@@ -112,7 +112,7 @@ We welcome community contributions to the SVT-AV1 Encoder. Thank you for your ti
 
 ## Contribution process
 
--  Follow the [coding guidelines] (STYLE.md)
+-  Follow the [coding guidelines](STYLE.md)
 
 -  Validate that your changes do not break a build
 
