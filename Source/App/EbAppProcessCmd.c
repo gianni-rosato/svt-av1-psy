@@ -13,6 +13,7 @@
 #include "EbAppContext.h"
 #include "EbAppConfig.h"
 #include "EbErrorCodes.h"
+#include "EbAppInputy4m.h"
 
 #include "EbTime.h"
 /***************************************
@@ -814,6 +815,12 @@ void ReadInputFrames(
                 headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, lumaReadSize >> 2, inputFile);
                 ebInputPtr = inputPtr->cr;
                 headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, lumaReadSize >> 2, inputFile);
+
+                /* if input is a y4m file, read next line with contains "FRAME" */
+                if(config->y4mInput==EB_TRUE) {
+                    readY4mFrameDelimiter(config);
+                }
+
                 inputPtr->luma = inputPtr->luma + ((config->inputPaddedWidth*TOP_INPUT_PADDING + LEFT_INPUT_PADDING) << is16bit);
                 inputPtr->cb   = inputPtr->cb + (((config->inputPaddedWidth >> 1)*(TOP_INPUT_PADDING >> 1) + (LEFT_INPUT_PADDING >> 1)) << is16bit);
                 inputPtr->cr   = inputPtr->cr + (((config->inputPaddedWidth >> 1)*(TOP_INPUT_PADDING >> 1) + (LEFT_INPUT_PADDING >> 1)) << is16bit);

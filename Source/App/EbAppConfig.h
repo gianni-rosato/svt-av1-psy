@@ -217,6 +217,8 @@ typedef struct EbConfig_s
 
     FILE                    *qpFile;
 
+    EbBool                  y4mInput;
+
     EbBool                  use_qp_file;
 
     uint32_t                 frameRate;
