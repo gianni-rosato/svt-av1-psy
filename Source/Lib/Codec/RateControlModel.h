@@ -18,14 +18,14 @@ typedef struct    RateControlModel_s {
      * Indexed by QP. intraSizePrediction[15] references the estimated size of an
      * intra frame at QP = 15
      */
-    uint32_t    intra_size_predictions[64];
+    size_t      intra_size_predictions[64];
 
     /*
      * @variable uint32_t[64]. Predicted inter frame size for a given QP.
      * Indexed by QP. interSizePrediction[15] references the estimated size of an
      * inter frame at QP = 15
      */
-    uint32_t    inter_size_predictions[64];
+    size_t      inter_size_predictions[64];
 
     /*
      * @variable uint32_t. Desired bitrate set in the configuration
@@ -78,56 +78,56 @@ typedef struct    RateControlModel_s {
     uint32_t    pixels;
 
     /*
-     * @variable RateControlGopInfo_t[]. Information about group of picture in
+     * @variable EbRateControlGopInfo[]. Information about group of picture in
      * the current sequence. Dynamically allocated in RateControlInit.
      * Indexed by pictureNumber.
      */
-    RateControlGopInfo_t    *gop_infos;
-} RateControlModel_t;
+    EbRateControlGopInfo    *gop_infos;
+} EbRateControlModel;
 
 /*
- * @function rate_control_model_ctor. Allocate and initialize a new RateControlModel_t
+ * @function rate_control_model_ctor. Allocate and initialize a new EbRateControlModel
  * with default values.
- * @param {RateControlModel_t*} object_double_ptr. Address of the pointer to RateControlModel_t
+ * @param {EbRateControlModel*} object_double_ptr. Address of the pointer to EbRateControlModel
  * @return {EbErrorType}.
  */
-EbErrorType rate_control_model_ctor(RateControlModel_t **object_double_ptr);
+EbErrorType rate_control_model_ctor(EbRateControlModel **object_double_ptr);
 
 /*
  * @function rate_control_model_init. Initialize a model with data specific to a sequence.
  * Must be called before RateControlUpdateModel and RateControlGetQuantizer
- * @param {RateControlModel_t*} model_ptr.
+ * @param {EbRateControlModel*} model_ptr.
  * @param {SequenceControlSet_t*} sequence_control_set_ptr. First frame used to initialize the model
  * @return {EbErrorType}.
  */
-EbErrorType    rate_control_model_init(RateControlModel_t *model_ptr,
+EbErrorType	rate_control_model_init(EbRateControlModel *model_ptr,
                                     SequenceControlSet_t *sequence_control_set_ptr);
 
 /*
  * @function rate_control_update_model. Update a model with information from an encoded frame.
- * @param {RateControlModel_t*} model_ptr.
+ * @param {EbRateControlModel*} model_ptr.
  * @param {PictureParentControlSet_t*} picture_ptr. Encoded frame.
  * @return {EbErrorType}.
  */
-EbErrorType    rate_control_update_model(RateControlModel_t *model_ptr,
+EbErrorType	rate_control_update_model(EbRateControlModel *model_ptr,
                                       PictureParentControlSet_t *picture_ptr);
 
 /*
  * @function rate_control_get_quantizer. Return a QP for the given frame to be encoded.
  * Uses data from the model and information from the given frame to make a decision
- * @param {RateControlModel_t*} model_ptr.
+ * @param {EbRateControlModel*} model_ptr.
  * @param {PictureParentControlSet_t*} picture_ptr. Frame to be encoded.
  * @return {uint8_t}. Suggested QP for the given frame
  */
-uint8_t    rate_control_get_quantizer(RateControlModel_t *model_ptr,
+uint8_t	rate_control_get_quantizer(EbRateControlModel *model_ptr,
                                    PictureParentControlSet_t *picture_ptr);
 
 /*
- * @function get_gop_size_in_bbytes. Return the size in bytes a new gop should take
+ * @function get_gop_size_in_bytes. Return the size in bytes a new gop should take
  * to fit closer to the rate control constraints.
- * @param {RateControlModel_t*} model_ptr.
+ * @param {EbRateControlModel*} model_ptr.
  * @return {uint32_t}. Ideal size the gop should take.
  */
-uint32_t  get_gop_size_in_bytes(RateControlModel_t *model_ptr);
+uint32_t  get_gop_size_in_bytes(EbRateControlModel *model_ptr);
 
 #endif // RateControlModel_h

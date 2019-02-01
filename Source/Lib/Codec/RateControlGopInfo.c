@@ -6,12 +6,12 @@
 #include "RateControlModel.h"
 #include "RateControlGopInfo.h"
 
-RateControlGopInfo_t *get_gop_infos(RateControlGopInfo_t *gop_info,
+EbRateControlGopInfo *get_gop_infos(EbRateControlGopInfo *gop_info,
                                     uint64_t position)
 {
-    RateControlGopInfo_t    *current;
+    EbRateControlGopInfo    *current;
 
-    while (position >= 0) {
+    while (1) { // First frame is always guaranteed to exist
         current = &gop_info[position];
 
         if (current->exists) {
