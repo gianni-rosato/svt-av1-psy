@@ -127,9 +127,9 @@ static void SetCfgInputFile                     (const char *value, EbConfig_t *
         FOPEN(cfg->inputFile, value, "rb");
     }
 
-    /* if input is a y4m file, read header and parse parameters */
+    /* if input is a YUV4MPEG2 (y4m) file, read header and parse parameters */
     if(cfg->inputFile!=NULL){
-        if(checkIfY4m(value) == EB_TRUE) {
+        if(checkIfY4m(cfg->inputFile) == EB_TRUE) {
             cfg->y4mInput = EB_TRUE;
         }
     }else{

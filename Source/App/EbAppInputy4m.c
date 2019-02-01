@@ -1,5 +1,5 @@
 /*
-* Copyright(c) 2018 Intel Corporation
+* Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
@@ -226,15 +226,20 @@ int32_t readY4mFrameDelimiter(EbConfig_t *cfg){
 }
 
 /* check if filename contains y4m extension */
-EbBool checkIfY4m(const char* inputFileName){
+EbBool checkIfY4m(FILE* inputFile){
 
-    size_t len;
+    unsigned char buffer[YFM_HEADER_MAX+1];
 
-    len = strlen(inputFileName);
-    if(strncmp(&inputFileName[len-4], ".y4m", 4)==0){
-        return EB_TRUE; /* .y4m file extension */
+    /* find out if this is actually a .y4m file*/
+    fread(buffer, YUV4MPEG2_IND_SIZE, 1, inputFile);
+    buffer[YUV4MPEG2_IND_SIZE] = 0;
+
+    fseek(inputFile, 0, SEEK_SET);
+
+    if (strcmp((const char*)buffer, "YUV4MPEG2") == 0) {
+        return EB_TRUE; /* YUV4MPEG2 file */
     }else{
-        return EB_FALSE; /* not .y4m file extension */
+        return EB_FALSE; /* Not a YUV4MPEG2 file */
     }
 
 }
