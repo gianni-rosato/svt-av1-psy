@@ -30,7 +30,7 @@ SVT-AV1 Encoder may run on any Windows* or Linux* 64 bit operating systems. The 
 
 * __Unix* Operating Systems (64-bit):__
 
-	-  Mac OS*X
+	-  MacOS
 
 ## Hardware
 
