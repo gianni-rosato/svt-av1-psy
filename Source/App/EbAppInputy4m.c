@@ -21,14 +21,6 @@ int32_t readY4mHeader(EbConfig_t *cfg){
     /* pointer to the input file */
     ptr_in = cfg->inputFile;
 
-    /* find out if this is actually a .y4m file*/
-    fread(buffer, YUV4MPEG2_IND_SIZE, 1, ptr_in);
-    buffer[YUV4MPEG2_IND_SIZE] = 0;
-    if (strcmp((const char*)buffer, "YUV4MPEG2") != 0) {
-        fprintf(cfg->errorLogFile, "The file provided is not in .y4m format\n");
-        return EB_ErrorBadParameter;
-    }
-
     /* get first line after YUV4MPEG2 */
     fgets((char*)buffer, sizeof(buffer), ptr_in);
 
@@ -225,20 +217,19 @@ int32_t readY4mFrameDelimiter(EbConfig_t *cfg){
 
 }
 
-/* check if filename contains y4m extension */
+/* check if the input file is in YUV4MPEG2 (y4m) format */
 EbBool checkIfY4m(FILE* inputFile){
 
     unsigned char buffer[YFM_HEADER_MAX+1];
 
-    /* find out if this is actually a .y4m file*/
+    /* Parse the header for the "YUV4MPEG2" string */
     fread(buffer, YUV4MPEG2_IND_SIZE, 1, inputFile);
     buffer[YUV4MPEG2_IND_SIZE] = 0;
-
-    fseek(inputFile, 0, SEEK_SET);
 
     if (strcmp((const char*)buffer, "YUV4MPEG2") == 0) {
         return EB_TRUE; /* YUV4MPEG2 file */
     }else{
+        fseek(inputFile, 0, SEEK_SET);
         return EB_FALSE; /* Not a YUV4MPEG2 file */
     }
 
