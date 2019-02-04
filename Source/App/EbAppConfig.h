@@ -218,6 +218,7 @@ typedef struct EbConfig_s
     FILE                    *qpFile;
 
     EbBool                  y4mInput;
+    unsigned char           y4mBuf[9];
 
     EbBool                  use_qp_file;
 

@@ -218,18 +218,22 @@ int32_t readY4mFrameDelimiter(EbConfig_t *cfg){
 }
 
 /* check if the input file is in YUV4MPEG2 (y4m) format */
-EbBool checkIfY4m(FILE* inputFile){
+EbBool checkIfY4m(EbConfig_t *cfg){
 
-    unsigned char buffer[YFM_HEADER_MAX+1];
+    unsigned char buffer[YUV4MPEG2_IND_SIZE+1];
 
     /* Parse the header for the "YUV4MPEG2" string */
-    fread(buffer, YUV4MPEG2_IND_SIZE, 1, inputFile);
+    fread(buffer, YUV4MPEG2_IND_SIZE, 1, cfg->inputFile);
     buffer[YUV4MPEG2_IND_SIZE] = 0;
 
     if (strcmp((const char*)buffer, "YUV4MPEG2") == 0) {
         return EB_TRUE; /* YUV4MPEG2 file */
     }else{
-        fseek(inputFile, 0, SEEK_SET);
+        if(cfg->inputFile != stdin) {
+            fseek(cfg->inputFile, 0, SEEK_SET);
+        }else{
+            memcpy(cfg->y4mBuf, buffer, YUV4MPEG2_IND_SIZE); /* TODO copy 9 bytes read to cfg->y4mBuf*/
+        }
         return EB_FALSE; /* Not a YUV4MPEG2 file */
     }
 

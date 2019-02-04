@@ -13,4 +13,4 @@ int32_t readY4mHeader(EbConfig_t *cfg);
 
 int32_t readY4mFrameDelimiter(EbConfig_t *cfg);
 
-EbBool checkIfY4m(FILE* inputFile);
+EbBool checkIfY4m(EbConfig_t *cfg);
