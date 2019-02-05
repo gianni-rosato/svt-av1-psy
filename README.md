@@ -127,5 +127,3 @@ Use the "Issues" tab on Github. To avoid duplicate issues, please make sure you 
 # Notices and Disclaimers
 
 The notices and disclaimers can be found [here](NOTICES.md)
-
-
