@@ -1,114 +1,18 @@
 # Scalable Video Technology for AV1 Encoder (SVT-AV1 Encoder) User Guide
 
 ## Table of Contents
-1. Introduction
-2. System Requirements
-  - 2.1 CPU requirements
-  - 2.2 RAM requirements
-  - 2.3 Operating systems 
-  - 2.4 Build the code
-  - 2.5 Installation
-3. Sample Application Guide
-  - 3.1 Input Video Format
-  - 3.2 Compressed 10-bit format
-  - 3.3 Running the encoder
-4. Legal Disclaimer
+1. [Introduction](#introduction)
+2. [Sample Application Guide](#sample-application-guide)
+    - [Input Video Format](#input-video-format)
+    - [Compressed 10-bit format](#compressed-10-bit-format)
+    - [Running the encoder](#running-the-encoder)
+3. [Legal Disclaimer](#legal-disclaimer)
 
 
 ## Introduction
 
-This document describes the system requirements and how to use the Scalable Video Technology for AV1 Encoder (SVT-AV1).  In particular, this user guide section describes how to run the sample application with the respective dynamically linked library.
+This document describes how to use the Scalable Video Technology for AV1 Encoder (SVT-AV1).  In particular, this user guide describes how to run the sample application with the respective dynamically linked library.
 
-## System Requirements
-
-The SVT-AV1 Encoder library was developed to be supported on x86 for Windows\* and Linux\* operating systems.
-
-### CPU requirements
-
-In order to achieve the performance targeted by the SVT-AV1 Encoder, the specific CPU model listed above would need to be used when running the encoder. Otherwise, the encoder runs on any 5th Generation Intel® Core™ processor, (Intel® Xeon® CPUs, E5-v4 or newer).
-
-### RAM requirements
-
-In order to run the highest resolution supported by the encoder, at least 48GB of RAM is required to run a single 4k 10-bit encode. The encoder application will display an error if the system does not have enough RAM to support this resolution. The table below lists the minimum amount of RAM required for some standard resolutions of 10bit video per channel:
-
-| **Resolution** | **Minimum Footprint in GB** |
-| ---            | --- |
-| 4k             | 48 |
-| 1080p          | 16 |
-| 720p           | 8 |
-| 480p           | 4 |
-
-### Operating systems
-
-The list below includes the operating systems that the encoder application and library could run on, assuming the above pre-requisites are met.
-
-#### Windows\* Operating Systems (64-bit)
-
-- Windows\* 10
-- Windows\* Server 2016 Standard
-
-#### Linux\* Operating Systems (64-bit)
-
-- Ubuntu\* 16.04 Desktop LTS
-- Ubuntu\* 16.04 Server LTS
-- Ubuntu\* 18.04 Desktop LTS
-- Ubuntu\* 18.04 Server LTS
-
-#### Unix\* Operating Systems (64-bit)
-
-- MAC OS\*X
-
-
-### Build the code
-
-The list below includes the build tools necessary for the encoder application and library to build properly.
-
-#### Windows\* Operating Systems (64-bit)
-
-Build requirements
-  - Visual Studio\* 2017
-  - YASM Assembler version 1.2.0 or later
-    - Download the yasm exe from the following [link](http://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win64.exe)
-    - Rename yasm-1.3.0-win64.exe to yasm.exe
-    - Copy yasm.exe into a location that is in your system PATH environment variable
-  - CMake 3.5 or later [link](https://github.com/Kitware/CMake/releases/download/v3.13.0/cmake-3.13.0-win64-x64.msi)
-
-Build instructions
-  - Generate the Visual Studio\* 2017 project files by following the steps below in a windows command line prompt:
-    - In the repository main directory go under the path_to_repo\Build\windows location
-    - run generate\_vs17.bat [such would generate the visual studio project files]
-  - Open the &quot;svt-av1.sln&quot; using Visual Studio\* 2017 and click on Build -- > Build Solution
-
-Binaries Location
-  - Binaries can be found under path_to_repo/Bin/Release or path_to_repo/Bin/Debug, depending on whether Debug or Release were selected in the build mode
-
-#### Linux\* Operating Systems (64-bit)
-
-Build requirements
-  - GCC 5.4.0
-  - CMake 3.5.1
-  - YASM Assembler version 1.2.0 or later
-Build instructions
-  - cd Build/linux
-  - chmod +x build.sh
-  - ./build.sh <release | debug> (if none specified, both release and debug will be built)
-Binaries Location:
-  - Binaries can be found under Bin/Release or Bin/Debug
-
-### Installation
-
-For the binaries to operate properly on your system, the following conditions have to be met:
-
-Windows\*:
-  - On any of the Windows\* operating systems listed in section 2.3, Install Visual Studio 2017
-  - Once the installation is complete, copy the binaries to a location making sure that both the sample application &quot;SvtAv1EncApp.exe&quot; and library &quot;SvtAv1Enc.dll&quot; are in the same folder.
-  - Open the command line at the chosen location and run the sample application to encode.
-Linux\*:
-  - On any of the Linux\* operating systems listed in section 2.3, copy the binaries under a location of your choice.
-  - Change the permissions on the sample application &quot;SvtAv1EncApp&quot; executable by running the command:
-    - chmod +x SvtAv1EncApp
-  - Open the terminal and cd into your chosen location
-  - Run the sample application to encode.
 
 ## Sample Application Guide
 
