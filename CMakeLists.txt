@@ -26,7 +26,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(CMAKE_C_FLAGS "-Wall -Wextra -Wformat -Wformat-security -mavx2 -fstack-protector-strong -fPIE -fPIC -D_FORTIFY_SOURCE=2 ")
+    set(CMAKE_C_FLAGS "-Wall -Wextra -Wformat -Wformat-security -mavx -fstack-protector-strong -fPIE -fPIC -D_FORTIFY_SOURCE=2 ")
     set(CMAKE_C_FLAGS_RELEASE "-O2")
     set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 	SET(CMAKE_EXE_LINKER_FLAGS "-z noexecstack -z relro -z now -pie ")

@@ -2098,13 +2098,13 @@ RTCD_EXTERN void(*av1_txb_init_levels)(const tran_low_t *const coeff, const int3
         if (flags & HAS_AVX2) av1_jnt_convolve_2d = av1_jnt_convolve_2d_avx2;
 
         aom_quantize_b = aom_quantize_b_c_II;
-        if (flags & HAS_AVX) aom_quantize_b = aom_highbd_quantize_b_avx2;
+        if (flags & HAS_AVX2) aom_quantize_b = aom_highbd_quantize_b_avx2;
 
         aom_quantize_b_32x32 = aom_quantize_b_32x32_c_II;
-        if (flags & HAS_AVX) aom_quantize_b_32x32 = aom_highbd_quantize_b_32x32_avx2;
+        if (flags & HAS_AVX2) aom_quantize_b_32x32 = aom_highbd_quantize_b_32x32_avx2;
 
         aom_highbd_quantize_b_32x32 = aom_highbd_quantize_b_32x32_c;
-        if (flags & HAS_AVX) aom_highbd_quantize_b_32x32 = aom_highbd_quantize_b_32x32_avx2;
+        if (flags & HAS_AVX2) aom_highbd_quantize_b_32x32 = aom_highbd_quantize_b_32x32_avx2;
 
         aom_highbd_quantize_b = aom_highbd_quantize_b_c;
         if (flags & HAS_AVX2) aom_highbd_quantize_b = aom_highbd_quantize_b_avx2;
@@ -2150,7 +2150,7 @@ RTCD_EXTERN void(*av1_txb_init_levels)(const tran_low_t *const coeff, const int3
         if (flags & HAS_SSE4_1) av1_inv_txfm2d_add_16x4 = av1_inv_txfm2d_add_16x4_sse4_1;
 
         //toDO add C
-        if (flags & HAS_AVX2) av1_inv_txfm_add = av1_inv_txfm_add_ssse3;
+        if (flags & HAS_SSSE3) av1_inv_txfm_add = av1_inv_txfm_add_ssse3;
 
         highbd_variance64 = highbd_variance64_c;
         if (flags & HAS_AVX2) highbd_variance64 = highbd_variance64_avx2;
