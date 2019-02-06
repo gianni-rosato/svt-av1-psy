@@ -6,10 +6,52 @@ addons:
     packages:
      - cmake
      - yasm
+  homebrew:
+    packages:
+      - yasm
+
+matrix:
+  allow_failures:
+  - name: "FFmpeg patch"  # See issue #15
 
 jobs:
   include:
-   - name: SVT-AV1
+   # General Linux build job
+   - name: Build
      script:
      - cd Build/linux
      - ./build.sh release
+   # General macOS build job
+   - name: macOS build
+     os: osx
+     script:
+     - cd Build/linux
+     - ./build.sh release     
+   # Coveralls test job
+   - name: Coveralls
+     before_install:
+     - pip install --user cpp-coveralls
+     script:
+     - cd Build/linux
+     - ./build.sh release
+     after_success:
+     - coveralls
+     
+   # FFmpeg interation build
+   - name: FFmpeg patch
+     script:
+     # Build and install SVT-AV1
+     - cd $TRAVIS_BUILD_DIR
+     - cd Build
+     - cmake ..
+     - make -j$(nproc)
+     - sudo make install
+     # Apply SVT-AV1 plugin and enable libsvtav1 to FFmpeg
+     - git clone https://github.com/FFmpeg/FFmpeg ffmpeg
+     - cd ffmpeg
+     - git checkout release/4.1
+     - git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
+     - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
+     - export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig
+     - ./configure --enable-libsvtav1
+     - make --quiet -j$(nproc)
