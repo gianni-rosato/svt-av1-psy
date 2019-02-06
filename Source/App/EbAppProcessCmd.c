@@ -13,6 +13,7 @@
 #include "EbAppContext.h"
 #include "EbAppConfig.h"
 #include "EbErrorCodes.h"
+#include "EbAppInputy4m.h"
 
 #include "EbTime.h"
 /***************************************
@@ -21,6 +22,7 @@
 #define CLIP3(MinVal, MaxVal, a)        (((a)<(MinVal)) ? (MinVal) : (((a)>(MaxVal)) ? (MaxVal) :(a)))
 #define FUTURE_WINDOW_WIDTH                 4
 #define SIZE_OF_ONE_FRAME_IN_BYTES(width, height,is16bit) ( ( ((width)*(height)*3)>>1 )<<is16bit)
+#define YUV4MPEG2_IND_SIZE 9
 extern volatile int32_t keepRunning;
 
 /***************************************
@@ -809,11 +811,26 @@ void ReadInputFrames(
             else {
                 uint64_t lumaReadSize = (uint64_t)inputPaddedWidth*inputPaddedHeight << is16bit;
                 ebInputPtr = inputPtr->luma;
-                headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, lumaReadSize, inputFile);
+                if(config->y4mInput==EB_FALSE && config->processedFrameCount == 0 && config->inputFile == stdin) {
+                    /* if not a y4m file and input is read from stdin, 9 bytes were already read when checking
+                        or the YUV4MPEG2 string in the stream, so copy those bytes over */
+                    memcpy(ebInputPtr,config->y4mBuf,YUV4MPEG2_IND_SIZE);
+                    headerPtr->n_filled_len += YUV4MPEG2_IND_SIZE;
+                    ebInputPtr += YUV4MPEG2_IND_SIZE;
+                    headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, lumaReadSize-YUV4MPEG2_IND_SIZE, inputFile);
+                }else {
+                    headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, lumaReadSize, inputFile);
+                }
                 ebInputPtr = inputPtr->cb;
                 headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, lumaReadSize >> 2, inputFile);
                 ebInputPtr = inputPtr->cr;
                 headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, lumaReadSize >> 2, inputFile);
+
+                /* if input is a y4m file, read next line with contains "FRAME" */
+                if(config->y4mInput==EB_TRUE) {
+                    readY4mFrameDelimiter(config);
+                }
+
                 inputPtr->luma = inputPtr->luma + ((config->inputPaddedWidth*TOP_INPUT_PADDING + LEFT_INPUT_PADDING) << is16bit);
                 inputPtr->cb   = inputPtr->cb + (((config->inputPaddedWidth >> 1)*(TOP_INPUT_PADDING >> 1) + (LEFT_INPUT_PADDING >> 1)) << is16bit);
                 inputPtr->cr   = inputPtr->cr + (((config->inputPaddedWidth >> 1)*(TOP_INPUT_PADDING >> 1) + (LEFT_INPUT_PADDING >> 1)) << is16bit);

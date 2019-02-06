@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "EbAppConfig.h"
+#include "EbAppInputy4m.h"
 
 #ifdef _WIN32
 #else
@@ -115,6 +116,7 @@
  **********************************/
 static void SetCfgInputFile                     (const char *value, EbConfig_t *cfg)
 {
+
     if (cfg->inputFile && cfg->inputFile != stdin) {
         fclose(cfg->inputFile);
     }
@@ -124,6 +126,16 @@ static void SetCfgInputFile                     (const char *value, EbConfig_t *
     else {
         FOPEN(cfg->inputFile, value, "rb");
     }
+
+    /* if input is a YUV4MPEG2 (y4m) file, read header and parse parameters */
+    if(cfg->inputFile!=NULL){
+        if(checkIfY4m(cfg) == EB_TRUE) {
+            cfg->y4mInput = EB_TRUE;
+        }
+    }else{
+        cfg->y4mInput = EB_FALSE;
+    }
+
 };
 static void SetCfgStreamFile                    (const char *value, EbConfig_t *cfg)
 {
@@ -982,6 +994,7 @@ EbErrorType ReadCommandLine(
     uint32_t    index           = 0;
     int32_t             cmd_token_cnt   = 0;                        // total number of tokens
     int32_t             token_index     = -1;
+    int32_t ret_y4m;
 
     for (index = 0; index < MAX_CHANNEL_NUMBER; ++index){
         config_strings[index] = (char*)malloc(sizeof(char)*COMMAND_LINE_MAX_SIZE);
@@ -1042,6 +1055,21 @@ EbErrorType ReadCommandLine(
                         break;
                     }
                 }
+            }
+        }
+    }
+
+    /***************************************************************************************************/
+    /********************** Parse parameters from input file if in y4m format **************************/
+    /********************** overriding config file and command line inputs    **************************/
+    /***************************************************************************************************/
+
+    for (index = 0; index < numChannels; ++index) {
+        if ((configs[index])->y4mInput == EB_TRUE){
+            ret_y4m = readY4mHeader(configs[index]);
+            if(ret_y4m == EB_ErrorBadParameter){
+                printf("Error found when reading the y4m file parameters.\n");
+                return EB_ErrorBadParameter;
             }
         }
     }
