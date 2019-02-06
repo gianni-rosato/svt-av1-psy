@@ -603,12 +603,9 @@ void md_update_all_neighbour_arrays_multiple(
     ModeDecisionContext_t               *context_ptr,
     uint32_t                            blk_mds,
     uint32_t                            sb_origin_x,
-    uint32_t                            sb_origin_y)
-{
+    uint32_t                            sb_origin_y){
 
     context_ptr->blk_geom = Get_blk_geom_mds(blk_mds);
-
-
 
     uint32_t blk_it;
     for (blk_it = 0; blk_it < context_ptr->blk_geom->totns; blk_it++)
@@ -621,86 +618,41 @@ void md_update_all_neighbour_arrays_multiple(
             sb_origin_x,
             sb_origin_y);
     }
-
 }
 
-
-
 //*************************//
-// SetNfl
+// set_nfl
 // Based on the MDStage and the encodeMode
 // the NFL candidates numbers are set
 //*************************//
-void SetNfl(
+void set_nfl(
+    ModeDecisionContext_t     *context_ptr,
+    PictureControlSet_t       *picture_control_set_ptr){
 
-    SequenceControlSet_t    *sequence_control_set_ptr,
-    LargestCodingUnit_t     *sb_ptr,
-    ModeDecisionContext_t    *context_ptr,
-    PictureControlSet_t        *picture_control_set_ptr)
-{
+    // Set NFL Candidates
+    // NFL Level MD         Settings
+    // 0                    MAX_NFL 12
+    // 1                    8
+    // 2                    6
+    // 3                    4
+    // 4                    4/3/2
 
-#if ENCODER_MODE_CLEANUP
-    if (0) {
-#else
-    if (picture_control_set_ptr->enc_mode >= ENC_M3) {
-#endif
-        if ((picture_control_set_ptr->enc_mode >= ENC_M3) && (sequence_control_set_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE))
-        {
-
-            // Set number of NFL Candidates
-            if (picture_control_set_ptr->parent_pcs_ptr->depth_mode == PICT_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_ptr->index] == LCU_PRED_OPEN_LOOP_1_NFL_DEPTH_MODE)
-                context_ptr->full_recon_search_count = 1;
-            else
-                if (picture_control_set_ptr->slice_type == I_SLICE)
-                    context_ptr->full_recon_search_count = (context_ptr->blk_geom->bwidth == 32 && context_ptr->blk_geom->bheight == 32) ? 3 : 2;
-
-                else if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-                    context_ptr->full_recon_search_count = (context_ptr->blk_geom->bwidth >= 16 && context_ptr->blk_geom->bheight >= 16) ? 2 : 1;
-                else
-                    context_ptr->full_recon_search_count = (context_ptr->blk_geom->bwidth >= 32 && context_ptr->blk_geom->bheight >= 32) ? 2 : 1;
-
-        }
-        else
-        {
-            // Set number of NFL Candidates
-            if (picture_control_set_ptr->parent_pcs_ptr->depth_mode == PICT_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_ptr->index] == LCU_PRED_OPEN_LOOP_1_NFL_DEPTH_MODE)
-                context_ptr->full_recon_search_count = 1;
-            else
-                context_ptr->full_recon_search_count =
-                (picture_control_set_ptr->slice_type == I_SLICE) ? 4 : 2;
-
-
-        }
-
-    }
+    if (context_ptr->nfl_level == 0)
+        context_ptr->full_recon_search_count = MAX_NFL;
+    else if (context_ptr->nfl_level == 1)
+        context_ptr->full_recon_search_count = 8;
+    else if (context_ptr->nfl_level == 2)
+        context_ptr->full_recon_search_count = 6;
+    else if (context_ptr->nfl_level == 3)
+        context_ptr->full_recon_search_count = 4;
     else
-    {
-        // Set number of NFL Candidates
-        if (picture_control_set_ptr->parent_pcs_ptr->depth_mode == PICT_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_ptr->index] == LCU_PRED_OPEN_LOOP_1_NFL_DEPTH_MODE)
-            context_ptr->full_recon_search_count = 1;
-        else
-            context_ptr->full_recon_search_count =
+        context_ptr->full_recon_search_count =
             (picture_control_set_ptr->slice_type == I_SLICE) ? 4 :
             (context_ptr->blk_geom->bwidth == 32 && context_ptr->blk_geom->bheight == 32 && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 3 : 2;
 
-#if INC_NFL
-        context_ptr->full_recon_search_count = 4;
-#endif
-#if INC_NFL12
-        context_ptr->full_recon_search_count = MAX_NFL;
-#endif
-
-#if TURN_OFF_NFL8
-#if ENCODER_MODE_CLEANUP
-if (picture_control_set_ptr->parent_pcs_ptr->enc_mode == ENC_M2)
-#endif
-        context_ptr->full_recon_search_count = 6;
-else if (picture_control_set_ptr->parent_pcs_ptr->enc_mode == ENC_M3)
-		context_ptr->full_recon_search_count = 4;
-#endif
-
-    }
-    assert(context_ptr->full_recon_search_count <= MAX_NFL);
+        //if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_ptr->index] == LCU_PRED_OPEN_LOOP_1_NFL_DEPTH_MODE)
+        //    context_ptr->full_recon_search_count = 1;
+    ASSERT(context_ptr->full_recon_search_count <= MAX_NFL);
 }
 
 //*************************//
@@ -2476,11 +2428,8 @@ void move_cu_data(
 *   performs CL (LCU)
 *******************************************/
 EbBool allowed_ns_cu(
-    PictureControlSet_t                *picture_control_set_ptr,
-    ModeDecisionContext_t            *context_ptr,
-    uint8_t                            is_complete_sb,
-    uint8_t                            allow_non_square_block)
-{
+    ModeDecisionContext_t             *context_ptr,
+    uint8_t                            is_complete_sb){
   
     EbBool  ret = 1;
     // Disable NSQ for non-complete LCU
@@ -2489,79 +2438,6 @@ EbBool allowed_ns_cu(
             ret = 0;
         }
     }
-
-    if (picture_control_set_ptr->slice_type == I_SLICE && context_ptr->blk_geom->sq_size == 128)
-
-        ret = 0;
-
-    // Disable non-square blocks if it is not allowed.
-#if!    TEST5_DISABLE_NSQ_ME
-    if (!allow_non_square_block) {
-        if (context_ptr->blk_geom->shape != PART_N) {
-            ret = 0;
-        }
-    }
-
-
-#if DISABLE_128x128
-    if (context_ptr->blk_geom->sq_size == 128) {
-        ret = 0;
-    }
-#endif
-#if DISABLE_4xN_Nx4
-#if ENCODER_MODE_CLEANUP
-    if (picture_control_set_ptr->enc_mode > ENC_M1) {
-#endif
-        if (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) {
-            ret = 0;
-        }
-#if ENCODER_MODE_CLEANUP
-    }
-#endif
-#endif
-#if DISABLE_NSQ
-#if ENCODER_MODE_CLEANUP
-    if (picture_control_set_ptr->enc_mode > ENC_M2) {
-#endif
-        if (context_ptr->blk_geom->shape != PART_N) {
-            ret = 0;
-        }
-#if ENCODER_MODE_CLEANUP
-    }
-#endif
-#endif
-#if ENABLE_INTRA_4x4
-#if ENCODER_MODE_CLEANUP
-    if (picture_control_set_ptr->enc_mode >= ENC_M1) {
-#endif
-        if (context_ptr->blk_geom->bwidth == 4 && context_ptr->blk_geom->bheight == 4 && context_ptr->blk_geom->shape == PART_N) {
-            ret = 1;
-        }
-#if ENCODER_MODE_CLEANUP
-    }
-#endif
-#endif
-#if    ENABLE_INTER_4x4
-    if (picture_control_set_ptr->slice_type != I_SLICE) {
-        if (context_ptr->blk_geom->bwidth == 4 && context_ptr->blk_geom->bheight == 4 && context_ptr->blk_geom->shape == PART_N) {
-            ret = 1;
-        }
-    }
-#endif
-#if    DISABLE_NSQ_FOR_NON_REF
-#if ENCODER_MODE_CLEANUP
-    if (picture_control_set_ptr->enc_mode == ENC_M1|| picture_control_set_ptr->enc_mode == ENC_M2) {
-#endif
-        if (!picture_control_set_ptr->parent_pcs_ptr->small_block_flag) {
-            if (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) {
-                ret = 0;
-            }
-        }
-#if ENCODER_MODE_CLEANUP
-    }
-#endif
-#endif
-#endif
     return ret;
 }
 
@@ -2601,12 +2477,12 @@ void md_encode_block(
     if (allowed_ns_cu(
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
 #if ENCODER_MODE_CLEANUP
-        picture_control_set_ptr, context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb, (picture_control_set_ptr->enc_mode > ENC_M0) ? picture_control_set_ptr->parent_pcs_ptr->non_square_block_flag : sequence_control_set_ptr->static_config.ext_block_flag))
+        context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb))
 #else
-        picture_control_set_ptr, context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb, picture_control_set_ptr->parent_pcs_ptr->non_square_block_flag))
+        context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb))
 #endif
 #else
-        picture_control_set_ptr, context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb, sequence_control_set_ptr->static_config.ext_block_flag))
+        context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb))
 #endif
     {
         // Set PF Mode - should be done per TU (and not per CU) to avoid the correction
@@ -2630,9 +2506,7 @@ void md_encode_block(
             context_ptr->leaf_depth_neighbor_array,
             context_ptr->leaf_partition_neighbor_array);
 
-        SetNfl(
-            sequence_control_set_ptr,
-            context_ptr->sb_ptr,
+        set_nfl(
             context_ptr,
             picture_control_set_ptr);
 
@@ -2914,9 +2788,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
         cu_ptr->qp = context_ptr->qp;
         cu_ptr->best_d1_blk = blk_idx_mds;
 #if INJECT_ONLY_SQ
-#if ENCODER_MODE_CLEANUP
-        if (picture_control_set_ptr->enc_mode > ENC_M0) {
-#endif
+
             if (leafDataPtr->tot_d1_blocks != 1)
             {
                 if (blk_geom->shape == PART_N)
@@ -2928,19 +2800,6 @@ EB_EXTERN EbErrorType mode_decision_sb(
                         sb_origin_x,
                         sb_origin_y);
             }
-#if ENCODER_MODE_CLEANUP
-        }
-        else {
-            if (blk_geom->shape == PART_N)
-                copy_neighbour_arrays(      //save a clean neigh in [1], encode uses [0], reload the clean in [0] after done last ns block in a partition
-                    picture_control_set_ptr,
-                    context_ptr,
-                    0, 1,
-                    blk_idx_mds,
-                    sb_origin_x,
-                    sb_origin_y);
-        }
-#endif
 #else
         if (blk_geom->shape == PART_N)
             copy_neighbour_arrays(      //save a clean neigh in [1], encode uses [0], reload the clean in [0] after done last ns block in a partition

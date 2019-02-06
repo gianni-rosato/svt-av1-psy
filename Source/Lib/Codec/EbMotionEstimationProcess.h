@@ -20,7 +20,7 @@ typedef struct MotionEstimationContext_s
     EbFifo_t                        *pictureDecisionResultsInputFifoPtr;
     EbFifo_t                        *motionEstimationResultsOutputFifoPtr;
     IntraReferenceSamplesOpenLoop_t *intra_ref_ptr;
-    MeContext_t                     *meContextPtr;
+    MeContext_t                     *me_context_ptr;
 
     uint8_t                       *indexTable0;
     uint8_t                       *indexTable1;

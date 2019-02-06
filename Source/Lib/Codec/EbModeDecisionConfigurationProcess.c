@@ -2474,7 +2474,129 @@ void DeriveLcuMdMode(
         context_ptr);
 
 }
+void forward_sq_non4_blocks_to_md(
+    SequenceControlSet_t                   *sequence_control_set_ptr,
+    PictureControlSet_t                    *picture_control_set_ptr)
+{
 
+    uint32_t                   sb_index;
+    EbBool                  split_flag;
+
+
+    for (sb_index = 0; sb_index < sequence_control_set_ptr->sb_tot_cnt; ++sb_index)
+    {
+
+        MdcLcuData_t *resultsPtr = &picture_control_set_ptr->mdc_sb_array[sb_index];
+
+        resultsPtr->leaf_count = 0;
+
+        uint32_t  blk_index = picture_control_set_ptr->slice_type == I_SLICE && sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 17 : 0;
+
+
+
+        while (blk_index < sequence_control_set_ptr->max_block_cnt)
+        {
+            split_flag = EB_TRUE;
+
+            const BlockGeom * blk_geom = Get_blk_geom_mds(blk_index);
+
+
+            //if the parentSq is inside inject this block
+            if (sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index])
+
+            {
+
+                //int32_t offset_d1 = ns_blk_offset[(int32_t)from_shape_to_part[blk_geom->shape]]; //cu_ptr->best_d1_blk; // TOCKECK
+                //int32_t num_d1_block = ns_blk_num[(int32_t)from_shape_to_part[blk_geom->shape]]; // context_ptr->blk_geom->totns; // TOCKECK
+                //
+                //                                                  // for (int32_t d1_itr = blk_it; d1_itr < blk_it + num_d1_block; d1_itr++) {
+                // for (int32_t d1_itr = (int32_t)blk_index ; d1_itr < (int32_t)blk_index +  num_d1_block ; d1_itr++) {
+
+                resultsPtr->leaf_data_array[resultsPtr->leaf_count].tot_d1_blocks = 1;
+
+
+                resultsPtr->leaf_data_array[resultsPtr->leaf_count].leaf_index = 0;//valid only for square 85 world. will be removed.
+                resultsPtr->leaf_data_array[resultsPtr->leaf_count].mds_idx = blk_index;
+
+                if (blk_geom->sq_size > 8)
+                {
+                    resultsPtr->leaf_data_array[resultsPtr->leaf_count++].split_flag = EB_TRUE;
+                    split_flag = EB_TRUE;
+                }
+                else {
+                    resultsPtr->leaf_data_array[resultsPtr->leaf_count++].split_flag = EB_FALSE;
+                    split_flag = EB_FALSE;
+                }
+
+
+            }
+
+            blk_index += split_flag ? d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth] : ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth];
+
+        }
+
+    }
+
+    picture_control_set_ptr->parent_pcs_ptr->average_qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
+
+}
+
+void forward_all_c_blocks_to_md(
+    SequenceControlSet_t   *sequence_control_set_ptr,
+    PictureControlSet_t    *picture_control_set_ptr){
+
+    uint32_t                sb_index;
+    for (sb_index = 0; sb_index < sequence_control_set_ptr->sb_tot_cnt; ++sb_index){
+
+        MdcLcuData_t *resultsPtr = &picture_control_set_ptr->mdc_sb_array[sb_index];
+        resultsPtr->leaf_count = 0;
+        uint32_t blk_index = 0;
+        uint32_t tot_d1_blocks;
+
+        while (blk_index < sequence_control_set_ptr->max_block_cnt)
+        {
+            tot_d1_blocks = 0;
+            const BlockGeom * blk_geom = Get_blk_geom_mds(blk_index);
+
+            //if the parentSq is inside inject this block
+            uint8_t is_blk_allowed = picture_control_set_ptr->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
+
+            if (sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed){
+
+                tot_d1_blocks = resultsPtr->leaf_data_array[resultsPtr->leaf_count].tot_d1_blocks =
+
+                    blk_geom->sq_size == 128 ? 17 :
+                    blk_geom->sq_size > 16 ? 25 :
+                    blk_geom->sq_size == 16 ? 17 :
+                    blk_geom->sq_size == 8 ? 1 : 1;
+
+                for (uint32_t idx = 0; idx < tot_d1_blocks; ++idx) {
+                    blk_geom = Get_blk_geom_mds(blk_index);
+
+                    //if the parentSq is inside inject this block
+                    if (sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index]){
+
+                        resultsPtr->leaf_data_array[resultsPtr->leaf_count].leaf_index = 0;//valid only for square 85 world. will be removed.
+                        resultsPtr->leaf_data_array[resultsPtr->leaf_count].mds_idx = blk_index;
+                        if (blk_geom->sq_size > 4)
+                        {
+                            resultsPtr->leaf_data_array[resultsPtr->leaf_count++].split_flag = EB_TRUE;
+                        }
+                        else {
+                            resultsPtr->leaf_data_array[resultsPtr->leaf_count++].split_flag = EB_FALSE;
+                        }
+                    }
+                    blk_index++;
+                }
+            }
+            blk_index += (d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth] - tot_d1_blocks);
+
+        }
+
+    }
+
+    picture_control_set_ptr->parent_pcs_ptr->average_qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
+}
 /******************************************************
  * Mode Decision Configuration Kernel
  ******************************************************/
@@ -2492,10 +2614,6 @@ void* ModeDecisionConfigurationKernel(void *input_ptr)
     // Output
     EbObjectWrapper_t                          *encDecTasksWrapperPtr;
     EncDecTasks_t                              *encDecTasksPtr;
-#if !MEM_RED
-    uint32_t                                      picture_width_in_sb;
-    uint32_t                                      picture_height_in_sb;
-#endif
 
     for (;;) {
 
@@ -2507,10 +2625,7 @@ void* ModeDecisionConfigurationKernel(void *input_ptr)
         rateControlResultsPtr = (RateControlResults_t*)rateControlResultsWrapperPtr->objectPtr;
         picture_control_set_ptr = (PictureControlSet_t*)rateControlResultsPtr->pictureControlSetWrapperPtr->objectPtr;
         sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
-#if !MEM_RED
-        picture_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-        picture_height_in_sb = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-#endif
+      
         context_ptr->qp = picture_control_set_ptr->picture_qp;
 
         picture_control_set_ptr->parent_pcs_ptr->average_qp = 0;
@@ -2548,25 +2663,9 @@ void* ModeDecisionConfigurationKernel(void *input_ptr)
             (picture_control_set_ptr->parent_pcs_ptr->zz_cost_average > 15) &&
             (picture_control_set_ptr->parent_pcs_ptr->pic_noise_class >= picNoiseClassTH));
 
-#if !MEM_RED
-        // Aura Detection
-        // Still is using the picture QP to derive aura thresholds, there fore it could not move to the open loop
-        AuraDetection(  // HT done
-            sequence_control_set_ptr,
-            picture_control_set_ptr,
-            picture_width_in_sb,
-            picture_height_in_sb);
-
-        // Detect complex/non-flat/moving SB in a non-complex area (used to refine MDC depth control in Gold)
-        DetectComplexNonFlatMovingLcu( // HT done
-            picture_control_set_ptr,
-            picture_width_in_sb,
-            picture_height_in_sb);
-#endif
         // Compute picture and slice level chroma QP offsets
         SetSliceAndPictureChromaQpOffsets( // HT done
-            picture_control_set_ptr
-        );
+            picture_control_set_ptr);
 
         // Compute Tc, and Beta offsets for a given picture
         AdaptiveDlfParameterComputation( // HT done
@@ -2616,7 +2715,7 @@ void* ModeDecisionConfigurationKernel(void *input_ptr)
             dequantsMd);
 #endif
 
-        if (picture_control_set_ptr->parent_pcs_ptr->depth_mode == PICT_SB_SWITCH_DEPTH_MODE) {
+        if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE) {
 
             DeriveLcuMdMode(
                 sequence_control_set_ptr,
@@ -2660,45 +2759,31 @@ void* ModeDecisionConfigurationKernel(void *input_ptr)
                 }
             }
         }
-        else  if (picture_control_set_ptr->parent_pcs_ptr->depth_mode == PICT_FULL85_DEPTH_MODE) {
-#if INJECT_ONLY_SQ
-#if ENCODER_MODE_CLEANUP
-            if (picture_control_set_ptr->enc_mode > ENC_M0) {
-#endif
-                if (picture_control_set_ptr->parent_pcs_ptr->non_square_block_flag)
-                    forward_all_blocks_to_md(
-                        sequence_control_set_ptr,
-                        picture_control_set_ptr);
-                else
-                    forward_sq_blocks_to_md(
-                        sequence_control_set_ptr,
-                        picture_control_set_ptr);
-#if ENCODER_MODE_CLEANUP
-            }
-            else{
-#endif
+        else  if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_ALL_DEPTH_MODE) {
 
             forward_all_blocks_to_md(
                 sequence_control_set_ptr,
                 picture_control_set_ptr);
-#if ENCODER_MODE_CLEANUP
-            }
-        
-#endif
-#else
-            forward_all_blocks_to_md(
-                sequence_control_set_ptr,
-                picture_control_set_ptr);
-#endif
         }
-        else  if (picture_control_set_ptr->parent_pcs_ptr->depth_mode == PICT_FULL84_DEPTH_MODE) {
+        else  if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_ALL_C_DEPTH_MODE) {
 
-            Forward84CuToModeDecision(
+            forward_all_c_blocks_to_md(
                 sequence_control_set_ptr,
                 picture_control_set_ptr);
         }
-        else if (picture_control_set_ptr->parent_pcs_ptr->depth_mode >= PICT_OPEN_LOOP_DEPTH_MODE) {
+        else  if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SQ_DEPTH_MODE) {
 
+            forward_sq_blocks_to_md(
+                sequence_control_set_ptr,
+                picture_control_set_ptr);
+        }
+        else  if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SQ_NON4_DEPTH_MODE) {
+
+            forward_sq_non4_blocks_to_md(
+                sequence_control_set_ptr,
+                picture_control_set_ptr);
+        }
+        else if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode >= PIC_OPEN_LOOP_DEPTH_MODE) {
             // Predict the SB partitionning
             PerformEarlyLcuPartitionning( // HT done
                 context_ptr,
@@ -2708,6 +2793,7 @@ void* ModeDecisionConfigurationKernel(void *input_ptr)
         else {   // (picture_control_set_ptr->parent_pcs_ptr->mdMode == PICT_BDP_DEPTH_MODE || picture_control_set_ptr->parent_pcs_ptr->mdMode == PICT_LIGHT_BDP_DEPTH_MODE )
             picture_control_set_ptr->parent_pcs_ptr->average_qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
         }
+
 
         // Derive MD parameters
         SetMdSettings( // HT Done

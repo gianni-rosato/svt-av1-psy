@@ -1880,6 +1880,52 @@ static int32_t search_filter_level(
     filt_best = filt_mid;
     ss_err[filt_mid] = best_err;
 
+#if DLF_TEST4
+    filter_step = 2;
+    const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
+    const int32_t filt_low = AOMMAX(filt_mid - filter_step, min_filter_level);
+
+    // Bias against raising loop filter in favor of lowering it.
+    int64_t bias = (best_err >> (15 - (filt_mid / 8))) * filter_step;
+
+    //if ((cpi->oxcf.pass == 2) && (cpi->twopass.section_intra_rating < 20))
+    //    bias = (bias * cpi->twopass.section_intra_rating) / 20;
+
+    // yx, bias less for large block size
+    if (pcsPtr->parent_pcs_ptr->tx_mode != ONLY_4X4) bias >>= 1;
+
+    if (filt_direction <= 0 && filt_low != filt_mid) {
+        // Get Low filter error score
+        if (ss_err[filt_low] < 0) {
+            ss_err[filt_low] =
+                try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_low, partial_frame, plane, dir);
+        }
+        // If value is close to the best so far then bias towards a lower loop
+        // filter value.
+        if (ss_err[filt_low] < (best_err + bias)) {
+            // Was it actually better than the previous best?
+            if (ss_err[filt_low] < best_err) {
+                best_err = ss_err[filt_low];
+            }
+            filt_best = filt_low;
+        }
+    }
+
+    // Now look at filt_high
+    if (filt_direction >= 0 && filt_high != filt_mid) {
+        if (ss_err[filt_high] < 0) {
+            ss_err[filt_high] =
+                try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_high, partial_frame, plane, dir);
+        }
+        // If value is significantly better than previous best, bias added against
+        // raising filter value
+        if (ss_err[filt_high] < (best_err - bias)) {
+            best_err = ss_err[filt_high];
+            filt_best = filt_high;
+        }
+    }
+#else
+
     while (filter_step > 0) {
         const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
         const int32_t filt_low = AOMMAX(filt_mid - filter_step, min_filter_level);
@@ -1934,7 +1980,7 @@ static int32_t search_filter_level(
             filt_mid = filt_best;
         }
     }
-
+#endif
     // Update best error
     best_err = ss_err[filt_best];
 
@@ -1990,11 +2036,27 @@ void av1_pick_filter_level(
         }
         if (scsPtr->static_config.encoder_bit_depth != EB_8BIT && pcsPtr->parent_pcs_ptr->av1FrameType == KEY_FRAME)
             filt_guess -= 4;
+
+    if (pcsPtr->parent_pcs_ptr->loop_filter_mode == 1) {
+        filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
+        int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
+
+        // TODO(chengchen): retrain the model for Y, U, V filter levels
+        lf->filter_level[0] = clamp(filt_guess, min_filter_level, max_filter_level);
+        lf->filter_level[1] = clamp(filt_guess, min_filter_level, max_filter_level);
+        lf->filter_level_u = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
+        lf->filter_level_v = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
+    }
+    else {
+
         // TODO(chengchen): retrain the model for Y, U, V filter levels
         lf->filter_level[0] = clamp(filt_guess, min_filter_level, max_filter_level);
         lf->filter_level[1] = clamp(filt_guess, min_filter_level, max_filter_level);
         lf->filter_level_u = clamp(filt_guess, min_filter_level, max_filter_level);
         lf->filter_level_v = clamp(filt_guess, min_filter_level, max_filter_level);
+
+    }
+
     }
     else {
         const int32_t last_frame_filter_level[4] = { lf->filter_level[0],
@@ -2006,13 +2068,14 @@ void av1_pick_filter_level(
         lf->filter_level[0] = lf->filter_level[1] =
             search_filter_level(srcBuffer, tempLfReconBuffer, pcsPtr, method == LPF_PICK_FROM_SUBIMAGE,
                 last_frame_filter_level, NULL, 0, 2);
+#if !DLF_TEST3 && !DLF_TEST4
         lf->filter_level[0] =
             search_filter_level(srcBuffer, tempLfReconBuffer, pcsPtr, method == LPF_PICK_FROM_SUBIMAGE,
                 last_frame_filter_level, NULL, 0, 0);
         lf->filter_level[1] =
             search_filter_level(srcBuffer, tempLfReconBuffer, pcsPtr, method == LPF_PICK_FROM_SUBIMAGE,
                 last_frame_filter_level, NULL, 0, 1);
-
+#endif
         if (num_planes > 1) {
             lf->filter_level_u =
                 search_filter_level(srcBuffer, tempLfReconBuffer, pcsPtr, method == LPF_PICK_FROM_SUBIMAGE,

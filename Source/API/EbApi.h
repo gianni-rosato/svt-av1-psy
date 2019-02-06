@@ -21,6 +21,8 @@ extern "C" {
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT            2
 
+#define MAX_ENC_PRESET                              3
+
 #ifdef _WIN32
 #define EB_API __declspec(dllexport)
 #else
@@ -132,7 +134,7 @@ typedef struct EbSvtAv1EncConfiguration
      * is to be performed at. 0 is the highest quality mode, 3 is the highest
      * density mode.
      *
-     * Default is 3. */
+     * Default is defined as MAX_ENC_PRESET. */
     uint8_t                  enc_mode;
 
     // GOP Structure

@@ -25,8 +25,8 @@
 typedef int32_t tran_low_t;
 
 void av1_txb_init_levels_avx2(const tran_low_t *const coeff, const int32_t width,
-	const int32_t height, uint8_t *const levels) {
-	const int32_t stride = width + TX_PAD_HOR;
+    const int32_t height, uint8_t *const levels) {
+    const int32_t stride = width + TX_PAD_HOR;
   const __m256i y_zeros = _mm256_setzero_si256();
 
   const int32_t pre_len = sizeof(*levels) * TX_PAD_TOP * stride;

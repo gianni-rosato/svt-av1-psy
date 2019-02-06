@@ -34,13 +34,8 @@ static void ConfigurePictureEdges(
     PictureControlSet_t  *ppsPtr)
 {
     // Tiles Initialisation
-#if MEM_RED
     const uint16_t picture_width_in_sb = (scsPtr->luma_width + scsPtr->sb_size_pix - 1) / scsPtr->sb_size_pix;
     const uint16_t picture_height_in_sb = (scsPtr->luma_height + scsPtr->sb_size_pix - 1) / scsPtr->sb_size_pix;
-#else
-    const uint16_t picture_width_in_sb = (scsPtr->luma_width + scsPtr->sb_sz - 1) / scsPtr->sb_sz;
-    const uint16_t picture_height_in_sb = (scsPtr->luma_height + scsPtr->sb_sz - 1) / scsPtr->sb_sz;
-#endif
     unsigned xLcuIndex, yLcuIndex, sb_index;
 
     // LCU-loops

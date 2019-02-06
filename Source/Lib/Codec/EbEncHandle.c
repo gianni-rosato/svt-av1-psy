@@ -823,9 +823,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.bot_padding = encHandlePtr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->bot_padding;
         inputData.bit_depth = EB_8BIT;
         inputData.sb_sz = encHandlePtr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->sb_sz;
-#if MEM_RED
         inputData.sb_size_pix = scs_init.sb_size;
-#endif
         inputData.max_depth = encHandlePtr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->max_sb_depth;
         inputData.is16bit = is16bit;
         return_error = EbSystemResourceCtor(
@@ -1579,7 +1577,7 @@ EB_API EbErrorType eb_deinit_encoder(EbComponentType *svt_enc_component)
     return return_error;
 }
 
-EbErrorType EbH265EncInitParameter(
+EbErrorType eb_svt_enc_init_parameter(
     EbSvtAv1EncConfiguration * config_ptr);
 
 EbErrorType init_svt_av1_encoder_handle(
@@ -1621,7 +1619,7 @@ EB_API EbErrorType eb_init_handle(
         //SVT_LOG("Error: Component Struct Malloc Failed\n");
         return_error = EB_ErrorInsufficientResources;
     }
-    return_error = EbH265EncInitParameter(config_ptr);
+    return_error = eb_svt_enc_init_parameter(config_ptr);
 
     return return_error;
 }
@@ -2002,8 +2000,8 @@ static EbErrorType VerifySettings(
     EbSvtAv1EncConfiguration *config = &sequence_control_set_ptr->static_config;
     unsigned int channelNumber = config->channel_id;
 #if ENCODER_MODE_CLEANUP
-    if (config->enc_mode > 3) {
-        SVT_LOG("Error instance %u: EncoderMode must be in the range of [0-3]\n", channelNumber + 1);
+    if (config->enc_mode > MAX_ENC_PRESET) {
+        SVT_LOG("Error instance %u: EncoderMode must be in the range of [0-%d]\n", channelNumber + 1, MAX_ENC_PRESET);
 #else
     if (config->enc_mode != 1) {
         SVT_LOG("Error instance %u: EncoderMode must be [1]\n", channelNumber + 1);
@@ -2301,7 +2299,7 @@ static EbErrorType VerifySettings(
 /**********************************
 Set Default Library Params
 **********************************/
-EbErrorType EbH265EncInitParameter(
+EbErrorType eb_svt_enc_init_parameter(
     EbSvtAv1EncConfiguration * config_ptr)
 {
     EbErrorType                  return_error = EB_ErrorNone;

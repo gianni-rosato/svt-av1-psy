@@ -1314,7 +1314,35 @@ EbErrorType QpmDeriveWeightsMinAndMax(
 
     return return_error;
 }
+/******************************************************
+* Derive EncDec Settings for OQ
+Input   : encoder mode and tune
+Output  : EncDec Kernel signal(s)
+******************************************************/
+EbErrorType signal_derivation_enc_dec_kernel_oq(
+    PictureControlSet_t     *picture_control_set_ptr,
+    ModeDecisionContext_t   *context_ptr) {
 
+    EbErrorType return_error = EB_ErrorNone;
+
+    // NFL Level MD         Settings
+    // 0                    MAX_NFL 12
+    // 1                    8
+    // 2                    6
+    // 3                    4
+    // 4                    4/3/2
+    if (picture_control_set_ptr->enc_mode == ENC_M0) 
+        context_ptr->nfl_level = 0;
+    else if (picture_control_set_ptr->enc_mode == ENC_M1) 
+        context_ptr->nfl_level = 1;
+    else if (picture_control_set_ptr->enc_mode == ENC_M2) 
+        context_ptr->nfl_level = 2;
+    else 
+        context_ptr->nfl_level = 3;
+    
+
+    return return_error;
+}
 void move_cu_data(
     CodingUnit_t *src_cu,
     CodingUnit_t *dst_cu);
@@ -1387,6 +1415,12 @@ void* EncDecKernel(void *input_ptr)
         lastLcuFlag = EB_FALSE;
         is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
+        // EncDec Kernel Signal(s) derivation
+        
+        signal_derivation_enc_dec_kernel_oq(
+            picture_control_set_ptr,
+            context_ptr->md_context);
+      
         // SB Constants
         sb_sz = (uint8_t)sequence_control_set_ptr->sb_size_pix;
         lcuSizeLog2 = (uint8_t)Log2f(sb_sz);
@@ -1602,13 +1636,13 @@ void* EncDecKernel(void *input_ptr)
                 }
             }
 
-#if AV1_LF && AV1_LF_FULL_IMAGE_SELECTION
-            EbBool dlfEnableFlag = (EbBool)(!sequence_control_set_ptr->static_config.disable_dlf_flag &&
+#if AV1_LF 
+            EbBool dlfEnableFlag = (EbBool)(picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode &&
                 (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
                     sequence_control_set_ptr->static_config.recon_enabled ||
                     sequence_control_set_ptr->static_config.stat_report));
 
-            if (dlfEnableFlag) {
+            if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
                 EbPictureBufferDesc_t  *reconBuffer = is16bit ? picture_control_set_ptr->recon_picture16bit_ptr : picture_control_set_ptr->recon_picture_ptr;
                 if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE && picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr) {
 
@@ -1625,6 +1659,7 @@ void* EncDecKernel(void *input_ptr)
                 }
 
                 av1_loop_filter_init(picture_control_set_ptr);
+
 
                 av1_pick_filter_level(
                     context_ptr,

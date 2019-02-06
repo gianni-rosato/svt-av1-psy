@@ -17,7 +17,7 @@
  * @param {uint32_t} desired_size.
  * @return {uint32_t}.
  */
-static uint32_t	get_inter_qp_for_size(EbRateControlModel *model_ptr, uint32_t desired_size);
+static uint32_t    get_inter_qp_for_size(EbRateControlModel *model_ptr, uint32_t desired_size);
 
 /*
  * @private
@@ -58,7 +58,7 @@ static const size_t DEFAULT_REF_INTER_PICTURE_COMPRESSION_RATIO[64] = {
      20385, 17752, 15465, 13178, 10891
 };
 
-EbErrorType	rate_control_model_ctor(EbRateControlModel **object_doubble_ptr) {
+EbErrorType    rate_control_model_ctor(EbRateControlModel **object_doubble_ptr) {
     EbRateControlModel  *model_ptr;
 
     EB_MALLOC(EbRateControlModel*, model_ptr, sizeof(EbRateControlModel), EB_N_PTR);
@@ -89,7 +89,7 @@ EbErrorType rate_control_model_init(EbRateControlModel *model_ptr, SequenceContr
     return EB_ErrorNone;
 }
 
-EbErrorType	rate_control_update_model(EbRateControlModel *model_ptr, PictureParentControlSet_t *picture_ptr) {
+EbErrorType    rate_control_update_model(EbRateControlModel *model_ptr, PictureParentControlSet_t *picture_ptr) {
     uint64_t                size = picture_ptr->total_num_bits;
     EbRateControlGopInfo    *gop = get_gop_infos(model_ptr->gop_infos, picture_ptr->picture_number);
 
@@ -105,7 +105,7 @@ EbErrorType	rate_control_update_model(EbRateControlModel *model_ptr, PicturePare
       if (gop->actual_size > gop->desired_size) {
         variation = -((int64_t)gop->actual_size / (int64_t)gop->desired_size);
       } else if (gop->desired_size > gop->actual_size) {
-	    variation = ((int64_t)(gop->desired_size / (int64_t)gop->actual_size));
+        variation = ((int64_t)(gop->desired_size / (int64_t)gop->actual_size));
       }
       variation = CLIP3(-100, 100, variation);
       variation -= gop->model_variation;
@@ -116,7 +116,7 @@ EbErrorType	rate_control_update_model(EbRateControlModel *model_ptr, PicturePare
     return EB_ErrorNone;
 }
 
-uint8_t	rate_control_get_quantizer(EbRateControlModel *model_ptr, PictureParentControlSet_t *picture_ptr) {
+uint8_t    rate_control_get_quantizer(EbRateControlModel *model_ptr, PictureParentControlSet_t *picture_ptr) {
     FRAME_TYPE  type = picture_ptr->av1FrameType;
 
     if (type == INTRA_ONLY_FRAME || type == KEY_FRAME) {
@@ -132,9 +132,9 @@ uint32_t get_inter_qp_for_size(EbRateControlModel *model_ptr, uint32_t desired_s
     uint8_t     qp;
     
     for (qp = 0; qp < MAX_QP_VALUE; qp++) {
-        float	size = model_ptr->inter_size_predictions[qp];
+        float    size = model_ptr->inter_size_predictions[qp];
 
-	    size = (size / (1920 * 1080)) * model_ptr->pixels;
+        size = (size / (1920 * 1080)) * model_ptr->pixels;
         // Scale size for current resolution
         if (desired_size > size) {
             break;

@@ -20,7 +20,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
-	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -static-intel -w")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -static-intel -w")
 endif()
 
 file(GLOB all_files

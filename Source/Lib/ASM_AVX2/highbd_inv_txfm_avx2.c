@@ -6543,8 +6543,8 @@ void av1_highbd_inv_txfm2d_add_universe_avx2(const int32_t *input,
     }
 }
 void av1_highbd_inv_txfm_add_avx2(const int32_t *input, uint16_t *dest,
-	int32_t stride, TxType tx_type, TxSize tx_size, int32_t eob, int32_t bd) {
-	//assert(av1_ext_tx_used[txfm_param->tx_set_type][txfm_param->tx_type]);
+    int32_t stride, TxType tx_type, TxSize tx_size, int32_t eob, int32_t bd) {
+    //assert(av1_ext_tx_used[txfm_param->tx_set_type][txfm_param->tx_type]);
 
     av1_highbd_inv_txfm2d_add_universe_avx2(
         input, dest, stride, tx_type, tx_size,

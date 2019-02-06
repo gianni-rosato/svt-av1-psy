@@ -2415,7 +2415,7 @@ void HalfPelSearch_LCU(
     }
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
 #if ENCODER_MODE_CLEANUP
-    if ((picture_control_set_ptr->enc_mode > ENC_M0)?picture_control_set_ptr->non_square_block_flag: sequence_control_set_ptr->static_config.ext_block_flag) {
+    if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
 #else
     if (picture_control_set_ptr->non_square_block_flag) {
 #endif
@@ -6202,21 +6202,9 @@ EbErrorType MotionEstimateLcu(
     uint64_t                  hmeMvSad = 0;
 
     uint32_t                  pu_index;
-#if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
-#if ENCODER_MODE_CLEANUP
-    uint32_t max_number_of_pus_per_sb;
-    if (picture_control_set_ptr->enc_mode > ENC_M0) {
-#endif
-        max_number_of_pus_per_sb = (picture_control_set_ptr->non_square_block_flag) ? picture_control_set_ptr->max_number_of_pus_per_sb : SQUARE_PU_COUNT;
-#if ENCODER_MODE_CLEANUP
-    }
-    else {
-        max_number_of_pus_per_sb = picture_control_set_ptr->max_number_of_pus_per_sb;
-    }
-#endif
-#else
+
     uint32_t                  max_number_of_pus_per_sb = picture_control_set_ptr->max_number_of_pus_per_sb;
-#endif
+
     uint32_t                  numOfListToSearch;
     uint32_t                  listIndex;
     uint8_t                   candidateIndex = 0;
@@ -6754,7 +6742,7 @@ EbErrorType MotionEstimateLcu(
 
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
 #if ENCODER_MODE_CLEANUP
-                    if ((picture_control_set_ptr->enc_mode > ENC_M0)?picture_control_set_ptr->non_square_block_flag: sequence_control_set_ptr->static_config.ext_block_flag) {
+                    if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
 #else
                     if (picture_control_set_ptr->non_square_block_flag) {
 #endif
@@ -6966,7 +6954,7 @@ EbErrorType MotionEstimateLcu(
                             enableQuarterPel,
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
 #if ENCODER_MODE_CLEANUP
-                            (picture_control_set_ptr->enc_mode > ENC_M0)? picture_control_set_ptr->non_square_block_flag:sequence_control_set_ptr->static_config.ext_block_flag);
+                            picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE);
 #else
                             picture_control_set_ptr->non_square_block_flag);
 #endif
@@ -7037,7 +7025,7 @@ EbErrorType MotionEstimateLcu(
         if (numOfListToSearch) {
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
 #if ENCODER_MODE_CLEANUP
-            if (picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_0 || pu_index < 21 || ((picture_control_set_ptr->enc_mode > ENC_M0) ? picture_control_set_ptr->non_square_block_flag: sequence_control_set_ptr->static_config.ext_block_flag)) {
+            if (picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_0 || pu_index < 21 || (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE)) {
 #else
             if (picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_0 || pu_index < 21 || picture_control_set_ptr->non_square_block_flag) {
 #endif
@@ -7459,7 +7447,7 @@ void IntraOpenLoopSearchTheseModesOutputBest(
         sadArray[candidateIndex] = (uint32_t)NxMSadKernel_funcPtrArray[asm_type][cu_size >> 3]( // Always SAD without weighting
             src,
             src_stride,
-            &(context_ptr->meContextPtr->sb_buffer[0]),
+            &(context_ptr->me_context_ptr->sb_buffer[0]),
             BLOCK_SIZE_64,
             cu_size,
             cu_size);
@@ -7783,7 +7771,7 @@ int32_t GetInterIntraSadDistance(
     stage1SadArray[0] = (uint32_t)NxMSadKernel_funcPtrArray[asm_type][cu_size >> 3]( // Always SAD without weighting
         src,
         input_ptr->strideY,
-        &(context_ptr->meContextPtr->sb_buffer[0]),
+        &(context_ptr->me_context_ptr->sb_buffer[0]),
         BLOCK_SIZE_64,
         cu_size,
         cu_size);
@@ -7953,7 +7941,7 @@ uint32_t UpdateNeighborDcIntraPred(
     distortion = (uint32_t)NxMSadKernel_funcPtrArray[asm_type][cu_size >> 3]( // Always SAD without weighting
         &(input_ptr->bufferY[(input_ptr->origin_y + cu_origin_y) * input_ptr->strideY + (input_ptr->origin_x + cu_origin_x)]),
         input_ptr->strideY,
-        &(context_ptr->meContextPtr->sb_buffer[0]),
+        &(context_ptr->me_context_ptr->sb_buffer[0]),
         BLOCK_SIZE_64,
         cu_size,
         cu_size);
@@ -8125,7 +8113,7 @@ EbErrorType OpenLoopIntraSearchLcu(
                     OisCuPtr[0].distortion = (uint32_t)NxMSadKernel_funcPtrArray[asm_type][cu_size >> 3]( // Always SAD without weighting
                         &(input_ptr->bufferY[(input_ptr->origin_y + cu_origin_y) * input_ptr->strideY + (input_ptr->origin_x + cu_origin_x)]),
                         input_ptr->strideY,
-                        &(context_ptr->meContextPtr->sb_buffer[0]),
+                        &(context_ptr->me_context_ptr->sb_buffer[0]),
                         BLOCK_SIZE_64,
                         cu_size,
                         cu_size);
@@ -8253,7 +8241,7 @@ EbErrorType OpenLoopIntraSearchLcu(
                         sadDistortion = (uint32_t)NxMSadKernel_funcPtrArray[asm_type][cu_size >> 3](
                             &(input_ptr->bufferY[(input_ptr->origin_y + cu_origin_y) * input_ptr->strideY + (input_ptr->origin_x + cu_origin_x)]),
                             input_ptr->strideY,
-                            &(context_ptr->meContextPtr->sb_buffer[0]),
+                            &(context_ptr->me_context_ptr->sb_buffer[0]),
                             BLOCK_SIZE_64,
                             cu_size,
                             cu_size);

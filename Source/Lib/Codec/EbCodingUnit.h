@@ -218,11 +218,7 @@ extern "C" {
         uint8_t n8_w, n8_h;
         uint8_t n4_w, n4_h;  // TODO: this is for warped motion, for now
         uint8_t ref_mv_count[MODE_CTX_REF_FRAMES];
-#if MEM_RED2
         CandidateMv final_ref_mv_stack[MAX_REF_MV_STACK_SIZE];       
-#else
-        CandidateMv ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
-#endif
         uint8_t is_sec_rect;
         int32_t up_available;
         int32_t left_available;
@@ -343,9 +339,6 @@ extern "C" {
     } EdgeLcuResults_t;
     typedef struct LargestCodingUnit_s {
         struct PictureControlSet_s     *picture_control_set_ptr;
-#if !MEM_RED
-        CodingUnit_t                  **coded_leaf_array_ptr;
-#endif
         CodingUnit_t                   *final_cu_arr;
         uint32_t                        tot_final_cu;
         PartitionType                  *cu_partition_array;

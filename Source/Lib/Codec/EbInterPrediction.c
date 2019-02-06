@@ -3621,7 +3621,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
             uint32_t best_filters = 0;// mbmi->interp_filters;
 
 
-            if (picture_control_set_ptr->parent_pcs_ptr->use_fast_interpolation_filter_search &&
+            if (picture_control_set_ptr->parent_pcs_ptr->interpolation_filter_search_mode == 1 &&
                 picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->enable_dual_filter) {
                 int32_t tmp_skip_sb = 0;
                 int64_t tmp_skip_sse = INT64_MAX;
@@ -3953,7 +3953,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
             uint32_t best_filters = 0;// mbmi->interp_filters;
 
 
-            if (picture_control_set_ptr->parent_pcs_ptr->use_fast_interpolation_filter_search &&
+            if (picture_control_set_ptr->parent_pcs_ptr->interpolation_filter_search_mode == 1 &&
                 picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->enable_dual_filter) {
                 int32_t tmp_skip_sb = 0;
                 int64_t tmp_skip_sse = INT64_MAX;
@@ -4289,31 +4289,25 @@ EbErrorType inter_pu_prediction_av1(
         int32_t rs = 0;
         int64_t rd = INT64_MAX;
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
-        if (md_context_ptr->blk_geom->bwidth > 4 && md_context_ptr->blk_geom->bheight > 4)
-            interpolation_filter_search_HBD(
-                picture_control_set_ptr,
-                candidate_buffer_ptr->predictionPtrTemp,
-                md_context_ptr,
-                candidate_buffer_ptr,
-                mv_unit,
-                ref_pic_list0,
-                ref_pic_list1,
-                asm_type,
-                &rd,
-                &rs,
-                &skip_txfm_sb,
-                &skip_sse_sb);
 
+        if (picture_control_set_ptr->parent_pcs_ptr->interpolation_filter_search_mode > 0) {
+            if (md_context_ptr->blk_geom->bwidth > 4 && md_context_ptr->blk_geom->bheight > 4)
+                interpolation_filter_search_HBD(
+                    picture_control_set_ptr,
+                    candidate_buffer_ptr->predictionPtrTemp,
+                    md_context_ptr,
+                    candidate_buffer_ptr,
+                    mv_unit,
+                    ref_pic_list0,
+                    ref_pic_list1,
+                    asm_type,
+                    &rd,
+                    &rs,
+                    &skip_txfm_sb,
+                    &skip_sse_sb);
+        }
 
         //candidate_buffer_ptr->candidate_ptr->interp_filters = 1;//SWITCHABLE_FILTERS;
-
-#if TURN_OFF_INTERPOL_FILTER_SEARCH
-#if ENCODER_MODE_CLEANUP && !MR_MODE
-        if (picture_control_set_ptr->parent_pcs_ptr->enc_mode > ENC_M0)
-
-            candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
-#endif
-#endif
 #endif
 #if INTERPOL_FILTER_SEARCH_10BIT_SUPPORT
         AV1InterPrediction10BitMD(
@@ -4344,30 +4338,25 @@ EbErrorType inter_pu_prediction_av1(
         int32_t rs = 0;
         int64_t rd = INT64_MAX;
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
-        if (md_context_ptr->blk_geom->bwidth > 4 && md_context_ptr->blk_geom->bheight > 4)
 
-            interpolation_filter_search(
-                picture_control_set_ptr,
-                candidate_buffer_ptr->predictionPtrTemp,
-                md_context_ptr,
-                candidate_buffer_ptr,
-                mv_unit,
-                ref_pic_list0,
-                ref_pic_list1,
-                asm_type,
-                &rd,
-                &rs,
-                &skip_txfm_sb,
-                &skip_sse_sb);
-
-
+        if (picture_control_set_ptr->parent_pcs_ptr->interpolation_filter_search_mode > 0) {
+            if (md_context_ptr->blk_geom->bwidth > 4 && md_context_ptr->blk_geom->bheight > 4)
+                interpolation_filter_search(
+                    picture_control_set_ptr,
+                    candidate_buffer_ptr->predictionPtrTemp,
+                    md_context_ptr,
+                    candidate_buffer_ptr,
+                    mv_unit,
+                    ref_pic_list0,
+                    ref_pic_list1,
+                    asm_type,
+                    &rd,
+                    &rs,
+                    &skip_txfm_sb,
+                    &skip_sse_sb);
+        }
         //candidate_buffer_ptr->candidate_ptr->interp_filters = 1;//SWITCHABLE_FILTERS;
-#if TURN_OFF_INTERPOL_FILTER_SEARCH
-#if ENCODER_MODE_CLEANUP && !MR_MODE
-        if (picture_control_set_ptr->parent_pcs_ptr->enc_mode > ENC_M0)
-            candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
-#endif
-#endif
+
         av1_inter_prediction(
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->interp_filters,

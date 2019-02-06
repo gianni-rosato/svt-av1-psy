@@ -100,7 +100,7 @@ EbErrorType rate_control_model_ctor(EbRateControlModel **object_double_ptr);
  * @param {SequenceControlSet_t*} sequence_control_set_ptr. First frame used to initialize the model
  * @return {EbErrorType}.
  */
-EbErrorType	rate_control_model_init(EbRateControlModel *model_ptr,
+EbErrorType    rate_control_model_init(EbRateControlModel *model_ptr,
                                     SequenceControlSet_t *sequence_control_set_ptr);
 
 /*
@@ -109,7 +109,7 @@ EbErrorType	rate_control_model_init(EbRateControlModel *model_ptr,
  * @param {PictureParentControlSet_t*} picture_ptr. Encoded frame.
  * @return {EbErrorType}.
  */
-EbErrorType	rate_control_update_model(EbRateControlModel *model_ptr,
+EbErrorType    rate_control_update_model(EbRateControlModel *model_ptr,
                                       PictureParentControlSet_t *picture_ptr);
 
 /*
@@ -119,7 +119,7 @@ EbErrorType	rate_control_update_model(EbRateControlModel *model_ptr,
  * @param {PictureParentControlSet_t*} picture_ptr. Frame to be encoded.
  * @return {uint8_t}. Suggested QP for the given frame
  */
-uint8_t	rate_control_get_quantizer(EbRateControlModel *model_ptr,
+uint8_t    rate_control_get_quantizer(EbRateControlModel *model_ptr,
                                    PictureParentControlSet_t *picture_ptr);
 
 /*

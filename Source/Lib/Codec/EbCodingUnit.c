@@ -31,9 +31,6 @@ EbErrorType largest_coding_unit_ctor(
 {
     EbErrorType return_error = EB_ErrorNone;
     uint32_t borderLargestCuSize;
-#if !MEM_RED
-    uint8_t codedLeafIndex;
-#endif
     uint32_t tu_index;
     EbPictureBufferDescInitData_t coeffInitData;
 
@@ -88,21 +85,6 @@ EbErrorType largest_coding_unit_ctor(
 
     EB_MALLOC(PartitionType*, largestCodingUnitPtr->cu_partition_array, sizeof(PartitionType) * BLOCK_MAX_COUNT, EB_N_PTR);
 
-#if !MEM_RED
-    EB_MALLOC(CodingUnit_t**, largestCodingUnitPtr->coded_leaf_array_ptr, sizeof(CodingUnit_t*) * CU_MAX_COUNT, EB_N_PTR);
-    for (codedLeafIndex = 0; codedLeafIndex < CU_MAX_COUNT; ++codedLeafIndex) {
-        EB_MALLOC(CodingUnit_t*, largestCodingUnitPtr->coded_leaf_array_ptr[codedLeafIndex], sizeof(CodingUnit_t), EB_N_PTR);
-        for (tu_index = 0; tu_index < TRANSFORM_UNIT_MAX_COUNT; ++tu_index) {
-            largestCodingUnitPtr->coded_leaf_array_ptr[codedLeafIndex]->transform_unit_array[tu_index].tu_index = tu_index;
-        }
-
-        largestCodingUnitPtr->coded_leaf_array_ptr[codedLeafIndex]->leaf_index = codedLeafIndex;
-
-        EB_MALLOC(MacroBlockD*, largestCodingUnitPtr->coded_leaf_array_ptr[codedLeafIndex]->av1xd, sizeof(MacroBlockD), EB_N_PTR);
-
-
-    }
-#endif
     coeffInitData.bufferEnableMask = PICTURE_BUFFER_DESC_FULL_MASK;
     coeffInitData.maxWidth = SB_STRIDE_Y;
     coeffInitData.maxHeight = SB_STRIDE_Y;
@@ -112,7 +94,6 @@ EbErrorType largest_coding_unit_ctor(
     coeffInitData.top_padding = 0;
     coeffInitData.bot_padding = 0;
     coeffInitData.splitMode = EB_FALSE;
-
 
     return_error = EbPictureBufferDescCtor(
         (EbPtr*) &(largestCodingUnitPtr->quantized_coeff),

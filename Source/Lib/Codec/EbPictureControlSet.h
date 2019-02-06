@@ -14079,14 +14079,19 @@ extern "C" {
 #endif
         // MD
         EbEncMode                             enc_mode;
-        EbPictureDepthMode                    depth_mode;
+
         EbLcuDepthMode                       *sb_md_mode_array;
         EbChromaMode                          chroma_mode;
-        EbSbComplexityStatus                *complex_sb_array;
+        EbSbComplexityStatus                 *complex_sb_array;
         EbCu8x8Mode                           cu8x8_mode;
         EbBool                                use_src_ref;
         EbBool                                limit_ois_to_dc_mode_flag;
 
+        // Multi-modes signal(s) 
+        EbPictureDepthMode                    pic_depth_mode;
+        uint8_t                               interpolation_filter_search_mode;
+        uint8_t                               loop_filter_mode;
+        uint8_t                               intra_pred_mode;
         //**********************************************************************************************************//
         FRAME_TYPE                            av1FrameType;
         Av1RpsNode_t                          av1RefSignal;
@@ -14227,16 +14232,11 @@ extern "C" {
         int16_t                               tiltMvy;
         EbWarpedMotionParams                  global_motion[TOTAL_REFS_PER_FRAME];
         PictureControlSet_t                  *childPcs;
-        int32_t                               use_fast_interpolation_filter_search;
         Macroblock                           *av1x;
         int32_t                               film_grain_params_present; //todo (AN): Do we need this flag at picture level?
         aom_film_grain_t                      film_grain_params;
         struct aom_denoise_and_model_t       *denoise_and_model;
         EbBool                                enable_in_loop_motion_estimation_flag;
-#if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
-        uint8_t                               non_square_block_flag;
-        uint8_t                               small_block_flag;
-#endif
 
     } PictureParentControlSet_t;
 
@@ -14251,10 +14251,8 @@ extern "C" {
         uint16_t                           bot_padding;
         EB_BITDEPTH                        bit_depth;
         uint32_t                           sb_sz;
-#if MEM_RED
         uint32_t                           sb_size_pix;   //since we still have lot of code assuming 64x64 LCU, we add a new paramter supporting both128x128 and 64x64, 
                                                           //ultimately the fixed code supporting 64x64 should be upgraded to use 128x128 and the above could be removed.
-#endif
         uint32_t                           max_depth;
         EbBool                             is16bit;
         uint32_t                           ten_bit_format;

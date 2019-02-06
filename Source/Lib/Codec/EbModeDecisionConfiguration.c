@@ -481,14 +481,14 @@ void RefinementPredictionLoop(
                 }
             }
             else {
-                if (picture_control_set_ptr->parent_pcs_ptr->depth_mode == PICT_SB_SWITCH_DEPTH_MODE && (picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_index] == LCU_PRED_OPEN_LOOP_DEPTH_MODE || picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_index] == LCU_PRED_OPEN_LOOP_1_NFL_DEPTH_MODE)) {
+                if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && (picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_index] == LCU_PRED_OPEN_LOOP_DEPTH_MODE || picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_index] == LCU_PRED_OPEN_LOOP_1_NFL_DEPTH_MODE)) {
                     refinementLevel = Pred;
                 }
                 else
 
 
-                    if (picture_control_set_ptr->parent_pcs_ptr->depth_mode == PICT_OPEN_LOOP_DEPTH_MODE ||
-                        (picture_control_set_ptr->parent_pcs_ptr->depth_mode == PICT_SB_SWITCH_DEPTH_MODE && (picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_index] == LCU_OPEN_LOOP_DEPTH_MODE || picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_index] == LCU_AVC_DEPTH_MODE)))
+                    if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_OPEN_LOOP_DEPTH_MODE ||
+                        (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && (picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_index] == LCU_OPEN_LOOP_DEPTH_MODE || picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_index] == LCU_AVC_DEPTH_MODE)))
 
                         refinementLevel = NdpRefinementControlNREF[temporal_layer_index][depth];
                     else
@@ -1081,7 +1081,7 @@ EbErrorType EarlyModeDecisionLcu(
     uint32_t          tbOriginY = sb_ptr->origin_y;
     EB_SLICE        slice_type = picture_control_set_ptr->slice_type;
 
-    uint32_t      startDepth = (picture_control_set_ptr->parent_pcs_ptr->depth_mode == PICT_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_index] == LCU_AVC_DEPTH_MODE) ?
+    uint32_t      startDepth = (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_index] == LCU_AVC_DEPTH_MODE) ?
         DEPTH_16 :
         DEPTH_64;
 
@@ -1093,7 +1093,7 @@ EbErrorType EarlyModeDecisionLcu(
 
 
     // The MDC refinements had been taken into account at the budgeting algorithm & therefore could be skipped for the ADP case
-    if (picture_control_set_ptr->parent_pcs_ptr->depth_mode != PICT_SB_SWITCH_DEPTH_MODE) {
+    if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode != PIC_SB_SWITCH_DEPTH_MODE) {
         PrePredictionRefinement(
             sequence_control_set_ptr,
             picture_control_set_ptr,

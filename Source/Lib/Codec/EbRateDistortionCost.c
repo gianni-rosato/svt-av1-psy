@@ -1119,11 +1119,7 @@ EbErrorType Av1InterFastCost(
             for (idx = 0; idx < 2; ++idx) {
                 if (cu_ptr->av1xd->ref_mv_count[candidate_ptr->ref_frame_type] > idx + 1) {
                     uint8_t drl1Ctx =
-#if MEM_RED2
                         av1_drl_ctx(context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[candidate_ptr->ref_frame_type], idx);
-#else
-                        av1_drl_ctx(cu_ptr->av1xd->ref_mv_stack[candidate_ptr->ref_frame_type], idx);
-#endif
 
                     interModeBitsNum += candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->drlModeFacBits[drl1Ctx][candidate_ptr->drl_index != idx];
                     if (candidate_ptr->drl_index == idx) break;
@@ -1137,11 +1133,7 @@ EbErrorType Av1InterFastCost(
             for (idx = 1; idx < 3; ++idx) {
                 if (cu_ptr->av1xd->ref_mv_count[candidate_ptr->ref_frame_type] > idx + 1) {
                     uint8_t drl_ctx =
-#if MEM_RED2
                         av1_drl_ctx(context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[candidate_ptr->ref_frame_type], idx);
-#else
-                        av1_drl_ctx(cu_ptr->av1xd->ref_mv_stack[candidate_ptr->ref_frame_type], idx);
-#endif
 
                     interModeBitsNum += candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->drlModeFacBits[drl_ctx][candidate_ptr->drl_index != (idx - 1)];
 

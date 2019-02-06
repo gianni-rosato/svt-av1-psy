@@ -1771,11 +1771,7 @@ void WriteDrlIdx(
         for (idx = 0; idx < 2; ++idx) {
             if (xd->ref_mv_count[ref_frame_type] > idx + 1) {
                 uint8_t drl_ctx =
-#if MEM_RED2
                     av1_drl_ctx(xd->final_ref_mv_stack, idx);
-#else
-                    av1_drl_ctx(xd->ref_mv_stack[ref_frame_type], idx);
-#endif
 
                 aom_write_symbol(ecWriter, cu_ptr->drl_index != idx, frameContext->drl_cdf[drl_ctx],
                     2);
@@ -1792,11 +1788,8 @@ void WriteDrlIdx(
         for (idx = 1; idx < 3; ++idx) {
             if (xd->ref_mv_count[ref_frame_type] > idx + 1) {
                 uint8_t drl_ctx =
-#if MEM_RED2
                     av1_drl_ctx(xd->final_ref_mv_stack, idx);
-#else
-                    av1_drl_ctx(xd->ref_mv_stack[ref_frame_type], idx);
-#endif
+    
                 aom_write_symbol(ecWriter, cu_ptr->drl_index != (idx - 1),
                     frameContext->drl_cdf[drl_ctx], 2);
 

@@ -202,16 +202,12 @@ EbErrorType PictureControlSetCtor(
     sb_origin_x = 0;
     sb_origin_y = 0;
 
-#if MEM_RED
     const uint16_t picture_sb_w   = (uint16_t)((initDataPtr->picture_width  + initDataPtr->sb_size_pix - 1) / initDataPtr->sb_size_pix); 
     const uint16_t picture_sb_h   = (uint16_t)((initDataPtr->picture_height + initDataPtr->sb_size_pix - 1) / initDataPtr->sb_size_pix);
     const uint16_t all_sb = picture_sb_w * picture_sb_h;
 
     for (sb_index = 0; sb_index < all_sb; ++sb_index) {
 
-#else
-    for (sb_index = 0; sb_index < objectPtr->sb_total_count; ++sb_index) {
-#endif
         return_error = largest_coding_unit_ctor(
             &(objectPtr->sb_ptr_array[sb_index]),
             (uint8_t)initDataPtr->sb_sz,
@@ -225,13 +221,8 @@ EbErrorType PictureControlSetCtor(
             return EB_ErrorInsufficientResources;
         }
         // Increment the Order in coding order (Raster Scan Order)
-#if MEM_RED
         sb_origin_y = (sb_origin_x == picture_sb_w - 1) ? sb_origin_y + 1 : sb_origin_y;
         sb_origin_x = (sb_origin_x == picture_sb_w - 1) ? 0 : sb_origin_x + 1;
-#else
-        sb_origin_y = (sb_origin_x == pictureLcuWidth - 1) ? sb_origin_y + 1 : sb_origin_y;
-        sb_origin_x = (sb_origin_x == pictureLcuWidth - 1) ? 0 : sb_origin_x + 1;
-#endif
 
     }
 

@@ -2649,52 +2649,14 @@ EbErrorType EncQpmDeriveDeltaQPForEachLeafLcu(
     return return_error;
 }
 
-/************************************
-this function checks whether any intra
-CU is present in the current LCU
-*************************************/
-EbBool isIntraPresent(
-    LargestCodingUnit_t                 *sb_ptr)
-{
-
-#if !MEM_RED
-    printf("REMOVE");
-
-    uint8_t leaf_index = 0;
-    while (leaf_index < CU_MAX_COUNT) {
-
-        CodingUnit_t * const cu_ptr = sb_ptr->coded_leaf_array_ptr[leaf_index];
-
-        if (cu_ptr->split_flag == EB_FALSE) {
-
-            const CodedUnitStats_t *cuStatsPtr = GetCodedUnitStats(leaf_index);
-            if (cu_ptr->prediction_mode_flag == INTRA_MODE)
-                return EB_TRUE;
-
-
-            leaf_index += DepthOffset[cuStatsPtr->depth];
-        }
-        else {
-            leaf_index++;
-        }
-    }
-#else
-    UNUSED(sb_ptr);
-#endif
-    return EB_FALSE;
-
-}
-
-
 void Store16bitInputSrc(
     EncDecContext_t         *context_ptr,
     PictureControlSet_t     *picture_control_set_ptr,
-    uint32_t                   lcuX,
-    uint32_t                   lcuY,
-    uint32_t                   lcuW,
-    uint32_t                   lcuH
-)
-{
+    uint32_t                 lcuX,
+    uint32_t                 lcuY,
+    uint32_t                 lcuW,
+    uint32_t                 lcuH ){
+
     uint32_t rowIt;
     uint16_t* fromPtr;
     uint16_t* toPtr;
@@ -2821,12 +2783,12 @@ EB_EXTERN void AV1EncodePass(
 
     EbBool                 constrained_intra_flag = picture_control_set_ptr->constrained_intra_flag;
 
-    EbBool dlfEnableFlag = (EbBool)(!sequence_control_set_ptr->static_config.disable_dlf_flag &&
+    EbBool dlfEnableFlag = (EbBool)(picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode &&
         (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
             sequence_control_set_ptr->static_config.recon_enabled ||
             sequence_control_set_ptr->static_config.stat_report));
 
-    const EbBool isIntraLCU = picture_control_set_ptr->limit_intra ? isIntraPresent(sb_ptr) : EB_TRUE;
+    const EbBool isIntraLCU = picture_control_set_ptr->limit_intra ? EB_FALSE : EB_TRUE;
 
     EbBool doRecon = (EbBool)(
         (picture_control_set_ptr->limit_intra == 0 || isIntraLCU == 1) ||
@@ -3044,17 +3006,19 @@ EB_EXTERN void AV1EncodePass(
     context_ptr->coded_area_sb = 0;
     context_ptr->coded_area_sb_uv = 0;
 
-#if AV1_LF && !AV1_LF_FULL_IMAGE_SELECTION
-    if (dlfEnableFlag && tbAddr == 0) {
-        av1_loop_filter_init(picture_control_set_ptr);
+#if AV1_LF 
+    if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 1){        
+        if (tbAddr == 0) {
+            av1_loop_filter_init(picture_control_set_ptr);
 
-        av1_pick_filter_level(
-            context_ptr,
-            (EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
-            picture_control_set_ptr,
-            LPF_PICK_FROM_Q);
+            av1_pick_filter_level(
+                context_ptr,
+                (EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
+                picture_control_set_ptr,
+                LPF_PICK_FROM_Q);
 
-        av1_loop_filter_frame_init(picture_control_set_ptr, 0, 3);
+            av1_loop_filter_frame_init(picture_control_set_ptr, 0, 3);
+        }
     }
 #endif
 #if ADD_DELTA_QP_SUPPORT
@@ -3603,9 +3567,7 @@ EB_EXTERN void AV1EncodePass(
 
                     //IntMv  predmv[2];
                     enc_pass_av1_mv_pred(
-#if MEM_RED2
                         context_ptr->md_context,
-#endif
                         cu_ptr,
                         blk_geom,
                         context_ptr->cu_origin_x,
@@ -3618,12 +3580,10 @@ EB_EXTERN void AV1EncodePass(
                     //out1:  predmv
                     //out2:   cu_ptr->inter_mode_ctx[ cu_ptr->prediction_unit_array[0].ref_frame_type ]
 
-#if MEM_RED2
                     //keep final usefull mvp for entropy
                     memcpy(cu_ptr->av1xd->final_ref_mv_stack,
                        context_ptr->md_context->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[cu_ptr->prediction_unit_array[0].ref_frame_type],
                         sizeof(CandidateMv)*MAX_REF_MV_STACK_SIZE);
-#endif
 
                     {
                         // 1st Partition Loop
@@ -4155,12 +4115,9 @@ EB_EXTERN void AV1EncodePass(
     } // CU Loop
 
     sb_ptr->tot_final_cu = final_cu_itr;
-
-    // First Pass Deblocking
-    if (dlfEnableFlag) {
-
 #if AV1_LF
-#if !AV1_LF_FULL_IMAGE_SELECTION
+    // First Pass Deblocking
+    if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 1) {
         if (picture_control_set_ptr->parent_pcs_ptr->lf.filter_level[0] || picture_control_set_ptr->parent_pcs_ptr->lf.filter_level[1]) {
             uint8_t LastCol = ((sb_origin_x)+sb_width == sequence_control_set_ptr->luma_width) ? 1 : 0;
             loop_filter_sb(
@@ -4173,13 +4130,8 @@ EB_EXTERN void AV1EncodePass(
                 3,
                 LastCol);
         }
-#endif
-#else
-
-#endif
-
     }
-
+#endif
 
     return;
 }

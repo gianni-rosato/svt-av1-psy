@@ -338,6 +338,82 @@ EbErrorType GenerateMiniGopRps(
     return return_error;
 }
 
+/******************************************************
+* Derive Multi-Processes Settings for OQ
+Input   : encoder mode and tune
+Output  : Multi-Processes signal(s)
+******************************************************/
+EbErrorType signal_derivation_multi_processes_oq(
+    PictureParentControlSet_t   *picture_control_set_ptr){
+
+    EbErrorType return_error = EB_ErrorNone;
+
+    //  MDC Partitioning Method              Settings
+    //  PIC_ALL_DEPTH_MODE                   ALL sq and nsq: SB size -> 4x4
+    //  PIC_ALL_C_DEPTH_MODE                 ALL sq and nsq: SB size -> 4x4  (No 4xN ; Nx4)
+    //  PIC_SQ_DEPTH_MODE                    ONLY sq: SB size -> 4x4
+    //  PIC_SQ_NON4_DEPTH_MODE               ONLY sq: SB size -> 8x8  (No 4x4)
+
+    if (picture_control_set_ptr->enc_mode == ENC_M0)
+        picture_control_set_ptr->pic_depth_mode = PIC_ALL_DEPTH_MODE;
+
+    else if (picture_control_set_ptr->enc_mode == ENC_M1) {
+        if (picture_control_set_ptr->is_used_as_reference_flag == EB_TRUE)
+            picture_control_set_ptr->pic_depth_mode = PIC_ALL_DEPTH_MODE;
+        else
+            picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
+    }
+    else if (picture_control_set_ptr->enc_mode == ENC_M2) {
+        if (picture_control_set_ptr->is_used_as_reference_flag == EB_TRUE)
+            picture_control_set_ptr->pic_depth_mode = PIC_ALL_C_DEPTH_MODE;
+        else
+            picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
+    }
+    else {
+        if (picture_control_set_ptr->is_used_as_reference_flag == EB_TRUE)
+            picture_control_set_ptr->pic_depth_mode = PIC_SQ_DEPTH_MODE;
+        else
+            picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
+    }
+
+    picture_control_set_ptr->max_number_of_pus_per_sb = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
+
+    // Interpolation filter search Level MD         Settings
+    // 0                                            OFF
+    // 1                                            FAST
+    // 2                                            ON
+    if (picture_control_set_ptr->enc_mode == ENC_M0)
+        picture_control_set_ptr->interpolation_filter_search_mode = 1;
+    else
+        picture_control_set_ptr->interpolation_filter_search_mode = 0;
+
+    // Loop filter Level                            Settings
+    // 0                                            OFF
+    // 1                                            LIGHT
+    // 1                                            FULL
+    if (!picture_control_set_ptr->sequence_control_set_ptr->static_config.disable_dlf_flag){
+        if (picture_control_set_ptr->enc_mode <= ENC_M2)
+            picture_control_set_ptr->loop_filter_mode = 2;
+        else
+            picture_control_set_ptr->loop_filter_mode = 1;
+    }
+    else {
+        picture_control_set_ptr->loop_filter_mode = 0;
+    }
+
+    // Loop filter Level                            Settings
+    // 0                                            LIGHT: disable_z2_prediction && disable_angle_refinement
+    // 1                                            FULL
+    if (picture_control_set_ptr->temporal_layer_index == 0)
+        picture_control_set_ptr->intra_pred_mode = 1;
+    else
+        picture_control_set_ptr->intra_pred_mode = 0;
+
+
+
+
+    return return_error;
+}
 /***************************************************************************
 * Set the default subPel enble/disable flag for each frame
 ****************************************************************************/
@@ -1234,48 +1310,9 @@ void* PictureDecisionKernel(void *input_ptr)
                                     picture_control_set_ptr->av1_cm->ref_frame_sign_bias[BWDREF_FRAME] = 1;
                             }
 
-
-                            // MD Mode
-                            if (picture_control_set_ptr->slice_type == I_SLICE) {
-#if ENCODER_MODE_CLEANUP
-                                if (1) {
-#else
-                                if (sequence_control_set_ptr->input_resolution >= INPUT_SIZE_1080p_RANGE || (picture_control_set_ptr->enc_mode <= ENC_M2)) {
-#endif
-                                    picture_control_set_ptr->depth_mode = PICT_FULL84_DEPTH_MODE;
-                                }
-                                else {
-                                    picture_control_set_ptr->depth_mode = PICT_BDP_DEPTH_MODE;
-                                }
-                            }
-                            else {
-                                picture_control_set_ptr->depth_mode = PICT_SB_SWITCH_DEPTH_MODE;
-                            }
-
-                            picture_control_set_ptr->depth_mode = PICT_FULL85_DEPTH_MODE;
-#if DISABLE_NSQ_FOR_NON_REF 
-#if ENCODER_MODE_CLEANUP
-                            if (picture_control_set_ptr->enc_mode == ENC_M1 || picture_control_set_ptr->enc_mode == ENC_M2) {
-#endif
-                                // Set default settings for NSQ 
-                                picture_control_set_ptr->non_square_block_flag = sequence_control_set_ptr->static_config.ext_block_flag &&  picture_control_set_ptr->is_used_as_reference_flag ? 1 : 0;
-                                // Set default settings for Nx4 and 4xN 
-                                picture_control_set_ptr->small_block_flag = picture_control_set_ptr->is_used_as_reference_flag ? 1 : 0;
-#if ENCODER_MODE_CLEANUP
-                            }
-#endif
-#endif
-
-#if DISABLE_NSQ
-#if ENCODER_MODE_CLEANUP
-                            if (picture_control_set_ptr->enc_mode > ENC_M2) {
-                                picture_control_set_ptr->non_square_block_flag = 0;
-                            }
-#else
-                            picture_control_set_ptr->non_square_block_flag = 0;
-#endif
-
-#endif
+                            // ME Kernel Multi-Processes Signal(s) derivation
+                            signal_derivation_multi_processes_oq(
+                                picture_control_set_ptr);
 
                             // Set the default settings of  subpel
                             picture_control_set_ptr->use_subpel_flag = PictureLevelSubPelSettings(
@@ -1319,12 +1356,7 @@ void* PictureDecisionKernel(void *input_ptr)
                                 picture_control_set_ptr->cu8x8_mode = CU_8x8_MODE_0;
                             }
 #endif
-#if USE_FAST_INTERP_SEARCH
-                            picture_control_set_ptr->use_fast_interpolation_filter_search = 1;
 
-#else
-                            picture_control_set_ptr->use_fast_interpolation_filter_search = 0;
-#endif
 
                             // Update the Dependant List Count - If there was an I-frame or Scene Change, then cleanup the Picture Decision PA Reference Queue Dependent Counts
                             if (picture_control_set_ptr->slice_type == I_SLICE)

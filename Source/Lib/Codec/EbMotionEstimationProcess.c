@@ -56,32 +56,32 @@ EbErrorType CheckZeroZeroCenter(
 /************************************************
  * Set ME/HME Params from Config
  ************************************************/
-void* SetMeHmeParamsFromConfig(
+void* set_me_hme_params_from_config(
     SequenceControlSet_t        *sequence_control_set_ptr,
-    MeContext_t                 *meContextPtr)
+    MeContext_t                 *me_context_ptr)
 {
 
     uint16_t hmeRegionIndex = 0;
 
-    meContextPtr->search_area_width = (uint8_t)sequence_control_set_ptr->static_config.search_area_width;
-    meContextPtr->search_area_height = (uint8_t)sequence_control_set_ptr->static_config.search_area_height;
+    me_context_ptr->search_area_width = (uint8_t)sequence_control_set_ptr->static_config.search_area_width;
+    me_context_ptr->search_area_height = (uint8_t)sequence_control_set_ptr->static_config.search_area_height;
 
-    meContextPtr->number_hme_search_region_in_width = (uint16_t)sequence_control_set_ptr->static_config.number_hme_search_region_in_width;
-    meContextPtr->number_hme_search_region_in_height = (uint16_t)sequence_control_set_ptr->static_config.number_hme_search_region_in_height;
+    me_context_ptr->number_hme_search_region_in_width = (uint16_t)sequence_control_set_ptr->static_config.number_hme_search_region_in_width;
+    me_context_ptr->number_hme_search_region_in_height = (uint16_t)sequence_control_set_ptr->static_config.number_hme_search_region_in_height;
 
-    meContextPtr->hme_level0_total_search_area_width = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_total_search_area_width;
-    meContextPtr->hme_level0_total_search_area_height = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_total_search_area_height;
+    me_context_ptr->hme_level0_total_search_area_width = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_total_search_area_width;
+    me_context_ptr->hme_level0_total_search_area_height = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_total_search_area_height;
 
-    for (hmeRegionIndex = 0; hmeRegionIndex < meContextPtr->number_hme_search_region_in_width; ++hmeRegionIndex) {
-        meContextPtr->hme_level0_search_area_in_width_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_search_area_in_width_array[hmeRegionIndex];
-        meContextPtr->hme_level1_search_area_in_width_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level1_search_area_in_width_array[hmeRegionIndex];
-        meContextPtr->hme_level2_search_area_in_width_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level2_search_area_in_width_array[hmeRegionIndex];
+    for (hmeRegionIndex = 0; hmeRegionIndex < me_context_ptr->number_hme_search_region_in_width; ++hmeRegionIndex) {
+        me_context_ptr->hme_level0_search_area_in_width_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_search_area_in_width_array[hmeRegionIndex];
+        me_context_ptr->hme_level1_search_area_in_width_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level1_search_area_in_width_array[hmeRegionIndex];
+        me_context_ptr->hme_level2_search_area_in_width_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level2_search_area_in_width_array[hmeRegionIndex];
     }
 
-    for (hmeRegionIndex = 0; hmeRegionIndex < meContextPtr->number_hme_search_region_in_height; ++hmeRegionIndex) {
-        meContextPtr->hme_level0_search_area_in_height_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_search_area_in_height_array[hmeRegionIndex];
-        meContextPtr->hme_level1_search_area_in_height_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level1_search_area_in_height_array[hmeRegionIndex];
-        meContextPtr->hme_level2_search_area_in_height_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level2_search_area_in_height_array[hmeRegionIndex];
+    for (hmeRegionIndex = 0; hmeRegionIndex < me_context_ptr->number_hme_search_region_in_height; ++hmeRegionIndex) {
+        me_context_ptr->hme_level0_search_area_in_height_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_search_area_in_height_array[hmeRegionIndex];
+        me_context_ptr->hme_level1_search_area_in_height_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level1_search_area_in_height_array[hmeRegionIndex];
+        me_context_ptr->hme_level2_search_area_in_height_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level2_search_area_in_height_array[hmeRegionIndex];
     }
 
     return EB_NULL;
@@ -91,15 +91,15 @@ void* SetMeHmeParamsFromConfig(
 /************************************************
  * Set ME/HME Params
  ************************************************/
-void* SetMeHmeParamsOq(
-    MeContext_t                     *meContextPtr,
+void* set_me_hme_params_oq(
+    MeContext_t                     *me_context_ptr,
     PictureParentControlSet_t       *picture_control_set_ptr,
     SequenceControlSet_t            *sequence_control_set_ptr,
     EbInputResolution                 input_resolution)
 {
     (void)*picture_control_set_ptr;
     //uint8_t  hmeMeLevel = picture_control_set_ptr->enc_mode;
-    uint8_t  hmeMeLevel = 0; // OMK to be revised after new presets
+    uint8_t  hmeMeLevel = picture_control_set_ptr->enc_mode <= ENC_M3 ? 0: picture_control_set_ptr->enc_mode; // OMK to be revised after new presets
 
     uint32_t inputRatio = sequence_control_set_ptr->luma_width / sequence_control_set_ptr->luma_height;
 
@@ -110,30 +110,30 @@ void* SetMeHmeParamsOq(
         4;  // 4K
 
 // HME/ME default settings
-    meContextPtr->number_hme_search_region_in_width = 2;
-    meContextPtr->number_hme_search_region_in_height = 2;
+    me_context_ptr->number_hme_search_region_in_width = 2;
+    me_context_ptr->number_hme_search_region_in_height = 2;
 
     // HME Level0
-    meContextPtr->hme_level0_total_search_area_width = HmeLevel0TotalSearchAreaWidth[resolutionIndex][hmeMeLevel];
-    meContextPtr->hme_level0_total_search_area_height = HmeLevel0TotalSearchAreaHeight[resolutionIndex][hmeMeLevel];
-    meContextPtr->hme_level0_search_area_in_width_array[0] = HmeLevel0SearchAreaInWidthArrayRight[resolutionIndex][hmeMeLevel];
-    meContextPtr->hme_level0_search_area_in_width_array[1] = HmeLevel0SearchAreaInWidthArrayLeft[resolutionIndex][hmeMeLevel];
-    meContextPtr->hme_level0_search_area_in_height_array[0] = HmeLevel0SearchAreaInHeightArrayTop[resolutionIndex][hmeMeLevel];
-    meContextPtr->hme_level0_search_area_in_height_array[1] = HmeLevel0SearchAreaInHeightArrayBottom[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level0_total_search_area_width = HmeLevel0TotalSearchAreaWidth[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level0_total_search_area_height = HmeLevel0TotalSearchAreaHeight[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level0_search_area_in_width_array[0] = HmeLevel0SearchAreaInWidthArrayRight[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level0_search_area_in_width_array[1] = HmeLevel0SearchAreaInWidthArrayLeft[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level0_search_area_in_height_array[0] = HmeLevel0SearchAreaInHeightArrayTop[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level0_search_area_in_height_array[1] = HmeLevel0SearchAreaInHeightArrayBottom[resolutionIndex][hmeMeLevel];
     // HME Level1
-    meContextPtr->hme_level1_search_area_in_width_array[0] = HmeLevel1SearchAreaInWidthArrayRight[resolutionIndex][hmeMeLevel];
-    meContextPtr->hme_level1_search_area_in_width_array[1] = HmeLevel1SearchAreaInWidthArrayLeft[resolutionIndex][hmeMeLevel];
-    meContextPtr->hme_level1_search_area_in_height_array[0] = HmeLevel1SearchAreaInHeightArrayTop[resolutionIndex][hmeMeLevel];
-    meContextPtr->hme_level1_search_area_in_height_array[1] = HmeLevel1SearchAreaInHeightArrayBottom[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level1_search_area_in_width_array[0] = HmeLevel1SearchAreaInWidthArrayRight[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level1_search_area_in_width_array[1] = HmeLevel1SearchAreaInWidthArrayLeft[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level1_search_area_in_height_array[0] = HmeLevel1SearchAreaInHeightArrayTop[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level1_search_area_in_height_array[1] = HmeLevel1SearchAreaInHeightArrayBottom[resolutionIndex][hmeMeLevel];
     // HME Level2
-    meContextPtr->hme_level2_search_area_in_width_array[0] = HmeLevel2SearchAreaInWidthArrayRight[resolutionIndex][hmeMeLevel];
-    meContextPtr->hme_level2_search_area_in_width_array[1] = HmeLevel2SearchAreaInWidthArrayLeft[resolutionIndex][hmeMeLevel];
-    meContextPtr->hme_level2_search_area_in_height_array[0] = HmeLevel2SearchAreaInHeightArrayTop[resolutionIndex][hmeMeLevel];
-    meContextPtr->hme_level2_search_area_in_height_array[1] = HmeLevel2SearchAreaInHeightArrayBottom[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level2_search_area_in_width_array[0] = HmeLevel2SearchAreaInWidthArrayRight[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level2_search_area_in_width_array[1] = HmeLevel2SearchAreaInWidthArrayLeft[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level2_search_area_in_height_array[0] = HmeLevel2SearchAreaInHeightArrayTop[resolutionIndex][hmeMeLevel];
+    me_context_ptr->hme_level2_search_area_in_height_array[1] = HmeLevel2SearchAreaInHeightArrayBottom[resolutionIndex][hmeMeLevel];
 
     // ME
-    meContextPtr->search_area_width = SearchAreaWidth[resolutionIndex][hmeMeLevel];
-    meContextPtr->search_area_height = SearchAreaHeight[resolutionIndex][hmeMeLevel];
+    me_context_ptr->search_area_width = SearchAreaWidth[resolutionIndex][hmeMeLevel];
+    me_context_ptr->search_area_height = SearchAreaHeight[resolutionIndex][hmeMeLevel];
 
 
     // HME Level0 adjustment for low frame rate contents (frame rate <= 30)
@@ -141,12 +141,12 @@ void* SetMeHmeParamsOq(
         if ((sequence_control_set_ptr->static_config.frame_rate >> 16) <= 30) {
 
             if (hmeMeLevel == ENC_M6) {
-                meContextPtr->hme_level0_total_search_area_width = MAX(96, meContextPtr->hme_level0_total_search_area_width);
-                meContextPtr->hme_level0_total_search_area_height = MAX(64, meContextPtr->hme_level0_total_search_area_height);
-                meContextPtr->hme_level0_search_area_in_width_array[0] = MAX(48, meContextPtr->hme_level0_search_area_in_width_array[0]);
-                meContextPtr->hme_level0_search_area_in_width_array[1] = MAX(48, meContextPtr->hme_level0_search_area_in_width_array[1]);
-                meContextPtr->hme_level0_search_area_in_height_array[0] = MAX(32, meContextPtr->hme_level0_search_area_in_height_array[0]);
-                meContextPtr->hme_level0_search_area_in_height_array[1] = MAX(32, meContextPtr->hme_level0_search_area_in_height_array[1]);
+                me_context_ptr->hme_level0_total_search_area_width = MAX(96, me_context_ptr->hme_level0_total_search_area_width);
+                me_context_ptr->hme_level0_total_search_area_height = MAX(64, me_context_ptr->hme_level0_total_search_area_height);
+                me_context_ptr->hme_level0_search_area_in_width_array[0] = MAX(48, me_context_ptr->hme_level0_search_area_in_width_array[0]);
+                me_context_ptr->hme_level0_search_area_in_width_array[1] = MAX(48, me_context_ptr->hme_level0_search_area_in_width_array[1]);
+                me_context_ptr->hme_level0_search_area_in_height_array[0] = MAX(32, me_context_ptr->hme_level0_search_area_in_height_array[0]);
+                me_context_ptr->hme_level0_search_area_in_height_array[1] = MAX(32, me_context_ptr->hme_level0_search_area_in_height_array[1]);
 
             }
         }
@@ -159,7 +159,7 @@ void* SetMeHmeParamsOq(
   Input   : encoder mode and tune
   Output  : ME Kernel signal(s)
 ******************************************************/
-EbErrorType SignalDerivationMeKernelOq(
+EbErrorType signal_derivation_me_kernel_oq(
     SequenceControlSet_t        *sequence_control_set_ptr,
     PictureParentControlSet_t   *picture_control_set_ptr,
     MotionEstimationContext_t   *context_ptr) {
@@ -168,16 +168,16 @@ EbErrorType SignalDerivationMeKernelOq(
 
     // Set ME/HME search regions
     if (sequence_control_set_ptr->static_config.use_default_me_hme) {
-        SetMeHmeParamsOq(
-            context_ptr->meContextPtr,
+        set_me_hme_params_oq(
+            context_ptr->me_context_ptr,
             picture_control_set_ptr,
             sequence_control_set_ptr,
             sequence_control_set_ptr->input_resolution);
     }
     else {
-        SetMeHmeParamsFromConfig(
+        set_me_hme_params_from_config(
             sequence_control_set_ptr,
-            context_ptr->meContextPtr);
+            context_ptr->me_context_ptr);
     }
 
     return return_error;
@@ -204,7 +204,7 @@ EbErrorType MotionEstimationContextCtor(
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
-    return_error = MeContextCtor(&(context_ptr->meContextPtr));
+    return_error = MeContextCtor(&(context_ptr->me_context_ptr));
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
@@ -286,8 +286,8 @@ EbErrorType ComputeDecimatedZzSad(
                     previousInputPictureFull->strideY,
                     BLOCK_SIZE_64,
                     BLOCK_SIZE_64,
-                    context_ptr->meContextPtr->sixteenth_sb_buffer,
-                    context_ptr->meContextPtr->sixteenth_sb_buffer_stride,
+                    context_ptr->me_context_ptr->sixteenth_sb_buffer,
+                    context_ptr->me_context_ptr->sixteenth_sb_buffer_stride,
                     4);
 
                 if (asm_type >= ASM_NON_AVX2 && asm_type < ASM_TYPE_TOTAL)
@@ -295,8 +295,8 @@ EbErrorType ComputeDecimatedZzSad(
                     decimatedLcuCollocatedSad = NxMSadKernel_funcPtrArray[asm_type][2](
                         &(sixteenthDecimatedPicturePtr->bufferY[blkDisplacementDecimated]),
                         sixteenthDecimatedPicturePtr->strideY,
-                        context_ptr->meContextPtr->sixteenth_sb_buffer,
-                        context_ptr->meContextPtr->sixteenth_sb_buffer_stride,
+                        context_ptr->me_context_ptr->sixteenth_sb_buffer,
+                        context_ptr->me_context_ptr->sixteenth_sb_buffer_stride,
                         16, 16);
 
                 // Background Enhancement Algorithm
@@ -442,12 +442,12 @@ void* MotionEstimationKernel(void *input_ptr)
         md_rate_estimation_array = (MdRateEstimationContext_t*)sequence_control_set_ptr->encode_context_ptr->md_rate_estimation_array;
         md_rate_estimation_array += picture_control_set_ptr->slice_type * TOTAL_NUMBER_OF_QP_VALUES + picture_control_set_ptr->picture_qp;
         // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
-        EB_MEMCPY(&(context_ptr->meContextPtr->mvd_bits_array[0]), &(md_rate_estimation_array->mvdBits[0]), sizeof(EB_BitFraction)*NUMBER_OF_MVD_CASES);
-        ///context_ptr->meContextPtr->lambda = lambdaModeDecisionLdSadQpScaling[picture_control_set_ptr->picture_qp];
+        EB_MEMCPY(&(context_ptr->me_context_ptr->mvd_bits_array[0]), &(md_rate_estimation_array->mvdBits[0]), sizeof(EB_BitFraction)*NUMBER_OF_MVD_CASES);
+        ///context_ptr->me_context_ptr->lambda = lambdaModeDecisionLdSadQpScaling[picture_control_set_ptr->picture_qp];
 #if ME_HME_OQ
    // ME Kernel Signal(s) derivation
 
-        SignalDerivationMeKernelOq(
+        signal_derivation_me_kernel_oq(
             sequence_control_set_ptr,
             picture_control_set_ptr,
             context_ptr);
@@ -456,21 +456,21 @@ void* MotionEstimationKernel(void *input_ptr)
         if (sequence_control_set_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS) {
 
             if (picture_control_set_ptr->temporal_layer_index == 0) {
-                context_ptr->meContextPtr->lambda = lambdaModeDecisionRaSad[picture_control_set_ptr->picture_qp];
+                context_ptr->me_context_ptr->lambda = lambdaModeDecisionRaSad[picture_control_set_ptr->picture_qp];
             }
             else if (picture_control_set_ptr->temporal_layer_index < 3) {
-                context_ptr->meContextPtr->lambda = lambdaModeDecisionRaSadQpScalingL1[picture_control_set_ptr->picture_qp];
+                context_ptr->me_context_ptr->lambda = lambdaModeDecisionRaSadQpScalingL1[picture_control_set_ptr->picture_qp];
             }
             else {
-                context_ptr->meContextPtr->lambda = lambdaModeDecisionRaSadQpScalingL3[picture_control_set_ptr->picture_qp];
+                context_ptr->me_context_ptr->lambda = lambdaModeDecisionRaSadQpScalingL3[picture_control_set_ptr->picture_qp];
             }
         }
         else {
             if (picture_control_set_ptr->temporal_layer_index == 0) {
-                context_ptr->meContextPtr->lambda = lambdaModeDecisionLdSad[picture_control_set_ptr->picture_qp];
+                context_ptr->me_context_ptr->lambda = lambdaModeDecisionLdSad[picture_control_set_ptr->picture_qp];
             }
             else {
-                context_ptr->meContextPtr->lambda = lambdaModeDecisionLdSadQpScaling[picture_control_set_ptr->picture_qp];
+                context_ptr->me_context_ptr->lambda = lambdaModeDecisionLdSadQpScaling[picture_control_set_ptr->picture_qp];
             }
         }
 
@@ -491,10 +491,10 @@ void* MotionEstimationKernel(void *input_ptr)
                     // Load the SB from the input to the intermediate SB buffer
                     bufferIndex = (inputPicturePtr->origin_y + sb_origin_y) * inputPicturePtr->strideY + inputPicturePtr->origin_x + sb_origin_x;
 
-                    context_ptr->meContextPtr->hme_search_type = HME_RECTANGULAR;
+                    context_ptr->me_context_ptr->hme_search_type = HME_RECTANGULAR;
 
                     for (lcuRow = 0; lcuRow < BLOCK_SIZE_64; lcuRow++) {
-                        EB_MEMCPY((&(context_ptr->meContextPtr->sb_buffer[lcuRow * BLOCK_SIZE_64])), (&(inputPicturePtr->bufferY[bufferIndex + lcuRow * inputPicturePtr->strideY])), BLOCK_SIZE_64 * sizeof(uint8_t));
+                        EB_MEMCPY((&(context_ptr->me_context_ptr->sb_buffer[lcuRow * BLOCK_SIZE_64])), (&(inputPicturePtr->bufferY[bufferIndex + lcuRow * inputPicturePtr->strideY])), BLOCK_SIZE_64 * sizeof(uint8_t));
 
                     }
 
@@ -511,8 +511,8 @@ void* MotionEstimationKernel(void *input_ptr)
                     }
 
 
-                    context_ptr->meContextPtr->sb_src_ptr = &inputPaddedPicturePtr->bufferY[bufferIndex];
-                    context_ptr->meContextPtr->sb_src_stride = inputPaddedPicturePtr->strideY;
+                    context_ptr->me_context_ptr->sb_src_ptr = &inputPaddedPicturePtr->bufferY[bufferIndex];
+                    context_ptr->me_context_ptr->sb_src_stride = inputPaddedPicturePtr->strideY;
 
 
                     // Load the 1/4 decimated SB from the 1/4 decimated input to the 1/4 intermediate SB buffer
@@ -521,7 +521,7 @@ void* MotionEstimationKernel(void *input_ptr)
                         bufferIndex = (quarterDecimatedPicturePtr->origin_y + (sb_origin_y >> 1)) * quarterDecimatedPicturePtr->strideY + quarterDecimatedPicturePtr->origin_x + (sb_origin_x >> 1);
 
                         for (lcuRow = 0; lcuRow < (sb_height >> 1); lcuRow++) {
-                            EB_MEMCPY((&(context_ptr->meContextPtr->quarter_sb_buffer[lcuRow * context_ptr->meContextPtr->quarter_sb_buffer_stride])), (&(quarterDecimatedPicturePtr->bufferY[bufferIndex + lcuRow * quarterDecimatedPicturePtr->strideY])), (sb_width >> 1) * sizeof(uint8_t));
+                            EB_MEMCPY((&(context_ptr->me_context_ptr->quarter_sb_buffer[lcuRow * context_ptr->me_context_ptr->quarter_sb_buffer_stride])), (&(quarterDecimatedPicturePtr->bufferY[bufferIndex + lcuRow * quarterDecimatedPicturePtr->strideY])), (sb_width >> 1) * sizeof(uint8_t));
 
                         }
                     }
@@ -533,7 +533,7 @@ void* MotionEstimationKernel(void *input_ptr)
 
                         {
                             uint8_t  *framePtr = &sixteenthDecimatedPicturePtr->bufferY[bufferIndex];
-                            uint8_t  *localPtr = context_ptr->meContextPtr->sixteenth_sb_buffer;
+                            uint8_t  *localPtr = context_ptr->me_context_ptr->sixteenth_sb_buffer;
 
                             for (lcuRow = 0; lcuRow < (sb_height >> 2); lcuRow += 2) {
                                 EB_MEMCPY(localPtr, framePtr, (sb_width >> 2) * sizeof(uint8_t));
@@ -548,7 +548,7 @@ void* MotionEstimationKernel(void *input_ptr)
                         sb_index,
                         sb_origin_x,
                         sb_origin_y,
-                        context_ptr->meContextPtr,
+                        context_ptr->me_context_ptr,
                         inputPicturePtr);
 
                 }

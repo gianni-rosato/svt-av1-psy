@@ -415,7 +415,7 @@ void EbConfigCtor(EbConfig_t *config_ptr)
     config_ptr->max_qp_allowed                       = 63;
     config_ptr->min_qp_allowed                       = 0;
     config_ptr->base_layer_switch_mode               = 0;
-    config_ptr->encMode                              = 3;
+    config_ptr->encMode                              = MAX_ENC_PRESET;
     config_ptr->intraPeriod                          = -2;
     config_ptr->intraRefreshType                     = 1;
     config_ptr->hierarchicalLevels                   = 3;

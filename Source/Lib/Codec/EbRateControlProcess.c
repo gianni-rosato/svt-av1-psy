@@ -997,9 +997,6 @@ void* RateControlKernel(void *input_ptr)
     RateControlResults_t        *rateControlResultsPtr;
 
     // SB Loop variables
-#if !MEM_RED
-    uint32_t                       sb_total_count;
-#endif
     LargestCodingUnit_t         *sb_ptr;
     uint32_t                       lcuCodingOrder;
     uint64_t                       totalNumberOfFbFrames = 0;
@@ -1116,10 +1113,6 @@ void* RateControlKernel(void *input_ptr)
                     context_ptr->rateControlParamQueue[0] :
                     context_ptr->rateControlParamQueue[intervalIndexTemp + 1];
             }
-
-#if !MEM_RED
-            sb_total_count = picture_control_set_ptr->sb_total_count;
-#endif
 
             if (sequence_control_set_ptr->static_config.rate_control_mode == 0) {
                 // if RC mode is 0,  fixed QP is used
@@ -1320,12 +1313,7 @@ void* RateControlKernel(void *input_ptr)
                 }
             }
             picture_control_set_ptr->parent_pcs_ptr->average_qp = 0;
-#if MEM_RED
             for (lcuCodingOrder = 0; lcuCodingOrder < sequence_control_set_ptr->sb_tot_cnt; ++lcuCodingOrder) {
-#else
-
-            for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
-#endif
 
                 sb_ptr = picture_control_set_ptr->sb_ptr_array[lcuCodingOrder];
 #if ADD_DELTA_QP_SUPPORT

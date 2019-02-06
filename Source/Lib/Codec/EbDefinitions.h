@@ -35,121 +35,106 @@
 extern "C" {
 #endif
      //Mode definition : Only one mode should be ON at a time
-#define MM                                    0
-#define NEW_M0                                0
-#define NEW_M1                              0
-#define NEWW_M2                                0
-#define MR_MODE                                0
-#define SHUT_FILTERING                      0 // CDEF RESTORATION DLF
+#define MR_MODE                                         0
+#define SHUT_FILTERING                                  0 // CDEF RESTORATION DLF
     ////
-#define MEM_RED                                1
-#define MEM_RED2                            1
-#define MEM_RED3                            1
-#define MEM_RED4                            0 //  Reduce mem allocation when DISABLE_128X128_SB is ON
+#define MEM_RED4                                        0 //  Reduce mem allocation when DISABLE_128X128_SB is ON
 
-#define INTRA_CORE_OPT                        1
-#define INTRA_LOSSY_OPT                        1
+#define    DLF_TEST2                                       1
+#define    DLF_TEST3                                       0
+#define    DLF_TEST4                                       0
 
-#define ENCODER_MODE_CLEANUP                1                                          
-#define IVF_FRAME_HEADER_IN_LIB                     0
+#define INTRA_CORE_OPT                                  1
 
-#define ENABLE_INTRA_4x4                            1 //
-#define DISABLE_NSQ                                 1 //
-#define DISABLE_128X128_SB                          0
-#define ENABLE_INTER_4x4                            0 // optional
+#define ENCODER_MODE_CLEANUP                            1                                          
 
-#define DISABLE_4xN_Nx4                               1 //
-#define DISABLE_128x128                                  0 //
-#define VCI_CANDIDATE_II                              1
+#define ENABLE_INTRA_4x4                                1 //
+#define DISABLE_NSQ                                     1 //
+#define DISABLE_128X128_SB                              0
+#define ENABLE_INTER_4x4                                0 // optional
+#define DISABLE_4xN_Nx4                                 1 //
+#define DISABLE_128x128                                 0 //
+#define VCI_CANDIDATE_II                                1
 
 #if VCI_CANDIDATE_II
-#define INTRA_ASM                                     1
-#define CBF_ZERO_OFF                                  1 // Remove CBF zero feature due to VQ problems
-#define TX_TYPE_FIX                                   1 // Fix the Tx Type search for Inter blocks
-#define INC_NFL                                       1 // Set NFL to 4 for all sizes and temporal layers
-#define REMOVE_INTRA_CONST                            1 // Remove the constraints for INTRA injection
+#define INTRA_ASM                                       1
+#define CBF_ZERO_OFF                                    1 // Remove CBF zero feature due to VQ problems
+#define TX_TYPE_FIX                                     1 // Fix the Tx Type search for Inter blocks
+#define INC_NFL                                         1 // Set NFL to 4 for all sizes and temporal layers
+#define REMOVE_INTRA_CONST                              1 // Remove the constraints for INTRA injection
 
 // ADOPTED HEVC-M0 FEATURES (Active in M0 and M1)
-#define M0_ME_QUARTER_PEL_SEARCH                      1 // F1
-#define SHUT_CBF_FL_SKIP                              1 // F2 Lossless
-#define V2_HME_ME_SR                                  1 // F3
-#define ME_64x64                                      1 // F4
-#define V2_QP_SCALING                                 1 // F5 to keep for vmaff only
-#define NEW_QP_SCALING                                1 // F6
-#define M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH         1 // F7
-#define M0_64x64_32x32_HALF_QUARTER_PEL               1 // F8
-
-#define IMPROVED_UNIPRED_INJECTION                    1 // F11
-#define IMPROVED_BIPRED_INJECTION                     1 // F10
-
-
-#define M0_ME_SEARCH_BASE                             1 // F13
-#define INC_NFL12                                     1 // F14
-
-#define AV1_UPGRADE                                   1 // Upgrade to V1.0.0
-
-#define INTRAD_ASM                                    1 //asm for intra directionnal modes - Z1
-#define SUPPORT_10BIT                                 1 // Support for 10 Bit encodings
-#define NEW_QPS                                       1 // New QPS based on AOM 1Pass
-#define ME_HME_OQ                                     1 // Ported ME HME from EB32 OQ
+#define M0_ME_QUARTER_PEL_SEARCH                        1 // F1
+#define SHUT_CBF_FL_SKIP                                1 // F2 Lossless
+#define V2_HME_ME_SR                                    1 // F3
+#define ME_64x64                                        1 // F4
+#define V2_QP_SCALING                                   1 // F5 to keep for vmaff only
+#define NEW_QP_SCALING                                  1 // F6
+#define M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH           1 // F7
+#define M0_64x64_32x32_HALF_QUARTER_PEL                 1 // F8
+#define IMPROVED_UNIPRED_INJECTION                      1 // F11
+#define IMPROVED_BIPRED_INJECTION                       1 // F10
+#define M0_ME_SEARCH_BASE                               1 // F13
+#define INC_NFL12                                       1 // F14
+#define AV1_UPGRADE                                     1 // Upgrade to V1.0.0
+#define INTRAD_ASM                                      1 // asm for intra directionnal modes - Z1
+#define SUPPORT_10BIT                                   1 // Support for 10 Bit encodings
+#define NEW_QPS                                         1 // New QPS based on AOM 1Pass
+#define ME_HME_OQ                                       1 // Ported ME HME from EB32 OQ
 
 #if SUPPORT_10BIT
-
-#define INTRA_10BIT_SUPPORT                         1
-#define QT_10BIT_SUPPORT                            1
-#define CDEF_10BIT_FIX                              1
-#define RS_10BIT_FIX                                1
-#define MD_10BIT_FIX                                1
-#define LF_10BIT_FIX                                1
-#define INTERPOL_FILTER_SEARCH_10BIT_SUPPORT        1
+#define INTRA_10BIT_SUPPORT                             1
+#define QT_10BIT_SUPPORT                                1
+#define CDEF_10BIT_FIX                                  1
+#define RS_10BIT_FIX                                    1
+#define MD_10BIT_FIX                                    1
+#define LF_10BIT_FIX                                    1
+#define INTERPOL_FILTER_SEARCH_10BIT_SUPPORT            1
 #endif
 
-#define BUG_FIX                                     1 // BUG fix related to transform type
-#define LIMIT_INTRA_INJ                                1
-#define TURN_OFF_INTERPOL_FILTER_SEARCH                1
-#define TURN_OFF_TX_TYPE_SEARCH                        1
-#define TURN_OFF_NFL8                                1 // Uses 8->4 NFL
+#define BUG_FIX                                         1 // BUG fix related to transform type
+#define LIMIT_INTRA_INJ                                 1
+#define TURN_OFF_INTERPOL_FILTER_SEARCH                 1
+#define TURN_OFF_TX_TYPE_SEARCH                         1
+#define TURN_OFF_NFL8                                   1 // Uses 8->4 NFL
 
-
-#define TURN_OFF_CFL                               0 // turning CFL off is broken
+#define TURN_OFF_CFL                                    0 // turning CFL off is broken
 #if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
-#define M0_SAD_HALF_QUARTER_PEL_BIPRED_SEARCH       1
+#define M0_SAD_HALF_QUARTER_PEL_BIPRED_SEARCH           1
 #endif
 #endif
 
 // NEW MACOS
-#define INTRINSIC_OPT_2                             1 // Intrinsics opt work phase 2
-#define DIS_EDGE_FIL                                1 // disable intra edge filter - to be removed after fixing the neigbor array for intra 4xN and Nx4
-#define DISABLE_INTRA_PRED_INTRINSIC                0 // To be used to switch between intrinsic and C code for intra-pred
-#define USE_INLOOP_ME_FULL_SAD                      0 // To switch between full SAD and subsampled-SAD for in-loop-me subpel.
-#define NO_SUBPEL_FOR_128X128                       1 // Intrinsic is not available for 128x128 Subpel
+#define INTRINSIC_OPT_2                                 1 // Intrinsics opt work phase 2
+#define DIS_EDGE_FIL                                    1 // disable intra edge filter - to be removed after fixing the neigbor array for intra 4xN and Nx4
+#define DISABLE_INTRA_PRED_INTRINSIC                    0 // To be used to switch between intrinsic and C code for intra-pred
+#define USE_INLOOP_ME_FULL_SAD                          0 // To switch between full SAD and subsampled-SAD for in-loop-me subpel.
+#define NO_SUBPEL_FOR_128X128                           1 // Intrinsic is not available for 128x128 Subpel
 //FOR DEBUGGING - Do not remove
-#define NO_ENCDEC                                   0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
+#define NO_ENCDEC                                       0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
-#define    FIX_DEBUG_CRASH                             1
-#define FIX_47                                      1 // interdepth decision to be tedted block aware
-#define HME_ENHANCED_CENTER_SEARCH                  1
-#define TUNE_CHROMA_OFFSET                          1
-#define FAST_TX_SEARCH                                1
-#define MACRO_BLOCK_CLEANUP                            1
-#define DISABLE_NSQ_FOR_NON_REF                     1
-#define FIX_INTER_DEPTH                             1  // Fix interdepth depth cost when MDC cuts depths
-
-#define DISABLE_IN_LOOP_ME                          1
-#define EXTRA_ALLOCATION                            1
-#define USE_FAST_INTERP_SEARCH                      0
-#define SCS_CP_FIX                                  0 
-#define ENCDEC_TX_SEARCH                            1
-#define DISABLE_ANGULAR_MODE                        0
-#define FIX_ME_SR_10BIT                             1
-#define TEST5_DISABLE_NSQ_ME                        0
-#define DISABLE_ANGULAR_MODE_FOR_NON_REF            0
-#define INJECT_ONLY_SQ                                1
-#define OPT_MEMCPY                                    1
-#define DISABLE_DR_REFIN                            0
-#define CDEF_REF_ONLY                               0 //CDEF for ref frame only
-#define REST_REF_ONLY                               0 //REST for ref frame only
-#define REDUCE_COPY_CDEF                            1
+#define FIX_DEBUG_CRASH                                 1
+#define FIX_47                                          1 // interdepth decision to be tedted block aware
+#define HME_ENHANCED_CENTER_SEARCH                      1
+#define TUNE_CHROMA_OFFSET                              1
+#define FAST_TX_SEARCH                                  1
+#define MACRO_BLOCK_CLEANUP                             1
+#define DISABLE_NSQ_FOR_NON_REF                         1
+#define FIX_INTER_DEPTH                                 1  // Fix interdepth depth cost when MDC cuts depths
+#define DISABLE_IN_LOOP_ME                              1
+#define EXTRA_ALLOCATION                                1
+#define SCS_CP_FIX                                      0 
+#define ENCDEC_TX_SEARCH                                1
+#define DISABLE_ANGULAR_MODE                            0
+#define FIX_ME_SR_10BIT                                 1
+#define TEST5_DISABLE_NSQ_ME                            0
+#define DISABLE_ANGULAR_MODE_FOR_NON_REF                0
+#define INJECT_ONLY_SQ                                  1
+#define OPT_MEMCPY                                      1
+#define DISABLE_DR_REFIN                                0
+#define CDEF_REF_ONLY                                   0 //CDEF for ref frame only
+#define REST_REF_ONLY                                   0 //REST for ref frame only
+#define REDUCE_COPY_CDEF                                1
 
 
 /********************************************************/
@@ -182,77 +167,13 @@ extern "C" {
 #define CFL_BUF_SQUARE (CFL_BUF_LINE * CFL_BUF_LINE)
 /***********************************    AV1_OBU     ********************************/
 #define INVALID_NEIGHBOR_DATA 0xFFu
-#define AOM_CONFIG_H_
-#define ARCH_ARM 0
-#define ARCH_MIPS 0
-#define ARCH_PPC 0
-#define ARCH_X86 0
-#define ARCH_X86_64 1
-#define CONFIG_ACCOUNTING 0
-#define CONFIG_ANALYZER 0
-#define CONFIG_AV1 1
-#define CONFIG_AV1_DECODER 1
-#define CONFIG_AV1_ENCODER 1
-#define CONFIG_BIG_ENDIAN 0
 #define CONFIG_BITSTREAM_DEBUG 0
 #define CONFIG_BUFFER_MODEL 1
 #define CONFIG_COEFFICIENT_RANGE_CHECKING 0
-#if AV1_UPGRADE
-#define CONFIG_COLLECT_INTER_MODE_RD_STATS 1
-#else
-#define CONFIG_COLLECT_INTER_MODE_RD_STATS 0
-#endif
-#define CONFIG_COLLECT_RD_STATS 0
-#define CONFIG_DEBUG 0
-#define CONFIG_DECODE_PERF_TESTS 0
-#define CONFIG_DIST_8X8 1
-#define CONFIG_ENCODE_PERF_TESTS 0
 #define CONFIG_ENTROPY_STATS 0
-#define CONFIG_FILEOPTIONS 1
 #define CONFIG_FP_MB_STATS 0
-#define CONFIG_GCC 0
-#define CONFIG_GCOV 0
-#define CONFIG_GPROF 0
-#define CONFIG_INSPECTION 0
 #define CONFIG_INTERNAL_STATS 0
-#define CONFIG_INTER_STATS_ONLY 0
-#define CONFIG_LIBYUV 1
-#define CONFIG_LOWBITDEPTH 0
-#define CONFIG_MISMATCH_DEBUG 0
-#define CONFIG_MSVS 1
-#define CONFIG_MULTITHREAD 1
-#define CONFIG_OS_SUPPORT 1
-#define CONFIG_PIC 0
 #define CONFIG_RD_DEBUG 0
-#define CONFIG_RUNTIME_CPU_DETECT 1
-#define CONFIG_SHARED 0
-#define CONFIG_SIZE_LIMIT 0
-#define CONFIG_SPATIAL_RESAMPLING 1
-#define CONFIG_STATIC 1
-#define CONFIG_UNIT_TESTS 1
-#define CONFIG_WEBM_IO 1
-#define DECODE_HEIGHT_LIMIT 0
-#define DECODE_WIDTH_LIMIT 0
-#define HAVE_AVX 1
-#define HAVE_AVX2 1
-#define HAVE_DSPR2 0
-#define HAVE_FEXCEPT 0
-#define HAVE_MIPS32 0
-#define HAVE_MIPS64 0
-#define HAVE_MMX 1
-#define HAVE_MSA 0
-#define HAVE_NEON 0
-#define HAVE_NEON_ASM 0
-#define HAVE_PTHREAD_H 0
-#define HAVE_SSE 1
-#define HAVE_SSE2 1
-#define HAVE_SSE3 1
-#define HAVE_SSE4_1 1
-#define HAVE_SSE4_2 1
-#define HAVE_SSSE3 1
-#define HAVE_UNISTD_H 0
-#define HAVE_VSX 0
-#define HAVE_WXWIDGETS 0
 
 // Max superblock size
 #define MAX_SB_SIZE_LOG2 7
@@ -350,8 +271,12 @@ one more than the minimum. */
 
 // AV1 Loop Filter
 #define AV1_LF                                    1  // AV1 Loop Filter
-#if AV1_LF
+#if AV1_LF 
+#if DLF_TEST2
+#define AV1_LF_FULL_IMAGE_SELECTION               0
+#else
 #define AV1_LF_FULL_IMAGE_SELECTION               1  // 0 uses LPF_PICK_FROM_Q, 1 uses LPF_PICK_FROM_FULL_IMAGE
+#endif
 #define LF_SHARPNESS 0
 #endif
 
@@ -446,8 +371,7 @@ extern void RunEmms();
 #undef MEM_VALUE_T_SZ_BITS
 #define MEM_VALUE_T_SZ_BITS (sizeof(MEM_VALUE_T) << 3)
 
-
-    static __inline void mem_put_le16(void *vmem, MEM_VALUE_T val) {
+static __inline void mem_put_le16(void *vmem, MEM_VALUE_T val) {
     MAU_T *mem = (MAU_T *)vmem;
 
     mem[0] = (MAU_T)((val >> 0) & 0xff);
@@ -1885,11 +1809,11 @@ typedef enum EB_BITFIELD_MASKS {
 
 #define    Log2f                              Log2f_SSE2
 
-#define INPUT_SIZE_576p_TH                0x90000        // 0.58 Million
-#define INPUT_SIZE_1080i_TH                0xB71B0        // 0.75 Million
-#define INPUT_SIZE_1080p_TH                0x1AB3F0    // 1.75 Million
-#define INPUT_SIZE_4K_TH                0x29F630    // 2.75 Million
-#define INPUT_SIZE_8K_TH                0xA7D8C0    // 11 Million
+#define INPUT_SIZE_576p_TH                  0x90000        // 0.58 Million
+#define INPUT_SIZE_1080i_TH                 0xB71B0        // 0.75 Million
+#define INPUT_SIZE_1080p_TH                 0x1AB3F0    // 1.75 Million
+#define INPUT_SIZE_4K_TH                    0x29F630    // 2.75 Million
+#define INPUT_SIZE_8K_TH                    0xA7D8C0    // 11 Million
 
 /** Redefine ASSERT() to avoid warnings
 */
@@ -3003,12 +2927,14 @@ typedef enum EbCu8x8Mode {
 
 typedef enum EbPictureDepthMode {
 
-    PICT_SB_SWITCH_DEPTH_MODE = 0,
-    PICT_FULL85_DEPTH_MODE = 1,
-    PICT_FULL84_DEPTH_MODE = 2,
-    PICT_BDP_DEPTH_MODE = 3,
-    PICT_LIGHT_BDP_DEPTH_MODE = 4,
-    PICT_OPEN_LOOP_DEPTH_MODE = 5
+    PIC_ALL_DEPTH_MODE          = 0, // ALL sq and nsq:  SB size -> 4x4 
+    PIC_ALL_C_DEPTH_MODE        = 1, // ALL sq and nsq with control :  SB size -> 4x4 
+    PIC_SQ_DEPTH_MODE           = 2, // ALL sq:  SB size -> 4x4 
+    PIC_SQ_NON4_DEPTH_MODE      = 3, // SQ:  SB size -> 8x8 
+    PIC_BDP_DEPTH_MODE          = 4,
+    PIC_LIGHT_BDP_DEPTH_MODE    = 5,
+    PIC_SB_SWITCH_DEPTH_MODE    = 6,
+    PIC_OPEN_LOOP_DEPTH_MODE    = 7
 } EbPictureDepthMode;
 
 typedef enum EbLcuDepthMode {
@@ -3436,7 +3362,7 @@ static const uint16_t HmeLevel0SearchAreaInHeightArrayBottom[5][MAX_SUPPORTED_MO
 };
 
 // HME LEVEL 1
-//     M0    M1    M2    M3    M4    M5    M6    M7
+//      M0    M1    M2    M3    M4    M5    M6    M7
 static const uint8_t EnableHmeLevel1Flag[5][MAX_SUPPORTED_MODES] = {
     {   1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
     {   1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_720P_RANGE
@@ -3473,7 +3399,7 @@ static const uint16_t HmeLevel1SearchAreaInHeightArrayBottom[5][MAX_SUPPORTED_MO
     {  16,    8,    4,    4,    4,    4,    4,    4 }
 };
 // HME LEVEL 2
-//     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10   M11
+//     M0    M1    M2    M3    M4    M5    M6    M7
 static const uint8_t EnableHmeLevel2Flag[5][MAX_SUPPORTED_MODES] = {
     {   1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
     {   1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_720P_RANGE

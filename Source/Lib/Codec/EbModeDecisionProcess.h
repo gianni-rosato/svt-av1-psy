@@ -81,9 +81,7 @@ extern "C" {
         PARTITION_CONTEXT           above_neighbor_partition;
         uint64_t                    cost;
         uint64_t                    cost_luma;
-#if MEM_RED2
         CandidateMv ed_ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];//to be used in MD and EncDec
-#endif
 
     } MdCodingUnit_t;
 
@@ -207,6 +205,11 @@ extern "C" {
         DECLARE_ALIGNED(16, uint8_t, above_data[MAX_MB_PLANE][MAX_TX_SIZE * 2 + 32]);
         BlockSize  scaled_chroma_bsize;
 #endif
+
+
+        // Multi-modes signal(s) 
+        uint8_t                           nfl_level;
+
 
     } ModeDecisionContext_t;
 

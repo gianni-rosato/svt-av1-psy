@@ -5373,8 +5373,8 @@ EbErrorType IntraPredictionOpenLoop(
         IntraPlanar_funcPtrArray[asm_type](
             cu_size,
             context_ptr->intra_ref_ptr->y_intra_reference_array_reverse,
-            (&(context_ptr->meContextPtr->sb_buffer[0])),
-            context_ptr->meContextPtr->sb_buffer_stride,
+            (&(context_ptr->me_context_ptr->sb_buffer[0])),
+            context_ptr->me_context_ptr->sb_buffer_stride,
             EB_FALSE);
 
         break;
@@ -5384,8 +5384,8 @@ EbErrorType IntraPredictionOpenLoop(
         IntraDCLuma_funcPtrArray[asm_type](
             cu_size,
             context_ptr->intra_ref_ptr->y_intra_reference_array_reverse,
-            (&(context_ptr->meContextPtr->sb_buffer[0])),
-            context_ptr->meContextPtr->sb_buffer_stride,
+            (&(context_ptr->me_context_ptr->sb_buffer[0])),
+            context_ptr->me_context_ptr->sb_buffer_stride,
             EB_FALSE);
 
         break;
@@ -5395,8 +5395,8 @@ EbErrorType IntraPredictionOpenLoop(
         IntraVerticalLuma_funcPtrArray[asm_type](
             cu_size,
             context_ptr->intra_ref_ptr->y_intra_reference_array_reverse,
-            (&(context_ptr->meContextPtr->sb_buffer[0])),
-            context_ptr->meContextPtr->sb_buffer_stride,
+            (&(context_ptr->me_context_ptr->sb_buffer[0])),
+            context_ptr->me_context_ptr->sb_buffer_stride,
             EB_FALSE);
 
         break;
@@ -5406,8 +5406,8 @@ EbErrorType IntraPredictionOpenLoop(
         IntraHorzLuma_funcPtrArray[asm_type](
             cu_size,
             context_ptr->intra_ref_ptr->y_intra_reference_array_reverse,
-            (&(context_ptr->meContextPtr->sb_buffer[0])),
-            context_ptr->meContextPtr->sb_buffer_stride,
+            (&(context_ptr->me_context_ptr->sb_buffer[0])),
+            context_ptr->me_context_ptr->sb_buffer_stride,
             EB_FALSE);
 
         break;
@@ -5419,8 +5419,8 @@ EbErrorType IntraPredictionOpenLoop(
             cu_size,
             context_ptr->intra_ref_ptr->y_intra_reference_array,
             context_ptr->intra_ref_ptr->y_intra_reference_array_reverse,
-            (&(context_ptr->meContextPtr->sb_buffer[0])),
-            context_ptr->meContextPtr->sb_buffer_stride,
+            (&(context_ptr->me_context_ptr->sb_buffer[0])),
+            context_ptr->me_context_ptr->sb_buffer_stride,
             context_ptr->intra_ref_ptr->reference_above_line_y,
             &context_ptr->intra_ref_ptr->above_ready_flag_y,
             context_ptr->intra_ref_ptr->reference_left_line_y,

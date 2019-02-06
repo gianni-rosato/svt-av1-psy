@@ -356,31 +356,28 @@ void* SetMeHmeParams(
 Input   : encoder mode and tune
 Output  : Pre-Analysis signal(s)
 ******************************************************/
-EbErrorType SignalDerivationPreAnalysisOq(
+EbErrorType signal_derivation_pre_analysis_oq(
     SequenceControlSet_t       *sequence_control_set_ptr,
     PictureParentControlSet_t  *picture_control_set_ptr) {
 
     EbErrorType return_error = EB_ErrorNone;
-
     uint8_t input_resolution = sequence_control_set_ptr->input_resolution;
 
-
     // Derive HME Flag
-
     if (sequence_control_set_ptr->static_config.use_default_me_hme) {
-        uint8_t  hmeMeLevel = picture_control_set_ptr->enc_mode;
+        uint8_t  hme_me_level = picture_control_set_ptr->enc_mode;
 
         uint32_t inputRatio = sequence_control_set_ptr->luma_width / sequence_control_set_ptr->luma_height;
-        uint8_t resolutionIndex = input_resolution <= INPUT_SIZE_576p_RANGE_OR_LOWER ? 0 : // 480P
+        uint8_t resolution_index = input_resolution <= INPUT_SIZE_576p_RANGE_OR_LOWER ? 0 : // 480P
             (input_resolution <= INPUT_SIZE_1080i_RANGE && inputRatio < 2) ? 1 : // 720P
             (input_resolution <= INPUT_SIZE_1080i_RANGE && inputRatio > 3) ? 2 : // 1080I
             (input_resolution <= INPUT_SIZE_1080p_RANGE) ? 3 : // 1080I
             4;    // 4K
 
         picture_control_set_ptr->enable_hme_flag = EB_TRUE;
-        picture_control_set_ptr->enable_hme_level0_flag = EnableHmeLevel0Flag[resolutionIndex][hmeMeLevel];
-        picture_control_set_ptr->enable_hme_level1_flag = EnableHmeLevel1Flag[resolutionIndex][hmeMeLevel];
-        picture_control_set_ptr->enable_hme_level2_flag = EnableHmeLevel2Flag[resolutionIndex][hmeMeLevel];
+        picture_control_set_ptr->enable_hme_level0_flag = EnableHmeLevel0Flag[resolution_index][hme_me_level];
+        picture_control_set_ptr->enable_hme_level1_flag = EnableHmeLevel1Flag[resolution_index][hme_me_level];
+        picture_control_set_ptr->enable_hme_level2_flag = EnableHmeLevel2Flag[resolution_index][hme_me_level];
     }
     else {
         picture_control_set_ptr->enable_hme_flag = sequence_control_set_ptr->static_config.enable_hme_flag;
@@ -883,7 +880,7 @@ void* ResourceCoordinationKernel(void *input_ptr)
 #endif
 #if ME_HME_OQ
         // Pre-Analysis Signal(s) derivation
-        SignalDerivationPreAnalysisOq(
+        signal_derivation_pre_analysis_oq(
             sequence_control_set_ptr,
             picture_control_set_ptr);
 #else

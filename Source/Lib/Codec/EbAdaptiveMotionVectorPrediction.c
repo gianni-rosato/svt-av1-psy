@@ -18,7 +18,6 @@
 
 #include "EbDefinitions.h"
 #include "EbUtility.h"
-
 #include "EbAdaptiveMotionVectorPrediction.h"
 #include "EbSequenceControlSet.h"
 #include "EbReferenceObject.h"
@@ -60,7 +59,7 @@ static inline void scale_mv(
         td = CLIP3(-128, 127, td);
         temp = (int16_t)((0x4000 + ABS(td >> 1)) / td);
         scale_factor = CLIP3(-4096, 4095, (tb * temp + 32) >> 6);
-        
+
         *mvx = CLIP3(-32768, 32767, (scale_factor * (*mvx) + 127 + (scale_factor * (*mvx) < 0)) >> 8);
         *mvy = CLIP3(-32768, 32767, (scale_factor * (*mvy) + 127 + (scale_factor * (*mvy) < 0)) >> 8);
     }
@@ -280,7 +279,7 @@ static inline EbBool get_scaling_spatial_amvp_v2(
     EbReferenceObject_t      *reference_object;
     uint64_t                  ref_pic_poc;
     EbReflist                ref_pic_list;
-    
+
     cur_pic_poc = picture_control_set_ptr->picture_number;
 
     if (mv_unit->predDirection == BI_PRED)
@@ -508,9 +507,9 @@ static MvReferenceFrame ref_frame_map[TOTAL_COMP_REFS][2] = {
 };
 
 static void clamp_mv(
-    MV *mv, 
-    int32_t min_col, 
-    int32_t max_col, 
+    MV *mv,
+    int32_t min_col,
+    int32_t max_col,
     int32_t min_row,
     int32_t max_row) {
     mv->col = (int16_t)clamp(mv->col, min_col, max_col);
@@ -836,7 +835,7 @@ static void scan_blk_mbmi(const Av1Common *cm, const MacroBlockD *xd,
 
 static int32_t has_top_right(const Av1Common *cm, const MacroBlockD *xd,
     int32_t mi_row, int32_t mi_col, int32_t bs) {
-    
+
     (void)xd;
     (void)cm;
     const int32_t sb_mi_size = mi_size_wide[cm->p_pcs_ptr->sequence_control_set_ptr->sb_size];
@@ -1001,9 +1000,9 @@ void setup_ref_mv_list(
 
 
     //-------------------------- TMVP --------------------------
-    //CHKN  TMVP - get canididates from reference frames- orderHint has to be on, 
+    //CHKN  TMVP - get canididates from reference frames- orderHint has to be on,
     // in order to scale the vectors.
-    //CHKN this checks all colocated block(s) + extra 3 positions. this changes 
+    //CHKN this checks all colocated block(s) + extra 3 positions. this changes
     // the mode context too.
 
     //-------------------------- TMVP --------------------------
@@ -1192,11 +1191,11 @@ void setup_ref_mv_list(
 
             for (int32_t idx = 0; idx < 2; ++idx) {
                 int32_t comp_idx = 0;
-                for (int32_t list_idx = 0; list_idx < ref_id_count[idx] 
+                for (int32_t list_idx = 0; list_idx < ref_id_count[idx]
                     && comp_idx < 3; ++list_idx, ++comp_idx)
                     comp_list[comp_idx][idx] = ref_id[idx][list_idx];
 
-                for (int32_t list_idx = 0; list_idx < ref_diff_count[idx] 
+                for (int32_t list_idx = 0; list_idx < ref_diff_count[idx]
                     && comp_idx < 3; ++list_idx, ++comp_idx)
                     comp_list[comp_idx][idx] = ref_diff[idx][list_idx];
 
@@ -1207,7 +1206,7 @@ void setup_ref_mv_list(
             //CHKN fill the stack, increment the counter
             if (refmv_count[ref_frame]) { //CHKN RefMvCount=1
                 assert(refmv_count[ref_frame] == 1);
-                if (comp_list[0][0].as_int == ref_mv_stack[ref_frame][0].this_mv.as_int 
+                if (comp_list[0][0].as_int == ref_mv_stack[ref_frame][0].this_mv.as_int
                     &&  comp_list[0][1].as_int == ref_mv_stack[ref_frame][0].comp_mv.as_int) {
                     ref_mv_stack[ref_frame][refmv_count[ref_frame]].this_mv = comp_list[1][0];
                     ref_mv_stack[ref_frame][refmv_count[ref_frame]].comp_mv = comp_list[1][1];
@@ -1324,7 +1323,7 @@ void setup_ref_mv_list(
 
         //CHKN  THIS IS a Single Reference case
 
-        //CHKN if the stack has at least 2 cand, then copy the top 2 to the final mvp Table, 
+        //CHKN if the stack has at least 2 cand, then copy the top 2 to the final mvp Table,
         // if the stack has less than 2, use Gm to fill the mvpTable.
         //     the stack counter remains 0 or 1 in this case.
 
@@ -1418,9 +1417,7 @@ static INLINE IntMv gm_get_motion_vector(
 }
 
 void generate_av1_mvp_table(
-#if MEM_RED2
     ModeDecisionContext_t            *context_ptr,
-#endif
     CodingUnit_t                     *cu_ptr,
     const BlockGeom                  *blk_geom,
     uint16_t                          cu_origin_x,
@@ -1447,11 +1444,7 @@ void generate_av1_mvp_table(
     xd->mb_to_right_edge = ((cm->mi_cols - bw - mi_col) * MI_SIZE) * 8;
 
     memset(xd->ref_mv_count, 0, sizeof(xd->ref_mv_count));
-#if MEM_RED2   
     memset(context_ptr->md_local_cu_unit[blk_geom->blkidx_mds].ed_ref_mv_stack, 0, sizeof(context_ptr->md_local_cu_unit[blk_geom->blkidx_mds].ed_ref_mv_stack));
-#else
-    memset(xd->ref_mv_stack, 0, sizeof(xd->ref_mv_stack));
-#endif
 
     xd->up_available = (mi_row > 0);
     xd->left_available = (mi_col > 0);
@@ -1512,11 +1505,7 @@ void generate_av1_mvp_table(
             xd,
             ref_frame,
             xd->ref_mv_count,
-#if MEM_RED2   
             context_ptr->md_local_cu_unit[blk_geom->blkidx_mds].ed_ref_mv_stack,
-#else
-            xd->ref_mv_stack,
-#endif
             cu_ptr->ref_mvs,
             zeromv,
             mi_row,
@@ -1527,9 +1516,7 @@ void generate_av1_mvp_table(
 
 }
 void get_av1_mv_pred_drl(
-#if MEM_RED2
     ModeDecisionContext_t            *context_ptr,
-#endif
     CodingUnit_t      *cu_ptr,
     MvReferenceFrame   ref_frame,
     uint8_t            is_compound,
@@ -1551,27 +1538,14 @@ void get_av1_mv_pred_drl(
 
     if (is_compound && mode != GLOBAL_GLOBALMV) {
         int32_t ref_mv_idx = drl_index + 1;
-#if MEM_RED2   
-       
         nearestmv[0] = context_ptr->md_local_cu_unit[cu_ptr->mds_idx].ed_ref_mv_stack[ref_frame][0].this_mv;
         nearestmv[1] = context_ptr->md_local_cu_unit[cu_ptr->mds_idx].ed_ref_mv_stack[ref_frame][0].comp_mv;
         nearmv[0]    = context_ptr->md_local_cu_unit[cu_ptr->mds_idx].ed_ref_mv_stack[ref_frame][ref_mv_idx].this_mv;
         nearmv[1]    = context_ptr->md_local_cu_unit[cu_ptr->mds_idx].ed_ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
-
-#else
-        nearestmv[0] = xd->ref_mv_stack[ref_frame][0].this_mv;
-        nearestmv[1] = xd->ref_mv_stack[ref_frame][0].comp_mv;
-        nearmv[0] = xd->ref_mv_stack[ref_frame][ref_mv_idx].this_mv;
-        nearmv[1] = xd->ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
-#endif
     }
     else if (drl_index > 0 && mode == NEARMV) {
         ASSERT((1 + drl_index) < MAX_REF_MV_STACK_SIZE);
-#if MEM_RED2   
         IntMv cur_mv = context_ptr->md_local_cu_unit[cu_ptr->mds_idx].ed_ref_mv_stack[ref_frame][1 + drl_index].this_mv;
-#else
-        IntMv cur_mv = xd->ref_mv_stack[ref_frame][1 + drl_index].this_mv;
-#endif
         nearmv[0] = cur_mv;
     }
 
@@ -1589,29 +1563,16 @@ void get_av1_mv_pred_drl(
 
         // TODO(jingning, yunqing): Do we need a lower_mv_precision() call here?
         if (compound_ref0_mode(mode) == NEWMV)
-#if MEM_RED2               
             ref_mv[0] = context_ptr->md_local_cu_unit[cu_ptr->mds_idx].ed_ref_mv_stack[ref_frame][ref_mv_idx].this_mv;
-#else
-            ref_mv[0] = xd->ref_mv_stack[ref_frame][ref_mv_idx].this_mv;
-#endif
 
         if (compound_ref1_mode(mode) == NEWMV)
-#if MEM_RED2               
             ref_mv[1] = context_ptr->md_local_cu_unit[cu_ptr->mds_idx].ed_ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
-#else
-            ref_mv[1] = xd->ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
-#endif
-
 
     }
     else {
         if (mode == NEWMV) {
             if (xd->ref_mv_count[ref_frame] > 1)
-#if MEM_RED2               
                 ref_mv[0] = context_ptr->md_local_cu_unit[cu_ptr->mds_idx].ed_ref_mv_stack[ref_frame][drl_index].this_mv;
-#else
-                ref_mv[0] = xd->ref_mv_stack[ref_frame][drl_index].this_mv;
-#endif
         }
     }
 
@@ -1619,9 +1580,7 @@ void get_av1_mv_pred_drl(
 }
 
 void enc_pass_av1_mv_pred(
-#if MEM_RED2
     ModeDecisionContext_t            *md_context_ptr,
-#endif
     CodingUnit_t                     *cu_ptr,
     const BlockGeom                  *blk_geom,
     uint16_t                          cu_origin_x,
@@ -1636,9 +1595,7 @@ void enc_pass_av1_mv_pred(
     IntMv    nearestmv[2], nearmv[2];
 
     generate_av1_mvp_table(
-#if MEM_RED2
         md_context_ptr,
-#endif
         cu_ptr,
         blk_geom,
         cu_origin_x,
@@ -1648,9 +1605,7 @@ void enc_pass_av1_mv_pred(
         picture_control_set_ptr);
 
     get_av1_mv_pred_drl(
-#if MEM_RED2
         md_context_ptr,
-#endif
         cu_ptr,
         ref_frame,
         is_compound,
@@ -1745,7 +1700,7 @@ void update_mi_map(
     ModeInfo *miPtr = *(picture_control_set_ptr->mi_grid_base + offset);
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, cu_ptr->prediction_unit_array->ref_frame_type);
-    
+
     uint8_t  miX, miY;
     for (miY = 0; miY < (blk_geom->bheight >> MI_SIZE_LOG2); miY++) {
 
@@ -1883,7 +1838,7 @@ int av1_find_samples(
     int mi_row,
     int mi_col,
     int *pts,
-    int *pts_inref) 
+    int *pts_inref)
 {
   MbModeInfo *const mbmi0 = &xd->mi[0]->mbmi;
   int ref_frame = mbmi0->ref_frame[0];

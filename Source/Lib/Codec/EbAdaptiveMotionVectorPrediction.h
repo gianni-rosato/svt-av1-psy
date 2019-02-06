@@ -47,9 +47,7 @@ extern "C" {
         uint32_t                   tbSize);
 
     void generate_av1_mvp_table(
-#if MEM_RED2
         struct ModeDecisionContext_s            *context_ptr,
-#endif
         CodingUnit_t                     *cu_ptr,
         const BlockGeom                   * blk_geom,
         uint16_t                            cu_origin_x,
@@ -59,9 +57,7 @@ extern "C" {
         PictureControlSet_t              *picture_control_set_ptr);
 
     void get_av1_mv_pred_drl(
-#if MEM_RED2
         struct ModeDecisionContext_s            *context_ptr,
-#endif
         CodingUnit_t      *cu_ptr,
         MvReferenceFrame ref_frame,
         uint8_t              is_compound,
@@ -72,9 +68,7 @@ extern "C" {
         IntMv             ref_mv[2]);
 
     void enc_pass_av1_mv_pred(
-#if MEM_RED2
         struct ModeDecisionContext_s            *md_context_ptr,
-#endif
         CodingUnit_t                     *cu_ptr,
         const BlockGeom                   * blk_geom,
         uint16_t                            cu_origin_x,
