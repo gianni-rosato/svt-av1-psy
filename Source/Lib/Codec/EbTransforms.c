@@ -8318,6 +8318,28 @@ static void highbd_inv_txfm_add(const tran_low_t *input, uint8_t *dest,
     }
 }
 
+void av1_inv_txfm_add_c(const tran_low_t *dqcoeff, uint8_t *dst, int32_t stride,
+    const TxfmParam *txfm_param) {
+    const TxType tx_size = txfm_param->tx_size;
+    DECLARE_ALIGNED(32, uint16_t, tmp[MAX_TX_SQUARE]);
+    int32_t tmp_stride = MAX_TX_SIZE;
+    int32_t w = tx_size_wide[tx_size];
+    int32_t h = tx_size_high[tx_size];
+    for (int32_t r = 0; r < h; ++r) {
+        for (int32_t c = 0; c < w; ++c) {
+            tmp[r * tmp_stride + c] = dst[r * stride + c];
+        }
+    }
+
+    highbd_inv_txfm_add(dqcoeff, CONVERT_TO_BYTEPTR(tmp), tmp_stride,
+        txfm_param);
+
+    for (int32_t r = 0; r < h; ++r) {
+        for (int32_t c = 0; c < w; ++c) {
+            dst[r * stride + c] = (uint8_t)tmp[r * tmp_stride + c];
+        }
+    }
+}
 
 EbErrorType Av1InvTransformRecon(
     int32_t      *coeffBuffer,//1D buffer
