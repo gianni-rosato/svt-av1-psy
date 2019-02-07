@@ -90,8 +90,7 @@ In order to run the highest resolution supported by the SVT-AV1 Encoder, at leas
 	 -	YASM Assembler version 1.2.0 or later
 
 * __Build Instructions__
-	 -	cd Build/linux
-	 -	./build.sh <release | debug> (if none specified, both release and debug will be built)
+	 -	./Build/linux/build.sh <release | debug> (if none specified, both release and debug will be built)
 
 * __Sample Binaries location__
 	 -	Binaries can be found under Bin/Release and / or Bin/Debug
