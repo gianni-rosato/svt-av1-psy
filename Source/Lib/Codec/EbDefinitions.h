@@ -2460,9 +2460,9 @@ strcmp(target,token)
 #define EB_STRLEN(target, max_size) \
 strnlen_ss(target, max_size)
 
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+//#ifdef __cplusplus
+//}
+//#endif // __cplusplus
 
 
 
