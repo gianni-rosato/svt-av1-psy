@@ -430,7 +430,7 @@ void highbd_variance64_avx2(const uint8_t *a8, int32_t a_stride,
 
 #ifdef _WIN32
     // Add this redundant instruction to fix a Visual Studio compiler bug, which
-    // faslely loads 64-bit intermediate result into *sse in
+    // falsely loads 64-bit intermediate result into *sse in
     // variance_final_from_32bit_sum_avx2(), instead of 32-bit result as we
     // wanted. We and *sse back to 32-bit correct result.
     // No overflow happens here,  since for the largest 8-bit 128x128 block,
