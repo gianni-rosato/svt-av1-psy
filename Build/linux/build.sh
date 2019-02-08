@@ -13,7 +13,7 @@ function clean {
 
 function build {
     build_type=$1
-    lowercase_build_type=${build_type,}
+    lowercase_build_type=$(echo ${build_type} | tr '[:upper:]' '[:lower:]')
     mkdir -p $lowercase_build_type
     mkdir -p ../../Bin/$build_type
     cd $lowercase_build_type
