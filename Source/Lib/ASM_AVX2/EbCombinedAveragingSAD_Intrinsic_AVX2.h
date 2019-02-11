@@ -82,7 +82,15 @@ extern "C" {
         uint64_t * meanOf8x8Blocks,      // mean of four  8x8
         uint64_t * meanOfSquared8x8Blocks);
 
-
+    uint32_t CombinedAveragingSSD_AVX2(
+        uint8_t  *src,
+        uint32_t  src_stride,
+        uint8_t  *ref1,
+        uint32_t  ref1Stride,
+        uint8_t  *ref2,
+        uint32_t  ref2Stride,
+        uint32_t  height,
+        uint32_t  width);
 #ifdef __cplusplus
 }
 #endif
