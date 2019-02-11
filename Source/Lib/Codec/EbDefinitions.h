@@ -285,6 +285,13 @@ one more than the minimum. */
 #define LF_SHARPNESS 0
 #endif
 
+#define FILTER_BITS 7
+#define SUBPEL_BITS 4
+#define SUBPEL_MASK ((1 << SUBPEL_BITS) - 1)
+#define SUBPEL_SHIFTS (1 << SUBPEL_BITS)
+#define SUBPEL_TAPS 8
+typedef int16_t InterpKernel[SUBPEL_TAPS];
+
 /***************************************************/
 /****************** Helper Macros ******************/
 /***************************************************/

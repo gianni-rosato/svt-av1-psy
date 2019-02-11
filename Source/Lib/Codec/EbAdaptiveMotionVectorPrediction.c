@@ -1479,7 +1479,7 @@ void generate_av1_mvp_table(
     for (refIt = 0; refIt < tot_refs; ++refIt) {
 
         MvReferenceFrame ref_frame = ref_frames[refIt];
-        IntMv zeromv[2] = { 0 };
+        IntMv zeromv[2] = { {0}, {0} };
 
         MvReferenceFrame rf[2];
         av1_set_ref_frame(rf, ref_frame);

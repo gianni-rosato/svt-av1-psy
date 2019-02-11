@@ -618,9 +618,7 @@ void Unipred3x3CandidatesInjection(
     MeCuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr][me2Nx2NTableOffset];
     ModeDecisionCandidate_t    *candidateArray = context_ptr->fast_candidate_array;
     EbBool isCompoundEnabled = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
-    IntMv  bestPredmv[2] = { 0 };
-
-
+    IntMv  bestPredmv[2] = { {0}, {0} };
 
     // (8 Best_L0 neighbors)
     for (bipredIndex = 0; bipredIndex < BIPRED_3x3_REFINMENT_POSITIONS; ++bipredIndex)
@@ -759,7 +757,7 @@ void Bipred3x3CandidatesInjection(
     MeCuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr][me2Nx2NTableOffset];
     ModeDecisionCandidate_t    *candidateArray = context_ptr->fast_candidate_array;
     EbBool isCompoundEnabled = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
-    IntMv  bestPredmv[2] = { 0 };
+    IntMv  bestPredmv[2] = { {0}, {0} };
 
     if (isCompoundEnabled) {
         /**************
@@ -1234,7 +1232,7 @@ void  inject_inter_candidates(
 
     uint32_t close_loop_me_index = use_close_loop_me ? get_in_loop_me_info_index(MAX_SS_ME_PU_COUNT, sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 1 : 0, context_ptr->blk_geom) : 0;
     EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
-    IntMv  bestPredmv[2] = { 0 };
+    IntMv  bestPredmv[2] = { {0}, {0} };
 
     generate_av1_mvp_table(
         context_ptr,
