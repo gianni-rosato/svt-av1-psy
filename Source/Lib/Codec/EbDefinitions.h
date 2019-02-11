@@ -40,6 +40,11 @@ extern "C" {
     ////
 #define MEM_RED4                                        0 //  Reduce mem allocation when DISABLE_128X128_SB is ON
 
+#define FILT_PROC	  1	// New Filtering processes.
+#define CDEF_M        1 // multi-threaded cdef
+#define REST_M        1 // multi-threaded restoration
+#define REST_NEED_B   1 // use boundary update in restoration
+
 #define    DLF_TEST2                                       1
 #define    DLF_TEST3                                       0
 #define    DLF_TEST4                                       0

@@ -19,7 +19,11 @@
 #include "EbEncDecProcess.h"
 #include "aom_dsp_rtcd.h"
 
+#if CDEF_M
+ void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
+#else
 static void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
+#endif
     int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
     int32_t vsize, int32_t hsize);
 
@@ -469,6 +473,9 @@ void av1_cdef_frame(
     PictureControlSet_t            *pCs
 )
 {
+#if FILT_PROC
+    (void)context_ptr;
+#endif
     struct PictureParentControlSet_s     *pPcs = pCs->parent_pcs_ptr;
     Av1Common*   cm = pPcs->av1_cm;
 
@@ -477,11 +484,19 @@ void av1_cdef_frame(
 
 
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
+#if FILT_PROC
+        recon_picture_ptr = ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->referencePicture;
+#else
         recon_picture_ptr = context_ptr->is16bit ?
         ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->referencePicture16bit :
         ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->referencePicture;
+#endif
     else
+#if FILT_PROC
+        recon_picture_ptr = pCs->recon_picture_ptr;
+#else
         recon_picture_ptr = context_ptr->is16bit ? pCs->recon_picture16bit_ptr : pCs->recon_picture_ptr;
+#endif
 
     EbByte  reconBufferY = &((recon_picture_ptr->bufferY)[recon_picture_ptr->origin_x + recon_picture_ptr->origin_y * recon_picture_ptr->strideY]);
     EbByte  reconBufferCb = &((recon_picture_ptr->bufferCb)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCb]);
@@ -1132,10 +1147,11 @@ void av1_cdef_frame16bit(
 
 ///-------search
 
+#if ! CDEF_M
 #define REDUCED_PRI_STRENGTHS 8
 #define REDUCED_TOTAL_STRENGTHS (REDUCED_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
 #define TOTAL_STRENGTHS (CDEF_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
-
+#endif
 static int32_t priconv[REDUCED_PRI_STRENGTHS] = { 0, 1, 2, 3, 5, 7, 10, 13 };
 
 /* Search for the best strength to add as an option, knowing we
@@ -1277,7 +1293,11 @@ static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev
 }
 
 /* FIXME: SSE-optimize this. */
-static void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
+#if CDEF_M
+ void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
+#else
+ static void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
+#endif
     int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
     int32_t vsize, int32_t hsize) {
     int32_t r, c;
@@ -1403,6 +1423,171 @@ uint64_t compute_cdef_dist(uint16_t *dst, int32_t dstride, uint16_t *src,
     }
     return sum >> 2 * coeff_shift;
 }
+#if CDEF_M
+void finish_cdef_search(
+    EncDecContext_t                *context_ptr,
+    SequenceControlSet_t           *sequence_control_set_ptr,
+    PictureControlSet_t            *picture_control_set_ptr )
+{
+    (void)context_ptr;
+    int32_t fast = 0;
+    struct PictureParentControlSet_s     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
+    Av1Common*   cm = pPcs->av1_cm;
+    int32_t mi_rows = pPcs->av1_cm->mi_rows;
+    int32_t mi_cols = pPcs->av1_cm->mi_cols;
+
+    int32_t fbr, fbc;
+
+    int32_t pli;
+
+    uint64_t best_tot_mse = (uint64_t)1 << 63;
+    uint64_t tot_mse;
+    int32_t sb_count;
+    int32_t nvfb = (mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
+    int32_t nhfb = (mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
+    int32_t *sb_index = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
+    int32_t *selected_strength = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
+    uint64_t(*mse[2])[TOTAL_STRENGTHS];
+    int32_t pri_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex  >> 6);
+    int32_t sec_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex  >> 6);
+    int32_t i;
+    int32_t nb_strengths;
+    int32_t nb_strength_bits;
+    int32_t quantizer;
+    double lambda;
+    const int32_t num_planes = 3;
+
+    quantizer =
+        av1_ac_quant_Q3(pPcs->base_qindex, 0, (aom_bit_depth_t)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
+    lambda = .12 * quantizer * quantizer / 256.;
+
+    mse[0] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);
+    mse[1] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);
+
+
+
+
+
+    sb_count = 0;
+    for (fbr = 0; fbr < nvfb; ++fbr) {
+        for (fbc = 0; fbc < nhfb; ++fbc) {
+
+            ModeInfo **mi = picture_control_set_ptr->mi_grid_base + MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc;
+            const MbModeInfo *mbmi = &mi[0]->mbmi;
+
+            if (((fbc & 1) &&
+                (mbmi->sb_type == BLOCK_128X128 || mbmi->sb_type == BLOCK_128X64)) ||
+                ((fbr & 1) &&
+                (mbmi->sb_type == BLOCK_128X128 || mbmi->sb_type == BLOCK_64X128)))
+            {
+                continue;
+            }
+
+
+
+            // No filtering if the entire filter block is skipped
+            if (sb_all_skip(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
+                continue;
+
+            for (pli = 0; pli < num_planes; pli++) {
+                if (pli == 0)
+                     memcpy(mse[0][sb_count], picture_control_set_ptr->mse_seg[0][fbr*nhfb + fbc], TOTAL_STRENGTHS * sizeof(uint64_t));
+                if (pli == 2)
+                     memcpy(mse[1][sb_count], picture_control_set_ptr->mse_seg[1][fbr*nhfb + fbc], TOTAL_STRENGTHS * sizeof(uint64_t));
+
+                sb_index[sb_count] = MI_SIZE_64X64 * fbr * picture_control_set_ptr->mi_stride + MI_SIZE_64X64 * fbc;
+            }
+            sb_count++;
+
+        }
+    }
+
+    nb_strength_bits = 0;
+    /* Search for different number of signalling bits. */
+    for (i = 0; i <= 3; i++) {
+        int32_t j;
+        int32_t best_lev0[CDEF_MAX_STRENGTHS];
+        int32_t best_lev1[CDEF_MAX_STRENGTHS] = { 0 };
+        nb_strengths = 1 << i;
+
+        if (num_planes >= 3)
+            tot_mse = joint_strength_search_dual(best_lev0, best_lev1, nb_strengths, mse, sb_count, fast);
+        else
+            tot_mse = joint_strength_search(best_lev0, nb_strengths, mse[0], sb_count, fast);
+
+        /* Count superblock signalling cost. */
+        tot_mse += (uint64_t)(sb_count * lambda * i);
+        /* Count header signalling cost. */
+        tot_mse += (uint64_t)(nb_strengths * lambda * CDEF_STRENGTH_BITS);
+        if (tot_mse < best_tot_mse) {
+            best_tot_mse = tot_mse;
+            nb_strength_bits = i;
+            for (j = 0; j < 1 << nb_strength_bits; j++) {
+                pPcs->cdef_strengths[j] = best_lev0[j];
+                pPcs->cdef_uv_strengths[j] = best_lev1[j];
+            }
+        }
+    }
+    nb_strengths = 1 << nb_strength_bits;
+
+    pPcs->cdef_bits = nb_strength_bits;
+    pPcs->nb_cdef_strengths = nb_strengths;
+    for (i = 0; i < sb_count; i++) {
+        int32_t gi;
+        int32_t best_gi;
+        uint64_t best_mse = (uint64_t)1 << 63;
+        best_gi = 0;
+        for (gi = 0; gi < pPcs->nb_cdef_strengths; gi++) {
+            uint64_t curr = mse[0][i][pPcs->cdef_strengths[gi]];
+            if (num_planes >= 3) curr += mse[1][i][pPcs->cdef_uv_strengths[gi]];
+            if (curr < best_mse) {
+                best_gi = gi;
+                best_mse = curr;
+            }
+        }
+        selected_strength[i] = best_gi;
+        picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.cdef_strength = (int8_t)best_gi;
+        //in case the fb is within a block=128x128 or 128x64, or 64x128, then we genrate param only for the first 64x64.
+        //since our mi map deos not have the multi pointer single data assignment, we need to duplicate data.
+        BlockSize sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
+
+        switch (sb_type)
+        {
+        case BLOCK_128X128: 
+            picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64]->mbmi.cdef_strength = (int8_t)best_gi;
+            picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64 * picture_control_set_ptr->mi_stride]->mbmi.cdef_strength = (int8_t)best_gi;
+            picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64 * picture_control_set_ptr->mi_stride + MI_SIZE_64X64]->mbmi.cdef_strength = (int8_t)best_gi;
+            break;
+        case BLOCK_128X64:
+            picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64]->mbmi.cdef_strength = (int8_t)best_gi;
+            break;
+        case BLOCK_64X128:
+            picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64 * picture_control_set_ptr->mi_stride]->mbmi.cdef_strength = (int8_t)best_gi;
+            break;
+        default:          
+            break;            
+        }
+
+
+
+    }
+
+    if (fast) {
+        for (int32_t j = 0; j < nb_strengths; j++) {
+            pPcs->cdef_strengths[j] = priconv[pPcs->cdef_strengths[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (pPcs->cdef_strengths[j] % CDEF_SEC_STRENGTHS);
+            pPcs->cdef_uv_strengths[j] = priconv[pPcs->cdef_uv_strengths[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (pPcs->cdef_uv_strengths[j] % CDEF_SEC_STRENGTHS);
+        }
+    }
+    pPcs->cdef_pri_damping = pri_damping;
+    pPcs->cdef_sec_damping = sec_damping;
+
+
+    free(mse[0]);
+    free(mse[1]);
+    free(sb_index);
+    free(selected_strength);
+}
+#endif
 
 void av1_cdef_search(
     EncDecContext_t                *context_ptr,

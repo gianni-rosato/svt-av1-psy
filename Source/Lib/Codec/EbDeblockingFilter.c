@@ -1989,7 +1989,11 @@ static int32_t search_filter_level(
 }
 
 void av1_pick_filter_level(
+#if FILT_PROC
+    DlfContext_t         *context_ptr,
+#else
     EncDecContext_t         *context_ptr,
+#endif
     EbPictureBufferDesc_t   *srcBuffer, // source input
     PictureControlSet_t     *pcsPtr,
     LPF_PICK_METHOD          method) {

@@ -3012,7 +3012,11 @@ EB_EXTERN void AV1EncodePass(
             av1_loop_filter_init(picture_control_set_ptr);
 
             av1_pick_filter_level(
+#if FILT_PROC
+                0,
+#else
                 context_ptr,
+#endif
                 (EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                 picture_control_set_ptr,
                 LPF_PICK_FROM_Q);

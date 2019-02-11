@@ -296,6 +296,9 @@ extern "C" {
     // Finally tmpbuf is a scratch buffer used by the sgrproj filter which should
     // be at least SGRPROJ_TMPBUF_SIZE big.
     void av1_loop_restoration_filter_unit(
+#if REST_NEED_B
+        uint8_t need_bounadaries,
+#endif
         const RestorationTileLimits *limits, const RestorationUnitInfo *rui,
         const RestorationStripeBoundaries *rsb, RestorationLineBuffers *rlbs,
         const AV1PixelRect *tile_rect, int32_t tile_stripe0, int32_t ss_x, int32_t ss_y,
@@ -390,8 +393,20 @@ extern "C" {
 
 
 
+#if REST_M
+    typedef struct {
+        // The best coefficients for Wiener or Sgrproj restoration
+        WienerInfo wiener;
+        SgrprojInfo sgrproj;
 
+        // The sum of squared errors for this rtype.
+        int64_t sse[RESTORE_SWITCHABLE_TYPES];
 
+        // The rtype to use for this unit given a frame rtype as
+        // index. Indices: WIENER, SGRPROJ, SWITCHABLE.
+        RestorationType best_rtype[RESTORE_TYPES - 1];
+    } RestUnitSearchInfo;
+#endif
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -23,6 +23,11 @@
 #include "EbRestoration.h"
 #include "noise_model.h"
 
+#if CDEF_M
+#include "EbCdef.h"
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -13698,7 +13703,27 @@ extern "C" {
         EbBool                                entropy_coding_pic_done;
         EbHandle                              intra_mutex;
         uint32_t                              intra_coded_area;
+#if CDEF_M
+        uint32_t                              tot_seg_searched_cdef;
+        EbHandle                              cdef_search_mutex;
 
+        uint16_t                              cdef_segments_total_count;
+        uint8_t                               cdef_segments_column_count;
+        uint8_t                               cdef_segments_row_count;
+
+        uint64_t(*mse_seg[2])[TOTAL_STRENGTHS];
+
+        uint16_t *src[3];        //dlfed recon in 16bit form
+        uint16_t *ref_coeff[3];  //input video in 16bit form
+
+#endif
+#if REST_M
+        uint32_t                              tot_seg_searched_rest;
+        EbHandle                              rest_search_mutex;
+        uint16_t                              rest_segments_total_count;
+        uint8_t                               rest_segments_column_count;
+        uint8_t                               rest_segments_row_count;            
+#endif
         // Mode Decision Config
         MdcLcuData_t                         *mdc_sb_array;
 
@@ -14237,7 +14262,9 @@ extern "C" {
         aom_film_grain_t                      film_grain_params;
         struct aom_denoise_and_model_t       *denoise_and_model;
         EbBool                                enable_in_loop_motion_estimation_flag;
-
+#if REST_M       
+        RestUnitSearchInfo                   *rusi_picture[3];//for 3 planes
+#endif
     } PictureParentControlSet_t;
 
 
