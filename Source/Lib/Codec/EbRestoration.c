@@ -48,21 +48,6 @@ static INLINE InterpFilter av1_extract_interp_filter(InterpFilters filters,
     return (InterpFilter)((filters >> (x_filter ? 16 : 0)) & 0xffff);
 }
 
-static INLINE InterpFilters av1_make_interp_filters(InterpFilter y_filter,
-    InterpFilter x_filter) {
-    uint16_t y16 = y_filter & 0xffff;
-    uint16_t x16 = x_filter & 0xffff;
-    return y16 | ((uint32_t)x16 << 16);
-}
-
-static INLINE InterpFilters av1_broadcast_interp_filter(InterpFilter filter) {
-    return av1_make_interp_filters(filter, filter);
-}
-
-static INLINE InterpFilter av1_unswitchable_filter(InterpFilter filter) {
-    return filter == SWITCHABLE ? EIGHTTAP_REGULAR : filter;
-}
-
 #define LOG_SWITCHABLE_FILTERS \
   2 /* (1 << LOG_SWITCHABLE_FILTERS) > SWITCHABLE_FILTERS */
 
@@ -80,14 +65,6 @@ static INLINE InterpFilter av1_unswitchable_filter(InterpFilter filter) {
 
 InterpFilterParams av1_get_interp_filter_params_with_block_size(
     const InterpFilter interp_filter, const int32_t w);
-
-static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(
-    const InterpFilterParams filter_params, const int32_t subpel) {
-    return filter_params.filter_ptr + filter_params.taps * subpel;
-}
-
-
-
 
 void *aom_memset16(void *dest, int32_t val, size_t length);
 
@@ -131,50 +108,8 @@ typedef void(*aom_highbd_convolve_fn_t)(
     InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
     const int32_t subpel_y_q4, ConvolveParams *conv_params, int32_t bd);
 
-static INLINE void av1_get_convolve_filter_params(InterpFilters interp_filters,
-    InterpFilterParams *params_x,
-    InterpFilterParams *params_y,
-    int32_t w, int32_t h) {
-    InterpFilter filter_x = av1_extract_interp_filter(interp_filters, 1);
-    InterpFilter filter_y = av1_extract_interp_filter(interp_filters, 0);
-    *params_x = av1_get_interp_filter_params_with_block_size(filter_x, w);
-    *params_y = av1_get_interp_filter_params_with_block_size(filter_y, h);
-}
-
 struct AV1Common;
 struct scale_factors;
-
-static INLINE ConvolveParams get_conv_params_no_round(int32_t ref, int32_t do_average,
-    int32_t plane,
-    CONV_BUF_TYPE *dst,
-    int32_t dst_stride,
-    int32_t is_compound, int32_t bd) {
-    ConvolveParams conv_params;
-    conv_params.ref = ref;
-    conv_params.do_average = do_average;
-    assert(IMPLIES(do_average, is_compound));
-    conv_params.is_compound = is_compound;
-    conv_params.round_0 = ROUND0_BITS;
-    conv_params.round_1 = is_compound ? COMPOUND_ROUND1_BITS
-        : 2 * FILTER_BITS - conv_params.round_0;
-    const int32_t intbufrange = bd + FILTER_BITS - conv_params.round_0 + 2;
-    assert(IMPLIES(bd < 12, intbufrange <= 16));
-    if (intbufrange > 16) {
-        conv_params.round_0 += intbufrange - 16;
-        if (!is_compound) conv_params.round_1 -= intbufrange - 16;
-    }
-    // TODO(yunqing): The following dst should only be valid while
-    // is_compound = 1;
-    conv_params.dst = dst;
-    conv_params.dst_stride = dst_stride;
-    conv_params.plane = plane;
-    return conv_params;
-}
-
-static INLINE ConvolveParams get_conv_params(int32_t ref, int32_t do_average, int32_t plane,
-    int32_t bd) {
-    return get_conv_params_no_round(ref, do_average, plane, NULL, 0, 0, bd);
-}
 
 static INLINE ConvolveParams get_conv_params_wiener(int32_t bd) {
     ConvolveParams conv_params;

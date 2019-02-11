@@ -177,8 +177,6 @@ extern "C" {
 #if WIENER_FILT_PREC_BITS != 7
 #error "Wiener filter currently only works if WIENER_FILT_PREC_BITS == 7"
 #endif
-#define SUBPEL_TAPS 8
-    typedef int16_t InterpKernel[SUBPEL_TAPS];
 
     typedef struct {
         DECLARE_ALIGNED(16, InterpKernel, vfilter);
