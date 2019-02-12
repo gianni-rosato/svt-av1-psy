@@ -43,10 +43,6 @@ int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t h
 //
 // Without CONFIG_DUAL_FILTER,
 typedef uint32_t InterpFilters;
-static INLINE InterpFilter av1_extract_interp_filter(InterpFilters filters,
-    int32_t x_filter) {
-    return (InterpFilter)((filters >> (x_filter ? 16 : 0)) & 0xffff);
-}
 
 #define LOG_SWITCHABLE_FILTERS \
   2 /* (1 << LOG_SWITCHABLE_FILTERS) > SWITCHABLE_FILTERS */

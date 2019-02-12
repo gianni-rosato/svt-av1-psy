@@ -20,21 +20,10 @@
 // Loads and stores to do away with the tedium of casting the address
 // to the right type.
 
-static INLINE __m128i xx_loadl_64(const void *a) {
-    return _mm_loadl_epi64((const __m128i *)a);
-}
-
-static INLINE __m128i xx_loadu_128(const void *a) {
-    return _mm_loadu_si128((const __m128i *)a);
-}
-
 static INLINE void xx_storel_32(void *const a, const __m128i v) {
     *(uint32_t *)a = _mm_cvtsi128_si32(v);
 }
 
-static INLINE void xx_storeu_128(void *const a, const __m128i v) {
-    _mm_storeu_si128((__m128i *)a, v);
-}
 /***********************************************************************************/
 // lpf_common_sse2.h
 
@@ -1655,82 +1644,6 @@ static INLINE void transpose8x8_sse2(__m128i *x0, __m128i *x1, __m128i *x2,
         w6, w7);  // 04 14 24 34 44 54 64 74 05 15 25 35 45 55 65 75
     *d6d7 = _mm_unpackhi_epi32(
         w6, w7);  // 06 16 26 36 46 56 66 76 07 17 27 37 47 57 67 77
-}
-
-static INLINE void transpose8x8(uint8_t *src[], int32_t in_p,
-    uint8_t *dst[], int32_t out_p,
-    int32_t num_8x8_to_transpose) {
-    int32_t idx8x8 = 0;
-    __m128i x0, x1, x2, x3, x4, x5, x6, x7;
-    do {
-        uint8_t *in = src[idx8x8];
-        uint8_t *out = dst[idx8x8];
-
-        x0 =
-            _mm_loadl_epi64((__m128i *)(in + 0 * in_p));  // 00 01 02 03 04 05 06 07
-        x1 =
-            _mm_loadl_epi64((__m128i *)(in + 1 * in_p));  // 10 11 12 13 14 15 16 17
-
-        x0 = _mm_unpacklo_epi8(
-            x0, x1);  // 00 10 01 11 02 12 03 13 04 14 05 15 06 16 07 17
-
-        x2 =
-            _mm_loadl_epi64((__m128i *)(in + 2 * in_p));  // 20 21 22 23 24 25 26 27
-        x3 =
-            _mm_loadl_epi64((__m128i *)(in + 3 * in_p));  // 30 31 32 33 34 35 36 37
-
-        x1 = _mm_unpacklo_epi8(
-            x2, x3);  // 20 30 21 31 22 32 23 33 24 34 25 35 26 36 27 37
-
-        x4 =
-            _mm_loadl_epi64((__m128i *)(in + 4 * in_p));  // 40 41 42 43 44 45 46 47
-        x5 =
-            _mm_loadl_epi64((__m128i *)(in + 5 * in_p));  // 50 51 52 53 54 55 56 57
-        // 40 50 41 51 42 52 43 53 44 54 45 55 46 56 47 57
-        x2 = _mm_unpacklo_epi8(x4, x5);
-
-        x6 =
-            _mm_loadl_epi64((__m128i *)(in + 6 * in_p));  // 60 61 62 63 64 65 66 67
-        x7 =
-            _mm_loadl_epi64((__m128i *)(in + 7 * in_p));  // 70 71 72 73 74 75 76 77
-        // 60 70 61 71 62 72 63 73 64 74 65 75 66 76 67 77
-        x3 = _mm_unpacklo_epi8(x6, x7);
-
-        // 00 10 20 30 01 11 21 31 02 12 22 32 03 13 23 33
-        x4 = _mm_unpacklo_epi16(x0, x1);
-        // 40 50 60 70 41 51 61 71 42 52 62 72 43 53 63 73
-        x5 = _mm_unpacklo_epi16(x2, x3);
-        // 00 10 20 30 40 50 60 70 01 11 21 31 41 51 61 71
-        x6 = _mm_unpacklo_epi32(x4, x5);
-        _mm_storel_pd((double *)(out + 0 * out_p),
-            _mm_castsi128_pd(x6));  // 00 10 20 30 40 50 60 70
-        _mm_storeh_pd((double *)(out + 1 * out_p),
-            _mm_castsi128_pd(x6));  // 01 11 21 31 41 51 61 71
-        // 02 12 22 32 42 52 62 72 03 13 23 33 43 53 63 73
-        x7 = _mm_unpackhi_epi32(x4, x5);
-        _mm_storel_pd((double *)(out + 2 * out_p),
-            _mm_castsi128_pd(x7));  // 02 12 22 32 42 52 62 72
-        _mm_storeh_pd((double *)(out + 3 * out_p),
-            _mm_castsi128_pd(x7));  // 03 13 23 33 43 53 63 73
-
-        // 04 14 24 34 05 15 25 35 06 16 26 36 07 17 27 37
-        x4 = _mm_unpackhi_epi16(x0, x1);
-        // 44 54 64 74 45 55 65 75 46 56 66 76 47 57 67 77
-        x5 = _mm_unpackhi_epi16(x2, x3);
-        // 04 14 24 34 44 54 64 74 05 15 25 35 45 55 65 75
-        x6 = _mm_unpacklo_epi32(x4, x5);
-        _mm_storel_pd((double *)(out + 4 * out_p),
-            _mm_castsi128_pd(x6));  // 04 14 24 34 44 54 64 74
-        _mm_storeh_pd((double *)(out + 5 * out_p),
-            _mm_castsi128_pd(x6));  // 05 15 25 35 45 55 65 75
-        // 06 16 26 36 46 56 66 76 07 17 27 37 47 57 67 77
-        x7 = _mm_unpackhi_epi32(x4, x5);
-
-        _mm_storel_pd((double *)(out + 6 * out_p),
-            _mm_castsi128_pd(x7));  // 06 16 26 36 46 56 66 76
-        _mm_storeh_pd((double *)(out + 7 * out_p),
-            _mm_castsi128_pd(x7));  // 07 17 27 37 47 57 67 77
-    } while (++idx8x8 < num_8x8_to_transpose);
 }
 
 void aom_lpf_vertical_4_dual_sse2(uint8_t *s, int32_t p, const uint8_t *blimit0,

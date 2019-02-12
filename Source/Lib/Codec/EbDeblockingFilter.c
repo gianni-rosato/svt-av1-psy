@@ -425,35 +425,6 @@ static INLINE int8_t highbd_filter_mask(uint8_t limit, uint8_t blimit,
     return ~mask;
 }
 
-static INLINE int8_t highbd_filter_mask3_chroma(uint8_t limit, uint8_t blimit,
-    uint16_t p2, uint16_t p1,
-    uint16_t p0, uint16_t q0,
-    uint16_t q1, uint16_t q2,
-    int32_t bd) {
-    int8_t mask = 0;
-    int16_t limit16 = (uint16_t)limit << (bd - 8);
-    int16_t blimit16 = (uint16_t)blimit << (bd - 8);
-    mask |= (abs(p2 - p1) > limit16) * -1;
-    mask |= (abs(p1 - p0) > limit16) * -1;
-    mask |= (abs(q1 - q0) > limit16) * -1;
-    mask |= (abs(q2 - q1) > limit16) * -1;
-    mask |= (abs(p0 - q0) * 2 + abs(p1 - q1) / 2 > blimit16) * -1;
-    return ~mask;
-}
-
-static INLINE int8_t highbd_flat_mask3_chroma(uint8_t thresh, uint16_t p2,
-    uint16_t p1, uint16_t p0,
-    uint16_t q0, uint16_t q1,
-    uint16_t q2, int32_t bd) {
-    int8_t mask = 0;
-    int16_t thresh16 = (uint16_t)thresh << (bd - 8);
-    mask |= (abs(p1 - p0) > thresh16) * -1;
-    mask |= (abs(q1 - q0) > thresh16) * -1;
-    mask |= (abs(p2 - p0) > thresh16) * -1;
-    mask |= (abs(q2 - q0) > thresh16) * -1;
-    return ~mask;
-}
-
 static INLINE int8_t highbd_flat_mask4(uint8_t thresh, uint16_t p3, uint16_t p2,
     uint16_t p1, uint16_t p0, uint16_t q0,
     uint16_t q1, uint16_t q2, uint16_t q3,
@@ -553,25 +524,6 @@ void aom_highbd_lpf_vertical_4_c(uint16_t *s, int32_t pitch, const uint8_t *blim
     }
 }
 
-static INLINE void highbd_filter6(int8_t mask, uint8_t thresh, int8_t flat,
-    uint16_t *op2, uint16_t *op1, uint16_t *op0,
-    uint16_t *oq0, uint16_t *oq1, uint16_t *oq2,
-    int32_t bd) {
-    if (flat && mask) {
-        const uint16_t p2 = *op2, p1 = *op1, p0 = *op0;
-        const uint16_t q0 = *oq0, q1 = *oq1, q2 = *oq2;
-
-        // 5-tap filter [1, 2, 2, 2, 1]
-        *op1 = ROUND_POWER_OF_TWO(p2 * 3 + p1 * 2 + p0 * 2 + q0, 3);
-        *op0 = ROUND_POWER_OF_TWO(p2 + p1 * 2 + p0 * 2 + q0 * 2 + q1, 3);
-        *oq0 = ROUND_POWER_OF_TWO(p1 + p0 * 2 + q0 * 2 + q1 * 2 + q2, 3);
-        *oq1 = ROUND_POWER_OF_TWO(p0 + q0 * 2 + q1 * 2 + q2 * 3, 3);
-    }
-    else {
-        highbd_filter4(mask, thresh, op1, op0, oq0, oq1, bd);
-    }
-}
-
 static INLINE void highbd_filter8(int8_t mask, uint8_t thresh, int8_t flat,
     uint16_t *op3, uint16_t *op2, uint16_t *op1,
     uint16_t *op0, uint16_t *oq0, uint16_t *oq1,
@@ -634,69 +586,6 @@ void aom_highbd_lpf_vertical_8_c(uint16_t *s, int32_t pitch, const uint8_t *blim
         s += pitch;
     }
 }
-
-
-static INLINE void highbd_filter14(int8_t mask, uint8_t thresh, int8_t flat,
-    int8_t flat2, uint16_t *op6, uint16_t *op5,
-    uint16_t *op4, uint16_t *op3, uint16_t *op2,
-    uint16_t *op1, uint16_t *op0, uint16_t *oq0,
-    uint16_t *oq1, uint16_t *oq2, uint16_t *oq3,
-    uint16_t *oq4, uint16_t *oq5, uint16_t *oq6,
-    int32_t bd) {
-    if (flat2 && flat && mask) {
-        const uint16_t p6 = *op6;
-        const uint16_t p5 = *op5;
-        const uint16_t p4 = *op4;
-        const uint16_t p3 = *op3;
-        const uint16_t p2 = *op2;
-        const uint16_t p1 = *op1;
-        const uint16_t p0 = *op0;
-        const uint16_t q0 = *oq0;
-        const uint16_t q1 = *oq1;
-        const uint16_t q2 = *oq2;
-        const uint16_t q3 = *oq3;
-        const uint16_t q4 = *oq4;
-        const uint16_t q5 = *oq5;
-        const uint16_t q6 = *oq6;
-
-        // 13-tap filter [1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1]
-        *op5 = ROUND_POWER_OF_TWO(p6 * 7 + p5 * 2 + p4 * 2 + p3 + p2 + p1 + p0 + q0,
-            4);
-        *op4 = ROUND_POWER_OF_TWO(
-            p6 * 5 + p5 * 2 + p4 * 2 + p3 * 2 + p2 + p1 + p0 + q0 + q1, 4);
-        *op3 = ROUND_POWER_OF_TWO(
-            p6 * 4 + p5 + p4 * 2 + p3 * 2 + p2 * 2 + p1 + p0 + q0 + q1 + q2, 4);
-        *op2 = ROUND_POWER_OF_TWO(
-            p6 * 3 + p5 + p4 + p3 * 2 + p2 * 2 + p1 * 2 + p0 + q0 + q1 + q2 + q3,
-            4);
-        *op1 = ROUND_POWER_OF_TWO(p6 * 2 + p5 + p4 + p3 + p2 * 2 + p1 * 2 + p0 * 2 +
-            q0 + q1 + q2 + q3 + q4,
-            4);
-        *op0 = ROUND_POWER_OF_TWO(p6 + p5 + p4 + p3 + p2 + p1 * 2 + p0 * 2 +
-            q0 * 2 + q1 + q2 + q3 + q4 + q5,
-            4);
-        *oq0 = ROUND_POWER_OF_TWO(p5 + p4 + p3 + p2 + p1 + p0 * 2 + q0 * 2 +
-            q1 * 2 + q2 + q3 + q4 + q5 + q6,
-            4);
-        *oq1 = ROUND_POWER_OF_TWO(p4 + p3 + p2 + p1 + p0 + q0 * 2 + q1 * 2 +
-            q2 * 2 + q3 + q4 + q5 + q6 * 2,
-            4);
-        *oq2 = ROUND_POWER_OF_TWO(
-            p3 + p2 + p1 + p0 + q0 + q1 * 2 + q2 * 2 + q3 * 2 + q4 + q5 + q6 * 3,
-            4);
-        *oq3 = ROUND_POWER_OF_TWO(
-            p2 + p1 + p0 + q0 + q1 + q2 * 2 + q3 * 2 + q4 * 2 + q5 + q6 * 4, 4);
-        *oq4 = ROUND_POWER_OF_TWO(
-            p1 + p0 + q0 + q1 + q2 + q3 * 2 + q4 * 2 + q5 * 2 + q6 * 5, 4);
-        *oq5 = ROUND_POWER_OF_TWO(p0 + q0 + q1 + q2 + q3 + q4 * 2 + q5 * 2 + q6 * 7,
-            4);
-    }
-    else {
-        highbd_filter8(mask, thresh, flat, op3, op2, op1, op0, oq0, oq1, oq2, oq3,
-            bd);
-    }
-}
-
 
 
 //**********************************************************************************************************************//

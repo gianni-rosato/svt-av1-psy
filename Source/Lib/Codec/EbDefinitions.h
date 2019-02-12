@@ -623,6 +623,10 @@ static const int32_t tx_size_high[TX_SIZES_ALL] = {
     4, 8, 16, 32, 64, 8, 4, 16, 8, 32, 16, 64, 32, 16, 4, 32, 8, 64, 16,
 };
 
+ // tran_low_t  is the datatype used for final transform coefficients.
+typedef int32_t tran_low_t;
+typedef uint8_t qm_val_t;
+
 typedef enum TX_CLASS {
     TX_CLASS_2D = 0,
     TX_CLASS_HORIZ = 1,
