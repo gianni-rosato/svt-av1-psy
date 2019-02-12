@@ -2790,14 +2790,14 @@ void HalfPelSearch_LCU(
 *
 *******************************************/
 uint32_t combined_averaging_ssd_c(
-    uint8_t  *src,
-    uint32_t  src_stride,
-    uint8_t  *ref1,
-    uint32_t  ref1_stride,
-    uint8_t  *ref2,
-    uint32_t  ref2_stride,
-    uint32_t  height,
-    uint32_t  width)
+    uint8_t   *src,
+    ptrdiff_t  src_stride,
+    uint8_t   *ref1,
+    ptrdiff_t  ref1_stride,
+    uint8_t   *ref2,
+    ptrdiff_t  ref2_stride,
+    uint32_t   height,
+    uint32_t   width)
 {
     uint32_t x, y;
     uint32_t ssd = 0;

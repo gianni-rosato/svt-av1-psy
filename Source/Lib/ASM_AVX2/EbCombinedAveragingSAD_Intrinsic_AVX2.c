@@ -378,14 +378,14 @@ void  ComputeIntermVarFour8x8_AVX2_INTRIN(
 }
 
 uint32_t combined_averaging_ssd_avx2(
-    uint8_t  *src,
-    uint32_t  src_stride,
-    uint8_t  *ref1,
-    uint32_t  ref1_stride,
-    uint8_t  *ref2,
-    uint32_t  ref2_stride,
-    uint32_t  height,
-    uint32_t  width)
+    uint8_t   *src,
+    ptrdiff_t  src_stride,
+    uint8_t   *ref1,
+    ptrdiff_t  ref1_stride,
+    uint8_t   *ref2,
+    ptrdiff_t  ref2_stride,
+    uint32_t   height,
+    uint32_t   width)
 {
     __m256i sum = _mm256_setzero_si256();
     __m256i s, r1, r2, avg, ssd;
