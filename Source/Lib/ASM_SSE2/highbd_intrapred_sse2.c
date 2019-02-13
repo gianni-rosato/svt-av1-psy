@@ -546,52 +546,6 @@ void aom_highbd_dc_128_predictor_8x32_sse2(uint16_t *dst, ptrdiff_t stride,
 }
 
 // -----------------------------------------------------------------------------
-// 16x1
-
-static INLINE void store_16x1(uint16_t *dst, const __m128i dc) {
-    _mm_store_si128((__m128i *)(dst + 0), dc);
-    _mm_store_si128((__m128i *)(dst + 8), dc);
-}
-
-// 16x4
-
-static INLINE void store_16x4(uint16_t *dst, ptrdiff_t stride, const __m128i dc) {
-    store_16x1(dst + 0 * stride, dc);
-    store_16x1(dst + 1 * stride, dc);
-    store_16x1(dst + 2 * stride, dc);
-    store_16x1(dst + 3 * stride, dc);
-}
-
-// 16xh
-
-static INLINE void dc_store_16xh(uint16_t *dst, ptrdiff_t stride, int32_t height,
-    const __m128i *dc) {
-    const __m128i dc_dup_lo = _mm_shufflelo_epi16(*dc, 0);
-    const __m128i dc_dup = _mm_unpacklo_epi64(dc_dup_lo, dc_dup_lo);
-    int32_t i;
-    for (i = 0; i < height; ++i, dst += stride) {
-        _mm_store_si128((__m128i *)dst, dc_dup);
-        _mm_store_si128((__m128i *)(dst + 8), dc_dup);
-    }
-}
-
-// -----------------------------------------------------------------------------
-// 32xh
-
-static INLINE void dc_store_32xh(uint16_t *dst, ptrdiff_t stride, int32_t height,
-    const __m128i *dc) {
-    const __m128i dc_dup_lo = _mm_shufflelo_epi16(*dc, 0);
-    const __m128i dc_dup = _mm_unpacklo_epi64(dc_dup_lo, dc_dup_lo);
-    int32_t i;
-    for (i = 0; i < height; ++i, dst += stride) {
-        _mm_store_si128((__m128i *)dst, dc_dup);
-        _mm_store_si128((__m128i *)(dst + 8), dc_dup);
-        _mm_store_si128((__m128i *)(dst + 16), dc_dup);
-        _mm_store_si128((__m128i *)(dst + 24), dc_dup);
-    }
-}
-
-// -----------------------------------------------------------------------------
 // V_PRED
 
 void aom_highbd_v_predictor_4x8_sse2(uint16_t *dst, ptrdiff_t stride,

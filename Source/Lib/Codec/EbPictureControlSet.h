@@ -58,8 +58,6 @@ extern "C" {
 #define AOM_QM_BITS                            5
 #define QM_TOTAL_SIZE                          3344
 
-    typedef uint8_t qm_val_t;
-
     static const int32_t tx_size_2d[TX_SIZES_ALL + 1] = {
         16, 64, 256, 1024, 4096, 32, 32, 128, 128, 512,
         512, 2048, 2048, 64, 64, 256, 256, 1024, 1024,
@@ -13465,8 +13463,6 @@ extern "C" {
                 32, 32, 32, 32 },
     },
     };
-
-    typedef int32_t tran_low_t;
 
     struct Buf2d {
         uint8_t *buf;

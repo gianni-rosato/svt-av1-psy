@@ -1716,7 +1716,7 @@ static INLINE TxType av1_get_tx_type(
     const TxSetType tx_set_type =
         /*av1_*/get_ext_tx_set_type(tx_size, is_inter, reduced_tx_set);
 
-    TxType tx_type;
+    TxType tx_type = DCT_DCT;
     if ( /*xd->lossless[mbmi->segment_id] ||*/ txsize_sqr_up_map[tx_size] > TX_32X32) {
         tx_type = DCT_DCT;
     }
@@ -2287,9 +2287,4 @@ uint8_t product_full_mode_decision(
     UNUSED(cu_size_log2);
     return lowestCostIndex;
 }
-
-
-
-
-
 

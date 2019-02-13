@@ -115,12 +115,6 @@ void aom_fft4x4_float_sse2(const float *input, float *temp, float *output) {
 // Generate definitions for 1d inverse transforms using float and mm128
 GEN_IFFT_4(static INLINE void, sse2, float, __m128, _mm_load_ps, _mm_store_ps,
     _mm_set1_ps, _mm_add_ps, _mm_sub_ps);
-GEN_IFFT_8(static INLINE void, sse2, float, __m128, _mm_load_ps, _mm_store_ps,
-    _mm_set1_ps, _mm_add_ps, _mm_sub_ps, _mm_mul_ps);
-GEN_IFFT_16(static INLINE void, sse2, float, __m128, _mm_load_ps, _mm_store_ps,
-    _mm_set1_ps, _mm_add_ps, _mm_sub_ps, _mm_mul_ps);
-GEN_IFFT_32(static INLINE void, sse2, float, __m128, _mm_load_ps, _mm_store_ps,
-    _mm_set1_ps, _mm_add_ps, _mm_sub_ps, _mm_mul_ps);
 
 void aom_ifft4x4_float_sse2(const float *input, float *temp, float *output) {
     aom_ifft_2d_gen(input, temp, output, 4, aom_fft1d_4_float, aom_fft1d_4_sse2,
