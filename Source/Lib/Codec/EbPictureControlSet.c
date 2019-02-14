@@ -20,8 +20,12 @@
 #include "EbPictureControlSet.h"
 #include "EbPictureBufferDesc.h"
 
+#if CDEF_M
+void *aom_memalign(size_t align, size_t size);
+void aom_free(void *memblk);
+void *aom_malloc(size_t size);
 
-
+#endif
 EbErrorType av1_alloc_restoration_buffers(Av1Common *cm);
 
 
@@ -848,6 +852,31 @@ EbErrorType PictureControlSetCtor(
 
     EB_CREATEMUTEX(EbHandle, objectPtr->intra_mutex, sizeof(EbHandle), EB_MUTEX);
 
+#if CDEF_M
+    EB_CREATEMUTEX(EbHandle, objectPtr->cdef_search_mutex, sizeof(EbHandle), EB_MUTEX);
+
+    //objectPtr->mse_seg[0] = (uint64_t(*)[64])aom_malloc(sizeof(**objectPtr->mse_seg) *  pictureLcuWidth * pictureLcuHeight);
+   // objectPtr->mse_seg[1] = (uint64_t(*)[64])aom_malloc(sizeof(**objectPtr->mse_seg) *  pictureLcuWidth * pictureLcuHeight);
+   
+    EB_MALLOC(uint64_t(*)[64], objectPtr->mse_seg[0], sizeof(**objectPtr->mse_seg) *  pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
+    EB_MALLOC(uint64_t(*)[64], objectPtr->mse_seg[1], sizeof(**objectPtr->mse_seg) *  pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
+
+    if (is16bit == 0)
+    {
+        EB_MALLOC(uint16_t*, objectPtr->src[0],sizeof(*objectPtr->src)       * initDataPtr->picture_width * initDataPtr->picture_height,EB_N_PTR);
+        EB_MALLOC(uint16_t*, objectPtr->ref_coeff[0],sizeof(*objectPtr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height, EB_N_PTR);
+        EB_MALLOC(uint16_t*, objectPtr->src[1],sizeof(*objectPtr->src)       * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
+        EB_MALLOC(uint16_t*, objectPtr->ref_coeff[1],sizeof(*objectPtr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
+        EB_MALLOC(uint16_t*, objectPtr->src[2],sizeof(*objectPtr->src)       * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
+        EB_MALLOC(uint16_t*,objectPtr->ref_coeff[2],sizeof(*objectPtr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
+    }
+#endif
+
+#if REST_M
+    EB_CREATEMUTEX(EbHandle, objectPtr->rest_search_mutex, sizeof(EbHandle), EB_MUTEX);
+     
+#endif
+
     objectPtr->cu32x32_quant_coeff_num_map_array_stride = (uint16_t)((initDataPtr->picture_width + 32 - 1) / 32);
     uint16_t cu32x32QuantCoeffNumMapArraySize = (uint16_t)(((initDataPtr->picture_width + 32 - 1) / 32) * ((initDataPtr->picture_height + 32 - 1) / 32));
     EB_MALLOC(int8_t*, objectPtr->cu32x32_quant_coeff_num_map_array, sizeof(int8_t) * cu32x32QuantCoeffNumMapArraySize, EB_N_PTR);
@@ -1080,7 +1109,26 @@ EbErrorType PictureParentControlSetCtor(
 
     memset(&objectPtr->av1_cm->rst_frame, 0, sizeof(Yv12BufferConfig));
 
+#if REST_M
+    int32_t ntiles[2];
+    for (int32_t is_uv = 0; is_uv < 2; ++is_uv)
+        ntiles[is_uv] = objectPtr->av1_cm->rst_info[is_uv].units_per_tile; //CHKN res_tiles_in_plane
 
+    assert(ntiles[1] <= ntiles[0]);
+
+    EB_MALLOC(RestUnitSearchInfo*, objectPtr->rusi_picture[0], sizeof(RestUnitSearchInfo) * ntiles[0], EB_N_PTR);
+    EB_MALLOC(RestUnitSearchInfo*, objectPtr->rusi_picture[1], sizeof(RestUnitSearchInfo) * ntiles[1], EB_N_PTR);
+    EB_MALLOC(RestUnitSearchInfo*, objectPtr->rusi_picture[2], sizeof(RestUnitSearchInfo) * ntiles[1], EB_N_PTR);
+
+    //objectPtr->rusi_picture[0] = (RestUnitSearchInfo *)malloc(sizeof(RestUnitSearchInfo) * ntiles[0]);
+    //objectPtr->rusi_picture[1] = (RestUnitSearchInfo *)malloc(sizeof(RestUnitSearchInfo) * ntiles[1]);
+    //objectPtr->rusi_picture[2] = (RestUnitSearchInfo *)malloc(sizeof(RestUnitSearchInfo) * ntiles[1]);
+
+    memset(objectPtr->rusi_picture[0], 0, sizeof(RestUnitSearchInfo) * ntiles[0]);
+    memset(objectPtr->rusi_picture[1], 0, sizeof(RestUnitSearchInfo) * ntiles[1]);
+    memset(objectPtr->rusi_picture[2], 0, sizeof(RestUnitSearchInfo) * ntiles[1]);
+
+#endif
     EB_MALLOC(Macroblock*, objectPtr->av1x, sizeof(Macroblock), EB_N_PTR);
 
     // Film grain noise model if film grain is applied

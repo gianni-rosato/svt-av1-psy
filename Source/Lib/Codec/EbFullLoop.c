@@ -388,6 +388,7 @@ void av1_highbd_quantize_b_facade(const tran_low_t *coeff_ptr,
     }
 }
 
+/*
 static INLINE void highbd_quantize_dc(
     const tran_low_t *coeff_ptr, int32_t n_coeffs, int32_t skip_block,
     const int16_t *round_ptr, const int16_t quant, tran_low_t *qcoeff_ptr,
@@ -418,6 +419,7 @@ static INLINE void highbd_quantize_dc(
     }
     *eob_ptr = (uint16_t)(eob + 1);
 }
+*/
 
 #endif
 #if !QT_10BIT_SUPPORT

@@ -122,7 +122,7 @@ void get_proj_subspace_avx2(const uint8_t *src8, int width, int height,
       }
 
       //Complement when width not divided by 16
-      for (j; j < width; ++j) {
+      for (; j < width; ++j) {
         const double u = (double)(dat[i * dat_stride + j] << SGRPROJ_RST_BITS);
         const double s =
             (double)(src[i * src_stride + j] << SGRPROJ_RST_BITS) - u;
@@ -236,7 +236,7 @@ void get_proj_subspace_avx2(const uint8_t *src8, int width, int height,
       }
 
       //Complement when width not divided by 16
-      for (j; j < width; ++j) {
+      for (; j < width; ++j) {
         const double u = (double)(dat[i * dat_stride + j] << SGRPROJ_RST_BITS);
         const double s =
             (double)(src[i * src_stride + j] << SGRPROJ_RST_BITS) - u;

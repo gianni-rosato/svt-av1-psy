@@ -43,25 +43,6 @@ int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t h
 //
 // Without CONFIG_DUAL_FILTER,
 typedef uint32_t InterpFilters;
-static INLINE InterpFilter av1_extract_interp_filter(InterpFilters filters,
-    int32_t x_filter) {
-    return (InterpFilter)((filters >> (x_filter ? 16 : 0)) & 0xffff);
-}
-
-static INLINE InterpFilters av1_make_interp_filters(InterpFilter y_filter,
-    InterpFilter x_filter) {
-    uint16_t y16 = y_filter & 0xffff;
-    uint16_t x16 = x_filter & 0xffff;
-    return y16 | ((uint32_t)x16 << 16);
-}
-
-static INLINE InterpFilters av1_broadcast_interp_filter(InterpFilter filter) {
-    return av1_make_interp_filters(filter, filter);
-}
-
-static INLINE InterpFilter av1_unswitchable_filter(InterpFilter filter) {
-    return filter == SWITCHABLE ? EIGHTTAP_REGULAR : filter;
-}
 
 #define LOG_SWITCHABLE_FILTERS \
   2 /* (1 << LOG_SWITCHABLE_FILTERS) > SWITCHABLE_FILTERS */
@@ -80,14 +61,6 @@ static INLINE InterpFilter av1_unswitchable_filter(InterpFilter filter) {
 
 InterpFilterParams av1_get_interp_filter_params_with_block_size(
     const InterpFilter interp_filter, const int32_t w);
-
-static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(
-    const InterpFilterParams filter_params, const int32_t subpel) {
-    return filter_params.filter_ptr + filter_params.taps * subpel;
-}
-
-
-
 
 void *aom_memset16(void *dest, int32_t val, size_t length);
 
@@ -131,50 +104,8 @@ typedef void(*aom_highbd_convolve_fn_t)(
     InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
     const int32_t subpel_y_q4, ConvolveParams *conv_params, int32_t bd);
 
-static INLINE void av1_get_convolve_filter_params(InterpFilters interp_filters,
-    InterpFilterParams *params_x,
-    InterpFilterParams *params_y,
-    int32_t w, int32_t h) {
-    InterpFilter filter_x = av1_extract_interp_filter(interp_filters, 1);
-    InterpFilter filter_y = av1_extract_interp_filter(interp_filters, 0);
-    *params_x = av1_get_interp_filter_params_with_block_size(filter_x, w);
-    *params_y = av1_get_interp_filter_params_with_block_size(filter_y, h);
-}
-
 struct AV1Common;
 struct scale_factors;
-
-static INLINE ConvolveParams get_conv_params_no_round(int32_t ref, int32_t do_average,
-    int32_t plane,
-    CONV_BUF_TYPE *dst,
-    int32_t dst_stride,
-    int32_t is_compound, int32_t bd) {
-    ConvolveParams conv_params;
-    conv_params.ref = ref;
-    conv_params.do_average = do_average;
-    assert(IMPLIES(do_average, is_compound));
-    conv_params.is_compound = is_compound;
-    conv_params.round_0 = ROUND0_BITS;
-    conv_params.round_1 = is_compound ? COMPOUND_ROUND1_BITS
-        : 2 * FILTER_BITS - conv_params.round_0;
-    const int32_t intbufrange = bd + FILTER_BITS - conv_params.round_0 + 2;
-    assert(IMPLIES(bd < 12, intbufrange <= 16));
-    if (intbufrange > 16) {
-        conv_params.round_0 += intbufrange - 16;
-        if (!is_compound) conv_params.round_1 -= intbufrange - 16;
-    }
-    // TODO(yunqing): The following dst should only be valid while
-    // is_compound = 1;
-    conv_params.dst = dst;
-    conv_params.dst_stride = dst_stride;
-    conv_params.plane = plane;
-    return conv_params;
-}
-
-static INLINE ConvolveParams get_conv_params(int32_t ref, int32_t do_average, int32_t plane,
-    int32_t bd) {
-    return get_conv_params_no_round(ref, do_average, plane, NULL, 0, 0, bd);
-}
 
 static INLINE ConvolveParams get_conv_params_wiener(int32_t bd) {
     ConvolveParams conv_params;
@@ -283,12 +214,12 @@ EbErrorType av1_alloc_restoration_struct(struct Av1Common *cm, RestorationInfo *
     // max with 1 is to deal with tiles that are smaller than half of a
     // restoration unit.
     const int32_t unit_size = rsi->restoration_unit_size;
-    const int32_t hpertile = count_units_in_tile(unit_size, max_tile_w);
+    const int32_t hpertile = count_units_in_tile(unit_size, max_tile_w);   //FB of size < 1/2 UnitSize are included in neigh FB making them bigger!!
     const int32_t vpertile = count_units_in_tile(unit_size, max_tile_h);
 
-    rsi->units_per_tile = hpertile * vpertile;
-    rsi->horz_units_per_tile = hpertile;
-    rsi->vert_units_per_tile = vpertile;
+    rsi->units_per_tile = hpertile * vpertile;//pic_tot_FB
+    rsi->horz_units_per_tile = hpertile;      //pic_width_in_FB
+    rsi->vert_units_per_tile = vpertile;      //pic_height_in_FB
 
     const int32_t ntiles = 1;
     const int32_t nunits = ntiles * rsi->units_per_tile;
@@ -1235,6 +1166,9 @@ static const stripe_filter_fun stripe_filters[NUM_STRIPE_FILTERS] = {
 
 // Filter one restoration unit
 void av1_loop_restoration_filter_unit(
+#if REST_NEED_B
+    uint8_t need_bounadaries,
+#endif
     const RestorationTileLimits *limits, const RestorationUnitInfo *rui,
     const RestorationStripeBoundaries *rsb, RestorationLineBuffers *rlbs,
     const AV1PixelRect *tile_rect, int32_t tile_stripe0, int32_t ss_x, int32_t ss_y,
@@ -1287,13 +1221,18 @@ void av1_loop_restoration_filter_unit(
         const int32_t h = AOMMIN(nominal_stripe_height,
             remaining_stripes.v_end - remaining_stripes.v_start);
 
+#if REST_NEED_B
+        if(need_bounadaries)
+#endif
         setup_processing_stripe_boundary(&remaining_stripes, rsb, rsb_row, highbd,
             h, data8, stride, rlbs, copy_above,
             copy_below, optimized_lr);
 
         stripe_filter(rui, unit_w, h, procunit_width, data8_tl + i * stride, stride,
             dst8_tl + i * dst_stride, dst_stride, tmpbuf, bit_depth);
-
+#if REST_NEED_B
+        if (need_bounadaries)
+#endif
         restore_processing_stripe_boundary(&remaining_stripes, rlbs, highbd, h,
             data8, stride, copy_above, copy_below,
             optimized_lr);
@@ -1328,6 +1267,9 @@ static void filter_frame_on_unit(const RestorationTileLimits *limits,
     const RestorationInfo *rsi = ctxt->rsi;
 
     av1_loop_restoration_filter_unit(
+#if REST_NEED_B
+        1,
+#endif
         limits, &rsi->unit_info[rest_unit_idx], &rsi->boundaries, ctxt->rlbs,
         tile_rect, ctxt->tile_stripe0, ctxt->ss_x, ctxt->ss_y, ctxt->highbd,
         ctxt->bit_depth, ctxt->data8, ctxt->data_stride, ctxt->dst8,
@@ -1459,6 +1401,112 @@ void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane,
         rsi->units_per_tile, rsi->restoration_unit_size,
         ss_y, on_rest_unit, priv);
 }
+#if REST_M
+static void foreach_rest_unit_in_tile_seg(const AV1PixelRect *tile_rect,
+    int32_t tile_row, int32_t tile_col, int32_t tile_cols,
+    int32_t hunits_per_tile, int32_t units_per_tile,
+    int32_t unit_size, int32_t ss_y,
+    rest_unit_visitor_t on_rest_unit,
+    void *priv ,
+    int32_t vunits_per_tile,
+    PictureControlSet_t   *picture_control_set_ptr,
+    uint32_t segment_index  )
+{
+    //tile_row=0
+    //tile_col=0
+    //tile_cols=1
+    const int32_t tile_w = tile_rect->right - tile_rect->left; // eq to pic_width
+    const int32_t tile_h = tile_rect->bottom - tile_rect->top; // eq to pic_height
+    const int32_t ext_size = unit_size * 3 / 2;
+
+    const int32_t tile_idx = tile_col + tile_row * tile_cols;  //eq to 0
+    const int32_t unit_idx0 = tile_idx * units_per_tile;       //eq to 0
+
+    uint32_t  x_seg_idx;
+    uint32_t  y_seg_idx;
+    uint32_t picture_width_in_units = hunits_per_tile;
+    uint32_t picture_height_in_units = vunits_per_tile;
+    SEGMENT_CONVERT_IDX_TO_XY(segment_index, x_seg_idx, y_seg_idx, picture_control_set_ptr->rest_segments_column_count);
+    uint32_t x_unit_start_idx = SEGMENT_START_IDX(x_seg_idx, picture_width_in_units,  picture_control_set_ptr->rest_segments_column_count);
+    uint32_t x_unit_end_idx   = SEGMENT_END_IDX  (x_seg_idx, picture_width_in_units,  picture_control_set_ptr->rest_segments_column_count);
+    uint32_t y_unit_start_idx = SEGMENT_START_IDX(y_seg_idx, picture_height_in_units, picture_control_set_ptr->rest_segments_row_count);
+    uint32_t y_unit_end_idx   = SEGMENT_END_IDX  (y_seg_idx, picture_height_in_units, picture_control_set_ptr->rest_segments_row_count);
+
+#if 0
+    int32_t y0 = 0, i = 0;
+    while (y0 < tile_h) {
+#else
+    int32_t y0 = y_unit_start_idx * unit_size;
+    int32_t yend = ((int32_t)y_unit_end_idx == (int32_t)picture_height_in_units) ? tile_h : (int32_t)y_unit_end_idx * (int32_t)unit_size; //MIN(y_unit_end_idx * unit_size , tile_h);
+    int32_t i = y_unit_start_idx;
+
+    while (y0 < yend) {
+#endif
+        int32_t remaining_h = tile_h - y0;
+        int32_t h = (remaining_h < ext_size) ? remaining_h : unit_size; //the area at the pic boundary should have size>= half unit_size to be an independent unit.
+                                                                        //if not, it will be added to the last complete unit, increasing its size to up to  3/2 unit_size.
+
+        RestorationTileLimits limits;
+        limits.v_start = tile_rect->top + y0;
+        limits.v_end = tile_rect->top + y0 + h;
+        assert(limits.v_end <= tile_rect->bottom);
+        // Offset the tile upwards to align with the restoration processing stripe
+        const int32_t voffset = RESTORATION_UNIT_OFFSET >> ss_y;
+        limits.v_start = AOMMAX(tile_rect->top, limits.v_start - voffset);
+        if (limits.v_end < tile_rect->bottom) limits.v_end -= voffset;
+
+#if 0
+        int32_t x0 = 0, j = 0;
+        while (x0 < tile_w) {
+#else
+        int32_t x0 = x_unit_start_idx * unit_size;
+        int32_t xend = ((int32_t)x_unit_end_idx == (int32_t)picture_width_in_units) ? tile_w : (int32_t)x_unit_end_idx * (int32_t)unit_size; //MIN(x_unit_end_idx * unit_size,tile_w);
+        int32_t j = x_unit_start_idx;
+
+        while (x0 < xend) {
+#endif
+            int32_t remaining_w = tile_w - x0;
+            int32_t w = (remaining_w < ext_size) ? remaining_w : unit_size;
+
+            limits.h_start = tile_rect->left + x0;
+            limits.h_end = tile_rect->left + x0 + w;
+            assert(limits.h_end <= tile_rect->right);
+
+            const int32_t unit_idx = unit_idx0 + i * hunits_per_tile + j;
+            on_rest_unit(&limits, tile_rect, unit_idx, priv);
+
+            x0 += w;
+            ++j;
+        }
+
+        y0 += h;
+        ++i;
+    }
+}
+void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane,
+    rest_tile_start_visitor_t on_tile,
+    rest_unit_visitor_t on_rest_unit,
+    void *priv,
+    PictureControlSet_t   *picture_control_set_ptr,
+    uint32_t segment_index)
+{
+    const int32_t is_uv = plane > 0;
+    const int32_t ss_y = is_uv && cm->subsampling_y;
+
+    const RestorationInfo *rsi = &cm->rst_info[plane];
+
+    const AV1PixelRect tile_rect = whole_frame_rect(cm, is_uv);
+
+    if (on_tile) on_tile(0, 0, priv);  //will set rsc->tile_strip0=0;
+
+    foreach_rest_unit_in_tile_seg(&tile_rect, 0, 0, 1, rsi->horz_units_per_tile,
+        rsi->units_per_tile, rsi->restoration_unit_size,
+        ss_y, on_rest_unit, priv,
+        rsi->vert_units_per_tile,
+        picture_control_set_ptr,
+        segment_index);
+}
+#endif
 
 int32_t av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
     int32_t mi_row, int32_t mi_col, BlockSize bsize,

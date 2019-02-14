@@ -20,6 +20,9 @@
 #include "EbPredictionUnit.h"
 #include "EbNeighborArrays.h"
 #include "EbEncDecProcess.h"
+#if FILT_PROC
+#include "EbDlfProcess.h"
+#endif
 
 #ifndef EbDeblockingFilter_h
 #define EbDeblockingFilter_h
@@ -104,7 +107,11 @@ extern "C" {
         int32_t partial_frame*/);
 
     void av1_pick_filter_level(
+#if FILT_PROC
+        DlfContext_t         *context_ptr,
+#else
         EncDecContext_t         *context_ptr,
+#endif
         EbPictureBufferDesc_t   *srcBuffer, // source input
         PictureControlSet_t     *pcsPtr,
         LPF_PICK_METHOD          method);
