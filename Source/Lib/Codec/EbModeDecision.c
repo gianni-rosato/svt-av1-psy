@@ -505,11 +505,12 @@ void Me2Nx2NCandidatesInjectionSwResults(
         candidateArray[canTotalCnt].motionVector_y_L0 = mePuResult->yMvL0;
         candidateArray[canTotalCnt].motionVector_x_L1 = mePuResult->xMvL1;
         candidateArray[canTotalCnt].motionVector_y_L1 = mePuResult->yMvL1;
-
+#if !CHROMA_BLIND
         if (picture_control_set_ptr->parent_pcs_ptr->use_subpel_flag == 0) {
             RoundMv(candidateArray,
                 canTotalCnt);
         }
+#endif
 
         if (interDirection == UNI_PRED_LIST_0) {
 

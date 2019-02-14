@@ -28,7 +28,7 @@ extern "C" {
         InterPredictionContext_t   **inter_prediction_context,
         uint16_t                     max_cu_width,
         uint16_t                     max_cu_height);
-
+#if !CHROMA_BLIND
     extern EbErrorType inter2_nx2_n_pu_prediction_avc(
         struct ModeDecisionContext_s           *context_ptr,
         uint32_t                                component_mask,
@@ -42,7 +42,7 @@ extern "C" {
         PictureControlSet_t                    *picture_control_set_ptr,
         ModeDecisionCandidateBuffer_t          *candidate_buffer_ptr,
         EbAsm                                   asm_type);
-
+#endif
     EbErrorType av1_inter_prediction(
         PictureControlSet_t                    *picture_control_set_ptr,
         uint32_t                                interp_filters,
@@ -62,7 +62,9 @@ extern "C" {
 
     EbErrorType inter_pu_prediction_av1(
         struct ModeDecisionContext_s           *md_context_ptr,
+#if !CHROMA_BLIND
         uint32_t                                component_mask,
+#endif
         PictureControlSet_t                    *picture_control_set_ptr,
         ModeDecisionCandidateBuffer_t          *candidate_buffer_ptr,
         EbAsm                                   asm_type);

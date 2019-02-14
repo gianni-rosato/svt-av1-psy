@@ -1154,7 +1154,11 @@ void* RateControlKernel(void *input_ptr)
 
                     }
 #endif
+#if R2R_FIX
+ 
+                    picture_control_set_ptr->picture_qp = (uint8_t)CLIP3((int32_t)sequence_control_set_ptr->static_config.min_qp_allowed, (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed, picture_control_set_ptr->parent_pcs_ptr->base_qindex >> 2);
 
+#else
                     if (picture_control_set_ptr->slice_type == I_SLICE) {
                         picture_control_set_ptr->picture_qp = (uint8_t)CLIP3((int32_t)sequence_control_set_ptr->static_config.min_qp_allowed, (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed, (int32_t)(sequence_control_set_ptr->qp) + context_ptr->maxRateAdjustDeltaQP);
                     }
@@ -1188,6 +1192,7 @@ void* RateControlKernel(void *input_ptr)
                         picture_control_set_ptr->picture_qp = (uint8_t)CLIP3((int32_t)sequence_control_set_ptr->static_config.min_qp_allowed, (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed, (int32_t)(sequence_control_set_ptr->qp + QP_OFFSET_LAYER_ARRAY[picture_control_set_ptr->temporal_layer_index]));
 #endif
                     }
+#endif
                 }
 
                 else if (picture_control_set_ptr->parent_pcs_ptr->qp_on_the_fly == EB_TRUE) {
@@ -1197,9 +1202,11 @@ void* RateControlKernel(void *input_ptr)
                     picture_control_set_ptr->parent_pcs_ptr->base_qindex = quantizer_to_qindex[picture_control_set_ptr->picture_qp];
 #endif
                 }
-
+#if R2R_FIX
+                picture_control_set_ptr->parent_pcs_ptr->picture_qp = picture_control_set_ptr->picture_qp;
+#else    
                 picture_control_set_ptr->picture_qp = picture_control_set_ptr->picture_qp;
-
+#endif
             }
             else {
                 picture_control_set_ptr->picture_qp = rate_control_get_quantizer(rc_model_ptr, picture_control_set_ptr->parent_pcs_ptr);

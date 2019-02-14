@@ -88,13 +88,15 @@ void PfZeroOutUselessQuadrants(
 *
 *******************************************/
 
-
+#if CHROMA_BLIND
+const EB_PREDICTION_FUNC  ProductPredictionFunTable[3] = { NULL, inter_pu_prediction_av1, AV1IntraPredictionCL};
+#else
 const EB_PREDICTION_FUNC  ProductPredictionFunTableCL[3][3] = {
     { NULL, inter2_nx2_n_pu_prediction_avc, AV1IntraPredictionCL },
     { NULL, inter2_nx2_n_pu_prediction_avc_style, AV1IntraPredictionCL },
     { NULL, inter_pu_prediction_av1, AV1IntraPredictionCL }
 };
-
+#endif
 
 const EB_FAST_COST_FUNC   Av1ProductFastCostFuncTable[3] =
 {
@@ -587,6 +589,9 @@ void md_update_all_neighbour_arrays(
         EB_FALSE);
 
     update_mi_map(
+#if CHROMA_BLIND
+        context_ptr,
+#endif
         context_ptr->cu_ptr,
         context_ptr->cu_origin_x,
         context_ptr->cu_origin_y,
@@ -1152,31 +1157,45 @@ void ProductMdFastPuPrediction(
     PictureControlSet_t                 *picture_control_set_ptr,
     ModeDecisionCandidateBuffer_t       *candidateBuffer,
     ModeDecisionContext_t               *context_ptr,
+#if !CHROMA_BLIND
     uint32_t                             use_chroma_information_in_fast_loop,
+#endif
     uint32_t                             modeType,
     ModeDecisionCandidate_t             *const candidate_ptr,
     uint32_t                             fastLoopCandidateIndex,
     uint32_t                             bestFirstFastCostSearchCandidateIndex,
     EbAsm                                asm_type)
 {
+#if !CHROMA_BLIND
     UNUSED(use_chroma_information_in_fast_loop);
+#endif
     UNUSED(candidate_ptr);
     UNUSED(fastLoopCandidateIndex);
     UNUSED(bestFirstFastCostSearchCandidateIndex);
     context_ptr->pu_itr = 0;
-
+#if !CHROMA_BLIND
     EbBool enableSubPelFlag = picture_control_set_ptr->parent_pcs_ptr->use_subpel_flag;
     enableSubPelFlag = 2;
+#endif
     // Prediction
 
     candidateBuffer->candidate_ptr->prediction_is_ready_luma = EB_TRUE;
     candidateBuffer->candidate_ptr->interp_filters = 0;
+
+#if CHROMA_BLIND
+    ProductPredictionFunTable[modeType](
+        context_ptr,
+        picture_control_set_ptr,
+        candidateBuffer,
+        asm_type);
+#else
     ProductPredictionFunTableCL[enableSubPelFlag][modeType](
         context_ptr,
         context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
         picture_control_set_ptr,
         candidateBuffer,
         asm_type);
+#endif
 }
 void generate_intra_reference_samples(
     const Av1Common         *cm,
@@ -1302,13 +1321,14 @@ void ProductPerformFastLoop(
 
 
         if ((!distortion_ready) || fastLoopCandidateIndex == bestFirstFastCostSearchCandidateIndex) {
+#if !CHROMA_BLIND
             context_ptr->round_mv_to_integer = (candidate_ptr->merge_flag == EB_TRUE) ?
 
                 EB_TRUE :
                 EB_FALSE;
 
             context_ptr->round_mv_to_integer = picture_control_set_ptr->parent_pcs_ptr->use_subpel_flag ? EB_FALSE : context_ptr->round_mv_to_integer;
-
+#endif
             lumaFastDistortion = 0;
             chromaFastDistortion = 0;
             // Set the Candidate Buffer
@@ -1316,8 +1336,10 @@ void ProductPerformFastLoop(
             ProductMdFastPuPrediction(
                 picture_control_set_ptr,
                 candidateBuffer,
-                context_ptr,
+                context_ptr, 
+#if !CHROMA_BLIND
                 EB_TRUE/*use_chroma_information_in_fast_loop*/,
+#endif
                 candidate_ptr->type,
                 candidate_ptr,
                 fastLoopCandidateIndex,
@@ -1342,9 +1364,12 @@ void ProductPerformFastLoop(
                         bheight >> candidateBuffer->sub_sampled_pred,
                         bwidth)) << candidateBuffer->sub_sampled_pred;
                 }
-
+#if CHROMA_BLIND
+                if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level == CHROMA_LEVEL_0) {
+#else
                 // Cb
                 if (context_ptr->blk_geom->has_uv) {
+#endif
 
                     uint8_t * const inputBufferCb = inputPicturePtr->bufferCb + inputCbOriginIndex;
                     uint8_t *  const predBufferCb = candidateBuffer->prediction_ptr->bufferCb + cuChromaOriginIndex;
@@ -2076,22 +2101,31 @@ void AV1PerformFullLoop(
 
         candidate_ptr->chroma_distortion = 0;
         candidate_ptr->chroma_distortion_inter_depth = 0;
+#if !CHROMA_BLIND
         context_ptr->round_mv_to_integer = (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE) ?
             EB_TRUE :
             EB_FALSE;
 
         context_ptr->round_mv_to_integer = picture_control_set_ptr->parent_pcs_ptr->use_subpel_flag ? EB_FALSE : context_ptr->round_mv_to_integer;
-
+#endif
         // Set Skip Flag
         candidate_ptr->skip_flag = EB_FALSE;
 
         if (candidate_ptr->prediction_is_ready_luma == EB_FALSE || candidate_ptr->motion_mode == WARPED_CAUSAL) {
+#if CHROMA_BLIND
+            ProductPredictionFunTable[candidate_ptr->type](
+                context_ptr,
+                picture_control_set_ptr,
+                candidateBuffer,
+                asm_type);
+#else
             ProductPredictionFunTableCL[2][candidate_ptr->type](
                 context_ptr,
                 context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
                 picture_control_set_ptr,
                 candidateBuffer,
                 asm_type);
+#endif
         }
 
         if (candidate_ptr->motion_mode == WARPED_CAUSAL && candidate_ptr->local_warp_valid == 0)
@@ -2273,13 +2307,14 @@ void AV1PerformFullLoop(
 
 
         candidateBuffer->y_coeff_bits = y_coeff_bits;
-
+#if !CHROMA_BLIND
         if (picture_control_set_ptr->parent_pcs_ptr->chroma_mode == CHROMA_MODE_BEST)
         {
             candidateBuffer->y_coeff_bits = y_coeff_bits;
             candidateBuffer->y_full_distortion[DIST_CALC_RESIDUAL] = y_full_distortion[DIST_CALC_RESIDUAL];
             candidateBuffer->y_full_distortion[DIST_CALC_PREDICTION] = y_full_distortion[DIST_CALC_PREDICTION];
         }
+#endif
 #if 0 //AMIR_DEBUG
         //if (picture_control_set_ptr->parent_pcs_ptr->picture_number == 0 && /*context_ptr->cu_size > 16 &&*/ (cuStatsPtr)->origin_x >= 0 && (cuStatsPtr)->origin_x < 64 && (cuStatsPtr)->origin_y >= 0 && (cuStatsPtr)->origin_y < 64){
         printf("POC:%d\t(%d,%d)\t%d\t%d\t%d\t%d\t%lld\t%lld\t%lld\t%lld\t%lld\n",

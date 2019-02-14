@@ -4194,12 +4194,16 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
 
 EbErrorType inter_pu_prediction_av1(
     ModeDecisionContext_t                  *md_context_ptr,
+#if !CHROMA_BLIND
     uint32_t                                  component_mask,
+#endif
     PictureControlSet_t                    *picture_control_set_ptr,
     ModeDecisionCandidateBuffer_t          *candidate_buffer_ptr,
     EbAsm                                  asm_type)
 {
+#if !CHROMA_BLIND
     (void)component_mask;
+#endif
     EbErrorType            return_error = EB_ErrorNone;
     EbPictureBufferDesc_t  *ref_pic_list0;
     EbPictureBufferDesc_t  *ref_pic_list1 = NULL;
@@ -4408,7 +4412,7 @@ void RoundMvOnTheFly(
     return;
 }
 
-
+#if !CHROMA_BLIND
 EbErrorType inter2_nx2_n_pu_prediction_avc(
     ModeDecisionContext_t                  *md_context_ptr,
     uint32_t                                  component_mask,
@@ -4473,6 +4477,7 @@ EbErrorType inter2_nx2_n_pu_prediction_avc(
                     &motionVector_x,
                     &motionVector_y);
             }
+
             //all the input quantites are in Qpel resolution
             refList0PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
                 (int32_t)(((ref_pic_list0->width) << 2) + MVBOUNDHIGH),
@@ -4825,7 +4830,7 @@ EbErrorType inter2_nx2_n_pu_prediction_avc(
 
     return return_error;
 }
-
+#endif
 
 
 /***************************************************
@@ -4860,7 +4865,7 @@ void UnPackReferenceLumaBlock(
     );
 }
 
-
+#if !CHROMA_BLIND
 EbErrorType inter2_nx2_n_pu_prediction_avc_style(
     ModeDecisionContext_t                  *md_context_ptr,
     uint32_t                                  component_mask,
@@ -5009,7 +5014,7 @@ EbErrorType inter2_nx2_n_pu_prediction_avc_style(
                     &motionVector_x,
                     &motionVector_y);
             }
-
+            #
             //all the input quantites are in Qpel resolution
             refList0PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
                 (int32_t)(((ref_pic_list0->width) << 2) + MVBOUNDHIGH),
@@ -5377,7 +5382,7 @@ EbErrorType inter2_nx2_n_pu_prediction_avc_style(
 
     return return_error;
 }
-
+#endif
 /** choose_mvp_idx_v2 function is used to choose the best AMVP candidate.
     @param *candidate_ptr(output)
         candidate_ptr points to the prediction result.

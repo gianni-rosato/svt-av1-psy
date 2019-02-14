@@ -1684,6 +1684,9 @@ void update_av1_mi_map(
 
 
 void update_mi_map(
+#if CHROMA_BLIND
+    struct ModeDecisionContext_s   *context_ptr,
+#endif
     CodingUnit_t                   *cu_ptr,
     uint32_t                        cu_origin_x,
     uint32_t                        cu_origin_y,
@@ -1743,8 +1746,11 @@ void update_mi_map(
 
                 miPtr[miX + miY * mi_stride].mbmi.partition = from_shape_to_part[blk_geom->shape];// cu_ptr->part;
             }
-
+#if CHROMA_BLIND
+            if (blk_geom->has_uv && context_ptr->chroma_level == CHROMA_LEVEL_0)
+#else
             if (blk_geom->has_uv)
+#endif
                 miPtr[miX + miY * mi_stride].mbmi.skip = (cu_ptr->transform_unit_array[0].y_has_coeff == 0 && cu_ptr->transform_unit_array[0].v_has_coeff == 0 && cu_ptr->transform_unit_array[0].u_has_coeff == 0) ? EB_TRUE : EB_FALSE;
             else
                 miPtr[miX + miY * mi_stride].mbmi.skip = (cu_ptr->transform_unit_array[0].y_has_coeff == 0) ? EB_TRUE : EB_FALSE;

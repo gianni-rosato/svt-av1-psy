@@ -171,7 +171,9 @@ extern "C" {
         uint16_t                        cu_origin_x;
         uint16_t                        cu_origin_y;
         uint64_t                        chroma_weight;
+#if !CHROMA_BLIND
         uint32_t                        use_chroma_information_in_fast_loop;
+#endif
         uint8_t                         sb_sz;
         uint32_t                        sb_origin_x;
         uint32_t                        sb_origin_y;
@@ -185,7 +187,9 @@ extern "C" {
         unsigned                        luma_intra_ref_samples_gen_done      : 2; // only 1 bit is needed, but used two for rounding
         unsigned                        chroma_intra_ref_samples_gen_done    : 2; // only 1 bit is needed, but used two for rounding
         unsigned                        generate_mvp                         : 2; // only 1 bit is needed, but used two for rounding
+#if !CHROMA_BLIND
         unsigned                        round_mv_to_integer                  : 2; // only 1 bit is needed, but used two for rounding
+#endif
         uint32_t                        full_recon_search_count;
         EbBool                          cu_use_ref_src_flag;
         uint16_t                        qp_index;
@@ -209,7 +213,9 @@ extern "C" {
 
         // Multi-modes signal(s) 
         uint8_t                           nfl_level;
-
+#if CHROMA_BLIND
+        uint8_t                           chroma_level;
+#endif
 
     } ModeDecisionContext_t;
 

@@ -414,6 +414,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     return return_error;
 }
+
 /***************************************************************************
 * Set the default subPel enble/disable flag for each frame
 ****************************************************************************/
@@ -458,7 +459,7 @@ uint8_t PictureLevelSubPelSettings(
 #endif
     return subPelMode;
 }
-
+#if !CHROMA_BLIND
 /***************************************************************************
 * Set the default chroma mode for each frame
 ****************************************************************************/
@@ -490,7 +491,7 @@ EbChromaMode PictureLevelChromaSettings(
 #endif
     return chroma_mode;
 }
-
+#endif
 
 /*************************************************
 * AV1 Reference Picture Signalling:
@@ -1320,7 +1321,7 @@ void* PictureDecisionKernel(void *input_ptr)
                                 picture_control_set_ptr->enc_mode,
                                 picture_control_set_ptr->temporal_layer_index,
                                 picture_control_set_ptr->is_used_as_reference_flag);
-
+#if !CHROMA_BLIND
                             // Set the default settings of  chroma
                             picture_control_set_ptr->chroma_mode = PictureLevelChromaSettings(
                                 sequence_control_set_ptr->input_resolution,
@@ -1328,6 +1329,7 @@ void* PictureDecisionKernel(void *input_ptr)
                                 picture_control_set_ptr->slice_type,
                                 picture_control_set_ptr->temporal_layer_index,
                                 picture_control_set_ptr->is_used_as_reference_flag);
+#endif
 
                             picture_control_set_ptr->use_src_ref = EB_FALSE;
 #if DISABLE_IN_LOOP_ME
