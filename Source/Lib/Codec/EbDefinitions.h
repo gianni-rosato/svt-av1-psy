@@ -40,6 +40,11 @@ extern "C" {
     ////
 #define MEM_RED4                                        0 //  Reduce mem allocation when DISABLE_128X128_SB is ON
 
+#define FILT_PROC	  1	// New Filtering processes.
+#define CDEF_M        1 // multi-threaded cdef
+#define REST_M        1 // multi-threaded restoration
+#define REST_NEED_B   1 // use boundary update in restoration
+
 #define    DLF_TEST2                                       1
 #define    DLF_TEST3                                       0
 #define    DLF_TEST4                                       0
@@ -279,6 +284,13 @@ one more than the minimum. */
 #endif
 #define LF_SHARPNESS 0
 #endif
+
+#define FILTER_BITS 7
+#define SUBPEL_BITS 4
+#define SUBPEL_MASK ((1 << SUBPEL_BITS) - 1)
+#define SUBPEL_SHIFTS (1 << SUBPEL_BITS)
+#define SUBPEL_TAPS 8
+typedef int16_t InterpKernel[SUBPEL_TAPS];
 
 /***************************************************/
 /****************** Helper Macros ******************/
@@ -610,6 +622,10 @@ static const int32_t tx_size_wide[TX_SIZES_ALL] = {
 static const int32_t tx_size_high[TX_SIZES_ALL] = {
     4, 8, 16, 32, 64, 8, 4, 16, 8, 32, 16, 64, 32, 16, 4, 32, 8, 64, 16,
 };
+
+ // tran_low_t  is the datatype used for final transform coefficients.
+typedef int32_t tran_low_t;
+typedef uint8_t qm_val_t;
 
 typedef enum TX_CLASS {
     TX_CLASS_2D = 0,

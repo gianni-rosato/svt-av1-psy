@@ -41,13 +41,6 @@
 
 #define AOM_INTERP_EXTEND 4
 
-#define FILTER_BITS 7
-
-#define SUBPEL_BITS 4
-#define SUBPEL_MASK ((1 << SUBPEL_BITS) - 1)
-#define SUBPEL_SHIFTS (1 << SUBPEL_BITS)
-#define SUBPEL_TAPS 8
-
 #define SCALE_SUBPEL_BITS 10
 #define SCALE_SUBPEL_SHIFTS (1 << SCALE_SUBPEL_BITS)
 #define SCALE_SUBPEL_MASK (SCALE_SUBPEL_SHIFTS - 1)
@@ -59,8 +52,6 @@
 #define RS_SCALE_SUBPEL_BITS 14
 #define RS_SCALE_SUBPEL_MASK ((1 << RS_SCALE_SUBPEL_BITS) - 1)
 #define RS_SCALE_EXTRA_BITS (RS_SCALE_SUBPEL_BITS - RS_SUBPEL_BITS)
-
-typedef int16_t InterpKernel[SUBPEL_TAPS];
 
 #define BIL_SUBPEL_BITS 3
 #define BIL_SUBPEL_SHIFTS (1 << BIL_SUBPEL_BITS)
@@ -137,20 +128,6 @@ sub_pel_filters_4[SUBPEL_SHIFTS]) = {
 
 #define MAX_FILTER_TAP 8
 
-typedef void(*aom_convolve_fn_t)(const uint8_t *src, int32_t src_stride,
-    uint8_t *dst, int32_t dst_stride, int32_t w, int32_t h,
-    InterpFilterParams *filter_params_x,
-    InterpFilterParams *filter_params_y,
-    const int32_t subpel_x_q4, const int32_t subpel_y_q4,
-    ConvolveParams *conv_params);
-
-typedef void(*aom_highbd_convolve_fn_t)(
-    const uint16_t *src, int32_t src_stride, uint16_t *dst, int32_t dst_stride, int32_t w,
-    int32_t h, const InterpFilterParams *filter_params_x,
-    const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-    const int32_t subpel_y_q4, ConvolveParams *conv_params, int32_t bd);
-
-
 void av1_convolve_2d_sr_c(const uint8_t *src, int32_t src_stride, uint8_t *dst,
     int32_t dst_stride, int32_t w, int32_t h,
     InterpFilterParams *filter_params_x,
@@ -158,9 +135,6 @@ void av1_convolve_2d_sr_c(const uint8_t *src, int32_t src_stride, uint8_t *dst,
     const int32_t subpel_x_q4, const int32_t subpel_y_q4,
     ConvolveParams *conv_params)
 {
-
-
-
     int16_t im_block[(MAX_SB_SIZE + MAX_FILTER_TAP - 1) * MAX_SB_SIZE];
     int32_t im_h = h + filter_params_y->taps - 1;
     int32_t im_stride = w;
@@ -213,10 +187,6 @@ void av1_convolve_y_sr_c(const uint8_t *src, int32_t src_stride, uint8_t *dst,
     const int32_t subpel_x_q4, const int32_t subpel_y_q4,
     ConvolveParams *conv_params)
 {
-
-
-
-
     const int32_t fo_vert = filter_params_y->taps / 2 - 1;
     (void)filter_params_x;
     (void)subpel_x_q4;
@@ -249,8 +219,6 @@ void av1_convolve_x_sr_c(const uint8_t *src, int32_t src_stride, uint8_t *dst,
     const int32_t subpel_x_q4, const int32_t subpel_y_q4,
     ConvolveParams *conv_params)
 {
-
-
     const int32_t fo_horiz = filter_params_x->taps / 2 - 1;
     const int32_t bits = FILTER_BITS - conv_params->round_0;
     (void)filter_params_y;
@@ -303,10 +271,6 @@ void av1_jnt_convolve_2d_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8
     const int32_t subpel_x_q4, const int32_t subpel_y_q4,
     ConvolveParams *conv_params)
 {
-
-
-
-
     CONV_BUF_TYPE *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     int16_t im_block[(MAX_SB_SIZE + MAX_FILTER_TAP - 1) * MAX_SB_SIZE];
@@ -378,8 +342,6 @@ void av1_jnt_convolve_y_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
     const int32_t subpel_x_q4, const int32_t subpel_y_q4,
     ConvolveParams *conv_params)
 {
-
-
     CONV_BUF_TYPE *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     const int32_t fo_vert = filter_params_y->taps / 2 - 1;
@@ -434,8 +396,6 @@ void av1_jnt_convolve_x_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
     const int32_t subpel_x_q4, const int32_t subpel_y_q4,
     ConvolveParams *conv_params)
 {
-
-
     CONV_BUF_TYPE *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     const int32_t fo_horiz = filter_params_x->taps / 2 - 1;
@@ -490,9 +450,6 @@ void av1_jnt_convolve_2d_copy_c(const uint8_t *src, int32_t src_stride,
     const int32_t subpel_x_q4, const int32_t subpel_y_q4,
     ConvolveParams *conv_params)
 {
-
-
-
     CONV_BUF_TYPE *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     const int32_t bits =
@@ -530,11 +487,6 @@ void av1_jnt_convolve_2d_copy_c(const uint8_t *src, int32_t src_stride,
         }
     }
 }
-
-
-//static INLINE int32_t clamp(int32_t value, int32_t low, int32_t high) {
-//    return value < low ? low : (value > high ? high : value);
-//}
 
 void av1_highbd_convolve_2d_copy_sr_c(
     const uint16_t *src, int32_t src_stride, uint16_t *dst, int32_t dst_stride, int32_t w,

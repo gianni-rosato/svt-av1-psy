@@ -49,8 +49,6 @@ extern "C" {
     //to not include convolve.h, just forward declare what's needed.
     struct ConvolveParams;
     struct InterpFilterParams;
-    typedef int32_t tran_low_t;
-
 
     void apply_selfguided_restoration_c(const uint8_t *dat, int32_t width, int32_t height, int32_t stride, int32_t eps, const int32_t *xqd, uint8_t *dst, int32_t dst_stride, int32_t *tmpbuf, int32_t bit_depth, int32_t highbd);
     void apply_selfguided_restoration_avx2(const uint8_t *dat, int32_t width, int32_t height, int32_t stride, int32_t eps, const int32_t *xqd, uint8_t *dst, int32_t dst_stride, int32_t *tmpbuf, int32_t bit_depth, int32_t highbd);
