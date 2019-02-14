@@ -764,6 +764,8 @@ __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 {
+    if(svt_enc_component == NULL)
+        return EB_ErrorBadParameter;
     EbEncHandle_t *encHandlePtr = (EbEncHandle_t*)svt_enc_component->pComponentPrivate;
     EbErrorType return_error = EB_ErrorNone;
     uint32_t instanceIndex;
@@ -1779,10 +1781,13 @@ __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_deinit_encoder(EbComponentType *svt_enc_component)
 {
+    if(svt_enc_component == NULL)
+        return EB_ErrorBadParameter;
     EbEncHandle_t *encHandlePtr = (EbEncHandle_t*)svt_enc_component->pComponentPrivate;
     EbErrorType return_error = EB_ErrorNone;
     int32_t              ptrIndex = 0;
     EbMemoryMapEntry*   memoryEntry = (EbMemoryMapEntry*)EB_NULL;
+
     if (encHandlePtr) {
         if (encHandlePtr->memoryMapIndex) {
             // Loop through the ptr table and free all malloc'd pointers per channel
@@ -1840,6 +1845,8 @@ EB_API EbErrorType eb_init_handle(
 
 {
     EbErrorType           return_error = EB_ErrorNone;
+    if(p_handle == NULL)
+         return EB_ErrorBadParameter;
 
     *p_handle = (EbComponentType*)malloc(sizeof(EbComponentType));
     if (*p_handle != (EbComponentType*)NULL) {
@@ -2741,6 +2748,9 @@ EB_API EbErrorType eb_svt_enc_set_parameter(
     EbComponentType              *svt_enc_component,
     EbSvtAv1EncConfiguration     *pComponentParameterStructure)
 {
+    if(svt_enc_component == NULL)
+        return EB_ErrorBadParameter;
+
     EbErrorType           return_error  = EB_ErrorNone;
     EbEncHandle_t        *pEncCompData  = (EbEncHandle_t*)svt_enc_component->pComponentPrivate;
     uint32_t              instanceIndex = 0;
