@@ -34,6 +34,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+#define SIMULATE_PF_N2          0
+#define FULL_LOOP_ESCAPE        0
+#define CHROMA_BLIND            0
+
      //Mode definition : Only one mode should be ON at a time
 #define MR_MODE                                         0
 #define SHUT_FILTERING                                  0 // CDEF RESTORATION DLF
