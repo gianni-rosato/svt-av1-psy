@@ -126,6 +126,10 @@ void DerivePictureActivityStatistics(
     uint64_t               nonMovingIndexMin = ~0u;
     uint64_t               nonMovingIndexMax = 0;
     uint64_t               nonMovingIndexSum = 0;
+#if NEW_PRED_STRUCT
+    uint32_t               complete_sb_count = 0;
+    uint32_t               non_moving_sb_count = 0;
+#endif
     uint32_t               sb_total_count = picture_control_set_ptr->sb_total_count;
     uint32_t                 totNmvIdx = 0;
 
@@ -140,14 +144,21 @@ void DerivePictureActivityStatistics(
         nonMovingIndexMax = picture_control_set_ptr->non_moving_index_array[sb_index] > nonMovingIndexMax ?
             picture_control_set_ptr->non_moving_index_array[sb_index] :
             nonMovingIndexMax;
-
+#if NEW_PRED_STRUCT
+        if (picture_control_set_ptr->non_moving_index_array[sb_index] < NON_MOVING_SCORE_1) {
+            non_moving_sb_count++;
+        }
+        complete_sb_count++;
+#endif
         nonMovingIndexSum += picture_control_set_ptr->non_moving_index_array[sb_index];
 
         if (picture_control_set_ptr->non_moving_index_array[sb_index] < 10)
             totNmvIdx++;
     }
     picture_control_set_ptr->non_moving_index_average = (uint16_t)(nonMovingIndexSum / sb_total_count);
-
+#if NEW_PRED_STRUCT
+    picture_control_set_ptr->kf_zeromotion_pct = (non_moving_sb_count * 100) / complete_sb_count;
+#endif
     InitBeaQpmInfo(
         picture_control_set_ptr,
         sequence_control_set_ptr);

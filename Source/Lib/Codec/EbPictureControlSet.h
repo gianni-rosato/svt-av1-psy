@@ -13999,6 +13999,9 @@ extern "C" {
         uint8_t                              *zz_cost_array;
         // Non moving index array
         uint8_t                              *non_moving_index_array;
+#if NEW_PRED_STRUCT
+        int                                   kf_zeromotion_pct; // percent of zero motion blocks
+#endif
         uint8_t                               fade_out_from_black;
         uint8_t                               fade_in_to_black;
         EbBool                                is_pan;
@@ -14084,7 +14087,10 @@ extern "C" {
         EbPred                                pred_structure;
         uint8_t                               hierarchical_levels;
         uint16_t                              full_sb_count;
-        
+#if NEW_PRED_STRUCT
+        EbBool                                init_pred_struct_position_flag;
+        int8_t                                hierarchical_layers_diff;
+#endif        
         // ME Tools
         EbBool                                use_subpel_flag;
         EbBool                                enable_hme_flag;
