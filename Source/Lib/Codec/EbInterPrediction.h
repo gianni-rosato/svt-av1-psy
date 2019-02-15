@@ -58,6 +58,9 @@ extern "C" {
         EbPictureBufferDesc_t                  *prediction_ptr,
         uint16_t                                dst_origin_x,
         uint16_t                                dst_origin_y,
+#if CHROMA_BLIND
+        EbBool                                  perform_chroma,
+#endif
         EbAsm                                   asm_type);
 
     EbErrorType inter_pu_prediction_av1(

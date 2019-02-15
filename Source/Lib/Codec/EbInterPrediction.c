@@ -1017,6 +1017,9 @@ EbErrorType av1_inter_prediction(
     EbPictureBufferDesc_t                  *prediction_ptr,
     uint16_t                                dst_origin_x,
     uint16_t                                dst_origin_y,
+#if CHROMA_BLIND
+    EbBool                                  perform_chroma,
+#endif
     EbAsm                                   asm_type)
 {
     (void)asm_type;
@@ -1045,10 +1048,13 @@ EbErrorType av1_inter_prediction(
     //for this case: only uniPred is allowed.
 
     int32_t sub8x8_inter = 0;
-
+#if CHROMA_BLIND
+    if(perform_chroma && (blk_geom->has_uv && (blk_geom->bwidth == 4 || blk_geom->bheight == 4)))
+#else
     if (blk_geom->has_uv &&
         (blk_geom->bwidth == 4 || blk_geom->bheight == 4)
         )
+#endif
     {
 
         //CHKN setup input param
@@ -1284,9 +1290,11 @@ EbErrorType av1_inter_prediction(
             subpel_x,
             subpel_y,
             &conv_params);
-
+#if CHROMA_BLIND
+        if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
+#else
         if (blk_geom->has_uv && sub8x8_inter == 0) {
-
+#endif
             //List0-Cb
             srcPtr = ref_pic_list0->bufferCb + (ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list0->strideCb;
             dstPtr = prediction_ptr->bufferCb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->strideCb;
@@ -1376,9 +1384,11 @@ EbErrorType av1_inter_prediction(
             subpel_x,
             subpel_y,
             &conv_params);
-
+#if CHROMA_BLIND
+        if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
+#else
         if (blk_geom->has_uv && sub8x8_inter == 0) {
-
+#endif
             //List0-Cb
             srcPtr = ref_pic_list1->bufferCb + (ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->strideCb;
             dstPtr = prediction_ptr->bufferCb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->strideCb;
@@ -1493,6 +1503,9 @@ EbErrorType AV1MDInterPrediction(
     EbPictureBufferDesc_t                   *prediction_ptr,
     uint16_t                                 dst_origin_x,
     uint16_t                                 dst_origin_y,
+#if CHROMA_BLIND
+    EbBool                                  perform_chroma,
+#endif
     EbAsm                                    asm_type)
 {
     EbErrorType  return_error = EB_ErrorNone;
@@ -1523,10 +1536,13 @@ EbErrorType AV1MDInterPrediction(
    //for this case: only uniPred is allowed.
 
     int32_t sub8x8_inter = 0;
-
+#if CHROMA_BLIND
+    if (perform_chroma && blk_geom->has_uv && (blk_geom->bwidth == 4 || blk_geom->bheight == 4))
+#else
     if (blk_geom->has_uv &&
         (blk_geom->bwidth == 4 || blk_geom->bheight == 4)
         )
+#endif
     {
 
         //CHKN setup input param
@@ -1807,7 +1823,11 @@ EbErrorType AV1MDInterPrediction(
             subpel_y,
             &conv_params);
 
+#if CHROMA_BLIND
+        if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
+#else
         if (blk_geom->has_uv && sub8x8_inter == 0) {
+#endif
             //List0-Cb
             srcPtr = (uint16_t*)ref_pic_list0->bufferCb + (ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list0->strideCb;
             dstPtr = prediction_ptr->bufferCb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->strideCb;
@@ -1955,8 +1975,11 @@ EbErrorType AV1MDInterPrediction(
             subpel_y,
             &conv_params);
 
-
+#if CHROMA_BLIND
+        if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
+#else
         if (blk_geom->has_uv && sub8x8_inter == 0) {
+#endif
             //List1-Cb
             srcPtr = (uint16_t*)ref_pic_list1->bufferCb + (ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->strideCb;
             dstPtr = prediction_ptr->bufferCb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->strideCb;
@@ -2340,6 +2363,7 @@ EbErrorType av1_inter_prediction_hbd(
             bit_depth);
 
         if (blk_geom->has_uv && sub8x8_inter == 0) {
+
             //List0-Cb
             srcPtr = (uint16_t*)ref_pic_list0->bufferCb + (ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list0->strideCb;
             dstPtr = (uint16_t*)prediction_ptr->bufferCb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->strideCb;
@@ -2451,6 +2475,7 @@ EbErrorType av1_inter_prediction_hbd(
             bit_depth);
 
         if (blk_geom->has_uv && sub8x8_inter == 0) {
+
             //List0-Cb
             srcPtr = (uint16_t*)ref_pic_list1->bufferCb + (ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->strideCb;
             dstPtr = (uint16_t*)prediction_ptr->bufferCb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->strideCb;
@@ -3585,6 +3610,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         prediction_ptr,
         md_context_ptr->blk_geom->origin_x,
         md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+        md_context_ptr->chroma_level == CHROMA_LEVEL_0,
+#endif
         asm_type);
 
 
@@ -3660,6 +3688,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+                        md_context_ptr->chroma_level == CHROMA_LEVEL_0,
+#endif
                         asm_type);
 
                     model_rd_for_sb(
@@ -3731,6 +3762,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+                        md_context_ptr->chroma_level == CHROMA_LEVEL_0,
+#endif
                         asm_type);
 
 
@@ -3805,6 +3839,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+                        md_context_ptr->chroma_level == CHROMA_LEVEL_0,
+#endif
                         asm_type);
 
                     model_rd_for_sb(
@@ -3920,6 +3957,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         prediction_ptr,
         md_context_ptr->blk_geom->origin_x,
         md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+        md_context_ptr->chroma_level == CHROMA_LEVEL_0,
+#endif
         asm_type);
 
     model_rd_for_sb(
@@ -3994,6 +4034,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+                        md_context_ptr->chroma_level == CHROMA_LEVEL_0,
+#endif
                         asm_type);
 
                     model_rd_for_sb(
@@ -4066,6 +4109,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+                        md_context_ptr->chroma_level == CHROMA_LEVEL_0,
+#endif
                         asm_type);
 
 
@@ -4141,6 +4187,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+                        md_context_ptr->chroma_level == CHROMA_LEVEL_0,
+#endif
                         asm_type);
 
                     model_rd_for_sb(
@@ -4229,7 +4278,7 @@ EbErrorType inter_pu_prediction_av1(
         if (picture_control_set_ptr->slice_type == B_SLICE)
             ref_pic_list1 = ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->objectPtr)->referencePicture;
     }
-
+    // Hsan
     if(candidate_ptr->motion_mode == WARPED_CAUSAL) {
         candidate_ptr->local_warp_valid = warped_motion_parameters(
             picture_control_set_ptr,
@@ -4324,6 +4373,9 @@ EbErrorType inter_pu_prediction_av1(
             candidate_buffer_ptr->prediction_ptr,
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+            md_context_ptr->chroma_level == CHROMA_LEVEL_0,
+#endif
             asm_type);
     }
     else {
@@ -4367,6 +4419,9 @@ EbErrorType inter_pu_prediction_av1(
             candidate_buffer_ptr->prediction_ptr,
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+            md_context_ptr->chroma_level == CHROMA_LEVEL_0,
+#endif
             asm_type);
 
     }

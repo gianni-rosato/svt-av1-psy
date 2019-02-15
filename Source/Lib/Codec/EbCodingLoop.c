@@ -3700,6 +3700,9 @@ EB_EXTERN void AV1EncodePass(
                                     reconBuffer,
                                     context_ptr->cu_origin_x,
                                     context_ptr->cu_origin_y,
+#if CHROMA_BLIND
+                                    EB_TRUE,
+#endif
                                     asm_type);
                             }
                         }
