@@ -418,7 +418,7 @@ void EbConfigCtor(EbConfig_t *config_ptr)
     config_ptr->encMode                              = MAX_ENC_PRESET;
     config_ptr->intraPeriod                          = -2;
     config_ptr->intraRefreshType                     = 1;
-    config_ptr->hierarchicalLevels                   = 3;
+    config_ptr->hierarchicalLevels                   = 4;
     config_ptr->predStructure                        = 2;
     config_ptr->disable_dlf_flag                     = EB_FALSE;
     config_ptr->enable_warped_motion                 = EB_FALSE;
