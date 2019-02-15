@@ -1963,8 +1963,12 @@ static void CflPrediction(
         cuChromaOriginIndex,
         asm_type);
 
-
+#if CHROMA_BLIND
+    // Hsan: UV_CFL_PRED ! UV_DC_PRED !
+    if (candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED && context_ptr->chroma_level == CHROMA_LEVEL_0) {
+#else
     if (candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
+#endif
         // 4: Recalculate the prediction and the residual
         int32_t alpha_q3_cb =
             cfl_idx_to_alpha(candidateBuffer->candidate_ptr->cfl_alpha_idx, candidateBuffer->candidate_ptr->cfl_alpha_signs, CFL_PRED_U);
@@ -2144,7 +2148,11 @@ void AV1PerformFullLoop(
 
         //TOADD
         //Cb Residual
+#if CHROMA_BLIND
+        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level == CHROMA_LEVEL_0) {
+#else
         if (context_ptr->blk_geom->has_uv) {
+#endif
 
             ResidualKernel(
                 &(inputPicturePtr->bufferCb[inputCbOriginIndex]),
@@ -2206,6 +2214,7 @@ void AV1PerformFullLoop(
             &y_coeff_bits,
             &y_full_distortion[0]);
 
+
         if (candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
             // If mode is CFL:
             // 1: recon the Luma
@@ -2242,8 +2251,11 @@ void AV1PerformFullLoop(
         uint8_t cbQp = context_ptr->qp;
         uint8_t crQp = context_ptr->qp;
 
-
+#if CHROMA_BLIND
+        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level == CHROMA_LEVEL_0) {
+#else
         if (context_ptr->blk_geom->has_uv) {
+#endif
             FullLoop_R(
                 sb_ptr,
                 candidateBuffer,
@@ -2273,10 +2285,20 @@ void AV1PerformFullLoop(
                 &cb_coeff_bits,
                 &cr_coeff_bits,
                 asm_type);
-
+#if !CHROMA_BLIND
             candidate_ptr->block_has_coeff = (candidate_ptr->y_has_coeff | candidate_ptr->u_has_coeff | candidate_ptr->v_has_coeff) ? EB_TRUE : EB_FALSE;
-
+#endif
         }
+
+#if CHROMA_BLIND
+        if (context_ptr->chroma_level == CHROMA_LEVEL_0) {
+            candidate_ptr->block_has_coeff = (candidate_ptr->y_has_coeff | candidate_ptr->u_has_coeff | candidate_ptr->v_has_coeff) ? EB_TRUE : EB_FALSE;
+        }
+        else {
+            candidate_ptr->block_has_coeff = candidate_ptr->y_has_coeff ? EB_TRUE : EB_FALSE;
+        }
+#endif
+
         //ALL PLANE
         Av1ProductFullCostFuncTable[candidate_ptr->type](
             picture_control_set_ptr,

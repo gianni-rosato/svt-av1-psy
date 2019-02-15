@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 
-#define R2R_FIX                 0
+#define R2R_FIX                 1
 #define SIMULATE_PF_N2          0
 #define FULL_LOOP_ESCAPE        0
 #define CHROMA_BLIND            0
