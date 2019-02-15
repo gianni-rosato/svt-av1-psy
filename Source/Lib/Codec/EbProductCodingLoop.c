@@ -1963,12 +1963,9 @@ static void CflPrediction(
         cuChromaOriginIndex,
         asm_type);
 
-#if CHROMA_BLIND
-    // Hsan: UV_CFL_PRED ! UV_DC_PRED !
-    if (candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED && context_ptr->chroma_level == CHROMA_LEVEL_0) {
-#else
+
     if (candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
-#endif
+
         // 4: Recalculate the prediction and the residual
         int32_t alpha_q3_cb =
             cfl_idx_to_alpha(candidateBuffer->candidate_ptr->cfl_alpha_idx, candidateBuffer->candidate_ptr->cfl_alpha_signs, CFL_PRED_U);
@@ -2214,24 +2211,29 @@ void AV1PerformFullLoop(
             &y_coeff_bits,
             &y_full_distortion[0]);
 
+#if CHROMA_BLIND
+        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level == CHROMA_LEVEL_0) {
+#endif
+            if (candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
+                // If mode is CFL:
+                // 1: recon the Luma
+                // 2: Form the pred_buf_q3
+                // 3: Loop over alphas and find the best or choose DC
+                // 4: Recalculate the residual for chroma
+                CflPrediction(
+                    picture_control_set_ptr,
+                    candidateBuffer,
+                    sb_ptr,
+                    context_ptr,
+                    inputPicturePtr,
+                    inputCbOriginIndex,
+                    cuChromaOriginIndex,
+                    asm_type);
 
-        if (candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
-            // If mode is CFL:
-            // 1: recon the Luma
-            // 2: Form the pred_buf_q3
-            // 3: Loop over alphas and find the best or choose DC
-            // 4: Recalculate the residual for chroma
-            CflPrediction(
-                picture_control_set_ptr,
-                candidateBuffer,
-                sb_ptr,
-                context_ptr,
-                inputPicturePtr,
-                inputCbOriginIndex,
-                cuChromaOriginIndex,
-                asm_type);
-
+            }
+#if CHROMA_BLIND
         }
+#endif
 
         candidate_ptr->chroma_distortion_inter_depth = 0;
         candidate_ptr->chroma_distortion = 0;
@@ -2291,12 +2293,7 @@ void AV1PerformFullLoop(
         }
 
 #if CHROMA_BLIND
-        if (context_ptr->chroma_level == CHROMA_LEVEL_0) {
-            candidate_ptr->block_has_coeff = (candidate_ptr->y_has_coeff | candidate_ptr->u_has_coeff | candidate_ptr->v_has_coeff) ? EB_TRUE : EB_FALSE;
-        }
-        else {
-            candidate_ptr->block_has_coeff = candidate_ptr->y_has_coeff ? EB_TRUE : EB_FALSE;
-        }
+        candidate_ptr->block_has_coeff = (candidate_ptr->y_has_coeff | candidate_ptr->u_has_coeff | candidate_ptr->v_has_coeff) ? EB_TRUE : EB_FALSE;
 #endif
 
         //ALL PLANE

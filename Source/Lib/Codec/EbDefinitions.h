@@ -35,8 +35,6 @@
 extern "C" {
 #endif
 
-
-#define R2R_FIX                 1
 #define SIMULATE_PF_N2          0
 #define FULL_LOOP_ESCAPE        0
 #define CHROMA_BLIND            0
@@ -2927,7 +2925,7 @@ static const uint8_t INTRA_AREA_TH_CLASS_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #if CHROMA_BLIND
 #define EB_CHROMA_LEVEL uint8_t
 #define CHROMA_LEVEL_0  0 // CHROMA ON @ MD 
-#define CHROMA_LEVEL_1  2 // CHROMA OFF @ MD
+#define CHROMA_LEVEL_1  1 // CHROMA OFF @ MD
 #else
 typedef enum EbChromaMode {
     CHROMA_MODE_FULL = 1,
