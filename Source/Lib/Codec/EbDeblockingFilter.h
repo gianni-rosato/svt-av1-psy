@@ -108,7 +108,7 @@ extern "C" {
 
     void av1_pick_filter_level(
 #if FILT_PROC
-        DlfContext_t         *context_ptr,
+        DlfContext_t            *context_ptr,
 #else
         EncDecContext_t         *context_ptr,
 #endif
