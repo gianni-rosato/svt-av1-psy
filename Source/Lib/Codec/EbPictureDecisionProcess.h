@@ -33,7 +33,7 @@ typedef struct PictureDecisionContext_s
 
     uint32_t        miniGopStartIndex[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t        miniGopEndIndex[MINI_GOP_WINDOW_MAX_COUNT];
-    uint32_t        miniGopLenght[MINI_GOP_WINDOW_MAX_COUNT];
+    uint32_t        miniGopLength[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t        miniGopIntraCount[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t        miniGopIdrCount[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t        miniGopHierarchicalLevels[MINI_GOP_WINDOW_MAX_COUNT];

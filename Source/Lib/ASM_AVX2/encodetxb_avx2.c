@@ -15,14 +15,8 @@
 #include <immintrin.h>  /* AVX2 */
 
 #include "EbDefinitions.h"
-//#include "aom/aom_integer.h"
-//#include "aom_dsp/x86/mem_sse2.h"
-//#include "av1/common/onyxc_int.h"
-//#include "av1/common/txb_common.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"
-
-typedef int32_t tran_low_t;
 
 void av1_txb_init_levels_avx2(const tran_low_t *const coeff, const int32_t width,
     const int32_t height, uint8_t *const levels) {

@@ -71,6 +71,11 @@ typedef struct EbEncHandle_s
     EbHandle                              *modeDecisionConfigurationThreadHandleArray;
     EbHandle                              *encDecThreadHandleArray;
     EbHandle                              *entropyCodingThreadHandleArray;
+#if FILT_PROC
+    EbHandle                              *dlfThreadHandleArray;
+    EbHandle                              *cdefThreadHandleArray;
+    EbHandle                              *restThreadHandleArray;
+#endif
     EbHandle                               packetizationThreadHandle;
 
     // Contexts
@@ -86,6 +91,11 @@ typedef struct EbEncHandle_s
     EbPtr                                 *modeDecisionConfigurationContextPtrArray;
     EbPtr                                 *encDecContextPtrArray;
     EbPtr                                 *entropyCodingContextPtrArray;
+#if FILT_PROC
+    EbPtr                                 *dlfContextPtrArray;
+    EbPtr                                 *cdefContextPtrArray;
+    EbPtr                                 *restContextPtrArray;
+#endif
     EbPtr                                  packetizationContextPtr;
 
     // System Resource Managers
@@ -104,6 +114,11 @@ typedef struct EbEncHandle_s
     EbSystemResource_t                     *encDecTasksResourcePtr;
     EbSystemResource_t                     *encDecResultsResourcePtr;
     EbSystemResource_t                     *entropyCodingResultsResourcePtr;
+#if FILT_PROC
+    EbSystemResource_t                     *dlfResultsResourcePtr;
+    EbSystemResource_t                     *cdefResultsResourcePtr;
+    EbSystemResource_t                     *restResultsResourcePtr;
+#endif
 
     // Inter-Process Producer Fifos
     EbFifo_t                              **input_buffer_producer_fifo_ptr_array;
@@ -122,6 +137,11 @@ typedef struct EbEncHandle_s
     EbFifo_t                              **encDecTasksProducerFifoPtrArray;
     EbFifo_t                              **encDecResultsProducerFifoPtrArray;
     EbFifo_t                              **entropyCodingResultsProducerFifoPtrArray;
+#if FILT_PROC
+    EbFifo_t                              **dlfResultsProducerFifoPtrArray;
+    EbFifo_t                              **cdefResultsProducerFifoPtrArray;
+    EbFifo_t                              **restResultsProducerFifoPtrArray;
+#endif
 
     // Inter-Process Consumer Fifos
     EbFifo_t                              **input_buffer_consumer_fifo_ptr_array;
@@ -139,7 +159,11 @@ typedef struct EbEncHandle_s
     EbFifo_t                              **encDecTasksConsumerFifoPtrArray;
     EbFifo_t                              **encDecResultsConsumerFifoPtrArray;
     EbFifo_t                              **entropyCodingResultsConsumerFifoPtrArray;
-
+#if FILT_PROC
+    EbFifo_t                              **dlfResultsConsumerFifoPtrArray;
+    EbFifo_t                              **cdefResultsConsumerFifoPtrArray;
+    EbFifo_t                              **restResultsConsumerFifoPtrArray;
+#endif
     // Callbacks
     EbCallback_t                          **app_callback_ptr_array;
 

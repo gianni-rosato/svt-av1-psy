@@ -23,6 +23,11 @@
 #include "EbRestoration.h"
 #include "noise_model.h"
 
+#if CDEF_M
+#include "EbCdef.h"
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,8 +57,6 @@ extern "C" {
 #define NEIGHBOR_ARRAY_TOTAL_COUNT             4
 #define AOM_QM_BITS                            5
 #define QM_TOTAL_SIZE                          3344
-
-    typedef uint8_t qm_val_t;
 
     static const int32_t tx_size_2d[TX_SIZES_ALL + 1] = {
         16, 64, 256, 1024, 4096, 32, 32, 128, 128, 512,
@@ -13461,8 +13464,6 @@ extern "C" {
     },
     };
 
-    typedef int32_t tran_low_t;
-
     struct Buf2d {
         uint8_t *buf;
         uint8_t *buf0;
@@ -13610,6 +13611,15 @@ extern "C" {
         int32_t tile_row_start_sb[MAX_TILE_ROWS + 1];  // valid for 0 <= i <= tile_rows
         int32_t tile_width, tile_height;               // In MI units
         struct PictureParentControlSet_s               *p_pcs_ptr;
+#if FAST_SG
+        int8_t  sg_filter_mode;
+        int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS];
+        int32_t sg_frame_ep;
+        int8_t  sg_ref_frame_ep[2];
+#endif
+#if FAST_SG
+        int8_t  wn_filter_mode;
+#endif
     } Av1Common;
 
     /**************************************
@@ -13698,7 +13708,27 @@ extern "C" {
         EbBool                                entropy_coding_pic_done;
         EbHandle                              intra_mutex;
         uint32_t                              intra_coded_area;
+#if CDEF_M
+        uint32_t                              tot_seg_searched_cdef;
+        EbHandle                              cdef_search_mutex;
 
+        uint16_t                              cdef_segments_total_count;
+        uint8_t                               cdef_segments_column_count;
+        uint8_t                               cdef_segments_row_count;
+
+        uint64_t(*mse_seg[2])[TOTAL_STRENGTHS];
+
+        uint16_t *src[3];        //dlfed recon in 16bit form
+        uint16_t *ref_coeff[3];  //input video in 16bit form
+
+#endif
+#if REST_M
+        uint32_t                              tot_seg_searched_rest;
+        EbHandle                              rest_search_mutex;
+        uint16_t                              rest_segments_total_count;
+        uint8_t                               rest_segments_column_count;
+        uint8_t                               rest_segments_row_count;            
+#endif
         // Mode Decision Config
         MdcLcuData_t                         *mdc_sb_array;
 
@@ -13969,6 +13999,9 @@ extern "C" {
         uint8_t                              *zz_cost_array;
         // Non moving index array
         uint8_t                              *non_moving_index_array;
+#if NEW_PRED_STRUCT
+        int                                   kf_zeromotion_pct; // percent of zero motion blocks
+#endif
         uint8_t                               fade_out_from_black;
         uint8_t                               fade_in_to_black;
         EbBool                                is_pan;
@@ -14054,7 +14087,10 @@ extern "C" {
         EbPred                                pred_structure;
         uint8_t                               hierarchical_levels;
         uint16_t                              full_sb_count;
-        
+#if NEW_PRED_STRUCT
+        EbBool                                init_pred_struct_position_flag;
+        int8_t                                hierarchical_layers_diff;
+#endif        
         // ME Tools
         EbBool                                use_subpel_flag;
         EbBool                                enable_hme_flag;
@@ -14237,6 +14273,15 @@ extern "C" {
         aom_film_grain_t                      film_grain_params;
         struct aom_denoise_and_model_t       *denoise_and_model;
         EbBool                                enable_in_loop_motion_estimation_flag;
+#if REST_M       
+        RestUnitSearchInfo                   *rusi_picture[3];//for 3 planes
+#endif
+#if FAST_CDEF
+        int8_t                                cdef_filter_mode;
+        int32_t                               cdef_frame_strength;
+        int32_t                               cdf_ref_frame_strenght;
+        int32_t                               use_ref_frame_cdef_strength;
+#endif
 
     } PictureParentControlSet_t;
 

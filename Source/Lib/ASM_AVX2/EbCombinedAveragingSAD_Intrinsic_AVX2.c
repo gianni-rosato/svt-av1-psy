@@ -377,5 +377,51 @@ void  ComputeIntermVarFour8x8_AVX2_INTRIN(
 
 }
 
+uint32_t combined_averaging_ssd_avx2(
+    uint8_t   *src,
+    ptrdiff_t  src_stride,
+    uint8_t   *ref1,
+    ptrdiff_t  ref1_stride,
+    uint8_t   *ref2,
+    ptrdiff_t  ref2_stride,
+    uint32_t   height,
+    uint32_t   width)
+{
+    __m256i sum = _mm256_setzero_si256();
+    __m256i s, r1, r2, avg, ssd;
+    __m128i sum1_128, sum2_128;
+    uint32_t row, col;
+
+    for (row = 0; row < height; row++)
+    {
+        for (col = 0; col < width; col += 4)
+        {
+            s = _mm256_setzero_si256();
+            r1 = _mm256_setzero_si256();
+            r2 = _mm256_setzero_si256();
+            s = _mm256_insert_epi32(s, *(int32_t *)(src + col), 0);
+            r1 = _mm256_insert_epi32(r1, *(int32_t *)(ref1 + col), 0);
+            r2 = _mm256_insert_epi32(r2, *(int32_t *)(ref2 + col), 0);
+
+            avg = _mm256_avg_epu8(r1, r2);
+            ssd = _mm256_cvtepu8_epi64(_mm256_castsi256_si128(avg));
+            s = _mm256_cvtepu8_epi64(_mm256_castsi256_si128(s));
+            ssd = _mm256_sub_epi64(s, ssd);
+            ssd = _mm256_mul_epi32(ssd, ssd);
+
+            sum = _mm256_add_epi64(sum, ssd);
+        }
+        src += src_stride;
+        ref1 += ref1_stride;
+        ref2 += ref2_stride;
+    }
+    sum1_128 = _mm256_extracti128_si256(sum, 0);
+    sum2_128 = _mm256_extracti128_si256(sum, 1);
+    sum1_128 = _mm_add_epi64(sum1_128, sum2_128);
+    sum2_128 = _mm_shuffle_epi32(sum1_128, 0xc6);
+    sum1_128 = _mm_add_epi64(sum1_128, sum2_128);
+    return _mm_cvtsi128_si32(sum1_128);
+}
+
 
 

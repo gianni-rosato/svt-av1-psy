@@ -317,6 +317,15 @@ EbErrorType copy_sequence_control_set(
         dst->enc_dec_segment_col_count_array[i] = src->enc_dec_segment_col_count_array[i];
         dst->enc_dec_segment_row_count_array[i] = src->enc_dec_segment_row_count_array[i];
     }
+
+#if CDEF_M
+    dst->cdef_segment_column_count = src->cdef_segment_column_count;
+    dst->cdef_segment_row_count = src->cdef_segment_row_count;
+#endif
+#if REST_M
+    dst->rest_segment_column_count = src->rest_segment_column_count;
+    dst->rest_segment_row_count = src->rest_segment_row_count;
+#endif
     return EB_ErrorNone;
 }
 
