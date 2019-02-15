@@ -159,6 +159,7 @@ extern "C" {
 #endif
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
 #define MAX_NFL                                   12
+#define MAX_LAD                                   120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x)>>3)<<3)
 #define AV1_PROB_COST_SHIFT 9
 #define AOMINNERBORDERINPIXELS 160
