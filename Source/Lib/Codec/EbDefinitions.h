@@ -35,7 +35,15 @@
 extern "C" {
 #endif
 
-    //Mode definition : Only one mode should be ON at a time
+
+#define R2R_FIX                 1
+#define SIMULATE_PF_N2          0
+#define FULL_LOOP_ESCAPE        0
+#define CHROMA_BLIND            0
+
+
+     //Mode definition : Only one mode should be ON at a time
+
 #define MR_MODE                                         0
 #define SHUT_FILTERING                                  0 // CDEF RESTORATION DLF
     ////
@@ -71,6 +79,7 @@ extern "C" {
 #define SHUT_CBF_FL_SKIP                                1 // F2 Lossless
 #define V2_HME_ME_SR                                    1 // F3
 #define ME_64x64                                        1 // F4
+
 #define M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH           1 // F7
 #define M0_64x64_32x32_HALF_QUARTER_PEL                 1 // F8
 #define IMPROVED_UNIPRED_INJECTION                      1 // F11
@@ -1812,9 +1821,9 @@ typedef enum EB_BITFIELD_MASKS {
 #define INIT_RC_OPT_G1                    1
 #define INIT_RC_OPT_G2                    1
 #define HIST_OPT                          2 // 1 is intrinsic, 2 is C
-
+#if !CHROMA_BLIND
 #define INTER_DEPTH_DECISION_CHROMA_BLIND 1
-
+#endif
 #define ENABLE_8x8                        0
 
 #define    Log2f                              Log2f_SSE2
@@ -2915,11 +2924,16 @@ static const uint8_t INTRA_AREA_TH_CLASS_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define N4_SHAPE      2
 #define ONLY_DC_SHAPE 3
 
-
+#if CHROMA_BLIND
+#define EB_CHROMA_LEVEL uint8_t
+#define CHROMA_LEVEL_0  0 // CHROMA ON @ MD 
+#define CHROMA_LEVEL_1  2 // CHROMA OFF @ MD
+#else
 typedef enum EbChromaMode {
     CHROMA_MODE_FULL = 1,
     CHROMA_MODE_BEST = 2 //Chroma for best full loop candidate.
 } EbChromaMode;
+#endif
 
 typedef enum EbSbComplexityStatus {
     SB_COMPLEXITY_STATUS_0 = 0,
