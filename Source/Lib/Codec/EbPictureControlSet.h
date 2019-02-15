@@ -14282,6 +14282,11 @@ extern "C" {
         int32_t                               cdf_ref_frame_strenght;
         int32_t                               use_ref_frame_cdef_strength;
 #endif
+#if TX_SEARCH_LEVELS
+        uint8_t                               tx_search_level;
+        uint64_t                              tx_weight;
+        uint8_t                               tx_search_reduced_set;
+#endif
 
     } PictureParentControlSet_t;
 

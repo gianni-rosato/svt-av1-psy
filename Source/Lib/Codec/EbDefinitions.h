@@ -35,7 +35,7 @@
 extern "C" {
 #endif
 
-    //Mode definition : Only one mode should be ON at a time
+     //Mode definition : Only one mode should be ON at a time
 #define MR_MODE                                         0
 #define SHUT_FILTERING                                  0 // CDEF RESTORATION DLF
     ////
@@ -140,6 +140,7 @@ extern "C" {
 #define FAST_CDEF                                       1
 #define FAST_SG                                         1
 #define FAST_WN                                         1
+#define TX_SEARCH_LEVELS                                1 
 
 /********************************************************/
 /****************** Pre-defined Values ******************/
@@ -475,6 +476,14 @@ typedef struct InterpFilterParams {
     InterpFilter interp_filter;
 } InterpFilterParams;
 
+#if TX_SEARCH_LEVELS
+typedef enum TX_SEARCH_LEVEL {
+    TX_SEARCH_OFF,
+    TX_SEARCH_ENC_DEC,
+    TX_SEARCH_INTER_DEPTH,
+    TX_SEARCH_FULL_LOOP
+} TX_SEARCH_LEVEL;
+#endif
 
 
 

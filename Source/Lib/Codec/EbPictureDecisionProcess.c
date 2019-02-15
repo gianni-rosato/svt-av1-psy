@@ -733,6 +733,31 @@ EbErrorType signal_derivation_multi_processes_oq(
         cm->wn_filter_mode = 2;
 #endif
 
+#if TX_SEARCH_LEVELS
+    // Tx_search Level                                Settings
+    // 0                                              OFF
+    // 1                                              Tx search at encdec
+    // 2                                              Tx search at inter-depth
+    // 3                                              Tx search at full loop
+
+    if (picture_control_set_ptr->enc_mode > ENC_M1) {
+        picture_control_set_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
+    }
+    else {
+        picture_control_set_ptr->tx_search_level = TX_SEARCH_FULL_LOOP;
+    }
+
+    // Set tx search skip weights (MAX_MODE_COST: no skipping; 0: always skipping)
+    picture_control_set_ptr->tx_weight = MAX_MODE_COST;
+
+    // Set tx search reduced set falg (0: full tx set; 1: reduced tx set)
+    if (picture_control_set_ptr->enc_mode == ENC_M1) {
+        picture_control_set_ptr->tx_search_reduced_set = 1;
+    }
+    else {
+        picture_control_set_ptr->tx_search_reduced_set = 0;
+    }
+#endif
     // Intra prediction Level                       Settings
     // 0                                            OFF : disable_angle_prediction
     // 1                                            OFF per block : disable_angle_prediction for 64/32/4
@@ -1096,7 +1121,7 @@ void  Av1GenerateRpsInfo(
         if (pictureIndex == 3) {
             av1Rps->refDpbIndex[0] = base0_idx;
             av1Rps->refDpbIndex[6] = layer1_idx;
-        }
+    }
         else if (pictureIndex == 11) {
             av1Rps->refDpbIndex[0] = layer1_idx;
             av1Rps->refDpbIndex[6] = base1_idx;
@@ -1195,8 +1220,8 @@ void  Av1GenerateRpsInfo(
                 picture_control_set_ptr->showFrame = EB_TRUE;
                 picture_control_set_ptr->hasShowExisting = EB_FALSE;
             }
-            else
-            {
+    else
+    {
                 picture_control_set_ptr->showFrame = EB_FALSE;
                 picture_control_set_ptr->hasShowExisting = EB_FALSE;
             }

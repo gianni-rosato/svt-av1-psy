@@ -397,7 +397,10 @@ EbErrorType PreModeDecision(
     uint32_t                         *full_candidate_total_count_ptr,
     uint8_t                          *best_candidate_index_array,
     uint8_t                          *disable_merge_index,
-    EbBool                         same_fast_full_candidate
+#if TX_SEARCH_LEVELS
+    uint64_t                         *ref_fast_cost,
+#endif
+    EbBool                           same_fast_full_candidate
 )
 {
     UNUSED(cu_ptr);
@@ -456,7 +459,13 @@ EbErrorType PreModeDecision(
             }
         }
     }
-
+#if TX_SEARCH_LEVELS
+    for (i = 0; i < fullReconCandidateCount; i++) {
+        if (*(buffer_ptr_array[i]->fast_cost_ptr) < *ref_fast_cost) {
+            *ref_fast_cost = *(buffer_ptr_array[i]->fast_cost_ptr);
+        }
+    }
+#endif
     // Set (*full_candidate_total_count_ptr) to fullReconCandidateCount
     (*full_candidate_total_count_ptr) = fullReconCandidateCount;
 
