@@ -119,7 +119,7 @@ void* dlf_kernel(void *input_ptr)
                 sequence_control_set_ptr->static_config.recon_enabled ||
                 sequence_control_set_ptr->static_config.stat_report));
 
-        if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
+        if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode >= 2) {
 
             EbPictureBufferDesc_t  *recon_buffer = is16bit ? picture_control_set_ptr->recon_picture16bit_ptr : picture_control_set_ptr->recon_picture_ptr;
             if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
@@ -137,6 +137,16 @@ void* dlf_kernel(void *input_ptr)
             }
 
             av1_loop_filter_init(picture_control_set_ptr);
+
+            if (picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
+
+                av1_pick_filter_level(
+                    context_ptr,
+                    (EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
+                    picture_control_set_ptr,
+                    LPF_PICK_FROM_Q);
+
+            }
 
             av1_pick_filter_level(
                 context_ptr,
@@ -187,7 +197,7 @@ void* dlf_kernel(void *input_ptr)
             }
 
 #if CDEF_M
-            if (sequence_control_set_ptr->enable_cdef)
+            if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode)
             {
 #endif
                 if (is16bit)

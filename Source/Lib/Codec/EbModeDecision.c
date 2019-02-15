@@ -1716,7 +1716,7 @@ static INLINE TxType av1_get_tx_type(
     const TxSetType tx_set_type =
         /*av1_*/get_ext_tx_set_type(tx_size, is_inter, reduced_tx_set);
 
-    TxType tx_type;
+    TxType tx_type = DCT_DCT;
     if ( /*xd->lossless[mbmi->segment_id] ||*/ txsize_sqr_up_map[tx_size] > TX_32X32) {
         tx_type = DCT_DCT;
     }
@@ -1769,57 +1769,91 @@ void  inject_intra_candidates(
     EbBool                      disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 || 
                                                     context_ptr->blk_geom->bwidth == 4  ||   
                                                     context_ptr->blk_geom->bheight == 4)    ? EB_TRUE : EB_FALSE;
-    uint8_t                     disable_z2_prediction    = (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 0) ? 1 : 0;
-    uint8_t                     disable_angle_refinement = (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 0) ? 1 : 0;  
+    uint8_t                     disable_z2_prediction;
+    uint8_t                     disable_angle_refinement;
+    uint8_t                     disable_angle_prediction;
+
+    if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 0){
+        disable_z2_prediction       = 0;
+        disable_angle_refinement    = 0;
+        disable_angle_prediction    = 1;
+    } else if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 1) {
+        disable_z2_prediction       = 0;
+        disable_angle_refinement    = 0 ;
+        disable_angle_prediction    = (context_ptr->blk_geom->sq_size > 16 ||
+                                       context_ptr->blk_geom->bwidth == 4 ||
+                                       context_ptr->blk_geom->bheight == 4) ? 1 : 0;
+    } else if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 2) {
+        disable_z2_prediction       = 1;
+        disable_angle_refinement    = 1;
+        disable_angle_prediction    = 0;
+    } else if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 3) {
+        disable_z2_prediction       = (context_ptr->blk_geom->sq_size > 16 ||
+                                       context_ptr->blk_geom->bwidth == 4 ||
+                                       context_ptr->blk_geom->bheight == 4) ? 1 : 0;
+        disable_angle_refinement    = (context_ptr->blk_geom->sq_size > 16 ||
+                                       context_ptr->blk_geom->bwidth == 4 ||
+                                       context_ptr->blk_geom->bheight == 4) ? 1 : 0;
+        disable_angle_prediction    = 0;
+    } else {
+        disable_z2_prediction       = 0;
+        disable_angle_refinement    = 0;
+        disable_angle_prediction    = 0;
+
+    }
 #if MR_MODE
     disable_z2_prediction       = 0;
     disable_angle_refinement    = 0;
+    disable_angle_prediction    = 0;
 #endif
     angleDeltaCandidateCount = disable_angle_refinement ? 1: angleDeltaCandidateCount;
     
     for (openLoopIntraCandidate = intra_mode_start; openLoopIntraCandidate < intra_mode_end + 1; ++openLoopIntraCandidate) {
 
         if (av1_is_directional_mode((PredictionMode)openLoopIntraCandidate)) {
-            for (angleDeltaCounter = 0; angleDeltaCounter < angleDeltaCandidateCount; ++angleDeltaCounter) {
-                int32_t angle_delta = angleDeltaCandidateCount == 1 ? 0 : angleDeltaCounter - (angleDeltaCandidateCount >> 1);
-                int32_t  p_angle = mode_to_angle_map[(PredictionMode)openLoopIntraCandidate] + angle_delta * ANGLE_STEP;
-                if (!disable_z2_prediction || (p_angle <= 90 || p_angle >= 180)) {
-                    candidateArray[canTotalCnt].type = INTRA_MODE;
-                    candidateArray[canTotalCnt].intra_luma_mode = openLoopIntraCandidate;
-                    candidateArray[canTotalCnt].distortion_ready = 0;
-                    candidateArray[canTotalCnt].is_directional_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)openLoopIntraCandidate);
-                    candidateArray[canTotalCnt].use_angle_delta = use_angle_delta ? candidateArray[canTotalCnt].is_directional_mode_flag : 0;
-                    candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y] = angle_delta;
-                    candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[openLoopIntraCandidate] : UV_CFL_PRED;
-                    candidateArray[canTotalCnt].cfl_alpha_signs = 0;
-                    candidateArray[canTotalCnt].cfl_alpha_idx = 0;
-                    candidateArray[canTotalCnt].is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)candidateArray[canTotalCnt].intra_chroma_mode);
-                    candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_UV] = 0;
-                    candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
 
-                    if (candidateArray[canTotalCnt].intra_chroma_mode == UV_CFL_PRED)
-                        candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
-                    else
-                        candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] =
-                        av1_get_tx_type(
-                            context_ptr->blk_geom->bsize,
-                            0,
-                            (PredictionMode)candidateArray[canTotalCnt].intra_luma_mode,
-                            (UV_PredictionMode)candidateArray[canTotalCnt].intra_chroma_mode,
-                            PLANE_TYPE_UV,
-                            0,
-                            0,
-                            0,
-                            context_ptr->blk_geom->txsize_uv[0],
-                            picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
-                    // candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV]            = context_ptr->blk_geom->bwidth_uv >= 32 || context_ptr->blk_geom->bheight_uv >= 32  ? DCT_DCT : chroma_transform_type[candidateArray[canTotalCnt].intra_chroma_mode];
-                    candidateArray[canTotalCnt].mpm_flag = EB_FALSE;
-                    candidateArray[canTotalCnt].ref_frame_type = INTRA_FRAME;
-                    candidateArray[canTotalCnt].pred_mode = (PredictionMode)openLoopIntraCandidate;
-                    candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
-                    ++canTotalCnt;
-                }
+            if (!disable_angle_prediction) {
+                for (angleDeltaCounter = 0; angleDeltaCounter < angleDeltaCandidateCount; ++angleDeltaCounter) {
+                    int32_t angle_delta = angleDeltaCandidateCount == 1 ? 0 : angleDeltaCounter - (angleDeltaCandidateCount >> 1);
+                    int32_t  p_angle = mode_to_angle_map[(PredictionMode)openLoopIntraCandidate] + angle_delta * ANGLE_STEP;
+                    if (!disable_z2_prediction || (p_angle <= 90 || p_angle >= 180)) {
+                        candidateArray[canTotalCnt].type = INTRA_MODE;
+                        candidateArray[canTotalCnt].intra_luma_mode = openLoopIntraCandidate;
+                        candidateArray[canTotalCnt].distortion_ready = 0;
+                        candidateArray[canTotalCnt].is_directional_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)openLoopIntraCandidate);
+                        candidateArray[canTotalCnt].use_angle_delta = use_angle_delta ? candidateArray[canTotalCnt].is_directional_mode_flag : 0;
+                        candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y] = angle_delta;
+                        candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[openLoopIntraCandidate] : UV_CFL_PRED;
+                        candidateArray[canTotalCnt].cfl_alpha_signs = 0;
+                        candidateArray[canTotalCnt].cfl_alpha_idx = 0;
+                        candidateArray[canTotalCnt].is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)candidateArray[canTotalCnt].intra_chroma_mode);
+                        candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_UV] = 0;
+                        candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
+
+                        if (candidateArray[canTotalCnt].intra_chroma_mode == UV_CFL_PRED)
+                            candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
+                        else
+                            candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] =
+                            av1_get_tx_type(
+                                context_ptr->blk_geom->bsize,
+                                0,
+                                (PredictionMode)candidateArray[canTotalCnt].intra_luma_mode,
+                                (UV_PredictionMode)candidateArray[canTotalCnt].intra_chroma_mode,
+                                PLANE_TYPE_UV,
+                                0,
+                                0,
+                                0,
+                                context_ptr->blk_geom->txsize_uv[0],
+                                picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+                        // candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV]            = context_ptr->blk_geom->bwidth_uv >= 32 || context_ptr->blk_geom->bheight_uv >= 32  ? DCT_DCT : chroma_transform_type[candidateArray[canTotalCnt].intra_chroma_mode];
+                        candidateArray[canTotalCnt].mpm_flag = EB_FALSE;
+                        candidateArray[canTotalCnt].ref_frame_type = INTRA_FRAME;
+                        candidateArray[canTotalCnt].pred_mode = (PredictionMode)openLoopIntraCandidate;
+                        candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
+                        ++canTotalCnt;
+                    }
             }
+        }
         }
         else {
             candidateArray[canTotalCnt].type = INTRA_MODE;
@@ -2025,7 +2059,7 @@ uint8_t product_full_mode_decision(
 
 
     if (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE) {
-        context_ptr->md_ep_pipe_sb[cu_ptr->leaf_index].chroma_distortion = buffer_ptr_array[lowestCostIndex]->candidate_ptr->chroma_distortion;
+        context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].chroma_distortion = buffer_ptr_array[lowestCostIndex]->candidate_ptr->chroma_distortion;
     }
 
     context_ptr->md_local_cu_unit[cu_ptr->mds_idx].full_distortion = buffer_ptr_array[lowestCostIndex]->candidate_ptr->full_distortion;
@@ -2253,9 +2287,4 @@ uint8_t product_full_mode_decision(
     UNUSED(cu_size_log2);
     return lowestCostIndex;
 }
-
-
-
-
-
 

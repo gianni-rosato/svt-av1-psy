@@ -764,6 +764,8 @@ __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 {
+    if(svt_enc_component == NULL)
+        return EB_ErrorBadParameter;
     EbEncHandle_t *encHandlePtr = (EbEncHandle_t*)svt_enc_component->pComponentPrivate;
     EbErrorType return_error = EB_ErrorNone;
     uint32_t instanceIndex;
@@ -1779,10 +1781,13 @@ __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_deinit_encoder(EbComponentType *svt_enc_component)
 {
+    if(svt_enc_component == NULL)
+        return EB_ErrorBadParameter;
     EbEncHandle_t *encHandlePtr = (EbEncHandle_t*)svt_enc_component->pComponentPrivate;
     EbErrorType return_error = EB_ErrorNone;
     int32_t              ptrIndex = 0;
     EbMemoryMapEntry*   memoryEntry = (EbMemoryMapEntry*)EB_NULL;
+
     if (encHandlePtr) {
         if (encHandlePtr->memoryMapIndex) {
             // Loop through the ptr table and free all malloc'd pointers per channel
@@ -1840,6 +1845,8 @@ EB_API EbErrorType eb_init_handle(
 
 {
     EbErrorType           return_error = EB_ErrorNone;
+    if(p_handle == NULL)
+         return EB_ErrorBadParameter;
 
     *p_handle = (EbComponentType*)malloc(sizeof(EbComponentType));
     if (*p_handle != (EbComponentType*)NULL) {
@@ -2316,12 +2323,17 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error instance %u: QP must be [0 - %d]\n", channelNumber + 1, MAX_QP_VALUE);
         return_error = EB_ErrorBadParameter;
     }
-
-    if (config->hierarchical_levels != 3) {
+#if NEW_PRED_STRUCT
+    if (config->hierarchical_levels != 3 && config->hierarchical_levels != 4) {
+        SVT_LOG("Error instance %u: Hierarchical Levels supported [3-4]\n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
+    if (config->hierarchical_levels != 3 ) {
         SVT_LOG("Error instance %u: Hierarchical Levels supported [3]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#endif
     if (config->intra_period_length < -2 || config->intra_period_length > 255) {
         SVT_LOG("Error Instance %u: The intra period must be [-2 - 255] \n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
@@ -2577,7 +2589,11 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->enc_mode = 3;
     config_ptr->intra_period_length = 30;
     config_ptr->intra_refresh_type = 1;
+#if NEW_PRED_STRUCT
+    config_ptr->hierarchical_levels = 4;
+#else
     config_ptr->hierarchical_levels = 3;
+#endif    
     config_ptr->pred_structure = EB_PRED_RANDOM_ACCESS;
     config_ptr->disable_dlf_flag = EB_FALSE;
     config_ptr->enable_warped_motion = EB_FALSE;
@@ -2741,6 +2757,9 @@ EB_API EbErrorType eb_svt_enc_set_parameter(
     EbComponentType              *svt_enc_component,
     EbSvtAv1EncConfiguration     *pComponentParameterStructure)
 {
+    if(svt_enc_component == NULL)
+        return EB_ErrorBadParameter;
+
     EbErrorType           return_error  = EB_ErrorNone;
     EbEncHandle_t        *pEncCompData  = (EbEncHandle_t*)svt_enc_component->pComponentPrivate;
     uint32_t              instanceIndex = 0;

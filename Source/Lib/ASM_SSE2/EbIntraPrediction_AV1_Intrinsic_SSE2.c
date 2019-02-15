@@ -66,17 +66,6 @@ static INLINE void dc_store_32xh(const __m128i *row, int32_t height, uint8_t *ds
     }
 }
 
-static INLINE void dc_store_64xh(const __m128i *row, int32_t height, uint8_t *dst,
-    ptrdiff_t stride) {
-    for (int32_t i = 0; i < height; ++i) {
-        _mm_store_si128((__m128i *)dst, *row);
-        _mm_store_si128((__m128i *)(dst + 16), *row);
-        _mm_store_si128((__m128i *)(dst + 32), *row);
-        _mm_store_si128((__m128i *)(dst + 48), *row);
-        dst += stride;
-    }
-}
-
 static INLINE void dc_store_16xh(const __m128i *row, int32_t height, uint8_t *dst,
     ptrdiff_t stride) {
     int32_t i;

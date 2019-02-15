@@ -80,10 +80,8 @@ extern "C" {
         5,  // TX_64X16
     };
     // Note:
-    // tran_low_t  is the datatype used for final transform coefficients.
     // tran_high_t is the datatype used for intermediate transform stages.
     typedef int64_t tran_high_t;
-    typedef int32_t tran_low_t;
 
     static const TX_TYPE_1D vtx_tab[TX_TYPES] = {
         DCT_1D, ADST_1D, DCT_1D, ADST_1D,
@@ -301,7 +299,6 @@ extern "C" {
         7,  // 64x16 transform
     };
     ////////////////////// QUANTIZATION//////////////
-    typedef uint8_t qm_val_t;
     typedef struct QUANT_PARAM {
         int32_t log_scale;
         TxSize tx_size;

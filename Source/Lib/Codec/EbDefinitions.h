@@ -34,20 +34,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-     //Mode definition : Only one mode should be ON at a time
+
+    //Mode definition : Only one mode should be ON at a time
 #define MR_MODE                                         0
 #define SHUT_FILTERING                                  0 // CDEF RESTORATION DLF
     ////
 #define MEM_RED4                                        0 //  Reduce mem allocation when DISABLE_128X128_SB is ON
 
-#define FILT_PROC	  1	// New Filtering processes.
+#define FILT_PROC      1    // New Filtering processes.
 #define CDEF_M        1 // multi-threaded cdef
 #define REST_M        1 // multi-threaded restoration
 #define REST_NEED_B   1 // use boundary update in restoration
-
-#define    DLF_TEST2                                       1
-#define    DLF_TEST3                                       0
-#define    DLF_TEST4                                       0
+#define NEW_PRED_STRUCT                                 1 // Ability to run 5-layer prediction structure. By Default 5L is used
 
 #define INTRA_CORE_OPT                                  1
 
@@ -73,8 +71,6 @@ extern "C" {
 #define SHUT_CBF_FL_SKIP                                1 // F2 Lossless
 #define V2_HME_ME_SR                                    1 // F3
 #define ME_64x64                                        1 // F4
-#define V2_QP_SCALING                                   1 // F5 to keep for vmaff only
-#define NEW_QP_SCALING                                  1 // F6
 #define M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH           1 // F7
 #define M0_64x64_32x32_HALF_QUARTER_PEL                 1 // F8
 #define IMPROVED_UNIPRED_INJECTION                      1 // F11
@@ -141,6 +137,9 @@ extern "C" {
 #define REST_REF_ONLY                                   0 //REST for ref frame only
 #define REDUCE_COPY_CDEF                                1
 
+#define FAST_CDEF                                       1
+#define FAST_SG                                         1
+#define FAST_WN                                         1
 
 /********************************************************/
 /****************** Pre-defined Values ******************/
@@ -277,11 +276,6 @@ one more than the minimum. */
 // AV1 Loop Filter
 #define AV1_LF                                    1  // AV1 Loop Filter
 #if AV1_LF 
-#if DLF_TEST2
-#define AV1_LF_FULL_IMAGE_SELECTION               0
-#else
-#define AV1_LF_FULL_IMAGE_SELECTION               1  // 0 uses LPF_PICK_FROM_Q, 1 uses LPF_PICK_FROM_FULL_IMAGE
-#endif
 #define LF_SHARPNESS 0
 #endif
 
@@ -622,6 +616,10 @@ static const int32_t tx_size_wide[TX_SIZES_ALL] = {
 static const int32_t tx_size_high[TX_SIZES_ALL] = {
     4, 8, 16, 32, 64, 8, 4, 16, 8, 32, 16, 64, 32, 16, 4, 32, 8, 64, 16,
 };
+
+ // tran_low_t  is the datatype used for final transform coefficients.
+typedef int32_t tran_low_t;
+typedef uint8_t qm_val_t;
 
 typedef enum TX_CLASS {
     TX_CLASS_2D = 0,
@@ -2817,6 +2815,14 @@ static const uint8_t INTRA_AREA_TH_CLASS_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
     { 50, 40, 30, 20, 10, 10 }
 };
 
+
+#if NEW_PRED_STRUCT
+#define NON_MOVING_SCORE_0     0
+#define NON_MOVING_SCORE_1    10
+#define NON_MOVING_SCORE_2    20
+#define NON_MOVING_SCORE_3    30
+#define INVALID_NON_MOVING_SCORE (uint8_t) ~0
+#endif
 // Picture split into regions for analysis (SCD, Dynamic GOP)
 #define CLASS_SUB_0_REGION_SPLIT_PER_WIDTH    1
 #define CLASS_SUB_0_REGION_SPLIT_PER_HEIGHT    1

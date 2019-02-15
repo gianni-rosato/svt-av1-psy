@@ -425,35 +425,6 @@ static INLINE int8_t highbd_filter_mask(uint8_t limit, uint8_t blimit,
     return ~mask;
 }
 
-static INLINE int8_t highbd_filter_mask3_chroma(uint8_t limit, uint8_t blimit,
-    uint16_t p2, uint16_t p1,
-    uint16_t p0, uint16_t q0,
-    uint16_t q1, uint16_t q2,
-    int32_t bd) {
-    int8_t mask = 0;
-    int16_t limit16 = (uint16_t)limit << (bd - 8);
-    int16_t blimit16 = (uint16_t)blimit << (bd - 8);
-    mask |= (abs(p2 - p1) > limit16) * -1;
-    mask |= (abs(p1 - p0) > limit16) * -1;
-    mask |= (abs(q1 - q0) > limit16) * -1;
-    mask |= (abs(q2 - q1) > limit16) * -1;
-    mask |= (abs(p0 - q0) * 2 + abs(p1 - q1) / 2 > blimit16) * -1;
-    return ~mask;
-}
-
-static INLINE int8_t highbd_flat_mask3_chroma(uint8_t thresh, uint16_t p2,
-    uint16_t p1, uint16_t p0,
-    uint16_t q0, uint16_t q1,
-    uint16_t q2, int32_t bd) {
-    int8_t mask = 0;
-    int16_t thresh16 = (uint16_t)thresh << (bd - 8);
-    mask |= (abs(p1 - p0) > thresh16) * -1;
-    mask |= (abs(q1 - q0) > thresh16) * -1;
-    mask |= (abs(p2 - p0) > thresh16) * -1;
-    mask |= (abs(q2 - q0) > thresh16) * -1;
-    return ~mask;
-}
-
 static INLINE int8_t highbd_flat_mask4(uint8_t thresh, uint16_t p3, uint16_t p2,
     uint16_t p1, uint16_t p0, uint16_t q0,
     uint16_t q1, uint16_t q2, uint16_t q3,
@@ -553,25 +524,6 @@ void aom_highbd_lpf_vertical_4_c(uint16_t *s, int32_t pitch, const uint8_t *blim
     }
 }
 
-static INLINE void highbd_filter6(int8_t mask, uint8_t thresh, int8_t flat,
-    uint16_t *op2, uint16_t *op1, uint16_t *op0,
-    uint16_t *oq0, uint16_t *oq1, uint16_t *oq2,
-    int32_t bd) {
-    if (flat && mask) {
-        const uint16_t p2 = *op2, p1 = *op1, p0 = *op0;
-        const uint16_t q0 = *oq0, q1 = *oq1, q2 = *oq2;
-
-        // 5-tap filter [1, 2, 2, 2, 1]
-        *op1 = ROUND_POWER_OF_TWO(p2 * 3 + p1 * 2 + p0 * 2 + q0, 3);
-        *op0 = ROUND_POWER_OF_TWO(p2 + p1 * 2 + p0 * 2 + q0 * 2 + q1, 3);
-        *oq0 = ROUND_POWER_OF_TWO(p1 + p0 * 2 + q0 * 2 + q1 * 2 + q2, 3);
-        *oq1 = ROUND_POWER_OF_TWO(p0 + q0 * 2 + q1 * 2 + q2 * 3, 3);
-    }
-    else {
-        highbd_filter4(mask, thresh, op1, op0, oq0, oq1, bd);
-    }
-}
-
 static INLINE void highbd_filter8(int8_t mask, uint8_t thresh, int8_t flat,
     uint16_t *op3, uint16_t *op2, uint16_t *op1,
     uint16_t *op0, uint16_t *oq0, uint16_t *oq1,
@@ -634,69 +586,6 @@ void aom_highbd_lpf_vertical_8_c(uint16_t *s, int32_t pitch, const uint8_t *blim
         s += pitch;
     }
 }
-
-
-static INLINE void highbd_filter14(int8_t mask, uint8_t thresh, int8_t flat,
-    int8_t flat2, uint16_t *op6, uint16_t *op5,
-    uint16_t *op4, uint16_t *op3, uint16_t *op2,
-    uint16_t *op1, uint16_t *op0, uint16_t *oq0,
-    uint16_t *oq1, uint16_t *oq2, uint16_t *oq3,
-    uint16_t *oq4, uint16_t *oq5, uint16_t *oq6,
-    int32_t bd) {
-    if (flat2 && flat && mask) {
-        const uint16_t p6 = *op6;
-        const uint16_t p5 = *op5;
-        const uint16_t p4 = *op4;
-        const uint16_t p3 = *op3;
-        const uint16_t p2 = *op2;
-        const uint16_t p1 = *op1;
-        const uint16_t p0 = *op0;
-        const uint16_t q0 = *oq0;
-        const uint16_t q1 = *oq1;
-        const uint16_t q2 = *oq2;
-        const uint16_t q3 = *oq3;
-        const uint16_t q4 = *oq4;
-        const uint16_t q5 = *oq5;
-        const uint16_t q6 = *oq6;
-
-        // 13-tap filter [1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1]
-        *op5 = ROUND_POWER_OF_TWO(p6 * 7 + p5 * 2 + p4 * 2 + p3 + p2 + p1 + p0 + q0,
-            4);
-        *op4 = ROUND_POWER_OF_TWO(
-            p6 * 5 + p5 * 2 + p4 * 2 + p3 * 2 + p2 + p1 + p0 + q0 + q1, 4);
-        *op3 = ROUND_POWER_OF_TWO(
-            p6 * 4 + p5 + p4 * 2 + p3 * 2 + p2 * 2 + p1 + p0 + q0 + q1 + q2, 4);
-        *op2 = ROUND_POWER_OF_TWO(
-            p6 * 3 + p5 + p4 + p3 * 2 + p2 * 2 + p1 * 2 + p0 + q0 + q1 + q2 + q3,
-            4);
-        *op1 = ROUND_POWER_OF_TWO(p6 * 2 + p5 + p4 + p3 + p2 * 2 + p1 * 2 + p0 * 2 +
-            q0 + q1 + q2 + q3 + q4,
-            4);
-        *op0 = ROUND_POWER_OF_TWO(p6 + p5 + p4 + p3 + p2 + p1 * 2 + p0 * 2 +
-            q0 * 2 + q1 + q2 + q3 + q4 + q5,
-            4);
-        *oq0 = ROUND_POWER_OF_TWO(p5 + p4 + p3 + p2 + p1 + p0 * 2 + q0 * 2 +
-            q1 * 2 + q2 + q3 + q4 + q5 + q6,
-            4);
-        *oq1 = ROUND_POWER_OF_TWO(p4 + p3 + p2 + p1 + p0 + q0 * 2 + q1 * 2 +
-            q2 * 2 + q3 + q4 + q5 + q6 * 2,
-            4);
-        *oq2 = ROUND_POWER_OF_TWO(
-            p3 + p2 + p1 + p0 + q0 + q1 * 2 + q2 * 2 + q3 * 2 + q4 + q5 + q6 * 3,
-            4);
-        *oq3 = ROUND_POWER_OF_TWO(
-            p2 + p1 + p0 + q0 + q1 + q2 * 2 + q3 * 2 + q4 * 2 + q5 + q6 * 4, 4);
-        *oq4 = ROUND_POWER_OF_TWO(
-            p1 + p0 + q0 + q1 + q2 + q3 * 2 + q4 * 2 + q5 * 2 + q6 * 5, 4);
-        *oq5 = ROUND_POWER_OF_TWO(p0 + q0 + q1 + q2 + q3 + q4 * 2 + q5 * 2 + q6 * 7,
-            4);
-    }
-    else {
-        highbd_filter8(mask, thresh, flat, op3, op2, op1, op0, oq0, oq1, oq2, oq3,
-            bd);
-    }
-}
-
 
 
 //**********************************************************************************************************************//
@@ -1880,53 +1769,8 @@ static int32_t search_filter_level(
     filt_best = filt_mid;
     ss_err[filt_mid] = best_err;
 
-#if DLF_TEST4
-    filter_step = 2;
-    const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
-    const int32_t filt_low = AOMMAX(filt_mid - filter_step, min_filter_level);
-
-    // Bias against raising loop filter in favor of lowering it.
-    int64_t bias = (best_err >> (15 - (filt_mid / 8))) * filter_step;
-
-    //if ((cpi->oxcf.pass == 2) && (cpi->twopass.section_intra_rating < 20))
-    //    bias = (bias * cpi->twopass.section_intra_rating) / 20;
-
-    // yx, bias less for large block size
-    if (pcsPtr->parent_pcs_ptr->tx_mode != ONLY_4X4) bias >>= 1;
-
-    if (filt_direction <= 0 && filt_low != filt_mid) {
-        // Get Low filter error score
-        if (ss_err[filt_low] < 0) {
-            ss_err[filt_low] =
-                try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_low, partial_frame, plane, dir);
-        }
-        // If value is close to the best so far then bias towards a lower loop
-        // filter value.
-        if (ss_err[filt_low] < (best_err + bias)) {
-            // Was it actually better than the previous best?
-            if (ss_err[filt_low] < best_err) {
-                best_err = ss_err[filt_low];
-            }
-            filt_best = filt_low;
-        }
-    }
-
-    // Now look at filt_high
-    if (filt_direction >= 0 && filt_high != filt_mid) {
-        if (ss_err[filt_high] < 0) {
-            ss_err[filt_high] =
-                try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_high, partial_frame, plane, dir);
-        }
-        // If value is significantly better than previous best, bias added against
-        // raising filter value
-        if (ss_err[filt_high] < (best_err - bias)) {
-            best_err = ss_err[filt_high];
-            filt_best = filt_high;
-        }
-    }
-#else
-
-    while (filter_step > 0) {
+    if (pcsPtr->parent_pcs_ptr->loop_filter_mode <= 2) {
+        filter_step = 2;
         const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
         const int32_t filt_low = AOMMAX(filt_mid - filter_step, min_filter_level);
 
@@ -1969,18 +1813,64 @@ static int32_t search_filter_level(
                 filt_best = filt_high;
             }
         }
+    }
+    else {
 
-        // Half the step distance if the best filter value was the same as last time
-        if (filt_best == filt_mid) {
-            filter_step /= 2;
-            filt_direction = 0;
-        }
-        else {
-            filt_direction = (filt_best < filt_mid) ? -1 : 1;
-            filt_mid = filt_best;
+        while (filter_step > 0) {
+            const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
+            const int32_t filt_low = AOMMAX(filt_mid - filter_step, min_filter_level);
+
+            // Bias against raising loop filter in favor of lowering it.
+            int64_t bias = (best_err >> (15 - (filt_mid / 8))) * filter_step;
+
+            //if ((cpi->oxcf.pass == 2) && (cpi->twopass.section_intra_rating < 20))
+            //    bias = (bias * cpi->twopass.section_intra_rating) / 20;
+
+            // yx, bias less for large block size
+            if (pcsPtr->parent_pcs_ptr->tx_mode != ONLY_4X4) bias >>= 1;
+
+            if (filt_direction <= 0 && filt_low != filt_mid) {
+                // Get Low filter error score
+                if (ss_err[filt_low] < 0) {
+                    ss_err[filt_low] =
+                        try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_low, partial_frame, plane, dir);
+                }
+                // If value is close to the best so far then bias towards a lower loop
+                // filter value.
+                if (ss_err[filt_low] < (best_err + bias)) {
+                    // Was it actually better than the previous best?
+                    if (ss_err[filt_low] < best_err) {
+                        best_err = ss_err[filt_low];
+                    }
+                    filt_best = filt_low;
+                }
+            }
+
+            // Now look at filt_high
+            if (filt_direction >= 0 && filt_high != filt_mid) {
+                if (ss_err[filt_high] < 0) {
+                    ss_err[filt_high] =
+                        try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_high, partial_frame, plane, dir);
+                }
+                // If value is significantly better than previous best, bias added against
+                // raising filter value
+                if (ss_err[filt_high] < (best_err - bias)) {
+                    best_err = ss_err[filt_high];
+                    filt_best = filt_high;
+                }
+            }
+
+            // Half the step distance if the best filter value was the same as last time
+            if (filt_best == filt_mid) {
+                filter_step /= 2;
+                filt_direction = 0;
+            }
+            else {
+                filt_direction = (filt_best < filt_mid) ? -1 : 1;
+                filt_mid = filt_best;
+            }
         }
     }
-#endif
     // Update best error
     best_err = ss_err[filt_best];
 
@@ -1990,7 +1880,7 @@ static int32_t search_filter_level(
 
 void av1_pick_filter_level(
 #if FILT_PROC
-    DlfContext_t         *context_ptr,
+    DlfContext_t            *context_ptr,
 #else
     EncDecContext_t         *context_ptr,
 #endif
@@ -2041,7 +1931,7 @@ void av1_pick_filter_level(
         if (scsPtr->static_config.encoder_bit_depth != EB_8BIT && pcsPtr->parent_pcs_ptr->av1FrameType == KEY_FRAME)
             filt_guess -= 4;
 
-    if (pcsPtr->parent_pcs_ptr->loop_filter_mode == 1) {
+   
         filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
         int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
 
@@ -2050,16 +1940,6 @@ void av1_pick_filter_level(
         lf->filter_level[1] = clamp(filt_guess, min_filter_level, max_filter_level);
         lf->filter_level_u = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
         lf->filter_level_v = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
-    }
-    else {
-
-        // TODO(chengchen): retrain the model for Y, U, V filter levels
-        lf->filter_level[0] = clamp(filt_guess, min_filter_level, max_filter_level);
-        lf->filter_level[1] = clamp(filt_guess, min_filter_level, max_filter_level);
-        lf->filter_level_u = clamp(filt_guess, min_filter_level, max_filter_level);
-        lf->filter_level_v = clamp(filt_guess, min_filter_level, max_filter_level);
-
-    }
 
     }
     else {
@@ -2072,7 +1952,7 @@ void av1_pick_filter_level(
         lf->filter_level[0] = lf->filter_level[1] =
             search_filter_level(srcBuffer, tempLfReconBuffer, pcsPtr, method == LPF_PICK_FROM_SUBIMAGE,
                 last_frame_filter_level, NULL, 0, 2);
-#if !DLF_TEST3 && !DLF_TEST4
+#if 0
         lf->filter_level[0] =
             search_filter_level(srcBuffer, tempLfReconBuffer, pcsPtr, method == LPF_PICK_FROM_SUBIMAGE,
                 last_frame_filter_level, NULL, 0, 0);

@@ -133,7 +133,7 @@ The encoder parameters present in the Sample.cfg file are listed in this table b
 | **FrameRate** | -fps | [0 - 2^64 -1] | 25 | If the number is less than 1000, the input frame rate is an integer number between 1 and 60, else the input number is in Q16 format (shifted by 16 bits) [Max allowed is 240 fps] |
 | **FrameRateNumerator** | -fps-num | [0 - 2^64 -1] | 0 | Frame rate numerator e.g. 6000 |
 | **FrameRateDenominator** | -fps-denom | [0 - 2^64 -1] | 0 | Frame rate denominator e.g. 100 |
-| **HierarchicalLevels** | -hierarchical-levels | [0 – 5] | 3 | 0 : Flat3: 4-Level HierarchyMinigop Size = (2^HierarchicalLevels) (e.g. 3 == > 7B pyramid, 2 == > 3B Pyramid) |
+| **HierarchicalLevels** | -hierarchical-levels | [3 – 4] | 4 | 0 : Flat4: 5-Level HierarchyMinigop Size = (2^HierarchicalLevels) (e.g. 3 == > 7B pyramid, 4 == > 15B Pyramid) |
 | **IntraPeriod** | -intra-period | [-2 - 255] | -2 | Distance Between Intra Frame inserted. -1 denotes no intra update. -2 denotes auto. |
 | **IntraRefreshType** | -irefresh-type | [1 – 2] | 1 | 1: CRA (Open GOP)2: IDR (Closed GOP) |
 | **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 |

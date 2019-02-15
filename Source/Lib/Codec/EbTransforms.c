@@ -8320,7 +8320,7 @@ static void highbd_inv_txfm_add(const tran_low_t *input, uint8_t *dest,
 
 void av1_inv_txfm_add_c(const tran_low_t *dqcoeff, uint8_t *dst, int32_t stride,
     const TxfmParam *txfm_param) {
-    const TxType tx_size = txfm_param->tx_size;
+    const TxSize tx_size = txfm_param->tx_size;
     DECLARE_ALIGNED(32, uint16_t, tmp[MAX_TX_SQUARE]);
     int32_t tmp_stride = MAX_TX_SIZE;
     int32_t w = tx_size_wide[tx_size];

@@ -49,8 +49,6 @@ extern "C" {
     //to not include convolve.h, just forward declare what's needed.
     struct ConvolveParams;
     struct InterpFilterParams;
-    typedef int32_t tran_low_t;
-
 
     void apply_selfguided_restoration_c(const uint8_t *dat, int32_t width, int32_t height, int32_t stride, int32_t eps, const int32_t *xqd, uint8_t *dst, int32_t dst_stride, int32_t *tmpbuf, int32_t bit_depth, int32_t highbd);
     void apply_selfguided_restoration_avx2(const uint8_t *dat, int32_t width, int32_t height, int32_t stride, int32_t eps, const int32_t *xqd, uint8_t *dst, int32_t dst_stride, int32_t *tmpbuf, int32_t bit_depth, int32_t highbd);
@@ -261,10 +259,15 @@ extern "C" {
     uint64_t dist_8x8_16bit_c(uint16_t *dst, int dstride, uint16_t *src, int sstride, int coeff_shift);
     uint64_t dist_8x8_16bit_avx2(uint16_t *dst, int dstride, uint16_t *src, int sstride, int coeff_shift);
     RTCD_EXTERN uint64_t(*dist_8x8_16bit)(uint16_t *dst, int dstride, uint16_t *src, int sstride, int coeff_shift);
-
+#if FAST_CDEF
+    uint64_t search_one_dual_c(int *lev0, int *lev1, int nb_strengths, uint64_t(**mse)[64], int sb_count, int fast, int start_gi, int end_gi);
+    uint64_t search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths, uint64_t(**mse)[64], int sb_count, int fast, int start_gi, int end_gi);
+    RTCD_EXTERN uint64_t(*search_one_dual)(int *lev0, int *lev1, int nb_strengths, uint64_t(**mse)[64], int sb_count, int fast, int start_gi, int end_gi);
+#else
     uint64_t search_one_dual_c(int *lev0, int *lev1, int nb_strengths, uint64_t(**mse)[64], int sb_count, int fast);
     uint64_t search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths, uint64_t(**mse)[64], int sb_count, int fast);
     RTCD_EXTERN uint64_t(*search_one_dual)(int *lev0, int *lev1, int nb_strengths, uint64_t(**mse)[64], int sb_count, int fast);
+#endif
 
     uint32_t aom_mse16x16_c(const uint8_t *src_ptr, int32_t  source_stride, const uint8_t *ref_ptr, int32_t  recon_stride, uint32_t *sse);
     uint32_t aom_mse16x16_avx2(const uint8_t *src_ptr, int32_t  source_stride, const uint8_t *ref_ptr, int32_t  recon_stride, uint32_t *sse);
