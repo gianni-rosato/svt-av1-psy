@@ -1767,9 +1767,21 @@ void  inject_intra_candidates(
     EbBool                      use_angle_delta = (context_ptr->blk_geom->bsize >= BLOCK_8X8);
     uint8_t                     angleDeltaCandidateCount = use_angle_delta ? 7 : 1;
     ModeDecisionCandidate_t    *candidateArray = context_ptr->fast_candidate_array;
+#if CHROMA_BLIND 
+    EbBool                      disable_cfl_flag = (context_ptr->chroma_level == CHROMA_LEVEL_1 || 
+                                                    context_ptr->blk_geom->sq_size > 32 ||
+                                                    context_ptr->blk_geom->bwidth == 4  ||   
+                                                    context_ptr->blk_geom->bheight == 4)    ? EB_TRUE : EB_FALSE;
+#else
     EbBool                      disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 || 
                                                     context_ptr->blk_geom->bwidth == 4  ||   
                                                     context_ptr->blk_geom->bheight == 4)    ? EB_TRUE : EB_FALSE;
+#endif
+
+#if SHUT_CHROMA_FROM_LUMA
+    EbBool                      disable_cfl_flag = EB_TRUE;
+#endif
+
     uint8_t                     disable_z2_prediction;
     uint8_t                     disable_angle_refinement;
     uint8_t                     disable_angle_prediction;

@@ -711,13 +711,21 @@ static void Av1EncodeLoop(
         }
 #endif
 
+#if 0//CHROMA_BLIND
+        // Evaluate cfl if not done @ MD, and if applicable
+        EbBool evaluate_cfl = (context_ptr->md_context->chroma_level == CHROMA_LEVEL_0 ||
+            context_ptr->blk_geom->sq_size > 32 ||
+            context_ptr->blk_geom->bwidth == 4 ||
+            context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
+
+        if (evaluate_cfl || (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED)) {
+#else
         if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED) {
+#endif
             EbPictureBufferDesc_t *reconSamples = predSamples;
             uint32_t reconLumaOffset = (reconSamples->origin_y + origin_y)            * reconSamples->strideY + (reconSamples->origin_x + origin_x);
 
             if (txb_ptr->y_has_coeff == EB_TRUE && cu_ptr->skip_flag == EB_FALSE) {
-
-
 
 
                 uint8_t     *predBuffer = predSamples->bufferY + predLumaOffset;
@@ -754,7 +762,18 @@ static void Av1EncodeLoop(
                 LOG2F(context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr]) + LOG2F(context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]));
 
 
-
+#if 0//CHROMA_BLIND
+            if (evaluate_cfl) {
+                cfl_rd_pick_alpha(
+                    picture_control_set_ptr,
+                    sb_ptr,
+                    context_ptr,
+                    inputPicturePtr,
+                    inputCbOriginIndex,
+                    cuChromaOriginIndex,
+                    asm_type);
+            }
+#endif
             int32_t alpha_q3 =
                 cfl_idx_to_alpha(cu_ptr->prediction_unit_array->cfl_alpha_idx, cu_ptr->prediction_unit_array->cfl_alpha_signs, CFL_PRED_U); // once for U, once for V
 

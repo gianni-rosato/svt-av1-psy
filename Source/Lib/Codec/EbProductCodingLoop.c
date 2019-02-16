@@ -1581,6 +1581,10 @@ void ProductDerivePartialFrequencyN2Flag(
 
 void AV1CostCalcCfl(
     PictureControlSet_t                *picture_control_set_ptr,
+#if CHROMA_BLIND
+    int32_t                             cfl_alpha_idx,
+    int32_t                             cfl_alpha_signs,
+#endif
     ModeDecisionCandidateBuffer_t      *candidateBuffer,
     LargestCodingUnit_t                *sb_ptr,
     ModeDecisionContext_t              *context_ptr,
@@ -1617,11 +1621,16 @@ void AV1CostCalcCfl(
         crFullDistortion[DIST_CALC_PREDICTION] = 0;
         cb_coeff_bits = 0;
         cr_coeff_bits = 0;
+#if CHROMA_BLIND
+        alpha_q3 = cfl_idx_to_alpha(cfl_alpha_idx, cfl_alpha_signs, CFL_PRED_U); // once for U, once for V
+        if (cfl_alpha_idx == 0 && cfl_alpha_signs == 0) // To check DC
+            alpha_q3 = 0;
+#else
         alpha_q3 =
             cfl_idx_to_alpha(candidate_ptr->cfl_alpha_idx, candidate_ptr->cfl_alpha_signs, CFL_PRED_U); // once for U, once for V
         if (candidate_ptr->cfl_alpha_idx == 0 && candidate_ptr->cfl_alpha_signs == 0)// To check DC
             alpha_q3 = 0;
-
+#endif
         assert(chroma_width * CFL_BUF_LINE + chroma_height <=
             CFL_BUF_SQUARE);
 
@@ -1690,13 +1699,18 @@ void AV1CostCalcCfl(
 
         cb_coeff_bits = 0;
         cr_coeff_bits = 0;
+#if CHROMA_BLIND
+        alpha_q3 = cfl_idx_to_alpha(cfl_alpha_idx, cfl_alpha_signs, CFL_PRED_V); // once for U, once for V
 
+        if (cfl_alpha_idx == 0 && cfl_alpha_signs == 0) // To check DC
+            alpha_q3 = 0;
+#else
         alpha_q3 =
             cfl_idx_to_alpha(candidate_ptr->cfl_alpha_idx, candidate_ptr->cfl_alpha_signs, CFL_PRED_V); // once for U, once for V
 
         if (candidate_ptr->cfl_alpha_idx == 0 && candidate_ptr->cfl_alpha_signs == 0) // To check DC
             alpha_q3 = 0;
-
+#endif
         assert(chroma_width * CFL_BUF_LINE + chroma_height <=
             CFL_BUF_SQUARE);
 
@@ -1768,15 +1782,23 @@ static void cfl_rd_pick_alpha(
     EbPictureBufferDesc_t   *inputPicturePtr,
     uint32_t                   inputCbOriginIndex,
     uint32_t                     cuChromaOriginIndex,
+#if CHROMA_BLIND
+    uint8_t  intra_luma_mode,
+    int32_t  *cfl_alpha_idx,
+    int32_t  *cfl_alpha_signs,
+#endif
     EbAsm                    asm_type) {
 
     int64_t                  best_rd = INT64_MAX;
     uint64_t                  full_distortion[DIST_CALC_TOTAL];
     uint64_t                  coeffBits;
+#if CHROMA_BLIND
+    const int64_t mode_rd = RDCOST(context_ptr->full_lambda, (uint64_t)context_ptr->md_rate_estimation_ptr->intraUVmodeFacBits[CFL_ALLOWED][intra_luma_mode][UV_CFL_PRED], 0);
+#else
     const int64_t mode_rd =
         RDCOST(context_ptr->full_lambda,
         (uint64_t)candidateBuffer->candidate_ptr->md_rate_estimation_ptr->intraUVmodeFacBits[CFL_ALLOWED][candidateBuffer->candidate_ptr->intra_luma_mode][UV_CFL_PRED], 0);
-
+#endif
     int64_t best_rd_uv[CFL_JOINT_SIGNS][CFL_PRED_PLANES];
     int32_t best_c[CFL_JOINT_SIGNS][CFL_PRED_PLANES];
 
@@ -1792,11 +1814,20 @@ static void cfl_rd_pick_alpha(
         for (int32_t i = CFL_SIGN_NEG; i < CFL_SIGNS; i++) {
             const int32_t joint_sign = PLANE_SIGN_TO_JOINT_SIGN(plane, CFL_SIGN_ZERO, i);
             if (i == CFL_SIGN_NEG) {
+#if CHROMA_BLIND
+                *cfl_alpha_idx = 0;
+                *cfl_alpha_signs = joint_sign;
+#else
                 candidateBuffer->candidate_ptr->cfl_alpha_idx = 0;
                 candidateBuffer->candidate_ptr->cfl_alpha_signs = joint_sign;
+#endif
 
                 AV1CostCalcCfl(
                     picture_control_set_ptr,
+#if CHROMA_BLIND
+                    *cfl_alpha_idx,
+                    *cfl_alpha_signs,
+#endif
                     candidateBuffer,
                     sb_ptr,
                     context_ptr,
@@ -1810,8 +1841,11 @@ static void cfl_rd_pick_alpha(
 
                 if (coeffBits == INT64_MAX) break;
             }
+#if CHROMA_BLIND
+            const int32_t alpha_rate = context_ptr->md_rate_estimation_ptr->cflAlphaFacBits[joint_sign][plane][0];
+#else
             const int32_t alpha_rate = candidateBuffer->candidate_ptr->md_rate_estimation_ptr->cflAlphaFacBits[joint_sign][plane][0];
-
+#endif
 
             best_rd_uv[joint_sign][plane] =
                 RDCOST(context_ptr->full_lambda, coeffBits + alpha_rate, full_distortion[DIST_CALC_RESIDUAL]);
@@ -1831,11 +1865,19 @@ static void cfl_rd_pick_alpha(
                 for (int32_t i = 0; i < CFL_SIGNS; i++) {
                     const int32_t joint_sign = PLANE_SIGN_TO_JOINT_SIGN(plane, pn_sign, i);
                     if (i == 0) {
+#if CHROMA_BLIND
+                        *cfl_alpha_idx = (c << CFL_ALPHABET_SIZE_LOG2) + c;
+                        *cfl_alpha_signs = joint_sign;
+#else
                         candidateBuffer->candidate_ptr->cfl_alpha_idx = (c << CFL_ALPHABET_SIZE_LOG2) + c;
                         candidateBuffer->candidate_ptr->cfl_alpha_signs = joint_sign;
-
+#endif
                         AV1CostCalcCfl(
                             picture_control_set_ptr,
+#if CHROMA_BLIND
+                            *cfl_alpha_idx,
+                            *cfl_alpha_signs,
+#endif
                             candidateBuffer,
                             sb_ptr,
                             context_ptr,
@@ -1849,7 +1891,11 @@ static void cfl_rd_pick_alpha(
 
                         if (coeffBits == INT64_MAX) break;
                     }
+#if CHROMA_BLIND
                     const int32_t alpha_rate = candidateBuffer->candidate_ptr->md_rate_estimation_ptr->cflAlphaFacBits[joint_sign][plane][c];
+#else
+                    const int32_t alpha_rate = candidateBuffer->candidate_ptr->md_rate_estimation_ptr->cflAlphaFacBits[joint_sign][plane][c];
+#endif
                     int64_t this_rd =
                         RDCOST(context_ptr->full_lambda, coeffBits + alpha_rate, full_distortion[DIST_CALC_RESIDUAL]);
                     if (this_rd >= best_rd_uv[joint_sign][plane]) continue;
@@ -1871,14 +1917,23 @@ static void cfl_rd_pick_alpha(
     // Compare with DC Chroma
     coeffBits = 0;
     full_distortion[DIST_CALC_RESIDUAL] = 0;
+#if CHROMA_BLIND
+    *cfl_alpha_idx = 0;
+    *cfl_alpha_signs = 0;
+#else
     candidateBuffer->candidate_ptr->cfl_alpha_idx = 0;
     candidateBuffer->candidate_ptr->cfl_alpha_signs = 0;
+#endif
     const int64_t dc_mode_rd =
         RDCOST(context_ptr->full_lambda,
             candidateBuffer->candidate_ptr->md_rate_estimation_ptr->intraUVmodeFacBits[CFL_ALLOWED][candidateBuffer->candidate_ptr->intra_luma_mode][UV_DC_PRED], 0);
 
     AV1CostCalcCfl(
         picture_control_set_ptr,
+#if CHROMA_BLIND
+        *cfl_alpha_idx,
+        *cfl_alpha_signs,
+#endif
         candidateBuffer,
         sb_ptr,
         context_ptr,
@@ -1897,8 +1952,13 @@ static void cfl_rd_pick_alpha(
     dc_rd += dc_mode_rd;
     if (dc_rd <= best_rd) {
         candidateBuffer->candidate_ptr->intra_chroma_mode = UV_DC_PRED;
+#if CHROMA_BLIND
+        *cfl_alpha_idx = 0;
+        *cfl_alpha_signs = 0;
+#else
         candidateBuffer->candidate_ptr->cfl_alpha_idx = 0;
         candidateBuffer->candidate_ptr->cfl_alpha_signs = 0;
+#endif
     }
     else {
         int32_t ind = 0;
@@ -1910,9 +1970,13 @@ static void cfl_rd_pick_alpha(
         else {
             best_joint_sign = 0;
         }
-
+#if CHROMA_BLIND
+        *cfl_alpha_idx = ind;
+        *cfl_alpha_signs = best_joint_sign;
+#else
         candidateBuffer->candidate_ptr->cfl_alpha_idx = ind;
         candidateBuffer->candidate_ptr->cfl_alpha_signs = best_joint_sign;
+#endif
     }
 
 }
@@ -1979,6 +2043,11 @@ static void CflPrediction(
         inputPicturePtr,
         inputCbOriginIndex,
         cuChromaOriginIndex,
+#if CHROMA_BLIND
+        candidateBuffer->candidate_ptr->intra_luma_mode,
+        &candidateBuffer->candidate_ptr->cfl_alpha_idx,
+        &candidateBuffer->candidate_ptr->cfl_alpha_signs,
+#endif
         asm_type);
 
 
@@ -2229,11 +2298,9 @@ void AV1PerformFullLoop(
             &y_coeff_bits,
             &y_full_distortion[0]);
 
-#if CHROMA_BLIND
-        if (context_ptr->chroma_level == CHROMA_LEVEL_0 && candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
-#else
+
         if (candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
-#endif
+
             // If mode is CFL:
             // 1: recon the Luma
             // 2: Form the pred_buf_q3
