@@ -38,8 +38,10 @@ extern "C" {
 #define SIMULATE_PF_N2          0
 #define FULL_LOOP_ESCAPE        0
 #define SHUT_CHROMA_FROM_LUMA   0
-#define CHROMA_BLIND            1
-
+#define CHROMA_BLIND            0
+#if CHROMA_BLIND
+#define CFL_EP                  1
+#endif
 
      //Mode definition : Only one mode should be ON at a time
 
