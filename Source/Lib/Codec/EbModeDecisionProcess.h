@@ -209,7 +209,9 @@ extern "C" {
 
         // Multi-modes signal(s) 
         uint8_t                           nfl_level;
-
+#if INTERPOLATION_SEARCH_LEVELS
+        uint8_t                           skip_interpolation_search;
+#endif
 
     } ModeDecisionContext_t;
 

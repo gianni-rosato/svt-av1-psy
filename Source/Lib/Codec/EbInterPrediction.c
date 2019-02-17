@@ -3572,8 +3572,11 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
             int32_t best_in_temp = 0;
             uint32_t best_filters = 0;// mbmi->interp_filters;
 
-
+#if INTERPOLATION_SEARCH_LEVELS
+            if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level &&
+#else
             if (picture_control_set_ptr->parent_pcs_ptr->interpolation_filter_search_mode == 1 &&
+#endif
                 picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->enable_dual_filter) {
                 int32_t tmp_skip_sb = 0;
                 int64_t tmp_skip_sse = INT64_MAX;
@@ -3904,8 +3907,11 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
             int32_t best_in_temp = 0;
             uint32_t best_filters = 0;// mbmi->interp_filters;
 
-
+#if INTERPOLATION_SEARCH_LEVELS
+            if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level &&
+#else
             if (picture_control_set_ptr->parent_pcs_ptr->interpolation_filter_search_mode == 1 &&
+#endif
                 picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->enable_dual_filter) {
                 int32_t tmp_skip_sb = 0;
                 int64_t tmp_skip_sse = INT64_MAX;
@@ -4155,10 +4161,10 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
 
 EbErrorType inter_pu_prediction_av1(
     ModeDecisionContext_t                  *md_context_ptr,
-    uint32_t                                  component_mask,
+    uint32_t                                component_mask,
     PictureControlSet_t                    *picture_control_set_ptr,
     ModeDecisionCandidateBuffer_t          *candidate_buffer_ptr,
-    EbAsm                                  asm_type)
+    EbAsm                                   asm_type)
 {
     (void)component_mask;
     EbErrorType            return_error = EB_ErrorNone;
@@ -4241,8 +4247,11 @@ EbErrorType inter_pu_prediction_av1(
         int32_t rs = 0;
         int64_t rd = INT64_MAX;
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
-
+#if INTERPOLATION_SEARCH_LEVELS
+        if (!md_context_ptr->skip_interpolation_search) {
+#else
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_filter_search_mode > 0) {
+#endif
             if (md_context_ptr->blk_geom->bwidth > 4 && md_context_ptr->blk_geom->bheight > 4)
                 interpolation_filter_search_HBD(
                     picture_control_set_ptr,
@@ -4290,8 +4299,11 @@ EbErrorType inter_pu_prediction_av1(
         int32_t rs = 0;
         int64_t rd = INT64_MAX;
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
-
+#if INTERPOLATION_SEARCH_LEVELS
+        if (!md_context_ptr->skip_interpolation_search) {
+#else
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_filter_search_mode > 0) {
+#endif
             if (md_context_ptr->blk_geom->bwidth > 4 && md_context_ptr->blk_geom->bheight > 4)
                 interpolation_filter_search(
                     picture_control_set_ptr,
@@ -4307,6 +4319,7 @@ EbErrorType inter_pu_prediction_av1(
                     &skip_txfm_sb,
                     &skip_sse_sb);
         }
+
         //candidate_buffer_ptr->candidate_ptr->interp_filters = 1;//SWITCHABLE_FILTERS;
 
         av1_inter_prediction(

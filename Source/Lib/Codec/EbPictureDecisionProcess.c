@@ -658,7 +658,19 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
 
     picture_control_set_ptr->max_number_of_pus_per_sb = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
-
+#if INTERPOLATION_SEARCH_LEVELS
+    // Interpolation search Level                     Settings
+    // 0                                              OFF
+    // 1                                              Interpolation search at inter-depth
+    // 2                                              Interpolation search at full loop
+    // 3                                              Interpolation search at fast loop
+    if (picture_control_set_ptr->enc_mode == ENC_M0) {
+        picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FULL_LOOP;
+    }
+    else {
+        picture_control_set_ptr->interpolation_search_level = IT_SEARCH_OFF;
+    }
+#else
     // Interpolation filter search Level MD         Settings
     // 0                                            OFF
     // 1                                            FAST
@@ -667,6 +679,8 @@ EbErrorType signal_derivation_multi_processes_oq(
         picture_control_set_ptr->interpolation_filter_search_mode = 1;
     else
         picture_control_set_ptr->interpolation_filter_search_mode = 0;
+
+#endif
 
     // Loop filter Level                            Settings
     // 0                                            OFF
@@ -758,6 +772,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         picture_control_set_ptr->tx_search_reduced_set = 0;
     }
 #endif
+
     // Intra prediction Level                       Settings
     // 0                                            OFF : disable_angle_prediction
     // 1                                            OFF per block : disable_angle_prediction for 64/32/4

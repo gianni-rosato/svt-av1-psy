@@ -1168,7 +1168,9 @@ void ProductMdFastPuPrediction(
     EbBool enableSubPelFlag = picture_control_set_ptr->parent_pcs_ptr->use_subpel_flag;
     enableSubPelFlag = 2;
     // Prediction
-
+#if INTERPOLATION_SEARCH_LEVELS
+    context_ptr->skip_interpolation_search = picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FAST_LOOP ? 0 : 1;
+#endif
     candidateBuffer->candidate_ptr->prediction_is_ready_luma = EB_TRUE;
     candidateBuffer->candidate_ptr->interp_filters = 0;
     ProductPredictionFunTableCL[enableSubPelFlag][modeType](
@@ -2006,8 +2008,7 @@ uint8_t get_skip_tx_search_flag(
     int32_t                  sq_size,
     uint64_t                 ref_fast_cost,
     uint64_t                 cu_cost,
-    uint64_t                 weight
-) 
+    uint64_t                 weight) 
 {
 
     uint8_t  tx_search_skip_fag = cu_cost >= ((ref_fast_cost * weight) / 100) ? 1 : 0;
@@ -2088,16 +2089,25 @@ void AV1PerformFullLoop(
 
         // Set Skip Flag
         candidate_ptr->skip_flag = EB_FALSE;
+#if INTERPOLATION_SEARCH_LEVELS
+        if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FULL_LOOP) {
+            context_ptr->skip_interpolation_search = 0;
 
+
+            if (candidate_ptr->type != INTRA_MODE || candidate_ptr->motion_mode == WARPED_CAUSAL) {
+#else
         if (candidate_ptr->prediction_is_ready_luma == EB_FALSE || candidate_ptr->motion_mode == WARPED_CAUSAL) {
+#endif
             ProductPredictionFunTableCL[2][candidate_ptr->type](
                 context_ptr,
                 context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
                 picture_control_set_ptr,
                 candidateBuffer,
                 asm_type);
+            }
+#if INTERPOLATION_SEARCH_LEVELS
         }
-
+#endif
         if (candidate_ptr->motion_mode == WARPED_CAUSAL && candidate_ptr->local_warp_valid == 0)
             continue;
 
@@ -2869,7 +2879,6 @@ void md_encode_block(
         //if we want to recon N candidate, we would need N+1 buffers
         maxBuffers = MIN((buffer_total_count + 1), context_ptr->buffer_depth_index_width[0]);
 
-
         ProductPerformFastLoop(
             picture_control_set_ptr,
             context_ptr->sb_ptr,
@@ -2911,6 +2920,7 @@ void md_encode_block(
 #endif
             (EbBool)(secondFastCostSearchCandidateTotalCount == buffer_total_count)); // The fast loop bug fix is now added to 4K only
 
+
         AV1PerformFullLoop(
             picture_control_set_ptr,
             context_ptr->sb_ptr,
@@ -2941,6 +2951,25 @@ void md_encode_block(
         candidateBuffer = candidate_buffer_ptr_array[candidateIndex];
 
         bestCandidateBuffers[0] = candidateBuffer;
+
+#if INTERPOLATION_SEARCH_LEVELS
+        if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_INTER_DEPTH) {
+
+            if (candidateBuffer->candidate_ptr->type != INTRA_MODE && candidateBuffer->candidate_ptr->motion_mode == SIMPLE_TRANSLATION) {
+
+                context_ptr->skip_interpolation_search = 0;
+
+                ProductPredictionFunTableCL[2][candidateBuffer->candidate_ptr->type](
+                    context_ptr,
+                    context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
+                    picture_control_set_ptr,
+                    candidateBuffer,
+                    asm_type);
+
+                cu_ptr->interp_filters = candidateBuffer->candidate_ptr->interp_filters;
+            }
+        }
+#endif
 
 #if TX_SEARCH_LEVELS
         inter_depth_tx_search(

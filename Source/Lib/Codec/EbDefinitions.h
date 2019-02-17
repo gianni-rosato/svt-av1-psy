@@ -141,7 +141,7 @@ extern "C" {
 #define FAST_SG                                         1
 #define FAST_WN                                         1
 #define TX_SEARCH_LEVELS                                1 
-
+#define INTERPOLATION_SEARCH_LEVELS                     1 
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/
@@ -485,8 +485,14 @@ typedef enum TX_SEARCH_LEVEL {
 } TX_SEARCH_LEVEL;
 #endif
 
-
-
+#if INTERPOLATION_SEARCH_LEVELS
+typedef enum INTERPOLATION_SEARCH_LEVEL {
+    IT_SEARCH_OFF,
+    IT_SEARCH_INTER_DEPTH,
+    IT_SEARCH_FULL_LOOP,
+    IT_SEARCH_FAST_LOOP,
+} INTERPOLATION_SEARCH_LEVEL;
+#endif
 typedef enum COMPOUND_DIST_WEIGHT_MODE {
     DIST,
 } COMPOUND_DIST_WEIGHT_MODE;

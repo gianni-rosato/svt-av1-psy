@@ -14125,7 +14125,9 @@ extern "C" {
 
         // Multi-modes signal(s) 
         EbPictureDepthMode                    pic_depth_mode;
+#if !INTERPOLATION_SEARCH_LEVELS
         uint8_t                               interpolation_filter_search_mode;
+#endif
         uint8_t                               loop_filter_mode;
         uint8_t                               intra_pred_mode;
         //**********************************************************************************************************//
@@ -14286,6 +14288,9 @@ extern "C" {
         uint8_t                               tx_search_level;
         uint64_t                              tx_weight;
         uint8_t                               tx_search_reduced_set;
+#endif
+#if INTERPOLATION_SEARCH_LEVELS
+        uint8_t                               interpolation_search_level;
 #endif
 
     } PictureParentControlSet_t;
