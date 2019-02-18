@@ -1761,7 +1761,11 @@ void AV1CostCalcCfl(
 #define PLANE_SIGN_TO_JOINT_SIGN(plane, a, b) \
   (plane == CFL_PRED_U ? a * CFL_SIGNS + b - 1 : b * CFL_SIGNS + a - 1)
 /*************************Pick the best alpha for cfl mode  or Choose DC******************************************************/
+#if CFL_EP 
+void cfl_rd_pick_alpha(
+#else
 static void cfl_rd_pick_alpha(
+#endif
     PictureControlSet_t     *picture_control_set_ptr,
     ModeDecisionCandidateBuffer_t  *candidateBuffer,
     LargestCodingUnit_t     *sb_ptr,

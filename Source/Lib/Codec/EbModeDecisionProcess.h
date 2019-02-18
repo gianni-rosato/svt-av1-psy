@@ -294,6 +294,19 @@ extern "C" {
         uint8_t                  picture_qp,
         uint8_t                  sb_qp);
 
+
+#if CFL_EP 
+    extern void cfl_rd_pick_alpha(
+        PictureControlSet_t             *picture_control_set_ptr,
+        ModeDecisionCandidateBuffer_t   *candidateBuffer,
+        LargestCodingUnit_t             *sb_ptr,
+        ModeDecisionContext_t           *context_ptr,
+        EbPictureBufferDesc_t           *inputPicturePtr,
+        uint32_t                         inputCbOriginIndex,
+        uint32_t                         cuChromaOriginIndex,
+        EbAsm                            asm_type);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

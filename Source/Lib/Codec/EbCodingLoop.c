@@ -711,17 +711,20 @@ static void Av1EncodeLoop(
         }
 #endif
 
-#if 0//CHROMA_BLIND
-        // Evaluate cfl if not done @ MD, and if applicable
-        EbBool evaluate_cfl = (context_ptr->md_context->chroma_level == CHROMA_LEVEL_0 ||
+#if CFL_EP
+        // Evaluate cfl @ EP if not done @ MD, and if applicable
+        EbBool evaluate_cfl_ep = (context_ptr->md_context->chroma_level == CHROMA_LEVEL_0 ||
             context_ptr->blk_geom->sq_size > 32 ||
             context_ptr->blk_geom->bwidth == 4 ||
             context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
 
-        if (evaluate_cfl || (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED)) {
+
+        if (cu_ptr->prediction_mode_flag == INTRA_MODE && (evaluate_cfl_ep || cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED)) {
 #else
         if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED) {
 #endif
+
+
             EbPictureBufferDesc_t *reconSamples = predSamples;
             uint32_t reconLumaOffset = (reconSamples->origin_y + origin_y)            * reconSamples->strideY + (reconSamples->origin_x + origin_x);
 
@@ -740,7 +743,7 @@ static void Av1EncodeLoop(
                     eob[0]);
 
             }
-
+#if 0
             // Down sample Luma
             cfl_luma_subsampling_420_lbd_c(
                 reconSamples->bufferY + reconLumaOffset,
@@ -760,55 +763,72 @@ static void Av1EncodeLoop(
                 context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr],
                 round_offset,
                 LOG2F(context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr]) + LOG2F(context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]));
+#endif
 
+#if CFL_EP
+            if (evaluate_cfl_ep) {
+                // 3: Loop over alphas and find the best or choose DC
+                // Re-use the candidate buffer 1st spot to evaluate cfl o: (1) t
+                ModeDecisionCandidateBuffer_t  *candidateBuffer = &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]);
+                
+                // Input(s)
+                candidateBuffer->candidate_ptr->intra_luma_mode = cu_ptr->pred_mode;
 
-#if 0//CHROMA_BLIND
-            if (evaluate_cfl) {
                 cfl_rd_pick_alpha(
                     picture_control_set_ptr,
+                    candidateBuffer,
                     sb_ptr,
-                    context_ptr,
-                    inputPicturePtr,
-                    inputCbOriginIndex,
-                    cuChromaOriginIndex,
+                    context_ptr->md_context,
+                    input_samples,
+                    inputCbOffset,
+                    scratchCbOffset,
                     asm_type);
+
+                // Output(s)
+                cu_ptr->prediction_unit_array->intra_chroma_mode = candidateBuffer->candidate_ptr->intra_chroma_mode;
+                cu_ptr->prediction_unit_array->cfl_alpha_idx     = candidateBuffer->candidate_ptr->cfl_alpha_idx;
+                cu_ptr->prediction_unit_array->cfl_alpha_signs   = candidateBuffer->candidate_ptr->cfl_alpha_signs;
+            }
+
+            if (cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED) {
+#endif
+                int32_t alpha_q3 =
+                    cfl_idx_to_alpha(cu_ptr->prediction_unit_array->cfl_alpha_idx, cu_ptr->prediction_unit_array->cfl_alpha_signs, CFL_PRED_U); // once for U, once for V
+
+                //TOCHANGE
+                //assert(chromaSize * CFL_BUF_LINE + chromaSize <= CFL_BUF_SQUARE);
+
+                cfl_predict_lbd(
+                    context_ptr->pred_buf_q3,
+                    predSamples->bufferCb + predCbOffset,
+                    predSamples->strideCb,
+                    predSamples->bufferCb + predCbOffset,
+                    predSamples->strideCb,
+                    alpha_q3,
+                    8,
+                    context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
+                    context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]);
+                alpha_q3 =
+                    cfl_idx_to_alpha(cu_ptr->prediction_unit_array->cfl_alpha_idx, cu_ptr->prediction_unit_array->cfl_alpha_signs, CFL_PRED_V); // once for U, once for V
+
+                //TOCHANGE
+                //assert(chromaSize * CFL_BUF_LINE + chromaSize <= CFL_BUF_SQUARE);
+
+                cfl_predict_lbd(
+                    context_ptr->pred_buf_q3,
+                    predSamples->bufferCr + predCrOffset,
+                    predSamples->strideCr,
+                    predSamples->bufferCr + predCrOffset,
+                    predSamples->strideCr,
+                    alpha_q3,
+                    8,
+                    context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
+                    context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]);
+
+#if CFL_EP
             }
 #endif
-            int32_t alpha_q3 =
-                cfl_idx_to_alpha(cu_ptr->prediction_unit_array->cfl_alpha_idx, cu_ptr->prediction_unit_array->cfl_alpha_signs, CFL_PRED_U); // once for U, once for V
-
-            //TOCHANGE
-            //assert(chromaSize * CFL_BUF_LINE + chromaSize <= CFL_BUF_SQUARE);
-
-            cfl_predict_lbd(
-                context_ptr->pred_buf_q3,
-                predSamples->bufferCb + predCbOffset,
-                predSamples->strideCb,
-                predSamples->bufferCb + predCbOffset,
-                predSamples->strideCb,
-                alpha_q3,
-                8,
-                context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
-                context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]);
-            alpha_q3 =
-                cfl_idx_to_alpha(cu_ptr->prediction_unit_array->cfl_alpha_idx, cu_ptr->prediction_unit_array->cfl_alpha_signs, CFL_PRED_V); // once for U, once for V
-
-            //TOCHANGE
-            //assert(chromaSize * CFL_BUF_LINE + chromaSize <= CFL_BUF_SQUARE);
-
-            cfl_predict_lbd(
-                context_ptr->pred_buf_q3,
-                predSamples->bufferCr + predCrOffset,
-                predSamples->strideCr,
-                predSamples->bufferCr + predCrOffset,
-                predSamples->strideCr,
-                alpha_q3,
-                8,
-                context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
-                context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]);
         }
-
-
 
     }
 
@@ -1427,8 +1447,18 @@ static void Av1EncodeGenerateRecon(
     //**********************************
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
 
-        if (cu_ptr->prediction_mode_flag != INTRA_MODE || cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED)
+#if CFL_EP
+        // Evaluate cfl @ EP if not done @ MD, and if applicable
+        EbBool evaluate_cfl_ep = (context_ptr->md_context->chroma_level == CHROMA_LEVEL_0 ||
+            context_ptr->blk_geom->sq_size > 32 ||
+            context_ptr->blk_geom->bwidth == 4 ||
+            context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
 
+
+        if (cu_ptr->prediction_mode_flag != INTRA_MODE || (cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED && evaluate_cfl_ep == 0))
+#else
+        if (cu_ptr->prediction_mode_flag != INTRA_MODE || cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED)
+#endif
         {
             predLumaOffset = (predSamples->origin_y + origin_y)             * predSamples->strideY + (predSamples->origin_x + origin_x);
             if (txb_ptr->y_has_coeff == EB_TRUE && cu_ptr->skip_flag == EB_FALSE) {
