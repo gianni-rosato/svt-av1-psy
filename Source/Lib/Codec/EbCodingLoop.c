@@ -743,7 +743,7 @@ static void Av1EncodeLoop(
                     eob[0]);
 
             }
-#if 0
+
             // Down sample Luma
             cfl_luma_subsampling_420_lbd_c(
                 reconSamples->bufferY + reconLumaOffset,
@@ -763,7 +763,6 @@ static void Av1EncodeLoop(
                 context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr],
                 round_offset,
                 LOG2F(context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr]) + LOG2F(context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]));
-#endif
 
 #if CFL_EP
             if (evaluate_cfl_ep) {
@@ -773,6 +772,7 @@ static void Av1EncodeLoop(
                 
                 // Input(s)
                 candidateBuffer->candidate_ptr->intra_luma_mode = cu_ptr->pred_mode;
+                context_ptr->md_context->blk_geom = context_ptr->blk_geom;
 
                 cfl_rd_pick_alpha(
                     picture_control_set_ptr,
