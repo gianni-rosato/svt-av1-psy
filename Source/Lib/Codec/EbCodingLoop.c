@@ -712,11 +712,12 @@ static void Av1EncodeLoop(
 #endif
 
 #if CFL_EP
-        // Evaluate cfl @ EP if not done @ MD, and if applicable
-        EbBool evaluate_cfl_ep = (context_ptr->md_context->chroma_level == CHROMA_LEVEL_0 ||
-            context_ptr->blk_geom->sq_size > 32 ||
+        // Derive disable_cfl_flag as evaluate_cfl_ep = f(disable_cfl_flag)
+        EbBool disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 ||
             context_ptr->blk_geom->bwidth == 4 ||
-            context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
+            context_ptr->blk_geom->bheight == 4) ? EB_TRUE : EB_FALSE;
+        // Evaluate cfl @ EP if applicable, and not done @ MD 
+        EbBool evaluate_cfl_ep = (disable_cfl_flag == EB_FALSE && context_ptr->md_context->chroma_level == CHROMA_LEVEL_1);
 
 
         if (cu_ptr->prediction_mode_flag == INTRA_MODE && (evaluate_cfl_ep || cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED)) {
@@ -748,7 +749,11 @@ static void Av1EncodeLoop(
             cfl_luma_subsampling_420_lbd_c(
                 reconSamples->bufferY + reconLumaOffset,
                 reconSamples->strideY,
+#if CHROMA_BLIND
+                context_ptr->md_context->pred_buf_q3,
+#else
                 context_ptr->pred_buf_q3,
+#endif
                 context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[context_ptr->txb_itr]);
 
@@ -758,22 +763,28 @@ static void Av1EncodeLoop(
 
 
             subtract_average(
+#if CHROMA_BLIND
+                context_ptr->md_context->pred_buf_q3,
+#else
                 context_ptr->pred_buf_q3,
+#endif
                 context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr],
                 round_offset,
                 LOG2F(context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr]) + LOG2F(context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]));
 
 #if CFL_EP
-            if (evaluate_cfl_ep) {
+            if (evaluate_cfl_ep) 
+            {
                 // 3: Loop over alphas and find the best or choose DC
-                // Re-use the candidate buffer 1st spot to evaluate cfl: (1) to cfl_rd_pick_alpha(), (2) 
+                // Use the 1st spot of the candidate buffer to hold cfl settings: (1) to cfl_rd_pick_alpha(), (2) 
                 ModeDecisionCandidateBuffer_t  *candidateBuffer = &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]);
                 
                 // Input(s)
                 candidateBuffer->candidate_ptr->intra_luma_mode = cu_ptr->pred_mode;
                 context_ptr->md_context->blk_geom = context_ptr->blk_geom;
-
+                predSamples->bufferCb + predCbOffset,
+                predSamples->bufferCr + predCrOffset,
                 cfl_rd_pick_alpha(
                     picture_control_set_ptr,
                     candidateBuffer,
@@ -799,7 +810,11 @@ static void Av1EncodeLoop(
                 //assert(chromaSize * CFL_BUF_LINE + chromaSize <= CFL_BUF_SQUARE);
 
                 cfl_predict_lbd(
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
                     context_ptr->pred_buf_q3,
+#endif
                     predSamples->bufferCb + predCbOffset,
                     predSamples->strideCb,
                     predSamples->bufferCb + predCbOffset,
@@ -815,7 +830,11 @@ static void Av1EncodeLoop(
                 //assert(chromaSize * CFL_BUF_LINE + chromaSize <= CFL_BUF_SQUARE);
 
                 cfl_predict_lbd(
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
                     context_ptr->pred_buf_q3,
+#endif
                     predSamples->bufferCr + predCrOffset,
                     predSamples->strideCr,
                     predSamples->bufferCr + predCrOffset,
@@ -1202,8 +1221,12 @@ static void Av1EncodeLoop16bit(
                 // Down sample Luma
                 cfl_luma_subsampling_420_hbd_c(
                     ((uint16_t*)reconSamples->bufferY) + reconLumaOffset,
-                    reconSamples->strideY,
+                    reconSamples->strideY,              
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
                     context_ptr->pred_buf_q3,
+#endif
                     context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_height[context_ptr->txb_itr]);
 
@@ -1211,7 +1234,11 @@ static void Av1EncodeLoop16bit(
 
 
                 subtract_average(
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
                     context_ptr->pred_buf_q3,
+#endif
                     context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr],
                     round_offset,
@@ -1225,7 +1252,11 @@ static void Av1EncodeLoop16bit(
                 // assert(chromaSize * CFL_BUF_LINE + chromaSize <=                CFL_BUF_SQUARE);
 
                 cfl_predict_hbd(
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
                     context_ptr->pred_buf_q3,
+#endif
                     ((uint16_t*)predSamples16bit->bufferCb) + predCbOffset,
                     predSamples16bit->strideCb,
                     ((uint16_t*)predSamples16bit->bufferCb) + predCbOffset,
@@ -1241,7 +1272,11 @@ static void Av1EncodeLoop16bit(
                 //assert(chromaSize * CFL_BUF_LINE + chromaSize <=                CFL_BUF_SQUARE);
 
                 cfl_predict_hbd(
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
                     context_ptr->pred_buf_q3,
+#endif
                     ((uint16_t*)predSamples16bit->bufferCr) + predCrOffset,
                     predSamples16bit->strideCr,
                     ((uint16_t*)predSamples16bit->bufferCr) + predCrOffset,
@@ -1448,14 +1483,14 @@ static void Av1EncodeGenerateRecon(
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
 
 #if CFL_EP
-        // Evaluate cfl @ EP if not done @ MD, and if applicable
-        EbBool evaluate_cfl_ep = (context_ptr->md_context->chroma_level == CHROMA_LEVEL_0 ||
-            context_ptr->blk_geom->sq_size > 32 ||
+        // Derive disable_cfl_flag as evaluate_cfl_ep = f(disable_cfl_flag)
+        EbBool disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 ||
             context_ptr->blk_geom->bwidth == 4 ||
-            context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
-
-
-        if (cu_ptr->prediction_mode_flag != INTRA_MODE || (cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED && evaluate_cfl_ep == 0))
+            context_ptr->blk_geom->bheight == 4) ? EB_TRUE : EB_FALSE;
+        // Evaluate cfl @ EP if applicable, and not done @ MD 
+        EbBool evaluate_cfl_ep = (disable_cfl_flag == EB_FALSE && context_ptr->md_context->chroma_level == CHROMA_LEVEL_1);
+       
+        if (cu_ptr->prediction_mode_flag != INTRA_MODE || (cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED && evaluate_cfl_ep == EB_FALSE))
 #else
         if (cu_ptr->prediction_mode_flag != INTRA_MODE || cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED)
 #endif
@@ -3328,11 +3363,28 @@ EB_EXTERN void AV1EncodePass(
                                             topNeighArray[0] = leftNeighArray[0] = ep_cr_recon_neighbor_array->topLeftArray[MAX_PICTURE_HEIGHT_SIZE / 2 + cu_originx_uv - cu_originy_uv];
                                     }
 
-
                                     if (plane)
                                         mode = (pu_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED : (PredictionMode)pu_ptr->intra_chroma_mode;
                                     else
                                         mode = cu_ptr->pred_mode; //PredictionMode mode,
+#if CFL_EP
+                                    // Hsan: if CHROMA_MODE_1, then CFL will be evaluated @ EP as no CHROMA @ MD 
+                                    // If that's the case then you should ensure than the 1st chroma prediction uses UV_DC_PRED (that's the default configuration for CHROMA_MODE_1 if CFL applicable (check fast looop candidates injection) then MD assumes chroma mode always UV_DC_PRED)
+                                    // To do: add an assert
+                                    
+                                    // Derive disable_cfl_flag as evaluate_cfl_ep = f(disable_cfl_flag)
+                                    EbBool disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 ||
+                                        context_ptr->blk_geom->bwidth == 4 ||
+                                        context_ptr->blk_geom->bheight == 4) ? EB_TRUE : EB_FALSE;
+                                    // Evaluate cfl @ EP if applicable, and not done @ MD 
+                                    EbBool evaluate_cfl_ep = (disable_cfl_flag == EB_FALSE && context_ptr->md_context->chroma_level == CHROMA_LEVEL_1);
+
+                                    if (plane && cu_ptr->prediction_mode_flag == INTRA_MODE && evaluate_cfl_ep) {
+                                        if (mode != UV_DC_PRED) {
+                                            assert(0);
+                                        }
+                                    }
+#endif
 
                                     av1_predict_intra_block(
 #if INTRA_CORE_OPT

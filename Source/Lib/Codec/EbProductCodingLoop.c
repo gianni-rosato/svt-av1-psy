@@ -1911,6 +1911,9 @@ static void cfl_rd_pick_alpha(
         candidateBuffer->candidate_ptr->cfl_alpha_signs = 0;
     }
     else {
+#if CFL_EP
+        candidateBuffer->candidate_ptr->intra_chroma_mode = UV_CFL_PRED;
+#endif
         int32_t ind = 0;
         if (best_joint_sign >= 0) {
             const int32_t u = best_c[best_joint_sign][CFL_PRED_U];

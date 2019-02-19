@@ -40,7 +40,7 @@ extern "C" {
 #define SHUT_CHROMA_FROM_LUMA   0
 #define CHROMA_BLIND            1
 #if CHROMA_BLIND
-#define CFL_EP                  0
+#define CFL_EP                  1
 #endif
 
      //Mode definition : Only one mode should be ON at a time

@@ -1361,9 +1361,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // CHROMA_LEVEL_0   CHROMA ON @ MD 
     // CHROMA_LEVEL_1   CHROMA OFF @ MD
     if (picture_control_set_ptr->slice_type == I_SLICE)
-        context_ptr->chroma_level = CHROMA_LEVEL_1;
+        context_ptr->chroma_level = CHROMA_LEVEL_0;
     else 
-        context_ptr->chroma_level = CHROMA_LEVEL_1;
+        context_ptr->chroma_level = CHROMA_LEVEL_0;
 #endif
 
     return return_error;

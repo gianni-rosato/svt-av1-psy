@@ -127,8 +127,10 @@ extern "C" {
         uint8_t                                upsample_left;
         uint8_t                                upsample_above;
         uint8_t                                upsample_left_chroma;
-        uint8_t                                upsample_above_chroma;
+        uint8_t                                upsample_above_chroma; 
+#if !CHROMA_BLIND
         int16_t                                pred_buf_q3[CFL_BUF_SQUARE];
+#endif
         uint16_t                               coded_area_sb;
         uint16_t                               coded_area_sb_uv;
 
