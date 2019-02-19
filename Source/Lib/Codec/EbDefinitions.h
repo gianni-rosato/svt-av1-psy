@@ -142,6 +142,7 @@ extern "C" {
 #define FAST_WN                                         1
 #define TX_SEARCH_LEVELS                                1 
 #define INTERPOLATION_SEARCH_LEVELS                     1 
+#define NSQ_SEARCH_LEVELS                               1
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/
@@ -492,6 +493,19 @@ typedef enum INTERPOLATION_SEARCH_LEVEL {
     IT_SEARCH_FULL_LOOP,
     IT_SEARCH_FAST_LOOP,
 } INTERPOLATION_SEARCH_LEVEL;
+#endif
+#if NSQ_SEARCH_LEVELS
+typedef enum NSQ_SEARCH_LEVEL {
+    NSQ_SEARCH_OFF,
+    NSQ_SEARCH_BASE_ON_SQ_TYPE,
+    NSQ_SEARCH_BASE_ON_SQ_COEFF,
+    NSQ_INTER_SEARCH_BASE_ON_SQ_MVMODE,
+    NSQ_INTER_SEARCH_BASE_ON_SQ_INTRAMODE,
+    NSQ_SEARCH_FULL
+} NSQ_SEARCH_LEVEL;
+#endif
+#if NSQ_SEARCH_LEVELS
+#define MAX_PARENT_SQ     6
 #endif
 typedef enum COMPOUND_DIST_WEIGHT_MODE {
     DIST,

@@ -212,6 +212,11 @@ extern "C" {
 #if INTERPOLATION_SEARCH_LEVELS
         uint8_t                           skip_interpolation_search;
 #endif
+#if NSQ_SEARCH_LEVELS
+        uint8_t                           parent_sq_type[MAX_PARENT_SQ];
+        uint8_t                           parent_sq_has_coeff[MAX_PARENT_SQ];
+        uint8_t                           parent_sq_pred_mode[MAX_PARENT_SQ];
+#endif
 
     } ModeDecisionContext_t;
 

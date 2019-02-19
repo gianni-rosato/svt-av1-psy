@@ -658,6 +658,24 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
 
     picture_control_set_ptr->max_number_of_pus_per_sb = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
+#if NSQ_SEARCH_LEVELS
+    // NSQ search Level                               Settings
+    // 0                                              OFF
+    // 1                                              Allow only NSQ Intra-FULL if parent SQ is intra-coded and vice versa.
+    // 2                                              Allow only NSQ Inter-NEAREST/NEAR/GLOBAL if parent SQ has no coeff
+    // 3                                              Allow only NSQ Intra-FULL and Inter-NEWMV if parent SQ is NEWMV
+    // 4                                              Allow only NSQ Inter-FULL and Intra-Z3 if parent SQ is intra-coded
+    // 5                                              Allow NSQ Intra-FULL and Inter-FULL
+
+    picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_FULL;
+
+    if (picture_control_set_ptr->nsq_search_level == NSQ_SEARCH_OFF) {
+        if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) picture_control_set_ptr->pic_depth_mode = PIC_SQ_DEPTH_MODE;
+    }
+    if (picture_control_set_ptr->pic_depth_mode > PIC_SQ_DEPTH_MODE) {
+        assert(picture_control_set_ptr->nsq_search_level != NSQ_SEARCH_OFF);
+    }
+#endif
 #if INTERPOLATION_SEARCH_LEVELS
     // Interpolation search Level                     Settings
     // 0                                              OFF

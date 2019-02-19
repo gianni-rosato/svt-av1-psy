@@ -1173,6 +1173,7 @@ static uint64_t search_one(int32_t *lev, int32_t nb_strengths,
 #endif
     uint64_t tot_mse[TOTAL_STRENGTHS];
 #if FAST_CDEF
+    (void)fast;
     const int32_t total_strengths = end_gi;
 #else
     const int32_t total_strengths = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;
@@ -1193,7 +1194,7 @@ static uint64_t search_one(int32_t *lev, int32_t nb_strengths,
         /* Find best mse when adding each possible new option. */
         
 #if FAST_CDEF
-        for (j = start_gi; j < end_gi; j++) {
+        for (j = start_gi; j < total_strengths; j++) {
 #else
         for (j = 0; j < total_strengths; j++) {
 #endif
@@ -1203,7 +1204,7 @@ static uint64_t search_one(int32_t *lev, int32_t nb_strengths,
         }
     }
 #if FAST_CDEF
-    for (j = start_gi; j < end_gi; j++) {
+    for (j = start_gi; j < total_strengths; j++) {
 #else
     for (j = 0; j < total_strengths; j++) {
 #endif
@@ -1233,6 +1234,7 @@ uint64_t search_one_dual_c(int32_t *lev0, int32_t *lev1, int32_t nb_strengths,
     int32_t best_id0 = 0;
     int32_t best_id1 = 0;
 #if FAST_CDEF
+    (void)fast;
     const int32_t total_strengths = end_gi;
 #else
     const int32_t total_strengths = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;
@@ -1251,9 +1253,9 @@ uint64_t search_one_dual_c(int32_t *lev0, int32_t *lev1, int32_t nb_strengths,
         }
         /* Find best mse when adding each possible new option. */
 #if FAST_CDEF
-        for (j = start_gi; j < end_gi; j++) {
+        for (j = start_gi; j < total_strengths; j++) {
             int32_t k;
-            for (k = start_gi; k < end_gi; k++) {
+            for (k = start_gi; k < total_strengths; k++) {
 #else
         for (j = 0; j < total_strengths; j++) {
             int32_t k;
@@ -1269,9 +1271,9 @@ uint64_t search_one_dual_c(int32_t *lev0, int32_t *lev1, int32_t nb_strengths,
     }
 
 #if FAST_CDEF
-    for (j = start_gi; j < end_gi; j++) {
+    for (j = start_gi; j < total_strengths; j++) {
         int32_t k;
-        for (k = start_gi; k < end_gi; k++) {
+        for (k = start_gi; k < total_strengths; k++) {
 #else
     for (j = 0; j < total_strengths; j++) {
         int32_t k;
@@ -1762,15 +1764,6 @@ void av1_cdef_search(
     int32_t *sb_index = (int32_t *)aom_malloc(nvfb * nhfb * sizeof(*sb_index));       //CHKN add cast
     int32_t *selected_strength = (int32_t *)aom_malloc(nvfb * nhfb * sizeof(*sb_index));
 
-#if FAST_CDEF
-    int32_t selected_strength_cnt[TOTAL_STRENGTHS] = { 0 };
-    int32_t best_frame_gi_cnt = 0;
-    int32_t gi_step;
-    int32_t mid_gi;
-    int32_t start_gi;
-    int32_t end_gi;
-#endif
-
     ASSERT(sb_index != NULL);
     ASSERT(selected_strength != NULL);
 
@@ -1787,6 +1780,16 @@ void av1_cdef_search(
     DECLARE_ALIGNED(32, uint16_t, inbuf[CDEF_INBUF_SIZE]);
     uint16_t *in;
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
+
+#if FAST_CDEF
+    int32_t selected_strength_cnt[TOTAL_STRENGTHS] = { 0 };
+    int32_t best_frame_gi_cnt = 0;
+    int32_t gi_step = get_cdef_gi_step(pPcs->cdef_filter_mode);
+    int32_t mid_gi = pPcs->cdf_ref_frame_strenght;
+    int32_t start_gi = 0;
+    int32_t end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
+#endif
+
     quantizer =
         //CHKN av1_ac_quant_Q3(cm->base_qindex, 0, cm->bit_depth) >> (cm->bit_depth - 8);
         av1_ac_quant_Q3(pPcs->base_qindex, 0, (aom_bit_depth_t)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
@@ -1927,11 +1930,6 @@ void av1_cdef_search(
                     stride[pli], ysize, xsize);
 #endif
 #if FAST_CDEF
-                gi_step = get_cdef_gi_step(pPcs->cdef_filter_mode);
-                mid_gi = pPcs->cdf_ref_frame_strenght;
-                start_gi = 0;
-                end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
-
                 for (gi = start_gi; gi < end_gi; gi++) {
 #else
                 for (gi = 0; gi < total_strengths; gi++) {
@@ -2152,15 +2150,6 @@ void av1_cdef_search16bit(
     int32_t *sb_index = (int32_t *)aom_malloc(nvfb * nhfb * sizeof(*sb_index));       //CHKN add cast
     int32_t *selected_strength = (int32_t *)aom_malloc(nvfb * nhfb * sizeof(*sb_index));
 
-#if FAST_CDEF
-    int32_t best_frame_gi_cnt = 0;
-    int32_t selected_strength_cnt[64] = { 0 };
-    int32_t gi_step;
-    int32_t mid_gi;
-    int32_t start_gi;
-    int32_t end_gi;
-#endif
-
     ASSERT(sb_index);
     ASSERT(selected_strength);
 
@@ -2178,6 +2167,16 @@ void av1_cdef_search16bit(
     DECLARE_ALIGNED(32, uint16_t, inbuf[CDEF_INBUF_SIZE]);
     uint16_t *in;
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
+
+#if FAST_CDEF
+    int32_t selected_strength_cnt[TOTAL_STRENGTHS] = { 0 };
+    int32_t best_frame_gi_cnt = 0;
+    int32_t gi_step = get_cdef_gi_step(pPcs->cdef_filter_mode);
+    int32_t mid_gi = pPcs->cdf_ref_frame_strenght;
+    int32_t start_gi = 0;
+    int32_t end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
+#endif
+
     quantizer =
         //CHKN av1_ac_quant_Q3(cm->base_qindex, 0, cm->bit_depth) >> (cm->bit_depth - 8);
         av1_ac_quant_Q3(pPcs->base_qindex, 0, (aom_bit_depth_t)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
@@ -2324,11 +2323,6 @@ void av1_cdef_search16bit(
                 for (i = 0; i < CDEF_INBUF_SIZE; i++)
                     inbuf[i] = CDEF_VERY_LARGE;
 #if FAST_CDEF
-                gi_step = get_cdef_gi_step(pPcs->cdef_filter_mode);
-                mid_gi = pPcs->cdf_ref_frame_strenght;
-                start_gi = 0;
-                end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
-
                 for (gi = start_gi; gi < end_gi; gi++) {
 #else
                 for (gi = 0; gi < total_strengths; gi++) {

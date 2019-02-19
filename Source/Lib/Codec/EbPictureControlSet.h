@@ -14292,6 +14292,9 @@ extern "C" {
 #if INTERPOLATION_SEARCH_LEVELS
         uint8_t                               interpolation_search_level;
 #endif
+#if NSQ_SEARCH_LEVELS
+        uint8_t                               nsq_search_level;
+#endif
 
     } PictureParentControlSet_t;
 

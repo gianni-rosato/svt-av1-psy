@@ -31,6 +31,9 @@
 #include "EbMotionEstimation.h"
 #include "EbAvcStyleMcp.h"
 #include "aom_dsp_rtcd.h"
+#if TX_SEARCH_LEVELS
+#include "EbCodingLoop.h"
+#endif
 
 #define TH_NFL_BIAS             7
 extern void av1_predict_intra_block_md(
@@ -2002,21 +2005,22 @@ static void CflPrediction(
         candidateBuffer->candidate_ptr->intra_chroma_mode = UV_DC_PRED;
     }
 }
-
 #if TX_SEARCH_LEVELS
 uint8_t get_skip_tx_search_flag(
     int32_t                  sq_size,
     uint64_t                 ref_fast_cost,
     uint64_t                 cu_cost,
-    uint64_t                 weight) 
+    uint64_t                 weight)
 {
-
+    //NM: Skip tx search when the fast cost of the current mode candidate is substansially 
+    // Larger than the best fast_cost (
     uint8_t  tx_search_skip_fag = cu_cost >= ((ref_fast_cost * weight) / 100) ? 1 : 0;
     tx_search_skip_fag = sq_size >= 128 ? 1 : tx_search_skip_fag;
 
     return tx_search_skip_fag;
 }
 #endif
+
 void AV1PerformFullLoop(
     PictureControlSet_t     *picture_control_set_ptr,
     LargestCodingUnit_t     *sb_ptr,
@@ -2680,13 +2684,11 @@ void inter_depth_tx_search(
         uint32_t                txb_itr;
         uint32_t                tu_index;
         uint32_t                tuTotalCount;
-        uint32_t  cu_size_log2 = context_ptr->cu_size_log2;
 
-        {
-            tuTotalCount = context_ptr->blk_geom->txb_count;
-            tu_index = 0;
-            txb_itr = 0;
-        }
+        tuTotalCount = context_ptr->blk_geom->txb_count;
+        tu_index = 0;
+        txb_itr = 0;
+        
 
 #if NO_ENCDEC
         int32_t txb_1d_offset = 0, txb_1d_offset_uv = 0;
@@ -2980,6 +2982,20 @@ void md_encode_block(
             inputPicturePtr,
             ref_fast_cost,
             asm_type);
+#endif
+
+#if NSQ_SEARCH_LEVELS
+        uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+        if (context_ptr->blk_geom->shape == PART_N) {
+
+            context_ptr->parent_sq_type[sq_index] = candidateBuffer->candidate_ptr->type;
+
+            context_ptr->parent_sq_has_coeff[sq_index] = (candidateBuffer->candidate_ptr->y_has_coeff ||
+                candidateBuffer->candidate_ptr->u_has_coeff ||
+                candidateBuffer->candidate_ptr->v_has_coeff) ? 1 : 0;
+
+            context_ptr->parent_sq_pred_mode[sq_index] = candidateBuffer->candidate_ptr->pred_mode;
+        }
 #endif
 
         AV1PerformInverseTransformRecon(

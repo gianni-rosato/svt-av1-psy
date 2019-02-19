@@ -29,6 +29,9 @@
 #include "EbModeDecisionConfiguration.h"
 #include "EbIntraPrediction.h"
 #include "aom_dsp_rtcd.h"
+#if TX_SEARCH_LEVELS
+#include "EbCodingLoop.h"
+#endif
 
 static const uint32_t me2Nx2NOffset[4] = { 0, 1, 5, 21 };
 extern void av1_predict_intra_block(

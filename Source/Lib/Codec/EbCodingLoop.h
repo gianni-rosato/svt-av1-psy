@@ -56,9 +56,9 @@ extern "C" {
         PictureControlSet_t                 *picture_control_set_ptr,
         const MdcLcuData_t * const           mdcResultTbPtr,
         LargestCodingUnit_t                 *sb_ptr,
-        uint32_t                               sb_origin_x,
-        uint32_t                               sb_origin_y,
-        uint32_t                               lcuAddr,
+        uint16_t                             sb_origin_x,
+        uint16_t                             sb_origin_y,
+        uint32_t                             lcuAddr,
         SsMeContext_t                       *ss_mecontext,
         ModeDecisionContext_t               *context_ptr);
 
@@ -75,6 +75,14 @@ extern "C" {
     extern EbErrorType QpmDeriveWeightsMinAndMax(
         PictureControlSet_t                    *picture_control_set_ptr,
         EncDecContext_t                        *context_ptr);
+
+#if TX_SEARCH_LEVELS
+    uint8_t get_skip_tx_search_flag(
+        int32_t                  sq_size,
+        uint64_t                 ref_fast_cost,
+        uint64_t                 cu_cost,
+        uint64_t                 weight);
+#endif
 
     extern void AV1EncodePass(
         SequenceControlSet_t    *sequence_control_set_ptr,

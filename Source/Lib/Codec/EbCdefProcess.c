@@ -93,9 +93,6 @@ EbErrorType cdef_context_ctor(
 void cdef_seg_search(
     PictureControlSet_t            *picture_control_set_ptr,
     SequenceControlSet_t           *sequence_control_set_ptr,
-#if FAST_CDEF
-    int32_t                        selected_strength_cnt[64],
-#endif
     uint32_t                        segment_index)
 {
 
@@ -271,9 +268,6 @@ void cdef_seg_search(
 void cdef_seg_search16bit(
     PictureControlSet_t            *picture_control_set_ptr,
     SequenceControlSet_t           *sequence_control_set_ptr,
-#if FAST_CDEF
-    int32_t                        selected_strength_cnt[64],
-#endif
     uint32_t                        segment_index)
 {
     EbPictureBufferDesc_t *input_pic_ptr = picture_control_set_ptr->input_frame16bit;
@@ -497,17 +491,11 @@ void* cdef_kernel(void *input_ptr)
                 cdef_seg_search16bit(
                     picture_control_set_ptr,
                     sequence_control_set_ptr,
-#if FAST_CDEF
-                    selected_strength_cnt,
-#endif
                     dlf_results_ptr->segment_index);
             else
                 cdef_seg_search(
                     picture_control_set_ptr,
                     sequence_control_set_ptr,
-#if FAST_CDEF
-                    selected_strength_cnt,
-#endif
                     dlf_results_ptr->segment_index);
 #if CDEF_M
         }
