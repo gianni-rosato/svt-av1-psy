@@ -1767,16 +1767,10 @@ void  inject_intra_candidates(
     EbBool                      use_angle_delta = (context_ptr->blk_geom->bsize >= BLOCK_8X8);
     uint8_t                     angleDeltaCandidateCount = use_angle_delta ? 7 : 1;
     ModeDecisionCandidate_t    *candidateArray = context_ptr->fast_candidate_array;
-#if CHROMA_BLIND 
-    EbBool                      disable_cfl_flag = (context_ptr->chroma_level == CHROMA_LEVEL_1 || 
-                                                    context_ptr->blk_geom->sq_size > 32 ||
-                                                    context_ptr->blk_geom->bwidth == 4  ||   
-                                                    context_ptr->blk_geom->bheight == 4)    ? EB_TRUE : EB_FALSE;
-#else
+
     EbBool                      disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 || 
                                                     context_ptr->blk_geom->bwidth == 4  ||   
                                                     context_ptr->blk_geom->bheight == 4)    ? EB_TRUE : EB_FALSE;
-#endif
 
 #if SHUT_CHROMA_FROM_LUMA
     EbBool                      disable_cfl_flag = EB_TRUE;
@@ -1836,7 +1830,15 @@ void  inject_intra_candidates(
                         candidateArray[canTotalCnt].is_directional_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)openLoopIntraCandidate);
                         candidateArray[canTotalCnt].use_angle_delta = use_angle_delta ? candidateArray[canTotalCnt].is_directional_mode_flag : 0;
                         candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y] = angle_delta;
+#if CHROMA_BLIND 
+                        candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ? 
+                            intra_luma_to_chroma[openLoopIntraCandidate] : 
+                            (context_ptr->chroma_level == CHROMA_LEVEL_0) ?
+                                UV_CFL_PRED :
+                                UV_DC_PRED;
+#else
                         candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[openLoopIntraCandidate] : UV_CFL_PRED;
+#endif
                         candidateArray[canTotalCnt].cfl_alpha_signs = 0;
                         candidateArray[canTotalCnt].cfl_alpha_idx = 0;
                         candidateArray[canTotalCnt].is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)candidateArray[canTotalCnt].intra_chroma_mode);
@@ -1878,7 +1880,16 @@ void  inject_intra_candidates(
 #if TURN_OFF_CFL
             candidateArray[canTotalCnt].intra_chroma_mode = intra_luma_to_chroma[openLoopIntraCandidate];
 #else
+#if CHROMA_BLIND
+            candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ? 
+                intra_luma_to_chroma[openLoopIntraCandidate] : 
+                (context_ptr->chroma_level == CHROMA_LEVEL_0) ?
+                    UV_CFL_PRED :
+                    UV_DC_PRED;
+
+#else
             candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[openLoopIntraCandidate] : UV_CFL_PRED;
+#endif
 #endif
             candidateArray[canTotalCnt].cfl_alpha_signs = 0;
             candidateArray[canTotalCnt].cfl_alpha_idx = 0;

@@ -767,7 +767,7 @@ static void Av1EncodeLoop(
 #if CFL_EP
             if (evaluate_cfl_ep) {
                 // 3: Loop over alphas and find the best or choose DC
-                // Re-use the candidate buffer 1st spot to evaluate cfl o: (1) t
+                // Re-use the candidate buffer 1st spot to evaluate cfl: (1) to cfl_rd_pick_alpha(), (2) 
                 ModeDecisionCandidateBuffer_t  *candidateBuffer = &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]);
                 
                 // Input(s)
