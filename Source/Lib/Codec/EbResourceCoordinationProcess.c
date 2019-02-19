@@ -367,17 +367,10 @@ EbErrorType signal_derivation_pre_analysis_oq(
     if (sequence_control_set_ptr->static_config.use_default_me_hme) {
         uint8_t  hme_me_level = picture_control_set_ptr->enc_mode;
 
-        uint32_t inputRatio = sequence_control_set_ptr->luma_width / sequence_control_set_ptr->luma_height;
-        uint8_t resolution_index = input_resolution <= INPUT_SIZE_576p_RANGE_OR_LOWER ? 0 : // 480P
-            (input_resolution <= INPUT_SIZE_1080i_RANGE && inputRatio < 2) ? 1 : // 720P
-            (input_resolution <= INPUT_SIZE_1080i_RANGE && inputRatio > 3) ? 2 : // 1080I
-            (input_resolution <= INPUT_SIZE_1080p_RANGE) ? 3 : // 1080I
-            4;    // 4K
-
         picture_control_set_ptr->enable_hme_flag = EB_TRUE;
-        picture_control_set_ptr->enable_hme_level0_flag = EnableHmeLevel0Flag[resolution_index][hme_me_level];
-        picture_control_set_ptr->enable_hme_level1_flag = EnableHmeLevel1Flag[resolution_index][hme_me_level];
-        picture_control_set_ptr->enable_hme_level2_flag = EnableHmeLevel2Flag[resolution_index][hme_me_level];
+        picture_control_set_ptr->enable_hme_level0_flag = EnableHmeLevel0Flag[input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level1_flag = EnableHmeLevel1Flag[input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level2_flag = EnableHmeLevel2Flag[input_resolution][hme_me_level];
     }
     else {
         picture_control_set_ptr->enable_hme_flag = sequence_control_set_ptr->static_config.enable_hme_flag;
