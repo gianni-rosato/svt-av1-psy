@@ -777,14 +777,39 @@ static void Av1EncodeLoop(
             if (evaluate_cfl_ep) 
             {
                 // 3: Loop over alphas and find the best or choose DC
-                // Use the 1st spot of the candidate buffer to hold cfl settings: (1) to cfl_rd_pick_alpha(), (2) 
+                // Use the 1st spot of the candidate buffer to hold cfl settings to keep using: (1) same kernel cfl_rd_pick_alpha() (toward unification), (2) no dedicated buffers for CFL evaluation @ EP (toward less memory)
+                // Howver there extra mecopy(s) from EP buffer(s) to MD buffer(s) that could be avoided after restructuring of cfl_rd_pick_alpha() (expose pred buffer(s)). 
+
                 ModeDecisionCandidateBuffer_t  *candidateBuffer = &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]);
                 
                 // Input(s)
                 candidateBuffer->candidate_ptr->intra_luma_mode = cu_ptr->pred_mode;
                 context_ptr->md_context->blk_geom = context_ptr->blk_geom;
-                predSamples->bufferCb + predCbOffset,
-                predSamples->bufferCr + predCrOffset,
+               
+                EbByte src_pred_ptr;
+                EbByte dst_pred_ptr;
+
+                // Copy Cb pred samples from ep buffer to md buffer
+                src_pred_ptr = predSamples->bufferCb + predCbOffset;
+                dst_pred_ptr = &(candidateBuffer->prediction_ptr->bufferCb[scratchCbOffset]);
+                for (int i = 0; i < context_ptr->blk_geom->bheight_uv; i++) {
+                    memcpy(dst_pred_ptr, src_pred_ptr, context_ptr->blk_geom->bwidth_uv);
+                    src_pred_ptr += predSamples->strideCb;
+                    dst_pred_ptr += candidateBuffer->prediction_ptr->strideCb;
+                }
+
+                // Copy Cr pred samples from ep buffer to md buffer
+                src_pred_ptr = predSamples->bufferCr + predCrOffset;
+                 dst_pred_ptr = &(candidateBuffer->prediction_ptr->bufferCr[scratchCrOffset]);
+                for (int i = 0; i < context_ptr->blk_geom->bheight_uv; i++) {
+                    memcpy(dst_pred_ptr, src_pred_ptr, context_ptr->blk_geom->bwidth_uv);
+                    src_pred_ptr += predSamples->strideCr;
+                    dst_pred_ptr += candidateBuffer->prediction_ptr->strideCr;
+                }
+                
+                // To do: the 1s below done as a sanity check if not initialized @ MD (i.e. if bypassed)
+                // candidateBuffer->candidate_ptr->md_rate_estimation_ptr
+
                 cfl_rd_pick_alpha(
                     picture_control_set_ptr,
                     candidateBuffer,
