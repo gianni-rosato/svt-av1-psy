@@ -774,18 +774,21 @@ static void Av1EncodeLoop(
                 LOG2F(context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr]) + LOG2F(context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]));
 
 #if CFL_EP
-            if (evaluate_cfl_ep) 
+            if (evaluate_cfl_ep)
             {
                 // 3: Loop over alphas and find the best or choose DC
                 // Use the 1st spot of the candidate buffer to hold cfl settings to keep using: (1) same kernel cfl_rd_pick_alpha() (toward unification), (2) no dedicated buffers for CFL evaluation @ EP (toward less memory)
                 // Howver there extra mecopy(s) from EP buffer(s) to MD buffer(s) that could be avoided after restructuring of cfl_rd_pick_alpha() (expose pred buffer(s)). 
 
                 ModeDecisionCandidateBuffer_t  *candidateBuffer = &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]);
-                
+
                 // Input(s)
+                candidateBuffer->candidate_ptr->type = INTRA_MODE;
                 candidateBuffer->candidate_ptr->intra_luma_mode = cu_ptr->pred_mode;
+                candidateBuffer->candidate_ptr->cfl_alpha_signs = 0;
+                candidateBuffer->candidate_ptr->cfl_alpha_idx = 0;
                 context_ptr->md_context->blk_geom = context_ptr->blk_geom;
-               
+
                 EbByte src_pred_ptr;
                 EbByte dst_pred_ptr;
 
@@ -800,15 +803,14 @@ static void Av1EncodeLoop(
 
                 // Copy Cr pred samples from ep buffer to md buffer
                 src_pred_ptr = predSamples->bufferCr + predCrOffset;
-                 dst_pred_ptr = &(candidateBuffer->prediction_ptr->bufferCr[scratchCrOffset]);
+                dst_pred_ptr = &(candidateBuffer->prediction_ptr->bufferCr[scratchCrOffset]);
                 for (int i = 0; i < context_ptr->blk_geom->bheight_uv; i++) {
                     memcpy(dst_pred_ptr, src_pred_ptr, context_ptr->blk_geom->bwidth_uv);
                     src_pred_ptr += predSamples->strideCr;
                     dst_pred_ptr += candidateBuffer->prediction_ptr->strideCr;
                 }
-                
+
                 // To do: the 1s below done as a sanity check if not initialized @ MD (i.e. if bypassed)
-                // candidateBuffer->candidate_ptr->md_rate_estimation_ptr
 
                 cfl_rd_pick_alpha(
                     picture_control_set_ptr,
@@ -821,9 +823,13 @@ static void Av1EncodeLoop(
                     asm_type);
 
                 // Output(s)
-                cu_ptr->prediction_unit_array->intra_chroma_mode = candidateBuffer->candidate_ptr->intra_chroma_mode;
-                cu_ptr->prediction_unit_array->cfl_alpha_idx     = candidateBuffer->candidate_ptr->cfl_alpha_idx;
-                cu_ptr->prediction_unit_array->cfl_alpha_signs   = candidateBuffer->candidate_ptr->cfl_alpha_signs;
+                if (candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
+                    cu_ptr->prediction_unit_array->intra_chroma_mode = UV_CFL_PRED;
+                    cu_ptr->prediction_unit_array->cfl_alpha_idx = candidateBuffer->candidate_ptr->cfl_alpha_idx;
+                    cu_ptr->prediction_unit_array->cfl_alpha_signs = candidateBuffer->candidate_ptr->cfl_alpha_signs;
+                    cu_ptr->prediction_unit_array->is_directional_chroma_mode_flag = EB_FALSE;
+
+                }
             }
 
             if (cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED) {

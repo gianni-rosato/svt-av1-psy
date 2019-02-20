@@ -1844,7 +1844,7 @@ void  inject_intra_candidates(
                         candidateArray[canTotalCnt].is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)candidateArray[canTotalCnt].intra_chroma_mode);
                         candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_UV] = 0;
                         candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
-                        // Hsan: check the transform of chroma @ EP 
+
                         if (candidateArray[canTotalCnt].intra_chroma_mode == UV_CFL_PRED)
                             candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
                         else
