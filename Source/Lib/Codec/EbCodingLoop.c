@@ -712,15 +712,7 @@ static void Av1EncodeLoop(
 #endif
 
 #if CFL_EP
-        // Derive disable_cfl_flag as evaluate_cfl_ep = f(disable_cfl_flag)
-        EbBool disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 ||
-            context_ptr->blk_geom->bwidth == 4 ||
-            context_ptr->blk_geom->bheight == 4) ? EB_TRUE : EB_FALSE;
-        // Evaluate cfl @ EP if applicable, and not done @ MD 
-        EbBool evaluate_cfl_ep = (disable_cfl_flag == EB_FALSE && context_ptr->md_context->chroma_level == CHROMA_LEVEL_1);
-
-
-        if (cu_ptr->prediction_mode_flag == INTRA_MODE && (evaluate_cfl_ep || cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED)) {
+        if (cu_ptr->prediction_mode_flag == INTRA_MODE && (context_ptr->evaluate_cfl_ep || cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED)) {
 #else
         if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED) {
 #endif
@@ -774,7 +766,7 @@ static void Av1EncodeLoop(
                 LOG2F(context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr]) + LOG2F(context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]));
 
 #if CFL_EP
-            if (evaluate_cfl_ep)
+            if (context_ptr->evaluate_cfl_ep)
             {
                 // 3: Loop over alphas and find the best or choose DC
                 // Use the 1st spot of the candidate buffer to hold cfl settings to keep using: (1) same kernel cfl_rd_pick_alpha() (toward unification), (2) no dedicated buffers for CFL evaluation @ EP (toward less memory)
@@ -1514,14 +1506,7 @@ static void Av1EncodeGenerateRecon(
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
 
 #if CFL_EP
-        // Derive disable_cfl_flag as evaluate_cfl_ep = f(disable_cfl_flag)
-        EbBool disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 ||
-            context_ptr->blk_geom->bwidth == 4 ||
-            context_ptr->blk_geom->bheight == 4) ? EB_TRUE : EB_FALSE;
-        // Evaluate cfl @ EP if applicable, and not done @ MD 
-        EbBool evaluate_cfl_ep = (disable_cfl_flag == EB_FALSE && context_ptr->md_context->chroma_level == CHROMA_LEVEL_1);
-       
-        if (cu_ptr->prediction_mode_flag != INTRA_MODE || (cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED && evaluate_cfl_ep == EB_FALSE))
+        if (cu_ptr->prediction_mode_flag != INTRA_MODE || (cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED && context_ptr->evaluate_cfl_ep == EB_FALSE))
 #else
         if (cu_ptr->prediction_mode_flag != INTRA_MODE || cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED)
 #endif
@@ -3207,6 +3192,15 @@ EB_EXTERN void AV1EncodePass(
                 uint32_t  coded_area_org = context_ptr->coded_area_sb;
                 uint32_t  coded_area_org_uv = context_ptr->coded_area_sb_uv;
 
+#if CFL_EP
+                // Derive disable_cfl_flag as evaluate_cfl_ep = f(disable_cfl_flag)
+                EbBool disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 ||
+                    context_ptr->blk_geom->bwidth == 4 ||
+                    context_ptr->blk_geom->bheight == 4) ? EB_TRUE : EB_FALSE;
+                // Evaluate cfl @ EP if applicable, and not done @ MD 
+                context_ptr->evaluate_cfl_ep = (disable_cfl_flag == EB_FALSE && context_ptr->md_context->chroma_level == CHROMA_LEVEL_1);
+#endif
+
 #if ADD_DELTA_QP_SUPPORT
                 if (context_ptr->skip_qpm_flag == EB_FALSE && sequence_control_set_ptr->static_config.improve_sharpness) {
                     cu_ptr->qp = sb_ptr->qp;
@@ -3402,15 +3396,7 @@ EB_EXTERN void AV1EncodePass(
                                     // Hsan: if CHROMA_MODE_1, then CFL will be evaluated @ EP as no CHROMA @ MD 
                                     // If that's the case then you should ensure than the 1st chroma prediction uses UV_DC_PRED (that's the default configuration for CHROMA_MODE_1 if CFL applicable (check fast looop candidates injection) then MD assumes chroma mode always UV_DC_PRED)
                                     // To do: add an assert
-                                    
-                                    // Derive disable_cfl_flag as evaluate_cfl_ep = f(disable_cfl_flag)
-                                    EbBool disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 ||
-                                        context_ptr->blk_geom->bwidth == 4 ||
-                                        context_ptr->blk_geom->bheight == 4) ? EB_TRUE : EB_FALSE;
-                                    // Evaluate cfl @ EP if applicable, and not done @ MD 
-                                    EbBool evaluate_cfl_ep = (disable_cfl_flag == EB_FALSE && context_ptr->md_context->chroma_level == CHROMA_LEVEL_1);
-
-                                    if (plane && cu_ptr->prediction_mode_flag == INTRA_MODE && evaluate_cfl_ep) {
+                                    if (plane && cu_ptr->prediction_mode_flag == INTRA_MODE && context_ptr->evaluate_cfl_ep) {
                                         if (mode != UV_DC_PRED) {
                                             assert(0);
                                         }
