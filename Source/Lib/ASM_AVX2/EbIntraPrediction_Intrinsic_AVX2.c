@@ -9592,7 +9592,6 @@ static void highbd_dr_prediction_z2_Nx4_avx2(
     int32_t dy) {
     const int32_t min_base_x = -(1 << upsample_above);
     const int32_t min_base_y = -(1 << upsample_left);
-    (void)min_base_y;
     const int32_t frac_bits_x = 6 - upsample_above;
     const int32_t frac_bits_y = 6 - upsample_left;
 
