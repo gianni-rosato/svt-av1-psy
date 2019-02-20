@@ -3392,10 +3392,10 @@ EB_EXTERN void AV1EncodePass(
                                         mode = (pu_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED : (PredictionMode)pu_ptr->intra_chroma_mode;
                                     else
                                         mode = cu_ptr->pred_mode; //PredictionMode mode,
-#if CFL_EP
+
                                     // Hsan: if CHROMA_MODE_1, then CFL will be evaluated @ EP as no CHROMA @ MD 
-                                    // If that's the case then you should ensure than the 1st chroma prediction uses UV_DC_PRED (that's the default configuration for CHROMA_MODE_1 if CFL applicable (check fast looop candidates injection) then MD assumes chroma mode always UV_DC_PRED)
-                                    // To do: add an assert
+                                    // If that's the case then you should ensure than the 1st chroma prediction uses UV_DC_PRED (that's the default configuration for CHROMA_MODE_1 if CFL applicable (set @ fast loop candidates injection) then MD assumes chroma mode always UV_DC_PRED)
+#if 0
                                     if (plane && cu_ptr->prediction_mode_flag == INTRA_MODE && context_ptr->evaluate_cfl_ep) {
                                         if (mode != UV_DC_PRED) {
                                             assert(0);
