@@ -171,19 +171,19 @@ extern "C" {
     RTCD_EXTERN void(*av1_fwd_txfm2d_16x8)(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
 
     void av1_fwd_txfm2d_4x16_c(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
-    void av1_fwd_txfm2d_4x16_sse4_1(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
+    void av1_fwd_txfm2d_4x16_avx2(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
     RTCD_EXTERN void(*av1_fwd_txfm2d_4x16)(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
 
     void av1_fwd_txfm2d_16x4_c(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
-    void av1_fwd_txfm2d_16x4_sse4_1(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
+    void av1_fwd_txfm2d_16x4_avx2(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
     RTCD_EXTERN void(*av1_fwd_txfm2d_16x4)(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
 
     void av1_fwd_txfm2d_4x8_c(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
-    void av1_fwd_txfm2d_4x8_sse4_1(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
+    void av1_fwd_txfm2d_4x8_avx2(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
     RTCD_EXTERN void(*av1_fwd_txfm2d_4x8)(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
 
     void av1_fwd_txfm2d_8x4_c(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
-    void av1_fwd_txfm2d_8x4_sse4_1(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
+    void av1_fwd_txfm2d_8x4_avx2(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
     RTCD_EXTERN void(*av1_fwd_txfm2d_8x4)(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
 
     void av1_fwd_txfm2d_32x16_c(int16_t *input, int32_t *output, uint32_t inputStride, TxType transform_type, uint8_t  bit_depth);
@@ -2682,14 +2682,14 @@ extern "C" {
         if (flags & HAS_AVX2) av1_fwd_txfm2d_8x16 = av1_fwd_txfm2d_8x16_avx2;
 
         av1_fwd_txfm2d_16x4 = av1_fwd_txfm2d_16x4_c;
-        if (flags & HAS_SSE4_1) av1_fwd_txfm2d_16x4 = av1_fwd_txfm2d_16x4_sse4_1;
+        if (flags & HAS_AVX2) av1_fwd_txfm2d_16x4 = av1_fwd_txfm2d_16x4_avx2;
         av1_fwd_txfm2d_4x16 = av1_fwd_txfm2d_4x16_c;
-        if (flags & HAS_SSE4_1) av1_fwd_txfm2d_4x16 = av1_fwd_txfm2d_4x16_sse4_1;
+        if (flags & HAS_AVX2) av1_fwd_txfm2d_4x16 = av1_fwd_txfm2d_4x16_avx2;
 
         av1_fwd_txfm2d_8x4 = av1_fwd_txfm2d_8x4_c;
-        if (flags & HAS_SSE4_1) av1_fwd_txfm2d_8x4 = av1_fwd_txfm2d_8x4_sse4_1;
+        if (flags & HAS_AVX2) av1_fwd_txfm2d_8x4 = av1_fwd_txfm2d_8x4_avx2;
         av1_fwd_txfm2d_4x8 = av1_fwd_txfm2d_4x8_c;
-        if (flags & HAS_SSE4_1) av1_fwd_txfm2d_4x8 = av1_fwd_txfm2d_4x8_sse4_1;
+        if (flags & HAS_AVX2) av1_fwd_txfm2d_4x8 = av1_fwd_txfm2d_4x8_avx2;
 #else
         av1_fwd_txfm2d_16x8 = av1_fwd_txfm2d_16x8_c;
         av1_fwd_txfm2d_8x16 = av1_fwd_txfm2d_8x16_c;
