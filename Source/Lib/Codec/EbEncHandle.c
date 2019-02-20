@@ -251,7 +251,7 @@ uint32_t GetNumCores() {
 #ifdef WIN32
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
-    return sysinfo.dwNumberOfProcessors << 1;
+    return sysinfo.dwNumberOfProcessors;
 #else
     return sysconf(_SC_NPROCESSORS_ONLN);
 #endif
@@ -318,26 +318,17 @@ void SwitchToRealTime(){
 #endif
 }
 uint32_t SetParentPcs(EbSvtAv1EncConfiguration*   config) {
-    uint32_t inputPic = 100;
+
     uint32_t fps = (uint32_t)((config->frame_rate > 1000) ? config->frame_rate >> 16 : config->frame_rate);
 
     fps = fps > 120 ? 120 : fps;
     fps = fps < 24 ? 24 : fps;
 
-    //uint32_t     lowLatencyInput = (config->enc_mode < 6 || config->speed_control_flag == 1) ? fps :
-    //    (config->enc_mode < 8) ? fps >> 1 : (uint32_t)((2 << config->hierarchical_levels) + SCD_LAD);
-
-    uint32_t     normalLatencyInput = (fps * 3) >> 1;
-
-    if ((config->source_width * config->source_height) > INPUT_SIZE_8K_TH )
-        normalLatencyInput = (normalLatencyInput * 3) >> 1;
-
-    inputPic = (normalLatencyInput + config->look_ahead_distance);
-
-    return inputPic;
+    return ((fps*5)>>2); // 1.25 sec worth of internal buffering
 }
 void LoadDefaultBufferConfigurationSettings(
     SequenceControlSet_t       *sequence_control_set_ptr){
+
     uint32_t encDecSegH = (sequence_control_set_ptr->static_config.super_block_size == 128) ?
         ((sequence_control_set_ptr->max_input_luma_height + 64) / 128) :
         ((sequence_control_set_ptr->max_input_luma_height + 32) / 64);
@@ -345,14 +336,13 @@ void LoadDefaultBufferConfigurationSettings(
         ((sequence_control_set_ptr->max_input_luma_width + 64) / 128) :
         ((sequence_control_set_ptr->max_input_luma_width + 32) / 64);
 
-    uint32_t meSegH = (((sequence_control_set_ptr->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 6;
-    uint32_t meSegW = (((sequence_control_set_ptr->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 10;
-
-    uint32_t inputPic = SetParentPcs(&sequence_control_set_ptr->static_config);
+    uint32_t meSegH     = (((sequence_control_set_ptr->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 6;
+    uint32_t meSegW     = (((sequence_control_set_ptr->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 10;
+    uint32_t inputPic   = SetParentPcs(&sequence_control_set_ptr->static_config);
 
     unsigned int coreCount = GetNumCores();
 
-    sequence_control_set_ptr->output_stream_buffer_fifo_init_count = sequence_control_set_ptr->input_buffer_fifo_init_count = inputPic + SCD_LAD;
+    sequence_control_set_ptr->input_buffer_fifo_init_count = inputPic + SCD_LAD + sequence_control_set_ptr->static_config.look_ahead_distance ;
     sequence_control_set_ptr->output_stream_buffer_fifo_init_count = sequence_control_set_ptr->input_buffer_fifo_init_count + 4;
     // ME segments
     sequence_control_set_ptr->me_segment_row_count_array[0] = meSegH;
@@ -391,38 +381,42 @@ void LoadDefaultBufferConfigurationSettings(
 #if REST_M
     //since restoration unit size is same for Luma and Chroma, Luma segments and chroma segments do not correspond to the same area!
     //to keep proper processing, segments have to be configured based on chroma resolution.
-    uint32_t unit_size = 256;
-    uint32_t rest_seg_w = MAX((sequence_control_set_ptr->max_input_luma_width /2 + (unit_size >> 1)) / unit_size, 1);
-    uint32_t rest_seg_h = MAX((sequence_control_set_ptr->max_input_luma_height/2 + (unit_size >> 1)) / unit_size, 1);
+    uint32_t unit_size                                  = 256;
+    uint32_t rest_seg_w                                 = MAX((sequence_control_set_ptr->max_input_luma_width /2 + (unit_size >> 1)) / unit_size, 1);
+    uint32_t rest_seg_h                                 = MAX((sequence_control_set_ptr->max_input_luma_height/2 + (unit_size >> 1)) / unit_size, 1);
     sequence_control_set_ptr->rest_segment_column_count = MIN(rest_seg_w,6);
-    sequence_control_set_ptr->rest_segment_row_count = MIN(rest_seg_h,4);
+    sequence_control_set_ptr->rest_segment_row_count    = MIN(rest_seg_h,4);
 #endif
     //#====================== Data Structures and Picture Buffers ======================
-    sequence_control_set_ptr->picture_control_set_pool_init_count = inputPic;
-    sequence_control_set_ptr->picture_control_set_pool_init_count_child = MAX(4, coreCount / 6);
-    sequence_control_set_ptr->reference_picture_buffer_init_count = inputPic;//MAX((uint32_t)(sequence_control_set_ptr->inputOutputBufferFifoInitCount >> 1), (uint32_t)((1 << sequence_control_set_ptr->static_config.hierarchicalLevels) + 2));
-    sequence_control_set_ptr->pa_reference_picture_buffer_init_count = inputPic;//MAX((uint32_t)(sequence_control_set_ptr->inputOutputBufferFifoInitCount >> 1), (uint32_t)((1 << sequence_control_set_ptr->static_config.hierarchicalLevels) + 2));
-    sequence_control_set_ptr->output_recon_buffer_fifo_init_count = sequence_control_set_ptr->reference_picture_buffer_init_count;
+    sequence_control_set_ptr->picture_control_set_pool_init_count       = inputPic;
+    sequence_control_set_ptr->picture_control_set_pool_init_count_child = MAX(MIN(2, coreCount/2), coreCount / 6);
+    sequence_control_set_ptr->reference_picture_buffer_init_count       = MAX((uint32_t)(inputPic >> 1),
+                                                                          (uint32_t)((1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 2)) +
+                                                                          sequence_control_set_ptr->static_config.look_ahead_distance + SCD_LAD;
+    sequence_control_set_ptr->pa_reference_picture_buffer_init_count    = MAX((uint32_t)(inputPic >> 1),
+                                                                          (uint32_t)((1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 2)) +
+                                                                          sequence_control_set_ptr->static_config.look_ahead_distance + SCD_LAD;
+    sequence_control_set_ptr->output_recon_buffer_fifo_init_count       = sequence_control_set_ptr->reference_picture_buffer_init_count;
 
     //#====================== Inter process Fifos ======================
-    sequence_control_set_ptr->resource_coordination_fifo_init_count = 300;
-    sequence_control_set_ptr->picture_analysis_fifo_init_count = 300;
-    sequence_control_set_ptr->picture_decision_fifo_init_count = 300;
-    sequence_control_set_ptr->initial_rate_control_fifo_init_count = 300;
-    sequence_control_set_ptr->picture_demux_fifo_init_count = 300;
-    sequence_control_set_ptr->rate_control_tasks_fifo_init_count = 300;
-    sequence_control_set_ptr->rate_control_fifo_init_count = 301;
+    sequence_control_set_ptr->resource_coordination_fifo_init_count       = 300;
+    sequence_control_set_ptr->picture_analysis_fifo_init_count            = 300;
+    sequence_control_set_ptr->picture_decision_fifo_init_count            = 300;
+    sequence_control_set_ptr->initial_rate_control_fifo_init_count        = 300;
+    sequence_control_set_ptr->picture_demux_fifo_init_count               = 300;
+    sequence_control_set_ptr->rate_control_tasks_fifo_init_count          = 300;
+    sequence_control_set_ptr->rate_control_fifo_init_count                = 301;
     sequence_control_set_ptr->mode_decision_configuration_fifo_init_count = 300;
-    sequence_control_set_ptr->motion_estimation_fifo_init_count = 300;
-    sequence_control_set_ptr->entropy_coding_fifo_init_count = 300;
-    sequence_control_set_ptr->enc_dec_fifo_init_count = 300;
+    sequence_control_set_ptr->motion_estimation_fifo_init_count           = 300;
+    sequence_control_set_ptr->entropy_coding_fifo_init_count              = 300;
+    sequence_control_set_ptr->enc_dec_fifo_init_count                     = 300;
 #if FILT_PROC    
-    sequence_control_set_ptr->dlf_fifo_init_count = 300;
-    sequence_control_set_ptr->cdef_fifo_init_count = 300;
-    sequence_control_set_ptr->rest_fifo_init_count = 300;
+    sequence_control_set_ptr->dlf_fifo_init_count                         = 300;
+    sequence_control_set_ptr->cdef_fifo_init_count                        = 300;
+    sequence_control_set_ptr->rest_fifo_init_count                        = 300;
 #endif
     //#====================== Processes number ======================
-    sequence_control_set_ptr->total_process_init_count = 0;
+    sequence_control_set_ptr->total_process_init_count                    = 0;
 
 #if ONE_SEG
     sequence_control_set_ptr->total_process_init_count += sequence_control_set_ptr->picture_analysis_process_init_count = 1;//MAX(15, coreCount / 6);
@@ -432,12 +426,18 @@ void LoadDefaultBufferConfigurationSettings(
     sequence_control_set_ptr->total_process_init_count += sequence_control_set_ptr->enc_dec_process_init_count = 1;//MAX(40, coreCount);
     sequence_control_set_ptr->total_process_init_count += sequence_control_set_ptr->entropy_coding_process_init_count = 1;//MAX(3, coreCount / 12);
 #else
-    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->picture_analysis_process_init_count             = MAX(15, coreCount / 6));
-    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->motion_estimation_process_init_count            = MAX(20, coreCount / 3));
-    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->source_based_operations_process_init_count      = MAX(3, coreCount / 12));
-    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->mode_decision_configuration_process_init_count  = MAX(3, coreCount / 12));
-    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->enc_dec_process_init_count                      = MAX(40, coreCount)    );
-    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->entropy_coding_process_init_count               = MAX(3, coreCount / 12));
+    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->picture_analysis_process_init_count             = MAX(MIN(15, coreCount), coreCount / 6));
+    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->motion_estimation_process_init_count            = MAX(MIN(20, coreCount), coreCount / 3));
+    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->source_based_operations_process_init_count      = MAX(MIN(3, coreCount), coreCount / 12));
+    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->mode_decision_configuration_process_init_count  = MAX(MIN(3, coreCount), coreCount / 12));
+    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->enc_dec_process_init_count                      = MAX(MIN(40, coreCount), coreCount)    );
+    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->entropy_coding_process_init_count               = MAX(MIN(3, coreCount), coreCount / 12));
+#endif
+
+#if FILT_PROC
+    sequence_control_set_ptr->total_process_init_count +=(sequence_control_set_ptr->dlf_process_init_count                           = MAX(MIN(40, coreCount), coreCount));
+    sequence_control_set_ptr->total_process_init_count +=(sequence_control_set_ptr->cdef_process_init_count                          = MAX(MIN(40, coreCount), coreCount));
+    sequence_control_set_ptr->total_process_init_count +=(sequence_control_set_ptr->rest_process_init_count                          = MAX(MIN(40, coreCount), coreCount));
 #endif
 
 #if FILT_PROC
@@ -1585,11 +1585,11 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             encHandlePtr->sequenceControlSetInstanceArray[0]->sequence_control_set_ptr->max_input_luma_width,
             encHandlePtr->sequenceControlSetInstanceArray[0]->sequence_control_set_ptr->max_input_luma_height
         );
+
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
     }
-
 
 #if FILT_PROC
     // Dlf Contexts
@@ -1627,7 +1627,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             return EB_ErrorInsufficientResources;
         }
     }
-
     //Rest Contexts
     EB_MALLOC(EbPtr*, encHandlePtr->restContextPtrArray, sizeof(EbPtr) * encHandlePtr->sequenceControlSetInstanceArray[0]->sequence_control_set_ptr->rest_process_init_count, EB_N_PTR);
 
@@ -1917,22 +1916,24 @@ EB_API EbErrorType eb_deinit_handle(
 }
 
 // Sets the default intra period the closest possible to 1 second without breaking the minigop
-static int32_t ComputeIntraPeriod(
-    SequenceControlSet_t       *sequence_control_set_ptr)
-{
-    int32_t intraPeriod = 0;
-    EbSvtAv1EncConfiguration   *config = &sequence_control_set_ptr->static_config;
-    int32_t fps = 60;
-    int32_t miniGopSize = (1 << (config->hierarchical_levels));
-    int32_t minIp = ((int)((fps) / miniGopSize)*(miniGopSize));
-    int32_t maxIp = ((int)((fps + miniGopSize) / miniGopSize)*(miniGopSize));
+static int32_t compute_default_intra_period(
+    SequenceControlSet_t       *sequence_control_set_ptr){
 
-    intraPeriod = (ABS((fps - maxIp)) > ABS((fps - minIp))) ? minIp : maxIp;
+    int32_t intra_period               = 0;
+    EbSvtAv1EncConfiguration   *config = &sequence_control_set_ptr->static_config;
+    int32_t fps                        = config->frame_rate < 1000 ? 
+                                            config->frame_rate : 
+                                            config->frame_rate >> 16;
+    int32_t mini_gop_size              = (1 << (config->hierarchical_levels));
+    int32_t min_ip                     = ((int)((fps) / mini_gop_size)*(mini_gop_size));
+    int32_t max_ip                     = ((int)((fps + mini_gop_size) / mini_gop_size)*(mini_gop_size));
+
+    intra_period = (ABS((fps - max_ip)) > ABS((fps - min_ip))) ? min_ip : max_ip;
 
     if (config->intra_refresh_type == 1)
-        intraPeriod -= 1;
+        intra_period -= 1;
 
-    return intraPeriod;
+    return intra_period;
 }
 
 // Set configurations for the hardcoded parameters
@@ -1954,15 +1955,38 @@ void SetDefaultConfigurationParameters(
     return;
 }
 
-uint32_t ComputeDefaultLookAhead(
-    EbSvtAv1EncConfiguration*   config)
-{
+static uint32_t compute_default_look_ahead(
+    EbSvtAv1EncConfiguration*   config){
+
     int32_t lad = 0;
     if (config->rate_control_mode == 0)
-        lad = 17;
+        lad = (2 << config->hierarchical_levels)+1;
     else
         lad = config->intra_period_length;
 
+    return lad;
+}
+
+// Only use the maximum look ahead needed if 
+static uint32_t cap_look_ahead_distance(
+    EbSvtAv1EncConfiguration*   config){
+
+    uint32_t lad = 0;
+
+    if(config){
+        uint32_t fps = config->frame_rate < 1000 ?
+                      config->frame_rate : 
+                      config->frame_rate >> 16;
+        uint32_t max_cqp_lad = (2 << config->hierarchical_levels) + 1;
+        uint32_t max_rc_lad  = fps << 1;
+        lad = config->look_ahead_distance;
+        if (config->rate_control_mode == 0 && lad > max_cqp_lad)
+            lad = max_cqp_lad;
+        else if (config->rate_control_mode != 0 && lad > max_rc_lad)
+            lad = max_rc_lad;
+    }
+
+    lad = lad > MAX_LAD ? MAX_LAD: lad; // clip to max allowed lad
 
     return lad;
 }
@@ -2195,12 +2219,13 @@ void CopyApiFromApp(
 
     // Get Default Intra Period if not specified
     if (sequence_control_set_ptr->static_config.intra_period_length == -2) {
-        sequence_control_set_ptr->intra_period_length = sequence_control_set_ptr->static_config.intra_period_length = ComputeIntraPeriod(sequence_control_set_ptr);
+        sequence_control_set_ptr->intra_period_length = sequence_control_set_ptr->static_config.intra_period_length = compute_default_intra_period(sequence_control_set_ptr);
     }
 
-    if (sequence_control_set_ptr->static_config.look_ahead_distance == (uint32_t)~0) {
-        sequence_control_set_ptr->static_config.look_ahead_distance = ComputeDefaultLookAhead(&sequence_control_set_ptr->static_config);
-    }
+    if (sequence_control_set_ptr->static_config.look_ahead_distance == (uint32_t)~0)
+        sequence_control_set_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&sequence_control_set_ptr->static_config);
+    else
+        sequence_control_set_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&sequence_control_set_ptr->static_config);
 
     return;
 }
@@ -2456,8 +2481,8 @@ static EbErrorType VerifySettings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->look_ahead_distance > 250 && config->look_ahead_distance != (uint32_t)~0) {
-        SVT_LOG("Error Instance %u: The lookahead distance must be [0 - 250] \n", channelNumber + 1);
+    if (config->look_ahead_distance > MAX_LAD && config->look_ahead_distance != (uint32_t)~0) {
+        SVT_LOG("Error Instance %u: The lookahead distance must be [0 - %d] \n", channelNumber + 1, MAX_LAD);
         return_error = EB_ErrorBadParameter;
     }
     if (config->scene_change_detection > 1) {

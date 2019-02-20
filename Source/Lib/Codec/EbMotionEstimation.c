@@ -5481,10 +5481,9 @@ EbErrorType CheckZeroZeroCenter(
     int16_t        origin_x = (int16_t)sb_origin_x;
     int16_t        origin_y = (int16_t)sb_origin_y;
     uint32_t       subsampleSad = 1;
-#if HME_ENHANCED_CENTER_SEARCH
     int16_t        pad_width = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t        pad_height = (int16_t)BLOCK_SIZE_64 - 1;
-#endif
+    
     searchRegionIndex = (int16_t)refPicPtr->origin_x + origin_x +
         ((int16_t)refPicPtr->origin_y + origin_y) * refPicPtr->strideY;
 
@@ -5498,7 +5497,6 @@ EbErrorType CheckZeroZeroCenter(
 
     zeroMvSad = zeroMvSad << subsampleSad;
 
-#if HME_ENHANCED_CENTER_SEARCH
     // FIX
     // Correct the left edge of the Search Area if it is not on the reference Picture
     *xSearchCenter = ((origin_x + *xSearchCenter) < -pad_width) ?
@@ -5517,7 +5515,7 @@ EbErrorType CheckZeroZeroCenter(
         *ySearchCenter - ((origin_y + *ySearchCenter) - ((int16_t)refPicPtr->height - 1)) :
         *ySearchCenter;
     ///
-#endif
+
 
     zeroMvCost = zeroMvSad << COST_PRECISION;
     searchRegionIndex = (int16_t)(refPicPtr->origin_x + origin_x) + *xSearchCenter +
@@ -5878,7 +5876,7 @@ EbErrorType     suPelEnable(
 
     return return_error;
 }
-#if HME_ENHANCED_CENTER_SEARCH
+
 static void hme_mv_center_check(
     EbPictureBufferDesc_t       *ref_pic_ptr,
     MeContext_t                    *context_ptr,
@@ -6143,7 +6141,6 @@ static void hme_mv_center_check(
     *xsc = search_center_x;
     *ysc = search_center_y;
 }
-#endif
 
 /*******************************************
 * MotionEstimateLcu
@@ -6300,23 +6297,22 @@ EbErrorType MotionEstimateLcu(
             if (picture_control_set_ptr->temporal_layer_index > 0 || listIndex == 0) {
                 // A - The MV center for Tier0 search could be either (0,0), or HME
                 // A - Set HME MV Center
-#if HME_ENHANCED_CENTER_SEARCH 
-                hme_mv_center_check(
-                    refPicPtr,
-                    context_ptr,
-                    &xSearchCenter,
-                    &ySearchCenter,
-                    listIndex,
-                    origin_x,
-                    origin_y,
-                    sb_width,
-                    sb_height,
-                    asm_type);
-
-#else
-                xSearchCenter = 0;
-                ySearchCenter = 0;
-#endif
+                if (context_ptr->update_hme_search_center_flag)
+                    hme_mv_center_check(
+                        refPicPtr,
+                        context_ptr,
+                        &xSearchCenter,
+                        &ySearchCenter,
+                        listIndex,
+                        origin_x,
+                        origin_y,
+                        sb_width,
+                        sb_height,
+                        asm_type);
+                else {
+                    xSearchCenter = 0;
+                    ySearchCenter = 0;
+                }
                 // B - NO HME in boundaries
                 // C - Skip HME
 

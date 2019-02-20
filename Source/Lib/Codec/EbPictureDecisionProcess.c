@@ -658,7 +658,37 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
 
     picture_control_set_ptr->max_number_of_pus_per_sb = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
+#if NSQ_SEARCH_LEVELS
+    // NSQ search Level                               Settings
+    // 0                                              OFF
+    // 1                                              Allow only NSQ Intra-FULL if parent SQ is intra-coded and vice versa.
+    // 2                                              Allow only NSQ Inter-NEAREST/NEAR/GLOBAL if parent SQ has no coeff
+    // 3                                              Allow only NSQ Intra-FULL and Inter-NEWMV if parent SQ is NEWMV
+    // 4                                              Allow only NSQ Inter-FULL and Intra-Z3 if parent SQ is intra-coded
+    // 5                                              Allow NSQ Intra-FULL and Inter-FULL
 
+    picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_FULL;
+
+    if (picture_control_set_ptr->nsq_search_level == NSQ_SEARCH_OFF) {
+        if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) picture_control_set_ptr->pic_depth_mode = PIC_SQ_DEPTH_MODE;
+    }
+    if (picture_control_set_ptr->pic_depth_mode > PIC_SQ_DEPTH_MODE) {
+        assert(picture_control_set_ptr->nsq_search_level != NSQ_SEARCH_OFF);
+    }
+#endif
+#if INTERPOLATION_SEARCH_LEVELS
+    // Interpolation search Level                     Settings
+    // 0                                              OFF
+    // 1                                              Interpolation search at inter-depth
+    // 2                                              Interpolation search at full loop
+    // 3                                              Interpolation search at fast loop
+    if (picture_control_set_ptr->enc_mode == ENC_M0) {
+        picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FULL_LOOP;
+    }
+    else {
+        picture_control_set_ptr->interpolation_search_level = IT_SEARCH_OFF;
+    }
+#else
     // Interpolation filter search Level MD         Settings
     // 0                                            OFF
     // 1                                            FAST
@@ -667,6 +697,8 @@ EbErrorType signal_derivation_multi_processes_oq(
         picture_control_set_ptr->interpolation_filter_search_mode = 1;
     else
         picture_control_set_ptr->interpolation_filter_search_mode = 0;
+
+#endif
 
     // Loop filter Level                            Settings
     // 0                                            OFF
@@ -731,6 +763,32 @@ EbErrorType signal_derivation_multi_processes_oq(
         cm->wn_filter_mode = 1;
     else 
         cm->wn_filter_mode = 2;
+#endif
+
+#if TX_SEARCH_LEVELS
+    // Tx_search Level                                Settings
+    // 0                                              OFF
+    // 1                                              Tx search at encdec
+    // 2                                              Tx search at inter-depth
+    // 3                                              Tx search at full loop
+
+    if (picture_control_set_ptr->enc_mode > ENC_M1) {
+        picture_control_set_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
+    }
+    else {
+        picture_control_set_ptr->tx_search_level = TX_SEARCH_FULL_LOOP;
+    }
+
+    // Set tx search skip weights (MAX_MODE_COST: no skipping; 0: always skipping)
+    picture_control_set_ptr->tx_weight = MAX_MODE_COST;
+
+    // Set tx search reduced set falg (0: full tx set; 1: reduced tx set)
+    if (picture_control_set_ptr->enc_mode == ENC_M1) {
+        picture_control_set_ptr->tx_search_reduced_set = 1;
+    }
+    else {
+        picture_control_set_ptr->tx_search_reduced_set = 0;
+    }
 #endif
 
     // Intra prediction Level                       Settings
@@ -1096,7 +1154,7 @@ void  Av1GenerateRpsInfo(
         if (pictureIndex == 3) {
             av1Rps->refDpbIndex[0] = base0_idx;
             av1Rps->refDpbIndex[6] = layer1_idx;
-        }
+    }
         else if (pictureIndex == 11) {
             av1Rps->refDpbIndex[0] = layer1_idx;
             av1Rps->refDpbIndex[6] = base1_idx;
@@ -1195,8 +1253,8 @@ void  Av1GenerateRpsInfo(
                 picture_control_set_ptr->showFrame = EB_TRUE;
                 picture_control_set_ptr->hasShowExisting = EB_FALSE;
             }
-            else
-            {
+    else
+    {
                 picture_control_set_ptr->showFrame = EB_FALSE;
                 picture_control_set_ptr->hasShowExisting = EB_FALSE;
             }

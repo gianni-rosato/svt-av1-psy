@@ -3242,6 +3242,45 @@ uint32_t Compute8xMSad_AVX2_INTRIN(
     return (uint32_t)_mm_cvtsi128_si32(xmm0);
 }
 
+uint32_t Compute4xMSadSub_AVX2_INTRIN(
+    uint8_t  *src,        // input parameter, source samples Ptr
+    uint32_t  src_stride,  // input parameter, source stride
+    uint8_t  *ref,        // input parameter, reference samples Ptr
+    uint32_t  refStride,  // input parameter, reference stride
+    uint32_t  height,     // input parameter, block height (M)
+    uint32_t  width)      // input parameter, block width (N)
+{
+    uint32_t y;
+    uint32_t hsteps = height >> 2;
+    (void)width;
+    assert(height % 4 == 0);
+
+    __m256i mm256_sad = _mm256_setzero_si256();
+    __m256i mm256_src;
+    __m256i mm256_ref;
+
+    for (y = 0; y < hsteps; y++) {
+        mm256_src = _mm256_setr_epi32(*(uint32_t*)src,
+            *(uint32_t*)(src + 1 * src_stride),
+            *(uint32_t*)(src + 2 * src_stride),
+            *(uint32_t*)(src + 3 * src_stride),
+            0, 0, 0, 0);
+
+        mm256_ref = _mm256_setr_epi32(*(uint32_t*)ref,
+            *(uint32_t*)(ref + 1 * refStride),
+            *(uint32_t*)(ref + 2 * refStride),
+            *(uint32_t*)(ref + 3 * refStride),
+            0, 0, 0, 0);
+
+        mm256_sad = _mm256_add_epi16(mm256_sad,
+            _mm256_sad_epu8(mm256_src, mm256_ref));
+
+        src += src_stride * 4;
+        ref += refStride * 4;
+    }
+    return _mm256_extract_epi32(mm256_sad, 0) + _mm256_extract_epi32(mm256_sad, 2);
+}
+
 static __m256i Compute16x2Sad_Kernel(const uint8_t *const src,
     const uint32_t src_stride, const uint8_t *const ref,
     const uint32_t ref_stride, const __m256i ymm)

@@ -31,6 +31,7 @@ uint64_t search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths,
   int best_id0 = 0;
   int best_id1 = 0;
 #if FAST_CDEF
+  (void)fast;
   const int total_strengths = end_gi;
 #else
   const int total_strengths = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;
@@ -59,9 +60,9 @@ uint64_t search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths,
     /* Find best mse when adding each possible new option. */
     assert(~total_strengths % 4);
 #if FAST_CDEF
-	for (int j = start_gi; j < end_gi; ++j) { // process by 4x4
+	for (int j = start_gi; j < total_strengths; ++j) { // process by 4x4
 		tmp = _mm256_set1_epi64x(mse[0][i][j]);
-		for (int k = 0; k < end_gi; k += 4) {
+		for (int k = 0; k < total_strengths; k += 4) {
 #else
     for (int j = 0; j < total_strengths; ++j) { // process by 4x4
       tmp = _mm256_set1_epi64x(mse[0][i][j]);
@@ -79,9 +80,9 @@ uint64_t search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths,
     }
   }
 #if FAST_CDEF
-  for (j = start_gi; j < end_gi; j++) {
+  for (j = start_gi; j < total_strengths; j++) {
 	  int k;
-	  for (k = start_gi; k < end_gi; k++) {
+	  for (k = start_gi; k < total_strengths; k++) {
 #else
   for (j = 0; j < total_strengths; j++) {
     int k;

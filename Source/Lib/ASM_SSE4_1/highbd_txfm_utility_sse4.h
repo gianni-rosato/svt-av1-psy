@@ -79,24 +79,6 @@ static INLINE void transpose_16x16(const __m128i *in, __m128i *out) {
         out[63]);
 }
 
-static INLINE void transpose_8nx8n_sse4_1(const __m128i *input, __m128i *output,
-    const int32_t width, const int32_t height) {
-    const int32_t numcol = height >> 2;
-    const int32_t numrow = width >> 2;
-    for (int32_t j = 0; j < numrow; j++) {
-        for (int32_t i = 0; i < numcol; i++) {
-            TRANSPOSE_4X4(input[i * width + j + (numrow * 0)],
-                input[i * width + j + (numrow * 1)],
-                input[i * width + j + (numrow * 2)],
-                input[i * width + j + (numrow * 3)],
-                output[j * height + i + (numcol * 0)],
-                output[j * height + i + (numcol * 1)],
-                output[j * height + i + (numcol * 2)],
-                output[j * height + i + (numcol * 3)]);
-        }
-    }
-}
-
 // Note:
 //  rounding = 1 << (bit - 1)
 static INLINE __m128i half_btf_sse4_1(const __m128i *w0, const __m128i *n0,

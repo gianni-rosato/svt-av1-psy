@@ -11,14 +11,6 @@
 extern "C" {
 #endif
 
-    extern uint32_t Compute4xMSadSub_SSE2_INTRIN(
-        uint8_t  *src,                            // input parameter, source samples Ptr
-        uint32_t  src_stride,                      // input parameter, source stride
-        uint8_t  *ref,                            // input parameter, reference samples Ptr
-        uint32_t  refStride,                      // input parameter, reference stride
-        uint32_t  height,                         // input parameter, block height (M)
-        uint32_t  width);                         // input parameter, block width (N)
-
     extern uint32_t CombinedAveraging4xMSAD_SSE2_INTRIN(
         uint8_t  *src,
         uint32_t  src_stride,

@@ -108,7 +108,7 @@ extern "C" {
     {
         // NON_AVX2
         {
-            /*0 4xM  */ Compute4xMSadSub_SSE2_INTRIN,
+            /*0 4xM  */ Compute4xMSadSub_AVX2_INTRIN,
             /*1 8xM  */ FastLoop_NxMSadKernel,
             /*2 16xM */ FastLoop_NxMSadKernel,
             /*3 24xM */ FastLoop_NxMSadKernel,
@@ -121,7 +121,7 @@ extern "C" {
         },
         // AVX2
         {
-            /*0 4xM  */ Compute4xMSadSub_SSE2_INTRIN,
+            /*0 4xM  */ Compute4xMSadSub_AVX2_INTRIN,
             /*1 8xM  */ Compute8xMSad_AVX2_INTRIN,
             /*2 16xM */ Compute16xMSad_AVX2_INTRIN,
             /*3 24xM */ FastLoop_NxMSadKernel,
