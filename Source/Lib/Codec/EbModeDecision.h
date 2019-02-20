@@ -33,7 +33,9 @@ extern "C" {
     **************************************/
     typedef EbErrorType(*EB_PREDICTION_FUNC)(
         struct ModeDecisionContext_s           *context_ptr,
+#if !CHROMA_BLIND
         uint32_t                                component_mask,
+#endif
         PictureControlSet_t                    *picture_control_set_ptr,
         struct ModeDecisionCandidateBuffer_s   *candidate_buffer_ptr,
         EbAsm                                   asm_type);
