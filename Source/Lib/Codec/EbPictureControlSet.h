@@ -14117,9 +14117,7 @@ extern "C" {
         EbEncMode                             enc_mode;
 
         EbLcuDepthMode                       *sb_md_mode_array;
-#if !CHROMA_BLIND
         EbChromaMode                          chroma_mode;
-#endif
         EbSbComplexityStatus                 *complex_sb_array;
         EbCu8x8Mode                           cu8x8_mode;
         EbBool                                use_src_ref;

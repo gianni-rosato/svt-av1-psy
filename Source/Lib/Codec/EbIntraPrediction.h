@@ -218,9 +218,7 @@ extern "C" {
 
     extern EbErrorType AV1IntraPredictionCL(
         struct ModeDecisionContext_s           *context_ptr,
- #if !CHROMA_BLIND
         uint32_t                                  component_mask,
-#endif
         PictureControlSet_t                    *picture_control_set_ptr,
         ModeDecisionCandidateBuffer_t           *candidate_buffer_ptr,
         EbAsm                                  asm_type);

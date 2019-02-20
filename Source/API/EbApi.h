@@ -21,7 +21,7 @@ extern "C" {
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT            2
 
-#define MAX_ENC_PRESET                              4
+#define MAX_ENC_PRESET                              3
 
 #ifdef _WIN32
 #define EB_API __declspec(dllexport)

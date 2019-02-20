@@ -989,35 +989,6 @@ void ProductFullLoop(
             PLANE_TYPE_Y,
             context_ptr->pf_md_mode);
 
-#if SIMULATE_PF_N2     
-        int32_t* transCoeffBuffer = &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferY)[txb_1d_offset]);
-        int32_t tu_size;
-        switch (context_ptr->blk_geom->txsize[txb_itr]) {
-        case TX_64X64:
-            tu_size = 64;
-            break;
-        case TX_32X32:
-            tu_size = 32;
-            break;
-        case TX_16X16:
-            tu_size = 16;
-            break;
-        case TX_8X8:
-            tu_size = 8;
-            break;
-        case TX_4X4:
-            tu_size = 4;
-            break;
-        default: assert(0); break;}
-
-        if ((tu_size == 32 || tu_size == 16 || tu_size == 8 || tu_size == 4) && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0) {
-            for (int i = 0; i < (tu_size* tu_size); i++) {
-                if (i % tu_size >= (tu_size >> 1) || i / tu_size >= (tu_size >> 1)) {
-                    transCoeffBuffer[i] = 0;
-                }
-            }
-        }
-#endif
         Av1QuantizeInvQuantize(
             picture_control_set_ptr,
             &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferY)[txb_1d_offset]),
@@ -1883,37 +1854,6 @@ void FullLoop_R(
                 PLANE_TYPE_UV,
                 correctedPFMode);
 
-
-#if SIMULATE_PF_N2     
-            int32_t* transCoeffBuffer = &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferCb)[txb_1d_offset]);
-            int32_t tu_size;
-            switch (context_ptr->blk_geom->txsize_uv[txb_itr]) {
-            case TX_64X64:
-                tu_size = 64;
-                break;
-            case TX_32X32:
-                tu_size = 32;
-                break;
-            case TX_16X16:
-                tu_size = 16;
-                break;
-            case TX_8X8:
-                tu_size = 8;
-                break;
-            case TX_4X4:
-                tu_size = 4;
-                break;
-            default: assert(0); break;
-            }
-
-            if ((tu_size == 32 || tu_size == 16 || tu_size == 8 || tu_size == 4) && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0) {
-                for (int i = 0; i < (tu_size* tu_size); i++) {
-                    if (i % tu_size >= (tu_size >> 1) || i / tu_size >= (tu_size >> 1)) {
-                        transCoeffBuffer[i] = 0;
-                    }
-                }
-            }
-#endif
             Av1QuantizeInvQuantize(
                 picture_control_set_ptr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferCb)[txb_1d_offset]),
@@ -1962,37 +1902,6 @@ void FullLoop_R(
                 PLANE_TYPE_UV,
                 correctedPFMode);
 
-#if SIMULATE_PF_N2     
-            int32_t* transCoeffBuffer = &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferCr)[txb_1d_offset]);
-            int32_t tu_size;
-            switch (context_ptr->blk_geom->txsize_uv[txb_itr]) {
-            case TX_64X64:
-                tu_size = 64;
-                break;
-            case TX_32X32:
-                tu_size = 32;
-                break;
-            case TX_16X16:
-                tu_size = 16;
-                break;
-            case TX_8X8:
-                tu_size = 8;
-                break;
-            case TX_4X4:
-                tu_size = 4;
-                break;
-            default: assert(0); break;
-            }
-
-            if ((tu_size == 32 || tu_size == 16 || tu_size == 8 || tu_size == 4) && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0) {
-                    
-                    for (int i = 0; i < (tu_size* tu_size); i++) {
-                    if (i % tu_size >= (tu_size >> 1) || i / tu_size >= (tu_size >> 1)) {
-                        transCoeffBuffer[i] = 0;
-                    }
-                }
-            }
-#endif
             Av1QuantizeInvQuantize(
                 picture_control_set_ptr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferCr)[txb_1d_offset]),
