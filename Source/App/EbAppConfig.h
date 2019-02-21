@@ -321,6 +321,10 @@ typedef struct EbConfig_s
      ****************************************/
     EbBool                  constrained_intra;
 
+#if TILES
+    int32_t                  tile_columns;
+    int32_t                  tile_rows;
+#endif
 
     /****************************************
      * Rate Control

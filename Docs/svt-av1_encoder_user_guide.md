@@ -164,7 +164,8 @@ The encoder parameters present in the Sample.cfg file are listed in this table b
 | **ReconFile**   | -o | any string | null | Recon file path. Optional output of recon. |
 | **TargetSocket**   | -ss | [0-1] | 1 | For Windows based dual socket systems, this can specify which socket the encoder should start / run on (depending on whether UseRoundRobinThreadAssignment is set to 1 or 0) 0= Socket 0, 1=Socket 1 ) |
 | **ImproveSharpness** | -sharp | [0-1] | 0 | Improve sharpness (0= OFF, 1=ON ) |
-
+| **TileRow** | -tile-rows | [0-6] | 0 | log2 of tile rows |
+| **TileCol** | -tile-columns | [0-6] | 0 | log2 of tile columns |
 ## Legal Disclaimer
 
 Optimization Notice: Intel compilers may or may not optimize to the same degree for non-Intel microprocessors for optimizations that are not unique to Intel microprocessors. These optimizations include SSE2, SSE3, and SSSE3 instruction sets and other optimizations. Intel does not guarantee the availability, functionality, or effectiveness of any optimization on microprocessors not manufactured by Intel. Microprocessor-dependent optimizations in this product are intended for use with Intel microprocessors. Certain optimizations not specific to Intel microarchitecture are reserved for Intel microprocessors. Please refer to the applicable product User and Reference Guides for more information regarding the specific instruction sets covered by this notice.

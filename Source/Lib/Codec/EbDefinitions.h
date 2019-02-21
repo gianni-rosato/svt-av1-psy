@@ -46,6 +46,7 @@ extern "C" {
 #define REST_M        1 // multi-threaded restoration
 #define REST_NEED_B   1 // use boundary update in restoration
 #define NEW_PRED_STRUCT                                 1 // Ability to run 5-layer prediction structure. By Default 5L is used
+#define  TILES     1
 
 #define INTRA_CORE_OPT                                  1
 

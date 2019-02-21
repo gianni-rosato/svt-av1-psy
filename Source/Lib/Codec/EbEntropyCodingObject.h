@@ -21,6 +21,9 @@ extern "C" {
         FRAME_CONTEXT   *fc;              /* this frame entropy */
         aom_writer       ecWriter;
         EbPtr           ecOutputBitstreamPtr;
+#if TILES
+        uint64_t   ec_frame_size;
+#endif
     } EntropyCoder_t;
 
     extern EbErrorType BitstreamCtor(

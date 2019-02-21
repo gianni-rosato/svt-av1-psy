@@ -212,6 +212,10 @@ extern "C" {
         int32_t mi_row_start, mi_row_end;
         int32_t mi_col_start, mi_col_end;
         int32_t tg_horz_boundary;
+#if TILES
+        int32_t tile_row;
+        int32_t tile_col;
+#endif
     } TileInfo;
     typedef struct MacroBlockD {
         // block dimension in the unit of mode_info.
@@ -368,6 +372,9 @@ extern "C" {
 
         // Quantized Coefficients
         EbPictureBufferDesc_t          *quantized_coeff;
+#if TILES
+        TileInfo tile_info;
+#endif
 
     } LargestCodingUnit_t;
 

@@ -76,9 +76,22 @@ EbErrorType output_bitstream_rbsp_to_payload(
     uint32_t  read_location = start_location;
     EbByte read_byte_ptr;
     EbByte write_byte_ptr;
+#if IVF_FRAME_HEADER_IN_LIB
+    static uint64_t frame_count = 0;
+
+#endif
     // IVF data
     read_byte_ptr = (EbByte)bitstream_ptr->bufferBeginAv1;
     write_byte_ptr = &output_buffer[*output_buffer_index];
+#if IVF_FRAME_HEADER_IN_LIB
+    mem_put_le32(&write_byte_ptr[write_location], (int32_t)buffer_written_bytes_count);
+    write_location = write_location + 4;
+    mem_put_le32(&write_byte_ptr[write_location], (int32_t)(frame_count & 0xFFFFFFFF));
+    write_location = write_location + 4;
+    mem_put_le32(&write_byte_ptr[write_location], (int32_t)(frame_count >> 32));
+    write_location = write_location + 4;
+    *output_buffer_index += 12;
+#endif
     //frame_count++;
     while ((read_location < buffer_written_bytes_count)) {
         if ((*output_buffer_index) < (*output_buffer_size)) {

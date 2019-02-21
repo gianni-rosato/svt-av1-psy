@@ -89,6 +89,10 @@
 #define TEMPORAL_ID                        "-temporal-id" // no Eval
 #define LOOK_AHEAD_DIST_TOKEN           "-lad"
 #define SUPER_BLOCK_SIZE_TOKEN          "-sb-size"
+#if TILES
+#define TILE_ROW_TOKEN                   "-tile-rows"
+#define TILE_COL_TOKEN                   "-tile-columns"
+#endif
 #define SCENE_CHANGE_DETECTION_TOKEN    "-scd"
 #define INJECTOR_TOKEN                  "-inj"  // no Eval
 #define INJECTOR_FRAMERATE_TOKEN        "-inj-frm-rt" // no Eval
@@ -189,6 +193,10 @@ static void SetDisableDlfFlag                   (const char *value, EbConfig_t *
 static void SetEnableLocalWarpedMotionFlag      (const char *value, EbConfig_t *cfg) {cfg->enable_warped_motion = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableHmeFlag                    (const char *value, EbConfig_t *cfg) {cfg->enableHmeFlag = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableHmeLevel0Flag              (const char *value, EbConfig_t *cfg) {cfg->enableHmeLevel0Flag = (EbBool)strtoul(value, NULL, 0);};
+#if TILES
+static void SetTileRow                          (const char *value, EbConfig_t *cfg) { cfg->tile_rows = strtoul(value, NULL, 0); };
+static void SetTileCol                          (const char *value, EbConfig_t *cfg) { cfg->tile_columns = strtoul(value, NULL, 0); };
+#endif
 static void SetSceneChangeDetection             (const char *value, EbConfig_t *cfg) {cfg->scene_change_detection = strtoul(value, NULL, 0);};
 static void SetLookAheadDistance                (const char *value, EbConfig_t *cfg) {cfg->look_ahead_distance = strtoul(value, NULL, 0);};
 static void SetRateControlMode                  (const char *value, EbConfig_t *cfg) {cfg->rateControlMode = strtoul(value, NULL, 0);};
@@ -295,6 +303,10 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, HIERARCHICAL_LEVELS_TOKEN, "HierarchicalLevels", SetHierarchicalLevels },
     { SINGLE_INPUT, PRED_STRUCT_TOKEN, "PredStructure", SetCfgPredStructure },
 
+#if TILES
+     { SINGLE_INPUT, TILE_ROW_TOKEN, "TileRow", SetTileRow},
+     { SINGLE_INPUT, TILE_COL_TOKEN, "TileCol", SetTileCol},
+#endif
     // Rate Control
     { SINGLE_INPUT, SCENE_CHANGE_DETECTION_TOKEN, "SceneChangeDetection", SetSceneChangeDetection},
     { SINGLE_INPUT, QP_TOKEN, "QP", SetCfgQp },
@@ -508,6 +520,10 @@ void EbConfigCtor(EbConfig_t *config_ptr)
     config_ptr->targetSocket                         = 1;
     config_ptr->processedFrameCount                  = 0;
     config_ptr->processedByteCount                   = 0;
+#if TILES
+    config_ptr->tile_rows = 0;
+    config_ptr->tile_columns = 0;
+#endif
 
     return;
 }
