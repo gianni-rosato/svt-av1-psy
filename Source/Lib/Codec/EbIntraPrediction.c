@@ -8312,9 +8312,11 @@ void generate_intra_reference_samples(
     int32_t row_off = 0;
     uint32_t bl_org_x_pict = md_context_ptr->cu_origin_x;
     uint32_t bl_org_y_pict = md_context_ptr->cu_origin_y;
-
+#if CHROMA_BLIND
+    uint8_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level == CHROMA_MODE_0) ? (int) MAX_MB_PLANE : 1;
+#else
     uint8_t end_plane = /*(int)MAX_MB_PLANE;*/ md_context_ptr->blk_geom->has_uv ? (int)MAX_MB_PLANE : 1;
-
+#endif
 
 #if 1
 
@@ -9838,12 +9840,16 @@ is the main function to compute intra prediction for a PU
 */
 EbErrorType AV1IntraPredictionCL(
     ModeDecisionContext_t                  *md_context_ptr,
+#if !CHROMA_BLIND
     uint32_t                                  component_mask,
+#endif
     PictureControlSet_t                    *picture_control_set_ptr,
     ModeDecisionCandidateBuffer_t           *candidate_buffer_ptr,
     EbAsm                                  asm_type)
 {
+#if !CHROMA_BLIND
     (void)component_mask;
+#endif
     (void)asm_type;
     EbErrorType return_error = EB_ErrorNone;
 
@@ -9895,9 +9901,13 @@ EbErrorType AV1IntraPredictionCL(
     uint8_t    topNeighArray[64 * 2 + 1];
     uint8_t    leftNeighArray[64 * 2 + 1];
     PredictionMode mode;
-
+#if CHROMA_BLIND
+    uint8_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level == CHROMA_MODE_0) ? (int) MAX_MB_PLANE : 1;
+    for (int32_t plane = 0; plane < end_plane; ++plane) {
+#else
     uint8_t end_plane = md_context_ptr->blk_geom->has_uv ? 2 : 0;
     for (int32_t plane = 0; plane <= end_plane; ++plane) {
+#endif
 #if !INTRA_CORE_OPT
         if (plane == 0) {
             if (md_context_ptr->cu_origin_y != 0)
@@ -9935,7 +9945,7 @@ EbErrorType AV1IntraPredictionCL(
         }
 #endif
         if (plane)
-            mode = (candidate_buffer_ptr->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED : (PredictionMode)candidate_buffer_ptr->candidate_ptr->intra_chroma_mode;
+            mode = (candidate_buffer_ptr->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode) UV_DC_PRED : (PredictionMode) candidate_buffer_ptr->candidate_ptr->intra_chroma_mode;
         else
             mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
 

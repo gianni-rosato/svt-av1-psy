@@ -1911,7 +1911,12 @@ void CodingLoopContextGeneration(
             &cu_ptr->luma_txb_skip_context,
             &cu_ptr->luma_dc_sign_context);
 
+
+#if CHROMA_BLIND
+        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level == CHROMA_MODE_0) {
+#else
         if (context_ptr->blk_geom->has_uv) {
+#endif
             GetTxbCtx(
                 COMPONENT_CHROMA,
                 cb_dc_sign_level_coeff_neighbor_array,
