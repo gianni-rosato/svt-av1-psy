@@ -3753,79 +3753,29 @@ EB_EXTERN void AV1EncodePass(
                         context_ptr->mv_unit.mv[REF_LIST_1].mvUnion = pu_ptr->mv[REF_LIST_1].mvUnion;
 
                         // Inter Prediction
-                        EbBool local_warp_valid = EB_FALSE;
-                        if (pu_ptr->motion_mode == WARPED_CAUSAL) {
-                            local_warp_valid = warped_motion_parameters(
-                                picture_control_set_ptr,
-                                cu_ptr,
+                        if (doMC &&
+                            pu_ptr->motion_mode == WARPED_CAUSAL)
+                        {
+                            warped_motion_prediction(
                                 &context_ptr->mv_unit,
+                                context_ptr->cu_origin_x,
+                                context_ptr->cu_origin_y,
+                                cu_ptr,
                                 blk_geom,
+                                is16bit ? refObj0->referencePicture16bit : refObj0->referencePicture,
+                                reconBuffer,
                                 context_ptr->cu_origin_x,
                                 context_ptr->cu_origin_y,
                                 &cu_ptr->prediction_unit_array[0].wm_params,
-                                &cu_ptr->prediction_unit_array[0].num_proj_ref);
-
-                            int32_t mi_row = context_ptr->cu_origin_y >> MI_SIZE_LOG2;
-                            int32_t mi_col = context_ptr->cu_origin_x >> MI_SIZE_LOG2;
-
-                            av1_count_overlappable_neighbors(
-                                picture_control_set_ptr,
-                                cu_ptr,
-                                blk_geom->bsize,
-                                mi_row,
-                                mi_col);
-
-                            const EbBool overlappable_candidates =
-                                cu_ptr->prediction_unit_array[0].overlappable_neighbors[0]!=0 ||
-                                cu_ptr->prediction_unit_array[0].overlappable_neighbors[1]!=0;
-
-                            local_warp_valid = local_warp_valid && overlappable_candidates;
-
-                            if (doMC) {
-                                if (local_warp_valid) {
-                                    if (is16bit) {
-                                        warped_motion_prediction(
-                                            &context_ptr->mv_unit,
-                                            context_ptr->cu_origin_x,
-                                            context_ptr->cu_origin_y,
-                                            cu_ptr,
-                                            blk_geom,
-                                            refObj0->referencePicture16bit,
-                                            reconBuffer,
-                                            context_ptr->cu_origin_x,
-                                            context_ptr->cu_origin_y,
-                                            &cu_ptr->prediction_unit_array[0].wm_params,
-                                            (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
+                                (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
 #if CHROMA_BLIND
-                                            EB_TRUE,
+                                EB_TRUE,
 #endif
-                                            asm_type);
-                                    } else {
-                                        warped_motion_prediction(
-                                            &context_ptr->mv_unit,
-                                            context_ptr->cu_origin_x,
-                                            context_ptr->cu_origin_y,
-                                            cu_ptr,
-                                            blk_geom,
-                                            refObj0->referencePicture,
-                                            reconBuffer,
-                                            context_ptr->cu_origin_x,
-                                            context_ptr->cu_origin_y,
-                                            &cu_ptr->prediction_unit_array[0].wm_params,
-                                            (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
-#if CHROMA_BLIND
-                                            EB_TRUE,
-#endif
-                                            asm_type);
-                                    }
-                                } else
-                                    pu_ptr->motion_mode = SIMPLE_TRANSLATION;
-                            }
+                                asm_type);
                         }
 
                         if (doMC &&
-                            (pu_ptr->motion_mode != WARPED_CAUSAL ||
-                            (pu_ptr->motion_mode == WARPED_CAUSAL && local_warp_valid == EB_FALSE)))
+                            pu_ptr->motion_mode != WARPED_CAUSAL)
                         {
                             if (is16bit) {
                                 av1_inter_prediction_hbd(

@@ -1181,10 +1181,8 @@ EbErrorType Av1InterFastCost(
         MOTION_MODE motion_mode_rd = candidate_buffer_ptr->candidate_ptr->motion_mode;
         BlockSize bsize = context_ptr->blk_geom->bsize;
 
-        cu_ptr->prediction_unit_array[0].overlappable_neighbors[0] = 1;
-        cu_ptr->prediction_unit_array[0].overlappable_neighbors[1] = 1;
-
-        MOTION_MODE motion_allowed =  motion_mode_allowed(
+        cu_ptr->prediction_unit_array[0].num_proj_ref = candidate_buffer_ptr->candidate_ptr->num_proj_ref;
+        MOTION_MODE last_motion_mode_allowed = motion_mode_allowed(
             picture_control_set_ptr,
             cu_ptr,
             bsize,
@@ -1192,10 +1190,11 @@ EbErrorType Av1InterFastCost(
             rf[1],
             inter_mode);
 
-        switch (motion_allowed) {
+        switch (last_motion_mode_allowed) {
         case SIMPLE_TRANSLATION: break;
         case OBMC_CAUSAL:
-            interModeBitsNum += candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->motionModeFacBits1[bsize][SIMPLE_TRANSLATION]; // TODO: modify when OBMC added
+            assert(motion_mode_rd == SIMPLE_TRANSLATION); // TODO: remove when OBMC added
+            interModeBitsNum += candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->motionModeFacBits1[bsize][motion_mode_rd];
             break;
         default:
             interModeBitsNum += candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->motionModeFacBits[bsize][motion_mode_rd];

@@ -220,7 +220,7 @@ extern "C" {
     typedef struct MacroBlockD {
         // block dimension in the unit of mode_info.
         uint8_t n8_w, n8_h;
-        uint8_t n4_w, n4_h;  // TODO: this is for warped motion, for now
+        uint8_t n4_w, n4_h;  // for warped motion
         uint8_t ref_mv_count[MODE_CTX_REF_FRAMES];
         CandidateMv final_ref_mv_stack[MAX_REF_MV_STACK_SIZE];       
         uint8_t is_sec_rect;

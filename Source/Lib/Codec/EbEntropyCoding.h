@@ -307,13 +307,6 @@ extern "C" {
 
     //*******************************************************************************************//
 
-    void av1_count_overlappable_neighbors(
-        const PictureControlSet_t        *picture_control_set_ptr,
-        CodingUnit_t                     *cu_ptr,
-        const BlockSize                   bsize,
-        int32_t                           mi_row,
-        int32_t                           mi_col);
-
     MOTION_MODE motion_mode_allowed(
         const PictureControlSet_t       *picture_control_set_ptr,
         const CodingUnit_t              *cu_ptr,

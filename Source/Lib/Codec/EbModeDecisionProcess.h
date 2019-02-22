@@ -24,9 +24,9 @@ extern "C" {
      * Defines
      **************************************/
 #if IMPROVED_BIPRED_INJECTION || IMPROVED_UNIPRED_INJECTION
-#define MODE_DECISION_CANDIDATE_MAX_COUNT               113// 61 Intra & 18+2x8+2x8 Inter
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               124// 61 Intra & 18+2x8+2x8 Inter
 #else
-#define MODE_DECISION_CANDIDATE_MAX_COUNT               79//35//20 // 61 Intra & 18 Inter
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               90//35//20 // 61 Intra & 18 Inter
 #endif
 #if INC_NFL12
 #define MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT        (MAX_NFL*6) //up to 6 depths

@@ -1535,49 +1535,49 @@ int select_samples(
     int len,
     BlockSize bsize)
 {
-  const uint8_t bw = block_size_wide[bsize];
-  const uint8_t bh = block_size_high[bsize];
-  const int thresh = clamp(AOMMAX(bw, bh), 16, 112);
-  int pts_mvd[SAMPLES_ARRAY_SIZE] = { 0 };
-  int i, j, k, l = len;
-  int ret = 0;
-  // assert(len <= LEAST_SQUARES_SAMPLES_MAX);
+    const uint8_t bw = block_size_wide[bsize];
+    const uint8_t bh = block_size_high[bsize];
+    const int thresh = clamp(AOMMAX(bw, bh), 16, 112);
+    int pts_mvd[SAMPLES_ARRAY_SIZE] = { 0 };
+    int i, j, k, l = len;
+    int ret = 0;
 
-  // Obtain the motion vector difference.
-  for (i = 0; i < len; ++i) {
-    pts_mvd[i] = abs(pts_inref[2 * i] - pts[2 * i] - mv->col) +
-                 abs(pts_inref[2 * i + 1] - pts[2 * i + 1] - mv->row);
+    // Obtain the motion vector difference.
+    for (i = 0; i < len; ++i) {
+        pts_mvd[i] = abs(pts_inref[2 * i] - pts[2 * i] - mv->col) +
+                     abs(pts_inref[2 * i + 1] - pts[2 * i + 1] - mv->row);
 
-    if (pts_mvd[i] > thresh)
-      pts_mvd[i] = -1;
-    else
-      ret++;
-  }
+        if (pts_mvd[i] > thresh)
+            pts_mvd[i] = -1;
+        else
+            ret++;
+    }
 
-  // Keep at least 1 sample.
-  if (!ret)
-    return 1;
+     // Keep at least 1 sample.
+    if (!ret)
+        return 1;
 
-  i = 0;
-  j = l - 1;
-  for (k = 0; k < l - ret; k++) {
-    while (pts_mvd[i] != -1) i++;
-    while (pts_mvd[j] == -1) j--;
-    assert(i != j);
-    if (i > j)
-        break;
+    i = 0;
+    j = l - 1;
+    for (k = 0; k < l - ret; k++) {
+        while (pts_mvd[i] != -1)
+            i++;
+        while (pts_mvd[j] == -1)
+            j--;
+        if (i > j)
+            break;
 
-    // Replace the discarded samples;
-    pts_mvd[i] = pts_mvd[j];
-    pts[2 * i] = pts[2 * j];
-    pts[2 * i + 1] = pts[2 * j + 1];
-    pts_inref[2 * i] = pts_inref[2 * j];
-    pts_inref[2 * i + 1] = pts_inref[2 * j + 1];
-    i++;
-    j--;
-  }
+        // Replace the discarded samples;
+        pts_mvd[i] = pts_mvd[j];
+        pts[2 * i] = pts[2 * j];
+        pts[2 * i + 1] = pts[2 * j + 1];
+        pts_inref[2 * i] = pts_inref[2 * j];
+        pts_inref[2 * i + 1] = pts_inref[2 * j + 1];
+        i++;
+        j--;
+    }
 
-  return ret;
+    return ret;
 }
 
 
@@ -1585,157 +1585,296 @@ int select_samples(
 // Sample are the neighbor block center point's coordinates relative to the
 // left-top pixel of current block.
 int av1_find_samples(
-    const Av1Common *cm,
-    MacroBlockD *xd,
-    int mi_row,
-    int mi_col,
-    int *pts,
-    int *pts_inref)
+    const Av1Common                    *cm,
+    MacroBlockD                        *xd,
+    int                                 mi_row,
+    int                                 mi_col,
+    MvReferenceFrame                    rf0,
+    int                                *pts,
+    int                                *pts_inref)
 {
-  MbModeInfo *const mbmi0 = &xd->mi[0]->mbmi;
-  int ref_frame = mbmi0->ref_frame[0];
-  int up_available = xd->up_available;
-  int left_available = xd->left_available;
-  int i, mi_step = 1, np = 0;
+    int up_available = xd->up_available;
+    int left_available = xd->left_available;
+    int i, mi_step = 1, np = 0;
 
-  const TileInfo *const tile = &xd->tile;
-  int do_tl = 1;
-  int do_tr = 1;
+    const TileInfo *const tile = &xd->tile;
+    int do_tl = 1;
+    int do_tr = 1;
 
-  // scan the nearest above rows
-  if (up_available) {
-    int mi_row_offset = -1;
-    MbModeInfo *mbmi = &xd->mi[mi_row_offset * xd->mi_stride]->mbmi;
-    uint8_t n4_w = mi_size_wide[mbmi->sb_type];
+    // scan the nearest above rows
+    if (up_available) {
+        int mi_row_offset = -1;
+        MbModeInfo *mbmi = &xd->mi[mi_row_offset * xd->mi_stride]->mbmi;
+        uint8_t n4_w = mi_size_wide[mbmi->sb_type];
 
-    if (xd->n4_w <= n4_w) {
-      // Handle "current block width <= above block width" case.
-      int col_offset = -mi_col % n4_w;
+        if (xd->n4_w <= n4_w) {
+            // Handle "current block width <= above block width" case.
+            int col_offset = -mi_col % n4_w;
 
-      if (col_offset < 0) do_tl = 0;
-      if (col_offset + n4_w > xd->n4_w) do_tr = 0;
+            if (col_offset < 0)
+                do_tl = 0;
+            if (col_offset + n4_w > xd->n4_w)
+                do_tr = 0;
 
-      if (mbmi->ref_frame[0] == ref_frame && mbmi->ref_frame[1] == NONE_FRAME) {
-        record_samples(mbmi, pts, pts_inref, 0, -1, col_offset, 1);
-        pts += 2;
-        pts_inref += 2;
-        np++;
-        if (np >= LEAST_SQUARES_SAMPLES_MAX)
-            return LEAST_SQUARES_SAMPLES_MAX;
-      }
-    } else {
-      // Handle "current block width > above block width" case.
-      for (i = 0; i < AOMMIN(xd->n4_w, cm->mi_cols - mi_col); i += mi_step) {
-        int mi_col_offset = i;
-        mbmi = &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
-        n4_w = mi_size_wide[mbmi->sb_type];
-        mi_step = AOMMIN(xd->n4_w, n4_w);
+            if (mbmi->ref_frame[0] == rf0 && mbmi->ref_frame[1] == NONE_FRAME) {
+                record_samples(mbmi, pts, pts_inref, 0, -1, col_offset, 1);
+                pts += 2;
+                pts_inref += 2;
+                np++;
+                if (np >= LEAST_SQUARES_SAMPLES_MAX)
+                    return LEAST_SQUARES_SAMPLES_MAX;
+            }
+        } else {
+            // Handle "current block width > above block width" case.
+            for (i = 0; i < AOMMIN(xd->n4_w, cm->mi_cols - mi_col); i += mi_step) {
+                int mi_col_offset = i;
+                mbmi = &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
+                n4_w = mi_size_wide[mbmi->sb_type];
+                mi_step = AOMMIN(xd->n4_w, n4_w);
 
-        if (mbmi->ref_frame[0] == ref_frame &&
-            mbmi->ref_frame[1] == NONE_FRAME)
-        {
-          record_samples(mbmi, pts, pts_inref, 0, -1, i, 1);
-          pts += 2;
-          pts_inref += 2;
-          np++;
-          if (np >= LEAST_SQUARES_SAMPLES_MAX)
-            return LEAST_SQUARES_SAMPLES_MAX;
+                if (mbmi->ref_frame[0] == rf0 &&
+                    mbmi->ref_frame[1] == NONE_FRAME)
+                {
+                    record_samples(mbmi, pts, pts_inref, 0, -1, i, 1);
+                    pts += 2;
+                    pts_inref += 2;
+                    np++;
+                    if (np >= LEAST_SQUARES_SAMPLES_MAX)
+                        return LEAST_SQUARES_SAMPLES_MAX;
+                }
+            }
         }
-      }
     }
-  }
 
-  // scan the nearest left columns
-  if (left_available) {
-    int mi_col_offset = -1;
+    // scan the nearest left columns
+    if (left_available) {
+        int mi_col_offset = -1;
+        MbModeInfo *mbmi = &xd->mi[mi_col_offset]->mbmi;
+        uint8_t n4_h = mi_size_high[mbmi->sb_type];
 
-    MbModeInfo *mbmi = &xd->mi[mi_col_offset]->mbmi;
-    uint8_t n4_h = mi_size_high[mbmi->sb_type];
+        if (xd->n4_h <= n4_h) {
+            // Handle "current block height <= above block height" case.
+            int row_offset = -mi_row % n4_h;
+            if (row_offset < 0)
+                do_tl = 0;
 
-    if (xd->n4_h <= n4_h) {
-      // Handle "current block height <= above block height" case.
-      int row_offset = -mi_row % n4_h;
+            if (mbmi->ref_frame[0] == rf0 && mbmi->ref_frame[1] == NONE_FRAME) {
+                record_samples(mbmi, pts, pts_inref, row_offset, 1, 0, -1);
+                pts += 2;
+                pts_inref += 2;
+                np++;
+                if (np >= LEAST_SQUARES_SAMPLES_MAX)
+                    return LEAST_SQUARES_SAMPLES_MAX;
+            }
+        } else {
+            // Handle "current block height > above block height" case.
+            for (i = 0; i < AOMMIN(xd->n4_h, cm->mi_rows - mi_row); i += mi_step) {
+                int mi_row_offset = i;
+                mbmi = &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
+                n4_h = mi_size_high[mbmi->sb_type];
+                mi_step = AOMMIN(xd->n4_h, n4_h);
 
-      if (row_offset < 0) do_tl = 0;
-
-      if (mbmi->ref_frame[0] == ref_frame && mbmi->ref_frame[1] == NONE_FRAME) {
-        record_samples(mbmi, pts, pts_inref, row_offset, 1, 0, -1);
-        pts += 2;
-        pts_inref += 2;
-        np++;
-        if (np >= LEAST_SQUARES_SAMPLES_MAX)
-            return LEAST_SQUARES_SAMPLES_MAX;
-      }
-    } else {
-      // Handle "current block height > above block height" case.
-      for (i = 0; i < AOMMIN(xd->n4_h, cm->mi_rows - mi_row); i += mi_step) {
-        int mi_row_offset = i;
-        mbmi = &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
-        n4_h = mi_size_high[mbmi->sb_type];
-        mi_step = AOMMIN(xd->n4_h, n4_h);
-
-        if (mbmi->ref_frame[0] == ref_frame &&
-            mbmi->ref_frame[1] == NONE_FRAME)
-        {
-          record_samples(mbmi, pts, pts_inref, i, 1, 0, -1);
-          pts += 2;
-          pts_inref += 2;
-          np++;
-          if (np >= LEAST_SQUARES_SAMPLES_MAX)
-            return LEAST_SQUARES_SAMPLES_MAX;
+                if (mbmi->ref_frame[0] == rf0 &&
+                    mbmi->ref_frame[1] == NONE_FRAME)
+                {
+                    record_samples(mbmi, pts, pts_inref, i, 1, 0, -1);
+                    pts += 2;
+                    pts_inref += 2;
+                    np++;
+                    if (np >= LEAST_SQUARES_SAMPLES_MAX)
+                        return LEAST_SQUARES_SAMPLES_MAX;
+                }
+            }
         }
-      }
     }
-  }
 
-  // Top-left block
-  if (do_tl && left_available && up_available) {
-    int mi_row_offset = -1;
-    int mi_col_offset = -1;
+    // Top-left block
+    if (do_tl && left_available && up_available) {
+        int mi_row_offset = -1;
+        int mi_col_offset = -1;
+        MbModeInfo *mbmi = &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
 
-    MbModeInfo *mbmi = &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
-
-    if (mbmi->ref_frame[0] == ref_frame && mbmi->ref_frame[1] == NONE_FRAME) {
-      record_samples(mbmi, pts, pts_inref, 0, -1, 0, -1);
-      pts += 2;
-      pts_inref += 2;
-      np++;
-      if (np >= LEAST_SQUARES_SAMPLES_MAX)
-        return LEAST_SQUARES_SAMPLES_MAX;
+        if (mbmi->ref_frame[0] == rf0 && mbmi->ref_frame[1] == NONE_FRAME) {
+            record_samples(mbmi, pts, pts_inref, 0, -1, 0, -1);
+            pts += 2;
+            pts_inref += 2;
+            np++;
+            if (np >= LEAST_SQUARES_SAMPLES_MAX)
+                return LEAST_SQUARES_SAMPLES_MAX;
+        }
     }
-  }
 
-  // Top-right block
-  if (do_tr &&
-      has_top_right(cm, xd, mi_row, mi_col, AOMMAX(xd->n4_w, xd->n4_h)))
-  {
-    Position trb_pos = { -1, xd->n4_w };
+    // Top-right block
+    if (do_tr &&
+        has_top_right(cm, xd, mi_row, mi_col, AOMMAX(xd->n4_w, xd->n4_h)))
+    {
+        Position trb_pos = { -1, xd->n4_w };
 
-    if (is_inside(tile, mi_col, mi_row, cm->mi_rows, &trb_pos)) {
-      int mi_row_offset = -1;
-      int mi_col_offset = xd->n4_w;
+        if (is_inside(tile, mi_col, mi_row, cm->mi_rows, &trb_pos)) {
+            int mi_row_offset = -1;
+            int mi_col_offset = xd->n4_w;
 
-      MbModeInfo *mbmi =
-          &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
+            MbModeInfo *mbmi =
+                &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
 
-      if (mbmi->ref_frame[0] == ref_frame && mbmi->ref_frame[1] == NONE_FRAME) {
-        record_samples(mbmi, pts, pts_inref, 0, -1, xd->n4_w, 1);
-        np++;
-        if (np >= LEAST_SQUARES_SAMPLES_MAX)
-            return LEAST_SQUARES_SAMPLES_MAX;
-      }
+            if (mbmi->ref_frame[0] == rf0 && mbmi->ref_frame[1] == NONE_FRAME) {
+                record_samples(mbmi, pts, pts_inref, 0, -1, xd->n4_w, 1);
+                np++;
+                if (np >= LEAST_SQUARES_SAMPLES_MAX)
+                    return LEAST_SQUARES_SAMPLES_MAX;
+            }
+        }
     }
-  }
 
-  return np;
+    return np;
+}
+
+
+void wm_count_samples(
+    CodingUnit_t                       *cu_ptr,
+    const BlockGeom                    *blk_geom,
+    uint16_t                            cu_origin_x,
+    uint16_t                            cu_origin_y,
+    uint8_t                             ref_frame_type,
+    PictureControlSet_t                *picture_control_set_ptr,
+    uint16_t                           *num_samples)
+{
+    Av1Common  *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
+    MacroBlockD  *xd = cu_ptr->av1xd;
+
+    int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
+    int32_t mi_col = cu_origin_x >> MI_SIZE_LOG2;
+
+    xd->n4_w = blk_geom->bwidth  >> MI_SIZE_LOG2;
+    xd->n4_h = blk_geom->bheight >> MI_SIZE_LOG2;
+
+    int up_available = xd->up_available;
+    int left_available = xd->left_available;
+    int i, mi_step = 1, np = 0;
+
+    const TileInfo *const tile = &xd->tile;
+    int do_tl = 1;
+    int do_tr = 1;
+
+    MvReferenceFrame rf[2];
+    av1_set_ref_frame(rf, ref_frame_type);
+
+    if (up_available) {
+        int mi_row_offset = -1;
+        MbModeInfo *mbmi = &xd->mi[mi_row_offset * xd->mi_stride]->mbmi;
+        uint8_t n4_w = mi_size_wide[mbmi->sb_type];
+
+        if (xd->n4_w <= n4_w) {
+            int col_offset = -mi_col % n4_w;
+            if (col_offset < 0) 
+                do_tl = 0;
+            if (col_offset + n4_w > xd->n4_w) 
+                do_tr = 0;
+
+            if (mbmi->ref_frame[0] == rf[0] && mbmi->ref_frame[1] == NONE_FRAME) {
+                np++;
+                if (np >= LEAST_SQUARES_SAMPLES_MAX) {
+                    *num_samples = LEAST_SQUARES_SAMPLES_MAX;
+                    return;
+                }
+            }
+        } else {
+            for (i = 0; i < AOMMIN(xd->n4_w, cm->mi_cols - mi_col); i += mi_step) {
+                int mi_col_offset = i;
+                mbmi = &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
+                n4_w = mi_size_wide[mbmi->sb_type];
+                mi_step = AOMMIN(xd->n4_w, n4_w);
+
+                if (mbmi->ref_frame[0] == rf[0] &&
+                    mbmi->ref_frame[1] == NONE_FRAME)
+                {
+                    np++;
+                    if (np >= LEAST_SQUARES_SAMPLES_MAX) {
+                        *num_samples = LEAST_SQUARES_SAMPLES_MAX;
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    if (left_available) {
+        int mi_col_offset = -1;
+        MbModeInfo *mbmi = &xd->mi[mi_col_offset]->mbmi;
+        uint8_t n4_h = mi_size_high[mbmi->sb_type];
+        if (xd->n4_h <= n4_h) {
+            int row_offset = -mi_row % n4_h;
+            if (row_offset < 0) 
+                do_tl = 0;
+             if (mbmi->ref_frame[0] == rf[0] && mbmi->ref_frame[1] == NONE_FRAME) {
+                np++;
+                if (np >= LEAST_SQUARES_SAMPLES_MAX) {
+                    *num_samples = LEAST_SQUARES_SAMPLES_MAX;
+                    return;
+                }
+            }
+        } else {
+            for (i = 0; i < AOMMIN(xd->n4_h, cm->mi_rows - mi_row); i += mi_step) {
+                int mi_row_offset = i;
+                mbmi = &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
+                n4_h = mi_size_high[mbmi->sb_type];
+                mi_step = AOMMIN(xd->n4_h, n4_h);
+
+                if (mbmi->ref_frame[0] == rf[0] &&
+                    mbmi->ref_frame[1] == NONE_FRAME)
+                {
+                    np++;
+                    if (np >= LEAST_SQUARES_SAMPLES_MAX) {
+                        *num_samples = LEAST_SQUARES_SAMPLES_MAX;
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    if (do_tl && left_available && up_available) {
+        int mi_row_offset = -1;
+        int mi_col_offset = -1;
+        MbModeInfo *mbmi = &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
+        if (mbmi->ref_frame[0] == rf[0] && mbmi->ref_frame[1] == NONE_FRAME) {
+            np++;
+            if (np >= LEAST_SQUARES_SAMPLES_MAX) {
+                *num_samples = LEAST_SQUARES_SAMPLES_MAX;
+                return;
+            }
+        }
+    }
+
+    if (do_tr &&
+        has_top_right(cm, xd, mi_row, mi_col, AOMMAX(xd->n4_w, xd->n4_h)))
+    {
+        Position trb_pos = { -1, xd->n4_w };
+        if (is_inside(tile, mi_col, mi_row, cm->mi_rows, &trb_pos)) {
+            int mi_row_offset = -1;
+            int mi_col_offset = xd->n4_w;
+            MbModeInfo *mbmi =
+                &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;
+
+            if (mbmi->ref_frame[0] == rf[0] && mbmi->ref_frame[1] == NONE_FRAME) {
+                np++;
+                if (np >= LEAST_SQUARES_SAMPLES_MAX) {
+                    *num_samples = LEAST_SQUARES_SAMPLES_MAX;
+                    return;
+                }
+            }
+        }
+    }
+    *num_samples = np;
 }
 
 
 uint16_t wm_find_samples(
     CodingUnit_t                       *cu_ptr,
     const BlockGeom                    *blk_geom,
-    uint16_t                            pu_origin_x,
-    uint16_t                            pu_origin_y,
+    uint16_t                            cu_origin_x,
+    uint16_t                            cu_origin_y,
+    MvReferenceFrame                    rf0,
     PictureControlSet_t                *picture_control_set_ptr,
     int32_t                            *pts,
     int32_t                            *pts_inref)
@@ -1743,13 +1882,13 @@ uint16_t wm_find_samples(
     Av1Common  *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD  *xd = cu_ptr->av1xd;
 
-    int32_t mi_row = pu_origin_y >> MI_SIZE_LOG2;
-    int32_t mi_col = pu_origin_x >> MI_SIZE_LOG2;
+    int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
+    int32_t mi_col = cu_origin_x >> MI_SIZE_LOG2;
 
     xd->n4_w = blk_geom->bwidth  >> MI_SIZE_LOG2;
     xd->n4_h = blk_geom->bheight >> MI_SIZE_LOG2;
 
-    return (uint16_t) av1_find_samples(cm, xd, mi_row, mi_col, pts, pts_inref);
+    return (uint16_t) av1_find_samples(cm, xd, mi_row, mi_col, rf0, pts, pts_inref);
 }
 
 
@@ -1758,8 +1897,9 @@ EbBool warped_motion_parameters(
     CodingUnit_t                     *cu_ptr,
     MvUnit_t                         *mv_unit,
     const BlockGeom                  *blk_geom,
-    uint16_t                          pu_origin_x,
-    uint16_t                          pu_origin_y,
+    uint16_t                          cu_origin_x,
+    uint16_t                          cu_origin_y,
+    uint8_t                           ref_frame_type,
     EbWarpedMotionParams             *wm_params,
     uint16_t                         *num_samples)
 {
@@ -1768,8 +1908,8 @@ EbBool warped_motion_parameters(
     EbBool apply_wm = EB_FALSE;
 
     int pts[SAMPLES_ARRAY_SIZE], pts_inref[SAMPLES_ARRAY_SIZE];
-    int32_t mi_row = pu_origin_y >> MI_SIZE_LOG2;
-    int32_t mi_col = pu_origin_x >> MI_SIZE_LOG2;
+    int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
+    int32_t mi_col = cu_origin_x >> MI_SIZE_LOG2;
     xd->n4_w = blk_geom->bwidth  >> MI_SIZE_LOG2;
     xd->n4_h = blk_geom->bheight >> MI_SIZE_LOG2;
 
@@ -1777,11 +1917,15 @@ EbBool warped_motion_parameters(
     if (blk_geom->bwidth < 8 || blk_geom->bheight < 8)
         return apply_wm;
 
+    MvReferenceFrame rf[2];
+    av1_set_ref_frame(rf, ref_frame_type);
+
     uint16_t nsamples = wm_find_samples(
         cu_ptr,
         blk_geom,
-        pu_origin_x,
-        pu_origin_y,
+        cu_origin_x,
+        cu_origin_y,
+        rf[0],
         picture_control_set_ptr,
         pts,
         pts_inref);
@@ -1811,3 +1955,107 @@ EbBool warped_motion_parameters(
     return apply_wm;
 }
 
+
+//foreach_overlappable_nb_above
+int count_overlappable_nb_above(
+    const Av1Common *cm,
+    MacroBlockD *xd,
+    int32_t mi_col,
+    int nb_max)
+{
+    int nb_count = 0;
+    if (!xd->up_available)
+        return nb_count;
+
+    // prev_row_mi points into the mi array, starting at the beginning of the
+    // previous row.
+    ModeInfo **prev_row_mi = xd->mi - mi_col - 1 * xd->mi_stride;
+    const int end_col = MIN(mi_col + xd->n4_w, cm->mi_cols);
+    uint8_t mi_step;
+
+    for (int above_mi_col = mi_col; above_mi_col < end_col && nb_count < nb_max;
+        above_mi_col += mi_step)
+    {
+        ModeInfo **above_mi = prev_row_mi + above_mi_col;
+        mi_step = MIN(mi_size_wide[above_mi[0]->mbmi.sb_type], mi_size_wide[BLOCK_64X64]);
+
+        // If we're considering a block with width 4, it should be treated as
+        // half of a pair of blocks with chroma information in the second. Move
+        // above_mi_col back to the start of the pair if needed, set above_mbmi
+        // to point at the block with chroma information, and set mi_step to 2 to
+        // step over the entire pair at the end of the iteration.
+        if (mi_step == 1) {
+            above_mi_col &= ~1;
+            above_mi = prev_row_mi + above_mi_col + 1;
+            mi_step = 2;
+        }
+        if (is_neighbor_overlappable(&(*above_mi)->mbmi))
+            ++nb_count;
+    }
+
+    return nb_count;
+}
+
+int count_overlappable_nb_left(
+    const Av1Common *cm,
+    MacroBlockD *xd,
+    int32_t mi_row,
+    int nb_max)
+{
+    int nb_count = 0;
+    if (!xd->left_available)
+        return nb_count;
+
+    // prev_col_mi points into the mi array, starting at the top of the
+    // previous column
+    ModeInfo **prev_col_mi = xd->mi - 1 - mi_row * xd->mi_stride;
+    const int end_row = MIN(mi_row + xd->n4_h, cm->mi_rows);
+    uint8_t mi_step;
+
+    for (int left_mi_row = mi_row; left_mi_row < end_row && nb_count < nb_max;
+       left_mi_row += mi_step)
+    {
+        ModeInfo **left_mi = prev_col_mi + left_mi_row * xd->mi_stride;
+        mi_step = MIN(mi_size_high[left_mi[0]->mbmi.sb_type], mi_size_high[BLOCK_64X64]);
+        if (mi_step == 1) {
+            left_mi_row &= ~1;
+            left_mi = prev_col_mi + (left_mi_row + 1) * xd->mi_stride;
+            mi_step = 2;
+        }
+
+        if (is_neighbor_overlappable(&(*left_mi)->mbmi))
+            ++nb_count;
+    }
+
+    return nb_count;
+}
+
+
+void av1_count_overlappable_neighbors(
+    const PictureControlSet_t        *picture_control_set_ptr,
+    CodingUnit_t                     *cu_ptr,
+    const BlockSize                   bsize,
+    int32_t                           mi_row,
+    int32_t                           mi_col)
+{
+    Av1Common  *cm  = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
+    MacroBlockD *xd = cu_ptr->av1xd;
+
+    xd->mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 / 4);
+    const int32_t offset = mi_row * xd->mi_stride + mi_col;
+    xd->mi = picture_control_set_ptr->mi_grid_base + offset;
+    xd->up_available = (mi_row > 0);
+    xd->left_available = (mi_col > 0);
+
+    cu_ptr->prediction_unit_array[0].overlappable_neighbors[0] = 0;
+    cu_ptr->prediction_unit_array[0].overlappable_neighbors[1] = 0;
+
+    if (!is_motion_variation_allowed_bsize(bsize))
+        return;
+
+    cu_ptr->prediction_unit_array[0].overlappable_neighbors[0] =
+        count_overlappable_nb_above(cm, xd, mi_col, MAX_SIGNED_VALUE);
+
+    cu_ptr->prediction_unit_array[0].overlappable_neighbors[1] =
+        count_overlappable_nb_left(cm, xd, mi_row, MAX_SIGNED_VALUE);
+}

@@ -3521,12 +3521,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
   { 1, 2 }, { 2, 0 }, { 2, 1 }, { 2, 2 },
 };
 
-
-
-
-
-
-
 /*static*/ void interpolation_filter_search(
     PictureControlSet_t *picture_control_set_ptr,
     EbPictureBufferDesc_t *prediction_ptr,
@@ -4259,6 +4253,10 @@ EbErrorType inter_pu_prediction_av1(
     SequenceControlSet_t* sequence_control_set_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr));
     EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
+    int64_t skip_sse_sb = INT64_MAX;
+    int32_t skip_txfm_sb = 0;
+    int32_t rs = 0;
+    int64_t rd = INT64_MAX;
 
     if (is16bit) {
         ref_pic_list0 = ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr)->referencePicture16bit;
@@ -4270,62 +4268,55 @@ EbErrorType inter_pu_prediction_av1(
             ref_pic_list1 = ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->objectPtr)->referencePicture;
     }
 
-    if(candidate_ptr->motion_mode == WARPED_CAUSAL) {
-        candidate_ptr->local_warp_valid = warped_motion_parameters(
-            picture_control_set_ptr,
-            md_context_ptr->cu_ptr,
-            &mv_unit,
-            md_context_ptr->blk_geom,
-            md_context_ptr->cu_origin_x,
-            md_context_ptr->cu_origin_y,
-            &candidate_ptr->wm_params,
-            &candidate_ptr->num_proj_ref);
+    if (picture_control_set_ptr->parent_pcs_ptr->allow_warped_motion
+        && candidate_ptr->motion_mode != WARPED_CAUSAL)
+            wm_count_samples(
+                md_context_ptr->cu_ptr,
+                md_context_ptr->blk_geom,
+                md_context_ptr->cu_origin_x,
+                md_context_ptr->cu_origin_y,
+                candidate_ptr->ref_frame_type,
+                picture_control_set_ptr,
+                &candidate_ptr->num_proj_ref);
 
-        if(candidate_ptr->local_warp_valid) {
-            if (is16bit) {
-                warped_motion_prediction_md(
-                    &mv_unit,
-                    md_context_ptr,
-                    md_context_ptr->cu_origin_x,
-                    md_context_ptr->cu_origin_y,
-                    md_context_ptr->cu_ptr,
-                    md_context_ptr->blk_geom,
-                    ref_pic_list0,
-                    candidate_buffer_ptr->prediction_ptr,
-                    md_context_ptr->blk_geom->origin_x,
-                    md_context_ptr->blk_geom->origin_y,
-                    &candidate_ptr->wm_params,
-                    asm_type);
-            } else {
-                warped_motion_prediction(
-                    &mv_unit,
-                    md_context_ptr->cu_origin_x,
-                    md_context_ptr->cu_origin_y,
-                    md_context_ptr->cu_ptr,
-                    md_context_ptr->blk_geom,
-                    ref_pic_list0,
-                    candidate_buffer_ptr->prediction_ptr,
-                    md_context_ptr->blk_geom->origin_x,
-                    md_context_ptr->blk_geom->origin_y,
-                    &candidate_ptr->wm_params,
-                    (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
+    if (candidate_ptr->motion_mode == WARPED_CAUSAL) {
+        if (is16bit) {
+            warped_motion_prediction_md(
+                &mv_unit,
+                md_context_ptr,
+                md_context_ptr->cu_origin_x,
+                md_context_ptr->cu_origin_y,
+                md_context_ptr->cu_ptr,
+                md_context_ptr->blk_geom,
+                ref_pic_list0,
+                candidate_buffer_ptr->prediction_ptr,
+                md_context_ptr->blk_geom->origin_x,
+                md_context_ptr->blk_geom->origin_y,
+                &candidate_ptr->wm_params,
+                asm_type);
+        } else {
+            warped_motion_prediction(
+                &mv_unit,
+                md_context_ptr->cu_origin_x,
+                md_context_ptr->cu_origin_y,
+                md_context_ptr->cu_ptr,
+                md_context_ptr->blk_geom,
+                ref_pic_list0,
+                candidate_buffer_ptr->prediction_ptr,
+                md_context_ptr->blk_geom->origin_x,
+                md_context_ptr->blk_geom->origin_y,
+                &candidate_ptr->wm_params,
+                (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
 #if CHROMA_BLIND
-                    md_context_ptr->chroma_level == CHROMA_MODE_0,
+                md_context_ptr->chroma_level == CHROMA_MODE_0,
 #endif
-                    asm_type);
-            }
+                asm_type);
         }
-
         return return_error;
     }
 
     if (is16bit) {
 #if INTERPOL_FILTER_SEARCH_10BIT_SUPPORT
-
-        int64_t skip_sse_sb = INT64_MAX;
-        int32_t skip_txfm_sb = 0;
-        int32_t rs = 0;
-        int64_t rd = INT64_MAX;
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
 #if INTERPOLATION_SEARCH_LEVELS
         if (!md_context_ptr->skip_interpolation_search) {
@@ -4348,7 +4339,6 @@ EbErrorType inter_pu_prediction_av1(
                     &skip_sse_sb);
         }
 
-        //candidate_buffer_ptr->candidate_ptr->interp_filters = 1;//SWITCHABLE_FILTERS;
 #endif
 #if INTERPOL_FILTER_SEARCH_10BIT_SUPPORT
         AV1InterPrediction10BitMD(
@@ -4374,13 +4364,7 @@ EbErrorType inter_pu_prediction_av1(
             md_context_ptr->chroma_level == CHROMA_MODE_0,
 #endif
             asm_type);
-    }
-    else {
-
-        int64_t skip_sse_sb = INT64_MAX;
-        int32_t skip_txfm_sb = 0;
-        int32_t rs = 0;
-        int64_t rd = INT64_MAX;
+    } else {
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
 #if INTERPOLATION_SEARCH_LEVELS
         if (!md_context_ptr->skip_interpolation_search) {
@@ -4403,8 +4387,6 @@ EbErrorType inter_pu_prediction_av1(
                     &skip_sse_sb);
         }
 
-        //candidate_buffer_ptr->candidate_ptr->interp_filters = 1;//SWITCHABLE_FILTERS;
-
         av1_inter_prediction(
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->interp_filters,
@@ -4424,14 +4406,10 @@ EbErrorType inter_pu_prediction_av1(
             md_context_ptr->chroma_level == CHROMA_MODE_0,
 #endif
             asm_type);
-
     }
-
 
     return return_error;
 }
-
-
 
 
 EbErrorType inter_prediction_context_ctor(

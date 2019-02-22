@@ -26,7 +26,6 @@
 #include "EbModeDecisionProcess.h"
 #include "EbComputeSAD.h"
 #include "EbTransforms.h"
-#include "EbWarpedMotion.h"
 #include "EbMeSadCalculation.h"
 #include "EbMotionEstimation.h"
 #include "EbAvcStyleMcp.h"
@@ -1377,7 +1376,7 @@ void ProductPerformFastLoop(
             const unsigned inputStrideY = inputPicturePtr->strideY;
             uint8_t * const predBufferY = prediction_ptr->bufferY + cuOriginIndex;
             // Skip distortion computation if the candidate is MPM
-            if (candidateBuffer->candidate_ptr->mpm_flag == EB_FALSE && !(candidate_ptr->motion_mode == WARPED_CAUSAL && candidate_ptr->local_warp_valid == 0)) {
+            if (candidateBuffer->candidate_ptr->mpm_flag == EB_FALSE) {
                 if (fastLoopCandidateIndex == bestFirstFastCostSearchCandidateIndex && candidate_ptr->type == INTRA_MODE)
                     lumaFastDistortion = candidate_ptr->me_distortion;
                 else {
@@ -1438,37 +1437,15 @@ void ProductPerformFastLoop(
             }
 
             // Fast Cost Calc
-            if (candidate_ptr->motion_mode == WARPED_CAUSAL && candidate_ptr->local_warp_valid == 0)
-                *(candidateBuffer->fast_cost_ptr) = 0xFFFFFFFFFFFFFFFFull;
-            else {
-                Av1ProductFastCostFuncTable[candidate_ptr->type](
-                    context_ptr,
-                    cu_ptr,
-                    candidateBuffer,
-                    cu_ptr->qp,
-                    lumaFastDistortion,
-                    chromaFastDistortion,
-                    context_ptr->fast_lambda,
-                    picture_control_set_ptr);
-            }
-
-#if 0 // AMIR_DEBUG
-            if (picture_control_set_ptr->parent_pcs_ptr->picture_number == 0 && context_ptr->cu_origin_x >= 00 && context_ptr->cu_origin_x < 64 && context_ptr->cu_origin_y >= 0 && context_ptr->cu_origin_y < 64) {
-                //if (picture_control_set_ptr->parent_pcs_ptr->picture_number == 0 && /*context_ptr->cu_size > 16 &&*/ context_ptr->cu_origin_x >= 00 && context_ptr->cu_origin_x < 64 && context_ptr->cu_origin_y >= 0 && context_ptr->cu_origin_y < 64) {
-
-                printf("POC:%d\t(%d,%d)\t%dx%d\t%d\t%d\t%lld\n",
-                    picture_control_set_ptr->parent_pcs_ptr->picture_number,
-                    context_ptr->cu_origin_x,
-                    context_ptr->cu_origin_y,
-                    context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight,
-                    *secondFastCostSearchCandidateTotalCount,
-                    candidate_ptr->pred_mode,
-                    *candidateBuffer->fast_cost_ptr
-                );
-
-            }
-#endif
-
+            Av1ProductFastCostFuncTable[candidate_ptr->type](
+                context_ptr,
+                cu_ptr,
+                candidateBuffer,
+                cu_ptr->qp,
+                lumaFastDistortion,
+                chromaFastDistortion,
+                context_ptr->fast_lambda,
+                picture_control_set_ptr);
             (*secondFastCostSearchCandidateTotalCount)++;
         }
 
@@ -1485,27 +1462,20 @@ void ProductPerformFastLoop(
             const uint64_t *fast_cost_array = context_ptr->fast_cost_array;
             const uint32_t bufferIndexStart = context_ptr->buffer_depth_index_start[0];
             const uint32_t bufferIndexEnd = bufferIndexStart + maxBuffers;
-
             uint32_t bufferIndex;
 
             highestCostIndex = bufferIndexStart;
             bufferIndex = bufferIndexStart + 1;
 
             do {
-
                 highestCost = fast_cost_array[highestCostIndex];
-
-                if (highestCost == maxCost) {
+                if (highestCost == maxCost)
                     break;
-                }
 
                 if (fast_cost_array[bufferIndex] > highestCost)
-                {
                     highestCostIndex = bufferIndex;
-                }
 
             } while (++bufferIndex < bufferIndexEnd);
-
         }
     } while (--fastLoopCandidateIndex >= 0);// End Second FastLoop
 
@@ -2158,10 +2128,9 @@ void AV1PerformFullLoop(
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FULL_LOOP) {
             context_ptr->skip_interpolation_search = 0;
 
-
-            if (candidate_ptr->type != INTRA_MODE || candidate_ptr->motion_mode == WARPED_CAUSAL) {
+            if (candidate_ptr->type != INTRA_MODE) {
 #else
-        if (candidate_ptr->prediction_is_ready_luma == EB_FALSE || candidate_ptr->motion_mode == WARPED_CAUSAL) {
+        if (candidate_ptr->prediction_is_ready_luma == EB_FALSE) {
 #endif
 
 #if CHROMA_BLIND
@@ -2182,8 +2151,6 @@ void AV1PerformFullLoop(
 #if INTERPOLATION_SEARCH_LEVELS
         }
 #endif
-        if (candidate_ptr->motion_mode == WARPED_CAUSAL && candidate_ptr->local_warp_valid == 0)
-            continue;
 
         //Y Residual
         ResidualKernel(
@@ -2896,7 +2863,8 @@ void md_encode_block(
     SsMeContext_t                    *ss_mecontext,
     uint32_t                          leaf_index,
     uint32_t                          lcuAddr,
-    ModeDecisionCandidateBuffer_t    *bestCandidateBuffers[5]){
+    ModeDecisionCandidateBuffer_t    *bestCandidateBuffers[5])
+{
 
     ModeDecisionCandidateBuffer_t         **candidateBufferPtrArrayBase = context_ptr->candidate_buffer_ptr_array;
     ModeDecisionCandidateBuffer_t         **candidate_buffer_ptr_array;
@@ -3195,9 +3163,8 @@ void md_encode_block(
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost = MAX_MODE_COST;
         cu_ptr->prediction_unit_array->ref_frame_type = 0;
     }
-
-
 }
+
 
 EB_EXTERN EbErrorType mode_decision_sb(
     SequenceControlSet_t                *sequence_control_set_ptr,
