@@ -17,6 +17,11 @@ jobs:
      script:
      - cd Build/linux
      - ./build.sh release
+   # General Linux debug build job
+   - name: Debug build
+     script:
+     - cd Build/linux
+     - ./build.sh debug
    # General macOS build job
    - name: macOS build
      os: osx

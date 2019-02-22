@@ -33,7 +33,7 @@ extern "C" {
      ************************************/
     typedef struct SequenceControlSet_s
     {
-        EbSvtAv1EncConfiguration                  static_config;
+        EbSvtAv1EncConfiguration                static_config;
 
         // Encoding Context
         EncodeContext_t                        *encode_context_ptr;

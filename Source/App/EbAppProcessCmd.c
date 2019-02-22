@@ -16,6 +16,10 @@
 #include "EbAppInputy4m.h"
 
 #include "EbTime.h"
+
+
+#define IVF_FRAME_HEADER_IN_LIB                     0
+
 /***************************************
  * Macros
  ***************************************/
@@ -1380,10 +1384,18 @@ APPEXITCONDITIONTYPE ProcessOutputStreamBuffer(
             }
 
             if (headerPtr->flags & EB_BUFFERFLAG_SHOW_EXT){
+#if TILES
+                uint8_t show_existing_frame_size = (headerPtr->flags & EB_BUFFERFLAG_TG) ? OBU_FRAME_HEADER_SIZE + 1 : OBU_FRAME_HEADER_SIZE;
+                write_ivf_frame_header(config, headerPtr->n_filled_len - show_existing_frame_size);
+                fwrite(headerPtr->p_buffer, 1, headerPtr->n_filled_len - show_existing_frame_size, streamFile);
+                write_ivf_frame_header(config, show_existing_frame_size);
+                fwrite(headerPtr->p_buffer + headerPtr->n_filled_len - show_existing_frame_size, 1, show_existing_frame_size, streamFile);
+#else
                 write_ivf_frame_header(config, headerPtr->n_filled_len - OBU_FRAME_HEADER_SIZE);
                 fwrite(headerPtr->p_buffer, 1, headerPtr->n_filled_len - OBU_FRAME_HEADER_SIZE, streamFile);
                 write_ivf_frame_header(config, OBU_FRAME_HEADER_SIZE);
                 fwrite(headerPtr->p_buffer + headerPtr->n_filled_len - OBU_FRAME_HEADER_SIZE, 1, OBU_FRAME_HEADER_SIZE, streamFile);
+#endif
             }else{
                 write_ivf_frame_header(config, headerPtr->n_filled_len);
 #else

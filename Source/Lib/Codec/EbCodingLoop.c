@@ -35,6 +35,9 @@
 
 static const uint32_t me2Nx2NOffset[4] = { 0, 1, 5, 21 };
 extern void av1_predict_intra_block(
+#if TILES   
+    TileInfo                    *tile,
+#endif
 #if INTRA_CORE_OPT
     ModeDecisionContext_t                  *md_context_ptr,
 #endif
@@ -68,6 +71,9 @@ extern void av1_predict_intra_block(
 
 #if INTRA_10BIT_SUPPORT
 void av1_predict_intra_block_16bit(
+#if TILES   
+    TileInfo               *tile,
+#endif
     EncDecContext_t         *context_ptr,
     CodingUnit_t *cu_ptr,
     const Av1Common *cm,
@@ -725,13 +731,17 @@ static void Av1EncodeLoop(
         }
 #endif
 
+#if CHROMA_BLIND
+        if (cu_ptr->prediction_mode_flag == INTRA_MODE && (context_ptr->evaluate_cfl_ep || cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED)) {
+#else
         if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED) {
+#endif
+
+
             EbPictureBufferDesc_t *reconSamples = predSamples;
             uint32_t reconLumaOffset = (reconSamples->origin_y + origin_y)            * reconSamples->strideY + (reconSamples->origin_x + origin_x);
 
             if (txb_ptr->y_has_coeff == EB_TRUE && cu_ptr->skip_flag == EB_FALSE) {
-
-
 
 
                 uint8_t     *predBuffer = predSamples->bufferY + predLumaOffset;
@@ -751,7 +761,11 @@ static void Av1EncodeLoop(
             cfl_luma_subsampling_420_lbd_c(
                 reconSamples->bufferY + reconLumaOffset,
                 reconSamples->strideY,
+#if CHROMA_BLIND
+                context_ptr->md_context->pred_buf_q3,
+#else
                 context_ptr->pred_buf_q3,
+#endif
                 context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[context_ptr->txb_itr]);
 
@@ -761,49 +775,118 @@ static void Av1EncodeLoop(
 
 
             subtract_average(
+#if CHROMA_BLIND
+                context_ptr->md_context->pred_buf_q3,
+#else
                 context_ptr->pred_buf_q3,
+#endif
                 context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr],
                 round_offset,
                 LOG2F(context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr]) + LOG2F(context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]));
 
+#if CHROMA_BLIND
+            if (context_ptr->evaluate_cfl_ep)
+            {
+                // 3: Loop over alphas and find the best or choose DC
+                // Use the 1st spot of the candidate buffer to hold cfl settings: (1) to use same kernel as MD for CFL evaluation: cfl_rd_pick_alpha() (toward unification), (2) to avoid dedicated buffers for CFL evaluation @ EP (toward less memory)
+                ModeDecisionCandidateBuffer_t  *candidateBuffer = &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]);
 
+                // Input(s)
+                candidateBuffer->candidate_ptr->type = INTRA_MODE;
+                candidateBuffer->candidate_ptr->intra_luma_mode = cu_ptr->pred_mode;
+                candidateBuffer->candidate_ptr->cfl_alpha_signs = 0;
+                candidateBuffer->candidate_ptr->cfl_alpha_idx = 0;
+                context_ptr->md_context->blk_geom = context_ptr->blk_geom;
 
-            int32_t alpha_q3 =
-                cfl_idx_to_alpha(cu_ptr->prediction_unit_array->cfl_alpha_idx, cu_ptr->prediction_unit_array->cfl_alpha_signs, CFL_PRED_U); // once for U, once for V
+                EbByte src_pred_ptr;
+                EbByte dst_pred_ptr;
 
-            //TOCHANGE
-            //assert(chromaSize * CFL_BUF_LINE + chromaSize <= CFL_BUF_SQUARE);
+                // Copy Cb pred samples from ep buffer to md buffer
+                src_pred_ptr = predSamples->bufferCb + predCbOffset;
+                dst_pred_ptr = &(candidateBuffer->prediction_ptr->bufferCb[scratchCbOffset]);
+                for (int i = 0; i < context_ptr->blk_geom->bheight_uv; i++) {
+                    memcpy(dst_pred_ptr, src_pred_ptr, context_ptr->blk_geom->bwidth_uv);
+                    src_pred_ptr += predSamples->strideCb;
+                    dst_pred_ptr += candidateBuffer->prediction_ptr->strideCb;
+                }
 
-            cfl_predict_lbd(
-                context_ptr->pred_buf_q3,
-                predSamples->bufferCb + predCbOffset,
-                predSamples->strideCb,
-                predSamples->bufferCb + predCbOffset,
-                predSamples->strideCb,
-                alpha_q3,
-                8,
-                context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
-                context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]);
-            alpha_q3 =
-                cfl_idx_to_alpha(cu_ptr->prediction_unit_array->cfl_alpha_idx, cu_ptr->prediction_unit_array->cfl_alpha_signs, CFL_PRED_V); // once for U, once for V
+                // Copy Cr pred samples from ep buffer to md buffer
+                src_pred_ptr = predSamples->bufferCr + predCrOffset;
+                dst_pred_ptr = &(candidateBuffer->prediction_ptr->bufferCr[scratchCrOffset]);
+                for (int i = 0; i < context_ptr->blk_geom->bheight_uv; i++) {
+                    memcpy(dst_pred_ptr, src_pred_ptr, context_ptr->blk_geom->bwidth_uv);
+                    src_pred_ptr += predSamples->strideCr;
+                    dst_pred_ptr += candidateBuffer->prediction_ptr->strideCr;
+                }
 
-            //TOCHANGE
-            //assert(chromaSize * CFL_BUF_LINE + chromaSize <= CFL_BUF_SQUARE);
+                cfl_rd_pick_alpha(
+                    picture_control_set_ptr,
+                    candidateBuffer,
+                    sb_ptr,
+                    context_ptr->md_context,
+                    input_samples,
+                    inputCbOffset,
+                    scratchCbOffset,
+                    asm_type);
 
-            cfl_predict_lbd(
-                context_ptr->pred_buf_q3,
-                predSamples->bufferCr + predCrOffset,
-                predSamples->strideCr,
-                predSamples->bufferCr + predCrOffset,
-                predSamples->strideCr,
-                alpha_q3,
-                8,
-                context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
-                context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]);
+                // Output(s)
+                if (candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
+                    cu_ptr->prediction_unit_array->intra_chroma_mode = UV_CFL_PRED;
+                    cu_ptr->prediction_unit_array->cfl_alpha_idx = candidateBuffer->candidate_ptr->cfl_alpha_idx;
+                    cu_ptr->prediction_unit_array->cfl_alpha_signs = candidateBuffer->candidate_ptr->cfl_alpha_signs;
+                    cu_ptr->prediction_unit_array->is_directional_chroma_mode_flag = EB_FALSE;
+
+                }
+            }
+
+            if (cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED) {
+#endif
+                int32_t alpha_q3 =
+                    cfl_idx_to_alpha(cu_ptr->prediction_unit_array->cfl_alpha_idx, cu_ptr->prediction_unit_array->cfl_alpha_signs, CFL_PRED_U); // once for U, once for V
+
+                //TOCHANGE
+                //assert(chromaSize * CFL_BUF_LINE + chromaSize <= CFL_BUF_SQUARE);
+
+                cfl_predict_lbd(
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
+                    context_ptr->pred_buf_q3,
+#endif
+                    predSamples->bufferCb + predCbOffset,
+                    predSamples->strideCb,
+                    predSamples->bufferCb + predCbOffset,
+                    predSamples->strideCb,
+                    alpha_q3,
+                    8,
+                    context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
+                    context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]);
+                alpha_q3 =
+                    cfl_idx_to_alpha(cu_ptr->prediction_unit_array->cfl_alpha_idx, cu_ptr->prediction_unit_array->cfl_alpha_signs, CFL_PRED_V); // once for U, once for V
+
+                //TOCHANGE
+                //assert(chromaSize * CFL_BUF_LINE + chromaSize <= CFL_BUF_SQUARE);
+
+                cfl_predict_lbd(
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
+                    context_ptr->pred_buf_q3,
+#endif
+                    predSamples->bufferCr + predCrOffset,
+                    predSamples->strideCr,
+                    predSamples->bufferCr + predCrOffset,
+                    predSamples->strideCr,
+                    alpha_q3,
+                    8,
+                    context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
+                    context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr]);
+
+#if CHROMA_BLIND
+            }
+#endif
         }
-
-
 
     }
 
@@ -1188,8 +1271,12 @@ static void Av1EncodeLoop16bit(
                 // Down sample Luma
                 cfl_luma_subsampling_420_hbd_c(
                     ((uint16_t*)reconSamples->bufferY) + reconLumaOffset,
-                    reconSamples->strideY,
+                    reconSamples->strideY,              
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
                     context_ptr->pred_buf_q3,
+#endif
                     context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_height[context_ptr->txb_itr]);
 
@@ -1197,7 +1284,11 @@ static void Av1EncodeLoop16bit(
 
 
                 subtract_average(
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
                     context_ptr->pred_buf_q3,
+#endif
                     context_ptr->blk_geom->tx_width_uv[context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_height_uv[context_ptr->txb_itr],
                     round_offset,
@@ -1211,7 +1302,11 @@ static void Av1EncodeLoop16bit(
                 // assert(chromaSize * CFL_BUF_LINE + chromaSize <=                CFL_BUF_SQUARE);
 
                 cfl_predict_hbd(
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
                     context_ptr->pred_buf_q3,
+#endif
                     ((uint16_t*)predSamples16bit->bufferCb) + predCbOffset,
                     predSamples16bit->strideCb,
                     ((uint16_t*)predSamples16bit->bufferCb) + predCbOffset,
@@ -1227,7 +1322,11 @@ static void Av1EncodeLoop16bit(
                 //assert(chromaSize * CFL_BUF_LINE + chromaSize <=                CFL_BUF_SQUARE);
 
                 cfl_predict_hbd(
+#if CHROMA_BLIND
+                    context_ptr->md_context->pred_buf_q3,
+#else
                     context_ptr->pred_buf_q3,
+#endif
                     ((uint16_t*)predSamples16bit->bufferCr) + predCrOffset,
                     predSamples16bit->strideCr,
                     ((uint16_t*)predSamples16bit->bufferCr) + predCrOffset,
@@ -1433,8 +1532,11 @@ static void Av1EncodeGenerateRecon(
     //**********************************
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
 
+#if CHROMA_BLIND
+        if (cu_ptr->prediction_mode_flag != INTRA_MODE || (cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED && context_ptr->evaluate_cfl_ep == EB_FALSE))
+#else
         if (cu_ptr->prediction_mode_flag != INTRA_MODE || cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED)
-
+#endif
         {
             predLumaOffset = (predSamples->origin_y + origin_y)             * predSamples->strideY + (predSamples->origin_x + origin_x);
             if (txb_ptr->y_has_coeff == EB_TRUE && cu_ptr->skip_flag == EB_FALSE) {
@@ -3117,6 +3219,15 @@ EB_EXTERN void AV1EncodePass(
                 uint32_t  coded_area_org = context_ptr->coded_area_sb;
                 uint32_t  coded_area_org_uv = context_ptr->coded_area_sb_uv;
 
+#if CHROMA_BLIND
+                // Derive disable_cfl_flag as evaluate_cfl_ep = f(disable_cfl_flag)
+                EbBool disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 ||
+                    context_ptr->blk_geom->bwidth == 4 ||
+                    context_ptr->blk_geom->bheight == 4) ? EB_TRUE : EB_FALSE;
+                // Evaluate cfl @ EP if applicable, and not done @ MD 
+                context_ptr->evaluate_cfl_ep = (disable_cfl_flag == EB_FALSE && context_ptr->md_context->chroma_level == CHROMA_MODE_1);
+#endif
+
 #if ADD_DELTA_QP_SUPPORT
                 if (context_ptr->skip_qpm_flag == EB_FALSE && sequence_control_set_ptr->static_config.improve_sharpness) {
                     cu_ptr->qp = sb_ptr->qp;
@@ -3238,6 +3349,9 @@ EB_EXTERN void AV1EncodePass(
                                         mode = cu_ptr->pred_mode; //PredictionMode mode,
 
                                     av1_predict_intra_block_16bit(
+#if TILES   
+                                        &sb_ptr->tile_info,
+#endif
                                         context_ptr,
                                         cu_ptr,
                                         picture_control_set_ptr->parent_pcs_ptr->av1_cm,                  //const Av1Common *cm,
@@ -3304,13 +3418,25 @@ EB_EXTERN void AV1EncodePass(
                                             topNeighArray[0] = leftNeighArray[0] = ep_cr_recon_neighbor_array->topLeftArray[MAX_PICTURE_HEIGHT_SIZE / 2 + cu_originx_uv - cu_originy_uv];
                                     }
 
-
                                     if (plane)
                                         mode = (pu_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED : (PredictionMode)pu_ptr->intra_chroma_mode;
                                     else
                                         mode = cu_ptr->pred_mode; //PredictionMode mode,
 
+                                    // Hsan: if CHROMA_MODE_1, then CFL will be evaluated @ EP as no CHROMA @ MD 
+                                    // If that's the case then you should ensure than the 1st chroma prediction uses UV_DC_PRED (that's the default configuration for CHROMA_MODE_1 if CFL applicable (set @ fast loop candidates injection) then MD assumes chroma mode always UV_DC_PRED)
+#if 0
+                                    if (plane && cu_ptr->prediction_mode_flag == INTRA_MODE && context_ptr->evaluate_cfl_ep) {
+                                        if (mode != UV_DC_PRED) {
+                                            assert(0);
+                                        }
+                                    }
+#endif
+
                                     av1_predict_intra_block(
+#if TILES
+                                        &sb_ptr->tile_info,
+#endif
 #if INTRA_CORE_OPT
                                         NULL,
 #endif
@@ -3596,7 +3722,10 @@ EB_EXTERN void AV1EncodePass(
 
                     //IntMv  predmv[2];
                     enc_pass_av1_mv_pred(
-                        context_ptr->md_context,
+#if TILES
+                        &sb_ptr->tile_info,
+#endif
+                         context_ptr->md_context,
                         cu_ptr,
                         blk_geom,
                         context_ptr->cu_origin_x,
@@ -3624,73 +3753,29 @@ EB_EXTERN void AV1EncodePass(
                         context_ptr->mv_unit.mv[REF_LIST_1].mvUnion = pu_ptr->mv[REF_LIST_1].mvUnion;
 
                         // Inter Prediction
-                        EbBool local_warp_valid = EB_FALSE;
-                        if (pu_ptr->motion_mode == WARPED_CAUSAL) {
-                            local_warp_valid = warped_motion_parameters(
-                                picture_control_set_ptr,
-                                cu_ptr,
+                        if (doMC &&
+                            pu_ptr->motion_mode == WARPED_CAUSAL)
+                        {
+                            warped_motion_prediction(
                                 &context_ptr->mv_unit,
+                                context_ptr->cu_origin_x,
+                                context_ptr->cu_origin_y,
+                                cu_ptr,
                                 blk_geom,
+                                is16bit ? refObj0->referencePicture16bit : refObj0->referencePicture,
+                                reconBuffer,
                                 context_ptr->cu_origin_x,
                                 context_ptr->cu_origin_y,
                                 &cu_ptr->prediction_unit_array[0].wm_params,
-                                &cu_ptr->prediction_unit_array[0].num_proj_ref);
-
-                            int32_t mi_row = context_ptr->cu_origin_y >> MI_SIZE_LOG2;
-                            int32_t mi_col = context_ptr->cu_origin_x >> MI_SIZE_LOG2;
-
-                            av1_count_overlappable_neighbors(
-                                picture_control_set_ptr,
-                                cu_ptr,
-                                blk_geom->bsize,
-                                mi_row,
-                                mi_col);
-
-                            const EbBool overlappable_candidates =
-                                cu_ptr->prediction_unit_array[0].overlappable_neighbors[0]!=0 ||
-                                cu_ptr->prediction_unit_array[0].overlappable_neighbors[1]!=0;
-
-                            local_warp_valid = local_warp_valid && overlappable_candidates;
-
-                            if (doMC) {
-                                if (local_warp_valid) {
-                                    if (is16bit) {
-                                        warped_motion_prediction(
-                                            &context_ptr->mv_unit,
-                                            context_ptr->cu_origin_x,
-                                            context_ptr->cu_origin_y,
-                                            cu_ptr,
-                                            blk_geom,
-                                            refObj0->referencePicture16bit,
-                                            reconBuffer,
-                                            context_ptr->cu_origin_x,
-                                            context_ptr->cu_origin_y,
-                                            &cu_ptr->prediction_unit_array[0].wm_params,
-                                            (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
-                                            asm_type);
-                                    } else {
-                                        warped_motion_prediction(
-                                            &context_ptr->mv_unit,
-                                            context_ptr->cu_origin_x,
-                                            context_ptr->cu_origin_y,
-                                            cu_ptr,
-                                            blk_geom,
-                                            refObj0->referencePicture,
-                                            reconBuffer,
-                                            context_ptr->cu_origin_x,
-                                            context_ptr->cu_origin_y,
-                                            &cu_ptr->prediction_unit_array[0].wm_params,
-                                            (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
-                                            asm_type);
-                                    }
-                                } else
-                                    pu_ptr->motion_mode = SIMPLE_TRANSLATION;
-                            }
+                                (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
+#if CHROMA_BLIND
+                                EB_TRUE,
+#endif
+                                asm_type);
                         }
 
                         if (doMC &&
-                            (pu_ptr->motion_mode != WARPED_CAUSAL ||
-                            (pu_ptr->motion_mode == WARPED_CAUSAL && local_warp_valid == EB_FALSE)))
+                            pu_ptr->motion_mode != WARPED_CAUSAL)
                         {
                             if (is16bit) {
                                 av1_inter_prediction_hbd(
@@ -3725,6 +3810,9 @@ EB_EXTERN void AV1EncodePass(
                                     reconBuffer,
                                     context_ptr->cu_origin_x,
                                     context_ptr->cu_origin_y,
+#if CHROMA_BLIND
+                                    EB_TRUE,
+#endif
                                     asm_type);
                             }
                         }

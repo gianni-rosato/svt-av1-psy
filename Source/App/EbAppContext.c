@@ -174,6 +174,10 @@ EbErrorType CopyConfigurationParameters(
     callbackData->ebEncParameters.pred_structure = (uint8_t)config->predStructure;
     callbackData->ebEncParameters.in_loop_me_flag = config->in_loop_me_flag;
     callbackData->ebEncParameters.ext_block_flag = config->ext_block_flag;
+#if TILES
+    callbackData->ebEncParameters.tile_rows = config->tile_rows;
+    callbackData->ebEncParameters.tile_columns = config->tile_columns;
+#endif
     callbackData->ebEncParameters.scene_change_detection = config->scene_change_detection;
     callbackData->ebEncParameters.look_ahead_distance = config->look_ahead_distance;
     callbackData->ebEncParameters.framesToBeEncoded = config->framesToBeEncoded;

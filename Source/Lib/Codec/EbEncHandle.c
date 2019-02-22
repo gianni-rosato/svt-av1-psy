@@ -2055,10 +2055,10 @@ void CopyApiFromApp(
     sequence_control_set_ptr->general_interlaced_source_flag = 0;
 
     // SB Definitions
-#if    DISABLE_128X128_SB
+#if DISABLE_128X128_SB
     sequence_control_set_ptr->static_config.super_block_size = 64;
 #else
-    sequence_control_set_ptr->static_config.super_block_size = 128;
+    sequence_control_set_ptr->static_config.super_block_size = (pComponentParameterStructure->enc_mode <= ENC_M2) ? 128 : 64;
 #endif
     sequence_control_set_ptr->static_config.pred_structure = 2; // Hardcoded(Cleanup)
     sequence_control_set_ptr->static_config.enable_qp_scaling_flag = 1;
@@ -2158,6 +2158,10 @@ void CopyApiFromApp(
     sequence_control_set_ptr->static_config.constrained_intra = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->constrained_intra;
 
     // Adaptive Loop Filter
+#if TILES
+    sequence_control_set_ptr->static_config.tile_rows = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->tile_rows;
+    sequence_control_set_ptr->static_config.tile_columns = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->tile_columns;
+#endif
 
     // Rate Control
     sequence_control_set_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->scene_change_detection;
@@ -2485,6 +2489,12 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error Instance %u: The lookahead distance must be [0 - %d] \n", channelNumber + 1, MAX_LAD);
         return_error = EB_ErrorBadParameter;
     }
+#if TILES
+    if (config->tile_rows < 0 || config->tile_columns < 0 || config->tile_rows > 6 || config->tile_columns > 6) {
+        SVT_LOG("Error Instance %u: Log2Tile rows/cols must be [0 - 6] \n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
     if (config->scene_change_detection > 1) {
         SVT_LOG("Error Instance %u: The scene change detection must be [0 - 1] \n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
@@ -2601,7 +2611,10 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->source_height = 0;
     config_ptr->framesToBeEncoded = 0; 
     config_ptr->stat_report = 1;
-
+#if TILES
+    config_ptr->tile_rows = 0;
+    config_ptr->tile_columns = 0;
+#endif
     config_ptr->qp = 50;
     config_ptr->use_qp_file = EB_FALSE;
     config_ptr->scene_change_detection = 0;
@@ -3132,6 +3145,11 @@ EB_API EbErrorType eb_svt_get_packet(
         if (packet->flags != EB_BUFFERFLAG_EOS && 
             packet->flags != EB_BUFFERFLAG_SHOW_EXT &&
             packet->flags != (EB_BUFFERFLAG_SHOW_EXT | EB_BUFFERFLAG_EOS) &&
+#if TILES
+            packet->flags != (EB_BUFFERFLAG_TG) &&
+            packet->flags != (EB_BUFFERFLAG_SHOW_EXT | EB_BUFFERFLAG_TG) &&
+            packet->flags != (EB_BUFFERFLAG_SHOW_EXT | EB_BUFFERFLAG_EOS | EB_BUFFERFLAG_TG) &&
+#endif
             packet->flags != 0) {
             return_error = EB_ErrorMax;
         }

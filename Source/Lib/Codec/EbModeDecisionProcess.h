@@ -24,9 +24,9 @@ extern "C" {
      * Defines
      **************************************/
 #if IMPROVED_BIPRED_INJECTION || IMPROVED_UNIPRED_INJECTION
-#define MODE_DECISION_CANDIDATE_MAX_COUNT               113// 61 Intra & 18+2x8+2x8 Inter
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               124// 61 Intra & 18+2x8+2x8 Inter
 #else
-#define MODE_DECISION_CANDIDATE_MAX_COUNT               79//35//20 // 61 Intra & 18 Inter
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               90//35//20 // 61 Intra & 18 Inter
 #endif
 #if INC_NFL12
 #define MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT        (MAX_NFL*6) //up to 6 depths
@@ -97,8 +97,8 @@ extern "C" {
         ModeDecisionCandidateBuffer_t **candidate_buffer_ptr_array;
         MdRateEstimationContext_t      *md_rate_estimation_ptr;
         InterPredictionContext_t       *inter_prediction_context;
-        MdCodingUnit_t                  md_local_cu_unit[BLOCK_MAX_COUNT];
-        CodingUnit_t                    md_cu_arr_nsq[BLOCK_MAX_COUNT];
+        MdCodingUnit_t                  md_local_cu_unit[BLOCK_MAX_COUNT_SB_128];
+        CodingUnit_t                    md_cu_arr_nsq[BLOCK_MAX_COUNT_SB_128];
 
         NeighborArrayUnit_t            *intra_luma_mode_neighbor_array;
         NeighborArrayUnit_t            *intra_chroma_mode_neighbor_array;
@@ -161,7 +161,7 @@ extern "C" {
 
         // Entropy Coder
         EntropyCoder_t                 *coeff_est_entropy_coder_ptr;
-        MdEncPassCuData_t               md_ep_pipe_sb[BLOCK_MAX_COUNT];
+        MdEncPassCuData_t               md_ep_pipe_sb[BLOCK_MAX_COUNT_SB_128];
 
         uint8_t                         group_of8x8_blocks_count;
         uint8_t                         group_of16x16_blocks_count;
@@ -171,7 +171,9 @@ extern "C" {
         uint16_t                        cu_origin_x;
         uint16_t                        cu_origin_y;
         uint64_t                        chroma_weight;
+#if !CHROMA_BLIND
         uint32_t                        use_chroma_information_in_fast_loop;
+#endif
         uint8_t                         sb_sz;
         uint32_t                        sb_origin_x;
         uint32_t                        sb_origin_y;
@@ -185,7 +187,9 @@ extern "C" {
         unsigned                        luma_intra_ref_samples_gen_done      : 2; // only 1 bit is needed, but used two for rounding
         unsigned                        chroma_intra_ref_samples_gen_done    : 2; // only 1 bit is needed, but used two for rounding
         unsigned                        generate_mvp                         : 2; // only 1 bit is needed, but used two for rounding
+#if !CHROMA_BLIND
         unsigned                        round_mv_to_integer                  : 2; // only 1 bit is needed, but used two for rounding
+#endif
         uint32_t                        full_recon_search_count;
         EbBool                          cu_use_ref_src_flag;
         uint16_t                        qp_index;
@@ -199,7 +203,7 @@ extern "C" {
         uint8_t                         intra_luma_top_mode;
         uint8_t                         intra_chroma_left_mode;
         uint8_t                         intra_chroma_top_mode;
-        int16_t                         pred_buf_q3[CFL_BUF_SQUARE];
+        int16_t                         pred_buf_q3[CFL_BUF_SQUARE]; // Hsan: both MD and EP to use pred_buf_q3 (kept 1, and removed the 2nd)
 #if INTRA_CORE_OPT
         DECLARE_ALIGNED(16, uint8_t, left_data[MAX_MB_PLANE][MAX_TX_SIZE * 2 + 32]);
         DECLARE_ALIGNED(16, uint8_t, above_data[MAX_MB_PLANE][MAX_TX_SIZE * 2 + 32]);
@@ -209,6 +213,7 @@ extern "C" {
 
         // Multi-modes signal(s) 
         uint8_t                           nfl_level;
+
 #if INTERPOLATION_SEARCH_LEVELS
         uint8_t                           skip_interpolation_search;
 #endif
@@ -216,6 +221,9 @@ extern "C" {
         uint8_t                           parent_sq_type[MAX_PARENT_SQ];
         uint8_t                           parent_sq_has_coeff[MAX_PARENT_SQ];
         uint8_t                           parent_sq_pred_mode[MAX_PARENT_SQ];
+#endif
+#if CHROMA_BLIND
+        uint8_t                           chroma_level;
 #endif
 
     } ModeDecisionContext_t;
@@ -294,6 +302,19 @@ extern "C" {
         SequenceControlSet_t    *sequence_control_set_ptr,
         uint8_t                  picture_qp,
         uint8_t                  sb_qp);
+
+
+#if CHROMA_BLIND 
+    extern void cfl_rd_pick_alpha(
+        PictureControlSet_t             *picture_control_set_ptr,
+        ModeDecisionCandidateBuffer_t   *candidateBuffer,
+        LargestCodingUnit_t             *sb_ptr,
+        ModeDecisionContext_t           *context_ptr,
+        EbPictureBufferDesc_t           *inputPicturePtr,
+        uint32_t                         inputCbOriginIndex,
+        uint32_t                         cuChromaOriginIndex,
+        EbAsm                            asm_type);
+#endif
 
 #ifdef __cplusplus
 }

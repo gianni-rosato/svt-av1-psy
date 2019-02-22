@@ -487,7 +487,9 @@ extern EbErrorType sb_params_init(
                 EB_TRUE;
         }
 
-        for (md_scan_block_index = 0; md_scan_block_index < BLOCK_MAX_COUNT; md_scan_block_index++) {
+         uint16_t max_block_count = sequence_control_set_ptr->max_block_cnt;
+
+        for (md_scan_block_index = 0; md_scan_block_index < max_block_count; md_scan_block_index++) {
 
             const BlockGeom * blk_geom = Get_blk_geom_mds(md_scan_block_index);
 
@@ -540,9 +542,10 @@ EbErrorType sb_geom_init(SequenceControlSet_t * sequence_control_set_ptr)
                 1 :
                 0);
 
+        
+        uint16_t max_block_count = sequence_control_set_ptr->max_block_cnt;
 
-
-        for (md_scan_block_index = 0; md_scan_block_index < BLOCK_MAX_COUNT; md_scan_block_index++) {
+        for (md_scan_block_index = 0; md_scan_block_index < max_block_count ; md_scan_block_index++) {
 
             const BlockGeom * blk_geom = Get_blk_geom_mds(md_scan_block_index);
 

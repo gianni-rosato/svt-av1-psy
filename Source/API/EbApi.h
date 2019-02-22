@@ -12,6 +12,10 @@ extern "C" {
 
 #include "stdint.h"
 
+
+#define  TILES    1
+
+
     // API Version
 #define SVT_VERSION_MAJOR       0
 #define SVT_VERSION_MINOR       4
@@ -21,7 +25,7 @@ extern "C" {
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT            2
 
-#define MAX_ENC_PRESET                              3
+#define MAX_ENC_PRESET                              4
 
 #ifdef _WIN32
 #define EB_API __declspec(dllexport)
@@ -102,6 +106,9 @@ EbBool is a 32 bit quantity and is aligned on a 32 bit word boundary.
 #define EB_BUFFERFLAG_EOS           0x00000001  // signals the last packet of the stream
 #define EB_BUFFERFLAG_SHOW_EXT      0x00000002  // signals that the packet contains a show existing frame at the end
 
+#if TILES
+#define EB_BUFFERFLAG_TG            0x00000004  // signals that the packet contains Tile Group header
+#endif
     // For 8-bit and 10-bit packed inputs, the luma, cb, and cr fields should be used
     //   for the three input picture planes.  However, for 10-bit unpacked planes the
     //   lumaExt, cbExt, and crExt fields should be used hold the extra 2-bits of
@@ -490,6 +497,13 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 0. */
     uint32_t                 recon_enabled;
+#if TILES
+    /* Log 2 Tile Rows and colums . 0 means no tiling,1 means that we split the dimension
+        * into 2
+        * Default is 0. */
+    int32_t                  tile_columns;
+    int32_t                  tile_rows;
+#endif
 
 } EbSvtAv1EncConfiguration;
 

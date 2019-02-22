@@ -1,4 +1,4 @@
-From 976b0ab59e4eb5242729d960539cb2714c6cba28 Mon Sep 17 00:00:00 2001
+From 99f851c5bea509726ce841b1cc57605a6a84ba19 Mon Sep 17 00:00:00 2001
 From: Daryl Seah <daryl.seah@intel.com>
 Date: Fri, 18 Jan 2019 02:11:38 +0000
 Subject: [PATCH 1/1] Add ability for ffmpeg to run svt-av1
@@ -15,7 +15,7 @@ Signed-off-by: Jing SUN <jing.a.sun@intel.com>
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
-index a70c5f9..5b5238a 100755
+index a70c5f9..1850ef0 100755
 --- a/configure
 +++ b/configure
 @@ -262,6 +262,7 @@ External library support:
@@ -46,7 +46,7 @@ index a70c5f9..5b5238a 100755
  enabled libssh            && require_pkg_config libssh libssh libssh/sftp.h sftp_init
  enabled libspeex          && require_pkg_config libspeex speex speex/speex.h speex_decoder_init
  enabled libsrt            && require_pkg_config libsrt "srt >= 1.3.0" srt/srt.h srt_socket
-+enabled libsvtav1         && require_pkg_config libsvtav1 SvtAv1Enc EbApi.h eb_init_handle
++enabled libsvtav1         && require_pkg_config libsvtav1 SvtAv1Enc svt-av1/EbApi.h eb_init_handle
  enabled libtensorflow     && require libtensorflow tensorflow/c/c_api.h TF_Version -ltensorflow
  enabled libtesseract      && require_pkg_config libtesseract tesseract tesseract/capi.h TessBaseAPICreate
  enabled libtheora         && require libtheora theora/theoraenc.h th_info_init -ltheoraenc -ltheoradec -logg
@@ -76,7 +76,7 @@ index 1b8144a..f7df66c 100644
  extern AVCodec ff_libvo_amrwbenc_encoder;
 diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
 new file mode 100644
-index 0000000..1eba049
+index 0000000..4305285
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
 @@ -0,0 +1,491 @@
@@ -103,9 +103,9 @@ index 0000000..1eba049
 +*/
 +
 +#include <stdint.h>
-+#include "EbErrorCodes.h"
-+#include "EbTime.h"
-+#include "EbApi.h"
++#include "svt-av1/EbErrorCodes.h"
++#include "svt-av1/EbTime.h"
++#include "svt-av1/EbApi.h"
 +
 +#include "libavutil/common.h"
 +#include "libavutil/frame.h"

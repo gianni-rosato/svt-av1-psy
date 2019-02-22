@@ -20,9 +20,7 @@ Tasks & Questions
 */
 EbErrorType largest_coding_unit_ctor(
     LargestCodingUnit_t        **larget_coding_unit_dbl_ptr,
-    uint8_t                        sb_sz,
-    uint32_t                       picture_width,
-    uint32_t                       picture_height,
+    uint8_t                        sb_size_pix,
     uint16_t                       sb_origin_x,
     uint16_t                       sb_origin_y,
     uint16_t                       sb_index,
@@ -30,7 +28,6 @@ EbErrorType largest_coding_unit_ctor(
 
 {
     EbErrorType return_error = EB_ErrorNone;
-    uint32_t borderLargestCuSize;
     uint32_t tu_index;
     EbPictureBufferDescInitData_t coeffInitData;
 
@@ -40,24 +37,11 @@ EbErrorType largest_coding_unit_ctor(
     *larget_coding_unit_dbl_ptr = largestCodingUnitPtr;
 
     // ************ SB ***************
-    if ((picture_width - sb_origin_x) < sb_sz) {
-        borderLargestCuSize = picture_width - sb_origin_x;
         // Which borderLargestCuSize is not a power of two
-        while ((borderLargestCuSize & (borderLargestCuSize - 1)) > 0) {
-            borderLargestCuSize -= (borderLargestCuSize & ((~0u) << Log2f(borderLargestCuSize)));
-        }
-    }
 
-    if ((picture_height - sb_origin_y) < sb_sz) {
-        borderLargestCuSize = picture_height - sb_origin_y;
         // Which borderLargestCuSize is not a power of two
-        while ((borderLargestCuSize & (borderLargestCuSize - 1)) > 0) {
-            borderLargestCuSize -= (borderLargestCuSize & ((~0u) << Log2f(borderLargestCuSize)));
-        }
-    }
     largestCodingUnitPtr->picture_control_set_ptr = picture_control_set;
-    largestCodingUnitPtr->size = sb_sz;
-    largestCodingUnitPtr->size_log2 = (uint8_t)Log2f(sb_sz);
+
     largestCodingUnitPtr->origin_x = sb_origin_x;
     largestCodingUnitPtr->origin_y = sb_origin_y;
 
@@ -65,7 +49,7 @@ EbErrorType largest_coding_unit_ctor(
 
     uint32_t cu_i;
 #if MEM_RED4
-    uint32_t  tot_cu_num = sb_sz == 128 ? 1024 : 256;
+    uint32_t  tot_cu_num = sb_size_pix == 128 ? 1024 : 256;
 #else
     uint32_t  tot_cu_num = 1024;
 #endif
@@ -83,7 +67,9 @@ EbErrorType largest_coding_unit_ctor(
         EB_MALLOC(MacroBlockD*, largestCodingUnitPtr->final_cu_arr[cu_i].av1xd, sizeof(MacroBlockD), EB_N_PTR);
     }
 
-    EB_MALLOC(PartitionType*, largestCodingUnitPtr->cu_partition_array, sizeof(PartitionType) * BLOCK_MAX_COUNT, EB_N_PTR);
+    uint32_t  max_block_count = sb_size_pix == 128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64; 
+
+    EB_MALLOC(PartitionType*, largestCodingUnitPtr->cu_partition_array, sizeof(PartitionType) * max_block_count, EB_N_PTR);
 
     coeffInitData.bufferEnableMask = PICTURE_BUFFER_DESC_FULL_MASK;
     coeffInitData.maxWidth = SB_STRIDE_Y;
