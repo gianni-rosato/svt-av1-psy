@@ -28,9 +28,9 @@ option(gtest_build_samples "Build gtest's sample programs." OFF)
 
 option(gtest_disable_pthreads "Disable uses of pthreads in gtest." OFF)
 
-add_compile_definitions(GTEST_HAS_STD_TUPLE_=1)
-add_compile_definitions(GTEST_HAS_TR1_TUPLE=0)
-add_compile_definitions(_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
+add_definitions(-DGTEST_HAS_STD_TUPLE_=1)
+add_definitions(-DGTEST_HAS_TR1_TUPLE=0)
+add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
 
 # Defines pre_project_set_up_hermetic_build() and set_up_hermetic_build().
 include(cmake/hermetic_build.cmake OPTIONAL)

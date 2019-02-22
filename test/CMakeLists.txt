@@ -35,7 +35,7 @@ option(
   "Use shared (DLL) run-time lib even when Google Test is built as static lib."
   OFF)
 
-add_compile_definitions(_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
+add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
 
 enable_testing()
 
