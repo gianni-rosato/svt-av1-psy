@@ -7,7 +7,13 @@
 
 # BUILD_SHARED_LIBS is a standard CMake variable, but we declare it here to
 # make it prominent in the GUI.
+if (UNIX)
 option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." OFF)
+endif()
+
+if (MSVC OR MSYS OR MINGW OR WIN32)
+option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
+endif()
 
 # When other libraries are using a shared version of runtime libraries,
 # Google Test also has to use one.
@@ -24,6 +30,7 @@ option(gtest_disable_pthreads "Disable uses of pthreads in gtest." OFF)
 
 add_compile_definitions(GTEST_HAS_STD_TUPLE_=1)
 add_compile_definitions(GTEST_HAS_TR1_TUPLE=0)
+add_compile_definitions(_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
 
 # Defines pre_project_set_up_hermetic_build() and set_up_hermetic_build().
 include(cmake/hermetic_build.cmake OPTIONAL)
@@ -70,9 +77,18 @@ link_directories(${gtest_BINARY_DIR}/src)
 # Google Test libraries.  We build them using more strict warnings than what
 # are used for other targets, to ensure that gtest can be compiled by a user
 # aggressive about warnings.
-cxx_library(gtest "${cxx_strict}" src/gtest-all.cc)
-cxx_library(gtest_main "${cxx_strict}" src/gtest_main.cc)
-target_link_libraries(gtest_main gtest)
+
+if(UNIX)
+  cxx_library(gtest_all "${cxx_strict}" src/gtest-all.cc src/gtest_main.cc)
+endif()
+
+if (MSVC OR MSYS OR MINGW OR WIN32)
+  cxx_shared_library(gtest_all "${cxx_default}"
+    src/gtest-all.cc src/gtest_main.cc)
+endif()
+
+target_link_libraries(gtest_all)
+
 
 ########################################################################
 #
@@ -253,3 +269,8 @@ if (gtest_build_tests)
   cxx_executable(gtest_xml_output_unittest_ test gtest)
   py_test(gtest_xml_output_unittest)
 endif()
+
+install(TARGETS gtest_all LIBRARY DESTINATION "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}"
+                      ARCHIVE DESTINATION "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}"
+                      RUNTIME DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+                      COMPONENT library)
