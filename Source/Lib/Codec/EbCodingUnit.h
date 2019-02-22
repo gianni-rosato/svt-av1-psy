@@ -352,8 +352,6 @@ extern "C" {
 #if !ADD_DELTA_QP_SUPPORT
         unsigned                        qp                      : 8;
 #endif                                                          
-        unsigned                        size                    : 8;
-        unsigned                        size_log2               : 3;
         unsigned                        picture_left_edge_flag  : 1;
         unsigned                        picture_top_edge_flag   : 1;
         unsigned                        picture_right_edge_flag : 1;
@@ -381,8 +379,6 @@ extern "C" {
     extern EbErrorType largest_coding_unit_ctor(
         LargestCodingUnit_t          **larget_coding_unit_dbl_ptr,
         uint8_t                        sb_sz,
-        uint32_t                       picture_width,
-        uint32_t                       picture_height,
         uint16_t                       sb_origin_x,
         uint16_t                       sb_origin_y,
         uint16_t                       sb_index,

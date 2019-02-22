@@ -1013,10 +1013,11 @@ void build_blk_geom(int32_t use_128x128)
 {
     max_sb = use_128x128 ? 128 : 64;
     max_depth = use_128x128 ? 6 : 5;
+    uint32_t  max_block_count = use_128x128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64; 
 
     //(0)compute total number of blocks using the information provided
     max_num_active_blocks = count_total_num_of_active_blks();
-    if (max_num_active_blocks != BLOCK_MAX_COUNT)
+    if (max_num_active_blocks != max_block_count)
         printf(" \n\n Error %i blocks\n\n ", max_num_active_blocks);
 
     //(1) Construct depth scan blk_geom_dps

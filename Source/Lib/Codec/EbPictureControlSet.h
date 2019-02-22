@@ -13643,7 +13643,7 @@ extern "C" {
         // ME Results
         uint64_t          treeblock_variance;
         uint32_t          leaf_count;
-        EbMdcLeafData_t   leaf_data_array[BLOCK_MAX_COUNT];
+        EbMdcLeafData_t   leaf_data_array[BLOCK_MAX_COUNT_SB_128];
 
     } MdcLcuData_t;
 
@@ -13864,7 +13864,7 @@ extern "C" {
         uint8_t   height;
         uint8_t   is_complete_sb;
         EbBool    raster_scan_cu_validity[CU_MAX_COUNT];
-        EbBool    block_is_inside_md_scan[BLOCK_MAX_COUNT];
+        EbBool    block_is_inside_md_scan[BLOCK_MAX_COUNT_SB_128];
         uint8_t   potential_logo_sb;
         uint8_t   is_edge_sb;
     } SbParams_t;
@@ -13878,7 +13878,7 @@ extern "C" {
         uint8_t    width;
         uint8_t    height;
         uint8_t    is_complete_sb;
-        EbBool     block_is_inside_md_scan[BLOCK_MAX_COUNT];
+        EbBool     block_is_inside_md_scan[BLOCK_MAX_COUNT_SB_128];
     } SbGeom_t;
 
     typedef struct CuStat_s {

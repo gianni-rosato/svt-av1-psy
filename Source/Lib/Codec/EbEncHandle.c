@@ -2055,10 +2055,10 @@ void CopyApiFromApp(
     sequence_control_set_ptr->general_interlaced_source_flag = 0;
 
     // SB Definitions
-#if    DISABLE_128X128_SB
+#if DISABLE_128X128_SB
     sequence_control_set_ptr->static_config.super_block_size = 64;
 #else
-    sequence_control_set_ptr->static_config.super_block_size = 128;
+    sequence_control_set_ptr->static_config.super_block_size = (pComponentParameterStructure->enc_mode <= ENC_M2) ? 128 : 64;
 #endif
     sequence_control_set_ptr->static_config.pred_structure = 2; // Hardcoded(Cleanup)
     sequence_control_set_ptr->static_config.enable_qp_scaling_flag = 1;

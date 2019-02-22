@@ -97,8 +97,8 @@ extern "C" {
         ModeDecisionCandidateBuffer_t **candidate_buffer_ptr_array;
         MdRateEstimationContext_t      *md_rate_estimation_ptr;
         InterPredictionContext_t       *inter_prediction_context;
-        MdCodingUnit_t                  md_local_cu_unit[BLOCK_MAX_COUNT];
-        CodingUnit_t                    md_cu_arr_nsq[BLOCK_MAX_COUNT];
+        MdCodingUnit_t                  md_local_cu_unit[BLOCK_MAX_COUNT_SB_128];
+        CodingUnit_t                    md_cu_arr_nsq[BLOCK_MAX_COUNT_SB_128];
 
         NeighborArrayUnit_t            *intra_luma_mode_neighbor_array;
         NeighborArrayUnit_t            *intra_chroma_mode_neighbor_array;
@@ -161,7 +161,7 @@ extern "C" {
 
         // Entropy Coder
         EntropyCoder_t                 *coeff_est_entropy_coder_ptr;
-        MdEncPassCuData_t               md_ep_pipe_sb[BLOCK_MAX_COUNT];
+        MdEncPassCuData_t               md_ep_pipe_sb[BLOCK_MAX_COUNT_SB_128];
 
         uint8_t                         group_of8x8_blocks_count;
         uint8_t                         group_of16x16_blocks_count;

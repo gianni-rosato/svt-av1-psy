@@ -40,7 +40,7 @@ extern "C" {
 #define MR_MODE                                         0
 #define SHUT_FILTERING                                  0 // CDEF RESTORATION DLF
     ////
-#define MEM_RED4                                        0 //  Reduce mem allocation when DISABLE_128X128_SB is ON
+#define MEM_RED4                                        1 //  Reduce mem allocation when DISABLE_128X128_SB is ON
 
 #define FILT_PROC      1    // New Filtering processes.
 #define CDEF_M        1 // multi-threaded cdef
@@ -164,7 +164,8 @@ extern "C" {
 #if DISABLE_128X128_SB
 #define BLOCK_MAX_COUNT                           1101
 #else
-#define BLOCK_MAX_COUNT                           4421  //SB128_TODO: reduce alloction for 64x64
+#define BLOCK_MAX_COUNT_SB_128                    4421  // TODO: reduce alloction for 64x64
+#define BLOCK_MAX_COUNT_SB_64                     1101  // TODO: reduce alloction for 64x64
 #endif
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
 #define MAX_NFL                                   12
