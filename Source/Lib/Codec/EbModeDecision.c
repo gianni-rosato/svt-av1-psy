@@ -1815,7 +1815,11 @@ void  inject_inter_candidates(
             // Bipred2Nx2N
             //----------------------
 #if ENCODER_MODE_CLEANUP
+#if TUNED_SETTINGS_FOR_M1
+            if (picture_control_set_ptr->enc_mode == ENC_M0 || context_ptr->blk_geom->shape == PART_N)
+#else
             if (picture_control_set_ptr->enc_mode <= ENC_M0)
+#endif
 
 #else
             if (picture_control_set_ptr->enc_mode <= ENC_M1 /*&& sequence_control_set_ptr->static_config.tune != TUNE_VQ*/)
@@ -1838,8 +1842,11 @@ void  inject_inter_candidates(
             // Unipred2Nx2N
             //----------------------
 #if ENCODER_MODE_CLEANUP
+#if TUNED_SETTINGS_FOR_M1
+            if (picture_control_set_ptr->enc_mode == ENC_M0 || context_ptr->blk_geom->shape == PART_N)
+#else
             if (picture_control_set_ptr->enc_mode <= ENC_M0)
-
+#endif
 #else
             if (picture_control_set_ptr->enc_mode <= ENC_M1 /*&& sequence_control_set_ptr->static_config.tune != TUNE_VQ*/)
 #endif
@@ -2233,7 +2240,11 @@ EbErrorType ProductGenerateMdCandidatesCu(
     if (slice_type != I_SLICE) {
 #if ENABLE_INTRA_4x4
 #if ENCODER_MODE_CLEANUP
+#if TUNED_SETTINGS_FOR_M1
+        if ((picture_control_set_ptr->enc_mode <= ENC_M1) ||
+#else
         if ((picture_control_set_ptr->enc_mode <= ENC_M0) ||
+#endif
             (context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4))
 #else
         if (context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4)
