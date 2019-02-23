@@ -15,7 +15,7 @@
  * Includes
  ***************************************/
 #include "EbSimpleAppContext.h"
-#include "EbApi.h"
+#include "EbEncApi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -177,7 +177,7 @@ void ReadInputFrames(
     uint32_t  inputPaddedHeight = config->inputPaddedHeight;
     FILE   *inputFile = config->inputFile;
     uint8_t  *ebInputPtr;
-    EbSvtEncInput* inputPtr = (EbSvtEncInput*)headerPtr->p_buffer;
+    EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)headerPtr->p_buffer;
     inputPtr->yStride  = inputPaddedWidth;
     inputPtr->cbStride = inputPaddedWidth >> 1;
     inputPtr->crStride = inputPaddedWidth >> 1;

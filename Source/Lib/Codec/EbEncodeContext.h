@@ -10,7 +10,7 @@
 
 #include "EbDefinitions.h"
 #include "EbThreads.h"
-#include "EbApi.h"
+#include "EbEncApi.h"
 #include "EbPictureDecisionReorderQueue.h"
 #include "EbPictureDecisionQueue.h"
 #include "EbPictureManagerQueue.h"

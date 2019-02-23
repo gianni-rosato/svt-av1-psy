@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
-#include "EbApi.h"
+#include "EbEncApi.h"
 #ifdef _WIN32
 #define inline __inline
 #elif __GNUC__

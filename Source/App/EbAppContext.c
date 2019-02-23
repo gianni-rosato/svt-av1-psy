@@ -260,7 +260,7 @@ static EbErrorType AllocateFrameBuffer(
     const size_t chroma10bitSize = (config->encoderBitDepth > 8 && tenBitPackedMode == 0) ? chroma8bitSize : 0;
 
     // Determine
-    EbSvtEncInput* inputPtr = (EbSvtEncInput*)p_buffer;
+    EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)p_buffer;
     inputPtr->yStride = config->inputPaddedWidth;
     inputPtr->crStride = config->inputPaddedWidth >> 1;
     inputPtr->cbStride = config->inputPaddedWidth >> 1;
@@ -321,7 +321,7 @@ EbErrorType AllocateInputBuffers(
         // Initialize Header
         callbackData->inputBufferPool->size                       = sizeof(EbBufferHeaderType);
 
-        EB_APP_MALLOC(uint8_t*, callbackData->inputBufferPool->p_buffer, sizeof(EbSvtEncInput), EB_N_PTR, EB_ErrorInsufficientResources);
+        EB_APP_MALLOC(uint8_t*, callbackData->inputBufferPool->p_buffer, sizeof(EbSvtIOFormat), EB_N_PTR, EB_ErrorInsufficientResources);
 
         if (config->bufferedInput == -1) {
 

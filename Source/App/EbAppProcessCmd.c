@@ -765,7 +765,7 @@ void ReadInputFrames(
     uint32_t  inputPaddedHeight = config->inputPaddedHeight;
     FILE   *inputFile = config->inputFile;
     uint8_t  *ebInputPtr;
-    EbSvtEncInput* inputPtr = (EbSvtEncInput*)headerPtr->p_buffer;
+    EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)headerPtr->p_buffer;
 
     uint64_t frameSize = (uint64_t)((inputPaddedWidth*inputPaddedHeight * 3) / 2 + (inputPaddedWidth / 4 * inputPaddedHeight * 3) / 2);
     inputPtr->yStride  = inputPaddedWidth;
@@ -1053,7 +1053,7 @@ void ReadInputFrames(
             const size_t luma2bitSize = luma8bitSize / 4; //4-2bit pixels into 1 byte
             const size_t chroma2bitSize = luma2bitSize >> 2;
 
-            EbSvtEncInput* inputPtr = (EbSvtEncInput*)headerPtr->p_buffer;
+            EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)headerPtr->p_buffer;
             inputPtr->yStride = config->inputPaddedWidth;
             inputPtr->crStride = config->inputPaddedWidth >> 1;
             inputPtr->cbStride = config->inputPaddedWidth >> 1;
@@ -1094,7 +1094,7 @@ void ReadInputFrames(
             const size_t luma10bitSize = (config->encoderBitDepth > 8 && tenBitPackedMode == 0) ? luma8bitSize : 0;
             const size_t chroma10bitSize = (config->encoderBitDepth > 8 && tenBitPackedMode == 0) ? chroma8bitSize : 0;
 
-            EbSvtEncInput* inputPtr = (EbSvtEncInput*)headerPtr->p_buffer;
+            EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)headerPtr->p_buffer;
 
             inputPtr->yStride = config->inputPaddedWidth;
             inputPtr->crStride = config->inputPaddedWidth >> 1;

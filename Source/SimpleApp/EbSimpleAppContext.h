@@ -6,7 +6,7 @@
 #ifndef EbSimpleAppContext_h
 #define EbSimpleAppContext_h
 
-#include "EbApi.h"
+#include "EbEncApi.h"
 #include <stdio.h>
 
 typedef struct EbConfig_s
