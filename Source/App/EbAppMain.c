@@ -65,10 +65,10 @@ void EventHandler(int32_t dummy) {
 void AssignAppThreadGroup(uint8_t targetSocket) {
 #ifdef _MSC_VER
     if (GetActiveProcessorGroupCount() == 2) {
-        GROUP_AFFINITY           groupAffinity;
-        GetThreadGroupAffinity(GetCurrentThread(), &groupAffinity);
-        groupAffinity.Group = targetSocket;
-        SetThreadGroupAffinity(GetCurrentThread(), &groupAffinity, NULL);
+        GROUP_AFFINITY           group_affinity;
+        GetThreadGroupAffinity(GetCurrentThread(), &group_affinity);
+        group_affinity.Group = targetSocket;
+        SetThreadGroupAffinity(GetCurrentThread(), &group_affinity, NULL);
     }
 #else
     (void)targetSocket;

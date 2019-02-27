@@ -18,48 +18,48 @@ extern "C" {
     void build_blk_geom();
     typedef struct BlockGeom
     {
-        uint8_t       depth;             // depth of the block
-        PART        shape;           // P_N..P_V4 . P_S is not used.
-        uint8_t       origin_x;         // orgin x from topleft of sb
-        uint8_t       origin_y;         // orgin x from topleft of sb
-
-        uint8_t       d1i;             // index of the block in d1 dimension 0..24  (0 is parent square, 1 top half of H , ...., 24:last quarter of V4)
-        uint16_t      sqi_mds;         // index of the parent square in md  scan.
-        uint8_t       totns;             // max number of ns blocks within one partition 1..4 (N:1,H:2,V:2,HA:3,HB:3,VA:3,VB:3,H4:4,V4:4)
-        uint8_t       nsi;             // non square index within a partition  0..totns-1
-
-
-        uint8_t       bwidth;          // block width
-        uint8_t       bheight;         // block height
-        uint8_t       bwidth_uv;          // block width for Chroma 4:2:0
-        uint8_t       bheight_uv;         // block height for Chroma 4:2:0
-        uint8_t       bwidth_log2;     // block width log2
-        uint8_t       bheight_log2;    // block height log2
-        BlockSize  bsize;           // bloc size
-        BlockSize  bsize_uv;           // bloc size for Chroma 4:2:0
-        uint16_t    txb_count;       //4-2-1
+        uint8_t    depth;                       // depth of the block
+        PART       shape;                       // P_N..P_V4 . P_S is not used.
+        uint8_t    origin_x;                    // orgin x from topleft of sb
+        uint8_t    origin_y;                    // orgin x from topleft of sb
+                   
+        uint8_t    d1i;                         // index of the block in d1 dimension 0..24  (0 is parent square, 1 top half of H , ...., 24:last quarter of V4)
+        uint16_t   sqi_mds;                     // index of the parent square in md  scan.
+        uint8_t    totns;                       // max number of ns blocks within one partition 1..4 (N:1,H:2,V:2,HA:3,HB:3,VA:3,VB:3,H4:4,V4:4)
+        uint8_t    nsi;                         // non square index within a partition  0..totns-1
+                   
+                   
+        uint8_t    bwidth;                      // block width
+        uint8_t    bheight;                     // block height
+        uint8_t    bwidth_uv;                   // block width for Chroma 4:2:0
+        uint8_t    bheight_uv;                  // block height for Chroma 4:2:0
+        uint8_t    bwidth_log2;                 // block width log2
+        uint8_t    bheight_log2;                // block height log2
+        block_size bsize;                       // bloc size
+        block_size bsize_uv;                    // bloc size for Chroma 4:2:0
+        uint16_t   txb_count;                   //4-2-1
         TxSize     txsize[MAX_TXB_COUNT];
         TxSize     txsize_uv[MAX_TXB_COUNT];
-        uint16_t    tx_org_x[MAX_TXB_COUNT];    //orgin is SB
-        uint16_t    tx_org_y[MAX_TXB_COUNT];    //origin is SB
-        uint16_t    tx_boff_x[MAX_TXB_COUNT];    //block offset , origin is block
-        uint16_t    tx_boff_y[MAX_TXB_COUNT];    //block offset , origin is block
-        uint8_t     tx_width[MAX_TXB_COUNT];//tx_size_wide
-        uint8_t     tx_height[MAX_TXB_COUNT];//tx_size_wide
-        uint8_t     tx_width_uv[MAX_TXB_COUNT];//tx_size_wide
-        uint8_t     tx_height_uv[MAX_TXB_COUNT];//tx_size_wide
-
-
-        uint16_t      blkidx_mds;      // block index in md scan
-        uint16_t      blkidx_dps;      // block index in depth scan
-        int32_t         has_uv;
-        int32_t         sq_size;
-        int32_t         is_last_quadrant;      // only for square bloks, is this the fourth quadrant block?
+        uint16_t   tx_org_x[MAX_TXB_COUNT];     //orgin is SB
+        uint16_t   tx_org_y[MAX_TXB_COUNT];     //origin is SB
+        uint16_t   tx_boff_x[MAX_TXB_COUNT];    //block offset , origin is block
+        uint16_t   tx_boff_y[MAX_TXB_COUNT];    //block offset , origin is block
+        uint8_t    tx_width[MAX_TXB_COUNT];     //tx_size_wide
+        uint8_t    tx_height[MAX_TXB_COUNT];    //tx_size_wide
+        uint8_t    tx_width_uv[MAX_TXB_COUNT];  //tx_size_wide
+        uint8_t    tx_height_uv[MAX_TXB_COUNT]; //tx_size_wide
+                   
+                   
+        uint16_t   blkidx_mds;                  // block index in md scan
+        uint16_t   blkidx_dps;                  // block index in depth scan
+        int32_t    has_uv;
+        int32_t    sq_size;
+        int32_t    is_last_quadrant;            // only for square bloks, is this the fourth quadrant block?
 
 
     } BlockGeom;
 
-    static const BlockSize ss_size_lookup[BlockSizeS_ALL][2][2] = {
+    static const block_size ss_size_lookup[BlockSizeS_ALL][2][2] = {
         //  ss_x == 0    ss_x == 0        ss_x == 1      ss_x == 1
         //  ss_y == 0    ss_y == 1        ss_y == 0      ss_y == 1
         { { BLOCK_4X4, BLOCK_4X4 }, { BLOCK_4X4, BLOCK_4X4 } },
@@ -85,7 +85,7 @@ extern "C" {
         { { BLOCK_16X64, BLOCK_16X32 }, { BLOCK_INVALID, BLOCK_8X32 } },
         { { BLOCK_64X16, BLOCK_INVALID }, { BLOCK_32X16, BLOCK_32X8 } }
     };
-    static INLINE BlockSize get_plane_block_size(BlockSize bsize,
+    static INLINE block_size get_plane_block_size(block_size bsize,
         int32_t subsampling_x,
         int32_t subsampling_y) {
         if (bsize == BLOCK_INVALID) return BLOCK_INVALID;
@@ -107,7 +107,7 @@ extern "C" {
     };
 
 
-    const BlockGeom * Get_blk_geom_mds(uint32_t bidx_mds);
+    const BlockGeom * get_blk_geom_mds(uint32_t bidx_mds);
 
 
 

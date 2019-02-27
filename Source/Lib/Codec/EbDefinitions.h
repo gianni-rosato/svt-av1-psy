@@ -559,7 +559,7 @@ typedef enum ATTRIBUTE_PACKED {
     BlockSizeS = BLOCK_4X16,
     BLOCK_INVALID = 255,
     BLOCK_LARGEST = (BlockSizeS - 1)
-} BlockSize;
+} block_size;
 
 typedef enum ATTRIBUTE_PACKED {
     PARTITION_NONE,
@@ -1257,7 +1257,7 @@ typedef struct PartitionContext {
     PARTITION_CONTEXT left;
 }PartitionContext;
 // Generates 5 bit field in which each bit set to 1 represents
-// a blocksize partition  11111 means we split 128x128, 64x64, 32x32, 16x16
+// a block_size partition  11111 means we split 128x128, 64x64, 32x32, 16x16
 // and 8x8.  10000 means we just split the 128x128 to 64x64
 /* clang-format off */
 static const struct {
@@ -2103,7 +2103,7 @@ semaphores, mutexs, etc.
 typedef void * EbHandle;
 
 /** The EB_CTOR type is used to define the eBrisk object constructors.
-objectPtr is a EbPtr to the object being constructed.
+object_ptr is a EbPtr to the object being constructed.
 object_init_data_ptr is a EbPtr to a data structure used to initialize the object.
 */
 typedef EbErrorType(*EB_CTOR)(
@@ -2111,10 +2111,10 @@ typedef EbErrorType(*EB_CTOR)(
     EbPtr object_init_data_ptr);
 
 /** The EB_DTOR type is used to define the eBrisk object destructors.
-objectPtr is a EbPtr to the object being constructed.
+object_ptr is a EbPtr to the object being constructed.
 */
 typedef void(*EB_DTOR)(
-    EbPtr objectPtr);
+    EbPtr object_ptr);
 
 #define INVALID_MV            0xFFFFFFFF
 #define BLKSIZE 64
@@ -2191,30 +2191,30 @@ extern    EbMemoryMapEntry        *appMemoryMap;            // App Memory table
 extern    uint32_t                  *appMemoryMapIndex;       // App Memory index
 extern    uint64_t                  *totalAppMemory;          // App Memory malloc'd
 
-extern    EbMemoryMapEntry        *memoryMap;               // library Memory table
-extern    uint32_t                  *memoryMapIndex;          // library memory index
-extern    uint64_t                  *totalLibMemory;          // library Memory malloc'd
+extern    EbMemoryMapEntry        *memory_map;               // library Memory table
+extern    uint32_t                  *memory_map_index;          // library memory index
+extern    uint64_t                  *total_lib_memory;          // library Memory malloc'd
 
 extern    uint32_t                   libMallocCount;
-extern    uint32_t                   libThreadCount;
+extern    uint32_t                   lib_thread_count;
 extern    uint32_t                   libSemaphoreCount;
 extern    uint32_t                   libMutexCount;
 
 extern    uint32_t                   appMallocCount;
 
-#define EB_APP_MALLOC(type, pointer, nElements, pointerClass, returnType) \
-pointer = (type)malloc(nElements); \
+#define EB_APP_MALLOC(type, pointer, n_elements, pointer_class, returnType) \
+pointer = (type)malloc(n_elements); \
 if (pointer == (type)EB_NULL){ \
     return returnType; \
     } \
     else { \
-    appMemoryMap[*(appMemoryMapIndex)].ptrType = pointerClass; \
+    appMemoryMap[*(appMemoryMapIndex)].ptrType = pointer_class; \
     appMemoryMap[(*(appMemoryMapIndex))++].ptr = pointer; \
-    if (nElements % 8 == 0) { \
-        *totalAppMemory += (nElements); \
+    if (n_elements % 8 == 0) { \
+        *totalAppMemory += (n_elements); \
             } \
             else { \
-        *totalAppMemory += ((nElements) + (8 - ((nElements) % 8))); \
+        *totalAppMemory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
 if (*(appMemoryMapIndex) >= MAX_APP_NUM_PTR) { \
@@ -2222,22 +2222,22 @@ if (*(appMemoryMapIndex) >= MAX_APP_NUM_PTR) { \
         } \
 appMallocCount++;
 
-#define EB_APP_MALLOC_NR(type, pointer, nElements, pointerClass,returnType) \
+#define EB_APP_MALLOC_NR(type, pointer, n_elements, pointer_class,returnType) \
 (void)returnType; \
-pointer = (type)malloc(nElements); \
+pointer = (type)malloc(n_elements); \
 if (pointer == (type)EB_NULL){ \
     returnType = EB_ErrorInsufficientResources; \
     printf("Malloc has failed due to insuffucient resources"); \
     return; \
     } \
     else { \
-    appMemoryMap[*(appMemoryMapIndex)].ptrType = pointerClass; \
+    appMemoryMap[*(appMemoryMapIndex)].ptrType = pointer_class; \
     appMemoryMap[(*(appMemoryMapIndex))++].ptr = pointer; \
-    if (nElements % 8 == 0) { \
-        *totalAppMemory += (nElements); \
+    if (n_elements % 8 == 0) { \
+        *totalAppMemory += (n_elements); \
             } \
             else { \
-        *totalAppMemory += ((nElements) + (8 - ((nElements) % 8))); \
+        *totalAppMemory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
 if (*(appMemoryMapIndex) >= MAX_APP_NUM_PTR) { \
@@ -2250,135 +2250,135 @@ appMallocCount++;
 #define ALVALUE 32
 
 #ifdef _MSC_VER
-#define EB_ALLIGN_MALLOC(type, pointer, nElements, pointerClass) \
-pointer = (type) _aligned_malloc(nElements,ALVALUE); \
+#define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \
+pointer = (type) _aligned_malloc(n_elements,ALVALUE); \
 if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
     } \
     else { \
-    memoryMap[*(memoryMapIndex)].ptrType = pointerClass; \
-    memoryMap[(*(memoryMapIndex))++].ptr = pointer; \
-    if (nElements % 8 == 0) { \
-        *totalLibMemory += (nElements); \
+    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[(*(memory_map_index))++].ptr = pointer; \
+    if (n_elements % 8 == 0) { \
+        *total_lib_memory += (n_elements); \
     } \
     else { \
-        *totalLibMemory += ((nElements) + (8 - ((nElements) % 8))); \
+        *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
-if (*(memoryMapIndex) >= MAX_NUM_PTR) { \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
     return EB_ErrorInsufficientResources; \
 } \
 libMallocCount++;
 
 #else
-#define EB_ALLIGN_MALLOC(type, pointer, nElements, pointerClass) \
-if (posix_memalign((void**)(&(pointer)), ALVALUE, nElements) != 0) { \
+#define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \
+if (posix_memalign((void**)(&(pointer)), ALVALUE, n_elements) != 0) { \
     return EB_ErrorInsufficientResources; \
         } \
             else { \
     pointer = (type) pointer;  \
-    memoryMap[*(memoryMapIndex)].ptrType = pointerClass; \
-    memoryMap[(*(memoryMapIndex))++].ptr = pointer; \
-    if (nElements % 8 == 0) { \
-        *totalLibMemory += (nElements); \
+    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[(*(memory_map_index))++].ptr = pointer; \
+    if (n_elements % 8 == 0) { \
+        *total_lib_memory += (n_elements); \
             } \
             else { \
-        *totalLibMemory += ((nElements) + (8 - ((nElements) % 8))); \
+        *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
-if (*(memoryMapIndex) >= MAX_NUM_PTR) { \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
     return EB_ErrorInsufficientResources; \
     } \
 libMallocCount++;
 #endif
 
 
-#define EB_MALLOC(type, pointer, nElements, pointerClass) \
-pointer = (type) malloc(nElements); \
+#define EB_MALLOC(type, pointer, n_elements, pointer_class) \
+pointer = (type) malloc(n_elements); \
 if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
     } \
     else { \
-    memoryMap[*(memoryMapIndex)].ptrType = pointerClass; \
-    memoryMap[(*(memoryMapIndex))++].ptr = pointer; \
-    if (nElements % 8 == 0) { \
-        *totalLibMemory += (nElements); \
+    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[(*(memory_map_index))++].ptr = pointer; \
+    if (n_elements % 8 == 0) { \
+        *total_lib_memory += (n_elements); \
     } \
     else { \
-        *totalLibMemory += ((nElements) + (8 - ((nElements) % 8))); \
+        *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
-if (*(memoryMapIndex) >= MAX_NUM_PTR) { \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
     return EB_ErrorInsufficientResources; \
 } \
 libMallocCount++;
 
-#define EB_CALLOC(type, pointer, count, size, pointerClass) \
+#define EB_CALLOC(type, pointer, count, size, pointer_class) \
 pointer = (type) calloc(count, size); \
 if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
 } \
 else { \
-    memoryMap[*(memoryMapIndex)].ptrType = pointerClass; \
-    memoryMap[(*(memoryMapIndex))++].ptr = pointer; \
+    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[(*(memory_map_index))++].ptr = pointer; \
     if (count % 8 == 0) { \
-        *totalLibMemory += (count); \
+        *total_lib_memory += (count); \
     } \
     else { \
-        *totalLibMemory += ((count) + (8 - ((count) % 8))); \
+        *total_lib_memory += ((count) + (8 - ((count) % 8))); \
     } \
 } \
-if (*(memoryMapIndex) >= MAX_NUM_PTR) { \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
     return EB_ErrorInsufficientResources; \
 } \
 libMallocCount++;
 
-#define EB_CREATESEMAPHORE(type, pointer, nElements, pointerClass, initialCount, maxCount) \
-pointer = EbCreateSemaphore(initialCount, maxCount); \
+#define EB_CREATESEMAPHORE(type, pointer, n_elements, pointer_class, initial_count, max_count) \
+pointer = eb_create_semaphore(initial_count, max_count); \
 if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
 } \
 else { \
-    memoryMap[*(memoryMapIndex)].ptrType = pointerClass; \
-    memoryMap[(*(memoryMapIndex))++].ptr = pointer; \
-    if (nElements % 8 == 0) { \
-        *totalLibMemory += (nElements); \
+    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[(*(memory_map_index))++].ptr = pointer; \
+    if (n_elements % 8 == 0) { \
+        *total_lib_memory += (n_elements); \
     } \
     else { \
-        *totalLibMemory += ((nElements) + (8 - ((nElements) % 8))); \
+        *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
-if (*(memoryMapIndex) >= MAX_NUM_PTR) { \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
     return EB_ErrorInsufficientResources; \
 } \
 libSemaphoreCount++;
 
-#define EB_CREATEMUTEX(type, pointer, nElements, pointerClass) \
-pointer = EbCreateMutex(); \
+#define EB_CREATEMUTEX(type, pointer, n_elements, pointer_class) \
+pointer = eb_create_mutex(); \
 if (pointer == (type)EB_NULL){ \
     return EB_ErrorInsufficientResources; \
 } \
 else { \
-    memoryMap[*(memoryMapIndex)].ptrType = pointerClass; \
-    memoryMap[(*(memoryMapIndex))++].ptr = pointer; \
-    if (nElements % 8 == 0) { \
-        *totalLibMemory += (nElements); \
+    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[(*(memory_map_index))++].ptr = pointer; \
+    if (n_elements % 8 == 0) { \
+        *total_lib_memory += (n_elements); \
     } \
     else { \
-        *totalLibMemory += ((nElements) + (8 - ((nElements) % 8))); \
+        *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
-if (*(memoryMapIndex) >= MAX_NUM_PTR) { \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
     return EB_ErrorInsufficientResources; \
 } \
 libMutexCount++;
 
 #define EB_MEMORY() \
 printf("Total Number of Mallocs in Library: %d\n", libMallocCount); \
-printf("Total Number of Threads in Library: %d\n", libThreadCount); \
+printf("Total Number of Threads in Library: %d\n", lib_thread_count); \
 printf("Total Number of Semaphore in Library: %d\n", libSemaphoreCount); \
 printf("Total Number of Mutex in Library: %d\n", libMutexCount); \
-printf("Total Library Memory: %.2lf KB\n\n",*totalLibMemory/(double)1024);
+printf("Total Library Memory: %.2lf KB\n\n",*total_lib_memory/(double)1024);
 
 
 #define EB_APP_MEMORY() \
@@ -2486,7 +2486,7 @@ extern errno_t
 extern rsize_t
     strnlen_ss(const char *s, rsize_t smax);
 
-extern void DRDmemcpy(void  *dstPtr, void *srcPtr, uint32_t  cnt);
+extern void DRDmemcpy(void  *dst_ptr, void *src_ptr, uint32_t  cnt);
 #define EB_MEMCPY(dst, src, size) \
 DRDmemcpy(dst, src, size)
 

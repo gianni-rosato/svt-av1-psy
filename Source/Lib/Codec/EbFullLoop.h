@@ -15,13 +15,13 @@ extern "C" {
         LargestCodingUnit_t            *sb_ptr,
         ModeDecisionCandidateBuffer_t  *candidateBuffer,
         ModeDecisionContext_t          *context_ptr,
-        EbPictureBufferDesc_t          *inputPicturePtr,
+        EbPictureBufferDesc_t          *input_picture_ptr,
         PictureControlSet_t            *picture_control_set_ptr,
         uint32_t                          component_mask,
         uint32_t                          cbQp,
         uint32_t                          crQp,
-        uint32_t                          *cbCountNonZeroCoeffs,
-        uint32_t                          *crCountNonZeroCoeffs);
+        uint32_t                          *cb_count_non_zero_coeffs,
+        uint32_t                          *cr_count_non_zero_coeffs);
 
     void CuFullDistortionFastTuMode_R(
         LargestCodingUnit_t            *sb_ptr,
@@ -33,7 +33,7 @@ extern "C" {
         uint64_t                          crFullDistortion[DIST_CALC_TOTAL],
         uint32_t                          count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU],
 
-        COMPONENT_TYPE                  componentType,
+        COMPONENT_TYPE                  component_type,
 
         uint64_t                         *cb_coeff_bits,
         uint64_t                         *cr_coeff_bits,

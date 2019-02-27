@@ -491,10 +491,10 @@ extern EbErrorType sb_params_init(
 
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count; md_scan_block_index++) {
 
-            const BlockGeom * blk_geom = Get_blk_geom_mds(md_scan_block_index);
+            const BlockGeom * blk_geom = get_blk_geom_mds(md_scan_block_index);
 
             if (blk_geom->shape != PART_N)
-                blk_geom = Get_blk_geom_mds(blk_geom->sqi_mds);
+                blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
 
             sequence_control_set_ptr->sb_params_array[sb_index].block_is_inside_md_scan[md_scan_block_index] =
                 ((sequence_control_set_ptr->sb_params_array[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->luma_width) ||
@@ -547,10 +547,10 @@ EbErrorType sb_geom_init(SequenceControlSet_t * sequence_control_set_ptr)
 
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count ; md_scan_block_index++) {
 
-            const BlockGeom * blk_geom = Get_blk_geom_mds(md_scan_block_index);
+            const BlockGeom * blk_geom = get_blk_geom_mds(md_scan_block_index);
 
             if (blk_geom->shape != PART_N)
-                blk_geom = Get_blk_geom_mds(blk_geom->sqi_mds);
+                blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
 
             sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
                 ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->luma_width) ||

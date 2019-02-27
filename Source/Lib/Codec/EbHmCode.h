@@ -15,7 +15,7 @@ extern "C" {
 
     uint64_t Compute4x4Satd_U8(
         uint8_t  *src,
-        uint64_t *dcValue,
+        uint64_t *dc_value,
         uint32_t  src_stride);
 #ifdef __cplusplus
 }

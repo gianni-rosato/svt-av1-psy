@@ -15,76 +15,73 @@ extern "C" {
 
 
     /*******************************************
-    * noiseExtractLumaWeak
+    * noise_extract_luma_weak
     *  weak filter Luma and store noise.
     *******************************************/
-    void noiseExtractLumaWeak_AVX2_INTRIN(
-        EbPictureBufferDesc_t       *inputPicturePtr,
-        EbPictureBufferDesc_t       *denoisedPicturePtr,
-        EbPictureBufferDesc_t       *noisePicturePtr,
-        uint32_t                       sb_origin_y,
-        uint32_t                       sb_origin_x
-    );
+    void noise_extract_luma_weak_avx2_intrin(
+        EbPictureBufferDesc_t *input_picture_ptr,
+        EbPictureBufferDesc_t *denoised_picture_ptr,
+        EbPictureBufferDesc_t *noise_picture_ptr,
+        uint32_t               sb_origin_y,
+        uint32_t               sb_origin_x);
 
-    void noiseExtractLumaWeakLcu_AVX2_INTRIN(
-        EbPictureBufferDesc_t       *inputPicturePtr,
-        EbPictureBufferDesc_t       *denoisedPicturePtr,
-        EbPictureBufferDesc_t       *noisePicturePtr,
-        uint32_t                       sb_origin_y,
-        uint32_t                       sb_origin_x
-    );
+    void noise_extract_luma_weak_lcu_avx2_intrin(
+        EbPictureBufferDesc_t *input_picture_ptr,
+        EbPictureBufferDesc_t *denoised_picture_ptr,
+        EbPictureBufferDesc_t *noise_picture_ptr,
+        uint32_t               sb_origin_y,
+        uint32_t               sb_origin_x);
 
-    void noiseExtractChromaStrong_AVX2_INTRIN(
-        EbPictureBufferDesc_t       *inputPicturePtr,
-        EbPictureBufferDesc_t       *denoisedPicturePtr,
-        uint32_t                       sb_origin_y,
-        uint32_t                         sb_origin_x);
+    void noise_extract_chroma_strong_avx2_intrin(
+        EbPictureBufferDesc_t *input_picture_ptr,
+        EbPictureBufferDesc_t *denoised_picture_ptr,
+        uint32_t               sb_origin_y,
+        uint32_t               sb_origin_x);
 
-    void noiseExtractChromaWeak_AVX2_INTRIN(
-        EbPictureBufferDesc_t       *inputPicturePtr,
-        EbPictureBufferDesc_t       *denoisedPicturePtr,
-        uint32_t                       sb_origin_y,
-        uint32_t                         sb_origin_x);
+    void noise_extract_chroma_weak_avx2_intrin(
+        EbPictureBufferDesc_t *input_picture_ptr,
+        EbPictureBufferDesc_t *denoised_picture_ptr,
+        uint32_t               sb_origin_y,
+        uint32_t               sb_origin_x);
 
-    void noiseExtractLumaStrong_AVX2_INTRIN(
-        EbPictureBufferDesc_t       *inputPicturePtr,
-        EbPictureBufferDesc_t       *denoisedPicturePtr,
-        uint32_t                       sb_origin_y,
-        uint32_t                       sb_origin_x);
+    void noise_extract_luma_strong_avx2_intrin(
+        EbPictureBufferDesc_t *input_picture_ptr,
+        EbPictureBufferDesc_t *denoised_picture_ptr,
+        uint32_t               sb_origin_y,
+        uint32_t               sb_origin_x);
 
-    void ChromaStrong_AVX2_INTRIN(
-        __m256i                        top,
-        __m256i                        curr,
-        __m256i                        bottom,
-        __m256i                        currPrev,
-        __m256i                        currNext,
-        __m256i                        topPrev,
-        __m256i                        topNext,
-        __m256i                        bottomPrev,
-        __m256i                        bottomNext,
-        uint8_t                       *ptrDenoised);
+    void chroma_strong_avx2_intrin(
+        __m256i   top,
+        __m256i   curr,
+        __m256i   bottom,
+        __m256i   curr_prev,
+        __m256i   curr_next,
+        __m256i   top_prev,
+        __m256i   top_next,
+        __m256i   bottom_prev,
+        __m256i   bottom_next,
+        uint8_t  *ptr_denoised);
 
-    void lumaWeakFilter_AVX2_INTRIN(
-        __m256i                        top,
-        __m256i                        curr,
-        __m256i                        bottom,
-        __m256i                        currPrev,
-        __m256i                        currNext,
-        uint8_t                       *ptrDenoised,
-        uint8_t                        *ptrNoise);
+    void luma_weak_filter_avx2_intrin(
+        __m256i  top,
+        __m256i  curr,
+        __m256i  bottom,
+        __m256i  curr_prev,
+        __m256i  curr_next,
+        uint8_t *ptr_denoised,
+        uint8_t *ptr_noise);
 
-
-    void chromaWeakLumaStrongFilter_AVX2_INTRIN(
-        __m256i                        top,
-        __m256i                        curr,
-        __m256i                        bottom,
-        __m256i                        currPrev,
-        __m256i                        currNext,
-        __m256i                        topPrev,
-        __m256i                        topNext,
-        __m256i                        bottomPrev,
-        __m256i                        bottomNext,
-        uint8_t                       *ptrDenoised);
+    void chroma_weak_luma_strong_filter_avx2_intrin(
+        __m256i  top,
+        __m256i  curr,
+        __m256i  bottom,
+        __m256i  curr_prev,
+        __m256i  curr_next,
+        __m256i  top_prev,
+        __m256i  top_next,
+        __m256i  bottom_prev,
+        __m256i  bottom_next,
+        uint8_t *ptr_denoised);
 
 #ifdef __cplusplus
 }

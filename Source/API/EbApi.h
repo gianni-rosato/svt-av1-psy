@@ -513,7 +513,7 @@ typedef struct EbSvtAv1EncConfiguration
      * @ **p_handle      Handle to be called in the future for manipulating the
      *                  component.
      * @ *p_app_data      Callback data.
-     * @ *config_ptr     Pointer passed back to the client during callbacks, it will be
+     * @ *config_ptr     pointer passed back to the client during callbacks, it will be
      *                  loaded with default params from the library. */
     EB_API EbErrorType eb_init_handle(
         EbComponentType** p_handle,

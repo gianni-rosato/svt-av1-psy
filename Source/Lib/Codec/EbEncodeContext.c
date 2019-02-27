@@ -48,7 +48,7 @@ EbErrorType encode_context_ctor(
     EB_MALLOC(PictureDecisionReorderEntry_t**, encode_context_ptr->picture_decision_reorder_queue, sizeof(PictureDecisionReorderEntry_t*) * PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = PictureDecisionReorderEntryCtor(
+        return_error = picture_decision_reorder_entry_ctor(
             &(encode_context_ptr->picture_decision_reorder_queue[pictureIndex]),
             pictureIndex);
         if (return_error == EB_ErrorInsufficientResources) {
@@ -61,7 +61,7 @@ EbErrorType encode_context_ctor(
     EB_MALLOC(PictureManagerReorderEntry_t**, encode_context_ptr->picture_manager_reorder_queue, sizeof(PictureManagerReorderEntry_t*) * PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = PictureManagerReorderEntryCtor(
+        return_error = picture_manager_reorder_entry_ctor(
             &(encode_context_ptr->picture_manager_reorder_queue[pictureIndex]),
             pictureIndex);
         if (return_error == EB_ErrorInsufficientResources) {
@@ -92,7 +92,7 @@ EbErrorType encode_context_ctor(
     EB_MALLOC(InputQueueEntry_t**, encode_context_ptr->input_picture_queue, sizeof(InputQueueEntry_t*) * INPUT_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < INPUT_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = InputQueueEntryCtor(
+        return_error = input_queue_entry_ctor(
             &(encode_context_ptr->input_picture_queue[pictureIndex]));
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
@@ -105,7 +105,7 @@ EbErrorType encode_context_ctor(
     EB_MALLOC(ReferenceQueueEntry_t**, encode_context_ptr->reference_picture_queue, sizeof(ReferenceQueueEntry_t*) * REFERENCE_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < REFERENCE_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = ReferenceQueueEntryCtor(
+        return_error = reference_queue_entry_ctor(
             &(encode_context_ptr->reference_picture_queue[pictureIndex]));
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
@@ -118,7 +118,7 @@ EbErrorType encode_context_ctor(
     EB_MALLOC(PaReferenceQueueEntry_t**, encode_context_ptr->picture_decision_pa_reference_queue, sizeof(PaReferenceQueueEntry_t*) * PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = PaReferenceQueueEntryCtor(
+        return_error = pa_reference_queue_entry_ctor(
             &(encode_context_ptr->picture_decision_pa_reference_queue[pictureIndex]));
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
@@ -159,7 +159,7 @@ EbErrorType encode_context_ctor(
     EB_MALLOC(PacketizationReorderEntry_t**, encode_context_ptr->packetization_reorder_queue, sizeof(PacketizationReorderEntry_t*) * PACKETIZATION_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < PACKETIZATION_REORDER_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = PacketizationReorderEntryCtor(
+        return_error = packetization_reorder_entry_ctor(
             &(encode_context_ptr->packetization_reorder_queue[pictureIndex]),
             pictureIndex);
         if (return_error == EB_ErrorInsufficientResources) {
@@ -201,7 +201,7 @@ EbErrorType encode_context_ctor(
     // Rate Control Bit Tables
     EB_MALLOC(RateControlTables_t*, encode_context_ptr->rate_control_tables_array, sizeof(RateControlTables_t) * TOTAL_NUMBER_OF_INITIAL_RC_TABLES_ENTRY, EB_N_PTR);
 
-    return_error = RateControlTablesCtor(encode_context_ptr->rate_control_tables_array);
+    return_error = rate_control_tables_ctor(encode_context_ptr->rate_control_tables_array);
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
@@ -221,14 +221,14 @@ EbErrorType encode_context_ctor(
     encode_context_ptr->max_coded_poc = 0;
     encode_context_ptr->max_coded_poc_selected_ref_qp = 32;
 
-    encode_context_ptr->shared_reference_mutex = EbCreateMutex();
+    encode_context_ptr->shared_reference_mutex = eb_create_mutex();
     if (encode_context_ptr->shared_reference_mutex == (EbHandle)EB_NULL) {
         return EB_ErrorInsufficientResources;
     }
     else {
-        memoryMap[*(memoryMapIndex)].ptrType = EB_MUTEX;
-        memoryMap[(*(memoryMapIndex))++].ptr = encode_context_ptr->shared_reference_mutex;
-        *totalLibMemory += (sizeof(EbHandle));
+        memory_map[*(memory_map_index)].ptrType = EB_MUTEX;
+        memory_map[(*(memory_map_index))++].ptr = encode_context_ptr->shared_reference_mutex;
+        *total_lib_memory += (sizeof(EbHandle));
     }
 
 

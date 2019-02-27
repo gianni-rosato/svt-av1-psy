@@ -50,7 +50,7 @@ extern "C" {
         uint32_t                 dstLumaIndex,
         uint32_t                 dstChromaIndex,
         uint32_t                 component_mask,
-        EbByte                tempBuf,
+        EbByte                temp_buf,
         EbBool                subSamplePredFlag,
         EbAsm                 asm_type);
 
@@ -83,7 +83,7 @@ extern "C" {
         uint32_t                 dstLumaIndex,
         uint32_t                 dstChromaIndex,
         uint32_t                 component_mask,
-        EbByte                tempBuf,
+        EbByte                temp_buf,
         EbBool                subSamplePredFlag,
         EbAsm                 asm_type);
 
@@ -97,8 +97,8 @@ extern "C" {
         uint32_t                 dstLumaIndex,
         uint32_t                 dstChromaIndex,          //input parameter, please refer to the detailed explanation above.
         uint32_t                 component_mask,
-        EbByte                tempBuf,
-        EbBool                subPred,
+        EbByte                temp_buf,
+        EbBool                sub_pred,
         EbAsm                 asm_type);
     void estimate_bi_pred_interpolation_avc_chroma_ref10_bit(
         EbPictureBufferDesc_t *refFramePicList0,
@@ -116,7 +116,7 @@ extern "C" {
         EbByte                refList0TempDst,
         EbByte                refList1TempDst,
         EbByte                firstPassIFTempDst,
-        EbBool                subPred,
+        EbBool                sub_pred,
         EbAsm                 asm_type);
 
     void estimate_uni_pred_interpolation_avc_lumaRef10Bit(
@@ -129,8 +129,8 @@ extern "C" {
         uint32_t                 dstLumaIndex,
         uint32_t                 dstChromaIndex,          //input parameter, please refer to the detailed explanation above.
         uint32_t                 component_mask,
-        EbByte                tempBuf,
-        EbBool                subPred,
+        EbByte                temp_buf,
+        EbBool                sub_pred,
         EbBool                subPredChroma,
         EbAsm                 asm_type);
 
@@ -150,7 +150,7 @@ extern "C" {
         EbByte                refList0TempDst,
         EbByte                refList1TempDst,
         EbByte                firstPassIFTempDst,
-        EbBool                subPred,
+        EbBool                sub_pred,
         EbBool                subPredChroma,
         EbAsm                 asm_type);
 
@@ -164,7 +164,7 @@ extern "C" {
         uint32_t                 dstLumaIndex,
         uint32_t                 dstChromaIndex,          //input parameter, please refer to the detailed explanation above.
         uint32_t                 component_mask,
-        EbByte                tempBuf,
+        EbByte                temp_buf,
         EbBool                subSamplePredFlag,
         EbBool                subSamplePredFlagChroma,
         EbAsm                 asm_type);
@@ -196,9 +196,9 @@ extern "C" {
         uint32_t                dst_stride,
         uint32_t                pu_width,
         uint32_t                pu_height,
-        EbByte               tempBuf,
+        EbByte               temp_buf,
         EbBool               skip,
-        uint32_t                fracPos);
+        uint32_t                frac_pos);
 
     typedef void(*AvcStyleChromaInterpolationFilterNew)(
         EbByte               ref_pic,
@@ -207,20 +207,20 @@ extern "C" {
         uint32_t                dst_stride,
         uint32_t                pu_width,
         uint32_t                pu_height,
-        EbByte               tempBuf,
+        EbByte               temp_buf,
         EbBool               skip,
         uint32_t                frac_pos_x,
         uint32_t                frac_pos_y);
 
     typedef void(*PictureAverage)(
         EbByte                  src0,
-        uint32_t                   src0Stride,
+        uint32_t                   src0_stride,
         EbByte                  src1,
-        uint32_t                   src1Stride,
+        uint32_t                   src1_stride,
         EbByte                  dst,
         uint32_t                   dst_stride,
-        uint32_t                   areaWidth,
-        uint32_t                   areaHeight);
+        uint32_t                   area_width,
+        uint32_t                   area_height);
 
 
     /***************************************
@@ -229,62 +229,62 @@ extern "C" {
     static const AvcStyleInterpolationFilterNew FUNC_TABLE avc_style_uni_pred_luma_if_function_ptr_array[ASM_TYPE_TOTAL][16] = {
         // NON_AVX2
         {
-            AvcStyleCopy_SSE2,                                    //A
-            AvcStyleLumaInterpolationFilterHorizontal_SSSE3_INTRIN,       //a
-            AvcStyleLumaInterpolationFilterHorizontal_SSSE3_INTRIN,       //b
-            AvcStyleLumaInterpolationFilterHorizontal_SSSE3_INTRIN,       //c
-            AvcStyleLumaInterpolationFilterVertical_SSSE3_INTRIN,         //d
-            AvcStyleLumaInterpolationFilterPose_SSSE3,             //e
-            AvcStyleLumaInterpolationFilterPosf_SSSE3,             //f
-            AvcStyleLumaInterpolationFilterPosg_SSSE3,             //g
-            AvcStyleLumaInterpolationFilterVertical_SSSE3_INTRIN,         //h
-            AvcStyleLumaInterpolationFilterPosi_SSSE3,             //i
-            AvcStyleLumaInterpolationFilterPosj_SSSE3,             //j
-            AvcStyleLumaInterpolationFilterPosk_SSSE3,             //k
-            AvcStyleLumaInterpolationFilterVertical_SSSE3_INTRIN,         //n
-            AvcStyleLumaInterpolationFilterPosp_SSSE3,             //p
-            AvcStyleLumaInterpolationFilterPosq_SSSE3,             //q
-            AvcStyleLumaInterpolationFilterPosr_SSSE3,             //r
+            avc_style_copy_sse2,                                    //A
+            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //a
+            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //b
+            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //c
+            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //d
+            avc_style_luma_interpolation_filter_pose_ssse3,             //e
+            avc_style_luma_interpolation_filter_posf_ssse3,             //f
+            avc_style_luma_interpolation_filter_posg_ssse3,             //g
+            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //h
+            avc_style_luma_interpolation_filter_posi_ssse3,             //i
+            avc_style_luma_interpolation_filter_posj_ssse3,             //j
+            avc_style_luma_interpolation_filter_posk_ssse3,             //k
+            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //n
+            avc_style_luma_interpolation_filter_posp_ssse3,             //p
+            avc_style_luma_interpolation_filter_posq_ssse3,             //q
+            avc_style_luma_interpolation_filter_posr_ssse3,             //r
         },
         // AVX2
         {
-            AvcStyleCopy_SSE2,                                    //A
-            AvcStyleLumaInterpolationFilterHorizontal_SSSE3_INTRIN,       //a
-            AvcStyleLumaInterpolationFilterHorizontal_SSSE3_INTRIN,       //b
-            AvcStyleLumaInterpolationFilterHorizontal_SSSE3_INTRIN,       //c
-            AvcStyleLumaInterpolationFilterVertical_SSSE3_INTRIN,         //d
-            AvcStyleLumaInterpolationFilterPose_SSSE3,             //e
-            AvcStyleLumaInterpolationFilterPosf_SSSE3,             //f
-            AvcStyleLumaInterpolationFilterPosg_SSSE3,             //g
-            AvcStyleLumaInterpolationFilterVertical_SSSE3_INTRIN,         //h
-            AvcStyleLumaInterpolationFilterPosi_SSSE3,             //i
-            AvcStyleLumaInterpolationFilterPosj_SSSE3,             //j
-            AvcStyleLumaInterpolationFilterPosk_SSSE3,             //k
-            AvcStyleLumaInterpolationFilterVertical_SSSE3_INTRIN,         //n
-            AvcStyleLumaInterpolationFilterPosp_SSSE3,             //p
-            AvcStyleLumaInterpolationFilterPosq_SSSE3,             //q
-            AvcStyleLumaInterpolationFilterPosr_SSSE3,             //r
+            avc_style_copy_sse2,                                    //A
+            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //a
+            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //b
+            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //c
+            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //d
+            avc_style_luma_interpolation_filter_pose_ssse3,             //e
+            avc_style_luma_interpolation_filter_posf_ssse3,             //f
+            avc_style_luma_interpolation_filter_posg_ssse3,             //g
+            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //h
+            avc_style_luma_interpolation_filter_posi_ssse3,             //i
+            avc_style_luma_interpolation_filter_posj_ssse3,             //j
+            avc_style_luma_interpolation_filter_posk_ssse3,             //k
+            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //n
+            avc_style_luma_interpolation_filter_posp_ssse3,             //p
+            avc_style_luma_interpolation_filter_posq_ssse3,             //q
+            avc_style_luma_interpolation_filter_posr_ssse3,             //r
         },
     };
 
     static const PictureAverage FUNC_TABLE picture_average_array[ASM_TYPE_TOTAL] = {
         // NON_AVX2
-        PictureAverageKernel_SSE2_INTRIN,
+        picture_average_kernel_sse2_intrin,
         // AVX2
-        PictureAverageKernel_SSE2_INTRIN,
+        picture_average_kernel_sse2_intrin,
     };
 
     typedef void(*PictureAverage1Line)(
         EbByte                  src0,
         EbByte                  src1,
         EbByte                  dst,
-        uint32_t                   areaWidth);
+        uint32_t                   area_width);
 
     static const PictureAverage1Line FUNC_TABLE picture_average1_line_array[ASM_TYPE_TOTAL] = {
         // NON_AVX2
-        PictureAverageKernel1Line_SSE2_INTRIN,
+        picture_average_kernel1_line_sse2_intrin,
         // AVX2
-        PictureAverageKernel1Line_SSE2_INTRIN,
+        picture_average_kernel1_line_sse2_intrin,
     };
 
 #ifdef __cplusplus

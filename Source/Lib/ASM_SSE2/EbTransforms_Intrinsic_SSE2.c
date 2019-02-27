@@ -22,7 +22,7 @@
 
 #define MACRO_TRANS_2MAC(XMM_1, XMM_2, XMM_3, XMM_4, XMM_OFFSET, OFFSET1, OFFSET2, SHIFT, OFFSET3)\
     MACRO_TRANS_2MAC_NO_SAVE(XMM_1, XMM_2, XMM_3, XMM_4, XMM_OFFSET, OFFSET1, OFFSET2, SHIFT)\
-    _mm_storel_epi64((__m128i *)(transformCoefficients+OFFSET3), XMM_3);
+    _mm_storel_epi64((__m128i *)(transform_coefficients+OFFSET3), XMM_3);
 
 #define TRANS8x8_OFFSET_83_36    0
 #define TRANS8x8_OFFSET_36_N83  (8 + TRANS8x8_OFFSET_83_36)
@@ -105,7 +105,7 @@
 __attribute__((visibility("hidden")))
 #endif
 #endif
-EB_ALIGN(16) const int16_t DstTransformAsmConst_SSE2[] = {
+EB_ALIGN(16) const int16_t dst_transform_asm_const_sse2[] = {
     1, 0, 1, 0, 1, 0, 1, 0,
     29, 55, 29, 55, 29, 55, 29, 55,
     74, 84, 74, 84, 74, 84, 74, 84,
@@ -126,7 +126,7 @@ EB_ALIGN(16) const int16_t DstTransformAsmConst_SSE2[] = {
 __attribute__((visibility("hidden")))
 #endif
 #endif
-EB_ALIGN(16) const int16_t InvTransformAsmConst_SSE2[] = {
+EB_ALIGN(16) const int16_t inv_transform_asm_const_sse2[] = {
     2, 0, 2, 0, 2, 0, 2, 0,
     4, 0, 4, 0, 4, 0, 4, 0,
     8, 0, 8, 0, 8, 0, 8, 0,
@@ -323,7 +323,7 @@ EB_ALIGN(16) const int16_t InvTransformAsmConst_SSE2[] = {
 __attribute__((visibility("hidden")))
 #endif
 #endif
-EB_ALIGN(16) const int16_t InvDstTransformAsmConst_SSE2[] = {
+EB_ALIGN(16) const int16_t inv_dst_transform_asm_const_sse2[] = {
     64, 0, 64, 0, 64, 0, 64, 0,
     29, 84, 29, 84, 29, 84, 29, 84,
     74, 55, 74, 55, 74, 55, 74, 55,
@@ -1348,7 +1348,7 @@ static void InvTransform32_SSE2(
     }
 }
 
-void EstimateInvTransform32x32_SSE2(
+void estimate_inv_transform32x32_sse2(
     int16_t *src,
     const uint32_t  src_stride,
     int16_t *dst,
@@ -1365,7 +1365,7 @@ void EstimateInvTransform32x32_SSE2(
 
 
 // forward 16x16 transform
-void Transform16x16_SSE2(
+void transform16x16_sse2(
     int16_t *src,
     const uint32_t src_stride,
     int16_t *dst,
@@ -1381,7 +1381,7 @@ void Transform16x16_SSE2(
 
 
 // inverse 16x16 transform
-void EstimateInvTransform16x16_SSE2(
+void estimate_inv_transform16x16_sse2(
     int16_t  *src,
     uint32_t   src_stride,
     int16_t  *dst,
@@ -2073,7 +2073,7 @@ static void PfreqN42DTransform32_SSE2(
     }
 }
 
-void Transform32x32_SSE2(
+void transform32x32_sse2(
     int16_t *src,
     const uint32_t src_stride,
     int16_t *dst,
@@ -2088,7 +2088,7 @@ void Transform32x32_SSE2(
 
     return;
 }
-void PfreqTransform32x32_SSE2(
+void pfreq_transform32x32_sse2(
     int16_t *src,
     const uint32_t src_stride,
     int16_t *dst,
@@ -2104,7 +2104,7 @@ void PfreqTransform32x32_SSE2(
     return;
 }
 
-void PfreqN4Transform32x32_SSE2(
+void pfreq_n4_transform32x32_sse2(
     int16_t *src,
     const uint32_t src_stride,
     int16_t *dst,
@@ -2290,7 +2290,7 @@ static void PfreqTranspose16_SSE2(
         }
     }
 }
-void PfreqTransform16x16_SSE2(
+void pfreq_transform16x16_sse2(
     int16_t *src,
     const uint32_t src_stride,
     int16_t *dst,
@@ -2464,7 +2464,7 @@ static void PfreqN4SecondTranspose16_SSE2(
         }
     }
 }
-void PfreqN4Transform16x16_SSE2(
+void pfreq_n4_transform16x16_sse2(
     int16_t *src,
     const uint32_t src_stride,
     int16_t *dst,
@@ -2481,13 +2481,13 @@ void PfreqN4Transform16x16_SSE2(
 }
 
 
-void Transform4x4_SSE2_INTRIN(
+void transform4x4_sse2_intrin(
     int16_t                  *residual,
     const uint32_t             src_stride,
-    int16_t                  *transformCoefficients,
+    int16_t                  *transform_coefficients,
     const uint32_t             dst_stride,
     int16_t                  *transform_inner_array_ptr,
-    uint32_t                   bitIncrement)
+    uint32_t                   bit_increment)
 {
 #define OFFSET_128 0
 #define OFFSET_64_64 8
@@ -2512,7 +2512,7 @@ void Transform4x4_SSE2_INTRIN(
     EB_ALIGN(16) const int16_t * TransformAsmConst = transformIntrinConst_SSE2;
     __m128i xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm_offset, xmm_shift;
 
-    xmm_shift = _mm_cvtsi32_si128(5 - bitIncrement);
+    xmm_shift = _mm_cvtsi32_si128(5 - bit_increment);
     xmm0 = _mm_loadl_epi64((__m128i*)(residual));
     xmm1 = _mm_loadl_epi64((__m128i*)(residual + src_stride));
     xmm2 = _mm_loadl_epi64((__m128i *)(residual + 2 * src_stride));
@@ -2531,8 +2531,8 @@ void Transform4x4_SSE2_INTRIN(
     xmm2 = _mm_sll_epi16(_mm_add_epi16(xmm2, xmm0), xmm_shift);
     xmm4 = _mm_sll_epi16(_mm_sub_epi16(xmm4, xmm0), xmm_shift);
 
-    xmm_offset = _mm_slli_epi16(_mm_set1_epi32(1), bitIncrement);
-    xmm_shift = _mm_cvtsi32_si128(bitIncrement + 1);
+    xmm_offset = _mm_slli_epi16(_mm_set1_epi32(1), bit_increment);
+    xmm_shift = _mm_cvtsi32_si128(bit_increment + 1);
 
     xmm1 = _mm_unpacklo_epi16(xmm3, _mm_srli_si128(xmm3, 8));
 
@@ -2558,7 +2558,7 @@ void Transform4x4_SSE2_INTRIN(
         MACRO_TRANS_2MAC(xmm2, xmm3, xmm6, xmm0, xmm_offset, OFFSET_64_N64, OFFSET_N64_64, 8, 2 * dst_stride)
         MACRO_TRANS_2MAC(xmm2, xmm3, xmm1, xmm4, xmm_offset, OFFSET_36_N83, OFFSET_83_N36, 8, 3 * dst_stride)
 
-        (void)transformCoefficients;
+        (void)transform_coefficients;
     (void)transform_inner_array_ptr;
 
 #undef OFFSET_128
@@ -2571,13 +2571,13 @@ void Transform4x4_SSE2_INTRIN(
 #undef OFFSET_83_N36
 }
 
-void DstTransform4x4_SSE2_INTRIN(
+void dst_transform4x4_sse2_intrin(
     int16_t                  *residual,
     const uint32_t             src_stride,
-    int16_t                  *transformCoefficients,
+    int16_t                  *transform_coefficients,
     const uint32_t             dst_stride,
     int16_t                  *transform_inner_array_ptr,
-    uint32_t                   bitIncrement)
+    uint32_t                   bit_increment)
 {
 #define OFFSET_DST_1        0
 #define OFFSET_DST_29_55    (8+OFFSET_DST_1)
@@ -2595,14 +2595,14 @@ void DstTransform4x4_SSE2_INTRIN(
     __m128i xmm_trans0, xmm_trans1, xmm_trans2, xmm_trans3, xmm_trans0_1, xmm_trans2_3, xmm_trans_lo, xmm_trans_hi;
     __m128i xmm_temp;
 
-    uint32_t shift = bitIncrement + 1;
-    EB_ALIGN(16) const int16_t * TransformAsmConst = DstTransformAsmConst_SSE2;
+    uint32_t shift = bit_increment + 1;
+    EB_ALIGN(16) const int16_t * TransformAsmConst = dst_transform_asm_const_sse2;
 
     xmm_res0 = _mm_loadl_epi64((__m128i *)(residual));
     xmm_res1 = _mm_loadl_epi64((__m128i *)(residual + src_stride));
     xmm_res2 = _mm_loadl_epi64((__m128i *)(residual + 2 * src_stride));
     xmm_res3 = _mm_loadl_epi64((__m128i *)(residual + 3 * src_stride));
-    xmm_offset = _mm_srli_epi32(_mm_slli_epi32(_mm_load_si128((__m128i *)(DstTransformAsmConst_SSE2 + OFFSET_DST_1)), shift), 1);
+    xmm_offset = _mm_srli_epi32(_mm_slli_epi32(_mm_load_si128((__m128i *)(dst_transform_asm_const_sse2 + OFFSET_DST_1)), shift), 1);
 
     xmm_res0_1 = _mm_unpacklo_epi32(xmm_res0, xmm_res1); // |res01    |res-S1-01|res23    |res-S1-23|
     xmm_res2_3 = _mm_unpacklo_epi32(xmm_res2, xmm_res3); // |res-S2-01|res-S3-01|res-S2-23|res-S3-23|
@@ -2629,13 +2629,13 @@ void DstTransform4x4_SSE2_INTRIN(
         (void)transform_inner_array_ptr;
 }
 
-void Transform8x8_SSE2_INTRIN(
+void transform8x8_sse2_intrin(
     int16_t                  *residual,
     const uint32_t             src_stride,
-    int16_t                  *transformCoefficients,
+    int16_t                  *transform_coefficients,
     const uint32_t             dst_stride,
     int16_t                  *transform_inner_array_ptr,
-    uint32_t                   bitIncrement)
+    uint32_t                   bit_increment)
 {
     // Transform8x8 has its own table because the larger table's offset macros exceed 256 (which is maximum macro expansion depth
     // Use a smaller table with values just for Transform8x8.
@@ -2701,12 +2701,12 @@ void Transform8x8_SSE2_INTRIN(
     evenOdd0 = _mm_sub_epi16(even0, even3);
     evenOdd1 = _mm_sub_epi16(even1, even2);
 
-    shift = 4 - bitIncrement;
+    shift = 4 - bit_increment;
     trans0 = _mm_slli_epi16(_mm_add_epi16(evenEven0, evenEven1), shift);
     trans4 = _mm_slli_epi16(_mm_sub_epi16(evenEven0, evenEven1), shift);
 
-    xmm_offset = _mm_slli_epi32(_mm_set1_epi32(0x00000002), bitIncrement);
-    shift = bitIncrement + 2;
+    xmm_offset = _mm_slli_epi32(_mm_set1_epi32(0x00000002), bit_increment);
+    shift = bit_increment + 2;
 
     trans2 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_83_36)), _mm_unpacklo_epi16(evenOdd0, evenOdd1)), xmm_offset), shift),
         _mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_83_36)), _mm_unpackhi_epi16(evenOdd0, evenOdd1)), xmm_offset), shift));
@@ -2714,7 +2714,7 @@ void Transform8x8_SSE2_INTRIN(
     trans6 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_36_N83)), _mm_unpacklo_epi16(evenOdd0, evenOdd1)), xmm_offset), shift),
         _mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_36_N83)), _mm_unpackhi_epi16(evenOdd0, evenOdd1)), xmm_offset), shift));
 
-    // TransformCoefficients 1, 3, 5, 7
+    // transform_coefficients 1, 3, 5, 7
     odd01_lo = _mm_unpacklo_epi16(odd0, odd1);
     odd01_hi = _mm_unpackhi_epi16(odd0, odd1);
     odd23_lo = _mm_unpacklo_epi16(odd2, odd3);
@@ -2730,27 +2730,27 @@ void Transform8x8_SSE2_INTRIN(
 
         xmm_offset = _mm_loadu_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_256));
 
-    MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, 9, _mm_storeu_si128, transformCoefficients, 0)
-        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_89_75, TRANS8x8_OFFSET_50_18, TRANS8x8_OFFSET_N18_N50, TRANS8x8_OFFSET_N75_N89, 9, _mm_storeu_si128, transformCoefficients, (dst_stride))
-        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_83_36, TRANS8x8_OFFSET_N36_N83, TRANS8x8_OFFSET_N83_N36, TRANS8x8_OFFSET_36_83, 9, _mm_storeu_si128, transformCoefficients, (2 * dst_stride))
-        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_75_N18, TRANS8x8_OFFSET_N89_N50, TRANS8x8_OFFSET_50_89, TRANS8x8_OFFSET_18_N75, 9, _mm_storeu_si128, transformCoefficients, (3 * dst_stride))
-        transformCoefficients += 4 * dst_stride;
-    MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, 9, _mm_storeu_si128, transformCoefficients, 0)
-        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_50_N89, TRANS8x8_OFFSET_18_75, TRANS8x8_OFFSET_N75_N18, TRANS8x8_OFFSET_89_N50, 9, _mm_storeu_si128, transformCoefficients, (dst_stride))
-        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_36_N83, TRANS8x8_OFFSET_83_N36, TRANS8x8_OFFSET_N36_83, TRANS8x8_OFFSET_N83_36, 9, _mm_storeu_si128, transformCoefficients, (2 * dst_stride))
-        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_18_N50, TRANS8x8_OFFSET_75_N89, TRANS8x8_OFFSET_89_N75, TRANS8x8_OFFSET_50_N18, 9, _mm_storeu_si128, transformCoefficients, (3 * dst_stride))
+    MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, 9, _mm_storeu_si128, transform_coefficients, 0)
+        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_89_75, TRANS8x8_OFFSET_50_18, TRANS8x8_OFFSET_N18_N50, TRANS8x8_OFFSET_N75_N89, 9, _mm_storeu_si128, transform_coefficients, (dst_stride))
+        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_83_36, TRANS8x8_OFFSET_N36_N83, TRANS8x8_OFFSET_N83_N36, TRANS8x8_OFFSET_36_83, 9, _mm_storeu_si128, transform_coefficients, (2 * dst_stride))
+        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_75_N18, TRANS8x8_OFFSET_N89_N50, TRANS8x8_OFFSET_50_89, TRANS8x8_OFFSET_18_N75, 9, _mm_storeu_si128, transform_coefficients, (3 * dst_stride))
+        transform_coefficients += 4 * dst_stride;
+    MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, 9, _mm_storeu_si128, transform_coefficients, 0)
+        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_50_N89, TRANS8x8_OFFSET_18_75, TRANS8x8_OFFSET_N75_N18, TRANS8x8_OFFSET_89_N50, 9, _mm_storeu_si128, transform_coefficients, (dst_stride))
+        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_36_N83, TRANS8x8_OFFSET_83_N36, TRANS8x8_OFFSET_N36_83, TRANS8x8_OFFSET_N83_36, 9, _mm_storeu_si128, transform_coefficients, (2 * dst_stride))
+        MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_18_N50, TRANS8x8_OFFSET_75_N89, TRANS8x8_OFFSET_89_N75, TRANS8x8_OFFSET_50_N18, 9, _mm_storeu_si128, transform_coefficients, (3 * dst_stride))
 
         (void)transform_inner_array_ptr;
 }
 
 
-void PfreqTransform8x8_SSE2_INTRIN(
+void pfreq_transform8x8_sse2_intrin(
     int16_t                  *residual,
     const uint32_t             src_stride,
-    int16_t                  *transformCoefficients,
+    int16_t                  *transform_coefficients,
     const uint32_t             dst_stride,
     int16_t                  *transform_inner_array_ptr,
-    uint32_t                   bitIncrement)
+    uint32_t                   bit_increment)
 {
     // Transform8x8 has its own table because the larger table's offset macros exceed 256 (which is maximum macro expansion depth
     // Use a smaller table with values just for Transform8x8.
@@ -2816,12 +2816,12 @@ void PfreqTransform8x8_SSE2_INTRIN(
     evenOdd0 = _mm_sub_epi16(even0, even3);
     evenOdd1 = _mm_sub_epi16(even1, even2);
 
-    shift = 4 - bitIncrement;
+    shift = 4 - bit_increment;
     trans0 = _mm_slli_epi16(_mm_add_epi16(evenEven0, evenEven1), shift);
     trans4 = _mm_slli_epi16(_mm_sub_epi16(evenEven0, evenEven1), shift);
 
-    xmm_offset = _mm_slli_epi32(_mm_set1_epi32(0x00000002), bitIncrement);
-    shift = bitIncrement + 2;
+    xmm_offset = _mm_slli_epi32(_mm_set1_epi32(0x00000002), bit_increment);
+    shift = bit_increment + 2;
 
     trans2 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_83_36)), _mm_unpacklo_epi16(evenOdd0, evenOdd1)), xmm_offset), shift),
         _mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_83_36)), _mm_unpackhi_epi16(evenOdd0, evenOdd1)), xmm_offset), shift));
@@ -2829,7 +2829,7 @@ void PfreqTransform8x8_SSE2_INTRIN(
     //trans6 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_36_N83)), _mm_unpacklo_epi16(evenOdd0, evenOdd1)), xmm_offset), shift),
     //    _mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_36_N83)), _mm_unpackhi_epi16(evenOdd0, evenOdd1)), xmm_offset), shift));
 
-    // TransformCoefficients 1, 3, 5, 7
+    // transform_coefficients 1, 3, 5, 7
     odd01_lo = _mm_unpacklo_epi16(odd0, odd1);
     odd01_hi = _mm_unpackhi_epi16(odd0, odd1);
     odd23_lo = _mm_unpacklo_epi16(odd2, odd3);
@@ -2845,27 +2845,27 @@ void PfreqTransform8x8_SSE2_INTRIN(
 
         xmm_offset = _mm_loadu_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_256));
 
-    MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, 9, _mm_storeu_si128, transformCoefficients, 0)
-        MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_89_75, TRANS8x8_OFFSET_50_18, TRANS8x8_OFFSET_N18_N50, TRANS8x8_OFFSET_N75_N89, 9, _mm_storeu_si128, transformCoefficients, (dst_stride))
-        MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_83_36, TRANS8x8_OFFSET_N36_N83, TRANS8x8_OFFSET_N83_N36, TRANS8x8_OFFSET_36_83, 9, _mm_storeu_si128, transformCoefficients, (2 * dst_stride))
-        MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_75_N18, TRANS8x8_OFFSET_N89_N50, TRANS8x8_OFFSET_50_89, TRANS8x8_OFFSET_18_N75, 9, _mm_storeu_si128, transformCoefficients, (3 * dst_stride))
-        //transformCoefficients += 4 * dst_stride;
-        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, 9, _mm_storeu_si128, transformCoefficients, 0)
-        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_50_N89, TRANS8x8_OFFSET_18_75, TRANS8x8_OFFSET_N75_N18, TRANS8x8_OFFSET_89_N50, 9, _mm_storeu_si128, transformCoefficients, (dst_stride))
-        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_36_N83, TRANS8x8_OFFSET_83_N36, TRANS8x8_OFFSET_N36_83, TRANS8x8_OFFSET_N83_36, 9, _mm_storeu_si128, transformCoefficients, (2 * dst_stride))
-        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_18_N50, TRANS8x8_OFFSET_75_N89, TRANS8x8_OFFSET_89_N75, TRANS8x8_OFFSET_50_N18, 9, _mm_storeu_si128, transformCoefficients, (3 * dst_stride))
+    MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, 9, _mm_storeu_si128, transform_coefficients, 0)
+        MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_89_75, TRANS8x8_OFFSET_50_18, TRANS8x8_OFFSET_N18_N50, TRANS8x8_OFFSET_N75_N89, 9, _mm_storeu_si128, transform_coefficients, (dst_stride))
+        MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_83_36, TRANS8x8_OFFSET_N36_N83, TRANS8x8_OFFSET_N83_N36, TRANS8x8_OFFSET_36_83, 9, _mm_storeu_si128, transform_coefficients, (2 * dst_stride))
+        MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_75_N18, TRANS8x8_OFFSET_N89_N50, TRANS8x8_OFFSET_50_89, TRANS8x8_OFFSET_18_N75, 9, _mm_storeu_si128, transform_coefficients, (3 * dst_stride))
+        //transform_coefficients += 4 * dst_stride;
+        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, 9, _mm_storeu_si128, transform_coefficients, 0)
+        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_50_N89, TRANS8x8_OFFSET_18_75, TRANS8x8_OFFSET_N75_N18, TRANS8x8_OFFSET_89_N50, 9, _mm_storeu_si128, transform_coefficients, (dst_stride))
+        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_36_N83, TRANS8x8_OFFSET_83_N36, TRANS8x8_OFFSET_N36_83, TRANS8x8_OFFSET_N83_36, 9, _mm_storeu_si128, transform_coefficients, (2 * dst_stride))
+        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_18_N50, TRANS8x8_OFFSET_75_N89, TRANS8x8_OFFSET_89_N75, TRANS8x8_OFFSET_50_N18, 9, _mm_storeu_si128, transform_coefficients, (3 * dst_stride))
 
         (void)transform_inner_array_ptr;
 }
 
 
-void PfreqN4Transform8x8_SSE2_INTRIN(
+void pfreq_n4_transform8x8_sse2_intrin(
     int16_t                  *residual,
     const uint32_t             src_stride,
-    int16_t                  *transformCoefficients,
+    int16_t                  *transform_coefficients,
     const uint32_t             dst_stride,
     int16_t                  *transform_inner_array_ptr,
-    uint32_t                   bitIncrement)
+    uint32_t                   bit_increment)
 {
     // Transform8x8 has its own table because the larger table's offset macros exceed 256 (which is maximum macro expansion depth
     // Use a smaller table with values just for Transform8x8.
@@ -2931,12 +2931,12 @@ void PfreqN4Transform8x8_SSE2_INTRIN(
     evenOdd0 = _mm_sub_epi16(even0, even3);
     evenOdd1 = _mm_sub_epi16(even1, even2);
 
-    shift = 4 - bitIncrement;
+    shift = 4 - bit_increment;
     trans0 = _mm_slli_epi16(_mm_add_epi16(evenEven0, evenEven1), shift);
     trans4 = _mm_slli_epi16(_mm_sub_epi16(evenEven0, evenEven1), shift);
 
-    xmm_offset = _mm_slli_epi32(_mm_set1_epi32(0x00000002), bitIncrement);
-    shift = bitIncrement + 2;
+    xmm_offset = _mm_slli_epi32(_mm_set1_epi32(0x00000002), bit_increment);
+    shift = bit_increment + 2;
 
     trans2 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_83_36)), _mm_unpacklo_epi16(evenOdd0, evenOdd1)), xmm_offset), shift),
         _mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_83_36)), _mm_unpackhi_epi16(evenOdd0, evenOdd1)), xmm_offset), shift));
@@ -2944,7 +2944,7 @@ void PfreqN4Transform8x8_SSE2_INTRIN(
     //trans6 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_36_N83)), _mm_unpacklo_epi16(evenOdd0, evenOdd1)), xmm_offset), shift),
     //    _mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_36_N83)), _mm_unpackhi_epi16(evenOdd0, evenOdd1)), xmm_offset), shift));
 
-    // TransformCoefficients 1, 3, 5, 7
+    // transform_coefficients 1, 3, 5, 7
     odd01_lo = _mm_unpacklo_epi16(odd0, odd1);
     odd01_hi = _mm_unpackhi_epi16(odd0, odd1);
     odd23_lo = _mm_unpacklo_epi16(odd2, odd3);
@@ -2960,15 +2960,15 @@ void PfreqN4Transform8x8_SSE2_INTRIN(
 
         xmm_offset = _mm_loadu_si128((__m128i *)(TransformIntrinConst + TRANS8x8_OFFSET_256));
 
-    MACRO_TRANS_8MAC_PF_N4(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, 9, _mm_storeu_si128, transformCoefficients, 0)
-        MACRO_TRANS_8MAC_PF_N4(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_89_75, TRANS8x8_OFFSET_50_18, TRANS8x8_OFFSET_N18_N50, TRANS8x8_OFFSET_N75_N89, 9, _mm_storeu_si128, transformCoefficients, (dst_stride))
-        //MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_83_36, TRANS8x8_OFFSET_N36_N83, TRANS8x8_OFFSET_N83_N36, TRANS8x8_OFFSET_36_83, 9, _mm_storeu_si128, transformCoefficients, (2 * dst_stride))
-        //MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_75_N18, TRANS8x8_OFFSET_N89_N50, TRANS8x8_OFFSET_50_89, TRANS8x8_OFFSET_18_N75, 9, _mm_storeu_si128, transformCoefficients, (3 * dst_stride))
-        //transformCoefficients += 4 * dst_stride;
-        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, 9, _mm_storeu_si128, transformCoefficients, 0)
-        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_50_N89, TRANS8x8_OFFSET_18_75, TRANS8x8_OFFSET_N75_N18, TRANS8x8_OFFSET_89_N50, 9, _mm_storeu_si128, transformCoefficients, (dst_stride))
-        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_36_N83, TRANS8x8_OFFSET_83_N36, TRANS8x8_OFFSET_N36_83, TRANS8x8_OFFSET_N83_36, 9, _mm_storeu_si128, transformCoefficients, (2 * dst_stride))
-        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_18_N50, TRANS8x8_OFFSET_75_N89, TRANS8x8_OFFSET_89_N75, TRANS8x8_OFFSET_50_N18, 9, _mm_storeu_si128, transformCoefficients, (3 * dst_stride))
+    MACRO_TRANS_8MAC_PF_N4(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, TRANS8x8_OFFSET_64_64, 9, _mm_storeu_si128, transform_coefficients, 0)
+        MACRO_TRANS_8MAC_PF_N4(trans0, trans02, trans01, trans0123, trans4, trans45, trans45, trans45, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_89_75, TRANS8x8_OFFSET_50_18, TRANS8x8_OFFSET_N18_N50, TRANS8x8_OFFSET_N75_N89, 9, _mm_storeu_si128, transform_coefficients, (dst_stride))
+        //MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_83_36, TRANS8x8_OFFSET_N36_N83, TRANS8x8_OFFSET_N83_N36, TRANS8x8_OFFSET_36_83, 9, _mm_storeu_si128, transform_coefficients, (2 * dst_stride))
+        //MACRO_TRANS_8MAC_PF_N2(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_75_N18, TRANS8x8_OFFSET_N89_N50, TRANS8x8_OFFSET_50_89, TRANS8x8_OFFSET_18_N75, 9, _mm_storeu_si128, transform_coefficients, (3 * dst_stride))
+        //transform_coefficients += 4 * dst_stride;
+        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, TRANS8x8_OFFSET_64_N64, TRANS8x8_OFFSET_N64_64, 9, _mm_storeu_si128, transform_coefficients, 0)
+        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_50_N89, TRANS8x8_OFFSET_18_75, TRANS8x8_OFFSET_N75_N18, TRANS8x8_OFFSET_89_N50, 9, _mm_storeu_si128, transform_coefficients, (dst_stride))
+        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_36_N83, TRANS8x8_OFFSET_83_N36, TRANS8x8_OFFSET_N36_83, TRANS8x8_OFFSET_N83_36, 9, _mm_storeu_si128, transform_coefficients, (2 * dst_stride))
+        //MACRO_TRANS_8MAC(trans0, trans02, trans01, trans0123, trans4, trans46, trans45, trans4567, xmm_offset, TransformIntrinConst, TRANS8x8_OFFSET_18_N50, TRANS8x8_OFFSET_75_N89, TRANS8x8_OFFSET_89_N75, TRANS8x8_OFFSET_50_N18, 9, _mm_storeu_si128, transform_coefficients, (3 * dst_stride))
 
         (void)transform_inner_array_ptr;
 }

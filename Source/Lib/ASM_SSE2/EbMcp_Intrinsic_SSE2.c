@@ -10,7 +10,7 @@
 __attribute__((visibility("hidden")))
 #endif
 #endif
-EB_ALIGN(16) const int16_t IntraPredictionConst_SSE2[344] = {
+EB_ALIGN(16) const int16_t intra_prediction_const_sse2[344] = {
     17, 19, 21, 23, 25, 27, 29, 31,
      1,  3,  5,  7,  9, 11, 13, 15,
     25, 26, 27, 28, 29, 30, 31, 32,

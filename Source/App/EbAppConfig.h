@@ -90,19 +90,19 @@ extern    uint32_t                   appMallocCount;
 
 #define MAX_APP_NUM_PTR                             (0x186A0 << 2)             // Maximum number of pointers to be allocated for the app
 
-#define EB_APP_MALLOC(type, pointer, nElements, pointerClass, returnType) \
-    pointer = (type)malloc(nElements); \
+#define EB_APP_MALLOC(type, pointer, n_elements, pointer_class, returnType) \
+    pointer = (type)malloc(n_elements); \
     if (pointer == (type)EB_NULL){ \
         return returnType; \
             } \
                 else { \
-        appMemoryMap[*(appMemoryMapIndex)].ptrType = pointerClass; \
+        appMemoryMap[*(appMemoryMapIndex)].ptrType = pointer_class; \
         appMemoryMap[(*(appMemoryMapIndex))++].ptr = pointer; \
-        if (nElements % 8 == 0) { \
-            *totalAppMemory += (nElements); \
+        if (n_elements % 8 == 0) { \
+            *totalAppMemory += (n_elements); \
                         } \
                                 else { \
-            *totalAppMemory += ((nElements) + (8 - ((nElements) % 8))); \
+            *totalAppMemory += ((n_elements) + (8 - ((n_elements) % 8))); \
             } \
         } \
     if (*(appMemoryMapIndex) >= MAX_APP_NUM_PTR) { \
@@ -110,22 +110,22 @@ extern    uint32_t                   appMallocCount;
                 } \
     appMallocCount++;
 
-#define EB_APP_MALLOC_NR(type, pointer, nElements, pointerClass,returnType) \
+#define EB_APP_MALLOC_NR(type, pointer, n_elements, pointer_class,returnType) \
     (void)returnType; \
-    pointer = (type)malloc(nElements); \
+    pointer = (type)malloc(n_elements); \
     if (pointer == (type)EB_NULL){ \
         returnType = EB_ErrorInsufficientResources; \
         printf("Malloc has failed due to insuffucient resources"); \
         return; \
             } \
                 else { \
-        appMemoryMap[*(appMemoryMapIndex)].ptrType = pointerClass; \
+        appMemoryMap[*(appMemoryMapIndex)].ptrType = pointer_class; \
         appMemoryMap[(*(appMemoryMapIndex))++].ptr = pointer; \
-        if (nElements % 8 == 0) { \
-            *totalAppMemory += (nElements); \
+        if (n_elements % 8 == 0) { \
+            *totalAppMemory += (n_elements); \
                         } \
                                 else { \
-            *totalAppMemory += ((nElements) + (8 - ((nElements) % 8))); \
+            *totalAppMemory += ((n_elements) + (8 - ((n_elements) % 8))); \
             } \
         } \
     if (*(appMemoryMapIndex) >= MAX_APP_NUM_PTR) { \

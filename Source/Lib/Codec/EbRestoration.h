@@ -329,7 +329,7 @@ extern "C" {
     // to the current tile, whose starting index is returned as
     // *tile_tl_idx.
     //int32_t av1_loop_restoration_corners_in_sb(const struct AV1Common *cm, int32_t plane,
-    //                                       int32_t mi_row, int32_t mi_col, BlockSize bsize,
+    //                                       int32_t mi_row, int32_t mi_col, block_size bsize,
     //                                       int32_t *rcol0, int32_t *rcol1, int32_t *rrow0,
     //                                       int32_t *rrow1, int32_t *tile_tl_idx);
 

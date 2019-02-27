@@ -670,12 +670,12 @@ void av1_quantize_b_facade_II(
 *
 *  Unified Quant +iQuant
 *********************************************************************/
-void Av1QuantizeInvQuantize_II(
+void av1_quantize_inv_quantize_ii(
     PictureControlSet_t  *picture_control_set_ptr,
     int32_t               *coeff,
-    const uint32_t          coeffStride,
-    int32_t               *quantCoeff,
-    int32_t               *reconCoeff,
+    const uint32_t          coeff_stride,
+    int32_t               *quant_coeff,
+    int32_t               *recon_coeff,
     uint32_t                qp,
     uint32_t                width,
     uint32_t                height,
@@ -684,18 +684,18 @@ void Av1QuantizeInvQuantize_II(
     //  MacroblockPlane      candidate_plane,
     EbAsm                asm_type,
     uint32_t                *y_count_non_zero_coeffs,
-    EbPfMode              pfMode,
-    uint8_t                 enableContouringQCUpdateFlag,
-    uint32_t                componentType,
+    EbPfMode              pf_mode,
+    uint8_t                 enable_contouring_qc_update_flag,
+    uint32_t                component_type,
 #if QT_10BIT_SUPPORT
-    uint32_t                bitIncrement,
+    uint32_t                bit_increment,
 #endif
     TxType               tx_type,
-    EbBool               cleanSparseCoeffFlag)
+    EbBool               clean_sparse_coeff_flag)
 {
-    (void)cleanSparseCoeffFlag;
-    (void)enableContouringQCUpdateFlag;
-    (void)pfMode;
+    (void)clean_sparse_coeff_flag;
+    (void)enable_contouring_qc_update_flag;
+    (void)pf_mode;
     (void)asm_type;
 #if !ADD_DELTA_QP_SUPPORT
     (void) qp;
@@ -726,8 +726,8 @@ void Av1QuantizeInvQuantize_II(
     uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
 #endif
 #if MD_10BIT_FIX
-    if (bitIncrement == 0) {
-        if (componentType == COMPONENT_LUMA) {
+    if (bit_increment == 0) {
+        if (component_type == COMPONENT_LUMA) {
             candidate_plane.quant_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.y_quant[qIndex];
             candidate_plane.quant_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.y_quant_fp[qIndex];
             candidate_plane.round_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.y_round_fp[qIndex];
@@ -737,7 +737,7 @@ void Av1QuantizeInvQuantize_II(
             candidate_plane.dequant_QTX = picture_control_set_ptr->parent_pcs_ptr->deqMd.y_dequant_QTX[qIndex];
         }
 
-        if (componentType == COMPONENT_CHROMA_CB) {
+        if (component_type == COMPONENT_CHROMA_CB) {
             candidate_plane.quant_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.u_quant[qIndex];
             candidate_plane.quant_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.u_quant_fp[qIndex];
             candidate_plane.round_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.u_round_fp[qIndex];
@@ -748,7 +748,7 @@ void Av1QuantizeInvQuantize_II(
 
         }
 
-        if (componentType == COMPONENT_CHROMA_CR) {
+        if (component_type == COMPONENT_CHROMA_CR) {
             candidate_plane.quant_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.v_quant[qIndex];
             candidate_plane.quant_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.v_quant_fp[qIndex];
             candidate_plane.round_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.v_round_fp[qIndex];
@@ -761,7 +761,7 @@ void Av1QuantizeInvQuantize_II(
 
     }
     else {
-        if (componentType == COMPONENT_LUMA) {
+        if (component_type == COMPONENT_LUMA) {
             candidate_plane.quant_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.y_quant[qIndex];
             candidate_plane.quant_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.y_quant_fp[qIndex];
             candidate_plane.round_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.y_round_fp[qIndex];
@@ -771,7 +771,7 @@ void Av1QuantizeInvQuantize_II(
             candidate_plane.dequant_QTX = picture_control_set_ptr->parent_pcs_ptr->deq.y_dequant_QTX[qIndex];
         }
 
-        if (componentType == COMPONENT_CHROMA_CB) {
+        if (component_type == COMPONENT_CHROMA_CB) {
             candidate_plane.quant_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.u_quant[qIndex];
             candidate_plane.quant_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.u_quant_fp[qIndex];
             candidate_plane.round_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.u_round_fp[qIndex];
@@ -782,7 +782,7 @@ void Av1QuantizeInvQuantize_II(
 
         }
 
-        if (componentType == COMPONENT_CHROMA_CR) {
+        if (component_type == COMPONENT_CHROMA_CR) {
             candidate_plane.quant_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.v_quant[qIndex];
             candidate_plane.quant_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.v_quant_fp[qIndex];
             candidate_plane.round_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.v_round_fp[qIndex];
@@ -793,7 +793,7 @@ void Av1QuantizeInvQuantize_II(
         }
     }
 #else
-    if (componentType == COMPONENT_LUMA) {
+    if (component_type == COMPONENT_LUMA) {
         candidate_plane.quant_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.y_quant[qIndex];
         candidate_plane.quant_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.y_quant_fp[qIndex];
         candidate_plane.round_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.y_round_fp[qIndex];
@@ -803,7 +803,7 @@ void Av1QuantizeInvQuantize_II(
         candidate_plane.dequant_QTX = picture_control_set_ptr->parent_pcs_ptr->deq.y_dequant_QTX[qIndex];
     }
 
-    if (componentType == COMPONENT_CHROMA_CB) {
+    if (component_type == COMPONENT_CHROMA_CB) {
         candidate_plane.quant_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.u_quant[qIndex];
         candidate_plane.quant_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.u_quant_fp[qIndex];
         candidate_plane.round_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.u_round_fp[qIndex];
@@ -814,7 +814,7 @@ void Av1QuantizeInvQuantize_II(
 
     }
 
-    if (componentType == COMPONENT_CHROMA_CR) {
+    if (component_type == COMPONENT_CHROMA_CR) {
         candidate_plane.quant_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.v_quant[qIndex];
         candidate_plane.quant_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.v_quant_fp[qIndex];
         candidate_plane.round_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.v_round_fp[qIndex];
@@ -837,38 +837,38 @@ void Av1QuantizeInvQuantize_II(
     qparam.iqmatrix = iqMatrix;
 
 #if QT_10BIT_SUPPORT
-    if (bitIncrement)
+    if (bit_increment)
         av1_highbd_quantize_b_facade(
         (tran_low_t*)coeff,
             n_coeffs,
             &candidate_plane,
-            quantCoeff,
-            (tran_low_t*)reconCoeff,
+            quant_coeff,
+            (tran_low_t*)recon_coeff,
             eob,
             scan_order,
             &qparam);
     else
         av1_quantize_b_facade_II(
         (tran_low_t*)coeff,
-            coeffStride,
+            coeff_stride,
             width,
             height,
             n_coeffs,
             &candidate_plane,
-            quantCoeff,
-            (tran_low_t*)reconCoeff,
+            quant_coeff,
+            (tran_low_t*)recon_coeff,
             eob,
             scan_order,
             &qparam);
 #else
     av1_quantize_b_facade_II(
         (tran_low_t*)coeff,
-        coeffStride,
-        areaSize,
+        coeff_stride,
+        area_size,
         n_coeffs,
         &candidate_plane,
-        quantCoeff,
-        (tran_low_t*)reconCoeff,
+        quant_coeff,
+        (tran_low_t*)recon_coeff,
         eob,
         scan_order,
         &qparam);
@@ -876,12 +876,12 @@ void Av1QuantizeInvQuantize_II(
     *y_count_non_zero_coeffs = *eob;
 
     }
-void Av1QuantizeInvQuantize(
+void av1_quantize_inv_quantize(
     PictureControlSet_t  *picture_control_set_ptr,
     int32_t               *coeff,
-    const uint32_t          coeffStride,
-    int32_t               *quantCoeff,
-    int32_t               *reconCoeff,
+    const uint32_t          coeff_stride,
+    int32_t               *quant_coeff,
+    int32_t               *recon_coeff,
     uint32_t                qp,
     uint32_t                width,
     uint32_t                height,
@@ -890,38 +890,38 @@ void Av1QuantizeInvQuantize(
     MacroblockPlane      candidate_plane,
     EbAsm                asm_type,
     uint32_t                *y_count_non_zero_coeffs,
-    EbPfMode              pfMode,
-    uint8_t                 enableContouringQCUpdateFlag,
-    uint32_t                componentType,
+    EbPfMode              pf_mode,
+    uint8_t                 enable_contouring_qc_update_flag,
+    uint32_t                component_type,
 #if QT_10BIT_SUPPORT
-    uint32_t                bitIncrement,
+    uint32_t                bit_increment,
 #endif
     TxType               tx_type,
-    EbBool               cleanSparseCoeffFlag)
+    EbBool               clean_sparse_coeff_flag)
 {
-    (void)coeffStride;
+    (void)coeff_stride;
     (void)candidate_plane;
-    (void)enableContouringQCUpdateFlag;
-    (void)pfMode;
+    (void)enable_contouring_qc_update_flag;
+    (void)pf_mode;
     //Note: Transformed, Quantized, iQuantized coeff are stored in 1D fashion. 64x64 is hence in the first 32x32 corner.
 
     uint32_t i;
 
     for (i = 0; i < height; i++)
     {
-        memset(quantCoeff + i * width, 0, width * sizeof(int32_t));
-        memset(reconCoeff + i * width, 0, width * sizeof(int32_t));
+        memset(quant_coeff + i * width, 0, width * sizeof(int32_t));
+        memset(recon_coeff + i * width, 0, width * sizeof(int32_t));
     }
 
 
 
 
-    Av1QuantizeInvQuantize_II(
+    av1_quantize_inv_quantize_ii(
         picture_control_set_ptr,
         coeff,
         0,
-        quantCoeff,
-        reconCoeff,
+        quant_coeff,
+        recon_coeff,
         qp,
         width,
         height,
@@ -931,12 +931,12 @@ void Av1QuantizeInvQuantize(
         y_count_non_zero_coeffs,
         0,
         0,
-        componentType,
+        component_type,
 #if QT_10BIT_SUPPORT
-        bitIncrement,
+        bit_increment,
 #endif
         tx_type,
-        cleanSparseCoeffFlag);
+        clean_sparse_coeff_flag);
 
 
 
@@ -955,14 +955,14 @@ void ProductFullLoop(
     uint64_t                         *y_full_distortion)
 {
     uint32_t                       tuOriginIndex;
-    uint64_t                      yFullCost;
-    SequenceControlSet_t        *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+    uint64_t                      y_full_cost;
+    SequenceControlSet_t        *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     EbAsm                         asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
 
-    EbBool                      cleanSparseCoeffFlag = EB_FALSE;
+    EbBool                      clean_sparse_coeff_flag = EB_FALSE;
 
     //    uint32_t   currentTuIndex,tuIt;
-    uint64_t   yTuCoeffBits;
+    uint64_t   y_tu_coeff_bits;
     uint64_t   tuFullDistortion[3][DIST_CALC_TOTAL];
     context_ptr->three_quad_energy = 0;
     uint32_t  txb_1d_offset = 0;
@@ -971,14 +971,14 @@ void ProductFullLoop(
     {
         uint16_t tx_org_x = context_ptr->blk_geom->tx_org_x[txb_itr];
         uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[txb_itr];
-        tuOriginIndex = tx_org_x + (tx_org_y * candidateBuffer->residual_ptr->strideY);
-        yTuCoeffBits = 0;
+        tuOriginIndex = tx_org_x + (tx_org_y * candidateBuffer->residual_ptr->stride_y);
+        y_tu_coeff_bits = 0;
 
         // Y: T Q iQ
-        Av1EstimateTransform(
-            &(((int16_t*)candidateBuffer->residual_ptr->bufferY)[tuOriginIndex]),
-            candidateBuffer->residual_ptr->strideY,
-            &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferY)[txb_1d_offset]),
+        av1_estimate_transform(
+            &(((int16_t*)candidateBuffer->residual_ptr->buffer_y)[tuOriginIndex]),
+            candidateBuffer->residual_ptr->stride_y,
+            &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->buffer_y)[txb_1d_offset]),
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize[txb_itr],
             &context_ptr->three_quad_energy,
@@ -989,12 +989,12 @@ void ProductFullLoop(
             PLANE_TYPE_Y,
             context_ptr->pf_md_mode);
 
-        Av1QuantizeInvQuantize(
+        av1_quantize_inv_quantize(
             picture_control_set_ptr,
-            &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferY)[txb_1d_offset]),
+            &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->buffer_y)[txb_1d_offset]),
             NOT_USED_VALUE,
-            &(((int32_t*)candidateBuffer->residualQuantCoeffPtr->bufferY)[txb_1d_offset]),
-            &(((int32_t*)candidateBuffer->reconCoeffPtr->bufferY)[txb_1d_offset]),
+            &(((int32_t*)candidateBuffer->residualQuantCoeffPtr->buffer_y)[txb_1d_offset]),
+            &(((int32_t*)candidateBuffer->reconCoeffPtr->buffer_y)[txb_1d_offset]),
             qp,
             context_ptr->blk_geom->tx_width[txb_itr],
             context_ptr->blk_geom->tx_height[txb_itr],
@@ -1010,14 +1010,14 @@ void ProductFullLoop(
             BIT_INCREMENT_8BIT,
 #endif
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
-            cleanSparseCoeffFlag);
+            clean_sparse_coeff_flag);
 
-        candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residualQuantCoeffPtr->bufferY)[txb_1d_offset]);
+        candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residualQuantCoeffPtr->buffer_y)[txb_1d_offset]);
 
 
 
         // LUMA DISTORTION
-        PictureFullDistortion32Bits(
+        picture_full_distortion32_bits(
             context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr,
             txb_1d_offset,
             0,
@@ -1059,9 +1059,9 @@ void ProductFullLoop(
             y_count_non_zero_coeffs[txb_itr],
             0,
             0,
-            &yTuCoeffBits,
-            &yTuCoeffBits,
-            &yTuCoeffBits,
+            &y_tu_coeff_bits,
+            &y_tu_coeff_bits,
+            &y_tu_coeff_bits,
             context_ptr->blk_geom->txsize[0],
             context_ptr->blk_geom->txsize_uv[0],
             COMPONENT_LUMA,
@@ -1070,19 +1070,19 @@ void ProductFullLoop(
 
 
         //TODO: fix cbf decision
-        Av1TuCalcCostLuma(
+        av1_tu_calc_cost_luma(
             context_ptr->cu_ptr->luma_txb_skip_context,//this should be updated here.
             candidateBuffer->candidate_ptr,
             txb_itr,
             context_ptr->blk_geom->txsize[0],
             y_count_non_zero_coeffs[txb_itr],
             tuFullDistortion[0],      //gets updated inside based on cbf decision
-            &yTuCoeffBits,            //gets updated inside based on cbf decision
-            &yFullCost,
+            &y_tu_coeff_bits,            //gets updated inside based on cbf decision
+            &y_full_cost,
             context_ptr->full_lambda);
 
 
-        (*y_coeff_bits) += yTuCoeffBits;
+        (*y_coeff_bits) += y_tu_coeff_bits;
 
         y_full_distortion[DIST_CALC_RESIDUAL] += tuFullDistortion[0][DIST_CALC_RESIDUAL];
         y_full_distortion[DIST_CALC_PREDICTION] += tuFullDistortion[0][DIST_CALC_PREDICTION];
@@ -1143,15 +1143,15 @@ void ProductFullLoopTxSearch(
     PictureControlSet_t            *picture_control_set_ptr)
 {
     uint32_t                       tuOriginIndex;
-    SequenceControlSet_t          *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+    SequenceControlSet_t          *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     EbAsm                          asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
-    EbBool                         cleanSparseCoeffFlag = EB_FALSE;
-    uint64_t                       yTuCoeffBits;
+    EbBool                         clean_sparse_coeff_flag = EB_FALSE;
+    uint64_t                       y_tu_coeff_bits;
     uint64_t                       tuFullDistortion[3][DIST_CALC_TOTAL];
     int32_t                        plane = 0;
     const int32_t                  is_inter = candidateBuffer->candidate_ptr->type == INTER_MODE ? EB_TRUE : EB_FALSE;//is_inter_block(mbmi);
     uint64_t                       bestFullCost = UINT64_MAX;
-    uint64_t                       yFullCost = MAX_CU_COST;
+    uint64_t                       y_full_cost = MAX_CU_COST;
     uint32_t                       yCountNonZeroCoeffsTemp;
     TxType                         txk_start = DCT_DCT;
     TxType                         txk_end = TX_TYPES;
@@ -1208,14 +1208,14 @@ void ProductFullLoopTxSearch(
 
 
         {
-            tuOriginIndex = context_ptr->blk_geom->origin_x + (context_ptr->blk_geom->origin_y * candidateBuffer->residual_ptr->strideY);
-            yTuCoeffBits = 0;
+            tuOriginIndex = context_ptr->blk_geom->origin_x + (context_ptr->blk_geom->origin_y * candidateBuffer->residual_ptr->stride_y);
+            y_tu_coeff_bits = 0;
             // Y: T Q iQ
-            Av1EstimateTransform(
-                &(((int16_t*)candidateBuffer->residual_ptr->bufferY)[tuOriginIndex]),
-                candidateBuffer->residual_ptr->strideY,
+            av1_estimate_transform(
+                &(((int16_t*)candidateBuffer->residual_ptr->buffer_y)[tuOriginIndex]),
+                candidateBuffer->residual_ptr->stride_y,
 
-                &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferY)[tuOriginIndex]),
+                &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->buffer_y)[tuOriginIndex]),
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize[txb_itr],
                 &context_ptr->three_quad_energy,
@@ -1226,12 +1226,12 @@ void ProductFullLoopTxSearch(
                 PLANE_TYPE_Y,
                 context_ptr->pf_md_mode);
 
-            Av1QuantizeInvQuantize(
+            av1_quantize_inv_quantize(
                 picture_control_set_ptr,
-                &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferY)[tuOriginIndex]),
+                &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->buffer_y)[tuOriginIndex]),
                 NOT_USED_VALUE,
-                &(((int32_t*)candidateBuffer->residualQuantCoeffPtr->bufferY)[tuOriginIndex]),
-                &(((int32_t*)candidateBuffer->reconCoeffPtr->bufferY)[tuOriginIndex]),
+                &(((int32_t*)candidateBuffer->residualQuantCoeffPtr->buffer_y)[tuOriginIndex]),
+                &(((int32_t*)candidateBuffer->reconCoeffPtr->buffer_y)[tuOriginIndex]),
                 context_ptr->cu_ptr->qp,
                 context_ptr->blk_geom->bwidth,
                 context_ptr->blk_geom->bheight,
@@ -1247,9 +1247,9 @@ void ProductFullLoopTxSearch(
                 BIT_INCREMENT_8BIT,
 #endif
                 tx_type,
-                cleanSparseCoeffFlag);
+                clean_sparse_coeff_flag);
 
-            candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residualQuantCoeffPtr->bufferY)[tuOriginIndex]);
+            candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residualQuantCoeffPtr->buffer_y)[tuOriginIndex]);
 
 
 #if TX_TYPE_FIX
@@ -1262,7 +1262,7 @@ void ProductFullLoopTxSearch(
 
 
             // LUMA DISTORTION
-            PictureFullDistortion32Bits(
+            picture_full_distortion32_bits(
                 context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr,
                 tuOriginIndex,
                 0,
@@ -1303,29 +1303,29 @@ void ProductFullLoopTxSearch(
                 yCountNonZeroCoeffsTemp,
                 0,
                 0,
-                &yTuCoeffBits,
-                &yTuCoeffBits,
-                &yTuCoeffBits,
+                &y_tu_coeff_bits,
+                &y_tu_coeff_bits,
+                &y_tu_coeff_bits,
                 context_ptr->blk_geom->txsize[txb_itr],
                 context_ptr->blk_geom->txsize_uv[txb_itr],
                 COMPONENT_LUMA,
                 asm_type);
 
-            Av1TuCalcCostLuma(
+            av1_tu_calc_cost_luma(
                 context_ptr->cu_ptr->luma_txb_skip_context,
                 candidateBuffer->candidate_ptr,
                 txb_itr,
                 context_ptr->blk_geom->txsize[txb_itr],
                 yCountNonZeroCoeffsTemp,
                 tuFullDistortion[0],
-                &yTuCoeffBits,
-                &yFullCost,
+                &y_tu_coeff_bits,
+                &y_full_cost,
                 context_ptr->full_lambda);
 
         }
 
-        if (yFullCost < bestFullCost) {
-            bestFullCost = yFullCost;
+        if (y_full_cost < bestFullCost) {
+            bestFullCost = y_full_cost;
 #if BUG_FIX
             best_tx_type = tx_type;
 #else
@@ -1388,12 +1388,12 @@ void encode_pass_tx_search(
     const uint32_t         scratchLumaOffset = context_ptr->blk_geom->tx_org_x[context_ptr->txb_itr] + context_ptr->blk_geom->tx_org_y[context_ptr->txb_itr] * SB_STRIDE_Y;
     const uint32_t         coeff1dOffset = context_ptr->coded_area_sb;
 
-    EbBool                 cleanSparseCoeffFlag = EB_FALSE;
-    uint64_t               yTuCoeffBits;
+    EbBool                 clean_sparse_coeff_flag = EB_FALSE;
+    uint64_t               y_tu_coeff_bits;
     uint64_t               tuFullDistortion[3][DIST_CALC_TOTAL];
     const int32_t          is_inter = context_ptr->is_inter;
     uint64_t               bestFullCost = UINT64_MAX;
-    uint64_t               yFullCost;
+    uint64_t               y_full_cost;
     uint32_t               yCountNonZeroCoeffsTemp;
     TxType                 txk_start = DCT_DCT;
     TxType                 txk_end = TX_TYPES;
@@ -1426,12 +1426,12 @@ void encode_pass_tx_search(
 
         context_ptr->three_quad_energy = 0;
 
-        yTuCoeffBits = 0;
+        y_tu_coeff_bits = 0;
 
-        Av1EstimateTransform(
-            ((int16_t*)residual16bit->bufferY) + scratchLumaOffset,
-            residual16bit->strideY,
-            ((tran_low_t*)transform16bit->bufferY) + coeff1dOffset,
+        av1_estimate_transform(
+            ((int16_t*)residual16bit->buffer_y) + scratchLumaOffset,
+            residual16bit->stride_y,
+            ((tran_low_t*)transform16bit->buffer_y) + coeff1dOffset,
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
@@ -1442,12 +1442,12 @@ void encode_pass_tx_search(
             PLANE_TYPE_Y,
             context_ptr->trans_coeff_shape_luma);
 
-        Av1QuantizeInvQuantize(
+        av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
-            ((tran_low_t*)transform16bit->bufferY) + coeff1dOffset,
+            ((tran_low_t*)transform16bit->buffer_y) + coeff1dOffset,
             NOT_USED_VALUE,
-            ((int32_t*)coeffSamplesTB->bufferY) + coeff1dOffset,
-            ((int32_t*)inverse_quant_buffer->bufferY) + coeff1dOffset,
+            ((int32_t*)coeffSamplesTB->buffer_y) + coeff1dOffset,
+            ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
             context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->txb_itr],
@@ -1461,7 +1461,7 @@ void encode_pass_tx_search(
             COMPONENT_LUMA,
             BIT_INCREMENT_8BIT,
             tx_type,
-            cleanSparseCoeffFlag);
+            clean_sparse_coeff_flag);
 
         //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
         if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT) {
@@ -1470,7 +1470,7 @@ void encode_pass_tx_search(
 
 
         // LUMA DISTORTION
-        PictureFullDistortion32Bits(
+        picture_full_distortion32_bits(
             transform16bit,
             coeff1dOffset,
             0,
@@ -1526,27 +1526,27 @@ void encode_pass_tx_search(
             yCountNonZeroCoeffsTemp,
             0,
             0,
-            &yTuCoeffBits,
-            &yTuCoeffBits,
-            &yTuCoeffBits,
+            &y_tu_coeff_bits,
+            &y_tu_coeff_bits,
+            &y_tu_coeff_bits,
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
             context_ptr->blk_geom->txsize_uv[context_ptr->txb_itr],
             COMPONENT_LUMA,
             asm_type);
 
-        Av1TuCalcCostLuma(
+        av1_tu_calc_cost_luma(
             context_ptr->cu_ptr->luma_txb_skip_context,
             candidateBuffer->candidate_ptr,
             context_ptr->txb_itr,
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
             yCountNonZeroCoeffsTemp,
             tuFullDistortion[0],
-            &yTuCoeffBits,
-            &yFullCost,
+            &y_tu_coeff_bits,
+            &y_full_cost,
             context_ptr->full_lambda);
 
-        if (yFullCost < bestFullCost) {
-            bestFullCost = yFullCost;
+        if (y_full_cost < bestFullCost) {
+            bestFullCost = y_full_cost;
             best_tx_type = tx_type;
         }
 
@@ -1590,15 +1590,15 @@ void encode_pass_tx_search_hbd(
     uint32_t         qp                   = cu_ptr->qp;
     const uint32_t   scratchLumaOffset    = context_ptr->blk_geom->origin_x + context_ptr->blk_geom->origin_y * SB_STRIDE_Y;
     const uint32_t   coeff1dOffset        = context_ptr->coded_area_sb;
-    EbBool           cleanSparseCoeffFlag = EB_FALSE;
+    EbBool           clean_sparse_coeff_flag = EB_FALSE;
 
     //Update QP for Quant
     qp += QP_BD_OFFSET;
-    uint64_t                    yTuCoeffBits;
+    uint64_t                    y_tu_coeff_bits;
     uint64_t                    tuFullDistortion[3][DIST_CALC_TOTAL];
     const int32_t               is_inter = context_ptr->is_inter;
     uint64_t                    bestFullCost = UINT64_MAX;
-    uint64_t                    yFullCost;
+    uint64_t                    y_full_cost;
     uint32_t                    yCountNonZeroCoeffsTemp;
     TxType                      txk_start = DCT_DCT;
     TxType                      txk_end = TX_TYPES;
@@ -1632,12 +1632,12 @@ void encode_pass_tx_search_hbd(
         context_ptr->three_quad_energy = 0;
 
 
-        yTuCoeffBits = 0;
+        y_tu_coeff_bits = 0;
 
-        Av1EstimateTransform(
-            ((int16_t*)residual16bit->bufferY) + scratchLumaOffset,
-            residual16bit->strideY,
-            ((tran_low_t*)transform16bit->bufferY) + coeff1dOffset,
+        av1_estimate_transform(
+            ((int16_t*)residual16bit->buffer_y) + scratchLumaOffset,
+            residual16bit->stride_y,
+            ((tran_low_t*)transform16bit->buffer_y) + coeff1dOffset,
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
@@ -1648,16 +1648,16 @@ void encode_pass_tx_search_hbd(
             PLANE_TYPE_Y,
             context_ptr->trans_coeff_shape_luma);
 
-        Av1QuantizeInvQuantize(
+        av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
-            ((int32_t*)transform16bit->bufferY) + coeff1dOffset,
+            ((int32_t*)transform16bit->buffer_y) + coeff1dOffset,
             NOT_USED_VALUE,
 #if QT_10BIT_SUPPORT
-            ((int32_t*)coeffSamplesTB->bufferY) + coeff1dOffset,
+            ((int32_t*)coeffSamplesTB->buffer_y) + coeff1dOffset,
 #else
-            ((int32_t*)coeffSamplesTB->bufferY) + scratchLumaOffset,
+            ((int32_t*)coeffSamplesTB->buffer_y) + scratchLumaOffset,
 #endif
-            ((int32_t*)inverse_quant_buffer->bufferY) + coeff1dOffset,
+            ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
             context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->txb_itr],
@@ -1673,7 +1673,7 @@ void encode_pass_tx_search_hbd(
             BIT_INCREMENT_10BIT,
 #endif
             tx_type,
-            cleanSparseCoeffFlag);
+            clean_sparse_coeff_flag);
 
         //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
         if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT) {
@@ -1682,7 +1682,7 @@ void encode_pass_tx_search_hbd(
 
 
         // LUMA DISTORTION
-        PictureFullDistortion32Bits(
+        picture_full_distortion32_bits(
             transform16bit,
             coeff1dOffset,
             0,
@@ -1738,27 +1738,27 @@ void encode_pass_tx_search_hbd(
             yCountNonZeroCoeffsTemp,
             0,
             0,
-            &yTuCoeffBits,
-            &yTuCoeffBits,
-            &yTuCoeffBits,
+            &y_tu_coeff_bits,
+            &y_tu_coeff_bits,
+            &y_tu_coeff_bits,
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
             context_ptr->blk_geom->txsize_uv[context_ptr->txb_itr],
             COMPONENT_LUMA,
             asm_type);
 
-        Av1TuCalcCostLuma(
+        av1_tu_calc_cost_luma(
             context_ptr->cu_ptr->luma_txb_skip_context,
             candidateBuffer->candidate_ptr,
             context_ptr->txb_itr,
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
             yCountNonZeroCoeffsTemp,
             tuFullDistortion[0],
-            &yTuCoeffBits,
-            &yFullCost,
+            &y_tu_coeff_bits,
+            &y_full_cost,
             context_ptr->full_lambda);
 
-        if (yFullCost < bestFullCost) {
-            bestFullCost = yFullCost;
+        if (y_full_cost < bestFullCost) {
+            bestFullCost = y_full_cost;
             best_tx_type = tx_type;
         }
 
@@ -1781,17 +1781,17 @@ void FullLoop_R(
     LargestCodingUnit_t            *sb_ptr,
     ModeDecisionCandidateBuffer_t  *candidateBuffer,
     ModeDecisionContext_t          *context_ptr,
-    EbPictureBufferDesc_t          *inputPicturePtr,
+    EbPictureBufferDesc_t          *input_picture_ptr,
     PictureControlSet_t            *picture_control_set_ptr,
     uint32_t                          component_mask,
     uint32_t                          cbQp,
     uint32_t                          crQp,
-    uint32_t                          *cbCountNonZeroCoeffs,
-    uint32_t                          *crCountNonZeroCoeffs)
+    uint32_t                          *cb_count_non_zero_coeffs,
+    uint32_t                          *cr_count_non_zero_coeffs)
 {
     (void)sb_ptr;
     (void)crQp;
-    (void)inputPicturePtr;
+    (void)input_picture_ptr;
     int16_t                *chromaResidualPtr;
     uint32_t                 tuOriginIndex;
     UNUSED(tuOriginIndex);
@@ -1805,10 +1805,10 @@ void FullLoop_R(
     // EbPictureBufferDesc_t         * tuTransCoeffTmpPtr;
      //EbPictureBufferDesc_t         * tuQuantCoeffTmpPtr;
 
-    SequenceControlSet_t    *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+    SequenceControlSet_t    *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     EbAsm     asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
 
-    EbBool cleanSparseCoeffFlag = EB_FALSE;
+    EbBool clean_sparse_coeff_flag = EB_FALSE;
     context_ptr->three_quad_energy = 0;
 
     tuCount = context_ptr->blk_geom->txb_count;
@@ -1822,7 +1822,7 @@ void FullLoop_R(
 
 
         // NADER - TU
-        tuOriginIndex = txb_origin_x + txb_origin_y * candidateBuffer->residualQuantCoeffPtr->strideY;
+        tuOriginIndex = txb_origin_x + txb_origin_y * candidateBuffer->residualQuantCoeffPtr->stride_y;
         tuCbOriginIndex = (((txb_origin_x >> 3) << 3) + (((txb_origin_y >> 3) << 3) * candidateBuffer->residualQuantCoeffPtr->strideCb)) >> 1;
         tuCrOriginIndex = (((txb_origin_x >> 3) << 3) + (((txb_origin_y >> 3) << 3) * candidateBuffer->residualQuantCoeffPtr->strideCr)) >> 1;
 
@@ -1840,7 +1840,7 @@ void FullLoop_R(
 
 
             // Cb Transform
-            Av1EstimateTransform(
+            av1_estimate_transform(
                 chromaResidualPtr,
                 candidateBuffer->residual_ptr->strideCb,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferCb)[txb_1d_offset]),
@@ -1854,7 +1854,7 @@ void FullLoop_R(
                 PLANE_TYPE_UV,
                 correctedPFMode);
 
-            Av1QuantizeInvQuantize(
+            av1_quantize_inv_quantize(
                 picture_control_set_ptr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferCb)[txb_1d_offset]),
                 NOT_USED_VALUE,
@@ -1867,7 +1867,7 @@ void FullLoop_R(
                 &candidateBuffer->candidate_ptr->eob[1][txb_itr],
                 candidateBuffer->candidate_ptr->candidate_plane[1],
                 asm_type,
-                &(cbCountNonZeroCoeffs[txb_itr]),
+                &(cb_count_non_zero_coeffs[txb_itr]),
                 context_ptr->pf_md_mode,
                 0,
                 COMPONENT_CHROMA_CB,
@@ -1875,7 +1875,7 @@ void FullLoop_R(
                 BIT_INCREMENT_8BIT,
 #endif
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
-                cleanSparseCoeffFlag);
+                clean_sparse_coeff_flag);
             candidateBuffer->candidate_ptr->quantized_dc[1] = (((int32_t*)candidateBuffer->residualQuantCoeffPtr->bufferCb)[txb_1d_offset]);
         }
 
@@ -1888,7 +1888,7 @@ void FullLoop_R(
                 &(((int16_t*)candidateBuffer->residual_ptr->bufferCr)[tuCrOriginIndex]);
 
             // Cr Transform
-            Av1EstimateTransform(
+            av1_estimate_transform(
                 chromaResidualPtr,
                 candidateBuffer->residual_ptr->strideCr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferCr)[txb_1d_offset]),
@@ -1902,7 +1902,7 @@ void FullLoop_R(
                 PLANE_TYPE_UV,
                 correctedPFMode);
 
-            Av1QuantizeInvQuantize(
+            av1_quantize_inv_quantize(
                 picture_control_set_ptr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferCr)[txb_1d_offset]),
                 NOT_USED_VALUE,
@@ -1915,7 +1915,7 @@ void FullLoop_R(
                 &candidateBuffer->candidate_ptr->eob[2][txb_itr],
                 candidateBuffer->candidate_ptr->candidate_plane[2],
                 asm_type,
-                &(crCountNonZeroCoeffs[txb_itr]),
+                &(cr_count_non_zero_coeffs[txb_itr]),
                 context_ptr->pf_md_mode,
                 0,
                 COMPONENT_CHROMA_CR,
@@ -1923,7 +1923,7 @@ void FullLoop_R(
                 BIT_INCREMENT_8BIT,
 #endif
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
-                cleanSparseCoeffFlag);
+                clean_sparse_coeff_flag);
             candidateBuffer->candidate_ptr->quantized_dc[2] = (((int32_t*)candidateBuffer->residualQuantCoeffPtr->bufferCr)[txb_1d_offset]);
         }
 
@@ -1948,16 +1948,16 @@ void CuFullDistortionFastTuMode_R(
     uint64_t                          cbFullDistortion[DIST_CALC_TOTAL],
     uint64_t                          crFullDistortion[DIST_CALC_TOTAL],
     uint32_t                          count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU],
-    COMPONENT_TYPE                  componentType,
+    COMPONENT_TYPE                  component_type,
     uint64_t                         *cb_coeff_bits,
     uint64_t                         *cr_coeff_bits,
     EbAsm                            asm_type)
 {
     (void)sb_ptr;
 
-    uint64_t                          yTuCoeffBits;
-    uint64_t                          cbTuCoeffBits;
-    uint64_t                          crTuCoeffBits;
+    uint64_t                          y_tu_coeff_bits;
+    uint64_t                          cb_tu_coeff_bits;
+    uint64_t                          cr_tu_coeff_bits;
     uint32_t                          tuOriginIndex;
     uint32_t                          txb_origin_x;
     uint32_t                          txb_origin_y;
@@ -1968,7 +1968,7 @@ void CuFullDistortionFastTuMode_R(
     EbPictureBufferDesc_t          *transform_buffer;
     uint32_t                          tuTotalCount;
     uint32_t                          txb_itr = 0;
-    //    SequenceControlSet_t           *sequence_control_set_ptr=((SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr);
+    //    SequenceControlSet_t           *sequence_control_set_ptr=((SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr);
 
     tuTotalCount = context_ptr->blk_geom->txb_count;
     currentTuIndex = 0;
@@ -1986,14 +1986,14 @@ void CuFullDistortionFastTuMode_R(
 
 
 
-        tuOriginIndex = txb_origin_x + txb_origin_y * candidateBuffer->residualQuantCoeffPtr->strideY;
+        tuOriginIndex = txb_origin_x + txb_origin_y * candidateBuffer->residualQuantCoeffPtr->stride_y;
         tuChromaOriginIndex = txb_1d_offset;
         // Reset the Bit Costs
-        yTuCoeffBits = 0;
-        cbTuCoeffBits = 0;
-        crTuCoeffBits = 0;
+        y_tu_coeff_bits = 0;
+        cb_tu_coeff_bits = 0;
+        cr_tu_coeff_bits = 0;
 
-        if (componentType == COMPONENT_CHROMA_CB || componentType == COMPONENT_CHROMA_CR || componentType == COMPONENT_CHROMA || componentType == COMPONENT_ALL) {
+        if (component_type == COMPONENT_CHROMA_CB || component_type == COMPONENT_CHROMA_CR || component_type == COMPONENT_CHROMA || component_type == COMPONENT_ALL) {
             uint32_t countNonZeroCoeffsAll[3];
             countNonZeroCoeffsAll[0] = count_non_zero_coeffs[0][currentTuIndex];
             countNonZeroCoeffsAll[1] = count_non_zero_coeffs[1][currentTuIndex];
@@ -2006,7 +2006,7 @@ void CuFullDistortionFastTuMode_R(
             //    equivalent.
 
 
-            PictureFullDistortion32Bits(
+            picture_full_distortion32_bits(
                 transform_buffer,
                 NOT_USED_VALUE,
                 tuChromaOriginIndex,
@@ -2023,7 +2023,7 @@ void CuFullDistortionFastTuMode_R(
                 countNonZeroCoeffsAll[0],
                 countNonZeroCoeffsAll[1],
                 countNonZeroCoeffsAll[2],
-                componentType,
+                component_type,
                 asm_type);
 
             TxSize    txSize = context_ptr->blk_geom->txsize_uv[txb_itr];
@@ -2049,18 +2049,18 @@ void CuFullDistortionFastTuMode_R(
                 count_non_zero_coeffs[0][currentTuIndex],
                 count_non_zero_coeffs[1][currentTuIndex],
                 count_non_zero_coeffs[2][currentTuIndex],
-                &yTuCoeffBits,
-                &cbTuCoeffBits,
-                &crTuCoeffBits,
+                &y_tu_coeff_bits,
+                &cb_tu_coeff_bits,
+                &cr_tu_coeff_bits,
                 context_ptr->blk_geom->txsize[txb_itr],
                 context_ptr->blk_geom->txsize_uv[txb_itr],
 
-                componentType,
+                component_type,
                 asm_type);
 
 
             // OMK Useless ? We don't calculate Chroma CBF here
-            Av1TuCalcCost(
+            av1_tu_calc_cost(
                 candidate_ptr,
                 context_ptr->cu_ptr->luma_txb_skip_context,
                 currentTuIndex,
@@ -2070,17 +2070,17 @@ void CuFullDistortionFastTuMode_R(
                 tuFullDistortion[0],
                 tuFullDistortion[1],
                 tuFullDistortion[2],
-                componentType,
-                &yTuCoeffBits,
-                &cbTuCoeffBits,
-                &crTuCoeffBits,
+                component_type,
+                &y_tu_coeff_bits,
+                &cb_tu_coeff_bits,
+                &cr_tu_coeff_bits,
                 context_ptr->blk_geom->txsize[txb_itr],
                 context_ptr->full_lambda);
 
 
 
-            *cb_coeff_bits += cbTuCoeffBits;
-            *cr_coeff_bits += crTuCoeffBits;
+            *cb_coeff_bits += cb_tu_coeff_bits;
+            *cr_coeff_bits += cr_tu_coeff_bits;
             cbFullDistortion[DIST_CALC_RESIDUAL] += tuFullDistortion[1][DIST_CALC_RESIDUAL];
             crFullDistortion[DIST_CALC_RESIDUAL] += tuFullDistortion[2][DIST_CALC_RESIDUAL];
             cbFullDistortion[DIST_CALC_PREDICTION] += tuFullDistortion[1][DIST_CALC_PREDICTION];
@@ -2181,7 +2181,7 @@ void   compute_depth_costs(
     // Compute above depth  cost
     if (context_ptr->md_local_cu_unit[above_depth_mds].tested_cu_flag == EB_TRUE)
     {
-        Av1SplitFlagRate(
+        av1_split_flag_rate(
             sequence_control_set_ptr,
             context_ptr,
             &context_ptr->md_cu_arr_nsq[above_depth_mds],
@@ -2199,7 +2199,7 @@ void   compute_depth_costs(
     }
 
     // Compute curr depth  cost
-    Av1SplitFlagRate(
+    av1_split_flag_rate(
         sequence_control_set_ptr,
         context_ptr,
         &context_ptr->md_cu_arr_nsq[above_depth_mds],
@@ -2213,7 +2213,7 @@ void   compute_depth_costs(
     if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
 
         if (context_ptr->md_cu_arr_nsq[curr_depth_blk0_mds].mdc_split_flag == 0)
-            Av1SplitFlagRate(
+            av1_split_flag_rate(
                 sequence_control_set_ptr,
                 context_ptr,
                 &context_ptr->md_cu_arr_nsq[curr_depth_blk0_mds],
@@ -2225,7 +2225,7 @@ void   compute_depth_costs(
                 sequence_control_set_ptr->max_sb_depth);
 
         if (context_ptr->md_cu_arr_nsq[curr_depth_blk1_mds].mdc_split_flag == 0)
-            Av1SplitFlagRate(
+            av1_split_flag_rate(
                 sequence_control_set_ptr,
                 context_ptr,
                 &context_ptr->md_cu_arr_nsq[curr_depth_blk1_mds],
@@ -2237,7 +2237,7 @@ void   compute_depth_costs(
                 sequence_control_set_ptr->max_sb_depth);
 
         if (context_ptr->md_cu_arr_nsq[curr_depth_blk2_mds].mdc_split_flag == 0)
-            Av1SplitFlagRate(
+            av1_split_flag_rate(
                 sequence_control_set_ptr,
                 context_ptr,
                 &context_ptr->md_cu_arr_nsq[curr_depth_blk2_mds],
@@ -2249,7 +2249,7 @@ void   compute_depth_costs(
                 sequence_control_set_ptr->max_sb_depth);
 
         if (context_ptr->md_cu_arr_nsq[curr_depth_blk3_mds].mdc_split_flag == 0)
-            Av1SplitFlagRate(
+            av1_split_flag_rate(
                 sequence_control_set_ptr,
                 context_ptr,
                 &context_ptr->md_cu_arr_nsq[curr_depth_blk3_mds],
@@ -2306,7 +2306,7 @@ void   compute_depth_costs(
     // Compute above depth  cost
     if (context_ptr->md_local_cu_unit[above_depth_mds].tested_cu_flag == EB_TRUE)
     {
-        Av1SplitFlagRate(
+        av1_split_flag_rate(
             sequence_control_set_ptr,
             context_ptr,
             &context_ptr->md_cu_arr_nsq[above_depth_mds],
@@ -2324,7 +2324,7 @@ void   compute_depth_costs(
     }
 
     // Compute curr depth  cost
-    Av1SplitFlagRate(
+    av1_split_flag_rate(
         sequence_control_set_ptr,
         context_ptr,
         &context_ptr->md_cu_arr_nsq[above_depth_mds],
@@ -2343,7 +2343,7 @@ void   compute_depth_costs(
         curr_rate;
 #else  
     // Compute depth N cost
-    Av1SplitFlagRate(
+    av1_split_flag_rate(
         sequence_control_set_ptr,
         context_ptr,
         &context_ptr->md_cu_arr_nsq[above_depth_mds],
@@ -2360,7 +2360,7 @@ void   compute_depth_costs(
     *depthNCost = context_ptr->md_local_cu_unit[above_depth_mds].cost + depthNRate;
 
     // Compute depth N+1 cost
-    Av1SplitFlagRate(
+    av1_split_flag_rate(
         sequence_control_set_ptr,
         context_ptr,
         &context_ptr->md_cu_arr_nsq[above_depth_mds],
@@ -2406,7 +2406,7 @@ uint32_t d2_inter_depth_block_decision(
     UNUSED(d1_idx_mds);
     UNUSED(d0_idx_mds);
     uint64_t                    parent_depth_cost = 0, current_depth_cost = 0;
-    SequenceControlSet_t     *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+    SequenceControlSet_t     *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     EbBool                    lastDepthFlag;
     const BlockGeom          * blk_geom;
 
@@ -2414,7 +2414,7 @@ uint32_t d2_inter_depth_block_decision(
     d1_idx_mds = blk_mds;
     d2_idx_mds = blk_mds;
     lastCuIndex = blk_mds;
-    blk_geom = Get_blk_geom_mds(blk_mds);
+    blk_geom = get_blk_geom_mds(blk_mds);
     uint32_t    parent_depth_idx_mds = blk_mds;
     uint32_t    current_depth_idx_mds = blk_mds;
 
@@ -2444,7 +2444,7 @@ uint32_t d2_inter_depth_block_decision(
             }
 
             //setup next parent inter depth
-            blk_geom = Get_blk_geom_mds(parent_depth_idx_mds);
+            blk_geom = get_blk_geom_mds(parent_depth_idx_mds);
             current_depth_idx_mds = parent_depth_idx_mds;
         }
     }

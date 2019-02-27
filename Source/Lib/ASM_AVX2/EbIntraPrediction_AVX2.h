@@ -38,253 +38,252 @@ extern "C" {
         13, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4,
     };
 
-    extern void IntraModePlanar_AVX2_INTRIN(
-        const uint32_t   size,                       //input parameter, denotes the size of the current PU
-        uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
-        uint8_t         *prediction_ptr,              //output parameter, pointer to the prediction
-        const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
-        const EbBool  skip);
+    extern void intra_mode_planar_avx2_intrin(
+        const uint32_t  size,                           //input parameter, denotes the size of the current PU
+        uint8_t        *ref_samples,                    //input parameter, pointer to the reference samples
+        uint8_t        *prediction_ptr,                 //output parameter, pointer to the prediction
+        const uint32_t  prediction_buffer_stride,       //input parameter, denotes the stride for the prediction ptr
+        const EbBool    skip);
 
 
-    void IntraModePlanar_AV1_AVX2_INTRIN(
-        const uint32_t   size,                       //input parameter, denotes the size of the current PU
-        uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
-        uint8_t         *dst,              //output parameter, pointer to the prediction
-        const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
-        const EbBool  skip);
+    void intra_mode_planar_av1_avx2_intrin(
+        const uint32_t  size,                           //input parameter, denotes the size of the current PU
+        uint8_t        *ref_samples,                    //input parameter, pointer to the reference samples
+        uint8_t        *dst,                            //output parameter, pointer to the prediction
+        const uint32_t  prediction_buffer_stride,       //input parameter, denotes the stride for the prediction ptr
+        const EbBool    skip);
 
-    extern void IntraModeAngular_Vertical_Kernel_AVX2_INTRIN(
-        uint32_t         size,                       //input parameter, denotes the size of the current PU
-        uint8_t         *refSampMain,                //input parameter, pointer to the reference samples
-        uint8_t         *prediction_ptr,              //output parameter, pointer to the prediction
-        uint32_t         predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    extern void intra_mode_angular_vertical_kernel_avx2_intrin(
+        uint32_t      size,                             //input parameter, denotes the size of the current PU
+        uint8_t      *ref_samp_main,                    //input parameter, pointer to the reference samples
+        uint8_t      *prediction_ptr,                   //output parameter, pointer to the prediction
+        uint32_t      prediction_buffer_stride,         //input parameter, denotes the stride for the prediction ptr
         const EbBool  skip,
-        int32_t         intraPredAngle);
+        int32_t       intra_pred_angle);
 
-    extern void IntraModeAngular_Horizontal_Kernel_AVX2_INTRIN(
-        uint32_t         size,                       //input parameter, denotes the size of the current PU
-        uint8_t         *refSampMain,                //input parameter, pointer to the reference samples
-        uint8_t         *prediction_ptr,              //output parameter, pointer to the prediction
-        uint32_t         predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    extern void intra_mode_angular_horizontal_kernel_avx2_intrin(
+        uint32_t      size,                             //input parameter, denotes the size of the current PU
+        uint8_t      *ref_samp_main,                    //input parameter, pointer to the reference samples
+        uint8_t      *prediction_ptr,                   //output parameter, pointer to the prediction
+        uint32_t      prediction_buffer_stride,         //input parameter, denotes the stride for the prediction ptr
         const EbBool  skip,
-        int32_t         intraPredAngle);
+        int32_t       intra_pred_angle);
 
-    extern void IntraModeVerticalLuma_AVX2_INTRIN(
-        const uint32_t      size,                   //input parameter, denotes the size of the current PU
-        uint8_t            *refSamples,             //input parameter, pointer to the reference samples
-        uint8_t            *prediction_ptr,          //output parameter, pointer to the prediction
-        const uint32_t      predictionBufferStride, //input parameter, denotes the stride for the prediction ptr
-        const EbBool     skip                    //skip one row
-    );
+    extern void intra_mode_vertical_luma_avx2_intrin(
+        const uint32_t  size,                           //input parameter, denotes the size of the current PU
+        uint8_t        *ref_samples,                    //input parameter, pointer to the reference samples
+        uint8_t        *prediction_ptr,                 //output parameter, pointer to the prediction
+        const uint32_t  prediction_buffer_stride,       //input parameter, denotes the stride for the prediction ptr
+        const EbBool    skip);                          //skip one row
+   
+    extern void intra_mode_dc_luma_avx2_intrin(
+        const uint32_t  size,                           //input parameter, denotes the size of the current PU
+        uint8_t        *ref_samples,                    //input parameter, pointer to the reference samples
+        uint8_t        *prediction_ptr,                 //output parameter, pointer to the prediction
+        const uint32_t  prediction_buffer_stride,       //input parameter, denotes the stride for the prediction ptr
+        const EbBool    skip);
 
-    extern void IntraModeDCLuma_AVX2_INTRIN(
-        const uint32_t      size,                       //input parameter, denotes the size of the current PU
-        uint8_t            *refSamples,                 //input parameter, pointer to the reference samples
-        uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
-        const uint32_t      predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
-        const EbBool     skip);
 
+    extern void intra_mode_dc_32x32_av1_avx2_intrin(
+        EbBool           is_left_availble,
+        EbBool           is_above_availble,
+        const uint32_t   size,                          //input parameter, denotes the size of the current PU
+        uint8_t         *ref_samples,                   //input parameter, pointer to the reference samples
+        uint8_t         *dst,                           //output parameter, pointer to the prediction
+        const uint32_t   prediction_buffer_stride,      //input parameter, denotes the stride for the prediction ptr
+        const EbBool     skip);                         //skip half rows
 
-    extern void IntraModeDC_32x32_AV1_AVX2_INTRIN(
-        EbBool                         is_left_availble,
-        EbBool                         is_above_availble,
-        const uint32_t   size,                       //input parameter, denotes the size of the current PU
-        uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
-        uint8_t         *dst,              //output parameter, pointer to the prediction
-        const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
-        const EbBool  skip);              //skip half rows
+    void intra_mode_dc_64x64_av1_avx2_intrin(
+        EbBool         is_left_availble,
+        EbBool         is_above_availble,
+        const uint32_t size,                            //input parameter, denotes the size of the current PU
+        uint8_t       *ref_samples,                     //input parameter, pointer to the reference samples
+        uint8_t       *dst,                             //output parameter, pointer to the prediction
+        const uint32_t prediction_buffer_stride,        //input parameter, denotes the stride for the prediction ptr
+        const EbBool   skip);
 
-    void IntraModeDC_64x64_AV1_AVX2_INTRIN(
-        EbBool        is_left_availble,
-        EbBool        is_above_availble,
-        const uint32_t   size,                       //input parameter, denotes the size of the current PU
-        uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
-        uint8_t         *dst,              //output parameter, pointer to the prediction
-        const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
-        const EbBool  skip);
+    extern void intra_mode_angular_2_avx2_intrin(
+        const uint32_t  size,                           //input parameter, denotes the size of the current PU
+        uint8_t        *ref_samples,                    //input parameter, pointer to the reference samples
+        uint8_t        *prediction_ptr,                 //output parameter, pointer to the prediction
+        const uint32_t  prediction_buffer_stride,       //input parameter, denotes the stride for the prediction ptr
+        const EbBool    skip);
 
-    extern void IntraModeAngular_2_AVX2_INTRIN(
-        const uint32_t      size,                       //input parameter, denotes the size of the current PU
-        uint8_t            *refSamples,                 //input parameter, pointer to the reference samples
-        uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
-        const uint32_t      predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
-        const EbBool     skip);
+    extern void intra_mode_angular_18_avx2_intrin(
+        const uint32_t  size,                           //input parameter, denotes the size of the current PU
+        uint8_t        *ref_samples,                    //input parameter, pointer to the reference samples
+        uint8_t        *prediction_ptr,                 //output parameter, pointer to the prediction
+        const uint32_t  prediction_buffer_stride,       //input parameter, denotes the stride for the prediction ptr
+        const EbBool    skip);
 
-    extern void IntraModeAngular_18_AVX2_INTRIN(
-        const uint32_t      size,                       //input parameter, denotes the size of the current PU
-        uint8_t            *refSamples,                 //input parameter, pointer to the reference samples
-        uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
-        const uint32_t      predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
-        const EbBool     skip);
+    extern void intra_mode_angular_34_avx2_intrin(
+        const uint32_t  size,                           //input parameter, denotes the size of the current PU
+        uint8_t        *ref_samples,                    //input parameter, pointer to the reference samples
+        uint8_t        *prediction_ptr,                 //output parameter, pointer to the prediction
+        const uint32_t  prediction_buffer_stride,       //input parameter, denotes the stride for the prediction ptr
+        const EbBool    skip);
 
-    extern void IntraModeAngular_34_AVX2_INTRIN(
-        const uint32_t      size,                       //input parameter, denotes the size of the current PU
-        uint8_t            *refSamples,                 //input parameter, pointer to the reference samples
-        uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
-        const uint32_t      predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
-        const EbBool     skip);
+    uint32_t update_neighbor_dc_intra_pred_avx2_intrin(
+        uint8_t  *y_intra_reference_array_reverse,
+        uint16_t  input_height,
+        uint16_t  stride_y,
+        EbByte    buffer_y,
+        uint16_t  origin_y,
+        uint16_t  origin_x,
+        uint32_t  src_origin_x,
+        uint32_t  src_origin_y,
+        uint32_t  block_size,
+        EbAsm     asm_type);
 
-    uint32_t UpdateNeighborDcIntraPred_AVX2_INTRIN(
-        uint8_t                           *y_intra_reference_array_reverse,
-        uint16_t                           inputHeight,
-        uint16_t                           strideY,
-        EbByte                          bufferY,
-        uint16_t                           origin_y,
-        uint16_t                           origin_x,
-        uint32_t                           srcOriginX,
-        uint32_t                           srcOriginY,
-        uint32_t                           blockSize,
-        EbAsm                             asm_type);
+    void intra_mode_angular_av1_z1_16bit_4x4_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z1_16bit_4x4_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z1_16bit_8x8_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z1_16bit_8x8_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z1_16bit_16x16_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z1_16bit_16x16_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z1_16bit_32x32_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z1_16bit_32x32_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z1_16bit_64x64_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z1_16bit_64x64_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z2_16bit_4x4_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z2_16bit_4x4_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z2_16bit_8x8_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z2_16bit_8x8_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z2_16bit_16x16_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z2_16bit_16x16_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z2_16bit_32x32_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z2_16bit_32x32_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z2_16bit_64x64_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z2_16bit_64x64_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z3_16bit_4x4_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z3_16bit_4x4_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z3_16bit_8x8_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z3_16bit_8x8_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z3_16bit_16x16_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z3_16bit_16x16_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z3_16bit_32x32_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
-    void IntraModeAngular_AV1_Z3_16bit_32x32_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
-
-    void IntraModeAngular_AV1_Z3_16bit_64x64_AVX2(
-        const uint32_t   size,
-        uint16_t         *refSamples,
-        uint16_t         *dst,
-        const uint32_t   predictionBufferStride,
-        const EbBool  skip,
-        uint16_t          dx,
-        uint16_t          dy,
-        uint16_t          bd);
+    void intra_mode_angular_av1_z3_16bit_64x64_avx2(
+        const uint32_t  size,
+        uint16_t       *ref_samples,
+        uint16_t       *dst,
+        const uint32_t  prediction_buffer_stride,
+        const EbBool    skip,
+        uint16_t        dx,
+        uint16_t        dy,
+        uint16_t        bd);
 
 #ifdef __cplusplus
 }

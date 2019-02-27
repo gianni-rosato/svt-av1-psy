@@ -20,7 +20,7 @@ typedef struct InitialRateControlReorderEntry_s {
 } InitialRateControlReorderEntry_t;
 
 extern EbErrorType InitialRateControlReorderEntryCtor(
-    InitialRateControlReorderEntry_t   **entryDblPtr,
+    InitialRateControlReorderEntry_t   **entry_dbl_ptr,
     uint32_t                               picture_number);
 
 
@@ -47,7 +47,7 @@ typedef struct HlRateControlHistogramEntry_s {
 } HlRateControlHistogramEntry_t;
 
 extern EbErrorType HlRateControlHistogramEntryCtor(
-    HlRateControlHistogramEntry_t   **entryDblPtr,
+    HlRateControlHistogramEntry_t   **entry_dbl_ptr,
     uint32_t                            picture_number);
 
 #endif //EbInitialRateControlReorderQueue_h

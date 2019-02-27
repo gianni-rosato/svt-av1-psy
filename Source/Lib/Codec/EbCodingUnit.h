@@ -148,7 +148,7 @@ extern "C" {
 
     typedef struct MbModeInfo {
         // Common for both INTER and INTRA blocks
-        BlockSize sb_type;
+        block_size sb_type;
         PredictionMode mode;
         //TxSize tx_size;
         //uint8_t inter_tx_size[INTER_TX_SIZE_BUF_LEN];

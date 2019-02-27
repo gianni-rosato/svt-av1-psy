@@ -28,21 +28,21 @@ extern "C" {
     typedef struct EbPictureBufferDesc_s
     {
         // Buffer Ptrs
-        EbByte         bufferY;             // Pointer to the Y luma buffer
-        EbByte         bufferCb;            // Pointer to the U chroma buffer
-        EbByte         bufferCr;            // Pointer to the V chroma buffer
+        EbByte         buffer_y;             // pointer to the Y luma buffer
+        EbByte         bufferCb;            // pointer to the U chroma buffer
+        EbByte         bufferCr;            // pointer to the V chroma buffer
         //Bit increment
-        EbByte         bufferBitIncY;       // Pointer to the Y luma buffer Bit increment
-        EbByte         bufferBitIncCb;      // Pointer to the U chroma buffer Bit increment
-        EbByte         bufferBitIncCr;      // Pointer to the V chroma buffer Bit increment
+        EbByte         bufferBitIncY;       // pointer to the Y luma buffer Bit increment
+        EbByte         bufferBitIncCb;      // pointer to the U chroma buffer Bit increment
+        EbByte         bufferBitIncCr;      // pointer to the V chroma buffer Bit increment
 
-        uint16_t          strideY;          // Pointer to the Y luma buffer
-        uint16_t          strideCb;         // Pointer to the U chroma buffer
-        uint16_t          strideCr;         // Pointer to the V chroma buffer
+        uint16_t          stride_y;          // pointer to the Y luma buffer
+        uint16_t          strideCb;         // pointer to the U chroma buffer
+        uint16_t          strideCr;         // pointer to the V chroma buffer
 
-        uint16_t          strideBitIncY;    // Pointer to the Y luma buffer Bit increment
-        uint16_t          strideBitIncCb;   // Pointer to the U chroma buffer Bit increment
-        uint16_t          strideBitIncCr;   // Pointer to the V chroma buffer Bit increment
+        uint16_t          strideBitIncY;    // pointer to the Y luma buffer Bit increment
+        uint16_t          strideBitIncCb;   // pointer to the U chroma buffer Bit increment
+        uint16_t          strideBitIncCr;   // pointer to the V chroma buffer Bit increment
 
         // Picture Parameters
         uint16_t          origin_x;         // Horizontal padding distance
@@ -236,7 +236,7 @@ extern "C" {
     );
 
     typedef struct aom_codec_frame_buffer {
-        uint8_t *data; /**< Pointer to the data buffer */
+        uint8_t *data; /**< pointer to the data buffer */
         size_t size;   /**< Size of data in bytes */
         void *priv;    /**< Frame's private data */
     } aom_codec_frame_buffer_t;
@@ -257,7 +257,7 @@ extern "C" {
     *
     * \param[in] priv         Callback's private data
     * \param[in] new_size     Size in bytes needed by the buffer
-    * \param[in,out] fb       Pointer to aom_codec_frame_buffer_t
+    * \param[in,out] fb       pointer to aom_codec_frame_buffer_t
     */
     typedef int32_t(*aom_get_frame_buffer_cb_fn_t)(void *priv, size_t min_size,
         aom_codec_frame_buffer_t *fb);
@@ -292,13 +292,13 @@ extern "C" {
     /**************************************
      * Extern Function Declarations
      **************************************/
-    extern EbErrorType EbPictureBufferDescCtor(
+    extern EbErrorType eb_picture_buffer_desc_ctor(
         EbPtr *object_dbl_ptr,
-        EbPtr object_init_data_ptr);
+        EbPtr  object_init_data_ptr);
 
-    extern EbErrorType EbReconPictureBufferDescCtor(
+    extern EbErrorType eb_recon_picture_buffer_desc_ctor(
         EbPtr *object_dbl_ptr,
-        EbPtr object_init_data_ptr);
+        EbPtr  object_init_data_ptr);
 
 #ifdef __cplusplus
 }

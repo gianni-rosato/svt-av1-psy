@@ -63,13 +63,13 @@ EbErrorType motion_compensation_prediction_context_ctor(
 
         initData.splitMode = EB_FALSE;
 #if !EXTRA_ALLOCATION
-        return_error = EbPictureBufferDescCtor(
+        return_error = eb_picture_buffer_desc_ctor(
             (EbPtr*)&context_ptr->local_reference_block_l0,
             (EbPtr)&initData);
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
-        return_error = EbPictureBufferDescCtor(
+        return_error = eb_picture_buffer_desc_ctor(
             (EbPtr*)&context_ptr->local_reference_block_l1,
             (EbPtr)&initData);
         if (return_error == EB_ErrorInsufficientResources) {
@@ -81,11 +81,11 @@ EbErrorType motion_compensation_prediction_context_ctor(
         initData.maxWidth = max_cu_width + 32;
         initData.maxHeight = max_cu_height + 32;
 
-        return_error = EbPictureBufferDescCtor((EbPtr*)&context_ptr->local_reference_block8_bitl0, (EbPtr)&initData);
+        return_error = eb_picture_buffer_desc_ctor((EbPtr*)&context_ptr->local_reference_block8_bitl0, (EbPtr)&initData);
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
-        return_error = EbPictureBufferDescCtor((EbPtr*)&context_ptr->local_reference_block8_bitl1, (EbPtr)&initData);
+        return_error = eb_picture_buffer_desc_ctor((EbPtr*)&context_ptr->local_reference_block8_bitl1, (EbPtr)&initData);
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
@@ -126,10 +126,10 @@ void encode_uni_pred_interpolation(
     frac_pos_y = posY & 0x03;
 
     uniPredLumaIFFunctionPtrArrayNew[asm_type][frac_pos_x + (frac_pos_y << 2)](
-        ref_pic->bufferY + integPosx + integPosy * ref_pic->strideY,
-        ref_pic->strideY,
-        dst->bufferY + dstLumaIndex,
-        dst->strideY,
+        ref_pic->buffer_y + integPosx + integPosy * ref_pic->stride_y,
+        ref_pic->stride_y,
+        dst->buffer_y + dstLumaIndex,
+        dst->stride_y,
         pu_width,
         pu_height,
         tempBuf0);

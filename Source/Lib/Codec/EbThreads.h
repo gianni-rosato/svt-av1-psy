@@ -22,97 +22,109 @@ extern "C" {
     /**************************************
      * Threads
      **************************************/
-    extern EbHandle EbCreateThread(
-        void *threadFunction(void *),
-        void *threadContext);
-    extern EbErrorType EbStartThread(
-        EbHandle threadHandle);
-    extern EbErrorType EbStopThread(
-        EbHandle threadHandle);
-    extern EbErrorType EbDestroyThread(
-        EbHandle threadHandle);
+    extern EbHandle eb_create_thread(
+        void *thread_function(void *),
+        void *thread_context);
+
+    extern EbErrorType eb_start_thread(
+        EbHandle thread_handle);
+
+    extern EbErrorType eb_stop_thread(
+        EbHandle thread_handle);
+
+    extern EbErrorType eb_destroy_thread(
+        EbHandle thread_handle);
 
     /**************************************
      * Semaphores
      **************************************/
-    extern EbHandle EbCreateSemaphore(
-        uint32_t initialCount,
-        uint32_t maxCount);
-    extern EbErrorType EbPostSemaphore(
-        EbHandle semaphoreHandle);
-    extern EbErrorType EbBlockOnSemaphore(
-        EbHandle semaphoreHandle);
-    extern EbErrorType EbDestroySemaphore(
-        EbHandle semaphoreHandle);
+    extern EbHandle eb_create_semaphore(
+        uint32_t initial_count,
+        uint32_t max_count);
+
+    extern EbErrorType eb_post_semaphore(
+        EbHandle semaphore_handle);
+
+    extern EbErrorType eb_block_on_semaphore(
+        EbHandle semaphore_handle);
+
+    extern EbErrorType eb_destroy_semaphore(
+        EbHandle semaphore_handle);
+
     /**************************************
      * Mutex
      **************************************/
-    extern EbHandle EbCreateMutex(
+    extern EbHandle eb_create_mutex(
         void);
-    extern EbErrorType EbReleaseMutex(
-        EbHandle mutexHandle);
-    extern EbErrorType EbBlockOnMutex(
-        EbHandle mutexHandle);
-    extern EbErrorType EbBlockOnMutexTimeout(
-        EbHandle mutexHandle,
-        uint32_t timeout);
-    extern EbErrorType EbDestroyMutex(
-        EbHandle mutexHandle);
 
-    extern    EbMemoryMapEntry        *memoryMap;               // library Memory table
-    extern    uint32_t                  *memoryMapIndex;          // library memory index
-    extern    uint64_t                  *totalLibMemory;          // library Memory malloc'd
+    extern EbErrorType eb_release_mutex(
+        EbHandle mutex_handle);
+
+    extern EbErrorType eb_block_on_mutex(
+        EbHandle mutex_handle);
+
+    extern EbErrorType eb_block_on_mutex_timeout(
+        EbHandle mutex_handle,
+        uint32_t timeout);
+
+    extern EbErrorType eb_destroy_mutex(
+        EbHandle mutex_handle);
+
+    extern    EbMemoryMapEntry *memory_map;                // library Memory table
+    extern    uint32_t         *memory_map_index;          // library memory index
+    extern    uint64_t         *total_lib_memory;          // library Memory malloc'd
 
 #ifdef _MSC_VER
-    extern    GROUP_AFFINITY           groupAffinity;
-    extern    uint8_t                    numGroups;
-    extern    EbBool                  alternateGroups;
-#define EB_CREATETHREAD(type, pointer, nElements, pointerClass, threadFunction, threadContext) \
-    pointer = EbCreateThread(threadFunction, threadContext); \
+    extern    GROUP_AFFINITY    group_affinity;
+    extern    uint8_t           num_groups;
+    extern    EbBool            alternate_groups;
+
+#define EB_CREATETHREAD(type, pointer, n_elements, pointer_class, thread_function, thread_context) \
+    pointer = eb_create_thread(thread_function, thread_context); \
     if (pointer == (type)EB_NULL) { \
         return EB_ErrorInsufficientResources; \
     } \
     else { \
-        memoryMap[*(memoryMapIndex)].ptrType = pointerClass; \
-        memoryMap[(*(memoryMapIndex))++].ptr = pointer; \
-        if (nElements % 8 == 0) { \
-            *totalLibMemory += (nElements); \
+        memory_map[*(memory_map_index)].ptrType = pointer_class; \
+        memory_map[(*(memory_map_index))++].ptr = pointer; \
+        if (n_elements % 8 == 0) { \
+            *total_lib_memory += (n_elements); \
         } \
         else { \
-            *totalLibMemory += ((nElements) + (8 - ((nElements) % 8))); \
+            *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
         } \
-        if (numGroups == 2 && alternateGroups){ \
-            groupAffinity.Group = 1 - groupAffinity.Group; \
-            SetThreadGroupAffinity(pointer,&groupAffinity,NULL); \
+        if (num_groups == 2 && alternate_groups){ \
+            group_affinity.Group = 1 - group_affinity.Group; \
+            SetThreadGroupAffinity(pointer,&group_affinity,NULL); \
         } \
-        else if (numGroups == 2 && !alternateGroups){ \
-            SetThreadGroupAffinity(pointer,&groupAffinity,NULL); \
+        else if (num_groups == 2 && !alternate_groups){ \
+            SetThreadGroupAffinity(pointer,&group_affinity,NULL); \
         } \
     } \
-    if (*(memoryMapIndex) >= MAX_NUM_PTR) { \
+    if (*(memory_map_index) >= MAX_NUM_PTR) { \
         return EB_ErrorInsufficientResources; \
     } \
-    libThreadCount++;
+    lib_thread_count++;
 #else
-#define EB_CREATETHREAD(type, pointer, nElements, pointerClass, threadFunction, threadContext) \
-    pointer = EbCreateThread(threadFunction, threadContext); \
+#define EB_CREATETHREAD(type, pointer, n_elements, pointer_class, thread_function, thread_context) \
+    pointer = eb_create_thread(thread_function, thread_context); \
     if (pointer == (type)EB_NULL) { \
         return EB_ErrorInsufficientResources; \
     } \
     else { \
-        memoryMap[*(memoryMapIndex)].ptrType = pointerClass; \
-        memoryMap[(*(memoryMapIndex))++].ptr = pointer; \
-        if (nElements % 8 == 0) { \
-            *totalLibMemory += (nElements); \
+        memory_map[*(memory_map_index)].ptrType = pointer_class; \
+        memory_map[(*(memory_map_index))++].ptr = pointer; \
+        if (n_elements % 8 == 0) { \
+            *total_lib_memory += (n_elements); \
         } \
         else { \
-            *totalLibMemory += ((nElements) + (8 - ((nElements) % 8))); \
+            *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
         } \
     } \
-    if (*(memoryMapIndex) >= MAX_NUM_PTR) { \
+    if (*(memory_map_index) >= MAX_NUM_PTR) { \
         return EB_ErrorInsufficientResources; \
     } \
-    libThreadCount++;
+    lib_thread_count++;
 #endif
 
 

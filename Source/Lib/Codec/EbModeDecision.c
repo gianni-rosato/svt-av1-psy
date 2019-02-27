@@ -188,12 +188,12 @@ EbErrorType mode_decision_candidate_buffer_ctor(
     bufferPtr->candidate_ptr = (ModeDecisionCandidate_t*)EB_NULL;
 
     // Video Buffers
-    return_error = EbPictureBufferDescCtor(
+    return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*)&(bufferPtr->prediction_ptr),
         (EbPtr)&pictureBufferDescInitData);
 
     // Video Buffers
-    return_error = EbPictureBufferDescCtor(
+    return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*)&(bufferPtr->predictionPtrTemp),
         (EbPtr)&pictureBufferDescInitData);
 
@@ -201,7 +201,7 @@ EbErrorType mode_decision_candidate_buffer_ctor(
         return EB_ErrorInsufficientResources;
     }
 
-    return_error = EbPictureBufferDescCtor(
+    return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*)&(bufferPtr->cflTempPredictionPtr),
         (EbPtr)&pictureBufferDescInitData);
 
@@ -210,7 +210,7 @@ EbErrorType mode_decision_candidate_buffer_ctor(
     }
 
 
-    return_error = EbPictureBufferDescCtor(
+    return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*)&(bufferPtr->residual_ptr),
         (EbPtr)&doubleWidthPictureBufferDescInitData);
 
@@ -218,7 +218,7 @@ EbErrorType mode_decision_candidate_buffer_ctor(
         return EB_ErrorInsufficientResources;
     }
 
-    return_error = EbPictureBufferDescCtor(
+    return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*)&(bufferPtr->residualQuantCoeffPtr),
         (EbPtr)&ThirtyTwoWidthPictureBufferDescInitData);
 
@@ -226,7 +226,7 @@ EbErrorType mode_decision_candidate_buffer_ctor(
         return EB_ErrorInsufficientResources;
     }
 
-    return_error = EbPictureBufferDescCtor(
+    return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*)&(bufferPtr->reconCoeffPtr),
         (EbPtr)&ThirtyTwoWidthPictureBufferDescInitData);
 
@@ -234,8 +234,8 @@ EbErrorType mode_decision_candidate_buffer_ctor(
         return EB_ErrorInsufficientResources;
     }
 
-    return_error = EbPictureBufferDescCtor(
-        (EbPtr*)&(bufferPtr->reconPtr),
+    return_error = eb_picture_buffer_desc_ctor(
+        (EbPtr*)&(bufferPtr->recon_ptr),
         (EbPtr)&pictureBufferDescInitData);
 
     if (return_error == EB_ErrorInsufficientResources) {
@@ -282,8 +282,8 @@ EbErrorType SetMvpClipMVs(
 {
     EbErrorType  return_error = EB_ErrorNone;
 
-    uint32_t        picture_width = ((SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr)->luma_width;
-    uint32_t        picture_height = ((SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr)->luma_height;
+    uint32_t        picture_width = ((SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_width;
+    uint32_t        picture_height = ((SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_height;
 
     candidate_ptr->motion_vector_pred_idx[REF_LIST_0] = 0;
     candidate_ptr->motion_vector_pred_x[REF_LIST_0] = 0;
@@ -1923,7 +1923,7 @@ static TxType intra_mode_to_tx_type(const MbModeInfo *mbmi,
 }
 
 static INLINE TxType av1_get_tx_type(
-    BlockSize  sb_type,
+    block_size  sb_type,
     int32_t   is_inter,
     PredictionMode pred_mode,
     UV_PredictionMode pred_mode_uv,
@@ -1937,7 +1937,7 @@ static INLINE TxType av1_get_tx_type(
     UNUSED(blk_row);
     UNUSED(blk_col);
 
-    // BlockSize  sb_type = BLOCK_8X8;
+    // block_size  sb_type = BLOCK_8X8;
 
     MbModeInfo  mbmi;
     mbmi.mode = pred_mode;
@@ -2194,7 +2194,7 @@ EbErrorType ProductGenerateMdCandidatesCu(
 
     (void)lcuAddr;
     (void)interPredContextPtr;
-    const SequenceControlSet_t *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+    const SequenceControlSet_t *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     const EB_SLICE slice_type = picture_control_set_ptr->slice_type;
     uint32_t       canTotalCnt;
 
@@ -2505,14 +2505,14 @@ uint8_t product_full_mode_decision(
             uint32_t  bwidth = context_ptr->blk_geom->tx_width[txb_itr] < 64 ? context_ptr->blk_geom->tx_width[txb_itr] : 32;
             uint32_t  bheight = context_ptr->blk_geom->tx_height[txb_itr] < 64 ? context_ptr->blk_geom->tx_height[txb_itr] : 32;
 
-            int32_t* srcPtr = &(((int32_t*)buffer_ptr_array[lowestCostIndex]->residualQuantCoeffPtr->bufferY)[txb_1d_offset]);
-            int32_t* dstPtr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->bufferY)[txb_1d_offset]);
+            int32_t* src_ptr = &(((int32_t*)buffer_ptr_array[lowestCostIndex]->residualQuantCoeffPtr->buffer_y)[txb_1d_offset]);
+            int32_t* dst_ptr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->buffer_y)[txb_1d_offset]);
 
             uint32_t j;
 
             for (j = 0; j < bheight; j++)
             {
-                memcpy(dstPtr + j * bwidth, srcPtr + j * bwidth, bwidth * sizeof(int32_t));
+                memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
             }
 
             if (context_ptr->blk_geom->has_uv)
@@ -2521,20 +2521,20 @@ uint8_t product_full_mode_decision(
                 bwidth = context_ptr->blk_geom->tx_width_uv[txb_itr];
                 bheight = context_ptr->blk_geom->tx_height_uv[txb_itr];
 
-                srcPtr = &(((int32_t*)buffer_ptr_array[lowestCostIndex]->residualQuantCoeffPtr->bufferCb)[txb_1d_offset_uv]);
-                dstPtr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->bufferCb)[txb_1d_offset_uv]);
+                src_ptr = &(((int32_t*)buffer_ptr_array[lowestCostIndex]->residualQuantCoeffPtr->bufferCb)[txb_1d_offset_uv]);
+                dst_ptr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->bufferCb)[txb_1d_offset_uv]);
 
                 for (j = 0; j < bheight; j++)
                 {
-                    memcpy(dstPtr + j * bwidth, srcPtr + j * bwidth, bwidth * sizeof(int32_t));
+                    memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
                 }
 
-                srcPtr = &(((int32_t*)buffer_ptr_array[lowestCostIndex]->residualQuantCoeffPtr->bufferCr)[txb_1d_offset_uv]);
-                dstPtr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->bufferCr)[txb_1d_offset_uv]);
+                src_ptr = &(((int32_t*)buffer_ptr_array[lowestCostIndex]->residualQuantCoeffPtr->bufferCr)[txb_1d_offset_uv]);
+                dst_ptr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->bufferCr)[txb_1d_offset_uv]);
 
                 for (j = 0; j < bheight; j++)
                 {
-                    memcpy(dstPtr + j * bwidth, srcPtr + j * bwidth, bwidth * sizeof(int32_t));
+                    memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
                 }
             }
 

@@ -111,8 +111,8 @@ EbErrorType EbAppContextCtor(
 
     // recon buffer
     if (config->reconFile) {
-        contextPtr->reconBuffer = (EbBufferHeaderType*)malloc(sizeof(EbBufferHeaderType));
-        if (!contextPtr->reconBuffer) return return_error;
+        contextPtr->recon_buffer = (EbBufferHeaderType*)malloc(sizeof(EbBufferHeaderType));
+        if (!contextPtr->recon_buffer) return return_error;
         const size_t lumaSize =
             config->inputPaddedWidth    *
             config->inputPaddedHeight;
@@ -122,16 +122,16 @@ EbErrorType EbAppContextCtor(
         const size_t frameSize = (lumaSize + chromaSize) << tenBit;
 
         // Initialize Header
-        contextPtr->reconBuffer->size = sizeof(EbBufferHeaderType);
+        contextPtr->recon_buffer->size = sizeof(EbBufferHeaderType);
 
-        contextPtr->reconBuffer->p_buffer = (uint8_t*)malloc(frameSize);
-        if (!contextPtr->reconBuffer->p_buffer) return return_error;
+        contextPtr->recon_buffer->p_buffer = (uint8_t*)malloc(frameSize);
+        if (!contextPtr->recon_buffer->p_buffer) return return_error;
 
-        contextPtr->reconBuffer->n_alloc_len = (uint32_t)frameSize;
-        contextPtr->reconBuffer->p_app_private = NULL;
+        contextPtr->recon_buffer->n_alloc_len = (uint32_t)frameSize;
+        contextPtr->recon_buffer->p_app_private = NULL;
     }
     else
-        contextPtr->reconBuffer = NULL;
+        contextPtr->recon_buffer = NULL;
     return EB_ErrorNone;
 }
 
@@ -152,8 +152,8 @@ void EbAppContextDtor(
     free(contextPtr->outputStreamBuffer->p_buffer);
     free(contextPtr->inputPictureBuffer);
     free(contextPtr->outputStreamBuffer);
-    if(contextPtr->reconBuffer)
-        free(contextPtr->reconBuffer);
+    if(contextPtr->recon_buffer)
+        free(contextPtr->recon_buffer);
 }
 
 /***********************************************

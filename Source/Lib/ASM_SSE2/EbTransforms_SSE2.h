@@ -11,138 +11,137 @@
 extern "C" {
 #endif
 
-    extern EB_ALIGN(16) const int16_t DstTransformAsmConst_SSE2[88];
-    extern EB_ALIGN(16) const int16_t InvTransformAsmConst_SSE2[1512];
-    extern EB_ALIGN(16) const int16_t InvDstTransformAsmConst_SSE2[72];
+    extern EB_ALIGN(16) const int16_t dst_transform_asm_const_sse2[88];
+    extern EB_ALIGN(16) const int16_t inv_transform_asm_const_sse2[1512];
+    extern EB_ALIGN(16) const int16_t inv_dst_transform_asm_const_sse2[72];
 
+    extern void transform4x4_sse2_intrin(
+        int16_t        *residual,
+        const uint32_t  src_stride,
+        int16_t        *transform_coefficients,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
-    extern void Transform4x4_SSE2_INTRIN(
-        int16_t                  *residual,
-        const uint32_t             src_stride,
-        int16_t                  *transformCoefficients,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
+    extern void dst_transform4x4_sse2_intrin(
+        int16_t        *residual,
+        const uint32_t  src_stride,
+        int16_t        *transform_coefficients,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
-    extern void DstTransform4x4_SSE2_INTRIN(
-        int16_t                  *residual,
-        const uint32_t             src_stride,
-        int16_t                  *transformCoefficients,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
+    extern void transform8x8_sse2_intrin(
+        int16_t        *residual,
+        const uint32_t  src_stride,
+        int16_t        *transform_coefficients,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
-    extern void Transform8x8_SSE2_INTRIN(
-        int16_t                  *residual,
-        const uint32_t             src_stride,
-        int16_t                  *transformCoefficients,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
+    extern void pfreq_transform8x8_sse2_intrin(
+        int16_t        *residual,
+        const uint32_t  src_stride,
+        int16_t        *transform_coefficients,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
-    extern void PfreqTransform8x8_SSE2_INTRIN(
-        int16_t                  *residual,
-        const uint32_t             src_stride,
-        int16_t                  *transformCoefficients,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
+    extern void pfreq_n4_transform8x8_sse2_intrin(
+        int16_t        *residual,
+        const uint32_t  src_stride,
+        int16_t        *transform_coefficients,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
-    extern void PfreqN4Transform8x8_SSE2_INTRIN(
-        int16_t                  *residual,
-        const uint32_t             src_stride,
-        int16_t                  *transformCoefficients,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
+    extern void transform16x16_sse2(
+        int16_t        *residual,
+        const uint32_t  src_stride,
+        int16_t        *transform_coefficients,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
-    extern void Transform16x16_SSE2(
-        int16_t                  *residual,
-        const uint32_t             src_stride,
-        int16_t                  *transformCoefficients,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
+    extern void transform32x32_sse2(
+        int16_t        *residual,
+        const uint32_t  src_stride,
+        int16_t        *transform_coefficients,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
+    extern void inv_transform8x8_sse2_intrin(
+        int16_t        *transform_coefficients,
+        const uint32_t  src_stride,
+        int16_t        *residual,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
-    extern void Transform32x32_SSE2(
-        int16_t                  *residual,
-        const uint32_t             src_stride,
-        int16_t                  *transformCoefficients,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
+    extern void inv_transform4x4_sse2_intrin(
+        int16_t        *transform_coefficients,
+        const uint32_t  src_stride,
+        int16_t        *residual,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
-    extern void InvTransform8x8_SSE2_INTRIN(
-        int16_t                  *transformCoefficients,
-        const uint32_t             src_stride,
-        int16_t                  *residual,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
+    extern void inv_dst_transform4x4_sse2_intrin(
+        int16_t        *transform_coefficients,
+        const uint32_t  src_stride,
+        int16_t        *residual,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
-    extern void InvTransform4x4_SSE2_INTRIN(
-        int16_t                  *transformCoefficients,
-        const uint32_t             src_stride,
-        int16_t                  *residual,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
-
-    extern void InvDstTransform4x4_SSE2_INTRIN(
-        int16_t                  *transformCoefficients,
-        const uint32_t             src_stride,
-        int16_t                  *residual,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
-
-    void PfreqTransform32x32_SSE2(
-        int16_t *src,
+    void pfreq_transform32x32_sse2(
+        int16_t       *src,
         const uint32_t src_stride,
-        int16_t *dst,
+        int16_t       *dst,
         const uint32_t dst_stride,
-        int16_t *intermediate,
-        uint32_t addshift);
+        int16_t       *intermediate,
+        uint32_t       addshift);
 
-    void PfreqTransform16x16_SSE2(
-        int16_t *src,
+    void pfreq_transform16x16_sse2(
+        int16_t       *src,
         const uint32_t src_stride,
-        int16_t *dst,
+        int16_t       *dst,
         const uint32_t dst_stride,
-        int16_t *intermediate,
-        uint32_t addshift);
+        int16_t       *intermediate,
+        uint32_t       addshift);
 
-    void PfreqN4Transform32x32_SSE2(
-        int16_t *src,
+    void pfreq_n4_transform32x32_sse2(
+        int16_t       *src,
         const uint32_t src_stride,
-        int16_t *dst,
+        int16_t       *dst,
         const uint32_t dst_stride,
-        int16_t *intermediate,
-        uint32_t addshift);
-    void PfreqN4Transform16x16_SSE2(
-        int16_t *src,
+        int16_t       *intermediate,
+        uint32_t       addshift);
+
+    void pfreq_n4_transform16x16_sse2(
+        int16_t       *src,
         const uint32_t src_stride,
-        int16_t *dst,
+        int16_t       *dst,
         const uint32_t dst_stride,
-        int16_t *intermediate,
-        uint32_t addshift);
+        int16_t       *intermediate,
+        uint32_t       addshift);
 
-    void EstimateInvTransform32x32_SSE2(
-        int16_t                  *transformCoefficients,
-        const uint32_t             src_stride,
-        int16_t                  *residual,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
+    void estimate_inv_transform32x32_sse2(
+        int16_t        *transform_coefficients,
+        const uint32_t  src_stride,
+        int16_t        *residual,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
-    void EstimateInvTransform16x16_SSE2(
-        int16_t                  *src,
-        uint32_t                   src_stride,
-        int16_t                  *dst,
-        uint32_t                   dst_stride,
-        int16_t                  *intermediate,
-        uint32_t                   addshift);
+    void estimate_inv_transform16x16_sse2(
+        int16_t  *src,
+        uint32_t  src_stride,
+        int16_t  *dst,
+        uint32_t  dst_stride,
+        int16_t  *intermediate,
+        uint32_t  addshift);
 
 #ifdef __cplusplus
 }

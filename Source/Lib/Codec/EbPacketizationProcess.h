@@ -17,8 +17,8 @@ extern "C" {
      **************************************/
     typedef struct EbPPSConfig_s
     {
-        uint8_t       ppsId;
-        uint8_t       constrainedFlag;
+        uint8_t ppsId;
+        uint8_t constrainedFlag;
 
     } EbPPSConfig_t;
 
@@ -27,9 +27,9 @@ extern "C" {
      **************************************/
     typedef struct PacketizationContext_s
     {
-        EbFifo_t                *entropyCodingInputFifoPtr;
-        EbFifo_t                *rateControlTasksOutputFifoPtr;
-        EbPPSConfig_t           *ppsConfig;
+        EbFifo_t      *entropy_coding_input_fifo_ptr;
+        EbFifo_t      *rate_control_tasks_output_fifo_ptr;
+        EbPPSConfig_t *ppsConfig;
 
         uint64_t   dpbDispOrder[8], dpbDecOrder[8];
         uint64_t   totShownFrames;
@@ -40,10 +40,10 @@ extern "C" {
     /**************************************
      * Extern Function Declarations
      **************************************/
-    extern EbErrorType PacketizationContextCtor(
+    extern EbErrorType packetization_context_ctor(
         PacketizationContext_t **context_dbl_ptr,
-        EbFifo_t                *entropyCodingInputFifoPtr,
-        EbFifo_t                *rateControlTasksOutputFifoPtr);
+        EbFifo_t                *entropy_coding_input_fifo_ptr,
+        EbFifo_t                *rate_control_tasks_output_fifo_ptr);
 
 
 

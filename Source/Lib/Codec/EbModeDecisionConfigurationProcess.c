@@ -610,13 +610,13 @@ void set_reference_sg_ep(
         cm->sg_ref_frame_ep[0] = cm->sg_ref_frame_ep[1] = -1;
         break;
     case B_SLICE:
-        refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
-        refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->objectPtr;
+        refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
+        refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
         cm->sg_ref_frame_ep[0] = refObjL0->sg_frame_ep;
         cm->sg_ref_frame_ep[1] = refObjL1->sg_frame_ep;
         break;
     case P_SLICE:
-        refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
+        refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
         cm->sg_ref_frame_ep[0] = refObjL0->sg_frame_ep;
         break;
     default:
@@ -641,14 +641,14 @@ void set_reference_cdef_strength(
         picture_control_set_ptr->parent_pcs_ptr->cdf_ref_frame_strenght = 0;
         break;
     case B_SLICE:
-        refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
-        refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->objectPtr;
+        refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
+        refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
         strength = (refObjL0->cdef_frame_strength + refObjL1->cdef_frame_strength) / 2;
         picture_control_set_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 1;
         picture_control_set_ptr->parent_pcs_ptr->cdf_ref_frame_strenght = strength;
         break;
     case P_SLICE:
-        refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
+        refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
         strength = refObjL0->cdef_frame_strength;
         picture_control_set_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 1;
         picture_control_set_ptr->parent_pcs_ptr->cdf_ref_frame_strenght = strength;
@@ -679,8 +679,8 @@ void AdaptiveDlfParameterComputation(
 
     if (picture_control_set_ptr->slice_type == B_SLICE) {
 
-        refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
-        refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->objectPtr;
+        refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
+        refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
 
         if ((refObjL0->intra_coded_area > INTRA_AREA_TH_CLASS_1[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][refObjL0->tmpLayerIdx]) && (refObjL1->intra_coded_area > INTRA_AREA_TH_CLASS_1[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][refObjL1->tmpLayerIdx]))
 
@@ -692,8 +692,8 @@ void AdaptiveDlfParameterComputation(
     if (picture_control_set_ptr->slice_type == B_SLICE) {
 
         if (!scene_transition_flag && !picture_control_set_ptr->parent_pcs_ptr->fade_out_from_black && !picture_control_set_ptr->parent_pcs_ptr->fade_in_to_black) {
-            refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
-            refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->objectPtr;
+            refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
+            refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
 
             if (picture_control_set_ptr->temporal_layer_index == 0) {
                 highIntra = (picture_control_set_ptr->parent_pcs_ptr->intra_coded_block_probability > INTRA_AREA_TH_CLASS_1[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][picture_control_set_ptr->temporal_layer_index]) ? 1 : 0;
@@ -1016,7 +1016,7 @@ void forward_all_blocks_to_md(
         {
             split_flag = EB_TRUE;
 
-            const BlockGeom * blk_geom = Get_blk_geom_mds(blk_index);
+            const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
 
             //if the parentSq is inside inject this block
             uint8_t is_blk_allowed = picture_control_set_ptr->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
@@ -1080,7 +1080,7 @@ void forward_sq_blocks_to_md(
         {
             split_flag = EB_TRUE;
 
-            const BlockGeom * blk_geom = Get_blk_geom_mds(blk_index);
+            const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
 
             //if the parentSq is inside inject this block
             if (sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index])
@@ -1436,7 +1436,7 @@ EbAuraStatus AuraDetection64x64Gold(
 )
 {
 
-    SequenceControlSet_t  *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+    SequenceControlSet_t  *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     int32_t                 picture_width_in_sb = (sequence_control_set_ptr->luma_width + BLOCK_SIZE_64 - 1) >> LOG2_64_SIZE;
     int32_t                 picture_height_in_sb = (sequence_control_set_ptr->luma_height + BLOCK_SIZE_64 - 1) >> LOG2_64_SIZE;
     uint32_t                 sb_index = yLcuIndex * picture_width_in_sb + xLcuIndex;
@@ -2056,8 +2056,8 @@ void ConfigureAdp(
     if (picture_control_set_ptr->slice_type != I_SLICE) {
         if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
             EbReferenceObject_t  * refObjL0, *refObjL1;
-            refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
-            refObjL1 = (picture_control_set_ptr->parent_pcs_ptr->slice_type == B_SLICE) ? (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->objectPtr : (EbReferenceObject_t*)EB_NULL;
+            refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
+            refObjL1 = (picture_control_set_ptr->parent_pcs_ptr->slice_type == B_SLICE) ? (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr : (EbReferenceObject_t*)EB_NULL;
             luminosityChange = ((ABS(picture_control_set_ptr->parent_pcs_ptr->average_intensity[0] - refObjL0->average_intensity) >= LUMINOSITY_CHANGE_TH) || (refObjL1 != EB_NULL && ABS(picture_control_set_ptr->parent_pcs_ptr->average_intensity[0] - refObjL1->average_intensity) >= LUMINOSITY_CHANGE_TH));
         }
     }
@@ -2566,7 +2566,7 @@ void forward_sq_non4_blocks_to_md(
         {
             split_flag = EB_TRUE;
 
-            const BlockGeom * blk_geom = Get_blk_geom_mds(blk_index);
+            const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
 
 
             //if the parentSq is inside inject this block
@@ -2624,7 +2624,7 @@ void forward_all_c_blocks_to_md(
         while (blk_index < sequence_control_set_ptr->max_block_cnt)
         {
             tot_d1_blocks = 0;
-            const BlockGeom * blk_geom = Get_blk_geom_mds(blk_index);
+            const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
 
             //if the parentSq is inside inject this block
             uint8_t is_blk_allowed = picture_control_set_ptr->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
@@ -2639,7 +2639,7 @@ void forward_all_c_blocks_to_md(
                     blk_geom->sq_size == 8 ? 1 : 1;
 
                 for (uint32_t idx = 0; idx < tot_d1_blocks; ++idx) {
-                    blk_geom = Get_blk_geom_mds(blk_index);
+                    blk_geom = get_blk_geom_mds(blk_index);
 
                     //if the parentSq is inside inject this block
                     if (sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index]){
@@ -2686,13 +2686,13 @@ void* ModeDecisionConfigurationKernel(void *input_ptr)
     for (;;) {
 
         // Get RateControl Results
-        EbGetFullObject(
+        eb_get_full_object(
             context_ptr->rateControlInputFifoPtr,
             &rateControlResultsWrapperPtr);
 
-        rateControlResultsPtr = (RateControlResults_t*)rateControlResultsWrapperPtr->objectPtr;
-        picture_control_set_ptr = (PictureControlSet_t*)rateControlResultsPtr->pictureControlSetWrapperPtr->objectPtr;
-        sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+        rateControlResultsPtr = (RateControlResults_t*)rateControlResultsWrapperPtr->object_ptr;
+        picture_control_set_ptr = (PictureControlSet_t*)rateControlResultsPtr->pictureControlSetWrapperPtr->object_ptr;
+        sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
       
         context_ptr->qp = picture_control_set_ptr->picture_qp;
 
@@ -2879,19 +2879,19 @@ void* ModeDecisionConfigurationKernel(void *input_ptr)
             picture_control_set_ptr);
 
         // Post the results to the MD processes
-        EbGetEmptyObject(
+        eb_get_empty_object(
             context_ptr->modeDecisionConfigurationOutputFifoPtr,
             &encDecTasksWrapperPtr);
 
-        encDecTasksPtr = (EncDecTasks_t*)encDecTasksWrapperPtr->objectPtr;
+        encDecTasksPtr = (EncDecTasks_t*)encDecTasksWrapperPtr->object_ptr;
         encDecTasksPtr->pictureControlSetWrapperPtr = rateControlResultsPtr->pictureControlSetWrapperPtr;
         encDecTasksPtr->inputType = ENCDEC_TASKS_MDC_INPUT;
 
         // Post the Full Results Object
-        EbPostFullObject(encDecTasksWrapperPtr);
+        eb_post_full_object(encDecTasksWrapperPtr);
 
         // Release Rate Control Results
-        EbReleaseObject(rateControlResultsWrapperPtr);
+        eb_release_object(rateControlResultsWrapperPtr);
 
     }
 

@@ -14,23 +14,20 @@ extern "C" {
     /**************************************
      * Process Results
      **************************************/
-    typedef struct ResourceCoordinationResults_s
-    {
+    typedef struct ResourceCoordinationResults_s {
         EbObjectWrapper_t *pictureControlSetWrapperPtr;
-
     } ResourceCoordinationResults_t;
 
-    typedef struct ResourceCoordinationResultInitData_s
-    {
+    typedef struct ResourceCoordinationResultInitData_s {
         int32_t junk;
     } ResourceCoordinationResultInitData_t;
 
     /**************************************
      * Extern Function Declarations
      **************************************/
-    extern EbErrorType ResourceCoordinationResultCtor(
+    extern EbErrorType resource_coordination_result_ctor(
         EbPtr *object_dbl_ptr,
-        EbPtr object_init_data_ptr);
+        EbPtr  object_init_data_ptr);
 
 
 #ifdef __cplusplus

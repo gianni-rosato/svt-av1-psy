@@ -47,7 +47,7 @@ void estimate_uni_pred_interpolation_unpacked_avc_style(
     uint8_t    frac_posy, mapped_frac_posy;
     uint32_t   luma_stride;
 
-    luma_stride = dst->strideY;
+    luma_stride = dst->stride_y;
 
     frac_posx = pos_x & 0x03;
     frac_posy = pos_y & 0x03;
@@ -59,8 +59,8 @@ void estimate_uni_pred_interpolation_unpacked_avc_style(
     (void)dst_chroma_index;
     //doing the luma interpolation
     avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 2)](
-        ref_pic->bufferY + 2 + 2 * ref_pic->strideY, ref_pic->strideY,
-        dst->bufferY + dst_luma_index, luma_stride,
+        ref_pic->buffer_y + 2 + 2 * ref_pic->stride_y, ref_pic->stride_y,
+        dst->buffer_y + dst_luma_index, luma_stride,
         pu_width, pu_height,
         temp_buf,
         sub_sample_pred_flag,
@@ -72,10 +72,10 @@ void estimate_uni_pred_interpolation_unpacked_avc_style(
 * Requirement: pu_height % 2 = 0
 * Requirement: skip         = 0 or 1
 * Requirement (x86 only): temp_buf % 16 = 0
-* Requirement (x86 only): (dst->bufferY  + dst_luma_index  ) % 16 = 0 when pu_width %16 = 0
+* Requirement (x86 only): (dst->buffer_y  + dst_luma_index  ) % 16 = 0 when pu_width %16 = 0
 * Requirement (x86 only): (dst->bufferCb + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
 * Requirement (x86 only): (dst->bufferCr + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
-* Requirement (x86 only): dst->strideY   % 16 = 0 when pu_width %16 = 0
+* Requirement (x86 only): dst->stride_y   % 16 = 0 when pu_width %16 = 0
 * Requirement (x86 only): dst->chromaStride % 16 = 0 when pu_width %32 = 0
 *******************************************************************************/
 void estimate_bi_pred_interpolation_unpacked_avc_style(
@@ -104,8 +104,8 @@ void estimate_bi_pred_interpolation_unpacked_avc_style(
 
     uint32_t   luma_stride, ref_luma_stride;
 
-    luma_stride = bi_dst->strideY;
-    ref_luma_stride = ref_pic_list0->strideY;
+    luma_stride = bi_dst->stride_y;
+    ref_luma_stride = ref_pic_list0->stride_y;
 
     (void)component_mask;
     (void)dst_chroma_index;
@@ -121,7 +121,7 @@ void estimate_bi_pred_interpolation_unpacked_avc_style(
 
 
     avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 2)](
-        ref_pic_list0->bufferY + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
+        ref_pic_list0->buffer_y + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
         ref_list0_temp_dst, pu_width,
         pu_width, pu_height,
         first_pass_if_temp_dst,
@@ -136,7 +136,7 @@ void estimate_bi_pred_interpolation_unpacked_avc_style(
 
     //doing the luma interpolation
     avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 2)](
-        ref_pic_list1->bufferY + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
+        ref_pic_list1->buffer_y + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
         ref_list1_temp_dst, pu_width,
         pu_width, pu_height,
         first_pass_if_temp_dst,
@@ -144,9 +144,9 @@ void estimate_bi_pred_interpolation_unpacked_avc_style(
         mapped_frac_posx ? mapped_frac_posx : mapped_frac_posy);
 
     // bi-pred luma
-    picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->bufferY + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
+    picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->buffer_y + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
     if (sub_sample_pred_flag) {
-        picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->bufferY + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
+        picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->buffer_y + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
     }
 }
 
@@ -156,10 +156,10 @@ void estimate_bi_pred_interpolation_unpacked_avc_style(
 * Requirement: pu_height % 2 = 0
 * Requirement: skip         = 0 or 1
 * Requirement (x86 only): temp_buf % 16 = 0
-* Requirement (x86 only): (dst->bufferY  + dst_luma_index  ) % 16 = 0 when pu_width %16 = 0
+* Requirement (x86 only): (dst->buffer_y  + dst_luma_index  ) % 16 = 0 when pu_width %16 = 0
 * Requirement (x86 only): (dst->bufferCb + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
 * Requirement (x86 only): (dst->bufferCr + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
-* Requirement (x86 only): dst->strideY   % 16 = 0 when pu_width %16 = 0
+* Requirement (x86 only): dst->stride_y   % 16 = 0 when pu_width %16 = 0
 * Requirement (x86 only): dst->chromaStride % 16 = 0 when pu_width %32 = 0
 *******************************************************************************/
 void estimate_uni_pred_interpolation_avc_luma(
@@ -186,7 +186,7 @@ void estimate_uni_pred_interpolation_avc_luma(
 
     uint8_t    frac_pos;
 
-    luma_stride = dst->strideY;
+    luma_stride = dst->stride_y;
 
     //luma
     //compute the luma fractional position
@@ -209,8 +209,8 @@ void estimate_uni_pred_interpolation_avc_luma(
     {
         //doing the luma interpolation
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 2)](
-            ref_pic->bufferY + integ_pos_x + integ_pos_y * ref_pic->strideY, ref_pic->strideY,
-            dst->bufferY + dst_luma_index, luma_stride,
+            ref_pic->buffer_y + integ_pos_x + integ_pos_y * ref_pic->stride_y, ref_pic->stride_y,
+            dst->buffer_y + dst_luma_index, luma_stride,
             pu_width, pu_height,
             temp_buf,
             sub_sample_pred_flag,
@@ -267,10 +267,10 @@ void estimate_uni_pred_interpolation_avc_luma(
  * Requirement: pu_height % 2 = 0
  * Requirement: skip         = 0 or 1
  * Requirement (x86 only): temp_buf % 16 = 0
- * Requirement (x86 only): (dst->bufferY  + dst_luma_index  ) % 16 = 0 when pu_width %16 = 0
+ * Requirement (x86 only): (dst->buffer_y  + dst_luma_index  ) % 16 = 0 when pu_width %16 = 0
  * Requirement (x86 only): (dst->bufferCb + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
  * Requirement (x86 only): (dst->bufferCr + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
- * Requirement (x86 only): dst->strideY   % 16 = 0 when pu_width %16 = 0
+ * Requirement (x86 only): dst->stride_y   % 16 = 0 when pu_width %16 = 0
  * Requirement (x86 only): dst->chromaStride % 16 = 0 when pu_width %32 = 0
 *******************************************************************************/
 void estimate_bi_pred_interpolation_avc_luma(
@@ -302,8 +302,8 @@ void estimate_bi_pred_interpolation_avc_luma(
 
     uint32_t   chroma_pu_width = pu_width >> 1;
     uint32_t   chroma_pu_height = pu_height >> 1;
-    luma_stride = bi_dst->strideY;
-    ref_luma_stride = ref_pic_list0->strideY;
+    luma_stride = bi_dst->stride_y;
+    ref_luma_stride = ref_pic_list0->stride_y;
     uint8_t shift = sub_sample_pred_flag ? 1 : 0;
 
     //Luma
@@ -327,7 +327,7 @@ void estimate_bi_pred_interpolation_avc_luma(
         integ_pos_y += integer_posoffset_tab_y[frac_pos];
 
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 2)](
-            ref_pic_list0->bufferY + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
+            ref_pic_list0->buffer_y + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
             ref_list0_temp_dst, pu_width,
             pu_width, pu_height,
             first_pass_if_temp_dst,
@@ -352,7 +352,7 @@ void estimate_bi_pred_interpolation_avc_luma(
         integ_pos_y += integer_posoffset_tab_y[frac_pos];
         //doing the luma interpolation
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 2)](
-            ref_pic_list1->bufferY + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
+            ref_pic_list1->buffer_y + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
             ref_list1_temp_dst, pu_width,
             pu_width, pu_height,
             first_pass_if_temp_dst,
@@ -361,9 +361,9 @@ void estimate_bi_pred_interpolation_avc_luma(
 
 
         // bi-pred luma
-        picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->bufferY + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
+        picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->buffer_y + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
         if (sub_sample_pred_flag) {
-            picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->bufferY + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
+            picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->buffer_y + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
         }
     }
 
@@ -532,13 +532,13 @@ void estimate_uni_pred_interpolation_avc_lumaRef10Bit(
         (void)temp_buf;
         uint32_t in_pos_x = (pos_x >> 2);
         uint32_t in_pos_y = (pos_y >> 2);
-        uint16_t *ptr16 = (uint16_t *)ref_frame_pic_list0->bufferY + in_pos_x + in_pos_y * ref_frame_pic_list0->strideY;
+        uint16_t *ptr16 = (uint16_t *)ref_frame_pic_list0->buffer_y + in_pos_x + in_pos_y * ref_frame_pic_list0->stride_y;
 
         extract8_bitdata_safe_sub(
             ptr16,
-            ref_frame_pic_list0->strideY << sub_pred,
-            dst->bufferY + dst_luma_index,
-            dst->strideY << sub_pred,
+            ref_frame_pic_list0->stride_y << sub_pred,
+            dst->buffer_y + dst_luma_index,
+            dst->stride_y << sub_pred,
             pu_width,
             pu_height >> sub_pred,
             sub_pred,
@@ -706,12 +706,12 @@ void estimate_bi_pred_interpolation_avc_luma_ref10_bit(
         (void)ref_list0_temp_dst;
         (void)ref_list1_temp_dst;
         unpack_l0l1_avg_safe_sub(
-            (uint16_t *)ref_frame_pic_list0->bufferY + (ref_list0_pos_x >> 2) + (ref_list0_pos_y >> 2)*ref_frame_pic_list0->strideY,
-            ref_frame_pic_list0->strideY << sub_pred,
-            (uint16_t *)ref_frame_pic_list1->bufferY + (ref_list1_pos_x >> 2) + (ref_list1_pos_y >> 2)*ref_frame_pic_list1->strideY,
-            ref_frame_pic_list1->strideY << sub_pred,
-            bi_dst->bufferY + dst_luma_index,
-            bi_dst->strideY << sub_pred,
+            (uint16_t *)ref_frame_pic_list0->buffer_y + (ref_list0_pos_x >> 2) + (ref_list0_pos_y >> 2)*ref_frame_pic_list0->stride_y,
+            ref_frame_pic_list0->stride_y << sub_pred,
+            (uint16_t *)ref_frame_pic_list1->buffer_y + (ref_list1_pos_x >> 2) + (ref_list1_pos_y >> 2)*ref_frame_pic_list1->stride_y,
+            ref_frame_pic_list1->stride_y << sub_pred,
+            bi_dst->buffer_y + dst_luma_index,
+            bi_dst->stride_y << sub_pred,
             pu_width,
             pu_height >> sub_pred,
             sub_pred,
@@ -771,7 +771,7 @@ void uni_pred_i_free_ref8_bit(
 
     uint8_t    frac_pos;
 
-    luma_stride = dst->strideY;
+    luma_stride = dst->stride_y;
 
     //luma
     //compute the luma fractional position
@@ -794,8 +794,8 @@ void uni_pred_i_free_ref8_bit(
     {
         //doing the luma interpolation
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 2)](
-            ref_pic->bufferY + integ_pos_x + integ_pos_y * ref_pic->strideY, ref_pic->strideY,
-            dst->bufferY + dst_luma_index, luma_stride,
+            ref_pic->buffer_y + integ_pos_x + integ_pos_y * ref_pic->stride_y, ref_pic->stride_y,
+            dst->buffer_y + dst_luma_index, luma_stride,
             pu_width, pu_height,
             temp_buf,
             sub_sample_pred_flag,
@@ -874,8 +874,8 @@ void bi_pred_i_free_ref8_bit(
 
     uint32_t   chroma_pu_width = pu_width >> 1;
     uint32_t   chroma_pu_height = pu_height >> 1;
-    luma_stride = bi_dst->strideY;
-    ref_luma_stride = ref_pic_list0->strideY;
+    luma_stride = bi_dst->stride_y;
+    ref_luma_stride = ref_pic_list0->stride_y;
     uint8_t shift = sub_sample_pred_flag ? 1 : 0;
 
     //Luma
@@ -899,7 +899,7 @@ void bi_pred_i_free_ref8_bit(
         integ_pos_y += integer_posoffset_tab_y[frac_pos];
 
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 2)](
-            ref_pic_list0->bufferY + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
+            ref_pic_list0->buffer_y + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
             ref_list0_temp_dst, pu_width,
             pu_width, pu_height,
             first_pass_if_temp_dst,
@@ -925,7 +925,7 @@ void bi_pred_i_free_ref8_bit(
 
         //doing the luma interpolation
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 2)](
-            ref_pic_list1->bufferY + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
+            ref_pic_list1->buffer_y + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
             ref_list1_temp_dst, pu_width,
             pu_width, pu_height,
             first_pass_if_temp_dst,
@@ -933,9 +933,9 @@ void bi_pred_i_free_ref8_bit(
             mapped_frac_posx ? mapped_frac_posx : mapped_frac_posy);
 
         // bi-pred luma
-        picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->bufferY + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
+        picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->buffer_y + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
         if (sub_sample_pred_flag) {
-            picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->bufferY + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
+            picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->buffer_y + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
         }
     }
     

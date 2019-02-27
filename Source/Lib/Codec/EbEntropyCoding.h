@@ -83,12 +83,12 @@ extern "C" {
         uint32_t                                 yEob,
         uint32_t                                 cbEob,
         uint32_t                                 crEob,
-        uint64_t                                 *yTuCoeffBits,
-        uint64_t                                 *cbTuCoeffBits,
-        uint64_t                                 *crTuCoeffBits,
+        uint64_t                                 *y_tu_coeff_bits,
+        uint64_t                                 *cb_tu_coeff_bits,
+        uint64_t                                 *cr_tu_coeff_bits,
         TxSize                                 txsize,
         TxSize                                 txsize_uv,
-        COMPONENT_TYPE                          componentType,
+        COMPONENT_TYPE                          component_type,
         EbAsm                                  asm_type);
 
     extern EbErrorType CopyRbspBitstreamToPayload(
@@ -212,7 +212,7 @@ extern "C" {
         NeighborArrayUnit_t     *dcSignLevelCoeffNeighborArray,
         uint32_t                  cu_origin_x,
         uint32_t                  cu_origin_y,
-        const BlockSize        plane_bsize,
+        const block_size        plane_bsize,
         const TxSize           tx_size,
         int16_t *const           txb_skip_ctx,
         int16_t *const           dc_sign_ctx);
@@ -310,7 +310,7 @@ extern "C" {
     MOTION_MODE motion_mode_allowed(
         const PictureControlSet_t       *picture_control_set_ptr,
         const CodingUnit_t              *cu_ptr,
-        const BlockSize                 bsize,
+        const block_size                 bsize,
         MvReferenceFrame                rf0,
         MvReferenceFrame                rf1,
         PredictionMode                  mode);

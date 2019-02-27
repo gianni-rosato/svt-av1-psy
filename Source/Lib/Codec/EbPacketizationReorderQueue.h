@@ -39,9 +39,9 @@ extern "C" {
 
     } PacketizationReorderEntry_t;
 
-    extern EbErrorType PacketizationReorderEntryCtor(
-        PacketizationReorderEntry_t   **entryDblPtr,
-        uint32_t                          picture_number);
+    extern EbErrorType packetization_reorder_entry_ctor(
+        PacketizationReorderEntry_t **entry_dbl_ptr,
+        uint32_t                      picture_number);
 
 
 #ifdef __cplusplus

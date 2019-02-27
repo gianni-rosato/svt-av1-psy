@@ -35,9 +35,9 @@ extern "C" {
 
     extern void Decimation2D(
         uint8_t                   *input_samples,
-        uint32_t                   inputStride,
-        uint32_t                   inputAreaWidth,
-        uint32_t                   inputAreaHeight,
+        uint32_t                   input_stride,
+        uint32_t                   input_area_width,
+        uint32_t                   input_area_height,
         uint8_t                   *decimSamples,
         uint32_t                   decimStride,
         uint32_t                   decimStep);
@@ -1529,7 +1529,7 @@ extern "C" {
         uint8_t  *src,                            // input parameter, source samples Ptr
         uint32_t  src_stride,                      // input parameter, source stride
         uint8_t  *ref,                            // input parameter, reference samples Ptr
-        uint32_t  refStride);
+        uint32_t  ref_stride);
 
     // Nader - to be replaced by loock-up table
     /*******************************************

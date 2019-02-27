@@ -67,13 +67,13 @@ typedef struct EbPaReferenceObjectDescInitData_s {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType EbReferenceObjectCtor(
+extern EbErrorType eb_reference_object_ctor(
     EbPtr *object_dbl_ptr,
-    EbPtr object_init_data_ptr);
+    EbPtr  object_init_data_ptr);
 
-extern EbErrorType EbPaReferenceObjectCtor(
+extern EbErrorType eb_pa_reference_object_ctor(
     EbPtr *object_dbl_ptr,
-    EbPtr object_init_data_ptr);
+    EbPtr  object_init_data_ptr);
 
 
 #endif //EbReferenceObject_h

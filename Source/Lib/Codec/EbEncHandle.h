@@ -23,7 +23,7 @@ typedef struct EbEncHandle_s
 {
     // Encode Instances & Compute Segments
     uint32_t                                  encodeInstanceTotalCount;
-    uint32_t                                 *computeSegmentsTotalCountArray;
+    uint32_t                                 *compute_segments_total_count_array;
 
     // Config Set Counts
     uint32_t                                  sequenceControlSetPoolTotalCount;
@@ -40,7 +40,7 @@ typedef struct EbEncHandle_s
     // Config Set Pool & Active Array
     EbSystemResource_t                     *sequenceControlSetPoolPtr;
     EbFifo_t                              **sequenceControlSetPoolProducerFifoPtrArray;
-    EbSequenceControlSetInstance_t        **sequenceControlSetInstanceArray;
+    EbSequenceControlSetInstance_t        **sequence_control_set_instance_array;
 
     // Full Results
     EbSystemResource_t                    **pictureControlSetPoolPtrArray;
@@ -168,9 +168,9 @@ typedef struct EbEncHandle_s
     EbCallback_t                          **app_callback_ptr_array;
 
     // Memory Map
-    EbMemoryMapEntry                       *memoryMap;
-    uint32_t                                memoryMapIndex;
-    uint64_t                                totalLibMemory;
+    EbMemoryMapEntry                       *memory_map;
+    uint32_t                                memory_map_index;
+    uint64_t                                total_lib_memory;
 
 } EbEncHandle_t;
 

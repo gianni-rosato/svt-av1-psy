@@ -126,7 +126,7 @@ uint64_t Compute4x4Satd(
 
 uint64_t Compute4x4Satd_U8(
     uint8_t *src,       // input parameter, diff samples Ptr
-    uint64_t *dcValue,
+    uint64_t *dc_value,
     uint32_t  src_stride)
 {
     uint64_t satdBlock4x4 = 0;
@@ -207,7 +207,7 @@ uint64_t Compute4x4Satd_U8(
     }
 
     satdBlock4x4 = ((satdBlock4x4 + 1) >> 1);
-    *dcValue += d[0];
+    *dc_value += d[0];
     return satdBlock4x4;
 }
 

@@ -7,14 +7,14 @@
 
 #include "EbResourceCoordinationResults.h"
 
-EbErrorType ResourceCoordinationResultCtor(
+EbErrorType resource_coordination_result_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    ResourceCoordinationResults_t *objectPtr;
-    EB_MALLOC(ResourceCoordinationResults_t*, objectPtr, sizeof(ResourceCoordinationResults_t), EB_N_PTR);
+    ResourceCoordinationResults_t *object_ptr;
+    EB_MALLOC(ResourceCoordinationResults_t*, object_ptr, sizeof(ResourceCoordinationResults_t), EB_N_PTR);
 
-    *object_dbl_ptr = objectPtr;
+    *object_dbl_ptr = object_ptr;
 
     object_init_data_ptr = 0;
     (void)object_init_data_ptr;

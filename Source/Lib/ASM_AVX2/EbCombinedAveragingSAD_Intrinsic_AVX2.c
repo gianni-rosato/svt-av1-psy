@@ -13,13 +13,13 @@
     _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)
 
 
-uint32_t CombinedAveraging8xMSAD_AVX2_INTRIN(
+uint32_t combined_averaging8x_msad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
-    uint32_t  ref1Stride,
+    uint32_t  ref1_stride,
     uint8_t  *ref2,
-    uint32_t  ref2Stride,
+    uint32_t  ref2_stride,
     uint32_t  height,
     uint32_t  width)
 {
@@ -30,14 +30,14 @@ uint32_t CombinedAveraging8xMSAD_AVX2_INTRIN(
 
     for (y = 0; y < height; y += 4) {
         const __m256i s = load8bit_8x4_avx2(src, src_stride);
-        const __m256i r1 = load8bit_8x4_avx2(ref1, ref1Stride);
-        const __m256i r2 = load8bit_8x4_avx2(ref2, ref2Stride);
+        const __m256i r1 = load8bit_8x4_avx2(ref1, ref1_stride);
+        const __m256i r2 = load8bit_8x4_avx2(ref2, ref2_stride);
         const __m256i avg = _mm256_avg_epu8(r1, r2);
         const __m256i sad = _mm256_sad_epu8(s, avg);
         sum = _mm256_add_epi32(sum, sad);
         src += src_stride << 2;
-        ref1 += ref1Stride << 2;
-        ref2 += ref2Stride << 2;
+        ref1 += ref1_stride << 2;
+        ref2 += ref2_stride << 2;
     }
 
     sad = _mm_add_epi32(_mm256_castsi256_si128(sum),
@@ -48,24 +48,24 @@ uint32_t CombinedAveraging8xMSAD_AVX2_INTRIN(
 }
 
 static INLINE __m256i CombinedAveragingSad16x2_AVX2(const uint8_t *const src,
-    const uint32_t src_stride, const uint8_t *const ref1, const uint32_t ref1Stride,
-    const uint8_t *const ref2, const uint32_t ref2Stride, const __m256i sum)
+    const uint32_t src_stride, const uint8_t *const ref1, const uint32_t ref1_stride,
+    const uint8_t *const ref2, const uint32_t ref2_stride, const __m256i sum)
 {
     const __m256i s = load8bit_16x2_unaligned_avx2(src, src_stride);
-    const __m256i r1 = load8bit_16x2_unaligned_avx2(ref1, ref1Stride);
-    const __m256i r2 = load8bit_16x2_unaligned_avx2(ref2, ref2Stride);
+    const __m256i r1 = load8bit_16x2_unaligned_avx2(ref1, ref1_stride);
+    const __m256i r2 = load8bit_16x2_unaligned_avx2(ref2, ref2_stride);
     const __m256i avg = _mm256_avg_epu8(r1, r2);
     const __m256i sad = _mm256_sad_epu8(s, avg);
     return _mm256_add_epi32(sum, sad);
 }
 
-uint32_t CombinedAveraging16xMSAD_AVX2_INTRIN(
+uint32_t combined_averaging16x_msad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
-    uint32_t  ref1Stride,
+    uint32_t  ref1_stride,
     uint8_t  *ref2,
-    uint32_t  ref2Stride,
+    uint32_t  ref2_stride,
     uint32_t  height,
     uint32_t  width)
 {
@@ -75,11 +75,11 @@ uint32_t CombinedAveraging16xMSAD_AVX2_INTRIN(
     (void)width;
 
     for (y = 0; y < height; y += 2) {
-        sum = CombinedAveragingSad16x2_AVX2(src, src_stride, ref1, ref1Stride,
-            ref2, ref2Stride, sum);
+        sum = CombinedAveragingSad16x2_AVX2(src, src_stride, ref1, ref1_stride,
+            ref2, ref2_stride, sum);
         src += src_stride << 1;
-        ref1 += ref1Stride << 1;
-        ref2 += ref2Stride << 1;
+        ref1 += ref1_stride << 1;
+        ref2 += ref2_stride << 1;
     }
 
     sad = _mm_add_epi32(_mm256_castsi256_si128(sum),
@@ -100,13 +100,13 @@ static INLINE __m256i CombinedAveragingSad24_AVX2(const uint8_t *const src,
     return _mm256_add_epi32(sum, sad);
 }
 
-uint32_t CombinedAveraging24xMSAD_AVX2_INTRIN(
+uint32_t combined_averaging24x_msad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
-    uint32_t  ref1Stride,
+    uint32_t  ref1_stride,
     uint8_t  *ref2,
-    uint32_t  ref2Stride,
+    uint32_t  ref2_stride,
     uint32_t  height,
     uint32_t  width)
 {
@@ -117,12 +117,12 @@ uint32_t CombinedAveraging24xMSAD_AVX2_INTRIN(
 
     for (y = 0; y < height; y += 2) {
         sum = CombinedAveragingSad24_AVX2(src + 0 * src_stride,
-            ref1 + 0 * ref1Stride, ref2 + 0 * ref2Stride, sum);
+            ref1 + 0 * ref1_stride, ref2 + 0 * ref2_stride, sum);
         sum = CombinedAveragingSad24_AVX2(src + 1 * src_stride,
-            ref1 + 1 * ref1Stride, ref2 + 1 * ref2Stride, sum);
+            ref1 + 1 * ref1_stride, ref2 + 1 * ref2_stride, sum);
         src += src_stride << 1;
-        ref1 += ref1Stride << 1;
-        ref2 += ref2Stride << 1;
+        ref1 += ref1_stride << 1;
+        ref2 += ref2_stride << 1;
     }
 
     sad = _mm_add_epi32(_mm256_castsi256_si128(sum),
@@ -143,13 +143,13 @@ static INLINE __m256i CombinedAveragingSad32_AVX2(const uint8_t *const src,
     return _mm256_add_epi32(sum, sad);
 }
 
-uint32_t CombinedAveraging32xMSAD_AVX2_INTRIN(
+uint32_t combined_averaging32x_msad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
-    uint32_t  ref1Stride,
+    uint32_t  ref1_stride,
     uint8_t  *ref2,
-    uint32_t  ref2Stride,
+    uint32_t  ref2_stride,
     uint32_t  height,
     uint32_t  width)
 {
@@ -160,12 +160,12 @@ uint32_t CombinedAveraging32xMSAD_AVX2_INTRIN(
 
     for (y = 0; y < height; y += 2) {
         sum = CombinedAveragingSad32_AVX2(src + 0 * src_stride,
-            ref1 + 0 * ref1Stride, ref2 + 0 * ref2Stride, sum);
+            ref1 + 0 * ref1_stride, ref2 + 0 * ref2_stride, sum);
         sum = CombinedAveragingSad32_AVX2(src + 1 * src_stride,
-            ref1 + 1 * ref1Stride, ref2 + 1 * ref2Stride, sum);
+            ref1 + 1 * ref1_stride, ref2 + 1 * ref2_stride, sum);
         src += src_stride << 1;
-        ref1 += ref1Stride << 1;
-        ref2 += ref2Stride << 1;
+        ref1 += ref1_stride << 1;
+        ref2 += ref2_stride << 1;
     }
 
     sad = _mm_add_epi32(_mm256_castsi256_si128(sum),
@@ -175,13 +175,13 @@ uint32_t CombinedAveraging32xMSAD_AVX2_INTRIN(
     return _mm_cvtsi128_si32(sad);
 }
 
-uint32_t CombinedAveraging48xMSAD_AVX2_INTRIN(
+uint32_t combined_averaging48x_msad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
-    uint32_t  ref1Stride,
+    uint32_t  ref1_stride,
     uint8_t  *ref2,
-    uint32_t  ref2Stride,
+    uint32_t  ref2_stride,
     uint32_t  height,
     uint32_t  width)
 {
@@ -192,15 +192,15 @@ uint32_t CombinedAveraging48xMSAD_AVX2_INTRIN(
 
     for (y = 0; y < height; y += 2) {
         sum = CombinedAveragingSad32_AVX2(src + 0 * src_stride,
-            ref1 + 0 * ref1Stride, ref2 + 0 * ref2Stride, sum);
+            ref1 + 0 * ref1_stride, ref2 + 0 * ref2_stride, sum);
         sum = CombinedAveragingSad32_AVX2(src + 1 * src_stride,
-            ref1 + 1 * ref1Stride, ref2 + 1 * ref2Stride, sum);
+            ref1 + 1 * ref1_stride, ref2 + 1 * ref2_stride, sum);
         sum = CombinedAveragingSad16x2_AVX2(src + 32, src_stride, ref1 + 32,
-            ref1Stride, ref2 + 32, ref2Stride, sum);
+            ref1_stride, ref2 + 32, ref2_stride, sum);
 
         src += src_stride << 1;
-        ref1 += ref1Stride << 1;
-        ref2 += ref2Stride << 1;
+        ref1 += ref1_stride << 1;
+        ref2 += ref2_stride << 1;
     }
 
     sad = _mm_add_epi32(_mm256_castsi256_si128(sum),
@@ -210,13 +210,13 @@ uint32_t CombinedAveraging48xMSAD_AVX2_INTRIN(
     return _mm_cvtsi128_si32(sad);
 }
 
-uint32_t CombinedAveraging64xMSAD_AVX2_INTRIN(
+uint32_t combined_averaging64x_msad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
-    uint32_t  ref1Stride,
+    uint32_t  ref1_stride,
     uint8_t  *ref2,
-    uint32_t  ref2Stride,
+    uint32_t  ref2_stride,
     uint32_t  height,
     uint32_t  width)
 {
@@ -231,8 +231,8 @@ uint32_t CombinedAveraging64xMSAD_AVX2_INTRIN(
         sum = CombinedAveragingSad32_AVX2(src + 0x20,
             ref1 + 0x20, ref2 + 0x20, sum);
         src += src_stride;
-        ref1 += ref1Stride;
-        ref2 += ref2Stride;
+        ref1 += ref1_stride;
+        ref2 += ref2_stride;
     }
 
     sad = _mm_add_epi32(_mm256_castsi256_si128(sum),
@@ -241,23 +241,23 @@ uint32_t CombinedAveraging64xMSAD_AVX2_INTRIN(
 
     return _mm_cvtsi128_si32(sad);
 }
-uint64_t ComputeMean8x8_AVX2_INTRIN(
+uint64_t compute_mean8x8_avx2_intrin(
     uint8_t *  input_samples,      // input parameter, input samples Ptr
-    uint32_t   inputStride,       // input parameter, input stride
-    uint32_t   inputAreaWidth,    // input parameter, input area width
-    uint32_t   inputAreaHeight)   // input parameter, input area height
+    uint32_t   input_stride,       // input parameter, input stride
+    uint32_t   input_area_width,    // input parameter, input area width
+    uint32_t   input_area_height)   // input parameter, input area height
 {
     __m256i sum, sum2, xmm2, xmm1, sum1, xmm0 = _mm256_setzero_si256();
     __m128i  upper, lower, mean = _mm_setzero_si128();
     uint64_t result;
-    xmm1 = _mm256_sad_epu8(xmm0, _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + inputStride)), _mm_loadl_epi64((__m128i *)(input_samples))));
-    xmm2 = _mm256_sad_epu8(xmm0, _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + 3 * inputStride)), _mm_loadl_epi64((__m128i *)(input_samples + 2 * inputStride))));
+    xmm1 = _mm256_sad_epu8(xmm0, _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)), _mm_loadl_epi64((__m128i *)(input_samples))));
+    xmm2 = _mm256_sad_epu8(xmm0, _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)), _mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride))));
     sum1 = _mm256_add_epi16(xmm1, xmm2);
 
-    input_samples += 4 * inputStride;
+    input_samples += 4 * input_stride;
 
-    xmm1 = _mm256_sad_epu8(xmm0, _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + inputStride)), _mm_loadl_epi64((__m128i *)(input_samples))));
-    xmm2 = _mm256_sad_epu8(xmm0, _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + 3 * inputStride)), _mm_loadl_epi64((__m128i *)(input_samples + 2 * inputStride))));
+    xmm1 = _mm256_sad_epu8(xmm0, _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)), _mm_loadl_epi64((__m128i *)(input_samples))));
+    xmm2 = _mm256_sad_epu8(xmm0, _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)), _mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride))));
     sum2 = _mm256_add_epi16(xmm1, xmm2);
 
     sum = _mm256_add_epi16(sum1, sum2);
@@ -269,8 +269,8 @@ uint64_t ComputeMean8x8_AVX2_INTRIN(
 
     mean = _mm_add_epi32(lower, upper);
 
-    (void)inputAreaWidth;
-    (void)inputAreaHeight;
+    (void)input_area_width;
+    (void)input_area_height;
 
     result = (uint64_t)_mm_cvtsi128_si32(mean) << 2;
     return result;
@@ -278,11 +278,11 @@ uint64_t ComputeMean8x8_AVX2_INTRIN(
 }
 
 /********************************************************************************************************************************/
-void  ComputeIntermVarFour8x8_AVX2_INTRIN(
+void  compute_interm_var_four8x8_avx2_intrin(
     uint8_t *  input_samples,
-    uint16_t   inputStride,
-    uint64_t * meanOf8x8Blocks,      // mean of four  8x8
-    uint64_t * meanOfSquared8x8Blocks)  // meanSquared
+    uint16_t   input_stride,
+    uint64_t * mean_of8x8_blocks,      // mean of four  8x8
+    uint64_t * mean_of_squared8x8_blocks)  // meanSquared
 {
 
     __m256i ymm1, ymm2, ymm3, ymm4, ymm_sum1, ymm_sum2, ymm_FinalSum, ymm_shift,/* ymm_blockMeanSquared*///,
@@ -295,16 +295,16 @@ void  ComputeIntermVarFour8x8_AVX2_INTRIN(
     __m128i xmm_zero = _mm_setzero_si128();
 
     ymm_in = _mm256_loadu_si256((__m256i *) input_samples);
-    ymm_in_2S = _mm256_loadu_si256((__m256i *)(input_samples + 2 * inputStride));
+    ymm_in_2S = _mm256_loadu_si256((__m256i *)(input_samples + 2 * input_stride));
 
     ymm1 = _mm256_sad_epu8(ymm_in, ymm_zero);
     ymm2 = _mm256_sad_epu8(ymm_in_2S, ymm_zero);
 
     ymm_sum1 = _mm256_add_epi16(ymm1, ymm2);
 
-    input_samples += 4 * inputStride;
+    input_samples += 4 * input_stride;
     ymm_in_second = _mm256_loadu_si256((__m256i *)input_samples);
-    ymm_in_2S_second = _mm256_loadu_si256((__m256i *)(input_samples + 2 * inputStride));
+    ymm_in_2S_second = _mm256_loadu_si256((__m256i *)(input_samples + 2 * input_stride));
 
     ymm3 = _mm256_sad_epu8(ymm_in_second, ymm_zero);
     ymm4 = _mm256_sad_epu8(ymm_in_2S_second, ymm_zero);
@@ -316,7 +316,7 @@ void  ComputeIntermVarFour8x8_AVX2_INTRIN(
     ymm_shift = _mm256_set_epi64x(3, 3, 3, 3);
     ymm_FinalSum = _mm256_sllv_epi64(ymm_FinalSum, ymm_shift);
 
-    _mm256_storeu_si256((__m256i *)(meanOf8x8Blocks), ymm_FinalSum);
+    _mm256_storeu_si256((__m256i *)(mean_of8x8_blocks), ymm_FinalSum);
 
     /*******************************Squared Mean******************************/
 
@@ -372,7 +372,7 @@ void  ComputeIntermVarFour8x8_AVX2_INTRIN(
     ymm_result = _mm256_sllv_epi64(ymm_result, ymm_shiftSquared);
 
 
-    _mm256_storeu_si256((__m256i *)(meanOfSquared8x8Blocks), ymm_result);
+    _mm256_storeu_si256((__m256i *)(mean_of_squared8x8_blocks), ymm_result);
 
 
 }

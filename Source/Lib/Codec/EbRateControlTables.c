@@ -4,7 +4,7 @@
 */ 
 
 #include "EbRateControlTables.h"
-static const EB_Bit_Number initialRateControlSad64x64Tables[] = {
+static const EbBitNumber initialRateControlSad64x64Tables[] = {
     // QP = 0 NEW
         0,        0,        0,        0,
         0,        0,    19064,    21410,
@@ -934,7 +934,7 @@ static const EB_Bit_Number initialRateControlSad64x64Tables[] = {
 
 
 
-static const EB_Bit_Number initialRateControlIntraSad64x64Tables[] = {
+static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     // QP = 0 NEW
         0,        0,        0,        0,
         0,        0,        0,    22636,
@@ -1869,7 +1869,7 @@ static const EB_Bit_Number initialRateControlIntraSad64x64Tables[] = {
 /**************************************
  * Function Declarations
  **************************************/
-EbErrorType RateControlTablesCtor(
+EbErrorType rate_control_tables_ctor(
     RateControlTables_t *initialRateControlTablesArray)
 {
     int32_t qp_index, intervalIndex, temporalIndex;

@@ -15,24 +15,20 @@ extern "C" {
 /**************************************
  * Process Results
  **************************************/
-typedef struct RateControlResults_s
-{
-    EbObjectWrapper_t                   *pictureControlSetWrapperPtr;
-    
+typedef struct RateControlResults_s {
+    EbObjectWrapper_t *pictureControlSetWrapperPtr;
 } RateControlResults_t;
 
-typedef struct RateControlResultsInitData_s
-{
+typedef struct RateControlResultsInitData_s {
     int32_t junk;
 } RateControlResultsInitData_t;
 
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType RateControlResultsCtor(
+extern EbErrorType rate_control_results_ctor(
     EbPtr *object_dbl_ptr, 
     EbPtr object_init_data_ptr);
-
 
 #ifdef __cplusplus
 }

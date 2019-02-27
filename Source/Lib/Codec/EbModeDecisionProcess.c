@@ -105,7 +105,7 @@ EbErrorType mode_decision_context_ctor(
             context_ptr->md_cu_arr_nsq[codedLeafIndex].transform_unit_array[tu_index].tu_index = tu_index;
         }
 
-        const BlockGeom * blk_geom = Get_blk_geom_mds(codedLeafIndex);
+        const BlockGeom * blk_geom = get_blk_geom_mds(codedLeafIndex);
         UNUSED(blk_geom);
         EB_MALLOC(MacroBlockD*, context_ptr->md_cu_arr_nsq[codedLeafIndex].av1xd, sizeof(MacroBlockD), EB_N_PTR);
         EB_MALLOC(uint8_t*, context_ptr->md_cu_arr_nsq[codedLeafIndex].neigh_left_recon[0], 128, EB_N_PTR);
@@ -130,7 +130,7 @@ EbErrorType mode_decision_context_ctor(
             initData.bot_padding = 0;
             initData.splitMode = EB_FALSE;
 
-            return_error = EbPictureBufferDescCtor(
+            return_error = eb_picture_buffer_desc_ctor(
                 (EbPtr*)&context_ptr->md_cu_arr_nsq[codedLeafIndex].coeff_tmp,
                 (EbPtr)&initData);
 
@@ -148,7 +148,7 @@ EbErrorType mode_decision_context_ctor(
             initData.bot_padding = 0;
             initData.splitMode = EB_FALSE;
 
-            return_error = EbPictureBufferDescCtor(
+            return_error = eb_picture_buffer_desc_ctor(
                 (EbPtr*)&context_ptr->md_cu_arr_nsq[codedLeafIndex].recon_tmp,
                 (EbPtr)&initData);
 
@@ -168,26 +168,26 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet_t *picture_control_se
 {
     uint8_t depth;
     for (depth = 0; depth < NEIGHBOR_ARRAY_TOTAL_COUNT; depth++) {
-        NeighborArrayUnitReset(picture_control_set_ptr->md_intra_luma_mode_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_intra_chroma_mode_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_mv_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_skip_flag_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_mode_type_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_leaf_depth_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->mdleaf_partition_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_intra_luma_mode_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_intra_chroma_mode_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_mv_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_skip_flag_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_mode_type_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_leaf_depth_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->mdleaf_partition_neighbor_array[depth]);
 
-        NeighborArrayUnitReset(picture_control_set_ptr->md_luma_recon_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_cb_recon_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_cr_recon_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_luma_recon_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_cb_recon_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_cr_recon_neighbor_array[depth]);
 
-        NeighborArrayUnitReset(picture_control_set_ptr->md_skip_coeff_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_cb_dc_sign_level_coeff_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_inter_pred_dir_neighbor_array[depth]);
-        NeighborArrayUnitReset(picture_control_set_ptr->md_ref_frame_type_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_skip_coeff_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_cb_dc_sign_level_coeff_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_inter_pred_dir_neighbor_array[depth]);
+        neighbor_array_unit_reset(picture_control_set_ptr->md_ref_frame_type_neighbor_array[depth]);
 
-        NeighborArrayUnitReset32(picture_control_set_ptr->md_interpolation_type_neighbor_array[depth]);
+        neighbor_array_unit_reset32(picture_control_set_ptr->md_interpolation_type_neighbor_array[depth]);
 
     }
 
@@ -197,9 +197,9 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet_t *picture_control_se
 
 void ResetMdRefinmentNeighborArrays(PictureControlSet_t *picture_control_set_ptr)
 {
-    NeighborArrayUnitReset(picture_control_set_ptr->md_refinement_intra_luma_mode_neighbor_array);
-    NeighborArrayUnitReset(picture_control_set_ptr->md_refinement_mode_type_neighbor_array);
-    NeighborArrayUnitReset(picture_control_set_ptr->md_refinement_luma_recon_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->md_refinement_intra_luma_mode_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->md_refinement_mode_type_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->md_refinement_luma_recon_neighbor_array);
 
     return;
 }
@@ -447,9 +447,9 @@ void reset_mode_decision(
     }
 
 
-    // TMVP Map Writer Pointer
+    // TMVP Map Writer pointer
     if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-        context_ptr->reference_object_write_ptr = (EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr;
+        context_ptr->reference_object_write_ptr = (EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
     else
         context_ptr->reference_object_write_ptr = (EbReferenceObject_t*)EB_NULL;
 

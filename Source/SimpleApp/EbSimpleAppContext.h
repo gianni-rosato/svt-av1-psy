@@ -182,7 +182,7 @@ typedef struct EbAppContext_s {
     // Buffer Pools
     EbBufferHeaderType                 *inputPictureBuffer;
     EbBufferHeaderType                 *outputStreamBuffer;
-    EbBufferHeaderType                 *reconBuffer;
+    EbBufferHeaderType                 *recon_buffer;
 
     uint32_t instanceIdx;
 

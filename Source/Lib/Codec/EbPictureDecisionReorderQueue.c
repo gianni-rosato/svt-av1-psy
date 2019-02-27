@@ -6,14 +6,14 @@
 #include <stdlib.h>
 #include "EbPictureManagerReorderQueue.h"
 
-EbErrorType PictureManagerReorderEntryCtor(
-    PictureManagerReorderEntry_t   **entryDblPtr,
+EbErrorType picture_manager_reorder_entry_ctor(
+    PictureManagerReorderEntry_t   **entry_dbl_ptr,
     uint32_t                           picture_number)
 {
-    EB_MALLOC(PictureManagerReorderEntry_t*, *entryDblPtr, sizeof(PictureManagerReorderEntry_t), EB_N_PTR);
+    EB_MALLOC(PictureManagerReorderEntry_t*, *entry_dbl_ptr, sizeof(PictureManagerReorderEntry_t), EB_N_PTR);
 
-    (*entryDblPtr)->picture_number = picture_number;
-    (*entryDblPtr)->parentPcsWrapperPtr = (EbObjectWrapper_t *)EB_NULL;
+    (*entry_dbl_ptr)->picture_number = picture_number;
+    (*entry_dbl_ptr)->parentPcsWrapperPtr = (EbObjectWrapper_t *)EB_NULL;
 
     return EB_ErrorNone;
 }

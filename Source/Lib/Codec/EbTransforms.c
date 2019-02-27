@@ -23,9 +23,9 @@
 
 uint32_t CheckNZero4x4(
     int16_t  *coeff,
-    uint32_t   coeffStride){
+    uint32_t   coeff_stride){
 
-    const uint32_t stride = coeffStride / 4;
+    const uint32_t stride = coeff_stride / 4;
 
     uint64_t * coefPtr = (uint64_t *)coeff;
 
@@ -68,37 +68,37 @@ static const int8_t *fwd_txfm_shift_ls[TX_SIZES_ALL] = {
     fwd_shift_32x8, fwd_shift_16x64, fwd_shift_64x16,
 };
 
-void MatMultOut(
+void mat_mult_out(
     int16_t           *coeff,
-    const uint32_t     coeffStride,
-    int16_t*          coeffOut,
-    const uint32_t     coeffOutStride,
-    const uint16_t     *maskingMatrix,
-    const uint32_t     maskingMatrixStride,
-    const uint32_t     computeSize,
+    const uint32_t     coeff_stride,
+    int16_t*          coeff_out,
+    const uint32_t     coeff_out_stride,
+    const uint16_t     *masking_matrix,
+    const uint32_t     masking_matrix_stride,
+    const uint32_t     compute_size,
     const int32_t     offset,
-    const int32_t     shiftNum,
+    const int32_t     shift_num,
     uint32_t             *nonzerocoeff) {
 
     uint32_t coeffLocation = 0, coeffOutLocation = 0;
-    uint32_t rowIndex, colIndex;
+    uint32_t row_index, colIndex;
     int32_t coeffTemp;
 
     *nonzerocoeff = 0;
 
-    for (rowIndex = 0; rowIndex < computeSize; ++rowIndex) {
-        for (colIndex = 0; colIndex < computeSize; ++colIndex) {
-            coeffTemp = (ABS(coeff[coeffLocation]) * maskingMatrix[colIndex + rowIndex * maskingMatrixStride] + offset) >> shiftNum;
+    for (row_index = 0; row_index < compute_size; ++row_index) {
+        for (colIndex = 0; colIndex < compute_size; ++colIndex) {
+            coeffTemp = (ABS(coeff[coeffLocation]) * masking_matrix[colIndex + row_index * masking_matrix_stride] + offset) >> shift_num;
             coeffTemp = (coeff[coeffLocation] < 0) ? -coeffTemp : coeffTemp;
 
-            coeffOut[coeffOutLocation] = (int16_t)CLIP3(MIN_NEG_16BIT_NUM, MAX_POS_16BIT_NUM, coeffTemp);
+            coeff_out[coeffOutLocation] = (int16_t)CLIP3(MIN_NEG_16BIT_NUM, MAX_POS_16BIT_NUM, coeffTemp);
 
             (*nonzerocoeff) += (coeffTemp != 0);
             ++coeffLocation;
             ++coeffOutLocation;
         }
-        coeffLocation += coeffStride - computeSize;
-        coeffOutLocation += coeffOutStride - computeSize;
+        coeffLocation += coeff_stride - compute_size;
+        coeffOutLocation += coeff_out_stride - compute_size;
     }
 }
 
@@ -110,7 +110,7 @@ void MatMultOut(
 uint64_t GetPMCost(
     uint64_t                   lambda,
     uint64_t                   tuDistortion,
-    uint64_t                   yTuCoeffBits
+    uint64_t                   y_tu_coeff_bits
 );
 
 
@@ -216,7 +216,7 @@ EB_EXTERN EB_ALIGN(16) const int16_t TransformAsmConst[] = {
     87, -90, 87, -90, 87, -90, 87, -90,
 };
 
-EB_ALIGN(16) const int16_t TransformAsmConst_SSE4_1[] = {
+EB_ALIGN(16) const int16_t transform_asm_const_sse4_1[] = {
     2, 0, 2, 0, 2, 0, 2, 0,
     4, 0, 4, 0, 4, 0, 4, 0,
     8, 0, 8, 0, 8, 0, 8, 0,
@@ -1127,7 +1127,7 @@ static const uint16_t MaskingMatrix32x32_Level7_4K_Set2[] = {
 
 };
 
-static const uint16_t *MaskingMatrix[2][8][4] =//
+static const uint16_t *masking_matrix[2][8][4] =//
 {
     /****************** 4K ************************/
     {
@@ -1159,32 +1159,32 @@ static const uint16_t *MaskingMatrix[2][8][4] =//
     },
 };
 
-void MatMult(
+void mat_mult(
     int16_t           *coeff,
-    const uint32_t     coeffStride,
-    const uint16_t    *maskingMatrix,
-    const uint32_t     maskingMatrixStride,
-    const uint32_t     computeSize,
+    const uint32_t     coeff_stride,
+    const uint16_t    *masking_matrix,
+    const uint32_t     masking_matrix_stride,
+    const uint32_t     compute_size,
     const int32_t      offset,
-    const int32_t      shiftNum,
+    const int32_t      shift_num,
     uint32_t          *nonzerocoeff) {
 
     uint32_t coeffLocation = 0;
-    uint32_t rowIndex, colIndex;
+    uint32_t row_index, colIndex;
     int32_t coeffTemp;
 
     *nonzerocoeff = 0;
 
-    for (rowIndex = 0; rowIndex < computeSize; ++rowIndex) {
-        for (colIndex = 0; colIndex < computeSize; ++colIndex) {
-            coeffTemp = (ABS(coeff[coeffLocation]) * maskingMatrix[colIndex + rowIndex * maskingMatrixStride] + offset) >> shiftNum;
+    for (row_index = 0; row_index < compute_size; ++row_index) {
+        for (colIndex = 0; colIndex < compute_size; ++colIndex) {
+            coeffTemp = (ABS(coeff[coeffLocation]) * masking_matrix[colIndex + row_index * masking_matrix_stride] + offset) >> shift_num;
             coeffTemp = (coeff[coeffLocation] < 0) ? -coeffTemp : coeffTemp;
 
             coeff[coeffLocation] = (int16_t)CLIP3(MIN_NEG_16BIT_NUM, MAX_POS_16BIT_NUM, coeffTemp);
             (*nonzerocoeff) += (coeffTemp != 0);
             ++coeffLocation;
         }
-        coeffLocation += coeffStride - computeSize;
+        coeffLocation += coeff_stride - compute_size;
     }
 }
 
@@ -3700,7 +3700,7 @@ void av1_round_shift_array_c(int32_t *arr, int32_t size, int32_t bit) {
 //fwd_txfm2d_c
 static INLINE void Av1TranformTwoDCore_c(
     int16_t                     *input,
-    uint32_t                      inputStride,
+    uint32_t                      input_stride,
     int32_t                      *output,
     const TXFM_2D_FLIP_CFG      *cfg,
     int32_t                      *buf,
@@ -3737,12 +3737,12 @@ static INLINE void Av1TranformTwoDCore_c(
     // Columns
     for (c = 0; c < txfm_size_col; ++c) {
         if (cfg->ud_flip == 0) {
-            for (r = 0; r < txfm_size_row; ++r) temp_in[r] = input[r * inputStride + c];
+            for (r = 0; r < txfm_size_row; ++r) temp_in[r] = input[r * input_stride + c];
         }
         else {
             for (r = 0; r < txfm_size_row; ++r)
                 // flip upside down
-                temp_in[r] = input[(txfm_size_row - r - 1) * inputStride + c];
+                temp_in[r] = input[(txfm_size_row - r - 1) * input_stride + c];
         }
         av1_round_shift_array_c(temp_in, txfm_size_row, -shift[0]); // NM av1_round_shift_array_c
         txfm_func_col(temp_in, temp_out, cos_bit_col, stage_range_col);
@@ -3868,25 +3868,25 @@ void Av1TransformConfig(
 
 uint64_t EnergyComputation(
     int32_t  *coeff,
-    uint32_t   coeffStride,
-    uint32_t   areaWidth,
-    uint32_t   areaHeight)
+    uint32_t   coeff_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
 {
     uint32_t  columnIndex;
-    uint32_t  rowIndex = 0;
+    uint32_t  row_index = 0;
     uint64_t  predictionDistortion = 0;
 
 
-    while (rowIndex < areaHeight) {
+    while (row_index < area_height) {
 
         columnIndex = 0;
-        while (columnIndex < areaWidth) {
+        while (columnIndex < area_width) {
             predictionDistortion += (int64_t)SQR((int64_t)(coeff[columnIndex]));
             ++columnIndex;
         }
 
-        coeff += coeffStride;
-        ++rowIndex;
+        coeff += coeff_stride;
+        ++row_index;
     }
 
     return predictionDistortion;
@@ -3928,7 +3928,7 @@ uint64_t  HandleTransform64x64_c(
 void Av1TransformTwoD_64x64_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth)
 {
@@ -3942,7 +3942,7 @@ void Av1TransformTwoD_64x64_c(
     //fwd_txfm2d_c
     Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -3953,7 +3953,7 @@ void Av1TransformTwoD_64x64_c(
 void Av1TransformTwoD_32x32_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth)
 {
@@ -3967,7 +3967,7 @@ void Av1TransformTwoD_32x32_c(
 
     Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -3977,7 +3977,7 @@ void Av1TransformTwoD_32x32_c(
 void Av1TransformTwoD_16x16_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth)
 {
@@ -3991,7 +3991,7 @@ void Av1TransformTwoD_16x16_c(
 
     Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4001,7 +4001,7 @@ void Av1TransformTwoD_16x16_c(
 void Av1TransformTwoD_8x8_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth)
 {
@@ -4015,7 +4015,7 @@ void Av1TransformTwoD_8x8_c(
 
     Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4025,7 +4025,7 @@ void Av1TransformTwoD_8x8_c(
 void Av1TransformTwoD_4x4_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth)
 {
@@ -4039,7 +4039,7 @@ void Av1TransformTwoD_4x4_c(
 
     Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4052,7 +4052,7 @@ void Av1TransformTwoD_4x4_c(
 void av1_fwd_txfm2d_64x32_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[64 * 32];
@@ -4062,7 +4062,7 @@ void av1_fwd_txfm2d_64x32_c(
     (transform_type, TX_64X32, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4095,7 +4095,7 @@ uint64_t  HandleTransform64x32_c(
 void av1_fwd_txfm2d_32x64_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[32 * 64];
@@ -4106,7 +4106,7 @@ void av1_fwd_txfm2d_32x64_c(
     /*fwd_txfm2d_c*/
     Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4138,7 +4138,7 @@ uint64_t  HandleTransform32x64_c(
 void av1_fwd_txfm2d_64x16_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[64 * 16];
@@ -4148,7 +4148,7 @@ void av1_fwd_txfm2d_64x16_c(
     (transform_type, TX_64X16, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4180,7 +4180,7 @@ uint64_t  HandleTransform64x16_c(
 void av1_fwd_txfm2d_16x64_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[16 * 64];
@@ -4191,7 +4191,7 @@ void av1_fwd_txfm2d_16x64_c(
     /*fwd_txfm2d_c*/
     Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4225,7 +4225,7 @@ uint64_t  HandleTransform16x64_c(
 void av1_fwd_txfm2d_32x16_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[32 * 16];
@@ -4233,7 +4233,7 @@ void av1_fwd_txfm2d_32x16_c(
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_32X16, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4243,7 +4243,7 @@ void av1_fwd_txfm2d_32x16_c(
 void av1_fwd_txfm2d_16x32_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[16 * 32];
@@ -4251,7 +4251,7 @@ void av1_fwd_txfm2d_16x32_c(
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_16X32, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4261,7 +4261,7 @@ void av1_fwd_txfm2d_16x32_c(
 void av1_fwd_txfm2d_16x8_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[16 * 8];
@@ -4269,7 +4269,7 @@ void av1_fwd_txfm2d_16x8_c(
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_16X8, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4279,7 +4279,7 @@ void av1_fwd_txfm2d_16x8_c(
 void av1_fwd_txfm2d_8x16_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[8 * 16];
@@ -4287,7 +4287,7 @@ void av1_fwd_txfm2d_8x16_c(
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_8X16, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4297,7 +4297,7 @@ void av1_fwd_txfm2d_8x16_c(
 void av1_fwd_txfm2d_32x8_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[32 * 8];
@@ -4305,7 +4305,7 @@ void av1_fwd_txfm2d_32x8_c(
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_32X8, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4315,7 +4315,7 @@ void av1_fwd_txfm2d_32x8_c(
 void av1_fwd_txfm2d_8x32_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[8 * 32];
@@ -4323,7 +4323,7 @@ void av1_fwd_txfm2d_8x32_c(
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_8X32, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4333,7 +4333,7 @@ void av1_fwd_txfm2d_8x32_c(
 void av1_fwd_txfm2d_16x4_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[16 * 4];
@@ -4341,7 +4341,7 @@ void av1_fwd_txfm2d_16x4_c(
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_16X4, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4351,7 +4351,7 @@ void av1_fwd_txfm2d_16x4_c(
 void av1_fwd_txfm2d_4x16_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[4 * 16];
@@ -4359,7 +4359,7 @@ void av1_fwd_txfm2d_4x16_c(
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_4X16, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4369,7 +4369,7 @@ void av1_fwd_txfm2d_4x16_c(
 void av1_fwd_txfm2d_8x4_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[8 * 4];
@@ -4377,7 +4377,7 @@ void av1_fwd_txfm2d_8x4_c(
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_8X4, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4387,7 +4387,7 @@ void av1_fwd_txfm2d_8x4_c(
 void av1_fwd_txfm2d_4x8_c(
     int16_t         *input,
     int32_t         *output,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[4 * 8];
@@ -4395,7 +4395,7 @@ void av1_fwd_txfm2d_4x8_c(
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_4X8, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         &cfg,
         intermediateTransformBuffer,
@@ -4407,53 +4407,53 @@ void av1_fwd_txfm2d_4x8_c(
 *   Note there is an implicit assumption that TU Size <= PU Size,
 *   which is different than the HEVC requirements.
 *********************************************************************/
-EbErrorType Av1EstimateTransform(
+EbErrorType av1_estimate_transform(
     int16_t              *residual_buffer,
-    uint32_t              residualStride,
-    int32_t              *coeffBuffer,
-    uint32_t              coeffStride,
+    uint32_t              residual_stride,
+    int32_t              *coeff_buffer,
+    uint32_t              coeff_stride,
     TxSize                transform_size,
     uint64_t             *three_quad_energy,
     int16_t              *transform_inner_array_ptr,
-    uint32_t              bitIncrement,
+    uint32_t              bit_increment,
     TxType                transform_type,
     EbAsm                 asm_type,
-    PLANE_TYPE            componentType,
-    EB_TRANS_COEFF_SHAPE  transCoeffShape)
+    PLANE_TYPE            component_type,
+    EB_TRANS_COEFF_SHAPE  trans_coeff_shape)
 
 {
     EbErrorType return_error = EB_ErrorNone;
 
     (void)asm_type;
-    (void)transCoeffShape;
+    (void)trans_coeff_shape;
     (void)transform_inner_array_ptr;
-    (void)coeffStride;
-    (void)componentType;
-    uint8_t      bit_depth = bitIncrement ? 10 : 8;// NM - Set to zero for the moment
+    (void)coeff_stride;
+    (void)component_type;
+    uint8_t      bit_depth = bit_increment ? 10 : 8;// NM - Set to zero for the moment
 
     switch (transform_size) {
     case TX_64X32:
         if (transform_type == DCT_DCT)
             av1_fwd_txfm2d_64x32(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         else
             av1_fwd_txfm2d_64x32_c(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         
-        *three_quad_energy = HandleTransform64x32_c(coeffBuffer,
+        *three_quad_energy = HandleTransform64x32_c(coeff_buffer,
             64);
 
         // Re-pack non-zero coeffs in the first 32x32 indices.
         for (int32_t row = 1; row < 32; ++row) {
-            memcpy(coeffBuffer + row * 32, coeffBuffer + row * 64, 32 * sizeof(int32_t));
+            memcpy(coeff_buffer + row * 32, coeff_buffer + row * 64, 32 * sizeof(int32_t));
         }
         break;
 
@@ -4461,19 +4461,19 @@ EbErrorType Av1EstimateTransform(
         if (transform_type == DCT_DCT)
             av1_fwd_txfm2d_32x64(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         else
             av1_fwd_txfm2d_32x64_c(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
 
-        *three_quad_energy = HandleTransform32x64_c(coeffBuffer,
+        *three_quad_energy = HandleTransform32x64_c(coeff_buffer,
             32);
 
         break;
@@ -4482,41 +4482,41 @@ EbErrorType Av1EstimateTransform(
         if (transform_type == DCT_DCT)
             av1_fwd_txfm2d_64x16(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         else
             av1_fwd_txfm2d_64x16_c(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
 
-        *three_quad_energy = HandleTransform64x16_c(coeffBuffer,
+        *three_quad_energy = HandleTransform64x16_c(coeff_buffer,
             64);
         // Re-pack non-zero coeffs in the first 32x16 indices.
         for (int32_t row = 1; row < 16; ++row) {
-            memcpy(coeffBuffer + row * 32, coeffBuffer + row * 64, 32 * sizeof(int32_t));
+            memcpy(coeff_buffer + row * 32, coeff_buffer + row * 64, 32 * sizeof(int32_t));
         }
         break;
     case TX_16X64:
         if (transform_type == DCT_DCT)
             av1_fwd_txfm2d_16x64(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         else
             av1_fwd_txfm2d_16x64_c(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
-        *three_quad_energy = HandleTransform16x64_c(coeffBuffer,
+        *three_quad_energy = HandleTransform16x64_c(coeff_buffer,
             16);
 
         break;
@@ -4526,15 +4526,15 @@ EbErrorType Av1EstimateTransform(
         if (transform_type == IDTX)
             av1_fwd_txfm2d_32x16(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         else
             av1_fwd_txfm2d_32x16_c(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         break;
@@ -4543,15 +4543,15 @@ EbErrorType Av1EstimateTransform(
         if ((transform_type == DCT_DCT) || (transform_type == IDTX))
             av1_fwd_txfm2d_16x32(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         else
             av1_fwd_txfm2d_16x32_c(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         break;
@@ -4559,8 +4559,8 @@ EbErrorType Av1EstimateTransform(
     case TX_16X8:
         av1_fwd_txfm2d_16x8(
             residual_buffer,
-            coeffBuffer,
-            residualStride,
+            coeff_buffer,
+            residual_stride,
             transform_type,
             bit_depth);
         break;
@@ -4568,8 +4568,8 @@ EbErrorType Av1EstimateTransform(
     case TX_8X16:
         av1_fwd_txfm2d_8x16(
             residual_buffer,
-            coeffBuffer,
-            residualStride,
+            coeff_buffer,
+            residual_stride,
             transform_type,
             bit_depth);
         break;
@@ -4578,15 +4578,15 @@ EbErrorType Av1EstimateTransform(
         if ((transform_type == DCT_DCT) || (transform_type == IDTX))
             av1_fwd_txfm2d_32x8(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         else
             av1_fwd_txfm2d_32x8_c(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         break;
@@ -4595,31 +4595,31 @@ EbErrorType Av1EstimateTransform(
         if ((transform_type == DCT_DCT) || (transform_type == IDTX))
             av1_fwd_txfm2d_8x32(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         else
             av1_fwd_txfm2d_8x32_c(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         break;
     case TX_16X4:
         av1_fwd_txfm2d_16x4(
             residual_buffer,
-            coeffBuffer,
-            residualStride,
+            coeff_buffer,
+            residual_stride,
             transform_type,
             bit_depth);
         break;
     case TX_4X16:
         av1_fwd_txfm2d_4x16(
             residual_buffer,
-            coeffBuffer,
-            residualStride,
+            coeff_buffer,
+            residual_stride,
             transform_type,
             bit_depth);
         break;
@@ -4627,8 +4627,8 @@ EbErrorType Av1EstimateTransform(
 
         av1_fwd_txfm2d_8x4(
             residual_buffer,
-            coeffBuffer,
-            residualStride,
+            coeff_buffer,
+            residual_stride,
             transform_type,
             bit_depth);
 
@@ -4637,8 +4637,8 @@ EbErrorType Av1EstimateTransform(
 
         av1_fwd_txfm2d_4x8(
             residual_buffer,
-            coeffBuffer,
-            residualStride,
+            coeff_buffer,
+            residual_stride,
             transform_type,
             bit_depth);
 
@@ -4650,18 +4650,18 @@ EbErrorType Av1EstimateTransform(
 
         av1_fwd_txfm2d_64x64(
             residual_buffer,
-            coeffBuffer,
-            residualStride,
+            coeff_buffer,
+            residual_stride,
             transform_type,
             bit_depth);
 
-        *three_quad_energy = HandleTransform64x64_c(coeffBuffer,
+        *three_quad_energy = HandleTransform64x64_c(coeff_buffer,
             64);
 
         uint32_t row;
         // Re-pack non-zero coeffs in the first 32x32 indices.
         for (row = 1; row < 32; ++row) {
-            memcpy(coeffBuffer + row * 32, coeffBuffer + row * 64, 32 * sizeof(int32_t));
+            memcpy(coeff_buffer + row * 32, coeff_buffer + row * 64, 32 * sizeof(int32_t));
         }
 
         break;
@@ -4672,8 +4672,8 @@ EbErrorType Av1EstimateTransform(
             // Tahani: I believe those cases are never hit
             Av1TransformTwoD_32x32_c(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
 
@@ -4681,8 +4681,8 @@ EbErrorType Av1EstimateTransform(
 
             av1_fwd_txfm2d_32x32(
                 residual_buffer,
-                coeffBuffer,
-                residualStride,
+                coeff_buffer,
+                residual_stride,
                 transform_type,
                 bit_depth);
         }
@@ -4695,8 +4695,8 @@ EbErrorType Av1EstimateTransform(
 
         av1_fwd_txfm2d_16x16(
             residual_buffer,
-            coeffBuffer,
-            residualStride,
+            coeff_buffer,
+            residual_stride,
             transform_type,
             bit_depth);
 
@@ -4705,8 +4705,8 @@ EbErrorType Av1EstimateTransform(
 
         av1_fwd_txfm2d_8x8(
             residual_buffer,
-            coeffBuffer,
-            residualStride,
+            coeff_buffer,
+            residual_stride,
             transform_type,
             bit_depth);
 
@@ -4715,8 +4715,8 @@ EbErrorType Av1EstimateTransform(
 
         av1_fwd_txfm2d_4x4(
             residual_buffer,
-            coeffBuffer,
-            residualStride,
+            coeff_buffer,
+            residual_stride,
             transform_type,
             bit_depth);
 
@@ -4732,16 +4732,16 @@ EbErrorType Av1EstimateTransform(
  *   Note there is an implicit assumption that TU Size <= PU Size,
  *   which is different than the HEVC requirements.
  *********************************************************************/
-EbErrorType EncodeTransform(
+EbErrorType encode_transform(
     int16_t               *residual_buffer,
-    uint32_t               residualStride,
-    int16_t               *coeffBuffer,
-    uint32_t               coeffStride,
+    uint32_t               residual_stride,
+    int16_t               *coeff_buffer,
+    uint32_t               coeff_stride,
     uint32_t               transform_size,
     int16_t               *transform_inner_array_ptr,
-    uint32_t               bitIncrement,
-    EbBool                 dstTransformFlag,
-    EB_TRANS_COEFF_SHAPE   transCoeffShape,
+    uint32_t               bit_increment,
+    EbBool                 dst_transform_flag,
+    EB_TRANS_COEFF_SHAPE   trans_coeff_shape,
     EbAsm                  asm_type)
 {
     EbErrorType return_error = EB_ErrorNone;
@@ -4749,48 +4749,48 @@ EbErrorType EncodeTransform(
 
     uint32_t transformSizeFlag = Log2f(TRANSFORM_MAX_SIZE) - Log2f(transform_size);
 
-    if (transCoeffShape == DEFAULT_SHAPE) {
-        (*transformFunctionTableEncode[/*asm_type*/(bitIncrement & 2) ? ASM_NON_AVX2 : asm_type][transformSizeFlag + dstTransformFlag])(
+    if (trans_coeff_shape == DEFAULT_SHAPE) {
+        (*transform_function_table_encode[/*asm_type*/(bit_increment & 2) ? ASM_NON_AVX2 : asm_type][transformSizeFlag + dst_transform_flag])(
             residual_buffer,
-            residualStride,
-            coeffBuffer,
-            coeffStride,
+            residual_stride,
+            coeff_buffer,
+            coeff_stride,
             transform_inner_array_ptr,
-            bitIncrement
+            bit_increment
             );
     }
 
-    else if (transCoeffShape == N2_SHAPE) {
-        (*PfreqN2TransformTable[/*asm_type*/(bitIncrement & 2) ? ASM_NON_AVX2 : asm_type][transformSizeFlag + dstTransformFlag])(
+    else if (trans_coeff_shape == N2_SHAPE) {
+        (*pfreq_n2_transform_table[/*asm_type*/(bit_increment & 2) ? ASM_NON_AVX2 : asm_type][transformSizeFlag + dst_transform_flag])(
             residual_buffer,
-            residualStride,
-            coeffBuffer,
-            coeffStride,
+            residual_stride,
+            coeff_buffer,
+            coeff_stride,
             transform_inner_array_ptr,
-            bitIncrement
+            bit_increment
             );
     }
 
-    else if (transCoeffShape == N4_SHAPE) {
-        (*PfreqN4TransformTable[/*asm_type*/(bitIncrement & 2) ? ASM_NON_AVX2 : asm_type][transformSizeFlag + dstTransformFlag])(
+    else if (trans_coeff_shape == N4_SHAPE) {
+        (*pfreq_n4_transform_table[/*asm_type*/(bit_increment & 2) ? ASM_NON_AVX2 : asm_type][transformSizeFlag + dst_transform_flag])(
             residual_buffer,
-            residualStride,
-            coeffBuffer,
-            coeffStride,
+            residual_stride,
+            coeff_buffer,
+            coeff_stride,
             transform_inner_array_ptr,
-            bitIncrement);
+            bit_increment);
     }
 
-    else { // transCoeffShape == ONLY_DC_SHAPE
+    else { // trans_coeff_shape == ONLY_DC_SHAPE
 
-        int32_t sumResidual;
+        int32_t sum_residual;
 
-        sumResidual = SumResidual_funcPtrArray[asm_type](
+        sum_residual = sum_residual_func_ptr_array[asm_type](
             residual_buffer,
             transform_size,
-            residualStride);
+            residual_stride);
 
-        uint32_t shift1st = Log2f(transform_size) - 1 + bitIncrement;
+        uint32_t shift1st = Log2f(transform_size) - 1 + bit_increment;
         int32_t offset1st = 1 << (shift1st - 1);
 
         uint32_t shift2nd = Log2f(transform_size) + 6;
@@ -4798,10 +4798,10 @@ EbErrorType EncodeTransform(
 
         int16_t dcCoeff;
         int32_t dcCoeffTemp;
-        dcCoeffTemp = (int32_t)((64 * sumResidual + offset1st) >> shift1st);
+        dcCoeffTemp = (int32_t)((64 * sum_residual + offset1st) >> shift1st);
         dcCoeff = (int16_t)((64 * dcCoeffTemp + offset2nd) >> shift2nd);
 
-        coeffBuffer[0] = dcCoeff;
+        coeff_buffer[0] = dcCoeff;
 
     }
 
@@ -7342,7 +7342,7 @@ static INLINE void Av1InverseTransformTwoDCore_c(
 
 void Av1InverseTransformTwoD_4x4_c(
     int32_t        *input,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     int32_t        *output,
     uint32_t         outputStride,
     TxType        transform_type,
@@ -7359,7 +7359,7 @@ void Av1InverseTransformTwoD_4x4_c(
     // av1_gen_inv_stage_range() does for inverse shifts.
     Av1InverseTransformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         outputStride,
         &cfg,
@@ -7370,7 +7370,7 @@ void Av1InverseTransformTwoD_4x4_c(
 
 void Av1InverseTransformTwoD_8x8_c(
     int32_t        *input,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     int32_t        *output,
     uint32_t         outputStride,
     TxType        transform_type,
@@ -7387,7 +7387,7 @@ void Av1InverseTransformTwoD_8x8_c(
     // av1_gen_inv_stage_range() does for inverse shifts.
     Av1InverseTransformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         outputStride,
         &cfg,
@@ -7398,7 +7398,7 @@ void Av1InverseTransformTwoD_8x8_c(
 
 void Av1InverseTransformTwoD_16x16_c(
     int32_t        *input,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     int32_t        *output,
     uint32_t         outputStride,
     TxType        transform_type,
@@ -7415,7 +7415,7 @@ void Av1InverseTransformTwoD_16x16_c(
     // av1_gen_inv_stage_range() does for inverse shifts.
     Av1InverseTransformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         outputStride,
         &cfg,
@@ -7426,7 +7426,7 @@ void Av1InverseTransformTwoD_16x16_c(
 
 void Av1InverseTransformTwoD_32x32_c(
     int32_t        *input,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     int32_t        *output,
     uint32_t         outputStride,
     TxType        transform_type,
@@ -7443,7 +7443,7 @@ void Av1InverseTransformTwoD_32x32_c(
     // av1_gen_inv_stage_range() does for inverse shifts.
     Av1InverseTransformTwoDCore_c(
         input,
-        inputStride,
+        input_stride,
         output,
         outputStride,
         &cfg,
@@ -7454,13 +7454,13 @@ void Av1InverseTransformTwoD_32x32_c(
 
 void Av1InverseTransformTwoD_64x64_c(
     int32_t        *input,
-    uint32_t         inputStride,
+    uint32_t         input_stride,
     int32_t        *output,
     uint32_t         outputStride,
     TxType        transform_type,
     uint8_t          bit_depth)
 {
-    (void)inputStride;
+    (void)input_stride;
     // TODO(urvang): Can the same array be reused, instead of using a new array?
     // Remap 32x32 input into a modified 64x64 by:
     // - Copying over these values in top-left 32x32 locations.
@@ -7498,29 +7498,29 @@ void Av1InverseTransformTwoD_64x64_c(
 /*********************************************************************
 * Estimate Inverse Transform
 *********************************************************************/
-EbErrorType Av1EstimateInvTransform(
-    int32_t      *coeffBuffer,
-    uint32_t      coeffStride,
-    int32_t      *reconBuffer,
-    uint32_t      reconStride,
+EbErrorType av1_estimate_inv_transform(
+    int32_t      *coeff_buffer,
+    uint32_t      coeff_stride,
+    int32_t      *recon_buffer,
+    uint32_t      recon_stride,
     TxSize        transform_size,
     int16_t      *transform_inner_array_ptr,
-    uint32_t      bitIncrement,
+    uint32_t      bit_increment,
     TxType        transform_type,
     uint32_t      eob,
     EbAsm         asm_type,
-    uint32_t      partialFrequencyN2Flag)
+    uint32_t      partial_frequency_n2_flag)
 {
     EbErrorType return_error = EB_ErrorNone;
 
     // Nader inverse tranform
     (void)transform_inner_array_ptr;
     (void)asm_type;
-    (void)partialFrequencyN2Flag;
+    (void)partial_frequency_n2_flag;
 
     //TxSetType  transformSetType = transform_type == DCT_DCT ? EXT_TX_SET_DCTONLY : /*ADST_ADST*/ EXT_TX_SET_DTT4_IDTX ; // NM - Set to zero for the moment
 
-    uint8_t      bit_depth = bitIncrement ? 10 : 8;// NM - Set to zero for the moment
+    uint8_t      bit_depth = bit_increment ? 10 : 8;// NM - Set to zero for the moment
 
 
     if (eob) {
@@ -7529,37 +7529,37 @@ EbErrorType Av1EstimateInvTransform(
         switch (transform_size) {
         case TX_32X32:
             Av1InverseTransformTwoD_32x32_c(
-                coeffBuffer,
-                coeffStride,
-                reconBuffer,
-                reconStride,
+                coeff_buffer,
+                coeff_stride,
+                recon_buffer,
+                recon_stride,
                 transform_type,
                 bit_depth);
             break;
         case TX_16X16:
             Av1InverseTransformTwoD_16x16_c(
-                coeffBuffer,
-                coeffStride,
-                reconBuffer,
-                reconStride,
+                coeff_buffer,
+                coeff_stride,
+                recon_buffer,
+                recon_stride,
                 transform_type,
                 bit_depth);
             break;
         case TX_8X8:
             Av1InverseTransformTwoD_8x8_c(
-                coeffBuffer,
-                coeffStride,
-                reconBuffer,
-                reconStride,
+                coeff_buffer,
+                coeff_stride,
+                recon_buffer,
+                recon_stride,
                 transform_type,
                 bit_depth);
             break;
         case TX_64X64:
             Av1InverseTransformTwoD_64x64_c(
-                coeffBuffer,
-                coeffStride,
-                reconBuffer,
-                reconStride,
+                coeff_buffer,
+                coeff_stride,
+                recon_buffer,
+                recon_stride,
                 transform_type,
                 bit_depth);
             break;
@@ -7568,10 +7568,10 @@ EbErrorType Av1EstimateInvTransform(
             // which is significant (not just an optimization) for the lossless
             // case.
             Av1InverseTransformTwoD_4x4_c(
-                coeffBuffer,
-                coeffStride,
-                reconBuffer,
-                reconStride,
+                coeff_buffer,
+                coeff_stride,
+                recon_buffer,
+                recon_stride,
                 transform_type,
                 bit_depth);
             break;
@@ -8341,17 +8341,17 @@ void av1_inv_txfm_add_c(const tran_low_t *dqcoeff, uint8_t *dst, int32_t stride,
     }
 }
 
-EbErrorType Av1InvTransformRecon(
-    int32_t      *coeffBuffer,//1D buffer
-    uint8_t      *reconBuffer,
-    uint32_t      reconStride,
+EbErrorType av1_inv_transform_recon(
+    int32_t      *coeff_buffer,//1D buffer
+    uint8_t      *recon_buffer,
+    uint32_t      recon_stride,
     TxSize        txsize,
-    uint32_t      bitIncrement,
+    uint32_t      bit_increment,
     TxType        transform_type,
-    PLANE_TYPE   componentType,
+    PLANE_TYPE   component_type,
     uint32_t       eob)
 {
-    UNUSED(componentType);
+    UNUSED(component_type);
     EbErrorType return_error = EB_ErrorNone;
     TxfmParam txfm_param;
     
@@ -8360,28 +8360,28 @@ EbErrorType Av1InvTransformRecon(
     txfm_param.tx_size = txsize;
     txfm_param.eob = eob;
     txfm_param.lossless = 0;
-    txfm_param.bd = bitIncrement ? 10 : 8;
+    txfm_param.bd = bit_increment ? 10 : 8;
     txfm_param.is_hbd = 1;
     //txfm_param.tx_set_type = av1_get_ext_tx_set_type(   txfm_param->tx_size, is_inter_block(xd->mi[0]), reduced_tx_set);
 
-    highbd_inv_txfm_add((const tran_low_t *)coeffBuffer, reconBuffer,
-        reconStride, &txfm_param);
+    highbd_inv_txfm_add((const tran_low_t *)coeff_buffer, recon_buffer,
+        recon_stride, &txfm_param);
 
     return return_error;
 }
 
 
-EbErrorType Av1InvTransformRecon8bit(
-    int32_t       *coeffBuffer,//1D buffer
-    uint8_t       *reconBuffer,
-    uint32_t       reconStride,
+EbErrorType av1_inv_transform_recon8bit(
+    int32_t       *coeff_buffer,//1D buffer
+    uint8_t       *recon_buffer,
+    uint32_t       recon_stride,
     TxSize         txsize,
     TxType         transform_type,
-    PLANE_TYPE     componentType,
+    PLANE_TYPE     component_type,
     uint32_t       eob
 )
 {
-    UNUSED(componentType);
+    UNUSED(component_type);
     EbErrorType return_error = EB_ErrorNone;
     TxfmParam txfm_param;
     txfm_param.tx_type = transform_type;
@@ -8392,24 +8392,24 @@ EbErrorType Av1InvTransformRecon8bit(
     txfm_param.is_hbd = 1;
     //txfm_param.tx_set_type = av1_get_ext_tx_set_type(   txfm_param->tx_size, is_inter_block(xd->mi[0]), reduced_tx_set);
 
-    av1_inv_txfm_add((const tran_low_t *)coeffBuffer, reconBuffer,
-        reconStride, &txfm_param);
+    av1_inv_txfm_add((const tran_low_t *)coeff_buffer, recon_buffer,
+        recon_stride, &txfm_param);
 
     return return_error;
 }
 /*********************************************************************
  * Encode Inverse Transform
  *********************************************************************/
-EbErrorType EncodeInvTransform(
+EbErrorType encode_inv_transform(
     EbBool      is_only_dc,
-    int16_t      *coeffBuffer,
-    uint32_t       coeffStride,
-    int16_t      *reconBuffer,
-    uint32_t       reconStride,
+    int16_t      *coeff_buffer,
+    uint32_t       coeff_stride,
+    int16_t      *recon_buffer,
+    uint32_t       recon_stride,
     uint32_t       transform_size,
     int16_t      *transform_inner_array_ptr,
-    uint32_t       bitIncrement,
-    EbBool      dstTransformFlag,
+    uint32_t       bit_increment,
+    EbBool      dst_transform_flag,
     EbAsm       asm_type)
 {
     EbErrorType return_error = EB_ErrorNone;
@@ -8417,10 +8417,10 @@ EbErrorType EncodeInvTransform(
     uint32_t transformSizeFlag = Log2f(TRANSFORM_MAX_SIZE) - Log2f(transform_size);
 
     if (is_only_dc) {
-        int16_t  dcCoef = coeffBuffer[0];
+        int16_t  dcCoef = coeff_buffer[0];
 
         uint32_t  shift1st = SHIFT_INV_1ST;
-        uint32_t  shift2nd = SHIFT_INV_2ND - bitIncrement;
+        uint32_t  shift2nd = SHIFT_INV_2ND - bit_increment;
 
         int32_t  offset1st = 1 << (shift1st - 1);
         int32_t  offset2nd = 1 << (shift2nd - 1);
@@ -8430,9 +8430,9 @@ EbErrorType EncodeInvTransform(
         invTranformedDcCoef = (int16_t)CLIP3(MIN_NEG_16BIT_NUM, MAX_POS_16BIT_NUM, ((64 * dcCoef + offset1st) >> shift1st));
         invTranformedDcCoef = (int16_t)CLIP3(MIN_NEG_16BIT_NUM, MAX_POS_16BIT_NUM, ((64 * invTranformedDcCoef + offset2nd) >> shift2nd));
 
-        memset16bitBlock_funcPtrArray[asm_type](
-            reconBuffer,
-            reconStride,
+        memset16bit_block_func_ptr_array[asm_type](
+            recon_buffer,
+            recon_stride,
             transform_size,
             invTranformedDcCoef);
 
@@ -8444,13 +8444,13 @@ EbErrorType EncodeInvTransform(
         // The input of this function is the quantized_inversequantized transformed residual
         //   but in order to avoid extra copying, it is overwritten in place. The
         //   input(residual_buffer) is the SB residual buffer
-        (*invTransformFunctionTableEncode[asm_type][transformSizeFlag + dstTransformFlag])(
-            coeffBuffer,
-            coeffStride,
-            reconBuffer,
-            reconStride,
+        (*inv_transform_function_table_encode[asm_type][transformSizeFlag + dst_transform_flag])(
+            coeff_buffer,
+            coeff_stride,
+            recon_buffer,
+            recon_stride,
             transform_inner_array_ptr,
-            bitIncrement);
+            bit_increment);
     }
     return return_error;
 }
@@ -8458,53 +8458,53 @@ EbErrorType EncodeInvTransform(
 /*********************************************************************
  * Map Chroma QP
  *********************************************************************/
-uint8_t MapChromaQp(
+uint8_t map_chroma_qp(
     uint8_t  qp)
 {
     return qp;
 
 }
 
-uint8_t ConstructPmTransCoeffShapingKnob(const uint16_t *maskingMatrix, uint8_t txb_size) // M_Processing is an function of type uint16_t
+uint8_t ConstructPmTransCoeffShapingKnob(const uint16_t *masking_matrix, uint8_t txb_size) // M_Processing is an function of type uint16_t
 {
 
     uint8_t  stride = txb_size;
     uint8_t  strideN2 = stride >> 1;
     uint8_t  strideN4 = stride >> 2;
 
-    uint16_t index, rowIndex, columnIndex;
+    uint16_t index, row_index, columnIndex;
     uint64_t h1 = 0, h2 = 0, h3 = 0, q1 = 0, q2 = 0, q3 = 0, dc = 0;
 
     for (index = 0; index < txb_size*txb_size; index++)
     {
-        rowIndex = index / stride;
+        row_index = index / stride;
         columnIndex = index % stride;
-        if ((columnIndex >= strideN2) && (rowIndex < strideN2))
+        if ((columnIndex >= strideN2) && (row_index < strideN2))
         {
-            h1 += maskingMatrix[index];
+            h1 += masking_matrix[index];
         }
-        else if ((rowIndex >= strideN2) && (columnIndex < strideN2))
+        else if ((row_index >= strideN2) && (columnIndex < strideN2))
         {
-            h2 += maskingMatrix[index];
+            h2 += masking_matrix[index];
         }
-        else if ((rowIndex > strideN2) && (columnIndex > strideN2))
+        else if ((row_index > strideN2) && (columnIndex > strideN2))
         {
-            h3 += maskingMatrix[index];
+            h3 += masking_matrix[index];
         }
-        else if ((columnIndex >= strideN4) && (rowIndex < strideN4))
+        else if ((columnIndex >= strideN4) && (row_index < strideN4))
         {
-            q1 += maskingMatrix[index];
+            q1 += masking_matrix[index];
         }
-        else if ((rowIndex >= strideN4) && (columnIndex < strideN4))
+        else if ((row_index >= strideN4) && (columnIndex < strideN4))
         {
-            q2 += maskingMatrix[index];
+            q2 += masking_matrix[index];
         }
-        else if ((rowIndex > strideN4) && (columnIndex > strideN4))
+        else if ((row_index > strideN4) && (columnIndex > strideN4))
         {
-            q3 += maskingMatrix[index];
+            q3 += masking_matrix[index];
         }
-        else if ((rowIndex != 0) && (columnIndex != 0)) {
-            dc += maskingMatrix[index];
+        else if ((row_index != 0) && (columnIndex != 0)) {
+            dc += masking_matrix[index];
         }
     }
 
@@ -8535,7 +8535,7 @@ uint8_t ConstructPmTransCoeffShapingKnob(const uint16_t *maskingMatrix, uint8_t 
         return(0);
     }
 }
-void ConstructPmTransCoeffShaping(
+void construct_pm_trans_coeff_shaping(
     SequenceControlSet_t  *sequence_control_set_ptr)
 {
 
@@ -8547,7 +8547,7 @@ void ConstructPmTransCoeffShaping(
     for (resolutionIndex = 0; resolutionIndex < 2; resolutionIndex++) {
         for (levelIndex = 0; levelIndex < 8; levelIndex++) {
             for (tuSizeIndex = 0; tuSizeIndex < 4; tuSizeIndex++) {
-                sequence_control_set_ptr->trans_coeff_shape_array[resolutionIndex][levelIndex][tuSizeIndex] = ConstructPmTransCoeffShapingKnob(MaskingMatrix[resolutionIndex][levelIndex][tuSizeIndex], arrayLength[tuSizeIndex]);
+                sequence_control_set_ptr->trans_coeff_shape_array[resolutionIndex][levelIndex][tuSizeIndex] = ConstructPmTransCoeffShapingKnob(masking_matrix[resolutionIndex][levelIndex][tuSizeIndex], arrayLength[tuSizeIndex]);
             }
         }
     }

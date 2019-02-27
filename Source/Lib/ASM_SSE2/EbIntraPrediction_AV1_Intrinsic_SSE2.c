@@ -75,13 +75,13 @@ static INLINE void dc_store_16xh(const __m128i *row, int32_t height, uint8_t *ds
     }
 }
 
-void IntraModeDC_16x16_AV1_SSE2_INTRIN(
+void intra_mode_dc_16x16_av1_sse2_intrin(
     EbBool                         is_left_availble,
     EbBool                         is_above_availble,
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
 
@@ -91,37 +91,37 @@ void IntraModeDC_16x16_AV1_SSE2_INTRIN(
     uint32_t rowStride = skip ? 2 : 1;
 
     if (is_left_availble && !is_above_availble) {
-        __m128i sum_left = dc_sum_16(&refSamples[leftOffset]);
+        __m128i sum_left = dc_sum_16(&ref_samples[leftOffset]);
         const __m128i eight = _mm_set1_epi16((uint16_t)8);
         sum_left = _mm_add_epi16(sum_left, eight);
         sum_left = _mm_srai_epi16(sum_left, 4);
         sum_left = _mm_unpacklo_epi8(sum_left, sum_left);
         sum_left = _mm_shufflelo_epi16(sum_left, 0);
         const __m128i row = _mm_unpacklo_epi64(sum_left, sum_left);
-        dc_store_16xh(&row, 16, dst, rowStride * predictionBufferStride);
+        dc_store_16xh(&row, 16, dst, rowStride * prediction_buffer_stride);
 
     }
     else if (is_above_availble && !is_left_availble) {
-        __m128i sum_above = dc_sum_16(&refSamples[topOffset]);
+        __m128i sum_above = dc_sum_16(&ref_samples[topOffset]);
         const __m128i eight = _mm_set1_epi16((uint16_t)8);
         sum_above = _mm_add_epi16(sum_above, eight);
         sum_above = _mm_srai_epi16(sum_above, 4);
         sum_above = _mm_unpacklo_epi8(sum_above, sum_above);
         sum_above = _mm_shufflelo_epi16(sum_above, 0);
         const __m128i row = _mm_unpacklo_epi64(sum_above, sum_above);
-        dc_store_16xh(&row, 16, dst, rowStride * predictionBufferStride);
+        dc_store_16xh(&row, 16, dst, rowStride * prediction_buffer_stride);
     }
     else
     {
-        const __m128i sum_left = dc_sum_16(&refSamples[leftOffset]);
-        __m128i sum_above = dc_sum_16(&refSamples[topOffset]);
+        const __m128i sum_left = dc_sum_16(&ref_samples[leftOffset]);
+        __m128i sum_above = dc_sum_16(&ref_samples[topOffset]);
         sum_above = _mm_add_epi16(sum_above, sum_left);
 
         uint32_t sum = _mm_cvtsi128_si32(sum_above);
         sum += 16;
         sum >>= 5;
         const __m128i row = _mm_set1_epi8((uint8_t)sum);
-        dc_store_16xh(&row, 16, dst, rowStride * predictionBufferStride);
+        dc_store_16xh(&row, 16, dst, rowStride * prediction_buffer_stride);
     }
 
 
@@ -140,13 +140,13 @@ static INLINE __m128i dc_sum_8(const uint8_t *ref) {
     return _mm_sad_epu8(x, zero);
 }
 
-void IntraModeDC_8x8_AV1_SSE2_INTRIN(
+void intra_mode_dc_8x8_av1_sse2_intrin(
     EbBool                         is_left_availble,
     EbBool                         is_above_availble,
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
 
@@ -156,35 +156,35 @@ void IntraModeDC_8x8_AV1_SSE2_INTRIN(
     uint32_t rowStride = skip ? 2 : 1;
 
     if (is_left_availble && !is_above_availble) {
-        __m128i sum_left = dc_sum_8(&refSamples[leftOffset]);
+        __m128i sum_left = dc_sum_8(&ref_samples[leftOffset]);
         const __m128i four = _mm_set1_epi16((uint16_t)4);
         sum_left = _mm_add_epi16(sum_left, four);
         sum_left = _mm_srai_epi16(sum_left, 3);
         sum_left = _mm_unpacklo_epi8(sum_left, sum_left);
         const __m128i row = _mm_shufflelo_epi16(sum_left, 0);
-        dc_store_8xh(&row, 8, dst, rowStride * predictionBufferStride);
+        dc_store_8xh(&row, 8, dst, rowStride * prediction_buffer_stride);
 
     }
     else if (is_above_availble && !is_left_availble) {
-        __m128i sum_above = dc_sum_8(&refSamples[topOffset]);
+        __m128i sum_above = dc_sum_8(&ref_samples[topOffset]);
         const __m128i four = _mm_set1_epi16((uint16_t)4);
         sum_above = _mm_add_epi16(sum_above, four);
         sum_above = _mm_srai_epi16(sum_above, 3);
         sum_above = _mm_unpacklo_epi8(sum_above, sum_above);
         const __m128i row = _mm_shufflelo_epi16(sum_above, 0);
-        dc_store_8xh(&row, 8, dst, rowStride * predictionBufferStride);
+        dc_store_8xh(&row, 8, dst, rowStride * prediction_buffer_stride);
     }
     else
     {
-        const __m128i sum_left = dc_sum_8(&refSamples[leftOffset]);
-        __m128i sum_above = dc_sum_8(&refSamples[topOffset]);
+        const __m128i sum_left = dc_sum_8(&ref_samples[leftOffset]);
+        __m128i sum_above = dc_sum_8(&ref_samples[topOffset]);
         sum_above = _mm_add_epi16(sum_above, sum_left);
 
         uint32_t sum = _mm_cvtsi128_si32(sum_above);
         sum += 8;
         sum >>= 4;
         const __m128i row = _mm_set1_epi8((uint8_t)sum);
-        dc_store_8xh(&row, 8, dst, rowStride * predictionBufferStride);
+        dc_store_8xh(&row, 8, dst, rowStride * prediction_buffer_stride);
 
     }
 
@@ -204,13 +204,13 @@ static INLINE void dc_store_4x4(uint32_t dc, uint8_t *dst, ptrdiff_t stride) {
         dst += stride;
     }
 }
-void IntraModeDC_4x4_AV1_SSE2_INTRIN(
+void intra_mode_dc_4x4_av1_sse2_intrin(
     EbBool                         is_left_availble,
     EbBool                         is_above_availble,
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
 
@@ -220,7 +220,7 @@ void IntraModeDC_4x4_AV1_SSE2_INTRIN(
     uint32_t rowStride = skip ? 2 : 1;
 
     if (is_left_availble && !is_above_availble) {
-        __m128i sum_left = dc_sum_4(&refSamples[leftOffset]);
+        __m128i sum_left = dc_sum_4(&ref_samples[leftOffset]);
         const __m128i two = _mm_set1_epi16((uint16_t)2);
         sum_left = _mm_add_epi16(sum_left, two);
         sum_left = _mm_srai_epi16(sum_left, 2);
@@ -228,11 +228,11 @@ void IntraModeDC_4x4_AV1_SSE2_INTRIN(
         sum_left = _mm_packus_epi16(sum_left, sum_left);
 
         const uint32_t pred = _mm_cvtsi128_si32(sum_left);
-        dc_store_4x4(pred, dst, rowStride * predictionBufferStride);
+        dc_store_4x4(pred, dst, rowStride * prediction_buffer_stride);
 
     }
     else if (is_above_availble && !is_left_availble) {
-        __m128i sum_above = dc_sum_4(&refSamples[topOffset]);
+        __m128i sum_above = dc_sum_4(&ref_samples[topOffset]);
         const __m128i two = _mm_set1_epi16((int16_t)2);
         sum_above = _mm_add_epi16(sum_above, two);
         sum_above = _mm_srai_epi16(sum_above, 2);
@@ -240,13 +240,13 @@ void IntraModeDC_4x4_AV1_SSE2_INTRIN(
         sum_above = _mm_packus_epi16(sum_above, sum_above);
 
         const uint32_t pred = _mm_cvtsi128_si32(sum_above);
-        dc_store_4x4(pred, dst, rowStride * predictionBufferStride);
+        dc_store_4x4(pred, dst, rowStride * prediction_buffer_stride);
 
     }
     else
     {
-        const __m128i sum_left = dc_sum_4(&refSamples[leftOffset]);
-        __m128i sum_above = dc_sum_4(&refSamples[topOffset]);
+        const __m128i sum_left = dc_sum_4(&ref_samples[leftOffset]);
+        __m128i sum_above = dc_sum_4(&ref_samples[topOffset]);
         sum_above = _mm_add_epi16(sum_left, sum_above);
 
         uint32_t sum = _mm_cvtsi128_si32(sum_above);
@@ -255,7 +255,7 @@ void IntraModeDC_4x4_AV1_SSE2_INTRIN(
 
         const __m128i row = _mm_set1_epi8((uint8_t)sum);
         const uint32_t pred = _mm_cvtsi128_si32(row);
-        dc_store_4x4(pred, dst, rowStride * predictionBufferStride);
+        dc_store_4x4(pred, dst, rowStride * prediction_buffer_stride);
 
     }
 

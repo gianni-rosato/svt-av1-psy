@@ -633,7 +633,7 @@ static void lineSplit(
 
 
 /**********************************
-* Set Config Value
+* Set Config value
 **********************************/
 static void SetConfigValue(
     EbConfig_t *config,

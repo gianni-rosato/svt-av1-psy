@@ -37,17 +37,16 @@ typedef struct RateControlTasks_s
 
 } RateControlTasks_t;
 
-typedef struct RateControlTasksInitData_s
-{
+typedef struct RateControlTasksInitData_s {
     int32_t junk;
 } RateControlTasksInitData_t;
 
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType RateControlTasksCtor(
+extern EbErrorType rate_control_tasks_ctor(
     EbPtr *object_dbl_ptr,
-    EbPtr object_init_data_ptr);
+    EbPtr  object_init_data_ptr);
 
 
 #endif // EbRateControlTasks_h

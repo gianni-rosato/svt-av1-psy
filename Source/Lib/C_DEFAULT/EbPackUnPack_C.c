@@ -9,13 +9,13 @@
 /************************************************
 * pack 8 and 2 bit 2D data into 10 bit data
 ************************************************/
-void EB_ENC_msbPack2D(
-    uint8_t     *in8BitBuffer,
-    uint32_t     in8Stride,
-    uint8_t     *innBitBuffer,
-    uint16_t    *out16BitBuffer,
-    uint32_t     innStride,
-    uint32_t     outStride,
+void eb_enc_msb_pack2_d(
+    uint8_t     *in8_bit_buffer,
+    uint32_t     in8_stride,
+    uint8_t     *inn_bit_buffer,
+    uint16_t    *out16_bit_buffer,
+    uint32_t     inn_stride,
+    uint32_t     out_stride,
     uint32_t     width,
     uint32_t     height)
 {
@@ -29,10 +29,10 @@ void EB_ENC_msbPack2D(
     {
         for (k = 0; k < width; k++)
         {
-            outPixel = (in8BitBuffer[k + j * in8Stride]) << 2;
-            nBitPixel = (innBitBuffer[k + j * innStride] >> 6) & 3;
+            outPixel = (in8_bit_buffer[k + j * in8_stride]) << 2;
+            nBitPixel = (inn_bit_buffer[k + j * inn_stride] >> 6) & 3;
 
-            out16BitBuffer[k + j * outStride] = outPixel | nBitPixel;
+            out16_bit_buffer[k + j * out_stride] = outPixel | nBitPixel;
         }
     }
 }
@@ -41,13 +41,13 @@ void EB_ENC_msbPack2D(
 * pack 8 and 2 bit 2D data into 10 bit data
 2bit data storage : 4 2bit-pixels in one byte
 ************************************************/
-void CompressedPackmsb(
-    uint8_t     *in8BitBuffer,
-    uint32_t     in8Stride,
-    uint8_t     *innBitBuffer,
-    uint16_t    *out16BitBuffer,
-    uint32_t     innStride,
-    uint32_t     outStride,
+void compressed_packmsb(
+    uint8_t     *in8_bit_buffer,
+    uint32_t     in8_stride,
+    uint8_t     *inn_bit_buffer,
+    uint16_t    *out16_bit_buffer,
+    uint32_t     inn_stride,
+    uint32_t     out_stride,
     uint32_t     width,
     uint32_t     height)
 {
@@ -61,24 +61,24 @@ void CompressedPackmsb(
         for (kIdx = 0; kIdx < width / 4; kIdx++)
         {
 
-            four2bitPels = innBitBuffer[kIdx + row * innStride];
+            four2bitPels = inn_bit_buffer[kIdx + row * inn_stride];
 
             nBitPixel = (four2bitPels >> 6) & 3;
 
-            outPixel = in8BitBuffer[kIdx * 4 + 0 + row * in8Stride] << 2;
-            out16BitBuffer[kIdx * 4 + 0 + row * outStride] = outPixel | nBitPixel;
+            outPixel = in8_bit_buffer[kIdx * 4 + 0 + row * in8_stride] << 2;
+            out16_bit_buffer[kIdx * 4 + 0 + row * out_stride] = outPixel | nBitPixel;
 
             nBitPixel = (four2bitPels >> 4) & 3;
-            outPixel = in8BitBuffer[kIdx * 4 + 1 + row * in8Stride] << 2;
-            out16BitBuffer[kIdx * 4 + 1 + row * outStride] = outPixel | nBitPixel;
+            outPixel = in8_bit_buffer[kIdx * 4 + 1 + row * in8_stride] << 2;
+            out16_bit_buffer[kIdx * 4 + 1 + row * out_stride] = outPixel | nBitPixel;
 
             nBitPixel = (four2bitPels >> 2) & 3;
-            outPixel = in8BitBuffer[kIdx * 4 + 2 + row * in8Stride] << 2;
-            out16BitBuffer[kIdx * 4 + 2 + row * outStride] = outPixel | nBitPixel;
+            outPixel = in8_bit_buffer[kIdx * 4 + 2 + row * in8_stride] << 2;
+            out16_bit_buffer[kIdx * 4 + 2 + row * out_stride] = outPixel | nBitPixel;
 
             nBitPixel = (four2bitPels >> 0) & 3;
-            outPixel = in8BitBuffer[kIdx * 4 + 3 + row * in8Stride] << 2;
-            out16BitBuffer[kIdx * 4 + 3 + row * outStride] = outPixel | nBitPixel;
+            outPixel = in8_bit_buffer[kIdx * 4 + 3 + row * in8_stride] << 2;
+            out16_bit_buffer[kIdx * 4 + 3 + row * out_stride] = outPixel | nBitPixel;
 
 
         }
@@ -89,32 +89,32 @@ void CompressedPackmsb(
 * convert unpacked nbit (n=2) data to compressedPAcked
 2bit data storage : 4 2bit-pixels in one byte
 ************************************************/
-void CPack_C(
-    const uint8_t     *innBitBuffer,
-    uint32_t     innStride,
-    uint8_t     *inCompnBitBuffer,
-    uint32_t     outStride,
-    uint8_t    *localCache,
+void c_pack_c(
+    const uint8_t     *inn_bit_buffer,
+    uint32_t     inn_stride,
+    uint8_t     *in_compn_bit_buffer,
+    uint32_t     out_stride,
+    uint8_t    *local_cache,
     uint32_t     width,
     uint32_t     height)
 {
-    uint32_t rowIndex, colIndex;
-    (void)localCache;
+    uint32_t row_index, colIndex;
+    (void)local_cache;
 
-    for (rowIndex = 0; rowIndex < height; rowIndex++)
+    for (row_index = 0; row_index < height; row_index++)
     {
         for (colIndex = 0; colIndex < width; colIndex += 4)
         {
-            uint32_t i = colIndex + rowIndex * innStride;
+            uint32_t i = colIndex + row_index * inn_stride;
 
             uint8_t compressedUnpackedPixel = 0;
-            compressedUnpackedPixel = compressedUnpackedPixel | ((innBitBuffer[i + 0] >> 0) & 0xC0);//1100.0000
-            compressedUnpackedPixel = compressedUnpackedPixel | ((innBitBuffer[i + 1] >> 2) & 0x30);//0011.0000
-            compressedUnpackedPixel = compressedUnpackedPixel | ((innBitBuffer[i + 2] >> 4) & 0x0C);//0000.1100
-            compressedUnpackedPixel = compressedUnpackedPixel | ((innBitBuffer[i + 3] >> 6) & 0x03);//0000.0011
+            compressedUnpackedPixel = compressedUnpackedPixel | ((inn_bit_buffer[i + 0] >> 0) & 0xC0);//1100.0000
+            compressedUnpackedPixel = compressedUnpackedPixel | ((inn_bit_buffer[i + 1] >> 2) & 0x30);//0011.0000
+            compressedUnpackedPixel = compressedUnpackedPixel | ((inn_bit_buffer[i + 2] >> 4) & 0x0C);//0000.1100
+            compressedUnpackedPixel = compressedUnpackedPixel | ((inn_bit_buffer[i + 3] >> 6) & 0x03);//0000.0011
 
-            uint32_t j = colIndex / 4 + rowIndex * outStride;
-            inCompnBitBuffer[j] = compressedUnpackedPixel;
+            uint32_t j = colIndex / 4 + row_index * out_stride;
+            in_compn_bit_buffer[j] = compressedUnpackedPixel;
         }
     }
 
@@ -124,13 +124,13 @@ void CPack_C(
 /************************************************
 * unpack 10 bit data into  8 and 2 bit 2D data
 ************************************************/
-void EB_ENC_msbUnPack2D(
-    uint16_t      *in16BitBuffer,
-    uint32_t       inStride,
-    uint8_t       *out8BitBuffer,
-    uint8_t       *outnBitBuffer,
-    uint32_t       out8Stride,
-    uint32_t       outnStride,
+void eb_enc_msb_un_pack2_d(
+    uint16_t      *in16_bit_buffer,
+    uint32_t       in_stride,
+    uint8_t       *out8_bit_buffer,
+    uint8_t       *outn_bit_buffer,
+    uint32_t       out8_stride,
+    uint32_t       outn_stride,
     uint32_t       width,
     uint32_t       height)
 {
@@ -141,19 +141,19 @@ void EB_ENC_msbUnPack2D(
     {
         for (k = 0; k < width; k++)
         {
-            inPixel = in16BitBuffer[k + j * inStride];
-            out8BitBuffer[k + j * out8Stride] = (uint8_t)(inPixel >> 2);
+            inPixel = in16_bit_buffer[k + j * in_stride];
+            out8_bit_buffer[k + j * out8_stride] = (uint8_t)(inPixel >> 2);
             tmpPixel = (uint8_t)(inPixel << 6);
-            outnBitBuffer[k + j * outnStride] = tmpPixel;
+            outn_bit_buffer[k + j * outn_stride] = tmpPixel;
         }
     }
 
 }
-void UnPack8BitData(
-    uint16_t      *in16BitBuffer,
-    uint32_t       inStride,
-    uint8_t       *out8BitBuffer,
-    uint32_t       out8Stride,
+void un_pack8_bit_data(
+    uint16_t      *in16_bit_buffer,
+    uint32_t       in_stride,
+    uint8_t       *out8_bit_buffer,
+    uint32_t       out8_stride,
     uint32_t       width,
     uint32_t       height)
 {
@@ -164,20 +164,20 @@ void UnPack8BitData(
     {
         for (k = 0; k < width; k++)
         {
-            inPixel = in16BitBuffer[k + j * inStride];
-            out8BitBuffer[k + j * out8Stride] = (uint8_t)(inPixel >> 2);
+            inPixel = in16_bit_buffer[k + j * in_stride];
+            out8_bit_buffer[k + j * out8_stride] = (uint8_t)(inPixel >> 2);
             //tmpPixel = (uint8_t)(inPixel << 6);
-            //outnBitBuffer[k + j*outnStride] = tmpPixel;
+            //outn_bit_buffer[k + j*outn_stride] = tmpPixel;
         }
     }
 
 }
-void UnpackAvg(
-    uint16_t *ref16L0,
-    uint32_t  refL0Stride,
-    uint16_t *ref16L1,
-    uint32_t  refL1Stride,
-    uint8_t  *dstPtr,
+void unpack_avg(
+    uint16_t *ref16_l0,
+    uint32_t  ref_l0_stride,
+    uint16_t *ref16_l1,
+    uint32_t  ref_l1_stride,
+    uint8_t  *dst_ptr,
     uint32_t  dst_stride,
     uint32_t  width,
     uint32_t  height)
@@ -190,9 +190,9 @@ void UnpackAvg(
     {
         for (k = 0; k < width; k++)
         {
-            inPixelL0 = (uint8_t)(ref16L0[k + j * refL0Stride] >> 2);
-            inPixelL1 = (uint8_t)(ref16L1[k + j * refL1Stride] >> 2);
-            dstPtr[k + j * dst_stride] = (inPixelL0 + inPixelL1 + 1) >> 1;
+            inPixelL0 = (uint8_t)(ref16_l0[k + j * ref_l0_stride] >> 2);
+            inPixelL1 = (uint8_t)(ref16_l1[k + j * ref_l1_stride] >> 2);
+            dst_ptr[k + j * dst_stride] = (inPixelL0 + inPixelL1 + 1) >> 1;
 
         }
     }
@@ -200,14 +200,14 @@ void UnpackAvg(
 
 }
 
-void UnpackAvgSafeSub(
-    uint16_t *ref16L0,
-    uint32_t  refL0Stride,
-    uint16_t *ref16L1,
-    uint32_t  refL1Stride,
-    uint8_t  *dstPtr,
+void unpack_avg_safe_sub(
+    uint16_t *ref16_l0,
+    uint32_t  ref_l0_stride,
+    uint16_t *ref16_l1,
+    uint32_t  ref_l1_stride,
+    uint8_t  *dst_ptr,
     uint32_t  dst_stride,
-    EbBool      subPred,
+    EbBool      sub_pred,
     uint32_t  width,
     uint32_t  height)
 {
@@ -219,21 +219,21 @@ void UnpackAvgSafeSub(
     {
         for (k = 0; k < width; k++)
         {
-            inPixelL0 = (uint8_t)(ref16L0[k + j * refL0Stride] >> 2);
-            inPixelL1 = (uint8_t)(ref16L1[k + j * refL1Stride] >> 2);
-            dstPtr[k + j * dst_stride] = (inPixelL0 + inPixelL1 + 1) >> 1;
+            inPixelL0 = (uint8_t)(ref16_l0[k + j * ref_l0_stride] >> 2);
+            inPixelL1 = (uint8_t)(ref16_l1[k + j * ref_l1_stride] >> 2);
+            dst_ptr[k + j * dst_stride] = (inPixelL0 + inPixelL1 + 1) >> 1;
 
         }
     }
 
-    if (subPred) {
+    if (sub_pred) {
         //Last row
         j = height * 2 - 1;
         for (k = 0; k < width; k++)
         {
-            inPixelL0 = (uint8_t)(ref16L0[k + j * refL0Stride / 2] >> 2);
-            inPixelL1 = (uint8_t)(ref16L1[k + j * refL1Stride / 2] >> 2);
-            dstPtr[k + j * dst_stride / 2] = (inPixelL0 + inPixelL1 + 1) >> 1;
+            inPixelL0 = (uint8_t)(ref16_l0[k + j * ref_l0_stride / 2] >> 2);
+            inPixelL1 = (uint8_t)(ref16_l1[k + j * ref_l1_stride / 2] >> 2);
+            dst_ptr[k + j * dst_stride / 2] = (inPixelL0 + inPixelL1 + 1) >> 1;
 
         }
 

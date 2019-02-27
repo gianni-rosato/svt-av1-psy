@@ -12,22 +12,20 @@
 /**************************************
  * Process Results
  **************************************/
-typedef struct PictureAnalysisResults_s
-{
-    EbObjectWrapper_t   *pictureControlSetWrapperPtr;
+typedef struct PictureAnalysisResults_s {
+    EbObjectWrapper_t *pictureControlSetWrapperPtr;
 } PictureAnalysisResults_t;
 
-typedef struct PictureAnalysisResultInitData_s
-{
+typedef struct PictureAnalysisResultInitData_s {
     int32_t junk;
 } PictureAnalysisResultInitData_t;
 
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType PictureAnalysisResultCtor(
+extern EbErrorType picture_analysis_result_ctor(
     EbPtr *object_dbl_ptr,
-    EbPtr object_init_data_ptr);
+    EbPtr  object_init_data_ptr);
 
 
 #endif //EbPictureAnalysisResults_h

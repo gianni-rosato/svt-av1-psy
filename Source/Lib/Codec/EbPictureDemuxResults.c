@@ -6,19 +6,19 @@
 #include <stdlib.h>
 #include "EbPictureDemuxResults.h"
 
-EbErrorType PictureResultsCtor(
+EbErrorType picture_results_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    PictureDemuxResults_t *objectPtr;
-    EB_MALLOC(PictureDemuxResults_t*, objectPtr, sizeof(PictureDemuxResults_t), EB_N_PTR);
+    PictureDemuxResults_t *object_ptr;
+    EB_MALLOC(PictureDemuxResults_t*, object_ptr, sizeof(PictureDemuxResults_t), EB_N_PTR);
 
-    *object_dbl_ptr = objectPtr;
+    *object_dbl_ptr = object_ptr;
 
-    objectPtr->pictureType = EB_PIC_INVALID;
-    objectPtr->pictureControlSetWrapperPtr = 0;
-    objectPtr->reference_picture_wrapper_ptr = 0;
-    objectPtr->picture_number = 0;
+    object_ptr->pictureType = EB_PIC_INVALID;
+    object_ptr->pictureControlSetWrapperPtr = 0;
+    object_ptr->reference_picture_wrapper_ptr = 0;
+    object_ptr->picture_number = 0;
 
     (void)object_init_data_ptr;
 

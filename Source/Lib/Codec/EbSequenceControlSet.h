@@ -195,7 +195,7 @@ extern "C" {
         int32_t                                 frame_id_numbers_present_flag;
         int32_t                                 frame_id_length;
         int32_t                                 delta_frame_id_length;
-        BlockSize                               sb_size;                            // Size of the superblock used for this frame
+        block_size                               sb_size;                            // Size of the superblock used for this frame
         int32_t                                 mib_size;                           // Size of the superblock in units of MI blocks
         int32_t                                 mib_size_log2;                      // Log 2 of above.
         int32_t                                 order_hint_bits_minus1;
@@ -262,12 +262,12 @@ extern "C" {
      * Extern Function Declarations
      **************************************/
     extern EbErrorType eb_sequence_control_set_ctor(
-        EbPtr                          *object_dbl_ptr,
-        EbPtr                           object_init_data_ptr);
+        EbPtr *object_dbl_ptr,
+        EbPtr  object_init_data_ptr);
 
     extern EbErrorType copy_sequence_control_set(
-        SequenceControlSet_t            *dst,
-        SequenceControlSet_t            *src);
+        SequenceControlSet_t *dst,
+        SequenceControlSet_t *src);
 
     extern EbErrorType eb_sequence_control_set_instance_ctor(
         EbSequenceControlSetInstance_t **object_dbl_ptr);
@@ -279,10 +279,10 @@ extern "C" {
         SequenceControlSet_t *sequence_control_set_ptr);
 
     extern EbErrorType derive_input_resolution(
-        SequenceControlSet_t     *sequence_control_set_ptr,
-        uint32_t                  input_size);
+        SequenceControlSet_t *sequence_control_set_ptr,
+        uint32_t              input_size);
 
-    EbErrorType sb_geom_init(SequenceControlSet_t * sequence_control_set_ptr);
+    EbErrorType sb_geom_init(SequenceControlSet_t *sequence_control_set_ptr);
 
 #ifdef __cplusplus
 }

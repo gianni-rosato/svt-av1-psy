@@ -32,18 +32,17 @@
  /**************************************
   * The EB_BitFraction is used to define the bit fraction numbers
   **************************************/
-typedef uint16_t EB_Bit_Number;
+typedef uint16_t EbBitNumber;
 
 /**************************************
  * Initial Rate Control Structure
  **************************************/
 typedef struct InitialRateControlTables_s {
-    EB_Bit_Number  sadBitsArray[MAX_TEMPORAL_LAYERS][NUMBER_OF_SAD_INTERVALS];
-    EB_Bit_Number  intraSadBitsArray[MAX_TEMPORAL_LAYERS][NUMBER_OF_INTRA_SAD_INTERVALS];
-
-
+    EbBitNumber  sadBitsArray[MAX_TEMPORAL_LAYERS][NUMBER_OF_SAD_INTERVALS];
+    EbBitNumber  intraSadBitsArray[MAX_TEMPORAL_LAYERS][NUMBER_OF_INTRA_SAD_INTERVALS];
 } RateControlTables_t;
-static const uint8_t refQpListTable[] =
+
+static const uint8_t ref_qp_list_table[] =
 
 { 0,    1,    2,    3,    4,    5,    6,    7,
   8,    9,   10,   11,   12,   13,   14,   15,
@@ -56,7 +55,7 @@ static const uint8_t refQpListTable[] =
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType RateControlTablesCtor(
+extern EbErrorType rate_control_tables_ctor(
     RateControlTables_t *rate_control_tables_array
 );
 

@@ -23,8 +23,8 @@ extern "C" {
       *   ProcessResults, and GracefulDegradation)
       *********************************************************************/
     typedef struct EbObjectWrapper_s {
-        // objectPtr - pointer to the object being managed.
-        void                     *objectPtr;
+        // object_ptr - pointer to the object being managed.
+        void                     *object_ptr;
 
         // liveCount - a count of the number of pictures actively being
         //   encoded in the pipeline at any given time.  Modification
@@ -104,15 +104,15 @@ extern "C" {
      * SystemResource
      *   Defines a complete solution for managing objects in the encoder
      *   system (i.e. SequenceControlSet, PictureBufferDesc, ProcessResults, and
-     *   GracefulDegradation).  The objectTotalCount and wrapperPtrPool are
+     *   GracefulDegradation).  The object_total_count and wrapperPtrPool are
      *   only used to construct and destruct the SystemResource.  The
      *   fullFifo provides downstream pipeline data flow control.  The
      *   emptyFifo provides upstream pipeline backpressure flow control.
      *********************************************************************/
     typedef struct EbSystemResource_s {
-        // objectTotalCount - A count of the number of objects contained in the
+        // object_total_count - A count of the number of objects contained in the
         //   System Resoruce.
-        uint32_t              objectTotalCount;
+        uint32_t              object_total_count;
 
         // wrapperPtrPool - An array of pointers to the EbObjectWrappers used
         //   to construct and destruct the SystemResource.
@@ -129,115 +129,115 @@ extern "C" {
     } EbSystemResource_t;
 
     /*********************************************************************
-     * EbObjectReleaseEnable
+     * eb_object_release_enable
      *   Enables the releaseEnable member of EbObjectWrapper.  Used by
      *   certain objects (e.g. SequenceControlSet) to control whether
      *   EbObjectWrappers are allowed to be released or not.
      *
-     *   resourcePtr
-     *      Pointer to the SystemResource that manages the EbObjectWrapper.
+     *   resource_ptr
+     *      pointer to the SystemResource that manages the EbObjectWrapper.
      *      The emptyFifo's lockoutMutex is used to write protect the
      *      modification of the EbObjectWrapper.
      *
      *   wrapper_ptr
-     *      Pointer to the EbObjectWrapper to be modified.
+     *      pointer to the EbObjectWrapper to be modified.
      *********************************************************************/
-    extern EbErrorType EbObjectReleaseEnable(
+    extern EbErrorType eb_object_release_enable(
         EbObjectWrapper_t   *wrapper_ptr);
 
     /*********************************************************************
-     * EbObjectReleaseDisable
+     * eb_object_release_disable
      *   Disables the releaseEnable member of EbObjectWrapper.  Used by
      *   certain objects (e.g. SequenceControlSet) to control whether
      *   EbObjectWrappers are allowed to be released or not.
      *
-     *   resourcePtr
-     *      Pointer to the SystemResource that manages the EbObjectWrapper.
+     *   resource_ptr
+     *      pointer to the SystemResource that manages the EbObjectWrapper.
      *      The emptyFifo's lockoutMutex is used to write protect the
      *      modification of the EbObjectWrapper.
      *
      *   wrapper_ptr
-     *      Pointer to the EbObjectWrapper to be modified.
+     *      pointer to the EbObjectWrapper to be modified.
      *********************************************************************/
-    extern EbErrorType EbObjectReleaseDisable(
+    extern EbErrorType eb_object_release_disable(
         EbObjectWrapper_t   *wrapper_ptr);
 
     /*********************************************************************
-     * EbObjectIncLiveCount
+     * eb_object_inc_live_count
      *   Increments the liveCount member of EbObjectWrapper.  Used by
      *   certain objects (e.g. SequenceControlSet) to count the number of active
      *   pointers of a EbObjectWrapper in pipeline at any point in time.
      *
-     *   resourcePtr
-     *      Pointer to the SystemResource that manages the EbObjectWrapper.
+     *   resource_ptr
+     *      pointer to the SystemResource that manages the EbObjectWrapper.
      *      The emptyFifo's lockoutMutex is used to write protect the
      *      modification of the EbObjectWrapper.
      *
      *   wrapper_ptr
-     *      Pointer to the EbObjectWrapper to be modified.
+     *      pointer to the EbObjectWrapper to be modified.
      *
-     *   incrementNumber
+     *   increment_number
      *      The number to increment the live count by.
      *********************************************************************/
-    extern EbErrorType EbObjectIncLiveCount(
-        EbObjectWrapper_t   *wrapper_ptr,
-        uint32_t               incrementNumber);
+    extern EbErrorType eb_object_inc_live_count(
+        EbObjectWrapper_t *wrapper_ptr,
+        uint32_t           increment_number);
 
     /*********************************************************************
-     * EbSystemResourceCtor
+     * eb_system_resource_ctor
      *   Constructor for EbSystemResource.  Fully constructs all members
      *   of EbSystemResource including the object with the passed
-     *   ObjectCtor function.
+     *   object_ctor function.
      *
-     *   resourcePtr
-     *     Pointer that will contain the SystemResource to be constructed.
+     *   resource_ptr
+     *     pointer that will contain the SystemResource to be constructed.
      *
-     *   objectTotalCount
+     *   object_total_count
      *     Number of objects to be managed by the SystemResource.
      *
-     *   fullFifoEnabled
+     *   full_fifo_enabled
      *     Bool that describes if the SystemResource is to have an output
      *     fifo.  An outputFifo is not used by certain objects (e.g.
      *     SequenceControlSet).
      *
-     *   ObjectCtor
+     *   object_ctor
      *     Function pointer to the constructor of the object managed by
-     *     SystemResource referenced by resourcePtr. No object level
-     *     construction is performed if ObjectCtor is NULL.
+     *     SystemResource referenced by resource_ptr. No object level
+     *     construction is performed if object_ctor is NULL.
      *
      *   object_init_data_ptr
-     *     Pointer to data block to be used during the construction of
-     *     the object. object_init_data_ptr is passed to ObjectCtor when
-     *     ObjectCtor is called.
+     *     pointer to data block to be used during the construction of
+     *     the object. object_init_data_ptr is passed to object_ctor when
+     *     object_ctor is called.
      *********************************************************************/
-    extern EbErrorType EbSystemResourceCtor(
-        EbSystemResource_t **resourceDblPtr,
-        uint32_t               objectTotalCount,
-        uint32_t               producerProcessTotalCount,
-        uint32_t               consumerProcessTotalCount,
-        EbFifo_t          ***producerFifoPtrArrayPtr,
-        EbFifo_t          ***consumerFifoPtrArrayPtr,
-        EbBool              fullFifoEnabled,
-        EB_CTOR              ObjectCtor,
+    extern EbErrorType eb_system_resource_ctor(
+        EbSystemResource_t **resource_dbl_ptr,
+        uint32_t            object_total_count,
+        uint32_t            producer_process_total_count,
+        uint32_t            consumer_process_total_count,
+        EbFifo_t         ***producer_fifo_ptr_array_ptr,
+        EbFifo_t         ***consumer_fifo_ptr_array_ptr,
+        EbBool              full_fifo_enabled,
+        EB_CTOR             object_ctor,
         EbPtr               object_init_data_ptr);
 
     /*********************************************************************
-     * EbSystemResourceDtor
+     * eb_system_resource_dtor
      *   Destructor for EbSystemResource.  Fully destructs all members
      *   of EbSystemResource including the object with the passed
-     *   ObjectDtor function.
+     *   object_dtor function.
      *
-     *   resourcePtr
-     *     Pointer to the SystemResource to be destructed.
+     *   resource_ptr
+     *     pointer to the SystemResource to be destructed.
      *
-     *   ObjectDtor
+     *   object_dtor
      *     Function pointer to the destructor of the object managed by
-     *     SystemResource referenced by resourcePtr. No object level
-     *     destruction is performed if ObjectDtor is NULL.
+     *     SystemResource referenced by resource_ptr. No object level
+     *     destruction is performed if object_dtor is NULL.
      *********************************************************************/
-    extern void EbSystemResourceDtor(
-        EbSystemResource_t  *resourcePtr,
-        EB_DTOR              ObjectDtor);
+    extern void eb_system_resource_dtor(
+        EbSystemResource_t  *resource_ptr,
+        EB_DTOR              object_dtor);
 
     /*********************************************************************
      * EbSystemResourceGetEmptyObject
@@ -247,17 +247,17 @@ extern "C" {
      *   on the SystemResource emptyFifo countingSemaphore. This function
      *   is write protected by the SystemResource emptyFifo lockoutMutex.
      *
-     *   resourcePtr
-     *      Pointer to the SystemResource that provides the empty
+     *   resource_ptr
+     *      pointer to the SystemResource that provides the empty
      *      EbObjectWrapper.
      *
-     *   wrapperDblPtr
+     *   wrapper_dbl_ptr
      *      Double pointer used to pass the pointer to the empty
      *      EbObjectWrapper pointer.
      *********************************************************************/
-    extern EbErrorType EbGetEmptyObject(
-        EbFifo_t   *emptyFifoPtr,
-        EbObjectWrapper_t **wrapperDblPtr);
+    extern EbErrorType eb_get_empty_object(
+        EbFifo_t           *empty_fifo_ptr,
+        EbObjectWrapper_t **wrapper_dbl_ptr);
 
     /*********************************************************************
      * EbSystemResourcePostObject
@@ -266,15 +266,15 @@ extern "C" {
      *   This function is write protected by the SystemResource fullFifo
      *   lockoutMutex.
      *
-     *   resourcePtr
-     *      Pointer to the SystemResource that the EbObjectWrapper is
+     *   resource_ptr
+     *      pointer to the SystemResource that the EbObjectWrapper is
      *      posted to.
      *
      *   wrapper_ptr
-     *      Pointer to EbObjectWrapper to be posted.
+     *      pointer to EbObjectWrapper to be posted.
      *********************************************************************/
-    extern EbErrorType EbPostFullObject(
-        EbObjectWrapper_t   *objectPtr);
+    extern EbErrorType eb_post_full_object(
+        EbObjectWrapper_t *object_ptr);
 
     /*********************************************************************
      * EbSystemResourceGetFullObject
@@ -283,21 +283,21 @@ extern "C" {
      *   This function is write protected by the SystemResource fullFifo
      *   lockoutMutex.
      *
-     *   resourcePtr
-     *      Pointer to the SystemResource that provides the full
+     *   resource_ptr
+     *      pointer to the SystemResource that provides the full
      *      EbObjectWrapper.
      *
-     *   wrapperDblPtr
+     *   wrapper_dbl_ptr
      *      Double pointer used to pass the pointer to the full
      *      EbObjectWrapper pointer.
      *********************************************************************/
-    extern EbErrorType EbGetFullObject(
-        EbFifo_t   *fullFifoPtr,
-        EbObjectWrapper_t **wrapperDblPtr);
+    extern EbErrorType eb_get_full_object(
+        EbFifo_t           *full_fifo_ptr,
+        EbObjectWrapper_t **wrapper_dbl_ptr);
 
-    extern EbErrorType EbGetFullObjectNonBlocking(
-        EbFifo_t   *fullFifoPtr,
-        EbObjectWrapper_t **wrapperDblPtr);
+    extern EbErrorType eb_get_full_object_non_blocking(
+        EbFifo_t           *full_fifo_ptr,
+        EbObjectWrapper_t **wrapper_dbl_ptr);
 
     /*********************************************************************
      * EbSystemResourceReleaseObject
@@ -306,11 +306,11 @@ extern "C" {
      *   This function is write protected by the SystemResource emptyFifo
      *   lockoutMutex.
      *
-     *   objectPtr
-     *      Pointer to EbObjectWrapper to be released.
+     *   object_ptr
+     *      pointer to EbObjectWrapper to be released.
      *********************************************************************/
-    extern EbErrorType EbReleaseObject(
-        EbObjectWrapper_t   *objectPtr);
+    extern EbErrorType eb_release_object(
+        EbObjectWrapper_t *object_ptr);
 #ifdef __cplusplus
 }
 #endif

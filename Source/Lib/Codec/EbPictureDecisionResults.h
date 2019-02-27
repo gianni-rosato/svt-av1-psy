@@ -18,17 +18,16 @@ typedef struct PictureDecisionResults_s
     uint32_t               segment_index;
 } PictureDecisionResults_t;
 
-typedef struct PictureDecisionResultInitData_s
-{
+typedef struct PictureDecisionResultInitData_s {
     int32_t junk;
 } PictureDecisionResultInitData_t;
 
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType PictureDecisionResultCtor(
+extern EbErrorType picture_decision_result_ctor(
     EbPtr *object_dbl_ptr,
-    EbPtr object_init_data_ptr);
+    EbPtr  object_init_data_ptr);
 
 
 #endif //EbPictureDecisionResults_h

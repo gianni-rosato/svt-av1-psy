@@ -302,7 +302,7 @@ static void transform16(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_
 
 
 // forward 16x16 transform
-void lowPrecisionTransform16x16_SSSE3(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, int16_t *intermediate, uint32_t addshift)
+void low_precision_transform16x16_ssse3(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, int16_t *intermediate, uint32_t addshift)
 {
     transform16(src, src_stride, intermediate, 16, (int16_t)(4 + addshift));
     transpose16(intermediate, 16, dst, dst_stride);
@@ -463,7 +463,7 @@ static void invTransform16Partial(int16_t *src, uint32_t src_stride, int16_t *ds
 }
 
 // inverse 16x16 transform
-void PFinvTransform16x16_SSSE3(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, int16_t *intermediate, uint32_t addshift)
+void p_finv_transform16x16_ssse3(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, int16_t *intermediate, uint32_t addshift)
 {
 
     uint32_t pattern = transpose16Check0s(src, src_stride, intermediate, 16);
@@ -812,7 +812,7 @@ static void transform32(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_
 }
 
 // forward 32x32 transform
-void lowPrecisionTransform32x32_SSSE3(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, int16_t *intermediate, uint32_t addshift)
+void low_precision_transform32x32_ssse3(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, int16_t *intermediate, uint32_t addshift)
 {
     transform32(src, src_stride, intermediate, 32, 6 + addshift);
     transpose32(intermediate, 32, dst, dst_stride);
@@ -1498,7 +1498,7 @@ static void invTransform32Partial(int16_t *src, uint32_t src_stride, int16_t *ds
 }
 
 // inverse 32x32 transform
-void PFinvTransform32x32_SSSE3(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, int16_t *intermediate, uint32_t addshift)
+void p_finv_transform32x32_ssse3(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, int16_t *intermediate, uint32_t addshift)
 {
 
     uint32_t pattern = transpose32Check0s(src, src_stride, intermediate, 32);
@@ -1511,29 +1511,29 @@ void PFinvTransform32x32_SSSE3(int16_t *src, uint32_t src_stride, int16_t *dst, 
 }
 
 
-void QuantizeInvQuantizeNxN_SSE3(
+void quantize_inv_quantize_nx_n_sse3(
     int16_t          *coeff,
-    const uint32_t     coeffStride,
-    int16_t          *quantCoeff,
-    int16_t          *reconCoeff,
-    const uint32_t     qFunc,
+    const uint32_t     coeff_stride,
+    int16_t          *quant_coeff,
+    int16_t          *recon_coeff,
+    const uint32_t     q_func,
     const uint32_t     q_offset,
-    const int32_t     shiftedQBits,
-    const int32_t     shiftedFFunc,
+    const int32_t     shifted_q_bits,
+    const int32_t     shifted_f_func,
     const int32_t     iq_offset,
-    const int32_t     shiftNum,
-    const uint32_t     areaSize,
+    const int32_t     shift_num,
+    const uint32_t     area_size,
     uint32_t          *nonzerocoeff)
 {
     unsigned row, col;
 
-    __m128i q = _mm_set1_epi16((int16_t)qFunc);
+    __m128i q = _mm_set1_epi16((int16_t)q_func);
     __m128i o = _mm_set1_epi32(q_offset);
-    __m128i s = _mm_cvtsi32_si128(shiftedQBits);
+    __m128i s = _mm_cvtsi32_si128(shifted_q_bits);
 
-    __m128i iq = _mm_set1_epi16((int16_t)shiftedFFunc);
+    __m128i iq = _mm_set1_epi16((int16_t)shifted_f_func);
     __m128i io = _mm_set1_epi32(iq_offset);
-    __m128i is = _mm_cvtsi32_si128(shiftNum);
+    __m128i is = _mm_cvtsi32_si128(shift_num);
 
     __m128i z = _mm_setzero_si128();
 
@@ -1546,7 +1546,7 @@ void QuantizeInvQuantizeNxN_SSE3(
             __m128i a0, a1;
             __m128i b0, b1;
             __m128i x;
-            __m128i y = _mm_loadu_si128((__m128i *)(coeff + coeffStride * row + col));
+            __m128i y = _mm_loadu_si128((__m128i *)(coeff + coeff_stride * row + col));
 
             x = _mm_abs_epi16(y);
 
@@ -1565,7 +1565,7 @@ void QuantizeInvQuantizeNxN_SSE3(
             x = _mm_packs_epi32(b0, b1);
             z = _mm_sub_epi16(z, _mm_cmpgt_epi16(x, _mm_setzero_si128()));
             x = _mm_sign_epi16(x, y);
-            _mm_storeu_si128((__m128i *)(quantCoeff + coeffStride * row + col), x);
+            _mm_storeu_si128((__m128i *)(quant_coeff + coeff_stride * row + col), x);
 
             a0 = _mm_mullo_epi16(x, iq);
             a1 = _mm_mulhi_epi16(x, iq);
@@ -1580,45 +1580,45 @@ void QuantizeInvQuantizeNxN_SSE3(
             b1 = _mm_sra_epi32(b1, is);
 
             x = _mm_packs_epi32(b0, b1);
-            _mm_storeu_si128((__m128i *)(reconCoeff + coeffStride * row + col), x);
+            _mm_storeu_si128((__m128i *)(recon_coeff + coeff_stride * row + col), x);
 
             col += 8;
-        } while (col < areaSize);
+        } while (col < area_size);
 
         row++;
-    } while (row < areaSize);
+    } while (row < area_size);
 
     z = _mm_sad_epu8(z, _mm_srli_si128(z, 7));
     *nonzerocoeff = _mm_cvtsi128_si32(z);
 }
 
-void QuantizeInvQuantize8x8_SSE3(
+void quantize_inv_quantize8x8_sse3(
     int16_t          *coeff,
-    const uint32_t     coeffStride,
-    int16_t          *quantCoeff,
-    int16_t          *reconCoeff,
-    const uint32_t     qFunc,
+    const uint32_t     coeff_stride,
+    int16_t          *quant_coeff,
+    int16_t          *recon_coeff,
+    const uint32_t     q_func,
     const uint32_t     q_offset,
-    const int32_t     shiftedQBits,
-    const int32_t     shiftedFFunc,
+    const int32_t     shifted_q_bits,
+    const int32_t     shifted_f_func,
     const int32_t     iq_offset,
-    const int32_t     shiftNum,
-    const uint32_t     areaSize,
+    const int32_t     shift_num,
+    const uint32_t     area_size,
     uint32_t          *nonzerocoeff)
 {
     unsigned row;
 
-    __m128i q = _mm_set1_epi16((int16_t)qFunc);
+    __m128i q = _mm_set1_epi16((int16_t)q_func);
     __m128i o = _mm_set1_epi32(q_offset);
-    __m128i s = _mm_cvtsi32_si128(shiftedQBits);
+    __m128i s = _mm_cvtsi32_si128(shifted_q_bits);
 
-    __m128i iq = _mm_set1_epi16((int16_t)shiftedFFunc);
+    __m128i iq = _mm_set1_epi16((int16_t)shifted_f_func);
     __m128i io = _mm_set1_epi32(iq_offset);
-    __m128i is = _mm_cvtsi32_si128(shiftNum);
+    __m128i is = _mm_cvtsi32_si128(shift_num);
 
     __m128i z = _mm_setzero_si128();
 
-    (void)areaSize;
+    (void)area_size;
 
     row = 0;
     do
@@ -1626,7 +1626,7 @@ void QuantizeInvQuantize8x8_SSE3(
         __m128i a0, a1;
         __m128i b0, b1;
         __m128i x;
-        __m128i y = _mm_loadu_si128((__m128i *)(coeff + coeffStride * row));
+        __m128i y = _mm_loadu_si128((__m128i *)(coeff + coeff_stride * row));
 
         x = _mm_abs_epi16(y);
 
@@ -1647,7 +1647,7 @@ void QuantizeInvQuantize8x8_SSE3(
         z = _mm_sub_epi16(z, _mm_cmpgt_epi16(x, _mm_setzero_si128()));
 
         x = _mm_sign_epi16(x, y);
-        _mm_storeu_si128((__m128i *)(quantCoeff + coeffStride * row), x);
+        _mm_storeu_si128((__m128i *)(quant_coeff + coeff_stride * row), x);
 
         a0 = _mm_mullo_epi16(x, iq);
         a1 = _mm_mulhi_epi16(x, iq);
@@ -1662,7 +1662,7 @@ void QuantizeInvQuantize8x8_SSE3(
         b1 = _mm_sra_epi32(b1, is);
 
         x = _mm_packs_epi32(b0, b1);
-        _mm_storeu_si128((__m128i *)(reconCoeff + coeffStride * row), x);
+        _mm_storeu_si128((__m128i *)(recon_coeff + coeff_stride * row), x);
 
         row++;
     } while (row < 8);
@@ -1671,41 +1671,41 @@ void QuantizeInvQuantize8x8_SSE3(
     *nonzerocoeff = _mm_cvtsi128_si32(z);
 }
 
-void QuantizeInvQuantize4x4_SSE3(
+void quantize_inv_quantize4x4_sse3(
     int16_t          *coeff,
-    const uint32_t     coeffStride,
-    int16_t          *quantCoeff,
-    int16_t          *reconCoeff,
-    const uint32_t     qFunc,
+    const uint32_t     coeff_stride,
+    int16_t          *quant_coeff,
+    int16_t          *recon_coeff,
+    const uint32_t     q_func,
     const uint32_t     q_offset,
-    const int32_t     shiftedQBits,
-    const int32_t     shiftedFFunc,
+    const int32_t     shifted_q_bits,
+    const int32_t     shifted_f_func,
     const int32_t     iq_offset,
-    const int32_t     shiftNum,
-    const uint32_t     areaSize,
+    const int32_t     shift_num,
+    const uint32_t     area_size,
     uint32_t          *nonzerocoeff)
 {
     int32_t row;
 
-    __m128i q = _mm_set1_epi16((int16_t)qFunc);
+    __m128i q = _mm_set1_epi16((int16_t)q_func);
     __m128i o = _mm_set1_epi32(q_offset);
-    __m128i s = _mm_cvtsi32_si128(shiftedQBits);
+    __m128i s = _mm_cvtsi32_si128(shifted_q_bits);
 
-    __m128i iq = _mm_set1_epi16((int16_t)shiftedFFunc);
+    __m128i iq = _mm_set1_epi16((int16_t)shifted_f_func);
     __m128i io = _mm_set1_epi32(iq_offset);
-    __m128i is = _mm_cvtsi32_si128(shiftNum);
+    __m128i is = _mm_cvtsi32_si128(shift_num);
 
     __m128i z = _mm_setzero_si128();
 
-    (void)areaSize;
+    (void)area_size;
 
     row = 0;
     do
     {
         __m128i a0, a1;
         __m128i b0, b1;
-        __m128i x0 = _mm_loadl_epi64((__m128i *)(coeff + coeffStride * row + 0));
-        __m128i x1 = _mm_loadl_epi64((__m128i *)(coeff + coeffStride * row + coeffStride));
+        __m128i x0 = _mm_loadl_epi64((__m128i *)(coeff + coeff_stride * row + 0));
+        __m128i x1 = _mm_loadl_epi64((__m128i *)(coeff + coeff_stride * row + coeff_stride));
         __m128i y = _mm_unpacklo_epi64(x0, x1);
         __m128i x;
 
@@ -1728,8 +1728,8 @@ void QuantizeInvQuantize4x4_SSE3(
         z = _mm_sub_epi16(z, _mm_cmpgt_epi16(x, _mm_setzero_si128()));
 
         x = _mm_sign_epi16(x, y);
-        _mm_storel_epi64((__m128i *)(quantCoeff + coeffStride * row + 0), x);
-        _mm_storel_epi64((__m128i *)(quantCoeff + coeffStride * row + coeffStride), _mm_srli_si128(x, 8));
+        _mm_storel_epi64((__m128i *)(quant_coeff + coeff_stride * row + 0), x);
+        _mm_storel_epi64((__m128i *)(quant_coeff + coeff_stride * row + coeff_stride), _mm_srli_si128(x, 8));
 
         __m128i zer = _mm_setzero_si128();
         __m128i cmp = _mm_cmpeq_epi16(x, zer);
@@ -1750,12 +1750,12 @@ void QuantizeInvQuantize4x4_SSE3(
             b1 = _mm_sra_epi32(b1, is);
 
             x = _mm_packs_epi32(b0, b1);
-            _mm_storel_epi64((__m128i *)(reconCoeff + coeffStride * row + 0), x);
-            _mm_storel_epi64((__m128i *)(reconCoeff + coeffStride * row + coeffStride), _mm_srli_si128(x, 8));
+            _mm_storel_epi64((__m128i *)(recon_coeff + coeff_stride * row + 0), x);
+            _mm_storel_epi64((__m128i *)(recon_coeff + coeff_stride * row + coeff_stride), _mm_srli_si128(x, 8));
         }
         else {
-            _mm_storel_epi64((__m128i *)(reconCoeff + coeffStride * row + 0), zer);
-            _mm_storel_epi64((__m128i *)(reconCoeff + coeffStride * row + coeffStride), zer);
+            _mm_storel_epi64((__m128i *)(recon_coeff + coeff_stride * row + 0), zer);
+            _mm_storel_epi64((__m128i *)(recon_coeff + coeff_stride * row + coeff_stride), zer);
         }
         row += 2;
     } while (row < 4);

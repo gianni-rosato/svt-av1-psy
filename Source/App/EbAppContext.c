@@ -351,15 +351,15 @@ EbErrorType AllocateOutputReconBuffers(
     const size_t frameSize = (lumaSize + chromaSize) << tenBit;
 
 // ... Recon Port
-    EB_APP_MALLOC(EbBufferHeaderType*, callbackData->reconBuffer, sizeof(EbBufferHeaderType), EB_N_PTR, EB_ErrorInsufficientResources);
+    EB_APP_MALLOC(EbBufferHeaderType*, callbackData->recon_buffer, sizeof(EbBufferHeaderType), EB_N_PTR, EB_ErrorInsufficientResources);
 
     // Initialize Header
-    callbackData->reconBuffer->size = sizeof(EbBufferHeaderType);
+    callbackData->recon_buffer->size = sizeof(EbBufferHeaderType);
 
-    EB_APP_MALLOC(uint8_t*, callbackData->reconBuffer->p_buffer, frameSize, EB_N_PTR, EB_ErrorInsufficientResources);
+    EB_APP_MALLOC(uint8_t*, callbackData->recon_buffer->p_buffer, frameSize, EB_N_PTR, EB_ErrorInsufficientResources);
 
-    callbackData->reconBuffer->n_alloc_len = (uint32_t)frameSize;
-    callbackData->reconBuffer->p_app_private = NULL;
+    callbackData->recon_buffer->n_alloc_len = (uint32_t)frameSize;
+    callbackData->recon_buffer->p_app_private = NULL;
     return return_error;
 }
 

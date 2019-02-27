@@ -11,7 +11,16 @@
 extern "C" {
 #endif
 
-    void AvcStyleCopy_SSE2(EbByte ref_pic, uint32_t src_stride, EbByte dst, uint32_t dst_stride, uint32_t pu_width, uint32_t pu_height, EbByte tempBuf, EbBool skip, uint32_t fracPos);
+    void avc_style_copy_sse2(
+        EbByte   ref_pic, 
+        uint32_t src_stride, 
+        EbByte   dst, 
+        uint32_t dst_stride, 
+        uint32_t pu_width, 
+        uint32_t pu_height, 
+        EbByte   temp_buf, 
+        EbBool   skip, 
+        uint32_t frac_pos);
 
 #ifdef __cplusplus
 }

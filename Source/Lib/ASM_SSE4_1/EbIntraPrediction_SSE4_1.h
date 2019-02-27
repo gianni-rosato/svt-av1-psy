@@ -11,12 +11,12 @@
 extern "C" {
 #endif
 
-    extern void IntraModeDCLuma16bit_SSE4_1_INTRIN(
-        const uint32_t   size,                       //input parameter, denotes the size of the current PU
-        uint16_t         *refSamples,                 //input parameter, pointer to the reference samples
-        uint16_t         *prediction_ptr,              //output parameter, pointer to the prediction
-        const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
-        const EbBool  skip);                       //skip half rows
+    extern void intra_mode_dc_luma16bit_sse4_1_intrin(
+        const uint32_t  size,                         //input parameter, denotes the size of the current PU
+        uint16_t       *ref_samples,                  //input parameter, pointer to the reference samples
+        uint16_t       *prediction_ptr,               //output parameter, pointer to the prediction
+        const uint32_t  prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
+        const EbBool    skip);                        //skip half rows
 
 #ifdef __cplusplus
 }

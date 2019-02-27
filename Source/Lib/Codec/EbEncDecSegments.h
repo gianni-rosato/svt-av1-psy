@@ -29,8 +29,8 @@ extern "C" {
     (((yLcuIndex) * (segmentRowCount)) / (lcuRowTotalCount))
 #define BAND_INDEX(xLcuIndex, yLcuIndex, segmentBandCount, lcuBandTotalCount) \
     ((((xLcuIndex) + (yLcuIndex)) * (segmentBandCount)) / (lcuBandTotalCount))
-#define SEGMENT_INDEX(rowIndex, bandIndex, segmentBandCount) \
-    (((rowIndex) * (segmentBandCount)) + (bandIndex))
+#define SEGMENT_INDEX(row_index, bandIndex, segmentBandCount) \
+    (((row_index) * (segmentBandCount)) + (bandIndex))
 
       /**************************************
        * Member definitions

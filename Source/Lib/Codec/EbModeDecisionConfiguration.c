@@ -246,7 +246,7 @@ EbErrorType MdcIntraCuRate(
     (void)cu_depth;
     //uint32_t chroma_mode = EB_INTRA_CHROMA_DM;
     //EB_PART_MODE partitionMode = SIZE_2Nx2N;
-    //int32_t predictionIndex = -1;
+    //int32_t prediction_index = -1;
 
     //// Number of bits for each synatax element
     //uint64_t partSizeIntraBitsNum = 0;
@@ -256,7 +256,7 @@ EbErrorType MdcIntraCuRate(
     //uint64_t lumaRate;
     //uint64_t chromaRate;
 
-    //EncodeContext_t *encode_context_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr))->encode_context_ptr;
+    //EncodeContext_t *encode_context_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr))->encode_context_ptr;
 
     //CHECK_REPORT_ERROR(
     //    (partitionMode == SIZE_2Nx2N),
@@ -268,18 +268,18 @@ EbErrorType MdcIntraCuRate(
 
     //// Estimate Partition Size Bits :
     //// *Note - Intra is implicitly 2Nx2N
-    //partSizeIntraBitsNum = ((uint8_t)cu_depth == (((SequenceControlSet_t *)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr)->max_sb_depth - 1)) ?
+    //partSizeIntraBitsNum = ((uint8_t)cu_depth == (((SequenceControlSet_t *)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->max_sb_depth - 1)) ?
     //    md_rate_estimation_ptr->intraPartSizeBits[partitionMode] :
     //    ZERO_COST;
 
     //// Estimate Luma Mode Bits for Intra
-    ///*IntraLumaModeContext(
+    ///*intra_luma_mode_context(
     //cu_ptr,
-    //lumaMode,
-    //&predictionIndex);*/
+    //luma_mode,
+    //&prediction_index);*/
 
-    //intraLumaModeBitsNum = (predictionIndex != -1) ?
-    //    md_rate_estimation_ptr->intraLumaBits[predictionIndex] :
+    //intraLumaModeBitsNum = (prediction_index != -1) ?
+    //    md_rate_estimation_ptr->intraLumaBits[prediction_index] :
     //    md_rate_estimation_ptr->intraLumaBits[3];
 
     //// Rate of the candiadate mode is equal to the sum of the rate of independent syntax element
@@ -393,7 +393,7 @@ uint8_t DeriveContouringClass(
 {
     uint8_t contouringClass = 0;
 
-    SequenceControlSet_t *sequence_control_set_ptr = (SequenceControlSet_t*)parentPcsPtr->sequence_control_set_wrapper_ptr->objectPtr;
+    SequenceControlSet_t *sequence_control_set_ptr = (SequenceControlSet_t*)parentPcsPtr->sequence_control_set_wrapper_ptr->object_ptr;
 
     if (parentPcsPtr->is_sb_homogeneous_over_time[sb_index]) {
         if (leaf_index > 0) {

@@ -46,21 +46,21 @@ void printfTime(const char *fmt, ...)
 #endif
 
 /****************************************
- * EbCreateThread
+ * eb_create_thread
  ****************************************/
-EbHandle EbCreateThread(
-    void *threadFunction(void *),
-    void *threadContext)
+EbHandle eb_create_thread(
+    void *thread_function(void *),
+    void *thread_context)
 {
-    EbHandle threadHandle = NULL;
+    EbHandle thread_handle = NULL;
 
 #ifdef _WIN32
 
-    threadHandle = (EbHandle)CreateThread(
+    thread_handle = (EbHandle)CreateThread(
         NULL,                           // default security attributes
         0,                              // default stack size
-        (LPTHREAD_START_ROUTINE)threadFunction, // function to be tied to the new thread
-        threadContext,                  // context to be tied to the new thread
+        (LPTHREAD_START_ROUTINE)thread_function, // function to be tied to the new thread
+        thread_context,                  // context to be tied to the new thread
         0,                              // thread active when created
         NULL);                          // new thread ID
 
@@ -76,39 +76,39 @@ EbHandle EbCreateThread(
 
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 
-    threadHandle = (pthread_t*)malloc(sizeof(pthread_t));
+    thread_handle = (pthread_t*)malloc(sizeof(pthread_t));
     int32_t ret = pthread_create(
-        (pthread_t*)threadHandle,      // Thread handle
+        (pthread_t*)thread_handle,      // Thread handle
         &attr,                       // attributes
-        threadFunction,                 // function to be run by new thread
-        threadContext);
+        thread_function,                 // function to be run by new thread
+        thread_context);
 
     if (ret != 0)
         if (ret == EPERM) {
 
-            pthread_cancel(*((pthread_t*)threadHandle));
-            pthread_join(*((pthread_t*)threadHandle), NULL);
-            free(threadHandle);
+            pthread_cancel(*((pthread_t*)thread_handle));
+            pthread_join(*((pthread_t*)thread_handle), NULL);
+            free(thread_handle);
 
-            threadHandle = (pthread_t*)malloc(sizeof(pthread_t));
+            thread_handle = (pthread_t*)malloc(sizeof(pthread_t));
 
             pthread_create(
-                (pthread_t*)threadHandle,      // Thread handle
+                (pthread_t*)thread_handle,      // Thread handle
                 (const pthread_attr_t*)EB_NULL,                        // attributes
-                threadFunction,                 // function to be run by new thread
-                threadContext);
+                thread_function,                 // function to be run by new thread
+                thread_context);
         }
 
 #endif // _WIN32
 
-    return threadHandle;
+    return thread_handle;
 }
 
 ///****************************************
-// * EbStartThread
+// * eb_start_thread
 // ****************************************/
-//EbErrorType EbStartThread(
-//    EbHandle threadHandle)
+//EbErrorType eb_start_thread(
+//    EbHandle thread_handle)
 //{
 //    EbErrorType error_return = EB_ErrorNone;
 //
@@ -124,47 +124,47 @@ EbHandle EbCreateThread(
 //    */
 //
 //#ifdef _WIN32
-//    //error_return = ResumeThread((HANDLE) threadHandle) ? EB_ErrorThreadUnresponsive : EB_ErrorNone;
+//    //error_return = ResumeThread((HANDLE) thread_handle) ? EB_ErrorThreadUnresponsive : EB_ErrorNone;
 //#elif defined(__linux__) || defined(__APPLE__)
 //#endif // _WIN32
 //
-//    error_return = (threadHandle) ? EB_ErrorNone : EB_ErrorNullThread;
+//    error_return = (thread_handle) ? EB_ErrorNone : EB_ErrorNullThread;
 //
 //    return error_return;
 //}
 //
 ///****************************************
-// * EbStopThread
+// * eb_stop_thread
 // ****************************************/
-//EbErrorType EbStopThread(
-//    EbHandle threadHandle)
+//EbErrorType eb_stop_thread(
+//    EbHandle thread_handle)
 //{
 //    EbErrorType error_return = EB_ErrorNone;
 //
 //#ifdef _WIN32
-//    //error_return = SuspendThread((HANDLE) threadHandle) ? EB_ErrorThreadUnresponsive : EB_ErrorNone;
+//    //error_return = SuspendThread((HANDLE) thread_handle) ? EB_ErrorThreadUnresponsive : EB_ErrorNone;
 //#elif defined(__linux__) || defined(__APPLE__)
 //#endif // _WIN32
 //
-//    error_return = (threadHandle) ? EB_ErrorNone : EB_ErrorNullThread;
+//    error_return = (thread_handle) ? EB_ErrorNone : EB_ErrorNullThread;
 //
 //    return error_return;
 //}
 //
 /****************************************
- * EbDestroyThread
+ * eb_destroy_thread
  ****************************************/
-EbErrorType EbDestroyThread(
-    EbHandle threadHandle)
+EbErrorType eb_destroy_thread(
+    EbHandle thread_handle)
 {
     EbErrorType error_return = EB_ErrorNone;
 
 #ifdef _WIN32
-    error_return = TerminateThread((HANDLE)threadHandle, 0) ? EB_ErrorDestroyThreadFailed : EB_ErrorNone;
+    error_return = TerminateThread((HANDLE)thread_handle, 0) ? EB_ErrorDestroyThreadFailed : EB_ErrorNone;
 #elif defined(__linux__) || defined(__APPLE__)
-    error_return = pthread_cancel(*((pthread_t*)threadHandle)) ? EB_ErrorDestroyThreadFailed : EB_ErrorNone;
-    pthread_join(*((pthread_t*)threadHandle), NULL);
-    free(threadHandle);
+    error_return = pthread_cancel(*((pthread_t*)thread_handle)) ? EB_ErrorDestroyThreadFailed : EB_ErrorNone;
+    pthread_join(*((pthread_t*)thread_handle), NULL);
+    free(thread_handle);
 #endif // _WIN32
 
     return error_return;
@@ -178,37 +178,37 @@ static int32_t semaphore_id(void)
 #endif
 
 /***************************************
- * EbCreateSemaphore
+ * eb_create_semaphore
  ***************************************/
-EbHandle EbCreateSemaphore(uint32_t initialCount, uint32_t maxCount)
+EbHandle eb_create_semaphore(uint32_t initial_count, uint32_t max_count)
 {
 #ifdef _WIN32
-    EbHandle semaphoreHandle = NULL;
-    (void)maxCount;
+    EbHandle semaphore_handle = NULL;
+    (void)max_count;
 
-    semaphoreHandle = (EbHandle)CreateSemaphore(
+    semaphore_handle = (EbHandle)CreateSemaphore(
         NULL,                           // default security attributes
-        initialCount,                   // initial semaphore count
-        maxCount,                       // maximum semaphore count
+        initial_count,                   // initial semaphore count
+        max_count,                       // maximum semaphore count
         NULL);                          // semaphore is not named
-    return semaphoreHandle;
+    return semaphore_handle;
 
 #elif defined(__linux__) 
-    EbHandle semaphoreHandle = NULL;
-    (void)maxCount;
+    EbHandle semaphore_handle = NULL;
+    (void)max_count;
 
-    semaphoreHandle = (sem_t*)malloc(sizeof(sem_t));
+    semaphore_handle = (sem_t*)malloc(sizeof(sem_t));
     sem_init(
-        (sem_t*)semaphoreHandle,       // semaphore handle
+        (sem_t*)semaphore_handle,       // semaphore handle
         0,                              // shared semaphore (not local)
-        initialCount);                  // initial count
-    return semaphoreHandle;
+        initial_count);                  // initial count
+    return semaphore_handle;
 
 #elif defined(__APPLE__)
-    UNUSED(maxCount);
+    UNUSED(max_count);
     char name[15];
     sprintf(name, "/sem_%05d_%03d", getpid(), semaphore_id());
-    sem_t *s = sem_open(name, O_CREAT | O_EXCL, 0644, initialCount);
+    sem_t *s = sem_open(name, O_CREAT | O_EXCL, 0644, initial_count);
     if (s == SEM_FAILED) {
         fprintf(stderr, "errno: %d\n", errno);
         return NULL;
@@ -219,135 +219,135 @@ EbHandle EbCreateSemaphore(uint32_t initialCount, uint32_t maxCount)
 }
 
 /***************************************
- * EbPostSemaphore
+ * eb_post_semaphore
  ***************************************/
-EbErrorType EbPostSemaphore(
-    EbHandle semaphoreHandle)
+EbErrorType eb_post_semaphore(
+    EbHandle semaphore_handle)
 {
     EbErrorType return_error = EB_ErrorNone;
 
 #ifdef _WIN32
     return_error = ReleaseSemaphore(
-        semaphoreHandle,    // semaphore handle
+        semaphore_handle,    // semaphore handle
         1,                  // amount to increment the semaphore
         NULL)               // pointer to previous count (optional)
         ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
 #elif defined(__linux__) || defined(__APPLE__)
-    return_error = sem_post((sem_t*)semaphoreHandle) ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
+    return_error = sem_post((sem_t*)semaphore_handle) ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
 #endif // _WIN32
 
     return return_error;
 }
 
 /***************************************
- * EbBlockOnSemaphore
+ * eb_block_on_semaphore
  ***************************************/
-EbErrorType EbBlockOnSemaphore(
-    EbHandle semaphoreHandle)
+EbErrorType eb_block_on_semaphore(
+    EbHandle semaphore_handle)
 {
     EbErrorType return_error = EB_ErrorNone;
 
 #ifdef _WIN32
-    return_error = WaitForSingleObject((HANDLE)semaphoreHandle, INFINITE) ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
+    return_error = WaitForSingleObject((HANDLE)semaphore_handle, INFINITE) ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
 #elif defined(__linux__) || defined(__APPLE__)
-    return_error = sem_wait((sem_t*)semaphoreHandle) ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
+    return_error = sem_wait((sem_t*)semaphore_handle) ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
 #endif // _WIN32
 
     return return_error;
 }
 
 /***************************************
- * EbDestroySemaphore
+ * eb_destroy_semaphore
  ***************************************/
-EbErrorType EbDestroySemaphore(EbHandle semaphoreHandle)
+EbErrorType eb_destroy_semaphore(EbHandle semaphore_handle)
 {
     EbErrorType return_error = EB_ErrorNone;
 
 #ifdef _WIN32
-    return_error = CloseHandle((HANDLE)semaphoreHandle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
+    return_error = CloseHandle((HANDLE)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
 #elif defined(__linux__) 
-    return_error = sem_destroy((sem_t*)semaphoreHandle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
-    free(semaphoreHandle);
+    return_error = sem_destroy((sem_t*)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
+    free(semaphore_handle);
 #elif defined(__APPLE__)
-    return_error = sem_close(semaphoreHandle);
+    return_error = sem_close(semaphore_handle);
 #endif // _WIN32
 
     return return_error;
 }
 /***************************************
- * EbCreateMutex
+ * eb_create_mutex
  ***************************************/
-EbHandle EbCreateMutex(
+EbHandle eb_create_mutex(
     void)
 {
-    EbHandle mutexHandle = NULL;
+    EbHandle mutex_handle = NULL;
 
 #ifdef _WIN32
-    mutexHandle = (EbHandle)CreateMutex(
+    mutex_handle = (EbHandle)CreateMutex(
         NULL,                   // default security attributes
         FALSE,                  // FALSE := not initially owned
         NULL);                  // mutex is not named
 
 #elif defined(__linux__) || defined(__APPLE__)
 
-    mutexHandle = (EbHandle)malloc(sizeof(pthread_mutex_t));
+    mutex_handle = (EbHandle)malloc(sizeof(pthread_mutex_t));
 
     pthread_mutex_init(
-        (pthread_mutex_t*)mutexHandle,
+        (pthread_mutex_t*)mutex_handle,
         NULL);                  // default attributes
 
 #endif // _WIN32
 
-    return mutexHandle;
+    return mutex_handle;
 }
 
 /***************************************
  * EbPostMutex
  ***************************************/
-EbErrorType EbReleaseMutex(
-    EbHandle mutexHandle)
+EbErrorType eb_release_mutex(
+    EbHandle mutex_handle)
 {
     EbErrorType return_error = EB_ErrorNone;
 
 #ifdef _WIN32
-    return_error = ReleaseMutex((HANDLE)mutexHandle) ? EB_ErrorCreateMutexFailed : EB_ErrorNone;
+    return_error = ReleaseMutex((HANDLE)mutex_handle) ? EB_ErrorCreateMutexFailed : EB_ErrorNone;
 #elif defined(__linux__) || defined(__APPLE__)
-    return_error = pthread_mutex_unlock((pthread_mutex_t*)mutexHandle) ? EB_ErrorCreateMutexFailed : EB_ErrorNone;
+    return_error = pthread_mutex_unlock((pthread_mutex_t*)mutex_handle) ? EB_ErrorCreateMutexFailed : EB_ErrorNone;
 #endif // _WIN32
 
     return return_error;
 }
 
 /***************************************
- * EbBlockOnMutex
+ * eb_block_on_mutex
  ***************************************/
-EbErrorType EbBlockOnMutex(
-    EbHandle mutexHandle)
+EbErrorType eb_block_on_mutex(
+    EbHandle mutex_handle)
 {
     EbErrorType return_error = EB_ErrorNone;
 
 #ifdef _WIN32
-    return_error = WaitForSingleObject((HANDLE)mutexHandle, INFINITE) ? EB_ErrorMutexUnresponsive : EB_ErrorNone;
+    return_error = WaitForSingleObject((HANDLE)mutex_handle, INFINITE) ? EB_ErrorMutexUnresponsive : EB_ErrorNone;
 #elif defined(__linux__) || defined(__APPLE__)
-    return_error = pthread_mutex_lock((pthread_mutex_t*)mutexHandle) ? EB_ErrorMutexUnresponsive : EB_ErrorNone;
+    return_error = pthread_mutex_lock((pthread_mutex_t*)mutex_handle) ? EB_ErrorMutexUnresponsive : EB_ErrorNone;
 #endif // _WIN32
 
     return return_error;
 }
 
 /***************************************
- * EbBlockOnMutexTimeout
+ * eb_block_on_mutex_timeout
  ***************************************/
-EbErrorType EbBlockOnMutexTimeout(
-    EbHandle mutexHandle,
+EbErrorType eb_block_on_mutex_timeout(
+    EbHandle mutex_handle,
     uint32_t    timeout)
 {
     EbErrorType return_error = EB_ErrorNone;
 
 #ifdef _WIN32
-    WaitForSingleObject((HANDLE)mutexHandle, timeout);
+    WaitForSingleObject((HANDLE)mutex_handle, timeout);
 #elif defined(__linux__) || defined(__APPLE__)
-    return_error = pthread_mutex_lock((pthread_mutex_t*)mutexHandle) ? EB_ErrorMutexUnresponsive : EB_ErrorNone;
+    return_error = pthread_mutex_lock((pthread_mutex_t*)mutex_handle) ? EB_ErrorMutexUnresponsive : EB_ErrorNone;
     (void)timeout;
 #endif // _WIN32
 
@@ -355,18 +355,18 @@ EbErrorType EbBlockOnMutexTimeout(
 }
 
 /***************************************
- * EbDestroyMutex
+ * eb_destroy_mutex
  ***************************************/
-EbErrorType EbDestroyMutex(
-    EbHandle mutexHandle)
+EbErrorType eb_destroy_mutex(
+    EbHandle mutex_handle)
 {
     EbErrorType return_error = EB_ErrorNone;
 
 #ifdef _WIN32
-    return_error = CloseHandle((HANDLE)mutexHandle) ? EB_ErrorDestroyMutexFailed : EB_ErrorNone;
+    return_error = CloseHandle((HANDLE)mutex_handle) ? EB_ErrorDestroyMutexFailed : EB_ErrorNone;
 #elif defined(__linux__) || defined(__APPLE__)
-    return_error = pthread_mutex_destroy((pthread_mutex_t*)mutexHandle) ? EB_ErrorDestroyMutexFailed : EB_ErrorNone;
-    free(mutexHandle);
+    return_error = pthread_mutex_destroy((pthread_mutex_t*)mutex_handle) ? EB_ErrorDestroyMutexFailed : EB_ErrorNone;
+    free(mutex_handle);
 #endif // _WIN32
 
     return return_error;

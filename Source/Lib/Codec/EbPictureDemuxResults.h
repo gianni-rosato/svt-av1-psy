@@ -34,17 +34,16 @@ typedef struct PictureDemuxResults_s
 
 } PictureDemuxResults_t;
 
-typedef struct PictureResultInitData_s
-{
+typedef struct PictureResultInitData_s {
     int32_t junk;
 } PictureResultInitData_t;
 
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType PictureResultsCtor(
+extern EbErrorType picture_results_ctor(
     EbPtr *object_dbl_ptr,
-    EbPtr object_init_data_ptr);
+    EbPtr  object_init_data_ptr);
 
 
 #endif //EbPictureResults_h

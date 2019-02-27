@@ -38,7 +38,7 @@ extern "C" {
     typedef struct ReferenceList_s
     {
         int32_t                              referenceList;
-        uint32_t                              referenceListCount;
+        uint32_t                             referenceListCount;
 
     } ReferenceList_t;
 
@@ -59,7 +59,7 @@ extern "C" {
     typedef struct DependentList_s
     {
         int32_t                             *list;
-        uint32_t                              listCount;
+        uint32_t                             listCount;
 
     } DependentList_t;
 
@@ -70,8 +70,8 @@ extern "C" {
      *   Config Entry.
      ************************************************/
     typedef struct PredictionStructureConfigEntry_s {
-        uint32_t                              temporal_layer_index;
-        uint32_t                              decode_order;
+        uint32_t                             temporal_layer_index;
+        uint32_t                             decode_order;
         int32_t                              refList0;
         int32_t                              refList1;
     } PredictionStructureConfigEntry_t;
@@ -82,7 +82,7 @@ extern "C" {
      *   for the basic prediction structure.
      ************************************************/
     typedef struct PredictionStructureConfig_s {
-        uint32_t                              entryCount;
+        uint32_t                            entryCount;
         PredictionStructureConfigEntry_t   *entryArray;
     } PredictionStructureConfig_t;
 

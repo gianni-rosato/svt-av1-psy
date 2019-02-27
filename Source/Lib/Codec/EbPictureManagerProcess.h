@@ -14,26 +14,23 @@ extern "C" {
     /***************************************
      * Context
      ***************************************/
-    typedef struct PictureManagerContext_s
-    {
-        EbFifo_t                 *pictureInputFifoPtr;
-        EbFifo_t                 *pictureManagerOutputFifoPtr;
-        EbFifo_t                **pictureControlSetFifoPtrArray;
-
+    typedef struct PictureManagerContext_s {
+        EbFifo_t  *picture_input_fifo_ptr;
+        EbFifo_t  *pictureManagerOutputFifoPtr;
+        EbFifo_t **picture_control_set_fifo_ptr_array;
     } PictureManagerContext_t;
 
     /***************************************
      * Extern Function Declaration
      ***************************************/
-    extern EbErrorType PictureManagerContextCtor(
+    extern EbErrorType picture_manager_context_ctor(
         PictureManagerContext_t **context_dbl_ptr,
         EbFifo_t                 *pictureInputFifoPtr,
         EbFifo_t                 *pictureManagerOutputFifoPtr,
-        EbFifo_t                **pictureControlSetFifoPtrArray);
+        EbFifo_t                **picture_control_set_fifo_ptr_array);
 
+    extern void* picture_manager_kernel(void *input_ptr);
 
-
-    extern void* PictureManagerKernel(void *input_ptr);
 #ifdef __cplusplus
 }
 #endif

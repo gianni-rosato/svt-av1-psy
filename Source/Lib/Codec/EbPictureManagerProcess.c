@@ -60,20 +60,20 @@ static void ConfigurePictureEdges(
 /************************************************
  * Picture Manager Context Constructor
  ************************************************/
-EbErrorType PictureManagerContextCtor(
+EbErrorType picture_manager_context_ctor(
     PictureManagerContext_t **context_dbl_ptr,
-    EbFifo_t                 *pictureInputFifoPtr,
+    EbFifo_t                 *picture_input_fifo_ptr,
     EbFifo_t                 *pictureManagerOutputFifoPtr,
-    EbFifo_t                **pictureControlSetFifoPtrArray)
+    EbFifo_t                **picture_control_set_fifo_ptr_array)
 {
     PictureManagerContext_t *context_ptr;
     EB_MALLOC(PictureManagerContext_t*, context_ptr, sizeof(PictureManagerContext_t), EB_N_PTR);
 
     *context_dbl_ptr = context_ptr;
 
-    context_ptr->pictureInputFifoPtr = pictureInputFifoPtr;
+    context_ptr->picture_input_fifo_ptr = picture_input_fifo_ptr;
     context_ptr->pictureManagerOutputFifoPtr = pictureManagerOutputFifoPtr;
-    context_ptr->pictureControlSetFifoPtrArray = pictureControlSetFifoPtrArray;
+    context_ptr->picture_control_set_fifo_ptr_array = picture_control_set_fifo_ptr_array;
 
     return EB_ErrorNone;
 }
@@ -102,7 +102,7 @@ EbErrorType PictureManagerContextCtor(
  *   -Picture Control Set with fully available Reference List
  *
  ***************************************************************************************************/
-void* PictureManagerKernel(void *input_ptr)
+void* picture_manager_kernel(void *input_ptr)
 {
     PictureManagerContext_t         *context_ptr = (PictureManagerContext_t*)input_ptr;
 
@@ -146,11 +146,11 @@ void* PictureManagerKernel(void *input_ptr)
     for (;;) {
 
         // Get Input Full Object
-        EbGetFullObject(
-            context_ptr->pictureInputFifoPtr,
+        eb_get_full_object(
+            context_ptr->picture_input_fifo_ptr,
             &inputPictureDemuxWrapperPtr);
 
-        inputPictureDemuxPtr = (PictureDemuxResults_t*)inputPictureDemuxWrapperPtr->objectPtr;
+        inputPictureDemuxPtr = (PictureDemuxResults_t*)inputPictureDemuxWrapperPtr->object_ptr;
 
         // *Note - This should be overhauled and/or replaced when we
         //   need hierarchical support.
@@ -160,8 +160,8 @@ void* PictureManagerKernel(void *input_ptr)
 
         case EB_PIC_INPUT:
 
-            picture_control_set_ptr = (PictureParentControlSet_t*)inputPictureDemuxPtr->pictureControlSetWrapperPtr->objectPtr;
-            sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+            picture_control_set_ptr = (PictureParentControlSet_t*)inputPictureDemuxPtr->pictureControlSetWrapperPtr->object_ptr;
+            sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
             encode_context_ptr = sequence_control_set_ptr->encode_context_ptr;
 
             //printf("\nPicture Manager Process @ %d \n ", picture_control_set_ptr->picture_number);
@@ -184,7 +184,7 @@ void* PictureManagerKernel(void *input_ptr)
 
             while (queueEntryPtr->parentPcsWrapperPtr != EB_NULL) {
 
-                picture_control_set_ptr = (PictureParentControlSet_t*)queueEntryPtr->parentPcsWrapperPtr->objectPtr;
+                picture_control_set_ptr = (PictureParentControlSet_t*)queueEntryPtr->parentPcsWrapperPtr->object_ptr;
 
                 predPositionPtr = picture_control_set_ptr->pred_struct_ptr->predStructEntryPtrArray[picture_control_set_ptr->pred_struct_index];
 #if NEW_PRED_STRUCT
@@ -458,7 +458,7 @@ void* PictureManagerKernel(void *input_ptr)
                 // Release the Reference Buffer once we know it is not a reference
                 if (picture_control_set_ptr->is_used_as_reference_flag == EB_FALSE) {
                     // Release the nominal liveCount value
-                    EbReleaseObject(picture_control_set_ptr->reference_picture_wrapper_ptr);
+                    eb_release_object(picture_control_set_ptr->reference_picture_wrapper_ptr);
                     picture_control_set_ptr->reference_picture_wrapper_ptr = (EbObjectWrapper_t*)EB_NULL;
                 }
 
@@ -477,7 +477,7 @@ void* PictureManagerKernel(void *input_ptr)
 
         case EB_PIC_REFERENCE:
 
-            sequence_control_set_ptr = (SequenceControlSet_t*)inputPictureDemuxPtr->sequence_control_set_wrapper_ptr->objectPtr;
+            sequence_control_set_ptr = (SequenceControlSet_t*)inputPictureDemuxPtr->sequence_control_set_wrapper_ptr->object_ptr;
             encode_context_ptr = sequence_control_set_ptr->encode_context_ptr;
 
             // Check if Reference Queue is full
@@ -515,13 +515,13 @@ void* PictureManagerKernel(void *input_ptr)
 
             //keep the relase of SCS here because we still need the encodeContext strucutre here
             // Release the Reference's SequenceControlSet
-            EbReleaseObject(inputPictureDemuxPtr->sequence_control_set_wrapper_ptr);
+            eb_release_object(inputPictureDemuxPtr->sequence_control_set_wrapper_ptr);
 
             break;
 
         default:
 
-            sequence_control_set_ptr = (SequenceControlSet_t*)inputPictureDemuxPtr->sequence_control_set_wrapper_ptr->objectPtr;
+            sequence_control_set_ptr = (SequenceControlSet_t*)inputPictureDemuxPtr->sequence_control_set_wrapper_ptr->object_ptr;
             encode_context_ptr = sequence_control_set_ptr->encode_context_ptr;
 
             CHECK_REPORT_ERROR_NC(
@@ -547,8 +547,8 @@ void* PictureManagerKernel(void *input_ptr)
 
                 if (inputEntryPtr->inputObjectPtr != EB_NULL) {
 
-                    entryPictureControlSetPtr = (PictureParentControlSet_t*)inputEntryPtr->inputObjectPtr->objectPtr;
-                    entrySequenceControlSetPtr = (SequenceControlSet_t*)entryPictureControlSetPtr->sequence_control_set_wrapper_ptr->objectPtr;
+                    entryPictureControlSetPtr = (PictureParentControlSet_t*)inputEntryPtr->inputObjectPtr->object_ptr;
+                    entrySequenceControlSetPtr = (SequenceControlSet_t*)entryPictureControlSetPtr->sequence_control_set_wrapper_ptr->object_ptr;
 
                     availabilityFlag = EB_TRUE;
 
@@ -625,16 +625,16 @@ void* PictureManagerKernel(void *input_ptr)
                     if (availabilityFlag == EB_TRUE) {
 
                         // Get New  Empty Child PCS from PCS Pool
-                        EbGetEmptyObject(
-                            context_ptr->pictureControlSetFifoPtrArray[0],
+                        eb_get_empty_object(
+                            context_ptr->picture_control_set_fifo_ptr_array[0],
                             &ChildPictureControlSetWrapperPtr);
 
                         // Child PCS is released by Packetization
-                        EbObjectIncLiveCount(
+                        eb_object_inc_live_count(
                             ChildPictureControlSetWrapperPtr,
                             1);
 
-                        ChildPictureControlSetPtr = (PictureControlSet_t*)ChildPictureControlSetWrapperPtr->objectPtr;
+                        ChildPictureControlSetPtr = (PictureControlSet_t*)ChildPictureControlSetWrapperPtr->object_ptr;
 
                         //1.Link The Child PCS to its Parent
                         ChildPictureControlSetPtr->picture_parent_control_set_wrapper_ptr = inputEntryPtr->inputObjectPtr;
@@ -671,15 +671,15 @@ void* PictureManagerKernel(void *input_ptr)
 
                         // Entropy Coding Rows
                         {
-                            unsigned rowIndex;
+                            unsigned row_index;
 
                             ChildPictureControlSetPtr->entropy_coding_current_row = 0;
                             ChildPictureControlSetPtr->entropy_coding_current_available_row = 0;
                             ChildPictureControlSetPtr->entropy_coding_row_count = picture_height_in_sb;
                             ChildPictureControlSetPtr->entropy_coding_in_progress = EB_FALSE;
 
-                            for (rowIndex = 0; rowIndex < MAX_LCU_ROWS; ++rowIndex) {
-                                ChildPictureControlSetPtr->entropy_coding_row_array[rowIndex] = EB_FALSE;
+                            for (row_index = 0; row_index < MAX_LCU_ROWS; ++row_index) {
+                                ChildPictureControlSetPtr->entropy_coding_row_array[row_index] = EB_FALSE;
                             }
                         }
 
@@ -753,14 +753,14 @@ void* PictureManagerKernel(void *input_ptr)
                                 ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0] = referenceEntryPtr->referenceObjectPtr;
 
 #if ADD_DELTA_QP_SUPPORT
-                                ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->objectPtr)->qp;
-                                ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->objectPtr)->slice_type;
+                                ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
+                                ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
 #else
-                                ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->objectPtr)->qp;
-                                ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->objectPtr)->slice_type;
+                                ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
+                                ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
 #endif
                                 // Increment the Reference's liveCount by the number of tiles in the input picture
-                                EbObjectIncLiveCount(
+                                eb_object_inc_live_count(
                                     referenceEntryPtr->referenceObjectPtr,
                                     1);
 
@@ -788,13 +788,13 @@ void* PictureManagerKernel(void *input_ptr)
                                 // Set the Reference Object
                                 ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1] = referenceEntryPtr->referenceObjectPtr;
 
-                                ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_1] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->objectPtr)->qp;
-                                ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->objectPtr)->slice_type;
+                                ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_1] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
+                                ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
 
 
 
                                 // Increment the Reference's liveCount by the number of tiles in the input picture
-                                EbObjectIncLiveCount(
+                                eb_object_inc_live_count(
                                     referenceEntryPtr->referenceObjectPtr,
                                     1);
 
@@ -817,23 +817,23 @@ void* PictureManagerKernel(void *input_ptr)
 
                         // Increment the sequenceControlSet Wrapper's live count by 1 for only the pictures which are used as reference
                         if (ChildPictureControlSetPtr->parent_pcs_ptr->is_used_as_reference_flag) {
-                            EbObjectIncLiveCount(
+                            eb_object_inc_live_count(
                                 ChildPictureControlSetPtr->parent_pcs_ptr->sequence_control_set_wrapper_ptr,
                                 1);
                         }
 
 
                         // Get Empty Results Object
-                        EbGetEmptyObject(
+                        eb_get_empty_object(
                             context_ptr->pictureManagerOutputFifoPtr,
                             &outputWrapperPtr);
 
-                        rateControlTasksPtr = (RateControlTasks_t*)outputWrapperPtr->objectPtr;
+                        rateControlTasksPtr = (RateControlTasks_t*)outputWrapperPtr->object_ptr;
                         rateControlTasksPtr->pictureControlSetWrapperPtr = ChildPictureControlSetWrapperPtr;
                         rateControlTasksPtr->taskType = RC_PICTURE_MANAGER_RESULT;
 
                         // Post the Full Results Object
-                        EbPostFullObject(outputWrapperPtr);
+                        eb_post_full_object(outputWrapperPtr);
 
                         // Remove the Input Entry from the Input Queue
                         inputEntryPtr->inputObjectPtr = (EbObjectWrapper_t*)EB_NULL;
@@ -865,7 +865,7 @@ void* PictureManagerKernel(void *input_ptr)
                     (referenceEntryPtr->referenceObjectPtr))
                 {
                     // Release the nominal liveCount value
-                    EbReleaseObject(referenceEntryPtr->referenceObjectPtr);
+                    eb_release_object(referenceEntryPtr->referenceObjectPtr);
 
                     referenceEntryPtr->referenceObjectPtr = (EbObjectWrapper_t*)EB_NULL;
                     referenceEntryPtr->referenceAvailable = EB_FALSE;
@@ -886,7 +886,7 @@ void* PictureManagerKernel(void *input_ptr)
         }
 
         // Release the Input Picture Demux Results
-        EbReleaseObject(inputPictureDemuxWrapperPtr);
+        eb_release_object(inputPictureDemuxWrapperPtr);
 
     }
     return EB_NULL;

@@ -14,7 +14,7 @@ EbErrorType EncDecSegmentsCtor(
     uint32_t             segmentColCount,
     uint32_t             segmentRowCount)
 {
-    uint32_t rowIndex;
+    uint32_t row_index;
     EncDecSegments_t *segmentsPtr;
     EB_MALLOC(EncDecSegments_t*, segmentsPtr, sizeof(EncDecSegments_t), EB_N_PTR);
 
@@ -39,8 +39,8 @@ EbErrorType EncDecSegmentsCtor(
     // Segment rows
     EB_MALLOC(EncDecSegSegmentRow_t*, segmentsPtr->rowArray, sizeof(EncDecSegSegmentRow_t) * segmentsPtr->segmentMaxRowCount, EB_N_PTR)
 
-        for (rowIndex = 0; rowIndex < segmentsPtr->segmentMaxRowCount; ++rowIndex) {
-            EB_CREATEMUTEX(EbHandle, segmentsPtr->rowArray[rowIndex].assignmentMutex, sizeof(EbHandle), EB_MUTEX);
+        for (row_index = 0; row_index < segmentsPtr->segmentMaxRowCount; ++row_index) {
+            EB_CREATEMUTEX(EbHandle, segmentsPtr->rowArray[row_index].assignmentMutex, sizeof(EbHandle), EB_MUTEX);
         }
 
     return EB_ErrorNone;
@@ -56,7 +56,7 @@ void EncDecSegmentsInit(
     uint32_t            picHeightLcu)
 {
     unsigned x, y, yLast;
-    unsigned rowIndex, bandIndex, segment_index;
+    unsigned row_index, bandIndex, segment_index;
 
     segmentsPtr->lcuRowCount = picHeightLcu;
     segmentsPtr->lcuBandCount = BAND_TOTAL_COUNT(picHeightLcu, picWidthLcu);
@@ -73,8 +73,8 @@ void EncDecSegmentsInit(
     for (y = 0; y < picHeightLcu; ++y) {
         for (x = 0; x < picWidthLcu; ++x) {
             bandIndex = BAND_INDEX(x, y, segmentsPtr->segmentBandCount, segmentsPtr->lcuBandCount);
-            rowIndex = ROW_INDEX(y, segmentsPtr->segmentRowCount, segmentsPtr->lcuRowCount);
-            segment_index = SEGMENT_INDEX(rowIndex, bandIndex, segmentsPtr->segmentBandCount);
+            row_index = ROW_INDEX(y, segmentsPtr->segmentRowCount, segmentsPtr->lcuRowCount);
+            segment_index = SEGMENT_INDEX(row_index, bandIndex, segmentsPtr->segmentBandCount);
 
             //++segmentsPtr->inputMap.inputDependencyMap[segment_index];
             ++segmentsPtr->validLcuCountArray[segment_index];
@@ -88,30 +88,30 @@ void EncDecSegmentsInit(
     }
 
     // Initialize the row-based controls
-    for (rowIndex = 0; rowIndex < segmentsPtr->segmentRowCount; ++rowIndex) {
-        y = ((rowIndex * segmentsPtr->lcuRowCount) + (segmentsPtr->segmentRowCount - 1)) / segmentsPtr->segmentRowCount;
-        yLast = ((((rowIndex + 1) * segmentsPtr->lcuRowCount) + (segmentsPtr->segmentRowCount - 1)) / segmentsPtr->segmentRowCount) - 1;
+    for (row_index = 0; row_index < segmentsPtr->segmentRowCount; ++row_index) {
+        y = ((row_index * segmentsPtr->lcuRowCount) + (segmentsPtr->segmentRowCount - 1)) / segmentsPtr->segmentRowCount;
+        yLast = ((((row_index + 1) * segmentsPtr->lcuRowCount) + (segmentsPtr->segmentRowCount - 1)) / segmentsPtr->segmentRowCount) - 1;
         bandIndex = BAND_INDEX(0, y, segmentsPtr->segmentBandCount, segmentsPtr->lcuBandCount);
 
-        segmentsPtr->rowArray[rowIndex].startingSegIndex = (uint16_t)SEGMENT_INDEX(rowIndex, bandIndex, segmentsPtr->segmentBandCount);
+        segmentsPtr->rowArray[row_index].startingSegIndex = (uint16_t)SEGMENT_INDEX(row_index, bandIndex, segmentsPtr->segmentBandCount);
         bandIndex = BAND_INDEX(picWidthLcu - 1, yLast, segmentsPtr->segmentBandCount, segmentsPtr->lcuBandCount);
-        segmentsPtr->rowArray[rowIndex].endingSegIndex = (uint16_t)SEGMENT_INDEX(rowIndex, bandIndex, segmentsPtr->segmentBandCount);
-        segmentsPtr->rowArray[rowIndex].currentSegIndex = segmentsPtr->rowArray[rowIndex].startingSegIndex;
+        segmentsPtr->rowArray[row_index].endingSegIndex = (uint16_t)SEGMENT_INDEX(row_index, bandIndex, segmentsPtr->segmentBandCount);
+        segmentsPtr->rowArray[row_index].currentSegIndex = segmentsPtr->rowArray[row_index].startingSegIndex;
     }
 
     // Initialize the per-segment dependency map
     EB_MEMSET(segmentsPtr->depMap.dependencyMap, 0, sizeof(uint8_t) * segmentsPtr->segmentTotalCount);
-    for (rowIndex = 0; rowIndex < segmentsPtr->segmentRowCount; ++rowIndex) {
-        for (segment_index = segmentsPtr->rowArray[rowIndex].startingSegIndex; segment_index <= segmentsPtr->rowArray[rowIndex].endingSegIndex; ++segment_index) {
+    for (row_index = 0; row_index < segmentsPtr->segmentRowCount; ++row_index) {
+        for (segment_index = segmentsPtr->rowArray[row_index].startingSegIndex; segment_index <= segmentsPtr->rowArray[row_index].endingSegIndex; ++segment_index) {
 
             // Check that segment is valid
             if (segmentsPtr->validLcuCountArray[segment_index]) {
                 // Right Neighbor
-                if (segment_index < segmentsPtr->rowArray[rowIndex].endingSegIndex) {
+                if (segment_index < segmentsPtr->rowArray[row_index].endingSegIndex) {
                     ++segmentsPtr->depMap.dependencyMap[segment_index + 1];
                 }
                 // Bottom Neighbor
-                if (rowIndex < segmentsPtr->segmentRowCount - 1 && segment_index + segmentsPtr->segmentBandCount >= segmentsPtr->rowArray[rowIndex + 1].startingSegIndex) {
+                if (row_index < segmentsPtr->segmentRowCount - 1 && segment_index + segmentsPtr->segmentBandCount >= segmentsPtr->rowArray[row_index + 1].startingSegIndex) {
                     ++segmentsPtr->depMap.dependencyMap[segment_index + segmentsPtr->segmentBandCount];
                 }
             }

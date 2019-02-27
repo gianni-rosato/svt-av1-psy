@@ -7,11 +7,11 @@
 #include <emmintrin.h>
 #include "stdint.h"
 
-void SadCalculation_8x8_16x16_SSE2_INTRIN(
+void sad_calculation_8x8_16x16_sse2_intrin(
     uint8_t   *src,
     uint32_t   src_stride,
     uint8_t   *ref,
-    uint32_t   refStride,
+    uint32_t   ref_stride,
     uint32_t  *p_best_sad8x8,
     uint32_t  *p_best_sad16x16,
     uint32_t  *p_best_mv8x8,
@@ -23,24 +23,24 @@ void SadCalculation_8x8_16x16_SSE2_INTRIN(
     __m128i sad8x8_greater_or_eq_bitmask, BestMV8x8, BestSad8x8, xmm_pBestSad8x8, xmm_pBestMV8x8, xmm_mv;
 
     src_stride <<= 1;
-    refStride <<= 1;
+    ref_stride <<= 1;
 
     //sad8x8_0, sad8x8_1
 
     xmm_sad8x8_0_1 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)src), _mm_loadu_si128((__m128i*)ref)),
-        _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + src_stride)), _mm_loadu_si128((__m128i*)(ref + refStride))));
-    xmm_sad8x8_0_1 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (2 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (2 * refStride)))), xmm_sad8x8_0_1);
-    xmm_sad8x8_0_1 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (3 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (3 * refStride)))), xmm_sad8x8_0_1);
+        _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + src_stride)), _mm_loadu_si128((__m128i*)(ref + ref_stride))));
+    xmm_sad8x8_0_1 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (2 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (2 * ref_stride)))), xmm_sad8x8_0_1);
+    xmm_sad8x8_0_1 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (3 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (3 * ref_stride)))), xmm_sad8x8_0_1);
 
     src += src_stride << 2;
-    ref += refStride << 2;
+    ref += ref_stride << 2;
 
     //sad8x8_2, sad8x8_3
 
     xmm_sad8x8_2_3 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)src), _mm_loadu_si128((__m128i*)ref)),
-        _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + src_stride)), _mm_loadu_si128((__m128i*)(ref + refStride))));
-    xmm_sad8x8_2_3 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (2 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (2 * refStride)))), xmm_sad8x8_2_3);
-    xmm_sad8x8_2_3 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (3 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (3 * refStride)))), xmm_sad8x8_2_3);
+        _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + src_stride)), _mm_loadu_si128((__m128i*)(ref + ref_stride))));
+    xmm_sad8x8_2_3 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (2 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (2 * ref_stride)))), xmm_sad8x8_2_3);
+    xmm_sad8x8_2_3 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (3 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (3 * ref_stride)))), xmm_sad8x8_2_3);
 
     xmm_sad16x16 = _mm_add_epi32(xmm_sad8x8_0_1, xmm_sad8x8_2_3);
 
@@ -77,7 +77,7 @@ void SadCalculation_8x8_16x16_SSE2_INTRIN(
     }
 }
 
-void SadCalculation_32x32_64x64_SSE2_INTRIN(
+void sad_calculation_32x32_64x64_sse2_intrin(
     uint32_t  *p_sad16x16,
     uint32_t  *p_best_sad32x32,
     uint32_t  *p_best_sad64x64,
@@ -127,30 +127,30 @@ void SadCalculation_32x32_64x64_SSE2_INTRIN(
 }
 
 
-void InitializeBuffer_32bits_SSE2_INTRIN(
-    uint32_t*        Pointer,
-    uint32_t        Count128,
-    uint32_t        Count32,
-    uint32_t        Value)
+void initialize_buffer_32bits_sse2_intrin(
+    uint32_t*        pointer,
+    uint32_t        count128,
+    uint32_t        count32,
+    uint32_t        value)
 {
     __m128i xmm1, xmm2;
     uint32_t index128;
-    xmm2 = _mm_cvtsi32_si128(Value);
+    xmm2 = _mm_cvtsi32_si128(value);
     xmm1 = _mm_or_si128(_mm_slli_si128(xmm2, 4), xmm2);
     xmm2 = _mm_or_si128(_mm_slli_si128(xmm1, 8), xmm1);
 
-    for (index128 = 0; index128 < Count128; ++index128) {
-        _mm_storeu_si128((__m128i *)Pointer, xmm2);
-        Pointer += 4;
+    for (index128 = 0; index128 < count128; ++index128) {
+        _mm_storeu_si128((__m128i *)pointer, xmm2);
+        pointer += 4;
     }
-    if (Count32 == 3) { //Initialize 96 bits
-        _mm_storel_epi64((__m128i *)(Pointer), xmm2);
-        *(Pointer + 2) = _mm_cvtsi128_si32(xmm2);
+    if (count32 == 3) { //Initialize 96 bits
+        _mm_storel_epi64((__m128i *)(pointer), xmm2);
+        *(pointer + 2) = _mm_cvtsi128_si32(xmm2);
     }
-    else if (Count32 == 2) { // Initialize 64 bits
-        _mm_storel_epi64((__m128i *)Pointer, xmm2);
+    else if (count32 == 2) { // Initialize 64 bits
+        _mm_storel_epi64((__m128i *)pointer, xmm2);
     }
-    else if (Count32 == 1) { // Initialize 32 bits
-        *(Pointer) = _mm_cvtsi128_si32(xmm2);
+    else if (count32 == 1) { // Initialize 32 bits
+        *(pointer) = _mm_cvtsi128_si32(xmm2);
     }
 }

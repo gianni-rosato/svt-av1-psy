@@ -165,16 +165,16 @@ uint8_t SearchAreaHeight[5][MAX_SUPPORTED_MODES] = {
 /************************************************
  * Resource Coordination Context Constructor
  ************************************************/
-EbErrorType ResourceCoordinationContextCtor(
+EbErrorType resource_coordination_context_ctor(
     ResourceCoordinationContext_t  **context_dbl_ptr,
     EbFifo_t                        *inputBufferFifoPtr,
-    EbFifo_t                        *resourceCoordinationResultsOutputFifoPtr,
-    EbFifo_t                        **pictureControlSetFifoPtrArray,
-    EbSequenceControlSetInstance_t  **sequenceControlSetInstanceArray,
-    EbFifo_t                         *sequenceControlSetEmptyFifoPtr,
-    EbCallback_t                    **appCallbackPtrArray,
-    uint32_t                         *computeSegmentsTotalCountArray,
-    uint32_t                          encodeInstancesTotalCount)
+    EbFifo_t                        *resource_coordination_results_output_fifo_ptr,
+    EbFifo_t                        **picture_control_set_fifo_ptr_array,
+    EbSequenceControlSetInstance_t  **sequence_control_set_instance_array,
+    EbFifo_t                         *sequence_control_set_empty_fifo_ptr,
+    EbCallback_t                    **app_callback_ptr_array,
+    uint32_t                         *compute_segments_total_count_array,
+    uint32_t                          encode_instances_total_count)
 {
     uint32_t instanceIndex;
 
@@ -184,25 +184,25 @@ EbErrorType ResourceCoordinationContextCtor(
     *context_dbl_ptr = context_ptr;
 
     context_ptr->input_buffer_fifo_ptr = inputBufferFifoPtr;
-    context_ptr->resourceCoordinationResultsOutputFifoPtr = resourceCoordinationResultsOutputFifoPtr;
-    context_ptr->pictureControlSetFifoPtrArray = pictureControlSetFifoPtrArray;
-    context_ptr->sequenceControlSetInstanceArray = sequenceControlSetInstanceArray;
-    context_ptr->sequenceControlSetEmptyFifoPtr = sequenceControlSetEmptyFifoPtr;
-    context_ptr->appCallbackPtrArray = appCallbackPtrArray;
-    context_ptr->computeSegmentsTotalCountArray = computeSegmentsTotalCountArray;
-    context_ptr->encodeInstancesTotalCount = encodeInstancesTotalCount;
+    context_ptr->resource_coordination_results_output_fifo_ptr = resource_coordination_results_output_fifo_ptr;
+    context_ptr->picture_control_set_fifo_ptr_array = picture_control_set_fifo_ptr_array;
+    context_ptr->sequence_control_set_instance_array = sequence_control_set_instance_array;
+    context_ptr->sequence_control_set_empty_fifo_ptr = sequence_control_set_empty_fifo_ptr;
+    context_ptr->app_callback_ptr_array = app_callback_ptr_array;
+    context_ptr->compute_segments_total_count_array = compute_segments_total_count_array;
+    context_ptr->encode_instances_total_count = encode_instances_total_count;
 
     // Allocate SequenceControlSetActiveArray
-    EB_MALLOC(EbObjectWrapper_t**, context_ptr->sequenceControlSetActiveArray, sizeof(EbObjectWrapper_t*) * context_ptr->encodeInstancesTotalCount, EB_N_PTR);
+    EB_MALLOC(EbObjectWrapper_t**, context_ptr->sequenceControlSetActiveArray, sizeof(EbObjectWrapper_t*) * context_ptr->encode_instances_total_count, EB_N_PTR);
 
-    for (instanceIndex = 0; instanceIndex < context_ptr->encodeInstancesTotalCount; ++instanceIndex) {
+    for (instanceIndex = 0; instanceIndex < context_ptr->encode_instances_total_count; ++instanceIndex) {
         context_ptr->sequenceControlSetActiveArray[instanceIndex] = 0;
     }
 
     // Picture Stats
-    EB_MALLOC(uint64_t*, context_ptr->pictureNumberArray, sizeof(uint64_t) * context_ptr->encodeInstancesTotalCount, EB_N_PTR);
+    EB_MALLOC(uint64_t*, context_ptr->pictureNumberArray, sizeof(uint64_t) * context_ptr->encode_instances_total_count, EB_N_PTR);
 
-    for (instanceIndex = 0; instanceIndex < context_ptr->encodeInstancesTotalCount; ++instanceIndex) {
+    for (instanceIndex = 0; instanceIndex < context_ptr->encode_instances_total_count; ++instanceIndex) {
         context_ptr->pictureNumberArray[instanceIndex] = 0;
     }
 
@@ -407,7 +407,7 @@ void SpeedBufferControl(
     int64_t bufferTrshold1 = SC_FRAMES_INTERVAL_T1;
     int64_t bufferTrshold2 = SC_FRAMES_INTERVAL_T2;
     int64_t bufferTrshold3 = MIN(targetFps * 3, SC_FRAMES_INTERVAL_T3);
-    EbBlockOnMutex(sequence_control_set_ptr->encode_context_ptr->sc_buffer_mutex);
+    eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->sc_buffer_mutex);
 
     if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in == 0) {
         EbStartTime(&context_ptr->firstInPicArrivedTimeSeconds, &context_ptr->firstInPicArrivedTimeuSeconds);
@@ -548,7 +548,7 @@ void SpeedBufferControl(
     // Set the encoder level
     picture_control_set_ptr->enc_mode = sequence_control_set_ptr->encode_context_ptr->enc_mode;
 
-    EbReleaseMutex(sequence_control_set_ptr->encode_context_ptr->sc_buffer_mutex);
+    eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->sc_buffer_mutex);
     context_ptr->prevEncMod = sequence_control_set_ptr->encode_context_ptr->enc_mode;
 }
 
@@ -665,7 +665,7 @@ void ResetPcsAv1(
 /***************************************
  * ResourceCoordination Kernel
  ***************************************/
-void* ResourceCoordinationKernel(void *input_ptr)
+void* resource_coordination_kernel(void *input_ptr)
 {
     ResourceCoordinationContext_t   *context_ptr = (ResourceCoordinationContext_t*)input_ptr;
 
@@ -699,40 +699,40 @@ void* ResourceCoordinationKernel(void *input_ptr)
         instanceIndex = 0;
 
         // Get the Next svt Input Buffer [BLOCKING]
-        EbGetFullObject(
+        eb_get_full_object(
             context_ptr->input_buffer_fifo_ptr,
             &ebInputWrapperPtr);
-        ebInputPtr = (EbBufferHeaderType*)ebInputWrapperPtr->objectPtr;
-        sequence_control_set_ptr = context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr;
+        ebInputPtr = (EbBufferHeaderType*)ebInputWrapperPtr->object_ptr;
+        sequence_control_set_ptr = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr;
 
         // If config changes occured since the last picture began encoding, then
         //   prepare a new sequence_control_set_ptr containing the new changes and update the state
         //   of the previous Active SequenceControlSet
-        EbBlockOnMutex(context_ptr->sequenceControlSetInstanceArray[instanceIndex]->config_mutex);
-        if (context_ptr->sequenceControlSetInstanceArray[instanceIndex]->encode_context_ptr->initial_picture) {
+        eb_block_on_mutex(context_ptr->sequence_control_set_instance_array[instanceIndex]->config_mutex);
+        if (context_ptr->sequence_control_set_instance_array[instanceIndex]->encode_context_ptr->initial_picture) {
 
             // Update picture width, picture height, cropping right offset, cropping bottom offset, and conformance windows
-            if (context_ptr->sequenceControlSetInstanceArray[instanceIndex]->encode_context_ptr->initial_picture)
+            if (context_ptr->sequence_control_set_instance_array[instanceIndex]->encode_context_ptr->initial_picture)
 
             {
-                context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->luma_width = context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->max_input_luma_width;
-                context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->luma_height = context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->max_input_luma_height;
-                context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->chroma_width = (context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->max_input_luma_width >> 1);
-                context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->chroma_height = (context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->max_input_luma_height >> 1);
+                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->luma_width = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_luma_width;
+                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->luma_height = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_luma_height;
+                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->chroma_width = (context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_luma_width >> 1);
+                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->chroma_height = (context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_luma_height >> 1);
 
-                context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->pad_right = context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->max_input_pad_right;
-                context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->cropping_right_offset = context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->pad_right;
-                context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->pad_bottom = context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->max_input_pad_bottom;
-                context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->cropping_bottom_offset = context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->pad_bottom;
+                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_right = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_pad_right;
+                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->cropping_right_offset = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_right;
+                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_bottom = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_pad_bottom;
+                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->cropping_bottom_offset = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_bottom;
 
-                if (context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->pad_right != 0 || context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->pad_bottom != 0) {
-                    context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->conformance_window_flag = 1;
+                if (context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_right != 0 || context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_bottom != 0) {
+                    context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->conformance_window_flag = 1;
                 }
                 else {
-                    context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->conformance_window_flag = 0;
+                    context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->conformance_window_flag = 0;
                 }
 
-                input_size = context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->luma_width * context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr->luma_height;
+                input_size = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->luma_width * context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->luma_height;
             }
 
 
@@ -740,45 +740,45 @@ void* ResourceCoordinationKernel(void *input_ptr)
             previousSequenceControlSetWrapperPtr = context_ptr->sequenceControlSetActiveArray[instanceIndex];
 
             // Get empty SequenceControlSet [BLOCKING]
-            EbGetEmptyObject(
-                context_ptr->sequenceControlSetEmptyFifoPtr,
+            eb_get_empty_object(
+                context_ptr->sequence_control_set_empty_fifo_ptr,
                 &context_ptr->sequenceControlSetActiveArray[instanceIndex]);
 
             // Copy the contents of the active SequenceControlSet into the new empty SequenceControlSet
             copy_sequence_control_set(
-                (SequenceControlSet_t*)context_ptr->sequenceControlSetActiveArray[instanceIndex]->objectPtr,
-                context_ptr->sequenceControlSetInstanceArray[instanceIndex]->sequence_control_set_ptr);
+                (SequenceControlSet_t*)context_ptr->sequenceControlSetActiveArray[instanceIndex]->object_ptr,
+                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr);
 
             // Disable releaseFlag of new SequenceControlSet
-            EbObjectReleaseDisable(
+            eb_object_release_disable(
                 context_ptr->sequenceControlSetActiveArray[instanceIndex]);
 
             if (previousSequenceControlSetWrapperPtr != EB_NULL) {
 
                 // Enable releaseFlag of old SequenceControlSet
-                EbObjectReleaseEnable(
+                eb_object_release_enable(
                     previousSequenceControlSetWrapperPtr);
 
                 // Check to see if previous SequenceControlSet is already inactive, if TRUE then release the SequenceControlSet
                 if (previousSequenceControlSetWrapperPtr->liveCount == 0) {
-                    EbReleaseObject(
+                    eb_release_object(
                         previousSequenceControlSetWrapperPtr);
                 }
             }
         }
-        EbReleaseMutex(context_ptr->sequenceControlSetInstanceArray[instanceIndex]->config_mutex);
+        eb_release_mutex(context_ptr->sequence_control_set_instance_array[instanceIndex]->config_mutex);
 
         // Sequence Control Set is released by Rate Control after passing through MDC->MD->ENCDEC->Packetization->RateControl
         //   and in the PictureManager
-        EbObjectIncLiveCount(
+        eb_object_inc_live_count(
             context_ptr->sequenceControlSetActiveArray[instanceIndex],
             2);
 
         // Set the current SequenceControlSet
-        sequence_control_set_ptr = (SequenceControlSet_t*)context_ptr->sequenceControlSetActiveArray[instanceIndex]->objectPtr;
+        sequence_control_set_ptr = (SequenceControlSet_t*)context_ptr->sequenceControlSetActiveArray[instanceIndex]->object_ptr;
 
         // Init SB Params
-        if (context_ptr->sequenceControlSetInstanceArray[instanceIndex]->encode_context_ptr->initial_picture) {
+        if (context_ptr->sequence_control_set_instance_array[instanceIndex]->encode_context_ptr->initial_picture) {
             derive_input_resolution(
                 sequence_control_set_ptr,
                 input_size);
@@ -792,25 +792,25 @@ void* ResourceCoordinationKernel(void *input_ptr)
                 PM_MODE_1;
 
             // Construct PM Trans Coeff Shaping
-            if (context_ptr->sequenceControlSetInstanceArray[instanceIndex]->encode_context_ptr->initial_picture) {
+            if (context_ptr->sequence_control_set_instance_array[instanceIndex]->encode_context_ptr->initial_picture) {
                 if (sequence_control_set_ptr->pm_mode == PM_MODE_0) {
-                    ConstructPmTransCoeffShaping(sequence_control_set_ptr);
+                    construct_pm_trans_coeff_shaping(sequence_control_set_ptr);
                 }
             }
 
         }
 
         //Get a New ParentPCS where we will hold the new inputPicture
-        EbGetEmptyObject(
-            context_ptr->pictureControlSetFifoPtrArray[instanceIndex],
+        eb_get_empty_object(
+            context_ptr->picture_control_set_fifo_ptr_array[instanceIndex],
             &pictureControlSetWrapperPtr);
 
         // Parent PCS is released by the Rate Control after passing through MDC->MD->ENCDEC->Packetization
-        EbObjectIncLiveCount(
+        eb_object_inc_live_count(
             pictureControlSetWrapperPtr,
             1);
 
-        picture_control_set_ptr = (PictureParentControlSet_t*)pictureControlSetWrapperPtr->objectPtr;
+        picture_control_set_ptr = (PictureParentControlSet_t*)pictureControlSetWrapperPtr->object_ptr;
 
         picture_control_set_ptr->p_pcs_wrapper_ptr = pictureControlSetWrapperPtr;
 
@@ -818,7 +818,7 @@ void* ResourceCoordinationKernel(void *input_ptr)
         picture_control_set_ptr->enc_mode = sequence_control_set_ptr->static_config.enc_mode;
 
         // Keep track of the previous input for the ZZ SADs computation
-        picture_control_set_ptr->previous_picture_control_set_wrapper_ptr = (context_ptr->sequenceControlSetInstanceArray[instanceIndex]->encode_context_ptr->initial_picture) ?
+        picture_control_set_ptr->previous_picture_control_set_wrapper_ptr = (context_ptr->sequence_control_set_instance_array[instanceIndex]->encode_context_ptr->initial_picture) ?
             pictureControlSetWrapperPtr :
             sequence_control_set_ptr->encode_context_ptr->previous_picture_control_set_wrapper_ptr;
 
@@ -942,34 +942,34 @@ void* ResourceCoordinationKernel(void *input_ptr)
         sequence_control_set_ptr->encode_context_ptr->initial_picture = EB_FALSE;
 
         // Get Empty Reference Picture Object
-        EbGetEmptyObject(
+        eb_get_empty_object(
             sequence_control_set_ptr->encode_context_ptr->pa_reference_picture_pool_fifo_ptr,
             &reference_picture_wrapper_ptr);
 
         picture_control_set_ptr->pa_reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
 
         // Give the new Reference a nominal liveCount of 1
-        EbObjectIncLiveCount(
+        eb_object_inc_live_count(
             picture_control_set_ptr->pa_reference_picture_wrapper_ptr,
             2);
 
-        EbObjectIncLiveCount(
+        eb_object_inc_live_count(
             pictureControlSetWrapperPtr,
             2);
     
-        ((EbPaReferenceObject_t*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->objectPtr)->inputPaddedPicturePtr->bufferY = picture_control_set_ptr->enhanced_picture_ptr->bufferY;
+        ((EbPaReferenceObject_t*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->inputPaddedPicturePtr->buffer_y = picture_control_set_ptr->enhanced_picture_ptr->buffer_y;
         // Get Empty Output Results Object
         if (picture_control_set_ptr->picture_number > 0 && (prevPictureControlSetWrapperPtr != NULL))
         {
-            ((PictureParentControlSet_t       *)prevPictureControlSetWrapperPtr->objectPtr)->end_of_sequence_flag = end_of_sequence_flag;
-            EbGetEmptyObject(
-                context_ptr->resourceCoordinationResultsOutputFifoPtr,
+            ((PictureParentControlSet_t       *)prevPictureControlSetWrapperPtr->object_ptr)->end_of_sequence_flag = end_of_sequence_flag;
+            eb_get_empty_object(
+                context_ptr->resource_coordination_results_output_fifo_ptr,
                 &outputWrapperPtr);
-            outputResultsPtr = (ResourceCoordinationResults_t*)outputWrapperPtr->objectPtr;
+            outputResultsPtr = (ResourceCoordinationResults_t*)outputWrapperPtr->object_ptr;
             outputResultsPtr->pictureControlSetWrapperPtr = prevPictureControlSetWrapperPtr;
 
             // Post the finished Results Object
-            EbPostFullObject(outputWrapperPtr);
+            eb_post_full_object(outputWrapperPtr);
         }
         prevPictureControlSetWrapperPtr = pictureControlSetWrapperPtr;
     }

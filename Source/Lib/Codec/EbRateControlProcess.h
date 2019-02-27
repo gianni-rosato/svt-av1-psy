@@ -41,7 +41,7 @@
 
 #define        RC_QPMOD_MAXQP                    42
 
-static const uint32_t  RATE_PERCENTAGE_LAYER_ARRAY[EB_MAX_TEMPORAL_LAYERS][EB_MAX_TEMPORAL_LAYERS] = {
+static const uint32_t  rate_percentage_layer_array[EB_MAX_TEMPORAL_LAYERS][EB_MAX_TEMPORAL_LAYERS] = {
     {100,  0,  0,  0,  0,  0 },
     { 70, 30,  0,  0,  0,  0 },
     { 70, 15, 15,  0,  0,  0 },
@@ -52,7 +52,7 @@ static const uint32_t  RATE_PERCENTAGE_LAYER_ARRAY[EB_MAX_TEMPORAL_LAYERS][EB_MA
 
 // range from 0 to 51
 // precision is 16 bits
-static const uint64_t TWO_TO_POWER_QP_OVER_THREE[] = {
+static const uint64_t two_to_power_qp_over_three[] = {
          0x10000,      0x1428A,     0x19660,     0x20000,
          0x28514,      0x32CC0,     0x40000,     0x50A29,
          0x65980,      0x80000,     0xA1451,     0xCB2FF,
@@ -68,7 +68,7 @@ static const uint64_t TWO_TO_POWER_QP_OVER_THREE[] = {
      0x100000000,  0x1428A2F99, 0x1965FEA54, 0x200000000
 };
 // range is from -51 to 51 (0 to 102)
-static const uint64_t TWO_TO_POWER_X_OVER_SIX[] = {
+static const uint64_t two_to_power_x_over_six[] = {
          0xB5,       0xCB,        0xE4,        0xFF,        0x11F,        0x142,
         0x16A,      0x196,       0x1C8,       0x1FF,        0x23E,        0x285,
         0x2D4,      0x32C,       0x390,       0x3FF,        0x47D,        0x50A,
@@ -219,8 +219,8 @@ typedef struct HighLevelRateControlContext_s
 
 typedef struct RateControlContext_s
 {
-    EbFifo_t                    *rateControlInputTasksFifoPtr;
-    EbFifo_t                    *rateControlOutputResultsFifoPtr;
+    EbFifo_t                    *rate_control_input_tasks_fifo_ptr;
+    EbFifo_t                    *rate_control_output_results_fifo_ptr;
 
     HighLevelRateControlContext_t *highLevelRateControlPtr;
 
@@ -271,35 +271,25 @@ typedef struct RateControlContext_s
 
 } RateControlContext_t;
 
-
-
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType RateControlLayerContextCtor(
-    RateControlLayerContext_t   **entryDblPtr);
+extern EbErrorType rate_control_layer_context_ctor(
+    RateControlLayerContext_t **entry_dbl_ptr);
 
+extern EbErrorType rate_control_interval_param_context_ctor(
+    RateControlIntervalParamContext_t **entry_dbl_ptr);
 
+extern EbErrorType rate_control_coded_frames_stats_context_ctor(
+    CodedFramesStatsEntry_t **entry_dbl_ptr,
+    uint64_t                  picture_number);
 
-extern EbErrorType RateControlIntervalParamContextCtor(
-    RateControlIntervalParamContext_t   **entryDblPtr);
+extern EbErrorType rate_control_context_ctor(
+    RateControlContext_t **context_dbl_ptr,
+    EbFifo_t              *rate_control_input_tasks_fifo_ptr,
+    EbFifo_t              *rate_control_output_results_fifo_ptr,
+    int32_t                intra_period_length);
 
-
-
-extern EbErrorType RateControlCodedFramesStatsContextCtor(
-    CodedFramesStatsEntry_t   **entryDblPtr,
-    uint64_t                      picture_number);
-
-
-
-extern EbErrorType RateControlContextCtor(
-    RateControlContext_t   **context_dbl_ptr,
-    EbFifo_t                *rateControlInputTasksFifoPtr,
-    EbFifo_t                *rateControlOutputResultsFifoPtr,
-    int32_t                   intra_period_length);
-
-
-
-extern void* RateControlKernel(void *input_ptr);
+extern void* rate_control_kernel(void *input_ptr);
 
 #endif // EbRateControl_h

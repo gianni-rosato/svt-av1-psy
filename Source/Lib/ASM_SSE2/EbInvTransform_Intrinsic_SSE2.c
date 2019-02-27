@@ -197,19 +197,19 @@
 #define OFFSET_N46_N88  (8+OFFSET_22_78)
 #define OFFSET_54_90    (8+OFFSET_N46_N88)
 
-void InvTransform4x4_SSE2_INTRIN(
-    int16_t                  *transformCoefficients,
+void inv_transform4x4_sse2_intrin(
+    int16_t                  *transform_coefficients,
     const uint32_t             src_stride,
     int16_t                  *residual,
     const uint32_t             dst_stride,
     int16_t                  *transform_inner_array_ptr,
-    uint32_t                   bitIncrement)
+    uint32_t                   bit_increment)
 {
 #define MACRO_4x4(SHIFT_INSTR, SHIFT_ARG)\
-    xmm_even1 = _mm_madd_epi16(xmm_trans_1_3, _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2+OFFSET_64_N64)));\
-    xmm_odd1  = _mm_madd_epi16(xmm_trans_2_4, _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2+OFFSET_36_N83)));\
-    xmm_even0 = _mm_madd_epi16(xmm_trans_1_3, _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2+OFFSET_64_64)));\
-    xmm_odd0  = _mm_madd_epi16(xmm_trans_2_4, _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2+OFFSET_83_36)));\
+    xmm_even1 = _mm_madd_epi16(xmm_trans_1_3, _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2+OFFSET_64_N64)));\
+    xmm_odd1  = _mm_madd_epi16(xmm_trans_2_4, _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2+OFFSET_36_N83)));\
+    xmm_even0 = _mm_madd_epi16(xmm_trans_1_3, _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2+OFFSET_64_64)));\
+    xmm_odd0  = _mm_madd_epi16(xmm_trans_2_4, _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2+OFFSET_83_36)));\
     xmm_even0 = _mm_add_epi32(xmm_even0, xmm_offset);\
     xmm_even1 = _mm_add_epi32(xmm_even1, xmm_offset);\
     xmm_res1 = _mm_##SHIFT_INSTR(_mm_add_epi32(xmm_even0, xmm_odd0), SHIFT_ARG);\
@@ -224,17 +224,17 @@ void InvTransform4x4_SSE2_INTRIN(
     __m128i xmm_trans1, xmm_trans2, xmm_trans3, xmm_trans4, xmm_trans_1_3, xmm_trans_2_4;
     __m128i xmm_res_3_4, xmm_res_1_2, xmm_res_1_2_3_4_lo, xmm_res_1_2_3_4_hi;
 
-    xmm_trans1 = _mm_loadl_epi64((__m128i *)(transformCoefficients));
-    xmm_trans2 = _mm_loadl_epi64((__m128i *)(transformCoefficients + src_stride));
-    xmm_trans3 = _mm_loadl_epi64((__m128i *)(transformCoefficients + src_stride * 2));
-    xmm_trans4 = _mm_loadl_epi64((__m128i *)(transformCoefficients + src_stride * 3));
+    xmm_trans1 = _mm_loadl_epi64((__m128i *)(transform_coefficients));
+    xmm_trans2 = _mm_loadl_epi64((__m128i *)(transform_coefficients + src_stride));
+    xmm_trans3 = _mm_loadl_epi64((__m128i *)(transform_coefficients + src_stride * 2));
+    xmm_trans4 = _mm_loadl_epi64((__m128i *)(transform_coefficients + src_stride * 3));
 
-    xmm_shift = _mm_cvtsi32_si128(SHIFT_INV_2ND - bitIncrement);
+    xmm_shift = _mm_cvtsi32_si128(SHIFT_INV_2ND - bit_increment);
 
     xmm_trans_1_3 = _mm_unpacklo_epi16(xmm_trans1, xmm_trans3);
     xmm_trans_2_4 = _mm_unpacklo_epi16(xmm_trans2, xmm_trans4);
 
-    xmm_offset = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_64));
+    xmm_offset = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_64));
     MACRO_4x4(srai_epi32, 7)
 
         xmm5 = _mm_unpackhi_epi16(xmm_res_1_3, xmm_res_2_4);
@@ -245,7 +245,7 @@ void InvTransform4x4_SSE2_INTRIN(
     xmm_trans_1_3 = _mm_unpacklo_epi16(xmm0, xmm2);
     xmm_trans_2_4 = _mm_unpackhi_epi16(xmm0, xmm2);
 
-    xmm_offset = _mm_srli_epi32(_mm_set1_epi32(0x0800), bitIncrement);
+    xmm_offset = _mm_srli_epi32(_mm_set1_epi32(0x0800), bit_increment);
 
     MACRO_4x4(sra_epi32, xmm_shift)
 
@@ -265,13 +265,13 @@ void InvTransform4x4_SSE2_INTRIN(
 }
 
 
-void InvTransform8x8_SSE2_INTRIN(
-    int16_t                  *transformCoefficients,
+void inv_transform8x8_sse2_intrin(
+    int16_t                  *transform_coefficients,
     const uint32_t             src_stride,
     int16_t                  *residual,
     const uint32_t             dst_stride,
     int16_t                  *transform_inner_array_ptr,
-    uint32_t                   bitIncrement)
+    uint32_t                   bit_increment)
 {
 #define MACRO_8X8_ODD(XMM_TRANS_1_3_LO, XMM_TRANS_1_3_HI, XMM_TRANS_2_4_LO, XMM_TRANS_2_4_HI, XMM_DCT1, XMM_DCT2, OFFSET)\
     xmm_odd_lo = _mm_add_epi32(_mm_madd_epi16(XMM_TRANS_1_3_LO, XMM_DCT1), _mm_madd_epi16(XMM_TRANS_2_4_LO, XMM_DCT2));\
@@ -295,11 +295,11 @@ void InvTransform8x8_SSE2_INTRIN(
     __m128i xmm_evenEven0L, xmm_evenEven0H, xmm_evenEven1L, xmm_evenEven1H;
 
     // Odd transform coefficients (1,3,5,7)
-    transformCoefficients += src_stride;
-    xmm_trans1 = _mm_loadu_si128((__m128i *)(transformCoefficients));
-    xmm_trans2 = _mm_loadu_si128((__m128i *)(transformCoefficients + 2 * src_stride));
-    xmm_trans3 = _mm_loadu_si128((__m128i *)(transformCoefficients + 4 * src_stride));
-    xmm_trans4 = _mm_loadu_si128((__m128i *)(transformCoefficients + 6 * src_stride));
+    transform_coefficients += src_stride;
+    xmm_trans1 = _mm_loadu_si128((__m128i *)(transform_coefficients));
+    xmm_trans2 = _mm_loadu_si128((__m128i *)(transform_coefficients + 2 * src_stride));
+    xmm_trans3 = _mm_loadu_si128((__m128i *)(transform_coefficients + 4 * src_stride));
+    xmm_trans4 = _mm_loadu_si128((__m128i *)(transform_coefficients + 6 * src_stride));
 
     xmm_trans_1_3_hi = _mm_unpackhi_epi16(xmm_trans1, xmm_trans3);
     xmm_trans_1_3_lo = _mm_unpacklo_epi16(xmm_trans1, xmm_trans3);
@@ -307,40 +307,40 @@ void InvTransform8x8_SSE2_INTRIN(
     xmm_trans_2_4_lo = _mm_unpacklo_epi16(xmm_trans2, xmm_trans4);
 
     //Odd0
-    xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_89_50));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_75_18));
+    xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_89_50));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_75_18));
     MACRO_8X8_ODD(xmm_trans_1_3_lo, xmm_trans_1_3_hi, xmm_trans_2_4_lo, xmm_trans_2_4_hi, xmm_DCT1, xmm_DCT2, 0)
 
         //Odd1
-        xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_75_N89));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_N18_N50));
+        xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_75_N89));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_N18_N50));
     MACRO_8X8_ODD(xmm_trans_1_3_lo, xmm_trans_1_3_hi, xmm_trans_2_4_lo, xmm_trans_2_4_hi, xmm_DCT1, xmm_DCT2, 0x10)
 
         //Odd2
-        xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_50_18));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_N89_75));
+        xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_50_18));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_N89_75));
     MACRO_8X8_ODD(xmm_trans_1_3_lo, xmm_trans_1_3_hi, xmm_trans_2_4_lo, xmm_trans_2_4_hi, xmm_DCT1, xmm_DCT2, 0x20)
 
         //Odd3
-        xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_18_75));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_N50_N89));
+        xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_18_75));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_N50_N89));
     MACRO_8X8_ODD(xmm_trans_1_3_lo, xmm_trans_1_3_hi, xmm_trans_2_4_lo, xmm_trans_2_4_hi, xmm_DCT1, xmm_DCT2, 0x30)
 
         // Even transform coefficients (0,2,4,6)
-        transformCoefficients -= src_stride;
-    xmm_trans1 = _mm_loadu_si128((__m128i *)(transformCoefficients));
-    xmm_trans2 = _mm_loadu_si128((__m128i *)(transformCoefficients + 2 * src_stride));
-    xmm_trans3 = _mm_loadu_si128((__m128i *)(transformCoefficients + 4 * src_stride));
-    xmm_trans4 = _mm_loadu_si128((__m128i *)(transformCoefficients + 6 * src_stride));
+        transform_coefficients -= src_stride;
+    xmm_trans1 = _mm_loadu_si128((__m128i *)(transform_coefficients));
+    xmm_trans2 = _mm_loadu_si128((__m128i *)(transform_coefficients + 2 * src_stride));
+    xmm_trans3 = _mm_loadu_si128((__m128i *)(transform_coefficients + 4 * src_stride));
+    xmm_trans4 = _mm_loadu_si128((__m128i *)(transform_coefficients + 6 * src_stride));
 
     xmm_trans_1_3_hi = _mm_unpackhi_epi16(xmm_trans1, xmm_trans3);
     xmm_trans_1_3_lo = _mm_unpacklo_epi16(xmm_trans1, xmm_trans3);
     xmm_trans_2_4_hi = _mm_unpackhi_epi16(xmm_trans2, xmm_trans4);
     xmm_trans_2_4_lo = _mm_unpacklo_epi16(xmm_trans2, xmm_trans4);
 
-    xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_64_64));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_64_N64));
-    xmm_offset = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_64));
+    xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_64_64));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_64_N64));
+    xmm_offset = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_64));
 
     xmm_evenEven0L = _mm_add_epi32(_mm_madd_epi16(xmm_trans_1_3_lo, xmm_DCT1), xmm_offset);
     xmm_evenEven0H = _mm_add_epi32(_mm_madd_epi16(xmm_trans_1_3_hi, xmm_DCT1), xmm_offset);
@@ -348,8 +348,8 @@ void InvTransform8x8_SSE2_INTRIN(
     xmm_evenEven1L = _mm_add_epi32(_mm_madd_epi16(xmm_trans_1_3_lo, xmm_DCT2), xmm_offset);
     xmm_evenEven1H = _mm_add_epi32(_mm_madd_epi16(xmm_trans_1_3_hi, xmm_DCT2), xmm_offset);
 
-    xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_83_36));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_36_N83));
+    xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_83_36));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_36_N83));
 
     xmm_evenOdd0L = _mm_madd_epi16(xmm_trans_2_4_lo, xmm_DCT1);
     xmm_evenOdd0H = _mm_madd_epi16(xmm_trans_2_4_hi, xmm_DCT1);
@@ -387,23 +387,23 @@ void InvTransform8x8_SSE2_INTRIN(
     xmm_trans_2_4_lo = _mm_unpacklo_epi16(xmm_res26_hi, xmm_res37_hi);
     xmm_trans_2_4_hi = _mm_unpackhi_epi16(xmm_res26_hi, xmm_res37_hi);
 
-    xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_89_50));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_75_18));
+    xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_89_50));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_75_18));
 
     MACRO_8X8_ODD(xmm_trans_1_3_lo, xmm_trans_1_3_hi, xmm_trans_2_4_lo, xmm_trans_2_4_hi, xmm_DCT1, xmm_DCT2, 0)
 
-        xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_75_N89));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_N18_N50));
+        xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_75_N89));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_N18_N50));
 
     MACRO_8X8_ODD(xmm_trans_1_3_lo, xmm_trans_1_3_hi, xmm_trans_2_4_lo, xmm_trans_2_4_hi, xmm_DCT1, xmm_DCT2, 0x10)
 
-        xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_50_18));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_N89_75));
+        xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_50_18));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_N89_75));
 
     MACRO_8X8_ODD(xmm_trans_1_3_lo, xmm_trans_1_3_hi, xmm_trans_2_4_lo, xmm_trans_2_4_hi, xmm_DCT1, xmm_DCT2, 0x20)
 
-        xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_18_75));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_N50_N89));
+        xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_18_75));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_N50_N89));
 
     MACRO_8X8_ODD(xmm_trans_1_3_lo, xmm_trans_1_3_hi, xmm_trans_2_4_lo, xmm_trans_2_4_hi, xmm_DCT1, xmm_DCT2, 0x30)
 
@@ -418,9 +418,9 @@ void InvTransform8x8_SSE2_INTRIN(
     xmm_trans_2_4_hi = _mm_unpackhi_epi16(xmm_trans2, xmm_trans4);
     xmm_trans_2_4_lo = _mm_unpacklo_epi16(xmm_trans2, xmm_trans4);
 
-    xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_64_64));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_64_N64));
-    xmm_offset = _mm_srli_epi32(_mm_set1_epi32(0x0800), bitIncrement);
+    xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_64_64));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_64_N64));
+    xmm_offset = _mm_srli_epi32(_mm_set1_epi32(0x0800), bit_increment);
 
     xmm_evenEven0L = _mm_add_epi32(_mm_madd_epi16(xmm_trans_1_3_lo, xmm_DCT1), xmm_offset);
     xmm_evenEven0H = _mm_add_epi32(_mm_madd_epi16(xmm_trans_1_3_hi, xmm_DCT1), xmm_offset);
@@ -428,8 +428,8 @@ void InvTransform8x8_SSE2_INTRIN(
     xmm_evenEven1L = _mm_add_epi32(_mm_madd_epi16(xmm_trans_1_3_lo, xmm_DCT2), xmm_offset);
     xmm_evenEven1H = _mm_add_epi32(_mm_madd_epi16(xmm_trans_1_3_hi, xmm_DCT2), xmm_offset);
 
-    xmm_DCT1 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_83_36));
-    xmm_DCT2 = _mm_load_si128((__m128i *)(InvTransformAsmConst_SSE2 + OFFSET_36_N83));
+    xmm_DCT1 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_83_36));
+    xmm_DCT2 = _mm_load_si128((__m128i *)(inv_transform_asm_const_sse2 + OFFSET_36_N83));
 
     xmm_evenOdd0L = _mm_madd_epi16(xmm_trans_2_4_lo, xmm_DCT1);
     xmm_evenOdd0H = _mm_madd_epi16(xmm_trans_2_4_hi, xmm_DCT1);
@@ -445,7 +445,7 @@ void InvTransform8x8_SSE2_INTRIN(
     xmm_even1H = _mm_add_epi32(xmm_evenEven1H, xmm_evenOdd1H);
     xmm_even2L = _mm_sub_epi32(xmm_evenEven1L, xmm_evenOdd1L);
     xmm_even2H = _mm_sub_epi32(xmm_evenEven1H, xmm_evenOdd1H);
-    xmm_shift = _mm_cvtsi32_si128(SHIFT_INV_2ND - bitIncrement); //shift2nd
+    xmm_shift = _mm_cvtsi32_si128(SHIFT_INV_2ND - bit_increment); //shift2nd
 
     MACRO_8X8_FINAL(xmm_even0L, xmm_even0H, xmm_res0, xmm_res7, 0, sra_epi32, xmm_shift)
         MACRO_8X8_FINAL(xmm_even1L, xmm_even1H, xmm_res1, xmm_res6, 0x10, sra_epi32, xmm_shift)
@@ -469,13 +469,13 @@ void InvTransform8x8_SSE2_INTRIN(
 
 
 
-void InvDstTransform4x4_SSE2_INTRIN(
-    int16_t                  *transformCoefficients,
+void inv_dst_transform4x4_sse2_intrin(
+    int16_t                  *transform_coefficients,
     const uint32_t             src_stride,
     int16_t                  *residual,
     const uint32_t             dst_stride,
     int16_t                  *transform_inner_array_ptr,
-    uint32_t                   bitIncrement)
+    uint32_t                   bit_increment)
 {
 #define OFFSET_DST_64      0
 #define OFFSET_DST_29_84   (8+OFFSET_DST_64)
@@ -488,17 +488,17 @@ void InvDstTransform4x4_SSE2_INTRIN(
 #define OFFSET_DST_N74_N29 (8+OFFSET_DST_84_55)
 
 #define MACRO_DST_4X4(SHIFT_INSTR, SHIFT)\
-    xmm_res1 = _mm_##SHIFT_INSTR(_mm_add_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(InvDstTransformAsmConst_SSE2 + OFFSET_DST_29_84)), xmm_trans_1_3),\
-                                                             _mm_madd_epi16(_mm_load_si128((__m128i *)(InvDstTransformAsmConst_SSE2 + OFFSET_DST_74_55)), xmm_trans_2_4)),\
+    xmm_res1 = _mm_##SHIFT_INSTR(_mm_add_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(inv_dst_transform_asm_const_sse2 + OFFSET_DST_29_84)), xmm_trans_1_3),\
+                                                             _mm_madd_epi16(_mm_load_si128((__m128i *)(inv_dst_transform_asm_const_sse2 + OFFSET_DST_74_55)), xmm_trans_2_4)),\
                                                xmm_offset), SHIFT);\
-    xmm_res2 = _mm_##SHIFT_INSTR(_mm_add_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(InvDstTransformAsmConst_SSE2 + OFFSET_DST_55_N29)), xmm_trans_1_3),\
-                                                             _mm_madd_epi16(_mm_load_si128((__m128i *)(InvDstTransformAsmConst_SSE2 + OFFSET_DST_74_N84)), xmm_trans_2_4)),\
+    xmm_res2 = _mm_##SHIFT_INSTR(_mm_add_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(inv_dst_transform_asm_const_sse2 + OFFSET_DST_55_N29)), xmm_trans_1_3),\
+                                                             _mm_madd_epi16(_mm_load_si128((__m128i *)(inv_dst_transform_asm_const_sse2 + OFFSET_DST_74_N84)), xmm_trans_2_4)),\
                                                xmm_offset), SHIFT);\
-    xmm_res3 = _mm_##SHIFT_INSTR(_mm_add_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(InvDstTransformAsmConst_SSE2 + OFFSET_DST_74_N74)), xmm_trans_1_3),\
-                                                             _mm_madd_epi16(_mm_load_si128((__m128i *)(InvDstTransformAsmConst_SSE2 + OFFSET_DST_0_74)), xmm_trans_2_4)),\
+    xmm_res3 = _mm_##SHIFT_INSTR(_mm_add_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(inv_dst_transform_asm_const_sse2 + OFFSET_DST_74_N74)), xmm_trans_1_3),\
+                                                             _mm_madd_epi16(_mm_load_si128((__m128i *)(inv_dst_transform_asm_const_sse2 + OFFSET_DST_0_74)), xmm_trans_2_4)),\
                                                xmm_offset), SHIFT);\
-    xmm_res4 = _mm_##SHIFT_INSTR(_mm_add_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(InvDstTransformAsmConst_SSE2 + OFFSET_DST_84_55)), xmm_trans_1_3),\
-                                                             _mm_madd_epi16(_mm_load_si128((__m128i *)(InvDstTransformAsmConst_SSE2 + OFFSET_DST_N74_N29)), xmm_trans_2_4)),\
+    xmm_res4 = _mm_##SHIFT_INSTR(_mm_add_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(inv_dst_transform_asm_const_sse2 + OFFSET_DST_84_55)), xmm_trans_1_3),\
+                                                             _mm_madd_epi16(_mm_load_si128((__m128i *)(inv_dst_transform_asm_const_sse2 + OFFSET_DST_N74_N29)), xmm_trans_2_4)),\
                                                xmm_offset), SHIFT);\
     xmm_res_1_3 = _mm_packs_epi32(xmm_res1, xmm_res3);\
     xmm_res_2_4 = _mm_packs_epi32(xmm_res2, xmm_res4);\
@@ -511,15 +511,15 @@ void InvDstTransform4x4_SSE2_INTRIN(
     __m128i xmm_shift, xmm_offset, xmm_trans1, xmm_trans2, xmm_trans3, xmm_trans4, xmm_trans_1_3, xmm_trans_2_4;
     __m128i xmm_res1, xmm_res2, xmm_res3, xmm_res4, xmm_res_1_3, xmm_res_2_4, xmm_res_lo_32, xmm_res_hi_32, xmm_res_lo, xmm_res_hi;
 
-    xmm_shift = _mm_cvtsi32_si128(12 - bitIncrement);
-    xmm_trans1 = _mm_loadl_epi64((__m128i *)(transformCoefficients));
-    xmm_trans2 = _mm_loadl_epi64((__m128i *)(transformCoefficients + src_stride));
-    xmm_trans3 = _mm_loadl_epi64((__m128i *)(transformCoefficients + src_stride * 2));
-    xmm_trans4 = _mm_loadl_epi64((__m128i *)(transformCoefficients + src_stride * 3));
+    xmm_shift = _mm_cvtsi32_si128(12 - bit_increment);
+    xmm_trans1 = _mm_loadl_epi64((__m128i *)(transform_coefficients));
+    xmm_trans2 = _mm_loadl_epi64((__m128i *)(transform_coefficients + src_stride));
+    xmm_trans3 = _mm_loadl_epi64((__m128i *)(transform_coefficients + src_stride * 2));
+    xmm_trans4 = _mm_loadl_epi64((__m128i *)(transform_coefficients + src_stride * 3));
     xmm_trans_1_3 = _mm_unpacklo_epi16(xmm_trans1, xmm_trans3);
     xmm_trans_2_4 = _mm_unpacklo_epi16(xmm_trans2, xmm_trans4);
 
-    xmm_offset = _mm_load_si128((__m128i *)(InvDstTransformAsmConst_SSE2 + OFFSET_DST_64));
+    xmm_offset = _mm_load_si128((__m128i *)(inv_dst_transform_asm_const_sse2 + OFFSET_DST_64));
     MACRO_DST_4X4(srai_epi32, 7)
 
         xmm_trans_1_3 = _mm_unpacklo_epi16(xmm_res_lo_32, xmm_res_hi_32);

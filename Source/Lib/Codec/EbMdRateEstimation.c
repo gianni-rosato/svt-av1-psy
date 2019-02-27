@@ -21,7 +21,7 @@
 
 #include "EbBitstreamUnit.h"
 
-static INLINE int32_t get_interinter_wedge_bits(BlockSize sb_type) {
+static INLINE int32_t get_interinter_wedge_bits(block_size sb_type) {
     const int32_t wbits = wedge_params_lookup[sb_type].bits;
     return (wbits > 0) ? wbits + 1 : 0;
 }
@@ -256,7 +256,7 @@ void av1_estimate_syntax_rate(
         for (i = 0; i < BlockSizeS_ALL; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->compoundTypeFacBits[i], fc->compound_type_cdf[i], NULL);
         for (i = 0; i < BlockSizeS_ALL; ++i) {
-            if (get_interinter_wedge_bits((BlockSize)i)) {
+            if (get_interinter_wedge_bits((block_size)i)) {
                 av1_get_syntax_rate_from_cdf(md_rate_estimation_array->wedgeIdxFacBits[i], fc->wedge_idx_cdf[i], NULL);
             }
         }

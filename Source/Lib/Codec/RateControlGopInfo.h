@@ -62,7 +62,7 @@ typedef struct  EbRateControlGopInfo_s {
  * bitsteam
  * @param {EbRateControlGopInfo*} gop_info. Typically RateControlModel->gopInfos
  * @param {uint64_t} position. Position of the GOP to start the search from.
- * @return {EbRateControlGopInfo*}. Pointer to the GOP structure.
+ * @return {EbRateControlGopInfo*}. pointer to the GOP structure.
  * or EB_NULL if not found (unlikely).
  */
 EbRateControlGopInfo *get_gop_infos(EbRateControlGopInfo *gop_info,

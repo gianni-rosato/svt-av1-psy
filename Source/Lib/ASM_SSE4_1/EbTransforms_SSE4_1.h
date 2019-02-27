@@ -10,29 +10,31 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    extern EB_ALIGN(16) const int16_t TransformAsmConst_SSE4_1[1632];
+    extern EB_ALIGN(16) const int16_t transform_asm_const_sse4_1[1632];
 
-    extern void Transform8x8_SSE4_1_INTRIN(
-        int16_t                  *residual,
-        const uint32_t             src_stride,
-        int16_t                  *transformCoefficients,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
-    extern void PfreqTransform8x8_SSE4_1_INTRIN(
-        int16_t                  *residual,
-        const uint32_t             src_stride,
-        int16_t                  *transformCoefficients,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
-    extern void PfreqN4Transform8x8_SSE4_1_INTRIN(
-        int16_t                  *residual,
-        const uint32_t             src_stride,
-        int16_t                  *transformCoefficients,
-        const uint32_t             dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                   bitIncrement);
+    extern void transform8x8_sse4_1_intrin(
+        int16_t        *residual,
+        const uint32_t  src_stride,
+        int16_t        *transform_coefficients,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
+
+    extern void pfreq_transform8x8_sse4_1_intrin(
+        int16_t        *residual,
+        const uint32_t  src_stride,
+        int16_t        *transform_coefficients,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
+
+    extern void pfreq_n4_transform8x8_sse4_1_intrin(
+        int16_t        *residual,
+        const uint32_t  src_stride,
+        int16_t        *transform_coefficients,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
 #ifdef __cplusplus
 }

@@ -81,7 +81,7 @@ EbErrorType largest_coding_unit_ctor(
     coeffInitData.bot_padding = 0;
     coeffInitData.splitMode = EB_FALSE;
 
-    return_error = EbPictureBufferDescCtor(
+    return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*) &(largestCodingUnitPtr->quantized_coeff),
         (EbPtr)&coeffInitData);
 

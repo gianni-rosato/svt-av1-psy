@@ -13,12 +13,12 @@
  * Packetization Reorder Queue Entry
  ************************************************/
 typedef struct PictureManagerReorderEntry_s {
-    uint64_t                                picture_number;
-    EbObjectWrapper_t                    *parentPcsWrapperPtr;
+    uint64_t           picture_number;
+    EbObjectWrapper_t *parentPcsWrapperPtr;
 } PictureManagerReorderEntry_t;
 
-extern EbErrorType PictureManagerReorderEntryCtor(
-    PictureManagerReorderEntry_t       **entryDblPtr,
-    uint32_t                                picture_number);
+extern EbErrorType picture_manager_reorder_entry_ctor(
+    PictureManagerReorderEntry_t **entry_dbl_ptr,
+    uint32_t                       picture_number);
 
 #endif //EbPictureManagerReorderQueue_h

@@ -371,13 +371,13 @@ void CalculateAcEnergy(
     PictureParentControlSet_t        *picture_control_set_ptr,
     uint32_t                             sb_index) {
 
-    EbPictureBufferDesc_t    *inputPicturePtr = picture_control_set_ptr->enhanced_picture_ptr;
-    uint32_t                     inputLumaStride = inputPicturePtr->strideY;
+    EbPictureBufferDesc_t    *input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
+    uint32_t                     inputLumaStride = input_picture_ptr->stride_y;
     uint32_t                   inputOriginIndex;
     SbParams_t  *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
 
     uint8_t       *meanPtr = picture_control_set_ptr->yMean[sb_index];
-    inputOriginIndex = (sb_params->origin_y + inputPicturePtr->origin_y) * inputLumaStride + (sb_params->origin_x + inputPicturePtr->origin_x);
+    inputOriginIndex = (sb_params->origin_y + input_picture_ptr->origin_y) * inputLumaStride + (sb_params->origin_x + input_picture_ptr->origin_x);
 
     if (sb_params->is_complete_sb && picture_control_set_ptr->slice_type == I_SLICE) {
 
@@ -386,9 +386,9 @@ void CalculateAcEnergy(
         uint16_t cuH, cuW;
 
 
-        picture_control_set_ptr->sb_y_src_energy_cu_array[sb_index][0] = ComputeNxMSatdSadLCU(
-            &(inputPicturePtr->bufferY[inputOriginIndex]),
-            inputPicturePtr->strideY,
+        picture_control_set_ptr->sb_y_src_energy_cu_array[sb_index][0] = compute_nx_m_satd_sad_lcu(
+            &(input_picture_ptr->buffer_y[inputOriginIndex]),
+            input_picture_ptr->stride_y,
             sb_params->width,
             sb_params->height,
             sequence_control_set_ptr->encode_context_ptr->asm_type);
@@ -403,9 +403,9 @@ void CalculateAcEnergy(
             for (cuW = 0; cuW < cuNum; cuW++) {
                 inputCuOriginIndex = inputOriginIndex + cuH * (64 / cuNum)*inputLumaStride + cuW * (64 / cuNum);
 
-                picture_control_set_ptr->sb_y_src_energy_cu_array[sb_index][1 + cuH * cuNum + cuW] = ComputeNxMSatdSadLCU(
-                    &(inputPicturePtr->bufferY[inputCuOriginIndex]),
-                    inputPicturePtr->strideY,
+                picture_control_set_ptr->sb_y_src_energy_cu_array[sb_index][1 + cuH * cuNum + cuW] = compute_nx_m_satd_sad_lcu(
+                    &(input_picture_ptr->buffer_y[inputCuOriginIndex]),
+                    input_picture_ptr->stride_y,
                     cu_size,
                     cu_size,
                     sequence_control_set_ptr->encode_context_ptr->asm_type);
@@ -995,13 +995,13 @@ void* source_based_operations_kernel(void *input_ptr)
     for (;;) {
 
         // Get Input Full Object
-        EbGetFullObject(
+        eb_get_full_object(
             context_ptr->initial_rate_control_results_input_fifo_ptr,
             &inputResultsWrapperPtr);
 
-        inputResultsPtr = (InitialRateControlResults_t*)inputResultsWrapperPtr->objectPtr;
-        picture_control_set_ptr = (PictureParentControlSet_t*)inputResultsPtr->pictureControlSetWrapperPtr->objectPtr;
-        sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+        inputResultsPtr = (InitialRateControlResults_t*)inputResultsWrapperPtr->object_ptr;
+        picture_control_set_ptr = (PictureParentControlSet_t*)inputResultsPtr->pictureControlSetWrapperPtr->object_ptr;
+        sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 
         picture_control_set_ptr->dark_back_groundlight_fore_ground = EB_FALSE;
         context_ptr->picture_num_grass_sb = 0;
@@ -1178,19 +1178,19 @@ void* source_based_operations_kernel(void *input_ptr)
             picture_control_set_ptr);
 
         // Get Empty Results Object
-        EbGetEmptyObject(
+        eb_get_empty_object(
             context_ptr->picture_demux_results_output_fifo_ptr,
             &outputResultsWrapperPtr);
 
-        outputResultsPtr = (PictureDemuxResults_t*)outputResultsWrapperPtr->objectPtr;
+        outputResultsPtr = (PictureDemuxResults_t*)outputResultsWrapperPtr->object_ptr;
         outputResultsPtr->pictureControlSetWrapperPtr = inputResultsPtr->pictureControlSetWrapperPtr;
         outputResultsPtr->pictureType = EB_PIC_INPUT;
 
         // Release the Input Results
-        EbReleaseObject(inputResultsWrapperPtr);
+        eb_release_object(inputResultsWrapperPtr);
 
         // Post the Full Results Object
-        EbPostFullObject(outputResultsWrapperPtr);
+        eb_post_full_object(outputResultsWrapperPtr);
 
     }
     return EB_NULL;

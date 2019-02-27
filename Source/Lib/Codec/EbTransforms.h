@@ -93,7 +93,7 @@ extern "C" {
         DCT_1D, FLIPADST_1D, FLIPADST_1D, FLIPADST_1D, ADST_1D, IDTX_1D,
         IDTX_1D, DCT_1D, IDTX_1D, ADST_1D, IDTX_1D, FLIPADST_1D,
     };
-    static const BlockSize txsize_to_bsize[TX_SIZES_ALL] = {
+    static const block_size txsize_to_bsize[TX_SIZES_ALL] = {
         BLOCK_4X4,    // TX_4X4
         BLOCK_8X8,    // TX_8X8
         BLOCK_16X16,  // TX_16X16
@@ -3862,395 +3862,284 @@ extern "C" {
         }
         return tx_size_2d[tx_size];
     }
-    static const uint32_t QFunc[] = { 26214,23302,20560,18396,16384,14564 };
-    static const uint32_t FFunc[] = { 40,45,51,57,64,72 };
+    static const uint32_t q_func[] = { 26214,23302,20560,18396,16384,14564 };
 
-    //QP in [0..63]
-    static const uint8_t QpModSix[] = {
-      0, 1, 2, 3, 4, 5,
-      0, 1, 2, 3, 4, 5,
-      0, 1, 2, 3, 4, 5,
-      0, 1, 2, 3, 4, 5,
-      0, 1, 2, 3, 4, 5,
-      0, 1, 2, 3, 4, 5,
-      0, 1, 2, 3, 4, 5,
-      0, 1, 2, 3, 4, 5,
-      0, 1, 2, 3, 4, 5,
-      0, 1, 2, 3, 4, 5,
-      0, 1, 2, 3
-    };
-    static const uint8_t QpDivSix[] = {
-      0, 0, 0, 0, 0, 0,
-      1, 1, 1, 1, 1, 1,
-      2, 2, 2, 2, 2, 2,
-      3, 3, 3, 3, 3, 3,
-      4, 4, 4, 4, 4, 4,
-      5, 5, 5, 5, 5, 5,
-      6, 6, 6, 6, 6, 6,
-      7, 7, 7, 7, 7, 7,
-      8, 8, 8, 8, 8, 8,
-      9, 9, 9, 9, 9, 9,
-      10, 10, 10,10
 
-    };
-
-    static void  QiQVoidFunc() {}
-
-    extern EbErrorType EncodeTransform(
+    extern EbErrorType encode_transform(
         int16_t             *residual_buffer,
-        uint32_t             residualStride,
-        int16_t             *coeffBuffer,
-        uint32_t             coeffStride,
+        uint32_t             residual_stride,
+        int16_t             *coeff_buffer,
+        uint32_t             coeff_stride,
         uint32_t             transform_size,
         int16_t             *transform_inner_array_ptr,
-        uint32_t             bitIncrement,
-        EbBool               dstTransformFlag,
-        EB_TRANS_COEFF_SHAPE transCoeffShape,
+        uint32_t             bit_increment,
+        EbBool               dst_transform_flag,
+        EB_TRANS_COEFF_SHAPE trans_coeff_shape,
         EbAsm                asm_type);
 
-    extern EbErrorType Av1EstimateTransform(
+    extern EbErrorType av1_estimate_transform(
         int16_t             *residual_buffer,
-        uint32_t             residualStride,
-        int32_t             *coeffBuffer,
-        uint32_t             coeffStride,
+        uint32_t             residual_stride,
+        int32_t             *coeff_buffer,
+        uint32_t             coeff_stride,
         TxSize               transform_size,
         uint64_t            *three_quad_energy,
         int16_t             *transform_inner_array_ptr,
-        uint32_t             bitIncrement,
+        uint32_t             bit_increment,
         TxType               transform_type,
         EbAsm                asm_type,
-        PLANE_TYPE           componentType,
-        EB_TRANS_COEFF_SHAPE transCoeffShape);
+        PLANE_TYPE           component_type,
+        EB_TRANS_COEFF_SHAPE trans_coeff_shape);
 
-    extern void Av1QuantizeInvQuantize(
-        PictureControlSet_t  *picture_control_set_ptr,
-        int32_t              *coeff,
-        const uint32_t        coeffStride,
-        int32_t              *quantCoeff,
-        int32_t              *reconCoeff,
-        uint32_t              qp,
-        uint32_t              width,
-        uint32_t              height,
-        TxSize                txsize,
-        uint16_t             *eob,
-        MacroblockPlane       candidate_plane,
-        EbAsm                 asm_type,
-        uint32_t             *y_count_non_zero_coeffs,
-        EbPfMode            pfMode,
-        uint8_t               enableContouringQCUpdateFlag,
-        uint32_t              componentType,
+    extern void av1_quantize_inv_quantize(
+        PictureControlSet_t *picture_control_set_ptr,
+        int32_t             *coeff,
+        const uint32_t       coeff_stride,
+        int32_t             *quant_coeff,
+        int32_t             *recon_coeff,
+        uint32_t             qp,
+        uint32_t             width,
+        uint32_t             height,
+        TxSize               txsize,
+        uint16_t            *eob,
+        MacroblockPlane      candidate_plane,
+        EbAsm                asm_type,
+        uint32_t            *y_count_non_zero_coeffs,
+        EbPfMode             pf_mode,
+        uint8_t              enable_contouring_qc_update_flag,
+        uint32_t             component_type,
 #if QT_10BIT_SUPPORT
-        uint32_t              bitIncrement,
+        uint32_t             bit_increment,
 #endif
-        TxType                tx_type,
-        EbBool                cleanSparseCoeffFlag);
+        TxType               tx_type,
+        EbBool               clean_sparse_coeff_flag);
 
-    extern void Av1QuantizeInvQuantize_II(
-        PictureControlSet_t  *picture_control_set_ptr,
-        int32_t              *coeff,
-        const uint32_t        coeffStride,
-        int32_t              *quantCoeff,
-        int32_t              *reconCoeff,
-        uint32_t              qp,
-        uint32_t              width,
-        uint32_t              height,
-        TxSize                transform_size,
-        uint16_t             *eob,
-        EbAsm                 asm_type,
-        uint32_t             *y_count_non_zero_coeffs,
-        EbPfMode            pfMode,
-        uint8_t               enableContouringQCUpdateFlag,
-        uint32_t              componentType,
+    extern void av1_quantize_inv_quantize_ii(
+        PictureControlSet_t *picture_control_set_ptr,
+        int32_t             *coeff,
+        const uint32_t       coeff_stride,
+        int32_t             *quant_coeff,
+        int32_t             *recon_coeff,
+        uint32_t             qp,
+        uint32_t             width,
+        uint32_t             height,
+        TxSize               transform_size,
+        uint16_t            *eob,
+        EbAsm                asm_type,
+        uint32_t            *y_count_non_zero_coeffs,
+        EbPfMode             pf_mode,
+        uint8_t              enable_contouring_qc_update_flag,
+        uint32_t             component_type,
 #if QT_10BIT_SUPPORT
-        uint32_t              bitIncrement,
+        uint32_t             bit_increment,
 #endif
-        TxType                tx_type,
-        EbBool                cleanSparseCoeffFlag);
+        TxType               tx_type,
+        EbBool               clean_sparse_coeff_flag);
 
-    extern EbErrorType Av1EstimateInvTransform(
-        int32_t       *coeffBuffer,
-        uint32_t       coeffStride,
-        int32_t       *reconBuffer,
-        uint32_t       reconStride,
-        TxSize         transform_size,
-        int16_t       *transform_inner_array_ptr,
-        uint32_t       bitIncrement,
-        TxType         transform_type,
-        uint32_t       eob,
-        EbAsm          asm_type,
-        uint32_t       partialFrequencyN2Flag);
+    extern EbErrorType av1_estimate_inv_transform(
+        int32_t  *coeff_buffer,
+        uint32_t  coeff_stride,
+        int32_t  *recon_buffer,
+        uint32_t  recon_stride,
+        TxSize    transform_size,
+        int16_t  *transform_inner_array_ptr,
+        uint32_t  bit_increment,
+        TxType    transform_type,
+        uint32_t  eob,
+        EbAsm     asm_type,
+        uint32_t  partial_frequency_n2_flag);
 
 
-    EbErrorType Av1InvTransformRecon(
-        int32_t       *coeffBuffer,//1D buffer
-        uint8_t       *reconBuffer,
-        uint32_t       reconStride,
-        TxSize         txsize,
-        uint32_t       bitIncrement,
-        TxType         transform_type,
-        PLANE_TYPE     componentType,
-        uint32_t       eob);
+    EbErrorType av1_inv_transform_recon(
+        int32_t    *coeff_buffer,//1D buffer
+        uint8_t    *recon_buffer,
+        uint32_t    recon_stride,
+        TxSize      txsize,
+        uint32_t    bit_increment,
+        TxType      transform_type,
+        PLANE_TYPE  component_type,
+        uint32_t    eob);
 
-    EbErrorType Av1InvTransformRecon8bit(
-        int32_t      *coeffBuffer,//1D buffer
-        uint8_t      *reconBuffer,
-        uint32_t      reconStride,
-        TxSize        txsize,
-        TxType        transform_type,
-        PLANE_TYPE    componentType,
-        uint32_t      eob);
+    EbErrorType av1_inv_transform_recon8bit(
+        int32_t    *coeff_buffer,//1D buffer
+        uint8_t    *recon_buffer,
+        uint32_t    recon_stride,
+        TxSize      txsize,
+        TxType      transform_type,
+        PLANE_TYPE  component_type,
+        uint32_t    eob);
 
-    extern EbErrorType EncodeInvTransform(
-        EbBool        is_only_dc,
-        int16_t      *coeffBuffer,
-        uint32_t      coeffStride,
-        int16_t      *reconBuffer,
-        uint32_t      reconStride,
-        uint32_t      transform_size,
-        int16_t      *transform_inner_array_ptr,
-        uint32_t      bitIncrement,
-        EbBool        dstTransformFlag,
-        EbAsm         asm_type);
+    extern EbErrorType encode_inv_transform(
+        EbBool    is_only_dc,
+        int16_t  *coeff_buffer,
+        uint32_t  coeff_stride,
+        int16_t  *recon_buffer,
+        uint32_t  recon_stride,
+        uint32_t  transform_size,
+        int16_t  *transform_inner_array_ptr,
+        uint32_t  bit_increment,
+        EbBool    dst_transform_flag,
+        EbAsm     asm_type);
 
-    extern uint8_t MapChromaQp(
+    extern uint8_t map_chroma_qp(
         uint8_t qp
     );
 
 
     /*****************************
-    * Function Pointer Typedef
+    * Function pointer Typedef
     *****************************/
     typedef void(*EB_QIQ_TYPE)(
-        int16_t           *coeff,
-        const uint32_t     coeffStride,
-        int16_t           *quantCoeff,
-        int16_t           *reconCoeff,
-        const uint32_t     qFunc,
-        const uint32_t     q_offset,
-        const int32_t      shiftedQBits,
-        const int32_t      shiftedFFunc,
-        const int32_t      iq_offset,
-        const int32_t      shiftNum,
-        const uint32_t     areaSize,
-        uint32_t          *nonzerocoeff);
+        int16_t        *coeff,
+        const uint32_t  coeff_stride,
+        int16_t        *quant_coeff,
+        int16_t        *recon_coeff,
+        const uint32_t  q_func,
+        const uint32_t  q_offset,
+        const int32_t   shifted_q_bits,
+        const int32_t   shifted_f_func,
+        const int32_t   iq_offset,
+        const int32_t   shift_num,
+        const uint32_t  area_size,
+        uint32_t       *nonzerocoeff);
 
     typedef void(*EB_MAT_MUL_TYPE)(
-        int16_t           *coeff,
-        const uint32_t     coeffStride,
-        const uint16_t    *maskingMatrix,
-        const uint32_t     maskingMatrixStride,
-        const uint32_t     computeSize,
-        const int32_t      offset,
-        const int32_t      shiftNum,
-        uint32_t          *nonzerocoeff);
+        int16_t        *coeff,
+        const uint32_t  coeff_stride,
+        const uint16_t *masking_matrix,
+        const uint32_t  masking_matrix_stride,
+        const uint32_t  compute_size,
+        const int32_t   offset,
+        const int32_t   shift_num,
+        uint32_t       *nonzerocoeff);
 
-    extern void MatMult(
-        int16_t           *coeff,
-        const uint32_t     coeffStride,
-        const uint16_t    *maskingMatrix,
-        const uint32_t     maskingMatrixStride,
-        const uint32_t     computeSize,
-        const int32_t      offset,
-        const int32_t      shiftNum,
-        uint32_t          *nonzerocoeff);
+    extern void mat_mult(
+        int16_t        *coeff,
+        const uint32_t  coeff_stride,
+        const uint16_t *masking_matrix,
+        const uint32_t  masking_matrix_stride,
+        const uint32_t  compute_size,
+        const int32_t   offset,
+        const int32_t   shift_num,
+        uint32_t       *nonzerocoeff);
 
     typedef void(*EB_MAT_OUT_MUL_TYPE)(
-        int16_t           *coeff,
-        const uint32_t     coeffStride,
-        int16_t*           coeffOut,
-        const uint32_t     coeffOutStride,
-        const uint16_t    *maskingMatrix,
-        const uint32_t     maskingMatrixStride,
-        const uint32_t     computeSize,
-        const int32_t      offset,
-        const int32_t      shiftNum,
-        uint32_t          *nonzerocoeff);
+        int16_t        *coeff,
+        const uint32_t  coeff_stride,
+        int16_t*        coeff_out,
+        const uint32_t  coeff_out_stride,
+        const uint16_t *masking_matrix,
+        const uint32_t  masking_matrix_stride,
+        const uint32_t  compute_size,
+        const int32_t   offset,
+        const int32_t   shift_num,
+        uint32_t       *nonzerocoeff);
 
-    void MatMultOut(
-        int16_t           *coeff,
-        const uint32_t     coeffStride,
-        int16_t*           coeffOut,
-        const uint32_t     coeffOutStride,
-        const uint16_t    *maskingMatrix,
-        const uint32_t     maskingMatrixStride,
-        const uint32_t     computeSize,
-        const int32_t      offset,
-        const int32_t      shiftNum,
-        uint32_t          *nonzerocoeff);
-
-    static EB_MAT_OUT_MUL_TYPE FUNC_TABLE MatMulOut_funcPtrArray[ASM_TYPE_TOTAL] = {
-          MatMultOut,
-          MatMult4x4_OutBuff_AVX2_INTRIN,
-    };
+    void mat_mult_out(
+        int16_t        *coeff,
+        const uint32_t  coeff_stride,
+        int16_t*        coeff_out,
+        const uint32_t  coeff_out_stride,
+        const uint16_t *masking_matrix,
+        const uint32_t  masking_matrix_stride,
+        const uint32_t  compute_size,
+        const int32_t   offset,
+        const int32_t   shift_num,
+        uint32_t       *nonzerocoeff);
 
     typedef void(*EB_TRANSFORM_FUNC)(
-        int16_t                  *residual,
-        const uint32_t            src_stride,
-        int16_t                  *transformCoefficients,
-        const uint32_t            dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                  bitIncrement);
+        int16_t        *residual,
+        const uint32_t  src_stride,
+        int16_t        *transform_coefficients,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
     typedef void(*EB_INVTRANSFORM_FUNC)(
-        int16_t                  *transformCoefficients,
-        const uint32_t            src_stride,
-        int16_t                  *residual,
-        const uint32_t            dst_stride,
-        int16_t                  *transform_inner_array_ptr,
-        uint32_t                  bitIncrement);
+        int16_t        *transform_coefficients,
+        const uint32_t  src_stride,
+        int16_t        *residual,
+        const uint32_t  dst_stride,
+        int16_t        *transform_inner_array_ptr,
+        uint32_t        bit_increment);
 
     /*****************************
     * Function Tables
     *****************************/
-    static EB_QIQ_TYPE FUNC_TABLE QiQ_funcPtrArray[ASM_TYPE_TOTAL][5] = {
+    static const EB_TRANSFORM_FUNC pfreq_n2_transform_table[ASM_TYPE_TOTAL][5] = {
         // NON_AVX2
         {
-            /*0 4x4   */     QuantizeInvQuantize4x4_SSE3,
-            /*1 8x8   */     QuantizeInvQuantize8x8_SSE3,
-            /*2 16x16 */     QuantizeInvQuantizeNxN_SSE3,
-            /*3       */     (EB_QIQ_TYPE)QiQVoidFunc,
-            /*4 32x32 */     QuantizeInvQuantizeNxN_SSE3
-        },
-        // AVX2
-        {
-            /*0 4x4   */    QuantizeInvQuantize4x4_SSE3,
-            /*1 8x8   */     QuantizeInvQuantize8x8_AVX2_INTRIN,
-            /*2 16x16 */     QuantizeInvQuantizeNxN_AVX2_INTRIN,
-            /*3       */    (EB_QIQ_TYPE)QiQVoidFunc,
-            /*4 32x32 */     QuantizeInvQuantizeNxN_AVX2_INTRIN,
-
-        },
-    };
-    static EB_MAT_MUL_TYPE FUNC_TABLE MatMul_funcPtrArray[ASM_TYPE_TOTAL][5] = {
-        // NON_AVX2
-        {
-            /*0 4x4   */     MatMult,
-            /*1 8x8   */     MatMult,
-            /*2 16x16 */     MatMult,
-            /*3 16x16 */     MatMult,
-            /*4 32x32 */     MatMult
-        },
-        // AVX2
-        {
-            /*0 4x4   */     MatMult4x4_AVX2_INTRIN,
-            /*1 8x8   */     MatMult8x8_AVX2_INTRIN,
-            /*2 16x16 */     MatMultNxN_AVX2_INTRIN,
-            /*3 16x16 */     MatMultNxN_AVX2_INTRIN,
-            /*4 32x32 */     MatMultNxN_AVX2_INTRIN
-        },
-
-
-    };
-    static const EB_TRANSFORM_FUNC transformFunctionTableEstimate[ASM_TYPE_TOTAL][5] = {
-        // NON_AVX2
-        {
-            lowPrecisionTransform32x32_SSSE3,
-            lowPrecisionTransform16x16_SSSE3,
-            Transform8x8_SSE4_1_INTRIN,
-            Transform4x4_SSE2_INTRIN,
-            DstTransform4x4_SSE2_INTRIN
-        },
-        // AVX2
-        {
-            lowPrecisionTransform32x32_AVX2_INTRIN,
-            lowPrecisionTransform16x16_AVX2_INTRIN,
-            Transform8x8_SSE4_1_INTRIN,
-            Transform4x4_SSE2_INTRIN,
-            DstTransform4x4_SSE2_INTRIN
-        },
-    };
-    static const EB_TRANSFORM_FUNC PfreqN2TransformTable[ASM_TYPE_TOTAL][5] = {
-        // NON_AVX2
-        {
-            PfreqTransform32x32_SSE2,
-            PfreqTransform16x16_SSE2,
-            PfreqTransform8x8_SSE2_INTRIN,
-            Transform4x4_SSE2_INTRIN,
-            DstTransform4x4_SSE2_INTRIN
+            pfreq_transform32x32_sse2,
+            pfreq_transform16x16_sse2,
+            pfreq_transform8x8_sse2_intrin,
+            transform4x4_sse2_intrin,
+            dst_transform4x4_sse2_intrin
 
         },
         // AVX2
         {
-            PfreqTransform32x32_AVX2_INTRIN,
-            PfreqTransform16x16_SSE2,
-            PfreqTransform8x8_SSE4_1_INTRIN,
-            Transform4x4_SSE2_INTRIN,
-            DstTransform4x4_SSE2_INTRIN
+            pfreq_transform32x32_avx2_intrin,
+            pfreq_transform16x16_sse2,
+            pfreq_transform8x8_sse4_1_intrin,
+            transform4x4_sse2_intrin,
+            dst_transform4x4_sse2_intrin
         }
     };
-    static const EB_TRANSFORM_FUNC PfreqN4TransformTable[ASM_TYPE_TOTAL][5] = {
+    static const EB_TRANSFORM_FUNC pfreq_n4_transform_table[ASM_TYPE_TOTAL][5] = {
         // NON_AVX2
         {
-            PfreqN4Transform32x32_SSE2,
-            PfreqN4Transform16x16_SSE2,
-            PfreqN4Transform8x8_SSE2_INTRIN,
-            Transform4x4_SSE2_INTRIN,
-            DstTransform4x4_SSE2_INTRIN
+            pfreq_n4_transform32x32_sse2,
+            pfreq_n4_transform16x16_sse2,
+            pfreq_n4_transform8x8_sse2_intrin,
+            transform4x4_sse2_intrin,
+            dst_transform4x4_sse2_intrin
         },
         // AVX2
         {
-            PfreqN4Transform32x32_AVX2_INTRIN,
-            PfreqN4Transform16x16_SSE2,
-            PfreqN4Transform8x8_SSE4_1_INTRIN,
-            Transform4x4_SSE2_INTRIN,
-            DstTransform4x4_SSE2_INTRIN
+            pfreq_n4_transform32x32_avx2_intrin,
+            pfreq_n4_transform16x16_sse2,
+            pfreq_n4_transform8x8_sse4_1_intrin,
+            transform4x4_sse2_intrin,
+            dst_transform4x4_sse2_intrin
         }
     };
-    static const EB_TRANSFORM_FUNC transformFunctionTableEncode[ASM_TYPE_TOTAL][5] = {
+    static const EB_TRANSFORM_FUNC transform_function_table_encode[ASM_TYPE_TOTAL][5] = {
         // NON_AVX2
         {
-            Transform32x32_SSE2,
-            Transform16x16_SSE2,
-            Transform8x8_SSE2_INTRIN,
-            Transform4x4_SSE2_INTRIN,
-            DstTransform4x4_SSE2_INTRIN
+            transform32x32_sse2,
+            transform16x16_sse2,
+            transform8x8_sse2_intrin,
+            transform4x4_sse2_intrin,
+            dst_transform4x4_sse2_intrin
         },
         // AVX2
         {
-            Transform32x32_SSE2,
-            Transform16x16_SSE2,
-            Transform8x8_SSE4_1_INTRIN,
-            Transform4x4_SSE2_INTRIN,
-            DstTransform4x4_SSE2_INTRIN
+            transform32x32_sse2,
+            transform16x16_sse2,
+            transform8x8_sse4_1_intrin,
+            transform4x4_sse2_intrin,
+            dst_transform4x4_sse2_intrin
         },
     };
-    static const EB_INVTRANSFORM_FUNC invTransformFunctionTableEstimate[ASM_TYPE_TOTAL][5] = {
+    static const EB_INVTRANSFORM_FUNC inv_transform_function_table_encode[ASM_TYPE_TOTAL][5] = {
         // NON_AVX2
         {
-            EstimateInvTransform32x32_SSE2,
-            EstimateInvTransform16x16_SSE2,
-            InvTransform8x8_SSE2_INTRIN,
-            InvTransform4x4_SSE2_INTRIN,
-            InvDstTransform4x4_SSE2_INTRIN
+            p_finv_transform32x32_ssse3,
+            p_finv_transform16x16_ssse3,
+            inv_transform8x8_sse2_intrin,
+            inv_transform4x4_sse2_intrin,
+            inv_dst_transform4x4_sse2_intrin
         },
         // AVX2
         {
-            EstimateInvTransform32x32_SSE2,
-            EstimateInvTransform16x16_SSE2,
-            InvTransform8x8_SSE2_INTRIN,
-            InvTransform4x4_SSE2_INTRIN,
-            InvDstTransform4x4_SSE2_INTRIN
+            p_finv_transform32x32_ssse3,
+            p_finv_transform16x16_ssse3,
+            inv_transform8x8_sse2_intrin,
+            inv_transform4x4_sse2_intrin,
+            inv_dst_transform4x4_sse2_intrin
         },
     };
-    static const EB_INVTRANSFORM_FUNC invTransformFunctionTableEncode[ASM_TYPE_TOTAL][5] = {
-        // NON_AVX2
-        {
-            PFinvTransform32x32_SSSE3,
-            PFinvTransform16x16_SSSE3,
-            InvTransform8x8_SSE2_INTRIN,
-            InvTransform4x4_SSE2_INTRIN,
-            InvDstTransform4x4_SSE2_INTRIN
-        },
-        // AVX2
-        {
-            PFinvTransform32x32_SSSE3,
-            PFinvTransform16x16_SSSE3,
-            InvTransform8x8_SSE2_INTRIN,
-            InvTransform4x4_SSE2_INTRIN,
-            InvDstTransform4x4_SSE2_INTRIN
-        },
-    };
-    void ConstructPmTransCoeffShaping(SequenceControlSet_t  *sequence_control_set_ptr);
+    void construct_pm_trans_coeff_shaping(SequenceControlSet_t  *sequence_control_set_ptr);
 
 #ifdef __cplusplus
 }

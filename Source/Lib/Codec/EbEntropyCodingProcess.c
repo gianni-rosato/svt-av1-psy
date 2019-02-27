@@ -57,21 +57,21 @@ EbErrorType entropy_coding_context_ctor(
  ***********************************************/
 static void EntropyCodingResetNeighborArrays(PictureControlSet_t *picture_control_set_ptr)
 {
-    NeighborArrayUnitReset(picture_control_set_ptr->mode_type_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->mode_type_neighbor_array);
 
-    NeighborArrayUnitReset(picture_control_set_ptr->partition_context_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->partition_context_neighbor_array);
 
-    NeighborArrayUnitReset(picture_control_set_ptr->skip_flag_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->skip_flag_neighbor_array);
 
-    NeighborArrayUnitReset(picture_control_set_ptr->skip_coeff_neighbor_array);
-    NeighborArrayUnitReset(picture_control_set_ptr->luma_dc_sign_level_coeff_neighbor_array);
-    NeighborArrayUnitReset(picture_control_set_ptr->cb_dc_sign_level_coeff_neighbor_array);
-    NeighborArrayUnitReset(picture_control_set_ptr->cr_dc_sign_level_coeff_neighbor_array);
-    NeighborArrayUnitReset(picture_control_set_ptr->inter_pred_dir_neighbor_array);
-    NeighborArrayUnitReset(picture_control_set_ptr->ref_frame_type_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->skip_coeff_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->luma_dc_sign_level_coeff_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->cb_dc_sign_level_coeff_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->cr_dc_sign_level_coeff_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->inter_pred_dir_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->ref_frame_type_neighbor_array);
 
-    NeighborArrayUnitReset(picture_control_set_ptr->intra_luma_mode_neighbor_array);
-    NeighborArrayUnitReset32(picture_control_set_ptr->interpolation_type_neighbor_array);
+    neighbor_array_unit_reset(picture_control_set_ptr->intra_luma_mode_neighbor_array);
+    neighbor_array_unit_reset32(picture_control_set_ptr->interpolation_type_neighbor_array);
     return;
 }
 
@@ -382,7 +382,7 @@ static void EntropyCodingLcu(
     //store the number of written bits before coding quantized coeffs (flush is not called yet):
     // The total number of bits is
     // number of written bits
-    // + 32  - bits remaining in interval Low Value
+    // + 32  - bits remaining in interval Low value
     // + number of buffered byte * 8
     // This should be only for coeffs not any flag
     writtenBitsBeforeQuantizedCoeff = ((OutputBitstreamUnit_t*)EntropyCoderGetBitstreamPtr(picture_control_set_ptr->entropy_coder_ptr))->writtenBitsCount;
@@ -400,7 +400,7 @@ static void EntropyCodingLcu(
     //store the number of written bits after coding quantized coeffs (flush is not called yet):
     // The total number of bits is
     // number of written bits
-    // + 32  - bits remaining in interval Low Value
+    // + 32  - bits remaining in interval Low value
     // + number of buffered byte * 8
     writtenBitsAfterQuantizedCoeff = ((OutputBitstreamUnit_t*)EntropyCoderGetBitstreamPtr(picture_control_set_ptr->entropy_coder_ptr))->writtenBitsCount;
 
@@ -451,20 +451,20 @@ static void EntropyCodingLcu(
  ******************************************************/
 static EbBool UpdateEntropyCodingRows(
     PictureControlSet_t *picture_control_set_ptr,
-    uint32_t              *rowIndex,
+    uint32_t              *row_index,
     uint32_t               row_count,
     EbBool             *initialProcessCall)
 {
     EbBool processNextRow = EB_FALSE;
 
     // Note, any writes & reads to status variables (e.g. in_progress) in MD-CTRL must be thread-safe
-    EbBlockOnMutex(picture_control_set_ptr->entropy_coding_mutex);
+    eb_block_on_mutex(picture_control_set_ptr->entropy_coding_mutex);
 
     // Update availability mask
     if (*initialProcessCall == EB_TRUE) {
         unsigned i;
 
-        for (i = *rowIndex; i < *rowIndex + row_count; ++i) {
+        for (i = *row_index; i < *row_index + row_count; ++i) {
             picture_control_set_ptr->entropy_coding_row_array[i] = EB_TRUE;
         }
 
@@ -489,14 +489,14 @@ static EbBool UpdateEntropyCodingRows(
         if (picture_control_set_ptr->entropy_coding_current_row <= picture_control_set_ptr->entropy_coding_current_available_row)
         {
             picture_control_set_ptr->entropy_coding_in_progress = EB_TRUE;
-            *rowIndex = picture_control_set_ptr->entropy_coding_current_row++;
+            *row_index = picture_control_set_ptr->entropy_coding_current_row++;
             processNextRow = EB_TRUE;
         }
     }
 
     *initialProcessCall = EB_FALSE;
 
-    EbReleaseMutex(picture_control_set_ptr->entropy_coding_mutex);
+    eb_release_mutex(picture_control_set_ptr->entropy_coding_mutex);
 
     return processNextRow;
 }
@@ -535,12 +535,12 @@ void* EntropyCodingKernel(void *input_ptr)
     for (;;) {
 
         // Get Mode Decision Results
-        EbGetFullObject(
+        eb_get_full_object(
             context_ptr->enc_dec_input_fifo_ptr,
             &encDecResultsWrapperPtr);
-        encDecResultsPtr = (EncDecResults_t*)encDecResultsWrapperPtr->objectPtr;
-        picture_control_set_ptr = (PictureControlSet_t*)encDecResultsPtr->pictureControlSetWrapperPtr->objectPtr;
-        sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+        encDecResultsPtr = (EncDecResults_t*)encDecResultsWrapperPtr->object_ptr;
+        picture_control_set_ptr = (PictureControlSet_t*)encDecResultsPtr->pictureControlSetWrapperPtr->object_ptr;
+        sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
         lastLcuFlag = EB_FALSE;
 
         // SB Constants
@@ -614,10 +614,10 @@ void* EntropyCodingKernel(void *input_ptr)
                     RateControlTasks_t *rateControlTaskPtr;
 
                     // Get Empty EncDec Results
-                    EbGetEmptyObject(
+                    eb_get_empty_object(
                         context_ptr->rate_control_output_fifo_ptr,
                         &rateControlTaskWrapperPtr);
-                    rateControlTaskPtr = (RateControlTasks_t*)rateControlTaskWrapperPtr->objectPtr;
+                    rateControlTaskPtr = (RateControlTasks_t*)rateControlTaskWrapperPtr->object_ptr;
                     rateControlTaskPtr->taskType = RC_ENTROPY_CODING_ROW_FEEDBACK_RESULT;
                     rateControlTaskPtr->picture_number = picture_control_set_ptr->picture_number;
                     rateControlTaskPtr->rowNumber = yLcuIndex;
@@ -627,10 +627,10 @@ void* EntropyCodingKernel(void *input_ptr)
                     rateControlTaskPtr->segment_index = ~0u;
 
                     // Post EncDec Results
-                    EbPostFullObject(rateControlTaskWrapperPtr);
+                    eb_post_full_object(rateControlTaskWrapperPtr);
                 }
 
-                EbBlockOnMutex(picture_control_set_ptr->entropy_coding_mutex);
+                eb_block_on_mutex(picture_control_set_ptr->entropy_coding_mutex);
                 if (picture_control_set_ptr->entropy_coding_pic_done == EB_FALSE) {
 
                     // If the picture is complete, terminate the slice
@@ -646,7 +646,7 @@ void* EntropyCodingKernel(void *input_ptr)
                         for (refIdx = 0; refIdx < picture_control_set_ptr->parent_pcs_ptr->ref_list0_count; ++refIdx) {
                             if (picture_control_set_ptr->ref_pic_ptr_array[0] != EB_NULL) {
 
-                                EbReleaseObject(picture_control_set_ptr->ref_pic_ptr_array[0]);
+                                eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0]);
                             }
                         }
 
@@ -654,23 +654,23 @@ void* EntropyCodingKernel(void *input_ptr)
                         for (refIdx = 0; refIdx < picture_control_set_ptr->parent_pcs_ptr->ref_list1_count; ++refIdx) {
                             if (picture_control_set_ptr->ref_pic_ptr_array[1] != EB_NULL) {
 
-                                EbReleaseObject(picture_control_set_ptr->ref_pic_ptr_array[1]);
+                                eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1]);
                             }
                         }
 
                         // Get Empty Entropy Coding Results
-                        EbGetEmptyObject(
+                        eb_get_empty_object(
                             context_ptr->entropy_coding_output_fifo_ptr,
                             &entropyCodingResultsWrapperPtr);
-                        entropyCodingResultsPtr = (EntropyCodingResults_t*)entropyCodingResultsWrapperPtr->objectPtr;
+                        entropyCodingResultsPtr = (EntropyCodingResults_t*)entropyCodingResultsWrapperPtr->object_ptr;
                         entropyCodingResultsPtr->pictureControlSetWrapperPtr = encDecResultsPtr->pictureControlSetWrapperPtr;
 
                         // Post EntropyCoding Results
-                        EbPostFullObject(entropyCodingResultsWrapperPtr);
+                        eb_post_full_object(entropyCodingResultsWrapperPtr);
 
                     } // End if(PictureCompleteFlag)
                 }
-                EbReleaseMutex(picture_control_set_ptr->entropy_coding_mutex);
+                eb_release_mutex(picture_control_set_ptr->entropy_coding_mutex);
 
 
             }
@@ -779,33 +779,33 @@ void* EntropyCodingKernel(void *input_ptr)
                  // Release the List 0 Reference Pictures
                  for (refIdx = 0; refIdx < picture_control_set_ptr->parent_pcs_ptr->ref_list0_count; ++refIdx) {
                      if (picture_control_set_ptr->ref_pic_ptr_array[0] != EB_NULL) {
-                         EbReleaseObject(picture_control_set_ptr->ref_pic_ptr_array[0]);
+                         eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0]);
                      }
                  }
 
                  // Release the List 1 Reference Pictures
                  for (refIdx = 0; refIdx < picture_control_set_ptr->parent_pcs_ptr->ref_list1_count; ++refIdx) {
                      if (picture_control_set_ptr->ref_pic_ptr_array[1] != EB_NULL) {
-                         EbReleaseObject(picture_control_set_ptr->ref_pic_ptr_array[1]);
+                         eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1]);
                      }
                  }
 
                  // Get Empty Entropy Coding Results
-                 EbGetEmptyObject(
+                 eb_get_empty_object(
                      context_ptr->entropy_coding_output_fifo_ptr,
                      &entropyCodingResultsWrapperPtr);
-                 entropyCodingResultsPtr = (EntropyCodingResults_t*)entropyCodingResultsWrapperPtr->objectPtr;
+                 entropyCodingResultsPtr = (EntropyCodingResults_t*)entropyCodingResultsWrapperPtr->object_ptr;
                  entropyCodingResultsPtr->pictureControlSetWrapperPtr = encDecResultsPtr->pictureControlSetWrapperPtr;
 
                  // Post EntropyCoding Results
-                 EbPostFullObject(entropyCodingResultsWrapperPtr);
+                 eb_post_full_object(entropyCodingResultsWrapperPtr);
 
              } 
 
         }
 #endif
         // Release Mode Decision Results
-        EbReleaseObject(encDecResultsWrapperPtr);
+        eb_release_object(encDecResultsWrapperPtr);
 
     }
 

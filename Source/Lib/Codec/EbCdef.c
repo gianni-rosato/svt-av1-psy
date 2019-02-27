@@ -393,7 +393,7 @@ static int32_t is_8x8_block_skip(ModeInfo **grid, int32_t mi_row, int32_t mi_col
 }
 
 int32_t sb_compute_cdef_list(PictureControlSet_t            *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col,
-    cdef_list *dlist, BlockSize bs)
+    cdef_list *dlist, block_size bs)
 {
     //MbModeInfo **grid = cm->mi_grid_visible;
     ModeInfo **grid = picture_control_set_ptr->mi_grid_base;
@@ -491,11 +491,11 @@ void av1_cdef_frame(
 
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
 #if FILT_PROC
-        recon_picture_ptr = ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->referencePicture;
+        recon_picture_ptr = ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture;
 #else
         recon_picture_ptr = context_ptr->is16bit ?
-        ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->referencePicture16bit :
-        ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->referencePicture;
+        ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture16bit :
+        ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture;
 #endif
     else
 #if FILT_PROC
@@ -504,7 +504,7 @@ void av1_cdef_frame(
         recon_picture_ptr = context_ptr->is16bit ? pCs->recon_picture16bit_ptr : pCs->recon_picture_ptr;
 #endif
 
-    EbByte  reconBufferY = &((recon_picture_ptr->bufferY)[recon_picture_ptr->origin_x + recon_picture_ptr->origin_y * recon_picture_ptr->strideY]);
+    EbByte  reconBufferY = &((recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x + recon_picture_ptr->origin_y * recon_picture_ptr->stride_y]);
     EbByte  reconBufferCb = &((recon_picture_ptr->bufferCb)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCb]);
     EbByte  reconBufferCr = &((recon_picture_ptr->bufferCr)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCr]);
 
@@ -664,7 +664,7 @@ void av1_cdef_frame(
                 switch (pli) {
                 case 0:
                     recBuff = reconBufferY;
-                    recStride = recon_picture_ptr->strideY;
+                    recStride = recon_picture_ptr->stride_y;
                     break;
                 case 1:
                     recBuff = reconBufferCb;
@@ -828,12 +828,12 @@ void av1_cdef_frame16bit(
 
 
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
-        recon_picture_ptr = ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->referencePicture16bit;
+        recon_picture_ptr = ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture16bit;
 
     else
         recon_picture_ptr = pCs->recon_picture16bit_ptr;
 
-    uint16_t*  reconBufferY = (uint16_t*)recon_picture_ptr->bufferY + (recon_picture_ptr->origin_x + recon_picture_ptr->origin_y     * recon_picture_ptr->strideY);
+    uint16_t*  reconBufferY = (uint16_t*)recon_picture_ptr->buffer_y + (recon_picture_ptr->origin_x + recon_picture_ptr->origin_y     * recon_picture_ptr->stride_y);
     uint16_t*  reconBufferCb = (uint16_t*)recon_picture_ptr->bufferCb + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCb);
     uint16_t*  reconBufferCr = (uint16_t*)recon_picture_ptr->bufferCr + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCr);
 
@@ -992,7 +992,7 @@ void av1_cdef_frame16bit(
                 switch (pli) {
                 case 0:
                     recBuff = reconBufferY;
-                    recStride = recon_picture_ptr->strideY;
+                    recStride = recon_picture_ptr->stride_y;
                     break;
                 case 1:
                     recBuff = reconBufferCb;
@@ -1454,7 +1454,7 @@ uint64_t mse_4x4_16bit_c(uint16_t *dst, int32_t dstride, uint16_t *src,
 
 /* Compute MSE only on the blocks we filtered. */
 uint64_t compute_cdef_dist(uint16_t *dst, int32_t dstride, uint16_t *src,
-    cdef_list *dlist, int32_t cdef_count, BlockSize bsize,
+    cdef_list *dlist, int32_t cdef_count, block_size bsize,
     int32_t coeff_shift, int32_t pli) {
     uint64_t sum = 0;
     int32_t bi, bx, by;
@@ -1655,7 +1655,7 @@ void finish_cdef_search(
         picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.cdef_strength = (int8_t)best_gi;
         //in case the fb is within a block=128x128 or 128x64, or 64x128, then we genrate param only for the first 64x64.
         //since our mi map deos not have the multi pointer single data assignment, we need to duplicate data.
-        BlockSize sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
+        block_size sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
 
         switch (sb_type)
         {
@@ -1720,19 +1720,19 @@ void av1_cdef_search(
 
     EbPictureBufferDesc_t  * recon_picture_ptr;
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
-        recon_picture_ptr = ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->referencePicture;
+        recon_picture_ptr = ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture;
     else
         recon_picture_ptr = picture_control_set_ptr->recon_picture_ptr;
 
-    EbByte  reconBufferY = &((recon_picture_ptr->bufferY)[recon_picture_ptr->origin_x + recon_picture_ptr->origin_y * recon_picture_ptr->strideY]);
+    EbByte  reconBufferY = &((recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x + recon_picture_ptr->origin_y * recon_picture_ptr->stride_y]);
     EbByte  reconBufferCb = &((recon_picture_ptr->bufferCb)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCb]);
     EbByte  reconBufferCr = &((recon_picture_ptr->bufferCr)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCr]);
 
 
-    EbPictureBufferDesc_t *inputPicturePtr = (EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-    EbByte  inputBufferY = &((inputPicturePtr->bufferY)[inputPicturePtr->origin_x + inputPicturePtr->origin_y * inputPicturePtr->strideY]);
-    EbByte  inputBufferCb = &((inputPicturePtr->bufferCb)[inputPicturePtr->origin_x / 2 + inputPicturePtr->origin_y / 2 * inputPicturePtr->strideCb]);
-    EbByte  inputBufferCr = &((inputPicturePtr->bufferCr)[inputPicturePtr->origin_x / 2 + inputPicturePtr->origin_y / 2 * inputPicturePtr->strideCr]);
+    EbPictureBufferDesc_t *input_picture_ptr = (EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    EbByte  inputBufferY = &((input_picture_ptr->buffer_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
+    EbByte  inputBufferCb = &((input_picture_ptr->bufferCb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCb]);
+    EbByte  inputBufferCr = &((input_picture_ptr->bufferCr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCr]);
 
 
     int32_t r, c;
@@ -1812,19 +1812,19 @@ void av1_cdef_search(
         switch (pli) {
         case 0:
             ref_buffer = inputBufferY;
-            ref_stride = inputPicturePtr->strideY;
+            ref_stride = input_picture_ptr->stride_y;
             in_buffer = reconBufferY;
-            in_stride = recon_picture_ptr->strideY;
+            in_stride = recon_picture_ptr->stride_y;
             break;
         case 1:
             ref_buffer = inputBufferCb;
-            ref_stride = inputPicturePtr->strideCb;
+            ref_stride = input_picture_ptr->strideCb;
             in_buffer = reconBufferCb;
             in_stride = recon_picture_ptr->strideCb;
             break;
         case 2:
             ref_buffer = inputBufferCr;
-            ref_stride = inputPicturePtr->strideCr;
+            ref_stride = input_picture_ptr->strideCr;
             in_buffer = reconBufferCr;
             in_stride = recon_picture_ptr->strideCr;
             break;
@@ -1881,7 +1881,7 @@ void av1_cdef_search(
             nvb = AOMMIN(MI_SIZE_64X64, cm->mi_rows - MI_SIZE_64X64 * fbr);
             int32_t hb_step = 1; //CHKN these should be all time with 64x64 LCUs
             int32_t vb_step = 1;
-            BlockSize bs = BLOCK_64X64;
+            block_size bs = BLOCK_64X64;
             ModeInfo **mi = picture_control_set_ptr->mi_grid_base + MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc;
             const MbModeInfo *mbmi = &mi[0]->mbmi;
 
@@ -1965,7 +1965,7 @@ void av1_cdef_search(
                         ref_coeff[pli] +
                         (fbr * MI_SIZE_64X64 << mi_high_l2[pli]) * stride[pli] +
                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]),
-                        stride[pli], tmp_dst, dlist, cdef_count, (BlockSize)bsize[pli], coeff_shift,
+                        stride[pli], tmp_dst, dlist, cdef_count, (block_size)bsize[pli], coeff_shift,
                         pli);
 
                     if (pli < 2)
@@ -2037,7 +2037,7 @@ void av1_cdef_search(
         picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.cdef_strength = (int8_t)best_gi;
         //in case the fb is within a block=128x128 or 128x64, or 64x128, then we genrate param only for the first 64x64.
         //since our mi map deos not have the multi pointer single data assignment, we need to duplicate data.
-        BlockSize sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
+        block_size sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
 
         if (sb_type == BLOCK_128X128)
         {
@@ -2105,20 +2105,20 @@ void av1_cdef_search16bit(
 
     EbPictureBufferDesc_t  * recon_picture_ptr;
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
-        recon_picture_ptr = ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->referencePicture16bit;
+        recon_picture_ptr = ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture16bit;
     else
         recon_picture_ptr = picture_control_set_ptr->recon_picture16bit_ptr;
 
 
-    uint16_t*  reconBufferY = (uint16_t*)recon_picture_ptr->bufferY + (recon_picture_ptr->origin_x + recon_picture_ptr->origin_y     * recon_picture_ptr->strideY);
+    uint16_t*  reconBufferY = (uint16_t*)recon_picture_ptr->buffer_y + (recon_picture_ptr->origin_x + recon_picture_ptr->origin_y     * recon_picture_ptr->stride_y);
     uint16_t*  reconBufferCb = (uint16_t*)recon_picture_ptr->bufferCb + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCb);
     uint16_t*  reconBufferCr = (uint16_t*)recon_picture_ptr->bufferCr + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCr);
 
 
-    EbPictureBufferDesc_t *inputPicturePtr = picture_control_set_ptr->input_frame16bit;
-    uint16_t*  inputBufferY = (uint16_t*)inputPicturePtr->bufferY + (inputPicturePtr->origin_x + inputPicturePtr->origin_y * inputPicturePtr->strideY);
-    uint16_t*  inputBufferCb = (uint16_t*)inputPicturePtr->bufferCb + (inputPicturePtr->origin_x / 2 + inputPicturePtr->origin_y / 2 * inputPicturePtr->strideCb);
-    uint16_t*  inputBufferCr = (uint16_t*)inputPicturePtr->bufferCr + (inputPicturePtr->origin_x / 2 + inputPicturePtr->origin_y / 2 * inputPicturePtr->strideCr);
+    EbPictureBufferDesc_t *input_picture_ptr = picture_control_set_ptr->input_frame16bit;
+    uint16_t*  inputBufferY = (uint16_t*)input_picture_ptr->buffer_y + (input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y);
+    uint16_t*  inputBufferCb = (uint16_t*)input_picture_ptr->bufferCb + (input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCb);
+    uint16_t*  inputBufferCr = (uint16_t*)input_picture_ptr->bufferCr + (input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCr);
 
 
     int32_t r, c;
@@ -2199,40 +2199,40 @@ void av1_cdef_search16bit(
 #if CDEF_10BIT_FIX
         case 0:
             ref_buffer = inputBufferY;
-            ref_stride = inputPicturePtr->strideY;
+            ref_stride = input_picture_ptr->stride_y;
             in_buffer = reconBufferY;
-            in_stride = recon_picture_ptr->strideY;
+            in_stride = recon_picture_ptr->stride_y;
             break;
         case 1:
             ref_buffer = inputBufferCb;
-            ref_stride = inputPicturePtr->strideCb;
+            ref_stride = input_picture_ptr->strideCb;
             in_buffer = reconBufferCb;
             in_stride = recon_picture_ptr->strideCb;
             break;
         case 2:
             ref_buffer = inputBufferCr;
-            ref_stride = inputPicturePtr->strideCr;
+            ref_stride = input_picture_ptr->strideCr;
             in_buffer = reconBufferCr;
             in_stride = recon_picture_ptr->strideCr;
             break;
 #else
         case 0:
             ref_buffer = reconBufferY;
-            ref_stride = recon_picture_ptr->strideY;
+            ref_stride = recon_picture_ptr->stride_y;
             in_buffer = inputBufferY;
-            in_stride = inputPicturePtr->strideY;
+            in_stride = input_picture_ptr->stride_y;
             break;
         case 1:
             ref_buffer = reconBufferCb;
             ref_stride = recon_picture_ptr->strideCb;
             in_buffer = inputBufferCb;
-            in_stride = inputPicturePtr->strideCb;
+            in_stride = input_picture_ptr->strideCb;
             break;
         case 2:
             ref_buffer = reconBufferCr;
             ref_stride = recon_picture_ptr->strideCr;
             in_buffer = inputBufferCr;
-            in_stride = inputPicturePtr->strideCr;
+            in_stride = input_picture_ptr->strideCr;
             break;
 #endif
         }
@@ -2287,7 +2287,7 @@ void av1_cdef_search16bit(
             nvb = AOMMIN(MI_SIZE_64X64, cm->mi_rows - MI_SIZE_64X64 * fbr);
             int32_t hb_step = 1; //CHKN these should be all time with 64x64 LCUs
             int32_t vb_step = 1;
-            BlockSize bs = BLOCK_64X64;
+            block_size bs = BLOCK_64X64;
             ModeInfo **mi = picture_control_set_ptr->mi_grid_base + MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc;
             const MbModeInfo *mbmi = &mi[0]->mbmi;
 
@@ -2356,7 +2356,7 @@ void av1_cdef_search16bit(
                         ref_coeff[pli] +
                         (fbr * MI_SIZE_64X64 << mi_high_l2[pli]) * stride[pli] +
                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]),
-                        stride[pli], tmp_dst, dlist, cdef_count, (BlockSize)bsize[pli], coeff_shift,
+                        stride[pli], tmp_dst, dlist, cdef_count, (block_size)bsize[pli], coeff_shift,
                         pli);
 
                     if (pli < 2)
@@ -2428,7 +2428,7 @@ void av1_cdef_search16bit(
         picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.cdef_strength = (int8_t)best_gi;
         //in case the fb is within a block=128x128 or 128x64, or 64x128, then we genrate param only for the first 64x64.
         //since our mi map deos not have the multi pointer single data assignment, we need to duplicate data.
-        BlockSize sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
+        block_size sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
 
         if (sb_type == BLOCK_128X128)
         {

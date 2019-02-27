@@ -10,13 +10,13 @@
 /*******************************************************************************
                       PictureAdditionKernel_INTRIN
 *******************************************************************************/
-void PictureAdditionKernel4x4_SSE_INTRIN(
-    uint8_t  *predPtr,
-    uint32_t  predStride,
+void picture_addition_kernel4x4_sse_intrin(
+    uint8_t  *pred_ptr,
+    uint32_t  pred_stride,
     int16_t *residual_ptr,
-    uint32_t  residualStride,
-    uint8_t  *reconPtr,
-    uint32_t  reconStride,
+    uint32_t  residual_stride,
+    uint8_t  *recon_ptr,
+    uint32_t  recon_stride,
     uint32_t  width,
     uint32_t  height)
 {
@@ -26,12 +26,12 @@ void PictureAdditionKernel4x4_SSE_INTRIN(
 
     for (y = 0; y < 4; ++y) {
 
-        recon_0_3 = _mm_packus_epi16(_mm_add_epi16(_mm_unpacklo_epi8(_mm_cvtsi32_si128(*(uint32_t *)predPtr), xmm0), _mm_loadl_epi64((__m128i *)residual_ptr)), xmm0);
+        recon_0_3 = _mm_packus_epi16(_mm_add_epi16(_mm_unpacklo_epi8(_mm_cvtsi32_si128(*(uint32_t *)pred_ptr), xmm0), _mm_loadl_epi64((__m128i *)residual_ptr)), xmm0);
 
-        *(uint32_t *)reconPtr = _mm_cvtsi128_si32(recon_0_3);
-        predPtr += predStride;
-        residual_ptr += residualStride;
-        reconPtr += reconStride;
+        *(uint32_t *)recon_ptr = _mm_cvtsi128_si32(recon_0_3);
+        pred_ptr += pred_stride;
+        residual_ptr += residual_stride;
+        recon_ptr += recon_stride;
     }
     (void)width;
     (void)height;
@@ -39,13 +39,13 @@ void PictureAdditionKernel4x4_SSE_INTRIN(
     return;
 }
 
-void PictureAdditionKernel8x8_SSE2_INTRIN(
-    uint8_t  *predPtr,
-    uint32_t  predStride,
+void picture_addition_kernel8x8_sse2_intrin(
+    uint8_t  *pred_ptr,
+    uint32_t  pred_stride,
     int16_t *residual_ptr,
-    uint32_t  residualStride,
-    uint8_t  *reconPtr,
-    uint32_t  reconStride,
+    uint32_t  residual_stride,
+    uint8_t  *recon_ptr,
+    uint32_t  recon_stride,
     uint32_t  width,
     uint32_t  height)
 {
@@ -57,12 +57,12 @@ void PictureAdditionKernel8x8_SSE2_INTRIN(
 
     for (y = 0; y < 8; ++y) {
 
-        recon_0_7 = _mm_packus_epi16(_mm_add_epi16(_mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)predPtr), xmm0), _mm_loadu_si128((__m128i *)residual_ptr)), xmm0);
+        recon_0_7 = _mm_packus_epi16(_mm_add_epi16(_mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)pred_ptr), xmm0), _mm_loadu_si128((__m128i *)residual_ptr)), xmm0);
 
-        *(uint64_t *)reconPtr = _mm_cvtsi128_si64(recon_0_7);
-        predPtr += predStride;
-        residual_ptr += residualStride;
-        reconPtr += reconStride;
+        *(uint64_t *)recon_ptr = _mm_cvtsi128_si64(recon_0_7);
+        pred_ptr += pred_stride;
+        residual_ptr += residual_stride;
+        recon_ptr += recon_stride;
     }
     (void)width;
     (void)height;
@@ -70,13 +70,13 @@ void PictureAdditionKernel8x8_SSE2_INTRIN(
     return;
 }
 
-void PictureAdditionKernel16x16_SSE2_INTRIN(
-    uint8_t  *predPtr,
-    uint32_t  predStride,
+void picture_addition_kernel16x16_sse2_intrin(
+    uint8_t  *pred_ptr,
+    uint32_t  pred_stride,
     int16_t *residual_ptr,
-    uint32_t  residualStride,
-    uint8_t  *reconPtr,
-    uint32_t  reconStride,
+    uint32_t  residual_stride,
+    uint8_t  *recon_ptr,
+    uint32_t  recon_stride,
     uint32_t  width,
     uint32_t  height)
 {
@@ -87,16 +87,16 @@ void PictureAdditionKernel16x16_SSE2_INTRIN(
 
     for (y = 0; y < 16; ++y) {
 
-        pred_0_15 = _mm_loadu_si128((__m128i *)predPtr);
+        pred_0_15 = _mm_loadu_si128((__m128i *)pred_ptr);
         recon_0_7 = _mm_add_epi16(_mm_unpacklo_epi8(pred_0_15, xmm0), _mm_loadu_si128((__m128i *)residual_ptr));
         recon_8_15 = _mm_add_epi16(_mm_unpackhi_epi8(pred_0_15, xmm0), _mm_loadu_si128((__m128i *)(residual_ptr + 8)));
         xmm_clip_U8 = _mm_packus_epi16(recon_0_7, recon_8_15);
 
-        _mm_storeu_si128((__m128i*)reconPtr, xmm_clip_U8);
+        _mm_storeu_si128((__m128i*)recon_ptr, xmm_clip_U8);
 
-        predPtr += predStride;
-        residual_ptr += residualStride;
-        reconPtr += reconStride;
+        pred_ptr += pred_stride;
+        residual_ptr += residual_stride;
+        recon_ptr += recon_stride;
     }
     (void)width;
     (void)height;
@@ -104,13 +104,13 @@ void PictureAdditionKernel16x16_SSE2_INTRIN(
     return;
 
 }
-void PictureAdditionKernel32x32_SSE2_INTRIN(
-    uint8_t  *predPtr,
-    uint32_t  predStride,
+void picture_addition_kernel32x32_sse2_intrin(
+    uint8_t  *pred_ptr,
+    uint32_t  pred_stride,
     int16_t *residual_ptr,
-    uint32_t  residualStride,
-    uint8_t  *reconPtr,
-    uint32_t  reconStride,
+    uint32_t  residual_stride,
+    uint8_t  *recon_ptr,
+    uint32_t  recon_stride,
     uint32_t  width,
     uint32_t  height)
 {
@@ -119,8 +119,8 @@ void PictureAdditionKernel32x32_SSE2_INTRIN(
     xmm0 = _mm_setzero_si128();
 
     for (y = 0; y < 32; ++y) {
-        pred_0_15 = _mm_loadu_si128((__m128i *)predPtr);
-        pred_16_31 = _mm_loadu_si128((__m128i *)(predPtr + 16));
+        pred_0_15 = _mm_loadu_si128((__m128i *)pred_ptr);
+        pred_16_31 = _mm_loadu_si128((__m128i *)(pred_ptr + 16));
 
         recon_0_7 = _mm_add_epi16(_mm_unpacklo_epi8(pred_0_15, xmm0), _mm_loadu_si128((__m128i *)residual_ptr));
         recon_8_15 = _mm_add_epi16(_mm_unpackhi_epi8(pred_0_15, xmm0), _mm_loadu_si128((__m128i *)(residual_ptr + 8)));
@@ -130,12 +130,12 @@ void PictureAdditionKernel32x32_SSE2_INTRIN(
         recon_0_15_clipped = _mm_packus_epi16(recon_0_7, recon_8_15);
         recon_16_31_clipped = _mm_packus_epi16(recon_16_23, recon_24_31);
 
-        _mm_storeu_si128((__m128i*)reconPtr, recon_0_15_clipped);
-        _mm_storeu_si128((__m128i*)(reconPtr + 16), recon_16_31_clipped);
+        _mm_storeu_si128((__m128i*)recon_ptr, recon_0_15_clipped);
+        _mm_storeu_si128((__m128i*)(recon_ptr + 16), recon_16_31_clipped);
 
-        predPtr += predStride;
-        residual_ptr += residualStride;
-        reconPtr += reconStride;
+        pred_ptr += pred_stride;
+        residual_ptr += residual_stride;
+        recon_ptr += recon_stride;
     }
     (void)width;
     (void)height;
@@ -143,13 +143,13 @@ void PictureAdditionKernel32x32_SSE2_INTRIN(
     return;
 }
 
-void PictureAdditionKernel64x64_SSE2_INTRIN(
-    uint8_t  *predPtr,
-    uint32_t  predStride,
+void picture_addition_kernel64x64_sse2_intrin(
+    uint8_t  *pred_ptr,
+    uint32_t  pred_stride,
     int16_t *residual_ptr,
-    uint32_t  residualStride,
-    uint8_t  *reconPtr,
-    uint32_t  reconStride,
+    uint32_t  residual_stride,
+    uint8_t  *recon_ptr,
+    uint32_t  recon_stride,
     uint32_t  width,
     uint32_t  height)
 {
@@ -163,10 +163,10 @@ void PictureAdditionKernel64x64_SSE2_INTRIN(
 
     for (y = 0; y < 64; ++y) {
 
-        pred_0_15 = _mm_loadu_si128((__m128i *)predPtr);
-        pred_16_31 = _mm_loadu_si128((__m128i *)(predPtr + 16));
-        pred_32_47 = _mm_loadu_si128((__m128i *)(predPtr + 32));
-        pred_48_63 = _mm_loadu_si128((__m128i *)(predPtr + 48));
+        pred_0_15 = _mm_loadu_si128((__m128i *)pred_ptr);
+        pred_16_31 = _mm_loadu_si128((__m128i *)(pred_ptr + 16));
+        pred_32_47 = _mm_loadu_si128((__m128i *)(pred_ptr + 32));
+        pred_48_63 = _mm_loadu_si128((__m128i *)(pred_ptr + 48));
 
         recon_0_7 = _mm_add_epi16(_mm_unpacklo_epi8(pred_0_15, xmm0), _mm_loadu_si128((__m128i *)residual_ptr));
         recon_8_15 = _mm_add_epi16(_mm_unpackhi_epi8(pred_0_15, xmm0), _mm_loadu_si128((__m128i *)(residual_ptr + 8)));
@@ -182,14 +182,14 @@ void PictureAdditionKernel64x64_SSE2_INTRIN(
         recon_32_47_clipped = _mm_packus_epi16(recon_32_39, recon_40_47);
         recon_48_63_clipped = _mm_packus_epi16(recon_48_55, recon_56_63);
 
-        _mm_storeu_si128((__m128i*)reconPtr, recon_0_15_clipped);
-        _mm_storeu_si128((__m128i*)(reconPtr + 16), recon_16_31_clipped);
-        _mm_storeu_si128((__m128i*)(reconPtr + 32), recon_32_47_clipped);
-        _mm_storeu_si128((__m128i*)(reconPtr + 48), recon_48_63_clipped);
+        _mm_storeu_si128((__m128i*)recon_ptr, recon_0_15_clipped);
+        _mm_storeu_si128((__m128i*)(recon_ptr + 16), recon_16_31_clipped);
+        _mm_storeu_si128((__m128i*)(recon_ptr + 32), recon_32_47_clipped);
+        _mm_storeu_si128((__m128i*)(recon_ptr + 48), recon_48_63_clipped);
 
-        predPtr += predStride;
-        residual_ptr += residualStride;
-        reconPtr += reconStride;
+        pred_ptr += pred_stride;
+        residual_ptr += residual_stride;
+        recon_ptr += recon_stride;
     }
     (void)width;
     (void)height;
@@ -200,45 +200,45 @@ void PictureAdditionKernel64x64_SSE2_INTRIN(
 /******************************************************************************************************
 ResidualKernel
 ***********************************************************************************************************/
-void ResidualKernelSubSampled4x4_SSE_INTRIN(
+void residual_kernel_sub_sampled4x4_sse_intrin(
     uint8_t   *input,
-    uint32_t   inputStride,
+    uint32_t   input_stride,
     uint8_t   *pred,
-    uint32_t   predStride,
+    uint32_t   pred_stride,
     int16_t  *residual,
-    uint32_t   residualStride,
-    uint32_t   areaWidth,
-    uint32_t   areaHeight,
-    uint8_t    lastLine)
+    uint32_t   residual_stride,
+    uint32_t   area_width,
+    uint32_t   area_height,
+    uint8_t    last_line)
 {
     __m128i residual_0_3, xmm0 = _mm_setzero_si128();
     uint32_t y;
-    //hard code subampling dimensions, keep residualStride
-    areaHeight >>= 1;
-    inputStride <<= 1;
-    predStride <<= 1;
+    //hard code subampling dimensions, keep residual_stride
+    area_height >>= 1;
+    input_stride <<= 1;
+    pred_stride <<= 1;
 
-    for (y = 0; y < areaHeight; ++y) {
+    for (y = 0; y < area_height; ++y) {
 
         residual_0_3 = _mm_sub_epi16(_mm_unpacklo_epi8(_mm_cvtsi32_si128(*(uint32_t *)input), xmm0),
             _mm_unpacklo_epi8(_mm_cvtsi32_si128(*(uint32_t *)pred), xmm0));
 
         *(uint64_t *)residual = _mm_cvtsi128_si64(residual_0_3);
 
-        residual += residualStride;
+        residual += residual_stride;
         *(uint64_t *)residual = _mm_cvtsi128_si64(residual_0_3);
 
-        input += inputStride;
-        pred += predStride;
-        residual += residualStride;
+        input += input_stride;
+        pred += pred_stride;
+        residual += residual_stride;
     }
-    (void)areaWidth;
+    (void)area_width;
     //compute the last line
 
-    if (lastLine) {
-        input -= (inputStride) >> 1;
-        pred -= (predStride) >> 1;
-        residual -= residualStride;
+    if (last_line) {
+        input -= (input_stride) >> 1;
+        pred -= (pred_stride) >> 1;
+        residual -= residual_stride;
         residual_0_3 = _mm_sub_epi16(_mm_unpacklo_epi8(_mm_cvtsi32_si128(*(uint32_t *)input), xmm0),
             _mm_unpacklo_epi8(_mm_cvtsi32_si128(*(uint32_t *)pred), xmm0));
 
@@ -248,16 +248,16 @@ void ResidualKernelSubSampled4x4_SSE_INTRIN(
     return;
 }
 
-void ResidualKernelSubSampled8x8_SSE2_INTRIN(
+void residual_kernel_sub_sampled8x8_sse2_intrin(
     uint8_t   *input,
-    uint32_t   inputStride,
+    uint32_t   input_stride,
     uint8_t   *pred,
-    uint32_t   predStride,
+    uint32_t   pred_stride,
     int16_t  *residual,
-    uint32_t   residualStride,
-    uint32_t   areaWidth,
-    uint32_t   areaHeight,
-    uint8_t    lastLine
+    uint32_t   residual_stride,
+    uint32_t   area_width,
+    uint32_t   area_height,
+    uint8_t    last_line
 
 )
 {
@@ -265,31 +265,31 @@ void ResidualKernelSubSampled8x8_SSE2_INTRIN(
     uint32_t y;
 
     xmm0 = _mm_setzero_si128();
-    //hard code subampling dimensions, keep residualStride
-    areaHeight >>= 1;
-    inputStride <<= 1;
-    predStride <<= 1;
+    //hard code subampling dimensions, keep residual_stride
+    area_height >>= 1;
+    input_stride <<= 1;
+    pred_stride <<= 1;
 
-    for (y = 0; y < areaHeight; ++y) {
+    for (y = 0; y < area_height; ++y) {
 
         residual_0_7 = _mm_sub_epi16(_mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)input), xmm0), _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)pred), xmm0));
 
         _mm_storeu_si128((__m128i*)residual, residual_0_7);
 
-        residual += residualStride;
+        residual += residual_stride;
         _mm_storeu_si128((__m128i*)residual, residual_0_7);
 
-        input += inputStride;
-        pred += predStride;
-        residual += residualStride;
+        input += input_stride;
+        pred += pred_stride;
+        residual += residual_stride;
     }
-    (void)areaWidth;
+    (void)area_width;
     //compute the last line
-    if (lastLine) {
+    if (last_line) {
 
-        input -= (inputStride) >> 1;
-        pred -= (predStride) >> 1;
-        residual -= residualStride;
+        input -= (input_stride) >> 1;
+        pred -= (pred_stride) >> 1;
+        residual -= residual_stride;
 
         residual_0_7 = _mm_sub_epi16(_mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)input), xmm0), _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)pred), xmm0));
 
@@ -300,16 +300,16 @@ void ResidualKernelSubSampled8x8_SSE2_INTRIN(
     return;
 }
 
-void ResidualKernelSubSampled16x16_SSE2_INTRIN(
+void residual_kernel_sub_sampled16x16_sse2_intrin(
     uint8_t   *input,
-    uint32_t   inputStride,
+    uint32_t   input_stride,
     uint8_t   *pred,
-    uint32_t   predStride,
+    uint32_t   pred_stride,
     int16_t  *residual,
-    uint32_t   residualStride,
-    uint32_t   areaWidth,
-    uint32_t   areaHeight,
-    uint8_t    lastLine
+    uint32_t   residual_stride,
+    uint32_t   area_width,
+    uint32_t   area_height,
+    uint8_t    last_line
 
 )
 {
@@ -317,12 +317,12 @@ void ResidualKernelSubSampled16x16_SSE2_INTRIN(
     uint32_t y;
 
     xmm0 = _mm_setzero_si128();
-    //hard code subampling dimensions, keep residualStride
-    areaHeight >>= 1;
-    inputStride <<= 1;
-    predStride <<= 1;
+    //hard code subampling dimensions, keep residual_stride
+    area_height >>= 1;
+    input_stride <<= 1;
+    pred_stride <<= 1;
 
-    for (y = 0; y < areaHeight; ++y) {
+    for (y = 0; y < area_height; ++y) {
 
         residual_0_7 = _mm_sub_epi16(_mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
         residual_8_15 = _mm_sub_epi16(_mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
@@ -330,22 +330,22 @@ void ResidualKernelSubSampled16x16_SSE2_INTRIN(
         _mm_storeu_si128((__m128i*)residual, residual_0_7);
         _mm_storeu_si128((__m128i*)(residual + 8), residual_8_15);
 
-        residual += residualStride;
+        residual += residual_stride;
         _mm_storeu_si128((__m128i*)residual, residual_0_7);
         _mm_storeu_si128((__m128i*)(residual + 8), residual_8_15);
 
-        input += inputStride;
-        pred += predStride;
-        residual += residualStride;
+        input += input_stride;
+        pred += pred_stride;
+        residual += residual_stride;
     }
-    (void)areaWidth;
+    (void)area_width;
     //compute the last line
 
-    if (lastLine) {
+    if (last_line) {
 
-        input -= (inputStride) >> 1;
-        pred -= (predStride) >> 1;
-        residual -= residualStride;
+        input -= (input_stride) >> 1;
+        pred -= (pred_stride) >> 1;
+        residual -= residual_stride;
 
         residual_0_7 = _mm_sub_epi16(_mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
         residual_8_15 = _mm_sub_epi16(_mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
@@ -357,29 +357,29 @@ void ResidualKernelSubSampled16x16_SSE2_INTRIN(
     return;
 }
 
-void ResidualKernelSubSampled32x32_SSE2_INTRIN(
+void residual_kernel_sub_sampled32x32_sse2_intrin(
     uint8_t   *input,
-    uint32_t   inputStride,
+    uint32_t   input_stride,
     uint8_t   *pred,
-    uint32_t   predStride,
+    uint32_t   pred_stride,
     int16_t  *residual,
-    uint32_t   residualStride,
-    uint32_t   areaWidth,
-    uint32_t   areaHeight,
-    uint8_t    lastLine)
+    uint32_t   residual_stride,
+    uint32_t   area_width,
+    uint32_t   area_height,
+    uint8_t    last_line)
 {
     __m128i xmm0, residual_0_7, residual_8_15, residual_16_23, residual_24_31;
     uint32_t y;
 
     xmm0 = _mm_setzero_si128();
 
-    //hard code subampling dimensions, keep residualStride
-    areaHeight >>= 1;
-    inputStride <<= 1;
-    predStride <<= 1;
+    //hard code subampling dimensions, keep residual_stride
+    area_height >>= 1;
+    input_stride <<= 1;
+    pred_stride <<= 1;
 
 
-    for (y = 0; y < areaHeight; ++y) {
+    for (y = 0; y < area_height; ++y) {
 
         residual_0_7 = _mm_sub_epi16(_mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
         residual_8_15 = _mm_sub_epi16(_mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
@@ -391,23 +391,23 @@ void ResidualKernelSubSampled32x32_SSE2_INTRIN(
         _mm_storeu_si128((__m128i*)(residual + 16), residual_16_23);
         _mm_storeu_si128((__m128i*)(residual + 24), residual_24_31);
 
-        residual += residualStride;
+        residual += residual_stride;
         _mm_storeu_si128((__m128i*)residual, residual_0_7);
         _mm_storeu_si128((__m128i*)(residual + 8), residual_8_15);
         _mm_storeu_si128((__m128i*)(residual + 16), residual_16_23);
         _mm_storeu_si128((__m128i*)(residual + 24), residual_24_31);
 
-        input += inputStride;
-        pred += predStride;
-        residual += residualStride;
+        input += input_stride;
+        pred += pred_stride;
+        residual += residual_stride;
     }
-    (void)areaWidth;
+    (void)area_width;
     //compute the last line
 
-    if (lastLine) {
-        input -= (inputStride) >> 1;
-        pred -= (predStride) >> 1;
-        residual -= residualStride;
+    if (last_line) {
+        input -= (input_stride) >> 1;
+        pred -= (pred_stride) >> 1;
+        residual -= residual_stride;
 
         residual_0_7 = _mm_sub_epi16(_mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
         residual_8_15 = _mm_sub_epi16(_mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
@@ -424,28 +424,28 @@ void ResidualKernelSubSampled32x32_SSE2_INTRIN(
 }
 
 
-void ResidualKernelSubSampled64x64_SSE2_INTRIN(
+void residual_kernel_sub_sampled64x64_sse2_intrin(
     uint8_t   *input,
-    uint32_t   inputStride,
+    uint32_t   input_stride,
     uint8_t   *pred,
-    uint32_t   predStride,
+    uint32_t   pred_stride,
     int16_t  *residual,
-    uint32_t   residualStride,
-    uint32_t   areaWidth,
-    uint32_t   areaHeight,
-    uint8_t    lastLine)
+    uint32_t   residual_stride,
+    uint32_t   area_width,
+    uint32_t   area_height,
+    uint8_t    last_line)
 {
     __m128i xmm0, residual_0_7, residual_8_15, residual_16_23, residual_24_31, resdiaul_32_39, residual_40_47, residual_48_55, residual_56_63;
     uint32_t y;
 
     xmm0 = _mm_setzero_si128();
 
-    //hard code subampling dimensions, keep residualStride
-    areaHeight >>= 1;
-    inputStride <<= 1;
-    predStride <<= 1;
+    //hard code subampling dimensions, keep residual_stride
+    area_height >>= 1;
+    input_stride <<= 1;
+    pred_stride <<= 1;
 
-    for (y = 0; y < areaHeight; ++y) {
+    for (y = 0; y < area_height; ++y) {
 
         residual_0_7 = _mm_sub_epi16(_mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
         residual_8_15 = _mm_sub_epi16(_mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
@@ -466,7 +466,7 @@ void ResidualKernelSubSampled64x64_SSE2_INTRIN(
         _mm_storeu_si128((__m128i*)(residual + 56), residual_56_63);
 
         //duplicate top field residual to bottom field
-        residual += residualStride;
+        residual += residual_stride;
         _mm_storeu_si128((__m128i*)residual, residual_0_7);
         _mm_storeu_si128((__m128i*)(residual + 8), residual_8_15);
         _mm_storeu_si128((__m128i*)(residual + 16), residual_16_23);
@@ -476,17 +476,17 @@ void ResidualKernelSubSampled64x64_SSE2_INTRIN(
         _mm_storeu_si128((__m128i*)(residual + 48), residual_48_55);
         _mm_storeu_si128((__m128i*)(residual + 56), residual_56_63);
 
-        input += inputStride;
-        pred += predStride;
-        residual += residualStride;
+        input += input_stride;
+        pred += pred_stride;
+        residual += residual_stride;
     }
-    (void)areaWidth;
+    (void)area_width;
     //compute the last line
 
-    if (lastLine) {
-        input -= (inputStride) >> 1;
-        pred -= (predStride) >> 1;
-        residual -= residualStride;
+    if (last_line) {
+        input -= (input_stride) >> 1;
+        pred -= (pred_stride) >> 1;
+        residual -= residual_stride;
 
         residual_0_7 = _mm_sub_epi16(_mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpacklo_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
         residual_8_15 = _mm_sub_epi16(_mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)input), xmm0), _mm_unpackhi_epi8(_mm_loadu_si128((__m128i *)pred), xmm0));
@@ -511,93 +511,93 @@ void ResidualKernelSubSampled64x64_SSE2_INTRIN(
     return;
 }
 /******************************************************************************************************
-                                       ResidualKernel16bit_SSE2_INTRIN
+                                       residual_kernel16bit_sse2_intrin
 ******************************************************************************************************/
-void ResidualKernel16bit_SSE2_INTRIN(
+void residual_kernel16bit_sse2_intrin(
     uint16_t   *input,
-    uint32_t   inputStride,
+    uint32_t   input_stride,
     uint16_t   *pred,
-    uint32_t   predStride,
+    uint32_t   pred_stride,
     int16_t  *residual,
-    uint32_t   residualStride,
-    uint32_t   areaWidth,
-    uint32_t   areaHeight)
+    uint32_t   residual_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
 {
     uint32_t x, y;
     __m128i residual0, residual1;
 
-    if (areaWidth == 4)
+    if (area_width == 4)
     {
-        for (y = 0; y < areaHeight; y += 2) {
+        for (y = 0; y < area_height; y += 2) {
 
             residual0 = _mm_sub_epi16(_mm_loadl_epi64((__m128i*)input), _mm_loadl_epi64((__m128i*)pred));
-            residual1 = _mm_sub_epi16(_mm_loadl_epi64((__m128i*)(input + inputStride)), _mm_loadl_epi64((__m128i*)(pred + predStride)));
+            residual1 = _mm_sub_epi16(_mm_loadl_epi64((__m128i*)(input + input_stride)), _mm_loadl_epi64((__m128i*)(pred + pred_stride)));
 
             _mm_storel_epi64((__m128i*)residual, residual0);
-            _mm_storel_epi64((__m128i*)(residual + residualStride), residual1);
+            _mm_storel_epi64((__m128i*)(residual + residual_stride), residual1);
 
-            input += inputStride << 1;
-            pred += predStride << 1;
-            residual += residualStride << 1;
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
         }
     }
-    else if (areaWidth == 8) {
-        for (y = 0; y < areaHeight; y += 2) {
+    else if (area_width == 8) {
+        for (y = 0; y < area_height; y += 2) {
 
             residual0 = _mm_sub_epi16(_mm_loadu_si128((__m128i*)input), _mm_loadu_si128((__m128i*)pred));
-            residual1 = _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride)), _mm_loadu_si128((__m128i*)(pred + predStride)));
+            residual1 = _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride)), _mm_loadu_si128((__m128i*)(pred + pred_stride)));
 
             _mm_storeu_si128((__m128i*) residual, residual0);
-            _mm_storeu_si128((__m128i*) (residual + residualStride), residual1);
+            _mm_storeu_si128((__m128i*) (residual + residual_stride), residual1);
 
-            input += inputStride << 1;
-            pred += predStride << 1;
-            residual += residualStride << 1;
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
         }
     }
-    else if (areaWidth == 16) {
+    else if (area_width == 16) {
 
         __m128i residual2, residual3;
 
-        for (y = 0; y < areaHeight; y += 2) {
+        for (y = 0; y < area_height; y += 2) {
 
             residual0 = _mm_sub_epi16(_mm_loadu_si128((__m128i*)input), _mm_loadu_si128((__m128i*)pred));
             residual1 = _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + 8)), _mm_loadu_si128((__m128i*)(pred + 8)));
-            residual2 = _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride)), _mm_loadu_si128((__m128i*)(pred + predStride)));
-            residual3 = _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride + 8)), _mm_loadu_si128((__m128i*)(pred + predStride + 8)));
+            residual2 = _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride)), _mm_loadu_si128((__m128i*)(pred + pred_stride)));
+            residual3 = _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride + 8)), _mm_loadu_si128((__m128i*)(pred + pred_stride + 8)));
 
             _mm_storeu_si128((__m128i*)residual, residual0);
             _mm_storeu_si128((__m128i*)(residual + 8), residual1);
-            _mm_storeu_si128((__m128i*)(residual + residualStride), residual2);
-            _mm_storeu_si128((__m128i*)(residual + residualStride + 8), residual3);
+            _mm_storeu_si128((__m128i*)(residual + residual_stride), residual2);
+            _mm_storeu_si128((__m128i*)(residual + residual_stride + 8), residual3);
 
-            input += inputStride << 1;
-            pred += predStride << 1;
-            residual += residualStride << 1;
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
         }
     }
-    else if (areaWidth == 32) {
+    else if (area_width == 32) {
 
-        for (y = 0; y < areaHeight; y += 2) {
+        for (y = 0; y < area_height; y += 2) {
             //residual[columnIndex] = ((int16_t)input[columnIndex]) - ((int16_t)pred[columnIndex]);
             _mm_storeu_si128((__m128i*) residual, _mm_sub_epi16(_mm_loadu_si128((__m128i*)input), _mm_loadu_si128((__m128i*)pred)));
             _mm_storeu_si128((__m128i*) (residual + 8), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + 8)), _mm_loadu_si128((__m128i*)(pred + 8))));
             _mm_storeu_si128((__m128i*) (residual + 16), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + 16)), _mm_loadu_si128((__m128i*)(pred + 16))));
             _mm_storeu_si128((__m128i*) (residual + 24), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + 24)), _mm_loadu_si128((__m128i*)(pred + 24))));
 
-            _mm_storeu_si128((__m128i*) (residual + residualStride), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride)), _mm_loadu_si128((__m128i*)(pred + predStride))));
-            _mm_storeu_si128((__m128i*) (residual + residualStride + 8), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride + 8)), _mm_loadu_si128((__m128i*)(pred + predStride + 8))));
-            _mm_storeu_si128((__m128i*) (residual + residualStride + 16), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride + 16)), _mm_loadu_si128((__m128i*)(pred + predStride + 16))));
-            _mm_storeu_si128((__m128i*) (residual + residualStride + 24), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride + 24)), _mm_loadu_si128((__m128i*)(pred + predStride + 24))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride)), _mm_loadu_si128((__m128i*)(pred + pred_stride))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride + 8), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride + 8)), _mm_loadu_si128((__m128i*)(pred + pred_stride + 8))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride + 16), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride + 16)), _mm_loadu_si128((__m128i*)(pred + pred_stride + 16))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride + 24), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride + 24)), _mm_loadu_si128((__m128i*)(pred + pred_stride + 24))));
 
-            input += inputStride << 1;
-            pred += predStride << 1;
-            residual += residualStride << 1;
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
         }
     }
-    else if (areaWidth == 64) { // Branch was not tested because the encoder had max txb_size of 32
+    else if (area_width == 64) { // Branch was not tested because the encoder had max txb_size of 32
 
-        for (y = 0; y < areaHeight; y += 2) {
+        for (y = 0; y < area_height; y += 2) {
 
             //residual[columnIndex] = ((int16_t)input[columnIndex]) - ((int16_t)pred[columnIndex]) 8 indices per _mm_sub_epi16
             _mm_storeu_si128((__m128i*) residual, _mm_sub_epi16(_mm_loadu_si128((__m128i*)input), _mm_loadu_si128((__m128i*)pred)));
@@ -609,36 +609,36 @@ void ResidualKernel16bit_SSE2_INTRIN(
             _mm_storeu_si128((__m128i*) (residual + 48), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + 48)), _mm_loadu_si128((__m128i*)(pred + 48))));
             _mm_storeu_si128((__m128i*) (residual + 56), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + 56)), _mm_loadu_si128((__m128i*)(pred + 56))));
 
-            _mm_storeu_si128((__m128i*) (residual + residualStride), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride)), _mm_loadu_si128((__m128i*)(pred + predStride))));
-            _mm_storeu_si128((__m128i*) (residual + residualStride + 8), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride + 8)), _mm_loadu_si128((__m128i*)(pred + predStride + 8))));
-            _mm_storeu_si128((__m128i*) (residual + residualStride + 16), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride + 16)), _mm_loadu_si128((__m128i*)(pred + predStride + 16))));
-            _mm_storeu_si128((__m128i*) (residual + residualStride + 24), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride + 24)), _mm_loadu_si128((__m128i*)(pred + predStride + 24))));
-            _mm_storeu_si128((__m128i*) (residual + residualStride + 32), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride + 32)), _mm_loadu_si128((__m128i*)(pred + predStride + 32))));
-            _mm_storeu_si128((__m128i*) (residual + residualStride + 40), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride + 40)), _mm_loadu_si128((__m128i*)(pred + predStride + 40))));
-            _mm_storeu_si128((__m128i*) (residual + residualStride + 48), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride + 48)), _mm_loadu_si128((__m128i*)(pred + predStride + 48))));
-            _mm_storeu_si128((__m128i*) (residual + residualStride + 56), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride + 56)), _mm_loadu_si128((__m128i*)(pred + predStride + 56))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride)), _mm_loadu_si128((__m128i*)(pred + pred_stride))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride + 8), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride + 8)), _mm_loadu_si128((__m128i*)(pred + pred_stride + 8))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride + 16), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride + 16)), _mm_loadu_si128((__m128i*)(pred + pred_stride + 16))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride + 24), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride + 24)), _mm_loadu_si128((__m128i*)(pred + pred_stride + 24))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride + 32), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride + 32)), _mm_loadu_si128((__m128i*)(pred + pred_stride + 32))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride + 40), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride + 40)), _mm_loadu_si128((__m128i*)(pred + pred_stride + 40))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride + 48), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride + 48)), _mm_loadu_si128((__m128i*)(pred + pred_stride + 48))));
+            _mm_storeu_si128((__m128i*) (residual + residual_stride + 56), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride + 56)), _mm_loadu_si128((__m128i*)(pred + pred_stride + 56))));
 
-            input += inputStride << 1;
-            pred += predStride << 1;
-            residual += residualStride << 1;
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
         }
     }
     else {
 
-        uint32_t inputStrideDiff = 2 * inputStride;
-        uint32_t predStrideDiff = 2 * predStride;
-        uint32_t residualStrideDiff = 2 * residualStride;
-        inputStrideDiff -= areaWidth;
-        predStrideDiff -= areaWidth;
-        residualStrideDiff -= areaWidth;
+        uint32_t inputStrideDiff = 2 * input_stride;
+        uint32_t predStrideDiff = 2 * pred_stride;
+        uint32_t residualStrideDiff = 2 * residual_stride;
+        inputStrideDiff -= area_width;
+        predStrideDiff -= area_width;
+        residualStrideDiff -= area_width;
 
-        if (!(areaWidth & 7)) {
+        if (!(area_width & 7)) {
 
-            for (x = 0; x < areaHeight; x += 2) {
-                for (y = 0; y < areaWidth; y += 8) {
+            for (x = 0; x < area_height; x += 2) {
+                for (y = 0; y < area_width; y += 8) {
 
                     _mm_storeu_si128((__m128i*) residual, _mm_sub_epi16(_mm_loadu_si128((__m128i*)input), _mm_loadu_si128((__m128i*)pred)));
-                    _mm_storeu_si128((__m128i*) (residual + residualStride), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride)), _mm_loadu_si128((__m128i*)(pred + predStride))));
+                    _mm_storeu_si128((__m128i*) (residual + residual_stride), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride)), _mm_loadu_si128((__m128i*)(pred + pred_stride))));
 
                     input += 8;
                     pred += 8;
@@ -650,11 +650,11 @@ void ResidualKernel16bit_SSE2_INTRIN(
             }
         }
         else {
-            for (x = 0; x < areaHeight; x += 2) {
-                for (y = 0; y < areaWidth; y += 4) {
+            for (x = 0; x < area_height; x += 2) {
+                for (y = 0; y < area_width; y += 4) {
 
                     _mm_storel_epi64((__m128i*) residual, _mm_sub_epi16(_mm_loadu_si128((__m128i*)input), _mm_loadu_si128((__m128i*)pred)));
-                    _mm_storel_epi64((__m128i*) (residual + residualStride), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + inputStride)), _mm_loadu_si128((__m128i*)(pred + predStride))));
+                    _mm_storel_epi64((__m128i*) (residual + residual_stride), _mm_sub_epi16(_mm_loadu_si128((__m128i*)(input + input_stride)), _mm_loadu_si128((__m128i*)(pred + pred_stride))));
 
                     input += 4;
                     pred += 4;
@@ -670,17 +670,17 @@ void ResidualKernel16bit_SSE2_INTRIN(
 }
 
 /******************************************************************************************************
-                                   PictureAdditionKernel16bit_SSE2_INTRIN
+                                   picture_addition_kernel16bit_sse2_intrin
 ******************************************************************************************************/
 
 
-void PictureAdditionKernel16bit_SSE2_INTRIN(
-    uint16_t  *predPtr,
-    uint32_t  predStride,
+void picture_addition_kernel16bit_sse2_intrin(
+    uint16_t  *pred_ptr,
+    uint32_t  pred_stride,
     int16_t *residual_ptr,
-    uint32_t  residualStride,
-    uint16_t  *reconPtr,
-    uint32_t  reconStride,
+    uint32_t  residual_stride,
+    uint16_t  *recon_ptr,
+    uint32_t  recon_stride,
     uint32_t  width,
     uint32_t  height)
 {
@@ -696,18 +696,18 @@ void PictureAdditionKernel16bit_SSE2_INTRIN(
         __m128i xmm_sum_0_3, xmm_sum_s0_s3, xmm_clip3_0_3, xmm_clip3_s0_s3;
         for (y = 0; y < height; y += 2) {
 
-            xmm_sum_0_3 = _mm_adds_epi16(_mm_loadl_epi64((__m128i*)predPtr), _mm_loadl_epi64((__m128i*)residual_ptr));
-            xmm_sum_s0_s3 = _mm_adds_epi16(_mm_loadl_epi64((__m128i*)(predPtr + predStride)), _mm_loadl_epi64((__m128i*)(residual_ptr + residualStride)));
+            xmm_sum_0_3 = _mm_adds_epi16(_mm_loadl_epi64((__m128i*)pred_ptr), _mm_loadl_epi64((__m128i*)residual_ptr));
+            xmm_sum_s0_s3 = _mm_adds_epi16(_mm_loadl_epi64((__m128i*)(pred_ptr + pred_stride)), _mm_loadl_epi64((__m128i*)(residual_ptr + residual_stride)));
 
             xmm_clip3_0_3 = _mm_max_epi16(_mm_min_epi16(xmm_sum_0_3, xmm_Max10bit), xmm_0);
             xmm_clip3_s0_s3 = _mm_max_epi16(_mm_min_epi16(xmm_sum_s0_s3, xmm_Max10bit), xmm_0);
 
-            _mm_storel_epi64((__m128i*) reconPtr, xmm_clip3_0_3);
-            _mm_storel_epi64((__m128i*) (reconPtr + reconStride), xmm_clip3_s0_s3);
+            _mm_storel_epi64((__m128i*) recon_ptr, xmm_clip3_0_3);
+            _mm_storel_epi64((__m128i*) (recon_ptr + recon_stride), xmm_clip3_s0_s3);
 
-            predPtr += predStride << 1;
-            residual_ptr += residualStride << 1;
-            reconPtr += reconStride << 1;
+            pred_ptr += pred_stride << 1;
+            residual_ptr += residual_stride << 1;
+            recon_ptr += recon_stride << 1;
         }
     }
     else if (width == 8) {
@@ -716,18 +716,18 @@ void PictureAdditionKernel16bit_SSE2_INTRIN(
 
         for (y = 0; y < height; y += 2) {
 
-            xmm_sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)predPtr), _mm_loadu_si128((__m128i*)residual_ptr));
-            xmm_sum_s0_s7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + predStride)), _mm_loadu_si128((__m128i*)(residual_ptr + residualStride)));
+            xmm_sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)pred_ptr), _mm_loadu_si128((__m128i*)residual_ptr));
+            xmm_sum_s0_s7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + pred_stride)), _mm_loadu_si128((__m128i*)(residual_ptr + residual_stride)));
 
             xmm_clip3_0_7 = _mm_max_epi16(_mm_min_epi16(xmm_sum_0_7, xmm_Max10bit), xmm_0);
             xmm_clip3_s0_s7 = _mm_max_epi16(_mm_min_epi16(xmm_sum_s0_s7, xmm_Max10bit), xmm_0);
 
-            _mm_storeu_si128((__m128i*) reconPtr, xmm_clip3_0_7);
-            _mm_storeu_si128((__m128i*) (reconPtr + reconStride), xmm_clip3_s0_s7);
+            _mm_storeu_si128((__m128i*) recon_ptr, xmm_clip3_0_7);
+            _mm_storeu_si128((__m128i*) (recon_ptr + recon_stride), xmm_clip3_s0_s7);
 
-            predPtr += predStride << 1;
-            residual_ptr += residualStride << 1;
-            reconPtr += reconStride << 1;
+            pred_ptr += pred_stride << 1;
+            residual_ptr += residual_stride << 1;
+            recon_ptr += recon_stride << 1;
         }
     }
     else if (width == 16) {
@@ -736,24 +736,24 @@ void PictureAdditionKernel16bit_SSE2_INTRIN(
 
         for (y = 0; y < height; y += 2) {
 
-            sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)predPtr), _mm_loadu_si128((__m128i*)residual_ptr));
-            sum_8_15 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + 8)), _mm_loadu_si128((__m128i*)(residual_ptr + 8)));
-            sum_s0_s7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + predStride)), _mm_loadu_si128((__m128i*)(residual_ptr + residualStride)));
-            sum_s8_s15 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + predStride + 8)), _mm_loadu_si128((__m128i*)(residual_ptr + residualStride + 8)));
+            sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)pred_ptr), _mm_loadu_si128((__m128i*)residual_ptr));
+            sum_8_15 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + 8)), _mm_loadu_si128((__m128i*)(residual_ptr + 8)));
+            sum_s0_s7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + pred_stride)), _mm_loadu_si128((__m128i*)(residual_ptr + residual_stride)));
+            sum_s8_s15 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + pred_stride + 8)), _mm_loadu_si128((__m128i*)(residual_ptr + residual_stride + 8)));
 
             clip3_0_7 = _mm_max_epi16(_mm_min_epi16(sum_0_7, xmm_Max10bit), xmm_0);
             clip3_8_15 = _mm_max_epi16(_mm_min_epi16(sum_8_15, xmm_Max10bit), xmm_0);
             clip3_s0_s7 = _mm_max_epi16(_mm_min_epi16(sum_s0_s7, xmm_Max10bit), xmm_0);
             clip3_s8_s15 = _mm_max_epi16(_mm_min_epi16(sum_s8_s15, xmm_Max10bit), xmm_0);
 
-            _mm_storeu_si128((__m128i*) reconPtr, clip3_0_7);
-            _mm_storeu_si128((__m128i*) (reconPtr + 8), clip3_8_15);
-            _mm_storeu_si128((__m128i*) (reconPtr + reconStride), clip3_s0_s7);
-            _mm_storeu_si128((__m128i*) (reconPtr + reconStride + 8), clip3_s8_s15);
+            _mm_storeu_si128((__m128i*) recon_ptr, clip3_0_7);
+            _mm_storeu_si128((__m128i*) (recon_ptr + 8), clip3_8_15);
+            _mm_storeu_si128((__m128i*) (recon_ptr + recon_stride), clip3_s0_s7);
+            _mm_storeu_si128((__m128i*) (recon_ptr + recon_stride + 8), clip3_s8_s15);
 
-            predPtr += predStride << 1;
-            residual_ptr += residualStride << 1;
-            reconPtr += reconStride << 1;
+            pred_ptr += pred_stride << 1;
+            residual_ptr += residual_stride << 1;
+            recon_ptr += recon_stride << 1;
         }
     }
     else if (width == 32) {
@@ -762,15 +762,15 @@ void PictureAdditionKernel16bit_SSE2_INTRIN(
 
         for (y = 0; y < height; y += 2) {
 
-            sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)predPtr), _mm_loadu_si128((__m128i*)residual_ptr));
-            sum_8_15 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + 8)), _mm_loadu_si128((__m128i*)(residual_ptr + 8)));
-            sum_16_23 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + 16)), _mm_loadu_si128((__m128i*)(residual_ptr + 16)));
-            sum_24_31 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + 24)), _mm_loadu_si128((__m128i*)(residual_ptr + 24)));
+            sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)pred_ptr), _mm_loadu_si128((__m128i*)residual_ptr));
+            sum_8_15 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + 8)), _mm_loadu_si128((__m128i*)(residual_ptr + 8)));
+            sum_16_23 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + 16)), _mm_loadu_si128((__m128i*)(residual_ptr + 16)));
+            sum_24_31 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + 24)), _mm_loadu_si128((__m128i*)(residual_ptr + 24)));
 
-            sum_s0_s7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + predStride)), _mm_loadu_si128((__m128i*)(residual_ptr + residualStride)));
-            sum_s8_s15 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + predStride + 8)), _mm_loadu_si128((__m128i*)(residual_ptr + residualStride + 8)));
-            sum_s16_s23 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + predStride + 16)), _mm_loadu_si128((__m128i*)(residual_ptr + residualStride + 16)));
-            sum_s24_s31 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + predStride + 24)), _mm_loadu_si128((__m128i*)(residual_ptr + residualStride + 24)));
+            sum_s0_s7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + pred_stride)), _mm_loadu_si128((__m128i*)(residual_ptr + residual_stride)));
+            sum_s8_s15 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + pred_stride + 8)), _mm_loadu_si128((__m128i*)(residual_ptr + residual_stride + 8)));
+            sum_s16_s23 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + pred_stride + 16)), _mm_loadu_si128((__m128i*)(residual_ptr + residual_stride + 16)));
+            sum_s24_s31 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + pred_stride + 24)), _mm_loadu_si128((__m128i*)(residual_ptr + residual_stride + 24)));
 
             clip3_0_7 = _mm_max_epi16(_mm_min_epi16(sum_0_7, xmm_Max10bit), xmm_0);
             clip3_8_15 = _mm_max_epi16(_mm_min_epi16(sum_8_15, xmm_Max10bit), xmm_0);
@@ -782,19 +782,19 @@ void PictureAdditionKernel16bit_SSE2_INTRIN(
             clip3_s16_s23 = _mm_max_epi16(_mm_min_epi16(sum_s16_s23, xmm_Max10bit), xmm_0);
             clip3_s24_s31 = _mm_max_epi16(_mm_min_epi16(sum_s24_s31, xmm_Max10bit), xmm_0);
 
-            _mm_storeu_si128((__m128i*) reconPtr, clip3_0_7);
-            _mm_storeu_si128((__m128i*) (reconPtr + 8), clip3_8_15);
-            _mm_storeu_si128((__m128i*) (reconPtr + 16), clip3_16_23);
-            _mm_storeu_si128((__m128i*) (reconPtr + 24), clip3_24_31);
+            _mm_storeu_si128((__m128i*) recon_ptr, clip3_0_7);
+            _mm_storeu_si128((__m128i*) (recon_ptr + 8), clip3_8_15);
+            _mm_storeu_si128((__m128i*) (recon_ptr + 16), clip3_16_23);
+            _mm_storeu_si128((__m128i*) (recon_ptr + 24), clip3_24_31);
 
-            _mm_storeu_si128((__m128i*) (reconPtr + reconStride), clip3_s0_s7);
-            _mm_storeu_si128((__m128i*) (reconPtr + reconStride + 8), clip3_s8_s15);
-            _mm_storeu_si128((__m128i*) (reconPtr + reconStride + 16), clip3_s16_s23);
-            _mm_storeu_si128((__m128i*) (reconPtr + reconStride + 24), clip3_s24_s31);
+            _mm_storeu_si128((__m128i*) (recon_ptr + recon_stride), clip3_s0_s7);
+            _mm_storeu_si128((__m128i*) (recon_ptr + recon_stride + 8), clip3_s8_s15);
+            _mm_storeu_si128((__m128i*) (recon_ptr + recon_stride + 16), clip3_s16_s23);
+            _mm_storeu_si128((__m128i*) (recon_ptr + recon_stride + 24), clip3_s24_s31);
 
-            predPtr += predStride << 1;
-            residual_ptr += residualStride << 1;
-            reconPtr += reconStride << 1;
+            pred_ptr += pred_stride << 1;
+            residual_ptr += residual_stride << 1;
+            recon_ptr += recon_stride << 1;
         }
     }
     else if (width == 64) { // Branch not tested due to Max TU size is 32 at time of development
@@ -804,14 +804,14 @@ void PictureAdditionKernel16bit_SSE2_INTRIN(
 
         for (y = 0; y < height; ++y) {
 
-            sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)predPtr), _mm_loadu_si128((__m128i*)residual_ptr));
-            sum_8_15 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + 8)), _mm_loadu_si128((__m128i*)(residual_ptr + 8)));
-            sum_16_23 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + 16)), _mm_loadu_si128((__m128i*)(residual_ptr + 16)));
-            sum_24_31 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + 24)), _mm_loadu_si128((__m128i*)(residual_ptr + 24)));
-            sum_32_39 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + 32)), _mm_loadu_si128((__m128i*)(residual_ptr + 32)));
-            sum_40_47 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + 40)), _mm_loadu_si128((__m128i*)(residual_ptr + 40)));
-            sum_48_55 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + 48)), _mm_loadu_si128((__m128i*)(residual_ptr + 48)));
-            sum_56_63 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + 56)), _mm_loadu_si128((__m128i*)(residual_ptr + 56)));
+            sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)pred_ptr), _mm_loadu_si128((__m128i*)residual_ptr));
+            sum_8_15 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + 8)), _mm_loadu_si128((__m128i*)(residual_ptr + 8)));
+            sum_16_23 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + 16)), _mm_loadu_si128((__m128i*)(residual_ptr + 16)));
+            sum_24_31 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + 24)), _mm_loadu_si128((__m128i*)(residual_ptr + 24)));
+            sum_32_39 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + 32)), _mm_loadu_si128((__m128i*)(residual_ptr + 32)));
+            sum_40_47 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + 40)), _mm_loadu_si128((__m128i*)(residual_ptr + 40)));
+            sum_48_55 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + 48)), _mm_loadu_si128((__m128i*)(residual_ptr + 48)));
+            sum_56_63 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + 56)), _mm_loadu_si128((__m128i*)(residual_ptr + 56)));
 
             clip3_0_7 = _mm_max_epi16(_mm_min_epi16(sum_0_7, xmm_Max10bit), xmm_0);
             clip3_8_15 = _mm_max_epi16(_mm_min_epi16(sum_8_15, xmm_Max10bit), xmm_0);
@@ -822,25 +822,25 @@ void PictureAdditionKernel16bit_SSE2_INTRIN(
             clip3_48_55 = _mm_max_epi16(_mm_min_epi16(sum_48_55, xmm_Max10bit), xmm_0);
             clip3_56_63 = _mm_max_epi16(_mm_min_epi16(sum_56_63, xmm_Max10bit), xmm_0);
 
-            _mm_storeu_si128((__m128i*) reconPtr, clip3_0_7);
-            _mm_storeu_si128((__m128i*) (reconPtr + 8), clip3_8_15);
-            _mm_storeu_si128((__m128i*) (reconPtr + 16), clip3_16_23);
-            _mm_storeu_si128((__m128i*) (reconPtr + 24), clip3_24_31);
-            _mm_storeu_si128((__m128i*) (reconPtr + 32), clip3_32_39);
-            _mm_storeu_si128((__m128i*) (reconPtr + 40), clip3_40_47);
-            _mm_storeu_si128((__m128i*) (reconPtr + 48), clip3_48_55);
-            _mm_storeu_si128((__m128i*) (reconPtr + 56), clip3_56_63);
+            _mm_storeu_si128((__m128i*) recon_ptr, clip3_0_7);
+            _mm_storeu_si128((__m128i*) (recon_ptr + 8), clip3_8_15);
+            _mm_storeu_si128((__m128i*) (recon_ptr + 16), clip3_16_23);
+            _mm_storeu_si128((__m128i*) (recon_ptr + 24), clip3_24_31);
+            _mm_storeu_si128((__m128i*) (recon_ptr + 32), clip3_32_39);
+            _mm_storeu_si128((__m128i*) (recon_ptr + 40), clip3_40_47);
+            _mm_storeu_si128((__m128i*) (recon_ptr + 48), clip3_48_55);
+            _mm_storeu_si128((__m128i*) (recon_ptr + 56), clip3_56_63);
 
-            predPtr += predStride;
-            residual_ptr += residualStride;
-            reconPtr += reconStride;
+            pred_ptr += pred_stride;
+            residual_ptr += residual_stride;
+            recon_ptr += recon_stride;
         }
     }
     else
     {
-        uint32_t predStrideDiff = 2 * predStride;
-        uint32_t residualStrideDiff = 2 * residualStride;
-        uint32_t reconStrideDiff = 2 * reconStride;
+        uint32_t predStrideDiff = 2 * pred_stride;
+        uint32_t residualStrideDiff = 2 * residual_stride;
+        uint32_t reconStrideDiff = 2 * recon_stride;
         predStrideDiff -= width;
         residualStrideDiff -= width;
         reconStrideDiff -= width;
@@ -852,22 +852,22 @@ void PictureAdditionKernel16bit_SSE2_INTRIN(
             for (x = 0; x < height; x += 2) {
                 for (y = 0; y < width; y += 8) {
 
-                    xmm_sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)predPtr), _mm_loadu_si128((__m128i*)residual_ptr));
-                    xmm_sum_s0_s7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + predStride)), _mm_loadu_si128((__m128i*)(residual_ptr + residualStride)));
+                    xmm_sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)pred_ptr), _mm_loadu_si128((__m128i*)residual_ptr));
+                    xmm_sum_s0_s7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + pred_stride)), _mm_loadu_si128((__m128i*)(residual_ptr + residual_stride)));
 
                     xmm_clip3_0_7 = _mm_max_epi16(_mm_min_epi16(xmm_sum_0_7, xmm_Max10bit), xmm_0);
                     xmm_clip3_s0_s7 = _mm_max_epi16(_mm_min_epi16(xmm_sum_s0_s7, xmm_Max10bit), xmm_0);
 
-                    _mm_storeu_si128((__m128i*) reconPtr, xmm_clip3_0_7);
-                    _mm_storeu_si128((__m128i*) (reconPtr + reconStride), xmm_clip3_s0_s7);
+                    _mm_storeu_si128((__m128i*) recon_ptr, xmm_clip3_0_7);
+                    _mm_storeu_si128((__m128i*) (recon_ptr + recon_stride), xmm_clip3_s0_s7);
 
-                    predPtr += 8;
+                    pred_ptr += 8;
                     residual_ptr += 8;
-                    reconPtr += 8;
+                    recon_ptr += 8;
                 }
-                predPtr += predStrideDiff;
+                pred_ptr += predStrideDiff;
                 residual_ptr += residualStrideDiff;
-                reconPtr += reconStrideDiff;
+                recon_ptr += reconStrideDiff;
             }
         }
         else {
@@ -875,22 +875,22 @@ void PictureAdditionKernel16bit_SSE2_INTRIN(
             for (x = 0; x < height; x += 2) {
                 for (y = 0; y < width; y += 4) {
 
-                    xmm_sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)predPtr), _mm_loadu_si128((__m128i*)residual_ptr));
-                    xmm_sum_s0_s7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(predPtr + predStride)), _mm_loadu_si128((__m128i*)(residual_ptr + residualStride)));
+                    xmm_sum_0_7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)pred_ptr), _mm_loadu_si128((__m128i*)residual_ptr));
+                    xmm_sum_s0_s7 = _mm_adds_epi16(_mm_loadu_si128((__m128i*)(pred_ptr + pred_stride)), _mm_loadu_si128((__m128i*)(residual_ptr + residual_stride)));
 
                     xmm_clip3_0_3 = _mm_max_epi16(_mm_min_epi16(xmm_sum_0_7, xmm_Max10bit), xmm_0);
                     xmm_clip3_s0_s3 = _mm_max_epi16(_mm_min_epi16(xmm_sum_s0_s7, xmm_Max10bit), xmm_0);
 
-                    _mm_storel_epi64((__m128i*) reconPtr, xmm_clip3_0_3);
-                    _mm_storel_epi64((__m128i*) (reconPtr + reconStride), xmm_clip3_s0_s3);
+                    _mm_storel_epi64((__m128i*) recon_ptr, xmm_clip3_0_3);
+                    _mm_storel_epi64((__m128i*) (recon_ptr + recon_stride), xmm_clip3_s0_s3);
 
-                    predPtr += 4;
+                    pred_ptr += 4;
                     residual_ptr += 4;
-                    reconPtr += 4;
+                    recon_ptr += 4;
                 }
-                predPtr += predStrideDiff;
+                pred_ptr += predStrideDiff;
                 residual_ptr += residualStrideDiff;
-                reconPtr += reconStrideDiff;
+                recon_ptr += reconStrideDiff;
             }
         }
     }

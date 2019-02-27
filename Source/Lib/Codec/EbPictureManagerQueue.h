@@ -88,13 +88,13 @@ extern "C" {
 
     } RcFeedbackQueueEntry_t;
 
-    extern EbErrorType InputQueueEntryCtor(
-        InputQueueEntry_t      **entryDblPtr);
+    extern EbErrorType input_queue_entry_ctor(
+        InputQueueEntry_t **entry_dbl_ptr);
 
 
 
-    extern EbErrorType ReferenceQueueEntryCtor(
-        ReferenceQueueEntry_t  **entryDblPtr);
+    extern EbErrorType reference_queue_entry_ctor(
+        ReferenceQueueEntry_t  **entry_dbl_ptr);
 
 
 #ifdef __cplusplus

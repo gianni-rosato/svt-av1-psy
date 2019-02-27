@@ -679,7 +679,7 @@ EbErrorType GenerateIntraReferenceSamplesEncodePass(
     neighborAvailable = EB_FALSE;
     while (blockIndex < leftBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_left_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -711,7 +711,7 @@ EbErrorType GenerateIntraReferenceSamplesEncodePass(
     reconArrayIndex = MAX_PICTURE_HEIGHT_SIZE + origin_x - origin_y;
     while (blockIndex < topLeftBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_left_index(
             mode_type_neighbor_array,
             origin_x,
             origin_y);
@@ -739,7 +739,7 @@ EbErrorType GenerateIntraReferenceSamplesEncodePass(
     reconArrayIndex = origin_x;
     while (blockIndex < topBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -808,7 +808,7 @@ EbErrorType GenerateIntraReferenceSamplesEncodePass(
     }
     else {
 
-        // Write Pad Value - adjust for the TopLeft block being 1-sample
+        // Write Pad value - adjust for the TopLeft block being 1-sample
         writeCountLuma = (blockIndex >= topLeftBlockEnd) ?
             (blockIndex - 1) * MIN_PU_SIZE + 1 :
             blockIndex * MIN_PU_SIZE;
@@ -834,7 +834,7 @@ EbErrorType GenerateIntraReferenceSamplesEncodePass(
     reconArrayIndex = origin_y + (2 * size - MIN_PU_SIZE) - (blockIndex * MIN_PU_SIZE);
     while (blockIndex < leftBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_left_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -885,7 +885,7 @@ EbErrorType GenerateIntraReferenceSamplesEncodePass(
     reconArrayIndex = MAX_PICTURE_HEIGHT_SIZE + origin_x - origin_y;
     while (blockIndex < topLeftBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_left_index(
             mode_type_neighbor_array,
             origin_x,
             origin_y);
@@ -902,7 +902,7 @@ EbErrorType GenerateIntraReferenceSamplesEncodePass(
             *cbWritePtr = topLeftCbReconNeighborArray[reconArrayIndex >> 1];
             *crWritePtr = topLeftCrReconNeighborArray[reconArrayIndex >> 1];
 
-            // Set Pad Value
+            // Set Pad value
             lumaPadValue = topLeftLumaReconNeighborArray[reconArrayIndex];
             cbPadValue = topLeftCbReconNeighborArray[reconArrayIndex >> 1];
             crPadValue = topLeftCrReconNeighborArray[reconArrayIndex >> 1];
@@ -926,7 +926,7 @@ EbErrorType GenerateIntraReferenceSamplesEncodePass(
     reconArrayIndex = origin_x + (blockIndex - topLeftBlockEnd) * MIN_PU_SIZE;
     while (blockIndex < topBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -1198,7 +1198,7 @@ EbErrorType GenerateIntraReference16bitSamplesEncodePass(
     neighborAvailable = EB_FALSE;
     while (blockIndex < leftBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_left_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -1231,7 +1231,7 @@ EbErrorType GenerateIntraReference16bitSamplesEncodePass(
     reconArrayIndex = MAX_PICTURE_HEIGHT_SIZE + origin_x - origin_y;
     while (blockIndex < topLeftBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_left_index(
             mode_type_neighbor_array,
             origin_x,
             origin_y);
@@ -1259,7 +1259,7 @@ EbErrorType GenerateIntraReference16bitSamplesEncodePass(
     reconArrayIndex = origin_x;
     while (blockIndex < topBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -1328,7 +1328,7 @@ EbErrorType GenerateIntraReference16bitSamplesEncodePass(
     }
     else {
 
-        // Write Pad Value - adjust for the TopLeft block being 1-sample
+        // Write Pad value - adjust for the TopLeft block being 1-sample
         writeCountLuma = (blockIndex >= topLeftBlockEnd) ?
             (blockIndex - 1) * MIN_PU_SIZE + 1 :
             blockIndex * MIN_PU_SIZE;
@@ -1354,7 +1354,7 @@ EbErrorType GenerateIntraReference16bitSamplesEncodePass(
     reconArrayIndex = origin_y + (2 * size - MIN_PU_SIZE) - (blockIndex * MIN_PU_SIZE);
     while (blockIndex < leftBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_left_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -1407,7 +1407,7 @@ EbErrorType GenerateIntraReference16bitSamplesEncodePass(
     reconArrayIndex = MAX_PICTURE_HEIGHT_SIZE + origin_x - origin_y;
     while (blockIndex < topLeftBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_left_index(
             mode_type_neighbor_array,
             origin_x,
             origin_y);
@@ -1425,7 +1425,7 @@ EbErrorType GenerateIntraReference16bitSamplesEncodePass(
             *cbWritePtr = topLeftCbReconNeighborArray[reconArrayIndex >> 1];
             *crWritePtr = topLeftCrReconNeighborArray[reconArrayIndex >> 1];
 
-            // Set Pad Value
+            // Set Pad value
             lumaPadValue = topLeftLumaReconNeighborArray[reconArrayIndex];
             cbPadValue = topLeftCbReconNeighborArray[reconArrayIndex >> 1];
             crPadValue = topLeftCrReconNeighborArray[reconArrayIndex >> 1];
@@ -1449,7 +1449,7 @@ EbErrorType GenerateIntraReference16bitSamplesEncodePass(
     reconArrayIndex = origin_x + (blockIndex - topLeftBlockEnd) * MIN_PU_SIZE;
     while (blockIndex < topBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -1702,7 +1702,7 @@ EbErrorType GenerateLumaIntraReference16bitSamplesEncodePass(
     neighborAvailable = EB_FALSE;
     while (blockIndex < leftBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_left_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -1731,7 +1731,7 @@ EbErrorType GenerateLumaIntraReference16bitSamplesEncodePass(
     reconArrayIndex = MAX_PICTURE_HEIGHT_SIZE + origin_x - origin_y;
     while (blockIndex < topLeftBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_left_index(
             mode_type_neighbor_array,
             origin_x,
             origin_y);
@@ -1756,7 +1756,7 @@ EbErrorType GenerateLumaIntraReference16bitSamplesEncodePass(
     reconArrayIndex = origin_x;
     while (blockIndex < topBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -1806,7 +1806,7 @@ EbErrorType GenerateLumaIntraReference16bitSamplesEncodePass(
     }
     else {
 
-        // Write Pad Value - adjust for the TopLeft block being 1-sample
+        // Write Pad value - adjust for the TopLeft block being 1-sample
         writeCountLuma = (blockIndex >= topLeftBlockEnd) ?
             (blockIndex - 1) * MIN_PU_SIZE + 1 :
             blockIndex * MIN_PU_SIZE;
@@ -1824,7 +1824,7 @@ EbErrorType GenerateLumaIntraReference16bitSamplesEncodePass(
     reconArrayIndex = origin_y + (2 * size - MIN_PU_SIZE) - (blockIndex * MIN_PU_SIZE);
     while (blockIndex < leftBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_left_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -1862,7 +1862,7 @@ EbErrorType GenerateLumaIntraReference16bitSamplesEncodePass(
     reconArrayIndex = MAX_PICTURE_HEIGHT_SIZE + origin_x - origin_y;
     while (blockIndex < topLeftBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_left_index(
             mode_type_neighbor_array,
             origin_x,
             origin_y);
@@ -1877,7 +1877,7 @@ EbErrorType GenerateLumaIntraReference16bitSamplesEncodePass(
             // Copy sample
             *lumaWritePtr = topLeftLumaReconNeighborArray[reconArrayIndex];
 
-            // Set Pad Value
+            // Set Pad value
             lumaPadValue = topLeftLumaReconNeighborArray[reconArrayIndex];
         }
         else {
@@ -1896,7 +1896,7 @@ EbErrorType GenerateLumaIntraReference16bitSamplesEncodePass(
 
     while (blockIndex < topBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -2123,7 +2123,7 @@ EbErrorType GenerateChromaIntraReference16bitSamplesEncodePass(
     neighborAvailable = EB_FALSE;
     while (blockIndex < leftBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_left_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -2154,7 +2154,7 @@ EbErrorType GenerateChromaIntraReference16bitSamplesEncodePass(
     reconArrayIndex = MAX_PICTURE_HEIGHT_SIZE + origin_x - origin_y;
     while (blockIndex < topLeftBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_left_index(
             mode_type_neighbor_array,
             origin_x,
             origin_y);
@@ -2181,7 +2181,7 @@ EbErrorType GenerateChromaIntraReference16bitSamplesEncodePass(
     reconArrayIndex = origin_x;
     while (blockIndex < topBlockEnd && neighborAvailable == EB_FALSE) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -2243,7 +2243,7 @@ EbErrorType GenerateChromaIntraReference16bitSamplesEncodePass(
     }
     else {
 
-        // Write Pad Value - adjust for the TopLeft block being 1-sample
+        // Write Pad value - adjust for the TopLeft block being 1-sample
         writeCountChroma = (blockIndex >= topLeftBlockEnd) ?
             (((blockIndex - 1) * MIN_PU_SIZE) >> 1) + 1 :
             ((blockIndex    * MIN_PU_SIZE) >> 1);
@@ -2263,7 +2263,7 @@ EbErrorType GenerateChromaIntraReference16bitSamplesEncodePass(
     reconArrayIndex = origin_y + (2 * size - MIN_PU_SIZE) - (blockIndex * MIN_PU_SIZE);
     while (blockIndex < leftBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_left_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -2308,7 +2308,7 @@ EbErrorType GenerateChromaIntraReference16bitSamplesEncodePass(
     reconArrayIndex = MAX_PICTURE_HEIGHT_SIZE + origin_x - origin_y;
     while (blockIndex < topLeftBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopLeftIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_left_index(
             mode_type_neighbor_array,
             origin_x,
             origin_y);
@@ -2325,7 +2325,7 @@ EbErrorType GenerateChromaIntraReference16bitSamplesEncodePass(
             *cbWritePtr = topLeftCbReconNeighborArray[reconArrayIndex >> 1];
             *crWritePtr = topLeftCrReconNeighborArray[reconArrayIndex >> 1];
 
-            // Set Pad Value
+            // Set Pad value
             cbPadValue = topLeftCbReconNeighborArray[reconArrayIndex >> 1];
             crPadValue = topLeftCrReconNeighborArray[reconArrayIndex >> 1];
         }
@@ -2347,7 +2347,7 @@ EbErrorType GenerateChromaIntraReference16bitSamplesEncodePass(
 
     while (blockIndex < topBlockEnd) {
 
-        modeArrayIndex = GetNeighborArrayUnitTopIndex(
+        modeArrayIndex = get_neighbor_array_unit_top_index(
             mode_type_neighbor_array,
             reconArrayIndex);
 
@@ -2435,22 +2435,22 @@ EbErrorType GenerateChromaIntraReference16bitSamplesEncodePass(
 static void IntraModeAngular_27To33(
     uint32_t            mode,                       //input parameter, indicates the Intra luma mode
     const uint32_t      size,                       //input parameter, denotes the size of the current PU
-    uint8_t            *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t            *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
-    const uint32_t      predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t      prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     EbAsm            asm_type)
 {
-    uint8_t           *refSampMain;
-    int32_t           intraPredAngle = intraModeAngularTable[mode - INTRA_VERTICAL_MODE];
-    refSampMain = refSamples + (size << 1);
+    uint8_t           *ref_samp_main;
+    int32_t           intra_pred_angle = intraModeAngularTable[mode - INTRA_VERTICAL_MODE];
+    ref_samp_main = ref_samples + (size << 1);
 
     IntraAngVertical_funcPtrArray[asm_type](
         size,
-        refSampMain,
+        ref_samp_main,
         prediction_ptr,
-        predictionBufferStride,
+        prediction_buffer_stride,
         EB_FALSE,
-        intraPredAngle);
+        intra_pred_angle);
 
     return;
 }
@@ -2462,27 +2462,27 @@ static void IntraModeAngular_27To33(
 static void IntraModeAngular_19To25(
     uint32_t            mode,                       //input parameter, indicates the Intra luma mode
     const uint32_t      size,                       //input parameter, denotes the size of the current PU
-    uint8_t            *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t            *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
-    const uint32_t      predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t      prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     uint8_t            *refAbove,
     EbBool          *AboveReadyFlag,
     EbAsm            asm_type
 )
 {
-    uint8_t        *refSampMain;
+    uint8_t        *ref_samp_main;
     uint8_t        *refSampSide;
     const uint32_t  numberOfSamples = size + 1;
     int32_t        signIndex;
     const uint32_t  refOffset = (size << 1);
-    int32_t        intraPredAngle = 0;
+    int32_t        intra_pred_angle = 0;
     uint32_t        invAngle = 0;
     uint32_t        invAngleSum = 128;       // rounding used for (shift by 8)
     int32_t        idx;
     uint32_t        index;
 
     if (INTRA_VERTICAL_MODE - mode < 9) { // check for index range, has to be less than size of array
-        intraPredAngle = intraModeAngularTableNegative[INTRA_VERTICAL_MODE - mode];
+        intra_pred_angle = intraModeAngularTableNegative[INTRA_VERTICAL_MODE - mode];
         invAngle = invIntraModeAngularTable[INTRA_VERTICAL_MODE - mode];
     }
 
@@ -2493,28 +2493,28 @@ static void IntraModeAngular_19To25(
         *AboveReadyFlag = EB_TRUE;
         // Copy above reference samples (inc top left)
         for (index = 0; index < numberOfSamples; index++) {
-            refAbove[index + size - 1] = refSamples[refOffset + index];
+            refAbove[index + size - 1] = ref_samples[refOffset + index];
         }
     }
 
-    refSampMain = refAbove + (size - 1);
+    ref_samp_main = refAbove + (size - 1);
 
     // Extend the Main reference to the left for angles with negative slope
-    refSampSide = refSamples + (size << 1);
-    for (signIndex = -1; signIndex > (int32_t)((int32_t)size*intraPredAngle >> 5); --signIndex) {
+    refSampSide = ref_samples + (size << 1);
+    for (signIndex = -1; signIndex > (int32_t)((int32_t)size*intra_pred_angle >> 5); --signIndex) {
         invAngleSum += invAngle;
         idx = (-((int32_t)invAngleSum >> 8));
-        refSampMain[signIndex] = refSampSide[idx];
+        ref_samp_main[signIndex] = refSampSide[idx];
     }
 
 
     IntraAngVertical_funcPtrArray[asm_type](
         size,
-        refSampMain,
+        ref_samp_main,
         prediction_ptr,
-        predictionBufferStride,
+        prediction_buffer_stride,
         EB_FALSE,
-        intraPredAngle);
+        intra_pred_angle);
 
     return;
 }
@@ -2527,21 +2527,21 @@ static void IntraModeAngular_19To25(
 static void IntraModeAngular_11To17(
     uint32_t            mode,                       //input parameter, indicates the Intra luma mode
     const uint32_t      size,                       //input parameter, denotes the size of the current PU
-    uint8_t            *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t            *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
-    const uint32_t      predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t      prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     uint8_t            *refLeft,
     EbBool          *LeftReadyFlag,
     EbAsm            asm_type)
 {
-    uint8_t          *refSampMain;
+    uint8_t          *ref_samp_main;
     uint8_t          *refSampSide;
     const uint32_t    numberOfSamples = size + 1;
     int32_t          signIndex;
     const uint32_t    refOffset = (size << 1);
     uint32_t          index;
 
-    int32_t          intraPredAngle = intraModeAngularTableNegative[mode - INTRA_HORIZONTAL_MODE];
+    int32_t          intra_pred_angle = intraModeAngularTableNegative[mode - INTRA_HORIZONTAL_MODE];
     uint32_t          invAngle = invIntraModeAngularTable[mode - INTRA_HORIZONTAL_MODE];
     uint32_t          invAngleSum = 128;       // rounding used for (shift by 8)
 
@@ -2552,28 +2552,28 @@ static void IntraModeAngular_11To17(
         *LeftReadyFlag = EB_TRUE;
         // Copy left reference samples (inc top left)(DO we really need all the data including topright??)
         for (index = 0; index < numberOfSamples; index++) {
-            refLeft[index + size - 1] = refSamples[refOffset - index];
+            refLeft[index + size - 1] = ref_samples[refOffset - index];
         }
     }
 
-    refSampMain = refLeft + (size - 1);
+    ref_samp_main = refLeft + (size - 1);
 
     // Extend the Main reference to the left for angles with negative slope
-    refSampSide = refSamples + (size << 1);
+    refSampSide = ref_samples + (size << 1);
 
-    for (signIndex = -1; signIndex > (int32_t)((int32_t)size*intraPredAngle >> 5); --signIndex) {
+    for (signIndex = -1; signIndex > (int32_t)((int32_t)size*intra_pred_angle >> 5); --signIndex) {
         invAngleSum += invAngle;
-        refSampMain[signIndex] = refSampSide[invAngleSum >> 8];
+        ref_samp_main[signIndex] = refSampSide[invAngleSum >> 8];
     }
 
 
     IntraAngHorizontal_funcPtrArray[asm_type](
         size,
-        refSampMain,
+        ref_samp_main,
         prediction_ptr,
-        predictionBufferStride,
+        prediction_buffer_stride,
         EB_FALSE,
-        intraPredAngle);
+        intra_pred_angle);
 
     return;
 }
@@ -2585,24 +2585,24 @@ static void IntraModeAngular_11To17(
 static void IntraModeAngular_3To9(
     uint32_t            mode,                       //input parameter, indicates the Intra luma mode
     const uint32_t      size,                       //input parameter, denotes the size of the current PU
-    uint8_t            *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t            *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
-    const uint32_t      predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t      prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     EbAsm            asm_type)
 {
-    uint8_t        *refSampMain;
+    uint8_t        *ref_samp_main;
 
-    int32_t        intraPredAngle = (INTRA_HORIZONTAL_MODE - mode) < 9 ? intraModeAngularTable[INTRA_HORIZONTAL_MODE - mode] : 0;
+    int32_t        intra_pred_angle = (INTRA_HORIZONTAL_MODE - mode) < 9 ? intraModeAngularTable[INTRA_HORIZONTAL_MODE - mode] : 0;
 
-    refSampMain = refSamples - 1;
+    ref_samp_main = ref_samples - 1;
 
     IntraAngHorizontal_funcPtrArray[asm_type](
         size,
-        refSampMain,
+        ref_samp_main,
         prediction_ptr,
-        predictionBufferStride,
+        prediction_buffer_stride,
         EB_FALSE,
-        intraPredAngle);
+        intra_pred_angle);
 
     return;
 }
@@ -2611,15 +2611,15 @@ void highbd_dc_predictor(
     EbBool                         is_left_availble,
     EbBool                         is_above_availble,
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
 
     //uint32_t sum = 0;
 //    uint32_t index;
-    uint32_t columnIndex, rowIndex;
+    uint32_t columnIndex, row_index;
     uint32_t writeIndex;
     uint32_t leftOffset = 0;
     uint32_t topOffset = (size << 1) + 1;
@@ -2633,23 +2633,23 @@ void highbd_dc_predictor(
     if (is_left_availble && !is_above_availble) {
 
         for (i = 0; i < size; i++) {
-            sum += refSamples[leftOffset + i];
+            sum += ref_samples[leftOffset + i];
         }
         expected_dc = (sum + (size >> 1)) / size;
     }
     else if (is_above_availble && !is_left_availble) {
         for (i = 0; i < size; i++) {
-            sum += refSamples[topOffset + i];
+            sum += ref_samples[topOffset + i];
         }
         expected_dc = (sum + (size >> 1)) / size;
     }
     else {
 
         for (i = 0; i < size; i++) {
-            sum += refSamples[topOffset + i];
+            sum += ref_samples[topOffset + i];
         }
         for (i = 0; i < size; i++) {
-            sum += refSamples[leftOffset + i];
+            sum += ref_samples[leftOffset + i];
         }
         expected_dc = (sum + (count >> 1)) / count;
 
@@ -2659,48 +2659,48 @@ void highbd_dc_predictor(
     // expected_dc = (sum + (count >> 1)) / count;
 
      /*for (r = 0; r < size; r++) {
-         writeIndex = rowIndex * predictionBufferStride;
+         writeIndex = row_index * prediction_buffer_stride;
 
          EB_MEMSET( dst, expected_dc, size);
 
-         dst += rowStride* predictionBufferStride;
+         dst += rowStride* prediction_buffer_stride;
      }*/
 
      // Generate the prediction
-    for (rowIndex = 0; rowIndex < size; rowIndex += rowStride) {
-        writeIndex = rowIndex * predictionBufferStride;
+    for (row_index = 0; row_index < size; row_index += rowStride) {
+        writeIndex = row_index * prediction_buffer_stride;
         for (columnIndex = 0; columnIndex < size; ++columnIndex) {
             dst[writeIndex] = (uint8_t)expected_dc;
             ++writeIndex;
         }
     }
     // --------- Reference Samples Structure ---------
-    // refSamples[0]        = Left[0]
-    // refSamples[1]        = Left[1]
+    // ref_samples[0]        = Left[0]
+    // ref_samples[1]        = Left[1]
     // ...
-    // refSamples[size-1]   = Left[size-1]
+    // ref_samples[size-1]   = Left[size-1]
     // ... (arbitrary value)
-    // refSamples[2*size+1] = Top[0]
-    // refSamples[2*size+2] = Top[1]
+    // ref_samples[2*size+1] = Top[0]
+    // ref_samples[2*size+2] = Top[1]
     // ...
-    // refSamples[3*size]   = Top[size-1]
+    // ref_samples[3*size]   = Top[size-1]
     // -----------------------------------------------
 
     // top reference samples
     //for (index = 0; index< size; index++) {
-    //    sum += refSamples[topOffset + index];
+    //    sum += ref_samples[topOffset + index];
     //}
 
     //// left reference samples
     //for (index = 0; index< size; index++) {
-    //    sum += refSamples[leftOffset + index];
+    //    sum += ref_samples[leftOffset + index];
     //}
 
     //predictionDcValue = (uint8_t)((sum + size) >> Log2f(size << 1));
 
     //// Generate the prediction
-    //for (rowIndex = 0; rowIndex < size; rowIndex += rowStride) {
-    //    writeIndex = rowIndex * predictionBufferStride;
+    //for (row_index = 0; row_index < size; row_index += rowStride) {
+    //    writeIndex = row_index * prediction_buffer_stride;
     //    for (columnIndex = 0; columnIndex < size; ++columnIndex) {
     //        prediction_ptr[writeIndex] = predictionDcValue;
     //        ++writeIndex;
@@ -2709,17 +2709,17 @@ void highbd_dc_predictor(
 
     //// Perform DC filtering on boundary pixels for all sizes 4, 8, 16
     //if (size < 32) {
-    //    prediction_ptr[0] = (uint8_t)((refSamples[leftOffset] + refSamples[topOffset] + (prediction_ptr[0] << 1) + 2) >> 2);
+    //    prediction_ptr[0] = (uint8_t)((ref_samples[leftOffset] + ref_samples[topOffset] + (prediction_ptr[0] << 1) + 2) >> 2);
 
     //    // first row
     //    for (columnIndex = 1; columnIndex<size; columnIndex++) {
-    //        prediction_ptr[columnIndex] = (uint8_t)((refSamples[topOffset + columnIndex] + 3 * prediction_ptr[columnIndex] + 2) >> 2);
+    //        prediction_ptr[columnIndex] = (uint8_t)((ref_samples[topOffset + columnIndex] + 3 * prediction_ptr[columnIndex] + 2) >> 2);
     //    }
 
     //    //first col
-    //    for (rowIndex = rowStride; rowIndex<size; rowIndex += rowStride) {
-    //        writeIndex = rowIndex*predictionBufferStride;
-    //        prediction_ptr[writeIndex] = (uint8_t)((refSamples[leftOffset + rowIndex] + 3 * prediction_ptr[writeIndex] + 2) >> 2);
+    //    for (row_index = rowStride; row_index<size; row_index += rowStride) {
+    //        writeIndex = row_index*prediction_buffer_stride;
+    //        prediction_ptr[writeIndex] = (uint8_t)((ref_samples[leftOffset + row_index] + 3 * prediction_ptr[writeIndex] + 2) >> 2);
     //    }
     //}
 
@@ -2729,9 +2729,9 @@ void highbd_dc_predictor(
 /* clang-format on */
 void IntraModePlanar(
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
 
@@ -2742,8 +2742,8 @@ void IntraModePlanar(
     uint32_t topOffset = (size << 1) + 1;
 
 
-    const uint8_t below_pred = refSamples[leftOffset + size - 1];   // estimated by bottom-left pixel
-    const uint8_t right_pred = refSamples[topOffset + size - 1];  // estimated by top-right pixel
+    const uint8_t below_pred = ref_samples[leftOffset + size - 1];   // estimated by bottom-left pixel
+    const uint8_t right_pred = ref_samples[topOffset + size - 1];  // estimated by top-right pixel
 
     const uint8_t *const sm_weights_w = sm_weight_arrays + size;
     const uint8_t *const sm_weights_h = sm_weight_arrays + size;
@@ -2756,7 +2756,7 @@ void IntraModePlanar(
         uint32_t c;
         for (c = 0; c < size; ++c) {
 
-            const uint8_t pixels[] = { refSamples[topOffset + c], below_pred,  refSamples[leftOffset + r], right_pred };
+            const uint8_t pixels[] = { ref_samples[topOffset + c], below_pred,  ref_samples[leftOffset + r], right_pred };
 
             const uint8_t weights[] = { sm_weights_h[r], (uint8_t)(scale - sm_weights_h[r]),
                 sm_weights_w[c], (uint8_t)(scale - sm_weights_w[c]) };
@@ -2768,7 +2768,7 @@ void IntraModePlanar(
             }
             dst[c] = (uint8_t)divide_round(this_pred, log2_scale);
         }
-        dst += rowStride * predictionBufferStride;
+        dst += rowStride * prediction_buffer_stride;
     }
 
     return;
@@ -2838,15 +2838,15 @@ void IntraModePlanar(
 
 void highbd_smooth_v_predictor(
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint16_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint16_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint16_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
     (void)skip;
     const uint32_t          bottomLeftEnd = 1 * (size);
     const uint32_t          topLeftBlockEnd = 2 * (size)+1;
-    const uint16_t below_pred = refSamples[bottomLeftEnd - 1];//left[size - 1];  // estimated by bottom-left pixel
+    const uint16_t below_pred = ref_samples[bottomLeftEnd - 1];//left[size - 1];  // estimated by bottom-left pixel
     const uint8_t *const sm_weights = sm_weight_arrays + size;
     // scale = 2^sm_weight_log2_scale
     const int32_t log2_scale = sm_weight_log2_scale;
@@ -2858,7 +2858,7 @@ void highbd_smooth_v_predictor(
     for (r = 0; r < size; r++) {
         uint16_t c;
         for (c = 0; c < size; ++c) {
-            const uint16_t pixels[] = { refSamples[topLeftBlockEnd + c], below_pred };
+            const uint16_t pixels[] = { ref_samples[topLeftBlockEnd + c], below_pred };
             const uint8_t weights[] = { (uint8_t)(sm_weights[r]), (uint8_t)(scale - sm_weights[r]) };
             uint32_t this_pred = 0;
             assert(scale >= sm_weights[r]);
@@ -2868,7 +2868,7 @@ void highbd_smooth_v_predictor(
             }
             dst[c] = (uint16_t)divide_round(this_pred, log2_scale);
         }
-        dst += predictionBufferStride;
+        dst += prediction_buffer_stride;
     }
     return;
 }
@@ -2876,9 +2876,9 @@ void highbd_smooth_v_predictor(
 /* clang-format on */
 void ebav1_smooth_v_predictor(
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
     (void)skip;
@@ -2886,7 +2886,7 @@ void ebav1_smooth_v_predictor(
     const uint32_t          bottomLeftEnd = 1 * (size);
     const uint32_t          topLeftBlockEnd = 2 * (size)+1;
 
-    const uint8_t below_pred = refSamples[bottomLeftEnd - 1];//left[size - 1];  // estimated by bottom-left pixel
+    const uint8_t below_pred = ref_samples[bottomLeftEnd - 1];//left[size - 1];  // estimated by bottom-left pixel
     const uint8_t *const sm_weights = sm_weight_arrays + size;
     // scale = 2^sm_weight_log2_scale
     const int32_t log2_scale = sm_weight_log2_scale;
@@ -2898,7 +2898,7 @@ void ebav1_smooth_v_predictor(
     for (r = 0; r < size; r++) {
         uint16_t c;
         for (c = 0; c < size; ++c) {
-            const uint8_t pixels[] = { refSamples[topLeftBlockEnd + c], below_pred };
+            const uint8_t pixels[] = { ref_samples[topLeftBlockEnd + c], below_pred };
             const uint8_t weights[] = { (uint8_t)(sm_weights[r]), (uint8_t)(scale - sm_weights[r]) };
             uint32_t this_pred = 0;
             assert(scale >= sm_weights[r]);
@@ -2908,22 +2908,22 @@ void ebav1_smooth_v_predictor(
             }
             dst[c] = (uint8_t)divide_round(this_pred, log2_scale);
         }
-        dst += predictionBufferStride;
+        dst += prediction_buffer_stride;
     }
     return;
 }
 #if !QT_10BIT_SUPPORT
 void highbd_smooth_h_predictor(
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint16_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint16_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint16_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
     (void)skip;
 
     const uint32_t          topLeftBlockEnd = 2 * (size)+1;
-    const uint16_t right_pred = refSamples[topLeftBlockEnd + size - 1];  // estimated by top-right pixel
+    const uint16_t right_pred = ref_samples[topLeftBlockEnd + size - 1];  // estimated by top-right pixel
     const uint8_t *const sm_weights = sm_weight_arrays + size;
     // scale = 2^sm_weight_log2_scale
     const int32_t log2_scale = sm_weight_log2_scale;
@@ -2935,7 +2935,7 @@ void highbd_smooth_h_predictor(
     for (r = 0; r < size; r++) {
         uint16_t c;
         for (c = 0; c < size; ++c) {
-            const uint16_t pixels[] = { refSamples[r], right_pred };
+            const uint16_t pixels[] = { ref_samples[r], right_pred };
             const uint8_t weights[] = { (uint8_t)(sm_weights[c]), (uint8_t)(scale - scale - sm_weights[c]) };
             uint32_t this_pred = 0;
             assert(scale >= sm_weights[c]);
@@ -2945,22 +2945,22 @@ void highbd_smooth_h_predictor(
             }
             dst[c] = (uint16_t)divide_round(this_pred, log2_scale);
         }
-        dst += predictionBufferStride;
+        dst += prediction_buffer_stride;
     }
     return;
 }
 #endif
 void ebav1_smooth_h_predictor(
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)
 {
     (void)skip;
     const uint32_t          topLeftBlockEnd = 2 * (size)+1;
 
-    const uint8_t right_pred = refSamples[topLeftBlockEnd + size - 1];  // estimated by top-right pixel
+    const uint8_t right_pred = ref_samples[topLeftBlockEnd + size - 1];  // estimated by top-right pixel
     const uint8_t *const sm_weights = sm_weight_arrays + size;
     // scale = 2^sm_weight_log2_scale
     const int32_t log2_scale = sm_weight_log2_scale;
@@ -2972,7 +2972,7 @@ void ebav1_smooth_h_predictor(
     for (r = 0; r < size; r++) {
         uint16_t c;
         for (c = 0; c < size; ++c) {
-            const uint8_t pixels[] = { refSamples[r], right_pred };
+            const uint8_t pixels[] = { ref_samples[r], right_pred };
             const uint8_t weights[] = { (uint8_t)(sm_weights[c]), (uint8_t)(scale - scale - sm_weights[c]) };
             uint32_t this_pred = 0;
             assert(scale >= sm_weights[c]);
@@ -2982,7 +2982,7 @@ void ebav1_smooth_h_predictor(
             }
             dst[c] = (uint8_t)divide_round(this_pred, log2_scale);
         }
-        dst += predictionBufferStride;
+        dst += prediction_buffer_stride;
     }
     return;
 }
@@ -2991,14 +2991,14 @@ void ebav1_smooth_h_predictor(
 
 
 void ebav1_v_predictor(uint8_t *dst, const uint32_t stride, int32_t bw, int32_t bh,
-    const uint8_t *refSamples) {
+    const uint8_t *ref_samples) {
     int32_t r;
     int32_t c;
 
     for (r = 0; r < bh; r++) {
         for (c = 0; c < bh; c++) {
-            dst[c + r * stride] = refSamples[bw + bh + 1 + c];
-            //EB_MEMSET(dst, refSamples[bw + bh + 1], bw);
+            dst[c + r * stride] = ref_samples[bw + bh + 1 + c];
+            //EB_MEMSET(dst, ref_samples[bw + bh + 1], bw);
            //dst += stride;
         }
     }
@@ -3006,12 +3006,12 @@ void ebav1_v_predictor(uint8_t *dst, const uint32_t stride, int32_t bw, int32_t 
 
 
 void ebav1_h_predictor(uint8_t *dst, const uint32_t stride, int32_t bw, int32_t bh,
-    const uint8_t *refSamples) {
+    const uint8_t *ref_samples) {
     int32_t r;
     //(void)above;
 
     for (r = 0; r < bh; r++) {
-        EB_MEMSET(dst, refSamples[r], bw);
+        EB_MEMSET(dst, ref_samples[r], bw);
         dst += stride;
     }
 
@@ -3020,9 +3020,9 @@ void ebav1_h_predictor(uint8_t *dst, const uint32_t stride, int32_t bw, int32_t 
 
 void IntraModeAngular_AV1_Z1(
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip,
     uint16_t          dx,              //output parameter, pointer to the prediction
     uint16_t          dy              //output parameter, pointer to the prediction
@@ -3031,7 +3031,7 @@ void IntraModeAngular_AV1_Z1(
 {
     (void)dy;
 
-    //    uint32_t rowIndex, colIndex;
+    //    uint32_t row_index, colIndex;
     uint32_t toAboveOffset = (size << 1) + 1;
     uint32_t rowStride = skip ? 2 : 1;
 
@@ -3045,28 +3045,28 @@ void IntraModeAngular_AV1_Z1(
     x = dx;
 
 
-    for (r = 0; r < size; ++r, dst += (rowStride* predictionBufferStride), x += dx) {
+    for (r = 0; r < size; ++r, dst += (rowStride* prediction_buffer_stride), x += dx) {
         base = x >> frac_bits;
         shift = ((x) & 0x3F) >> 1;
 
         if (base >= max_base_x) {
             for (uint32_t i = r; i < size; ++i) {
-                EB_MEMSET(dst, refSamples[toAboveOffset + max_base_x], size);
-                dst += rowStride * predictionBufferStride;
+                EB_MEMSET(dst, ref_samples[toAboveOffset + max_base_x], size);
+                dst += rowStride * prediction_buffer_stride;
             }
             return;
         }
 
         for (c = 0; c < size; ++c, base += base_inc) {
             if (base < max_base_x) {
-                val = refSamples[toAboveOffset + base] * (32 - shift) + refSamples[toAboveOffset + base + 1] * shift;
+                val = ref_samples[toAboveOffset + base] * (32 - shift) + ref_samples[toAboveOffset + base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
 
                 dst[c] = (uint8_t)clip_pixel_highbd(val, 8);
 
             }
             else {
-                dst[c] = refSamples[toAboveOffset + max_base_x];
+                dst[c] = ref_samples[toAboveOffset + max_base_x];
             }
         }
     }
@@ -3077,16 +3077,16 @@ void IntraModeAngular_AV1_Z1(
 }
 void IntraModeAngular_AV1_Z2(
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint8_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip,
     uint16_t          dx,              //output parameter, pointer to the prediction
     uint16_t          dy              //output parameter, pointer to the prediction
 )
 {
 
-    //    uint32_t rowIndex, colIndex;
+    //    uint32_t row_index, colIndex;
     uint32_t toAboveOffset = (size << 1) + 1;
     uint32_t toAboveLeftOffset = (size << 1);
     uint32_t shiftToAboveLeft = 0;
@@ -3108,7 +3108,7 @@ void IntraModeAngular_AV1_Z2(
             if (base >= min_base_x) {
                 shift = ((x) & 0x3F) >> 1;
                 shiftToAboveLeft = (base <= -1) ? -1 - base : 0;
-                val = refSamples[toAboveOffset + base + shiftToAboveLeft] * (32 - shift) + refSamples[toAboveOffset + base + 1] * shift;
+                val = ref_samples[toAboveOffset + base + shiftToAboveLeft] * (32 - shift) + ref_samples[toAboveOffset + base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
             }
             else {
@@ -3117,14 +3117,14 @@ void IntraModeAngular_AV1_Z2(
                 base = y >> frac_bits_y;
                 shiftToAboveLeft = (base <= -1) ? toAboveLeftOffset - base : 0;
                 shift = ((y) & 0x3F) >> 1;
-                val = refSamples[toLeftOffset + base + shiftToAboveLeft] * (32 - shift) + refSamples[toLeftOffset + base + 1] * shift;
+                val = ref_samples[toLeftOffset + base + shiftToAboveLeft] * (32 - shift) + ref_samples[toLeftOffset + base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
             }
 
             dst[c] = (uint8_t)clip_pixel_highbd(val, 8);
 
         }
-        dst += (rowStride* predictionBufferStride);
+        dst += (rowStride* prediction_buffer_stride);
     }
 
 
@@ -3133,16 +3133,16 @@ void IntraModeAngular_AV1_Z2(
 }
 void IntraModeAngular_AV1_Z3(
     const uint32_t   size,                        //input parameter, denotes the size of the current PU
-    uint8_t         *refSamples,                  //input parameter, pointer to the reference samples
+    uint8_t         *ref_samples,                  //input parameter, pointer to the reference samples
     uint8_t         *dst,                         //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,      //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,      //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip,
     uint16_t          dx,                          //output parameter, pointer to the prediction
     uint16_t          dy                           //output parameter, pointer to the prediction
 )
 {
 
-    //    uint32_t rowIndex, colIndex;
+    //    uint32_t row_index, colIndex;
     //    uint32_t toAboveOffset = (size << 1) + 1 ;
     uint32_t toLeftOffset = 0;
     uint32_t rowStride = skip ? 2 : 1;
@@ -3165,14 +3165,14 @@ void IntraModeAngular_AV1_Z3(
 
         for (r = 0; r < size; ++r, base += base_inc) {
             if (base < max_base_y) {
-                val = refSamples[toLeftOffset + base] * (32 - shift) + refSamples[toLeftOffset + base + 1] * shift;
+                val = ref_samples[toLeftOffset + base] * (32 - shift) + ref_samples[toLeftOffset + base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
 
-                dst[r * (rowStride* predictionBufferStride) + c] = (uint8_t)clip_pixel_highbd(val, 8);
+                dst[r * (rowStride* prediction_buffer_stride) + c] = (uint8_t)clip_pixel_highbd(val, 8);
 
             }
             else {
-                for (; r < size; ++r) dst[r * (rowStride* predictionBufferStride) + c] = refSamples[toLeftOffset + max_base_y];
+                for (; r < size; ++r) dst[r * (rowStride* prediction_buffer_stride) + c] = ref_samples[toLeftOffset + max_base_y];
                 break;
             }
         }
@@ -3187,15 +3187,15 @@ void highbd_dc_predictor_16bit(
     EbBool        is_left_availble,
     EbBool        is_above_availble,
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint16_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint16_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint16_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
 
     //uint32_t sum = 0;
 //    uint32_t index;
-    uint32_t columnIndex, rowIndex;
+    uint32_t columnIndex, row_index;
     uint32_t writeIndex;
     uint32_t leftOffset = 0;
     uint32_t topOffset = (size << 1) + 1;
@@ -3208,23 +3208,23 @@ void highbd_dc_predictor_16bit(
     if (is_left_availble && !is_above_availble) {
 
         for (i = 0; i < size; i++) {
-            sum += refSamples[leftOffset + i];
+            sum += ref_samples[leftOffset + i];
         }
         expected_dc = (sum + (size >> 1)) / size;
     }
     else if (is_above_availble && !is_left_availble) {
         for (i = 0; i < size; i++) {
-            sum += refSamples[topOffset + i];
+            sum += ref_samples[topOffset + i];
         }
         expected_dc = (sum + (size >> 1)) / size;
     }
     else {
 
         for (i = 0; i < size; i++) {
-            sum += refSamples[topOffset + i];
+            sum += ref_samples[topOffset + i];
         }
         for (i = 0; i < size; i++) {
-            sum += refSamples[leftOffset + i];
+            sum += ref_samples[leftOffset + i];
         }
         expected_dc = (sum + (count >> 1)) / count;
 
@@ -3234,16 +3234,16 @@ void highbd_dc_predictor_16bit(
     // expected_dc = (sum + (count >> 1)) / count;
 
     /*for (r = 0; r < size; r++) {
-    writeIndex = rowIndex * predictionBufferStride;
+    writeIndex = row_index * prediction_buffer_stride;
 
     EB_MEMSET( dst, expected_dc, size);
 
-    dst += rowStride* predictionBufferStride;
+    dst += rowStride* prediction_buffer_stride;
     }*/
 
     // Generate the prediction
-    for (rowIndex = 0; rowIndex < size; rowIndex += rowStride) {
-        writeIndex = rowIndex * predictionBufferStride;
+    for (row_index = 0; row_index < size; row_index += rowStride) {
+        writeIndex = row_index * prediction_buffer_stride;
         for (columnIndex = 0; columnIndex < size; ++columnIndex) {
             dst[writeIndex] = (uint16_t)expected_dc;
             ++writeIndex;
@@ -3255,9 +3255,9 @@ void highbd_dc_predictor_16bit(
 /* clang-format on */
 void IntraModePlanar_16bit(
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint16_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint16_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint16_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
 
@@ -3270,8 +3270,8 @@ void IntraModePlanar_16bit(
 
 
 
-    const uint16_t below_pred = refSamples[leftOffset + size - 1];   // estimated by bottom-left pixel
-    const uint16_t right_pred = refSamples[topOffset + size - 1];  // estimated by top-right pixel
+    const uint16_t below_pred = ref_samples[leftOffset + size - 1];   // estimated by bottom-left pixel
+    const uint16_t right_pred = ref_samples[topOffset + size - 1];  // estimated by top-right pixel
     const uint8_t *const sm_weights_w = sm_weight_arrays + size;
     const uint8_t *const sm_weights_h = sm_weight_arrays + size;
     // scale = 2 * 2^sm_weight_log2_scale
@@ -3282,7 +3282,7 @@ void IntraModePlanar_16bit(
     for (r = 0; r < size; ++r) {
         uint32_t c;
         for (c = 0; c < size; ++c) {
-            const uint16_t pixels[] = { refSamples[topOffset + c], below_pred, refSamples[leftOffset + r], right_pred };
+            const uint16_t pixels[] = { ref_samples[topOffset + c], below_pred, ref_samples[leftOffset + r], right_pred };
             const uint8_t weights[] = { sm_weights_h[r], (uint8_t)(scale - sm_weights_h[r]),
                 sm_weights_w[c], (uint8_t)(scale - sm_weights_w[c]) };
             uint32_t this_pred = 0;
@@ -3293,21 +3293,21 @@ void IntraModePlanar_16bit(
             }
             dst[c] = (uint16_t)divide_round(this_pred, log2_scale);
         }
-        dst += rowStride * predictionBufferStride;
+        dst += rowStride * prediction_buffer_stride;
     }
 
     return;
 }
 
 void v_predictor_16bit(uint16_t *dst, const uint32_t stride, int32_t bw, int32_t bh,
-    const uint16_t *refSamples) {
+    const uint16_t *ref_samples) {
     int32_t r;
     int32_t c;
 
     for (r = 0; r < bh; r++) {
         for (c = 0; c < bh; c++) {
-            dst[c + r * stride] = refSamples[bw + bh + 1 + c];
-            //EB_MEMSET(dst, refSamples[bw + bh + 1], bw);
+            dst[c + r * stride] = ref_samples[bw + bh + 1 + c];
+            //EB_MEMSET(dst, ref_samples[bw + bh + 1], bw);
             //dst += stride;
         }
     }
@@ -3315,12 +3315,12 @@ void v_predictor_16bit(uint16_t *dst, const uint32_t stride, int32_t bw, int32_t
 
 
 void h_predictor_16bit(uint16_t *dst, const uint32_t stride, int32_t bw, int32_t bh,
-    const uint16_t *refSamples) {
+    const uint16_t *ref_samples) {
     int32_t r;
     //(void)above;
 
     for (r = 0; r < bh; r++) {
-        memset16bit(dst, refSamples[r], bw);
+        memset16bit(dst, ref_samples[r], bw);
         dst += stride;
     }
 
@@ -3329,9 +3329,9 @@ void h_predictor_16bit(uint16_t *dst, const uint32_t stride, int32_t bw, int32_t
 
 void IntraModeAngular_AV1_Z1_16bit(
     const uint32_t   size,                    //input parameter, denotes the size of the current PU
-    uint16_t         *refSamples,             //input parameter, pointer to the reference samples
+    uint16_t         *ref_samples,             //input parameter, pointer to the reference samples
     uint16_t         *dst,                    //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,  //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,  //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip,
     uint16_t          dx,                     //output parameter, pointer to the prediction
     uint16_t          dy,                      //output parameter, pointer to the prediction
@@ -3339,7 +3339,7 @@ void IntraModeAngular_AV1_Z1_16bit(
 
 {
     (void)dy;
-    //    uint32_t rowIndex, colIndex;
+    //    uint32_t row_index, colIndex;
     uint32_t toAboveOffset = (size << 1) + 1;
     uint32_t rowStride = skip ? 2 : 1;
 
@@ -3353,26 +3353,26 @@ void IntraModeAngular_AV1_Z1_16bit(
     x = dx;
 
 
-    for (r = 0; r < size; ++r, dst += (rowStride* predictionBufferStride), x += dx) {
+    for (r = 0; r < size; ++r, dst += (rowStride* prediction_buffer_stride), x += dx) {
         base = x >> frac_bits;
         shift = ((x) & 0x3F) >> 1;
 
         if (base >= max_base_x) {
             for (uint32_t i = r; i < size; ++i) {
-                memset16bit(dst, refSamples[toAboveOffset + max_base_x], size);
-                dst += rowStride * predictionBufferStride;
+                memset16bit(dst, ref_samples[toAboveOffset + max_base_x], size);
+                dst += rowStride * prediction_buffer_stride;
             }
             return;
         }
 
         for (c = 0; c < size; ++c, base += base_inc) {
             if (base < max_base_x) {
-                val = refSamples[toAboveOffset + base] * (32 - shift) + refSamples[toAboveOffset + base + 1] * shift;
+                val = ref_samples[toAboveOffset + base] * (32 - shift) + ref_samples[toAboveOffset + base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
                 dst[c] = clip_pixel_highbd(val, bd);
             }
             else {
-                dst[c] = refSamples[toAboveOffset + max_base_x];
+                dst[c] = ref_samples[toAboveOffset + max_base_x];
             }
         }
     }
@@ -3383,16 +3383,16 @@ void IntraModeAngular_AV1_Z1_16bit(
 }
 void IntraModeAngular_AV1_Z2_16bit(
     const uint32_t   size,                       //input parameter, denotes the size of the current PU
-    uint16_t         *refSamples,                 //input parameter, pointer to the reference samples
+    uint16_t         *ref_samples,                 //input parameter, pointer to the reference samples
     uint16_t         *dst,              //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip,
     uint16_t          dx,              //output parameter, pointer to the prediction
     uint16_t          dy,              //output parameter, pointer to the prediction
     uint16_t          bd)
 {
 
-    //    uint32_t rowIndex, colIndex;
+    //    uint32_t row_index, colIndex;
     uint32_t toAboveOffset = (size << 1) + 1;
     uint32_t toAboveLeftOffset = (size << 1);
     uint32_t shiftToAboveLeft = 0;
@@ -3415,7 +3415,7 @@ void IntraModeAngular_AV1_Z2_16bit(
             if (base >= min_base_x) {
                 shift = ((x) & 0x3F) >> 1;
                 shiftToAboveLeft = (base <= -1) ? -1 - base : 0;
-                val = refSamples[toAboveOffset + base + shiftToAboveLeft] * (32 - shift) + refSamples[toAboveOffset + base + 1] * shift;
+                val = ref_samples[toAboveOffset + base + shiftToAboveLeft] * (32 - shift) + ref_samples[toAboveOffset + base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
             }
             else {
@@ -3424,12 +3424,12 @@ void IntraModeAngular_AV1_Z2_16bit(
                 base = y >> frac_bits_y;
                 shiftToAboveLeft = (base <= -1) ? toAboveLeftOffset - base : 0;
                 shift = ((y) & 0x3F) >> 1;
-                val = refSamples[toLeftOffset + base + shiftToAboveLeft] * (32 - shift) + refSamples[toLeftOffset + base + 1] * shift;
+                val = ref_samples[toLeftOffset + base + shiftToAboveLeft] * (32 - shift) + ref_samples[toLeftOffset + base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
             }
             dst[c] = clip_pixel_highbd(val, bd);
         }
-        dst += (rowStride* predictionBufferStride);
+        dst += (rowStride* prediction_buffer_stride);
     }
 
 
@@ -3438,16 +3438,16 @@ void IntraModeAngular_AV1_Z2_16bit(
 }
 void IntraModeAngular_AV1_Z3_16bit(
     const uint32_t   size,                        //input parameter, denotes the size of the current PU
-    uint16_t         *refSamples,                  //input parameter, pointer to the reference samples
+    uint16_t         *ref_samples,                  //input parameter, pointer to the reference samples
     uint16_t         *dst,                         //output parameter, pointer to the prediction
-    const uint32_t   predictionBufferStride,      //input parameter, denotes the stride for the prediction ptr
+    const uint32_t   prediction_buffer_stride,      //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip,
     uint16_t          dx,                          //output parameter, pointer to the prediction
     uint16_t          dy,                          //output parameter, pointer to the prediction
     uint16_t          bd)
 {
 
-    //    uint32_t rowIndex, colIndex;
+    //    uint32_t row_index, colIndex;
     //    uint32_t toAboveOffset = (size << 1) + 1;
     uint32_t toLeftOffset = 0;
     uint32_t rowStride = skip ? 2 : 1;
@@ -3470,12 +3470,12 @@ void IntraModeAngular_AV1_Z3_16bit(
 
         for (r = 0; r < size; ++r, base += base_inc) {
             if (base < max_base_y) {
-                val = refSamples[toLeftOffset + base] * (32 - shift) + refSamples[toLeftOffset + base + 1] * shift;
+                val = ref_samples[toLeftOffset + base] * (32 - shift) + ref_samples[toLeftOffset + base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
-                dst[r * (rowStride* predictionBufferStride) + c] = clip_pixel_highbd(val, bd);
+                dst[r * (rowStride* prediction_buffer_stride) + c] = clip_pixel_highbd(val, bd);
             }
             else {
-                for (; r < size; ++r) dst[r * (rowStride* predictionBufferStride) + c] = refSamples[toLeftOffset + max_base_y];
+                for (; r < size; ++r) dst[r * (rowStride* prediction_buffer_stride) + c] = ref_samples[toLeftOffset + max_base_y];
                 break;
             }
         }
@@ -3492,10 +3492,10 @@ void IntraModeAngular_AV1_Z3_16bit(
 static inline void IntraModeAngular_all(
     uint32_t            mode,                       //input parameter, indicates the Intra luma mode
     const uint32_t      puSize,                     //input parameter, denotes the size of the current PU
-    uint8_t            *refSamples,                 //input parameter, pointer to the reference samples
+    uint8_t            *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t            *refSamplesReverse,          //input parameter, pointer to the reference samples,Left in reverse order
     uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
-    const uint32_t      predictionBufferStride,     //input parameter, denotes the stride for the prediction ptr
+    const uint32_t      prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     uint8_t            *refAbove,
     EbBool          *AboveReadyFlag,
     uint8_t            *refLeft,
@@ -3509,9 +3509,9 @@ static inline void IntraModeAngular_all(
 
         IntraAng34_funcPtrArray[asm_type](
             puSize,
-            refSamples,
+            ref_samples,
             prediction_ptr,
-            predictionBufferStride,
+            prediction_buffer_stride,
             EB_FALSE);
 
         break;
@@ -3519,18 +3519,18 @@ static inline void IntraModeAngular_all(
         IntraModeAngular_27To33(
             mode,
             puSize,
-            refSamples,
+            ref_samples,
             prediction_ptr,
-            predictionBufferStride,
+            prediction_buffer_stride,
             asm_type);
         break;
     case 25: case 24: case 23: case 22: case 21: case 20: case 19:
         IntraModeAngular_19To25(
             mode,
             puSize,
-            refSamples,
+            ref_samples,
             prediction_ptr,
-            predictionBufferStride,
+            prediction_buffer_stride,
             refAbove,
             AboveReadyFlag,
             asm_type);
@@ -3538,18 +3538,18 @@ static inline void IntraModeAngular_all(
     case 18:
         IntraAng18_funcPtrArray[asm_type](
             puSize,
-            refSamples,
+            ref_samples,
             prediction_ptr,
-            predictionBufferStride,
+            prediction_buffer_stride,
             EB_FALSE);
         break;
     case 17: case 16: case 15: case 14: case 13: case 12: case 11:
         IntraModeAngular_11To17(
             mode,
             puSize,
-            refSamples,
+            ref_samples,
             prediction_ptr,
-            predictionBufferStride,
+            prediction_buffer_stride,
             refLeft,
             LeftReadyFlag,
             asm_type);
@@ -3560,7 +3560,7 @@ static inline void IntraModeAngular_all(
             puSize,
             refSamplesReverse,
             prediction_ptr,
-            predictionBufferStride,
+            prediction_buffer_stride,
             asm_type);
         break;
     case 2:
@@ -3569,7 +3569,7 @@ static inline void IntraModeAngular_all(
             puSize,
             refSamplesReverse,
             prediction_ptr,
-            predictionBufferStride,
+            prediction_buffer_stride,
             EB_FALSE);
         break;
     }
@@ -3586,7 +3586,7 @@ EbErrorType IntraPredictionCL(
     EbAsm                                  asm_type)
 {
     EbErrorType return_error = EB_ErrorNone;
-    const uint32_t lumaMode = candidate_buffer_ptr->candidate_ptr->intra_luma_mode;
+    const uint32_t luma_mode = candidate_buffer_ptr->candidate_ptr->intra_luma_mode;
     uint32_t                      chroma_mode;
     const uint32_t pu_origin_x = md_context_ptr->cu_origin_x;
     const uint32_t pu_origin_y = md_context_ptr->cu_origin_y;
@@ -3595,13 +3595,13 @@ EbErrorType IntraPredictionCL(
 
 
     IntraReferenceSamples_t * const context_ptr = (IntraReferenceSamples_t*)(md_context_ptr->intra_ref_ptr);
-    const EncodeContext_t * const encode_context_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr))->encode_context_ptr;
+    const EncodeContext_t * const encode_context_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr))->encode_context_ptr;
 
     // Map the mode to the function table index
     uint32_t funcIndex =
-        (lumaMode < 2) ? lumaMode :
-        (lumaMode == INTRA_VERTICAL_MODE) ? 2 :
-        (lumaMode == INTRA_HORIZONTAL_MODE) ? 3 :
+        (luma_mode < 2) ? luma_mode :
+        (luma_mode == INTRA_VERTICAL_MODE) ? 2 :
+        (luma_mode == INTRA_HORIZONTAL_MODE) ? 3 :
         4;
 
     uint32_t puOriginIndex;
@@ -3629,18 +3629,18 @@ EbErrorType IntraPredictionCL(
 
         if (md_context_ptr->luma_intra_ref_samples_gen_done == EB_FALSE)
         {
-            EbPictureBufferDesc_t     *inputPicturePtr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+            EbPictureBufferDesc_t     *input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 
             GenerateIntraLumaReferenceSamplesMd(
                 md_context_ptr,
                 picture_control_set_ptr,
-                inputPicturePtr);
+                input_picture_ptr);
         }
         puOriginIndex = ((pu_origin_y & (63)) * 64) + (pu_origin_x & (63));
         puSize = pu_width;
 
-        diffModeA = EB_ABS_DIFF((int32_t)lumaMode, (int32_t)INTRA_HORIZONTAL_MODE);
-        diffModeB = EB_ABS_DIFF((int32_t)lumaMode, (int32_t)INTRA_VERTICAL_MODE);
+        diffModeA = EB_ABS_DIFF((int32_t)luma_mode, (int32_t)INTRA_HORIZONTAL_MODE);
+        diffModeB = EB_ABS_DIFF((int32_t)luma_mode, (int32_t)INTRA_VERTICAL_MODE);
         diffMode = MIN(diffModeA, diffModeB);
 
         context_ptr->above_ready_flag_y = EB_FALSE;
@@ -3656,8 +3656,8 @@ EbErrorType IntraPredictionCL(
             IntraPlanar_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array,
-                &(candidate_buffer_ptr->prediction_ptr->bufferY[puOriginIndex]),
-                candidate_buffer_ptr->prediction_ptr->strideY,
+                &(candidate_buffer_ptr->prediction_ptr->buffer_y[puOriginIndex]),
+                candidate_buffer_ptr->prediction_ptr->stride_y,
                 EB_FALSE);
 
             break;
@@ -3669,8 +3669,8 @@ EbErrorType IntraPredictionCL(
             IntraDCLuma_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array,
-                &(candidate_buffer_ptr->prediction_ptr->bufferY[puOriginIndex]),
-                candidate_buffer_ptr->prediction_ptr->strideY,
+                &(candidate_buffer_ptr->prediction_ptr->buffer_y[puOriginIndex]),
+                candidate_buffer_ptr->prediction_ptr->stride_y,
                 EB_FALSE);
 
             break;
@@ -3684,8 +3684,8 @@ EbErrorType IntraPredictionCL(
             IntraVerticalLuma_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array,
-                &(candidate_buffer_ptr->prediction_ptr->bufferY[puOriginIndex]),
-                candidate_buffer_ptr->prediction_ptr->strideY,
+                &(candidate_buffer_ptr->prediction_ptr->buffer_y[puOriginIndex]),
+                candidate_buffer_ptr->prediction_ptr->stride_y,
                 EB_FALSE);
             break;
 
@@ -3697,8 +3697,8 @@ EbErrorType IntraPredictionCL(
             IntraHorzLuma_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array,
-                &(candidate_buffer_ptr->prediction_ptr->bufferY[puOriginIndex]),
-                candidate_buffer_ptr->prediction_ptr->strideY,
+                &(candidate_buffer_ptr->prediction_ptr->buffer_y[puOriginIndex]),
+                candidate_buffer_ptr->prediction_ptr->stride_y,
                 EB_FALSE);
 
             break;
@@ -3711,12 +3711,12 @@ EbErrorType IntraPredictionCL(
                 context_ptr->y_intra_reference_array_reverse;
 
             IntraModeAngular_all(
-                lumaMode,
+                luma_mode,
                 puSize,
                 y_intra_reference_array,
                 y_intra_reference_array_reverse,
-                &(candidate_buffer_ptr->prediction_ptr->bufferY[puOriginIndex]),
-                candidate_buffer_ptr->prediction_ptr->strideY,
+                &(candidate_buffer_ptr->prediction_ptr->buffer_y[puOriginIndex]),
+                candidate_buffer_ptr->prediction_ptr->stride_y,
                 context_ptr->reference_above_line_y,
                 &context_ptr->above_ready_flag_y,
                 context_ptr->reference_left_line_y,
@@ -3735,16 +3735,16 @@ EbErrorType IntraPredictionCL(
         if (md_context_ptr->chroma_intra_ref_samples_gen_done == EB_FALSE)
         {
 
-            EbPictureBufferDesc_t *inputPicturePtr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+            EbPictureBufferDesc_t *input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
             GenerateIntraChromaReferenceSamplesMd(
                 md_context_ptr,
                 picture_control_set_ptr,
-                inputPicturePtr);
+                input_picture_ptr);
 
         }
 
         // The chroma_mode is always DM
-        chroma_mode = (uint32_t)lumaMode;
+        chroma_mode = (uint32_t)luma_mode;
         puChromaOriginIndex = (((pu_origin_y & (63)) * 32) + (pu_origin_x & (63))) >> 1;
         chromaPuSize = pu_width >> 1;
 
@@ -3909,17 +3909,17 @@ EbErrorType Intra4x4IntraPredictionCL(
     EbAsm                                  asm_type)
 {
     EbErrorType                return_error = EB_ErrorNone;
-    uint32_t          lumaMode = candidate_buffer_ptr->candidate_ptr->intra_luma_mode;
+    uint32_t          luma_mode = candidate_buffer_ptr->candidate_ptr->intra_luma_mode;
     uint32_t        chroma_mode;
 
     IntraReferenceSamples_t *context_ptr = (IntraReferenceSamples_t*)(((ModeDecisionContext_t*)prediction_context_ptr)->intra_ref_ptr);
-    EncodeContext_t         *encode_context_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr))->encode_context_ptr;
+    EncodeContext_t         *encode_context_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr))->encode_context_ptr;
 
     // Map the mode to the function table index
     uint32_t funcIndex =
-        (lumaMode < 2) ? lumaMode :
-        (lumaMode == INTRA_VERTICAL_MODE) ? 2 :
-        (lumaMode == INTRA_HORIZONTAL_MODE) ? 3 :
+        (luma_mode < 2) ? luma_mode :
+        (luma_mode == INTRA_VERTICAL_MODE) ? 2 :
+        (luma_mode == INTRA_HORIZONTAL_MODE) ? 3 :
         4;
 
     uint32_t puOriginIndex;
@@ -3944,13 +3944,13 @@ EbErrorType Intra4x4IntraPredictionCL(
 
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
 
-        lumaMode = candidate_buffer_ptr->candidate_ptr->intra_luma_mode;
+        luma_mode = candidate_buffer_ptr->candidate_ptr->intra_luma_mode;
 
-        puOriginIndex = ((pu_origin_y & (sb_sz - 1)) * candidate_buffer_ptr->prediction_ptr->strideY) + (pu_origin_x & (sb_sz - 1));
+        puOriginIndex = ((pu_origin_y & (sb_sz - 1)) * candidate_buffer_ptr->prediction_ptr->stride_y) + (pu_origin_x & (sb_sz - 1));
         puSize = pu_width;
 
-        diffModeA = EB_ABS_DIFF((int32_t)lumaMode, (int32_t)INTRA_HORIZONTAL_MODE);
-        diffModeB = EB_ABS_DIFF((int32_t)lumaMode, (int32_t)INTRA_VERTICAL_MODE);
+        diffModeA = EB_ABS_DIFF((int32_t)luma_mode, (int32_t)INTRA_HORIZONTAL_MODE);
+        diffModeB = EB_ABS_DIFF((int32_t)luma_mode, (int32_t)INTRA_VERTICAL_MODE);
         diffMode = MIN(diffModeA, diffModeB);
 
         context_ptr->above_ready_flag_y = EB_FALSE;
@@ -3966,8 +3966,8 @@ EbErrorType Intra4x4IntraPredictionCL(
             IntraPlanar_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array,
-                &(candidate_buffer_ptr->prediction_ptr->bufferY[puOriginIndex]),
-                candidate_buffer_ptr->prediction_ptr->strideY,
+                &(candidate_buffer_ptr->prediction_ptr->buffer_y[puOriginIndex]),
+                candidate_buffer_ptr->prediction_ptr->stride_y,
                 EB_FALSE);
 
             break;
@@ -3979,8 +3979,8 @@ EbErrorType Intra4x4IntraPredictionCL(
             IntraDCLuma_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array,
-                &(candidate_buffer_ptr->prediction_ptr->bufferY[puOriginIndex]),
-                candidate_buffer_ptr->prediction_ptr->strideY,
+                &(candidate_buffer_ptr->prediction_ptr->buffer_y[puOriginIndex]),
+                candidate_buffer_ptr->prediction_ptr->stride_y,
                 EB_FALSE);
 
             break;
@@ -3994,8 +3994,8 @@ EbErrorType Intra4x4IntraPredictionCL(
             IntraVerticalLuma_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array,
-                &(candidate_buffer_ptr->prediction_ptr->bufferY[puOriginIndex]),
-                candidate_buffer_ptr->prediction_ptr->strideY,
+                &(candidate_buffer_ptr->prediction_ptr->buffer_y[puOriginIndex]),
+                candidate_buffer_ptr->prediction_ptr->stride_y,
                 EB_FALSE);
             break;
 
@@ -4007,8 +4007,8 @@ EbErrorType Intra4x4IntraPredictionCL(
             IntraHorzLuma_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array,
-                &(candidate_buffer_ptr->prediction_ptr->bufferY[puOriginIndex]),
-                candidate_buffer_ptr->prediction_ptr->strideY,
+                &(candidate_buffer_ptr->prediction_ptr->buffer_y[puOriginIndex]),
+                candidate_buffer_ptr->prediction_ptr->stride_y,
                 EB_FALSE);
 
             break;
@@ -4021,12 +4021,12 @@ EbErrorType Intra4x4IntraPredictionCL(
                 context_ptr->y_intra_reference_array_reverse;
 
             IntraModeAngular_all(
-                lumaMode,
+                luma_mode,
                 puSize,
                 y_intra_reference_array,
                 y_intra_reference_array_reverse,
-                &(candidate_buffer_ptr->prediction_ptr->bufferY[puOriginIndex]),
-                candidate_buffer_ptr->prediction_ptr->strideY,
+                &(candidate_buffer_ptr->prediction_ptr->buffer_y[puOriginIndex]),
+                candidate_buffer_ptr->prediction_ptr->stride_y,
                 context_ptr->reference_above_line_y,
                 &context_ptr->above_ready_flag_y,
                 context_ptr->reference_left_line_y,
@@ -4043,7 +4043,7 @@ EbErrorType Intra4x4IntraPredictionCL(
     if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
 
         // The chroma_mode is always DM
-        chroma_mode = (uint32_t)lumaMode;
+        chroma_mode = (uint32_t)luma_mode;
 
         puChromaOriginIndex = (((pu_origin_y & (sb_sz - 1)) * candidate_buffer_ptr->prediction_ptr->strideCb) + (pu_origin_x & (sb_sz - 1))) >> 1;
         chromaPuSize = pu_width;
@@ -4211,19 +4211,19 @@ EbErrorType EncodePassIntraPrediction(
     uint8_t                          upsample_above_chroma,
     EbBool                         is_left_availble,
     EbBool                         is_above_availble,
-    void                                   *refSamples,
+    void                                   *ref_samples,
     uint32_t                                  origin_x,
     uint32_t                                  origin_y,
     uint32_t                                  puSize,
     EbPictureBufferDesc_t                  *prediction_ptr,
-    uint32_t                                  lumaMode,
+    uint32_t                                  luma_mode,
     uint32_t                                  chroma_mode,
     int32_t                                  angle_delta,
     uint16_t                                  bitdepth,
     EbAsm                                  asm_type)
 {
     EbErrorType             return_error = EB_ErrorNone;
-    IntraReferenceSamples_t *referenceSamples = (IntraReferenceSamples_t*)refSamples;
+    IntraReferenceSamples_t *referenceSamples = (IntraReferenceSamples_t*)ref_samples;
     uint32_t lumaOffset;
     uint32_t chromaOffset;
 
@@ -4241,9 +4241,9 @@ EbErrorType EncodePassIntraPrediction(
     //***********************************
 
     if (upsample_left == 0 && upsample_above == 0) {
-        lumaOffset = (origin_y)* prediction_ptr->strideY + (origin_x);
+        lumaOffset = (origin_y)* prediction_ptr->stride_y + (origin_x);
 
-        uint32_t av1LumaMode = lumaMode;// intra_hev_cmode_to_intra_av1_mode[lumaMode] ;
+        uint32_t av1LumaMode = luma_mode;// intra_hev_cmode_to_intra_av1_mode[luma_mode] ;
 
         y_intra_reference_array =
             referenceSamples->y_intra_reference_array;
@@ -4258,8 +4258,8 @@ EbErrorType EncodePassIntraPrediction(
                 is_above_availble,
                 puSize,
                 y_intra_reference_array_reverse,
-                prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 EB_FALSE);
 
         else if (av1LumaMode == SMOOTH_PRED)
@@ -4267,15 +4267,15 @@ EbErrorType EncodePassIntraPrediction(
             IntraPlanar_Av1_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array_reverse,
-                prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 EB_FALSE);
 
         else if (av1LumaMode == SMOOTH_V_PRED)
 
             eb_smooth_v_predictor(
-                prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 puSize, puSize,
                 y_intra_reference_array_reverse + 2 * puSize + 1,
                 y_intra_reference_array_reverse
@@ -4283,8 +4283,8 @@ EbErrorType EncodePassIntraPrediction(
         else if (av1LumaMode == SMOOTH_H_PRED)
 
             eb_smooth_h_predictor(
-                prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 puSize, puSize,
                 y_intra_reference_array_reverse + 2 * puSize + 1,
                 y_intra_reference_array_reverse
@@ -4298,8 +4298,8 @@ EbErrorType EncodePassIntraPrediction(
                 puSize,
                 y_intra_reference_array_reverse,
                 y_intra_reference_array,
-                prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 referenceSamples->reference_above_line_y,
                 &referenceSamples->above_ready_flag_y,
                 referenceSamples->reference_left_line_y,
@@ -4403,12 +4403,12 @@ EbErrorType EncodePassIntraPrediction16bit(
     uint8_t                          upsample_above_chroma,
     EbBool                         is_left_availble,
     EbBool                         is_above_availble,
-    void                                   *refSamples,
+    void                                   *ref_samples,
     uint32_t                                  origin_x,
     uint32_t                                  origin_y,
     uint32_t                                  puSize,
     EbPictureBufferDesc_t                  *prediction_ptr,
-    uint32_t                                  lumaMode,
+    uint32_t                                  luma_mode,
     uint32_t                                  chroma_mode,
     int32_t                                  angle_delta,
     uint16_t                                  bitdepth,
@@ -4422,7 +4422,7 @@ EbErrorType EncodePassIntraPrediction16bit(
 
 
     EbErrorType                return_error = EB_ErrorNone;
-    IntraReference16bitSamples_t *referenceSamples = (IntraReference16bitSamples_t *)refSamples;
+    IntraReference16bitSamples_t *referenceSamples = (IntraReference16bitSamples_t *)ref_samples;
     uint32_t lumaOffset;
     uint32_t chromaOffset;
 
@@ -4440,9 +4440,9 @@ EbErrorType EncodePassIntraPrediction16bit(
         //***********************************
     {
 
-        lumaOffset = (origin_y)* prediction_ptr->strideY + (origin_x);
+        lumaOffset = (origin_y)* prediction_ptr->stride_y + (origin_x);
 
-        uint32_t av1LumaMode = lumaMode;// intra_hev_cmode_to_intra_av1_mode[lumaMode] ;
+        uint32_t av1LumaMode = luma_mode;// intra_hev_cmode_to_intra_av1_mode[luma_mode] ;
 
         y_intra_reference_array =
             referenceSamples->y_intra_reference_array;
@@ -4455,15 +4455,15 @@ EbErrorType EncodePassIntraPrediction16bit(
                 is_above_availble,
                 puSize,
                 y_intra_reference_array_reverse,
-                (uint16_t*)prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                (uint16_t*)prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 EB_FALSE);
         else if (av1LumaMode == SMOOTH_PRED)
             IntraModePlanar_16bit(
                 puSize,
                 y_intra_reference_array_reverse,
-                (uint16_t*)prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                (uint16_t*)prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 EB_FALSE);
 
         else if (av1LumaMode == SMOOTH_V_PRED)
@@ -4471,8 +4471,8 @@ EbErrorType EncodePassIntraPrediction16bit(
             IntraSmoothV_16bit_Av1_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array_reverse,
-                (uint16_t*)prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                (uint16_t*)prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 EB_FALSE);
 
         else if (av1LumaMode == SMOOTH_H_PRED)
@@ -4480,8 +4480,8 @@ EbErrorType EncodePassIntraPrediction16bit(
             IntraSmoothH_16bit_Av1_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array_reverse,
-                (uint16_t*)prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                (uint16_t*)prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 EB_FALSE);
 
         else
@@ -4491,8 +4491,8 @@ EbErrorType EncodePassIntraPrediction16bit(
                 puSize,
                 y_intra_reference_array_reverse,
                 y_intra_reference_array,
-                (uint16_t*)prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                (uint16_t*)prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 referenceSamples->reference_above_line_y,
                 &referenceSamples->above_ready_flag_y,
                 referenceSamples->reference_left_line_y,
@@ -4603,7 +4603,7 @@ EbErrorType EncodePassIntra4x4Prediction(
     uint32_t                                  puSize,
     uint32_t                                  chromaPuSize,
     EbPictureBufferDesc_t                  *prediction_ptr,
-    uint32_t                      lumaMode,
+    uint32_t                      luma_mode,
     uint32_t                    chroma_mode,
     uint32_t                                  component_mask,
     EbAsm                                  asm_type)
@@ -4628,9 +4628,9 @@ EbErrorType EncodePassIntra4x4Prediction(
     if (upsample_left == 0 && upsample_above == 0) {
         if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
 
-            lumaOffset = (origin_y)* prediction_ptr->strideY + (origin_x);
+            lumaOffset = (origin_y)* prediction_ptr->stride_y + (origin_x);
 
-            uint32_t av1LumaMode = lumaMode;// intra_hev_cmode_to_intra_av1_mode[lumaMode] ;
+            uint32_t av1LumaMode = luma_mode;// intra_hev_cmode_to_intra_av1_mode[luma_mode] ;
 
             y_intra_reference_array =
                 referenceSamples->y_intra_reference_array;
@@ -4645,8 +4645,8 @@ EbErrorType EncodePassIntra4x4Prediction(
                     is_above_availble,
                     puSize,
                     y_intra_reference_array_reverse,
-                    prediction_ptr->bufferY + lumaOffset,
-                    prediction_ptr->strideY,
+                    prediction_ptr->buffer_y + lumaOffset,
+                    prediction_ptr->stride_y,
                     EB_FALSE);
 
             else if (av1LumaMode == SMOOTH_PRED)
@@ -4654,8 +4654,8 @@ EbErrorType EncodePassIntra4x4Prediction(
                 IntraPlanar_Av1_funcPtrArray[asm_type](
                     puSize,
                     y_intra_reference_array_reverse,
-                    prediction_ptr->bufferY + lumaOffset,
-                    prediction_ptr->strideY,
+                    prediction_ptr->buffer_y + lumaOffset,
+                    prediction_ptr->stride_y,
                     EB_FALSE);
 
             else if (av1LumaMode == SMOOTH_V_PRED)
@@ -4663,8 +4663,8 @@ EbErrorType EncodePassIntra4x4Prediction(
                 IntraSmoothV_Av1_funcPtrArray[asm_type](
                     puSize,
                     y_intra_reference_array_reverse,
-                    prediction_ptr->bufferY + lumaOffset,
-                    prediction_ptr->strideY,
+                    prediction_ptr->buffer_y + lumaOffset,
+                    prediction_ptr->stride_y,
                     EB_FALSE);
 
             else if (av1LumaMode == SMOOTH_H_PRED)
@@ -4672,8 +4672,8 @@ EbErrorType EncodePassIntra4x4Prediction(
                 IntraSmoothH_Av1_funcPtrArray[asm_type](
                     puSize,
                     y_intra_reference_array_reverse,
-                    prediction_ptr->bufferY + lumaOffset,
-                    prediction_ptr->strideY,
+                    prediction_ptr->buffer_y + lumaOffset,
+                    prediction_ptr->stride_y,
                     EB_FALSE);
 
             else
@@ -4683,8 +4683,8 @@ EbErrorType EncodePassIntra4x4Prediction(
                     puSize,
                     y_intra_reference_array_reverse,
                     y_intra_reference_array,
-                    prediction_ptr->bufferY + lumaOffset,
-                    prediction_ptr->strideY,
+                    prediction_ptr->buffer_y + lumaOffset,
+                    prediction_ptr->stride_y,
                     referenceSamples->reference_above_line_y,
                     &referenceSamples->above_ready_flag_y,
                     referenceSamples->reference_left_line_y,
@@ -4703,7 +4703,7 @@ EbErrorType EncodePassIntra4x4Prediction(
 
         if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
 
-            uint32_t av1ChromaMode = chroma_mode;//intra_hev_cmode_to_intra_av1_mode[lumaMode] ;
+            uint32_t av1ChromaMode = chroma_mode;//intra_hev_cmode_to_intra_av1_mode[luma_mode] ;
 
 
 
@@ -4802,7 +4802,7 @@ EbErrorType EncodePassIntra4x4Prediction16bit(
     uint32_t                                  puSize,
     uint32_t                                  chromaPuSize,
     EbPictureBufferDesc_t                  *prediction_ptr,
-    uint32_t                      lumaMode,
+    uint32_t                      luma_mode,
     uint32_t                    chroma_mode,
     uint32_t                                  component_mask,
     uint16_t                                  bitdepth,
@@ -4832,9 +4832,9 @@ EbErrorType EncodePassIntra4x4Prediction16bit(
     //***********************************
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
 
-        lumaOffset = (origin_y)* prediction_ptr->strideY + (origin_x);
+        lumaOffset = (origin_y)* prediction_ptr->stride_y + (origin_x);
 
-        uint32_t av1LumaMode = lumaMode;// intra_hev_cmode_to_intra_av1_mode[lumaMode] ;
+        uint32_t av1LumaMode = luma_mode;// intra_hev_cmode_to_intra_av1_mode[luma_mode] ;
 
 
         y_intra_reference_array =
@@ -4848,15 +4848,15 @@ EbErrorType EncodePassIntra4x4Prediction16bit(
                 is_above_availble,
                 puSize,
                 y_intra_reference_array_reverse,
-                (uint16_t*)prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                (uint16_t*)prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 EB_FALSE);
         else if (av1LumaMode == SMOOTH_PRED)
             IntraModePlanar_16bit(
                 puSize,
                 y_intra_reference_array_reverse,
-                (uint16_t*)prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                (uint16_t*)prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 EB_FALSE);
 
         else if (av1LumaMode == SMOOTH_V_PRED)
@@ -4864,8 +4864,8 @@ EbErrorType EncodePassIntra4x4Prediction16bit(
             IntraSmoothV_16bit_Av1_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array_reverse,
-                (uint16_t*)prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                (uint16_t*)prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 EB_FALSE);
 
         else if (av1LumaMode == SMOOTH_H_PRED)
@@ -4873,8 +4873,8 @@ EbErrorType EncodePassIntra4x4Prediction16bit(
             IntraSmoothH_16bit_Av1_funcPtrArray[asm_type](
                 puSize,
                 y_intra_reference_array_reverse,
-                (uint16_t*)prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                (uint16_t*)prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 EB_FALSE);
 
         else
@@ -4884,8 +4884,8 @@ EbErrorType EncodePassIntra4x4Prediction16bit(
                 puSize,
                 y_intra_reference_array_reverse,
                 y_intra_reference_array,
-                (uint16_t*)prediction_ptr->bufferY + lumaOffset,
-                prediction_ptr->strideY,
+                (uint16_t*)prediction_ptr->buffer_y + lumaOffset,
+                prediction_ptr->stride_y,
                 referenceSamples->reference_above_line_y,
                 &referenceSamples->above_ready_flag_y,
                 referenceSamples->reference_left_line_y,
@@ -4899,7 +4899,7 @@ EbErrorType EncodePassIntra4x4Prediction16bit(
     // Chroma
     //***********************************
     if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
-        uint32_t av1ChromaMode = chroma_mode;//intra_hev_cmode_to_intra_av1_mode[lumaMode] ;
+        uint32_t av1ChromaMode = chroma_mode;//intra_hev_cmode_to_intra_av1_mode[luma_mode] ;
         chromaOffset = ((origin_y)* prediction_ptr->strideCb + (origin_x)) >> 1;
         if (av1ChromaMode == UV_DC_PRED) {
             highbd_dc_predictor_16bit(
@@ -5005,16 +5005,16 @@ EbErrorType UpdateNeighborSamplesArrayOpenLoop(
     IntraReferenceSamplesOpenLoop_t *intra_ref_ptr,
     EbPictureBufferDesc_t           *inputPtr,
     uint32_t                           stride,
-    uint32_t                           srcOriginX,
-    uint32_t                           srcOriginY,
-    uint32_t                           blockSize)
+    uint32_t                           src_origin_x,
+    uint32_t                           src_origin_y,
+    uint32_t                           block_size)
 {
 
     EbErrorType    return_error = EB_ErrorNone;
 
     uint32_t idx;
-    uint8_t  *srcPtr;
-    uint8_t  *dstPtr;
+    uint8_t  *src_ptr;
+    uint8_t  *dst_ptr;
     uint8_t  *readPtr;
 
     uint32_t count;
@@ -5025,66 +5025,66 @@ EbErrorType UpdateNeighborSamplesArrayOpenLoop(
 
     uint32_t width = inputPtr->width;
     uint32_t height = inputPtr->height;
-    uint32_t blockSizeHalf = blockSize << 1;
+    uint32_t blockSizeHalf = block_size << 1;
 
     // Adjust the Source ptr to start at the origin of the block being updated
-    srcPtr = inputPtr->bufferY + (((srcOriginY + inputPtr->origin_y) * stride) + (srcOriginX + inputPtr->origin_x));
+    src_ptr = inputPtr->buffer_y + (((src_origin_y + inputPtr->origin_y) * stride) + (src_origin_x + inputPtr->origin_x));
 
     // Adjust the Destination ptr to start at the origin of the Intra reference array
-    dstPtr = yBorderReverse;
+    dst_ptr = yBorderReverse;
 
     //Initialise the Luma Intra Reference Array to the mid range value 128 (for CUs at the picture boundaries)
-    EB_MEMSET(dstPtr, MIDRANGE_VALUE_8BIT, (blockSize << 2) + 1);
+    EB_MEMSET(dst_ptr, MIDRANGE_VALUE_8BIT, (block_size << 2) + 1);
 
     // Get the left-column
     count = blockSizeHalf;
 
-    if (srcOriginX != 0) {
+    if (src_origin_x != 0) {
 
-        readPtr = srcPtr - 1;
-        count = ((srcOriginY + count) > height) ? count - ((srcOriginY + count) - height) : count;
+        readPtr = src_ptr - 1;
+        count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
 
         for (idx = 0; idx < count; ++idx) {
 
-            *dstPtr = *readPtr;
+            *dst_ptr = *readPtr;
             readPtr += stride;
-            dstPtr++;
+            dst_ptr++;
         }
 
-        dstPtr += (blockSizeHalf - count);
+        dst_ptr += (blockSizeHalf - count);
 
     }
     else {
 
-        dstPtr += count;
+        dst_ptr += count;
     }
 
     // Get the upper left sample
-    if (srcOriginX != 0 && srcOriginY != 0) {
+    if (src_origin_x != 0 && src_origin_y != 0) {
 
-        readPtr = srcPtr - stride - 1;
-        *dstPtr = *readPtr;
-        dstPtr++;
+        readPtr = src_ptr - stride - 1;
+        *dst_ptr = *readPtr;
+        dst_ptr++;
     }
     else {
 
-        dstPtr++;
+        dst_ptr++;
     }
 
     // Get the top-row
     count = blockSizeHalf;
-    if (srcOriginY != 0) {
+    if (src_origin_y != 0) {
 
-        readPtr = srcPtr - stride;
+        readPtr = src_ptr - stride;
 
-        count = ((srcOriginX + count) > width) ? count - ((srcOriginX + count) - width) : count;
-        EB_MEMCPY(dstPtr, readPtr, count);
-        dstPtr += (blockSizeHalf - count);
+        count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
+        EB_MEMCPY(dst_ptr, readPtr, count);
+        dst_ptr += (blockSizeHalf - count);
 
     }
     else {
 
-        dstPtr += count;
+        dst_ptr += count;
     }
 
 
@@ -5460,7 +5460,7 @@ static const uint8_t *const has_tr_vert_tables[BlockSizeS] = {
 };
 
 static const uint8_t *get_has_tr_table(PartitionType partition,
-    BlockSize bsize) {
+    block_size bsize) {
     const uint8_t *ret = NULL;
     // If this is a mixed vertical partition, look up bsize in orders_vert.
     if (partition == PARTITION_VERT_A || partition == PARTITION_VERT_B) {
@@ -5474,7 +5474,7 @@ static const uint8_t *get_has_tr_table(PartitionType partition,
     return ret;
 }
 
-static int32_t has_top_right(const Av1Common *cm, BlockSize bsize, int32_t mi_row,
+static int32_t has_top_right(const Av1Common *cm, block_size bsize, int32_t mi_row,
     int32_t mi_col, int32_t top_available, int32_t right_available,
     PartitionType partition, TxSize txsz, int32_t row_off,
     int32_t col_off, int32_t ss_x, int32_t ss_y) {
@@ -5648,7 +5648,7 @@ static const uint8_t *const has_bl_vert_tables[BlockSizeS] = {
 };
 
 static const uint8_t *get_has_bl_table(PartitionType partition,
-    BlockSize bsize) {
+    block_size bsize) {
     const uint8_t *ret = NULL;
     // If this is a mixed vertical partition, look up bsize in orders_vert.
     if (partition == PARTITION_VERT_A || partition == PARTITION_VERT_B) {
@@ -5662,7 +5662,7 @@ static const uint8_t *get_has_bl_table(PartitionType partition,
     return ret;
 }
 
-static int32_t has_bottom_left(const Av1Common *cm, BlockSize bsize, int32_t mi_row,
+static int32_t has_bottom_left(const Av1Common *cm, block_size bsize, int32_t mi_row,
     int32_t mi_col, int32_t bottom_available, int32_t left_available,
     PartitionType partition, TxSize txsz, int32_t row_off,
     int32_t col_off, int32_t ss_x, int32_t ss_y) {
@@ -8249,9 +8249,9 @@ static void build_intra_predictors_md(
     }
 }
 
-/*static INLINE*/ BlockSize scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x,
+/*static INLINE*/ block_size scale_chroma_bsize(block_size bsize, int32_t subsampling_x,
     int32_t subsampling_y) {
-    BlockSize bs = bsize;
+    block_size bs = bsize;
     switch (bsize) {
     case BLOCK_4X4:
         if (subsampling_x == 1 && subsampling_y == 1)
@@ -8320,23 +8320,23 @@ void generate_intra_reference_samples(
 
 #if 1
 
-    uint32_t modeTypeLeftNeighborIndex = GetNeighborArrayUnitLeftIndex(
+    uint32_t modeTypeLeftNeighborIndex = get_neighbor_array_unit_left_index(
         md_context_ptr->mode_type_neighbor_array,
         md_context_ptr->cu_origin_y);
-    uint32_t modeTypeTopNeighborIndex = GetNeighborArrayUnitTopIndex(
+    uint32_t modeTypeTopNeighborIndex = get_neighbor_array_unit_top_index(
         md_context_ptr->mode_type_neighbor_array,
         md_context_ptr->cu_origin_x);
-    uint32_t intraLumaModeLeftNeighborIndex = GetNeighborArrayUnitLeftIndex(
+    uint32_t intraLumaModeLeftNeighborIndex = get_neighbor_array_unit_left_index(
         md_context_ptr->intra_luma_mode_neighbor_array,
         md_context_ptr->cu_origin_y);
-    uint32_t intraLumaModeTopNeighborIndex = GetNeighborArrayUnitTopIndex(
+    uint32_t intraLumaModeTopNeighborIndex = get_neighbor_array_unit_top_index(
         md_context_ptr->intra_luma_mode_neighbor_array,
         md_context_ptr->cu_origin_x);
 
-    uint32_t intraChromaModeLeftNeighborIndex = GetNeighborArrayUnitLeftIndex(
+    uint32_t intraChromaModeLeftNeighborIndex = get_neighbor_array_unit_left_index(
         md_context_ptr->intra_chroma_mode_neighbor_array,
         md_context_ptr->round_origin_y >> 1);
-    uint32_t intraChromaModeTopNeighborIndex = GetNeighborArrayUnitTopIndex(
+    uint32_t intraChromaModeTopNeighborIndex = get_neighbor_array_unit_top_index(
         md_context_ptr->intra_chroma_mode_neighbor_array,
         md_context_ptr->round_origin_x >> 1);
 
@@ -8360,7 +8360,7 @@ void generate_intra_reference_samples(
         (uint32_t)md_context_ptr->intra_chroma_mode_neighbor_array->topArray[intraChromaModeTopNeighborIndex]);       //   use DC. This seems like we could use a LCU-width
 #endif
 
-    BlockSize bsize;
+    block_size bsize;
     for (int plane = 0; plane < end_plane; ++plane) {
         bsize = md_context_ptr->blk_geom->bsize;
         //if (md_context_ptr->blk_geom->origin_x == 8 && md_context_ptr->blk_geom->origin_y == 0 && plane == 0 && md_context_ptr->blk_geom->bsize == BLOCK_8X8)
@@ -9101,11 +9101,11 @@ extern void av1_predict_intra_block_md(
     FILTER_INTRA_MODE filter_intra_mode,
     uint8_t* topNeighArray,
     uint8_t* leftNeighArray,
-    EbPictureBufferDesc_t  *reconBuffer,
+    EbPictureBufferDesc_t  *recon_buffer,
     int32_t col_off,
     int32_t row_off,
     int32_t plane,
-    BlockSize bsize,
+    block_size bsize,
     uint32_t cuOrgX,
     uint32_t cuOrgY,
     uint32_t OrgX,
@@ -9154,16 +9154,16 @@ extern void av1_predict_intra_block_md(
     uint8_t *dst;
     int32_t dst_stride;
     if (plane == 0) {
-        dst = reconBuffer->bufferY + OrgX + reconBuffer->origin_x + (OrgY + reconBuffer->origin_y)*reconBuffer->strideY;
-        dst_stride = reconBuffer->strideY;
+        dst = recon_buffer->buffer_y + OrgX + recon_buffer->origin_x + (OrgY + recon_buffer->origin_y)*recon_buffer->stride_y;
+        dst_stride = recon_buffer->stride_y;
     }
     else if (plane == 1) {
-        dst = reconBuffer->bufferCb + (OrgX + reconBuffer->origin_x / 2 + (OrgY + reconBuffer->origin_y / 2)*reconBuffer->strideCb);
-        dst_stride = reconBuffer->strideCb;
+        dst = recon_buffer->bufferCb + (OrgX + recon_buffer->origin_x / 2 + (OrgY + recon_buffer->origin_y / 2)*recon_buffer->strideCb);
+        dst_stride = recon_buffer->strideCb;
     }
     else {
-        dst = reconBuffer->bufferCr + (OrgX + reconBuffer->origin_x / 2 + (OrgY + reconBuffer->origin_y / 2)*reconBuffer->strideCr);
-        dst_stride = reconBuffer->strideCr;
+        dst = recon_buffer->bufferCr + (OrgX + recon_buffer->origin_x / 2 + (OrgY + recon_buffer->origin_y / 2)*recon_buffer->strideCr);
+        dst_stride = recon_buffer->strideCr;
 
     }
     int32_t chroma_up_available = xd->up_available;
@@ -9199,7 +9199,7 @@ extern void av1_predict_intra_block_md(
     //  return;
     //}
 
-    //CHKN BlockSize bsize = mbmi->sb_type;
+    //CHKN block_size bsize = mbmi->sb_type;
 
 
     struct MacroblockdPlane  pd_s;
@@ -9305,13 +9305,13 @@ extern void av1_predict_intra_block(
     FILTER_INTRA_MODE filter_intra_mode,
     uint8_t* topNeighArray,
     uint8_t* leftNeighArray,
-    EbPictureBufferDesc_t  *reconBuffer,
+    EbPictureBufferDesc_t  *recon_buffer,
 #if !INTRA_CORE_OPT
     int32_t col_off,
     int32_t row_off,
 #endif
     int32_t plane,
-    BlockSize bsize,
+    block_size bsize,
     uint32_t bl_org_x_pict,
     uint32_t bl_org_y_pict,
     uint32_t bl_org_x_mb,
@@ -9397,16 +9397,16 @@ extern void av1_predict_intra_block(
     uint8_t  *dst;
     int32_t dst_stride;
     if (plane == 0) {
-        dst = reconBuffer->bufferY + pred_buf_x_offest + reconBuffer->origin_x + (pred_buf_y_offest + reconBuffer->origin_y)*reconBuffer->strideY;
-        dst_stride = reconBuffer->strideY;
+        dst = recon_buffer->buffer_y + pred_buf_x_offest + recon_buffer->origin_x + (pred_buf_y_offest + recon_buffer->origin_y)*recon_buffer->stride_y;
+        dst_stride = recon_buffer->stride_y;
     }
     else if (plane == 1) {
-        dst = reconBuffer->bufferCb + (pred_buf_x_offest + reconBuffer->origin_x / 2 + (pred_buf_y_offest + reconBuffer->origin_y / 2)*reconBuffer->strideCb);
-        dst_stride = reconBuffer->strideCb;
+        dst = recon_buffer->bufferCb + (pred_buf_x_offest + recon_buffer->origin_x / 2 + (pred_buf_y_offest + recon_buffer->origin_y / 2)*recon_buffer->strideCb);
+        dst_stride = recon_buffer->strideCb;
     }
     else {
-        dst = reconBuffer->bufferCr + (pred_buf_x_offest + reconBuffer->origin_x / 2 + (pred_buf_y_offest + reconBuffer->origin_y / 2)*reconBuffer->strideCr);
-        dst_stride = reconBuffer->strideCr;
+        dst = recon_buffer->bufferCr + (pred_buf_x_offest + recon_buffer->origin_x / 2 + (pred_buf_y_offest + recon_buffer->origin_y / 2)*recon_buffer->strideCr);
+        dst_stride = recon_buffer->strideCr;
 
     }
 
@@ -9468,7 +9468,7 @@ extern void av1_predict_intra_block(
     //  return;
     //}
 
-    //CHKN BlockSize bsize = mbmi->sb_type;
+    //CHKN block_size bsize = mbmi->sb_type;
 #if !INTRA_CORE_OPT 
     struct MacroblockdPlane  pd_s;
     struct MacroblockdPlane * pd = &pd_s;
@@ -9641,12 +9641,12 @@ void av1_predict_intra_block_16bit(
     FILTER_INTRA_MODE filter_intra_mode,
     uint16_t* topNeighArray,
     uint16_t* leftNeighArray,
-    EbPictureBufferDesc_t  *reconBuffer,
+    EbPictureBufferDesc_t  *recon_buffer,
     int32_t col_off,
     int32_t row_off,
     int32_t plane,
 
-    BlockSize bsize,
+    block_size bsize,
     uint32_t bl_org_x_pict,
     uint32_t bl_org_y_pict)
 {
@@ -9704,16 +9704,16 @@ void av1_predict_intra_block_16bit(
     uint16_t *dst;
     int32_t dst_stride;
     if (plane == 0) {
-        dst = (uint16_t*)(reconBuffer->bufferY) + pred_buf_x_offest + reconBuffer->origin_x + (pred_buf_y_offest + reconBuffer->origin_y)*reconBuffer->strideY;
-        dst_stride = reconBuffer->strideY;
+        dst = (uint16_t*)(recon_buffer->buffer_y) + pred_buf_x_offest + recon_buffer->origin_x + (pred_buf_y_offest + recon_buffer->origin_y)*recon_buffer->stride_y;
+        dst_stride = recon_buffer->stride_y;
     }
     else if (plane == 1) {
-        dst = (uint16_t*)(reconBuffer->bufferCb) + (pred_buf_x_offest + reconBuffer->origin_x / 2 + (pred_buf_y_offest + reconBuffer->origin_y / 2)*reconBuffer->strideCb);
-        dst_stride = reconBuffer->strideCb;
+        dst = (uint16_t*)(recon_buffer->bufferCb) + (pred_buf_x_offest + recon_buffer->origin_x / 2 + (pred_buf_y_offest + recon_buffer->origin_y / 2)*recon_buffer->strideCb);
+        dst_stride = recon_buffer->strideCb;
     }
     else {
-        dst = (uint16_t*)(reconBuffer->bufferCr) + (pred_buf_x_offest + reconBuffer->origin_x / 2 + (pred_buf_y_offest + reconBuffer->origin_y / 2)*reconBuffer->strideCr);
-        dst_stride = reconBuffer->strideCr;
+        dst = (uint16_t*)(recon_buffer->bufferCr) + (pred_buf_x_offest + recon_buffer->origin_x / 2 + (pred_buf_y_offest + recon_buffer->origin_y / 2)*recon_buffer->strideCr);
+        dst_stride = recon_buffer->strideCr;
 
     }
 
@@ -9764,7 +9764,7 @@ void av1_predict_intra_block_16bit(
     //  return;
     //}
 
-    //CHKN BlockSize bsize = mbmi->sb_type;
+    //CHKN block_size bsize = mbmi->sb_type;
 
     struct MacroblockdPlane  pd_s;
     struct MacroblockdPlane * pd = &pd_s;
@@ -9857,23 +9857,23 @@ EbErrorType AV1IntraPredictionCL(
 #if !INTRA_CORE_OPT
 
 
-    uint32_t modeTypeLeftNeighborIndex = GetNeighborArrayUnitLeftIndex(
+    uint32_t modeTypeLeftNeighborIndex = get_neighbor_array_unit_left_index(
         md_context_ptr->mode_type_neighbor_array,
         md_context_ptr->cu_origin_y);
-    uint32_t modeTypeTopNeighborIndex = GetNeighborArrayUnitTopIndex(
+    uint32_t modeTypeTopNeighborIndex = get_neighbor_array_unit_top_index(
         md_context_ptr->mode_type_neighbor_array,
         md_context_ptr->cu_origin_x);
-    uint32_t intraLumaModeLeftNeighborIndex = GetNeighborArrayUnitLeftIndex(
+    uint32_t intraLumaModeLeftNeighborIndex = get_neighbor_array_unit_left_index(
         md_context_ptr->intra_luma_mode_neighbor_array,
         md_context_ptr->cu_origin_y);
-    uint32_t intraLumaModeTopNeighborIndex = GetNeighborArrayUnitTopIndex(
+    uint32_t intraLumaModeTopNeighborIndex = get_neighbor_array_unit_top_index(
         md_context_ptr->intra_luma_mode_neighbor_array,
         md_context_ptr->cu_origin_x);
 
-    uint32_t intraChromaModeLeftNeighborIndex = GetNeighborArrayUnitLeftIndex(
+    uint32_t intraChromaModeLeftNeighborIndex = get_neighbor_array_unit_left_index(
         md_context_ptr->intra_chroma_mode_neighbor_array,
         md_context_ptr->round_origin_y >> 1);
-    uint32_t intraChromaModeTopNeighborIndex = GetNeighborArrayUnitTopIndex(
+    uint32_t intraChromaModeTopNeighborIndex = get_neighbor_array_unit_top_index(
         md_context_ptr->intra_chroma_mode_neighbor_array,
         md_context_ptr->round_origin_x >> 1);
 

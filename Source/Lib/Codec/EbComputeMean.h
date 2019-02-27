@@ -17,22 +17,22 @@ extern "C" {
 
     typedef uint64_t(*EB_COMPUTE_MEAN_FUNC)(
         uint8_t *input_samples,
-        uint32_t inputStride,
-        uint32_t inputAreaWidth,
-        uint32_t inputAreaHeight);
+        uint32_t input_stride,
+        uint32_t input_area_width,
+        uint32_t input_area_height);
 
     static const EB_COMPUTE_MEAN_FUNC ComputeMeanFunc[2][ASM_TYPE_TOTAL] = {
         {
             // NON_AVX2
-            ComputeMean8x8_SSE2_INTRIN,
+            compute_mean8x8_sse2_intrin,
             // AVX2
-            ComputeMean8x8_AVX2_INTRIN
+            compute_mean8x8_avx2_intrin
         },
         {
             // NON_AVX2
-            ComputeMeanOfSquaredValues8x8_SSE2_INTRIN,
+            compute_mean_of_squared_values8x8_sse2_intrin,
             // AVX2
-            ComputeMeanOfSquaredValues8x8_SSE2_INTRIN
+            compute_mean_of_squared_values8x8_sse2_intrin
         }
     };
 

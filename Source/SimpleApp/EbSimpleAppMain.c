@@ -97,7 +97,7 @@ APPEXITCONDITIONTYPE ProcessOutputReconBuffer(
     EbConfig_t             *config,
     EbAppContext_t         *appCallBack)
 {
-    EbBufferHeaderType    *headerPtr = appCallBack->reconBuffer; // needs to change for buffered input
+    EbBufferHeaderType    *headerPtr = appCallBack->recon_buffer; // needs to change for buffered input
     EbComponentType       *componentHandle = (EbComponentType*)appCallBack->svtEncoderHandle;
     APPEXITCONDITIONTYPE    return_value = APP_ExitConditionNone;
     EbErrorType            recon_status = EB_ErrorNone;

@@ -7,12 +7,12 @@
 #include "EbPictureDecisionQueue.h"
 
 
-EbErrorType PaReferenceQueueEntryCtor(
-    PaReferenceQueueEntry_t   **entryDblPtr)
+EbErrorType pa_reference_queue_entry_ctor(
+    PaReferenceQueueEntry_t   **entry_dbl_ptr)
 {
     PaReferenceQueueEntry_t *entryPtr;
     EB_MALLOC(PaReferenceQueueEntry_t*, entryPtr, sizeof(PaReferenceQueueEntry_t), EB_N_PTR);
-    *entryDblPtr = entryPtr;
+    *entry_dbl_ptr = entryPtr;
 
     entryPtr->inputObjectPtr = (EbObjectWrapper_t*)EB_NULL;
     entryPtr->picture_number = 0;

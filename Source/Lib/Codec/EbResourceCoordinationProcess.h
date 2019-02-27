@@ -19,16 +19,16 @@ extern "C" {
     {
 
         EbFifo_t                            *input_buffer_fifo_ptr;
-        EbFifo_t                            *resourceCoordinationResultsOutputFifoPtr;
-        EbFifo_t                           **pictureControlSetFifoPtrArray;
-        EbSequenceControlSetInstance_t     **sequenceControlSetInstanceArray;
+        EbFifo_t                            *resource_coordination_results_output_fifo_ptr;
+        EbFifo_t                           **picture_control_set_fifo_ptr_array;
+        EbSequenceControlSetInstance_t     **sequence_control_set_instance_array;
         EbObjectWrapper_t                  **sequenceControlSetActiveArray;
-        EbFifo_t                            *sequenceControlSetEmptyFifoPtr;
-        EbCallback_t                       **appCallbackPtrArray;
+        EbFifo_t                            *sequence_control_set_empty_fifo_ptr;
+        EbCallback_t                       **app_callback_ptr_array;
         
         // Compute Segments
-        uint32_t                              *computeSegmentsTotalCountArray;
-        uint32_t                               encodeInstancesTotalCount;
+        uint32_t                              *compute_segments_total_count_array;
+        uint32_t                               encode_instances_total_count;
 
         // Picture Number Array
         uint64_t                              *pictureNumberArray;
@@ -62,18 +62,18 @@ extern "C" {
     /***************************************
      * Extern Function Declaration
      ***************************************/
-    extern EbErrorType ResourceCoordinationContextCtor(
-        ResourceCoordinationContext_t      **context_dbl_ptr,
-        EbFifo_t                            *input_buffer_fifo_ptr,
-        EbFifo_t                            *resourceCoordinationResultsOutputFifoPtr,
-        EbFifo_t                           **pictureControlSetFifoPtrArray,
-        EbSequenceControlSetInstance_t     **sequenceControlSetInstanceArray,
-        EbFifo_t                            *sequenceControlSetEmptyFifoPtr,
-        EbCallback_t                       **appCallbackPtrArray,
-        uint32_t                            *computeSegmentsTotalCountArray,
-        uint32_t                             encodeInstancesTotalCount);
+    extern EbErrorType resource_coordination_context_ctor(
+        ResourceCoordinationContext_t  **context_dbl_ptr,
+        EbFifo_t                        *input_buffer_fifo_ptr,
+        EbFifo_t                        *resource_coordination_results_output_fifo_ptr,
+        EbFifo_t                       **picture_control_set_fifo_ptr_array,
+        EbSequenceControlSetInstance_t **sequence_control_set_instance_array,
+        EbFifo_t                        *sequence_control_set_empty_fifo_ptr,
+        EbCallback_t                   **app_callback_ptr_array,
+        uint32_t                        *compute_segments_total_count_array,
+        uint32_t                         encode_instances_total_count);
 
-    extern void* ResourceCoordinationKernel(void *input_ptr);
+    extern void* resource_coordination_kernel(void *input_ptr);
 #ifdef __cplusplus
 }
 #endif

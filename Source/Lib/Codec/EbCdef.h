@@ -85,7 +85,7 @@ extern "C" {
 
     //int32_t sb_all_skip(const Av1Common *const cm, int32_t mi_row, int32_t mi_col);
     //int32_t sb_compute_cdef_list(const Av1Common *const cm, int32_t mi_row, int32_t mi_col,
-    //                         cdef_list *dlist, BlockSize bsize);
+    //                         cdef_list *dlist, block_size bsize);
 
     //void av1_cdef_frame(Yv12BufferConfig *frame, Av1Common *cm, MacroBlockD *xd);
     //

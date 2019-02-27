@@ -12,137 +12,139 @@
 extern "C" {
 #endif
 
-    extern void EB_ENC_msbPack2D_AVX2_INTRIN_AL(
-        uint8_t     *in8BitBuffer,
-        uint32_t     in8Stride,
-        uint8_t     *innBitBuffer,
-        uint16_t    *out16BitBuffer,
-        uint32_t     innStride,
-        uint32_t     outStride,
-        uint32_t     width,
-        uint32_t     height);
+    extern void eb_enc_msb_pack2d_avx2_intrin_al(
+        uint8_t  *in8_bit_buffer,
+        uint32_t  in8_stride,
+        uint8_t  *inn_bit_buffer,
+        uint16_t *out16_bit_buffer,
+        uint32_t  inn_stride,
+        uint32_t  out_stride,
+        uint32_t  width,
+        uint32_t  height);
+                 
+    extern void compressed_packmsb_avx2_intrin(
+        uint8_t  *in8_bit_buffer,
+        uint32_t  in8_stride,
+        uint8_t  *inn_bit_buffer,
+        uint16_t *out16_bit_buffer,
+        uint32_t  inn_stride,
+        uint32_t  out_stride,
+        uint32_t  width,
+        uint32_t  height);
 
-    extern void CompressedPackmsb_AVX2_INTRIN(
-        uint8_t     *in8BitBuffer,
-        uint32_t     in8Stride,
-        uint8_t     *innBitBuffer,
-        uint16_t    *out16BitBuffer,
-        uint32_t     innStride,
-        uint32_t     outStride,
-        uint32_t     width,
-        uint32_t     height);
+    void c_pack_avx2_intrin(
+        const uint8_t *inn_bit_buffer,
+        uint32_t       inn_stride,
+        uint8_t       *in_compn_bit_buffer,
+        uint32_t       out_stride,
+        uint8_t       *local_cache,
+        uint32_t       width,
+        uint32_t       height);
 
-    void CPack_AVX2_INTRIN(
-        const uint8_t     *innBitBuffer,
-        uint32_t     innStride,
-        uint8_t     *inCompnBitBuffer,
-        uint32_t     outStride,
-        uint8_t    *localCache,
-        uint32_t     width,
-        uint32_t     height);
-
-
-    void UnpackAvg_AVX2_INTRIN(
-        uint16_t *ref16L0,
-        uint32_t  refL0Stride,
-        uint16_t *ref16L1,
-        uint32_t  refL1Stride,
-        uint8_t  *dstPtr,
+    void unpack_avg_avx2_intrin(
+        uint16_t *ref16_l0,
+        uint32_t  ref_l0_stride,
+        uint16_t *ref16_l1,
+        uint32_t  ref_l1_stride,
+        uint8_t  *dst_ptr,
         uint32_t  dst_stride,
         uint32_t  width,
         uint32_t  height);
 
-    int32_t  sumResidual8bit_AVX2_INTRIN(
-        int16_t * inPtr,
-        uint32_t   size,
-        uint32_t   strideIn);
-    void memset16bitBlock_AVX2_INTRIN(
-        int16_t * inPtr,
-        uint32_t   strideIn,
-        uint32_t   size,
-        int16_t   value
-    );
+    int32_t sum_residual8bit_avx2_intrin(
+        int16_t  *in_ptr,
+        uint32_t  size,
+        uint32_t  stride_in);
 
+    void memset16bit_block_avx2_intrin(
+        int16_t *in_ptr,
+        uint32_t stride_in,
+        uint32_t size,
+        int16_t  value);
 
-    void UnpackAvgSafeSub_AVX2_INTRIN(
-        uint16_t *ref16L0,
-        uint32_t  refL0Stride,
-        uint16_t *ref16L1,
-        uint32_t  refL1Stride,
-        uint8_t  *dstPtr,
+    void unpack_avg_safe_sub_avx2_intrin(
+        uint16_t *ref16_l0,
+        uint32_t  ref_l0_stride,
+        uint16_t *ref16_l1,
+        uint32_t  ref_l1_stride,
+        uint8_t  *dst_ptr,
         uint32_t  dst_stride,
-        EbBool  subPred,
+        EbBool    sub_pred,
         uint32_t  width,
         uint32_t  height);
 
-    void PictureAdditionKernel4x4_AV1_SSE2_INTRIN(
-        uint8_t  *predPtr,
-        uint32_t  predStride,
-        int32_t *residual_ptr,
-        uint32_t  residualStride,
-        uint8_t  *reconPtr,
-        uint32_t  reconStride,
+    void picture_addition_kernel4x4_av1_sse2_intrin(
+        uint8_t  *pred_ptr,
+        uint32_t  pred_stride,
+        int32_t  *residual_ptr,
+        uint32_t  residual_stride,
+        uint8_t  *recon_ptr,
+        uint32_t  recon_stride,
         uint32_t  width,
         uint32_t  height,
-        int32_t     bd);
-    void PictureAdditionKernel8x8_AV1_SSE2_INTRIN(
-        uint8_t  *predPtr,
-        uint32_t  predStride,
-        int32_t *residual_ptr,
-        uint32_t  residualStride,
-        uint8_t  *reconPtr,
-        uint32_t  reconStride,
-        uint32_t  width,
-        uint32_t  height,
-        int32_t     bd);
-    void PictureAdditionKernel16x16_AV1_SSE2_INTRIN(
-        uint8_t  *predPtr,
-        uint32_t  predStride,
-        int32_t *residual_ptr,
-        uint32_t  residualStride,
-        uint8_t  *reconPtr,
-        uint32_t  reconStride,
-        uint32_t  width,
-        uint32_t  height,
-        int32_t     bd);
-    void PictureAdditionKernel32x32_AV1_SSE2_INTRIN(
-        uint8_t  *predPtr,
-        uint32_t  predStride,
-        int32_t *residual_ptr,
-        uint32_t  residualStride,
-        uint8_t  *reconPtr,
-        uint32_t  reconStride,
-        uint32_t  width,
-        uint32_t  height,
-        int32_t     bd);
-    void PictureAdditionKernel64x64_AV1_SSE2_INTRIN(
-        uint8_t  *predPtr,
-        uint32_t  predStride,
-        int32_t *residual_ptr,
-        uint32_t  residualStride,
-        uint8_t  *reconPtr,
-        uint32_t  reconStride,
-        uint32_t  width,
-        uint32_t  height,
-        int32_t     bd);
+        int32_t   bd);
 
-    void FullDistortionKernelCbfZero32Bits_AVX2(
-        int32_t  *coeff,
-        uint32_t   coeffStride,
-        int32_t  *reconCoeff,
-        uint32_t   reconCoeffStride,
-        uint64_t   distortionResult[DIST_CALC_TOTAL],
-        uint32_t   areaWidth,
-        uint32_t   areaHeight);
+    void picture_addition_kernel8x8_av1_sse2_intrin(
+        uint8_t  *pred_ptr,
+        uint32_t  pred_stride,
+        int32_t  *residual_ptr,
+        uint32_t  residual_stride,
+        uint8_t  *recon_ptr,
+        uint32_t  recon_stride,
+        uint32_t  width,
+        uint32_t  height,
+        int32_t   bd);
 
-    void FullDistortionKernel32Bits_AVX2(
+    void picture_addition_kernel16x16_av1_sse2_intrin(
+        uint8_t  *pred_ptr,
+        uint32_t  pred_stride,
+        int32_t  *residual_ptr,
+        uint32_t  residual_stride,
+        uint8_t  *recon_ptr,
+        uint32_t  recon_stride,
+        uint32_t  width,
+        uint32_t  height,
+        int32_t   bd);
+
+    void picture_addition_kernel32x32_av1_sse2_intrin(
+        uint8_t  *pred_ptr,
+        uint32_t  pred_stride,
+        int32_t  *residual_ptr,
+        uint32_t  residual_stride,
+        uint8_t  *recon_ptr,
+        uint32_t  recon_stride,
+        uint32_t  width,
+        uint32_t  height,
+        int32_t   bd);
+
+    void picture_addition_kernel64x64_av1_sse2_intrin(
+        uint8_t  *pred_ptr,
+        uint32_t  pred_stride,
+        int32_t  *residual_ptr,
+        uint32_t  residual_stride,
+        uint8_t  *recon_ptr,
+        uint32_t  recon_stride,
+        uint32_t  width,
+        uint32_t  height,
+        int32_t   bd);
+
+    void full_distortion_kernel_cbf_zero32_bits_avx2(
         int32_t  *coeff,
-        uint32_t   coeffStride,
-        int32_t  *reconCoeff,
-        uint32_t   reconCoeffStride,
-        uint64_t   distortionResult[DIST_CALC_TOTAL],
-        uint32_t   areaWidth,
-        uint32_t   areaHeight);
+        uint32_t  coeff_stride,
+        int32_t  *recon_coeff,
+        uint32_t  recon_coeff_stride,
+        uint64_t  distortion_result[DIST_CALC_TOTAL],
+        uint32_t  area_width,
+        uint32_t  area_height);
+
+    void full_distortion_kernel32_bits_avx2(
+        int32_t  *coeff,
+        uint32_t  coeff_stride,
+        int32_t  *recon_coeff,
+        uint32_t  recon_coeff_stride,
+        uint64_t  distortion_result[DIST_CALC_TOTAL],
+        uint32_t  area_width,
+        uint32_t  area_height);
 
 
 #ifdef __cplusplus
