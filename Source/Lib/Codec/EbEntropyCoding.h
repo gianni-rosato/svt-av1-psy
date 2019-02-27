@@ -299,8 +299,8 @@ extern "C" {
         SequenceControlSet_t *scsPtr,
         PictureControlSet_t *pcsPtr,
         uint8_t showExisting);
-    extern EbErrorType EncodeTDAv1(
-        Bitstream_t *bitstreamPtr);
+    extern EbErrorType encode_td_av1(
+        uint8_t *bitstreamPtr);
     extern EbErrorType EncodeSPSAv1(
         Bitstream_t *bitstreamPtr,
         SequenceControlSet_t *scsPtr);

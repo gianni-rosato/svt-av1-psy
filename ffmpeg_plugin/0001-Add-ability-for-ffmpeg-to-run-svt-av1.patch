@@ -15,7 +15,7 @@ Signed-off-by: Jing SUN <jing.a.sun@intel.com>
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
-index a70c5f9..1850ef0 100755
+index a70c5f9..5b5238a 100755
 --- a/configure
 +++ b/configure
 @@ -262,6 +262,7 @@ External library support:

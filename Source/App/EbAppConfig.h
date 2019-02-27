@@ -385,6 +385,9 @@ typedef struct EbConfig_s
     uint64_t                processedFrameCount;
     uint64_t                processedByteCount;
 
+    uint64_t                byte_count_since_ivf;
+    uint64_t                ivf_count;
+
 } EbConfig_t;
 
 extern void EbConfigCtor(EbConfig_t *config_ptr);

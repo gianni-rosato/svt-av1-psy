@@ -180,6 +180,9 @@ EbErrorType encode_context_ctor(
     encode_context_ptr->terminating_picture_number = ~0u;
     encode_context_ptr->terminating_sequence_flag_received = EB_FALSE;
 
+    // Signalling the need for a td structure to be written in the bitstream - on when the sequence starts
+    encode_context_ptr->td_needed = EB_TRUE;
+
     // Prediction Structure Group
     encode_context_ptr->prediction_structure_group_ptr = (PredictionStructureGroup_t*)EB_NULL;
 

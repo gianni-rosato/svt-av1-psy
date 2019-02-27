@@ -1260,6 +1260,10 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
 #define SPEED_MEASUREMENT_INTERVAL  2000
 #define START_STEADY_STATE          1000
 #define AV1_FOURCC                  0x31305641 // used for ivf header
+#define IVF_STREAM_HEADER_SIZE      32
+#define IVF_FRAME_HEADER_SIZE       12
+#define OBU_FRAME_HEADER_SIZE       3
+#define TD_SIZE                     2
 static __inline void mem_put_le32(void *vmem, int32_t val) {
     uint8_t *mem = (uint8_t *)vmem;
 
@@ -1280,7 +1284,7 @@ static __inline void mem_put_le16(void *vmem, int32_t val) {
 
 static void write_ivf_stream_header(EbConfig_t *config)
 {
-    char header[32];
+    char header[IVF_STREAM_HEADER_SIZE];
     header[0] = 'D';
     header[1] = 'K';
     header[2] = 'I';
@@ -1298,28 +1302,42 @@ static void write_ivf_stream_header(EbConfig_t *config)
     mem_put_le32(header + 28, 0);               // unused
     //config->performanceContext.byteCount += 32;
     if (config->bitstreamFile)
-        fwrite(header, 1, 32, config->bitstreamFile);
+        fwrite(header, 1, IVF_STREAM_HEADER_SIZE, config->bitstreamFile);
 
     return;
 }
+static void update_prev_ivf_header(EbConfig_t *config){
+
+    char header[4]; // only for the number of bytes
+    if (config && config->bitstreamFile && config->byte_count_since_ivf != 0){
+        fseeko64(config->bitstreamFile, (-(int32_t)(config->byte_count_since_ivf + IVF_FRAME_HEADER_SIZE)),SEEK_CUR);
+        mem_put_le32(&header[0], (int32_t)(config->byte_count_since_ivf));
+        fwrite(header, 1, 4, config->bitstreamFile);
+        fseeko64(config->bitstreamFile, (config->byte_count_since_ivf + IVF_FRAME_HEADER_SIZE - 4), SEEK_CUR);
+        config->byte_count_since_ivf = 0;
+    }
+}
 
 static void write_ivf_frame_header(EbConfig_t *config, uint32_t byte_count){
-    char header[12];
+    char header[IVF_FRAME_HEADER_SIZE];
     int32_t write_location = 0;
 
     mem_put_le32(&header[write_location], (int32_t)byte_count);
     write_location = write_location + 4;
-    mem_put_le32(&header[write_location], (int32_t)((config->performanceContext.frameCount - 1) & 0xFFFFFFFF));
+    mem_put_le32(&header[write_location], (int32_t)((config->ivf_count) & 0xFFFFFFFF));
     write_location = write_location + 4;
-    mem_put_le32(&header[write_location], (int32_t)((config->performanceContext.frameCount - 1) >> 32));
+    mem_put_le32(&header[write_location], (int32_t)((config->ivf_count) >> 32));
     write_location = write_location + 4;
-    //config->performanceContext.byteCount += write_location;
+
+    config->byte_count_since_ivf = (byte_count);
+
+    config->ivf_count++;
+    fflush(stdout);
 
     if (config->bitstreamFile)
-        fwrite(header, 1, 12, config->bitstreamFile);
+        fwrite(header, 1, IVF_FRAME_HEADER_SIZE, config->bitstreamFile);
 }
-#define OBU_FRAME_HEADER_SIZE   3
-#define TD_SPS_SIZE             17
+
 APPEXITCONDITIONTYPE ProcessOutputStreamBuffer(
     EbConfig_t             *config,
     EbAppContext_t         *appCallBack,
@@ -1354,6 +1372,12 @@ APPEXITCONDITIONTYPE ProcessOutputStreamBuffer(
         return APP_ExitConditionError;
     }
     else if (stream_status != EB_NoErrorEmptyQueue) {
+#if TILES
+        EbBool   has_tiles                = (EbBool)(appCallBack->ebEncParameters.tile_columns || appCallBack->ebEncParameters.tile_rows);
+#else
+        EbBool   has_tiles                = (EbBool)EB_FALSE;
+#endif
+        uint8_t  obu_frame_header_size    = has_tiles ? OBU_FRAME_HEADER_SIZE + 1 : OBU_FRAME_HEADER_SIZE;
         ++(config->performanceContext.frameCount);
         *totalLatency += (uint64_t)headerPtr->n_tick_count;
         *maxLatency = (headerPtr->n_tick_count > *maxLatency) ? headerPtr->n_tick_count : *maxLatency;
@@ -1380,32 +1404,62 @@ APPEXITCONDITIONTYPE ProcessOutputStreamBuffer(
         if (streamFile) {
             if (config->performanceContext.frameCount == 1){
                 write_ivf_stream_header(config);
-#if !IVF_FRAME_HEADER_IN_LIB
             }
 
-            if (headerPtr->flags & EB_BUFFERFLAG_SHOW_EXT){
-#if TILES
-                uint8_t show_existing_frame_size = (headerPtr->flags & EB_BUFFERFLAG_TG) ? OBU_FRAME_HEADER_SIZE + 1 : OBU_FRAME_HEADER_SIZE;
-                write_ivf_frame_header(config, headerPtr->n_filled_len - show_existing_frame_size);
-                fwrite(headerPtr->p_buffer, 1, headerPtr->n_filled_len - show_existing_frame_size, streamFile);
-                write_ivf_frame_header(config, show_existing_frame_size);
-                fwrite(headerPtr->p_buffer + headerPtr->n_filled_len - show_existing_frame_size, 1, show_existing_frame_size, streamFile);
-#else
-                write_ivf_frame_header(config, headerPtr->n_filled_len - OBU_FRAME_HEADER_SIZE);
-                fwrite(headerPtr->p_buffer, 1, headerPtr->n_filled_len - OBU_FRAME_HEADER_SIZE, streamFile);
-                write_ivf_frame_header(config, OBU_FRAME_HEADER_SIZE);
-                fwrite(headerPtr->p_buffer + headerPtr->n_filled_len - OBU_FRAME_HEADER_SIZE, 1, OBU_FRAME_HEADER_SIZE, streamFile);
-#endif
-            }else{
-                write_ivf_frame_header(config, headerPtr->n_filled_len);
-#else
-            }
-#endif
+            switch(headerPtr->flags & 0x00000006){ // Check for the flags EB_BUFFERFLAG_HAS_TD and EB_BUFFERFLAG_SHOW_EXT
 
-                fwrite(headerPtr->p_buffer, 1, headerPtr->n_filled_len, streamFile);
-#if !IVF_FRAME_HEADER_IN_LIB
+                case (EB_BUFFERFLAG_HAS_TD | EB_BUFFERFLAG_SHOW_EXT):
+
+                    // terminate previous ivf packet, update the combined size of packets sent
+                    update_prev_ivf_header(config);
+
+                    // Write a new IVF frame header to file as a TD is in the packet
+                    write_ivf_frame_header(config, headerPtr->n_filled_len - (obu_frame_header_size + TD_SIZE));
+                    fwrite(headerPtr->p_buffer, 1, headerPtr->n_filled_len - (obu_frame_header_size + TD_SIZE), streamFile);
+
+                    // An EB_BUFFERFLAG_SHOW_EXT means that another TD has been added to the packet to show another frame, a new IVF is needed
+                    write_ivf_frame_header(config, (obu_frame_header_size + TD_SIZE));
+                    fwrite(headerPtr->p_buffer + headerPtr->n_filled_len - (obu_frame_header_size + TD_SIZE), 1, (obu_frame_header_size + TD_SIZE), streamFile);
+
+
+                    break;
+
+                case (EB_BUFFERFLAG_HAS_TD):
+
+                    // terminate previous ivf packet, update the combined size of packets sent
+                    update_prev_ivf_header(config);
+
+                    // Write a new IVF frame header to file as a TD is in the packet
+                    write_ivf_frame_header(config, headerPtr->n_filled_len);
+                    fwrite(headerPtr->p_buffer, 1, headerPtr->n_filled_len, streamFile);
+
+                    break;
+
+                case (EB_BUFFERFLAG_SHOW_EXT):
+
+                    // this case means that there's only one TD in this packet and is relater
+                    fwrite(headerPtr->p_buffer, 1, headerPtr->n_filled_len - (obu_frame_header_size + TD_SIZE), streamFile);
+                    // this packet will be part of the previous IVF header
+                    config->byte_count_since_ivf += (headerPtr->n_filled_len - (obu_frame_header_size + TD_SIZE));
+
+                    // terminate previous ivf packet, update the combined size of packets sent
+                    update_prev_ivf_header(config);
+
+                    // An EB_BUFFERFLAG_SHOW_EXT means that another TD has been added to the packet to show another frame, a new IVF is needed
+                    write_ivf_frame_header(config, (obu_frame_header_size + TD_SIZE));
+                    fwrite(headerPtr->p_buffer + headerPtr->n_filled_len - (obu_frame_header_size + TD_SIZE), 1, (obu_frame_header_size + TD_SIZE), streamFile);
+
+                    break;
+
+                default:
+
+                    // This is a packet without a TD, write it straight to file
+                    fwrite(headerPtr->p_buffer, 1, headerPtr->n_filled_len, streamFile);
+
+                    // this packet will be part of the previous IVF header
+                    config->byte_count_since_ivf += (headerPtr->n_filled_len);
+                    break;
             }
-#endif
         }
         config->performanceContext.byteCount += headerPtr->n_filled_len;
 

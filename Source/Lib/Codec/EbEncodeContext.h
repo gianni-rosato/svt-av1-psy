@@ -115,6 +115,9 @@ typedef struct EncodeContext_s
     uint64_t                                         terminating_picture_number;
     EbBool                                           terminating_sequence_flag_received;
 
+    // Signalling the need for a td structure to be written in the bitstream - only used in the PK process so no need for a mutex
+    EbBool                                           td_needed;
+
     // Prediction Structure
     PredictionStructureGroup_t                       *prediction_structure_group_ptr;
                                                      
