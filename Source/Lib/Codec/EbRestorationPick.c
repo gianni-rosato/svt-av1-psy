@@ -1449,8 +1449,8 @@ static void search_wiener(const RestorationTileLimits *limits,
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
     const Av1Common *const cm = rsc->cm;
 #if FAST_WN
-    int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
-    const int32_t wiener_win =
+    int32_t wn_luma = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP : cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
+    const int32_t wiener_win = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP :
         (rsc->plane == AOM_PLANE_Y) ? wn_luma : WIENER_WIN_CHROMA;
 #else
     const int32_t wiener_win =
@@ -1840,8 +1840,8 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
     const Av1Common *const cm = rsc->cm;
 #if FAST_WN
-    int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
-    const int32_t wiener_win =
+    int32_t wn_luma = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP : cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
+    const int32_t wiener_win = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP :
         (rsc->plane == AOM_PLANE_Y) ? wn_luma : WIENER_WIN_CHROMA;
 #else
     const int32_t wiener_win =
@@ -1931,8 +1931,8 @@ static void search_wiener_finish(const RestorationTileLimits *limits,
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
 #if FAST_WN
     const Av1Common *const cm = rsc->cm;
-    int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
-    const int32_t wiener_win =
+    int32_t wn_luma = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP : cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
+    const int32_t wiener_win = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP :
         (rsc->plane == AOM_PLANE_Y) ? wn_luma : WIENER_WIN_CHROMA;
 #else
     const int32_t wiener_win =

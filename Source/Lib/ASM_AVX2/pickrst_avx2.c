@@ -412,6 +412,37 @@ static INLINE void acc_stat_win5_one_line_avx2(
     }
 }
 
+static INLINE void acc_stat_win3_one_line_avx2(
+    const uint8_t *dgd, const uint8_t *src, int32_t h_start, int32_t h_end,
+    int32_t dgd_stride, const __m128i *shuffle, int32_t *sumX,
+    int32_t sumY[WIENER_WIN_3TAP][WIENER_WIN_3TAP],
+    int32_t M_int[WIENER_WIN_3TAP][WIENER_WIN_3TAP],
+    int32_t H_int[WIENER_WIN2_3TAP][WIENER_WIN_3TAP * 8]) {
+    int32_t j, k, l;
+    const int32_t wiener_win = WIENER_WIN_3TAP;
+    for (j = h_start; j < h_end; j += 2) {
+        const uint8_t X1 = src[j];
+        const uint8_t X2 = src[j + 1];
+        *sumX += X1 + X2;
+        const uint8_t *dgd_ij = dgd + j;
+        for (k = 0; k < wiener_win; k++) {
+            const uint8_t *dgd_ijk = dgd_ij + k * dgd_stride;
+            for (l = 0; l < wiener_win; l++) {
+                int32_t *H_ = &H_int[(l * wiener_win + k)][0];
+                const uint8_t D1 = dgd_ijk[l];
+                const uint8_t D2 = dgd_ijk[l + 1];
+                sumY[k][l] += D1 + D2;
+                M_int[k][l] += D1 * X1 + D2 * X2;
+
+                const __m256i kl =
+                    _mm256_cvtepu8_epi16(_mm_set1_epi16(*((uint16_t *)(dgd_ijk + l))));
+                acc_stat_avx2(H_ + 0 * 8, dgd_ij + 0 * dgd_stride, shuffle, &kl);
+                acc_stat_avx2(H_ + 1 * 8, dgd_ij + 1 * dgd_stride, shuffle, &kl);
+                acc_stat_avx2(H_ + 2 * 8, dgd_ij + 2 * dgd_stride, shuffle, &kl);
+            }
+        }
+    }
+}
 static INLINE void compute_stats_win5_opt_avx2(
     const uint8_t *dgd, const uint8_t *src, int32_t h_start, int32_t h_end, int32_t v_start,
     int32_t v_end, int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H) {
@@ -470,6 +501,64 @@ static INLINE void compute_stats_win5_opt_avx2(
     }
 }
 
+static INLINE void compute_stats_win3_opt_avx2(
+    const uint8_t *dgd, const uint8_t *src, int32_t h_start, int32_t h_end, int32_t v_start,
+    int32_t v_end, int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H) {
+    int32_t i, j, k, l, m, n;
+    const int32_t wiener_win = WIENER_WIN_3TAP;
+    const int32_t pixel_count = (h_end - h_start) * (v_end - v_start);
+    const int32_t wiener_win2 = wiener_win * wiener_win;
+    const int32_t wiener_halfwin = (wiener_win >> 1);
+    uint8_t avg = find_average(dgd, h_start, h_end, v_start, v_end, dgd_stride);
+
+    int32_t M_int32[WIENER_WIN_3TAP][WIENER_WIN_3TAP] = { { 0 } };
+    int64_t M_int64[WIENER_WIN_3TAP][WIENER_WIN_3TAP] = { { 0 } };
+    int32_t H_int32[WIENER_WIN2_3TAP][WIENER_WIN_3TAP * 8] = { { 0 } };
+    int64_t H_int64[WIENER_WIN2_3TAP][WIENER_WIN_3TAP * 8] = { { 0 } };
+    int32_t sumY[WIENER_WIN_3TAP][WIENER_WIN_3TAP] = { { 0 } };
+    int32_t sumX = 0;
+    const uint8_t *dgd_win = dgd - wiener_halfwin * dgd_stride - wiener_halfwin;
+
+    const __m128i shuffle = xx_loadu_128(g_shuffle_stats_data);
+    for (j = v_start; j < v_end; j += 64) {
+        const int32_t vert_end = AOMMIN(64, v_end - j) + j;
+        for (i = j; i < vert_end; i++) {
+            acc_stat_win3_one_line_avx2(
+                dgd_win + i * dgd_stride, src + i * src_stride, h_start, h_end,
+                dgd_stride, &shuffle, &sumX, sumY, M_int32, H_int32);
+        }
+        for (k = 0; k < wiener_win; ++k) {
+            for (l = 0; l < wiener_win; ++l) {
+                M_int64[k][l] += M_int32[k][l];
+                M_int32[k][l] = 0;
+            }
+        }
+        for (k = 0; k < WIENER_WIN2_3TAP; ++k) {
+            for (l = 0; l < WIENER_WIN_3TAP * 8; ++l) {
+                H_int64[k][l] += H_int32[k][l];
+                H_int32[k][l] = 0;
+            }
+        }
+    }
+
+    const int64_t avg_square_sum = (int64_t)avg * (int64_t)avg * pixel_count;
+    for (k = 0; k < wiener_win; k++) {
+        for (l = 0; l < wiener_win; l++) {
+            const int32_t idx0 = l * wiener_win + k;
+            M[idx0] =
+                M_int64[k][l] + (avg_square_sum - (int64_t)avg * (sumX + sumY[k][l]));
+            int64_t *H_ = H + idx0 * wiener_win2;
+            int64_t *H_int_ = &H_int64[idx0][0];
+            for (m = 0; m < wiener_win; m++) {
+                for (n = 0; n < wiener_win; n++) {
+                    H_[m * wiener_win + n] = H_int_[n * 8 + m] + avg_square_sum -
+                        (int64_t)avg * (sumY[k][l] + sumY[n][m]);
+                }
+            }
+        }
+    }
+}
+
 void av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd,
     const uint8_t *src, int32_t h_start, int32_t h_end,
     int32_t v_start, int32_t v_end, int32_t dgd_stride,
@@ -482,7 +571,11 @@ void av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd,
         compute_stats_win5_opt_avx2(dgd, src, h_start, h_end, v_start, v_end,
             dgd_stride, src_stride, M, H);
     }
-    else {
+    else if (wiener_win == 3) {
+        compute_stats_win3_opt_avx2(dgd, src, h_start, h_end, v_start, v_end,
+            dgd_stride, src_stride, M, H);
+    }
+    else{
         av1_compute_stats_c(wiener_win, dgd, src, h_start, h_end, v_start, v_end,
             dgd_stride, src_stride, M, H);
     }
