@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 3.5)
 set(project_name "svt-av1")
 
-project(${project_name} C ASM_NASM)
+project(${project_name} C CXX ASM_NASM)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib)
@@ -44,9 +44,13 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_ASM_NASM_FLAGS_DEBUG "")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
+include(CTest)
+
+set(USE_CODE_COVERAGE 0)
+
 # Prepare for Coveralls
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(USE_CODE_COVERAGE AND CMAKE_COMPILER_IS_GNUCXX)
     include(CodeCoverage)
     setup_target_for_coverage(${PROJECT_NAME}_coverage ${PROJECT_TEST_NAME} coverage)
 endif()
@@ -55,3 +59,7 @@ endif()
 add_subdirectory (Source/Lib)
 add_subdirectory (Source/App)
 add_subdirectory (Source/SimpleApp)
+if (BUILD_TESTING)
+    add_subdirectory (test)
+    add_subdirectory (third_party/googletest)
+endif()
