@@ -4993,6 +4993,7 @@ void av1_fwd_txfm2d_4x8_avx2(int16_t *input, int32_t *output, uint32_t stride, T
 {
     __m256i in[4];
     __m256i outcoeff256[4];
+
     const int8_t *shift = fwd_txfm_shift_ls[TX_4X8];
     const int32_t txw_idx = get_txw_idx(TX_4X8);
     const int32_t txh_idx = get_txh_idx(TX_4X8);

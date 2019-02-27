@@ -135,27 +135,38 @@ void DerivePictureActivityStatistics(
 
     uint32_t               sb_index;
     for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
-
-
-        nonMovingIndexMin = picture_control_set_ptr->non_moving_index_array[sb_index] < nonMovingIndexMin ?
-            picture_control_set_ptr->non_moving_index_array[sb_index] :
-            nonMovingIndexMin;
-
-        nonMovingIndexMax = picture_control_set_ptr->non_moving_index_array[sb_index] > nonMovingIndexMax ?
-            picture_control_set_ptr->non_moving_index_array[sb_index] :
-            nonMovingIndexMax;
-#if NEW_PRED_STRUCT
-        if (picture_control_set_ptr->non_moving_index_array[sb_index] < NON_MOVING_SCORE_1) {
-            non_moving_sb_count++;
-        }
-        complete_sb_count++;
+#if CONTENT_BASED_QPS
+        SbParams_t *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+        if (sb_params->is_complete_sb) 
 #endif
-        nonMovingIndexSum += picture_control_set_ptr->non_moving_index_array[sb_index];
+        { 
+            nonMovingIndexMin = picture_control_set_ptr->non_moving_index_array[sb_index] < nonMovingIndexMin ?
+                picture_control_set_ptr->non_moving_index_array[sb_index] :
+                nonMovingIndexMin;
 
-        if (picture_control_set_ptr->non_moving_index_array[sb_index] < 10)
-            totNmvIdx++;
+            nonMovingIndexMax = picture_control_set_ptr->non_moving_index_array[sb_index] > nonMovingIndexMax ?
+                picture_control_set_ptr->non_moving_index_array[sb_index] :
+                nonMovingIndexMax;
+#if NEW_PRED_STRUCT
+            if (picture_control_set_ptr->non_moving_index_array[sb_index] < NON_MOVING_SCORE_1) {
+                non_moving_sb_count++;
+            }
+            complete_sb_count++;
+#endif
+            nonMovingIndexSum += picture_control_set_ptr->non_moving_index_array[sb_index];
+
+
+            if (picture_control_set_ptr->non_moving_index_array[sb_index] < NON_MOVING_SCORE_1)
+                totNmvIdx++;
+        }
+
     }
+#if CONTENT_BASED_QPS
+    picture_control_set_ptr->non_moving_index_average = (uint16_t)(nonMovingIndexSum / complete_sb_count);
+#else
     picture_control_set_ptr->non_moving_index_average = (uint16_t)(nonMovingIndexSum / sb_total_count);
+#endif
+  
 #if NEW_PRED_STRUCT
     picture_control_set_ptr->kf_zeromotion_pct = (non_moving_sb_count * 100) / complete_sb_count;
 #endif

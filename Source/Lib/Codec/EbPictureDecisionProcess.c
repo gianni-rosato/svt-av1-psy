@@ -387,7 +387,6 @@ EbErrorType handle_incomplete_picture_window_map(
     EncodeContext_t                 *encode_context_ptr) {
 
     EbErrorType return_error = EB_ErrorNone;
-
     if (context_ptr->totalNumberOfMiniGops == 0) {
 
         context_ptr->miniGopStartIndex[context_ptr->totalNumberOfMiniGops] = 0;
@@ -644,6 +643,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         picture_control_set_ptr->pic_depth_mode = PIC_ALL_DEPTH_MODE;
 
     else if (picture_control_set_ptr->enc_mode == ENC_M1) {
+
 #if TUNED_SETTINGS_FOR_M1
         picture_control_set_ptr->pic_depth_mode = PIC_ALL_C_DEPTH_MODE;
 #else
@@ -844,7 +844,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Intra prediction levels                      Settings
     // 0                                            OFF : disable_angle_prediction
     // 1                                            Disable_angle_prediction for 64/32/4 (mode 1) @ BASE AND OFF (mode 0) Otherwise
-    // 2                                            Disable_z2_prediction && disable_angle_refinement for 64/32/4 (mode 3) @ BASE AND OFF (mode 0) Otherwise
+    // 2                                            Disable_z2_prediction && disable_angle_refinementÂ for 64/32/4 (mode 3) @ BASE AND OFF (mode 0) Otherwise
     // 3                                            Full (mode 4) @ BASE AND Disable_z2_prediction && disable_angle_refinement (mode 2) Otherwise
     // 4                                            FULL 
 

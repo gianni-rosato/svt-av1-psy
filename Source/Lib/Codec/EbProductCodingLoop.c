@@ -2580,7 +2580,6 @@ void inter_depth_tx_search(
         ref_fast_cost,
         *candidateBuffer->fast_cost_ptr,
         picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
-
     if (!tx_search_skip_fag) {
 
         uint64_t      y_full_distortion[DIST_CALC_TOTAL] = { 0 };
