@@ -23,6 +23,107 @@
     yBest = i; \
   }
 
+void ext_sad_calculation_8x8_16x16_avx2_intrin(
+    uint8_t  *src,
+    uint32_t  src_stride,
+    uint8_t  *ref,
+    uint32_t  ref_stride,
+    uint32_t *p_best_sad8x8,
+    uint32_t *p_best_sad16x16,
+    uint32_t *p_best_mv8x8,
+    uint32_t *p_best_mv16x16,
+    uint32_t  mv,
+    uint32_t *p_sad16x16,
+    uint32_t *p_sad8x8) {
+    __m128i xmm_sad16x16, xmm_sad16x16_total, sad8x8_0_3;
+    __m128i sad8x8_less_than_bitmask, sad8x8_greater_or_eq_bitmask, best_mv8x8;
+    __m128i best_sad8x8, xmm_best_sad8x8, xmm_best_mv8x8;
+    __m256i sad8x8_0_3_256, src_256, ref_256;
+    __m128i xmm_mv = _mm_set1_epi32(mv);
+
+    src_stride <<= 1;
+    ref_stride <<= 1;
+
+    src_256 = _mm256_set_m128i(
+        _mm_loadu_si128((__m128i const*)(src + 4 * src_stride)),
+        _mm_loadu_si128((__m128i const*)src));
+
+    ref_256 = _mm256_set_m128i(
+        _mm_loadu_si128((__m128i const*)(ref + 4 * src_stride)),
+        _mm_loadu_si128((__m128i const*)ref));
+    sad8x8_0_3_256 = _mm256_sad_epu8(src_256, ref_256);
+
+    src_256 = _mm256_set_m128i(
+        _mm_loadu_si128((__m128i const*)(src + 5 * src_stride)),
+        _mm_loadu_si128((__m128i const*)(src + 1 * src_stride)));
+    ref_256 = _mm256_set_m128i(
+        _mm_loadu_si128((__m128i const*)(ref + 5 * ref_stride)),
+        _mm_loadu_si128((__m128i const*)(ref + 1 * ref_stride)));
+    sad8x8_0_3_256 = _mm256_add_epi32(_mm256_sad_epu8(src_256, ref_256),
+        sad8x8_0_3_256);
+
+    src_256 = _mm256_set_m128i(
+        _mm_loadu_si128((__m128i const*)(src + 6 * src_stride)),
+        _mm_loadu_si128((__m128i const*)(src + 2 * src_stride)));
+    ref_256 = _mm256_set_m128i(
+        _mm_loadu_si128((__m128i const*)(ref + 6 * ref_stride)),
+        _mm_loadu_si128((__m128i const*)(ref + 2 * ref_stride)));
+    sad8x8_0_3_256 = _mm256_add_epi32(_mm256_sad_epu8(src_256, ref_256),
+        sad8x8_0_3_256);
+
+    src_256 = _mm256_set_m128i(
+        _mm_loadu_si128((__m128i const*)(src + 7 * src_stride)),
+        _mm_loadu_si128((__m128i const*)(src + 3 * src_stride)));
+    ref_256 = _mm256_set_m128i(
+        _mm_loadu_si128((__m128i const*)(ref + 7 * ref_stride)),
+        _mm_loadu_si128((__m128i const*)(ref + 3 * ref_stride)));
+    sad8x8_0_3_256 = _mm256_add_epi32(_mm256_sad_epu8(src_256, ref_256),
+        sad8x8_0_3_256);
+
+    sad8x8_0_3_256 = _mm256_slli_epi32(sad8x8_0_3_256, 1);
+    p_sad8x8[0] = _mm256_extract_epi32(sad8x8_0_3_256, 0);
+    p_sad8x8[1] = _mm256_extract_epi32(sad8x8_0_3_256, 2);
+    p_sad8x8[2] = _mm256_extract_epi32(sad8x8_0_3_256, 4);
+    p_sad8x8[3] = _mm256_extract_epi32(sad8x8_0_3_256, 6);
+
+    sad8x8_0_3 = _mm_packs_epi32(_mm256_extracti128_si256(sad8x8_0_3_256, 0),
+        _mm256_extracti128_si256(sad8x8_0_3_256, 1));
+    sad8x8_0_3_256 = _mm256_srli_epi32(sad8x8_0_3_256, 1);
+
+    xmm_best_sad8x8 = _mm_loadu_si128((__m128i const*)p_best_sad8x8);
+    xmm_best_mv8x8 = _mm_loadu_si128((__m128i const*)p_best_mv8x8);
+
+    // sad8x8_0 < p_best_sad8x8[0] for 0 to 3
+    sad8x8_less_than_bitmask = _mm_cmplt_epi32(sad8x8_0_3, xmm_best_sad8x8);
+
+    sad8x8_greater_or_eq_bitmask = _mm_sub_epi32(_mm_set1_epi8(0xff),
+        sad8x8_less_than_bitmask);
+
+    best_sad8x8 = _mm_or_si128(
+        _mm_and_si128(xmm_best_sad8x8, sad8x8_greater_or_eq_bitmask),
+        _mm_and_si128(sad8x8_less_than_bitmask, sad8x8_0_3));
+    best_mv8x8 = _mm_or_si128(
+        _mm_and_si128(xmm_best_mv8x8, sad8x8_greater_or_eq_bitmask),
+        _mm_and_si128(sad8x8_less_than_bitmask, xmm_mv));
+
+    _mm_storeu_si128((__m128i*)p_best_sad8x8, best_sad8x8);
+    _mm_storeu_si128((__m128i*)p_best_mv8x8, best_mv8x8);
+
+    xmm_sad16x16 = _mm_add_epi32(_mm256_extracti128_si256(sad8x8_0_3_256, 0),
+        _mm256_extracti128_si256(sad8x8_0_3_256, 1));
+
+    xmm_sad16x16_total = _mm_slli_epi32(_mm_add_epi32(
+        _mm_srli_si128(xmm_sad16x16, 8), xmm_sad16x16), 1);
+
+    p_sad16x16[0] = _mm_cvtsi128_si32(xmm_sad16x16_total);
+
+    if (p_sad16x16[0] < p_best_sad16x16[0]) {
+        p_best_sad16x16[0] = p_sad16x16[0];
+        p_best_mv16x16[0] = mv;
+    }
+
+}
+
 void sad_loop_kernel_sparse_avx2_intrin(
     uint8_t  *src,                            // input parameter, source samples Ptr
     uint32_t  src_stride,                      // input parameter, source stride

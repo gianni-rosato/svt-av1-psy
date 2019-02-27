@@ -130,7 +130,7 @@ static EB_EXTSADCALCULATION8X8AND16X16_TYPE ExtSadCalculation_8x8_16x16_funcPtrA
     // NON_AVX2
     ext_sad_calculation_8x8_16x16,
     // AVX2
-    ext_sad_calculation_8x8_16x16_sse4_intrin
+    ext_sad_calculation_8x8_16x16_avx2_intrin
 };
 static EB_EXTSADCALCULATION32X32AND64X64_TYPE ExtSadCalculation_32x32_64x64_funcPtrArray[ASM_TYPE_TOTAL] = {
     // NON_AVX2
