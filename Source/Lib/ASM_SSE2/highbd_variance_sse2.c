@@ -198,9 +198,10 @@ void aom_highbd_8_mse16x16_sse2(const uint8_t *src8, int32_t src_stride,
     int32_t sum;
     uint16_t *src = CONVERT_TO_SHORTPTR(src8);
     uint16_t *ref = CONVERT_TO_SHORTPTR(ref8);
+
+    /*TODO: Remove calculate unused sum.*/
     highbd_8_variance_sse2(src, src_stride, ref, ref_stride, 16, 16, sse, &sum,
         aom_highbd_calc16x16var_sse2, 16);
-    return;
 }
 
 #endif

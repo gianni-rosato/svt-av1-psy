@@ -89,8 +89,7 @@ static INLINE void comp_mask_pred_8_ssse3(uint8_t *comp_pred, int32_t height,
 }
 
 static INLINE void variance_kernel_avx2(const __m256i src, const __m256i ref,
-    __m256i *const sse,
-    __m256i *const sum) {
+    __m256i *const sse) {
     const __m256i adj_sub = _mm256_set1_epi16((short)0xff01);  // (1,-1)
 
     // unpack into pairs of source and reference values
@@ -104,45 +103,37 @@ static INLINE void variance_kernel_avx2(const __m256i src, const __m256i ref,
     const __m256i madd1 = _mm256_madd_epi16(diff1, diff1);
 
     // add to the running totals
-    *sum = _mm256_add_epi16(*sum, _mm256_add_epi16(diff0, diff1));
     *sse = _mm256_add_epi32(*sse, _mm256_add_epi32(madd0, madd1));
 }
 
-static INLINE int32_t variance_final_from_32bit_sum_avx2(__m256i vsse, __m128i vsum,
+static INLINE void variance_final_from_32bit_sum_avx2(__m256i vsse,
     uint32_t *const sse) {
     // extract the low lane and add it to the high lane
     const __m128i sse_reg_128 = mm256_add_hi_lo_epi32(vsse);
+    const __m128i zero = _mm_setzero_si128();
 
     // unpack sse and sum registers and add
-    const __m128i sse_sum_lo = _mm_unpacklo_epi32(sse_reg_128, vsum);
-    const __m128i sse_sum_hi = _mm_unpackhi_epi32(sse_reg_128, vsum);
+    const __m128i sse_sum_lo = _mm_unpacklo_epi32(sse_reg_128, zero);
+    const __m128i sse_sum_hi = _mm_unpackhi_epi32(sse_reg_128, zero);
     const __m128i sse_sum = _mm_add_epi32(sse_sum_lo, sse_sum_hi);
 
     // perform the final summation and extract the results
     const __m128i res = _mm_add_epi32(sse_sum, _mm_srli_si128(sse_sum, 8));
     *((int32_t *)sse) = _mm_cvtsi128_si32(res);
-    return _mm_extract_epi32(res, 1);
 }
 
 // handle pixels (<= 512)
-static INLINE int32_t variance_final_512_avx2(__m256i vsse, __m256i vsum,
+static INLINE void variance_final_512_avx2(__m256i vsse,
     uint32_t *const sse) {
     // extract the low lane and add it to the high lane
-    const __m128i vsum_128 = mm256_add_hi_lo_epi16(vsum);
-    const __m128i vsum_64 = _mm_add_epi16(vsum_128, _mm_srli_si128(vsum_128, 8));
-    const __m128i sum_int32 = _mm_cvtepi16_epi32(vsum_64);
-    return variance_final_from_32bit_sum_avx2(vsse, sum_int32, sse);
+    variance_final_from_32bit_sum_avx2(vsse, sse);
 }
 
 // handle 1024 pixels (32x32, 16x64, 64x16)
-static INLINE int32_t variance_final_1024_avx2(__m256i vsse, __m256i vsum,
+static INLINE void variance_final_1024_avx2(__m256i vsse,
     uint32_t *const sse) {
     // extract the low lane and add it to the high lane
-    const __m128i vsum_128 = mm256_add_hi_lo_epi16(vsum);
-    const __m128i vsum_64 =
-        _mm_add_epi32(_mm_cvtepi16_epi32(vsum_128),
-            _mm_cvtepi16_epi32(_mm_srli_si128(vsum_128, 8)));
-    return variance_final_from_32bit_sum_avx2(vsse, vsum_64, sse);
+    variance_final_from_32bit_sum_avx2(vsse, sse);
 }
 
 static INLINE __m256i sum_to_32bit_avx2(const __m256i sum) {
@@ -153,42 +144,37 @@ static INLINE __m256i sum_to_32bit_avx2(const __m256i sum) {
 }
 
 // handle 2048 pixels (32x64, 64x32)
-static INLINE int32_t variance_final_2048_avx2(__m256i vsse, __m256i vsum,
+static INLINE void variance_final_2048_avx2(__m256i vsse,
     uint32_t *const sse) {
-    vsum = sum_to_32bit_avx2(vsum);
-    const __m128i vsum_128 = mm256_add_hi_lo_epi32(vsum);
-    return variance_final_from_32bit_sum_avx2(vsse, vsum_128, sse);
+    variance_final_from_32bit_sum_avx2(vsse, sse);
 }
 
 static INLINE void variance16_kernel_avx2(
     const uint8_t *const src, const int32_t src_stride, const uint8_t *const ref,
-    const int32_t ref_stride, __m256i *const sse, __m256i *const sum) {
+    const int32_t ref_stride, __m256i *const sse) {
     const __m128i s0 = _mm_loadu_si128((__m128i const *)(src + 0 * src_stride));
     const __m128i s1 = _mm_loadu_si128((__m128i const *)(src + 1 * src_stride));
     const __m128i r0 = _mm_loadu_si128((__m128i const *)(ref + 0 * ref_stride));
     const __m128i r1 = _mm_loadu_si128((__m128i const *)(ref + 1 * ref_stride));
     const __m256i s = _mm256_inserti128_si256(_mm256_castsi128_si256(s0), s1, 1);
     const __m256i r = _mm256_inserti128_si256(_mm256_castsi128_si256(r0), r1, 1);
-    variance_kernel_avx2(s, r, sse, sum);
+    variance_kernel_avx2(s, r, sse);
 }
 
 static INLINE void variance32_kernel_avx2(const uint8_t *const src,
     const uint8_t *const ref,
-    __m256i *const sse,
-    __m256i *const sum) {
+    __m256i *const sse) {
     const __m256i s = _mm256_loadu_si256((__m256i const *)(src));
     const __m256i r = _mm256_loadu_si256((__m256i const *)(ref));
-    variance_kernel_avx2(s, r, sse, sum);
+    variance_kernel_avx2(s, r, sse);
 }
 
 static INLINE void variance16_avx2(const uint8_t *src, const int32_t src_stride,
     const uint8_t *ref, const int32_t ref_stride,
-    const int32_t h, __m256i *const vsse,
-    __m256i *const vsum) {
-    *vsum = _mm256_setzero_si256();
+    const int32_t h, __m256i *const vsse) {
 
     for (int32_t i = 0; i < h; i += 2) {
-        variance16_kernel_avx2(src, src_stride, ref, ref_stride, vsse, vsum);
+        variance16_kernel_avx2(src, src_stride, ref, ref_stride, vsse);
         src += 2 * src_stride;
         ref += 2 * ref_stride;
     }
@@ -196,12 +182,10 @@ static INLINE void variance16_avx2(const uint8_t *src, const int32_t src_stride,
 
 static INLINE void variance32_avx2(const uint8_t *src, const int32_t src_stride,
     const uint8_t *ref, const int32_t ref_stride,
-    const int32_t h, __m256i *const vsse,
-    __m256i *const vsum) {
-    *vsum = _mm256_setzero_si256();
+    const int32_t h, __m256i *const vsse) {
 
     for (int32_t i = 0; i < h; i++) {
-        variance32_kernel_avx2(src, ref, vsse, vsum);
+        variance32_kernel_avx2(src, ref, vsse);
         src += src_stride;
         ref += ref_stride;
     }
@@ -209,13 +193,11 @@ static INLINE void variance32_avx2(const uint8_t *src, const int32_t src_stride,
 
 static INLINE void variance64_avx2(const uint8_t *src, const int32_t src_stride,
     const uint8_t *ref, const int32_t ref_stride,
-    const int32_t h, __m256i *const vsse,
-    __m256i *const vsum) {
-    *vsum = _mm256_setzero_si256();
+    const int32_t h, __m256i *const vsse) {
 
     for (int32_t i = 0; i < h; i++) {
-        variance32_kernel_avx2(src + 0, ref + 0, vsse, vsum);
-        variance32_kernel_avx2(src + 32, ref + 32, vsse, vsum);
+        variance32_kernel_avx2(src + 0, ref + 0, vsse);
+        variance32_kernel_avx2(src + 32, ref + 32, vsse);
         src += src_stride;
         ref += ref_stride;
     }
@@ -223,68 +205,28 @@ static INLINE void variance64_avx2(const uint8_t *src, const int32_t src_stride,
 
 static INLINE void variance128_avx2(const uint8_t *src, const int32_t src_stride,
     const uint8_t *ref, const int32_t ref_stride,
-    const int32_t h, __m256i *const vsse,
-    __m256i *const vsum) {
-    *vsum = _mm256_setzero_si256();
+    const int32_t h, __m256i *const vsse) {
 
     for (int32_t i = 0; i < h; i++) {
-        variance32_kernel_avx2(src + 0, ref + 0, vsse, vsum);
-        variance32_kernel_avx2(src + 32, ref + 32, vsse, vsum);
-        variance32_kernel_avx2(src + 64, ref + 64, vsse, vsum);
-        variance32_kernel_avx2(src + 96, ref + 96, vsse, vsum);
+        variance32_kernel_avx2(src + 0, ref + 0, vsse);
+        variance32_kernel_avx2(src + 32, ref + 32, vsse);
+        variance32_kernel_avx2(src + 64, ref + 64, vsse);
+        variance32_kernel_avx2(src + 96, ref + 96, vsse);
         src += src_stride;
         ref += ref_stride;
     }
 }
 
 #define AOM_VAR_NO_LOOP_AVX2(bw, bh, bits, max_pixel)                         \
-  uint32_t aom_variance##bw##x##bh##_avx2(                                \
+  void aom_variance##bw##x##bh##_avx2(                                \
       const uint8_t *src, int32_t src_stride, const uint8_t *ref, int32_t ref_stride, \
       uint32_t *sse) {                                                    \
     __m256i vsse = _mm256_setzero_si256();                                    \
-    __m256i vsum;                                                             \
-    variance##bw##_avx2(src, src_stride, ref, ref_stride, bh, &vsse, &vsum);  \
-    const int32_t sum = variance_final_##max_pixel##_avx2(vsse, vsum, sse);       \
-    return *sse - (uint32_t)(((int64_t)sum * sum) >> bits);                   \
+    variance##bw##_avx2(src, src_stride, ref, ref_stride, bh, &vsse);  \
+    variance_final_##max_pixel##_avx2(vsse,  sse);       \
   }
 
-AOM_VAR_NO_LOOP_AVX2(16, 4, 6, 512);
-AOM_VAR_NO_LOOP_AVX2(16, 8, 7, 512);
 AOM_VAR_NO_LOOP_AVX2(16, 16, 8, 512);
-AOM_VAR_NO_LOOP_AVX2(16, 32, 9, 512);
-AOM_VAR_NO_LOOP_AVX2(16, 64, 10, 1024);
-
-AOM_VAR_NO_LOOP_AVX2(32, 8, 8, 512);
-AOM_VAR_NO_LOOP_AVX2(32, 16, 9, 512);
-AOM_VAR_NO_LOOP_AVX2(32, 32, 10, 1024);
-AOM_VAR_NO_LOOP_AVX2(32, 64, 11, 2048);
-
-AOM_VAR_NO_LOOP_AVX2(64, 16, 10, 1024);
-AOM_VAR_NO_LOOP_AVX2(64, 32, 11, 2048);
-
-#define AOM_VAR_LOOP_AVX2(bw, bh, bits, uh)                                   \
-  uint32_t aom_variance##bw##x##bh##_avx2(                                \
-      const uint8_t *src, int32_t src_stride, const uint8_t *ref, int32_t ref_stride, \
-      uint32_t *sse) {                                                    \
-    __m256i vsse = _mm256_setzero_si256();                                    \
-    __m256i vsum = _mm256_setzero_si256();                                    \
-    for (int32_t i = 0; i < (bh / uh); i++) {                                     \
-      __m256i vsum16;                                                         \
-      variance##bw##_avx2(src, src_stride, ref, ref_stride, uh, &vsse,        \
-                          &vsum16);                                           \
-      vsum = _mm256_add_epi32(vsum, sum_to_32bit_avx2(vsum16));               \
-      src += uh * src_stride;                                                 \
-      ref += uh * ref_stride;                                                 \
-    }                                                                         \
-    const __m128i vsum_128 = mm256_add_hi_lo_epi32(vsum);                     \
-    const int32_t sum = variance_final_from_32bit_sum_avx2(vsse, vsum_128, sse);  \
-    return *sse - (uint32_t)(((int64_t)sum * sum) >> bits);               \
-  }
-
-AOM_VAR_LOOP_AVX2(64, 64, 12, 32);    // 64x32 * ( 64/32)
-AOM_VAR_LOOP_AVX2(64, 128, 13, 32);   // 64x32 * (128/32)
-AOM_VAR_LOOP_AVX2(128, 64, 13, 16);   // 128x16 * ( 64/16)
-AOM_VAR_LOOP_AVX2(128, 128, 14, 16);  // 128x16 * (128/16)
 
 uint32_t aom_mse16x16_avx2(const uint8_t *src, int32_t src_stride,
     const uint8_t *ref, int32_t ref_stride,
@@ -324,108 +266,86 @@ static INLINE void comp_mask_pred_line_avx2(const __m256i s0, const __m256i s1,
 
 void highbd_variance64_avx2(const uint8_t *a8, int32_t a_stride,
     const uint8_t *b8, int32_t b_stride, int32_t w, int32_t h,
-    uint64_t *sse, int64_t *sum) {
+    uint64_t *sse) {
     const uint8_t *a = a8;
     const uint8_t *b = b8;
 
     if (w == 4) {
         __m128i vsse = _mm_setzero_si128();
-        __m128i vsum;
         uint32_t tsse;
-        int32_t tsum;
-        variance4_sse2(a8, a_stride, b8, b_stride, h, &vsse, &vsum);
-        variance_final_128_pel_sse2(vsse, vsum, &tsse, &tsum);
-        *sum = tsum;
+        variance4_sse2(a8, a_stride, b8, b_stride, h, &vsse);
+        variance_final_128_pel_sse2(vsse, &tsse);
         *sse = tsse;
     }
     else if (w == 8) {
         __m128i vsse = _mm_setzero_si128();
-        __m128i vsum;
         uint32_t tsse;
-        int32_t tsum;
-        variance8_sse2(a8, a_stride, b8, b_stride, h, &vsse, &vsum);
-        variance_final_256_pel_sse2(vsse, vsum, &tsse, &tsum);
-        *sum = tsum;
+        variance8_sse2(a8, a_stride, b8, b_stride, h, &vsse);
+        variance_final_256_pel_sse2(vsse, &tsse);
         *sse = tsse;
     }
     else if (w == 16) {
         __m256i vsse = _mm256_setzero_si256();
-        __m256i vsum;
         uint32_t tsse;
-        variance16_avx2(a8, a_stride, b8, b_stride, h, &vsse, &vsum);
-        *sum = variance_final_1024_avx2(vsse, vsum, &tsse);
+        variance16_avx2(a8, a_stride, b8, b_stride, h, &vsse);
+        variance_final_1024_avx2(vsse, &tsse);
         *sse = tsse;
     }
     else if (w == 32) {
         if (h <= 64) {
             __m256i vsse = _mm256_setzero_si256();
-            __m256i vsum;
             uint32_t tsse;
-            variance32_avx2(a8, a_stride, b8, b_stride, h, &vsse, &vsum);
-            *sum = variance_final_2048_avx2(vsse, vsum, &tsse);
+            variance32_avx2(a8, a_stride, b8, b_stride, h, &vsse);
+            variance_final_2048_avx2(vsse, &tsse);
             *sse = tsse;
         }
         else {
             __m256i vsse = _mm256_setzero_si256();
-            __m256i vsum0, vsum1, vsum;
             uint32_t tsse;
-            variance32_avx2(a8, a_stride, b8, b_stride, 64, &vsse, &vsum0);
+            variance32_avx2(a8, a_stride, b8, b_stride, 64, &vsse);
             variance32_avx2(a8 + 64 * a_stride, a_stride, b8 + 64 * b_stride,
-                b_stride, h - 64, &vsse, &vsum1);
-            vsum0 = sum_to_32bit_avx2(vsum0);
-            vsum1 = sum_to_32bit_avx2(vsum1);
-            vsum = _mm256_add_epi32(vsum0, vsum1);
-            const __m128i vsum_128 = mm256_add_hi_lo_epi32(vsum);
-            *sum = variance_final_from_32bit_sum_avx2(vsse, vsum_128, &tsse);
+                b_stride, h - 64, &vsse);
+            variance_final_from_32bit_sum_avx2(vsse, &tsse);
             *sse = tsse;
         }
     }
     else if (w == 64) {
         if (h <= 32) {
             __m256i vsse = _mm256_setzero_si256();
-            __m256i vsum;
             uint32_t tsse;
-            variance64_avx2(a8, a_stride, b8, b_stride, h, &vsse, &vsum);
-            *sum = variance_final_2048_avx2(vsse, vsum, &tsse);
+            variance64_avx2(a8, a_stride, b8, b_stride, h, &vsse);
+            variance_final_2048_avx2(vsse, &tsse);
             *sse = tsse;
         }
         else {
             __m256i vsse = _mm256_setzero_si256();
-            __m256i vsum = _mm256_setzero_si256();
             uint32_t tsse;
 
             int32_t i = 0;
             do {
-                __m256i vsum16;
-                variance64_avx2(a8, a_stride, b8, b_stride, 32, &vsse, &vsum16);
-                vsum = _mm256_add_epi32(vsum, sum_to_32bit_avx2(vsum16));
+                variance64_avx2(a8, a_stride, b8, b_stride, 32, &vsse);
                 a8 += 32 * a_stride;
                 b8 += 32 * b_stride;
             } while (++i < (h / 32));
-            const __m128i vsum_128 = mm256_add_hi_lo_epi32(vsum);
-            *sum = variance_final_from_32bit_sum_avx2(vsse, vsum_128, &tsse);
+            variance_final_from_32bit_sum_avx2(vsse, &tsse);
             *sse = tsse;
         }
     }
     else if (w == 128) {
         __m256i vsse = _mm256_setzero_si256();
-        __m256i vsum = _mm256_setzero_si256();
         uint32_t tsse;
 
         int32_t i = 0;
         do {
-            __m256i vsum16;
-            variance128_avx2(a8, a_stride, b8, b_stride, 16, &vsse, &vsum16);
-            vsum = _mm256_add_epi32(vsum, sum_to_32bit_avx2(vsum16));
+            variance128_avx2(a8, a_stride, b8, b_stride, 16, &vsse);
             a8 += 16 * a_stride;
             b8 += 16 * b_stride;
         } while (++i < (h / 16));
-        const __m128i vsum_128 = mm256_add_hi_lo_epi32(vsum);
-        *sum = variance_final_from_32bit_sum_avx2(vsse, vsum_128, &tsse);
+        variance_final_from_32bit_sum_avx2(vsse, &tsse);
         *sse = tsse;
     }
     else {
-        highbd_variance64_c(a, a_stride, b, b_stride, w, h, sse, sum);
+        highbd_variance64_c(a, a_stride, b, b_stride, w, h, sse);
     }
 
 #ifdef _WIN32

@@ -45,51 +45,35 @@ static INLINE uint32_t add32x4_sse2(__m128i val) {
 }
 
 static INLINE void variance_kernel_sse2(const __m128i src, const __m128i ref,
-    __m128i *const sse,
-    __m128i *const sum) {
+    __m128i *const sse) {
     const __m128i diff = _mm_sub_epi16(src, ref);
     *sse = _mm_add_epi32(*sse, _mm_madd_epi16(diff, diff));
-    *sum = _mm_add_epi16(*sum, diff);
 }
 
 // Can handle 128 pixels' diff sum (such as 8x16 or 16x8)
 // Slightly faster than variance_final_256_pel_sse2()
 // diff sum of 128 pixels can still fit in 16bit integer
-static INLINE void variance_final_128_pel_sse2(__m128i vsse, __m128i vsum,
-    uint32_t *const sse,
-    int32_t *const sum) {
+static INLINE void variance_final_128_pel_sse2(__m128i vsse,
+    uint32_t *const sse) {
     *sse = add32x4_sse2(vsse);
-
-    vsum = _mm_add_epi16(vsum, _mm_srli_si128(vsum, 8));
-    vsum = _mm_add_epi16(vsum, _mm_srli_si128(vsum, 4));
-    vsum = _mm_add_epi16(vsum, _mm_srli_si128(vsum, 2));
-    *sum = (int16_t)_mm_extract_epi16(vsum, 0);
 }
 
 // Can handle 256 pixels' diff sum (such as 16x16)
-static INLINE void variance_final_256_pel_sse2(__m128i vsse, __m128i vsum,
-    uint32_t *const sse,
-    int32_t *const sum) {
+static INLINE void variance_final_256_pel_sse2(__m128i vsse,
+    uint32_t *const sse) {
     *sse = add32x4_sse2(vsse);
-
-    vsum = _mm_add_epi16(vsum, _mm_srli_si128(vsum, 8));
-    vsum = _mm_add_epi16(vsum, _mm_srli_si128(vsum, 4));
-    *sum = (int16_t)_mm_extract_epi16(vsum, 0);
-    *sum += (int16_t)_mm_extract_epi16(vsum, 1);
 }
 
 static INLINE void variance4_sse2(const uint8_t *src, const int32_t src_stride,
     const uint8_t *ref, const int32_t ref_stride,
-    const int32_t h, __m128i *const sse,
-    __m128i *const sum) {
+    const int32_t h, __m128i *const sse) {
     assert(h <= 256);  // May overflow for larger height.
-    *sum = _mm_setzero_si128();
 
     for (int32_t i = 0; i < h; i += 2) {
         const __m128i s = load4x2_sse2(src, src_stride);
         const __m128i r = load4x2_sse2(ref, ref_stride);
 
-        variance_kernel_sse2(s, r, sse, sum);
+        variance_kernel_sse2(s, r, sse);
         src += 2 * src_stride;
         ref += 2 * ref_stride;
     }
@@ -97,15 +81,13 @@ static INLINE void variance4_sse2(const uint8_t *src, const int32_t src_stride,
 
 static INLINE void variance8_sse2(const uint8_t *src, const int32_t src_stride,
     const uint8_t *ref, const int32_t ref_stride,
-    const int32_t h, __m128i *const sse,
-    __m128i *const sum) {
+    const int32_t h, __m128i *const sse) {
     assert(h <= 128);  // May overflow for larger height.
-    *sum = _mm_setzero_si128();
     for (int32_t i = 0; i < h; i++) {
         const __m128i s = load8_8to16_sse2(src);
         const __m128i r = load8_8to16_sse2(ref);
 
-        variance_kernel_sse2(s, r, sse, sum);
+        variance_kernel_sse2(s, r, sse);
         src += src_stride;
         ref += ref_stride;
     }
