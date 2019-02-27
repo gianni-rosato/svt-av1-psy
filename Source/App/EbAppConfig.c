@@ -971,9 +971,14 @@ int32_t ComputeFramesToBeEncoded(
     uint64_t fileSize = 0;
     int32_t frameCount = 0;
     uint32_t frameSize;
+    long currLoc;
+
+    currLoc = ftello64(config->inputFile); // get current fp location
+
     if (config->inputFile) {
         fseeko64(config->inputFile, 0L, SEEK_END);
         fileSize = ftello64(config->inputFile);
+        fseeko64(config->inputFile, currLoc, SEEK_SET); // seek back to that location
     }
 
     frameSize = SIZE_OF_ONE_FRAME_IN_BYTES(config->inputPaddedWidth, config->inputPaddedHeight, (uint8_t)((config->encoderBitDepth == 10) ? 1 : 0));

@@ -813,6 +813,12 @@ void ReadInputFrames(
                 }
             }
             else {
+
+                /* if input is a y4m file, read next line which contains "FRAME" */
+                if(config->y4mInput==EB_TRUE) {
+                    readY4mFrameDelimiter(config);
+                }
+
                 uint64_t lumaReadSize = (uint64_t)inputPaddedWidth*inputPaddedHeight << is16bit;
                 ebInputPtr = inputPtr->luma;
                 if(config->y4mInput==EB_FALSE && config->processedFrameCount == 0 && config->inputFile == stdin) {
@@ -829,11 +835,6 @@ void ReadInputFrames(
                 headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, lumaReadSize >> 2, inputFile);
                 ebInputPtr = inputPtr->cr;
                 headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, lumaReadSize >> 2, inputFile);
-
-                /* if input is a y4m file, read next line with contains "FRAME" */
-                if(config->y4mInput==EB_TRUE) {
-                    readY4mFrameDelimiter(config);
-                }
 
                 inputPtr->luma = inputPtr->luma + ((config->inputPaddedWidth*TOP_INPUT_PADDING + LEFT_INPUT_PADDING) << is16bit);
                 inputPtr->cb   = inputPtr->cb + (((config->inputPaddedWidth >> 1)*(TOP_INPUT_PADDING >> 1) + (LEFT_INPUT_PADDING >> 1)) << is16bit);
