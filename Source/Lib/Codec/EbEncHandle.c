@@ -111,6 +111,8 @@
 #if defined(__linux__) || defined(__APPLE__)
 #include <pthread.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #endif
 
 
@@ -159,11 +161,20 @@ uint32_t                         libMallocCount = 0;
 uint32_t                         lib_thread_count = 0;
 uint32_t                         libSemaphoreCount = 0;
 uint32_t                         libMutexCount = 0;
-#ifdef _MSC_VER
+
+uint8_t                          num_groups = 0;
+#ifdef _WIN32
 GROUP_AFFINITY                   group_affinity;
+EbBool                           alternate_groups = 0;
+#else
+cpu_set_t                        group_affinity;
+typedef struct logicalProcessorGroup {
+    uint32_t num;
+    uint32_t group[1024];
+}processorGroup;
+#define MAX_PROCESSOR_GROUP 16
+processorGroup                   lp_group[MAX_PROCESSOR_GROUP];
 #endif
-uint8_t                          num_groups;
-EbBool                           alternate_groups;
 
 /**************************************
 * Instruction Set Support
@@ -246,61 +257,155 @@ EbAsm GetCpuAsmType()
         asm_type = ASM_NON_AVX2;
     return asm_type;
 }
-//Get Number of processes
-uint32_t GetNumCores() {
-#ifdef WIN32
+
+//Get Number of logical processors
+uint32_t GetNumProcessors() {
+#ifdef _WIN32
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
-    return sysinfo.dwNumberOfProcessors;
+    return num_groups == 1 ? sysinfo.dwNumberOfProcessors : sysinfo.dwNumberOfProcessors << 1;
 #else
     return sysconf(_SC_NPROCESSORS_ONLN);
 #endif
 }
+
 void InitThreadManagmentParams() {
-#ifdef _MSC_VER
+#ifdef _WIN32
     // Initialize group_affinity structure with Current thread info
     GetThreadGroupAffinity(GetCurrentThread(), &group_affinity);
     num_groups = (uint8_t)GetActiveProcessorGroupCount();
 #else
-    return;
+    const char* PROCESSORID = "processor";
+    const char* PHYSICALID = "physical id";
+    int processor_id_len = strnlen_ss(PROCESSORID, 128);
+    int physical_id_len = strnlen_ss(PHYSICALID, 128);
+    if (processor_id_len < 0 || processor_id_len >= 128) return EB_ErrorInsufficientResources;
+    if (physical_id_len < 0 || physical_id_len >= 128) return EB_ErrorInsufficientResources;
+    memset(lp_group, 0, sizeof(lp_group));
+
+    int fd = open("/proc/cpuinfo", O_RDONLY | O_NOFOLLOW, "rt");
+    struct stat file_stat;
+    if (fd >= 0) {
+        if (fstat(fd, &file_stat) != -1 && S_ISREG(file_stat.st_mode) != 0) {
+            int processor_id = 0, socket_id = 0;
+            char line[128];
+            int bytes = 1;
+            while (bytes > 0) {
+                bytes = read(fd, line, 128);
+                if (bytes > 0) {
+                    if (strncmp(line, PROCESSORID, processor_id_len) == 0) {
+                        char* p = line + processor_id_len;
+                        while (*p < '0' || *p > '9') p++;
+                        processor_id = strtol(p, NULL, 0);
+                    }
+                    if (strncmp(line, PHYSICALID, physical_id_len) == 0) {
+                        char* p = line + physical_id_len;
+                        while (*p < '0' || *p > '9') p++;
+                        socket_id = strtol(p, NULL, 0);
+                        if (socket_id < 0 || socket_id > 15) {
+                            close(fd);
+                            return EB_ErrorInsufficientResources;
+                        }
+                        if (socket_id + 1 > num_groups)
+                            num_groups = socket_id + 1;
+                        lp_group[socket_id].group[lp_group[socket_id].num++] = processor_id;
+                    }
+                    lseek(fd, -bytes + 1, SEEK_CUR);
+                    while (line[0] != '\n' && bytes > 0) bytes = read(fd, line, 1);
+                }
+            }
+        }
+        close(fd);
+    }
 #endif
 }
-void EbSetThreadManagementParameters(EbSvtAv1EncConfiguration   *config_ptr) {
-#ifdef _MSC_VER
-    alternate_groups = 0;
-    if (config_ptr->use_round_robin_thread_assignment == EB_TRUE) {
-        if (num_groups == 2 && config_ptr->active_channel_count > 1) {
-            if ((config_ptr->active_channel_count % 2) && (config_ptr->active_channel_count - 1 == config_ptr->channel_id)) {
-                alternate_groups = 1;
-                group_affinity.Group = 0;
+
+#ifdef _WIN32
+uint64_t GetAffinityMask(uint32_t lpnum) {
+    uint64_t mask = 0x1;
+    for (uint32_t i = lpnum - 1; i > 0; i--)
+        mask += (uint64_t)1 << i;
+    return mask;
+}
+#endif
+
+EbErrorType EbSetThreadManagementParameters(EbSvtAv1EncConfiguration   *config_ptr) {
+    uint32_t num_logical_processors = GetNumProcessors();
+#ifdef _WIN32
+    // For system with a single processor group(no more than 64 logic processors all together)
+    // Affinity of the thread can be set to one or more logical processors
+    if (num_groups == 1) {
+        uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
+            config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
+        group_affinity.Mask = GetAffinityMask(lps);
+    }
+    else if (num_groups > 1) { // For system with multiple processor group
+        if (config_ptr->logical_processors == 0) {
+            if (config_ptr->target_socket != -1) {
+                group_affinity.Group = config_ptr->target_socket;
             }
-            else if (config_ptr->channel_id % 2) {
-                alternate_groups = 0;
-                group_affinity.Group = 1;
-            }
-            else {
-                alternate_groups = 0;
-                group_affinity.Group = 0;
-            }
-        }
-        else if (num_groups == 2 && config_ptr->active_channel_count == 1) {
-            alternate_groups = 1;
-            group_affinity.Group = 0;
         }
         else {
-            alternate_groups = 0;
-            num_groups = 1;
+            uint32_t num_lp_per_group = num_logical_processors / num_groups;
+            if (config_ptr->target_socket == -1) {
+                if (config_ptr->logical_processors > num_lp_per_group) {
+                    alternate_groups = TRUE;
+                    SVT_LOG("SVT [WARNING]: -lp(logical processors) setting is ignored. Run on both sockets. \n");
+                }
+                else {
+                    group_affinity.Mask = GetAffinityMask(config_ptr->logical_processors);
+                }
+            }
+            else {
+                uint32_t lps = config_ptr->logical_processors == 0 ? num_lp_per_group :
+                    config_ptr->logical_processors < num_lp_per_group ? config_ptr->logical_processors : num_lp_per_group;
+                group_affinity.Mask = GetAffinityMask(lps);
+                group_affinity.Group = config_ptr->target_socket;
+            }
         }
     }
-    else {
-        alternate_groups = 0;
-        num_groups = 1;
-    }
 #else
-    alternate_groups = 0;
-    num_groups = 1;
-    (void)config_ptr;
+    CPU_ZERO(&group_affinity);
+
+    if (num_groups == 1) {
+        uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
+            config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
+        for (uint32_t i = 0; i < lps; i++)
+            CPU_SET(lp_group[0].group[i], &group_affinity);
+    }
+    else if (num_groups > 1) {
+        uint32_t num_lp_per_group = num_logical_processors / num_groups;
+        if (config_ptr->logical_processors == 0) {
+            if (config_ptr->target_socket != -1) {
+                for (uint32_t i = 0; i < lp_group[config_ptr->target_socket].num; i++)
+                    CPU_SET(lp_group[config_ptr->target_socket].group[i], &group_affinity);
+            }
+        }
+        else {
+            if (config_ptr->target_socket == -1) {
+                uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
+                    config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
+                if (lps > num_lp_per_group) {
+                    for (uint32_t i = 0; i < lp_group[0].num; i++)
+                        CPU_SET(lp_group[0].group[i], &group_affinity);
+                    for (uint32_t i = 0; i < (lps - lp_group[0].num); i++)
+                        CPU_SET(lp_group[1].group[i], &group_affinity);
+                }
+                else {
+                    for (uint32_t i = 0; i < lps; i++)
+                        CPU_SET(lp_group[0].group[i], &group_affinity);
+                }
+            }
+            else {
+                uint32_t lps = config_ptr->logical_processors == 0 ? num_lp_per_group :
+                    config_ptr->logical_processors < num_lp_per_group ? config_ptr->logical_processors : num_lp_per_group;
+                for (uint32_t i = 0; i < lps; i++)
+                    CPU_SET(lp_group[config_ptr->target_socket].group[i], &group_affinity);
+            }
+        }
+    }
 #endif
+    return EB_ErrorNone;
 }
 void asmSetConvolveAsmTable(void);
 void asmSetConvolveHbdAsmTable(void);
@@ -340,7 +445,27 @@ void LoadDefaultBufferConfigurationSettings(
     uint32_t meSegW     = (((sequence_control_set_ptr->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 10;
     uint32_t inputPic   = SetParentPcs(&sequence_control_set_ptr->static_config);
 
-    unsigned int coreCount = GetNumCores();
+    unsigned int lpCount = GetNumProcessors();
+    unsigned int coreCount = lpCount;
+    if (sequence_control_set_ptr->static_config.target_socket != -1)
+        coreCount /= num_groups;
+    if (sequence_control_set_ptr->static_config.logical_processors != 0)
+        coreCount = sequence_control_set_ptr->static_config.logical_processors < coreCount ?
+            sequence_control_set_ptr->static_config.logical_processors: coreCount;
+
+#ifdef _WIN32
+    //Handle special case on Windows
+    //By default, on Windows an application is constrained to a single group
+    if (sequence_control_set_ptr->static_config.target_socket == -1 &&
+        sequence_control_set_ptr->static_config.logical_processors == 0)
+        coreCount /= num_groups;
+
+    //Affininty can only be set by group on Windows.
+    //Run on both sockets if -lp is larger than logical processor per group.
+    if (sequence_control_set_ptr->static_config.target_socket == -1 &&
+        sequence_control_set_ptr->static_config.logical_processors > lpCount / num_groups)
+        coreCount = lpCount;
+#endif
 
     sequence_control_set_ptr->input_buffer_fifo_init_count = inputPic + SCD_LAD + sequence_control_set_ptr->static_config.look_ahead_distance ;
     sequence_control_set_ptr->output_stream_buffer_fifo_init_count = sequence_control_set_ptr->input_buffer_fifo_init_count + 4;
@@ -389,7 +514,7 @@ void LoadDefaultBufferConfigurationSettings(
 #endif
     //#====================== Data Structures and Picture Buffers ======================
     sequence_control_set_ptr->picture_control_set_pool_init_count       = inputPic;
-    sequence_control_set_ptr->picture_control_set_pool_init_count_child = MAX(MIN(2, coreCount/2), coreCount / 6);
+    sequence_control_set_ptr->picture_control_set_pool_init_count_child = MAX(MAX(MIN(2, coreCount/2), coreCount / 6), 1);
     sequence_control_set_ptr->reference_picture_buffer_init_count       = MAX((uint32_t)(inputPic >> 1),
                                                                           (uint32_t)((1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 2)) +
                                                                           sequence_control_set_ptr->static_config.look_ahead_distance + SCD_LAD;
@@ -692,14 +817,6 @@ static EbErrorType eb_enc_handle_ctor(
     return EB_ErrorNone;
 }
 
-#ifdef _WIN32
-uint64_t GetAffinityMask(uint32_t lpnum) {
-    uint64_t mask = 0x1;
-    for (uint32_t i = lpnum - 1; i > 0; i--)
-        mask += (uint64_t)1 << i;
-    return mask;
-}
-#endif
 EbErrorType EbInputBufferHeaderCtor(
     EbPtr *objectDblPtr,
     EbPtr  objectInitDataPtr);
@@ -1681,7 +1798,11 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     * Thread Handles
     ************************************/
     EbSvtAv1EncConfiguration   *config_ptr = &encHandlePtr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config;
-    EbSetThreadManagementParameters(config_ptr);
+
+    return_error = EbSetThreadManagementParameters(config_ptr);
+    if (return_error == EB_ErrorInsufficientResources) {
+        return EB_ErrorInsufficientResources;
+    }
 
     // Resource Coordination
     EB_CREATETHREAD(EbHandle, encHandlePtr->resourceCoordinationThreadHandle, sizeof(EbHandle), EB_THREAD, resource_coordination_kernel, encHandlePtr->resourceCoordinationContextPtr);
@@ -2213,7 +2334,8 @@ void CopyApiFromApp(
 
     sequence_control_set_ptr->static_config.channel_id = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->channel_id;
     sequence_control_set_ptr->static_config.active_channel_count = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->active_channel_count;
-    sequence_control_set_ptr->static_config.use_round_robin_thread_assignment = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->use_round_robin_thread_assignment;
+    sequence_control_set_ptr->static_config.logical_processors = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->logical_processors;
+    sequence_control_set_ptr->static_config.target_socket = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->target_socket;
     sequence_control_set_ptr->qp = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->qp;
     sequence_control_set_ptr->static_config.recon_enabled = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->recon_enabled;
 
@@ -2587,6 +2709,11 @@ static EbErrorType VerifySettings(
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->target_socket != -1 && config->target_socket != 0 && config->target_socket != 1) {
+        SVT_LOG("Error instance %u: Invalid TargetSocket. TargetSocket must be [-1 - 1] \n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     return return_error;
 }
 
@@ -2701,8 +2828,8 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->asm_type = 1;
 
     // Channel info
-    //config_ptr->logicalProcessors = 0;
-    //config_ptr->target_socket = -1;
+    config_ptr->logical_processors = 0;
+    config_ptr->target_socket = -1;
     config_ptr->channel_id = 0;
     config_ptr->active_channel_count = 1;
 

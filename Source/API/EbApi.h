@@ -487,7 +487,23 @@ typedef struct EbSvtAv1EncConfiguration
     *
     * Default is 60. */
     int32_t                  injector_frame_rate;
-    EbBool                   use_round_robin_thread_assignment;
+
+    // Threads management
+
+    /* The number of logical processor which encoder threads run on. If
+     * LogicalProcessorNumber and TargetSocket are not set, threads are managed by
+     * OS thread scheduler. */
+    uint32_t                logical_processors;
+
+    /* Target socket to run on. For dual socket systems, this can specify which
+     * socket the encoder runs on.
+     *
+     * -1 = Both Sockets.
+     *  0 = Socket 0.
+     *  1 = Socket 1.
+     *
+     * Default is -1. */
+    int32_t                 target_socket;
 
     // Debug tools
 

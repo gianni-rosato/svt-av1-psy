@@ -8,7 +8,7 @@
 
 #include "EbDefinitions.h"
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <Windows.h>
 #endif
 
@@ -74,7 +74,7 @@ extern "C" {
     extern    uint32_t         *memory_map_index;          // library memory index
     extern    uint64_t         *total_lib_memory;          // library Memory malloc'd
 
-#ifdef _MSC_VER
+#ifdef _WIN32
     extern    GROUP_AFFINITY    group_affinity;
     extern    uint8_t           num_groups;
     extern    EbBool            alternate_groups;
@@ -93,7 +93,10 @@ extern "C" {
         else { \
             *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
         } \
-        if (num_groups == 2 && alternate_groups){ \
+        if(num_groups == 1) {\
+            SetThreadAffinityMask(pointer, group_affinity.Mask);\
+        }\
+        else if (num_groups == 2 && alternate_groups){ \
             group_affinity.Group = 1 - group_affinity.Group; \
             SetThreadGroupAffinity(pointer,&group_affinity,NULL); \
         } \
@@ -106,12 +109,18 @@ extern "C" {
     } \
     lib_thread_count++;
 #else
+#define __USE_GNU
+#define _GNU_SOURCE
+#include <sched.h>
+#include <pthread.h>
+extern    cpu_set_t                   group_affinity;
 #define EB_CREATETHREAD(type, pointer, n_elements, pointer_class, thread_function, thread_context) \
     pointer = eb_create_thread(thread_function, thread_context); \
     if (pointer == (type)EB_NULL) { \
         return EB_ErrorInsufficientResources; \
     } \
     else { \
+        pthread_setaffinity_np(*((pthread_t*)pointer),sizeof(cpu_set_t),&group_affinity); \
         memory_map[*(memory_map_index)].ptrType = pointer_class; \
         memory_map[(*(memory_map_index))++].ptr = pointer; \
         if (n_elements % 8 == 0) { \

@@ -220,6 +220,8 @@ EbErrorType CopyConfigurationParameters(
     callbackData->ebEncParameters.injector_frame_rate = config->injector_frame_rate;
     callbackData->ebEncParameters.speed_control_flag = config->speed_control_flag;
     callbackData->ebEncParameters.asm_type = config->asmType;
+    callbackData->ebEncParameters.logical_processors = config->logicalProcessors;
+    callbackData->ebEncParameters.target_socket = config->targetSocket;
     callbackData->ebEncParameters.recon_enabled = config->reconFile ? EB_TRUE : EB_FALSE;
 
     for (hmeRegionIndex = 0; hmeRegionIndex < callbackData->ebEncParameters.number_hme_search_region_in_width; ++hmeRegionIndex) {
