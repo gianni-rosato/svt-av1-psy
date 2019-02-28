@@ -601,6 +601,8 @@ void extract8_bitdata_safe_sub(
     EbAsm       asm_type
 )
 {
+    /* sub_pred not implemented */
+    (void)sub_pred;
 
     unpack8_bit_safe_sub_func_ptr_array_16_bit[asm_type](
         in16_bit_buffer,
@@ -608,8 +610,7 @@ void extract8_bitdata_safe_sub(
         out8_bit_buffer,
         out8_stride,
         width,
-        height,
-        sub_pred
+        height
         );
 }
 void unpack_l0l1_avg_safe_sub(

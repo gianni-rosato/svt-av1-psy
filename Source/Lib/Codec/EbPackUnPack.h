@@ -11,6 +11,7 @@ extern "C" {
 
 #include "EbPackUnPack_C.h"
 #include "EbPackUnPack_SSE2.h"
+#include "EbPackUnPack_AVX2.h"
 #include "EbPictureOperators.h"
 
     typedef void(*EB_ENC_Pack2D_TYPE)(
@@ -148,9 +149,9 @@ extern "C" {
         },
         {
             // NON_AVX2
-            eb_enc_un_pack8_bit_data_sse2_intrin,
+            un_pack8_bit_data,
             // AVX2
-            eb_enc_un_pack8_bit_data_sse2_intrin,
+            eb_enc_un_pack8_bit_data_avx2_intrin,
         }
     };
 
@@ -160,15 +161,14 @@ extern "C" {
         uint8_t  *out8_bit_buffer,
         uint32_t  out8_stride,
         uint32_t  width,
-        uint32_t  height,
-        EbBool    sub_pred);
+        uint32_t  height);
 
     EB_ENC_UnPack8BitDataSUB_TYPE unpack8_bit_safe_sub_func_ptr_array_16_bit[ASM_TYPE_TOTAL] =
     {
         // NON_AVX2
-        eb_enc_un_pack8_bit_data_safe_sub_sse2_intrin,
+        un_pack8_bit_data,
         // AVX2
-        eb_enc_un_pack8_bit_data_safe_sub_sse2_intrin,
+        eb_enc_un_pack8_bit_data_avx2_intrin,
 
     };
 
