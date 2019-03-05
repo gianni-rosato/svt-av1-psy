@@ -11,7 +11,7 @@ extern "C" {
 #endif // __cplusplus
 
 #include "stdint.h"
-#include "EbFormats.h"
+#include "EbSvtAv1Formats.h"
 
     // API Version
 #define SVT_VERSION_MAJOR       0

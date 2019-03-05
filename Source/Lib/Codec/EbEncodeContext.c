@@ -9,7 +9,7 @@
 #include "EbEncodeContext.h"
 #include "EbPictureManagerQueue.h"
 #include "EbCabacContextModel.h"
-#include "EbErrorCodes.h"
+#include "EbSvtAv1ErrorCodes.h"
 
 EbErrorType encode_context_ctor(
     EbPtr *object_dbl_ptr,

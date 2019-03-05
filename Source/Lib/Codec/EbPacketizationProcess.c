@@ -13,7 +13,7 @@
 #include "EbPictureControlSet.h"
 #include "EbEntropyCoding.h"
 #include "EbRateControlTasks.h"
-#include "EbTime.h"
+#include "EbSvtAv1Time.h"
 
 static EbBool IsPassthroughData(EbLinkedListNode* dataNode)
 {

@@ -12,10 +12,10 @@
 
 #include "EbAppContext.h"
 #include "EbAppConfig.h"
-#include "EbErrorCodes.h"
+#include "EbSvtAv1ErrorCodes.h"
 #include "EbAppInputy4m.h"
 
-#include "EbTime.h"
+#include "EbSvtAv1Time.h"
 
 
 #define IVF_FRAME_HEADER_IN_LIB                     0

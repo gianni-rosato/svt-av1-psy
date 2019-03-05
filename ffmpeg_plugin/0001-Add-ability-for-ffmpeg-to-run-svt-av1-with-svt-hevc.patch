@@ -103,9 +103,9 @@ index 0000000..4305285
 +*/
 +
 +#include <stdint.h>
-+#include "svt-av1/EbErrorCodes.h"
-+#include "svt-av1/EbTime.h"
-+#include "svt-av1/EbApi.h"
++#include "svt-av1/EbSvtAv1ErrorCodes.h"
++#include "svt-av1/EbSvtAv1Time.h"
++#include "svt-av1/EbSvtAv1Enc.h"
 +
 +#include "libavutil/common.h"
 +#include "libavutil/frame.h"

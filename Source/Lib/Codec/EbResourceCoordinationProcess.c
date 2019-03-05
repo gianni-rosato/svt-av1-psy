@@ -14,7 +14,7 @@
 #include "EbResourceCoordinationProcess.h"
 #include "EbResourceCoordinationResults.h"
 #include "EbTransforms.h"
-#include "EbTime.h"
+#include "EbSvtAv1Time.h"
 
 #if !ME_HME_OQ
 // HME LEVEL 0

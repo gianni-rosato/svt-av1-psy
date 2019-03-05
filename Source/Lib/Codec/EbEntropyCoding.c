@@ -21,7 +21,7 @@
 #include "EbEntropyCodingUtil.h"
 #include "EbUtility.h"
 #include "EbCodingUnit.h"
-#include "EbErrorCodes.h"
+#include "EbSvtAv1ErrorCodes.h"
 #include "EbTransforms.h"
 #include "EbEntropyCodingProcess.h"
 

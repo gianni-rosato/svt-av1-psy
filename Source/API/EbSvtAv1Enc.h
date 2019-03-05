@@ -11,7 +11,7 @@ extern "C" {
 #endif // __cplusplus
 
 #include "stdint.h"
-#include "EbCodec.h"
+#include "EbSvtAv1.h"
 
 #define TILES                       1
 

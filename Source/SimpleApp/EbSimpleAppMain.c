@@ -15,7 +15,7 @@
  * Includes
  ***************************************/
 #include "EbSimpleAppContext.h"
-#include "EbEncApi.h"
+#include "EbSvtAv1Enc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

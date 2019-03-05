@@ -21,7 +21,7 @@
 #include "EbAdaptiveMotionVectorPrediction.h"
 #include "EbSequenceControlSet.h"
 #include "EbReferenceObject.h"
-#include "EbErrorCodes.h"
+#include "EbSvtAv1ErrorCodes.h"
 #include "EbModeDecisionProcess.h"
 
 #define UNUSED_FUNC

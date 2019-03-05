@@ -62,7 +62,7 @@
 #include <immintrin.h>
 
 #include "EbDefinitions.h"
-#include "EbEncApi.h"
+#include "EbSvtAv1Enc.h"
 #include "EbThreads.h"
 #include "EbUtility.h"
 #include "EbEncHandle.h"

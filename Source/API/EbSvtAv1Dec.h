@@ -11,8 +11,8 @@ extern "C" {
 #endif // __cplusplus
 
 #include "stdint.h"
-#include "EbCodec.h"
-#include "EbExtFrameBuf.h"
+#include "EbSvtAv1.h"
+#include "EbSvtAv1ExtFrameBuf.h"
 
 typedef struct EbAV1OperatingPoint{
     uint32_t    op_idc;

@@ -25,7 +25,7 @@
 #include "EbAdaptiveMotionVectorPrediction.h"
 
 #include "EbModeDecisionProcess.h"
-#include "EbErrorCodes.h"
+#include "EbSvtAv1ErrorCodes.h"
 #include <smmintrin.h> /* SSE4.1 */
 
 

@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 
-#include "EbEncApi.h"
+#include "EbSvtAv1Enc.h"
 
 #ifdef __GNUC__
 #define fseeko64 fseek
