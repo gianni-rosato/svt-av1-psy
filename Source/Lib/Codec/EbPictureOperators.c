@@ -554,9 +554,7 @@ void extract_8bit_data(
     uint32_t       out8_stride,
     uint32_t       width,
     uint32_t       height,
-    EbAsm       asm_type
-)
-{
+    EbAsm          asm_type){
 
     unpack8_bit_func_ptr_array_16_bit[((width & 3) == 0) && ((height & 1) == 0)][asm_type](
         in16_bit_buffer,

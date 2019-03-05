@@ -893,11 +893,7 @@ EbErrorType picture_control_set_ctor(
     }
 
     object_ptr->mi_stride = pictureLcuWidth * (BLOCK_SIZE_64 / 4);
-
-
-
     return EB_ErrorNone;
-
 }
 
 
@@ -967,12 +963,8 @@ EbErrorType picture_parent_control_set_ctor(
             }
         }
     }
-#if ENCODER_MODE_CLEANUP
     uint32_t maxOisCand = MAX_OPEN_LOOP_INTRA_CANDIDATES ;
 
-#else
-    uint32_t maxOisCand = initDataPtr->enc_mode <= ENC_M1 || initDataPtr->speed_control ? MAX_OPEN_LOOP_INTRA_CANDIDATES : 9;
-#endif
     EB_MALLOC(OisCu32Cu16Results_t**, object_ptr->ois_cu32_cu16_results, sizeof(OisCu32Cu16Results_t*) * object_ptr->sb_total_count, EB_N_PTR);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
@@ -1073,8 +1065,11 @@ EbErrorType picture_parent_control_set_ctor(
 
     EB_CREATEMUTEX(EbHandle, object_ptr->rc_distortion_histogram_mutex, sizeof(EbHandle), EB_MUTEX);
 
-
+#if ADAPTIVE_DEPTH_PARTITIONING
+    EB_MALLOC(EB_SB_DEPTH_MODE*, object_ptr->sb_depth_mode_array, sizeof(EB_SB_DEPTH_MODE) * object_ptr->sb_total_count, EB_N_PTR);
+#else
     EB_MALLOC(EbLcuDepthMode*, object_ptr->sb_md_mode_array, sizeof(EbLcuDepthMode) * object_ptr->sb_total_count, EB_N_PTR);
+#endif
 
     EB_MALLOC(Av1Common*, object_ptr->av1_cm, sizeof(Av1Common), EB_N_PTR);
 

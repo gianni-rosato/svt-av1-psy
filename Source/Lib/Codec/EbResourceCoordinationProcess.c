@@ -16,152 +16,6 @@
 #include "EbTransforms.h"
 #include "EbTime.h"
 
-#if !ME_HME_OQ
-// HME LEVEL 0
-uint8_t EnableHmeLevel0Flag[5][MAX_SUPPORTED_MODES] = {
-    { 1, 1, 1, 1, 1, 1, 1, 1 },
-    { 1, 1, 1, 1, 1, 1, 1, 1 },
-    { 1, 1, 1, 1, 1, 1, 1, 1 },
-    { 1, 1, 1, 1, 1, 1, 1, 1 },
-    { 1, 1, 1, 1, 1, 1, 1, 1 },
-};
-uint16_t HmeLevel0TotalSearchAreaWidth[5][MAX_SUPPORTED_MODES] = {
-    { 48, 48, 32, 32, 32, 24, 24, 24 },
-    { 64, 64, 48, 48, 48, 32, 32, 32 },
-    { 96, 96, 64, 64, 64, 48, 48, 48 },
-    { 96, 96, 64, 64, 48, 48, 48, 48 },
-    { 128, 128, 96, 64, 64, 64, 64, 64 }
-};
-uint16_t HmeLevel0TotalSearchAreaHeight[5][MAX_SUPPORTED_MODES] = {
-    { 24, 24, 16, 16, 16, 12, 12, 12 },
-    { 32, 32, 32, 32, 32, 24, 24, 24 },
-    { 32, 32, 32, 32, 32, 16, 16, 16 },
-    { 48, 48, 48, 48, 32, 40, 40, 40 },
-    { 80, 80, 64, 32, 32, 32, 32, 32 }
-};
-uint16_t HmeLevel0SearchAreaInWidthArray_Left[5][MAX_SUPPORTED_MODES] = {
-    { 24, 24, 16, 16, 16, 12, 12, 12 },
-    { 32, 32, 24, 24, 24, 16, 16, 16 },
-    { 48, 48, 32, 32, 32, 24, 24, 24 },
-    { 48, 48, 32, 32, 24, 24, 24, 24 },
-    { 64, 64, 48, 32, 32, 32, 32, 32 }
-};
-uint16_t HmeLevel0SearchAreaInWidthArray_Right[5][MAX_SUPPORTED_MODES] = {
-    { 24, 24, 16, 16, 16, 12, 12, 12 },
-    { 32, 32, 24, 24, 24, 16, 16, 16 },
-    { 48, 48, 32, 32, 32, 24, 24, 24 },
-    { 48, 48, 32, 32, 24, 24, 24, 24 },
-    { 64, 64, 48, 32, 32, 32, 32, 32 }
-};
-uint16_t HmeLevel0SearchAreaInHeightArray_Top[5][MAX_SUPPORTED_MODES] = {
-    { 12, 12, 8, 8, 8, 6, 6, 6 },
-    { 16, 16, 16, 16, 16, 12, 12, 12 },
-    { 16, 16, 16, 16, 16, 8, 8, 8 },
-    { 24, 24, 24, 24, 16, 20, 20, 20 },
-    { 40, 40, 32, 16, 16, 16, 16, 16 }
-};
-uint16_t HmeLevel0SearchAreaInHeightArray_Bottom[5][MAX_SUPPORTED_MODES] = {
-    { 12, 12, 8, 8, 8, 6, 6, 6 },
-    { 16, 16, 16, 16, 16, 12, 12, 12 },
-    { 16, 16, 16, 16, 16, 8, 8, 8 },
-    { 24, 24, 24, 24, 16, 20, 20, 20 },
-    { 40, 40, 32, 16, 16, 16, 16, 16 }
-};
-// HME LEVEL 1
-uint8_t EnableHmeLevel1Flag[5][MAX_SUPPORTED_MODES] = {
-    { 1, 1, 1, 1, 1, 1, 1, 1 },
-    { 1, 1, 1, 1, 1, 1, 1, 1 },
-    { 1, 1, 1, 1, 1, 1, 1, 1 },
-    { 1, 1, 1, 1, 1, 1, 1, 1 },
-    { 1, 1, 0, 0, 0, 0, 0, 0 }
-};
-uint16_t HmeLevel1SearchAreaInWidthArray_Left[5][MAX_SUPPORTED_MODES] = {
-    { 16, 16, 16, 16, 8, 8, 8, 8 },
-    { 16, 16, 16, 16, 8, 8, 8, 8 },
-    { 16, 16, 16, 16, 8, 8, 8, 8 },
-    { 16, 16, 8, 8, 8, 8, 8, 8 },
-    { 16, 16, 0, 0, 0, 0, 0, 0 }
-};
-uint16_t HmeLevel1SearchAreaInWidthArray_Right[5][MAX_SUPPORTED_MODES] = {
-    { 16, 16, 16, 16, 8, 8, 8, 8 },
-    { 16, 16, 16, 16, 8, 8, 8, 8 },
-    { 16, 16, 16, 16, 8, 8, 8, 8 },
-    { 16, 16, 8, 8, 8, 8, 8, 8 },
-    { 16, 16, 0, 0, 0, 0, 0, 0 }
-};
-uint16_t HmeLevel1SearchAreaInHeightArray_Top[5][MAX_SUPPORTED_MODES] = {
-    { 7, 7, 7, 7, 3, 3, 3, 3 },
-    { 7, 7, 7, 7, 3, 3, 3, 3 },
-    { 7, 7, 7, 7, 3, 3, 3, 3 },
-    { 7, 7, 3, 3, 3, 3, 3, 3 },
-    { 9, 9, 0, 0, 0, 0, 0, 0 }
-};
-uint16_t HmeLevel1SearchAreaInHeightArray_Bottom[5][MAX_SUPPORTED_MODES] = {
-    { 7, 7, 7, 7, 3, 3, 3, 3 },
-    { 7, 7, 7, 7, 3, 3, 3, 3 },
-    { 7, 7, 7, 7, 3, 3, 3, 3 },
-    { 7, 7, 3, 3, 3, 3, 3, 3 },
-    { 9, 9, 0, 0, 0, 0, 0, 0 }
-};
-// HME LEVEL 2
-uint8_t EnableHmeLevel2Flag[5][MAX_SUPPORTED_MODES] = {
-    { 1, 1, 1, 1, 0, 0, 0, 0 },
-    { 1, 1, 1, 1, 0, 0, 0, 0 },
-    { 1, 1, 1, 1, 0, 0, 0, 0 },
-    { 1, 1, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 }
-};
-uint16_t HmeLevel2SearchAreaInWidthArray_Left[5][MAX_SUPPORTED_MODES] = {
-    { 8, 8, 8, 8, 0, 0, 0, 0 },
-    { 8, 8, 8, 8, 0, 0, 0, 0 },
-    { 8, 8, 8, 8, 0, 0, 0, 0 },
-    { 8, 8, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 }
-};
-uint16_t HmeLevel2SearchAreaInWidthArray_Right[5][MAX_SUPPORTED_MODES] = {
-    { 8, 8, 8, 8, 0, 0, 0, 0 },
-    { 8, 8, 8, 8, 0, 0, 0, 0 },
-    { 8, 8, 8, 8, 0, 0, 0, 0 },
-    { 8, 8, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 }
-};
-uint16_t HmeLevel2SearchAreaInHeightArray_Top[5][MAX_SUPPORTED_MODES] = {
-    { 3, 3, 3, 3, 0, 0, 0, 0 },
-    { 3, 3, 3, 3, 0, 0, 0, 0 },
-    { 3, 3, 3, 3, 0, 0, 0, 0 },
-    { 3, 3, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 }
-};
-uint16_t HmeLevel2SearchAreaInHeightArray_Bottom[5][MAX_SUPPORTED_MODES] = {
-    { 3, 3, 3, 3, 0, 0, 0, 0 },
-    { 3, 3, 3, 3, 0, 0, 0, 0 },
-    { 3, 3, 3, 3, 0, 0, 0, 0 },
-    { 3, 3, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 }
-};
-
-uint8_t SearchAreaWidth[5][MAX_SUPPORTED_MODES] = {
-
-    { 16, 16, 16, 16, 8, 8, 8, 8 },
-    { 16, 16, 16, 16, 8, 8, 8, 8 },
-    { 16, 16, 16, 16, 8, 8, 8, 8 },
-    { 16, 16, 8, 8, 8, 8, 8, 8 },
-    { 24, 24, 16, 16, 16, 8, 8, 8 }
-
-};
-
-uint8_t SearchAreaHeight[5][MAX_SUPPORTED_MODES] = {
-
-    {  7, 7, 7, 7, 5, 5, 5, 5 },
-    { 9, 9, 9, 9, 7, 7, 7, 7 },
-    { 7, 7, 7, 7, 5, 5, 5, 5 },
-    { 13, 13, 7, 7, 7, 7, 5, 5 },
-    { 23, 23, 13, 7, 7, 7, 7, 7 }
-
-};
-
-
-#endif
 /************************************************
  * Resource Coordination Context Constructor
  ************************************************/
@@ -228,129 +82,6 @@ EbErrorType resource_coordination_context_ctor(
     return EB_ErrorNone;
 }
 
-#if !ME_HME_OQ
-// Set ME/HME Params
-void* SetMeHmeParams(
-    PictureParentControlSet_t       *picture_control_set_ptr,
-    SequenceControlSet_t                *sequence_control_set_ptr,
-    EbInputResolution                 input_resolution)
-{
-
-    uint8_t  encModeIndex = picture_control_set_ptr->enc_mode;
-
-    uint32_t inputRatio = sequence_control_set_ptr->luma_width / sequence_control_set_ptr->luma_height;
-
-    uint8_t resolutionIndex = input_resolution <= INPUT_SIZE_576p_RANGE_OR_LOWER ? 0 : // 480P
-        (input_resolution <= INPUT_SIZE_1080i_RANGE && inputRatio < 2) ? 1 : // 720P
-        (input_resolution <= INPUT_SIZE_1080i_RANGE && inputRatio > 3) ? 2 : // 1080I
-        (input_resolution <= INPUT_SIZE_1080p_RANGE) ? 3 : // 1080I
-        4; // 4K
-
-#if V2_HME_ME_SR
-    if (picture_control_set_ptr->enc_mode > ENC_M1 /*|| sequence_control_set_ptr->static_config.tune == TUNE_VQ*/) {
-
-#endif
-        // HME/ME default settings
-        picture_control_set_ptr->enable_hme_flag = EB_TRUE;
-        picture_control_set_ptr->number_hme_search_region_in_width = 2;
-        picture_control_set_ptr->number_hme_search_region_in_height = 2;
-        picture_control_set_ptr->enable_hme_level0_flag = EnableHmeLevel0Flag[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level0_total_search_area_width = HmeLevel0TotalSearchAreaWidth[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level0_total_search_area_height = HmeLevel0TotalSearchAreaHeight[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level0_search_area_in_width_array[0] = HmeLevel0SearchAreaInWidthArray_Right[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level0_search_area_in_width_array[1] = HmeLevel0SearchAreaInWidthArray_Left[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level0_search_area_in_height_array[0] = HmeLevel0SearchAreaInHeightArray_Top[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level0_search_area_in_height_array[1] = HmeLevel0SearchAreaInHeightArray_Bottom[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->enable_hme_level1_flag = EnableHmeLevel1Flag[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level1_search_area_in_width_array[0] = HmeLevel1SearchAreaInWidthArray_Right[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level1_search_area_in_width_array[1] = HmeLevel1SearchAreaInWidthArray_Left[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level1_search_area_in_height_array[0] = HmeLevel1SearchAreaInHeightArray_Top[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level1_search_area_in_height_array[1] = HmeLevel1SearchAreaInHeightArray_Bottom[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->enable_hme_level2_flag = EnableHmeLevel2Flag[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level2_search_area_in_width_array[0] = HmeLevel2SearchAreaInWidthArray_Right[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level2_search_area_in_width_array[1] = HmeLevel2SearchAreaInWidthArray_Left[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level2_search_area_in_height_array[0] = HmeLevel2SearchAreaInHeightArray_Top[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->hme_level2_search_area_in_height_array[1] = HmeLevel2SearchAreaInHeightArray_Bottom[resolutionIndex][encModeIndex];
-
-
-        picture_control_set_ptr->search_area_width = SearchAreaWidth[resolutionIndex][encModeIndex];
-        picture_control_set_ptr->search_area_height = SearchAreaHeight[resolutionIndex][encModeIndex];
-
-
-        // HME Level0 adjustment for low frame rate contents (frame rate <= 30)
-
-        if (input_resolution == INPUT_SIZE_4K_RANGE) {
-            if ((sequence_control_set_ptr->static_config.frame_rate >> 16) <= 30) {
-
-                if (picture_control_set_ptr->enc_mode == ENC_M2) {
-                    picture_control_set_ptr->hme_level0_total_search_area_width = 124;
-                    picture_control_set_ptr->hme_level0_total_search_area_height = 64;
-                    picture_control_set_ptr->hme_level0_search_area_in_width_array[0] = 62;
-                    picture_control_set_ptr->hme_level0_search_area_in_width_array[1] = 62;
-                    picture_control_set_ptr->hme_level0_search_area_in_height_array[0] = 32;
-                    picture_control_set_ptr->hme_level0_search_area_in_height_array[1] = 32;
-                }
-                else if (picture_control_set_ptr->enc_mode == ENC_M3) {
-                    picture_control_set_ptr->hme_level0_total_search_area_width = 96;
-                    picture_control_set_ptr->hme_level0_total_search_area_height = 64;
-                    picture_control_set_ptr->hme_level0_search_area_in_width_array[0] = 48;
-                    picture_control_set_ptr->hme_level0_search_area_in_width_array[1] = 48;
-                    picture_control_set_ptr->hme_level0_search_area_in_height_array[0] = 32;
-                    picture_control_set_ptr->hme_level0_search_area_in_height_array[1] = 32;
-                }
-                else if (picture_control_set_ptr->enc_mode == ENC_M4) {
-                    picture_control_set_ptr->hme_level0_total_search_area_width = 64;
-                    picture_control_set_ptr->hme_level0_total_search_area_height = 48;
-                    picture_control_set_ptr->hme_level0_search_area_in_width_array[0] = 32;
-                    picture_control_set_ptr->hme_level0_search_area_in_width_array[1] = 32;
-                    picture_control_set_ptr->hme_level0_search_area_in_height_array[0] = 24;
-                    picture_control_set_ptr->hme_level0_search_area_in_height_array[1] = 24;
-                }
-                else if (picture_control_set_ptr->enc_mode >= ENC_M5) {
-                    picture_control_set_ptr->hme_level0_total_search_area_width = 64;
-                    picture_control_set_ptr->hme_level0_total_search_area_height = 48;
-                    picture_control_set_ptr->hme_level0_search_area_in_width_array[0] = 32;
-                    picture_control_set_ptr->hme_level0_search_area_in_width_array[1] = 32;
-                    picture_control_set_ptr->hme_level0_search_area_in_height_array[0] = 24;
-                    picture_control_set_ptr->hme_level0_search_area_in_height_array[1] = 24;
-                }
-            }
-        }
-#if V2_HME_ME_SR
-    }
-    else {
-        picture_control_set_ptr->enable_hme_flag = EB_TRUE;
-        picture_control_set_ptr->enable_hme_level0_flag = EB_TRUE;
-        picture_control_set_ptr->number_hme_search_region_in_width = 1;
-        picture_control_set_ptr->number_hme_search_region_in_height = 1;
-        picture_control_set_ptr->hme_level0_total_search_area_width = 64;
-        picture_control_set_ptr->hme_level0_total_search_area_height = 64;
-        picture_control_set_ptr->hme_level0_search_area_in_width_array[0] = 64;
-        picture_control_set_ptr->hme_level0_search_area_in_height_array[0] = 64;
-        picture_control_set_ptr->enable_hme_level1_flag = EB_TRUE;
-        picture_control_set_ptr->hme_level1_search_area_in_width_array[0] = 32;
-        picture_control_set_ptr->hme_level1_search_area_in_height_array[0] = 32;
-        picture_control_set_ptr->enable_hme_level2_flag = EB_TRUE;
-        picture_control_set_ptr->hme_level2_search_area_in_width_array[0] = 4;
-        picture_control_set_ptr->hme_level2_search_area_in_height_array[0] = 4;
-        picture_control_set_ptr->search_area_width = 32;
-        picture_control_set_ptr->search_area_height = 16;
-
-#if ME_128x128
-        picture_control_set_ptr->search_area_width = 128;
-        picture_control_set_ptr->search_area_height = 128;
-#endif
-#if ME_64x64
-        picture_control_set_ptr->search_area_width = 64;
-        picture_control_set_ptr->search_area_height = 64;
-#endif
-    }
-#endif
-
-
-    return EB_NULL;
-};
-#else
 /******************************************************
 * Derive Pre-Analysis settings for OQ
 Input   : encoder mode and tune
@@ -378,11 +109,12 @@ EbErrorType signal_derivation_pre_analysis_oq(
         picture_control_set_ptr->enable_hme_level1_flag = sequence_control_set_ptr->static_config.enable_hme_level1_flag;
         picture_control_set_ptr->enable_hme_level2_flag = sequence_control_set_ptr->static_config.enable_hme_level2_flag;
     }
+    if (picture_control_set_ptr->enc_mode >= ENC_M7)
+        sequence_control_set_ptr->enable_restoration = 0;
 
     return return_error;
 }
 
-#endif
 //******************************************************************************//
 // Modify the Enc mode based on the buffer Status
 // Inputs: TargetSpeed, Status of the SCbuffer
@@ -690,9 +422,7 @@ void* resource_coordination_kernel(void *input_ptr)
 
     uint32_t                         input_size = 0;
     EbObjectWrapper_t               *prevPictureControlSetWrapperPtr = 0;
-#if !ME_HME_OQ
-    uint16_t                         hmeRegionIndex = 0;
-#endif
+    
     for (;;) {
 
         // Tie instanceIndex to zero for now...
@@ -864,55 +594,13 @@ void* resource_coordination_kernel(void *input_ptr)
             SCD_MODE_1;
 
         // Set the block mean calculation prec
-#if ENCODER_MODE_CLEANUP
         sequence_control_set_ptr->block_mean_calc_prec = BLOCK_MEAN_PREC_SUB;
-#else
-        sequence_control_set_ptr->block_mean_calc_prec = picture_control_set_ptr->enc_mode == ENC_M0 ?
-            BLOCK_MEAN_PREC_FULL :
-            BLOCK_MEAN_PREC_SUB;
-#endif
-#if ME_HME_OQ
+    
         // Pre-Analysis Signal(s) derivation
         signal_derivation_pre_analysis_oq(
             sequence_control_set_ptr,
             picture_control_set_ptr);
-#else
-        // Set ME/HME Params
-        if (sequence_control_set_ptr->static_config.use_default_me_hme) { // Need third option
-            SetMeHmeParams(
-                picture_control_set_ptr,
-                sequence_control_set_ptr,
-                sequence_control_set_ptr->input_resolution);
-        }
-        else {
-            picture_control_set_ptr->enable_hme_flag = sequence_control_set_ptr->static_config.enable_hme_flag;
-
-            picture_control_set_ptr->enable_hme_level0_flag = sequence_control_set_ptr->static_config.enable_hme_level0_flag;
-            picture_control_set_ptr->enable_hme_level1_flag = sequence_control_set_ptr->static_config.enable_hme_level1_flag;
-            picture_control_set_ptr->enable_hme_level2_flag = sequence_control_set_ptr->static_config.enable_hme_level2_flag;
-
-            picture_control_set_ptr->search_area_width = (uint8_t)sequence_control_set_ptr->static_config.search_area_width;
-            picture_control_set_ptr->search_area_height = (uint8_t)sequence_control_set_ptr->static_config.search_area_height;
-
-            picture_control_set_ptr->number_hme_search_region_in_width = (uint16_t)sequence_control_set_ptr->static_config.number_hme_search_region_in_width;
-            picture_control_set_ptr->number_hme_search_region_in_height = (uint16_t)sequence_control_set_ptr->static_config.number_hme_search_region_in_height;
-
-            picture_control_set_ptr->hme_level0_total_search_area_width = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_total_search_area_width;
-            picture_control_set_ptr->hme_level0_total_search_area_height = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_total_search_area_height;
-
-            for (hmeRegionIndex = 0; hmeRegionIndex < picture_control_set_ptr->number_hme_search_region_in_width; ++hmeRegionIndex) {
-                picture_control_set_ptr->hme_level0_search_area_in_width_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_search_area_in_width_array[hmeRegionIndex];
-                picture_control_set_ptr->hme_level1_search_area_in_width_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level1_search_area_in_width_array[hmeRegionIndex];
-                picture_control_set_ptr->hme_level2_search_area_in_width_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level2_search_area_in_width_array[hmeRegionIndex];
-            }
-
-            for (hmeRegionIndex = 0; hmeRegionIndex < picture_control_set_ptr->number_hme_search_region_in_height; ++hmeRegionIndex) {
-                picture_control_set_ptr->hme_level0_search_area_in_height_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level0_search_area_in_height_array[hmeRegionIndex];
-                picture_control_set_ptr->hme_level1_search_area_in_height_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level1_search_area_in_height_array[hmeRegionIndex];
-                picture_control_set_ptr->hme_level2_search_area_in_height_array[hmeRegionIndex] = (uint16_t)sequence_control_set_ptr->static_config.hme_level2_search_area_in_height_array[hmeRegionIndex];
-            }
-        }
-#endif
+    
         // Rate Control
         // Set the ME Distortion and OIS Historgrams to zero
         if (sequence_control_set_ptr->static_config.rate_control_mode) {

@@ -123,7 +123,7 @@ The encoder parameters present in the Sample.cfg file are listed in this table b
 | **ErrorFile** | -errlog | any string | stderr | error log displaying configuration or encode errors |
 | **UseQpFile** | -use-q-file | [0 - 1] | 0 | When set to 1, overwrite the picture qp assignment using qp values in QpFile |
 | **QpFile** | -qp-file | any string | Null | Path to qp file |
-| **EncoderMode** | -enc-mode | [0 - 3] | 3 | Encoder Preset [0,1,3] 0 = highest quality, 3 = highest speed |
+| **EncoderMode** | -enc-mode | [0 - 7] | 7 | Encoder Preset [0,1,2,3,4,5,6,7] 0 = highest quality, 7 = highest speed |
 | **EncoderBitDepth** | -bit-depth | [8 , 10] | 8 | specifies the bit depth of the input video |
 | **CompressedTenBitFormat** | -compressed-ten-bit-format | [0 - 1] | 0 | Offline packing of the 2bits: requires two bits packed input (0: OFF, 1: ON) |
 | **SourceWidth** | -w | [64 - 4096] | None | Input source width |

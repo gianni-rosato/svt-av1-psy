@@ -1350,18 +1350,9 @@ void QpmGatherStatisticsSW(
     uint8_t                   cu_depth;
     SbParams_t sb_params = sequence_control_set_ptr->sb_params_array[sb_index];
 
-#if ENCODER_MODE_CLEANUP
     EbBool  use16x16Stat = EB_FALSE;
-
-#else
-    EbBool  use16x16Stat = (sequence_control_set_ptr->input_resolution == INPUT_SIZE_4K_RANGE &&
-        picture_control_set_ptr->enc_mode >= ENC_M3 &&
-        picture_control_set_ptr->slice_type != I_SLICE);
-#endif
     if (use16x16Stat == EB_FALSE)
     {
-
-
         // 8x8 block loop
         cu_depth = 3;
         for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_8x8_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_8x8_63; rasterScanCuIndex++) {
@@ -1778,14 +1769,8 @@ void* InitialRateControlKernel(void *input_ptr)
                 picture_control_set_ptr->inter_complexity_min_pre = picture_control_set_ptr->inter_complexity_min[0];
                 picture_control_set_ptr->inter_complexity_max_pre = picture_control_set_ptr->inter_complexity_max[0];
 
-#if ENCODER_MODE_CLEANUP
                 EbBool  use16x16Stat = EB_FALSE;
 
-#else
-                EbBool  use16x16Stat = (sequence_control_set_ptr->input_resolution == INPUT_SIZE_4K_RANGE &&
-                    picture_control_set_ptr->enc_mode >= ENC_M3 &&
-                    picture_control_set_ptr->slice_type != I_SLICE);
-#endif
                 uint32_t totDepths = use16x16Stat ? 3 : 4;
 
                 for (cu_depth = 0; cu_depth < totDepths; ++cu_depth) {

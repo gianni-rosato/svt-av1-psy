@@ -1952,14 +1952,7 @@ void av1_pick_filter_level(
         lf->filter_level[0] = lf->filter_level[1] =
             search_filter_level(srcBuffer, tempLfReconBuffer, pcsPtr, method == LPF_PICK_FROM_SUBIMAGE,
                 last_frame_filter_level, NULL, 0, 2);
-#if 0
-        lf->filter_level[0] =
-            search_filter_level(srcBuffer, tempLfReconBuffer, pcsPtr, method == LPF_PICK_FROM_SUBIMAGE,
-                last_frame_filter_level, NULL, 0, 0);
-        lf->filter_level[1] =
-            search_filter_level(srcBuffer, tempLfReconBuffer, pcsPtr, method == LPF_PICK_FROM_SUBIMAGE,
-                last_frame_filter_level, NULL, 0, 1);
-#endif
+
         if (num_planes > 1) {
             lf->filter_level_u =
                 search_filter_level(srcBuffer, tempLfReconBuffer, pcsPtr, method == LPF_PICK_FROM_SUBIMAGE,

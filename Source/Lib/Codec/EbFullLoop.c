@@ -1191,17 +1191,9 @@ void ProductFullLoopTxSearch(
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
         tx_type = (TxType)tx_type_index;
         if (!allowed_tx_mask[tx_type]) continue;
-#if TX_SEARCH_LEVELS
         if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set)
             if (!allowed_tx_set_a[txSize][tx_type]) continue;
-#else
-#if FAST_TX_SEARCH
-#if ENCODER_MODE_CLEANUP
-        if (picture_control_set_ptr->enc_mode == ENC_M1)
-#endif
-         if (!allowed_tx_set_a[txSize][tx_type]) continue;
-#endif
-#endif
+
         context_ptr->three_quad_energy = 0;
         uint32_t txb_itr = 0;
         for (txb_itr = 0; txb_itr < context_ptr->blk_geom->txb_count; txb_itr++)
@@ -1407,17 +1399,9 @@ void encode_pass_tx_search(
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
         tx_type = (TxType)tx_type_index;
 
-#if TX_SEARCH_LEVELS
         if(picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set)
             if (!allowed_tx_set_a[txSize][tx_type]) continue;
-#else
-#if FAST_TX_SEARCH
-#if ENCODER_MODE_CLEANUP
-        if (picture_control_set_ptr->enc_mode == ENC_M1)
-#endif
-            if (!allowed_tx_set_a[txSize][tx_type]) continue;
-#endif
-#endif
+
         const int32_t eset = get_ext_tx_set(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
         // eset == 0 should correspond to a set with only DCT_DCT and there
         // is no need to send the tx_type
@@ -1612,17 +1596,9 @@ void encode_pass_tx_search_hbd(
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
         tx_type = (TxType)tx_type_index;
         ////if (!allowed_tx_mask[tx_type]) continue;
-#if TX_SEARCH_LEVELS
         if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set)
             if (!allowed_tx_set_a[txSize][tx_type]) continue;
-#else
-#if FAST_TX_SEARCH
-#if ENCODER_MODE_CLEANUP
-        if (picture_control_set_ptr->enc_mode == ENC_M1 )
-#endif
-            if (!allowed_tx_set_a[txSize][tx_type]) continue;
-#endif
-#endif
+
         const int32_t eset = get_ext_tx_set(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
         // eset == 0 should correspond to a set with only DCT_DCT and there
         // is no need to send the tx_type
