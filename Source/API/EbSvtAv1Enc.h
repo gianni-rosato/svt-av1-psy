@@ -13,13 +13,13 @@ extern "C" {
 #include "stdint.h"
 #include "EbSvtAv1.h"
 
-#define TILES                       1
+#define  TILES    1
 
     //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT            2
 
-#define MAX_ENC_PRESET                              4
+#define MAX_ENC_PRESET                              7
 
 #define EB_BUFFERFLAG_EOS           0x00000001  // signals the last packet of the stream
 #define EB_BUFFERFLAG_SHOW_EXT      0x00000002  // signals that the packet contains a show existing frame at the end
@@ -430,7 +430,7 @@ typedef struct EbSvtAv1EncConfiguration
      * @ **p_handle      Handle to be called in the future for manipulating the
      *                  component.
      * @ *p_app_data      Callback data.
-     * @ *config_ptr     pointer passed back to the client during callbacks, it will be
+     * @ *config_ptr     Pointer passed back to the client during callbacks, it will be
      *                  loaded with default params from the library. */
     EB_API EbErrorType eb_init_handle(
         EbComponentType** p_handle,

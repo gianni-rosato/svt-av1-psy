@@ -11,6 +11,9 @@
 #include "EbDefinitions.h"
 #include "EbRateControlProcess.h"
 #include "EbSequenceControlSet.h"
+#if MDC_FIX_0
+#include "EbModeDecision.h"
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -57,7 +60,19 @@ extern "C" {
         int8_t                               max_delta_qp[4];
 
 
-
+#if ADAPTIVE_DEPTH_PARTITIONING
+        // Adaptive Depth Partitioning
+        uint32_t                             *sb_score_array;
+        uint8_t                               cost_depth_mode[SB_PRED_OPEN_LOOP_1_NFL_DEPTH_MODE];
+        uint8_t                              *sb_cost_array;
+        uint32_t                              predicted_cost;
+        uint32_t                              budget;
+        int8_t                                score_th[MAX_SUPPORTED_SEGMENTS];
+        uint8_t                               interval_cost[MAX_SUPPORTED_SEGMENTS];
+        uint8_t                               number_of_segments;
+        uint32_t                              sb_min_score;
+        uint32_t                              sb_max_score;
+#else
         // Budgeting
         uint32_t                             *lcuScoreArray;
 
@@ -75,12 +90,19 @@ extern "C" {
         uint32_t                              lcuMaxScore;
         EbBool                             depthSensitivePictureFlag;
         EbBool                             performRefinement;
-
-
+#endif
+#if MDC_FIX_0
+        const BlockGeom                      *blk_geom;
+        ModeDecisionCandidate_t              *mdc_candidate_ptr;
+        CandidateMv                          *mdc_ref_mv_stack;
+        CodingUnit_t                         *mdc_cu_ptr;
+#endif
         uint8_t                               qp_index;
 
-
-
+#if ADAPTIVE_DEPTH_PARTITIONING
+        // Multi - Mode signal(s)
+        uint8_t                               adp_level; // Hsan: to use
+#endif
     } ModeDecisionConfigurationContext_t;
 
 

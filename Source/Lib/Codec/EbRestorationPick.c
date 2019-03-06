@@ -44,7 +44,7 @@ void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane,
 
 // When set to RESTORE_WIENER or RESTORE_SGRPROJ only those are allowed.
 // When set to RESTORE_TYPES we allow switchable.
-static const RestorationType force_restore_type = RESTORE_TYPES;
+//static const RestorationType force_restore_type = RESTORE_TYPES;
 
 // Number of Wiener iterations
 #define NUM_WIENER_ITERS 5
@@ -1449,8 +1449,8 @@ static void search_wiener(const RestorationTileLimits *limits,
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
     const Av1Common *const cm = rsc->cm;
 #if FAST_WN
-    int32_t wn_luma = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP : cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
-    const int32_t wiener_win = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP :
+    int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP : cm->wn_filter_mode == 2 ? WIENER_WIN_CHROMA : WIENER_WIN;
+    const int32_t wiener_win = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP :
         (rsc->plane == AOM_PLANE_Y) ? wn_luma : WIENER_WIN_CHROMA;
 #else
     const int32_t wiener_win =
@@ -1667,6 +1667,7 @@ void av1_pick_filter_restoration(const Yv12BufferConfig *src, Yv12BufferConfig *
     //CHKN Av1Common *const cm = &cpi->common;
     const int32_t num_planes = 3;// av1_num_planes(cm);
    // assert(!cm->all_lossless);
+    RestorationType force_restore_type_d = (cm->wn_filter_mode) ? RESTORE_TYPES : RESTORE_SGRPROJ;
 
     int32_t ntiles[2];
     for (int32_t is_uv = 0; is_uv < 2; ++is_uv)
@@ -1696,10 +1697,7 @@ void av1_pick_filter_restoration(const Yv12BufferConfig *src, Yv12BufferConfig *
 
         double best_cost = 0;
         RestorationType best_rtype = RESTORE_NONE;
-
         const int32_t highbd = rsc.cm->use_highbitdepth;
-
-
 
 
         extend_frame(rsc.dgd_buffer, rsc.plane_width, rsc.plane_height,
@@ -1712,8 +1710,8 @@ void av1_pick_filter_restoration(const Yv12BufferConfig *src, Yv12BufferConfig *
 
             RestorationType r = (RestorationType)restType;
 
-            if ((force_restore_type != RESTORE_TYPES) && (r != RESTORE_NONE) &&
-                (r != force_restore_type))
+            if ((force_restore_type_d != RESTORE_TYPES) && (r != RESTORE_NONE) &&
+                (r != force_restore_type_d))
                 continue;
 
             double cost = search_rest_type(&rsc, r);
@@ -1723,15 +1721,10 @@ void av1_pick_filter_restoration(const Yv12BufferConfig *src, Yv12BufferConfig *
                 best_cost = cost;
                 best_rtype = r;
             }
-
-
         }
-
-
-
         cm->rst_info[plane].frame_restoration_type = best_rtype;
-        if (force_restore_type != RESTORE_TYPES)
-            assert(best_rtype == force_restore_type || best_rtype == RESTORE_NONE);
+        if (force_restore_type_d != RESTORE_TYPES)
+            assert(best_rtype == force_restore_type_d || best_rtype == RESTORE_NONE);
 
         if (best_rtype != RESTORE_NONE) {
             for (int32_t u = 0; u < plane_ntiles; ++u) {
@@ -1840,8 +1833,8 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
     const Av1Common *const cm = rsc->cm;
 #if FAST_WN
-    int32_t wn_luma = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP : cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
-    const int32_t wiener_win = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP :
+    int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP : cm->wn_filter_mode == 2 ? WIENER_WIN_CHROMA : WIENER_WIN;
+    const int32_t wiener_win = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP :
         (rsc->plane == AOM_PLANE_Y) ? wn_luma : WIENER_WIN_CHROMA;
 #else
     const int32_t wiener_win =
@@ -1931,8 +1924,8 @@ static void search_wiener_finish(const RestorationTileLimits *limits,
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
 #if FAST_WN
     const Av1Common *const cm = rsc->cm;
-    int32_t wn_luma = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP : cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
-    const int32_t wiener_win = cm->wn_filter_mode == 0 ? WIENER_WIN_3TAP :
+    int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP : cm->wn_filter_mode == 2 ? WIENER_WIN_CHROMA : WIENER_WIN;
+    const int32_t wiener_win = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP :
         (rsc->plane == AOM_PLANE_Y) ? wn_luma : WIENER_WIN_CHROMA;
 #else
     const int32_t wiener_win =
@@ -2066,7 +2059,8 @@ void restoration_seg_search(
             highbd);       
 
         av1_foreach_rest_unit_in_frame_seg(rsc_p->cm, rsc_p->plane, rsc_on_tile, search_norestore_seg, rsc_p, pcs_ptr, segment_index);
-        av1_foreach_rest_unit_in_frame_seg(rsc_p->cm, rsc_p->plane, rsc_on_tile, search_wiener_seg,  rsc_p, pcs_ptr, segment_index);
+        if (cm->wn_filter_mode)
+            av1_foreach_rest_unit_in_frame_seg(rsc_p->cm, rsc_p->plane, rsc_on_tile, search_wiener_seg,  rsc_p, pcs_ptr, segment_index);
         av1_foreach_rest_unit_in_frame_seg(rsc_p->cm, rsc_p->plane, rsc_on_tile, search_sgrproj_seg, rsc_p, pcs_ptr, segment_index);       
 
     }
@@ -2076,7 +2070,7 @@ void restoration_seg_search(
 void rest_finish_search(Macroblock *x, Av1Common *const cm)
 {      
     const int32_t num_planes = 3;
-
+    RestorationType force_restore_type_d = (cm->wn_filter_mode) ? RESTORE_TYPES : RESTORE_SGRPROJ;
     int32_t ntiles[2];
     for (int32_t is_uv = 0; is_uv < 2; ++is_uv)
         ntiles[is_uv] = rest_tiles_in_plane(cm, is_uv);
@@ -2117,8 +2111,8 @@ void rest_finish_search(Macroblock *x, Av1Common *const cm)
 
             RestorationType r = (RestorationType)restType;
 
-            if ((force_restore_type != RESTORE_TYPES) && (r != RESTORE_NONE) &&
-                (r != force_restore_type))
+            if ((force_restore_type_d != RESTORE_TYPES) && (r != RESTORE_NONE) &&
+                (r != force_restore_type_d))
                 continue;
 
             double cost = search_rest_type_finish(&rsc, r);
@@ -2131,8 +2125,8 @@ void rest_finish_search(Macroblock *x, Av1Common *const cm)
         }
 
         cm->rst_info[plane].frame_restoration_type = best_rtype;
-        if (force_restore_type != RESTORE_TYPES)
-            assert(best_rtype == force_restore_type || best_rtype == RESTORE_NONE);
+        if (force_restore_type_d != RESTORE_TYPES)
+            assert(best_rtype == force_restore_type_d || best_rtype == RESTORE_NONE);
 
         if (best_rtype != RESTORE_NONE) {
             for (int32_t u = 0; u < plane_ntiles; ++u) {

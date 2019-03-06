@@ -394,11 +394,10 @@ extern "C" {
         EbBool useSubSadFracBipredSearch;
 #endif
 #endif
-
 #if M0_64x64_32x32_HALF_QUARTER_PEL
         EbBool                        fractional_search64x64;
 #endif
-#if ME_HME_OQ
+
         // ME
         uint8_t                       search_area_width;
         uint8_t                       search_area_height;
@@ -413,7 +412,6 @@ extern "C" {
         uint16_t                      hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
         uint16_t                      hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
         uint16_t                      hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-#endif
         uint8_t                       update_hme_search_center_flag;
 
     } MeContext_t;

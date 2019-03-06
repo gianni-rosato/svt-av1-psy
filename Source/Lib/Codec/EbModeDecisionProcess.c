@@ -462,14 +462,8 @@ void reset_mode_decision(
         ResetMdRefinmentNeighborArrays(picture_control_set_ptr);
 
         for (lcuRowIndex = 0; lcuRowIndex < ((sequence_control_set_ptr->luma_height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64); lcuRowIndex++) {
-#if 0//ADD_DELTA_QP_SUPPORT
-            uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
-            picture_control_set_ptr->enc_prev_coded_qp[lcuRowIndex] = picture_qp;
-            picture_control_set_ptr->enc_prev_quant_group_coded_qp[lcuRowIndex] = picture_qp;
-#else
             picture_control_set_ptr->enc_prev_coded_qp[lcuRowIndex] = (uint8_t)picture_control_set_ptr->picture_qp;
             picture_control_set_ptr->enc_prev_quant_group_coded_qp[lcuRowIndex] = (uint8_t)picture_control_set_ptr->picture_qp;
-#endif
         }
     }
 

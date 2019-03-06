@@ -2414,11 +2414,7 @@ void HalfPelSearch_LCU(
         }
     }
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
-#if ENCODER_MODE_CLEANUP
     if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
-#else
-    if (picture_control_set_ptr->non_square_block_flag) {
-#endif
 #else
     if (sequence_control_set_ptr->static_config.ext_block_flag) {
 #endif
@@ -4142,16 +4138,9 @@ void HmeOneQuadrantLevel0(
     int16_t padWidth;
     int16_t padHeight;
 
-
-#if ME_HME_OQ
     (void)picture_control_set_ptr;
     int16_t search_area_width = (int16_t)(((context_ptr->hme_level0_total_search_area_width  * searchAreaMultiplierX) / 100));
     int16_t search_area_height = (int16_t)(((context_ptr->hme_level0_total_search_area_height * searchAreaMultiplierY) / 100));
-#else
-    int16_t search_area_width = (int16_t)(((picture_control_set_ptr->hme_level0_total_search_area_width  * searchAreaMultiplierX) / 100));
-    int16_t search_area_height = (int16_t)(((picture_control_set_ptr->hme_level0_total_search_area_height * searchAreaMultiplierY) / 100));
-
-#endif
     if (context_ptr->hme_search_type == HME_SPARSE)
         search_area_width = ((search_area_width + 4) >> 3) << 3;  //round down/up the width to the nearest multiple of 8.
 
@@ -4336,14 +4325,10 @@ void HmeLevel0(
 
     // Adjust SR size based on the searchAreaShift
 
-#if ME_HME_OQ
     (void)picture_control_set_ptr;
     int16_t search_area_width = (int16_t)(((context_ptr->hme_level0_search_area_in_width_array[searchRegionNumberInWidth] * searchAreaMultiplierX) / 100));
     int16_t search_area_height = (int16_t)(((context_ptr->hme_level0_search_area_in_height_array[searchRegionNumberInHeight] * searchAreaMultiplierY) / 100));
-#else
-    int16_t search_area_width = (int16_t)(((picture_control_set_ptr->hme_level0_search_area_in_width_array[searchRegionNumberInWidth] * searchAreaMultiplierX) / 100));
-    int16_t search_area_height = (int16_t)(((picture_control_set_ptr->hme_level0_search_area_in_height_array[searchRegionNumberInHeight] * searchAreaMultiplierY) / 100));
-#endif
+
     xSearchRegionDistance = xHmeSearchCenter;
     ySearchRegionDistance = yHmeSearchCenter;
     padWidth = (int16_t)(sixteenthRefPicPtr->origin_x) - 1;
@@ -4351,29 +4336,16 @@ void HmeLevel0(
 
     while (searchRegionNumberInWidth) {
         searchRegionNumberInWidth--;
-#if ME_HME_OQ
         xSearchRegionDistance += (int16_t)(((context_ptr->hme_level0_search_area_in_width_array[searchRegionNumberInWidth] * searchAreaMultiplierX) / 100));
-#else
-        xSearchRegionDistance += (int16_t)(((picture_control_set_ptr->hme_level0_search_area_in_width_array[searchRegionNumberInWidth] * searchAreaMultiplierX) / 100));
-#endif
     }
 
     while (searchRegionNumberInHeight) {
         searchRegionNumberInHeight--;
-#if ME_HME_OQ
         ySearchRegionDistance += (int16_t)(((context_ptr->hme_level0_search_area_in_height_array[searchRegionNumberInHeight] * searchAreaMultiplierY) / 100));
-#else
-        ySearchRegionDistance += (int16_t)(((picture_control_set_ptr->hme_level0_search_area_in_height_array[searchRegionNumberInHeight] * searchAreaMultiplierY) / 100));
-#endif
     }
-#if ME_HME_OQ
     x_search_area_origin = -(int16_t)((((context_ptr->hme_level0_total_search_area_width * searchAreaMultiplierX) / 100)) >> 1) + xSearchRegionDistance;
     y_search_area_origin = -(int16_t)((((context_ptr->hme_level0_total_search_area_height * searchAreaMultiplierY) / 100)) >> 1) + ySearchRegionDistance;
-#else
-    x_search_area_origin = -(int16_t)((((picture_control_set_ptr->hme_level0_total_search_area_width * searchAreaMultiplierX) / 100)) >> 1) + xSearchRegionDistance;
-    y_search_area_origin = -(int16_t)((((picture_control_set_ptr->hme_level0_total_search_area_height * searchAreaMultiplierY) / 100)) >> 1) + ySearchRegionDistance;
 
-#endif
     // Correct the left edge of the Search Area if it is not on the reference Picture
     x_search_area_origin = ((origin_x + x_search_area_origin) < -padWidth) ?
         -padWidth - origin_x :
@@ -4649,18 +4621,10 @@ void HmeLevel2(
 
     // round the search region width to nearest multiple of 8 if it is less than 8 or non multiple of 8
     // SAD calculation performance is the same for searchregion width from 1 to 8
-#if ME_HME_OQ
     (void)picture_control_set_ptr;
     int16_t hmeLevel2SearchAreaInWidth = (int16_t)context_ptr->hme_level2_search_area_in_width_array[searchRegionNumberInWidth];
-#else
-    int16_t hmeLevel2SearchAreaInWidth = (int16_t)picture_control_set_ptr->hme_level2_search_area_in_width_array[searchRegionNumberInWidth];
-#endif
     int16_t search_area_width = (hmeLevel2SearchAreaInWidth < 8) ? 8 : (hmeLevel2SearchAreaInWidth & 7) ? hmeLevel2SearchAreaInWidth + (hmeLevel2SearchAreaInWidth - ((hmeLevel2SearchAreaInWidth >> 3) << 3)) : hmeLevel2SearchAreaInWidth;
-#if ME_HME_OQ
     int16_t search_area_height = (int16_t)context_ptr->hme_level2_search_area_in_height_array[searchRegionNumberInHeight];
-#else
-    int16_t search_area_height = (int16_t)picture_control_set_ptr->hme_level2_search_area_in_height_array[searchRegionNumberInHeight];
-#endif
     int16_t x_search_area_origin;
     int16_t y_search_area_origin;
 
@@ -6240,36 +6204,21 @@ EbErrorType MotionEstimateLcu(
     EbBool                    enableHalfPel16x16 = EB_FALSE;
     EbBool                    enableHalfPel8x8 = EB_FALSE;
     EbBool                    enableQuarterPel = EB_FALSE;
-#if ENCODER_MODE_CLEANUP
     EbBool                 oneQuadrantHME =  EB_FALSE;
-#else
-    EbBool                 oneQuadrantHME = (picture_control_set_ptr->enc_mode >= ENC_M3) ? EB_TRUE : EB_FALSE;
-#endif
 
 #if M0_SAD_HALF_QUARTER_PEL_BIPRED_SEARCH || M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
 #if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
-    context_ptr->fractionalSearchMethod = (picture_control_set_ptr->enc_mode >= ENC_M3) ? FULL_SAD_SEARCH : SSD_SEARCH;
+    context_ptr->fractionalSearchMethod = (picture_control_set_ptr->enc_mode >= ENC_M7) ? FULL_SAD_SEARCH : SSD_SEARCH;
 #else
     context_ptr->fractionalSearchMethod = SUB_SAD_SEARCH;
 #endif
 #endif
 #if M0_64x64_32x32_HALF_QUARTER_PEL
-#if ENCODER_MODE_CLEANUP
     context_ptr->fractional_search64x64 = EB_TRUE;
-#else
-    context_ptr->fractional_search64x64 = (picture_control_set_ptr->enc_mode <= ENC_M1 /*&& sequence_control_set_ptr->static_config.tune != TUNE_VQ*/) ?
-        EB_TRUE :
-        EB_FALSE;
-#endif
 #endif
     oneQuadrantHME = sequence_control_set_ptr->input_resolution < INPUT_SIZE_4K_RANGE ? 0 : oneQuadrantHME;
 #if M0_ME_SEARCH_BASE
-#if ENCODER_MODE_CLEANUP
     numOfListToSearch = (picture_control_set_ptr->slice_type == P_SLICE ) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
-
-#else
-    numOfListToSearch = (picture_control_set_ptr->slice_type == P_SLICE || (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->enc_mode > ENC_M1)) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
-#endif
 #else
     numOfListToSearch = (picture_control_set_ptr->slice_type == P_SLICE) || (picture_control_set_ptr->temporal_layer_index == 0) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
 #endif
@@ -6317,13 +6266,8 @@ EbErrorType MotionEstimateLcu(
                 // C - Skip HME
 
                 if (picture_control_set_ptr->enable_hme_flag && /*B*/sb_height == BLOCK_SIZE_64) {//(searchCenterSad > sequence_control_set_ptr->static_config.skipTier0HmeTh)) {
-#if ME_HME_OQ
                     while (searchRegionNumberInHeight < context_ptr->number_hme_search_region_in_height) {
                         while (searchRegionNumberInWidth < context_ptr->number_hme_search_region_in_width) {
-#else
-                    while (searchRegionNumberInHeight < picture_control_set_ptr->number_hme_search_region_in_height) {
-                        while (searchRegionNumberInWidth < picture_control_set_ptr->number_hme_search_region_in_width) {
-#endif
 
                             xHmeLevel0SearchCenter[searchRegionNumberInWidth][searchRegionNumberInHeight] = x_search_center;
                             yHmeLevel0SearchCenter[searchRegionNumberInWidth][searchRegionNumberInHeight] = y_search_center;
@@ -6376,14 +6320,9 @@ EbErrorType MotionEstimateLcu(
                             searchRegionNumberInHeight = 0;
                             searchRegionNumberInWidth = 0;
                             {
-#if ME_HME_OQ
                                 while (searchRegionNumberInHeight < context_ptr->number_hme_search_region_in_height) {
                                     while (searchRegionNumberInWidth < context_ptr->number_hme_search_region_in_width) {
-#else
-                                while (searchRegionNumberInHeight < picture_control_set_ptr->number_hme_search_region_in_height) {
-                                    while (searchRegionNumberInWidth < picture_control_set_ptr->number_hme_search_region_in_width) {
 
-#endif
                                         HmeLevel0(
                                             picture_control_set_ptr,
                                             context_ptr,
@@ -6419,23 +6358,13 @@ EbErrorType MotionEstimateLcu(
                         searchRegionNumberInWidth = 0;
 
                         {
-#if ME_HME_OQ
                             while (searchRegionNumberInHeight < context_ptr->number_hme_search_region_in_height) {
                                 while (searchRegionNumberInWidth < context_ptr->number_hme_search_region_in_width) {
 
                                     // When HME level 0 has been disabled, increase the search area width and height for level 1 to (32x12) for Gold only
                                     hmeLevel1SearchAreaInWidth = (int16_t)context_ptr->hme_level1_search_area_in_width_array[searchRegionNumberInWidth];
                                     hmeLevel1SearchAreaInHeight = (int16_t)context_ptr->hme_level1_search_area_in_height_array[searchRegionNumberInHeight];
-#else
 
-                            while (searchRegionNumberInHeight < picture_control_set_ptr->number_hme_search_region_in_height) {
-                                while (searchRegionNumberInWidth < picture_control_set_ptr->number_hme_search_region_in_width) {
-
-                                    // When HME level 0 has been disabled, increase the search area width and height for level 1 to (32x12) for Gold only
-                                    hmeLevel1SearchAreaInWidth = (int16_t)picture_control_set_ptr->hme_level1_search_area_in_width_array[searchRegionNumberInWidth];
-                                    hmeLevel1SearchAreaInHeight = (int16_t)picture_control_set_ptr->hme_level1_search_area_in_height_array[searchRegionNumberInHeight];
-
-#endif
                                     HmeLevel1(
                                         context_ptr,
                                         origin_x >> 1,
@@ -6467,14 +6396,8 @@ EbErrorType MotionEstimateLcu(
                         searchRegionNumberInWidth = 0;
 
                         {
-#if ME_HME_OQ
                             while (searchRegionNumberInHeight < context_ptr->number_hme_search_region_in_height) {
                                 while (searchRegionNumberInWidth < context_ptr->number_hme_search_region_in_width) {
-#else
-                            while (searchRegionNumberInHeight < picture_control_set_ptr->number_hme_search_region_in_height) {
-                                while (searchRegionNumberInWidth < picture_control_set_ptr->number_hme_search_region_in_width) {
-
-#endif
 
                                     HmeLevel2(
                                         picture_control_set_ptr,
@@ -6519,14 +6442,9 @@ EbErrorType MotionEstimateLcu(
 
                             searchRegionNumberInWidth = 1;
                             searchRegionNumberInHeight = 0;
-#if ME_HME_OQ
+
                             while (searchRegionNumberInHeight < context_ptr->number_hme_search_region_in_height) {
                                 while (searchRegionNumberInWidth < context_ptr->number_hme_search_region_in_width) {
-#else
-                            while (searchRegionNumberInHeight < picture_control_set_ptr->number_hme_search_region_in_height) {
-                                while (searchRegionNumberInWidth < picture_control_set_ptr->number_hme_search_region_in_width) {
-
-#endif
 
                                     xHmeSearchCenter = (hmeLevel0Sad[searchRegionNumberInWidth][searchRegionNumberInHeight] < hmeMvSad) ? xHmeLevel0SearchCenter[searchRegionNumberInWidth][searchRegionNumberInHeight] : xHmeSearchCenter;
                                     yHmeSearchCenter = (hmeLevel0Sad[searchRegionNumberInWidth][searchRegionNumberInHeight] < hmeMvSad) ? yHmeLevel0SearchCenter[searchRegionNumberInWidth][searchRegionNumberInHeight] : yHmeSearchCenter;
@@ -6547,14 +6465,9 @@ EbErrorType MotionEstimateLcu(
 
                         searchRegionNumberInWidth = 1;
                         searchRegionNumberInHeight = 0;
-#if ME_HME_OQ
+
                         while (searchRegionNumberInHeight < context_ptr->number_hme_search_region_in_height) {
                             while (searchRegionNumberInWidth < context_ptr->number_hme_search_region_in_width) {
-#else
-
-                        while (searchRegionNumberInHeight < picture_control_set_ptr->number_hme_search_region_in_height) {
-                            while (searchRegionNumberInWidth < picture_control_set_ptr->number_hme_search_region_in_width) {
-#endif
 
                                 xHmeSearchCenter = (hmeLevel1Sad[searchRegionNumberInWidth][searchRegionNumberInHeight] < hmeMvSad) ? xHmeLevel1SearchCenter[searchRegionNumberInWidth][searchRegionNumberInHeight] : xHmeSearchCenter;
                                 yHmeSearchCenter = (hmeLevel1Sad[searchRegionNumberInWidth][searchRegionNumberInHeight] < hmeMvSad) ? yHmeLevel1SearchCenter[searchRegionNumberInWidth][searchRegionNumberInHeight] : yHmeSearchCenter;
@@ -6573,15 +6486,9 @@ EbErrorType MotionEstimateLcu(
 
                         searchRegionNumberInWidth = 1;
                         searchRegionNumberInHeight = 0;
-#if ME_HME_OQ
+    
                         while (searchRegionNumberInHeight < context_ptr->number_hme_search_region_in_height) {
                             while (searchRegionNumberInWidth < context_ptr->number_hme_search_region_in_width) {
-#else
-
-                        while (searchRegionNumberInHeight < picture_control_set_ptr->number_hme_search_region_in_height) {
-                            while (searchRegionNumberInWidth < picture_control_set_ptr->number_hme_search_region_in_width) {
-
-#endif
                                 xHmeSearchCenter = (hmeLevel2Sad[searchRegionNumberInWidth][searchRegionNumberInHeight] < hmeMvSad) ? xHmeLevel2SearchCenter[searchRegionNumberInWidth][searchRegionNumberInHeight] : xHmeSearchCenter;
                                 yHmeSearchCenter = (hmeLevel2Sad[searchRegionNumberInWidth][searchRegionNumberInHeight] < hmeMvSad) ? yHmeLevel2SearchCenter[searchRegionNumberInWidth][searchRegionNumberInHeight] : yHmeSearchCenter;
                                 hmeMvSad = (hmeLevel2Sad[searchRegionNumberInWidth][searchRegionNumberInHeight] < hmeMvSad) ? hmeLevel2Sad[searchRegionNumberInWidth][searchRegionNumberInHeight] : hmeMvSad;
@@ -6591,14 +6498,9 @@ EbErrorType MotionEstimateLcu(
                             searchRegionNumberInHeight++;
                         }
 
-#if ME_HME_OQ
                         numQuadInWidth = context_ptr->number_hme_search_region_in_width;
                         totalMeQuad = context_ptr->number_hme_search_region_in_height * context_ptr->number_hme_search_region_in_width;
-#else
-                        numQuadInWidth = picture_control_set_ptr->number_hme_search_region_in_width;
-                        totalMeQuad = picture_control_set_ptr->number_hme_search_region_in_height * picture_control_set_ptr->number_hme_search_region_in_width;
 
-#endif
                         if ((ref0Poc == ref1Poc) && (listIndex == 1) && (totalMeQuad > 1)) {
 
                             for (quadIndex = 0; quadIndex < totalMeQuad - 1; ++quadIndex) {
@@ -6636,19 +6538,10 @@ EbErrorType MotionEstimateLcu(
                 x_search_center = 0;
                 y_search_center = 0;
             }
-#if ME_HME_OQ
             search_area_width = (int16_t)MIN(context_ptr->search_area_width, 127);
             search_area_height = (int16_t)MIN(context_ptr->search_area_height, 127);
-#else
-            search_area_width = (int16_t)MIN(picture_control_set_ptr->search_area_width, 127);
-            search_area_height = (int16_t)MIN(picture_control_set_ptr->search_area_height, 127);
-#endif
-#if ENCODER_MODE_CLEANUP
+    
             if ((x_search_center != 0 || y_search_center != 0) && (picture_control_set_ptr->is_used_as_reference_flag == EB_TRUE)) {
-
-#else
-            if ((x_search_center != 0 || y_search_center != 0) && (picture_control_set_ptr->is_used_as_reference_flag == EB_TRUE || picture_control_set_ptr->enc_mode == ENC_M0)) {
-#endif
                 CheckZeroZeroCenter(
                     refPicPtr,
                     context_ptr,
@@ -6737,11 +6630,7 @@ EbErrorType MotionEstimateLcu(
                 {
 
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
-#if ENCODER_MODE_CLEANUP
                     if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
-#else
-                    if (picture_control_set_ptr->non_square_block_flag) {
-#endif
 #else
                     if (sequence_control_set_ptr->static_config.ext_block_flag) {
 #endif
@@ -6851,27 +6740,8 @@ EbErrorType MotionEstimateLcu(
                 enableQuarterPel = EB_TRUE;
 #endif
                 if (picture_control_set_ptr->use_subpel_flag == 1) {
-#if ENCODER_MODE_CLEANUP
-                    if (0) {
-#else
-                    if (picture_control_set_ptr->enc_mode > ENC_M1) {
-#endif
-                        suPelEnable(
-                            context_ptr,
-                            picture_control_set_ptr,
-                            listIndex,
-                            0,
-                            &enableHalfPel32x32,
-                            &enableHalfPel16x16,
-                            &enableHalfPel8x8);
 #if M0_ME_QUARTER_PEL_SEARCH
-                        enableQuarterPel = EB_FALSE;
-#endif
-                    }
-#if M0_ME_QUARTER_PEL_SEARCH
-                    else {
-                        enableQuarterPel = EB_TRUE; // AMIR enable in M1
-                    }
+                    enableQuarterPel = EB_TRUE; // AMIR enable in M1
 #else
                     enableQuarterPel = EB_FALSE;
 #endif
@@ -6949,11 +6819,7 @@ EbErrorType MotionEstimateLcu(
                             picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_1,
                             enableQuarterPel,
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
-#if ENCODER_MODE_CLEANUP
                             picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE);
-#else
-                            picture_control_set_ptr->non_square_block_flag);
-#endif
 #else
                             sequence_control_set_ptr->static_config.ext_block_flag);
 #endif
@@ -7020,11 +6886,7 @@ EbErrorType MotionEstimateLcu(
 
         if (numOfListToSearch) {
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
-#if ENCODER_MODE_CLEANUP
             if (picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_0 || pu_index < 21 || (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE)) {
-#else
-            if (picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_0 || pu_index < 21 || picture_control_set_ptr->non_square_block_flag) {
-#endif
 #else
             if (picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_0 || pu_index < 21 || sequence_control_set_ptr->static_config.ext_block_flag) {
 #endif
@@ -7525,87 +7387,62 @@ void InjectIntraCandidatesBasedOnBestMode(
     uint8_t                        temporal_layer_index,
     uint32_t                       bestMode)
 {
+
+    UNUSED(picture_control_set_ptr);
     uint32_t count = 0;
     switch (bestMode) {
 
     case EB_INTRA_MODE_2:
-        OisCuPtr[count].distortion = stage1SadArray[2];
-#if ENCODER_MODE_CLEANUP
-        if (1) 
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-#endif
-            OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
-        else
-            OisCuPtr[count].valid_distortion = EB_TRUE;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_2;
-        OisCuPtr[count++].intra_mode = EB_INTRA_DC;
-        OisCuPtr[count++].intra_mode = EB_INTRA_PLANAR;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_3;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_4;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_5;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_7;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_8;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_9;
+        OisCuPtr[count].distortion       = stage1SadArray[2];
+        OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_2;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_DC;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_PLANAR;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_3;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_4;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_5;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_7;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_8;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_9;
 
         break;
 
     case EB_INTRA_HORIZONTAL:
 
-        OisCuPtr[count].distortion = stage1SadArray[0];
-
-#if ENCODER_MODE_CLEANUP
-        if (1)
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-#endif
-            OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
-        else
-            OisCuPtr[count].valid_distortion = EB_TRUE;
-        OisCuPtr[count++].intra_mode = EB_INTRA_HORIZONTAL;
-        OisCuPtr[count++].intra_mode = EB_INTRA_DC;
-        OisCuPtr[count++].intra_mode = EB_INTRA_PLANAR;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_9;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_11;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_8;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_12;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_7;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_13;
+        OisCuPtr[count].distortion       = stage1SadArray[0];
+        OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_HORIZONTAL;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_DC;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_PLANAR;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_9;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_11;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_8;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_12;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_7;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_13;
 
 
         break;
 
     case EB_INTRA_MODE_18:
 
-        OisCuPtr[count].distortion = stage1SadArray[3];
-#if ENCODER_MODE_CLEANUP
-        if (1)
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-#endif
-            OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
-        else
-            OisCuPtr[count].valid_distortion = EB_TRUE;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_18;
-        OisCuPtr[count++].intra_mode = EB_INTRA_DC;
-        OisCuPtr[count++].intra_mode = EB_INTRA_PLANAR;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_17;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_19;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_16;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_20;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_15;
-        OisCuPtr[count++].intra_mode = EB_INTRA_MODE_21;
+        OisCuPtr[count].distortion       = stage1SadArray[3];
+        OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_18;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_DC;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_PLANAR;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_17;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_19;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_16;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_20;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_15;
+        OisCuPtr[count++].intra_mode     = EB_INTRA_MODE_21;
 
         break;
     case EB_INTRA_VERTICAL:
 
         OisCuPtr[count].distortion = stage1SadArray[1];
-
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-
-            OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
-        else
-            OisCuPtr[count].valid_distortion = EB_TRUE;
+        OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
         OisCuPtr[count++].intra_mode = EB_INTRA_VERTICAL;
         OisCuPtr[count++].intra_mode = EB_INTRA_DC;
         OisCuPtr[count++].intra_mode = EB_INTRA_PLANAR;
@@ -7616,21 +7453,12 @@ void InjectIntraCandidatesBasedOnBestMode(
         OisCuPtr[count++].intra_mode = EB_INTRA_MODE_23;
         OisCuPtr[count++].intra_mode = EB_INTRA_MODE_29;
 
-
-
         break;
 
     case EB_INTRA_MODE_34:
 
         OisCuPtr[count].distortion = stage1SadArray[4];
-#if ENCODER_MODE_CLEANUP
-        if (1)
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-#endif
-            OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
-        else
-            OisCuPtr[count].valid_distortion = EB_TRUE;
+        OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
         OisCuPtr[count++].intra_mode = EB_INTRA_MODE_34;
         OisCuPtr[count++].intra_mode = EB_INTRA_DC;
         OisCuPtr[count++].intra_mode = EB_INTRA_PLANAR;
@@ -7646,14 +7474,7 @@ void InjectIntraCandidatesBasedOnBestMode(
     case EB_INTRA_MODE_6:
 
         OisCuPtr[count].distortion = stage1SadArray[5];
-#if ENCODER_MODE_CLEANUP
-        if (1)
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-#endif
-            OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
-        else
-            OisCuPtr[count].valid_distortion = EB_TRUE;
+        OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
         OisCuPtr[count++].intra_mode = EB_INTRA_MODE_6;
         OisCuPtr[count++].intra_mode = EB_INTRA_DC;
         OisCuPtr[count++].intra_mode = EB_INTRA_PLANAR;
@@ -7669,14 +7490,7 @@ void InjectIntraCandidatesBasedOnBestMode(
     case EB_INTRA_MODE_14:
 
         OisCuPtr[count].distortion = stage1SadArray[6];
-#if ENCODER_MODE_CLEANUP
-        if (1)
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-#endif
-            OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
-        else
-            OisCuPtr[count].valid_distortion = EB_TRUE;
+        OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
         OisCuPtr[count++].intra_mode = EB_INTRA_MODE_14;
         OisCuPtr[count++].intra_mode = EB_INTRA_DC;
         OisCuPtr[count++].intra_mode = EB_INTRA_PLANAR;
@@ -7692,14 +7506,7 @@ void InjectIntraCandidatesBasedOnBestMode(
     case EB_INTRA_MODE_22:
 
         OisCuPtr[count].distortion = stage1SadArray[7];
-#if ENCODER_MODE_CLEANUP
-        if (1)
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-#endif
-            OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
-        else
-            OisCuPtr[count].valid_distortion = EB_TRUE;
+        OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
         OisCuPtr[count++].intra_mode = EB_INTRA_MODE_22;
         OisCuPtr[count++].intra_mode = EB_INTRA_DC;
         OisCuPtr[count++].intra_mode = EB_INTRA_PLANAR;
@@ -7716,14 +7523,7 @@ void InjectIntraCandidatesBasedOnBestMode(
     default:
 
         OisCuPtr[count].distortion = stage1SadArray[8];
-#if ENCODER_MODE_CLEANUP
-        if (1)
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-#endif
-            OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
-        else
-            OisCuPtr[count].valid_distortion = EB_TRUE;
+        OisCuPtr[count].valid_distortion = (temporal_layer_index > 1) ? EB_TRUE : EB_FALSE;
         OisCuPtr[count++].intra_mode = EB_INTRA_MODE_30;
         OisCuPtr[count++].intra_mode = EB_INTRA_DC;
         OisCuPtr[count++].intra_mode = EB_INTRA_PLANAR;
@@ -8152,36 +7952,13 @@ EbErrorType OpenLoopIntraSearchLcu(
         uint8_t oisThSet;
 
         if (sequence_control_set_ptr->input_resolution == INPUT_SIZE_4K_RANGE) {
-#if ENCODER_MODE_CLEANUP
             oisThSet = (  (picture_control_set_ptr->temporal_layer_index == 0 || picture_control_set_ptr->is_used_as_reference_flag == EB_TRUE)) ? 2 : 1;
-
-#else
-            oisThSet = (picture_control_set_ptr->enc_mode >= ENC_M2) ?
-                0 : // Light
-                1; // Default
-            oisThSet = ((picture_control_set_ptr->enc_mode <= ENC_M1) && (picture_control_set_ptr->temporal_layer_index == 0 || picture_control_set_ptr->is_used_as_reference_flag == EB_TRUE)) ? 2 : oisThSet;
-#endif
         }
         else {
-#if ENCODER_MODE_CLEANUP
             oisThSet = 2;
-
-#else
-            oisThSet = (picture_control_set_ptr->enc_mode <= ENC_M2) ?
-                2 : //Heavy
-                (picture_control_set_ptr->enc_mode == ENC_M3) ? 1 :// Default
-                0; // Light
-#endif
         }
 
-
-
-#if ENCODER_MODE_CLEANUP
-        EbBool  use16x16Stat = EB_FALSE;
-#else
-        EbBool  use16x16Stat = (sequence_control_set_ptr->input_resolution == INPUT_SIZE_4K_RANGE
-            && picture_control_set_ptr->enc_mode >= ENC_M3);
-#endif
+        EbBool  use16x16Stat  = EB_FALSE;
         uint32_t   maxCuIndex = use16x16Stat ? RASTER_SCAN_CU_INDEX_16x16_15 : RASTER_SCAN_CU_INDEX_8x8_63;
 
         for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_32x32_0; rasterScanCuIndex <= maxCuIndex; rasterScanCuIndex++) {
@@ -8212,12 +7989,7 @@ EbErrorType OpenLoopIntraSearchLcu(
                         cu_origin_y,
                         cu_size);
                 }
-#if ENCODER_MODE_CLEANUP
                 if ((picture_control_set_ptr->temporal_layer_index == 0) && (sequence_control_set_ptr->input_resolution < INPUT_SIZE_4K_RANGE)) {
-
-#else
-                if ((picture_control_set_ptr->temporal_layer_index == 0) && (picture_control_set_ptr->enc_mode <= ENC_M1 && sequence_control_set_ptr->input_resolution < INPUT_SIZE_4K_RANGE)) {
-#endif
                     for (intraCandidateIndex = 0; intraCandidateIndex < MAX_OPEN_LOOP_INTRA_CANDIDATES; intraCandidateIndex++) {
                         OisCuPtr[intraCandidateIndex].valid_distortion = EB_FALSE;
                     }

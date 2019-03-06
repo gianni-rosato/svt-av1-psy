@@ -5944,7 +5944,48 @@ static INLINE void highbd_h_predictor(uint16_t *dst, ptrdiff_t stride, int32_t b
         dst += stride;
     }
 }
+#if ENABLE_PAETH
+static INLINE int abs_diff(int a, int b) { return (a > b) ? a - b : b - a; }
+static INLINE uint16_t paeth_predictor_single(uint16_t left, uint16_t top,
+                                              uint16_t top_left) {
+  const int base = top + left - top_left;
+  const int p_left = abs_diff(base, left);
+  const int p_top = abs_diff(base, top);
+  const int p_top_left = abs_diff(base, top_left);
 
+  // Return nearest to base of left, top and top_left.
+  return (p_left <= p_top && p_left <= p_top_left)
+             ? left
+             : (p_top <= p_top_left) ? top : top_left;
+}
+
+static INLINE void paeth_predictor(uint8_t *dst, ptrdiff_t stride, int bw,
+                                   int bh, const uint8_t *above,
+                                   const uint8_t *left) {
+  int r, c;
+  const uint8_t ytop_left = above[-1];
+
+  for (r = 0; r < bh; r++) {
+    for (c = 0; c < bw; c++)
+      dst[c] = (uint8_t)paeth_predictor_single(left[r], above[c], ytop_left);
+    dst += stride;
+  }
+}
+
+static INLINE void highbd_paeth_predictor(uint16_t *dst, ptrdiff_t stride,
+                                          int bw, int bh, const uint16_t *above,
+                                          const uint16_t *left, int bd) {
+  int r, c;
+  const uint16_t ytop_left = above[-1];
+  (void)bd;
+
+  for (r = 0; r < bh; r++) {
+    for (c = 0; c < bw; c++)
+      dst[c] = paeth_predictor_single(left[r], above[c], ytop_left);
+    dst += stride;
+  }
+}
+#endif
 //static INLINE void highbd_paeth_predictor(uint16_t *dst, ptrdiff_t stride,
 //    int32_t bw, int32_t bh, const uint16_t *above,
 //    const uint16_t *left, int32_t bd) {
@@ -6445,6 +6486,28 @@ intra_pred_sized(smooth_v, 32, 16)
 intra_pred_sized(smooth_v, 32, 64)
 intra_pred_sized(smooth_v, 64, 16)
 intra_pred_sized(smooth_v, 64, 32)
+#if ENABLE_PAETH
+intra_pred_sized(paeth, 2, 2)
+intra_pred_sized(paeth, 4, 4)
+intra_pred_sized(paeth, 8, 8)
+intra_pred_sized(paeth, 16, 16)
+intra_pred_sized(paeth, 32, 32)
+intra_pred_sized(paeth, 64, 64)
+intra_pred_sized(paeth, 4, 8)
+intra_pred_sized(paeth, 4, 16)
+intra_pred_sized(paeth, 8, 4)
+intra_pred_sized(paeth, 8, 16)
+intra_pred_sized(paeth, 8, 32)
+intra_pred_sized(paeth, 16, 4)
+intra_pred_sized(paeth, 16, 8)
+intra_pred_sized(paeth, 16, 32)
+intra_pred_sized(paeth, 16, 64)
+intra_pred_sized(paeth, 32, 8)
+intra_pred_sized(paeth, 32, 16)
+intra_pred_sized(paeth, 32, 64)
+intra_pred_sized(paeth, 64, 16)
+intra_pred_sized(paeth, 64, 32)
+#endif
 #if INTRA_10BIT_SUPPORT
 #define intra_pred_highbd_sized(type, width, height)                        \
   void aom_highbd_##type##_predictor_##width##x##height##_c(                \
@@ -6656,6 +6719,28 @@ intra_pred_highbd_sized(smooth_v, 32, 64)
 intra_pred_highbd_sized(smooth_v, 64, 16)
 intra_pred_highbd_sized(smooth_v, 64, 32)
 
+#if ENABLE_PAETH
+intra_pred_highbd_sized(paeth, 2, 2)
+intra_pred_highbd_sized(paeth, 4, 4)
+intra_pred_highbd_sized(paeth, 8, 8)
+intra_pred_highbd_sized(paeth, 16, 16)
+intra_pred_highbd_sized(paeth, 32, 32)
+intra_pred_highbd_sized(paeth, 64, 64)
+intra_pred_highbd_sized(paeth, 4, 8)
+intra_pred_highbd_sized(paeth, 4, 16)
+intra_pred_highbd_sized(paeth, 8, 4)
+intra_pred_highbd_sized(paeth, 8, 16)
+intra_pred_highbd_sized(paeth, 8, 32)
+intra_pred_highbd_sized(paeth, 16, 4)
+intra_pred_highbd_sized(paeth, 16, 8)
+intra_pred_highbd_sized(paeth, 16, 32)
+intra_pred_highbd_sized(paeth, 16, 64)
+intra_pred_highbd_sized(paeth, 32, 8)
+intra_pred_highbd_sized(paeth, 32, 16)
+intra_pred_highbd_sized(paeth, 32, 64)
+intra_pred_highbd_sized(paeth, 64, 16)
+intra_pred_highbd_sized(paeth, 64, 32)
+#endif
 
 #endif
 
@@ -7388,6 +7473,32 @@ void init_intra_dc_predictors_c_internal(void)
     pred[SMOOTH_H_PRED][TX_32X32] = aom_smooth_h_predictor_32x32_c;
     pred[SMOOTH_H_PRED][TX_64X64] = aom_smooth_h_predictor_64x64_c;
 #endif
+#if ENABLE_PAETH
+    pred[PAETH_PRED][TX_4X4] = aom_paeth_predictor_4x4;
+    pred[PAETH_PRED][TX_8X8] = aom_paeth_predictor_8x8;
+    pred[PAETH_PRED][TX_16X16] = aom_paeth_predictor_16x16;
+    pred[PAETH_PRED][TX_32X32] = aom_paeth_predictor_32x32;
+    pred[PAETH_PRED][TX_64X64] = aom_paeth_predictor_64x64;
+
+    pred[PAETH_PRED][TX_4X8] = aom_paeth_predictor_4x8;
+    pred[PAETH_PRED][TX_4X16] = aom_paeth_predictor_4x16;
+
+    pred[PAETH_PRED][TX_8X4] = aom_paeth_predictor_8x4;
+    pred[PAETH_PRED][TX_8X16] = aom_paeth_predictor_8x16;
+    pred[PAETH_PRED][TX_8X32] = aom_paeth_predictor_8x32;
+
+    pred[PAETH_PRED][TX_16X4] = aom_paeth_predictor_16x4;
+    pred[PAETH_PRED][TX_16X8] = aom_paeth_predictor_16x8;
+    pred[PAETH_PRED][TX_16X32] = aom_paeth_predictor_16x32;
+    pred[PAETH_PRED][TX_16X64] = aom_paeth_predictor_16x64;
+
+    pred[PAETH_PRED][TX_32X8] = aom_paeth_predictor_32x8;
+    pred[PAETH_PRED][TX_32X16] = aom_paeth_predictor_32x16;
+    pred[PAETH_PRED][TX_32X64] = aom_paeth_predictor_32x64;
+
+    pred[PAETH_PRED][TX_64X16] = aom_paeth_predictor_64x16;
+    pred[PAETH_PRED][TX_64X32] = aom_paeth_predictor_64x32;
+#endif
 #if INTRA_ASM
     dc_pred[0][0][TX_4X4] = aom_dc_128_predictor_4x4;
     dc_pred[0][0][TX_8X8] = aom_dc_128_predictor_8x8;
@@ -7647,6 +7758,32 @@ void init_intra_dc_predictors_c_internal(void)
     pred_high[SMOOTH_H_PRED][TX_64X16] = aom_highbd_smooth_h_predictor_64x16;
     pred_high[SMOOTH_H_PRED][TX_64X32] = aom_highbd_smooth_h_predictor_64x32;
 
+#if ENABLE_PAETH
+    pred_high[PAETH_PRED][TX_4X4] = aom_highbd_paeth_predictor_4x4;
+    pred_high[PAETH_PRED][TX_8X8] = aom_highbd_paeth_predictor_8x8;
+    pred_high[PAETH_PRED][TX_16X16] = aom_highbd_paeth_predictor_16x16;
+    pred_high[PAETH_PRED][TX_32X32] = aom_highbd_paeth_predictor_32x32;
+    pred_high[PAETH_PRED][TX_64X64] = aom_highbd_paeth_predictor_64x64;
+
+    pred_high[PAETH_PRED][TX_4X8] = aom_highbd_paeth_predictor_4x8;
+    pred_high[PAETH_PRED][TX_4X16] = aom_highbd_paeth_predictor_4x16;
+
+    pred_high[PAETH_PRED][TX_8X4] = aom_highbd_paeth_predictor_8x4;
+    pred_high[PAETH_PRED][TX_8X16] = aom_highbd_paeth_predictor_8x16;
+    pred_high[PAETH_PRED][TX_8X32] = aom_highbd_paeth_predictor_8x32;
+
+    pred_high[PAETH_PRED][TX_16X4] = aom_highbd_paeth_predictor_16x4;
+    pred_high[PAETH_PRED][TX_16X8] = aom_highbd_paeth_predictor_16x8;
+    pred_high[PAETH_PRED][TX_16X32] = aom_highbd_paeth_predictor_16x32;
+    pred_high[PAETH_PRED][TX_16X64] = aom_highbd_paeth_predictor_16x64;
+
+    pred_high[PAETH_PRED][TX_32X8] = aom_highbd_paeth_predictor_32x8;
+    pred_high[PAETH_PRED][TX_32X16] = aom_highbd_paeth_predictor_32x16;
+    pred_high[PAETH_PRED][TX_32X64] = aom_highbd_paeth_predictor_32x64;
+
+    pred_high[PAETH_PRED][TX_64X16] = aom_highbd_paeth_predictor_64x16;
+    pred_high[PAETH_PRED][TX_64X32] = aom_highbd_paeth_predictor_64x32;
+#endif
     dc_pred_high[0][0][TX_4X4] = aom_highbd_dc_128_predictor_4x4;
     dc_pred_high[0][0][TX_8X8] = aom_highbd_dc_128_predictor_8x8;
     dc_pred_high[0][0][TX_16X16] = aom_highbd_dc_128_predictor_16x16;

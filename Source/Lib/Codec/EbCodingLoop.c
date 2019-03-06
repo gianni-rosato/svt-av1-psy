@@ -29,9 +29,7 @@
 #include "EbModeDecisionConfiguration.h"
 #include "EbIntraPrediction.h"
 #include "aom_dsp_rtcd.h"
-#if TX_SEARCH_LEVELS
 #include "EbCodingLoop.h"
-#endif
 
 static const uint32_t me2Nx2NOffset[4] = { 0, 1, 5, 21 };
 extern void av1_predict_intra_block(
@@ -639,7 +637,7 @@ static void Av1EncodeLoop(
             residual16bit->stride_y,
             context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->txb_itr]);
-#if TX_SEARCH_LEVELS
+        
         uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_ENC_DEC ? get_skip_tx_search_flag(
             context_ptr->blk_geom->sq_size,
             MAX_MODE_COST,
@@ -647,15 +645,7 @@ static void Av1EncodeLoop(
             1) : 1;
 
         if (!tx_search_skip_fag) {
-#else
 
-#if ENCDEC_TX_SEARCH
-#if ENCODER_MODE_CLEANUP
-        if (picture_control_set_ptr->enc_mode > ENC_M1) {
-#endif
-            if (context_ptr->blk_geom->sq_size < 128) //no tx search for 128x128 for now
-#endif
-#endif
                 encode_pass_tx_search(
                     picture_control_set_ptr,
                     context_ptr,
@@ -674,9 +664,7 @@ static void Av1EncodeLoop(
                     eob,
                     candidate_plane);
 
-#if ENCODER_MODE_CLEANUP
         }
-#endif
 
         av1_estimate_transform(
             ((int16_t*)residual16bit->buffer_y) + scratchLumaOffset,
@@ -1130,7 +1118,6 @@ static void Av1EncodeLoop16bit(
                 context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[context_ptr->txb_itr]);
 
-#if TX_SEARCH_LEVELS
             uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_ENC_DEC ? get_skip_tx_search_flag(
                 context_ptr->blk_geom->sq_size,
                 MAX_MODE_COST,
@@ -1138,14 +1125,7 @@ static void Av1EncodeLoop16bit(
                 1) : 1;
 
             if (!tx_search_skip_fag) {
-#else
-#if ENCDEC_TX_SEARCH
-#if ENCODER_MODE_CLEANUP
-            if (picture_control_set_ptr->enc_mode > ENC_M1) {
-#endif
-                if (context_ptr->blk_geom->sq_size < 128) //no tx search for 128x128 for now
-#endif
-#endif
+
                     encode_pass_tx_search_hbd(
                         picture_control_set_ptr,
                         context_ptr,
@@ -1163,9 +1143,7 @@ static void Av1EncodeLoop16bit(
                         dZoffset,
                         eob,
                         candidate_plane);
-#if ENCODER_MODE_CLEANUP
             }
-#endif
 
 
             av1_estimate_transform(
@@ -1275,7 +1253,6 @@ static void Av1EncodeLoop16bit(
 #if CHROMA_BLIND
                     context_ptr->md_context->pred_buf_q3,
 #else
-
                     context_ptr->pred_buf_q3,
 #endif
                     context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
@@ -2547,23 +2524,13 @@ EbErrorType EncQpmDeriveDeltaQPForEachLeafLcu(
     uint8_t                           max_qp_allowed = (uint8_t)sequence_control_set_ptr->static_config.max_qp_allowed;
     uint8_t                           cu_qp;
 
-#if ENCODER_MODE_CLEANUP
     EbBool  use16x16Stat = EB_FALSE;
 
-#else
-    EbBool  use16x16Stat = (sequence_control_set_ptr->input_resolution == INPUT_SIZE_4K_RANGE &&
-        picture_control_set_ptr->enc_mode >= ENC_M3 &&
-        picture_control_set_ptr->slice_type != I_SLICE && cu_size == 8);
-#endif
     uint32_t usedDepth = cu_depth;
     if (use16x16Stat)
         usedDepth = 2;
 
-
-
     uint32_t cuIndexInRaterScan = MD_SCAN_TO_RASTER_SCAN[cu_index];
-
-
 
     EbBool                         acEnergyBasedAntiContouring = picture_control_set_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE;
     uint8_t                           lowerQPClass;
@@ -3269,13 +3236,7 @@ EB_EXTERN void AV1EncodePass(
 
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE) {
 
-#if ENCDEC_TX_SEARCH
-#if ENCODER_MODE_CLEANUP
-                    if (picture_control_set_ptr->enc_mode > ENC_M1) 
-#endif
-                        context_ptr->is_inter = 0;
-#endif
-
+                    context_ptr->is_inter = 0;
                     context_ptr->tot_intra_coded_area += blk_geom->bwidth* blk_geom->bheight;
                     if (picture_control_set_ptr->slice_type != I_SLICE) {
                         context_ptr->intra_coded_area_sb[tbAddr] += blk_geom->bwidth* blk_geom->bheight;
@@ -3426,14 +3387,6 @@ EB_EXTERN void AV1EncodePass(
 
                                     // Hsan: if CHROMA_MODE_1, then CFL will be evaluated @ EP as no CHROMA @ MD 
                                     // If that's the case then you should ensure than the 1st chroma prediction uses UV_DC_PRED (that's the default configuration for CHROMA_MODE_1 if CFL applicable (set @ fast loop candidates injection) then MD assumes chroma mode always UV_DC_PRED)
-#if 0
-                                    if (plane && cu_ptr->prediction_mode_flag == INTRA_MODE && context_ptr->evaluate_cfl_ep) {
-                                        if (mode != UV_DC_PRED) {
-                                            assert(0);
-                                        }
-                                    }
-#endif
-
                                     av1_predict_intra_block(
 #if TILES
                                         &sb_ptr->tile_info,

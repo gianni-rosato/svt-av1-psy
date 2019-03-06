@@ -1432,16 +1432,11 @@ static void foreach_rest_unit_in_tile_seg(const AV1PixelRect *tile_rect,
     uint32_t y_unit_start_idx = SEGMENT_START_IDX(y_seg_idx, picture_height_in_units, picture_control_set_ptr->rest_segments_row_count);
     uint32_t y_unit_end_idx   = SEGMENT_END_IDX  (y_seg_idx, picture_height_in_units, picture_control_set_ptr->rest_segments_row_count);
 
-#if 0
-    int32_t y0 = 0, i = 0;
-    while (y0 < tile_h) {
-#else
     int32_t y0 = y_unit_start_idx * unit_size;
     int32_t yend = ((int32_t)y_unit_end_idx == (int32_t)picture_height_in_units) ? tile_h : (int32_t)y_unit_end_idx * (int32_t)unit_size; //MIN(y_unit_end_idx * unit_size , tile_h);
     int32_t i = y_unit_start_idx;
 
     while (y0 < yend) {
-#endif
         int32_t remaining_h = tile_h - y0;
         int32_t h = (remaining_h < ext_size) ? remaining_h : unit_size; //the area at the pic boundary should have size>= half unit_size to be an independent unit.
                                                                         //if not, it will be added to the last complete unit, increasing its size to up to  3/2 unit_size.
@@ -1455,16 +1450,11 @@ static void foreach_rest_unit_in_tile_seg(const AV1PixelRect *tile_rect,
         limits.v_start = AOMMAX(tile_rect->top, limits.v_start - voffset);
         if (limits.v_end < tile_rect->bottom) limits.v_end -= voffset;
 
-#if 0
-        int32_t x0 = 0, j = 0;
-        while (x0 < tile_w) {
-#else
         int32_t x0 = x_unit_start_idx * unit_size;
         int32_t xend = ((int32_t)x_unit_end_idx == (int32_t)picture_width_in_units) ? tile_w : (int32_t)x_unit_end_idx * (int32_t)unit_size; //MIN(x_unit_end_idx * unit_size,tile_w);
         int32_t j = x_unit_start_idx;
 
         while (x0 < xend) {
-#endif
             int32_t remaining_w = tile_w - x0;
             int32_t w = (remaining_w < ext_size) ? remaining_w : unit_size;
 

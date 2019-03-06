@@ -1226,9 +1226,10 @@ static int adaptive_qindex_calc(
     SequenceControlSet_t        *sequence_control_set_ptr = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr;
     const Av1Common  *const cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
 
-    const int cq_level = qindex;
-    int active_best_quality;
+    const int cq_level       = qindex;
+    int active_best_quality  = 0;
     int active_worst_quality = qindex;
+    rc->arf_q                = 0;
     int q;
     int is_src_frame_alt_ref, refresh_golden_frame, refresh_alt_ref_frame, new_bwdref_update_rule, is_intrl_arf_boost, rf_level, update_type, this_height;
 

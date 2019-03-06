@@ -388,7 +388,23 @@ void* PacketizationKernel(void *input_ptr)
                 }
             }
 #endif
-
+#if ADP_STATS_PER_LAYER
+            if (queueEntryPtr->picture_number == sequence_control_set_ptr->static_config.framesToBeEncoded - 1) {         
+                uint8_t layerIndex;
+                SVT_LOG("\nsq_search_count\tsq_non4_search_count\tmdc_count\tpred_count\tpred1_nfl_count");
+                for (layerIndex = 0; layerIndex < 5; layerIndex++) {
+                    SVT_LOG("\n/***************************Layer %d Stats ********************************/\n", layerIndex);
+                    if (sequence_control_set_ptr->total_count[layerIndex]) {
+                        SVT_LOG("%d\t", ((sequence_control_set_ptr->sq_search_count[layerIndex] * 100) / sequence_control_set_ptr->total_count[layerIndex]));
+                        SVT_LOG("%d\t", ((sequence_control_set_ptr->sq_non4_search_count[layerIndex] * 100) / sequence_control_set_ptr->total_count[layerIndex]));
+                        SVT_LOG("%d\t", ((sequence_control_set_ptr->mdc_count[layerIndex] * 100) / sequence_control_set_ptr->total_count[layerIndex]));
+                        SVT_LOG("%d\t", ((sequence_control_set_ptr->pred_count[layerIndex] * 100) / sequence_control_set_ptr->total_count[layerIndex]));
+                        SVT_LOG("%d\t", ((sequence_control_set_ptr->pred1_nfl_count[layerIndex] * 100) / sequence_control_set_ptr->total_count[layerIndex]));
+                    }
+                }
+                SVT_LOG("\n");
+            }
+#endif
             // Calculate frame latency in milliseconds
             double latency = 0.0;
             uint64_t finishTimeSeconds = 0;
