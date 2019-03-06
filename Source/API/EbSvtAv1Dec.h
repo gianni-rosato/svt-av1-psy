@@ -14,7 +14,8 @@ extern "C" {
 #include "EbSvtAv1.h"
 #include "EbSvtAv1ExtFrameBuf.h"
 
-typedef struct EbAV1OperatingPoint{
+typedef struct EbAV1OperatingPoint
+{
     uint32_t    op_idc;
     uint32_t    seq_level_idx;
     uint32_t    seq_tier;
@@ -23,7 +24,8 @@ typedef struct EbAV1OperatingPoint{
     uint32_t    initial_display_delay;
 } EbAv1OperatingPoint;
 
-typedef struct EbAV1StreamInfo{
+typedef struct EbAV1StreamInfo
+{
     /*seq_profile*/
     EbAv1SeqProfile seq_profile;
 
@@ -36,18 +38,20 @@ typedef struct EbAV1StreamInfo{
     EbAv1OperatingPoint op_points[EB_MAX_NUM_OPERATING_POINTS];
 
     /* Display Timing Info*/
-    uint32_t    timing_info_present;  // check the names
+    EbBool      timing_info_present;  // check the names
     uint32_t    num_units_in_display_tick;
     uint32_t    time_scale;
     uint32_t    equal_picture_interval;
     uint32_t    num_ticks_per_picture;
 
     /* Color format configuration */
-    EbBitDepth  bit_depth;
-    int32_t     subsampling_x;
-    int32_t     subsampling_y;
-    int32_t     monochrome;
+    EbBitDepth      bit_depth;
+    EbColorFormat   color_format;
 
+    /* Color description */
+    
+    EbBool          color_description_present_flag; 
+    
     aom_color_primaries_t color_primaries;
     aom_transfer_characteristics_t transfer_characteristics;
     aom_matrix_coefficients_t matrix_coefficients;
@@ -56,24 +60,26 @@ typedef struct EbAV1StreamInfo{
     aom_color_range_t color_range;
 
     /* Film Grain Synthesis Present */
-    uint32_t    film_grain_params_present;
+    EbBool    film_grain_params_present;
 
     /* The stream is in annex_b format */
-    uint32_t    is_annex_b;
+    EbBool    is_annex_b;
 
 } EbAV1StreamInfo;
 
-typedef struct EbAV1FrameInfo{
+typedef struct EbAV1FrameInfo
+{
 
     /* Layer to which the current frame belong */
     uint32_t    layer;
 
     /* Frame presentation time */
-    uint32_t    frame_presentation_time;
+    uint64_t    frame_presentation_time;
 
 } EbAV1FrameInfo;
 
-typedef struct EbSvtAv1DecConfiguration {
+typedef struct EbSvtAv1DecConfiguration 
+{
 
     /* Bitstream operating point to decode. 
      * 
@@ -91,7 +97,7 @@ typedef struct EbSvtAv1DecConfiguration {
     /* Skip film grain synthesis if it is present in the bitstream. Can be used for debugging purpose.  
      * 
      * Default is 0 */
-    uint32_t                skip_film_grain; 
+    EbBool                  skip_film_grain; 
 
     /* Skip N output frames in the display order.
      *
@@ -111,23 +117,22 @@ typedef struct EbSvtAv1DecConfiguration {
     /* Offline packing of the 2bits: requires two bits packed input.
      *
      * Default is 0. */
-    uint32_t                 compressed_ten_bit_format;
+    uint32_t                 compressed_ten_bit_format;  //remove?
 
     /* Outputs 8-bit pictures even if the bitstream has higher bit depth.
      * Ignored if the bitstream is 8-bit
      *
      * Default is 0. */
 
-    uint32_t                eight_bit_output;
+    EbBool                  eight_bit_output;
 
     /* Picture parameters */
     uint32_t                max_picture_width;
     uint32_t                max_picture_height;
 
-    EbBitDepth              bit_depth;
+    EbBitDepth              max_bit_depth;
 
-    int32_t                 subsampling_x;
-    int32_t                 subsampling_y;
+    EbColorFormat           max_color_format;
 
     /* Assembly instruction set used by encoder.
     *

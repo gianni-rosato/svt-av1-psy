@@ -95,6 +95,21 @@ typedef enum aom_color_range {
     AOM_CR_FULL_RANGE = 1    /**< YUV/RGB [0..255] */
 } aom_color_range_t;       /**< alias for enum aom_color_range */
 
+/* AV1 bit depth */
+typedef enum EbBitDepth {
+    EB_EIGHT_BIT = 8,
+    EB_TEN_BIT  = 10,
+    EB_TWELVE_BIT = 12    
+} EbBitDepth;
+
+/* AV1 Chroma Format */
+typedef enum EbColorFormat {
+    EB_YUV400,
+    EB_YUV420,
+    EB_YUV422,
+    EB_YUV444
+} EbColorFormat;
+
 /*!\brief List of chroma sample positions */
 typedef enum aom_chroma_sample_position {
     AOM_CSP_UNKNOWN = 0,          /**< Unknown */

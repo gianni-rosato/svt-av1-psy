@@ -33,12 +33,16 @@ extern "C" {
 * Defines
 ********************************/
 #define EB_PICTURE           uint32_t
-#define EB_B_PICTURE         0
-#define EB_P_PICTURE         1
-#define EB_I_PICTURE         2
-#define EB_IDR_PICTURE       3
-#define EB_NON_REF_PICTURE   4
-#define EB_INVALID_PICTURE   0xFF
+
+typedef enum EbPictureType
+{
+    EB_B_PICTURE       = 0,
+    EB_P_PICTURE       = 1,
+    EB_I_PICTURE       = 2,
+    EB_IDR_PICTURE     = 3,
+    EB_NON_REF_PICTURE = 4,
+    EB_INVALID_PICTURE = 0xFF
+} EbPictureType;
 
 /** The EbBool type is intended to be used to represent a true or a false
 value when passing parameters to and from the eBrisk API.  The
@@ -106,15 +110,9 @@ typedef enum EbErrorType
     EB_ErrorMax = 0x7FFFFFFF
 } EbErrorType;
 
-/* AV1 bit depth */
-typedef enum EbBitDepth{
-    EB_EIGHT_BIT = 8,
-    EB_TEN_BIT  = 10,
-    EB_TWELVE_BIT = 12    
-} EbBitDepth;
-
 /* AV1 bistream profile (seq_profile syntax element) */
-typedef enum EbAv1SeqProfile{
+typedef enum EbAv1SeqProfile 
+{
     MAIN_PROFILE = 0,
     HIGH_PROFILE  = 1,
     PROFESSIONAL_PROFILE = 2
@@ -125,7 +123,7 @@ typedef enum EbAv1SeqProfile{
 //   for the three input picture planes.  However, for 10-bit unpacked planes the
 //   lumaExt, cbExt, and crExt fields should be used hold the extra 2-bits of
 //   precision while the luma, cb, and cr fields hold the 8-bit data.
-typedef struct EbSvtIOFormat        //former EbSvtEncInput
+typedef struct EbSvtIOFormat            //former EbSvtEncInput
 {
     // Hosts 8 bit or 16 bit input YUV420p / YUV420p10le
     uint8_t *luma;
