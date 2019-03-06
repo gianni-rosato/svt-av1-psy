@@ -311,34 +311,7 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 0. */
     uint32_t                 high_dynamic_range_input;
-    /* Flag to simplify the detection of boundary between access units.
-     *
-     * Default is 0. */
-    uint32_t                 access_unit_delimiter;
-    /* Flag to enable buffering period supplemental enhancement information.
-     *
-     * Default is 0. */
-    uint32_t                 buffering_period_sei;
-    /* Flag to enable picture timing supplemental enhancement information.
-     *
-     * Default is 0. */
-    uint32_t                 picture_timing_sei;
-    /* Flag to enable registered user data supplemental enhancement information.
-     *
-     * Default is 0. */
-    uint32_t                 registered_user_data_sei_flag;
-    /* Flag to enable unregistered user data supplemental enhancement information.
-     *
-     * Default is 0. */
-    uint32_t                 unregistered_user_data_sei_flag;
-    /* Flag to enable recovery point supplemental enhancement information.
-     *
-     * Default is 0. */
-    uint32_t                 recovery_point_sei_flag;
-    /* Flag to insert temporal ID in Network Abstraction Layer units.
-     *
-     * Default is 1. */
-    uint32_t                 enable_temporal_id;
+
     /* Defined set of coding tools to create bitstream.
      *
      * 1 = Main, allows bit depth of 8.

@@ -136,13 +136,6 @@ typedef struct EbConfig_s
     uint8_t                     improve_sharpness;
     uint32_t                    video_usability_info;
     uint32_t                    high_dynamic_range_input;
-    uint32_t                    access_unit_delimiter;
-    uint32_t                    buffering_period_sei;
-    uint32_t                    picture_timing_sei;
-    uint8_t                     registered_user_data_sei_flag;
-    uint8_t                     unregistered_user_data_sei_flag;
-    uint8_t                     recovery_point_sei_flag;
-    uint32_t                    enable_temporal_id;
 
     /****************************************
      * Annex A Parameters
@@ -154,7 +147,6 @@ typedef struct EbConfig_s
     /****************************************
      * On-the-fly Testing
      ****************************************/
-    uint32_t                    testUserData;
     uint8_t                     eosFlag;
 
     /****************************************

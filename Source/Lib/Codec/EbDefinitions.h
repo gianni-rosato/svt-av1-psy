@@ -2135,10 +2135,6 @@ typedef void(*EB_DTOR)(
 ***************************************/
 // Reserved types for lib's internal use. Must be less than EB_EXT_TYPE_BASE
 #define       EB_TYPE_PIC_TIMING_SEI         0
-#define       EB_TYPE_BUFFERING_PERIOD_SEI   1
-#define       EB_TYPE_RECOVERY_POINT_SEI     2
-#define       EB_TYPE_UNREG_USER_DATA_SEI    3
-#define       EB_TYPE_REG_USER_DATA_SEI      4
 #define       EB_TYPE_PIC_STRUCT             5             // It is a requirement (for the application) that if pictureStruct is present for 1 picture it shall be present for every picture
 #define       EB_TYPE_INPUT_PICTURE_DEF      6
 

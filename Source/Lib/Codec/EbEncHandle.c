@@ -2328,13 +2328,6 @@ void CopyApiFromApp(
     // Thresholds
     sequence_control_set_ptr->static_config.improve_sharpness = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->improve_sharpness;
     sequence_control_set_ptr->static_config.high_dynamic_range_input = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->high_dynamic_range_input;
-    sequence_control_set_ptr->static_config.access_unit_delimiter = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->access_unit_delimiter;
-    sequence_control_set_ptr->static_config.buffering_period_sei = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->buffering_period_sei;
-    sequence_control_set_ptr->static_config.picture_timing_sei = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->picture_timing_sei;
-    sequence_control_set_ptr->static_config.registered_user_data_sei_flag = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->registered_user_data_sei_flag;
-    sequence_control_set_ptr->static_config.unregistered_user_data_sei_flag = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->unregistered_user_data_sei_flag;
-    sequence_control_set_ptr->static_config.recovery_point_sei_flag = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->recovery_point_sei_flag;
-    sequence_control_set_ptr->static_config.enable_temporal_id = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_temporal_id;
 
     // Annex A parameters
     sequence_control_set_ptr->static_config.profile = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->profile;
@@ -2656,40 +2649,6 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error instance %u : Invalid HighDynamicRangeInput. HighDynamicRangeInput must be [0 - 1]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->access_unit_delimiter > 1) {
-        SVT_LOG("Error instance %u : Invalid AccessUnitDelimiter. AccessUnitDelimiter must be [0 - 1]\n", channelNumber + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->buffering_period_sei > 1) {
-        SVT_LOG("Error instance %u : Invalid BufferingPeriod. BufferingPeriod must be [0 - 1]\n", channelNumber + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->picture_timing_sei > 1) {
-        SVT_LOG("Error instance %u : Invalid PictureTiming. PictureTiming must be [0 - 1]\n", channelNumber + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->registered_user_data_sei_flag > 1) {
-        SVT_LOG("Error instance %u : Invalid RegisteredUserData. RegisteredUserData must be [0 - 1]\n", channelNumber + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->unregistered_user_data_sei_flag > 1) {
-        SVT_LOG("Error instance %u : Invalid UnregisteredUserData. UnregisteredUserData must be [0 - 1]\n", channelNumber + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->recovery_point_sei_flag > 1) {
-        SVT_LOG("Error instance %u : Invalid RecoveryPoint. RecoveryPoint must be [0 - 1]\n", channelNumber + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->enable_temporal_id > 1) {
-        SVT_LOG("Error instance %u : Invalid TemporalId. TemporalId must be [0 - 1]\n", channelNumber + 1);
-        return_error = EB_ErrorBadParameter;
-    }
 
     if ((config->encoder_bit_depth != 8) &&
         (config->encoder_bit_depth != 10)
@@ -2808,13 +2767,6 @@ EbErrorType eb_svt_enc_init_parameter(
     //config_ptr->codeEosNal = 0;
 
     config_ptr->high_dynamic_range_input = 0;
-    config_ptr->access_unit_delimiter = 0;
-    config_ptr->buffering_period_sei = 0;
-    config_ptr->picture_timing_sei = 0;
-    config_ptr->registered_user_data_sei_flag = EB_FALSE;
-    config_ptr->unregistered_user_data_sei_flag = EB_FALSE;
-    config_ptr->recovery_point_sei_flag = EB_FALSE;
-    config_ptr->enable_temporal_id = 1;
 
     // Annex A parameters
     config_ptr->profile = 0;

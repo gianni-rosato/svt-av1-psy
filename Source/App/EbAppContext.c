@@ -205,13 +205,6 @@ EbErrorType CopyConfigurationParameters(
     callbackData->ebEncParameters.active_channel_count = config->active_channel_count;
     callbackData->ebEncParameters.improve_sharpness = (uint8_t)config->improve_sharpness;
     callbackData->ebEncParameters.high_dynamic_range_input = config->high_dynamic_range_input;
-    callbackData->ebEncParameters.access_unit_delimiter = config->access_unit_delimiter;
-    callbackData->ebEncParameters.buffering_period_sei = config->buffering_period_sei;
-    callbackData->ebEncParameters.picture_timing_sei = config->picture_timing_sei;
-    callbackData->ebEncParameters.registered_user_data_sei_flag = config->registered_user_data_sei_flag;
-    callbackData->ebEncParameters.unregistered_user_data_sei_flag = config->unregistered_user_data_sei_flag;
-    callbackData->ebEncParameters.recovery_point_sei_flag = config->recovery_point_sei_flag;
-    callbackData->ebEncParameters.enable_temporal_id = config->enable_temporal_id;
     callbackData->ebEncParameters.encoder_bit_depth = config->encoderBitDepth;
     callbackData->ebEncParameters.compressed_ten_bit_format = config->compressedTenBitFormat;
     callbackData->ebEncParameters.profile = config->profile;

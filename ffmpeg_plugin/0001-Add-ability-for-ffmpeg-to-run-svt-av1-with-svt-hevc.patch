@@ -255,7 +255,6 @@ index 0000000..4305285
 +    param->scene_change_detection   = svt_enc->scd;
 +    param->base_layer_switch_mode    = svt_enc->base_layer_switch_mode;
 +    param->qp                     = svt_enc->qp;
-+    param->access_unit_delimiter    = svt_enc->aud;
 +
 +    param->target_bit_rate          = avctx->bit_rate;
 +    if (avctx->gop_size > 0)
