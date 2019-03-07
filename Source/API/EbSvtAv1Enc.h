@@ -140,7 +140,7 @@ typedef struct EbSvtAv1EncConfiguration
      * 0 = encodes the full clip.
      *
      * Default is 0. */
-    uint64_t                 framesToBeEncoded;
+    uint64_t                 frames_to_be_encoded;
     uint32_t                 ten_bit_format;
     /* The visual quality knob that allows the use of adaptive quantization
      * within the picture and enables visual quality algorithms that improve the

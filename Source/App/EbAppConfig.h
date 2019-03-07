@@ -236,7 +236,7 @@ typedef struct EbConfig_s
     uint32_t                 inputPaddedWidth;
     uint32_t                 inputPaddedHeight;
 
-    int64_t                  framesToBeEncoded;
+    int64_t                  frames_to_be_encoded;
     int32_t                  framesEncoded;
     int32_t                  bufferedInput;
     uint8_t                **sequenceBuffer;

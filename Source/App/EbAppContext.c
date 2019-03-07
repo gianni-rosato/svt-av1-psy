@@ -180,7 +180,7 @@ EbErrorType CopyConfigurationParameters(
 #endif
     callbackData->ebEncParameters.scene_change_detection = config->scene_change_detection;
     callbackData->ebEncParameters.look_ahead_distance = config->look_ahead_distance;
-    callbackData->ebEncParameters.framesToBeEncoded = config->framesToBeEncoded;
+    callbackData->ebEncParameters.frames_to_be_encoded = config->frames_to_be_encoded;
     callbackData->ebEncParameters.rate_control_mode = config->rateControlMode;
     callbackData->ebEncParameters.target_bit_rate = config->targetBitRate;
     callbackData->ebEncParameters.max_qp_allowed = config->max_qp_allowed;

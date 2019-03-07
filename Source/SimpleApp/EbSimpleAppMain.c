@@ -62,7 +62,7 @@ static void EbConfigCtor(EbConfig_t *config_ptr)
     config_ptr->compressedTenBitFormat = 0;
     config_ptr->sourceWidth = 0;
     config_ptr->sourceHeight = 0;
-    config_ptr->framesToBeEncoded = 0;
+    config_ptr->frames_to_be_encoded = 0;
     config_ptr->channel_id = 0;
     config_ptr->stopEncoder = 0;
 

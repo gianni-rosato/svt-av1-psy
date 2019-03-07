@@ -2305,7 +2305,7 @@ void CopyApiFromApp(
     sequence_control_set_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->scene_change_detection;
     sequence_control_set_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->rate_control_mode;
     sequence_control_set_ptr->static_config.look_ahead_distance = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->look_ahead_distance;
-    sequence_control_set_ptr->static_config.framesToBeEncoded = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->framesToBeEncoded;
+    sequence_control_set_ptr->static_config.frames_to_be_encoded = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->frames_to_be_encoded;
     sequence_control_set_ptr->static_config.frame_rate = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->frame_rate;
     sequence_control_set_ptr->static_config.frame_rate_denominator = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->frame_rate_denominator;
     sequence_control_set_ptr->static_config.frame_rate_numerator = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->frame_rate_numerator;
@@ -2708,7 +2708,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->compressed_ten_bit_format = 0;
     config_ptr->source_width = 0;
     config_ptr->source_height = 0;
-    config_ptr->framesToBeEncoded = 0; 
+    config_ptr->frames_to_be_encoded = 0; 
     config_ptr->stat_report = 1;
 #if TILES
     config_ptr->tile_rows = 0;

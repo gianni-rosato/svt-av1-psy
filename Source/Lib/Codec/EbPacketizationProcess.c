@@ -389,7 +389,7 @@ void* PacketizationKernel(void *input_ptr)
             }
 #endif
 #if ADP_STATS_PER_LAYER
-            if (queueEntryPtr->picture_number == sequence_control_set_ptr->static_config.framesToBeEncoded - 1) {         
+            if (queueEntryPtr->picture_number == sequence_control_set_ptr->static_config.frames_to_be_encoded - 1) {         
                 uint8_t layerIndex;
                 SVT_LOG("\nsq_search_count\tsq_non4_search_count\tmdc_count\tpred_count\tpred1_nfl_count");
                 for (layerIndex = 0; layerIndex < 5; layerIndex++) {

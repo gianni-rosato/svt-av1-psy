@@ -1188,7 +1188,7 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
 
     int64_t                  inputPaddedWidth           = config->inputPaddedWidth;
     int64_t                  inputPaddedHeight          = config->inputPaddedHeight;
-    int64_t                  framesToBeEncoded          = config->framesToBeEncoded;
+    int64_t                  frames_to_be_encoded          = config->frames_to_be_encoded;
     uint64_t                 frameSize                  = (uint64_t)((inputPaddedWidth*inputPaddedHeight * 3) / 2 + (inputPaddedWidth / 4 * inputPaddedHeight * 3) / 2);
     int64_t                  totalBytesToProcessCount;
     int64_t                  remainingByteCount;
@@ -1198,9 +1198,9 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
         EbInjector(config->processedFrameCount, config->injector_frame_rate);
     }
 
-    totalBytesToProcessCount = (framesToBeEncoded < 0) ? -1 : (config->encoderBitDepth == 10 && config->compressedTenBitFormat == 1) ?
-        framesToBeEncoded * (int64_t)frameSize :
-        framesToBeEncoded * SIZE_OF_ONE_FRAME_IN_BYTES(inputPaddedWidth, inputPaddedHeight, is16bit);
+    totalBytesToProcessCount = (frames_to_be_encoded < 0) ? -1 : (config->encoderBitDepth == 10 && config->compressedTenBitFormat == 1) ?
+            frames_to_be_encoded * (int64_t)frameSize :
+            frames_to_be_encoded * SIZE_OF_ONE_FRAME_IN_BYTES(inputPaddedWidth, inputPaddedHeight, is16bit);
 
 
     remainingByteCount       = (totalBytesToProcessCount < 0) ?   -1 :  totalBytesToProcessCount - (int64_t)config->processedByteCount;
@@ -1236,7 +1236,7 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
         // Send the picture
         eb_svt_enc_send_picture(componentHandle, headerPtr);
 
-        if ((config->processedFrameCount == (uint64_t)config->framesToBeEncoded) || config->stopEncoder) {
+        if ((config->processedFrameCount == (uint64_t)config->frames_to_be_encoded) || config->stopEncoder) {
 
             headerPtr->n_alloc_len    = 0;
             headerPtr->n_filled_len   = 0;

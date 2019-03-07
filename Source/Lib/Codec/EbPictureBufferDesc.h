@@ -136,12 +136,12 @@ extern "C" {
         int32_t subsampling_x;
         int32_t subsampling_y;
         uint32_t bit_depth;
-        aom_color_primaries_t color_primaries;
-        aom_transfer_characteristics_t transfer_characteristics;
-        aom_matrix_coefficients_t matrix_coefficients;
+        EbColorPrimaries color_primaries;
+        EbTransferCharacteristics transfer_characteristics;
+        EbMatrixCoefficients matrix_coefficients;
         int32_t monochrome;
-        aom_chroma_sample_position_t chroma_sample_position;
-        aom_color_range_t color_range;
+        EbChromaSamplePosition chroma_sample_position;
+        EbColorRange color_range;
         int32_t render_width;
         int32_t render_height;
 

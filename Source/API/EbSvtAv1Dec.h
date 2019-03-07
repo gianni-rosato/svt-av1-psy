@@ -52,12 +52,12 @@ typedef struct EbAV1StreamInfo
     
     EbBool          color_description_present_flag; 
     
-    aom_color_primaries_t color_primaries;
-    aom_transfer_characteristics_t transfer_characteristics;
-    aom_matrix_coefficients_t matrix_coefficients;
+    EbColorPrimaries color_primaries;
+    EbTransferCharacteristics transfer_characteristics;
+    EbMatrixCoefficients matrix_coefficients;
 
-    aom_chroma_sample_position_t chroma_sample_position;
-    aom_color_range_t color_range;
+    EbChromaSamplePosition chroma_sample_position;
+    EbColorRange color_range;
 
     /* Film Grain Synthesis Present */
     EbBool    film_grain_params_present;
