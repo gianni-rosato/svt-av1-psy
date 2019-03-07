@@ -276,7 +276,7 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
             headerPtr->flags = 0;
             headerPtr->p_app_private = NULL;
             headerPtr->pts         = frameCount++;
-            headerPtr->pic_type   = EB_INVALID_PICTURE;
+            headerPtr->pic_type   = EB_AV1_INVALID_PICTURE;
 #if TEST_IDR
             if (frameCount == 200)
                 headerPtr->pic_type = IDR_SLICE;

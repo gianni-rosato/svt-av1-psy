@@ -326,7 +326,7 @@ EbErrorType AllocateInputBuffers(
 
         // Assign the variables
         callbackData->inputBufferPool->p_app_private = NULL;
-        callbackData->inputBufferPool->pic_type   = EB_INVALID_PICTURE;
+        callbackData->inputBufferPool->pic_type   = EB_AV1_INVALID_PICTURE;
     }
 
     return return_error;
@@ -375,7 +375,7 @@ EbErrorType AllocateOutputBuffers(
 
         callbackData->streamBufferPool->n_alloc_len = outputStreamBufferSize;
         callbackData->streamBufferPool->p_app_private = NULL;
-        callbackData->streamBufferPool->pic_type = EB_INVALID_PICTURE;
+        callbackData->streamBufferPool->pic_type = EB_AV1_INVALID_PICTURE;
     }
     return return_error;
 }

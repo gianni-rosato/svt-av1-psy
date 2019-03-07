@@ -1229,7 +1229,7 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
 
         // Fill in Buffers Header control data
         headerPtr->pts          = config->processedFrameCount-1;
-        headerPtr->pic_type    = EB_INVALID_PICTURE;
+        headerPtr->pic_type    = EB_AV1_INVALID_PICTURE;
 
         headerPtr->flags = 0;
 
@@ -1244,7 +1244,7 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
             headerPtr->p_app_private  = NULL;
             headerPtr->flags       = EB_BUFFERFLAG_EOS;
             headerPtr->p_buffer      = NULL;
-            headerPtr->pic_type    = EB_INVALID_PICTURE;
+            headerPtr->pic_type    = EB_AV1_INVALID_PICTURE;
 
             eb_svt_enc_send_picture(componentHandle, headerPtr);
 

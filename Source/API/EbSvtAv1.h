@@ -34,15 +34,18 @@ extern "C" {
 ********************************/
 #define EB_PICTURE           uint32_t
 
-typedef enum EbPictureType
+typedef enum EbAv1PictureType
 {
-    EB_B_PICTURE       = 0,
-    EB_P_PICTURE       = 1,
-    EB_I_PICTURE       = 2,
-    EB_IDR_PICTURE     = 3,
-    EB_NON_REF_PICTURE = 4,
-    EB_INVALID_PICTURE = 0xFF
-} EbPictureType;
+    EB_AV1_INTER_PICTURE         = 0,
+    EB_AV1_ALT_REF_PICTURE       = 1,
+    EB_AV1_INTRA_ONLY_PICTURE    = 2,
+    EB_AV1_KEY_PICTURE           = 3,
+    EB_AV1_NON_REF_PICTURE       = 4,
+    EB_AV1_SHOW_EXISTING_PICTURE = 6,
+    EB_AV1_FW_KEY_PICTURE        = 5,
+    EB_AV1_SWITCH_PICTURE        = 7,
+    EB_AV1_INVALID_PICTURE       = 0xFF
+} EbAv1PictureType;
 
 /** The EbBool type is intended to be used to represent a true or a false
 value when passing parameters to and from the eBrisk API.  The

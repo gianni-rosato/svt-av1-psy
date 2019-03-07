@@ -148,8 +148,8 @@ void* PacketizationKernel(void *input_ptr)
         output_stream_ptr->dts = picture_control_set_ptr->parent_pcs_ptr->decode_order - (uint64_t)(1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 1;
 #endif     
         output_stream_ptr->pic_type = picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ?
-            picture_control_set_ptr->parent_pcs_ptr->idr_flag ? EB_IDR_PICTURE :
-            picture_control_set_ptr->slice_type : EB_NON_REF_PICTURE;
+            picture_control_set_ptr->parent_pcs_ptr->idr_flag ? EB_AV1_KEY_PICTURE :
+            picture_control_set_ptr->slice_type : EB_AV1_NON_REF_PICTURE;
         output_stream_ptr->p_app_private = picture_control_set_ptr->parent_pcs_ptr->input_ptr->p_app_private;
 
         // Get Empty Rate Control Input Tasks
