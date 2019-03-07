@@ -1,4 +1,4 @@
-From 60c318686354a9551f6cb978a7dae83adab052e7 Mon Sep 17 00:00:00 2001
+From b74cb2d5c9c240c27a081d467e067fcc0c04bea6 Mon Sep 17 00:00:00 2001
 From: Daryl Seah <daryl.seah@intel.com>
 Date: Fri, 18 Jan 2019 02:11:38 +0000
 Subject: [PATCH 1/1] Add ability for ffmpeg to run svt-av1 with svt-hevc
@@ -15,7 +15,7 @@ Signed-off-by: Jing SUN <jing.a.sun@intel.com>
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
-index 06d5e8e..0bdd1c0 100755
+index 52bfff2..c48dc32 100755
 --- a/configure
 +++ b/configure
 @@ -263,6 +263,7 @@ External library support:
@@ -45,7 +45,7 @@ index 06d5e8e..0bdd1c0 100755
 @@ -6139,6 +6142,7 @@ enabled libssh            && require_pkg_config libssh libssh libssh/sftp.h sftp
  enabled libspeex          && require_pkg_config libspeex speex speex/speex.h speex_decoder_init
  enabled libsrt            && require_pkg_config libsrt "srt >= 1.3.0" srt/srt.h srt_socket
- enabled libsvthevc        && require_pkg_config libsvthevc SvtHevcEnc EbApi.h EbInitHandle
+ enabled libsvthevc        && require_pkg_config libsvthevc SvtHevcEnc svt-hevc/EbApi.h EbInitHandle
 +enabled libsvtav1         && require_pkg_config libsvtav1 SvtAv1Enc svt-av1/EbApi.h eb_init_handle
  enabled libtensorflow     && require libtensorflow tensorflow/c/c_api.h TF_Version -ltensorflow
  enabled libtesseract      && require_pkg_config libtesseract tesseract tesseract/capi.h TessBaseAPICreate
@@ -76,7 +76,7 @@ index 5739d53..98f0c99 100644
  extern AVCodec ff_libvo_amrwbenc_encoder;
 diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
 new file mode 100644
-index 0000000..4305285
+index 0000000..7d0e307
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
 @@ -0,0 +1,491 @@
@@ -489,8 +489,8 @@ index 0000000..4305285
 +    { "la_depth", "Look ahead distance [0, 256]", OFFSET(la_depth),
 +      AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 256, VE },
 +
-+    { "preset", "Encoding preset [1, 1]",
-+      OFFSET(enc_mode), AV_OPT_TYPE_INT, { .i64 = 1 }, 1, 1, VE },
++    { "preset", "Encoding preset [0, 7]",
++      OFFSET(enc_mode), AV_OPT_TYPE_INT, { .i64 = MAX_ENC_PRESET }, 0, MAX_ENC_PRESET, VE },
 +
 +    { "tier", "Set tier (general_tier_flag)", OFFSET(tier),
 +      AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 1, VE, "tier" },

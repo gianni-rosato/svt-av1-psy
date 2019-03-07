@@ -1,4 +1,4 @@
-From 99f851c5bea509726ce841b1cc57605a6a84ba19 Mon Sep 17 00:00:00 2001
+From 6be97da6f57f7773fca432de4ddecb3f57e47c25 Mon Sep 17 00:00:00 2001
 From: Daryl Seah <daryl.seah@intel.com>
 Date: Fri, 18 Jan 2019 02:11:38 +0000
 Subject: [PATCH 1/1] Add ability for ffmpeg to run svt-av1
@@ -15,7 +15,7 @@ Signed-off-by: Jing SUN <jing.a.sun@intel.com>
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
-index a70c5f9..5b5238a 100755
+index a70c5f9..1850ef0 100755
 --- a/configure
 +++ b/configure
 @@ -262,6 +262,7 @@ External library support:
@@ -76,7 +76,7 @@ index 1b8144a..f7df66c 100644
  extern AVCodec ff_libvo_amrwbenc_encoder;
 diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
 new file mode 100644
-index 0000000..4305285
+index 0000000..7d0e307
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
 @@ -0,0 +1,491 @@
@@ -489,8 +489,8 @@ index 0000000..4305285
 +    { "la_depth", "Look ahead distance [0, 256]", OFFSET(la_depth),
 +      AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 256, VE },
 +
-+    { "preset", "Encoding preset [1, 1]",
-+      OFFSET(enc_mode), AV_OPT_TYPE_INT, { .i64 = 1 }, 1, 1, VE },
++    { "preset", "Encoding preset [0, 7]",
++      OFFSET(enc_mode), AV_OPT_TYPE_INT, { .i64 = MAX_ENC_PRESET }, 0, MAX_ENC_PRESET, VE },
 +
 +    { "tier", "Set tier (general_tier_flag)", OFFSET(tier),
 +      AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 1, VE, "tier" },
