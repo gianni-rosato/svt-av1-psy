@@ -11,97 +11,15 @@ extern "C" {
 #endif // __cplusplus
 
 #include "stdint.h"
-
+#include "EbSvtAv1.h"
 
 #define  TILES    1
 
-
-    // API Version
-#define SVT_VERSION_MAJOR       0
-#define SVT_VERSION_MINOR       4
-#define SVT_VERSION_PATCHLEVEL  0
-#define EB_MAX_TEMPORAL_LAYERS              MAX_TEMPORAL_LAYERS
     //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT            2
 
 #define MAX_ENC_PRESET                              7
-
-#ifdef _WIN32
-#define EB_API __declspec(dllexport)
-#else
-#define EB_API
-#endif
-/********************************
-* Defines
-********************************/
-#define EB_PICTURE           uint32_t
-#define EB_B_PICTURE         0
-#define EB_P_PICTURE         1
-#define EB_I_PICTURE         2
-#define EB_IDR_PICTURE       3
-#define EB_NON_REF_PICTURE   4
-#define EB_INVALID_PICTURE   0xFF
-
-/** The EbBool type is intended to be used to represent a true or a false
-value when passing parameters to and from the eBrisk API.  The
-EbBool is a 32 bit quantity and is aligned on a 32 bit word boundary.
-*/
-
-#define EbBool   uint8_t
-#define EB_FALSE  0
-#define EB_TRUE   1
-
-    typedef struct EbBufferHeaderType
-    {
-        // EbBufferHeaderType size
-        uint32_t size;
-
-        // picture (input or output) buffer
-        uint8_t* p_buffer;
-        uint32_t n_filled_len;
-        uint32_t n_alloc_len;
-
-        // pic private data
-        void*    p_app_private;
-        void*    wrapper_ptr;
-
-        // pic timing param
-        uint32_t n_tick_count;
-        int64_t  dts;
-        int64_t  pts;
-
-        // pic info
-        uint32_t qp;
-        uint32_t pic_type;
-
-        // pic flags
-        uint32_t flags;
-    } EbBufferHeaderType;
-
-    typedef struct EbComponentType
-    {
-        uint32_t size;
-        void* pComponentPrivate;
-        void* pApplicationPrivate;
-    } EbComponentType;
-
-    typedef enum EbErrorType
-    {
-        EB_ErrorNone = 0,
-        EB_ErrorInsufficientResources = (int32_t)0x80001000,
-        EB_ErrorUndefined = (int32_t)0x80001001,
-        EB_ErrorInvalidComponent = (int32_t)0x80001004,
-        EB_ErrorBadParameter = (int32_t)0x80001005,
-        EB_ErrorDestroyThreadFailed = (int32_t)0x80002012,
-        EB_ErrorSemaphoreUnresponsive = (int32_t)0x80002021,
-        EB_ErrorDestroySemaphoreFailed = (int32_t)0x80002022,
-        EB_ErrorCreateMutexFailed = (int32_t)0x80002030,
-        EB_ErrorMutexUnresponsive = (int32_t)0x80002031,
-        EB_ErrorDestroyMutexFailed = (int32_t)0x80002032,
-        EB_NoErrorEmptyQueue = (int32_t)0x80002033,
-        EB_ErrorMax = 0x7FFFFFFF
-    } EbErrorType;
 
 #define EB_BUFFERFLAG_EOS           0x00000001  // signals the last packet of the stream
 #define EB_BUFFERFLAG_SHOW_EXT      0x00000002  // signals that the packet contains a show existing frame at the end
@@ -110,27 +28,6 @@ EbBool is a 32 bit quantity and is aligned on a 32 bit word boundary.
 #if TILES
 #define EB_BUFFERFLAG_TG            0x00000004  // signals that the packet contains Tile Group header
 #endif
-    // For 8-bit and 10-bit packed inputs, the luma, cb, and cr fields should be used
-    //   for the three input picture planes.  However, for 10-bit unpacked planes the
-    //   lumaExt, cbExt, and crExt fields should be used hold the extra 2-bits of
-    //   precision while the luma, cb, and cr fields hold the 8-bit data.
-    typedef struct EbSvtEncInput
-    {
-        // Hosts 8 bit or 16 bit input YUV420p / YUV420p10le
-        uint8_t *luma;
-        uint8_t *cb;
-        uint8_t *cr;
-
-        // Hosts LSB 2 bits of 10bit input when the compressed 10bit format is used
-        uint8_t *lumaExt;
-        uint8_t *cbExt;
-        uint8_t *crExt;
-
-        uint32_t yStride;
-        uint32_t crStride;
-        uint32_t cbStride;
-
-    } EbSvtEncInput;
 
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
@@ -155,7 +52,7 @@ typedef struct EbSvtAv1EncConfiguration
      * -1 = no intra update.
      * -2 = auto.
      *
-     * Deault is -2. */
+     * Default is -2. */
     int32_t                  intra_period_length;
     /* Random access.
      *
@@ -177,7 +74,7 @@ typedef struct EbSvtAv1EncConfiguration
      * encoded pictures in display order. In other words, pictures with display
      * order N can only be referenced by pictures with display order greater than
      * N, and it can only refer pictures with picture order lower than N. The Low
-     * Delay structure can be flat structured (e.g. IPPPPPPP…) or hierarchically
+     * Delay structure can be flat structured (e.g. IPPPPPPP...) or hierarchically
      * structured. B/b pictures can be used instead of P/p pictures. However, the
      * reference picture list 0 and the reference picture list 1 will contain the
      * same reference picture.
@@ -212,12 +109,14 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 25. */
     uint32_t                 frame_rate;
-    /* Frame rate numerator. When zero, the encoder will use –fps if
+
+    /* Frame rate numerator. When zero, the encoder will use -fps if
      * FrameRateDenominator is also zero, otherwise an error is returned.
      *
      * Default is 0. */
     uint32_t                 frame_rate_numerator;
-    /* Frame rate denominator. When zero, the encoder will use –fps if
+
+    /* Frame rate denominator. When zero, the encoder will use -fps if
      * FrameRateNumerator is also zero, otherwise an error is returned.
      *
      * Default is 0. */
@@ -241,8 +140,8 @@ typedef struct EbSvtAv1EncConfiguration
      * 0 = encodes the full clip.
      *
      * Default is 0. */
-    uint64_t                 framesToBeEncoded;
-    uint32_t                 ten_bit_format;
+    uint64_t                 frames_to_be_encoded;
+
     /* The visual quality knob that allows the use of adaptive quantization
      * within the picture and enables visual quality algorithms that improve the
      * sharpness of the background. Only available for 4k resolution and
@@ -314,21 +213,6 @@ typedef struct EbSvtAv1EncConfiguration
     * Default is 1. */
     EbBool                   enable_hme_flag;
 
-    /* Flag to enable Hierarchical Motion Estimation 1/16th of the picture
-    *
-    * Default is 1. */
-    EbBool                   enable_hme_level0_flag;
-
-    /* Flag to enable Hierarchical Motion Estimation 1/4th of the picture
-    *
-    * Default is 1. */
-    EbBool                   enable_hme_level1_flag;
-
-    /* Flag to enable Hierarchical Motion Estimation full sample of the picture
-    *
-    * Default is 1. */
-    EbBool                   enable_hme_level2_flag;
-
     /* Flag to enable the use of non-swaure partitions
     *
     * Default is 1. */
@@ -348,21 +232,6 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default depends on input resolution. */
     uint32_t                 search_area_height;
-
-    // HME Parameters
-    /* Number of search positions in width and height for the HME
-    *
-    * Default depends on input resolution. */
-    uint32_t                 number_hme_search_region_in_width;
-    uint32_t                 number_hme_search_region_in_height;
-    uint32_t                 hme_level0_total_search_area_width;
-    uint32_t                 hme_level0_total_search_area_height;
-    uint32_t                 hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t                 hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint32_t                 hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t                 hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint32_t                 hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t                 hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
 
     // MD Parameters
     /* Enable the use of Constrained Intra, which yields sending two picture
@@ -396,12 +265,12 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 7000000. */
     uint32_t                 target_bit_rate;
-    /* Maxium QP value allowed for rate control use, only apllicable when rate
+    /* Maxium QP value allowed for rate control use, only applicable when rate
      * control mode is set to 1. It has to be greater or equal to minQpAllowed.
      *
      * Default is 63. */
     uint32_t                 max_qp_allowed;
-    /* Minimum QP value allowed for rate control use, only apllicable when rate
+    /* Minimum QP value allowed for rate control use, only applicable when rate
      * control mode is set to 1. It has to be smaller or equal to maxQpAllowed.
      *
      * Default is 0. */
@@ -412,34 +281,7 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 0. */
     uint32_t                 high_dynamic_range_input;
-    /* Flag to simplify the detection of boundary between access units.
-     *
-     * Default is 0. */
-    uint32_t                 access_unit_delimiter;
-    /* Flag to enable buffering period supplemental enhancement information.
-     *
-     * Default is 0. */
-    uint32_t                 buffering_period_sei;
-    /* Flag to enable picture timeing supplemental enhancement information.
-     *
-     * Default is 0. */
-    uint32_t                 picture_timing_sei;
-    /* Flag to enable registered user data supplemental enhancement information.
-     *
-     * Default is 0. */
-    uint32_t                 registered_user_data_sei_flag;
-    /* Flag to enable unregistered user data supplemental enhancement information.
-     *
-     * Default is 0. */
-    uint32_t                 unregistered_user_data_sei_flag;
-    /* Flag to enable recovery point supplemental enhancement information.
-     *
-     * Default is 0. */
-    uint32_t                 recovery_point_sei_flag;
-    /* Flag to insert temporal ID in Network Abstraction Layer units.
-     *
-     * Default is 1. */
-    uint32_t                 enable_temporal_id;
+
     /* Defined set of coding tools to create bitstream.
      *
      * 1 = Main, allows bit depth of 8.
@@ -464,7 +306,7 @@ typedef struct EbSvtAv1EncConfiguration
     /* Assembly instruction set used by encoder.
     *
     * 0 = non-AVX2, C only.
-    * 1 = up to AVX512, auto-select highest assembly insturction set supported.
+    * 1 = up to AVX512, auto-select highest assembly instruction set supported.
     *
     * Default is 1. */
     uint32_t                 asm_type;
@@ -475,12 +317,10 @@ typedef struct EbSvtAv1EncConfiguration
     uint32_t                 channel_id;
     uint32_t                 active_channel_count;
 
-    uint32_t                 stat_report;
-
     /* Flag to enable the Speed Control functionality to achieve the real-time
     * encoding speed defined by dynamically changing the encoding preset to meet
     * the average speed defined in injectorFrameRate. When this parameter is set
-    * to 1 it forces –inj to be 1 -inj-frm-rt to be set to the –fps.
+    * to 1 it forces -inj to be 1 -inj-frm-rt to be set to the -fps.
     *
     * Default is 0. */
     uint32_t                 speed_control_flag;
@@ -521,6 +361,43 @@ typedef struct EbSvtAv1EncConfiguration
     int32_t                  tile_columns;
     int32_t                  tile_rows;
 #endif
+
+/* To be deprecated.
+ * Encoder configuration parameters below this line are to be deprecated. */
+
+    uint32_t                 stat_report;
+
+    /* Flag to enable Hierarchical Motion Estimation 1/16th of the picture
+    *
+    * Default is 1. */
+    EbBool                   enable_hme_level0_flag;
+
+    /* Flag to enable Hierarchical Motion Estimation 1/4th of the picture
+    *
+    * Default is 1. */
+    EbBool                   enable_hme_level1_flag;
+
+    /* Flag to enable Hierarchical Motion Estimation full sample of the picture
+    *
+    * Default is 1. */
+    EbBool                   enable_hme_level2_flag;
+
+    // HME Parameters
+    /* Number of search positions in width and height for the HME
+    *
+    * Default depends on input resolution. */
+    uint32_t                 number_hme_search_region_in_width;
+    uint32_t                 number_hme_search_region_in_height;
+    uint32_t                 hme_level0_total_search_area_width;
+    uint32_t                 hme_level0_total_search_area_height;
+    uint32_t                 hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t                 hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint32_t                 hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t                 hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint32_t                 hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t                 hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+
+    uint32_t                 ten_bit_format;
 
 } EbSvtAv1EncConfiguration;
 

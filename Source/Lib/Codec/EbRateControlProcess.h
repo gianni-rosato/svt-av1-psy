@@ -8,7 +8,7 @@
 
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
-#include "EbApi.h"
+#include "EbSvtAv1Enc.h"
 #include "EbPictureControlSet.h"
 
 #define CCOEFF_INIT_FACT              2

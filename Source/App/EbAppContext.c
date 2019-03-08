@@ -180,7 +180,7 @@ EbErrorType CopyConfigurationParameters(
 #endif
     callbackData->ebEncParameters.scene_change_detection = config->scene_change_detection;
     callbackData->ebEncParameters.look_ahead_distance = config->look_ahead_distance;
-    callbackData->ebEncParameters.framesToBeEncoded = config->framesToBeEncoded;
+    callbackData->ebEncParameters.frames_to_be_encoded = config->frames_to_be_encoded;
     callbackData->ebEncParameters.rate_control_mode = config->rateControlMode;
     callbackData->ebEncParameters.target_bit_rate = config->targetBitRate;
     callbackData->ebEncParameters.max_qp_allowed = config->max_qp_allowed;
@@ -205,13 +205,6 @@ EbErrorType CopyConfigurationParameters(
     callbackData->ebEncParameters.active_channel_count = config->active_channel_count;
     callbackData->ebEncParameters.improve_sharpness = (uint8_t)config->improve_sharpness;
     callbackData->ebEncParameters.high_dynamic_range_input = config->high_dynamic_range_input;
-    callbackData->ebEncParameters.access_unit_delimiter = config->access_unit_delimiter;
-    callbackData->ebEncParameters.buffering_period_sei = config->buffering_period_sei;
-    callbackData->ebEncParameters.picture_timing_sei = config->picture_timing_sei;
-    callbackData->ebEncParameters.registered_user_data_sei_flag = config->registered_user_data_sei_flag;
-    callbackData->ebEncParameters.unregistered_user_data_sei_flag = config->unregistered_user_data_sei_flag;
-    callbackData->ebEncParameters.recovery_point_sei_flag = config->recovery_point_sei_flag;
-    callbackData->ebEncParameters.enable_temporal_id = config->enable_temporal_id;
     callbackData->ebEncParameters.encoder_bit_depth = config->encoderBitDepth;
     callbackData->ebEncParameters.compressed_ten_bit_format = config->compressedTenBitFormat;
     callbackData->ebEncParameters.profile = config->profile;
@@ -260,7 +253,7 @@ static EbErrorType AllocateFrameBuffer(
     const size_t chroma10bitSize = (config->encoderBitDepth > 8 && tenBitPackedMode == 0) ? chroma8bitSize : 0;
 
     // Determine
-    EbSvtEncInput* inputPtr = (EbSvtEncInput*)p_buffer;
+    EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)p_buffer;
     inputPtr->yStride = config->inputPaddedWidth;
     inputPtr->crStride = config->inputPaddedWidth >> 1;
     inputPtr->cbStride = config->inputPaddedWidth >> 1;
@@ -321,7 +314,7 @@ EbErrorType AllocateInputBuffers(
         // Initialize Header
         callbackData->inputBufferPool->size                       = sizeof(EbBufferHeaderType);
 
-        EB_APP_MALLOC(uint8_t*, callbackData->inputBufferPool->p_buffer, sizeof(EbSvtEncInput), EB_N_PTR, EB_ErrorInsufficientResources);
+        EB_APP_MALLOC(uint8_t*, callbackData->inputBufferPool->p_buffer, sizeof(EbSvtIOFormat), EB_N_PTR, EB_ErrorInsufficientResources);
 
         if (config->bufferedInput == -1) {
 
@@ -333,7 +326,7 @@ EbErrorType AllocateInputBuffers(
 
         // Assign the variables
         callbackData->inputBufferPool->p_app_private = NULL;
-        callbackData->inputBufferPool->pic_type   = EB_INVALID_PICTURE;
+        callbackData->inputBufferPool->pic_type   = EB_AV1_INVALID_PICTURE;
     }
 
     return return_error;
@@ -382,7 +375,7 @@ EbErrorType AllocateOutputBuffers(
 
         callbackData->streamBufferPool->n_alloc_len = outputStreamBufferSize;
         callbackData->streamBufferPool->p_app_private = NULL;
-        callbackData->streamBufferPool->pic_type = EB_INVALID_PICTURE;
+        callbackData->streamBufferPool->pic_type = EB_AV1_INVALID_PICTURE;
     }
     return return_error;
 }

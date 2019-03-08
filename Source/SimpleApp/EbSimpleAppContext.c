@@ -27,7 +27,7 @@ EbErrorType AllocateFrameBuffer(
     const size_t chroma10bitSize = (config->encoderBitDepth > 8 && tenBitPackedMode == 0) ? chroma8bitSize : 0;
 
     // Determine
-    EbSvtEncInput* inputPtr = (EbSvtEncInput*)p_buffer;
+    EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)p_buffer;
 
     if (luma8bitSize) {
         inputPtr->luma = (uint8_t*)malloc(luma8bitSize);
@@ -86,12 +86,12 @@ EbErrorType EbAppContextCtor(
     contextPtr->inputPictureBuffer = (EbBufferHeaderType*)malloc(sizeof(EbBufferHeaderType));
     if (!contextPtr->inputPictureBuffer) return return_error;
 
-    contextPtr->inputPictureBuffer->p_buffer = (uint8_t*)malloc(sizeof(EbSvtEncInput));
+    contextPtr->inputPictureBuffer->p_buffer = (uint8_t*)malloc(sizeof(EbSvtIOFormat));
     if (!contextPtr->inputPictureBuffer->p_buffer) return return_error;
 
     contextPtr->inputPictureBuffer->size = sizeof(EbBufferHeaderType);
     contextPtr->inputPictureBuffer->p_app_private = NULL;
-    contextPtr->inputPictureBuffer->pic_type = EB_INVALID_PICTURE;
+    contextPtr->inputPictureBuffer->pic_type = EB_AV1_INVALID_PICTURE;
     // Allocate frame buffer for the p_buffer
     AllocateFrameBuffer(
         config,
@@ -107,7 +107,7 @@ EbErrorType EbAppContextCtor(
     contextPtr->outputStreamBuffer->size = sizeof(EbBufferHeaderType);
     contextPtr->outputStreamBuffer->n_alloc_len = EB_OUTPUTSTREAMBUFFERSIZE_MACRO(config->sourceWidth*config->sourceHeight);
     contextPtr->outputStreamBuffer->p_app_private = NULL;
-    contextPtr->outputStreamBuffer->pic_type = EB_INVALID_PICTURE;
+    contextPtr->outputStreamBuffer->pic_type = EB_AV1_INVALID_PICTURE;
 
     // recon buffer
     if (config->reconFile) {
@@ -141,7 +141,7 @@ EbErrorType EbAppContextCtor(
 void EbAppContextDtor(
     EbAppContext_t *contextPtr)
 {
-    EbSvtEncInput *inputPtr = (EbSvtEncInput*)contextPtr->inputPictureBuffer->p_buffer;
+    EbSvtIOFormat *inputPtr = (EbSvtIOFormat*)contextPtr->inputPictureBuffer->p_buffer;
     free(inputPtr->luma);
     free(inputPtr->cb);
     free(inputPtr->cr);

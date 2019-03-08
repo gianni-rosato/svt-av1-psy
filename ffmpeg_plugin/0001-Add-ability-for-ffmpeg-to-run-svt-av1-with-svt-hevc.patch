@@ -103,9 +103,9 @@ index 0000000..7d0e307
 +*/
 +
 +#include <stdint.h>
-+#include "svt-av1/EbErrorCodes.h"
-+#include "svt-av1/EbTime.h"
-+#include "svt-av1/EbApi.h"
++#include "svt-av1/EbSvtAv1ErrorCodes.h"
++#include "svt-av1/EbSvtAv1Time.h"
++#include "svt-av1/EbSvtAv1Enc.h"
 +
 +#include "libavutil/common.h"
 +#include "libavutil/frame.h"
@@ -255,7 +255,7 @@ index 0000000..7d0e307
 +    param->scene_change_detection   = svt_enc->scd;
 +    param->base_layer_switch_mode    = svt_enc->base_layer_switch_mode;
 +    param->qp                     = svt_enc->qp;
-+    param->access_unit_delimiter    = svt_enc->aud;
++
 +
 +    param->target_bit_rate          = avctx->bit_rate;
 +    if (avctx->gop_size > 0)
@@ -414,16 +414,16 @@ index 0000000..7d0e307
 +    headerPtr->pts          = frame->pts;
 +    switch (frame->pict_type) {
 +    case AV_PICTURE_TYPE_I:
-+        headerPtr->pic_type = svt_enc->forced_idr > 0 ? EB_IDR_PICTURE : EB_I_PICTURE;
++        headerPtr->pic_type = svt_enc->forced_idr > 0 ? EB_AV1_KEY_PICTURE : EB_AV1_INTRA_ONLY_PICTURE;
 +        break;
 +    case AV_PICTURE_TYPE_P:
-+        headerPtr->pic_type = EB_P_PICTURE;
++        headerPtr->pic_type = EB_AV1_ALT_REF_PICTURE;
 +        break;
 +    case AV_PICTURE_TYPE_B:
-+        headerPtr->pic_type = EB_B_PICTURE;
++        headerPtr->pic_type = EB_AV1_INTER_PICTURE;
 +        break;
 +    default:
-+        headerPtr->pic_type = EB_INVALID_PICTURE;
++        headerPtr->pic_type = EB_AV1_INVALID_PICTURE;
 +        break;
 +    }
 +    eb_svt_enc_send_picture(svt_enc->svt_handle, headerPtr);
@@ -450,9 +450,9 @@ index 0000000..7d0e307
 +    pkt->size = headerPtr->n_filled_len;
 +    pkt->pts  = headerPtr->pts;
 +    pkt->dts  = headerPtr->dts;
-+    if (headerPtr->pic_type == EB_IDR_PICTURE)
++    if (headerPtr->pic_type == EB_AV1_KEY_PICTURE)
 +        pkt->flags |= AV_PKT_FLAG_KEY;
-+    if (headerPtr->pic_type == EB_NON_REF_PICTURE)
++    if (headerPtr->pic_type == EB_AV1_NON_REF_PICTURE)
 +        pkt->flags |= AV_PKT_FLAG_DISPOSABLE;
 +
 +    ret = (headerPtr->flags & EB_BUFFERFLAG_EOS) ? AVERROR_EOF : 0;

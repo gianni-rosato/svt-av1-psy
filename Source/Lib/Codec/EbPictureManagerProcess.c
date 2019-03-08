@@ -19,7 +19,7 @@
 #include "EbPictureManagerQueue.h"
 #include "EbPredictionStructure.h"
 #include "EbRateControlTasks.h"
-#include "EbErrorCodes.h"
+#include "EbSvtAv1ErrorCodes.h"
 
 #if TILES
 void av1_tile_set_col(TileInfo *tile, PictureParentControlSet_t * pcsPtr, int col);

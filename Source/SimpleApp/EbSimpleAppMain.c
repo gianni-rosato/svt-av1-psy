@@ -15,7 +15,7 @@
  * Includes
  ***************************************/
 #include "EbSimpleAppContext.h"
-#include "EbApi.h"
+#include "EbSvtAv1Enc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -62,7 +62,7 @@ static void EbConfigCtor(EbConfig_t *config_ptr)
     config_ptr->compressedTenBitFormat = 0;
     config_ptr->sourceWidth = 0;
     config_ptr->sourceHeight = 0;
-    config_ptr->framesToBeEncoded = 0;
+    config_ptr->frames_to_be_encoded = 0;
     config_ptr->channel_id = 0;
     config_ptr->stopEncoder = 0;
 
@@ -177,7 +177,7 @@ void ReadInputFrames(
     uint32_t  inputPaddedHeight = config->inputPaddedHeight;
     FILE   *inputFile = config->inputFile;
     uint8_t  *ebInputPtr;
-    EbSvtEncInput* inputPtr = (EbSvtEncInput*)headerPtr->p_buffer;
+    EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)headerPtr->p_buffer;
     inputPtr->yStride  = inputPaddedWidth;
     inputPtr->cbStride = inputPaddedWidth >> 1;
     inputPtr->crStride = inputPaddedWidth >> 1;
@@ -276,7 +276,7 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
             headerPtr->flags = 0;
             headerPtr->p_app_private = NULL;
             headerPtr->pts         = frameCount++;
-            headerPtr->pic_type   = EB_INVALID_PICTURE;
+            headerPtr->pic_type   = EB_AV1_INVALID_PICTURE;
 #if TEST_IDR
             if (frameCount == 200)
                 headerPtr->pic_type = IDR_SLICE;

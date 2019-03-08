@@ -14,7 +14,7 @@
 #include "EbPictureDecisionProcess.h"
 #include "EbPictureDecisionResults.h"
 #include "EbReferenceObject.h"
-#include "EbErrorCodes.h"
+#include "EbSvtAv1ErrorCodes.h"
 
 /************************************************
  * Defines

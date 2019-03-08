@@ -21,7 +21,7 @@
 #include "EbSequenceControlSet.h"
 #include "EbPictureControlSet.h"
 #include "EbUtility.h"
-#include "EbErrorCodes.h"
+#include "EbSvtAv1ErrorCodes.h"
 #include "EbEntropyCoding.h"
 
 #include "EbRateControlResults.h"

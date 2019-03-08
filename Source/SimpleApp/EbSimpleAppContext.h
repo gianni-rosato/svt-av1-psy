@@ -6,7 +6,7 @@
 #ifndef EbSimpleAppContext_h
 #define EbSimpleAppContext_h
 
-#include "EbApi.h"
+#include "EbSvtAv1Enc.h"
 #include <stdio.h>
 
 typedef struct EbConfig_s
@@ -39,7 +39,7 @@ typedef struct EbConfig_s
     uint32_t                     inputPaddedWidth;
     uint32_t                     inputPaddedHeight;
 
-    int64_t                      framesToBeEncoded;
+    int64_t                      frames_to_be_encoded;
     int64_t                      framesEncoded;
     int64_t                      bufferedInput;
     uint8_t                   **sequenceBuffer;
@@ -136,13 +136,6 @@ typedef struct EbConfig_s
     uint8_t                     improve_sharpness;
     uint32_t                    video_usability_info;
     uint32_t                    high_dynamic_range_input;
-    uint32_t                    access_unit_delimiter;
-    uint32_t                    buffering_period_sei;
-    uint32_t                    picture_timing_sei;
-    uint8_t                     registered_user_data_sei_flag;
-    uint8_t                     unregistered_user_data_sei_flag;
-    uint8_t                     recovery_point_sei_flag;
-    uint32_t                    enable_temporal_id;
 
     /****************************************
      * Annex A Parameters
@@ -154,7 +147,6 @@ typedef struct EbConfig_s
     /****************************************
      * On-the-fly Testing
      ****************************************/
-    uint32_t                    testUserData;
     uint8_t                     eosFlag;
 
     /****************************************

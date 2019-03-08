@@ -12,10 +12,10 @@
 
 #include "EbAppContext.h"
 #include "EbAppConfig.h"
-#include "EbErrorCodes.h"
+#include "EbSvtAv1ErrorCodes.h"
 #include "EbAppInputy4m.h"
 
-#include "EbTime.h"
+#include "EbSvtAv1Time.h"
 
 
 #define IVF_FRAME_HEADER_IN_LIB                     0
@@ -765,7 +765,7 @@ void ReadInputFrames(
     uint32_t  inputPaddedHeight = config->inputPaddedHeight;
     FILE   *inputFile = config->inputFile;
     uint8_t  *ebInputPtr;
-    EbSvtEncInput* inputPtr = (EbSvtEncInput*)headerPtr->p_buffer;
+    EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)headerPtr->p_buffer;
 
     uint64_t frameSize = (uint64_t)((inputPaddedWidth*inputPaddedHeight * 3) / 2 + (inputPaddedWidth / 4 * inputPaddedHeight * 3) / 2);
     inputPtr->yStride  = inputPaddedWidth;
@@ -1053,7 +1053,7 @@ void ReadInputFrames(
             const size_t luma2bitSize = luma8bitSize / 4; //4-2bit pixels into 1 byte
             const size_t chroma2bitSize = luma2bitSize >> 2;
 
-            EbSvtEncInput* inputPtr = (EbSvtEncInput*)headerPtr->p_buffer;
+            EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)headerPtr->p_buffer;
             inputPtr->yStride = config->inputPaddedWidth;
             inputPtr->crStride = config->inputPaddedWidth >> 1;
             inputPtr->cbStride = config->inputPaddedWidth >> 1;
@@ -1094,7 +1094,7 @@ void ReadInputFrames(
             const size_t luma10bitSize = (config->encoderBitDepth > 8 && tenBitPackedMode == 0) ? luma8bitSize : 0;
             const size_t chroma10bitSize = (config->encoderBitDepth > 8 && tenBitPackedMode == 0) ? chroma8bitSize : 0;
 
-            EbSvtEncInput* inputPtr = (EbSvtEncInput*)headerPtr->p_buffer;
+            EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)headerPtr->p_buffer;
 
             inputPtr->yStride = config->inputPaddedWidth;
             inputPtr->crStride = config->inputPaddedWidth >> 1;
@@ -1188,7 +1188,7 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
 
     int64_t                  inputPaddedWidth           = config->inputPaddedWidth;
     int64_t                  inputPaddedHeight          = config->inputPaddedHeight;
-    int64_t                  framesToBeEncoded          = config->framesToBeEncoded;
+    int64_t                  frames_to_be_encoded          = config->frames_to_be_encoded;
     uint64_t                 frameSize                  = (uint64_t)((inputPaddedWidth*inputPaddedHeight * 3) / 2 + (inputPaddedWidth / 4 * inputPaddedHeight * 3) / 2);
     int64_t                  totalBytesToProcessCount;
     int64_t                  remainingByteCount;
@@ -1198,9 +1198,9 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
         EbInjector(config->processedFrameCount, config->injector_frame_rate);
     }
 
-    totalBytesToProcessCount = (framesToBeEncoded < 0) ? -1 : (config->encoderBitDepth == 10 && config->compressedTenBitFormat == 1) ?
-        framesToBeEncoded * (int64_t)frameSize :
-        framesToBeEncoded * SIZE_OF_ONE_FRAME_IN_BYTES(inputPaddedWidth, inputPaddedHeight, is16bit);
+    totalBytesToProcessCount = (frames_to_be_encoded < 0) ? -1 : (config->encoderBitDepth == 10 && config->compressedTenBitFormat == 1) ?
+            frames_to_be_encoded * (int64_t)frameSize :
+            frames_to_be_encoded * SIZE_OF_ONE_FRAME_IN_BYTES(inputPaddedWidth, inputPaddedHeight, is16bit);
 
 
     remainingByteCount       = (totalBytesToProcessCount < 0) ?   -1 :  totalBytesToProcessCount - (int64_t)config->processedByteCount;
@@ -1229,14 +1229,14 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
 
         // Fill in Buffers Header control data
         headerPtr->pts          = config->processedFrameCount-1;
-        headerPtr->pic_type    = EB_INVALID_PICTURE;
+        headerPtr->pic_type    = EB_AV1_INVALID_PICTURE;
 
         headerPtr->flags = 0;
 
         // Send the picture
         eb_svt_enc_send_picture(componentHandle, headerPtr);
 
-        if ((config->processedFrameCount == (uint64_t)config->framesToBeEncoded) || config->stopEncoder) {
+        if ((config->processedFrameCount == (uint64_t)config->frames_to_be_encoded) || config->stopEncoder) {
 
             headerPtr->n_alloc_len    = 0;
             headerPtr->n_filled_len   = 0;
@@ -1244,7 +1244,7 @@ APPEXITCONDITIONTYPE ProcessInputBuffer(
             headerPtr->p_app_private  = NULL;
             headerPtr->flags       = EB_BUFFERFLAG_EOS;
             headerPtr->p_buffer      = NULL;
-            headerPtr->pic_type    = EB_INVALID_PICTURE;
+            headerPtr->pic_type    = EB_AV1_INVALID_PICTURE;
 
             eb_svt_enc_send_picture(componentHandle, headerPtr);
 

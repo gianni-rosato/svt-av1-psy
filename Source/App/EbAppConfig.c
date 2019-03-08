@@ -76,17 +76,10 @@
 #define CONSTRAINED_INTRA_ENABLE_TOKEN  "-constrd-intra"
 #define IMPROVE_SHARPNESS_TOKEN         "-sharp"
 #define HDR_INPUT_TOKEN                 "-hdr"
-#define ACCESS_UNIT_DELM_TOKEN          "-ua-delm"   // no Eval
-#define BUFF_PERIOD_TOKEN               "-pbuff"     // no Eval
-#define PIC_TIMING_TOKEN                "-tpic"      // no Eval
-#define REG_USER_DATA_TOKEN             "-reg-user-data"  // no Eval
-#define UNREG_USER_DATA_TOKEN           "-unreg-user-data"  // no Eval
-#define RECOVERY_POINT_TOKEN            "-recovery-point" // no Eval
 #define RATE_CONTROL_ENABLE_TOKEN       "-rc"
 #define TARGET_BIT_RATE_TOKEN           "-tbr"
 #define MAX_QP_TOKEN                    "-max-qp"
 #define MIN_QP_TOKEN                    "-min-qp"
-#define TEMPORAL_ID                        "-temporal-id" // no Eval
 #define LOOK_AHEAD_DIST_TOKEN           "-lad"
 #define SUPER_BLOCK_SIZE_TOKEN          "-sb-size"
 #if TILES
@@ -165,7 +158,7 @@ static void SetCfgSourceWidth                   (const char *value, EbConfig_t *
 static void SetInterlacedVideo                  (const char *value, EbConfig_t *cfg) {cfg->interlacedVideo  = (EbBool) strtoul(value, NULL, 0);};
 static void SetSeperateFields                   (const char *value, EbConfig_t *cfg) {cfg->separateFields = (EbBool) strtoul(value, NULL, 0);};
 static void SetCfgSourceHeight                  (const char *value, EbConfig_t *cfg) {cfg->sourceHeight = strtoul(value, NULL, 0) >> cfg->separateFields;};
-static void SetCfgFramesToBeEncoded             (const char *value, EbConfig_t *cfg) {cfg->framesToBeEncoded = strtol(value,  NULL, 0) << cfg->separateFields;};
+static void SetCfgFramesToBeEncoded             (const char *value, EbConfig_t *cfg) {cfg->frames_to_be_encoded = strtol(value,  NULL, 0) << cfg->separateFields;};
 static void SetBufferedInput                    (const char *value, EbConfig_t *cfg) {cfg->bufferedInput = (strtol(value, NULL, 0) != -1 && cfg->separateFields) ? strtol(value, NULL, 0) << cfg->separateFields : strtol(value, NULL, 0);};
 static void SetFrameRate                        (const char *value, EbConfig_t *cfg) {
     cfg->frameRate = strtoul(value, NULL, 0);
@@ -223,13 +216,6 @@ static void SetHmeLevel2SearchAreaInHeightArray (const char *value, EbConfig_t *
 static void SetEnableConstrainedIntra           (const char *value, EbConfig_t *cfg) {cfg->constrained_intra                                             = (EbBool)strtoul(value, NULL, 0);};
 static void SetImproveSharpness                 (const char *value, EbConfig_t *cfg) {cfg->improve_sharpness               = (EbBool)strtol(value,  NULL, 0);};
 static void SetHighDynamicRangeInput            (const char *value, EbConfig_t *cfg) {cfg->high_dynamic_range_input            = strtol(value,  NULL, 0);};
-static void SetAccessUnitDelimiter              (const char *value, EbConfig_t *cfg) {cfg->access_unit_delimiter              = strtol(value,  NULL, 0);};
-static void SetBufferingPeriodSEI               (const char *value, EbConfig_t *cfg) {cfg->buffering_period_sei               = strtol(value,  NULL, 0);};
-static void SetPictureTimingSEI                 (const char *value, EbConfig_t *cfg) {cfg->picture_timing_sei                 = strtol(value,  NULL, 0);};
-static void SetRegisteredUserDataSEI            (const char *value, EbConfig_t *cfg) {cfg->registered_user_data_sei_flag        = (EbBool)strtol(value,  NULL, 0);};
-static void SetUnRegisteredUserDataSEI          (const char *value, EbConfig_t *cfg) {cfg->unregistered_user_data_sei_flag      = (EbBool)strtol(value,  NULL, 0);};
-static void SetRecoveryPointSEI                 (const char *value, EbConfig_t *cfg) {cfg->recovery_point_sei_flag             = (EbBool)strtol(value,  NULL, 0);};
-static void SetEnableTemporalId                 (const char *value, EbConfig_t *cfg) {cfg->enable_temporal_id                 = strtol(value,  NULL, 0);};
 static void SetProfile                          (const char *value, EbConfig_t *cfg) {cfg->profile                          = strtol(value,  NULL, 0);};
 static void SetTier                             (const char *value, EbConfig_t *cfg) {cfg->tier                             = strtol(value,  NULL, 0);};
 static void SetLevel                            (const char *value, EbConfig_t *cfg) {
@@ -355,13 +341,6 @@ config_entry_t config_entry[] = {
 //    { SINGLE_INPUT, BITRATE_REDUCTION_TOKEN, "BitRateReduction", SetBitRateReduction },
     { SINGLE_INPUT, IMPROVE_SHARPNESS_TOKEN,"ImproveSharpness", SetImproveSharpness},
     { SINGLE_INPUT, HDR_INPUT_TOKEN, "HighDynamicRangeInput", SetHighDynamicRangeInput },
-    { SINGLE_INPUT, ACCESS_UNIT_DELM_TOKEN, "AccessUnitDelimiter", SetAccessUnitDelimiter },
-    { SINGLE_INPUT, BUFF_PERIOD_TOKEN, "BufferingPeriod", SetBufferingPeriodSEI },
-    { SINGLE_INPUT, PIC_TIMING_TOKEN, "PictureTiming", SetPictureTimingSEI },
-    { SINGLE_INPUT, REG_USER_DATA_TOKEN, "RegisteredUserData", SetRegisteredUserDataSEI },
-    { SINGLE_INPUT, UNREG_USER_DATA_TOKEN, "UnregisteredUserData", SetUnRegisteredUserDataSEI },
-    { SINGLE_INPUT, RECOVERY_POINT_TOKEN, "RecoveryPoint", SetRecoveryPointSEI },
-    { SINGLE_INPUT, TEMPORAL_ID, "TemporalId", SetEnableTemporalId },
 
     // Latency
     { SINGLE_INPUT, INJECTOR_TOKEN, "Injector", SetInjector },
@@ -410,7 +389,7 @@ void EbConfigCtor(EbConfig_t *config_ptr)
     config_ptr->sourceHeight                         = 0;
     config_ptr->inputPaddedWidth                     = 0;
     config_ptr->inputPaddedHeight                    = 0;
-    config_ptr->framesToBeEncoded                    = 0;
+    config_ptr->frames_to_be_encoded                 = 0;
     config_ptr->bufferedInput                        = -1;
     config_ptr->sequenceBuffer                       = 0;
     config_ptr->latencyMode                          = 0;
@@ -471,15 +450,8 @@ void EbConfigCtor(EbConfig_t *config_ptr)
 
     // Thresholds
     config_ptr->high_dynamic_range_input             = 0;
-    config_ptr->access_unit_delimiter                = 0;
-    config_ptr->buffering_period_sei                 = 0;
-    config_ptr->picture_timing_sei                   = 0;
 
     config_ptr->improve_sharpness                    = 0;
-    config_ptr->registered_user_data_sei_flag        = 0;
-    config_ptr->unregistered_user_data_sei_flag      = 0;
-    config_ptr->recovery_point_sei_flag              = 0;
-    config_ptr->enable_temporal_id                   = 1;
 
     // Annex A parameters
     config_ptr->profile                              = 0;
@@ -493,7 +465,6 @@ void EbConfigCtor(EbConfig_t *config_ptr)
 
 
     // Testing
-    config_ptr->testUserData                         = 0;
     config_ptr->eosFlag                                = 0;
 
     // Computational Performance Parameters
@@ -792,7 +763,7 @@ static EbErrorType VerifySettings(EbConfig_t *config, uint32_t channelNumber)
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->framesToBeEncoded <= -1) {
+    if (config->frames_to_be_encoded <= -1) {
         fprintf(config->errorLogFile, "Error instance %u: FrameToBeEncoded must be greater than 0\n",channelNumber+1);
         return_error = EB_ErrorBadParameter;
     }
@@ -802,7 +773,7 @@ static EbErrorType VerifySettings(EbConfig_t *config, uint32_t channelNumber)
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->bufferedInput > config->framesToBeEncoded) {
+    if (config->bufferedInput > config->frames_to_be_encoded) {
         fprintf(config->errorLogFile, "Error instance %u: Invalid BufferedInput. BufferedInput must be less or equal to the number of frames to be encoded\n",channelNumber+1);
         return_error = EB_ErrorBadParameter;
     }
@@ -1251,10 +1222,10 @@ EbErrorType ReadCommandLine(
 
 
                 // Assuming no errors, set the frames to be encoded to the number of frames in the input yuv
-                if (return_errors[index] == EB_ErrorNone && configs[index]->framesToBeEncoded == 0)
-                    configs[index]->framesToBeEncoded = ComputeFramesToBeEncoded(configs[index]);
+                if (return_errors[index] == EB_ErrorNone && configs[index]->frames_to_be_encoded == 0)
+                    configs[index]->frames_to_be_encoded = ComputeFramesToBeEncoded(configs[index]);
 
-                if (configs[index]->framesToBeEncoded == -1) {
+                if (configs[index]->frames_to_be_encoded == -1) {
                     fprintf(configs[index]->errorLogFile, "Error instance %u: Input yuv does not contain enough frames \n", index + 1);
                     return_errors[index] = EB_ErrorBadParameter;
                 }

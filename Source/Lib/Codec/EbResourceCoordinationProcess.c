@@ -14,7 +14,7 @@
 #include "EbResourceCoordinationProcess.h"
 #include "EbResourceCoordinationResults.h"
 #include "EbTransforms.h"
-#include "EbTime.h"
+#include "EbSvtAv1Time.h"
 
 /************************************************
  * Resource Coordination Context Constructor
@@ -568,8 +568,8 @@ void* resource_coordination_kernel(void *input_ptr)
         picture_control_set_ptr->end_of_sequence_flag = end_of_sequence_flag;
 
         // Set Picture Control Flags
-        picture_control_set_ptr->idr_flag = sequence_control_set_ptr->encode_context_ptr->initial_picture || (picture_control_set_ptr->input_ptr->pic_type == EB_IDR_PICTURE);
-        picture_control_set_ptr->cra_flag = (picture_control_set_ptr->input_ptr->pic_type == EB_I_PICTURE) ? EB_TRUE : EB_FALSE;
+        picture_control_set_ptr->idr_flag = sequence_control_set_ptr->encode_context_ptr->initial_picture || (picture_control_set_ptr->input_ptr->pic_type == EB_AV1_KEY_PICTURE);
+        picture_control_set_ptr->cra_flag = (picture_control_set_ptr->input_ptr->pic_type == EB_AV1_INTRA_ONLY_PICTURE) ? EB_TRUE : EB_FALSE;
         picture_control_set_ptr->scene_change_flag = EB_FALSE;
         picture_control_set_ptr->qp_on_the_fly = EB_FALSE;
         picture_control_set_ptr->sb_total_count = sequence_control_set_ptr->sb_total_count;

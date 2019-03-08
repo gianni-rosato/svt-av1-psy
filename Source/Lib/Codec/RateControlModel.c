@@ -72,7 +72,7 @@ EbErrorType    rate_control_model_ctor(EbRateControlModel **object_doubble_ptr) 
 }
 
 EbErrorType rate_control_model_init(EbRateControlModel *model_ptr, SequenceControlSet_t *sequenceControlSetPtr) {
-    uint32_t                number_of_frame = sequenceControlSetPtr->static_config.framesToBeEncoded;
+    uint32_t                number_of_frame = sequenceControlSetPtr->static_config.frames_to_be_encoded;
     EbRateControlGopInfo    *gop_infos;
 
     EB_MALLOC(EbRateControlGopInfo*, gop_infos, sizeof(EbRateControlModel) * number_of_frame, EB_N_PTR);
