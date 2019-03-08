@@ -256,6 +256,7 @@ index 0000000..7d0e307
 +    param->base_layer_switch_mode    = svt_enc->base_layer_switch_mode;
 +    param->qp                     = svt_enc->qp;
 +
++
 +    param->target_bit_rate          = avctx->bit_rate;
 +    if (avctx->gop_size > 0)
 +        param->intra_period_length  = avctx->gop_size - 1;
