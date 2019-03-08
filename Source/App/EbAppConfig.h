@@ -268,7 +268,7 @@ typedef struct EbConfig_s
     /****************************************
      * Film Grain
      ****************************************/
-    EbBool                  film_grain_denoise_strength;
+    uint32_t                film_grain_denoise_strength;
      /****************************************
      * DLF
      ****************************************/

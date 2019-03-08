@@ -141,7 +141,7 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 0. */
     uint64_t                 frames_to_be_encoded;
-    uint32_t                 ten_bit_format;
+
     /* The visual quality knob that allows the use of adaptive quantization
      * within the picture and enables visual quality algorithms that improve the
      * sharpness of the background. Only available for 4k resolution and
@@ -213,21 +213,6 @@ typedef struct EbSvtAv1EncConfiguration
     * Default is 1. */
     EbBool                   enable_hme_flag;
 
-    /* Flag to enable Hierarchical Motion Estimation 1/16th of the picture
-    *
-    * Default is 1. */
-    EbBool                   enable_hme_level0_flag;
-
-    /* Flag to enable Hierarchical Motion Estimation 1/4th of the picture
-    *
-    * Default is 1. */
-    EbBool                   enable_hme_level1_flag;
-
-    /* Flag to enable Hierarchical Motion Estimation full sample of the picture
-    *
-    * Default is 1. */
-    EbBool                   enable_hme_level2_flag;
-
     /* Flag to enable the use of non-swaure partitions
     *
     * Default is 1. */
@@ -247,21 +232,6 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default depends on input resolution. */
     uint32_t                 search_area_height;
-
-    // HME Parameters
-    /* Number of search positions in width and height for the HME
-    *
-    * Default depends on input resolution. */
-    uint32_t                 number_hme_search_region_in_width;
-    uint32_t                 number_hme_search_region_in_height;
-    uint32_t                 hme_level0_total_search_area_width;
-    uint32_t                 hme_level0_total_search_area_height;
-    uint32_t                 hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t                 hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint32_t                 hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t                 hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint32_t                 hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t                 hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
 
     // MD Parameters
     /* Enable the use of Constrained Intra, which yields sending two picture
@@ -347,8 +317,6 @@ typedef struct EbSvtAv1EncConfiguration
     uint32_t                 channel_id;
     uint32_t                 active_channel_count;
 
-    uint32_t                 stat_report;
-
     /* Flag to enable the Speed Control functionality to achieve the real-time
     * encoding speed defined by dynamically changing the encoding preset to meet
     * the average speed defined in injectorFrameRate. When this parameter is set
@@ -393,6 +361,43 @@ typedef struct EbSvtAv1EncConfiguration
     int32_t                  tile_columns;
     int32_t                  tile_rows;
 #endif
+
+/* To be deprecated.
+ * Encoder configuration parameters below this line are to be deprecated. */
+
+    uint32_t                 stat_report;
+
+    /* Flag to enable Hierarchical Motion Estimation 1/16th of the picture
+    *
+    * Default is 1. */
+    EbBool                   enable_hme_level0_flag;
+
+    /* Flag to enable Hierarchical Motion Estimation 1/4th of the picture
+    *
+    * Default is 1. */
+    EbBool                   enable_hme_level1_flag;
+
+    /* Flag to enable Hierarchical Motion Estimation full sample of the picture
+    *
+    * Default is 1. */
+    EbBool                   enable_hme_level2_flag;
+
+    // HME Parameters
+    /* Number of search positions in width and height for the HME
+    *
+    * Default depends on input resolution. */
+    uint32_t                 number_hme_search_region_in_width;
+    uint32_t                 number_hme_search_region_in_height;
+    uint32_t                 hme_level0_total_search_area_width;
+    uint32_t                 hme_level0_total_search_area_height;
+    uint32_t                 hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t                 hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint32_t                 hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t                 hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint32_t                 hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t                 hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+
+    uint32_t                 ten_bit_format;
 
 } EbSvtAv1EncConfiguration;
 
