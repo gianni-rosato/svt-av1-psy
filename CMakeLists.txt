@@ -56,9 +56,9 @@ if(USE_CODE_COVERAGE AND CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 # Add Subdirectories
-add_subdirectory (Source/Lib)
-add_subdirectory (Source/App)
-add_subdirectory (Source/SimpleApp)
+add_subdirectory (Source/Lib/Common)
+add_subdirectory (Source/App/EncApp)
+add_subdirectory (Source/App/SimpleApp)
 if (BUILD_TESTING)
     add_subdirectory (test)
     add_subdirectory (third_party/googletest)

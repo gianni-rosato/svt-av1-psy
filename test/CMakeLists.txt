@@ -13,7 +13,7 @@ include_directories (${PROJECT_SOURCE_DIR}/test/)
 include_directories (${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 include_directories(${PROJECT_SOURCE_DIR}/third_party/googletest/include third_party/googletest/src)
 include_directories(${PROJECT_SOURCE_DIR}/Source/API )
-include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Codec )
+include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec )
 
 # Define helper functions and macros used by Google Test.
 include(../third_party/googletest/cmake/internal_utils.cmake)
@@ -42,8 +42,8 @@ enable_testing()
 file(GLOB all_files
     "*.h"
     "*.cc"
-    "../Source/Lib/Codec/grainSynthesis.h"
-    "../Source/Lib/Codec/grainSynthesis.c")
+    "../Source/Lib/Common/Codec/grainSynthesis.h"
+    "../Source/Lib/Common/Codec/grainSynthesis.c")
 
 if (UNIX)
   # App Source Files

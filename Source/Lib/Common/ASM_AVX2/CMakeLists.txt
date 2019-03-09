@@ -8,13 +8,13 @@
 # Include Encoder Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/)
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/OpenMAX/IL/)
-include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Codec/)
-include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/)
-include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE2/)
-include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSSE3/)
-include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE4_1/)
-include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/ASM_AVX2/)
-link_directories(${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSSE3/)
+include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/)
+include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/)
+include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/)
+include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/)
+include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/)
+include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/)
+link_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/)
 
 
 if(UNIX)
