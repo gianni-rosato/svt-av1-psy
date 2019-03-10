@@ -165,6 +165,8 @@ extern "C" {
 #define ENABLE_EOB_ZERO_CHECK                           1
 #define DISABLE_128_SB_FOR_SUB_720                      1
 
+#define IMPROVE_CHROMA_MODE                  1
+
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/
