@@ -8,7 +8,7 @@
 section .text
 ; ----------------------------------------------------------------------------------------
 
-cglobal _PictureCopyKernel_SSE2
+cglobal _picture_copy_kernel_sse2
 cglobal picture_copy_kernel_sse2
 
 ; Requirement: areaWidthInBytes = 4, 8, 12, 16, 24, 32, 48, 64 or 128
@@ -210,7 +210,7 @@ Label_PictureCopyKernel_SSE2_WIDTH16:
     ret
 ; ----------------------------------------------------------------------------------------
 
-cglobal _ZeroOutCoeff4x4_SSE
+cglobal _zero_out_coeff4x4_sse
 cglobal zero_out_coeff4x4_sse
 
     lea             r0,             [r0+2*r2]
@@ -230,7 +230,7 @@ cglobal zero_out_coeff4x4_sse
 
 ; ----------------------------------------------------------------------------------------
 
-cglobal _ZeroOutCoeff8x8_SSE2
+cglobal _zero_out_coeff8x8_sse2
 cglobal zero_out_coeff8x8_sse2
 
 ; TODO: use "movdqa" if coeff_buffer is guaranteed to be 16-byte aligned.
@@ -253,7 +253,7 @@ cglobal zero_out_coeff8x8_sse2
 
 ; ----------------------------------------------------------------------------------------
 
-cglobal _ZeroOutCoeff16x16_SSE2
+cglobal _zero_out_coeff16x16_sse2
 cglobal zero_out_coeff16x16_sse2
 
 ; TODO: use "movdqa" if coeff_buffer is guaranteed to be 16-byte aligned.
@@ -303,7 +303,7 @@ cglobal zero_out_coeff16x16_sse2
 
 ; ----------------------------------------------------------------------------------------
 
-cglobal _ZeroOutCoeff32x32_SSE2
+cglobal _zero_out_coeff32x32_sse2
 cglobal zero_out_coeff32x32_sse2
 
 ; TODO: use "movdqa" if coeff_buffer is guaranteed to be 16-byte aligned.
@@ -355,7 +355,7 @@ Label_ZeroOutCoeff32x32_SSE2_01:
 
 ; ----------------------------------------------------------------------------------------
 
-cglobal _PictureAverageKernel_SSE2
+cglobal _picture_average_kernel_sse2
 cglobal picture_average_kernel_sse2
 
 ; Requirement: pu_width         = 4, 8, 12, 16, 24, 32, 48 or 64
