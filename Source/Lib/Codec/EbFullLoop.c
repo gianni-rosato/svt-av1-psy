@@ -905,17 +905,6 @@ void av1_quantize_inv_quantize(
     (void)pf_mode;
     //Note: Transformed, Quantized, iQuantized coeff are stored in 1D fashion. 64x64 is hence in the first 32x32 corner.
 
-    uint32_t i;
-
-    for (i = 0; i < height; i++)
-    {
-        memset(quant_coeff + i * width, 0, width * sizeof(int32_t));
-        memset(recon_coeff + i * width, 0, width * sizeof(int32_t));
-    }
-
-
-
-
     av1_quantize_inv_quantize_ii(
         picture_control_set_ptr,
         coeff,
