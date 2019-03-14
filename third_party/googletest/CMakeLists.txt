@@ -82,14 +82,8 @@ link_directories(${gtest_BINARY_DIR}/src)
 # are used for other targets, to ensure that gtest can be compiled by a user
 # aggressive about warnings.
 
-if(UNIX)
-  cxx_library(gtest_all "${cxx_strict}" src/gtest-all.cc src/gtest_main.cc)
-endif()
-
-if (MSVC OR MSYS OR MINGW OR WIN32)
-  cxx_shared_library(gtest_all "${cxx_default}"
+cxx_shared_library(gtest_all "${cxx_default}"
     src/gtest-all.cc src/gtest_main.cc)
-endif()
 
 target_link_libraries(gtest_all)
 
