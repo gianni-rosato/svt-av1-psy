@@ -1,4 +1,4 @@
-From 6be97da6f57f7773fca432de4ddecb3f57e47c25 Mon Sep 17 00:00:00 2001
+From d6aa2afebf7c5b6cda7bf19d86a7bb3e01522df5 Mon Sep 17 00:00:00 2001
 From: Daryl Seah <daryl.seah@intel.com>
 Date: Fri, 18 Jan 2019 02:11:38 +0000
 Subject: [PATCH 1/1] Add ability for ffmpeg to run svt-av1
@@ -10,12 +10,12 @@ Signed-off-by: Jing SUN <jing.a.sun@intel.com>
  configure               |   4 +
  libavcodec/Makefile     |   1 +
  libavcodec/allcodecs.c  |   1 +
- libavcodec/libsvt_av1.c | 491 ++++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 497 insertions(+)
+ libavcodec/libsvt_av1.c | 492 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 498 insertions(+)
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
-index a70c5f9..1850ef0 100755
+index a70c5f9..b6a336d 100755
 --- a/configure
 +++ b/configure
 @@ -262,6 +262,7 @@ External library support:
@@ -76,10 +76,10 @@ index 1b8144a..f7df66c 100644
  extern AVCodec ff_libvo_amrwbenc_encoder;
 diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
 new file mode 100644
-index 0000000..7d0e307
+index 0000000..6ef262e
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
-@@ -0,0 +1,491 @@
+@@ -0,0 +1,492 @@
 +/*
 +* Scalable Video Technology for AV1 encoder library plugin
 +*
@@ -247,7 +247,7 @@ index 0000000..7d0e307
 +    }
 +
 +    // Update param from options
-+    param->hierarchical_levels     = svt_enc->hierarchical_level - 1;
++    param->hierarchical_levels     = svt_enc->hierarchical_level;
 +    param->enc_mode                = svt_enc->enc_mode;
 +    param->tier                   = svt_enc->tier;
 +    param->level                  = svt_enc->level;
@@ -481,7 +481,7 @@ index 0000000..7d0e307
 +      AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, VE },
 +
 +    { "hielevel", "Hierarchical prediction levels setting", OFFSET(hierarchical_level),
-+      AV_OPT_TYPE_INT, { .i64 = 4 }, 1, 4, VE , "hielevel"},
++      AV_OPT_TYPE_INT, { .i64 = 4 }, 3, 4, VE , "hielevel"},
 +        { "flat",   NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 1 },  INT_MIN, INT_MAX, VE, "hielevel" },
 +        { "2level", NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 2 },  INT_MIN, INT_MAX, VE, "hielevel" },
 +        { "3level", NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 3 },  INT_MIN, INT_MAX, VE, "hielevel" },
@@ -524,7 +524,7 @@ index 0000000..7d0e307
 +        { "vbr", NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 1 },  INT_MIN, INT_MAX, VE, "rc" },
 +
 +    { "qp", "QP value for intra frames", OFFSET(qp),
-+      AV_OPT_TYPE_INT, { .i64 = 32 }, 0, 51, VE },
++      AV_OPT_TYPE_INT, { .i64 = 50 }, 0, 63, VE },
 +
 +    { "sc_detection", "Scene change detection", OFFSET(scd),
 +      AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, VE },
@@ -547,9 +547,10 @@ index 0000000..7d0e307
 +
 +static const AVCodecDefault eb_enc_defaults[] = {
 +    { "b",         "7M"    },
++    { "g",         "-2"    },
 +    { "flags",     "-cgop" },
-+    { "qmin",      "10"    },
-+    { "qmax",      "48"    },
++    { "qmin",      "0"    },
++    { "qmax",      "63"    },
 +    { NULL },
 +};
 +

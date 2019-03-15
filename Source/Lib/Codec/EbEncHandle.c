@@ -2728,7 +2728,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->min_qp_allowed = 0;
     config_ptr->base_layer_switch_mode = 0;
     config_ptr->enc_mode = MAX_ENC_PRESET;
-    config_ptr->intra_period_length = 30;
+    config_ptr->intra_period_length = -2;
     config_ptr->intra_refresh_type = 1;
 #if NEW_PRED_STRUCT
     config_ptr->hierarchical_levels = 4;
