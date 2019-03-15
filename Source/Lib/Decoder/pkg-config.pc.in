@@ -1,0 +1,9 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+
+Name: SvtAv1Dec
+Description: SVT (Scalable Video Technology) for AV1 decoder library
+Version: 1.3.0
+Libs: -L${libdir} -lSvtAv1dec -lpthread -lm
+Cflags: -I${includedir}

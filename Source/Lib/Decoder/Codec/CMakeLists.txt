@@ -1,0 +1,72 @@
+# 
+# Copyright(c) 2019 Intel Corporation
+# SPDX - License - Identifier: BSD - 2 - Clause - Patent
+# 
+# DecoderLib Directory CMakeLists.txt
+
+# Include Decoder Subdirectories
+include_directories (${PROJECT_SOURCE_DIR}/Source/API/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec/)
+
+
+link_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/)
+link_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/)
+link_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/)
+link_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/)
+link_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/)
+link_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec/)
+
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+   SET(CMAKE_C_FLAGS "/MP")    
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+file(GLOB all_files
+    "*.h"
+    "*.c")
+ 
+# Decoder Lib Source Files
+add_library(SvtAv1Dec SHARED
+    ${all_files}
+)
+    
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+target_link_libraries(SvtAv1Dec
+    COMMON_CODEC
+    COMMON_C_DEFAULT
+    COMMON_ASM_SSE2
+    COMMON_ASM_SSSE3
+    COMMON_ASM_SSE4_1
+    COMMON_ASM_AVX2
+    m)
+else()
+target_link_libraries(SvtAv1Dec
+    COMMON_CODEC
+    COMMON_C_DEFAULT
+    COMMON_ASM_SSE2
+    COMMON_ASM_SSSE3
+    COMMON_ASM_SSE4_1
+    COMMON_ASM_AVX2)
+endif()
+
+if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
+    set(CMAKE_INSTALL_LIBDIR "lib")
+endif()
+
+if(NOT DEFINED CMAKE_INSTALL_INCLUDEDIR)
+    set(CMAKE_INSTALL_INCLUDEDIR "include/svt-av1")
+endif()
+    
+configure_file(../pkg-config.pc.in ${CMAKE_BINARY_DIR}/SvtAv1Dec.pc @ONLY)
+install(FILES ${CMAKE_BINARY_DIR}/SvtAv1Dec.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+install(TARGETS SvtAv1Dec DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+install(DIRECTORY ../../../API/ DESTINATION "${CMAKE_INSTALL_PREFIX}/include/svt-av1" FILES_MATCHING PATTERN "*.h")

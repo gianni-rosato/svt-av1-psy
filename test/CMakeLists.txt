@@ -53,6 +53,7 @@ if (UNIX)
     # Link the Encoder App
      target_link_libraries (SvtAv1UnitTests
         SvtAv1Enc
+        SvtAv1Dec
         gtest_all 
         pthread
         m)
@@ -60,7 +61,7 @@ endif(UNIX)
 
 if (MSVC OR MSYS OR MINGW OR WIN32)
   
-    set (lib_list SvtAv1Enc gtest_all)
+    set (lib_list SvtAv1Enc SvtAv1Dec gtest_all)
     cxx_executable_with_flags(SvtAv1UnitTests "${cxx_default}"
       "${lib_list}" ${all_files})
 

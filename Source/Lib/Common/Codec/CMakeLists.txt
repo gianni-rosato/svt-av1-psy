@@ -2,10 +2,6 @@
 # Copyright(c) 2019 Intel Corporation
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
 # 
-# 
-# Copyright(c) 2019 Netflix
-# SPDX - License - Identifier: BSD - 2 - Clause - Patent
-# 
 # Common/Codec Directory CMakeLists.txt
 
 # Include Encoder Subdirectories
