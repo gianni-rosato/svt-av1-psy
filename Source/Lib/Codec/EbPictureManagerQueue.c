@@ -16,10 +16,13 @@ EbErrorType input_queue_entry_ctor(
     entryPtr->inputObjectPtr = (EbObjectWrapper_t*)EB_NULL;
     entryPtr->referenceEntryIndex = 0;
     entryPtr->dependentCount = 0;
-
+#if BASE_LAYER_REF
+    EB_MALLOC(ReferenceList_t*, entryPtr->list0Ptr, sizeof(ReferenceList_t), EB_N_PTR);
+    EB_MALLOC(ReferenceList_t*, entryPtr->list1Ptr, sizeof(ReferenceList_t), EB_N_PTR);
+#else
     entryPtr->list0Ptr = (ReferenceList_t*)EB_NULL;
     entryPtr->list1Ptr = (ReferenceList_t*)EB_NULL;
-
+#endif
     return EB_ErrorNone;
 }
 

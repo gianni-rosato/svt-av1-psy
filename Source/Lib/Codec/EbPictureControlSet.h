@@ -13938,6 +13938,9 @@ extern "C" {
         EbBool                                eos_coming;
         uint8_t                               picture_qp;
         uint64_t                              picture_number;
+#if BASE_LAYER_REF
+        uint64_t                              last_islice_picture_number;
+#endif
         EbPicnoiseClass                       pic_noise_class;
         EB_SLICE                              slice_type;
         uint8_t                               pred_struct_index;

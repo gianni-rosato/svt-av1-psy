@@ -164,6 +164,10 @@ extern "C" {
 #define TWO_FAST_LOOP                                   1
 #define ENABLE_EOB_ZERO_CHECK                           1
 #define DISABLE_128_SB_FOR_SUB_720                      1
+#define BASE_LAYER_REF                                  1 // Base layer pictures use the previous I slice as the second reference
+#if BASE_LAYER_REF
+#define MAX_FRAMES_TO_REF_I                             64
+#endif
 
 #define IMPROVE_CHROMA_MODE                  1
 
