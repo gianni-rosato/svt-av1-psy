@@ -3,7 +3,7 @@
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
 # 
 
-# ASM_AVX2 Directory CMakeLists.txt
+# Common/ASM_AVX2 Directory CMakeLists.txt
 
 # Include Encoder Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/)
@@ -38,7 +38,7 @@ file(GLOB all_files
     "*.asm"
     "*.c")
 
-add_library(ASM_AVX2
+add_library(COMMON_ASM_AVX2
     ${all_files}
 )
 

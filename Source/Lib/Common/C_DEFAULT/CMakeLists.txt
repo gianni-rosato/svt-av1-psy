@@ -18,6 +18,6 @@ file(GLOB all_files
     "*.h"
     "*.c")
 
-add_library(C_DEFAULT
+add_library(COMMON_C_DEFAULT
     ${all_files}
 )

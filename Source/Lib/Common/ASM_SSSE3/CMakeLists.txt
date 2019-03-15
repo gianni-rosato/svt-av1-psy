@@ -31,7 +31,7 @@ file(GLOB all_files
     "*.asm"
     "*.c")
 
-add_library(ASM_SSSE3
+add_library(COMMON_ASM_SSSE3
     ${all_files}
 )
 

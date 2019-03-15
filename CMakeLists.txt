@@ -57,6 +57,7 @@ endif()
 
 # Add Subdirectories
 add_subdirectory (Source/Lib/Common)
+add_subdirectory (Source/Lib/Encoder)
 add_subdirectory (Source/App/EncApp)
 add_subdirectory (Source/App/SimpleApp)
 if (BUILD_TESTING)
