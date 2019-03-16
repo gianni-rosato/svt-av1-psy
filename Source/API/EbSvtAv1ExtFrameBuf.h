@@ -3,8 +3,8 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#ifndef EbExtFrameBuf_h
-#define EbExtFrameBuf_h
+#ifndef EbSvtAv1ExtFrameBuf_h
+#define EbSvtAv1ExtFrameBuf_h
 
 #ifdef __cplusplus
 extern "C" {

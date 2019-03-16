@@ -3,8 +3,8 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#ifndef EbCodec_h
-#define EbCodec_h
+#ifndef EbSvtAv1_h
+#define EbSvtAv1_h
 
 #ifdef __cplusplus
 extern "C" {
@@ -154,4 +154,4 @@ typedef struct EbSvtIOFormat            //former EbSvtEncInput
 }
 #endif // __cplusplus
 
-#endif // EbCodec_h
+#endif // EbSvtAv1_h

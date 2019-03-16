@@ -13,8 +13,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef EbFormats_h
-#define EbFormats_h
+#ifndef EbSvtAv1Formats_h
+#define EbSvtAv1Formats_h
 
 #ifdef __cplusplus
 extern "C" {
@@ -134,4 +134,4 @@ typedef enum EbChromaSamplePosition {
 }
 #endif // __cplusplus
 
-#endif // EbFormats_h
+#endif // EbSvtAv1Formats_h
