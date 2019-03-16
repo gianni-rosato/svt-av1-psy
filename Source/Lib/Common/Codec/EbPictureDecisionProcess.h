@@ -45,6 +45,9 @@ typedef struct PictureDecisionContext_s
 
 
     EbBool miniGopToggle;    //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
+#if BASE_LAYER_REF
+    uint64_t         last_islice_picture_number;
+#endif
 } PictureDecisionContext_t;
 
 /***************************************

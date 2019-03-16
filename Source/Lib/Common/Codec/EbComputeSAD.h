@@ -108,7 +108,7 @@ extern "C" {
     {
         // NON_AVX2
         {
-            /*0 4xM  */ Compute4xMSadSub_AVX2_INTRIN,
+            /*0 4xM  */ fast_loop_nx_m_sad_kernel,
             /*1 8xM  */ fast_loop_nx_m_sad_kernel,
             /*2 16xM */ fast_loop_nx_m_sad_kernel,
             /*3 24xM */ fast_loop_nx_m_sad_kernel,

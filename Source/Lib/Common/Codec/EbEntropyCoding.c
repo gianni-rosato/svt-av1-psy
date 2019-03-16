@@ -1011,7 +1011,7 @@ static void EncodePartitionAv1(
 
     }
     else if (!hasRows && hasCols) {
-        aom_cdf_prob cdf[2];
+        aom_cdf_prob cdf[CDF_SIZE(2)];
         partition_gather_vert_alike(cdf, frameContext->partition_cdf[contextIndex], bsize);
         aom_write_symbol(
             ecWriter,
@@ -1020,7 +1020,7 @@ static void EncodePartitionAv1(
             2);
     }
     else {
-        aom_cdf_prob cdf[2];
+        aom_cdf_prob cdf[CDF_SIZE(2)];
         partition_gather_horz_alike(cdf, frameContext->partition_cdf[contextIndex], bsize);
         aom_write_symbol(
             ecWriter,

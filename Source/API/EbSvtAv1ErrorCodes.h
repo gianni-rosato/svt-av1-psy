@@ -3,8 +3,8 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#ifndef EbErrorCodes_h
-#define EbErrorCodes_h
+#ifndef EbSvtAv1ErrorCodes_h
+#define EbSvtAv1ErrorCodes_h
 
 #ifdef __cplusplus
 extern "C" {
@@ -241,4 +241,4 @@ extern "C" {
 }
 #endif // __cplusplus
 
-#endif // EbErrorCodes_h
+#endif // EbSvtAv1ErrorCodes_h

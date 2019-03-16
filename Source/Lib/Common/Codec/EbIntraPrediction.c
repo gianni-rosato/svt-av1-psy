@@ -8767,14 +8767,14 @@ static void build_intra_predictors(
 #if INTRA_CORE_OPT 
     uint8_t * above_row;
     uint8_t * left_col;
+    DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
+    DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
     if (stage == MD_STAGE) {
 
         above_row = md_context_ptr->above_data[plane] + 16;
         left_col = md_context_ptr->left_data[plane] + 16;
     }
     else {
-        DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
-        DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
         above_row = above_data + 16;
         left_col = left_data + 16;
     }

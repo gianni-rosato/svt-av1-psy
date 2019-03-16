@@ -3,8 +3,8 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#ifndef EbApi_h
-#define EbApi_h
+#ifndef EbSvtAv1Enc_h
+#define EbSvtAv1Enc_h
 
 #ifdef __cplusplus
 extern "C" {
@@ -503,4 +503,4 @@ typedef struct EbSvtAv1EncConfiguration
 }
 #endif // __cplusplus
 
-#endif // EbApi_h
+#endif // EbSvtAv1Enc_h
