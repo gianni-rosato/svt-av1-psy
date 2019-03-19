@@ -7,7 +7,6 @@
 
 # Include Encoder Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/)
-include_directories(${PROJECT_SOURCE_DIR}/Source/API/OpenMAX/IL/)
 include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/)
 include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/)
 include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/)
