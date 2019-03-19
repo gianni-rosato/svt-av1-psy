@@ -4025,12 +4025,16 @@ void SetPictureParametersForStatisticsGathering(
 void PicturePreProcessingOperations(
     PictureParentControlSet_t       *picture_control_set_ptr,
     EbPictureBufferDesc_t           *input_picture_ptr,
+#if !SHUT_FULL_DENOISE
     PictureAnalysisContext_t        *context_ptr,
+#endif
     SequenceControlSet_t            *sequence_control_set_ptr,
     EbPictureBufferDesc_t           *quarter_decimated_picture_ptr,
     EbPictureBufferDesc_t           *sixteenth_decimated_picture_ptr,
     uint32_t                           sb_total_count,
+#if !SHUT_FULL_DENOISE
     uint32_t                           picture_width_in_sb,
+#endif
     EbAsm                           asm_type) {
 
     UNUSED(quarter_decimated_picture_ptr);
@@ -4045,7 +4049,13 @@ void PicturePreProcessingOperations(
             asm_type);
     }
     else {
-
+#if SHUT_FULL_DENOISE
+        //Reset the flat noise flag array to False for both RealTime/HighComplexity Modes
+        for (uint32_t lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
+            picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
+        }
+        picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
+#else
         FullSampleDenoise(
             context_ptr,
             sequence_control_set_ptr,
@@ -4054,6 +4064,8 @@ void PicturePreProcessingOperations(
             sequence_control_set_ptr->static_config.enable_denoise_flag,
             picture_width_in_sb,
             asm_type);
+#endif
+        
     }
     return;
 
@@ -4872,7 +4884,50 @@ void DecimateInputPicture(
         }
     }
 }
+#if ICOPY
+int av1_count_colors(const uint8_t *src, int stride, int rows, int cols,
+    int *val_count) {
+    const int max_pix_val = 1 << 8;
+    memset(val_count, 0, max_pix_val * sizeof(val_count[0]));
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            const int this_val = src[r * stride + c];
+            assert(this_val < max_pix_val);
+            ++val_count[this_val];
+        }
+    }
+    int n = 0;
+    for (int i = 0; i < max_pix_val; ++i) {
+        if (val_count[i]) ++n;
+    }
+    return n;
+}
+// Estimate if the source frame is screen content, based on the portion of
+// blocks that have no more than 4 (experimentally selected) luma colors.
+static int is_screen_content(const uint8_t *src, int use_hbd,
+    int stride, int width, int height) {
+    assert(src != NULL);
+    int counts = 0;
+    const int blk_w = 16;
+    const int blk_h = 16;
+    const int limit = 4;
+    for (int r = 0; r + blk_h <= height; r += blk_h) {
+        for (int c = 0; c + blk_w <= width; c += blk_w) {
+            int count_buf[1 << 12];  // Maximum (1 << 12) color levels.
+            const int n_colors =
+                use_hbd ? 0 /*av1_count_colors_highbd(src + r * stride + c, stride, blk_w,
+                    blk_h, bd, count_buf)*/
+                : av1_count_colors(src + r * stride + c, stride, blk_w, blk_h,
+                    count_buf);
+            if (n_colors > 1 && n_colors <= limit) counts++;
+        }
+    }
+    // The threshold is 10%.
+    return counts * blk_h * blk_w * 10 > width * height;
+}
 
+
+#endif
 /************************************************
  * Picture Analysis Kernel
  * The Picture Analysis Process pads & decimates the input pictures.
@@ -4933,6 +4988,8 @@ void* picture_analysis_kernel(void *input_ptr)
         SetPictureParametersForStatisticsGathering(
             sequence_control_set_ptr);
 
+
+
         // Pad pictures to multiple min cu size
         PadPictureToMultipleOfMinCuSizeDimensions(
             sequence_control_set_ptr,
@@ -4942,12 +4999,16 @@ void* picture_analysis_kernel(void *input_ptr)
         PicturePreProcessingOperations(
             picture_control_set_ptr,
             input_picture_ptr,
+#if !SHUT_FULL_DENOISE
             context_ptr,
+#endif
             sequence_control_set_ptr,
             quarterDecimatedPicturePtr,
             sixteenthDecimatedPicturePtr,
             sb_total_count,
+#if !SHUT_FULL_DENOISE
             picture_width_in_sb,
+#endif
             asm_type);
 
         // Pad input picture to complete border LCUs
@@ -4971,7 +5032,26 @@ void* picture_analysis_kernel(void *input_ptr)
             sb_total_count,
             asm_type);
 
+#if ICOPY
+        picture_control_set_ptr->sc_content_detected = is_screen_content(
+            input_picture_ptr->buffer_y + input_picture_ptr->origin_x + input_picture_ptr->origin_y*input_picture_ptr->stride_y,
+            0,
+            input_picture_ptr->stride_y,
+            sequence_control_set_ptr->luma_width, sequence_control_set_ptr->luma_height);       
+ #if ADD_VAR_SC_DETECT
+        if (picture_control_set_ptr->sc_content_detected) {
+            if (picture_control_set_ptr->pic_avg_variance > 1000)
+                picture_control_set_ptr->sc_content_detected = 1;
+            else
+                picture_control_set_ptr->sc_content_detected = 0;
+        }
+#endif
 
+#endif
+        
+#if HARD_CODE_SC_SETTING
+        picture_control_set_ptr->sc_content_detected = EB_TRUE;
+#endif
         // Hold the 64x64 variance and mean in the reference frame
         uint32_t sb_index;
         for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {

@@ -478,7 +478,11 @@ void Av1WriteTxType(
     TxType                     txType,
     TxSize                      txSize) {
 
+#if ICOPY
+    const int32_t isInter = cu_ptr->av1xd->use_intrabc || (cu_ptr->prediction_mode_flag == INTER_MODE);
+#else
     const int32_t isInter = (cu_ptr->prediction_mode_flag == INTER_MODE);
+#endif
 
     const TxSize squareTxSize = txsize_sqr_map[txSize];
 
@@ -4035,8 +4039,12 @@ static void WriteUncompressedHeaderObu(SequenceControlSet_t *scsPtr/*AV1_COMP *c
         write_frame_size(pcsPtr, frame_size_override_flag, wb);
         //assert(av1_superres_unscaled(cm) ||
         //    !(cm->allow_intrabc && NO_FILTER_FOR_IBC));
+#if ICOPY
+        if (pcsPtr->allow_screen_content_tools)
+#else
         if (pcsPtr->allow_screen_content_tools &&
             0 /*(av1_superres_unscaled(cm) || !NO_FILTER_FOR_IBC)*/)
+#endif
             aom_wb_write_bit(wb, pcsPtr->allow_intrabc);
         // all eight fbs are refreshed, pick one that will live long enough
         pcsPtr->fb_of_context_type[REGULAR_FRAME] = 0;
@@ -4044,8 +4052,12 @@ static void WriteUncompressedHeaderObu(SequenceControlSet_t *scsPtr/*AV1_COMP *c
     else {
         if (pcsPtr->av1FrameType == INTRA_ONLY_FRAME) {
             write_frame_size(pcsPtr, frame_size_override_flag, wb);
+#if ICOPY
+            if (pcsPtr->allow_screen_content_tools)
+#else
             if (pcsPtr->allow_screen_content_tools &&
                 0 /*(av1_superres_unscaled(cm) || !NO_FILTER_FOR_IBC)*/)
+#endif
                 aom_wb_write_bit(wb, pcsPtr->allow_intrabc);
         }
         else if (pcsPtr->av1FrameType == INTER_FRAME || frame_is_sframe(pcsPtr)) {
@@ -5009,6 +5021,109 @@ EbErrorType ec_update_neighbors(
     return return_error;
 
 }
+#if ICOPY
+int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, block_size bsize,
+    int32_t subsampling_x, int32_t subsampling_y);
+
+static INLINE int av1_allow_palette(int allow_screen_content_tools,
+    block_size sb_type) {
+    return allow_screen_content_tools && block_size_wide[sb_type] <= 64 &&
+        block_size_high[sb_type] <= 64 && sb_type >= BLOCK_8X8;
+}
+
+static INLINE int av1_get_palette_bsize_ctx(block_size bsize) {
+    return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
+}
+static void write_palette_mode_info(
+    FRAME_CONTEXT           *ec_ctx,
+    CodingUnit_t            *cu_ptr,
+    block_size bsize,
+    int mi_row,
+    int mi_col, aom_writer *w)
+{
+    const uint32_t intra_luma_mode = cu_ptr->pred_mode;
+    uint32_t intra_chroma_mode = cu_ptr->prediction_unit_array->intra_chroma_mode;
+
+    const int num_planes = 3;// av1_num_planes(cm);
+    //const BLOCK_SIZE bsize = mbmi->sb_type;
+    //assert(av1_allow_palette(cm->allow_screen_content_tools, bsize));
+   // const PALETTE_MODE_INFO *const pmi = &mbmi->palette_mode_info;
+    const int bsize_ctx = av1_get_palette_bsize_ctx(bsize);
+
+    if (intra_luma_mode == DC_PRED) {
+        const int n = 0;// pmi->palette_size[0];
+        const int palette_y_mode_ctx = 0;// av1_get_palette_mode_ctx(xd);
+        aom_write_symbol(
+            w, n > 0,
+            ec_ctx->palette_y_mode_cdf[bsize_ctx][palette_y_mode_ctx], 2);
+        if (n > 0) {
+            //aom_write_symbol(w, n - PALETTE_MIN_SIZE,
+            //    xd->tile_ctx->palette_y_size_cdf[bsize_ctx],
+            //    PALETTE_SIZES);
+            //write_palette_colors_y(xd, pmi, cm->seq_params.bit_depth, w);
+        }
+    }
+
+    const int uv_dc_pred =
+        num_planes > 1 && intra_chroma_mode == UV_DC_PRED &&
+        is_chroma_reference(mi_row, mi_col, bsize, 1, 1);
+    if (uv_dc_pred) {
+        const int n = 0;// pmi->palette_size[1];
+        const int palette_uv_mode_ctx = 0;// (pmi->palette_size[0] > 0);
+        aom_write_symbol(w, n > 0,
+            ec_ctx->palette_uv_mode_cdf[palette_uv_mode_ctx], 2);
+        if (n > 0) {
+            /*           aom_write_symbol(w, n - PALETTE_MIN_SIZE,
+                           xd->tile_ctx->palette_uv_size_cdf[bsize_ctx],
+                           PALETTE_SIZES);
+                       write_palette_colors_uv(xd, pmi, cm->seq_params.bit_depth, w);*/
+        }
+    }
+}
+void av1_encode_dv(aom_writer *w, const MV *mv, const MV *ref,
+    nmv_context *mvctx) {
+    // DV and ref DV should not have sub-pel.
+    assert((mv->col & 7) == 0);
+    assert((mv->row & 7) == 0);
+    assert((ref->col & 7) == 0);
+    assert((ref->row & 7) == 0);
+    const MV diff = { mv->row - ref->row, mv->col - ref->col };
+    const MV_JOINT_TYPE j = av1_get_mv_joint((int32_t*)&diff);
+
+    aom_write_symbol(w, j, mvctx->joints_cdf, MV_JOINTS);
+    if (mv_joint_vertical(j))
+        encode_mv_component(w, diff.row, &mvctx->comps[0], MV_SUBPEL_NONE);
+
+    if (mv_joint_horizontal(j))
+        encode_mv_component(w, diff.col, &mvctx->comps[1], MV_SUBPEL_NONE);
+}
+
+int av1_allow_intrabc(const Av1Common *const cm) {
+
+    return (cm->p_pcs_ptr->slice_type == I_SLICE && cm->p_pcs_ptr->allow_screen_content_tools && cm->p_pcs_ptr->allow_intrabc);
+}
+
+static void write_intrabc_info(
+    FRAME_CONTEXT           *ec_ctx,
+    CodingUnit_t            *cu_ptr,
+    aom_writer *w) {
+
+
+    int use_intrabc = cu_ptr->av1xd->use_intrabc;
+    aom_write_symbol(w, use_intrabc, ec_ctx->intrabc_cdf, 2);
+    if (use_intrabc) {
+        //assert(mbmi->mode == DC_PRED);
+        //assert(mbmi->uv_mode == UV_DC_PRED);
+        //assert(mbmi->motion_mode == SIMPLE_TRANSLATION);
+        IntMv dv_ref = cu_ptr->predmv[0];// mbmi_ext->ref_mv_stack[INTRA_FRAME][0].this_mv;
+        MV mv;
+        mv.row = cu_ptr->prediction_unit_array[0].mv[INTRA_FRAME].y;
+        mv.col = cu_ptr->prediction_unit_array[0].mv[INTRA_FRAME].x;
+
+        av1_encode_dv(w, &mv, &dv_ref.as_mv, &ec_ctx->ndvc);
+    }
+}
+#endif
 
 EbErrorType write_modes_b(
     PictureControlSet_t     *picture_control_set_ptr,
@@ -5100,6 +5215,12 @@ EbErrorType write_modes_b(
             const uint32_t intra_luma_mode = cu_ptr->pred_mode;
             uint32_t intra_chroma_mode = cu_ptr->prediction_unit_array->intra_chroma_mode;
 
+#if ICOPY
+            if (av1_allow_intrabc(picture_control_set_ptr->parent_pcs_ptr->av1_cm))
+                write_intrabc_info(frameContext, cu_ptr, ecWriter);
+
+            if (cu_ptr->av1xd->use_intrabc == 0)
+#endif
             EncodeIntraLumaModeAv1(
                 frameContext,
                 ecWriter,
@@ -5119,15 +5240,28 @@ EbErrorType write_modes_b(
                 blk_geom->bheight,
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
+#if ICOPY
+            if (cu_ptr->av1xd->use_intrabc == 0)
+#endif
+                if (blk_geom->has_uv)
+                    EncodeIntraChromaModeAv1(
+                        frameContext,
+                        ecWriter,
+                        cu_ptr,
+                        intra_luma_mode,
+                        intra_chroma_mode,
+                        blk_geom->bwidth <= 32 && blk_geom->bheight <= 32);
 
-            if (blk_geom->has_uv)
-                EncodeIntraChromaModeAv1(
+#if ICOPY
+            if (cu_ptr->av1xd->use_intrabc == 0 && av1_allow_palette(picture_control_set_ptr->parent_pcs_ptr->allow_screen_content_tools, blk_geom->bsize))
+                write_palette_mode_info(
                     frameContext,
-                    ecWriter,
                     cu_ptr,
-                    intra_luma_mode,
-                    intra_chroma_mode,
-                    blk_geom->bwidth <= 32 && blk_geom->bheight <= 32);
+                    blk_geom->bsize,
+                    blkOriginY >> MI_SIZE_LOG2,
+                    blkOriginX >> MI_SIZE_LOG2,
+                    ecWriter);
+#endif
 
             if (!skipCoeff) {
                 Av1EncodeCoeff1D(

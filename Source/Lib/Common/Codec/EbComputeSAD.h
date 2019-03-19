@@ -25,9 +25,9 @@ extern "C" {
     * Function Ptr Types
     ***************************************/
     typedef uint32_t(*EB_SADKERNELNxM_TYPE)(
-        uint8_t  *src,
+        const uint8_t  *src,
         uint32_t  src_stride,
-        uint8_t  *ref,
+        const uint8_t  *ref,
         uint32_t  ref_stride,
         uint32_t  height,
         uint32_t  width);

@@ -198,7 +198,42 @@ EbErrorType eb_recon_picture_buffer_desc_ctor(
 
     return EB_ErrorNone;
 }
+#if ICOPY_10B
+void link_Eb_to_aom_buffer_desc_8bit(
+    EbPictureBufferDesc_t          *picBuffDsc,
+    Yv12BufferConfig             *aomBuffDsc
+)
+{
+    //forces an 8 bit version
+    //NOTe:  Not all fileds are connected. add more connections as needed.
+    {
+        aomBuffDsc->y_buffer = picBuffDsc->buffer_y + picBuffDsc->origin_x + (picBuffDsc->origin_y     * picBuffDsc->stride_y);
+        aomBuffDsc->u_buffer = picBuffDsc->bufferCb + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->strideCb);
+        aomBuffDsc->v_buffer = picBuffDsc->bufferCr + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->strideCb);
 
+        aomBuffDsc->y_width = picBuffDsc->width;
+        aomBuffDsc->uv_width = picBuffDsc->width / 2;
+
+        aomBuffDsc->y_height = picBuffDsc->height;
+        aomBuffDsc->uv_height = picBuffDsc->height / 2;
+
+        aomBuffDsc->y_stride = picBuffDsc->stride_y;
+        aomBuffDsc->uv_stride = picBuffDsc->strideCb;
+
+        aomBuffDsc->border = picBuffDsc->origin_x;
+
+        aomBuffDsc->subsampling_x = 1;
+        aomBuffDsc->subsampling_y = 1;
+
+        aomBuffDsc->y_crop_width = aomBuffDsc->y_width;
+        aomBuffDsc->uv_crop_width = aomBuffDsc->uv_width;
+        aomBuffDsc->y_crop_height = aomBuffDsc->y_height;
+        aomBuffDsc->uv_crop_height = aomBuffDsc->uv_height;
+
+        aomBuffDsc->flags = 0;
+    }
+}
+#endif
 
 void LinkEbToAomBufferDesc(
     EbPictureBufferDesc_t          *picBuffDsc,

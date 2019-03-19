@@ -129,6 +129,8 @@ static void SetCfgInputFile                     (const char *value, EbConfig_t *
         if(checkIfY4m(cfg) == EB_TRUE) {
             cfg->y4mInput = EB_TRUE;
         }
+        else
+            cfg->y4mInput = EB_FALSE;
     }else{
         cfg->y4mInput = EB_FALSE;
     }
@@ -941,10 +943,10 @@ EbBool is_negative_number(
 int32_t ComputeFramesToBeEncoded(
     EbConfig_t   *config)
 {
-    uint64_t fileSize = 0;
-    int32_t frameCount = 0;
+    uint64_t fileSize   = 0;
+    int32_t  frameCount = 0;
     uint32_t frameSize;
-    long currLoc;
+    uint64_t currLoc;
 
     currLoc = ftello64(config->inputFile); // get current fp location
 

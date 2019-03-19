@@ -718,6 +718,10 @@ void* picture_manager_kernel(void *input_ptr)
                             }
                         }
 
+#if ICOPY
+                        ChildPictureControlSetPtr->parent_pcs_ptr->av1_cm->pcs_ptr = ChildPictureControlSetPtr;
+#endif
+
 #if TILES             
                         set_tile_info(ChildPictureControlSetPtr->parent_pcs_ptr);
 

@@ -48,6 +48,9 @@ typedef struct PictureDecisionContext_s
 #if BASE_LAYER_REF
     uint64_t         last_islice_picture_number;
 #endif
+#if SC_DETECT_GOP
+    uint8_t         last_i_picture_sc_detection;
+#endif
 } PictureDecisionContext_t;
 
 /***************************************

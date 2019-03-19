@@ -100,8 +100,6 @@ void* dlf_kernel(void *input_ptr)
     struct DlfResults_s*                     dlf_results_ptr;
 
     // SB Loop variables
-
-
     for (;;) {
 
         // Get EncDec Results
@@ -109,11 +107,11 @@ void* dlf_kernel(void *input_ptr)
             context_ptr->dlf_input_fifo_ptr,
             &enc_dec_results_wrapper_ptr);
 
-        enc_dec_results_ptr = (EncDecResults_t*)enc_dec_results_wrapper_ptr->object_ptr;
-        picture_control_set_ptr = (PictureControlSet_t*)enc_dec_results_ptr->pictureControlSetWrapperPtr->object_ptr;
-        sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+        enc_dec_results_ptr         = (EncDecResults_t*)enc_dec_results_wrapper_ptr->object_ptr;
+        picture_control_set_ptr     = (PictureControlSet_t*)enc_dec_results_ptr->pictureControlSetWrapperPtr->object_ptr;
+        sequence_control_set_ptr    = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 
-        EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
+        EbBool is16bit       = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
         EbBool dlfEnableFlag = (EbBool)(picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode &&
             (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
                 sequence_control_set_ptr->static_config.recon_enabled ||
@@ -145,7 +143,6 @@ void* dlf_kernel(void *input_ptr)
                     (EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                     picture_control_set_ptr,
                     LPF_PICK_FROM_Q);
-
             }
 
             av1_pick_filter_level(
@@ -168,9 +165,7 @@ void* dlf_kernel(void *input_ptr)
                     3);
             }
 
-
 #if CDEF_M
-
         //pre-cdef prep
         {
             Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
@@ -215,7 +210,7 @@ void* dlf_kernel(void *input_ptr)
                 else
                 {
                     //these copies should go!
-                EbByte  rec_ptr = &((recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x + recon_picture_ptr->origin_y * recon_picture_ptr->stride_y]);
+                    EbByte  rec_ptr = &((recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x + recon_picture_ptr->origin_y * recon_picture_ptr->stride_y]);
                     EbByte  rec_ptr_cb = &((recon_picture_ptr->bufferCb)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCb]);
                     EbByte  rec_ptr_cr = &((recon_picture_ptr->bufferCr)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCr]);
 
@@ -239,18 +234,16 @@ void* dlf_kernel(void *input_ptr)
                             picture_control_set_ptr->ref_coeff[2][r * sequence_control_set_ptr->luma_width / 2 + c] = enh_ptr_cr[r * input_picture_ptr->strideCr + c];
                         }
                     }
-
                 }
 #if CDEF_M
             }
 #endif
-
         }
 
         picture_control_set_ptr->cdef_segments_column_count =  sequence_control_set_ptr->cdef_segment_column_count;
-        picture_control_set_ptr->cdef_segments_row_count = sequence_control_set_ptr->cdef_segment_row_count;
+        picture_control_set_ptr->cdef_segments_row_count    = sequence_control_set_ptr->cdef_segment_row_count;
         picture_control_set_ptr->cdef_segments_total_count  = (uint16_t)(picture_control_set_ptr->cdef_segments_column_count  * picture_control_set_ptr->cdef_segments_row_count);
-        picture_control_set_ptr->tot_seg_searched_cdef = 0;
+        picture_control_set_ptr->tot_seg_searched_cdef      = 0;
         uint32_t segment_index;
 
         for (segment_index = 0; segment_index < picture_control_set_ptr->cdef_segments_total_count; ++segment_index)
@@ -261,13 +254,11 @@ void* dlf_kernel(void *input_ptr)
                 &dlf_results_wrapper_ptr);
             dlf_results_ptr = (struct DlfResults_s*)dlf_results_wrapper_ptr->object_ptr;
             dlf_results_ptr->picture_control_set_wrapper_ptr = enc_dec_results_ptr->pictureControlSetWrapperPtr;
-
             dlf_results_ptr->segment_index = segment_index;
             // Post DLF Results
             eb_post_full_object(dlf_results_wrapper_ptr);
         }
 #else
-
             // Get Empty DLF Results to Cdef
             eb_get_empty_object(
                 context_ptr->dlf_output_fifo_ptr,

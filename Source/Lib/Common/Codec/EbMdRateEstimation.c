@@ -352,6 +352,9 @@ void av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2],
 * based on the frame CDF
 ***************************************************************************/
 void av1_estimate_mv_rate(
+#if ICOPY
+    PictureControlSet_t     *picture_control_set_ptr,
+#endif
     MdRateEstimationContext_t  *md_rate_estimation_array,
     nmv_context                *nmv_ctx)
 {
@@ -374,7 +377,14 @@ void av1_estimate_mv_rate(
     md_rate_estimation_array->nmvcoststack[0] = &md_rate_estimation_array->nmv_costs[0][MV_MAX];
     md_rate_estimation_array->nmvcoststack[1] = &md_rate_estimation_array->nmv_costs[1][MV_MAX];
 
+#if ICOPY 
+    if (picture_control_set_ptr->parent_pcs_ptr->allow_intrabc) {
+        int32_t *dvcost[2] = { &md_rate_estimation_array->dv_cost[0][MV_MAX], &md_rate_estimation_array->dv_cost[1][MV_MAX] };
+        av1_build_nmv_cost_table(md_rate_estimation_array->dv_joint_cost, dvcost, &picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc->ndvc,
+            MV_SUBPEL_NONE);
+    }
 
+#else
     // NM: To be added when adding the screen_content_tools
 
     /*if (frame_is_intra_only(cm) && cm->allow_screen_content_tools &&
@@ -383,6 +393,7 @@ void av1_estimate_mv_rate(
         av1_build_nmv_cost_table(cpi->dv_joint_cost, dvcost, &cm->fc->ndvc,
             MV_SUBPEL_NONE);
     }*/
+#endif
 }
 /**************************************************************************
 * av1_estimate_coefficients_rate()

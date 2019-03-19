@@ -42,14 +42,24 @@ extern "C" {
         uint32_t                   decimStride,
         uint32_t                   decimStep);
 
-
-    extern EbErrorType OpenLoopIntraSearchLcu(
+    
+#if OIS_BASED_INTRA
+    extern EbErrorType open_loop_intra_search_sb(
         PictureParentControlSet_t   *picture_control_set_ptr,
         uint32_t                       sb_index,
         MotionEstimationContext_t   *context_ptr,
         EbPictureBufferDesc_t       *input_ptr,
         EbAsm                       asm_type);
 
+
+#else
+    extern EbErrorType OpenLoopIntraSearchLcu(
+        PictureParentControlSet_t   *picture_control_set_ptr,
+        uint32_t                       sb_index,
+        MotionEstimationContext_t   *context_ptr,
+        EbPictureBufferDesc_t       *input_ptr,
+        EbAsm                       asm_type);
+#endif
 
     int8_t Sort3Elements(uint32_t a, uint32_t b, uint32_t c);
 #define a_b_c  0

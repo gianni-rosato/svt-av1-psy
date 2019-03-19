@@ -14,7 +14,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#if !OIS_BASED_INTRA
     extern void intra_mode_vertical_luma_sse2_intrin(
         const uint32_t  size,                         //input parameter, denotes the size of the current PU
         uint8_t        *ref_samples,                  //input parameter, pointer to the reference samples
@@ -119,7 +119,7 @@ extern "C" {
         uint8_t        *prediction_ptr,               //output parameter, pointer to the prediction
         const uint32_t  prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
         const EbBool    skip);                        //skip one row
-
+#endif
 
 #ifdef __cplusplus
 }

@@ -33,7 +33,7 @@ extern "C" {
         NeighborArrayUnit_t     *cr_dc_sign_level_coeff_neighbor_array,
         NeighborArrayUnit_t     *inter_pred_dir_neighbor_array,
         NeighborArrayUnit_t     *ref_frame_type_neighbor_array,
-        NeighborArrayUnit_t     *intraLumaNeighborArray,
+        NeighborArrayUnit_t     *intra_luma_mode_neighbor_array,
         NeighborArrayUnit_t     *skip_flag_neighbor_array,
         NeighborArrayUnit_t     *mode_type_neighbor_array,
         NeighborArrayUnit_t     *leaf_depth_neighbor_array,
@@ -161,6 +161,9 @@ extern "C" {
         uint64_t                 luma_distortion,
         uint64_t                 chroma_distortion,
         uint64_t                 lambda,
+#if USE_SSE_FL
+        EbBool                   use_ssd,
+#endif
         PictureControlSet_t     *picture_control_set_ptr,
         CandidateMv             *ref_mv_stack,
         const BlockGeom         *blk_geom,
@@ -188,6 +191,9 @@ extern "C" {
         uint64_t                 luma_distortion,
         uint64_t                 chroma_distortion,
         uint64_t                 lambda,
+#if USE_SSE_FL
+        EbBool                   use_ssd,
+#endif
         PictureControlSet_t     *picture_control_set_ptr,
         CandidateMv             *ref_mv_stack,
         const BlockGeom         *blk_geom,
@@ -234,7 +240,7 @@ extern "C" {
         uint64_t                                 *y_coeff_bits,
         uint64_t                                 *cb_coeff_bits,
         uint64_t                                 *cr_coeff_bits,
-        block_size                              bsize);
+        block_size                                bsize);
 
 #ifdef __cplusplus
 }

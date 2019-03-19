@@ -684,7 +684,9 @@ void av1_quantize_inv_quantize_ii(
     //  MacroblockPlane      candidate_plane,
     EbAsm                asm_type,
     uint32_t                *y_count_non_zero_coeffs,
+#if !PF_N2_32X32
     EbPfMode              pf_mode,
+#endif
     uint8_t                 enable_contouring_qc_update_flag,
     uint32_t                component_type,
 #if QT_10BIT_SUPPORT
@@ -890,7 +892,9 @@ void av1_quantize_inv_quantize(
     MacroblockPlane      candidate_plane,
     EbAsm                asm_type,
     uint32_t                *y_count_non_zero_coeffs,
+#if !PF_N2_32X32
     EbPfMode              pf_mode,
+#endif
     uint8_t                 enable_contouring_qc_update_flag,
     uint32_t                component_type,
 #if QT_10BIT_SUPPORT
@@ -902,8 +906,21 @@ void av1_quantize_inv_quantize(
     (void)coeff_stride;
     (void)candidate_plane;
     (void)enable_contouring_qc_update_flag;
+#if !PF_N2_32X32
     (void)pf_mode;
+#endif
     //Note: Transformed, Quantized, iQuantized coeff are stored in 1D fashion. 64x64 is hence in the first 32x32 corner.
+
+    uint32_t i;
+
+    for (i = 0; i < height; i++)
+    {
+        memset(quant_coeff + i * width, 0, width * sizeof(int32_t));
+        memset(recon_coeff + i * width, 0, width * sizeof(int32_t));
+    }
+
+
+
 
     av1_quantize_inv_quantize_ii(
         picture_control_set_ptr,
@@ -918,7 +935,9 @@ void av1_quantize_inv_quantize(
         &eob[0],
         asm_type,
         y_count_non_zero_coeffs,
+#if !PF_N2_32X32
         0,
+#endif
         0,
         component_type,
 #if QT_10BIT_SUPPORT
@@ -963,6 +982,18 @@ void ProductFullLoop(
         tuOriginIndex = tx_org_x + (tx_org_y * candidateBuffer->residual_ptr->stride_y);
         y_tu_coeff_bits = 0;
 
+#if PF_N2_32X32
+        EbPfMode pf_md_mode;
+        if (context_ptr->blk_geom->txsize[txb_itr] == TX_32X32 && candidateBuffer->candidate_ptr->type == INTER_MODE && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_FALSE) {
+            pf_md_mode = N2_SHAPE;
+        }
+        else {
+            pf_md_mode = DEFAULT_SHAPE;
+        }
+//#if PF_N2_32X32_TX_SEARCH
+//        pf_md_mode = DEFAULT_SHAPE;
+//#endif
+#endif
         // Y: T Q iQ
         av1_estimate_transform(
             &(((int16_t*)candidateBuffer->residual_ptr->buffer_y)[tuOriginIndex]),
@@ -976,8 +1007,42 @@ void ProductFullLoop(
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
             asm_type,
             PLANE_TYPE_Y,
+#if PF_N2_32X32
+            pf_md_mode);
+#else
             context_ptr->pf_md_mode);
+#endif
+#if SIMULATE_PF_N2     
+        int32_t* transCoeffBuffer = &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->buffer_y)[txb_1d_offset]);
+        int32_t tu_size;
+        switch (context_ptr->blk_geom->txsize[txb_itr]) {
+        case TX_64X64:
+            tu_size = 64;
+            break;
+        case TX_32X32:
+            tu_size = 32;
+            break;
+        case TX_16X16:
+            tu_size = 16;
+            break;
+        case TX_8X8:
+            tu_size = 8;
+            break;
+        case TX_4X4:
+            tu_size = 4;
+            break;
+        default: assert(0); break;
+        }
 
+        if(tu_size == 32)
+        {
+            for (int i = 0; i < (tu_size* tu_size); i++) {
+                if (i % tu_size >= (tu_size >> 1) || i / tu_size >= (tu_size >> 1)) {
+                    transCoeffBuffer[i] = 0;
+                }
+            }
+        }
+#endif
         av1_quantize_inv_quantize(
             picture_control_set_ptr,
             &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->buffer_y)[txb_1d_offset]),
@@ -992,7 +1057,9 @@ void ProductFullLoop(
             candidateBuffer->candidate_ptr->candidate_plane[0],
             asm_type,
             &(y_count_non_zero_coeffs[txb_itr]),
+#if !PF_N2_32X32
             context_ptr->pf_md_mode,
+#endif
             0,
             COMPONENT_LUMA,
 #if QT_10BIT_SUPPORT
@@ -1138,7 +1205,11 @@ void ProductFullLoopTxSearch(
     uint64_t                       y_tu_coeff_bits;
     uint64_t                       tuFullDistortion[3][DIST_CALC_TOTAL];
     int32_t                        plane = 0;
+#if ICOPY
+    const int32_t                  is_inter = (candidateBuffer->candidate_ptr->type == INTER_MODE || candidateBuffer->candidate_ptr->use_intrabc) ? EB_TRUE : EB_FALSE;
+#else
     const int32_t                  is_inter = candidateBuffer->candidate_ptr->type == INTER_MODE ? EB_TRUE : EB_FALSE;//is_inter_block(mbmi);
+#endif
     uint64_t                       bestFullCost = UINT64_MAX;
     uint64_t                       y_full_cost = MAX_CU_COST;
     uint32_t                       yCountNonZeroCoeffsTemp;
@@ -1191,6 +1262,19 @@ void ProductFullLoopTxSearch(
         {
             tuOriginIndex = context_ptr->blk_geom->origin_x + (context_ptr->blk_geom->origin_y * candidateBuffer->residual_ptr->stride_y);
             y_tu_coeff_bits = 0;
+#if PF_N2_32X32_TX_SEARCH
+            EbPfMode pf_md_mode;
+            if (context_ptr->blk_geom->txsize[txb_itr] == TX_32X32) {
+                pf_md_mode = N2_SHAPE;
+            }
+            else {
+                pf_md_mode = DEFAULT_SHAPE;
+            }
+#if PF_N2_32X32_TX_SEARCH
+            pf_md_mode = DEFAULT_SHAPE;
+#endif
+#endif
+
             // Y: T Q iQ
             av1_estimate_transform(
                 &(((int16_t*)candidateBuffer->residual_ptr->buffer_y)[tuOriginIndex]),
@@ -1205,7 +1289,11 @@ void ProductFullLoopTxSearch(
                 tx_type,
                 asm_type,
                 PLANE_TYPE_Y,
+#if PF_N2_32X32_TX_SEARCH
+                pf_md_mode);
+#else
                 context_ptr->pf_md_mode);
+#endif
 
             av1_quantize_inv_quantize(
                 picture_control_set_ptr,
@@ -1221,7 +1309,9 @@ void ProductFullLoopTxSearch(
                 candidateBuffer->candidate_ptr->candidate_plane[0],
                 asm_type,
                 &yCountNonZeroCoeffsTemp,
+#if !PF_N2_32X32
                 context_ptr->pf_md_mode,
+#endif
                 0,
                 COMPONENT_LUMA,
 #if QT_10BIT_SUPPORT
@@ -1401,6 +1491,19 @@ void encode_pass_tx_search(
 
         y_tu_coeff_bits = 0;
 
+#if PF_N2_32X32_TX_SEARCH
+        EbPfMode pf_md_mode;
+        if (context_ptr->blk_geom->txsize[context_ptr->txb_itr] == TX_32X32) {
+            pf_md_mode = N2_SHAPE;
+        }
+        else {
+            pf_md_mode = DEFAULT_SHAPE;
+        }
+#if PF_N2_32X32_TX_SEARCH
+        pf_md_mode = DEFAULT_SHAPE;
+#endif
+#endif
+
         av1_estimate_transform(
             ((int16_t*)residual16bit->buffer_y) + scratchLumaOffset,
             residual16bit->stride_y,
@@ -1413,7 +1516,11 @@ void encode_pass_tx_search(
             tx_type,
             asm_type,
             PLANE_TYPE_Y,
+#if PF_N2_32X32_TX_SEARCH
+            pf_md_mode);
+#else
             context_ptr->trans_coeff_shape_luma);
+#endif
 
         av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
@@ -1429,7 +1536,9 @@ void encode_pass_tx_search(
             candidate_plane[0],
             asm_type,
             &yCountNonZeroCoeffsTemp,
+#if !PF_N2_32X32
             0,
+#endif
             0,
             COMPONENT_LUMA,
             BIT_INCREMENT_8BIT,
@@ -1474,7 +1583,11 @@ void encode_pass_tx_search(
         //LUMA-ONLY
 
         ModeDecisionCandidateBuffer_t         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
+#if INTRA_INTER_FAST_LOOP
+        ModeDecisionCandidateBuffer_t         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
+#else
         ModeDecisionCandidateBuffer_t         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[context_ptr->md_context->buffer_depth_index_start[0]]);
+#endif
         ModeDecisionCandidateBuffer_t          *candidateBuffer;
 
         // Set the Candidate Buffer
@@ -1599,6 +1712,19 @@ void encode_pass_tx_search_hbd(
 
         y_tu_coeff_bits = 0;
 
+#if PF_N2_32X32_TX_SEARCH
+        EbPfMode pf_md_mode;
+        if (context_ptr->blk_geom->txsize[context_ptr->txb_itr] == TX_32X32) {
+            pf_md_mode = N2_SHAPE;
+        }
+        else {
+            pf_md_mode = DEFAULT_SHAPE;
+        }
+#if PF_N2_32X32_TX_SEARCH
+        pf_md_mode = DEFAULT_SHAPE;
+#endif
+#endif
+
         av1_estimate_transform(
             ((int16_t*)residual16bit->buffer_y) + scratchLumaOffset,
             residual16bit->stride_y,
@@ -1611,8 +1737,11 @@ void encode_pass_tx_search_hbd(
             tx_type,
             asm_type,
             PLANE_TYPE_Y,
+#if PF_N2_32X32_TX_SEARCH
+            pf_md_mode);
+#else
             context_ptr->trans_coeff_shape_luma);
-
+#endif
         av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
             ((int32_t*)transform16bit->buffer_y) + coeff1dOffset,
@@ -1631,7 +1760,9 @@ void encode_pass_tx_search_hbd(
             candidate_plane[0],
             asm_type,
             &yCountNonZeroCoeffsTemp,
+#if !PF_N2_32X32
             0,
+#endif
             0,
             COMPONENT_LUMA,
 #if QT_10BIT_SUPPORT
@@ -1678,7 +1809,11 @@ void encode_pass_tx_search_hbd(
         //LUMA-ONLY
 
         ModeDecisionCandidateBuffer_t         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
+#if INTRA_INTER_FAST_LOOP
+        ModeDecisionCandidateBuffer_t         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
+#else
         ModeDecisionCandidateBuffer_t         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[context_ptr->md_context->buffer_depth_index_start[0]]);
+#endif
         ModeDecisionCandidateBuffer_t          *candidateBuffer;
 
         // Set the Candidate Buffer
@@ -1794,8 +1929,9 @@ void FullLoop_R(
         //    This function replaces the previous Intra Chroma mode if the LM fast
             //    cost is better.
             //    *Note - this might require that we have inv transform in the loop
+#if !PF_N2_32X32
         EbPfMode    correctedPFMode = PF_OFF;
-
+#endif
         if (component_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
             // Configure the Chroma Residual Ptr
 
@@ -1805,6 +1941,18 @@ void FullLoop_R(
 
 
             // Cb Transform
+#if PF_N2_32X32
+            EbPfMode pf_md_mode;
+            if (context_ptr->blk_geom->txsize_uv[txb_itr] == TX_32X32) {
+                pf_md_mode = N2_SHAPE;
+            }
+            else {
+                pf_md_mode = DEFAULT_SHAPE;
+            }
+//#if PF_N2_32X32_TX_SEARCH
+//            pf_md_mode = DEFAULT_SHAPE;
+//#endif
+#endif
             av1_estimate_transform(
                 chromaResidualPtr,
                 candidateBuffer->residual_ptr->strideCb,
@@ -1817,8 +1965,11 @@ void FullLoop_R(
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
                 asm_type,
                 PLANE_TYPE_UV,
+#if PF_N2_32X32
+                pf_md_mode);
+#else
                 correctedPFMode);
-
+#endif
             av1_quantize_inv_quantize(
                 picture_control_set_ptr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr->bufferCb)[txb_1d_offset]),
@@ -1833,7 +1984,9 @@ void FullLoop_R(
                 candidateBuffer->candidate_ptr->candidate_plane[1],
                 asm_type,
                 &(cb_count_non_zero_coeffs[txb_itr]),
+#if !PF_N2_32X32
                 context_ptr->pf_md_mode,
+#endif
                 0,
                 COMPONENT_CHROMA_CB,
 #if QT_10BIT_SUPPORT
@@ -1853,6 +2006,18 @@ void FullLoop_R(
                 &(((int16_t*)candidateBuffer->residual_ptr->bufferCr)[tuCrOriginIndex]);
 
             // Cr Transform
+#if PF_N2_32X32
+            EbPfMode pf_md_mode;
+            if (context_ptr->blk_geom->txsize_uv[txb_itr] == TX_32X32) {
+                pf_md_mode = N2_SHAPE;
+            }
+            else {
+                pf_md_mode = DEFAULT_SHAPE;
+            }
+//#if PF_N2_32X32_TX_SEARCH
+//            pf_md_mode = DEFAULT_SHAPE;
+//#endif
+#endif
             av1_estimate_transform(
                 chromaResidualPtr,
                 candidateBuffer->residual_ptr->strideCr,
@@ -1865,7 +2030,11 @@ void FullLoop_R(
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
                 asm_type,
                 PLANE_TYPE_UV,
+#if PF_N2_32X32
+                pf_md_mode);
+#else
                 correctedPFMode);
+#endif
 
             av1_quantize_inv_quantize(
                 picture_control_set_ptr,

@@ -48,9 +48,10 @@
 #define LOW_MEAN_THLD1                   40
 #define HIGH_MEAN_THLD1                  210
 #define NORM_FACTOR                      10 // Used ComplexityClassifier32x32
-
+#if !INTRA_INTER_FAST_LOOP
 const uint32_t    THRESHOLD_NOISE[MAX_TEMPORAL_LAYERS] = { 33, 28, 27, 26, 26, 26 }; // [Temporal Layer Index]  // Used ComplexityClassifier32x32
 // Outlier removal threshold per depth {2%, 2%, 4%, 4%}
+#endif
 const int8_t  MinDeltaQPdefault[3] = {
     -4, -3, -2
 };
@@ -176,6 +177,7 @@ void DerivePictureActivityStatistics(
 
     return;
 }
+#if !INTRA_INTER_FAST_LOOP
 /***************************************************
 * complexity Classification
 ***************************************************/
@@ -225,7 +227,7 @@ void ComplexityClassifier32x32(
         }
     }
 }
-
+#endif
 
 
 
@@ -260,8 +262,12 @@ void FailingMotionLcu(
             cuMeSAD = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortionDirection[0].distortion;
 
 
+#if OIS_BASED_INTRA
+            ois_sb_results_t        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];	
+            ois_candidate_t *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[RASTER_SCAN_TO_MD_SCAN[rasterScanCuIndex]];
+            sortedcuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[RASTER_SCAN_TO_MD_SCAN[rasterScanCuIndex]]].distortion;
 
-
+#else
             OisCu32Cu16Results_t *oisResultsPtr = picture_control_set_ptr->ois_cu32_cu16_results[sb_index];
             if (RASTER_SCAN_CU_SIZE[rasterScanCuIndex] > 32) {
                 sortedcuOisSAD = oisResultsPtr->sorted_ois_candidate[1][0].distortion +
@@ -272,8 +278,7 @@ void FailingMotionLcu(
             else { //32x32
                 sortedcuOisSAD = oisResultsPtr->sorted_ois_candidate[rasterScanCuIndex][0].distortion;
             }
-
-
+#endif
 
             int64_t  meToOisSadDiff = (int32_t)cuMeSAD - (int32_t)sortedcuOisSAD;
             meToOisSadDeviation = (sortedcuOisSAD == 0) || (meToOisSadDiff < 0) ? 0 : (meToOisSadDiff * 100) / sortedcuOisSAD;
@@ -323,9 +328,13 @@ void DetectUncoveredLcu(
 
                 cuMeSAD = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortionDirection[0].distortion;
 
+#if OIS_BASED_INTRA
 
+            ois_sb_results_t        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];	
+            ois_candidate_t *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[RASTER_SCAN_TO_MD_SCAN[rasterScanCuIndex]];
+            sortedcuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[RASTER_SCAN_TO_MD_SCAN[rasterScanCuIndex]]].distortion;
 
-
+#else
                 OisCu32Cu16Results_t *oisResultsPtr = picture_control_set_ptr->ois_cu32_cu16_results[sb_index];
                 if (RASTER_SCAN_CU_SIZE[rasterScanCuIndex] > 32) {
                     sortedcuOisSAD = oisResultsPtr->sorted_ois_candidate[1][0].distortion +
@@ -340,7 +349,7 @@ void DetectUncoveredLcu(
                     sortedcuOisSAD = oisResultsPtr->sorted_ois_candidate[rasterScanCuIndex][0].distortion;
                 }
 
-
+#endif
 
                 int64_t  meToOisSadDiff = (int32_t)cuMeSAD - (int32_t)sortedcuOisSAD;
                 meToOisSadDeviation = (sortedcuOisSAD == 0) || (meToOisSadDiff < 0) ? 0 : (meToOisSadDiff * 100) / sortedcuOisSAD;
@@ -444,16 +453,20 @@ void LumaContrastDetectorLcu(
     if (sb_params->is_complete_sb) {
         if (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) {
 
+#if OIS_BASED_INTRA
 
+            ois_sb_results_t        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];	
+            ois_candidate_t *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[0];
+            cuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[0]].distortion;
 
-
+#else
             OisCu32Cu16Results_t *oisResultsPtr = picture_control_set_ptr->ois_cu32_cu16_results[sb_index];
             cuOisSAD = oisResultsPtr->sorted_ois_candidate[1][0].distortion +
                 oisResultsPtr->sorted_ois_candidate[2][0].distortion +
                 oisResultsPtr->sorted_ois_candidate[3][0].distortion +
                 oisResultsPtr->sorted_ois_candidate[4][0].distortion;
 
-
+#endif
 
             cuMeSAD = picture_control_set_ptr->me_results[sb_index][0].distortionDirection[0].distortion;
 
@@ -1171,12 +1184,12 @@ void* source_based_operations_kernel(void *input_ptr)
         GrassSkinPicture(
             context_ptr,
             picture_control_set_ptr);
-
+#if !INTRA_INTER_FAST_LOOP
         // Complexity Classification
         ComplexityClassifier32x32(
             sequence_control_set_ptr,
             picture_control_set_ptr);
-
+#endif
         // Get Empty Results Object
         eb_get_empty_object(
             context_ptr->picture_demux_results_output_fifo_ptr,

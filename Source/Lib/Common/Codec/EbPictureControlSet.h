@@ -27,6 +27,10 @@
 #include "EbCdef.h"
 #endif
 
+#if ICOPY
+#include"av1me.h"
+#include "hash_motion.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -13620,6 +13624,10 @@ extern "C" {
 #if FAST_SG
         int8_t  wn_filter_mode;
 #endif
+
+#if ICOPY
+        struct PictureControlSet_s               *pcs_ptr;
+#endif
     } Av1Common;
 
     /**************************************
@@ -13668,6 +13676,35 @@ extern "C" {
      **************************************/
     struct CodedTreeblock_s;
     struct LargestCodingUnit_s;
+#if ICOPY
+#define MAX_MESH_STEP 4
+
+    typedef struct MESH_PATTERN {
+        int range;
+        int interval;
+    } MESH_PATTERN;
+
+    typedef struct SPEED_FEATURES {
+
+        // TODO(jingning): combine the related motion search speed features
+        // This allows us to use motion search at other sizes as a starting
+        // point for this motion search and limits the search range around it.
+        int adaptive_motion_search;
+
+        // Flag for allowing some use of exhaustive searches;
+        int allow_exhaustive_searches;
+
+        // Threshold for allowing exhaistive motion search.
+        int exhaustive_searches_thresh;
+
+        // Maximum number of exhaustive searches for a frame.
+        int max_exaustive_pct;
+
+        // Pattern to be used for any exhaustive mesh searches.
+        MESH_PATTERN mesh_patterns[MAX_MESH_STEP];
+
+    } SPEED_FEATURES;
+#endif
 
     typedef struct PictureControlSet_s
     {
@@ -13850,6 +13887,13 @@ extern "C" {
         int32_t                               cdef_preset[4];
         WienerInfo                            wiener_info[MAX_MB_PLANE];
         SgrprojInfo                           sgrproj_info[MAX_MB_PLANE];
+#if ICOPY
+        SPEED_FEATURES sf;
+        search_site_config ss_cfg;//CHKN this might be a seq based
+        hash_table hash_table;
+        CRC_CALCULATOR crc_calculator1;
+        CRC_CALCULATOR crc_calculator2;
+#endif
 
     } PictureControlSet_t;
 
@@ -14058,8 +14102,9 @@ extern "C" {
         int32_t                               intra_max_distance[4];
         int32_t                               inter_min_distance[4];
         int32_t                               inter_max_distance[4];
+#if !INTRA_INTER_FAST_LOOP
         uint8_t                              *cmplx_status_sb;            // used by EncDecProcess()
-
+#endif
         // Histograms
         uint32_t                          ****picture_histogram;
         uint64_t                              average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH][MAX_NUMBER_OF_REGIONS_IN_HEIGHT][3];
@@ -14083,9 +14128,12 @@ extern "C" {
         EbHandle                              rc_distortion_histogram_mutex;
         
         // Open loop Intra candidate Search Results
+#if OIS_BASED_INTRA
+        ois_sb_results_t                    **ois_sb_results;
+#else
         OisCu32Cu16Results_t                **ois_cu32_cu16_results;
         OisCu8Results_t                     **ois_cu8_results;
-
+#endif
         // Dynamic GOP
         EbPred                                pred_structure;
         uint8_t                               hierarchical_levels;
@@ -14120,6 +14168,9 @@ extern "C" {
         EbPictureDepthMode                    pic_depth_mode;
         uint8_t                               loop_filter_mode;
         uint8_t                               intra_pred_mode;
+#if M8_SKIP_BLK
+        uint8_t                               skip_sub_blks;
+#endif
 #if TWO_FAST_LOOP
         uint8_t                               enable_two_fast_loops;
 #endif
@@ -14280,9 +14331,18 @@ extern "C" {
         uint8_t                               tx_search_level;
         uint64_t                              tx_weight;
         uint8_t                               tx_search_reduced_set;
+        uint8_t                               skip_tx_search;
         uint8_t                               interpolation_search_level;
         uint8_t                               nsq_search_level;
-
+#if NSQ_OPTIMASATION
+        uint8_t                               nsq_max_shapes_md; // max number of shapes to be tested in MD
+#endif
+#if ICOPY
+        uint8_t                              sc_content_detected;
+#endif
+#if IBC_MODES
+        uint8_t                              ibc_mode;
+#endif
     } PictureParentControlSet_t;
 
 

@@ -14,9 +14,14 @@ extern "C" {
 #endif
 
     // Max Search Area
+#if SCENE_CONTENT_SETTINGS
+#define MAX_SEARCH_AREA_WIDTH       MAX_PICTURE_WIDTH_SIZE  + (PAD_VALUE << 1)
+#define MAX_SEARCH_AREA_HEIGHT      MAX_PICTURE_HEIGHT_SIZE + (PAD_VALUE << 1)
+
+#else
 #define MAX_SEARCH_AREA_WIDTH       1350 // This should be a function for the MAX HME L0 * the multiplications per layers and per Hierarchichal structures
 #define MAX_SEARCH_AREA_HEIGHT      675 // This should be a function for the MAX HME L0 * the multiplications per layers and per Hierarchichal structures
-
+#endif
 // 1-D interpolation shift value
 #define IFShift                     6
 #define NUMBER_OF_SB_QUAD           4
@@ -381,7 +386,13 @@ extern "C" {
         uint32_t                     *p_best_ssd64x16;
         uint32_t                     *p_best_ssd16x64;
 #endif
-
+#if NSQ_OPTIMASATION
+        uint8_t                      p_sb_best_nsq[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
+        uint8_t                     *p_best_nsq8x8;
+        uint8_t                     *p_best_nsq16x16;
+        uint8_t                     *p_best_nsq32x32;
+        uint8_t                     *p_best_nsq64x64;
+#endif
         uint16_t                     *p_eight_pos_sad16x16;
         EB_BitFraction               *mvd_bits_array;
         uint64_t                      lambda;
@@ -399,8 +410,13 @@ extern "C" {
 #endif
 
         // ME
+#if QUICK_ME_CLEANUP
+        uint16_t                      search_area_width;
+        uint16_t                      search_area_height;
+#else
         uint8_t                       search_area_width;
         uint8_t                       search_area_height;
+#endif
         // HME
         uint16_t                      number_hme_search_region_in_width;
         uint16_t                      number_hme_search_region_in_height;
