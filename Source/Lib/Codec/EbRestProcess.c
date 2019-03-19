@@ -238,7 +238,11 @@ void* rest_kernel(void *input_ptr)
 
 #if  REST_M
 
+#if ICOPY
+        if (sequence_control_set_ptr->enable_restoration && picture_control_set_ptr->parent_pcs_ptr->allow_intrabc == 0)
+#else
         if (sequence_control_set_ptr->enable_restoration)
+#endif
         {
             get_own_recon(sequence_control_set_ptr, picture_control_set_ptr, context_ptr, is16bit);
 
@@ -280,7 +284,11 @@ void* rest_kernel(void *input_ptr)
 #if REST_REF_ONLY
             if (sequence_control_set_ptr->enable_restoration && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
 #else
+#if ICOPY
+            if (sequence_control_set_ptr->enable_restoration && picture_control_set_ptr->parent_pcs_ptr->allow_intrabc == 0) {
+#else
             if (sequence_control_set_ptr->enable_restoration) {
+#endif
 #endif
 
 #if  !REST_M
@@ -350,12 +358,12 @@ void* rest_kernel(void *input_ptr)
                     sequence_control_set_ptr);
             }
 
-            // PSNR Calculation
-            if (sequence_control_set_ptr->static_config.stat_report) {
-                PsnrCalculations(
-                    picture_control_set_ptr,
-                    sequence_control_set_ptr);
-            }
+            //// PSNR Calculation
+            //if (sequence_control_set_ptr->static_config.stat_report) {
+            //    PsnrCalculations(
+            //        picture_control_set_ptr,
+            //        sequence_control_set_ptr);
+            //}
 
             // Pad the reference picture and set up TMVP flag and ref POC
             if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)

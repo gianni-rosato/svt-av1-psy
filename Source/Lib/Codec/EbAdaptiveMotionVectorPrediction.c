@@ -165,7 +165,11 @@ static INLINE PredictionMode compound_ref1_mode(PredictionMode mode) {
 
 
 /*static INLINE*/ int32_t is_inter_block(const MbModeInfo *mbmi) {
+#if ICOPY
+    return (mbmi->use_intrabc || (mbmi->ref_frame[0] > INTRA_FRAME));
+#else
     return /*is_intrabc_block(mbmi) ||*/ mbmi->ref_frame[0] > INTRA_FRAME;
+#endif
 }
 
 static int32_t have_newmv_in_inter_mode(PredictionMode mode) {
@@ -233,7 +237,11 @@ static MvReferenceFrame ref_frame_map[TOTAL_COMP_REFS][2] = {
     { ALTREF2_FRAME, ALTREF_FRAME }
 };
 
+#if ICOPY
+void clamp_mv(
+#else
 static void clamp_mv(
+#endif
     MV *mv,
     int32_t min_col,
     int32_t max_col,
@@ -1400,6 +1408,9 @@ void update_av1_mi_map(
 
 
                 }
+#if ICOPY
+                miPtr[miX + miY * mi_stride].mbmi.use_intrabc = cu_ptr->av1xd->use_intrabc;
+#endif
 
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[0] = rf[0];
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[1] = rf[1];
@@ -1472,7 +1483,9 @@ void update_mi_map(
 
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = blk_geom->bsize;
                 }
-
+#if ICOPY
+                miPtr[miX + miY * mi_stride].mbmi.use_intrabc = cu_ptr->av1xd->use_intrabc;
+#endif
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[0] = rf[0];
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[1] = rf[1];
                 if (cu_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_0) {
@@ -2059,3 +2072,171 @@ void av1_count_overlappable_neighbors(
     cu_ptr->prediction_unit_array[0].overlappable_neighbors[1] =
         count_overlappable_nb_left(cm, xd, mi_row, MAX_SIGNED_VALUE);
 }
+
+#if ICOPY
+#define INTRABC_DELAY_PIXELS 256  //  Delay of 256 pixels
+#define INTRABC_DELAY_SB64  (INTRABC_DELAY_PIXELS / 64)
+
+void av1_find_ref_dv(IntMv *ref_dv, const TileInfo *const tile,
+    int mib_size, int mi_row, int mi_col) {
+    (void)mi_col;
+    if (mi_row - mib_size < tile->mi_row_start) {
+        ref_dv->as_mv.row = 0;
+        ref_dv->as_mv.col = -MI_SIZE * mib_size - INTRABC_DELAY_PIXELS;
+    }
+    else {
+        ref_dv->as_mv.row = -MI_SIZE * mib_size;
+        ref_dv->as_mv.col = 0;
+    }
+    ref_dv->as_mv.row *= 8;
+    ref_dv->as_mv.col *= 8;
+}
+
+int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, block_size bsize,
+    int32_t subsampling_x, int32_t subsampling_y);
+
+int av1_is_dv_valid(const MV dv,
+    const MacroBlockD *xd, int mi_row, int mi_col,
+    block_size bsize, int mib_size_log2) {
+    const int bw = block_size_wide[bsize];
+    const int bh = block_size_high[bsize];
+    const int SCALE_PX_TO_MV = 8;
+    // Disallow subpixel for now
+    // SUBPEL_MASK is not the correct scale
+    if (((dv.row & (SCALE_PX_TO_MV - 1)) || (dv.col & (SCALE_PX_TO_MV - 1))))
+        return 0;
+
+    const TileInfo *const tile = &xd->tile;
+    // Is the source top-left inside the current tile?
+    const int src_top_edge = mi_row * MI_SIZE * SCALE_PX_TO_MV + dv.row;
+    const int tile_top_edge = tile->mi_row_start * MI_SIZE * SCALE_PX_TO_MV;
+    if (src_top_edge < tile_top_edge) return 0;
+    const int src_left_edge = mi_col * MI_SIZE * SCALE_PX_TO_MV + dv.col;
+    const int tile_left_edge = tile->mi_col_start * MI_SIZE * SCALE_PX_TO_MV;
+    if (src_left_edge < tile_left_edge) return 0;
+    // Is the bottom right inside the current tile?
+    const int src_bottom_edge = (mi_row * MI_SIZE + bh) * SCALE_PX_TO_MV + dv.row;
+    const int tile_bottom_edge = tile->mi_row_end * MI_SIZE * SCALE_PX_TO_MV;
+    if (src_bottom_edge > tile_bottom_edge) return 0;
+    const int src_right_edge = (mi_col * MI_SIZE + bw) * SCALE_PX_TO_MV + dv.col;
+    const int tile_right_edge = tile->mi_col_end * MI_SIZE * SCALE_PX_TO_MV;
+    if (src_right_edge > tile_right_edge) return 0;
+
+    // Special case for sub 8x8 chroma cases, to prevent referring to chroma
+    // pixels outside current tile.
+    for (int plane = 1; plane < 3/* av1_num_planes(cm)*/; ++plane) {
+        //const struct macroblockd_plane *const pd = &xd->plane[plane];
+
+        if (is_chroma_reference(mi_row, mi_col, bsize, 1, 1/* pd->subsampling_x,
+            pd->subsampling_y*/)) {
+            if (bw < 8 /*&& pd->subsampling_x*/)
+                if (src_left_edge < tile_left_edge + 4 * SCALE_PX_TO_MV) return 0;
+            if (bh < 8/* && pd->subsampling_y*/)
+                if (src_top_edge < tile_top_edge + 4 * SCALE_PX_TO_MV) return 0;
+        }
+    }
+
+    // Is the bottom right within an already coded SB? Also consider additional
+    // constraints to facilitate HW decoder.
+    const int max_mib_size = 1 << mib_size_log2;
+    const int active_sb_row = mi_row >> mib_size_log2;
+    const int active_sb64_col = (mi_col * MI_SIZE) >> 6;
+    const int sb_size = max_mib_size * MI_SIZE;
+    const int src_sb_row = ((src_bottom_edge >> 3) - 1) / sb_size;
+    const int src_sb64_col = ((src_right_edge >> 3) - 1) >> 6;
+    const int total_sb64_per_row =
+        ((tile->mi_col_end - tile->mi_col_start - 1) >> 4) + 1;
+    const int active_sb64 = active_sb_row * total_sb64_per_row + active_sb64_col;
+    const int src_sb64 = src_sb_row * total_sb64_per_row + src_sb64_col;
+    if (src_sb64 >= active_sb64 - INTRABC_DELAY_SB64) return 0;
+
+    // Wavefront constraint: use only top left area of frame for reference.
+    const int gradient = 1 + INTRABC_DELAY_SB64 + (sb_size > 64);
+    const int wf_offset = gradient * (active_sb_row - src_sb_row);
+    if (src_sb_row > active_sb_row ||
+        src_sb64_col >= active_sb64_col - INTRABC_DELAY_SB64 + wf_offset)
+        return 0;
+
+#if IBC_SW_WAVEFRONT
+    //add a SW-Wavefront constraint
+    if (sb_size == 64)
+    {
+        if (src_sb64_col > active_sb64_col + (active_sb_row - src_sb_row))           
+            return 0;
+    }
+    else
+    {
+        const int src_sb128_col = ((src_right_edge >> 3) - 1) >> 7;
+        const int active_sb128_col = (mi_col * MI_SIZE) >> 7;
+
+        if (src_sb128_col > active_sb128_col + (active_sb_row - src_sb_row))          
+            return 0;
+
+    }
+#endif
+
+    return 1;
+}
+
+IntMv av1_get_ref_mv_from_stack(int ref_idx,
+    const MvReferenceFrame *ref_frame,
+    int ref_mv_idx,
+    CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
+    MacroBlockD * xd
+/*const MB_MODE_INFO_EXT *mbmi_ext*/) {
+
+    const int8_t ref_frame_type = av1_ref_frame_type(ref_frame);
+    const CandidateMv *curr_ref_mv_stack =
+        /*mbmi_ext->*/ref_mv_stack[ref_frame_type];
+    IntMv ref_mv;
+    ref_mv.as_int = INVALID_MV;
+
+    if (ref_frame[1] > INTRA_FRAME) {
+        if (ref_idx == 0) {
+            ref_mv = curr_ref_mv_stack[ref_mv_idx].this_mv;
+        }
+        else {
+            assert(ref_idx == 1);
+            ref_mv = curr_ref_mv_stack[ref_mv_idx].comp_mv;
+        }
+    }
+    else {
+        assert(ref_idx == 0);
+        if (ref_mv_idx < /*mbmi_ext->*/xd->ref_mv_count[ref_frame_type]) {
+            ref_mv = curr_ref_mv_stack[ref_mv_idx].this_mv;
+        }
+        else {
+            //CHKN got this from decoder read_intrabc_info global_mvs[ref_frame].as_int = INVALID_MV;
+            ref_mv.as_int = INVALID_MV;// mbmi_ext->global_mvs[ref_frame_type];
+        }
+    }
+    return ref_mv;
+}
+
+static INLINE void lower_mv_precision(MV *mv, int allow_hp, int is_integer) {
+    if (is_integer) {
+        integer_mv_precision(mv);
+    }
+    else {
+        if (!allow_hp) {
+            if (mv->row & 1) mv->row += (mv->row > 0 ? -1 : 1);
+            if (mv->col & 1) mv->col += (mv->col > 0 ? -1 : 1);
+        }
+    }
+}
+void av1_find_best_ref_mvs_from_stack(int allow_hp,
+    //const MB_MODE_INFO_EXT *mbmi_ext,
+    CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
+    MacroBlockD * xd,
+    MvReferenceFrame ref_frame,
+    IntMv *nearest_mv, IntMv *near_mv,
+    int is_integer)
+{
+    const int ref_idx = 0;
+    MvReferenceFrame ref_frames[2] = { ref_frame, NONE_FRAME };
+    *nearest_mv = av1_get_ref_mv_from_stack(ref_idx, ref_frames, 0, ref_mv_stack/*mbmi_ext*/, xd);
+    lower_mv_precision(&nearest_mv->as_mv, allow_hp, is_integer);
+    *near_mv = av1_get_ref_mv_from_stack(ref_idx, ref_frames, 1, ref_mv_stack/*mbmi_ext*/, xd);
+    lower_mv_precision(&near_mv->as_mv, allow_hp, is_integer);
+}
+#endif

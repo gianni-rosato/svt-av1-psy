@@ -10,7 +10,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
     // Weights are quadratic from '1' to '1 / block_size', scaled by
     // 2^sm_weight_log2_scale.
     static const int32_t sm_weight_log2_scale = 8;
@@ -37,7 +36,8 @@ extern "C" {
         65, 61, 57, 54, 50, 47, 44, 41, 38, 35, 32, 29, 27, 25, 22, 20, 18, 16, 15,
         13, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4,
     };
-
+    
+#if !OIS_BASED_INTRA
     extern void intra_mode_planar_avx2_intrin(
         const uint32_t  size,                           //input parameter, denotes the size of the current PU
         uint8_t        *ref_samples,                    //input parameter, pointer to the reference samples
@@ -134,7 +134,7 @@ extern "C" {
         uint32_t  src_origin_y,
         uint32_t  block_size,
         EbAsm     asm_type);
-
+#endif
     void intra_mode_angular_av1_z1_16bit_4x4_avx2(
         const uint32_t  size,
         uint16_t       *ref_samples,

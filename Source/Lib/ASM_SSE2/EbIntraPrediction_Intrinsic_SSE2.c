@@ -9,6 +9,8 @@
 #include "EbIntrinMacros_SSE2.h"
 #include "EbIntraPrediction_SSE2.h"
 
+#if !OIS_BASED_INTRA
+
 #define OFFSET_17TO31   0
 #define OFFSET_1TO15    (8+OFFSET_17TO31)
 #define OFFSET_25TO32   (8+OFFSET_1TO15)
@@ -2202,3 +2204,4 @@ void intra_mode_planar_sse2_intrin(
         }
     }
 }
+#endif

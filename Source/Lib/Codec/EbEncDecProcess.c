@@ -393,6 +393,9 @@ static void ResetEncDec(
 
         // Initial Rate Estimatimation of the Motion vectors
         av1_estimate_mv_rate(
+#if ICOPY
+            picture_control_set_ptr,
+#endif
             md_rate_estimation_array,
             &picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc->nmvc);
 
@@ -1345,19 +1348,67 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
     EbErrorType return_error = EB_ErrorNone;
 
-    // NFL Level MD         Settings
-    // 0                    MAX_NFL 12
-    // 1                    10
-    // 2                    8
-    // 3                    6
-    // 4                    4/3/2
-    if (picture_control_set_ptr->enc_mode <= ENC_M1)
-        context_ptr->nfl_level = 0;
-    else if (picture_control_set_ptr->enc_mode <= ENC_M3)
-        context_ptr->nfl_level = 2;
-    else
-        context_ptr->nfl_level = 3;
+    // NFL Level MD       Settings
+    // 0                  MAX_NFL 40
+    // 1                  30
+    // 2                  12
+    // 3                  10
+    // 4                  8
+    // 5                  6
+    // 6                  4  
+    // 7                  3 
+#if SCENE_CONTENT_SETTINGS
+    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected) {
+        
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            context_ptr->nfl_level = 2;
+        else if (picture_control_set_ptr->enc_mode <= ENC_M3)
+            context_ptr->nfl_level = 4;
+        else if (picture_control_set_ptr->enc_mode <= ENC_M7)
+            context_ptr->nfl_level = 5;
+        else
+            if (picture_control_set_ptr->parent_pcs_ptr->slice_type == I_SLICE)
+                context_ptr->nfl_level  = 5;
+            else if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+                context_ptr->nfl_level  = 6;
+            else
+                context_ptr->nfl_level  = 7;
 
+    }
+    else {
+#endif
+    if (picture_control_set_ptr->enc_mode == ENC_M0)
+        if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+            context_ptr->nfl_level = (sequence_control_set_ptr->input_resolution <= INPUT_SIZE_576p_RANGE_OR_LOWER) ? 0 : 1;
+        else
+            context_ptr->nfl_level = 2;
+    else if (picture_control_set_ptr->enc_mode <= ENC_M1)
+        if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+            context_ptr->nfl_level = 2;
+        else
+            context_ptr->nfl_level = 3;
+    else if (picture_control_set_ptr->enc_mode <= ENC_M3)
+        if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+            context_ptr->nfl_level = 2;
+        else
+            context_ptr->nfl_level = 4;
+    else if (picture_control_set_ptr->enc_mode <= ENC_M5)
+        if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+            context_ptr->nfl_level = 4;
+        else
+            context_ptr->nfl_level = 5;
+    else if(picture_control_set_ptr->enc_mode <= ENC_M7)
+        context_ptr->nfl_level = 5;
+    else
+        if (picture_control_set_ptr->parent_pcs_ptr->slice_type == I_SLICE)
+            context_ptr->nfl_level  = 5;
+        else if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+            context_ptr->nfl_level  = 6;
+        else
+            context_ptr->nfl_level  = 7;
+#if SCENE_CONTENT_SETTINGS
+    }
+#endif
 #if CHROMA_BLIND
     // Set Chroma Mode
     // Level                Settings
@@ -1371,6 +1422,139 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             CHROMA_MODE_1 :
             CHROMA_MODE_2 ;
 #endif
+
+    
+    // Set fast loop method
+    // 1 fast loop: SSD_SEARCH not supported    
+    // Level                Settings
+    //  0                   Collapsed fast loop
+    //  1                   Decoupled fast loops ( intra/inter) 
+
+    if (picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->decouple_intra_inter_fast_loop = 0;
+    else
+        context_ptr->decouple_intra_inter_fast_loop = 1;
+
+#if INTRA_INTER_FAST_LOOP
+    // Set the search method when decoupled fast loop is used 
+    // Hsan: FULL_SAD_SEARCH not supported
+#if SCENE_CONTENT_SETTINGS
+
+    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected){
+	    if (picture_control_set_ptr->enc_mode <= ENC_M0)
+	        context_ptr->decoupled_fast_loop_search_method = SSD_SEARCH;
+	    else
+	        context_ptr->decoupled_fast_loop_search_method = FULL_SAD_SEARCH;
+	}else
+#endif
+    if (picture_control_set_ptr->enc_mode <= ENC_M5)
+        context_ptr->decoupled_fast_loop_search_method = SSD_SEARCH;
+    else
+        context_ptr->decoupled_fast_loop_search_method = FULL_SAD_SEARCH;
+#endif
+#if FULL_LOOP_ESCAPE
+    // Set the full loop escape level
+    // Level                Settings
+    // 0                    Off
+    // 1                    On but only INTRA
+    // 2                    On both INTRA and INTER
+    if (picture_control_set_ptr->enc_mode <= ENC_M7)
+        context_ptr->full_loop_escape = 0;
+    else
+        context_ptr->full_loop_escape = 1;
+
+#endif
+#if SHUT_GLOBAL_MV
+    // Set global MV injection
+    // Level                Settings
+    // 0                    Injection off (Hsan: but not derivation as used by MV ref derivation)
+    // 1                    On
+    if (picture_control_set_ptr->enc_mode <= ENC_M7)
+        context_ptr->global_mv_injection = 1;
+    else
+        context_ptr->global_mv_injection = 0;
+#endif
+    
+    // Set warped motion injection
+    // Level                Settings
+    // 0                    OFF
+    // 1                    On
+#if SCENE_CONTENT_SETTINGS
+    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected) 
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            context_ptr->warped_motion_injection = 1;
+        else
+            context_ptr->warped_motion_injection = 0;
+    else
+
+#endif
+    if (picture_control_set_ptr->enc_mode <= ENC_M5)
+        context_ptr->warped_motion_injection = 1;
+    else
+        context_ptr->warped_motion_injection = 0;
+
+    
+    // Set unipred3x3 injection
+    // Level                Settings
+    // 0                    OFF
+    // 1                    ON FULL
+    // 2                    Reduced set
+#if SCENE_CONTENT_SETTINGS
+    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            context_ptr->unipred3x3_injection = 1;
+        else
+            context_ptr->unipred3x3_injection = 0;
+    else
+
+#endif
+    if (picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->unipred3x3_injection = 1;
+    else if (picture_control_set_ptr->enc_mode <= ENC_M3)
+        context_ptr->unipred3x3_injection = 2;
+    else
+        context_ptr->unipred3x3_injection = 0;
+
+    
+    // Set bipred3x3 injection
+    // Level                Settings
+    // 0                    OFF
+    // 1                    ON FULL
+    // 2                    Reduced set
+#if SCENE_CONTENT_SETTINGS
+    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            context_ptr->bipred3x3_injection = 1;
+        else
+            context_ptr->bipred3x3_injection = 0;
+    else
+
+#endif
+    if (picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->bipred3x3_injection = 1;
+    else if (picture_control_set_ptr->enc_mode <= ENC_M3)
+        context_ptr->bipred3x3_injection = 2;
+    else
+        context_ptr->bipred3x3_injection = 0;
+      
+    // Set interpolation filter search blk size
+    // Level                Settings
+    // 0                    ON for 8x8 and above
+    // 1                    ON for 16x16 and above
+    // 2                    ON for 32x32 and above
+#if SCENE_CONTENT_SETTINGS
+    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
+        context_ptr->interpolation_filter_search_blk_size = 0;
+    else
+#endif
+    if (picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->interpolation_filter_search_blk_size = 0;
+    else if (picture_control_set_ptr->enc_mode <= ENC_M2)
+        context_ptr->interpolation_filter_search_blk_size = 1;
+    else        
+        context_ptr->interpolation_filter_search_blk_size = 2;
+    
+
 
     return return_error;
 }
@@ -1493,6 +1677,12 @@ void* EncDecKernel(void *input_ptr)
                 picture_control_set_ptr,
                 sequence_control_set_ptr,
                 segment_index);
+
+#if M8_ADP
+            if (picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
+                ((EbReferenceObject_t  *)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->average_intensity = picture_control_set_ptr->parent_pcs_ptr->average_intensity[0];
+            }
+#endif
 
             if (sequence_control_set_ptr->static_config.improve_sharpness) {
                 QpmDeriveWeightsMinAndMax(

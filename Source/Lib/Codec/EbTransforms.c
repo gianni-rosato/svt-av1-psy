@@ -3777,7 +3777,489 @@ static INLINE void Av1TranformTwoDCore_c(
         }
     }
 }
+#if PF_N2_32X32
 
+void av1_round_shift_array_pf_c(int32_t *arr_in, int32_t *arr_out, int32_t size, int32_t bit) {
+    int32_t i;
+    if (bit == 0) {
+        for (i = 0; i < size; i++) {
+            arr_out[i] = arr_in[i];
+        }
+    }
+    else {
+        if (bit > 0) {
+            for (i = 0; i < size; i++) {
+                arr_out[i] = round_shift(arr_in[i], bit);
+            }
+        }
+        else {
+            for (i = 0; i < size; i++) {
+                arr_out[i] = arr_in[i] * (1 << (-bit));
+            }
+        }
+    }
+}
+void av1_fdct32_pf_new(const int32_t *input, int32_t *output, int8_t cos_bit,
+    const int8_t *stage_range) {
+    const int32_t size = 32;
+    const int32_t *cospi;
+
+    int32_t stage = 0;
+    int32_t *bf0, *bf1;
+    int32_t step[32];
+
+    // stage 0;
+    range_check(stage, input, input, size, stage_range[stage]);
+
+    // stage 1;
+    stage++;
+    bf1 = output;
+    bf1[0] = input[0] + input[31];
+    bf1[1] = input[1] + input[30];
+    bf1[2] = input[2] + input[29];
+    bf1[3] = input[3] + input[28];
+    bf1[4] = input[4] + input[27];
+    bf1[5] = input[5] + input[26];
+    bf1[6] = input[6] + input[25];
+    bf1[7] = input[7] + input[24];
+    bf1[8] = input[8] + input[23];
+    bf1[9] = input[9] + input[22];
+    bf1[10] = input[10] + input[21];
+    bf1[11] = input[11] + input[20];
+    bf1[12] = input[12] + input[19];
+    bf1[13] = input[13] + input[18];
+    bf1[14] = input[14] + input[17];
+    bf1[15] = input[15] + input[16];
+    bf1[16] = -input[16] + input[15];
+    bf1[17] = -input[17] + input[14];
+    bf1[18] = -input[18] + input[13];
+    bf1[19] = -input[19] + input[12];
+    bf1[20] = -input[20] + input[11];
+    bf1[21] = -input[21] + input[10];
+    bf1[22] = -input[22] + input[9];
+    bf1[23] = -input[23] + input[8];
+    bf1[24] = -input[24] + input[7];
+    bf1[25] = -input[25] + input[6];
+    bf1[26] = -input[26] + input[5];
+    bf1[27] = -input[27] + input[4];
+    bf1[28] = -input[28] + input[3];
+    bf1[29] = -input[29] + input[2];
+    bf1[30] = -input[30] + input[1];
+    bf1[31] = -input[31] + input[0];
+    range_check(stage, input, bf1, size, stage_range[stage]);
+
+    // stage 2
+    stage++;
+    cospi = cospi_arr(cos_bit);
+    bf0 = output;
+    bf1 = step;
+    bf1[0] = bf0[0] + bf0[15];
+    bf1[1] = bf0[1] + bf0[14];
+    bf1[2] = bf0[2] + bf0[13];
+    bf1[3] = bf0[3] + bf0[12];
+    bf1[4] = bf0[4] + bf0[11];
+    bf1[5] = bf0[5] + bf0[10];
+    bf1[6] = bf0[6] + bf0[9];
+    bf1[7] = bf0[7] + bf0[8];
+    bf1[8] = -bf0[8] + bf0[7];
+    bf1[9] = -bf0[9] + bf0[6];
+    bf1[10] = -bf0[10] + bf0[5];
+    bf1[11] = -bf0[11] + bf0[4];
+    bf1[12] = -bf0[12] + bf0[3];
+    bf1[13] = -bf0[13] + bf0[2];
+    bf1[14] = -bf0[14] + bf0[1];
+    bf1[15] = -bf0[15] + bf0[0];
+    bf1[16] = bf0[16];
+    bf1[17] = bf0[17];
+    bf1[18] = bf0[18];
+    bf1[19] = bf0[19];
+    bf1[20] = half_btf(-cospi[32], bf0[20], cospi[32], bf0[27], cos_bit);
+    bf1[21] = half_btf(-cospi[32], bf0[21], cospi[32], bf0[26], cos_bit);
+    bf1[22] = half_btf(-cospi[32], bf0[22], cospi[32], bf0[25], cos_bit);
+    bf1[23] = half_btf(-cospi[32], bf0[23], cospi[32], bf0[24], cos_bit);
+    bf1[24] = half_btf(cospi[32], bf0[24], cospi[32], bf0[23], cos_bit);
+    bf1[25] = half_btf(cospi[32], bf0[25], cospi[32], bf0[22], cos_bit);
+    bf1[26] = half_btf(cospi[32], bf0[26], cospi[32], bf0[21], cos_bit);
+    bf1[27] = half_btf(cospi[32], bf0[27], cospi[32], bf0[20], cos_bit);
+    bf1[28] = bf0[28];
+    bf1[29] = bf0[29];
+    bf1[30] = bf0[30];
+    bf1[31] = bf0[31];
+    range_check(stage, input, bf1, size, stage_range[stage]);
+
+    // stage 3
+    stage++;
+    cospi = cospi_arr(cos_bit);
+    bf0 = step;
+    bf1 = output;
+    bf1[0] = bf0[0] + bf0[7];
+    bf1[1] = bf0[1] + bf0[6];
+    bf1[2] = bf0[2] + bf0[5];
+    bf1[3] = bf0[3] + bf0[4];
+    bf1[4] = -bf0[4] + bf0[3];
+    bf1[5] = -bf0[5] + bf0[2];
+    bf1[6] = -bf0[6] + bf0[1];
+    bf1[7] = -bf0[7] + bf0[0];
+    bf1[8] = bf0[8];
+    bf1[9] = bf0[9];
+    bf1[10] = half_btf(-cospi[32], bf0[10], cospi[32], bf0[13], cos_bit);
+    bf1[11] = half_btf(-cospi[32], bf0[11], cospi[32], bf0[12], cos_bit);
+    bf1[12] = half_btf(cospi[32], bf0[12], cospi[32], bf0[11], cos_bit);
+    bf1[13] = half_btf(cospi[32], bf0[13], cospi[32], bf0[10], cos_bit);
+    bf1[14] = bf0[14];
+    bf1[15] = bf0[15];
+    bf1[16] = bf0[16] + bf0[23];
+    bf1[17] = bf0[17] + bf0[22];
+    bf1[18] = bf0[18] + bf0[21];
+    bf1[19] = bf0[19] + bf0[20];
+    bf1[20] = -bf0[20] + bf0[19];
+    bf1[21] = -bf0[21] + bf0[18];
+    bf1[22] = -bf0[22] + bf0[17];
+    bf1[23] = -bf0[23] + bf0[16];
+    bf1[24] = -bf0[24] + bf0[31];
+    bf1[25] = -bf0[25] + bf0[30];
+    bf1[26] = -bf0[26] + bf0[29];
+    bf1[27] = -bf0[27] + bf0[28];
+    bf1[28] = bf0[28] + bf0[27];
+    bf1[29] = bf0[29] + bf0[26];
+    bf1[30] = bf0[30] + bf0[25];
+    bf1[31] = bf0[31] + bf0[24];
+    range_check(stage, input, bf1, size, stage_range[stage]);
+
+    // stage 4
+    stage++;
+    cospi = cospi_arr(cos_bit);
+    bf0 = output;
+    bf1 = step;
+    bf1[0] = bf0[0] + bf0[3];
+    bf1[1] = bf0[1] + bf0[2];
+    bf1[2] = -bf0[2] + bf0[1];
+    bf1[3] = -bf0[3] + bf0[0];
+    bf1[4] = bf0[4];
+    bf1[5] = half_btf(-cospi[32], bf0[5], cospi[32], bf0[6], cos_bit);
+    bf1[6] = half_btf(cospi[32], bf0[6], cospi[32], bf0[5], cos_bit);
+    bf1[7] = bf0[7];
+    bf1[8] = bf0[8] + bf0[11];
+    bf1[9] = bf0[9] + bf0[10];
+    bf1[10] = -bf0[10] + bf0[9];
+    bf1[11] = -bf0[11] + bf0[8];
+    bf1[12] = -bf0[12] + bf0[15];
+    bf1[13] = -bf0[13] + bf0[14];
+    bf1[14] = bf0[14] + bf0[13];
+    bf1[15] = bf0[15] + bf0[12];
+    bf1[16] = bf0[16];
+    bf1[17] = bf0[17];
+    bf1[18] = half_btf(-cospi[16], bf0[18], cospi[48], bf0[29], cos_bit);
+    bf1[19] = half_btf(-cospi[16], bf0[19], cospi[48], bf0[28], cos_bit);
+    bf1[20] = half_btf(-cospi[48], bf0[20], -cospi[16], bf0[27], cos_bit);
+    bf1[21] = half_btf(-cospi[48], bf0[21], -cospi[16], bf0[26], cos_bit);
+    bf1[22] = bf0[22];
+    bf1[23] = bf0[23];
+    bf1[24] = bf0[24];
+    bf1[25] = bf0[25];
+    bf1[26] = half_btf(cospi[48], bf0[26], -cospi[16], bf0[21], cos_bit);
+    bf1[27] = half_btf(cospi[48], bf0[27], -cospi[16], bf0[20], cos_bit);
+    bf1[28] = half_btf(cospi[16], bf0[28], cospi[48], bf0[19], cos_bit);
+    bf1[29] = half_btf(cospi[16], bf0[29], cospi[48], bf0[18], cos_bit);
+    bf1[30] = bf0[30];
+    bf1[31] = bf0[31];
+    range_check(stage, input, bf1, size, stage_range[stage]);
+
+    // stage 5
+    stage++;
+    cospi = cospi_arr(cos_bit);
+    bf0 = step;
+    bf1 = output;
+    bf1[0] = half_btf(cospi[32], bf0[0], cospi[32], bf0[1], cos_bit);
+    //bf1[1] = half_btf(-cospi[32], bf0[1], cospi[32], bf0[0], cos_bit);
+    bf1[2] = half_btf(cospi[48], bf0[2], cospi[16], bf0[3], cos_bit);
+    //bf1[3] = half_btf(cospi[48], bf0[3], -cospi[16], bf0[2], cos_bit);
+    bf1[4] = bf0[4] + bf0[5];
+    bf1[5] = -bf0[5] + bf0[4];
+    bf1[6] = -bf0[6] + bf0[7];
+    bf1[7] = bf0[7] + bf0[6];
+    bf1[8] = bf0[8];
+    bf1[9] = half_btf(-cospi[16], bf0[9], cospi[48], bf0[14], cos_bit);
+    bf1[10] = half_btf(-cospi[48], bf0[10], -cospi[16], bf0[13], cos_bit);
+    bf1[11] = bf0[11];
+    bf1[12] = bf0[12];
+    bf1[13] = half_btf(cospi[48], bf0[13], -cospi[16], bf0[10], cos_bit);
+    bf1[14] = half_btf(cospi[16], bf0[14], cospi[48], bf0[9], cos_bit);
+    bf1[15] = bf0[15];
+    bf1[16] = bf0[16] + bf0[19];
+    bf1[17] = bf0[17] + bf0[18];
+    bf1[18] = -bf0[18] + bf0[17];
+    bf1[19] = -bf0[19] + bf0[16];
+    bf1[20] = -bf0[20] + bf0[23];
+    bf1[21] = -bf0[21] + bf0[22];
+    bf1[22] = bf0[22] + bf0[21];
+    bf1[23] = bf0[23] + bf0[20];
+    bf1[24] = bf0[24] + bf0[27];
+    bf1[25] = bf0[25] + bf0[26];
+    bf1[26] = -bf0[26] + bf0[25];
+    bf1[27] = -bf0[27] + bf0[24];
+    bf1[28] = -bf0[28] + bf0[31];
+    bf1[29] = -bf0[29] + bf0[30];
+    bf1[30] = bf0[30] + bf0[29];
+    bf1[31] = bf0[31] + bf0[28];
+    range_check(stage, input, bf1, size, stage_range[stage]);
+
+    // stage 6
+    stage++;
+    cospi = cospi_arr(cos_bit);
+    bf0 = output;
+    bf1 = step;
+    bf1[0] = bf0[0];
+    //bf1[1] = bf0[1];
+    bf1[2] = bf0[2];
+    //bf1[3] = bf0[3];
+    bf1[4] = half_btf(cospi[56], bf0[4], cospi[8], bf0[7], cos_bit);
+    //bf1[5] = half_btf(cospi[24], bf0[5], cospi[40], bf0[6], cos_bit);
+    bf1[6] = half_btf(cospi[24], bf0[6], -cospi[40], bf0[5], cos_bit);
+    //bf1[7] = half_btf(cospi[56], bf0[7], -cospi[8], bf0[4], cos_bit);
+    bf1[8] = bf0[8] + bf0[9];
+    bf1[9] = -bf0[9] + bf0[8];
+    bf1[10] = -bf0[10] + bf0[11];
+    bf1[11] = bf0[11] + bf0[10];
+    bf1[12] = bf0[12] + bf0[13];
+    bf1[13] = -bf0[13] + bf0[12];
+    bf1[14] = -bf0[14] + bf0[15];
+    bf1[15] = bf0[15] + bf0[14];
+    bf1[16] = bf0[16];
+    bf1[17] = half_btf(-cospi[8], bf0[17], cospi[56], bf0[30], cos_bit);
+    bf1[18] = half_btf(-cospi[56], bf0[18], -cospi[8], bf0[29], cos_bit);
+    bf1[19] = bf0[19];
+    bf1[20] = bf0[20];
+    bf1[21] = half_btf(-cospi[40], bf0[21], cospi[24], bf0[26], cos_bit);
+    bf1[22] = half_btf(-cospi[24], bf0[22], -cospi[40], bf0[25], cos_bit);
+    bf1[23] = bf0[23];
+    bf1[24] = bf0[24];
+    bf1[25] = half_btf(cospi[24], bf0[25], -cospi[40], bf0[22], cos_bit);
+    bf1[26] = half_btf(cospi[40], bf0[26], cospi[24], bf0[21], cos_bit);
+    bf1[27] = bf0[27];
+    bf1[28] = bf0[28];
+    bf1[29] = half_btf(cospi[56], bf0[29], -cospi[8], bf0[18], cos_bit);
+    bf1[30] = half_btf(cospi[8], bf0[30], cospi[56], bf0[17], cos_bit);
+    bf1[31] = bf0[31];
+    range_check(stage, input, bf1, size, stage_range[stage]);
+
+    // stage 7
+    stage++;
+    cospi = cospi_arr(cos_bit);
+    bf0 = step;
+    bf1 = output;
+    bf1[0] = bf0[0];
+    //bf1[1] = bf0[1];
+    bf1[2] = bf0[2];
+    //bf1[3] = bf0[3];
+    bf1[4] = bf0[4];
+    //bf1[5] = bf0[5];
+    bf1[6] = bf0[6];
+    //bf1[7] = bf0[7];
+    bf1[8] = half_btf(cospi[60], bf0[8], cospi[4], bf0[15], cos_bit);
+    //bf1[9] = half_btf(cospi[28], bf0[9], cospi[36], bf0[14], cos_bit);
+    bf1[10] = half_btf(cospi[44], bf0[10], cospi[20], bf0[13], cos_bit);
+    //bf1[11] = half_btf(cospi[12], bf0[11], cospi[52], bf0[12], cos_bit);
+    bf1[12] = half_btf(cospi[12], bf0[12], -cospi[52], bf0[11], cos_bit);
+    //bf1[13] = half_btf(cospi[44], bf0[13], -cospi[20], bf0[10], cos_bit);
+    bf1[14] = half_btf(cospi[28], bf0[14], -cospi[36], bf0[9], cos_bit);
+    //bf1[15] = half_btf(cospi[60], bf0[15], -cospi[4], bf0[8], cos_bit);
+    bf1[16] = bf0[16] + bf0[17];
+    bf1[17] = -bf0[17] + bf0[16];
+    bf1[18] = -bf0[18] + bf0[19];
+    bf1[19] = bf0[19] + bf0[18];
+    bf1[20] = bf0[20] + bf0[21];
+    bf1[21] = -bf0[21] + bf0[20];
+    bf1[22] = -bf0[22] + bf0[23];
+    bf1[23] = bf0[23] + bf0[22];
+    bf1[24] = bf0[24] + bf0[25];
+    bf1[25] = -bf0[25] + bf0[24];
+    bf1[26] = -bf0[26] + bf0[27];
+    bf1[27] = bf0[27] + bf0[26];
+    bf1[28] = bf0[28] + bf0[29];
+    bf1[29] = -bf0[29] + bf0[28];
+    bf1[30] = -bf0[30] + bf0[31];
+    bf1[31] = bf0[31] + bf0[30];
+    range_check(stage, input, bf1, size, stage_range[stage]);
+
+    // stage 8
+    stage++;
+    cospi = cospi_arr(cos_bit);
+    bf0 = output;
+    bf1 = step;
+    bf1[0] = bf0[0];
+    //bf1[1] = bf0[1];
+    bf1[2] = bf0[2];
+    //bf1[3] = bf0[3];
+    bf1[4] = bf0[4];
+    //bf1[5] = bf0[5];
+    bf1[6] = bf0[6];
+    //bf1[7] = bf0[7];
+    bf1[8] = bf0[8];
+    //bf1[9] = bf0[9];
+    bf1[10] = bf0[10];
+    //bf1[11] = bf0[11];
+    bf1[12] = bf0[12];
+    //bf1[13] = bf0[13];
+    bf1[14] = bf0[14];
+    //bf1[15] = bf0[15];
+    bf1[16] = half_btf(cospi[62], bf0[16], cospi[2], bf0[31], cos_bit);
+    //bf1[17] = half_btf(cospi[30], bf0[17], cospi[34], bf0[30], cos_bit);
+    bf1[18] = half_btf(cospi[46], bf0[18], cospi[18], bf0[29], cos_bit);
+    //bf1[19] = half_btf(cospi[14], bf0[19], cospi[50], bf0[28], cos_bit);
+    bf1[20] = half_btf(cospi[54], bf0[20], cospi[10], bf0[27], cos_bit);
+    //bf1[21] = half_btf(cospi[22], bf0[21], cospi[42], bf0[26], cos_bit);
+    bf1[22] = half_btf(cospi[38], bf0[22], cospi[26], bf0[25], cos_bit);
+    //bf1[23] = half_btf(cospi[6], bf0[23], cospi[58], bf0[24], cos_bit);
+    bf1[24] = half_btf(cospi[6], bf0[24], -cospi[58], bf0[23], cos_bit);
+    //bf1[25] = half_btf(cospi[38], bf0[25], -cospi[26], bf0[22], cos_bit);
+    bf1[26] = half_btf(cospi[22], bf0[26], -cospi[42], bf0[21], cos_bit);
+    //bf1[27] = half_btf(cospi[54], bf0[27], -cospi[10], bf0[20], cos_bit);
+    bf1[28] = half_btf(cospi[14], bf0[28], -cospi[50], bf0[19], cos_bit);
+    //bf1[29] = half_btf(cospi[46], bf0[29], -cospi[18], bf0[18], cos_bit);
+    bf1[30] = half_btf(cospi[30], bf0[30], -cospi[34], bf0[17], cos_bit);
+    //bf1[31] = half_btf(cospi[62], bf0[31], -cospi[2], bf0[16], cos_bit);
+    range_check(stage, input, bf1, size, stage_range[stage]);
+
+    // stage 9
+    stage++;
+    bf0 = step;
+    bf1 = output;
+    bf1[0] = bf0[0];
+    bf1[1] = bf0[16];
+    bf1[2] = bf0[8];
+    bf1[3] = bf0[24];
+    bf1[4] = bf0[4];
+    bf1[5] = bf0[20];
+    bf1[6] = bf0[12];
+    bf1[7] = bf0[28];
+    bf1[8] = bf0[2];
+    bf1[9] = bf0[18];
+    bf1[10] = bf0[10];
+    bf1[11] = bf0[26];
+    bf1[12] = bf0[6];
+    bf1[13] = bf0[22];
+    bf1[14] = bf0[14];
+    bf1[15] = bf0[30];
+    /*   bf1[16] = bf0[1];
+       bf1[17] = bf0[17];
+       bf1[18] = bf0[9];
+       bf1[19] = bf0[25];
+       bf1[20] = bf0[5];
+       bf1[21] = bf0[21];
+       bf1[22] = bf0[13];
+       bf1[23] = bf0[29];
+       bf1[24] = bf0[3];
+       bf1[25] = bf0[19];
+       bf1[26] = bf0[11];
+       bf1[27] = bf0[27];
+       bf1[28] = bf0[7];
+       bf1[29] = bf0[23];
+       bf1[30] = bf0[15];
+       bf1[31] = bf0[31];*/
+    range_check(stage, input, bf1, size, stage_range[stage]);
+}
+static INLINE TxfmFunc fwd_txfm_pf_type_to_func(TXFM_TYPE txfm_type) {
+    switch (txfm_type) {
+    case TXFM_TYPE_DCT4: return av1_fdct4_new;
+    case TXFM_TYPE_DCT8: return av1_fdct8_new;
+    case TXFM_TYPE_DCT16: return av1_fdct16_new;
+    case TXFM_TYPE_DCT32: return av1_fdct32_pf_new;
+    case TXFM_TYPE_DCT64: return av1_fdct64_new;
+    case TXFM_TYPE_ADST4: return av1_fadst4_new;
+    case TXFM_TYPE_ADST8: return av1_fadst8_new;
+    case TXFM_TYPE_ADST16: return av1_fadst16_new;
+    case TXFM_TYPE_ADST32: return av1_fadst32_new;
+    case TXFM_TYPE_IDENTITY4: return av1_fidentity4_c;
+    case TXFM_TYPE_IDENTITY8: return av1_fidentity8_c;
+    case TXFM_TYPE_IDENTITY16: return av1_fidentity16_c;
+    case TXFM_TYPE_IDENTITY32: return av1_fidentity32_c;
+    case TXFM_TYPE_IDENTITY64: return av1_fidentity64_c;
+    default: assert(0); return NULL;
+    }
+}
+static INLINE void Av1TranformTwoDCore_pf_c(
+    int16_t                     *input,
+    uint32_t                      inputStride,
+    int32_t                      *output,
+    const TXFM_2D_FLIP_CFG      *cfg,
+    int32_t                      *buf,
+    uint8_t                        bit_depth)
+{
+    int32_t c, r;
+    // Note when assigning txfm_size_col, we use the txfm_size from the
+    // row configuration and vice versa. This is intentionally done to
+    // accurately perform rectangular transforms. When the transform is
+    // rectangular, the number of columns will be the same as the
+    // txfm_size stored in the row cfg struct. It will make no difference
+    // for square transforms.
+    const int32_t txfm_size_col = tx_size_wide[cfg->tx_size];
+    const int32_t txfm_size_row = tx_size_high[cfg->tx_size];
+    // Take the shift from the larger dimension in the rectangular case.
+    const int8_t *shift = cfg->shift;
+    const int32_t rect_type = get_rect_tx_log_ratio(txfm_size_col, txfm_size_row);
+    int8_t stage_range_col[MAX_TXFM_STAGE_NUM];
+    int8_t stage_range_row[MAX_TXFM_STAGE_NUM];
+    assert(cfg->stage_num_col <= MAX_TXFM_STAGE_NUM);
+    assert(cfg->stage_num_row <= MAX_TXFM_STAGE_NUM);
+    av1_gen_fwd_stage_range(stage_range_col, stage_range_row, cfg, bit_depth);
+
+    const int8_t cos_bit_col = cfg->cos_bit_col;
+    const int8_t cos_bit_row = cfg->cos_bit_row;
+    const TxfmFunc txfm_func_col = fwd_txfm_pf_type_to_func(cfg->txfm_type_col);
+    const TxfmFunc txfm_func_row = fwd_txfm_pf_type_to_func(cfg->txfm_type_row);
+    ASSERT(txfm_func_col != NULL);
+    ASSERT(txfm_func_row != NULL);
+    // use output buffer as temp buffer
+   /* int32_t *temp_in = output;
+    int32_t *temp_out = output + txfm_size_row;*/
+    int32_t temp_in[32];
+    int32_t temp_out[32];
+
+    // Columns
+    for (c = 0; c < txfm_size_col; ++c) {
+        if (cfg->ud_flip == 0) {
+            for (r = 0; r < txfm_size_row; ++r) temp_in[r] = input[r * inputStride + c];
+        }
+        else {
+            for (r = 0; r < txfm_size_row; ++r)
+                // flip upside down
+                temp_in[r] = input[(txfm_size_row - r - 1) * inputStride + c];
+        }
+        av1_round_shift_array_c(temp_in, txfm_size_row, -shift[0]); // NM av1_round_shift_array_c
+        txfm_func_col(temp_in, temp_out, cos_bit_col, stage_range_col);
+        av1_round_shift_array_c(temp_out, 16/*txfm_size_row*/, -shift[1]); // NM av1_round_shift_array_c
+        if (cfg->lr_flip == 0) {
+            for (r = 0; r < txfm_size_row; ++r)
+                buf[r * txfm_size_col + c] = temp_out[r];
+        }
+        else {
+            for (r = 0; r < txfm_size_row; ++r)
+                // flip from left to right
+                buf[r * txfm_size_col + (txfm_size_col - c - 1)] = temp_out[r];
+        }
+    }
+
+    // Rows
+    for (r = 0; r < 16/*txfm_size_row*/; ++r) {
+
+        txfm_func_row(buf + r * txfm_size_col,
+            temp_out, //output + r * txfm_size_col,//
+            cos_bit_row,
+            stage_range_row);
+        av1_round_shift_array_pf_c(temp_out, output + r * txfm_size_col, 16/*txfm_size_col*/, -shift[2]);
+
+        if (abs(rect_type) == 1) {
+            // Multiply everything by Sqrt2 if the transform is rectangular and the
+            // size difference is a factor of 2.
+            for (c = 0; c < txfm_size_col; ++c) {
+                output[r * txfm_size_col + c] = round_shift(
+                    (int64_t)output[r * txfm_size_col + c] * NewSqrt2, NewSqrt2Bits);
+            }
+        }
+    }
+}
+#endif
 /*static INLINE */void get_flip_cfg(TxType tx_type, int32_t *ud_flip, int32_t *lr_flip) {
     switch (tx_type) {
     case DCT_DCT:
@@ -3973,7 +4455,33 @@ void Av1TransformTwoD_32x32_c(
         intermediateTransformBuffer,
         bit_depth);
 }
+#if PF_N2_32X32
+void av1_fwd_txfm2d_pf_32x32_c(
+    int16_t         *input,
+    int32_t         *output,
+    uint32_t         inputStride,
+    TxType           transform_type,
+    uint8_t          bit_depth)
+{
+    int32_t intermediateTransformBuffer[32 * 32];
+    TXFM_2D_FLIP_CFG cfg;
 
+    memset(output, 0, 1024 * sizeof(int32_t));
+
+    Av1TransformConfig(
+        transform_type,
+        TX_32X32,
+        &cfg);
+
+    Av1TranformTwoDCore_pf_c(
+        input,
+        inputStride,
+        output,
+        &cfg,
+        intermediateTransformBuffer,
+        bit_depth);
+}
+#endif
 void Av1TransformTwoD_16x16_c(
     int16_t         *input,
     int32_t         *output,
@@ -4667,7 +5175,63 @@ EbErrorType av1_estimate_transform(
         break;
 
     case TX_32X32:
+#if PF_N2_32X32
+        if (transform_type == V_DCT || transform_type == H_DCT || transform_type == V_ADST || transform_type == H_ADST || transform_type == V_FLIPADST || transform_type == H_FLIPADST)
+        {
+            if (trans_coeff_shape == N2_SHAPE)
+            {
+                av1_fwd_txfm2d_pf_32x32_c(
+                    residual_buffer,
+                    coeff_buffer,
+                    residual_stride,
+                    transform_type,
+                    bit_depth);
+            }
+            else
+            {
+                Av1TransformTwoD_32x32_c(
+                    residual_buffer,
+                    coeff_buffer,
+                    residual_stride,
+                    transform_type,
+                    bit_depth);
+            }
+        }
 
+        else {
+            if (trans_coeff_shape == N2_SHAPE)
+            {
+                if ((transform_type == IDTX) || (transform_type == DCT_DCT))
+                {
+                    av1_fwd_txfm2d_pf_32x32(
+                        residual_buffer,
+                        coeff_buffer,
+                        residual_stride,
+                        transform_type,
+                        bit_depth);
+                }
+                else
+                {
+                    av1_fwd_txfm2d_pf_32x32_c(
+                        residual_buffer,
+                        coeff_buffer,
+                        residual_stride,
+                        transform_type,
+                        bit_depth);
+                }
+
+            }
+            else
+            {
+                av1_fwd_txfm2d_32x32(
+                    residual_buffer,
+                    coeff_buffer,
+                    residual_stride,
+                    transform_type,
+                    bit_depth);
+            }
+        }
+#else
         if (transform_type == V_DCT || transform_type == H_DCT || transform_type == V_ADST || transform_type == H_ADST || transform_type == V_FLIPADST || transform_type == H_FLIPADST)
             // Tahani: I believe those cases are never hit
             Av1TransformTwoD_32x32_c(
@@ -4686,8 +5250,7 @@ EbErrorType av1_estimate_transform(
                 transform_type,
                 bit_depth);
         }
-
-
+#endif
 
         break;
 

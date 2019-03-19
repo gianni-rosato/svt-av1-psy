@@ -28,6 +28,9 @@ void *aom_malloc(size_t size);
 #endif
 EbErrorType av1_alloc_restoration_buffers(Av1Common *cm);
 
+#if ICOPY
+EbErrorType av1_hash_table_create(hash_table *p_hash_table);
+#endif
 
 static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx, int32_t sy,
     RestorationInfo *rst) {
@@ -893,6 +896,10 @@ EbErrorType picture_control_set_ctor(
     }
 
     object_ptr->mi_stride = pictureLcuWidth * (BLOCK_SIZE_64 / 4);
+#if ICOPY
+    object_ptr->hash_table.p_lookup_table = NULL;
+    av1_hash_table_create(&object_ptr->hash_table);
+#endif
     return EB_ErrorNone;
 }
 
@@ -963,6 +970,22 @@ EbErrorType picture_parent_control_set_ctor(
             }
         }
     }
+#if OIS_BASED_INTRA
+        EB_MALLOC(ois_sb_results_t**, object_ptr->ois_sb_results, sizeof(ois_sb_results_t*) * object_ptr->sb_total_count, EB_N_PTR);
+        
+    for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
+
+        EB_MALLOC(ois_sb_results_t*, object_ptr->ois_sb_results[sb_index], sizeof(ois_sb_results_t), EB_N_PTR);
+
+        ois_candidate_t* contigousCand;
+        EB_MALLOC(ois_candidate_t*, contigousCand, sizeof(ois_candidate_t) * MAX_OIS_CANDIDATES * CU_MAX_COUNT, EB_N_PTR);
+
+        uint32_t cuIdx;
+        for (cuIdx = 0; cuIdx < CU_MAX_COUNT; ++cuIdx) {
+            object_ptr->ois_sb_results[sb_index]->ois_candidate_array[cuIdx] = &contigousCand[cuIdx*MAX_OIS_CANDIDATES];
+        }
+    }
+#else
     uint32_t maxOisCand = MAX_OPEN_LOOP_INTRA_CANDIDATES ;
 
     EB_MALLOC(OisCu32Cu16Results_t**, object_ptr->ois_cu32_cu16_results, sizeof(OisCu32Cu16Results_t*) * object_ptr->sb_total_count, EB_N_PTR);
@@ -993,6 +1016,7 @@ EbErrorType picture_parent_control_set_ctor(
             object_ptr->ois_cu8_results[sb_index]->sorted_ois_candidate[cuIdx] = &contigousCand[cuIdx*maxOisCand];
         }
     }
+#endif
     // Motion Estimation Results
     object_ptr->max_number_of_pus_per_sb = (initDataPtr->ext_block_flag) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
     EB_MALLOC(MeCuResults_t**, object_ptr->me_results, sizeof(MeCuResults_t*) * object_ptr->sb_total_count, EB_N_PTR);
@@ -1037,8 +1061,9 @@ EbErrorType picture_parent_control_set_ctor(
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
         EB_MALLOC(uint64_t*, object_ptr->var_of_var32x32_based_sb_array[sb_index], sizeof(uint64_t) * 4, EB_N_PTR);
     }
+#if !INTRA_INTER_FAST_LOOP
     EB_MALLOC(uint8_t*, object_ptr->cmplx_status_sb, sizeof(uint8_t) * object_ptr->sb_total_count, EB_N_PTR);
-
+#endif
     EB_MALLOC(EbBool*, object_ptr->sb_isolated_non_homogeneous_area_array, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
 
     EB_MALLOC(uint64_t**, object_ptr->sb_y_src_energy_cu_array, sizeof(uint64_t*) * object_ptr->sb_total_count, EB_N_PTR);

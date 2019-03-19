@@ -73,6 +73,9 @@ extern "C" {
         DistDir_t    distortionDirection[3];
 
         uint8_t        totalMeCandidateIndex;
+#if NSQ_OPTIMASATION
+        uint8_t       me_nsq[2]; // 2 Number of reference lists
+#endif
     } MeCuResults_t;
 
 #ifdef __cplusplus

@@ -40,12 +40,19 @@ extern "C" {
         union {
             struct {
                 unsigned                        me_distortion : 20;
+#if !INTRA_INTER_FAST_LOOP
 #if TWO_FAST_LOOP
                 unsigned                        enable_two_fast_loops : 1;
 #else
                 unsigned                        distortion_ready : 1;
 #endif
+#endif
+#if OIS_BASED_INTRA
+                unsigned                        distortion_ready : 1;
+                unsigned                        : 2;
+#else
                 unsigned : 3;
+#endif
                 unsigned                        intra_luma_mode : 8; // HEVC mode, use pred_mode for AV1
             };
             uint32_t ois_results;
@@ -71,20 +78,29 @@ extern "C" {
         };
 
         uint8_t                                skip_flag;
-        EbBool                                 merge_flag;  // Hsan: does not seem to be used why not removed ?
+        EbBool                                 merge_flag;
+#if !INTRA_INTER_FAST_LOOP
         uint8_t                                merge_index; // Hsan: does not seem to be used why not removed ?
+#endif
         uint16_t                               count_non_zero_coeffs;
+#if !INTRA_INTER_FAST_LOOP
         EbBool                                 prediction_is_ready_luma;
+#endif
         uint8_t                                type;
+#if !INTRA_INTER_FAST_LOOP
         EbBool                                 mpm_flag;
-
+#endif
         // MD Rate Estimation Ptr
         MdRateEstimationContext_t             *md_rate_estimation_ptr; // 64 bits
         uint64_t                               fast_luma_rate;
         uint64_t                               fast_chroma_rate;
         uint64_t                               chroma_distortion;
         uint64_t                               chroma_distortion_inter_depth;
+#if TRACK_FAST_DISTORTION
+        uint32_t                               luma_fast_distortion;
+#else
         uint32_t                               luma_distortion;
+#endif
         uint32_t                               full_distortion;
 
         EbPtr                                 prediction_context_ptr;
@@ -101,7 +117,9 @@ extern "C" {
 
         PredictionMode                         pred_mode; // AV1 mode, no need to convert
         uint8_t                                drl_index;
-
+#if ICOPY
+        uint8_t                                use_intrabc;
+#endif
         // Intra Mode
         int32_t                                angle_delta[PLANE_TYPES];
         EbBool                                 is_directional_mode_flag;
@@ -120,7 +138,9 @@ extern "C" {
         uint32_t                               pred_mv_weight;
         uint8_t                                ref_frame_type;
         uint8_t                                ref_mv_index;
+#if !INTRA_INTER_FAST_LOOP
         EbBool                                 is_skip_mode_flag;
+#endif
         EbBool                                 is_new_mv;
         EbBool                                 is_zero_mv;
         TxType                                 transform_type[PLANE_TYPES];
@@ -156,6 +176,9 @@ extern "C" {
         uint64_t                                luma_distortion,
         uint64_t                                chroma_distortion,
         uint64_t                                lambda,
+#if USE_SSE_FL
+        EbBool                                  use_ssd,
+#endif
         PictureControlSet_t                    *picture_control_set_ptr,
         CandidateMv                            *ref_mv_stack,
         const BlockGeom                        *blk_geom,
@@ -365,8 +388,10 @@ extern "C" {
         uint64_t                                cb_distortion[2];
         uint64_t                                cr_coeff_bits;
         uint64_t                                cr_distortion[2];
+#if !INTRA_INTER_FAST_LOOP
         EbBool                                  sub_sampled_pred; //do prediction every other line, duplicate the residual
         EbBool                                  sub_sampled_pred_chroma;
+#endif
         uint64_t                                y_full_distortion[DIST_CALC_TOTAL];
         uint64_t                                y_coeff_bits;
 
@@ -375,6 +400,15 @@ extern "C" {
     /**************************************
     * Extern Function Declarations
     **************************************/
+#if INTRA_INTER_FAST_LOOP
+    extern EbErrorType mode_decision_candidate_buffer_ctor(
+        ModeDecisionCandidateBuffer_t **buffer_dbl_ptr,
+        uint64_t                       *fast_cost_ptr,
+        uint64_t                       *full_cost_ptr,
+        uint64_t                       *full_cost_skip_ptr,
+        uint64_t                       *full_cost_merge_ptr
+    );
+#else
     extern EbErrorType mode_decision_candidate_buffer_ctor(
         ModeDecisionCandidateBuffer_t **buffer_dbl_ptr,
         uint16_t                        sb_max_size,
@@ -384,7 +418,7 @@ extern "C" {
         uint64_t                       *full_cost_skip_ptr,
         uint64_t                       *full_cost_merge_ptr
     );
-
+#endif
     uint8_t product_full_mode_decision(
         struct ModeDecisionContext_s   *context_ptr,
         CodingUnit_t                   *cu_ptr,
@@ -394,7 +428,16 @@ extern "C" {
         uint32_t                        candidate_total_count,
         uint8_t                        *best_candidate_index_array,
         uint32_t                       *best_intra_mode);
+#if INTRA_INTER_FAST_LOOP
+    void sort_fast_loop_candidates(
+        struct ModeDecisionContext_s   *context_ptr,
+        uint32_t                        buffer_total_count,
+        ModeDecisionCandidateBuffer_t **buffer_ptr_array,
+        uint8_t                        *best_candidate_index_array,
+        uint8_t                        *sorted_candidate_index_array,
+        uint64_t                       *ref_fast_cost);
 
+#else
     EbErrorType PreModeDecision(
         CodingUnit_t                   *cu_ptr,
         uint32_t                        buffer_total_count,
@@ -407,7 +450,7 @@ extern "C" {
         uint8_t                        *disable_merge_index,
         uint64_t                       *ref_fast_cost,
         EbBool                          same_fast_full_candidate);
-
+#endif
     typedef EbErrorType(*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(
         struct ModeDecisionContext_s           *context_ptr,
         uint32_t                                pu_index,

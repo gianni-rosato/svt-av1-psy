@@ -170,7 +170,11 @@ EbErrorType eb_sequence_control_set_ctor(
 
     sequence_control_set_ptr->order_hint_bits_minus1 = sequence_control_set_ptr->enable_order_hint ? 6 : -1;
 
+#if ICOPY
+    sequence_control_set_ptr->force_screen_content_tools = 2;
+#else
     sequence_control_set_ptr->force_screen_content_tools = 0;
+#endif
     // 0 - force off
     // 1 - force on
     // 2 - adaptive

@@ -24,18 +24,25 @@ extern "C" {
      * Defines
      **************************************/
 #if IMPROVED_BIPRED_INJECTION || IMPROVED_UNIPRED_INJECTION
+#if ICOPY
+#define IBC_CAND 2 //two intra bc candidates
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               (124+IBC_CAND) /* 61 Intra & 18+2x8+2x8 Inter*/
+#else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               124// 61 Intra & 18+2x8+2x8 Inter
+#endif
 #else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               90//35//20 // 61 Intra & 18 Inter
 #endif
 #if INC_NFL12
+#if !INTRA_INTER_FAST_LOOP
 #define MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT        (MAX_NFL*6) //up to 6 depths
+#endif
 #else
 #define MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT        33
 #endif
-
+#if !INTRA_INTER_FAST_LOOP
 #define INDEPENDENT_INTRA_CHROMA_MODE_TOTAL_COUNT       4       // Planar, Vertical, Horizontal, DC
-
+#endif
 #define DEPTH_ONE_STEP   21
 #define DEPTH_TWO_STEP    5
 #define DEPTH_THREE_STEP  1
@@ -70,8 +77,13 @@ extern "C" {
         unsigned                    tested_cu_flag                  : 1;   //tells whether this CU is tested in MD.
         unsigned                    mdc_array_index                 : 7;
         unsigned                    count_non_zero_coeffs           : 11;
+#if M8_SKIP_BLK
+        unsigned                    top_neighbor_depth              : 8;
+        unsigned                    left_neighbor_depth             : 8;
+#else
         unsigned                    top_neighbor_depth              : 3;
         unsigned                    left_neighbor_depth             : 3;
+#endif
         unsigned                    top_neighbor_mode               : 2;
         unsigned                    left_neighbor_mode              : 2;
         unsigned                    full_distortion                 : 32;
@@ -132,11 +144,11 @@ extern "C" {
         uint64_t                       *full_cost_array;
         uint64_t                       *full_cost_skip_ptr;
         uint64_t                       *full_cost_merge_ptr;
-
+#if !INTRA_INTER_FAST_LOOP
         // Fast loop buffers
         uint8_t                         buffer_depth_index_start[MAX_LEVEL_COUNT];
         uint8_t                         buffer_depth_index_width[MAX_LEVEL_COUNT];
-
+#endif
         // Lambda
 #if ADD_DELTA_QP_SUPPORT
         uint16_t                        qp;
@@ -167,7 +179,11 @@ extern "C" {
         uint8_t                         group_of16x16_blocks_count;
         uint8_t                         pu_itr;
         uint8_t                         cu_size_log2;
+#if INTRA_INTER_FAST_LOOP
+        uint8_t                         best_candidate_index_array[MAX_NFL + 2];
+#else
         uint8_t                         best_candidate_index_array[MAX_NFL];
+#endif
 #if USED_NFL_FEATURE_BASED
         uint8_t                         sorted_candidate_index_array[MAX_NFL];
 #endif
@@ -228,7 +244,10 @@ extern "C" {
         int16_t                           injected_mv_y_bipred_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
         uint8_t                           injected_mv_count_bipred;
 #endif
-
+#if INTRA_INTER_FAST_LOOP
+        uint32_t                          fast_candidate_intra_count;
+        uint32_t                          fast_candidate_inter_count;
+#endif
         // Multi-modes signal(s) 
         uint8_t                           nfl_level;
         uint8_t                           skip_interpolation_search;
@@ -238,7 +257,23 @@ extern "C" {
 #if CHROMA_BLIND
         uint8_t                           chroma_level;
 #endif
-
+#if NSQ_OPTIMASATION
+        PART                              nsq_table[NSQ_TAB_SIZE];
+#endif
+#if INTRA_INTER_FAST_LOOP
+        uint8_t                           decoupled_fast_loop_search_method; 
+        uint8_t                           decouple_intra_inter_fast_loop;
+#endif
+#if FULL_LOOP_ESCAPE
+        uint8_t                           full_loop_escape;
+#endif
+#if SHUT_GLOBAL_MV
+        uint8_t                           global_mv_injection;
+#endif
+        uint8_t                           warped_motion_injection;
+        uint8_t                           unipred3x3_injection;
+        uint8_t                           bipred3x3_injection;
+        uint8_t                           interpolation_filter_search_blk_size;
     } ModeDecisionContext_t;
 
     typedef void(*EB_AV1_LAMBDA_ASSIGN_FUNC)(

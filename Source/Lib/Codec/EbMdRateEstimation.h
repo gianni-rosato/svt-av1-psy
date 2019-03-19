@@ -8,12 +8,19 @@
 
 #include "EbDefinitions.h"
 #include "EbCabacContextModel.h"
+#if ICOPY
+#include "EbPictureControlSet.h"
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
     /**************************************
      * MD Rate Estimation Defines
      **************************************/
+#if ICOPY
+#define MV_COST_WEIGHT_SUB 120
+#endif
+
 #define TOTAL_NUMBER_OF_MD_RATE_ESTIMATION_CASE_BUFFERS (TOTAL_NUMBER_OF_QP_VALUES * TOTAL_NUMBER_OF_SLICE_TYPES)
 #define NUMBER_OF_SPLIT_FLAG_CASES                            6       // number of cases for bit estimation for split flag
 #define NUMBER_OF_MVD_CASES                                  12       // number of cases for bit estimation for motion vector difference
@@ -63,6 +70,10 @@ extern "C" {
         int32_t nmv_costs[2][MV_VALS];
         int32_t nmv_costs_hp[2][MV_VALS];
         int32_t *nmvcoststack[2];
+#if ICOPY
+        int dv_cost[2][MV_VALS];
+        int dv_joint_cost[MV_JOINTS];
+#endif
 
         // Compouned Mode
         int32_t interCompoundModeFacBits[INTER_MODE_CONTEXTS][CDF_SIZE(INTER_COMPOUND_MODES)];
@@ -315,6 +326,9 @@ extern "C" {
     * based on the frame CDF
     ***************************************************************************/
     extern void av1_estimate_mv_rate(
+#if ICOPY
+        struct PictureControlSet_s     *picture_control_set_ptr,
+#endif
         MdRateEstimationContext_t  *md_rate_estimation_array,
         nmv_context                *nmv_ctx);
 

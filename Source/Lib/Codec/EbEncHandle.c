@@ -412,6 +412,10 @@ void asmSetConvolveAsmTable(void);
 void asmSetConvolveHbdAsmTable(void);
 void init_intra_dc_predictors_c_internal(void);
 void init_intra_predictors_internal(void);
+#if ICOPY
+void av1_init_me_luts(void);
+#endif
+
 void SwitchToRealTime(){
 #if defined(__linux__) || defined(__APPLE__)
 
@@ -435,7 +439,7 @@ int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config) {
         fps        = fps > 120 ? 120   : fps;
         fps        = fps < 24  ? 24    : fps; 
         ppcs_count = MAX(min_ppcs_count, fps);
-        ppcs_count = ((ppcs_count * 5) >> 2);  // 1.25 sec worth of internal buffering
+        ppcs_count = ((ppcs_count * 4) >> 1);  // 2 sec worth of internal buffering
     
         return (int32_t) ppcs_count;
     }
@@ -535,7 +539,7 @@ EbErrorType LoadDefaultBufferConfigurationSettings(
     sequence_control_set_ptr->rest_segment_row_count    = MIN(rest_seg_h,4);
 #endif
     //#====================== Data Structures and Picture Buffers ======================
-    sequence_control_set_ptr->picture_control_set_pool_init_count       = inputPic;
+    sequence_control_set_ptr->picture_control_set_pool_init_count       = inputPic + sequence_control_set_ptr->static_config.look_ahead_distance + SCD_LAD;
     sequence_control_set_ptr->picture_control_set_pool_init_count_child = MAX(MAX(MIN(3, coreCount/2), coreCount / 6), 1);
     sequence_control_set_ptr->reference_picture_buffer_init_count       = MAX((uint32_t)(inputPic >> 1),
                                                                           (uint32_t)((1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 2)) +
@@ -577,7 +581,7 @@ EbErrorType LoadDefaultBufferConfigurationSettings(
     sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->motion_estimation_process_init_count            = MAX(MIN(20, coreCount), coreCount / 3));
     sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->source_based_operations_process_init_count      = MAX(MIN(3, coreCount), coreCount / 12));
     sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->mode_decision_configuration_process_init_count  = MAX(MIN(3, coreCount), coreCount / 12));
-    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->enc_dec_process_init_count                      = MAX(MIN(40, coreCount), coreCount)    );
+    sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->enc_dec_process_init_count                      = MAX(MIN(40, coreCount), coreCount));//1);//CHKN   ICOPY
     sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->entropy_coding_process_init_count               = MAX(MIN(3, coreCount), coreCount / 12));
 #endif
 
@@ -892,6 +896,10 @@ EbErrorType RestResultsCtor(
     return EB_ErrorNone;
 }
 #endif
+#if ICOPY
+void init_fn_ptr(void);
+#endif
+
 /**********************************
 * Initialize Encoder Library
 **********************************/
@@ -939,6 +947,10 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 
     build_blk_geom(scs_init.sb_size == 128);
 
+#if ICOPY
+    av1_init_me_luts();
+    init_fn_ptr();
+#endif
 
     /************************************
     * Sequence Control Set
@@ -2176,7 +2188,7 @@ void SetParamBasedOnInput(
         sequence_control_set_ptr,
         sequence_control_set_ptr->luma_width*sequence_control_set_ptr->luma_height);
  #if DISABLE_128_SB_FOR_SUB_720
-    sequence_control_set_ptr->static_config.super_block_size       = (sequence_control_set_ptr->static_config.enc_mode <= ENC_M2 && sequence_control_set_ptr->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 128 : 64;
+    sequence_control_set_ptr->static_config.super_block_size       = (sequence_control_set_ptr->static_config.enc_mode <= ENC_M1 && sequence_control_set_ptr->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 128 : 64;
 #endif
 }
 
@@ -2713,7 +2725,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->source_width = 0;
     config_ptr->source_height = 0;
     config_ptr->frames_to_be_encoded = 0; 
-    config_ptr->stat_report = 1;
+    config_ptr->stat_report = 0;
 #if TILES
     config_ptr->tile_rows = 0;
     config_ptr->tile_columns = 0;

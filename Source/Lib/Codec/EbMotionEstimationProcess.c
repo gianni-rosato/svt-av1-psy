@@ -97,14 +97,36 @@ void* set_me_hme_params_oq(
     EbInputResolution                 input_resolution)
 {
     UNUSED(sequence_control_set_ptr);
-    //uint8_t  hmeMeLevel = picture_control_set_ptr->enc_mode;
     uint8_t  hmeMeLevel =  picture_control_set_ptr->enc_mode; // OMK to be revised after new presets
 
-
-// HME/ME default settings
+    // HME/ME default settings
     me_context_ptr->number_hme_search_region_in_width = 2;
     me_context_ptr->number_hme_search_region_in_height = 2;
 
+#if SCENE_CONTENT_SETTINGS
+    uint8_t sc_content_detected = picture_control_set_ptr->sc_content_detected;
+    // HME Level0
+    me_context_ptr->hme_level0_total_search_area_width = HmeLevel0TotalSearchAreaWidth[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->hme_level0_total_search_area_height = HmeLevel0TotalSearchAreaHeight[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->hme_level0_search_area_in_width_array[0] = HmeLevel0SearchAreaInWidthArrayRight[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->hme_level0_search_area_in_width_array[1] = HmeLevel0SearchAreaInWidthArrayLeft[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->hme_level0_search_area_in_height_array[0] = HmeLevel0SearchAreaInHeightArrayTop[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->hme_level0_search_area_in_height_array[1] = HmeLevel0SearchAreaInHeightArrayBottom[sc_content_detected][input_resolution][hmeMeLevel];
+    // HME Level1
+    me_context_ptr->hme_level1_search_area_in_width_array[0] = HmeLevel1SearchAreaInWidthArrayRight[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->hme_level1_search_area_in_width_array[1] = HmeLevel1SearchAreaInWidthArrayLeft[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->hme_level1_search_area_in_height_array[0] = HmeLevel1SearchAreaInHeightArrayTop[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->hme_level1_search_area_in_height_array[1] = HmeLevel1SearchAreaInHeightArrayBottom[sc_content_detected][input_resolution][hmeMeLevel];
+    // HME Level2
+    me_context_ptr->hme_level2_search_area_in_width_array[0] = HmeLevel2SearchAreaInWidthArrayRight[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->hme_level2_search_area_in_width_array[1] = HmeLevel2SearchAreaInWidthArrayLeft[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->hme_level2_search_area_in_height_array[0] = HmeLevel2SearchAreaInHeightArrayTop[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->hme_level2_search_area_in_height_array[1] = HmeLevel2SearchAreaInHeightArrayBottom[sc_content_detected][input_resolution][hmeMeLevel];
+
+    // ME
+    me_context_ptr->search_area_width = SearchAreaWidth[sc_content_detected][input_resolution][hmeMeLevel];
+    me_context_ptr->search_area_height = SearchAreaHeight[sc_content_detected][input_resolution][hmeMeLevel];
+#else
     // HME Level0
     me_context_ptr->hme_level0_total_search_area_width = HmeLevel0TotalSearchAreaWidth[input_resolution][hmeMeLevel];
     me_context_ptr->hme_level0_total_search_area_height = HmeLevel0TotalSearchAreaHeight[input_resolution][hmeMeLevel];
@@ -126,6 +148,7 @@ void* set_me_hme_params_oq(
     // ME
     me_context_ptr->search_area_width = SearchAreaWidth[input_resolution][hmeMeLevel];
     me_context_ptr->search_area_height = SearchAreaHeight[input_resolution][hmeMeLevel];
+#endif
 
     me_context_ptr->update_hme_search_center_flag = 1;
 
@@ -147,18 +170,27 @@ EbErrorType signal_derivation_me_kernel_oq(
     EbErrorType return_error = EB_ErrorNone;
 
     // Set ME/HME search regions
-    if (sequence_control_set_ptr->static_config.use_default_me_hme) {
+    if (sequence_control_set_ptr->static_config.use_default_me_hme) 
         set_me_hme_params_oq(
             context_ptr->me_context_ptr,
             picture_control_set_ptr,
             sequence_control_set_ptr,
             sequence_control_set_ptr->input_resolution);
-    }
-    else {
+    
+    else 
         set_me_hme_params_from_config(
             sequence_control_set_ptr,
             context_ptr->me_context_ptr);
-    }
+ #if SCENE_CONTENT_SETTINGS   
+    if (picture_control_set_ptr->sc_content_detected)
+        context_ptr->me_context_ptr->fractionalSearchMethod = FULL_SAD_SEARCH ; 
+    else 
+#endif
+        if (picture_control_set_ptr->enc_mode <= ENC_M6)
+        context_ptr->me_context_ptr->fractionalSearchMethod = SSD_SEARCH ; 
+    else
+        context_ptr->me_context_ptr->fractionalSearchMethod = FULL_SAD_SEARCH;
+
 
     return return_error;
 };
@@ -566,6 +598,15 @@ void* MotionEstimationKernel(void *input_ptr)
                     sb_index = (uint16_t)(xLcuIndex + yLcuIndex * picture_width_in_sb);
 
 
+#if OIS_BASED_INTRA             
+                    open_loop_intra_search_sb(
+                        picture_control_set_ptr,
+                        sb_index,
+                        context_ptr,
+                        input_picture_ptr,
+                        asm_type);
+
+#else
                     OpenLoopIntraSearchLcu(
                         picture_control_set_ptr,
                         sb_index,
@@ -573,7 +614,7 @@ void* MotionEstimationKernel(void *input_ptr)
                         input_picture_ptr,
                         asm_type);
 
-
+#endif
 
                 }
             }
@@ -646,12 +687,16 @@ void* MotionEstimationKernel(void *input_ptr)
                             uint32_t                       bestOisCuIndex = 0;
 
                             //DOUBLE CHECK THIS PIECE OF CODE
+#if  OIS_BASED_INTRA
+                            bestOisCuIndex =  picture_control_set_ptr->ois_sb_results[sb_index]->best_distortion_index[0];
+                            intra_sad_interval_index = (uint32_t) ( picture_control_set_ptr->ois_sb_results[sb_index]->ois_candidate_array[0][bestOisCuIndex].distortion  >> (12 - SAD_PRECISION_INTERVAL));//change 12 to 2*log2(64) ;
+#else
                             intra_sad_interval_index = (uint32_t)
                                 (((picture_control_set_ptr->ois_cu32_cu16_results[sb_index]->sorted_ois_candidate[1][bestOisCuIndex].distortion +
                                     picture_control_set_ptr->ois_cu32_cu16_results[sb_index]->sorted_ois_candidate[2][bestOisCuIndex].distortion +
                                     picture_control_set_ptr->ois_cu32_cu16_results[sb_index]->sorted_ois_candidate[3][bestOisCuIndex].distortion +
                                     picture_control_set_ptr->ois_cu32_cu16_results[sb_index]->sorted_ois_candidate[4][bestOisCuIndex].distortion)) >> (12 - SAD_PRECISION_INTERVAL));//change 12 to 2*log2(64) ;
-
+#endif
                             intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >> 2);
                             if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
                                 uint32_t sadIntervalIndexTemp = intra_sad_interval_index - ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
@@ -693,13 +738,17 @@ void* MotionEstimationKernel(void *input_ptr)
 
 
                             //DOUBLE CHECK THIS PIECE OF CODE
-
+                            
+#if OIS_BASED_INTRA
+                            bestOisCuIndex =  picture_control_set_ptr->ois_sb_results[sb_index]->best_distortion_index[0];
+                            intra_sad_interval_index = (uint32_t) ( picture_control_set_ptr->ois_sb_results[sb_index]->ois_candidate_array[0][bestOisCuIndex].distortion  >> (12 - SAD_PRECISION_INTERVAL));//change 12 to 2*log2(64) ;
+#else
                             intra_sad_interval_index = (uint32_t)
                                 (((picture_control_set_ptr->ois_cu32_cu16_results[sb_index]->sorted_ois_candidate[1][bestOisCuIndex].distortion +
                                     picture_control_set_ptr->ois_cu32_cu16_results[sb_index]->sorted_ois_candidate[2][bestOisCuIndex].distortion +
                                     picture_control_set_ptr->ois_cu32_cu16_results[sb_index]->sorted_ois_candidate[3][bestOisCuIndex].distortion +
                                     picture_control_set_ptr->ois_cu32_cu16_results[sb_index]->sorted_ois_candidate[4][bestOisCuIndex].distortion)) >> (12 - SAD_PRECISION_INTERVAL));//change 12 to 2*log2(64) ;
-
+#endif
                             intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >> 2);
                             if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
                                 uint32_t sadIntervalIndexTemp = intra_sad_interval_index - ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);

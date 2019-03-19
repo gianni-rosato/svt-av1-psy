@@ -56,20 +56,13 @@ int32_t OisPointTh[3][MAX_TEMPORAL_LAYERS][OIS_TH_COUNT] = {
     }
 };
 
-
-
-
-
 #define AVCCODEL
 /********************************************
 * Constants
 ********************************************/
 
-static const uint8_t numberOfOisModePoints[5/*IOS poitnt*/] = {
-    1, 3, 5, 7, 9
-};
-
 #define MAX_INTRA_IN_MD   9
+#if !OIS_BASED_INTRA
 //CHKN: Note that the max number set in this table should be referenced by the upper macro!!!
 static uint8_t intraSearchInMd[5][4] = {
     /*depth0*/    /*depth1*/    /*depth2*/    /*depth3*/
@@ -83,7 +76,7 @@ static uint8_t intraSearchInMd[5][4] = {
 // Intra Open Loop
 uint32_t iSliceModesArray[11] = { EB_INTRA_PLANAR, EB_INTRA_DC, EB_INTRA_HORIZONTAL, EB_INTRA_VERTICAL, EB_INTRA_MODE_2, EB_INTRA_MODE_18, EB_INTRA_MODE_34, EB_INTRA_MODE_6, EB_INTRA_MODE_14, EB_INTRA_MODE_22, EB_INTRA_MODE_30 };
 uint32_t stage1ModesArray[9] = { EB_INTRA_HORIZONTAL, EB_INTRA_VERTICAL, EB_INTRA_MODE_2, EB_INTRA_MODE_18, EB_INTRA_MODE_34, EB_INTRA_MODE_6, EB_INTRA_MODE_14, EB_INTRA_MODE_22, EB_INTRA_MODE_30 };
-
+#endif
 #define REFERENCE_PIC_LIST_0  0
 #define REFERENCE_PIC_LIST_1  1
 
@@ -258,6 +251,347 @@ void ext_sad_calculation_32x32_64x64(
     }
 }
 
+
+#if NSQ_OPTIMASATION
+#define BLK_NUM 5
+/**********************************************************
+Calcualte the best SAD from Rect H, V and H4, V4 partitions
+
+and return the best partition index
+***********************************************************/
+void nsq_me_analysis(
+    uint32_t  *p_sad64x32,
+    uint32_t  *p_sad32x16,
+    uint32_t  *p_sad16x8,
+    uint32_t  *p_sad32x64,
+    uint32_t  *p_sad16x32,
+    uint32_t  *p_sad8x16,
+    uint32_t  *p_sad32x8,
+    uint32_t  *p_sad8x32,
+    uint32_t  *p_sad64x16,
+    uint32_t  *p_sad16x64,
+    uint8_t   *p_nsq_64x64,
+    uint8_t   *p_nsq_32x32,
+    uint8_t   *p_nsq_16x16,
+    uint8_t   *p_nsq_8x8){
+
+    uint32_t sad[BLK_NUM];// sad_N, sad_H, sad_V, sad_H4, sad_V4, sad_S;
+    uint32_t best_nsq_sad;
+    uint8_t  nsq_index;
+    /*64x64*/
+    //sad[0] = p_sad64x64;
+    sad[1] = p_sad64x32[0] + p_sad64x32[1];
+    sad[2] = p_sad32x64[0] + p_sad32x64[1];
+    sad[3] = p_sad64x16[0] + p_sad64x16[1] + p_sad64x16[2] + p_sad64x16[3];
+    sad[4] = p_sad16x64[0] + p_sad16x64[1] + p_sad16x64[2] + p_sad16x64[3];
+    //sad[5] = p_sad32x32[0] + p_sad32x32[1] + p_sad32x32[2] + p_sad32x32[3];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            *p_nsq_64x64 = nsq_index;
+        }
+    }
+    /*32x32*/
+    //32x32_0
+    //sad[0] = p_sad32x32[0];
+    sad[1] = p_sad32x16[0] + p_sad32x16[1];
+    sad[2] = p_sad16x32[0] + p_sad16x32[1];
+    sad[3] = p_sad32x8[0] + p_sad32x8[1] + p_sad32x8[2] + p_sad32x8[3];
+    sad[4] = p_sad8x32[0] + p_sad8x32[1] + p_sad8x32[2] + p_sad8x32[3];
+    //sad[5] = p_sad16x16[0] + p_sad16x16[1] + p_sad16x16[2] + p_sad16x16[3];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_32x32[0] = nsq_index;
+        }
+    }
+    //32x32_1
+    //sad[0] = p_sad32x32[1];
+    sad[1] = p_sad32x16[2] + p_sad32x16[3];
+    sad[2] = p_sad16x32[2] + p_sad16x32[3];
+    sad[3] = p_sad32x8[4] + p_sad32x8[5] + p_sad32x8[6] + p_sad32x8[7];
+    sad[4] = p_sad8x32[4] + p_sad8x32[5] + p_sad8x32[6] + p_sad8x32[7];
+    //sad[5] = p_sad16x16[4] + p_sad16x16[5] + p_sad16x16[6] + p_sad16x16[7];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_32x32[1] = nsq_index;
+        }
+    }
+    //32x32_2
+    //sad[0] = p_sad32x32[2];
+    sad[1] = p_sad32x16[4] + p_sad32x16[5];
+    sad[2] = p_sad16x32[4] + p_sad16x32[5];
+    sad[3] = p_sad32x8[8] + p_sad32x8[9] + p_sad32x8[10] + p_sad32x8[11];
+    sad[4] = p_sad8x32[8] + p_sad8x32[9] + p_sad8x32[10] + p_sad8x32[11];
+    //sad[5] = p_sad16x16[8] + p_sad16x16[9] + p_sad16x16[10] + p_sad16x16[11];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_32x32[2] = nsq_index;
+        }
+    }
+    //32x32_3
+    //sad[0] = p_sad32x32[3];
+    sad[1] = p_sad32x16[6] + p_sad32x16[7];
+    sad[2] = p_sad16x32[6] + p_sad16x32[7];
+    sad[3] = p_sad32x8[12] + p_sad32x8[13] + p_sad32x8[14] + p_sad32x8[15];
+    sad[4] = p_sad8x32[12] + p_sad8x32[13] + p_sad8x32[14] + p_sad8x32[15];
+    //sad[5] = p_sad16x16[12] + p_sad16x16[13] + p_sad16x16[14] + p_sad16x16[15];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_32x32[3] = nsq_index;
+        }
+    }
+    /*16x16*/
+    //16x16_0
+    //sad[0] = p_sad16x16[0];
+    sad[1] = p_sad16x8[0] + p_sad16x8[1];
+    sad[2] = p_sad8x16[0] + p_sad8x16[1];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[0] + p_sad8x8[1] + p_sad8x8[2] + p_sad8x8[3];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[0] = nsq_index;
+        }
+    }
+    p_nsq_8x8[0] = p_nsq_8x8[1] = p_nsq_8x8[2] = p_nsq_8x8[3] = p_nsq_16x16[0];
+    //16x16_1
+    //sad[0] = p_sad16x16[1];
+    sad[1] = p_sad16x8[2] + p_sad16x8[3];
+    sad[2] = p_sad8x16[2] + p_sad8x16[3];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[4] + p_sad8x8[5] + p_sad8x8[6] + p_sad8x8[7];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[1] = nsq_index;
+        }
+    }
+    p_nsq_8x8[4] = p_nsq_8x8[5] = p_nsq_8x8[6] = p_nsq_8x8[7] = p_nsq_16x16[1];
+    //16x16_2
+    //sad[0] = p_sad16x16[2];
+    sad[1] = p_sad16x8[4] + p_sad16x8[5];
+    sad[2] = p_sad8x16[4] + p_sad8x16[5];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[8] + p_sad8x8[9] + p_sad8x8[10] + p_sad8x8[11];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[2] = nsq_index;
+        }
+    }
+    p_nsq_8x8[8] = p_nsq_8x8[9] = p_nsq_8x8[10] = p_nsq_8x8[11] = p_nsq_16x16[2];
+    //16x16_3
+    //sad[0] = p_sad16x16[3];
+    sad[1] = p_sad16x8[6] + p_sad16x8[7];
+    sad[2] = p_sad8x16[6] + p_sad8x16[7];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    // sad[5] = p_sad8x8[12] + p_sad8x8[13] + p_sad8x8[14] + p_sad8x8[15];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[3] = nsq_index;
+        }
+    }
+    p_nsq_8x8[12] = p_nsq_8x8[13] = p_nsq_8x8[14] = p_nsq_8x8[15] = p_nsq_16x16[3];
+    //16x16_4
+    //sad[0] = p_sad16x16[4];
+    sad[1] = p_sad16x8[8] + p_sad16x8[9];
+    sad[2] = p_sad8x16[8] + p_sad8x16[9];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    // sad[5] = p_sad8x8[16] + p_sad8x8[17] + p_sad8x8[18] + p_sad8x8[19];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[4] = nsq_index;
+        }
+    }
+    p_nsq_8x8[16] = p_nsq_8x8[17] = p_nsq_8x8[18] = p_nsq_8x8[19] = p_nsq_16x16[4];
+    //16x16_5
+    //sad[0] = p_sad16x16[5];
+    sad[1] = p_sad16x8[10] + p_sad16x8[11];
+    sad[2] = p_sad8x16[10] + p_sad8x16[11];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    // sad[5] = p_sad8x8[20] + p_sad8x8[21] + p_sad8x8[22] + p_sad8x8[23];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[5] = nsq_index;
+        }
+    }
+    p_nsq_8x8[20] = p_nsq_8x8[21] = p_nsq_8x8[22] = p_nsq_8x8[23] = p_nsq_16x16[5];
+    //16x16_6
+    //sad[0] = p_sad16x16[6];
+    sad[1] = p_sad16x8[12] + p_sad16x8[13];
+    sad[2] = p_sad8x16[12] + p_sad8x16[13];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[24] + p_sad8x8[25] + p_sad8x8[26] + p_sad8x8[27];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[6] = nsq_index;
+        }
+    }
+    p_nsq_8x8[24] = p_nsq_8x8[25] = p_nsq_8x8[26] = p_nsq_8x8[27] = p_nsq_16x16[6];
+    //16x16_7
+    //sad[0] = p_sad16x16[7];
+    sad[1] = p_sad16x8[14] + p_sad16x8[15];
+    sad[2] = p_sad8x16[14] + p_sad8x16[15];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[28] + p_sad8x8[29] + p_sad8x8[30] + p_sad8x8[31];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[7] = nsq_index;
+        }
+    }
+    p_nsq_8x8[28] = p_nsq_8x8[29] = p_nsq_8x8[30] = p_nsq_8x8[31] = p_nsq_16x16[7];
+    //16x16_8
+    //sad[0] = p_sad16x16[8];
+    sad[1] = p_sad16x8[16] + p_sad16x8[17];
+    sad[2] = p_sad8x16[16] + p_sad8x16[17];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[32] + p_sad8x8[33] + p_sad8x8[34] + p_sad8x8[35];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[8] = nsq_index;
+        }
+    }
+    p_nsq_8x8[32] = p_nsq_8x8[33] = p_nsq_8x8[34] = p_nsq_8x8[35] = p_nsq_16x16[8];
+    //16x16_9
+    //sad[0] = p_sad16x16[9];
+    sad[1] = p_sad16x8[18] + p_sad16x8[19];
+    sad[2] = p_sad8x16[18] + p_sad8x16[19];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[36] + p_sad8x8[37] + p_sad8x8[38] + p_sad8x8[39];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[9] = nsq_index;
+        }
+    }
+    p_nsq_8x8[36] = p_nsq_8x8[37] = p_nsq_8x8[38] = p_nsq_8x8[39] = p_nsq_16x16[9];
+    //16x16_10
+    //sad[0] = p_sad16x16[10];
+    sad[1] = p_sad16x8[20] + p_sad16x8[21];
+    sad[2] = p_sad8x16[20] + p_sad8x16[21];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[40] + p_sad8x8[41] + p_sad8x8[42] + p_sad8x8[43];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[10] = nsq_index;
+        }
+    }
+    p_nsq_8x8[40] = p_nsq_8x8[41] = p_nsq_8x8[42] = p_nsq_8x8[43] = p_nsq_16x16[10];
+    //16x16_11
+    //sad[0] = p_sad16x16[11];
+    sad[1] = p_sad16x8[22] + p_sad16x8[23];
+    sad[2] = p_sad8x16[22] + p_sad8x16[23];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[44] + p_sad8x8[45] + p_sad8x8[46] + p_sad8x8[47];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[11] = nsq_index;
+        }
+    }
+    p_nsq_8x8[44] = p_nsq_8x8[45] = p_nsq_8x8[46] = p_nsq_8x8[47] = p_nsq_16x16[11];
+    //16x16_12
+    //sad[0] = p_sad16x16[12];
+    sad[1] = p_sad16x8[24] + p_sad16x8[25];
+    sad[2] = p_sad8x16[24] + p_sad8x16[25];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[48] + p_sad8x8[49] + p_sad8x8[50] + p_sad8x8[51];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[12] = nsq_index;
+        }
+    }
+    p_nsq_8x8[48] = p_nsq_8x8[49] = p_nsq_8x8[50] = p_nsq_8x8[51] = p_nsq_16x16[12];
+    //16x16_13
+    //sad[0] = p_sad16x16[13];
+    sad[1] = p_sad16x8[26] + p_sad16x8[27];
+    sad[2] = p_sad8x16[26] + p_sad8x16[27];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[52] + p_sad8x8[53] + p_sad8x8[54] + p_sad8x8[55];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[13] = nsq_index;
+        }
+    }
+    p_nsq_8x8[52] = p_nsq_8x8[53] = p_nsq_8x8[54] = p_nsq_8x8[55] = p_nsq_16x16[13];
+    //16x16_14
+    //sad[0] = p_sad16x16[14];
+    sad[1] = p_sad16x8[28] + p_sad16x8[29];
+    sad[2] = p_sad8x16[28] + p_sad8x16[29];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[56] + p_sad8x8[57] + p_sad8x8[58] + p_sad8x8[59];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[14] = nsq_index;
+        }
+    }
+    p_nsq_8x8[56] = p_nsq_8x8[57] = p_nsq_8x8[58] = p_nsq_8x8[59] = p_nsq_16x16[14];
+    //16x16_15
+    //sad[0] = p_sad16x16[15];
+    sad[1] = p_sad16x8[30] + p_sad16x8[31];
+    sad[2] = p_sad8x16[30] + p_sad8x16[31];
+    sad[3] = MAX_SAD_VALUE;
+    sad[4] = MAX_SAD_VALUE;
+    //sad[5] = p_sad8x8[60] + p_sad8x8[61] + p_sad8x8[62] + p_sad8x8[63];
+    best_nsq_sad = MAX_SAD_VALUE;
+    for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
+        if (sad[nsq_index] < best_nsq_sad) {
+            best_nsq_sad = sad[nsq_index];
+            p_nsq_16x16[15] = nsq_index;
+        }
+    }
+    p_nsq_8x8[60] = p_nsq_8x8[61] = p_nsq_8x8[62] = p_nsq_8x8[63] = p_nsq_16x16[15];
+}
+#endif
 /****************************************************
 Calcualte SAD for Rect H, V and H4, V4 partitions
 
@@ -1059,6 +1393,48 @@ static EB_EXTSADCALCULATION_TYPE ExtSadCalculation_funcPtrArray[ASM_TYPE_TOTAL] 
     ExtSadCalculation
 };
 
+#if NSQ_OPTIMASATION
+/*******************************************
+* nsq_get_analysis_results_block returns the
+* the best partition for each sq_block based 
+* on the ME SAD
+*******************************************/
+static void nsq_get_analysis_results_block(
+    MeContext_t             *context_ptr) {
+
+
+    uint32_t  *p_best_sad64x32 = context_ptr->p_best_sad64x32;
+    uint32_t  *p_best_sad32x16 = context_ptr->p_best_sad32x16;
+    uint32_t  *p_best_sad16x8 = context_ptr->p_best_sad16x8;
+    uint32_t  *p_best_sad32x64 = context_ptr->p_best_sad32x64;
+    uint32_t  *p_best_sad16x32 = context_ptr->p_best_sad16x32;
+    uint32_t  *p_best_sad8x16 = context_ptr->p_best_sad8x16;
+    uint32_t  *p_best_sad32x8 = context_ptr->p_best_sad32x8;
+    uint32_t  *p_best_sad8x32 = context_ptr->p_best_sad8x32;
+    uint32_t  *p_best_sad64x16 = context_ptr->p_best_sad64x16;
+    uint32_t  *p_best_sad16x64 = context_ptr->p_best_sad16x64;
+    uint8_t  *p_best_nsq_64x64 = context_ptr->p_best_nsq64x64;
+    uint8_t  *p_best_nsq_32x32 = context_ptr->p_best_nsq32x32;
+    uint8_t  *p_best_nsq_16x16 = context_ptr->p_best_nsq16x16;
+    uint8_t  *p_best_nsq_8x8 = context_ptr->p_best_nsq8x8;
+
+    nsq_me_analysis(
+        p_best_sad64x32,
+        p_best_sad32x16,
+        p_best_sad16x8,
+        p_best_sad32x64,
+        p_best_sad16x32,
+        p_best_sad8x16,
+        p_best_sad32x8,
+        p_best_sad8x32,
+        p_best_sad64x16,
+        p_best_sad16x64,
+        p_best_nsq_64x64,
+        p_best_nsq_32x32,
+        p_best_nsq_16x16,
+        p_best_nsq_8x8);
+}
+#endif
 /*******************************************
 * open_loop_me_get_search_point_results_block
 *******************************************/
@@ -2413,6 +2789,7 @@ void HalfPelSearch_LCU(
             }
         }
     }
+#if !TEST5_DISABLE_NSQ_ME
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
     if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
 #else
@@ -2777,6 +3154,7 @@ void HalfPelSearch_LCU(
         }
 
     }
+#endif
 
     return;
 }
@@ -4139,11 +4517,17 @@ void HmeOneQuadrantLevel0(
     int16_t padHeight;
 
     (void)picture_control_set_ptr;
+#if QUICK_ME_CLEANUP // round up
+    // Round up x_HME_L0 to be a multiple of 16
+    int16_t search_area_width = (int16_t)((((((context_ptr->hme_level0_total_search_area_width  * searchAreaMultiplierX) / 100))) + 15) & ~0x0F);
+#else
     int16_t search_area_width = (int16_t)(((context_ptr->hme_level0_total_search_area_width  * searchAreaMultiplierX) / 100));
+#endif
     int16_t search_area_height = (int16_t)(((context_ptr->hme_level0_total_search_area_height * searchAreaMultiplierY) / 100));
+#if !QUICK_ME_CLEANUP
     if (context_ptr->hme_search_type == HME_SPARSE)
         search_area_width = ((search_area_width + 4) >> 3) << 3;  //round down/up the width to the nearest multiple of 8.
-
+#endif
     xSearchRegionDistance = xHmeSearchCenter;
     ySearchRegionDistance = yHmeSearchCenter;
     padWidth = (int16_t)(sixteenthRefPicPtr->origin_x) - 1;
@@ -4171,6 +4555,12 @@ void HmeOneQuadrantLevel0(
         MAX(1, search_area_width - ((origin_x + x_search_area_origin + search_area_width) - (int16_t)sixteenthRefPicPtr->width)) :
         search_area_width;
 
+#if QUICK_ME_CLEANUP // round down
+    // Round down x_HME to be a multiple of 16 as cropping already performed
+    search_area_width = (search_area_width < 16) ?
+        search_area_width :
+        search_area_width & ~0x0F;
+#endif
     // Correct the top edge of the Search Area if it is not on the reference Picture
     y_search_area_origin = ((origin_y + y_search_area_origin) < -padHeight) ?
         -padHeight - origin_y :
@@ -4195,9 +4585,10 @@ void HmeOneQuadrantLevel0(
 
     if (context_ptr->hme_search_type == HME_SPARSE)
     {
+#if !QUICK_ME_CLEANUP 
         //ensure that search area is multiple of 8.
         search_area_width = ((search_area_width >> 3) << 3);
-
+#endif
         NxMSadLoopKernelSparse_funcPtrArray[asm_type](
             &context_ptr->sixteenth_sb_buffer[0],
             context_ptr->sixteenth_sb_buffer_stride,
@@ -4217,12 +4608,12 @@ void HmeOneQuadrantLevel0(
 
     }
     else {
-
+#if !QUICK_ME_CLEANUP 
         if ((search_area_width & 15) != 0)
         {
             search_area_width = (int16_t)(floor((double)((search_area_width >> 4) << 4)));
         }
-
+#endif
         if (((search_area_width & 15) == 0) && (asm_type == ASM_AVX2))
         {
             sad_loop_kernel_avx2_hme_l0_intrin(
@@ -4326,7 +4717,12 @@ void HmeLevel0(
     // Adjust SR size based on the searchAreaShift
 
     (void)picture_control_set_ptr;
+#if QUICK_ME_CLEANUP // round up
+    // Round up x_HME_L0 to be a multiple of 16
+    int16_t search_area_width = (int16_t)((((((context_ptr->hme_level0_search_area_in_width_array[searchRegionNumberInWidth] * searchAreaMultiplierX) / 100))) + 15) & ~0x0F);
+#else
     int16_t search_area_width = (int16_t)(((context_ptr->hme_level0_search_area_in_width_array[searchRegionNumberInWidth] * searchAreaMultiplierX) / 100));
+#endif
     int16_t search_area_height = (int16_t)(((context_ptr->hme_level0_search_area_in_height_array[searchRegionNumberInHeight] * searchAreaMultiplierY) / 100));
 
     xSearchRegionDistance = xHmeSearchCenter;
@@ -4363,6 +4759,13 @@ void HmeLevel0(
     search_area_width = ((origin_x + x_search_area_origin + search_area_width) > (int16_t)sixteenthRefPicPtr->width) ?
         MAX(1, search_area_width - ((origin_x + x_search_area_origin + search_area_width) - (int16_t)sixteenthRefPicPtr->width)) :
         search_area_width;
+
+#if QUICK_ME_CLEANUP // round down
+    // Round down x_HME to be a multiple of 16 as cropping already performed
+    search_area_width = (search_area_width < 16) ?
+        search_area_width :
+        search_area_width & ~0x0F;
+#endif
 
     // Correct the top edge of the Search Area if it is not on the reference Picture
     y_search_area_origin = ((origin_y + y_search_area_origin) < -padHeight) ?
@@ -4495,9 +4898,14 @@ void HmeLevel1(
     int16_t xTopLeftSearchRegion;
     int16_t yTopLeftSearchRegion;
     uint32_t searchRegionIndex;
+#if QUICK_ME_CLEANUP // round up
+    // Round up x_HME_L0 to be a multiple of 8
+    int16_t search_area_width = (int16_t) ((hmeLevel1SearchAreaInWidth + 7) & ~0x07);
+#else
     // round the search region width to nearest multiple of 8 if it is less than 8 or non multiple of 8
     // SAD calculation performance is the same for searchregion width from 1 to 8
     int16_t search_area_width = (hmeLevel1SearchAreaInWidth < 8) ? 8 : (hmeLevel1SearchAreaInWidth & 7) ? hmeLevel1SearchAreaInWidth + (hmeLevel1SearchAreaInWidth - ((hmeLevel1SearchAreaInWidth >> 3) << 3)) : hmeLevel1SearchAreaInWidth;
+#endif
     int16_t search_area_height = hmeLevel1SearchAreaInHeight;
 
     int16_t x_search_area_origin;
@@ -4526,6 +4934,12 @@ void HmeLevel1(
         MAX(1, search_area_width - ((origin_x + x_search_area_origin + search_area_width) - (int16_t)quarterRefPicPtr->width)) :
         search_area_width;
 
+#if QUICK_ME_CLEANUP // round down
+    // Constrain x_HME_L1 to be a multiple of 8 (round down as cropping already performed)
+    search_area_width = (search_area_width < 8) ?
+        search_area_width :
+        search_area_width & ~0x07;
+#endif
     // Correct the top edge of the Search Area if it is not on the reference Picture
     y_search_area_origin = ((origin_y + y_search_area_origin) < -padHeight) ?
         -padHeight - origin_y :
@@ -4623,7 +5037,12 @@ void HmeLevel2(
     // SAD calculation performance is the same for searchregion width from 1 to 8
     (void)picture_control_set_ptr;
     int16_t hmeLevel2SearchAreaInWidth = (int16_t)context_ptr->hme_level2_search_area_in_width_array[searchRegionNumberInWidth];
+#if QUICK_ME_CLEANUP // round up
+    // Round up x_HME_L0 to be a multiple of 8
+    int16_t search_area_width = (int16_t)((hmeLevel2SearchAreaInWidth + 7) & ~0x07);
+#else
     int16_t search_area_width = (hmeLevel2SearchAreaInWidth < 8) ? 8 : (hmeLevel2SearchAreaInWidth & 7) ? hmeLevel2SearchAreaInWidth + (hmeLevel2SearchAreaInWidth - ((hmeLevel2SearchAreaInWidth >> 3) << 3)) : hmeLevel2SearchAreaInWidth;
+#endif
     int16_t search_area_height = (int16_t)context_ptr->hme_level2_search_area_in_height_array[searchRegionNumberInHeight];
     int16_t x_search_area_origin;
     int16_t y_search_area_origin;
@@ -4652,6 +5071,12 @@ void HmeLevel2(
         MAX(1, search_area_width - ((origin_x + x_search_area_origin + search_area_width) - (int16_t)refPicPtr->width)) :
         search_area_width;
 
+#if QUICK_ME_CLEANUP // round down
+    // Constrain x_HME_L1 to be a multiple of 8 (round down as cropping already performed)
+    search_area_width = (search_area_width < 8) ?
+        search_area_width :
+        search_area_width & ~0x07;
+#endif
     // Correct the top edge of the Search Area if it is not on the reference Picture
     y_search_area_origin = ((origin_y + y_search_area_origin) < -padHeight) ?
         -padHeight - origin_y :
@@ -6193,9 +6618,9 @@ EbErrorType MotionEstimateLcu(
 
     int16_t                  hmeLevel1SearchAreaInWidth;
     int16_t                  hmeLevel1SearchAreaInHeight;
-
+#if !QUICK_ME_CLEANUP
     uint32_t                  adjustSearchAreaDirection = 0;
-
+#endif
     // Configure HME level 0, level 1 and level 2 from static config parameters
     EbBool                 enable_hme_level0_flag = picture_control_set_ptr->enable_hme_level0_flag;
     EbBool                 enable_hme_level1_flag = picture_control_set_ptr->enable_hme_level1_flag;
@@ -6206,13 +6631,6 @@ EbErrorType MotionEstimateLcu(
     EbBool                    enableQuarterPel = EB_FALSE;
     EbBool                 oneQuadrantHME =  EB_FALSE;
 
-#if M0_SAD_HALF_QUARTER_PEL_BIPRED_SEARCH || M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
-#if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
-    context_ptr->fractionalSearchMethod = (picture_control_set_ptr->enc_mode >= ENC_M7) ? FULL_SAD_SEARCH : SSD_SEARCH;
-#else
-    context_ptr->fractionalSearchMethod = SUB_SAD_SEARCH;
-#endif
-#endif
 #if M0_64x64_32x32_HALF_QUARTER_PEL
     context_ptr->fractional_search64x64 = EB_TRUE;
 #endif
@@ -6221,6 +6639,16 @@ EbErrorType MotionEstimateLcu(
     numOfListToSearch = (picture_control_set_ptr->slice_type == P_SLICE ) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
 #else
     numOfListToSearch = (picture_control_set_ptr->slice_type == P_SLICE) || (picture_control_set_ptr->temporal_layer_index == 0) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
+#endif
+
+#if NSQ_OPTIMASATION 
+    EbBool is_nsq_table_used = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE &&
+                                picture_control_set_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
+                                picture_control_set_ptr->nsq_search_level < NSQ_SEARCH_FULL) ? EB_TRUE : EB_FALSE;
+#endif
+
+#if TEST5_DISABLE_NSQ_ME
+    is_nsq_table_used = EB_FALSE;
 #endif
     referenceObject = (EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[0]->object_ptr;
     ref0Poc = picture_control_set_ptr->ref_pic_poc_array[0];
@@ -6351,9 +6779,9 @@ EbErrorType MotionEstimateLcu(
                                     searchRegionNumberInWidth = 0;
                                     searchRegionNumberInHeight++;
                                 }
-                                    }
-                                }
                             }
+                        }
+                    }
 
                     // HME: Level1 search
                     if (enable_hme_level1_flag) {
@@ -6365,6 +6793,7 @@ EbErrorType MotionEstimateLcu(
                                 while (searchRegionNumberInWidth < context_ptr->number_hme_search_region_in_width) {
 
                                     // When HME level 0 has been disabled, increase the search area width and height for level 1 to (32x12) for Gold only
+
                                     hmeLevel1SearchAreaInWidth = (int16_t)context_ptr->hme_level1_search_area_in_width_array[searchRegionNumberInWidth];
                                     hmeLevel1SearchAreaInHeight = (int16_t)context_ptr->hme_level1_search_area_in_height_array[searchRegionNumberInHeight];
 
@@ -6390,8 +6819,8 @@ EbErrorType MotionEstimateLcu(
                                 searchRegionNumberInWidth = 0;
                                 searchRegionNumberInHeight++;
                             }
-                                }
-                            }
+                        }
+                    }
 
                     // HME: Level2 search
                     if (enable_hme_level2_flag) {
@@ -6425,8 +6854,8 @@ EbErrorType MotionEstimateLcu(
                                 searchRegionNumberInWidth = 0;
                                 searchRegionNumberInHeight++;
                             }
-                                }
-                            }
+                        }
+                    }
 
                     // Hierarchical ME - Search Center
                     if (enable_hme_level0_flag && !enable_hme_level1_flag && !enable_hme_level2_flag) {
@@ -6457,9 +6886,9 @@ EbErrorType MotionEstimateLcu(
                                 searchRegionNumberInWidth = 0;
                                 searchRegionNumberInHeight++;
                             }
-                                }
+                        }
 
-                            }
+                    }
 
                     if (enable_hme_level1_flag && !enable_hme_level2_flag) {
                         xHmeSearchCenter = xHmeLevel1SearchCenter[0][0];
@@ -6480,7 +6909,7 @@ EbErrorType MotionEstimateLcu(
                             searchRegionNumberInWidth = 0;
                             searchRegionNumberInHeight++;
                         }
-                            }
+                    }
 
                     if (enable_hme_level2_flag) {
                         xHmeSearchCenter = xHmeLevel2SearchCenter[0][0];
@@ -6489,7 +6918,7 @@ EbErrorType MotionEstimateLcu(
 
                         searchRegionNumberInWidth = 1;
                         searchRegionNumberInHeight = 0;
-    
+
                         while (searchRegionNumberInHeight < context_ptr->number_hme_search_region_in_height) {
                             while (searchRegionNumberInWidth < context_ptr->number_hme_search_region_in_width) {
                                 xHmeSearchCenter = (hmeLevel2Sad[searchRegionNumberInWidth][searchRegionNumberInHeight] < hmeMvSad) ? xHmeLevel2SearchCenter[searchRegionNumberInWidth][searchRegionNumberInHeight] : xHmeSearchCenter;
@@ -6530,20 +6959,25 @@ EbErrorType MotionEstimateLcu(
                             xHmeSearchCenter = xHmeLevel2SearchCenter[0][1];
                             yHmeSearchCenter = yHmeLevel2SearchCenter[0][1];
                         }
-                            }
+                    }
 
                     x_search_center = xHmeSearchCenter;
                     y_search_center = yHmeSearchCenter;
-                        }
-                    }
+                }
+            }
 
             else {
                 x_search_center = 0;
                 y_search_center = 0;
             }
+#if QUICK_ME_CLEANUP // round up
+            // Constrain x_ME to be a multiple of 8 (round up)
+            search_area_width  = (context_ptr->search_area_width + 7) & ~0x07;
+            search_area_height = context_ptr->search_area_height;
+#else
             search_area_width = (int16_t)MIN(context_ptr->search_area_width, 127);
             search_area_height = (int16_t)MIN(context_ptr->search_area_height, 127);
-    
+#endif
             if ((x_search_center != 0 || y_search_center != 0) && (picture_control_set_ptr->is_used_as_reference_flag == EB_TRUE)) {
                 CheckZeroZeroCenter(
                     refPicPtr,
@@ -6558,7 +6992,7 @@ EbErrorType MotionEstimateLcu(
             }
             x_search_area_origin = x_search_center - (search_area_width >> 1);
             y_search_area_origin = y_search_center - (search_area_height >> 1);
-
+#if !QUICK_ME_CLEANUP
             if (listIndex == 1 && sb_width == BLOCK_SIZE_64 && sb_height == BLOCK_SIZE_64)
             {
                 {
@@ -6576,6 +7010,7 @@ EbErrorType MotionEstimateLcu(
 
                 }
             }
+#endif
 
 
             // Correct the left edge of the Search Area if it is not on the reference Picture
@@ -6595,6 +7030,13 @@ EbErrorType MotionEstimateLcu(
             search_area_width = ((origin_x + x_search_area_origin + search_area_width) > picture_width) ?
                 MAX(1, search_area_width - ((origin_x + x_search_area_origin + search_area_width) - picture_width)) :
                 search_area_width;
+
+#if QUICK_ME_CLEANUP // round down
+            // Constrain x_ME to be a multiple of 8 (round down as cropping already performed)
+            search_area_width = (search_area_width < 8) ?
+                search_area_width :
+                search_area_width & ~0x07;
+#endif
 
             // Correct the top edge of the Search Area if it is not on the reference Picture
             y_search_area_origin = ((origin_y + y_search_area_origin) < -padHeight) ?
@@ -6631,11 +7073,14 @@ EbErrorType MotionEstimateLcu(
 
             {
                 {
-
+#if TEST5_DISABLE_NSQ_ME
+                    if(0){
+#else
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
                     if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
 #else
                     if (sequence_control_set_ptr->static_config.ext_block_flag) {
+#endif
 #endif
                         uint8_t refPicIndex = 0;
 
@@ -6822,18 +7267,30 @@ EbErrorType MotionEstimateLcu(
                             picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_1,
                             enableQuarterPel,
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
+#if TEST5_DISABLE_NSQ_ME
+                            EB_FALSE);
+#else
                             picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE);
+#endif
 #else
                             sequence_control_set_ptr->static_config.ext_block_flag);
 #endif
 #endif
 
                     }
-                }
-
-            }
-                        }
+#if NSQ_OPTIMASATION 
+                    if (is_nsq_table_used) {
+                        context_ptr->p_best_nsq64x64 = &(context_ptr->p_sb_best_nsq[listIndex][0][ME_TIER_ZERO_PU_64x64]);
+                        context_ptr->p_best_nsq32x32 = &(context_ptr->p_sb_best_nsq[listIndex][0][ME_TIER_ZERO_PU_32x32_0]);
+                        context_ptr->p_best_nsq16x16 = &(context_ptr->p_sb_best_nsq[listIndex][0][ME_TIER_ZERO_PU_16x16_0]);
+                        context_ptr->p_best_nsq8x8 = &(context_ptr->p_sb_best_nsq[listIndex][0][ME_TIER_ZERO_PU_8x8_0]);
+                        nsq_get_analysis_results_block(context_ptr);
                     }
+#endif
+                }
+            }
+        }
+    }
 
     // Bi-Prediction motion estimation loop
     for (pu_index = 0; pu_index < max_number_of_pus_per_sb; ++pu_index) {
@@ -6889,7 +7346,11 @@ EbErrorType MotionEstimateLcu(
 
         if (numOfListToSearch) {
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
+#if TEST5_DISABLE_NSQ_ME
+            if (picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_0 || pu_index < 21){
+#else
             if (picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_0 || pu_index < 21 || (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE)) {
+#endif
 #else
             if (picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_0 || pu_index < 21 || sequence_control_set_ptr->static_config.ext_block_flag) {
 #endif
@@ -6908,6 +7369,12 @@ EbErrorType MotionEstimateLcu(
         MeCuResults_t * mePuResult = &picture_control_set_ptr->me_results[sb_index][pu_index];
         mePuResult->totalMeCandidateIndex = totalMeCandidateIndex;
 
+#if NSQ_OPTIMASATION
+        uint8_t l0_nsq = is_nsq_table_used ? context_ptr->p_sb_best_nsq[0][0][nIdx] : 0;
+        uint8_t l1_nsq = is_nsq_table_used ? context_ptr->p_sb_best_nsq[1][0][nIdx] : 0;
+        mePuResult->me_nsq[0] = l0_nsq;
+        mePuResult->me_nsq[1] = l1_nsq;
+#endif
         if (totalMeCandidateIndex == 3) {
 
             uint32_t L0Sad = context_ptr->p_sb_best_sad[0][0][nIdx];
@@ -7274,6 +7741,7 @@ EbBool IsComplexLcu(
 
 }
 
+#if !OIS_BASED_INTRA
 /** IntraOpenLoopSearchTheseModesOutputBest
 
 */
@@ -8135,7 +8603,162 @@ EbErrorType OpenLoopIntraSearchLcu(
     return return_error;
 }
 
+#else
 
+EbErrorType open_loop_intra_search_sb(
+    PictureParentControlSet_t   *picture_control_set_ptr,
+    uint32_t                     sb_index,
+    MotionEstimationContext_t   *context_ptr,
+    EbPictureBufferDesc_t       *input_ptr,
+    EbAsm                        asm_type)
+{
+    EbErrorType return_error = EB_ErrorNone;
+    SequenceControlSet_t    *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 
+    uint32_t    cu_origin_x;
+    uint32_t    cu_origin_y;
+    uint32_t    pa_blk_index = 0;
+    uint8_t     is_16_bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
+    SbParams_t          *sb_params          = &sequence_control_set_ptr->sb_params_array[sb_index];
+    ois_sb_results_t    *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];    
+
+    uint8_t top_neigh_array[64 * 2 + 1];
+    uint8_t left_neigh_array[64 * 2 + 1];
+    uint8_t *above_ref = top_neigh_array;
+    uint8_t *left_ref = left_neigh_array;
+
+        while (pa_blk_index < CU_MAX_COUNT)
+        {
+           
+            const CodedUnitStats_t  *blk_stats_ptr;
+            blk_stats_ptr = GetCodedUnitStats(pa_blk_index);
+            uint8_t bsize = blk_stats_ptr->size;
+            if (sb_params->raster_scan_cu_validity[MD_SCAN_TO_RASTER_SCAN[pa_blk_index]]) {
+
+                ois_candidate_t *ois_blk_ptr = ois_sb_results_ptr->ois_candidate_array[pa_blk_index];
+                cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
+                cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
+
+                // Fill Neighbor Arrays
+                update_neighbor_samples_array_open_loop(
+                    above_ref,
+                    left_ref,
+                    input_ptr,
+                    input_ptr->stride_y,
+                    cu_origin_x,
+                    cu_origin_y,
+                    bsize,
+                    bsize);
+
+                uint8_t * above_row;
+                uint8_t * left_col;
+
+                DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
+                DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
+                above_row = above_data + 16;
+                left_col = left_data + 16;
+                
+                memcpy(above_row, top_neigh_array  + 1, 64 * 2 );
+                memcpy(left_col, left_neigh_array + 1, 64 * 2 );
+                
+                above_row[-1] =  left_col [-1] = top_neigh_array[0];
+
+                uint8_t     ois_intra_mode;
+                uint8_t     ois_intra_count = 0;
+                uint8_t     best_intra_ois_index = 0;
+                uint32_t    best_intra_ois_distortion = 64 * 64 * 255;
+                uint8_t     intra_mode_start = DC_PRED;
+                uint8_t     intra_mode_end = is_16_bit ? SMOOTH_H_PRED : PAETH_PRED;
+                uint8_t     angle_delta_counter = 0;
+                uint8_t     disable_angular_prediction = 0;
+                EbBool      use_angle_delta = (bsize >= 8);
+#if M8_OIS
+                uint8_t     angle_delta_candidate_count =   picture_control_set_ptr->intra_pred_mode >= 5 ? 1 : use_angle_delta ? 5 : 1; ;
+#else                
+                uint8_t     angle_delta_candidate_count = use_angle_delta ? 5 : 1;
+#endif
+
+                disable_angular_prediction = picture_control_set_ptr->temporal_layer_index > 0 ? 1 : (bsize > 16) ? 1 : 0;
+
+                angle_delta_candidate_count = disable_angular_prediction ? 1 : angle_delta_candidate_count;
+
+                TxSize  tx_size = bsize == 8 ? TX_8X8 : bsize == 16 ? TX_16X16: bsize == 32 ? TX_32X32 : TX_64X64;
+#if M8_OIS
+                intra_mode_end = (picture_control_set_ptr->is_used_as_reference_flag == 0  && picture_control_set_ptr->intra_pred_mode >= 4) ? DC_PRED: intra_mode_end;
+#endif 
+                for (ois_intra_mode = intra_mode_start; ois_intra_mode <= intra_mode_end; ++ois_intra_mode) {              
+                    if (av1_is_directional_mode((PredictionMode)ois_intra_mode)) {
+
+                        if (!disable_angular_prediction) {
+                            for (angle_delta_counter = 0; angle_delta_counter < angle_delta_candidate_count; ++angle_delta_counter) {
+                                int32_t angle_delta = angle_delta_candidate_count == 1 ? 0 : angle_delta_counter - (angle_delta_candidate_count >> 1);
+                                int32_t  p_angle = mode_to_angle_map[(PredictionMode)ois_intra_mode] + angle_delta * ANGLE_STEP;
+                                // PRED
+                                intra_prediction_open_loop(
+                                    p_angle,
+                                    ois_intra_mode,
+                                    cu_origin_x,
+                                    cu_origin_y,
+                                    tx_size,
+                                    above_row,
+                                    left_col,
+                                    context_ptr);
+                                //Distortion
+                                ois_blk_ptr[ois_intra_count].distortion = (uint32_t)NxMSadKernel_funcPtrArray[asm_type][bsize >> 3]( // Always SAD without weighting
+                                    &(input_ptr->buffer_y[(input_ptr->origin_y + cu_origin_y) * input_ptr->stride_y + (input_ptr->origin_x + cu_origin_x)]),
+                                    input_ptr->stride_y,
+                                    &(context_ptr->me_context_ptr->sb_buffer[0]),
+                                    BLOCK_SIZE_64,
+                                    bsize,
+                                    bsize);
+                                //kepp track of best SAD
+                                if (ois_blk_ptr[ois_intra_count].distortion < best_intra_ois_distortion) {
+                                    best_intra_ois_index = ois_intra_count;
+                                    best_intra_ois_distortion = ois_blk_ptr[ois_intra_count].distortion;
+                                }
+                                ois_blk_ptr[ois_intra_count].intra_mode = ois_intra_mode;
+                                ois_blk_ptr[ois_intra_count].valid_distortion = EB_TRUE;
+                                ois_blk_ptr[ois_intra_count++].angle_delta = angle_delta;
+                            }
+                        }                        
+                    }
+                    else {
+                            // PRED
+                            intra_prediction_open_loop(
+                                 0 ,
+                                ois_intra_mode,
+                                cu_origin_x,
+                                cu_origin_y,
+                                tx_size,
+                                above_row,
+                                left_col,
+                                context_ptr);
+                            //Distortion
+                            ois_blk_ptr[ois_intra_count].distortion = (uint32_t)NxMSadKernel_funcPtrArray[asm_type][bsize >> 3]( // Always SAD without weighting
+                                &(input_ptr->buffer_y[(input_ptr->origin_y + cu_origin_y) * input_ptr->stride_y + (input_ptr->origin_x + cu_origin_x)]),
+                                input_ptr->stride_y,
+                                &(context_ptr->me_context_ptr->sb_buffer[0]),
+                                BLOCK_SIZE_64,
+                                bsize,
+                                bsize);                            
+                            //kepp track of best SAD
+                            if (ois_blk_ptr[ois_intra_count].distortion < best_intra_ois_distortion) {
+                                best_intra_ois_index = ois_intra_count;
+                                best_intra_ois_distortion = ois_blk_ptr[ois_intra_count].distortion;
+                            }
+                            ois_blk_ptr[ois_intra_count].intra_mode = ois_intra_mode;
+                            ois_blk_ptr[ois_intra_count].valid_distortion = EB_TRUE;
+                            ois_blk_ptr[ois_intra_count++].angle_delta = 0;
+                    }
+                }                
+                ois_sb_results_ptr->best_distortion_index[pa_blk_index] = best_intra_ois_index;
+                ois_sb_results_ptr->total_ois_intra_candidate[pa_blk_index] = ois_intra_count;        
+            }
+            pa_blk_index ++;
+        }
+    return return_error;
+}
+
+#endif
 

@@ -203,7 +203,7 @@ void SpeedBufferControl(
             changeCond = 7;
         }
         encoderModeDelta = CLIP3(-1, 1, encoderModeDelta);
-        sequence_control_set_ptr->encode_context_ptr->enc_mode = (EbEncMode)CLIP3(1, 6, (int8_t)sequence_control_set_ptr->encode_context_ptr->enc_mode + encoderModeDelta);
+        sequence_control_set_ptr->encode_context_ptr->enc_mode = (EbEncMode)CLIP3(1, MAX_ENC_PRESET, (int8_t)sequence_control_set_ptr->encode_context_ptr->enc_mode + encoderModeDelta);
 
         // Update previous stats
         context_ptr->previousFrameInCheck1 = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
@@ -231,7 +231,7 @@ void SpeedBufferControl(
         }
 
         encoderModeDelta = CLIP3(-1, 1, encoderModeDelta);
-        sequence_control_set_ptr->encode_context_ptr->enc_mode = (EbEncMode)CLIP3(1, 6, (int8_t)sequence_control_set_ptr->encode_context_ptr->enc_mode + encoderModeDelta);
+        sequence_control_set_ptr->encode_context_ptr->enc_mode = (EbEncMode)CLIP3(1, MAX_ENC_PRESET, (int8_t)sequence_control_set_ptr->encode_context_ptr->enc_mode + encoderModeDelta);
 
         // Update previous stats
         context_ptr->previousFrameInCheck2 = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
@@ -300,8 +300,10 @@ void ResetPcsAv1(
     picture_control_set_ptr->disable_cdf_update = 0;
     picture_control_set_ptr->allow_high_precision_mv = 0;
     picture_control_set_ptr->cur_frame_force_integer_mv = 0;  // 0 the default in AOM, 1 only integer
+#if !ICOPY
     picture_control_set_ptr->allow_screen_content_tools = 0;
     picture_control_set_ptr->allow_intrabc = 0;
+#endif
     picture_control_set_ptr->allow_warped_motion = 0;
 
     /* profile settings */

@@ -31,7 +31,6 @@
 #include "aom_dsp_rtcd.h"
 #include "EbCodingLoop.h"
 
-static const uint32_t me2Nx2NOffset[4] = { 0, 1, 5, 21 };
 extern void av1_predict_intra_block(
 #if TILES   
     TileInfo                    *tile,
@@ -40,10 +39,12 @@ extern void av1_predict_intra_block(
     ModeDecisionContext_t                  *md_context_ptr,
 #endif
     STAGE                       stage,
+    #if !ICOPY
     uint8_t                     intra_luma_left_mode,
     uint8_t                     intra_luma_top_mode,
     uint8_t                     intra_chroma_left_mode,
     uint8_t                     intra_chroma_top_mode,
+#endif
     const BlockGeom            *blk_geom,
     const Av1Common *cm,
     int32_t wpx,
@@ -73,7 +74,9 @@ void av1_predict_intra_block_16bit(
     TileInfo               *tile,
 #endif
     EncDecContext_t         *context_ptr,
+    #if !ICOPY
     CodingUnit_t *cu_ptr,
+#endif
     const Av1Common *cm,
     int32_t wpx,
     int32_t hpx,
@@ -678,7 +681,11 @@ static void Av1EncodeLoop(
             txb_ptr->transform_type[PLANE_TYPE_Y],
             asm_type,
             PLANE_TYPE_Y,
+#if PF_N2_32X32
+            DEFAULT_SHAPE);
+#else
             context_ptr->trans_coeff_shape_luma);
+#endif
 
         av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
@@ -694,7 +701,9 @@ static void Av1EncodeLoop(
             candidate_plane[0],
             asm_type,
             &(count_non_zero_coeffs[0]),
+#if !PF_N2_32X32
             0,
+#endif
             0,
             COMPONENT_LUMA,
 #if QT_10BIT_SUPPORT
@@ -918,8 +927,11 @@ static void Av1EncodeLoop(
             txb_ptr->transform_type[PLANE_TYPE_UV],
             asm_type,
             PLANE_TYPE_UV,
+#if PF_N2_32X32
+            DEFAULT_SHAPE);
+#else
             context_ptr->trans_coeff_shape_chroma);
-
+#endif
 
         av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
@@ -936,7 +948,9 @@ static void Av1EncodeLoop(
             candidate_plane[1],
             asm_type,
             &(count_non_zero_coeffs[1]),
+#if !PF_N2_32X32
             0,
+#endif
             0,
             COMPONENT_CHROMA_CB,
             BIT_INCREMENT_8BIT,
@@ -962,8 +976,11 @@ static void Av1EncodeLoop(
             txb_ptr->transform_type[PLANE_TYPE_UV],
             asm_type,
             PLANE_TYPE_UV,
+#if PF_N2_32X32
+            DEFAULT_SHAPE);
+#else
             context_ptr->trans_coeff_shape_chroma);
-
+#endif
 
         av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
@@ -979,7 +996,9 @@ static void Av1EncodeLoop(
             candidate_plane[2],
             asm_type,
             &(count_non_zero_coeffs[2]),
+#if !PF_N2_32X32
             0,
+#endif
             0,
             COMPONENT_CHROMA_CR,
             BIT_INCREMENT_8BIT,
@@ -988,9 +1007,10 @@ static void Av1EncodeLoop(
 
         txb_ptr->v_has_coeff = count_non_zero_coeffs[2] ? EB_TRUE : EB_FALSE;
     }
-
+#if !PF_N2_32X32
     txb_ptr->trans_coeff_shape_luma = context_ptr->trans_coeff_shape_luma;
     txb_ptr->trans_coeff_shape_chroma = context_ptr->trans_coeff_shape_chroma;
+#endif
     txb_ptr->nz_coef_count[0] = (uint16_t)count_non_zero_coeffs[0];
     txb_ptr->nz_coef_count[1] = (uint16_t)count_non_zero_coeffs[1];
     txb_ptr->nz_coef_count[2] = (uint16_t)count_non_zero_coeffs[2];
@@ -1158,7 +1178,11 @@ static void Av1EncodeLoop16bit(
                 txb_ptr->transform_type[PLANE_TYPE_Y],
                 asm_type,
                 PLANE_TYPE_Y,
+#if PF_N2_32X32
+                DEFAULT_SHAPE);
+#else
                 context_ptr->trans_coeff_shape_luma);
+#endif
 
             av1_quantize_inv_quantize(
                 sb_ptr->picture_control_set_ptr,
@@ -1178,7 +1202,9 @@ static void Av1EncodeLoop16bit(
                 candidate_plane[0],
                 asm_type,
                 &(count_non_zero_coeffs[0]),
+#if !PF_N2_32X32
                 0,
+#endif
                 0,
                 COMPONENT_LUMA,
 #if QT_10BIT_SUPPORT
@@ -1357,8 +1383,11 @@ static void Av1EncodeLoop16bit(
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 asm_type,
                 PLANE_TYPE_UV,
+#if PF_N2_32X32
+                DEFAULT_SHAPE);
+#else
                 context_ptr->trans_coeff_shape_chroma);
-
+#endif
 
             av1_quantize_inv_quantize(
                 sb_ptr->picture_control_set_ptr,
@@ -1379,7 +1408,9 @@ static void Av1EncodeLoop16bit(
                 candidate_plane[1],
                 asm_type,
                 &(count_non_zero_coeffs[1]),
+#if !PF_N2_32X32
                 0,
+#endif
                 0,
                 COMPONENT_CHROMA_CB,
 #if QT_10BIT_SUPPORT
@@ -1423,7 +1454,11 @@ static void Av1EncodeLoop16bit(
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 asm_type,
                 PLANE_TYPE_UV,
+#if PF_N2_32X32
+                DEFAULT_SHAPE);
+#else
                 context_ptr->trans_coeff_shape_chroma);
+#endif
 
 
             av1_quantize_inv_quantize(
@@ -1444,7 +1479,9 @@ static void Av1EncodeLoop16bit(
                 candidate_plane[2],
                 asm_type,
                 &(count_non_zero_coeffs[2]),
+#if !PF_N2_32X32
                 0,
+#endif
                 0,
                 COMPONENT_CHROMA_CR,
 #if QT_10BIT_SUPPORT
@@ -1457,9 +1494,10 @@ static void Av1EncodeLoop16bit(
         }
     }
 
-
+#if !PF_N2_32X32
     txb_ptr->trans_coeff_shape_luma = context_ptr->trans_coeff_shape_luma;
     txb_ptr->trans_coeff_shape_chroma = context_ptr->trans_coeff_shape_chroma;
+#endif
     txb_ptr->nz_coef_count[0] = (uint16_t)count_non_zero_coeffs[0];
     txb_ptr->nz_coef_count[1] = (uint16_t)count_non_zero_coeffs[1];
     txb_ptr->nz_coef_count[2] = (uint16_t)count_non_zero_coeffs[2];
@@ -2359,7 +2397,13 @@ EbErrorType Av1QpModulationLcu(
         if (type == INTRA_MODE) {
 
 
+            
+#if OIS_BASED_INTRA
+            ois_sb_results_t        *ois_sb_results_ptr = picture_control_set_ptr->parent_pcs_ptr->ois_sb_results[sb_index];
+            ois_candidate_t *OisCuPtr = ois_sb_results_ptr->sorted_ois_candidate[from_1101_to_85[cu_index]];
+            distortion = OisCuPtr[ois_sb_results_ptr->best_distortion_index[from_1101_to_85[cu_index]]].distortion;
 
+#else
 
             OisCu32Cu16Results_t  *oisCu32Cu16ResultsPtr = picture_control_set_ptr->parent_pcs_ptr->ois_cu32_cu16_results[sb_index];
             //OisCu8Results_t         *oisCu8ResultsPtr = picture_control_set_ptr->parent_pcs_ptr->ois_cu8_results[sb_index];
@@ -2369,7 +2413,7 @@ EbErrorType Av1QpModulationLcu(
                 oisCu32Cu16ResultsPtr->sorted_ois_candidate[2][0].distortion +
                 oisCu32Cu16ResultsPtr->sorted_ois_candidate[3][0].distortion +
                 oisCu32Cu16ResultsPtr->sorted_ois_candidate[4][0].distortion;
-
+#endif
 
 
             distortion = (uint32_t)CLIP3(picture_control_set_ptr->parent_pcs_ptr->intra_complexity_min[0], picture_control_set_ptr->parent_pcs_ptr->intra_complexity_max[0], distortion);
@@ -2550,6 +2594,11 @@ EbErrorType EncQpmDeriveDeltaQPForEachLeafLcu(
 
 
 
+#if OIS_BASED_INTRA
+            ois_sb_results_t        *ois_sb_results_ptr = picture_control_set_ptr->parent_pcs_ptr->ois_sb_results[sb_index];
+            ois_candidate_t *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[ep_to_pa_block_index[cu_index]];
+            distortion = OisCuPtr[ois_sb_results_ptr->best_distortion_index[ep_to_pa_block_index[cu_index]]].distortion;
+#else
 
             OisCu32Cu16Results_t  *oisCu32Cu16ResultsPtr = picture_control_set_ptr->parent_pcs_ptr->ois_cu32_cu16_results[sb_index];
             OisCu8Results_t         *oisCu8ResultsPtr = picture_control_set_ptr->parent_pcs_ptr->ois_cu8_results[sb_index];
@@ -2608,7 +2657,7 @@ EbErrorType EncQpmDeriveDeltaQPForEachLeafLcu(
                 }
             }
 
-
+#endif
 
 
 
@@ -3095,9 +3144,10 @@ EB_EXTERN void AV1EncodePass(
         }
     }
     context_ptr->intra_coded_area_sb[tbAddr] = 0;
-
+#if !PF_N2_32X32
     context_ptr->trans_coeff_shape_luma = 0;
     context_ptr->trans_coeff_shape_chroma = 0;
+#endif
     context_ptr->coded_area_sb = 0;
     context_ptr->coded_area_sb_uv = 0;
 
@@ -3235,8 +3285,11 @@ EB_EXTERN void AV1EncodePass(
 #endif
 
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE) {
-
+#if ICOPY
+                    context_ptr->is_inter = cu_ptr->av1xd->use_intrabc;
+#else
                     context_ptr->is_inter = 0;
+#endif
                     context_ptr->tot_intra_coded_area += blk_geom->bwidth* blk_geom->bheight;
                     if (picture_control_set_ptr->slice_type != I_SLICE) {
                         context_ptr->intra_coded_area_sb[tbAddr] += blk_geom->bwidth* blk_geom->bheight;
@@ -3268,10 +3321,112 @@ EB_EXTERN void AV1EncodePass(
 
                             uint32_t cu_originy_uv = (context_ptr->cu_origin_y >> 3 << 3) >> 1;
                             uint32_t cu_originx_uv = (context_ptr->cu_origin_x >> 3 << 3) >> 1;
-                            if (is16bit) {
-                                uint16_t    topNeighArray[64 * 2 + 1];
-                                uint16_t    leftNeighArray[64 * 2 + 1];
-                                PredictionMode mode;
+#if ICOPY
+                            if (cu_ptr->av1xd->use_intrabc)
+                            {
+                                MvReferenceFrame ref_frame = INTRA_FRAME;
+                                generate_av1_mvp_table(
+#if TILES
+                                    &sb_ptr->tile_info,
+#endif
+                                    context_ptr->md_context,
+                                    cu_ptr,
+                                    context_ptr->blk_geom,
+                                    context_ptr->cu_origin_x,
+                                    context_ptr->cu_origin_y,
+                                    &ref_frame,
+                                    1,
+                                    picture_control_set_ptr);
+
+                                IntMv nearestmv, nearmv;
+                                av1_find_best_ref_mvs_from_stack(0, context_ptr->md_context->md_local_cu_unit[blk_geom->blkidx_mds].ed_ref_mv_stack, cu_ptr->av1xd, ref_frame, &nearestmv, &nearmv,
+                                    0);
+
+                                if (nearestmv.as_int == INVALID_MV) {
+                                    nearestmv.as_int = 0;
+                                }
+                                if (nearmv.as_int == INVALID_MV) {
+                                    nearmv.as_int = 0;
+                                }
+
+                                IntMv dv_ref = nearestmv.as_int == 0 ? nearmv : nearestmv;
+                                if (dv_ref.as_int == 0)
+                                    av1_find_ref_dv(&dv_ref, &cu_ptr->av1xd->tile, sequence_control_set_ptr->mib_size, context_ptr->cu_origin_y >> MI_SIZE_LOG2, context_ptr->cu_origin_x >> MI_SIZE_LOG2);
+                                // Ref DV should not have sub-pel.
+                                assert((dv_ref.as_mv.col & 7) == 0);
+                                assert((dv_ref.as_mv.row & 7) == 0);
+                                context_ptr->md_context->md_local_cu_unit[blk_geom->blkidx_mds].ed_ref_mv_stack[INTRA_FRAME][0].this_mv = dv_ref;
+                                cu_ptr->predmv[0] = dv_ref;
+
+                                //keep final usefull mvp for entropy
+                                memcpy(cu_ptr->av1xd->final_ref_mv_stack,
+                                    context_ptr->md_context->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[cu_ptr->prediction_unit_array[0].ref_frame_type],
+                                    sizeof(CandidateMv)*MAX_REF_MV_STACK_SIZE);
+
+                                pu_ptr = cu_ptr->prediction_unit_array;
+                                // Set MvUnit
+                                context_ptr->mv_unit.predDirection = (uint8_t)pu_ptr->inter_pred_direction_index;
+                                context_ptr->mv_unit.mv[REF_LIST_0].mvUnion = pu_ptr->mv[REF_LIST_0].mvUnion;
+                                context_ptr->mv_unit.mv[REF_LIST_1].mvUnion = pu_ptr->mv[REF_LIST_1].mvUnion;
+
+                                EbPictureBufferDesc_t * ref_pic_list0 = ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture;
+
+#if ICOPY_10B
+                                if (is16bit)
+                                    ref_pic_list0 = ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture16bit;
+
+                                if (is16bit)
+                                    av1_inter_prediction_hbd(
+                                        picture_control_set_ptr,
+                                        cu_ptr->prediction_unit_array->ref_frame_type,
+                                        cu_ptr,
+                                        &context_ptr->mv_unit,
+                                        1,//intrabc
+                                        context_ptr->cu_origin_x,
+                                        context_ptr->cu_origin_y,
+                                        blk_geom->bwidth,
+                                        blk_geom->bheight,
+                                        ref_pic_list0,
+                                        0,
+                                        recon_buffer,
+                                        context_ptr->cu_origin_x,
+                                        context_ptr->cu_origin_y,
+                                        (uint8_t)sequence_control_set_ptr->static_config.encoder_bit_depth,
+                                        asm_type);
+                                else
+#endif
+                                av1_inter_prediction(
+                                    picture_control_set_ptr,
+                                    cu_ptr->interp_filters,
+                                    cu_ptr,
+                                    cu_ptr->prediction_unit_array->ref_frame_type,
+                                    &context_ptr->mv_unit,
+#if ICOPY
+                                    1,// use_intrabc,
+#endif
+                                    context_ptr->cu_origin_x,
+                                    context_ptr->cu_origin_y,
+                                    blk_geom->bwidth,
+                                    blk_geom->bheight,
+                                    ref_pic_list0,
+                                    0,
+                                    recon_buffer,
+                                    context_ptr->cu_origin_x,
+                                    context_ptr->cu_origin_y,
+#if CHROMA_BLIND
+                                    EB_TRUE,
+#endif
+                                    asm_type);
+
+
+                            }
+                            else
+                            {
+#endif
+                                if (is16bit) {
+                                    uint16_t    topNeighArray[64 * 2 + 1];
+                                    uint16_t    leftNeighArray[64 * 2 + 1];
+                                    PredictionMode mode;
 
                                 int32_t plane_end = blk_geom->has_uv ? 2 : 0;
 
@@ -3315,7 +3470,9 @@ EB_EXTERN void AV1EncodePass(
                                         &sb_ptr->tile_info,
 #endif
                                         context_ptr,
+                                        #if !ICOPY
                                         cu_ptr,
+#endif
                                         picture_control_set_ptr->parent_pcs_ptr->av1_cm,                  //const Av1Common *cm,
                                         plane ? blk_geom->bwidth_uv : blk_geom->bwidth,                  //int32_t wpx,
                                         plane ? blk_geom->bheight_uv : blk_geom->bheight,                  //int32_t hpx,
@@ -3395,10 +3552,12 @@ EB_EXTERN void AV1EncodePass(
                                         NULL,
 #endif
                                         ED_STAGE,
+                                        #if !ICOPY
                                         cu_ptr->prediction_unit_array[0].intra_luma_left_mode,
                                         cu_ptr->prediction_unit_array[0].intra_luma_top_mode,
                                         cu_ptr->prediction_unit_array[0].intra_chroma_left_mode,
                                         cu_ptr->prediction_unit_array[0].intra_chroma_top_mode,
+#endif
                                         context_ptr->blk_geom,
                                         picture_control_set_ptr->parent_pcs_ptr->av1_cm,                  //const Av1Common *cm,
                                         plane ? blk_geom->bwidth_uv : blk_geom->bwidth,                   //int32_t wpx,
@@ -3423,7 +3582,10 @@ EB_EXTERN void AV1EncodePass(
                                         0,  // MD ONLY - NOT USED BY ENCDEC
                                         0);
                                 }
+                                }
+#if ICOPY
                             }
+#endif
 
 #else
                             uint8_t    topNeighArray[64 * 2 + 1];
@@ -3737,6 +3899,9 @@ EB_EXTERN void AV1EncodePass(
                                     cu_ptr->prediction_unit_array->ref_frame_type,
                                     cu_ptr,
                                     &context_ptr->mv_unit,
+#if ICOPY_10B
+                                    0,// use_intrabc,
+#endif
                                     context_ptr->cu_origin_x,
                                     context_ptr->cu_origin_y,
                                     blk_geom->bwidth,
@@ -3755,6 +3920,9 @@ EB_EXTERN void AV1EncodePass(
                                     cu_ptr,
                                     cu_ptr->prediction_unit_array->ref_frame_type,
                                     &context_ptr->mv_unit,
+#if ICOPY
+                                    0,//use_intrabc,
+#endif
                                     context_ptr->cu_origin_x,
                                     context_ptr->cu_origin_y,
                                     blk_geom->bwidth,
@@ -3824,7 +3992,11 @@ EB_EXTERN void AV1EncodePass(
                                     cuPlane);
 
                             // SKIP the CBF zero mode for DC path. There are problems with cost calculations
+#if PF_N2_32X32
+                            {
+#else
                             if (context_ptr->trans_coeff_shape_luma != ONLY_DC_SHAPE) {
+#endif
                                 // Compute Tu distortion
                                 if (!zeroLumaCbfMD)
 
@@ -3860,7 +4032,11 @@ EB_EXTERN void AV1EncodePass(
                                 if (!zeroLumaCbfMD) {
 
                                     ModeDecisionCandidateBuffer_t         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
+#if INTRA_INTER_FAST_LOOP
+                                    ModeDecisionCandidateBuffer_t         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
+#else
                                     ModeDecisionCandidateBuffer_t         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[context_ptr->md_context->buffer_depth_index_start[0]]);
+#endif
                                     ModeDecisionCandidateBuffer_t          *candidateBuffer;
 
                                     // Set the Candidate Buffer

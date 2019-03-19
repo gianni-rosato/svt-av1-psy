@@ -17,9 +17,6 @@
 #include "EbUtility.h"
 #include "EbReferenceObject.h"
 
-
-static const uint32_t me2Nx2NOffset[4] = { 0, 1, 5, 21 };
-
 /**************************************
 * Macros
 **************************************/
@@ -1359,6 +1356,15 @@ void QpmGatherStatisticsSW(
             if (sb_params.raster_scan_cu_validity[rasterScanCuIndex]) {
                 mdScanCuIndex = RASTER_SCAN_TO_MD_SCAN[rasterScanCuIndex];
 
+#if OIS_BASED_INTRA
+
+
+            ois_sb_results_t        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
+	
+            ois_candidate_t *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
+            oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
+
+#else
                 OisCu8Results_t            *oisCu8ResultsPtr = picture_control_set_ptr->ois_cu8_results[sb_index];
 
                 if (oisCu8ResultsPtr->sorted_ois_candidate[rasterScanCuIndex - RASTER_SCAN_CU_INDEX_8x8_0][0].valid_distortion) {
@@ -1376,7 +1382,7 @@ void QpmGatherStatisticsSW(
                         oisSad = 0;
                     }
                 }
-
+#endif
 
 
                 meSad = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortionDirection[0].distortion;
@@ -1405,12 +1411,19 @@ void QpmGatherStatisticsSW(
     cu_depth = 2;
     for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_16x16_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_16x16_15; rasterScanCuIndex++) {
         if (sb_params.raster_scan_cu_validity[rasterScanCuIndex]) {
+#if OIS_BASED_INTRA
+            
+            mdScanCuIndex = RASTER_SCAN_TO_MD_SCAN[rasterScanCuIndex];
 
+            ois_sb_results_t        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];	
+            ois_candidate_t *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
+            oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
 
+#else
             OisCu32Cu16Results_t            *oisCu32Cu16ResultsPtr = picture_control_set_ptr->ois_cu32_cu16_results[sb_index];
 
             oisSad = oisCu32Cu16ResultsPtr->sorted_ois_candidate[rasterScanCuIndex][0].distortion;
-
+#endif
             meSad = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortionDirection[0].distortion;
 
             //Keep track of the min,max and sum.
@@ -1430,12 +1443,18 @@ void QpmGatherStatisticsSW(
     for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_32x32_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_32x32_3; rasterScanCuIndex++) {
         if (sb_params.raster_scan_cu_validity[rasterScanCuIndex]) {
 
+#if OIS_BASED_INTRA
+             mdScanCuIndex = RASTER_SCAN_TO_MD_SCAN[rasterScanCuIndex];
 
+            ois_sb_results_t        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];	
+            ois_candidate_t *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
+            oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
 
+#else
             OisCu32Cu16Results_t            *oisCu32Cu16ResultsPtr = picture_control_set_ptr->ois_cu32_cu16_results[sb_index];
             oisSad = oisCu32Cu16ResultsPtr->sorted_ois_candidate[rasterScanCuIndex][0].distortion;
 
-
+#endif
             meSad = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortionDirection[0].distortion;
 
 
@@ -1454,8 +1473,14 @@ void QpmGatherStatisticsSW(
     // 64x64 block loop
     cu_depth = 0;
     if (sb_params.raster_scan_cu_validity[RASTER_SCAN_CU_INDEX_64x64]) {
+#if OIS_BASED_INTRA
+            mdScanCuIndex = 0;
 
+            ois_sb_results_t        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];	
+            ois_candidate_t *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
+            oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
 
+#else
         OisCu32Cu16Results_t            *oisCu32Cu16ResultsPtr = picture_control_set_ptr->ois_cu32_cu16_results[sb_index];
 
 
@@ -1465,7 +1490,7 @@ void QpmGatherStatisticsSW(
             oisCu32Cu16ResultsPtr->sorted_ois_candidate[3][0].distortion +
             oisCu32Cu16ResultsPtr->sorted_ois_candidate[4][0].distortion;
 
-
+#endif
         meSad = picture_control_set_ptr->me_results[sb_index][RASTER_SCAN_CU_INDEX_64x64].distortionDirection[0].distortion;
 
 

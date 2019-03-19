@@ -259,7 +259,11 @@ void cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int32_t dstride,
 #if FAST_CDEF
 int32_t get_cdef_gi_step(
     int8_t   cdef_filter_mode) {
+ #if ADD_CDEF_FILTER_LEVEL
+        int32_t gi_step = cdef_filter_mode == 1 ? 1 : cdef_filter_mode == 2 ? 4 : cdef_filter_mode == 3 ? 8 : cdef_filter_mode == 4 ? 16 : 64;
+#else
     int32_t gi_step = cdef_filter_mode == 1 ? 4 : cdef_filter_mode == 2 ? 8 : cdef_filter_mode == 3 ? 16 : 64;
+#endif
     return gi_step;
 }
 #endif
@@ -1542,8 +1546,13 @@ void finish_cdef_search(
     gi_step = get_cdef_gi_step(pPcs->cdef_filter_mode);
 
     mid_gi = pPcs->cdf_ref_frame_strenght;
+#if ADD_CDEF_FILTER_LEVEL
+    start_gi = pPcs->use_ref_frame_cdef_strength && pPcs->cdef_filter_mode == 1 ? (AOMMAX(0, mid_gi - gi_step)) : 0;
+    end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : pPcs->cdef_filter_mode == 1 ? 8 : total_strengths;
+#else
     start_gi = 0;
     end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
+#endif
 #endif
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
     int32_t pri_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex  >> 6);
@@ -1786,8 +1795,13 @@ void av1_cdef_search(
     int32_t best_frame_gi_cnt = 0;
     int32_t gi_step = get_cdef_gi_step(pPcs->cdef_filter_mode);
     int32_t mid_gi = pPcs->cdf_ref_frame_strenght;
+#if ADD_CDEF_FILTER_LEVEL
+    int32_t start_gi = pPcs->use_ref_frame_cdef_strength && pPcs->cdef_filter_mode == 1 ? (AOMMAX(0, mid_gi - gi_step)) : 0;
+    int32_t end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : pPcs->cdef_filter_mode == 1 ? 8 : total_strengths;
+#else
     int32_t start_gi = 0;
     int32_t end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
+#endif
 #endif
 
     quantizer =
@@ -2173,8 +2187,13 @@ void av1_cdef_search16bit(
     int32_t best_frame_gi_cnt = 0;
     int32_t gi_step = get_cdef_gi_step(pPcs->cdef_filter_mode);
     int32_t mid_gi = pPcs->cdf_ref_frame_strenght;
+#if ADD_CDEF_FILTER_LEVEL
+    int32_t start_gi = pPcs->use_ref_frame_cdef_strength && pPcs->cdef_filter_mode == 1 ? (AOMMAX(0, mid_gi - gi_step)) : 0;
+    int32_t end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : pPcs->cdef_filter_mode == 1 ? 8 : total_strengths;
+#else
     int32_t start_gi = 0;
     int32_t end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
+#endif
 #endif
 
     quantizer =

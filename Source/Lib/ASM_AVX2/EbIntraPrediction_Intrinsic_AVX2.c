@@ -2220,7 +2220,7 @@ void intra_mode_angular_2_avx2_intrin(
 }
 
 #define MIDRANGE_VALUE_8BIT    128
-
+#if !OIS_BASED_INTRA
 uint32_t update_neighbor_dc_intra_pred_avx2_intrin(
     uint8_t                           *yIntraReferenceArrayReverse,
     uint16_t                           input_height,
@@ -2500,7 +2500,7 @@ uint32_t update_neighbor_dc_intra_pred_avx2_intrin(
     }
     (void)asmType;
 }
-
+#endif
 /***********************************************************************************************************************************************************************************************
                                                                         intra_mode_angular_18_avx2_intrin
                                                                         ***********************************************************************************************************************************************************************************************/
