@@ -7,12 +7,12 @@
 
 # Include Encoder Subdirectories
 include_directories (${PROJECT_SOURCE_DIR}/Source/API/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Codec/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE2/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSSE3/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE4_1/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/ASM_AVX2/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     SET(CMAKE_C_FLAGS "/MP")    
@@ -31,7 +31,7 @@ file(GLOB all_files
     "*.asm"
     "*.c")
 
-add_library(ASM_SSSE3
+add_library(COMMON_ASM_SSSE3
     ${all_files}
 )
 

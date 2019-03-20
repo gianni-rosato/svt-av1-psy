@@ -7,8 +7,8 @@
 
 # Include Encoder Subdirectories
 include_directories (${PROJECT_SOURCE_DIR}/Source/API/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Codec/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     SET(CMAKE_C_FLAGS "/MP")    
@@ -18,6 +18,6 @@ file(GLOB all_files
     "*.h"
     "*.c")
 
-add_library(C_DEFAULT
+add_library(COMMON_C_DEFAULT
     ${all_files}
 )

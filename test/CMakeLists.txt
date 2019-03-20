@@ -13,7 +13,7 @@ include_directories (${PROJECT_SOURCE_DIR}/test/)
 include_directories (${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 include_directories(${PROJECT_SOURCE_DIR}/third_party/googletest/include third_party/googletest/src)
 include_directories(${PROJECT_SOURCE_DIR}/Source/API )
-include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Codec )
+include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec )
 
 # Define helper functions and macros used by Google Test.
 include(../third_party/googletest/cmake/internal_utils.cmake)
@@ -42,8 +42,8 @@ enable_testing()
 file(GLOB all_files
     "*.h"
     "*.cc"
-    "../Source/Lib/Codec/grainSynthesis.h"
-    "../Source/Lib/Codec/grainSynthesis.c")
+    "../Source/Lib/Common/Codec/grainSynthesis.h"
+    "../Source/Lib/Common/Codec/grainSynthesis.c")
 
 if (UNIX)
   # App Source Files
@@ -53,6 +53,7 @@ if (UNIX)
     # Link the Encoder App
      target_link_libraries (SvtAv1UnitTests
         SvtAv1Enc
+        SvtAv1Dec
         gtest_all 
         pthread
         m)
@@ -60,7 +61,7 @@ endif(UNIX)
 
 if (MSVC OR MSYS OR MINGW OR WIN32)
   
-    set (lib_list SvtAv1Enc gtest_all)
+    set (lib_list SvtAv1Enc SvtAv1Dec gtest_all)
     cxx_executable_with_flags(SvtAv1UnitTests "${cxx_default}"
       "${lib_list}" ${all_files})
 

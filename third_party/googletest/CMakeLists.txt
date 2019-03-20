@@ -5,6 +5,10 @@
 # ctest.  You can select which tests to run using 'ctest -R regex'.
 # For more options, run 'ctest --help'.
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+
 # BUILD_SHARED_LIBS is a standard CMake variable, but we declare it here to
 # make it prominent in the GUI.
 if (UNIX)
@@ -78,14 +82,8 @@ link_directories(${gtest_BINARY_DIR}/src)
 # are used for other targets, to ensure that gtest can be compiled by a user
 # aggressive about warnings.
 
-if(UNIX)
-  cxx_library(gtest_all "${cxx_strict}" src/gtest-all.cc src/gtest_main.cc)
-endif()
-
-if (MSVC OR MSYS OR MINGW OR WIN32)
-  cxx_shared_library(gtest_all "${cxx_default}"
+cxx_shared_library(gtest_all "${cxx_default}"
     src/gtest-all.cc src/gtest_main.cc)
-endif()
 
 target_link_libraries(gtest_all)
 
@@ -270,7 +268,8 @@ if (gtest_build_tests)
   py_test(gtest_xml_output_unittest)
 endif()
 
-install(TARGETS gtest_all LIBRARY DESTINATION "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}"
-                      ARCHIVE DESTINATION "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}"
-                      RUNTIME DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
-                      COMPONENT library)
+if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
+    set(CMAKE_INSTALL_LIBDIR "lib")
+endif()
+
+install(TARGETS gtest_all DESTINATION "${CMAKE_INSTALL_LIBDIR}")
