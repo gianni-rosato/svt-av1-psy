@@ -1,4 +1,6 @@
 
+## Code Style
+
 This style guide comes from `dav1d`: https://code.videolan.org/videolan/dav1d/wikis/Coding-style
 
 Tabs vs Spaces
@@ -95,3 +97,81 @@ don't use goto except for standard error handling;
 use native types (`int`, `unsigned`, etc.) for scalar variables where the upper bound of a size doesn't matter;
 use sized types (`uint8_t`, `int16_t`, etc.) for vector/array variables where the upper bound of the size matters;
 use dynamic types (`pixel`, `coef`, etc.) so multi-bitdepth templating works as it should.
+
+## Doxygen Documentation
+```
+/* File level Description */
+
+/*********************************************************************************
+* @file
+*  file.c
+*
+* @brief
+*  Brief description about file
+*
+* @author
+*  Author
+*
+* @par List of Functions:
+* - fun1()
+* - fun2()
+*
+* @remarks
+*  Any remarks
+*
+********************************************************************************/
+
+/* Macro Description */
+/** Brief description of MACRO */
+\#define MACRO   val
+
+/* enum Description : description for all entries */
+/** Brief description of ENUMs */
+enum {
+    ENUM1         = 1, /**< Brief description of ENUM1 */
+    ENUM2         = 2, /**< Brief description of ENUM2 */
+    ENUM3         = 3  /**< Brief description of ENUM3 */
+}
+
+/* enum Description : top level description */
+/** Brief description of ENUMs */
+enum {
+    ENUM1         = 1,
+    ENUM2         = 2,
+    ENUM3         = 3
+}
+
+/* structure level Description */
+
+struct {
+    member1, /**< Brief description of member1 */
+    member2, /**< Brief description of member2 */
+    member3, /**< Brief description of member3 */
+}
+
+/* Function level Description */
+
+/*********************************************************************************
+*
+* @brief
+*  Brief description of function
+*
+* @par Description:
+*  Detailed description of function
+*
+* @param[in] prm1
+*  Brief description of prm1
+*
+* @param[in] prm2
+*  Brief description of prm2
+*
+* @param[out] prm3
+*  Brief description of prm3
+*
+* @returns  Brief description of return value
+*
+* @remarks
+*  Any remarks
+*
+********************************************************************************/
+```
