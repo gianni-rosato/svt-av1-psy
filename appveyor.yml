@@ -11,7 +11,9 @@ build:
   project: svt-av1.sln
 
 artifacts:
-    - path: bin\Release\*.*
+    - path: bin\Release\SvtAv1*.exe
+      name: $(APPVEYOR_PROJECT_NAME)
+    - path: bin\Release\SvtAv1*.dll
       name: $(APPVEYOR_PROJECT_NAME)
 
 deploy:
