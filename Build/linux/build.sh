@@ -24,7 +24,7 @@ function build {
         -DCMAKE_ASM_NASM_COMPILER=$CMAKE_ASSEMBLER  \
 
     # Compile the Library
-    make -j $(nproc) SvtAv1EncApp SvtAv1DecApp SvtAv1UnitTests
+    make -j $(if [ "$(uname -s)" = "Darwin" ]; then sysctl -n hw.ncpu; else nproc; fi) SvtAv1EncApp SvtAv1DecApp SvtAv1UnitTests
     cd ..
 }
 
@@ -43,7 +43,7 @@ else
     CMAKE_COMPILER=$ICC_COMPILER
 fi
 
-cd $(dirname $(realpath $0))
+cd $(dirname $(if [ "$(uname -s)" = "Darwin" ]; then perl -e 'use Cwd "abs_path";print abs_path(shift)' $0; else realpath $0; fi))
 
 if [ $# -eq 0 ]; then
     build Debug
