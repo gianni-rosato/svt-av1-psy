@@ -23,33 +23,32 @@ extern "C" {
     // 2^12 / sqrt(2)
     static const int32_t NewInvSqrt2 = 2896;
 
-static INLINE __m256i av1_round_shift_32_avx2(__m256i vec, int32_t bit) {
-    __m256i tmp, round;
-    round = _mm256_set1_epi32(1 << (bit - 1));
-    tmp = _mm256_add_epi32(vec, round);
-    return _mm256_srai_epi32(tmp, bit);
-}
-
 static INLINE void av1_round_shift_rect_array_32_avx2(__m256i *input,
     __m256i *output,
     const int32_t size,
     const int32_t bit,
     const int32_t val) {
     const __m256i sqrt2 = _mm256_set1_epi32(val);
+    const __m256i round2 = _mm256_set1_epi32(1 << (NewSqrt2Bits - 1));
+    int32_t i;
     if (bit > 0) {
-        int32_t i;
+        const __m256i round1 = _mm256_set1_epi32(1 << (bit - 1));
+        __m256i r0, r1, r2, r3;
         for (i = 0; i < size; i++) {
-            const __m256i r0 = av1_round_shift_32_avx2(input[i], bit);
-            const __m256i r1 = _mm256_mullo_epi32(sqrt2, r0);
-            output[i] = av1_round_shift_32_avx2(r1, NewSqrt2Bits);
+            r0 = _mm256_add_epi32(input[i], round1);
+            r1 = _mm256_srai_epi32(r0, bit);
+            r2 = _mm256_mullo_epi32(sqrt2, r1);
+            r3 = _mm256_add_epi32(r2, round2);
+            output[i] = _mm256_srai_epi32(r3, NewSqrt2Bits);
         }
     }
     else {
-        int32_t i;
+        __m256i r0, r1, r2;
         for (i = 0; i < size; i++) {
-            const __m256i r0 = _mm256_slli_epi32(input[i], -bit);
-            const __m256i r1 = _mm256_mullo_epi32(sqrt2, r0);
-            output[i] = av1_round_shift_32_avx2(r1, NewSqrt2Bits);
+            r0 = _mm256_slli_epi32(input[i], -bit);
+            r1 = _mm256_mullo_epi32(sqrt2, r0);
+            r2 = _mm256_add_epi32(r1, round2);
+            output[i] = _mm256_srai_epi32(r2, NewSqrt2Bits);
         }
     }
 }
@@ -58,14 +57,15 @@ static INLINE void av1_round_shift_array_32_avx2(__m256i *input,
     __m256i *output,
     const int32_t size,
     const int32_t bit) {
+    int32_t i;
     if (bit > 0) {
-        int32_t i;
+        const __m256i round = _mm256_set1_epi32(1 << (bit - 1));
+        __m256i r0;
         for (i = 0; i < size; i++) {
-            output[i] = av1_round_shift_32_avx2(input[i], bit);
+            r0 = _mm256_add_epi32(input[i], round);
+            output[i] = _mm256_srai_epi32(r0, bit);
         }
-    }
-    else {
-        int32_t i;
+    } else {
         for (i = 0; i < size; i++) {
             output[i] = _mm256_slli_epi32(input[i], -bit);
         }
