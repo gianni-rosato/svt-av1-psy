@@ -44,7 +44,7 @@ jobs:
      script:
      - cd Build/linux
      - ./build.sh release
-     - wget -nc https://media.xiph.org/video/derf/y4m/akiyo_cif.y4m
+     - wget -nc --no-check-certificate https://media.xiph.org/video/derf/y4m/akiyo_cif.y4m
      - ../../Bin/Release/SvtAv1EncApp -i akiyo_cif.y4m -enc-mode 5 -lp 1 -q 24 -n 17 -o out.yuv -b out.ivf
      
    # FFmpeg interation build
