@@ -56,6 +56,56 @@ int32_t OisPointTh[3][MAX_TEMPORAL_LAYERS][OIS_TH_COUNT] = {
     }
 };
 
+#if NSQ_ME_OPT
+void ext_all_sad_calculation_8x8_16x16_c(
+    uint8_t   *src,
+    uint32_t   src_stride,
+    uint8_t   *ref,
+    uint32_t   ref_stride,
+    uint32_t   mv,
+    uint32_t  *p_best_sad8x8,
+    uint32_t  *p_best_sad16x16,
+    uint32_t  *p_best_mv8x8,
+    uint32_t  *p_best_mv16x16,
+    uint32_t   p_eight_sad16x16[16][8],
+    uint32_t   p_eight_sad8x8[64][8]);
+
+void ext_eigth_sad_calculation_nsq_c(
+    uint32_t   p_sad8x8[64][8],
+    uint32_t   p_sad16x16[16][8],
+    uint32_t   p_sad32x32[4][8],
+    uint32_t  *p_best_sad64x32,
+    uint32_t  *p_best_mv64x32,
+    uint32_t  *p_best_sad32x16,
+    uint32_t  *p_best_mv32x16,
+    uint32_t  *p_best_sad16x8,
+    uint32_t  *p_best_mv16x8,
+    uint32_t  *p_best_sad32x64,
+    uint32_t  *p_best_mv32x64,
+    uint32_t  *p_best_sad16x32,
+    uint32_t  *p_best_mv16x32,
+    uint32_t  *p_best_sad8x16,
+    uint32_t  *p_best_mv8x16,
+    uint32_t  *p_best_sad32x8,
+    uint32_t  *p_best_mv32x8,
+    uint32_t  *p_best_sad8x32,
+    uint32_t  *p_best_mv8x32,
+    uint32_t  *p_best_sad64x16,
+    uint32_t  *p_best_mv64x16,
+    uint32_t  *p_best_sad16x64,
+    uint32_t  *p_best_mv16x64,
+    uint32_t   mv);
+
+void ext_eight_sad_calculation_32x32_64x64_c(
+    uint32_t   p_sad16x16[16][8],
+    uint32_t  *p_best_sad32x32,
+    uint32_t  *p_best_sad64x64,
+    uint32_t  *p_best_mv32x32,
+    uint32_t  *p_best_mv64x64,
+    uint32_t   mv,
+    uint32_t  p_sad32x32[4][8]);
+#endif
+
 #define AVCCODEL
 /********************************************
 * Constants
@@ -143,6 +193,29 @@ static EB_SADCALCULATION32X32AND64X64_TYPE SadCalculation_32x32_64x64_funcPtrArr
     // AVX2
     sad_calculation_32x32_64x64_sse2_intrin,
 };
+
+#if NSQ_ME_OPT
+static EB_EXT_ALL_SAD_CALCULATION_8x8_16x16_TYPE Ext_ext_all_sad_calculation_8x8_16x16_funcPtrArray[ASM_TYPE_TOTAL] = {
+    // NON_AVX2
+    ext_all_sad_calculation_8x8_16x16_c,
+    // AVX2
+    ext_all_sad_calculation_8x8_16x16_avx2,
+};
+
+static EB_EIGHTSADCALCULATIONNSQ_TYPE Ext_eigth_sad_calculation_nsq_funcPtrArray[ASM_TYPE_TOTAL] = {
+    // NON_AVX2
+    ext_eigth_sad_calculation_nsq_c,
+    // AVX2
+    ext_eigth_sad_calculation_nsq_avx2,
+};
+
+static EB_EXT_EIGHT_SAD_CALCULATION_32x32_64x64_TYPE Ext_ext_eight_sad_calculation_32x32_64x64_funcPtrArray[ASM_TYPE_TOTAL] = {
+    // NON_AVX2
+    ext_eight_sad_calculation_32x32_64x64_c,
+    // AVX2
+    ext_eight_sad_calculation_32x32_64x64_avx2,
+};
+#endif
 
 /*******************************************
 Calcualte SAD for 16x16 and its 8x8 sublcoks
@@ -1393,16 +1466,1280 @@ static EB_EXTSADCALCULATION_TYPE ExtSadCalculation_funcPtrArray[ASM_TYPE_TOTAL] 
     ExtSadCalculation
 };
 
-#if NSQ_OPTIMASATION
+#if NSQ_ME_OPT
+/****************************************************
+Calcualte SAD for Rect H, V and H4, V4 partitions
+and update its Motion info if the result SAD is better
+****************************************************/
+void ext_eigth_sad_calculation_nsq_c(
+    uint32_t   p_sad8x8[64][8],
+    uint32_t   p_sad16x16[16][8],
+    uint32_t   p_sad32x32[4][8],
+    uint32_t  *p_best_sad64x32,
+    uint32_t  *p_best_mv64x32,
+    uint32_t  *p_best_sad32x16,
+    uint32_t  *p_best_mv32x16,
+    uint32_t  *p_best_sad16x8,
+    uint32_t  *p_best_mv16x8,
+    uint32_t  *p_best_sad32x64,
+    uint32_t  *p_best_mv32x64,
+    uint32_t  *p_best_sad16x32,
+    uint32_t  *p_best_mv16x32,
+    uint32_t  *p_best_sad8x16,
+    uint32_t  *p_best_mv8x16,
+    uint32_t  *p_best_sad32x8,
+    uint32_t  *p_best_mv32x8,
+    uint32_t  *p_best_sad8x32,
+    uint32_t  *p_best_mv8x32,
+    uint32_t  *p_best_sad64x16,
+    uint32_t  *p_best_mv64x16,
+    uint32_t  *p_best_sad16x64,
+    uint32_t  *p_best_mv16x64,
+    uint32_t   mv)
+{
+    uint8_t search_index;
+    uint32_t sad;
+    uint32_t sad_16x8[32];
+    uint32_t sad_8x16[32];
+    uint32_t sad_32x16[8];
+    uint32_t sad_16x32[8];
+
+    int16_t x_mv, y_mv;
+
+    for (search_index = 0; search_index < 8; search_index++)
+    {
+        // 64x32
+        sad = p_sad32x32[0][search_index] + p_sad32x32[1][search_index];
+        if (sad < p_best_sad64x32[0]) {
+            p_best_sad64x32[0] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv64x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = p_sad32x32[2][search_index] + p_sad32x32[3][search_index];
+        if (sad < p_best_sad64x32[1]) {
+            p_best_sad64x32[1] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv64x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        // 32x16
+        sad_32x16[0] = p_sad16x16[0][search_index] + p_sad16x16[1][search_index];
+        if (sad_32x16[0] < p_best_sad32x16[0]) {
+            p_best_sad32x16[0] = sad_32x16[0];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x16[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_32x16[1] = p_sad16x16[2][search_index] + p_sad16x16[3][search_index];
+        if (sad_32x16[1] < p_best_sad32x16[1]) {
+            p_best_sad32x16[1] = sad_32x16[1];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x16[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_32x16[2] = p_sad16x16[4][search_index] + p_sad16x16[5][search_index];
+        if (sad_32x16[2] < p_best_sad32x16[2]) {
+            p_best_sad32x16[2] = sad_32x16[2];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x16[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_32x16[3] = p_sad16x16[6][search_index] + p_sad16x16[7][search_index];
+        if (sad_32x16[3] < p_best_sad32x16[3]) {
+            p_best_sad32x16[3] = sad_32x16[3];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x16[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_32x16[4] = p_sad16x16[8][search_index] + p_sad16x16[9][search_index];
+        if (sad_32x16[4] < p_best_sad32x16[4]) {
+            p_best_sad32x16[4] = sad_32x16[4];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x16[4] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_32x16[5] = p_sad16x16[10][search_index] + p_sad16x16[11][search_index];
+        if (sad_32x16[5] < p_best_sad32x16[5]) {
+            p_best_sad32x16[5] = sad_32x16[5];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x16[5] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_32x16[6] = p_sad16x16[12][search_index] + p_sad16x16[13][search_index];
+        if (sad_32x16[6] < p_best_sad32x16[6]) {
+            p_best_sad32x16[6] = sad_32x16[6];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x16[6] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_32x16[7] = p_sad16x16[14][search_index] + p_sad16x16[15][search_index];
+        if (sad_32x16[7] < p_best_sad32x16[7]) {
+            p_best_sad32x16[7] = sad_32x16[7];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x16[7] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        // 64x16
+        sad = sad_32x16[0] + sad_32x16[2];
+        if (sad < p_best_sad64x16[0]) {
+            p_best_sad64x16[0] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv64x16[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+        sad = sad_32x16[1] + sad_32x16[3];
+        if (sad < p_best_sad64x16[1]) {
+            p_best_sad64x16[1] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv64x16[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_32x16[4] + sad_32x16[6];
+        if (sad < p_best_sad64x16[2]) {
+            p_best_sad64x16[2] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv64x16[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+        sad = sad_32x16[5] + sad_32x16[7];
+        if (sad < p_best_sad64x16[3]) {
+            p_best_sad64x16[3] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv64x16[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+        // 16x8
+        sad_16x8[0] = p_sad8x8[0][search_index] + p_sad8x8[1][search_index];
+        if (sad_16x8[0] < p_best_sad16x8[0]) {
+            p_best_sad16x8[0] = sad_16x8[0];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[1] = p_sad8x8[2][search_index] + p_sad8x8[3][search_index];
+        if (sad_16x8[1] < p_best_sad16x8[1]) {
+            p_best_sad16x8[1] = sad_16x8[1];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[2] = p_sad8x8[4][search_index] + p_sad8x8[5][search_index];
+        if (sad_16x8[2] < p_best_sad16x8[2]) {
+            p_best_sad16x8[2] = sad_16x8[2];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[3] = p_sad8x8[6][search_index] + p_sad8x8[7][search_index];
+        if (sad_16x8[3] < p_best_sad16x8[3]) {
+            p_best_sad16x8[3] = sad_16x8[3];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[4] = p_sad8x8[8][search_index] + p_sad8x8[9][search_index];
+        if (sad_16x8[4] < p_best_sad16x8[4]) {
+            p_best_sad16x8[4] = sad_16x8[4];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[4] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[5] = p_sad8x8[10][search_index] + p_sad8x8[11][search_index];
+        if (sad_16x8[5] < p_best_sad16x8[5]) {
+            p_best_sad16x8[5] = sad_16x8[5];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[5] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[6] = p_sad8x8[12][search_index] + p_sad8x8[13][search_index];
+        if (sad_16x8[6] < p_best_sad16x8[6]) {
+            p_best_sad16x8[6] = sad_16x8[6];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[6] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[7] = p_sad8x8[14][search_index] + p_sad8x8[15][search_index];
+        if (sad_16x8[7] < p_best_sad16x8[7]) {
+            p_best_sad16x8[7] = sad_16x8[7];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[7] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[8] = p_sad8x8[16][search_index] + p_sad8x8[17][search_index];
+        if (sad_16x8[8] < p_best_sad16x8[8]) {
+            p_best_sad16x8[8] = sad_16x8[8];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[8] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[9] = p_sad8x8[18][search_index] + p_sad8x8[19][search_index];
+        if (sad_16x8[9] < p_best_sad16x8[9]) {
+            p_best_sad16x8[9] = sad_16x8[9];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[9] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[10] = p_sad8x8[20][search_index] + p_sad8x8[21][search_index];
+        if (sad_16x8[10] < p_best_sad16x8[10]) {
+            p_best_sad16x8[10] = sad_16x8[10];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[10] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[11] = p_sad8x8[22][search_index] + p_sad8x8[23][search_index];
+        if (sad_16x8[11] < p_best_sad16x8[11]) {
+            p_best_sad16x8[11] = sad_16x8[11];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[11] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[12] = p_sad8x8[24][search_index] + p_sad8x8[25][search_index];
+        if (sad_16x8[12] < p_best_sad16x8[12]) {
+            p_best_sad16x8[12] = sad_16x8[12];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[12] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[13] = p_sad8x8[26][search_index] + p_sad8x8[27][search_index];
+        if (sad_16x8[13] < p_best_sad16x8[13]) {
+            p_best_sad16x8[13] = sad_16x8[13];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[13] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[14] = p_sad8x8[28][search_index] + p_sad8x8[29][search_index];
+        if (sad_16x8[14] < p_best_sad16x8[14]) {
+            p_best_sad16x8[14] = sad_16x8[14];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[14] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[15] = p_sad8x8[30][search_index] + p_sad8x8[31][search_index];
+        if (sad_16x8[15] < p_best_sad16x8[15]) {
+            p_best_sad16x8[15] = sad_16x8[15];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[15] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[16] = p_sad8x8[32][search_index] + p_sad8x8[33][search_index];
+        if (sad_16x8[16] < p_best_sad16x8[16]) {
+            p_best_sad16x8[16] = sad_16x8[16];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[16] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[17] = p_sad8x8[34][search_index] + p_sad8x8[35][search_index];
+        if (sad_16x8[17] < p_best_sad16x8[17]) {
+            p_best_sad16x8[17] = sad_16x8[17];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[17] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[18] = p_sad8x8[36][search_index] + p_sad8x8[37][search_index];
+        if (sad_16x8[18] < p_best_sad16x8[18]) {
+            p_best_sad16x8[18] = sad_16x8[18];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[18] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[19] = p_sad8x8[38][search_index] + p_sad8x8[39][search_index];
+        if (sad_16x8[19] < p_best_sad16x8[19]) {
+            p_best_sad16x8[19] = sad_16x8[19];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[19] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[20] = p_sad8x8[40][search_index] + p_sad8x8[41][search_index];
+        if (sad_16x8[20] < p_best_sad16x8[20]) {
+            p_best_sad16x8[20] = sad_16x8[20];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[20] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[21] = p_sad8x8[42][search_index] + p_sad8x8[43][search_index];
+        if (sad_16x8[21] < p_best_sad16x8[21]) {
+            p_best_sad16x8[21] = sad_16x8[21];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[21] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[22] = p_sad8x8[44][search_index] + p_sad8x8[45][search_index];
+        if (sad_16x8[22] < p_best_sad16x8[22]) {
+            p_best_sad16x8[22] = sad_16x8[22];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[22] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[23] = p_sad8x8[46][search_index] + p_sad8x8[47][search_index];
+        if (sad_16x8[23] < p_best_sad16x8[23]) {
+            p_best_sad16x8[23] = sad_16x8[23];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[23] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[24] = p_sad8x8[48][search_index] + p_sad8x8[49][search_index];
+        if (sad_16x8[24] < p_best_sad16x8[24]) {
+            p_best_sad16x8[24] = sad_16x8[24];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[24] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[25] = p_sad8x8[50][search_index] + p_sad8x8[51][search_index];
+        if (sad_16x8[25] < p_best_sad16x8[25]) {
+            p_best_sad16x8[25] = sad_16x8[25];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[25] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[26] = p_sad8x8[52][search_index] + p_sad8x8[53][search_index];
+        if (sad_16x8[26] < p_best_sad16x8[26]) {
+            p_best_sad16x8[26] = sad_16x8[26];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[26] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[27] = p_sad8x8[54][search_index] + p_sad8x8[55][search_index];
+        if (sad_16x8[27] < p_best_sad16x8[27]) {
+            p_best_sad16x8[27] = sad_16x8[27];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[27] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[28] = p_sad8x8[56][search_index] + p_sad8x8[57][search_index];
+        if (sad_16x8[28] < p_best_sad16x8[28]) {
+            p_best_sad16x8[28] = sad_16x8[28];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[28] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[29] = p_sad8x8[58][search_index] + p_sad8x8[59][search_index];
+        if (sad_16x8[29] < p_best_sad16x8[29]) {
+            p_best_sad16x8[29] = sad_16x8[29];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[29] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[30] = p_sad8x8[60][search_index] + p_sad8x8[61][search_index];
+        if (sad_16x8[30] < p_best_sad16x8[30]) {
+            p_best_sad16x8[30] = sad_16x8[30];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[30] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x8[31] = p_sad8x8[62][search_index] + p_sad8x8[63][search_index];
+        if (sad_16x8[31] < p_best_sad16x8[31]) {
+            p_best_sad16x8[31] = sad_16x8[31];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x8[31] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        // 32x64
+        sad = p_sad32x32[0][search_index] + p_sad32x32[2][search_index];
+        if (sad < p_best_sad32x64[0]) {
+            p_best_sad32x64[0] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = p_sad32x32[1][search_index] + p_sad32x32[3][search_index];
+        if (sad < p_best_sad32x64[1]) {
+            p_best_sad32x64[1] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x64[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        // 16x32
+        sad_16x32[0] = p_sad16x16[0][search_index] + p_sad16x16[2][search_index];
+        if (sad_16x32[0] < p_best_sad16x32[0]) {
+            p_best_sad16x32[0] = sad_16x32[0];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x32[1] = p_sad16x16[1][search_index] + p_sad16x16[3][search_index];
+        if (sad_16x32[1] < p_best_sad16x32[1]) {
+            p_best_sad16x32[1] = sad_16x32[1];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x32[2] = p_sad16x16[4][search_index] + p_sad16x16[6][search_index];
+        if (sad_16x32[2] < p_best_sad16x32[2]) {
+            p_best_sad16x32[2] = sad_16x32[2];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x32[3] = p_sad16x16[5][search_index] + p_sad16x16[7][search_index];
+        if (sad_16x32[3] < p_best_sad16x32[3]) {
+            p_best_sad16x32[3] = sad_16x32[3];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x32[4] = p_sad16x16[8][search_index] + p_sad16x16[10][search_index];
+        if (sad_16x32[4] < p_best_sad16x32[4]) {
+            p_best_sad16x32[4] = sad_16x32[4];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x32[4] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x32[5] = p_sad16x16[9][search_index] + p_sad16x16[11][search_index];
+        if (sad_16x32[5] < p_best_sad16x32[5]) {
+            p_best_sad16x32[5] = sad_16x32[5];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x32[5] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x32[6] = p_sad16x16[12][search_index] + p_sad16x16[14][search_index];
+        if (sad_16x32[6] < p_best_sad16x32[6]) {
+            p_best_sad16x32[6] = sad_16x32[6];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x32[6] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_16x32[7] = p_sad16x16[13][search_index] + p_sad16x16[15][search_index];
+        if (sad_16x32[7] < p_best_sad16x32[7]) {
+            p_best_sad16x32[7] = sad_16x32[7];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x32[7] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x32[0] + sad_16x32[4];
+        if (sad < p_best_sad16x64[0]) {
+            p_best_sad16x64[0] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+        sad = sad_16x32[1] + sad_16x32[5];
+        if (sad < p_best_sad16x64[1]) {
+            p_best_sad16x64[1] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x64[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x32[2] + sad_16x32[6];
+        if (sad < p_best_sad16x64[2]) {
+            p_best_sad16x64[2] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x64[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x32[3] + sad_16x32[7];
+        if (sad < p_best_sad16x64[3]) {
+            p_best_sad16x64[3] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x64[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+        // 8x16
+        sad_8x16[0] = p_sad8x8[0][search_index] + p_sad8x8[2][search_index];
+        if (sad_8x16[0] < p_best_sad8x16[0]) {
+            p_best_sad8x16[0] = sad_8x16[0];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[1] = p_sad8x8[1][search_index] + p_sad8x8[3][search_index];
+        if (sad_8x16[1] < p_best_sad8x16[1]) {
+            p_best_sad8x16[1] = sad_8x16[1];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[2] = p_sad8x8[4][search_index] + p_sad8x8[6][search_index];
+        if (sad_8x16[2] < p_best_sad8x16[2]) {
+            p_best_sad8x16[2] = sad_8x16[2];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[3] = p_sad8x8[5][search_index] + p_sad8x8[7][search_index];
+        if (sad_8x16[3] < p_best_sad8x16[3]) {
+            p_best_sad8x16[3] = sad_8x16[3];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[4] = p_sad8x8[8][search_index] + p_sad8x8[10][search_index];
+        if (sad_8x16[4] < p_best_sad8x16[4]) {
+            p_best_sad8x16[4] = sad_8x16[4];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[4] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[5] = p_sad8x8[9][search_index] + p_sad8x8[11][search_index];
+        if (sad_8x16[5] < p_best_sad8x16[5]) {
+            p_best_sad8x16[5] = sad_8x16[5];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[5] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[6] = p_sad8x8[12][search_index] + p_sad8x8[14][search_index];
+        if (sad_8x16[6] < p_best_sad8x16[6]) {
+            p_best_sad8x16[6] = sad_8x16[6];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[6] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[7] = p_sad8x8[13][search_index] + p_sad8x8[15][search_index];
+        if (sad_8x16[7] < p_best_sad8x16[7]) {
+            p_best_sad8x16[7] = sad_8x16[7];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[7] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[8] = p_sad8x8[16][search_index] + p_sad8x8[18][search_index];
+        if (sad_8x16[8] < p_best_sad8x16[8]) {
+            p_best_sad8x16[8] = sad_8x16[8];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[8] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[9] = p_sad8x8[17][search_index] + p_sad8x8[19][search_index];
+        if (sad_8x16[9] < p_best_sad8x16[9]) {
+            p_best_sad8x16[9] = sad_8x16[9];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[9] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[10] = p_sad8x8[20][search_index] + p_sad8x8[22][search_index];
+        if (sad_8x16[10] < p_best_sad8x16[10]) {
+            p_best_sad8x16[10] = sad_8x16[10];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[10] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[11] = p_sad8x8[21][search_index] + p_sad8x8[23][search_index];
+        if (sad_8x16[11] < p_best_sad8x16[11]) {
+            p_best_sad8x16[11] = sad_8x16[11];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[11] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[12] = p_sad8x8[24][search_index] + p_sad8x8[26][search_index];
+        if (sad_8x16[12] < p_best_sad8x16[12]) {
+            p_best_sad8x16[12] = sad_8x16[12];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[12] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[13] = p_sad8x8[25][search_index] + p_sad8x8[27][search_index];
+        if (sad_8x16[13] < p_best_sad8x16[13]) {
+            p_best_sad8x16[13] = sad_8x16[13];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[13] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[14] = p_sad8x8[28][search_index] + p_sad8x8[30][search_index];
+        if (sad_8x16[14] < p_best_sad8x16[14]) {
+            p_best_sad8x16[14] = sad_8x16[14];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[14] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[15] = p_sad8x8[29][search_index] + p_sad8x8[31][search_index];
+        if (sad_8x16[15] < p_best_sad8x16[15]) {
+            p_best_sad8x16[15] = sad_8x16[15];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[15] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[16] = p_sad8x8[32][search_index] + p_sad8x8[34][search_index];
+        if (sad_8x16[16] < p_best_sad8x16[16]) {
+            p_best_sad8x16[16] = sad_8x16[16];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[16] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[17] = p_sad8x8[33][search_index] + p_sad8x8[35][search_index];
+        if (sad_8x16[17] < p_best_sad8x16[17]) {
+            p_best_sad8x16[17] = sad_8x16[17];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[17] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[18] = p_sad8x8[36][search_index] + p_sad8x8[38][search_index];
+        if (sad_8x16[18] < p_best_sad8x16[18]) {
+            p_best_sad8x16[18] = sad_8x16[18];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[18] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[19] = p_sad8x8[37][search_index] + p_sad8x8[39][search_index];
+        if (sad_8x16[19] < p_best_sad8x16[19]) {
+            p_best_sad8x16[19] = sad_8x16[19];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[19] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[20] = p_sad8x8[40][search_index] + p_sad8x8[42][search_index];
+        if (sad_8x16[20] < p_best_sad8x16[20]) {
+            p_best_sad8x16[20] = sad_8x16[20];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[20] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[21] = p_sad8x8[41][search_index] + p_sad8x8[43][search_index];
+        if (sad_8x16[21] < p_best_sad8x16[21]) {
+            p_best_sad8x16[21] = sad_8x16[21];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[21] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[22] = p_sad8x8[44][search_index] + p_sad8x8[46][search_index];
+        if (sad_8x16[22] < p_best_sad8x16[22]) {
+            p_best_sad8x16[22] = sad_8x16[22];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[22] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[23] = p_sad8x8[45][search_index] + p_sad8x8[47][search_index];
+        if (sad_8x16[23] < p_best_sad8x16[23]) {
+            p_best_sad8x16[23] = sad_8x16[23];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[23] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[24] = p_sad8x8[48][search_index] + p_sad8x8[50][search_index];
+        if (sad_8x16[24] < p_best_sad8x16[24]) {
+            p_best_sad8x16[24] = sad_8x16[24];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[24] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[25] = p_sad8x8[49][search_index] + p_sad8x8[51][search_index];
+        if (sad_8x16[25] < p_best_sad8x16[25]) {
+            p_best_sad8x16[25] = sad_8x16[25];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[25] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[26] = p_sad8x8[52][search_index] + p_sad8x8[54][search_index];
+        if (sad_8x16[26] < p_best_sad8x16[26]) {
+            p_best_sad8x16[26] = sad_8x16[26];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[26] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[27] = p_sad8x8[53][search_index] + p_sad8x8[55][search_index];
+        if (sad_8x16[27] < p_best_sad8x16[27]) {
+            p_best_sad8x16[27] = sad_8x16[27];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[27] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[28] = p_sad8x8[56][search_index] + p_sad8x8[58][search_index];
+        if (sad_8x16[28] < p_best_sad8x16[28]) {
+            p_best_sad8x16[28] = sad_8x16[28];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[28] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[29] = p_sad8x8[57][search_index] + p_sad8x8[59][search_index];
+        if (sad_8x16[29] < p_best_sad8x16[29]) {
+            p_best_sad8x16[29] = sad_8x16[29];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[29] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[30] = p_sad8x8[60][search_index] + p_sad8x8[62][search_index];
+        if (sad_8x16[30] < p_best_sad8x16[30]) {
+            p_best_sad8x16[30] = sad_8x16[30];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[30] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad_8x16[31] = p_sad8x8[61][search_index] + p_sad8x8[63][search_index];
+        if (sad_8x16[31] < p_best_sad8x16[31]) {
+            p_best_sad8x16[31] = sad_8x16[31];
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x16[31] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        // 32x8
+        sad = sad_16x8[0] + sad_16x8[2];
+        if (sad < p_best_sad32x8[0]) {
+            p_best_sad32x8[0] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[1] + sad_16x8[3];
+        if (sad < p_best_sad32x8[1]) {
+            p_best_sad32x8[1] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[4] + sad_16x8[6];
+        if (sad < p_best_sad32x8[2]) {
+            p_best_sad32x8[2] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[5] + sad_16x8[7];
+        if (sad < p_best_sad32x8[3]) {
+            p_best_sad32x8[3] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[8] + sad_16x8[10];
+        if (sad < p_best_sad32x8[4]) {
+            p_best_sad32x8[4] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[4] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[9] + sad_16x8[11];
+        if (sad < p_best_sad32x8[5]) {
+            p_best_sad32x8[5] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[5] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[12] + sad_16x8[14];
+        if (sad < p_best_sad32x8[6]) {
+            p_best_sad32x8[6] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[6] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[13] + sad_16x8[15];
+        if (sad < p_best_sad32x8[7]) {
+            p_best_sad32x8[7] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[7] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[16] + sad_16x8[18];
+        if (sad < p_best_sad32x8[8]) {
+            p_best_sad32x8[8] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[8] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[17] + sad_16x8[19];
+        if (sad < p_best_sad32x8[9]) {
+            p_best_sad32x8[9] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[9] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[20] + sad_16x8[22];
+        if (sad < p_best_sad32x8[10]) {
+            p_best_sad32x8[10] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[10] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[21] + sad_16x8[23];
+        if (sad < p_best_sad32x8[11]) {
+            p_best_sad32x8[11] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[11] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[24] + sad_16x8[26];
+        if (sad < p_best_sad32x8[12]) {
+            p_best_sad32x8[12] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[12] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[25] + sad_16x8[27];
+        if (sad < p_best_sad32x8[13]) {
+            p_best_sad32x8[13] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[13] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[28] + sad_16x8[30];
+        if (sad < p_best_sad32x8[14]) {
+            p_best_sad32x8[14] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[14] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_16x8[29] + sad_16x8[31];
+        if (sad < p_best_sad32x8[15]) {
+            p_best_sad32x8[15] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x8[15] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+        // 8x32
+        sad = sad_8x16[0] + sad_8x16[4];
+        if (sad < p_best_sad8x32[0]) {
+            p_best_sad8x32[0] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[1] + sad_8x16[5];
+        if (sad < p_best_sad8x32[1]) {
+            p_best_sad8x32[1] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[2] + sad_8x16[6];
+        if (sad < p_best_sad8x32[2]) {
+            p_best_sad8x32[2] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[3] + sad_8x16[7];
+        if (sad < p_best_sad8x32[3]) {
+            p_best_sad8x32[3] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[8] + sad_8x16[12];
+        if (sad < p_best_sad8x32[4]) {
+            p_best_sad8x32[4] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[4] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[9] + sad_8x16[13];
+        if (sad < p_best_sad8x32[5]) {
+            p_best_sad8x32[5] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[5] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[10] + sad_8x16[14];
+        if (sad < p_best_sad8x32[6]) {
+            p_best_sad8x32[6] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[6] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[11] + sad_8x16[15];
+        if (sad < p_best_sad8x32[7]) {
+            p_best_sad8x32[7] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[7] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[16] + sad_8x16[20];
+        if (sad < p_best_sad8x32[8]) {
+            p_best_sad8x32[8] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[8] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[17] + sad_8x16[21];
+        if (sad < p_best_sad8x32[9]) {
+            p_best_sad8x32[9] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[9] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[18] + sad_8x16[22];
+        if (sad < p_best_sad8x32[10]) {
+            p_best_sad8x32[10] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[10] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[19] + sad_8x16[23];
+        if (sad < p_best_sad8x32[11]) {
+            p_best_sad8x32[11] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[11] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[24] + sad_8x16[28];
+        if (sad < p_best_sad8x32[12]) {
+            p_best_sad8x32[12] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[12] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[25] + sad_8x16[29];
+        if (sad < p_best_sad8x32[13]) {
+            p_best_sad8x32[13] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[13] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[26] + sad_8x16[30];
+        if (sad < p_best_sad8x32[14]) {
+            p_best_sad8x32[14] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[14] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad = sad_8x16[27] + sad_8x16[31];
+        if (sad < p_best_sad8x32[15]) {
+            p_best_sad8x32[15] = sad;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x32[15] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+    }
+}
+
+/*******************************************
+* ext_eight_sad_calculation_8x8_16x16
+*******************************************/
+static void ext_eight_sad_calculation_8x8_16x16(
+    uint8_t   *src,
+    uint32_t   src_stride,
+    uint8_t   *ref,
+    uint32_t   ref_stride,
+    uint32_t   mv,
+    uint32_t   start_16x16_pos,
+    uint32_t  *p_best_sad8x8,
+    uint32_t  *p_best_sad16x16,
+    uint32_t  *p_best_mv8x8,
+    uint32_t  *p_best_mv16x16,
+    uint32_t   p_eight_sad16x16[16][8],
+    uint32_t   p_eight_sad8x8[64][8])
+{
+    const uint32_t start_8x8_pos = 4 * start_16x16_pos;
+    uint32_t sad8x8_0, sad8x8_1, sad8x8_2, sad8x8_3;
+    uint32_t sad16x16;
+    uint32_t search_index;
+    int16_t x_mv, y_mv;
+    uint32_t srcStrideSub = (src_stride << 1);
+    uint32_t refStrideSub = (ref_stride << 1);
+
+    p_best_sad8x8 += start_8x8_pos;
+    p_best_mv8x8 += start_8x8_pos;
+    p_best_sad16x16 += start_16x16_pos;
+    p_best_mv16x16 += start_16x16_pos;
+
+    for (search_index = 0; search_index < 8; search_index++)
+    {
+        p_eight_sad8x8[0 + start_8x8_pos][search_index] = sad8x8_0 = (compute8x4SAD_funcPtrArray[0](src, srcStrideSub, ref + search_index, refStrideSub)) << 1;
+        if (sad8x8_0 < p_best_sad8x8[0]) {
+            p_best_sad8x8[0] = (uint32_t)sad8x8_0;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x8[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        p_eight_sad8x8[1 + start_8x8_pos][search_index] = sad8x8_1 = (compute8x4SAD_funcPtrArray[0](src + 8, srcStrideSub, ref + 8 + search_index, refStrideSub)) << 1;
+        if (sad8x8_1 < p_best_sad8x8[1]) {
+            p_best_sad8x8[1] = (uint32_t)sad8x8_1;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x8[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        p_eight_sad8x8[2 + start_8x8_pos][search_index] = sad8x8_2 = (compute8x4SAD_funcPtrArray[0](src + (src_stride << 3), srcStrideSub, ref + (ref_stride << 3) + search_index, refStrideSub)) << 1;
+        if (sad8x8_2 < p_best_sad8x8[2]) {
+            p_best_sad8x8[2] = (uint32_t)sad8x8_2;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x8[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        p_eight_sad8x8[3 + start_8x8_pos][search_index] = sad8x8_3 = (compute8x4SAD_funcPtrArray[0](src + (src_stride << 3) + 8, srcStrideSub, ref + (ref_stride << 3) + 8 + search_index, refStrideSub)) << 1;
+        if (sad8x8_3 < p_best_sad8x8[3]) {
+            p_best_sad8x8[3] = (uint32_t)sad8x8_3;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv8x8[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        p_eight_sad16x16[start_16x16_pos][search_index] = sad16x16 = sad8x8_0 + sad8x8_1 + sad8x8_2 + sad8x8_3;
+        if (sad16x16 < p_best_sad16x16[0]) {
+            p_best_sad16x16[0] = (uint32_t)sad16x16;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv16x16[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+    }
+}
+
+void ext_all_sad_calculation_8x8_16x16_c(
+    uint8_t   *src,
+    uint32_t   src_stride,
+    uint8_t   *ref,
+    uint32_t   ref_stride,
+    uint32_t   mv,
+    uint32_t  *p_best_sad8x8,
+    uint32_t  *p_best_sad16x16,
+    uint32_t  *p_best_mv8x8,
+    uint32_t  *p_best_mv16x16,
+    uint32_t   p_eight_sad16x16[16][8],
+    uint32_t   p_eight_sad8x8[64][8])
+{
+    static const char offsets[16] = {
+        0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
+    };
+
+    //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            const uint32_t blockIndex = 16 * y * src_stride + 16 * x;
+            const uint32_t searchPositionIndex = 16 * y * ref_stride + 16 * x;
+            ext_eight_sad_calculation_8x8_16x16(
+                src + blockIndex, src_stride, ref + searchPositionIndex,
+                ref_stride, mv, offsets[4 * y + x], p_best_sad8x8,
+                p_best_sad16x16,p_best_mv8x8, p_best_mv16x16, p_eight_sad16x16,
+                p_eight_sad8x8);
+        }
+    }
+}
+
+/*******************************************
+Calcualte SAD for 32x32,64x64 from 16x16
+and check if there is improvment, if yes keep
+the best SAD+MV
+*******************************************/
+void ext_eight_sad_calculation_32x32_64x64_c(
+    uint32_t   p_sad16x16[16][8],
+    uint32_t  *p_best_sad32x32,
+    uint32_t  *p_best_sad64x64,
+    uint32_t  *p_best_mv32x32,
+    uint32_t  *p_best_mv64x64,
+    uint32_t   mv,
+    uint32_t  p_sad32x32[4][8])
+{
+    uint32_t search_index;
+    int16_t x_mv, y_mv;
+    for (search_index = 0; search_index < 8; search_index++) {
+
+        uint32_t sad32x32_0, sad32x32_1, sad32x32_2, sad32x32_3, sad64x64;
+
+        p_sad32x32[0][search_index] = sad32x32_0 = p_sad16x16[0][search_index] + p_sad16x16[1][search_index] + p_sad16x16[2][search_index] + p_sad16x16[3][search_index];
+        if (sad32x32_0 < p_best_sad32x32[0]) {
+            p_best_sad32x32[0] = sad32x32_0;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        p_sad32x32[1][search_index] = sad32x32_1 = p_sad16x16[4][search_index] + p_sad16x16[5][search_index] + p_sad16x16[6][search_index] + p_sad16x16[7][search_index];
+        if (sad32x32_1 < p_best_sad32x32[1]) {
+            p_best_sad32x32[1] = sad32x32_1;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        p_sad32x32[2][search_index] = sad32x32_2 = p_sad16x16[8][search_index] + p_sad16x16[9][search_index] + p_sad16x16[10][search_index] + p_sad16x16[11][search_index];
+        if (sad32x32_2 < p_best_sad32x32[2]) {
+            p_best_sad32x32[2] = sad32x32_2;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        p_sad32x32[3][search_index] = sad32x32_3 = p_sad16x16[12][search_index] + p_sad16x16[13][search_index] + p_sad16x16[14][search_index] + p_sad16x16[15][search_index];
+        if (sad32x32_3 < p_best_sad32x32[3]) {
+            p_best_sad32x32[3] = sad32x32_3;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv32x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+
+        sad64x64 = sad32x32_0 + sad32x32_1 + sad32x32_2 + sad32x32_3;
+        if (sad64x64 < p_best_sad64x64[0]) {
+            p_best_sad64x64[0] = sad64x64;
+            x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+            y_mv = _MVYT(mv);
+            p_best_mv64x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+        }
+    }
+}
+
+/*******************************************
+* open_loop_me_get_search_point_results_block
+*******************************************/
+static void open_loop_me_get_eight_search_point_results_block(
+    MeContext_t             *context_ptr,                  // input parameter, ME context Ptr, used to get SB Ptr
+    uint32_t                listIndex,                     // input parameter, reference list index
+    uint32_t                searchRegionIndex,             // input parameter, search area origin, used to point to reference samples
+    int32_t                 xSearchIndex,                  // input parameter, search region position in the horizontal direction, used to derive xMV
+    int32_t                 ySearchIndex,                  // input parameter, search region position in the vertical direction, used to derive yMV
+    EbAsm                   asm_type)
+{
+    // uint32_t reflumaStride = refPicPtr->stride_y; // NADER
+    uint32_t reflumaStride = context_ptr->interpolated_full_stride[listIndex][0];
+    // uint8_t  *refPtr = refPicPtr->buffer_y; // NADER
+    uint8_t  *refPtr = context_ptr->integer_buffer_ptr[listIndex][0] +
+        ((ME_FILTER_TAP >> 1) * context_ptr->interpolated_full_stride[listIndex][0]) +
+        (ME_FILTER_TAP >> 1) + searchRegionIndex;
+    uint32_t currMV1 = (((uint16_t)ySearchIndex) << 18);
+    uint16_t currMV2 = (((uint16_t)xSearchIndex << 2));
+    uint32_t currMV = currMV1 | currMV2;
+
+    Ext_ext_all_sad_calculation_8x8_16x16_funcPtrArray[asm_type](
+        context_ptr->sb_src_ptr, context_ptr->sb_src_stride, refPtr,
+        reflumaStride, currMV, context_ptr->p_best_sad8x8,
+        context_ptr->p_best_sad16x16, context_ptr->p_best_mv8x8,
+        context_ptr->p_best_mv16x16, context_ptr->p_eight_sad16x16,
+        context_ptr->p_eight_sad8x8);
+
+    Ext_ext_eight_sad_calculation_32x32_64x64_funcPtrArray[asm_type](
+        context_ptr->p_eight_sad16x16, context_ptr->p_best_sad32x32,
+        context_ptr->p_best_sad64x64, context_ptr->p_best_mv32x32,
+        context_ptr->p_best_mv64x64, currMV, context_ptr->p_eight_sad32x32);
+
+    Ext_eigth_sad_calculation_nsq_funcPtrArray[asm_type](
+        context_ptr->p_eight_sad8x8,
+        context_ptr->p_eight_sad16x16,
+        context_ptr->p_eight_sad32x32,
+        context_ptr->p_best_sad64x32,
+        context_ptr->p_best_mv64x32,
+        context_ptr->p_best_sad32x16,
+        context_ptr->p_best_mv32x16,
+        context_ptr->p_best_sad16x8,
+        context_ptr->p_best_mv16x8,
+        context_ptr->p_best_sad32x64,
+        context_ptr->p_best_mv32x64,
+        context_ptr->p_best_sad16x32,
+        context_ptr->p_best_mv16x32,
+        context_ptr->p_best_sad8x16,
+        context_ptr->p_best_mv8x16,
+        context_ptr->p_best_sad32x8,
+        context_ptr->p_best_mv32x8,
+        context_ptr->p_best_sad8x32,
+        context_ptr->p_best_mv8x32,
+        context_ptr->p_best_sad64x16,
+        context_ptr->p_best_mv64x16,
+        context_ptr->p_best_sad16x64,
+        context_ptr->p_best_mv16x64,
+        currMV);
+}
+#endif
+
 /*******************************************
 * nsq_get_analysis_results_block returns the
-* the best partition for each sq_block based 
+* the best partition for each sq_block based
 * on the ME SAD
 *******************************************/
 static void nsq_get_analysis_results_block(
     MeContext_t             *context_ptr) {
-
-
     uint32_t  *p_best_sad64x32 = context_ptr->p_best_sad64x32;
     uint32_t  *p_best_sad32x16 = context_ptr->p_best_sad32x16;
     uint32_t  *p_best_sad16x8 = context_ptr->p_best_sad16x8;
@@ -1434,16 +2771,15 @@ static void nsq_get_analysis_results_block(
         p_best_nsq_16x16,
         p_best_nsq_8x8);
 }
-#endif
 /*******************************************
 * open_loop_me_get_search_point_results_block
 *******************************************/
 static void open_loop_me_get_search_point_results_block(
     MeContext_t             *context_ptr,                    // input parameter, ME context Ptr, used to get SB Ptr
-    uint32_t                   listIndex,                     // input parameter, reference list index
-    uint32_t                   searchRegionIndex,             // input parameter, search area origin, used to point to reference samples
-    int32_t                   xSearchIndex,                  // input parameter, search region position in the horizontal direction, used to derive xMV
-    int32_t                   ySearchIndex,                  // input parameter, search region position in the vertical direction, used to derive yMV
+    uint32_t                listIndex,                     // input parameter, reference list index
+    uint32_t                searchRegionIndex,             // input parameter, search area origin, used to point to reference samples
+    int32_t                 xSearchIndex,                  // input parameter, search region position in the horizontal direction, used to derive xMV
+    int32_t                 ySearchIndex,                  // input parameter, search region position in the vertical direction, used to derive yMV
     EbAsm                   asm_type)
 {
     uint8_t  *src_ptr = context_ptr->sb_src_ptr;
@@ -1940,22 +3276,29 @@ static void open_loop_me_fullpel_search_sblock(
 {
 
     uint32_t xSearchIndex, ySearchIndex;
+#if NSQ_ME_OPT
+    uint32_t  searchAreaWidthRest8 = search_area_width & 7;
+    uint32_t  searchAreaWidthMult8 = search_area_width - searchAreaWidthRest8;
+#endif
+
     for (ySearchIndex = 0; ySearchIndex < search_area_height; ySearchIndex++) {
+#if NSQ_ME_OPT
+        for (xSearchIndex = 0; xSearchIndex < searchAreaWidthMult8; xSearchIndex += 8){
 
-        //for (xSearchIndex = 0; xSearchIndex < searchAreaWidthMult8; xSearchIndex += 8){
+            //this function will do:  xSearchIndex, +1, +2, ..., +7
+            open_loop_me_get_eight_search_point_results_block(
+                context_ptr,
+                listIndex,
+                xSearchIndex + ySearchIndex * context_ptr->interpolated_full_stride[listIndex][0],
+                (int32_t)xSearchIndex + x_search_area_origin,
+                (int32_t)ySearchIndex + y_search_area_origin,
+                asm_type);
+        }
 
-        //    //this function will do:  xSearchIndex, +1, +2, ..., +7
-        //    GetEightHorizontalSearchPointResultsAll85PUs(
-        //        context_ptr,
-        //        listIndex,
-        //        xSearchIndex + ySearchIndex * context_ptr->interpolated_full_stride[listIndex][0],
-        //        xSearchIndex + x_search_area_origin,
-        //        ySearchIndex + y_search_area_origin,
-        //        asm_type
-        //        );
-        //}
-
+        for (xSearchIndex = searchAreaWidthMult8; xSearchIndex < search_area_width; xSearchIndex++) {
+#else
         for (xSearchIndex = 0/*searchAreaWidthMult8*/; xSearchIndex < search_area_width; xSearchIndex++) {
+#endif
 
             open_loop_me_get_search_point_results_block(
                 context_ptr,
@@ -6779,9 +8122,9 @@ EbErrorType MotionEstimateLcu(
                                     searchRegionNumberInWidth = 0;
                                     searchRegionNumberInHeight++;
                                 }
+                                    }
+                                }
                             }
-                        }
-                    }
 
                     // HME: Level1 search
                     if (enable_hme_level1_flag) {
@@ -6819,8 +8162,8 @@ EbErrorType MotionEstimateLcu(
                                 searchRegionNumberInWidth = 0;
                                 searchRegionNumberInHeight++;
                             }
-                        }
-                    }
+                                }
+                            }
 
                     // HME: Level2 search
                     if (enable_hme_level2_flag) {
@@ -6854,8 +8197,8 @@ EbErrorType MotionEstimateLcu(
                                 searchRegionNumberInWidth = 0;
                                 searchRegionNumberInHeight++;
                             }
-                        }
-                    }
+                                }
+                            }
 
                     // Hierarchical ME - Search Center
                     if (enable_hme_level0_flag && !enable_hme_level1_flag && !enable_hme_level2_flag) {
@@ -6886,9 +8229,9 @@ EbErrorType MotionEstimateLcu(
                                 searchRegionNumberInWidth = 0;
                                 searchRegionNumberInHeight++;
                             }
-                        }
+                                }
 
-                    }
+                            }
 
                     if (enable_hme_level1_flag && !enable_hme_level2_flag) {
                         xHmeSearchCenter = xHmeLevel1SearchCenter[0][0];
@@ -6909,7 +8252,7 @@ EbErrorType MotionEstimateLcu(
                             searchRegionNumberInWidth = 0;
                             searchRegionNumberInHeight++;
                         }
-                    }
+                            }
 
                     if (enable_hme_level2_flag) {
                         xHmeSearchCenter = xHmeLevel2SearchCenter[0][0];
@@ -6959,12 +8302,12 @@ EbErrorType MotionEstimateLcu(
                             xHmeSearchCenter = xHmeLevel2SearchCenter[0][1];
                             yHmeSearchCenter = yHmeLevel2SearchCenter[0][1];
                         }
-                    }
+                            }
 
                     x_search_center = xHmeSearchCenter;
                     y_search_center = yHmeSearchCenter;
-                }
-            }
+                        }
+                    }
 
             else {
                 x_search_center = 0;
@@ -7285,11 +8628,11 @@ EbErrorType MotionEstimateLcu(
                         context_ptr->p_best_nsq16x16 = &(context_ptr->p_sb_best_nsq[listIndex][0][ME_TIER_ZERO_PU_16x16_0]);
                         context_ptr->p_best_nsq8x8 = &(context_ptr->p_sb_best_nsq[listIndex][0][ME_TIER_ZERO_PU_8x8_0]);
                         nsq_get_analysis_results_block(context_ptr);
-                    }
-#endif
                 }
+#endif
             }
-        }
+                        }
+                    }
     }
 
     // Bi-Prediction motion estimation loop

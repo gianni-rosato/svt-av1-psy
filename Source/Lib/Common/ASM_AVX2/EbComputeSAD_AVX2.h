@@ -150,6 +150,55 @@ extern "C" {
         int16_t   search_area_width,
         int16_t   search_area_height);
 
+#if NSQ_ME_OPT
+    void ext_all_sad_calculation_8x8_16x16_avx2(
+        uint8_t   *src,
+        uint32_t   src_stride,
+        uint8_t   *ref,
+        uint32_t   ref_stride,
+        uint32_t   mv,
+        uint32_t  *p_best_sad8x8,
+        uint32_t  *p_best_sad16x16,
+        uint32_t  *p_best_mv8x8,
+        uint32_t  *p_best_mv16x16,
+        uint32_t   p_eight_sad16x16[16][8],
+        uint32_t   p_eight_sad8x8[64][8]);
+
+    void ext_eigth_sad_calculation_nsq_avx2(
+        uint32_t   p_sad8x8[64][8],
+        uint32_t   p_sad16x16[16][8],
+        uint32_t   p_sad32x32[4][8],
+        uint32_t  *p_best_sad64x32,
+        uint32_t  *p_best_mv64x32,
+        uint32_t  *p_best_sad32x16,
+        uint32_t  *p_best_mv32x16,
+        uint32_t  *p_best_sad16x8,
+        uint32_t  *p_best_mv16x8,
+        uint32_t  *p_best_sad32x64,
+        uint32_t  *p_best_mv32x64,
+        uint32_t  *p_best_sad16x32,
+        uint32_t  *p_best_mv16x32,
+        uint32_t  *p_best_sad8x16,
+        uint32_t  *p_best_mv8x16,
+        uint32_t  *p_best_sad32x8,
+        uint32_t  *p_best_mv32x8,
+        uint32_t  *p_best_sad8x32,
+        uint32_t  *p_best_mv8x32,
+        uint32_t  *p_best_sad64x16,
+        uint32_t  *p_best_mv64x16,
+        uint32_t  *p_best_sad16x64,
+        uint32_t  *p_best_mv16x64,
+        uint32_t   mv);
+
+    void ext_eight_sad_calculation_32x32_64x64_avx2(
+        uint32_t  p_sad16x16[16][8],
+        uint32_t *p_best_sad32x32,
+        uint32_t *p_best_sad64x64,
+        uint32_t *p_best_mv32x32,
+        uint32_t *p_best_mv64x64,
+        uint32_t  mv,
+        uint32_t  p_sad32x32[4][8]);
+#endif /* NSQ_ME_OPT */
 
 #ifdef __cplusplus
 }

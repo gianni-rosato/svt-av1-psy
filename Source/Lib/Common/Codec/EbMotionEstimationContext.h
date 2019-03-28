@@ -394,6 +394,11 @@ extern "C" {
         uint8_t                     *p_best_nsq64x64;
 #endif
         uint16_t                     *p_eight_pos_sad16x16;
+#if NSQ_ME_OPT
+        uint32_t                      p_eight_sad32x32[4][8];
+        uint32_t                      p_eight_sad16x16[16][8];
+        uint32_t                      p_eight_sad8x8[64][8];
+#endif
         EB_BitFraction               *mvd_bits_array;
         uint64_t                      lambda;
         uint8_t                       hme_search_type;
