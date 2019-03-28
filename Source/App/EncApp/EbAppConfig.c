@@ -407,7 +407,11 @@ void EbConfigCtor(EbConfig_t *config_ptr)
     config_ptr->look_ahead_distance                  = (uint32_t)~0;
     config_ptr->targetBitRate                        = 7000000;
     config_ptr->max_qp_allowed                       = 63;
+#if 1 //RC
+    config_ptr->min_qp_allowed                       = 10;
+#else
     config_ptr->min_qp_allowed                       = 0;
+#endif
     config_ptr->base_layer_switch_mode               = 0;
     config_ptr->encMode                              = MAX_ENC_PRESET;
     config_ptr->intraPeriod                          = -2;

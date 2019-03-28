@@ -227,6 +227,11 @@ extern "C" {
 #define SC_HME_ME  0//use sc detector for hme/me setting
 
 #define AOM_INTERP_EXTEND 4
+#define RC                                              1 // VBR Rate control integrated from SVT-VP9
+#if RC
+#define RC_FEEDBACK                                     1 // Feedback from previous base layer is received before starting the next base layer frame
+#endif
+
 struct buf_2d {
     uint8_t *buf;
     uint8_t *buf0;
@@ -2288,9 +2293,13 @@ typedef struct EbMemoryMapEntry
 } EbMemoryMapEntry;
 
 // Rate Control
+#if RC
+#define THRESHOLD1QPINCREASE     1
+#define THRESHOLD2QPINCREASE     2
+#else
 #define THRESHOLD1QPINCREASE     0
 #define THRESHOLD2QPINCREASE     1
-
+#endif
 #define EB_IOS_POINT            uint8_t
 #define OIS_VERY_FAST_MODE       0
 #define OIS_FAST_MODE            1

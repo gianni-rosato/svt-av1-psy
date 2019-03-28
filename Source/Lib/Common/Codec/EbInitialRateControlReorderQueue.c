@@ -26,8 +26,11 @@ EbErrorType HlRateControlHistogramEntryCtor(
     EB_MALLOC(HlRateControlHistogramEntry_t*, *entry_dbl_ptr, sizeof(HlRateControlHistogramEntry_t), EB_N_PTR);
 
     (*entry_dbl_ptr)->picture_number = picture_number;
+#if RC
+    (*entry_dbl_ptr)->life_count = 0;
+#else
     (*entry_dbl_ptr)->lifeCount = 0;
-
+#endif
     (*entry_dbl_ptr)->parentPcsWrapperPtr = (EbObjectWrapper_t *)EB_NULL;
 
     // ME and OIS Distortion Histograms

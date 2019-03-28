@@ -57,6 +57,9 @@ extern "C" {
         uint64_t                        last_islice_picture_number;
 #endif
 
+#if RC_FEEDBACK
+        EbBool                         feedback_arrived;
+#endif 
     } ReferenceQueueEntry_t;
 
     /************************************************

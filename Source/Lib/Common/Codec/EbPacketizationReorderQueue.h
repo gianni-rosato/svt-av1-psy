@@ -30,6 +30,9 @@ extern "C" {
         uint64_t                                refPOCList0;
         uint64_t                                refPOCList1;
         uint64_t                                 poc;
+#if RC
+        uint64_t                                total_num_bits;
+#endif
         FRAME_TYPE                            av1FrameType;
         Av1RpsNode_t                          av1RefSignal;
         EbBool                               showFrame;

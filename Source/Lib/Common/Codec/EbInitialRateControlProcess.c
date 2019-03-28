@@ -17,6 +17,9 @@
 #include "EbUtility.h"
 #include "EbReferenceObject.h"
 
+
+static const uint32_t me2Nx2NOffset[4] = { 0, 1, 5, 21 };
+
 /**************************************
 * Macros
 **************************************/
@@ -1229,10 +1232,18 @@ void GetHistogramQueueData(
     histogramQueueEntryPtr->slice_type = picture_control_set_ptr->slice_type;
     histogramQueueEntryPtr->temporal_layer_index = picture_control_set_ptr->temporal_layer_index;
     histogramQueueEntryPtr->full_sb_count = picture_control_set_ptr->full_sb_count;
+#if RC
+    histogramQueueEntryPtr->life_count = 0;
+    histogramQueueEntryPtr->passed_to_hlrc = EB_FALSE;
+    histogramQueueEntryPtr->is_coded = EB_FALSE;
+    histogramQueueEntryPtr->total_num_bits_coded = 0;
+    histogramQueueEntryPtr->frames_in_sw = 0;
+#else
     histogramQueueEntryPtr->lifeCount = 0;
     histogramQueueEntryPtr->passedToHlrc = EB_FALSE;
     histogramQueueEntryPtr->isCoded = EB_FALSE;
     histogramQueueEntryPtr->totalNumBitsCoded = 0;
+#endif
     EB_MEMCPY(
         histogramQueueEntryPtr->me_distortion_histogram,
         picture_control_set_ptr->me_distortion_histogram,
@@ -1254,7 +1265,12 @@ void GetHistogramQueueData(
 void UpdateHistogramQueueEntry(
     SequenceControlSet_t              *sequence_control_set_ptr,
     EncodeContext_t                   *encode_context_ptr,
+#if RC
+    PictureParentControlSet_t         *picture_control_set_ptr,
+    uint32_t                           frames_in_sw)
+#else
     PictureParentControlSet_t         *picture_control_set_ptr)
+#endif
 {
 
     HlRateControlHistogramEntry_t     *histogramQueueEntryPtr;
@@ -1268,9 +1284,17 @@ void UpdateHistogramQueueEntry(
         histogramQueueEntryIndex - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
         histogramQueueEntryIndex;
     histogramQueueEntryPtr = encode_context_ptr->hl_rate_control_historgram_queue[histogramQueueEntryIndex];
-    histogramQueueEntryPtr->lifeCount += picture_control_set_ptr->historgram_life_count;
-    histogramQueueEntryPtr->passedToHlrc = EB_TRUE;
+    histogramQueueEntryPtr->passed_to_hlrc = EB_TRUE;
+#if RC
+    if (sequence_control_set_ptr->static_config.rate_control_mode == 3) {
+        histogramQueueEntryPtr->life_count += (int16_t)(sequence_control_set_ptr->static_config.intra_period_length + 1) - 3; // FramelevelRC does not decrease the life count for first picture in each temporal layer
 
+    }
+    else {
+        histogramQueueEntryPtr->life_count += picture_control_set_ptr->historgram_life_count;
+    }
+    histogramQueueEntryPtr->frames_in_sw = frames_in_sw;
+#endif
     eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->rate_table_update_mutex);
 
     return;
@@ -1920,7 +1944,12 @@ void* InitialRateControlKernel(void *input_ptr)
                             UpdateHistogramQueueEntry(
                                 sequence_control_set_ptr,
                                 encode_context_ptr,
+#if RC
+                                picture_control_set_ptr,
+                                frames_in_sw);
+#else
                                 picture_control_set_ptr);
+#endif
                         }
                     }
 

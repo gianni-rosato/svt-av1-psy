@@ -41,8 +41,11 @@ extern "C" {
 #define HISTOGRAM_NUMBER_OF_BINS            256
 #define MAX_NUMBER_OF_REGIONS_IN_WIDTH      4
 #define MAX_NUMBER_OF_REGIONS_IN_HEIGHT     4
+#if RC
+#define MAX_REF_QP_NUM                      81
+#else
 #define MAX_REF_QP_NUM                      52
-
+#endif
     // Segment Macros
 #define SEGMENT_MAX_COUNT   64
 #define SEGMENT_COMPLETION_MASK_SET(mask, index)        MULTI_LINE_MACRO_BEGIN (mask) |= (((uint64_t) 1) << (index)); MULTI_LINE_MACRO_END
