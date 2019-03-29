@@ -6,6 +6,8 @@ addons:
     packages:
      - cmake
      - yasm
+     - libgstreamer-plugins-base1.0-dev
+     - libgstreamer1.0-dev
   homebrew:
     packages:
       - yasm
@@ -64,4 +66,18 @@ jobs:
      - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
      - export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig
      - ./configure --enable-libsvtav1
+     - make --quiet -j$(nproc)
+
+   # GStreamer interation build
+   - name: GStreamer patch
+     script:
+     # Build and install SVT-AV1
+     - cd $TRAVIS_BUILD_DIR
+     - cd Build
+     - cmake ..
+     - make -j$(nproc)
+     - sudo make install
+     # Build GST-SVT-AV1 plugin
+     - cd $TRAVIS_BUILD_DIR/gstreamer-plugin
+     - cmake .
      - make --quiet -j$(nproc)
