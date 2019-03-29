@@ -11,12 +11,12 @@
 - git checkout release/4.1
 - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 - export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig
-If no SVT-HEVC plugin in FFmpeg
-- git apply ../SVT-AV1/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
-- ./configure --enable-libsvtav1
-Or if based on the SVT-HEVC plugin patch in FFmpeg
-- git apply ../SVT-AV1/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1-with-svt-hevc.patch
-- ./configure --enable-libsvthevc (optional) --enable-libsvtav1
+- Without SVT-HEVC:
+   - git apply ../SVT-AV1/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
+   - ./configure --enable-libsvtav1
+- Based on SVT-HEVC:
+   - git apply ../SVT-AV1/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1-with-svt-hevc.patch
+   - ./configure --enable-libsvthevc --enable-libsvtav1
 - make -j `nproc`
 
 3. Verify
