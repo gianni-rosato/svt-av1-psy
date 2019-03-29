@@ -15,7 +15,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if RS_10BIT_FIX
     typedef uint32_t(*high_variance_fn_t)(const uint16_t *src, int32_t src_stride,
         const uint16_t *ref, int32_t ref_stride,
         uint32_t *sse, int32_t *sum);
@@ -204,4 +203,3 @@ void aom_highbd_8_mse16x16_sse2(const uint8_t *src8, int32_t src_stride,
         aom_highbd_calc16x16var_sse2, 16);
 }
 
-#endif

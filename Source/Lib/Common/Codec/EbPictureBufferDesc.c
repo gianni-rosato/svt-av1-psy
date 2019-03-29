@@ -198,7 +198,6 @@ EbErrorType eb_recon_picture_buffer_desc_ctor(
 
     return EB_ErrorNone;
 }
-#if ICOPY_10B
 void link_Eb_to_aom_buffer_desc_8bit(
     EbPictureBufferDesc_t          *picBuffDsc,
     Yv12BufferConfig             *aomBuffDsc
@@ -233,7 +232,6 @@ void link_Eb_to_aom_buffer_desc_8bit(
         aomBuffDsc->flags = 0;
     }
 }
-#endif
 
 void LinkEbToAomBufferDesc(
     EbPictureBufferDesc_t          *picBuffDsc,

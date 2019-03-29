@@ -300,10 +300,6 @@ void ResetPcsAv1(
     picture_control_set_ptr->disable_cdf_update = 0;
     picture_control_set_ptr->allow_high_precision_mv = 0;
     picture_control_set_ptr->cur_frame_force_integer_mv = 0;  // 0 the default in AOM, 1 only integer
-#if !ICOPY
-    picture_control_set_ptr->allow_screen_content_tools = 0;
-    picture_control_set_ptr->allow_intrabc = 0;
-#endif
     picture_control_set_ptr->allow_warped_motion = 0;
 
     /* profile settings */

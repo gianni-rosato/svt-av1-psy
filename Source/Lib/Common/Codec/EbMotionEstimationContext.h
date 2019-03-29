@@ -348,9 +348,7 @@ extern "C" {
         uint32_t                      p_sad16x16[16];
         uint32_t                      p_sad8x8[64];
 
-#if M0_64x64_32x32_HALF_QUARTER_PEL
         uint8_t                       psub_pel_direction64x64;
-#endif                                
         uint8_t                       psub_pel_direction32x32[4];
         uint8_t                       psub_pel_direction16x16[16];
         uint8_t                       psub_pel_direction8x8[64];
@@ -369,7 +367,6 @@ extern "C" {
         uint32_t                      p_sb_best_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
         uint32_t                      p_sb_bipred_sad[MAX_ME_PU_COUNT];//needs to be upgraded to 209 pus
 
-#if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH //--
         uint32_t                      p_sb_best_ssd[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
         uint32_t                     *p_best_ssd8x8;
         uint32_t                     *p_best_ssd16x16;
@@ -385,14 +382,12 @@ extern "C" {
         uint32_t                     *p_best_ssd8x32;
         uint32_t                     *p_best_ssd64x16;
         uint32_t                     *p_best_ssd16x64;
-#endif
-#if NSQ_OPTIMASATION
+
         uint8_t                      p_sb_best_nsq[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
         uint8_t                     *p_best_nsq8x8;
         uint8_t                     *p_best_nsq16x16;
         uint8_t                     *p_best_nsq32x32;
         uint8_t                     *p_best_nsq64x64;
-#endif
         uint16_t                     *p_eight_pos_sad16x16;
 #if NSQ_ME_OPT
         uint32_t                      p_eight_sad32x32[4][8];
@@ -403,16 +398,9 @@ extern "C" {
         uint64_t                      lambda;
         uint8_t                       hme_search_type;
 
-#if M0_SAD_HALF_QUARTER_PEL_BIPRED_SEARCH || M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
-#if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
         uint8_t   fractionalSearchMethod;
-#else
-        EbBool useSubSadFracBipredSearch;
-#endif
-#endif
-#if M0_64x64_32x32_HALF_QUARTER_PEL
         EbBool                        fractional_search64x64;
-#endif
+
 
         // ME
 #if QUICK_ME_CLEANUP

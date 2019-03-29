@@ -20,7 +20,6 @@ extern "C" {
         uint64_t *dc_value,
         uint32_t  src_stride);
 
-#if  M0_SPATIAL_SSE || SPATIAL_SSE_I_B_SLICES || M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
     uint64_t SpatialFullDistortionKernel4x4_SSSE3_INTRIN(
         uint8_t   *input,
         uint32_t   input_stride,
@@ -44,7 +43,7 @@ extern "C" {
         uint32_t   recon_stride,
         uint32_t   area_width,
         uint32_t   area_height);
-#endif
+
 
 #ifdef __cplusplus
 }

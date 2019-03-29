@@ -14,7 +14,6 @@
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
 
-#if INTRA_10BIT_SUPPORT
  // -----------------------------------------------------------------------------
  // H_PRED
 
@@ -790,4 +789,3 @@ void aom_highbd_dc_predictor_32x16_sse2(uint16_t *dst, ptrdiff_t stride,
         dst += stride;
     }
 }
-#endif

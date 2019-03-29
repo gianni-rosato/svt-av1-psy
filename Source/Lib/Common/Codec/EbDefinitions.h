@@ -47,183 +47,84 @@ extern "C" {
 #define MR_MODE                                         0
 #define SHUT_FILTERING                                  0 // CDEF RESTORATION DLF
     ////
-#define MEM_RED4                                        1 //  Reduce mem allocation when DISABLE_128X128_SB is ON
-#define FILT_PROC                                       1    // New Filtering processes.
-#define CDEF_M                                          1 // multi-threaded cdef
-#define REST_M                                          1 // multi-threaded restoration
-#define REST_NEED_B                                     1 // use boundary update in restoration
-#define NEW_PRED_STRUCT                                 1 // Ability to run 5-layer prediction structure. By Default 5L is used
-#define TILES                                           1
-
-#define INTRA_CORE_OPT                                  0
-#define ENABLE_INTRA_4x4                                1 //
-#define DISABLE_NSQ                                     1 //
-#define DISABLE_128X128_SB                              0
-#define ENABLE_INTER_4x4                                0 // optional
-#define DISABLE_4xN_Nx4                                 1 //
-#define DISABLE_128x128                                 0
-#define VCI_CANDIDATE_II                                1
-
-#if VCI_CANDIDATE_II
-#define INTRA_ASM                                       1
-#define CBF_ZERO_OFF                                    1 // Remove CBF zero feature due to VQ problems
-#define TX_TYPE_FIX                                     1 // Fix the Tx Type search for Inter blocks
-#define INC_NFL                                         1 // Set NFL to 4 for all sizes and temporal layers
-#define REMOVE_INTRA_CONST                              1 // Remove the constraints for INTRA injection
 
 // ADOPTED HEVC-M0 FEATURES (Active in M0 and M1)
-#define M0_ME_QUARTER_PEL_SEARCH                        1 // F1
-#define SHUT_CBF_FL_SKIP                                1 // F2 Lossless
-#define V2_HME_ME_SR                                    1 // F3
-#define ME_64x64                                        1 // F4
-#define M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH           1 // F7
-#define M0_64x64_32x32_HALF_QUARTER_PEL                 1 // F8
-#define IMPROVED_UNIPRED_INJECTION                      1 // F11
-#define IMPROVED_BIPRED_INJECTION                       1 // F10
-#define M0_ME_SEARCH_BASE                               1 // F13
-#define INC_NFL12                                       1 // F14
-#define AV1_UPGRADE                                     1 // Upgrade to V1.0.0
-#define INTRAD_ASM                                      1 // asm for intra directionnal modes - Z1
-#define SUPPORT_10BIT                                   1 // Support for 10 Bit encodings
-#define NEW_QPS                                         1 // New QPS based on AOM 1Pass
-#define ME_HME_OQ                                       1 // Ported ME HME from EB32 OQ
-#if SUPPORT_10BIT
-#define INTRA_10BIT_SUPPORT                             1
-#define QT_10BIT_SUPPORT                                1
-#define CDEF_10BIT_FIX                                  1
-#define RS_10BIT_FIX                                    1
-#define MD_10BIT_FIX                                    1
-#define LF_10BIT_FIX                                    1
 #define INTERPOL_FILTER_SEARCH_10BIT_SUPPORT            1
-#endif
-#define BUG_FIX                                         1 // BUG fix related to transform type
-#define LIMIT_INTRA_INJ                                 1
-#define TURN_OFF_INTERPOL_FILTER_SEARCH                 1
-#define TURN_OFF_TX_TYPE_SEARCH                         1
-#define TURN_OFF_NFL8                                   1 // Uses 8->4 NFL
-
-#define TURN_OFF_CFL                                    0 // turning CFL off is broken
-#if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
 #define M0_SAD_HALF_QUARTER_PEL_BIPRED_SEARCH           1
-#endif
-#endif
-
 // NEW MACOS
 #define INTRINSIC_OPT_2                                 1 // Intrinsics opt work phase 2
 #define DIS_EDGE_FIL                                    0 // disable intra edge filter - to be removed after fixing the neigbor array for intra 4xN and Nx4
-#define DISABLE_INTRA_PRED_INTRINSIC                    0 // To be used to switch between intrinsic and C code for intra-pred
 #define USE_INLOOP_ME_FULL_SAD                          0 // To switch between full SAD and subsampled-SAD for in-loop-me subpel.
-#define NO_SUBPEL_FOR_128X128                           1 // Intrinsic is not available for 128x128 Subpel
+
+
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                                       0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
-#define FIX_DEBUG_CRASH                                 1
-#define FIX_47                                          1 // interdepth decision to be tedted block aware
-#define HME_ENHANCED_CENTER_SEARCH                      1
-#define TUNE_CHROMA_OFFSET                              0
-#define FAST_TX_SEARCH                                  1
-#define MACRO_BLOCK_CLEANUP                             1
-#define DISABLE_NSQ_FOR_NON_REF                         1
-#define FIX_INTER_DEPTH                                 1  // Fix interdepth depth cost when MDC cuts depths
-#define DISABLE_IN_LOOP_ME                              1
-#define EXTRA_ALLOCATION                                1
-#define SCS_CP_FIX                                      0 
+
 #define ENCDEC_TX_SEARCH                                1
-#define DISABLE_ANGULAR_MODE                            0
-#define FIX_ME_SR_10BIT                                 1
 #define TEST5_DISABLE_NSQ_ME                            0
-#define DISABLE_ANGULAR_MODE_FOR_NON_REF                0
-#define INJECT_ONLY_SQ                                  1
-#define OPT_MEMCPY                                      1
-#define DISABLE_DR_REFIN                                0
+
+
+
+
+// M9 settings toward 4K 60 fps
+#define M9_SETTINGS              0
+
+#if M9_SETTINGS
+// Adopted
+#define M9_FULL_LOOP_ESCAPE      0   // Enhanced full loop escape
+#define M9_HME                   0   // VP9 4K HME, HME (L0 only 48x32)
+#define M9_ME                    0   // VP9 4K ME, ME (16x9)
+#define M9_SUBPEL_SELECTION      0
+#define M9_CU_8x8                0
+    
+#define M9_INTRA                    0
+
+// Under testing
+#define M9_FRAC_ME_SEARCH_METHOD 0   // VP9 4K fractional search method; SUB_SAD_SEARCH vs. FULL_SAD_SEARCH 
+#define M9_FRAC_ME_SEARCH_64x64  0   // VP9 4K 64x64 search; OFF vs. ON
+#define M9_SUBPEL                0   // VP9 4K subpel settings; subpel ON base
+#define M9_NFL                   0   // VP9 4K NFL settings; NFL = 3 
+#define M9_PF                    0   // VP9 4K PF settings N2 is 32x32, and non-base
+#define M9_CDEF                  0   // CDEF off
+#define M9_TX_SEARCH             0   // Tx search off
+#define M9_CHROMA                0   // VP9 4K chroma settings; shut cfl @ ep
+#define M9_ADP                   0   // VP9 4K ADP budget;  (121,110,100 but different injection) (budget = f (layer index))      
+
+#define M9_NON_UNIFORM_NFL       0   // Non-uniform NFL
+
+#define OPT_LOSSLESS             0
+#define OPT_LOSSY                0
+#endif
+
 #define CDEF_REF_ONLY                                   0 //CDEF for ref frame only
 #define REST_REF_ONLY                                   0 //REST for ref frame only
 #define REDUCE_COPY_CDEF                                1
 
-#define FAST_CDEF                                       1
-#define FAST_SG                                         1
-#define FAST_WN                                         1
-#define CHROMA_BLIND                                    1 // Added the ability to switch between three chroma modes: 1. chroma @ MD, 2. chroma blind @ MD + CFL @ EP. 3. chroma blind @ MD + no CFL @ EP
-#define CONTENT_BASED_QPS                               1 // Adaptive QP Scaling (active for I only)
-#define ADAPTIVE_DEPTH_PARTITIONING                     1 // Added the ability to switch @ SB basis between: (1) all square up to 64x64,  (2) mdc up to 64x64, (3) mdc up to 64x64 only pred, (4) mdc up to 64x64 only pred + 1 NFL
-#if ADAPTIVE_DEPTH_PARTITIONING
-#define ADP_V1                                          0      
 #define ADP_STATS_PER_LAYER                             0
-#define OPEN_LOOP_EARLY_PARTITION                       1
-#if OPEN_LOOP_EARLY_PARTITION
-#define REST_FAST_RATE_EST                              1
-#define MDC_FIX_0                                       1
-#define MDC_FIX_1                                       1
-#endif
-#endif
+
+
 #define M8_ADP                                          1
 #if M8_ADP
 #define FASTER_M8_ADP                                   1
 #endif
-#define FULL_LOOP_ESCAPE                                1
-#define SIMULATE_PF_N2                                  0
-#define PF_N2_32X32_TX_SEARCH                           0
-#define PF_N2_32X32                                     0
-#define SHUT_GLOBAL_MV                                  1
 
-#define REMOVED_DUPLICATE_INTER                         1
-#define REMOVED_DUPLICATE_INTER_L1                      1
-#define REMOVED_DUPLICATE_INTER_BIPRED                  1
-#define INTRA_INTER_FAST_LOOP                           1
-#if INTRA_INTER_FAST_LOOP
-#define USE_SSE_FL                                      1
+#if M9_PF
+#define PF_N2_32X32                                     1
 #endif
-#define TRACK_FAST_DISTORTION                           1
 
 
-#define USED_NFL_FEATURE_BASED                          1
-#if USED_NFL_FEATURE_BASED
 #define NFL_TX_TH                                      12 // To be tuned
 #define NFL_IT_TH                                       2 // To be tuned
-#endif
 
-#define ENABLE_PAETH                                    1
-#if !INTRA_INTER_FAST_LOOP
-#define TWO_FAST_LOOP                                   1
-#endif
-#define ENABLE_EOB_ZERO_CHECK                           1
-#define DISABLE_128_SB_FOR_SUB_720                      1
+
 #define BASE_LAYER_REF                                  1 // Base layer pictures use the previous I slice as the second reference
-#if BASE_LAYER_REF
 #define MAX_FRAMES_TO_REF_I                             64
-#endif
 
-#define NSQ_OPTIMASATION                                1
 
-#if NSQ_OPTIMASATION
 #define NSQ_TAB_SIZE                                    6
-#endif
-
-#define IMPROVE_CHROMA_MODE                             1
-#define CHROMA_BLIND_IF_SEARCH                          1
-#define OIS_BASED_INTRA                                 1
 #define NSQ_ME_OPT                                      1
-
-#define SHUT_FULL_DENOISE                               1
-
-
-#define ICOPY       1 //Intra Block Copy
-
-#if ICOPY
-#define IBC_EARLY_0 1
-#define HASH_ME     0
-#define HASH_X      1
-#define IBC_SW_WAVEFRONT    1
-#define FIX_SAD   1
-#define SC_DETECT_GOP       1  //make all frames in the GOP use the I frame screen content detection status
-#define ADD_VAR_SC_DETECT   1
-#define IBC_MODES           1  //add two intermediates modes for ibc    
-#define ICOPY_10B           1  //10b path
-#endif
-
-#define AOM_SAD_PORTING 1
-
-#define ADD_CDEF_FILTER_LEVEL                           1
 
 #define SC_HME_ME  0//use sc detector for hme/me setting
 
@@ -265,20 +166,13 @@ enum {
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/
-#if  DISABLE_128X128_SB
-#define PAD_VALUE                                (64+32)
-#else
 #define PAD_VALUE                                (128+32)
-#endif
+
 
 //  Delta QP support
 #define ADD_DELTA_QP_SUPPORT                      0  // Add delta QP support - Please enable this flag and iproveSharpness (config) to test the QPM
-#if DISABLE_128X128_SB
-#define BLOCK_MAX_COUNT                           1101
-#else
 #define BLOCK_MAX_COUNT_SB_128                    4421  // TODO: reduce alloction for 64x64
 #define BLOCK_MAX_COUNT_SB_64                     1101  // TODO: reduce alloction for 64x64
-#endif
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
 #define MAX_NFL                                   40
 #define MAX_LAD                                   120 // max lookahead-distance 2x60fps
@@ -608,13 +502,10 @@ typedef enum INTERPOLATION_SEARCH_LEVEL {
     IT_SEARCH_OFF,
     IT_SEARCH_INTER_DEPTH,
     IT_SEARCH_FULL_LOOP,
-#if CHROMA_BLIND_IF_SEARCH
     IT_SEARCH_FAST_LOOP_UV_BLIND,
-#endif
     IT_SEARCH_FAST_LOOP,
 } INTERPOLATION_SEARCH_LEVEL;
 
-#if NSQ_OPTIMASATION
 typedef enum NSQ_SEARCH_LEVEL {
     NSQ_SEARCH_OFF,
     NSQ_SEARCH_LEVEL1,
@@ -625,16 +516,7 @@ typedef enum NSQ_SEARCH_LEVEL {
     NSQ_SEARCH_LEVEL6,
     NSQ_SEARCH_FULL
 } NSQ_SEARCH_LEVEL;
-#else
-typedef enum NSQ_SEARCH_LEVEL {
-    NSQ_SEARCH_OFF,
-    NSQ_SEARCH_BASE_ON_SQ_TYPE,
-    NSQ_SEARCH_BASE_ON_SQ_COEFF,
-    NSQ_INTER_SEARCH_BASE_ON_SQ_MVMODE,
-    NSQ_INTER_SEARCH_BASE_ON_SQ_INTRAMODE,
-    NSQ_SEARCH_FULL
-} NSQ_SEARCH_LEVEL;
-#endif
+
 #define MAX_PARENT_SQ     6
 typedef enum COMPOUND_DIST_WEIGHT_MODE {
     DIST,
@@ -1962,9 +1844,6 @@ typedef enum EB_BITFIELD_MASKS {
 #define INIT_RC_OPT_G1                    1
 #define INIT_RC_OPT_G2                    1
 #define HIST_OPT                          2 // 1 is intrinsic, 2 is C
-#if !CHROMA_BLIND
-#define INTER_DEPTH_DECISION_CHROMA_BLIND 1
-#endif
 #define ENABLE_8x8                        0
 
 #define    Log2f                              Log2f_SSE2
@@ -2978,13 +2857,12 @@ static const uint8_t INTRA_AREA_TH_CLASS_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 };
 
 
-#if NEW_PRED_STRUCT
 #define NON_MOVING_SCORE_0     0
 #define NON_MOVING_SCORE_1    10
 #define NON_MOVING_SCORE_2    20
 #define NON_MOVING_SCORE_3    30
 #define INVALID_NON_MOVING_SCORE (uint8_t) ~0
-#endif
+
 // Picture split into regions for analysis (SCD, Dynamic GOP)
 #define CLASS_SUB_0_REGION_SPLIT_PER_WIDTH    1
 #define CLASS_SUB_0_REGION_SPLIT_PER_HEIGHT    1
@@ -3077,17 +2955,10 @@ static const uint8_t INTRA_AREA_TH_CLASS_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define N4_SHAPE      2
 #define ONLY_DC_SHAPE 3
 
-#if CHROMA_BLIND 
 #define EB_CHROMA_LEVEL uint8_t
 #define CHROMA_MODE_0  0 // Chroma @ MD
 #define CHROMA_MODE_1  1 // Chroma blind @ MD + CFL @ EP
 #define CHROMA_MODE_2  2 // Chroma blind @ MD + no CFL @ EP
-#else
-typedef enum EbChromaMode {
-    CHROMA_MODE_FULL = 1,
-    CHROMA_MODE_BEST = 2 //Chroma for best full loop candidate.
-} EbChromaMode;
-#endif
 
 typedef enum EbSbComplexityStatus {
     SB_COMPLEXITY_STATUS_0 = 0,
@@ -3123,32 +2994,13 @@ typedef enum EbPictureDepthMode {
     PIC_OPEN_LOOP_DEPTH_MODE    = 7
 } EbPictureDepthMode;
 
-#if ADAPTIVE_DEPTH_PARTITIONING
 #define EB_SB_DEPTH_MODE              uint8_t
 #define SB_SQ_BLOCKS_DEPTH_MODE             1
 #define SB_SQ_NON4_BLOCKS_DEPTH_MODE        2
 #define SB_OPEN_LOOP_DEPTH_MODE             3
-#if M8_ADP
 #define SB_FAST_OPEN_LOOP_DEPTH_MODE        4
 #define SB_PRED_OPEN_LOOP_DEPTH_MODE        5
-#else
-#define SB_PRED_OPEN_LOOP_DEPTH_MODE        4
-#define SB_PRED_OPEN_LOOP_1_NFL_DEPTH_MODE  5
-#endif
-#else
-typedef enum EbLcuDepthMode {
 
-    LCU_FULL85_DEPTH_MODE = 1,
-    LCU_FULL84_DEPTH_MODE = 2,
-    LCU_BDP_DEPTH_MODE = 3,
-    LCU_LIGHT_BDP_DEPTH_MODE = 4,
-    LCU_OPEN_LOOP_DEPTH_MODE = 5,
-    LCU_LIGHT_OPEN_LOOP_DEPTH_MODE = 6,
-    LCU_AVC_DEPTH_MODE = 7,
-    LCU_PRED_OPEN_LOOP_DEPTH_MODE = 8,
-    LCU_PRED_OPEN_LOOP_1_NFL_DEPTH_MODE = 9
-} EbLcuDepthMode;
-#endif
 typedef enum EB_INTRA4x4_SEARCH_METHOD {
     INTRA4x4_OFF = 0,
     INTRA4x4_INLINE_SEARCH = 1,
@@ -3880,7 +3732,6 @@ static const uint8_t SearchAreaHeight[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
 //     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
 };
 #endif
-#if OIS_BASED_INTRA
 static const uint16_t ep_to_pa_block_index[BLOCK_MAX_COUNT_SB_64] = {
     0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
 
@@ -3976,7 +3827,6 @@ static const uint16_t ep_to_pa_block_index[BLOCK_MAX_COUNT_SB_64] = {
     83,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
     84,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0   
 };
-#endif
 #ifdef __cplusplus
 }
 #endif

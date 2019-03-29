@@ -21,11 +21,10 @@
 #include "EbRateControlTasks.h"
 #include "EbSvtAv1ErrorCodes.h"
 
-#if TILES
 void av1_tile_set_col(TileInfo *tile, PictureParentControlSet_t * pcsPtr, int col);
 void av1_tile_set_row(TileInfo *tile, PictureParentControlSet_t * pcsPtr, int row);
 void set_tile_info(PictureParentControlSet_t * pcsPtr);
-#endif
+
 
 /************************************************
  * Defines
@@ -187,7 +186,6 @@ void* picture_manager_kernel(void *input_ptr)
                 picture_control_set_ptr = (PictureParentControlSet_t*)queueEntryPtr->parentPcsWrapperPtr->object_ptr;
 
                 predPositionPtr = picture_control_set_ptr->pred_struct_ptr->predStructEntryPtrArray[picture_control_set_ptr->pred_struct_index];
-#if NEW_PRED_STRUCT
                 // If there was a change in the number of temporal layers, then cleanup the Reference Queue's Dependent Counts
                 if (picture_control_set_ptr->hierarchical_layers_diff != 0) {
 
@@ -325,7 +323,6 @@ void* picture_manager_kernel(void *input_ptr)
                         referenceQueueIndex = (referenceQueueIndex == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : referenceQueueIndex + 1;
                     }
                 }
-#endif
                 // If there was an I-frame or Scene Change, then cleanup the Reference Queue's Dependent Counts
                 if (picture_control_set_ptr->slice_type == I_SLICE)
                 {
@@ -731,11 +728,8 @@ void* picture_manager_kernel(void *input_ptr)
                             }
                         }
 
-#if ICOPY
                         ChildPictureControlSetPtr->parent_pcs_ptr->av1_cm->pcs_ptr = ChildPictureControlSetPtr;
-#endif
 
-#if TILES             
                         set_tile_info(ChildPictureControlSetPtr->parent_pcs_ptr);
 
                         struct PictureParentControlSet_s     *ppcs_ptr = ChildPictureControlSetPtr->parent_pcs_ptr;
@@ -765,7 +759,7 @@ void* picture_manager_kernel(void *input_ptr)
                             }
                         }                       
 
-#endif
+
 
                         // Picture edges
                         ConfigurePictureEdges(entrySequenceControlSetPtr, ChildPictureControlSetPtr);

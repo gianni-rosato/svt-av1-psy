@@ -23,26 +23,9 @@ extern "C" {
     /**************************************
      * Defines
      **************************************/
-#if IMPROVED_BIPRED_INJECTION || IMPROVED_UNIPRED_INJECTION
-#if ICOPY
 #define IBC_CAND 2 //two intra bc candidates
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (124+IBC_CAND) /* 61 Intra & 18+2x8+2x8 Inter*/
-#else
-#define MODE_DECISION_CANDIDATE_MAX_COUNT               124// 61 Intra & 18+2x8+2x8 Inter
-#endif
-#else
-#define MODE_DECISION_CANDIDATE_MAX_COUNT               90//35//20 // 61 Intra & 18 Inter
-#endif
-#if INC_NFL12
-#if !INTRA_INTER_FAST_LOOP
-#define MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT        (MAX_NFL*6) //up to 6 depths
-#endif
-#else
-#define MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT        33
-#endif
-#if !INTRA_INTER_FAST_LOOP
-#define INDEPENDENT_INTRA_CHROMA_MODE_TOTAL_COUNT       4       // Planar, Vertical, Horizontal, DC
-#endif
+
 #define DEPTH_ONE_STEP   21
 #define DEPTH_TWO_STEP    5
 #define DEPTH_THREE_STEP  1
@@ -144,11 +127,6 @@ extern "C" {
         uint64_t                       *full_cost_array;
         uint64_t                       *full_cost_skip_ptr;
         uint64_t                       *full_cost_merge_ptr;
-#if !INTRA_INTER_FAST_LOOP
-        // Fast loop buffers
-        uint8_t                         buffer_depth_index_start[MAX_LEVEL_COUNT];
-        uint8_t                         buffer_depth_index_width[MAX_LEVEL_COUNT];
-#endif
         // Lambda
 #if ADD_DELTA_QP_SUPPORT
         uint16_t                        qp;
@@ -179,20 +157,11 @@ extern "C" {
         uint8_t                         group_of16x16_blocks_count;
         uint8_t                         pu_itr;
         uint8_t                         cu_size_log2;
-#if INTRA_INTER_FAST_LOOP
         uint8_t                         best_candidate_index_array[MAX_NFL + 2];
-#else
-        uint8_t                         best_candidate_index_array[MAX_NFL];
-#endif
-#if USED_NFL_FEATURE_BASED
         uint8_t                         sorted_candidate_index_array[MAX_NFL];
-#endif
         uint16_t                        cu_origin_x;
         uint16_t                        cu_origin_y;
         uint64_t                        chroma_weight;
-#if !CHROMA_BLIND
-        uint32_t                        use_chroma_information_in_fast_loop;
-#endif
         uint8_t                         sb_sz;
         uint32_t                        sb_origin_x;
         uint32_t                        sb_origin_y;
@@ -206,9 +175,6 @@ extern "C" {
         unsigned                        luma_intra_ref_samples_gen_done      : 2; // only 1 bit is needed, but used two for rounding
         unsigned                        chroma_intra_ref_samples_gen_done    : 2; // only 1 bit is needed, but used two for rounding
         unsigned                        generate_mvp                         : 2; // only 1 bit is needed, but used two for rounding
-#if !CHROMA_BLIND
-        unsigned                        round_mv_to_integer                  : 2; // only 1 bit is needed, but used two for rounding
-#endif
         uint32_t                        full_recon_search_count;
         EbBool                          cu_use_ref_src_flag;
         uint16_t                        qp_index;
@@ -223,13 +189,7 @@ extern "C" {
         uint8_t                         intra_chroma_left_mode;
         uint8_t                         intra_chroma_top_mode;
         int16_t                         pred_buf_q3[CFL_BUF_SQUARE]; // Hsan: both MD and EP to use pred_buf_q3 (kept 1, and removed the 2nd)
-#if INTRA_CORE_OPT
-        DECLARE_ALIGNED(16, uint8_t, left_data[MAX_MB_PLANE][MAX_TX_SIZE * 2 + 32]);
-        DECLARE_ALIGNED(16, uint8_t, above_data[MAX_MB_PLANE][MAX_TX_SIZE * 2 + 32]);
-        block_size  scaled_chroma_bsize;
-#endif
 
-#if REMOVED_DUPLICATE_INTER
         int16_t                           injected_mv_x_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
         int16_t                           injected_mv_y_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
         uint8_t                           injected_mv_count_l0;
@@ -243,33 +203,20 @@ extern "C" {
         int16_t                           injected_mv_x_bipred_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
         int16_t                           injected_mv_y_bipred_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
         uint8_t                           injected_mv_count_bipred;
-#endif
-#if INTRA_INTER_FAST_LOOP
         uint32_t                          fast_candidate_intra_count;
         uint32_t                          fast_candidate_inter_count;
-#endif
         // Multi-modes signal(s) 
         uint8_t                           nfl_level;
         uint8_t                           skip_interpolation_search;
         uint8_t                           parent_sq_type[MAX_PARENT_SQ];
         uint8_t                           parent_sq_has_coeff[MAX_PARENT_SQ];
         uint8_t                           parent_sq_pred_mode[MAX_PARENT_SQ];
-#if CHROMA_BLIND
         uint8_t                           chroma_level;
-#endif
-#if NSQ_OPTIMASATION
         PART                              nsq_table[NSQ_TAB_SIZE];
-#endif
-#if INTRA_INTER_FAST_LOOP
         uint8_t                           decoupled_fast_loop_search_method; 
         uint8_t                           decouple_intra_inter_fast_loop;
-#endif
-#if FULL_LOOP_ESCAPE
         uint8_t                           full_loop_escape;
-#endif
-#if SHUT_GLOBAL_MV
         uint8_t                           global_mv_injection;
-#endif
         uint8_t                           warped_motion_injection;
         uint8_t                           unipred3x3_injection;
         uint8_t                           bipred3x3_injection;
@@ -352,7 +299,6 @@ extern "C" {
         uint8_t                  sb_qp);
 
 
-#if CHROMA_BLIND 
     extern void cfl_rd_pick_alpha(
         PictureControlSet_t             *picture_control_set_ptr,
         ModeDecisionCandidateBuffer_t   *candidateBuffer,
@@ -362,7 +308,7 @@ extern "C" {
         uint32_t                         inputCbOriginIndex,
         uint32_t                         cuChromaOriginIndex,
         EbAsm                            asm_type);
-#endif
+
 
 #ifdef __cplusplus
 }

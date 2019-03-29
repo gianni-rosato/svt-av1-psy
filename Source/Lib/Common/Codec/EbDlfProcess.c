@@ -16,7 +16,6 @@
 
 #include <stdlib.h>
 #include "EbDefinitions.h"
-#if FILT_PROC
 #include "EbDlfProcess.h"
 #include "EbEncDecResults.h"
 #include "EbEncDecTasks.h"
@@ -165,7 +164,6 @@ void* dlf_kernel(void *input_ptr)
                     3);
             }
 
-#if CDEF_M
         //pre-cdef prep
         {
             Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
@@ -191,10 +189,9 @@ void* dlf_kernel(void *input_ptr)
                 av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
             }
 
-#if CDEF_M
             if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode)
             {
-#endif
+
                 if (is16bit)
                 {
                     picture_control_set_ptr->src[0] = (uint16_t*)recon_picture_ptr->buffer_y + (recon_picture_ptr->origin_x + recon_picture_ptr->origin_y     * recon_picture_ptr->stride_y);
@@ -235,9 +232,8 @@ void* dlf_kernel(void *input_ptr)
                         }
                     }
                 }
-#if CDEF_M
             }
-#endif
+
         }
 
         picture_control_set_ptr->cdef_segments_column_count =  sequence_control_set_ptr->cdef_segment_column_count;
@@ -258,18 +254,7 @@ void* dlf_kernel(void *input_ptr)
             // Post DLF Results
             eb_post_full_object(dlf_results_wrapper_ptr);
         }
-#else
-            // Get Empty DLF Results to Cdef
-            eb_get_empty_object(
-                context_ptr->dlf_output_fifo_ptr,
-                &dlf_results_wrapper_ptr);
-            dlf_results_ptr = (struct DlfResults_s*)dlf_results_wrapper_ptr->object_ptr;
-            dlf_results_ptr->pictureControlSetWrapperPtr = enc_dec_results_ptr->pictureControlSetWrapperPtr;
-            dlf_results_ptr->completedLcuRowIndexStart = 0;
-            dlf_results_ptr->completedLcuRowCount = ((sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_size_pix - 1) >> lcuSizeLog2);
-            // Post DLF Results
-            eb_post_full_object(dlf_results_wrapper_ptr);
-#endif
+
 
             // Release EncDec Results
             eb_release_object(enc_dec_results_wrapper_ptr);
@@ -278,4 +263,3 @@ void* dlf_kernel(void *input_ptr)
 
     return EB_NULL;
 }
-#endif

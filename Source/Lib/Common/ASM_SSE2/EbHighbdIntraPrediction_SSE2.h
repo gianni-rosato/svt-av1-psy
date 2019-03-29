@@ -10,7 +10,6 @@
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
 
-#if INTRA_10BIT_SUPPORT
 
 static INLINE __m128i dc_sum_4x32bit(const __m128i src) {
     __m128i sum, sum_hi;
@@ -58,6 +57,5 @@ static INLINE __m128i dc_sum_8(const uint16_t *const src) {
     return dc_sum_8x16bit(s);
 }
 
-#endif // INTRA_10BIT_SUPPORT
 
 #endif // EbHighbdIntraPrediction_SSE2_h

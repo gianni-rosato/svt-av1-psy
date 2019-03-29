@@ -1166,9 +1166,7 @@ static const stripe_filter_fun stripe_filters[NUM_STRIPE_FILTERS] = {
 
 // Filter one restoration unit
 void av1_loop_restoration_filter_unit(
-#if REST_NEED_B
     uint8_t need_bounadaries,
-#endif
     const RestorationTileLimits *limits, const RestorationUnitInfo *rui,
     const RestorationStripeBoundaries *rsb, RestorationLineBuffers *rlbs,
     const AV1PixelRect *tile_rect, int32_t tile_stripe0, int32_t ss_x, int32_t ss_y,
@@ -1221,18 +1219,14 @@ void av1_loop_restoration_filter_unit(
         const int32_t h = AOMMIN(nominal_stripe_height,
             remaining_stripes.v_end - remaining_stripes.v_start);
 
-#if REST_NEED_B
         if(need_bounadaries)
-#endif
         setup_processing_stripe_boundary(&remaining_stripes, rsb, rsb_row, highbd,
             h, data8, stride, rlbs, copy_above,
             copy_below, optimized_lr);
 
         stripe_filter(rui, unit_w, h, procunit_width, data8_tl + i * stride, stride,
             dst8_tl + i * dst_stride, dst_stride, tmpbuf, bit_depth);
-#if REST_NEED_B
         if (need_bounadaries)
-#endif
         restore_processing_stripe_boundary(&remaining_stripes, rlbs, highbd, h,
             data8, stride, copy_above, copy_below,
             optimized_lr);
@@ -1267,9 +1261,7 @@ static void filter_frame_on_unit(const RestorationTileLimits *limits,
     const RestorationInfo *rsi = ctxt->rsi;
 
     av1_loop_restoration_filter_unit(
-#if REST_NEED_B
         1,
-#endif
         limits, &rsi->unit_info[rest_unit_idx], &rsi->boundaries, ctxt->rlbs,
         tile_rect, ctxt->tile_stripe0, ctxt->ss_x, ctxt->ss_y, ctxt->highbd,
         ctxt->bit_depth, ctxt->data8, ctxt->data_stride, ctxt->dst8,
@@ -1401,7 +1393,6 @@ void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane,
         rsi->units_per_tile, rsi->restoration_unit_size,
         ss_y, on_rest_unit, priv);
 }
-#if REST_M
 static void foreach_rest_unit_in_tile_seg(const AV1PixelRect *tile_rect,
     int32_t tile_row, int32_t tile_col, int32_t tile_cols,
     int32_t hunits_per_tile, int32_t units_per_tile,
@@ -1496,7 +1487,7 @@ void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane,
         picture_control_set_ptr,
         segment_index);
 }
-#endif
+
 
 int32_t av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
     int32_t mi_row, int32_t mi_col, block_size bsize,

@@ -57,7 +57,6 @@ EbErrorType mode_decision_context_ctor(
         return EB_ErrorInsufficientResources;
     }
     // Cost Arrays
-#if INTRA_INTER_FAST_LOOP
     // Hsan: MAX_NFL + 1 scratch buffer for intra + 1 scratch buffer for inter
     EB_MALLOC(uint64_t*, context_ptr->fast_cost_array, sizeof(uint64_t) * (MAX_NFL + 1 + 1), EB_N_PTR);
     EB_MALLOC(uint64_t*, context_ptr->full_cost_array, sizeof(uint64_t) * (MAX_NFL + 1 + 1), EB_N_PTR);
@@ -67,26 +66,9 @@ EbErrorType mode_decision_context_ctor(
     EB_MALLOC(ModeDecisionCandidateBuffer_t**, context_ptr->candidate_buffer_ptr_array, sizeof(ModeDecisionCandidateBuffer_t*) * (MAX_NFL + 1 + 1), EB_N_PTR);
 
     for (bufferIndex = 0; bufferIndex < (MAX_NFL + 1 + 1); ++bufferIndex) {
-#else
-    EB_MALLOC(uint64_t*, context_ptr->fast_cost_array, sizeof(uint64_t) * MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT, EB_N_PTR);
 
-    EB_MALLOC(uint64_t*, context_ptr->full_cost_array, sizeof(uint64_t) * MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT, EB_N_PTR);
-
-    EB_MALLOC(uint64_t*, context_ptr->full_cost_skip_ptr, sizeof(uint64_t) * MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT, EB_N_PTR);
-
-    EB_MALLOC(uint64_t*, context_ptr->full_cost_merge_ptr, sizeof(uint64_t) * MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT, EB_N_PTR);
-
-    // Candidate Buffers
-    EB_MALLOC(ModeDecisionCandidateBuffer_t**, context_ptr->candidate_buffer_ptr_array, sizeof(ModeDecisionCandidateBuffer_t*) * MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT, EB_N_PTR);
-
-    for (bufferIndex = 0; bufferIndex < MODE_DECISION_CANDIDATE_BUFFER_MAX_COUNT; ++bufferIndex) {
-#endif
         return_error = mode_decision_candidate_buffer_ctor(
             &(context_ptr->candidate_buffer_ptr_array[bufferIndex]),
-#if !INTRA_INTER_FAST_LOOP
-            SB_STRIDE_Y,
-            EB_8BIT,
-#endif
             &(context_ptr->fast_cost_array[bufferIndex]),
             &(context_ptr->full_cost_array[bufferIndex]),
             &(context_ptr->full_cost_skip_ptr[bufferIndex]),
@@ -385,11 +367,7 @@ void reset_mode_decision(
 #endif
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
     context_ptr->chroma_qp = context_ptr->qp;
-#if NEW_QPS
     context_ptr->qp_index = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->base_qindex;
-#else
-    context_ptr->qp_index = quantizer_to_qindex[context_ptr->qp];
-#endif
     (*av1_lambda_assignment_function_table[picture_control_set_ptr->parent_pcs_ptr->pred_structure])(
         &context_ptr->fast_lambda,
         &context_ptr->full_lambda,
@@ -397,45 +375,6 @@ void reset_mode_decision(
         &context_ptr->full_chroma_lambda,
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
         context_ptr->qp_index);
-#if !INTRA_INTER_FAST_LOOP
-    // Configure the number of candidate buffers to search at each depth
-
-    // 64x64 CU
-    context_ptr->buffer_depth_index_start[0] = 0;
-#if INC_NFL12
-    context_ptr->buffer_depth_index_width[0] = MAX_NFL + 1;
-#else
-    context_ptr->buffer_depth_index_width[0] = 5; // 3 NFL + 1 for temporary data
-#endif
-    // 32x32 CU
-    context_ptr->buffer_depth_index_start[1] = context_ptr->buffer_depth_index_start[0] + context_ptr->buffer_depth_index_width[0];
-#if INC_NFL12
-    context_ptr->buffer_depth_index_width[1] = MAX_NFL + 1;
-#else
-    context_ptr->buffer_depth_index_width[1] = 6;
-#endif
-    // 16x16 CU
-    context_ptr->buffer_depth_index_start[2] = context_ptr->buffer_depth_index_start[1] + context_ptr->buffer_depth_index_width[1];
-#if INC_NFL12
-    context_ptr->buffer_depth_index_width[2] = MAX_NFL + 1;
-#else
-    context_ptr->buffer_depth_index_width[2] = 6;
-#endif
-    // 8x8 CU
-    context_ptr->buffer_depth_index_start[3] = context_ptr->buffer_depth_index_start[2] + context_ptr->buffer_depth_index_width[2];
-#if INC_NFL12
-    context_ptr->buffer_depth_index_width[3] = MAX_NFL + 1;
-#else
-    context_ptr->buffer_depth_index_width[3] = 6;
-#endif
-    // 4x4 CU
-    context_ptr->buffer_depth_index_start[4] = context_ptr->buffer_depth_index_start[3] + context_ptr->buffer_depth_index_width[3];
-#if INC_NFL12
-    context_ptr->buffer_depth_index_width[4] = MAX_NFL + 1;
-#else
-    context_ptr->buffer_depth_index_width[4] = 5;
-#endif
-#endif
     // Slice Type
     slice_type =
         (picture_control_set_ptr->parent_pcs_ptr->idr_flag == EB_TRUE) ? I_SLICE :
@@ -522,11 +461,7 @@ void ModeDecisionConfigureLcu(
     /* Note(CHKN) : when Qp modulation varies QP on a sub-LCU(CU) basis,  Lamda has to change based on Cu->QP , and then this code has to move inside the CU loop in MD */
 
     // Lambda Assignement
-#if NEW_QPS
     context_ptr->qp_index = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->base_qindex;
-#else
-    context_ptr->qp_index = quantizer_to_qindex[context_ptr->qp];
-#endif
 
     (*av1_lambda_assignment_function_table[picture_control_set_ptr->parent_pcs_ptr->pred_structure])(
         &context_ptr->fast_lambda,

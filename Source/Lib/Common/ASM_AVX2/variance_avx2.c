@@ -359,7 +359,6 @@ void highbd_variance64_avx2(const uint8_t *a8, int32_t a_stride,
 #endif
 }
 
-#if AOM_SAD_PORTING
 static INLINE int variance_final_from_32bit_sum_avx2(__m256i vsse, __m128i vsum,
     unsigned int *const sse) {
     // extract the low lane and add it to the high lane
@@ -550,4 +549,3 @@ AOM_VAR_LOOP_AVX2(64, 128, 13, 32);   // 64x32 * (128/32)
 AOM_VAR_LOOP_AVX2(128, 64, 13, 16);   // 128x16 * ( 64/16)
 AOM_VAR_LOOP_AVX2(128, 128, 14, 16);  // 128x16 * (128/16)
 
-#endif /* AOM_SAD_PORTING */

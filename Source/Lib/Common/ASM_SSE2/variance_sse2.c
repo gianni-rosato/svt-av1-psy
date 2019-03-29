@@ -39,7 +39,6 @@ uint32_t aom_get_mb_ss_sse2(const int16_t *src) {
     return _mm_cvtsi128_si32(vsum);
 }
 
-#if AOM_SAD_PORTING
 
 // Can handle 128 pixels' diff sum (such as 8x16 or 16x8)
 // Slightly faster than variance_final_256_pel_sse2()
@@ -130,4 +129,3 @@ AOM_VAR_NO_LOOP_SSE2(8, 4, 5, 128);
 AOM_VAR_NO_LOOP_SSE2(8, 8, 6, 128);
 AOM_VAR_NO_LOOP_SSE2(8, 16, 7, 128);
 AOM_VAR_NO_LOOP_SSE2(8, 32, 8, 256);
-#endif /* AOM_SAD_PORTING */

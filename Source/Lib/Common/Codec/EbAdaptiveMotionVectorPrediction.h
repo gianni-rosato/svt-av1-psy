@@ -47,9 +47,7 @@ extern "C" {
         uint32_t                   tbSize);
 
     void generate_av1_mvp_table(
-#if TILES
         TileInfo                              *tile,
-#endif
       struct ModeDecisionContext_s            *context_ptr,
         CodingUnit_t                     *cu_ptr,
         const BlockGeom                   * blk_geom,
@@ -71,9 +69,8 @@ extern "C" {
         IntMv             ref_mv[2]);
 
     void enc_pass_av1_mv_pred(
-#if TILES
         TileInfo                               *tile,
-#endif
+
          struct ModeDecisionContext_s            *md_context_ptr,
         CodingUnit_t                     *cu_ptr,
         const BlockGeom                   * blk_geom,
@@ -87,9 +84,7 @@ extern "C" {
     );
 
     void update_mi_map(
-#if CHROMA_BLIND
         struct ModeDecisionContext_s   *context_ptr,
-#endif
         CodingUnit_t                   *cu_ptr,
         uint32_t                          cu_origin_x,
         uint32_t                          cu_origin_y,
@@ -151,7 +146,6 @@ extern "C" {
         int32_t                           mi_row,
         int32_t                           mi_col);
 
-#if ICOPY
     void av1_find_best_ref_mvs_from_stack(int allow_hp,
         CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
         MacroBlockD * xd,
@@ -163,7 +157,6 @@ extern "C" {
     int av1_is_dv_valid(const MV dv,
         const MacroBlockD *xd, int mi_row, int mi_col,
         block_size bsize, int mib_size_log2);
-#endif
 
 #ifdef __cplusplus
 }

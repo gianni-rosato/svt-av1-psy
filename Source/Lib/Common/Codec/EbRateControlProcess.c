@@ -3321,8 +3321,6 @@ void init_rc(
     }
 }
 #endif
-#if ADD_DELTA_QP_SUPPORT ||  NEW_QPS
-
 static const uint8_t quantizer_to_qindex[] = {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48,
     52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100,
@@ -3330,9 +3328,7 @@ static const uint8_t quantizer_to_qindex[] = {
     156, 160, 164, 168, 172, 176, 180, 184, 188, 192, 196, 200, 204,
     208, 212, 216, 220, 224, 228, 232, 236, 240, 244, 249, 255,
 };
-#endif
 
-#if NEW_QPS
 #define MAX_Q_INDEX 255
 #define MIN_Q_INDEX 0
 
@@ -3372,7 +3368,6 @@ int32_t av1_compute_qdelta(double qstart, double qtarget,
 
     return target_index - start_index;
 }
-#endif
 #if RC
 // calculate the QP based on the QP scaling
 uint32_t qp_scaling_calc(
@@ -3385,11 +3380,9 @@ uint32_t qp_scaling_calc(
     uint32_t    scaled_qp = 0;
     int         base_qindex;
 
-#if NEW_PRED_STRUCT                    
     const  double delta_rate_new[2][6] =
     { { 0.40, 0.7, 0.85, 1.0, 1.0, 1.0 },
     { 0.35, 0.6, 0.8,  0.9, 1.0, 1.0 } };
-#endif
 
 
     int qindex = quantizer_to_qindex[base_qp];
@@ -3408,11 +3401,7 @@ uint32_t qp_scaling_calc(
 
         delta_qindex = av1_compute_qdelta(
             q,
-#if NEW_PRED_STRUCT
             q* delta_rate_new[0][temporal_layer_index], // RC does not support 5L
-#else
-            q* delta_rate_oq[temporal_layer_index],
-#endif
             (aom_bit_depth_t)sequence_control_set_ptr->static_config.encoder_bit_depth);
 
     }
@@ -3424,7 +3413,6 @@ uint32_t qp_scaling_calc(
 
 }
 #endif
-#if CONTENT_BASED_QPS
 typedef struct {
     // Rate targetting variables
     int base_frame_target;  // A baseline frame target before adjustment
@@ -3793,7 +3781,7 @@ static int adaptive_qindex_calc(
 
     return q;
 }
-#endif
+
 void* rate_control_kernel(void *input_ptr)
 {
     // Context
@@ -3824,9 +3812,7 @@ void* rate_control_kernel(void *input_ptr)
 
     RATE_CONTROL_TASKTYPES               task_type;
     EbRateControlModel          *rc_model_ptr;
-#if CONTENT_BASED_QPS
     RATE_CONTROL                 rc;
-#endif
 
     rate_control_model_ctor(&rc_model_ptr);
 
@@ -3852,9 +3838,8 @@ void* rate_control_kernel(void *input_ptr)
             if (picture_control_set_ptr->picture_number == 0) {
 
                 rate_control_model_init(rc_model_ptr, sequence_control_set_ptr);
-#if  CONTENT_BASED_QPS
+
                 av1_rc_init_minq_luts();
-#endif
                 //init rate control parameters
                 init_rc(
                     context_ptr,
@@ -3922,14 +3907,10 @@ void* rate_control_kernel(void *input_ptr)
             if (sequence_control_set_ptr->static_config.rate_control_mode == 0) {
                 // if RC mode is 0,  fixed QP is used
                 // QP scaling based on POC number for Flat IPPP structure
-#if NEW_QPS
                 picture_control_set_ptr->parent_pcs_ptr->base_qindex = quantizer_to_qindex[picture_control_set_ptr->picture_qp];
-#endif
                 if (sequence_control_set_ptr->static_config.enable_qp_scaling_flag && picture_control_set_ptr->parent_pcs_ptr->qp_on_the_fly == EB_FALSE) {
-#if NEW_QPS
                     const int32_t qindex = quantizer_to_qindex[(uint8_t)sequence_control_set_ptr->qp];
                     const double q_val = av1_convert_qindex_to_q(qindex, (aom_bit_depth_t)sequence_control_set_ptr->static_config.encoder_bit_depth);
-#if CONTENT_BASED_QPS
                     if (picture_control_set_ptr->slice_type == I_SLICE) {
                         int32_t new_qindex = adaptive_qindex_calc(
                             picture_control_set_ptr,
@@ -3942,38 +3923,15 @@ void* rate_control_kernel(void *input_ptr)
                                 (int32_t)quantizer_to_qindex[sequence_control_set_ptr->static_config.max_qp_allowed],
                                 (int32_t)(new_qindex));
                     }
-
-#else
-                    if (picture_control_set_ptr->slice_type == I_SLICE) {
-                        const int32_t delta_qindex = av1_compute_qdelta(
-                            q_val,
-                            q_val * 0.25,
-                            (aom_bit_depth_t)sequence_control_set_ptr->static_config.encoder_bit_depth);
-                        picture_control_set_ptr->parent_pcs_ptr->base_qindex =
-                            (uint8_t)CLIP3(
-                            (int32_t)quantizer_to_qindex[sequence_control_set_ptr->static_config.min_qp_allowed],
-                                (int32_t)quantizer_to_qindex[sequence_control_set_ptr->static_config.max_qp_allowed],
-                                (int32_t)(qindex + delta_qindex));
-                    }
-#endif
                     else {
-#if NEW_PRED_STRUCT                    
                         const  double delta_rate_new[2][6] =
                         { { 0.40, 0.7, 0.85, 1.0, 1.0, 1.0 },
                         { 0.35, 0.6, 0.8,  0.9, 1.0, 1.0 } };
 
-#else
-                        const double delta_rate_new[6] = { 0.40, 0.7, 0.85, 1.0, 1.0, 1.0 };
-
-#endif
                         const int32_t delta_qindex = av1_compute_qdelta(
                             q_val,
-#if NEW_PRED_STRUCT
                             q_val * delta_rate_new[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels == 4][picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index],
-
-#else
-                            q_val * delta_rate_new[picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index],
-#endif     
+    
                             (aom_bit_depth_t)sequence_control_set_ptr->static_config.encoder_bit_depth);
 
                         picture_control_set_ptr->parent_pcs_ptr->base_qindex =
@@ -3983,16 +3941,13 @@ void* rate_control_kernel(void *input_ptr)
                                 (int32_t)(qindex + delta_qindex));
 
                     }
-#endif
                     picture_control_set_ptr->picture_qp = (uint8_t)CLIP3((int32_t)sequence_control_set_ptr->static_config.min_qp_allowed, (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed, picture_control_set_ptr->parent_pcs_ptr->base_qindex >> 2);
                 }
 
                 else if (picture_control_set_ptr->parent_pcs_ptr->qp_on_the_fly == EB_TRUE) {
 
                     picture_control_set_ptr->picture_qp = (uint8_t)CLIP3((int32_t)sequence_control_set_ptr->static_config.min_qp_allowed, (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed, picture_control_set_ptr->parent_pcs_ptr->picture_qp);
-#if NEW_QPS
                     picture_control_set_ptr->parent_pcs_ptr->base_qindex = quantizer_to_qindex[picture_control_set_ptr->picture_qp];
-#endif
                 }
                 picture_control_set_ptr->parent_pcs_ptr->picture_qp = picture_control_set_ptr->picture_qp;
             }
@@ -4032,10 +3987,7 @@ void* rate_control_kernel(void *input_ptr)
                     sequence_control_set_ptr->static_config.min_qp_allowed,
                     sequence_control_set_ptr->static_config.max_qp_allowed,
                     picture_control_set_ptr->picture_qp);
-
-#if NEW_QPS
                 picture_control_set_ptr->parent_pcs_ptr->base_qindex = quantizer_to_qindex[picture_control_set_ptr->picture_qp];
-#endif
             }
 
             picture_control_set_ptr->parent_pcs_ptr->picture_qp = picture_control_set_ptr->picture_qp;

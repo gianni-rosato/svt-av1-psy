@@ -3910,9 +3910,7 @@ extern "C" {
 #endif
         uint8_t              enable_contouring_qc_update_flag,
         uint32_t             component_type,
-#if QT_10BIT_SUPPORT
         uint32_t             bit_increment,
-#endif
         TxType               tx_type,
         EbBool               clean_sparse_coeff_flag);
 
@@ -3934,9 +3932,8 @@ extern "C" {
 #endif
         uint8_t              enable_contouring_qc_update_flag,
         uint32_t             component_type,
-#if QT_10BIT_SUPPORT
         uint32_t             bit_increment,
-#endif
+
         TxType               tx_type,
         EbBool               clean_sparse_coeff_flag);
 

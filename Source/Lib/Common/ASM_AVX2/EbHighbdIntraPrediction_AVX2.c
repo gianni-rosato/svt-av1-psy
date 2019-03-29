@@ -9,7 +9,6 @@
 #include "aom_dsp_rtcd.h"
 #include "EbIntraPrediction_AVX2.h"
 
-#if INTRA_10BIT_SUPPORT
 
 // =============================================================================
 
@@ -2897,4 +2896,3 @@ void aom_highbd_smooth_v_predictor_64x64_avx2(uint16_t *dst, ptrdiff_t stride,
     }
 }
 
-#endif // INTRA_10BIT_SUPPORT

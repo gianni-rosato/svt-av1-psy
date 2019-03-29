@@ -21,12 +21,11 @@
 #include "EbEntropyCodingResults.h"
 #include "EbRateControlTasks.h"
 
-#if TILES
 #define  AV1_MIN_TILE_SIZE_BYTES 1
 void av1_reset_loop_restoration(PictureControlSet_t     *piCSetPtr);
 void av1_tile_set_col(TileInfo *tile, PictureParentControlSet_t * pcsPtr, int col);
 void av1_tile_set_row(TileInfo *tile, PictureParentControlSet_t * pcsPtr, int row);
-#endif
+
 
 /******************************************************
  * Enc Dec Context Constructor
@@ -250,7 +249,6 @@ static void ResetEntropyCodingPicture(
 }
 
 
-#if TILES
 static void reset_ec_tile(
     uint32_t  total_size,
     uint32_t  is_last_tile_in_tg,
@@ -331,7 +329,7 @@ static void reset_ec_tile(
 
     return;
 }
-#endif
+
 /******************************************************
  * EncDec Configure LCU
  ******************************************************/
@@ -553,9 +551,8 @@ void* EntropyCodingKernel(void *input_ptr)
         lcuSizeLog2 = (uint8_t)Log2f(sb_sz);
         context_ptr->sb_sz = sb_sz;
         picture_width_in_sb = (sequence_control_set_ptr->luma_width + sb_sz - 1) >> lcuSizeLog2;
-#if TILES
         if(picture_control_set_ptr->parent_pcs_ptr->av1_cm->tile_cols * picture_control_set_ptr->parent_pcs_ptr->av1_cm->tile_rows == 1)
-#endif
+
         {
             initialProcessCall = EB_TRUE;
             yLcuIndex = encDecResultsPtr->completedLcuRowIndexStart;
@@ -587,10 +584,8 @@ void* EntropyCodingKernel(void *input_ptr)
 #if !RC   
                     lastLcuFlag = (sb_index == sequence_control_set_ptr->sb_tot_cnt - 1) ? EB_TRUE : EB_FALSE;
 #endif
-#if TILES 
                     if (sb_index == 0)
                         av1_reset_loop_restoration(picture_control_set_ptr);
-#endif
                     // Configure the LCU
                     EntropyCodingConfigureLcu(
                         context_ptr,
@@ -692,7 +687,6 @@ void* EntropyCodingKernel(void *input_ptr)
             }
 
         }
-#if TILES
         else
         {
 
@@ -833,7 +827,7 @@ void* EntropyCodingKernel(void *input_ptr)
              } 
 
         }
-#endif
+
         // Release Mode Decision Results
         eb_release_object(encDecResultsWrapperPtr);
 

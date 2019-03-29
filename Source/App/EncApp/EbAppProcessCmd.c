@@ -1381,11 +1381,7 @@ APPEXITCONDITIONTYPE ProcessOutputStreamBuffer(
         return APP_ExitConditionError;
     }
     else if (stream_status != EB_NoErrorEmptyQueue) {
-#if TILES
         EbBool   has_tiles                = (EbBool)(appCallBack->ebEncParameters.tile_columns || appCallBack->ebEncParameters.tile_rows);
-#else
-        EbBool   has_tiles                = (EbBool)EB_FALSE;
-#endif
         uint8_t  obu_frame_header_size    = has_tiles ? OBU_FRAME_HEADER_SIZE + 1 : OBU_FRAME_HEADER_SIZE;
         ++(config->performanceContext.frameCount);
         *totalLatency += (uint64_t)headerPtr->n_tick_count;

@@ -8457,7 +8457,6 @@ void av1_inv_txfm2d_add_32x8_c(const int32_t *input, uint16_t *output,
 
 
 
-#if AV1_UPGRADE
 static INLINE int32_t range_check_value(int32_t value, int8_t bit) {
 #if CONFIG_COEFFICIENT_RANGE_CHECKING
     const int64_t max_value = (1LL << (bit - 1)) - 1;
@@ -8474,7 +8473,7 @@ static INLINE int32_t range_check_value(int32_t value, int8_t bit) {
     (void)bit;
     return value;
 }
-#endif
+
 void av1_highbd_iwht4x4_16_add_c(const tran_low_t *input, uint8_t *dest8,
     int32_t stride, int32_t bd) {
     /* 4-point reversible, orthonormal inverse Walsh-Hadamard in 3.5 adds,
@@ -8519,12 +8518,11 @@ void av1_highbd_iwht4x4_16_add_c(const tran_low_t *input, uint8_t *dest8,
         c1 = e1 - c1;
         a1 -= b1;
         d1 += c1;
-#if AV1_UPGRADE
         range_check_value(a1, (int8_t)(bd + 1));
         range_check_value(b1, (int8_t)(bd + 1));
         range_check_value(c1, (int8_t)(bd + 1));
         range_check_value(d1, (int8_t)(bd + 1));
-#endif
+
 
         dest[stride * 0] = highbd_clip_pixel_add(dest[stride * 0], a1, bd);
         dest[stride * 1] = highbd_clip_pixel_add(dest[stride * 1], b1, bd);

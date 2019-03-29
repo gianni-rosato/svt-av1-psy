@@ -6,9 +6,8 @@
 #include "EbDefinitions.h"
 #include "emmintrin.h"
 #include "EbIntraPrediction_SSE2.h"
-#if INTRA_ASM
 #include "aom_dsp_rtcd.h"
-#endif
+
 static INLINE __m128i dc_sum_16(const uint8_t *ref) {
     __m128i x = _mm_loadu_si128((__m128i const *)ref);
     const __m128i zero = _mm_setzero_si128();
@@ -474,7 +473,6 @@ static INLINE void h_predictor_8x16xc(uint8_t *dst, ptrdiff_t stride,
 }
 
 
-#if INTRA_ASM
 
 
 static INLINE void h_predictor_64xh(uint8_t *dst, ptrdiff_t stride,
@@ -1274,4 +1272,3 @@ void aom_dc_predictor_32x8_sse2(uint8_t *dst, ptrdiff_t stride,
     dc_store_32xh(&row, 8, dst, stride);
 }
 
-#endif

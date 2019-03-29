@@ -297,11 +297,7 @@ void* PacketizationKernel(void *input_ptr)
         output_stream_ptr->flags |= (encode_context_ptr->terminating_sequence_flag_received == EB_TRUE && picture_control_set_ptr->parent_pcs_ptr->decode_order == encode_context_ptr->terminating_picture_number) ? EB_BUFFERFLAG_EOS : 0;
         output_stream_ptr->n_filled_len = 0;
         output_stream_ptr->pts = picture_control_set_ptr->parent_pcs_ptr->input_ptr->pts;
-#if NEW_PRED_STRUCT
         output_stream_ptr->dts = picture_control_set_ptr->parent_pcs_ptr->decode_order - (uint64_t)(1 << picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels) + 1;
-#else
-        output_stream_ptr->dts = picture_control_set_ptr->parent_pcs_ptr->decode_order - (uint64_t)(1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 1;
-#endif     
         output_stream_ptr->pic_type = picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ?
             picture_control_set_ptr->parent_pcs_ptr->idr_flag ? EB_AV1_KEY_PICTURE :
             picture_control_set_ptr->slice_type : EB_AV1_NON_REF_PICTURE;
@@ -360,10 +356,9 @@ void* PacketizationKernel(void *input_ptr)
 
             output_stream_ptr->flags |= EB_BUFFERFLAG_SHOW_EXT;
 
-#if TILES
             if (picture_control_set_ptr->parent_pcs_ptr->av1_cm->tile_cols * picture_control_set_ptr->parent_pcs_ptr->av1_cm->tile_rows > 1)
                 output_stream_ptr->flags |= EB_BUFFERFLAG_TG;
-#endif
+
         }
 
         // Send the number of bytes per frame to RC
@@ -431,11 +426,7 @@ void* PacketizationKernel(void *input_ptr)
         queueEntryPtr = encode_context_ptr->packetization_reorder_queue[encode_context_ptr->packetization_reorder_queue_head_index];
 
         while (queueEntryPtr->output_stream_wrapper_ptr != EB_NULL) {
-#if TILES
             EbBool has_tiles = (EbBool)(sequence_control_set_ptr->static_config.tile_columns || sequence_control_set_ptr->static_config.tile_rows);
-#else
-            EbBool has_tiles = EB_FALSE;
-#endif
             output_stream_wrapper_ptr = queueEntryPtr->output_stream_wrapper_ptr;
             output_stream_ptr = (EbBufferHeaderType*)output_stream_wrapper_ptr->object_ptr;
 

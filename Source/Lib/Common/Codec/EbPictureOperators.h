@@ -448,7 +448,6 @@ extern "C" {
         Compute8x8Satd_U8_SSE4
     };
 
-#if  M0_SPATIAL_SSE || SPATIAL_SSE_I_B_SLICES || M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
     typedef uint64_t(*EB_SPATIALFULLDIST_TYPE)(
         uint8_t  *input,
         uint32_t  input_stride,
@@ -456,7 +455,6 @@ extern "C" {
         uint32_t  recon_stride,
         uint32_t  area_width,
         uint32_t  area_height);
-#if  USE_SSE_FL
     static EB_SPATIALFULLDIST_TYPE FUNC_TABLE spatial_full_distortion_kernel_func_ptr_array[ASM_TYPE_TOTAL][6] = {
         // NON_AVX2
         {
@@ -489,37 +487,8 @@ extern "C" {
             SpatialFullDistortionKernel16MxN_SSSE3_INTRIN
         },
     };
-#else
-    static EB_SPATIALFULLDIST_TYPE FUNC_TABLE spatial_full_distortion_kernel_func_ptr_array[ASM_TYPE_TOTAL][5] = {
-        // NON_AVX2
-        {
-            // 4x4
-            SpatialFullDistortionKernel4x4_SSSE3_INTRIN,
-            // 8x8
-            SpatialFullDistortionKernel8x8_SSSE3_INTRIN,
-            // 16x16
-            SpatialFullDistortionKernel16MxN_SSSE3_INTRIN,
-            // 32x32
-            SpatialFullDistortionKernel16MxN_SSSE3_INTRIN,
-            // 64x64
-            SpatialFullDistortionKernel16MxN_SSSE3_INTRIN
-        },
-        // ASM_AVX2
-        {
-            // 4x4
-            SpatialFullDistortionKernel4x4_SSSE3_INTRIN,
-            // 8x8
-            SpatialFullDistortionKernel8x8_SSSE3_INTRIN,
-            // 16x16
-            SpatialFullDistortionKernel16MxN_SSSE3_INTRIN,
-            // 32x32
-            SpatialFullDistortionKernel16MxN_SSSE3_INTRIN,
-            // 64x64
-            SpatialFullDistortionKernel16MxN_SSSE3_INTRIN
-        },
-    };
-#endif
-#endif
+
+
     void picture_addition_kernel16_bit(
         uint16_t *pred_ptr,
         uint32_t  pred_stride,

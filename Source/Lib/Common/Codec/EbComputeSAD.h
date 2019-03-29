@@ -13,9 +13,7 @@
 #include "EbComputeSAD_SSE2.h"
 #include "EbComputeSAD_SSE4_1.h"
 #include "EbComputeSAD_AVX2.h"
-#if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
 #include "EbUtility.h"
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif

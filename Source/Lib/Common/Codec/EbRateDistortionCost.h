@@ -153,7 +153,6 @@ extern "C" {
         uint64_t        *y_tu_coeff_bits,
         uint32_t         component_mask);
 
-#if REST_FAST_RATE_EST
     extern uint64_t av1_intra_fast_cost(
         CodingUnit_t            *cu_ptr,
         ModeDecisionCandidate_t *candidate_ptr,
@@ -161,9 +160,7 @@ extern "C" {
         uint64_t                 luma_distortion,
         uint64_t                 chroma_distortion,
         uint64_t                 lambda,
-#if USE_SSE_FL
         EbBool                   use_ssd,
-#endif
         PictureControlSet_t     *picture_control_set_ptr,
         CandidateMv             *ref_mv_stack,
         const BlockGeom         *blk_geom,
@@ -171,19 +168,8 @@ extern "C" {
         uint32_t                 miCol,
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
-#else
-    extern EbErrorType av1_intra_fast_cost(
-        struct ModeDecisionContext_s             *context_ptr,
-        CodingUnit_t                             *cu_ptr,
-        ModeDecisionCandidateBuffer_t            *candidate_buffer_ptr,
-        uint32_t                                  qp,
-        uint64_t                                  luma_distortion,
-        uint64_t                                  chroma_distortion,
-        uint64_t                                  lambda,
-        PictureControlSet_t                      *picture_control_set_ptr);
-#endif
 
-#if REST_FAST_RATE_EST
+
     extern uint64_t av1_inter_fast_cost(
         CodingUnit_t            *cu_ptr,
         ModeDecisionCandidate_t *candidate_ptr,
@@ -191,9 +177,7 @@ extern "C" {
         uint64_t                 luma_distortion,
         uint64_t                 chroma_distortion,
         uint64_t                 lambda,
-#if USE_SSE_FL
         EbBool                   use_ssd,
-#endif
         PictureControlSet_t     *picture_control_set_ptr,
         CandidateMv             *ref_mv_stack,
         const BlockGeom         *blk_geom,
@@ -202,17 +186,7 @@ extern "C" {
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
 
-#else
-    extern EbErrorType av1_inter_fast_cost(
-        struct ModeDecisionContext_s            *context_ptr,
-        CodingUnit_t                            *cu_ptr,
-        ModeDecisionCandidateBuffer_t            *candidate_buffer_ptr,
-        uint32_t                                  qp,
-        uint64_t                                  luma_distortion,
-        uint64_t                                  chroma_distortion,
-        uint64_t                                  lambda,
-        PictureControlSet_t                        *picture_control_set_ptr);
-#endif
+
 
     extern EbErrorType av1_intra_full_cost(
         PictureControlSet_t                    *picture_control_set_ptr,

@@ -84,14 +84,13 @@ EbErrorType clip_mv(
     (*mvx) = CLIP3(((int16_t)((1 - cu_origin_x - 8 - tb_size) << 2)), ((int16_t)((picture_width + 8 - cu_origin_x - 1) << 2)), (*mvx));
     // vertical clipping
     (*mvy) = CLIP3(((int16_t)((1 - cu_origin_y - 8 - tb_size) << 2)), ((int16_t)((picture_height + 8 - cu_origin_y - 1) << 2)), (*mvy));
-#if AV1_UPGRADE
     const int32_t clamp_max = MV_UPP - 1;
     const int32_t clamp_min = MV_LOW + 1;
     // horizontal clipping
     (*mvx) = CLIP3(clamp_min, clamp_max, (*mvx));
     // vertical clipping
     (*mvy) = CLIP3(clamp_min, clamp_max, (*mvy));
-#endif
+
     return return_error;
 }
 
@@ -165,11 +164,7 @@ static INLINE PredictionMode compound_ref1_mode(PredictionMode mode) {
 
 
 /*static INLINE*/ int32_t is_inter_block(const MbModeInfo *mbmi) {
-#if ICOPY
     return (mbmi->use_intrabc || (mbmi->ref_frame[0] > INTRA_FRAME));
-#else
-    return /*is_intrabc_block(mbmi) ||*/ mbmi->ref_frame[0] > INTRA_FRAME;
-#endif
 }
 
 static int32_t have_newmv_in_inter_mode(PredictionMode mode) {
@@ -237,11 +232,7 @@ static MvReferenceFrame ref_frame_map[TOTAL_COMP_REFS][2] = {
     { ALTREF2_FRAME, ALTREF_FRAME }
 };
 
-#if ICOPY
 void clamp_mv(
-#else
-static void clamp_mv(
-#endif
     MV *mv,
     int32_t min_col,
     int32_t max_col,
@@ -1152,9 +1143,8 @@ static INLINE IntMv gm_get_motion_vector(
 }
 
 void generate_av1_mvp_table(
-#if TILES
     TileInfo                         *tile,
-#endif
+
     ModeDecisionContext_t            *context_ptr,
     CodingUnit_t                     *cu_ptr,
     const BlockGeom                  *blk_geom,
@@ -1184,13 +1174,9 @@ void generate_av1_mvp_table(
     memset(xd->ref_mv_count, 0, sizeof(xd->ref_mv_count));
     memset(context_ptr->md_local_cu_unit[blk_geom->blkidx_mds].ed_ref_mv_stack, 0, sizeof(context_ptr->md_local_cu_unit[blk_geom->blkidx_mds].ed_ref_mv_stack));
 
-#if TILES
     xd->up_available = (mi_row > tile->mi_row_start);
     xd->left_available = (mi_col > tile->mi_col_start);
-#else
-    xd->up_available = (mi_row > 0);
-    xd->left_available = (mi_col > 0);
-#endif
+
 
     xd->n8_h = bh;
     xd->n8_w = bw;
@@ -1205,17 +1191,11 @@ void generate_av1_mvp_table(
     if (xd->n8_w > xd->n8_h)
         if (mi_row & (xd->n8_w - 1)) xd->is_sec_rect = 1;
 
-#if  TILES
     xd->tile.mi_col_start = tile->mi_col_start;
     xd->tile.mi_col_end = tile->mi_col_end;
     xd->tile.mi_row_start = tile->mi_row_start;
     xd->tile.mi_row_end = tile->mi_row_end;
-#else
-    xd->tile.mi_col_start = 0;
-    xd->tile.mi_col_end = cm->mi_cols;
-    xd->tile.mi_row_start = 0;
-    xd->tile.mi_row_end = cm->mi_rows;
-#endif
+
     //these could be done at init time
     xd->mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 / 4);
     const int32_t offset = mi_row * xd->mi_stride + mi_col;
@@ -1328,9 +1308,8 @@ void get_av1_mv_pred_drl(
 }
 
 void enc_pass_av1_mv_pred(
-#if TILES
     TileInfo                         *tile,
-#endif
+
     ModeDecisionContext_t            *md_context_ptr,
     CodingUnit_t                     *cu_ptr,
     const BlockGeom                  *blk_geom,
@@ -1346,9 +1325,7 @@ void enc_pass_av1_mv_pred(
     IntMv    nearestmv[2], nearmv[2];
 
     generate_av1_mvp_table(
-#if TILES
         tile,
-#endif
         md_context_ptr,
         cu_ptr,
         blk_geom,
@@ -1408,9 +1385,7 @@ void update_av1_mi_map(
 
 
                 }
-#if ICOPY
                 miPtr[miX + miY * mi_stride].mbmi.use_intrabc = cu_ptr->av1xd->use_intrabc;
-#endif
 
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[0] = rf[0];
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[1] = rf[1];
@@ -1441,9 +1416,8 @@ void update_av1_mi_map(
 
 
 void update_mi_map(
-#if CHROMA_BLIND
     struct ModeDecisionContext_s   *context_ptr,
-#endif
+
     CodingUnit_t                   *cu_ptr,
     uint32_t                        cu_origin_x,
     uint32_t                        cu_origin_y,
@@ -1483,9 +1457,7 @@ void update_mi_map(
 
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = blk_geom->bsize;
                 }
-#if ICOPY
                 miPtr[miX + miY * mi_stride].mbmi.use_intrabc = cu_ptr->av1xd->use_intrabc;
-#endif
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[0] = rf[0];
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[1] = rf[1];
                 if (cu_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_0) {
@@ -1505,11 +1477,7 @@ void update_mi_map(
 
                 miPtr[miX + miY * mi_stride].mbmi.partition = from_shape_to_part[blk_geom->shape];// cu_ptr->part;
             }
-#if CHROMA_BLIND
             if (blk_geom->has_uv && context_ptr->chroma_level == CHROMA_MODE_0)
-#else
-            if (blk_geom->has_uv)
-#endif
                 miPtr[miX + miY * mi_stride].mbmi.skip = (cu_ptr->transform_unit_array[0].y_has_coeff == 0 && cu_ptr->transform_unit_array[0].v_has_coeff == 0 && cu_ptr->transform_unit_array[0].u_has_coeff == 0) ? EB_TRUE : EB_FALSE;
             else
                 miPtr[miX + miY * mi_stride].mbmi.skip = (cu_ptr->transform_unit_array[0].y_has_coeff == 0) ? EB_TRUE : EB_FALSE;
@@ -2073,7 +2041,6 @@ void av1_count_overlappable_neighbors(
         count_overlappable_nb_left(cm, xd, mi_row, MAX_SIGNED_VALUE);
 }
 
-#if ICOPY
 #define INTRABC_DELAY_PIXELS 256  //  Delay of 256 pixels
 #define INTRABC_DELAY_SB64  (INTRABC_DELAY_PIXELS / 64)
 
@@ -2157,7 +2124,6 @@ int av1_is_dv_valid(const MV dv,
         src_sb64_col >= active_sb64_col - INTRABC_DELAY_SB64 + wf_offset)
         return 0;
 
-#if IBC_SW_WAVEFRONT
     //add a SW-Wavefront constraint
     if (sb_size == 64)
     {
@@ -2173,7 +2139,6 @@ int av1_is_dv_valid(const MV dv,
             return 0;
 
     }
-#endif
 
     return 1;
 }
@@ -2239,4 +2204,3 @@ void av1_find_best_ref_mvs_from_stack(int allow_hp,
     *near_mv = av1_get_ref_mv_from_stack(ref_idx, ref_frames, 1, ref_mv_stack/*mbmi_ext*/, xd);
     lower_mv_precision(&near_mv->as_mv, allow_hp, is_integer);
 }
-#endif

@@ -48,11 +48,8 @@ EbErrorType largest_coding_unit_ctor(
     largestCodingUnitPtr->index = sb_index;
 
     uint32_t cu_i;
-#if MEM_RED4
     uint32_t  tot_cu_num = sb_size_pix == 128 ? 1024 : 256;
-#else
-    uint32_t  tot_cu_num = 1024;
-#endif
+
 
     EB_MALLOC(CodingUnit_t*, largestCodingUnitPtr->final_cu_arr, sizeof(CodingUnit_t) * tot_cu_num, EB_N_PTR);
 

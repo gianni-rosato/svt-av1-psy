@@ -29,13 +29,12 @@ typedef struct RestContext_s
     EbPictureBufferDesc_t          *temp_lf_recon_picture_ptr;
     EbPictureBufferDesc_t          *temp_lf_recon_picture16bit_ptr;
 
-#if REST_M
     EbPictureBufferDesc_t           *org_rec_frame; // while doing the filtering recon gets updated uisng setup/restore processing_stripe_bounadaries
                                                     // many threads doing the above will result in race condition.
                                                     // each thread will hence have his own copy of recon to work on.
                                                     // later we can have a search version that does not need the exact right recon
     int32_t *rst_tmpbuf;
-#endif
+
 
 } RestContext_t;
 

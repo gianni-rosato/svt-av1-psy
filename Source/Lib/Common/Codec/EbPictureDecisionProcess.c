@@ -304,7 +304,6 @@ EbErrorType ReleasePrevPictureFromReorderQueue(
 
     return return_error;
 }
-#if NEW_PRED_STRUCT
 
 /***************************************************************************************************
 * Initializes mini GOP activity array
@@ -593,7 +592,7 @@ EbBool is_supposedly_4L_reference_frame(
     }
 }
 
-#endif
+
 
 /***************************************************************************************************
 * Generates mini GOP RPSs
@@ -682,17 +681,12 @@ EbErrorType signal_derivation_multi_processes_oq(
                 picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
         else if (picture_control_set_ptr->enc_mode <= ENC_M5)
             picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
-#if ADAPTIVE_DEPTH_PARTITIONING
         else {
             if (picture_control_set_ptr->slice_type == I_SLICE)
                 picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
             else
                 picture_control_set_ptr->pic_depth_mode = PIC_SB_SWITCH_DEPTH_MODE;
         }
-#else
-        else
-            picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
-#endif
 
 #if SCENE_CONTENT_SETTINGS
     }
@@ -702,7 +696,6 @@ EbErrorType signal_derivation_multi_processes_oq(
 
    
 
-#if NSQ_OPTIMASATION
     // NSQ search Level                               Settings
     // NSQ_SEARCH_OFF                                 OFF
     // NSQ_SEARCH_LEVEL1                              Allow only NSQ Inter-NEAREST/NEAR/GLOBAL if parent SQ has no coeff + reordering nsq_table number and testing only 1 NSQ SHAPE
@@ -787,19 +780,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
         
 
-#else
-    // NSQ search Level                               Settings
-   // 0                                              OFF
-   // 1                                              Allow only NSQ Intra-FULL if parent SQ is intra-coded and vice versa.
-   // 2                                              Allow only NSQ Inter-NEAREST/NEAR/GLOBAL if parent SQ has no coeff
-   // 3                                              Allow only NSQ Intra-FULL and Inter-NEWMV if parent SQ is NEWMV
-   // 4                                              Allow only NSQ Inter-FULL and Intra-Z3 if parent SQ is intra-coded
-   // 5                                              Allow NSQ Intra-FULL and Inter-FULL
-    if (!MR_MODE)
-        picture_control_set_ptr->nsq_search_level        = NSQ_SEARCH_BASE_ON_SQ_COEFF;
-    else
-        picture_control_set_ptr->nsq_search_level        = NSQ_SEARCH_FULL;
-#endif
+
 
     if (picture_control_set_ptr->nsq_search_level == NSQ_SEARCH_OFF) {
         if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) picture_control_set_ptr->pic_depth_mode = PIC_SQ_DEPTH_MODE;
@@ -817,13 +798,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (sc_content_detected) {
 
         if (picture_control_set_ptr->enc_mode == ENC_M0)
-#if CHROMA_BLIND_IF_SEARCH
             picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP_UV_BLIND;
         else if (MR_MODE)
             picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP;
-#else
-            picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP;
-#endif
 
 
     }
@@ -833,11 +810,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (MR_MODE)
         picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP;
     else if (picture_control_set_ptr->enc_mode == ENC_M0)
-#if CHROMA_BLIND_IF_SEARCH
         picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP_UV_BLIND;
-#else
-        picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP;
-#endif
     else if (picture_control_set_ptr->enc_mode <= ENC_M2)
         if (picture_control_set_ptr->is_used_as_reference_flag)
             picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP_UV_BLIND;
@@ -857,17 +830,14 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 2                                            LIGHT FRAME-BASED
     // 3                                            FULL FRAME-BASED
 
-#if ICOPY
     //for now only I frames are allowed to use sc tools.
     //TODO: we can force all frames in GOP with the same detection status of leading I frame.
     if (picture_control_set_ptr->slice_type == I_SLICE) {
         picture_control_set_ptr->allow_screen_content_tools = picture_control_set_ptr->sc_content_detected;
         picture_control_set_ptr->allow_intrabc =  picture_control_set_ptr->sc_content_detected;
 
-#if IBC_MODES
         //IBC Modes:   0:Slow   1:Fast   2:Faster
         picture_control_set_ptr->ibc_mode = 0;
-#endif
 
         //turn OFF intra bc for some specific modes
         if (picture_control_set_ptr->enc_mode >= ENC_M3)
@@ -879,9 +849,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
 
     if (!picture_control_set_ptr->sequence_control_set_ptr->static_config.disable_dlf_flag && picture_control_set_ptr->allow_intrabc == 0) {
-#else
-    if (!picture_control_set_ptr->sequence_control_set_ptr->static_config.disable_dlf_flag) {
-#endif
         if (picture_control_set_ptr->enc_mode <= ENC_M3)
             picture_control_set_ptr->loop_filter_mode = 3;
         else if (picture_control_set_ptr->enc_mode <= ENC_M4)
@@ -892,7 +859,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     else {
         picture_control_set_ptr->loop_filter_mode = 0;
     }
-#if FAST_CDEF
     // CDEF Level                                   Settings
     // 0                                            OFF
     // 1                                            1 step refinement
@@ -902,12 +868,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 5                                            64 step refinement
     SequenceControlSet_t                    *sequence_control_set_ptr;
     sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-#if ADD_CDEF_FILTER_LEVEL
-#if ICOPY 
     if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->allow_intrabc == 0) {
-#else
-    if (sequence_control_set_ptr->enable_cdef) {
-#endif
         if (picture_control_set_ptr->enc_mode <= ENC_M5)
             picture_control_set_ptr->cdef_filter_mode = 4;
         else if (picture_control_set_ptr->enc_mode <= ENC_M7)
@@ -917,25 +878,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         picture_control_set_ptr->cdef_filter_mode = 0;
-#else
-#if ICOPY 
-    if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->allow_intrabc == 0) {
-#else
-    if (sequence_control_set_ptr->enable_cdef) {
-#endif
-        if (picture_control_set_ptr->enc_mode <= ENC_M3)
-            picture_control_set_ptr->cdef_filter_mode = 3;
-        else if (picture_control_set_ptr->enc_mode <= ENC_M7)
-            picture_control_set_ptr->cdef_filter_mode = 1;
-        else
-            picture_control_set_ptr->cdef_filter_mode = 1;
-    }
-    else
-        picture_control_set_ptr->cdef_filter_mode = 0;
 
-#endif
-#endif
-#if FAST_SG
     // SG Level                                    Settings
     // 0                                            OFF
     // 1                                            0 step refinement
@@ -960,9 +903,8 @@ EbErrorType signal_derivation_multi_processes_oq(
         cm->sg_filter_mode = 2;
     else
         cm->sg_filter_mode = 1;
-#endif
 
-#if FAST_WN
+
     // WN Level                                     Settings
     // 0                                            OFF
     // 1                                            3-Tap luma/ 3-Tap chroma
@@ -984,7 +926,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         cm->wn_filter_mode = 2;
     else
         cm->wn_filter_mode = 0;
-#endif
+
 
     // Tx_search Level                                Settings
     // 0                                              OFF
@@ -1075,21 +1017,16 @@ EbErrorType signal_derivation_multi_processes_oq(
                     picture_control_set_ptr->intra_pred_mode = 1;
                 else
                     picture_control_set_ptr->intra_pred_mode = 3;
-#if OIS_BASED_INTRA
             else if (picture_control_set_ptr->enc_mode <= ENC_M6)
-#else
-            else
-#endif
+
                 if (picture_control_set_ptr->temporal_layer_index == 0)
                     picture_control_set_ptr->intra_pred_mode = 2;
                 else
                     picture_control_set_ptr->intra_pred_mode = 3;
-#if OIS_BASED_INTRA
             else if (picture_control_set_ptr->enc_mode <= ENC_M7)
                 picture_control_set_ptr->intra_pred_mode = 4;
             else
                 picture_control_set_ptr->intra_pred_mode = 5;
-#endif
         }
         else {
 #endif
@@ -1103,21 +1040,16 @@ EbErrorType signal_derivation_multi_processes_oq(
                 picture_control_set_ptr->intra_pred_mode = 1;
             else
                 picture_control_set_ptr->intra_pred_mode = 3;
-#if OIS_BASED_INTRA
         else if (picture_control_set_ptr->enc_mode <= ENC_M6) 
-#else
-        else
-#endif
             if (picture_control_set_ptr->temporal_layer_index == 0)
                 picture_control_set_ptr->intra_pred_mode = 2;
             else
                 picture_control_set_ptr->intra_pred_mode = 3;
-#if OIS_BASED_INTRA
         else if (picture_control_set_ptr->enc_mode <= ENC_M7) 
             picture_control_set_ptr->intra_pred_mode = 4;
         else
             picture_control_set_ptr->intra_pred_mode = 5;
-#endif
+
 #if SCENE_CONTENT_SETTINGS
         }
 #endif
@@ -1133,41 +1065,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     picture_control_set_ptr->skip_sub_blks =   0;
 
 #endif
-#if TWO_FAST_LOOP
-		// Intra candidates are procsssed in a first fast loop , the best is injected into the second fast loop with Inter candidates.  
-        // two fast loops                       Settings
-        // 0                                    OFF : disable_angle_prediction
-        // 1                                    ON
-        if (picture_control_set_ptr->slice_type == I_SLICE) 
-            picture_control_set_ptr->enable_two_fast_loops = 0;
-        else 
-            picture_control_set_ptr->enable_two_fast_loops = 1;
-          
-#endif
     return return_error;
 }
 
 
-#if !CHROMA_BLIND
-/***************************************************************************
-* Set the default chroma mode for each frame
-****************************************************************************/
-EbChromaMode PictureLevelChromaSettings(
-    uint8_t   input_resolution,
-    uint8_t   enc_mode,
-    uint8_t   slice_type,
-    uint8_t   temporal_layer_index,
-    EbBool is_used_as_reference_flag){
-
-    EbChromaMode chroma_mode = CHROMA_MODE_FULL;
-    UNUSED(input_resolution);
-    UNUSED(enc_mode);
-    UNUSED(slice_type);
-    UNUSED(temporal_layer_index);
-    UNUSED(is_used_as_reference_flag);
-    return chroma_mode;
-}
-#endif
 
 /*************************************************
 * AV1 Reference Picture Signalling:
@@ -1396,7 +1297,6 @@ void  Av1GenerateRpsInfo(
         if (pictureIndex == context_ptr->miniGopEndIndex[0])
             context_ptr->miniGopToggle = 1 - context_ptr->miniGopToggle;
     }
-#if NEW_PRED_STRUCT
     else if (picture_control_set_ptr->hierarchical_levels == 4)//RPS for 4L GOP
     {
 
@@ -1628,7 +1528,7 @@ void  Av1GenerateRpsInfo(
         context_ptr->miniGopToggle = 1 - context_ptr->miniGopToggle;
 
     }
-#endif
+
     else
     {
         printf("Error: Not supported GOP structure!");
@@ -1900,11 +1800,10 @@ void* picture_decision_kernel(void *input_ptr)
 
                 picture_control_set_ptr->pred_structure = EB_PRED_RANDOM_ACCESS;
 
-#if NEW_PRED_STRUCT
                 picture_control_set_ptr->hierarchical_layers_diff = 0;
 
                 picture_control_set_ptr->init_pred_struct_position_flag = EB_FALSE;
-#endif
+
                 picture_control_set_ptr->target_bit_rate = sequence_control_set_ptr->static_config.target_bit_rate;
 
                 ReleasePrevPictureFromReorderQueue(
@@ -1972,7 +1871,6 @@ void* picture_decision_kernel(void *input_ptr)
                         sequence_control_set_ptr->static_config.hierarchical_levels : 
                         encode_context_ptr->previous_mini_gop_hierarchical_levels;
 
-#if NEW_PRED_STRUCT
                     {
                         if (encode_context_ptr->pre_assignment_buffer_count > 1)
                         {
@@ -1995,7 +1893,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 encode_context_ptr);
                         }
                     }
-#endif
+
                     GenerateMiniGopRps(
                         context_ptr,
                         encode_context_ptr);
@@ -2005,7 +1903,6 @@ void* picture_decision_kernel(void *input_ptr)
                     for (miniGopIndex = 0; miniGopIndex < context_ptr->totalNumberOfMiniGops; ++miniGopIndex) {
 
                         preAssignmentBufferFirstPassFlag = EB_TRUE;
-#if NEW_PRED_STRUCT
                         {
                             update_base_layer_reference_queue_dependent_count(
                                 context_ptr,
@@ -2016,7 +1913,7 @@ void* picture_decision_kernel(void *input_ptr)
                             // Keep track of the number of hierarchical levels of the latest implemented mini GOP
                             encode_context_ptr->previous_mini_gop_hierarchical_levels = context_ptr->miniGopHierarchicalLevels[miniGopIndex];
                         }
-#endif
+
                         // 1st Loop over Pictures in the Pre-Assignment Buffer
                         for (pictureIndex = context_ptr->miniGopStartIndex[miniGopIndex]; pictureIndex <= context_ptr->miniGopEndIndex[miniGopIndex]; ++pictureIndex) {
 
@@ -2081,12 +1978,10 @@ void* picture_decision_kernel(void *input_ptr)
                                     (encode_context_ptr->pre_assignment_buffer_eos_flag) ? P_SLICE :
                                     B_SLICE;
                             }
-#if NEW_PRED_STRUCT
                             // If mini GOP switch, reset position
                             encode_context_ptr->pred_struct_position = (picture_control_set_ptr->init_pred_struct_position_flag) ?
                                 picture_control_set_ptr->pred_struct_ptr->initPicIndex :
                                 encode_context_ptr->pred_struct_position;
-#endif
 
                             // If Intra, reset position
                             if (picture_control_set_ptr->idr_flag == EB_TRUE) {
@@ -2239,11 +2134,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 picture_control_set_ptr,
                                 encode_context_ptr,
                                 context_ptr,
-#if NEW_PRED_STRUCT
                                 pictureIndex - context_ptr->miniGopStartIndex[miniGopIndex]);
-#else
-                                pictureIndex);
-#endif
                             picture_control_set_ptr->allow_comp_inter_inter = 0;
                             picture_control_set_ptr->is_skip_mode_allowed = 0;
 
@@ -2300,12 +2191,10 @@ void* picture_decision_kernel(void *input_ptr)
                                     picture_control_set_ptr->av1_cm->ref_frame_sign_bias[BWDREF_FRAME] = 1;
                             }
 
-#if SC_DETECT_GOP
                             if (picture_control_set_ptr->slice_type == I_SLICE)
                                 context_ptr->last_i_picture_sc_detection = picture_control_set_ptr->sc_content_detected;
                             else
                                 picture_control_set_ptr->sc_content_detected = context_ptr->last_i_picture_sc_detection;
-#endif
 
                             // ME Kernel Multi-Processes Signal(s) derivation
                             signal_derivation_multi_processes_oq(
@@ -2313,22 +2202,9 @@ void* picture_decision_kernel(void *input_ptr)
 
                             // Set the default settings of  subpel
                             picture_control_set_ptr->use_subpel_flag = 1;
-#if !CHROMA_BLIND
-                            // Set the default settings of  chroma
-                            picture_control_set_ptr->chroma_mode = PictureLevelChromaSettings(
-                                sequence_control_set_ptr->input_resolution,
-                                picture_control_set_ptr->enc_mode,
-                                picture_control_set_ptr->slice_type,
-                                picture_control_set_ptr->temporal_layer_index,
-                                picture_control_set_ptr->is_used_as_reference_flag);
-#endif
 
                             picture_control_set_ptr->use_src_ref = EB_FALSE;
-#if DISABLE_IN_LOOP_ME
                             picture_control_set_ptr->enable_in_loop_motion_estimation_flag = EB_FALSE;
-#else
-                            picture_control_set_ptr->enable_in_loop_motion_estimation_flag = sequence_control_set_ptr->static_config.in_loop_me_flag && picture_control_set_ptr->slice_type != I_SLICE ? EB_TRUE : EB_FALSE;
-#endif
                             picture_control_set_ptr->limit_ois_to_dc_mode_flag = EB_FALSE;
                             picture_control_set_ptr->cu8x8_mode = CU_8x8_MODE_0;
 

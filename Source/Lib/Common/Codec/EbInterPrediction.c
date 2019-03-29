@@ -963,7 +963,6 @@ int32_t is_inter_block(const MbModeInfo *mbmi);
 block_size scale_chroma_bsize(block_size bsize, int32_t subsampling_x,
     int32_t subsampling_y);
 
-#if ICOPY
 // A special 2-tap bilinear filter for IntraBC chroma. IntraBC uses full pixel
 // MV for luma. If sub-sampling exists, chroma may possibly use half-pel MV.
 DECLARE_ALIGNED(256, static const int16_t, av1_intrabc_bilinear_filter[2]) = {
@@ -996,8 +995,6 @@ static void convolve_2d_for_intrabc(const uint8_t *src, int src_stride,
             (InterpFilterParams *)filter_params_y, 0, 0, conv_params);
     }
 }
-#endif
-#if ICOPY_10B
 static void highbd_convolve_2d_for_intrabc(const uint16_t *src, int src_stride,
     uint16_t *dst, int dst_stride, int w,
     int h, int subpel_x_q4,
@@ -1024,16 +1021,13 @@ static void highbd_convolve_2d_for_intrabc(const uint16_t *src, int src_stride,
             conv_params, bd);
     }
 }
-#endif
 EbErrorType av1_inter_prediction(
     PictureControlSet_t                    *picture_control_set_ptr,
     uint32_t                                interp_filters,
     CodingUnit_t                           *cu_ptr,
     uint8_t                                 ref_frame_type,
     MvUnit_t                               *mv_unit,
-#if ICOPY
     uint8_t                                  use_intrabc,
-#endif
     uint16_t                                pu_origin_x,
     uint16_t                                pu_origin_y,
     uint8_t                                 bwidth,
@@ -1043,9 +1037,7 @@ EbErrorType av1_inter_prediction(
     EbPictureBufferDesc_t                  *prediction_ptr,
     uint16_t                                dst_origin_x,
     uint16_t                                dst_origin_y,
-#if CHROMA_BLIND
     EbBool                                  perform_chroma,
-#endif
     EbAsm                                   asm_type)
 {
     (void)asm_type;
@@ -1074,13 +1066,8 @@ EbErrorType av1_inter_prediction(
     //for this case: only uniPred is allowed.
 
     int32_t sub8x8_inter = 0;
-#if CHROMA_BLIND
     if(perform_chroma && (blk_geom->has_uv && (blk_geom->bwidth == 4 || blk_geom->bheight == 4)))
-#else
-    if (blk_geom->has_uv &&
-        (blk_geom->bwidth == 4 || blk_geom->bheight == 4)
-        )
-#endif
+
     {
 
         //CHKN setup input param
@@ -1106,9 +1093,7 @@ EbErrorType av1_inter_prediction(
             av1_set_ref_frame(rf, ref_frame_type);
             for (miY = 0; miY < (blk_geom->bheight >> MI_SIZE_LOG2); miY++) {
                 for (miX = 0; miX < (blk_geom->bwidth >> MI_SIZE_LOG2); miX++) {
-#if ICOPY
                     miPtr[miX + miY * xd->mi_stride].mbmi.use_intrabc = use_intrabc;
-#endif
                     miPtr[miX + miY * xd->mi_stride].mbmi.ref_frame[0] = rf[0];
                     if (mv_unit->predDirection == UNI_PRED_LIST_0) {
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
@@ -1141,11 +1126,7 @@ EbErrorType av1_inter_prediction(
         sub8x8_inter = (block_size_wide[bsize] < 8 && ss_x) ||
             (block_size_high[bsize] < 8 && ss_y);
 
-#if ICOPY
         if (use_intrabc) sub8x8_inter = 0;
-#else
-        //if (is_intrabc) sub8x8_inter = 0;
-#endif
 
         // For sub8x8 chroma blocks, we may be covering more than one luma block's
         // worth of pixels. Thus (mi_x, mi_y) may not be the correct coordinates for
@@ -1323,11 +1304,8 @@ EbErrorType av1_inter_prediction(
             subpel_x,
             subpel_y,
             &conv_params);
-#if CHROMA_BLIND
         if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
-#else
-        if (blk_geom->has_uv && sub8x8_inter == 0) {
-#endif
+
             //List0-Cb
             src_ptr = ref_pic_list0->bufferCb + (ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list0->strideCb;
             dst_ptr = prediction_ptr->bufferCb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->strideCb;
@@ -1344,12 +1322,10 @@ EbErrorType av1_inter_prediction(
             av1_get_convolve_filter_params(interp_filters, &filter_params_x,
                 &filter_params_y, blk_geom->bwidth_uv, blk_geom->bheight_uv);
 
-#if ICOPY 
             if (use_intrabc && (subpel_x != 0 || subpel_y != 0))
                 convolve_2d_for_intrabc((const uint8_t *)src_ptr, src_stride, dst_ptr, dst_stride, blk_geom->bwidth_uv, blk_geom->bheight_uv, subpel_x,
                     subpel_y, &conv_params);
             else
-#endif
             convolve[subpel_x != 0][subpel_y != 0][is_compound](
                 src_ptr,
                 src_stride,
@@ -1376,12 +1352,10 @@ EbErrorType av1_inter_prediction(
             src_ptr = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
             conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstCr, 64, is_compound, EB_8BIT);
 
-#if ICOPY 
             if (use_intrabc && (subpel_x != 0 || subpel_y != 0))
                 convolve_2d_for_intrabc((const uint8_t *)src_ptr, src_stride, dst_ptr, dst_stride, blk_geom->bwidth_uv, blk_geom->bheight_uv, subpel_x,
                     subpel_y, &conv_params);
             else
-#endif
             convolve[subpel_x != 0][subpel_y != 0][is_compound](
                 src_ptr,
                 src_stride,
@@ -1430,11 +1404,8 @@ EbErrorType av1_inter_prediction(
             subpel_x,
             subpel_y,
             &conv_params);
-#if CHROMA_BLIND
         if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
-#else
-        if (blk_geom->has_uv && sub8x8_inter == 0) {
-#endif
+
             //List0-Cb
             src_ptr = ref_pic_list1->bufferCb + (ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->strideCb;
             dst_ptr = prediction_ptr->bufferCb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->strideCb;
@@ -1540,9 +1511,7 @@ EbErrorType AV1MDInterPrediction(
     ModeDecisionContext_t                   *md_context_ptr,
     CodingUnit_t                            *cu_ptr,
     MvUnit_t                                *mv_unit,
-#if ICOPY_10B
     uint8_t                                 use_intrabc,
-#endif
     uint16_t                                 pu_origin_x,
     uint16_t                                 pu_origin_y,
     uint8_t                                  bwidth,
@@ -1552,9 +1521,7 @@ EbErrorType AV1MDInterPrediction(
     EbPictureBufferDesc_t                   *prediction_ptr,
     uint16_t                                 dst_origin_x,
     uint16_t                                 dst_origin_y,
-#if CHROMA_BLIND
     EbBool                                  perform_chroma,
-#endif
     EbAsm                                    asm_type)
 {
     EbErrorType  return_error = EB_ErrorNone;
@@ -1585,13 +1552,7 @@ EbErrorType AV1MDInterPrediction(
    //for this case: only uniPred is allowed.
 
     int32_t sub8x8_inter = 0;
-#if CHROMA_BLIND
     if (perform_chroma && blk_geom->has_uv && (blk_geom->bwidth == 4 || blk_geom->bheight == 4))
-#else
-    if (blk_geom->has_uv &&
-        (blk_geom->bwidth == 4 || blk_geom->bheight == 4)
-        )
-#endif
     {
 
         //CHKN setup input param
@@ -1617,9 +1578,7 @@ EbErrorType AV1MDInterPrediction(
             av1_set_ref_frame(rf, ref_frame_type);
             for (miY = 0; miY < (blk_geom->bheight >> MI_SIZE_LOG2); miY++) {
                 for (miX = 0; miX < (blk_geom->bwidth >> MI_SIZE_LOG2); miX++) {
-#if ICOPY_10B
                     miPtr[miX + miY * xd->mi_stride].mbmi.use_intrabc = use_intrabc;
-#endif
                     miPtr[miX + miY * xd->mi_stride].mbmi.ref_frame[0] = rf[0];
                     if (mv_unit->predDirection == UNI_PRED_LIST_0) {
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
@@ -1652,11 +1611,7 @@ EbErrorType AV1MDInterPrediction(
         sub8x8_inter = (block_size_wide[bsize] < 8 && ss_x) ||
             (block_size_high[bsize] < 8 && ss_y);
 
-#if ICOPY_10B
         if (use_intrabc) sub8x8_inter = 0;
-#else
-        //if (is_intrabc) sub8x8_inter = 0;
-#endif
         // For sub8x8 chroma blocks, we may be covering more than one luma block's
         // worth of pixels. Thus (mi_x, mi_y) may not be the correct coordinates for
         // the top-left corner of the prediction source - the correct top-left corner
@@ -1878,11 +1833,7 @@ EbErrorType AV1MDInterPrediction(
             subpel_y,
             &conv_params);
 
-#if CHROMA_BLIND
         if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
-#else
-        if (blk_geom->has_uv && sub8x8_inter == 0) {
-#endif
             //List0-Cb
             src_ptr = (uint16_t*)ref_pic_list0->bufferCb + (ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list0->strideCb;
             dst_ptr = prediction_ptr->bufferCb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->strideCb;
@@ -1912,7 +1863,6 @@ EbErrorType AV1MDInterPrediction(
                 asm_type,
                 8);
 
-#if ICOPY_10B
             if (use_intrabc && (subpel_x != 0 || subpel_y != 0))
                 convolve_2d_for_intrabc(
                 (const uint8_t *)(context_ptr->mcp_context->local_reference_block8_bitl0->bufferCb + 4 + (4 * context_ptr->mcp_context->local_reference_block8_bitl0->strideCb)),
@@ -1920,7 +1870,6 @@ EbErrorType AV1MDInterPrediction(
                     dst_ptr, dst_stride, blk_geom->bwidth_uv, blk_geom->bheight_uv, subpel_x,
                     subpel_y, &conv_params);
             else
-#endif
             convolve[subpel_x != 0][subpel_y != 0][is_compound](
                 context_ptr->mcp_context->local_reference_block8_bitl0->bufferCb + 4 + (4 * context_ptr->mcp_context->local_reference_block8_bitl0->strideCb),
                 context_ptr->mcp_context->local_reference_block8_bitl0->strideCb,
@@ -1963,7 +1912,6 @@ EbErrorType AV1MDInterPrediction(
                 asm_type,
                 8);
 
-#if ICOPY_10B
             if (use_intrabc && (subpel_x != 0 || subpel_y != 0))
                 convolve_2d_for_intrabc(
                 (const uint8_t *)(context_ptr->mcp_context->local_reference_block8_bitl0->bufferCr + 4 + (4 * context_ptr->mcp_context->local_reference_block8_bitl0->strideCr)),
@@ -1971,7 +1919,6 @@ EbErrorType AV1MDInterPrediction(
                     dst_ptr, dst_stride, blk_geom->bwidth_uv, blk_geom->bheight_uv, subpel_x,
                     subpel_y, &conv_params);
             else
-#endif
             convolve[subpel_x != 0][subpel_y != 0][is_compound](
                 context_ptr->mcp_context->local_reference_block8_bitl0->bufferCr + 4 + (4 * context_ptr->mcp_context->local_reference_block8_bitl1->strideCr),
                 context_ptr->mcp_context->local_reference_block8_bitl0->strideCr,
@@ -2048,11 +1995,8 @@ EbErrorType AV1MDInterPrediction(
             subpel_y,
             &conv_params);
 
-#if CHROMA_BLIND
         if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
-#else
-        if (blk_geom->has_uv && sub8x8_inter == 0) {
-#endif
+
             //List1-Cb
             src_ptr = (uint16_t*)ref_pic_list1->bufferCb + (ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->strideCb;
             dst_ptr = prediction_ptr->bufferCb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->strideCb;
@@ -2151,9 +2095,7 @@ EbErrorType av1_inter_prediction_hbd(
     uint8_t                                   ref_frame_type,
     CodingUnit_t                           *cu_ptr,
     MvUnit_t                               *mv_unit,
-#if ICOPY_10B
     uint8_t                                  use_intrabc,
-#endif
     uint16_t                                  pu_origin_x,
     uint16_t                                  pu_origin_y,
     uint8_t                                   bwidth,
@@ -2221,9 +2163,7 @@ EbErrorType av1_inter_prediction_hbd(
             for (miY = 0; miY < (blk_geom->bheight >> MI_SIZE_LOG2); miY++) {
                 for (miX = 0; miX < (blk_geom->bwidth >> MI_SIZE_LOG2); miX++) {
                     miPtr[miX + miY * xd->mi_stride].mbmi.ref_frame[0] = rf[0];
-#if ICOPY_10B
                     miPtr[miX + miY * xd->mi_stride].mbmi.use_intrabc = use_intrabc;
-#endif
                     if (mv_unit->predDirection == UNI_PRED_LIST_0) {
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
@@ -2255,11 +2195,7 @@ EbErrorType av1_inter_prediction_hbd(
         sub8x8_inter = (block_size_wide[bsize] < 8 && ss_x) ||
             (block_size_high[bsize] < 8 && ss_y);
 
-#if ICOPY_10B
         if (use_intrabc) sub8x8_inter = 0;
-#else
-        //if (is_intrabc) sub8x8_inter = 0;
-#endif
         // For sub8x8 chroma blocks, we may be covering more than one luma block's
         // worth of pixels. Thus (mi_x, mi_y) may not be the correct coordinates for
         // the top-left corner of the prediction source - the correct top-left corner
@@ -2461,7 +2397,6 @@ EbErrorType av1_inter_prediction_hbd(
             av1_get_convolve_filter_params(cu_ptr->interp_filters, &filter_params_x,
                 &filter_params_y, blk_geom->bwidth_uv, blk_geom->bheight_uv);
 
-#if ICOPY_10B
             if (use_intrabc && (subpel_x != 0 || subpel_y != 0))
                 highbd_convolve_2d_for_intrabc(
                 (const uint16_t *)src_ptr,
@@ -2469,7 +2404,6 @@ EbErrorType av1_inter_prediction_hbd(
                     dst_ptr, dst_stride, blk_geom->bwidth_uv, blk_geom->bheight_uv, subpel_x,
                     subpel_y, &conv_params, bit_depth);
             else
-#endif
             convolveHbd[subpel_x != 0][subpel_y != 0][is_compound](
                 src_ptr,
                 src_stride,
@@ -2500,7 +2434,6 @@ EbErrorType av1_inter_prediction_hbd(
             subpel_y = mv_q4.row & SUBPEL_MASK;
             src_ptr = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
             conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstCr, 64, is_compound, bit_depth);
-#if ICOPY_10B
             if (use_intrabc && (subpel_x != 0 || subpel_y != 0))
                 highbd_convolve_2d_for_intrabc(
                 (const uint16_t *)src_ptr,
@@ -2508,7 +2441,6 @@ EbErrorType av1_inter_prediction_hbd(
                     dst_ptr, dst_stride, blk_geom->bwidth_uv, blk_geom->bheight_uv, subpel_x,
                     subpel_y, &conv_params, bit_depth);
             else
-#endif
             convolveHbd[subpel_x != 0][subpel_y != 0][is_compound](
                 src_ptr,
                 src_stride,
@@ -2661,9 +2593,8 @@ EbErrorType warped_motion_prediction(
     uint16_t                                dst_origin_y,
     EbWarpedMotionParams                   *wm_params,
     uint8_t                                 bit_depth,
-#if CHROMA_BLIND
     EbBool                                  perform_chroma,
-#endif
+
     EbAsm                                   asm_type)
 {
     (void)asm_type;
@@ -2717,9 +2648,8 @@ EbErrorType warped_motion_prediction(
             return return_error;
 
 
-#if CHROMA_BLIND
         if (perform_chroma) {
-#endif
+
          if (blk_geom->bwidth >= 16  && blk_geom->bheight >= 16 ) {
             // Cb
             src_ptr = ref_pic_list0->bufferCb + ref_pic_list0->origin_x / 2 + (ref_pic_list0->origin_y / 2) * ref_pic_list0->strideCb;
@@ -2836,9 +2766,8 @@ EbErrorType warped_motion_prediction(
                 subpel_y,
                 &conv_params);
             }
-#if CHROMA_BLIND
         }
-#endif
+
     } else { // HBD
         uint16_t *src_ptr;
         uint16_t *dst_ptr;
@@ -2873,9 +2802,8 @@ EbErrorType warped_motion_prediction(
         if (!blk_geom->has_uv)
             return return_error;
 
-#if CHROMA_BLIND
         if (perform_chroma) {
-#endif
+
          if (blk_geom->bwidth >= 16  && blk_geom->bheight >= 16 ) {
             // Cb
             src_ptr = (uint16_t *)ref_pic_list0->bufferCb + ref_pic_list0->origin_x / 2 + (ref_pic_list0->origin_y / 2) * ref_pic_list0->strideCb;
@@ -2992,9 +2920,7 @@ EbErrorType warped_motion_prediction(
                 &conv_params,
                 bit_depth);
             }
-#if CHROMA_BLIND
         }
-#endif
     }
 
     return return_error;
@@ -3072,9 +2998,7 @@ EbErrorType warped_motion_prediction_md(
 
     if (!blk_geom->has_uv)
         return return_error;
-#if CHROMA_BLIND
     if (md_context_ptr->chroma_level == CHROMA_MODE_0) {
-#endif
 
      if (blk_geom->bwidth >= 16  && blk_geom->bheight >= 16 ) {
         // Cb
@@ -3239,9 +3163,8 @@ EbErrorType warped_motion_prediction_md(
             subpel_y,
             &conv_params);
         }
-#if CHROMA_BLIND
     }
-#endif
+
     return return_error;
 }
 
@@ -3676,13 +3599,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
 
 
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;//&cpi->common;
-#if CHROMA_BLIND_IF_SEARCH
     EbBool use_uv = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level == CHROMA_MODE_0 &&
         picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level != IT_SEARCH_FAST_LOOP_UV_BLIND) ? EB_TRUE : EB_FALSE;
     const int32_t num_planes = use_uv ? MAX_MB_PLANE : 1;
-#else
-    const int32_t num_planes = MAX_MB_PLANE;
-#endif
 
     int32_t i;
     int32_t tmp_rate;
@@ -3713,9 +3632,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         md_context_ptr->cu_ptr,
         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
         &mv_unit,
-#if ICOPY
         0,
-#endif
         md_context_ptr->cu_origin_x,
         md_context_ptr->cu_origin_y,
         md_context_ptr->blk_geom->bwidth,
@@ -3725,13 +3642,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         prediction_ptr,
         md_context_ptr->blk_geom->origin_x,
         md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND_IF_SEARCH
         use_uv,
-#else
-#if CHROMA_BLIND
-        md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
-#endif
         asm_type);
 
 
@@ -3797,9 +3708,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         md_context_ptr->cu_ptr,
                         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
                         &mv_unit,
-#if ICOPY
                         0,
-#endif
                         md_context_ptr->cu_origin_x,
                         md_context_ptr->cu_origin_y,
                         md_context_ptr->blk_geom->bwidth,
@@ -3809,13 +3718,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND_IF_SEARCH
                         use_uv,
-#else
-#if CHROMA_BLIND
-                        md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
-#endif
                         asm_type);
 
                     model_rd_for_sb(
@@ -3878,9 +3781,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         md_context_ptr->cu_ptr,
                         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
                         &mv_unit,
-#if ICOPY
                         0,
-#endif
                         md_context_ptr->cu_origin_x,
                         md_context_ptr->cu_origin_y,
                         md_context_ptr->blk_geom->bwidth,
@@ -3890,13 +3791,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND_IF_SEARCH
                         use_uv,
-#else
-#if CHROMA_BLIND
-                        md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
-#endif
                         asm_type);
 
 
@@ -3962,9 +3857,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         md_context_ptr->cu_ptr,
                         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
                         &mv_unit,
-#if ICOPY
                         0,
-#endif
                         md_context_ptr->cu_origin_x,
                         md_context_ptr->cu_origin_y,
                         md_context_ptr->blk_geom->bwidth,
@@ -3974,13 +3867,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND_IF_SEARCH
                         use_uv,
-#else
-#if CHROMA_BLIND
-                        md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
-#endif
                         asm_type);
 
                     model_rd_for_sb(
@@ -4055,17 +3942,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
 
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;//&cpi->common;
 
-#if CHROMA_BLIND_IF_SEARCH
     EbBool use_uv = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level == CHROMA_MODE_0 &&
         picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level != IT_SEARCH_FAST_LOOP_UV_BLIND) ? EB_TRUE : EB_FALSE;
     const int32_t num_planes = use_uv ? MAX_MB_PLANE : 1;
-#else
-#if CHROMA_BLIND
-    const int32_t num_planes = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level == CHROMA_MODE_0) ? MAX_MB_PLANE : 1;
-#else
-    const int32_t num_planes = md_context_ptr->blk_geom->has_uv ? MAX_MB_PLANE : 1;
-#endif
-#endif
     int32_t i;
     int32_t tmp_rate;
     int64_t tmp_dist;
@@ -4096,9 +3975,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         md_context_ptr,
         md_context_ptr->cu_ptr,
         &mv_unit,
-#if ICOPY_10B
         0,//use_intra_bc
-#endif
         md_context_ptr->cu_origin_x,
         md_context_ptr->cu_origin_y,
         md_context_ptr->blk_geom->bwidth,
@@ -4108,13 +3985,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         prediction_ptr,
         md_context_ptr->blk_geom->origin_x,
         md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND_IF_SEARCH
         use_uv,
-#else
-#if CHROMA_BLIND
-        md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
-#endif
         asm_type);
 
     model_rd_for_sb(
@@ -4179,9 +4050,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         md_context_ptr,
                         md_context_ptr->cu_ptr,
                         &mv_unit,
-#if ICOPY_10B
                         0,//use_intra_bc
-#endif
                         md_context_ptr->cu_origin_x,
                         md_context_ptr->cu_origin_y,
                         md_context_ptr->blk_geom->bwidth,
@@ -4191,13 +4060,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND_IF_SEARCH
                         use_uv,
-#else
-#if CHROMA_BLIND
-                        md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
-#endif
                         asm_type);
 
                     model_rd_for_sb(
@@ -4261,9 +4124,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         md_context_ptr,
                         md_context_ptr->cu_ptr,
                         &mv_unit,
-#if ICOPY_10B
                         0,//use_intra_bc
-#endif
                         md_context_ptr->cu_origin_x,
                         md_context_ptr->cu_origin_y,
                         md_context_ptr->blk_geom->bwidth,
@@ -4273,13 +4134,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND_IF_SEARCH
                         use_uv,
-#else
-#if CHROMA_BLIND
-                        md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
-#endif
                         asm_type);
 
 
@@ -4346,9 +4201,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         md_context_ptr,
                         md_context_ptr->cu_ptr,
                         &mv_unit,
-#if ICOPY_10B
                         0,//use_intra_bc
-#endif
                         md_context_ptr->cu_origin_x,
                         md_context_ptr->cu_origin_y,
                         md_context_ptr->blk_geom->bwidth,
@@ -4358,13 +4211,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         prediction_ptr,
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND_IF_SEARCH
                         use_uv,
-#else
-#if CHROMA_BLIND
-                        md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
-#endif
                         asm_type);
 
                     model_rd_for_sb(
@@ -4418,16 +4265,10 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
 
 EbErrorType inter_pu_prediction_av1(
     ModeDecisionContext_t                  *md_context_ptr,
-#if !CHROMA_BLIND
-    uint32_t                                  component_mask,
-#endif
     PictureControlSet_t                    *picture_control_set_ptr,
     ModeDecisionCandidateBuffer_t          *candidate_buffer_ptr,
     EbAsm                                   asm_type)
 {
-#if !CHROMA_BLIND
-    (void)component_mask;
-#endif
     EbErrorType            return_error = EB_ErrorNone;
     EbPictureBufferDesc_t  *ref_pic_list0;
     EbPictureBufferDesc_t  *ref_pic_list1 = NULL;
@@ -4448,12 +4289,10 @@ EbErrorType inter_pu_prediction_av1(
     int32_t rs = 0;
     int64_t rd = INT64_MAX;
 
-#if ICOPY
     if (candidate_buffer_ptr->candidate_ptr->use_intrabc)
     {
         if (is16bit) {
 
-#if ICOPY_10B
             ref_pic_list0 = ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture16bit;
 
             AV1InterPrediction10BitMD(
@@ -4473,24 +4312,16 @@ EbErrorType inter_pu_prediction_av1(
                 candidate_buffer_ptr->prediction_ptr,
                 md_context_ptr->blk_geom->origin_x,
                 md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND
                 md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
+
                 asm_type);
 
             return return_error;
-#else
-            printf("ibc_need_10bit\n");
-            ref_pic_list0 = NULL;
-#endif
 
 
         }
         else {
             ref_pic_list0 = ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture;
-#if !ICOPY_10B
-        }
-#endif
         av1_inter_prediction(
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->interp_filters,
@@ -4507,17 +4338,12 @@ EbErrorType inter_pu_prediction_av1(
             candidate_buffer_ptr->prediction_ptr,
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND
             md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
             asm_type);
 
         return return_error;
-#if ICOPY_10B
         }
-#endif
     }
-#endif
 
     if (is16bit) {
         ref_pic_list0 = ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr)->referencePicture16bit;
@@ -4568,9 +4394,8 @@ EbErrorType inter_pu_prediction_av1(
                 md_context_ptr->blk_geom->origin_y,
                 &candidate_ptr->wm_params,
                 (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
-#if CHROMA_BLIND
                 md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
+
                 asm_type);
         }
         return return_error;
@@ -4610,9 +4435,7 @@ EbErrorType inter_pu_prediction_av1(
             md_context_ptr,
             md_context_ptr->cu_ptr,
             &mv_unit,
-#if ICOPY_10B
             0,//use_intra_bc
-#endif
             md_context_ptr->cu_origin_x,
             md_context_ptr->cu_origin_y,
             md_context_ptr->blk_geom->bwidth,
@@ -4622,9 +4445,8 @@ EbErrorType inter_pu_prediction_av1(
             candidate_buffer_ptr->prediction_ptr,
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND
             md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
+
             asm_type);
     } else {
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
@@ -4651,9 +4473,7 @@ EbErrorType inter_pu_prediction_av1(
             md_context_ptr->cu_ptr,
             candidate_buffer_ptr->candidate_ptr->ref_frame_type,
             &mv_unit,
-#if ICOPY
             candidate_buffer_ptr->candidate_ptr->use_intrabc,
-#endif
             md_context_ptr->cu_origin_x,
             md_context_ptr->cu_origin_y,
             md_context_ptr->blk_geom->bwidth,
@@ -4663,9 +4483,8 @@ EbErrorType inter_pu_prediction_av1(
             candidate_buffer_ptr->prediction_ptr,
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
-#if CHROMA_BLIND
             md_context_ptr->chroma_level == CHROMA_MODE_0,
-#endif
+
             asm_type);
     }
 
@@ -4707,425 +4526,6 @@ void RoundMvOnTheFly(
     return;
 }
 
-#if !CHROMA_BLIND
-EbErrorType inter2_nx2_n_pu_prediction_avc(
-    ModeDecisionContext_t                  *md_context_ptr,
-    uint32_t                                  component_mask,
-    PictureControlSet_t                    *picture_control_set_ptr,
-    ModeDecisionCandidateBuffer_t          *candidate_buffer_ptr,
-    EbAsm                                  asm_type)
-{
-    EbErrorType            return_error = EB_ErrorNone;
-    EbPictureBufferDesc_t  *ref_pic_list0;
-    EbPictureBufferDesc_t  *ref_pic_list1;
-    EbReferenceObject_t    *referenceObject;
-
-    uint32_t                  refList0PosX;
-    uint32_t                  refList0PosY;
-    uint32_t                  refList1PosX;
-    uint32_t                  refList1PosY;
-    const uint32_t pu_origin_x = md_context_ptr->cu_origin_x;
-    const uint32_t pu_origin_y = md_context_ptr->cu_origin_y;
-    const uint32_t pu_width = md_context_ptr->blk_geom->bwidth;
-    const uint32_t pu_height = md_context_ptr->blk_geom->bheight;
-    const uint32_t pu_index = md_context_ptr->pu_itr;
-
-    //InterPredictionContext_t  *context_ptr = (InterPredictionContext_t*)prediction_context_ptr;
-    InterPredictionContext_t *context_ptr = (InterPredictionContext_t*)(md_context_ptr->inter_prediction_context);
-    uint32_t                  puOriginIndex;
-    uint32_t                  puChromaOriginIndex;
-    EncodeContext_t        *encode_context_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr))->encode_context_ptr;
-
-    SequenceControlSet_t* sequence_control_set_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr));
-    EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
-
-    int16_t motionVector_x;
-    int16_t motionVector_y;
-    (void)asm_type;
-
-    if (md_context_ptr->cu_use_ref_src_flag)
-
-        is16bit = EB_FALSE;
-
-    switch (candidate_buffer_ptr->candidate_ptr->prediction_direction[pu_index]) {
-    case UNI_PRED_LIST_0:
-
-        if (is16bit) {
-
-            //----NOTE------- In 10Bit mode, the below Prediction code assumes no fractionnal whatsover
-
-            puOriginIndex = ((pu_origin_y  & (63)) * 64) + (pu_origin_x & (63));
-            puChromaOriginIndex = (((pu_origin_y  & (63)) * 32) + (pu_origin_x & (63))) >> 1;
-            referenceObject = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
-            ref_pic_list0 = (EbPictureBufferDesc_t*)referenceObject->referencePicture16bit;
-
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L0;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L0;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-            //all the input quantites are in Qpel resolution
-            refList0PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-
-
-            refList0PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-
-
-            estimate_uni_pred_interpolation_avc_lumaRef10Bit(
-                ref_pic_list0,
-                refList0PosX,
-                refList0PosY,
-                pu_width,
-                pu_height,
-                candidate_buffer_ptr->prediction_ptr,
-                puOriginIndex,
-                puChromaOriginIndex,
-                component_mask,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                candidate_buffer_ptr->sub_sampled_pred,
-                candidate_buffer_ptr->sub_sampled_pred_chroma,
-                asm_type);
-
-
-        }
-        else {
-            puOriginIndex = ((pu_origin_y  & (63)) * 64) + (pu_origin_x & (63));
-            puChromaOriginIndex = (((pu_origin_y  & (63)) * 32) + (pu_origin_x & (63))) >> 1;
-            referenceObject = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
-            ref_pic_list0 = (EbPictureBufferDesc_t*)referenceObject->referencePicture;
-
-            if (md_context_ptr->cu_use_ref_src_flag)
-                ref_pic_list0 = referenceObject->refDenSrcPicture;
-            else
-                ref_pic_list0 = referenceObject->referencePicture;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L0;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L0;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-            //all the input quantites are in Qpel resolution
-            refList0PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-
-
-            refList0PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            uni_pred_i_free_ref8_bit(
-                ref_pic_list0,
-                refList0PosX,
-                refList0PosY,
-                pu_width,
-                pu_height,
-                candidate_buffer_ptr->prediction_ptr,
-                puOriginIndex,
-                puChromaOriginIndex,
-                component_mask,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                candidate_buffer_ptr->sub_sampled_pred,
-                candidate_buffer_ptr->sub_sampled_pred_chroma,
-                asm_type); // temp until mismatch fixed
-        }
-
-        break;
-
-    case UNI_PRED_LIST_1:
-        puOriginIndex = ((pu_origin_y  & (63)) * 64) + (pu_origin_x & (63));
-        puChromaOriginIndex = (((pu_origin_y  & (63)) * 32) + (pu_origin_x & (63))) >> 1;
-        referenceObject = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
-
-        if (is16bit) {
-
-            ref_pic_list1 = (EbPictureBufferDesc_t*)referenceObject->referencePicture16bit;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L1;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L1;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-            refList1PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList1PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            estimate_uni_pred_interpolation_avc_lumaRef10Bit(
-                ref_pic_list1,
-                refList1PosX,
-                refList1PosY,
-                pu_width,
-                pu_height,
-                candidate_buffer_ptr->prediction_ptr,
-                puOriginIndex,
-                puChromaOriginIndex,
-                component_mask,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                candidate_buffer_ptr->sub_sampled_pred,
-                candidate_buffer_ptr->sub_sampled_pred_chroma,
-                asm_type);
-
-
-
-        }
-        else {
-            ref_pic_list1 = (EbPictureBufferDesc_t*)referenceObject->referencePicture;
-
-            if (md_context_ptr->cu_use_ref_src_flag)
-                ref_pic_list1 = referenceObject->refDenSrcPicture;
-            else
-                ref_pic_list1 = referenceObject->referencePicture;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L1;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L1;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-            refList1PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList1PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            uni_pred_i_free_ref8_bit(
-                ref_pic_list1,
-                refList1PosX,
-                refList1PosY,
-                pu_width,
-                pu_height,
-                candidate_buffer_ptr->prediction_ptr,
-                puOriginIndex,
-                puChromaOriginIndex,
-                component_mask,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                candidate_buffer_ptr->sub_sampled_pred,
-                candidate_buffer_ptr->sub_sampled_pred_chroma,
-                asm_type); // temp until mismatch fixed
-
-        }
-
-        break;
-
-    case BI_PRED:
-        puOriginIndex = ((pu_origin_y  & (63)) * 64) + (pu_origin_x & (63));
-        puChromaOriginIndex = (((pu_origin_y  & (63)) * 32) + (pu_origin_x & (63))) >> 1;
-
-        // List0
-        referenceObject = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
-
-        if (is16bit) {
-
-            ref_pic_list0 = (EbPictureBufferDesc_t*)referenceObject->referencePicture16bit;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L0;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L0;
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-            refList0PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList0PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            // List1
-            referenceObject = (EbReferenceObject_t *)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
-            ref_pic_list1 = (EbPictureBufferDesc_t*)referenceObject->referencePicture16bit;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L1;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L1;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-            refList1PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList1PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            //to test getting the preLoad fucntion inside to do it just prior to interpolation, also seperate chroma from luma (do all luma, all Cb, all Cr).
-            estimate_bi_pred_interpolation_avc_luma_ref10_bit(
-                ref_pic_list0,
-                ref_pic_list1,
-                refList0PosX,
-                refList0PosY,
-                refList1PosX,
-                refList1PosY,
-                pu_width,
-                pu_height,
-                candidate_buffer_ptr->prediction_ptr,
-                puOriginIndex,
-                puChromaOriginIndex,
-                component_mask,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf1,
-                context_ptr->mcp_context->avc_style_mcp_two_d_interpolation_first_pass_filter_result_buf,
-                candidate_buffer_ptr->sub_sampled_pred,
-                candidate_buffer_ptr->sub_sampled_pred_chroma,
-                asm_type);
-
-
-
-        }
-        else {
-            ref_pic_list0 = (EbPictureBufferDesc_t*)referenceObject->referencePicture;
-
-            if (md_context_ptr->cu_use_ref_src_flag)
-                ref_pic_list0 = referenceObject->refDenSrcPicture;
-            else
-                ref_pic_list0 = referenceObject->referencePicture;
-
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L0;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L0;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-            refList0PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList0PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            // List1
-            referenceObject = (EbReferenceObject_t *)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
-            ref_pic_list1 = (EbPictureBufferDesc_t*)referenceObject->referencePicture;
-
-            if (md_context_ptr->cu_use_ref_src_flag)
-                ref_pic_list1 = referenceObject->refDenSrcPicture;
-            else
-                ref_pic_list1 = referenceObject->referencePicture;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L1;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L1;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-            refList1PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList1PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            bi_pred_i_free_ref8_bit(
-                ref_pic_list0,
-                ref_pic_list1,
-                refList0PosX,
-                refList0PosY,
-                refList1PosX,
-                refList1PosY,
-                pu_width,
-                pu_height,
-                candidate_buffer_ptr->prediction_ptr,
-                puOriginIndex,
-                puChromaOriginIndex,
-                component_mask,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf1,
-                context_ptr->mcp_context->avc_style_mcp_two_d_interpolation_first_pass_filter_result_buf,
-                candidate_buffer_ptr->sub_sampled_pred,
-                candidate_buffer_ptr->sub_sampled_pred_chroma,
-                asm_type); // temp until mismatch fixed
-        }
-
-        break;
-
-    default:
-        CHECK_REPORT_ERROR_NC(
-            encode_context_ptr->app_callback_ptr,
-            EB_ENC_INTER_PRED_ERROR0);
-        break;
-    }
-
-    return return_error;
-}
-#endif
 
 
 /***************************************************
@@ -5160,524 +4560,6 @@ void UnPackReferenceLumaBlock(
     );
 }
 
-#if !CHROMA_BLIND
-EbErrorType inter2_nx2_n_pu_prediction_avc_style(
-    ModeDecisionContext_t                  *md_context_ptr,
-    uint32_t                                  component_mask,
-    PictureControlSet_t                    *picture_control_set_ptr,
-    ModeDecisionCandidateBuffer_t          *candidate_buffer_ptr,
-    EbAsm                                  asm_type)
-{
-    EbErrorType            return_error = EB_ErrorNone;
-    EbPictureBufferDesc_t  *ref_pic_list0;
-    EbPictureBufferDesc_t  *ref_pic_list1;
-    EbReferenceObject_t    *referenceObject;
-
-    uint32_t                  refList0PosX;
-    uint32_t                  refList0PosY;
-    uint32_t                  refList1PosX;
-    uint32_t                  refList1PosY;
-    const uint32_t pu_origin_x = md_context_ptr->cu_origin_x;
-    const uint32_t pu_origin_y = md_context_ptr->cu_origin_y;
-    const uint32_t pu_width = md_context_ptr->blk_geom->bwidth;
-    const uint32_t pu_height = md_context_ptr->blk_geom->bheight;
-    const uint32_t pu_index = md_context_ptr->pu_itr;
-
-
-    //InterPredictionContext_t  *context_ptr = (InterPredictionContext_t*)prediction_context_ptr;
-    InterPredictionContext_t *context_ptr = (InterPredictionContext_t*)(md_context_ptr->inter_prediction_context);
-    uint32_t                  puOriginIndex;
-    uint32_t                  puChromaOriginIndex;
-    EncodeContext_t        *encode_context_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr))->encode_context_ptr;
-
-    SequenceControlSet_t* sequence_control_set_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr));
-    EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
-
-    int16_t motionVector_x;
-    int16_t motionVector_y;
-    (void)asm_type;
-
-    EbBool   subSamplePredFlag = candidate_buffer_ptr->sub_sampled_pred;
-
-    if (md_context_ptr->cu_use_ref_src_flag)
-
-        is16bit = EB_FALSE;
-
-    switch (candidate_buffer_ptr->candidate_ptr->prediction_direction[pu_index]) {
-    case UNI_PRED_LIST_0:
-
-        if (is16bit) {
-
-            //----NOTE------- In 10Bit mode, the below Prediction code assumes no fractionnal whatsover
-
-            puOriginIndex = ((pu_origin_y  & (63)) * 64) + (pu_origin_x & (63));
-            puChromaOriginIndex = (((pu_origin_y  & (63)) * 32) + (pu_origin_x & (63))) >> 1;
-            referenceObject = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
-            ref_pic_list0 = (EbPictureBufferDesc_t*)referenceObject->referencePicture16bit;
-
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L0;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L0;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-            //all the input quantites are in Qpel resolution
-            refList0PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-
-
-            refList0PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-
-            if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
-
-                UnPackReferenceLumaBlock(
-                    ref_pic_list0,
-                    refList0PosX,
-                    refList0PosY,
-                    pu_width,
-                    pu_height,
-                    context_ptr->mcp_context->local_reference_block8_bitl0,
-                    candidate_buffer_ptr->sub_sampled_pred,
-                    asm_type);
-
-                estimate_uni_pred_interpolation_unpacked_avc_style(
-                    context_ptr->mcp_context->local_reference_block8_bitl0,
-                    refList0PosX,
-                    refList0PosY,
-                    pu_width,
-                    pu_height,
-                    candidate_buffer_ptr->prediction_ptr,
-                    puOriginIndex,
-                    puChromaOriginIndex,
-                    component_mask,
-                    context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                    subSamplePredFlag,
-                    asm_type); // temp until mismatch fixed
-            }
-
-            if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
-
-
-                estimate_uni_pred_interpolation_avc_chroma_ref10_bit(
-                    ref_pic_list0,
-                    refList0PosX,
-                    refList0PosY,
-                    pu_width,
-                    pu_height,
-                    candidate_buffer_ptr->prediction_ptr,
-                    puOriginIndex,
-                    puChromaOriginIndex,
-                    component_mask,
-                    context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                    candidate_buffer_ptr->sub_sampled_pred,
-                    asm_type);
-            }
-
-
-        }
-        else {
-            puOriginIndex = ((pu_origin_y  & (63)) * 64) + (pu_origin_x & (63));
-            puChromaOriginIndex = (((pu_origin_y  & (63)) * 32) + (pu_origin_x & (63))) >> 1;
-            referenceObject = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
-            ref_pic_list0 = (EbPictureBufferDesc_t*)referenceObject->referencePicture;
-
-            if (md_context_ptr->cu_use_ref_src_flag)
-                ref_pic_list0 = referenceObject->refDenSrcPicture;
-            else
-                ref_pic_list0 = referenceObject->referencePicture;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L0;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L0;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-            //all the input quantites are in Qpel resolution
-            refList0PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-
-
-            refList0PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            estimate_uni_pred_interpolation_avc_luma(
-                ref_pic_list0,
-                refList0PosX,
-                refList0PosY,
-                pu_width,
-                pu_height,
-                candidate_buffer_ptr->prediction_ptr,
-                puOriginIndex,
-                puChromaOriginIndex,
-                component_mask,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                subSamplePredFlag,
-                asm_type); // temp until mismatch fixed
-        }
-
-        break;
-
-    case UNI_PRED_LIST_1:
-        puOriginIndex = ((pu_origin_y  & (63)) * 64) + (pu_origin_x & (63));
-        puChromaOriginIndex = (((pu_origin_y  & (63)) * 32) + (pu_origin_x & (63))) >> 1;
-        referenceObject = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
-
-        if (is16bit) {
-
-            ref_pic_list1 = (EbPictureBufferDesc_t*)referenceObject->referencePicture16bit;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L1;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L1;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-            refList1PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList1PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
-
-                UnPackReferenceLumaBlock(
-                    ref_pic_list1,
-                    refList1PosX,
-                    refList1PosY,
-                    pu_width,
-                    pu_height,
-                    context_ptr->mcp_context->local_reference_block8_bitl1,
-                    candidate_buffer_ptr->sub_sampled_pred,
-                    asm_type);
-
-                estimate_uni_pred_interpolation_unpacked_avc_style(
-                    context_ptr->mcp_context->local_reference_block8_bitl1,
-                    refList1PosX,
-                    refList1PosY,
-                    pu_width,
-                    pu_height,
-                    candidate_buffer_ptr->prediction_ptr,
-                    puOriginIndex,
-                    puChromaOriginIndex,
-                    component_mask,
-                    context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf1,
-                    subSamplePredFlag,
-                    asm_type);
-            }
-
-            if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
-
-                estimate_uni_pred_interpolation_avc_chroma_ref10_bit(
-                    ref_pic_list1,
-                    refList1PosX,
-                    refList1PosY,
-                    pu_width,
-                    pu_height,
-                    candidate_buffer_ptr->prediction_ptr,
-                    puOriginIndex,
-                    puChromaOriginIndex,
-                    component_mask,
-                    context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                    candidate_buffer_ptr->sub_sampled_pred,
-                    asm_type);
-            }
-
-
-
-        }
-        else {
-            ref_pic_list1 = (EbPictureBufferDesc_t*)referenceObject->referencePicture;
-
-            if (md_context_ptr->cu_use_ref_src_flag)
-                ref_pic_list1 = referenceObject->refDenSrcPicture;
-            else
-                ref_pic_list1 = referenceObject->referencePicture;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L1;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L1;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-
-            refList1PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList1PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-
-            estimate_uni_pred_interpolation_avc_luma(
-                ref_pic_list1,
-                refList1PosX,
-                refList1PosY,
-                pu_width,
-                pu_height,
-                candidate_buffer_ptr->prediction_ptr,
-                puOriginIndex,
-                puChromaOriginIndex,
-                component_mask,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                subSamplePredFlag,
-                asm_type); // temp until mismatch fixed
-        }
-
-        break;
-
-    case BI_PRED:
-        puOriginIndex = ((pu_origin_y  & (63)) * 64) + (pu_origin_x & (63));
-        puChromaOriginIndex = (((pu_origin_y  & (63)) * 32) + (pu_origin_x & (63))) >> 1;
-
-        // List0
-        referenceObject = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
-
-        if (is16bit) {
-
-            ref_pic_list0 = (EbPictureBufferDesc_t*)referenceObject->referencePicture16bit;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L0;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L0;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-            refList0PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList0PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            // List1
-            referenceObject = (EbReferenceObject_t *)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
-            ref_pic_list1 = (EbPictureBufferDesc_t*)referenceObject->referencePicture16bit;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L1;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L1;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-            refList1PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList1PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
-
-                UnPackReferenceLumaBlock(
-                    ref_pic_list0,
-                    refList0PosX,
-                    refList0PosY,
-                    pu_width,
-                    pu_height,
-                    context_ptr->mcp_context->local_reference_block8_bitl0,
-                    candidate_buffer_ptr->sub_sampled_pred,
-                    asm_type);
-                UnPackReferenceLumaBlock(
-                    ref_pic_list1,
-                    refList1PosX,
-                    refList1PosY,
-                    pu_width,
-                    pu_height,
-                    context_ptr->mcp_context->local_reference_block8_bitl1,
-                    candidate_buffer_ptr->sub_sampled_pred,
-                    asm_type);
-
-                estimate_bi_pred_interpolation_unpacked_avc_style(
-                    context_ptr->mcp_context->local_reference_block8_bitl0,
-                    context_ptr->mcp_context->local_reference_block8_bitl1,
-                    refList0PosX,
-                    refList0PosY,
-                    refList1PosX,
-                    refList1PosY,
-                    pu_width,
-                    pu_height,
-                    candidate_buffer_ptr->prediction_ptr,
-                    puOriginIndex,
-                    puChromaOriginIndex,
-                    component_mask,
-                    context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                    context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf1,
-                    context_ptr->mcp_context->avc_style_mcp_two_d_interpolation_first_pass_filter_result_buf,
-                    subSamplePredFlag,
-                    asm_type); // temp until mismatch fixed
-            }
-            if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
-                //to test getting the preLoad fucntion inside to do it just prior to interpolation, also seperate chroma from luma (do all luma, all Cb, all Cr).
-                estimate_bi_pred_interpolation_avc_chroma_ref10_bit(
-                    ref_pic_list0,
-                    ref_pic_list1,
-                    refList0PosX,
-                    refList0PosY,
-                    refList1PosX,
-                    refList1PosY,
-                    pu_width,
-                    pu_height,
-                    candidate_buffer_ptr->prediction_ptr,
-                    puOriginIndex,
-                    puChromaOriginIndex,
-                    component_mask,
-                    context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                    context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf1,
-                    context_ptr->mcp_context->avc_style_mcp_two_d_interpolation_first_pass_filter_result_buf,
-                    candidate_buffer_ptr->sub_sampled_pred,
-                    asm_type);
-            }
-
-        }
-        else {
-            ref_pic_list0 = (EbPictureBufferDesc_t*)referenceObject->referencePicture;
-
-            if (md_context_ptr->cu_use_ref_src_flag)
-                ref_pic_list0 = referenceObject->refDenSrcPicture;
-            else
-                ref_pic_list0 = referenceObject->referencePicture;
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L0;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L0;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-            refList0PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList0PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list0->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-
-
-            // List1
-            referenceObject = (EbReferenceObject_t *)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
-            ref_pic_list1 = (EbPictureBufferDesc_t*)referenceObject->referencePicture;
-
-            if (md_context_ptr->cu_use_ref_src_flag)
-                ref_pic_list1 = referenceObject->refDenSrcPicture;
-            else
-                ref_pic_list1 = referenceObject->referencePicture;
-
-
-            motionVector_x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L1;
-            motionVector_y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L1;
-
-            motionVector_x = motionVector_x >> 1;
-            motionVector_y = motionVector_y >> 1;
-
-            if (md_context_ptr->round_mv_to_integer) {
-                RoundMvOnTheFly(
-                    &motionVector_x,
-                    &motionVector_y);
-            }
-
-
-            refList1PosX = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->width) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_x << 2) + REFPADD_QPEL + motionVector_x))
-            );
-            refList1PosY = (uint32_t)CLIP3((int32_t)MVBOUNDLOW,
-                (int32_t)(((ref_pic_list1->height) << 2) + MVBOUNDHIGH),
-                (int32_t)(((pu_origin_y << 2) + REFPADD_QPEL + motionVector_y))
-            );
-
-            estimate_bi_pred_interpolation_avc_luma(
-                ref_pic_list0,
-                ref_pic_list1,
-                refList0PosX,
-                refList0PosY,
-                refList1PosX,
-                refList1PosY,
-                pu_width,
-                pu_height,
-                candidate_buffer_ptr->prediction_ptr,
-                puOriginIndex,
-                puChromaOriginIndex,
-                component_mask,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf0,
-                context_ptr->mcp_context->avc_style_mcp_intermediate_result_buf1,
-                context_ptr->mcp_context->avc_style_mcp_two_d_interpolation_first_pass_filter_result_buf,
-                subSamplePredFlag,
-                asm_type); // temp until mismatch fixed
-        }
-
-        break;
-
-    default:
-        CHECK_REPORT_ERROR_NC(
-            encode_context_ptr->app_callback_ptr,
-            EB_ENC_INTER_PRED_ERROR0);
-        break;
-    }
-
-    return return_error;
-}
-#endif
 /** choose_mvp_idx_v2 function is used to choose the best AMVP candidate.
     @param *candidate_ptr(output)
         candidate_ptr points to the prediction result.

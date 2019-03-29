@@ -236,12 +236,10 @@ extern "C" {
         Yv12BufferConfig             *aomBuffDsc
     );
 
-#if ICOPY_10B
     void link_Eb_to_aom_buffer_desc_8bit(
         EbPictureBufferDesc_t          *picBuffDsc,
         Yv12BufferConfig             *aomBuffDsc
     );
-#endif
 
     typedef struct aom_codec_frame_buffer {
         uint8_t *data; /**< pointer to the data buffer */

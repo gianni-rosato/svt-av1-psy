@@ -113,11 +113,7 @@ extern "C" {
 
     static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControlSet_t *pcsPtr,
         SequenceControlSet_t    *scsPtr) {
-#if AV1_UPGRADE
         return !pcsPtr->error_resilient_mode &&
-#else
-        return !pcsPtr->error_resilient_mode && !pcsPtr->large_scale_tile &&
-#endif
             scsPtr->enable_ref_frame_mvs &&
             scsPtr->enable_order_hint && !frame_is_intra_only(pcsPtr);
     }

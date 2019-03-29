@@ -214,22 +214,14 @@ void update_recon_neighbor_array(
         get_neighbor_array_unit_top_index(
             na_unit_ptr,
             pic_origin_x) * na_unit_ptr->unit_size;
-#if OPT_MEMCPY
     EB_MEMCPY(dst_ptr, src_ptr_top, block_width);
-#else
-    memcpy(dst_ptr, src_ptr_top, block_width);
-#endif
 
 
     dst_ptr = na_unit_ptr->leftArray +
         get_neighbor_array_unit_left_index(
             na_unit_ptr,
             pic_origin_y) * na_unit_ptr->unit_size;
-#if OPT_MEMCPY
     EB_MEMCPY(dst_ptr, src_ptr_left, block_height);
-#else
-    memcpy(dst_ptr, src_ptr_left, block_height);
-#endif
 
 
     //na_unit_ptr->topLeftArray[ (MAX_PICTURE_HEIGHT_SIZE>>is_chroma) + pic_origin_x - pic_origin_y] = srcPtr2[block_height-1];
