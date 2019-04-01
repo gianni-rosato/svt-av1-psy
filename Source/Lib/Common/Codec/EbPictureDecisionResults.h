@@ -14,7 +14,7 @@
  **************************************/
 typedef struct PictureDecisionResults_s
 {
-    EbObjectWrapper_t   *pictureControlSetWrapperPtr;
+    EbObjectWrapper   *picture_control_set_wrapper_ptr;
     uint32_t               segment_index;
 } PictureDecisionResults_t;
 

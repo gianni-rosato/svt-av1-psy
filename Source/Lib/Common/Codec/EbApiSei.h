@@ -124,7 +124,7 @@ extern "C" {
         uint32_t                  log2MaxMvLengthHorizontal;
         uint32_t                  log2MaxMvLengthVertical;
 
-        AppHrdParameters_t     *hrdParametersPtr;
+        AppHrdParameters_t       *hrdParametersPtr;
 
     } AppVideoUsabilityInfo_t;
 

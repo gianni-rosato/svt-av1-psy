@@ -1422,7 +1422,7 @@ void update_mi_map(
     uint32_t                        cu_origin_x,
     uint32_t                        cu_origin_y,
     const BlockGeom                *blk_geom,
-    const CodedUnitStats_t         *cu_stats,
+    const CodedUnitStats         *cu_stats,
     PictureControlSet_t            *picture_control_set_ptr)
 {
     UNUSED(cu_stats);

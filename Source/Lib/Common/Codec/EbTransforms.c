@@ -1204,7 +1204,7 @@ void mat_mult(
 }
 
 void av1_gen_fwd_stage_range(int8_t *stage_range_col, int8_t *stage_range_row,
-    const TXFM_2D_FLIP_CFG *cfg, int32_t bd) {
+    const Txfm2DFlipCfg *cfg, int32_t bd) {
     // Take the shift from the larger dimension in the rectangular case.
     const int8_t *shift = cfg->shift;
     // i < MAX_TXFM_STAGE_NUM will mute above array bounds warning
@@ -3659,8 +3659,8 @@ void av1_fidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
 }
 
 
-static INLINE TxfmFunc fwd_txfm_type_to_func(TXFM_TYPE txfm_type) {
-    switch (txfm_type) {
+static INLINE TxfmFunc fwd_txfm_type_to_func(TxfmType TxfmType) {
+    switch (TxfmType) {
     case TXFM_TYPE_DCT4: return av1_fdct4_new;
     case TXFM_TYPE_DCT8: return av1_fdct8_new;
     case TXFM_TYPE_DCT16: return av1_fdct16_new;
@@ -3702,7 +3702,7 @@ static INLINE void Av1TranformTwoDCore_c(
     int16_t                     *input,
     uint32_t                      input_stride,
     int32_t                      *output,
-    const TXFM_2D_FLIP_CFG      *cfg,
+    const Txfm2DFlipCfg      *cfg,
     int32_t                      *buf,
     uint8_t                        bit_depth)
 {
@@ -4159,8 +4159,8 @@ void av1_fdct32_pf_new(const int32_t *input, int32_t *output, int8_t cos_bit,
        bf1[31] = bf0[31];*/
     range_check(stage, input, bf1, size, stage_range[stage]);
 }
-static INLINE TxfmFunc fwd_txfm_pf_type_to_func(TXFM_TYPE txfm_type) {
-    switch (txfm_type) {
+static INLINE TxfmFunc fwd_txfm_pf_type_to_func(TxfmType TxfmType) {
+    switch (TxfmType) {
     case TXFM_TYPE_DCT4: return av1_fdct4_new;
     case TXFM_TYPE_DCT8: return av1_fdct8_new;
     case TXFM_TYPE_DCT16: return av1_fdct16_new;
@@ -4182,7 +4182,7 @@ static INLINE void Av1TranformTwoDCore_pf_c(
     int16_t                     *input,
     uint32_t                      inputStride,
     int32_t                      *output,
-    const TXFM_2D_FLIP_CFG      *cfg,
+    const Txfm2DFlipCfg      *cfg,
     int32_t                      *buf,
     uint8_t                        bit_depth)
 {
@@ -4299,10 +4299,10 @@ static INLINE void Av1TranformTwoDCore_pf_c(
         assert(0);
     }
 }
-static INLINE void set_flip_cfg(TxType tx_type, TXFM_2D_FLIP_CFG *cfg) {
+static INLINE void set_flip_cfg(TxType tx_type, Txfm2DFlipCfg *cfg) {
     get_flip_cfg(tx_type, &cfg->ud_flip, &cfg->lr_flip);
 }
-static INLINE void set_fwd_txfm_non_scale_range(TXFM_2D_FLIP_CFG *cfg) {
+static INLINE void set_fwd_txfm_non_scale_range(Txfm2DFlipCfg *cfg) {
     const int32_t txh_idx = get_txh_idx(cfg->tx_size);
     av1_zero(cfg->stage_range_col);
     av1_zero(cfg->stage_range_row);
@@ -4329,7 +4329,7 @@ static INLINE void set_fwd_txfm_non_scale_range(TXFM_2D_FLIP_CFG *cfg) {
 void Av1TransformConfig(
     TxType tx_type,
     TxSize tx_size,
-    TXFM_2D_FLIP_CFG *cfg)
+    Txfm2DFlipCfg *cfg)
 {
     assert(cfg != NULL);
     cfg->tx_size = tx_size;
@@ -4415,7 +4415,7 @@ void Av1TransformTwoD_64x64_c(
     uint8_t          bit_depth)
 {
     int32_t intermediateTransformBuffer[64 * 64];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     //av1_get_fwd_txfm_cfg
     Av1TransformConfig(
         transform_type,
@@ -4440,7 +4440,7 @@ void Av1TransformTwoD_32x32_c(
     uint8_t          bit_depth)
 {
     int32_t intermediateTransformBuffer[32 * 32];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
 
     Av1TransformConfig(
         transform_type,
@@ -4464,7 +4464,7 @@ void av1_fwd_txfm2d_pf_32x32_c(
     uint8_t          bit_depth)
 {
     int32_t intermediateTransformBuffer[32 * 32];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
 
     memset(output, 0, 1024 * sizeof(int32_t));
 
@@ -4490,7 +4490,7 @@ void Av1TransformTwoD_16x16_c(
     uint8_t          bit_depth)
 {
     int32_t intermediateTransformBuffer[16 * 16];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
 
     Av1TransformConfig(
         transform_type,
@@ -4514,7 +4514,7 @@ void Av1TransformTwoD_8x8_c(
     uint8_t          bit_depth)
 {
     int32_t intermediateTransformBuffer[8 * 8];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
 
     Av1TransformConfig(
         transform_type,
@@ -4538,7 +4538,7 @@ void Av1TransformTwoD_4x4_c(
     uint8_t          bit_depth)
 {
     int32_t intermediateTransformBuffer[4 * 4];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
 
     Av1TransformConfig(
         transform_type,
@@ -4564,7 +4564,7 @@ void av1_fwd_txfm2d_64x32_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[64 * 32];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/
     Av1TransformConfig
     (transform_type, TX_64X32, &cfg);
@@ -4608,7 +4608,7 @@ void av1_fwd_txfm2d_32x64_c(
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[32 * 64];
 
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/
     Av1TransformConfig(transform_type, TX_32X64, &cfg);
     /*fwd_txfm2d_c*/
@@ -4650,7 +4650,7 @@ void av1_fwd_txfm2d_64x16_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[64 * 16];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/
     Av1TransformConfig
     (transform_type, TX_64X16, &cfg);
@@ -4693,7 +4693,7 @@ void av1_fwd_txfm2d_16x64_c(
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[16 * 64];
 
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/
     Av1TransformConfig(transform_type, TX_16X64, &cfg);
     /*fwd_txfm2d_c*/
@@ -4737,7 +4737,7 @@ void av1_fwd_txfm2d_32x16_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[32 * 16];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_32X16, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
@@ -4755,7 +4755,7 @@ void av1_fwd_txfm2d_16x32_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[16 * 32];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_16X32, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
@@ -4773,7 +4773,7 @@ void av1_fwd_txfm2d_16x8_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[16 * 8];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_16X8, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
@@ -4791,7 +4791,7 @@ void av1_fwd_txfm2d_8x16_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[8 * 16];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_8X16, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
@@ -4809,7 +4809,7 @@ void av1_fwd_txfm2d_32x8_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[32 * 8];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_32X8, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
@@ -4827,7 +4827,7 @@ void av1_fwd_txfm2d_8x32_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[8 * 32];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_8X32, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
@@ -4845,7 +4845,7 @@ void av1_fwd_txfm2d_16x4_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[16 * 4];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_16X4, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
@@ -4863,7 +4863,7 @@ void av1_fwd_txfm2d_4x16_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[4 * 16];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_4X16, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
@@ -4881,7 +4881,7 @@ void av1_fwd_txfm2d_8x4_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[8 * 4];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_8X4, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
@@ -4899,7 +4899,7 @@ void av1_fwd_txfm2d_4x8_c(
     TxType        transform_type,
     uint8_t          bit_depth) {
     int32_t intermediateTransformBuffer[4 * 8];
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/Av1TransformConfig(transform_type, TX_4X8, &cfg);
     /*fwd_txfm2d_c*/Av1TranformTwoDCore_c(
         input,
@@ -5374,7 +5374,7 @@ EbErrorType encode_transform(
 void Av1InverseTransformConfig(
     TxType tx_type,
     TxSize tx_size,
-    TXFM_2D_FLIP_CFG *cfg)
+    Txfm2DFlipCfg *cfg)
 {
     assert(cfg != NULL);
     cfg->tx_size = tx_size;
@@ -5404,7 +5404,7 @@ void Av1InverseTransformConfig(
 void av1_gen_inv_stage_range(
     int8_t *stage_range_col,
     int8_t *stage_range_row,
-    const TXFM_2D_FLIP_CFG *cfg,
+    const Txfm2DFlipCfg *cfg,
     TxSize tx_size,
     int32_t bd)
 {
@@ -7753,8 +7753,8 @@ void av1_iidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
         output[i] = round_shift((int64_t)NewSqrt2 * 4 * input[i], NewSqrt2Bits);
     assert(stage_range[0] + NewSqrt2Bits <= 32);
 }
-static INLINE TxfmFunc inv_txfm_type_to_func(TXFM_TYPE txfm_type) {
-    switch (txfm_type) {
+static INLINE TxfmFunc inv_txfm_type_to_func(TxfmType TxfmType) {
+    switch (TxfmType) {
     case TXFM_TYPE_DCT4: return av1_idct4_new;
     case TXFM_TYPE_DCT8: return av1_idct8_new;
     case TXFM_TYPE_DCT16: return av1_idct16_new;
@@ -7791,7 +7791,7 @@ static INLINE TxfmFunc inv_txfm_type_to_func(TXFM_TYPE txfm_type) {
 //        }
 //    }
 //}
-static INLINE tran_high_t check_range(tran_high_t input, int32_t bd) {
+static INLINE TranHigh check_range(TranHigh input, int32_t bd) {
     // AV1 TX case
     // - 8 bit: signed 16 bit integer
     // - 10 bit: signed 18 bit integer
@@ -7803,10 +7803,10 @@ static INLINE tran_high_t check_range(tran_high_t input, int32_t bd) {
     assert(int_min <= input);
     assert(input <= int_max);
 #endif  // CONFIG_COEFFICIENT_RANGE_CHECKING
-    return (tran_high_t)clamp64(input, int_min, int_max);
+    return (TranHigh)clamp64(input, int_min, int_max);
 }
 #define HIGHBD_WRAPLOW(x, bd) ((int32_t)check_range((x), bd))
-static INLINE uint16_t highbd_clip_pixel_add(uint16_t dest, tran_high_t trans,
+static INLINE uint16_t highbd_clip_pixel_add(uint16_t dest, TranHigh trans,
     int32_t bd) {
     trans = HIGHBD_WRAPLOW(trans, bd);
     return clip_pixel_highbd(dest + (int32_t)trans, bd);
@@ -7816,7 +7816,7 @@ static INLINE void Av1InverseTransformTwoDCore_c(
     int32_t inpuStride,
     tran_low_t *output,
     int32_t ouputStride,
-    TXFM_2D_FLIP_CFG *cfg,
+    Txfm2DFlipCfg *cfg,
     int32_t *txfm_buf,
     TxSize tx_size,
     int32_t bd)
@@ -7912,7 +7912,7 @@ void Av1InverseTransformTwoD_4x4_c(
     uint8_t          bit_depth)
 {
     DECLARE_ALIGNED(32, int32_t, intermediateInverseTransformBuffer[4 * 4 + 4 + 4]);
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
 
     Av1InverseTransformConfig(
         transform_type,
@@ -7940,7 +7940,7 @@ void Av1InverseTransformTwoD_8x8_c(
     uint8_t          bit_depth)
 {
     DECLARE_ALIGNED(32, int32_t, intermediateInverseTransformBuffer[8 * 8 + 8 + 8]);
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
 
     Av1InverseTransformConfig(
         transform_type,
@@ -7968,7 +7968,7 @@ void Av1InverseTransformTwoD_16x16_c(
     uint8_t          bit_depth)
 {
     DECLARE_ALIGNED(32, int32_t, intermediateInverseTransformBuffer[16 * 16 + 16 + 16]);
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
 
     Av1InverseTransformConfig(
         transform_type,
@@ -7996,7 +7996,7 @@ void Av1InverseTransformTwoD_32x32_c(
     uint8_t          bit_depth)
 {
     DECLARE_ALIGNED(32, int32_t, intermediateInverseTransformBuffer[32 * 32 + 32 + 32]);
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
 
     Av1InverseTransformConfig(
         transform_type,
@@ -8039,7 +8039,7 @@ void Av1InverseTransformTwoD_64x64_c(
 
     DECLARE_ALIGNED(32, int32_t, intermediateInverseTransformBuffer[64 * 64 + 64 + 64]);
 
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
 
     Av1InverseTransformConfig(
         transform_type,
@@ -8152,7 +8152,7 @@ static const int32_t *cast_to_int32(const tran_low_t *input) {
     return (const int32_t *)input;
 }
 void av1_get_inv_txfm_cfg(TxType tx_type, TxSize tx_size,
-    TXFM_2D_FLIP_CFG *cfg) {
+    Txfm2DFlipCfg *cfg) {
     assert(cfg != NULL);
     cfg->tx_size = tx_size;
     set_flip_cfg(tx_type, cfg);
@@ -8178,7 +8178,7 @@ void av1_get_inv_txfm_cfg(TxType tx_type, TxSize tx_size,
     cfg->stage_num_row = av1_txfm_stage_num_list[cfg->txfm_type_row];
 }
 static INLINE void inv_txfm2d_add_c(const int32_t *input, uint16_t *output,
-    int32_t stride, TXFM_2D_FLIP_CFG *cfg,
+    int32_t stride, Txfm2DFlipCfg *cfg,
     int32_t *txfm_buf, TxSize tx_size,
     int32_t bd) {
     // Note when assigning txfm_size_col, we use the txfm_size from the
@@ -8268,7 +8268,7 @@ static INLINE void inv_txfm2d_add_facade(const int32_t *input, uint16_t *output,
     int32_t stride, int32_t *txfm_buf,
     TxType tx_type, TxSize tx_size,
     int32_t bd) {
-    TXFM_2D_FLIP_CFG cfg;
+    Txfm2DFlipCfg cfg;
     av1_get_inv_txfm_cfg(tx_type, tx_size, &cfg);
     // Forward shift sum uses larger square size, to be consistent with what
     // av1_gen_inv_stage_range() does for inverse shifts.
@@ -9097,7 +9097,7 @@ uint8_t ConstructPmTransCoeffShapingKnob(const uint16_t *masking_matrix, uint8_t
     }
 }
 void construct_pm_trans_coeff_shaping(
-    SequenceControlSet_t  *sequence_control_set_ptr)
+    SequenceControlSet  *sequence_control_set_ptr)
 {
 
     uint8_t resolutionIndex;                     // 4K or 1080p Index

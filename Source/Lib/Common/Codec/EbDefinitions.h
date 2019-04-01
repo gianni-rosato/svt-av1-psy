@@ -2169,7 +2169,7 @@ typedef enum EbPtrType {
 typedef struct EbMemoryMapEntry
 {
     EbPtr                    ptr;                       // points to a memory pointer
-    EbPtrType                ptrType;                   // pointer type
+    EbPtrType                ptr_type;                   // pointer type
 } EbMemoryMapEntry;
 
 // Rate Control
@@ -2191,9 +2191,9 @@ typedef struct EbMemoryMapEntry
 // Display Total Memory at the end of the memory allocations
 #define DISPLAY_MEMORY                                  0
 
-extern    EbMemoryMapEntry        *appMemoryMap;            // App Memory table
-extern    uint32_t                  *appMemoryMapIndex;       // App Memory index
-extern    uint64_t                  *totalAppMemory;          // App Memory malloc'd
+extern    EbMemoryMapEntry        *app_memory_map;            // App Memory table
+extern    uint32_t                  *app_memory_map_index;       // App Memory index
+extern    uint64_t                  *total_app_memory;          // App Memory malloc'd
 
 extern    EbMemoryMapEntry        *memory_map;               // library Memory table
 extern    uint32_t                  *memory_map_index;          // library memory index
@@ -2204,52 +2204,52 @@ extern    uint32_t                   lib_thread_count;
 extern    uint32_t                   libSemaphoreCount;
 extern    uint32_t                   libMutexCount;
 
-extern    uint32_t                   appMallocCount;
+extern    uint32_t                   app_malloc_count;
 
-#define EB_APP_MALLOC(type, pointer, n_elements, pointer_class, returnType) \
+#define EB_APP_MALLOC(type, pointer, n_elements, pointer_class, return_type) \
 pointer = (type)malloc(n_elements); \
 if (pointer == (type)EB_NULL){ \
-    return returnType; \
+    return return_type; \
     } \
     else { \
-    appMemoryMap[*(appMemoryMapIndex)].ptrType = pointer_class; \
-    appMemoryMap[(*(appMemoryMapIndex))++].ptr = pointer; \
+    app_memory_map[*(app_memory_map_index)].ptr_type = pointer_class; \
+    app_memory_map[(*(app_memory_map_index))++].ptr = pointer; \
     if (n_elements % 8 == 0) { \
-        *totalAppMemory += (n_elements); \
+        *total_app_memory += (n_elements); \
             } \
             else { \
-        *totalAppMemory += ((n_elements) + (8 - ((n_elements) % 8))); \
+        *total_app_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
-if (*(appMemoryMapIndex) >= MAX_APP_NUM_PTR) { \
-    return returnType; \
+if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
+    return return_type; \
         } \
-appMallocCount++;
+app_malloc_count++;
 
-#define EB_APP_MALLOC_NR(type, pointer, n_elements, pointer_class,returnType) \
-(void)returnType; \
+#define EB_APP_MALLOC_NR(type, pointer, n_elements, pointer_class,return_type) \
+(void)return_type; \
 pointer = (type)malloc(n_elements); \
 if (pointer == (type)EB_NULL){ \
-    returnType = EB_ErrorInsufficientResources; \
+    return_type = EB_ErrorInsufficientResources; \
     printf("Malloc has failed due to insuffucient resources"); \
     return; \
     } \
     else { \
-    appMemoryMap[*(appMemoryMapIndex)].ptrType = pointer_class; \
-    appMemoryMap[(*(appMemoryMapIndex))++].ptr = pointer; \
+    app_memory_map[*(app_memory_map_index)].ptr_type = pointer_class; \
+    app_memory_map[(*(app_memory_map_index))++].ptr = pointer; \
     if (n_elements % 8 == 0) { \
-        *totalAppMemory += (n_elements); \
+        *total_app_memory += (n_elements); \
             } \
             else { \
-        *totalAppMemory += ((n_elements) + (8 - ((n_elements) % 8))); \
+        *total_app_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
-if (*(appMemoryMapIndex) >= MAX_APP_NUM_PTR) { \
-    returnType = EB_ErrorInsufficientResources; \
+if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
+    return_type = EB_ErrorInsufficientResources; \
     printf("Malloc has failed due to insuffucient resources"); \
     return; \
         } \
-appMallocCount++;
+app_malloc_count++;
 
 #define ALVALUE 32
 
@@ -2260,7 +2260,7 @@ if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
     } \
     else { \
-    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
     memory_map[(*(memory_map_index))++].ptr = pointer; \
     if (n_elements % 8 == 0) { \
         *total_lib_memory += (n_elements); \
@@ -2281,7 +2281,7 @@ if (posix_memalign((void**)(&(pointer)), ALVALUE, n_elements) != 0) { \
         } \
             else { \
     pointer = (type) pointer;  \
-    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
     memory_map[(*(memory_map_index))++].ptr = pointer; \
     if (n_elements % 8 == 0) { \
         *total_lib_memory += (n_elements); \
@@ -2303,7 +2303,7 @@ if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
     } \
     else { \
-    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
     memory_map[(*(memory_map_index))++].ptr = pointer; \
     if (n_elements % 8 == 0) { \
         *total_lib_memory += (n_elements); \
@@ -2323,7 +2323,7 @@ if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
 } \
 else { \
-    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
     memory_map[(*(memory_map_index))++].ptr = pointer; \
     if (count % 8 == 0) { \
         *total_lib_memory += (count); \
@@ -2343,7 +2343,7 @@ if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
 } \
 else { \
-    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
     memory_map[(*(memory_map_index))++].ptr = pointer; \
     if (n_elements % 8 == 0) { \
         *total_lib_memory += (n_elements); \
@@ -2363,7 +2363,7 @@ if (pointer == (type)EB_NULL){ \
     return EB_ErrorInsufficientResources; \
 } \
 else { \
-    memory_map[*(memory_map_index)].ptrType = pointer_class; \
+    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
     memory_map[(*(memory_map_index))++].ptr = pointer; \
     if (n_elements % 8 == 0) { \
         *total_lib_memory += (n_elements); \
@@ -2386,8 +2386,8 @@ printf("Total Library Memory: %.2lf KB\n\n",*total_lib_memory/(double)1024);
 
 
 #define EB_APP_MEMORY() \
-printf("Total Number of Mallocs in App: %d\n", appMallocCount); \
-printf("Total App Memory: %.2lf KB\n\n",*totalAppMemory/(double)1024);
+printf("Total Number of Mallocs in App: %d\n", app_malloc_count); \
+printf("Total App Memory: %.2lf KB\n\n",*total_app_memory/(double)1024);
 
 #ifndef EOK
 #define EOK             ( 0 )
@@ -3365,14 +3365,14 @@ static const uint32_t MD_SCAN_TO_OIS_32x32_SCAN[CU_MAX_COUNT] =
                             ME/HME settings
 *******************************************************************************/
 //     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12    
-static const uint8_t EnableHmeLevel0Flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint8_t enable_hme_level0_flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_1080p_RANGE
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_4K_RANGE
 };
 
-static const uint16_t HmeLevel0TotalSearchAreaWidth[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint16_t hme_level0_total_search_area_width[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {
         {  48,   48,   48,   48,   48,   48,   48,   48,   48,   48,   48,   48,   48 },
         { 112,  112,  112,  112,  112,  112,   64,   64,   64,   64,   64,   64,   64 },
@@ -3412,7 +3412,7 @@ static const uint16_t HmeLevel0SearchAreaInWidthArrayRight[SC_MAX_LEVEL][INPUT_S
         {  64,   64,   64,   64,   64,   64,   64,   64,   64,   64,   64,   64,   64 }
     }
 };
-static const uint16_t HmeLevel0TotalSearchAreaHeight[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint16_t hme_level0_total_search_area_height[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {
         {  40,   40,   40,   40,   40,   40,   40,   40,   40,   40,   40,   40,   40 },
         {  64,   64,   64,   64,   64,   64,   48,   48,   48,   48,   48,   48,   48 },
@@ -3454,7 +3454,7 @@ static const uint16_t HmeLevel0SearchAreaInHeightArrayBottom[SC_MAX_LEVEL][INPUT
 
 // HME LEVEL 1
 //      M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
-static const uint8_t EnableHmeLevel1Flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint8_t enable_hme_level1_flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_1080p_RANGE
@@ -3514,7 +3514,7 @@ static const uint16_t HmeLevel1SearchAreaInHeightArrayBottom[SC_MAX_LEVEL][INPUT
 };
 // HME LEVEL 2
 //     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
-static const uint8_t EnableHmeLevel2Flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint8_t enable_hme_level2_flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_1080p_RANGE
@@ -3573,7 +3573,7 @@ static const uint16_t HmeLevel2SearchAreaInHeightArrayBottom[SC_MAX_LEVEL][INPUT
     }
 };
 
-static const uint16_t SearchAreaWidth[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint16_t search_area_width[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {
         {  64,   64,   64,   64,   64,   64,   48,   48,   48,   48,   48,    48,   48 },
         { 112,   64,   64,   64,   64,   64,   48,   48,   48,   48,   48,    48,   48 },
@@ -3586,7 +3586,7 @@ static const uint16_t SearchAreaWidth[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPOR
         { 640,  640,  448,  128,  128,  128,  128,   96,   80,   80,   80,    80,   80 }
     }
 };
-static const uint16_t SearchAreaHeight[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint16_t search_area_height[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {
         {  64,   64,   64,   32,   32,   32,   48,   48,   16,   16,   16,    16,   16 },
         { 112,   64,   64,   32,   32,   32,   48,   48,   16,   16,   16,    16,   16 },
@@ -3607,14 +3607,14 @@ static const uint16_t SearchAreaHeight[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPO
                             ME/HME settings
 *******************************************************************************/
 //     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12    
-static const uint8_t EnableHmeLevel0Flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint8_t enable_hme_level0_flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_1080p_RANGE
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_4K_RANGE
 };
 
-static const uint16_t HmeLevel0TotalSearchAreaWidth[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint16_t hme_level0_total_search_area_width[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {  48,   48,   48,   48,   48,   48,   48,   48,   48,   48,   48,   48,   48 },
     { 112,  112,  112,  112,  112,  112,   64,   64,   64,   64,   64,   64,   64 },
     { 128,  128,  128,  128,  128,  128,   96,   96,   96,   96,   96,   96,   96 },
@@ -3633,7 +3633,7 @@ static const uint16_t HmeLevel0SearchAreaInWidthArrayRight[INPUT_SIZE_COUNT][MAX
     {  64,   64,   64,   64,   64,   64,   48,   48,   48,   48,   48,   48,   48 },
     {  64,   64,   64,   64,   64,   64,   64,   64,   64,   64,   64,   64,   64 }
 };
-static const uint16_t HmeLevel0TotalSearchAreaHeight[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint16_t hme_level0_total_search_area_height[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {  40,   40,   40,   40,   40,   40,   40,   40,   40,   40,   40,   40,   40 },
     {  64,   64,   64,   64,   64,   64,   48,   48,   48,   48,   48,   48,   48 },
     {  80,   80,   80,   80,   80,   80,   48,   48,   48,   48,   48,   48,   48 },
@@ -3654,7 +3654,7 @@ static const uint16_t HmeLevel0SearchAreaInHeightArrayBottom[INPUT_SIZE_COUNT][M
 
 // HME LEVEL 1
 //      M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
-static const uint8_t EnableHmeLevel1Flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint8_t enable_hme_level1_flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_1080p_RANGE
@@ -3686,7 +3686,7 @@ static const uint16_t HmeLevel1SearchAreaInHeightArrayBottom[INPUT_SIZE_COUNT][M
 };
 // HME LEVEL 2
 //     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
-static const uint8_t EnableHmeLevel2Flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint8_t enable_hme_level2_flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,     1,    1 },      // INPUT_SIZE_1080p_RANGE
@@ -3717,13 +3717,13 @@ static const uint16_t HmeLevel2SearchAreaInHeightArrayBottom[INPUT_SIZE_COUNT][M
     {   8,    8,    8,    8,    8,    8,    4,    4,    4,    4,    4,     4,    4 }
 };
 
-static const uint8_t SearchAreaWidth[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint8_t search_area_width[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {  64,   64,   64,   64,   64,   64,   48,   48,   48,   48,   48,    48,   48 },
     { 112,   64,   64,   64,   64,   64,   48,   48,   48,   48,   48,    48,   48 },
     { 128,   64,   64,   64,   64,   64,   48,   48,   48,   48,   48,    48,   48 },
     { 128,   64,   64,   64,   64,   64,   48,   48,   48,   48,   48,    48,   48 }
 };
-static const uint8_t SearchAreaHeight[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+static const uint8_t search_area_height[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {  64,   64,   64,   32,   32,   32,   48,   48,   16,   16,   16,    16,   16 },
     { 112,   64,   64,   32,   32,   32,   48,   48,   16,   16,   16,    16,   16 },
     { 128,   64,   64,   32,   32,   32,   48,   48,   16,   16,   16,    16,   16 },

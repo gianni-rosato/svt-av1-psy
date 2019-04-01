@@ -56,26 +56,6 @@ extern "C" {
         TxSize                   txsize,
         uint64_t                 lambda);                                // input parameter, lambda for Luma
 
-    extern EbErrorType tu_calc_cost(
-        uint32_t                 cu_size,
-        ModeDecisionCandidate_t *candidate_ptr,
-        uint32_t                 tu_index,
-        uint32_t                 transform_size,
-        uint32_t                 transform_chroma_size,
-        uint32_t                 y_count_non_zero_coeffs,
-        uint32_t                 cb_count_non_zero_coeffs,
-        uint32_t                 cr_count_non_zero_coeffs,
-        uint64_t                 y_tu_distortion[DIST_CALC_TOTAL],
-        uint64_t                 cb_tu_distortion[DIST_CALC_TOTAL],
-        uint64_t                 cr_tu_distortion[DIST_CALC_TOTAL],
-        uint32_t                 component_mask,
-        uint64_t                *y_tu_coeff_bits,
-        uint64_t                *cb_tu_coeff_bits,
-        uint64_t                *cr_tu_coeff_bits,
-        uint32_t                 qp,
-        uint64_t                 lambda,
-        uint64_t                 lambda_chroma);
-
     extern EbErrorType av1_tu_calc_cost_luma(
         int16_t                  txb_skip_ctx,
         ModeDecisionCandidate_t *candidate_ptr,                        // input parameter, prediction result Ptr
@@ -87,47 +67,6 @@ extern "C" {
         uint64_t                *y_full_cost,
         uint64_t                 lambda);                              // input parameter, lambda for Luma
 
-    extern EbErrorType intra_luma_mode_context(
-        CodingUnit_t *cu_ptr,
-        uint32_t      luma_mode,
-        int32_t      *prediction_index);
-
-    extern EbErrorType intra2_nx2_n_fast_cost_islice(
-        CodingUnit_t                          *cu_ptr,
-        struct ModeDecisionCandidateBuffer_s  *candidate_buffer_ptr,
-        uint32_t                               qp,
-        uint64_t                               luma_distortion,
-        uint64_t                               chroma_distortion,
-        uint64_t                               lambda,
-        PictureControlSet_t                   *picture_control_set_ptr);
-
-    extern EbErrorType  merge_skip_full_cost(
-        LargestCodingUnit_t           *sb_ptr,
-        CodingUnit_t                  *cu_ptr,
-        uint32_t                       cu_size,
-        uint32_t                       cu_size_log2,
-        ModeDecisionCandidateBuffer_t *candidate_buffer_ptr,
-        uint32_t                       qp,
-        uint64_t                      *y_distortion,
-        uint64_t                      *cb_distortion,
-        uint64_t                      *cr_distortion,
-        uint64_t                       lambda,
-        uint64_t                       lambda_chroma,
-        uint64_t                      *y_coeff_bits,
-        uint64_t                      *cb_coeff_bits,
-        uint64_t                      *cr_coeff_bits,
-        uint32_t                       transform_size,
-        uint32_t                       transform_chroma_size,
-        PictureControlSet_t           *picture_control_set_ptr);
-
-    extern EbErrorType split_flag_rate(
-        ModeDecisionContext_t     *context_ptr,
-        CodingUnit_t              *cu_ptr,
-        uint32_t                   split_flag,
-        uint64_t                  *split_rate,
-        uint64_t                   lambda,
-        MdRateEstimationContext_t *md_rate_estimation_ptr,
-        uint32_t                   tb_max_depth);
                                   
 #define RDDIV_BITS 7
 
@@ -136,7 +75,7 @@ extern "C" {
    ((D) * (1 << RDDIV_BITS)))
 
     extern EbErrorType av1_split_flag_rate(
-        SequenceControlSet_t      *sequence_control_set_ptr,
+        SequenceControlSet      *sequence_control_set_ptr,
         ModeDecisionContext_t     *context_ptr,
         CodingUnit_t              *cu_ptr,
         uint32_t                   leaf_index,

@@ -37,10 +37,10 @@ EbErrorType eb_sequence_control_set_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    EbSequenceControlSetInitData_t *scsInitData = (EbSequenceControlSetInitData_t*)object_init_data_ptr;
+    EbSequenceControlSetInitData *scsInitData = (EbSequenceControlSetInitData*)object_init_data_ptr;
     uint32_t segment_index;
-    SequenceControlSet_t *sequence_control_set_ptr;
-    EB_MALLOC(SequenceControlSet_t*, sequence_control_set_ptr, sizeof(SequenceControlSet_t), EB_N_PTR);
+    SequenceControlSet *sequence_control_set_ptr;
+    EB_MALLOC(SequenceControlSet*, sequence_control_set_ptr, sizeof(SequenceControlSet), EB_N_PTR);
 
     *object_dbl_ptr = (EbPtr)sequence_control_set_ptr;
 
@@ -239,8 +239,8 @@ EbErrorType eb_sequence_control_set_ctor(
  * Sequence Control Set Copy
  ************************************************/
 EbErrorType copy_sequence_control_set(
-    SequenceControlSet_t *dst,
-    SequenceControlSet_t *src)
+    SequenceControlSet *dst,
+    SequenceControlSet *src)
 {
     uint32_t  writeCount = 0;
 
@@ -348,7 +348,7 @@ EbErrorType copy_sequence_control_set(
 }
 
 extern EbErrorType derive_input_resolution(
-    SequenceControlSet_t *sequenceControlSetPtr,
+    SequenceControlSet *sequenceControlSetPtr,
     uint32_t                  inputSize) {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -364,11 +364,11 @@ extern EbErrorType derive_input_resolution(
 }
 
 EbErrorType eb_sequence_control_set_instance_ctor(
-    EbSequenceControlSetInstance_t **object_dbl_ptr)
+    EbSequenceControlSetInstance **object_dbl_ptr)
 {
-    EbSequenceControlSetInitData_t scsInitData;
+    EbSequenceControlSetInitData scsInitData;
     EbErrorType return_error = EB_ErrorNone;
-    EB_MALLOC(EbSequenceControlSetInstance_t*, *object_dbl_ptr, sizeof(EbSequenceControlSetInstance_t), EB_N_PTR);
+    EB_MALLOC(EbSequenceControlSetInstance*, *object_dbl_ptr, sizeof(EbSequenceControlSetInstance), EB_N_PTR);
 
     scsInitData.sb_size = 64;
 
@@ -396,7 +396,7 @@ EbErrorType eb_sequence_control_set_instance_ctor(
 }
 
 extern EbErrorType sb_params_ctor(
-    SequenceControlSet_t *sequence_control_set_ptr) {
+    SequenceControlSet *sequence_control_set_ptr) {
 
     EbErrorType return_error = EB_ErrorNone;
 
@@ -405,7 +405,7 @@ extern EbErrorType sb_params_ctor(
 }
 
 extern EbErrorType sb_params_init(
-    SequenceControlSet_t *sequence_control_set_ptr) {
+    SequenceControlSet *sequence_control_set_ptr) {
 
     EbErrorType return_error = EB_ErrorNone;
     uint16_t    sb_index;
@@ -530,7 +530,7 @@ extern EbErrorType sb_params_init(
     return return_error;
 }
 
-EbErrorType sb_geom_init(SequenceControlSet_t * sequence_control_set_ptr)
+EbErrorType sb_geom_init(SequenceControlSet * sequence_control_set_ptr)
 {
     uint16_t    sb_index;
     uint16_t    md_scan_block_index;

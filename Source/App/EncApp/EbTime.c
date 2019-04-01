@@ -106,7 +106,7 @@ void EbSleep(
     }
 }
 void EbInjector(
-    uint64_t processedFrameCount,
+    uint64_t processed_frame_count,
     uint32_t injector_frame_rate){
 
 #if defined(__linux__) || defined(__APPLE__)
@@ -151,7 +151,7 @@ void EbInjector(
         elapsedTime = (double)(nowCount.QuadPart - startCount.QuadPart) / (double)counterFreq.QuadPart;
 #endif
 
-        predictedTime = (processedFrameCount - bufferFrames) * injectorInterval;
+        predictedTime = (processed_frame_count - bufferFrames) * injectorInterval;
         milliSecAhead = (int32_t)(1000 * (predictedTime - elapsedTime ));
         if (milliSecAhead>0)
         {

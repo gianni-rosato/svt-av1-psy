@@ -12,7 +12,7 @@
 /*
  * @struct Holds a prediction model for a sequence
  */
-typedef struct    RateControlModel_s {
+typedef struct    RateControlModel {
     /*
      * @variable uint32_t[64]. Predicted intra frame size for a given QP.
      * Indexed by QP. intraSizePrediction[15] references the estimated size of an
@@ -97,11 +97,11 @@ EbErrorType rate_control_model_ctor(EbRateControlModel **object_double_ptr);
  * @function rate_control_model_init. Initialize a model with data specific to a sequence.
  * Must be called before RateControlUpdateModel and RateControlGetQuantizer
  * @param {EbRateControlModel*} model_ptr.
- * @param {SequenceControlSet_t*} sequence_control_set_ptr. First frame used to initialize the model
+ * @param {SequenceControlSet*} sequence_control_set_ptr. First frame used to initialize the model
  * @return {EbErrorType}.
  */
 EbErrorType    rate_control_model_init(EbRateControlModel *model_ptr,
-                                    SequenceControlSet_t *sequence_control_set_ptr);
+                                    SequenceControlSet *sequence_control_set_ptr);
 
 /*
  * @function rate_control_update_model. Update a model with information from an encoded frame.

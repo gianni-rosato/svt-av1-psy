@@ -9,8 +9,8 @@
 #include "EbPictureBufferDesc.h"
 
 
-EbErrorType EbTransQuantBuffersCtor(
-    EbTransQuantBuffers_t          *trans_quant_buffers_ptr)
+EbErrorType eb_trans_quant_buffers_ctor(
+    EbTransQuantBuffers          *trans_quant_buffers_ptr)
 {
     EbErrorType return_error = EB_ErrorNone;
     EbPictureBufferDescInitData_t transCoeffInitArray;
@@ -36,14 +36,14 @@ EbErrorType EbTransQuantBuffersCtor(
     ThirtyTwoBittransCoeffInitArray.splitMode = EB_FALSE;
 
     return_error = eb_picture_buffer_desc_ctor(
-        (EbPtr*) &(trans_quant_buffers_ptr->tuTransCoeff2Nx2NPtr),
+        (EbPtr*) &(trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr),
         (EbPtr)&ThirtyTwoBittransCoeffInitArray);
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
 
     return_error = eb_picture_buffer_desc_ctor(
-        (EbPtr*) &(trans_quant_buffers_ptr->tuTransCoeffNxNPtr),
+        (EbPtr*) &(trans_quant_buffers_ptr->tu_trans_coeff_nxn_ptr),
         (EbPtr)&ThirtyTwoBittransCoeffInitArray);
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
@@ -51,20 +51,20 @@ EbErrorType EbTransQuantBuffersCtor(
 
 
     return_error = eb_picture_buffer_desc_ctor(
-        (EbPtr*) &(trans_quant_buffers_ptr->tuTransCoeffN2xN2Ptr),
+        (EbPtr*) &(trans_quant_buffers_ptr->tu_trans_coeff_n2x_n2_ptr),
         (EbPtr)&transCoeffInitArray);
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
     return_error = eb_picture_buffer_desc_ctor(
-        (EbPtr*) &(trans_quant_buffers_ptr->tuQuantCoeffNxNPtr),
+        (EbPtr*) &(trans_quant_buffers_ptr->tu_quant_coeff_nxn_ptr),
         (EbPtr)&transCoeffInitArray);
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
 
     return_error = eb_picture_buffer_desc_ctor(
-        (EbPtr*) &(trans_quant_buffers_ptr->tuQuantCoeffN2xN2Ptr),
+        (EbPtr*) &(trans_quant_buffers_ptr->tu_quant_coeff_n2x_n2_ptr),
         (EbPtr)&transCoeffInitArray);
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;

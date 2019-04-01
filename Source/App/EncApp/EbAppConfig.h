@@ -34,22 +34,22 @@ typedef size_t rsize_t;
 typedef int32_t errno_t;
 #endif  /* _ERRNO_T_DEFINED */
 
-/** The APPEXITCONDITIONTYPE type is used to define the App main loop exit
+/** The AppExitConditionType type is used to define the App main loop exit
 conditions.
 */
-typedef enum APPEXITCONDITIONTYPE {
+typedef enum AppExitConditionType {
     APP_ExitConditionNone = 0,
     APP_ExitConditionFinished,
     APP_ExitConditionError
-} APPEXITCONDITIONTYPE;
+} AppExitConditionType;
 
-/** The APPPORTACTIVETYPE type is used to define the state of output ports in
+/** The AppPortActiveType type is used to define the state of output ports in
 the App.
 */
-typedef enum APPPORTACTIVETYPE {
+typedef enum AppPortActiveType {
     APP_PortActive = 0,
     APP_PortInactive
-} APPPORTACTIVETYPE;
+} AppPortActiveType;
 
 //typedef enum EbPtrType {
 //    EB_N_PTR = 0,                                   // malloc'd pointer
@@ -59,10 +59,10 @@ typedef enum APPPORTACTIVETYPE {
 //    EB_THREAD = 4                                    // thread handle
 //}EbPtrType;
 
-/** The EB_PTR type is intended to be used to pass pointers to and from the svt
+/** The EbPtr type is intended to be used to pass pointers to and from the svt
 API.  This is a 32 bit pointer and is aligned on a 32 bit word boundary.
 */
-typedef void * EB_PTR;
+typedef void * EbPtr;
 
 /** The EB_NULL type is used to define the C style NULL pointer.
 */
@@ -80,60 +80,60 @@ typedef void * EbPtr;
 typedef struct EbMemoryMapEntry
 {
     EbPtr                     ptr;                       // points to a memory pointer
-    EbPtrType                 ptrType;                   // pointer type
+    EbPtrType                 ptr_type;                   // pointer type
 } EbMemoryMapEntry;
 
-extern    EbMemoryMapEntry        *appMemoryMap;            // App Memory table
-extern    uint32_t                  *appMemoryMapIndex;       // App Memory index
-extern    uint64_t                  *totalAppMemory;          // App Memory malloc'd
-extern    uint32_t                   appMallocCount;
+extern    EbMemoryMapEntry        *app_memory_map;            // App Memory table
+extern    uint32_t                  *app_memory_map_index;       // App Memory index
+extern    uint64_t                  *total_app_memory;          // App Memory malloc'd
+extern    uint32_t                   app_malloc_count;
 
 #define MAX_APP_NUM_PTR                             (0x186A0 << 2)             // Maximum number of pointers to be allocated for the app
 
-#define EB_APP_MALLOC(type, pointer, n_elements, pointer_class, returnType) \
+#define EB_APP_MALLOC(type, pointer, n_elements, pointer_class, return_type) \
     pointer = (type)malloc(n_elements); \
     if (pointer == (type)EB_NULL){ \
-        return returnType; \
+        return return_type; \
             } \
                 else { \
-        appMemoryMap[*(appMemoryMapIndex)].ptrType = pointer_class; \
-        appMemoryMap[(*(appMemoryMapIndex))++].ptr = pointer; \
+        app_memory_map[*(app_memory_map_index)].ptr_type = pointer_class; \
+        app_memory_map[(*(app_memory_map_index))++].ptr = pointer; \
         if (n_elements % 8 == 0) { \
-            *totalAppMemory += (n_elements); \
+            *total_app_memory += (n_elements); \
                         } \
                                 else { \
-            *totalAppMemory += ((n_elements) + (8 - ((n_elements) % 8))); \
+            *total_app_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
             } \
         } \
-    if (*(appMemoryMapIndex) >= MAX_APP_NUM_PTR) { \
-        return returnType; \
+    if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
+        return return_type; \
                 } \
-    appMallocCount++;
+    app_malloc_count++;
 
-#define EB_APP_MALLOC_NR(type, pointer, n_elements, pointer_class,returnType) \
-    (void)returnType; \
+#define EB_APP_MALLOC_NR(type, pointer, n_elements, pointer_class,return_type) \
+    (void)return_type; \
     pointer = (type)malloc(n_elements); \
     if (pointer == (type)EB_NULL){ \
-        returnType = EB_ErrorInsufficientResources; \
+        return_type = EB_ErrorInsufficientResources; \
         printf("Malloc has failed due to insuffucient resources"); \
         return; \
             } \
                 else { \
-        appMemoryMap[*(appMemoryMapIndex)].ptrType = pointer_class; \
-        appMemoryMap[(*(appMemoryMapIndex))++].ptr = pointer; \
+        app_memory_map[*(app_memory_map_index)].ptr_type = pointer_class; \
+        app_memory_map[(*(app_memory_map_index))++].ptr = pointer; \
         if (n_elements % 8 == 0) { \
-            *totalAppMemory += (n_elements); \
+            *total_app_memory += (n_elements); \
                         } \
                                 else { \
-            *totalAppMemory += ((n_elements) + (8 - ((n_elements) % 8))); \
+            *total_app_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
             } \
         } \
-    if (*(appMemoryMapIndex) >= MAX_APP_NUM_PTR) { \
-        returnType = EB_ErrorInsufficientResources; \
+    if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
+        return_type = EB_ErrorInsufficientResources; \
         printf("Malloc has failed due to insuffucient resources"); \
         return; \
                 } \
-    appMallocCount++;
+    app_malloc_count++;
 
 /* string copy */
 extern errno_t strcpy_ss(char *dest, rsize_t dmax, const char *src);
@@ -157,8 +157,8 @@ extern rsize_t strnlen_ss(const char *s, rsize_t smax);
     strnlen_ss(target, max_size)
 
 #define EB_APP_MEMORY() \
-    printf("Total Number of Mallocs in App: %d\n", appMallocCount); \
-    printf("Total App Memory: %.2lf KB\n\n",*totalAppMemory/(double)1024);
+    printf("Total Number of Mallocs in App: %d\n", app_malloc_count); \
+    printf("Total App Memory: %.2lf KB\n\n",*total_app_memory/(double)1024);
 
 #define MAX_CHANNEL_NUMBER      6
 #define MAX_NUM_TOKENS          200
@@ -178,7 +178,7 @@ extern rsize_t strnlen_ss(const char *s, rsize_t smax);
 #define BOTTOM_INPUT_PADDING 0
 
 
-typedef struct EbPerformanceContext_s {
+typedef struct EbPerformanceContext {
 
     /****************************************
      * Computational Performance Data
@@ -189,75 +189,75 @@ typedef struct EbPerformanceContext_s {
     double                    total_execution_time;    // includes init
     double                    total_encode_time;       // not including init
 
-    uint64_t                  totalLatency;
-    uint32_t                  maxLatency;
+    uint64_t                  total_latency;
+    uint32_t                  max_latency;
 
-    uint64_t                  startsTime;
-    uint64_t                  startuTime;
-    uint64_t                  frameCount;
+    uint64_t                  starts_time;
+    uint64_t                  startu_time;
+    uint64_t                  frame_count;
 
-    double                    averageSpeed;
-    double                    averageLatency;
+    double                    average_speed;
+    double                    average_latency;
 
-    uint64_t                  byteCount;
+    uint64_t                  byte_count;
 
-}EbPerformanceContext_t;
+}EbPerformanceContext;
 
-typedef struct EbConfig_s
+typedef struct EbConfig
 {
     /****************************************
      * File I/O
      ****************************************/
-    FILE                    *configFile;
-    FILE                    *inputFile;
-    FILE                    *bitstreamFile;
-    FILE                    *reconFile;
-    FILE                    *errorLogFile;
-    FILE                    *bufferFile;
+    FILE                    *config_file;
+    FILE                    *input_file;
+    FILE                    *bitstream_file;
+    FILE                    *recon_file;
+    FILE                    *error_log_file;
+    FILE                    *buffer_file;
 
-    FILE                    *qpFile;
+    FILE                    *qp_file;
 
-    EbBool                  y4mInput;
-    unsigned char           y4mBuf[9];
+    EbBool                  y4m_input;
+    unsigned char           y4m_buf[9];
 
     EbBool                  use_qp_file;
 
-    uint32_t                 frameRate;
-    uint32_t                 frameRateNumerator;
-    uint32_t                 frameRateDenominator;
+    uint32_t                 frame_rate;
+    uint32_t                 frame_rate_numerator;
+    uint32_t                 frame_rate_denominator;
     uint32_t                 injector_frame_rate;
     uint32_t                 injector;
     uint32_t                 speed_control_flag;
-    uint32_t                 encoderBitDepth;
-    uint32_t                 compressedTenBitFormat;
-    uint32_t                 sourceWidth;
-    uint32_t                 sourceHeight;
+    uint32_t                 encoder_bit_depth;
+    uint32_t                 compressed_ten_bit_format;
+    uint32_t                 source_width;
+    uint32_t                 source_height;
 
-    uint32_t                 inputPaddedWidth;
-    uint32_t                 inputPaddedHeight;
+    uint32_t                 input_padded_width;
+    uint32_t                 input_padded_height;
 
     int64_t                  frames_to_be_encoded;
-    int32_t                  framesEncoded;
-    int32_t                  bufferedInput;
-    uint8_t                **sequenceBuffer;
+    int32_t                  frames_encoded;
+    int32_t                  buffered_input;
+    uint8_t                **sequence_buffer;
 
-    uint8_t                  latencyMode;
+    uint8_t                  latency_mode;
 
     /****************************************
      * // Interlaced Video
      ****************************************/
-    EbBool                  interlacedVideo;
-    EbBool                  separateFields;
+    EbBool                  interlaced_video;
+    EbBool                  separate_fields;
 
     /*****************************************
      * Coding Structure
      *****************************************/
     uint32_t                 base_layer_switch_mode;
-    uint8_t                  encMode;
-    int32_t                  intraPeriod;
-    uint32_t                 intraRefreshType;
-    uint32_t                 hierarchicalLevels;
-    uint32_t                 predStructure;
+    uint8_t                  enc_mode;
+    int32_t                  intra_period;
+    uint32_t                 intra_refresh_type;
+    uint32_t                 hierarchical_levels;
+    uint32_t                 pred_structure;
 
 
     /****************************************
@@ -283,38 +283,38 @@ typedef struct EbConfig_s
      * ME Tools
      ****************************************/
     EbBool                  use_default_me_hme;
-    EbBool                  enableHmeFlag;
-    EbBool                  enableHmeLevel0Flag;
-    EbBool                  enableHmeLevel1Flag;
-    EbBool                  enableHmeLevel2Flag;
+    EbBool                  enable_hme_flag;
+    EbBool                  enable_hme_level0_flag;
+    EbBool                  enable_hme_level1_flag;
+    EbBool                  enable_hme_level2_flag;
     EbBool                  ext_block_flag;
     EbBool                  in_loop_me_flag;
 
     /****************************************
      * ME Parameters
      ****************************************/
-    uint32_t                 searchAreaWidth;
-    uint32_t                 searchAreaHeight;
+    uint32_t                 search_area_width;
+    uint32_t                 search_area_height;
 
     /****************************************
      * HME Parameters
      ****************************************/
-    uint32_t                 numberHmeSearchRegionInWidth ;
-    uint32_t                 numberHmeSearchRegionInHeight;
-    uint32_t                 hmeLevel0TotalSearchAreaWidth;
-    uint32_t                 hmeLevel0TotalSearchAreaHeight;
-    uint32_t                 hmeLevel0ColumnIndex;
-    uint32_t                 hmeLevel0RowIndex;
-    uint32_t                 hmeLevel1ColumnIndex;
-    uint32_t                 hmeLevel1RowIndex;
-    uint32_t                 hmeLevel2ColumnIndex;
-    uint32_t                 hmeLevel2RowIndex;
-    uint32_t                 hmeLevel0SearchAreaInWidthArray[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t                 hmeLevel0SearchAreaInHeightArray[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint32_t                 hmeLevel1SearchAreaInWidthArray[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t                 hmeLevel1SearchAreaInHeightArray[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint32_t                 hmeLevel2SearchAreaInWidthArray[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t                 hmeLevel2SearchAreaInHeightArray[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint32_t                 number_hme_search_region_in_width;
+    uint32_t                 number_hme_search_region_in_height;
+    uint32_t                 hme_level0_total_search_area_width;
+    uint32_t                 hme_level0_total_search_area_height;
+    uint32_t                 hme_level0_column_index;
+    uint32_t                 hme_level0_row_index;
+    uint32_t                 hme_level1_column_index;
+    uint32_t                 hme_level1_row_index;
+    uint32_t                 hme_level2_column_index;
+    uint32_t                 hme_level2_row_index;
+    uint32_t                 hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t                 hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint32_t                 hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t                 hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint32_t                 hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t                 hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
 
     /****************************************
      * MD Parameters
@@ -329,9 +329,9 @@ typedef struct EbConfig_s
      * Rate Control
      ****************************************/
     uint32_t                 scene_change_detection;
-    uint32_t                 rateControlMode;
+    uint32_t                 rate_control_mode;
     uint32_t                 look_ahead_distance;
-    uint32_t                 targetBitRate;
+    uint32_t                 target_bit_rate;
     uint32_t                 max_qp_allowed;
     uint32_t                 min_qp_allowed;
 
@@ -352,40 +352,40 @@ typedef struct EbConfig_s
     /****************************************
      * On-the-fly Testing
      ****************************************/
-    EbBool                   eosFlag;
+    EbBool                   eos_flag;
 
     /****************************************
     * Optimization Type
     ****************************************/
-    uint32_t                  asmType;
+    uint32_t                  asm_type;
 
     /****************************************
      * Computational Performance Data
      ****************************************/
-    EbPerformanceContext_t  performanceContext;
+    EbPerformanceContext  performance_context;
 
     /****************************************
     * Instance Info
     ****************************************/
     uint32_t                channel_id;
     uint32_t                active_channel_count;
-    uint32_t                logicalProcessors;
-    int32_t                 targetSocket;
-    EbBool                 stopEncoder;         // to signal CTRL+C Event, need to stop encoding.
+    uint32_t                logical_processors;
+    int32_t                 target_socket;
+    EbBool                 stop_encoder;         // to signal CTRL+C Event, need to stop encoding.
 
-    uint64_t                processedFrameCount;
-    uint64_t                processedByteCount;
+    uint64_t                processed_frame_count;
+    uint64_t                processed_byte_count;
 
     uint64_t                byte_count_since_ivf;
     uint64_t                ivf_count;
 
-} EbConfig_t;
+} EbConfig;
 
-extern void EbConfigCtor(EbConfig_t *config_ptr);
-extern void EbConfigDtor(EbConfig_t *config_ptr);
+extern void eb_config_ctor(EbConfig *config_ptr);
+extern void eb_config_dtor(EbConfig *config_ptr);
 
-extern EbErrorType    ReadCommandLine(int32_t argc, char *const argv[], EbConfig_t **config, uint32_t  numChannels,    EbErrorType *return_errors);
-extern uint32_t     GetHelp(int32_t argc, char *const argv[]);
-extern uint32_t        GetNumberOfChannels(int32_t argc, char *const argv[]);
+extern EbErrorType    read_command_line(int32_t argc, char *const argv[], EbConfig **config, uint32_t  num_channels,    EbErrorType *return_errors);
+extern uint32_t     get_help(int32_t argc, char *const argv[]);
+extern uint32_t        get_number_of_channels(int32_t argc, char *const argv[]);
 
 #endif //EbAppConfig_h

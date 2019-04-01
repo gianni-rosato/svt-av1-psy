@@ -110,123 +110,123 @@
 /**********************************
  * Set Cfg Functions
  **********************************/
-static void SetCfgInputFile                     (const char *value, EbConfig_t *cfg)
+static void SetCfgInputFile                     (const char *value, EbConfig *cfg)
 {
 
-    if (cfg->inputFile && cfg->inputFile != stdin) {
-        fclose(cfg->inputFile);
+    if (cfg->input_file && cfg->input_file != stdin) {
+        fclose(cfg->input_file);
     }
     if (!strcmp(value, "stdin")) {
-        cfg->inputFile = stdin;
+        cfg->input_file = stdin;
     }
     else {
-        FOPEN(cfg->inputFile, value, "rb");
+        FOPEN(cfg->input_file, value, "rb");
     }
 
     /* if input is a YUV4MPEG2 (y4m) file, read header and parse parameters */
-    if(cfg->inputFile!=NULL){
-        if(checkIfY4m(cfg) == EB_TRUE) {
-            cfg->y4mInput = EB_TRUE;
+    if(cfg->input_file!=NULL){
+        if(check_if_y4m(cfg) == EB_TRUE) {
+            cfg->y4m_input = EB_TRUE;
         }
         else
-            cfg->y4mInput = EB_FALSE;
+            cfg->y4m_input = EB_FALSE;
     }else{
-        cfg->y4mInput = EB_FALSE;
+        cfg->y4m_input = EB_FALSE;
     }
 
 };
-static void SetCfgStreamFile                    (const char *value, EbConfig_t *cfg)
+static void SetCfgStreamFile                    (const char *value, EbConfig *cfg)
 {
-    if (cfg->bitstreamFile) { fclose(cfg->bitstreamFile); }
-    FOPEN(cfg->bitstreamFile,value, "wb");
+    if (cfg->bitstream_file) { fclose(cfg->bitstream_file); }
+    FOPEN(cfg->bitstream_file,value, "wb");
 };
-static void SetCfgErrorFile                     (const char *value, EbConfig_t *cfg)
+static void SetCfgErrorFile                     (const char *value, EbConfig *cfg)
 {
-    if (cfg->errorLogFile) { fclose(cfg->errorLogFile); }
-    FOPEN(cfg->errorLogFile,value, "w+");
+    if (cfg->error_log_file) { fclose(cfg->error_log_file); }
+    FOPEN(cfg->error_log_file,value, "w+");
 };
-static void SetCfgReconFile                     (const char *value, EbConfig_t *cfg)
+static void SetCfgReconFile                     (const char *value, EbConfig *cfg)
 {
-    if (cfg->reconFile) { fclose(cfg->reconFile); }
-    FOPEN(cfg->reconFile,value, "wb");
+    if (cfg->recon_file) { fclose(cfg->recon_file); }
+    FOPEN(cfg->recon_file,value, "wb");
 };
-static void SetCfgQpFile                        (const char *value, EbConfig_t *cfg)
+static void SetCfgQpFile                        (const char *value, EbConfig *cfg)
 {
-    if (cfg->qpFile) { fclose(cfg->qpFile); }
-    FOPEN(cfg->qpFile,value, "r");
+    if (cfg->qp_file) { fclose(cfg->qp_file); }
+    FOPEN(cfg->qp_file,value, "r");
 };
-static void SetCfgSourceWidth                   (const char *value, EbConfig_t *cfg) {cfg->sourceWidth = strtoul(value, NULL, 0);};
-static void SetInterlacedVideo                  (const char *value, EbConfig_t *cfg) {cfg->interlacedVideo  = (EbBool) strtoul(value, NULL, 0);};
-static void SetSeperateFields                   (const char *value, EbConfig_t *cfg) {cfg->separateFields = (EbBool) strtoul(value, NULL, 0);};
-static void SetCfgSourceHeight                  (const char *value, EbConfig_t *cfg) {cfg->sourceHeight = strtoul(value, NULL, 0) >> cfg->separateFields;};
-static void SetCfgFramesToBeEncoded             (const char *value, EbConfig_t *cfg) {cfg->frames_to_be_encoded = strtol(value,  NULL, 0) << cfg->separateFields;};
-static void SetBufferedInput                    (const char *value, EbConfig_t *cfg) {cfg->bufferedInput = (strtol(value, NULL, 0) != -1 && cfg->separateFields) ? strtol(value, NULL, 0) << cfg->separateFields : strtol(value, NULL, 0);};
-static void SetFrameRate                        (const char *value, EbConfig_t *cfg) {
-    cfg->frameRate = strtoul(value, NULL, 0);
-    if (cfg->frameRate > 1000 ){
-        cfg->frameRate = cfg->frameRate;
+static void SetCfgSourceWidth                   (const char *value, EbConfig *cfg) {cfg->source_width = strtoul(value, NULL, 0);};
+static void SetInterlacedVideo                  (const char *value, EbConfig *cfg) {cfg->interlaced_video  = (EbBool) strtoul(value, NULL, 0);};
+static void SetSeperateFields                   (const char *value, EbConfig *cfg) {cfg->separate_fields = (EbBool) strtoul(value, NULL, 0);};
+static void SetCfgSourceHeight                  (const char *value, EbConfig *cfg) {cfg->source_height = strtoul(value, NULL, 0) >> cfg->separate_fields;};
+static void SetCfgFramesToBeEncoded             (const char *value, EbConfig *cfg) {cfg->frames_to_be_encoded = strtol(value,  NULL, 0) << cfg->separate_fields;};
+static void SetBufferedInput                    (const char *value, EbConfig *cfg) {cfg->buffered_input = (strtol(value, NULL, 0) != -1 && cfg->separate_fields) ? strtol(value, NULL, 0) << cfg->separate_fields : strtol(value, NULL, 0);};
+static void SetFrameRate                        (const char *value, EbConfig *cfg) {
+    cfg->frame_rate = strtoul(value, NULL, 0);
+    if (cfg->frame_rate > 1000 ){
+        cfg->frame_rate = cfg->frame_rate;
     }
     else{
-        cfg->frameRate = cfg->frameRate << 16;
+        cfg->frame_rate = cfg->frame_rate << 16;
     }
 }
-static void SetFrameRateNumerator               (const char *value, EbConfig_t *cfg) { cfg->frameRateNumerator = strtoul(value, NULL, 0);};
-static void SetFrameRateDenominator             (const char *value, EbConfig_t *cfg) { cfg->frameRateDenominator = strtoul(value, NULL, 0);};
-static void SetEncoderBitDepth                  (const char *value, EbConfig_t *cfg) {cfg->encoderBitDepth = strtoul(value, NULL, 0);}
-static void SetcompressedTenBitFormat            (const char *value, EbConfig_t *cfg) {cfg->compressedTenBitFormat = strtoul(value, NULL, 0);}
-static void SetBaseLayerSwitchMode              (const char *value, EbConfig_t *cfg) {cfg->base_layer_switch_mode = (EbBool) strtoul(value, NULL, 0);};
-static void SetencMode                          (const char *value, EbConfig_t *cfg) {cfg->encMode = (uint8_t)strtoul(value, NULL, 0);};
-static void SetCfgIntraPeriod                   (const char *value, EbConfig_t *cfg) {cfg->intraPeriod = strtol(value,  NULL, 0);};
-static void SetCfgIntraRefreshType              (const char *value, EbConfig_t *cfg) {cfg->intraRefreshType = strtol(value,  NULL, 0);};
-static void SetHierarchicalLevels                (const char *value, EbConfig_t *cfg) { cfg->hierarchicalLevels = strtol(value, NULL, 0); };
-static void SetCfgPredStructure                    (const char *value, EbConfig_t *cfg) { cfg->predStructure = strtol(value, NULL, 0); };
-static void SetCfgQp                            (const char *value, EbConfig_t *cfg) {cfg->qp = strtoul(value, NULL, 0);};
-static void SetCfgUseQpFile                     (const char *value, EbConfig_t *cfg) {cfg->use_qp_file = (EbBool)strtol(value, NULL, 0); };
-//static void SetCfgFilmGrain(const char *value, EbConfig_t *cfg) { cfg->film_grain_denoise_strength = strtol(value, NULL, 0); };  //not bool to enable possible algorithm extension in the future
-static void SetDisableDlfFlag                   (const char *value, EbConfig_t *cfg) {cfg->disable_dlf_flag = (EbBool)strtoul(value, NULL, 0);};
-static void SetEnableLocalWarpedMotionFlag      (const char *value, EbConfig_t *cfg) {cfg->enable_warped_motion = (EbBool)strtoul(value, NULL, 0);};
-static void SetEnableHmeFlag                    (const char *value, EbConfig_t *cfg) {cfg->enableHmeFlag = (EbBool)strtoul(value, NULL, 0);};
-static void SetEnableHmeLevel0Flag              (const char *value, EbConfig_t *cfg) {cfg->enableHmeLevel0Flag = (EbBool)strtoul(value, NULL, 0);};
-static void SetTileRow                          (const char *value, EbConfig_t *cfg) { cfg->tile_rows = strtoul(value, NULL, 0); };
-static void SetTileCol                          (const char *value, EbConfig_t *cfg) { cfg->tile_columns = strtoul(value, NULL, 0); };
+static void SetFrameRateNumerator               (const char *value, EbConfig *cfg) { cfg->frame_rate_numerator = strtoul(value, NULL, 0);};
+static void SetFrameRateDenominator             (const char *value, EbConfig *cfg) { cfg->frame_rate_denominator = strtoul(value, NULL, 0);};
+static void SetEncoderBitDepth                  (const char *value, EbConfig *cfg) {cfg->encoder_bit_depth = strtoul(value, NULL, 0);}
+static void SetcompressedTenBitFormat            (const char *value, EbConfig *cfg) {cfg->compressed_ten_bit_format = strtoul(value, NULL, 0);}
+static void SetBaseLayerSwitchMode              (const char *value, EbConfig *cfg) {cfg->base_layer_switch_mode = (EbBool) strtoul(value, NULL, 0);};
+static void SetencMode                          (const char *value, EbConfig *cfg) {cfg->enc_mode = (uint8_t)strtoul(value, NULL, 0);};
+static void SetCfgIntraPeriod                   (const char *value, EbConfig *cfg) {cfg->intra_period = strtol(value,  NULL, 0);};
+static void SetCfgIntraRefreshType              (const char *value, EbConfig *cfg) {cfg->intra_refresh_type = strtol(value,  NULL, 0);};
+static void SetHierarchicalLevels                (const char *value, EbConfig *cfg) { cfg->hierarchical_levels = strtol(value, NULL, 0); };
+static void SetCfgPredStructure                    (const char *value, EbConfig *cfg) { cfg->pred_structure = strtol(value, NULL, 0); };
+static void SetCfgQp                            (const char *value, EbConfig *cfg) {cfg->qp = strtoul(value, NULL, 0);};
+static void SetCfgUseQpFile                     (const char *value, EbConfig *cfg) {cfg->use_qp_file = (EbBool)strtol(value, NULL, 0); };
+//static void SetCfgFilmGrain(const char *value, EbConfig *cfg) { cfg->film_grain_denoise_strength = strtol(value, NULL, 0); };  //not bool to enable possible algorithm extension in the future
+static void SetDisableDlfFlag                   (const char *value, EbConfig *cfg) {cfg->disable_dlf_flag = (EbBool)strtoul(value, NULL, 0);};
+static void SetEnableLocalWarpedMotionFlag      (const char *value, EbConfig *cfg) {cfg->enable_warped_motion = (EbBool)strtoul(value, NULL, 0);};
+static void SetEnableHmeFlag                    (const char *value, EbConfig *cfg) {cfg->enable_hme_flag = (EbBool)strtoul(value, NULL, 0);};
+static void SetEnableHmeLevel0Flag              (const char *value, EbConfig *cfg) {cfg->enable_hme_level0_flag = (EbBool)strtoul(value, NULL, 0);};
+static void SetTileRow                          (const char *value, EbConfig *cfg) { cfg->tile_rows = strtoul(value, NULL, 0); };
+static void SetTileCol                          (const char *value, EbConfig *cfg) { cfg->tile_columns = strtoul(value, NULL, 0); };
 
-static void SetSceneChangeDetection             (const char *value, EbConfig_t *cfg) {cfg->scene_change_detection = strtoul(value, NULL, 0);};
-static void SetLookAheadDistance                (const char *value, EbConfig_t *cfg) {cfg->look_ahead_distance = strtoul(value, NULL, 0);};
-static void SetRateControlMode                  (const char *value, EbConfig_t *cfg) {cfg->rateControlMode = strtoul(value, NULL, 0);};
-static void SetTargetBitRate                    (const char *value, EbConfig_t *cfg) {cfg->targetBitRate = strtoul(value, NULL, 0);};
-static void SetMaxQpAllowed                     (const char *value, EbConfig_t *cfg) {cfg->max_qp_allowed = strtoul(value, NULL, 0);};
-static void SetMinQpAllowed                     (const char *value, EbConfig_t *cfg) {cfg->min_qp_allowed = strtoul(value, NULL, 0);};
-static void SetEnableHmeLevel1Flag              (const char *value, EbConfig_t *cfg) {cfg->enableHmeLevel1Flag  = (EbBool)strtoul(value, NULL, 0);};
-static void SetEnableHmeLevel2Flag              (const char *value, EbConfig_t *cfg) {cfg->enableHmeLevel2Flag  = (EbBool)strtoul(value, NULL, 0);};
-static void SetCfgSearchAreaWidth               (const char *value, EbConfig_t *cfg) {cfg->searchAreaWidth = strtoul(value, NULL, 0);};
-static void SetCfgSearchAreaHeight              (const char *value, EbConfig_t *cfg) {cfg->searchAreaHeight = strtoul(value, NULL, 0);};
-static void SetCfgNumberHmeSearchRegionInWidth  (const char *value, EbConfig_t *cfg) {cfg->numberHmeSearchRegionInWidth = strtoul(value, NULL, 0);};
-static void SetCfgNumberHmeSearchRegionInHeight (const char *value, EbConfig_t *cfg) {cfg->numberHmeSearchRegionInHeight = strtoul(value, NULL, 0);};
-static void SetCfgHmeLevel0TotalSearchAreaWidth (const char *value, EbConfig_t *cfg) {cfg->hmeLevel0TotalSearchAreaWidth = strtoul(value, NULL, 0);};
-static void SetCfgHmeLevel0TotalSearchAreaHeight(const char *value, EbConfig_t *cfg) {cfg->hmeLevel0TotalSearchAreaHeight = strtoul(value, NULL, 0);};
-static void SetCfgUseDefaultMeHme               (const char *value, EbConfig_t *cfg) {cfg->use_default_me_hme = (EbBool)strtol(value, NULL, 0); };
-static void SetEnableExtBlockFlag(const char *value, EbConfig_t *cfg) { cfg->ext_block_flag = (EbBool)strtoul(value, NULL, 0); };
-static void SetEnableInLoopMeFlag(const char *value, EbConfig_t *cfg) { cfg->in_loop_me_flag = (EbBool)strtoul(value, NULL, 0); };
-static void SetHmeLevel0SearchAreaInWidthArray  (const char *value, EbConfig_t *cfg) {cfg->hmeLevel0SearchAreaInWidthArray[cfg->hmeLevel0ColumnIndex++] = strtoul(value, NULL, 0);};
-static void SetHmeLevel0SearchAreaInHeightArray (const char *value, EbConfig_t *cfg) {cfg->hmeLevel0SearchAreaInHeightArray[cfg->hmeLevel0RowIndex++] = strtoul(value, NULL, 0);};
-static void SetHmeLevel1SearchAreaInWidthArray  (const char *value, EbConfig_t *cfg) {cfg->hmeLevel1SearchAreaInWidthArray[cfg->hmeLevel1ColumnIndex++] = strtoul(value, NULL, 0);};
-static void SetHmeLevel1SearchAreaInHeightArray (const char *value, EbConfig_t *cfg) {cfg->hmeLevel1SearchAreaInHeightArray[cfg->hmeLevel1RowIndex++] = strtoul(value, NULL, 0);};
-static void SetHmeLevel2SearchAreaInWidthArray  (const char *value, EbConfig_t *cfg) {cfg->hmeLevel2SearchAreaInWidthArray[cfg->hmeLevel2ColumnIndex++] = strtoul(value, NULL, 0);};
-static void SetHmeLevel2SearchAreaInHeightArray (const char *value, EbConfig_t *cfg) {cfg->hmeLevel2SearchAreaInHeightArray[cfg->hmeLevel2RowIndex++] = strtoul(value, NULL, 0);};
-static void SetEnableConstrainedIntra           (const char *value, EbConfig_t *cfg) {cfg->constrained_intra                                             = (EbBool)strtoul(value, NULL, 0);};
-static void SetImproveSharpness                 (const char *value, EbConfig_t *cfg) {cfg->improve_sharpness               = (EbBool)strtol(value,  NULL, 0);};
-static void SetHighDynamicRangeInput            (const char *value, EbConfig_t *cfg) {cfg->high_dynamic_range_input            = strtol(value,  NULL, 0);};
-static void SetProfile                          (const char *value, EbConfig_t *cfg) {cfg->profile                          = strtol(value,  NULL, 0);};
-static void SetTier                             (const char *value, EbConfig_t *cfg) {cfg->tier                             = strtol(value,  NULL, 0);};
-static void SetLevel                            (const char *value, EbConfig_t *cfg) {
+static void SetSceneChangeDetection             (const char *value, EbConfig *cfg) {cfg->scene_change_detection = strtoul(value, NULL, 0);};
+static void SetLookAheadDistance                (const char *value, EbConfig *cfg) {cfg->look_ahead_distance = strtoul(value, NULL, 0);};
+static void SetRateControlMode                  (const char *value, EbConfig *cfg) {cfg->rate_control_mode = strtoul(value, NULL, 0);};
+static void SetTargetBitRate                    (const char *value, EbConfig *cfg) {cfg->target_bit_rate = strtoul(value, NULL, 0);};
+static void SetMaxQpAllowed                     (const char *value, EbConfig *cfg) {cfg->max_qp_allowed = strtoul(value, NULL, 0);};
+static void SetMinQpAllowed                     (const char *value, EbConfig *cfg) {cfg->min_qp_allowed = strtoul(value, NULL, 0);};
+static void SetEnableHmeLevel1Flag              (const char *value, EbConfig *cfg) {cfg->enable_hme_level1_flag  = (EbBool)strtoul(value, NULL, 0);};
+static void SetEnableHmeLevel2Flag              (const char *value, EbConfig *cfg) {cfg->enable_hme_level2_flag  = (EbBool)strtoul(value, NULL, 0);};
+static void SetCfgSearchAreaWidth               (const char *value, EbConfig *cfg) {cfg->search_area_width = strtoul(value, NULL, 0);};
+static void SetCfgSearchAreaHeight              (const char *value, EbConfig *cfg) {cfg->search_area_height = strtoul(value, NULL, 0);};
+static void SetCfgNumberHmeSearchRegionInWidth  (const char *value, EbConfig *cfg) {cfg->number_hme_search_region_in_width = strtoul(value, NULL, 0);};
+static void SetCfgNumberHmeSearchRegionInHeight (const char *value, EbConfig *cfg) {cfg->number_hme_search_region_in_height = strtoul(value, NULL, 0);};
+static void SetCfgHmeLevel0TotalSearchAreaWidth (const char *value, EbConfig *cfg) {cfg->hme_level0_total_search_area_width = strtoul(value, NULL, 0);};
+static void SetCfgHmeLevel0TotalSearchAreaHeight(const char *value, EbConfig *cfg) {cfg->hme_level0_total_search_area_height = strtoul(value, NULL, 0);};
+static void SetCfgUseDefaultMeHme               (const char *value, EbConfig *cfg) {cfg->use_default_me_hme = (EbBool)strtol(value, NULL, 0); };
+static void SetEnableExtBlockFlag(const char *value, EbConfig *cfg) { cfg->ext_block_flag = (EbBool)strtoul(value, NULL, 0); };
+static void SetEnableInLoopMeFlag(const char *value, EbConfig *cfg) { cfg->in_loop_me_flag = (EbBool)strtoul(value, NULL, 0); };
+static void SetHmeLevel0SearchAreaInWidthArray  (const char *value, EbConfig *cfg) {cfg->hme_level0_search_area_in_width_array[cfg->hme_level0_column_index++] = strtoul(value, NULL, 0);};
+static void SetHmeLevel0SearchAreaInHeightArray (const char *value, EbConfig *cfg) {cfg->hme_level0_search_area_in_height_array[cfg->hme_level0_row_index++] = strtoul(value, NULL, 0);};
+static void SetHmeLevel1SearchAreaInWidthArray  (const char *value, EbConfig *cfg) {cfg->hme_level1_search_area_in_width_array[cfg->hme_level1_column_index++] = strtoul(value, NULL, 0);};
+static void SetHmeLevel1SearchAreaInHeightArray (const char *value, EbConfig *cfg) {cfg->hme_level1_search_area_in_height_array[cfg->hme_level1_row_index++] = strtoul(value, NULL, 0);};
+static void SetHmeLevel2SearchAreaInWidthArray  (const char *value, EbConfig *cfg) {cfg->hme_level2_search_area_in_width_array[cfg->hme_level2_column_index++] = strtoul(value, NULL, 0);};
+static void SetHmeLevel2SearchAreaInHeightArray (const char *value, EbConfig *cfg) {cfg->hme_level2_search_area_in_height_array[cfg->hme_level2_row_index++] = strtoul(value, NULL, 0);};
+static void SetEnableConstrainedIntra           (const char *value, EbConfig *cfg) {cfg->constrained_intra                                             = (EbBool)strtoul(value, NULL, 0);};
+static void SetImproveSharpness                 (const char *value, EbConfig *cfg) {cfg->improve_sharpness               = (EbBool)strtol(value,  NULL, 0);};
+static void SetHighDynamicRangeInput            (const char *value, EbConfig *cfg) {cfg->high_dynamic_range_input            = strtol(value,  NULL, 0);};
+static void SetProfile                          (const char *value, EbConfig *cfg) {cfg->profile                          = strtol(value,  NULL, 0);};
+static void SetTier                             (const char *value, EbConfig *cfg) {cfg->tier                             = strtol(value,  NULL, 0);};
+static void SetLevel                            (const char *value, EbConfig *cfg) {
     if (strtoul( value, NULL,0) != 0 || EB_STRCMP(value, "0") == 0 )
         cfg->level = (uint32_t)(10*strtod(value,  NULL));
     else
         cfg->level = 9999999;
 };
-static void SetInjector                         (const char *value, EbConfig_t *cfg) {cfg->injector                         = strtol(value,  NULL, 0);};
-static void SpeedControlFlag                    (const char *value, EbConfig_t *cfg) { cfg->speed_control_flag = strtol(value, NULL, 0); };
-static void SetInjectorFrameRate                (const char *value, EbConfig_t *cfg) {
+static void SetInjector                         (const char *value, EbConfig *cfg) {cfg->injector                         = strtol(value,  NULL, 0);};
+static void SpeedControlFlag                    (const char *value, EbConfig *cfg) { cfg->speed_control_flag = strtol(value, NULL, 0); };
+static void SetInjectorFrameRate                (const char *value, EbConfig *cfg) {
     cfg->injector_frame_rate = strtoul(value, NULL, 0);
     if (cfg->injector_frame_rate > 1000 ){
         cfg->injector_frame_rate = cfg->injector_frame_rate;
@@ -235,10 +235,10 @@ static void SetInjectorFrameRate                (const char *value, EbConfig_t *
         cfg->injector_frame_rate = cfg->injector_frame_rate << 16;
     }
 }
-static void SetLatencyMode                      (const char *value, EbConfig_t *cfg)  {cfg->latencyMode               = (uint8_t)strtol(value, NULL, 0);};
-static void SetAsmType                          (const char *value, EbConfig_t *cfg)  {cfg->asmType                   = (uint32_t)strtoul(value, NULL, 0);};
-static void SetLogicalProcessors                (const char *value, EbConfig_t *cfg)  {cfg->logicalProcessors         = (uint32_t)strtoul(value, NULL, 0);};
-static void SetTargetSocket                     (const char *value, EbConfig_t *cfg)  {cfg->targetSocket              = (int32_t)strtol(value, NULL, 0);};
+static void SetLatencyMode                      (const char *value, EbConfig *cfg)  {cfg->latency_mode               = (uint8_t)strtol(value, NULL, 0);};
+static void SetAsmType                          (const char *value, EbConfig *cfg)  {cfg->asm_type                   = (uint32_t)strtoul(value, NULL, 0);};
+static void SetLogicalProcessors                (const char *value, EbConfig *cfg)  {cfg->logical_processors         = (uint32_t)strtoul(value, NULL, 0);};
+static void SetTargetSocket                     (const char *value, EbConfig *cfg)  {cfg->target_socket              = (int32_t)strtol(value, NULL, 0);};
 
 enum cfg_type{
     SINGLE_INPUT,   // Configuration parameters that have only 1 value input
@@ -252,7 +252,7 @@ typedef struct config_entry_s {
     enum  cfg_type type;
     const char *token;
     const char *name;
-    void (*scf)(const char *, EbConfig_t *);
+    void (*scf)(const char *, EbConfig *);
 } config_entry_t;
 
 /**********************************
@@ -261,23 +261,23 @@ typedef struct config_entry_s {
 config_entry_t config_entry[] = {
 
     // File I/O
-    { SINGLE_INPUT, INPUT_FILE_TOKEN, "InputFile", SetCfgInputFile },
+    { SINGLE_INPUT, INPUT_FILE_TOKEN, "input_file", SetCfgInputFile },
     { SINGLE_INPUT, OUTPUT_BITSTREAM_TOKEN,   "StreamFile",       SetCfgStreamFile },
     { SINGLE_INPUT, ERROR_FILE_TOKEN, "ErrorFile", SetCfgErrorFile },
-    { SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", SetCfgReconFile },
-    { SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", SetCfgQpFile },
+    { SINGLE_INPUT, OUTPUT_RECON_TOKEN, "recon_file", SetCfgReconFile },
+    { SINGLE_INPUT, QP_FILE_TOKEN, "qp_file", SetCfgQpFile },
 
     // Interlaced Video
-    { SINGLE_INPUT, INTERLACED_VIDEO_TOKEN , "InterlacedVideo" , SetInterlacedVideo },
+    { SINGLE_INPUT, INTERLACED_VIDEO_TOKEN , "interlaced_video" , SetInterlacedVideo },
     { SINGLE_INPUT, SEPERATE_FILDS_TOKEN, "SeperateFields", SetSeperateFields },
 
     // Picture Dimensions
-    { SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", SetCfgSourceWidth },
-    { SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", SetCfgSourceHeight },
+    { SINGLE_INPUT, WIDTH_TOKEN, "source_width", SetCfgSourceWidth },
+    { SINGLE_INPUT, HEIGHT_TOKEN, "source_height", SetCfgSourceHeight },
 
     // Prediction Structure
     { SINGLE_INPUT, NUMBER_OF_PICTURES_TOKEN, "FrameToBeEncoded", SetCfgFramesToBeEncoded },
-    { SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "BufferedInput", SetBufferedInput },
+    { SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "buffered_input", SetBufferedInput },
     { SINGLE_INPUT, BASE_LAYER_SWITCH_MODE_TOKEN, "BaseLayerSwitchMode", SetBaseLayerSwitchMode },
     { SINGLE_INPUT, ENCMODE_TOKEN, "EncoderMode", SetencMode},
     { SINGLE_INPUT, INTRA_PERIOD_TOKEN, "IntraPeriod", SetCfgIntraPeriod },
@@ -297,9 +297,9 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, SCENE_CHANGE_DETECTION_TOKEN, "SceneChangeDetection", SetSceneChangeDetection},
     { SINGLE_INPUT, QP_TOKEN, "QP", SetCfgQp },
     { SINGLE_INPUT, USE_QP_FILE_TOKEN, "UseQpFile", SetCfgUseQpFile },
-    { SINGLE_INPUT, RATE_CONTROL_ENABLE_TOKEN, "RateControlMode", SetRateControlMode },
+    { SINGLE_INPUT, RATE_CONTROL_ENABLE_TOKEN, "rate_control_mode", SetRateControlMode },
     { SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN, "LookAheadDistance",                             SetLookAheadDistance},
-    { SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", SetTargetBitRate },
+    { SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "target_bit_rate", SetTargetBitRate },
     { SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", SetMaxQpAllowed },
     { SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", SetMinQpAllowed },
 
@@ -319,25 +319,25 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, IN_LOOP_ME, "InLoopMeFlag", SetEnableInLoopMeFlag },
 
     // ME Parameters
-    { SINGLE_INPUT, SEARCH_AREA_WIDTH_TOKEN, "SearchAreaWidth", SetCfgSearchAreaWidth },
-    { SINGLE_INPUT, SEARCH_AREA_HEIGHT_TOKEN, "SearchAreaHeight", SetCfgSearchAreaHeight },
+    { SINGLE_INPUT, SEARCH_AREA_WIDTH_TOKEN, "search_area_width", SetCfgSearchAreaWidth },
+    { SINGLE_INPUT, SEARCH_AREA_HEIGHT_TOKEN, "search_area_height", SetCfgSearchAreaHeight },
 
     // HME Parameters
     { SINGLE_INPUT, NUM_HME_SEARCH_WIDTH_TOKEN, "number_hme_search_region_in_width", SetCfgNumberHmeSearchRegionInWidth },
-    { SINGLE_INPUT, NUM_HME_SEARCH_HEIGHT_TOKEN, "NumberHmeSearchRegionInHeight", SetCfgNumberHmeSearchRegionInHeight },
-    { SINGLE_INPUT, HME_SRCH_T_L0_WIDTH_TOKEN, "HmeLevel0TotalSearchAreaWidth", SetCfgHmeLevel0TotalSearchAreaWidth },
-    { SINGLE_INPUT, HME_SRCH_T_L0_HEIGHT_TOKEN, "HmeLevel0TotalSearchAreaHeight", SetCfgHmeLevel0TotalSearchAreaHeight },
+    { SINGLE_INPUT, NUM_HME_SEARCH_HEIGHT_TOKEN, "number_hme_search_region_in_height", SetCfgNumberHmeSearchRegionInHeight },
+    { SINGLE_INPUT, HME_SRCH_T_L0_WIDTH_TOKEN, "hme_level0_total_search_area_width", SetCfgHmeLevel0TotalSearchAreaWidth },
+    { SINGLE_INPUT, HME_SRCH_T_L0_HEIGHT_TOKEN, "hme_level0_total_search_area_height", SetCfgHmeLevel0TotalSearchAreaHeight },
 
     // MD Parameters
     { SINGLE_INPUT, CONSTRAINED_INTRA_ENABLE_TOKEN, "ConstrainedIntra", SetEnableConstrainedIntra},
 
     // Thread Management
-    { SINGLE_INPUT, THREAD_MGMNT, "logicalProcessors", SetLogicalProcessors },
-    { SINGLE_INPUT, TARGET_SOCKET, "TargetSocket", SetTargetSocket },
+    { SINGLE_INPUT, THREAD_MGMNT, "logical_processors", SetLogicalProcessors },
+    { SINGLE_INPUT, TARGET_SOCKET, "target_socket", SetTargetSocket },
 
     // Optional Features
 
-//    { SINGLE_INPUT, BITRATE_REDUCTION_TOKEN, "BitRateReduction", SetBitRateReduction },
+//    { SINGLE_INPUT, BITRATE_REDUCTION_TOKEN, "bit_rate_reduction", SetBitRateReduction },
     { SINGLE_INPUT, IMPROVE_SHARPNESS_TOKEN,"ImproveSharpness", SetImproveSharpness},
     { SINGLE_INPUT, HDR_INPUT_TOKEN, "HighDynamicRangeInput", SetHighDynamicRangeInput },
 
@@ -350,10 +350,10 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, PROFILE_TOKEN, "Profile", SetProfile },
     { SINGLE_INPUT, TIER_TOKEN, "Tier", SetTier },
     { SINGLE_INPUT, LEVEL_TOKEN, "Level", SetLevel },
-    { SINGLE_INPUT, LATENCY_MODE, "LatencyMode", SetLatencyMode },
+    { SINGLE_INPUT, LATENCY_MODE, "latency_mode", SetLatencyMode },
 
     // Asm Type
-    { SINGLE_INPUT, ASM_TYPE_TOKEN, "AsmType", SetAsmType },
+    { SINGLE_INPUT, ASM_TYPE_TOKEN, "asm_type", SetAsmType },
 
     // HME
     { ARRAY_INPUT,HME_LEVEL0_WIDTH, "HmeLevel0SearchAreaInWidth", SetHmeLevel0SearchAreaInWidthArray },
@@ -369,40 +369,40 @@ config_entry_t config_entry[] = {
 /**********************************
  * Constructor
  **********************************/
-void EbConfigCtor(EbConfig_t *config_ptr)
+void eb_config_ctor(EbConfig *config_ptr)
 {
-    config_ptr->configFile                           = NULL;
-    config_ptr->inputFile                            = NULL;
-    config_ptr->bitstreamFile                        = NULL;
-    config_ptr->reconFile                            = NULL;
-    config_ptr->errorLogFile                         = stderr;
-    config_ptr->qpFile                               = NULL;
+    config_ptr->config_file                           = NULL;
+    config_ptr->input_file                            = NULL;
+    config_ptr->bitstream_file                        = NULL;
+    config_ptr->recon_file                            = NULL;
+    config_ptr->error_log_file                         = stderr;
+    config_ptr->qp_file                               = NULL;
 
 
-    config_ptr->frameRate                            = 30 << 16;
-    config_ptr->frameRateNumerator                   = 0;
-    config_ptr->frameRateDenominator                 = 0;
-    config_ptr->encoderBitDepth                      = 8;
-    config_ptr->compressedTenBitFormat               = 0;
-    config_ptr->sourceWidth                          = 0;
-    config_ptr->sourceHeight                         = 0;
-    config_ptr->inputPaddedWidth                     = 0;
-    config_ptr->inputPaddedHeight                    = 0;
+    config_ptr->frame_rate                            = 30 << 16;
+    config_ptr->frame_rate_numerator                   = 0;
+    config_ptr->frame_rate_denominator                 = 0;
+    config_ptr->encoder_bit_depth                      = 8;
+    config_ptr->compressed_ten_bit_format               = 0;
+    config_ptr->source_width                          = 0;
+    config_ptr->source_height                         = 0;
+    config_ptr->input_padded_width                     = 0;
+    config_ptr->input_padded_height                    = 0;
     config_ptr->frames_to_be_encoded                 = 0;
-    config_ptr->bufferedInput                        = -1;
-    config_ptr->sequenceBuffer                       = 0;
-    config_ptr->latencyMode                          = 0;
+    config_ptr->buffered_input                        = -1;
+    config_ptr->sequence_buffer                       = 0;
+    config_ptr->latency_mode                          = 0;
 
     // Interlaced Video
-    config_ptr->interlacedVideo                      = EB_FALSE;
-    config_ptr->separateFields                       = EB_FALSE;
+    config_ptr->interlaced_video                      = EB_FALSE;
+    config_ptr->separate_fields                       = EB_FALSE;
     config_ptr->qp                                   = 50;
     config_ptr->use_qp_file                          = EB_FALSE;
 
     config_ptr->scene_change_detection               = 0;
-    config_ptr->rateControlMode                      = 0;
+    config_ptr->rate_control_mode                      = 0;
     config_ptr->look_ahead_distance                  = (uint32_t)~0;
-    config_ptr->targetBitRate                        = 7000000;
+    config_ptr->target_bit_rate                        = 7000000;
     config_ptr->max_qp_allowed                       = 63;
 #if 1 //RC
     config_ptr->min_qp_allowed                       = 10;
@@ -410,44 +410,44 @@ void EbConfigCtor(EbConfig_t *config_ptr)
     config_ptr->min_qp_allowed                       = 0;
 #endif
     config_ptr->base_layer_switch_mode               = 0;
-    config_ptr->encMode                              = MAX_ENC_PRESET;
-    config_ptr->intraPeriod                          = -2;
-    config_ptr->intraRefreshType                     = 1;
-    config_ptr->hierarchicalLevels                   = 4;
-    config_ptr->predStructure                        = 2;
+    config_ptr->enc_mode                              = MAX_ENC_PRESET;
+    config_ptr->intra_period                          = -2;
+    config_ptr->intra_refresh_type                     = 1;
+    config_ptr->hierarchical_levels                   = 4;
+    config_ptr->pred_structure                        = 2;
     config_ptr->disable_dlf_flag                     = EB_FALSE;
     config_ptr->enable_warped_motion                 = EB_FALSE;
     config_ptr->ext_block_flag                       = EB_FALSE;
     config_ptr->in_loop_me_flag                      = EB_TRUE;
     config_ptr->use_default_me_hme                   = EB_TRUE;
-    config_ptr->enableHmeFlag                        = EB_TRUE;
-    config_ptr->enableHmeLevel0Flag                  = EB_TRUE;
-    config_ptr->enableHmeLevel1Flag                  = EB_FALSE;
-    config_ptr->enableHmeLevel2Flag                  = EB_FALSE;
-    config_ptr->searchAreaWidth                      = 16;
-    config_ptr->searchAreaHeight                     = 7;
-    config_ptr->numberHmeSearchRegionInWidth         = 2;
-    config_ptr->numberHmeSearchRegionInHeight        = 2;
-    config_ptr->hmeLevel0TotalSearchAreaWidth        = 64;
-    config_ptr->hmeLevel0TotalSearchAreaHeight       = 25;
-    config_ptr->hmeLevel0ColumnIndex                 = 0;
-    config_ptr->hmeLevel0RowIndex                    = 0;
-    config_ptr->hmeLevel1ColumnIndex                 = 0;
-    config_ptr->hmeLevel1RowIndex                    = 0;
-    config_ptr->hmeLevel2ColumnIndex                 = 0;
-    config_ptr->hmeLevel2RowIndex                    = 0;
-    config_ptr->hmeLevel0SearchAreaInWidthArray[0]   = 32;
-    config_ptr->hmeLevel0SearchAreaInWidthArray[1]   = 32;
-    config_ptr->hmeLevel0SearchAreaInHeightArray[0]  = 12;
-    config_ptr->hmeLevel0SearchAreaInHeightArray[1]  = 13;
-    config_ptr->hmeLevel1SearchAreaInWidthArray[0]   = 1;
-    config_ptr->hmeLevel1SearchAreaInWidthArray[1]   = 1;
-    config_ptr->hmeLevel1SearchAreaInHeightArray[0]  = 1;
-    config_ptr->hmeLevel1SearchAreaInHeightArray[1]  = 1;
-    config_ptr->hmeLevel2SearchAreaInWidthArray[0]   = 1;
-    config_ptr->hmeLevel2SearchAreaInWidthArray[1]   = 1;
-    config_ptr->hmeLevel2SearchAreaInHeightArray[0]  = 1;
-    config_ptr->hmeLevel2SearchAreaInHeightArray[1]  = 1;
+    config_ptr->enable_hme_flag                        = EB_TRUE;
+    config_ptr->enable_hme_level0_flag                  = EB_TRUE;
+    config_ptr->enable_hme_level1_flag                  = EB_FALSE;
+    config_ptr->enable_hme_level2_flag                  = EB_FALSE;
+    config_ptr->search_area_width                      = 16;
+    config_ptr->search_area_height                     = 7;
+    config_ptr->number_hme_search_region_in_width         = 2;
+    config_ptr->number_hme_search_region_in_height        = 2;
+    config_ptr->hme_level0_total_search_area_width        = 64;
+    config_ptr->hme_level0_total_search_area_height       = 25;
+    config_ptr->hme_level0_column_index                 = 0;
+    config_ptr->hme_level0_row_index                    = 0;
+    config_ptr->hme_level1_column_index                 = 0;
+    config_ptr->hme_level1_row_index                    = 0;
+    config_ptr->hme_level2_column_index                 = 0;
+    config_ptr->hme_level2_row_index                    = 0;
+    config_ptr->hme_level0_search_area_in_width_array[0]   = 32;
+    config_ptr->hme_level0_search_area_in_width_array[1]   = 32;
+    config_ptr->hme_level0_search_area_in_height_array[0]  = 12;
+    config_ptr->hme_level0_search_area_in_height_array[1]  = 13;
+    config_ptr->hme_level1_search_area_in_width_array[0]   = 1;
+    config_ptr->hme_level1_search_area_in_width_array[1]   = 1;
+    config_ptr->hme_level1_search_area_in_height_array[0]  = 1;
+    config_ptr->hme_level1_search_area_in_height_array[1]  = 1;
+    config_ptr->hme_level2_search_area_in_width_array[0]   = 1;
+    config_ptr->hme_level2_search_area_in_width_array[1]   = 1;
+    config_ptr->hme_level2_search_area_in_height_array[0]  = 1;
+    config_ptr->hme_level2_search_area_in_height_array[1]  = 1;
     config_ptr->constrained_intra                    = 0;
     config_ptr->film_grain_denoise_strength          = 0;
 
@@ -468,34 +468,34 @@ void EbConfigCtor(EbConfig_t *config_ptr)
 
 
     // Testing
-    config_ptr->eosFlag                                = 0;
+    config_ptr->eos_flag                                = 0;
 
     // Computational Performance Parameters
-    config_ptr->performanceContext.lib_start_time[0] = 0;
-    config_ptr->performanceContext.lib_start_time[1] = 0;
+    config_ptr->performance_context.lib_start_time[0] = 0;
+    config_ptr->performance_context.lib_start_time[1] = 0;
 
-    config_ptr->performanceContext.encode_start_time[0] = 0;
-    config_ptr->performanceContext.encode_start_time[1] = 0;
+    config_ptr->performance_context.encode_start_time[0] = 0;
+    config_ptr->performance_context.encode_start_time[1] = 0;
 
-    config_ptr->performanceContext.total_execution_time = 0;
-    config_ptr->performanceContext.total_encode_time    = 0;
+    config_ptr->performance_context.total_execution_time = 0;
+    config_ptr->performance_context.total_encode_time    = 0;
 
-    config_ptr->performanceContext.frameCount        = 0;
-    config_ptr->performanceContext.averageSpeed      = 0;
-    config_ptr->performanceContext.startsTime        = 0;
-    config_ptr->performanceContext.startuTime        = 0;
-    config_ptr->performanceContext.maxLatency        = 0;
-    config_ptr->performanceContext.totalLatency      = 0;
-    config_ptr->performanceContext.byteCount         = 0;
+    config_ptr->performance_context.frame_count        = 0;
+    config_ptr->performance_context.average_speed      = 0;
+    config_ptr->performance_context.starts_time        = 0;
+    config_ptr->performance_context.startu_time        = 0;
+    config_ptr->performance_context.max_latency        = 0;
+    config_ptr->performance_context.total_latency      = 0;
+    config_ptr->performance_context.byte_count         = 0;
 
     // ASM Type
-    config_ptr->asmType                              = 1;
+    config_ptr->asm_type                              = 1;
 
-    config_ptr->stopEncoder                          = 0;
-    config_ptr->logicalProcessors                    = 0;
-    config_ptr->targetSocket                         = -1;
-    config_ptr->processedFrameCount                  = 0;
-    config_ptr->processedByteCount                   = 0;
+    config_ptr->stop_encoder                          = 0;
+    config_ptr->logical_processors                    = 0;
+    config_ptr->target_socket                         = -1;
+    config_ptr->processed_frame_count                  = 0;
+    config_ptr->processed_byte_count                   = 0;
     config_ptr->tile_rows                            = 0;
     config_ptr->tile_columns                         = 0;
 
@@ -507,38 +507,38 @@ void EbConfigCtor(EbConfig_t *config_ptr)
 /**********************************
  * Destructor
  **********************************/
-void EbConfigDtor(EbConfig_t *config_ptr)
+void eb_config_dtor(EbConfig *config_ptr)
 {
 
     // Close any files that are open
-    if (config_ptr->configFile) {
-        fclose(config_ptr->configFile);
-        config_ptr->configFile = (FILE *) NULL;
+    if (config_ptr->config_file) {
+        fclose(config_ptr->config_file);
+        config_ptr->config_file = (FILE *) NULL;
     }
 
-    if (config_ptr->inputFile) {
-        if (config_ptr->inputFile != stdin) fclose(config_ptr->inputFile);
-        config_ptr->inputFile = (FILE *) NULL;
+    if (config_ptr->input_file) {
+        if (config_ptr->input_file != stdin) fclose(config_ptr->input_file);
+        config_ptr->input_file = (FILE *) NULL;
     }
 
-    if (config_ptr->bitstreamFile) {
-        fclose(config_ptr->bitstreamFile);
-        config_ptr->bitstreamFile = (FILE *) NULL;
+    if (config_ptr->bitstream_file) {
+        fclose(config_ptr->bitstream_file);
+        config_ptr->bitstream_file = (FILE *) NULL;
     }
 
-    if (config_ptr->reconFile) {
-        fclose(config_ptr->reconFile);
-        config_ptr->reconFile = (FILE *)NULL;
+    if (config_ptr->recon_file) {
+        fclose(config_ptr->recon_file);
+        config_ptr->recon_file = (FILE *)NULL;
     }
 
-    if (config_ptr->errorLogFile) {
-        fclose(config_ptr->errorLogFile);
-        config_ptr->errorLogFile = (FILE *) NULL;
+    if (config_ptr->error_log_file) {
+        fclose(config_ptr->error_log_file);
+        config_ptr->error_log_file = (FILE *) NULL;
     }
 
-    if (config_ptr->qpFile) {
-        fclose(config_ptr->qpFile);
-        config_ptr->qpFile = (FILE *)NULL;
+    if (config_ptr->qp_file) {
+        fclose(config_ptr->qp_file);
+        config_ptr->qp_file = (FILE *)NULL;
     }
 
     return;
@@ -611,7 +611,7 @@ static void lineSplit(
 * Set Config value
 **********************************/
 static void SetConfigValue(
-    EbConfig_t *config,
+    EbConfig *config,
     char       *name,
     char       *value)
 {
@@ -631,7 +631,7 @@ static void SetConfigValue(
 * Parse Config File
 **********************************/
 static void ParseConfigFile(
-    EbConfig_t *config,
+    EbConfig *config,
     char       *buffer,
     int32_t         size)
 {
@@ -714,38 +714,38 @@ static int32_t FindToken(
 * Read Config File
 **********************************/
 static int32_t ReadConfigFile(
-    EbConfig_t  *config,
+    EbConfig  *config,
     char        *configPath,
-    uint32_t     instanceIdx)
+    uint32_t     instance_idx)
 {
     int32_t return_error = 0;
 
     // Open the config file
-    FOPEN(config->configFile, configPath, "rb");
+    FOPEN(config->config_file, configPath, "rb");
 
-    if (config->configFile != (FILE*) NULL) {
-        int32_t configFileSize = findFileSize(config->configFile);
+    if (config->config_file != (FILE*) NULL) {
+        int32_t configFileSize = findFileSize(config->config_file);
         char *configFileBuffer = (char*) malloc(configFileSize);
 
         if (configFileBuffer != (char *) NULL) {
-            int32_t resultSize = (int32_t) fread(configFileBuffer, 1, configFileSize, config->configFile);
+            int32_t resultSize = (int32_t) fread(configFileBuffer, 1, configFileSize, config->config_file);
 
             if (resultSize == configFileSize) {
                 ParseConfigFile(config, configFileBuffer, configFileSize);
             } else {
-                printf("Error channel %u: File Read Failed\n",instanceIdx+1);
+                printf("Error channel %u: File Read Failed\n",instance_idx+1);
                 return_error = -1;
             }
         } else {
-            printf("Error channel %u: Memory Allocation Failed\n",instanceIdx+1);
+            printf("Error channel %u: Memory Allocation Failed\n",instance_idx+1);
             return_error = -1;
         }
 
         free(configFileBuffer);
-        fclose(config->configFile);
-        config->configFile = (FILE*) NULL;
+        fclose(config->config_file);
+        config->config_file = (FILE*) NULL;
     } else {
-        printf("Error channel %u: Couldn't open Config File: %s\n", instanceIdx+1,configPath);
+        printf("Error channel %u: Couldn't open Config File: %s\n", instance_idx+1,configPath);
         return_error = -1;
     }
 
@@ -755,71 +755,71 @@ static int32_t ReadConfigFile(
 /******************************************
 * Verify Settings
 ******************************************/
-static EbErrorType VerifySettings(EbConfig_t *config, uint32_t channelNumber)
+static EbErrorType VerifySettings(EbConfig *config, uint32_t channelNumber)
 {
     EbErrorType return_error = EB_ErrorNone;
 
     // Check Input File
-    if(config->inputFile == (FILE*) NULL) {
-        fprintf(config->errorLogFile, "Error instance %u: Invalid Input File\n",channelNumber+1);
+    if(config->input_file == (FILE*) NULL) {
+        fprintf(config->error_log_file, "Error instance %u: Invalid Input File\n",channelNumber+1);
         return_error = EB_ErrorBadParameter;
     }
 
     if (config->frames_to_be_encoded <= -1) {
-        fprintf(config->errorLogFile, "Error instance %u: FrameToBeEncoded must be greater than 0\n",channelNumber+1);
+        fprintf(config->error_log_file, "Error instance %u: FrameToBeEncoded must be greater than 0\n",channelNumber+1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->bufferedInput < -1) {
-        fprintf(config->errorLogFile, "Error instance %u: Invalid BufferedInput. BufferedInput must greater or equal to -1\n", channelNumber + 1);
+    if (config->buffered_input < -1) {
+        fprintf(config->error_log_file, "Error instance %u: Invalid buffered_input. buffered_input must greater or equal to -1\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->bufferedInput > config->frames_to_be_encoded) {
-        fprintf(config->errorLogFile, "Error instance %u: Invalid BufferedInput. BufferedInput must be less or equal to the number of frames to be encoded\n",channelNumber+1);
+    if (config->buffered_input > config->frames_to_be_encoded) {
+        fprintf(config->error_log_file, "Error instance %u: Invalid buffered_input. buffered_input must be less or equal to the number of frames to be encoded\n",channelNumber+1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->use_qp_file == EB_TRUE && config->qpFile == NULL) {
-        fprintf(config->errorLogFile, "Error instance %u: Could not find QP file, UseQpFile is set to 1\n", channelNumber + 1);
+    if (config->use_qp_file == EB_TRUE && config->qp_file == NULL) {
+        fprintf(config->error_log_file, "Error instance %u: Could not find QP file, UseQpFile is set to 1\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->separateFields > 1) {
-        fprintf(config->errorLogFile, "Error Instance %u: Invalid SeperateFields Input\n", channelNumber + 1);
+    if (config->separate_fields > 1) {
+        fprintf(config->error_log_file, "Error Instance %u: Invalid SeperateFields Input\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->encoderBitDepth == 10 && config->separateFields == 1)
+    if (config->encoder_bit_depth == 10 && config->separate_fields == 1)
     {
-        fprintf(config->errorLogFile, "Error instance %u: Separate fields is not supported for 10 bit input \n", channelNumber + 1);
+        fprintf(config->error_log_file, "Error instance %u: Separate fields is not supported for 10 bit input \n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
 
     if (config->injector > 1 ){
-        fprintf(config->errorLogFile, "Error Instance %u: Invalid injector [0 - 1]\n",channelNumber+1);
+        fprintf(config->error_log_file, "Error Instance %u: Invalid injector [0 - 1]\n",channelNumber+1);
         return_error = EB_ErrorBadParameter;
     }
 
     if(config->injector_frame_rate > (240<<16) && config->injector){
-        fprintf(config->errorLogFile, "Error Instance %u: The maximum allowed injector_frame_rate is 240 fps\n",channelNumber+1);
+        fprintf(config->error_log_file, "Error Instance %u: The maximum allowed injector_frame_rate is 240 fps\n",channelNumber+1);
         return_error = EB_ErrorBadParameter;
     }
-    // Check that the injector frameRate is non-zero
+    // Check that the injector frame_rate is non-zero
     if(config->injector_frame_rate <= 0 && config->injector) {
-        fprintf(config->errorLogFile, "Error Instance %u: The injector frame rate should be greater than 0 fps \n",channelNumber+1);
+        fprintf(config->error_log_file, "Error Instance %u: The injector frame rate should be greater than 0 fps \n",channelNumber+1);
         return_error = EB_ErrorBadParameter;
     }
 
-    // TargetSocket
-    if (config->targetSocket != -1 && config->targetSocket != 0 && config->targetSocket != 1) {
-        fprintf(config->errorLogFile, "Error instance %u: Invalid TargetSocket [-1 - 1], your input: %d\n", channelNumber + 1, config->targetSocket);
+    // target_socket
+    if (config->target_socket != -1 && config->target_socket != 0 && config->target_socket != 1) {
+        fprintf(config->error_log_file, "Error instance %u: Invalid target_socket [-1 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
         return_error = EB_ErrorBadParameter;
     }
 
     // Local Warped Motion
     if (config->enable_warped_motion != 0 && config->enable_warped_motion != 1) {
-        fprintf(config->errorLogFile, "Error instance %u: Invalid warped motion flag [0 - 1], your input: %d\n", channelNumber + 1, config->targetSocket);
+        fprintf(config->error_log_file, "Error instance %u: Invalid warped motion flag [0 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -867,7 +867,7 @@ int32_t FindTokenMultipleInputs(
     return return_error;
 }
 
-uint32_t GetHelp(
+uint32_t get_help(
     int32_t     argc,
     char *const argv[])
 {
@@ -891,7 +891,7 @@ uint32_t GetHelp(
 /******************************************************
 * Get the number of channels and validate it with input
 ******************************************************/
-uint32_t GetNumberOfChannels(
+uint32_t get_number_of_channels(
     int32_t     argc,
     char *const argv[])
 {
@@ -941,46 +941,46 @@ EbBool is_negative_number(
 #define SIZE_OF_ONE_FRAME_IN_BYTES(width, height,is16bit) ( ( ((width)*(height)*3)>>1 )<<is16bit)
 // Computes the number of frames in the input file
 int32_t ComputeFramesToBeEncoded(
-    EbConfig_t   *config)
+    EbConfig   *config)
 {
     uint64_t fileSize   = 0;
-    int32_t  frameCount = 0;
+    int32_t  frame_count = 0;
     uint32_t frameSize;
     uint64_t currLoc;
 
-    currLoc = ftello64(config->inputFile); // get current fp location
+    currLoc = ftello64(config->input_file); // get current fp location
 
-    if (config->inputFile) {
-        fseeko64(config->inputFile, 0L, SEEK_END);
-        fileSize = ftello64(config->inputFile);
-        fseeko64(config->inputFile, currLoc, SEEK_SET); // seek back to that location
+    if (config->input_file) {
+        fseeko64(config->input_file, 0L, SEEK_END);
+        fileSize = ftello64(config->input_file);
+        fseeko64(config->input_file, currLoc, SEEK_SET); // seek back to that location
     }
 
-    frameSize = SIZE_OF_ONE_FRAME_IN_BYTES(config->inputPaddedWidth, config->inputPaddedHeight, (uint8_t)((config->encoderBitDepth == 10) ? 1 : 0));
+    frameSize = SIZE_OF_ONE_FRAME_IN_BYTES(config->input_padded_width, config->input_padded_height, (uint8_t)((config->encoder_bit_depth == 10) ? 1 : 0));
 
     if (frameSize == 0)
         return -1;
 
-    if (config->encoderBitDepth == 10 && config->compressedTenBitFormat == 1)
-        frameCount = (int32_t)(2 * ((double)fileSize / frameSize) / 1.25);
+    if (config->encoder_bit_depth == 10 && config->compressed_ten_bit_format == 1)
+        frame_count = (int32_t)(2 * ((double)fileSize / frameSize) / 1.25);
     else
-        frameCount = (int32_t)(fileSize / frameSize);
+        frame_count = (int32_t)(fileSize / frameSize);
 
-    if (frameCount == 0)
+    if (frame_count == 0)
         return -1;
 
-    return frameCount;
+    return frame_count;
 
 }
 
 /******************************************
 * Read Command Line
 ******************************************/
-EbErrorType ReadCommandLine(
+EbErrorType read_command_line(
     int32_t        argc,
     char *const    argv[],
-    EbConfig_t   **configs,
-    uint32_t       numChannels,
+    EbConfig   **configs,
+    uint32_t       num_channels,
     EbErrorType  *return_errors)
 {
 
@@ -1014,7 +1014,7 @@ EbErrorType ReadCommandLine(
 
         mark_token_as_read(CONFIG_FILE_TOKEN, cmd_copy, &cmd_token_cnt);
         // Parse the config file
-        for (index = 0; index < numChannels; ++index){
+        for (index = 0; index < num_channels; ++index){
             return_errors[index] = (EbErrorType)ReadConfigFile(configs[index], config_strings[index], index);
             return_error = (EbErrorType)(return_error &  return_errors[index]);
         }
@@ -1044,7 +1044,7 @@ EbErrorType ReadCommandLine(
                 mark_token_as_read(config_entry[token_index].token, cmd_copy, &cmd_token_cnt);
 
                 // Fill up the values corresponding to each channel
-                for (index = 0; index < numChannels; ++index) {
+                for (index = 0; index < num_channels; ++index) {
                     if (EB_STRCMP(config_strings[index], " ")) {
                         (*config_entry[token_index].scf)(config_strings[index], configs[index]);
                     }
@@ -1061,9 +1061,9 @@ EbErrorType ReadCommandLine(
     /********************** overriding config file and command line inputs    **************************/
     /***************************************************************************************************/
 
-    for (index = 0; index < numChannels; ++index) {
-        if ((configs[index])->y4mInput == EB_TRUE){
-            ret_y4m = readY4mHeader(configs[index]);
+    for (index = 0; index < num_channels; ++index) {
+        if ((configs[index])->y4m_input == EB_TRUE){
+            ret_y4m = read_y4m_header(configs[index]);
             if(ret_y4m == EB_ErrorBadParameter){
                 printf("Error found when reading the y4m file parameters.\n");
                 return EB_ErrorBadParameter;
@@ -1081,9 +1081,9 @@ EbErrorType ReadCommandLine(
 
         mark_token_as_read(HME_LEVEL0_WIDTH, cmd_copy, &cmd_token_cnt);
 
-        for (index = 0; done && (index < numChannels); ++index){
-            configs[index]->hmeLevel0ColumnIndex = 0;
-            for (inputIndex = lastIndex; inputIndex < configs[index]->numberHmeSearchRegionInWidth + lastIndex; ++inputIndex){
+        for (index = 0; done && (index < num_channels); ++index){
+            configs[index]->hme_level0_column_index = 0;
+            for (inputIndex = lastIndex; inputIndex < configs[index]->number_hme_search_region_in_width + lastIndex; ++inputIndex){
                 if (EB_STRCMP(config_strings[inputIndex], " "))
                     SetHmeLevel0SearchAreaInWidthArray(config_strings[inputIndex], configs[index]);
                 else{
@@ -1091,7 +1091,7 @@ EbErrorType ReadCommandLine(
                     break;
                 }
             }
-            lastIndex += configs[index]->numberHmeSearchRegionInWidth;
+            lastIndex += configs[index]->number_hme_search_region_in_width;
         }
     }
 
@@ -1104,9 +1104,9 @@ EbErrorType ReadCommandLine(
 
         mark_token_as_read(HME_LEVEL0_HEIGHT, cmd_copy, &cmd_token_cnt);
 
-        for (index = 0; done && (index < numChannels); ++index){
-            configs[index]->hmeLevel0RowIndex = 0;
-            for (inputIndex = lastIndex; inputIndex < configs[index]->numberHmeSearchRegionInHeight + lastIndex; ++inputIndex){
+        for (index = 0; done && (index < num_channels); ++index){
+            configs[index]->hme_level0_row_index = 0;
+            for (inputIndex = lastIndex; inputIndex < configs[index]->number_hme_search_region_in_height + lastIndex; ++inputIndex){
                 if (EB_STRCMP(config_strings[inputIndex], " "))
                     SetHmeLevel0SearchAreaInHeightArray(config_strings[inputIndex], configs[index]);
                 else{
@@ -1114,7 +1114,7 @@ EbErrorType ReadCommandLine(
                     break;
                 }
             }
-            lastIndex += configs[index]->numberHmeSearchRegionInHeight;
+            lastIndex += configs[index]->number_hme_search_region_in_height;
         }
     }
 
@@ -1126,9 +1126,9 @@ EbErrorType ReadCommandLine(
 
         mark_token_as_read(HME_LEVEL1_HEIGHT, cmd_copy, &cmd_token_cnt);
 
-        for (index = 0; done && (index < numChannels); ++index){
-            configs[index]->hmeLevel1RowIndex = 0;
-            for (inputIndex = lastIndex; inputIndex < configs[index]->numberHmeSearchRegionInHeight + lastIndex; ++inputIndex){
+        for (index = 0; done && (index < num_channels); ++index){
+            configs[index]->hme_level1_row_index = 0;
+            for (inputIndex = lastIndex; inputIndex < configs[index]->number_hme_search_region_in_height + lastIndex; ++inputIndex){
                 if (EB_STRCMP(config_strings[inputIndex], " "))
                     SetHmeLevel1SearchAreaInHeightArray(config_strings[inputIndex], configs[index]);
                 else{
@@ -1136,7 +1136,7 @@ EbErrorType ReadCommandLine(
                     break;
                 }
             }
-            lastIndex += configs[index]->numberHmeSearchRegionInHeight;
+            lastIndex += configs[index]->number_hme_search_region_in_height;
         }
     }
 
@@ -1148,9 +1148,9 @@ EbErrorType ReadCommandLine(
 
         mark_token_as_read(HME_LEVEL1_WIDTH, cmd_copy, &cmd_token_cnt);
 
-        for (index = 0; done && (index < numChannels); ++index){
-            configs[index]->hmeLevel1ColumnIndex = 0;
-            for (inputIndex = lastIndex; inputIndex < configs[index]->numberHmeSearchRegionInWidth + lastIndex; ++inputIndex){
+        for (index = 0; done && (index < num_channels); ++index){
+            configs[index]->hme_level1_column_index = 0;
+            for (inputIndex = lastIndex; inputIndex < configs[index]->number_hme_search_region_in_width + lastIndex; ++inputIndex){
                 if (EB_STRCMP(config_strings[inputIndex], " "))
                     SetHmeLevel1SearchAreaInWidthArray(config_strings[inputIndex], configs[index]);
                 else{
@@ -1158,7 +1158,7 @@ EbErrorType ReadCommandLine(
                     break;
                 }
             }
-            lastIndex += configs[index]->numberHmeSearchRegionInWidth;
+            lastIndex += configs[index]->number_hme_search_region_in_width;
         }
     }
 
@@ -1170,9 +1170,9 @@ EbErrorType ReadCommandLine(
 
         mark_token_as_read(HME_LEVEL2_WIDTH, cmd_copy, &cmd_token_cnt);
 
-        for (index = 0; done && (index < numChannels); ++index){
-            configs[index]->hmeLevel2ColumnIndex = 0;
-            for (inputIndex = lastIndex; inputIndex < configs[index]->numberHmeSearchRegionInWidth + lastIndex; ++inputIndex){
+        for (index = 0; done && (index < num_channels); ++index){
+            configs[index]->hme_level2_column_index = 0;
+            for (inputIndex = lastIndex; inputIndex < configs[index]->number_hme_search_region_in_width + lastIndex; ++inputIndex){
                 if (EB_STRCMP(config_strings[inputIndex], " "))
                     SetHmeLevel2SearchAreaInWidthArray(config_strings[inputIndex], configs[index]);
                 else{
@@ -1180,7 +1180,7 @@ EbErrorType ReadCommandLine(
                     break;
                 }
             }
-            lastIndex += configs[index]->numberHmeSearchRegionInWidth;
+            lastIndex += configs[index]->number_hme_search_region_in_width;
         }
     }
 
@@ -1192,9 +1192,9 @@ EbErrorType ReadCommandLine(
 
         mark_token_as_read(HME_LEVEL2_HEIGHT, cmd_copy, &cmd_token_cnt);
 
-        for (index = 0; done && (index < numChannels); ++index){
-            configs[index]->hmeLevel2RowIndex = 0;
-            for (inputIndex = lastIndex; inputIndex < configs[index]->numberHmeSearchRegionInHeight + lastIndex; ++inputIndex){
+        for (index = 0; done && (index < num_channels); ++index){
+            configs[index]->hme_level2_row_index = 0;
+            for (inputIndex = lastIndex; inputIndex < configs[index]->number_hme_search_region_in_height + lastIndex; ++inputIndex){
                 if (EB_STRCMP(config_strings[inputIndex], " "))
                     SetHmeLevel2SearchAreaInHeightArray(config_strings[inputIndex], configs[index]);
                 else{
@@ -1202,7 +1202,7 @@ EbErrorType ReadCommandLine(
                     break;
                 }
             }
-            lastIndex += configs[index]->numberHmeSearchRegionInHeight;
+            lastIndex += configs[index]->number_hme_search_region_in_height;
         }
     }
 
@@ -1212,14 +1212,14 @@ EbErrorType ReadCommandLine(
     // Verify the config values
     if (return_error == 0) {
         return_error = EB_ErrorBadParameter;
-        for (index = 0; index < numChannels; ++index){
+        for (index = 0; index < num_channels; ++index){
             if (return_errors[index] == EB_ErrorNone){
                 return_errors[index] = VerifySettings(configs[index], index);
 
                 // Assuming no errors, add padding to width and height
                 if (return_errors[index] == EB_ErrorNone) {
-                    configs[index]->inputPaddedWidth  = configs[index]->sourceWidth + LEFT_INPUT_PADDING + RIGHT_INPUT_PADDING;
-                    configs[index]->inputPaddedHeight = configs[index]->sourceHeight + TOP_INPUT_PADDING + BOTTOM_INPUT_PADDING;
+                    configs[index]->input_padded_width  = configs[index]->source_width + LEFT_INPUT_PADDING + RIGHT_INPUT_PADDING;
+                    configs[index]->input_padded_height = configs[index]->source_height + TOP_INPUT_PADDING + BOTTOM_INPUT_PADDING;
                 }
 
 
@@ -1228,7 +1228,7 @@ EbErrorType ReadCommandLine(
                     configs[index]->frames_to_be_encoded = ComputeFramesToBeEncoded(configs[index]);
 
                 if (configs[index]->frames_to_be_encoded == -1) {
-                    fprintf(configs[index]->errorLogFile, "Error instance %u: Input yuv does not contain enough frames \n", index + 1);
+                    fprintf(configs[index]->error_log_file, "Error instance %u: Input yuv does not contain enough frames \n", index + 1);
                     return_errors[index] = EB_ErrorBadParameter;
                 }
 

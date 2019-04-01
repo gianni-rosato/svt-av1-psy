@@ -14,8 +14,8 @@
  **************************************/
 typedef struct PictureDecisionContext_s
 {
-    EbFifo_t                     *picture_analysis_results_input_fifo_ptr;
-    EbFifo_t                     *picture_decision_results_output_fifo_ptr;
+    EbFifo                     *picture_analysis_results_input_fifo_ptr;
+    EbFifo                     *picture_decision_results_output_fifo_ptr;
 
     uint64_t                       lastSolidColorFramePoc;
 
@@ -54,8 +54,8 @@ typedef struct PictureDecisionContext_s
  ***************************************/
 extern EbErrorType picture_decision_context_ctor(
     PictureDecisionContext_t **context_dbl_ptr,
-    EbFifo_t                  *picture_analysis_results_input_fifo_ptr,
-    EbFifo_t                  *picture_decision_results_output_fifo_ptr);
+    EbFifo                  *picture_analysis_results_input_fifo_ptr,
+    EbFifo                  *picture_decision_results_output_fifo_ptr);
 
 
 extern void* picture_decision_kernel(void *input_ptr);

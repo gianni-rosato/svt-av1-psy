@@ -58,7 +58,8 @@ extern "C" {
 #define default_scan_16x64_neighbors default_scan_16x32_neighbors
 #define default_scan_64x16_neighbors default_scan_32x16_neighbors
 
-    static const int8_t txsize_log2_minus4[TX_SIZES_ALL] = {
+    static const int8_t txsize_log2_minus4[TX_SIZES_ALL] = 
+    {
         0,  // TX_4X4
         2,  // TX_8X8
         4,  // TX_16X16
@@ -80,20 +81,23 @@ extern "C" {
         5,  // TX_64X16
     };
     // Note:
-    // tran_high_t is the datatype used for intermediate transform stages.
-    typedef int64_t tran_high_t;
+    // TranHigh is the datatype used for intermediate transform stages.
+    typedef int64_t TranHigh;
 
-    static const TX_TYPE_1D vtx_tab[TX_TYPES] = {
+    static const TX_TYPE_1D vtx_tab[TX_TYPES] = 
+    {
         DCT_1D, ADST_1D, DCT_1D, ADST_1D,
         FLIPADST_1D, DCT_1D, FLIPADST_1D, ADST_1D, FLIPADST_1D, IDTX_1D,
         DCT_1D, IDTX_1D, ADST_1D, IDTX_1D, FLIPADST_1D, IDTX_1D,
     };
-    static const TX_TYPE_1D htx_tab[TX_TYPES] = {
+    static const TX_TYPE_1D htx_tab[TX_TYPES] = 
+    {
         DCT_1D, DCT_1D, ADST_1D, ADST_1D,
         DCT_1D, FLIPADST_1D, FLIPADST_1D, FLIPADST_1D, ADST_1D, IDTX_1D,
         IDTX_1D, DCT_1D, IDTX_1D, ADST_1D, IDTX_1D, FLIPADST_1D,
     };
-    static const block_size txsize_to_bsize[TX_SIZES_ALL] = {
+    static const block_size txsize_to_bsize[TX_SIZES_ALL] = 
+    {
         BLOCK_4X4,    // TX_4X4
         BLOCK_8X8,    // TX_8X8
         BLOCK_16X16,  // TX_16X16
@@ -133,14 +137,17 @@ extern "C" {
     static const int8_t fwd_shift_32x8[3] = { 2, -2, 0 };
     static const int8_t fwd_shift_16x64[3] = { 0, -2, 0 };
     static const int8_t fwd_shift_64x16[3] = { 2, -4, 0 };
-    static const int8_t fwd_cos_bit_col[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] = {
+
+    static const int8_t fwd_cos_bit_col[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] = 
+    {
         { 13, 13, 13, 0, 0 },
         { 13, 13, 13, 12, 0 },
         { 13, 13, 13, 12, 13 },
         { 0, 13, 13, 12, 13 },
         { 0, 0, 13, 12, 13 }
     };
-    static const int8_t fwd_cos_bit_row[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] = {
+    static const int8_t fwd_cos_bit_row[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] = 
+    {
         { 13, 13, 12, 0, 0 },
         { 13, 13, 13, 12, 0 },
         { 13, 13, 12, 13, 12 },
@@ -148,7 +155,8 @@ extern "C" {
         { 0, 0, 12, 11, 10 }
     };
 
-    typedef struct TransfromParam_s {
+    typedef struct TransformParam 
+    {
         // for both forward and inverse transforms
         TxType transform_type;
         TxSize transform_size;
@@ -157,11 +165,12 @@ extern "C" {
         TxSetType transformSetType;
         // for inverse transforms only
         int32_t eob;
-    } TransformParam_t;
+    } TransformParam;
 
     // Utility function that returns the log of the ratio of the col and row
     // sizes.
-    typedef enum TXFM_TYPE {
+    typedef enum TxfmType 
+    {
         TXFM_TYPE_DCT4,
         TXFM_TYPE_DCT8,
         TXFM_TYPE_DCT16,
@@ -178,8 +187,9 @@ extern "C" {
         TXFM_TYPE_IDENTITY64,
         TXFM_TYPES,
         TXFM_TYPE_INVALID,
-    } TXFM_TYPE;
-    typedef struct TXFM_2D_FLIP_CFG {
+    } TxfmType;
+    typedef struct Txfm2DFlipCfg 
+    {
         TxSize tx_size;
         int32_t ud_flip;  // flip upside down
         int32_t lr_flip;  // flip left to right
@@ -188,12 +198,14 @@ extern "C" {
         int8_t cos_bit_row;
         int8_t stage_range_col[MAX_TXFM_STAGE_NUM];
         int8_t stage_range_row[MAX_TXFM_STAGE_NUM];
-        TXFM_TYPE txfm_type_col;
-        TXFM_TYPE txfm_type_row;
+        TxfmType txfm_type_col;
+        TxfmType txfm_type_row;
         int32_t stage_num_col;
         int32_t stage_num_row;
-    } TXFM_2D_FLIP_CFG;
-    static const TXFM_TYPE av1_txfm_type_ls[5][TX_TYPES_1D] = {
+    } Txfm2DFlipCfg;
+
+    static const TxfmType av1_txfm_type_ls[5][TX_TYPES_1D] = 
+    {
         { TXFM_TYPE_DCT4, TXFM_TYPE_ADST4, TXFM_TYPE_ADST4, TXFM_TYPE_IDENTITY4 },
         { TXFM_TYPE_DCT8, TXFM_TYPE_ADST8, TXFM_TYPE_ADST8, TXFM_TYPE_IDENTITY8 },
         { TXFM_TYPE_DCT16, TXFM_TYPE_ADST16, TXFM_TYPE_ADST16, TXFM_TYPE_IDENTITY16 },
@@ -201,7 +213,8 @@ extern "C" {
         { TXFM_TYPE_DCT64, TXFM_TYPE_INVALID, TXFM_TYPE_INVALID,
         TXFM_TYPE_IDENTITY64 }
     };
-    static const int8_t av1_txfm_stage_num_list[TXFM_TYPES] = {
+    static const int8_t av1_txfm_stage_num_list[TXFM_TYPES] = 
+    {
         4,   // TXFM_TYPE_DCT4
         6,   // TXFM_TYPE_DCT8
         8,   // TXFM_TYPE_DCT16
@@ -236,14 +249,16 @@ extern "C" {
     static const int8_t fidtx16_range_mult2[1] = { 3 };
     static const int8_t fidtx32_range_mult2[1] = { 4 };
     static const int8_t fidtx64_range_mult2[1] = { 5 };
-    static const int8_t inv_cos_bit_col[MAX_TXWH_IDX][MAX_TXWH_IDX] = {
+    static const int8_t inv_cos_bit_col[MAX_TXWH_IDX][MAX_TXWH_IDX] = 
+    {
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0, 0 },
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0 },
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT },
         { 0, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT },
         { 0, 0, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT }
     };
-    static const int8_t inv_cos_bit_row[MAX_TXWH_IDX][MAX_TXWH_IDX] = {
+    static const int8_t inv_cos_bit_row[MAX_TXWH_IDX][MAX_TXWH_IDX] = 
+    {
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0, 0 },
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0 },
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT },
@@ -299,12 +314,13 @@ extern "C" {
         7,  // 64x16 transform
     };
     ////////////////////// QUANTIZATION//////////////
-    typedef struct QUANT_PARAM {
+    typedef struct QuantParam 
+    {
         int32_t log_scale;
         TxSize tx_size;
         const qm_val_t *qmatrix;
         const qm_val_t *iqmatrix;
-    } QUANT_PARAM;
+    } QuantParam;
 
     static inline int32_t av1_get_tx_scale(const TxSize tx_size) {
         const int32_t pels = tx_size_2d[tx_size];
@@ -3990,7 +4006,7 @@ extern "C" {
     /*****************************
     * Function pointer Typedef
     *****************************/
-    typedef void(*EB_QIQ_TYPE)(
+    typedef void(*EbQiqType)(
         int16_t        *coeff,
         const uint32_t  coeff_stride,
         int16_t        *quant_coeff,
@@ -4004,7 +4020,7 @@ extern "C" {
         const uint32_t  area_size,
         uint32_t       *nonzerocoeff);
 
-    typedef void(*EB_MAT_MUL_TYPE)(
+    typedef void(*EbMatMulType)(
         int16_t        *coeff,
         const uint32_t  coeff_stride,
         const uint16_t *masking_matrix,
@@ -4024,7 +4040,7 @@ extern "C" {
         const int32_t   shift_num,
         uint32_t       *nonzerocoeff);
 
-    typedef void(*EB_MAT_OUT_MUL_TYPE)(
+    typedef void(*EbMatOutMulType)(
         int16_t        *coeff,
         const uint32_t  coeff_stride,
         int16_t*        coeff_out,
@@ -4048,7 +4064,7 @@ extern "C" {
         const int32_t   shift_num,
         uint32_t       *nonzerocoeff);
 
-    typedef void(*EB_TRANSFORM_FUNC)(
+    typedef void(*EbTransformFunc)(
         int16_t        *residual,
         const uint32_t  src_stride,
         int16_t        *transform_coefficients,
@@ -4056,7 +4072,7 @@ extern "C" {
         int16_t        *transform_inner_array_ptr,
         uint32_t        bit_increment);
 
-    typedef void(*EB_INVTRANSFORM_FUNC)(
+    typedef void(*EbInvTransformFunc)(
         int16_t        *transform_coefficients,
         const uint32_t  src_stride,
         int16_t        *residual,
@@ -4067,7 +4083,7 @@ extern "C" {
     /*****************************
     * Function Tables
     *****************************/
-    static const EB_TRANSFORM_FUNC pfreq_n2_transform_table[ASM_TYPE_TOTAL][5] = {
+    static const EbTransformFunc pfreq_n2_transform_table[ASM_TYPE_TOTAL][5] = {
         // NON_AVX2
         {
             pfreq_transform32x32_sse2,
@@ -4086,7 +4102,7 @@ extern "C" {
             dst_transform4x4_sse2_intrin
         }
     };
-    static const EB_TRANSFORM_FUNC pfreq_n4_transform_table[ASM_TYPE_TOTAL][5] = {
+    static const EbTransformFunc pfreq_n4_transform_table[ASM_TYPE_TOTAL][5] = {
         // NON_AVX2
         {
             pfreq_n4_transform32x32_sse2,
@@ -4104,7 +4120,7 @@ extern "C" {
             dst_transform4x4_sse2_intrin
         }
     };
-    static const EB_TRANSFORM_FUNC transform_function_table_encode[ASM_TYPE_TOTAL][5] = {
+    static const EbTransformFunc transform_function_table_encode[ASM_TYPE_TOTAL][5] = {
         // NON_AVX2
         {
             transform32x32_sse2,
@@ -4122,7 +4138,7 @@ extern "C" {
             dst_transform4x4_sse2_intrin
         },
     };
-    static const EB_INVTRANSFORM_FUNC inv_transform_function_table_encode[ASM_TYPE_TOTAL][5] = {
+    static const EbInvTransformFunc inv_transform_function_table_encode[ASM_TYPE_TOTAL][5] = {
         // NON_AVX2
         {
             p_finv_transform32x32_ssse3,
@@ -4140,7 +4156,7 @@ extern "C" {
             inv_dst_transform4x4_sse2_intrin
         },
     };
-    void construct_pm_trans_coeff_shaping(SequenceControlSet_t  *sequence_control_set_ptr);
+    void construct_pm_trans_coeff_shaping(SequenceControlSet  *sequence_control_set_ptr);
 
 #ifdef __cplusplus
 }

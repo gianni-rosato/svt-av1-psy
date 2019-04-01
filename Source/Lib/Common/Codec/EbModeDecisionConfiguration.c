@@ -289,7 +289,7 @@ uint8_t DeriveContouringClass(
 {
     uint8_t contouringClass = 0;
 
-    SequenceControlSet_t *sequence_control_set_ptr = (SequenceControlSet_t*)parentPcsPtr->sequence_control_set_wrapper_ptr->object_ptr;
+    SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)parentPcsPtr->sequence_control_set_wrapper_ptr->object_ptr;
 
     if (parentPcsPtr->is_sb_homogeneous_over_time[sb_index]) {
         if (leaf_index > 0) {
@@ -324,7 +324,7 @@ uint8_t DeriveContouringClass(
 
 
 void RefinementPredictionLoop(
-    SequenceControlSet_t                   *sequence_control_set_ptr,
+    SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet_t                    *picture_control_set_ptr,
     LargestCodingUnit_t                    *sb_ptr,
     uint32_t                                  sb_index,
@@ -341,7 +341,7 @@ void RefinementPredictionLoop(
         {
             localCuArray[cu_index].slectedCu = EB_TRUE;
             sb_ptr->pred64 = (cu_index == 0) ? EB_TRUE : sb_ptr->pred64;
-            uint32_t depth = GetCodedUnitStats(cu_index)->depth;
+            uint32_t depth = get_coded_unit_stats(cu_index)->depth;
             uint8_t refinementLevel;   
             {
                 if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_PRED_OPEN_LOOP_DEPTH_MODE) {
@@ -389,7 +389,7 @@ void RefinementPredictionLoop(
 
 
 void PrePredictionRefinement(
-    SequenceControlSet_t                   *sequence_control_set_ptr,
+    SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet_t                    *picture_control_set_ptr,
     LargestCodingUnit_t                    *sb_ptr,
     uint32_t                                  sb_index,
@@ -449,7 +449,7 @@ void PrePredictionRefinement(
 
 
 void ForwardCuToModeDecision(
-    SequenceControlSet_t                   *sequence_control_set_ptr,
+    SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet_t                    *picture_control_set_ptr,
 
     uint32_t                                  sb_index,
@@ -467,7 +467,7 @@ void ForwardCuToModeDecision(
 
 
     // CU Loop
-    const CodedUnitStats_t *cuStatsPtr = GetCodedUnitStats(0);
+    const CodedUnitStats *cuStatsPtr = get_coded_unit_stats(0);
 
     SbStat_t *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
 
@@ -489,7 +489,7 @@ void ForwardCuToModeDecision(
         split_flag = EB_TRUE;
         if (sb_params->raster_scan_cu_validity[MD_SCAN_TO_RASTER_SCAN[cu_index]])
         {
-            cuStatsPtr = GetCodedUnitStats(cu_index);
+            cuStatsPtr = get_coded_unit_stats(cu_index);
 
             switch (cuStatsPtr->depth) {
 
@@ -670,7 +670,7 @@ void MdcInterDepthDecision(
     }
 
     // Walks to the last coded 16x16 block for merging
-    if (GROUP_OF_4_16x16_BLOCKS(GetCodedUnitStats(depthTwoCandidateCuIndex)->origin_x, GetCodedUnitStats(depthTwoCandidateCuIndex)->origin_y) &&
+    if (GROUP_OF_4_16x16_BLOCKS(get_coded_unit_stats(depthTwoCandidateCuIndex)->origin_x, get_coded_unit_stats(depthTwoCandidateCuIndex)->origin_y) &&
         (group_of8x8_blocks_count == 4)) {
 
         group_of8x8_blocks_count = 0;
@@ -684,7 +684,7 @@ void MdcInterDepthDecision(
         // From the top left index, get the index of the candidate pu for merging
         depthOneCandidateCuIndex = topLeftCuIndex - 1;
 
-        if (GetCodedUnitStats(depthOneCandidateCuIndex)->depth == 1) {
+        if (get_coded_unit_stats(depthOneCandidateCuIndex)->depth == 1) {
             depthNCost = localCuArray[depthOneCandidateCuIndex].earlyCost + depthNRate;
             if (endDepth < 2) {
 
@@ -722,7 +722,7 @@ void MdcInterDepthDecision(
 
     // Walks to the last coded 32x32 block for merging
     // Stage 2 isn't performed in I slices since the abcense of 64x64 candidates
-    if (GROUP_OF_4_32x32_BLOCKS(GetCodedUnitStats(depthOneCandidateCuIndex)->origin_x, GetCodedUnitStats(depthOneCandidateCuIndex)->origin_y) &&
+    if (GROUP_OF_4_32x32_BLOCKS(get_coded_unit_stats(depthOneCandidateCuIndex)->origin_x, get_coded_unit_stats(depthOneCandidateCuIndex)->origin_y) &&
         (group_of16x16_blocks_count == 4)) {
 
         group_of16x16_blocks_count = 0;
@@ -735,7 +735,7 @@ void MdcInterDepthDecision(
         // From the top left index, get the index of the candidate pu for merging
         depthZeroCandidateCuIndex = topLeftCuIndex - 1;
 
-        if (GetCodedUnitStats(depthZeroCandidateCuIndex)->depth == 0) {
+        if (get_coded_unit_stats(depthZeroCandidateCuIndex)->depth == 0) {
 
             // Compute depth N cost
             depthNCost = (&localCuArray[depthZeroCandidateCuIndex])->earlyCost + depthNRate;
@@ -768,7 +768,7 @@ void MdcInterDepthDecision(
 }
 
 void PredictionPartitionLoop(
-    SequenceControlSet_t                   *sequence_control_set_ptr,
+    SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet_t                    *picture_control_set_ptr,
     uint32_t                                sb_index,
     uint32_t                                tbOriginX,
@@ -783,14 +783,14 @@ void PredictionPartitionLoop(
     SbParams_t *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
     uint32_t      cuIndexInRaterScan;
     uint32_t      cu_index = 0;
-    uint32_t      startIndex = 0;
+    uint32_t      start_index = 0;
 
     (void)tbOriginX;
     (void)tbOriginY;
 
-    const CodedUnitStats_t *cuStatsPtr;
+    const CodedUnitStats *cuStatsPtr;
 
-    for (cu_index = startIndex; cu_index < CU_MAX_COUNT; ++cu_index)
+    for (cu_index = start_index; cu_index < CU_MAX_COUNT; ++cu_index)
 
     {
 
@@ -802,7 +802,7 @@ void PredictionPartitionLoop(
         if (sb_params->raster_scan_cu_validity[cuIndexInRaterScan])
         {
             uint32_t depth;
-            cuStatsPtr = GetCodedUnitStats(cu_index);
+            cuStatsPtr = get_coded_unit_stats(cu_index);
 
             depth = cuStatsPtr->depth;
             cu_ptr->earlySplitFlag = (depth < endDepth) ? EB_TRUE : EB_FALSE;
@@ -903,7 +903,7 @@ void PredictionPartitionLoop(
 }
 
 EbErrorType EarlyModeDecisionLcu(
-    SequenceControlSet_t                   *sequence_control_set_ptr,
+    SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet_t                    *picture_control_set_ptr,
     LargestCodingUnit_t                    *sb_ptr,
     uint32_t                                  sb_index,

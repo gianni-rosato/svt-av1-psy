@@ -26,8 +26,8 @@
 
 
  // Note:
- // tran_high_t is the datatype used for intermediate transform stages.
-typedef int64_t tran_high_t;
+ // TranHigh is the datatype used for intermediate transform stages.
+typedef int64_t TranHigh;
 
 static INLINE void init_one_qp(const __m128i *p, __m256i *qp) {
     const __m128i sign = _mm_srai_epi16(*p, 15);

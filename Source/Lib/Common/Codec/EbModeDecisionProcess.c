@@ -15,8 +15,8 @@
  ******************************************************/
 EbErrorType mode_decision_context_ctor(
     ModeDecisionContext_t  **context_dbl_ptr,
-    EbFifo_t                *mode_decision_configuration_input_fifo_ptr,
-    EbFifo_t                *mode_decision_output_fifo_ptr){
+    EbFifo                *mode_decision_configuration_input_fifo_ptr,
+    EbFifo                *mode_decision_output_fifo_ptr){
 
     uint32_t bufferIndex;
     uint32_t candidateIndex;
@@ -47,10 +47,10 @@ EbErrorType mode_decision_context_ctor(
     }
 
     // Transform and Quantization Buffers
-    EB_MALLOC(EbTransQuantBuffers_t*, context_ptr->trans_quant_buffers_ptr, sizeof(EbTransQuantBuffers_t), EB_N_PTR);
+    EB_MALLOC(EbTransQuantBuffers*, context_ptr->trans_quant_buffers_ptr, sizeof(EbTransQuantBuffers), EB_N_PTR);
 
 
-    return_error = EbTransQuantBuffersCtor(
+    return_error = eb_trans_quant_buffers_ctor(
         context_ptr->trans_quant_buffers_ptr);
 
     if (return_error == EB_ErrorInsufficientResources) {
@@ -350,7 +350,7 @@ const EB_AV1_LAMBDA_ASSIGN_FUNC av1_lambda_assignment_function_table[4] = {
 void reset_mode_decision(
     ModeDecisionContext_t   *context_ptr,
     PictureControlSet_t     *picture_control_set_ptr,
-    SequenceControlSet_t    *sequence_control_set_ptr,
+    SequenceControlSet    *sequence_control_set_ptr,
     uint32_t                   segment_index)
 {
     EB_SLICE                     slice_type;
@@ -402,9 +402,9 @@ void reset_mode_decision(
 
     // TMVP Map Writer pointer
     if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-        context_ptr->reference_object_write_ptr = (EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
+        context_ptr->reference_object_write_ptr = (EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
     else
-        context_ptr->reference_object_write_ptr = (EbReferenceObject_t*)EB_NULL;
+        context_ptr->reference_object_write_ptr = (EbReferenceObject*)EB_NULL;
 
     // Reset CABAC Contexts
     context_ptr->coeff_est_entropy_coder_ptr = picture_control_set_ptr->coeff_est_entropy_coder_ptr;
@@ -437,7 +437,7 @@ void ModeDecisionConfigureLcu(
     ModeDecisionContext_t   *context_ptr,
     LargestCodingUnit_t     *sb_ptr,
     PictureControlSet_t     *picture_control_set_ptr,
-    SequenceControlSet_t    *sequence_control_set_ptr,
+    SequenceControlSet    *sequence_control_set_ptr,
     uint8_t                    picture_qp,
     uint8_t                    sb_qp){
 

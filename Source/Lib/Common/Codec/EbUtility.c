@@ -136,9 +136,9 @@ static TxSize blocksize_to_txsize[BlockSizeS_ALL] = {
 
 
 };
-EbErrorType ZOrderIncrement(
-    uint32_t *xLoc,   // x location, level agnostic
-    uint32_t *yLoc)   // y location, level agnostic
+EbErrorType z_order_increment(
+    uint32_t *x_loc,   // x location, level agnostic
+    uint32_t *y_loc)   // y location, level agnostic
 {
     EbErrorType return_error = EB_ErrorNone;
     uint32_t mask;
@@ -166,14 +166,14 @@ EbErrorType ZOrderIncrement(
     //
     //  Finally, X and Y are progressed only at the bit-positions in the mask.
 
-    mask = ((*xLoc & *yLoc) << 1) | 0x1;
+    mask = ((*x_loc & *y_loc) << 1) | 0x1;
     mask &= (mask << 1) | 0x01;
     mask &= (mask << 2) | 0x03;
     mask &= (mask << 4) | 0x0F;
     mask &= (mask << 8) | 0xFF;
 
-    *yLoc ^= *xLoc & mask;
-    *xLoc ^= mask;
+    *y_loc ^= *x_loc & mask;
+    *x_loc ^= mask;
 
     return return_error;
 }
@@ -182,15 +182,15 @@ EbErrorType ZOrderIncrement(
  * Z-Order Increment with Level
  *   This is the main function for progressing
  *   through a treeblock's coding units. To get
- *   the true CU size, multiple the xLoc, yLoc
+ *   the true CU size, multiple the x_loc, y_loc
  *   by the smallest CU size.
  *****************************************/
 void ZOrderIncrementWithLevel(
-    uint32_t *xLoc,   // x location, units of smallest block size
-    uint32_t *yLoc,   // y location, units of smallest block size
+    uint32_t *x_loc,   // x location, units of smallest block size
+    uint32_t *y_loc,   // y location, units of smallest block size
     uint32_t *level,  // level, number of block size-steps from the smallest block size
     //   (e.g. if 8x8 = level 0, 16x16 = level 1, 32x32 == level 2, 64x64 == level 3)
-    uint32_t *index)  // The CU index, can be used to index a lookup table (see GetCodedUnitStats)
+    uint32_t *index)  // The CU index, can be used to index a lookup table (see get_coded_unit_stats)
 {
     uint32_t mask;
 
@@ -218,7 +218,7 @@ void ZOrderIncrementWithLevel(
     //  Finally, X and Y are progressed only at the bit-positions in the mask.
 
     // Seed the mask
-    mask = ((*xLoc & *yLoc) << 1) | 0x1;
+    mask = ((*x_loc & *y_loc) << 1) | 0x1;
 
     // This step zero-outs the mask if level is not zero.
     //   The purpose of this is step further down the tree
@@ -247,10 +247,10 @@ void ZOrderIncrementWithLevel(
 
     *level += ((2 ^ (mask >> 1)) & -(mask > 3)) ^ (mask >> 1);
 
-    // Increment the xLoc, yLoc.  Note that this only occurs when
+    // Increment the x_loc, y_loc.  Note that this only occurs when
     //   we are at the bottom of the tree.
-    *yLoc ^= *xLoc & mask;
-    *xLoc ^= mask;
+    *y_loc ^= *x_loc & mask;
+    *x_loc ^= mask;
 
     // Increment the index. Note that the natural progression of this
     //   block aligns with how leafs are stored in the accompanying
@@ -260,9 +260,9 @@ void ZOrderIncrementWithLevel(
     return;
 }
 
-static CodedUnitStats_t CodedUnitStatsArray[] = {
+static CodedUnitStats CodedUnitStatsArray[] = {
 
-    //   Depth       Size      SizeLog2     OriginX    OriginY   cuNumInDepth   Index
+    //   Depth       Size      SizeLog2     OriginX    OriginY   cu_num_in_depth   Index
         {0,           64,         6,           0,         0,        0     ,   0    },   // 0
         {1,           32,         5,           0,         0,        0     ,   1    },   // 1
         {2,           16,         4,           0,         0,        0     ,   1    },   // 2
@@ -353,22 +353,22 @@ static CodedUnitStats_t CodedUnitStatsArray[] = {
 /**************************************************************
  * Get Coded Unit Statistics
  **************************************************************/
-const CodedUnitStats_t* GetCodedUnitStats(const uint32_t cuIdx)
+const CodedUnitStats* get_coded_unit_stats(const uint32_t cuIdx)
 {
-    //ASSERT(cuIdx < CU_MAX_COUNT && "GetCodedUnitStats: Out-of-range CU Idx\n");
+    //ASSERT(cuIdx < CU_MAX_COUNT && "get_coded_unit_stats: Out-of-range CU Idx\n");
     if (cuIdx == 255)
         printf("Invalid CuIndex\n");
 
     return &CodedUnitStatsArray[cuIdx];
 }
 
-static const TransformUnitStats_t TransformUnitStatsArray[] = {
+static const TransformUnitStats TransformUnitStatsArray[] = {
     //
     //        depth
     //       /
-    //      /       offsetX (units of the current depth)
+    //      /       offset_x (units of the current depth)
     //     /       /
-    //    /       /       offsetY (units of the current depth)
+    //    /       /       offset_y (units of the current depth)
     //   /       /       /
     {0,     0,      0},     // 0
     {1,     0,      0},     // 1
@@ -397,7 +397,7 @@ static const TransformUnitStats_t TransformUnitStatsArray[] = {
 /**************************************************************
  * Get Transform Unit Statistics
  **************************************************************/
-const TransformUnitStats_t* GetTransformUnitStats(const uint32_t tuIdx)
+const TransformUnitStats* get_transform_unit_stats(const uint32_t tuIdx)
 {
     return &TransformUnitStatsArray[tuIdx];
 }
@@ -451,7 +451,7 @@ inline uint64_t Log2f64(uint64_t x)
 /*****************************************
  * Endian Swap
  *****************************************/
-uint32_t EndianSwap(uint32_t ui)
+uint32_t endian_swap(uint32_t ui)
 {
     uint32_t ul2;
 
@@ -464,7 +464,7 @@ uint32_t EndianSwap(uint32_t ui)
 
 }
 
-uint64_t Log2fHighPrecision(uint64_t x, uint8_t precision)
+uint64_t log2f_high_precision(uint64_t x, uint8_t precision)
 {
 
     uint64_t sigBitLocation = Log2f64(x);
@@ -479,7 +479,7 @@ uint64_t Log2fHighPrecision(uint64_t x, uint8_t precision)
 
 
 // concatenate two linked list, and return the pointer to the new concatenated list
-EbLinkedListNode* concatEbLinkedList(EbLinkedListNode* a, EbLinkedListNode* b)
+EbLinkedListNode* concat_eb_linked_list(EbLinkedListNode* a, EbLinkedListNode* b)
 {
     if (a)
     {
@@ -497,22 +497,22 @@ EbLinkedListNode* concatEbLinkedList(EbLinkedListNode* a, EbLinkedListNode* b)
 }
 
 // split a linked list
-EbLinkedListNode* splitEbLinkedList(EbLinkedListNode* input, EbLinkedListNode** restLL, EbBool(*predicateFunc)(EbLinkedListNode*))
+EbLinkedListNode* split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode** restLL, EbBool(*predicate_func)(EbLinkedListNode*))
 {
-    EbLinkedListNode* llTruePtr = (EbLinkedListNode *)EB_NULL;    // list of nodes satifying predicateFunc(node) == TRUE
-    EbLinkedListNode* llRestPtr = (EbLinkedListNode *)EB_NULL;    // list of nodes satifying predicateFunc(node) != TRUE
+    EbLinkedListNode* llTruePtr = (EbLinkedListNode *)EB_NULL;    // list of nodes satifying predicate_func(node) == TRUE
+    EbLinkedListNode* llRestPtr = (EbLinkedListNode *)EB_NULL;    // list of nodes satifying predicate_func(node) != TRUE
 
     while (input)
     {
         EbLinkedListNode* next = input->next;
         input->next = (EbLinkedListNode *)EB_NULL;
-        if (predicateFunc(input))
+        if (predicate_func(input))
         {
-            llTruePtr = concatEbLinkedList(input, llTruePtr);
+            llTruePtr = concat_eb_linked_list(input, llTruePtr);
         }
         else
         {
-            llRestPtr = concatEbLinkedList(input, llRestPtr);
+            llRestPtr = concat_eb_linked_list(input, llRestPtr);
         }
         input = next;
     }
@@ -523,7 +523,7 @@ EbLinkedListNode* splitEbLinkedList(EbLinkedListNode* input, EbLinkedListNode** 
 
 static const MiniGopStats_t MiniGopStatsArray[] = {
 
-    //    HierarchicalLevels    StartIndex    EndIndex    Lenght    miniGopIndex
+    //    hierarchical_levels    start_index    end_index    Lenght    miniGopIndex
     { 5,  0, 31, 32 },    // 0
     { 4,  0, 15, 16 },    // 1
     { 3,  0,  7,  8 },    // 2
@@ -544,7 +544,7 @@ static const MiniGopStats_t MiniGopStatsArray[] = {
 /**************************************************************
 * Get Mini GOP Statistics
 **************************************************************/
-const MiniGopStats_t* GetMiniGopStats(const uint32_t miniGopIndex)
+const MiniGopStats_t* get_mini_gop_stats(const uint32_t miniGopIndex)
 {
     return &MiniGopStatsArray[miniGopIndex];
 }

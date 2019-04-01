@@ -34,8 +34,8 @@ extern "C" {
 
     typedef struct ModeDecisionConfigurationContext_s
     {
-        EbFifo_t                            *rateControlInputFifoPtr;
-        EbFifo_t                            *modeDecisionConfigurationOutputFifoPtr;
+        EbFifo                            *rateControlInputFifoPtr;
+        EbFifo                            *modeDecisionConfigurationOutputFifoPtr;
 
         MdRateEstimationContext_t           *md_rate_estimation_ptr;
 
@@ -89,9 +89,9 @@ extern "C" {
      **************************************/
     extern EbErrorType ModeDecisionConfigurationContextCtor(
         ModeDecisionConfigurationContext_t **context_dbl_ptr,
-        EbFifo_t                            *rateControlInputFifoPtr,
+        EbFifo                            *rateControlInputFifoPtr,
 
-        EbFifo_t                            *modeDecisionConfigurationOutputFifoPtr,
+        EbFifo                            *modeDecisionConfigurationOutputFifoPtr,
         uint16_t                                 sb_total_count);
 
 

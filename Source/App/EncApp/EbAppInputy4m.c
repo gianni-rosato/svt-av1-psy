@@ -32,7 +32,7 @@ char* copyUntilCharacterOrNewLine(char *src, char *dst, char chr){
 }
 
 /* reads the y4m header and parses the input parameters */
-int32_t readY4mHeader(EbConfig_t *cfg){
+int32_t read_y4m_header(EbConfig *cfg){
 
     FILE *ptr_in;
     char buffer[YFM_HEADER_MAX];
@@ -43,7 +43,7 @@ int32_t readY4mHeader(EbConfig_t *cfg){
     EbBool interlaced = EB_TRUE;
 
     /* pointer to the input file */
-    ptr_in = cfg->inputFile;
+    ptr_in = cfg->input_file;
 
     /* get first line after YUV4MPEG2 */
     fresult = fgets(buffer, sizeof(buffer), ptr_in);
@@ -88,7 +88,7 @@ int32_t readY4mHeader(EbConfig_t *cfg){
                 break;
             case '?':
             default:
-                fprintf(cfg->errorLogFile, "interlace type not supported\n");
+                fprintf(cfg->error_log_file, "interlace type not supported\n");
                 return EB_ErrorBadParameter;
             }
             if(PRINT_HEADER)
@@ -181,7 +181,7 @@ int32_t readY4mHeader(EbConfig_t *cfg){
                 EB_STRCPY(chroma, CHROMA_MAX, "400");
                 bitdepth = 8;
             } else {
-                fprintf(cfg->errorLogFile, "chroma format not supported\n");
+                fprintf(cfg->error_log_file, "chroma format not supported\n");
                 return EB_ErrorBadParameter;
             }
             if(PRINT_HEADER)
@@ -216,26 +216,26 @@ int32_t readY4mHeader(EbConfig_t *cfg){
 
     /*check if required parameters were read*/
     if(width == 0) {
-        fprintf(cfg->errorLogFile, "width not found in y4m header\n");
+        fprintf(cfg->error_log_file, "width not found in y4m header\n");
         return EB_ErrorBadParameter;
     }
     if(height == 0) {
-        fprintf(cfg->errorLogFile, "height not found in y4m header\n");
+        fprintf(cfg->error_log_file, "height not found in y4m header\n");
         return EB_ErrorBadParameter;
     }
     if(fr_n == 0 || fr_d == 0) {
-        fprintf(cfg->errorLogFile, "frame rate not found in y4m header\n");
+        fprintf(cfg->error_log_file, "frame rate not found in y4m header\n");
         return EB_ErrorBadParameter;
     }
 
     /* Assign parameters to cfg */
-    cfg->sourceWidth = width;
-    cfg->sourceHeight = height;
-    cfg->frameRateNumerator = fr_n;
-    cfg->frameRateDenominator = fr_d;
-    cfg->frameRate = fr_n/fr_d;
-    cfg->encoderBitDepth = bitdepth;
-    cfg->interlacedVideo = interlaced;
+    cfg->source_width = width;
+    cfg->source_height = height;
+    cfg->frame_rate_numerator = fr_n;
+    cfg->frame_rate_denominator = fr_d;
+    cfg->frame_rate = fr_n/fr_d;
+    cfg->encoder_bit_depth = bitdepth;
+    cfg->interlaced_video = interlaced;
     /* TODO: when implemented, need to set input bit depth
         (instead of the encoder bit depth) and chroma format */
 
@@ -244,20 +244,20 @@ int32_t readY4mHeader(EbConfig_t *cfg){
 }
 
 /* read next line which contains the "FRAME" delimiter */
-int32_t readY4mFrameDelimiter(EbConfig_t *cfg){
+int32_t read_y4m_frame_delimiter(EbConfig *cfg){
 
     unsigned char bufferY4Mheader[10];
     char *fresult;
 
-    fresult = fgets((char *)bufferY4Mheader, sizeof(bufferY4Mheader), cfg->inputFile);
+    fresult = fgets((char *)bufferY4Mheader, sizeof(bufferY4Mheader), cfg->input_file);
 
     if(fresult == NULL){
-        assert(feof(cfg->inputFile));
+        assert(feof(cfg->input_file));
         return EB_ErrorNone;
     }
 
     if (EB_STRCMP((const char*)bufferY4Mheader, "FRAME\n") != 0) {
-        fprintf(cfg->errorLogFile, "Failed to read proper y4m frame delimeter. Read broken.\n");
+        fprintf(cfg->error_log_file, "Failed to read proper y4m frame delimeter. Read broken.\n");
         return EB_ErrorBadParameter;
     }
 
@@ -266,23 +266,23 @@ int32_t readY4mFrameDelimiter(EbConfig_t *cfg){
 }
 
 /* check if the input file is in YUV4MPEG2 (y4m) format */
-EbBool checkIfY4m(EbConfig_t *cfg){
+EbBool check_if_y4m(EbConfig *cfg){
 
     char buffer[YUV4MPEG2_IND_SIZE+1];
     size_t headerReadLength;
 
     /* Parse the header for the "YUV4MPEG2" string */
-    headerReadLength = fread(buffer, YUV4MPEG2_IND_SIZE, 1, cfg->inputFile);
+    headerReadLength = fread(buffer, YUV4MPEG2_IND_SIZE, 1, cfg->input_file);
     assert(headerReadLength == 1);
     buffer[YUV4MPEG2_IND_SIZE] = 0;
 
     if (EB_STRCMP(buffer, "YUV4MPEG2") == 0) {
         return EB_TRUE; /* YUV4MPEG2 file */
     }else{
-        if(cfg->inputFile != stdin) {
-            fseek(cfg->inputFile, 0, SEEK_SET);
+        if(cfg->input_file != stdin) {
+            fseek(cfg->input_file, 0, SEEK_SET);
         }else{
-            memcpy(cfg->y4mBuf, buffer, YUV4MPEG2_IND_SIZE); /* TODO copy 9 bytes read to cfg->y4mBuf*/
+            memcpy(cfg->y4m_buf, buffer, YUV4MPEG2_IND_SIZE); /* TODO copy 9 bytes read to cfg->y4m_buf*/
         }
         return EB_FALSE; /* Not a YUV4MPEG2 file */
     }

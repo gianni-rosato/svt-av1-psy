@@ -2195,7 +2195,7 @@ static const EbBitNumber initial_rate_control_intra_sad64x64_tables[] = {
  * Function Declarations
  **************************************/
 EbErrorType rate_control_tables_ctor(
-    RateControlTables_t *initial_rate_control_tables_array)
+    RateControlTables *initial_rate_control_tables_array)
 {
     int qp_index, interval_index, temporal_index;
     for (qp_index = 0; qp_index < 64; qp_index++) {
@@ -4103,7 +4103,7 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
  * Function Declarations
  **************************************/
 EbErrorType rate_control_tables_ctor(
-    RateControlTables_t *initialRateControlTablesArray)
+    RateControlTables *initialRateControlTablesArray)
 {
     int32_t qp_index, intervalIndex, temporalIndex;
     for (qp_index = 0; qp_index < 52; qp_index++) {

@@ -470,7 +470,7 @@ static INLINE void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src
 
 void av1_cdef_frame(
     EncDecContext_t                *context_ptr,
-    SequenceControlSet_t           *sequence_control_set_ptr,
+    SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet_t            *pCs
 )
 {
@@ -484,7 +484,7 @@ void av1_cdef_frame(
 
 
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
-        recon_picture_ptr = ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture;
+        recon_picture_ptr = ((EbReferenceObject*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
     else
         recon_picture_ptr = pCs->recon_picture_ptr;
 
@@ -800,7 +800,7 @@ void av1_cdef_frame(
 
 void av1_cdef_frame16bit(
     EncDecContext_t                *context_ptr,
-    SequenceControlSet_t           *sequence_control_set_ptr,
+    SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet_t            *pCs
 )
 {
@@ -813,7 +813,7 @@ void av1_cdef_frame16bit(
 
 
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
-        recon_picture_ptr = ((EbReferenceObject_t*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture16bit;
+        recon_picture_ptr = ((EbReferenceObject*)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
 
     else
         recon_picture_ptr = pCs->recon_picture16bit_ptr;
@@ -1409,7 +1409,7 @@ uint64_t compute_cdef_dist(uint16_t *dst, int32_t dstride, uint16_t *src,
 }
 void finish_cdef_search(
     EncDecContext_t                *context_ptr,
-    SequenceControlSet_t           *sequence_control_set_ptr,
+    SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet_t            *picture_control_set_ptr
     , int32_t                      selected_strength_cnt[64]
 )
@@ -1592,7 +1592,7 @@ void finish_cdef_search(
 
 void av1_cdef_search(
     EncDecContext_t                *context_ptr,
-    SequenceControlSet_t           *sequence_control_set_ptr,
+    SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet_t            *picture_control_set_ptr
     //Yv12BufferConfig *frame,
     //const Yv12BufferConfig *ref,
@@ -1610,7 +1610,7 @@ void av1_cdef_search(
 
     EbPictureBufferDesc_t  * recon_picture_ptr;
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
-        recon_picture_ptr = ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture;
+        recon_picture_ptr = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
     else
         recon_picture_ptr = picture_control_set_ptr->recon_picture_ptr;
 
@@ -1963,7 +1963,7 @@ void av1_cdef_search(
 
 void av1_cdef_search16bit(
     EncDecContext_t                *context_ptr,
-    SequenceControlSet_t           *sequence_control_set_ptr,
+    SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet_t            *picture_control_set_ptr
     //Yv12BufferConfig *frame,
     //const Yv12BufferConfig *ref,
@@ -1981,7 +1981,7 @@ void av1_cdef_search16bit(
 
     EbPictureBufferDesc_t  * recon_picture_ptr;
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
-        recon_picture_ptr = ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture16bit;
+        recon_picture_ptr = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
     else
         recon_picture_ptr = picture_control_set_ptr->recon_picture16bit_ptr;
 

@@ -40,17 +40,17 @@ extern "C" {
      **************************************/
     typedef struct EncDecContext_s
     {
-        EbFifo_t                              *mode_decision_input_fifo_ptr;
-        EbFifo_t                              *enc_dec_output_fifo_ptr;
-        EbFifo_t                              *enc_dec_feedback_fifo_ptr;
-        EbFifo_t                              *picture_demux_output_fifo_ptr;   // to picture-manager
+        EbFifo                              *mode_decision_input_fifo_ptr;
+        EbFifo                              *enc_dec_output_fifo_ptr;
+        EbFifo                              *enc_dec_feedback_fifo_ptr;
+        EbFifo                              *picture_demux_output_fifo_ptr;   // to picture-manager
         int16_t                               *transform_inner_array_ptr;
         MdRateEstimationContext_t             *md_rate_estimation_ptr;
         ModeDecisionContext_t                 *md_context;
         const BlockGeom                       *blk_geom;
 
         // TMVP
-        EbReferenceObject_t                   *reference_object_write_ptr;
+        EbReferenceObject                   *reference_object_write_ptr;
 
         // MCP Context
         MotionCompensationPredictionContext_t *mcp_context;
@@ -83,7 +83,7 @@ extern "C" {
 
         //  Context Variables---------------------------------
         CodingUnit_t                          *cu_ptr;
-        const CodedUnitStats_t                *cu_stats;
+        const CodedUnitStats                *cu_stats;
         uint16_t                               cu_origin_x; // within the picture
         uint16_t                               cu_origin_y; // within the picture
         uint8_t                                sb_sz;
@@ -139,10 +139,10 @@ extern "C" {
      **************************************/
     extern EbErrorType enc_dec_context_ctor(
         EncDecContext_t        **context_dbl_ptr,
-        EbFifo_t                *mode_decision_configuration_input_fifo_ptr,
-        EbFifo_t                *packetization_output_fifo_ptr,
-        EbFifo_t                *feedback_fifo_ptr,
-        EbFifo_t                *picture_demux_fifo_ptr,
+        EbFifo                *mode_decision_configuration_input_fifo_ptr,
+        EbFifo                *packetization_output_fifo_ptr,
+        EbFifo                *feedback_fifo_ptr,
+        EbFifo                *picture_demux_fifo_ptr,
         EbBool                   is16bit,
         uint32_t                 max_input_luma_width,
         uint32_t                 max_input_luma_height);

@@ -13697,7 +13697,7 @@ extern "C" {
 
     typedef struct PictureControlSet_s
     {
-        EbObjectWrapper_t                    *sequence_control_set_wrapper_ptr;
+        EbObjectWrapper                    *sequence_control_set_wrapper_ptr;
         
         EbPictureBufferDesc_t                *recon_picture_ptr;
         EbPictureBufferDesc_t                *film_grain_picture_ptr;
@@ -13707,13 +13707,13 @@ extern "C" {
         EbPictureBufferDesc_t                *input_frame16bit;
 
         struct PictureParentControlSet_s     *parent_pcs_ptr;  //The parent of this PCS.
-        EbObjectWrapper_t                    *picture_parent_control_set_wrapper_ptr;
+        EbObjectWrapper                    *picture_parent_control_set_wrapper_ptr;
         EntropyCoder_t                       *entropy_coder_ptr;
         // Packetization (used to encode SPS, PPS, etc)
         Bitstream_t                          *bitstreamPtr;
 
         // Reference Lists
-        EbObjectWrapper_t                    *ref_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST];
+        EbObjectWrapper                    *ref_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST];
         uint8_t                               ref_pic_qp_array[MAX_NUM_OF_REF_PIC_LIST];
         EB_SLICE                              ref_slice_type_array[MAX_NUM_OF_REF_PIC_LIST];
 
@@ -13938,17 +13938,17 @@ extern "C" {
     // Parent is created before the Child, and continue to live more. Child PCS only lives the exact time needed to encode the picture: from ME to EC/ALF.
     typedef struct PictureParentControlSet_s
     {
-        EbObjectWrapper_t                    *sequence_control_set_wrapper_ptr;
-        EbObjectWrapper_t                    *input_picture_wrapper_ptr;
-        EbObjectWrapper_t                    *reference_picture_wrapper_ptr;
-        EbObjectWrapper_t                    *pa_reference_picture_wrapper_ptr;
+        EbObjectWrapper                    *sequence_control_set_wrapper_ptr;
+        EbObjectWrapper                    *input_picture_wrapper_ptr;
+        EbObjectWrapper                    *reference_picture_wrapper_ptr;
+        EbObjectWrapper                    *pa_reference_picture_wrapper_ptr;
         EbPictureBufferDesc_t                *enhanced_picture_ptr;
         PredictionStructure_t                *pred_struct_ptr;          // need to check
-        struct SequenceControlSet_s          *sequence_control_set_ptr;
+        struct SequenceControlSet          *sequence_control_set_ptr;
         struct PictureParentControlSet_s     *ref_pa_pcs_array[MAX_NUM_OF_REF_PIC_LIST];
-        EbObjectWrapper_t                    *p_pcs_wrapper_ptr;
-        EbObjectWrapper_t                    *previous_picture_control_set_wrapper_ptr;
-        EbObjectWrapper_t                    *output_stream_wrapper_ptr;
+        EbObjectWrapper                    *p_pcs_wrapper_ptr;
+        EbObjectWrapper                    *previous_picture_control_set_wrapper_ptr;
+        EbObjectWrapper                    *output_stream_wrapper_ptr;
         Av1Common                            *av1_cm;
         
         // Data attached to the picture. This includes data passed from the application, or other data the encoder attaches
@@ -14014,10 +14014,10 @@ extern "C" {
         uint32_t                              cb_sse;
 
         // Pre Analysis
-        EbObjectWrapper_t                    *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST];
+        EbObjectWrapper                    *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST];
         uint64_t                              ref_pic_poc_array[MAX_NUM_OF_REF_PIC_LIST];
         uint16_t                            **variance;
-        uint8_t                             **yMean;
+        uint8_t                             **y_mean;
         uint8_t                             **cbMean;
         uint8_t                             **crMean;
         uint32_t                              pre_assignment_buffer_count;
@@ -14401,7 +14401,7 @@ extern "C" {
         //    int64_t first_time_stamp_ever;
         //
         //    RATE_CONTROL rc;
-        //    double framerate;
+        //    double frame_rate;
         //
         //    // NOTE(zoeliu): Any inter frame allows maximum of REF_FRAMES inter
         //    // references; Plus the currently coded frame itself, it is needed to allocate

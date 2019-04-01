@@ -12,15 +12,15 @@
 extern "C" {
 #endif
 
-    uint64_t Compute8x8Satd_SSE4(
+    uint64_t compute8x8_satd_sse4(
         int16_t *diff);       // input parameter, diff samples Ptr
 
-    uint64_t Compute8x8Satd_U8_SSE4(
+    uint64_t compute8x8_satd_u8_sse4(
         uint8_t  *src,       // input parameter, diff samples Ptr
         uint64_t *dc_value,
         uint32_t  src_stride);
 
-    uint64_t SpatialFullDistortionKernel4x4_SSSE3_INTRIN(
+    uint64_t spatial_full_distortion_kernel4x4_ssse3_intrin(
         uint8_t   *input,
         uint32_t   input_stride,
         uint8_t   *recon,
@@ -28,7 +28,7 @@ extern "C" {
         uint32_t   area_width,
         uint32_t   area_height);
 
-    uint64_t SpatialFullDistortionKernel8x8_SSSE3_INTRIN(
+    uint64_t spatial_full_distortion_kernel8x8_ssse3_intrin(
         uint8_t   *input,
         uint32_t   input_stride,
         uint8_t   *recon,
@@ -36,7 +36,7 @@ extern "C" {
         uint32_t   area_width,
         uint32_t   area_height);
 
-    uint64_t SpatialFullDistortionKernel16MxN_SSSE3_INTRIN(
+    uint64_t spatial_full_distortion_kernel16_mx_n_ssse3_intrin(
         uint8_t   *input,
         uint32_t   input_stride,
         uint8_t   *recon,

@@ -102,7 +102,7 @@ extern "C" {
     /***************************************
     * Function Tables
     ***************************************/
-    static EB_SADKERNELNxM_TYPE FUNC_TABLE NxMSadKernelSubSampled_funcPtrArray[ASM_TYPE_TOTAL][17] =   // [ASMTYPE][SAD - block height]
+    static EB_SADKERNELNxM_TYPE FUNC_TABLE NxMSadKernelSubSampled_funcPtrArray[ASM_TYPE_TOTAL][17] =   // [asm_type][SAD - block height]
     {
         // NON_AVX2
         {
@@ -131,7 +131,7 @@ extern "C" {
             0,0,0,0,0,0,0,fast_loop_nx_m_sad_kernel
         },
     };
-    static EB_SADKERNELNxM_TYPE FUNC_TABLE NxMSadKernel_funcPtrArray[ASM_TYPE_TOTAL][9] =   // [ASMTYPE][SAD - block height]
+    static EB_SADKERNELNxM_TYPE FUNC_TABLE NxMSadKernel_funcPtrArray[ASM_TYPE_TOTAL][9] =   // [asm_type][SAD - block height]
     {
         // NON_AVX2
         {
@@ -159,7 +159,7 @@ extern "C" {
         },
     };
 
-    static EB_SADAVGKERNELNxM_TYPE FUNC_TABLE NxMSadAveragingKernel_funcPtrArray[ASM_TYPE_TOTAL][9] =   // [ASMTYPE][SAD - block height]
+    static EB_SADAVGKERNELNxM_TYPE FUNC_TABLE NxMSadAveragingKernel_funcPtrArray[ASM_TYPE_TOTAL][9] =   // [asm_type][SAD - block height]
     {
         // NON_AVX2
         {
@@ -175,7 +175,7 @@ extern "C" {
         },
         // AVX2
         {
-            /*0 4xM  */     CombinedAveraging4xMSAD_SSE2_INTRIN,
+            /*0 4xM  */     combined_averaging4x_msad_sse2_intrin,
             /*1 8xM  */     combined_averaging8x_msad_avx2_intrin,
             /*2 16xM */     combined_averaging16x_msad_avx2_intrin,
             /*3 24xM */     combined_averaging24x_msad_avx2_intrin,

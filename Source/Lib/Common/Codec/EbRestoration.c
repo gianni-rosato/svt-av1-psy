@@ -17,8 +17,8 @@
 #include "EbRestoration.h"
 
 void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane,
-    rest_tile_start_visitor_t on_tile,
-    rest_unit_visitor_t on_rest_unit,
+    RestTileStartVisitor on_tile,
+    RestUnitVisitor on_rest_unit,
     void *priv);
 
 void aom_yv12_copy_y_c(const Yv12BufferConfig *src_ybc, Yv12BufferConfig *dst_ybc);
@@ -1332,7 +1332,7 @@ static void foreach_rest_unit_in_tile(const AV1PixelRect *tile_rect,
     int32_t tile_row, int32_t tile_col, int32_t tile_cols,
     int32_t hunits_per_tile, int32_t units_per_tile,
     int32_t unit_size, int32_t ss_y,
-    rest_unit_visitor_t on_rest_unit,
+    RestUnitVisitor on_rest_unit,
     void *priv) {
     const int32_t tile_w = tile_rect->right - tile_rect->left;
     const int32_t tile_h = tile_rect->bottom - tile_rect->top;
@@ -1377,8 +1377,8 @@ static void foreach_rest_unit_in_tile(const AV1PixelRect *tile_rect,
 }
 
 void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane,
-    rest_tile_start_visitor_t on_tile,
-    rest_unit_visitor_t on_rest_unit,
+    RestTileStartVisitor on_tile,
+    RestUnitVisitor on_rest_unit,
     void *priv) {
     const int32_t is_uv = plane > 0;
     const int32_t ss_y = is_uv && cm->subsampling_y;
@@ -1397,7 +1397,7 @@ static void foreach_rest_unit_in_tile_seg(const AV1PixelRect *tile_rect,
     int32_t tile_row, int32_t tile_col, int32_t tile_cols,
     int32_t hunits_per_tile, int32_t units_per_tile,
     int32_t unit_size, int32_t ss_y,
-    rest_unit_visitor_t on_rest_unit,
+    RestUnitVisitor on_rest_unit,
     void *priv ,
     int32_t vunits_per_tile,
     PictureControlSet_t   *picture_control_set_ptr,
@@ -1465,8 +1465,8 @@ static void foreach_rest_unit_in_tile_seg(const AV1PixelRect *tile_rect,
     }
 }
 void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane,
-    rest_tile_start_visitor_t on_tile,
-    rest_unit_visitor_t on_rest_unit,
+    RestTileStartVisitor on_tile,
+    RestUnitVisitor on_rest_unit,
     void *priv,
     PictureControlSet_t   *picture_control_set_ptr,
     uint32_t segment_index)

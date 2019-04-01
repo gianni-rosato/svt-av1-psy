@@ -50,13 +50,13 @@ typedef struct EncodeContext_s
     uint64_t                                         total_number_of_recon_frames;
 
     // Output Buffer Fifos
-    EbFifo_t                                        *stream_output_fifo_ptr;
-    EbFifo_t                                        *recon_output_fifo_ptr;
-    EbFifo_t                                        *statistics_output_fifo_ptr;
+    EbFifo                                        *stream_output_fifo_ptr;
+    EbFifo                                        *recon_output_fifo_ptr;
+    EbFifo                                        *statistics_output_fifo_ptr;
 
     // Picture Buffer Fifos
-    EbFifo_t                                        *reference_picture_pool_fifo_ptr;
-    EbFifo_t                                        *pa_reference_picture_pool_fifo_ptr;
+    EbFifo                                        *reference_picture_pool_fifo_ptr;
+    EbFifo                                        *pa_reference_picture_pool_fifo_ptr;
 
     // Picture Decision Reorder Queue
     PictureDecisionReorderEntry_t                  **picture_decision_reorder_queue;
@@ -73,7 +73,7 @@ typedef struct EncodeContext_s
     uint32_t                                         pre_assignment_buffer_scene_change_index;
     uint32_t                                         pre_assignment_buffer_eos_flag;
     uint64_t                                         decode_base_number;
-    EbObjectWrapper_t                              **pre_assignment_buffer;
+    EbObjectWrapper                              **pre_assignment_buffer;
     uint32_t                                         pre_assignment_buffer_count;
 
     // Picture Decision Circular Queues
@@ -125,7 +125,7 @@ typedef struct EncodeContext_s
     MdRateEstimationContext_t                        *md_rate_estimation_array;
 
     // Rate Control Bit Tables
-    RateControlTables_t                              *rate_control_tables_array;
+    RateControlTables                              *rate_control_tables_array;
     EbBool                                            rate_control_tables_array_updated;
     EbHandle                                          rate_table_update_mutex;
                                                      
@@ -144,7 +144,7 @@ typedef struct EncodeContext_s
     // Dynamic GOP                                   
     uint32_t                                          previous_mini_gop_hierarchical_levels;
     EbAsm                                             asm_type;
-    EbObjectWrapper_t                                *previous_picture_control_set_wrapper_ptr;
+    EbObjectWrapper                                *previous_picture_control_set_wrapper_ptr;
     EbHandle                                          shared_reference_mutex;
 
 } EncodeContext_t;

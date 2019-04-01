@@ -28,7 +28,7 @@ static EbBool IsPassthroughData(EbLinkedListNode* dataNode)
 static EbLinkedListNode* ExtractPassthroughData(EbLinkedListNode** llPtrPtr)
 {
     EbLinkedListNode* llRestPtr = NULL;
-    EbLinkedListNode* llPassPtr = splitEbLinkedList(*llPtrPtr, &llRestPtr, IsPassthroughData);
+    EbLinkedListNode* llPassPtr = split_eb_linked_list(*llPtrPtr, &llRestPtr, IsPassthroughData);
     *llPtrPtr = llRestPtr;
     return llPassPtr;
 }
@@ -36,8 +36,8 @@ static EbLinkedListNode* ExtractPassthroughData(EbLinkedListNode** llPtrPtr)
 
 EbErrorType packetization_context_ctor(
     PacketizationContext_t **context_dbl_ptr,
-    EbFifo_t                *entropy_coding_input_fifo_ptr,
-    EbFifo_t                *rate_control_tasks_output_fifo_ptr)
+    EbFifo                *entropy_coding_input_fifo_ptr,
+    EbFifo                *rate_control_tasks_output_fifo_ptr)
 {
     PacketizationContext_t *context_ptr;
     EB_MALLOC(PacketizationContext_t*, context_ptr, sizeof(PacketizationContext_t), EB_N_PTR);
@@ -88,7 +88,7 @@ static void write_td (
 
 void update_rc_rate_tables(
     PictureControlSet_t            *picture_control_set_ptr,
-    SequenceControlSet_t           *sequence_control_set_ptr) {
+    SequenceControlSet           *sequence_control_set_ptr) {
 
     EncodeContext_t* encode_context_ptr = (EncodeContext_t*)sequence_control_set_ptr->encode_context_ptr;
 
@@ -245,20 +245,20 @@ void* PacketizationKernel(void *input_ptr)
     PictureControlSet_t            *picture_control_set_ptr;
 
     // Config
-    SequenceControlSet_t           *sequence_control_set_ptr;
+    SequenceControlSet           *sequence_control_set_ptr;
 
     // Encoding Context
     EncodeContext_t                *encode_context_ptr;
 
     // Input
-    EbObjectWrapper_t              *entropyCodingResultsWrapperPtr;
+    EbObjectWrapper              *entropyCodingResultsWrapperPtr;
     EntropyCodingResults_t         *entropyCodingResultsPtr;
 
     // Output
-    EbObjectWrapper_t              *output_stream_wrapper_ptr;
+    EbObjectWrapper              *output_stream_wrapper_ptr;
     EbBufferHeaderType             *output_stream_ptr;
-    EbObjectWrapper_t              *rateControlTasksWrapperPtr;
-    RateControlTasks_t             *rateControlTasksPtr;
+    EbObjectWrapper              *rateControlTasksWrapperPtr;
+    RateControlTasks             *rateControlTasksPtr;
     
     // Queue variables
     int32_t                         queueEntryIndex;
@@ -275,8 +275,8 @@ void* PacketizationKernel(void *input_ptr)
             context_ptr->entropy_coding_input_fifo_ptr,
             &entropyCodingResultsWrapperPtr);
         entropyCodingResultsPtr = (EntropyCodingResults_t*)entropyCodingResultsWrapperPtr->object_ptr;
-        picture_control_set_ptr = (PictureControlSet_t*)entropyCodingResultsPtr->pictureControlSetWrapperPtr->object_ptr;
-        sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+        picture_control_set_ptr = (PictureControlSet_t*)entropyCodingResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
+        sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
         encode_context_ptr = (EncodeContext_t*)sequence_control_set_ptr->encode_context_ptr;
 
         //****************************************************
@@ -307,9 +307,9 @@ void* PacketizationKernel(void *input_ptr)
         eb_get_empty_object(
             context_ptr->rate_control_tasks_output_fifo_ptr,
             &rateControlTasksWrapperPtr);
-        rateControlTasksPtr = (RateControlTasks_t*)rateControlTasksWrapperPtr->object_ptr;
-        rateControlTasksPtr->pictureControlSetWrapperPtr = picture_control_set_ptr->picture_parent_control_set_wrapper_ptr;
-        rateControlTasksPtr->taskType = RC_PACKETIZATION_FEEDBACK_RESULT;
+        rateControlTasksPtr = (RateControlTasks*)rateControlTasksWrapperPtr->object_ptr;
+        rateControlTasksPtr->picture_control_set_wrapper_ptr = picture_control_set_ptr->picture_parent_control_set_wrapper_ptr;
+        rateControlTasksPtr->task_type = RC_PACKETIZATION_FEEDBACK_RESULT;
 
         // slice_type = picture_control_set_ptr->slice_type;
          // Reset the bitstream before writing to it
@@ -388,7 +388,7 @@ void* PacketizationKernel(void *input_ptr)
         // Note: last chance here to add more output meta data for an encoded picture -->
 
         // collect output meta data
-        queueEntryPtr->outMetaData = concatEbLinkedList(ExtractPassthroughData(&(picture_control_set_ptr->parent_pcs_ptr->data_ll_head_ptr)),
+        queueEntryPtr->outMetaData = concat_eb_linked_list(ExtractPassthroughData(&(picture_control_set_ptr->parent_pcs_ptr->data_ll_head_ptr)),
             picture_control_set_ptr->parent_pcs_ptr->app_out_data_ll_head_ptr);
         picture_control_set_ptr->parent_pcs_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)EB_NULL;
 
@@ -413,7 +413,7 @@ void* PacketizationKernel(void *input_ptr)
         eb_post_full_object(rateControlTasksWrapperPtr);
 
         //Release the Parent PCS then the Child PCS
-        eb_release_object(entropyCodingResultsPtr->pictureControlSetWrapperPtr);//Child
+        eb_release_object(entropyCodingResultsPtr->picture_control_set_wrapper_ptr);//Child
 
         // Release the Entropy Coding Result
         eb_release_object(entropyCodingResultsWrapperPtr);
@@ -578,10 +578,10 @@ void* PacketizationKernel(void *input_ptr)
 
             // Reset the Reorder Queue Entry
             queueEntryPtr->picture_number += PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
-            queueEntryPtr->output_stream_wrapper_ptr = (EbObjectWrapper_t *)EB_NULL;
+            queueEntryPtr->output_stream_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
 
             if (encode_context_ptr->statistics_port_active) {
-                queueEntryPtr->outputStatisticsWrapperPtr = (EbObjectWrapper_t *)EB_NULL;
+                queueEntryPtr->outputStatisticsWrapperPtr = (EbObjectWrapper *)EB_NULL;
             }
             // Increment the Reorder Queue head Ptr
             encode_context_ptr->packetization_reorder_queue_head_index =

@@ -304,9 +304,9 @@ index 0000000..6ef262e
 +    in_data->cr   = frame->data[2];
 +
 +    // stride info
-+    in_data->yStride  = frame->linesize[0] >> is16bit;
-+    in_data->cbStride = frame->linesize[1] >> is16bit;
-+    in_data->crStride = frame->linesize[2] >> is16bit;
++    in_data->y_stride  = frame->linesize[0] >> is16bit;
++    in_data->cb_stride = frame->linesize[1] >> is16bit;
++    in_data->cr_stride = frame->linesize[2] >> is16bit;
 +
 +    headerPtr->n_filled_len   += luma_size * 3/2u;
 +}

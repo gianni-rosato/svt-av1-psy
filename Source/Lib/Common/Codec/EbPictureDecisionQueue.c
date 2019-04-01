@@ -14,7 +14,7 @@ EbErrorType pa_reference_queue_entry_ctor(
     EB_MALLOC(PaReferenceQueueEntry_t*, entryPtr, sizeof(PaReferenceQueueEntry_t), EB_N_PTR);
     *entry_dbl_ptr = entryPtr;
 
-    entryPtr->inputObjectPtr = (EbObjectWrapper_t*)EB_NULL;
+    entryPtr->inputObjectPtr = (EbObjectWrapper*)EB_NULL;
     entryPtr->picture_number = 0;
     entryPtr->referenceEntryIndex = 0;
     entryPtr->dependentCount = 0;

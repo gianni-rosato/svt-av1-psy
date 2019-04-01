@@ -104,14 +104,14 @@ typedef struct EbSvtAv1DecConfiguration
      * 0 = decodes from the start of the bitstream.
      *
      * Default is 0. */
-    uint64_t                 skipFrames;
+    uint64_t                 skip_frames;
 
     /* Maximum number of frames in the sequence to be decoded.
      *
      * 0 = decodes the full bitstream.
      *
      * Default is 0. */
-    uint64_t                 framesToBeDecoded;
+    uint64_t                 frames_to_be_decoded;
 
 
     /* Offline packing of the 2bits: requires two bits packed input.

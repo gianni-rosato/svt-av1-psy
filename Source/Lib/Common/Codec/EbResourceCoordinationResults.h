@@ -14,13 +14,13 @@ extern "C" {
     /**************************************
      * Process Results
      **************************************/
-    typedef struct ResourceCoordinationResults_s {
-        EbObjectWrapper_t *pictureControlSetWrapperPtr;
-    } ResourceCoordinationResults_t;
+    typedef struct ResourceCoordinationResults {
+        EbObjectWrapper *picture_control_set_wrapper_ptr;
+    } ResourceCoordinationResults;
 
-    typedef struct ResourceCoordinationResultInitData_s {
+    typedef struct ResourceCoordinationResultInitData {
         int32_t junk;
-    } ResourceCoordinationResultInitData_t;
+    } ResourceCoordinationResultInitData;
 
     /**************************************
      * Extern Function Declarations

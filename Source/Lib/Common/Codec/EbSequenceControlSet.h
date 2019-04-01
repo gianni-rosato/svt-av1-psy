@@ -31,7 +31,7 @@ extern "C" {
     /************************************
      * Sequence Control Set
      ************************************/
-    typedef struct SequenceControlSet_s
+    typedef struct SequenceControlSet
     {
         EbSvtAv1EncConfiguration                static_config;
 
@@ -248,21 +248,21 @@ extern "C" {
         uint64_t                                pred1_nfl_count[5];
 #endif
 
-    } SequenceControlSet_t;
+    } SequenceControlSet;
 
-    typedef struct EbSequenceControlSetInitData_s
+    typedef struct EbSequenceControlSetInitData
     {
         EncodeContext_t            *encode_context_ptr;
         int32_t                     sb_size;
-    } EbSequenceControlSetInitData_t;
+    } EbSequenceControlSetInitData;
 
-    typedef struct EbSequenceControlSetInstance_s
+    typedef struct EbSequenceControlSetInstance
     {
         EncodeContext_t            *encode_context_ptr;
-        SequenceControlSet_t       *sequence_control_set_ptr;
+        SequenceControlSet       *sequence_control_set_ptr;
         EbHandle                    config_mutex;
 
-    } EbSequenceControlSetInstance_t;
+    } EbSequenceControlSetInstance;
 
     /**************************************
      * Extern Function Declarations
@@ -272,23 +272,23 @@ extern "C" {
         EbPtr  object_init_data_ptr);
 
     extern EbErrorType copy_sequence_control_set(
-        SequenceControlSet_t *dst,
-        SequenceControlSet_t *src);
+        SequenceControlSet *dst,
+        SequenceControlSet *src);
 
     extern EbErrorType eb_sequence_control_set_instance_ctor(
-        EbSequenceControlSetInstance_t **object_dbl_ptr);
+        EbSequenceControlSetInstance **object_dbl_ptr);
 
     extern EbErrorType sb_params_ctor(
-        SequenceControlSet_t *sequence_control_set_ptr);
+        SequenceControlSet *sequence_control_set_ptr);
 
     extern EbErrorType sb_params_init(
-        SequenceControlSet_t *sequence_control_set_ptr);
+        SequenceControlSet *sequence_control_set_ptr);
 
     extern EbErrorType derive_input_resolution(
-        SequenceControlSet_t *sequence_control_set_ptr,
+        SequenceControlSet *sequence_control_set_ptr,
         uint32_t              input_size);
 
-    EbErrorType sb_geom_init(SequenceControlSet_t *sequence_control_set_ptr);
+    EbErrorType sb_geom_init(SequenceControlSet *sequence_control_set_ptr);
 
 #ifdef __cplusplus
 }

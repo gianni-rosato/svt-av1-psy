@@ -20,20 +20,20 @@
  * Resource Coordination Context Constructor
  ************************************************/
 EbErrorType resource_coordination_context_ctor(
-    ResourceCoordinationContext_t  **context_dbl_ptr,
-    EbFifo_t                        *inputBufferFifoPtr,
-    EbFifo_t                        *resource_coordination_results_output_fifo_ptr,
-    EbFifo_t                        **picture_control_set_fifo_ptr_array,
-    EbSequenceControlSetInstance_t  **sequence_control_set_instance_array,
-    EbFifo_t                         *sequence_control_set_empty_fifo_ptr,
+    ResourceCoordinationContext  **context_dbl_ptr,
+    EbFifo                        *inputBufferFifoPtr,
+    EbFifo                        *resource_coordination_results_output_fifo_ptr,
+    EbFifo                        **picture_control_set_fifo_ptr_array,
+    EbSequenceControlSetInstance  **sequence_control_set_instance_array,
+    EbFifo                         *sequence_control_set_empty_fifo_ptr,
     EbCallback_t                    **app_callback_ptr_array,
     uint32_t                         *compute_segments_total_count_array,
     uint32_t                          encode_instances_total_count)
 {
-    uint32_t instanceIndex;
+    uint32_t instance_index;
 
-    ResourceCoordinationContext_t *context_ptr;
-    EB_MALLOC(ResourceCoordinationContext_t*, context_ptr, sizeof(ResourceCoordinationContext_t), EB_N_PTR);
+    ResourceCoordinationContext *context_ptr;
+    EB_MALLOC(ResourceCoordinationContext*, context_ptr, sizeof(ResourceCoordinationContext), EB_N_PTR);
 
     *context_dbl_ptr = context_ptr;
 
@@ -47,37 +47,37 @@ EbErrorType resource_coordination_context_ctor(
     context_ptr->encode_instances_total_count = encode_instances_total_count;
 
     // Allocate SequenceControlSetActiveArray
-    EB_MALLOC(EbObjectWrapper_t**, context_ptr->sequenceControlSetActiveArray, sizeof(EbObjectWrapper_t*) * context_ptr->encode_instances_total_count, EB_N_PTR);
+    EB_MALLOC(EbObjectWrapper**, context_ptr->sequenceControlSetActiveArray, sizeof(EbObjectWrapper*) * context_ptr->encode_instances_total_count, EB_N_PTR);
 
-    for (instanceIndex = 0; instanceIndex < context_ptr->encode_instances_total_count; ++instanceIndex) {
-        context_ptr->sequenceControlSetActiveArray[instanceIndex] = 0;
+    for (instance_index = 0; instance_index < context_ptr->encode_instances_total_count; ++instance_index) {
+        context_ptr->sequenceControlSetActiveArray[instance_index] = 0;
     }
 
     // Picture Stats
-    EB_MALLOC(uint64_t*, context_ptr->pictureNumberArray, sizeof(uint64_t) * context_ptr->encode_instances_total_count, EB_N_PTR);
+    EB_MALLOC(uint64_t*, context_ptr->picture_number_array, sizeof(uint64_t) * context_ptr->encode_instances_total_count, EB_N_PTR);
 
-    for (instanceIndex = 0; instanceIndex < context_ptr->encode_instances_total_count; ++instanceIndex) {
-        context_ptr->pictureNumberArray[instanceIndex] = 0;
+    for (instance_index = 0; instance_index < context_ptr->encode_instances_total_count; ++instance_index) {
+        context_ptr->picture_number_array[instance_index] = 0;
     }
 
-    context_ptr->averageEncMod = 0;
-    context_ptr->prevEncMod = 0;
-    context_ptr->prevEncModeDelta = 0;
-    context_ptr->curSpeed = 0; // speed x 1000
-    context_ptr->previousModeChangeBuffer = 0;
-    context_ptr->firstInPicArrivedTimeSeconds = 0;
-    context_ptr->firstInPicArrivedTimeuSeconds = 0;
-    context_ptr->previousFrameInCheck1 = 0;
-    context_ptr->previousFrameInCheck2 = 0;
-    context_ptr->previousFrameInCheck3 = 0;
-    context_ptr->previousModeChangeFrameIn = 0;
-    context_ptr->prevsTimeSeconds = 0;
-    context_ptr->prevsTimeuSeconds = 0;
-    context_ptr->prevFrameOut = 0;
-    context_ptr->startFlag = EB_FALSE;
+    context_ptr->average_enc_mod = 0;
+    context_ptr->prev_enc_mod = 0;
+    context_ptr->prev_enc_mode_delta = 0;
+    context_ptr->cur_speed = 0; // speed x 1000
+    context_ptr->previous_mode_change_buffer = 0;
+    context_ptr->first_in_pic_arrived_time_seconds = 0;
+    context_ptr->first_in_pic_arrived_timeu_seconds = 0;
+    context_ptr->previous_frame_in_check1 = 0;
+    context_ptr->previous_frame_in_check2 = 0;
+    context_ptr->previous_frame_in_check3 = 0;
+    context_ptr->previous_mode_change_frame_in = 0;
+    context_ptr->prevs_time_seconds = 0;
+    context_ptr->prevs_timeu_seconds = 0;
+    context_ptr->prev_frame_out = 0;
+    context_ptr->start_flag = EB_FALSE;
 
-    context_ptr->previousBufferCheck1 = 0;
-    context_ptr->prevChangeCond = 0;
+    context_ptr->previous_buffer_check1 = 0;
+    context_ptr->prev_change_cond = 0;
 
     return EB_ErrorNone;
 }
@@ -88,7 +88,7 @@ Input   : encoder mode and tune
 Output  : Pre-Analysis signal(s)
 ******************************************************/
 EbErrorType signal_derivation_pre_analysis_oq(
-    SequenceControlSet_t       *sequence_control_set_ptr,
+    SequenceControlSet       *sequence_control_set_ptr,
     PictureParentControlSet_t  *picture_control_set_ptr) {
 
     EbErrorType return_error = EB_ErrorNone;
@@ -99,9 +99,9 @@ EbErrorType signal_derivation_pre_analysis_oq(
         uint8_t  hme_me_level = picture_control_set_ptr->enc_mode;
 
         picture_control_set_ptr->enable_hme_flag = EB_TRUE;
-        picture_control_set_ptr->enable_hme_level0_flag = EnableHmeLevel0Flag[input_resolution][hme_me_level];
-        picture_control_set_ptr->enable_hme_level1_flag = EnableHmeLevel1Flag[input_resolution][hme_me_level];
-        picture_control_set_ptr->enable_hme_level2_flag = EnableHmeLevel2Flag[input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[input_resolution][hme_me_level];
     }
     else {
         picture_control_set_ptr->enable_hme_flag = sequence_control_set_ptr->static_config.enable_hme_flag;
@@ -121,9 +121,9 @@ EbErrorType signal_derivation_pre_analysis_oq(
 // Output: EncMod
 //******************************************************************************//
 void SpeedBufferControl(
-    ResourceCoordinationContext_t   *context_ptr,
+    ResourceCoordinationContext   *context_ptr,
     PictureParentControlSet_t       *picture_control_set_ptr,
-    SequenceControlSet_t            *sequence_control_set_ptr)
+    SequenceControlSet            *sequence_control_set_ptr)
 {
 
     uint64_t cursTimeSeconds = 0;
@@ -142,25 +142,25 @@ void SpeedBufferControl(
     eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->sc_buffer_mutex);
 
     if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in == 0) {
-        EbStartTime(&context_ptr->firstInPicArrivedTimeSeconds, &context_ptr->firstInPicArrivedTimeuSeconds);
+        EbStartTime(&context_ptr->first_in_pic_arrived_time_seconds, &context_ptr->first_in_pic_arrived_timeu_seconds);
     }
     else if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in == SC_FRAMES_TO_IGNORE) {
-        context_ptr->startFlag = EB_TRUE;
+        context_ptr->start_flag = EB_TRUE;
     }
 
     // Compute duration since the start of the encode and since the previous checkpoint
     EbFinishTime(&cursTimeSeconds, &cursTimeuSeconds);
 
     EbComputeOverallElapsedTimeMs(
-        context_ptr->firstInPicArrivedTimeSeconds,
-        context_ptr->firstInPicArrivedTimeuSeconds,
+        context_ptr->first_in_pic_arrived_time_seconds,
+        context_ptr->first_in_pic_arrived_timeu_seconds,
         cursTimeSeconds,
         cursTimeuSeconds,
         &overallDuration);
 
     EbComputeOverallElapsedTimeMs(
-        context_ptr->prevsTimeSeconds,
-        context_ptr->prevsTimeuSeconds,
+        context_ptr->prevs_time_seconds,
+        context_ptr->prevs_timeu_seconds,
         cursTimeSeconds,
         cursTimeuSeconds,
         &instDuration);
@@ -170,26 +170,26 @@ void SpeedBufferControl(
 
     encoderModeDelta = 0;
 
-    // Check every bufferTsshold1 for the changes (previousFrameInCheck1 variable)
-    if ((sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previousFrameInCheck1 + bufferTrshold1 && sequence_control_set_ptr->encode_context_ptr->sc_frame_in >= SC_FRAMES_TO_IGNORE)) {
+    // Check every bufferTsshold1 for the changes (previous_frame_in_check1 variable)
+    if ((sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previous_frame_in_check1 + bufferTrshold1 && sequence_control_set_ptr->encode_context_ptr->sc_frame_in >= SC_FRAMES_TO_IGNORE)) {
         // Go to a slower mode based on the fullness and changes of the buffer
-        if (sequence_control_set_ptr->encode_context_ptr->sc_buffer < targetFps && (context_ptr->prevEncModeDelta > -1 || (context_ptr->prevEncModeDelta < 0 && sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previousModeChangeFrameIn + targetFps * 2))) {
-            if (context_ptr->previousBufferCheck1 > sequence_control_set_ptr->encode_context_ptr->sc_buffer + bufferTrshold1) {
+        if (sequence_control_set_ptr->encode_context_ptr->sc_buffer < targetFps && (context_ptr->prev_enc_mode_delta > -1 || (context_ptr->prev_enc_mode_delta < 0 && sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previous_mode_change_frame_in + targetFps * 2))) {
+            if (context_ptr->previous_buffer_check1 > sequence_control_set_ptr->encode_context_ptr->sc_buffer + bufferTrshold1) {
                 encoderModeDelta += -1;
                 changeCond = 2;
             }
-            else if (context_ptr->previousModeChangeBuffer > bufferTrshold1 + sequence_control_set_ptr->encode_context_ptr->sc_buffer && sequence_control_set_ptr->encode_context_ptr->sc_buffer < bufferTrshold1) {
+            else if (context_ptr->previous_mode_change_buffer > bufferTrshold1 + sequence_control_set_ptr->encode_context_ptr->sc_buffer && sequence_control_set_ptr->encode_context_ptr->sc_buffer < bufferTrshold1) {
                 encoderModeDelta += -1;
                 changeCond = 4;
             }
         }
 
         // Go to a faster mode based on the fullness and changes of the buffer
-        if (sequence_control_set_ptr->encode_context_ptr->sc_buffer > bufferTrshold1 + context_ptr->previousBufferCheck1) {
+        if (sequence_control_set_ptr->encode_context_ptr->sc_buffer > bufferTrshold1 + context_ptr->previous_buffer_check1) {
             encoderModeDelta += +1;
             changeCond = 1;
         }
-        else if (sequence_control_set_ptr->encode_context_ptr->sc_buffer > bufferTrshold1 + context_ptr->previousModeChangeBuffer) {
+        else if (sequence_control_set_ptr->encode_context_ptr->sc_buffer > bufferTrshold1 + context_ptr->previous_mode_change_buffer) {
             encoderModeDelta += +1;
             changeCond = 3;
         }
@@ -197,8 +197,8 @@ void SpeedBufferControl(
         // Update the encode mode based on the fullness of the buffer
         // If previous ChangeCond was the same, double the threshold2
         if (sequence_control_set_ptr->encode_context_ptr->sc_buffer > bufferTrshold3 &&
-            (context_ptr->prevChangeCond != 7 || sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previousModeChangeFrameIn + bufferTrshold2 * 2) &&
-            sequence_control_set_ptr->encode_context_ptr->sc_buffer > context_ptr->previousModeChangeBuffer) {
+            (context_ptr->prev_change_cond != 7 || sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previous_mode_change_frame_in + bufferTrshold2 * 2) &&
+            sequence_control_set_ptr->encode_context_ptr->sc_buffer > context_ptr->previous_mode_change_buffer) {
             encoderModeDelta += 1;
             changeCond = 7;
         }
@@ -206,25 +206,25 @@ void SpeedBufferControl(
         sequence_control_set_ptr->encode_context_ptr->enc_mode = (EbEncMode)CLIP3(1, MAX_ENC_PRESET, (int8_t)sequence_control_set_ptr->encode_context_ptr->enc_mode + encoderModeDelta);
 
         // Update previous stats
-        context_ptr->previousFrameInCheck1 = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
-        context_ptr->previousBufferCheck1 = sequence_control_set_ptr->encode_context_ptr->sc_buffer;
+        context_ptr->previous_frame_in_check1 = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
+        context_ptr->previous_buffer_check1 = sequence_control_set_ptr->encode_context_ptr->sc_buffer;
 
         if (encoderModeDelta) {
-            context_ptr->previousModeChangeBuffer = sequence_control_set_ptr->encode_context_ptr->sc_buffer;
-            context_ptr->previousModeChangeFrameIn = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
-            context_ptr->prevEncModeDelta = encoderModeDelta;
+            context_ptr->previous_mode_change_buffer = sequence_control_set_ptr->encode_context_ptr->sc_buffer;
+            context_ptr->previous_mode_change_frame_in = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
+            context_ptr->prev_enc_mode_delta = encoderModeDelta;
         }
     }
 
-    // Check every bufferTrshold2 for the changes (previousFrameInCheck2 variable)
-    if ((sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previousFrameInCheck2 + bufferTrshold2 && sequence_control_set_ptr->encode_context_ptr->sc_frame_in >= SC_FRAMES_TO_IGNORE)) {
+    // Check every bufferTrshold2 for the changes (previous_frame_in_check2 variable)
+    if ((sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previous_frame_in_check2 + bufferTrshold2 && sequence_control_set_ptr->encode_context_ptr->sc_frame_in >= SC_FRAMES_TO_IGNORE)) {
         encoderModeDelta = 0;
 
         // if no change in the encoder mode and buffer is low enough and level is not increasing, switch to a slower encoder mode
         // If previous ChangeCond was the same, double the threshold2
-        if (encoderModeDelta == 0 && sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previousModeChangeFrameIn + bufferTrshold2 &&
-            (context_ptr->prevChangeCond != 8 || sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previousModeChangeFrameIn + bufferTrshold2 * 2) &&
-            ((sequence_control_set_ptr->encode_context_ptr->sc_buffer - context_ptr->previousModeChangeBuffer < (targetFps / 3)) || context_ptr->previousModeChangeBuffer == 0) &&
+        if (encoderModeDelta == 0 && sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previous_mode_change_frame_in + bufferTrshold2 &&
+            (context_ptr->prev_change_cond != 8 || sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previous_mode_change_frame_in + bufferTrshold2 * 2) &&
+            ((sequence_control_set_ptr->encode_context_ptr->sc_buffer - context_ptr->previous_mode_change_buffer < (targetFps / 3)) || context_ptr->previous_mode_change_buffer == 0) &&
             sequence_control_set_ptr->encode_context_ptr->sc_buffer < bufferTrshold3) {
             encoderModeDelta = -1;
             changeCond = 8;
@@ -234,54 +234,54 @@ void SpeedBufferControl(
         sequence_control_set_ptr->encode_context_ptr->enc_mode = (EbEncMode)CLIP3(1, MAX_ENC_PRESET, (int8_t)sequence_control_set_ptr->encode_context_ptr->enc_mode + encoderModeDelta);
 
         // Update previous stats
-        context_ptr->previousFrameInCheck2 = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
+        context_ptr->previous_frame_in_check2 = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
 
         if (encoderModeDelta) {
-            context_ptr->previousModeChangeBuffer = sequence_control_set_ptr->encode_context_ptr->sc_buffer;
-            context_ptr->previousModeChangeFrameIn = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
-            context_ptr->prevEncModeDelta = encoderModeDelta;
+            context_ptr->previous_mode_change_buffer = sequence_control_set_ptr->encode_context_ptr->sc_buffer;
+            context_ptr->previous_mode_change_frame_in = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
+            context_ptr->prev_enc_mode_delta = encoderModeDelta;
         }
 
     }
-    // Check every SC_FRAMES_INTERVAL_SPEED frames for the speed calculation (previousFrameInCheck3 variable)
-    if (context_ptr->startFlag || (sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previousFrameInCheck3 + SC_FRAMES_INTERVAL_SPEED && sequence_control_set_ptr->encode_context_ptr->sc_frame_in >= SC_FRAMES_TO_IGNORE)) {
-        if (context_ptr->startFlag) {
-            context_ptr->curSpeed = (uint64_t)(sequence_control_set_ptr->encode_context_ptr->sc_frame_out - 0) * 1000 / (uint64_t)(overallDuration);
+    // Check every SC_FRAMES_INTERVAL_SPEED frames for the speed calculation (previous_frame_in_check3 variable)
+    if (context_ptr->start_flag || (sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previous_frame_in_check3 + SC_FRAMES_INTERVAL_SPEED && sequence_control_set_ptr->encode_context_ptr->sc_frame_in >= SC_FRAMES_TO_IGNORE)) {
+        if (context_ptr->start_flag) {
+            context_ptr->cur_speed = (uint64_t)(sequence_control_set_ptr->encode_context_ptr->sc_frame_out - 0) * 1000 / (uint64_t)(overallDuration);
         }
         else {
 
             if (instDuration != 0)
-                context_ptr->curSpeed = (uint64_t)(sequence_control_set_ptr->encode_context_ptr->sc_frame_out - context_ptr->prevFrameOut) * 1000 / (uint64_t)(instDuration);
+                context_ptr->cur_speed = (uint64_t)(sequence_control_set_ptr->encode_context_ptr->sc_frame_out - context_ptr->prev_frame_out) * 1000 / (uint64_t)(instDuration);
         }
-        context_ptr->startFlag = EB_FALSE;
+        context_ptr->start_flag = EB_FALSE;
 
         // Update previous stats
-        context_ptr->previousFrameInCheck3 = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
-        context_ptr->prevsTimeSeconds = cursTimeSeconds;
-        context_ptr->prevsTimeuSeconds = cursTimeuSeconds;
-        context_ptr->prevFrameOut = sequence_control_set_ptr->encode_context_ptr->sc_frame_out;
+        context_ptr->previous_frame_in_check3 = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
+        context_ptr->prevs_time_seconds = cursTimeSeconds;
+        context_ptr->prevs_timeu_seconds = cursTimeuSeconds;
+        context_ptr->prev_frame_out = sequence_control_set_ptr->encode_context_ptr->sc_frame_out;
 
     }
     else if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in < SC_FRAMES_TO_IGNORE && (overallDuration != 0)) {
-        context_ptr->curSpeed = (uint64_t)(sequence_control_set_ptr->encode_context_ptr->sc_frame_out - 0) * 1000 / (uint64_t)(overallDuration);
+        context_ptr->cur_speed = (uint64_t)(sequence_control_set_ptr->encode_context_ptr->sc_frame_out - 0) * 1000 / (uint64_t)(overallDuration);
     }
 
     if (changeCond) {
-        context_ptr->prevChangeCond = changeCond;
+        context_ptr->prev_change_cond = changeCond;
     }
     sequence_control_set_ptr->encode_context_ptr->sc_frame_in++;
     if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in >= SC_FRAMES_TO_IGNORE) {
-        context_ptr->averageEncMod += sequence_control_set_ptr->encode_context_ptr->enc_mode;
+        context_ptr->average_enc_mod += sequence_control_set_ptr->encode_context_ptr->enc_mode;
     }
     else {
-        context_ptr->averageEncMod = 0;
+        context_ptr->average_enc_mod = 0;
     }
 
     // Set the encoder level
     picture_control_set_ptr->enc_mode = sequence_control_set_ptr->encode_context_ptr->enc_mode;
 
     eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->sc_buffer_mutex);
-    context_ptr->prevEncMod = sequence_control_set_ptr->encode_context_ptr->enc_mode;
+    context_ptr->prev_enc_mod = sequence_control_set_ptr->encode_context_ptr->enc_mode;
 }
 
 void ResetPcsAv1(
@@ -397,89 +397,89 @@ void ResetPcsAv1(
  ***************************************/
 void* resource_coordination_kernel(void *input_ptr)
 {
-    ResourceCoordinationContext_t   *context_ptr = (ResourceCoordinationContext_t*)input_ptr;
+    ResourceCoordinationContext   *context_ptr = (ResourceCoordinationContext*)input_ptr;
 
-    EbObjectWrapper_t               *pictureControlSetWrapperPtr;
+    EbObjectWrapper               *picture_control_set_wrapper_ptr;
 
     PictureParentControlSet_t       *picture_control_set_ptr;
 
-    EbObjectWrapper_t               *previousSequenceControlSetWrapperPtr;
-    SequenceControlSet_t            *sequence_control_set_ptr;
+    EbObjectWrapper               *previousSequenceControlSetWrapperPtr;
+    SequenceControlSet            *sequence_control_set_ptr;
 
-    EbObjectWrapper_t               *ebInputWrapperPtr;
+    EbObjectWrapper               *ebInputWrapperPtr;
     EbBufferHeaderType              *ebInputPtr;
-    EbObjectWrapper_t               *outputWrapperPtr;
-    ResourceCoordinationResults_t   *outputResultsPtr;
+    EbObjectWrapper               *outputWrapperPtr;
+    ResourceCoordinationResults   *outputResultsPtr;
 
-    EbObjectWrapper_t               *input_picture_wrapper_ptr;
-    EbObjectWrapper_t               *reference_picture_wrapper_ptr;
+    EbObjectWrapper               *input_picture_wrapper_ptr;
+    EbObjectWrapper               *reference_picture_wrapper_ptr;
 
-    uint32_t                         instanceIndex;
+    uint32_t                         instance_index;
     EbBool                           end_of_sequence_flag = EB_FALSE;
     uint32_t                         aspectRatio;
 
     uint32_t                         input_size = 0;
-    EbObjectWrapper_t               *prevPictureControlSetWrapperPtr = 0;
+    EbObjectWrapper               *prevPictureControlSetWrapperPtr = 0;
     
     for (;;) {
 
-        // Tie instanceIndex to zero for now...
-        instanceIndex = 0;
+        // Tie instance_index to zero for now...
+        instance_index = 0;
 
         // Get the Next svt Input Buffer [BLOCKING]
         eb_get_full_object(
             context_ptr->input_buffer_fifo_ptr,
             &ebInputWrapperPtr);
         ebInputPtr = (EbBufferHeaderType*)ebInputWrapperPtr->object_ptr;
-        sequence_control_set_ptr = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr;
+        sequence_control_set_ptr = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr;
 
         // If config changes occured since the last picture began encoding, then
         //   prepare a new sequence_control_set_ptr containing the new changes and update the state
         //   of the previous Active SequenceControlSet
-        eb_block_on_mutex(context_ptr->sequence_control_set_instance_array[instanceIndex]->config_mutex);
-        if (context_ptr->sequence_control_set_instance_array[instanceIndex]->encode_context_ptr->initial_picture) {
+        eb_block_on_mutex(context_ptr->sequence_control_set_instance_array[instance_index]->config_mutex);
+        if (context_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->initial_picture) {
 
             // Update picture width, picture height, cropping right offset, cropping bottom offset, and conformance windows
-            if (context_ptr->sequence_control_set_instance_array[instanceIndex]->encode_context_ptr->initial_picture)
+            if (context_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->initial_picture)
 
             {
-                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->luma_width = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_luma_width;
-                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->luma_height = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_luma_height;
-                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->chroma_width = (context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_luma_width >> 1);
-                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->chroma_height = (context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_luma_height >> 1);
+                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->luma_width = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width;
+                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->luma_height = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height;
+                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->chroma_width = (context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width >> 1);
+                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->chroma_height = (context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height >> 1);
 
-                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_right = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_pad_right;
-                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->cropping_right_offset = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_right;
-                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_bottom = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->max_input_pad_bottom;
-                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->cropping_bottom_offset = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_bottom;
+                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_right = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_pad_right;
+                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->cropping_right_offset = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_right;
+                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_bottom = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_pad_bottom;
+                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->cropping_bottom_offset = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_bottom;
 
-                if (context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_right != 0 || context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->pad_bottom != 0) {
-                    context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->conformance_window_flag = 1;
+                if (context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_right != 0 || context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_bottom != 0) {
+                    context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->conformance_window_flag = 1;
                 }
                 else {
-                    context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->conformance_window_flag = 0;
+                    context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->conformance_window_flag = 0;
                 }
 
-                input_size = context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->luma_width * context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr->luma_height;
+                input_size = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->luma_width * context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->luma_height;
             }
 
 
             // Copy previous Active SequenceControlSetPtr to a place holder
-            previousSequenceControlSetWrapperPtr = context_ptr->sequenceControlSetActiveArray[instanceIndex];
+            previousSequenceControlSetWrapperPtr = context_ptr->sequenceControlSetActiveArray[instance_index];
 
             // Get empty SequenceControlSet [BLOCKING]
             eb_get_empty_object(
                 context_ptr->sequence_control_set_empty_fifo_ptr,
-                &context_ptr->sequenceControlSetActiveArray[instanceIndex]);
+                &context_ptr->sequenceControlSetActiveArray[instance_index]);
 
             // Copy the contents of the active SequenceControlSet into the new empty SequenceControlSet
             copy_sequence_control_set(
-                (SequenceControlSet_t*)context_ptr->sequenceControlSetActiveArray[instanceIndex]->object_ptr,
-                context_ptr->sequence_control_set_instance_array[instanceIndex]->sequence_control_set_ptr);
+                (SequenceControlSet*)context_ptr->sequenceControlSetActiveArray[instance_index]->object_ptr,
+                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr);
 
             // Disable releaseFlag of new SequenceControlSet
             eb_object_release_disable(
-                context_ptr->sequenceControlSetActiveArray[instanceIndex]);
+                context_ptr->sequenceControlSetActiveArray[instance_index]);
 
             if (previousSequenceControlSetWrapperPtr != EB_NULL) {
 
@@ -488,25 +488,25 @@ void* resource_coordination_kernel(void *input_ptr)
                     previousSequenceControlSetWrapperPtr);
 
                 // Check to see if previous SequenceControlSet is already inactive, if TRUE then release the SequenceControlSet
-                if (previousSequenceControlSetWrapperPtr->liveCount == 0) {
+                if (previousSequenceControlSetWrapperPtr->live_count == 0) {
                     eb_release_object(
                         previousSequenceControlSetWrapperPtr);
                 }
             }
         }
-        eb_release_mutex(context_ptr->sequence_control_set_instance_array[instanceIndex]->config_mutex);
+        eb_release_mutex(context_ptr->sequence_control_set_instance_array[instance_index]->config_mutex);
 
         // Sequence Control Set is released by Rate Control after passing through MDC->MD->ENCDEC->Packetization->RateControl
         //   and in the PictureManager
         eb_object_inc_live_count(
-            context_ptr->sequenceControlSetActiveArray[instanceIndex],
+            context_ptr->sequenceControlSetActiveArray[instance_index],
             2);
 
         // Set the current SequenceControlSet
-        sequence_control_set_ptr = (SequenceControlSet_t*)context_ptr->sequenceControlSetActiveArray[instanceIndex]->object_ptr;
+        sequence_control_set_ptr = (SequenceControlSet*)context_ptr->sequenceControlSetActiveArray[instance_index]->object_ptr;
 
         // Init SB Params
-        if (context_ptr->sequence_control_set_instance_array[instanceIndex]->encode_context_ptr->initial_picture) {
+        if (context_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->initial_picture) {
             derive_input_resolution(
                 sequence_control_set_ptr,
                 input_size);
@@ -520,7 +520,7 @@ void* resource_coordination_kernel(void *input_ptr)
                 PM_MODE_1;
 
             // Construct PM Trans Coeff Shaping
-            if (context_ptr->sequence_control_set_instance_array[instanceIndex]->encode_context_ptr->initial_picture) {
+            if (context_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->initial_picture) {
                 if (sequence_control_set_ptr->pm_mode == PM_MODE_0) {
                     construct_pm_trans_coeff_shaping(sequence_control_set_ptr);
                 }
@@ -534,27 +534,27 @@ void* resource_coordination_kernel(void *input_ptr)
 
         //Get a New ParentPCS where we will hold the new inputPicture
         eb_get_empty_object(
-            context_ptr->picture_control_set_fifo_ptr_array[instanceIndex],
-            &pictureControlSetWrapperPtr);
+            context_ptr->picture_control_set_fifo_ptr_array[instance_index],
+            &picture_control_set_wrapper_ptr);
 
         // Parent PCS is released by the Rate Control after passing through MDC->MD->ENCDEC->Packetization
         eb_object_inc_live_count(
-            pictureControlSetWrapperPtr,
+            picture_control_set_wrapper_ptr,
             1);
 
-        picture_control_set_ptr = (PictureParentControlSet_t*)pictureControlSetWrapperPtr->object_ptr;
+        picture_control_set_ptr = (PictureParentControlSet_t*)picture_control_set_wrapper_ptr->object_ptr;
 
-        picture_control_set_ptr->p_pcs_wrapper_ptr = pictureControlSetWrapperPtr;
+        picture_control_set_ptr->p_pcs_wrapper_ptr = picture_control_set_wrapper_ptr;
 
         // Set the Encoder mode
         picture_control_set_ptr->enc_mode = sequence_control_set_ptr->static_config.enc_mode;
 
         // Keep track of the previous input for the ZZ SADs computation
-        picture_control_set_ptr->previous_picture_control_set_wrapper_ptr = (context_ptr->sequence_control_set_instance_array[instanceIndex]->encode_context_ptr->initial_picture) ?
-            pictureControlSetWrapperPtr :
+        picture_control_set_ptr->previous_picture_control_set_wrapper_ptr = (context_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->initial_picture) ?
+            picture_control_set_wrapper_ptr :
             sequence_control_set_ptr->encode_context_ptr->previous_picture_control_set_wrapper_ptr;
 
-        sequence_control_set_ptr->encode_context_ptr->previous_picture_control_set_wrapper_ptr = pictureControlSetWrapperPtr;
+        sequence_control_set_ptr->encode_context_ptr->previous_picture_control_set_wrapper_ptr = picture_control_set_wrapper_ptr;
 
         // Copy data from the svt buffer to the input frame
         // *Note - Assumes 4:2:0 planar
@@ -564,7 +564,7 @@ void* resource_coordination_kernel(void *input_ptr)
         end_of_sequence_flag = (picture_control_set_ptr->input_ptr->flags & EB_BUFFERFLAG_EOS) ? EB_TRUE : EB_FALSE;
         EbStartTime(&picture_control_set_ptr->start_time_seconds, &picture_control_set_ptr->start_time_u_seconds);
         
-        picture_control_set_ptr->sequence_control_set_wrapper_ptr = context_ptr->sequenceControlSetActiveArray[instanceIndex];
+        picture_control_set_ptr->sequence_control_set_wrapper_ptr = context_ptr->sequenceControlSetActiveArray[instance_index];
         picture_control_set_ptr->sequence_control_set_ptr = sequence_control_set_ptr;
         picture_control_set_ptr->input_picture_wrapper_ptr = input_picture_wrapper_ptr;
         picture_control_set_ptr->end_of_sequence_flag = end_of_sequence_flag;
@@ -626,7 +626,7 @@ void* resource_coordination_kernel(void *input_ptr)
         }
 
         // Picture Stats
-        picture_control_set_ptr->picture_number = context_ptr->pictureNumberArray[instanceIndex]++;
+        picture_control_set_ptr->picture_number = context_ptr->picture_number_array[instance_index]++;
         ResetPcsAv1(picture_control_set_ptr);
 
         sequence_control_set_ptr->encode_context_ptr->initial_picture = EB_FALSE;
@@ -638,16 +638,16 @@ void* resource_coordination_kernel(void *input_ptr)
 
         picture_control_set_ptr->pa_reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
 
-        // Give the new Reference a nominal liveCount of 1
+        // Give the new Reference a nominal live_count of 1
         eb_object_inc_live_count(
             picture_control_set_ptr->pa_reference_picture_wrapper_ptr,
             2);
 
         eb_object_inc_live_count(
-            pictureControlSetWrapperPtr,
+            picture_control_set_wrapper_ptr,
             2);
     
-        ((EbPaReferenceObject_t*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->inputPaddedPicturePtr->buffer_y = picture_control_set_ptr->enhanced_picture_ptr->buffer_y;
+        ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->input_padded_picture_ptr->buffer_y = picture_control_set_ptr->enhanced_picture_ptr->buffer_y;
         // Get Empty Output Results Object
         if (picture_control_set_ptr->picture_number > 0 && (prevPictureControlSetWrapperPtr != NULL))
         {
@@ -655,13 +655,13 @@ void* resource_coordination_kernel(void *input_ptr)
             eb_get_empty_object(
                 context_ptr->resource_coordination_results_output_fifo_ptr,
                 &outputWrapperPtr);
-            outputResultsPtr = (ResourceCoordinationResults_t*)outputWrapperPtr->object_ptr;
-            outputResultsPtr->pictureControlSetWrapperPtr = prevPictureControlSetWrapperPtr;
+            outputResultsPtr = (ResourceCoordinationResults*)outputWrapperPtr->object_ptr;
+            outputResultsPtr->picture_control_set_wrapper_ptr = prevPictureControlSetWrapperPtr;
 
             // Post the finished Results Object
             eb_post_full_object(outputWrapperPtr);
         }
-        prevPictureControlSetWrapperPtr = pictureControlSetWrapperPtr;
+        prevPictureControlSetWrapperPtr = picture_control_set_wrapper_ptr;
     }
 
     return EB_NULL;

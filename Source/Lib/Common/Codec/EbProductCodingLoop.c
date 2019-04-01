@@ -59,7 +59,7 @@ void PfZeroOutUselessQuadrants(
 /*******************************************
 * set Penalize Skip Flag
 *
-* Summary: Set the PenalizeSkipFlag to true
+* Summary: Set the penalize_skipflag to true
 * When there is luminance/chrominance change
 * or in noisy clip with low motion at meduim
 * varince area
@@ -659,7 +659,7 @@ void set_nfl(
 //*************************//
 void Initialize_cu_data_structure(
     ModeDecisionContext_t   *context_ptr,
-    SequenceControlSet_t    *sequence_control_set_ptr,
+    SequenceControlSet    *sequence_control_set_ptr,
     LargestCodingUnit_t        *sb_ptr,
     const MdcLcuData_t        * const mdcResultTbPtr)
 {
@@ -691,7 +691,7 @@ void Initialize_cu_data_structure(
     } while (blk_idx < sequence_control_set_ptr->max_block_cnt);
 }
 
-static INLINE tran_high_t check_range(tran_high_t input, int32_t bd) {
+static INLINE TranHigh check_range(TranHigh input, int32_t bd) {
     // AV1 TX case
     // - 8 bit: signed 16 bit integer
     // - 10 bit: signed 18 bit integer
@@ -703,11 +703,11 @@ static INLINE tran_high_t check_range(tran_high_t input, int32_t bd) {
     assert(int_min <= input);
     assert(input <= int_max);
 #endif  // CONFIG_COEFFICIENT_RANGE_CHECKING
-    return (tran_high_t)clamp64(input, int_min, int_max);
+    return (TranHigh)clamp64(input, int_min, int_max);
 }
 
 #define HIGHBD_WRAPLOW(x, bd) ((int32_t)check_range((x), bd))
-static INLINE uint16_t highbd_clip_pixel_add(uint16_t dest, tran_high_t trans,
+static INLINE uint16_t highbd_clip_pixel_add(uint16_t dest, TranHigh trans,
     int32_t bd) {
     trans = HIGHBD_WRAPLOW(trans, bd);
     return clip_pixel_highbd(dest + (int32_t)trans, bd);
@@ -893,7 +893,7 @@ void AV1PerformInverseTransformRecon(
     uint32_t                           tuTotalCount;
     uint32_t                           tu_index;
     uint32_t                           txb_itr;
-    TransformUnit_t                   *txb_ptr;
+    TransformUnit                   *txb_ptr;
     
     UNUSED(blk_geom);
 
@@ -1113,7 +1113,7 @@ uint64_t spatial_full_distortion_kernel(
     uint32_t   area_width,
     uint32_t   area_height);
 
-uint64_t SpatialFullDistortionKernel8x8_SSSE3_INTRIN(
+uint64_t spatial_full_distortion_kernel8x8_ssse3_intrin(
     uint8_t   *input,
     uint32_t   input_stride,
     uint8_t   *recon,
@@ -1121,7 +1121,7 @@ uint64_t SpatialFullDistortionKernel8x8_SSSE3_INTRIN(
     uint32_t   area_width,
     uint32_t   area_height);
 
-uint64_t SpatialFullDistortionKernel16MxN_SSSE3_INTRIN(
+uint64_t spatial_full_distortion_kernel16_mx_n_ssse3_intrin(
     uint8_t   *input,
     uint32_t   input_stride,
     uint8_t   *recon,
@@ -1391,7 +1391,7 @@ void ProductConfigureChroma(
 }
 #if !PF_N2_32X32
 void ProductDerivePartialFrequencyN2Flag(
-    SequenceControlSet_t               *sequence_control_set_ptr,
+    SequenceControlSet               *sequence_control_set_ptr,
     PictureControlSet_t                *picture_control_set_ptr,
     ModeDecisionContext_t              *context_ptr){
 
@@ -2198,8 +2198,8 @@ void move_cu_data(
 {
 
 
-    //CHKN TransformUnit_t             transform_unit_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
-    memcpy(dst_cu->transform_unit_array, src_cu->transform_unit_array, TRANSFORM_UNIT_MAX_COUNT * sizeof(TransformUnit_t));
+    //CHKN TransformUnit             transform_unit_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
+    memcpy(dst_cu->transform_unit_array, src_cu->transform_unit_array, TRANSFORM_UNIT_MAX_COUNT * sizeof(TransformUnit));
 
 
     //CHKN PredictionUnit_t            prediction_unit_array[MAX_NUM_OF_PU_PER_CU];    // 35-bytes * 4 = 140 bytes
@@ -2522,7 +2522,7 @@ void inter_depth_tx_search(
 
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].count_non_zero_coeffs = candidate_ptr->count_non_zero_coeffs;
 
-        TransformUnit_t        *txb_ptr;
+        TransformUnit        *txb_ptr;
         uint32_t                txb_itr;
         uint32_t                tu_index;
         uint32_t                tuTotalCount;
@@ -2749,7 +2749,7 @@ PART get_partition_shape(
 void  order_nsq_table(
     PictureControlSet_t            *picture_control_set_ptr,
     ModeDecisionContext_t          *context_ptr,
-    const SequenceControlSet_t     *sequence_control_set_ptr,
+    const SequenceControlSet     *sequence_control_set_ptr,
     LargestCodingUnit_t            *sb_ptr,
     NeighborArrayUnit_t            *leaf_partition_neighbor_array) {
     const uint32_t             lcuAddr = sb_ptr->index;
@@ -2945,7 +2945,7 @@ uint8_t check_skip_sub_blks(
 
 
 void md_encode_block(
-    SequenceControlSet_t             *sequence_control_set_ptr,
+    SequenceControlSet             *sequence_control_set_ptr,
     PictureControlSet_t              *picture_control_set_ptr,
     ModeDecisionContext_t            *context_ptr,
     SsMeContext_t                    *ss_mecontext,
@@ -3307,7 +3307,7 @@ void md_encode_block(
 
 
 EB_EXTERN EbErrorType mode_decision_sb(
-    SequenceControlSet_t                *sequence_control_set_ptr,
+    SequenceControlSet                *sequence_control_set_ptr,
     PictureControlSet_t                 *picture_control_set_ptr,
     const MdcLcuData_t * const           mdcResultTbPtr,
     LargestCodingUnit_t                 *sb_ptr,
@@ -4730,7 +4730,7 @@ static void in_loop_me_interpolate_search_region_avc_style(
 *   performs Half Pel refinement for one block
 ***************************************************************/
 static void in_loop_me_halfpel_refinement_block(
-    SequenceControlSet_t    *sequence_control_set_ptr,             // input parameter, Sequence control set Ptr
+    SequenceControlSet    *sequence_control_set_ptr,             // input parameter, Sequence control set Ptr
     SsMeContext_t           *context_ptr,                        // input parameter, ME context Ptr, used to get SB Ptr
     uint32_t                   block_index_in_sb_buffer,                  // input parameter, PU origin, used to point to source samples
     uint8_t                   *pos_b_buffer,                        // input parameter, position "b" interpolated search area Ptr
@@ -4933,7 +4933,7 @@ static void in_loop_me_halfpel_refinement_block(
 *   performs Half Pel refinement
 ***************************************************************/
 void in_loop_me_halfpel_search_sblock(
-    SequenceControlSet_t    *sequence_control_set_ptr,             // input parameter, Sequence control set Ptr
+    SequenceControlSet    *sequence_control_set_ptr,             // input parameter, Sequence control set Ptr
     SsMeContext_t           *context_ptr,                        // input/output parameter, ME context Ptr, used to get/update ME results
     uint8_t                   *pos_b_buffer,                        // input parameter, position "b" interpolated search area Ptr
     uint8_t                   *pos_h_buffer,                        // input parameter, position "h" interpolated search area Ptr
@@ -6933,13 +6933,13 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
 {
     EbErrorType return_error = EB_ErrorNone;
 
-    SequenceControlSet_t    *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+    SequenceControlSet    *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 
     int16_t                  xTopLeftSearchRegion;
     int16_t                  yTopLeftSearchRegion;
     uint32_t                  searchRegionIndex;
-    int16_t                  picture_width = (int16_t)((SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_width;
-    int16_t                  picture_height = (int16_t)((SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_height;
+    int16_t                  picture_width = (int16_t)((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_width;
+    int16_t                  picture_height = (int16_t)((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_height;
 
     int16_t                  padWidth = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t                  padHeight = (int16_t)BLOCK_SIZE_64 - 1;
@@ -6958,7 +6958,7 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
     uint32_t                  numOfListToSearch;
     uint32_t                  listIndex;
     EbPictureBufferDesc_t  *refPicPtr;
-    EbReferenceObject_t    *referenceObject;
+    EbReferenceObject    *referenceObject;
 
     EbAsm                  asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
 
@@ -6995,8 +6995,8 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
     for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch; ++listIndex) {
 
         EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
-        referenceObject = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[listIndex]->object_ptr;
-        refPicPtr = is16bit ? (EbPictureBufferDesc_t*)referenceObject->referencePicture16bit : (EbPictureBufferDesc_t*)referenceObject->referencePicture;
+        referenceObject = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[listIndex]->object_ptr;
+        refPicPtr = is16bit ? (EbPictureBufferDesc_t*)referenceObject->reference_picture16bit : (EbPictureBufferDesc_t*)referenceObject->reference_picture;
         search_area_width = (int16_t)MIN(context_ptr->search_area_width, 127);
         search_area_height = (int16_t)MIN(context_ptr->search_area_height, 127);
         x_search_center = listIndex == REF_LIST_0 ? xMvL0 : xMvL1;

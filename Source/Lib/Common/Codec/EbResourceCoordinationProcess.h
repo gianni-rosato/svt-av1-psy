@@ -15,15 +15,15 @@ extern "C" {
     /***************************************
      * Context
      ***************************************/
-    typedef struct ResourceCoordinationContext_s
+    typedef struct ResourceCoordinationContext
     {
 
-        EbFifo_t                            *input_buffer_fifo_ptr;
-        EbFifo_t                            *resource_coordination_results_output_fifo_ptr;
-        EbFifo_t                           **picture_control_set_fifo_ptr_array;
-        EbSequenceControlSetInstance_t     **sequence_control_set_instance_array;
-        EbObjectWrapper_t                  **sequenceControlSetActiveArray;
-        EbFifo_t                            *sequence_control_set_empty_fifo_ptr;
+        EbFifo                            *input_buffer_fifo_ptr;
+        EbFifo                            *resource_coordination_results_output_fifo_ptr;
+        EbFifo                           **picture_control_set_fifo_ptr_array;
+        EbSequenceControlSetInstance     **sequence_control_set_instance_array;
+        EbObjectWrapper                  **sequenceControlSetActiveArray;
+        EbFifo                            *sequence_control_set_empty_fifo_ptr;
         EbCallback_t                       **app_callback_ptr_array;
         
         // Compute Segments
@@ -31,44 +31,44 @@ extern "C" {
         uint32_t                               encode_instances_total_count;
 
         // Picture Number Array
-        uint64_t                              *pictureNumberArray;
+        uint64_t                              *picture_number_array;
 
-        uint64_t                               averageEncMod;
-        uint8_t                                prevEncMod;
-        int8_t                                prevEncModeDelta;
-        uint8_t                                prevChangeCond;
+        uint64_t                               average_enc_mod;
+        uint8_t                                prev_enc_mod;
+        int8_t                                prev_enc_mode_delta;
+        uint8_t                                prev_change_cond;
 
-        int64_t                               previousModeChangeBuffer;
-        int64_t                               previousModeChangeFrameIn;
-        int64_t                               previousBufferCheck1;
-        int64_t                               previousFrameInCheck1;
-        int64_t                               previousFrameInCheck2;
-        int64_t                               previousFrameInCheck3;
-
-
-        uint64_t                               curSpeed; // speed x 1000
-        uint64_t                               prevsTimeSeconds;
-        uint64_t                               prevsTimeuSeconds;
-        int64_t                               prevFrameOut;
-
-        uint64_t                               firstInPicArrivedTimeSeconds;
-        uint64_t                               firstInPicArrivedTimeuSeconds;
-        EbBool                              startFlag;
+        int64_t                               previous_mode_change_buffer;
+        int64_t                               previous_mode_change_frame_in;
+        int64_t                               previous_buffer_check1;
+        int64_t                               previous_frame_in_check1;
+        int64_t                               previous_frame_in_check2;
+        int64_t                               previous_frame_in_check3;
 
 
+        uint64_t                               cur_speed; // speed x 1000
+        uint64_t                               prevs_time_seconds;
+        uint64_t                               prevs_timeu_seconds;
+        int64_t                               prev_frame_out;
 
-    } ResourceCoordinationContext_t;
+        uint64_t                               first_in_pic_arrived_time_seconds;
+        uint64_t                               first_in_pic_arrived_timeu_seconds;
+        EbBool                              start_flag;
+
+
+
+    } ResourceCoordinationContext;
 
     /***************************************
      * Extern Function Declaration
      ***************************************/
     extern EbErrorType resource_coordination_context_ctor(
-        ResourceCoordinationContext_t  **context_dbl_ptr,
-        EbFifo_t                        *input_buffer_fifo_ptr,
-        EbFifo_t                        *resource_coordination_results_output_fifo_ptr,
-        EbFifo_t                       **picture_control_set_fifo_ptr_array,
-        EbSequenceControlSetInstance_t **sequence_control_set_instance_array,
-        EbFifo_t                        *sequence_control_set_empty_fifo_ptr,
+        ResourceCoordinationContext  **context_dbl_ptr,
+        EbFifo                        *input_buffer_fifo_ptr,
+        EbFifo                        *resource_coordination_results_output_fifo_ptr,
+        EbFifo                       **picture_control_set_fifo_ptr_array,
+        EbSequenceControlSetInstance **sequence_control_set_instance_array,
+        EbFifo                        *sequence_control_set_empty_fifo_ptr,
         EbCallback_t                   **app_callback_ptr_array,
         uint32_t                        *compute_segments_total_count_array,
         uint32_t                         encode_instances_total_count);

@@ -83,8 +83,8 @@ extern "C" {
 
     typedef struct ModeDecisionContext_s
     {
-        EbFifo_t                       *mode_decision_configuration_input_fifo_ptr;
-        EbFifo_t                       *mode_decision_output_fifo_ptr;
+        EbFifo                       *mode_decision_configuration_input_fifo_ptr;
+        EbFifo                       *mode_decision_output_fifo_ptr;
         int16_t                        *transform_inner_array_ptr;
 
         ModeDecisionCandidate_t       **fast_candidate_ptr_array;
@@ -114,13 +114,13 @@ extern "C" {
         NeighborArrayUnit32_t          *interpolation_type_neighbor_array;
 
         // TMVP
-        EbReferenceObject_t            *reference_object_write_ptr;
+        EbReferenceObject            *reference_object_write_ptr;
 
         // Intra Reference Samples
         IntraReferenceSamples_t        *intra_ref_ptr;
 
         // Transform and Quantization Buffers
-        EbTransQuantBuffers_t          *trans_quant_buffers_ptr;
+        EbTransQuantBuffers          *trans_quant_buffers_ptr;
         struct EncDecContext_s         *enc_dec_context_ptr;
 
         uint64_t                       *fast_cost_array;
@@ -142,11 +142,11 @@ extern "C" {
 
         //  Context Variables---------------------------------
         LargestCodingUnit_t            *sb_ptr;
-        TransformUnit_t                *txb_ptr;
+        TransformUnit                *txb_ptr;
         CodingUnit_t                   *cu_ptr;
         const BlockGeom                *blk_geom;
         PredictionUnit_t               *pu_ptr;
-        const PredictionUnitStats_t    *pu_stats;
+        const PredictionUnitStats    *pu_stats;
         MvUnit_t                        mv_unit;
 
         // Entropy Coder
@@ -246,8 +246,8 @@ extern "C" {
      **************************************/
     extern EbErrorType mode_decision_context_ctor(
         ModeDecisionContext_t      **context_dbl_ptr,
-        EbFifo_t                    *mode_decision_configuration_input_fifo_ptr,
-        EbFifo_t                    *mode_decision_output_fifo_ptr);
+        EbFifo                    *mode_decision_configuration_input_fifo_ptr,
+        EbFifo                    *mode_decision_output_fifo_ptr);
 
     extern void reset_mode_decision_neighbor_arrays(
         PictureControlSet_t *picture_control_set_ptr);
@@ -287,14 +287,14 @@ extern "C" {
     extern void reset_mode_decision(
         ModeDecisionContext_t   *context_ptr,
         PictureControlSet_t     *picture_control_set_ptr,
-        SequenceControlSet_t    *sequence_control_set_ptr,
+        SequenceControlSet    *sequence_control_set_ptr,
         uint32_t                 segment_index);
 
     extern void ModeDecisionConfigureLcu(
         ModeDecisionContext_t   *context_ptr,
         LargestCodingUnit_t     *sb_ptr,
         PictureControlSet_t     *picture_control_set_ptr,
-        SequenceControlSet_t    *sequence_control_set_ptr,
+        SequenceControlSet    *sequence_control_set_ptr,
         uint8_t                  picture_qp,
         uint8_t                  sb_qp);
 

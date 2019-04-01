@@ -113,58 +113,58 @@ extern "C" {
 
 
     // CU Stats Helper Functions
-    typedef struct CodedUnitStats_s
+    typedef struct CodedUnitStats
     {
         uint8_t   depth;
         uint8_t   size;
         uint8_t   size_log2;
         uint16_t  origin_x;
         uint16_t  origin_y;
-        uint8_t   cuNumInDepth;
-        uint8_t   parent32x32Index;
+        uint8_t   cu_num_in_depth;
+        uint8_t   parent32x32_index;
 
-    } CodedUnitStats_t;
+    } CodedUnitStats;
 
     // PU Stats Helper Functions
-    typedef struct PredictionUnitStats_t
+    typedef struct PredictionUnitStats
     {
         uint8_t  width;
         uint8_t  height;
-        uint8_t  offsetX;
-        uint8_t  offsetY;
+        uint8_t  offset_x;
+        uint8_t  offset_y;
 
-    } PredictionUnitStats_t;
+    } PredictionUnitStats;
 
     // TU Stats Helper Functions
-    typedef struct TransformUnitStats_s
+    typedef struct TransformUnitStats
     {
         uint8_t  depth;
-        uint8_t  offsetX;
-        uint8_t  offsetY;
+        uint8_t  offset_x;
+        uint8_t  offset_y;
 
-    } TransformUnitStats_t;
+    } TransformUnitStats;
 
-    extern uint64_t Log2fHighPrecision(uint64_t x, uint8_t precision);
+    extern uint64_t log2f_high_precision(uint64_t x, uint8_t precision);
 
-    extern const CodedUnitStats_t* GetCodedUnitStats(const uint32_t cuIdx);
-    extern const TransformUnitStats_t* GetTransformUnitStats(const uint32_t tuIdx);
+    extern const CodedUnitStats* get_coded_unit_stats(const uint32_t cuIdx);
+    extern const TransformUnitStats* get_transform_unit_stats(const uint32_t tuIdx);
 
-#define PU_ORIGIN_ADJUST(cuOrigin, cu_size, offset) ((((cu_size) * (offset)) >> 2) + (cuOrigin))
+#define PU_ORIGIN_ADJUST(cu_origin, cu_size, offset) ((((cu_size) * (offset)) >> 2) + (cu_origin))
 #define PU_SIZE_ADJUST(cu_size, puSize) (((cu_size) * (puSize)) >> 2)
 
-#define TU_ORIGIN_ADJUST(cuOrigin, cu_size, offset) ((((cu_size) * (offset)) >> 2) + (cuOrigin))
+#define TU_ORIGIN_ADJUST(cu_origin, cu_size, offset) ((((cu_size) * (offset)) >> 2) + (cu_origin))
 #define TU_SIZE_ADJUST(cu_size, tuDepth) ((cu_size) >> (tuDepth))
 
-    extern EbErrorType ZOrderIncrement(uint32_t *xLoc, uint32_t *yLoc);
+    extern EbErrorType z_order_increment(uint32_t *x_loc, uint32_t *y_loc);
     extern void ZOrderIncrementWithLevel(
-        uint32_t *xLoc,
-        uint32_t *yLoc,
+        uint32_t *x_loc,
+        uint32_t *y_loc,
         uint32_t *level,
         uint32_t *index);
 
     extern uint32_t Log2f(uint32_t x);
     extern uint64_t Log2f64(uint64_t x);
-    extern uint32_t EndianSwap(uint32_t ui);
+    extern uint32_t endian_swap(uint32_t ui);
 
     /****************************
      * MACROS
@@ -188,8 +188,8 @@ extern "C" {
 #define MAX(x, y)                       ((x)>(y)?(x):(y))
 #define MIN(x, y)                       ((x)<(y)?(x):(y))
 #define MEDIAN(a,b,c)                   ((a)>(b)?(a)>©?(b)>©?(b):©:(a):(b)>©?(a)>©?(a):©:(b))
-#define CLIP3(MinVal, MaxVal, a)        (((a)<(MinVal)) ? (MinVal) : (((a)>(MaxVal)) ? (MaxVal) :(a)))
-#define CLIP3EQ(MinVal, MaxVal, a)        (((a)<=(MinVal)) ? (MinVal) : (((a)>=(MaxVal)) ? (MaxVal) :(a)))
+#define CLIP3(min_val, max_val, a)        (((a)<(min_val)) ? (min_val) : (((a)>(max_val)) ? (max_val) :(a)))
+#define CLIP3EQ(min_val, max_val, a)        (((a)<=(min_val)) ? (min_val) : (((a)>=(max_val)) ? (max_val) :(a)))
 #define BITDEPTH_MIDRANGE_VALUE(precision)  (1 << ((precision) - 1))
 #define SWAP(a, b)                      MULTI_LINE_MACRO_BEGIN (a) ^= (b); (b) ^= (a); (a) ^= (b); MULTI_LINE_MACRO_END
 #define ABS(a)                          (((a) < 0) ? (-(a)) : (a))
@@ -264,30 +264,30 @@ extern "C" {
 // Helper functions for EbLinkedListNode.
 
 // concatenate two linked list, and return the pointer to the new concatenated list
-    EbLinkedListNode* concatEbLinkedList(EbLinkedListNode* a, EbLinkedListNode* b);
+    EbLinkedListNode* concat_eb_linked_list(EbLinkedListNode* a, EbLinkedListNode* b);
 
     // split a linked list into two. return the pointer to a linked list whose nodes meets the condition
-    // predicateFunc(node) == TRUE, the rest of the nodes will be collected into another linked list to which (*restLL) is
+    // predicate_func(node) == TRUE, the rest of the nodes will be collected into another linked list to which (*restLL) is
     // set. Does not gaurantee the original order of the nodes.
 
-    EbLinkedListNode* splitEbLinkedList(EbLinkedListNode* input, EbLinkedListNode** restLL, EbBool(*predicateFunc)(EbLinkedListNode*));
+    EbLinkedListNode* split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode** restLL, EbBool(*predicate_func)(EbLinkedListNode*));
 
 #define MINI_GOP_MAX_COUNT            15
 #define MINI_GOP_WINDOW_MAX_COUNT     8    // widow subdivision: 8 x 3L
 
 #define MIN_HIERARCHICAL_LEVEL         2
-    static const uint32_t MiniGopOffset[4] = { 1, 3, 7, 31 };
+    static const uint32_t mini_gop_offset[4] = { 1, 3, 7, 31 };
 
     typedef struct MiniGopStats_s
     {
         uint32_t  hierarchical_levels;
-        uint32_t  startIndex;
-        uint32_t  endIndex;
+        uint32_t  start_index;
+        uint32_t  end_index;
         uint32_t  lenght;
 
     } MiniGopStats_t;
-    extern const MiniGopStats_t* GetMiniGopStats(const uint32_t miniGopIndex);
-    typedef enum MINI_GOP_INDEX {
+    extern const MiniGopStats_t* get_mini_gop_stats(const uint32_t miniGopIndex);
+    typedef enum MiniGopIndex {
         L6_INDEX = 0,
         L5_0_INDEX = 1,
         L4_0_INDEX = 2,
@@ -303,7 +303,7 @@ extern "C" {
         L4_3_INDEX = 12,
         L3_6_INDEX = 13,
         L3_7_INDEX = 14
-    } MINI_GOP_INDEX;
+    } MiniGopIndex;
 
 #ifdef __cplusplus
 }

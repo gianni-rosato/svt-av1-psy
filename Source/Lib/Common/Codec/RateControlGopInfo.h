@@ -7,12 +7,12 @@
 #ifndef RateControlGopInfo_h
 #define RateControlGopInfo_h
 
-struct  EbRateControlGopInfo_s;
+struct  EbRateControlGopInfo;
 
 /*
  * @struct Holds rate control information for a group of picture
  */
-typedef struct  EbRateControlGopInfo_s {
+typedef struct  EbRateControlGopInfo {
     /*
      * @variable uint8_t. Represents an intra if not zero.
      */

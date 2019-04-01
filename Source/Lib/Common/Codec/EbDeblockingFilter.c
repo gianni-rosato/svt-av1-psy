@@ -1017,7 +1017,7 @@ void av1_filter_block_plane_vert(
     const MacroblockdPlane *const plane_ptr,
     const uint32_t mi_row, const uint32_t mi_col) {
 
-    SequenceControlSet_t *scsPtr = (SequenceControlSet_t*)pcsPtr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+    SequenceControlSet *scsPtr = (SequenceControlSet*)pcsPtr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     EbBool is16bit = scsPtr->static_config.encoder_bit_depth > 8;
     const int32_t row_step = MI_SIZE >> MI_SIZE_LOG2;
     const uint32_t scale_horz = plane_ptr->subsampling_x;
@@ -1139,7 +1139,7 @@ void av1_filter_block_plane_horz(
     const MacroblockdPlane *const plane_ptr,
     const uint32_t mi_row, const uint32_t mi_col) {
 
-    SequenceControlSet_t *scsPtr = (SequenceControlSet_t*)pcsPtr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+    SequenceControlSet *scsPtr = (SequenceControlSet*)pcsPtr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     EbBool is16bit = scsPtr->static_config.encoder_bit_depth > 8;
     const int32_t col_step = MI_SIZE >> MI_SIZE_LOG2;
     const uint32_t scale_horz = plane_ptr->subsampling_x;
@@ -1353,7 +1353,7 @@ void av1_loop_filter_frame(
     PictureControlSet_t *picture_control_set_ptr,
     int32_t plane_start, int32_t plane_end) {
 
-    SequenceControlSet_t *scsPtr = (SequenceControlSet_t*)picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+    SequenceControlSet *scsPtr = (SequenceControlSet*)picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     //LargestCodingUnit_t                     *sb_ptr;
     //uint16_t                                   sb_index;
     uint8_t                                   sb_size_Log2 = (uint8_t)Log2f(scsPtr->sb_size_pix);
@@ -1473,7 +1473,7 @@ uint64_t PictureSseCalculations(
     int32_t plane)
 
 {
-    SequenceControlSet_t   *sequence_control_set_ptr = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr;
+    SequenceControlSet   *sequence_control_set_ptr = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr;
     EbBool is16bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
     if (!is16bit) {
@@ -1653,10 +1653,10 @@ static int64_t try_filter_frame(
 
         //get the 16bit form of the input LCU
         if (is16bit) {
-            recon_buffer = ((EbReferenceObject_t*)pcsPtr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture16bit;
+            recon_buffer = ((EbReferenceObject*)pcsPtr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
         }
         else {
-            recon_buffer = ((EbReferenceObject_t*)pcsPtr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture;
+            recon_buffer = ((EbReferenceObject*)pcsPtr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
         }
     }
     else { // non ref pictures
@@ -1718,10 +1718,10 @@ static int32_t search_filter_level(
 
         //get the 16bit form of the input LCU
         if (is16bit) {
-            recon_buffer = ((EbReferenceObject_t*)pcsPtr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture16bit;
+            recon_buffer = ((EbReferenceObject*)pcsPtr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
         }
         else {
-            recon_buffer = ((EbReferenceObject_t*)pcsPtr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->referencePicture;
+            recon_buffer = ((EbReferenceObject*)pcsPtr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
         }
     }
     else { // non ref pictures
@@ -1854,7 +1854,7 @@ void av1_pick_filter_level(
     PictureControlSet_t     *pcsPtr,
     LPF_PICK_METHOD          method) {
 
-    SequenceControlSet_t *scsPtr = (SequenceControlSet_t*)pcsPtr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+    SequenceControlSet *scsPtr = (SequenceControlSet*)pcsPtr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     const int32_t num_planes = 3;
     (void)srcBuffer;
     struct loopfilter *const lf = &pcsPtr->parent_pcs_ptr->lf;

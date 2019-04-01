@@ -24,10 +24,10 @@
  * Context
  **************************************/
 
-typedef struct SourceBasedOperationsContext_s
+typedef struct SourceBasedOperationsContext
 {
-    EbFifo_t  *initial_rate_control_results_input_fifo_ptr;
-    EbFifo_t  *picture_demux_results_output_fifo_ptr;
+    EbFifo  *initial_rate_control_results_input_fifo_ptr;
+    EbFifo  *picture_demux_results_output_fifo_ptr;
 
     // Delta QP Map
     int8_t      min_delta_qp;
@@ -60,16 +60,16 @@ typedef struct SourceBasedOperationsContext_s
     uint8_t    *cr_mean_ptr;
     uint8_t    *cb_mean_ptr;
 
-} SourceBasedOperationsContext_t;
+} SourceBasedOperationsContext;
 
 /***************************************
  * Extern Function Declaration
  ***************************************/
 extern EbErrorType source_based_operations_context_ctor(
-    SourceBasedOperationsContext_t **context_dbl_ptr,
-    EbFifo_t                        *initial_rate_control_results_input_fifo_ptr,
-    EbFifo_t                        *picture_demux_results_output_fifo_ptr,
-    SequenceControlSet_t            *sequence_control_set_ptr);
+    SourceBasedOperationsContext **context_dbl_ptr,
+    EbFifo                        *initial_rate_control_results_input_fifo_ptr,
+    EbFifo                        *picture_demux_results_output_fifo_ptr,
+    SequenceControlSet            *sequence_control_set_ptr);
 
 extern void* source_based_operations_kernel(void *input_ptr);
 

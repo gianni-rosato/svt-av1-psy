@@ -16,7 +16,7 @@ extern "C" {
      **************************************/
     typedef struct
     {
-        EbObjectWrapper_t      *pictureControlSetWrapperPtr;
+        EbObjectWrapper      *picture_control_set_wrapper_ptr;
 
     } EntropyCodingResults_t;
 

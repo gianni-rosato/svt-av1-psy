@@ -38,25 +38,25 @@ typedef struct EbEncHandle_s
     uint32_t                                  paReferencePicturPooleBufferInitCount;
 
     // Config Set Pool & Active Array
-    EbSystemResource_t                     *sequenceControlSetPoolPtr;
-    EbFifo_t                              **sequenceControlSetPoolProducerFifoPtrArray;
-    EbSequenceControlSetInstance_t        **sequence_control_set_instance_array;
+    EbSystemResource                     *sequenceControlSetPoolPtr;
+    EbFifo                              **sequenceControlSetPoolProducerFifoPtrArray;
+    EbSequenceControlSetInstance        **sequence_control_set_instance_array;
 
     // Full Results
-    EbSystemResource_t                    **pictureControlSetPoolPtrArray;
-    EbFifo_t                             ***pictureControlSetPoolProducerFifoPtrDblArray;
+    EbSystemResource                    **pictureControlSetPoolPtrArray;
+    EbFifo                             ***pictureControlSetPoolProducerFifoPtrDblArray;
 
     //ParentControlSet
-    EbSystemResource_t                    **pictureParentControlSetPoolPtrArray;
-    EbFifo_t                             ***pictureParentControlSetPoolProducerFifoPtrDblArray;
+    EbSystemResource                    **pictureParentControlSetPoolPtrArray;
+    EbFifo                             ***pictureParentControlSetPoolProducerFifoPtrDblArray;
 
     // Picture Buffers
-    EbSystemResource_t                    **referencePicturePoolPtrArray;
-    EbSystemResource_t                    **paReferencePicturePoolPtrArray;
+    EbSystemResource                    **referencePicturePoolPtrArray;
+    EbSystemResource                    **paReferencePicturePoolPtrArray;
 
     // Picture Buffer Producer Fifos
-    EbFifo_t                             ***referencePicturePoolProducerFifoPtrDblArray;
-    EbFifo_t                             ***paReferencePicturePoolProducerFifoPtrDblArray;
+    EbFifo                             ***referencePicturePoolProducerFifoPtrDblArray;
+    EbFifo                             ***paReferencePicturePoolProducerFifoPtrDblArray;
 
     // Thread Handles
     EbHandle                               resourceCoordinationThreadHandle;
@@ -96,66 +96,66 @@ typedef struct EbEncHandle_s
     EbPtr                                  packetizationContextPtr;
 
     // System Resource Managers
-    EbSystemResource_t                     *input_buffer_resource_ptr;
-    EbSystemResource_t                    **output_stream_buffer_resource_ptr_array;
-    EbSystemResource_t                    **output_recon_buffer_resource_ptr_array;
-    EbSystemResource_t                    **output_statistics_buffer_resource_ptr_array;
-    EbSystemResource_t                     *resourceCoordinationResultsResourcePtr;
-    EbSystemResource_t                     *pictureAnalysisResultsResourcePtr;
-    EbSystemResource_t                     *pictureDecisionResultsResourcePtr;
-    EbSystemResource_t                     *motionEstimationResultsResourcePtr;
-    EbSystemResource_t                     *initialRateControlResultsResourcePtr;
-    EbSystemResource_t                     *pictureDemuxResultsResourcePtr;
-    EbSystemResource_t                     *rateControlTasksResourcePtr;
-    EbSystemResource_t                     *rateControlResultsResourcePtr;
-    EbSystemResource_t                     *encDecTasksResourcePtr;
-    EbSystemResource_t                     *encDecResultsResourcePtr;
-    EbSystemResource_t                     *entropyCodingResultsResourcePtr;
-    EbSystemResource_t                     *dlfResultsResourcePtr;
-    EbSystemResource_t                     *cdefResultsResourcePtr;
-    EbSystemResource_t                     *restResultsResourcePtr;
+    EbSystemResource                     *input_buffer_resource_ptr;
+    EbSystemResource                    **output_stream_buffer_resource_ptr_array;
+    EbSystemResource                    **output_recon_buffer_resource_ptr_array;
+    EbSystemResource                    **output_statistics_buffer_resource_ptr_array;
+    EbSystemResource                     *resourceCoordinationResultsResourcePtr;
+    EbSystemResource                     *pictureAnalysisResultsResourcePtr;
+    EbSystemResource                     *pictureDecisionResultsResourcePtr;
+    EbSystemResource                     *motionEstimationResultsResourcePtr;
+    EbSystemResource                     *initialRateControlResultsResourcePtr;
+    EbSystemResource                     *pictureDemuxResultsResourcePtr;
+    EbSystemResource                     *rateControlTasksResourcePtr;
+    EbSystemResource                     *rateControlResultsResourcePtr;
+    EbSystemResource                     *encDecTasksResourcePtr;
+    EbSystemResource                     *encDecResultsResourcePtr;
+    EbSystemResource                     *entropyCodingResultsResourcePtr;
+    EbSystemResource                     *dlfResultsResourcePtr;
+    EbSystemResource                     *cdefResultsResourcePtr;
+    EbSystemResource                     *restResultsResourcePtr;
 
     // Inter-Process Producer Fifos
-    EbFifo_t                              **input_buffer_producer_fifo_ptr_array;
-    EbFifo_t                             ***output_stream_buffer_producer_fifo_ptr_dbl_array;
-    EbFifo_t                             ***output_recon_buffer_producer_fifo_ptr_dbl_array;
-    EbFifo_t                             ***output_statistics_buffer_producer_fifo_ptr_dbl_array;
-    EbFifo_t                              **resourceCoordinationResultsProducerFifoPtrArray;
-    EbFifo_t                              **pictureAnalysisResultsProducerFifoPtrArray;
-    EbFifo_t                              **pictureDecisionResultsProducerFifoPtrArray;
-    EbFifo_t                              **motionEstimationResultsProducerFifoPtrArray;
-    EbFifo_t                              **initialRateControlResultsProducerFifoPtrArray;
-    EbFifo_t                              **pictureDemuxResultsProducerFifoPtrArray;
-    EbFifo_t                              **pictureManagerResultsProducerFifoPtrArray;
-    EbFifo_t                              **rateControlTasksProducerFifoPtrArray;
-    EbFifo_t                              **rateControlResultsProducerFifoPtrArray;
-    EbFifo_t                              **encDecTasksProducerFifoPtrArray;
-    EbFifo_t                              **encDecResultsProducerFifoPtrArray;
-    EbFifo_t                              **entropyCodingResultsProducerFifoPtrArray;
-    EbFifo_t                              **dlfResultsProducerFifoPtrArray;
-    EbFifo_t                              **cdefResultsProducerFifoPtrArray;
-    EbFifo_t                              **restResultsProducerFifoPtrArray;
+    EbFifo                              **input_buffer_producer_fifo_ptr_array;
+    EbFifo                             ***output_stream_buffer_producer_fifo_ptr_dbl_array;
+    EbFifo                             ***output_recon_buffer_producer_fifo_ptr_dbl_array;
+    EbFifo                             ***output_statistics_buffer_producer_fifo_ptr_dbl_array;
+    EbFifo                              **resourceCoordinationResultsProducerFifoPtrArray;
+    EbFifo                              **pictureAnalysisResultsProducerFifoPtrArray;
+    EbFifo                              **pictureDecisionResultsProducerFifoPtrArray;
+    EbFifo                              **motionEstimationResultsProducerFifoPtrArray;
+    EbFifo                              **initialRateControlResultsProducerFifoPtrArray;
+    EbFifo                              **pictureDemuxResultsProducerFifoPtrArray;
+    EbFifo                              **pictureManagerResultsProducerFifoPtrArray;
+    EbFifo                              **rateControlTasksProducerFifoPtrArray;
+    EbFifo                              **rateControlResultsProducerFifoPtrArray;
+    EbFifo                              **encDecTasksProducerFifoPtrArray;
+    EbFifo                              **encDecResultsProducerFifoPtrArray;
+    EbFifo                              **entropyCodingResultsProducerFifoPtrArray;
+    EbFifo                              **dlfResultsProducerFifoPtrArray;
+    EbFifo                              **cdefResultsProducerFifoPtrArray;
+    EbFifo                              **restResultsProducerFifoPtrArray;
 
 
     // Inter-Process Consumer Fifos
-    EbFifo_t                              **input_buffer_consumer_fifo_ptr_array;
-    EbFifo_t                             ***output_stream_buffer_consumer_fifo_ptr_dbl_array;
-    EbFifo_t                             ***output_recon_buffer_consumer_fifo_ptr_dbl_array;
-    EbFifo_t                             ***output_statistics_buffer_consumer_fifo_ptr_dbl_array;
-    EbFifo_t                              **resourceCoordinationResultsConsumerFifoPtrArray;
-    EbFifo_t                              **pictureAnalysisResultsConsumerFifoPtrArray;
-    EbFifo_t                              **pictureDecisionResultsConsumerFifoPtrArray;
-    EbFifo_t                              **motionEstimationResultsConsumerFifoPtrArray;
-    EbFifo_t                              **initialRateControlResultsConsumerFifoPtrArray;
-    EbFifo_t                              **pictureDemuxResultsConsumerFifoPtrArray;
-    EbFifo_t                              **rateControlTasksConsumerFifoPtrArray;
-    EbFifo_t                              **rateControlResultsConsumerFifoPtrArray;
-    EbFifo_t                              **encDecTasksConsumerFifoPtrArray;
-    EbFifo_t                              **encDecResultsConsumerFifoPtrArray;
-    EbFifo_t                              **entropyCodingResultsConsumerFifoPtrArray;
-    EbFifo_t                              **dlfResultsConsumerFifoPtrArray;
-    EbFifo_t                              **cdefResultsConsumerFifoPtrArray;
-    EbFifo_t                              **restResultsConsumerFifoPtrArray;
+    EbFifo                              **input_buffer_consumer_fifo_ptr_array;
+    EbFifo                             ***output_stream_buffer_consumer_fifo_ptr_dbl_array;
+    EbFifo                             ***output_recon_buffer_consumer_fifo_ptr_dbl_array;
+    EbFifo                             ***output_statistics_buffer_consumer_fifo_ptr_dbl_array;
+    EbFifo                              **resourceCoordinationResultsConsumerFifoPtrArray;
+    EbFifo                              **pictureAnalysisResultsConsumerFifoPtrArray;
+    EbFifo                              **pictureDecisionResultsConsumerFifoPtrArray;
+    EbFifo                              **motionEstimationResultsConsumerFifoPtrArray;
+    EbFifo                              **initialRateControlResultsConsumerFifoPtrArray;
+    EbFifo                              **pictureDemuxResultsConsumerFifoPtrArray;
+    EbFifo                              **rateControlTasksConsumerFifoPtrArray;
+    EbFifo                              **rateControlResultsConsumerFifoPtrArray;
+    EbFifo                              **encDecTasksConsumerFifoPtrArray;
+    EbFifo                              **encDecResultsConsumerFifoPtrArray;
+    EbFifo                              **entropyCodingResultsConsumerFifoPtrArray;
+    EbFifo                              **dlfResultsConsumerFifoPtrArray;
+    EbFifo                              **cdefResultsConsumerFifoPtrArray;
+    EbFifo                              **restResultsConsumerFifoPtrArray;
 
     // Callbacks
     EbCallback_t                          **app_callback_ptr_array;

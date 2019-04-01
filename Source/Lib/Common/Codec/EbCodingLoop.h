@@ -20,7 +20,7 @@ extern "C" {
      *******************************************/
 
     typedef EbErrorType(*EB_MODE_DECISION)(
-        SequenceControlSet_t                *sequence_control_set_ptr,
+        SequenceControlSet                *sequence_control_set_ptr,
         PictureControlSet_t                 *picture_control_set_ptr,
         const MdcLcuData_t * const           mdcResultTbPtr,
         LargestCodingUnit_t                 *sb_ptr,
@@ -31,7 +31,7 @@ extern "C" {
 
 
     extern EbErrorType AV1ProductModeDecisionLcu(
-        SequenceControlSet_t                *sequence_control_set_ptr,
+        SequenceControlSet                *sequence_control_set_ptr,
         PictureControlSet_t                 *picture_control_set_ptr,
         const MdcLcuData_t * const           mdcResultTbPtr,
         LargestCodingUnit_t                 *sb_ptr,
@@ -52,7 +52,7 @@ extern "C" {
         SsMeContext_t                        *context_ptr);          // input parameter, ME Context Ptr, used to store decimated/interpolated LCU/SR
 
     extern EbErrorType mode_decision_sb(
-        SequenceControlSet_t                *sequence_control_set_ptr,
+        SequenceControlSet                *sequence_control_set_ptr,
         PictureControlSet_t                 *picture_control_set_ptr,
         const MdcLcuData_t * const           mdcResultTbPtr,
         LargestCodingUnit_t                 *sb_ptr,
@@ -65,7 +65,7 @@ extern "C" {
 
 
     extern EbErrorType ModeDecisionRefinementLcu(
-        SequenceControlSet_t                *sequence_control_set_ptr,
+        SequenceControlSet                *sequence_control_set_ptr,
         PictureControlSet_t                 *picture_control_set_ptr,
         LargestCodingUnit_t                 *sb_ptr,
         uint32_t                               sb_origin_x,
@@ -83,7 +83,7 @@ extern "C" {
         uint64_t                 weight);
 
     extern void AV1EncodePass(
-        SequenceControlSet_t    *sequence_control_set_ptr,
+        SequenceControlSet    *sequence_control_set_ptr,
         PictureControlSet_t     *picture_control_set_ptr,
         LargestCodingUnit_t     *sb_ptr,
         uint32_t                   tbAddr,
@@ -96,7 +96,7 @@ extern "C" {
 #if NO_ENCDEC
 
     void no_enc_dec_pass(
-        SequenceControlSet_t    *sequence_control_set_ptr,
+        SequenceControlSet    *sequence_control_set_ptr,
         PictureControlSet_t     *picture_control_set_ptr,
         LargestCodingUnit_t     *sb_ptr,
         uint32_t                   tbAddr,

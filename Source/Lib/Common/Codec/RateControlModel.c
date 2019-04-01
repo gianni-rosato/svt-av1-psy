@@ -71,7 +71,7 @@ EbErrorType    rate_control_model_ctor(EbRateControlModel **object_doubble_ptr) 
     return EB_ErrorNone;
 }
 
-EbErrorType rate_control_model_init(EbRateControlModel *model_ptr, SequenceControlSet_t *sequenceControlSetPtr) {
+EbErrorType rate_control_model_init(EbRateControlModel *model_ptr, SequenceControlSet *sequenceControlSetPtr) {
     uint32_t                number_of_frame = sequenceControlSetPtr->static_config.frames_to_be_encoded;
     EbRateControlGopInfo    *gop_infos;
 

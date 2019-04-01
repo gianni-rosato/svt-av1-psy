@@ -24,9 +24,9 @@
  **************************************/
 typedef struct EntropyCodingContext_s
 {
-    EbFifo_t                       *enc_dec_input_fifo_ptr;
-    EbFifo_t                       *entropy_coding_output_fifo_ptr;  // to packetization
-    EbFifo_t                       *rate_control_output_fifo_ptr; // feedback to rate control
+    EbFifo                       *enc_dec_input_fifo_ptr;
+    EbFifo                       *entropy_coding_output_fifo_ptr;  // to packetization
+    EbFifo                       *rate_control_output_fifo_ptr; // feedback to rate control
 
     uint32_t                        sb_total_count;
     // Lambda
@@ -42,7 +42,7 @@ typedef struct EntropyCodingContext_s
 
     //  Context Variables---------------------------------
     CodingUnit_t                     *cu_ptr;
-    const CodedUnitStats_t           *cu_stats;
+    const CodedUnitStats           *cu_stats;
     uint32_t                          cu_index;
     uint8_t                           cu_depth;
     uint32_t                          cu_size;
@@ -54,7 +54,7 @@ typedef struct EntropyCodingContext_s
     uint32_t                          sb_origin_y;
     uint32_t                          pu_itr;
     PredictionUnit_t                 *pu_ptr;
-    const PredictionUnitStats_t      *pu_stats;
+    const PredictionUnitStats      *pu_stats;
     uint32_t                          pu_origin_x;
     uint32_t                          pu_origin_y;
     uint32_t                          pu_width;
@@ -62,7 +62,7 @@ typedef struct EntropyCodingContext_s
     MvUnit_t                          mv_unit;
 
     uint32_t                          txb_itr;
-    TransformUnit_t                  *txb_ptr;
+    TransformUnit                  *txb_ptr;
     uint32_t                          txb_origin_x;
     uint32_t                          txb_origin_y;
     uint32_t                          txb_size;
@@ -78,9 +78,9 @@ typedef struct EntropyCodingContext_s
  **************************************/
 extern EbErrorType entropy_coding_context_ctor(
     EntropyCodingContext_t **context_dbl_ptr,
-    EbFifo_t                *enc_dec_input_fifo_ptr,
-    EbFifo_t                *packetization_output_fifo_ptr,
-    EbFifo_t                *rate_control_output_fifo_ptr,
+    EbFifo                *enc_dec_input_fifo_ptr,
+    EbFifo                *packetization_output_fifo_ptr,
+    EbFifo                *rate_control_output_fifo_ptr,
     EbBool                   is16bit);
 
 extern void* EntropyCodingKernel(void *input_ptr);

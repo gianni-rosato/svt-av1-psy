@@ -18,11 +18,11 @@
 /**************************************
  * Rest Context
  **************************************/
-typedef struct RestContext_s
+typedef struct RestContext
 {
-    EbFifo_t                       *rest_input_fifo_ptr;
-    EbFifo_t                       *rest_output_fifo_ptr;
-    EbFifo_t                       *picture_demux_fifo_ptr;
+    EbFifo                       *rest_input_fifo_ptr;
+    EbFifo                       *rest_output_fifo_ptr;
+    EbFifo                       *picture_demux_fifo_ptr;
 
     EbPictureBufferDesc_t          *trial_frame_rst;
 
@@ -36,16 +36,16 @@ typedef struct RestContext_s
     int32_t *rst_tmpbuf;
 
 
-} RestContext_t;
+} RestContext;
 
 /**************************************
  * Extern Function Declarations
  **************************************/
 extern EbErrorType rest_context_ctor(
-    RestContext_t **context_dbl_ptr,
-    EbFifo_t                       *rest_input_fifo_ptr,
-    EbFifo_t                       *rest_output_fifo_ptr,
-    EbFifo_t                      *picture_demux_fifo_ptr,
+    RestContext **context_dbl_ptr,
+    EbFifo                       *rest_input_fifo_ptr,
+    EbFifo                       *rest_output_fifo_ptr,
+    EbFifo                      *picture_demux_fifo_ptr,
     EbBool                  is16bit,
     uint32_t                max_input_luma_width,
     uint32_t                max_input_luma_height

@@ -25,11 +25,11 @@ typedef struct PictureDemuxResults_s
     EB_PIC_TYPE                    pictureType;
 
     // Only valid for input pictures
-    EbObjectWrapper_t             *pictureControlSetWrapperPtr;
+    EbObjectWrapper             *picture_control_set_wrapper_ptr;
 
     // Only valid for reference pictures
-    EbObjectWrapper_t             *reference_picture_wrapper_ptr;
-    EbObjectWrapper_t             *sequence_control_set_wrapper_ptr;
+    EbObjectWrapper             *reference_picture_wrapper_ptr;
+    EbObjectWrapper             *sequence_control_set_wrapper_ptr;
     uint64_t                         picture_number;
 
 } PictureDemuxResults_t;

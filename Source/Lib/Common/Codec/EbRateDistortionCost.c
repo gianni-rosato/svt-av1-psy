@@ -2266,7 +2266,7 @@ static void partition_gather_vert_alike(int32_t *out,
 *       md_rate_estimation_ptr is pointer to MD rate Estimation Tables
 **********************************************************************************/
 EbErrorType av1_split_flag_rate(
-    SequenceControlSet_t                  *sequence_control_set_ptr,
+    SequenceControlSet                  *sequence_control_set_ptr,
     ModeDecisionContext_t                  *context_ptr,
     CodingUnit_t                           *cu_ptr,
     uint32_t                                  leaf_index,
@@ -2403,7 +2403,7 @@ EbErrorType av1_encode_tu_calc_cost(
         yNonZeroCbfRate = *y_tu_coeff_bits; // yNonZeroCbfLumaFlagBitsNum is already calculated inside y_tu_coeff_bits
 
         yZeroCbfRate = yZeroCbfLumaFlagBitsNum;
-        TransformUnit_t       *txb_ptr = &cu_ptr->transform_unit_array[context_ptr->txb_itr];
+        TransformUnit       *txb_ptr = &cu_ptr->transform_unit_array[context_ptr->txb_itr];
         if (txb_ptr->transform_type[PLANE_TYPE_Y] != DCT_DCT) {
             yZeroCbfCost = 0xFFFFFFFFFFFFFFFFull;
 

@@ -85,7 +85,7 @@ extern "C" {
         return EB_ErrorInsufficientResources; \
     } \
     else { \
-        memory_map[*(memory_map_index)].ptrType = pointer_class; \
+        memory_map[*(memory_map_index)].ptr_type = pointer_class; \
         memory_map[(*(memory_map_index))++].ptr = pointer; \
         if (n_elements % 8 == 0) { \
             *total_lib_memory += (n_elements); \
@@ -121,7 +121,7 @@ extern    cpu_set_t                   group_affinity;
     } \
    else { \
         pthread_setaffinity_np(*((pthread_t*)pointer),sizeof(cpu_set_t),&group_affinity); \
-        memory_map[*(memory_map_index)].ptrType = pointer_class; \
+        memory_map[*(memory_map_index)].ptr_type = pointer_class; \
         memory_map[(*(memory_map_index))++].ptr = pointer; \
         if (n_elements % 8 == 0) { \
             *total_lib_memory += (n_elements); \
@@ -141,7 +141,7 @@ extern    cpu_set_t                   group_affinity;
         return EB_ErrorInsufficientResources; \
     } \
    else { \
-        memory_map[*(memory_map_index)].ptrType = pointer_class; \
+        memory_map[*(memory_map_index)].ptr_type = pointer_class; \
         memory_map[(*(memory_map_index))++].ptr = pointer; \
         if (n_elements % 8 == 0) { \
             *total_lib_memory += (n_elements); \

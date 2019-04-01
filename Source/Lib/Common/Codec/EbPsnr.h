@@ -22,11 +22,12 @@
 extern "C" {
 #endif
 
-    typedef struct {
+    typedef struct PsnrStats
+    {
         double   psnr[4];     // total/y/u/v
         uint64_t sse[4];      // total/y/u/v
         uint32_t samples[4];  // total/y/u/v
-    } PSNR_STATS;
+    } PsnrStats;
 
     /*!\brief Converts SSE to PSNR
      *

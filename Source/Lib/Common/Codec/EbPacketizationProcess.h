@@ -27,8 +27,8 @@ extern "C" {
      **************************************/
     typedef struct PacketizationContext_s
     {
-        EbFifo_t      *entropy_coding_input_fifo_ptr;
-        EbFifo_t      *rate_control_tasks_output_fifo_ptr;
+        EbFifo      *entropy_coding_input_fifo_ptr;
+        EbFifo      *rate_control_tasks_output_fifo_ptr;
         EbPPSConfig_t *ppsConfig;
 
         uint64_t   dpbDispOrder[8], dpbDecOrder[8];
@@ -42,8 +42,8 @@ extern "C" {
      **************************************/
     extern EbErrorType packetization_context_ctor(
         PacketizationContext_t **context_dbl_ptr,
-        EbFifo_t                *entropy_coding_input_fifo_ptr,
-        EbFifo_t                *rate_control_tasks_output_fifo_ptr);
+        EbFifo                *entropy_coding_input_fifo_ptr,
+        EbFifo                *rate_control_tasks_output_fifo_ptr);
 
 
 

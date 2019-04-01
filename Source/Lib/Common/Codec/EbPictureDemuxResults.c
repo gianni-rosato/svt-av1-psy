@@ -16,7 +16,7 @@ EbErrorType picture_results_ctor(
     *object_dbl_ptr = object_ptr;
 
     object_ptr->pictureType = EB_PIC_INVALID;
-    object_ptr->pictureControlSetWrapperPtr = 0;
+    object_ptr->picture_control_set_wrapper_ptr = 0;
     object_ptr->reference_picture_wrapper_ptr = 0;
     object_ptr->picture_number = 0;
 

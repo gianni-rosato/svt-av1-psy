@@ -20,7 +20,7 @@ extern "C" {
      **************************************/
     typedef struct EncDecTasks_s
     {
-        EbObjectWrapper_t            *pictureControlSetWrapperPtr;
+        EbObjectWrapper            *picture_control_set_wrapper_ptr;
         uint32_t                        inputType;
         int16_t                        enc_dec_segment_row;
 

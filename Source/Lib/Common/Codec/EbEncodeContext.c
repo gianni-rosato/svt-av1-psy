@@ -36,12 +36,12 @@ EbErrorType encode_context_ctor(
     encode_context_ptr->statistics_port_active = EB_FALSE;
     
     // Output Buffer Fifos
-    encode_context_ptr->stream_output_fifo_ptr = (EbFifo_t*)EB_NULL;
-    encode_context_ptr->recon_output_fifo_ptr = (EbFifo_t*)EB_NULL;
+    encode_context_ptr->stream_output_fifo_ptr = (EbFifo*)EB_NULL;
+    encode_context_ptr->recon_output_fifo_ptr = (EbFifo*)EB_NULL;
 
     // Picture Buffer Fifos
-    encode_context_ptr->reference_picture_pool_fifo_ptr = (EbFifo_t*)EB_NULL;
-    encode_context_ptr->pa_reference_picture_pool_fifo_ptr = (EbFifo_t*)EB_NULL;
+    encode_context_ptr->reference_picture_pool_fifo_ptr = (EbFifo*)EB_NULL;
+    encode_context_ptr->pa_reference_picture_pool_fifo_ptr = (EbFifo*)EB_NULL;
 
     // Picture Decision Reordering Queue
     encode_context_ptr->picture_decision_reorder_queue_head_index = 0;
@@ -80,10 +80,10 @@ EbErrorType encode_context_ctor(
 
     encode_context_ptr->pre_assignment_buffer_count = 0;
 
-    EB_MALLOC(EbObjectWrapper_t**, encode_context_ptr->pre_assignment_buffer, sizeof(EbObjectWrapper_t*) * PRE_ASSIGNMENT_MAX_DEPTH, EB_N_PTR);
+    EB_MALLOC(EbObjectWrapper**, encode_context_ptr->pre_assignment_buffer, sizeof(EbObjectWrapper*) * PRE_ASSIGNMENT_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < PRE_ASSIGNMENT_MAX_DEPTH; ++pictureIndex) {
-        encode_context_ptr->pre_assignment_buffer[pictureIndex] = (EbObjectWrapper_t*)EB_NULL;
+        encode_context_ptr->pre_assignment_buffer[pictureIndex] = (EbObjectWrapper*)EB_NULL;
     }
 
     // Picture Manager Input Queue
@@ -199,7 +199,7 @@ EbErrorType encode_context_ctor(
     // Temporal Filter
 
     // Rate Control Bit Tables
-    EB_MALLOC(RateControlTables_t*, encode_context_ptr->rate_control_tables_array, sizeof(RateControlTables_t) * TOTAL_NUMBER_OF_INITIAL_RC_TABLES_ENTRY, EB_N_PTR);
+    EB_MALLOC(RateControlTables*, encode_context_ptr->rate_control_tables_array, sizeof(RateControlTables) * TOTAL_NUMBER_OF_INITIAL_RC_TABLES_ENTRY, EB_N_PTR);
 
     return_error = rate_control_tables_ctor(encode_context_ptr->rate_control_tables_array);
     if (return_error == EB_ErrorInsufficientResources) {
@@ -226,7 +226,7 @@ EbErrorType encode_context_ctor(
         return EB_ErrorInsufficientResources;
     }
     else {
-        memory_map[*(memory_map_index)].ptrType = EB_MUTEX;
+        memory_map[*(memory_map_index)].ptr_type = EB_MUTEX;
         memory_map[(*(memory_map_index))++].ptr = encode_context_ptr->shared_reference_mutex;
         *total_lib_memory += (sizeof(EbHandle));
     }

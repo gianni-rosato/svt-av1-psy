@@ -3542,7 +3542,7 @@ void InterpolateSearchRegionAVC(
 *   performs Half Pel refinement for one PU
 *******************************************/
 static void PU_HalfPelRefinement(
-    SequenceControlSet_t    *sequence_control_set_ptr,             // input parameter, Sequence control set Ptr
+    SequenceControlSet    *sequence_control_set_ptr,             // input parameter, Sequence control set Ptr
     MeContext_t             *context_ptr,                        // input parameter, ME context Ptr, used to get SB Ptr
     uint8_t                   *refBuffer,
     uint32_t                   ref_stride,
@@ -3827,7 +3827,7 @@ static void PU_HalfPelRefinement(
 *   performs Half Pel refinement for the 85 PUs
 *******************************************/
 void HalfPelSearch_LCU(
-    SequenceControlSet_t    *sequence_control_set_ptr,             // input parameter, Sequence control set Ptr
+    SequenceControlSet    *sequence_control_set_ptr,             // input parameter, Sequence control set Ptr
     PictureParentControlSet_t *picture_control_set_ptr,
     MeContext_t             *context_ptr,                        // input/output parameter, ME context Ptr, used to get/update ME results
     uint8_t                   *refBuffer,
@@ -7534,13 +7534,13 @@ EbErrorType MotionEstimateLcu(
 {
     EbErrorType return_error = EB_ErrorNone;
 
-    SequenceControlSet_t    *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+    SequenceControlSet    *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 
     int16_t                  xTopLeftSearchRegion;
     int16_t                  yTopLeftSearchRegion;
     uint32_t                  searchRegionIndex;
-    int16_t                  picture_width = (int16_t)((SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_width;
-    int16_t                  picture_height = (int16_t)((SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_height;
+    int16_t                  picture_width = (int16_t)((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_width;
+    int16_t                  picture_height = (int16_t)((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_height;
     uint32_t                  sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64 ? input_ptr->width - sb_origin_x : BLOCK_SIZE_64;
     uint32_t                  sb_height = (input_ptr->height - sb_origin_y) < BLOCK_SIZE_64 ? input_ptr->height - sb_origin_y : BLOCK_SIZE_64;
     int16_t                  padWidth = (int16_t)BLOCK_SIZE_64 - 1;
@@ -7584,7 +7584,7 @@ EbErrorType MotionEstimateLcu(
     uint32_t                  listIndex;
     uint8_t                   candidateIndex = 0;
     uint8_t                   totalMeCandidateIndex = 0;
-    EbPaReferenceObject_t  *referenceObject;  // input parameter, reference Object Ptr
+    EbPaReferenceObject  *referenceObject;  // input parameter, reference Object Ptr
 
     EbPictureBufferDesc_t  *refPicPtr;
     EbPictureBufferDesc_t  *quarterRefPicPtr;
@@ -7632,12 +7632,12 @@ EbErrorType MotionEstimateLcu(
 #if TEST5_DISABLE_NSQ_ME
     is_nsq_table_used = EB_FALSE;
 #endif
-    referenceObject = (EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[0]->object_ptr;
+    referenceObject = (EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[0]->object_ptr;
     ref0Poc = picture_control_set_ptr->ref_pic_poc_array[0];
 
     if (numOfListToSearch) {
 
-        referenceObject = (EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[1]->object_ptr;
+        referenceObject = (EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[1]->object_ptr;
         ref1Poc = picture_control_set_ptr->ref_pic_poc_array[1];
     }
 
@@ -7648,10 +7648,10 @@ EbErrorType MotionEstimateLcu(
         // Ref Picture Loop
         {
 
-            referenceObject = (EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex]->object_ptr;
-            refPicPtr = (EbPictureBufferDesc_t*)referenceObject->inputPaddedPicturePtr;
-            quarterRefPicPtr = (EbPictureBufferDesc_t*)referenceObject->quarterDecimatedPicturePtr;
-            sixteenthRefPicPtr = (EbPictureBufferDesc_t*)referenceObject->sixteenthDecimatedPicturePtr;
+            referenceObject = (EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex]->object_ptr;
+            refPicPtr = (EbPictureBufferDesc_t*)referenceObject->input_padded_picture_ptr;
+            quarterRefPicPtr = (EbPictureBufferDesc_t*)referenceObject->quarter_decimated_picture_ptr;
+            sixteenthRefPicPtr = (EbPictureBufferDesc_t*)referenceObject->sixteenth_decimated_picture_ptr;
 #if BASE_LAYER_REF
             if (picture_control_set_ptr->temporal_layer_index > 0 || listIndex == 0 || ((ref0Poc != ref1Poc) && (listIndex == 1))) {
 #else
@@ -8699,7 +8699,7 @@ EbErrorType open_loop_intra_search_sb(
     EbAsm                        asm_type)
 {
     EbErrorType return_error = EB_ErrorNone;
-    SequenceControlSet_t    *sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+    SequenceControlSet    *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 
     uint32_t    cu_origin_x;
     uint32_t    cu_origin_y;
@@ -8717,8 +8717,8 @@ EbErrorType open_loop_intra_search_sb(
         while (pa_blk_index < CU_MAX_COUNT)
         {
            
-            const CodedUnitStats_t  *blk_stats_ptr;
-            blk_stats_ptr = GetCodedUnitStats(pa_blk_index);
+            const CodedUnitStats  *blk_stats_ptr;
+            blk_stats_ptr = get_coded_unit_stats(pa_blk_index);
             uint8_t bsize = blk_stats_ptr->size;
             if (sb_params->raster_scan_cu_validity[MD_SCAN_TO_RASTER_SCAN[pa_blk_index]]) {
 

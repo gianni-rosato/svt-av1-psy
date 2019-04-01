@@ -32,7 +32,7 @@
   *   junctions (i.e. the listCount array) in order
   *   to reduce the number of references.  Note that the
   *   dependent deltaPOCs must be grouped together in order
-  *   of ascending referencePicture in order for the Dependent
+  *   of ascending reference_picture in order for the Dependent
   *   List clip to work properly.
   *
   *   All control and RPS information is derived from

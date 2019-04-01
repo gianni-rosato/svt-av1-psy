@@ -24,8 +24,8 @@
 
 
 void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane,
-    rest_tile_start_visitor_t on_tile,
-    rest_unit_visitor_t on_rest_unit,
+    RestTileStartVisitor on_tile,
+    RestUnitVisitor on_rest_unit,
     void *priv,
     PictureControlSet_t   *picture_control_set_ptr,
     uint32_t segment_index);
@@ -36,8 +36,8 @@ void av1_selfguided_restoration_c(const uint8_t *dgd8, int32_t width, int32_t he
     int32_t flt_stride, int32_t sgr_params_idx,
     int32_t bit_depth, int32_t highbd);
 void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane,
-    rest_tile_start_visitor_t on_tile,
-    rest_unit_visitor_t on_rest_unit,
+    RestTileStartVisitor on_tile,
+    RestUnitVisitor on_rest_unit,
     void *priv);
 
 
@@ -1582,7 +1582,7 @@ static void copy_unit_info(RestorationType frame_rtype,
 static double search_rest_type(RestSearchCtxt *rsc, RestorationType rtype)
 {
 
-    static const rest_unit_visitor_t funs[RESTORE_TYPES] = {
+    static const RestUnitVisitor funs[RESTORE_TYPES] = {
     search_norestore, search_wiener, search_sgrproj, search_switchable
     };
 
@@ -1927,7 +1927,7 @@ static void search_norestore_finish(const RestorationTileLimits *limits,
 static double search_rest_type_finish(RestSearchCtxt *rsc, RestorationType rtype)
 {
 
-    static const rest_unit_visitor_t funs[RESTORE_TYPES] = {
+    static const RestUnitVisitor funs[RESTORE_TYPES] = {
     search_norestore_finish, search_wiener_finish, search_sgrproj_finish, search_switchable
     };
 
@@ -1939,7 +1939,7 @@ static double search_rest_type_finish(RestSearchCtxt *rsc, RestorationType rtype
 }
 
 void restoration_seg_search(
-    RestContext_t          *context_ptr,
+    RestContext          *context_ptr,
     Yv12BufferConfig       *org_fts,
     const Yv12BufferConfig *src,
     Yv12BufferConfig       *trial_frame_rst ,

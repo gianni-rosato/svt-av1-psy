@@ -29,7 +29,8 @@
 
 #define RC_QPMOD_MAXQP             54
 
-static const uint32_t  rate_percentage_layer_array[EB_MAX_TEMPORAL_LAYERS][EB_MAX_TEMPORAL_LAYERS] = {
+static const uint32_t  rate_percentage_layer_array[EB_MAX_TEMPORAL_LAYERS][EB_MAX_TEMPORAL_LAYERS] = 
+{
     {100,  0,  0,  0,  0,  0 },
     { 70, 30,  0,  0,  0,  0 },
     { 70, 15, 15,  0,  0,  0 },
@@ -40,7 +41,8 @@ static const uint32_t  rate_percentage_layer_array[EB_MAX_TEMPORAL_LAYERS][EB_MA
 
 // range from 0 to 51
 // precision is 16 bits
-static const uint64_t two_to_power_qp_over_three[] = {
+static const uint64_t two_to_power_qp_over_three[] = 
+{
          0x10000,      0x1428A,     0x19660,     0x20000,
          0x28514,      0x32CC0,     0x40000,     0x50A29,
          0x65980,      0x80000,     0xA1451,     0xCB2FF,
@@ -58,30 +60,33 @@ static const uint64_t two_to_power_qp_over_three[] = {
 /**************************************
  * Input Port Types
  **************************************/
-typedef enum RATE_CONTROL_INPUT_PORT_TYPES {
+typedef enum RateControlInputPortTypes 
+{
     RATE_CONTROL_INPUT_PORT_PICTURE_MANAGER = 0,
     RATE_CONTROL_INPUT_PORT_PACKETIZATION = 1,
     RATE_CONTROL_INPUT_PORT_ENTROPY_CODING = 2,
     RATE_CONTROL_INPUT_PORT_TOTAL_COUNT = 3,
     RATE_CONTROL_INPUT_PORT_INVALID = ~0,
-} RATE_CONTROL_INPUT_PORT_TYPES;
+} RateControlInputPortTypes;
 
 /**************************************
  * Input Port Config
  **************************************/
-typedef struct RateControlPorts_s {
-    RATE_CONTROL_INPUT_PORT_TYPES    type;
+typedef struct RateControlPorts 
+{
+    RateControlInputPortTypes    type;
     uint32_t                           count;
-} RateControlPorts_t;
+} RateControlPorts;
 
 /**************************************
  * Coded Frames Stats
  **************************************/
-typedef struct CodedFramesStatsEntry_s {
+typedef struct CodedFramesStatsEntry 
+{
     uint64_t               picture_number;
     int64_t               frame_total_bit_actual;
     EbBool              end_of_sequence_flag;
-} CodedFramesStatsEntry_t;
+} CodedFramesStatsEntry;
 /**************************************
  * Context
  **************************************/
@@ -137,7 +142,7 @@ typedef struct RateControlLayerContext
 
     uint64_t   alpha;
 
-} RateControlLayerContext_t;
+} RateControlLayerContext;
 
 typedef struct RateControlIntervalParamContext
 {
@@ -147,7 +152,7 @@ typedef struct RateControlIntervalParamContext
     EbBool                       was_used;
     uint64_t                     processed_frames_number;
     EbBool                       last_gop;
-    RateControlLayerContext_t   **rate_control_layer_array;
+    RateControlLayerContext   **rate_control_layer_array;
 
     int64_t                      virtual_buffer_level;
     int64_t                      previous_virtual_buffer_level;
@@ -164,7 +169,7 @@ typedef struct RateControlIntervalParamContext
     EbBool                       min_target_rate_assigned;
     int64_t                      extra_ap_bit_ratio_i;
 
-} RateControlIntervalParamContext_t;
+} RateControlIntervalParamContext;
 
 typedef struct HighLevelRateControlContext
 {
@@ -177,16 +182,16 @@ typedef struct HighLevelRateControlContext
     uint32_t prev_intra_selected_ref_qp;
     uint32_t prev_intra_org_selected_ref_qp;
     uint64_t previous_updated_bit_constraint_per_sw;
-} HighLevelRateControlContext_t;
+} HighLevelRateControlContext;
 
 typedef struct RateControlContext
 {
-    EbFifo_t                            *rate_control_input_tasks_fifo_ptr;
-    EbFifo_t                            *rate_control_output_results_fifo_ptr;
+    EbFifo                            *rate_control_input_tasks_fifo_ptr;
+    EbFifo                            *rate_control_output_results_fifo_ptr;
 
-    HighLevelRateControlContext_t       *high_level_rate_control_ptr;
+    HighLevelRateControlContext       *high_level_rate_control_ptr;
 
-    RateControlIntervalParamContext_t  **rate_control_param_queue;
+    RateControlIntervalParamContext  **rate_control_param_queue;
     uint64_t                           rate_control_param_queue_head_index;
 
     uint64_t                           frame_rate;
@@ -233,9 +238,9 @@ typedef struct RateControlContext
     uint32_t                           qp_scaling_map[EB_MAX_TEMPORAL_LAYERS][MAX_REF_QP_NUM];
     uint32_t                           qp_scaling_map_I_SLICE[MAX_REF_QP_NUM];
 
-} RateControlContext_t;
+} RateControlContext;
 #else
-typedef struct RateControlLayerContext_s
+typedef struct RateControlLayerContext
 {
     uint64_t                  previousFrameSadMe;
     uint64_t                  previousFrameBitActual;
@@ -286,7 +291,7 @@ typedef struct RateControlLayerContext_s
 
     uint64_t                  alpha;
 
-} RateControlLayerContext_t;
+} RateControlLayerContext;
 
 typedef struct RateControlIntervalParamContext_s
 {
@@ -296,7 +301,7 @@ typedef struct RateControlIntervalParamContext_s
     EbBool                      wasUsed;
     uint64_t                       processedFramesNumber;
     EbBool                      lastGop;
-    RateControlLayerContext_t  **rateControlLayerArray;
+    RateControlLayerContext  **rateControlLayerArray;
 
     int64_t                       virtualBufferLevel;
     int64_t                       previousVirtualBufferLevel;
@@ -313,7 +318,7 @@ typedef struct RateControlIntervalParamContext_s
     EbBool                      min_target_rate_assigned;
     int64_t                       extraApBitRatioI;
 
-} RateControlIntervalParamContext_t;
+} RateControlIntervalParamContext;
 
 typedef struct HighLevelRateControlContext_s
 {
@@ -332,16 +337,16 @@ typedef struct HighLevelRateControlContext_s
 #endif
 
 
-} HighLevelRateControlContext_t;
+} HighLevelRateControlContext;
 
 typedef struct RateControlContext_s
 {
-    EbFifo_t                    *rate_control_input_tasks_fifo_ptr;
-    EbFifo_t                    *rate_control_output_results_fifo_ptr;
+    EbFifo                    *rate_control_input_tasks_fifo_ptr;
+    EbFifo                    *rate_control_output_results_fifo_ptr;
 
-    HighLevelRateControlContext_t *highLevelRateControlPtr;
+    HighLevelRateControlContext *highLevelRateControlPtr;
 
-    RateControlIntervalParamContext_t **rateControlParamQueue;
+    RateControlIntervalParamContext **rateControlParamQueue;
     uint64_t                       rateControlParamQueueHeadIndex;
 
     uint64_t                       frame_rate;
@@ -359,7 +364,7 @@ typedef struct RateControlContext_s
 
     // Rate Control Previous Bits Queue
 #if OVERSHOOT_STAT_PRINT
-    CodedFramesStatsEntry_t    **codedFramesStatQueue;
+    CodedFramesStatsEntry    **codedFramesStatQueue;
     uint32_t                       codedFramesStatQueueHeadIndex;
     uint32_t                       codedFramesStatQueueTailIndex;
 
@@ -386,25 +391,25 @@ typedef struct RateControlContext_s
     int16_t                      maxRateAdjustDeltaQP;
 
 
-} RateControlContext_t;
+} RateControlContext;
 #endif
 /**************************************
  * Extern Function Declarations
  **************************************/
 extern EbErrorType rate_control_layer_context_ctor(
-    RateControlLayerContext_t **entry_dbl_ptr);
+    RateControlLayerContext **entry_dbl_ptr);
 
 extern EbErrorType rate_control_interval_param_context_ctor(
-    RateControlIntervalParamContext_t **entry_dbl_ptr);
+    RateControlIntervalParamContext **entry_dbl_ptr);
 
 extern EbErrorType rate_control_coded_frames_stats_context_ctor(
-    CodedFramesStatsEntry_t **entry_dbl_ptr,
+    CodedFramesStatsEntry **entry_dbl_ptr,
     uint64_t                  picture_number);
 
 extern EbErrorType rate_control_context_ctor(
-    RateControlContext_t **context_dbl_ptr,
-    EbFifo_t              *rate_control_input_tasks_fifo_ptr,
-    EbFifo_t              *rate_control_output_results_fifo_ptr,
+    RateControlContext **context_dbl_ptr,
+    EbFifo              *rate_control_input_tasks_fifo_ptr,
+    EbFifo              *rate_control_output_results_fifo_ptr,
     int32_t                intra_period_length);
 
 extern void* rate_control_kernel(void *input_ptr);
