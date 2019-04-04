@@ -37,7 +37,7 @@
 extern "C" {
 #endif
 
-#define SEGMENT_ENTROPY_BUFFER_SIZE         0x989680// Entropy Bitstream Buffer Size
+#define SEGMENT_ENTROPY_BUFFER_SIZE         40000000 // Entropy Bitstream Buffer Size
 #define PACKETIZATION_PROCESS_BUFFER_SIZE SEGMENT_ENTROPY_BUFFER_SIZE
 #define HISTOGRAM_NUMBER_OF_BINS            256
 #define MAX_NUMBER_OF_REGIONS_IN_WIDTH      4
