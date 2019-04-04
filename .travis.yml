@@ -1,83 +1,139 @@
 language: c
+cache:
+  ccache: true
+  pip: true
+os:
+  - linux
+  - osx
 dist: xenial
-
+osx_image: xcode10.1
+compiler:
+  - clang
+  - gcc
 addons:
   apt:
     packages:
-     - cmake
-     - yasm
-     - libgstreamer-plugins-base1.0-dev
-     - libgstreamer1.0-dev
+      - cmake
+      - yasm
+      - valgrind
+      - libgstreamer-plugins-base1.0-dev
+      - libgstreamer1.0-dev
+      - llvm
+      - clang
   homebrew:
     packages:
       - yasm
-
-jobs:
+      - ccache
+notifications:
+  webhooks:
+    - https://coveralls.io/webhook
+env:
+  - build_type=release
+stages:
+  - name: test
+  - name: coveralls
+    if: branch = master
+  - name: valgrind
+    if: branch = master
+before_install:
+  - "sudo chown -R travis: $HOME"
+  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig PATH="/usr/local/opt/ccache/libexec:$PATH"
+  - cd $TRAVIS_BUILD_DIR
+  - wget -nc --no-check-certificate https://media.xiph.org/video/derf/y4m/akiyo_cif.y4m
+  - wget -nc --no-check-certificate https://media.xiph.org/video/derf/y4m/bus_cif.y4m
+  - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/$build_type
+install:
+  - pip install --user cpp-coveralls
+  - export PATH=/Users/travis/Library/Python/2.7/bin:${PATH}
+  #- if [ $TRAVIS_OS_NAME = osx ]; then brew install --HEAD valgrind; fi
+base_script: &base_script |
+  cd $TRAVIS_BUILD_DIR/Build/linux/$build_type
+  cmake $TRAVIS_BUILD_DIR -G"Unix Makefiles" -DCMAKE_ASM_NASM_COMPILER=yasm -DCMAKE_BUILD_TYPE=$build_type ${CMAKE_EFLAGS[@]}
+  cmake -j $(if [ $TRAVIS_OS_NAME = osx ]; then sysctl -n hw.ncpu; else nproc; fi) --build . &&
+  sudo cmake --build . --target install && cd $TRAVIS_BUILD_DIR
+coveralls_script: &coveralls_script |
+  SvtAv1EncApp -enc-mode 8 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 150 -b test1.mkv
+  git clone https://github.com/FFmpeg/FFmpeg ffmpeg --depth=1 --branch release/4.1 && cd ffmpeg &&
+  git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch &&
+  ffmpegconfig=(--disable-everything --enable-{libsvtav1,encoder={libaom_av1,libsvt_av1,rawvideo},decoder={h264,rawvideo,yuv4,libaom_av1},muxer={fifo,matroska,ivf,mp4,rawvideo,webm,yuv4mpegpipe},demuxer={h264,ivf,matroska,mpegts,rawvideo,yuv4mpegpipe},parser={av1,h264,mpeg4video},bsf={av1_metadata,h264_metadata},protocol={data,file,pipe,unix},filter={fifo,fps,libvmaf,psnr,ssim,vmafmotion}})
+  if ! ./configure ${ffmpegconfig[@]}; then cat ffbuild/config.log; fi &&
+  make -s -j$(if [ $TRAVIS_OS_NAME = osx ]; then sysctl -n hw.ncpu; else nproc; fi) >/dev/null &&
+  sudo make install && cd $TRAVIS_BUILD_DIR &&
+  ffmpeg -i akiyo_cif.y4m -vframes 150 -c:v libsvt_av1 test.mp4 &&
+  ffmpeg -i bus_cif.y4m -nostdin -f rawvideo -pix_fmt yuv420p - | SvtAv1EncApp -i stdin -w 352 -h 288 -fps 30 -n 150 -b test2.mkv
+after_coveralls_script: &after_coveralls_script |
+  if [ $CC = "clang" ] && [ $TRAVIS_OS_NAME = linux ]; then
+    GCOV_FILE=llvm-cov GCOV_OPTIONS='gcov -pl'
+  else
+    GCOV_FILE=gcov GCOV_OPTIONS='\-lp'
+  fi
+  coveralls --root $TRAVIS_BUILD_DIR -i Source -E ".*gtest.*" -E ".*CMakeFiles.*" -E ".*third_party.*" -E ".*test/FilmGrainTest.cc" -E ".*ffmpeg.*" --gcov $GCOV_FILE --gcov-options "$GCOV_OPTIONS"
+script:
+  - *base_script
+  - SvtAv1EncApp -enc-mode 8 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 150 -b test1.mkv
+before_cache:
+  - "sudo chown -R travis: $HOME"
+matrix:
+  fast_finish: true
+  allow_failures:
+    - name: Valgrind
+    - env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
+    # Exclude these because if the encoder can run with a release build, the commit is probably fine. Also required for fast_finish.
+  exclude:
+    - os: osx
+      compiler: gcc # gcc = clang in macOS, unecessary duplicate
   include:
-   # General Linux build job
-   - name: Build
-     script:
-     - cd Build/linux
-     - ./build.sh release
-   # General Linux debug build job
-   - name: Debug build
-     script:
-     - cd Build/linux
-     - ./build.sh debug
-   # General macOS build job
-   - name: macOS build
-     os: osx
-     script:
-     - cd Build/linux
-     - ./build.sh release     
-   # Coveralls test job
-   - name: Coveralls
-     before_install:
-     - pip install --user cpp-coveralls
-     script:
-     - cd Build/linux
-     - ./build.sh release
-     after_success:
-     - coveralls
-     
-   - name: Encode
-     before_install:
-     - pip install --user cpp-coveralls
-     script:
-     - cd Build/linux
-     - ./build.sh release
-     - wget -nc --no-check-certificate https://media.xiph.org/video/derf/y4m/akiyo_cif.y4m
-     - ../../Bin/Release/SvtAv1EncApp -i akiyo_cif.y4m -enc-mode 5 -lp 1 -q 24 -n 17 -o out.yuv -b out.ivf
-     
-   # FFmpeg interation build
-   - name: FFmpeg patch
-     script:
-     # Build and install SVT-AV1
-     - cd $TRAVIS_BUILD_DIR
-     - cd Build
-     - cmake ..
-     - make -j$(nproc)
-     - sudo make install
-     # Apply SVT-AV1 plugin and enable libsvtav1 to FFmpeg
-     - git clone https://github.com/FFmpeg/FFmpeg ffmpeg
-     - cd ffmpeg
-     - git checkout release/4.1
-     - git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
-     - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
-     - export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig
-     - ./configure --enable-libsvtav1
-     - make --quiet -j$(nproc)
-
-   # GStreamer interation build
-   - name: GStreamer patch
-     script:
-     # Build and install SVT-AV1
-     - cd $TRAVIS_BUILD_DIR
-     - cd Build
-     - cmake ..
-     - make -j$(nproc)
-     - sudo make install
-     # Build GST-SVT-AV1 plugin
-     - cd $TRAVIS_BUILD_DIR/gstreamer-plugin
-     - cmake .
-     - make --quiet -j$(nproc)
+    # FFmpeg interation build
+    # Might be unnecessary since it will be covered in debug builds. I'll leave it for reference.
+    - name: FFmpeg patch
+      stage: test
+      compiler: gcc
+      env: build_type=release
+      script:
+        # Build and install SVT-AV1
+        - *base_script
+        # Apply SVT-AV1 plugin and enable libsvtav1 to FFmpeg
+        - git clone https://github.com/FFmpeg/FFmpeg --branch release/4.1 --depth=1 ffmpeg && cd ffmpeg
+        - git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
+        - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig
+        - ./configure --enable-libsvtav1
+        - make --quiet -j$(nproc) && sudo make install
+    # GStreamer interation build
+    - name: GStreamer patch
+      stage: test
+      compiler: gcc
+      env: build_type=release
+      script:
+      # Build and install SVT-AV1
+      - *base_script
+      # Build GST-SVT-AV1 plugin
+      - cd $TRAVIS_BUILD_DIR/gstreamer-plugin
+      - cmake .
+      - make --quiet -j$(nproc)
+      - sudo make install
+    - name: Coveralls Linux+gcc
+      stage: Coveralls
+      os: linux
+      compiler: gcc
+      env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
+      script:
+        - *base_script
+        - *coveralls_script
+      after_script: *after_coveralls_script
+    - name: Coveralls osx+clang
+      stage: Coveralls
+      os: osx
+      compiler: clang
+      env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
+      script:
+        - *base_script
+        - *coveralls_script
+      after_script: *after_coveralls_script
+    - name: Valgrind
+      stage: valgrind
+      compiler: gcc
+      os: linux
+      env: build_type=debug
+      script:
+        - *base_script
+        - valgrind -- SvtAv1EncApp -enc-mode 8 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 150 -b test1.mkv
