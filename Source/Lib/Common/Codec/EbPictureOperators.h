@@ -168,15 +168,27 @@ extern "C" {
         uint32_t *in_ptr,
         uint64_t  num_of_elements);
 
-    void memset16bit(
-        uint16_t *in_ptr,
-        uint16_t  value,
-        uint64_t  num_of_elements);
+    static INLINE void memset16bit(
+        uint16_t                     * in_ptr,
+        uint16_t                       value,
+        uint64_t                       num_of_elements)
+    {
+        uint64_t i;
 
-    void memset32bit(
-        uint32_t *in_ptr,
-        uint32_t  value,
-        uint64_t  num_of_elements);
+        for (i = 0; i < num_of_elements; i++)
+            in_ptr[i] = value;
+    }
+
+    static INLINE void memset32bit(
+        uint32_t                     * in_ptr,
+        uint32_t                       value,
+        uint64_t                       num_of_elements)
+    {
+        uint64_t i;
+
+        for (i = 0; i < num_of_elements; i++)
+            in_ptr[i] = value;
+    }
 
     static void picture_addition_void_func() {}
     static void pic_zero_out_coef_void_func() {}

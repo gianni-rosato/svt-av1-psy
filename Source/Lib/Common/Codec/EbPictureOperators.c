@@ -643,34 +643,6 @@ void conv2b_to_c_pack_lcu(
 
 }
 
-
-/*******************************************
- * memset16bit
- *******************************************/
-void memset16bit(
-    uint16_t                     * in_ptr,
-    uint16_t                       value,
-    uint64_t                       num_of_elements)
-{
-    uint64_t i;
-
-    for (i = 0; i < num_of_elements; i++) {
-        in_ptr[i] = value;
-    }
-}
-void memset32bit(
-    uint32_t                     * in_ptr,
-    uint32_t                       value,
-    uint64_t                       num_of_elements)
-{
-    uint64_t i;
-
-    for (i = 0; i < num_of_elements; i++) {
-        in_ptr[i] = value;
-    }
-}
-
-
 /*******************************************
  * memcpy16bit
  *******************************************/

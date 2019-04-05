@@ -91,17 +91,12 @@ const EB_AV1_FULL_COST_FUNC   Av1ProductFullCostFuncTable[3] =
 void mode_decision_update_neighbor_arrays(
     ModeDecisionContext_t   *context_ptr,
     uint32_t                   index_mds,
-    EbBool                  intraMdOpenLoop,
-    EbBool                  intra4x4Selected
-)
-
-{
+    EbBool                  intraMdOpenLoop) {
     uint32_t  bwdith = context_ptr->blk_geom->bwidth;
     uint32_t  bheight = context_ptr->blk_geom->bheight;
 
     uint32_t                   origin_x = context_ptr->cu_origin_x;
     uint32_t                   origin_y = context_ptr->cu_origin_y;
-    (void)intra4x4Selected;
 
     uint32_t  cu_origin_x_uv = context_ptr->round_origin_x >> 1;
     uint32_t  cu_origin_y_uv = context_ptr->round_origin_y >> 1;
@@ -125,9 +120,6 @@ void mode_decision_update_neighbor_arrays(
     context_ptr->mv_unit.predDirection = (uint8_t)(context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].inter_pred_direction_index);
     context_ptr->mv_unit.mv[REF_LIST_0].mvUnion = context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].mv[REF_LIST_0].mvUnion;
     context_ptr->mv_unit.mv[REF_LIST_1].mvUnion = context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].mv[REF_LIST_1].mvUnion;
-    MvUnit_t                *mv_unit = &context_ptr->mv_unit;
-    (void)mv_unit;
-
 
 
     uint8_t                    y_has_coeff = context_ptr->cu_ptr->transform_unit_array[0].y_has_coeff;
@@ -561,8 +553,7 @@ void md_update_all_neighbour_arrays(
     mode_decision_update_neighbor_arrays(
         context_ptr,
         lastCuIndex_mds,
-        picture_control_set_ptr->intra_md_open_loop_flag,
-        EB_FALSE);
+        picture_control_set_ptr->intra_md_open_loop_flag);
 
     update_mi_map(
         context_ptr,
