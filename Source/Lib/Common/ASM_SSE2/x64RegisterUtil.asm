@@ -1,7 +1,7 @@
-; 
+;
 ; Copyright(c) 2019 Intel Corporation
 ; SPDX - License - Identifier: BSD - 2 - Clause - Patent
-; 
+;
 
 %include "x64inc.asm"
 
@@ -21,7 +21,6 @@ section .text
 ; So if RunEmms() is called according to the above cases,
 ; then the "emms" instruction in all other assembly functions can be removed.
 
-cglobal _RunEmms
 cglobal RunEmms
     emms
     ret

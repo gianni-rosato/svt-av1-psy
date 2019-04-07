@@ -1,7 +1,7 @@
-; 
+;
 ; Copyright(c) 2019 Intel Corporation
 ; SPDX - License - Identifier: BSD - 2 - Clause - Patent
-; 
+;
 
 %ifdef PREFIX
     %define mangle(x) _ %+ x
@@ -12,6 +12,9 @@
 %macro cglobal 1
     %assign stack_offset 0
     %xdefine %1 mangle(%1)
+    %ifidn   __OUTPUT_FORMAT__,macho64
+    %define %1 _ %+ %1
+    %endif
     global %1
     %1:
 %endmacro
@@ -310,7 +313,7 @@ bits 64
     ADD_RSP 16
     movdqu          xmm11,      [rsp]
     ADD_RSP 16
-    movdqu          xmm10,      [rsp] 
+    movdqu          xmm10,      [rsp]
     ADD_RSP 16
     movdqu          xmm9,       [rsp]
     ADD_RSP 16
