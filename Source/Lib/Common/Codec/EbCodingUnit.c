@@ -8,6 +8,7 @@
 #include "EbCodingUnit.h"
 #include "EbUtility.h"
 #include "EbTransformUnit.h"
+#include "EbPictureControlSet.h"
 
 /*
 Tasks & Questions
@@ -72,6 +73,7 @@ EbErrorType largest_coding_unit_ctor(
     coeffInitData.maxWidth = SB_STRIDE_Y;
     coeffInitData.maxHeight = SB_STRIDE_Y;
     coeffInitData.bit_depth = EB_32BIT;
+    coeffInitData.color_format = picture_control_set->color_format;
     coeffInitData.left_padding = 0;
     coeffInitData.right_padding = 0;
     coeffInitData.top_padding = 0;

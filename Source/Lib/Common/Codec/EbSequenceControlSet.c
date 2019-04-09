@@ -73,7 +73,7 @@ EbErrorType eb_sequence_control_set_ctor(
     sequence_control_set_ptr->profile_idc = 0;
     sequence_control_set_ptr->level_idc = 0;
     sequence_control_set_ptr->tier_idc = 0;
-    sequence_control_set_ptr->chroma_format_idc = 1; // EB_YUV420
+    sequence_control_set_ptr->chroma_format_idc = EB_YUV420;
     sequence_control_set_ptr->max_temporal_layers = 1;
 
     sequence_control_set_ptr->bits_for_picture_order_count = 16;
@@ -90,8 +90,8 @@ EbErrorType eb_sequence_control_set_ctor(
     sequence_control_set_ptr->encoder_bit_depth = 8;
 
     // Bitdepth
-    sequence_control_set_ptr->input_bitdepth = EB_8BIT;
-    sequence_control_set_ptr->output_bitdepth = EB_8BIT;
+    //sequence_control_set_ptr->input_bitdepth = EB_8BIT;
+    //sequence_control_set_ptr->output_bitdepth = EB_8BIT;
 
     // GOP Structure
     sequence_control_set_ptr->max_ref_count = 1;
@@ -273,8 +273,11 @@ EbErrorType copy_sequence_control_set(
     dst->cropping_bottom_offset = src->cropping_bottom_offset;                    writeCount += sizeof(int32_t);
     dst->conformance_window_flag = src->conformance_window_flag;                   writeCount += sizeof(uint32_t);
     dst->frame_rate = src->frame_rate;                               writeCount += sizeof(uint32_t);
-    dst->input_bitdepth = src->input_bitdepth;                           writeCount += sizeof(EB_BITDEPTH);
-    dst->output_bitdepth = src->output_bitdepth;                          writeCount += sizeof(EB_BITDEPTH);
+    //dst->input_bitdepth = src->input_bitdepth;                           writeCount += sizeof(EB_BITDEPTH);
+    //dst->output_bitdepth = src->output_bitdepth;                          writeCount += sizeof(EB_BITDEPTH);
+    dst->encoder_bit_depth = src->encoder_bit_depth;                      writeCount += sizeof(uint32_t);
+    dst->subsampling_x = src->subsampling_x;                writeCount += sizeof(uint16_t);
+    dst->subsampling_y = src->subsampling_y;                writeCount += sizeof(uint16_t);
     dst->pred_struct_ptr = src->pred_struct_ptr;                           writeCount += sizeof(PredictionStructure_t*);
     dst->intra_period_length = src->intra_period_length;                       writeCount += sizeof(int32_t);
     dst->intra_refresh_type = src->intra_refresh_type;                        writeCount += sizeof(uint32_t);

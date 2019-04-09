@@ -92,6 +92,7 @@ extern "C" {
         int16_t                                x_mv_amvp_candidate_array_list0[MAX_NUM_OF_AMVP_CANDIDATES];
         uint8_t                                txb_itr;
         EbBool                                 is16bit; //enable 10 bit encode in CL
+        EbColorFormat                          color_format;
         uint64_t                               tot_intra_coded_area;
         uint8_t                                intra_coded_area_sb[MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE];//percentage of intra coded area 0-100%
         uint8_t                                pmp_masking_level_enc_dec;
@@ -144,6 +145,7 @@ extern "C" {
         EbFifo                *feedback_fifo_ptr,
         EbFifo                *picture_demux_fifo_ptr,
         EbBool                   is16bit,
+        EbColorFormat            color_format,
         uint32_t                 max_input_luma_width,
         uint32_t                 max_input_luma_height);
 

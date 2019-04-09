@@ -153,6 +153,7 @@ EbErrorType eb_reference_object_ctor(
     *object_dbl_ptr = (EbPtr)referenceObject;
 
 
+    //TODO:12bit
     if (pictureBufferDescInitData16BitPtr.bit_depth == EB_10BIT) {
 
         return_error = eb_picture_buffer_desc_ctor(
@@ -198,7 +199,7 @@ EbErrorType eb_reference_object_ctor(
         bufDesc.top_padding = pictureBufferDescInitDataPtr->top_padding;
         bufDesc.bot_padding = pictureBufferDescInitDataPtr->bot_padding;
         bufDesc.splitMode = 0;
-
+        bufDesc.color_format = pictureBufferDescInitDataPtr->color_format;
 
         return_error = eb_picture_buffer_desc_ctor((EbPtr*)&(referenceObject->ref_den_src_picture),
             (EbPtr)&bufDesc);

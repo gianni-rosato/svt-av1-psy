@@ -169,14 +169,6 @@ extern rsize_t strnlen_ss(const char *s, rsize_t smax);
 #define FOPEN(f,s,m) f=fopen(s,m)
 #endif
 
-/****************************************
-* Padding
-****************************************/
-#define LEFT_INPUT_PADDING 0
-#define RIGHT_INPUT_PADDING 0
-#define TOP_INPUT_PADDING 0
-#define BOTTOM_INPUT_PADDING 0
-
 
 typedef struct EbPerformanceContext {
 
@@ -229,6 +221,7 @@ typedef struct EbConfig
     uint32_t                 injector;
     uint32_t                 speed_control_flag;
     uint32_t                 encoder_bit_depth;
+    uint32_t                 encoder_color_format;
     uint32_t                 compressed_ten_bit_format;
     uint32_t                 source_width;
     uint32_t                 source_height;

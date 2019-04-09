@@ -17,6 +17,7 @@ EbErrorType eb_trans_quant_buffers_ctor(
     transCoeffInitArray.maxWidth = SB_STRIDE_Y;
     transCoeffInitArray.maxHeight = SB_STRIDE_Y;
     transCoeffInitArray.bit_depth = EB_16BIT;
+    transCoeffInitArray.color_format = EB_YUV420;
     transCoeffInitArray.bufferEnableMask = PICTURE_BUFFER_DESC_FULL_MASK;
     transCoeffInitArray.left_padding = 0;
     transCoeffInitArray.right_padding = 0;
@@ -28,6 +29,7 @@ EbErrorType eb_trans_quant_buffers_ctor(
     ThirtyTwoBittransCoeffInitArray.maxWidth = SB_STRIDE_Y;
     ThirtyTwoBittransCoeffInitArray.maxHeight = SB_STRIDE_Y;
     ThirtyTwoBittransCoeffInitArray.bit_depth = EB_32BIT;
+    ThirtyTwoBittransCoeffInitArray.color_format = EB_YUV420;
     ThirtyTwoBittransCoeffInitArray.bufferEnableMask = PICTURE_BUFFER_DESC_FULL_MASK;
     ThirtyTwoBittransCoeffInitArray.left_padding = 0;
     ThirtyTwoBittransCoeffInitArray.right_padding = 0;

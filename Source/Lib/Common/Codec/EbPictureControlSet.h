@@ -13579,6 +13579,7 @@ extern "C" {
         // Marks if we need to use 16bit frame buffers (1: yes, 0: no).
         int32_t use_highbitdepth;
         int32_t bit_depth;
+        int32_t color_format;
         int32_t subsampling_x;
         int32_t subsampling_y;
         int32_t width;
@@ -13721,6 +13722,7 @@ extern "C" {
         uint64_t                              picture_number;
         uint8_t                               temporal_layer_index;
         
+        EbColorFormat                         color_format;
         
         EncDecSegments_t                     *enc_dec_segment_ctrl;
 
@@ -13943,6 +13945,7 @@ extern "C" {
         EbObjectWrapper                    *reference_picture_wrapper_ptr;
         EbObjectWrapper                    *pa_reference_picture_wrapper_ptr;
         EbPictureBufferDesc_t                *enhanced_picture_ptr;
+        EbPictureBufferDesc_t                *chroma_downsampled_picture_ptr; //if 422/444 input, down sample to 420 for MD
         PredictionStructure_t                *pred_struct_ptr;          // need to check
         struct SequenceControlSet          *sequence_control_set_ptr;
         struct PictureParentControlSet_s     *ref_pa_pcs_array[MAX_NUM_OF_REF_PIC_LIST];
@@ -14305,11 +14308,12 @@ extern "C" {
         uint16_t                           top_padding;
         uint16_t                           bot_padding;
         EB_BITDEPTH                        bit_depth;
+        EbColorFormat                      color_format;
         uint32_t                           sb_sz;
         uint32_t                           sb_size_pix;   //since we still have lot of code assuming 64x64 LCU, we add a new paramter supporting both128x128 and 64x64, 
                                                           //ultimately the fixed code supporting 64x64 should be upgraded to use 128x128 and the above could be removed.
         uint32_t                           max_depth;
-        EbBool                             is16bit;
+        //EbBool                             is16bit;
         uint32_t                           ten_bit_format;
         uint32_t                           compressed_ten_bit_format;
         uint16_t                           enc_dec_segment_col;
@@ -14317,7 +14321,7 @@ extern "C" {
         EbEncMode                          enc_mode;
         uint8_t                            speed_control;
         uint16_t                           film_grain_noise_level;
-        uint32_t                           encoder_bit_depth;
+        //uint32_t                           encoder_bit_depth;
         EbBool                             ext_block_flag;
         EbBool                             in_loop_me_flag;
 

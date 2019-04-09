@@ -48,8 +48,8 @@ extern "C" {
         uint32_t                                chroma_format_idc;
         uint32_t                                max_temporal_layers;
         uint32_t                                bits_for_picture_order_count;
-        int32_t                                 subsampling_x;            // add chroma subsampling parameters
-        int32_t                                 subsampling_y;
+        uint16_t                                subsampling_x;            // add chroma subsampling parameters
+        uint16_t                                subsampling_y;
 
         // Picture deminsions
         uint16_t                                max_input_luma_width;
@@ -77,13 +77,9 @@ extern "C" {
         int32_t                                 cropping_right_offset;
         int32_t                                 cropping_top_offset;
         int32_t                                 cropping_bottom_offset;
-
+ 
         // Conformance Window flag
         uint32_t                                conformance_window_flag;
-
-        // Bitdepth
-        EB_BITDEPTH                             input_bitdepth;
-        EB_BITDEPTH                             output_bitdepth;
 
         // Group of Pictures (GOP) Structure
         uint32_t                                max_ref_count;            // Maximum number of reference pictures, however each pred

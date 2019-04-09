@@ -902,6 +902,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     uint32_t maxLookAheadDistance = 0;
 
     EbBool is16bit = (EbBool)(encHandlePtr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    EbColorFormat color_format = encHandlePtr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.encoder_color_format;
 
     /************************************
     * Plateform detection
@@ -972,17 +973,17 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.right_padding = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->right_padding;
         inputData.top_padding = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->top_padding;
         inputData.bot_padding = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->bot_padding;
-        inputData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->output_bitdepth;
+        inputData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
+        inputData.color_format = color_format;
         inputData.sb_sz = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz;
         inputData.max_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_sb_depth;
-        inputData.is16bit = is16bit;
         inputData.ten_bit_format = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.ten_bit_format;
         inputData.compressed_ten_bit_format = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.compressed_ten_bit_format;
         encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->picture_control_set_pool_init_count += maxLookAheadDistance;
         inputData.enc_mode = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.enc_mode;
         inputData.speed_control = (uint8_t)encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.speed_control_flag;
         inputData.film_grain_noise_level = encHandlePtr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.film_grain_denoise_strength;
-        inputData.encoder_bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.encoder_bit_depth;
+        inputData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.encoder_bit_depth;
 
         inputData.ext_block_flag = (uint8_t)encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.ext_block_flag;
 
@@ -1033,11 +1034,10 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.right_padding = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->right_padding;
         inputData.top_padding = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->top_padding;
         inputData.bot_padding = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->bot_padding;
-        inputData.bit_depth = EB_8BIT;
+        inputData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
         inputData.sb_sz = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz;
         inputData.sb_size_pix = scs_init.sb_size;
         inputData.max_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_sb_depth;
-        inputData.is16bit = is16bit;
         return_error = eb_system_resource_ctor(
             &(encHandlePtr->pictureControlSetPoolPtrArray[instance_index]),
             encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->picture_control_set_pool_init_count_child, //EB_PictureControlSetPoolInitCountChild,
@@ -1085,7 +1085,8 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         // Initialize the various Picture types
         referencePictureBufferDescInitData.maxWidth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width;
         referencePictureBufferDescInitData.maxHeight = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height;
-        referencePictureBufferDescInitData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->input_bitdepth;
+        referencePictureBufferDescInitData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
+        referencePictureBufferDescInitData.color_format = color_format;
         referencePictureBufferDescInitData.bufferEnableMask = PICTURE_BUFFER_DESC_FULL_MASK;
 
         referencePictureBufferDescInitData.left_padding = PAD_VALUE;
@@ -1094,10 +1095,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         referencePictureBufferDescInitData.bot_padding = PAD_VALUE;
 
         referencePictureBufferDescInitData.splitMode = EB_FALSE;
-
-        if (is16bit) {
-            referencePictureBufferDescInitData.bit_depth = EB_10BIT;
-        }
 
         EbReferenceObjectDescInitDataStructure.reference_picture_desc_init_data = referencePictureBufferDescInitData;
 
@@ -1121,7 +1118,8 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         // Currently, only Luma samples are needed in the PA
         referencePictureBufferDescInitData.maxWidth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width;
         referencePictureBufferDescInitData.maxHeight = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height;
-        referencePictureBufferDescInitData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->input_bitdepth;
+        referencePictureBufferDescInitData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
+        referencePictureBufferDescInitData.color_format = EB_YUV420; //use 420 for picture analysis
 
         referencePictureBufferDescInitData.bufferEnableMask = 0;
 
@@ -1133,7 +1131,8 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 
         quarterDecimPictureBufferDescInitData.maxWidth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width >> 1;
         quarterDecimPictureBufferDescInitData.maxHeight = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height >> 1;
-        quarterDecimPictureBufferDescInitData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->input_bitdepth;
+        quarterDecimPictureBufferDescInitData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
+        quarterDecimPictureBufferDescInitData.color_format = EB_YUV420;
         quarterDecimPictureBufferDescInitData.bufferEnableMask = PICTURE_BUFFER_DESC_LUMA_MASK;
         quarterDecimPictureBufferDescInitData.left_padding = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 1;
         quarterDecimPictureBufferDescInitData.right_padding = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 1;
@@ -1143,7 +1142,8 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 
         sixteenthDecimPictureBufferDescInitData.maxWidth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width >> 2;
         sixteenthDecimPictureBufferDescInitData.maxHeight = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height >> 2;
-        sixteenthDecimPictureBufferDescInitData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->input_bitdepth;
+        sixteenthDecimPictureBufferDescInitData.bit_depth = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
+        sixteenthDecimPictureBufferDescInitData.color_format = EB_YUV420;
         sixteenthDecimPictureBufferDescInitData.bufferEnableMask = PICTURE_BUFFER_DESC_LUMA_MASK;
         sixteenthDecimPictureBufferDescInitData.left_padding = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 2;
         sixteenthDecimPictureBufferDescInitData.right_padding = encHandlePtr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 2;
@@ -1693,6 +1693,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
                 //1 +
                     processIndex], // Add port lookup logic here JMJ
             is16bit,
+            color_format,
             encHandlePtr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_width,
             encHandlePtr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_height
         );
@@ -1711,6 +1712,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             encHandlePtr->encDecResultsConsumerFifoPtrArray[processIndex],
             encHandlePtr->dlfResultsProducerFifoPtrArray[processIndex],             //output to EC
             is16bit,
+            color_format,
             encHandlePtr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_width,
             encHandlePtr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_height
         );
@@ -1748,6 +1750,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             encHandlePtr->pictureDemuxResultsProducerFifoPtrArray[
                 /*encHandlePtr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count*/ 1+ processIndex],
             is16bit,
+            color_format,
             encHandlePtr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_width,
             encHandlePtr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_height
         );
@@ -2097,9 +2100,10 @@ static uint32_t cap_look_ahead_distance(
     return lad;
 }
 
-void SetParamBasedOnInput(
-    SequenceControlSet       *sequence_control_set_ptr){
-
+void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
+{
+    uint16_t subsampling_x = sequence_control_set_ptr->subsampling_x;
+    uint16_t subsampling_y = sequence_control_set_ptr->subsampling_y;
     sequence_control_set_ptr->general_frame_only_constraint_flag = 0;
     sequence_control_set_ptr->general_progressive_source_flag = 1;
     sequence_control_set_ptr->general_interlaced_source_flag = 0;
@@ -2123,8 +2127,8 @@ void SetParamBasedOnInput(
         sequence_control_set_ptr->max_input_pad_bottom = 0;
     }
 
-    sequence_control_set_ptr->max_input_chroma_width = sequence_control_set_ptr->max_input_luma_width >> 1;
-    sequence_control_set_ptr->max_input_chroma_height = sequence_control_set_ptr->max_input_luma_height >> 1;
+    sequence_control_set_ptr->max_input_chroma_width = sequence_control_set_ptr->max_input_luma_width >> subsampling_x;
+    sequence_control_set_ptr->max_input_chroma_height = sequence_control_set_ptr->max_input_luma_height >> subsampling_y;
 
 
     // Configure the padding
@@ -2133,8 +2137,8 @@ void SetParamBasedOnInput(
     sequence_control_set_ptr->right_padding = BLOCK_SIZE_64 + 4;
     sequence_control_set_ptr->bot_padding = BLOCK_SIZE_64 + 4;
 
-    sequence_control_set_ptr->chroma_width = sequence_control_set_ptr->max_input_luma_width >> 1;
-    sequence_control_set_ptr->chroma_height = sequence_control_set_ptr->max_input_luma_height >> 1;
+    sequence_control_set_ptr->chroma_width = sequence_control_set_ptr->max_input_luma_width >> subsampling_x;
+    sequence_control_set_ptr->chroma_height = sequence_control_set_ptr->max_input_luma_height >> subsampling_y;
     sequence_control_set_ptr->luma_width = sequence_control_set_ptr->max_input_luma_width;
     sequence_control_set_ptr->luma_height = sequence_control_set_ptr->max_input_luma_height;
     sequence_control_set_ptr->static_config.source_width = sequence_control_set_ptr->max_input_luma_width;
@@ -2152,7 +2156,8 @@ void SetParamBasedOnInput(
 
 void CopyApiFromApp(
     SequenceControlSet       *sequence_control_set_ptr,
-    EbSvtAv1EncConfiguration   *pComponentParameterStructure) {
+    EbSvtAv1EncConfiguration   *pComponentParameterStructure)
+{
 
     uint32_t                  hmeRegionIndex = 0;
 
@@ -2288,6 +2293,16 @@ void CopyApiFromApp(
 
     // Misc
     sequence_control_set_ptr->static_config.encoder_bit_depth = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->encoder_bit_depth;
+    sequence_control_set_ptr->static_config.encoder_color_format = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->encoder_color_format;
+    if (sequence_control_set_ptr->static_config.encoder_color_format == EB_YUV400) {
+        SVT_LOG("SVT [Warning]: Color format EB_YUV400 not supported, set to EB_YUV420\n");
+        sequence_control_set_ptr->static_config.encoder_color_format = EB_YUV420;
+    }
+    sequence_control_set_ptr->chroma_format_idc = (uint32_t)(sequence_control_set_ptr->static_config.encoder_color_format);
+    sequence_control_set_ptr->encoder_bit_depth = (uint32_t)(sequence_control_set_ptr->static_config.encoder_bit_depth);
+
+    sequence_control_set_ptr->subsampling_x = (sequence_control_set_ptr->chroma_format_idc == EB_YUV444 ? 1 : 2) - 1;
+    sequence_control_set_ptr->subsampling_y = (sequence_control_set_ptr->chroma_format_idc >= EB_YUV422 ? 1 : 2) - 1;
     sequence_control_set_ptr->static_config.ten_bit_format = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->ten_bit_format;
     sequence_control_set_ptr->static_config.compressed_ten_bit_format = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->compressed_ten_bit_format;
 
@@ -2626,9 +2641,24 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error instance %u: Encoder Bit Depth shall be only 8 or 10 \n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
-    // Check if the encoder_bit_depth is conformant with the Profile constraint
-    if (config->profile == 1 && config->encoder_bit_depth == 10) {
-        SVT_LOG("Error instance %u: The encoder bit depth shall be equal to 8 for Main Profile\n", channelNumber + 1);
+    // Check if the EncoderBitDepth is conformant with the Profile constraint
+    if ((config->profile == 0 || config->profile == 1) && config->encoder_bit_depth > 10) {
+        SVT_LOG("Error instance %u: The encoder bit depth shall be equal to 8 or 10 for Main/High Profile\n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->profile == 0 && config->encoder_color_format > EB_YUV420) {
+        SVT_LOG("Error instance %u: Non 420 color format requires profile 1 or 2\n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->profile == 1 && config->encoder_color_format != EB_YUV444) {
+        SVT_LOG("Error instance %u: Profile 1 requires 4:4:4 color format\n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->profile == 2 && config->encoder_bit_depth <= 10 && config->encoder_color_format != EB_YUV422) {
+        SVT_LOG("Error instance %u: Profile 2 bit-depth < 10 requires 4:2:2 color format\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -2793,7 +2823,7 @@ static void PrintLibParams(
             SVT_LOG("Level %.1f\t", (float)(config->level / 10));
     }
     SVT_LOG("\nSVT [config]: EncoderMode \t\t\t\t\t\t\t: %d ", config->enc_mode);
-    SVT_LOG("\nSVT [config]: encoder_bit_depth / compressed_ten_bit_format\t\t\t\t: %d / %d ", config->encoder_bit_depth, config->compressed_ten_bit_format);
+    SVT_LOG("\nSVT [config]: encoder_bit_depth / encoder_color_format / compressed_ten_bit_format\t\t\t\t: %d / %d / %d", config->encoder_bit_depth, config->encoder_color_format, config->compressed_ten_bit_format);
     SVT_LOG("\nSVT [config]: source_width / source_height\t\t\t\t\t: %d / %d ", config->source_width, config->source_height);
     if (config->frame_rate_denominator != 0 && config->frame_rate_numerator != 0)
         SVT_LOG("\nSVT [config]: Fps_Numerator / Fps_Denominator / Gop Size / intra_refresh_type \t: %d / %d / %d / %d", config->frame_rate_numerator > (1 << 16) ? config->frame_rate_numerator >> 16 : config->frame_rate_numerator,
@@ -3359,6 +3389,7 @@ static EbErrorType allocate_frame_buffer(
     input_picture_buffer_desc_init_data.maxWidth = (uint16_t)sequence_control_set_ptr->max_input_luma_width;
     input_picture_buffer_desc_init_data.maxHeight = (uint16_t)sequence_control_set_ptr->max_input_luma_height;
     input_picture_buffer_desc_init_data.bit_depth = (EB_BITDEPTH)config->encoder_bit_depth;
+    input_picture_buffer_desc_init_data.color_format = (EbColorFormat)config->encoder_color_format;
 
     if (config->compressed_ten_bit_format == 1) {
         input_picture_buffer_desc_init_data.bufferEnableMask = 0;

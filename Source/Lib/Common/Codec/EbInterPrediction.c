@@ -4494,8 +4494,9 @@ EbErrorType inter_pu_prediction_av1(
 
 EbErrorType inter_prediction_context_ctor(
     InterPredictionContext_t **inter_prediction_context,
-    uint16_t                     max_cu_width,
-    uint16_t                     max_cu_height)
+    EbColorFormat              color_format,
+    uint16_t                   max_cu_width,
+    uint16_t                   max_cu_height)
 
 {
     EbErrorType              return_error = EB_ErrorNone;
@@ -4506,6 +4507,7 @@ EbErrorType inter_prediction_context_ctor(
 
     return_error = motion_compensation_prediction_context_ctor(
         &context_ptr->mcp_context,
+        color_format,
         max_cu_width,
         max_cu_height);
 

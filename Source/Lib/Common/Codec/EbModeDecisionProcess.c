@@ -15,6 +15,7 @@
  ******************************************************/
 EbErrorType mode_decision_context_ctor(
     ModeDecisionContext_t  **context_dbl_ptr,
+    EbColorFormat         color_format,
     EbFifo                *mode_decision_configuration_input_fifo_ptr,
     EbFifo                *mode_decision_output_fifo_ptr){
 
@@ -82,6 +83,7 @@ EbErrorType mode_decision_context_ctor(
     // Inter Prediction Context
     return_error = inter_prediction_context_ctor(
         &context_ptr->inter_prediction_context,
+        color_format,
         SB_STRIDE_Y,
         SB_STRIDE_Y);
     if (return_error == EB_ErrorInsufficientResources) {
@@ -120,6 +122,7 @@ EbErrorType mode_decision_context_ctor(
             initData.maxWidth = SB_STRIDE_Y;
             initData.maxHeight = SB_STRIDE_Y;
             initData.bit_depth = EB_32BIT;
+            initData.color_format = EB_YUV420;
             initData.left_padding = 0;
             initData.right_padding = 0;
             initData.top_padding = 0;
@@ -138,6 +141,7 @@ EbErrorType mode_decision_context_ctor(
             initData.maxWidth = SB_STRIDE_Y;
             initData.maxHeight = SB_STRIDE_Y;
             initData.bit_depth = EB_8BIT;
+            initData.color_format = EB_YUV420;
             initData.left_padding = 0;
             initData.right_padding = 0;
             initData.top_padding = 0;

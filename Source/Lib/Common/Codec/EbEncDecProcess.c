@@ -84,6 +84,7 @@ EbErrorType enc_dec_context_ctor(
     EbFifo                *feedback_fifo_ptr,
     EbFifo                *picture_demux_fifo_ptr,
     EbBool                  is16bit,
+    EbColorFormat           color_format,
     uint32_t                max_input_luma_width,
     uint32_t                max_input_luma_height){
 
@@ -95,6 +96,7 @@ EbErrorType enc_dec_context_ctor(
     *context_dbl_ptr = context_ptr;
 
     context_ptr->is16bit = is16bit;
+    context_ptr->color_format = color_format;
 
     // Input/Output System Resource Manager FIFOs
     context_ptr->mode_decision_input_fifo_ptr = mode_decision_configuration_input_fifo_ptr;
@@ -121,6 +123,7 @@ EbErrorType enc_dec_context_ctor(
         initData.top_padding = 0;
         initData.bot_padding = 0;
         initData.splitMode = EB_FALSE;
+        initData.color_format = color_format;
 
         context_ptr->input_sample16bit_buffer = (EbPictureBufferDesc_t *)EB_NULL;
         if (is16bit) {
@@ -144,12 +147,12 @@ EbErrorType enc_dec_context_ctor(
         initData.maxWidth = SB_STRIDE_Y;
         initData.maxHeight = SB_STRIDE_Y;
         initData.bit_depth = EB_16BIT;
+        initData.color_format = color_format;
         initData.left_padding = 0;
         initData.right_padding = 0;
         initData.top_padding = 0;
         initData.bot_padding = 0;
         initData.splitMode = EB_FALSE;
-
 
         EbPictureBufferDescInitData_t init32BitData;
 
@@ -157,6 +160,7 @@ EbErrorType enc_dec_context_ctor(
         init32BitData.maxWidth = SB_STRIDE_Y;
         init32BitData.maxHeight = SB_STRIDE_Y;
         init32BitData.bit_depth = EB_32BIT;
+        init32BitData.color_format = color_format;
         init32BitData.left_padding = 0;
         init32BitData.right_padding = 0;
         init32BitData.top_padding = 0;
@@ -198,7 +202,7 @@ EbErrorType enc_dec_context_ctor(
         }
     }
     // Mode Decision Context
-    return_error = mode_decision_context_ctor(&context_ptr->md_context, 0, 0);
+    return_error = mode_decision_context_ctor(&context_ptr->md_context, color_format, 0, 0);
 
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
@@ -211,7 +215,6 @@ EbErrorType enc_dec_context_ctor(
 
 
     context_ptr->md_context->enc_dec_context_ptr = context_ptr;
-
 
     return EB_ErrorNone;
 }

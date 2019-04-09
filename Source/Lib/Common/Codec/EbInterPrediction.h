@@ -26,6 +26,7 @@ extern "C" {
 
     extern EbErrorType inter_prediction_context_ctor(
         InterPredictionContext_t   **inter_prediction_context,
+        EbColorFormat                color_format,
         uint16_t                     max_cu_width,
         uint16_t                     max_cu_height);
     EbErrorType av1_inter_prediction(

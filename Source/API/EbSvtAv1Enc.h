@@ -128,7 +128,15 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 8. */
     uint32_t                 encoder_bit_depth;
-
+    /* Specifies the chroma subsampleing format of input video.
+     *
+     * 0 = mono.
+     * 1 = 420.
+     * 2 = 422.
+     * 3 = 444.
+     *
+     * Default is 1. */
+    EbColorFormat            encoder_color_format;
     /* Offline packing of the 2bits: requires two bits packed input.
      *
      * Default is 0. */

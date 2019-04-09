@@ -217,6 +217,7 @@ extern "C" {
     {
         uint16_t          noise_level;
         uint32_t          encoder_bit_depth;
+        uint32_t          encoder_color_format;
 
         uint16_t          width;
         uint16_t          height;

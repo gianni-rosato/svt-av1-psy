@@ -38,6 +38,7 @@
 #define FRAME_RATE_NUMERATOR_TOKEN      "-fps-num"
 #define FRAME_RATE_DENOMINATOR_TOKEN    "-fps-denom"
 #define ENCODER_BIT_DEPTH               "-bit-depth"
+#define ENCODER_COLOR_FORMAT            "-color-format"
 #define INPUT_COMPRESSED_TEN_BIT_FORMAT "-compressed-ten-bit-format"
 #define ENCMODE_TOKEN                   "-enc-mode"
 #define HIERARCHICAL_LEVELS_TOKEN       "-hierarchical-levels" // no Eval
@@ -173,6 +174,7 @@ static void SetFrameRate                        (const char *value, EbConfig *cf
 static void SetFrameRateNumerator               (const char *value, EbConfig *cfg) { cfg->frame_rate_numerator = strtoul(value, NULL, 0);};
 static void SetFrameRateDenominator             (const char *value, EbConfig *cfg) { cfg->frame_rate_denominator = strtoul(value, NULL, 0);};
 static void SetEncoderBitDepth                  (const char *value, EbConfig *cfg) {cfg->encoder_bit_depth = strtoul(value, NULL, 0);}
+static void SetEncoderColorFormat               (const char *value, EbConfig *cfg) {cfg->encoder_color_format = strtoul(value, NULL, 0);}
 static void SetcompressedTenBitFormat            (const char *value, EbConfig *cfg) {cfg->compressed_ten_bit_format = strtoul(value, NULL, 0);}
 static void SetBaseLayerSwitchMode              (const char *value, EbConfig *cfg) {cfg->base_layer_switch_mode = (EbBool) strtoul(value, NULL, 0);};
 static void SetencMode                          (const char *value, EbConfig *cfg) {cfg->enc_mode = (uint8_t)strtoul(value, NULL, 0);};
@@ -286,6 +288,7 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, FRAME_RATE_NUMERATOR_TOKEN, "FrameRateNumerator", SetFrameRateNumerator },
     { SINGLE_INPUT, FRAME_RATE_DENOMINATOR_TOKEN, "FrameRateDenominator", SetFrameRateDenominator },
     { SINGLE_INPUT, ENCODER_BIT_DEPTH, "EncoderBitDepth", SetEncoderBitDepth },
+    { SINGLE_INPUT, ENCODER_COLOR_FORMAT, "EncoderColorFormat", SetEncoderColorFormat},
     { SINGLE_INPUT, INPUT_COMPRESSED_TEN_BIT_FORMAT, "CompressedTenBitFormat", SetcompressedTenBitFormat },
     { SINGLE_INPUT, HIERARCHICAL_LEVELS_TOKEN, "HierarchicalLevels", SetHierarchicalLevels },
     { SINGLE_INPUT, PRED_STRUCT_TOKEN, "PredStructure", SetCfgPredStructure },
@@ -378,11 +381,11 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->error_log_file                         = stderr;
     config_ptr->qp_file                               = NULL;
 
-
     config_ptr->frame_rate                            = 30 << 16;
     config_ptr->frame_rate_numerator                   = 0;
     config_ptr->frame_rate_denominator                 = 0;
     config_ptr->encoder_bit_depth                      = 8;
+    config_ptr->encoder_color_format                   = 1; //EB_YUV420
     config_ptr->compressed_ten_bit_format               = 0;
     config_ptr->source_width                          = 0;
     config_ptr->source_height                         = 0;
@@ -796,6 +799,10 @@ static EbErrorType VerifySettings(EbConfig *config, uint32_t channelNumber)
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->encoder_color_format != 1) {
+        fprintf(config->error_log_file, "Error instance %u: Only support 420 now \n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
     if (config->injector > 1 ){
         fprintf(config->error_log_file, "Error Instance %u: Invalid injector [0 - 1]\n",channelNumber+1);
         return_error = EB_ErrorBadParameter;
@@ -938,7 +945,6 @@ EbBool is_negative_number(
     return EB_TRUE;
 }
 
-#define SIZE_OF_ONE_FRAME_IN_BYTES(width, height,is16bit) ( ( ((width)*(height)*3)>>1 )<<is16bit)
 // Computes the number of frames in the input file
 int32_t ComputeFramesToBeEncoded(
     EbConfig   *config)
@@ -956,7 +962,9 @@ int32_t ComputeFramesToBeEncoded(
         fseeko64(config->input_file, currLoc, SEEK_SET); // seek back to that location
     }
 
-    frameSize = SIZE_OF_ONE_FRAME_IN_BYTES(config->input_padded_width, config->input_padded_height, (uint8_t)((config->encoder_bit_depth == 10) ? 1 : 0));
+    frameSize = config->input_padded_width * config->input_padded_height; // Luma
+    frameSize += 2 * (frameSize >> (3 - config->encoder_color_format)); // Add Chroma
+    frameSize = frameSize << ((config->encoder_bit_depth == 10) ? 1 : 0);
 
     if (frameSize == 0)
         return -1;
@@ -1218,8 +1226,8 @@ EbErrorType read_command_line(
 
                 // Assuming no errors, add padding to width and height
                 if (return_errors[index] == EB_ErrorNone) {
-                    configs[index]->input_padded_width  = configs[index]->source_width + LEFT_INPUT_PADDING + RIGHT_INPUT_PADDING;
-                    configs[index]->input_padded_height = configs[index]->source_height + TOP_INPUT_PADDING + BOTTOM_INPUT_PADDING;
+                    configs[index]->input_padded_width  = configs[index]->source_width;
+                    configs[index]->input_padded_height = configs[index]->source_height;
                 }
 
 

@@ -1562,9 +1562,11 @@ EbErrorType denoise_and_model_ctor(EbPtr *object_dbl_ptr,
     struct aom_denoise_and_model_t *object_ptr = 0;
     denoise_and_model_init_data_t *init_data_ptr = (denoise_and_model_init_data_t*)object_init_data_ptr;
     EbErrorType return_error = EB_ErrorNone;
-    int32_t use_highbd = init_data_ptr->encoder_bit_depth > EB_8BIT ? 10 : 8;
+    uint32_t use_highbd = init_data_ptr->encoder_bit_depth > EB_8BIT ? 10 : 8;
 
     int32_t chroma_sub_log2[2] = { 1, 1 };  //todo: send chroma subsampling
+    chroma_sub_log2[0] = (init_data_ptr->encoder_color_format == EB_YUV444 ? 1 : 2) - 1;
+    chroma_sub_log2[1] = (init_data_ptr->encoder_color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     return_error = aom_denoise_and_model_alloc(&object_ptr,
         init_data_ptr->encoder_bit_depth > EB_8BIT ? 10 : 8,

@@ -47,6 +47,7 @@ extern EbErrorType rest_context_ctor(
     EbFifo                       *rest_output_fifo_ptr,
     EbFifo                      *picture_demux_fifo_ptr,
     EbBool                  is16bit,
+    EbColorFormat           color_format,
     uint32_t                max_input_luma_width,
     uint32_t                max_input_luma_height
    );
