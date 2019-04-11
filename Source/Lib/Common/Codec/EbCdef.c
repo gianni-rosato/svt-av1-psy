@@ -24,7 +24,7 @@
     int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
     int32_t vsize, int32_t hsize);
 
-extern int16_t av1_ac_quant_Q3(int32_t qindex, int32_t delta, aom_bit_depth_t bit_depth);
+extern int16_t av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 //-------memory stuff
 
@@ -357,7 +357,7 @@ void cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *i
     }
 }
 
-int32_t sb_all_skip(PictureControlSet_t   *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col) {
+int32_t sb_all_skip(PictureControlSet   *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col) {
     int32_t maxc, maxr;
     int32_t skip = 1;
     maxc = cm->mi_cols - mi_col;
@@ -387,8 +387,8 @@ static int32_t is_8x8_block_skip(ModeInfo **grid, int32_t mi_row, int32_t mi_col
     return is_skip;
 }
 
-int32_t sb_compute_cdef_list(PictureControlSet_t            *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col,
-    cdef_list *dlist, block_size bs)
+int32_t sb_compute_cdef_list(PictureControlSet            *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col,
+    cdef_list *dlist, BlockSize bs)
 {
     //MbModeInfo **grid = cm->mi_grid_visible;
     ModeInfo **grid = picture_control_set_ptr->mi_grid_base;
@@ -469,18 +469,18 @@ static INLINE void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src
 }
 
 void av1_cdef_frame(
-    EncDecContext_t                *context_ptr,
+    EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
-    PictureControlSet_t            *pCs
+    PictureControlSet            *pCs
 )
 {
     (void)context_ptr;
 
-    struct PictureParentControlSet_s     *pPcs = pCs->parent_pcs_ptr;
+    struct PictureParentControlSet     *pPcs = pCs->parent_pcs_ptr;
     Av1Common*   cm = pPcs->av1_cm;
 
 
-    EbPictureBufferDesc_t  * recon_picture_ptr;
+    EbPictureBufferDesc  * recon_picture_ptr;
 
 
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
@@ -490,8 +490,8 @@ void av1_cdef_frame(
 
 
     EbByte  reconBufferY = &((recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x + recon_picture_ptr->origin_y * recon_picture_ptr->stride_y]);
-    EbByte  reconBufferCb = &((recon_picture_ptr->bufferCb)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCb]);
-    EbByte  reconBufferCr = &((recon_picture_ptr->bufferCr)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCr]);
+    EbByte  reconBufferCb = &((recon_picture_ptr->buffer_cb)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cb]);
+    EbByte  reconBufferCr = &((recon_picture_ptr->buffer_cr)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cr]);
 
 
 
@@ -653,12 +653,12 @@ void av1_cdef_frame(
                     break;
                 case 1:
                     recBuff = reconBufferCb;
-                    recStride = recon_picture_ptr->strideCb;
+                    recStride = recon_picture_ptr->stride_cb;
 
                     break;
                 case 2:
                     recBuff = reconBufferCr;
-                    recStride = recon_picture_ptr->strideCr;
+                    recStride = recon_picture_ptr->stride_cr;
                     break;
                 }
 
@@ -799,17 +799,17 @@ void av1_cdef_frame(
 }
 
 void av1_cdef_frame16bit(
-    EncDecContext_t                *context_ptr,
+    EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
-    PictureControlSet_t            *pCs
+    PictureControlSet            *pCs
 )
 {
     (void)context_ptr;
-    struct PictureParentControlSet_s     *pPcs = pCs->parent_pcs_ptr;
+    struct PictureParentControlSet     *pPcs = pCs->parent_pcs_ptr;
     Av1Common*   cm = pPcs->av1_cm;
 
 
-    EbPictureBufferDesc_t  * recon_picture_ptr;
+    EbPictureBufferDesc  * recon_picture_ptr;
 
 
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
@@ -819,8 +819,8 @@ void av1_cdef_frame16bit(
         recon_picture_ptr = pCs->recon_picture16bit_ptr;
 
     uint16_t*  reconBufferY = (uint16_t*)recon_picture_ptr->buffer_y + (recon_picture_ptr->origin_x + recon_picture_ptr->origin_y     * recon_picture_ptr->stride_y);
-    uint16_t*  reconBufferCb = (uint16_t*)recon_picture_ptr->bufferCb + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCb);
-    uint16_t*  reconBufferCr = (uint16_t*)recon_picture_ptr->bufferCr + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCr);
+    uint16_t*  reconBufferCb = (uint16_t*)recon_picture_ptr->buffer_cb + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cb);
+    uint16_t*  reconBufferCr = (uint16_t*)recon_picture_ptr->buffer_cr + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cr);
 
 
 
@@ -981,12 +981,12 @@ void av1_cdef_frame16bit(
                     break;
                 case 1:
                     recBuff = reconBufferCb;
-                    recStride = recon_picture_ptr->strideCb;
+                    recStride = recon_picture_ptr->stride_cb;
 
                     break;
                 case 2:
                     recBuff = reconBufferCr;
-                    recStride = recon_picture_ptr->strideCr;
+                    recStride = recon_picture_ptr->stride_cr;
                     break;
                 }
 
@@ -1358,7 +1358,7 @@ uint64_t mse_4x4_16bit_c(uint16_t *dst, int32_t dstride, uint16_t *src,
 
 /* Compute MSE only on the blocks we filtered. */
 uint64_t compute_cdef_dist(uint16_t *dst, int32_t dstride, uint16_t *src,
-    cdef_list *dlist, int32_t cdef_count, block_size bsize,
+    cdef_list *dlist, int32_t cdef_count, BlockSize bsize,
     int32_t coeff_shift, int32_t pli) {
     uint64_t sum = 0;
     int32_t bi, bx, by;
@@ -1408,15 +1408,15 @@ uint64_t compute_cdef_dist(uint16_t *dst, int32_t dstride, uint16_t *src,
     return sum >> 2 * coeff_shift;
 }
 void finish_cdef_search(
-    EncDecContext_t                *context_ptr,
+    EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
-    PictureControlSet_t            *picture_control_set_ptr
+    PictureControlSet            *picture_control_set_ptr
     , int32_t                      selected_strength_cnt[64]
 )
 {
     (void)context_ptr;
     int32_t fast = 0;
-    struct PictureParentControlSet_s     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
+    struct PictureParentControlSet     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
     Av1Common*   cm = pPcs->av1_cm;
     int32_t mi_rows = pPcs->av1_cm->mi_rows;
     int32_t mi_cols = pPcs->av1_cm->mi_cols;
@@ -1456,7 +1456,7 @@ void finish_cdef_search(
     const int32_t num_planes = 3;
 
     quantizer =
-        av1_ac_quant_Q3(pPcs->base_qindex, 0, (aom_bit_depth_t)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
+        av1_ac_quant_Q3(pPcs->base_qindex, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
     lambda = .12 * quantizer * quantizer / 256.;
 
     mse[0] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);
@@ -1547,7 +1547,7 @@ void finish_cdef_search(
         picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.cdef_strength = (int8_t)best_gi;
         //in case the fb is within a block=128x128 or 128x64, or 64x128, then we genrate param only for the first 64x64.
         //since our mi map deos not have the multi pointer single data assignment, we need to duplicate data.
-        block_size sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
+        BlockSize sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
 
         switch (sb_type)
         {
@@ -1591,9 +1591,9 @@ void finish_cdef_search(
 
 
 void av1_cdef_search(
-    EncDecContext_t                *context_ptr,
+    EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
-    PictureControlSet_t            *picture_control_set_ptr
+    PictureControlSet            *picture_control_set_ptr
     //Yv12BufferConfig *frame,
     //const Yv12BufferConfig *ref,
     //Av1Common *cm,
@@ -1603,26 +1603,26 @@ void av1_cdef_search(
 {
     (void)context_ptr;
     int32_t fast = 0;
-    struct PictureParentControlSet_s     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
+    struct PictureParentControlSet     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
     Av1Common*   cm = pPcs->av1_cm;
     int32_t mi_rows = pPcs->av1_cm->mi_rows;
     int32_t mi_cols = pPcs->av1_cm->mi_cols;
 
-    EbPictureBufferDesc_t  * recon_picture_ptr;
+    EbPictureBufferDesc  * recon_picture_ptr;
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
         recon_picture_ptr = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
     else
         recon_picture_ptr = picture_control_set_ptr->recon_picture_ptr;
 
     EbByte  reconBufferY = &((recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x + recon_picture_ptr->origin_y * recon_picture_ptr->stride_y]);
-    EbByte  reconBufferCb = &((recon_picture_ptr->bufferCb)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCb]);
-    EbByte  reconBufferCr = &((recon_picture_ptr->bufferCr)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCr]);
+    EbByte  reconBufferCb = &((recon_picture_ptr->buffer_cb)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cb]);
+    EbByte  reconBufferCr = &((recon_picture_ptr->buffer_cr)[recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cr]);
 
 
-    EbPictureBufferDesc_t *input_picture_ptr = (EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
     EbByte  inputBufferY = &((input_picture_ptr->buffer_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
-    EbByte  inputBufferCb = &((input_picture_ptr->bufferCb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCb]);
-    EbByte  inputBufferCr = &((input_picture_ptr->bufferCr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCr]);
+    EbByte  inputBufferCb = &((input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
+    EbByte  inputBufferCr = &((input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
 
 
     int32_t r, c;
@@ -1681,7 +1681,7 @@ void av1_cdef_search(
 
     quantizer =
         //CHKN av1_ac_quant_Q3(cm->base_qindex, 0, cm->bit_depth) >> (cm->bit_depth - 8);
-        av1_ac_quant_Q3(pPcs->base_qindex, 0, (aom_bit_depth_t)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
+        av1_ac_quant_Q3(pPcs->base_qindex, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
     lambda = .12 * quantizer * quantizer / 256.;
 
     //av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0,    num_planes);
@@ -1707,15 +1707,15 @@ void av1_cdef_search(
             break;
         case 1:
             ref_buffer = inputBufferCb;
-            ref_stride = input_picture_ptr->strideCb;
+            ref_stride = input_picture_ptr->stride_cb;
             in_buffer = reconBufferCb;
-            in_stride = recon_picture_ptr->strideCb;
+            in_stride = recon_picture_ptr->stride_cb;
             break;
         case 2:
             ref_buffer = inputBufferCr;
-            ref_stride = input_picture_ptr->strideCr;
+            ref_stride = input_picture_ptr->stride_cr;
             in_buffer = reconBufferCr;
-            in_stride = recon_picture_ptr->strideCr;
+            in_stride = recon_picture_ptr->stride_cr;
             break;
         }
 
@@ -1770,7 +1770,7 @@ void av1_cdef_search(
             nvb = AOMMIN(MI_SIZE_64X64, cm->mi_rows - MI_SIZE_64X64 * fbr);
             int32_t hb_step = 1; //CHKN these should be all time with 64x64 LCUs
             int32_t vb_step = 1;
-            block_size bs = BLOCK_64X64;
+            BlockSize bs = BLOCK_64X64;
             ModeInfo **mi = picture_control_set_ptr->mi_grid_base + MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc;
             const MbModeInfo *mbmi = &mi[0]->mbmi;
 
@@ -1850,7 +1850,7 @@ void av1_cdef_search(
                         ref_coeff[pli] +
                         (fbr * MI_SIZE_64X64 << mi_high_l2[pli]) * stride[pli] +
                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]),
-                        stride[pli], tmp_dst, dlist, cdef_count, (block_size)bsize[pli], coeff_shift,
+                        stride[pli], tmp_dst, dlist, cdef_count, (BlockSize)bsize[pli], coeff_shift,
                         pli);
 
                     if (pli < 2)
@@ -1914,7 +1914,7 @@ void av1_cdef_search(
         picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.cdef_strength = (int8_t)best_gi;
         //in case the fb is within a block=128x128 or 128x64, or 64x128, then we genrate param only for the first 64x64.
         //since our mi map deos not have the multi pointer single data assignment, we need to duplicate data.
-        block_size sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
+        BlockSize sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
 
         if (sb_type == BLOCK_128X128)
         {
@@ -1962,9 +1962,9 @@ void av1_cdef_search(
 }
 
 void av1_cdef_search16bit(
-    EncDecContext_t                *context_ptr,
+    EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
-    PictureControlSet_t            *picture_control_set_ptr
+    PictureControlSet            *picture_control_set_ptr
     //Yv12BufferConfig *frame,
     //const Yv12BufferConfig *ref,
     //Av1Common *cm,
@@ -1974,12 +1974,12 @@ void av1_cdef_search16bit(
 {
     (void)context_ptr;
     int32_t fast = 0;
-    struct PictureParentControlSet_s     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
+    struct PictureParentControlSet     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
     Av1Common*   cm = pPcs->av1_cm;
     int32_t mi_rows = pPcs->av1_cm->mi_rows;
     int32_t mi_cols = pPcs->av1_cm->mi_cols;
 
-    EbPictureBufferDesc_t  * recon_picture_ptr;
+    EbPictureBufferDesc  * recon_picture_ptr;
     if (pPcs->is_used_as_reference_flag == EB_TRUE)
         recon_picture_ptr = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
     else
@@ -1987,14 +1987,14 @@ void av1_cdef_search16bit(
 
 
     uint16_t*  reconBufferY = (uint16_t*)recon_picture_ptr->buffer_y + (recon_picture_ptr->origin_x + recon_picture_ptr->origin_y     * recon_picture_ptr->stride_y);
-    uint16_t*  reconBufferCb = (uint16_t*)recon_picture_ptr->bufferCb + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCb);
-    uint16_t*  reconBufferCr = (uint16_t*)recon_picture_ptr->bufferCr + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->strideCr);
+    uint16_t*  reconBufferCb = (uint16_t*)recon_picture_ptr->buffer_cb + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cb);
+    uint16_t*  reconBufferCr = (uint16_t*)recon_picture_ptr->buffer_cr + (recon_picture_ptr->origin_x / 2 + recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cr);
 
 
-    EbPictureBufferDesc_t *input_picture_ptr = picture_control_set_ptr->input_frame16bit;
+    EbPictureBufferDesc *input_picture_ptr = picture_control_set_ptr->input_frame16bit;
     uint16_t*  inputBufferY = (uint16_t*)input_picture_ptr->buffer_y + (input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y);
-    uint16_t*  inputBufferCb = (uint16_t*)input_picture_ptr->bufferCb + (input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCb);
-    uint16_t*  inputBufferCr = (uint16_t*)input_picture_ptr->bufferCr + (input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCr);
+    uint16_t*  inputBufferCb = (uint16_t*)input_picture_ptr->buffer_cb + (input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb);
+    uint16_t*  inputBufferCr = (uint16_t*)input_picture_ptr->buffer_cr + (input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr);
 
 
     int32_t r, c;
@@ -2054,7 +2054,7 @@ void av1_cdef_search16bit(
 
     quantizer =
         //CHKN av1_ac_quant_Q3(cm->base_qindex, 0, cm->bit_depth) >> (cm->bit_depth - 8);
-        av1_ac_quant_Q3(pPcs->base_qindex, 0, (aom_bit_depth_t)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
+        av1_ac_quant_Q3(pPcs->base_qindex, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
     lambda = .12 * quantizer * quantizer / 256.;
 
     //av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0,    num_planes);
@@ -2079,15 +2079,15 @@ void av1_cdef_search16bit(
             break;
         case 1:
             ref_buffer = inputBufferCb;
-            ref_stride = input_picture_ptr->strideCb;
+            ref_stride = input_picture_ptr->stride_cb;
             in_buffer = reconBufferCb;
-            in_stride = recon_picture_ptr->strideCb;
+            in_stride = recon_picture_ptr->stride_cb;
             break;
         case 2:
             ref_buffer = inputBufferCr;
-            ref_stride = input_picture_ptr->strideCr;
+            ref_stride = input_picture_ptr->stride_cr;
             in_buffer = reconBufferCr;
-            in_stride = recon_picture_ptr->strideCr;
+            in_stride = recon_picture_ptr->stride_cr;
             break;
         }
 
@@ -2141,7 +2141,7 @@ void av1_cdef_search16bit(
             nvb = AOMMIN(MI_SIZE_64X64, cm->mi_rows - MI_SIZE_64X64 * fbr);
             int32_t hb_step = 1; //CHKN these should be all time with 64x64 LCUs
             int32_t vb_step = 1;
-            block_size bs = BLOCK_64X64;
+            BlockSize bs = BLOCK_64X64;
             ModeInfo **mi = picture_control_set_ptr->mi_grid_base + MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc;
             const MbModeInfo *mbmi = &mi[0]->mbmi;
 
@@ -2206,7 +2206,7 @@ void av1_cdef_search16bit(
                         ref_coeff[pli] +
                         (fbr * MI_SIZE_64X64 << mi_high_l2[pli]) * stride[pli] +
                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]),
-                        stride[pli], tmp_dst, dlist, cdef_count, (block_size)bsize[pli], coeff_shift,
+                        stride[pli], tmp_dst, dlist, cdef_count, (BlockSize)bsize[pli], coeff_shift,
                         pli);
 
                     if (pli < 2)
@@ -2269,7 +2269,7 @@ void av1_cdef_search16bit(
         picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.cdef_strength = (int8_t)best_gi;
         //in case the fb is within a block=128x128 or 128x64, or 64x128, then we genrate param only for the first 64x64.
         //since our mi map deos not have the multi pointer single data assignment, we need to duplicate data.
-        block_size sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
+        BlockSize sb_type = picture_control_set_ptr->mi_grid_base[sb_index[i]]->mbmi.sb_type;
 
         if (sb_type == BLOCK_128X128)
         {

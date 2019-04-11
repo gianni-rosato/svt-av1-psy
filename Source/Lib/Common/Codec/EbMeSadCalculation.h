@@ -17,7 +17,7 @@ extern "C" {
     /***************************************
     * Function Types
     ***************************************/
-    typedef void(*EB_SADCALCULATION8X8AND16X16_TYPE)(
+    typedef void(*EbSadCalculation8x8and16x16Type)(
         uint8_t   *src,
         uint32_t   src_stride,
         uint8_t   *ref,
@@ -29,7 +29,7 @@ extern "C" {
         uint32_t   mv,
         uint32_t  *p_sad16x16);
 
-    typedef void(*EB_EXTSADCALCULATION8X8AND16X16_TYPE)(
+    typedef void(*EbExtSadCalculation8x8and16x16Type)(
         uint8_t   *src,
         uint32_t   src_stride,
         uint8_t   *ref,
@@ -42,7 +42,7 @@ extern "C" {
         uint32_t  *p_sad16x16,
         uint32_t  *p_sad8x8);
 
-    typedef void(*EB_EXTSADCALCULATION32X32AND64X64_TYPE)(
+    typedef void(*EbExtSadCalculation32x32and64x64Type)(
         uint32_t  *p_sad16x16,
         uint32_t  *p_best_sad32x32,
         uint32_t  *p_best_sad64x64,
@@ -51,7 +51,7 @@ extern "C" {
         uint32_t   mv,
         uint32_t  *p_sad32x32);
 
-    typedef void(*EB_EXTSADCALCULATION_TYPE)(
+    typedef void(*EbExtSadCalculationType)(
         uint32_t  *p_sad8x8,
         uint32_t  *p_sad16x16,
         uint32_t  *p_sad32x32,
@@ -77,7 +77,7 @@ extern "C" {
         uint32_t  *p_best_mv16x64,
         uint32_t   mv);
 
-    typedef void(*EB_SADCALCULATION32X32AND64X64_TYPE)(
+    typedef void(*EbSadCalculation32x32and64x64Type)(
         uint32_t  *p_sad16x16,
         uint32_t  *p_best_sad32x32,
         uint32_t  *p_best_sad64x64,
@@ -85,69 +85,13 @@ extern "C" {
         uint32_t  *p_best_mv64x64,
         uint32_t   mv);
 
-    typedef void(*EB_INIALIZEBUFFER_32BITS)(
+    typedef void(*EbInializeBuffer32Bits)(
         uint32_t*        pointer,
         uint32_t        count128,
         uint32_t        count32,
         uint32_t        value);
 
-    typedef void(*EB_RECTAMPSADCALCULATION8X8AND16X16_TYPE)(
-        uint8_t   *src,
-        uint32_t   src_stride,
-        uint8_t   *ref,
-        uint32_t   ref_stride,
-        uint32_t  *p_best_sad8x8,
-        uint32_t  *p_best_sad16x16,
-        uint32_t  *p_best_mv8x8,
-        uint32_t  *p_best_mv16x16,
-        uint32_t   mv,
-        uint32_t  *p_sad16x16,
-        uint32_t  *p_sad8x8);
-
-    typedef void(*EB_RECTAMPSADCALCULATION32X32AND64X64_TYPE)(
-        uint32_t  *p_sad16x16,
-        uint32_t  *p_sad32x32,
-        uint32_t  *p_best_sad32x32,
-        uint32_t  *p_best_sad64x64,
-        uint32_t  *p_best_mv32x32,
-        uint32_t  *p_best_mv64x64,
-        uint32_t   mv);
-
-    typedef void(*EB_RECTAMPSADCALCULATION_TYPE)(
-        uint32_t  *p_sad8x8,
-        uint32_t  *p_sad16x16,
-        uint32_t  *p_sad32x32,
-        uint32_t  *p_best_sad64x32,
-        uint32_t  *p_best_mv64x32,
-        uint32_t  *p_best_sad32x16,
-        uint32_t  *p_best_mv32x16,
-        uint32_t  *p_best_sad16x8,
-        uint32_t  *p_best_mv16x8,
-        uint32_t  *p_best_sad32x64,
-        uint32_t  *p_best_mv32x64,
-        uint32_t  *p_best_sad16x32,
-        uint32_t  *p_best_mv16x32,
-        uint32_t  *p_best_sad8x16,
-        uint32_t  *p_best_mv8x16,
-        uint32_t  *p_best_sad64x16,
-        uint32_t  *p_best_mv64x16,
-        uint32_t  *p_best_sad32x8,
-        uint32_t  *p_best_mv32x8,
-        uint32_t  *pBestSad64x48,
-        uint32_t  *pBestMV64x48,
-        uint32_t  *pBestSad32x24,
-        uint32_t  *pBestMV32x24,
-        uint32_t  *p_best_sad16x64,
-        uint32_t  *p_best_mv16x64,
-        uint32_t  *p_best_sad8x32,
-        uint32_t  *p_best_mv8x32,
-        uint32_t  *pBestSad48x64,
-        uint32_t  *pBestMV48x64,
-        uint32_t  *pBestSad24x32,
-        uint32_t  *pBestMV24x32,
-        uint32_t   mv);
-
-    typedef void(*EB_EXT_ALL_SAD_CALCULATION_8x8_16x16_TYPE)(
+    typedef void(*EbExtAllSadCalculation8x816x16Type)(
         uint8_t   *src,
         uint32_t   src_stride,
         uint8_t   *ref,
@@ -160,7 +104,7 @@ extern "C" {
         uint32_t   p_eight_sad16x16[16][8],
         uint32_t   p_eight_sad8x8[64][8]);
 
-    typedef void(*EB_EIGHTSADCALCULATIONNSQ_TYPE)(
+    typedef void(*EbEightSadCalculationNsqType)(
         uint32_t   p_sad8x8[64][8],
         uint32_t   p_sad16x16[16][8],
         uint32_t   p_sad32x32[4][8],
@@ -186,7 +130,7 @@ extern "C" {
         uint32_t  *p_best_mv16x64,
         uint32_t   mv);
 
-    typedef void(*EB_EXT_EIGHT_SAD_CALCULATION_32x32_64x64_TYPE)(
+    typedef void(*EbExtEightSadCalculation32x3264x64Type)(
         uint32_t  p_sad16x16[16][8],
         uint32_t *p_best_sad32x32,
         uint32_t *p_best_sad64x64,
@@ -195,7 +139,7 @@ extern "C" {
         uint32_t  mv,
         uint32_t p_sad32x32[4][8]);
 
-    static EB_INIALIZEBUFFER_32BITS InitializeBuffer_32bits_funcPtrArray[ASM_TYPE_TOTAL] = {
+    static EbInializeBuffer32Bits initialize_buffer32bits_func_ptr_array[ASM_TYPE_TOTAL] = {
         // NON_AVX2
         initialize_buffer_32bits_sse2_intrin,
         // AVX2

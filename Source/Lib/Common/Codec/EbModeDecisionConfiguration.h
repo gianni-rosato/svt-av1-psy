@@ -14,48 +14,40 @@ extern "C" {
 #endif
 
 /*******************************************
- * EarlyModeDecisionLcu 
+ * early_mode_decision_lcu 
  *   predicts candidates (LCU)
  *******************************************/
-extern EbErrorType EarlyModeDecisionLcu(
+extern EbErrorType early_mode_decision_lcu(
     SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet_t                    *picture_control_set_ptr,
-    LargestCodingUnit_t                    *sb_ptr,
+    PictureControlSet                    *picture_control_set_ptr,
+    LargestCodingUnit                    *sb_ptr,
     uint32_t                                  sb_index,
-    ModeDecisionConfigurationContext_t     *context_ptr);
+    ModeDecisionConfigurationContext     *context_ptr);
 
 
 /*******************************************
-* DeriveDeltaQPForEachLeafLcu
+* derive_delta_qp_for_each_leaf_lcu
 *   Derive Lcu For Each Leaf (LCU)
 *******************************************/
-extern EbErrorType DeriveDeltaQPForEachLeafLcu(
+extern EbErrorType derive_delta_qp_for_each_leaf_lcu(
     SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet_t                    *picture_control_set_ptr,
-    LargestCodingUnit_t                    *sb_ptr,
+    PictureControlSet                    *picture_control_set_ptr,
+    LargestCodingUnit                    *sb_ptr,
     uint32_t                                  sb_index,
     int32_t                                  intra_min_distance,
     int32_t                                  intra_max_distance,
     int32_t                                  inter_min_distance,
     int32_t                                  inter_max_distance,
-    ModeDecisionConfigurationContext_t     *context_ptr);
+    ModeDecisionConfigurationContext     *context_ptr);
 
-void QpmDeriveDeltaQpMapWeights(
-    ModeDecisionConfigurationContext_t    *context_ptr,
-    PictureControlSet_t                  *picture_control_set_ptr);
+void qpm_derive_delta_qp_map_weights(
+    ModeDecisionConfigurationContext    *context_ptr,
+    PictureControlSet                  *picture_control_set_ptr);
 
-extern uint8_t DeriveContouringClass(
-    PictureParentControlSet_t   *parentPcsPtr,
+extern uint8_t derive_contouring_class(
+    PictureParentControlSet   *parent_pcs_ptr,
     uint16_t                       sb_index,
     uint8_t                        leaf_index);  
-/**************************************
-* Function Ptrs Definitions
-**************************************/
-typedef EbErrorType(*EB_MDC_FUNC)(
-    MdcpLocalCodingUnit_t                   *localCuArray,
-    uint32_t                                   cu_index,
-    uint32_t                                   depth,
-    EbBool                                 *mdcPrediction64);
 
 #define Pred        0x01
 #define Predp1      0x02

@@ -26,20 +26,20 @@
  * Constructor
  **********************************/
 EbErrorType output_bitstream_unit_ctor(
-    OutputBitstreamUnit_t   *bitstream_ptr,
+    OutputBitstreamUnit   *bitstream_ptr,
     uint32_t                 buffer_size){
 
     if (buffer_size) {
         bitstream_ptr->size = buffer_size / sizeof(uint32_t);
-        EB_MALLOC(uint8_t*, bitstream_ptr->bufferBeginAv1, sizeof(uint8_t) * bitstream_ptr->size, EB_N_PTR);
-        bitstream_ptr->bufferAv1 = bitstream_ptr->bufferBeginAv1;
+        EB_MALLOC(uint8_t*, bitstream_ptr->buffer_begin_av1, sizeof(uint8_t) * bitstream_ptr->size, EB_N_PTR);
+        bitstream_ptr->buffer_av1 = bitstream_ptr->buffer_begin_av1;
     }
     else {
         bitstream_ptr->size = 0;
-        bitstream_ptr->bufferBeginAv1 = 0;
-        bitstream_ptr->bufferAv1 = 0;
+        bitstream_ptr->buffer_begin_av1 = 0;
+        bitstream_ptr->buffer_av1 = 0;
     }
-    bitstream_ptr->writtenBitsCount = 0;
+    bitstream_ptr->written_bits_count = 0;
     
     return EB_ErrorNone;
 }
@@ -48,13 +48,13 @@ EbErrorType output_bitstream_unit_ctor(
  * Reset Bitstream
  **********************************/
 EbErrorType output_bitstream_reset(
-    OutputBitstreamUnit_t *bitstream_ptr)
+    OutputBitstreamUnit *bitstream_ptr)
 {
     EbErrorType return_error = EB_ErrorNone;
 
-    bitstream_ptr->writtenBitsCount = 0;
+    bitstream_ptr->written_bits_count = 0;
     // Reset the write ptr to the beginning of the buffer
-    bitstream_ptr->bufferAv1 = bitstream_ptr->bufferBeginAv1;
+    bitstream_ptr->buffer_av1 = bitstream_ptr->buffer_begin_av1;
 
     return return_error;
 }
@@ -64,14 +64,14 @@ EbErrorType output_bitstream_reset(
  *   Intended to be used in CABAC
  **********************************/
 EbErrorType output_bitstream_rbsp_to_payload(
-    OutputBitstreamUnit_t   *bitstream_ptr,
+    OutputBitstreamUnit   *bitstream_ptr,
     EbByte                  output_buffer,
     uint32_t                *output_buffer_index,
     uint32_t                *output_buffer_size,
     uint32_t                 start_location)
 {
     EbErrorType return_error = EB_ErrorNone;
-    uint32_t  buffer_written_bytes_count = (uint32_t)(bitstream_ptr->bufferAv1 - bitstream_ptr->bufferBeginAv1);
+    uint32_t  buffer_written_bytes_count = (uint32_t)(bitstream_ptr->buffer_av1 - bitstream_ptr->buffer_begin_av1);
     uint32_t  write_location = start_location;
     uint32_t  read_location = start_location;
     EbByte read_byte_ptr;
@@ -81,7 +81,7 @@ EbErrorType output_bitstream_rbsp_to_payload(
 
 #endif
     // IVF data
-    read_byte_ptr = (EbByte)bitstream_ptr->bufferBeginAv1;
+    read_byte_ptr = (EbByte)bitstream_ptr->buffer_begin_av1;
     write_byte_ptr = &output_buffer[*output_buffer_index];
 #if IVF_FRAME_HEADER_IN_LIB
     mem_put_le32(&write_byte_ptr[write_location], (int32_t)buffer_written_bytes_count);
@@ -108,13 +108,13 @@ EbErrorType output_bitstream_rbsp_to_payload(
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/
 // daalaboolwriter.c
-void aom_daala_start_encode(daala_writer *br, uint8_t *source) {
+void aom_daala_start_encode(DaalaWriter *br, uint8_t *source) {
     br->buffer = source;
     br->pos = 0;
     od_ec_enc_init(&br->ec, 62025);
 }
 
-int32_t aom_daala_stop_encode(daala_writer *br) {
+int32_t aom_daala_stop_encode(DaalaWriter *br) {
     int32_t nb_bits;
     uint32_t daala_bytes;
     uint8_t *daala_data;
@@ -197,7 +197,7 @@ URL="http://researchcommons.waikato.ac.nz/bitstream/handle/10289/78/content.pdf"
 necessary), and stores them back in the encoder context.
 low: The new value of low.
 rng: The new value of the range.*/
-static void od_ec_enc_normalize(od_ec_enc *enc, od_ec_window low,
+static void od_ec_enc_normalize(OdEcEnc *enc, od_ec_window low,
     unsigned rng) {
     int32_t d;
     int32_t c;
@@ -252,7 +252,7 @@ static void od_ec_enc_normalize(od_ec_enc *enc, od_ec_window low,
 
 /*Initializes the encoder.
 size: The initial size of the buffer, in bytes.*/
-void od_ec_enc_init(od_ec_enc *enc, uint32_t size) {
+void od_ec_enc_init(OdEcEnc *enc, uint32_t size) {
     od_ec_enc_reset(enc);
     enc->buf = (uint8_t *)malloc(sizeof(*enc->buf) * size);
     enc->storage = size;
@@ -269,7 +269,7 @@ void od_ec_enc_init(od_ec_enc *enc, uint32_t size) {
 }
 
 /*Reinitializes the encoder.*/
-void od_ec_enc_reset(od_ec_enc *enc) {
+void od_ec_enc_reset(OdEcEnc *enc) {
 
     enc->offs = 0;
     enc->low = 0;
@@ -285,7 +285,7 @@ void od_ec_enc_reset(od_ec_enc *enc) {
 }
 
 /*Frees the buffers used by the encoder.*/
-void od_ec_enc_clear(od_ec_enc *enc) {
+void od_ec_enc_clear(OdEcEnc *enc) {
     free(enc->precarry_buf);
     free(enc->buf);
 }
@@ -297,7 +297,7 @@ one to be encoded.
 fh: CDF_PROB_TOP minus the cumulative frequency of all symbols up to and
 including
 the one to be encoded.*/
-static void od_ec_encode_q15(od_ec_enc *enc, unsigned fl, unsigned fh, int32_t s,
+static void od_ec_encode_q15(OdEcEnc *enc, unsigned fl, unsigned fh, int32_t s,
     int32_t nsyms) {
     od_ec_window l;
     unsigned r;
@@ -335,7 +335,7 @@ static void od_ec_encode_q15(od_ec_enc *enc, unsigned fl, unsigned fh, int32_t s
 /*Encode a single binary value.
 val: The value to encode (0 or 1).
 f: The probability that the val is one, scaled by 32768.*/
-void od_ec_encode_bool_q15(od_ec_enc *enc, int32_t val, unsigned f) {
+void od_ec_encode_bool_q15(OdEcEnc *enc, int32_t val, unsigned f) {
     od_ec_window l;
     unsigned r;
     unsigned v;
@@ -363,7 +363,7 @@ The values must be monotonically decreasing, and icdf[nsyms - 1] must
 be 0.
 nsyms: The number of symbols in the alphabet.
 This should be at most 16.*/
-void od_ec_encode_cdf_q15(od_ec_enc *enc, int32_t s, const uint16_t *icdf,
+void od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *icdf,
     int32_t nsyms) {
     (void)nsyms;
     assert(s >= 0);
@@ -372,7 +372,7 @@ void od_ec_encode_cdf_q15(od_ec_enc *enc, int32_t s, const uint16_t *icdf,
     od_ec_encode_q15(enc, s > 0 ? icdf[s - 1] : OD_ICDF(0), icdf[s], s, nsyms);
 }
 
-uint8_t *od_ec_enc_done(od_ec_enc *enc, uint32_t *nbytes) {
+uint8_t *od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
     uint8_t *out;
     uint32_t storage;
     uint16_t *buf;
@@ -470,7 +470,7 @@ earlier call, even after encoding more data, if there is an encoding error
 Return: The number of bits.
 This will always be slightly larger than the exact value (e.g., all
 rounding error is in the positive direction).*/
-int32_t od_ec_enc_tell(const od_ec_enc *enc) {
+int32_t od_ec_enc_tell(const OdEcEnc *enc) {
     /*The 10 here counteracts the offset of -9 baked into cnt, and adds 1 extra
     bit, which we reserve for terminating the stream.*/
     return (enc->cnt + 10) + enc->offs * 8;
@@ -480,7 +480,7 @@ int32_t od_ec_enc_tell(const od_ec_enc *enc) {
 This allows an encoder to reverse a series of entropy coder
 decisions if it decides that the information would have been
 better coded some other way.*/
-void od_ec_enc_checkpoint(od_ec_enc *dst, const od_ec_enc *src) {
+void od_ec_enc_checkpoint(OdEcEnc *dst, const OdEcEnc *src) {
     OD_COPY(dst, src, 1);
 }
 
@@ -490,7 +490,7 @@ state's history: you can not switch backwards and forwards or otherwise
 switch to a state which isn't a casual ancestor of the current state.
 Restore is also incompatible with patching the initial bits, as the
 changes will remain in the restored version.*/
-void od_ec_enc_rollback(od_ec_enc *dst, const od_ec_enc *src) {
+void od_ec_enc_rollback(OdEcEnc *dst, const OdEcEnc *src) {
     uint8_t *buf;
     uint32_t storage;
     uint16_t *precarry_buf;

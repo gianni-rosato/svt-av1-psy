@@ -321,7 +321,7 @@ extern "C" {
      * \param[out]    grain  Output film grain parameters
      */
     int32_t aom_denoise_and_model_run(struct aom_denoise_and_model_t *ctx,
-        EbPictureBufferDesc_t *sd,
+        EbPictureBufferDesc *sd,
         aom_film_grain_t *film_grain,
         int32_t use_highbd,
         EbAsm asm_type);

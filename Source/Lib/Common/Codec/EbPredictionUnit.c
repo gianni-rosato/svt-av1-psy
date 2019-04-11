@@ -16,7 +16,7 @@ static const uint32_t PartitionCountLut[SIZE_PART_MODE] = {
     2  //SIZE_nRx2N
 };
 
-uint32_t PartitionCount(const EB_PART_MODE partMode)
+uint32_t PartitionCount(const EbPartMode partMode)
 {
     return PartitionCountLut[partMode];
     //uint32_t count = 2;

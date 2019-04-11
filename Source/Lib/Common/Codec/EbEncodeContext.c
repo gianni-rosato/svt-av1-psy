@@ -18,8 +18,8 @@ EbErrorType encode_context_ctor(
     uint32_t pictureIndex;
     EbErrorType return_error = EB_ErrorNone;
 
-    EncodeContext_t *encode_context_ptr;
-    EB_MALLOC(EncodeContext_t*, encode_context_ptr, sizeof(EncodeContext_t), EB_N_PTR);
+    EncodeContext *encode_context_ptr;
+    EB_MALLOC(EncodeContext*, encode_context_ptr, sizeof(EncodeContext), EB_N_PTR);
     *object_dbl_ptr = (EbPtr)encode_context_ptr;
 
     object_init_data_ptr = 0;
@@ -29,7 +29,7 @@ EbErrorType encode_context_ctor(
         EB_ENC_EC_ERROR29);
 
     // Callback Functions
-    encode_context_ptr->app_callback_ptr = (EbCallback_t*)EB_NULL;
+    encode_context_ptr->app_callback_ptr = (EbCallback*)EB_NULL;
 
     EB_CREATEMUTEX(EbHandle, encode_context_ptr->total_number_of_recon_frame_mutex, sizeof(EbHandle), EB_MUTEX);
     encode_context_ptr->total_number_of_recon_frames = 0;
@@ -45,7 +45,7 @@ EbErrorType encode_context_ctor(
 
     // Picture Decision Reordering Queue
     encode_context_ptr->picture_decision_reorder_queue_head_index = 0;
-    EB_MALLOC(PictureDecisionReorderEntry_t**, encode_context_ptr->picture_decision_reorder_queue, sizeof(PictureDecisionReorderEntry_t*) * PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_MALLOC(PictureDecisionReorderEntry**, encode_context_ptr->picture_decision_reorder_queue, sizeof(PictureDecisionReorderEntry*) * PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH; ++pictureIndex) {
         return_error = picture_decision_reorder_entry_ctor(
@@ -58,7 +58,7 @@ EbErrorType encode_context_ctor(
 
     // Picture Manager Reordering Queue
     encode_context_ptr->picture_manager_reorder_queue_head_index = 0;
-    EB_MALLOC(PictureManagerReorderEntry_t**, encode_context_ptr->picture_manager_reorder_queue, sizeof(PictureManagerReorderEntry_t*) * PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_MALLOC(PictureManagerReorderEntry**, encode_context_ptr->picture_manager_reorder_queue, sizeof(PictureManagerReorderEntry*) * PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH; ++pictureIndex) {
         return_error = picture_manager_reorder_entry_ctor(
@@ -89,7 +89,7 @@ EbErrorType encode_context_ctor(
     // Picture Manager Input Queue
     encode_context_ptr->input_picture_queue_head_index = 0;
     encode_context_ptr->input_picture_queue_tail_index = 0;
-    EB_MALLOC(InputQueueEntry_t**, encode_context_ptr->input_picture_queue, sizeof(InputQueueEntry_t*) * INPUT_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_MALLOC(InputQueueEntry**, encode_context_ptr->input_picture_queue, sizeof(InputQueueEntry*) * INPUT_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < INPUT_QUEUE_MAX_DEPTH; ++pictureIndex) {
         return_error = input_queue_entry_ctor(
@@ -102,7 +102,7 @@ EbErrorType encode_context_ctor(
     // Picture Manager Reference Queue
     encode_context_ptr->reference_picture_queue_head_index = 0;
     encode_context_ptr->reference_picture_queue_tail_index = 0;
-    EB_MALLOC(ReferenceQueueEntry_t**, encode_context_ptr->reference_picture_queue, sizeof(ReferenceQueueEntry_t*) * REFERENCE_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_MALLOC(ReferenceQueueEntry**, encode_context_ptr->reference_picture_queue, sizeof(ReferenceQueueEntry*) * REFERENCE_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < REFERENCE_QUEUE_MAX_DEPTH; ++pictureIndex) {
         return_error = reference_queue_entry_ctor(
@@ -115,7 +115,7 @@ EbErrorType encode_context_ctor(
     // Picture Decision PA Reference Queue
     encode_context_ptr->picture_decision_pa_reference_queue_head_index = 0;
     encode_context_ptr->picture_decision_pa_reference_queue_tail_index = 0;
-    EB_MALLOC(PaReferenceQueueEntry_t**, encode_context_ptr->picture_decision_pa_reference_queue, sizeof(PaReferenceQueueEntry_t*) * PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_MALLOC(PaReferenceQueueEntry**, encode_context_ptr->picture_decision_pa_reference_queue, sizeof(PaReferenceQueueEntry*) * PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH; ++pictureIndex) {
         return_error = pa_reference_queue_entry_ctor(
@@ -127,10 +127,10 @@ EbErrorType encode_context_ctor(
 
     // Initial Rate Control Reordering Queue
     encode_context_ptr->initial_rate_control_reorder_queue_head_index = 0;
-    EB_MALLOC(InitialRateControlReorderEntry_t**, encode_context_ptr->initial_rate_control_reorder_queue, sizeof(InitialRateControlReorderEntry_t*) * INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_MALLOC(InitialRateControlReorderEntry**, encode_context_ptr->initial_rate_control_reorder_queue, sizeof(InitialRateControlReorderEntry*) * INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = InitialRateControlReorderEntryCtor(
+        return_error = initial_rate_control_reorder_entry_ctor(
             &(encode_context_ptr->initial_rate_control_reorder_queue[pictureIndex]),
             pictureIndex);
         if (return_error == EB_ErrorInsufficientResources) {
@@ -141,10 +141,10 @@ EbErrorType encode_context_ctor(
     // High level Rate Control histogram Queue
     encode_context_ptr->hl_rate_control_historgram_queue_head_index = 0;
 
-    EB_MALLOC(HlRateControlHistogramEntry_t**, encode_context_ptr->hl_rate_control_historgram_queue, sizeof(HlRateControlHistogramEntry_t*) * HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_MALLOC(HlRateControlHistogramEntry**, encode_context_ptr->hl_rate_control_historgram_queue, sizeof(HlRateControlHistogramEntry*) * HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = HlRateControlHistogramEntryCtor(
+        return_error = hl_rate_control_histogram_entry_ctor(
             &(encode_context_ptr->hl_rate_control_historgram_queue[pictureIndex]),
             pictureIndex);
         if (return_error == EB_ErrorInsufficientResources) {
@@ -156,7 +156,7 @@ EbErrorType encode_context_ctor(
 
     // Packetization Reordering Queue
     encode_context_ptr->packetization_reorder_queue_head_index = 0;
-    EB_MALLOC(PacketizationReorderEntry_t**, encode_context_ptr->packetization_reorder_queue, sizeof(PacketizationReorderEntry_t*) * PACKETIZATION_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_MALLOC(PacketizationReorderEntry**, encode_context_ptr->packetization_reorder_queue, sizeof(PacketizationReorderEntry*) * PACKETIZATION_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
 
     for (pictureIndex = 0; pictureIndex < PACKETIZATION_REORDER_QUEUE_MAX_DEPTH; ++pictureIndex) {
         return_error = packetization_reorder_entry_ctor(
@@ -184,14 +184,14 @@ EbErrorType encode_context_ctor(
     encode_context_ptr->td_needed = EB_TRUE;
 
     // Prediction Structure Group
-    encode_context_ptr->prediction_structure_group_ptr = (PredictionStructureGroup_t*)EB_NULL;
+    encode_context_ptr->prediction_structure_group_ptr = (PredictionStructureGroup*)EB_NULL;
 
     // MD Rate Estimation Array
-    EB_MALLOC(MdRateEstimationContext_t*, encode_context_ptr->md_rate_estimation_array, sizeof(MdRateEstimationContext_t) * TOTAL_NUMBER_OF_MD_RATE_ESTIMATION_CASE_BUFFERS, EB_N_PTR);
+    EB_MALLOC(MdRateEstimationContext*, encode_context_ptr->md_rate_estimation_array, sizeof(MdRateEstimationContext) * TOTAL_NUMBER_OF_MD_RATE_ESTIMATION_CASE_BUFFERS, EB_N_PTR);
 
-    memset(encode_context_ptr->md_rate_estimation_array, 0, sizeof(MdRateEstimationContext_t) * TOTAL_NUMBER_OF_MD_RATE_ESTIMATION_CASE_BUFFERS);
+    memset(encode_context_ptr->md_rate_estimation_array, 0, sizeof(MdRateEstimationContext) * TOTAL_NUMBER_OF_MD_RATE_ESTIMATION_CASE_BUFFERS);
 
-    return_error = MdRateEstimationContextCtor(encode_context_ptr->md_rate_estimation_array);
+    return_error = md_rate_estimation_context_ctor(encode_context_ptr->md_rate_estimation_array);
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }

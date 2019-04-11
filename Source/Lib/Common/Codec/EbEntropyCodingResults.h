@@ -14,21 +14,19 @@ extern "C" {
     /**************************************
      * Process Results
      **************************************/
-    typedef struct
-    {
+    typedef struct EntropyCodingResults {
         EbObjectWrapper      *picture_control_set_wrapper_ptr;
 
-    } EntropyCodingResults_t;
+    } EntropyCodingResults;
 
-    typedef struct
-    {
+    typedef struct EntropyCodingResultsInitData {
         uint32_t         junk;
-    } EntropyCodingResultsInitData_t;
+    } EntropyCodingResultsInitData;
 
     /**************************************
      * Extern Function Declarations
      **************************************/
-    extern EbErrorType EntropyCodingResultsCtor(
+    extern EbErrorType entropy_coding_results_ctor(
         EbPtr *object_dbl_ptr,
         EbPtr object_init_data_ptr);
 

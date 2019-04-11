@@ -25,7 +25,7 @@ extern "C" {
 
 #define PM_STRIDE   4
 
-    typedef struct EbPmCand_s
+    typedef struct EbPmCand
     {
         int16_t        tr_coeff[4 * 4];
         int16_t        qu_coeff[4 * 4];
@@ -33,41 +33,41 @@ extern "C" {
         uint8_t        masking_level;
         uint64_t       cost;
         uint32_t       nz_coeff;
-    } EbPmCand_t;
+    } EbPmCand;
 
     /**************************************
      * Enc Dec Context
      **************************************/
-    typedef struct EncDecContext_s
+    typedef struct EncDecContext
     {
         EbFifo                              *mode_decision_input_fifo_ptr;
         EbFifo                              *enc_dec_output_fifo_ptr;
         EbFifo                              *enc_dec_feedback_fifo_ptr;
         EbFifo                              *picture_demux_output_fifo_ptr;   // to picture-manager
         int16_t                               *transform_inner_array_ptr;
-        MdRateEstimationContext_t             *md_rate_estimation_ptr;
-        ModeDecisionContext_t                 *md_context;
+        MdRateEstimationContext             *md_rate_estimation_ptr;
+        ModeDecisionContext                 *md_context;
         const BlockGeom                       *blk_geom;
 
         // TMVP
         EbReferenceObject                   *reference_object_write_ptr;
 
         // MCP Context
-        MotionCompensationPredictionContext_t *mcp_context;
-        SsMeContext_t                         *ss_mecontext;
+        MotionCompensationPredictionContext *mcp_context;
+        SsMeContext                         *ss_mecontext;
 
         // Intra Reference Samples
-        IntraReferenceSamples_t               *intra_ref_ptr;
-        IntraReference16bitSamples_t          *intra_ref_ptr16;  //We need a different buffer for ENC pass then the MD one.
+        IntraReferenceSamples               *intra_ref_ptr;
+        IntraReference16bitSamples          *intra_ref_ptr16;  //We need a different buffer for ENC pass then the MD one.
         
         // Coding Unit Workspace---------------------------
-        EbPictureBufferDesc_t                 *residual_buffer;
-        EbPictureBufferDesc_t                 *transform_buffer;
-        EbPictureBufferDesc_t                 *input_samples;
-        EbPictureBufferDesc_t                 *input_sample16bit_buffer;
+        EbPictureBufferDesc                 *residual_buffer;
+        EbPictureBufferDesc                 *transform_buffer;
+        EbPictureBufferDesc                 *input_samples;
+        EbPictureBufferDesc                 *input_sample16bit_buffer;
         // temporary buffers for decision making of LF (LPF_PICK_FROM_FULL_IMAGE).
         // Since recon switches between reconPtr and referencePtr, the temporary buffers sizes used the referencePtr's which has padding,...
-        EbPictureBufferDesc_t                 *inverse_quant_buffer;
+        EbPictureBufferDesc                 *inverse_quant_buffer;
         // Lambda
 #if ADD_DELTA_QP_SUPPORT
         uint16_t                               qp;
@@ -82,13 +82,13 @@ extern "C" {
         uint32_t                               full_chroma_lambda_sao;
 
         //  Context Variables---------------------------------
-        CodingUnit_t                          *cu_ptr;
+        CodingUnit                          *cu_ptr;
         const CodedUnitStats                *cu_stats;
         uint16_t                               cu_origin_x; // within the picture
         uint16_t                               cu_origin_y; // within the picture
         uint8_t                                sb_sz;
         uint32_t                               sb_index;
-        MvUnit_t                               mv_unit;
+        MvUnit                               mv_unit;
         int16_t                                x_mv_amvp_candidate_array_list0[MAX_NUM_OF_AMVP_CANDIDATES];
         uint8_t                                txb_itr;
         EbBool                                 is16bit; //enable 10 bit encode in CL
@@ -105,15 +105,15 @@ extern "C" {
         EbBool                                 grass_enhancement_flag;
         EbBool                                 backgorund_enhancement;
 #if ADD_DELTA_QP_SUPPORT                       
-        uint16_t                               qpmQp;
+        uint16_t                               qpm_qp;
 #else                                          
-        uint8_t                                qpmQp;
+        uint8_t                                qpm_qp;
 #endif
 #if !PF_N2_32X32
         EB_TRANS_COEFF_SHAPE                   trans_coeff_shape_luma;
         EB_TRANS_COEFF_SHAPE                   trans_coeff_shape_chroma;
 #endif
-        EbPmCand_t                             pm_cand_buffer[5];
+        EbPmCand                             pm_cand_buffer[5];
         uint16_t                               qp_index;
         uint64_t                               three_quad_energy;
 
@@ -133,13 +133,13 @@ extern "C" {
         uint8_t                                reduced_tx_set_used;
 #endif
         EbBool                                 evaluate_cfl_ep; // 0: CFL is evaluated @ mode decision, 1: CFL is evaluated @ encode pass
-    } EncDecContext_t;
+    } EncDecContext;
 
     /**************************************
      * Extern Function Declarations
      **************************************/
     extern EbErrorType enc_dec_context_ctor(
-        EncDecContext_t        **context_dbl_ptr,
+        EncDecContext        **context_dbl_ptr,
         EbFifo                *mode_decision_configuration_input_fifo_ptr,
         EbFifo                *packetization_output_fifo_ptr,
         EbFifo                *feedback_fifo_ptr,
@@ -149,7 +149,7 @@ extern "C" {
         uint32_t                 max_input_luma_width,
         uint32_t                 max_input_luma_height);
 
-    extern void* EncDecKernel(void *input_ptr);
+    extern void* enc_dec_kernel(void *input_ptr);
 
 #ifdef __cplusplus
 }

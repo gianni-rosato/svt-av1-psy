@@ -27,40 +27,42 @@ extern "C" {
      // Cost of coding an n bit literal, using 128 (i.e. 50%) probability for each bit.
 #define av1_cost_literal(n) ((n) * (1 << AV1_PROB_COST_SHIFT))
 
-    typedef struct {
+    typedef struct LvMapEobCost {
         int32_t eob_cost[2][11];
-    } LV_MAP_EOB_COST;
+    } LvMapEobCost;
 
-    typedef struct {
+    typedef struct LvMapCoeffCost 
+    {
         int32_t txb_skip_cost[TXB_SKIP_CONTEXTS][2];
         int32_t base_eob_cost[SIG_COEF_CONTEXTS_EOB][3];
         int32_t base_cost[SIG_COEF_CONTEXTS][4];
         int32_t eob_extra_cost[EOB_COEF_CONTEXTS][2];
         int32_t dc_sign_cost[DC_SIGN_CONTEXTS][2];
         int32_t lps_cost[LEVEL_CONTEXTS][COEFF_BASE_RANGE + 1];
-    } LV_MAP_COEFF_COST;
+    } LvMapCoeffCost;
 
 
     /**************************************
-     * The EB_BitFraction is used to define the bit fraction numbers
+     * The EbBitFraction is used to define the bit fraction numbers
      **************************************/
-    typedef uint32_t EB_BitFraction;
+    typedef uint32_t EbBitFraction;
 
     /**************************************
      * MD Rate Estimation Structure
      **************************************/
-    typedef struct MdRateEstimationContext_s {
-        EB_BitFraction  splitFlagBits[NUMBER_OF_SPLIT_FLAG_CASES];
-        EB_BitFraction  mvdBits[NUMBER_OF_MVD_CASES];
+    typedef struct MdRateEstimationContext 
+    {
+        EbBitFraction  split_flag_bits[NUMBER_OF_SPLIT_FLAG_CASES];
+        EbBitFraction  mvd_bits[NUMBER_OF_MVD_CASES];
         // Partition
-        int32_t partitionFacBits[PARTITION_CONTEXTS][CDF_SIZE(EXT_PARTITION_TYPES)];
+        int32_t partition_fac_bits[PARTITION_CONTEXTS][CDF_SIZE(EXT_PARTITION_TYPES)];
 
         // MV Mode
-        int32_t skipModeFacBits[SKIP_CONTEXTS][CDF_SIZE(2)];
-        int32_t newMvModeFacBits[NEWMV_MODE_CONTEXTS][CDF_SIZE(2)];
-        int32_t zeroMvModeFacBits[GLOBALMV_MODE_CONTEXTS][CDF_SIZE(2)];
-        int32_t refMvModeFacBits[REFMV_MODE_CONTEXTS][CDF_SIZE(2)];
-        int32_t drlModeFacBits[DRL_MODE_CONTEXTS][CDF_SIZE(2)];
+        int32_t skip_mode_fac_bits[SKIP_CONTEXTS][CDF_SIZE(2)];
+        int32_t new_mv_mode_fac_bits[NEWMV_MODE_CONTEXTS][CDF_SIZE(2)];
+        int32_t zero_mv_mode_fac_bits[GLOBALMV_MODE_CONTEXTS][CDF_SIZE(2)];
+        int32_t ref_mv_mode_fac_bits[REFMV_MODE_CONTEXTS][CDF_SIZE(2)];
+        int32_t drl_mode_fac_bits[DRL_MODE_CONTEXTS][CDF_SIZE(2)];
 
         int32_t nmv_vec_cost[MV_JOINTS];
         int32_t nmv_costs[2][MV_VALS];
@@ -70,64 +72,64 @@ extern "C" {
         int dv_joint_cost[MV_JOINTS];
 
         // Compouned Mode
-        int32_t interCompoundModeFacBits[INTER_MODE_CONTEXTS][CDF_SIZE(INTER_COMPOUND_MODES)];
-        int32_t compoundTypeFacBits[BlockSizeS_ALL][CDF_SIZE(COMPOUND_TYPES - 1)];
-        int32_t singleRefFacBits[REF_CONTEXTS][SINGLE_REFS - 1][CDF_SIZE(2)];
-        int32_t compRefTypeFacBits[COMP_REF_TYPE_CONTEXTS][CDF_SIZE(2)];
-        int32_t uniCompRefFacBits[UNI_COMP_REF_CONTEXTS][UNIDIR_COMP_REFS - 1][CDF_SIZE(2)];
-        int32_t compRefFacBits[REF_CONTEXTS][FWD_REFS - 1][CDF_SIZE(2)];
-        int32_t compBwdRefFacBits[REF_CONTEXTS][BWD_REFS - 1][CDF_SIZE(2)];
-        int32_t compIdxFacBits[COMP_INDEX_CONTEXTS][CDF_SIZE(2)];
-        int32_t compGroupIdxFacBits[COMP_GROUP_IDX_CONTEXTS][CDF_SIZE(2)];
-        int32_t compInterFacBits[COMP_INTER_CONTEXTS][CDF_SIZE(2)];
+        int32_t inter_compound_mode_fac_bits[INTER_MODE_CONTEXTS][CDF_SIZE(INTER_COMPOUND_MODES)];
+        int32_t compound_type_fac_bits[BlockSizeS_ALL][CDF_SIZE(COMPOUND_TYPES - 1)];
+        int32_t single_ref_fac_bits[REF_CONTEXTS][SINGLE_REFS - 1][CDF_SIZE(2)];
+        int32_t comp_ref_type_fac_bits[COMP_REF_TYPE_CONTEXTS][CDF_SIZE(2)];
+        int32_t uni_comp_ref_fac_bits[UNI_COMP_REF_CONTEXTS][UNIDIR_COMP_REFS - 1][CDF_SIZE(2)];
+        int32_t comp_ref_fac_bits[REF_CONTEXTS][FWD_REFS - 1][CDF_SIZE(2)];
+        int32_t comp_bwd_ref_fac_bits[REF_CONTEXTS][BWD_REFS - 1][CDF_SIZE(2)];
+        int32_t comp_idx_fac_bits[COMP_INDEX_CONTEXTS][CDF_SIZE(2)];
+        int32_t comp_group_idx_fac_bits[COMP_GROUP_IDX_CONTEXTS][CDF_SIZE(2)];
+        int32_t comp_inter_fac_bits[COMP_INTER_CONTEXTS][CDF_SIZE(2)];
 
         // Wedge Mode
-        int32_t wedgeIdxFacBits[BlockSizeS_ALL][CDF_SIZE(16)];
-        int32_t interIntraFacBits[BlockSize_GROUPS][CDF_SIZE(2)];
-        int32_t wedgeInterIntraFacBits[BlockSizeS_ALL][CDF_SIZE(2)];
-        int32_t interIntraModeFacBits[BlockSize_GROUPS][CDF_SIZE(INTERINTRA_MODES)];
-        int32_t motionModeFacBits[BlockSizeS_ALL][MOTION_MODES];
-        int32_t motionModeFacBits1[BlockSizeS_ALL][2];
+        int32_t wedge_idx_fac_bits[BlockSizeS_ALL][CDF_SIZE(16)];
+        int32_t inter_intra_fac_bits[BlockSize_GROUPS][CDF_SIZE(2)];
+        int32_t wedge_inter_intra_fac_bits[BlockSizeS_ALL][CDF_SIZE(2)];
+        int32_t inter_intra_mode_fac_bits[BlockSize_GROUPS][CDF_SIZE(INTERINTRA_MODES)];
+        int32_t motion_mode_fac_bits[BlockSizeS_ALL][MOTION_MODES];
+        int32_t motion_mode_fac_bits1[BlockSizeS_ALL][2];
 
         // Intra Mode
-        int32_t intrabcFacBits[CDF_SIZE(2)];
-        int32_t intraInterFacBits[INTRA_INTER_CONTEXTS][2];
-        int32_t filter_intra_FacBits[BlockSizeS_ALL][CDF_SIZE(2)];
-        int32_t filterIntraModeFacBits[CDF_SIZE(FILTER_INTRA_MODES)];
-        int32_t switchableRestoreFacBits[CDF_SIZE(RESTORE_SWITCHABLE_TYPES)];
-        int32_t wienerRestoreFacBits[CDF_SIZE(2)];
-        int32_t sgrprojRestoreFacBits[CDF_SIZE(2)];
-        int32_t yModeFacBits[KF_MODE_CONTEXTS][KF_MODE_CONTEXTS][CDF_SIZE(INTRA_MODES)];
-        int32_t mbModeFacBits[BlockSize_GROUPS][CDF_SIZE(INTRA_MODES)];
-        int32_t intraUVmodeFacBits[CFL_ALLOWED_TYPES][INTRA_MODES][CDF_SIZE(UV_INTRA_MODES)];
-        int32_t angleDeltaFacBits[DIRECTIONAL_MODES][CDF_SIZE(2 * MAX_ANGLE_DELTA + 1)];
-        int32_t cflAlphaFacBits[CFL_JOINT_SIGNS][CFL_PRED_PLANES][CFL_ALPHABET_SIZE];
+        int32_t intrabc_fac_bits[CDF_SIZE(2)];
+        int32_t intra_inter_fac_bits[INTRA_INTER_CONTEXTS][2];
+        int32_t filter_intra_fac_bits[BlockSizeS_ALL][CDF_SIZE(2)];
+        int32_t filter_intra_mode_fac_bits[CDF_SIZE(FILTER_INTRA_MODES)];
+        int32_t switchable_restore_fac_bits[CDF_SIZE(RESTORE_SWITCHABLE_TYPES)];
+        int32_t wiener_restore_fac_bits[CDF_SIZE(2)];
+        int32_t sgrproj_restore_fac_bits[CDF_SIZE(2)];
+        int32_t y_mode_fac_bits[KF_MODE_CONTEXTS][KF_MODE_CONTEXTS][CDF_SIZE(INTRA_MODES)];
+        int32_t mb_mode_fac_bits[BlockSize_GROUPS][CDF_SIZE(INTRA_MODES)];
+        int32_t intra_uv_mode_fac_bits[CFL_ALLOWED_TYPES][INTRA_MODES][CDF_SIZE(UV_INTRA_MODES)];
+        int32_t angle_delta_fac_bits[DIRECTIONAL_MODES][CDF_SIZE(2 * MAX_ANGLE_DELTA + 1)];
+        int32_t cfl_alpha_fac_bits[CFL_JOINT_SIGNS][CFL_PRED_PLANES][CFL_ALPHABET_SIZE];
 
         // Palette Mode
-        int32_t paletteYsizeFacBits[PALATTE_BSIZE_CTXS][CDF_SIZE(PALETTE_SIZES)];
-        int32_t paletteUVsizeFacBits[PALATTE_BSIZE_CTXS][CDF_SIZE(PALETTE_SIZES)];
-        int32_t paletteYcolorFacBitss[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS][CDF_SIZE(PALETTE_COLORS)];
-        int32_t paletteUVcolorFacBits[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS][CDF_SIZE(PALETTE_COLORS)];
-        int32_t paletteYmodeFacBits[PALATTE_BSIZE_CTXS][PALETTE_Y_MODE_CONTEXTS][CDF_SIZE(2)];
-        int32_t paletteUVmodeFacBits[PALETTE_UV_MODE_CONTEXTS][CDF_SIZE(2)];
+        int32_t palette_ysize_fac_bits[PALATTE_BSIZE_CTXS][CDF_SIZE(PALETTE_SIZES)];
+        int32_t palette_uv_size_fac_bits[PALATTE_BSIZE_CTXS][CDF_SIZE(PALETTE_SIZES)];
+        int32_t palette_ycolor_fac_bitss[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS][CDF_SIZE(PALETTE_COLORS)];
+        int32_t palette_uv_color_fac_bits[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS][CDF_SIZE(PALETTE_COLORS)];
+        int32_t palette_ymode_fac_bits[PALATTE_BSIZE_CTXS][PALETTE_Y_MODE_CONTEXTS][CDF_SIZE(2)];
+        int32_t palette_uv_mode_fac_bits[PALETTE_UV_MODE_CONTEXTS][CDF_SIZE(2)];
 
         // Tx and Coeff Rate Estimation
-        LV_MAP_COEFF_COST coeffFacBits[TX_SIZES][PLANE_TYPES];
-        LV_MAP_EOB_COST eobFracBits[7][2];
-        int32_t txfmPartitionFacBits[TXFM_PARTITION_CONTEXTS][CDF_SIZE(2)];
-        int32_t skipFacBits[SKIP_CONTEXTS][CDF_SIZE(2)];
-        int32_t txSizeFacBits[MAX_TX_CATS][TX_SIZE_CONTEXTS][CDF_SIZE(MAX_TX_DEPTH + 1)];
-        int32_t intraTxTypeFacBits[EXT_TX_SETS_INTRA][EXT_TX_SIZES][INTRA_MODES][CDF_SIZE(TX_TYPES)];
-        int32_t interTxTypeFacBits[EXT_TX_SETS_INTER][EXT_TX_SIZES][CDF_SIZE(TX_TYPES)];
-        int32_t switchable_interp_FacBitss[SWITCHABLE_FILTER_CONTEXTS][SWITCHABLE_FILTERS];
+        LvMapCoeffCost coeff_fac_bits[TX_SIZES][PLANE_TYPES];
+        LvMapEobCost eob_frac_bits[7][2];
+        int32_t txfm_partition_fac_bits[TXFM_PARTITION_CONTEXTS][CDF_SIZE(2)];
+        int32_t skip_fac_bits[SKIP_CONTEXTS][CDF_SIZE(2)];
+        int32_t tx_size_fac_bits[MAX_TX_CATS][TX_SIZE_CONTEXTS][CDF_SIZE(MAX_TX_DEPTH + 1)];
+        int32_t intra_tx_type_fac_bits[EXT_TX_SETS_INTRA][EXT_TX_SIZES][INTRA_MODES][CDF_SIZE(TX_TYPES)];
+        int32_t inter_tx_type_fac_bits[EXT_TX_SETS_INTER][EXT_TX_SIZES][CDF_SIZE(TX_TYPES)];
+        int32_t switchable_interp_fac_bitss[SWITCHABLE_FILTER_CONTEXTS][SWITCHABLE_FILTERS];
         int32_t initialized;
 
-    } MdRateEstimationContext_t;
+    } MdRateEstimationContext;
 
     /**************************************
     * Extern Function Declarations
     **************************************/
-    extern EbErrorType MdRateEstimationContextCtor(MdRateEstimationContext_t *md_rate_estimation_array);
+    extern EbErrorType md_rate_estimation_context_ctor(MdRateEstimationContext *md_rate_estimation_array);
     /***************************************************************************
     * AV1 Probability table
     * // round(-log2(i/256.) * (1 << AV1_PROB_COST_SHIFT)); i = 128~255.
@@ -184,10 +186,11 @@ extern "C" {
         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
     };
 
-    typedef uint8_t *wedge_masks_type[MAX_WEDGE_TYPES];
-    static wedge_masks_type wedge_masks[BlockSizeS_ALL][2];
+    typedef uint8_t *WedgeMasksType[MAX_WEDGE_TYPES];
+    static WedgeMasksType wedge_masks[BlockSizeS_ALL][2];
     // Angles are with respect to horizontal anti-clockwise
-    typedef enum {
+    typedef enum WedgeDirectionType 
+    {
         WEDGE_HORIZONTAL = 0,
         WEDGE_VERTICAL = 1,
         WEDGE_OBLIQUE27 = 2,
@@ -197,20 +200,22 @@ extern "C" {
         WEDGE_DIRECTIONS
     } WedgeDirectionType;
     // 3-tuple: {direction, x_offset, y_offset}
-    typedef struct {
+    typedef struct WedgeCodeType 
+    {
         WedgeDirectionType direction;
         int32_t x_offset;
         int32_t y_offset;
-    } wedge_code_type;
+    } WedgeCodeType;
 
-    typedef struct {
+    typedef struct WedgeParamsType 
+    {
         int32_t bits;
-        const wedge_code_type *codebook;
+        const WedgeCodeType *codebook;
         uint8_t *signflip;
-        wedge_masks_type *masks;
-    } wedge_params_type;
+        WedgeMasksType *masks;
+    } WedgeParamsType;
 
-    static const wedge_code_type wedge_codebook_16_hgtw[16] = {
+    static const WedgeCodeType wedge_codebook_16_hgtw[16] = {
         { WEDGE_OBLIQUE27, 4, 4 }, { WEDGE_OBLIQUE63, 4, 4 },
         { WEDGE_OBLIQUE117, 4, 4 }, { WEDGE_OBLIQUE153, 4, 4 },
         { WEDGE_HORIZONTAL, 4, 2 }, { WEDGE_HORIZONTAL, 4, 4 },
@@ -221,7 +226,7 @@ extern "C" {
         { WEDGE_OBLIQUE117, 2, 4 }, { WEDGE_OBLIQUE117, 6, 4 },
     };
 
-    static const wedge_code_type wedge_codebook_16_hltw[16] = {
+    static const WedgeCodeType wedge_codebook_16_hltw[16] = {
         { WEDGE_OBLIQUE27, 4, 4 }, { WEDGE_OBLIQUE63, 4, 4 },
         { WEDGE_OBLIQUE117, 4, 4 }, { WEDGE_OBLIQUE153, 4, 4 },
         { WEDGE_VERTICAL, 2, 4 }, { WEDGE_VERTICAL, 4, 4 },
@@ -232,7 +237,7 @@ extern "C" {
         { WEDGE_OBLIQUE117, 2, 4 }, { WEDGE_OBLIQUE117, 6, 4 },
     };
 
-    static const wedge_code_type wedge_codebook_16_heqw[16] = {
+    static const WedgeCodeType wedge_codebook_16_heqw[16] = {
         { WEDGE_OBLIQUE27, 4, 4 }, { WEDGE_OBLIQUE63, 4, 4 },
         { WEDGE_OBLIQUE117, 4, 4 }, { WEDGE_OBLIQUE153, 4, 4 },
         { WEDGE_HORIZONTAL, 4, 2 }, { WEDGE_HORIZONTAL, 4, 6 },
@@ -243,7 +248,7 @@ extern "C" {
         { WEDGE_OBLIQUE117, 2, 4 }, { WEDGE_OBLIQUE117, 6, 4 },
     };
 
-    static const wedge_params_type wedge_params_lookup[BlockSizeS_ALL] = {
+    static const WedgeParamsType wedge_params_lookup[BlockSizeS_ALL] = {
         { 0, NULL, NULL, NULL },
         { 0, NULL, NULL, NULL },
         { 0, NULL, NULL, NULL },
@@ -297,14 +302,14 @@ extern "C" {
     ***************************************************************************/
     extern void av1_get_syntax_rate_from_cdf(
         int32_t                        *costs,
-        const aom_cdf_prob             *cdf,
+        const AomCdfProb             *cdf,
         const int32_t                  *inv_map);
     /**************************************************************************
     * Estimate the rate for each syntax elements and for
     * all scenarios based on the frame CDF
     ***************************************************************************/
     extern void av1_estimate_syntax_rate(
-        MdRateEstimationContext_t      *md_rate_estimation_array,
+        MdRateEstimationContext      *md_rate_estimation_array,
         EbBool                          is_i_slice,
         FRAME_CONTEXT                  *fc);
     /**************************************************************************
@@ -312,7 +317,7 @@ extern "C" {
     * based on the frame CDF
     ***************************************************************************/
     extern void av1_estimate_coefficients_rate(
-        MdRateEstimationContext_t  *md_rate_estimation_array,
+        MdRateEstimationContext  *md_rate_estimation_array,
         FRAME_CONTEXT              *fc);
     /**************************************************************************
     * av1_estimate_mv_rate()
@@ -320,9 +325,9 @@ extern "C" {
     * based on the frame CDF
     ***************************************************************************/
     extern void av1_estimate_mv_rate(
-        struct PictureControlSet_s     *picture_control_set_ptr,
-        MdRateEstimationContext_t  *md_rate_estimation_array,
-        nmv_context                *nmv_ctx);
+        struct PictureControlSet     *picture_control_set_ptr,
+        MdRateEstimationContext  *md_rate_estimation_array,
+        NmvContext                *nmv_ctx);
 
 
 #ifdef __cplusplus

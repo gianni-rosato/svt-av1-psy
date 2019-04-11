@@ -18,7 +18,7 @@
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 
-void av1_txb_init_levels_avx2(const tran_low_t *const coeff, const int32_t width,
+void av1_txb_init_levels_avx2(const TranLow *const coeff, const int32_t width,
     const int32_t height, uint8_t *const levels) {
     const int32_t stride = width + TX_PAD_HOR;
   const __m256i y_zeros = _mm256_setzero_si256();
@@ -42,7 +42,7 @@ void av1_txb_init_levels_avx2(const tran_low_t *const coeff, const int32_t width
 
   int32_t i = 0;
   uint8_t *ls = levels;
-  const tran_low_t *cf = coeff;
+  const TranLow *cf = coeff;
   if (width == 4) {
     do {
       const __m256i c0 = yy_loadu_256(cf);

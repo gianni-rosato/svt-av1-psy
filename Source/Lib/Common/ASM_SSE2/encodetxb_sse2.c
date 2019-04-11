@@ -472,7 +472,7 @@ void av1_get_nz_map_contexts_sse2(
     const int16_t *const scan,
     const uint16_t eob,
     TxSize tx_size,
-    const TX_CLASS tx_class,
+    const TxClass tx_class,
     int8_t *const coeff_contexts
 ) {
 

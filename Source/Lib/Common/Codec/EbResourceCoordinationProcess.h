@@ -24,7 +24,7 @@ extern "C" {
         EbSequenceControlSetInstance     **sequence_control_set_instance_array;
         EbObjectWrapper                  **sequenceControlSetActiveArray;
         EbFifo                            *sequence_control_set_empty_fifo_ptr;
-        EbCallback_t                       **app_callback_ptr_array;
+        EbCallback                       **app_callback_ptr_array;
         
         // Compute Segments
         uint32_t                              *compute_segments_total_count_array;
@@ -69,7 +69,7 @@ extern "C" {
         EbFifo                       **picture_control_set_fifo_ptr_array,
         EbSequenceControlSetInstance **sequence_control_set_instance_array,
         EbFifo                        *sequence_control_set_empty_fifo_ptr,
-        EbCallback_t                   **app_callback_ptr_array,
+        EbCallback                   **app_callback_ptr_array,
         uint32_t                        *compute_segments_total_count_array,
         uint32_t                         encode_instances_total_count);
 

@@ -7,12 +7,12 @@
 #include "EbDefinitions.h"
 #include "EbEncDecResults.h"
 
-EbErrorType EncDecResultsCtor(
+EbErrorType enc_dec_results_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    EncDecResults_t *context_ptr;
-    EB_MALLOC(EncDecResults_t*, context_ptr, sizeof(EncDecResults_t), EB_N_PTR);
+    EncDecResults *context_ptr;
+    EB_MALLOC(EncDecResults*, context_ptr, sizeof(EncDecResults), EB_N_PTR);
 
     *object_dbl_ptr = (EbPtr)context_ptr;
 

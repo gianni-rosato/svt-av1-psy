@@ -23,7 +23,7 @@
 
 int av1_is_dv_valid(const MV dv,
     const MacroBlockD *xd, int mi_row, int mi_col,
-    block_size bsize, int mib_size_log2);
+    BlockSize bsize, int mib_size_log2);
 
 void clamp_mv(
     MV *mv,
@@ -141,7 +141,7 @@ void init_fn_ptr(void)
 
 // #define NEW_DIAMOND_SEARCH
 
-static INLINE const uint8_t *get_buf_from_mv(const struct buf_2d *buf,
+static INLINE const uint8_t *get_buf_from_mv(const struct Buf2D *buf,
                                              const MV *mv) {
   return &buf->buf[mv->row * buf->stride + mv->col];
 }
@@ -167,7 +167,7 @@ void av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv) {
 
 
 
-MV_JOINT_TYPE av1_get_mv_joint(const MV *mv);
+MvJointType av1_get_mv_joint(const MV *mv);
 
 static INLINE int mv_cost(const MV *mv, const int *joint_cost,
                           int *const comp_cost[2]) {
@@ -253,8 +253,8 @@ int av1_get_mvpred_var(const IntraBcContext *x, const MV *best_mv,
                        const MV *center_mv, const aom_variance_fn_ptr_t *vfp,
                        int use_mvcost) {
    
-  const struct buf_2d *const what = &x->plane[0].src;
-  const struct buf_2d *const in_what = &x->xdplane[0].pre[0];
+  const struct Buf2D *const what = &x->plane[0].src;
+  const struct Buf2D *const in_what = &x->xdplane[0].pre[0];
   const MV mv = { best_mv->row * 8, best_mv->col * 8 };
   unsigned int unused;
 
@@ -272,8 +272,8 @@ static int exhuastive_mesh_search(IntraBcContext  *x, MV *ref_mv, MV *best_mv,
                                   const aom_variance_fn_ptr_t *fn_ptr,
                                   const MV *center_mv) {
    
-  const struct buf_2d *const what = &x->plane[0].src;
-  const struct buf_2d *const in_what = &x->xdplane[0].pre[0];
+  const struct Buf2D *const what = &x->plane[0].src;
+  const struct Buf2D *const in_what = &x->xdplane[0].pre[0];
   MV fcenter_mv = { center_mv->row, center_mv->col };
   unsigned int best_sad = INT_MAX;
   int r, c, i;
@@ -505,7 +505,7 @@ int av1_diamond_search_sad_c(IntraBcContext  *x, const search_site_config *cfg,
 /* do_refine: If last step (1-away) of n-step search doesn't pick the center
               point as the best match, we will do a final 1-away diamond
               refining search  */
-static int full_pixel_diamond(PictureControlSet_t *pcs, IntraBcContext /*MACROBLOCK*/ *x,
+static int full_pixel_diamond(PictureControlSet *pcs, IntraBcContext /*MACROBLOCK*/ *x,
                               MV *mvp_full, int step_param, int sadpb,
                               int further_steps, int do_refine, int *cost_list,
                               const aom_variance_fn_ptr_t *fn_ptr,
@@ -578,13 +578,13 @@ static int full_pixel_diamond(PictureControlSet_t *pcs, IntraBcContext /*MACROBL
 #define MIN_INTERVAL 1
 // Runs an limited range exhaustive mesh search using a pattern set
 // according to the encode speed profile.
-static int full_pixel_exhaustive(PictureControlSet_t *pcs, IntraBcContext  *x,
+static int full_pixel_exhaustive(PictureControlSet *pcs, IntraBcContext  *x,
                                  const MV *centre_mv_full, int sadpb,
                                  int *cost_list,
                                  const aom_variance_fn_ptr_t *fn_ptr,
                                  const MV *ref_mv, MV *dst_mv) {
     UNUSED(cost_list);
-    const SPEED_FEATURES *const sf = &pcs->sf;// cpi->sf;
+    const SpeedFeatures *const sf = &pcs->sf;// cpi->sf;
   MV temp_mv = { centre_mv_full->row, centre_mv_full->col };
   MV f_ref_mv = { ref_mv->row >> 3, ref_mv->col >> 3 };
   int bestsme;
@@ -644,8 +644,8 @@ int av1_refining_search_sad(IntraBcContext  *x, MV *ref_mv, int error_per_bit,
                             const MV *center_mv) {
   
   const MV neighbors[4] = { { -1, 0 }, { 0, -1 }, { 0, 1 }, { 1, 0 } };
-  const struct buf_2d *const what = &x->plane[0].src;
-  const struct buf_2d *const in_what = &x->xdplane[0].pre[0];
+  const struct Buf2D *const what = &x->plane[0].src;
+  const struct Buf2D *const in_what = &x->xdplane[0].pre[0];
   const MV fcenter_mv = { center_mv->row >> 3, center_mv->col >> 3 };
   const uint8_t *best_address = get_buf_from_mv(in_what, ref_mv);
   unsigned int best_sad =
@@ -712,7 +712,7 @@ int av1_refining_search_sad(IntraBcContext  *x, MV *ref_mv, int error_per_bit,
   return best_sad;
 }
 
-int av1_full_pixel_search(PictureControlSet_t *pcs, IntraBcContext  *x, block_size bsize,
+int av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext  *x, BlockSize bsize,
                           MV *mvp_full, int step_param, int method,
                           int run_mesh_search, int error_per_bit,
                           int *cost_list, const MV *ref_mv, int var_max, int rd,
@@ -725,7 +725,7 @@ int av1_full_pixel_search(PictureControlSet_t *pcs, IntraBcContext  *x, block_si
     if (pcs->parent_pcs_ptr->ibc_mode > 0)
         ibc_shift = 1;
 
-    SPEED_FEATURES * sf = &pcs->sf;
+    SpeedFeatures * sf = &pcs->sf;
     sf->exhaustive_searches_thresh = (1 << 25);
   const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[bsize];
   int var = 0;

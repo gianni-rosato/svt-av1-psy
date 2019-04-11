@@ -61,7 +61,7 @@ EbErrorType eb_sequence_control_set_ctor(
         sequence_control_set_ptr->encode_context_ptr = scsInitData->encode_context_ptr;
     }
     else {
-        sequence_control_set_ptr->encode_context_ptr = (EncodeContext_t *)EB_NULL;
+        sequence_control_set_ptr->encode_context_ptr = (EncodeContext *)EB_NULL;
     }
 
     sequence_control_set_ptr->conformance_window_flag = 0;
@@ -245,7 +245,7 @@ EbErrorType copy_sequence_control_set(
     uint32_t  writeCount = 0;
 
     dst->static_config = src->static_config;                            writeCount += sizeof(EbSvtAv1EncConfiguration);
-    dst->encode_context_ptr = src->encode_context_ptr;                        writeCount += sizeof(EncodeContext_t*);
+    dst->encode_context_ptr = src->encode_context_ptr;                        writeCount += sizeof(EncodeContext*);
     dst->sps_id = src->sps_id;                                   writeCount += sizeof(uint32_t);
     dst->vps_id = src->vps_id;                                   writeCount += sizeof(uint32_t);
     dst->profile_space = src->profile_space;                            writeCount += sizeof(uint32_t);
@@ -278,7 +278,7 @@ EbErrorType copy_sequence_control_set(
     dst->encoder_bit_depth = src->encoder_bit_depth;                      writeCount += sizeof(uint32_t);
     dst->subsampling_x = src->subsampling_x;                writeCount += sizeof(uint16_t);
     dst->subsampling_y = src->subsampling_y;                writeCount += sizeof(uint16_t);
-    dst->pred_struct_ptr = src->pred_struct_ptr;                           writeCount += sizeof(PredictionStructure_t*);
+    dst->pred_struct_ptr = src->pred_struct_ptr;                           writeCount += sizeof(PredictionStructure*);
     dst->intra_period_length = src->intra_period_length;                       writeCount += sizeof(int32_t);
     dst->intra_refresh_type = src->intra_refresh_type;                        writeCount += sizeof(uint32_t);
     dst->max_ref_count = src->max_ref_count;                             writeCount += sizeof(uint32_t);
@@ -403,7 +403,7 @@ extern EbErrorType sb_params_ctor(
 
     EbErrorType return_error = EB_ErrorNone;
 
-    EB_MALLOC(SbParams_t*, sequence_control_set_ptr->sb_params_array, sizeof(SbParams_t) * ((MAX_PICTURE_WIDTH_SIZE + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz) * ((MAX_PICTURE_HEIGHT_SIZE + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz), EB_N_PTR);
+    EB_MALLOC(LcuParameters*, sequence_control_set_ptr->sb_params_array, sizeof(LcuParameters) * ((MAX_PICTURE_WIDTH_SIZE + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz) * ((MAX_PICTURE_HEIGHT_SIZE + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz), EB_N_PTR);
     return return_error;
 }
 
@@ -416,7 +416,7 @@ extern EbErrorType sb_params_init(
     uint16_t    md_scan_block_index;
     uint8_t   pictureLcuWidth = (uint8_t)((sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz);
     uint8_t    pictureLcuHeight = (uint8_t)((sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz);
-    EB_MALLOC(SbParams_t*, sequence_control_set_ptr->sb_params_array, sizeof(SbParams_t) * pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
+    EB_MALLOC(LcuParameters*, sequence_control_set_ptr->sb_params_array, sizeof(LcuParameters) * pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
 
     for (sb_index = 0; sb_index < pictureLcuWidth * pictureLcuHeight; ++sb_index) {
         sequence_control_set_ptr->sb_params_array[sb_index].horizontal_index = (uint8_t)(sb_index % pictureLcuWidth);
@@ -503,7 +503,7 @@ extern EbErrorType sb_params_init(
 
         for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_64x64; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_8x8_63; rasterScanCuIndex++) {
 
-            sequence_control_set_ptr->sb_params_array[sb_index].raster_scan_cu_validity[rasterScanCuIndex] = ((sequence_control_set_ptr->sb_params_array[sb_index].origin_x + RASTER_SCAN_CU_X[rasterScanCuIndex] + RASTER_SCAN_CU_SIZE[rasterScanCuIndex] > sequence_control_set_ptr->luma_width) || (sequence_control_set_ptr->sb_params_array[sb_index].origin_y + RASTER_SCAN_CU_Y[rasterScanCuIndex] + RASTER_SCAN_CU_SIZE[rasterScanCuIndex] > sequence_control_set_ptr->luma_height)) ?
+            sequence_control_set_ptr->sb_params_array[sb_index].raster_scan_cu_validity[rasterScanCuIndex] = ((sequence_control_set_ptr->sb_params_array[sb_index].origin_x + raster_scan_cu_x[rasterScanCuIndex] + raster_scan_cu_size[rasterScanCuIndex] > sequence_control_set_ptr->luma_width) || (sequence_control_set_ptr->sb_params_array[sb_index].origin_y + raster_scan_cu_y[rasterScanCuIndex] + raster_scan_cu_size[rasterScanCuIndex] > sequence_control_set_ptr->luma_height)) ?
                 EB_FALSE :
                 EB_TRUE;
         }
@@ -540,7 +540,7 @@ EbErrorType sb_geom_init(SequenceControlSet * sequence_control_set_ptr)
     uint16_t   pictureLcuWidth = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_size_pix - 1) / sequence_control_set_ptr->sb_size_pix;
     uint16_t    pictureLcuHeight = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_size_pix - 1) / sequence_control_set_ptr->sb_size_pix;
 
-    EB_MALLOC(SbGeom_t*, sequence_control_set_ptr->sb_geom, sizeof(SbGeom_t) * pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
+    EB_MALLOC(SbGeom*, sequence_control_set_ptr->sb_geom, sizeof(SbGeom) * pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
 
 
     for (sb_index = 0; sb_index < pictureLcuWidth * pictureLcuHeight; ++sb_index) {

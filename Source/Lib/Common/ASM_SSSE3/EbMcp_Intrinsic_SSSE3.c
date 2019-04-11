@@ -95,7 +95,7 @@ void PictureCopyKernel_SSSE3(
     uint32_t                   bytes_per_sample)
 {
 
-    uint32_t row_count, colCount;
+    uint32_t row_count, col_count;
     (void)bytes_per_sample;
 
 
@@ -171,7 +171,7 @@ void PictureCopyKernel_SSSE3(
         dst += 8;
     }
 
-    colCount = area_width;
+    col_count = area_width;
     do
     {
         EbByte ptr = src;
@@ -186,10 +186,10 @@ void PictureCopyKernel_SSSE3(
             _mm_storeu_si128((__m128i *)qtr, a1); qtr += dst_stride;
             row_count -= 2;
         } while (row_count != 0);
-        colCount -= 16;
+        col_count -= 16;
         src += 16;
         dst += 16;
-    } while (colCount != 0);
+    } while (col_count != 0);
 }
 
 void chroma_interpolation_copy_ssse3(
@@ -224,7 +224,7 @@ void luma_interpolation_copy_ssse3(
 
 void LumaInterpolationFilterTwoDInRaw7_SSSE3(int16_t *first_pass_if_dst, EbByte dst, uint32_t dst_stride, uint32_t pu_width, uint32_t pu_height, uint32_t frac_pos_y)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
     __m128i c0, c1, c2;
     __m128i a0, a1, a2, a3, a4, a5, a6;
     __m128i sum0, sum1;
@@ -295,7 +295,7 @@ void LumaInterpolationFilterTwoDInRaw7_SSSE3(int16_t *first_pass_if_dst, EbByte 
         dst += 4;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         EbByte qtr = dst;
@@ -334,13 +334,13 @@ void LumaInterpolationFilterTwoDInRaw7_SSSE3(int16_t *first_pass_if_dst, EbByte 
 
         first_pass_if_dst += (frac_pos_y == 2) ? 56 : 48;
         dst += 8;
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 void LumaInterpolationFilterTwoDInRawOutRaw7_SSSE3(int16_t *first_pass_if_dst, int16_t *dst, uint32_t pu_width, uint32_t pu_height, uint32_t frac_pos_y)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
 
     __m128i a0, a1, a2, a3, a4, a5, a6;
     __m128i c0, c1, c2;
@@ -392,7 +392,7 @@ void LumaInterpolationFilterTwoDInRawOutRaw7_SSSE3(int16_t *first_pass_if_dst, i
         first_pass_if_dst += (frac_pos_y == 2) ? 32 : 24;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         row_count = pu_height;
@@ -436,13 +436,13 @@ void LumaInterpolationFilterTwoDInRawOutRaw7_SSSE3(int16_t *first_pass_if_dst, i
         } while (row_count > 0);
 
         first_pass_if_dst += (frac_pos_y == 2) ? 56 : 48;
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 void LumaInterpolationFilterTwoDInRawM_SSSE3(int16_t *first_pass_if_dst, EbByte dst, uint32_t dst_stride, uint32_t pu_width, uint32_t pu_height)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
 
     __m128i c0, c1;
     __m128i a0, a1, a2, a3, a4, a5, a6, a7;
@@ -505,7 +505,7 @@ void LumaInterpolationFilterTwoDInRawM_SSSE3(int16_t *first_pass_if_dst, EbByte 
         dst += 4;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         qtr = dst;
@@ -544,13 +544,13 @@ void LumaInterpolationFilterTwoDInRawM_SSSE3(int16_t *first_pass_if_dst, EbByte 
 
         first_pass_if_dst += 56;
         dst += 8;
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 void LumaInterpolationFilterTwoDInRawOutRawM_SSSE3(int16_t *first_pass_if_dst, int16_t *dst, uint32_t pu_width, uint32_t pu_height)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
 
     __m128i a0, a1, a2, a3, a4, a5, a6, a7;
     __m128i c0, c1;
@@ -602,7 +602,7 @@ void LumaInterpolationFilterTwoDInRawOutRawM_SSSE3(int16_t *first_pass_if_dst, i
         first_pass_if_dst += 32;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         row_count = pu_height;
@@ -637,8 +637,8 @@ void LumaInterpolationFilterTwoDInRawOutRawM_SSSE3(int16_t *first_pass_if_dst, i
         } while (--row_count > 0);
 
         first_pass_if_dst += 56;
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 void PictureCopyKernelOutRaw_SSSE3(
@@ -650,7 +650,7 @@ void PictureCopyKernelOutRaw_SSSE3(
     int16_t                   offset)
 {
 
-    uint32_t row_count, colCount;
+    uint32_t row_count, col_count;
     __m128i o;
 
     PrefetchBlock(ref_pic, src_stride, pu_width, pu_height);
@@ -717,7 +717,7 @@ void PictureCopyKernelOutRaw_SSSE3(
         ref_pic += 4;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         __m128i a0;
@@ -733,9 +733,9 @@ void PictureCopyKernelOutRaw_SSSE3(
             dst += 8;
         } while (--row_count != 0);
 
-        colCount -= 8;
+        col_count -= 8;
         ref_pic += 8;
-    } while (colCount != 0);
+    } while (col_count != 0);
 }
 
 void chroma_interpolation_copy_out_raw_ssse3(
@@ -755,7 +755,7 @@ void chroma_interpolation_copy_out_raw_ssse3(
 }
 void ChromaInterpolationFilterTwoDInRaw_SSSE3(int16_t *first_pass_if_dst, EbByte dst, uint32_t dst_stride, uint32_t pu_width, uint32_t pu_height, uint32_t frac_pos_y)
 {
-    uint32_t row_count, colCount;
+    uint32_t row_count, col_count;
     __m128i c0, c1; // coeffs
     __m128i offset;
     EbByte qtr;
@@ -856,7 +856,7 @@ void ChromaInterpolationFilterTwoDInRaw_SSSE3(int16_t *first_pass_if_dst, EbByte
         dst += 4;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         qtr = dst;
@@ -893,9 +893,9 @@ void ChromaInterpolationFilterTwoDInRaw_SSSE3(int16_t *first_pass_if_dst, EbByte
         } while (--row_count != 0);
 
         first_pass_if_dst += 24;
-        colCount -= 8;
+        col_count -= 8;
         dst += 8;
-    } while (colCount != 0);
+    } while (col_count != 0);
 }
 
 
@@ -910,7 +910,7 @@ void chroma_interpolation_filter_one_d_horizontal_ssse3(
     uint32_t                frac_pos_x,
     uint32_t                frac_pos_y)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
     __m128i c0, c2; // coeffs
     __m128i a0, a1, a2, a3;
     __m128i b0, b1;
@@ -1014,7 +1014,7 @@ void chroma_interpolation_filter_one_d_horizontal_ssse3(
         dst += 4;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         row_count = pu_height;
@@ -1038,8 +1038,8 @@ void chroma_interpolation_filter_one_d_horizontal_ssse3(
 
         ref_pic += 8;
         dst += 8;
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 
@@ -1053,7 +1053,7 @@ void chroma_interpolation_filter_one_d_out_raw_horizontal_ssse3(
     uint32_t                frac_pos_x,
     uint32_t                frac_pos_y)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
     __m128i c0, c2; // coeffs
     __m128i a0, a1, a2, a3;
     __m128i b0, b1;
@@ -1140,7 +1140,7 @@ void chroma_interpolation_filter_one_d_out_raw_horizontal_ssse3(
     }
 
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         ptr = ref_pic;
@@ -1158,9 +1158,9 @@ void chroma_interpolation_filter_one_d_out_raw_horizontal_ssse3(
             dst += 8;
         } while (--row_count > 0);
 
-        colCount -= 8;
+        col_count -= 8;
         ref_pic += 8;
-    } while (colCount > 0);
+    } while (col_count > 0);
 }
 
 
@@ -1176,7 +1176,7 @@ void chroma_interpolation_filter_one_d_vertical_ssse3(
     uint32_t                frac_pos_x,
     uint32_t                frac_pos_y)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
     __m128i c0, c2; // coeffs
     __m128i a0, a1, a2, a3;
     __m128i b0, b1, b2, b3;
@@ -1280,7 +1280,7 @@ void chroma_interpolation_filter_one_d_vertical_ssse3(
         dst += 4;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         row_count = pu_height;
@@ -1311,8 +1311,8 @@ void chroma_interpolation_filter_one_d_vertical_ssse3(
 
         ref_pic += 8;
         dst += 8;
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 
@@ -1326,7 +1326,7 @@ void chroma_interpolation_filter_one_d_out_raw_vertical_ssse3(
     uint32_t                frac_pos_x,
     uint32_t                frac_pos_y)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
     __m128i c0, c2; // coeffs
     __m128i a0, a1, a2, a3;
     __m128i b0, b1, b2, b3;
@@ -1416,7 +1416,7 @@ void chroma_interpolation_filter_one_d_out_raw_vertical_ssse3(
         ref_pic += 4;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         row_count = pu_height;
@@ -1440,8 +1440,8 @@ void chroma_interpolation_filter_one_d_out_raw_vertical_ssse3(
         } while (--row_count > 0);
 
         ref_pic += 8;
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 
@@ -1463,7 +1463,7 @@ void chroma_interpolation_filter_two_d_ssse3(
 
 void ChromaInterpolationFilterTwoDInRawOutRaw_SSSE3(int16_t *first_pass_if_dst, int16_t *dst, uint32_t pu_width, uint32_t pu_height, uint32_t frac_pos_y)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
     __m128i c0, c1; // coeffs
 
     c0 = _mm_loadl_epi64((__m128i *)chromaFilterCoeff[frac_pos_y]);
@@ -1547,7 +1547,7 @@ void ChromaInterpolationFilterTwoDInRawOutRaw_SSSE3(int16_t *first_pass_if_dst, 
         first_pass_if_dst += 16;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         __m128i a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0 * 8));
@@ -1581,8 +1581,8 @@ void ChromaInterpolationFilterTwoDInRawOutRaw_SSSE3(int16_t *first_pass_if_dst, 
         } while (--row_count > 0);
 
         first_pass_if_dst += 24;
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 
@@ -1611,7 +1611,7 @@ void LumaInterpolationFilterOneDHorizontal_SSSE3(
     uint32_t                pu_height,
     uint32_t                frac_pos_x)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
     __m128i c0, c1, c2, c3; // coeffs
     __m128i a0, a1;
     __m128i b0;
@@ -1668,7 +1668,7 @@ void LumaInterpolationFilterOneDHorizontal_SSSE3(
         dst += 4;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         EbByte ptr = ref_pic;
@@ -1693,8 +1693,8 @@ void LumaInterpolationFilterOneDHorizontal_SSSE3(
         ref_pic += 8;
         dst += 8;
 
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 void LumaInterpolationFilterOneDOutRawHorizontal_SSSE3(
@@ -1705,7 +1705,7 @@ void LumaInterpolationFilterOneDOutRawHorizontal_SSSE3(
     uint32_t                pu_height,
     uint32_t                frac_pos_x)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
     __m128i c0, c1, c2, c3; // coeffs
     __m128i a0, a1;
     __m128i b0;
@@ -1759,7 +1759,7 @@ void LumaInterpolationFilterOneDOutRawHorizontal_SSSE3(
         ref_pic += 4;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         ptr = ref_pic;
@@ -1780,8 +1780,8 @@ void LumaInterpolationFilterOneDOutRawHorizontal_SSSE3(
         } while (--row_count > 0);
 
         ref_pic += 8;
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 void LumaInterpolationFilterOneDVertical_SSSE3(
@@ -1793,7 +1793,7 @@ void LumaInterpolationFilterOneDVertical_SSSE3(
     uint32_t                pu_height,
     uint32_t                frac_pos_x)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
     __m128i c0, c1, c2, c3; // coeffs
     __m128i a0, a1, a2, a3, a4, a5, a6, a7, a8;
     __m128i b0, b1, b2, b3, b4, b5, b6, b7;
@@ -1865,7 +1865,7 @@ void LumaInterpolationFilterOneDVertical_SSSE3(
         dst += 4;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         EbByte ptr = ref_pic;
@@ -1926,8 +1926,8 @@ void LumaInterpolationFilterOneDVertical_SSSE3(
         ref_pic += 8;
         dst += 8;
 
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 void LumaInterpolationFilterOneDOutRawVertical_SSSE3(
@@ -1938,7 +1938,7 @@ void LumaInterpolationFilterOneDOutRawVertical_SSSE3(
     uint32_t                pu_height,
     uint32_t                frac_pos_x)
 {
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
     __m128i c0, c1, c2, c3; // coeffs
     __m128i a0, a1, a2, a3, a4, a5, a6, a7, a8;
     __m128i b0, b1, b2, b3, b4, b5, b6, b7;
@@ -2007,7 +2007,7 @@ void LumaInterpolationFilterOneDOutRawVertical_SSSE3(
         ref_pic += 4;
     }
 
-    colCount = pu_width;
+    col_count = pu_width;
     do
     {
         ptr = ref_pic;
@@ -2062,8 +2062,8 @@ void LumaInterpolationFilterOneDOutRawVertical_SSSE3(
         } while (row_count > 0);
 
         ref_pic += 8;
-        colCount -= 8;
-    } while (colCount > 0);
+        col_count -= 8;
+    } while (col_count > 0);
 }
 
 

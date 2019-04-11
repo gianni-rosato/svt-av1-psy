@@ -13,35 +13,36 @@ extern "C" {
 #endif
 #pragma pack(push, 1)
 
-    typedef union {
+    typedef union Mv 
+    {
         struct
         {
             signed short x;
             signed short y;
         };
-        uint32_t mvUnion;
-    } Mv_t;
+        uint32_t mv_union;
+    } Mv;
 
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-    typedef struct
+    typedef struct Mvd
     {
-        signed   mvdX : 16;
-        signed   mvdY : 16;
-        unsigned refIdx : 1;
+        signed   mvd_x : 16;
+        signed   mvd_y : 16;
+        unsigned ref_idx : 1;
         unsigned : 7;
-        unsigned predIdx : 1;
+        unsigned pred_idx : 1;
         unsigned : 7;
 
-    } Mvd_t;
+    } Mvd;
 #pragma pack(pop)
 
-    typedef struct
+    typedef struct MvUnit
     {
-        Mv_t            mv[MAX_NUM_OF_REF_PIC_LIST];
-        uint8_t         predDirection;
-    } MvUnit_t;
+        Mv      mv[MAX_NUM_OF_REF_PIC_LIST];
+        uint8_t pred_direction;
+    } MvUnit;
 
 #ifdef __cplusplus
 }

@@ -18,8 +18,8 @@ extern "C" {
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
 
-    struct yv12_buffer_config;
-    struct AV1_COMP;
+    struct Yv12BufferConfig;
+    struct Av1Comp;
 
     static const uint8_t g_shuffle_stats_data[16] = {
         0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8,

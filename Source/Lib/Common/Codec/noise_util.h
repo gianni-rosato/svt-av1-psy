@@ -34,7 +34,7 @@ extern "C" {
         const float *data);
 
     // Filters aom_noise_tx's internal data using the provided noise power spectral
-    // density. The PSD must be at least block_size * block_size and should be
+    // density. The PSD must be at least BlockSize * BlockSize and should be
     // populated with a constant or via estimates taken from
     // aom_noise_tx_add_energy.
     void aom_noise_tx_filter(struct aom_noise_tx_t *aom_noise_tx, const float *psd);
@@ -45,7 +45,7 @@ extern "C" {
     void aom_noise_tx_inverse(struct aom_noise_tx_t *aom_noise_tx, float *data);
 
     // Returns a default value suitable for denosing a transform of the given
-    // block_size. The noise "factor" determines the strength of the noise to
+    // BlockSize. The noise "factor" determines the strength of the noise to
     // be removed. A value of about 2.5 can be used for moderate denoising,
     // where a value of 5.0 can be used for a high level of denoising.
     float aom_noise_psd_get_default_value(int32_t block_size, float factor);

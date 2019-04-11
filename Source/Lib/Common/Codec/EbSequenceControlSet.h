@@ -36,7 +36,7 @@ extern "C" {
         EbSvtAv1EncConfiguration                static_config;
 
         // Encoding Context
-        EncodeContext_t                        *encode_context_ptr;
+        EncodeContext                        *encode_context_ptr;
 
         // Profile & ID
         uint32_t                                sps_id;
@@ -84,7 +84,7 @@ extern "C" {
         // Group of Pictures (GOP) Structure
         uint32_t                                max_ref_count;            // Maximum number of reference pictures, however each pred
                                                             //   entry can be less.
-        PredictionStructure_t                  *pred_struct_ptr;
+        PredictionStructure                  *pred_struct_ptr;
         int32_t                                 intra_period_length;      // The frequency of intra pictures
         uint32_t                                intra_refresh_type;       // 1: CRA, 2: IDR
 
@@ -166,14 +166,14 @@ extern "C" {
         uint32_t                                total_process_init_count;
         
         uint16_t                                film_grain_random_seed;
-        SbParams_t                             *sb_params_array;
+        LcuParameters                             *sb_params_array;
         uint8_t                                 picture_width_in_sb;
         uint8_t                                 picture_height_in_sb;
         uint16_t                                sb_total_count;
         uint16_t                                sb_size_pix;  //sb size in pixels 64/128
         uint16_t                                sb_tot_cnt;   // sb total number
         uint16_t                                max_block_cnt;
-        SbGeom_t                               *sb_geom;
+        SbGeom                               *sb_geom;
 
         EbInputResolution                       input_resolution;
         EbScdMode                               scd_mode;
@@ -186,7 +186,7 @@ extern "C" {
         int32_t                                 frame_id_numbers_present_flag;
         int32_t                                 frame_id_length;
         int32_t                                 delta_frame_id_length;
-        block_size                               sb_size;                            // Size of the superblock used for this frame
+        BlockSize                               sb_size;                            // Size of the superblock used for this frame
         int32_t                                 mib_size;                           // Size of the superblock in units of MI blocks
         int32_t                                 mib_size_log2;                      // Log 2 of above.
         int32_t                                 order_hint_bits_minus1;
@@ -248,13 +248,13 @@ extern "C" {
 
     typedef struct EbSequenceControlSetInitData
     {
-        EncodeContext_t            *encode_context_ptr;
+        EncodeContext            *encode_context_ptr;
         int32_t                     sb_size;
     } EbSequenceControlSetInitData;
 
     typedef struct EbSequenceControlSetInstance
     {
-        EncodeContext_t            *encode_context_ptr;
+        EncodeContext            *encode_context_ptr;
         SequenceControlSet       *sequence_control_set_ptr;
         EbHandle                    config_mutex;
 

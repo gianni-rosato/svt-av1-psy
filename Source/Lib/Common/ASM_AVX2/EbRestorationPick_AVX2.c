@@ -28,7 +28,7 @@ void get_proj_subspace_avx2(const uint8_t *src8, int width, int height,
                             int dat_stride, int use_highbitdepth,
                             int32_t *flt0, int flt0_stride, int32_t *flt1,
                             int flt1_stride, int *xq,
-                            const sgr_params_type *params) {
+                            const SgrParamsType *params) {
   int i, j;
   double H[2][2] = { { 0, 0 }, { 0, 0 } };
   double C[2] = { 0, 0 };

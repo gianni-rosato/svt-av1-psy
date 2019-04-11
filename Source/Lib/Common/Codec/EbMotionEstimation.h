@@ -18,41 +18,34 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    extern EbErrorType MotionEstimateLcu(
-        PictureParentControlSet_t   *picture_control_set_ptr,
+    extern EbErrorType motion_estimate_lcu(
+        PictureParentControlSet   *picture_control_set_ptr,
         uint32_t                       sb_index,
         uint32_t                       sb_origin_x,
         uint32_t                       sb_origin_y,
-        MeContext_t                 *context_ptr,
-        EbPictureBufferDesc_t       *input_ptr);
+        MeContext                 *context_ptr,
+        EbPictureBufferDesc       *input_ptr);
 
-    extern EbErrorType OpenLoopIntraCandidateSearchLcu(
-        PictureParentControlSet_t   *picture_control_set_ptr,
-        uint32_t                       sb_index,
-        MotionEstimationContext_t   *context_ptr,
-        EbPictureBufferDesc_t       *input_ptr,
-        EbAsm                       asm_type);
-
-    extern void Decimation2D(
+    extern void decimation_2d(
         uint8_t                   *input_samples,
         uint32_t                   input_stride,
         uint32_t                   input_area_width,
         uint32_t                   input_area_height,
-        uint8_t                   *decimSamples,
-        uint32_t                   decimStride,
-        uint32_t                   decimStep);
+        uint8_t                   *decim_samples,
+        uint32_t                   decim_stride,
+        uint32_t                   decim_step);
 
     
     extern EbErrorType open_loop_intra_search_sb(
-        PictureParentControlSet_t   *picture_control_set_ptr,
+        PictureParentControlSet   *picture_control_set_ptr,
         uint32_t                       sb_index,
         MotionEstimationContext_t   *context_ptr,
-        EbPictureBufferDesc_t       *input_ptr,
+        EbPictureBufferDesc       *input_ptr,
         EbAsm                       asm_type);
 
 
 
-    int8_t Sort3Elements(uint32_t a, uint32_t b, uint32_t c);
+    int8_t sort_3_elements(uint32_t a, uint32_t b, uint32_t c);
 #define a_b_c  0
 #define a_c_b  1
 #define b_a_c  2
@@ -80,7 +73,7 @@ extern "C" {
 
 
 // Interpolation Filters
-    static const int32_t MeIFCoeff[3][4] = {
+    static const int32_t me_if_coeff[3][4] = {
         { -4, 54, 16, -2 }, // F0
         { -4, 36, 36, -4 }, // F1
         { -2, 16, 54, -4 }, // F2
@@ -175,7 +168,7 @@ extern "C" {
 
 
 
-    static const uint32_t partitionWidth[MAX_ME_PU_COUNT] = {
+    static const uint32_t partition_width[MAX_ME_PU_COUNT] = {
         64,                                                                          // (1)
         32, 32, 32, 32,                                                              // (4)
         16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,              // (16)
@@ -209,7 +202,7 @@ extern "C" {
 
 
 
-    static const uint32_t partitionHeight[MAX_ME_PU_COUNT] = {
+    static const uint32_t partition_height[MAX_ME_PU_COUNT] = {
         64,                                                                          // (1)
         32, 32, 32, 32,                                                              // (4)
         16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,              // (16)
@@ -241,7 +234,7 @@ extern "C" {
     };
 
 
-    static const uint32_t puSearchIndexMap[MAX_ME_PU_COUNT][2] = {
+    static const uint32_t pu_search_index_map[MAX_ME_PU_COUNT][2] = {
         { 0, 0 },
         { 0, 0 }, { 32, 0 }, { 0, 32 }, { 32, 32 },
 
@@ -1524,9 +1517,9 @@ extern "C" {
     );
 
 
-    static const uint8_t subPositionType[16] = { 0, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2 };
+    static const uint8_t sub_position_type[16] = { 0, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2 };
 
-    extern uint32_t Compute8x4SAD_Kernel(
+    extern uint32_t compute8x4_sad_kernel(
         uint8_t  *src,                            // input parameter, source samples Ptr
         uint32_t  src_stride,                      // input parameter, source stride
         uint8_t  *ref,                            // input parameter, reference samples Ptr

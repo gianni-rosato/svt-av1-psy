@@ -521,9 +521,9 @@ EbLinkedListNode* split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode
     return llTruePtr;
 }
 
-static const MiniGopStats_t MiniGopStatsArray[] = {
+static const MiniGopStats MiniGopStatsArray[] = {
 
-    //    hierarchical_levels    start_index    end_index    Lenght    miniGopIndex
+    //    hierarchical_levels    start_index    end_index    Lenght    mini_gop_index
     { 5,  0, 31, 32 },    // 0
     { 4,  0, 15, 16 },    // 1
     { 3,  0,  7,  8 },    // 2
@@ -544,9 +544,9 @@ static const MiniGopStats_t MiniGopStatsArray[] = {
 /**************************************************************
 * Get Mini GOP Statistics
 **************************************************************/
-const MiniGopStats_t* get_mini_gop_stats(const uint32_t miniGopIndex)
+const MiniGopStats* get_mini_gop_stats(const uint32_t mini_gop_index)
 {
-    return &MiniGopStatsArray[miniGopIndex];
+    return &MiniGopStatsArray[mini_gop_index];
 }
 
 
@@ -669,7 +669,7 @@ uint32_t ns_quarter_size_mult[9/*Up to 9 part*/][2/*h+v*/][4/*Up to 4 ns blocks 
 
 };
 
-block_size hvsize_to_bsize[/*H*/6][/*V*/6] =
+BlockSize hvsize_to_bsize[/*H*/6][/*V*/6] =
 {
     {  BLOCK_4X4,       BLOCK_4X8,     BLOCK_4X16,      BLOCK_INVALID,   BLOCK_INVALID,   BLOCK_INVALID      },
     {  BLOCK_8X4,       BLOCK_8X8,     BLOCK_8X16,      BLOCK_8X32,      BLOCK_INVALID,   BLOCK_INVALID      },
@@ -757,16 +757,16 @@ uint32_t search_matching_from_mds(
     return matched;
 
 }
-static INLINE TxSize av1_get_max_uv_txsize(block_size bsize, int32_t subsampling_x,
+static INLINE TxSize av1_get_max_uv_txsize(BlockSize bsize, int32_t subsampling_x,
     int32_t subsampling_y) {
-    const block_size plane_bsize =
+    const BlockSize plane_bsize =
         get_plane_block_size(bsize, subsampling_x, subsampling_y);
     assert(plane_bsize < BlockSizeS_ALL);
     const TxSize uv_tx = max_txsize_rect_lookup[plane_bsize];
     return av1_get_adjusted_tx_size(uv_tx);
 }
 static INLINE TxSize av1_get_tx_size(
-    block_size  sb_type,
+    BlockSize  sb_type,
     int32_t plane/*, const MacroBlockD *xd*/) {
     //const MbModeInfo *mbmi = xd->mi[0];
     // if (xd->lossless[mbmi->segment_id]) return TX_4X4;

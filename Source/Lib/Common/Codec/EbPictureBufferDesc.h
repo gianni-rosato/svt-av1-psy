@@ -26,50 +26,51 @@ extern "C" {
     /************************************
      * EbPictureBufferDesc
      ************************************/
-    typedef struct EbPictureBufferDesc_s
+    typedef struct EbPictureBufferDesc
     {
         // Buffer Ptrs
         EbByte         buffer_y;             // pointer to the Y luma buffer
-        EbByte         bufferCb;            // pointer to the U chroma buffer
-        EbByte         bufferCr;            // pointer to the V chroma buffer
+        EbByte         buffer_cb;            // pointer to the U chroma buffer
+        EbByte         buffer_cr;            // pointer to the V chroma buffer
         //Bit increment
-        EbByte         bufferBitIncY;       // pointer to the Y luma buffer Bit increment
-        EbByte         bufferBitIncCb;      // pointer to the U chroma buffer Bit increment
-        EbByte         bufferBitIncCr;      // pointer to the V chroma buffer Bit increment
+        EbByte         buffer_bit_inc_y;       // pointer to the Y luma buffer Bit increment
+        EbByte         buffer_bit_inc_cb;      // pointer to the U chroma buffer Bit increment
+        EbByte         buffer_bit_inc_cr;      // pointer to the V chroma buffer Bit increment
 
         uint16_t          stride_y;          // pointer to the Y luma buffer
-        uint16_t          strideCb;         // pointer to the U chroma buffer
-        uint16_t          strideCr;         // pointer to the V chroma buffer
+        uint16_t          stride_cb;         // pointer to the U chroma buffer
+        uint16_t          stride_cr;         // pointer to the V chroma buffer
 
-        uint16_t          strideBitIncY;    // pointer to the Y luma buffer Bit increment
-        uint16_t          strideBitIncCb;   // pointer to the U chroma buffer Bit increment
-        uint16_t          strideBitIncCr;   // pointer to the V chroma buffer Bit increment
+        uint16_t          stride_bit_inc_y;    // pointer to the Y luma buffer Bit increment
+        uint16_t          stride_bit_inc_cb;   // pointer to the U chroma buffer Bit increment
+        uint16_t          stride_bit_inc_cr;   // pointer to the V chroma buffer Bit increment
 
         // Picture Parameters
         uint16_t          origin_x;         // Horizontal padding distance
         uint16_t          origin_y;         // Vertical padding distance
         uint16_t          width;            // Luma picture width which excludes the padding
         uint16_t          height;           // Luma picture height which excludes the padding
-        uint16_t          maxWidth;         // input Luma picture width
-        uint16_t          maxHeight;        // input Luma picture height
-        EB_BITDEPTH       bit_depth;        // Pixel Bit Depth
+        uint16_t          max_width;        // input Luma picture width
+        uint16_t          max_height;       // input Luma picture height
+        EbBitDepthEnum    bit_depth;        // Pixel Bit Depth
         EbColorFormat     color_format;     // Chroma Subsumpling
 
         // Buffer Parameters
-        uint32_t          lumaSize;         // Size of the luma buffer
-        uint32_t          chromaSize;       // Size of the chroma buffers
+        uint32_t          luma_size;         // Size of the luma buffer
+        uint32_t          chroma_size;       // Size of the chroma buffers
         EbBool            packedFlag;       // Indicates if sample buffers are packed or not
 
         EbBool            film_grain_flag;  // Indicates if film grain parameters are present for the frame
 
-    } EbPictureBufferDesc_t;
+    } EbPictureBufferDesc;
 
 
 
 #define YV12_FLAG_HIGHBITDEPTH 8
 
     /*!\brief List of supported color primaries */
-    typedef enum aom_color_primaries {
+    typedef enum AomColorPrimaries 
+    {
         AOM_CICP_CP_RESERVED_0 = 0,  /**< For future use */
         AOM_CICP_CP_BT_709 = 1,      /**< BT.709 */
         AOM_CICP_CP_UNSPECIFIED = 2, /**< Unspecified */
@@ -87,10 +88,11 @@ extern "C" {
         AOM_CICP_CP_RESERVED_13 = 13, /**< For future use (values 13 - 21)  */
         AOM_CICP_CP_EBU_3213 = 22,    /**< EBU Tech. 3213-E  */
         AOM_CICP_CP_RESERVED_23 = 23  /**< For future use (values 23 - 255)  */
-    } aom_color_primaries_t;        /**< alias for enum aom_color_primaries */
+    } AomColorPrimaries;        /**< alias for enum AomColorPrimaries */
 
     /*!\brief List of supported transfer functions */
-    typedef enum aom_transfer_characteristics {
+    typedef enum AomTransferCharacteristics 
+    {
         AOM_CICP_TC_RESERVED_0 = 0,  /**< For future use */
         AOM_CICP_TC_BT_709 = 1,      /**< BT.709 */
         AOM_CICP_TC_UNSPECIFIED = 2, /**< Unspecified */
@@ -112,10 +114,11 @@ extern "C" {
         AOM_CICP_TC_SMPTE_428 = 17,      /**< SMPTE ST 428 */
         AOM_CICP_TC_HLG = 18,            /**< BT.2100 HLG, ARIB STD-B67 */
         AOM_CICP_TC_RESERVED_19 = 19     /**< For future use (values 19-255) */
-    } aom_transfer_characteristics_t;  /**< alias for enum aom_transfer_function */
+    } AomTransferCharacteristics;  /**< alias for enum aom_transfer_function */
 
     /*!\brief List of supported matrix coefficients */
-    typedef enum aom_matrix_coefficients {
+    typedef enum AomMatrixCoefficients 
+    {
         AOM_CICP_MC_IDENTITY = 0,    /**< Identity matrix */
         AOM_CICP_MC_BT_709 = 1,      /**< BT.709 */
         AOM_CICP_MC_UNSPECIFIED = 2, /**< Unspecified */
@@ -134,23 +137,27 @@ extern "C" {
         AOM_CICP_MC_CHROMAT_CL = 13, /**< Chromaticity-derived constant luminance */
         AOM_CICP_MC_ICTCP = 14,      /**< BT.2100 ICtCp */
         AOM_CICP_MC_RESERVED_15 = 15 /**< For future use (values 15-255)  */
-    } aom_matrix_coefficients_t;
+    } AomMatrixCoefficients;
 
     /*!\brief List of supported color range */
-    typedef enum aom_color_range {
+    typedef enum AomColorRange 
+    {
         AOM_CR_STUDIO_RANGE = 0, /**< Y [16..235], UV [16..240] */
         AOM_CR_FULL_RANGE = 1    /**< YUV/RGB [0..255] */
-    } aom_color_range_t;       /**< alias for enum aom_color_range */
+    } AomColorRange;       /**< alias for enum AomColorRange */
 
     /*!\brief List of chroma sample positions */
-    typedef enum aom_chroma_sample_position {
+    typedef enum AomChromaSamplePosition 
+    {
         AOM_CSP_UNKNOWN = 0,          /**< Unknown */
         AOM_CSP_VERTICAL = 1,         /**< Horizontally co-located with luma(0, 0)*/
         /**< sample, between two vertical samples */
         AOM_CSP_COLOCATED = 2,        /**< Co-located with luma(0, 0) sample */
         AOM_CSP_RESERVED = 3          /**< Reserved value */
-    } aom_chroma_sample_position_t; /**< alias for enum aom_transfer_function */
-    typedef struct yv12_buffer_config {
+    } AomChromaSamplePosition; /**< alias for enum aom_transfer_function */
+
+    typedef struct Yv12BufferConfig 
+    {
         union {
             struct {
                 int32_t y_width;
@@ -219,12 +226,12 @@ extern "C" {
         int32_t subsampling_x;
         int32_t subsampling_y;
         uint32_t bit_depth;
-        aom_color_primaries_t color_primaries;
-        aom_transfer_characteristics_t transfer_characteristics;
-        aom_matrix_coefficients_t matrix_coefficients;
+        AomColorPrimaries color_primaries;
+        AomTransferCharacteristics transfer_characteristics;
+        AomMatrixCoefficients matrix_coefficients;
         int32_t monochrome;
-        aom_chroma_sample_position_t chroma_sample_position;
-        aom_color_range_t color_range;
+        AomChromaSamplePosition chroma_sample_position;
+        AomColorRange color_range;
         int32_t render_width;
         int32_t render_height;
 
@@ -232,21 +239,22 @@ extern "C" {
         int32_t flags;
     } Yv12BufferConfig;
 
-    void LinkEbToAomBufferDesc(
-        EbPictureBufferDesc_t          *picBuffDsc,
+    void link_eb_to_aom_buffer_desc(
+        EbPictureBufferDesc          *picBuffDsc,
         Yv12BufferConfig             *aomBuffDsc
     );
 
     void link_Eb_to_aom_buffer_desc_8bit(
-        EbPictureBufferDesc_t          *picBuffDsc,
+        EbPictureBufferDesc          *picBuffDsc,
         Yv12BufferConfig             *aomBuffDsc
     );
 
-    typedef struct aom_codec_frame_buffer {
+    typedef struct AomCodecFrameBuffer 
+    {
         uint8_t *data; /**< pointer to the data buffer */
         size_t size;   /**< Size of data in bytes */
         void *priv;    /**< Frame's private data */
-    } aom_codec_frame_buffer_t;
+    } AomCodecFrameBuffer;
 
     /*!\brief get frame buffer callback prototype
     *
@@ -264,10 +272,10 @@ extern "C" {
     *
     * \param[in] priv         Callback's private data
     * \param[in] new_size     Size in bytes needed by the buffer
-    * \param[in,out] fb       pointer to aom_codec_frame_buffer_t
+    * \param[in,out] fb       pointer to AomCodecFrameBuffer
     */
     typedef int32_t(*aom_get_frame_buffer_cb_fn_t)(void *priv, size_t min_size,
-        aom_codec_frame_buffer_t *fb);
+        AomCodecFrameBuffer *fb);
 
 #define ADDRESS_STORAGE_SIZE sizeof(size_t)
 
@@ -282,20 +290,20 @@ extern "C" {
 /************************************
  * EbPictureBufferDesc Init Data
  ************************************/
-    typedef struct EbPictureBufferDescInitData_s
+    typedef struct EbPictureBufferDescInitData
     {
-        uint16_t          maxWidth;
-        uint16_t          maxHeight;
-        EB_BITDEPTH       bit_depth;
+        uint16_t          max_width;
+        uint16_t          max_height;
+        EbBitDepthEnum    bit_depth;
         EbColorFormat     color_format;
-        uint32_t          bufferEnableMask;
+        uint32_t          buffer_enable_mask;
         uint16_t          left_padding;
         uint16_t          right_padding;
         uint16_t          top_padding;
         uint16_t          bot_padding;
-        EbBool            splitMode;         //ON: allocate 8bit data seperately from nbit data
+        EbBool            split_mode;         //ON: allocate 8bit data seperately from nbit data
 
-    } EbPictureBufferDescInitData_t;
+    } EbPictureBufferDescInitData;
 
     /**************************************
      * Extern Function Declarations

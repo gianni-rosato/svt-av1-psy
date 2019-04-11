@@ -27,7 +27,7 @@ void av1_highbd_jnt_convolve_2d_copy_avx2(
     int32_t h, const InterpFilterParams *filter_params_x,
     const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
     const int32_t subpel_y_q4, ConvolveParams *conv_params, int32_t bd) {
-    CONV_BUF_TYPE *dst = conv_params->dst;
+    ConvBufType *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     (void)filter_params_x;
     (void)filter_params_y;
@@ -234,7 +234,7 @@ void av1_highbd_jnt_convolve_2d_avx2(
     const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
     const int32_t subpel_y_q4, ConvolveParams *conv_params, int32_t bd) {
     DECLARE_ALIGNED(32, int16_t, im_block[(MAX_SB_SIZE + MAX_FILTER_TAP) * 8]);
-    CONV_BUF_TYPE *dst = conv_params->dst;
+    ConvBufType *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     int32_t im_h = h + filter_params_y->taps - 1;
     int32_t im_stride = 8;
@@ -469,7 +469,7 @@ void av1_highbd_jnt_convolve_x_avx2(
     int32_t h, const InterpFilterParams *filter_params_x,
     const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
     const int32_t subpel_y_q4, ConvolveParams *conv_params, int32_t bd) {
-    CONV_BUF_TYPE *dst = conv_params->dst;
+    ConvBufType *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     const int32_t fo_horiz = filter_params_x->taps / 2 - 1;
     const uint16_t *const src_ptr = src - fo_horiz;
@@ -639,7 +639,7 @@ void av1_highbd_jnt_convolve_y_avx2(
     int32_t h, const InterpFilterParams *filter_params_x,
     const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
     const int32_t subpel_y_q4, ConvolveParams *conv_params, int32_t bd) {
-    CONV_BUF_TYPE *dst = conv_params->dst;
+    ConvBufType *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     const int32_t fo_vert = filter_params_y->taps / 2 - 1;
     const uint16_t *const src_ptr = src - fo_vert * src_stride;

@@ -26,7 +26,7 @@ EbErrorType resource_coordination_context_ctor(
     EbFifo                        **picture_control_set_fifo_ptr_array,
     EbSequenceControlSetInstance  **sequence_control_set_instance_array,
     EbFifo                         *sequence_control_set_empty_fifo_ptr,
-    EbCallback_t                    **app_callback_ptr_array,
+    EbCallback                    **app_callback_ptr_array,
     uint32_t                         *compute_segments_total_count_array,
     uint32_t                          encode_instances_total_count)
 {
@@ -89,7 +89,7 @@ Output  : Pre-Analysis signal(s)
 ******************************************************/
 EbErrorType signal_derivation_pre_analysis_oq(
     SequenceControlSet       *sequence_control_set_ptr,
-    PictureParentControlSet_t  *picture_control_set_ptr) {
+    PictureParentControlSet  *picture_control_set_ptr) {
 
     EbErrorType return_error = EB_ErrorNone;
     uint8_t input_resolution = sequence_control_set_ptr->input_resolution;
@@ -122,7 +122,7 @@ EbErrorType signal_derivation_pre_analysis_oq(
 //******************************************************************************//
 void SpeedBufferControl(
     ResourceCoordinationContext   *context_ptr,
-    PictureParentControlSet_t       *picture_control_set_ptr,
+    PictureParentControlSet       *picture_control_set_ptr,
     SequenceControlSet            *sequence_control_set_ptr)
 {
 
@@ -285,11 +285,11 @@ void SpeedBufferControl(
 }
 
 void ResetPcsAv1(
-    PictureParentControlSet_t       *picture_control_set_ptr) {
+    PictureParentControlSet       *picture_control_set_ptr) {
     picture_control_set_ptr->is_skip_mode_allowed = 0;
     picture_control_set_ptr->skip_mode_flag = 0;
-    picture_control_set_ptr->av1FrameType = KEY_FRAME;
-    picture_control_set_ptr->showFrame = 1;
+    picture_control_set_ptr->av1_frame_type = KEY_FRAME;
+    picture_control_set_ptr->show_frame = 1;
     picture_control_set_ptr->showable_frame = 1;  // frame can be used as show existing frame in future
     // Flag for a frame used as a reference - not written to the bitstream
     picture_control_set_ptr->is_reference_frame = 0;
@@ -401,7 +401,7 @@ void* resource_coordination_kernel(void *input_ptr)
 
     EbObjectWrapper               *picture_control_set_wrapper_ptr;
 
-    PictureParentControlSet_t       *picture_control_set_ptr;
+    PictureParentControlSet       *picture_control_set_ptr;
 
     EbObjectWrapper               *previousSequenceControlSetWrapperPtr;
     SequenceControlSet            *sequence_control_set_ptr;
@@ -542,7 +542,7 @@ void* resource_coordination_kernel(void *input_ptr)
             picture_control_set_wrapper_ptr,
             1);
 
-        picture_control_set_ptr = (PictureParentControlSet_t*)picture_control_set_wrapper_ptr->object_ptr;
+        picture_control_set_ptr = (PictureParentControlSet*)picture_control_set_wrapper_ptr->object_ptr;
 
         picture_control_set_ptr->p_pcs_wrapper_ptr = picture_control_set_wrapper_ptr;
 
@@ -559,7 +559,7 @@ void* resource_coordination_kernel(void *input_ptr)
         // Copy data from the svt buffer to the input frame
         // *Note - Assumes 4:2:0 planar
         input_picture_wrapper_ptr = ebInputWrapperPtr;
-        picture_control_set_ptr->enhanced_picture_ptr = (EbPictureBufferDesc_t*)ebInputPtr->p_buffer;
+        picture_control_set_ptr->enhanced_picture_ptr = (EbPictureBufferDesc*)ebInputPtr->p_buffer;
         picture_control_set_ptr->input_ptr            = ebInputPtr;
         end_of_sequence_flag = (picture_control_set_ptr->input_ptr->flags & EB_BUFFERFLAG_EOS) ? EB_TRUE : EB_FALSE;
         EbStartTime(&picture_control_set_ptr->start_time_seconds, &picture_control_set_ptr->start_time_u_seconds);
@@ -651,7 +651,7 @@ void* resource_coordination_kernel(void *input_ptr)
         // Get Empty Output Results Object
         if (picture_control_set_ptr->picture_number > 0 && (prevPictureControlSetWrapperPtr != NULL))
         {
-            ((PictureParentControlSet_t       *)prevPictureControlSetWrapperPtr->object_ptr)->end_of_sequence_flag = end_of_sequence_flag;
+            ((PictureParentControlSet       *)prevPictureControlSetWrapperPtr->object_ptr)->end_of_sequence_flag = end_of_sequence_flag;
             eb_get_empty_object(
                 context_ptr->resource_coordination_results_output_fifo_ptr,
                 &outputWrapperPtr);

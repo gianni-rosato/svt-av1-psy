@@ -28,7 +28,7 @@ void aom_yv12_copy_v_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst_bc)
 int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t height,
     int32_t ss_x, int32_t ss_y, int32_t use_highbitdepth,
     int32_t border, int32_t byte_alignment,
-    aom_codec_frame_buffer_t *fb,
+    AomCodecFrameBuffer *fb,
     aom_get_frame_buffer_cb_fn_t cb, void *cb_priv);
 
 
@@ -70,11 +70,11 @@ void *aom_memset16(void *dest, int32_t val, size_t length);
 ///---convolve.h
 #define FILTER_BITS 7
 
-//typedef uint16_t CONV_BUF_TYPE;
+//typedef uint16_t ConvBufType;
 //typedef struct ConvolveParams {
 //    int32_t ref;
 //    int32_t do_average;
-//    CONV_BUF_TYPE *dst;
+//    ConvBufType *dst;
 //    int32_t dst_stride;
 //    int32_t round_0;
 //    int32_t round_1;
@@ -160,7 +160,7 @@ void aom_free(void *memblk);
 // The 's' values are calculated based on original 'r' and 'e' values in the
 // spec using GenSgrprojVtable().
 // Note: Setting r = 0 skips the filter; with corresponding s = -1 (invalid).
-const sgr_params_type sgr_params[SGRPROJ_PARAMS] = {
+const SgrParamsType sgr_params[SGRPROJ_PARAMS] = {
   { { 2, 1 }, { 140, 3236 } }, { { 2, 1 }, { 112, 2158 } },
   { { 2, 1 }, { 93, 1618 } },  { { 2, 1 }, { 80, 1438 } },
   { { 2, 1 }, { 70, 1295 } },  { { 2, 1 }, { 58, 1177 } },
@@ -724,7 +724,7 @@ static void boxsum(int32_t *src, int32_t width, int32_t height, int32_t src_stri
         assert(0 && "Invalid value of r in self-guided filter");
 }
 
-void decode_xq(const int32_t *xqd, int32_t *xq, const sgr_params_type *params) {
+void decode_xq(const int32_t *xqd, int32_t *xq, const SgrParamsType *params) {
     if (params->r[0] == 0) {
         xq[0] = 0;
         xq[1] = (1 << SGRPROJ_PRJ_BITS) - xqd[1];
@@ -771,7 +771,7 @@ static void selfguided_restoration_fast_internal(
     int32_t *dgd, int32_t width, int32_t height, int32_t dgd_stride, int32_t *dst,
     int32_t dst_stride, int32_t bit_depth, int32_t sgr_params_idx, int32_t radius_idx)
 {
-    const sgr_params_type *const params = &sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &sgr_params[sgr_params_idx];
     const int32_t r = params->r[radius_idx];
     const int32_t width_ext = width + 2 * SGRPROJ_BORDER_HORZ;
     const int32_t height_ext = height + 2 * SGRPROJ_BORDER_VERT;
@@ -904,7 +904,7 @@ static void selfguided_restoration_internal(int32_t *dgd, int32_t width, int32_t
     int32_t dst_stride, int32_t bit_depth,
     int32_t sgr_params_idx,
     int32_t radius_idx) {
-    const sgr_params_type *const params = &sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &sgr_params[sgr_params_idx];
     const int32_t r = params->r[radius_idx];
     const int32_t width_ext = width + 2 * SGRPROJ_BORDER_HORZ;
     const int32_t height_ext = height + 2 * SGRPROJ_BORDER_VERT;
@@ -1044,7 +1044,7 @@ void av1_selfguided_restoration_c(const uint8_t *dgd8, int32_t width, int32_t he
         }
     }
 
-    const sgr_params_type *const params = &sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &sgr_params[sgr_params_idx];
     // If params->r == 0 we skip the corresponding filter. We only allow one of
     // the radii to be 0, as having both equal to 0 would be equivalent to
     // skipping SGR entirely.
@@ -1070,7 +1070,7 @@ void apply_selfguided_restoration_c(const uint8_t *dat8, int32_t width, int32_t 
 
     av1_selfguided_restoration_c(dat8, width, height, stride, flt0, flt1, width,
         eps, bit_depth, highbd);
-    const sgr_params_type *const params = &sgr_params[eps];
+    const SgrParamsType *const params = &sgr_params[eps];
     int32_t xq[2];
     decode_xq(xqd, xq, params);
     for (int32_t i = 0; i < height; ++i) {
@@ -1400,7 +1400,7 @@ static void foreach_rest_unit_in_tile_seg(const AV1PixelRect *tile_rect,
     RestUnitVisitor on_rest_unit,
     void *priv ,
     int32_t vunits_per_tile,
-    PictureControlSet_t   *picture_control_set_ptr,
+    PictureControlSet   *picture_control_set_ptr,
     uint32_t segment_index  )
 {
     //tile_row=0
@@ -1468,7 +1468,7 @@ void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane,
     RestTileStartVisitor on_tile,
     RestUnitVisitor on_rest_unit,
     void *priv,
-    PictureControlSet_t   *picture_control_set_ptr,
+    PictureControlSet   *picture_control_set_ptr,
     uint32_t segment_index)
 {
     const int32_t is_uv = plane > 0;
@@ -1490,7 +1490,7 @@ void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane,
 
 
 int32_t av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
-    int32_t mi_row, int32_t mi_col, block_size bsize,
+    int32_t mi_row, int32_t mi_col, BlockSize bsize,
     int32_t *rcol0, int32_t *rcol1, int32_t *rrow0,
     int32_t *rrow1, int32_t *tile_tl_idx) {
     assert(rcol0 && rcol1 && rrow0 && rrow1);

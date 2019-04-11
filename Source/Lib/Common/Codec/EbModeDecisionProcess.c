@@ -14,7 +14,7 @@
  * Mode Decision Context Constructor
  ******************************************************/
 EbErrorType mode_decision_context_ctor(
-    ModeDecisionContext_t  **context_dbl_ptr,
+    ModeDecisionContext  **context_dbl_ptr,
     EbColorFormat         color_format,
     EbFifo                *mode_decision_configuration_input_fifo_ptr,
     EbFifo                *mode_decision_output_fifo_ptr){
@@ -23,8 +23,8 @@ EbErrorType mode_decision_context_ctor(
     uint32_t candidateIndex;
     EbErrorType return_error = EB_ErrorNone;
 
-    ModeDecisionContext_t *context_ptr;
-    EB_MALLOC(ModeDecisionContext_t*, context_ptr, sizeof(ModeDecisionContext_t), EB_N_PTR);
+    ModeDecisionContext *context_ptr;
+    EB_MALLOC(ModeDecisionContext*, context_ptr, sizeof(ModeDecisionContext), EB_N_PTR);
     *context_dbl_ptr = context_ptr;
 
     // Input/Output System Resource Manager FIFOs
@@ -35,12 +35,12 @@ EbErrorType mode_decision_context_ctor(
     EB_MALLOC(int16_t*, context_ptr->transform_inner_array_ptr, 3120, EB_N_PTR); //refer to EbInvTransform_SSE2.as. case 32x32
 
     // MD rate Estimation tables
-    EB_MALLOC(MdRateEstimationContext_t*, context_ptr->md_rate_estimation_ptr, sizeof(MdRateEstimationContext_t), EB_N_PTR);
+    EB_MALLOC(MdRateEstimationContext*, context_ptr->md_rate_estimation_ptr, sizeof(MdRateEstimationContext), EB_N_PTR);
 
     // Fast Candidate Array
-    EB_MALLOC(ModeDecisionCandidate_t*, context_ptr->fast_candidate_array, sizeof(ModeDecisionCandidate_t) * MODE_DECISION_CANDIDATE_MAX_COUNT, EB_N_PTR);
+    EB_MALLOC(ModeDecisionCandidate*, context_ptr->fast_candidate_array, sizeof(ModeDecisionCandidate) * MODE_DECISION_CANDIDATE_MAX_COUNT, EB_N_PTR);
 
-    EB_MALLOC(ModeDecisionCandidate_t**, context_ptr->fast_candidate_ptr_array, sizeof(ModeDecisionCandidate_t*) * MODE_DECISION_CANDIDATE_MAX_COUNT, EB_N_PTR);
+    EB_MALLOC(ModeDecisionCandidate**, context_ptr->fast_candidate_ptr_array, sizeof(ModeDecisionCandidate*) * MODE_DECISION_CANDIDATE_MAX_COUNT, EB_N_PTR);
 
     for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex) {
         context_ptr->fast_candidate_ptr_array[candidateIndex] = &context_ptr->fast_candidate_array[candidateIndex];
@@ -64,7 +64,7 @@ EbErrorType mode_decision_context_ctor(
     EB_MALLOC(uint64_t*, context_ptr->full_cost_skip_ptr, sizeof(uint64_t) * (MAX_NFL + 1 + 1), EB_N_PTR);
     EB_MALLOC(uint64_t*, context_ptr->full_cost_merge_ptr, sizeof(uint64_t) * (MAX_NFL + 1 + 1), EB_N_PTR);
     // Candidate Buffers
-    EB_MALLOC(ModeDecisionCandidateBuffer_t**, context_ptr->candidate_buffer_ptr_array, sizeof(ModeDecisionCandidateBuffer_t*) * (MAX_NFL + 1 + 1), EB_N_PTR);
+    EB_MALLOC(ModeDecisionCandidateBuffer**, context_ptr->candidate_buffer_ptr_array, sizeof(ModeDecisionCandidateBuffer*) * (MAX_NFL + 1 + 1), EB_N_PTR);
 
     for (bufferIndex = 0; bufferIndex < (MAX_NFL + 1 + 1); ++bufferIndex) {
 
@@ -91,7 +91,7 @@ EbErrorType mode_decision_context_ctor(
     }
 
     // Intra Reference Samples
-    return_error = IntraReferenceSamplesCtor(&context_ptr->intra_ref_ptr);
+    return_error = intra_reference_samples_ctor(&context_ptr->intra_ref_ptr);
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
@@ -116,18 +116,18 @@ EbErrorType mode_decision_context_ctor(
 
 #if NO_ENCDEC //SB128_TODO to upgrade
         {
-            EbPictureBufferDescInitData_t initData;
+            EbPictureBufferDescInitData initData;
 
-            initData.bufferEnableMask = PICTURE_BUFFER_DESC_FULL_MASK;
-            initData.maxWidth = SB_STRIDE_Y;
-            initData.maxHeight = SB_STRIDE_Y;
+            initData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+            initData.max_width = SB_STRIDE_Y;
+            initData.max_height = SB_STRIDE_Y;
             initData.bit_depth = EB_32BIT;
             initData.color_format = EB_YUV420;
             initData.left_padding = 0;
             initData.right_padding = 0;
             initData.top_padding = 0;
             initData.bot_padding = 0;
-            initData.splitMode = EB_FALSE;
+            initData.split_mode = EB_FALSE;
 
             return_error = eb_picture_buffer_desc_ctor(
                 (EbPtr*)&context_ptr->md_cu_arr_nsq[codedLeafIndex].coeff_tmp,
@@ -137,16 +137,16 @@ EbErrorType mode_decision_context_ctor(
                 return EB_ErrorInsufficientResources;
             }
 
-            initData.bufferEnableMask = PICTURE_BUFFER_DESC_FULL_MASK;
-            initData.maxWidth = SB_STRIDE_Y;
-            initData.maxHeight = SB_STRIDE_Y;
+            initData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+            initData.max_width = SB_STRIDE_Y;
+            initData.max_height = SB_STRIDE_Y;
             initData.bit_depth = EB_8BIT;
             initData.color_format = EB_YUV420;
             initData.left_padding = 0;
             initData.right_padding = 0;
             initData.top_padding = 0;
             initData.bot_padding = 0;
-            initData.splitMode = EB_FALSE;
+            initData.split_mode = EB_FALSE;
 
             return_error = eb_picture_buffer_desc_ctor(
                 (EbPtr*)&context_ptr->md_cu_arr_nsq[codedLeafIndex].recon_tmp,
@@ -164,7 +164,7 @@ EbErrorType mode_decision_context_ctor(
 /**************************************************
  * Reset Mode Decision Neighbor Arrays
  *************************************************/
-void reset_mode_decision_neighbor_arrays(PictureControlSet_t *picture_control_set_ptr)
+void reset_mode_decision_neighbor_arrays(PictureControlSet *picture_control_set_ptr)
 {
     uint8_t depth;
     for (depth = 0; depth < NEIGHBOR_ARRAY_TOTAL_COUNT; depth++) {
@@ -195,7 +195,7 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet_t *picture_control_se
 }
 
 
-void ResetMdRefinmentNeighborArrays(PictureControlSet_t *picture_control_set_ptr)
+void ResetMdRefinmentNeighborArrays(PictureControlSet *picture_control_set_ptr)
 {
     neighbor_array_unit_reset(picture_control_set_ptr->md_refinement_intra_luma_mode_neighbor_array);
     neighbor_array_unit_reset(picture_control_set_ptr->md_refinement_mode_type_neighbor_array);
@@ -218,19 +218,19 @@ extern void lambda_assign_low_delay(
 {
 
     if (qp_hierarchical_position == 0) {
-        *fast_lambda = lambdaModeDecisionLdSad[qp];
-        *fast_chroma_lambda = lambdaModeDecisionLdSad[qp];
-        *full_lambda = lambdaModeDecisionLdSse[qp];
-        *full_chroma_lambda = lambdaModeDecisionLdSse[qp];
-        *full_chroma_lambda_sao = lambdaModeDecisionLdSse[chroma_qp];
+        *fast_lambda = lambda_mode_decision_ld_sad[qp];
+        *fast_chroma_lambda = lambda_mode_decision_ld_sad[qp];
+        *full_lambda = lambda_mode_decision_ld_sse[qp];
+        *full_chroma_lambda = lambda_mode_decision_ld_sse[qp];
+        *full_chroma_lambda_sao = lambda_mode_decision_ld_sse[chroma_qp];
 
     }
     else { // Hierarchical postions 1, 2, 3, 4, 5
-        *fast_lambda = lambdaModeDecisionLdSadQpScaling[qp];
-        *fast_chroma_lambda = lambdaModeDecisionLdSadQpScaling[qp];
-        *full_lambda = lambdaModeDecisionLdSseQpScaling[qp];
-        *full_chroma_lambda = lambdaModeDecisionLdSseQpScaling[qp];
-        *full_chroma_lambda_sao = lambdaModeDecisionLdSseQpScaling[chroma_qp];
+        *fast_lambda = lambda_mode_decision_ld_sad_qp_scaling[qp];
+        *fast_chroma_lambda = lambda_mode_decision_ld_sad_qp_scaling[qp];
+        *full_lambda = lambda_mode_decision_ld_sse_qp_scaling[qp];
+        *full_chroma_lambda = lambda_mode_decision_ld_sse_qp_scaling[qp];
+        *full_chroma_lambda_sao = lambda_mode_decision_ld_sse_qp_scaling[chroma_qp];
     }
 
 }
@@ -248,27 +248,27 @@ void lambda_assign_random_access(
 {
 
     if (qp_hierarchical_position == 0) {
-        *fast_lambda = lambdaModeDecisionRaSad[qp];
-        *fast_chroma_lambda = lambdaModeDecisionRaSad[qp];
-        *full_lambda = lambdaModeDecisionRaSse[qp];
-        *full_chroma_lambda = lambdaModeDecisionRaSse[qp];
-        *full_chroma_lambda_sao = lambdaModeDecisionRaSse[chroma_qp];
+        *fast_lambda = lambda_mode_decision_ra_sad[qp];
+        *fast_chroma_lambda = lambda_mode_decision_ra_sad[qp];
+        *full_lambda = lambda_mode_decision_ra_sse[qp];
+        *full_chroma_lambda = lambda_mode_decision_ra_sse[qp];
+        *full_chroma_lambda_sao = lambda_mode_decision_ra_sse[chroma_qp];
 
     }
     else if (qp_hierarchical_position < 3) { // Hierarchical postions 1, 2
 
-        *fast_lambda = lambdaModeDecisionRaSadQpScalingL1[qp];
-        *fast_chroma_lambda = lambdaModeDecisionRaSadQpScalingL1[qp];
-        *full_lambda = lambdaModeDecisionRaSseQpScalingL1[qp];
-        *full_chroma_lambda = lambdaModeDecisionRaSseQpScalingL1[qp];
-        *full_chroma_lambda_sao = lambdaModeDecisionRaSseQpScalingL1[chroma_qp];
+        *fast_lambda = lambda_mode_decision_ra_sad_qp_scaling_l1[qp];
+        *fast_chroma_lambda = lambda_mode_decision_ra_sad_qp_scaling_l1[qp];
+        *full_lambda = lambda_mode_decision_ra_sse_qp_scaling_l1[qp];
+        *full_chroma_lambda = lambda_mode_decision_ra_sse_qp_scaling_l1[qp];
+        *full_chroma_lambda_sao = lambda_mode_decision_ra_sse_qp_scaling_l1[chroma_qp];
     }
     else { // Hierarchical postions 3, 4, 5
-        *fast_lambda = lambdaModeDecisionRaSadQpScalingL3[qp];
-        *fast_chroma_lambda = lambdaModeDecisionRaSadQpScalingL3[qp];
-        *full_lambda = lambdaModeDecisionRaSseQpScalingL3[qp];
-        *full_chroma_lambda = lambdaModeDecisionRaSseQpScalingL3[qp];
-        *full_chroma_lambda_sao = lambdaModeDecisionRaSseQpScalingL3[chroma_qp];
+        *fast_lambda = lambda_mode_decision_ra_sad_qp_scaling_l3[qp];
+        *fast_chroma_lambda = lambda_mode_decision_ra_sad_qp_scaling_l3[qp];
+        *full_lambda = lambda_mode_decision_ra_sse_qp_scaling_l3[qp];
+        *full_chroma_lambda = lambda_mode_decision_ra_sse_qp_scaling_l3[qp];
+        *full_chroma_lambda_sao = lambda_mode_decision_ra_sse_qp_scaling_l3[chroma_qp];
     }
 
 }
@@ -286,11 +286,11 @@ void lambdaAssignISlice(
 {
 
     if (qp_hierarchical_position == 0) {
-        *fast_lambda = lambdaModeDecisionISliceSad[qp];
-        *fast_chroma_lambda = lambdaModeDecisionISliceSad[qp];
-        *full_lambda = lambdaModeDecisionISliceSse[qp];
-        *full_chroma_lambda = lambdaModeDecisionISliceSse[qp];
-        *full_chroma_lambda_sao = lambdaModeDecisionISliceSse[chroma_qp];
+        *fast_lambda = lambda_mode_decision_i_slice_sad[qp];
+        *fast_chroma_lambda = lambda_mode_decision_i_slice_sad[qp];
+        *full_lambda = lambda_mode_decision_i_slice_sse[qp];
+        *full_chroma_lambda = lambda_mode_decision_i_slice_sse[qp];
+        *full_chroma_lambda_sao = lambda_mode_decision_i_slice_sse[chroma_qp];
 
     }
     else {
@@ -298,7 +298,7 @@ void lambdaAssignISlice(
     }
 
 }
-const EB_LAMBDA_ASSIGN_FUNC lambda_assignment_function_table[4] = {
+const EbLambdaAssignFunc lambda_assignment_function_table[4] = {
     lambda_assign_low_delay, // low delay P
     lambda_assign_low_delay, // low delay B
     lambda_assign_random_access, // Random Access
@@ -317,18 +317,18 @@ void Av1lambdaAssign(
 
     if (bit_depth == 8) {
 
-        *full_lambda = Av1lambdaModeDecision8BitSse[qp_index];
-        *fast_lambda = Av1lambdaModeDecision8BitSad[qp_index];
+        *full_lambda = av1_lambda_mode_decision8_bit_sse[qp_index];
+        *fast_lambda = av1_lambda_mode_decision8_bit_sad[qp_index];
 
     }
     else if (bit_depth == 10) {
-        *full_lambda = Av1lambdaModeDecision10BitSse[qp_index];
-        *fast_lambda = Av1lambdaModeDecision10BitSad[qp_index];
+        *full_lambda = av1lambda_mode_decision10_bit_sse[qp_index];
+        *fast_lambda = av1lambda_mode_decision10_bit_sad[qp_index];
 
     }
     else if (bit_depth == 12) {
-        *full_lambda = Av1lambdaModeDecision12BitSse[qp_index];
-        *fast_lambda = Av1lambdaModeDecision12BitSad[qp_index];
+        *full_lambda = av1lambda_mode_decision12_bit_sse[qp_index];
+        *fast_lambda = av1lambda_mode_decision12_bit_sad[qp_index];
 
     }
     else {
@@ -344,7 +344,7 @@ void Av1lambdaAssign(
     // NM: To be done: tune lambda based on the picture type and layer.
 
 }
-const EB_AV1_LAMBDA_ASSIGN_FUNC av1_lambda_assignment_function_table[4] = {
+const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4] = {
     Av1lambdaAssign,
     Av1lambdaAssign,
     Av1lambdaAssign,
@@ -352,14 +352,14 @@ const EB_AV1_LAMBDA_ASSIGN_FUNC av1_lambda_assignment_function_table[4] = {
 };
 
 void reset_mode_decision(
-    ModeDecisionContext_t   *context_ptr,
-    PictureControlSet_t     *picture_control_set_ptr,
+    ModeDecisionContext   *context_ptr,
+    PictureControlSet     *picture_control_set_ptr,
     SequenceControlSet    *sequence_control_set_ptr,
     uint32_t                   segment_index)
 {
     EB_SLICE                     slice_type;
     uint32_t                       lcuRowIndex;
-    MdRateEstimationContext_t   *md_rate_estimation_array;
+    MdRateEstimationContext   *md_rate_estimation_array;
 
     // QP
 #if ADD_DELTA_QP_SUPPORT
@@ -388,7 +388,7 @@ void reset_mode_decision(
 
     /* Note(CHKN) : Rate estimation will use FrameQP even when Qp modulation is ON */
 
-    md_rate_estimation_array = (MdRateEstimationContext_t*)sequence_control_set_ptr->encode_context_ptr->md_rate_estimation_array;
+    md_rate_estimation_array = (MdRateEstimationContext*)sequence_control_set_ptr->encode_context_ptr->md_rate_estimation_array;
 #if ADD_DELTA_QP_SUPPORT
     md_rate_estimation_array += slice_type * TOTAL_NUMBER_OF_QP_VALUES + picture_control_set_ptr->picture_qp;
 #else
@@ -425,7 +425,7 @@ void reset_mode_decision(
     }
 
     picture_control_set_ptr->parent_pcs_ptr->allow_warped_motion = sequence_control_set_ptr->static_config.enable_warped_motion
-        && !(picture_control_set_ptr->parent_pcs_ptr->av1FrameType == KEY_FRAME || picture_control_set_ptr->parent_pcs_ptr->av1FrameType == INTRA_ONLY_FRAME)
+        && !(picture_control_set_ptr->parent_pcs_ptr->av1_frame_type == KEY_FRAME || picture_control_set_ptr->parent_pcs_ptr->av1_frame_type == INTRA_ONLY_FRAME)
         && !picture_control_set_ptr->parent_pcs_ptr->error_resilient_mode;
     picture_control_set_ptr->parent_pcs_ptr->switchable_motion_mode = picture_control_set_ptr->parent_pcs_ptr->allow_warped_motion;
 
@@ -437,10 +437,10 @@ void reset_mode_decision(
 /******************************************************
  * Mode Decision Configure LCU
  ******************************************************/
-void ModeDecisionConfigureLcu(
-    ModeDecisionContext_t   *context_ptr,
-    LargestCodingUnit_t     *sb_ptr,
-    PictureControlSet_t     *picture_control_set_ptr,
+void mode_decision_configure_lcu(
+    ModeDecisionContext   *context_ptr,
+    LargestCodingUnit     *sb_ptr,
+    PictureControlSet     *picture_control_set_ptr,
     SequenceControlSet    *sequence_control_set_ptr,
     uint8_t                    picture_qp,
     uint8_t                    sb_qp){

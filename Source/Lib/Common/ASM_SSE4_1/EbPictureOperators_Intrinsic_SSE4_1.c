@@ -577,11 +577,11 @@ uint64_t spatial_full_distortion_kernel16_mx_n_ssse3_intrin(
     uint32_t   area_height)
 {
     uint64_t  spatialDistortion = 0;
-    int32_t row_count, colCount;
+    int32_t row_count, col_count;
     __m128i sum = _mm_setzero_si128();
     __m128i x0, y0, x0_L, x0_H;
 
-    colCount = area_width;
+    col_count = area_width;
     do
     {
         uint8_t *coeffTemp = input;
@@ -608,8 +608,8 @@ uint64_t spatial_full_distortion_kernel16_mx_n_ssse3_intrin(
 
         input += 16;
         recon += 16;
-        colCount -= 16;
-    } while (colCount > 0);
+        col_count -= 16;
+    } while (col_count > 0);
 
     sum = _mm_add_epi32(sum, _mm_shuffle_epi32(sum, 0x4e)); // 01001110
     sum = _mm_unpacklo_epi32(sum, sum);

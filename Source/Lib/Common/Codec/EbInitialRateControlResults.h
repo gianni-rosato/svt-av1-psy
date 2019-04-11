@@ -12,20 +12,18 @@
 /**************************************
  * Process Results
  **************************************/
-typedef struct InitialRateControlResults_s
-{
+typedef struct InitialRateControlResults {
     EbObjectWrapper   *picture_control_set_wrapper_ptr;
-} InitialRateControlResults_t;
+} InitialRateControlResults;
 
-typedef struct InitialRateControlResultInitData_s
-{
+typedef struct InitialRateControlResultInitData {
     int32_t junk;
-} InitialRateControlResultInitData_t;
+} InitialRateControlResultInitData;
 
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType InitialRateControlResultsCtor(
+extern EbErrorType initial_rate_control_results_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr);
 

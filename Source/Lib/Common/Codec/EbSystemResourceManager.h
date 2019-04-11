@@ -221,7 +221,7 @@ extern "C" {
         EbFifo         ***producer_fifo_ptr_array_ptr,
         EbFifo         ***consumer_fifo_ptr_array_ptr,
         EbBool              full_fifo_enabled,
-        EB_CTOR             object_ctor,
+        EbCtor             object_ctor,
         EbPtr               object_init_data_ptr);
 
     /*********************************************************************
@@ -240,7 +240,7 @@ extern "C" {
      *********************************************************************/
     extern void eb_system_resource_dtor(
         EbSystemResource  *resource_ptr,
-        EB_DTOR              object_dtor);
+        EbDtor              object_dtor);
 
     /*********************************************************************
      * EbSystemResourceGetEmptyObject

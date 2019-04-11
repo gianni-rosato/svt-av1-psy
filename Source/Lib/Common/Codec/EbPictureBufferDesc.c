@@ -29,98 +29,98 @@ EbErrorType eb_picture_buffer_desc_ctor(
     EbPtr  *object_dbl_ptr,
     EbPtr   object_init_data_ptr)
 {
-    EbPictureBufferDesc_t          *pictureBufferDescPtr;
-    EbPictureBufferDescInitData_t  *pictureBufferDescInitDataPtr = (EbPictureBufferDescInitData_t*)object_init_data_ptr;
+    EbPictureBufferDesc          *pictureBufferDescPtr;
+    EbPictureBufferDescInitData  *pictureBufferDescInitDataPtr = (EbPictureBufferDescInitData*)object_init_data_ptr;
 
     uint32_t bytesPerPixel = (pictureBufferDescInitDataPtr->bit_depth == EB_8BIT) ? 1 : (pictureBufferDescInitDataPtr->bit_depth <= EB_16BIT) ? 2 : 4;
     const uint16_t subsampling_x = (pictureBufferDescInitDataPtr->color_format == EB_YUV444 ? 1 : 2) - 1;
 
-    if (pictureBufferDescInitDataPtr->bit_depth > EB_8BIT && pictureBufferDescInitDataPtr->bit_depth <= EB_16BIT && pictureBufferDescInitDataPtr->splitMode == EB_TRUE)
+    if (pictureBufferDescInitDataPtr->bit_depth > EB_8BIT && pictureBufferDescInitDataPtr->bit_depth <= EB_16BIT && pictureBufferDescInitDataPtr->split_mode == EB_TRUE)
         bytesPerPixel = 1;
 
-    EB_MALLOC(EbPictureBufferDesc_t*, pictureBufferDescPtr, sizeof(EbPictureBufferDesc_t), EB_N_PTR);
+    EB_MALLOC(EbPictureBufferDesc*, pictureBufferDescPtr, sizeof(EbPictureBufferDesc), EB_N_PTR);
 
     // Allocate the PictureBufferDesc Object
     *object_dbl_ptr = (EbPtr)pictureBufferDescPtr;
 
     // Set the Picture Buffer Static variables
-    pictureBufferDescPtr->maxWidth = pictureBufferDescInitDataPtr->maxWidth;
-    pictureBufferDescPtr->maxHeight = pictureBufferDescInitDataPtr->maxHeight;
-    pictureBufferDescPtr->width = pictureBufferDescInitDataPtr->maxWidth;
-    pictureBufferDescPtr->height = pictureBufferDescInitDataPtr->maxHeight;
+    pictureBufferDescPtr->max_width = pictureBufferDescInitDataPtr->max_width;
+    pictureBufferDescPtr->max_height = pictureBufferDescInitDataPtr->max_height;
+    pictureBufferDescPtr->width = pictureBufferDescInitDataPtr->max_width;
+    pictureBufferDescPtr->height = pictureBufferDescInitDataPtr->max_height;
     pictureBufferDescPtr->bit_depth = pictureBufferDescInitDataPtr->bit_depth;
     pictureBufferDescPtr->color_format = pictureBufferDescInitDataPtr->color_format;
-    pictureBufferDescPtr->stride_y = pictureBufferDescInitDataPtr->maxWidth + pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding;
-    pictureBufferDescPtr->strideCb = pictureBufferDescPtr->strideCr = pictureBufferDescPtr->stride_y >> subsampling_x;
+    pictureBufferDescPtr->stride_y = pictureBufferDescInitDataPtr->max_width + pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding;
+    pictureBufferDescPtr->stride_cb = pictureBufferDescPtr->stride_cr = pictureBufferDescPtr->stride_y >> subsampling_x;
     pictureBufferDescPtr->origin_x = pictureBufferDescInitDataPtr->left_padding;
     pictureBufferDescPtr->origin_y = pictureBufferDescInitDataPtr->top_padding;
 
-    pictureBufferDescPtr->lumaSize = (pictureBufferDescInitDataPtr->maxWidth + pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding) *
-        (pictureBufferDescInitDataPtr->maxHeight + pictureBufferDescInitDataPtr->top_padding + pictureBufferDescInitDataPtr->bot_padding);
-    pictureBufferDescPtr->chromaSize = pictureBufferDescPtr->lumaSize >> (3 - pictureBufferDescInitDataPtr->color_format);
+    pictureBufferDescPtr->luma_size = (pictureBufferDescInitDataPtr->max_width + pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding) *
+        (pictureBufferDescInitDataPtr->max_height + pictureBufferDescInitDataPtr->top_padding + pictureBufferDescInitDataPtr->bot_padding);
+    pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->luma_size >> (3 - pictureBufferDescInitDataPtr->color_format);
     pictureBufferDescPtr->packedFlag = EB_FALSE;
 
-    if (pictureBufferDescInitDataPtr->splitMode == EB_TRUE) {
-        pictureBufferDescPtr->strideBitIncY = pictureBufferDescPtr->stride_y;
-        pictureBufferDescPtr->strideBitIncCb = pictureBufferDescPtr->strideCb;
-        pictureBufferDescPtr->strideBitIncCr = pictureBufferDescPtr->strideCr;
+    if (pictureBufferDescInitDataPtr->split_mode == EB_TRUE) {
+        pictureBufferDescPtr->stride_bit_inc_y = pictureBufferDescPtr->stride_y;
+        pictureBufferDescPtr->stride_bit_inc_cb = pictureBufferDescPtr->stride_cb;
+        pictureBufferDescPtr->stride_bit_inc_cr = pictureBufferDescPtr->stride_cr;
     }
     else {
-        pictureBufferDescPtr->strideBitIncY = 0;
-        pictureBufferDescPtr->strideBitIncCb = 0;
-        pictureBufferDescPtr->strideBitIncCr = 0;
+        pictureBufferDescPtr->stride_bit_inc_y = 0;
+        pictureBufferDescPtr->stride_bit_inc_cb = 0;
+        pictureBufferDescPtr->stride_bit_inc_cr = 0;
     }
 
     // Allocate the Picture Buffers (luma & chroma)
-    if (pictureBufferDescInitDataPtr->bufferEnableMask & PICTURE_BUFFER_DESC_Y_FLAG) {
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_y, pictureBufferDescPtr->lumaSize      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-        //pictureBufferDescPtr->buffer_y = (EbByte) EB_aligned_malloc( pictureBufferDescPtr->lumaSize      * bytesPerPixel * sizeof(uint8_t),ALVALUE);
-        pictureBufferDescPtr->bufferBitIncY = 0;
-        if (pictureBufferDescInitDataPtr->splitMode == EB_TRUE) {
-            EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->bufferBitIncY, pictureBufferDescPtr->lumaSize      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-            //pictureBufferDescPtr->bufferBitIncY = (EbByte) EB_aligned_malloc( pictureBufferDescPtr->lumaSize      * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+    if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
+        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_y, pictureBufferDescPtr->luma_size      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
+        //pictureBufferDescPtr->buffer_y = (EbByte) EB_aligned_malloc( pictureBufferDescPtr->luma_size      * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+        pictureBufferDescPtr->buffer_bit_inc_y = 0;
+        if (pictureBufferDescInitDataPtr->split_mode == EB_TRUE) {
+            EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_bit_inc_y, pictureBufferDescPtr->luma_size      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
+            //pictureBufferDescPtr->buffer_bit_inc_y = (EbByte) EB_aligned_malloc( pictureBufferDescPtr->luma_size      * bytesPerPixel * sizeof(uint8_t),ALVALUE);
         }
 
-        memset(pictureBufferDescPtr->buffer_y, 0, pictureBufferDescPtr->lumaSize * bytesPerPixel * sizeof(uint8_t));
+        memset(pictureBufferDescPtr->buffer_y, 0, pictureBufferDescPtr->luma_size * bytesPerPixel * sizeof(uint8_t));
 
     }
     else {
         pictureBufferDescPtr->buffer_y = 0;
-        pictureBufferDescPtr->bufferBitIncY = 0;
+        pictureBufferDescPtr->buffer_bit_inc_y = 0;
     }
 
-    if (pictureBufferDescInitDataPtr->bufferEnableMask & PICTURE_BUFFER_DESC_Cb_FLAG) {
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->bufferCb, pictureBufferDescPtr->chromaSize    * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-        //pictureBufferDescPtr->bufferCb = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chromaSize    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
-        pictureBufferDescPtr->bufferBitIncCb = 0;
-        if (pictureBufferDescInitDataPtr->splitMode == EB_TRUE) {
-            EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->bufferBitIncCb, pictureBufferDescPtr->chromaSize      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-            //pictureBufferDescPtr->bufferBitIncCb = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chromaSize    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+    if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
+        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cb, pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
+        //pictureBufferDescPtr->buffer_cb = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+        pictureBufferDescPtr->buffer_bit_inc_cb = 0;
+        if (pictureBufferDescInitDataPtr->split_mode == EB_TRUE) {
+            EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_bit_inc_cb, pictureBufferDescPtr->chroma_size      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
+            //pictureBufferDescPtr->buffer_bit_inc_cb = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
         }
 
-        memset(pictureBufferDescPtr->bufferCb, 0, pictureBufferDescPtr->chromaSize * bytesPerPixel * sizeof(uint8_t));
+        memset(pictureBufferDescPtr->buffer_cb, 0, pictureBufferDescPtr->chroma_size * bytesPerPixel * sizeof(uint8_t));
 
     }
     else {
-        pictureBufferDescPtr->bufferCb = 0;
-        pictureBufferDescPtr->bufferBitIncCb = 0;
+        pictureBufferDescPtr->buffer_cb = 0;
+        pictureBufferDescPtr->buffer_bit_inc_cb = 0;
     }
 
-    if (pictureBufferDescInitDataPtr->bufferEnableMask & PICTURE_BUFFER_DESC_Cr_FLAG) {
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->bufferCr, pictureBufferDescPtr->chromaSize    * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-        //pictureBufferDescPtr->bufferCr = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chromaSize    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
-        pictureBufferDescPtr->bufferBitIncCr = 0;
-        if (pictureBufferDescInitDataPtr->splitMode == EB_TRUE) {
-            EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->bufferBitIncCr, pictureBufferDescPtr->chromaSize      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-            //pictureBufferDescPtr->bufferBitIncCr = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chromaSize    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+    if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
+        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cr, pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
+        //pictureBufferDescPtr->buffer_cr = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+        pictureBufferDescPtr->buffer_bit_inc_cr = 0;
+        if (pictureBufferDescInitDataPtr->split_mode == EB_TRUE) {
+            EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_bit_inc_cr, pictureBufferDescPtr->chroma_size      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
+            //pictureBufferDescPtr->buffer_bit_inc_cr = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
         }
 
-        memset(pictureBufferDescPtr->bufferCr, 0, pictureBufferDescPtr->chromaSize * bytesPerPixel * sizeof(uint8_t));
+        memset(pictureBufferDescPtr->buffer_cr, 0, pictureBufferDescPtr->chroma_size * bytesPerPixel * sizeof(uint8_t));
 
     }
     else {
-        pictureBufferDescPtr->bufferCr = 0;
-        pictureBufferDescPtr->bufferBitIncCr = 0;
+        pictureBufferDescPtr->buffer_cr = 0;
+        pictureBufferDescPtr->buffer_bit_inc_cr = 0;
     }
 
     return EB_ErrorNone;
@@ -137,73 +137,73 @@ EbErrorType eb_recon_picture_buffer_desc_ctor(
     EbPtr  *object_dbl_ptr,
     EbPtr   object_init_data_ptr)
 {
-    EbPictureBufferDesc_t          *pictureBufferDescPtr;
-    EbPictureBufferDescInitData_t  *pictureBufferDescInitDataPtr = (EbPictureBufferDescInitData_t*)object_init_data_ptr;
+    EbPictureBufferDesc          *pictureBufferDescPtr;
+    EbPictureBufferDescInitData  *pictureBufferDescInitDataPtr = (EbPictureBufferDescInitData*)object_init_data_ptr;
     const uint16_t subsampling_x = (pictureBufferDescInitDataPtr->color_format == EB_YUV444 ? 1 : 2) - 1;
 
     uint32_t bytesPerPixel = (pictureBufferDescInitDataPtr->bit_depth == EB_8BIT) ? 1 : 2;
 
-    EB_MALLOC(EbPictureBufferDesc_t*, pictureBufferDescPtr, sizeof(EbPictureBufferDesc_t), EB_N_PTR);
+    EB_MALLOC(EbPictureBufferDesc*, pictureBufferDescPtr, sizeof(EbPictureBufferDesc), EB_N_PTR);
 
     // Allocate the PictureBufferDesc Object
     *object_dbl_ptr = (EbPtr)pictureBufferDescPtr;
 
     // Set the Picture Buffer Static variables
-    pictureBufferDescPtr->maxWidth = pictureBufferDescInitDataPtr->maxWidth;
-    pictureBufferDescPtr->maxHeight = pictureBufferDescInitDataPtr->maxHeight;
-    pictureBufferDescPtr->width = pictureBufferDescInitDataPtr->maxWidth;
-    pictureBufferDescPtr->height = pictureBufferDescInitDataPtr->maxHeight;
+    pictureBufferDescPtr->max_width = pictureBufferDescInitDataPtr->max_width;
+    pictureBufferDescPtr->max_height = pictureBufferDescInitDataPtr->max_height;
+    pictureBufferDescPtr->width = pictureBufferDescInitDataPtr->max_width;
+    pictureBufferDescPtr->height = pictureBufferDescInitDataPtr->max_height;
     pictureBufferDescPtr->bit_depth = pictureBufferDescInitDataPtr->bit_depth;
     pictureBufferDescPtr->color_format = pictureBufferDescInitDataPtr->color_format;
-    pictureBufferDescPtr->stride_y = pictureBufferDescInitDataPtr->maxWidth + pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding;
-    pictureBufferDescPtr->strideCb = pictureBufferDescPtr->strideCr = pictureBufferDescPtr->stride_y >> subsampling_x;
+    pictureBufferDescPtr->stride_y = pictureBufferDescInitDataPtr->max_width + pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding;
+    pictureBufferDescPtr->stride_cb = pictureBufferDescPtr->stride_cr = pictureBufferDescPtr->stride_y >> subsampling_x;
     pictureBufferDescPtr->origin_x = pictureBufferDescInitDataPtr->left_padding;
     pictureBufferDescPtr->origin_y = pictureBufferDescInitDataPtr->top_padding;
 
-    pictureBufferDescPtr->lumaSize = (pictureBufferDescInitDataPtr->maxWidth + pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding) *
-        (pictureBufferDescInitDataPtr->maxHeight + pictureBufferDescInitDataPtr->top_padding + pictureBufferDescInitDataPtr->bot_padding);
-    pictureBufferDescPtr->chromaSize = pictureBufferDescPtr->lumaSize >> (3 - pictureBufferDescInitDataPtr->color_format);
+    pictureBufferDescPtr->luma_size = (pictureBufferDescInitDataPtr->max_width + pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding) *
+        (pictureBufferDescInitDataPtr->max_height + pictureBufferDescInitDataPtr->top_padding + pictureBufferDescInitDataPtr->bot_padding);
+    pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->luma_size >> (3 - pictureBufferDescInitDataPtr->color_format);
     pictureBufferDescPtr->packedFlag = EB_FALSE;
 
-    pictureBufferDescPtr->strideBitIncY = 0;
-    pictureBufferDescPtr->strideBitIncCb = 0;
-    pictureBufferDescPtr->strideBitIncCr = 0;
+    pictureBufferDescPtr->stride_bit_inc_y = 0;
+    pictureBufferDescPtr->stride_bit_inc_cb = 0;
+    pictureBufferDescPtr->stride_bit_inc_cr = 0;
 
     // Allocate the Picture Buffers (luma & chroma)
-    if (pictureBufferDescInitDataPtr->bufferEnableMask & PICTURE_BUFFER_DESC_Y_FLAG) {
+    if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
 
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_y, pictureBufferDescPtr->lumaSize * bytesPerPixel, EB_A_PTR);
-        memset(pictureBufferDescPtr->buffer_y, 0, pictureBufferDescPtr->lumaSize      * bytesPerPixel);
+        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_y, pictureBufferDescPtr->luma_size * bytesPerPixel, EB_A_PTR);
+        memset(pictureBufferDescPtr->buffer_y, 0, pictureBufferDescPtr->luma_size      * bytesPerPixel);
 
     }
     else {
         pictureBufferDescPtr->buffer_y = 0;
     }
 
-    if (pictureBufferDescInitDataPtr->bufferEnableMask & PICTURE_BUFFER_DESC_Cb_FLAG) {
+    if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
 
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->bufferCb, pictureBufferDescPtr->chromaSize * bytesPerPixel, EB_A_PTR);
-        memset(pictureBufferDescPtr->bufferCb, 0, pictureBufferDescPtr->chromaSize      * bytesPerPixel);
-
-    }
-    else {
-        pictureBufferDescPtr->bufferCb = 0;
-    }
-
-    if (pictureBufferDescInitDataPtr->bufferEnableMask & PICTURE_BUFFER_DESC_Cr_FLAG) {
-
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->bufferCr, pictureBufferDescPtr->chromaSize * bytesPerPixel, EB_A_PTR);
-        memset(pictureBufferDescPtr->bufferCr, 0, pictureBufferDescPtr->chromaSize      * bytesPerPixel);
+        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cb, pictureBufferDescPtr->chroma_size * bytesPerPixel, EB_A_PTR);
+        memset(pictureBufferDescPtr->buffer_cb, 0, pictureBufferDescPtr->chroma_size      * bytesPerPixel);
 
     }
     else {
-        pictureBufferDescPtr->bufferCr = 0;
+        pictureBufferDescPtr->buffer_cb = 0;
+    }
+
+    if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
+
+        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cr, pictureBufferDescPtr->chroma_size * bytesPerPixel, EB_A_PTR);
+        memset(pictureBufferDescPtr->buffer_cr, 0, pictureBufferDescPtr->chroma_size      * bytesPerPixel);
+
+    }
+    else {
+        pictureBufferDescPtr->buffer_cr = 0;
     }
 
     return EB_ErrorNone;
 }
 void link_Eb_to_aom_buffer_desc_8bit(
-    EbPictureBufferDesc_t          *picBuffDsc,
+    EbPictureBufferDesc          *picBuffDsc,
     Yv12BufferConfig             *aomBuffDsc
 )
 {
@@ -211,8 +211,8 @@ void link_Eb_to_aom_buffer_desc_8bit(
     //NOTe:  Not all fileds are connected. add more connections as needed.
     {
         aomBuffDsc->y_buffer = picBuffDsc->buffer_y + picBuffDsc->origin_x + (picBuffDsc->origin_y     * picBuffDsc->stride_y);
-        aomBuffDsc->u_buffer = picBuffDsc->bufferCb + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->strideCb);
-        aomBuffDsc->v_buffer = picBuffDsc->bufferCr + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->strideCb);
+        aomBuffDsc->u_buffer = picBuffDsc->buffer_cb + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->stride_cb);
+        aomBuffDsc->v_buffer = picBuffDsc->buffer_cr + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->stride_cb);
 
         aomBuffDsc->y_width = picBuffDsc->width;
         aomBuffDsc->uv_width = picBuffDsc->width / 2;
@@ -221,7 +221,7 @@ void link_Eb_to_aom_buffer_desc_8bit(
         aomBuffDsc->uv_height = picBuffDsc->height / 2;
 
         aomBuffDsc->y_stride = picBuffDsc->stride_y;
-        aomBuffDsc->uv_stride = picBuffDsc->strideCb;
+        aomBuffDsc->uv_stride = picBuffDsc->stride_cb;
 
         aomBuffDsc->border = picBuffDsc->origin_x;
 
@@ -239,8 +239,8 @@ void link_Eb_to_aom_buffer_desc_8bit(
 
 //Jing: TODO
 //Change here later
-void LinkEbToAomBufferDesc(
-    EbPictureBufferDesc_t          *picBuffDsc,
+void link_eb_to_aom_buffer_desc(
+    EbPictureBufferDesc          *picBuffDsc,
     Yv12BufferConfig             *aomBuffDsc
 )
 {
@@ -249,8 +249,8 @@ void LinkEbToAomBufferDesc(
     if (picBuffDsc->bit_depth == EB_8BIT) {
 
         aomBuffDsc->y_buffer = picBuffDsc->buffer_y + picBuffDsc->origin_x + (picBuffDsc->origin_y     * picBuffDsc->stride_y);
-        aomBuffDsc->u_buffer = picBuffDsc->bufferCb + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->strideCb);
-        aomBuffDsc->v_buffer = picBuffDsc->bufferCr + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->strideCb);
+        aomBuffDsc->u_buffer = picBuffDsc->buffer_cb + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->stride_cb);
+        aomBuffDsc->v_buffer = picBuffDsc->buffer_cr + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->stride_cb);
 
 
         aomBuffDsc->y_width = picBuffDsc->width;
@@ -261,7 +261,7 @@ void LinkEbToAomBufferDesc(
 
 
         aomBuffDsc->y_stride = picBuffDsc->stride_y;
-        aomBuffDsc->uv_stride = picBuffDsc->strideCb;
+        aomBuffDsc->uv_stride = picBuffDsc->stride_cb;
 
         aomBuffDsc->border = picBuffDsc->origin_x;
 
@@ -305,12 +305,12 @@ void LinkEbToAomBufferDesc(
         */
 
         aomBuffDsc->y_buffer = CONVERT_TO_BYTEPTR(picBuffDsc->buffer_y);
-        aomBuffDsc->u_buffer = CONVERT_TO_BYTEPTR(picBuffDsc->bufferCb);
-        aomBuffDsc->v_buffer = CONVERT_TO_BYTEPTR(picBuffDsc->bufferCr);
+        aomBuffDsc->u_buffer = CONVERT_TO_BYTEPTR(picBuffDsc->buffer_cb);
+        aomBuffDsc->v_buffer = CONVERT_TO_BYTEPTR(picBuffDsc->buffer_cr);
 
         aomBuffDsc->y_buffer += picBuffDsc->origin_x + (picBuffDsc->origin_y     * picBuffDsc->stride_y);
-        aomBuffDsc->u_buffer += picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->strideCb);
-        aomBuffDsc->v_buffer += picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->strideCb);
+        aomBuffDsc->u_buffer += picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->stride_cb);
+        aomBuffDsc->v_buffer += picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->stride_cb);
 
 
         aomBuffDsc->y_width = picBuffDsc->width;
@@ -321,7 +321,7 @@ void LinkEbToAomBufferDesc(
 
 
         aomBuffDsc->y_stride = picBuffDsc->stride_y;
-        aomBuffDsc->uv_stride = picBuffDsc->strideCb;
+        aomBuffDsc->uv_stride = picBuffDsc->stride_cb;
 
         aomBuffDsc->border = picBuffDsc->origin_x;
 
@@ -351,7 +351,7 @@ void aom_free(void *memblk);
 int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t height,
     int32_t ss_x, int32_t ss_y, int32_t use_highbitdepth,
     int32_t border, int32_t byte_alignment,
-    aom_codec_frame_buffer_t *fb,
+    AomCodecFrameBuffer *fb,
     aom_get_frame_buffer_cb_fn_t cb, void *cb_priv) {
     if (ybf) {
         const int32_t aom_byte_align = (byte_alignment == 0) ? 1 : byte_alignment;

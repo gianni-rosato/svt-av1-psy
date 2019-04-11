@@ -293,7 +293,7 @@ typedef struct RateControlLayerContext
 
 } RateControlLayerContext;
 
-typedef struct RateControlIntervalParamContext_s
+typedef struct RateControlIntervalParamContext
 {
     uint64_t                       firstPoc;
     uint64_t                       lastPoc;
@@ -320,7 +320,7 @@ typedef struct RateControlIntervalParamContext_s
 
 } RateControlIntervalParamContext;
 
-typedef struct HighLevelRateControlContext_s
+typedef struct HighLevelRateControlContext
 {
 
     uint64_t                       targetBitsPerSlidingWindow;
@@ -339,7 +339,7 @@ typedef struct HighLevelRateControlContext_s
 
 } HighLevelRateControlContext;
 
-typedef struct RateControlContext_s
+typedef struct RateControlContext
 {
     EbFifo                    *rate_control_input_tasks_fifo_ptr;
     EbFifo                    *rate_control_output_results_fifo_ptr;

@@ -23,69 +23,71 @@ extern "C" {
      /**************************************
       * Macros
       **************************************/
-#define BAND_TOTAL_COUNT(lcuRowTotalCount, lcuColTotalCount) \
-    ((lcuRowTotalCount) + (lcuColTotalCount) - 1)
-#define ROW_INDEX(yLcuIndex, segmentRowCount, lcuRowTotalCount) \
-    (((yLcuIndex) * (segmentRowCount)) / (lcuRowTotalCount))
-#define BAND_INDEX(xLcuIndex, yLcuIndex, segmentBandCount, lcuBandTotalCount) \
-    ((((xLcuIndex) + (yLcuIndex)) * (segmentBandCount)) / (lcuBandTotalCount))
-#define SEGMENT_INDEX(row_index, bandIndex, segmentBandCount) \
-    (((row_index) * (segmentBandCount)) + (bandIndex))
+#define BAND_TOTAL_COUNT(lcu_row_total_count, lcu_col_total_count) \
+    ((lcu_row_total_count) + (lcu_col_total_count) - 1)
+#define ROW_INDEX(y_lcu_index, segment_row_count, lcu_row_total_count) \
+    (((y_lcu_index) * (segment_row_count)) / (lcu_row_total_count))
+#define BAND_INDEX(x_lcu_index, y_lcu_index, segment_band_count, lcu_band_total_count) \
+    ((((x_lcu_index) + (y_lcu_index)) * (segment_band_count)) / (lcu_band_total_count))
+#define SEGMENT_INDEX(row_index, band_index, segment_band_count) \
+    (((row_index) * (segment_band_count)) + (band_index))
 
       /**************************************
        * Member definitions
        **************************************/
-    typedef struct {
-        uint8_t      *dependencyMap;
-        EbHandle   updateMutex;
-    } EncDecSegDependencyMap_t;
+    typedef struct EncDecSegDependencyMap 
+    {
+        uint8_t      *dependency_map;
+        EbHandle   update_mutex;
+    } EncDecSegDependencyMap;
 
-    typedef struct {
-        uint16_t      startingSegIndex;
-        uint16_t      endingSegIndex;
-        uint16_t      currentSegIndex;
-        EbHandle   assignmentMutex;
-    } EncDecSegSegmentRow_t;
+    typedef struct EncDecSegSegmentRow 
+    {
+        uint16_t      starting_seg_index;
+        uint16_t      ending_seg_index;
+        uint16_t      current_seg_index;
+        EbHandle   assignment_mutex;
+    } EncDecSegSegmentRow;
 
     /**************************************
      * ENCDEC Segments
      **************************************/
-    typedef struct
+    typedef struct EncDecSegments
     {
-        EncDecSegDependencyMap_t  depMap;
-        EncDecSegSegmentRow_t    *rowArray;
+        EncDecSegDependencyMap  dep_map;
+        EncDecSegSegmentRow    *row_array;
 
-        uint16_t                   *xStartArray;
-        uint16_t                   *yStartArray;
-        uint16_t                   *validLcuCountArray;
+        uint16_t                   *x_start_array;
+        uint16_t                   *y_start_array;
+        uint16_t                   *valid_lcu_count_array;
 
-        uint32_t                    segmentBandCount;
-        uint32_t                    segmentRowCount;
+        uint32_t                    segment_band_count;
+        uint32_t                    segment_row_count;
         uint32_t                    segmentTotalCount;
-        uint32_t                    lcuBandCount;
-        uint32_t                    lcuRowCount;
+        uint32_t                    lcu_band_count;
+        uint32_t                    lcu_row_count;
 
-        uint32_t                    segmentMaxBandCount;
-        uint32_t                    segmentMaxRowCount;
-        uint32_t                    segmentMaxTotalCount;
+        uint32_t                    segment_max_band_count;
+        uint32_t                    segment_max_row_count;
+        uint32_t                    segment_max_total_count;
 
-    } EncDecSegments_t;
+    } EncDecSegments;
 
     /**************************************
      * Extern Function Declarations
      **************************************/
-    extern EbErrorType EncDecSegmentsCtor(
-        EncDecSegments_t **segmentsDblPtr,
-        uint32_t             segmentColCount,
-        uint32_t             segmentRowCount);
+    extern EbErrorType enc_dec_segments_ctor(
+        EncDecSegments **segments_dbl_ptr,
+        uint32_t             segment_col_count,
+        uint32_t             segment_row_count);
 
 
-    extern void EncDecSegmentsInit(
-        EncDecSegments_t *segmentsPtr,
-        uint32_t            colCount,
+    extern void enc_dec_segments_init(
+        EncDecSegments *segments_ptr,
+        uint32_t            col_count,
         uint32_t            row_count,
-        uint32_t            picWidthLcu,
-        uint32_t            picHeightLcu);
+        uint32_t            pic_width_lcu,
+        uint32_t            pic_height_lcu);
 #ifdef __cplusplus
 }
 #endif

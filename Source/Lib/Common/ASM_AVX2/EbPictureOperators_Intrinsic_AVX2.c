@@ -1961,7 +1961,7 @@ void full_distortion_kernel32_bits_avx2(
     uint32_t   area_width,
     uint32_t   area_height)
 {
-    uint32_t rowCount, colCount;
+    uint32_t rowCount, col_count;
     __m256i sum1 = _mm256_setzero_si256();
     __m256i sum2 = _mm256_setzero_si256();
     __m128i temp1, temp2, temp3;
@@ -1972,7 +1972,7 @@ void full_distortion_kernel32_bits_avx2(
         int32_t *coeffTemp = coeff;
         int32_t *reconCoeffTemp = recon_coeff;
 
-        colCount = area_width / 4;
+        col_count = area_width / 4;
         do
         {
             __m128i x0, y0;
@@ -1988,7 +1988,7 @@ void full_distortion_kernel32_bits_avx2(
             sum1 = _mm256_add_epi32(sum1, x);
             coeffTemp += 4;
             reconCoeffTemp += 4;
-        } while (--colCount);
+        } while (--col_count);
 
         coeff += coeff_stride;
         recon_coeff += recon_coeff_stride;
@@ -2019,7 +2019,7 @@ void full_distortion_kernel_cbf_zero32_bits_avx2(
     uint32_t   area_width,
     uint32_t   area_height)
 {
-    uint32_t rowCount, colCount;
+    uint32_t rowCount, col_count;
     __m256i sum = _mm256_setzero_si256();
     __m128i temp1, temp2;
 
@@ -2028,7 +2028,7 @@ void full_distortion_kernel_cbf_zero32_bits_avx2(
     {
         int32_t *coeffTemp = coeff;
 
-        colCount = area_width / 4;
+        col_count = area_width / 4;
         do
         {
             __m128i x0;
@@ -2038,7 +2038,7 @@ void full_distortion_kernel_cbf_zero32_bits_avx2(
             y0 = _mm256_cvtepi32_epi64(x0);
             z0 = _mm256_mul_epi32(y0, y0);
             sum = _mm256_add_epi64(sum, z0);
-        } while (--colCount);
+        } while (--col_count);
 
         coeff += coeff_stride;
         recon_coeff += coeff_stride;

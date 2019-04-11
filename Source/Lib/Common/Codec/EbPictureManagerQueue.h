@@ -18,90 +18,74 @@ extern "C" {
     /************************************************
      * Input Queue Entry
      ************************************************/
-    struct ReferenceQueueEntry_s;   // empty struct definition
+    struct ReferenceQueueEntry;   // empty struct definition
 
-    typedef struct InputQueueEntry_s {
-        EbObjectWrapper              *inputObjectPtr;
-        uint32_t                          dependentCount;
-        uint32_t                          referenceEntryIndex;
-        ReferenceList_t                *list0Ptr;
-        ReferenceList_t                *list1Ptr;
-        uint32_t                          useCount;
-        EbBool                         memoryMgmtLoopDone;
-        EbBool                         rateControlLoopDone;
-        EbBool                         encodingHasBegun;
-
-    } InputQueueEntry_t;
+    typedef struct InputQueueEntry 
+    {
+        EbObjectWrapper *input_object_ptr;
+        uint32_t         dependent_count;
+        uint32_t         reference_entry_index;
+        ReferenceList   *list0_ptr;
+        ReferenceList   *list1_ptr;
+    } InputQueueEntry;
 
     /************************************************
      * Reference Queue Entry
      ************************************************/
-    typedef struct ReferenceQueueEntry_s {
-
-        uint64_t                          picture_number;
-        uint64_t                          decode_order;
-        EbObjectWrapper              *referenceObjectPtr;
-        uint32_t                          dependentCount;
-        EbBool                         release_enable;
-        EbBool                         referenceAvailable;
-        uint32_t                          depList0Count;
-        uint32_t                          depList1Count;
-        DependentList_t                 list0;
-        DependentList_t                 list1;
-        EbBool                         is_used_as_reference_flag;
-
-        uint64_t                          rcGroupIndex;
-        EB_SLICE                        slice_type;
-        uint8_t                         temporal_layer_index;
-        uint64_t                        last_islice_picture_number;
-
-#if RC_FEEDBACK
-        EbBool                         feedback_arrived;
+    typedef struct ReferenceQueueEntry 
+    {
+        uint64_t         picture_number;
+        uint64_t         decode_order;
+        EbObjectWrapper *reference_object_ptr;
+        uint32_t         dependent_count;
+        EbBool           release_enable;
+        EbBool           reference_available;
+        uint32_t         dep_list0_count;
+        uint32_t         dep_list1_count;
+        DependentList    list0;
+        DependentList    list1;
+        EbBool           is_used_as_reference_flag;
+        EB_SLICE         slice_type;
+        uint8_t          temporal_layer_index;
+        uint64_t         last_islice_picture_number;         
+#if RC_FEEDBACK         
+        EbBool           feedback_arrived;
 #endif 
-    } ReferenceQueueEntry_t;
+    } ReferenceQueueEntry;
 
     /************************************************
      * Rate Control Input Queue Entry
      ************************************************/
 
-    typedef struct RcInputQueueEntry_s {
-        uint64_t                          picture_number;
-        EbObjectWrapper              *inputObjectPtr;
+    typedef struct RcInputQueueEntry 
+    {
+        uint64_t         picture_number;
+        EbObjectWrapper *input_object_ptr;
+        EbBool           release_enabled;
+        uint64_t         group_id;
+        uint64_t         gop_first_poc;
+        uint32_t         gop_index;
+    } RcInputQueueEntry;
 
-        EbBool                         isPassed;
-        EbBool                         releaseEnabled;
-        uint64_t                          groupId;
-        uint64_t                          gopFirstPoc;
-        uint32_t                          gopIndex;
-
-
-    } RcInputQueueEntry_t;
 
     /************************************************
      * Rate Control FeedBack  Queue Entry
      ************************************************/
-    typedef struct RcFeedbackQueueEntry_s {
+    typedef struct RcFeedbackQueueEntry 
+    {
+        uint64_t  picture_number;
+        EbBool    release_enabled;
+        uint64_t  group_id;
+        uint64_t  gop_first_poc;
+        uint32_t  gop_index;
+    } RcFeedbackQueueEntry;
 
-        uint64_t                          picture_number;
-        EbObjectWrapper              *feedbackObjectPtr;
-
-        EbBool                         isAvailable;
-        EbBool                         isUpdated;
-        EbBool                         releaseEnabled;
-        uint64_t                          groupId;
-        uint64_t                          gopFirstPoc;
-        uint32_t                          gopIndex;
-
-    } RcFeedbackQueueEntry_t;
 
     extern EbErrorType input_queue_entry_ctor(
-        InputQueueEntry_t **entry_dbl_ptr);
-
-
+        InputQueueEntry **entry_dbl_ptr);
 
     extern EbErrorType reference_queue_entry_ctor(
-        ReferenceQueueEntry_t  **entry_dbl_ptr);
-
+        ReferenceQueueEntry  **entry_dbl_ptr);
 
 #ifdef __cplusplus
 }

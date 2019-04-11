@@ -8,12 +8,12 @@
 #include "EbDefinitions.h"
 #include "EbEncDecTasks.h"
 
-EbErrorType EncDecTasksCtor(
+EbErrorType enc_dec_tasks_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    EncDecTasks_t *context_ptr;
-    EB_MALLOC(EncDecTasks_t*, context_ptr, sizeof(EncDecTasks_t), EB_N_PTR);
+    EncDecTasks *context_ptr;
+    EB_MALLOC(EncDecTasks*, context_ptr, sizeof(EncDecTasks), EB_N_PTR);
 
     *object_dbl_ptr = (EbPtr)context_ptr;
 

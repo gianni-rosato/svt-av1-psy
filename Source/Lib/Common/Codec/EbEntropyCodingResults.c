@@ -9,12 +9,12 @@
 #include "EbEntropyCodingResults.h"
 
 
-EbErrorType EntropyCodingResultsCtor(
+EbErrorType entropy_coding_results_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    EntropyCodingResults_t *context_ptr;
-    EB_MALLOC(EntropyCodingResults_t*, context_ptr, sizeof(EntropyCodingResults_t), EB_N_PTR);
+    EntropyCodingResults *context_ptr;
+    EB_MALLOC(EntropyCodingResults*, context_ptr, sizeof(EntropyCodingResults), EB_N_PTR);
 
     *object_dbl_ptr = (EbPtr)context_ptr;
 

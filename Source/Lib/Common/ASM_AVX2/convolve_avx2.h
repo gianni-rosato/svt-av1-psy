@@ -120,7 +120,7 @@ static INLINE __m256i convolve_lowbd_x(const __m256i data,
     return convolve_lowbd(s, coeffs);
 }
 
-static INLINE void add_store_aligned_256(CONV_BUF_TYPE *const dst,
+static INLINE void add_store_aligned_256(ConvBufType *const dst,
     const __m256i *const res,
     const int32_t do_average) {
     __m256i d;

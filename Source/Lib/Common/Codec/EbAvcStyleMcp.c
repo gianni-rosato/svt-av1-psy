@@ -30,12 +30,12 @@ static const   uint8_t  integer_posoffset_tab_y[16] = { 0, 0, 0, 0,
 
 
 void estimate_uni_pred_interpolation_unpacked_avc_style(
-    EbPictureBufferDesc_t   *ref_pic,
+    EbPictureBufferDesc   *ref_pic,
     uint32_t                 pos_x,
     uint32_t                 pos_y,
     uint32_t                 pu_width,
     uint32_t                 pu_height,
-    EbPictureBufferDesc_t   *dst,
+    EbPictureBufferDesc   *dst,
     uint32_t                 dst_luma_index,
     uint32_t                 dst_chroma_index,          //input parameter, please refer to the detailed explanation above.
     uint32_t                 component_mask,
@@ -73,21 +73,21 @@ void estimate_uni_pred_interpolation_unpacked_avc_style(
 * Requirement: skip         = 0 or 1
 * Requirement (x86 only): temp_buf % 16 = 0
 * Requirement (x86 only): (dst->buffer_y  + dst_luma_index  ) % 16 = 0 when pu_width %16 = 0
-* Requirement (x86 only): (dst->bufferCb + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
-* Requirement (x86 only): (dst->bufferCr + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
+* Requirement (x86 only): (dst->buffer_cb + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
+* Requirement (x86 only): (dst->buffer_cr + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
 * Requirement (x86 only): dst->stride_y   % 16 = 0 when pu_width %16 = 0
 * Requirement (x86 only): dst->chromaStride % 16 = 0 when pu_width %32 = 0
 *******************************************************************************/
 void estimate_bi_pred_interpolation_unpacked_avc_style(
-    EbPictureBufferDesc_t   *ref_pic_list0,
-    EbPictureBufferDesc_t   *ref_pic_list1,
+    EbPictureBufferDesc   *ref_pic_list0,
+    EbPictureBufferDesc   *ref_pic_list1,
     uint32_t                 ref_list0_pos_x,
     uint32_t                 ref_list0_pos_y,
     uint32_t                 ref_list1_pos_x,
     uint32_t                 ref_list1_pos_y,
     uint32_t                 pu_width,
     uint32_t                 pu_height,
-    EbPictureBufferDesc_t   *bi_dst,
+    EbPictureBufferDesc   *bi_dst,
     uint32_t                 dst_luma_index,
     uint32_t                 dst_chroma_index,
     uint32_t                 component_mask,
@@ -157,18 +157,18 @@ void estimate_bi_pred_interpolation_unpacked_avc_style(
 * Requirement: skip         = 0 or 1
 * Requirement (x86 only): temp_buf % 16 = 0
 * Requirement (x86 only): (dst->buffer_y  + dst_luma_index  ) % 16 = 0 when pu_width %16 = 0
-* Requirement (x86 only): (dst->bufferCb + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
-* Requirement (x86 only): (dst->bufferCr + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
+* Requirement (x86 only): (dst->buffer_cb + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
+* Requirement (x86 only): (dst->buffer_cr + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
 * Requirement (x86 only): dst->stride_y   % 16 = 0 when pu_width %16 = 0
 * Requirement (x86 only): dst->chromaStride % 16 = 0 when pu_width %32 = 0
 *******************************************************************************/
 void estimate_uni_pred_interpolation_avc_luma(
-    EbPictureBufferDesc_t   *ref_pic,
+    EbPictureBufferDesc   *ref_pic,
     uint32_t                 pos_x,
     uint32_t                 pos_y,
     uint32_t                 pu_width,
     uint32_t                 pu_height,
-    EbPictureBufferDesc_t   *dst,
+    EbPictureBufferDesc   *dst,
     uint32_t                 dst_luma_index,
     uint32_t                 dst_chroma_index,          //input parameter, please refer to the detailed explanation above.
     uint32_t                 component_mask,
@@ -237,10 +237,10 @@ void estimate_uni_pred_interpolation_avc_luma(
        //       for integer positions ( mapped_frac_posx + (mapped_frac_posy << 3) equals 0 )
        //doing the chroma Cb interpolation
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic->bufferCb + integ_pos_x + integ_pos_y * ref_pic->strideCb,
-            ref_pic->strideCb,
-            dst->bufferCb + dst_chroma_index,
-            dst->strideCb,
+            ref_pic->buffer_cb + integ_pos_x + integ_pos_y * ref_pic->stride_cb,
+            ref_pic->stride_cb,
+            dst->buffer_cb + dst_chroma_index,
+            dst->stride_cb,
             chroma_pu_width,
             chroma_pu_height,
             temp_buf,
@@ -249,10 +249,10 @@ void estimate_uni_pred_interpolation_avc_luma(
 
         //doing the chroma Cr interpolation
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic->bufferCr + integ_pos_x + integ_pos_y * ref_pic->strideCr,
-            ref_pic->strideCr,
-            dst->bufferCr + dst_chroma_index,
-            dst->strideCr,
+            ref_pic->buffer_cr + integ_pos_x + integ_pos_y * ref_pic->stride_cr,
+            ref_pic->stride_cr,
+            dst->buffer_cr + dst_chroma_index,
+            dst->stride_cr,
             chroma_pu_width,
             chroma_pu_height,
             temp_buf,
@@ -268,21 +268,21 @@ void estimate_uni_pred_interpolation_avc_luma(
  * Requirement: skip         = 0 or 1
  * Requirement (x86 only): temp_buf % 16 = 0
  * Requirement (x86 only): (dst->buffer_y  + dst_luma_index  ) % 16 = 0 when pu_width %16 = 0
- * Requirement (x86 only): (dst->bufferCb + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
- * Requirement (x86 only): (dst->bufferCr + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
+ * Requirement (x86 only): (dst->buffer_cb + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
+ * Requirement (x86 only): (dst->buffer_cr + dst_chroma_index) % 16 = 0 when pu_width %32 = 0
  * Requirement (x86 only): dst->stride_y   % 16 = 0 when pu_width %16 = 0
  * Requirement (x86 only): dst->chromaStride % 16 = 0 when pu_width %32 = 0
 *******************************************************************************/
 void estimate_bi_pred_interpolation_avc_luma(
-    EbPictureBufferDesc_t   *ref_pic_list0,
-    EbPictureBufferDesc_t   *ref_pic_list1,
+    EbPictureBufferDesc   *ref_pic_list0,
+    EbPictureBufferDesc   *ref_pic_list1,
     uint32_t                 ref_list0_pos_x,
     uint32_t                 ref_list0_pos_y,
     uint32_t                 ref_list1_pos_x,
     uint32_t                 ref_list1_pos_y,
     uint32_t                 pu_width,
     uint32_t                 pu_height,
-    EbPictureBufferDesc_t   *bi_dst,
+    EbPictureBufferDesc   *bi_dst,
     uint32_t                 dst_luma_index,
     uint32_t                 dst_chroma_index,
     uint32_t                 component_mask,
@@ -388,8 +388,8 @@ void estimate_bi_pred_interpolation_avc_luma(
             integ_pos_y++;
 
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic_list0->bufferCb + integ_pos_x + integ_pos_y * ref_pic_list0->strideCb,
-            ref_pic_list0->strideCb,
+            ref_pic_list0->buffer_cb + integ_pos_x + integ_pos_y * ref_pic_list0->stride_cb,
+            ref_pic_list0->stride_cb,
             ref_list0_temp_dst,
             chroma_pu_width,
             chroma_pu_width,
@@ -414,8 +414,8 @@ void estimate_bi_pred_interpolation_avc_luma(
             integ_pos_y++;
 
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic_list1->bufferCb + integ_pos_x + integ_pos_y * ref_pic_list1->strideCb,
-            ref_pic_list1->strideCb,
+            ref_pic_list1->buffer_cb + integ_pos_x + integ_pos_y * ref_pic_list1->stride_cb,
+            ref_pic_list1->stride_cb,
             ref_list1_temp_dst,
             chroma_pu_width,
             chroma_pu_width,
@@ -431,8 +431,8 @@ void estimate_bi_pred_interpolation_avc_luma(
             chroma_pu_width << shift,
             ref_list1_temp_dst,
             chroma_pu_width << shift,
-            bi_dst->bufferCb + dst_chroma_index,
-            bi_dst->strideCb << shift,
+            bi_dst->buffer_cb + dst_chroma_index,
+            bi_dst->stride_cb << shift,
             chroma_pu_width,
             chroma_pu_height >> shift
             );
@@ -456,8 +456,8 @@ void estimate_bi_pred_interpolation_avc_luma(
             integ_pos_y++;
 
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic_list0->bufferCr + integ_pos_x + integ_pos_y * ref_pic_list0->strideCr,
-            ref_pic_list0->strideCr,
+            ref_pic_list0->buffer_cr + integ_pos_x + integ_pos_y * ref_pic_list0->stride_cr,
+            ref_pic_list0->stride_cr,
             ref_list0_temp_dst,
             chroma_pu_width,
             chroma_pu_width,
@@ -482,8 +482,8 @@ void estimate_bi_pred_interpolation_avc_luma(
             integ_pos_y++;
 
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic_list1->bufferCr + integ_pos_x + integ_pos_y * ref_pic_list1->strideCr,
-            ref_pic_list1->strideCr,
+            ref_pic_list1->buffer_cr + integ_pos_x + integ_pos_y * ref_pic_list1->stride_cr,
+            ref_pic_list1->stride_cr,
             ref_list1_temp_dst,
             chroma_pu_width,
             chroma_pu_width,
@@ -498,8 +498,8 @@ void estimate_bi_pred_interpolation_avc_luma(
             chroma_pu_width << shift,
             ref_list1_temp_dst,
             chroma_pu_width << shift,
-            bi_dst->bufferCr + dst_chroma_index,
-            bi_dst->strideCr << shift,
+            bi_dst->buffer_cr + dst_chroma_index,
+            bi_dst->stride_cr << shift,
             chroma_pu_width,
             chroma_pu_height >> shift
             );
@@ -509,12 +509,12 @@ void estimate_bi_pred_interpolation_avc_luma(
 
 
 void estimate_uni_pred_interpolation_avc_lumaRef10Bit(
-    EbPictureBufferDesc_t   *ref_frame_pic_list0,
+    EbPictureBufferDesc   *ref_frame_pic_list0,
     uint32_t                 pos_x,
     uint32_t                 pos_y,
     uint32_t                 pu_width,
     uint32_t                 pu_height,
-    EbPictureBufferDesc_t   *dst,
+    EbPictureBufferDesc   *dst,
     uint32_t                 dst_luma_index,
     uint32_t                 dst_chroma_index,          //input parameter, please refer to the detailed explanation above.
     uint32_t                 component_mask,
@@ -551,25 +551,25 @@ void estimate_uni_pred_interpolation_avc_lumaRef10Bit(
             sub_pred = sub_pred_chroma;
             uint32_t in_pos_x = (pos_x >> 3);
             uint32_t in_pos_y = (pos_y >> 3);
-            uint16_t *ptr16 = (uint16_t *)ref_frame_pic_list0->bufferCb + in_pos_x + in_pos_y * ref_frame_pic_list0->strideCb;
+            uint16_t *ptr16 = (uint16_t *)ref_frame_pic_list0->buffer_cb + in_pos_x + in_pos_y * ref_frame_pic_list0->stride_cb;
 
             extract_8bit_data(
                 ptr16,
-                ref_frame_pic_list0->strideCb << sub_pred,
-                dst->bufferCb + dst_chroma_index,
-                dst->strideCb << sub_pred,
+                ref_frame_pic_list0->stride_cb << sub_pred,
+                dst->buffer_cb + dst_chroma_index,
+                dst->stride_cb << sub_pred,
                 chroma_pu_width,
                 chroma_pu_height >> sub_pred,
                 asm_type
             );
 
-            ptr16 = (uint16_t *)ref_frame_pic_list0->bufferCr + in_pos_x + in_pos_y * ref_frame_pic_list0->strideCr;
+            ptr16 = (uint16_t *)ref_frame_pic_list0->buffer_cr + in_pos_x + in_pos_y * ref_frame_pic_list0->stride_cr;
 
             extract_8bit_data(
                 ptr16,
-                ref_frame_pic_list0->strideCr << sub_pred,
-                dst->bufferCr + dst_chroma_index,
-                dst->strideCr << sub_pred,
+                ref_frame_pic_list0->stride_cr << sub_pred,
+                dst->buffer_cr + dst_chroma_index,
+                dst->stride_cr << sub_pred,
                 chroma_pu_width,
                 chroma_pu_height >> sub_pred,
                 asm_type
@@ -579,12 +579,12 @@ void estimate_uni_pred_interpolation_avc_lumaRef10Bit(
 }
 
 void estimate_uni_pred_interpolation_avc_chroma_ref10_bit(
-    EbPictureBufferDesc_t   *ref_frame_pic_list0,
+    EbPictureBufferDesc   *ref_frame_pic_list0,
     uint32_t                 pos_x,
     uint32_t                 pos_y,
     uint32_t                 pu_width,
     uint32_t                 pu_height,
-    EbPictureBufferDesc_t   *dst,
+    EbPictureBufferDesc   *dst,
     uint32_t                 dst_luma_index,
     uint32_t                 dst_chroma_index,          //input parameter, please refer to the detailed explanation above.
     uint32_t                 component_mask,
@@ -596,7 +596,7 @@ void estimate_uni_pred_interpolation_avc_chroma_ref10_bit(
     uint32_t   chroma_pu_height = pu_height >> 1;
     uint32_t   in_pos_x = (pos_x >> 3);
     uint32_t   in_pos_y = (pos_y >> 3);
-    uint16_t  *ptr16 = (uint16_t *)ref_frame_pic_list0->bufferCb + in_pos_x + in_pos_y * ref_frame_pic_list0->strideCb;
+    uint16_t  *ptr16 = (uint16_t *)ref_frame_pic_list0->buffer_cb + in_pos_x + in_pos_y * ref_frame_pic_list0->stride_cb;
 
     (void)temp_buf;
     (void)component_mask;
@@ -604,36 +604,36 @@ void estimate_uni_pred_interpolation_avc_chroma_ref10_bit(
 
     extract_8bit_data(
         ptr16,
-        ref_frame_pic_list0->strideCb << sub_pred,
-        dst->bufferCb + dst_chroma_index,
-        dst->strideCb << sub_pred,
+        ref_frame_pic_list0->stride_cb << sub_pred,
+        dst->buffer_cb + dst_chroma_index,
+        dst->stride_cb << sub_pred,
         chroma_pu_width,
         chroma_pu_height >> sub_pred,
         asm_type
     );
 
-    ptr16 = (uint16_t *)ref_frame_pic_list0->bufferCr + in_pos_x + in_pos_y * ref_frame_pic_list0->strideCr;
+    ptr16 = (uint16_t *)ref_frame_pic_list0->buffer_cr + in_pos_x + in_pos_y * ref_frame_pic_list0->stride_cr;
 
     extract_8bit_data(
         ptr16,
-        ref_frame_pic_list0->strideCr << sub_pred,
-        dst->bufferCr + dst_chroma_index,
-        dst->strideCr << sub_pred,
+        ref_frame_pic_list0->stride_cr << sub_pred,
+        dst->buffer_cr + dst_chroma_index,
+        dst->stride_cr << sub_pred,
         chroma_pu_width,
         chroma_pu_height >> sub_pred,
         asm_type
     );
 }
 void estimate_bi_pred_interpolation_avc_chroma_ref10_bit(
-    EbPictureBufferDesc_t   *ref_frame_pic_list0,
-    EbPictureBufferDesc_t   *ref_frame_pic_list1,
+    EbPictureBufferDesc   *ref_frame_pic_list0,
+    EbPictureBufferDesc   *ref_frame_pic_list1,
     uint32_t                 ref_list0_pos_x,
     uint32_t                 ref_list0_pos_y,
     uint32_t                 ref_list1_pos_x,
     uint32_t                 ref_list1_pos_y,
     uint32_t                 pu_width,
     uint32_t                 pu_height,
-    EbPictureBufferDesc_t   *bi_dst,
+    EbPictureBufferDesc   *bi_dst,
     uint32_t                 dst_luma_index,
     uint32_t                 dst_chroma_index,
     uint32_t                 component_mask,
@@ -652,24 +652,24 @@ void estimate_bi_pred_interpolation_avc_chroma_ref10_bit(
     (void)component_mask;
     (void)dst_luma_index;
     unpack_l0l1_avg(
-        (uint16_t *)ref_frame_pic_list0->bufferCb + (ref_list0_pos_x >> 3) + (ref_list0_pos_y >> 3)*ref_frame_pic_list0->strideCb,
-        ref_frame_pic_list0->strideCb << sub_pred,
-        (uint16_t *)ref_frame_pic_list1->bufferCb + (ref_list1_pos_x >> 3) + (ref_list1_pos_y >> 3)*ref_frame_pic_list1->strideCb,
-        ref_frame_pic_list1->strideCb << sub_pred,
-        bi_dst->bufferCb + dst_chroma_index,
-        bi_dst->strideCb << sub_pred,
+        (uint16_t *)ref_frame_pic_list0->buffer_cb + (ref_list0_pos_x >> 3) + (ref_list0_pos_y >> 3)*ref_frame_pic_list0->stride_cb,
+        ref_frame_pic_list0->stride_cb << sub_pred,
+        (uint16_t *)ref_frame_pic_list1->buffer_cb + (ref_list1_pos_x >> 3) + (ref_list1_pos_y >> 3)*ref_frame_pic_list1->stride_cb,
+        ref_frame_pic_list1->stride_cb << sub_pred,
+        bi_dst->buffer_cb + dst_chroma_index,
+        bi_dst->stride_cb << sub_pred,
         chroma_pu_width,
         chroma_pu_height >> sub_pred,
         asm_type
     );
 
     unpack_l0l1_avg(
-        (uint16_t *)ref_frame_pic_list0->bufferCr + (ref_list0_pos_x >> 3) + (ref_list0_pos_y >> 3)*ref_frame_pic_list0->strideCr,
-        ref_frame_pic_list0->strideCr << sub_pred,
-        (uint16_t *)ref_frame_pic_list1->bufferCr + (ref_list1_pos_x >> 3) + (ref_list1_pos_y >> 3)*ref_frame_pic_list1->strideCr,
-        ref_frame_pic_list1->strideCr << sub_pred,
-        bi_dst->bufferCr + dst_chroma_index,
-        bi_dst->strideCr << sub_pred,
+        (uint16_t *)ref_frame_pic_list0->buffer_cr + (ref_list0_pos_x >> 3) + (ref_list0_pos_y >> 3)*ref_frame_pic_list0->stride_cr,
+        ref_frame_pic_list0->stride_cr << sub_pred,
+        (uint16_t *)ref_frame_pic_list1->buffer_cr + (ref_list1_pos_x >> 3) + (ref_list1_pos_y >> 3)*ref_frame_pic_list1->stride_cr,
+        ref_frame_pic_list1->stride_cr << sub_pred,
+        bi_dst->buffer_cr + dst_chroma_index,
+        bi_dst->stride_cr << sub_pred,
         chroma_pu_width,
         chroma_pu_height >> sub_pred,
         asm_type
@@ -677,15 +677,15 @@ void estimate_bi_pred_interpolation_avc_chroma_ref10_bit(
 }
 
 void estimate_bi_pred_interpolation_avc_luma_ref10_bit(
-    EbPictureBufferDesc_t   *ref_frame_pic_list0,
-    EbPictureBufferDesc_t   *ref_frame_pic_list1,
+    EbPictureBufferDesc   *ref_frame_pic_list0,
+    EbPictureBufferDesc   *ref_frame_pic_list1,
     uint32_t                 ref_list0_pos_x,
     uint32_t                 ref_list0_pos_y,
     uint32_t                 ref_list1_pos_x,
     uint32_t                 ref_list1_pos_y,
     uint32_t                 pu_width,
     uint32_t                 pu_height,
-    EbPictureBufferDesc_t   *bi_dst,
+    EbPictureBufferDesc   *bi_dst,
     uint32_t                 dst_luma_index,
     uint32_t                 dst_chroma_index,
     uint32_t                 component_mask,
@@ -723,23 +723,23 @@ void estimate_bi_pred_interpolation_avc_luma_ref10_bit(
     if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
         sub_pred = sub_pred_chroma;
         unpack_l0l1_avg(
-            (uint16_t *)ref_frame_pic_list0->bufferCb + (ref_list0_pos_x >> 3) + (ref_list0_pos_y >> 3)*ref_frame_pic_list0->strideCb,
-            ref_frame_pic_list0->strideCb << sub_pred,
-            (uint16_t *)ref_frame_pic_list1->bufferCb + (ref_list1_pos_x >> 3) + (ref_list1_pos_y >> 3)*ref_frame_pic_list1->strideCb,
-            ref_frame_pic_list1->strideCb << sub_pred,
-            bi_dst->bufferCb + dst_chroma_index,
-            bi_dst->strideCb << sub_pred,
+            (uint16_t *)ref_frame_pic_list0->buffer_cb + (ref_list0_pos_x >> 3) + (ref_list0_pos_y >> 3)*ref_frame_pic_list0->stride_cb,
+            ref_frame_pic_list0->stride_cb << sub_pred,
+            (uint16_t *)ref_frame_pic_list1->buffer_cb + (ref_list1_pos_x >> 3) + (ref_list1_pos_y >> 3)*ref_frame_pic_list1->stride_cb,
+            ref_frame_pic_list1->stride_cb << sub_pred,
+            bi_dst->buffer_cb + dst_chroma_index,
+            bi_dst->stride_cb << sub_pred,
             chroma_pu_width,
             chroma_pu_height >> sub_pred,
             asm_type);
 
         unpack_l0l1_avg(
-            (uint16_t *)ref_frame_pic_list0->bufferCr + (ref_list0_pos_x >> 3) + (ref_list0_pos_y >> 3)*ref_frame_pic_list0->strideCr,
-            ref_frame_pic_list0->strideCr << sub_pred,
-            (uint16_t *)ref_frame_pic_list1->bufferCr + (ref_list1_pos_x >> 3) + (ref_list1_pos_y >> 3)*ref_frame_pic_list1->strideCr,
-            ref_frame_pic_list1->strideCr << sub_pred,
-            bi_dst->bufferCr + dst_chroma_index,
-            bi_dst->strideCr << sub_pred,
+            (uint16_t *)ref_frame_pic_list0->buffer_cr + (ref_list0_pos_x >> 3) + (ref_list0_pos_y >> 3)*ref_frame_pic_list0->stride_cr,
+            ref_frame_pic_list0->stride_cr << sub_pred,
+            (uint16_t *)ref_frame_pic_list1->buffer_cr + (ref_list1_pos_x >> 3) + (ref_list1_pos_y >> 3)*ref_frame_pic_list1->stride_cr,
+            ref_frame_pic_list1->stride_cr << sub_pred,
+            bi_dst->buffer_cr + dst_chroma_index,
+            bi_dst->stride_cr << sub_pred,
             chroma_pu_width,
             chroma_pu_height >> sub_pred,
             asm_type);
@@ -747,12 +747,12 @@ void estimate_bi_pred_interpolation_avc_luma_ref10_bit(
 }
 
 void uni_pred_i_free_ref8_bit(
-    EbPictureBufferDesc_t   *ref_pic,
+    EbPictureBufferDesc   *ref_pic,
     uint32_t                 pos_x,
     uint32_t                 pos_y,
     uint32_t                 pu_width,
     uint32_t                 pu_height,
-    EbPictureBufferDesc_t   *dst,
+    EbPictureBufferDesc   *dst,
     uint32_t                 dst_luma_index,
     uint32_t                 dst_chroma_index,          //input parameter, please refer to the detailed explanation above.
     uint32_t                 component_mask,
@@ -820,10 +820,10 @@ void uni_pred_i_free_ref8_bit(
        //       for integer positions ( mapped_frac_posx + (mapped_frac_posy << 3) equals 0 )
        //doing the chroma Cb interpolation
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic->bufferCb + integ_pos_x + integ_pos_y * ref_pic->strideCb,
-            ref_pic->strideCb,
-            dst->bufferCb + dst_chroma_index,
-            dst->strideCb,
+            ref_pic->buffer_cb + integ_pos_x + integ_pos_y * ref_pic->stride_cb,
+            ref_pic->stride_cb,
+            dst->buffer_cb + dst_chroma_index,
+            dst->stride_cb,
             chroma_pu_width,
             chroma_pu_height,
             temp_buf,
@@ -832,10 +832,10 @@ void uni_pred_i_free_ref8_bit(
 
         //doing the chroma Cr interpolation
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic->bufferCr + integ_pos_x + integ_pos_y * ref_pic->strideCr,
-            ref_pic->strideCr,
-            dst->bufferCr + dst_chroma_index,
-            dst->strideCr,
+            ref_pic->buffer_cr + integ_pos_x + integ_pos_y * ref_pic->stride_cr,
+            ref_pic->stride_cr,
+            dst->buffer_cr + dst_chroma_index,
+            dst->stride_cr,
             chroma_pu_width,
             chroma_pu_height,
             temp_buf,
@@ -845,15 +845,15 @@ void uni_pred_i_free_ref8_bit(
 }
 
 void bi_pred_i_free_ref8_bit(
-    EbPictureBufferDesc_t   *ref_pic_list0,
-    EbPictureBufferDesc_t   *ref_pic_list1,
+    EbPictureBufferDesc   *ref_pic_list0,
+    EbPictureBufferDesc   *ref_pic_list1,
     uint32_t                 ref_list0_pos_x,
     uint32_t                 ref_list0_pos_y,
     uint32_t                 ref_list1_pos_x,
     uint32_t                 ref_list1_pos_y,
     uint32_t                 pu_width,
     uint32_t                 pu_height,
-    EbPictureBufferDesc_t   *bi_dst,
+    EbPictureBufferDesc   *bi_dst,
     uint32_t                 dst_luma_index,
     uint32_t                 dst_chroma_index,
     uint32_t                 component_mask,
@@ -962,8 +962,8 @@ void bi_pred_i_free_ref8_bit(
             integ_pos_y++;
 
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic_list0->bufferCb + integ_pos_x + integ_pos_y * ref_pic_list0->strideCb,
-            ref_pic_list0->strideCb,
+            ref_pic_list0->buffer_cb + integ_pos_x + integ_pos_y * ref_pic_list0->stride_cb,
+            ref_pic_list0->stride_cb,
             ref_list0_temp_dst,
             chroma_pu_width,
             chroma_pu_width,
@@ -986,8 +986,8 @@ void bi_pred_i_free_ref8_bit(
             integ_pos_y++;
 
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic_list1->bufferCb + integ_pos_x + integ_pos_y * ref_pic_list1->strideCb,
-            ref_pic_list1->strideCb,
+            ref_pic_list1->buffer_cb + integ_pos_x + integ_pos_y * ref_pic_list1->stride_cb,
+            ref_pic_list1->stride_cb,
             ref_list1_temp_dst,
             chroma_pu_width,
             chroma_pu_width,
@@ -1002,8 +1002,8 @@ void bi_pred_i_free_ref8_bit(
             chroma_pu_width << shift,
             ref_list1_temp_dst,
             chroma_pu_width << shift,
-            bi_dst->bufferCb + dst_chroma_index,
-            bi_dst->strideCb << shift,
+            bi_dst->buffer_cb + dst_chroma_index,
+            bi_dst->stride_cb << shift,
             chroma_pu_width,
             chroma_pu_height >> shift);
 
@@ -1025,8 +1025,8 @@ void bi_pred_i_free_ref8_bit(
             integ_pos_y++;
 
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic_list0->bufferCr + integ_pos_x + integ_pos_y * ref_pic_list0->strideCr,
-            ref_pic_list0->strideCr,
+            ref_pic_list0->buffer_cr + integ_pos_x + integ_pos_y * ref_pic_list0->stride_cr,
+            ref_pic_list0->stride_cr,
             ref_list0_temp_dst,
             chroma_pu_width,
             chroma_pu_width,
@@ -1049,8 +1049,8 @@ void bi_pred_i_free_ref8_bit(
             integ_pos_y++;
 
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 3)](
-            ref_pic_list1->bufferCr + integ_pos_x + integ_pos_y * ref_pic_list1->strideCr,
-            ref_pic_list1->strideCr,
+            ref_pic_list1->buffer_cr + integ_pos_x + integ_pos_y * ref_pic_list1->stride_cr,
+            ref_pic_list1->stride_cr,
             ref_list1_temp_dst,
             chroma_pu_width,
             chroma_pu_width,
@@ -1065,8 +1065,8 @@ void bi_pred_i_free_ref8_bit(
             chroma_pu_width << shift,
             ref_list1_temp_dst,
             chroma_pu_width << shift,
-            bi_dst->bufferCr + dst_chroma_index,
-            bi_dst->strideCr << shift,
+            bi_dst->buffer_cr + dst_chroma_index,
+            bi_dst->stride_cr << shift,
             chroma_pu_width,
             chroma_pu_height >> shift);
     }

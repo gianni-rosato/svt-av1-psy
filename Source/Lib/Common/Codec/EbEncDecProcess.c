@@ -25,34 +25,34 @@
 #include "grainSynthesis.h"
 
 void av1_cdef_search(
-    EncDecContext_t                *context_ptr,
+    EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
-    PictureControlSet_t            *picture_control_set_ptr
+    PictureControlSet            *picture_control_set_ptr
 );
 
 void av1_cdef_frame(
-    EncDecContext_t                *context_ptr,
+    EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
-    PictureControlSet_t            *pCs
+    PictureControlSet            *pCs
 );
 
 void av1_cdef_search16bit(
-    EncDecContext_t                *context_ptr,
+    EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
-    PictureControlSet_t            *picture_control_set_ptr
+    PictureControlSet            *picture_control_set_ptr
 );
 void av1_cdef_frame16bit(
     uint8_t is16bit,
     SequenceControlSet           *sequence_control_set_ptr,
-    PictureControlSet_t            *pCs
+    PictureControlSet            *pCs
 );
 
-void av1_add_film_grain(EbPictureBufferDesc_t *src,
-    EbPictureBufferDesc_t *dst,
+void av1_add_film_grain(EbPictureBufferDesc *src,
+    EbPictureBufferDesc *dst,
     aom_film_grain_t *film_grain_ptr);
 
 void av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm, int32_t after_cdef);
-void av1_pick_filter_restoration(const Yv12BufferConfig *src, Yv12BufferConfig * trial_frame_rst /*AV1_COMP *cpi*/, Macroblock *x, Av1Common *const cm);
+void av1_pick_filter_restoration(const Yv12BufferConfig *src, Yv12BufferConfig * trial_frame_rst /*Av1Comp *cpi*/, Macroblock *x, Av1Common *const cm);
 void av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm, int32_t optimized_lr);
 
 const int16_t encMinDeltaQpWeightTab[MAX_TEMPORAL_LAYERS] = { 100, 100, 100, 100, 100, 100 };
@@ -78,7 +78,7 @@ const int8_t  encMaxDeltaQpTab[4][MAX_TEMPORAL_LAYERS] = {
  * Enc Dec Context Constructor
  ******************************************************/
 EbErrorType enc_dec_context_ctor(
-    EncDecContext_t        **context_dbl_ptr,
+    EncDecContext        **context_dbl_ptr,
     EbFifo                *mode_decision_configuration_input_fifo_ptr,
     EbFifo                *packetization_output_fifo_ptr,
     EbFifo                *feedback_fifo_ptr,
@@ -91,8 +91,8 @@ EbErrorType enc_dec_context_ctor(
     (void)max_input_luma_width;
     (void)max_input_luma_height;
     EbErrorType return_error = EB_ErrorNone;
-    EncDecContext_t *context_ptr;
-    EB_MALLOC(EncDecContext_t*, context_ptr, sizeof(EncDecContext_t), EB_N_PTR);
+    EncDecContext *context_ptr;
+    EB_MALLOC(EncDecContext*, context_ptr, sizeof(EncDecContext), EB_N_PTR);
     *context_dbl_ptr = context_ptr;
 
     context_ptr->is16bit = is16bit;
@@ -107,25 +107,25 @@ EbErrorType enc_dec_context_ctor(
     // Trasform Scratch Memory
     EB_MALLOC(int16_t*, context_ptr->transform_inner_array_ptr, 3152, EB_N_PTR); //refer to EbInvTransform_SSE2.as. case 32x32
     // MD rate Estimation tables
-    EB_MALLOC(MdRateEstimationContext_t*, context_ptr->md_rate_estimation_ptr, sizeof(MdRateEstimationContext_t), EB_N_PTR);
+    EB_MALLOC(MdRateEstimationContext*, context_ptr->md_rate_estimation_ptr, sizeof(MdRateEstimationContext), EB_N_PTR);
 
 
     // Prediction Buffer
     {
-        EbPictureBufferDescInitData_t initData;
+        EbPictureBufferDescInitData initData;
 
-        initData.bufferEnableMask = PICTURE_BUFFER_DESC_FULL_MASK;
-        initData.maxWidth = SB_STRIDE_Y;
-        initData.maxHeight = SB_STRIDE_Y;
+        initData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+        initData.max_width = SB_STRIDE_Y;
+        initData.max_height = SB_STRIDE_Y;
         initData.bit_depth = EB_8BIT;
         initData.left_padding = 0;
         initData.right_padding = 0;
         initData.top_padding = 0;
         initData.bot_padding = 0;
-        initData.splitMode = EB_FALSE;
+        initData.split_mode = EB_FALSE;
         initData.color_format = color_format;
 
-        context_ptr->input_sample16bit_buffer = (EbPictureBufferDesc_t *)EB_NULL;
+        context_ptr->input_sample16bit_buffer = (EbPictureBufferDesc *)EB_NULL;
         if (is16bit) {
             initData.bit_depth = EB_16BIT;
 
@@ -141,31 +141,32 @@ EbErrorType enc_dec_context_ctor(
 
     // Scratch Coeff Buffer
     {
-        EbPictureBufferDescInitData_t initData;
+        EbPictureBufferDescInitData initData;
 
-        initData.bufferEnableMask = PICTURE_BUFFER_DESC_FULL_MASK;
-        initData.maxWidth = SB_STRIDE_Y;
-        initData.maxHeight = SB_STRIDE_Y;
+        initData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+        initData.max_width = SB_STRIDE_Y;
+        initData.max_height = SB_STRIDE_Y;
         initData.bit_depth = EB_16BIT;
         initData.color_format = color_format;
         initData.left_padding = 0;
         initData.right_padding = 0;
         initData.top_padding = 0;
         initData.bot_padding = 0;
-        initData.splitMode = EB_FALSE;
+        initData.split_mode = EB_FALSE;
 
-        EbPictureBufferDescInitData_t init32BitData;
 
-        init32BitData.bufferEnableMask = PICTURE_BUFFER_DESC_FULL_MASK;
-        init32BitData.maxWidth = SB_STRIDE_Y;
-        init32BitData.maxHeight = SB_STRIDE_Y;
+        EbPictureBufferDescInitData init32BitData;
+
+        init32BitData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+        init32BitData.max_width = SB_STRIDE_Y;
+        init32BitData.max_height = SB_STRIDE_Y;
         init32BitData.bit_depth = EB_32BIT;
         init32BitData.color_format = color_format;
         init32BitData.left_padding = 0;
         init32BitData.right_padding = 0;
         init32BitData.top_padding = 0;
         init32BitData.bot_padding = 0;
-        init32BitData.splitMode = EB_FALSE;
+        init32BitData.split_mode = EB_FALSE;
         return_error = eb_picture_buffer_desc_ctor(
             (EbPtr*)&context_ptr->inverse_quant_buffer,
             (EbPtr)&init32BitData);
@@ -190,13 +191,13 @@ EbErrorType enc_dec_context_ctor(
     }
 
     // Intra Reference Samples
-    return_error = IntraReferenceSamplesCtor(&context_ptr->intra_ref_ptr);
+    return_error = intra_reference_samples_ctor(&context_ptr->intra_ref_ptr);
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
-    context_ptr->intra_ref_ptr16 = (IntraReference16bitSamples_t *)EB_NULL;
+    context_ptr->intra_ref_ptr16 = (IntraReference16bitSamples *)EB_NULL;
     if (is16bit) {
-        return_error = IntraReference16bitSamplesCtor(&context_ptr->intra_ref_ptr16);
+        return_error = intra_reference16bit_samples_ctor(&context_ptr->intra_ref_ptr16);
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
@@ -224,7 +225,7 @@ EbErrorType enc_dec_context_ctor(
 /**************************************************
  * Reset Mode Decision Neighbor Arrays
  *************************************************/
-static void ResetEncodePassNeighborArrays(PictureControlSet_t *picture_control_set_ptr)
+static void ResetEncodePassNeighborArrays(PictureControlSet *picture_control_set_ptr)
 {
     neighbor_array_unit_reset(picture_control_set_ptr->ep_intra_luma_mode_neighbor_array);
     neighbor_array_unit_reset(picture_control_set_ptr->ep_intra_chroma_mode_neighbor_array);
@@ -245,13 +246,13 @@ static void ResetEncodePassNeighborArrays(PictureControlSet_t *picture_control_s
  * Reset Coding Loop
  **************************************************/
 static void ResetEncDec(
-    EncDecContext_t         *context_ptr,
-    PictureControlSet_t     *picture_control_set_ptr,
+    EncDecContext         *context_ptr,
+    PictureControlSet     *picture_control_set_ptr,
     SequenceControlSet    *sequence_control_set_ptr,
     uint32_t                   segment_index)
 {
     EB_SLICE                     slice_type;
-    MdRateEstimationContext_t   *md_rate_estimation_array;
+    MdRateEstimationContext   *md_rate_estimation_array;
     context_ptr->is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
 
@@ -284,7 +285,7 @@ static void ResetEncDec(
         picture_control_set_ptr->slice_type;
 
     // Increment the MD Rate Estimation array pointer to point to the right address based on the QP and slice type
-    md_rate_estimation_array = (MdRateEstimationContext_t*)sequence_control_set_ptr->encode_context_ptr->md_rate_estimation_array;
+    md_rate_estimation_array = (MdRateEstimationContext*)sequence_control_set_ptr->encode_context_ptr->md_rate_estimation_array;
 #if ADD_DELTA_QP_SUPPORT
     md_rate_estimation_array += slice_type * TOTAL_NUMBER_OF_QP_VALUES + picture_control_set_ptr->parent_pcs_ptr->picture_qp;
 #else
@@ -312,9 +313,9 @@ static void ResetEncDec(
  * EncDec Configure LCU
  ******************************************************/
 static void EncDecConfigureLcu(
-    EncDecContext_t         *context_ptr,
-    LargestCodingUnit_t     *sb_ptr,
-    PictureControlSet_t     *picture_control_set_ptr,
+    EncDecContext         *context_ptr,
+    LargestCodingUnit     *sb_ptr,
+    PictureControlSet     *picture_control_set_ptr,
     SequenceControlSet    *sequence_control_set_ptr,
     uint8_t                    picture_qp,
     uint8_t                    sb_qp)
@@ -386,14 +387,14 @@ static void EncDecConfigureLcu(
  *   threads from performing an update (A).
  ******************************************************/
 EbBool AssignEncDecSegments(
-    EncDecSegments_t   *segmentPtr,
+    EncDecSegments   *segmentPtr,
     uint16_t             *segmentInOutIndex,
-    EncDecTasks_t      *taskPtr,
+    EncDecTasks      *taskPtr,
     EbFifo           *srmFifoPtr)
 {
     EbBool continueProcessingFlag = EB_FALSE;
     EbObjectWrapper *wrapper_ptr;
-    EncDecTasks_t *feedbackTaskPtr;
+    EncDecTasks *feedbackTaskPtr;
 
     uint32_t rowSegmentIndex = 0;
     uint32_t segment_index;
@@ -411,7 +412,7 @@ EbBool AssignEncDecSegments(
     //}
 
 
-    switch (taskPtr->inputType) {
+    switch (taskPtr->input_type) {
 
     case ENCDEC_TASKS_MDC_INPUT:
 
@@ -419,13 +420,13 @@ EbBool AssignEncDecSegments(
         //   no logic is necessary to clear input dependencies.
 
         // Start on Segment 0 immediately
-        *segmentInOutIndex = segmentPtr->rowArray[0].currentSegIndex;
-        taskPtr->inputType = ENCDEC_TASKS_CONTINUE;
-        ++segmentPtr->rowArray[0].currentSegIndex;
+        *segmentInOutIndex = segmentPtr->row_array[0].current_seg_index;
+        taskPtr->input_type = ENCDEC_TASKS_CONTINUE;
+        ++segmentPtr->row_array[0].current_seg_index;
         continueProcessingFlag = EB_TRUE;
 
         //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-        //    (unsigned) ((PictureControlSet_t*) taskPtr->picture_control_set_wrapper_ptr->object_ptr)->picture_number,
+        //    (unsigned) ((PictureControlSet*) taskPtr->picture_control_set_wrapper_ptr->object_ptr)->picture_number,
         //    *segmentInOutIndex);
 
         break;
@@ -436,13 +437,13 @@ EbBool AssignEncDecSegments(
         //rowSegmentIndex = taskPtr->encDecSegmentRowArray[0];
 
         // Start on the assigned row immediately
-        *segmentInOutIndex = segmentPtr->rowArray[taskPtr->enc_dec_segment_row].currentSegIndex;
-        taskPtr->inputType = ENCDEC_TASKS_CONTINUE;
-        ++segmentPtr->rowArray[taskPtr->enc_dec_segment_row].currentSegIndex;
+        *segmentInOutIndex = segmentPtr->row_array[taskPtr->enc_dec_segment_row].current_seg_index;
+        taskPtr->input_type = ENCDEC_TASKS_CONTINUE;
+        ++segmentPtr->row_array[taskPtr->enc_dec_segment_row].current_seg_index;
         continueProcessingFlag = EB_TRUE;
 
         //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-        //    (unsigned) ((PictureControlSet_t*) taskPtr->picture_control_set_wrapper_ptr->object_ptr)->picture_number,
+        //    (unsigned) ((PictureControlSet*) taskPtr->picture_control_set_wrapper_ptr->object_ptr)->picture_number,
         //    *segmentInOutIndex);
 
         break;
@@ -451,63 +452,63 @@ EbBool AssignEncDecSegments(
 
         // Update the Dependency List for Right and Bottom Neighbors
         segment_index = *segmentInOutIndex;
-        rowSegmentIndex = segment_index / segmentPtr->segmentBandCount;
+        rowSegmentIndex = segment_index / segmentPtr->segment_band_count;
 
         rightSegmentIndex = segment_index + 1;
-        bottomLeftSegmentIndex = segment_index + segmentPtr->segmentBandCount;
+        bottomLeftSegmentIndex = segment_index + segmentPtr->segment_band_count;
 
         // Right Neighbor
-        if (segment_index < segmentPtr->rowArray[rowSegmentIndex].endingSegIndex)
+        if (segment_index < segmentPtr->row_array[rowSegmentIndex].ending_seg_index)
         {
-            eb_block_on_mutex(segmentPtr->rowArray[rowSegmentIndex].assignmentMutex);
+            eb_block_on_mutex(segmentPtr->row_array[rowSegmentIndex].assignment_mutex);
 
-            --segmentPtr->depMap.dependencyMap[rightSegmentIndex];
+            --segmentPtr->dep_map.dependency_map[rightSegmentIndex];
 
-            if (segmentPtr->depMap.dependencyMap[rightSegmentIndex] == 0) {
-                *segmentInOutIndex = segmentPtr->rowArray[rowSegmentIndex].currentSegIndex;
-                ++segmentPtr->rowArray[rowSegmentIndex].currentSegIndex;
+            if (segmentPtr->dep_map.dependency_map[rightSegmentIndex] == 0) {
+                *segmentInOutIndex = segmentPtr->row_array[rowSegmentIndex].current_seg_index;
+                ++segmentPtr->row_array[rowSegmentIndex].current_seg_index;
                 selfAssigned = EB_TRUE;
                 continueProcessingFlag = EB_TRUE;
 
                 //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-                //    (unsigned) ((PictureControlSet_t*) taskPtr->picture_control_set_wrapper_ptr->object_ptr)->picture_number,
+                //    (unsigned) ((PictureControlSet*) taskPtr->picture_control_set_wrapper_ptr->object_ptr)->picture_number,
                 //    *segmentInOutIndex);
             }
 
-            eb_release_mutex(segmentPtr->rowArray[rowSegmentIndex].assignmentMutex);
+            eb_release_mutex(segmentPtr->row_array[rowSegmentIndex].assignment_mutex);
         }
 
         // Bottom-left Neighbor
-        if (rowSegmentIndex < segmentPtr->segmentRowCount - 1 && bottomLeftSegmentIndex >= segmentPtr->rowArray[rowSegmentIndex + 1].startingSegIndex)
+        if (rowSegmentIndex < segmentPtr->segment_row_count - 1 && bottomLeftSegmentIndex >= segmentPtr->row_array[rowSegmentIndex + 1].starting_seg_index)
         {
-            eb_block_on_mutex(segmentPtr->rowArray[rowSegmentIndex + 1].assignmentMutex);
+            eb_block_on_mutex(segmentPtr->row_array[rowSegmentIndex + 1].assignment_mutex);
 
-            --segmentPtr->depMap.dependencyMap[bottomLeftSegmentIndex];
+            --segmentPtr->dep_map.dependency_map[bottomLeftSegmentIndex];
 
-            if (segmentPtr->depMap.dependencyMap[bottomLeftSegmentIndex] == 0) {
+            if (segmentPtr->dep_map.dependency_map[bottomLeftSegmentIndex] == 0) {
                 if (selfAssigned == EB_TRUE) {
                     feedbackRowIndex = (int16_t)rowSegmentIndex + 1;
                 }
                 else {
-                    *segmentInOutIndex = segmentPtr->rowArray[rowSegmentIndex + 1].currentSegIndex;
-                    ++segmentPtr->rowArray[rowSegmentIndex + 1].currentSegIndex;
+                    *segmentInOutIndex = segmentPtr->row_array[rowSegmentIndex + 1].current_seg_index;
+                    ++segmentPtr->row_array[rowSegmentIndex + 1].current_seg_index;
                     selfAssigned = EB_TRUE;
                     continueProcessingFlag = EB_TRUE;
 
                     //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-                    //    (unsigned) ((PictureControlSet_t*) taskPtr->picture_control_set_wrapper_ptr->object_ptr)->picture_number,
+                    //    (unsigned) ((PictureControlSet*) taskPtr->picture_control_set_wrapper_ptr->object_ptr)->picture_number,
                     //    *segmentInOutIndex);
                 }
             }
-            eb_release_mutex(segmentPtr->rowArray[rowSegmentIndex + 1].assignmentMutex);
+            eb_release_mutex(segmentPtr->row_array[rowSegmentIndex + 1].assignment_mutex);
         }
 
         if (feedbackRowIndex > 0) {
             eb_get_empty_object(
                 srmFifoPtr,
                 &wrapper_ptr);
-            feedbackTaskPtr = (EncDecTasks_t*)wrapper_ptr->object_ptr;
-            feedbackTaskPtr->inputType = ENCDEC_TASKS_ENCDEC_INPUT;
+            feedbackTaskPtr = (EncDecTasks*)wrapper_ptr->object_ptr;
+            feedbackTaskPtr->input_type = ENCDEC_TASKS_ENCDEC_INPUT;
             feedbackTaskPtr->enc_dec_segment_row = feedbackRowIndex;
             feedbackTaskPtr->picture_control_set_wrapper_ptr = taskPtr->picture_control_set_wrapper_ptr;
             eb_post_full_object(wrapper_ptr);
@@ -522,12 +523,12 @@ EbBool AssignEncDecSegments(
     return continueProcessingFlag;
 }
 void ReconOutput(
-    PictureControlSet_t    *picture_control_set_ptr,
+    PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr) {
 
     EbObjectWrapper             *outputReconWrapperPtr;
     EbBufferHeaderType           *outputReconPtr;
-    EncodeContext_t               *encode_context_ptr = sequence_control_set_ptr->encode_context_ptr;
+    EncodeContext               *encode_context_ptr = sequence_control_set_ptr->encode_context_ptr;
     EbBool is16bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
     // The totalNumberOfReconFrames counter has to be write/read protected as
     //   it is used to determine the end of the stream.  If it is not protected
@@ -558,7 +559,7 @@ void ReconOutput(
         uint8_t *reconReadPtr;
         uint8_t *reconWritePtr;
 
-        EbPictureBufferDesc_t *recon_ptr;
+        EbPictureBufferDesc *recon_ptr;
         {
             if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                 recon_ptr = is16bit ?
@@ -575,7 +576,7 @@ void ReconOutput(
         // FGN: Create a buffer if needed, copy the reconstructed picture and run the film grain synthesis algorithm
 
         if (sequence_control_set_ptr->film_grain_params_present) {
-            EbPictureBufferDesc_t  *intermediateBufferPtr;
+            EbPictureBufferDesc  *intermediateBufferPtr;
             {
                 if (is16bit)
                     intermediateBufferPtr = picture_control_set_ptr->film_grain_picture16bit_ptr;
@@ -596,7 +597,7 @@ void ReconOutput(
 
         // End running the film grain
         // Y Recon Samples
-        sampleTotalCount = ((recon_ptr->maxWidth - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->maxHeight - sequence_control_set_ptr->max_input_pad_bottom)) << is16bit;
+        sampleTotalCount = ((recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->max_height - sequence_control_set_ptr->max_input_pad_bottom)) << is16bit;
         reconReadPtr = recon_ptr->buffer_y + (recon_ptr->origin_y << is16bit) * recon_ptr->stride_y + (recon_ptr->origin_x << is16bit);
         reconWritePtr = &(outputReconPtr->p_buffer[outputReconPtr->n_filled_len]);
 
@@ -610,7 +611,7 @@ void ReconOutput(
             reconReadPtr,
             recon_ptr->stride_y,
             reconWritePtr,
-            recon_ptr->maxWidth - sequence_control_set_ptr->max_input_pad_right,
+            recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right,
             recon_ptr->width - sequence_control_set_ptr->pad_right,
             recon_ptr->height - sequence_control_set_ptr->pad_bottom,
             1 << is16bit);
@@ -618,8 +619,8 @@ void ReconOutput(
         outputReconPtr->n_filled_len += sampleTotalCount;
 
         // U Recon Samples
-        sampleTotalCount = ((recon_ptr->maxWidth - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->maxHeight - sequence_control_set_ptr->max_input_pad_bottom) >> 2) << is16bit;
-        reconReadPtr = recon_ptr->bufferCb + ((recon_ptr->origin_y << is16bit) >> 1) * recon_ptr->strideCb + ((recon_ptr->origin_x << is16bit) >> 1);
+        sampleTotalCount = ((recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->max_height - sequence_control_set_ptr->max_input_pad_bottom) >> 2) << is16bit;
+        reconReadPtr = recon_ptr->buffer_cb + ((recon_ptr->origin_y << is16bit) >> 1) * recon_ptr->stride_cb + ((recon_ptr->origin_x << is16bit) >> 1);
         reconWritePtr = &(outputReconPtr->p_buffer[outputReconPtr->n_filled_len]);
 
         CHECK_REPORT_ERROR(
@@ -630,17 +631,17 @@ void ReconOutput(
         // Initialize U recon buffer
         picture_copy_kernel(
             reconReadPtr,
-            recon_ptr->strideCb,
+            recon_ptr->stride_cb,
             reconWritePtr,
-            (recon_ptr->maxWidth - sequence_control_set_ptr->max_input_pad_right) >> 1,
+            (recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) >> 1,
             (recon_ptr->width - sequence_control_set_ptr->pad_right) >> 1,
             (recon_ptr->height - sequence_control_set_ptr->pad_bottom) >> 1,
             1 << is16bit);
         outputReconPtr->n_filled_len += sampleTotalCount;
 
         // V Recon Samples
-        sampleTotalCount = ((recon_ptr->maxWidth - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->maxHeight - sequence_control_set_ptr->max_input_pad_bottom) >> 2) << is16bit;
-        reconReadPtr = recon_ptr->bufferCr + ((recon_ptr->origin_y << is16bit) >> 1) * recon_ptr->strideCr + ((recon_ptr->origin_x << is16bit) >> 1);
+        sampleTotalCount = ((recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->max_height - sequence_control_set_ptr->max_input_pad_bottom) >> 2) << is16bit;
+        reconReadPtr = recon_ptr->buffer_cr + ((recon_ptr->origin_y << is16bit) >> 1) * recon_ptr->stride_cr + ((recon_ptr->origin_x << is16bit) >> 1);
         reconWritePtr = &(outputReconPtr->p_buffer[outputReconPtr->n_filled_len]);
 
         CHECK_REPORT_ERROR(
@@ -652,9 +653,9 @@ void ReconOutput(
 
         picture_copy_kernel(
             reconReadPtr,
-            recon_ptr->strideCr,
+            recon_ptr->stride_cr,
             reconWritePtr,
-            (recon_ptr->maxWidth - sequence_control_set_ptr->max_input_pad_right) >> 1,
+            (recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) >> 1,
             (recon_ptr->width - sequence_control_set_ptr->pad_right) >> 1,
             (recon_ptr->height - sequence_control_set_ptr->pad_bottom) >> 1,
             1 << is16bit);
@@ -668,21 +669,21 @@ void ReconOutput(
 }
 
 void PsnrCalculations(
-    PictureControlSet_t    *picture_control_set_ptr,
+    PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr){
 
     EbBool is16bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
     if (!is16bit) {
 
-        EbPictureBufferDesc_t *recon_ptr;
+        EbPictureBufferDesc *recon_ptr;
 
         if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
             recon_ptr = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
         else
             recon_ptr = picture_control_set_ptr->recon_picture_ptr;
 
-        EbPictureBufferDesc_t *input_picture_ptr = (EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+        EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 
         uint64_t sseTotal[3] = { 0 };
         uint32_t   columnIndex;
@@ -711,8 +712,8 @@ void PsnrCalculations(
 
         sseTotal[0] = residualDistortion;
 
-        reconCoeffBuffer = &((recon_ptr->bufferCb)[recon_ptr->origin_x / 2 + recon_ptr->origin_y / 2 * recon_ptr->strideCb]);
-        inputBuffer = &((input_picture_ptr->bufferCb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCb]);
+        reconCoeffBuffer = &((recon_ptr->buffer_cb)[recon_ptr->origin_x / 2 + recon_ptr->origin_y / 2 * recon_ptr->stride_cb]);
+        inputBuffer = &((input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
 
         residualDistortion = 0;
         row_index = 0;
@@ -724,15 +725,15 @@ void PsnrCalculations(
                 ++columnIndex;
             }
 
-            inputBuffer += input_picture_ptr->strideCb;
-            reconCoeffBuffer += recon_ptr->strideCb;
+            inputBuffer += input_picture_ptr->stride_cb;
+            reconCoeffBuffer += recon_ptr->stride_cb;
             ++row_index;
         }
 
         sseTotal[1] = residualDistortion;
 
-        reconCoeffBuffer = &((recon_ptr->bufferCr)[recon_ptr->origin_x / 2 + recon_ptr->origin_y / 2 * recon_ptr->strideCr]);
-        inputBuffer = &((input_picture_ptr->bufferCr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCr]);
+        reconCoeffBuffer = &((recon_ptr->buffer_cr)[recon_ptr->origin_x / 2 + recon_ptr->origin_y / 2 * recon_ptr->stride_cr]);
+        inputBuffer = &((input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
         residualDistortion = 0;
         row_index = 0;
 
@@ -744,8 +745,8 @@ void PsnrCalculations(
                 ++columnIndex;
             }
 
-            inputBuffer += input_picture_ptr->strideCr;
-            reconCoeffBuffer += recon_ptr->strideCr;
+            inputBuffer += input_picture_ptr->stride_cr;
+            reconCoeffBuffer += recon_ptr->stride_cr;
             ++row_index;
         }
 
@@ -756,13 +757,13 @@ void PsnrCalculations(
     }
     else {
 
-        EbPictureBufferDesc_t *recon_ptr;
+        EbPictureBufferDesc *recon_ptr;
 
         if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
             recon_ptr = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
         else
             recon_ptr = picture_control_set_ptr->recon_picture16bit_ptr;
-        EbPictureBufferDesc_t *input_picture_ptr = (EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+        EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 
         uint64_t sseTotal[3] = { 0 };
         uint32_t   columnIndex;
@@ -787,11 +788,11 @@ void PsnrCalculations(
             EbByte  inputBufferOrg = &((input_picture_ptr->buffer_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
             uint16_t*  reconBufferOrg = (uint16_t*)(&((recon_ptr->buffer_y)[(recon_ptr->origin_x << is16bit) + (recon_ptr->origin_y << is16bit) * recon_ptr->stride_y]));;
 
-            EbByte  inputBufferOrgU = &((input_picture_ptr->bufferCb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCb]);;
-            uint16_t*  reconBufferOrgU = reconCoeffBuffer = (uint16_t*)(&((recon_ptr->bufferCb)[(recon_ptr->origin_x << is16bit) / 2 + (recon_ptr->origin_y << is16bit) / 2 * recon_ptr->strideCb]));;
+            EbByte  inputBufferOrgU = &((input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);;
+            uint16_t*  reconBufferOrgU = reconCoeffBuffer = (uint16_t*)(&((recon_ptr->buffer_cb)[(recon_ptr->origin_x << is16bit) / 2 + (recon_ptr->origin_y << is16bit) / 2 * recon_ptr->stride_cb]));;
 
-            EbByte  inputBufferOrgV = &((input_picture_ptr->bufferCr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCr]);;
-            uint16_t*  reconBufferOrgV = reconCoeffBuffer = (uint16_t*)(&((recon_ptr->bufferCr)[(recon_ptr->origin_x << is16bit) / 2 + (recon_ptr->origin_y << is16bit) / 2 * recon_ptr->strideCr]));;
+            EbByte  inputBufferOrgV = &((input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);;
+            uint16_t*  reconBufferOrgV = reconCoeffBuffer = (uint16_t*)(&((recon_ptr->buffer_cr)[(recon_ptr->origin_x << is16bit) / 2 + (recon_ptr->origin_y << is16bit) / 2 * recon_ptr->stride_cr]));;
 
             residualDistortion = 0;
             uint64_t residualDistortionU = 0;
@@ -808,7 +809,7 @@ void PsnrCalculations(
                     uint32_t sb_height = (luma_height - tbOriginY) < 64 ? (luma_height - tbOriginY) : 64;
 
                     inputBuffer = inputBufferOrg + tbOriginY * input_picture_ptr->stride_y + tbOriginX;
-                    inputBufferBitInc = input_picture_ptr->bufferBitIncY + tbOriginY * luma2BitWidth + (tbOriginX / 4)*sb_height;
+                    inputBufferBitInc = input_picture_ptr->buffer_bit_inc_y + tbOriginY * luma2BitWidth + (tbOriginX / 4)*sb_height;
                     reconCoeffBuffer = reconBufferOrg + tbOriginY * recon_ptr->stride_y + tbOriginX;
 
                     uint64_t   j, k;
@@ -858,11 +859,11 @@ void PsnrCalculations(
 
                     inn_stride = sb_width / 4;
 
-                    inputBuffer = inputBufferOrgU + tbOriginY * input_picture_ptr->strideCb + tbOriginX;
+                    inputBuffer = inputBufferOrgU + tbOriginY * input_picture_ptr->stride_cb + tbOriginX;
 
-                    inputBufferBitInc = input_picture_ptr->bufferBitIncCb + tbOriginY * chroma2BitWidth + (tbOriginX / 4)*sb_height;
+                    inputBufferBitInc = input_picture_ptr->buffer_bit_inc_cb + tbOriginY * chroma2BitWidth + (tbOriginX / 4)*sb_height;
 
-                    reconCoeffBuffer = reconBufferOrgU + tbOriginY * recon_ptr->strideCb + tbOriginX;
+                    reconCoeffBuffer = reconBufferOrgU + tbOriginY * recon_ptr->stride_cb + tbOriginX;
 
 
 
@@ -874,34 +875,34 @@ void PsnrCalculations(
                             four2bitPels = inputBufferBitInc[k + j * inn_stride];
 
                             nBitPixel = (four2bitPels >> 6) & 3;
-                            outPixel = inputBuffer[k * 4 + 0 + j * input_picture_ptr->strideCb] << 2;
+                            outPixel = inputBuffer[k * 4 + 0 + j * input_picture_ptr->stride_cb] << 2;
                             outPixel = outPixel | nBitPixel;
-                            residualDistortionU += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 0 + j * recon_ptr->strideCb]);
+                            residualDistortionU += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 0 + j * recon_ptr->stride_cb]);
 
 
                             nBitPixel = (four2bitPels >> 4) & 3;
-                            outPixel = inputBuffer[k * 4 + 1 + j * input_picture_ptr->strideCb] << 2;
+                            outPixel = inputBuffer[k * 4 + 1 + j * input_picture_ptr->stride_cb] << 2;
                             outPixel = outPixel | nBitPixel;
-                            residualDistortionU += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 1 + j * recon_ptr->strideCb]);
+                            residualDistortionU += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 1 + j * recon_ptr->stride_cb]);
 
 
                             nBitPixel = (four2bitPels >> 2) & 3;
-                            outPixel = inputBuffer[k * 4 + 2 + j * input_picture_ptr->strideCb] << 2;
+                            outPixel = inputBuffer[k * 4 + 2 + j * input_picture_ptr->stride_cb] << 2;
                             outPixel = outPixel | nBitPixel;
-                            residualDistortionU += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 2 + j * recon_ptr->strideCb]);
+                            residualDistortionU += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 2 + j * recon_ptr->stride_cb]);
 
                             nBitPixel = (four2bitPels >> 0) & 3;
-                            outPixel = inputBuffer[k * 4 + 3 + j * input_picture_ptr->strideCb] << 2;
+                            outPixel = inputBuffer[k * 4 + 3 + j * input_picture_ptr->stride_cb] << 2;
                             outPixel = outPixel | nBitPixel;
-                            residualDistortionU += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 3 + j * recon_ptr->strideCb]);
+                            residualDistortionU += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 3 + j * recon_ptr->stride_cb]);
 
                         }
                     }
 
 
-                    inputBuffer = inputBufferOrgV + tbOriginY * input_picture_ptr->strideCr + tbOriginX;
-                    inputBufferBitInc = input_picture_ptr->bufferBitIncCr + tbOriginY * chroma2BitWidth + (tbOriginX / 4)*sb_height;
-                    reconCoeffBuffer = reconBufferOrgV + tbOriginY * recon_ptr->strideCr + tbOriginX;
+                    inputBuffer = inputBufferOrgV + tbOriginY * input_picture_ptr->stride_cr + tbOriginX;
+                    inputBufferBitInc = input_picture_ptr->buffer_bit_inc_cr + tbOriginY * chroma2BitWidth + (tbOriginX / 4)*sb_height;
+                    reconCoeffBuffer = reconBufferOrgV + tbOriginY * recon_ptr->stride_cr + tbOriginX;
 
 
                     for (j = 0; j < sb_height; j++)
@@ -912,26 +913,26 @@ void PsnrCalculations(
                             four2bitPels = inputBufferBitInc[k + j * inn_stride];
 
                             nBitPixel = (four2bitPels >> 6) & 3;
-                            outPixel = inputBuffer[k * 4 + 0 + j * input_picture_ptr->strideCr] << 2;
+                            outPixel = inputBuffer[k * 4 + 0 + j * input_picture_ptr->stride_cr] << 2;
                             outPixel = outPixel | nBitPixel;
-                            residualDistortionV += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 0 + j * recon_ptr->strideCr]);
+                            residualDistortionV += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 0 + j * recon_ptr->stride_cr]);
 
 
                             nBitPixel = (four2bitPels >> 4) & 3;
-                            outPixel = inputBuffer[k * 4 + 1 + j * input_picture_ptr->strideCr] << 2;
+                            outPixel = inputBuffer[k * 4 + 1 + j * input_picture_ptr->stride_cr] << 2;
                             outPixel = outPixel | nBitPixel;
-                            residualDistortionV += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 1 + j * recon_ptr->strideCr]);
+                            residualDistortionV += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 1 + j * recon_ptr->stride_cr]);
 
 
                             nBitPixel = (four2bitPels >> 2) & 3;
-                            outPixel = inputBuffer[k * 4 + 2 + j * input_picture_ptr->strideCr] << 2;
+                            outPixel = inputBuffer[k * 4 + 2 + j * input_picture_ptr->stride_cr] << 2;
                             outPixel = outPixel | nBitPixel;
-                            residualDistortionV += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 2 + j * recon_ptr->strideCr]);
+                            residualDistortionV += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 2 + j * recon_ptr->stride_cr]);
 
                             nBitPixel = (four2bitPels >> 0) & 3;
-                            outPixel = inputBuffer[k * 4 + 3 + j * input_picture_ptr->strideCr] << 2;
+                            outPixel = inputBuffer[k * 4 + 3 + j * input_picture_ptr->stride_cr] << 2;
                             outPixel = outPixel | nBitPixel;
-                            residualDistortionV += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 3 + j * recon_ptr->strideCr]);
+                            residualDistortionV += (int64_t)SQR((int64_t)outPixel - (int64_t)reconCoeffBuffer[k * 4 + 3 + j * recon_ptr->stride_cr]);
 
                         }
                     }
@@ -952,7 +953,7 @@ void PsnrCalculations(
 
             reconCoeffBuffer = (uint16_t*)(&((recon_ptr->buffer_y)[(recon_ptr->origin_x << is16bit) + (recon_ptr->origin_y << is16bit) * recon_ptr->stride_y]));
             inputBuffer = &((input_picture_ptr->buffer_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
-            inputBufferBitInc = &((input_picture_ptr->bufferBitIncY)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->strideBitIncY]);
+            inputBufferBitInc = &((input_picture_ptr->buffer_bit_inc_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_bit_inc_y]);
 
             residualDistortion = 0;
 
@@ -966,16 +967,16 @@ void PsnrCalculations(
                 }
 
                 inputBuffer += input_picture_ptr->stride_y;
-                inputBufferBitInc += input_picture_ptr->strideBitIncY;
+                inputBufferBitInc += input_picture_ptr->stride_bit_inc_y;
                 reconCoeffBuffer += recon_ptr->stride_y;
                 ++row_index;
             }
 
             sseTotal[0] = residualDistortion;
 
-            reconCoeffBuffer = (uint16_t*)(&((recon_ptr->bufferCb)[(recon_ptr->origin_x << is16bit) / 2 + (recon_ptr->origin_y << is16bit) / 2 * recon_ptr->strideCb]));
-            inputBuffer = &((input_picture_ptr->bufferCb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCb]);
-            inputBufferBitInc = &((input_picture_ptr->bufferBitIncCb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideBitIncCb]);
+            reconCoeffBuffer = (uint16_t*)(&((recon_ptr->buffer_cb)[(recon_ptr->origin_x << is16bit) / 2 + (recon_ptr->origin_y << is16bit) / 2 * recon_ptr->stride_cb]));
+            inputBuffer = &((input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
+            inputBufferBitInc = &((input_picture_ptr->buffer_bit_inc_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_bit_inc_cb]);
 
             residualDistortion = 0;
             row_index = 0;
@@ -987,17 +988,17 @@ void PsnrCalculations(
                     ++columnIndex;
                 }
 
-                inputBuffer += input_picture_ptr->strideCb;
-                inputBufferBitInc += input_picture_ptr->strideBitIncCb;
-                reconCoeffBuffer += recon_ptr->strideCb;
+                inputBuffer += input_picture_ptr->stride_cb;
+                inputBufferBitInc += input_picture_ptr->stride_bit_inc_cb;
+                reconCoeffBuffer += recon_ptr->stride_cb;
                 ++row_index;
             }
 
             sseTotal[1] = residualDistortion;
 
-            reconCoeffBuffer = (uint16_t*)(&((recon_ptr->bufferCr)[(recon_ptr->origin_x << is16bit) / 2 + (recon_ptr->origin_y << is16bit) / 2 * recon_ptr->strideCr]));
-            inputBuffer = &((input_picture_ptr->bufferCr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideCr]);
-            inputBufferBitInc = &((input_picture_ptr->bufferBitIncCr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->strideBitIncCr]);
+            reconCoeffBuffer = (uint16_t*)(&((recon_ptr->buffer_cr)[(recon_ptr->origin_x << is16bit) / 2 + (recon_ptr->origin_y << is16bit) / 2 * recon_ptr->stride_cr]));
+            inputBuffer = &((input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
+            inputBufferBitInc = &((input_picture_ptr->buffer_bit_inc_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_bit_inc_cr]);
 
             residualDistortion = 0;
             row_index = 0;
@@ -1010,9 +1011,9 @@ void PsnrCalculations(
                     ++columnIndex;
                 }
 
-                inputBuffer += input_picture_ptr->strideCr;
-                inputBufferBitInc += input_picture_ptr->strideBitIncCr;
-                reconCoeffBuffer += recon_ptr->strideCr;
+                inputBuffer += input_picture_ptr->stride_cr;
+                inputBufferBitInc += input_picture_ptr->stride_bit_inc_cr;
+                reconCoeffBuffer += recon_ptr->stride_cr;
                 ++row_index;
             }
 
@@ -1028,14 +1029,14 @@ void PsnrCalculations(
 }
 
 void PadRefAndSetFlags(
-    PictureControlSet_t    *picture_control_set_ptr,
+    PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr
 )
 {
 
     EbReferenceObject   *referenceObject = (EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
-    EbPictureBufferDesc_t *refPicPtr = (EbPictureBufferDesc_t*)referenceObject->reference_picture;
-    EbPictureBufferDesc_t *refPic16BitPtr = (EbPictureBufferDesc_t*)referenceObject->reference_picture16bit;
+    EbPictureBufferDesc *refPicPtr = (EbPictureBufferDesc*)referenceObject->reference_picture;
+    EbPictureBufferDesc *refPic16BitPtr = (EbPictureBufferDesc*)referenceObject->reference_picture16bit;
     EbBool                is16bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
     if (!is16bit) {
@@ -1050,8 +1051,8 @@ void PadRefAndSetFlags(
 
         // Cb samples
         generate_padding(
-            refPicPtr->bufferCb,
-            refPicPtr->strideCb,
+            refPicPtr->buffer_cb,
+            refPicPtr->stride_cb,
             refPicPtr->width >> 1,
             refPicPtr->height >> 1,
             refPicPtr->origin_x >> 1,
@@ -1059,8 +1060,8 @@ void PadRefAndSetFlags(
 
         // Cr samples
         generate_padding(
-            refPicPtr->bufferCr,
-            refPicPtr->strideCr,
+            refPicPtr->buffer_cr,
+            refPicPtr->stride_cr,
             refPicPtr->width >> 1,
             refPicPtr->height >> 1,
             refPicPtr->origin_x >> 1,
@@ -1080,8 +1081,8 @@ void PadRefAndSetFlags(
 
         // Cb samples
         generate_padding16_bit(
-            refPic16BitPtr->bufferCb,
-            refPic16BitPtr->strideCb << 1,
+            refPic16BitPtr->buffer_cb,
+            refPic16BitPtr->stride_cb << 1,
             refPic16BitPtr->width,
             refPic16BitPtr->height >> 1,
             refPic16BitPtr->origin_x,
@@ -1089,8 +1090,8 @@ void PadRefAndSetFlags(
 
         // Cr samples
         generate_padding16_bit(
-            refPic16BitPtr->bufferCr,
-            refPic16BitPtr->strideCr << 1,
+            refPic16BitPtr->buffer_cr,
+            refPic16BitPtr->stride_cr << 1,
             refPic16BitPtr->width,
             refPic16BitPtr->height >> 1,
             refPic16BitPtr->origin_x,
@@ -1120,7 +1121,7 @@ void PadRefAndSetFlags(
 }
 
 void CopyStatisticsToRefObject(
-    PictureControlSet_t    *picture_control_set_ptr,
+    PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr
 )
 {
@@ -1161,14 +1162,14 @@ void CopyStatisticsToRefObject(
 
 
 EbErrorType QpmDeriveWeightsMinAndMax(
-    PictureControlSet_t                    *picture_control_set_ptr,
-    EncDecContext_t                        *context_ptr)
+    PictureControlSet                    *picture_control_set_ptr,
+    EncDecContext                        *context_ptr)
 {
     EbErrorType                    return_error = EB_ErrorNone;
     uint32_t cu_depth;
     context_ptr->min_delta_qp_weight = encMinDeltaQpWeightTab[picture_control_set_ptr->temporal_layer_index];
     context_ptr->max_delta_qp_weight = encMaxDeltaQpWeightTab[picture_control_set_ptr->temporal_layer_index];
-    //QpmDeriveDeltaQpMapWeights
+    //qpm_derive_delta_qp_map_weights
 
 
     EbBool adjust_min_qp_flag = EB_FALSE;
@@ -1229,8 +1230,8 @@ Output  : EncDec Kernel signal(s)
 EbErrorType signal_derivation_enc_dec_kernel_oq(
     SequenceControlSet    *sequence_control_set_ptr,
 
-    PictureControlSet_t     *picture_control_set_ptr,
-    ModeDecisionContext_t   *context_ptr) {
+    PictureControlSet     *picture_control_set_ptr,
+    ModeDecisionContext   *context_ptr) {
 
     EbErrorType return_error = EB_ErrorNone;
 
@@ -1439,33 +1440,33 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     return return_error;
 }
 void move_cu_data(
-    CodingUnit_t *src_cu,
-    CodingUnit_t *dst_cu);
+    CodingUnit *src_cu,
+    CodingUnit *dst_cu);
 
 /******************************************************
  * EncDec Kernel
  ******************************************************/
-void* EncDecKernel(void *input_ptr)
+void* enc_dec_kernel(void *input_ptr)
 {
     // Context & SCS & PCS
-    EncDecContext_t                         *context_ptr = (EncDecContext_t*)input_ptr;
-    PictureControlSet_t                     *picture_control_set_ptr;
+    EncDecContext                         *context_ptr = (EncDecContext*)input_ptr;
+    PictureControlSet                     *picture_control_set_ptr;
     SequenceControlSet                    *sequence_control_set_ptr;
 
     // Input
     EbObjectWrapper                       *encDecTasksWrapperPtr;
-    EncDecTasks_t                           *encDecTasksPtr;
+    EncDecTasks                           *encDecTasksPtr;
 
     // Output
     EbObjectWrapper                       *encDecResultsWrapperPtr;
-    EncDecResults_t                         *encDecResultsPtr;
+    EncDecResults                         *encDecResultsPtr;
     // SB Loop variables
-    LargestCodingUnit_t                     *sb_ptr;
+    LargestCodingUnit                     *sb_ptr;
     uint16_t                                 sb_index;
     uint8_t                                  sb_sz;
     uint8_t                                  lcuSizeLog2;
-    uint32_t                                 xLcuIndex;
-    uint32_t                                 yLcuIndex;
+    uint32_t                                 x_lcu_index;
+    uint32_t                                 y_lcu_index;
     uint32_t                                 sb_origin_x;
     uint32_t                                 sb_origin_y;
     EbBool                                   lastLcuFlag;
@@ -1473,7 +1474,7 @@ void* EncDecKernel(void *input_ptr)
     uint32_t                                 lcuRowIndexStart;
     uint32_t                                 lcuRowIndexCount;
     uint32_t                                 picture_width_in_sb;
-    MdcLcuData_t                            *mdcPtr;
+    MdcLcuData                            *mdcPtr;
 
     // Variables
     EbBool                                   is16bit;
@@ -1489,7 +1490,7 @@ void* EncDecKernel(void *input_ptr)
     uint32_t                                 segmentRowIndex;
     uint32_t                                 segmentBandIndex;
     uint32_t                                 segmentBandSize;
-    EncDecSegments_t                        *segmentsPtr;
+    EncDecSegments                        *segments_ptr;
     for (;;) {
 
         // Get Mode Decision Results
@@ -1497,10 +1498,10 @@ void* EncDecKernel(void *input_ptr)
             context_ptr->mode_decision_input_fifo_ptr,
             &encDecTasksWrapperPtr);
 
-        encDecTasksPtr = (EncDecTasks_t*)encDecTasksWrapperPtr->object_ptr;
-        picture_control_set_ptr = (PictureControlSet_t*)encDecTasksPtr->picture_control_set_wrapper_ptr->object_ptr;
+        encDecTasksPtr = (EncDecTasks*)encDecTasksWrapperPtr->object_ptr;
+        picture_control_set_ptr = (PictureControlSet*)encDecTasksPtr->picture_control_set_wrapper_ptr->object_ptr;
         sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-        segmentsPtr = picture_control_set_ptr->enc_dec_segment_ctrl;
+        segments_ptr = picture_control_set_ptr->enc_dec_segment_ctrl;
         lastLcuFlag = EB_FALSE;
         is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
         (void)is16bit;
@@ -1523,16 +1524,16 @@ void* EncDecKernel(void *input_ptr)
         context_ptr->tot_intra_coded_area = 0;
 
         // Segment-loop
-        while (AssignEncDecSegments(segmentsPtr, &segment_index, encDecTasksPtr, context_ptr->enc_dec_feedback_fifo_ptr) == EB_TRUE)
+        while (AssignEncDecSegments(segments_ptr, &segment_index, encDecTasksPtr, context_ptr->enc_dec_feedback_fifo_ptr) == EB_TRUE)
         {
-            xLcuStartIndex = segmentsPtr->xStartArray[segment_index];
-            yLcuStartIndex = segmentsPtr->yStartArray[segment_index];
+            xLcuStartIndex = segments_ptr->x_start_array[segment_index];
+            yLcuStartIndex = segments_ptr->y_start_array[segment_index];
             lcuStartIndex = yLcuStartIndex * picture_width_in_sb + xLcuStartIndex;
-            lcuSegmentCount = segmentsPtr->validLcuCountArray[segment_index];
+            lcuSegmentCount = segments_ptr->valid_lcu_count_array[segment_index];
 
-            segmentRowIndex = segment_index / segmentsPtr->segmentBandCount;
-            segmentBandIndex = segment_index - segmentRowIndex * segmentsPtr->segmentBandCount;
-            segmentBandSize = (segmentsPtr->lcuBandCount * (segmentBandIndex + 1) + segmentsPtr->segmentBandCount - 1) / segmentsPtr->segmentBandCount;
+            segmentRowIndex = segment_index / segments_ptr->segment_band_count;
+            segmentBandIndex = segment_index - segmentRowIndex * segments_ptr->segment_band_count;
+            segmentBandSize = (segments_ptr->lcu_band_count * (segmentBandIndex + 1) + segments_ptr->segment_band_count - 1) / segments_ptr->segment_band_count;
 
             // Reset Coding Loop State
             reset_mode_decision( // HT done
@@ -1557,23 +1558,23 @@ void* EncDecKernel(void *input_ptr)
                     picture_control_set_ptr,
                     context_ptr);
             }
-            for (yLcuIndex = yLcuStartIndex, lcuSegmentIndex = lcuStartIndex; lcuSegmentIndex < lcuStartIndex + lcuSegmentCount; ++yLcuIndex) {
-                for (xLcuIndex = xLcuStartIndex; xLcuIndex < picture_width_in_sb && (xLcuIndex + yLcuIndex < segmentBandSize) && lcuSegmentIndex < lcuStartIndex + lcuSegmentCount; ++xLcuIndex, ++lcuSegmentIndex) {
+            for (y_lcu_index = yLcuStartIndex, lcuSegmentIndex = lcuStartIndex; lcuSegmentIndex < lcuStartIndex + lcuSegmentCount; ++y_lcu_index) {
+                for (x_lcu_index = xLcuStartIndex; x_lcu_index < picture_width_in_sb && (x_lcu_index + y_lcu_index < segmentBandSize) && lcuSegmentIndex < lcuStartIndex + lcuSegmentCount; ++x_lcu_index, ++lcuSegmentIndex) {
 
-                    sb_index = (uint16_t)(yLcuIndex * picture_width_in_sb + xLcuIndex);
+                    sb_index = (uint16_t)(y_lcu_index * picture_width_in_sb + x_lcu_index);
                     sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
-                    sb_origin_x = xLcuIndex << lcuSizeLog2;
-                    sb_origin_y = yLcuIndex << lcuSizeLog2;
+                    sb_origin_x = x_lcu_index << lcuSizeLog2;
+                    sb_origin_y = y_lcu_index << lcuSizeLog2;
                     lastLcuFlag = (sb_index == sequence_control_set_ptr->sb_tot_cnt - 1) ? EB_TRUE : EB_FALSE;
-                    endOfRowFlag = (xLcuIndex == picture_width_in_sb - 1) ? EB_TRUE : EB_FALSE;
-                    lcuRowIndexStart = (xLcuIndex == picture_width_in_sb - 1 && lcuRowIndexCount == 0) ? yLcuIndex : lcuRowIndexStart;
-                    lcuRowIndexCount = (xLcuIndex == picture_width_in_sb - 1) ? lcuRowIndexCount + 1 : lcuRowIndexCount;
+                    endOfRowFlag = (x_lcu_index == picture_width_in_sb - 1) ? EB_TRUE : EB_FALSE;
+                    lcuRowIndexStart = (x_lcu_index == picture_width_in_sb - 1 && lcuRowIndexCount == 0) ? y_lcu_index : lcuRowIndexStart;
+                    lcuRowIndexCount = (x_lcu_index == picture_width_in_sb - 1) ? lcuRowIndexCount + 1 : lcuRowIndexCount;
                     mdcPtr = &picture_control_set_ptr->mdc_sb_array[sb_index];
                     context_ptr->sb_index = sb_index;
                     context_ptr->md_context->cu_use_ref_src_flag = (picture_control_set_ptr->parent_pcs_ptr->use_src_ref) && (picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index].edge_block_num == EB_FALSE || picture_control_set_ptr->parent_pcs_ptr->sb_flat_noise_array[sb_index]) ? EB_TRUE : EB_FALSE;
 
                     // Configure the LCU
-                    ModeDecisionConfigureLcu(
+                    mode_decision_configure_lcu(
                         context_ptr->md_context,
                         sb_ptr,
                         picture_control_set_ptr,
@@ -1584,7 +1585,7 @@ void* EncDecKernel(void *input_ptr)
                     uint32_t lcuRow;
                     if (picture_control_set_ptr->parent_pcs_ptr->enable_in_loop_motion_estimation_flag) {
 
-                        EbPictureBufferDesc_t       *input_picture_ptr;
+                        EbPictureBufferDesc       *input_picture_ptr;
 
                         input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 
@@ -1624,26 +1625,26 @@ void* EncDecKernel(void *input_ptr)
                             uint32_t me_sb_addr_2 = (me_sb_y + 1) < me_pic_height_in_sb ? (me_sb_x + 0) + ((me_sb_y + 1) * me_pic_width_in_sb) : me_sb_addr_0;
                             uint32_t me_sb_addr_3 = ((me_sb_x + 1) < me_pic_width_in_sb) && ((me_sb_y + 1) < me_pic_height_in_sb) ? (me_sb_x + 1) + ((me_sb_y + 1) * me_pic_width_in_sb) : me_sb_addr_0;
 
-                            MeCuResults_t * me_block_results_0 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_0][0];
-                            MeCuResults_t * me_block_results_1 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_1][0];
-                            MeCuResults_t * me_block_results_2 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_2][0];
-                            MeCuResults_t * me_block_results_3 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_3][0];
+                            MeCuResults * me_block_results_0 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_0][0];
+                            MeCuResults * me_block_results_1 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_1][0];
+                            MeCuResults * me_block_results_2 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_2][0];
+                            MeCuResults * me_block_results_3 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_3][0];
 
-                            // Compute average open_loop 64x64 MVs
-                            mv_l0_x = ((me_block_results_0->xMvL0 + me_block_results_1->xMvL0 + me_block_results_2->xMvL0 + me_block_results_3->xMvL0) >> 2) >> 2;
-                            mv_l0_y = ((me_block_results_0->yMvL0 + me_block_results_1->yMvL0 + me_block_results_2->yMvL0 + me_block_results_3->yMvL0) >> 2) >> 2;
-                            mv_l1_x = ((me_block_results_0->xMvL1 + me_block_results_1->xMvL1 + me_block_results_2->xMvL1 + me_block_results_3->xMvL1) >> 2) >> 2;
-                            mv_l1_y = ((me_block_results_0->yMvL1 + me_block_results_1->yMvL1 + me_block_results_2->yMvL1 + me_block_results_3->yMvL1) >> 2) >> 2;
+                            // Compute average open_loop 64x64 mvs
+                            mv_l0_x = ((me_block_results_0->x_mv_l0 + me_block_results_1->x_mv_l0 + me_block_results_2->x_mv_l0 + me_block_results_3->x_mv_l0) >> 2) >> 2;
+                            mv_l0_y = ((me_block_results_0->y_mv_l0 + me_block_results_1->y_mv_l0 + me_block_results_2->y_mv_l0 + me_block_results_3->y_mv_l0) >> 2) >> 2;
+                            mv_l1_x = ((me_block_results_0->x_mv_l1 + me_block_results_1->x_mv_l1 + me_block_results_2->x_mv_l1 + me_block_results_3->x_mv_l1) >> 2) >> 2;
+                            mv_l1_y = ((me_block_results_0->y_mv_l1 + me_block_results_1->y_mv_l1 + me_block_results_2->y_mv_l1 + me_block_results_3->y_mv_l1) >> 2) >> 2;
 
                         }
                         else {
                             me_sb_addr = sb_index;
-                            MeCuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr][0];
+                            MeCuResults * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr][0];
 
-                            mv_l0_x = mePuResult->xMvL0 >> 2;
-                            mv_l0_y = mePuResult->yMvL0 >> 2;
-                            mv_l1_x = mePuResult->xMvL1 >> 2;
-                            mv_l1_y = mePuResult->yMvL1 >> 2;
+                            mv_l0_x = mePuResult->x_mv_l0 >> 2;
+                            mv_l0_y = mePuResult->y_mv_l0 >> 2;
+                            mv_l1_x = mePuResult->x_mv_l1 >> 2;
+                            mv_l1_y = mePuResult->y_mv_l1 >> 2;
                         }
 
 
@@ -1732,9 +1733,9 @@ void* EncDecKernel(void *input_ptr)
                 }
             }
 
-            EB_MEMCPY(picture_control_set_ptr->parent_pcs_ptr->av1x->sgrproj_restore_cost, context_ptr->md_rate_estimation_ptr->sgrprojRestoreFacBits, 2 * sizeof(int32_t));
-            EB_MEMCPY(picture_control_set_ptr->parent_pcs_ptr->av1x->switchable_restore_cost, context_ptr->md_rate_estimation_ptr->switchableRestoreFacBits, 3 * sizeof(int32_t));
-            EB_MEMCPY(picture_control_set_ptr->parent_pcs_ptr->av1x->wiener_restore_cost, context_ptr->md_rate_estimation_ptr->wienerRestoreFacBits, 2 * sizeof(int32_t));
+            EB_MEMCPY(picture_control_set_ptr->parent_pcs_ptr->av1x->sgrproj_restore_cost, context_ptr->md_rate_estimation_ptr->sgrproj_restore_fac_bits, 2 * sizeof(int32_t));
+            EB_MEMCPY(picture_control_set_ptr->parent_pcs_ptr->av1x->switchable_restore_cost, context_ptr->md_rate_estimation_ptr->switchable_restore_fac_bits, 3 * sizeof(int32_t));
+            EB_MEMCPY(picture_control_set_ptr->parent_pcs_ptr->av1x->wiener_restore_cost, context_ptr->md_rate_estimation_ptr->wiener_restore_fac_bits, 2 * sizeof(int32_t));
             picture_control_set_ptr->parent_pcs_ptr->av1x->rdmult = context_ptr->full_lambda;
 
 
@@ -1749,11 +1750,11 @@ void* EncDecKernel(void *input_ptr)
             eb_get_empty_object(
                 context_ptr->enc_dec_output_fifo_ptr,
                 &encDecResultsWrapperPtr);
-            encDecResultsPtr = (EncDecResults_t*)encDecResultsWrapperPtr->object_ptr;
+            encDecResultsPtr = (EncDecResults*)encDecResultsWrapperPtr->object_ptr;
             encDecResultsPtr->picture_control_set_wrapper_ptr = encDecTasksPtr->picture_control_set_wrapper_ptr;
             //CHKN these are not needed for DLF
-            encDecResultsPtr->completedLcuRowIndexStart = 0;
-            encDecResultsPtr->completedLcuRowCount = ((sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_size_pix - 1) >> lcuSizeLog2);
+            encDecResultsPtr->completed_lcu_row_index_start = 0;
+            encDecResultsPtr->completed_lcu_row_count = ((sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_size_pix - 1) >> lcuSizeLog2);
             // Post EncDec Results
             eb_post_full_object(encDecResultsWrapperPtr);
 
@@ -1765,8 +1766,8 @@ void* EncDecKernel(void *input_ptr)
     return EB_NULL;
 }
 
-void av1_add_film_grain(EbPictureBufferDesc_t *src,
-    EbPictureBufferDesc_t *dst,
+void av1_add_film_grain(EbPictureBufferDesc *src,
+    EbPictureBufferDesc *dst,
     aom_film_grain_t *film_grain_ptr) {
     uint8_t *luma, *cb, *cr;
     int32_t height, width, luma_stride, chroma_stride;
@@ -1796,35 +1797,35 @@ void av1_add_film_grain(EbPictureBufferDesc_t *src,
         chroma_subsamp_y = 1;
     }
 
-    dst->maxWidth = src->maxWidth;
-    dst->maxHeight = src->maxHeight;
+    dst->max_width = src->max_width;
+    dst->max_height = src->max_height;
 
     fgn_copy_rect(src->buffer_y + ((src->origin_y * src->stride_y + src->origin_x) << use_high_bit_depth), src->stride_y,
         dst->buffer_y + ((dst->origin_y * dst->stride_y + dst->origin_x) << use_high_bit_depth), dst->stride_y,
         dst->width, dst->height, use_high_bit_depth);
 
-    fgn_copy_rect(src->bufferCb + ((src->strideCb * (src->origin_y >> chroma_subsamp_y)
-        + (src->origin_x >> chroma_subsamp_x)) << use_high_bit_depth), src->strideCb,
-        dst->bufferCb + ((dst->strideCb * (dst->origin_y >> chroma_subsamp_y)
-            + (dst->origin_x >> chroma_subsamp_x)) << use_high_bit_depth), dst->strideCb,
+    fgn_copy_rect(src->buffer_cb + ((src->stride_cb * (src->origin_y >> chroma_subsamp_y)
+        + (src->origin_x >> chroma_subsamp_x)) << use_high_bit_depth), src->stride_cb,
+        dst->buffer_cb + ((dst->stride_cb * (dst->origin_y >> chroma_subsamp_y)
+            + (dst->origin_x >> chroma_subsamp_x)) << use_high_bit_depth), dst->stride_cb,
         dst->width >> chroma_subsamp_x, dst->height >> chroma_subsamp_y,
         use_high_bit_depth);
 
-    fgn_copy_rect(src->bufferCr + ((src->strideCr * (src->origin_y >> chroma_subsamp_y)
-        + (src->origin_x >> chroma_subsamp_x)) << use_high_bit_depth), src->strideCr,
-        dst->bufferCr + ((dst->strideCr * (dst->origin_y >> chroma_subsamp_y)
-            + (dst->origin_x >> chroma_subsamp_x)) << use_high_bit_depth), dst->strideCr,
+    fgn_copy_rect(src->buffer_cr + ((src->stride_cr * (src->origin_y >> chroma_subsamp_y)
+        + (src->origin_x >> chroma_subsamp_x)) << use_high_bit_depth), src->stride_cr,
+        dst->buffer_cr + ((dst->stride_cr * (dst->origin_y >> chroma_subsamp_y)
+            + (dst->origin_x >> chroma_subsamp_x)) << use_high_bit_depth), dst->stride_cr,
         dst->width >> chroma_subsamp_x, dst->height >> chroma_subsamp_y,
         use_high_bit_depth);
 
     luma = dst->buffer_y + ((dst->origin_y * dst->stride_y + dst->origin_x) << use_high_bit_depth);
-    cb = dst->bufferCb + ((dst->strideCb * (dst->origin_y >> chroma_subsamp_y)
+    cb = dst->buffer_cb + ((dst->stride_cb * (dst->origin_y >> chroma_subsamp_y)
         + (dst->origin_x >> chroma_subsamp_x)) << use_high_bit_depth);
-    cr = dst->bufferCr + ((dst->strideCr * (dst->origin_y >> chroma_subsamp_y)
+    cr = dst->buffer_cr + ((dst->stride_cr * (dst->origin_y >> chroma_subsamp_y)
         + (dst->origin_x >> chroma_subsamp_x)) << use_high_bit_depth);
 
     luma_stride = dst->stride_y;
-    chroma_stride = dst->strideCb;
+    chroma_stride = dst->stride_cb;
 
     width = dst->width;
     height = dst->height;

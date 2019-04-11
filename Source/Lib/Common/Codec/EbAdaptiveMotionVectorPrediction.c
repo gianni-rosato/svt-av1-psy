@@ -1101,7 +1101,7 @@ static INLINE void integer_mv_precision(MV *mv) {
 static INLINE IntMv gm_get_motion_vector(
     const EbWarpedMotionParams *gm,
     int32_t allow_hp,
-    block_size bsize,
+    BlockSize bsize,
     int32_t mi_col, int32_t mi_row,
     int32_t is_integer)
 
@@ -1145,14 +1145,14 @@ static INLINE IntMv gm_get_motion_vector(
 void generate_av1_mvp_table(
     TileInfo                         *tile,
 
-    ModeDecisionContext_t            *context_ptr,
-    CodingUnit_t                     *cu_ptr,
+    ModeDecisionContext            *context_ptr,
+    CodingUnit                     *cu_ptr,
     const BlockGeom                  *blk_geom,
     uint16_t                          cu_origin_x,
     uint16_t                          cu_origin_y,
     MvReferenceFrame                 *ref_frames,
     uint32_t                          tot_refs,
-    PictureControlSet_t              *picture_control_set_ptr)
+    PictureControlSet              *picture_control_set_ptr)
 {
     int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
     int32_t mi_col = cu_origin_x >> MI_SIZE_LOG2;
@@ -1162,7 +1162,7 @@ void generate_av1_mvp_table(
     xd->n8_h = blk_geom->bheight >> MI_SIZE_LOG2;
     xd->n4_w = blk_geom->bwidth >> MI_SIZE_LOG2;
     xd->n4_h = blk_geom->bheight >> MI_SIZE_LOG2;
-    block_size bsize = blk_geom->bsize;
+    BlockSize bsize = blk_geom->bsize;
     const int32_t bw = mi_size_wide[bsize];
     const int32_t bh = mi_size_high[bsize];
 
@@ -1244,8 +1244,8 @@ void generate_av1_mvp_table(
 
 }
 void get_av1_mv_pred_drl(
-    ModeDecisionContext_t            *context_ptr,
-    CodingUnit_t      *cu_ptr,
+    ModeDecisionContext            *context_ptr,
+    CodingUnit      *cu_ptr,
     MvReferenceFrame   ref_frame,
     uint8_t            is_compound,
     PredictionMode     mode,
@@ -1310,12 +1310,12 @@ void get_av1_mv_pred_drl(
 void enc_pass_av1_mv_pred(
     TileInfo                         *tile,
 
-    ModeDecisionContext_t            *md_context_ptr,
-    CodingUnit_t                     *cu_ptr,
+    ModeDecisionContext            *md_context_ptr,
+    CodingUnit                     *cu_ptr,
     const BlockGeom                  *blk_geom,
     uint16_t                          cu_origin_x,
     uint16_t                          cu_origin_y,
-    PictureControlSet_t              *picture_control_set_ptr,
+    PictureControlSet              *picture_control_set_ptr,
     MvReferenceFrame                  ref_frame,
     uint8_t                           is_compound,
     PredictionMode                    mode,
@@ -1348,11 +1348,11 @@ void enc_pass_av1_mv_pred(
 }
 
 void update_av1_mi_map(
-    CodingUnit_t                   *cu_ptr,
+    CodingUnit                   *cu_ptr,
     uint32_t                        cu_origin_x,
     uint32_t                        cu_origin_y,
     const BlockGeom                *blk_geom,
-    PictureControlSet_t            *picture_control_set_ptr)
+    PictureControlSet            *picture_control_set_ptr)
 {
     uint32_t mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
     int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
@@ -1416,14 +1416,14 @@ void update_av1_mi_map(
 
 
 void update_mi_map(
-    struct ModeDecisionContext_s   *context_ptr,
+    struct ModeDecisionContext   *context_ptr,
 
-    CodingUnit_t                   *cu_ptr,
+    CodingUnit                   *cu_ptr,
     uint32_t                        cu_origin_x,
     uint32_t                        cu_origin_y,
     const BlockGeom                *blk_geom,
     const CodedUnitStats         *cu_stats,
-    PictureControlSet_t            *picture_control_set_ptr)
+    PictureControlSet            *picture_control_set_ptr)
 {
     UNUSED(cu_stats);
     uint32_t mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
@@ -1514,7 +1514,7 @@ int select_samples(
     int *pts,
     int *pts_inref,
     int len,
-    block_size bsize)
+    BlockSize bsize)
 {
     const uint8_t bw = block_size_wide[bsize];
     const uint8_t bh = block_size_high[bsize];
@@ -1712,12 +1712,12 @@ int av1_find_samples(
 
 
 void wm_count_samples(
-    CodingUnit_t                       *cu_ptr,
+    CodingUnit                       *cu_ptr,
     const BlockGeom                    *blk_geom,
     uint16_t                            cu_origin_x,
     uint16_t                            cu_origin_y,
     uint8_t                             ref_frame_type,
-    PictureControlSet_t                *picture_control_set_ptr,
+    PictureControlSet                *picture_control_set_ptr,
     uint16_t                           *num_samples)
 {
     Av1Common  *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
@@ -1851,12 +1851,12 @@ void wm_count_samples(
 
 
 uint16_t wm_find_samples(
-    CodingUnit_t                       *cu_ptr,
+    CodingUnit                       *cu_ptr,
     const BlockGeom                    *blk_geom,
     uint16_t                            cu_origin_x,
     uint16_t                            cu_origin_y,
     MvReferenceFrame                    rf0,
-    PictureControlSet_t                *picture_control_set_ptr,
+    PictureControlSet                *picture_control_set_ptr,
     int32_t                            *pts,
     int32_t                            *pts_inref)
 {
@@ -1874,9 +1874,9 @@ uint16_t wm_find_samples(
 
 
 EbBool warped_motion_parameters(
-    PictureControlSet_t              *picture_control_set_ptr,
-    CodingUnit_t                     *cu_ptr,
-    MvUnit_t                         *mv_unit,
+    PictureControlSet              *picture_control_set_ptr,
+    CodingUnit                     *cu_ptr,
+    MvUnit                         *mv_unit,
     const BlockGeom                  *blk_geom,
     uint16_t                          cu_origin_x,
     uint16_t                          cu_origin_y,
@@ -1885,7 +1885,7 @@ EbBool warped_motion_parameters(
     uint16_t                         *num_samples)
 {
     MacroBlockD  *xd = cu_ptr->av1xd;
-    block_size bsize = blk_geom->bsize;
+    BlockSize bsize = blk_geom->bsize;
     EbBool apply_wm = EB_FALSE;
 
     int pts[SAMPLES_ARRAY_SIZE], pts_inref[SAMPLES_ARRAY_SIZE];
@@ -2013,9 +2013,9 @@ int count_overlappable_nb_left(
 
 
 void av1_count_overlappable_neighbors(
-    const PictureControlSet_t        *picture_control_set_ptr,
-    CodingUnit_t                     *cu_ptr,
-    const block_size                   bsize,
+    const PictureControlSet        *picture_control_set_ptr,
+    CodingUnit                     *cu_ptr,
+    const BlockSize                   bsize,
     int32_t                           mi_row,
     int32_t                           mi_col)
 {
@@ -2059,12 +2059,12 @@ void av1_find_ref_dv(IntMv *ref_dv, const TileInfo *const tile,
     ref_dv->as_mv.col *= 8;
 }
 
-int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, block_size bsize,
+int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, BlockSize bsize,
     int32_t subsampling_x, int32_t subsampling_y);
 
 int av1_is_dv_valid(const MV dv,
     const MacroBlockD *xd, int mi_row, int mi_col,
-    block_size bsize, int mib_size_log2) {
+    BlockSize bsize, int mib_size_log2) {
     const int bw = block_size_wide[bsize];
     const int bh = block_size_high[bsize];
     const int SCALE_PX_TO_MV = 8;
@@ -2092,7 +2092,7 @@ int av1_is_dv_valid(const MV dv,
     // Special case for sub 8x8 chroma cases, to prevent referring to chroma
     // pixels outside current tile.
     for (int plane = 1; plane < 3/* av1_num_planes(cm)*/; ++plane) {
-        //const struct macroblockd_plane *const pd = &xd->plane[plane];
+        //const struct MacroBlockDPlane *const pd = &xd->plane[plane];
 
         if (is_chroma_reference(mi_row, mi_col, bsize, 1, 1/* pd->subsampling_x,
             pd->subsampling_y*/)) {

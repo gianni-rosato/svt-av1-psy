@@ -36,7 +36,7 @@ void av1_jnt_convolve_x_avx2(const uint8_t *src, int32_t src_stride, uint8_t *ds
     InterpFilterParams *filter_params_y,
     const int32_t subpel_x_q4, const int32_t subpel_y_q4,
     ConvolveParams *conv_params) {
-    CONV_BUF_TYPE *dst = conv_params->dst;
+    ConvBufType *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     const int32_t bd = 8;
     int32_t i, j;
@@ -74,7 +74,7 @@ void av1_jnt_convolve_x_avx2(const uint8_t *src, int32_t src_stride, uint8_t *ds
 
     for (i = 0; i < h; i += 2) {
         const uint8_t *src_data = src_ptr + i * src_stride;
-        CONV_BUF_TYPE *dst_data = dst + i * dst_stride;
+        ConvBufType *dst_data = dst + i * dst_stride;
         for (j = 0; j < w; j += 8) {
             const __m256i data =
                 load_line2_avx2(&src_data[j], &src_data[j + src_stride]);
@@ -131,7 +131,7 @@ void av1_jnt_convolve_y_avx2(const uint8_t *src, int32_t src_stride, uint8_t *ds
     InterpFilterParams *filter_params_y,
     const int32_t subpel_x_q4, const int32_t subpel_y_q4,
     ConvolveParams *conv_params) {
-    CONV_BUF_TYPE *dst = conv_params->dst;
+    ConvBufType *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     const int32_t bd = 8;
     int32_t i, j;
@@ -347,7 +347,7 @@ void av1_jnt_convolve_2d_avx2(const uint8_t *src, int32_t src_stride, uint8_t *d
     InterpFilterParams *filter_params_y,
     const int32_t subpel_x_q4, const int32_t subpel_y_q4,
     ConvolveParams *conv_params) {
-    CONV_BUF_TYPE *dst = conv_params->dst;
+    ConvBufType *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     const int32_t bd = 8;
 
@@ -532,7 +532,7 @@ void av1_jnt_convolve_2d_copy_avx2(const uint8_t *src, int32_t src_stride,
     const int32_t subpel_x_q4, const int32_t subpel_y_q4,
     ConvolveParams *conv_params) {
     const int32_t bd = 8;
-    CONV_BUF_TYPE *dst = conv_params->dst;
+    ConvBufType *dst = conv_params->dst;
     int32_t dst_stride = conv_params->dst_stride;
     (void)filter_params_x;
     (void)filter_params_y;

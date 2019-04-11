@@ -13,7 +13,7 @@
 #include "aom_dsp_rtcd.h"
 #include <tmmintrin.h>
 
- // Weights are quadratic from '1' to '1 / block_size', scaled by
+ // Weights are quadratic from '1' to '1 / BlockSize', scaled by
  // 2^sm_weight_log2_scale.
 static const int32_t sm_weight_log2_scale = 8;
 

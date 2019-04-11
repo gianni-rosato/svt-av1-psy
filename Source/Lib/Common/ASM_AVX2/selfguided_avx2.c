@@ -218,7 +218,7 @@ static __m256i compute_p(__m256i sum1, __m256i sum2, int32_t bit_depth, int32_t 
 static void calc_ab(int32_t *A, int32_t *B, const int32_t *C, const int32_t *D,
     int32_t width, int32_t height, int32_t buf_stride, int32_t bit_depth,
     int32_t sgr_params_idx, int32_t radius_idx) {
-    const sgr_params_type *const params = &sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &sgr_params[sgr_params_idx];
     const int32_t r = params->r[radius_idx];
     const int32_t n = (2 * r + 1) * (2 * r + 1);
     const __m256i s = _mm256_set1_epi32(params->s[radius_idx]);
@@ -355,7 +355,7 @@ static void calc_ab_fast(int32_t *A, int32_t *B, const int32_t *C,
     const int32_t *D, int32_t width, int32_t height,
     int32_t buf_stride, int32_t bit_depth, int32_t sgr_params_idx,
     int32_t radius_idx) {
-    const sgr_params_type *const params = &sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &sgr_params[sgr_params_idx];
     const int32_t r = params->r[radius_idx];
     const int32_t n = (2 * r + 1) * (2 * r + 1);
     const __m256i s = _mm256_set1_epi32(params->s[radius_idx]);
@@ -605,7 +605,7 @@ void av1_selfguided_restoration_avx2(const uint8_t *dgd8, int32_t width, int32_t
         integral_images(dgd0, dgd_stride, width_ext, height_ext, Ctl, Dtl,
             buf_stride);
 
-    const sgr_params_type *const params = &sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &sgr_params[sgr_params_idx];
     // Write to flt0 and flt1
     // If params->r == 0 we skip the corresponding filter. We only allow one of
     // the radii to be 0, as having both equal to 0 would be equivalent to
@@ -639,7 +639,7 @@ void apply_selfguided_restoration_avx2(const uint8_t *dat8, int32_t width,
     assert(width * height <= RESTORATION_UNITPELS_MAX);
     av1_selfguided_restoration_avx2(dat8, width, height, stride, flt0, flt1,
         width, eps, bit_depth, highbd);
-    const sgr_params_type *const params = &sgr_params[eps];
+    const SgrParamsType *const params = &sgr_params[eps];
     int32_t xq[2];
     decode_xq(xqd, xq, params);
 

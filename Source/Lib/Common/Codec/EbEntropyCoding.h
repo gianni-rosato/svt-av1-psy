@@ -37,52 +37,53 @@
 extern "C" {
 #endif
     /*!\brief OBU types. */
-    typedef enum ATTRIBUTE_PACKED {
-        OBU_SEQUENCE_HEADER = 1,
-        OBU_TEMPORAL_DELIMITER = 2,
-        OBU_FRAME_HEADER = 3,
-        OBU_TILE_GROUP = 4,
-        OBU_METADATA = 5,
-        OBU_FRAME = 6,
+    typedef enum ATTRIBUTE_PACKED 
+    {
+        OBU_SEQUENCE_HEADER        = 1,
+        OBU_TEMPORAL_DELIMITER     = 2,
+        OBU_FRAME_HEADER           = 3,
+        OBU_TILE_GROUP             = 4,
+        OBU_METADATA               = 5,
+        OBU_FRAME                  = 6,
         OBU_REDUNDANT_FRAME_HEADER = 7,
-        OBU_PADDING = 15,
+        OBU_PADDING                = 15,
     } obuType;
 
     /**************************************
      * Extern Function Declarations
      **************************************/
-    struct EntropyCodingContext_s;
+    struct EntropyCodingContext;
     extern EbErrorType write_sb(
-        struct EntropyCodingContext_s   *context_ptr,
-        LargestCodingUnit_t     *tbPtr,
-        PictureControlSet_t     *picture_control_set_ptr,
-        EntropyCoder_t          *entropy_coder_ptr,
-        EbPictureBufferDesc_t   *coeffPtr);
+        struct EntropyCodingContext   *context_ptr,
+        LargestCodingUnit     *tb_ptr,
+        PictureControlSet     *picture_control_set_ptr,
+        EntropyCoder          *entropy_coder_ptr,
+        EbPictureBufferDesc   *coeff_ptr);
 
 
-    extern EbErrorType EncodeSliceFinish(
-        EntropyCoder_t        *entropy_coder_ptr);
+    extern EbErrorType encode_slice_finish(
+        EntropyCoder        *entropy_coder_ptr);
 
-    extern EbErrorType ResetBitstream(
-        EbPtr                 bitstreamPtr);
+    extern EbErrorType reset_bitstream(
+        EbPtr                 bitstream_ptr);
 
-    extern EbErrorType ResetEntropyCoder(
-        EncodeContext_t       *encode_context_ptr,
-        EntropyCoder_t        *entropy_coder_ptr,
+    extern EbErrorType reset_entropy_coder(
+        EncodeContext       *encode_context_ptr,
+        EntropyCoder        *entropy_coder_ptr,
         uint32_t                 qp,
         EB_SLICE               slice_type);
 
-    extern EbErrorType Av1TuEstimateCoeffBits(
-        PictureControlSet_t                    *picture_control_set_ptr,
-        struct ModeDecisionCandidateBuffer_s   *candidate_buffer_ptr,
-        CodingUnit_t                           *cu_ptr,
-        uint32_t                                  tuOriginIndex,
-        uint32_t                                  tuChromaOriginIndex,
-        EntropyCoder_t                         *entropy_coder_ptr,
-        EbPictureBufferDesc_t                  *coeff_buffer_sb,
-        uint32_t                                 yEob,
-        uint32_t                                 cbEob,
-        uint32_t                                 crEob,
+    extern EbErrorType av1_tu_estimate_coeff_bits(
+        PictureControlSet                    *picture_control_set_ptr,
+        struct ModeDecisionCandidateBuffer   *candidate_buffer_ptr,
+        CodingUnit                           *cu_ptr,
+        uint32_t                                  tu_origin_index,
+        uint32_t                                  tu_chroma_origin_index,
+        EntropyCoder                         *entropy_coder_ptr,
+        EbPictureBufferDesc                  *coeff_buffer_sb,
+        uint32_t                                 y_eob,
+        uint32_t                                 cb_eob,
+        uint32_t                                 cr_eob,
         uint64_t                                 *y_tu_coeff_bits,
         uint64_t                                 *cb_tu_coeff_bits,
         uint64_t                                 *cr_tu_coeff_bits,
@@ -91,110 +92,82 @@ extern "C" {
         COMPONENT_TYPE                          component_type,
         EbAsm                                  asm_type);
 
-    extern EbErrorType CopyRbspBitstreamToPayload(
-        Bitstream_t *bitstreamPtr,
-        EbByte      outputBuffer,
-        uint32_t      *outputBufferIndex,
-        uint32_t      *outputBufferSize,
-        EncodeContext_t         *encode_context_ptr);
+    extern EbErrorType copy_rbsp_bitstream_to_payload(
+        Bitstream *bitstream_ptr,
+        EbByte      output_buffer,
+        uint32_t      *output_buffer_index,
+        uint32_t      *output_buffer_size,
+        EncodeContext         *encode_context_ptr);
 
 
     //**********************************************************************************************************//
     //onyxc_int.h
-    static INLINE int32_t frame_is_intra_only(const PictureParentControlSet_t *const pcsPtr) {
-        return pcsPtr->av1FrameType == KEY_FRAME || pcsPtr->av1FrameType == INTRA_ONLY_FRAME;
+    static INLINE int32_t frame_is_intra_only(const PictureParentControlSet *const pcs_ptr) {
+        return pcs_ptr->av1_frame_type == KEY_FRAME || pcs_ptr->av1_frame_type == INTRA_ONLY_FRAME;
     }
 
-    static INLINE int32_t frame_is_sframe(const PictureParentControlSet_t *pcsPtr) {
-        return pcsPtr->av1FrameType == S_FRAME;
+    static INLINE int32_t frame_is_sframe(const PictureParentControlSet *pcs_ptr) {
+        return pcs_ptr->av1_frame_type == S_FRAME;
     }
 
     // Returns 1 if this frame might allow mvs from some reference frame.
 
-    static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControlSet_t *pcsPtr,
-        SequenceControlSet    *scsPtr) {
-        return !pcsPtr->error_resilient_mode &&
-            scsPtr->enable_ref_frame_mvs &&
-            scsPtr->enable_order_hint && !frame_is_intra_only(pcsPtr);
+    static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControlSet *pcs_ptr,
+        SequenceControlSet    *scs_ptr) {
+        return !pcs_ptr->error_resilient_mode &&
+            scs_ptr->enable_ref_frame_mvs &&
+            scs_ptr->enable_order_hint && !frame_is_intra_only(pcs_ptr);
     }
 
     // Returns 1 if this frame might use warped_motion
-    static INLINE int32_t frame_might_allow_warped_motion(const PictureParentControlSet_t *pcsPtr,
-        SequenceControlSet    *scsPtr) {
-        return !pcsPtr->error_resilient_mode && !frame_is_intra_only(pcsPtr) &&
-            scsPtr->static_config.enable_warped_motion;
+    static INLINE int32_t frame_might_allow_warped_motion(const PictureParentControlSet *pcs_ptr,
+        SequenceControlSet    *scs_ptr) {
+        return !pcs_ptr->error_resilient_mode && !frame_is_intra_only(pcs_ptr) &&
+            scs_ptr->static_config.enable_warped_motion;
     }
 
     static INLINE uint8_t major_minor_to_seq_level_idx(BitstreamLevel bl) {
         assert(bl.major >= LEVEL_MAJOR_MIN && bl.major <= LEVEL_MAJOR_MAX);
-        //assert(bl.minor >= LEVEL_MINOR_MIN && bl.minor <= LEVEL_MINOR_MAX);
         return ((bl.major - LEVEL_MAJOR_MIN) << LEVEL_MINOR_BITS) + bl.minor;
     }
 
     //**********************************************************************************************************//
     //encoder.h
-    static INLINE int32_t get_ref_frame_map_idx(const PictureParentControlSet_t *pcsPtr,
+    static INLINE int32_t get_ref_frame_map_idx(const PictureParentControlSet *pcs_ptr,
         MvReferenceFrame ref_frame) {
-        // (void)(*pcsPtr);
-        // (void)ref_frame;
-        // return 0;
-
-        return pcsPtr->av1RefSignal.refDpbIndex[ref_frame - LAST_FRAME];//LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
-        //if (ref_frame >= LAST_FRAME && ref_frame <= LAST3_FRAME)
-        //    return pcsPtr->lst_fb_idxes[ref_frame - 1];
-        //else if (ref_frame == GOLDEN_FRAME)
-        //    return pcsPtr->gld_fb_idx;
-        //else if (ref_frame == BWDREF_FRAME)
-        //    return pcsPtr->bwd_fb_idx;
-        //else if (ref_frame == ALTREF2_FRAME)
-        //    return pcsPtr->alt2_fb_idx;
-        //else
-        //    return pcsPtr->alt_fb_idx;
+        return pcs_ptr->av1_ref_signal.ref_dpb_index[ref_frame - LAST_FRAME];//LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
     }
 
     //*******************************************************************************************//
     // bitwriter_buffer.h
-    struct aom_write_bit_buffer {
+    struct AomWriteBitBuffer 
+    {
         uint8_t *bit_buffer;
         uint32_t bit_offset;
     };
 
-    int32_t aom_wb_is_byte_aligned(const struct aom_write_bit_buffer *wb);
-    uint32_t aom_wb_bytes_written(const struct aom_write_bit_buffer *wb);
+    int32_t aom_wb_is_byte_aligned(const struct AomWriteBitBuffer *wb);
+    uint32_t aom_wb_bytes_written(const struct AomWriteBitBuffer *wb);
 
-    void aom_wb_write_bit(struct aom_write_bit_buffer *wb, int32_t bit);
+    void aom_wb_write_bit(struct AomWriteBitBuffer *wb, int32_t bit);
 
-    void aom_wb_overwrite_bit(struct aom_write_bit_buffer *wb, int32_t bit);
+    void aom_wb_overwrite_bit(struct AomWriteBitBuffer *wb, int32_t bit);
 
-    void aom_wb_write_literal(struct aom_write_bit_buffer *wb, int32_t data, int32_t bits);
+    void aom_wb_write_literal(struct AomWriteBitBuffer *wb, int32_t data, int32_t bits);
 
-    void aom_wb_write_inv_signed_literal(struct aom_write_bit_buffer *wb, int32_t data,
+    void aom_wb_write_inv_signed_literal(struct AomWriteBitBuffer *wb, int32_t data,
         int32_t bits);
     //*******************************************************************************************//
     // bitstream.h
-    struct aom_write_bit_buffer;
+    struct AomWriteBitBuffer;
 
-    //void WriteSequenceHeader(/*AV1_COMP *cpi, */struct aom_write_bit_buffer *wb);
-    void WriteSequenceHeader(SequenceControlSet *scsPtr/*AV1_COMP *cpi*/, struct aom_write_bit_buffer *wb);
+    void write_sequence_header(SequenceControlSet *scs_ptr/*Av1Comp *cpi*/, struct AomWriteBitBuffer *wb);
 
     uint32_t WriteObuHeader(obuType obuType, int32_t obuExtension,
         uint8_t *const dst);
 
     int32_t WriteUlebObuSize(uint32_t obuHeaderSize, uint32_t obuPayloadSize,
         uint8_t *dest);
-
-    /*int32_t av1_pack_bitstream(AV1_COMP *const cpi, uint8_t *dest, size_t *size);
-
-    static INLINE int32_t av1_preserve_existing_gf(AV1_COMP *cpi) {
-    // Do not swap gf and arf indices for internal overlay frames
-    return !cpi->multi_arf_allowed && cpi->rc.is_src_frame_alt_ref &&
-    !cpi->rc.is_src_frame_ext_arf;
-    }
-
-    void av1_write_tx_type(const Av1Common *const cm, const MacroBlockD *xd,
-    int32_t blk_row, int32_t blk_col, int32_t plane, TxSize tx_size,
-    aom_writer *w);
-    */
 
     //*******************************************************************************************//
     // blockd.h
@@ -203,35 +176,35 @@ extern "C" {
             mode == NEW_NEARMV);
     }
 
-    void GetTxbCtx(
+    void get_txb_ctx(
         const int32_t               plane,
-        NeighborArrayUnit_t     *dcSignLevelCoeffNeighborArray,
+        NeighborArrayUnit     *dc_sign_level_coeff_neighbor_array,
         uint32_t                  cu_origin_x,
         uint32_t                  cu_origin_y,
-        const block_size        plane_bsize,
+        const BlockSize        plane_bsize,
         const TxSize           tx_size,
         int16_t *const           txb_skip_ctx,
         int16_t *const           dc_sign_ctx);
 
-    extern int32_t Av1GetReferenceModeContext(
+    extern int32_t av1_get_reference_mode_context(
         uint32_t                  cu_origin_x,
         uint32_t                  cu_origin_y,
-        NeighborArrayUnit_t    *mode_type_neighbor_array,
-        NeighborArrayUnit_t    *inter_pred_dir_neighbor_array);
+        NeighborArrayUnit    *mode_type_neighbor_array,
+        NeighborArrayUnit    *inter_pred_dir_neighbor_array);
 
-    extern int32_t Av1GetCompReferenceTypeContext(
+    extern int32_t av1_get_comp_reference_type_context(
         uint32_t                  cu_origin_x,
         uint32_t                  cu_origin_y,
-        NeighborArrayUnit_t    *mode_type_neighbor_array,
-        NeighborArrayUnit_t     *inter_pred_dir_neighbor_array);
+        NeighborArrayUnit    *mode_type_neighbor_array,
+        NeighborArrayUnit     *inter_pred_dir_neighbor_array);
 
-    extern void Av1CollectNeighborsRefCounts(
-        CodingUnit_t            *cu_ptr,
+    extern void av1_collect_neighbors_ref_counts(
+        CodingUnit            *cu_ptr,
         uint32_t                   cu_origin_x,
         uint32_t                   cu_origin_y,
-        NeighborArrayUnit_t     *mode_type_neighbor_array,
-        NeighborArrayUnit_t     *inter_pred_dir_neighbor_array,
-        NeighborArrayUnit_t     *ref_frame_type_neighbor_array);
+        NeighborArrayUnit     *mode_type_neighbor_array,
+        NeighborArrayUnit     *inter_pred_dir_neighbor_array,
+        NeighborArrayUnit     *ref_frame_type_neighbor_array);
 
     // Obtain contexts to signal a reference frame be either BWDREF/ALTREF2, or
     // ALTREF.
@@ -290,23 +263,23 @@ extern "C" {
     extern int32_t av1_get_pred_context_single_ref_p6(const MacroBlockD *xd);
 
 
-    extern EbErrorType WriteFrameHeaderAv1(
-        Bitstream_t *bitstreamPtr,
-        SequenceControlSet *scsPtr,
-        PictureControlSet_t *pcsPtr,
+    extern EbErrorType write_frame_header_av1(
+        Bitstream *bitstream_ptr,
+        SequenceControlSet *scs_ptr,
+        PictureControlSet *pcs_ptr,
         uint8_t showExisting);
     extern EbErrorType encode_td_av1(
-        uint8_t *bitstreamPtr);
-    extern EbErrorType EncodeSPSAv1(
-        Bitstream_t *bitstreamPtr,
-        SequenceControlSet *scsPtr);
+        uint8_t *bitstream_ptr);
+    extern EbErrorType encode_sps_av1(
+        Bitstream *bitstream_ptr,
+        SequenceControlSet *scs_ptr);
 
     //*******************************************************************************************//
 
-    MOTION_MODE motion_mode_allowed(
-        const PictureControlSet_t       *picture_control_set_ptr,
-        const CodingUnit_t              *cu_ptr,
-        const block_size                 bsize,
+    MotionMode motion_mode_allowed(
+        const PictureControlSet       *picture_control_set_ptr,
+        const CodingUnit              *cu_ptr,
+        const BlockSize                 bsize,
         MvReferenceFrame                rf0,
         MvReferenceFrame                rf1,
         PredictionMode                  mode);

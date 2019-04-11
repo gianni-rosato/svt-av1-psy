@@ -14,46 +14,41 @@ extern "C" {
     /**************************************
      * Process Results
      **************************************/
-    typedef struct EncDecResults_s
+    typedef struct EncDecResults
     {
-        EbObjectWrapper      *picture_control_set_wrapper_ptr;
-        uint32_t                  completedLcuRowIndexStart;
-        uint32_t                  completedLcuRowCount;
+        EbObjectWrapper *picture_control_set_wrapper_ptr;
+        uint32_t         completed_lcu_row_index_start;
+        uint32_t         completed_lcu_row_count;
 
-    } EncDecResults_t;
+    } EncDecResults;
 
-    typedef struct DlfResults_s
+    typedef struct DlfResults 
     {
-        EbObjectWrapper      *picture_control_set_wrapper_ptr;
-      
-        uint32_t          segment_index;
+        EbObjectWrapper *picture_control_set_wrapper_ptr;
+        uint32_t         segment_index;
+    } DlfResults;
 
-
-    } DlfResults_t;
-    typedef struct CdefResults_s
+    typedef struct CdefResults
     {
-        EbObjectWrapper      *picture_control_set_wrapper_ptr;
-       
-        uint32_t          segment_index;
+        EbObjectWrapper *picture_control_set_wrapper_ptr;
+        uint32_t         segment_index;
+    } CdefResults;
 
-    } CdefResults_t;
-    typedef struct RestResults_s
+    typedef struct RestResults
     {
-        EbObjectWrapper      *picture_control_set_wrapper_ptr;
-        uint32_t                  completed_lcu_row_index_start;
-        uint32_t                  completed_lcu_row_count;
+        EbObjectWrapper *picture_control_set_wrapper_ptr;
+        uint32_t         completed_lcu_row_index_start;
+        uint32_t         completed_lcu_row_count;
+    } RestResults;
 
-    } RestResults_t;
-
-    typedef struct EncDecResultsInitData_s
-    {
+    typedef struct EncDecResultsInitData {
         uint32_t         junk;
-    } EncDecResultsInitData_t;
+    } EncDecResultsInitData;
 
     /**************************************
      * Extern Function Declarations
      **************************************/
-    extern EbErrorType EncDecResultsCtor(
+    extern EbErrorType enc_dec_results_ctor(
         EbPtr *object_dbl_ptr,
         EbPtr object_init_data_ptr);
 

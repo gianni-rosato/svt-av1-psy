@@ -10,10 +10,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    uint64_t Compute4x4Satd(
+    uint64_t compute4x4_satd(
         int16_t *diff);
 
-    uint64_t Compute4x4Satd_U8(
+    uint64_t compute4x4_satd_u8(
         uint8_t  *src,
         uint64_t *dc_value,
         uint32_t  src_stride);

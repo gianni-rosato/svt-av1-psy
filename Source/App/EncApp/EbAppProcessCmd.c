@@ -35,10 +35,10 @@ extern volatile int32_t keepRunning;
 ***************************************/
 void LogErrorOutput(
     FILE                     *error_log_file,
-    uint32_t                  errorCode)
+    uint32_t                  error_code)
 {
 
-    switch (errorCode) {
+    switch (error_code) {
 
         // EB_ENC_AMVP_ERRORS:
     case EB_ENC_AMVP_ERROR1:
@@ -195,7 +195,7 @@ void LogErrorOutput(
         break;
 
     case EB_ENC_EC_ERROR2:
-        fprintf(error_log_file, "Error: CopyRbspBitstreamToPayload: output buffer too small!\n");
+        fprintf(error_log_file, "Error: copy_rbsp_bitstream_to_payload: output buffer too small!\n");
         break;
 
     case EB_ENC_EC_ERROR3:
@@ -432,7 +432,7 @@ void LogErrorOutput(
         break;
 
     case EB_ENC_PM_ERROR1:
-        fprintf(error_log_file, "Error: EbPictureManager: dependentCount underflow!\n");
+        fprintf(error_log_file, "Error: EbPictureManager: dependent_count underflow!\n");
         break;
 
     case EB_ENC_PM_ERROR10:
@@ -444,7 +444,7 @@ void LogErrorOutput(
         break;
 
     case EB_ENC_PM_ERROR3:
-        fprintf(error_log_file, "Error: PictureManagerProcess: The dependentCount underflow detected!\n");
+        fprintf(error_log_file, "Error: PictureManagerProcess: The dependent_count underflow detected!\n");
         break;
 
     case EB_ENC_PM_ERROR4:

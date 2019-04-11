@@ -14,23 +14,24 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    /** This macro is used to compare if two PUs have the same MVs (same refPicIndex, same MV_x and same MV_y)
+    /** This macro is used to compare if two PUs have the same mvs (same refPicIndex, same MV_x and same MV_y)
         in a particular reference picture list.
     */
-#define CHECK_MV_EQUIVALENT(pu1PredDir, pu1RefIdx, pu1Mv_x, pu1Mv_y, pu2PredDir, pu2RefIdx, pu2Mv_x, pu2Mv_y, refPicList)    (                                                \
-                (!(((pu1PredDir) + 1) & ( 1 << (refPicList))) &&                           \
-                !(((pu2PredDir) + 1) & ( 1 << (refPicList)))) ||                           \
-                ((((pu1PredDir) + 1) & ( 1 << (refPicList))) &&                            \
-                (((pu2PredDir) + 1) & ( 1 << (refPicList))) &&                             \
-                ((pu1RefIdx) == (pu2RefIdx)) &&     \
-                ((pu1Mv_x) == (pu2Mv_x)) &&       \
-                ((pu1Mv_y) == (pu2Mv_y)))         \
+#define CHECK_MV_EQUIVALENT(pu1_pred_dir, pu1_ref_idx, pu1_mv_x, pu1_mv_y, pu2_pred_dir, pu2_ref_idx, pu2_mv_x, pu2_mv_y, ref_pic_list)    (                                                \
+                (!(((pu1_pred_dir) + 1) & ( 1 << (ref_pic_list))) &&                           \
+                !(((pu2_pred_dir) + 1) & ( 1 << (ref_pic_list)))) ||                           \
+                ((((pu1_pred_dir) + 1) & ( 1 << (ref_pic_list))) &&                            \
+                (((pu2_pred_dir) + 1) & ( 1 << (ref_pic_list))) &&                             \
+                ((pu1_ref_idx) == (pu2_ref_idx)) &&     \
+                ((pu1_mv_x) == (pu2_mv_x)) &&       \
+                ((pu1_mv_y) == (pu2_mv_y)))         \
                 )
 
-    typedef struct MvMergeCandidate_s {
-        Mv_t    mv[MAX_NUM_OF_REF_PIC_LIST];
-        uint8_t   prediction_direction;
-    } MvMergeCandidate_t;
+    typedef struct MvMergeCandidate 
+    {
+        Mv    mv[MAX_NUM_OF_REF_PIC_LIST];
+        uint8_t prediction_direction;
+    } MvMergeCandidate;
 
 
 #ifdef __cplusplus

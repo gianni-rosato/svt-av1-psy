@@ -24,10 +24,10 @@ static uint32_t    get_inter_qp_for_size(EbRateControlModel *model_ptr, uint32_t
  * @function record_new_gop. Take into account a new group of picture in the
  * model
  * @param {EbRateControlModel*} model_ptr.
- * @param {PictureParentControlSet_t*} picture_ptr. Picture holding the intra frame.
+ * @param {PictureParentControlSet*} picture_ptr. Picture holding the intra frame.
  * @return {void}.
  */
-static void record_new_gop(EbRateControlModel *model_ptr, PictureParentControlSet_t *picture_ptr);
+static void record_new_gop(EbRateControlModel *model_ptr, PictureParentControlSet *picture_ptr);
 
 /*
  * Average size in bits for and intra frame per QP for a 1920x1080 reference video clip
@@ -89,7 +89,7 @@ EbErrorType rate_control_model_init(EbRateControlModel *model_ptr, SequenceContr
     return EB_ErrorNone;
 }
 
-EbErrorType    rate_control_update_model(EbRateControlModel *model_ptr, PictureParentControlSet_t *picture_ptr) {
+EbErrorType    rate_control_update_model(EbRateControlModel *model_ptr, PictureParentControlSet *picture_ptr) {
     uint64_t                size = picture_ptr->total_num_bits;
     EbRateControlGopInfo    *gop = get_gop_infos(model_ptr->gop_infos, picture_ptr->picture_number);
 
@@ -116,8 +116,8 @@ EbErrorType    rate_control_update_model(EbRateControlModel *model_ptr, PictureP
     return EB_ErrorNone;
 }
 
-uint8_t    rate_control_get_quantizer(EbRateControlModel *model_ptr, PictureParentControlSet_t *picture_ptr) {
-    FRAME_TYPE  type = picture_ptr->av1FrameType;
+uint8_t    rate_control_get_quantizer(EbRateControlModel *model_ptr, PictureParentControlSet *picture_ptr) {
+    FrameType  type = picture_ptr->av1_frame_type;
 
     if (type == INTRA_ONLY_FRAME || type == KEY_FRAME) {
         record_new_gop(model_ptr, picture_ptr);
@@ -144,7 +144,7 @@ uint32_t get_inter_qp_for_size(EbRateControlModel *model_ptr, uint32_t desired_s
     return qp;
 }
 
-static void record_new_gop(EbRateControlModel *model_ptr, PictureParentControlSet_t *picture_ptr) {
+static void record_new_gop(EbRateControlModel *model_ptr, PictureParentControlSet *picture_ptr) {
     uint64_t                pictureNumber = picture_ptr->picture_number;
     EbRateControlGopInfo    *gop = &model_ptr->gop_infos[pictureNumber];
 

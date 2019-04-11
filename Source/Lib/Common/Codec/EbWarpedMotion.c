@@ -472,7 +472,7 @@ void av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref,
           }
 
           if (conv_params->is_compound) {
-            CONV_BUF_TYPE *p =
+            ConvBufType *p =
                 &conv_params
                      ->dst[(i - p_row + k + 4) * conv_params->dst_stride +
                            (j - p_col + l + 4)];
@@ -760,7 +760,7 @@ void av1_warp_affine_c(const int32_t *mat, const uint8_t *ref, int width,
           }
 
           if (conv_params->is_compound) {
-            CONV_BUF_TYPE *p =
+            ConvBufType *p =
                 &conv_params
                      ->dst[(i - p_row + k + 4) * conv_params->dst_stride +
                            (j - p_col + l + 4)];
@@ -1064,7 +1064,7 @@ static int32_t get_mult_shift_diag(int64_t Px, int16_t iDet, int shift) {
 #endif  // USE_LIMITED_PREC_MULT
 
 static int find_affine_int(int np, const int *pts1, const int *pts2,
-                           block_size bsize, int mvy, int mvx,
+                           BlockSize bsize, int mvy, int mvx,
                            EbWarpedMotionParams *wm, int mi_row, int mi_col) {
   int32_t A[2][2] = { { 0, 0 }, { 0, 0 } };
   int32_t Bx[2] = { 0, 0 };
@@ -1182,7 +1182,7 @@ EbBool find_projection(
     int np,
     int *pts1,
     int *pts2,
-    block_size bsize,
+    BlockSize bsize,
     int mvy,
     int mvx,
     EbWarpedMotionParams *wm_params,

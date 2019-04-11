@@ -14,11 +14,11 @@ extern "C" {
 #endif
     typedef struct EbTransQuantBuffers
     {
-        EbPictureBufferDesc_t         *tu_trans_coeff2_nx2_n_ptr;
-        EbPictureBufferDesc_t         *tu_trans_coeff_nxn_ptr;
-        EbPictureBufferDesc_t         *tu_trans_coeff_n2x_n2_ptr;
-        EbPictureBufferDesc_t         *tu_quant_coeff_nxn_ptr;
-        EbPictureBufferDesc_t         *tu_quant_coeff_n2x_n2_ptr;
+        EbPictureBufferDesc         *tu_trans_coeff2_nx2_n_ptr;
+        EbPictureBufferDesc         *tu_trans_coeff_nxn_ptr;
+        EbPictureBufferDesc         *tu_trans_coeff_n2x_n2_ptr;
+        EbPictureBufferDesc         *tu_quant_coeff_nxn_ptr;
+        EbPictureBufferDesc         *tu_quant_coeff_n2x_n2_ptr;
 
     } EbTransQuantBuffers;
 

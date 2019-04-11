@@ -33,7 +33,7 @@
 #endif
 
  /**************************************
-  * The EB_BitFraction is used to define the bit fraction numbers
+  * The EbBitFraction is used to define the bit fraction numbers
   **************************************/
 typedef uint16_t EbBitNumber;
 

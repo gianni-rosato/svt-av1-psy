@@ -117,7 +117,7 @@ mdcSetDepth : set depth to be tested
 
 
 EbErrorType MdcRefinement(
-    MdcpLocalCodingUnit_t                   *localCuArray,
+    MdcpLocalCodingUnit                   *local_cu_array,
     uint32_t                                  cu_index,
     uint32_t                                  depth,
     uint8_t                                   refinementLevel,
@@ -128,75 +128,75 @@ EbErrorType MdcRefinement(
 
     if (refinementLevel & REFINEMENT_P) {
         if (lowestLevel == REFINEMENT_P) {
-            localCuArray[cu_index].stopSplit = EB_TRUE;
+            local_cu_array[cu_index].stop_split = EB_TRUE;
         }
 
     }
     else {
-        localCuArray[cu_index].slectedCu = EB_FALSE;
+        local_cu_array[cu_index].selected_cu = EB_FALSE;
     }
 
     if (refinementLevel & REFINEMENT_Pp1) {
 
         if (depth < 3 && cu_index < 81) {
-            localCuArray[cu_index + 1].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + DepthOffset[depth + 1]].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + 2 * DepthOffset[depth + 1]].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + 3 * DepthOffset[depth + 1]].slectedCu = EB_TRUE;
+            local_cu_array[cu_index + 1].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + depth_offset[depth + 1]].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 2 * depth_offset[depth + 1]].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 3 * depth_offset[depth + 1]].selected_cu = EB_TRUE;
         }
         if (lowestLevel == REFINEMENT_Pp1) {
             if (depth < 3 && cu_index < 81) {
-                localCuArray[cu_index + 1].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + DepthOffset[depth + 1]].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + 2 * DepthOffset[depth + 1]].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + 3 * DepthOffset[depth + 1]].stopSplit = EB_TRUE;
+                local_cu_array[cu_index + 1].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + depth_offset[depth + 1]].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + 2 * depth_offset[depth + 1]].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + 3 * depth_offset[depth + 1]].stop_split = EB_TRUE;
             }
         }
     }
 
     if (refinementLevel & REFINEMENT_Pp2) {
         if (depth < 2 && cu_index < 65) {
-            localCuArray[cu_index + 1 + 1].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + 1 + DepthOffset[depth + 2]].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + 1 + 2 * DepthOffset[depth + 2]].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + 1 + 3 * DepthOffset[depth + 2]].slectedCu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 1].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 1 + depth_offset[depth + 2]].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 1 + 2 * depth_offset[depth + 2]].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 1 + 3 * depth_offset[depth + 2]].selected_cu = EB_TRUE;
 
-            localCuArray[cu_index + 1 + DepthOffset[depth + 1] + 1].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + DepthOffset[depth + 1] + 1 + DepthOffset[depth + 2]].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + DepthOffset[depth + 1] + 1 + 2 * DepthOffset[depth + 2]].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + DepthOffset[depth + 1] + 1 + 3 * DepthOffset[depth + 2]].slectedCu = EB_TRUE;
+            local_cu_array[cu_index + 1 + depth_offset[depth + 1] + 1].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + depth_offset[depth + 1] + 1 + depth_offset[depth + 2]].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + depth_offset[depth + 1] + 1 + 2 * depth_offset[depth + 2]].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + depth_offset[depth + 1] + 1 + 3 * depth_offset[depth + 2]].selected_cu = EB_TRUE;
 
-            localCuArray[cu_index + 1 + 2 * DepthOffset[depth + 1] + 1].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + 2 * DepthOffset[depth + 1] + 1 + DepthOffset[depth + 2]].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + 2 * DepthOffset[depth + 1] + 1 + 2 * DepthOffset[depth + 2]].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + 2 * DepthOffset[depth + 1] + 1 + 3 * DepthOffset[depth + 2]].slectedCu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 2 * depth_offset[depth + 1] + 1].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 2 * depth_offset[depth + 1] + 1 + depth_offset[depth + 2]].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 2 * depth_offset[depth + 1] + 1 + 2 * depth_offset[depth + 2]].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 2 * depth_offset[depth + 1] + 1 + 3 * depth_offset[depth + 2]].selected_cu = EB_TRUE;
 
-            localCuArray[cu_index + 1 + 3 * DepthOffset[depth + 1] + 1].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + 3 * DepthOffset[depth + 1] + 1 + DepthOffset[depth + 2]].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + 3 * DepthOffset[depth + 1] + 1 + 2 * DepthOffset[depth + 2]].slectedCu = EB_TRUE;
-            localCuArray[cu_index + 1 + 3 * DepthOffset[depth + 1] + 1 + 3 * DepthOffset[depth + 2]].slectedCu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 3 * depth_offset[depth + 1] + 1].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 3 * depth_offset[depth + 1] + 1 + depth_offset[depth + 2]].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 3 * depth_offset[depth + 1] + 1 + 2 * depth_offset[depth + 2]].selected_cu = EB_TRUE;
+            local_cu_array[cu_index + 1 + 3 * depth_offset[depth + 1] + 1 + 3 * depth_offset[depth + 2]].selected_cu = EB_TRUE;
         }
         if (lowestLevel == REFINEMENT_Pp2) {
             if (depth < 2 && cu_index < 65) {
-                localCuArray[cu_index + 1 + 1].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + 1 + DepthOffset[depth + 2]].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + 1 + 2 * DepthOffset[depth + 2]].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + 1 + 3 * DepthOffset[depth + 2]].stopSplit = EB_TRUE;
+                local_cu_array[cu_index + 1 + 1].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + 1 + depth_offset[depth + 2]].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + 1 + 2 * depth_offset[depth + 2]].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + 1 + 3 * depth_offset[depth + 2]].stop_split = EB_TRUE;
 
-                localCuArray[cu_index + 1 + DepthOffset[depth + 1] + 1].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + DepthOffset[depth + 1] + 1 + DepthOffset[depth + 2]].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + DepthOffset[depth + 1] + 1 + 2 * DepthOffset[depth + 2]].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + DepthOffset[depth + 1] + 1 + 3 * DepthOffset[depth + 2]].stopSplit = EB_TRUE;
+                local_cu_array[cu_index + 1 + depth_offset[depth + 1] + 1].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + depth_offset[depth + 1] + 1 + depth_offset[depth + 2]].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + depth_offset[depth + 1] + 1 + 2 * depth_offset[depth + 2]].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + depth_offset[depth + 1] + 1 + 3 * depth_offset[depth + 2]].stop_split = EB_TRUE;
 
-                localCuArray[cu_index + 1 + 2 * DepthOffset[depth + 1] + 1].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + 2 * DepthOffset[depth + 1] + 1 + DepthOffset[depth + 2]].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + 2 * DepthOffset[depth + 1] + 1 + 2 * DepthOffset[depth + 2]].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + 2 * DepthOffset[depth + 1] + 1 + 3 * DepthOffset[depth + 2]].stopSplit = EB_TRUE;
+                local_cu_array[cu_index + 1 + 2 * depth_offset[depth + 1] + 1].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + 2 * depth_offset[depth + 1] + 1 + depth_offset[depth + 2]].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + 2 * depth_offset[depth + 1] + 1 + 2 * depth_offset[depth + 2]].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + 2 * depth_offset[depth + 1] + 1 + 3 * depth_offset[depth + 2]].stop_split = EB_TRUE;
 
-                localCuArray[cu_index + 1 + 3 * DepthOffset[depth + 1] + 1].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + 3 * DepthOffset[depth + 1] + 1 + DepthOffset[depth + 2]].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + 3 * DepthOffset[depth + 1] + 1 + 2 * DepthOffset[depth + 2]].stopSplit = EB_TRUE;
-                localCuArray[cu_index + 1 + 3 * DepthOffset[depth + 1] + 1 + 3 * DepthOffset[depth + 2]].stopSplit = EB_TRUE;
+                local_cu_array[cu_index + 1 + 3 * depth_offset[depth + 1] + 1].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + 3 * depth_offset[depth + 1] + 1 + depth_offset[depth + 2]].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + 3 * depth_offset[depth + 1] + 1 + 2 * depth_offset[depth + 2]].stop_split = EB_TRUE;
+                local_cu_array[cu_index + 1 + 3 * depth_offset[depth + 1] + 1 + 3 * depth_offset[depth + 2]].stop_split = EB_TRUE;
             }
         }
     }
@@ -209,7 +209,7 @@ EbErrorType MdcRefinement(
 
             for (outLoop = 0; outLoop < 16; ++outLoop) {
                 for (inLoop = 0; inLoop < 4; ++inLoop) {
-                    localCuArray[++cu_index].slectedCu = EB_TRUE;
+                    local_cu_array[++cu_index].selected_cu = EB_TRUE;
 
                 }
                 cu_index += cu_index == 21 ? 2 : cu_index == 42 ? 2 : cu_index == 63 ? 2 : 1;
@@ -219,7 +219,7 @@ EbErrorType MdcRefinement(
                 cu_index = 2;
                 for (outLoop = 0; outLoop < 16; ++outLoop) {
                     for (inLoop = 0; inLoop < 4; ++inLoop) {
-                        localCuArray[++cu_index].stopSplit = EB_TRUE;
+                        local_cu_array[++cu_index].stop_split = EB_TRUE;
                     }
                     cu_index += cu_index == 21 ? 2 : cu_index == 42 ? 2 : cu_index == 63 ? 2 : 1;
                 }
@@ -230,45 +230,45 @@ EbErrorType MdcRefinement(
 
     if (refinementLevel & REFINEMENT_Pm1) {
         if (depth > 0) {
-            localCuArray[cu_index - 1 - parentCuIndex[cu_index]].slectedCu = EB_TRUE;
+            local_cu_array[cu_index - 1 - parentCuIndex[cu_index]].selected_cu = EB_TRUE;
         }
         if (lowestLevel == REFINEMENT_Pm1) {
             if (depth > 0) {
-                localCuArray[cu_index - 1 - parentCuIndex[cu_index]].stopSplit = EB_TRUE;
+                local_cu_array[cu_index - 1 - parentCuIndex[cu_index]].stop_split = EB_TRUE;
             }
         }
     }
 
     if (refinementLevel & REFINEMENT_Pm2) {
         if (depth == 2) {
-            localCuArray[0].slectedCu = EB_TRUE;
+            local_cu_array[0].selected_cu = EB_TRUE;
         }
         if (depth == 3) {
-            localCuArray[1].slectedCu = EB_TRUE;
-            localCuArray[22].slectedCu = EB_TRUE;
-            localCuArray[43].slectedCu = EB_TRUE;
-            localCuArray[64].slectedCu = EB_TRUE;
+            local_cu_array[1].selected_cu = EB_TRUE;
+            local_cu_array[22].selected_cu = EB_TRUE;
+            local_cu_array[43].selected_cu = EB_TRUE;
+            local_cu_array[64].selected_cu = EB_TRUE;
         }
         if (lowestLevel == REFINEMENT_Pm2) {
             if (depth == 2) {
-                localCuArray[0].stopSplit = EB_TRUE;
+                local_cu_array[0].stop_split = EB_TRUE;
             }
             if (depth == 3) {
-                localCuArray[1].stopSplit = EB_TRUE;
-                localCuArray[22].stopSplit = EB_TRUE;
-                localCuArray[43].stopSplit = EB_TRUE;
-                localCuArray[64].stopSplit = EB_TRUE;
+                local_cu_array[1].stop_split = EB_TRUE;
+                local_cu_array[22].stop_split = EB_TRUE;
+                local_cu_array[43].stop_split = EB_TRUE;
+                local_cu_array[64].stop_split = EB_TRUE;
             }
         }
     }
 
     if (refinementLevel & REFINEMENT_Pm3) {
         if (depth == 3) {
-            localCuArray[0].slectedCu = EB_TRUE;
+            local_cu_array[0].selected_cu = EB_TRUE;
         }
         if (lowestLevel == REFINEMENT_Pm2) {
             if (depth == 3) {
-                localCuArray[0].stopSplit = EB_TRUE;
+                local_cu_array[0].stop_split = EB_TRUE;
             }
         }
     }
@@ -282,38 +282,38 @@ If (AC energy < 32 * 32) then apply aggressive action (Class 1),
 else if (AC energy < 32 * 32 * 1.6) OR (32 * 32 * 3.5 < AC energy < 32 * 32 * 4.5 AND non-8x8) then moderate action (Class 2),
 else no action
 *******************************************/
-uint8_t DeriveContouringClass(
-    PictureParentControlSet_t   *parentPcsPtr,
+uint8_t derive_contouring_class(
+    PictureParentControlSet   *parent_pcs_ptr,
     uint16_t                       sb_index,
     uint8_t                        leaf_index)
 {
     uint8_t contouringClass = 0;
 
-    SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)parentPcsPtr->sequence_control_set_wrapper_ptr->object_ptr;
+    SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 
-    if (parentPcsPtr->is_sb_homogeneous_over_time[sb_index]) {
+    if (parent_pcs_ptr->is_sb_homogeneous_over_time[sb_index]) {
         if (leaf_index > 0) {
-            SbParams_t            *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+            LcuParameters            *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
             if (sb_params->is_edge_sb) {
 
-                if (parentPcsPtr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1) {
+                if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1) {
                     contouringClass = 2;
                 }
-                else if (parentPcsPtr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2) {
+                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2) {
                     contouringClass = 3;
                 }
-                else if (parentPcsPtr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < (ANTI_CONTOURING_TH_1 + ANTI_CONTOURING_TH_2)) {
+                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < (ANTI_CONTOURING_TH_1 + ANTI_CONTOURING_TH_2)) {
                     contouringClass = 3;
                 }
             }
             else {
-                if (parentPcsPtr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_0) {
+                if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_0) {
                     contouringClass = 1;
                 }
-                else if (parentPcsPtr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1) {
+                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1) {
                     contouringClass = 2;
                 }
-                else if (parentPcsPtr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2) {
+                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2) {
                     contouringClass = 3;
                 }
             }
@@ -325,21 +325,21 @@ uint8_t DeriveContouringClass(
 
 void RefinementPredictionLoop(
     SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet_t                    *picture_control_set_ptr,
-    LargestCodingUnit_t                    *sb_ptr,
+    PictureControlSet                    *picture_control_set_ptr,
+    LargestCodingUnit                    *sb_ptr,
     uint32_t                                  sb_index,
-    ModeDecisionConfigurationContext_t     *context_ptr)
+    ModeDecisionConfigurationContext     *context_ptr)
 {
 
-    MdcpLocalCodingUnit_t    *localCuArray         = context_ptr->localCuArray;
-    SbParams_t               *sb_params            = &sequence_control_set_ptr->sb_params_array[sb_index];
+    MdcpLocalCodingUnit    *local_cu_array         = context_ptr->local_cu_array;
+    LcuParameters               *sb_params            = &sequence_control_set_ptr->sb_params_array[sb_index];
     uint32_t                  cu_index             = 0;
     sb_ptr->pred64 = EB_FALSE;
     while (cu_index < CU_MAX_COUNT)
     {
-        if (sb_params->raster_scan_cu_validity[MD_SCAN_TO_RASTER_SCAN[cu_index]] && (localCuArray[cu_index].earlySplitFlag == EB_FALSE))
+        if (sb_params->raster_scan_cu_validity[md_scan_to_raster_scan[cu_index]] && (local_cu_array[cu_index].early_split_flag == EB_FALSE))
         {
-            localCuArray[cu_index].slectedCu = EB_TRUE;
+            local_cu_array[cu_index].selected_cu = EB_TRUE;
             sb_ptr->pred64 = (cu_index == 0) ? EB_TRUE : sb_ptr->pred64;
             uint32_t depth = get_coded_unit_stats(cu_index)->depth;
             uint8_t refinementLevel;   
@@ -370,14 +370,14 @@ void RefinementPredictionLoop(
                     (refinementLevel & REFINEMENT_Pm1) ? REFINEMENT_Pm1 : (refinementLevel & REFINEMENT_Pm2) ? REFINEMENT_Pm2 : (refinementLevel & REFINEMENT_Pm3) ? REFINEMENT_Pm3 : 0x00;
 
                 MdcRefinement(
-                    &(*context_ptr->localCuArray),
+                    &(*context_ptr->local_cu_array),
                     cu_index,
                     depth,
                     refinementLevel,
                     lowestLevel);
             }
 
-            cu_index += DepthOffset[depth];
+            cu_index += depth_offset[depth];
 
         }
         else {
@@ -390,20 +390,20 @@ void RefinementPredictionLoop(
 
 void PrePredictionRefinement(
     SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet_t                    *picture_control_set_ptr,
-    LargestCodingUnit_t                    *sb_ptr,
+    PictureControlSet                    *picture_control_set_ptr,
+    LargestCodingUnit                    *sb_ptr,
     uint32_t                                  sb_index,
     uint32_t                                 *startDepth,
     uint32_t                                 *endDepth
 )
 {
-    SbParams_t    *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+    LcuParameters    *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
 
     EB_SLICE        slice_type = picture_control_set_ptr->slice_type;
 
     uint8_t           edge_block_num = picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index].edge_block_num;
 
-    SbStat_t      *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
+    SbStat      *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
     uint8_t           stationary_edge_over_time_flag = sb_stat_ptr->stationary_edge_over_time_flag;
 
     uint8_t           aura_status_iii = sb_ptr->aura_status_iii;
@@ -450,26 +450,26 @@ void PrePredictionRefinement(
 
 void ForwardCuToModeDecision(
     SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet_t                    *picture_control_set_ptr,
+    PictureControlSet                    *picture_control_set_ptr,
 
     uint32_t                                  sb_index,
-    ModeDecisionConfigurationContext_t     *context_ptr
+    ModeDecisionConfigurationContext     *context_ptr
 )
 {
 
     uint8_t                   cu_index = 0;
     uint32_t                  cuClass = DO_NOT_ADD_CU_CONTINUE_SPLIT;
     EbBool                 split_flag = EB_TRUE;
-    MdcLcuData_t           *resultsPtr = &picture_control_set_ptr->mdc_sb_array[sb_index];
-    SbParams_t            *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-    MdcpLocalCodingUnit_t  *localCuArray = context_ptr->localCuArray;
+    MdcLcuData           *resultsPtr = &picture_control_set_ptr->mdc_sb_array[sb_index];
+    LcuParameters            *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+    MdcpLocalCodingUnit  *local_cu_array = context_ptr->local_cu_array;
     EB_SLICE                slice_type = picture_control_set_ptr->slice_type;
 
 
     // CU Loop
     const CodedUnitStats *cuStatsPtr = get_coded_unit_stats(0);
 
-    SbStat_t *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
+    SbStat *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
 
     EbBool    testAllDepthIntraSliceFlag = EB_FALSE;
 
@@ -487,7 +487,7 @@ void ForwardCuToModeDecision(
     while (cu_index < CU_MAX_COUNT)
     {
         split_flag = EB_TRUE;
-        if (sb_params->raster_scan_cu_validity[MD_SCAN_TO_RASTER_SCAN[cu_index]])
+        if (sb_params->raster_scan_cu_validity[md_scan_to_raster_scan[cu_index]])
         {
             cuStatsPtr = get_coded_unit_stats(cu_index);
 
@@ -505,13 +505,13 @@ void ForwardCuToModeDecision(
                         cuClass = ADD_CU_CONTINUE_SPLIT;
                     }
                     else {
-                        cuClass = localCuArray[cu_index].slectedCu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
-                        cuClass = localCuArray[cu_index].stopSplit == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
+                        cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
+                        cuClass = local_cu_array[cu_index].stop_split == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
                     }
                 }
                 else {
-                    cuClass = localCuArray[cu_index].slectedCu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
-                    cuClass = localCuArray[cu_index].stopSplit == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
+                    cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
+                    cuClass = local_cu_array[cu_index].stop_split == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
 
                 }
 
@@ -594,7 +594,7 @@ void ForwardCuToModeDecision(
             }
         }
 
-        cu_index += (split_flag == EB_TRUE) ? 1 : DepthOffset[cuStatsPtr->depth];
+        cu_index += (split_flag == EB_TRUE) ? 1 : depth_offset[cuStatsPtr->depth];
 
     } // End CU Loop
 
@@ -603,7 +603,7 @@ void ForwardCuToModeDecision(
 
 
 void MdcInterDepthDecision(
-    ModeDecisionConfigurationContext_t     *context_ptr,
+    ModeDecisionConfigurationContext     *context_ptr,
     uint32_t                                 origin_x,
     uint32_t                                 origin_y,
     uint32_t                                 endDepth,
@@ -620,7 +620,7 @@ void MdcInterDepthDecision(
     uint64_t               depthNPlusOneRate = 0;
     uint64_t               depthNCost = 0;
     uint64_t               depthNPlusOneCost = 0;
-    MdcpLocalCodingUnit_t *localCuArray = context_ptr->localCuArray;
+    MdcpLocalCodingUnit *local_cu_array = context_ptr->local_cu_array;
     /*** Stage 0: Inter depth decision: depth 2 vs depth 3 ***/
     // Walks to the last coded 8x8 block for merging
     uint8_t  group_of8x8_blocks_count = context_ptr->group_of8x8_blocks_count;
@@ -638,32 +638,32 @@ void MdcInterDepthDecision(
         depthTwoCandidateCuIndex = topLeftCuIndex - 1;
 
         // Compute depth N cost
-        localCuArray[depthTwoCandidateCuIndex].splitContext = 0;
-        depthNCost = (localCuArray[depthTwoCandidateCuIndex]).earlyCost + depthNRate;
+        local_cu_array[depthTwoCandidateCuIndex].split_context = 0;
+        depthNCost = (local_cu_array[depthTwoCandidateCuIndex]).early_cost + depthNRate;
 
         if (endDepth < 3) {
 
-            (localCuArray[depthTwoCandidateCuIndex]).earlySplitFlag = EB_FALSE;
-            (localCuArray[depthTwoCandidateCuIndex]).earlyCost = depthNCost;
+            (local_cu_array[depthTwoCandidateCuIndex]).early_split_flag = EB_FALSE;
+            (local_cu_array[depthTwoCandidateCuIndex]).early_cost = depthNCost;
 
         }
         else {
-            depthNPlusOneCost = (localCuArray[cu_index]).earlyCost + (localCuArray[leftCuIndex]).earlyCost + (localCuArray[topCuIndex]).earlyCost + (localCuArray[topLeftCuIndex]).earlyCost + depthNPlusOneRate;
+            depthNPlusOneCost = (local_cu_array[cu_index]).early_cost + (local_cu_array[leftCuIndex]).early_cost + (local_cu_array[topCuIndex]).early_cost + (local_cu_array[topLeftCuIndex]).early_cost + depthNPlusOneRate;
 
             if (depthNCost <= depthNPlusOneCost) {
 
                 // If the cost is low enough to warrant not spliting further:
                 // 1. set the split flag of the candidate pu for merging to false
                 // 2. update the last pu index
-                (localCuArray[depthTwoCandidateCuIndex]).earlySplitFlag = EB_FALSE;
-                (localCuArray[depthTwoCandidateCuIndex]).earlyCost = depthNCost;
+                (local_cu_array[depthTwoCandidateCuIndex]).early_split_flag = EB_FALSE;
+                (local_cu_array[depthTwoCandidateCuIndex]).early_cost = depthNCost;
 
             }
             else {
                 // If the cost is not low enough:
                 // update the cost of the candidate pu for merging
                 // this update is required for the next inter depth decision
-                (&localCuArray[depthTwoCandidateCuIndex])->earlyCost = depthNPlusOneCost;
+                (&local_cu_array[depthTwoCandidateCuIndex])->early_cost = depthNPlusOneCost;
             }
 
         }
@@ -685,19 +685,19 @@ void MdcInterDepthDecision(
         depthOneCandidateCuIndex = topLeftCuIndex - 1;
 
         if (get_coded_unit_stats(depthOneCandidateCuIndex)->depth == 1) {
-            depthNCost = localCuArray[depthOneCandidateCuIndex].earlyCost + depthNRate;
+            depthNCost = local_cu_array[depthOneCandidateCuIndex].early_cost + depthNRate;
             if (endDepth < 2) {
 
-                localCuArray[depthOneCandidateCuIndex].earlySplitFlag = EB_FALSE;
-                localCuArray[depthOneCandidateCuIndex].earlyCost = depthNCost;
+                local_cu_array[depthOneCandidateCuIndex].early_split_flag = EB_FALSE;
+                local_cu_array[depthOneCandidateCuIndex].early_cost = depthNCost;
 
             }
             else {
                 // Compute depth N+1 cost
-                depthNPlusOneCost = localCuArray[depthTwoCandidateCuIndex].earlyCost +
-                    localCuArray[leftCuIndex].earlyCost +
-                    localCuArray[topCuIndex].earlyCost +
-                    localCuArray[topLeftCuIndex].earlyCost +
+                depthNPlusOneCost = local_cu_array[depthTwoCandidateCuIndex].early_cost +
+                    local_cu_array[leftCuIndex].early_cost +
+                    local_cu_array[topCuIndex].early_cost +
+                    local_cu_array[topLeftCuIndex].early_cost +
                     depthNPlusOneRate;
 
                 // Inter depth comparison: depth 1 vs depth 2
@@ -705,14 +705,14 @@ void MdcInterDepthDecision(
                     // If the cost is low enough to warrant not spliting further:
                     // 1. set the split flag of the candidate pu for merging to false
                     // 2. update the last pu index
-                    localCuArray[depthOneCandidateCuIndex].earlySplitFlag = EB_FALSE;
-                    localCuArray[depthOneCandidateCuIndex].earlyCost = depthNCost;
+                    local_cu_array[depthOneCandidateCuIndex].early_split_flag = EB_FALSE;
+                    local_cu_array[depthOneCandidateCuIndex].early_cost = depthNCost;
                 }
                 else {
                     // If the cost is not low enough:
                     // update the cost of the candidate pu for merging
                     // this update is required for the next inter depth decision
-                    localCuArray[depthOneCandidateCuIndex].earlyCost = depthNPlusOneCost;
+                    local_cu_array[depthOneCandidateCuIndex].early_cost = depthNPlusOneCost;
                 }
             }
         }
@@ -738,18 +738,18 @@ void MdcInterDepthDecision(
         if (get_coded_unit_stats(depthZeroCandidateCuIndex)->depth == 0) {
 
             // Compute depth N cost
-            depthNCost = (&localCuArray[depthZeroCandidateCuIndex])->earlyCost + depthNRate;
+            depthNCost = (&local_cu_array[depthZeroCandidateCuIndex])->early_cost + depthNRate;
             if (endDepth < 1) {
 
-                (&localCuArray[depthZeroCandidateCuIndex])->earlySplitFlag = EB_FALSE;
+                (&local_cu_array[depthZeroCandidateCuIndex])->early_split_flag = EB_FALSE;
 
             }
             else {
                 // Compute depth N+1 cost
-                depthNPlusOneCost = localCuArray[depthOneCandidateCuIndex].earlyCost +
-                    localCuArray[leftCuIndex].earlyCost +
-                    localCuArray[topCuIndex].earlyCost +
-                    localCuArray[topLeftCuIndex].earlyCost +
+                depthNPlusOneCost = local_cu_array[depthOneCandidateCuIndex].early_cost +
+                    local_cu_array[leftCuIndex].early_cost +
+                    local_cu_array[topCuIndex].early_cost +
+                    local_cu_array[topLeftCuIndex].early_cost +
                     depthNPlusOneRate;
 
                 // Inter depth comparison: depth 0 vs depth 1
@@ -757,7 +757,7 @@ void MdcInterDepthDecision(
                     // If the cost is low enough to warrant not spliting further:
                     // 1. set the split flag of the candidate pu for merging to false
                     // 2. update the last pu index
-                    (&localCuArray[depthZeroCandidateCuIndex])->earlySplitFlag = EB_FALSE;
+                    (&local_cu_array[depthZeroCandidateCuIndex])->early_split_flag = EB_FALSE;
                 }
             }
         }
@@ -769,18 +769,18 @@ void MdcInterDepthDecision(
 
 void PredictionPartitionLoop(
     SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet_t                    *picture_control_set_ptr,
+    PictureControlSet                    *picture_control_set_ptr,
     uint32_t                                sb_index,
     uint32_t                                tbOriginX,
     uint32_t                                tbOriginY,
     uint32_t                                startDepth,
     uint32_t                                endDepth,
-    ModeDecisionConfigurationContext_t     *context_ptr){
+    ModeDecisionConfigurationContext     *context_ptr){
 
-    MdcpLocalCodingUnit_t *localCuArray = context_ptr->localCuArray;
-    MdcpLocalCodingUnit_t   *cu_ptr;
+    MdcpLocalCodingUnit *local_cu_array = context_ptr->local_cu_array;
+    MdcpLocalCodingUnit   *cu_ptr;
 
-    SbParams_t *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+    LcuParameters *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
     uint32_t      cuIndexInRaterScan;
     uint32_t      cu_index = 0;
     uint32_t      start_index = 0;
@@ -794,25 +794,25 @@ void PredictionPartitionLoop(
 
     {
 
-        localCuArray[cu_index].slectedCu = EB_FALSE;
-        localCuArray[cu_index].stopSplit = EB_FALSE;
+        local_cu_array[cu_index].selected_cu = EB_FALSE;
+        local_cu_array[cu_index].stop_split = EB_FALSE;
 
-        cu_ptr = &localCuArray[cu_index];
-        cuIndexInRaterScan = MD_SCAN_TO_RASTER_SCAN[cu_index];
+        cu_ptr = &local_cu_array[cu_index];
+        cuIndexInRaterScan = md_scan_to_raster_scan[cu_index];
         if (sb_params->raster_scan_cu_validity[cuIndexInRaterScan])
         {
             uint32_t depth;
             cuStatsPtr = get_coded_unit_stats(cu_index);
 
             depth = cuStatsPtr->depth;
-            cu_ptr->earlySplitFlag = (depth < endDepth) ? EB_TRUE : EB_FALSE;
+            cu_ptr->early_split_flag = (depth < endDepth) ? EB_TRUE : EB_FALSE;
 
             if (depth >= startDepth && depth <= endDepth) {
                 //reset the flags here:   all CU splitFalg=TRUE. default: we always split. interDepthDecision will select where  to stop splitting(ie setting the flag to False)
 
                 if (picture_control_set_ptr->slice_type != I_SLICE) {
 
-                    MeCuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cuIndexInRaterScan];
+                    MeCuResults * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cuIndexInRaterScan];
                     // Initialize the mdc candidate (only av1 rate estimation inputs)
                     // Hsan: mode, direction, .. could be modified toward better early inter depth decision (e.g. NEARESTMV instead of NEWMV)
                     context_ptr->mdc_candidate_ptr->md_rate_estimation_ptr = context_ptr->md_rate_estimation_ptr;
@@ -820,7 +820,7 @@ void PredictionPartitionLoop(
                     context_ptr->mdc_candidate_ptr->merge_flag = EB_FALSE;
                     context_ptr->mdc_candidate_ptr->prediction_direction[0] = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ?
                         UNI_PRED_LIST_0 :
-                        mePuResult->distortionDirection[0].direction;
+                        mePuResult->distortion_direction[0].direction;
                     // Hsan: what's the best mode for rate simulation
                     context_ptr->mdc_candidate_ptr->inter_mode = NEARESTMV;
                     context_ptr->mdc_candidate_ptr->pred_mode = NEARESTMV;
@@ -828,10 +828,10 @@ void PredictionPartitionLoop(
                     context_ptr->mdc_candidate_ptr->is_new_mv = 1;
                     context_ptr->mdc_candidate_ptr->is_zero_mv = 0;
                     context_ptr->mdc_candidate_ptr->drl_index = 0;
-                    context_ptr->mdc_candidate_ptr->motionVector_x_L0 = mePuResult->xMvL0 << 1;
-                    context_ptr->mdc_candidate_ptr->motionVector_y_L0 = mePuResult->yMvL0 << 1;
-                    context_ptr->mdc_candidate_ptr->motionVector_x_L1 = mePuResult->xMvL1 << 1;
-                    context_ptr->mdc_candidate_ptr->motionVector_y_L1 = mePuResult->yMvL1 << 1;
+                    context_ptr->mdc_candidate_ptr->motion_vector_xl0 = mePuResult->x_mv_l0 << 1;
+                    context_ptr->mdc_candidate_ptr->motion_vector_yl0 = mePuResult->y_mv_l0 << 1;
+                    context_ptr->mdc_candidate_ptr->motion_vector_xl1 = mePuResult->x_mv_l1 << 1;
+                    context_ptr->mdc_candidate_ptr->motion_vector_yl1 = mePuResult->y_mv_l1 << 1;
                     context_ptr->mdc_candidate_ptr->ref_mv_index = 0;
                     context_ptr->mdc_candidate_ptr->pred_mv_weight = 0;
                     if (context_ptr->mdc_candidate_ptr->prediction_direction[0] == BI_PRED) {
@@ -860,11 +860,11 @@ void PredictionPartitionLoop(
                     av1_zero(context_ptr->mdc_cu_ptr->av1xd->neighbors_ref_counts); // Hsan: neighbor not generated @ open loop partitioning => assumes always (0,0)
 
                     // Fast Cost Calc
-                    cu_ptr->earlyCost = av1_inter_fast_cost(
+                    cu_ptr->early_cost = av1_inter_fast_cost(
                         context_ptr->mdc_cu_ptr,
                         context_ptr->mdc_candidate_ptr,
                         context_ptr->qp,
-                        mePuResult->distortionDirection[0].distortion,
+                        mePuResult->distortion_direction[0].distortion,
                         (uint64_t) 0,
                         context_ptr->lambda,
                         0,
@@ -893,7 +893,7 @@ void PredictionPartitionLoop(
                     cu_index);
             }
             else {
-                cu_ptr->earlyCost = ~0u;
+                cu_ptr->early_cost = ~0u;
             }
 
         }
@@ -902,12 +902,12 @@ void PredictionPartitionLoop(
 
 }
 
-EbErrorType EarlyModeDecisionLcu(
+EbErrorType early_mode_decision_lcu(
     SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet_t                    *picture_control_set_ptr,
-    LargestCodingUnit_t                    *sb_ptr,
+    PictureControlSet                    *picture_control_set_ptr,
+    LargestCodingUnit                    *sb_ptr,
     uint32_t                                  sb_index,
-    ModeDecisionConfigurationContext_t     *context_ptr){
+    ModeDecisionConfigurationContext     *context_ptr){
 
     EbErrorType    return_error = EB_ErrorNone;
     uint32_t       tbOriginX    = sb_ptr->origin_x;

@@ -465,7 +465,7 @@ static AOM_FORCE_INLINE void lpf_internal_14_sse2(
             filt);
         filt = _mm_packs_epi16(filt, _mm_subs_epi16(zero, filt));
         qs1ps1 = _mm_xor_si128(_mm_adds_epi8(qs1ps1, filt), t80);
-        // loopfilter done
+        // LoopFilter done
 
         {
             __m128i work;

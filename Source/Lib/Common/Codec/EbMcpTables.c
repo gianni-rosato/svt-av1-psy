@@ -10,7 +10,7 @@
 **************************************************/
 
 // Luma
-const InterpolationFilterNew uniPredLumaIFFunctionPtrArrayNew[ASM_TYPE_TOTAL][16] = {     //[ASM type][Interpolation position]
+const InterpolationFilterNew uni_pred_luma_if_function_ptr_array_new[ASM_TYPE_TOTAL][16] = {     //[ASM type][Interpolation position]
     // NON_AVX2
     {
         luma_interpolation_copy_ssse3,                        //A
@@ -51,7 +51,7 @@ const InterpolationFilterNew uniPredLumaIFFunctionPtrArrayNew[ASM_TYPE_TOTAL][16
     },
 };
 
-const InterpolationFilterOutRaw biPredLumaIFFunctionPtrArrayNew[ASM_TYPE_TOTAL][16] = {     //[ASM type][Interpolation position]
+const InterpolationFilterOutRaw bi_pred_luma_if_function_ptr_array_new[ASM_TYPE_TOTAL][16] = {     //[ASM type][Interpolation position]
         // NON_AVX2
         {
             luma_interpolation_copy_out_raw_ssse3,                   //A
@@ -93,7 +93,7 @@ const InterpolationFilterOutRaw biPredLumaIFFunctionPtrArrayNew[ASM_TYPE_TOTAL][
 };
 
 // Chroma
-const ChromaFilterNew uniPredChromaIFFunctionPtrArrayNew[ASM_TYPE_TOTAL][64] = {
+const ChromaFilterNew uni_pred_chroma_if_function_ptr_array_new[ASM_TYPE_TOTAL][64] = {
     // NON_AVX2
     {
         chroma_interpolation_copy_ssse3,                       //B
@@ -231,7 +231,7 @@ const ChromaFilterNew uniPredChromaIFFunctionPtrArrayNew[ASM_TYPE_TOTAL][64] = {
     },
 };
 
-const ChromaFilterOutRaw biPredChromaIFFunctionPtrArrayNew[ASM_TYPE_TOTAL][64] = {
+const ChromaFilterOutRaw bi_pred_chroma_if_function_ptr_array_new[ASM_TYPE_TOTAL][64] = {
     // NON_AVX2
     {
         chroma_interpolation_copy_out_raw_ssse3,                 //B

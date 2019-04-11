@@ -187,7 +187,7 @@ int32_t av1_has_exact_match(hash_table *p_hash_table, uint32_t hash_value1,
 void av1_generate_block_2x2_hash_value(const Yv12BufferConfig *picture,
                                        uint32_t *pic_block_hash[2],
                                        int8_t *pic_block_same_info[3],
-                                       PictureControlSet_t * pcs) {
+                                       PictureControlSet * pcs) {
   const int width = 2;
   const int height = 2;
   const int x_end = picture->y_crop_width - width + 1;
@@ -242,7 +242,7 @@ void av1_generate_block_hash_value(const Yv12BufferConfig *picture,
                                    uint32_t *dst_pic_block_hash[2],
                                    int8_t *src_pic_block_same_info[3],
                                    int8_t *dst_pic_block_same_info[3],
-                                   PictureControlSet_t * pcs  ) {
+                                   PictureControlSet * pcs  ) {
   const int pic_width = picture->y_crop_width;
   const int x_end = picture->y_crop_width - block_size + 1;
   const int y_end = picture->y_crop_height - block_size + 1;
@@ -397,7 +397,7 @@ int av1_hash_is_vertical_perfect(const Yv12BufferConfig *picture,
 
 void av1_get_block_hash_value(uint8_t *y_src, int stride, int block_size,
                               uint32_t *hash_value1, uint32_t *hash_value2,
-                              int use_highbitdepth, struct PictureControlSet_s * pcs, IntraBcContext  *x) {
+                              int use_highbitdepth, struct PictureControlSet * pcs, IntraBcContext  *x) {
   UNUSED (pcs);
   uint32_t to_hash[4];
   const int add_value = hash_block_size_to_index(block_size) << crc_bits;
