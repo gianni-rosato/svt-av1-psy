@@ -21,6 +21,4 @@ file(GLOB all_files
     "*.h"
     "*.c")
 
-add_library(COMMON_CODEC
-    ${all_files}
-)
+add_library(COMMON_CODEC OBJECT ${all_files})
