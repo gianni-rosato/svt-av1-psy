@@ -11,6 +11,7 @@
 //#if  (WIN_ENCODER_TIMING || WIN_DECODER_TIMING)
 #include <time.h>
 #include <stdio.h>
+#include <windows.h>
 //#endif
 
 #elif defined(__linux__) || defined(__APPLE__)

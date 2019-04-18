@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "EbString.h"
 #include "EbAppConfig.h"
 #include "EbAppInputy4m.h"
 
