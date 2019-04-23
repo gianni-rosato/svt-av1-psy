@@ -32,15 +32,15 @@ env:
 stages:
   - name: test
   - name: coveralls
-    if: branch = master
+    if: type != pull_request
   - name: valgrind
-    if: branch = master
+    if: type != pull_request
 before_install:
-  - "sudo chown -R travis: $HOME"
+  - "sudo chown -R travis: $HOME/.ccache"
   - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig PATH="/usr/local/opt/ccache/libexec:$PATH"
   - cd $TRAVIS_BUILD_DIR
-  - wget -nc --no-check-certificate https://media.xiph.org/video/derf/y4m/akiyo_cif.y4m
-  - wget -nc --no-check-certificate https://media.xiph.org/video/derf/y4m/bus_cif.y4m
+  - wget -nc --no-check-certificate https://github.com/OpenVisualCloud/SVT-AV1-Resources/raw/master/video.tar.gz
+  - tar xf video.tar.gz
   - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/$build_type
 install:
   - pip install --user cpp-coveralls
@@ -72,7 +72,7 @@ script:
   - *base_script
   - SvtAv1EncApp -enc-mode 8 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 150 -b test1.ivf
 before_cache:
-  - "sudo chown -R travis: $HOME"
+  - "sudo chown -R travis: $HOME/.ccache"
 matrix:
   fast_finish: true
   allow_failures:
@@ -84,7 +84,6 @@ matrix:
       compiler: gcc # gcc = clang in macOS, unecessary duplicate
   include:
     # FFmpeg interation build
-    # Might be unnecessary since it will be covered in debug builds. I'll leave it for reference.
     - name: FFmpeg patch
       stage: test
       compiler: gcc
