@@ -9,7 +9,6 @@
 #include "EbDefinitions.h"
 #include "smmintrin.h"
 
-
 #define UPDATE_BEST(s, k, offset) \
   temSum = _mm_extract_epi32(s, k); \
   if (temSum < lowSum) { \
@@ -4331,9 +4330,36 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
     *y_search_center = yBest;
 }
 
-/*******************************************
- * GetEightHorizontalSearchPointResults_8x8_16x16_PU
- *******************************************/
+static INLINE void sad_eight_8x4_sse41_intrin(const uint8_t *src,
+    const uint32_t src_stride, const uint8_t *ref, const uint32_t ref_stride,
+    __m128i *sad)
+{
+    const uint8_t *pSrc = src;
+    const uint8_t *pRef = ref;
+    __m128i s0, s1, s2, s3;
+
+    s0 = _mm_loadu_si128((__m128i*)pRef);
+    s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride * 2));
+    s2 = _mm_loadl_epi64((__m128i*)pSrc);
+    s3 = _mm_loadl_epi64((__m128i*)(pSrc + src_stride * 2));
+    *sad = _mm_adds_epu16(*sad, _mm_mpsadbw_epu8(s0, s2, 0));
+    *sad = _mm_adds_epu16(*sad, _mm_mpsadbw_epu8(s0, s2, 5));
+    *sad = _mm_adds_epu16(*sad, _mm_mpsadbw_epu8(s1, s3, 0));
+    *sad = _mm_adds_epu16(*sad, _mm_mpsadbw_epu8(s1, s3, 5));
+
+    pSrc += src_stride * 4;
+    pRef += ref_stride * 4;
+
+    s0 = _mm_loadu_si128((__m128i*)pRef);
+    s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride * 2));
+    s2 = _mm_loadl_epi64((__m128i*)pSrc);
+    s3 = _mm_loadl_epi64((__m128i*)(pSrc + src_stride * 2));
+    *sad = _mm_adds_epu16(*sad, _mm_mpsadbw_epu8(s0, s2, 0));
+    *sad = _mm_adds_epu16(*sad, _mm_mpsadbw_epu8(s0, s2, 5));
+    *sad = _mm_adds_epu16(*sad, _mm_mpsadbw_epu8(s1, s3, 0));
+    *sad = _mm_adds_epu16(*sad, _mm_mpsadbw_epu8(s1, s3, 5));
+}
+
 void get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin(
     uint8_t   *src,
     uint32_t   src_stride,
@@ -4344,15 +4370,16 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin(
     uint32_t  *p_best_sad16x16,
     uint32_t  *p_best_mv16x16,
     uint32_t   mv,
-    uint16_t  *p_sad16x16)
+    uint16_t  *p_sad16x16,
+    EbBool     sub_sad)
 {
 
     int16_t x_mv, y_mv;
-    const uint8_t *pRef, *pSrc;
-    __m128i s0, s1, s2, s3, s4, s5;
-    __m128i sad_0, sad_1, sad_2, sad_3;
+    __m128i s0, s1, s3;
+    __m128i sad[4];
     uint32_t temSum;
 
+    sad[0] = sad[1] = sad[2] = sad[3] = _mm_setzero_si128();
 
     /*
    -------------------------------------   -----------------------------------
@@ -4390,181 +4417,76 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin(
 
 
    //8x8_0
-    {
-        pSrc = src;
-        pRef = ref;
-        s3 = s4 = _mm_setzero_si128();
+    sad_eight_8x4_sse41_intrin(src + 0 * src_stride + 0, src_stride, ref + 0 * ref_stride + 0, ref_stride, &sad[0]);
+    sad_eight_8x4_sse41_intrin(src + 0 * src_stride + 8, src_stride, ref + 0 * ref_stride + 8, ref_stride, &sad[1]);
+    sad_eight_8x4_sse41_intrin(src + 8 * src_stride + 0, src_stride, ref + 8 * ref_stride + 0, ref_stride, &sad[2]);
+    sad_eight_8x4_sse41_intrin(src + 8 * src_stride + 8, src_stride, ref + 8 * ref_stride + 8, ref_stride, &sad[3]);
 
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride * 2));
-        s2 = _mm_loadl_epi64((__m128i*)pSrc);
-        s5 = _mm_loadl_epi64((__m128i*)(pSrc + src_stride * 2));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s2, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s0, s2, 5));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s1, s5, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s1, s5, 5));
-
-        pSrc += src_stride * 4;
-        pRef += ref_stride * 4;
-
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride * 2));
-        s2 = _mm_loadl_epi64((__m128i*)pSrc);
-        s5 = _mm_loadl_epi64((__m128i*)(pSrc + src_stride * 2));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s2, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s0, s2, 5));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s1, s5, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s1, s5, 5));
-
-        //final 8x4 SAD
-        sad_0 = _mm_adds_epu16(s3, s4);
-
-        //find the best for 8x8_0
-        s3 = _mm_minpos_epu16(sad_0);
-        temSum = _mm_extract_epi16(s3, 0);
-        if (2 * temSum < p_best_sad8x8[0]) {
-            p_best_sad8x8[0] = 2 * temSum;
-            x_mv = _MVXT(mv) + (int16_t)(_mm_extract_epi16(s3, 1) * 4);
-            y_mv = _MVYT(mv);
-            p_best_mv8x8[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-        }
+    if (sub_sad) {
+        sad[0] = _mm_slli_epi16(sad[0], 1);
+        sad[1] = _mm_slli_epi16(sad[1], 1);
+        sad[2] = _mm_slli_epi16(sad[2], 1);
+        sad[3] = _mm_slli_epi16(sad[3], 1);
+    }
+    else {
+        sad_eight_8x4_sse41_intrin(src + 1 * src_stride + 0, src_stride, ref + 1 * ref_stride + 0, ref_stride, &sad[0]);
+        sad_eight_8x4_sse41_intrin(src + 1 * src_stride + 8, src_stride, ref + 1 * ref_stride + 8, ref_stride, &sad[1]);
+        sad_eight_8x4_sse41_intrin(src + 9 * src_stride + 0, src_stride, ref + 9 * ref_stride + 0, ref_stride, &sad[2]);
+        sad_eight_8x4_sse41_intrin(src + 9 * src_stride + 8, src_stride, ref + 9 * ref_stride + 8, ref_stride, &sad[3]);
     }
 
-    //8x8_1
-    {
-        pSrc = src + 8;
-        pRef = ref + 8;
-        s3 = s4 = _mm_setzero_si128();
-
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride * 2));
-        s2 = _mm_loadl_epi64((__m128i*)pSrc);
-        s5 = _mm_loadl_epi64((__m128i*)(pSrc + src_stride * 2));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s2, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s0, s2, 5));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s1, s5, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s1, s5, 5));
-
-        pSrc += src_stride * 4;
-        pRef += ref_stride * 4;
-
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride * 2));
-        s2 = _mm_loadl_epi64((__m128i*)pSrc);
-        s5 = _mm_loadl_epi64((__m128i*)(pSrc + src_stride * 2));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s2, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s0, s2, 5));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s1, s5, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s1, s5, 5));
-
-        //final 8x4 SAD
-        sad_1 = _mm_adds_epu16(s3, s4);
-
-        //find the best for 8x8_1
-        s3 = _mm_minpos_epu16(sad_1);
-        temSum = _mm_extract_epi16(s3, 0);
-        if (2 * temSum < p_best_sad8x8[1]) {
-            p_best_sad8x8[1] = 2 * temSum;
-            x_mv = _MVXT(mv) + (int16_t)(_mm_extract_epi16(s3, 1) * 4);
-            y_mv = _MVYT(mv);
-            p_best_mv8x8[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-        }
+    //find the best for 8x8_0
+    s3 = _mm_minpos_epu16(sad[0]);
+    temSum = _mm_extract_epi16(s3, 0);
+    if (temSum < p_best_sad8x8[0]) {
+        p_best_sad8x8[0] = temSum;
+        x_mv = _MVXT(mv) + (int16_t)(_mm_extract_epi16(s3, 1) * 4);
+        y_mv = _MVYT(mv);
+        p_best_mv8x8[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
 
-    //8x8_2
-    {
-        pSrc = src + 8 * src_stride;
-        pRef = ref + 8 * ref_stride;
-        s3 = s4 = _mm_setzero_si128();
-
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride * 2));
-        s2 = _mm_loadl_epi64((__m128i*)pSrc);
-        s5 = _mm_loadl_epi64((__m128i*)(pSrc + src_stride * 2));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s2, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s0, s2, 5));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s1, s5, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s1, s5, 5));
-
-        pSrc += src_stride * 4;
-        pRef += ref_stride * 4;
-
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride * 2));
-        s2 = _mm_loadl_epi64((__m128i*)pSrc);
-        s5 = _mm_loadl_epi64((__m128i*)(pSrc + src_stride * 2));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s2, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s0, s2, 5));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s1, s5, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s1, s5, 5));
-
-        //final 8x4 SAD
-        sad_2 = _mm_adds_epu16(s3, s4);
-
-        //find the best for 8x8_2
-        s3 = _mm_minpos_epu16(sad_2);
-        temSum = _mm_extract_epi16(s3, 0);
-        if (2 * temSum < p_best_sad8x8[2]) {
-            p_best_sad8x8[2] = 2 * temSum;
-            x_mv = _MVXT(mv) + (int16_t)(_mm_extract_epi16(s3, 1) * 4);
-            y_mv = _MVYT(mv);
-            p_best_mv8x8[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-        }
+    //find the best for 8x8_1
+    s3 = _mm_minpos_epu16(sad[1]);
+    temSum = _mm_extract_epi16(s3, 0);
+    if (temSum < p_best_sad8x8[1]) {
+        p_best_sad8x8[1] = temSum;
+        x_mv = _MVXT(mv) + (int16_t)(_mm_extract_epi16(s3, 1) * 4);
+        y_mv = _MVYT(mv);
+        p_best_mv8x8[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
 
-    //8x8_3
-    {
-        pSrc = src + 8 + 8 * src_stride;
-        pRef = ref + 8 + 8 * ref_stride;
-        s3 = s4 = _mm_setzero_si128();
+    //find the best for 8x8_2
+    s3 = _mm_minpos_epu16(sad[2]);
+    temSum = _mm_extract_epi16(s3, 0);
+    if (temSum < p_best_sad8x8[2]) {
+        p_best_sad8x8[2] = temSum;
+        x_mv = _MVXT(mv) + (int16_t)(_mm_extract_epi16(s3, 1) * 4);
+        y_mv = _MVYT(mv);
+        p_best_mv8x8[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+    }
 
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride * 2));
-        s2 = _mm_loadl_epi64((__m128i*)pSrc);
-        s5 = _mm_loadl_epi64((__m128i*)(pSrc + src_stride * 2));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s2, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s0, s2, 5));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s1, s5, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s1, s5, 5));
-
-        pSrc += src_stride * 4;
-        pRef += ref_stride * 4;
-
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride * 2));
-        s2 = _mm_loadl_epi64((__m128i*)pSrc);
-        s5 = _mm_loadl_epi64((__m128i*)(pSrc + src_stride * 2));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s2, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s0, s2, 5));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s1, s5, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s1, s5, 5));
-
-        //final 8x4 SAD
-        sad_3 = _mm_adds_epu16(s3, s4);
-
-        //find the best for 8x8_3
-        s3 = _mm_minpos_epu16(sad_3);
-        temSum = _mm_extract_epi16(s3, 0);
-        if (2 * temSum < p_best_sad8x8[3]) {
-            p_best_sad8x8[3] = 2 * temSum;
-            x_mv = _MVXT(mv) + (int16_t)(_mm_extract_epi16(s3, 1) * 4);
-            y_mv = _MVYT(mv);
-            p_best_mv8x8[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-        }
+    //find the best for 8x8_3
+    s3 = _mm_minpos_epu16(sad[3]);
+    temSum = _mm_extract_epi16(s3, 0);
+    if (temSum < p_best_sad8x8[3]) {
+        p_best_sad8x8[3] = temSum;
+        x_mv = _MVXT(mv) + (int16_t)(_mm_extract_epi16(s3, 1) * 4);
+        y_mv = _MVYT(mv);
+        p_best_mv8x8[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
 
     //16x16
     {
-        s0 = _mm_adds_epu16(sad_0, sad_1);
-        s1 = _mm_adds_epu16(sad_2, sad_3);
+        s0 = _mm_adds_epu16(sad[0], sad[1]);
+        s1 = _mm_adds_epu16(sad[2], sad[3]);
         s3 = _mm_adds_epu16(s0, s1);
-        //sotore the 8 SADs(16x8 SADs)
+        //sotore the 8 SADs(16x16 SADs)
         _mm_store_si128((__m128i*)p_sad16x16, s3);
         //find the best for 16x16
         s3 = _mm_minpos_epu16(s3);
         temSum = _mm_extract_epi16(s3, 0);
-        if (2 * temSum < p_best_sad16x16[0]) {
-            p_best_sad16x16[0] = 2 * temSum;
+        if (temSum < p_best_sad16x16[0]) {
+            p_best_sad16x16[0] = temSum;
             x_mv = _MVXT(mv) + (int16_t)(_mm_extract_epi16(s3, 1) * 4);
             y_mv = _MVYT(mv);
             p_best_mv16x16[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
@@ -4643,52 +4565,52 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin(
 
     //sad_00
     temSum = _mm_extract_epi32(sad_00, 0);
-    if (2 * temSum < p_best_sad32x32[0]) {
-        p_best_sad32x32[0] = 2 * temSum;
+    if (temSum < p_best_sad32x32[0]) {
+        p_best_sad32x32[0] = temSum;
         x_mv = _MVXT(mv) + (0 + 0) * 4;   y_mv = _MVYT(mv);
         p_best_mv32x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_00, 1);
-    if (2 * temSum < p_best_sad32x32[0]) {
-        p_best_sad32x32[0] = 2 * temSum;
+    if (temSum < p_best_sad32x32[0]) {
+        p_best_sad32x32[0] = temSum;
         x_mv = _MVXT(mv) + (0 + 1) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_00, 2);
-    if (2 * temSum < p_best_sad32x32[0]) {
-        p_best_sad32x32[0] = 2 * temSum;
+    if (temSum < p_best_sad32x32[0]) {
+        p_best_sad32x32[0] = temSum;
         x_mv = _MVXT(mv) + (0 + 2) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_00, 3);
-    if (2 * temSum < p_best_sad32x32[0]) {
-        p_best_sad32x32[0] = 2 * temSum;
+    if (temSum < p_best_sad32x32[0]) {
+        p_best_sad32x32[0] = temSum;
         x_mv = _MVXT(mv) + (0 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
 
     //sad_01
     temSum = _mm_extract_epi32(sad_01, 0);
-    if (2 * temSum < p_best_sad32x32[0]) {
-        p_best_sad32x32[0] = 2 * temSum;
+    if (temSum < p_best_sad32x32[0]) {
+        p_best_sad32x32[0] = temSum;
         x_mv = _MVXT(mv) + (4 + 0) * 4;   y_mv = _MVYT(mv);
         p_best_mv32x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_01, 1);
-    if (2 * temSum < p_best_sad32x32[0]) {
-        p_best_sad32x32[0] = 2 * temSum;
+    if (temSum < p_best_sad32x32[0]) {
+        p_best_sad32x32[0] = temSum;
         x_mv = _MVXT(mv) + (4 + 1) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_01, 2);
-    if (2 * temSum < p_best_sad32x32[0]) {
-        p_best_sad32x32[0] = 2 * temSum;
+    if (temSum < p_best_sad32x32[0]) {
+        p_best_sad32x32[0] = temSum;
         x_mv = _MVXT(mv) + (4 + 2) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_01, 3);
-    if (2 * temSum < p_best_sad32x32[0]) {
-        p_best_sad32x32[0] = 2 * temSum;
+    if (temSum < p_best_sad32x32[0]) {
+        p_best_sad32x32[0] = temSum;
         x_mv = _MVXT(mv) + (4 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
@@ -4718,52 +4640,52 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin(
 
     //sad_10
     temSum = _mm_extract_epi32(sad_10, 0);
-    if (2 * temSum < p_best_sad32x32[1]) {
-        p_best_sad32x32[1] = 2 * temSum;
+    if (temSum < p_best_sad32x32[1]) {
+        p_best_sad32x32[1] = temSum;
         x_mv = _MVXT(mv) + (0 + 0) * 4;   y_mv = _MVYT(mv);
         p_best_mv32x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_10, 1);
-    if (2 * temSum < p_best_sad32x32[1]) {
-        p_best_sad32x32[1] = 2 * temSum;
+    if (temSum < p_best_sad32x32[1]) {
+        p_best_sad32x32[1] = temSum;
         x_mv = _MVXT(mv) + (0 + 1) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_10, 2);
-    if (2 * temSum < p_best_sad32x32[1]) {
-        p_best_sad32x32[1] = 2 * temSum;
+    if (temSum < p_best_sad32x32[1]) {
+        p_best_sad32x32[1] = temSum;
         x_mv = _MVXT(mv) + (0 + 2) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_10, 3);
-    if (2 * temSum < p_best_sad32x32[1]) {
-        p_best_sad32x32[1] = 2 * temSum;
+    if (temSum < p_best_sad32x32[1]) {
+        p_best_sad32x32[1] = temSum;
         x_mv = _MVXT(mv) + (0 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
 
     //sad_11
     temSum = _mm_extract_epi32(sad_11, 0);
-    if (2 * temSum < p_best_sad32x32[1]) {
-        p_best_sad32x32[1] = 2 * temSum;
+    if (temSum < p_best_sad32x32[1]) {
+        p_best_sad32x32[1] = temSum;
         x_mv = _MVXT(mv) + (4 + 0) * 4;   y_mv = _MVYT(mv);
         p_best_mv32x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_11, 1);
-    if (2 * temSum < p_best_sad32x32[1]) {
-        p_best_sad32x32[1] = 2 * temSum;
+    if (temSum < p_best_sad32x32[1]) {
+        p_best_sad32x32[1] = temSum;
         x_mv = _MVXT(mv) + (4 + 1) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_11, 2);
-    if (2 * temSum < p_best_sad32x32[1]) {
-        p_best_sad32x32[1] = 2 * temSum;
+    if (temSum < p_best_sad32x32[1]) {
+        p_best_sad32x32[1] = temSum;
         x_mv = _MVXT(mv) + (4 + 2) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_11, 3);
-    if (2 * temSum < p_best_sad32x32[1]) {
-        p_best_sad32x32[1] = 2 * temSum;
+    if (temSum < p_best_sad32x32[1]) {
+        p_best_sad32x32[1] = temSum;
         x_mv = _MVXT(mv) + (4 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
@@ -4795,52 +4717,52 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin(
 
     //sad_20
     temSum = _mm_extract_epi32(sad_20, 0);
-    if (2 * temSum < p_best_sad32x32[2]) {
-        p_best_sad32x32[2] = 2 * temSum;
+    if (temSum < p_best_sad32x32[2]) {
+        p_best_sad32x32[2] = temSum;
         x_mv = _MVXT(mv) + (0 + 0) * 4;   y_mv = _MVYT(mv);
         p_best_mv32x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_20, 1);
-    if (2 * temSum < p_best_sad32x32[2]) {
-        p_best_sad32x32[2] = 2 * temSum;
+    if (temSum < p_best_sad32x32[2]) {
+        p_best_sad32x32[2] = temSum;
         x_mv = _MVXT(mv) + (0 + 1) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_20, 2);
-    if (2 * temSum < p_best_sad32x32[2]) {
-        p_best_sad32x32[2] = 2 * temSum;
+    if (temSum < p_best_sad32x32[2]) {
+        p_best_sad32x32[2] = temSum;
         x_mv = _MVXT(mv) + (0 + 2) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_20, 3);
-    if (2 * temSum < p_best_sad32x32[2]) {
-        p_best_sad32x32[2] = 2 * temSum;
+    if (temSum < p_best_sad32x32[2]) {
+        p_best_sad32x32[2] = temSum;
         x_mv = _MVXT(mv) + (0 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
 
     //sad_21
     temSum = _mm_extract_epi32(sad_21, 0);
-    if (2 * temSum < p_best_sad32x32[2]) {
-        p_best_sad32x32[2] = 2 * temSum;
+    if (temSum < p_best_sad32x32[2]) {
+        p_best_sad32x32[2] = temSum;
         x_mv = _MVXT(mv) + (4 + 0) * 4;   y_mv = _MVYT(mv);
         p_best_mv32x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_21, 1);
-    if (2 * temSum < p_best_sad32x32[2]) {
-        p_best_sad32x32[2] = 2 * temSum;
+    if (temSum < p_best_sad32x32[2]) {
+        p_best_sad32x32[2] = temSum;
         x_mv = _MVXT(mv) + (4 + 1) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_21, 2);
-    if (2 * temSum < p_best_sad32x32[2]) {
-        p_best_sad32x32[2] = 2 * temSum;
+    if (temSum < p_best_sad32x32[2]) {
+        p_best_sad32x32[2] = temSum;
         x_mv = _MVXT(mv) + (4 + 2) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_21, 3);
-    if (2 * temSum < p_best_sad32x32[2]) {
-        p_best_sad32x32[2] = 2 * temSum;
+    if (temSum < p_best_sad32x32[2]) {
+        p_best_sad32x32[2] = temSum;
         x_mv = _MVXT(mv) + (4 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
@@ -4872,52 +4794,52 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin(
 
     //sad_30
     temSum = _mm_extract_epi32(sad_30, 0);
-    if (2 * temSum < p_best_sad32x32[3]) {
-        p_best_sad32x32[3] = 2 * temSum;
+    if (temSum < p_best_sad32x32[3]) {
+        p_best_sad32x32[3] = temSum;
         x_mv = _MVXT(mv) + (0 + 0) * 4;   y_mv = _MVYT(mv);
         p_best_mv32x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_30, 1);
-    if (2 * temSum < p_best_sad32x32[3]) {
-        p_best_sad32x32[3] = 2 * temSum;
+    if (temSum < p_best_sad32x32[3]) {
+        p_best_sad32x32[3] = temSum;
         x_mv = _MVXT(mv) + (0 + 1) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_30, 2);
-    if (2 * temSum < p_best_sad32x32[3]) {
-        p_best_sad32x32[3] = 2 * temSum;
+    if (temSum < p_best_sad32x32[3]) {
+        p_best_sad32x32[3] = temSum;
         x_mv = _MVXT(mv) + (0 + 2) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_30, 3);
-    if (2 * temSum < p_best_sad32x32[3]) {
-        p_best_sad32x32[3] = 2 * temSum;
+    if (temSum < p_best_sad32x32[3]) {
+        p_best_sad32x32[3] = temSum;
         x_mv = _MVXT(mv) + (0 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
 
     //sad_31
     temSum = _mm_extract_epi32(sad_31, 0);
-    if (2 * temSum < p_best_sad32x32[3]) {
-        p_best_sad32x32[3] = 2 * temSum;
+    if (temSum < p_best_sad32x32[3]) {
+        p_best_sad32x32[3] = temSum;
         x_mv = _MVXT(mv) + (4 + 0) * 4;   y_mv = _MVYT(mv);
         p_best_mv32x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_31, 1);
-    if (2 * temSum < p_best_sad32x32[3]) {
-        p_best_sad32x32[3] = 2 * temSum;
+    if (temSum < p_best_sad32x32[3]) {
+        p_best_sad32x32[3] = temSum;
         x_mv = _MVXT(mv) + (4 + 1) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_31, 2);
-    if (2 * temSum < p_best_sad32x32[3]) {
-        p_best_sad32x32[3] = 2 * temSum;
+    if (temSum < p_best_sad32x32[3]) {
+        p_best_sad32x32[3] = temSum;
         x_mv = _MVXT(mv) + (4 + 2) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_31, 3);
-    if (2 * temSum < p_best_sad32x32[3]) {
-        p_best_sad32x32[3] = 2 * temSum;
+    if (temSum < p_best_sad32x32[3]) {
+        p_best_sad32x32[3] = temSum;
         x_mv = _MVXT(mv) + (4 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
@@ -4928,52 +4850,52 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin(
 
     //sad_0
     temSum = _mm_extract_epi32(sad_0, 0);
-    if (2 * temSum < p_best_sad64x64[0]) {
-        p_best_sad64x64[0] = 2 * temSum;
+    if (temSum < p_best_sad64x64[0]) {
+        p_best_sad64x64[0] = temSum;
         x_mv = _MVXT(mv) + (0 + 0) * 4;   y_mv = _MVYT(mv);
         p_best_mv64x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_0, 1);
-    if (2 * temSum < p_best_sad64x64[0]) {
-        p_best_sad64x64[0] = 2 * temSum;
+    if (temSum < p_best_sad64x64[0]) {
+        p_best_sad64x64[0] = temSum;
         x_mv = _MVXT(mv) + (0 + 1) * 4;  y_mv = _MVYT(mv);
         p_best_mv64x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_0, 2);
-    if (2 * temSum < p_best_sad64x64[0]) {
-        p_best_sad64x64[0] = 2 * temSum;
+    if (temSum < p_best_sad64x64[0]) {
+        p_best_sad64x64[0] = temSum;
         x_mv = _MVXT(mv) + (0 + 2) * 4;  y_mv = _MVYT(mv);
         p_best_mv64x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_0, 3);
-    if (2 * temSum < p_best_sad64x64[0]) {
-        p_best_sad64x64[0] = 2 * temSum;
+    if (temSum < p_best_sad64x64[0]) {
+        p_best_sad64x64[0] = temSum;
         x_mv = _MVXT(mv) + (0 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv64x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
 
     //sad_1
     temSum = _mm_extract_epi32(sad_1, 0);
-    if (2 * temSum < p_best_sad64x64[0]) {
-        p_best_sad64x64[0] = 2 * temSum;
+    if (temSum < p_best_sad64x64[0]) {
+        p_best_sad64x64[0] = temSum;
         x_mv = _MVXT(mv) + (4 + 0) * 4;   y_mv = _MVYT(mv);
         p_best_mv64x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_1, 1);
-    if (2 * temSum < p_best_sad64x64[0]) {
-        p_best_sad64x64[0] = 2 * temSum;
+    if (temSum < p_best_sad64x64[0]) {
+        p_best_sad64x64[0] = temSum;
         x_mv = _MVXT(mv) + (4 + 1) * 4;  y_mv = _MVYT(mv);
         p_best_mv64x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_1, 2);
-    if (2 * temSum < p_best_sad64x64[0]) {
-        p_best_sad64x64[0] = 2 * temSum;
+    if (temSum < p_best_sad64x64[0]) {
+        p_best_sad64x64[0] = temSum;
         x_mv = _MVXT(mv) + (4 + 2) * 4;  y_mv = _MVYT(mv);
         p_best_mv64x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
     temSum = _mm_extract_epi32(sad_1, 3);
-    if (2 * temSum < p_best_sad64x64[0]) {
-        p_best_sad64x64[0] = 2 * temSum;
+    if (temSum < p_best_sad64x64[0]) {
+        p_best_sad64x64[0] = temSum;
         x_mv = _MVXT(mv) + (4 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv64x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }

@@ -19,9 +19,7 @@
 #include "EbDefinitions.h"
 #include "EbUtility.h"
 #include "EbAdaptiveMotionVectorPrediction.h"
-#include "EbSequenceControlSet.h"
-#include "EbReferenceObject.h"
-#include "EbSvtAv1ErrorCodes.h"
+#include "EbSvtAv1.h"
 #include "EbModeDecisionProcess.h"
 
 #define UNUSED_FUNC
@@ -439,7 +437,7 @@ static void scan_row_mbmi(const Av1Common *cm, const MacroBlockD *xd,
         const ModeInfo *const candidate_mi = candidate_mi0[col_offset + i];
         const MbModeInfo *const candidate = &candidate_mi->mbmi;
         const int32_t candidate_bsize = candidate->sb_type;
-        ASSERT(candidate_bsize < BlockSizeS_ALL);
+        assert(candidate_bsize < BlockSizeS_ALL);
         const int32_t n8_w = mi_size_wide[candidate_bsize];
         int32_t len = AOMMIN(xd->n8_w, n8_w);
         if (use_step_16)
@@ -498,7 +496,7 @@ static void scan_col_mbmi(const Av1Common *cm, const MacroBlockD *xd,
             xd->mi[(row_offset + i) * xd->mi_stride + col_offset];
         const MbModeInfo *const candidate = &candidate_mi->mbmi;
         const int32_t candidate_bsize = candidate->sb_type;
-        ASSERT(candidate_bsize < BlockSizeS_ALL);
+        assert(candidate_bsize < BlockSizeS_ALL);
         const int32_t n8_h = mi_size_high[candidate_bsize];
         int32_t len = AOMMIN(xd->n8_h, n8_h);
         if (use_step_16)
@@ -1272,7 +1270,7 @@ void get_av1_mv_pred_drl(
         nearmv[1]    = context_ptr->md_local_cu_unit[cu_ptr->mds_idx].ed_ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
     }
     else if (drl_index > 0 && mode == NEARMV) {
-        ASSERT((1 + drl_index) < MAX_REF_MV_STACK_SIZE);
+        assert((1 + drl_index) < MAX_REF_MV_STACK_SIZE);
         IntMv cur_mv = context_ptr->md_local_cu_unit[cu_ptr->mds_idx].ed_ref_mv_stack[ref_frame][1 + drl_index].this_mv;
         nearmv[0] = cur_mv;
     }
@@ -1371,7 +1369,9 @@ void update_av1_mi_map(
             //these needed for mvPred
             {
                 miPtr[miX + miY * mi_stride].mbmi.mode = cu_ptr->pred_mode;
-
+#if FIX_INTRA_UV
+                miPtr[miX + miY * mi_stride].mbmi.uv_mode = cu_ptr->prediction_unit_array->intra_chroma_mode;
+#endif 
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4) {
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = 0;
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = BLOCK_4X4;
@@ -1443,7 +1443,9 @@ void update_mi_map(
             //these needed for mvPred
             {
                 miPtr[miX + miY * mi_stride].mbmi.mode = cu_ptr->pred_mode;
-
+#if FIX_INTRA_UV
+                miPtr[miX + miY * mi_stride].mbmi.uv_mode = cu_ptr->prediction_unit_array->intra_chroma_mode;
+#endif 
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4) {
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = 0;
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = BLOCK_4X4;
@@ -1477,7 +1479,7 @@ void update_mi_map(
 
                 miPtr[miX + miY * mi_stride].mbmi.partition = from_shape_to_part[blk_geom->shape];// cu_ptr->part;
             }
-            if (blk_geom->has_uv && context_ptr->chroma_level == CHROMA_MODE_0)
+            if (blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1)
                 miPtr[miX + miY * mi_stride].mbmi.skip = (cu_ptr->transform_unit_array[0].y_has_coeff == 0 && cu_ptr->transform_unit_array[0].v_has_coeff == 0 && cu_ptr->transform_unit_array[0].u_has_coeff == 0) ? EB_TRUE : EB_FALSE;
             else
                 miPtr[miX + miY * mi_stride].mbmi.skip = (cu_ptr->transform_unit_array[0].y_has_coeff == 0) ? EB_TRUE : EB_FALSE;
@@ -1541,10 +1543,16 @@ int select_samples(
     i = 0;
     j = l - 1;
     for (k = 0; k < l - ret; k++) {
-        while (pts_mvd[i] != -1)
+        while (pts_mvd[i] != -1) {
             i++;
-        while (pts_mvd[j] == -1)
+        }
+        if (j < 0)
+            break;
+        while (pts_mvd[j] == -1) {
             j--;
+            if (j < 0)
+                break;
+        }
         if (i > j)
             break;
 
@@ -2021,13 +2029,13 @@ void av1_count_overlappable_neighbors(
 {
     Av1Common  *cm  = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *xd = cu_ptr->av1xd;
-
+#if ! FIX_WARP_TILE
     xd->mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 / 4);
     const int32_t offset = mi_row * xd->mi_stride + mi_col;
     xd->mi = picture_control_set_ptr->mi_grid_base + offset;
     xd->up_available = (mi_row > 0);
     xd->left_available = (mi_col > 0);
-
+#endif
     cu_ptr->prediction_unit_array[0].overlappable_neighbors[0] = 0;
     cu_ptr->prediction_unit_array[0].overlappable_neighbors[1] = 0;
 

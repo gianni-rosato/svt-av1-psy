@@ -99,9 +99,21 @@ EbErrorType signal_derivation_pre_analysis_oq(
         uint8_t  hme_me_level = picture_control_set_ptr->enc_mode;
 
         picture_control_set_ptr->enable_hme_flag = EB_TRUE;
+#if NEW_PRESETS
+#if SCREEN_CONTENT_SETTINGS
+        picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[0][input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[0][input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[0][input_resolution][hme_me_level];
+#else
         picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[input_resolution][hme_me_level];
         picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[input_resolution][hme_me_level];
         picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[input_resolution][hme_me_level];
+#endif
+#else
+        picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[input_resolution][hme_me_level];
+#endif
     }
     else {
         picture_control_set_ptr->enable_hme_flag = sequence_control_set_ptr->static_config.enable_hme_flag;
@@ -109,8 +121,13 @@ EbErrorType signal_derivation_pre_analysis_oq(
         picture_control_set_ptr->enable_hme_level1_flag = sequence_control_set_ptr->static_config.enable_hme_level1_flag;
         picture_control_set_ptr->enable_hme_level2_flag = sequence_control_set_ptr->static_config.enable_hme_level2_flag;
     }
+#if NEW_PRESETS
+    if (picture_control_set_ptr->enc_mode >= ENC_M8)
+        sequence_control_set_ptr->enable_restoration = 0;
+#else
     if (picture_control_set_ptr->enc_mode >= ENC_M7)
         sequence_control_set_ptr->enable_restoration = 0;
+#endif
 
     return return_error;
 }
@@ -529,7 +546,7 @@ void* resource_coordination_kernel(void *input_ptr)
             sequence_control_set_ptr->max_frame_window_to_ref_islice = (sequence_control_set_ptr->static_config.intra_period_length == -1) ? MAX_FRAMES_TO_REF_I : MIN(MAX_FRAMES_TO_REF_I, sequence_control_set_ptr->static_config.intra_period_length);
             sequence_control_set_ptr->extra_frames_to_ref_islice = MAX(sequence_control_set_ptr->max_frame_window_to_ref_islice / (1 << sequence_control_set_ptr->static_config.hierarchical_levels) - 1, 0);
             sequence_control_set_ptr->max_frame_window_to_ref_islice = (sequence_control_set_ptr->extra_frames_to_ref_islice + 1)*(1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 1;
-#endif
+#endif  
         }
 
         //Get a New ParentPCS where we will hold the new inputPicture

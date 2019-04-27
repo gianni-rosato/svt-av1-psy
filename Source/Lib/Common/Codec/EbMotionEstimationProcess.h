@@ -22,6 +22,8 @@ typedef struct MotionEstimationContext
     IntraReferenceSamplesOpenLoop *intra_ref_ptr;
     MeContext                     *me_context_ptr;
 
+    uint8_t                       *indexTable0;
+    uint8_t                       *indexTable1;
 } MotionEstimationContext_t;
 
 /***************************************

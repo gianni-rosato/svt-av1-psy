@@ -35,18 +35,18 @@ typedef struct _block_hash {
   uint32_t hash_value2;
 } block_hash;
 
-typedef struct _hash_table {
+typedef struct HashTable {
   Vector **p_lookup_table;
-} hash_table;
+} HashTable;
 
-void av1_hash_table_init(hash_table *p_hash_table, struct Macroblock *x);
-void av1_hash_table_destroy(hash_table *p_hash_table);
-EbErrorType  av1_hash_table_create(hash_table *p_hash_table);
-int32_t av1_hash_table_count(const hash_table *p_hash_table,
+void av1_hash_table_init(HashTable *p_hash_table, struct Macroblock *x);
+void av1_hash_table_destroy(HashTable *p_hash_table);
+EbErrorType  av1_hash_table_create(HashTable *p_hash_table);
+int32_t av1_hash_table_count(const HashTable *p_hash_table,
                              uint32_t hash_value);
-Iterator av1_hash_get_first_iterator(hash_table *p_hash_table,
+Iterator av1_hash_get_first_iterator(HashTable *p_hash_table,
                                      uint32_t hash_value);
-int32_t av1_has_exact_match(hash_table *p_hash_table, uint32_t hash_value1,
+int32_t av1_has_exact_match(HashTable *p_hash_table, uint32_t hash_value1,
                             uint32_t hash_value2);
 void av1_generate_block_2x2_hash_value(const Yv12BufferConfig *picture,
                                        uint32_t *pic_block_hash[2],
@@ -59,7 +59,7 @@ void av1_generate_block_hash_value(const Yv12BufferConfig *picture,
                                    int8_t *src_pic_block_same_info[3],
                                    int8_t *dst_pic_block_same_info[3],
                                    struct PictureControlSet * pcs);
-void av1_add_to_hash_map_by_row_with_precal_data(hash_table *p_hash_table,
+void av1_add_to_hash_map_by_row_with_precal_data(HashTable *p_hash_table,
                                                  uint32_t *pic_hash[2],
                                                  int8_t *pic_is_same,
                                                  int pic_width, int pic_height,

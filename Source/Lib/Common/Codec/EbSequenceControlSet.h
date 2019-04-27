@@ -166,7 +166,7 @@ extern "C" {
         uint32_t                                total_process_init_count;
         
         uint16_t                                film_grain_random_seed;
-        LcuParameters                             *sb_params_array;
+        SbParams                               *sb_params_array;
         uint8_t                                 picture_width_in_sb;
         uint8_t                                 picture_height_in_sb;
         uint16_t                                sb_total_count;
@@ -230,10 +230,13 @@ extern "C" {
         int32_t                                 display_model_info_present_flag;
         int32_t                                 film_grain_denoise_strength;
         int32_t                                 film_grain_params_present;  // To turn on/off film grain (on a sequence basis)
-
+#if BASE_LAYER_REF
         int32_t                                 extra_frames_to_ref_islice;
         int32_t                                 max_frame_window_to_ref_islice;
-
+#endif
+#if MRP_ME
+        uint32_t                                reference_count;
+#endif
 
 #if ADP_STATS_PER_LAYER
         uint64_t                                total_count[5];

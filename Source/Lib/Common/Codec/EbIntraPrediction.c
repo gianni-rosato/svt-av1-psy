@@ -22,8 +22,10 @@
 #include "EbModeDecision.h"
 #include "EbCodingUnit.h"
 #include "EbModeDecisionProcess.h"
+#include "EbDefinitions.h"
+#include "EbPictureControlSet.h"
+#include "EbEncDecProcess.h"
 #include "aom_dsp_rtcd.h"
-#include "EbTransforms.h"
 
 void *aom_memset16(void *dest, int32_t val, size_t length);
 
@@ -4123,8 +4125,8 @@ extern void av1_predict_intra_block(
 
     int32_t mirow = bl_org_y_pict >> 2;
     int32_t micol = bl_org_x_pict >> 2;
-    xd->up_available = (mirow > 0);
-    xd->left_available = (micol > 0);
+    xd->up_available   = (mirow > tile->mi_row_start);
+    xd->left_available = (micol > tile->mi_col_start);
     const int32_t bw = mi_size_wide[bsize];
     const int32_t bh = mi_size_high[bsize];
 
@@ -4132,10 +4134,10 @@ extern void av1_predict_intra_block(
     xd->mb_to_bottom_edge = ((cm->mi_rows - bh - mirow) * MI_SIZE) * 8;
     xd->mb_to_left_edge = -((micol * MI_SIZE) * 8);
     xd->mb_to_right_edge = ((cm->mi_cols - bw - micol) * MI_SIZE) * 8;
-    xd->tile.mi_col_start = 0;
-    xd->tile.mi_col_end = cm->mi_cols;
-    xd->tile.mi_row_start = 0;
-    xd->tile.mi_row_end = cm->mi_rows;
+    xd->tile.mi_col_start = tile->mi_col_start;
+    xd->tile.mi_col_end = tile->mi_col_end;
+    xd->tile.mi_row_start = tile->mi_row_start;
+    xd->tile.mi_row_end = tile->mi_row_end;
     xd->n8_h = bh;
     xd->n8_w = bw;
     xd->is_sec_rect = 0;
@@ -4629,9 +4631,16 @@ EbErrorType av1_intra_prediction_cl(
     uint8_t    topNeighArray[64 * 2 + 1];
     uint8_t    leftNeighArray[64 * 2 + 1];
     PredictionMode mode;
-    uint8_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level == CHROMA_MODE_0) ? (int) MAX_MB_PLANE : 1;
-    for (int32_t plane = 0; plane < end_plane; ++plane) {
+#if SEARCH_UV_MODE
+    // Hsan: plane should be derived @ an earlier stage (e.g. @ the call of perform_fast_loop())
+    int32_t start_plane = (md_context_ptr->uv_search_path) ? 1 : 0;
+    int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int)MAX_MB_PLANE : 1;
 
+    for (int32_t plane = start_plane; plane < end_plane; ++plane) {
+#else
+    uint8_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int) MAX_MB_PLANE : 1;
+    for (int32_t plane = 0; plane < end_plane; ++plane) {
+#endif      
         if (plane == 0) {
             if (md_context_ptr->cu_origin_y != 0)
                 memcpy(topNeighArray + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->cu_origin_x, md_context_ptr->blk_geom->bwidth * 2);
@@ -4674,7 +4683,7 @@ EbErrorType av1_intra_prediction_cl(
 
         av1_predict_intra_block(
             &md_context_ptr->sb_ptr->tile_info, 
-		
+        
             MD_STAGE,
             md_context_ptr->blk_geom,
             picture_control_set_ptr->parent_pcs_ptr->av1_cm,                                      //const Av1Common *cm,
@@ -4682,7 +4691,11 @@ EbErrorType av1_intra_prediction_cl(
             plane ? md_context_ptr->blk_geom->bheight_uv : md_context_ptr->blk_geom->bheight,          //int32_t hpx,
             plane ? tx_size_Chroma : tx_size,                                               //TxSize tx_size,
             mode,                                                                           //PredictionMode mode,
+#if SEARCH_UV_MODE // conformance
+            plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
+#else
             plane ? 0 : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],         //int32_t angle_delta,
+#endif
             0,                                                                              //int32_t use_palette,
             FILTER_INTRA_MODES,                                                             //CHKN FilterIntraMode filter_intra_mode,
             topNeighArray + 1,

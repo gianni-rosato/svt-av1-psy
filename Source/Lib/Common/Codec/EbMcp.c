@@ -3,7 +3,6 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#include <stdlib.h>
 #include <string.h>
 
 #include "EbMcp.h"
@@ -22,7 +21,7 @@
 #else
 #define ChromaMinusOffset1 MinusOffset1
 #endif
-
+#if !UNPACK_REF_POST_EP  
 EbErrorType motion_compensation_prediction_context_ctor(
     MotionCompensationPredictionContext **context_dbl_ptr,
     EbColorFormat                             color_format,
@@ -35,16 +34,7 @@ EbErrorType motion_compensation_prediction_context_ctor(
     EB_MALLOC(MotionCompensationPredictionContext *, context_ptr, sizeof(MotionCompensationPredictionContext), EB_N_PTR);
     *(context_dbl_ptr) = context_ptr;
     UNUSED(color_format);
-#if !EXTRA_ALLOCATION
-    uint32_t frame_size = (max_cu_width * max_cu_height) + 2 * ((max_cu_width * max_cu_height) >> (3 - color_format));
-    EB_MALLOC(EbByte, context_ptr->avc_style_mcp_intermediate_result_buf0, sizeof(uint8_t) * frame_size * 6 + 16, EB_N_PTR);//Y + U + V;
-    EB_MALLOC(EbByte, context_ptr->avc_style_mcp_intermediate_result_buf1, sizeof(uint8_t) * frame_size * 6 + 16, EB_N_PTR);//Y + U + V;
-
-#if !USE_PRE_COMPUTE
-    EB_MALLOC(EbByte, context_ptr->avc_style_mcp_two_d_interpolation_first_pass_filter_result_buf, sizeof(uint8_t)*(6 * max_cu_width + MaxHorizontalLumaFliterTag - 1)*(max_cu_height + MaxVerticalLumaFliterTag - 1), EB_N_PTR);
-#endif
-
-#endif
+ 
 
     // context_ptr->localReferenceBlock = (uint16_t*)malloc(sizeof(uint16_t)*( (max_cu_width+8)*(max_cu_height+8)));
 
@@ -58,27 +48,12 @@ EbErrorType motion_compensation_prediction_context_ctor(
         initData.max_height = max_cu_height + 16;
 
         initData.bit_depth = EB_16BIT;
-        initData.color_format = EB_YUV420; //always use 420 for MD
         initData.left_padding = 0;
         initData.right_padding = 0;
         initData.top_padding = 0;
         initData.bot_padding = 0;
 
         initData.split_mode = EB_FALSE;
-#if !EXTRA_ALLOCATION
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&context_ptr->local_reference_block_l0,
-            (EbPtr)&initData);
-        if (return_error == EB_ErrorInsufficientResources) {
-            return EB_ErrorInsufficientResources;
-        }
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&context_ptr->local_reference_block_l1,
-            (EbPtr)&initData);
-        if (return_error == EB_ErrorInsufficientResources) {
-            return EB_ErrorInsufficientResources;
-        }
-#endif
 
         initData.bit_depth = EB_8BIT;
         initData.max_width = max_cu_width + 32;
@@ -97,7 +72,7 @@ EbErrorType motion_compensation_prediction_context_ctor(
     }
     return EB_ErrorNone;
 }
-
+#endif
 void encode_uni_pred_interpolation(
     EbPictureBufferDesc *ref_pic,                  //input parameter, please refer to the detailed explanation above.
     uint32_t                 pos_x,                    //input parameter, please refer to the detailed explanation above.

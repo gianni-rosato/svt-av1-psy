@@ -767,7 +767,7 @@ void av1_compute_stats_c(int32_t wiener_win, const uint8_t *dgd, const uint8_t *
     int32_t dgd_stride, int32_t src_stride, int64_t *M,
     int64_t *H) {
     int32_t i, j, k, l;
-    int16_t Y[WIENER_WIN2];
+    int16_t Y[WIENER_WIN2] = { 0 };
     const int32_t wiener_win2 = wiener_win * wiener_win;
     const int32_t wiener_halfwin = (wiener_win >> 1);
     uint8_t avg = find_average(dgd, h_start, h_end, v_start, v_end, dgd_stride);
@@ -809,7 +809,7 @@ void av1_compute_stats_highbd_c(int32_t wiener_win, const uint8_t *dgd8,
     int32_t src_stride, int64_t *M, int64_t *H,
     AomBitDepth bit_depth) {
     int32_t i, j, k, l;
-    int32_t Y[WIENER_WIN2];
+    int32_t Y[WIENER_WIN2] = { 0 };
     const int32_t wiener_win2 = wiener_win * wiener_win;
     const int32_t wiener_halfwin = (wiener_win >> 1);
     const uint16_t *src = CONVERT_TO_SHORTPTR(src8);
@@ -1404,7 +1404,7 @@ static void search_wiener(const RestorationTileLimits *limits,
     {
         if (rsc->plane == AOM_PLANE_Y) {
 
-            av1_compute_stats_highbd(WIENER_WIN, rsc->dgd_buffer, rsc->src_buffer,
+            av1_compute_stats_highbd(wiener_win, rsc->dgd_buffer, rsc->src_buffer,
 
                 limits->h_start, limits->h_end, limits->v_start,
                 limits->v_end, rsc->dgd_stride, rsc->src_stride, M,
@@ -1413,7 +1413,7 @@ static void search_wiener(const RestorationTileLimits *limits,
         }
         else {
 
-            av1_compute_stats_highbd(WIENER_WIN_CHROMA, rsc->dgd_buffer, rsc->src_buffer,
+            av1_compute_stats_highbd(wiener_win, rsc->dgd_buffer, rsc->src_buffer,
 
                 limits->h_start, limits->h_end, limits->v_start,
                 limits->v_end, rsc->dgd_stride, rsc->src_stride, M,
@@ -1571,8 +1571,8 @@ static void search_switchable(const RestorationTileLimits *limits,
 static void copy_unit_info(RestorationType frame_rtype,
     const RestUnitSearchInfo *rusi,
     RestorationUnitInfo *rui) {
-    assert(frame_rtype > 0);
-    rui->restoration_type = rusi->best_rtype[frame_rtype - 1];
+    if (frame_rtype >= 1)
+        rui->restoration_type = rusi->best_rtype[frame_rtype - 1];
     if (rui->restoration_type == RESTORE_WIENER)
         rui->wiener_info = rusi->wiener;
     else
@@ -1773,7 +1773,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
     {
         if (rsc->plane == AOM_PLANE_Y) {
 
-            av1_compute_stats_highbd(WIENER_WIN, rsc->dgd_buffer, rsc->src_buffer,
+            av1_compute_stats_highbd(wiener_win, rsc->dgd_buffer, rsc->src_buffer,
 
                 limits->h_start, limits->h_end, limits->v_start,
                 limits->v_end, rsc->dgd_stride, rsc->src_stride, M,
@@ -1782,7 +1782,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
         }
         else {
 
-            av1_compute_stats_highbd(WIENER_WIN_CHROMA, rsc->dgd_buffer, rsc->src_buffer,
+            av1_compute_stats_highbd(wiener_win, rsc->dgd_buffer, rsc->src_buffer,
 
                 limits->h_start, limits->h_end, limits->v_start,
                 limits->v_end, rsc->dgd_stride, rsc->src_stride, M,

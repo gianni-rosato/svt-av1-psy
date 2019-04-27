@@ -35,10 +35,10 @@ extern "C" {
     {
         int32_t txb_skip_cost[TXB_SKIP_CONTEXTS][2];
         int32_t base_eob_cost[SIG_COEF_CONTEXTS_EOB][3];
-        int32_t base_cost[SIG_COEF_CONTEXTS][4];
+        int32_t base_cost[SIG_COEF_CONTEXTS][8];
         int32_t eob_extra_cost[EOB_COEF_CONTEXTS][2];
         int32_t dc_sign_cost[DC_SIGN_CONTEXTS][2];
-        int32_t lps_cost[LEVEL_CONTEXTS][COEFF_BASE_RANGE + 1];
+        int32_t lps_cost[LEVEL_CONTEXTS][COEFF_BASE_RANGE + 1 + COEFF_BASE_RANGE + 1];
     } LvMapCoeffCost;
 
 

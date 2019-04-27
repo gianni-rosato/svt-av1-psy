@@ -109,7 +109,7 @@ extern "C" {
 #else                                          
         uint8_t                                qpm_qp;
 #endif
-#if !PF_N2_32X32
+#if !PF_N2_SUPPORT
         EB_TRANS_COEFF_SHAPE                   trans_coeff_shape_luma;
         EB_TRANS_COEFF_SHAPE                   trans_coeff_shape_chroma;
 #endif
@@ -128,11 +128,12 @@ extern "C" {
         uint16_t                               coded_area_sb;
         uint16_t                               coded_area_sb_uv;
 
-#if ENCDEC_TX_SEARCH
         uint8_t                                is_inter;
         uint8_t                                reduced_tx_set_used;
-#endif
         EbBool                                 evaluate_cfl_ep; // 0: CFL is evaluated @ mode decision, 1: CFL is evaluated @ encode pass
+#if  BLK_SKIP_DECISION
+        uint8_t                                md_skip_blk;
+#endif    
     } EncDecContext;
 
     /**************************************

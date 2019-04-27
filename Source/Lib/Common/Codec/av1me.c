@@ -197,7 +197,7 @@ static int mvsad_err_cost(const IntraBcContext *x, const MV *mv, const MV *ref,
       AV1_PROB_COST_SHIFT);
 }
 
-void av1_init3smotion_compensation(search_site_config *cfg, int stride) {
+void av1_init3smotion_compensation(SearchSiteConfig *cfg, int stride) {
   int len, ss_count = 1;
 
   cfg->ss[0].mv.col = cfg->ss[0].mv.row = 0;
@@ -218,14 +218,6 @@ void av1_init3smotion_compensation(search_site_config *cfg, int stride) {
 
   cfg->ss_count = ss_count;
   cfg->searches_per_step = 8;
-}
-
-static INLINE int check_bounds(const MvLimits *mv_limits, int row, int col,
-                               int range) {
-  return ((row - range) >= mv_limits->row_min) &
-         ((row + range) <= mv_limits->row_max) &
-         ((col - range) >= mv_limits->col_min) &
-         ((col + range) <= mv_limits->col_max);
 }
 
 static INLINE int is_mv_in(const MvLimits *mv_limits, const MV *mv) {
@@ -357,7 +349,7 @@ static int exhuastive_mesh_search(IntraBcContext  *x, MV *ref_mv, MV *best_mv,
 }
 
 
-int av1_diamond_search_sad_c(IntraBcContext  *x, const search_site_config *cfg,
+int av1_diamond_search_sad_c(IntraBcContext  *x, const SearchSiteConfig *cfg,
                              MV *ref_mv, MV *best_mv, int search_param,
                              int sad_per_bit, int *num00,
                              const aom_variance_fn_ptr_t *fn_ptr,
@@ -811,7 +803,7 @@ int av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext  *x, BlockSize 
         int best_hash_cost = INT_MAX;
 
         // for the hashMap
-        hash_table *ref_frame_hash = &pcs->hash_table;
+        HashTable *ref_frame_hash = &pcs->hash_table;
 
         av1_get_block_hash_value(what, what_stride, block_width, &hash_value1,
                                  &hash_value2, 0, pcs, x);

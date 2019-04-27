@@ -19,7 +19,7 @@
 #include "EbRestProcess.h"
 #include "EbEncDecResults.h"
 
-#include "EbEncDecTasks.h"
+#include "EbThreads.h"
 #include "EbPictureDemuxResults.h"
 #include "EbReferenceObject.h"
 
@@ -320,7 +320,7 @@ void* rest_kernel(void *input_ptr)
                 PadRefAndSetFlags(
                     picture_control_set_ptr,
                     sequence_control_set_ptr);
-
+#if !OPT_LOSSLESS_1
             if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE && picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)
             {
                 EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -378,6 +378,7 @@ void* rest_kernel(void *input_ptr)
                     refDenPic->origin_x >> 1,
                     refDenPic->origin_y >> 1);
             }
+#endif
             if (sequence_control_set_ptr->static_config.recon_enabled) {
                 ReconOutput(
                     picture_control_set_ptr,

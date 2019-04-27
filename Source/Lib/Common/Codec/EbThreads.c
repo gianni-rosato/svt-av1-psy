@@ -77,28 +77,31 @@ EbHandle eb_create_thread(
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 
     thread_handle = (pthread_t*)malloc(sizeof(pthread_t));
-    int32_t ret = pthread_create(
-        (pthread_t*)thread_handle,      // Thread handle
-        &attr,                       // attributes
-        thread_function,                 // function to be run by new thread
-        thread_context);
+    if (thread_handle != NULL) {
+        int32_t ret = pthread_create(
+            (pthread_t*)thread_handle,      // Thread handle
+            &attr,                       // attributes
+            thread_function,                 // function to be run by new thread
+            thread_context);
 
-    if (ret != 0)
-        if (ret == EPERM) {
+        if (ret != 0) {
+            if (ret == EPERM) {
 
-            pthread_cancel(*((pthread_t*)thread_handle));
-            pthread_join(*((pthread_t*)thread_handle), NULL);
-            free(thread_handle);
+                pthread_cancel(*((pthread_t*)thread_handle));
+                free(thread_handle);
 
-            thread_handle = (pthread_t*)malloc(sizeof(pthread_t));
-
-            pthread_create(
-                (pthread_t*)thread_handle,      // Thread handle
-                (const pthread_attr_t*)EB_NULL,                        // attributes
-                thread_function,                 // function to be run by new thread
-                thread_context);
+                thread_handle = (pthread_t*)malloc(sizeof(pthread_t));
+                if (thread_handle != NULL) {
+                    pthread_create(
+                        (pthread_t*)thread_handle,      // Thread handle
+                        (const pthread_attr_t*)EB_NULL,                        // attributes
+                        thread_function,                 // function to be run by new thread
+                        thread_context);
+                }
+            }
         }
-
+    }
+    pthread_attr_destroy(&attr);
 #endif // _WIN32
 
     return thread_handle;
@@ -292,10 +295,11 @@ EbHandle eb_create_mutex(
 
     mutex_handle = (EbHandle)malloc(sizeof(pthread_mutex_t));
 
-    pthread_mutex_init(
-        (pthread_mutex_t*)mutex_handle,
-        NULL);                  // default attributes
-
+    if (mutex_handle != NULL) {
+        pthread_mutex_init(
+            (pthread_mutex_t*)mutex_handle,
+            NULL);                  // default attributes
+    }
 #endif // _WIN32
 
     return mutex_handle;

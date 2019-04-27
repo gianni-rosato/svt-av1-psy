@@ -929,6 +929,7 @@ static TxSize set_lpf_parameters(
 
     const TxSize ts =
         get_transform_size(xd, mbmi/*mi[0]*/, edge_dir, mi_row, mi_col, plane, plane_ptr);
+    assert(ts < TX_SIZES_ALL);
 
     {
         const uint32_t coord = (VERT_EDGE == edge_dir) ? (x) : (y);
@@ -965,7 +966,7 @@ static TxSize set_lpf_parameters(
 
                     const BlockSize bsize =
                         get_plane_block_size(mbmi->sb_type, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
-                    ASSERT(bsize < BlockSizeS_ALL);
+                    assert(bsize < BlockSizeS_ALL);
                     const int32_t prediction_masks = edge_dir == VERT_EDGE
                         ? block_size_wide[bsize] - 1
                         : block_size_high[bsize] - 1;
@@ -1125,7 +1126,7 @@ void av1_filter_block_plane_vert(
             default: break;
             }
             // advance the destination pointer
-            ASSERT(tx_size < TX_SIZES_ALL);
+            assert(tx_size < TX_SIZES_ALL);
             advance_units = tx_size_wide_unit[tx_size];
             x += advance_units;
             p += ((advance_units * MI_SIZE) << plane_ptr->is16Bit);
@@ -1260,7 +1261,7 @@ void av1_filter_block_plane_horz(
             }
 
             // advance the destination pointer
-            ASSERT(tx_size < TX_SIZES_ALL);
+            assert(tx_size < TX_SIZES_ALL);
             advance_units = tx_size_high_unit[tx_size];
             y += advance_units;
             p += ((advance_units * dst_stride * MI_SIZE) << plane_ptr->is16Bit);

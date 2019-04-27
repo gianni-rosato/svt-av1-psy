@@ -7,8 +7,7 @@
 
 
 #include <emmintrin.h>
-
-#include "EbDefinitions.h"
+#include <stdint.h>
 
 /****************************************************************************************
 eb_enc_msb_un_pack2d_sse2_intrin

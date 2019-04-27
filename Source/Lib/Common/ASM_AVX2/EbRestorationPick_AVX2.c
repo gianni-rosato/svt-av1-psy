@@ -7,7 +7,6 @@
 #include "EbRestoration.h"
 #include <immintrin.h>
 #include<math.h>
-#include "synonyms.h"
 
 static INLINE void avx2_mul_epi16_epi32(__m256i *a, __m256i *b, __m256i *out) {
   __m256i a_32[2];

@@ -67,7 +67,46 @@ void av1_get_syntax_rate_from_cdf(
     }
 }
 
+#if CABAC_UP
+///tmp function to be removed once we have updated all syntax CDFs
+void av1_estimate_syntax_rate___partial(
+    MdRateEstimationContext  *md_rate_estimation_array,
+    EbBool                     is_i_slice,
+    FRAME_CONTEXT              *fc)
+{
+    int32_t i, j;
 
+    md_rate_estimation_array->initialized = 1;
+#if CABAC_UP1
+    for (i = 0; i < PARTITION_CONTEXTS; ++i)
+        av1_get_syntax_rate_from_cdf(md_rate_estimation_array->partitionFacBits[i], fc->partition_cdf[i], NULL);
+#endif
+
+#if CABAC_UP2
+    //if (cm->skip_mode_flag) { // NM - Hardcoded to true
+    for (i = 0; i < SKIP_CONTEXTS; ++i) {
+        av1_get_syntax_rate_from_cdf(md_rate_estimation_array->skipModeFacBits[i], fc->skip_mode_cdfs[i], NULL);
+    }
+    //}
+#endif
+
+    for (i = TX_4X4; i < EXT_TX_SIZES; ++i) {
+        int32_t s;
+        for (s = 1; s < EXT_TX_SETS_INTER; ++s) {
+            if (use_inter_ext_tx_for_txsize[s][i]) {
+                av1_get_syntax_rate_from_cdf(md_rate_estimation_array->inter_tx_type_fac_bits[s][i], fc->inter_ext_tx_cdf[s][i], av1_ext_tx_inv[av1_ext_tx_set_idx_to_type[1][s]]);
+            }
+        }
+        for (s = 1; s < EXT_TX_SETS_INTRA; ++s) {
+            if (use_intra_ext_tx_for_txsize[s][i]) {
+                for (j = 0; j < INTRA_MODES; ++j) {
+                    av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intra_tx_type_fac_bits[s][i][j], fc->intra_ext_tx_cdf[s][i][j], av1_ext_tx_inv[av1_ext_tx_set_idx_to_type[0][s]]);
+                }
+            }
+        }
+    }
+}
+#endif
 /*************************************************************
 * av1_estimate_syntax_rate()
 * Estimate the rate for each syntax elements and for
@@ -157,9 +196,11 @@ void av1_estimate_syntax_rate(
             memset(FacBits_v, 0, CFL_ALPHABET_SIZE * sizeof(*FacBits_v));
         }
         else {
-            ASSERT((CFL_CONTEXT_V(joint_sign) < CFL_ALPHA_CONTEXTS) && (CFL_CONTEXT_V(joint_sign) >= 0));
-            const AomCdfProb *cdf_v = fc->cfl_alpha_cdf[CFL_CONTEXT_V(joint_sign)];
-            av1_get_syntax_rate_from_cdf(FacBits_v, cdf_v, NULL);
+            int32_t cdf_index = CFL_CONTEXT_V(joint_sign);
+            if ((cdf_index < CFL_ALPHA_CONTEXTS) && (cdf_index >= 0)) {
+                const AomCdfProb *cdf_v = fc->cfl_alpha_cdf[cdf_index];
+                av1_get_syntax_rate_from_cdf(FacBits_v, cdf_v, NULL);
+            }
         }
         for (int32_t u = 0; u < CFL_ALPHABET_SIZE; u++)
             FacBits_u[u] += sign_FacBits[joint_sign];
@@ -367,9 +408,9 @@ void av1_estimate_mv_rate(
 
     av1_build_nmv_cost_table(
         md_rate_estimation_array->nmv_vec_cost,//out
-        /*picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv */0 ? nmvcost_hp : nmvcost, //out
+        picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv ? nmvcost_hp : nmvcost, //out
         nmv_ctx,
-        MV_SUBPEL_LOW_PRECISION);
+        picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv);
 
 
     md_rate_estimation_array->nmvcoststack[0] = &md_rate_estimation_array->nmv_costs[0][MV_MAX];
@@ -432,7 +473,16 @@ void av1_estimate_coefficients_rate(
             for (ctx = 0; ctx < SIG_COEF_CONTEXTS; ++ctx)
                 av1_get_syntax_rate_from_cdf(pcost->base_cost[ctx],
                     fc->coeff_base_cdf[tx_size][plane][ctx], NULL);
-
+            for (int ctx = 0; ctx < SIG_COEF_CONTEXTS; ++ctx) {
+                pcost->base_cost[ctx][4] = 0;
+                pcost->base_cost[ctx][5] = pcost->base_cost[ctx][1] +
+                    av1_cost_literal(1) -
+                    pcost->base_cost[ctx][0];
+                pcost->base_cost[ctx][6] =
+                    pcost->base_cost[ctx][2] - pcost->base_cost[ctx][1];
+                pcost->base_cost[ctx][7] =
+                    pcost->base_cost[ctx][3] - pcost->base_cost[ctx][2];
+            }
             for (ctx = 0; ctx < EOB_COEF_CONTEXTS; ++ctx)
                 av1_get_syntax_rate_from_cdf(pcost->eob_extra_cost[ctx],
                     fc->eob_extra_cdf[tx_size][plane][ctx], NULL);
@@ -461,6 +511,14 @@ void av1_estimate_coefficients_rate(
                 // for (i = 0; i <= COEFF_BASE_RANGE; i++)
                 //  printf("%5d ", pcost->lps_cost[ctx][i]);
                 // printf("\n");
+            }
+            for (int ctx = 0; ctx < LEVEL_CONTEXTS; ++ctx) {
+                pcost->lps_cost[ctx][0 + COEFF_BASE_RANGE + 1] =
+                    pcost->lps_cost[ctx][0];
+                for (int i = 1; i <= COEFF_BASE_RANGE; ++i) {
+                    pcost->lps_cost[ctx][i + COEFF_BASE_RANGE + 1] =
+                        pcost->lps_cost[ctx][i] - pcost->lps_cost[ctx][i - 1];
+                }
             }
         }
     }

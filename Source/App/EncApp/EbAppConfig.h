@@ -37,7 +37,7 @@ typedef int32_t errno_t;
 /** The AppExitConditionType type is used to define the App main loop exit
 conditions.
 */
-typedef enum AppExitConditionType 
+typedef enum AppExitConditionType
 {
     APP_ExitConditionNone = 0,
     APP_ExitConditionFinished,
@@ -47,7 +47,7 @@ typedef enum AppExitConditionType
 /** The AppPortActiveType type is used to define the state of output ports in
 the App.
 */
-typedef enum AppPortActiveType 
+typedef enum AppPortActiveType
 {
     APP_PortActive = 0,
     APP_PortInactive
@@ -64,7 +64,7 @@ typedef void * EbPtr;
 #define EB_NULL ((void*) 0)
 
 // memory map to be removed and replaced by malloc / free
-typedef enum EbPtrType 
+typedef enum EbPtrType
 {
     EB_N_PTR     = 0,                                   // malloc'd pointer
     EB_A_PTR     = 1,                                   // malloc'd pointer aligned
@@ -312,7 +312,6 @@ typedef struct EbConfig
     int32_t                  tile_columns;
     int32_t                  tile_rows;
 
-
     /****************************************
      * Rate Control
      ****************************************/
@@ -328,6 +327,7 @@ typedef struct EbConfig
      ****************************************/
 
     EbBool                   improve_sharpness;
+    uint32_t                 screen_content_mode;
     uint32_t                 high_dynamic_range_input;
 
     /****************************************

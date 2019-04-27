@@ -12,7 +12,7 @@
 #include "lpf_common_sse2.h"
 #include "aom_dsp_rtcd.h"
 #ifndef _mm256_setr_m128i
-#define _mm256_setr_m128i(/* __m128i */ hi, /* __m128i */ lo) \
+#define _mm256_setr_m128i(/* __m128i */ lo, /* __m128i */ hi) \
     _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)
 #endif
 

@@ -74,6 +74,10 @@ extern "C" {
         EB_SLICE               slice_type);
 
     extern EbErrorType av1_tu_estimate_coeff_bits(
+#if CABAC_UP
+        uint8_t        allow_update_cdf,
+        FRAME_CONTEXT *ec_ctx,
+#endif
         PictureControlSet                    *picture_control_set_ptr,
         struct ModeDecisionCandidateBuffer   *candidate_buffer_ptr,
         CodingUnit                           *cu_ptr,
@@ -205,7 +209,9 @@ extern "C" {
         NeighborArrayUnit     *mode_type_neighbor_array,
         NeighborArrayUnit     *inter_pred_dir_neighbor_array,
         NeighborArrayUnit     *ref_frame_type_neighbor_array);
-
+#if MRP_COST_EST
+    extern void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd);
+#endif
     // Obtain contexts to signal a reference frame be either BWDREF/ALTREF2, or
     // ALTREF.
     //extern int32_t get_pred_context_brfarf2_or_arf(const MacroBlockD *xd);

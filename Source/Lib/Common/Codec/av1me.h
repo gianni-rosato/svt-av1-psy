@@ -48,11 +48,11 @@ typedef struct search_site {
   int offset;
 } search_site;
 
-typedef struct search_site_config {
+typedef struct SearchSiteConfig {
   search_site ss[8 * MAX_MVSEARCH_STEPS + 1];
   int ss_count;
   int searches_per_step;
-} search_site_config;
+} SearchSiteConfig;
 
 typedef struct {
   MV coord;
@@ -60,17 +60,11 @@ typedef struct {
 } search_neighbors;
 
 
-void av1_init_dsmotion_compensation(search_site_config *cfg, int stride);
-void av1_init3smotion_compensation(search_site_config *cfg, int stride);
-
+void av1_init_dsmotion_compensation(SearchSiteConfig *cfg, int stride);
+void av1_init3smotion_compensation(SearchSiteConfig *cfg, int stride);
 void av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv);
-
-#if 1 //---CHKN
-
-
 struct Av1Comp;
 struct SpeedFeatures;
-
 
 int av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MACROBLOCK*/ *x,
                           BlockSize bsize, MV *mvp_full, int step_param,
@@ -83,5 +77,4 @@ int av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MACROB
 }  // extern "C"
 #endif
 
-#endif//----CHKN
 #endif  // AOM_AV1_ENCODER_MCOMP_H_

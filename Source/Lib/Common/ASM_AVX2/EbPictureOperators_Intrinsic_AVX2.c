@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <immintrin.h>
 #include "EbPictureOperators_AVX2.h"
+#include "EbPictureOperators_SSE2.h"
 #include "EbMemory_AVX2.h"
 
 #define _mm256_set_m128i(/* __m128i */ hi, /* __m128i */ lo) \
@@ -1967,14 +1968,12 @@ void full_distortion_kernel32_bits_avx2(
     __m128i temp1, temp2, temp3;
 
     rowCount = area_height;
-    do
-    {
+    do {
         int32_t *coeffTemp = coeff;
         int32_t *reconCoeffTemp = recon_coeff;
 
         col_count = area_width / 4;
-        do
-        {
+        do {
             __m128i x0, y0;
             __m256i x, y, z;
             x0 = _mm_loadu_si128((__m128i *)(coeffTemp));
@@ -2024,13 +2023,11 @@ void full_distortion_kernel_cbf_zero32_bits_avx2(
     __m128i temp1, temp2;
 
     rowCount = area_height;
-    do
-    {
+    do {
         int32_t *coeffTemp = coeff;
 
         col_count = area_width / 4;
-        do
-        {
+        do {
             __m128i x0;
             __m256i y0, z0;
             x0 = _mm_loadu_si128((__m128i *)(coeffTemp));
@@ -2830,4 +2827,208 @@ void ResidualKernel_avx2(
             }
         }
     }
+}
+static INLINE int32_t Hadd32_AVX2_INTRIN(const __m256i src) {
+    const __m128i src_L = _mm256_extracti128_si256(src, 0);
+    const __m128i src_H = _mm256_extracti128_si256(src, 1);
+    const __m128i sum = _mm_add_epi32(src_L, src_H);
+
+    return Hadd32_SSE2_INTRIN(sum);
+}
+
+static INLINE void Distortion_AVX2_INTRIN(const __m256i input,
+    const __m256i recon, __m256i *const sum) {
+    const __m256i in = _mm256_unpacklo_epi8(input, _mm256_setzero_si256());
+    const __m256i re = _mm256_unpacklo_epi8(recon, _mm256_setzero_si256());
+    const __m256i diff = _mm256_sub_epi16(in, re);
+    const __m256i dist = _mm256_madd_epi16(diff, diff);
+    *sum = _mm256_add_epi32(*sum, dist);
+}
+
+uint64_t spatial_full_distortion_kernel4x_n_avx2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m256i sum = _mm256_setzero_si256();
+    __m128i sum_L, sum_H, s;
+
+    (void)area_width;
+
+    do {
+        const __m128i in0 = _mm_cvtsi32_si128(*(uint32_t *)(input + 0 * input_stride));
+        const __m128i in1 = _mm_cvtsi32_si128(*(uint32_t *)(input + 1 * input_stride));
+        const __m128i re0 = _mm_cvtsi32_si128(*(uint32_t *)(recon + 0 * recon_stride));
+        const __m128i re1 = _mm_cvtsi32_si128(*(uint32_t *)(recon + 1 * recon_stride));
+        const __m256i in = _mm256_setr_m128i(in0, in1);
+        const __m256i re = _mm256_setr_m128i(re0, re1);
+        Distortion_AVX2_INTRIN(in, re, &sum);
+        input += 2 * input_stride;
+        recon += 2 * recon_stride;
+        row_count -= 2;
+    } while (row_count);
+
+    sum_L = _mm256_extracti128_si256(sum, 0);
+    sum_H = _mm256_extracti128_si256(sum, 1);
+    s = _mm_add_epi32(sum_L, sum_H);
+    s = _mm_add_epi32(s, _mm_srli_si128(s, 4));
+
+    return _mm_cvtsi128_si32(s);
+}
+
+uint64_t spatial_full_distortion_kernel8x_n_avx2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m256i sum = _mm256_setzero_si256();
+
+    (void)area_width;
+
+    do {
+        const __m128i in0 = _mm_loadl_epi64((__m128i *)(input + 0 * input_stride));
+        const __m128i in1 = _mm_loadl_epi64((__m128i *)(input + 1 * input_stride));
+        const __m128i re0 = _mm_loadl_epi64((__m128i *)(recon + 0 * recon_stride));
+        const __m128i re1 = _mm_loadl_epi64((__m128i *)(recon + 1 * recon_stride));
+        const __m256i in = _mm256_setr_m128i(in0, in1);
+        const __m256i re = _mm256_setr_m128i(re0, re1);
+        Distortion_AVX2_INTRIN(in, re, &sum);
+        input += 2 * input_stride;
+        recon += 2 * recon_stride;
+        row_count -= 2;
+    } while (row_count);
+
+    return Hadd32_AVX2_INTRIN(sum);
+}
+
+static INLINE void SpatialFullDistortionKernel16_AVX2_INTRIN(
+    const uint8_t *const input, const uint8_t *const recon, __m256i *const sum)
+{
+    const __m128i in8 = _mm_loadu_si128((__m128i *)input);
+    const __m128i re8 = _mm_loadu_si128((__m128i *)recon);
+    const __m256i in16 = _mm256_cvtepu8_epi16(in8);
+    const __m256i re16 = _mm256_cvtepu8_epi16(re8);
+    const __m256i diff = _mm256_sub_epi16(in16, re16);
+    const __m256i dist = _mm256_madd_epi16(diff, diff);
+    *sum = _mm256_add_epi32(*sum, dist);
+}
+
+uint64_t spatial_full_distortion_kernel16x_n_avx2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m256i sum = _mm256_setzero_si256();
+
+    (void)area_width;
+
+    do {
+        SpatialFullDistortionKernel16_AVX2_INTRIN(input, recon, &sum);
+        input += input_stride;
+        recon += recon_stride;
+    } while (--row_count);
+
+    return Hadd32_AVX2_INTRIN(sum);
+}
+
+static INLINE void SpatialFullDistortionKernel32_AVX2_INTRIN(
+    const uint8_t *const input, const uint8_t *const recon, __m256i *const sum)
+{
+    const __m256i in = _mm256_loadu_si256((__m256i *)input);
+    const __m256i re = _mm256_loadu_si256((__m256i *)recon);
+    const __m256i max = _mm256_max_epu8(in, re);
+    const __m256i min = _mm256_min_epu8(in, re);
+    const __m256i diff = _mm256_sub_epi8(max, min);
+    const __m256i diff_L = _mm256_unpacklo_epi8(diff, _mm256_setzero_si256());
+    const __m256i diff_H = _mm256_unpackhi_epi8(diff, _mm256_setzero_si256());
+    const __m256i dist_L = _mm256_madd_epi16(diff_L, diff_L);
+    const __m256i dist_H = _mm256_madd_epi16(diff_H, diff_H);
+    const __m256i dist = _mm256_add_epi32(dist_L, dist_H);
+    *sum = _mm256_add_epi32(*sum, dist);
+}
+
+static INLINE void SpatialFullDistortionKernel64_AVX2_INTRIN(
+    const uint8_t *const input, const uint8_t *const recon, __m256i *const sum)
+{
+    SpatialFullDistortionKernel32_AVX2_INTRIN(input + 0 * 32, recon + 0 * 32, sum);
+    SpatialFullDistortionKernel32_AVX2_INTRIN(input + 1 * 32, recon + 1 * 32, sum);
+}
+
+uint64_t spatial_full_distortion_kernel32x_n_avx2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m256i sum = _mm256_setzero_si256();
+
+    (void)area_width;
+
+    do {
+        SpatialFullDistortionKernel32_AVX2_INTRIN(input, recon, &sum);
+        input += input_stride;
+        recon += recon_stride;
+    } while (--row_count);
+
+    return Hadd32_AVX2_INTRIN(sum);
+}
+
+uint64_t spatial_full_distortion_kernel64x_n_avx2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m256i sum = _mm256_setzero_si256();
+
+    (void)area_width;
+
+    do {
+        SpatialFullDistortionKernel64_AVX2_INTRIN(input, recon, &sum);
+        input += input_stride;
+        recon += recon_stride;
+    } while (--row_count);
+
+    return Hadd32_AVX2_INTRIN(sum);
+}
+
+uint64_t spatial_full_distortion_kernel128x_n_avx2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m256i sum = _mm256_setzero_si256();
+
+    (void)area_width;
+
+    do {
+        SpatialFullDistortionKernel64_AVX2_INTRIN(input + 0 * 64, recon + 0 * 64, &sum);
+        SpatialFullDistortionKernel64_AVX2_INTRIN(input + 1 * 64, recon + 1 * 64, &sum);
+        input += input_stride;
+        recon += recon_stride;
+    } while (--row_count);
+
+    return Hadd32_AVX2_INTRIN(sum);
 }

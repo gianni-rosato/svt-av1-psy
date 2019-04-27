@@ -3,8 +3,7 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#include "EbDefinitions.h"
-#include "EbUtility.h"
+#include <stdint.h>
 
 
 static void variance_c(const uint8_t *a, int a_stride, const uint8_t *b,

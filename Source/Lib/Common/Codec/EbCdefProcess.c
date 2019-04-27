@@ -15,11 +15,11 @@
 */
 
 #include <stdlib.h>
+#include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
 #include "EbCdefProcess.h"
 #include "EbEncDecResults.h"
-#include "EbEncDecTasks.h"
-#include "EbPictureDemuxResults.h"
+#include "EbThreads.h"
 #include "EbReferenceObject.h"
 
 #include "EbCdef.h"
@@ -33,9 +33,6 @@ void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
 void *aom_memalign(size_t align, size_t size);
 void aom_free(void *memblk);
 void *aom_malloc(size_t size);
-uint64_t compute_cdef_dist(uint16_t *dst, int32_t dstride, uint16_t *src,
-    cdef_list *dlist, int32_t cdef_count, BlockSize bsize,
-    int32_t coeff_shift, int32_t pli);
 int32_t sb_all_skip(PictureControlSet   *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col);
 int32_t sb_compute_cdef_list(PictureControlSet   *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col,
     cdef_list *dlist, BlockSize bs);
@@ -495,46 +492,38 @@ void* cdef_kernel(void *input_ptr)
 
 
 
-#if CDEF_REF_ONLY
-        if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
-#else
         if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode) {
-#endif
                 finish_cdef_search(
                     0,
                     sequence_control_set_ptr,
-                    picture_control_set_ptr
-                    ,selected_strength_cnt
-                );
+                    picture_control_set_ptr,
+                    selected_strength_cnt);
 
-                if (is16bit)
-                    av1_cdef_frame16bit(
-                        0,
-                        sequence_control_set_ptr,
-                        picture_control_set_ptr);
-                else
-                    av1_cdef_frame(
-                        0,
-                        sequence_control_set_ptr,
-                        picture_control_set_ptr);
+#if CDEF_OFF_NON_REF
+                if (sequence_control_set_ptr->enable_restoration != 0 || picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag || sequence_control_set_ptr->static_config.recon_enabled){
+#endif
+                    if (is16bit)
+                        av1_cdef_frame16bit(
+                            0,
+                            sequence_control_set_ptr,
+                            picture_control_set_ptr);
+                    else
+                        av1_cdef_frame(
+                            0,
+                            sequence_control_set_ptr,
+                            picture_control_set_ptr);
+#if CDEF_OFF_NON_REF
+                }
+#endif
 
         }
         else {
 
-#if 1//CDEF_REF_ONLY || ICOPY
             picture_control_set_ptr->parent_pcs_ptr->cdef_bits = 0;
             picture_control_set_ptr->parent_pcs_ptr->cdef_strengths[0] = 0;
             picture_control_set_ptr->parent_pcs_ptr->nb_cdef_strengths = 1;
             picture_control_set_ptr->parent_pcs_ptr->cdef_uv_strengths[0] = 0;
-#else
-            picture_control_set_ptr->parent_pcs_ptr->cdef_bits = 0;
-
-            picture_control_set_ptr->parent_pcs_ptr->nb_cdef_strengths = 0;
-#endif
-
-
         }
-
 
         //restoration prep
 

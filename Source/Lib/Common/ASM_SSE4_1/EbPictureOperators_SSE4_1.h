@@ -20,30 +20,6 @@ extern "C" {
         uint64_t *dc_value,
         uint32_t  src_stride);
 
-    uint64_t spatial_full_distortion_kernel4x4_ssse3_intrin(
-        uint8_t   *input,
-        uint32_t   input_stride,
-        uint8_t   *recon,
-        uint32_t   recon_stride,
-        uint32_t   area_width,
-        uint32_t   area_height);
-
-    uint64_t spatial_full_distortion_kernel8x8_ssse3_intrin(
-        uint8_t   *input,
-        uint32_t   input_stride,
-        uint8_t   *recon,
-        uint32_t   recon_stride,
-        uint32_t   area_width,
-        uint32_t   area_height);
-
-    uint64_t spatial_full_distortion_kernel16_mx_n_ssse3_intrin(
-        uint8_t   *input,
-        uint32_t   input_stride,
-        uint8_t   *recon,
-        uint32_t   recon_stride,
-        uint32_t   area_width,
-        uint32_t   area_height);
-
 
 #ifdef __cplusplus
 }

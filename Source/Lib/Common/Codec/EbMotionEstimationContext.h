@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
     // Max Search Area
-#if SCENE_CONTENT_SETTINGS
+#if SCREEN_CONTENT_SETTINGS
 #define MAX_SEARCH_AREA_WIDTH       MAX_PICTURE_WIDTH_SIZE  + (PAD_VALUE << 1)
 #define MAX_SEARCH_AREA_HEIGHT      MAX_PICTURE_HEIGHT_SIZE + (PAD_VALUE << 1)
 
@@ -292,6 +292,13 @@ extern "C" {
 
     typedef struct MePredUnit 
     {
+#if MRP_ME
+        uint8_t          ref_index[MAX_NUM_OF_REF_PIC_LIST];
+#endif
+#if MRP_MD_UNI_DIR_BIPRED
+        uint8_t          ref0_list;
+        uint8_t          ref1_list;
+#endif
         uint32_t         distortion;
         EbPredDirection  prediction_direction;
         uint32_t         mv[MAX_NUM_OF_REF_PIC_LIST];
@@ -414,6 +421,11 @@ extern "C" {
         EbBool                        fractional_search64x64;
 
 
+#if M9_SUBPEL_SELECTION
+        uint8_t                       fractional_search_model;
+#endif
+        uint8_t                       hme_search_method;
+        uint8_t                       me_search_method;
         // ME
 #if QUICK_ME_CLEANUP
         uint16_t                      search_area_width;
@@ -589,6 +601,13 @@ extern "C" {
 
     } SsMeContext;
 
+    typedef uint64_t(*EB_ME_DISTORTION_FUNC)(
+        uint8_t                     *src,
+        uint32_t                     src_stride,
+        uint8_t                     *ref,
+        uint32_t                     ref_stride,
+        uint32_t                     width,
+        uint32_t                     height);
     extern EbErrorType me_context_ctor(
         MeContext     **object_dbl_ptr);
 

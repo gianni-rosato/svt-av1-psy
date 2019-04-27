@@ -103,8 +103,14 @@ void* set_me_hme_params_oq(
     me_context_ptr->number_hme_search_region_in_width = 2;
     me_context_ptr->number_hme_search_region_in_height = 2;
 
-#if SCENE_CONTENT_SETTINGS
+#if SCREEN_CONTENT_SETTINGS
     uint8_t sc_content_detected = picture_control_set_ptr->sc_content_detected;
+
+#if SCREEN_CONTENT_SETTINGS
+    picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[sc_content_detected][input_resolution][hmeMeLevel];
+    picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[sc_content_detected][input_resolution][hmeMeLevel];
+    picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[sc_content_detected][input_resolution][hmeMeLevel];
+#endif
     // HME Level0
     me_context_ptr->hme_level0_total_search_area_width = hme_level0_total_search_area_width[sc_content_detected][input_resolution][hmeMeLevel];
     me_context_ptr->hme_level0_total_search_area_height = hme_level0_total_search_area_height[sc_content_detected][input_resolution][hmeMeLevel];
@@ -181,17 +187,125 @@ EbErrorType signal_derivation_me_kernel_oq(
         set_me_hme_params_from_config(
             sequence_control_set_ptr,
             context_ptr->me_context_ptr);
- #if SCENE_CONTENT_SETTINGS   
-    if (picture_control_set_ptr->sc_content_detected)
-        context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH ; 
-    else 
+#if SCREEN_CONTENT_SETTINGS
+        if (picture_control_set_ptr->sc_content_detected)
+            if (picture_control_set_ptr->enc_mode <= ENC_M1)
+                context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH ; 
+            else
+                context_ptr->me_context_ptr->fractional_search_method = SUB_SAD_SEARCH;
+        else
 #endif
         if (picture_control_set_ptr->enc_mode <= ENC_M6)
         context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH ; 
-    else
+#if M9_FRAC_ME_SEARCH_METHOD
+        else if (picture_control_set_ptr->enc_mode <= ENC_M8)
+            context_ptr->me_context_ptr->fractionalSearchMethod = FULL_SAD_SEARCH;
+        else
+            context_ptr->me_context_ptr->fractionalSearchMethod = SUB_SAD_SEARCH;
+#else
+        else
         context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
+#endif
+#if SCREEN_CONTENT_SETTINGS
+        if (picture_control_set_ptr->sc_content_detected)
+            if (picture_control_set_ptr->enc_mode <= ENC_M1)
+                context_ptr->me_context_ptr->fractional_search64x64 = EB_TRUE;
+            else
+                context_ptr->me_context_ptr->fractional_search64x64 = EB_FALSE;
+        else
+            context_ptr->me_context_ptr->fractional_search64x64 = EB_TRUE;
+
+#endif
+#if M9_FRAC_ME_SEARCH_64x64
+    //if (picture_control_set_ptr->sc_content_detected)
+    //    context_ptr->fractional_search64x64 = EB_TRUE;
+    //else 
+    {
+        if (picture_control_set_ptr->enc_mode <= ENC_M8)
+            context_ptr->me_context_ptr->fractional_search64x64 = EB_TRUE;
+        else
+            context_ptr->me_context_ptr->fractional_search64x64 = EB_FALSE;
+    }
+#endif
+
+#if M9_SUBPEL_SELECTION
+    // Set fractional search model
+    // 0: search all blocks 
+    // 1: selective based on Full-Search SAD & MV.
+    // 2: off
+    if (picture_control_set_ptr->use_subpel_flag == 1) {
+#if NEW_PRESETS
+        if (picture_control_set_ptr->enc_mode <= ENC_M6) {
+            context_ptr->me_context_ptr->fractional_search_model = 0;
+        }
+        else {
+            context_ptr->me_context_ptr->fractional_search_model = 1;
+        }
+#else
+        if (picture_control_set_ptr->enc_mode <= ENC_M8) {
+            context_ptr->me_context_ptr->fractional_search_model = 0;
+        }
+        else {
+            context_ptr->me_context_ptr->fractional_search_model = 1;
+        }
+#endif
+    }
+    else {
+        context_ptr->me_context_ptr->fractional_search_model = 2;
+    }
+#endif
 
 
+#if USE_SAD_HME
+    // HME Search Method
+#if NEW_PRESETS
+#if SCREEN_CONTENT_SETTINGS
+    if (picture_control_set_ptr->sc_content_detected)
+        if (picture_control_set_ptr->enc_mode <= ENC_M6)
+            context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
+        else
+            context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+    else
+#endif
+    context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
+#else
+#if MOD_M0
+    context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+#else
+    context_ptr->me_context_ptr->hme_search_method = (picture_control_set_ptr->enc_mode == ENC_M0) ?
+        FULL_SAD_SEARCH :
+        SUB_SAD_SEARCH;
+#endif
+#endif
+#else
+    context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+#endif
+#if USE_SAD_ME
+    // ME Search Method
+#if NEW_PRESETS
+#if SCREEN_CONTENT_SETTINGS
+    if (picture_control_set_ptr->sc_content_detected)
+        if (picture_control_set_ptr->enc_mode <= ENC_M3)
+            context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
+        else
+            context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+    else
+#endif
+    context_ptr->me_context_ptr->me_search_method = (picture_control_set_ptr->enc_mode <= ENC_M1) ?
+        FULL_SAD_SEARCH :
+        SUB_SAD_SEARCH;
+#else
+#if MOD_M0
+    context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+#else
+    context_ptr->me_context_ptr->me_search_method = (picture_control_set_ptr->enc_mode == ENC_M0) ?
+        FULL_SAD_SEARCH :
+        SUB_SAD_SEARCH;
+#endif
+#endif
+#else
+    context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH  ;
+#endif
     return return_error;
 };
 /************************************************
@@ -269,7 +383,7 @@ EbErrorType ComputeDecimatedZzSad(
         for (x_lcu_index = xLcuStartIndex; x_lcu_index < xLcuEndIndex; ++x_lcu_index) {
 
             sb_index = x_lcu_index + y_lcu_index * sequence_control_set_ptr->picture_width_in_sb;
-            LcuParameters *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+            SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
 
             sb_width = sb_params->width;
             sb_height = sb_params->height;
@@ -546,12 +660,28 @@ void* motion_estimation_kernel(void *input_ptr)
                         {
                             uint8_t  *framePtr = &sixteenth_decimated_picture_ptr->buffer_y[bufferIndex];
                             uint8_t  *localPtr = context_ptr->me_context_ptr->sixteenth_sb_buffer;
-
+#if USE_SAD_HMEL0 
+                            if (context_ptr->me_context_ptr->hme_search_method == FULL_SAD_SEARCH) {
+                                for (lcuRow = 0; lcuRow < (sb_height >> 2); lcuRow += 1) {
+                                    EB_MEMCPY(localPtr, framePtr, (sb_width >> 2) * sizeof(uint8_t));
+                                    localPtr += 16;
+                                    framePtr += sixteenth_decimated_picture_ptr->stride_y;
+                                }
+                            }
+                            else {
+                                for (lcuRow = 0; lcuRow < (sb_height >> 2); lcuRow += 2) {
+                                    EB_MEMCPY(localPtr, framePtr, (sb_width >> 2) * sizeof(uint8_t));
+                                    localPtr += 16;
+                                    framePtr += sixteenth_decimated_picture_ptr->stride_y << 1;
+                                }
+                            }
+#else
                             for (lcuRow = 0; lcuRow < (sb_height >> 2); lcuRow += 2) {
                                 EB_MEMCPY(localPtr, framePtr, (sb_width >> 2) * sizeof(uint8_t));
                                 localPtr += 16;
                                 framePtr += sixteenth_decimated_picture_ptr->stride_y << 1;
                             }
+#endif
                         }
                     }
 
@@ -566,7 +696,9 @@ void* motion_estimation_kernel(void *input_ptr)
                 }
             }
         }
-
+#if M9_INTRA
+        if ( picture_control_set_ptr->intra_pred_mode > 4)
+#endif
         // *** OPEN LOOP INTRA CANDIDATE SEARCH CODE ***
         {
 
@@ -688,8 +820,9 @@ void* motion_estimation_kernel(void *input_ptr)
             }
             else {
                 
-
-
+#if !RC
+                uint32_t                       bestOisCuIndex = 0;
+#endif
                 for (y_lcu_index = yLcuStartIndex; y_lcu_index < yLcuEndIndex; ++y_lcu_index) {
                     for (x_lcu_index = xLcuStartIndex; x_lcu_index < xLcuEndIndex; ++x_lcu_index) {
                         sb_origin_x = x_lcu_index * sequence_control_set_ptr->sb_sz;

@@ -37,7 +37,11 @@ extern "C" {
        ************************************************/
     typedef struct ReferenceList
     {
+#if MRP_ME
+        int32_t                              *reference_list;
+#else
         int32_t                              reference_list;
+#endif
         uint32_t                              reference_list_count;
 
     } ReferenceList;
@@ -73,8 +77,13 @@ extern "C" {
     {
         uint32_t temporal_layer_index;
         uint32_t decode_order;
+#if MRP_ME
+        int32_t                              ref_list0[REF_LIST_MAX_DEPTH];
+        int32_t                              ref_list1[REF_LIST_MAX_DEPTH];
+#else
         int32_t  ref_list0;
         int32_t  ref_list1;
+#endif
     } PredictionStructureConfigEntry;
 
     /************************************************
@@ -109,7 +118,14 @@ extern "C" {
         uint32_t                              short_term_rps_in_sps_index;
         EbBool                             inter_rps_prediction_flag;
         EbBool                             long_term_rps_present_flag;
+        uint32_t                              gop_position_least_significant_bits;
 
+        // Predicted Short-Term RPS
+        uint32_t                              delta_rps_index_minus1;
+        uint32_t                              absolute_delta_rps_minus1;
+        uint32_t                              delta_rps_sign;
+        EbBool                             used_by_curr_pic_flag[MAX_NUM_OF_REF_PICS_TOTAL];
+        EbBool                             used_by_future_pic_flag[MAX_NUM_OF_REF_PICS_TOTAL];
         // Non-Predicted Short-Term RPS
         uint32_t                              negative_ref_pics_total_count;
         uint32_t                              positive_ref_pics_total_count;
@@ -118,14 +134,28 @@ extern "C" {
         EbBool                             used_by_negative_curr_pic_flag[MAX_NUM_OF_NEGATIVE_REF_PICS];
         EbBool                             used_by_positive_curr_pic_flag[MAX_NUM_OF_POSITIVE_REF_PICS];
 
+        // Long-Term RPS
+        uint32_t                              long_term_ref_pics_total_count;
+        uint32_t                              delta_gop_poslsb[MAX_NUM_OF_REF_PICS_TOTAL];
+        EbBool                             delta_gop_pos_msb_present_flag[MAX_NUM_OF_REF_PICS_TOTAL];
+        uint32_t                              delta_gop_pos_msb_minus1[MAX_NUM_OF_REF_PICS_TOTAL];
+        EbBool                             used_by_lt_curr_pic_flag_array[MAX_NUM_OF_REF_PICS_TOTAL];
         // List Construction
         EbBool                             ref_pics_override_total_count_flag;
         int32_t                              ref_pics_list0_total_count_minus1;
         int32_t                              ref_pics_list1_total_count_minus1;
+        EbBool                             lists_modification_present_flag;
+        EbBool                             restricted_ref_pic_lists_flag;      // Same list enable flag (if set,
+                                                                            //   it implies all slices of the
+                                                                            //   same type in the same picture
+                                                                            //   have identical lists)
 
         // List Modification
         // *Note - This should probably be moved to the slice header since its a dynamic control - JMJ Jan 2, 2013
         EbBool                             list0_modification_flag;
+        EbBool                             list1_modification_flag;
+        uint32_t                              list0_mod_index[MAX_NUM_OF_REF_PICS_TOTAL];
+        uint32_t                              list1_mod_index[MAX_NUM_OF_REF_PICS_TOTAL];
 
         // Lists Combination (STUB)
 
@@ -175,6 +205,9 @@ extern "C" {
      * Declarations
      ************************************************/
     extern EbErrorType prediction_structure_group_ctor(
+#if MRP_M1
+        uint8_t          enc_mode,
+#endif
         PredictionStructureGroup   **predictionStructureGroupDblPtr,
         uint32_t                        base_layer_switch_mode);
 
@@ -183,11 +216,24 @@ extern "C" {
         EbPred                        pred_structure,
         uint32_t                         number_of_references,
         uint32_t                         levels_of_hierarchy);
-
+#if NEW_RPS
+    enum {
+        LAST = 0,
+        LAST2 = 1,
+        LAST3 = 2,
+        GOLD = 3,
+        BWD = 4,
+        ALT2 = 5,
+        ALT = 6
+    } REF_FRAME_MINUS1;
+#endif
     typedef struct Av1RpsNode 
     {
         uint8_t refresh_frame_mask;
         uint8_t ref_dpb_index[7];//LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
+#if REF_ORDER
+        uint64_t ref_poc_array[7]; //decoder based ref poc array //LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
+#endif
     } Av1RpsNode;
 
 

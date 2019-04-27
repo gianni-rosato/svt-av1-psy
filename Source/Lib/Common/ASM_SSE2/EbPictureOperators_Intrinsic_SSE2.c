@@ -897,4 +897,180 @@ void picture_addition_kernel16bit_sse2_intrin(
     return;
 }
 
+static INLINE __m128i Distortion_SSE2_INTRIN(const __m128i input,
+    const __m128i recon, const __m128i sum) {
+    const __m128i in = _mm_unpacklo_epi8(input, _mm_setzero_si128());
+    const __m128i re = _mm_unpacklo_epi8(recon, _mm_setzero_si128());
+    const __m128i diff = _mm_sub_epi16(in, re);
+    const __m128i dist = _mm_madd_epi16(diff, diff);
+    return _mm_add_epi32(sum, dist);
+}
 
+uint64_t spatial_full_distortion_kernel4x_n_sse2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m128i sum = _mm_setzero_si128();
+
+    (void)area_width;
+
+    do {
+        const __m128i in = _mm_cvtsi32_si128(*(uint32_t *)input);
+        const __m128i re = _mm_cvtsi32_si128(*(uint32_t *)recon);
+        sum = Distortion_SSE2_INTRIN(in, re, sum);
+        input += input_stride;
+        recon += recon_stride;
+    } while (--row_count);
+
+    sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 4));
+
+    return _mm_cvtsi128_si32(sum);
+}
+
+uint64_t spatial_full_distortion_kernel8x_n_sse2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m128i sum = _mm_setzero_si128();
+
+    (void)area_width;
+
+    do {
+        const __m128i in = _mm_loadl_epi64((__m128i *)input);
+        const __m128i re = _mm_loadl_epi64((__m128i *)recon);
+        sum = Distortion_SSE2_INTRIN(in, re, sum);
+        input += input_stride;
+        recon += recon_stride;
+    } while (--row_count);
+
+    return Hadd32_SSE2_INTRIN(sum);
+}
+
+static INLINE void SpatialFullDistortionKernel16_SSE2_INTRIN(
+    const uint8_t *const input, const uint8_t *const recon, __m128i *const sum)
+{
+    const __m128i in = _mm_loadu_si128((__m128i *)input);
+    const __m128i re = _mm_loadu_si128((__m128i *)recon);
+    const __m128i max = _mm_max_epu8(in, re);
+    const __m128i min = _mm_min_epu8(in, re);
+    const __m128i diff = _mm_sub_epi8(max, min);
+    const __m128i diff_L = _mm_unpacklo_epi8(diff, _mm_setzero_si128());
+    const __m128i diff_H = _mm_unpackhi_epi8(diff, _mm_setzero_si128());
+    const __m128i dist_L = _mm_madd_epi16(diff_L, diff_L);
+    const __m128i dist_H = _mm_madd_epi16(diff_H, diff_H);
+    const __m128i dist = _mm_add_epi32(dist_L, dist_H);
+    *sum = _mm_add_epi32(*sum, dist);
+}
+
+static INLINE void SpatialFullDistortionKernel32_SSE2_INTRIN(
+    const uint8_t *const input, const uint8_t *const recon, __m128i *const sum)
+{
+    SpatialFullDistortionKernel16_SSE2_INTRIN(input + 0 * 16, recon + 0 * 16, sum);
+    SpatialFullDistortionKernel16_SSE2_INTRIN(input + 1 * 16, recon + 1 * 16, sum);
+}
+
+static INLINE void SpatialFullDistortionKernel64_SSE2_INTRIN(
+    const uint8_t *const input, const uint8_t *const recon, __m128i *const sum)
+{
+    SpatialFullDistortionKernel32_SSE2_INTRIN(input + 0 * 32, recon + 0 * 32, sum);
+    SpatialFullDistortionKernel32_SSE2_INTRIN(input + 1 * 32, recon + 1 * 32, sum);
+}
+
+uint64_t spatial_full_distortion_kernel16x_n_sse2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m128i sum = _mm_setzero_si128();
+
+    (void)area_width;
+
+    do {
+        SpatialFullDistortionKernel16_SSE2_INTRIN(input, recon, &sum);
+        input += input_stride;
+        recon += recon_stride;
+    } while (--row_count);
+
+    return Hadd32_SSE2_INTRIN(sum);
+}
+
+uint64_t spatial_full_distortion_kernel32x_n_sse2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m128i sum = _mm_setzero_si128();
+
+    (void)area_width;
+
+    do {
+        SpatialFullDistortionKernel32_SSE2_INTRIN(input, recon, &sum);
+        input += input_stride;
+        recon += recon_stride;
+    } while (--row_count);
+
+    return Hadd32_SSE2_INTRIN(sum);
+}
+
+uint64_t spatial_full_distortion_kernel64x_n_sse2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m128i sum = _mm_setzero_si128();
+
+    (void)area_width;
+
+    do {
+        SpatialFullDistortionKernel64_SSE2_INTRIN(input, recon, &sum);
+        input += input_stride;
+        recon += recon_stride;
+    } while (--row_count);
+
+    return Hadd32_SSE2_INTRIN(sum);
+}
+
+uint64_t spatial_full_distortion_kernel128x_n_sse2_intrin(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *recon,
+    uint32_t   recon_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    int32_t row_count = area_height;
+    __m128i sum = _mm_setzero_si128();
+
+    (void)area_width;
+
+    do {
+        SpatialFullDistortionKernel64_SSE2_INTRIN(input + 0 * 64, recon + 0 * 64, &sum);
+        SpatialFullDistortionKernel64_SSE2_INTRIN(input + 1 * 64, recon + 1 * 64, &sum);
+        input += input_stride;
+        recon += recon_stride;
+    } while (--row_count);
+
+    return Hadd32_SSE2_INTRIN(sum);
+}

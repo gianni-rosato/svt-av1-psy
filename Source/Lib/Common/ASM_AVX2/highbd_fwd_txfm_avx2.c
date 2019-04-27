@@ -241,6 +241,29 @@ static INLINE __m128i half_btf_small(const __m128i *w0, const __m128i *n0,
 
 // out0 = in0*w0 + in1*w1
 // out1 = -in1*w0 + in0*w1
+#define btf_32_avx2_type0(w0, w1, in0, in1, out0, out1, bit) \
+  do {                                                         \
+    const __m256i ww0 = _mm256_set1_epi32(w0);                    \
+    const __m256i ww1 = _mm256_set1_epi32(w1);                    \
+    const __m256i in0_w0 = _mm256_mullo_epi32(in0, ww0);          \
+    const __m256i in1_w1 = _mm256_mullo_epi32(in1, ww1);          \
+    out0 = _mm256_add_epi32(in0_w0, in1_w1);                      \
+    out0 = av1_round_shift_32_avx2(out0, bit);               \
+    const __m256i in0_w1 = _mm256_mullo_epi32(in0, ww1);          \
+    const __m256i in1_w0 = _mm256_mullo_epi32(in1, ww0);          \
+    out1 = _mm256_sub_epi32(in0_w1, in1_w0);                      \
+    out1 = av1_round_shift_32_avx2(out1, bit);               \
+      } while (0)
+
+// out0 = in0*w0 + in1*w1
+// out1 = in1*w0 - in0*w1
+#define btf_32_avx2_type1(w0, w1, in0, in1, out0, out1, bit) \
+  do {                                                         \
+    btf_32_avx2_type0(w1, w0, in1, in0, out0, out1, bit);    \
+      } while (0)
+
+// out0 = in0*w0 + in1*w1
+// out1 = -in1*w0 + in0*w1
 #define btf_32_type0_avx2_new(ww0, ww1, in0, in1, out0, out1, r, bit) \
   do {                                                                  \
     const __m256i in0_w0 = _mm256_mullo_epi32(in0, ww0);                   \
@@ -4087,7 +4110,7 @@ void av1_fwd_txfm2d_32x32_avx2(int16_t *input, int32_t *output,
     fwd_txfm2d_32x32_avx2(input, output, stride, &cfg, txfm_buf);
 }
 
-#if PF_N2_32X32
+#if 0//PF_N2_SUPPORT // Broken support by commit fa20efe18e1ed867720475b8c52d9c5e54427d60 in master
 void av1_idtx32_pf_new_avx2(const __m256i *input, __m256i *output, int8_t cos_bit,
     const int32_t col_num) {
     (void)cos_bit;

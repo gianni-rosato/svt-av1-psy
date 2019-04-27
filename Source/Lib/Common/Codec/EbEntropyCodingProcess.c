@@ -655,18 +655,33 @@ void* entropy_coding_kernel(void *input_ptr)
 
                         // Release the List 0 Reference Pictures
                         for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list0_count; ++ref_idx) {
+#if MRP_MD
+                            if (picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL) {
+#else
                             if (picture_control_set_ptr->ref_pic_ptr_array[0] != EB_NULL) {
+#endif
 
+#if MRP_MD
+                                eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx]);
+#else
                                 eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0]);
+#endif
                             }
                         }
 
                         // Release the List 1 Reference Pictures
                         for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list1_count; ++ref_idx) {
+#if MRP_MD
+                            if (picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL) {
+
+                                eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx]);
+                            }
+#else
                             if (picture_control_set_ptr->ref_pic_ptr_array[1] != EB_NULL) {
 
                                 eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1]);
                             }
+#endif
                         }
 
                         // Get Empty Entropy Coding Results
@@ -802,16 +817,28 @@ void* entropy_coding_kernel(void *input_ptr)
 
                  // Release the List 0 Reference Pictures
                  for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list0_count; ++ref_idx) {
+#if MRP_MD
+                     if (picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL) {
+                         eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx]);
+                     }
+#else
                      if (picture_control_set_ptr->ref_pic_ptr_array[0] != EB_NULL) {
                          eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0]);
                      }
+#endif
                  }
 
                  // Release the List 1 Reference Pictures
                  for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list1_count; ++ref_idx) {
+#if MRP_MD
+                     if (picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL) {
+                         eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx]);
+                     }
+#else
                      if (picture_control_set_ptr->ref_pic_ptr_array[1] != EB_NULL) {
                          eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1]);
                      }
+#endif
                  }
 
                  // Get Empty Entropy Coding Results

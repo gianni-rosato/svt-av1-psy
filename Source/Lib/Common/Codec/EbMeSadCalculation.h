@@ -27,7 +27,8 @@ extern "C" {
         uint32_t  *p_best_mv8x8,
         uint32_t  *p_best_mv16x16,
         uint32_t   mv,
-        uint32_t  *p_sad16x16);
+        uint32_t  *p_sad16x16,
+        EbBool     sub_sad);
 
     typedef void(*EbExtSadCalculation8x8and16x16Type)(
         uint8_t   *src,
@@ -40,7 +41,8 @@ extern "C" {
         uint32_t  *p_best_mv16x16,
         uint32_t   mv,
         uint32_t  *p_sad16x16,
-        uint32_t  *p_sad8x8);
+        uint32_t  *p_sad8x8,
+        EbBool    sub_sad);
 
     typedef void(*EbExtSadCalculation32x32and64x64Type)(
         uint32_t  *p_sad16x16,
@@ -91,7 +93,8 @@ extern "C" {
         uint32_t        count32,
         uint32_t        value);
 
-    typedef void(*EbExtAllSadCalculation8x816x16Type)(
+#if NSQ_ME_OPT
+    typedef void(*EB_EXT_ALL_SAD_CALCULATION_8x8_16x16_TYPE)(
         uint8_t   *src,
         uint32_t   src_stride,
         uint8_t   *ref,
@@ -138,7 +141,7 @@ extern "C" {
         uint32_t *p_best_mv64x64,
         uint32_t  mv,
         uint32_t p_sad32x32[4][8]);
-
+#endif
     static EbInializeBuffer32Bits initialize_buffer32bits_func_ptr_array[ASM_TYPE_TOTAL] = {
         // NON_AVX2
         initialize_buffer_32bits_sse2_intrin,

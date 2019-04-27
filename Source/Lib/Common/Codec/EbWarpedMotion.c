@@ -11,7 +11,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
 #include <math.h>
 #include <assert.h>
 #include "EbWarpedMotion.h"

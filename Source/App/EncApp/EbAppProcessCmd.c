@@ -894,7 +894,7 @@ void ReadInputFrames(
             inputPtr->cb_ext = config->sequence_buffer[config->processed_frame_count % config->buffered_input] + luma8bitSize + 2 * chroma8bitSize + luma2bitSize;
             inputPtr->cr_ext = config->sequence_buffer[config->processed_frame_count % config->buffered_input] + luma8bitSize + 2 * chroma8bitSize + luma2bitSize + chroma2bitSize;
 
-            headerPtr->n_filled_len = luma8bitSize + luma2bitSize + 2 * (chroma8bitSize + chroma2bitSize);
+            headerPtr->n_filled_len = (uint32_t)(luma8bitSize + luma2bitSize + 2 * (chroma8bitSize + chroma2bitSize));
         } else {
             //Normal unpacked mode:yuv420p10le yuv422p10le yuv444p10le
             const size_t lumaSize = (input_padded_width * input_padded_height) << is16bit;
@@ -910,7 +910,7 @@ void ReadInputFrames(
             inputPtr->cb = config->sequence_buffer[config->processed_frame_count % config->buffered_input] + lumaSize;
             inputPtr->cr = config->sequence_buffer[config->processed_frame_count % config->buffered_input] + lumaSize+ chromaSize;
 
-            headerPtr->n_filled_len = lumaSize + 2 * chromaSize;
+            headerPtr->n_filled_len = (uint32_t)(lumaSize + 2 * chromaSize);
         }
     }
 
@@ -981,7 +981,7 @@ AppExitConditionType ProcessInputBuffer(
     const int64_t frames_to_be_encoded = config->frames_to_be_encoded;
     int64_t totalBytesToProcessCount;
     int64_t remainingByteCount;
-    uint32_t compressed10bitFrameSize = (input_padded_width*input_padded_height) + 2 * ((input_padded_width*input_padded_width) >> (3 - color_format));
+    uint32_t compressed10bitFrameSize = (uint32_t)((input_padded_width*input_padded_height) + 2 * ((input_padded_width*input_padded_width) >> (3 - color_format)));
     compressed10bitFrameSize += compressed10bitFrameSize / 4;
 
     if (config->injector && config->processed_frame_count)

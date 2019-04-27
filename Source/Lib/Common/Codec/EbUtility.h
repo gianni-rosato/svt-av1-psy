@@ -14,6 +14,13 @@ extern "C" {
     /****************************
      * UTILITY FUNCTIONS
      ****************************/
+#if RED_CU
+    typedef struct BlockList_s
+    {
+        uint8_t  list_size;
+        uint16_t blk_mds_table[3]; //stores a max of 3 redundant blocks
+    }BlockList_t;  
+#endif
 
     void build_blk_geom();
     typedef struct BlockGeom
@@ -27,6 +34,13 @@ extern "C" {
         uint16_t   sqi_mds;                     // index of the parent square in md  scan.
         uint8_t    totns;                       // max number of ns blocks within one partition 1..4 (N:1,H:2,V:2,HA:3,HB:3,VA:3,VB:3,H4:4,V4:4)
         uint8_t    nsi;                         // non square index within a partition  0..totns-1
+#if RED_CU
+        uint8_t        similar;                 // 1: means that this block is similar (same shape/location) to another
+        uint8_t        quadi;                   // parent square is in which quadrant 0..3
+        uint8_t        redund;                  // 1: means that this block is redundant to another
+        BlockList_t    redund_list;             // the list where the block is redundant 
+        BlockList_t    similar_list;       
+#endif
                    
                    
         uint8_t    bwidth;                      // block width

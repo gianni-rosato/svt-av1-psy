@@ -275,7 +275,7 @@ EbErrorType MdcRefinement(
 
     return return_error;
 }
-
+#if !OPT_LOSSLESS_0
 /*******************************************
 Derive the contouring class
 If (AC energy < 32 * 32) then apply aggressive action (Class 1),
@@ -293,7 +293,7 @@ uint8_t derive_contouring_class(
 
     if (parent_pcs_ptr->is_sb_homogeneous_over_time[sb_index]) {
         if (leaf_index > 0) {
-            LcuParameters            *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+            SbParams            *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
             if (sb_params->is_edge_sb) {
 
                 if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1) {
@@ -321,7 +321,7 @@ uint8_t derive_contouring_class(
     }
     return(contouringClass);
 }
-
+#endif
 
 void RefinementPredictionLoop(
     SequenceControlSet                   *sequence_control_set_ptr,
@@ -332,15 +332,19 @@ void RefinementPredictionLoop(
 {
 
     MdcpLocalCodingUnit    *local_cu_array         = context_ptr->local_cu_array;
-    LcuParameters               *sb_params            = &sequence_control_set_ptr->sb_params_array[sb_index];
+    SbParams               *sb_params            = &sequence_control_set_ptr->sb_params_array[sb_index];
     uint32_t                  cu_index             = 0;
+#if !MEMORY_FOOTPRINT_OPT
     sb_ptr->pred64 = EB_FALSE;
+#endif
     while (cu_index < CU_MAX_COUNT)
     {
         if (sb_params->raster_scan_cu_validity[md_scan_to_raster_scan[cu_index]] && (local_cu_array[cu_index].early_split_flag == EB_FALSE))
         {
             local_cu_array[cu_index].selected_cu = EB_TRUE;
+#if !MEMORY_FOOTPRINT_OPT
             sb_ptr->pred64 = (cu_index == 0) ? EB_TRUE : sb_ptr->pred64;
+#endif
             uint32_t depth = get_coded_unit_stats(cu_index)->depth;
             uint8_t refinementLevel;   
             {
@@ -387,7 +391,7 @@ void RefinementPredictionLoop(
     } // End while 1 CU Loop
 }
 
-
+#if !DISABLE_OIS_USE
 void PrePredictionRefinement(
     SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet                    *picture_control_set_ptr,
@@ -397,7 +401,7 @@ void PrePredictionRefinement(
     uint32_t                                 *endDepth
 )
 {
-    LcuParameters    *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+    SbParams    *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
 
     EB_SLICE        slice_type = picture_control_set_ptr->slice_type;
 
@@ -407,11 +411,6 @@ void PrePredictionRefinement(
     uint8_t           stationary_edge_over_time_flag = sb_stat_ptr->stationary_edge_over_time_flag;
 
     uint8_t           aura_status_iii = sb_ptr->aura_status_iii;
-
-
-
-
-
 
     if (picture_control_set_ptr->parent_pcs_ptr->high_dark_low_light_area_density_flag && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 && picture_control_set_ptr->parent_pcs_ptr->sharp_edge_sb_flag[sb_index] && !picture_control_set_ptr->parent_pcs_ptr->similar_colocated_sb_array_ii[sb_index]) {
         *startDepth = DEPTH_16;
@@ -446,6 +445,7 @@ void PrePredictionRefinement(
         *startDepth = DEPTH_16;
     }
 }
+#endif
 
 
 void ForwardCuToModeDecision(
@@ -461,7 +461,7 @@ void ForwardCuToModeDecision(
     uint32_t                  cuClass = DO_NOT_ADD_CU_CONTINUE_SPLIT;
     EbBool                 split_flag = EB_TRUE;
     MdcLcuData           *resultsPtr = &picture_control_set_ptr->mdc_sb_array[sb_index];
-    LcuParameters            *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+    SbParams            *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
     MdcpLocalCodingUnit  *local_cu_array = context_ptr->local_cu_array;
     EB_SLICE                slice_type = picture_control_set_ptr->slice_type;
 
@@ -780,7 +780,7 @@ void PredictionPartitionLoop(
     MdcpLocalCodingUnit *local_cu_array = context_ptr->local_cu_array;
     MdcpLocalCodingUnit   *cu_ptr;
 
-    LcuParameters *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+    SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
     uint32_t      cuIndexInRaterScan;
     uint32_t      cu_index = 0;
     uint32_t      start_index = 0;
@@ -812,7 +812,32 @@ void PredictionPartitionLoop(
 
                 if (picture_control_set_ptr->slice_type != I_SLICE) {
 
+#if MD_INJECTION
+                    const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index];
+                    const MeCandidate *me_block_results = me_results->me_candidate[cuIndexInRaterScan];
+                    uint8_t total_me_cnt = me_results->total_me_candidate_index[cuIndexInRaterScan];
+                    uint8_t me_index = 0;
+                    for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; me_candidate_index++) {
+                        const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
+                        if (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) {
+                            if (me_block_results_ptr->direction == 0) {
+                                me_index = me_candidate_index;
+                                break;
+                            }
+                        }
+                        else {
+                            if (me_block_results_ptr->direction == 2) {
+                                me_index = me_candidate_index;
+                                break;
+                            }
+                        }
+                    }
+
+                    //const MeCandidate_t *me_results = &me_block_results[me_index];
+
+#else
                     MeCuResults * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cuIndexInRaterScan];
+#endif
                     // Initialize the mdc candidate (only av1 rate estimation inputs)
                     // Hsan: mode, direction, .. could be modified toward better early inter depth decision (e.g. NEARESTMV instead of NEWMV)
                     context_ptr->mdc_candidate_ptr->md_rate_estimation_ptr = context_ptr->md_rate_estimation_ptr;
@@ -820,7 +845,11 @@ void PredictionPartitionLoop(
                     context_ptr->mdc_candidate_ptr->merge_flag = EB_FALSE;
                     context_ptr->mdc_candidate_ptr->prediction_direction[0] = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ?
                         UNI_PRED_LIST_0 :
+#if MD_INJECTION
+                        me_block_results[me_index].direction;
+#else
                         mePuResult->distortion_direction[0].direction;
+#endif
                     // Hsan: what's the best mode for rate simulation
                     context_ptr->mdc_candidate_ptr->inter_mode = NEARESTMV;
                     context_ptr->mdc_candidate_ptr->pred_mode = NEARESTMV;
@@ -828,10 +857,20 @@ void PredictionPartitionLoop(
                     context_ptr->mdc_candidate_ptr->is_new_mv = 1;
                     context_ptr->mdc_candidate_ptr->is_zero_mv = 0;
                     context_ptr->mdc_candidate_ptr->drl_index = 0;
+#if MD_INJECTION
+                    context_ptr->mdc_candidate_ptr->motion_vector_xl0 = me_block_results[me_index].x_mv_l0 << 1;
+                    context_ptr->mdc_candidate_ptr->motion_vector_yl0 = me_block_results[me_index].y_mv_l0 << 1;
+#else
                     context_ptr->mdc_candidate_ptr->motion_vector_xl0 = mePuResult->x_mv_l0 << 1;
                     context_ptr->mdc_candidate_ptr->motion_vector_yl0 = mePuResult->y_mv_l0 << 1;
+#endif
+#if MD_INJECTION
+                    context_ptr->mdc_candidate_ptr->motion_vector_xl1 = me_block_results[me_index].x_mv_l1 << 1;
+                    context_ptr->mdc_candidate_ptr->motion_vector_yl1 = me_block_results[me_index].y_mv_l1 << 1;
+#else
                     context_ptr->mdc_candidate_ptr->motion_vector_xl1 = mePuResult->x_mv_l1 << 1;
                     context_ptr->mdc_candidate_ptr->motion_vector_yl1 = mePuResult->y_mv_l1 << 1;
+#endif
                     context_ptr->mdc_candidate_ptr->ref_mv_index = 0;
                     context_ptr->mdc_candidate_ptr->pred_mv_weight = 0;
                     if (context_ptr->mdc_candidate_ptr->prediction_direction[0] == BI_PRED) {
@@ -864,7 +903,11 @@ void PredictionPartitionLoop(
                         context_ptr->mdc_cu_ptr,
                         context_ptr->mdc_candidate_ptr,
                         context_ptr->qp,
+#if MD_INJECTION
+                        me_block_results[me_index].distortion,
+#else
                         mePuResult->distortion_direction[0].distortion,
+#endif
                         (uint64_t) 0,
                         context_ptr->lambda,
                         0,
@@ -873,6 +916,9 @@ void PredictionPartitionLoop(
                         context_ptr->blk_geom,
                         (tbOriginY + context_ptr->blk_geom->origin_y) >> MI_SIZE_LOG2,
                         (tbOriginX + context_ptr->blk_geom->origin_x) >> MI_SIZE_LOG2,
+#if MRP_COST_EST
+                        0,
+#endif
                         DC_PRED,        // Hsan: neighbor not generated @ open loop partitioning
                         DC_PRED);       // Hsan: neighbor not generated @ open loop partitioning
 

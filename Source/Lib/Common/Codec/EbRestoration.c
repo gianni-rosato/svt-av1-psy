@@ -125,6 +125,11 @@ static INLINE ConvolveParams get_conv_params_wiener(int32_t bd) {
     conv_params.dst_stride = 0;
     conv_params.plane = 0;
 
+    // Initialization
+    conv_params.fwd_offset = 0;
+    conv_params.bck_offset = 0;
+    conv_params.use_jnt_comp_avg = 0;
+
     return conv_params;
 }
 

@@ -7,8 +7,7 @@
 
 #include <emmintrin.h>
 #include <immintrin.h>
-
-#include "EbDefinitions.h"
+#include <stdint.h>
 
 
 void eb_enc_un_pack8_bit_data_avx2_intrin(

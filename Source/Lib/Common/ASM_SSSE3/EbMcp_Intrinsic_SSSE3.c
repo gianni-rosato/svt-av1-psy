@@ -68,8 +68,7 @@ static void PrefetchBlock(uint8_t *src, uint32_t src_stride, uint32_t blkWidth, 
 #if PREFETCH
     uint32_t row_count = blkHeight;
 
-    do
-    {
+    do {
         uint8_t *addr0 = src;
         uint8_t *addr1 = addr0 + blkWidth - 1;
         src += src_stride;
@@ -108,8 +107,7 @@ void PictureCopyKernel_SSSE3(
         EbByte ptr = src;
         EbByte qtr = dst;
         row_count = area_height;
-        do
-        {
+        do {
             // Note: do only one at a time to minimize number of registers used
             uint16_t a0;
             a0 = *(uint16_t *)ptr; ptr += src_stride;
@@ -130,8 +128,7 @@ void PictureCopyKernel_SSSE3(
         EbByte ptr = src;
         EbByte qtr = dst;
         row_count = area_height;
-        do
-        {
+        do {
             __m128i a0, a1;
             a0 = _mm_cvtsi32_si128(*(uint32_t *)ptr); ptr += src_stride;
             a1 = _mm_cvtsi32_si128(*(uint32_t *)ptr); ptr += src_stride;
@@ -153,8 +150,7 @@ void PictureCopyKernel_SSSE3(
         EbByte ptr = src;
         EbByte qtr = dst;
         row_count = area_height;
-        do
-        {
+        do {
             __m128i a0, a1;
             a0 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
             a1 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
@@ -172,13 +168,11 @@ void PictureCopyKernel_SSSE3(
     }
 
     col_count = area_width;
-    do
-    {
+    do {
         EbByte ptr = src;
         EbByte qtr = dst;
         row_count = area_height;
-        do
-        {
+        do {
             __m128i a0, a1;
             a0 = _mm_loadu_si128((__m128i *)ptr); ptr += src_stride;
             a1 = _mm_loadu_si128((__m128i *)ptr); ptr += src_stride;
@@ -244,8 +238,7 @@ void LumaInterpolationFilterTwoDInRaw7_SSSE3(int16_t *first_pass_if_dst, EbByte 
 
         qtr = dst;
 
-        do
-        {
+        do {
             a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0 * 4));
             a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 1 * 4));
             a2 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 2 * 4));
@@ -296,13 +289,11 @@ void LumaInterpolationFilterTwoDInRaw7_SSSE3(int16_t *first_pass_if_dst, EbByte 
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         EbByte qtr = dst;
 
         row_count = pu_height;
-        do
-        {
+        do {
             a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0 * 8));
             a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 1 * 8));
             a2 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 2 * 8));
@@ -353,8 +344,7 @@ void LumaInterpolationFilterTwoDInRawOutRaw7_SSSE3(int16_t *first_pass_if_dst, i
     {
         row_count = pu_height;
 
-        do
-        {
+        do {
             __m128i sum0, sum1;
             a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0 * 4));
             a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 1 * 4));
@@ -393,11 +383,9 @@ void LumaInterpolationFilterTwoDInRawOutRaw7_SSSE3(int16_t *first_pass_if_dst, i
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         row_count = pu_height;
-        do
-        {
+        do {
             __m128i b0l, b0h, b1l, b1h, b2l, b2h;
             __m128i sum0, sum1;
 
@@ -454,15 +442,11 @@ void LumaInterpolationFilterTwoDInRawM_SSSE3(int16_t *first_pass_if_dst, EbByte 
     c1 = _mm_shuffle_epi32(c0, 0x55);
     c0 = _mm_shuffle_epi32(c0, 0x00);
 
-
-
-    if (pu_width & 4)
-    {
+    if (pu_width & 4){
         row_count = pu_height;
         qtr = dst;
 
-        do
-        {
+        do {
             a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0 * 4));
             a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 1 * 4));
             a2 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 2 * 4));
@@ -506,13 +490,11 @@ void LumaInterpolationFilterTwoDInRawM_SSSE3(int16_t *first_pass_if_dst, EbByte 
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         qtr = dst;
 
         row_count = pu_height;
-        do
-        {
+        do {
             a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0 * 8));
             a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 1 * 8));
             a2 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 2 * 8));
@@ -548,8 +530,8 @@ void LumaInterpolationFilterTwoDInRawM_SSSE3(int16_t *first_pass_if_dst, EbByte 
     } while (col_count > 0);
 }
 
-void LumaInterpolationFilterTwoDInRawOutRawM_SSSE3(int16_t *first_pass_if_dst, int16_t *dst, uint32_t pu_width, uint32_t pu_height)
-{
+void LumaInterpolationFilterTwoDInRawOutRawM_SSSE3(int16_t *first_pass_if_dst, int16_t *dst, uint32_t pu_width, uint32_t pu_height){
+
     int32_t row_count, col_count;
 
     __m128i a0, a1, a2, a3, a4, a5, a6, a7;
@@ -558,12 +540,10 @@ void LumaInterpolationFilterTwoDInRawOutRawM_SSSE3(int16_t *first_pass_if_dst, i
     c1 = _mm_shuffle_epi32(c0, 0x55);
     c0 = _mm_shuffle_epi32(c0, 0x00);
 
-    if (pu_width & 4)
-    {
+    if (pu_width & 4) {
         row_count = pu_height;
 
-        do
-        {
+        do {
             __m128i sum0, sum1;
             a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0 * 4));
             a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 1 * 4));
@@ -603,11 +583,9 @@ void LumaInterpolationFilterTwoDInRawOutRawM_SSSE3(int16_t *first_pass_if_dst, i
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         row_count = pu_height;
-        do
-        {
+        do {
             __m128i sum0, sum1;
             a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0 * 8));
             a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 1 * 8));
@@ -659,14 +637,12 @@ void PictureCopyKernelOutRaw_SSSE3(
 
     /*__m128i*/ o = _mm_set1_epi16(offset);
 
-    if (pu_width & 2)
-    {
+    if (pu_width & 2) {
         __m128i a0;
         EbByte ptr = ref_pic;
         row_count = pu_height;
         /*__m128i*/ a0 = _mm_setzero_si128();
-        do
-        {
+        do {
             a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 0); ptr += src_stride;
             a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 1); ptr += src_stride;
             a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 2); ptr += src_stride;
@@ -689,12 +665,10 @@ void PictureCopyKernelOutRaw_SSSE3(
         ref_pic += 2;
     }
 
-    if (pu_width & 4)
-    {
+    if (pu_width & 4) {
         EbByte ptr = ref_pic;
         row_count = pu_height;
-        do
-        {
+        do {
             __m128i a0, a1;
             a0 = _mm_cvtsi32_si128(*(uint32_t *)ptr); ptr += src_stride;
             a1 = _mm_cvtsi32_si128(*(uint32_t *)ptr); ptr += src_stride;
@@ -718,13 +692,11 @@ void PictureCopyKernelOutRaw_SSSE3(
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         __m128i a0;
         EbByte ptr = ref_pic;
         row_count = pu_height;
-        do
-        {
+        do {
             /*__m128i*/ a0 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
             a0 = _mm_unpacklo_epi8(a0, _mm_setzero_si128());
             a0 = _mm_slli_epi16(a0, 6);
@@ -772,8 +744,7 @@ void ChromaInterpolationFilterTwoDInRaw_SSSE3(int16_t *first_pass_if_dst, EbByte
 
         row_count = pu_height;
         qtr = dst;
-        do
-        {
+        do {
             a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0));
             a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 2));
             a2 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 4));
@@ -813,12 +784,12 @@ void ChromaInterpolationFilterTwoDInRaw_SSSE3(int16_t *first_pass_if_dst, EbByte
         dst += 2;
     }
 
-    if (pu_width & 4)
-    {
+    if (pu_width & 4){
+
         row_count = pu_height;
         qtr = dst;
-        do
-        {
+        do {
+
             a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0));
             a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 4));
             a2 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 8));
@@ -857,16 +828,14 @@ void ChromaInterpolationFilterTwoDInRaw_SSSE3(int16_t *first_pass_if_dst, EbByte
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         qtr = dst;
         row_count = pu_height;
         a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0 * 8));
         a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 1 * 8));
         a2 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 2 * 8));
 
-        do
-        {
+        do {
             a3 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 3 * 8));
 
             b0 = _mm_unpacklo_epi16(a0, a1);
@@ -932,14 +901,12 @@ void chroma_interpolation_filter_one_d_horizontal_ssse3(
     c2 = _mm_shuffle_epi32(c0, 0x55);
     c0 = _mm_shuffle_epi32(c0, 0x00);
 
-    if (pu_width & 2)
-    {
+    if (pu_width & 2) {
         row_count = pu_height;
         ptr = ref_pic;
         qtr = dst;
 
-        do
-        {
+        do {
             // Need 5 samples, load 8
             a0 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
             a1 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
@@ -977,8 +944,7 @@ void chroma_interpolation_filter_one_d_horizontal_ssse3(
     }
 
 
-    if (pu_width & 4)
-    {
+    if (pu_width & 4) {
         row_count = pu_height;
         ptr = ref_pic;
         qtr = dst;
@@ -1015,13 +981,11 @@ void chroma_interpolation_filter_one_d_horizontal_ssse3(
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         row_count = pu_height;
         ptr = ref_pic;
         qtr = dst;
-        do
-        {
+        do {
             // Need 11 samples, load 16
             a0 = _mm_loadu_si128((__m128i *)ptr); ptr += src_stride;
 
@@ -1072,12 +1036,10 @@ void chroma_interpolation_filter_one_d_out_raw_horizontal_ssse3(
     c2 = _mm_shuffle_epi32(c0, 0x55);
     c0 = _mm_shuffle_epi32(c0, 0x00);
 
-    if (pu_width & 2)
-    {
+    if (pu_width & 2) {
         row_count = pu_height;
         ptr = ref_pic;
-        do
-        {
+        do {
             // Need 5 samples, load 8
             a0 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
             a1 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
@@ -1107,12 +1069,10 @@ void chroma_interpolation_filter_one_d_out_raw_horizontal_ssse3(
         ref_pic += 2;
     }
 
-    if (pu_width & 4)
-    {
+    if (pu_width & 4) {
         row_count = pu_height;
         ptr = ref_pic;
-        do
-        {
+        do {
 
             // Need 7 samples, load 8
             a0 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
@@ -1132,21 +1092,17 @@ void chroma_interpolation_filter_one_d_out_raw_horizontal_ssse3(
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
 
         ref_pic += 4;
     }
 
 
     col_count = pu_width;
-    do
-    {
+    do {
         ptr = ref_pic;
         row_count = pu_height;
-        do
-        {
+        do {
 
             // Need 11 samples, load 16
             a0 = _mm_loadu_si128((__m128i *)ptr); ptr += src_stride;
@@ -1197,8 +1153,7 @@ void chroma_interpolation_filter_one_d_vertical_ssse3(
     c2 = _mm_shuffle_epi32(c0, 0x55);
     c0 = _mm_shuffle_epi32(c0, 0x00);
 
-    if (pu_width & 2)
-    {
+    if (pu_width & 2) {
         row_count = pu_height;
         ptr = ref_pic;
         qtr = dst;
@@ -1208,8 +1163,7 @@ void chroma_interpolation_filter_one_d_vertical_ssse3(
         a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 1); ptr += src_stride;
         a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 2); ptr += src_stride;
 
-        do
-        {
+        do {
             a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 3); ptr += src_stride;
             a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 4); ptr += src_stride;
             a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 5); ptr += src_stride;
@@ -1241,8 +1195,7 @@ void chroma_interpolation_filter_one_d_vertical_ssse3(
         dst += 2;
     }
 
-    if (pu_width & 4)
-    {
+    if (pu_width & 4) {
         row_count = pu_height;
         ptr = ref_pic;
         qtr = dst;
@@ -1252,8 +1205,7 @@ void chroma_interpolation_filter_one_d_vertical_ssse3(
         a0 = _mm_unpacklo_epi32(b2, b1);
         a0 = _mm_unpacklo_epi64(a0, b0);
 
-        do
-        {
+        do {
             sum = _mm_set1_epi16(32);
             sum = _mm_add_epi16(sum, _mm_maddubs_epi16(_mm_shuffle_epi8(a0, _mm_setr_epi8(8, 4, 9, 5, 10, 6, 11, 7, 4, 0, 5, 1, 6, 2, 7, 3)), c0));
             b3 = _mm_cvtsi32_si128(*(uint32_t *)ptr); ptr += src_stride;
@@ -1272,17 +1224,14 @@ void chroma_interpolation_filter_one_d_vertical_ssse3(
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
 
         ref_pic += 4;
         dst += 4;
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         row_count = pu_height;
         ptr = ref_pic;
         qtr = dst;
@@ -1290,8 +1239,7 @@ void chroma_interpolation_filter_one_d_vertical_ssse3(
         a1 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
         a2 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
 
-        do
-        {
+        do {
 
             sum = _mm_set1_epi16(32);
             a3 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
@@ -1355,8 +1303,7 @@ void chroma_interpolation_filter_one_d_out_raw_vertical_ssse3(
         a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 1); ptr += src_stride;
         a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 2); ptr += src_stride;
 
-        do
-        {
+        do {
             a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 3); ptr += src_stride;
             a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 4); ptr += src_stride;
             a0 = _mm_insert_epi16(a0, *(uint16_t *)ptr, 5); ptr += src_stride;
@@ -1382,8 +1329,7 @@ void chroma_interpolation_filter_one_d_out_raw_vertical_ssse3(
         ref_pic += 2;
     }
 
-    if (pu_width & 4)
-    {
+    if (pu_width & 4) {
         row_count = pu_height;
         ptr = ref_pic;
         b0 = _mm_cvtsi32_si128(*(uint32_t *)ptr); ptr += src_stride;
@@ -1392,8 +1338,7 @@ void chroma_interpolation_filter_one_d_out_raw_vertical_ssse3(
         a0 = _mm_unpacklo_epi32(b2, b1);
         a0 = _mm_unpacklo_epi64(a0, b0);
 
-        do
-        {
+        do {
             sum = _mm_maddubs_epi16(_mm_shuffle_epi8(a0, _mm_setr_epi8(8, 4, 9, 5, 10, 6, 11, 7, 4, 0, 5, 1, 6, 2, 7, 3)), c0);
             b3 = _mm_cvtsi32_si128(*(uint32_t *)ptr); ptr += src_stride;
             b0 = _mm_cvtsi32_si128(*(uint32_t *)ptr); ptr += src_stride;
@@ -1409,24 +1354,20 @@ void chroma_interpolation_filter_one_d_out_raw_vertical_ssse3(
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
 
         ref_pic += 4;
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         row_count = pu_height;
         ptr = ref_pic;
         a0 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
         a1 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
         a2 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
 
-        do
-        {
+        do {
 
             a3 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
             sum = _mm_maddubs_epi16(_mm_unpacklo_epi8(a0, a1), c0);
@@ -1470,11 +1411,9 @@ void ChromaInterpolationFilterTwoDInRawOutRaw_SSSE3(int16_t *first_pass_if_dst, 
     c1 = _mm_shuffle_epi32(c0, 0x55);
     c0 = _mm_shuffle_epi32(c0, 0);
 
-    if (pu_width & 2)
-    {
+    if (pu_width & 2) {
         row_count = pu_height;
-        do
-        {
+        do {
             __m128i a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0));
             __m128i a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 2));
             __m128i a2 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 4));
@@ -1508,11 +1447,9 @@ void ChromaInterpolationFilterTwoDInRawOutRaw_SSSE3(int16_t *first_pass_if_dst, 
         first_pass_if_dst += 8;
     }
 
-    if (pu_width & 4)
-    {
+    if (pu_width & 4) {
         row_count = pu_height;
-        do
-        {
+        do {
             __m128i a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0));
             __m128i a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 4));
             __m128i a2 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 8));
@@ -1548,15 +1485,13 @@ void ChromaInterpolationFilterTwoDInRawOutRaw_SSSE3(int16_t *first_pass_if_dst, 
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         __m128i a0 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 0 * 8));
         __m128i a1 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 1 * 8));
         __m128i a2 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 2 * 8));
         row_count = pu_height;
 
-        do
-        {
+        do {
             __m128i a3 = _mm_loadu_si128((__m128i *)(first_pass_if_dst + 3 * 8));
             __m128i b0, b1, b2, b3;
             __m128i sum0, sum1;
@@ -1630,13 +1565,11 @@ void LumaInterpolationFilterOneDHorizontal_SSSE3(
     c1 = _mm_shuffle_epi32(c0, 0x55);
     c0 = _mm_shuffle_epi32(c0, 0x00);
 
-    if (pu_width & 4)
-    {
+    if (pu_width & 4) {
         EbByte ptr = ref_pic;
         EbByte qtr = dst;
         row_count = pu_height;
-        do
-        {
+        do {
             a0 = _mm_loadu_si128((__m128i *)ptr); ptr += src_stride;
             a1 = _mm_loadu_si128((__m128i *)ptr); ptr += src_stride;
 
@@ -1669,14 +1602,12 @@ void LumaInterpolationFilterOneDHorizontal_SSSE3(
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         EbByte ptr = ref_pic;
         EbByte qtr = dst;
 
         row_count = pu_height;
-        do
-        {
+        do {
             a0 = _mm_loadu_si128((__m128i *)ptr); ptr += src_stride;
 
             sum = _mm_set1_epi16(32);
@@ -1725,12 +1656,10 @@ void LumaInterpolationFilterOneDOutRawHorizontal_SSSE3(
     c1 = _mm_shuffle_epi32(c0, 0x55);
     c0 = _mm_shuffle_epi32(c0, 0x00);
 
-    if (pu_width & 4)
-    {
+    if (pu_width & 4) {
         ptr = ref_pic;
         row_count = pu_height;
-        do
-        {
+        do {
             a0 = _mm_loadu_si128((__m128i *)ptr); ptr += src_stride;
             a1 = _mm_loadu_si128((__m128i *)ptr); ptr += src_stride;
 
@@ -1760,12 +1689,10 @@ void LumaInterpolationFilterOneDOutRawHorizontal_SSSE3(
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         ptr = ref_pic;
         row_count = pu_height;
-        do
-        {
+        do {
             a0 = _mm_loadu_si128((__m128i *)ptr); ptr += src_stride;
 
             sum = _mm_maddubs_epi16(_mm_shuffle_epi8(a0, _mm_setr_epi8(0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8)), c0);
@@ -1832,8 +1759,7 @@ void LumaInterpolationFilterOneDVertical_SSSE3(
         b0 = _mm_unpacklo_epi64(b0, b1);
         b1 = _mm_unpacklo_epi64(b2, b3);
 
-        do
-        {
+        do {
             sum = _mm_set1_epi16(32);
 
             sum = _mm_add_epi16(sum, _mm_maddubs_epi16(_mm_shuffle_epi8(b0, _mm_setr_epi8(4, 8, 5, 9, 6, 10, 7, 11, 8, 12, 9, 13, 10, 14, 11, 15)), c0));
@@ -1866,8 +1792,7 @@ void LumaInterpolationFilterOneDVertical_SSSE3(
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         EbByte ptr = ref_pic;
         EbByte qtr = dst;
 
@@ -1885,8 +1810,7 @@ void LumaInterpolationFilterOneDVertical_SSSE3(
         b3 = _mm_unpacklo_epi8(a3, a4);
         b4 = _mm_unpacklo_epi8(a4, a5);
         b5 = _mm_unpacklo_epi8(a5, a6);
-        do
-        {
+        do {
             sum = _mm_set1_epi16(32);
             a7 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
             a8 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
@@ -1976,8 +1900,7 @@ void LumaInterpolationFilterOneDOutRawVertical_SSSE3(
         b0 = _mm_unpacklo_epi64(b0, b1);
         b1 = _mm_unpacklo_epi64(b2, b3);
 
-        do
-        {
+        do {
 
             sum = _mm_maddubs_epi16(_mm_shuffle_epi8(b0, _mm_setr_epi8(4, 8, 5, 9, 6, 10, 7, 11, 8, 12, 9, 13, 10, 14, 11, 15)), c0);
             sum = _mm_add_epi16(sum, _mm_maddubs_epi16(_mm_shuffle_epi8(b1, _mm_setr_epi8(4, 8, 5, 9, 6, 10, 7, 11, 8, 12, 9, 13, 10, 14, 11, 15)), c2));
@@ -2008,8 +1931,7 @@ void LumaInterpolationFilterOneDOutRawVertical_SSSE3(
     }
 
     col_count = pu_width;
-    do
-    {
+    do {
         ptr = ref_pic;
         row_count = pu_height;
         a0 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
@@ -2025,8 +1947,7 @@ void LumaInterpolationFilterOneDOutRawVertical_SSSE3(
         b3 = _mm_unpacklo_epi8(a3, a4);
         b4 = _mm_unpacklo_epi8(a4, a5);
         b5 = _mm_unpacklo_epi8(a5, a6);
-        do
-        {
+        do {
             a7 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
             a8 = _mm_loadl_epi64((__m128i *)ptr); ptr += src_stride;
             b6 = _mm_unpacklo_epi8(a6, a7);

@@ -7,6 +7,16 @@
 #include <emmintrin.h>
 #include "stdint.h"
 
+static INLINE void sad8x4x2_sse2_intrin(const uint8_t *src,
+    const uint32_t src_stride, const uint8_t *ref, const uint32_t ref_stride,
+    __m128i *sad8x8)
+{
+    *sad8x8 = _mm_add_epi32(*sad8x8, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + 0 * src_stride)), _mm_loadu_si128((__m128i*)(ref + 0 * ref_stride))));
+    *sad8x8 = _mm_add_epi32(*sad8x8, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + 2 * src_stride)), _mm_loadu_si128((__m128i*)(ref + 2 * ref_stride))));
+    *sad8x8 = _mm_add_epi32(*sad8x8, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + 4 * src_stride)), _mm_loadu_si128((__m128i*)(ref + 4 * ref_stride))));
+    *sad8x8 = _mm_add_epi32(*sad8x8, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + 6 * src_stride)), _mm_loadu_si128((__m128i*)(ref + 6 * ref_stride))));
+}
+
 void sad_calculation_8x8_16x16_sse2_intrin(
     uint8_t   *src,
     uint32_t   src_stride,
@@ -17,38 +27,38 @@ void sad_calculation_8x8_16x16_sse2_intrin(
     uint32_t  *p_best_mv8x8,
     uint32_t  *p_best_mv16x16,
     uint32_t   mv,
-    uint32_t  *p_sad16x16)
+    uint32_t  *p_sad16x16,
+    EbBool     sub_sad)
 {
-    __m128i xmm_sad16x16, xmm_sad8x8_0_1, xmm_sad8x8_2_3, xmm_sad16x16_total, sad8x8_0_3, sad8x8_less_than_bitmask, xmm_N1;
+    __m128i xmm_sad16x16, xmm_sad8x8[2], xmm_sad16x16_total, sad8x8_0_3, sad8x8_less_than_bitmask, xmm_N1;
     __m128i sad8x8_greater_or_eq_bitmask, BestMV8x8, BestSad8x8, xmm_pBestSad8x8, xmm_pBestMV8x8, xmm_mv;
 
-    src_stride <<= 1;
-    ref_stride <<= 1;
+    xmm_sad8x8[0] = xmm_sad8x8[1] = _mm_setzero_si128();
 
     //sad8x8_0, sad8x8_1
-
-    xmm_sad8x8_0_1 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)src), _mm_loadu_si128((__m128i*)ref)),
-        _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + src_stride)), _mm_loadu_si128((__m128i*)(ref + ref_stride))));
-    xmm_sad8x8_0_1 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (2 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (2 * ref_stride)))), xmm_sad8x8_0_1);
-    xmm_sad8x8_0_1 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (3 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (3 * ref_stride)))), xmm_sad8x8_0_1);
-
-    src += src_stride << 2;
-    ref += ref_stride << 2;
+    sad8x4x2_sse2_intrin(src + 0 * src_stride, src_stride, ref + 0 * ref_stride, ref_stride, &xmm_sad8x8[0]);
 
     //sad8x8_2, sad8x8_3
+    sad8x4x2_sse2_intrin(src + 8 * src_stride, src_stride, ref + 8 * ref_stride, ref_stride, &xmm_sad8x8[1]);
 
-    xmm_sad8x8_2_3 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)src), _mm_loadu_si128((__m128i*)ref)),
-        _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + src_stride)), _mm_loadu_si128((__m128i*)(ref + ref_stride))));
-    xmm_sad8x8_2_3 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (2 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (2 * ref_stride)))), xmm_sad8x8_2_3);
-    xmm_sad8x8_2_3 = _mm_add_epi32(_mm_sad_epu8(_mm_loadu_si128((__m128i*)(src + (3 * src_stride))), _mm_loadu_si128((__m128i*)(ref + (3 * ref_stride)))), xmm_sad8x8_2_3);
+    if (sub_sad) {
+        xmm_sad8x8[0] = _mm_slli_epi32(xmm_sad8x8[0], 1);
+        xmm_sad8x8[1] = _mm_slli_epi32(xmm_sad8x8[1], 1);
+    }
+    else {
+        //sad8x8_0, sad8x8_1
+        sad8x4x2_sse2_intrin(src + 1 * src_stride, src_stride, ref + 1 * ref_stride, ref_stride, &xmm_sad8x8[0]);
 
-    xmm_sad16x16 = _mm_add_epi32(xmm_sad8x8_0_1, xmm_sad8x8_2_3);
+        //sad8x8_2, sad8x8_3
+        sad8x4x2_sse2_intrin(src + 9 * src_stride, src_stride, ref + 9 * ref_stride, ref_stride, &xmm_sad8x8[1]);
+    }
 
-    xmm_sad16x16_total = _mm_slli_epi32(_mm_add_epi32(_mm_srli_si128(xmm_sad16x16, 8), xmm_sad16x16), 1);
+    xmm_sad16x16 = _mm_add_epi32(xmm_sad8x8[0], xmm_sad8x8[1]);
+    xmm_sad16x16_total = _mm_add_epi32(_mm_srli_si128(xmm_sad16x16, 8), xmm_sad16x16);
 
     *p_sad16x16 = _mm_cvtsi128_si32(xmm_sad16x16_total);
 
-    sad8x8_0_3 = _mm_slli_epi32(_mm_packs_epi32(xmm_sad8x8_0_1, xmm_sad8x8_2_3), 1);
+    sad8x8_0_3 = _mm_packs_epi32(xmm_sad8x8[0], xmm_sad8x8[1]);
 
     xmm_mv = _mm_cvtsi64_si128(mv);
     xmm_mv = _mm_unpacklo_epi32(xmm_mv, xmm_mv);
@@ -60,7 +70,7 @@ void sad_calculation_8x8_16x16_sse2_intrin(
     // sad8x8_0 < p_best_sad8x8[0] for 0 to 3
     sad8x8_less_than_bitmask = _mm_cmplt_epi32(sad8x8_0_3, xmm_pBestSad8x8);
 
-    xmm_N1 = _mm_cmpeq_epi8(xmm_sad8x8_0_1, xmm_sad8x8_0_1);
+    xmm_N1 = _mm_cmpeq_epi8(xmm_sad8x8[0], xmm_sad8x8[0]);
 
     sad8x8_greater_or_eq_bitmask = _mm_sub_epi32(xmm_N1, sad8x8_less_than_bitmask);
 

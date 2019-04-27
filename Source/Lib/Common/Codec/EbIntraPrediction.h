@@ -138,6 +138,8 @@ extern "C" {
 
     extern EbErrorType intra_open_loop_reference_samples_ctor(
         IntraReferenceSamplesOpenLoop **context_dbl_ptr);
+    extern void IntraOpenLoopReferenceSamplesDtor(
+        IntraReferenceSamplesOpenLoop  *context_ptr);
 
     extern EbErrorType update_neighbor_samples_array_open_loop(
         uint8_t                           *above_ref,
@@ -158,6 +160,56 @@ extern "C" {
         uint8_t                         *left_col,
         MotionEstimationContext_t       *context_ptr);                  // input parameter, ME context
 
+    typedef void(*EB_INTRA_NOANG_TYPE)(
+        const uint32_t      size,
+        uint8_t            *ref_samples,
+        uint8_t            *prediction_ptr,
+        const uint32_t      prediction_buffer_stride,
+        const EbBool        skip);
+    typedef void(*EB_INTRA_DC_AV1_TYPE)(
+        EbBool        is_left_availble,
+        EbBool        is_above_availble,
+        const uint32_t   size,                       //input parameter, denotes the size of the current PU
+        uint8_t         *ref_samples,                 //input parameter, pointer to the reference samples
+        uint8_t         *dst,              //output parameter, pointer to the prediction
+        const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
+        const EbBool  skip);                       //skip half rows
+    typedef uint32_t(*EB_NEIGHBOR_DC_INTRA_TYPE)(
+        MotionEstimationContext_t       *context_ptr,
+        EbPictureBufferDesc           *input_ptr,
+        uint32_t                           src_origin_x,
+        uint32_t                           src_origin_y,
+        uint32_t                           block_size,
+        EbAsm                              asm_type);
+    typedef void(*EB_INTRA_NOANG_16bit_TYPE)(
+        const uint32_t   size,
+        uint16_t         *ref_samples,
+        uint16_t         *prediction_ptr,
+        const uint32_t   prediction_buffer_stride,
+        const EbBool  skip);
+    typedef void(*EB_INTRA_ANG_Z1_Z2_Z3_16bit_TYPE)(
+        const uint32_t   size,
+        uint16_t         *ref_samples,
+        uint16_t         *dst,
+        const uint32_t   prediction_buffer_stride,
+        const EbBool  skip,
+        uint16_t          dx,
+        uint16_t          dy,
+        uint16_t          bd);
+    typedef void(*EB_INTRA_ANG_TYPE)(
+        uint32_t            size,
+        uint8_t            *ref_samp_main,
+        uint8_t            *prediction_ptr,
+        uint32_t            prediction_buffer_stride,
+        const EbBool     skip,
+        int32_t            intra_pred_angle);
+    typedef void(*EB_INTRA_ANG_16BIT_TYPE)(
+        uint32_t          size,                       //input parameter, denotes the size of the current PU
+        uint16_t         *ref_samp_main,                //input parameter, pointer to the reference samples
+        uint16_t         *prediction_ptr,              //output parameter, pointer to the prediction
+        uint32_t            prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
+        const EbBool   skip,
+        int32_t   intra_pred_angle);
     extern void intra_mode_planar(
         const uint32_t   size,                       //input parameter, denotes the size of the current PU
         uint8_t         *ref_samples,                 //input parameter, pointer to the reference samples
@@ -207,6 +259,214 @@ extern "C" {
         uint16_t          dy,              //output parameter, pointer to the prediction
         uint16_t          bd);
 
+    static EB_INTRA_NOANG_TYPE FUNC_TABLE IntraSmoothH_Av1_funcPtrArray[ASM_TYPE_TOTAL] = {
+        // NON_AVX2
+        ebav1_smooth_h_predictor,
+        // AVX2
+        ebav1_smooth_h_predictor,
+    };
+    static EB_INTRA_NOANG_TYPE FUNC_TABLE IntraSmoothV_Av1_funcPtrArray[ASM_TYPE_TOTAL] = {
+        // NON_AVX2
+        ebav1_smooth_v_predictor,
+        // AVX2
+        ebav1_smooth_v_predictor,
+    };
+
+    static EB_INTRA_ANG_Z1_Z2_Z3_16bit_TYPE FUNC_TABLE IntraModeAngular_AV1_Z1_16bit_funcPtrArray[9][ASM_TYPE_TOTAL] = {
+        // 4x4
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z1_16bit,
+            // AVX2
+            intra_mode_angular_av1_z1_16bit_4x4_avx2,
+        },
+        // 8x8
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z1_16bit,
+            // AVX2
+            intra_mode_angular_av1_z1_16bit_8x8_avx2,
+        },
+        // 16x16
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z1_16bit,
+            // AVX2
+            intra_mode_angular_av1_z1_16bit_16x16_avx2,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z1_16bit,
+            // AVX2
+            intra_mode_angular_av1_z1_16bit,
+        },
+        // 32x32
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z1_16bit,
+            // AVX2
+            intra_mode_angular_av1_z1_16bit_32x32_avx2,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z1_16bit,
+            // AVX2
+            intra_mode_angular_av1_z1_16bit,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z1_16bit,
+            // AVX2
+            intra_mode_angular_av1_z1_16bit,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z1_16bit,
+            // AVX2
+            intra_mode_angular_av1_z1_16bit,
+        },
+        // 64x64
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z1_16bit,
+            // AVX2
+            intra_mode_angular_av1_z1_16bit_64x64_avx2,
+        }
+    };
+    static EB_INTRA_ANG_Z1_Z2_Z3_16bit_TYPE FUNC_TABLE IntraModeAngular_AV1_Z2_16bit_funcPtrArray[9][ASM_TYPE_TOTAL] = {
+        // 4x4
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z2_16bit,
+            // AVX2
+            intra_mode_angular_av1_z2_16bit_4x4_avx2,
+        },
+        // 8x8
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z2_16bit,
+            // AVX2
+            intra_mode_angular_av1_z2_16bit_8x8_avx2,
+        },
+        // 16x16
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z2_16bit,
+            // AVX2
+            intra_mode_angular_av1_z2_16bit_16x16_avx2,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z2_16bit,
+            // AVX2
+            intra_mode_angular_av1_z2_16bit,
+        },
+        // 32x32
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z2_16bit,
+            // AVX2
+            intra_mode_angular_av1_z2_16bit_32x32_avx2,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z2_16bit,
+            // AVX2
+            intra_mode_angular_av1_z2_16bit,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z2_16bit,
+            // AVX2
+            intra_mode_angular_av1_z2_16bit,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z2_16bit,
+            // AVX2
+            intra_mode_angular_av1_z2_16bit,
+        },
+        // 64x64
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z2_16bit,
+            // AVX2
+            intra_mode_angular_av1_z2_16bit_64x64_avx2,
+        }
+    };
+    static EB_INTRA_ANG_Z1_Z2_Z3_16bit_TYPE FUNC_TABLE IntraModeAngular_AV1_Z3_16bit_funcPtrArray[9][ASM_TYPE_TOTAL] = {
+        // 4x4
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z3_16bit,
+            // AVX2
+            intra_mode_angular_av1_z3_16bit_4x4_avx2,
+        },
+        // 8x8
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z3_16bit,
+            // AVX2
+            intra_mode_angular_av1_z3_16bit_8x8_avx2,
+        },
+        // 16x16
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z3_16bit,
+            // AVX2
+            intra_mode_angular_av1_z3_16bit_16x16_avx2,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z3_16bit,
+            // AVX2
+            intra_mode_angular_av1_z3_16bit,
+        },
+        // 32x32
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z3_16bit,
+            // AVX2
+            intra_mode_angular_av1_z3_16bit_32x32_avx2,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z3_16bit,
+            // AVX2
+            intra_mode_angular_av1_z3_16bit,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z3_16bit,
+            // AVX2
+            intra_mode_angular_av1_z3_16bit,
+        },
+        // NxN
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z3_16bit,
+            // AVX2
+            intra_mode_angular_av1_z3_16bit,
+        },
+        // 64x64
+        {
+            // NON_AVX2
+            intra_mode_angular_av1_z3_16bit,
+            // AVX2
+            intra_mode_angular_av1_z3_16bit_64x64_avx2,
+        }
+    };
 
     extern void cfl_luma_subsampling_420_lbd_c(
         uint8_t *input, // AMIR-> Changed to 8 bit

@@ -21,7 +21,8 @@ extern "C" {
         uint32_t *p_best_mv16x16,
         uint32_t  mv,
         uint32_t *p_sad16x16,
-        uint32_t *p_sad8x8);
+        uint32_t *p_sad8x8,
+        EbBool    sub_sad);
 
     uint32_t compute4x_m_sad_avx2_intrin(
         const uint8_t  *src,                      // input parameter, source samples Ptr
@@ -126,7 +127,8 @@ extern "C" {
         uint32_t  *p_best_sad16x16,
         uint32_t  *p_best_mv16x16,
         uint32_t   mv,
-        uint16_t  *p_sad16x16);
+        uint16_t  *p_sad16x16,
+        EbBool     sub_sad);
 
     void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
         uint16_t  *p_sad16x16,

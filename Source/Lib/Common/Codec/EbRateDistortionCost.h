@@ -21,13 +21,31 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+    extern uint64_t av1_cost_coeffs_txb(
+#if CABAC_UP
+        uint8_t        allow_update_cdf,
+        FRAME_CONTEXT *ec_ctx,
+#endif
+        struct ModeDecisionCandidateBuffer    *candidate_buffer_ptr,
+        const TranLow                        *const qcoeff,
+        uint16_t                                   eob,
+        PlaneType                               plane_type,
+        TxSize                                  transform_size,
+        /*const uint32_t                             area_size,
+        const uint32_t                             stride,*/
+        int16_t                                   txb_skip_ctx,
+        int16_t                                   dc_sign_ctx,
+        EbBool                                  reducedTransformSetFlag);
+
     extern void coding_loop_context_generation(
         ModeDecisionContext   *context_ptr,
         CodingUnit            *cu_ptr,
         uint32_t                 cu_origin_x,
         uint32_t                 cu_origin_y,
+#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
         uint32_t                 sb_sz,
         NeighborArrayUnit     *skip_coeff_neighbor_array,
+#endif
         NeighborArrayUnit     *luma_dc_sign_level_coeff_neighbor_array,
         NeighborArrayUnit     *cb_dc_sign_level_coeff_neighbor_array,
         NeighborArrayUnit     *cr_dc_sign_level_coeff_neighbor_array,
@@ -56,6 +74,25 @@ extern "C" {
         TxSize                   txsize,
         uint64_t                 lambda);                                // input parameter, lambda for Luma
 
+    extern EbErrorType tu_calc_cost(
+        uint32_t                 cu_size,
+        ModeDecisionCandidate *candidate_ptr,
+        uint32_t                 tu_index,
+        uint32_t                 transform_size,
+        uint32_t                 transform_chroma_size,
+        uint32_t                 y_count_non_zero_coeffs,
+        uint32_t                 cb_count_non_zero_coeffs,
+        uint32_t                 cr_count_non_zero_coeffs,
+        uint64_t                 y_tu_distortion[DIST_CALC_TOTAL],
+        uint64_t                 cb_tu_distortion[DIST_CALC_TOTAL],
+        uint64_t                 cr_tu_distortion[DIST_CALC_TOTAL],
+        uint32_t                 component_mask,
+        uint64_t                *y_tu_coeff_bits,
+        uint64_t                *cb_tu_coeff_bits,
+        uint64_t                *cr_tu_coeff_bits,
+        uint32_t                 qp,
+        uint64_t                 lambda,
+        uint64_t                 lambda_chroma);
     extern EbErrorType av1_tu_calc_cost_luma(
         int16_t                  txb_skip_ctx,
         ModeDecisionCandidate *candidate_ptr,                        // input parameter, prediction result Ptr
@@ -67,6 +104,44 @@ extern "C" {
         uint64_t                *y_full_cost,
         uint64_t                 lambda);                              // input parameter, lambda for Luma
 
+    extern EbErrorType intra_luma_mode_context(
+        CodingUnit *cu_ptr,
+        uint32_t      luma_mode,
+        int32_t      *prediction_index);
+    extern EbErrorType intra2_nx2_n_fast_cost_islice(
+        CodingUnit                          *cu_ptr,
+        struct ModeDecisionCandidateBuffer  *candidate_buffer_ptr,
+        uint32_t                               qp,
+        uint64_t                               luma_distortion,
+        uint64_t                               chroma_distortion,
+        uint64_t                               lambda,
+        PictureControlSet                   *picture_control_set_ptr);
+    extern EbErrorType  merge_skip_full_cost(
+        LargestCodingUnit           *sb_ptr,
+        CodingUnit                  *cu_ptr,
+        uint32_t                       cu_size,
+        uint32_t                       cu_size_log2,
+        ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+        uint32_t                       qp,
+        uint64_t                      *y_distortion,
+        uint64_t                      *cb_distortion,
+        uint64_t                      *cr_distortion,
+        uint64_t                       lambda,
+        uint64_t                       lambda_chroma,
+        uint64_t                      *y_coeff_bits,
+        uint64_t                      *cb_coeff_bits,
+        uint64_t                      *cr_coeff_bits,
+        uint32_t                       transform_size,
+        uint32_t                       transform_chroma_size,
+        PictureControlSet           *picture_control_set_ptr);
+    extern EbErrorType split_flag_rate(
+        ModeDecisionContext     *context_ptr,
+        CodingUnit              *cu_ptr,
+        uint32_t                   split_flag,
+        uint64_t                  *split_rate,
+        uint64_t                   lambda,
+        MdRateEstimationContext *md_rate_estimation_ptr,
+        uint32_t                   tb_max_depth);
                                   
 #define RDDIV_BITS 7
 
@@ -105,6 +180,9 @@ extern "C" {
         const BlockGeom         *blk_geom,
         uint32_t                 miRow,
         uint32_t                 miCol,
+#if MRP_COST_EST
+        uint8_t                 md_pass,
+#endif
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
 
@@ -122,6 +200,9 @@ extern "C" {
         const BlockGeom         *blk_geom,
         uint32_t                 miRow,
         uint32_t                 miCol,
+#if MRP_COST_EST
+        uint8_t                 md_pass,
+#endif
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
 

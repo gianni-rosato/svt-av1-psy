@@ -21,7 +21,7 @@ void aom_free(void *memblk);
 static const int crc_bits = 16;
 static const int block_size_bits = 3;
 
-static void hash_table_clear_all(hash_table *p_hash_table) {
+static void hash_table_clear_all(HashTable *p_hash_table) {
   if (p_hash_table->p_lookup_table == NULL) {
     return;
   }
@@ -105,7 +105,7 @@ static int hash_block_size_to_index(int block_size) {
   }
 }
 
-//void av1_hash_table_init(hash_table *p_hash_table, MACROBLOCK *x) {
+//void av1_hash_table_init(HashTable *p_hash_table, MACROBLOCK *x) {
 //  if (x->g_crc_initialized == 0) {
 //    av1_crc_calculator_init(&x->crc_calculator1, 24, 0x5D6DCB);
 //    av1_crc_calculator_init(&x->crc_calculator2, 24, 0x864CFB);
@@ -114,13 +114,13 @@ static int hash_block_size_to_index(int block_size) {
 //  p_hash_table->p_lookup_table = NULL;
 //}
 
-void av1_hash_table_destroy(hash_table *p_hash_table) {
+void av1_hash_table_destroy(HashTable *p_hash_table) {
   hash_table_clear_all(p_hash_table);
   aom_free(p_hash_table->p_lookup_table);
   p_hash_table->p_lookup_table = NULL;
 }
 
-EbErrorType  av1_hash_table_create(hash_table *p_hash_table) {
+EbErrorType  av1_hash_table_create(HashTable *p_hash_table) {
 
     EbErrorType err_code = EB_ErrorNone;;
 
@@ -137,7 +137,7 @@ EbErrorType  av1_hash_table_create(hash_table *p_hash_table) {
   return err_code;
 }
 
-static void hash_table_add_to_table(hash_table *p_hash_table,
+static void hash_table_add_to_table(HashTable *p_hash_table,
                                     uint32_t hash_value,
                                     block_hash *curr_block_hash) {
   if (p_hash_table->p_lookup_table[hash_value] == NULL) {
@@ -153,7 +153,7 @@ static void hash_table_add_to_table(hash_table *p_hash_table,
   }
 }
 
-int32_t av1_hash_table_count(const hash_table *p_hash_table,
+int32_t av1_hash_table_count(const HashTable *p_hash_table,
                              uint32_t hash_value) {
   if (p_hash_table->p_lookup_table[hash_value] == NULL) {
     return 0;
@@ -162,13 +162,13 @@ int32_t av1_hash_table_count(const hash_table *p_hash_table,
   }
 }
 
-Iterator av1_hash_get_first_iterator(hash_table *p_hash_table,
+Iterator av1_hash_get_first_iterator(HashTable *p_hash_table,
                                      uint32_t hash_value) {
   assert(av1_hash_table_count(p_hash_table, hash_value) > 0);
   return aom_vector_begin(p_hash_table->p_lookup_table[hash_value]);
 }
 
-int32_t av1_has_exact_match(hash_table *p_hash_table, uint32_t hash_value1,
+int32_t av1_has_exact_match(HashTable *p_hash_table, uint32_t hash_value1,
                             uint32_t hash_value2) {
   if (p_hash_table->p_lookup_table[hash_value1] == NULL) {
     return 0;
@@ -306,7 +306,7 @@ void av1_generate_block_hash_value(const Yv12BufferConfig *picture,
   }
 }
 
-void av1_add_to_hash_map_by_row_with_precal_data(hash_table *p_hash_table,
+void av1_add_to_hash_map_by_row_with_precal_data(HashTable *p_hash_table,
                                                  uint32_t *pic_hash[2],
                                                  int8_t *pic_is_same,
                                                  int pic_width, int pic_height,

@@ -20,7 +20,7 @@ char* copyUntilCharacterOrNewLine(char *src, char *dst, char chr){
         count++;
     }
 
-    if(count > YFM_HEADER_MAX){
+    if(count >= YFM_HEADER_MAX){
         count = YFM_HEADER_MAX-1;
     }
 

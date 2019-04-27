@@ -37,6 +37,9 @@ extern "C" {
 
         uint64_t                         *cb_coeff_bits,
         uint64_t                         *cr_coeff_bits,
+#if SPATIAL_SSE
+        EbBool                           is_full_loop,
+#endif
         EbAsm                            asm_type);
 
     void product_full_loop(

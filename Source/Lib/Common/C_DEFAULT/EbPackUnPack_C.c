@@ -4,7 +4,7 @@
 */
 
 #include "EbPackUnPack_C.h"
-#include "EbDefinitions.h"
+#include "EbSvtAv1.h"
 
 /************************************************
 * pack 8 and 2 bit 2D data into 10 bit data

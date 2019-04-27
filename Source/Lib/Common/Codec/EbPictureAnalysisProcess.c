@@ -63,9 +63,9 @@ EbErrorType picture_analysis_context_ctor(
         // If 420/422, re-use luma for chroma
         // If 444, re-use luma for Cr
         if (input_picture_buffer_desc_init_data->color_format != EB_YUV444) {
-		    input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
+            input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
         } else {
-		    input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG | PICTURE_BUFFER_DESC_Cb_FLAG;
+            input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG | PICTURE_BUFFER_DESC_Cb_FLAG;
         }
         return_error = eb_picture_buffer_desc_ctor(
             (EbPtr*)&(context_ptr->denoised_picture_ptr),
@@ -101,62 +101,62 @@ EbErrorType picture_analysis_context_ctor(
 
 static void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBufferDesc* outputPicturePtr)
 {
-	uint32_t input_color_format = input_picture_ptr->color_format;
-	const uint16_t input_subsampling_x = (input_color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t input_subsampling_y = (input_color_format >= EB_YUV422 ? 1 : 2) - 1;
+    uint32_t input_color_format = input_picture_ptr->color_format;
+    const uint16_t input_subsampling_x = (input_color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t input_subsampling_y = (input_color_format >= EB_YUV422 ? 1 : 2) - 1;
 
-	uint32_t output_color_format = outputPicturePtr->color_format;
-	const uint16_t output_subsampling_x = (output_color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t output_subsampling_y = (output_color_format >= EB_YUV422 ? 1 : 2) - 1;
+    uint32_t output_color_format = outputPicturePtr->color_format;
+    const uint16_t output_subsampling_x = (output_color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t output_subsampling_y = (output_color_format >= EB_YUV422 ? 1 : 2) - 1;
 
-	uint32_t stride_in, strideOut;
-	uint32_t inputOriginIndex, outputOriginIndex;
+    uint32_t stride_in, strideOut;
+    uint32_t inputOriginIndex, outputOriginIndex;
 
-	uint8_t *ptrIn;
-	uint8_t *ptrOut;
+    uint8_t *ptrIn;
+    uint8_t *ptrOut;
 
-	uint32_t ii, jj;
+    uint32_t ii, jj;
 
-	//Cb
-	{
-		stride_in = input_picture_ptr->stride_cb;
-		inputOriginIndex = (input_picture_ptr->origin_x >> input_subsampling_x) +
+    //Cb
+    {
+        stride_in = input_picture_ptr->stride_cb;
+        inputOriginIndex = (input_picture_ptr->origin_x >> input_subsampling_x) +
             (input_picture_ptr->origin_y >> input_subsampling_y)  * input_picture_ptr->stride_cb;
-		ptrIn = &(input_picture_ptr->buffer_cb[inputOriginIndex]);
+        ptrIn = &(input_picture_ptr->buffer_cb[inputOriginIndex]);
 
-		strideOut = outputPicturePtr->stride_cb;
-		outputOriginIndex = (outputPicturePtr->origin_x >> output_subsampling_x) +
+        strideOut = outputPicturePtr->stride_cb;
+        outputOriginIndex = (outputPicturePtr->origin_x >> output_subsampling_x) +
             (outputPicturePtr->origin_y >> output_subsampling_y)  * outputPicturePtr->stride_cb;
-		ptrOut = &(outputPicturePtr->buffer_cb[outputOriginIndex]);
+        ptrOut = &(outputPicturePtr->buffer_cb[outputOriginIndex]);
 
-		for (jj = 0; jj < (uint32_t)(outputPicturePtr->height >> output_subsampling_y); jj++) {
-			for (ii = 0; ii < (uint32_t)(outputPicturePtr->width >> output_subsampling_x); ii++) {
-				ptrOut[ii + jj * strideOut] =
+        for (jj = 0; jj < (uint32_t)(outputPicturePtr->height >> output_subsampling_y); jj++) {
+            for (ii = 0; ii < (uint32_t)(outputPicturePtr->width >> output_subsampling_x); ii++) {
+                ptrOut[ii + jj * strideOut] =
                     ptrIn[(ii << (1 - input_subsampling_x)) +
                     (jj << (1 - input_subsampling_y)) * stride_in];
-			}
-		}
+            }
+        }
 
-	}
+    }
 
-	//Cr
-	{
-		stride_in = input_picture_ptr->stride_cr;
-		inputOriginIndex = (input_picture_ptr->origin_x >> input_subsampling_x) + (input_picture_ptr->origin_y >> input_subsampling_y)  * input_picture_ptr->stride_cr;
-		ptrIn = &(input_picture_ptr->buffer_cr[inputOriginIndex]);
+    //Cr
+    {
+        stride_in = input_picture_ptr->stride_cr;
+        inputOriginIndex = (input_picture_ptr->origin_x >> input_subsampling_x) + (input_picture_ptr->origin_y >> input_subsampling_y)  * input_picture_ptr->stride_cr;
+        ptrIn = &(input_picture_ptr->buffer_cr[inputOriginIndex]);
 
-		strideOut = outputPicturePtr->stride_cr;
-		outputOriginIndex = (outputPicturePtr->origin_x >> output_subsampling_x) + (outputPicturePtr->origin_y >> output_subsampling_y)  * outputPicturePtr->stride_cr;
-		ptrOut = &(outputPicturePtr->buffer_cr[outputOriginIndex]);
+        strideOut = outputPicturePtr->stride_cr;
+        outputOriginIndex = (outputPicturePtr->origin_x >> output_subsampling_x) + (outputPicturePtr->origin_y >> output_subsampling_y)  * outputPicturePtr->stride_cr;
+        ptrOut = &(outputPicturePtr->buffer_cr[outputOriginIndex]);
 
-		for (jj = 0; jj < (uint32_t)(outputPicturePtr->height >> output_subsampling_y); jj++) {
-			for (ii = 0; ii < (uint32_t)(outputPicturePtr->width >> output_subsampling_x); ii++) {
-				ptrOut[ii + jj * strideOut] =
+        for (jj = 0; jj < (uint32_t)(outputPicturePtr->height >> output_subsampling_y); jj++) {
+            for (ii = 0; ii < (uint32_t)(outputPicturePtr->width >> output_subsampling_x); ii++) {
+                ptrOut[ii + jj * strideOut] =
                     ptrIn[(ii << (1 - input_subsampling_x)) +
                     (jj << (1 - input_subsampling_y)) * stride_in];
-			}
-		}
-	}
+            }
+        }
+    }
 }
 
 /************************************************
@@ -1417,8 +1417,8 @@ void noise_extract_chroma_strong(
     uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
 
     uint32_t color_format = input_picture_ptr->color_format;
-	const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
+    const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     //Cb
     {
@@ -1508,8 +1508,8 @@ void noise_extract_chroma_weak(
     uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
 
     uint32_t color_format = input_picture_ptr->color_format;
-	const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
+    const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     //Cb
     {
@@ -3102,8 +3102,8 @@ EbErrorType DenoiseInputPicture(
     uint16_t       verticalIdx;
 
     uint32_t color_format = input_picture_ptr->color_format;
-	const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
+    const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     //use denoised input if the source is extremly noisy
     if (picture_control_set_ptr->pic_noise_class >= PIC_NOISE_CLASS_4) {
@@ -3351,10 +3351,10 @@ EbErrorType DetectInputPictureNoise(
 
     }
 
-    context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
-
-    picNoiseVariance = picNoiseVariance / totLcuCount;
-
+    if (totLcuCount > 0) {
+        context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
+        picNoiseVariance = picNoiseVariance / totLcuCount;
+    }
 
     //the variance of a 64x64 noise area tends to be bigger for small resolutions.
     if (sequence_control_set_ptr->luma_height <= 720)
@@ -3497,8 +3497,8 @@ EbErrorType SubSampleFilterNoise(
     uint16_t        verticalIdx;
 
     uint32_t color_format = input_picture_ptr->color_format;
-	const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
+    const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     if (picture_control_set_ptr->pic_noise_class == PIC_NOISE_CLASS_3_1) {
 
@@ -3781,11 +3781,10 @@ EbErrorType QuarterSampleDetectNoise(
         }
     }
 
-
-    context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
-
-    picNoiseVariance = picNoiseVariance / totLcuCount;
-
+    if (totLcuCount > 0) {
+        context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
+        picNoiseVariance = picNoiseVariance / totLcuCount;
+    }
 
     //the variance of a 64x64 noise area tends to be bigger for small resolutions.
     //if (sequence_control_set_ptr->luma_height <= 720)
@@ -3922,11 +3921,10 @@ EbErrorType SubSampleDetectNoise(
         }
     }
 
-
-    context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
-
-    picNoiseVariance = picNoiseVariance / totLcuCount;
-
+    if (totLcuCount > 0) {
+        context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
+        picNoiseVariance = picNoiseVariance / totLcuCount;
+    }
 
     //the variance of a 64x64 noise area tends to be bigger for small resolutions.
     if (sequence_control_set_ptr->luma_height <= 720)
@@ -4301,7 +4299,7 @@ void EdgeDetectionMeanLumaChroma16x16(
             SbStat *sb_stat_ptr = &picture_control_set_ptr->sb_stat_array[sb_index];
 
             EB_MEMSET(sb_stat_ptr, 0, sizeof(SbStat));
-            LcuParameters     *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+            SbParams     *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
             if (sb_params->potential_logo_sb &&sb_params->is_complete_sb)
 
             {
@@ -4362,7 +4360,7 @@ void EdgeDetectionMeanLumaChroma16x16(
         }
 
         for (sb_index = 0; sb_index < totalLcuCount; sb_index++) {
-            LcuParameters *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+            SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
             if (sb_params->potential_logo_sb &&sb_params->is_complete_sb) {
                 SbStat *sb_stat_ptr = &picture_control_set_ptr->sb_stat_array[sb_index];
 
@@ -4502,6 +4500,7 @@ void EdgeDetection(
     }
     return;
 }
+
 /******************************************************
 * Calculate the variance of variance to determine Homogeneous regions. Note: Variance calculation should be on.
 ******************************************************/
@@ -4520,16 +4519,17 @@ void DetermineHomogeneousRegionInPicture(
     uint32_t sb_total_count = picture_control_set_ptr->sb_total_count;
 
     for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
+#if !MEMORY_FOOTPRINT_OPT
         uint64_t meanSqrVariance32x32Based[4] = { 0 }, meanVariance32x32Based[4] = { 0 };
 
         uint64_t meanSqrVariance64x64Based = 0, meanVariance64x64Based = 0;
         uint64_t varOfVar64x64Based = 0;
-
-        LcuParameters sb_params = sequence_control_set_ptr->sb_params_array[sb_index];
-
+#endif
+        SbParams sb_params = sequence_control_set_ptr->sb_params_array[sb_index];
+#if !MEMORY_FOOTPRINT_OPT
         // Initialize
         picture_control_set_ptr->sb_homogeneous_area_array[sb_index] = EB_TRUE;
-
+#endif
         variancePtr = picture_control_set_ptr->variance[sb_index];
 
         if (sb_params.is_complete_sb) {
@@ -4539,6 +4539,7 @@ void DetermineHomogeneousRegionInPicture(
             varLcuCnt++;
 
             veryLowVarCnt += ((variancePtr[ME_TIER_ZERO_PU_64x64]) < LCU_LOW_VAR_TH) ? 1 : 0;
+#if !MEMORY_FOOTPRINT_OPT
             cu_size = 8;
             cuIndexOffset = ME_TIER_ZERO_PU_8x8_0;
             cuNum = 64 / cu_size;
@@ -4599,8 +4600,9 @@ void DetermineHomogeneousRegionInPicture(
                     picture_control_set_ptr->sb_homogeneous_area_array[sb_index] = EB_FALSE;
                 }
             }
-
+#endif
         }
+#if !MEMORY_FOOTPRINT_OPT
         else {
 
             // Should be re-calculated and scaled properly
@@ -4609,14 +4611,15 @@ void DetermineHomogeneousRegionInPicture(
             picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][2] = 0xFFFFFFFFFFFFFFFF;
             picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][3] = 0xFFFFFFFFFFFFFFFF;
         }
+#endif
     }
     picture_control_set_ptr->very_low_var_pic_flag = EB_FALSE;
-    if (((veryLowVarCnt * 100) / varLcuCnt) > PIC_LOW_VAR_PERCENTAGE_TH) {
+    if ((varLcuCnt > 0) && (((veryLowVarCnt * 100) / varLcuCnt) > PIC_LOW_VAR_PERCENTAGE_TH)) {
         picture_control_set_ptr->very_low_var_pic_flag = EB_TRUE;
     }
 
     picture_control_set_ptr->logo_pic_flag = EB_FALSE;
-    if (((veryLowVarCnt * 100) / varLcuCnt) > 80) {
+    if ((varLcuCnt > 0) && (((veryLowVarCnt * 100) / varLcuCnt) > 80)) {
         picture_control_set_ptr->logo_pic_flag = EB_TRUE;
     }
 
@@ -4648,7 +4651,7 @@ void ComputePictureSpatialStatistics(
     picTotVariance = 0;
 
     for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-        LcuParameters   *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+        SbParams   *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
 
         sb_origin_x = sb_params->origin_x;
         sb_origin_y = sb_params->origin_y;
@@ -4687,6 +4690,7 @@ void ComputePictureSpatialStatistics(
     }
 
     picture_control_set_ptr->pic_avg_variance = (uint16_t)(picTotVariance / sb_total_count);
+
     // Calculate the variance of variance to determine Homogeneous regions. Note: Variance calculation should be on.
     DetermineHomogeneousRegionInPicture(
         sequence_control_set_ptr,
@@ -4822,8 +4826,8 @@ void PadPictureToMultipleOfMinCuSizeDimensions(
     EbBool                          is16BitInput = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
     uint32_t color_format = input_picture_ptr->color_format;
-	const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
+    const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     // Input Picture Padding
     pad_input_picture(
@@ -5100,24 +5104,25 @@ void* picture_analysis_kernel(void *input_ptr)
         GatheringPictureStatistics(
             sequence_control_set_ptr,
             picture_control_set_ptr,
-			picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
+            picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
             input_padded_picture_ptr,
             sixteenth_decimated_picture_ptr,
             sb_total_count,
             asm_type);
-
-        picture_control_set_ptr->sc_content_detected = is_screen_content(
-            input_picture_ptr->buffer_y + input_picture_ptr->origin_x + input_picture_ptr->origin_y*input_picture_ptr->stride_y,
-            0,
-            input_picture_ptr->stride_y,
-            sequence_control_set_ptr->luma_width, sequence_control_set_ptr->luma_height);       
-        if (picture_control_set_ptr->sc_content_detected) {
-            if (picture_control_set_ptr->pic_avg_variance > 1000)
-                picture_control_set_ptr->sc_content_detected = 1;
-            else
-                picture_control_set_ptr->sc_content_detected = 0;
-        }
-
+        if (sequence_control_set_ptr->static_config.screen_content_mode == 2){ // auto detect
+            picture_control_set_ptr->sc_content_detected = is_screen_content(
+                input_picture_ptr->buffer_y + input_picture_ptr->origin_x + input_picture_ptr->origin_y*input_picture_ptr->stride_y,
+                0,
+                input_picture_ptr->stride_y,
+                sequence_control_set_ptr->luma_width, sequence_control_set_ptr->luma_height);
+            if (picture_control_set_ptr->sc_content_detected) {
+                if (picture_control_set_ptr->pic_avg_variance > 1000)
+                    picture_control_set_ptr->sc_content_detected = 1;
+                else
+                    picture_control_set_ptr->sc_content_detected = 0;
+            }
+        }else // off / on
+            picture_control_set_ptr->sc_content_detected = sequence_control_set_ptr->static_config.screen_content_mode;
         
 #if HARD_CODE_SC_SETTING
         picture_control_set_ptr->sc_content_detected = EB_TRUE;

@@ -43,11 +43,20 @@ extern EbErrorType derive_delta_qp_for_each_leaf_lcu(
 void qpm_derive_delta_qp_map_weights(
     ModeDecisionConfigurationContext    *context_ptr,
     PictureControlSet                  *picture_control_set_ptr);
-
+#if !OPT_LOSSLESS_0
 extern uint8_t derive_contouring_class(
     PictureParentControlSet   *parent_pcs_ptr,
     uint16_t                       sb_index,
     uint8_t                        leaf_index);  
+#endif
+/**************************************
+* Function Ptrs Definitions
+**************************************/
+typedef EbErrorType(*EB_MDC_FUNC)(
+    MdcpLocalCodingUnit                   *localCuArray,
+    uint32_t                                   cu_index,
+    uint32_t                                   depth,
+    EbBool                                 *mdcPrediction64);
 
 #define Pred        0x01
 #define Predp1      0x02

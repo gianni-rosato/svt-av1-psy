@@ -48,11 +48,6 @@ extern "C" {
     extern const int32_t cdef_sec_taps[2][2];
     DECLARE_ALIGNED(16, extern const int32_t, cdef_directions[8][2]);
 
-    typedef struct {
-        uint8_t by;
-        uint8_t bx;
-        uint8_t skip;
-    } cdef_list;
 
 #define REDUCED_PRI_STRENGTHS 8
 #define REDUCED_TOTAL_STRENGTHS (REDUCED_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)

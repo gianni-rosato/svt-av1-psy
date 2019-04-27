@@ -98,13 +98,12 @@ static void transpose16(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_
     }
 }
 
-static void transpose16Partial(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t pattern)
-{
+static void transpose16Partial(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t pattern) {
+
     uint32_t j;
     uint32_t numRows = 2 - (pattern & 1);
 
-    do
-    {
+    do {
         for (j = 0; j < 2; j++)
         {
             __m128i a0, a1, a2, a3, a4, a5, a6, a7;
@@ -313,14 +312,13 @@ void low_precision_transform16x16_ssse3(int16_t *src, uint32_t src_stride, int16
 }
 
 // 16-point inverse transform
-static void invTransform16(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows)
-{
+static void invTransform16(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows) {
+
     __m128i s0 = _mm_cvtsi32_si128(shift);
     __m128i o0 = _mm_set1_epi32(1 << (shift - 1));
     const __m128i *coeff32 = (const __m128i *)coeff_tbl2;
 
-    do
-    {
+    do {
         __m128i x0, x1;
         __m128i a0, a1, a2, a3;
         __m128i b0, b1, b2, b3;
@@ -387,14 +385,13 @@ static void invTransform16(int16_t *src, uint32_t src_stride, int16_t *dst, uint
 }
 
 // 16-point inverse transform
-static void invTransform16Half(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows)
-{
+static void invTransform16Half(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows) {
+
     __m128i s0 = _mm_cvtsi32_si128(shift);
     __m128i o0 = _mm_set1_epi32(1 << (shift - 1));
     const __m128i *coeff32 = (const __m128i *)coeff_tbl2;
 
-    do
-    {
+    do {
         __m128i x0, x1;
         __m128i a0, a1, a2, a3;
         __m128i b0, b1, b2, b3;
@@ -534,15 +531,14 @@ static void transpose32(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_
     }
 }
 
-static void transpose32Partial(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t pattern)
-{
+static void transpose32Partial(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t pattern) {
+
     uint32_t j;
     uint32_t numRows = 4 - (pattern & 3);
 
-    do
-    {
-        for (j = 0; j < 4; j++)
-        {
+    do {
+        for (j = 0; j < 4; j++) {
+
             __m128i a0, a1, a2, a3, a4, a5, a6, a7;
             __m128i b0, b1, b2, b3, b4, b5, b6, b7;
 
@@ -682,15 +678,14 @@ static uint32_t transpose32Check0s(int16_t *src, uint32_t src_stride, int16_t *d
 }
 
 // 32-point forward transform (32 rows)
-static void transform32(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift)
-{
+static void transform32(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift) {
+
     __m128i s0 = _mm_cvtsi32_si128(shift);
     __m128i o0 = _mm_set1_epi32(1 << (shift - 1));
     const __m128i *coeff32 = (const __m128i *)coeff_tbl;
 
     uint32_t numRows = 32;
-    do
-    {
+    do {
         __m128i x0, x1, x2, x3;
         __m128i y0, y1, y2, y3;
         __m128i a0, a1, a2, a3, a4, a5, a6, a7;
@@ -823,14 +818,14 @@ void low_precision_transform32x32_ssse3(int16_t *src, uint32_t src_stride, int16
 }
 
 // 32-point inverse transform (32 rows)
-static void invTransform32(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows)
-{
+static void invTransform32(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows) {
+
     __m128i s0 = _mm_cvtsi32_si128(shift);
     __m128i o0 = _mm_set1_epi32(1 << (shift - 1));
     const __m128i *coeff32 = (const __m128i *)coeff_tbl2;
 
-    do
-    {
+    do {
+
         __m128i x0, x1, x2, x3;
 #ifndef SSSE3/// __SSSE3__
         __m128i y0, y1, y2, y3;
@@ -1028,14 +1023,14 @@ static void invTransform32(int16_t *src, uint32_t src_stride, int16_t *dst, uint
     } while (--numRows);
 }
 
-static void invTransform32ThreeQuarter(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows)
-{
+static void invTransform32ThreeQuarter(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows) {
+
     __m128i s0 = _mm_cvtsi32_si128(shift);
     __m128i o0 = _mm_set1_epi32(1 << (shift - 1));
     const __m128i *coeff32 = (const __m128i *)coeff_tbl2;
 
-    do
-    {
+    do {
+
         __m128i x0, x1, x2, x3;
 #ifndef SSSE3/// __SSSE3__
         __m128i y0, y1, y2, y3;
@@ -1208,14 +1203,13 @@ static void invTransform32ThreeQuarter(int16_t *src, uint32_t src_stride, int16_
     } while (--numRows);
 }
 
-static void invTransform32Half(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows)
-{
+static void invTransform32Half(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows) {
+
     __m128i s0 = _mm_cvtsi32_si128(shift);
     __m128i o0 = _mm_set1_epi32(1 << (shift - 1));
     const __m128i *coeff32 = (const __m128i *)coeff_tbl2;
 
-    do
-    {
+    do {
         __m128i x0, x1, x2, x3;
 #ifndef SSSE3/// __SSSE3__
         __m128i y0, y1, y2;
@@ -1357,14 +1351,14 @@ static void invTransform32Half(int16_t *src, uint32_t src_stride, int16_t *dst, 
     } while (--numRows);
 }
 
-static void invTransform32Quarter(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows)
-{
+static void invTransform32Quarter(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride, uint32_t shift, uint32_t numRows) {
+
     __m128i s0 = _mm_cvtsi32_si128(shift);
     __m128i o0 = _mm_set1_epi32(1 << (shift - 1));
     const __m128i *coeff32 = (const __m128i *)coeff_tbl2;
 
-    do
-    {
+    do {
+
         __m128i x0, x1, x2, x3;
 #ifndef SSSE3/// __SSSE3__
         __m128i y0, y1;
@@ -1523,8 +1517,8 @@ void quantize_inv_quantize_nx_n_sse3(
     const int32_t     iq_offset,
     const int32_t     shift_num,
     const uint32_t     area_size,
-    uint32_t          *nonzerocoeff)
-{
+    uint32_t          *nonzerocoeff){
+
     unsigned row, col;
 
     __m128i q = _mm_set1_epi16((int16_t)q_func);
@@ -1538,11 +1532,10 @@ void quantize_inv_quantize_nx_n_sse3(
     __m128i z = _mm_setzero_si128();
 
     row = 0;
-    do
-    {
+    do {
+
         col = 0;
-        do
-        {
+        do {
             __m128i a0, a1;
             __m128i b0, b1;
             __m128i x;
@@ -1604,8 +1597,8 @@ void quantize_inv_quantize8x8_sse3(
     const int32_t     iq_offset,
     const int32_t     shift_num,
     const uint32_t     area_size,
-    uint32_t          *nonzerocoeff)
-{
+    uint32_t          *nonzerocoeff){
+
     unsigned row;
 
     __m128i q = _mm_set1_epi16((int16_t)q_func);
@@ -1621,8 +1614,7 @@ void quantize_inv_quantize8x8_sse3(
     (void)area_size;
 
     row = 0;
-    do
-    {
+    do {
         __m128i a0, a1;
         __m128i b0, b1;
         __m128i x;
@@ -1683,8 +1675,8 @@ void quantize_inv_quantize4x4_sse3(
     const int32_t     iq_offset,
     const int32_t     shift_num,
     const uint32_t     area_size,
-    uint32_t          *nonzerocoeff)
-{
+    uint32_t          *nonzerocoeff){
+
     int32_t row;
 
     __m128i q = _mm_set1_epi16((int16_t)q_func);
@@ -1700,8 +1692,7 @@ void quantize_inv_quantize4x4_sse3(
     (void)area_size;
 
     row = 0;
-    do
-    {
+    do {
         __m128i a0, a1;
         __m128i b0, b1;
         __m128i x0 = _mm_loadl_epi64((__m128i *)(coeff + coeff_stride * row + 0));

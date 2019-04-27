@@ -18,8 +18,7 @@
 #include "EbDefinitions.h"
 #include "EbDlfProcess.h"
 #include "EbEncDecResults.h"
-#include "EbEncDecTasks.h"
-#include "EbPictureDemuxResults.h"
+#include "EbThreads.h"
 #include "EbReferenceObject.h"
 
 #include "EbDeblockingFilter.h"

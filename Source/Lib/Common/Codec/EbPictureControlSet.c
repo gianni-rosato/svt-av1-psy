@@ -27,7 +27,7 @@ void *aom_malloc(size_t size);
 
 EbErrorType av1_alloc_restoration_buffers(Av1Common *cm);
 
-EbErrorType av1_hash_table_create(hash_table *p_hash_table);
+EbErrorType av1_hash_table_create(HashTable *p_hash_table);
 
 static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx, int32_t sy,
     RestorationInfo *rst) {
@@ -47,7 +47,59 @@ static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx,
     rst[2].restoration_unit_size = rst[1].restoration_unit_size;
 }
 
+#if MRP_ME
+EbErrorType me_sb_results_ctor(
+    MeLcuResults     **objectDblPtr,
+    uint32_t           maxNumberOfPusPerLcu,
+    uint32_t           maxNumberOfMeCandidatesPerPU){
 
+    uint32_t  puIndex;
+    MeLcuResults *objectPtr;
+
+    EB_MALLOC(MeLcuResults*, objectPtr, sizeof(MeLcuResults), EB_N_PTR);
+
+    *objectDblPtr = objectPtr;
+
+    EB_MALLOC(MeCandidate**, objectPtr->me_candidate, sizeof(MeCandidate*) * maxNumberOfPusPerLcu, EB_N_PTR);
+
+#if ALIGN_MEM 
+    objectPtr->meCandidateArray = (MeCandidate_t*)EB_aligned_malloc(sizeof(MeCandidate_t) * maxNumberOfPusPerLcu * maxNumberOfMeCandidatesPerPU, 64);
+#else
+    EB_MALLOC(MeCandidate*, objectPtr->me_candidate_array, sizeof(MeCandidate) * maxNumberOfPusPerLcu * maxNumberOfMeCandidatesPerPU, EB_N_PTR);
+#endif 
+    for (puIndex = 0; puIndex < maxNumberOfPusPerLcu; ++puIndex) {
+        //objectPtr->meCandidate[puIndex] = (MeCandidate_t*) malloc(sizeof(MeCandidate_t) * maxNumberOfMeCandidatesPerPU);
+        objectPtr->me_candidate[puIndex] = &objectPtr->me_candidate_array[puIndex * maxNumberOfMeCandidatesPerPU];
+
+        objectPtr->me_candidate[puIndex][0].ref_idx_l0 = 0;
+        objectPtr->me_candidate[puIndex][0].ref_idx_l1 = 0;
+        objectPtr->me_candidate[puIndex][1].ref_idx_l0 = 0;
+        objectPtr->me_candidate[puIndex][1].ref_idx_l1 = 0;
+        objectPtr->me_candidate[puIndex][2].ref_idx_l0 = 0;
+        objectPtr->me_candidate[puIndex][2].ref_idx_l1 = 0;
+
+        objectPtr->me_candidate[puIndex][0].direction = 0;
+        objectPtr->me_candidate[puIndex][1].direction = 1;
+        objectPtr->me_candidate[puIndex][2].direction = 2;
+
+    }
+#if 0
+    objectPtr->xMvSearchAreaCenter[0][0] = 0;
+    objectPtr->yMvSearchAreaCenter[0][0] = 0;
+    objectPtr->xMvSearchAreaCenter[1][0] = 0;
+    objectPtr->yMvSearchAreaCenter[1][0] = 0;
+#endif
+    EB_MALLOC(uint8_t*, objectPtr->total_me_candidate_index, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
+
+#if NSQ_OPTIMASATION
+    EB_MALLOC(uint8_t*, objectPtr->me_nsq_0, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
+    EB_MALLOC(uint8_t*, objectPtr->me_nsq_1, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
+#endif
+
+    //objectPtr->lcuDistortion = 0;
+    return EB_ErrorNone;
+}
+#endif
 EbErrorType picture_control_set_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
@@ -233,11 +285,16 @@ EbErrorType picture_control_set_ctor(
 
     }
 
+#if CABAC_UP   
+    EB_MALLOC(FRAME_CONTEXT*, object_ptr->ec_ctx_array, sizeof(FRAME_CONTEXT)             * all_sb, EB_N_PTR);
+    EB_MALLOC(MdRateEstimationContext*, object_ptr->rate_est_array, sizeof(MdRateEstimationContext) * all_sb, EB_N_PTR);
+#endif
+#if !MEMORY_FOOTPRINT_OPT
     // Copy SB array map
     EB_MALLOC(LargestCodingUnit**, object_ptr->sb_ptr_array_copy, sizeof(LargestCodingUnit*) * object_ptr->sb_total_count, EB_N_PTR);
 
     EB_MEMCPY(object_ptr->sb_ptr_array_copy, object_ptr->sb_ptr_array, object_ptr->sb_total_count * sizeof(sizeof(LargestCodingUnit*)));
-
+#endif
     // Mode Decision Control config
     EB_MALLOC(MdcLcuData*, object_ptr->mdc_sb_array, object_ptr->sb_total_count * sizeof(MdcLcuData), EB_N_PTR);
     object_ptr->qp_array_stride = (uint16_t)((initDataPtr->picture_width + MIN_BLOCK_SIZE - 1) / MIN_BLOCK_SIZE);
@@ -247,12 +304,12 @@ EbErrorType picture_control_set_ctor(
 
     // Allocate memory for qp array (used by DLF)
     EB_MALLOC(uint8_t*, object_ptr->qp_array, sizeof(uint8_t) * object_ptr->qp_array_size, EB_N_PTR);
-
+#if !MEMORY_FOOTPRINT_OPT
     EB_MALLOC(uint8_t*, object_ptr->entropy_qp_array, sizeof(uint8_t) * object_ptr->qp_array_size, EB_N_PTR);
 
     // Allocate memory for cbf array (used by DLF)
     EB_MALLOC(uint8_t*, object_ptr->cbf_map_array, sizeof(uint8_t) * ((initDataPtr->picture_width >> 2) * (initDataPtr->picture_height >> 2)), EB_N_PTR);
-
+#endif
     // Mode Decision Neighbor Arrays
     uint8_t depth;
     for (depth = 0; depth < NEIGHBOR_ARRAY_TOTAL_COUNT; depth++) {
@@ -376,7 +433,7 @@ EbErrorType picture_control_set_ctor(
             return EB_ErrorInsufficientResources;
         }
 
-
+#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_skip_coeff_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE,
@@ -389,6 +446,7 @@ EbErrorType picture_control_set_ctor(
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
+#endif
         // for each 4x4
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth],
@@ -470,7 +528,7 @@ EbErrorType picture_control_set_ctor(
 
 
     }
-
+#if !MEMORY_FOOTPRINT_OPT
     return_error = neighbor_array_unit_ctor(
         &object_ptr->md_refinement_intra_luma_mode_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -508,7 +566,7 @@ EbErrorType picture_control_set_ctor(
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
-
+#endif
     // Encode Pass Neighbor Arrays
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ep_intra_luma_mode_neighbor_array,
@@ -662,7 +720,7 @@ EbErrorType picture_control_set_ctor(
         object_ptr->ep_cb_recon_neighbor_array16bit = 0;
         object_ptr->ep_cr_recon_neighbor_array16bit = 0;
     }
-
+#if !OPT_LOSSLESS_0
     return_error = neighbor_array_unit_ctor(
         &object_ptr->amvp_mv_merge_mv_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -687,6 +745,7 @@ EbErrorType picture_control_set_ctor(
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
+#endif
     // Entropy Coding Neighbor Arrays
     return_error = neighbor_array_unit_ctor(
         &object_ptr->mode_type_neighbor_array,
@@ -866,25 +925,26 @@ EbErrorType picture_control_set_ctor(
 
     if (!is16bit)
     {
-        EB_MALLOC(uint16_t*, object_ptr->src[0],sizeof(*object_ptr->src)       * initDataPtr->picture_width * initDataPtr->picture_height,EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->ref_coeff[0],sizeof(*object_ptr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height, EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->src[1],sizeof(*object_ptr->src)       * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->ref_coeff[1],sizeof(*object_ptr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->src[2],sizeof(*object_ptr->src)       * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
-        EB_MALLOC(uint16_t*,object_ptr->ref_coeff[2],sizeof(*object_ptr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
+        EB_MALLOC(uint16_t*, object_ptr->src[0],sizeof(object_ptr->src)       * initDataPtr->picture_width * initDataPtr->picture_height,EB_N_PTR);
+        EB_MALLOC(uint16_t*, object_ptr->ref_coeff[0],sizeof(object_ptr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height, EB_N_PTR);
+        EB_MALLOC(uint16_t*, object_ptr->src[1],sizeof(object_ptr->src)       * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
+        EB_MALLOC(uint16_t*, object_ptr->ref_coeff[1],sizeof(object_ptr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
+        EB_MALLOC(uint16_t*, object_ptr->src[2],sizeof(object_ptr->src)       * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
+        EB_MALLOC(uint16_t*,object_ptr->ref_coeff[2],sizeof(object_ptr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
     }
 
 
     EB_CREATEMUTEX(EbHandle, object_ptr->rest_search_mutex, sizeof(EbHandle), EB_MUTEX);
      
 
-
+#if !MEMORY_FOOTPRINT_OPT
     object_ptr->cu32x32_quant_coeff_num_map_array_stride = (uint16_t)((initDataPtr->picture_width + 32 - 1) / 32);
     uint16_t cu32x32QuantCoeffNumMapArraySize = (uint16_t)(((initDataPtr->picture_width + 32 - 1) / 32) * ((initDataPtr->picture_height + 32 - 1) / 32));
     EB_MALLOC(int8_t*, object_ptr->cu32x32_quant_coeff_num_map_array, sizeof(int8_t) * cu32x32QuantCoeffNumMapArraySize, EB_N_PTR);
-
+#endif
     //the granularity is 4x4
     EB_MALLOC(ModeInfo**, object_ptr->mi_grid_base, sizeof(ModeInfo*) * object_ptr->sb_total_count*(BLOCK_SIZE_64 / 4)*(BLOCK_SIZE_64 / 4), EB_N_PTR);
+
     EB_MALLOC(ModeInfo*, object_ptr->mip, sizeof(ModeInfo) * object_ptr->sb_total_count*(BLOCK_SIZE_64 / 4)*(BLOCK_SIZE_64 / 4), EB_N_PTR);
 
     memset(object_ptr->mip, 0, sizeof(ModeInfo) * object_ptr->sb_total_count*(BLOCK_SIZE_64 / 4)*(BLOCK_SIZE_64 / 4));
@@ -1011,11 +1071,34 @@ EbErrorType picture_parent_control_set_ctor(
 
     // Motion Estimation Results
     object_ptr->max_number_of_pus_per_sb = (initDataPtr->ext_block_flag) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
+#if MRP_CONNECTION
+#if MRP_MEM_OPT
+    object_ptr->max_number_of_candidates_per_block = ME_RES_CAND; //[Single Ref = 7] + [BiDir = 12 = 3*4 ] + [UniDir = 4 = 3+1]
+#else
+    object_ptr->max_number_of_candidates_per_block = 100;//(initDataPtr->mePictureSearchCount * initDataPtr->mePictureSearchCount) + (initDataPtr->mePictureSearchCount << 1);
+#endif
+    EB_MALLOC(MeLcuResults**, object_ptr->me_results, sizeof(MeLcuResults*) * object_ptr->sb_total_count, EB_N_PTR);
+
+    for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
+
+        return_error = me_sb_results_ctor(
+            &(object_ptr->me_results[sb_index]),
+#if NO_CFG_FILE
+            MAX_ME_PU_COUNT,
+#else
+            object_ptr->max_number_of_pus_per_sb,
+#endif
+            object_ptr->max_number_of_candidates_per_block);
+    }
+
+#else
+
     EB_MALLOC(MeCuResults**, object_ptr->me_results, sizeof(MeCuResults*) * object_ptr->sb_total_count, EB_N_PTR);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
         EB_MALLOC(MeCuResults*, object_ptr->me_results[sb_index], sizeof(MeCuResults) * MAX_ME_PU_COUNT, EB_N_PTR);
     }
+#endif
     EB_MALLOC(uint32_t*, object_ptr->rc_me_distortion, sizeof(uint32_t) * object_ptr->sb_total_count, EB_N_PTR);
     // ME and OIS Distortion Histograms
     EB_MALLOC(uint16_t*, object_ptr->me_distortion_histogram, sizeof(uint16_t) * NUMBER_OF_SAD_INTERVALS, EB_N_PTR);
@@ -1028,33 +1111,39 @@ EbErrorType picture_parent_control_set_ctor(
 
     // Non moving index array
     EB_MALLOC(uint8_t*, object_ptr->non_moving_index_array, sizeof(uint8_t) * object_ptr->sb_total_count, EB_N_PTR);
-
+#if !MEMORY_FOOTPRINT_OPT  
     // similar Colocated Lcu array
     EB_MALLOC(EbBool*, object_ptr->similar_colocated_sb_array, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
 
     // similar Colocated Lcu array
     EB_MALLOC(EbBool*, object_ptr->similar_colocated_sb_array_ii, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
-
+#endif
     // SB noise variance array
     EB_MALLOC(uint8_t*, object_ptr->sb_flat_noise_array, sizeof(uint8_t) * object_ptr->sb_total_count, EB_N_PTR);
-    EB_MALLOC(uint64_t*, object_ptr->sb_variance_of_variance_over_time, sizeof(uint64_t) * object_ptr->sb_total_count, EB_N_PTR);
+#if !MEMORY_FOOTPRINT_OPT     
+    EB_MALLOC(uint64_t*, object_ptr->sb_variance_of_variance_over_time, sizeof(uint64_t) * object_ptr->sb_total_count, EB_N_PTR); 
     EB_MALLOC(EbBool*, object_ptr->is_sb_homogeneous_over_time, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
+#endif
     EB_MALLOC(EdgeLcuResults*, object_ptr->edge_results_ptr, sizeof(EdgeLcuResults) * object_ptr->sb_total_count, EB_N_PTR);
 
     EB_MALLOC(uint8_t*, object_ptr->sharp_edge_sb_flag, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
-
+#if !DISABLE_OIS_USE
     EB_MALLOC(uint8_t*, object_ptr->failing_motion_sb_flag, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
 
     EB_MALLOC(EbBool*, object_ptr->uncovered_area_sb_flag, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
-
+#endif
+#if !MEMORY_FOOTPRINT_OPT    
     EB_MALLOC(EbBool*, object_ptr->sb_homogeneous_area_array, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
 
     EB_MALLOC(uint64_t**, object_ptr->var_of_var32x32_based_sb_array, sizeof(uint64_t*) * object_ptr->sb_total_count, EB_N_PTR);
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
         EB_MALLOC(uint64_t*, object_ptr->var_of_var32x32_based_sb_array[sb_index], sizeof(uint64_t) * 4, EB_N_PTR);
     }
+#endif
+#if !MEMORY_FOOTPRINT_OPT
     EB_MALLOC(EbBool*, object_ptr->sb_isolated_non_homogeneous_area_array, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
-
+#endif
+#if !OPT_LOSSLESS_0
     EB_MALLOC(uint64_t**, object_ptr->sb_y_src_energy_cu_array, sizeof(uint64_t*) * object_ptr->sb_total_count, EB_N_PTR);
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
         EB_MALLOC(uint64_t*, object_ptr->sb_y_src_energy_cu_array[sb_index], sizeof(uint64_t) * 5, EB_N_PTR);
@@ -1064,7 +1153,8 @@ EbErrorType picture_parent_control_set_ctor(
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
         EB_MALLOC(uint64_t*, object_ptr->sb_y_src_mean_cu_array[sb_index], sizeof(uint64_t) * 5, EB_N_PTR);
     }
-
+#endif
+#if !MEMORY_FOOTPRINT_OPT
     EB_MALLOC(uint8_t*, object_ptr->sb_cmplx_contrast_array, sizeof(uint8_t) * object_ptr->sb_total_count, EB_N_PTR);
     EB_MALLOC(uint8_t*, object_ptr->sb_high_contrast_array_dialated, sizeof(uint8_t) * object_ptr->sb_total_count, EB_N_PTR);
 
@@ -1072,7 +1162,7 @@ EbErrorType picture_parent_control_set_ctor(
     object_ptr->cu32x32_clean_sparse_coeff_map_array_size = (uint16_t)(((initDataPtr->picture_width + 32 - 1) / 32) * ((initDataPtr->picture_height + 32 - 1) / 32));
     // Allocate memory for 32x32 cu array for clean sparse coeff
     EB_MALLOC(uint8_t*, object_ptr->cu32x32_clean_sparse_coeff_map_array, sizeof(uint8_t) * object_ptr->cu32x32_clean_sparse_coeff_map_array_size, EB_N_PTR);
-
+#endif
     EB_MALLOC(SbStat*, object_ptr->sb_stat_array, sizeof(SbStat) * object_ptr->sb_total_count, EB_N_PTR);
 
     EB_MALLOC(EbSbComplexityStatus*, object_ptr->complex_sb_array, sizeof(EbSbComplexityStatus) * object_ptr->sb_total_count, EB_N_PTR);

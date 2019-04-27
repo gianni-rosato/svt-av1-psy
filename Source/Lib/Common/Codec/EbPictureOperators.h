@@ -350,6 +350,17 @@ extern "C" {
         // AVX2
         picture_addition_kernel16bit_sse2_intrin,
     };
+    typedef void(*EB_RESDKERNELSUBSAMPLED_TYPE)(
+        uint8_t  *input,
+        uint32_t  input_stride,
+        uint8_t  *pred,
+        uint32_t  pred_stride,
+        int16_t  *residual,
+        uint32_t  residual_stride,
+        uint32_t  area_width,
+        uint32_t  area_height,
+        uint8_t   last_line
+        );
 
     void residual_kernel16bit(
         uint16_t *input,
@@ -408,32 +419,32 @@ extern "C" {
         // NON_AVX2
         {
             // 4x4
-            spatial_full_distortion_kernel4x4_ssse3_intrin,
-            // 8x8
-            spatial_full_distortion_kernel8x8_ssse3_intrin,
-            // 16x16
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 32x32
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 64x64
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 128x128
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin
+            spatial_full_distortion_kernel4x_n_sse2_intrin,
+            // 8xN
+            spatial_full_distortion_kernel8x_n_sse2_intrin,
+            // 16xN
+            spatial_full_distortion_kernel16x_n_sse2_intrin,
+            // 32xN
+            spatial_full_distortion_kernel32x_n_sse2_intrin,
+            // 64xN
+            spatial_full_distortion_kernel64x_n_sse2_intrin,
+            // 128xN
+            spatial_full_distortion_kernel128x_n_sse2_intrin
         },
         // ASM_AVX2
         {
             // 4x4
-            spatial_full_distortion_kernel4x4_ssse3_intrin,
-            // 8x8
-            spatial_full_distortion_kernel8x8_ssse3_intrin,
-            // 16x16
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 32x32
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 64x64
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 128x128
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin
+            spatial_full_distortion_kernel4x_n_avx2_intrin,
+            // 8xN
+            spatial_full_distortion_kernel8x_n_avx2_intrin,
+            // 16xN
+            spatial_full_distortion_kernel16x_n_avx2_intrin,
+            // 32xN
+            spatial_full_distortion_kernel32x_n_avx2_intrin,
+            // 64xN
+            spatial_full_distortion_kernel64x_n_avx2_intrin,
+            // 128xN
+            spatial_full_distortion_kernel128x_n_avx2_intrin
         },
     };
 

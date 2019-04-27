@@ -26,6 +26,8 @@
 #define CODED_FRAMES_STAT_QUEUE_MAX_DEPTH   10000
 #endif
 #define RC_PRINTS                   0
+#define ADAPTIVE_PERCENTAGE         1
+#define RC_UPDATE_TARGET_RATE       1
 
 #define RC_QPMOD_MAXQP             54
 
@@ -179,9 +181,11 @@ typedef struct HighLevelRateControlContext
     uint64_t channel_bit_rate_per_sw;
     uint64_t bit_constraint_per_sw;
     uint64_t pred_bits_ref_qpPerSw[MAX_REF_QP_NUM];
+#if RC_UPDATE_TARGET_RATE
     uint32_t prev_intra_selected_ref_qp;
     uint32_t prev_intra_org_selected_ref_qp;
     uint64_t previous_updated_bit_constraint_per_sw;
+#endif
 } HighLevelRateControlContext;
 
 typedef struct RateControlContext
