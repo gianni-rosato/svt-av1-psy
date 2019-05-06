@@ -2668,7 +2668,7 @@ extern void
 memset(dst, val, count)
 
 #define EB_STRNCPY(dst, src, count) \
-strncpy_ss(dst, sizeof(dst), src, count)
+strncpy_ss(dst, dst_size, src, count)
 
 #define EB_STRCPY(dst, size, src) \
 strcpy_ss(dst, size, src)

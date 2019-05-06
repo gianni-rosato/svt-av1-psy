@@ -20,12 +20,7 @@ char* copyUntilCharacterOrNewLine(char *src, char *dst, char chr){
         count++;
     }
 
-    if(count >= YFM_HEADER_MAX){
-        count = YFM_HEADER_MAX-1;
-    }
-
-    EB_STRNCPY(dst, src_init, count);
-    dst[count] = '\0';
+    EB_STRNCPY(dst, YFM_HEADER_MAX, src_init, count);
 
     return src;
 
