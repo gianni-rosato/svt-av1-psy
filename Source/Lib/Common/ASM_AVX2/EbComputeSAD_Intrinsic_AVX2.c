@@ -6095,7 +6095,7 @@ void ext_all_sad_calculation_8x8_16x16_avx2(
    */
 #define avx2_find_min_pos(in, best_id) {                                      \
     __m256i x = _mm256_slli_epi32(in, 3);                 /* x = x<<3 | idx */\
-    x = _mm256_add_epi32(x, idx_min_pos_prv);       /*x = [12345678]*/        \
+    x = _mm256_add_epi32(x, idx_min_pos_prv);             /*x = [12345678]*/  \
     const __m256i y = _mm256_permute2f128_si256(x, x, 1); /*y = [56781234]*/  \
     const __m256i m1 = _mm256_min_epu32(x, y);            /*m1 = [12341234]*/ \
     const __m256i m2 = _mm256_permute4x64_epi64(m1, 5);   /*m2 = [34123412]*/ \
@@ -6103,7 +6103,7 @@ void ext_all_sad_calculation_8x8_16x16_avx2(
     const __m256i m4 = _mm256_shuffle_epi32(m3, 5);       /*m4 = [21212121]*/ \
     const __m256i m = _mm256_min_epu32(m3, m4);           /*m5 = [11111111]*/ \
     /* (x<<3 | idx) & (0b000111) = idx */  \
-    best_id = _mm256_extract_epi16(m, 0) & 0x07; } while(0)
+    best_id = _mm256_extract_epi16(m, 0) & 0x07; }
 
 void ext_eigth_sad_calculation_nsq_avx2(
     uint32_t   p_sad8x8[64][8],
