@@ -17,6 +17,7 @@
 #include "EbSvtAv1Enc.h"
 #include "EbThreads.h"
 #include "EbUtility.h"
+#include "EbString.h"
 #include "EbEncHandle.h"
 #include "EbSystemResourceManager.h"
 #include "EbPictureControlSet.h"
@@ -226,8 +227,8 @@ EbErrorType InitThreadManagmentParams() {
 #elif defined(__linux__)
     const char* PROCESSORID = "processor";
     const char* PHYSICALID = "physical id";
-    int processor_id_len = strnlen(PROCESSORID, 128);
-    int physical_id_len = strnlen(PHYSICALID, 128);
+    int processor_id_len = EB_STRLEN(PROCESSORID, 128);
+    int physical_id_len = EB_STRLEN(PHYSICALID, 128);
     if (processor_id_len < 0 || processor_id_len >= 128)
         return EB_ErrorInsufficientResources;
     if (physical_id_len < 0 || physical_id_len >= 128)
