@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include "EbAppConfig.h"
 #include "EbAppContext.h"
-#include "EbSvtAv1Time.h"
+#include "EbTime.h"
 #ifdef _WIN32
 #include <Windows.h>
 #else
@@ -156,7 +156,7 @@ int32_t main(int32_t argc, char* argv[])
                     configs[instanceCount]->active_channel_count = num_channels;
                     configs[instanceCount]->channel_id = instanceCount;
 
-                    EbStartTime((uint64_t*)&configs[instanceCount]->performance_context.lib_start_time[0], (uint64_t*)&configs[instanceCount]->performance_context.lib_start_time[1]);
+                    StartTime((uint64_t*)&configs[instanceCount]->performance_context.lib_start_time[0], (uint64_t*)&configs[instanceCount]->performance_context.lib_start_time[1]);
 
                     return_errors[instanceCount] = init_encoder(configs[instanceCount], appCallbacks[instanceCount], instanceCount);
                     return_error = (EbErrorType)(return_error | return_errors[instanceCount]);
@@ -176,7 +176,7 @@ int32_t main(int32_t argc, char* argv[])
                         exitConditionsRecon[instanceCount]  = configs[instanceCount]->recon_file ? APP_ExitConditionNone : APP_ExitConditionError;
                         exitConditionsInput[instanceCount]  = APP_ExitConditionNone;
                         channelActive[instanceCount]        = EB_TRUE;
-                        EbStartTime((uint64_t*)&configs[instanceCount]->performance_context.encode_start_time[0], (uint64_t*)&configs[instanceCount]->performance_context.encode_start_time[1]);
+                        StartTime((uint64_t*)&configs[instanceCount]->performance_context.encode_start_time[0], (uint64_t*)&configs[instanceCount]->performance_context.encode_start_time[1]);
 
                     }
                     else {
