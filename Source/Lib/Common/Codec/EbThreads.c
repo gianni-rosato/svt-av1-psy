@@ -163,7 +163,7 @@ EbErrorType eb_destroy_thread(
     EbErrorType error_return = EB_ErrorNone;
 
 #ifdef _WIN32
-    error_return = TerminateThread((HANDLE)thread_handle, 0) ? EB_ErrorDestroyThreadFailed : EB_ErrorNone;
+    error_return = !TerminateThread((HANDLE)thread_handle, 0) ? EB_ErrorDestroyThreadFailed : EB_ErrorNone;
 #elif defined(__linux__) || defined(__APPLE__)
     error_return = pthread_cancel(*((pthread_t*)thread_handle)) ? EB_ErrorDestroyThreadFailed : EB_ErrorNone;
     pthread_join(*((pthread_t*)thread_handle), NULL);
@@ -230,7 +230,7 @@ EbErrorType eb_post_semaphore(
     EbErrorType return_error = EB_ErrorNone;
 
 #ifdef _WIN32
-    return_error = ReleaseSemaphore(
+    return_error = !ReleaseSemaphore(
         semaphore_handle,    // semaphore handle
         1,                  // amount to increment the semaphore
         NULL)               // pointer to previous count (optional)
@@ -267,7 +267,7 @@ EbErrorType eb_destroy_semaphore(EbHandle semaphore_handle)
     EbErrorType return_error = EB_ErrorNone;
 
 #ifdef _WIN32
-    return_error = CloseHandle((HANDLE)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
+    return_error = !CloseHandle((HANDLE)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
 #elif defined(__linux__) 
     return_error = sem_destroy((sem_t*)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
     free(semaphore_handle);
@@ -314,7 +314,7 @@ EbErrorType eb_release_mutex(
     EbErrorType return_error = EB_ErrorNone;
 
 #ifdef _WIN32
-    return_error = ReleaseMutex((HANDLE)mutex_handle) ? EB_ErrorCreateMutexFailed : EB_ErrorNone;
+    return_error = !ReleaseMutex((HANDLE)mutex_handle) ? EB_ErrorCreateMutexFailed : EB_ErrorNone;
 #elif defined(__linux__) || defined(__APPLE__)
     return_error = pthread_mutex_unlock((pthread_mutex_t*)mutex_handle) ? EB_ErrorCreateMutexFailed : EB_ErrorNone;
 #endif // _WIN32
