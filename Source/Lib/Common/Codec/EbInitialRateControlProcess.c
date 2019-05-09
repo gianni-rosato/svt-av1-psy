@@ -1315,7 +1315,7 @@ void UpdateHistogramQueueEntry(
     HlRateControlHistogramEntry     *histogramQueueEntryPtr;
     int32_t                             histogramQueueEntryIndex;
 
-    eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->rate_table_update_mutex);
+    eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
 
     histogramQueueEntryIndex = (int32_t)(picture_control_set_ptr->picture_number - encode_context_ptr->hl_rate_control_historgram_queue[encode_context_ptr->hl_rate_control_historgram_queue_head_index]->picture_number);
     histogramQueueEntryIndex += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
@@ -1334,7 +1334,7 @@ void UpdateHistogramQueueEntry(
     }
     histogramQueueEntryPtr->frames_in_sw = frames_in_sw;
 #endif
-    eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->rate_table_update_mutex);
+    eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
 
     return;
 
