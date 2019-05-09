@@ -428,6 +428,11 @@ void reset_mode_decision(
 #endif
     }
 
+#if EIGTH_PEL_MV
+    picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv = picture_control_set_ptr->enc_mode == ENC_M0 &&
+        (picture_control_set_ptr->parent_pcs_ptr->is_pan || picture_control_set_ptr->parent_pcs_ptr->is_tilt) ? 1 : 0;
+#endif
+
 #if ENABLE_WARPED_MV
 #if NEW_PRESETS
     EbBool enable_wm = (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) || MR_MODE ? EB_TRUE : EB_FALSE;
