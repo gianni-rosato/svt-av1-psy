@@ -233,6 +233,9 @@ extern "C" {
         uint8_t                           injected_mv_count_bipred;
         uint32_t                          fast_candidate_intra_count;
         uint32_t                          fast_candidate_inter_count;
+#if MEMORY_FOOTPRINT_OPT_ME_MV   
+        uint32_t                          me_block_offset;
+#endif
         // Multi-modes signal(s) 
         uint8_t                           nfl_level;
         uint8_t                           skip_interpolation_search;

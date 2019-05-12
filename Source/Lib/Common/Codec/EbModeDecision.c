@@ -660,23 +660,34 @@ int8_t BIPRED_3x3_X_POS[BIPRED_3x3_REFINMENT_POSITIONS] = { -1, -1, 0, 1, 1, 1, 
 int8_t BIPRED_3x3_Y_POS[BIPRED_3x3_REFINMENT_POSITIONS] = { 0, 1, 1, 1, 0, -1, -1, -1 };
 
 void Unipred3x3CandidatesInjection(
-    PictureControlSet            *picture_control_set_ptr,
-    ModeDecisionContext          *context_ptr,
-    LargestCodingUnit            *sb_ptr,
-    uint32_t                        me_sb_addr,
-    SsMeContext                  *inloop_me_context,
-    EbBool                          use_close_loop_me,
-    uint32_t                        close_loop_me_index,
-    const uint32_t                  me2Nx2NTableOffset,
-    uint32_t                       *candidateTotalCnt){
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+    const SequenceControlSet  *sequence_control_set_ptr, 
+#endif
+    PictureControlSet         *picture_control_set_ptr,
+    ModeDecisionContext       *context_ptr,
+    LargestCodingUnit         *sb_ptr,
+    uint32_t                   me_sb_addr,
+    SsMeContext               *inloop_me_context,
+    EbBool                     use_close_loop_me,
+    uint32_t                   close_loop_me_index,
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
+    const uint32_t             me2Nx2NTableOffset,
+#endif
+    uint32_t                  *candidateTotalCnt){
 
     UNUSED(sb_ptr);
     uint32_t                   bipredIndex;
     uint32_t                   canTotalCnt = (*candidateTotalCnt);
 #if MD_INJECTION
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+    const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
+    uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
+    const MeCandidate *me_block_results = me_results->me_candidate[context_ptr->me_block_offset];
+#else
     const MeLcuResults *me_results      = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
     uint8_t total_me_cnt                = me_results->total_me_candidate_index[me2Nx2NTableOffset];
     const MeCandidate *me_block_results = me_results->me_candidate[me2Nx2NTableOffset];
+#endif
 #else
     MeCuResults * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr][me2Nx2NTableOffset];
 #endif
@@ -706,9 +717,13 @@ void Unipred3x3CandidatesInjection(
                 continue;
         }
 #if MD_INJECTION
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+        int16_t to_inject_mv_x = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].x_mv + BIPRED_3x3_X_POS[bipredIndex]) << 1;
+        int16_t to_inject_mv_y = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].y_mv + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
+#else
         int16_t to_inject_mv_x = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_block_results_ptr->x_mv_l0 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
         int16_t to_inject_mv_y = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_block_results_ptr->y_mv_l0 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
-
+#endif
 #else
         int16_t to_inject_mv_x = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (mePuResult->x_mv_l0 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
         int16_t to_inject_mv_y = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (mePuResult->y_mv_l0 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
@@ -806,8 +821,18 @@ void Unipred3x3CandidatesInjection(
                     continue;
             }
 #if MD_INJECTION
+#if MEMORY_FOOTPRINT_OPT_ME_MV  
+#if FROM_7_TO_4_MV
+            int16_t to_inject_mv_x = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? 4 : 2) + list1_ref_index].x_mv + BIPRED_3x3_X_POS[bipredIndex]) << 1;
+            int16_t to_inject_mv_y = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? 4 : 2) + list1_ref_index].y_mv + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
+#else
+            int16_t to_inject_mv_x = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_results->me_mv_array[me2Nx2NTableOffset][4 + list1_ref_index].x_mv + BIPRED_3x3_X_POS[bipredIndex]) << 1;
+            int16_t to_inject_mv_y = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_results->me_mv_array[me2Nx2NTableOffset][4 + list1_ref_index].y_mv + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
+#endif                     
+#else
             int16_t to_inject_mv_x = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_block_results_ptr->x_mv_l1 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
             int16_t to_inject_mv_y = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_block_results_ptr->y_mv_l1 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
+#endif
 #else
             int16_t to_inject_mv_x = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (mePuResult->x_mv_l1 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
             int16_t to_inject_mv_y = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (mePuResult->y_mv_l1 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
@@ -891,23 +916,34 @@ void Unipred3x3CandidatesInjection(
 }
 
 void Bipred3x3CandidatesInjection(
-    PictureControlSet            *picture_control_set_ptr,
-    ModeDecisionContext          *context_ptr,
-    LargestCodingUnit            *sb_ptr,
-    uint32_t                        me_sb_addr,
-    SsMeContext                  *inloop_me_context,
-    EbBool                          use_close_loop_me,
-    uint32_t                        close_loop_me_index,
-    const uint32_t                  me2Nx2NTableOffset,
-    uint32_t                       *candidateTotalCnt){
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+    const SequenceControlSet *sequence_control_set_ptr,
+#endif
+    PictureControlSet        *picture_control_set_ptr,
+    ModeDecisionContext      *context_ptr,
+    LargestCodingUnit        *sb_ptr,
+    uint32_t                  me_sb_addr,
+    SsMeContext              *inloop_me_context,
+    EbBool                    use_close_loop_me,
+    uint32_t                  close_loop_me_index,
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
+    const uint32_t            me2Nx2NTableOffset,
+#endif
+    uint32_t                 *candidateTotalCnt){
 
     UNUSED(sb_ptr);
     uint32_t                   bipredIndex;
     uint32_t                   canTotalCnt = (*candidateTotalCnt);
 #if MD_INJECTION
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+    const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
+    uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
+    const MeCandidate *me_block_results = me_results->me_candidate[context_ptr->me_block_offset];
+#else
     const MeLcuResults *me_results      = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
     uint8_t total_me_cnt                = me_results->total_me_candidate_index[me2Nx2NTableOffset];
     const MeCandidate *me_block_results = me_results->me_candidate[me2Nx2NTableOffset];
+#endif
 #else
     MeCuResults * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr][me2Nx2NTableOffset];
 #endif
@@ -938,11 +974,22 @@ void Bipred3x3CandidatesInjection(
                 continue;
         }
 #if MD_INJECTION
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+        int16_t to_inject_mv_x_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].x_mv << 1;
+        int16_t to_inject_mv_y_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].y_mv << 1;
+#if FROM_7_TO_4_MV
+        int16_t to_inject_mv_x_l1 = use_close_loop_me ? ((inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1) : (me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? (me_block_results_ptr->ref1_list << 2) : (me_block_results_ptr->ref1_list << 1)) + list1_ref_index].x_mv + BIPRED_3x3_X_POS[bipredIndex]) << 1;
+        int16_t to_inject_mv_y_l1 = use_close_loop_me ? ((inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1) : (me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? (me_block_results_ptr->ref1_list << 2) : (me_block_results_ptr->ref1_list << 1)) + list1_ref_index].y_mv + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
+#else
+        int16_t to_inject_mv_x_l1 = use_close_loop_me ? ((inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1) : (me_results->me_mv_array[me2Nx2NTableOffset][(me_block_results_ptr->ref1_list << 2) + list1_ref_index].x_mv + BIPRED_3x3_X_POS[bipredIndex]) << 1;
+        int16_t to_inject_mv_y_l1 = use_close_loop_me ? ((inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1) : (me_results->me_mv_array[me2Nx2NTableOffset][(me_block_results_ptr->ref1_list << 2) + list1_ref_index].y_mv + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
+#endif
+#else
         int16_t to_inject_mv_x_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_block_results_ptr->x_mv_l0 << 1;
         int16_t to_inject_mv_y_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_block_results_ptr->y_mv_l0 << 1;
         int16_t to_inject_mv_x_l1 = use_close_loop_me ? ((inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1) : (me_block_results_ptr->x_mv_l1 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
         int16_t to_inject_mv_y_l1 = use_close_loop_me ? ((inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1) : (me_block_results_ptr->y_mv_l1 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
-
+#endif
 #else
         int16_t to_inject_mv_x_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : mePuResult->x_mv_l0 << 1;
         int16_t to_inject_mv_y_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : mePuResult->y_mv_l0 << 1;
@@ -1047,11 +1094,22 @@ void Bipred3x3CandidatesInjection(
                     continue;
             }
 #if MD_INJECTION
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+            int16_t to_inject_mv_x_l0 = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].x_mv + BIPRED_3x3_X_POS[bipredIndex]) << 1;
+            int16_t to_inject_mv_y_l0 = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].y_mv + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
+#if FROM_7_TO_4_MV
+            int16_t to_inject_mv_x_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? (me_block_results_ptr->ref1_list << 2) : (me_block_results_ptr->ref1_list << 1)) + list1_ref_index].x_mv << 1;
+            int16_t to_inject_mv_y_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? (me_block_results_ptr->ref1_list << 2) : (me_block_results_ptr->ref1_list << 1)) + list1_ref_index].y_mv << 1;
+#else
+            int16_t to_inject_mv_x_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[me2Nx2NTableOffset][(me_block_results_ptr->ref1_list << 2) + list1_ref_index].x_mv << 1;
+            int16_t to_inject_mv_y_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[me2Nx2NTableOffset][(me_block_results_ptr->ref1_list << 2) + list1_ref_index].y_mv << 1;
+#endif
+#else
             int16_t to_inject_mv_x_l0 = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_block_results_ptr->x_mv_l0 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
             int16_t to_inject_mv_y_l0 = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_block_results_ptr->y_mv_l0 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
             int16_t to_inject_mv_x_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_block_results_ptr->x_mv_l1 << 1;
             int16_t to_inject_mv_y_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_block_results_ptr->y_mv_l1 << 1;
-
+#endif
 #else
             int16_t to_inject_mv_x_l0 = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (mePuResult->x_mv_l0 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
             int16_t to_inject_mv_y_l0 = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (mePuResult->y_mv_l0 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
@@ -1778,16 +1836,18 @@ void inject_warped_motion_candidates(
     PictureControlSet              *picture_control_set_ptr,
     struct ModeDecisionContext     *context_ptr,
     CodingUnit                     *cu_ptr,
-    uint32_t                         *candTotCnt,
+    uint32_t                       *candTotCnt,
     SsMeContext                    *ss_mecontext,
 #if MD_INJECTION
-    MeLcuResults                    *meResult,
-    uint16_t                           block_index,
+    MeLcuResults                   *meResult,
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
+    uint16_t                        block_index,
+#endif
 #else
     MeCuResults                    *mePuResult,
 #endif
-    EbBool                            use_close_loop_me,
-    uint32_t                          close_loop_me_index)
+    EbBool                          use_close_loop_me,
+    uint32_t                        close_loop_me_index)
 {
     uint32_t canIdx = *candTotCnt;
     ModeDecisionCandidate *candidateArray = context_ptr->fast_candidate_array;
@@ -1945,8 +2005,14 @@ void inject_warped_motion_candidates(
 
     IntMv  bestPredmv[2] = { {0}, {0} };
 #if MD_INJECTION
+
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+    uint8_t total_me_cnt = meResult->total_me_candidate_index[context_ptr->me_block_offset];
+    const MeCandidate *me_block_results = meResult->me_candidate[context_ptr->me_block_offset];
+#else
     uint8_t total_me_cnt = meResult->total_me_candidate_index[block_index];
     const MeCandidate *me_block_results = meResult->me_candidate[block_index];
+#endif
     //const MeLcuResults_t *meResults = pictureControlSetPtr->ParentPcsPtr->meResultsPtr[lcuAddr];
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index)
     {
@@ -1988,8 +2054,13 @@ void inject_warped_motion_candidates(
         candidateArray[canIdx].motion_vector_yl0 = to_inject_mv_y;
 #else
 #if MD_INJECTION
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+        candidateArray[canIdx].motion_vector_xl0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : meResult->me_mv_array[context_ptr->me_block_offset][list0_ref_index].x_mv << 1;
+        candidateArray[canIdx].motion_vector_yl0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : meResult->me_mv_array[context_ptr->me_block_offset][list0_ref_index].y_mv << 1;
+#else
         candidateArray[canIdx].motion_vector_xl0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_block_results_ptr->x_mv_l0 << 1; // context_ptr->cu_ptr->ref_mvs[LAST_FRAME][0].as_mv.col;
         candidateArray[canIdx].motion_vector_yl0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_block_results_ptr->y_mv_l0 << 1; // context_ptr->cu_ptr->ref_mvs[LAST_FRAME][0].as_mv.row;
+#endif
 #else
         candidateArray[canIdx].motionVector_x_L0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : mePuResult->xMvL0 << 1; // context_ptr->cu_ptr->ref_mvs[LAST_FRAME][0].as_mv.col;
         candidateArray[canIdx].motionVector_y_L0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : mePuResult->yMvL0 << 1; // context_ptr->cu_ptr->ref_mvs[LAST_FRAME][0].as_mv.row;
@@ -2106,17 +2177,29 @@ void  inject_inter_candidates(
 
 
     max_number_of_pus_per_sb = picture_control_set_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
-
+#if MEMORY_FOOTPRINT_OPT_ME_MV   
+    context_ptr->me_block_offset =
+        (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 || context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) ? 
+            0 :
+            get_me_info_index(max_number_of_pus_per_sb, context_ptr->blk_geom, geom_offset_x, geom_offset_y);
+#else
     uint32_t me2Nx2NTableOffset;
 
     me2Nx2NTableOffset = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 || context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) ? 0 :
         get_me_info_index(max_number_of_pus_per_sb, context_ptr->blk_geom, geom_offset_x, geom_offset_y);
+#endif
 
 
 #if MD_INJECTION
     MeLcuResults *me_results            = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
-    uint8_t total_me_cnt                = me_results->total_me_candidate_index[me2Nx2NTableOffset];
+
+#if MEMORY_FOOTPRINT_OPT_ME_MV 
+    uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
+    const MeCandidate *me_block_results = me_results->me_candidate[context_ptr->me_block_offset];
+#else
+    uint8_t total_me_cnt = me_results->total_me_candidate_index[me2Nx2NTableOffset];
     const MeCandidate *me_block_results = me_results->me_candidate[me2Nx2NTableOffset];
+#endif
 #else
     MeCuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr][me2Nx2NTableOffset];
 #endif
@@ -2127,6 +2210,9 @@ void  inject_inter_candidates(
 #if BASE_LAYER_REF || MRP_REF_MODE
 #if MRP_ENABLE_BI_FOR_BASE
     EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
+#if MRP_DISABLE_ADDED_CAND_M1
+    allow_bipred = (picture_control_set_ptr->enc_mode >= ENC_M1 && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_FALSE : allow_bipred;
+#endif
 #if !INJ_MVP 
    EbBool amp_allow_bipred = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0 || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
 #endif
@@ -2222,8 +2308,13 @@ void  inject_inter_candidates(
 
             if (inter_direction == 0) {
 
+#if MEMORY_FOOTPRINT_OPT_ME_MV                               
+                int16_t to_inject_mv_x = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].x_mv << 1;
+                int16_t to_inject_mv_y = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].y_mv << 1;
+#else
                 int16_t to_inject_mv_x = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_block_results_ptr->x_mv_l0 << 1;
                 int16_t to_inject_mv_y = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_block_results_ptr->y_mv_l0 << 1;
+#endif
 #if MRP_DUPLICATION_FIX
                 uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
                 if (context_ptr->injected_mv_count_l0 == 0 || mrp_is_already_injected_mv_l0(context_ptr, to_inject_mv_x, to_inject_mv_y, to_inject_ref_type) == EB_FALSE) {
@@ -2303,10 +2394,18 @@ void  inject_inter_candidates(
                    NEWMV L1
                ************* */
                 if (inter_direction == 1) {
-
+#if MEMORY_FOOTPRINT_OPT_ME_MV     
+#if FROM_7_TO_4_MV
+                    int16_t to_inject_mv_x = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? 4 : 2) + list1_ref_index].x_mv << 1;
+                    int16_t to_inject_mv_y = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? 4 : 2) + list1_ref_index].y_mv << 1;
+#else
+                    int16_t to_inject_mv_x = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][4 + list1_ref_index].x_mv << 1;
+                    int16_t to_inject_mv_y = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][4 + list1_ref_index].y_mv << 1;                
+#endif
+#else
                     int16_t to_inject_mv_x = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_block_results_ptr->x_mv_l1 << 1;
                     int16_t to_inject_mv_y = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_block_results_ptr->y_mv_l1 << 1;
-
+#endif
 #if MRP_DUPLICATION_FIX
                     uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
                     if (context_ptr->injected_mv_count_l1 == 0 || mrp_is_already_injected_mv_l1(context_ptr, to_inject_mv_x, to_inject_mv_y, to_inject_ref_type) == EB_FALSE) {
@@ -2385,12 +2484,22 @@ void  inject_inter_candidates(
                 if (allow_bipred) {
 
                     if (inter_direction == 2) {
-
+#if MEMORY_FOOTPRINT_OPT_ME_MV      
+                        int16_t to_inject_mv_x_l0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].x_mv << 1;
+                        int16_t to_inject_mv_y_l0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].y_mv << 1;
+#if FROM_7_TO_4_MV
+                        int16_t to_inject_mv_x_l1 = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? (me_block_results_ptr->ref1_list << 2) : (me_block_results_ptr->ref1_list << 1)) + list1_ref_index].x_mv << 1;
+                        int16_t to_inject_mv_y_l1 = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? (me_block_results_ptr->ref1_list << 2) : (me_block_results_ptr->ref1_list << 1)) + list1_ref_index].y_mv << 1;
+#else   
+                        int16_t to_inject_mv_x_l1 = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][(me_block_results_ptr->ref1_list << 2) + list1_ref_index].x_mv << 1;
+                        int16_t to_inject_mv_y_l1 = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][(me_block_results_ptr->ref1_list << 2) + list1_ref_index].y_mv << 1;
+#endif
+#else
                         int16_t to_inject_mv_x_l0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_block_results_ptr->x_mv_l0 << 1;
                         int16_t to_inject_mv_y_l0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_block_results_ptr->y_mv_l0 << 1;
                         int16_t to_inject_mv_x_l1 = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_block_results_ptr->x_mv_l1 << 1;
                         int16_t to_inject_mv_y_l1 = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_block_results_ptr->y_mv_l1 << 1;
-
+#endif
 #if MRP_DUPLICATION_FIX
                         MvReferenceFrame rf[2];
 #if MRP_MD_UNI_DIR_BIPRED
@@ -2649,7 +2758,9 @@ void  inject_inter_candidates(
             &canTotalCnt,
             ss_mecontext,
             me_results,
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
             me2Nx2NTableOffset,
+#endif
             use_close_loop_me,
             close_loop_me_index);
     }
@@ -2668,6 +2779,9 @@ void  inject_inter_candidates(
             if (context_ptr->bipred3x3_injection > 0)
                 if (picture_control_set_ptr->slice_type == B_SLICE)
                     Bipred3x3CandidatesInjection(
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+                        sequence_control_set_ptr,
+#endif
                         picture_control_set_ptr,
                         context_ptr,
                         sb_ptr,
@@ -2675,7 +2789,9 @@ void  inject_inter_candidates(
                         ss_mecontext,
                         use_close_loop_me,
                         close_loop_me_index,
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
                         me2Nx2NTableOffset,
+#endif
                         &canTotalCnt);
 
 #if BASE_LAYER_REF || MRP_REF_MODE
@@ -2688,6 +2804,9 @@ void  inject_inter_candidates(
         if (context_ptr->unipred3x3_injection > 0)
             if (picture_control_set_ptr->slice_type != I_SLICE)
                 Unipred3x3CandidatesInjection(
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+                    sequence_control_set_ptr,
+#endif
                     picture_control_set_ptr,
                     context_ptr,
                     sb_ptr,
@@ -2695,7 +2814,9 @@ void  inject_inter_candidates(
                     ss_mecontext,
                     use_close_loop_me,
                     close_loop_me_index,
+#if !MEMORY_FOOTPRINT_OPT_ME_MV 
                     me2Nx2NTableOffset,
+#endif
                     &canTotalCnt);
 
             }

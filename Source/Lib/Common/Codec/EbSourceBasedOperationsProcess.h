@@ -49,7 +49,9 @@ typedef struct SourceBasedOperationsContext
     uint32_t    sb_cmplx_contrast_count;
     uint32_t    high_contrast_num;
     uint32_t    high_contrast_num_ii;
+#if !MEMORY_FOOTPRINT_OPT
     EbBool      high_dist;
+#endif
 #if !DISABLE_OIS_USE
     uint32_t    count_of_moving_sbs;
     uint32_t    countOfNonMovingLcus;

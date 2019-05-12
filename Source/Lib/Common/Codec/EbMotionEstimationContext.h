@@ -15,9 +15,13 @@ extern "C" {
 
     // Max Search Area
 #if SCREEN_CONTENT_SETTINGS
+#if REDUCE_ME_SEARCH_AREA
+#define MAX_SEARCH_AREA_WIDTH       1280
+#define MAX_SEARCH_AREA_HEIGHT      1280
+#else
 #define MAX_SEARCH_AREA_WIDTH       MAX_PICTURE_WIDTH_SIZE  + (PAD_VALUE << 1)
 #define MAX_SEARCH_AREA_HEIGHT      MAX_PICTURE_HEIGHT_SIZE + (PAD_VALUE << 1)
-
+#endif
 #else
 #define MAX_SEARCH_AREA_WIDTH       1350 // This should be a function for the MAX HME L0 * the multiplications per layers and per Hierarchichal structures
 #define MAX_SEARCH_AREA_HEIGHT      675 // This should be a function for the MAX HME L0 * the multiplications per layers and per Hierarchichal structures
@@ -301,7 +305,9 @@ extern "C" {
 #endif
         uint32_t         distortion;
         EbPredDirection  prediction_direction;
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
         uint32_t         mv[MAX_NUM_OF_REF_PIC_LIST];
+#endif
     } MePredUnit;
 
     typedef struct MotionEstimationTierZero {
@@ -313,9 +319,11 @@ extern "C" {
         // Search region stride
         uint32_t                      interpolated_stride;
         uint32_t                      interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+        MotionEstimationTierZero     *me_candidate;
+#else
         MotionEstimationTierZero    me_candidate[MAX_ME_CANDIDATE_PER_PU];
-
+#endif
         // Intermediate LCU-sized buffer to retain the input samples
         uint8_t                      *sb_buffer;
         uint8_t                      *sb_buffer_ptr;
@@ -454,8 +462,11 @@ extern "C" {
         // Search region stride
         uint32_t                      interpolated_stride;
         uint32_t                      interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+        MotionEstimationTierZero     *me_candidate;
+#else
         MotionEstimationTierZero    me_candidate[MAX_ME_CANDIDATE_PER_PU];
-
+#endif
         // Intermediate LCU-sized buffer to retain the input samples
         uint8_t                      *sb_buffer;
         uint8_t                      *sb_buffer_ptr;
@@ -608,8 +619,20 @@ extern "C" {
         uint32_t                     ref_stride,
         uint32_t                     width,
         uint32_t                     height);
+
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+    extern EbErrorType me_context_ctor(
+        MeContext     **object_dbl_ptr,
+#if REDUCE_ME_SEARCH_AREA
+        uint16_t        max_input_luma_width,
+        uint16_t        max_input_luma_height,
+#endif
+        uint8_t         nsq_present,
+        uint8_t         mrp_mode);
+#else
     extern EbErrorType me_context_ctor(
         MeContext     **object_dbl_ptr);
+#endif
 
 #ifdef __cplusplus
 }

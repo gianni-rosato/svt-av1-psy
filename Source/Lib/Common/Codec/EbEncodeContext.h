@@ -144,7 +144,7 @@ typedef struct EncodeContext
     // Dynamic GOP                                   
     uint32_t                                          previous_mini_gop_hierarchical_levels;
     EbAsm                                             asm_type;
-    EbObjectWrapper                                *previous_picture_control_set_wrapper_ptr;
+    EbObjectWrapper                                  *previous_picture_control_set_wrapper_ptr;
     EbHandle                                          shared_reference_mutex;
 
 } EncodeContext;

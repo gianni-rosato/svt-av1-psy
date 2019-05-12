@@ -301,6 +301,7 @@ int32_t main(int32_t argc, char* argv[])
                     printf("Error encoding at channel %u! Check error log file for more details ... \n", instanceCount + 1);
                 }
             }
+
             // DeInit Encoder
             for (instanceCount = num_channels; instanceCount > 0; --instanceCount) {
                 if (return_errors[instanceCount - 1] == EB_ErrorNone)

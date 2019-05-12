@@ -4511,8 +4511,9 @@ void DetermineHomogeneousRegionInPicture(
 
     uint16_t  *variancePtr;
     uint32_t sb_index;
-
+#if !MEMORY_FOOTPRINT_OPT
     uint32_t cuNum, cu_size, cuIndexOffset, cuH, cuW;
+#endif
     uint64_t nullVarCnt = 0;
     uint64_t veryLowVarCnt = 0;
     uint64_t varLcuCnt = 0;

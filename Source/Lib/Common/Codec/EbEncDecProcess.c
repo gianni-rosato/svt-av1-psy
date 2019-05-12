@@ -1689,7 +1689,6 @@ void move_cu_data(
 #if CABAC_UP
 void av1_estimate_syntax_rate___partial(
     MdRateEstimationContext        *md_rate_estimation_array,
-    EbBool                          is_i_slice,
     FRAME_CONTEXT                  *fc);
 #endif
 /******************************************************
@@ -1848,7 +1847,6 @@ void* enc_dec_kernel(void *input_ptr)
                         //construct the tables using the latest CDFs : Coeff Only here ---to check if I am using all the uptodate CDFs here
                         av1_estimate_syntax_rate___partial(
                             &picture_control_set_ptr->rate_est_array[sb_index],
-                            picture_control_set_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
                             &picture_control_set_ptr->ec_ctx_array[sb_index]);
 
                         av1_estimate_coefficients_rate(
@@ -1993,14 +1991,16 @@ void* enc_dec_kernel(void *input_ptr)
                         context_ptr);
 #else
                     // Encode Pass
-                    AV1EncodePass(
+                    av1_encode_pass(
                         sequence_control_set_ptr,
                         picture_control_set_ptr,
                         sb_ptr,
                         sb_index,
                         sb_origin_x,
                         sb_origin_y,
+#if !MEMORY_FOOTPRINT_OPT
                         sb_ptr->qp,
+#endif
                         context_ptr);
 #endif
 

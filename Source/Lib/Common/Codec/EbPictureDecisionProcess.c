@@ -904,6 +904,9 @@ Input   : encoder mode and tune
 Output  : Multi-Processes signal(s)
 ******************************************************/
 EbErrorType signal_derivation_multi_processes_oq(
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+    SequenceControlSet        *sequence_control_set_ptr,
+#endif
     PictureParentControlSet   *picture_control_set_ptr) {
 
     EbErrorType return_error = EB_ErrorNone;
@@ -973,6 +976,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 picture_control_set_ptr->pic_depth_mode = PIC_SB_SWITCH_DEPTH_MODE;
         }
+#endif
+
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+        if (picture_control_set_ptr->pic_depth_mode < PIC_SQ_DEPTH_MODE)
+            assert(sequence_control_set_ptr->static_config.nsq_present == 1 && "use nsq_present 1");
 #endif
 
     picture_control_set_ptr->max_number_of_pus_per_sb = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
@@ -1050,6 +1058,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_OFF;
     else
         picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_OFF;
+#endif
+
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+    if (picture_control_set_ptr->nsq_search_level > NSQ_SEARCH_OFF)
+        assert(sequence_control_set_ptr->static_config.nsq_present == 1 && "use nsq_present 1");
 #endif
 
 #if  RED_CU_DEBUG
@@ -1207,8 +1220,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 3                                            8 step refinement
     // 4                                            16 step refinement
     // 5                                            64 step refinement
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
     SequenceControlSet                    *sequence_control_set_ptr;
     sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+#endif
     if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->allow_intrabc == 0) {
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
@@ -1576,7 +1591,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if MRP_MVP
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 //set the ref frame types used for this picture,
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+void set_all_ref_frame_type(SequenceControlSet *sequence_control_set_ptr, PictureParentControlSet  *parent_pcs_ptr, MvReferenceFrame ref_frame_arr[], uint8_t* tot_ref_frames)
+#else
 void set_all_ref_frame_type(PictureParentControlSet  *parent_pcs_ptr, MvReferenceFrame ref_frame_arr[], uint8_t* tot_ref_frames)
+#endif
 {
     MvReferenceFrame rf[2];
     *tot_ref_frames = 0;
@@ -1606,7 +1625,11 @@ void set_all_ref_frame_type(PictureParentControlSet  *parent_pcs_ptr, MvReferenc
 
 #if NO_UNI
 #if MRP_FIX_CLOSE_GOP
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+    if (sequence_control_set_ptr->static_config.mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
+#else
     if (parent_pcs_ptr->mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
+#endif
 #else
     if (parent_pcs_ptr->mrp_mode == 0)
 #endif
@@ -3766,6 +3789,9 @@ void* picture_decision_kernel(void *input_ptr)
 
                             // ME Kernel Multi-Processes Signal(s) derivation
                             signal_derivation_multi_processes_oq(
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+                                sequence_control_set_ptr,
+#endif
                                 picture_control_set_ptr);
 
                             // Set the default settings of  subpel
@@ -3878,7 +3904,13 @@ void* picture_decision_kernel(void *input_ptr)
                             inputEntryPtr->input_object_ptr = picture_control_set_ptr->pa_reference_picture_wrapper_ptr;
                             inputEntryPtr->picture_number = picture_control_set_ptr->picture_number;
                             inputEntryPtr->reference_entry_index = encode_context_ptr->picture_decision_pa_reference_queue_tail_index;
+#if !BUG_FIX_PCS_LIVE_COUNT
                             inputEntryPtr->p_pcs_ptr = picture_control_set_ptr;
+#endif
+#if BUG_FIX_INPUT_LIVE_COUNT
+                            inputEntryPtr->input_picture_wrapper_ptr = picture_control_set_ptr->input_picture_wrapper_ptr;
+#endif
+
                             encode_context_ptr->picture_decision_pa_reference_queue_tail_index =
                                 (encode_context_ptr->picture_decision_pa_reference_queue_tail_index == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : encode_context_ptr->picture_decision_pa_reference_queue_tail_index + 1;
 
@@ -3893,12 +3925,14 @@ void* picture_decision_kernel(void *input_ptr)
                             // set the Reference Counts Based on Temporal Layer and how many frames are active
                             picture_control_set_ptr->ref_list0_count = (picture_type == I_SLICE) ? 0 : (uint8_t)predPositionPtr->ref_list0.reference_list_count;
                             picture_control_set_ptr->ref_list1_count = (picture_type == I_SLICE) ? 0 : (uint8_t)predPositionPtr->ref_list1.reference_list_count;
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
 #if NO_UNI
                             //0: ON- full
                             //1: ON- no-uniDirection
                             //2: OFF                            
                             picture_control_set_ptr->mrp_mode = picture_control_set_ptr->enc_mode == ENC_M0 ? 0 : 2; 
                             
+#endif
 #endif
 #if MRP_M0_ONLY
 #if NO_UNI
@@ -4062,19 +4096,26 @@ void* picture_decision_kernel(void *input_ptr)
                                             // Set the Reference Object
                                         picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0][ref_pic_index] = paReferenceEntryPtr->input_object_ptr;
                                         picture_control_set_ptr->ref_pic_poc_array[REF_LIST_0][ref_pic_index] = ref_poc;
+#if !BUG_FIX_PCS_LIVE_COUNT
                                         picture_control_set_ptr->ref_pa_pcs_array[REF_LIST_0][ref_pic_index] = paReferenceEntryPtr->p_pcs_ptr;
-
+#endif
                                         // Increment the PA Reference's liveCount by the number of tiles in the input picture
                                         eb_object_inc_live_count(
                                             paReferenceEntryPtr->input_object_ptr,
                                             1);
-
+#if !BUG_FIX_PCS_LIVE_COUNT
                                         ((EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0][ref_pic_index]->object_ptr)->p_pcs_ptr = paReferenceEntryPtr->p_pcs_ptr;
 
                                         eb_object_inc_live_count(
                                             paReferenceEntryPtr->p_pcs_ptr->p_pcs_wrapper_ptr,
                                             1);
-
+#endif
+#if BUG_FIX_INPUT_LIVE_COUNT
+                                        picture_control_set_ptr->ref_input_ptr_array[REF_LIST_0][ref_pic_index] = paReferenceEntryPtr->input_picture_wrapper_ptr;
+                                        eb_object_inc_live_count(
+                                            paReferenceEntryPtr->input_picture_wrapper_ptr,
+                                            1);
+#endif
                                         --paReferenceEntryPtr->dependent_count;
                                     }
                                 }
@@ -4130,7 +4171,9 @@ void* picture_decision_kernel(void *input_ptr)
                                             picture_control_set_ptr->picture_number,
                                             -inputEntryPtr->list1_ptr->reference_list[ref_pic_index]/*,
                                             sequence_control_set_ptr->bits_for_picture_order_count*/);
+#if !BUG_FIX_PCS_LIVE_COUNT
                                         picture_control_set_ptr->ref_pa_pcs_array[REF_LIST_1][ref_pic_index] = paReferenceEntryPtr->p_pcs_ptr;
+#endif
                                         // Set the Reference Object
                                         picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1][ref_pic_index] = paReferenceEntryPtr->input_object_ptr;
                                         picture_control_set_ptr->ref_pic_poc_array[REF_LIST_1][ref_pic_index] = ref_poc;
@@ -4139,13 +4182,19 @@ void* picture_decision_kernel(void *input_ptr)
                                         eb_object_inc_live_count(
                                             paReferenceEntryPtr->input_object_ptr,
                                             1);
-
+#if !BUG_FIX_PCS_LIVE_COUNT
                                         ((EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1][ref_pic_index]->object_ptr)->p_pcs_ptr = paReferenceEntryPtr->p_pcs_ptr;
 
                                         eb_object_inc_live_count(
                                             paReferenceEntryPtr->p_pcs_ptr->p_pcs_wrapper_ptr,
                                             1);
-
+#endif
+#if BUG_FIX_INPUT_LIVE_COUNT
+                                        picture_control_set_ptr->ref_input_ptr_array[REF_LIST_1][ref_pic_index] = paReferenceEntryPtr->input_picture_wrapper_ptr;
+                                        eb_object_inc_live_count(
+                                            paReferenceEntryPtr->input_picture_wrapper_ptr,
+                                            1);
+#endif
                                         --paReferenceEntryPtr->dependent_count;
                                     }
                                 }
@@ -4185,7 +4234,11 @@ void* picture_decision_kernel(void *input_ptr)
 
 #if SETUP_SKIP
                             av1_setup_skip_mode_allowed(picture_control_set_ptr);
+
                             picture_control_set_ptr->is_skip_mode_allowed = picture_control_set_ptr->skip_mode_info.skip_mode_allowed;
+#if MRP_DISABLE_ADDED_CAND_M1
+                            picture_control_set_ptr->is_skip_mode_allowed = picture_control_set_ptr->enc_mode >= ENC_M1 && picture_control_set_ptr->temporal_layer_index == 0 ? 0 : picture_control_set_ptr->is_skip_mode_allowed;
+#endif
                             picture_control_set_ptr->skip_mode_flag = picture_control_set_ptr->is_skip_mode_allowed;
                             //printf("POC:%i  skip_mode_allowed:%i  REF_SKIP_0: %i   REF_SKIP_1: %i \n",picture_control_set_ptr->picture_number, picture_control_set_ptr->skip_mode_info.skip_mode_allowed, picture_control_set_ptr->skip_mode_info.ref_frame_idx_0, picture_control_set_ptr->skip_mode_info.ref_frame_idx_1);
 #else
@@ -4252,7 +4305,11 @@ void* picture_decision_kernel(void *input_ptr)
 
 #if MRP_MVP
                             //set the ref frame types used for this picture,
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+                            set_all_ref_frame_type(sequence_control_set_ptr, picture_control_set_ptr, picture_control_set_ptr->ref_frame_type_arr, &picture_control_set_ptr->tot_ref_frame_types);
+#else
                             set_all_ref_frame_type(picture_control_set_ptr, picture_control_set_ptr->ref_frame_type_arr, &picture_control_set_ptr->tot_ref_frame_types);
+#endif
 #endif
                             // Initialize Segments
                             picture_control_set_ptr->me_segments_column_count = (uint8_t)(sequence_control_set_ptr->me_segment_column_count_array[picture_control_set_ptr->temporal_layer_index]);
@@ -4312,7 +4369,9 @@ void* picture_decision_kernel(void *input_ptr)
                     // Remove the entry
                     if ((inputEntryPtr->dependent_count == 0) &&
                         (inputEntryPtr->input_object_ptr)) {
+#if !BUG_FIX_PCS_LIVE_COUNT
                         eb_release_object(inputEntryPtr->p_pcs_ptr->p_pcs_wrapper_ptr);
+#endif
                         // Release the nominal live_count value
                         eb_release_object(inputEntryPtr->input_object_ptr);
                         inputEntryPtr->input_object_ptr = (EbObjectWrapper*)EB_NULL;

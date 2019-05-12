@@ -418,9 +418,10 @@ extern "C" {
         uint32_t                        tot_final_cu;
 #endif
         PartitionType                  *cu_partition_array;
-
+#if !MEMORY_FOOTPRINT_OPT  
         // Coding Units
         EbAuraStatus                    aura_status_iii; // aura status for Gold 4K only, used in testing more depths
+#endif
 #if !ADD_DELTA_QP_SUPPORT
         unsigned                        qp                      : 8;
 #endif                                                          

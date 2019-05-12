@@ -13992,10 +13992,12 @@ extern "C" {
         EbPictureBufferDesc                *chroma_downsampled_picture_ptr; //if 422/444 input, down sample to 420 for MD
         PredictionStructure                *pred_struct_ptr;          // need to check
         struct SequenceControlSet          *sequence_control_set_ptr;
+#if !BUG_FIX_PCS_LIVE_COUNT
 #if MRP_ME
         struct PictureParentControlSet     *ref_pa_pcs_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #else
         struct PictureParentControlSet     *ref_pa_pcs_array[MAX_NUM_OF_REF_PIC_LIST];
+#endif
 #endif
         EbObjectWrapper                    *p_pcs_wrapper_ptr;
         EbObjectWrapper                    *previous_picture_control_set_wrapper_ptr;
@@ -14071,11 +14073,14 @@ extern "C" {
 
         // Pre Analysis
 #if MRP_ME
-        EbObjectWrapper                   *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+        EbObjectWrapper                      *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
         uint64_t                              ref_pic_poc_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #else
         EbObjectWrapper                    *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST];
         uint64_t                              ref_pic_poc_array[MAX_NUM_OF_REF_PIC_LIST];
+#endif
+#if BUG_FIX_INPUT_LIVE_COUNT
+        EbObjectWrapper                      *ref_input_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #endif
         uint16_t                            **variance;
         uint8_t                             **y_mean;
@@ -14086,8 +14091,10 @@ extern "C" {
         EbBool                                scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
         EbBool                                intensity_transition_flag;
         uint8_t                               average_intensity[3];
+#if !MEMORY_FOOTPRINT_OPT 
         // zz cost array
         uint8_t                              *zz_cost_array;
+#endif
         // Non moving index array
         uint8_t                              *non_moving_index_array;
         int                                   kf_zeromotion_pct; // percent of zero motion blocks
@@ -14124,8 +14131,10 @@ extern "C" {
 #if !DISABLE_OIS_USE
         uint8_t                               intra_coded_block_probability;    // used by EncDecProcess()
 #endif
+#if !MEMORY_FOOTPRINT_OPT 
         EbBool                                low_motion_content_flag;            // used by EncDecProcess()
         uint32_t                              zz_cost_average;                    // used by ModeDecisionConfigurationProcess()
+#endif
         uint16_t                              non_moving_index_average;            // used by ModeDecisionConfigurationProcess()
 #if !MEMORY_FOOTPRINT_OPT
         EbBool                               *sb_isolated_non_homogeneous_area_array;            // used by ModeDecisionConfigurationProcess()
@@ -14374,8 +14383,10 @@ extern "C" {
 #if SETUP_SKIP
         SkipModeInfo                         skip_mode_info;
 #endif
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
 #if NO_UNI
         uint8_t                              mrp_mode;
+#endif
 #endif
     } PictureParentControlSet;
 
@@ -14402,10 +14413,13 @@ extern "C" {
         EbEncMode                          enc_mode;
         uint8_t                            speed_control;
         uint16_t                           film_grain_noise_level;
-        //uint32_t                           encoder_bit_depth;
         EbBool                             ext_block_flag;
         EbBool                             in_loop_me_flag;
-
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+        uint8_t                            mrp_mode;
+        uint8_t                            cdf_mode;
+        uint8_t                            nsq_present;
+#endif
     } PictureControlSetInitData;
 
     typedef struct Av1Comp 
@@ -14650,6 +14664,9 @@ extern "C" {
     extern EbErrorType me_sb_results_ctor(
         MeLcuResults     **objectDblPtr,
         uint32_t           maxNumberOfPusPerLcu,
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+        uint8_t            mrp_mode,
+#endif
         uint32_t           maxNumberOfMeCandidatesPerPU);
 #endif
 #ifdef __cplusplus

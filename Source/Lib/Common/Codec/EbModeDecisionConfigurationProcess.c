@@ -1352,7 +1352,7 @@ void DetectComplexNonFlatMovingLcu(
     }
 }
 #endif
-
+#if !MEMORY_FOOTPRINT_OPT 
 EbAuraStatus AuraDetection64x64Gold(
     PictureControlSet           *picture_control_set_ptr,
     uint8_t                          picture_qp,
@@ -1513,8 +1513,8 @@ EbAuraStatus AuraDetection64x64Gold(
     return   auraClass;
 
 }
-
-
+#endif
+#if !MEMORY_FOOTPRINT_OPT 
 /******************************************************
 * Aura detection
 ******************************************************/
@@ -1552,7 +1552,7 @@ void AuraDetection(
     }
     return;
 }
-
+#endif
 /******************************************************
 * Load the cost of the different partitioning method into a local array and derive sensitive picture flag
     Input   : the offline derived cost per search method, detection signals
@@ -2008,6 +2008,9 @@ Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(
+#if MEMORY_FOOTPRINT_OPT
+    SequenceControlSet               *sequence_control_set_ptr,
+#endif
     PictureControlSet                *picture_control_set_ptr,
     ModeDecisionConfigurationContext *context_ptr) {
 
@@ -2026,6 +2029,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     else
 #endif
     picture_control_set_ptr->update_cdf = (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+    if(picture_control_set_ptr->update_cdf)
+        assert(sequence_control_set_ptr->static_config.cdf_mode == 0 && "use cdf_mode 0");
+#endif
 #else
     picture_control_set_ptr->update_cdf = picture_control_set_ptr->parent_pcs_ptr->enc_mode == ENC_M0 ? 1 : 0;
 #endif
@@ -2226,6 +2234,9 @@ void* mode_decision_configuration_kernel(void *input_ptr)
       
         // Mode Decision Configuration Kernel Signal(s) derivation
         signal_derivation_mode_decision_config_kernel_oq(
+#if MEMORY_FOOTPRINT_OPT
+            sequence_control_set_ptr,
+#endif
             picture_control_set_ptr,
             context_ptr);
 

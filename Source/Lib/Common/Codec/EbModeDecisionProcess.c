@@ -361,7 +361,9 @@ void reset_mode_decision(
     uint32_t                   segment_index)
 {
     EB_SLICE                     slice_type;
+#if !MEMORY_FOOTPRINT_OPT 
     uint32_t                       lcuRowIndex;
+#endif
     MdRateEstimationContext   *md_rate_estimation_array;
 
     // QP

@@ -4,20 +4,18 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
 
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
-#include "EbPictureBufferDesc.h"
 
 #include "EbSourceBasedOperationsProcess.h"
 #include "EbInitialRateControlResults.h"
 #include "EbPictureDemuxResults.h"
-#include "EbPictureOperators.h"
 #include "EbMotionEstimationContext.h"
 #include "emmintrin.h"
+
 /**************************************
 * Macros
 **************************************/
@@ -32,14 +30,13 @@
 #define CR_MEAN_RANGE_02                 135
 
 #define DARK_FRM_TH                      45
-#define CB_MEAN_RANGE_00                80
+#define CB_MEAN_RANGE_00                 80
 
-
-#define SAD_DEVIATION_LCU_TH        15
-#define SAD_DEVIATION_LCU_NON_M4_TH 20
+#define SAD_DEVIATION_LCU_TH             15
+#define SAD_DEVIATION_LCU_NON_M4_TH      20
 
 #define MAX_DELTA_QP_SHAPE_TH            4
-#define MIN_DELTA_QP_SHAPE_TH           1
+#define MIN_DELTA_QP_SHAPE_TH            1
 
 #define MIN_BLACK_AREA_PERCENTAGE        20
 #define LOW_MEAN_THLD                    25
@@ -65,22 +62,24 @@ EbErrorType source_based_operations_context_ctor(
     SequenceControlSet            *sequence_control_set_ptr)
 {
     SourceBasedOperationsContext *context_ptr;
-
+#if MEMORY_FOOTPRINT_OPT
+    UNUSED(sequence_control_set_ptr);
+#else
     uint32_t  pictureLcuWidth = (sequence_control_set_ptr->max_input_luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-    uint32_t    pictureLcuHeight = (sequence_control_set_ptr->max_input_luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+    uint32_t  pictureLcuHeight = (sequence_control_set_ptr->max_input_luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
     uint32_t    sb_total_count = pictureLcuWidth * pictureLcuHeight;
-
+#endif
     EB_MALLOC(SourceBasedOperationsContext*, context_ptr, sizeof(SourceBasedOperationsContext), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
+    *context_dbl_ptr                                         = context_ptr;
     context_ptr->initial_rate_control_results_input_fifo_ptr = initialRateControlResultsInputFifoPtr;
-    context_ptr->picture_demux_results_output_fifo_ptr = picture_demux_results_output_fifo_ptr;
+    context_ptr->picture_demux_results_output_fifo_ptr       = picture_demux_results_output_fifo_ptr;
 #if !MEMORY_FOOTPRINT_OPT
     EB_MALLOC(uint8_t*, context_ptr->sb_high_contrast_array, sizeof(uint8_t) * sb_total_count, EB_N_PTR);
 #endif
     return EB_ErrorNone;
 }
 
-
+#if !MEMORY_FOOTPRINT_OPT 
 /****************************************
 * Init BEA QPM array to 0
 ** Used when no Lookahead is available
@@ -113,6 +112,7 @@ void InitBeaQpmInfo(
 
     return;
 }
+#endif
 /***************************************************
 * Derives BEA statistics and set activity flags
 ***************************************************/
@@ -161,10 +161,11 @@ void DerivePictureActivityStatistics(
         picture_control_set_ptr->kf_zeromotion_pct = (non_moving_sb_count * 100) / complete_sb_count;
     }
 
+#if !MEMORY_FOOTPRINT_OPT 
     InitBeaQpmInfo(
         picture_control_set_ptr,
         sequence_control_set_ptr);
-
+#endif
     return;
 }
 
@@ -711,7 +712,7 @@ void DeriveHighDarkAreaDensityFlag(
 #define MID_CR        115
 #define TH_CB        10
 #define TH_CR        15
-
+#if !MEMORY_FOOTPRINT_OPT
 /******************************************************
 * High  contrast classifier
 ******************************************************/
@@ -743,7 +744,7 @@ void TemporalHighContrastClassifier(
     }
     context_ptr->high_dist = meDist > 0 ? EB_TRUE : EB_FALSE;
 }
-
+#endif
 void SpatialHighContrastClassifier(
     SourceBasedOperationsContext    *context_ptr,
     PictureParentControlSet       *picture_control_set_ptr,
@@ -1035,15 +1036,19 @@ void* source_based_operations_kernel(void *input_ptr)
                 }
             }
 #endif
+#if !MEMORY_FOOTPRINT_OPT
             // Uncovered area detection II
 
             // Temporal high contrast classifier
+#endif
             if (is_complete_sb) {
+#if !MEMORY_FOOTPRINT_OPT
                 TemporalHighContrastClassifier(
                     context_ptr,
                     picture_control_set_ptr,
                     sb_index);
-#if !MEMORY_FOOTPRINT_OPT
+
+
                 if (context_ptr->high_contrast_num > 0 && context_ptr->high_dist == EB_TRUE) {
                     picture_control_set_ptr->sb_cmplx_contrast_array[sb_index] = 4;
                     context_ptr->sb_cmplx_contrast_count++;

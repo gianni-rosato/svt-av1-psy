@@ -132,6 +132,13 @@ void* set_me_hme_params_oq(
     // ME
     me_context_ptr->search_area_width = search_area_width[sc_content_detected][input_resolution][hmeMeLevel];
     me_context_ptr->search_area_height = search_area_height[sc_content_detected][input_resolution][hmeMeLevel];
+
+#if REDUCE_ME_SEARCH_AREA
+    assert(me_context_ptr->search_area_width  <= MAX_SEARCH_AREA_WIDTH  && "increase MAX_SEARCH_AREA_WIDTH" );
+    assert(me_context_ptr->search_area_height <= MAX_SEARCH_AREA_HEIGHT && "increase MAX_SEARCH_AREA_HEIGHT");
+#endif
+
+
 #else
     // HME Level0
     me_context_ptr->hme_level0_total_search_area_width = hme_level0_total_search_area_width[input_resolution][hmeMeLevel];
@@ -311,11 +318,23 @@ EbErrorType signal_derivation_me_kernel_oq(
 /************************************************
  * Motion Analysis Context Constructor
  ************************************************/
-
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+EbErrorType motion_estimation_context_ctor(
+    MotionEstimationContext_t   **context_dbl_ptr,
+    EbFifo                       *picture_decision_results_input_fifo_ptr,
+    EbFifo                       *motion_estimation_results_output_fifo_ptr,  
+#if REDUCE_ME_SEARCH_AREA
+    uint16_t                      max_input_luma_width,
+    uint16_t                      max_input_luma_height,
+#endif
+    uint8_t                       nsq_present,
+    uint8_t                       mrp_mode) {
+#else
 EbErrorType motion_estimation_context_ctor(
     MotionEstimationContext_t   **context_dbl_ptr,
     EbFifo                     *picture_decision_results_input_fifo_ptr,
     EbFifo                     *motion_estimation_results_output_fifo_ptr) {
+#endif
 
     EbErrorType return_error = EB_ErrorNone;
     MotionEstimationContext_t *context_ptr;
@@ -329,7 +348,19 @@ EbErrorType motion_estimation_context_ctor(
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
+
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+    return_error = me_context_ctor(
+        &(context_ptr->me_context_ptr),
+#if REDUCE_ME_SEARCH_AREA
+        max_input_luma_width,
+        max_input_luma_height,
+#endif
+        nsq_present,
+        mrp_mode);
+#else
     return_error = me_context_ctor(&(context_ptr->me_context_ptr));
+#endif
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
@@ -425,7 +456,7 @@ EbErrorType ComputeDecimatedZzSad(
                         context_ptr->me_context_ptr->sixteenth_sb_buffer,
                         context_ptr->me_context_ptr->sixteenth_sb_buffer_stride,
                         16, 16);
-
+#if !MEMORY_FOOTPRINT_OPT 
                 // Background Enhancement Algorithm
                 // Classification is important to:
                 // 1. Avoid improving moving objects.
@@ -446,11 +477,13 @@ EbErrorType ComputeDecimatedZzSad(
                 else {
                     previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = BEA_CLASS_3_ZZ_COST;
                 }
-
+#endif
 
             }
             else {
+#if !MEMORY_FOOTPRINT_OPT 
                 previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = INVALID_ZZ_COST;
+#endif
                 decimatedLcuCollocatedSad = (uint32_t)~0;
             }
 

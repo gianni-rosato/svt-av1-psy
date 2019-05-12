@@ -326,8 +326,10 @@ uint8_t derive_contouring_class(
 void RefinementPredictionLoop(
     SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet                    *picture_control_set_ptr,
+#if !MEMORY_FOOTPRINT_OPT
     LargestCodingUnit                    *sb_ptr,
-    uint32_t                                  sb_index,
+#endif
+    uint32_t                              sb_index,
     ModeDecisionConfigurationContext     *context_ptr)
 {
 
@@ -468,17 +470,14 @@ void ForwardCuToModeDecision(
 
     // CU Loop
     const CodedUnitStats *cuStatsPtr = get_coded_unit_stats(0);
-
+#if !MEMORY_FOOTPRINT_OPT 
     SbStat *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
-
     EbBool    testAllDepthIntraSliceFlag = EB_FALSE;
-
-
     testAllDepthIntraSliceFlag = slice_type == I_SLICE &&
         (sb_stat_ptr->stationary_edge_over_time_flag || picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag ||
         (picture_control_set_ptr->parent_pcs_ptr->very_low_var_pic_flag && picture_control_set_ptr->parent_pcs_ptr->low_motion_content_flag)) ?
         EB_TRUE : testAllDepthIntraSliceFlag;
-
+#endif
 
     resultsPtr->leaf_count = 0;
     uint8_t   enable_blk_4x4 = 0;
@@ -501,6 +500,10 @@ void ForwardCuToModeDecision(
 
 
                 if (slice_type == I_SLICE) {
+#if MEMORY_FOOTPRINT_OPT 
+                    cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
+                    cuClass = local_cu_array[cu_index].stop_split == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
+#else
                     if (testAllDepthIntraSliceFlag) {
                         cuClass = ADD_CU_CONTINUE_SPLIT;
                     }
@@ -508,6 +511,7 @@ void ForwardCuToModeDecision(
                         cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
                         cuClass = local_cu_array[cu_index].stop_split == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
                     }
+#endif
                 }
                 else {
                     cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
@@ -858,15 +862,25 @@ void PredictionPartitionLoop(
                     context_ptr->mdc_candidate_ptr->is_zero_mv = 0;
                     context_ptr->mdc_candidate_ptr->drl_index = 0;
 #if MD_INJECTION
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+                    context_ptr->mdc_candidate_ptr->motion_vector_xl0 = me_results->me_mv_array[cuIndexInRaterScan][0].x_mv << 1;
+                    context_ptr->mdc_candidate_ptr->motion_vector_yl0 = me_results->me_mv_array[cuIndexInRaterScan][0].y_mv << 1;
+#else
                     context_ptr->mdc_candidate_ptr->motion_vector_xl0 = me_block_results[me_index].x_mv_l0 << 1;
                     context_ptr->mdc_candidate_ptr->motion_vector_yl0 = me_block_results[me_index].y_mv_l0 << 1;
+#endif
 #else
                     context_ptr->mdc_candidate_ptr->motion_vector_xl0 = mePuResult->x_mv_l0 << 1;
                     context_ptr->mdc_candidate_ptr->motion_vector_yl0 = mePuResult->y_mv_l0 << 1;
 #endif
 #if MD_INJECTION
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+                    context_ptr->mdc_candidate_ptr->motion_vector_xl1 = me_results->me_mv_array[cuIndexInRaterScan][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? 4 : 2)].x_mv << 1;
+                    context_ptr->mdc_candidate_ptr->motion_vector_yl1 = me_results->me_mv_array[cuIndexInRaterScan][((sequence_control_set_ptr->static_config.mrp_mode == 0) ? 4 : 2)].y_mv << 1;
+#else
                     context_ptr->mdc_candidate_ptr->motion_vector_xl1 = me_block_results[me_index].x_mv_l1 << 1;
                     context_ptr->mdc_candidate_ptr->motion_vector_yl1 = me_block_results[me_index].y_mv_l1 << 1;
+#endif
 #else
                     context_ptr->mdc_candidate_ptr->motion_vector_xl1 = mePuResult->x_mv_l1 << 1;
                     context_ptr->mdc_candidate_ptr->motion_vector_yl1 = mePuResult->y_mv_l1 << 1;
@@ -980,7 +994,9 @@ EbErrorType early_mode_decision_lcu(
     RefinementPredictionLoop(
         sequence_control_set_ptr,
         picture_control_set_ptr,
+#if !MEMORY_FOOTPRINT_OPT
         sb_ptr,
+#endif
         sb_index,
         context_ptr);
 

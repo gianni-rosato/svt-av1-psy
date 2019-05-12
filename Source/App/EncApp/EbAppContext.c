@@ -661,7 +661,7 @@ EbErrorType de_init_encoder(
 {
     EbErrorType return_error = EB_ErrorNone;
     int32_t              ptrIndex        = 0;
-    EbMemoryMapEntry*   memoryEntry     = (EbMemoryMapEntry*)0;
+    EbMemoryMapEntry*   memory_entry     = (EbMemoryMapEntry*)0;
 
     if (((EbComponentType*)(callback_data_ptr->svt_encoder_handle)) != NULL) {
             return_error = eb_deinit_encoder(callback_data_ptr->svt_encoder_handle);
@@ -674,10 +674,10 @@ EbErrorType de_init_encoder(
 
     // Loop through the ptr table and free all malloc'd pointers per channel
     for (ptrIndex = appMemoryMapIndexAllChannels[instance_index] - 1; ptrIndex >= 0; --ptrIndex) {
-        memoryEntry = &appMemoryMapAllChannels[instance_index][ptrIndex];
-        switch (memoryEntry->ptr_type) {
+        memory_entry = &appMemoryMapAllChannels[instance_index][ptrIndex];
+        switch (memory_entry->ptr_type) {
         case EB_N_PTR:
-            free(memoryEntry->ptr);
+            free(memory_entry->ptr);
             break;
         default:
             return_error = EB_ErrorMax;

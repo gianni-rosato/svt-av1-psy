@@ -71,7 +71,6 @@ void av1_get_syntax_rate_from_cdf(
 ///tmp function to be removed once we have updated all syntax CDFs
 void av1_estimate_syntax_rate___partial(
     MdRateEstimationContext  *md_rate_estimation_array,
-    EbBool                     is_i_slice,
     FRAME_CONTEXT              *fc)
 {
     int32_t i, j;

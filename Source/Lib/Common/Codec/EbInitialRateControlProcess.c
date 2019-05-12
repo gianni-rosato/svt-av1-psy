@@ -43,10 +43,13 @@ void GetMv(
     for (meCandidateIndex = 0; meCandidateIndex < total_me_cnt; meCandidateIndex++) {
 
         if (me_block_results->direction == UNI_PRED_LIST_0) {
-
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+            *xCurrentMv = me_results->me_mv_array[0][0].x_mv;
+            *yCurrentMv = me_results->me_mv_array[0][0].y_mv;
+#else
             *xCurrentMv = me_block_results->x_mv_l0;
             *yCurrentMv = me_block_results->y_mv_l0;
-
+#endif
             break;
         }
     }
@@ -473,8 +476,12 @@ void ReleasePaReferenceObjects(
 
             for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
                 if (picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index] != EB_NULL) {
-
+#if BUG_FIX_INPUT_LIVE_COUNT
+                    eb_release_object(picture_control_set_ptr->ref_input_ptr_array[listIndex][ref_pic_index]);
+#endif
+#if !BUG_FIX_PCS_LIVE_COUNT
                     eb_release_object(((EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index]->object_ptr)->p_pcs_ptr->p_pcs_wrapper_ptr);
+#endif
                     eb_release_object(picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index]);
                 }
             }
@@ -489,8 +496,9 @@ void ReleasePaReferenceObjects(
     }
 
     if (picture_control_set_ptr->pa_reference_picture_wrapper_ptr != EB_NULL) {
-
+#if !BUG_FIX_PCS_LIVE_COUNT
         eb_release_object(picture_control_set_ptr->p_pcs_wrapper_ptr);
+#endif
         eb_release_object(picture_control_set_ptr->pa_reference_picture_wrapper_ptr);
     }
 
@@ -1010,8 +1018,9 @@ void UpdateBeaInfoOverTime(
 
     // SB Loop
     for (lcuIdx = 0; lcuIdx < picture_control_set_ptr->sb_total_count; ++lcuIdx) {
-
+#if !MEMORY_FOOTPRINT_OPT 
         uint32_t zzCostOverSlidingWindow = picture_control_set_ptr->zz_cost_array[lcuIdx];
+#endif
         uint16_t nonMovingIndexOverSlidingWindow = picture_control_set_ptr->non_moving_index_array[lcuIdx];
 
         // Walk the first N entries in the sliding window starting picture + 1
@@ -1026,15 +1035,17 @@ void UpdateBeaInfoOverTime(
             if (temporaryPictureControlSetPtr->slice_type == I_SLICE || temporaryPictureControlSetPtr->end_of_sequence_flag) {
                 break;
             }
-
+#if !MEMORY_FOOTPRINT_OPT 
             zzCostOverSlidingWindow += temporaryPictureControlSetPtr->zz_cost_array[lcuIdx];
+#endif
             nonMovingIndexOverSlidingWindow += temporaryPictureControlSetPtr->non_moving_index_array[lcuIdx];
 
             // Increment the inputQueueIndex Iterator
             inputQueueIndex = (inputQueueIndex == INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1) ? 0 : inputQueueIndex + 1;
         }
-
+#if !MEMORY_FOOTPRINT_OPT 
         picture_control_set_ptr->zz_cost_array[lcuIdx] = (uint8_t)(zzCostOverSlidingWindow / (framesToCheckIndex + 1));
+#endif
         picture_control_set_ptr->non_moving_index_array[lcuIdx] = (uint8_t)(nonMovingIndexOverSlidingWindow / (framesToCheckIndex + 1));
 
         nonMovingIndexSum += picture_control_set_ptr->non_moving_index_array[lcuIdx];
@@ -1053,11 +1064,13 @@ void InitZzCostInfo(
     PictureParentControlSet         *picture_control_set_ptr)
 {
     uint16_t lcuIdx;
+#if !MEMORY_FOOTPRINT_OPT 
     // SB loop
     for (lcuIdx = 0; lcuIdx < picture_control_set_ptr->sb_total_count; ++lcuIdx) {
         picture_control_set_ptr->zz_cost_array[lcuIdx] = INVALID_ZZ_COST;
 
     }
+#endif
     picture_control_set_ptr->non_moving_index_average = INVALID_ZZ_COST;
 
     // SB Loop

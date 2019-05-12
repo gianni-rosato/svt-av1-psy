@@ -211,26 +211,15 @@ EbErrorType encode_context_ctor(
     encode_context_ptr->rate_control_tables_array_updated = EB_FALSE;
 
     EB_CREATEMUTEX(EbHandle, encode_context_ptr->sc_buffer_mutex, sizeof(EbHandle), EB_MUTEX);
-    encode_context_ptr->sc_buffer = 0;
-    encode_context_ptr->sc_frame_in = 0;
-    encode_context_ptr->sc_frame_out = 0;
-
-    encode_context_ptr->enc_mode = SPEED_CONTROL_INIT_MOD;
-
-    encode_context_ptr->previous_selected_ref_qp = 32;
-    encode_context_ptr->max_coded_poc = 0;
+    encode_context_ptr->sc_buffer                     = 0;
+    encode_context_ptr->sc_frame_in                   = 0;
+    encode_context_ptr->sc_frame_out                  = 0;
+    encode_context_ptr->enc_mode                      = SPEED_CONTROL_INIT_MOD;
+    encode_context_ptr->previous_selected_ref_qp      = 32;
+    encode_context_ptr->max_coded_poc                 = 0;
     encode_context_ptr->max_coded_poc_selected_ref_qp = 32;
 
-    encode_context_ptr->shared_reference_mutex = eb_create_mutex();
-    if (encode_context_ptr->shared_reference_mutex == (EbHandle)EB_NULL) {
-        return EB_ErrorInsufficientResources;
-    }
-    else {
-        memory_map[*(memory_map_index)].ptr_type = EB_MUTEX;
-        memory_map[(*(memory_map_index))++].ptr = encode_context_ptr->shared_reference_mutex;
-        *total_lib_memory += (sizeof(EbHandle));
-    }
-
+    EB_CREATEMUTEX(EbHandle, encode_context_ptr->shared_reference_mutex, sizeof(EbHandle), EB_MUTEX);
 
     return EB_ErrorNone;
 }

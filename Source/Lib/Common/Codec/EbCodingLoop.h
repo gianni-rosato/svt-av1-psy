@@ -86,14 +86,16 @@ extern "C" {
         uint64_t                 cu_cost,
         uint64_t                 weight);
 
-    extern void AV1EncodePass(
+    extern void av1_encode_pass(
         SequenceControlSet    *sequence_control_set_ptr,
         PictureControlSet     *picture_control_set_ptr,
         LargestCodingUnit     *sb_ptr,
         uint32_t                   tbAddr,
         uint32_t                   sb_origin_x,
         uint32_t                   sb_origin_y,
+#if !MEMORY_FOOTPRINT_OPT
         uint32_t                   sb_qp,
+#endif
         EncDecContext         *context_ptr);
 
 

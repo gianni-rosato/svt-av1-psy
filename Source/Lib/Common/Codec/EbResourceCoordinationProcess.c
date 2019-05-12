@@ -27,9 +27,13 @@ EbErrorType resource_coordination_context_ctor(
     EbSequenceControlSetInstance  **sequence_control_set_instance_array,
     EbFifo                         *sequence_control_set_empty_fifo_ptr,
     EbCallback                    **app_callback_ptr_array,
-    uint32_t                         *compute_segments_total_count_array,
-    uint32_t                          encode_instances_total_count)
-{
+#if MEM_MAP_OPT
+    uint32_t                       compute_segments_total_count_array,
+#else
+    uint32_t                      *compute_segments_total_count_array,
+#endif
+    uint32_t                        encode_instances_total_count){
+
     uint32_t instance_index;
 
     ResourceCoordinationContext *context_ptr;
@@ -586,6 +590,11 @@ void* resource_coordination_kernel(void *input_ptr)
         picture_control_set_ptr->input_picture_wrapper_ptr = input_picture_wrapper_ptr;
         picture_control_set_ptr->end_of_sequence_flag = end_of_sequence_flag;
 
+#if BUG_FIX_INPUT_LIVE_COUNT
+        eb_object_inc_live_count(
+            picture_control_set_ptr->input_picture_wrapper_ptr,
+            1);
+#endif
         // Set Picture Control Flags
         picture_control_set_ptr->idr_flag = sequence_control_set_ptr->encode_context_ptr->initial_picture || (picture_control_set_ptr->input_ptr->pic_type == EB_AV1_KEY_PICTURE);
         picture_control_set_ptr->cra_flag = (picture_control_set_ptr->input_ptr->pic_type == EB_AV1_INTRA_ONLY_PICTURE) ? EB_TRUE : EB_FALSE;
@@ -659,11 +668,11 @@ void* resource_coordination_kernel(void *input_ptr)
         eb_object_inc_live_count(
             picture_control_set_ptr->pa_reference_picture_wrapper_ptr,
             2);
-
+#if !BUG_FIX_PCS_LIVE_COUNT
         eb_object_inc_live_count(
             picture_control_set_wrapper_ptr,
             2);
-    
+#endif
         ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->input_padded_picture_ptr->buffer_y = picture_control_set_ptr->enhanced_picture_ptr->buffer_y;
         // Get Empty Output Results Object
         if (picture_control_set_ptr->picture_number > 0 && (prevPictureControlSetWrapperPtr != NULL))
