@@ -61,6 +61,9 @@ coveralls_script: &coveralls_script |
   sudo make install && cd $TRAVIS_BUILD_DIR &&
   ffmpeg -i akiyo_cif.y4m -vframes 150 -c:v libsvt_av1 test.mp4 &&
   ffmpeg -i bus_cif.y4m -nostdin -f rawvideo -pix_fmt yuv420p - | SvtAv1EncApp -i stdin -w 352 -h 288 -fps 30 -n 150 -b test2.ivf
+  SvtAv1UnitTests
+  SvtAv1ApiTests
+  SvtAviE2ETests
 after_coveralls_script: &after_coveralls_script |
   if [ $CC = "clang" ] && [ $TRAVIS_OS_NAME = linux ]; then
     GCOV_FILE=llvm-cov GCOV_OPTIONS='gcov -pl'

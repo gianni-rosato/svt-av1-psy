@@ -24,7 +24,16 @@ function build {
         -DCMAKE_ASM_NASM_COMPILER=$CMAKE_ASSEMBLER  \
 
     # Compile the Library
-    make -j $(if [ "$(uname -s)" = "Darwin" ]; then sysctl -n hw.ncpu; else nproc; fi) SvtAv1EncApp SvtAv1DecApp SvtAv1UnitTests
+    make -j $(if [ "$(uname -s)" = "Darwin" ]; then sysctl -n hw.ncpu; else nproc; fi) SvtAv1EncApp SvtAv1DecApp
+    if [ "$2" = "test" ]; then    
+        make -j $(if [ "$(uname -s)" = "Darwin" ]; then sysctl -n hw.ncpu; else nproc; fi) SvtAv1UnitTests SvtAv1ApiTests SvtAv1E2ETests TestVectors
+        # Copy test conformance dependency
+        if [ "$(uname -s)" = "Darwin" ]; then
+            cp ../../../third_party/aom/lib/mac/*.dylib ../../../Bin/$build_type/
+        else
+            cp ../../../third_party/aom/lib/linux/libaom* ../../../Bin/$build_type/
+        fi
+    fi
     cd ..
 }
 
@@ -51,20 +60,20 @@ if [ $# -eq 0 ]; then
 elif [ "$1" = "clean" ]; then
     clean
 elif [ "$1" = "debug" ]; then
-    build Debug
+    build Debug $2
 elif [ "$1" = "release" ]; then
-    build Release
+    build Release $2
 elif [ "$1" = "cpp" ]; then
     build Debug
     build Release
 elif [ "$1" = "all" ]; then
-    build Debug
-    build Release
+    build Debug $2
+    build Release $2
 elif [ "$1" = "gcc" ]; then
     build Debug
     build Release
 else
-    echo "build.sh <clean|all|debug|release|help>"
+    echo "build.sh <clean|all[test]|debug[test]|release[test]|help>"
 fi
 
 exit
