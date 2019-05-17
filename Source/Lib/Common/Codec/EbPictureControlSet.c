@@ -93,12 +93,6 @@ EbErrorType me_sb_results_ctor(
 #endif
 #endif
     }
-#if 0
-    objectPtr->xMvSearchAreaCenter[0][0] = 0;
-    objectPtr->yMvSearchAreaCenter[0][0] = 0;
-    objectPtr->xMvSearchAreaCenter[1][0] = 0;
-    objectPtr->yMvSearchAreaCenter[1][0] = 0;
-#endif
     EB_MALLOC(uint8_t*, objectPtr->total_me_candidate_index, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
 
 #if NSQ_OPTIMASATION
@@ -546,19 +540,6 @@ EbErrorType picture_control_set_ctor(
 
     }
 #if !MEMORY_FOOTPRINT_OPT
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->md_refinement_intra_luma_mode_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources) {
-        return EB_ErrorInsufficientResources;
-    }
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->md_refinement_mode_type_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,

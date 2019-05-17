@@ -1128,12 +1128,7 @@ void log_redundancy_similarity(uint32_t  max_block_count)
                 cur_geom->similar = 1;
                 cur_geom->similar_list.blk_mds_table[cur_geom->similar_list.list_size] = search_geom->blkidx_mds;
                 cur_geom->similar_list.list_size++;
-#if 0
-                // exclude the first split
-                if (cur_geom->nsi == 0 && search_geom->nsi == 0 && cur_geom->depth == search_geom->depth) 
-#else
                 if (cur_geom->nsi == 0 && search_geom->nsi==0)
-#endif
                 {
                     cur_geom->redund = 1;
                     cur_geom->redund_list.blk_mds_table[cur_geom->redund_list.list_size] = search_geom->blkidx_mds;

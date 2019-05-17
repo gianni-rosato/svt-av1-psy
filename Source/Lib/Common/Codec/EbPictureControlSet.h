@@ -13847,7 +13847,6 @@ extern "C" {
         // Mode Decision Refinement Neighbor Arrays
         NeighborArrayUnit                  *md_refinement_intra_luma_mode_neighbor_array;
         NeighborArrayUnit                  *md_refinement_mode_type_neighbor_array;
-        NeighborArrayUnit                  *md_refinement_luma_recon_neighbor_array;
 #endif
         // Encode Pass Neighbor Arrays
         NeighborArrayUnit                  *ep_intra_luma_mode_neighbor_array;
