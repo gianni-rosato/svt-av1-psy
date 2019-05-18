@@ -1,260 +1,368 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Copyright(c) 2019 Intel Corporation
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
 #
 
-function build {
-    build_type=$1
-    lowercase_build_type=$(echo ${build_type} | tr '[:upper:]' '[:lower:]')
-    mkdir -p $lowercase_build_type
-    mkdir -p ../../Bin/$build_type
-    cd $lowercase_build_type
+# Sets context of if running in the script.
+# Helpful when copying and pasting functions and debuging.
+if printf '%s' "$0" | grep -q '\.sh'; then
+    IN_SCRIPT=true
+fi
 
-    cmake_env=" -DCMAKE_BUILD_TYPE=${build_type}"
-    cmake_env+=" -DCMAKE_C_COMPILER=${compiler}"
-    cmake_env+=" -DCMAKE_CXX_COMPILER=${compilerxx}"
-    cmake_env+=" -DCMAKE_INSTALL_PREFIX=${install_prefix}"
-    cmake_env+=" -DCMAKE_ASM_NASM_COMPILER=${assembler}"
-    if [ "$2" = "test" ]; then
-        cmake_env+=" -DBUILD_SHARED_LIBS=ON"
-        cmake_env+=" -DBUILD_TESTING=ON"
+# Fails the script if any of the commands error (Other than if and some others)
+set -e
+
+# Function to print to stderr or stdout while stripping preceding tabs(spaces)
+# If tabs are desired, use cat
+print_message() {
+    if [ "$1" = "stdout" ] || [ "$1" = "-" ]; then
+        shift
+        printf '%b\n' "${@:-Unknown Message}" | sed 's/^[ \t]*//'
     else
-        cmake_env+=" -DBUILD_SHARED_LIBS=${enable_shared}"
-    fi
-
-    if [ "x${target_system}" != "x" ] ; then
-        cmake_env+=" -DCMAKE_SYSTEM_NAME=${target_system}"
-        if [ "${target_system}" == "Windows" ] ; then
-            cmake_env+=" -DCMAKE_RC_COMPILER=${windres}"
-        fi
-    fi
-    PATH=$PATH:/usr/local/bin/
-    cmake ${verbose:+"-v"} ../../.. ${cmake_env}
-
-    if [ "${verbose}" = "1" ]; then
-        VERBOSE_MAKE="VERBOSE=1"
-    else
-        VERBOSE_MAKE=""
-    fi
-
-    # Compile the Library
-    make ${VERBOSE_MAKE} -j ${make_threads} SvtAv1EncApp SvtAv1DecApp
-
-    if [ "$2" = "test" ]; then
-        make ${VERBOSE_MAKE} -j ${make_threads} SvtAv1UnitTests SvtAv1ApiTests SvtAv1E2ETests TestVectors
-    fi
-    cd ..
-}
-
-function clean {
-    rm -R -f debug
-    rm -R -f release
-    rm -R -f ../../Bin/Debug
-    rm -R -f ../../Bin/Release
-}
-
-function ncpu {
-    if [ "$(uname -s)" = "Darwin" ]; then
-        sysctl -n hw.ncpu
-    else
-        nproc
+        printf '%b\n' "${@:-Unknown Message}" | sed 's/^[ \t]*//' >&2
     fi
 }
 
-function absdir {
-    if [ "$(uname -s)" = "Darwin" ]; then
-        dirname $(perl -e 'use Cwd "abs_path";print abs_path(shift)' $1)
-    else
-        dirname $(realpath $1)
-    fi
-}
-
-function probe_tools {
-    compiler="${GCC_COMPILER}"
-    if [ "x${CC}" != "x" ]; then
-        compiler=${CC}
-    elif [ -n "${cross_prefix}" ]; then
-        if hash "${cross_prefix}${GCC_COMPILER}" 2> /dev/null; then
-            compiler="${cross_prefix}${GCC_COMPILER}"
-        elif hash "${cross_prefix}${CC_COMPILER}" 2> /dev/null; then
-            compiler="${cross_prefix}${CC_COMPILER}"
-        else
-            echo "No suitable CC for ${cross_prefix}"
-            usage
-            exit 1
-        fi
-    elif [ -e "${ICC_COMPILER_PATH}/${ICC_COMPILER}" ]; then
-        compiler="${ICC_COMPILER_PATH}/${ICC_COMPILER}"
-    elif hash "${ICC_COMPILER}" 2> /dev/null; then
-        compiler="${ICC_COMPILER}"
-    elif hash "${GCC_COMPILER}" 2> /dev/null; then
-        compiler="${GCC_COMPILER}"
-    elif hash "${CLANG_COMPILER}" 2> /dev/null; then
-        compiler="${CLANG_COMPILER}"
-    fi
-
-    # Choose CXX
-    compilerxx="${GXX_COMPILER}"
-    if [ "x${CXX}" != "x" ]; then
-        compilerxx=${CXX}
-    elif [ -n "${cross_prefix}" ]; then
-        if hash "${cross_prefix}${GXX_COMPILER}" 2> /dev/null; then
-            compilerxx="${cross_prefix}${GXX_COMPILER}"
-        elif hash "${cross_prefix}${CXX_COMPILER}" 2> /dev/null; then
-            compilerxx="${cross_prefix}${CXX_COMPILER}"
-        else
-            echo "No suitable CXX for ${cross_prefix}"
-            usage
-            exit 1
-        fi
-    elif [ -e "${ICC_COMPILER_PATH}/${ICPC_COMPILER}" ]; then
-        compilerxx="${ICC_COMPILER_PATH}/${ICPC_COMPILER}"
-    elif hash "${ICPC_COMPILER}" 2> /dev/null; then
-        compilerxx="${ICPC_COMPILER}"
-    elif hash "${GXX_COMPILER}" 2> /dev/null; then
-        compilerxx="${GXX_COMPILER}"
-    elif hash "${CLANGXX_COMPILER}" 2> /dev/null; then
-        compilerxx="${CLANGXX_COMPILER}"
-    fi
-
-    if hash "${YASM_ASSEMBLER}" 2> /dev/null; then
-        assembler="${YASM_ASSEMBLER}"
-    else
-            echo "No suitable assembler found"
-            usage
-            exit 1
-    fi
-
-    if [ "${target_system}" == "Windows" ] ; then
-        windres="${cross_prefix}windres"
-    fi
-}
-
-function run {
-    # Run command
-    if [ "$1" = "clean" ]; then
-        clean
-    elif [ "$1" = "debug" ]; then
-        build Debug $2
-    elif [ "$1" = "release" ]; then
-        build Release $2
-    elif [ "$1" = "all" ]; then
-        build Debug $2
-        build Release $2
-    elif [ "$1" = "test" ]; then
-        build Debug "test"
-        build Release "test"
-    else
-        usage
+# Convenient function to exit with message
+die() {
+    print_message "${@:-Unknown error}"
+    if ${IN_SCRIPT:-false}; then
+        print_message "The script will now exit."
         exit 1
     fi
 }
 
-function usage {
-    cat <<EOF
-Usage: $0 [-p install_prefix] [-c cross_prefix] [-s system] [-j threads] [-x] [-v] [-h] command
-Options:
-    -p install_prefix - Installation directory prefix (default ${install_prefix})
-    -c cross_prefix   - cross-tools prefix (default "${cross_prefix}")
-    -s system         - Target system (default "${target_system}")
-    -j threads        - Parallel make threads
-    -x                - Build static library. (default shared. Test target need shared library,
-                        this parameter has no effect with test target on. )
-    -v                - Verbose output
-    -h                - Show this message
-    command           - clean, all, all [test], release [test],
-                        debug [test], test (default ${build_command})
+# Function for changing directory.
+cd_safe() {
+    if (cd "$1"); then
+        cd "$1"
+    else
+        _dir="$1"
+        shift
+        die "${@:-Failed cd to $_dir.}"
+    fi
+}
 
-Environment:
-    CC                - Override C compiler
-    CXX               - Override C++ compiler
+${IN_SCRIPT:-false} && cd_safe "$(cd "$(dirname "$0")" > /dev/null 2>&1 && pwd -P)"
+
+# Help message
+echo_help() {
+    cat << EOF
+Usage: $0 [OPTION] ... -- [OPTIONS FOR CMAKE]
+
+-a, --all, all          Builds release and debug
+    --asm, asm=*        Set assembly compiler [$ASM]
+-b, --bindir, bindir=*  Directory to install binaries
+    --cc, cc=*          Set C compiler [$CC]
+    --cxx, cxx=*        Set CXX compiler [$CXX]
+    --clean, clean      Remove build and Bin folders
+    --debug, debug      Build debug
+    --shared, shared    Build shared libs
+-x, --static, static    Build static libs
+-g, --gen, gen=*        Set CMake generator
+-i, --install, install  Install build [Default release]
+-j, --jobs, jobs=*      Set number of jobs for make/CMake [$jobs]
+-p, --prefix, prefix=*  Set installation prefix
+    --release, release  Build release
+-s, --target_system,    Set CMake target system
+    target_system=*
+    --test, test        Build Unit Tests
+-t, --toolchain,        Set CMake toolchain file
+    toolchain=*
+-v, --verbose, verbose  Print out commands
+
+Example usage:
+    build.sh -xi debug test
+    build.sh jobs=8 all cc=clang cpp=clang++
+    build.sh -j 4 all -t "https://gist.githubusercontent.com/peterspackman/8cf73f7f12ba270aa8192d6911972fe8/raw/mingw-w64-x86_64.cmake"
+    build.sh generator=Xcode cc=clang
 EOF
 }
 
+# Usage: build <release|debug> [test]
+build() (
+    build_type=Release
+    while [ -n "$*" ]; do
+        case "$(printf %s "$1" | tr '[:upper:]' '[:lower:]')" in
+        release) build_type="Release" && shift ;;
+        debug) build_type="Debug" && shift ;;
+        *) break ;;
+        esac
+    done
 
-####################
-# main() starts here
-####################
+    mkdir -p "$build_type" > /dev/null 2>&1
+    cd_safe "$build_type"
 
-# CLI option defaults
-cross_prefix=""
-target_system=""
-install_prefix="/usr/local"
-enable_shared=ON
-build_command=all
-unit_test=
-make_threads=$(ncpu)
-verbose=
+    for file in *; do
+        rm -rf "$file"
+    done
 
-# Compilers, auto-detected
-# May be overridden using CC and CXX environment variables
-CC_COMPILER=cc
-CLANG_COMPILER=clang
-GCC_COMPILER=gcc
-ICC_COMPILER=icc
-ICC_COMPILER_PATH=/opt/intel/composerxe/bin
+    cmake ../../.. -DCMAKE_BUILD_TYPE="$build_type" $CMAKE_EXTRA_FLAGS "$@"
 
-CXX_COMPILER=c++
-CLANGXX_COMPILER=clang++
-GXX_COMPILER=g++
-ICPC_COMPILER=icpc
+    # Compile the Library
+    if [ -f Makefile ]; then
+        make -j "${jobs:-4}"
+    elif cmake --build 2>&1 | grep -q -- '-j'; then
+        cmake --build . --config "$build_type" -j "${jobs:-4}"
+    else
+        cmake --build . --config "$build_type"
+    fi
+)
 
-YASM_ASSEMBLER=yasm
+check_executable() (
+    print_exec=false
+    while true; do
+        case "$1" in
+        -p) print_exec=true && shift ;;
+        *) break ;;
+        esac
+    done
+    [ -n "$1" ] && command_to_check="$1" || return 1
+    shift
+    if [ -e "$command_to_check" ]; then
+        $print_exec && printf '%s\n' "$command_to_check"
+        return 0
+    fi
+    for d in "$@" $(printf '%s ' "$PATH" | tr ':' ' '); do
+        if [ -e "$d/$command_to_check" ]; then
+            $print_exec && printf '%s\n' "$d/$command_to_check"
+            return 0
+        fi
+    done
+    return 127
+)
 
-windres=""
+install_build() (
+    build_type="Release"
+    sudo=
+    while [ -n "$*" ]; do
+        case $(printf %s "$1" | tr '[:upper:]' '[:lower:]') in
+        release) build_type="Release" && shift ;;
+        debug) build_type="Debug" && shift ;;
+        *) break ;;
+        esac
+    done
+    check_executable sudo && sudo -v > /dev/null 2>&1 && sudo=sudo
+    { [ -d "$build_type" ] && cd_safe "$build_type"; } ||
+        die "Unable to find the build folder. Did the build command run?"
+    $sudo cmake --build . --target install --config "$build_type" ||
+        die "Unable to run install"
+)
 
-# Parse CLI options
-while getopts "p:c:s:j:xvh" opt; do
-    case ${opt} in
-        p)
-            install_prefix=${OPTARG}
-            ;;
-        c)
-            cross_prefix=${OPTARG}
-            ;;
-        s)
-            target_system=${OPTARG}
-            ;;
-        j)
-            make_threads=${OPTARG}
-            ;;
-        x)
-            enable_shared=OFF
-            ;;
-        v)
-            set -x
-            verbose=1
-            ;;
-        h)
-            usage
-            exit 0
-            ;;
-        *)
-            usage
-            exit 1
-            ;;
-    esac
-done
-
-# Parse non-option arguments
-shift $((OPTIND-1))
-if [ $# -eq 1 ]; then
-    build_command=$1
-elif [ $# -eq 2 ]; then
-    build_command=$1
-    unit_test=$2
-elif [ $# != 0 ]; then
-    usage
-    exit 1
+if [ -z "$CC" ] && [ "$(uname -a | cut -c1-5)" != "MINGW" ]; then
+    if check_executable icc /opt/intel/bin; then
+        CC=$(check_executable -p icc /opt/intel/bin)
+    elif check_executable gcc; then
+        CC=$(check_executable -p gcc)
+    elif check_executable clang; then
+        CC=$(check_executable -p clang)
+    elif check_executable cc; then
+        CC=$(check_executable -p cc)
+    else
+        die "No suitable c compiler found in path" \
+            "Please either install one or set it via cc=*"
+    fi
+    export CC
 fi
 
-# Select suitable build tools
-probe_tools
+if [ -z "$CXX" ] && [ "$(uname -a | cut -c1-5)" != "MINGW" ]; then
+    if check_executable icpc "/opt/intel/bin"; then
+        CXX=$(check_executable -p icpc "/opt/intel/bin")
+    elif check_executable g++; then
+        CXX=$(check_executable -p g++)
+    elif check_executable clang++; then
+        CXX=$(check_executable -p clang++)
+    elif check_executable c++; then
+        CC=$(check_executable -p c++)
+    else
+        die "No suitable cpp compiler found in path" \
+            "Please either install one or set it via cxx=*"
+    fi
+    export CXX
+fi
 
-# Build directories subdirectories of build script's directory
-cd $(absdir $0)
+if [ -z "$jobs" ]; then
+    jobs=$(getconf _NPROCESSORS_ONLN) ||
+        jobs=$(nproc) ||
+        jobs=$(sysctl -n hw.ncpu) ||
+        jobs=2
+fi
 
-run ${build_command} ${unit_test}
+build_release=false
+build_debug=false
+build_install=false
 
-exit
+parse_options() {
+    while true; do
+        [ -z "$1" ] && break
+        case $(printf %s "$1" | tr '[:upper:]' '[:lower:]') in
+        help) echo_help && ${IN_SCRIPT:-false} && exit ;;
+        all) build_debug=true build_release=true && shift ;;
+        asm=*)
+            check_executable "${1#*=}" &&
+                CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_ASM_NASM_COMPILER=$(check_executable -p "${1#*=}")"
+            shift
+            ;;
+        bindir=*)
+            CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -CMAKE_INSTALL_BINDIR=${1#*=}"
+            shift
+            ;;
+        cc=*)
+            if check_executable "${1#*=}"; then
+                CC="$(check_executable -p "${1#*=}")"
+                export CC
+            fi
+            shift
+            ;;
+        cxx=*)
+            if check_executable "${1#*=}"; then
+                CXX="$(check_executable -p "${1#*=}")"
+                export CXX
+            fi
+            shift
+            ;;
+        clean)
+            for d in *; do
+                [ -d "$d" ] && rm -rf "$d"
+            done
+            for d in ../../Bin/*; do
+                [ -d "$d" ] && rm -rf "$d"
+            done
+            shift && ${IN_SCRIPT:-false} && exit
+            ;;
+        debug) build_debug=true && shift ;;
+        build_shared) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_SHARED_LIBS=ON" && shift ;;
+        build_static) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_SHARED_LIBS=OFF" && shift ;;
+        generator=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -G${1#*=}" && shift ;;
+        install) build_install=true && shift ;;
+        jobs=*) jobs="${1#*=}" && shift ;;
+        prefix=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_INSTALL_PREFIX=${1#*=}" && shift ;;
+        release) build_release=true && shift ;;
+        target_system=*)
+            CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_SYSTEM_NAME=${1#*=}"
+            shift
+            ;;
+        tests) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_TESTING=ON" && shift ;;
+        toolchain=*)
+            toolchain=""
+            url="${1#*=}"
+            if [ "$(echo "$url" | cut -c1-4)" = "http" ]; then
+                toolchain="${url%%\?*}"
+                toolchain="${toolchain##*/}"
+                toolchain="$PWD/$toolchain"
+                curl --connect-timeout 15 --retry 3 --retry-delay 5 -sfLk -o "$toolchain" "$url"
+            else
+                toolchain="$url"
+            fi
+            CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_TOOLCHAIN_FILE=../$toolchain" && shift
+            ;;
+        verbose) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_VERBOSE_MAKEFILE=1" && shift ;;
+        *) print_message "Unknown option: $1" && shift ;;
+        esac
+    done
+}
+
+if [ -z "$*" ]; then
+    build_release=true
+else
+    while [ -n "$*" ]; do
+        # Handle --* based args
+        if [ "$(printf %s "$1" | cut -c1-2)" = "--" ]; then
+            # Stop on "--", pass the rest to cmake
+            [ -z "$(printf %s "$1" | cut -c3-)" ] && shift && break
+            case "$(printf %s "$1" | cut -c3- | tr '[:upper:]' '[:lower:]')" in
+            help) parse_options help && shift ;;
+            all) parse_options debug release && shift ;;
+            asm) parse_options asm="$2" && shift 2 ;;
+            bindir) parse_options bindir="$2" && shift 2 ;;
+            cc) parse_options cc="$2" && shift 2 ;;
+            cxx) parse_options cxx="$2" && shift 2 ;;
+            clean) parse_options clean && shift ;;
+            debug) parse_options debug && shift ;;
+            gen) parse_options generator="$2" && shift 2 ;;
+            install) parse_options install && shift ;;
+            jobs) parse_options jobs="$2" && shift 2 ;;
+            prefix) parse_options prefix="$2" && shift 2 ;;
+            release) parse_options release && shift ;;
+            shared) parse_options build_shared && shift ;;
+            static) parse_options build_static && shift ;;
+            target_system) parse_options target_system="$2" && shift 2 ;;
+            toolchain) parse_options toolchain="$2" && shift ;;
+            test) parse_options tests && shift ;;
+            verbose) parse_options verbose && shift ;;
+            *) die "Error, unknown option: $1" ;;
+            esac
+        # Handle -* based args. Currently doesn't differentiate upper and lower since there's not need at the momment.
+        elif [ "$(printf %s "$1" | cut -c1)" = "-" ]; then
+            i=2
+            match="$1"
+            shift
+            while [ $i -ne $((${#match} + 1)) ]; do
+                case "$(echo "$match" | cut -c$i | tr '[:upper:]' '[:lower:]')" in
+                h) parse_options help ;;
+                a) parse_options all && i=$((i + 1)) ;;
+                b) parse_options bindir="$1" && i=$((i + 1)) ;;
+                g) parse_options generator="$1" && i=$((i + 1)) ;;
+                i) parse_options install && i=$((i + 1)) ;;
+                j) parse_options jobs="$1" && i=$((i + 1)) ;;
+                p) parse_options prefix="$1" && i=$((i + 1)) ;;
+                s) parse_options target_system="$1" && i=$((i + 1)) ;;
+                t) parse_options toolchain="$1" && i=$((i + 1)) ;;
+                x) parse_options build_static && i=$((i + 1)) ;;
+                v) parse_options verbose && i=$((i + 1)) ;;
+                *) die "Error, unknown option: -$(echo "$match" | cut -c$i | tr '[:upper:]' '[:lower:]')" ;;
+                esac
+            done
+        # Handle single word args
+        else
+            case "$(printf %s "$1" | tr '[:upper:]' '[:lower:]')" in
+            all) parse_options release debug && shift ;;
+            asm=*) parse_options asm="${1#*=}" && shift ;;
+            bindir=*) parse_options bindir="${1#*=}" && shift ;;
+            cc=*) parse_options cc="${1#*=}" && shift ;;
+            cxx=*) parse_options cxx="${1#*=}" && shift ;;
+            clean) parse_options clean && shift ;;
+            debug) parse_options debug && shift ;;
+            gen=*) parse_options generator="${1#*=}" && shift ;;
+            help) parse_options help && shift ;;
+            install) parse_options install && shift ;;
+            jobs=*) parse_options jobs="${1#*=}" && shift ;;
+            prefix=*) parse_options prefix="${1#*=}" && shift ;;
+            target_system=*) parse_options target_system="${1#*=}" && shift ;;
+            shared) parse_options build_shared && shift ;;
+            static) parse_options build_static && shift ;;
+            release) parse_options release && shift ;;
+            test) parse_options tests && shift ;;
+            toolchain=*) parse_options toolchain="${1#*=}" && shift ;;
+            verbose) parse_options verbose && shift ;;
+            end) ${IN_SCRIPT:-false} && exit ;;
+            *) die "Error, unknown option: $1" ;;
+            esac
+        fi
+    done
+fi
+
+if [ "${PATH#*\/usr\/local\/bin}" = "$PATH" ]; then
+    PATH="$PATH:/usr/local/bin"
+fi
+
+if $build_debug && $build_release; then
+    build release "$@"
+    build debug "$@"
+elif $build_debug; then
+    build debug "$@"
+else
+    build release "$@"
+fi
+
+if $build_install; then
+    if $build_release; then
+        install_build release
+    elif $build_debug; then
+        install_build debug
+    else
+        build release "$@"
+        install_build release
+    fi
+fi
