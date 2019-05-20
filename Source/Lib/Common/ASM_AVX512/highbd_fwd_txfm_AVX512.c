@@ -1423,7 +1423,7 @@ static INLINE void fwd_txfm2d_32x32_avx512(const int16_t *input, int32_t *output
 void av1_fwd_txfm2d_32x32_avx512(int16_t *input, int32_t *output,
     uint32_t stride, TxType tx_type, uint8_t  bd)
 {
-    DECLARE_ALIGNED(32, int32_t, txfm_buf[1024]);
+    DECLARE_ALIGNED(64, int32_t, txfm_buf[1024]);
     Txfm2DFlipCfg cfg;
     Av1TransformConfig(tx_type, TX_32X32, &cfg);
     (void)bd;

@@ -3245,8 +3245,8 @@ extern "C" {
         eb_av1_fwd_txfm2d_32x32 = Av1TransformTwoD_32x32_c;
         eb_av1_fwd_txfm2d_16x16 = Av1TransformTwoD_16x16_c;
 #ifndef NON_AVX512_SUPPORT
-        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x64 = eb_av1_fwd_txfm2d_64x64_avx2;
-        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_32x32 = eb_av1_fwd_txfm2d_32x32_avx2;
+        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x64 = av1_fwd_txfm2d_64x64_avx512;
+        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_32x32 = av1_fwd_txfm2d_32x32_avx512;
         if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x16 = av1_fwd_txfm2d_16x16_avx512;
 #else
         if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x64 = eb_av1_fwd_txfm2d_64x64_avx2;
