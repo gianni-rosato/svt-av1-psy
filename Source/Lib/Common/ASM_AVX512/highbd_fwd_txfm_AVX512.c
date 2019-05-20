@@ -2312,3 +2312,348 @@ void av1_fwd_txfm2d_64x64_avx512(int16_t *input, int32_t *output,
     default: assert(0);
   }
 }
+
+static INLINE void transpose_16nx16m_avx512(const __m512i *in,
+    __m512i *out, const int32_t width, const int32_t height) {
+    const int32_t numcol = height >> 4;
+    const int32_t numrow = width >> 4;
+    __m512i out1[16];
+    for (int32_t j = 0; j < numrow; j++) {
+        for (int32_t i = 0; i < numcol; i++) {
+            TRANSPOSE_4X4_AVX512(in[i * width + j + (numrow * 0)], in[i * width + j + (numrow * 1)],
+                in[i * width + j + (numrow * 2)], in[i * width + j + (numrow * 3)],
+                out1[0], out1[1], out1[2], out1[3]);
+            TRANSPOSE_4X4_AVX512(in[i * width + j + (numrow * 4)], in[i * width + j + (numrow * 5)],
+                in[i * width + j + (numrow * 6)], in[i * width + j + (numrow * 7)],
+                out1[4], out1[5], out1[6], out1[7]);
+            TRANSPOSE_4X4_AVX512(in[i * width + j + (numrow * 8)], in[i * width + j + (numrow * 9)],
+                in[i * width + j + (numrow * 10)], in[i * width + j + (numrow * 11)],
+                out1[8], out1[9], out1[10], out1[11]);
+            TRANSPOSE_4X4_AVX512(in[i * width + j + (numrow * 12)], in[i * width + j + (numrow * 13)],
+                in[i * width + j + (numrow * 14)], in[i * width + j + (numrow * 15)],
+                out1[12], out1[13], out1[14], out1[15]);
+
+            __m128i * outptr = (__m128i *)(out + (j * height + i + (numcol * 0)));
+
+            //will get first row of transpose matrix from corresponding 4 vectors in out1
+            outptr[0] = _mm512_extracti32x4_epi32(out1[0], 0);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[4], 0);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[8], 0);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[12], 0);
+
+            //will get second row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 1)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[1], 0);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[5], 0);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[9], 0);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[13], 0);
+
+            //will get 3rd row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 2)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[2], 0);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[6], 0);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[10], 0);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[14], 0);
+
+            //will get 4th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 3)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[3], 0);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[7], 0);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[11], 0);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[15], 0);
+
+            //will get 5th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 4)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[0], 1);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[4], 1);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[8], 1);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[12], 1);
+
+            //will get 6th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 5)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[1], 1);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[5], 1);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[9], 1);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[13], 1);
+
+            //will get 7th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 6)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[2], 1);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[6], 1);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[10], 1);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[14], 1);
+
+            //will get 8th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 7)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[3], 1);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[7], 1);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[11], 1);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[15], 1);
+
+            //will get 9th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 8)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[0], 2);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[4], 2);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[8], 2);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[12], 2);
+
+            //will get 10th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 9)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[1], 2);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[5], 2);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[9], 2);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[13], 2);
+
+            //will get 11th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 10)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[2], 2);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[6], 2);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[10], 2);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[14], 2);
+
+            //will get 12th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 11)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[3], 2);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[7], 2);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[11], 2);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[15], 2);
+
+            //will get 13th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 12)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[0], 3);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[4], 3);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[8], 3);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[12], 3);
+
+            //will get 14th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 13)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[1], 3);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[5], 3);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[9], 3);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[13], 3);
+
+            //will get 15th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 14)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[2], 3);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[6], 3);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[10], 3);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[14], 3);
+
+            //will get 16th row of transpose matrix from corresponding 4 vectors in out1
+            outptr = (__m128i *)(out + (j * height + i + (numcol * 15)));
+            outptr[0] = _mm512_extracti32x4_epi32(out1[3], 3);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[7], 3);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[11], 3);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[15], 3);
+        }
+    }
+}
+
+static INLINE void load_buffer_16_avx512(const int16_t *input, __m512i *in,
+    int32_t stride, int32_t flipud, int32_t fliplr,
+    int32_t shift) {
+    (void)flipud;
+    (void)fliplr;
+    __m256i temp;
+    temp = _mm256_loadu_si256((const __m256i *)(input + 0 * stride));
+
+    in[0] = _mm512_cvtepi16_epi32(temp);
+    in[0] = _mm512_slli_epi32(in[0], shift);
+}
+
+static INLINE void load_buffer_32_avx512(const int16_t *input, __m512i *in,
+    int32_t stride, int32_t flipud, int32_t fliplr,
+    int32_t shift) {
+    (void)flipud;
+    (void)fliplr;
+    __m256i temp[2];
+    temp[0] = _mm256_loadu_si256((const __m256i *)(input + 0 * stride));
+    temp[1] = _mm256_loadu_si256((const __m256i *)(input + 1 * stride));
+
+    in[0] = _mm512_cvtepi16_epi32(temp[0]);
+    in[1] = _mm512_cvtepi16_epi32(temp[1]);
+
+    in[0] = _mm512_slli_epi32(in[0], shift);
+    in[1] = _mm512_slli_epi32(in[1], shift);
+}
+
+static INLINE void load_buffer_32x16n(const int16_t *input, __m512i *out,
+    int32_t stride, int32_t flipud, int32_t fliplr,
+    int32_t shift, const int32_t height) {
+    const int16_t *in = input;
+    __m512i *output = out;
+    for (int32_t col = 0; col < height; col++) {
+        in = input + col * stride;
+        output = out + col * 2;
+        load_buffer_32_avx512(in, output, 16, flipud, fliplr, shift);
+    }
+}
+
+static INLINE void av1_round_shift_rect_array_32_avx512(__m512i *input,
+    __m512i *output,
+    const int32_t size,
+    const int32_t bit,
+    const int32_t val) {
+    const __m512i sqrt2 = _mm512_set1_epi32(val);
+    const __m512i round2 = _mm512_set1_epi32(1 << (12 - 1));
+    int32_t i;
+    if (bit > 0) {
+        const __m512i round1 = _mm512_set1_epi32(1 << (bit - 1));
+        __m512i r0, r1, r2, r3;
+        for (i = 0; i < size; i++) {
+            r0 = _mm512_add_epi32(input[i], round1);
+            r1 = _mm512_srai_epi32(r0, bit);
+            r2 = _mm512_mullo_epi32(sqrt2, r1);
+            r3 = _mm512_add_epi32(r2, round2);
+            output[i] = _mm512_srai_epi32(r3, 12);
+        }
+    }
+    else {
+        __m512i r0, r1, r2;
+        for (i = 0; i < size; i++) {
+            r0 = _mm512_slli_epi32(input[i], -bit);
+            r1 = _mm512_mullo_epi32(sqrt2, r0);
+            r2 = _mm512_add_epi32(r1, round2);
+            output[i] = _mm512_srai_epi32(r2, 12);
+        }
+    }
+}
+
+void av1_fwd_txfm2d_32x64_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t  bd)
+{
+    (void)tx_type;
+    __m512i in[128];
+    __m512i *outcoef512 = (__m512i *)output;
+    const int8_t *shift = fwd_txfm_shift_ls[TX_32X64];
+    const int32_t txw_idx = get_txw_idx(TX_32X64);
+    const int32_t txh_idx = get_txh_idx(TX_32X64);
+    const int32_t txfm_size_col = tx_size_wide[TX_32X64];
+    const int32_t txfm_size_row = tx_size_high[TX_32X64];
+    int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
+    const int32_t num_row = txfm_size_row >> 4;
+    const int32_t num_col = txfm_size_col >> 4;
+
+    // column transform
+    load_buffer_32x16n(input, in, stride, 0, 0, shift[0], txfm_size_row);
+    av1_fdct64_new_avx512(in, in, bitcol, txfm_size_col, num_col);
+
+    for (int32_t i = 0; i < 8; i++) {
+        col_txfm_16x16_rounding_avx512((in + i * 16), -shift[1]);
+    }
+    transpose_16nx16m_avx512(in, outcoef512, txfm_size_col, txfm_size_row);
+
+    // row transform
+    av1_fdct32_new_avx512(outcoef512, in, bitrow, txfm_size_row, num_row);
+    transpose_16nx16m_avx512(in, outcoef512, txfm_size_row, txfm_size_col);
+    av1_round_shift_rect_array_32_avx512(outcoef512, outcoef512, 128, -shift[2],
+        5793);
+    (void)bd;
+}
+
+void av1_fwd_txfm2d_64x32_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t  bd)
+{
+    (void)tx_type;
+    __m512i in[128];
+    __m512i *outcoef512 = (__m512i *)output;
+    const int8_t *shift = fwd_txfm_shift_ls[TX_64X32];
+    const int32_t txw_idx = get_txw_idx(TX_64X32);
+    const int32_t txh_idx = get_txh_idx(TX_64X32);
+    const int32_t txfm_size_col = tx_size_wide[TX_64X32];
+    const int32_t txfm_size_row = tx_size_high[TX_64X32];
+    int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
+    const int32_t num_row = txfm_size_row >> 4;
+    const int32_t num_col = txfm_size_col >> 4;
+
+    // column transform
+    for (int32_t i = 0; i < 32; i++) {
+        load_buffer_32_avx512(input + 0 + i * stride, in + 0 + i * 4, 16, 0, 0, shift[0]);
+        load_buffer_32_avx512(input + 32 + i * stride, in + 2 + i * 4, 16, 0, 0, shift[0]);
+    }
+
+    av1_fdct32_new_avx512(in, in, bitcol, txfm_size_col, num_col);
+
+
+    for (int32_t i = 0; i < 8; i++) {
+        col_txfm_16x16_rounding_avx512((in + i * 16), -shift[1]);
+    }
+    transpose_16nx16m_avx512(in, outcoef512, txfm_size_col, txfm_size_row);
+
+    // row transform
+    av1_fdct64_new_avx512(outcoef512, in, bitrow, txfm_size_row, num_row);
+    transpose_16nx16m_avx512(in, outcoef512, txfm_size_row, txfm_size_col);
+    av1_round_shift_rect_array_32_avx512(outcoef512, outcoef512, 128,
+        -shift[2], 5793);
+    (void)bd;
+}
+
+void av1_fwd_txfm2d_16x64_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t  bd)
+{
+    __m512i in[64];
+    __m512i *outcoeff512 = (__m512i *)output;
+    const int8_t *shift = fwd_txfm_shift_ls[TX_16X64];
+    const int32_t txw_idx = get_txw_idx(TX_16X64);
+    const int32_t txh_idx = get_txh_idx(TX_16X64);
+    const int32_t txfm_size_col = tx_size_wide[TX_16X64];
+    const int32_t txfm_size_row = tx_size_high[TX_16X64];
+    int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
+    const int32_t num_row = txfm_size_row >> 4;
+    const int32_t num_col = txfm_size_col >> 4;
+
+    // column tranform
+    for (int32_t i = 0; i < txfm_size_row; i++) {
+        load_buffer_16_avx512(input + i * stride, in + i, 16,
+            0, 0, shift[0]);
+    }
+
+    av1_fdct64_new_avx512(in, outcoeff512, bitcol, txfm_size_col, num_col);
+
+    col_txfm_16x16_rounding_avx512(outcoeff512, -shift[1]);
+    col_txfm_16x16_rounding_avx512(outcoeff512 + 16, -shift[1]);
+    col_txfm_16x16_rounding_avx512(outcoeff512 + 32, -shift[1]);
+    col_txfm_16x16_rounding_avx512(outcoeff512 + 48, -shift[1]);
+    transpose_16nx16m_avx512(outcoeff512, in, txfm_size_col, txfm_size_row);
+    // row tranform
+    fdct16x16_avx512(in, in, bitrow, num_row);
+    transpose_16nx16m_avx512(in, outcoeff512, txfm_size_row, txfm_size_col);
+    (void)bd;
+}
+
+void av1_fwd_txfm2d_64x16_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t  bd)
+{
+    __m512i in[64];
+    __m512i *outcoeff512 = (__m512i *)output;
+    const int8_t *shift = fwd_txfm_shift_ls[TX_64X16];
+    const int32_t txw_idx = get_txw_idx(TX_64X16);
+    const int32_t txh_idx = get_txh_idx(TX_64X16);
+    const int32_t txfm_size_col = tx_size_wide[TX_64X16];
+    const int32_t txfm_size_row = tx_size_high[TX_64X16];
+    int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
+    const int32_t num_row = txfm_size_row >> 4;
+    const int32_t num_col = txfm_size_col >> 4;
+    // column tranform
+    for (int32_t i = 0; i < txfm_size_row; i++) {
+        load_buffer_16_avx512(input + 0 + i * stride, in + 0 + i * 4, 16,
+            0, 0, shift[0]);
+        load_buffer_16_avx512(input + 16 + i * stride, in + 1 + i * 4, 16,
+            0, 0, shift[0]);
+        load_buffer_16_avx512(input + 32 + i * stride, in + 2 + i * 4, 16,
+            0, 0, shift[0]);
+        load_buffer_16_avx512(input + 48 + i * stride, in + 3 + i * 4, 16,
+            0, 0, shift[0]);
+    }
+
+    fdct16x16_avx512(in, outcoeff512, bitcol, num_col);
+    col_txfm_16x16_rounding_avx512(outcoeff512, -shift[1]);
+    col_txfm_16x16_rounding_avx512(outcoeff512 + 16, -shift[1]);
+    col_txfm_16x16_rounding_avx512(outcoeff512 + 32, -shift[1]);
+    col_txfm_16x16_rounding_avx512(outcoeff512 + 48, -shift[1]);
+    transpose_16nx16m_avx512(outcoeff512, in, txfm_size_col, txfm_size_row);
+    // row tranform
+    av1_fdct64_new_avx512(in, in, bitrow, txfm_size_row, num_row);
+    transpose_16nx16m_avx512(in, outcoeff512, txfm_size_row, txfm_size_col);
+    (void)bd;
+}
