@@ -123,9 +123,9 @@ We welcome community contributions to the SVT-AV1 Encoder. Thank you for your ti
 
 -  Submit a pull request for review to the maintainer
 
-## How to Report Bugs and Provide Feedback
+### How to Report Bugs and Provide Feedback
 
-Use the "Issues" tab on Github. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one.
+Use the [Issues]() tab on Github. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one.
 
 ## IRC
 
