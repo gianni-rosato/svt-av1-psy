@@ -1245,7 +1245,6 @@ void eighth_pel_unipred_refinement(
 
     // (8 Best_L0 neighbors)
 #if MD_INJECTION
-    //const MeLcuResults_t *meResults = pictureControlSetPtr->ParentPcsPtr->meResultsPtr[lcuAddr];
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index)
     {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
@@ -1254,8 +1253,7 @@ void eighth_pel_unipred_refinement(
 
         if (inter_direction == 0) {
 #endif
-            for (bipredIndex = 0; bipredIndex < BIPRED_3x3_REFINMENT_POSITIONS; ++bipredIndex)
-            {
+            for (bipredIndex = 0; bipredIndex < BIPRED_3x3_REFINMENT_POSITIONS; ++bipredIndex) {
                 /**************
                 NEWMV L0
                 ************* */
@@ -1285,17 +1283,13 @@ void eighth_pel_unipred_refinement(
                     candidateArray[canTotalCnt].inter_mode = NEWMV;
                     candidateArray[canTotalCnt].pred_mode = NEWMV;
                     candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
-
                     candidateArray[canTotalCnt].is_compound = 0;
                     candidateArray[canTotalCnt].is_new_mv = 1;
                     candidateArray[canTotalCnt].is_zero_mv = 0;
-
                     candidateArray[canTotalCnt].drl_index = 0;
-
                     // Set the MV to ME result
                     candidateArray[canTotalCnt].motion_vector_xl0 = to_inject_mv_x;
                     candidateArray[canTotalCnt].motion_vector_yl0 = to_inject_mv_y;
-
                     // will be needed later by the rate estimation
                     candidateArray[canTotalCnt].ref_mv_index = 0;
                     candidateArray[canTotalCnt].pred_mv_weight = 0;
@@ -1306,7 +1300,6 @@ void eighth_pel_unipred_refinement(
 #else
                     candidateArray[canTotalCnt].ref_frame_type = LAST_FRAME;
 #endif
-
                     candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                     candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 
@@ -1338,14 +1331,13 @@ void eighth_pel_unipred_refinement(
                     ++context_ptr->injected_mv_count_l0;
                 }
 #if MD_INJECTION
-                }
             }
-#endif
         }
+#endif
+    }
 
     // (8 Best_L1 neighbors)
 #if MD_INJECTION
-//const MeLcuResults_t *meResults = pictureControlSetPtr->ParentPcsPtr->meResultsPtr[lcuAddr];
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index)
     {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
@@ -1353,8 +1345,7 @@ void eighth_pel_unipred_refinement(
         const uint8_t list1_ref_index = me_block_results_ptr->ref_idx_l1;
         if (inter_direction == 1) {
 #endif
-            for (bipredIndex = 0; bipredIndex < BIPRED_3x3_REFINMENT_POSITIONS; ++bipredIndex)
-            {
+            for (bipredIndex = 0; bipredIndex < BIPRED_3x3_REFINMENT_POSITIONS; ++bipredIndex) {
                 if (isCompoundEnabled) {
                     /**************
                     NEWMV L1
@@ -1384,13 +1375,10 @@ void eighth_pel_unipred_refinement(
                         candidateArray[canTotalCnt].inter_mode = NEWMV;
                         candidateArray[canTotalCnt].pred_mode = NEWMV;
                         candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
-
                         candidateArray[canTotalCnt].is_compound = 0;
                         candidateArray[canTotalCnt].is_new_mv = 1;
                         candidateArray[canTotalCnt].is_zero_mv = 0;
-
                         candidateArray[canTotalCnt].drl_index = 0;
-
                         // Set the MV to ME result
                         candidateArray[canTotalCnt].motion_vector_xl1 = to_inject_mv_x;
                         candidateArray[canTotalCnt].motion_vector_yl1 = to_inject_mv_y;
@@ -1434,18 +1422,16 @@ void eighth_pel_unipred_refinement(
 #endif
                         ++context_ptr->injected_mv_count_l1;
                     }
-                    }
-#if MD_INJECTION
                 }
+#if MD_INJECTION
             }
-#endif
         }
-
+#endif
+    }
     // update the total number of candidates injected
     (*candidateTotalCnt) = canTotalCnt;
-
     return;
-    }
+}
 
 void eighth_pel_bipred_refinement(
     PictureControlSet            *picture_control_set_ptr,
