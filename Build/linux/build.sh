@@ -22,17 +22,12 @@ function build {
         -DCMAKE_BUILD_TYPE=$build_type              \
         -DCMAKE_C_COMPILER=$CMAKE_COMPILER          \
         -DCMAKE_ASM_NASM_COMPILER=$CMAKE_ASSEMBLER  \
+        -DBUILD_TESTING=ON                          \
 
     # Compile the Library
     make -j $(if [ "$(uname -s)" = "Darwin" ]; then sysctl -n hw.ncpu; else nproc; fi) SvtAv1EncApp SvtAv1DecApp
     if [ "$2" = "test" ]; then    
         make -j $(if [ "$(uname -s)" = "Darwin" ]; then sysctl -n hw.ncpu; else nproc; fi) SvtAv1UnitTests SvtAv1ApiTests SvtAv1E2ETests TestVectors
-        # Copy test conformance dependency
-        if [ "$(uname -s)" = "Darwin" ]; then
-            cp ../../../third_party/aom/lib/mac/*.dylib ../../../Bin/$build_type/
-        else
-            cp ../../../third_party/aom/lib/linux/libaom* ../../../Bin/$build_type/
-        fi
     fi
     cd ..
 }

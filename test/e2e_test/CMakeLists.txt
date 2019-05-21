@@ -65,6 +65,17 @@ if (UNIX)
     add_executable (SvtAv1E2ETests 
       ${all_files})
 
+    if (APPLE)
+      add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
+                      COMMAND ${CMAKE_COMMAND} -E copy
+                           ${PROJECT_SOURCE_DIR}/third_party/aom/lib/mac/* ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+    endif(APPLE)
+    if (UNIX AND NOT APPLE)
+      add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
+                      COMMAND ${CMAKE_COMMAND} -E copy
+                           ${PROJECT_SOURCE_DIR}/third_party/aom/lib/linux/* ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+    endif(UNIX AND NOT APPLE)
+
     # Link the Encoder App
      target_link_libraries (SvtAv1E2ETests
         aom

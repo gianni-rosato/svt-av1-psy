@@ -19,7 +19,6 @@ set(CAN_USE_ASSEMBLER TRUE)
 set(CMAKE_NASM_LINK_EXECUTABLE "ld -o <TARGET> <OBJECTS>")
 set(CMAKE_ASM_NASM_SOURCE_FILE_EXTENSIONS asm)
 
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_ASM_NASM_OBJECT_FORMAT macho64)
     set(CMAKE_ASM_NASM_FLAGS "-DUNIX64")
@@ -49,6 +48,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_ASM_NASM_FLAGS_DEBUG "")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
+option(BUILD_TESTING "" OFF)
 include(CTest)
 
 set(COVERAGE false CACHE BOOL "For use with coveralls and GTest")
