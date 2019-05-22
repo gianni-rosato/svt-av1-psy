@@ -1372,7 +1372,7 @@ static INLINE void iidentity16_and_round_shift_avx2(__m256i *input, int32_t shif
 
 static INLINE void idct16_col_avx2(__m256i *in, __m256i *out, int32_t bit,
     const int8_t *shift) {
-
+    (void) shift;
     const int32_t *cospi = cospi_arr(bit);
     const __m256i cospi60 = _mm256_set1_epi32(cospi[60]);
     const __m256i cospi28 = _mm256_set1_epi32(cospi[28]);

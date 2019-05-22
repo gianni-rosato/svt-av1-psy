@@ -2274,7 +2274,6 @@ void ResidualKernel8x4_AVX2_INTRIN(
     uint32_t   area_height)
 {
     const __m256i zero = _mm256_setzero_si256();
-    uint32_t y;
     (void)area_width;
     (void)area_height;
 

@@ -20,7 +20,7 @@ void eb_enc_un_pack8_bit_data_avx2_intrin(
     uint32_t x, y;
 
     __m256i ymm_00FF, in_pixel0, in_pixel1;
-    __m256i in_pixel1_shftR_2_U8, in_pixel0_shftR_2_U8;
+    __m256i in_pixel0_shftR_2_U8;
     ymm_00FF = _mm256_set1_epi16(0x00FF);
 
     if (width == 8) {
@@ -205,9 +205,8 @@ void eb_enc_un_pack8_bit_data_avx2_intrin(
             }
         }
         else if (!(width & 31)) {
-            __m256i in_pixel2, in_pixel3, in_pixel4, in_pixel5;
-            __m256i in_pixel6, in_pixel7;
-            __m256i out8_0_U8, out8_1_U8, out8_2_U8, out8_3_U8;
+            __m256i in_pixel2, in_pixel3;
+            __m256i out8_0_U8, out8_1_U8;
 
             for (x = 0; x < height; x += 2) {
                 for (y = 0; y < width; y += 32) {
@@ -254,8 +253,6 @@ void eb_enc_un_pack8_bit_data_avx2_intrin(
             }
         }
         else if (!(width & 15)) {
-            __m128i in_pixel2, in_pixel3;
-
             for (x = 0; x < height; x += 2) {
                 for (y = 0; y < width; y += 16) {
                     in_pixel0 = _mm256_loadu_si256((__m256i*) in_16bit_buffer);
@@ -319,7 +316,6 @@ void eb_enc_un_pack8_bit_data_avx2_intrin(
             __m128i xmm_00FF, in_pixel0, in_pixel1, in_pixel1_shftR_2_U8;
             __m128i in_pixel0_shftR_2_U8, in_pixel0_shftR_2, in_pixel1_shftR_2;
             xmm_00FF = _mm_set1_epi16(0x00FF);
-            uint32_t va;
             uint32_t width_down4 = width & (~0x3);
             uint16_t in_pixel;
             for (x = 0; x < height; x += 2) {

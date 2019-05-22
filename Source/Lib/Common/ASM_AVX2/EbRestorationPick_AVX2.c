@@ -42,7 +42,7 @@ void get_proj_subspace_avx2(const uint8_t *src8, int width, int height,
   xq[0] = 0;
   xq[1] = 0;
 
-  __m256i  H_00, H_01, H_10, H_11;
+  __m256i  H_00, H_01, H_11;
   __m256i  C_0, C_1;
   H_00 = _mm256_setzero_si256();
   H_01 = _mm256_setzero_si256();
