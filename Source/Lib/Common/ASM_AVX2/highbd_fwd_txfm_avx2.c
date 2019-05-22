@@ -3904,7 +3904,6 @@ static INLINE void fdct32x32_avx2(const __m256i *input, __m256i *output,
     const int32_t txfm_size = 32;
     const int32_t num_per_256 = 8;
     int32_t col_num = txfm_size / num_per_256;
-    int32_t col;
     (void)stage_range;
     av1_fdct32_new_avx2(input, output, cos_bit, txfm_size, col_num);
 }

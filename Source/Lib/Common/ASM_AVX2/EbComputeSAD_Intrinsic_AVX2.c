@@ -37,7 +37,7 @@ void ext_sad_calculation_8x8_16x16_avx2_intrin(
     uint32_t *p_sad8x8,
     EbBool    sub_sad) {
     __m128i xmm_sad16x16, xmm_sad16x16_total, sad8x8_0_3;
-    __m128i sad8x8_less_than_bitmask, sad8x8_greater_or_eq_bitmask, best_mv8x8;
+    __m128i sad8x8_less_than_bitmask, best_mv8x8;
     __m128i best_sad8x8, xmm_best_sad8x8, xmm_best_mv8x8;
     __m256i sad8x8_0_3_256, src_256, ref_256;
     __m128i xmm_mv = _mm_set1_epi32(mv);
@@ -3614,7 +3614,6 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_avx2_intrin(
     int16_t x_mv, y_mv;
     __m128i s3;
     __m128i sad_0, sad_1, sad_2, sad_3;
-    __m256i ss0, ss1, ss2, ss3, ss4;
     __m256i s[4];
     uint32_t temSum;
 
