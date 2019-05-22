@@ -52,6 +52,10 @@ extern "C" {
 #define TXS_SPLIT                         1
 #define TXS_SPLIT_SETTINGS                1
 #define TX_H4                             1
+
+#define ATB_MD                            0 
+#define ATB_EP                            1 
+#define ATB_EC                            1 
 #endif
 
 // New  presets

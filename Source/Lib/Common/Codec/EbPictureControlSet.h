@@ -13828,6 +13828,9 @@ extern "C" {
         NeighborArrayUnit                  *md_mode_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_leaf_depth_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#if ATB_MD
+        NeighborArrayUnit                  *md_tx_depth_1_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#endif
         NeighborArrayUnit                  *md_cb_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_cr_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
@@ -13878,7 +13881,9 @@ extern "C" {
         NeighborArrayUnit                  *inter_pred_dir_neighbor_array;
         NeighborArrayUnit                  *ref_frame_type_neighbor_array;
         NeighborArrayUnit32                *interpolation_type_neighbor_array;
-
+#if ATB_EC
+        NeighborArrayUnit                  *txfm_context_array;
+#endif
         ModeInfo                            **mi_grid_base; //2 SB Rows of mi Data are enough
 
         ModeInfo                             *mip;

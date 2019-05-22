@@ -118,6 +118,9 @@ extern "C" {
         NeighborArrayUnit            *luma_recon_neighbor_array;
         NeighborArrayUnit            *cb_recon_neighbor_array;
         NeighborArrayUnit            *cr_recon_neighbor_array;
+#if ATB_MD
+        NeighborArrayUnit            *tx_search_luma_recon_neighbor_array;
+#endif
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
         NeighborArrayUnit            *skip_coeff_neighbor_array;
 #endif
