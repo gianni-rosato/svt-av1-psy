@@ -704,9 +704,6 @@ void set_nfl(
     }
 #endif
 
-#if FORCE_1_NFL
-    context_ptr->full_recon_search_count = 1;
-#endif
     ASSERT(context_ptr->full_recon_search_count <= MAX_NFL);
 }
 
@@ -2896,6 +2893,19 @@ void full_loop_luma_intra(
 #else
     uint8_t end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
 #endif
+
+    // Hsan atb --> if atb on
+    // Reset
+    if (end_tx_depth) {
+        copy_neigh_arr(
+            picture_control_set_ptr->md_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
+            picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
+            context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x,
+            context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y,
+            context_ptr->blk_geom->bwidth,
+            context_ptr->blk_geom->bheight,
+            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
+    }
     for (context_ptr->tx_depth = 0; context_ptr->tx_depth <= end_tx_depth; context_ptr->tx_depth++) {
 
         // Set recon neighbor array to be used @ intra compensation
@@ -3138,7 +3148,7 @@ void full_loop_luma_intra(
     // ATB Recon
     context_ptr->tx_depth = candidateBuffer->candidate_ptr->tx_depth = best_tx_depth;
 
-    if (context_ptr->tx_depth == 0) {
+    if (context_ptr->tx_depth == 0) { // Hsan atb --> if atb on
 
         // Set recon neighbor array to be used @ intra compensation
         context_ptr->tx_search_luma_recon_neighbor_array = picture_control_set_ptr->md_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
@@ -3490,9 +3500,7 @@ void AV1PerformFullLoop(
 
         tx_search_skip_fag = ( picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
 
-#if DISABLE_TX_TYPE
-        tx_search_skip_fag = 1;
-#endif
+#if !ATB_MD // Hsan atb - if atb on
         if (!tx_search_skip_fag){
 
                 product_full_loop_tx_search(
@@ -3509,7 +3517,7 @@ void AV1PerformFullLoop(
             //re-init
             candidate_ptr->y_has_coeff = 0;
         }
-
+#endif
 #if ATB_MD
         if (candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0)
             full_loop_luma_intra(

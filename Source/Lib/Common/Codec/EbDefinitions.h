@@ -48,11 +48,9 @@ extern "C" {
 
 
 // Testing only
-#define TXS_DISABLE_CFL                   1
-#define FORCE_1_NFL                       1
-#define DISABLE_TX_TYPE                   1
+#define TXS_DISABLE_CFL                   0
 
-#define ATB                               1 // Adaptive Transform Block 
+#define ATB                               0 // Adaptive Transform Block 
 
 #if ATB
 #define ATB_SUPPORT                       1
@@ -64,7 +62,7 @@ extern "C" {
 #define ATB_EP                            1 
 #define ATB_EC                            1 
 
-    
+#define TRANSFORM_TYPE_SEARCH             0
 #endif
 
 // New  presets

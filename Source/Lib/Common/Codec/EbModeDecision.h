@@ -119,7 +119,11 @@ extern "C" {
 #endif
         EbBool                                 is_new_mv;
         EbBool                                 is_zero_mv;
+#if TRANSFORM_TYPE_SEARCH
+        TxType                                 transform_type[PLANE_TYPES][MAX_TXB_COUNT];
+#else
         TxType                                 transform_type[PLANE_TYPES];
+#endif
         MacroblockPlane                        candidate_plane[MAX_MB_PLANE];
         uint16_t                               eob[MAX_MB_PLANE][MAX_TXB_COUNT];
         int32_t                                quantized_dc[3];
