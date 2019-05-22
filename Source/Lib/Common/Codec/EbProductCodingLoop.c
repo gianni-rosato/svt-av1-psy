@@ -2880,27 +2880,6 @@ void AV1PerformFullLoop(
         candidateBuffer->candidate_ptr->full_distortion = (uint32_t)(y_full_distortion[0]);
 
         candidateBuffer->y_coeff_bits = y_coeff_bits;
-
-#if 0 //AMIR_DEBUG
-       if (picture_control_set_ptr->parent_pcs_ptr->picture_number == 0 && (context_ptr->blk_geom->blkidx_mds==5 || context_ptr->blk_geom->blkidx_mds == 25) )
-        printf("POC:%d\t%d\t(%d,%d)\t%d\t%d\t%d\t%lld\t%lld\t%lld\t%lld\t%lld\n",
-            picture_control_set_ptr->parent_pcs_ptr->picture_number,
-            fullLoopCandidateIndex,
-            context_ptr->cu_origin_x,
-            context_ptr->cu_origin_y,
-            context_ptr->blk_geom->sq_size,
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
-            candidate_ptr->pred_mode,
-            *candidateBuffer->full_cost_ptr,
-            candidateBuffer->y_coeff_bits,
-            cb_coeff_bits + cr_coeff_bits,
-            (uint64_t)candidateBuffer->candidate_ptr->full_distortion,
-            candidateBuffer->cb_distortion[DIST_CALC_RESIDUAL] + candidateBuffer->cr_distortion[DIST_CALC_RESIDUAL]
-        );
-
-        //}
-#endif
-
         candidate_ptr->full_distortion = (uint32_t)(y_full_distortion[0]);
 
         if (context_ptr->full_loop_escape) 

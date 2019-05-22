@@ -1858,11 +1858,7 @@ void frame_level_rc_feedback_picture_vbr(
             (double)rate_control_layer_ptr->c_coeff,
             (double)rate_control_layer_ptr->k_coeff,
             (double)parentpicture_control_set_ptr->sad_me,
-#if 1 //RC_IMPROVEMENT
             (double)context_ptr->extra_bits_gen,
-#else
-            (double)rate_control_layer_ptr->previous_frame_distortion_me,
-#endif
             (int)rate_control_param_ptr->virtual_buffer_level,
             (int)context_ptr->extra_bits);
     }
@@ -3169,17 +3165,11 @@ void frame_level_rc_feedback_picture_cvbr(
             (double)rate_control_layer_ptr->c_coeff,
             (double)rate_control_layer_ptr->k_coeff,
             (double)parentpicture_control_set_ptr->sad_me,
-#if 1 //RC_IMPROVEMENT
             (double)context_ptr->extra_bits_gen,
-#else
-            (double)rate_control_layer_ptr->previous_frame_distortion_me,
-#endif
             (int)rate_control_param_ptr->virtual_buffer_level,
             (int)context_ptr->extra_bits);
     }
 #endif
-
-
 }
 
 void high_level_rc_feed_back_picture(

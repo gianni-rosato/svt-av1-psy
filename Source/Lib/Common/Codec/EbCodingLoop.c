@@ -128,62 +128,6 @@ typedef void(*EB_AV1_GENERATE_RECON_FUNC_PTR)(
     uint16_t                *eob,
     EbAsm                 asm_type);
 
-
-typedef void(*EB_GENERATE_RECON_FUNC_PTR)(
-    EncDecContext       *context_ptr,
-    uint32_t                 origin_x,
-    uint32_t                 origin_y,
-    EbPictureBufferDesc *predSamples,     // no basis/offset
-    EbPictureBufferDesc *residual16bit,    // no basis/offset
-    int16_t                *transformScratchBuffer,
-    EbAsm                 asm_type);
-
-typedef void(*EB_GENERATE_RECON_INTRA_4x4_FUNC_PTR)(
-    EncDecContext       *context_ptr,
-    uint32_t                 origin_x,
-    uint32_t                 origin_y,
-    EbPictureBufferDesc *predSamples,     // no basis/offset
-    EbPictureBufferDesc *residual16bit,    // no basis/offset
-    int16_t                *transformScratchBuffer,
-    uint32_t                 component_mask,
-    EbAsm                 asm_type);
-
-typedef EbErrorType(*EB_GENERATE_INTRA_SAMPLES_FUNC_PTR)(
-    EbBool                         *is_left_availble,
-    EbBool                         *is_above_availble,
-    EbBool                     constrained_intra_flag,   //input parameter, indicates if constrained intra is switched on/off
-    EbBool                     strongIntraSmoothingFlag,
-    uint32_t                      origin_x,
-    uint32_t                      origin_y,
-    uint32_t                      size,
-    uint32_t                      cu_depth,
-    NeighborArrayUnit        *mode_type_neighbor_array,
-    NeighborArrayUnit        *luma_recon_neighbor_array,
-    NeighborArrayUnit        *cb_recon_neighbor_array,
-    NeighborArrayUnit        *cr_recon_neighbor_array,
-    void                       *refWrapperPtr,
-    EbBool                     pictureLeftBoundary,
-    EbBool                     pictureTopBoundary,
-    EbBool                     pictureRightBoundary);
-typedef EbErrorType(*EB_ENC_PASS_INTRA_FUNC_PTR)(
-    uint8_t                          upsample_left,
-    uint8_t                          upsample_above,
-    uint8_t                          upsample_left_chroma,
-    uint8_t                          upsample_above_chroma,
-    EbBool                         is_left_availble,
-    EbBool                         is_above_availble,
-    void                       *referenceSamples,
-    uint32_t                      origin_x,
-    uint32_t                      origin_y,
-    uint32_t                      puSize,
-    EbPictureBufferDesc      *prediction_ptr,
-    uint32_t                      luma_mode,
-    uint32_t                      chroma_mode,
-    int32_t                      angle_delta,
-    uint16_t                      bitdepth,
-    EbAsm                      asm_type);
-
-
 /***************************************************
 * Update Intra Mode Neighbor Arrays
 ***************************************************/

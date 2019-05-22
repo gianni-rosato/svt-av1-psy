@@ -5175,63 +5175,6 @@ EbErrorType av1_estimate_transform(
         break;
 
     case TX_32X32:
-#if 0//PF_N2_SUPPORT // Broken support by commit fa20efe18e1ed867720475b8c52d9c5e54427d60 in master
-        if (transform_type == V_DCT || transform_type == H_DCT || transform_type == V_ADST || transform_type == H_ADST || transform_type == V_FLIPADST || transform_type == H_FLIPADST)
-        {
-            if (trans_coeff_shape == N2_SHAPE)
-            {
-                av1_fwd_txfm2d_pf_32x32_c(
-                    residual_buffer,
-                    coeff_buffer,
-                    residual_stride,
-                    transform_type,
-                    bit_depth);
-            }
-            else
-            {
-                Av1TransformTwoD_32x32_c(
-                    residual_buffer,
-                    coeff_buffer,
-                    residual_stride,
-                    transform_type,
-                    bit_depth);
-            }
-        }
-
-        else {
-            if (trans_coeff_shape == N2_SHAPE)
-            {
-                if ((transform_type == IDTX) || (transform_type == DCT_DCT))
-                {
-                    av1_fwd_txfm2d_pf_32x32(
-                        residual_buffer,
-                        coeff_buffer,
-                        residual_stride,
-                        transform_type,
-                        bit_depth);
-                }
-                else
-                {
-                    av1_fwd_txfm2d_pf_32x32_c(
-                        residual_buffer,
-                        coeff_buffer,
-                        residual_stride,
-                        transform_type,
-                        bit_depth);
-                }
-
-            }
-            else
-            {
-                av1_fwd_txfm2d_32x32(
-                    residual_buffer,
-                    coeff_buffer,
-                    residual_stride,
-                    transform_type,
-                    bit_depth);
-            }
-        }
-#else
         if (transform_type == V_DCT || transform_type == H_DCT || transform_type == V_ADST || transform_type == H_ADST || transform_type == V_FLIPADST || transform_type == H_FLIPADST)
             // Tahani: I believe those cases are never hit
             Av1TransformTwoD_32x32_c(
@@ -5242,7 +5185,6 @@ EbErrorType av1_estimate_transform(
                 bit_depth);
 
         else {
-
             av1_fwd_txfm2d_32x32(
                 residual_buffer,
                 coeff_buffer,
@@ -5250,7 +5192,6 @@ EbErrorType av1_estimate_transform(
                 transform_type,
                 bit_depth);
         }
-#endif
 
         break;
 

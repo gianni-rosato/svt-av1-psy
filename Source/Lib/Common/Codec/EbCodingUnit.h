@@ -217,15 +217,14 @@ extern "C" {
 
     typedef struct MacroBlockPlane 
     {
-#if 0
+        struct Buf2D src;
+/*
         DECLARE_ALIGNED(16, int16_t, src_diff[MAX_SB_SQUARE]);
         TranLow *qcoeff;
         TranLow *coeff;
         uint16_t *eobs;
         uint8_t *txb_entropy_ctx;
-#endif
-        struct Buf2D src;
-#if 0
+
         // Quantizer setings
         // These are used/accessed only in the quantization process
         // RDO does not / must not depend on any of these values
@@ -237,7 +236,7 @@ extern "C" {
         const int16_t *zbin_QTX;
         const int16_t *round_QTX;
         const int16_t *dequant_QTX;
-#endif
+*/
     } MacroBlockPlane;
 
     typedef struct MacroBlockD 

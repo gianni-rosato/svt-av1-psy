@@ -93,12 +93,6 @@ EbErrorType me_sb_results_ctor(
 #endif
 #endif
     }
-#if 0
-    objectPtr->xMvSearchAreaCenter[0][0] = 0;
-    objectPtr->yMvSearchAreaCenter[0][0] = 0;
-    objectPtr->xMvSearchAreaCenter[1][0] = 0;
-    objectPtr->yMvSearchAreaCenter[1][0] = 0;
-#endif
     EB_MALLOC(uint8_t*, objectPtr->total_me_candidate_index, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
 
 #if NSQ_OPTIMASATION

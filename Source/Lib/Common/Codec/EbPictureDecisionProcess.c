@@ -2008,33 +2008,14 @@ void  Av1GenerateRpsInfo(
         if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_LOW_DELAY_P)
         {
             //P frames 
-#if 0
-            if (1) {//use single ref frames
-                av1Rps->ref_dpb_index[1] = av1Rps->ref_dpb_index[2] = av1Rps->ref_dpb_index[3] = av1Rps->ref_dpb_index[0];
-                av1Rps->ref_dpb_index[4] = av1Rps->ref_dpb_index[5] = av1Rps->ref_dpb_index[6] = av1Rps->ref_dpb_index[0];
-
-                av1Rps->ref_poc_array[1] = av1Rps->ref_poc_array[2] = av1Rps->ref_poc_array[3] = av1Rps->ref_poc_array[0];
-                av1Rps->ref_poc_array[4] = av1Rps->ref_poc_array[5] = av1Rps->ref_poc_array[6] = av1Rps->ref_poc_array[0];
-            }
-#else
             av1Rps->ref_dpb_index[4] = av1Rps->ref_dpb_index[5] = av1Rps->ref_dpb_index[6] = av1Rps->ref_dpb_index[0];
             av1Rps->ref_poc_array[4] = av1Rps->ref_poc_array[5] = av1Rps->ref_poc_array[6] = av1Rps->ref_poc_array[0];
-#endif
 
             picture_control_set_ptr->show_frame = EB_TRUE;
             picture_control_set_ptr->has_show_existing = EB_FALSE;
         }
         else if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_RANDOM_ACCESS)
         {
-#if 0
-            if (1) {//use single ref frames
-                av1Rps->ref_dpb_index[1] = av1Rps->ref_dpb_index[2] = av1Rps->ref_dpb_index[3] = av1Rps->ref_dpb_index[0];
-                av1Rps->ref_dpb_index[5] = av1Rps->ref_dpb_index[6] = av1Rps->ref_dpb_index[4];
-
-                av1Rps->ref_poc_array[1] = av1Rps->ref_poc_array[2] = av1Rps->ref_poc_array[3] = av1Rps->ref_poc_array[0];
-                av1Rps->ref_poc_array[5] = av1Rps->ref_poc_array[6] = av1Rps->ref_poc_array[4];
-            }
-#endif
             //Decide on Show Mecanism
             if (picture_control_set_ptr->slice_type == I_SLICE)
             {
@@ -4253,19 +4234,6 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
 #endif
 
-#if 0//RPS_4L
-                            // if (picture_control_set_ptr->picture_number == 36)
-                            {
-                                printf("   \n\nPOC:%i   List0:%i frames  \n", picture_control_set_ptr->picture_number, picture_control_set_ptr->ref_list0_count);
-                                for (int i = 0; i < picture_control_set_ptr->ref_list0_count; ++i)
-                                    printf("   List0POC:%i  \n", picture_control_set_ptr->ref_pic_poc_array[REF_LIST_0][i]);
-
-                                printf("   POC:%i   List1:%i frames  \n", picture_control_set_ptr->picture_number, picture_control_set_ptr->ref_list1_count);
-                                for (int j = 0; j < picture_control_set_ptr->ref_list1_count; ++j)
-                                    printf("   List1POC:%i  \n", picture_control_set_ptr->ref_pic_poc_array[REF_LIST_1][j]);
-
-                            }
-#endif
                             // SB Loop to reset similarColocatedLcu Array
                             uint16_t *variancePtr;
                             uint32_t  NullVarCnt = 0;

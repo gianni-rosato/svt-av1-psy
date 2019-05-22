@@ -200,10 +200,8 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *picture_control_set_
 #if !MEMORY_FOOTPRINT_OPT
 void ResetMdRefinmentNeighborArrays(PictureControlSet *picture_control_set_ptr)
 {
-    neighbor_array_unit_reset(picture_control_set_ptr->md_refinement_intra_luma_mode_neighbor_array);
     neighbor_array_unit_reset(picture_control_set_ptr->md_refinement_mode_type_neighbor_array);
     neighbor_array_unit_reset(picture_control_set_ptr->md_refinement_luma_recon_neighbor_array);
-
     return;
 }
 #endif
