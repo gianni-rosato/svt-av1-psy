@@ -46,6 +46,31 @@ extern "C" {
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
+// Testing only
+#define TXS_DISABLE_CFL                   1
+#define QP_SCALING_OFF                    1
+
+
+#define ATB                               1 // Adaptive Transform Block Lossy
+#if ATB
+#define ATB_SUPPORT                       1
+#define ATB_EP                            1
+#define ATB_EC                            1
+
+#define ATB_MD                            1 
+#define ATB_TX_SEARCH                     1
+#define ATB_RATE                          1 // to check TXS_CTX_EP
+#define TRANSFORM_TYPE_SUPPORT            1 // Lossless M0 only
+
+    // Lossless changes 
+#define ATB_LOSSLESS                      1 // Adaptive Transform Block Lossless
+#if ATB_LOSSLESS
+#define ATB_DC_CONTEXT_SUPPORT_0          1 
+#define ATB_DC_CONTEXT_SUPPORT_1          1
+#define ATB_DC_CONTEXT_SUPPORT_2          1 
+#endif
+#endif
+
 // New  presets
 #define NEW_PRESETS                       1
 #define NEW_BUFF_CFG                      1
@@ -311,7 +336,11 @@ enum {
 #define ADD_DELTA_QP_SUPPORT                      0  // Add delta QP support - Please enable this flag and iproveSharpness (config) to test the QPM
 #define BLOCK_MAX_COUNT_SB_128                    4421  // TODO: reduce alloction for 64x64
 #define BLOCK_MAX_COUNT_SB_64                     1101  // TODO: reduce alloction for 64x64
+#if ATB_SUPPORT
+#define MAX_TXB_COUNT                             16 // Maximum number of transform blocks per depth
+#else
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
+#endif
 #define MAX_NFL                                   40
 #define MAX_LAD                                   120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x)>>3)<<3)
@@ -795,7 +824,87 @@ typedef enum ATTRIBUTE_PACKED {
 #else
 } TxSize;
 #endif
+#if ATB_SUPPORT
+static const TxSize tx_depth_to_tx_size[3][BlockSizeS_ALL] = {
+    // tx_depth 0
+    {
+        TX_4X4,
+        TX_4X8,
+        TX_8X4,
+        TX_8X8,
+        TX_8X16,
+        TX_16X8,
+        TX_16X16,
+        TX_16X32,
+        TX_32X16,
+        TX_32X32,
+        TX_32X64,
+        TX_64X32,
+        TX_64X64,
+        TX_64X64,//TX_64X128,
+        TX_64X64,//TX_128X64,
+        TX_64X64,//TX_128X128,
+        TX_4X16,
+        TX_16X4,
+        TX_8X32,
+        TX_32X8,
+        TX_16X64,
+        TX_64X16
+    },
 
+    // tx_depth 1: 
+    {
+        TX_4X4,
+        TX_4X8,
+        TX_8X4,
+        TX_4X4,
+        TX_8X8,
+        TX_8X8,
+        TX_8X8,
+        TX_16X16,
+        TX_16X16,
+        TX_16X16,
+        TX_32X32,
+        TX_32X32,
+        TX_32X32,
+        TX_64X64,//TX_64X128,
+        TX_64X64,//TX_128X64,
+        TX_64X64,//TX_128X128,
+        TX_4X4,
+        TX_4X4,
+        TX_8X8,
+        TX_8X8,
+        TX_16X16,
+        TX_16X16
+    },
+
+    // tx_depth 2
+    {
+        TX_4X4,
+        TX_4X8,
+        TX_8X4,
+        TX_8X8,
+        TX_4X4,
+        TX_4X4,
+        TX_4X4,
+        TX_8X8,
+        TX_8X8,
+        TX_8X8,
+        TX_16X16,
+        TX_16X16,
+        TX_16X16,
+        TX_64X64,//TX_64X128,
+        TX_64X64,//TX_128X64,
+        TX_64X64,//TX_128X128,
+        TX_4X16, // No depth 2
+        TX_16X4, // No depth 2
+        TX_4X4,
+        TX_4X4,
+        TX_8X8,
+        TX_8X8
+    }
+};
+#endif
 static const int32_t tx_size_wide[TX_SIZES_ALL] = {
     4, 8, 16, 32, 64, 4, 8, 8, 16, 16, 32, 32, 64, 4, 16, 8, 32, 16, 64,
 };
