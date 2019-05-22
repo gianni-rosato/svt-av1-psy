@@ -2438,8 +2438,15 @@ void coding_loop_context_generation(
     cu_ptr->cr_txb_skip_context = 0;
     cu_ptr->cr_dc_sign_context = 0;
 
+#if ATB_SUPPORT // Hsan atb
+    uint8_t tx_depth = context_ptr->tx_depth = cu_ptr->tx_depth;
+    int32_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];
+#else
     int32_t txb_count = context_ptr->blk_geom->txb_count;
+#endif
     int32_t txb_itr = 0;
+
+
     for (txb_itr = 0; txb_itr < txb_count; txb_itr++) {
 
 
@@ -2449,7 +2456,11 @@ void coding_loop_context_generation(
             cu_origin_x,
             cu_origin_y,
             plane_bsize,
+#if ATB_SUPPORT
+            context_ptr->blk_geom->txsize[tx_depth][txb_itr],
+#else
             context_ptr->blk_geom->txsize[txb_itr],
+#endif
             &cu_ptr->luma_txb_skip_context,
             &cu_ptr->luma_dc_sign_context);
 
@@ -2461,7 +2472,11 @@ void coding_loop_context_generation(
                 context_ptr->round_origin_x >> 1,
                 context_ptr->round_origin_y >> 1,
                 context_ptr->blk_geom->bsize_uv,
+#if ATB_SUPPORT
+                context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
+#else
                 context_ptr->blk_geom->txsize_uv[txb_itr],
+#endif
                 &cu_ptr->cb_txb_skip_context,
                 &cu_ptr->cb_dc_sign_context);
             get_txb_ctx(
@@ -2470,7 +2485,11 @@ void coding_loop_context_generation(
                 context_ptr->round_origin_x >> 1,
                 context_ptr->round_origin_y >> 1,
                 context_ptr->blk_geom->bsize_uv,
+#if ATB_SUPPORT
+                context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
+#else
                 context_ptr->blk_geom->txsize_uv[txb_itr],
+#endif
                 &cu_ptr->cr_txb_skip_context,
                 &cu_ptr->cr_dc_sign_context);
         }
@@ -2902,7 +2921,11 @@ EbErrorType av1_encode_tu_calc_cost(
         // *Note - As of Oct 2011, the JCT-VC uses the PSNR forumula
         //  PSNR = (LUMA_WEIGHT * PSNRy + PSNRu + PSNRv) / (2+LUMA_WEIGHT)
         yZeroCbfDistortion = LUMA_WEIGHT * (yZeroCbfDistortion << AV1_COST_PRECISION);
+#if ATB_SUPPORT
+        TxSize    txSize = context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr];
+#else
         TxSize    txSize = context_ptr->blk_geom->txsize[context_ptr->txb_itr];
+#endif
         assert(txSize < TX_SIZES_ALL);
 
         const TxSize txs_ctx = (TxSize)((txsize_sqr_map[txSize] + txsize_sqr_up_map[txSize] + 1) >> 1);

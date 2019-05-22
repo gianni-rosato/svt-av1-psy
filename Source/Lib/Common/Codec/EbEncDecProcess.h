@@ -134,6 +134,9 @@ extern "C" {
 #if  BLK_SKIP_DECISION
         uint8_t                                md_skip_blk;
 #endif    
+#if ATB_SUPPORT
+        uint8_t                                tx_depth; // Hsan atb 
+#endif
     } EncDecContext;
 
     /**************************************

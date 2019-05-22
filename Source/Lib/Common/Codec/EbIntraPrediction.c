@@ -4778,8 +4778,13 @@ EbErrorType av1_intra_prediction_cl(
     md_context_ptr->intra_chroma_top_mode = (uint32_t)(
         (md_context_ptr->mode_type_neighbor_array->top_array[modeTypeTopNeighborIndex] != INTRA_MODE) ? UV_DC_PRED :
         (uint32_t)md_context_ptr->intra_chroma_mode_neighbor_array->top_array[intraChromaModeTopNeighborIndex]);       //   use DC. This seems like we could use a LCU-width
+#if ATB_SUPPORT
+    TxSize  tx_size = md_context_ptr->blk_geom->txsize[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; // Nader - Intra 128x128 not supported
+    TxSize  tx_size_Chroma = md_context_ptr->blk_geom->txsize_uv[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; //Nader - Intra 128x128 not supported
+#else
     TxSize  tx_size = md_context_ptr->blk_geom->txsize[0]; // Nader - Intra 128x128 not supported
     TxSize  tx_size_Chroma = md_context_ptr->blk_geom->txsize_uv[0]; //Nader - Intra 128x128 not supported
+#endif
     uint8_t    topNeighArray[64 * 2 + 1];
     uint8_t    leftNeighArray[64 * 2 + 1];
     PredictionMode mode;

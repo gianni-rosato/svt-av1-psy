@@ -130,6 +130,9 @@ extern "C" {
         uint16_t                               num_proj_ref;
         EbBool                                 local_warp_valid;
         EbWarpedMotionParams                   wm_params;
+#if ATB_SUPPORT
+        uint8_t                                tx_depth;
+#endif
     } ModeDecisionCandidate;
 
 

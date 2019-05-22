@@ -696,6 +696,256 @@ int32_t  Av1WriteCoeffsTxb1D(
 
 }
 
+#if ATB_SUPPORT
+static EbErrorType av1_encode_tx_coef_y(
+    PictureControlSet     *pcs_ptr,
+    EntropyCodingContext  *context_ptr,
+    FRAME_CONTEXT         *frameContext,
+    AomWriter             *ec_writer,
+    CodingUnit            *cu_ptr,
+    uint32_t               cu_origin_x,
+    uint32_t               cu_origin_y,
+    uint32_t               intraLumaDir,
+    BlockSize              plane_bsize,
+    EbPictureBufferDesc   *coeff_ptr,
+    NeighborArrayUnit     *luma_dc_sign_level_coeff_neighbor_array)
+{
+
+    EbErrorType return_error = EB_ErrorNone;
+
+    const BlockGeom *blk_geom = get_blk_geom_mds(cu_ptr->mds_idx);
+    int32_t cul_level_y = 0;
+
+    uint8_t  tx_depth = cu_ptr->tx_depth; 
+    uint16_t txb_count = blk_geom->txb_count[cu_ptr->tx_depth];
+    uint8_t  txb_itr = 0;
+
+    uint8_t tx_index;
+    for (tx_index = 0; tx_index < txb_count; tx_index++) {
+        txb_itr = tx_index;
+
+        const TxSize tx_size = blk_geom->txsize[tx_depth][txb_itr];
+
+        int32_t *coeff_buffer;
+
+        const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
+
+        coeff_buffer = (int32_t*)coeff_ptr->buffer_y + coeff1dOffset;
+
+        {
+            int16_t txb_skip_ctx = 0;
+            int16_t dcSignCtx = 0;
+
+            get_txb_ctx(
+                COMPONENT_LUMA,
+                luma_dc_sign_level_coeff_neighbor_array,
+                cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x,
+                cu_origin_y + blk_geom->tx_org_y[tx_depth][txb_itr] - blk_geom->origin_y,
+                plane_bsize,
+                tx_size,
+                &txb_skip_ctx,
+                &dcSignCtx);
+
+
+            cul_level_y =
+                Av1WriteCoeffsTxb1D(
+                    pcs_ptr->parent_pcs_ptr,
+                    frameContext,
+                    ec_writer,
+                    cu_ptr,
+                    tx_size,
+                    0,
+                    txb_itr,
+                    intraLumaDir,
+                    coeff_buffer,
+                    coeff_ptr->stride_y,
+                    COMPONENT_LUMA,
+                    txb_skip_ctx,
+                    dcSignCtx,
+                    cu_ptr->transform_unit_array[txb_itr].nz_coef_count[0]);
+        }
+
+        // Update the luma Dc Sign Level Coeff Neighbor Array
+        {
+            uint8_t dcSignLevelCoeff = (uint8_t)cul_level_y;
+
+            neighbor_array_unit_mode_write(
+                luma_dc_sign_level_coeff_neighbor_array,
+                (uint8_t*)&dcSignLevelCoeff,
+                cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x,
+                cu_origin_y + blk_geom->tx_org_y[tx_depth][txb_itr] - blk_geom->origin_y,
+                blk_geom->tx_width[tx_depth][txb_itr],
+                blk_geom->tx_height[tx_depth][txb_itr],
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+        }
+
+        context_ptr->coded_area_sb += blk_geom->tx_width[tx_depth][txb_itr] * blk_geom->tx_height[tx_depth][txb_itr];
+
+    }
+
+    return return_error;
+}
+static EbErrorType av1_encode_tx_coef_uv(
+    PictureControlSet     *pcs_ptr,
+    EntropyCodingContext  *context_ptr,
+    FRAME_CONTEXT         *frameContext,
+    AomWriter             *ec_writer,
+    CodingUnit            *cu_ptr,
+    uint32_t               cu_origin_x,
+    uint32_t               cu_origin_y,
+    uint32_t               intraLumaDir,
+    EbPictureBufferDesc   *coeff_ptr,
+    NeighborArrayUnit     *cr_dc_sign_level_coeff_neighbor_array,
+    NeighborArrayUnit     *cb_dc_sign_level_coeff_neighbor_array)
+{
+
+    EbErrorType return_error = EB_ErrorNone;
+
+    const BlockGeom *blk_geom = get_blk_geom_mds(cu_ptr->mds_idx);
+
+    if (!blk_geom->has_uv) return return_error;
+
+    int32_t cul_level_cb = 0, cul_level_cr = 0;
+
+
+    uint8_t tx_depth   = cu_ptr->tx_depth;
+    uint16_t txb_count = blk_geom->txb_count[cu_ptr->tx_depth];
+    uint8_t txb_itr    = 0;
+
+    uint8_t tx_index;
+
+#if TXS_SPLIT // Hsan atb
+    if (cu_ptr->tx_depth)
+        txb_count = 1;
+#endif
+
+    for (tx_index = 0; tx_index < txb_count; tx_index++) {
+
+        txb_itr = tx_index;
+
+        const TxSize chroma_tx_size = blk_geom->txsize_uv[tx_depth][txb_itr];
+
+        int32_t *coeff_buffer;
+
+        const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
+
+        coeff_buffer = (int32_t*)coeff_ptr->buffer_y + coeff1dOffset;
+
+
+        if (blk_geom->has_uv) {
+
+            // cb
+            coeff_buffer = (int32_t*)coeff_ptr->buffer_cb + context_ptr->coded_area_sb_uv;
+            {
+                int16_t txb_skip_ctx = 0;
+                int16_t dcSignCtx = 0;
+
+                get_txb_ctx(
+                    COMPONENT_CHROMA,
+                    cb_dc_sign_level_coeff_neighbor_array,
+                    ROUND_UV(cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
+                    ROUND_UV(cu_origin_y + blk_geom->tx_org_y[tx_depth][txb_itr] - blk_geom->origin_y) >> 1,
+                    blk_geom->bsize_uv,
+                    chroma_tx_size,
+                    &txb_skip_ctx,
+                    &dcSignCtx);
+
+
+                cul_level_cb =
+                    Av1WriteCoeffsTxb1D(
+                        pcs_ptr->parent_pcs_ptr,
+                        frameContext,
+                        ec_writer,
+                        cu_ptr,
+                        chroma_tx_size,
+                        0,
+                        txb_itr,
+                        intraLumaDir,
+                        coeff_buffer,
+                        coeff_ptr->stride_cb,
+                        COMPONENT_CHROMA,
+                        txb_skip_ctx,
+                        dcSignCtx,
+                        cu_ptr->transform_unit_array[txb_itr].nz_coef_count[1]);
+
+            }
+
+            // cr
+            coeff_buffer = (int32_t*)coeff_ptr->buffer_cr + context_ptr->coded_area_sb_uv;
+            {
+
+                int16_t txb_skip_ctx = 0;
+                int16_t dcSignCtx = 0;
+
+                get_txb_ctx(
+                    COMPONENT_CHROMA,
+                    cr_dc_sign_level_coeff_neighbor_array,
+                    ROUND_UV(cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
+                    ROUND_UV(cu_origin_y + blk_geom->tx_org_y[tx_depth][txb_itr] - blk_geom->origin_y) >> 1,
+                    blk_geom->bsize_uv,
+                    chroma_tx_size,
+                    &txb_skip_ctx,
+                    &dcSignCtx);
+
+
+                cul_level_cr =
+                    Av1WriteCoeffsTxb1D(
+                        pcs_ptr->parent_pcs_ptr,
+                        frameContext,
+                        ec_writer,
+                        cu_ptr,
+                        chroma_tx_size,
+                        0,
+                        txb_itr,
+                        intraLumaDir,
+                        coeff_buffer,
+                        coeff_ptr->stride_cr,
+                        COMPONENT_CHROMA,
+                        txb_skip_ctx,
+                        dcSignCtx,
+                        cu_ptr->transform_unit_array[txb_itr].nz_coef_count[2]);
+            }
+        }
+
+
+
+        // Update the cb Dc Sign Level Coeff Neighbor Array
+
+        if (blk_geom->has_uv)
+        {
+            uint8_t dcSignLevelCoeff = (uint8_t)cul_level_cb;
+            neighbor_array_unit_mode_write(
+                cb_dc_sign_level_coeff_neighbor_array,
+                (uint8_t*)&dcSignLevelCoeff,
+                ROUND_UV(cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
+                ROUND_UV(cu_origin_y + blk_geom->tx_org_y[tx_depth][txb_itr] - blk_geom->origin_y) >> 1,
+                blk_geom->tx_width_uv[tx_depth][txb_itr],
+                blk_geom->tx_height_uv[tx_depth][txb_itr],
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+        }
+
+        if (blk_geom->has_uv)
+            // Update the cr DC Sign Level Coeff Neighbor Array
+        {
+            uint8_t dcSignLevelCoeff = (uint8_t)cul_level_cr;
+            neighbor_array_unit_mode_write(
+                cr_dc_sign_level_coeff_neighbor_array,
+                (uint8_t*)&dcSignLevelCoeff,
+                ROUND_UV(cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
+                ROUND_UV(cu_origin_y + blk_geom->tx_org_y[tx_depth][txb_itr] - blk_geom->origin_y) >> 1,
+                blk_geom->tx_width_uv[tx_depth][txb_itr],
+                blk_geom->tx_height_uv[tx_depth][txb_itr],
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+        }
+
+
+        context_ptr->coded_area_sb_uv += blk_geom->tx_width_uv[tx_depth][txb_itr] * blk_geom->tx_height_uv[tx_depth][txb_itr];
+    }
+
+    return return_error;
+}
+#endif
 /************************************
 ******* Av1EncodeTuCoeff
 **************************************/
@@ -717,6 +967,33 @@ static EbErrorType Av1EncodeCoeff1D(
 
     EbErrorType return_error = EB_ErrorNone;
 
+#if ATB_SUPPORT
+    av1_encode_tx_coef_y(
+        pcs_ptr,
+        context_ptr,
+        frameContext,
+        ec_writer,
+        cu_ptr,
+        cu_origin_x,
+        cu_origin_y,
+        intraLumaDir,
+        plane_bsize,
+        coeff_ptr,
+        luma_dc_sign_level_coeff_neighbor_array);
+
+    av1_encode_tx_coef_uv(
+        pcs_ptr,
+        context_ptr,
+        frameContext,
+        ec_writer,
+        cu_ptr,
+        cu_origin_x,
+        cu_origin_y,
+        intraLumaDir,
+        coeff_ptr,
+        cr_dc_sign_level_coeff_neighbor_array,
+        cb_dc_sign_level_coeff_neighbor_array);
+#else
     const BlockGeom *blk_geom = get_blk_geom_mds(cu_ptr->mds_idx);
     int32_t cul_level_y, cul_level_cb = 0 , cul_level_cr = 0;
 
@@ -896,7 +1173,7 @@ static EbErrorType Av1EncodeCoeff1D(
             context_ptr->coded_area_sb_uv += blk_geom->tx_width_uv[txb_itr] * blk_geom->tx_height_uv[txb_itr];
 
     }
-
+#endif
     return return_error;
 }
 

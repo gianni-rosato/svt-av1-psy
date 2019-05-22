@@ -275,6 +275,10 @@ extern "C" {
 #if OPT_QUANT_COEFF
         EbBool                            trellis_quant_coeff_optimization;
 #endif
+#if ATB_SUPPORT
+        uint8_t                           tx_depth;
+        uint8_t                           txb_itr;
+#endif
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(
