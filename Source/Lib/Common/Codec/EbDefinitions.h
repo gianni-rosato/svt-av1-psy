@@ -50,7 +50,7 @@ extern "C" {
 // Testing only
 #define TXS_DISABLE_CFL                   1
 
-#define ATB                               1 // Adaptive Transform Block 
+#define ATB                               0 // Adaptive Transform Block 
 
 #if ATB
 #define ATB_SUPPORT                       1
@@ -62,7 +62,8 @@ extern "C" {
 #define ATB_EP                            1 
 #define ATB_EC                            1 
 
-#define TRANSFORM_TYPE_SEARCH             0
+#define TRANSFORM_TYPE_SEARCH             1
+#define ATB_TX_SEARCH                     1
 #endif
 
 // New  presets
