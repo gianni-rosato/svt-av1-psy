@@ -31,7 +31,7 @@ extern "C" {
         uint16_t                            eob,
         PlaneType                           plane_type,
         TxSize                              transform_size,
-#if TRANSFORM_TYPE_SEARCH                         
+#if TRANSFORM_TYPE_SUPPORT                         
         TxType                              transform_type,
 #endif
         int16_t                             txb_skip_ctx,

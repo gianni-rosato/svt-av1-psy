@@ -2683,7 +2683,7 @@ void intra_tx_loop(
             // Set the Candidate Buffer
             candidateBuffer = candidate_buffer_ptr_array[0];
             // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-#if TRANSFORM_TYPE_SEARCH
+#if TRANSFORM_TYPE_SUPPORT
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][context_ptr->txb_itr] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0] = cu_ptr->transform_unit_array[0].transform_type[PLANE_TYPE_UV];
 #else
@@ -2713,7 +2713,7 @@ void intra_tx_loop(
                 &cr_tu_coeff_bits,
                 context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->txsize_uv[context_ptr->tx_depth][context_ptr->txb_itr],
-#if TRANSFORM_TYPE_SEARCH
+#if TRANSFORM_TYPE_SUPPORT
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][context_ptr->txb_itr],
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
 #endif
@@ -3613,7 +3613,7 @@ EB_EXTERN void av1_encode_pass(
                                     // Set the Candidate Buffer
                                     candidateBuffer = candidate_buffer_ptr_array[0];
                                     // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-#if !TRANSFORM_TYPE_SEARCH                        
+#if !TRANSFORM_TYPE_SUPPORT                        
                                     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
                                     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
 #endif
@@ -3645,7 +3645,7 @@ EB_EXTERN void av1_encode_pass(
                                         context_ptr->blk_geom->txsize[context_ptr->txb_itr],
                                         context_ptr->blk_geom->txsize_uv[context_ptr->txb_itr],
 #endif
-#if TRANSFORM_TYPE_SEARCH
+#if TRANSFORM_TYPE_SUPPORT
                                         cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
                                         cu_ptr->transform_unit_array[0].transform_type[PLANE_TYPE_UV],
 #endif
@@ -3960,7 +3960,7 @@ EB_EXTERN void av1_encode_pass(
 
                         for (tuIt = 0; tuIt < totTu; tuIt++) {
                             context_ptr->txb_itr = tuIt;
-#if TXS_SPLIT
+#if ATB_SUPPORT
                             uint8_t uv_pass = context_ptr->tx_depth && tuIt ? 0 : 1; //NM: 128x128 exeption
 #endif
 #if ATB_SUPPORT
@@ -3987,7 +3987,7 @@ EB_EXTERN void av1_encode_pass(
                                     transform_inner_array_ptr,
                                     asm_type,
                                     count_non_zero_coeffs,
-#if TXS_SPLIT
+#if ATB_SUPPORT
                                     context_ptr->blk_geom->has_uv && uv_pass ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
 #else
                                     context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
@@ -4053,7 +4053,7 @@ EB_EXTERN void av1_encode_pass(
                                     // Set the Candidate Buffer
                                     candidateBuffer = candidate_buffer_ptr_array[0];
                                     // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-#if !TRANSFORM_TYPE_SEARCH
+#if !TRANSFORM_TYPE_SUPPORT
                                     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = cu_ptr->transform_unit_array[tuIt].transform_type[PLANE_TYPE_Y];
                                     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV] = cu_ptr->transform_unit_array[tuIt].transform_type[PLANE_TYPE_UV];
 #endif
@@ -4086,11 +4086,11 @@ EB_EXTERN void av1_encode_pass(
                                         context_ptr->blk_geom->txsize[context_ptr->txb_itr],
                                         context_ptr->blk_geom->txsize_uv[context_ptr->txb_itr],
 #endif
-#if TRANSFORM_TYPE_SEARCH
+#if TRANSFORM_TYPE_SUPPORT
                                         cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
                                         cu_ptr->transform_unit_array[0].transform_type[PLANE_TYPE_UV],
 #endif
-#if TXS_SPLIT
+#if ATB_SUPPORT
                                         context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL : COMPONENT_LUMA,
 #else
                                         context_ptr->blk_geom->has_uv ? COMPONENT_ALL : COMPONENT_LUMA,
@@ -4116,7 +4116,7 @@ EB_EXTERN void av1_encode_pass(
                                 // Update count_non_zero_coeffs after CBF decision
                                 if (cu_ptr->transform_unit_array[context_ptr->txb_itr].y_has_coeff == EB_FALSE)
                                     count_non_zero_coeffs[0] = 0;
-#if TXS_SPLIT
+#if ATB_SUPPORT
                                 if (context_ptr->blk_geom->has_uv && uv_pass) {
 #else
                                 if (context_ptr->blk_geom->has_uv) {
@@ -4133,7 +4133,7 @@ EB_EXTERN void av1_encode_pass(
                                 cu_ptr->transform_unit_array[context_ptr->txb_itr].nz_coef_count[2] = (uint16_t)count_non_zero_coeffs[2];
 
                                 y_coeff_bits += y_tu_coeff_bits;
-#if TXS_SPLIT
+#if ATB_SUPPORT
                                 if (context_ptr->blk_geom->has_uv && uv_pass) {
 #else
                                 if (context_ptr->blk_geom->has_uv) {
@@ -4154,7 +4154,7 @@ EB_EXTERN void av1_encode_pass(
                                     // Set the Candidate Buffer
                                     candidateBuffer = candidate_buffer_ptr_array[0];
                                     // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-#if !TRANSFORM_TYPE_SEARCH
+#if !TRANSFORM_TYPE_SUPPORT
                                     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = cu_ptr->transform_unit_array[tuIt].transform_type[PLANE_TYPE_Y];
                                     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV] = cu_ptr->transform_unit_array[tuIt].transform_type[PLANE_TYPE_UV];
 #endif
@@ -4166,7 +4166,7 @@ EB_EXTERN void av1_encode_pass(
                                     //CHKN add updating eobs[] after CBF decision
                                     if (cu_ptr->transform_unit_array[context_ptr->txb_itr].y_has_coeff == EB_FALSE)
                                         eobs[context_ptr->txb_itr][0] = 0;
-#if TXS_SPLIT
+#if ATB_SUPPORT
                                     if (context_ptr->blk_geom->has_uv && uv_pass) {
 #else
                                     if (context_ptr->blk_geom->has_uv) {
@@ -4200,11 +4200,11 @@ EB_EXTERN void av1_encode_pass(
                                         context_ptr->blk_geom->txsize[context_ptr->txb_itr],
                                         context_ptr->blk_geom->txsize_uv[context_ptr->txb_itr],
 #endif
-#if TRANSFORM_TYPE_SEARCH
+#if TRANSFORM_TYPE_SUPPORT
                                         cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
                                         cu_ptr->transform_unit_array[0].transform_type[PLANE_TYPE_UV],
 #endif
-#if TXS_SPLIT
+#if ATB_SUPPORT
                                         context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL : COMPONENT_LUMA,
 #else
                                         context_ptr->blk_geom->has_uv ? COMPONENT_ALL : COMPONENT_LUMA,
@@ -4215,7 +4215,7 @@ EB_EXTERN void av1_encode_pass(
                             }
 #if ATB_SUPPORT
                             context_ptr->coded_area_sb += blk_geom->tx_width[context_ptr->tx_depth][tuIt] * blk_geom->tx_height[context_ptr->tx_depth][tuIt];
-#if TXS_SPLIT
+#if ATB_SUPPORT
                             if (context_ptr->blk_geom->has_uv && uv_pass)
 #else         
                             if (blk_geom->has_uv)
@@ -4261,7 +4261,7 @@ EB_EXTERN void av1_encode_pass(
                     context_ptr->coded_area_sb_uv = coded_area_org_uv;
                     for (tuIt = 0; tuIt < totTu; tuIt++)
                     {
-#if TXS_SPLIT
+#if ATB_SUPPORT
                         uint8_t uv_pass = context_ptr->tx_depth && tuIt ? 0 : 1; //NM: 128x128 exeption
 #endif
                         context_ptr->txb_itr = tuIt;
@@ -4298,7 +4298,7 @@ EB_EXTERN void av1_encode_pass(
                                 transform_inner_array_ptr,
                                 asm_type,
                                 count_non_zero_coeffs,
-#if TXS_SPLIT
+#if ATB_SUPPORT
                                 context_ptr->blk_geom->has_uv && uv_pass ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
 #else
                                 context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
@@ -4318,7 +4318,7 @@ EB_EXTERN void av1_encode_pass(
                                 // Set the Candidate Buffer
                                 candidateBuffer = candidate_buffer_ptr_array[0];
                                 // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-#if !TRANSFORM_TYPE_SEARCH
+#if !TRANSFORM_TYPE_SUPPORT
                                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = cu_ptr->transform_unit_array[tuIt].transform_type[PLANE_TYPE_Y];
                                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV] = cu_ptr->transform_unit_array[tuIt].transform_type[PLANE_TYPE_UV];
 #endif
@@ -4351,11 +4351,11 @@ EB_EXTERN void av1_encode_pass(
                                     context_ptr->blk_geom->txsize[context_ptr->txb_itr],
                                     context_ptr->blk_geom->txsize_uv[context_ptr->txb_itr],
 #endif
-#if TRANSFORM_TYPE_SEARCH
+#if TRANSFORM_TYPE_SUPPORT
                                     cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
                                     cu_ptr->transform_unit_array[0].transform_type[PLANE_TYPE_UV],
 #endif
-#if TXS_SPLIT
+#if ATB_SUPPORT
                                     context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL : COMPONENT_LUMA,
 #else
                                     context_ptr->blk_geom->has_uv ? COMPONENT_ALL : COMPONENT_LUMA,
@@ -4366,7 +4366,7 @@ EB_EXTERN void av1_encode_pass(
 
 
                         }
-#if TXS_SPLIT
+#if ATB_SUPPORT
                         if (context_ptr->blk_geom->has_uv && uv_pass) {
 #else
                         if (context_ptr->blk_geom->has_uv) {
@@ -4392,14 +4392,14 @@ EB_EXTERN void av1_encode_pass(
                                 recon_buffer,
                                 inverse_quant_buffer,
                                 transform_inner_array_ptr,
-#if TXS_SPLIT
+#if ATB_SUPPORT
                                 context_ptr->blk_geom->has_uv && uv_pass ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
 #else
                                 context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
 #endif
                                 eobs[context_ptr->txb_itr],
                                 asm_type);
-#if TXS_SPLIT
+#if ATB_SUPPORT
                         if (context_ptr->blk_geom->has_uv && uv_pass) {
 #else
                         if (context_ptr->blk_geom->has_uv) {
@@ -4415,7 +4415,7 @@ EB_EXTERN void av1_encode_pass(
 #if ATB_SUPPORT
                         context_ptr->coded_area_sb += blk_geom->tx_width[context_ptr->tx_depth][tuIt] * blk_geom->tx_height[context_ptr->tx_depth][tuIt];
 
-#if TXS_SPLIT    
+#if ATB_SUPPORT    
                         if (context_ptr->blk_geom->has_uv && uv_pass)
 #else
                         if (blk_geom->has_uv)

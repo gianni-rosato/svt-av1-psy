@@ -558,7 +558,7 @@ uint64_t av1_cost_coeffs_txb(
     uint16_t                            eob,
     PlaneType                           plane_type,
     TxSize                              transform_size,
-#if TRANSFORM_TYPE_SEARCH                         
+#if TRANSFORM_TYPE_SUPPORT                         
     TxType                              transform_type,
 #endif
     int16_t                             txb_skip_ctx,
@@ -571,7 +571,7 @@ uint64_t av1_cost_coeffs_txb(
     //warehouse_efficients_txb
 
     const TxSize txs_ctx = (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
-#if !TRANSFORM_TYPE_SEARCH
+#if !TRANSFORM_TYPE_SUPPORT
     const TxType transform_type = candidate_buffer_ptr->candidate_ptr->transform_type[plane_type];
 #endif
     const TxClass tx_class = tx_type_to_class[transform_type];
@@ -1781,7 +1781,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
     uint64_t                            *cr_tu_coeff_bits,
     TxSize                               txsize,
     TxSize                               txsize_uv,
-#if TRANSFORM_TYPE_SEARCH
+#if TRANSFORM_TYPE_SUPPORT
     TxType                               tx_type,
     TxType                               tx_type_uv,
 #endif
@@ -1822,7 +1822,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
                 (uint16_t)y_eob,
                 PLANE_TYPE_Y,
                 txsize,
-#if TRANSFORM_TYPE_SEARCH
+#if TRANSFORM_TYPE_SUPPORT
                 tx_type,
 #endif
                 luma_txb_skip_context,
@@ -1860,7 +1860,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
                 (uint16_t)cb_eob,
                 PLANE_TYPE_UV,
                 txsize_uv,
-#if TRANSFORM_TYPE_SEARCH
+#if TRANSFORM_TYPE_SUPPORT
                 tx_type_uv,
 #endif
                 cb_txb_skip_context,
@@ -1898,7 +1898,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
                 (uint16_t)cr_eob,
                 PLANE_TYPE_UV,
                 txsize_uv,
-#if TRANSFORM_TYPE_SEARCH
+#if TRANSFORM_TYPE_SUPPORT
                 tx_type_uv,
 #endif
                 cr_txb_skip_context,

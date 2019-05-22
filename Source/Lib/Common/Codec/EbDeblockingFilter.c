@@ -857,7 +857,7 @@ static TxSize get_transform_size(const MacroBlockD *const xd,
     //if (xd->lossless[mbmi->segment_id]) return TX_4X4;
 
     TxSize tx_size = (plane == COMPONENT_LUMA)
-#if TXS_SPLIT
+#if ATB_SUPPORT
         ? (is_inter_block(mbmi) ? tx_depth_to_tx_size[0][mbmi->sb_type] : tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]) // use max_tx_size
 #else
         ? mbmi->tx_size
@@ -865,7 +865,7 @@ static TxSize get_transform_size(const MacroBlockD *const xd,
 
         : av1_get_max_uv_txsize(mbmi->sb_type, plane_ptr);
     assert(tx_size < TX_SIZES_ALL);
-#if TXS_SPLIT
+#if ATB_SUPPORT
     if (((plane == COMPONENT_LUMA) && is_inter_block(mbmi) && !mbmi->skip)) {  // if split tx is used
 
         const BlockSize sb_type = mbmi->sb_type;

@@ -814,7 +814,7 @@ static EbErrorType av1_encode_tx_coef_uv(
 
     uint8_t tx_index;
 
-#if TXS_SPLIT // Hsan atb
+#if ATB_SUPPORT // Hsan atb
     if (cu_ptr->tx_depth)
         txb_count = 1;
 #endif
@@ -5717,7 +5717,7 @@ static void write_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
     const int ctx = txfm_partition_context(xd->above_txfm_context + blk_col,
         xd->left_txfm_context + blk_row,
         mbmi->sb_type, tx_size);
-#if TXS_SPLIT
+#if ATB_SUPPORT
     const int write_txfm_partition =
         (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]);
 #else

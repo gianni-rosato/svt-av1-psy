@@ -119,7 +119,7 @@ extern "C" {
 #endif
         EbBool                                 is_new_mv;
         EbBool                                 is_zero_mv;
-#if TRANSFORM_TYPE_SEARCH
+#if TRANSFORM_TYPE_SUPPORT
         TxType                                 transform_type[PLANE_TYPES][MAX_TXB_COUNT];
 #else
         TxType                                 transform_type[PLANE_TYPES];

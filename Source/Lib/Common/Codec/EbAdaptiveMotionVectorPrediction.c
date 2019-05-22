@@ -1375,7 +1375,7 @@ void update_av1_mi_map(
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4) {
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = 0;
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = BLOCK_4X4;
-#if TXS_SPLIT
+#if ATB_SUPPORT
                     miPtr[miX + miY * mi_stride].mbmi.tx_depth = cu_ptr->tx_depth;
 #endif
                 }
@@ -1391,7 +1391,7 @@ void update_av1_mi_map(
                     }
 #endif
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = blk_geom->bsize;
-#if TXS_SPLIT
+#if ATB_SUPPORT
                     miPtr[miX + miY * mi_stride].mbmi.tx_depth = cu_ptr->tx_depth;
 #endif
 
@@ -1460,7 +1460,7 @@ void update_mi_map(
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4) {
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = 0;
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = BLOCK_4X4;
-#if TXS_SPLIT
+#if ATB_SUPPORT
                     miPtr[miX + miY * mi_stride].mbmi.tx_depth = cu_ptr->tx_depth;
 #endif
                 }
@@ -1477,7 +1477,7 @@ void update_mi_map(
                     }
 
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = blk_geom->bsize;
-#if TXS_SPLIT
+#if ATB_SUPPORT
                     miPtr[miX + miY * mi_stride].mbmi.tx_depth = cu_ptr->tx_depth;
 #endif
                 }

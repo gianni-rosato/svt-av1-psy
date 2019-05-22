@@ -195,7 +195,7 @@ extern "C" {
 #if ATB_EC
         uint8_t inter_tx_size[INTER_TX_SIZE_BUF_LEN];
 #endif
-#if TXS_SPLIT
+#if ATB_SUPPORT
         uint8_t tx_depth;
 #endif
     } MbModeInfo;

@@ -50,19 +50,14 @@ extern "C" {
 // Testing only
 #define TXS_DISABLE_CFL                   1
 
-#define ATB                               0 // Adaptive Transform Block 
+#define ATB                               1 // Adaptive Transform Block 
 
 #if ATB
 #define ATB_SUPPORT                       1
-#define TXS_SPLIT                         1
-#define TXS_SPLIT_SETTINGS                1
-#define TX_H4                             1
-
 #define ATB_MD                            1 
 #define ATB_EP                            1 
 #define ATB_EC                            1 
-
-#define TRANSFORM_TYPE_SEARCH             1
+#define TRANSFORM_TYPE_SUPPORT            1
 #define ATB_TX_SEARCH                     1
 #endif
 
@@ -819,7 +814,7 @@ typedef enum ATTRIBUTE_PACKED {
 #else
 } TxSize;
 #endif
-#if TXS_SPLIT
+#if ATB_SUPPORT
 static const TxSize tx_depth_to_tx_size[3][BlockSizeS_ALL] = {
     // tx_depth 0
     {
