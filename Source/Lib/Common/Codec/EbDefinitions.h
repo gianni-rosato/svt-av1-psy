@@ -48,9 +48,9 @@ extern "C" {
 
 
 // Testing only
-#define TXS_DISABLE_CFL                   0
+#define TXS_DISABLE_CFL                   1
 
-#define ATB                               0 // Adaptive Transform Block 
+#define ATB                               1 // Adaptive Transform Block 
 
 #if ATB
 #define ATB_SUPPORT                       1

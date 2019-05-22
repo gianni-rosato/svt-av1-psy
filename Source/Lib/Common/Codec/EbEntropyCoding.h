@@ -79,26 +79,30 @@ extern "C" {
 
     extern EbErrorType av1_tu_estimate_coeff_bits(
 #if CABAC_UP
-        uint8_t        allow_update_cdf,
-        FRAME_CONTEXT *ec_ctx,
+        uint8_t                             allow_update_cdf,
+        FRAME_CONTEXT                      *ec_ctx,
 #endif
-        PictureControlSet                    *picture_control_set_ptr,
-        struct ModeDecisionCandidateBuffer   *candidate_buffer_ptr,
-        CodingUnit                           *cu_ptr,
-        uint32_t                                  tu_origin_index,
-        uint32_t                                  tu_chroma_origin_index,
-        EntropyCoder                         *entropy_coder_ptr,
-        EbPictureBufferDesc                  *coeff_buffer_sb,
-        uint32_t                                 y_eob,
-        uint32_t                                 cb_eob,
-        uint32_t                                 cr_eob,
-        uint64_t                                 *y_tu_coeff_bits,
-        uint64_t                                 *cb_tu_coeff_bits,
-        uint64_t                                 *cr_tu_coeff_bits,
-        TxSize                                 txsize,
-        TxSize                                 txsize_uv,
-        COMPONENT_TYPE                          component_type,
-        EbAsm                                  asm_type);
+        PictureControlSet                  *picture_control_set_ptr,
+        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+        CodingUnit                         *cu_ptr,
+        uint32_t                            tu_origin_index,
+        uint32_t                            tu_chroma_origin_index,
+        EntropyCoder                       *entropy_coder_ptr,
+        EbPictureBufferDesc                *coeff_buffer_sb,
+        uint32_t                            y_eob,
+        uint32_t                            cb_eob,
+        uint32_t                            cr_eob,
+        uint64_t                            *y_tu_coeff_bits,
+        uint64_t                            *cb_tu_coeff_bits,
+        uint64_t                            *cr_tu_coeff_bits,
+        TxSize                               txsize,
+        TxSize                               txsize_uv,
+#if TRANSFORM_TYPE_SEARCH
+        TxType                               tx_type,
+        TxType                               tx_type_uv,
+#endif
+        COMPONENT_TYPE                       component_type,
+        EbAsm                                asm_type);
 
     extern EbErrorType copy_rbsp_bitstream_to_payload(
         Bitstream *bitstream_ptr,

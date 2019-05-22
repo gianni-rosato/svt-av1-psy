@@ -550,19 +550,20 @@ static INLINE int32_t av1_cost_skip_txb(
 // Note: don't call this function when eob is 0.
 uint64_t av1_cost_coeffs_txb(
 #if CABAC_UP
-    uint8_t        allow_update_cdf,
-    FRAME_CONTEXT *ec_ctx,
+    uint8_t                             allow_update_cdf,
+    FRAME_CONTEXT                      *ec_ctx,
 #endif
-    struct ModeDecisionCandidateBuffer    *candidate_buffer_ptr,
-    const TranLow                        *const qcoeff,
-    uint16_t                                   eob,
-    PlaneType                               plane_type,
-    TxSize                                  transform_size,
-    /*const uint32_t                             area_size,
-    const uint32_t                             stride,*/
-    int16_t                                   txb_skip_ctx,
-    int16_t                                   dc_sign_ctx,
-    EbBool                                  reducedTransformSetFlag)
+    struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+    const TranLow                      *const qcoeff,
+    uint16_t                            eob,
+    PlaneType                           plane_type,
+    TxSize                              transform_size,
+#if TRANSFORM_TYPE_SEARCH                         
+    TxType                              transform_type,
+#endif
+    int16_t                             txb_skip_ctx,
+    int16_t                             dc_sign_ctx,
+    EbBool                              reducedTransformSetFlag)
 
 {
 
@@ -570,7 +571,9 @@ uint64_t av1_cost_coeffs_txb(
     //warehouse_efficients_txb
 
     const TxSize txs_ctx = (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
+#if !TRANSFORM_TYPE_SEARCH
     const TxType transform_type = candidate_buffer_ptr->candidate_ptr->transform_type[plane_type];
+#endif
     const TxClass tx_class = tx_type_to_class[transform_type];
     int32_t c, cost;
     const int32_t bwl = get_txb_bwl(transform_size);
@@ -1760,26 +1763,30 @@ uint64_t av1_inter_fast_cost(
 
 EbErrorType av1_tu_estimate_coeff_bits(
 #if CABAC_UP
-    uint8_t        allow_update_cdf,
-    FRAME_CONTEXT *ec_ctx,
+    uint8_t                             allow_update_cdf,
+    FRAME_CONTEXT                      *ec_ctx,
 #endif
-    PictureControlSet                    *picture_control_set_ptr,
-    struct ModeDecisionCandidateBuffer   *candidate_buffer_ptr,
-    CodingUnit                           *cu_ptr,
-    uint32_t                                  tu_origin_index,
-    uint32_t                                  tu_chroma_origin_index,
-    EntropyCoder                         *entropy_coder_ptr,
-    EbPictureBufferDesc                  *coeff_buffer_sb,
-    uint32_t                                 y_eob,
-    uint32_t                                 cb_eob,
-    uint32_t                                 cr_eob,
-    uint64_t                                 *y_tu_coeff_bits,
-    uint64_t                                 *cb_tu_coeff_bits,
-    uint64_t                                 *cr_tu_coeff_bits,
-    TxSize                                 txsize,
-    TxSize                                 txsize_uv,
-    COMPONENT_TYPE                          component_type,
-    EbAsm                                  asm_type)
+    PictureControlSet                  *picture_control_set_ptr,
+    struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+    CodingUnit                         *cu_ptr,
+    uint32_t                            tu_origin_index,
+    uint32_t                            tu_chroma_origin_index,
+    EntropyCoder                       *entropy_coder_ptr,
+    EbPictureBufferDesc                *coeff_buffer_sb,
+    uint32_t                            y_eob,
+    uint32_t                            cb_eob,
+    uint32_t                            cr_eob,
+    uint64_t                            *y_tu_coeff_bits,
+    uint64_t                            *cb_tu_coeff_bits,
+    uint64_t                            *cr_tu_coeff_bits,
+    TxSize                               txsize,
+    TxSize                               txsize_uv,
+#if TRANSFORM_TYPE_SEARCH
+    TxType                               tx_type,
+    TxType                               tx_type_uv,
+#endif
+    COMPONENT_TYPE                       component_type,
+    EbAsm                                asm_type)
 {
     (void)asm_type;
     (void)entropy_coder_ptr;
@@ -1815,6 +1822,9 @@ EbErrorType av1_tu_estimate_coeff_bits(
                 (uint16_t)y_eob,
                 PLANE_TYPE_Y,
                 txsize,
+#if TRANSFORM_TYPE_SEARCH
+                tx_type,
+#endif
                 luma_txb_skip_context,
                 luma_dc_sign_context,
                 reducedTransformSetFlag);
@@ -1850,6 +1860,9 @@ EbErrorType av1_tu_estimate_coeff_bits(
                 (uint16_t)cb_eob,
                 PLANE_TYPE_UV,
                 txsize_uv,
+#if TRANSFORM_TYPE_SEARCH
+                tx_type_uv,
+#endif
                 cb_txb_skip_context,
                 cb_dc_sign_context,
                 reducedTransformSetFlag);
@@ -1885,6 +1898,9 @@ EbErrorType av1_tu_estimate_coeff_bits(
                 (uint16_t)cr_eob,
                 PLANE_TYPE_UV,
                 txsize_uv,
+#if TRANSFORM_TYPE_SEARCH
+                tx_type_uv,
+#endif
                 cr_txb_skip_context,
                 cr_dc_sign_context,
                 reducedTransformSetFlag);
