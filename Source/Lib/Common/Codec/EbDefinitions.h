@@ -46,16 +46,25 @@ extern "C" {
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
+
+// Testing only
+#define TXS_DISABLE_CFL                   1
+#define FORCE_1_NFL                       1
+#define DISABLE_TX_TYPE                   1
+
 #define ATB                               1 // Adaptive Transform Block 
+
 #if ATB
 #define ATB_SUPPORT                       1
 #define TXS_SPLIT                         1
 #define TXS_SPLIT_SETTINGS                1
 #define TX_H4                             1
 
-#define ATB_MD                            0 
+#define ATB_MD                            1 
 #define ATB_EP                            1 
 #define ATB_EC                            1 
+
+    
 #endif
 
 // New  presets

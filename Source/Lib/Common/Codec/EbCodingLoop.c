@@ -2473,7 +2473,7 @@ void intra_tx_loop(
     uint32_t cu_originx_uv = (context_ptr->cu_origin_x >> 3 << 3) >> 1;
 
     // Hsan atb testing
-    //context_ptr->tx_depth = cu_ptr->tx_depth = 1;
+    context_ptr->tx_depth = cu_ptr->tx_depth;
     uint32_t totTu = context_ptr->blk_geom->txb_count[cu_ptr->tx_depth];
     uint8_t   tuIt;
     uint8_t   cb_qp = cu_ptr->qp;

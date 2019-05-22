@@ -703,6 +703,10 @@ void set_nfl(
         context_ptr->full_recon_search_count = nfl_non_ref[nfl_index];
     }
 #endif
+
+#if FORCE_1_NFL
+    context_ptr->full_recon_search_count = 1;
+#endif
     ASSERT(context_ptr->full_recon_search_count <= MAX_NFL);
 }
 
@@ -2924,8 +2928,7 @@ void full_loop_luma_intra(
             av1_intra_luma_prediction(
                 context_ptr,
                 picture_control_set_ptr,
-                candidateBuffer,
-                asm_type);
+                candidateBuffer);
 
             // Y Residual
             ResidualKernel(
@@ -3164,8 +3167,7 @@ void full_loop_luma_intra(
             av1_intra_luma_prediction(
                 context_ptr,
                 picture_control_set_ptr,
-                candidateBuffer,
-                asm_type);
+                candidateBuffer);
 
             // Y Residual
             ResidualKernel(
@@ -3487,6 +3489,10 @@ void AV1PerformFullLoop(
             picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
 
         tx_search_skip_fag = ( picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
+
+#if DISABLE_TX_TYPE
+        tx_search_skip_fag = 1;
+#endif
         if (!tx_search_skip_fag){
 
                 product_full_loop_tx_search(

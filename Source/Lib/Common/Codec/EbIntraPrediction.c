@@ -4261,8 +4261,8 @@ extern void av1_predict_intra_block(
     uint32_t  pred_buf_x_offest;
     uint32_t  pred_buf_y_offest;
 
-    if (stage == ED_STAGE) { // EncDec
-#if ATB_EP
+    if (stage == ED_STAGE) { // EncDec 
+#if ATB_EP // Hsan atb 
         pred_buf_x_offest = plane ? ((bl_org_x_pict >> 3) << 3) >> 1 : tu_org_x_pict;
         pred_buf_y_offest = plane ? ((bl_org_y_pict >> 3) << 3) >> 1 : tu_org_y_pict;
 #else
