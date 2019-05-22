@@ -2381,7 +2381,7 @@ void product_full_loop(
 #endif
 #if TRANSFORM_TYPE_SEARCH
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
 #endif
             COMPONENT_LUMA,
             asm_type);
@@ -2679,7 +2679,7 @@ void product_full_loop_tx_search(
 #endif
 #if TRANSFORM_TYPE_SEARCH
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
 #endif
                 COMPONENT_LUMA,
                 asm_type);
@@ -2953,7 +2953,7 @@ void encode_pass_tx_search(
 #endif
 #if TRANSFORM_TYPE_SEARCH
             cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
-            cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV],
+            cu_ptr->transform_unit_array[0].transform_type[PLANE_TYPE_UV],
 #endif
             COMPONENT_LUMA,
             asm_type);
@@ -3203,7 +3203,7 @@ void encode_pass_tx_search_hbd(
 #endif
 #if TRANSFORM_TYPE_SEARCH
             cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
-            cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV],
+            cu_ptr->transform_unit_array[0].transform_type[PLANE_TYPE_UV],
 #endif
             COMPONENT_LUMA,
             asm_type);
@@ -3328,7 +3328,7 @@ void full_loop_r(
                 context_ptr->transform_inner_array_ptr,
                 0,
 #if TRANSFORM_TYPE_SEARCH
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3365,7 +3365,7 @@ void full_loop_r(
                 COMPONENT_CHROMA_CB,
                 BIT_INCREMENT_8BIT,
 #if TRANSFORM_TYPE_SEARCH
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3412,7 +3412,7 @@ void full_loop_r(
                         context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
 #if TRANSFORM_TYPE_SEARCH
-                        candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                        candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
 #else
                         candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3469,7 +3469,7 @@ void full_loop_r(
                 context_ptr->transform_inner_array_ptr,
                 0,
 #if TRANSFORM_TYPE_SEARCH
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3507,7 +3507,7 @@ void full_loop_r(
                 COMPONENT_CHROMA_CR,
                 BIT_INCREMENT_8BIT,
 #if TRANSFORM_TYPE_SEARCH
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3550,7 +3550,7 @@ void full_loop_r(
                         context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
 #if TRANSFORM_TYPE_SEARCH
-                        candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                        candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
 #else
                         candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3850,7 +3850,7 @@ void cu_full_distortion_fast_tu_mode_r(
 #endif
 #if TRANSFORM_TYPE_SEARCH
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
 #endif
                 component_type,
                 asm_type);
