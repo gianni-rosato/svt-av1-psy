@@ -392,7 +392,7 @@ extern "C" {
         IntMv                       predmv[2];
         uint8_t                     skip_coeff_context;
         int16_t                     luma_txb_skip_context;
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
         int16_t                     luma_dc_sign_context[MAX_TXB_COUNT];
 #else
         int16_t                     luma_dc_sign_context;
@@ -403,7 +403,11 @@ extern "C" {
         int16_t                     cr_dc_sign_context;
         uint8_t                     reference_mode_context;
         uint8_t                     compoud_reference_type_context;
+#if ATB_DC_CONTEXT_SUPPORT_1
+        int32_t                     quantized_dc[3][MAX_TXB_COUNT];
+#else
         int32_t                     quantized_dc[3];
+#endif
         uint32_t                    is_inter_ctx;
         uint32_t                    interp_filters;
         PartitionType               part;

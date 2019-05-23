@@ -1767,7 +1767,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
     FRAME_CONTEXT                      *ec_ctx,
 #endif
     PictureControlSet                  *picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
     uint8_t                             txb_itr,
 #endif
     struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
@@ -1800,7 +1800,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
 
 
     int16_t  luma_txb_skip_context = cu_ptr->luma_txb_skip_context;
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
     int16_t  luma_dc_sign_context = cu_ptr->luma_dc_sign_context[txb_itr];
 #else
     int16_t  luma_dc_sign_context = cu_ptr->luma_dc_sign_context;
@@ -2491,7 +2491,7 @@ void coding_loop_context_generation(
     BlockSize plane_bsize = context_ptr->blk_geom->bsize;
 
     cu_ptr->luma_txb_skip_context = 0;
-#if !ATB_DC_CONTEXT_SUPPORT
+#if !ATB_DC_CONTEXT_SUPPORT_0
     cu_ptr->luma_dc_sign_context = 0;
 #endif
     cu_ptr->cb_txb_skip_context = 0;
@@ -2500,7 +2500,7 @@ void coding_loop_context_generation(
     cu_ptr->cr_dc_sign_context = 0;
 
 
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
 #if ATB_SUPPORT // Hsan atb
     uint8_t tx_depth = context_ptr->tx_depth = cu_ptr->tx_depth;
     int32_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];

@@ -2178,15 +2178,18 @@ void product_full_loop(
 #endif
             candidateBuffer,
             context_ptr->cu_ptr->luma_txb_skip_context,
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
             context_ptr->cu_ptr->luma_dc_sign_context[txb_itr],
 #else
             context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
             candidateBuffer->candidate_ptr->pred_mode,
             EB_FALSE);
-
+#if ATB_DC_CONTEXT_SUPPORT_1
+        candidateBuffer->candidate_ptr->quantized_dc[0][txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
+#else
         candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
+#endif
 
 #if SPATIAL_SSE
         if (context_ptr->spatial_sse_full_loop) {
@@ -2364,7 +2367,7 @@ void product_full_loop(
             NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
             picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
             txb_itr,
 #endif
             candidateBuffer,
@@ -2613,7 +2616,7 @@ void product_full_loop_tx_search(
                 tx_type,
                 candidateBuffer,
                 context_ptr->cu_ptr->luma_txb_skip_context,
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
                 context_ptr->cu_ptr->luma_dc_sign_context[txb_itr],
 #else
                 context_ptr->cu_ptr->luma_dc_sign_context,
@@ -2621,8 +2624,11 @@ void product_full_loop_tx_search(
                 candidateBuffer->candidate_ptr->pred_mode,
                 EB_FALSE);
 
+#if ATB_DC_CONTEXT_SUPPORT_1
+            candidateBuffer->candidate_ptr->quantized_dc[0][txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[tu_origin_index]);
+#else
             candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[tu_origin_index]);
-
+#endif
 
             //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
             if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT) {
@@ -2669,7 +2675,7 @@ void product_full_loop_tx_search(
                 NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
                 picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
                 txb_itr,
 #endif
                 candidateBuffer,
@@ -2946,7 +2952,7 @@ void encode_pass_tx_search(
             NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
             picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
             context_ptr->txb_itr,
 #endif
             candidateBuffer,
@@ -3199,7 +3205,7 @@ void encode_pass_tx_search_hbd(
             NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
             picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
             context_ptr->txb_itr,
 #endif
             candidateBuffer,
@@ -3402,7 +3408,11 @@ void full_loop_r(
                 0,
                 EB_FALSE);
 #endif
+#if ATB_DC_CONTEXT_SUPPORT_1
+            candidateBuffer->candidate_ptr->quantized_dc[1][0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cb)[txb_1d_offset]);
+#else
             candidateBuffer->candidate_ptr->quantized_dc[1] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cb)[txb_1d_offset]);
+#endif
 #if SPATIAL_SSE
             if (context_ptr->spatial_sse_full_loop) {
                 uint32_t cb_has_coeff = cb_count_non_zero_coeffs[txb_itr] > 0;
@@ -3543,7 +3553,11 @@ void full_loop_r(
                 0,
                 EB_FALSE);
 #endif
+#if ATB_DC_CONTEXT_SUPPORT_1
+            candidateBuffer->candidate_ptr->quantized_dc[2][0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cr)[txb_1d_offset]);
+#else
             candidateBuffer->candidate_ptr->quantized_dc[2] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cr)[txb_1d_offset]);
+#endif
 #if SPATIAL_SSE
             if (context_ptr->spatial_sse_full_loop) {
                 uint32_t cr_has_coeff = cr_count_non_zero_coeffs[txb_itr] > 0;
@@ -3849,7 +3863,7 @@ void cu_full_distortion_fast_tu_mode_r(
                 NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
                 picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
                 txb_itr,
 #endif
                 candidateBuffer,

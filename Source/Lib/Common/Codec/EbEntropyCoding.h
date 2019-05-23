@@ -83,7 +83,7 @@ extern "C" {
         FRAME_CONTEXT                      *ec_ctx,
 #endif
         PictureControlSet                  *picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_DC_CONTEXT_SUPPORT_0
         uint8_t                             txb_itr,
 #endif
         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,

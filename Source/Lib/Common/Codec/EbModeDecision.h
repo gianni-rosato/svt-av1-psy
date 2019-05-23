@@ -126,7 +126,11 @@ extern "C" {
 #endif
         MacroblockPlane                        candidate_plane[MAX_MB_PLANE];
         uint16_t                               eob[MAX_MB_PLANE][MAX_TXB_COUNT];
+#if ATB_DC_CONTEXT_SUPPORT_1
+        int32_t                                quantized_dc[3][MAX_TXB_COUNT];
+#else
         int32_t                                quantized_dc[3];
+#endif
         uint32_t                               interp_filters;
         uint8_t                                tu_width;
         uint8_t                                tu_height;
