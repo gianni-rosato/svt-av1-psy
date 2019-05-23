@@ -1539,7 +1539,7 @@ void AV1PerformInverseTransformRecon(
                     context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
 #if TRANSFORM_TYPE_SUPPORT
-                    candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
+                    candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
 #else
                     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -1580,7 +1580,7 @@ void AV1PerformInverseTransformRecon(
                     context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
 #if TRANSFORM_TYPE_SUPPORT
-                    candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0],
+                    candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
 #else
                     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -2670,7 +2670,8 @@ void check_best_indepedant_cfl(
         candidateBuffer->candidate_ptr->fast_chroma_rate = context_ptr->fast_chroma_rate[candidateBuffer->candidate_ptr->intra_luma_mode][MAX_ANGLE_DELTA + candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_Y]];
 
 #if TRANSFORM_TYPE_SUPPORT
-        TxType tx_type_uv = av1_get_tx_type(
+        candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0] =
+            av1_get_tx_type(
                 context_ptr->blk_geom->bsize,
                 0,
                 (PredictionMode)NULL,
@@ -2680,14 +2681,11 @@ void check_best_indepedant_cfl(
                 0,
                 0,
 #if ATB_SUPPORT
-                context_ptr->blk_geom->txsize_uv[context_ptr->tx_depth][0], // Hsan atb
-#else
+                context_ptr->blk_geom->txsize_uv[0][0],
+#else             
                 context_ptr->blk_geom->txsize_uv[0],
 #endif
                 picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
-        uint8_t txb_itr;
-        for(txb_itr = 0; txb_itr < MAX_TXB_COUNT; txb_itr++)
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr] = tx_type_uv; // Hsan atb
 #else
         candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV] =
             av1_get_tx_type(
@@ -3793,7 +3791,7 @@ void perform_intra_atb_tx_search(
                 context_ptr->blk_geom->txsize_uv[context_ptr->tx_depth][context_ptr->txb_itr],// NM: why  tu_index 0?
 #if TRANSFORM_TYPE_SUPPORT
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][context_ptr->txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0], // Hsan atb,
+                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][context_ptr->txb_itr],
 #endif
                 COMPONENT_LUMA,
                 asm_type);
@@ -4243,7 +4241,7 @@ void perform_intra_atb_tx_search(
                 context_ptr->blk_geom->txsize_uv[context_ptr->tx_depth][context_ptr->txb_itr],
 #if TRANSFORM_TYPE_SUPPORT
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][context_ptr->txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0], // Hsan atb,
+                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][context_ptr->txb_itr],
 #endif
                 COMPONENT_LUMA,
                 asm_type);
@@ -4434,8 +4432,7 @@ void AV1PerformFullLoop(
         }
 #endif
 #if ATB_MD
-        // ATB Path if INTRA and atb_mode 0
-        if (candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
+        if (context_ptr->atb_level == 1 && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
             perform_intra_atb_tx_search(
                 candidateBuffer,
                 context_ptr,
@@ -5135,7 +5132,7 @@ void inter_depth_tx_search(
             txb_ptr->v_has_coeff = (EbBool)(((candidate_ptr->v_has_coeff) & (1 << (tu_index))) > 0);
 #if TRANSFORM_TYPE_SUPPORT
             txb_ptr->transform_type[PLANE_TYPE_Y] = candidate_ptr->transform_type[PLANE_TYPE_Y][tu_index];
-            txb_ptr->transform_type[PLANE_TYPE_UV] = candidate_ptr->transform_type[PLANE_TYPE_UV][0];
+            txb_ptr->transform_type[PLANE_TYPE_UV] = candidate_ptr->transform_type[PLANE_TYPE_UV][tu_index];
 #else
             txb_ptr->transform_type[PLANE_TYPE_Y] = candidate_ptr->transform_type[PLANE_TYPE_Y];
             txb_ptr->transform_type[PLANE_TYPE_UV] = candidate_ptr->transform_type[PLANE_TYPE_UV];
@@ -5603,22 +5600,22 @@ void search_best_independent_uv_mode(
             candidateBuffer->candidate_ptr->is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)uv_mode);
             candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_UV] = uv_angle_delta;
 #if TRANSFORM_TYPE_SUPPORT
-            TxType tx_type_uv = av1_get_tx_type(
-                context_ptr->blk_geom->bsize,
-                0,
-                (PredictionMode)NULL,
-                (UvPredictionMode)uv_mode,
-                PLANE_TYPE_UV,
-                0,
-                0,
-                0,
+            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0] =
+                av1_get_tx_type(
+                    context_ptr->blk_geom->bsize,
+                    0,
+                    (PredictionMode)NULL,
+                    (UvPredictionMode)uv_mode,
+                    PLANE_TYPE_UV,
+                    0,
+                    0,
+                    0,
 #if ATB_SUPPORT
-                context_ptr->blk_geom->txsize_uv[tx_depth][0], // Hsan atb
+                    context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
 #else
-                context_ptr->blk_geom->txsize_uv[0],
+                    context_ptr->blk_geom->txsize_uv[0],
 #endif
-                picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0] = tx_type_uv; // Hsan atb
+                    picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
 #else
 
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV] =
@@ -5732,11 +5729,9 @@ void search_best_independent_uv_mode(
             candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_Y] = angle_delta;
             candidateBuffer->candidate_ptr->cfl_alpha_signs = 0;
             candidateBuffer->candidate_ptr->cfl_alpha_idx = 0;
-#if TRANSFORM_TYPE_SUPPORT // Hsan atb
-            uint8_t tx_itr;
-            for (tx_itr = 0; tx_itr < MAX_TXB_COUNT; tx_itr++) {
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][tx_itr] = DCT_DCT;
-            }
+#if TRANSFORM_TYPE_SUPPORT
+            // This kernel assumes no atb
+            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][0] = DCT_DCT;
 #else
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = DCT_DCT;
 #endif
@@ -5772,24 +5767,23 @@ void search_best_independent_uv_mode(
                     candidateBuffer->candidate_ptr->is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)uv_mode);
                     candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_UV] = uv_angle_delta;
 
-#if TRANSFORM_TYPE_SUPPORT // Hsan atb
-                    TxType tx_type_uv = av1_get_tx_type(
-                        context_ptr->blk_geom->bsize,
-                        0,
-                        (PredictionMode)candidateBuffer->candidate_ptr->intra_luma_mode,
-                        (UvPredictionMode)candidateBuffer->candidate_ptr->intra_chroma_mode,
-                        PLANE_TYPE_UV,
-                        0,
-                        0,
-                        0,
+#if TRANSFORM_TYPE_SUPPORT
+                    candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0] =
+                        av1_get_tx_type(
+                            context_ptr->blk_geom->bsize,
+                            0,
+                            (PredictionMode)candidateBuffer->candidate_ptr->intra_luma_mode,
+                            (UvPredictionMode)candidateBuffer->candidate_ptr->intra_chroma_mode,
+                            PLANE_TYPE_UV,
+                            0,
+                            0,
+                            0,
 #if ATB_SUPPORT
-                        context_ptr->blk_geom->txsize_uv[tx_depth][0], // Hsan atb
+                            context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
 #else
-                        context_ptr->blk_geom->txsize_uv[0],
+                            context_ptr->blk_geom->txsize_uv[0],
 #endif
-                        picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
-                    
-                    candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0] = tx_type_uv; // Hsan atb
+                            picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
 #else
                     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV] =
                         av1_get_tx_type(
