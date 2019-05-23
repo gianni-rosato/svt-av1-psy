@@ -392,7 +392,11 @@ extern "C" {
         IntMv                       predmv[2];
         uint8_t                     skip_coeff_context;
         int16_t                     luma_txb_skip_context;
+#if ATB_DC_CONTEXT_SUPPORT
+        int16_t                     luma_dc_sign_context[MAX_TXB_COUNT];
+#else
         int16_t                     luma_dc_sign_context;
+#endif
         int16_t                     cb_txb_skip_context;
         int16_t                     cb_dc_sign_context;
         int16_t                     cr_txb_skip_context;

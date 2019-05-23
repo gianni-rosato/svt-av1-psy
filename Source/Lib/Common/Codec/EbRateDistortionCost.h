@@ -41,10 +41,10 @@ extern "C" {
     extern void coding_loop_context_generation(
         ModeDecisionContext   *context_ptr,
         CodingUnit            *cu_ptr,
-        uint32_t                 cu_origin_x,
-        uint32_t                 cu_origin_y,
+        uint32_t               cu_origin_x,
+        uint32_t               cu_origin_y,
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
-        uint32_t                 sb_sz,
+        uint32_t               sb_sz,
         NeighborArrayUnit     *skip_coeff_neighbor_array,
 #endif
         NeighborArrayUnit     *luma_dc_sign_level_coeff_neighbor_array,

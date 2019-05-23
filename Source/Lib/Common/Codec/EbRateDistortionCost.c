@@ -1767,6 +1767,9 @@ EbErrorType av1_tu_estimate_coeff_bits(
     FRAME_CONTEXT                      *ec_ctx,
 #endif
     PictureControlSet                  *picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT
+    uint8_t                             txb_itr,
+#endif
     struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
     CodingUnit                         *cu_ptr,
     uint32_t                            tu_origin_index,
@@ -1797,7 +1800,11 @@ EbErrorType av1_tu_estimate_coeff_bits(
 
 
     int16_t  luma_txb_skip_context = cu_ptr->luma_txb_skip_context;
+#if ATB_DC_CONTEXT_SUPPORT
+    int16_t  luma_dc_sign_context = cu_ptr->luma_dc_sign_context[txb_itr];
+#else
     int16_t  luma_dc_sign_context = cu_ptr->luma_dc_sign_context;
+#endif
     int16_t  cb_txb_skip_context = cu_ptr->cb_txb_skip_context;
     int16_t  cb_dc_sign_context = cu_ptr->cb_dc_sign_context;
     int16_t  cr_txb_skip_context = cu_ptr->cr_txb_skip_context;
@@ -2019,6 +2026,24 @@ EbErrorType Av1FullCost(
     totalDistortion = luma_sse + chromaSse;
 
     rate = lumaRate + chromaRate + coeffRate;
+
+#if ATB_RATE
+    if (candidate_buffer_ptr->candidate_ptr->block_has_coeff) {
+
+        uint64_t tx_size_bits = estimate_tx_size_bits(
+            picture_control_set_ptr,
+            context_ptr->cu_origin_x,
+            context_ptr->cu_origin_y,
+            context_ptr->cu_ptr,
+            context_ptr->blk_geom,
+            context_ptr->txfm_context_array,
+            candidate_buffer_ptr->candidate_ptr->tx_depth,
+            context_ptr->md_rate_estimation_ptr);
+
+        rate += tx_size_bits;
+    }
+#endif
+
     // Assign full cost
     *(candidate_buffer_ptr->full_cost_ptr) = RDCOST(lambda, rate, totalDistortion);
 
@@ -2128,6 +2153,24 @@ EbErrorType  Av1MergeSkipFullCost(
 
 
     mergeRate += coeffRate;
+
+#if ATB_RATE
+    if (candidate_buffer_ptr->candidate_ptr->block_has_coeff) {
+
+        uint64_t tx_size_bits = estimate_tx_size_bits(
+            picture_control_set_ptr,
+            context_ptr->cu_origin_x,
+            context_ptr->cu_origin_y,
+            context_ptr->cu_ptr,
+            context_ptr->blk_geom,
+            context_ptr->txfm_context_array,
+            candidate_buffer_ptr->candidate_ptr->tx_depth,
+            context_ptr->md_rate_estimation_ptr);
+
+        mergeRate += tx_size_bits;
+
+    }
+#endif
 
     mergeDistortion = (mergeLumaSse + mergeChromaSse);
 
@@ -2448,12 +2491,73 @@ void coding_loop_context_generation(
     BlockSize plane_bsize = context_ptr->blk_geom->bsize;
 
     cu_ptr->luma_txb_skip_context = 0;
+#if !ATB_DC_CONTEXT_SUPPORT
     cu_ptr->luma_dc_sign_context = 0;
+#endif
     cu_ptr->cb_txb_skip_context = 0;
     cu_ptr->cb_dc_sign_context = 0;
     cu_ptr->cr_txb_skip_context = 0;
     cu_ptr->cr_dc_sign_context = 0;
 
+
+#if ATB_DC_CONTEXT_SUPPORT
+#if ATB_SUPPORT // Hsan atb
+    uint8_t tx_depth = context_ptr->tx_depth = cu_ptr->tx_depth;
+    int32_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];
+#else
+    int32_t txb_count = context_ptr->blk_geom->txb_count;
+#endif
+    int32_t txb_itr = 0;
+
+
+    for (txb_itr = 0; txb_itr < txb_count; txb_itr++) {
+
+
+        get_txb_ctx(                  //SB128_TODO move inside Full loop
+            COMPONENT_LUMA,
+            luma_dc_sign_level_coeff_neighbor_array,
+            cu_origin_x,
+            cu_origin_y,
+            plane_bsize,
+#if ATB_SUPPORT
+            context_ptr->blk_geom->txsize[tx_depth][txb_itr],
+#else
+            context_ptr->blk_geom->txsize[txb_itr],
+#endif
+            &cu_ptr->luma_txb_skip_context,
+            &cu_ptr->luma_dc_sign_context[txb_itr]);
+
+
+        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
+            get_txb_ctx(
+                COMPONENT_CHROMA,
+                cb_dc_sign_level_coeff_neighbor_array,
+                context_ptr->round_origin_x >> 1,
+                context_ptr->round_origin_y >> 1,
+                context_ptr->blk_geom->bsize_uv,
+#if ATB_SUPPORT
+                context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
+#else
+                context_ptr->blk_geom->txsize_uv[txb_itr],
+#endif
+                &cu_ptr->cb_txb_skip_context,
+                &cu_ptr->cb_dc_sign_context);
+            get_txb_ctx(
+                COMPONENT_CHROMA,
+                cr_dc_sign_level_coeff_neighbor_array,
+                context_ptr->round_origin_x >> 1,
+                context_ptr->round_origin_y >> 1,
+                context_ptr->blk_geom->bsize_uv,
+#if ATB_SUPPORT
+                context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
+#else
+                context_ptr->blk_geom->txsize_uv[txb_itr],
+#endif
+                &cu_ptr->cr_txb_skip_context,
+                &cu_ptr->cr_dc_sign_context);
+        }
+    }
+#else
 #if ATB_SUPPORT // Hsan atb
     uint8_t tx_depth = context_ptr->tx_depth = cu_ptr->tx_depth;
     int32_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];
@@ -2510,7 +2614,7 @@ void coding_loop_context_generation(
                 &cu_ptr->cr_dc_sign_context);
         }
     }
-
+#endif
     // Generate reference mode context
 
     cu_ptr->reference_mode_context = (uint8_t)av1_get_reference_mode_context(

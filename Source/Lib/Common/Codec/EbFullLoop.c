@@ -2178,7 +2178,11 @@ void product_full_loop(
 #endif
             candidateBuffer,
             context_ptr->cu_ptr->luma_txb_skip_context,
+#if ATB_DC_CONTEXT_SUPPORT
+            context_ptr->cu_ptr->luma_dc_sign_context[txb_itr],
+#else
             context_ptr->cu_ptr->luma_dc_sign_context,
+#endif
             candidateBuffer->candidate_ptr->pred_mode,
             EB_FALSE);
 
@@ -2360,6 +2364,9 @@ void product_full_loop(
             NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
             picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT
+            txb_itr,
+#endif
             candidateBuffer,
             context_ptr->cu_ptr,
             txb_1d_offset,
@@ -2606,7 +2613,11 @@ void product_full_loop_tx_search(
                 tx_type,
                 candidateBuffer,
                 context_ptr->cu_ptr->luma_txb_skip_context,
+#if ATB_DC_CONTEXT_SUPPORT
+                context_ptr->cu_ptr->luma_dc_sign_context[txb_itr],
+#else
                 context_ptr->cu_ptr->luma_dc_sign_context,
+#endif
                 candidateBuffer->candidate_ptr->pred_mode,
                 EB_FALSE);
 
@@ -2658,6 +2669,9 @@ void product_full_loop_tx_search(
                 NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
                 picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT
+                txb_itr,
+#endif
                 candidateBuffer,
                 context_ptr->cu_ptr,
                 tu_origin_index,
@@ -2932,6 +2946,9 @@ void encode_pass_tx_search(
             NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
             picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT
+            context_ptr->txb_itr,
+#endif
             candidateBuffer,
             context_ptr->cu_ptr,
             coeff1dOffset,
@@ -3182,6 +3199,9 @@ void encode_pass_tx_search_hbd(
             NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
             picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT
+            context_ptr->txb_itr,
+#endif
             candidateBuffer,
             context_ptr->cu_ptr,
             coeff1dOffset,
@@ -3829,6 +3849,9 @@ void cu_full_distortion_fast_tu_mode_r(
                 NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
                 picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT
+                txb_itr,
+#endif
                 candidateBuffer,
                 context_ptr->cu_ptr,
                 tu_origin_index,
