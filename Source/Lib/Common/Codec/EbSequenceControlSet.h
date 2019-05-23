@@ -173,11 +173,28 @@ extern "C" {
         uint16_t                                sb_size_pix;  //sb size in pixels 64/128
         uint16_t                                sb_tot_cnt;   // sb total number
         uint16_t                                max_block_cnt;
-        SbGeom                               *sb_geom;
+        SbGeom                                 *sb_geom;
 
         EbInputResolution                       input_resolution;
         EbScdMode                               scd_mode;
         EbPmMode                                pm_mode;
+
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+        /* MRP (mm-signal; 0: MRP mode 0, 1: MRP mode 1)
+        *
+        * Default is 0. */
+        uint8_t                                 mrp_mode;
+
+        /* CDF (mm-signal; 0: CDF update, 1: no CDF update)
+        *
+        * Default is 0. */
+        uint8_t                                 cdf_mode;
+
+        /* NSQ present (mm-signal; 0: NSQ absent, 1: NSQ present)
+        *
+        * Default is 1. */
+        uint8_t                                 nsq_present;
+#endif
         uint8_t                                 trans_coeff_shape_array[2][8][4];    // [componantTypeIndex][resolutionIndex][levelIndex][tuSizeIndex]
         EbBlockMeanPrec                         block_mean_calc_prec;
 

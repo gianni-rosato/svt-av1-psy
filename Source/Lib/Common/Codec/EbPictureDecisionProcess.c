@@ -980,7 +980,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 
 #if MEMORY_FOOTPRINT_OPT_ME_MV
         if (picture_control_set_ptr->pic_depth_mode < PIC_SQ_DEPTH_MODE)
-            assert(sequence_control_set_ptr->static_config.nsq_present == 1 && "use nsq_present 1");
+            assert(sequence_control_set_ptr->nsq_present == 1 && "use nsq_present 1");
 #endif
 
     picture_control_set_ptr->max_number_of_pus_per_sb = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
@@ -1062,7 +1062,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 
 #if MEMORY_FOOTPRINT_OPT_ME_MV
     if (picture_control_set_ptr->nsq_search_level > NSQ_SEARCH_OFF)
-        assert(sequence_control_set_ptr->static_config.nsq_present == 1 && "use nsq_present 1");
+        assert(sequence_control_set_ptr->nsq_present == 1 && "use nsq_present 1");
 #endif
 
 #if  RED_CU_DEBUG
@@ -1626,7 +1626,7 @@ void set_all_ref_frame_type(PictureParentControlSet  *parent_pcs_ptr, MvReferenc
 #if NO_UNI
 #if MRP_FIX_CLOSE_GOP
 #if MEMORY_FOOTPRINT_OPT_ME_MV
-    if (sequence_control_set_ptr->static_config.mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
+    if (sequence_control_set_ptr->mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
 #else
     if (parent_pcs_ptr->mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
 #endif
