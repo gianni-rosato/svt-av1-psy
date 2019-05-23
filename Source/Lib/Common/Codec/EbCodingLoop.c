@@ -2733,6 +2733,18 @@ void perform_intra_coding_loop(
             context_ptr->blk_geom->has_uv && uv_pass ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
             is16bit);
 
+        context_ptr->coded_area_sb += context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr];
+
+        if (context_ptr->blk_geom->has_uv && uv_pass)
+            context_ptr->coded_area_sb_uv += context_ptr->blk_geom->tx_width_uv[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height_uv[context_ptr->tx_depth][context_ptr->txb_itr];
+
+    } // Transform Loop
+
+
+    for (context_ptr->txb_itr = 0; context_ptr->txb_itr < totTu; context_ptr->txb_itr++) {
+
+        uint8_t uv_pass = context_ptr->tx_depth && context_ptr->txb_itr ? 0 : 1;
+
         if (context_ptr->blk_geom->has_uv && uv_pass) {
 
             cu_ptr->block_has_coeff = cu_ptr->block_has_coeff |
@@ -2754,10 +2766,6 @@ void perform_intra_coding_loop(
                 cu_ptr->transform_unit_array[context_ptr->txb_itr].y_has_coeff;
         }
 
-        context_ptr->coded_area_sb += context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr];
-
-        if (context_ptr->blk_geom->has_uv && uv_pass)
-            context_ptr->coded_area_sb_uv += context_ptr->blk_geom->tx_width_uv[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height_uv[context_ptr->tx_depth][context_ptr->txb_itr];
 
     } // Transform Loop
 }
