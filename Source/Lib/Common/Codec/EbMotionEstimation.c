@@ -7249,7 +7249,7 @@ EbErrorType  BiPredictionSearch(
 #if MRP_MD_UNI_DIR_BIPRED
 #if NO_UNI
 #if MEMORY_FOOTPRINT_OPT_ME_MV
-    if (sequence_control_set_ptr->static_config.mrp_mode == 0)
+    if (sequence_control_set_ptr->mrp_mode == 0)
 #else
     if (picture_control_set_ptr->mrp_mode == 0)
 #endif
@@ -9201,8 +9201,8 @@ EbErrorType motion_estimate_lcu(
             // Ref Picture Loop
             for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
 #if FROM_7_TO_4_MV
-               picture_control_set_ptr->me_results[sb_index]->me_mv_array[pu_index][((listIndex && sequence_control_set_ptr->static_config.mrp_mode == 0) ? 4 : listIndex ? 2 : 0) + ref_pic_index].x_mv = _MVXT(context_ptr->p_sb_best_mv[listIndex][ref_pic_index][nIdx]);
-               picture_control_set_ptr->me_results[sb_index]->me_mv_array[pu_index][((listIndex && sequence_control_set_ptr->static_config.mrp_mode == 0) ? 4 : listIndex ? 2 : 0) + ref_pic_index].y_mv = _MVYT(context_ptr->p_sb_best_mv[listIndex][ref_pic_index][nIdx]);              
+               picture_control_set_ptr->me_results[sb_index]->me_mv_array[pu_index][((listIndex && sequence_control_set_ptr->mrp_mode == 0) ? 4 : listIndex ? 2 : 0) + ref_pic_index].x_mv = _MVXT(context_ptr->p_sb_best_mv[listIndex][ref_pic_index][nIdx]);
+               picture_control_set_ptr->me_results[sb_index]->me_mv_array[pu_index][((listIndex && sequence_control_set_ptr->mrp_mode == 0) ? 4 : listIndex ? 2 : 0) + ref_pic_index].y_mv = _MVYT(context_ptr->p_sb_best_mv[listIndex][ref_pic_index][nIdx]);              
 #else
                picture_control_set_ptr->me_results[sb_index]->me_mv_array[pu_index][(listIndex << 2) + ref_pic_index].x_mv = _MVXT(context_ptr->p_sb_best_mv[listIndex][ref_pic_index][nIdx]);
                picture_control_set_ptr->me_results[sb_index]->me_mv_array[pu_index][(listIndex << 2) + ref_pic_index].y_mv = _MVYT(context_ptr->p_sb_best_mv[listIndex][ref_pic_index][nIdx]);
