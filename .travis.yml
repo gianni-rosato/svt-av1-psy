@@ -31,6 +31,7 @@ env:
   - build_type=release
 stages:
   - name: test
+  - name: unittest 
   - name: coveralls
     if: type != pull_request
   - name: valgrind
@@ -78,6 +79,8 @@ matrix:
   allow_failures:
     - name: Valgrind
     - env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
+    - name: Unit Tests Linux+gcc
+    - name: Unit Tests osx+clang
     # Exclude these because if the encoder can run with a release build, the commit is probably fine. Also required for fast_finish.
   exclude:
     - os: osx
@@ -136,3 +139,29 @@ matrix:
       script:
         - *base_script
         - valgrind -- SvtAv1EncApp -enc-mode 8 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 150 -b test1.ivf
+    - name: Unit Tests Linux+gcc
+      stage: unittest
+      os: linux
+      compiler: gcc
+      env: build_type=debug CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
+      script:
+        - *base_script
+        - cd $TRAVIS_BUILD_DIR/Build/linux/$build_type
+        - make TestVectors
+        - cd $TRAVIS_BUILD_DIR
+        - SvtAv1UnitTests
+        - SvtAv1ApiTests
+        - SvtAv1E2ETests
+    - name: Unit Tests osx+clang
+      stage: unittest
+      os: osx
+      compiler: clang
+      env: build_type=debug CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
+      script:
+        - *base_script
+        - cd $TRAVIS_BUILD_DIR/Build/linux/$build_type
+        - make TestVectors
+        - cd $TRAVIS_BUILD_DIR
+        - SvtAv1UnitTests
+        - SvtAv1ApiTests
+        - SvtAv1E2ETests

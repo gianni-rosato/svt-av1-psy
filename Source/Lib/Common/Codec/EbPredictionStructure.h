@@ -217,7 +217,7 @@ extern "C" {
         uint32_t                         number_of_references,
         uint32_t                         levels_of_hierarchy);
 #if NEW_RPS
-    enum {
+    typedef enum {
         LAST = 0,
         LAST2 = 1,
         LAST3 = 2,
