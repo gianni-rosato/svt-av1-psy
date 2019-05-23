@@ -48,20 +48,20 @@ extern "C" {
 
 
 // Testing only
-#define TXS_DISABLE_CFL                   0
-#define QP_SCALING_OFF                    0
+#define TXS_DISABLE_CFL                   1
+#define QP_SCALING_OFF                    1
 
 #define ATB                               1 // Adaptive Transform Block 
 
 #if ATB
-#define ATB_SUPPORT                       0
-#define ATB_EP                            0
-#define ATB_EC                            0
+#define ATB_SUPPORT                       1
+#define ATB_EP                            1
+#define ATB_EC                            1
 
-#define ATB_MD                            0 
-#define TRANSFORM_TYPE_SUPPORT            0
-#define ATB_TX_SEARCH                     0
-#define ATB_RATE                          0 // to check TXS_CTX_EP
+#define ATB_MD                            1 
+#define TRANSFORM_TYPE_SUPPORT            1
+#define ATB_TX_SEARCH                     1
+#define ATB_RATE                          1 // to check TXS_CTX_EP
 
 #define ATB_DC_CONTEXT_SUPPORT_0          0 
 #define ATB_DC_CONTEXT_SUPPORT_1          0
