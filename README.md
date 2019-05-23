@@ -6,18 +6,18 @@
 
 The Scalable Video Technology for AV1 Encoder (SVT-AV1 Encoder) is an AV1-compliant encoder library core. The SVT-AV1 development is a work-in-progress targeting performance levels applicable to both VOD and Live encoding / transcoding video applications.
 
-# License
+## License
 
 SVT-AV1 Encoder is licensed under the OSI-approved BSD+Patent license. See [LICENSE](LICENSE.md) for details.
 
-# Documentation
+## Documentation
 
 More details about the SVT-AV1 Encoder usage can be found under:
 -   [svt-av1-encoder-user-guide](Docs/svt-av1_encoder_user_guide.md)
 
-# System Requirements
+## System Requirements
 
-## Operating System
+### Operating System
 
 SVT-AV1 Encoder may run on any Windows* or Linux* 64 bit operating systems. The list below represents the operating systems that the encoder application and library were tested and validated on:
 
@@ -35,7 +35,7 @@ SVT-AV1 Encoder may run on any Windows* or Linux* 64 bit operating systems. The 
 
     -  MacOS
 
-## Hardware
+### Hardware
 
 The SVT-AV1 Encoder library supports the x86 architecture
 
@@ -55,9 +55,9 @@ The SVT-AV1 Encoder adapts to the system that is being ran on. The memory requir
 |       480p            |            3           |            5            |
 
 
-# Build and Install
+## Build and Install
 
-## Windows* Operating Systems (64-bit):
+### Windows* Operating Systems (64-bit):
 
 * __Build Requirements__
     -    Visual Studio* 2017 (can be downloaded [here](https://www.visualstudio.com/vs/older-downloads/))
@@ -82,7 +82,7 @@ The SVT-AV1 Encoder adapts to the system that is being ran on. The memory requir
     -    Open the command prompt window at the chosen location and run the sample application to encode. SvtAV1EncApp.exe -i [in.yuv] -w [width] -h [height] -b [out.ivf].
     -    Sample application supports reading from pipe. E.g. ffmpeg -i [input.mp4] -nostdin -f rawvideo -pix_fmt yuv420p - | SvtAv1EncApp.exe -i stdin -n [number_of_frames_to_encode] -w [width] -h [height].
 
-## Linux* Operating Systems (64-bit):
+### Linux* Operating Systems (64-bit):
 
 * __Build Requirements__
      -    GCC 5.4.0 or later
@@ -104,16 +104,16 @@ For the binaries to operate properly on your system, the following conditions ha
     -    Run the sample application to encode. ./SvtAv1EncApp -i [in.yuv] -w [width] -h [height] -b [out.ivf].
     -    Sample application supports reading from pipe. E.g. ffmpeg -i [input.mp4] -nostdin -f rawvideo -pix_fmt yuv420p - | ./SvtAv1EncApp -i stdin -n [number_of_frames_to_encode] -w [width] -h [height].
 
-# Demo features and limitations
+## Demo features and limitations
 
 -  **Multi-instance support:** The multi-instance functionality is a demo feature implemented in the SVT-AV1 Encoder sample application as an example of one sample application using multiple encoding libraries. Encoding using the multi-instance support is limited to only 6 simultaneous streams. For example two channels encoding on Windows: SvtAV1EncApp.exe -nch 2 -c firstchannel.cfg secondchannel.cfg
 -  **Features enabled:** The library will display an error message any feature combination that is not currently supported. 
 
-# How to Contribute
+## How to Contribute
 
 We welcome community contributions to the SVT-AV1 Encoder. Thank you for your time! By contributing to the project, you agree to the license and copyright terms in the OSI-approved BSD+Patent license and to the release of your contribution under these terms. See [LICENSE](LICENSE.md) for details.
 
-## Contribution process
+### Contribution process
 
 -  Follow the [coding guidelines](STYLE.md)
 
@@ -123,10 +123,14 @@ We welcome community contributions to the SVT-AV1 Encoder. Thank you for your ti
 
 -  Submit a pull request for review to the maintainer
 
-# How to Report Bugs and Provide Feedback
+### How to Report Bugs and Provide Feedback
 
-Use the "Issues" tab on Github. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one.
+Use the [Issues]() tab on Github. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one.
 
-# Notices and Disclaimers
+## IRC
+
+`#svt` on Freenode. Join via [Freenode Webchat](https://webchat.freenode.net/?channels=svt) or use your favorite IRC client.
+
+## Notices and Disclaimers
 
 The notices and disclaimers can be found [here](NOTICES.md)

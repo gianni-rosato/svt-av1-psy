@@ -16,3 +16,6 @@ Build/linux/release/
 Build/VS/x64
 Bin
 build
+test/vectors/
+test/docs/
+.vscode

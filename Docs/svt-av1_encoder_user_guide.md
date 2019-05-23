@@ -123,7 +123,7 @@ The encoder parameters present in the Sample.cfg file are listed in this table b
 | **ErrorFile** | -errlog | any string | stderr | error log displaying configuration or encode errors |
 | **UseQpFile** | -use-q-file | [0 - 1] | 0 | When set to 1, overwrite the picture qp assignment using qp values in QpFile |
 | **QpFile** | -qp-file | any string | Null | Path to qp file |
-| **EncoderMode** | -enc-mode | [0 - 3] | 3 | Encoder Preset [0,1,3] 0 = highest quality, 3 = highest speed |
+| **EncoderMode** | -enc-mode | [0 - 8] | 8 | Encoder Preset [0,1,2,3,4,5,6,7,8] 0 = highest quality, 8 = highest speed |
 | **EncoderBitDepth** | -bit-depth | [8 , 10] | 8 | specifies the bit depth of the input video |
 | **CompressedTenBitFormat** | -compressed-ten-bit-format | [0 - 1] | 0 | Offline packing of the 2bits: requires two bits packed input (0: OFF, 1: ON) |
 | **SourceWidth** | -w | [64 - 4096] | None | Input source width |
@@ -137,6 +137,7 @@ The encoder parameters present in the Sample.cfg file are listed in this table b
 | **IntraPeriod** | -intra-period | [-2 - 255] | -2 | Distance Between Intra Frame inserted. -1 denotes no intra update. -2 denotes auto. |
 | **IntraRefreshType** | -irefresh-type | [1 – 2] | 1 | 1: CRA (Open GOP)2: IDR (Closed GOP) |
 | **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 |
+| **RateControlMode** | -rc | [0 - 3] | 0 | 0 = CQP , 1 = ABR , 2 = ABR , 3 = CVBR |
 | **UseDefaultMeHme** | -use-default-me-hme | [0 - 1] | 1 | 0 : Overwrite Default ME HME parameters1 : Use default ME HME parameters, dependent on width and height |
 | **HME** | -hme | [0 - 1] | 1 | Enable HME, 0 = OFF, 1 = ON |
 | **HMELevel0** | -hme-l0 | [0 - 1] | 1 | Enable HME Level 0 , 0 = OFF, 1 = ON |
@@ -145,6 +146,7 @@ The encoder parameters present in the Sample.cfg file are listed in this table b
 | **InLoopMeFlag** | -in-loop-me | [0 - 1] | Depends on –enc-mode | 0=ME on source samples, 1= ME on recon samples |
 | **LocalWarpedMotion** | -local-warp | [0 - 1] | 0 | Enable warped motion use , 0 = OFF, 1 = ON |
 | **ExtBlockFlag** | -ext-block | [0 - 1] | Depends on –enc-mode | Enable the non-square block 0=OFF, 1= ON |
+| **ScreenContentMode** | -scm | [0 - 2] | 2 | Enable Screen Content Optimization mode (0: OFF, 1: ON, 2: Content Based Detection) |
 | **SearchAreaWidth** | -search-w | [1 - 256] | Depends on input resolution | Search Area in Width |
 | **SearchAreaHeight** | -search-h | [1 - 256] | Depends on input resolution | Search Area in Height |
 | **NumberHmeSearchRegionInWidth** | -num-hme-w | [1 - 2] | Depends on input resolution | Search Regions in Width |
@@ -157,15 +159,38 @@ The encoder parameters present in the Sample.cfg file are listed in this table b
 | **HmeLevel1SearchAreaInHeight** | -hme-l1-h | [1 - 256] | Depends on input resolution | HME Level 1 Search Area in Height for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInHeight |
 | **HmeLevel2SearchAreaInWidth** | -hme-l2-w | [1 - 256] | Depends on input resolution | HME Level 2 Search Area in Width for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInWidth |
 | **HmeLevel2SearchAreaInHeight** | -hme-l2-h | [1 - 256] | Depends on input resolution | HME Level 2 Search Area in Height for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInHeight |
-| **LookAheadDistance** | -lad | [0 - 120] | 17 | When Rate Control is set to 1 it&#39;s best to set this parameter to be equal to the Intra period value (such is the default set by the encoder) [this value is capped by the encoder to its maximum need e.g. 17 for CQP, 2*fps for rate control] |
+| **LookAheadDistance** | -lad | [0 - 120] | 33 | When Rate Control is set to 1 it&#39;s best to set this parameter to be equal to the Intra period value (such is the default set by the encoder) [this value is capped by the encoder to its maximum need e.g. 33 for CQP, 2*fps for rate control] |
 | **SceneChangeDetection** | -scd | [0 - 1] | 1 | Enables or disables the scene change detection algorithm |
 | **AsmType** | -asm | [0 - 1] | 1 | Assembly instruction set (0: Automatically select lowest assembly instruction set supported, 1: Automatically select highest assembly instruction set supported,) |
-| **UseRoundRobinThreadAssignment** | -rr | [0 - 1] | 0 | For Dual socket systems running a Windows\* OS on systems with > 32 physical processors. When enabled, allows the encoder to run on both sockets |
+| **LogicalProcessorNumber** | -lp | [0, total number of logical processor] | 0 | The number of logical processor which encoder threads run on.Refer to Appendix A.1 |
+| **TargetSocket** | -ss | [-1,1] | -1 | For dual socket systems, this can specify which socket the encoder runs on.Refer to Appendix A.1 |
 | **ReconFile**   | -o | any string | null | Recon file path. Optional output of recon. |
-| **TargetSocket**   | -ss | [0-1] | 1 | For Windows based dual socket systems, this can specify which socket the encoder should start / run on (depending on whether UseRoundRobinThreadAssignment is set to 1 or 0) 0= Socket 0, 1=Socket 1 ) |
 | **ImproveSharpness** | -sharp | [0-1] | 0 | Improve sharpness (0= OFF, 1=ON ) |
 | **TileRow** | -tile-rows | [0-6] | 0 | log2 of tile rows |
 | **TileCol** | -tile-columns | [0-6] | 0 | log2 of tile columns |
+
+## Appendix A Encoder Parameters
+### 1. Thread management parameters
+
+LogicalProcessorNumber (-lp) and TargetSocket (-ss) parameters are used to management thread affinity on Windows and Ubuntu OS. These are some examples how you use them together.
+
+If LogicalProcessorNumber and TargetSocket are not set, threads are managed by OS thread scheduler.
+
+>SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –lp 40
+
+If only LogicalProcessorNumber is set, threads run on 40 logical processors. Threads may run on dual sockets if 40 is larger than logical processor number of a socket.
+
+NOTE: On Windows, thread affinity can be set only by group on system with more than 64 logical processors. So, if 40 is larger than logical processor number of a single socket, threads run on all logical processors of both sockets.
+
+>SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –ss 1
+
+If only TargetSocket is set, threads run on all the logical processors of socket 1.
+
+>SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –lp 20 –ss 0
+
+If both LogicalProcessorNumber and TargetSocket are set, threads run on 20 logical processors of socket 0. Threads guaranteed to run only on socket 0 if 20 is larger than logical processor number of socket 0.
+
+
 ## Legal Disclaimer
 
 Optimization Notice: Intel compilers may or may not optimize to the same degree for non-Intel microprocessors for optimizations that are not unique to Intel microprocessors. These optimizations include SSE2, SSE3, and SSSE3 instruction sets and other optimizations. Intel does not guarantee the availability, functionality, or effectiveness of any optimization on microprocessors not manufactured by Intel. Microprocessor-dependent optimizations in this product are intended for use with Intel microprocessors. Certain optimizations not specific to Intel microarchitecture are reserved for Intel microprocessors. Please refer to the applicable product User and Reference Guides for more information regarding the specific instruction sets covered by this notice.
