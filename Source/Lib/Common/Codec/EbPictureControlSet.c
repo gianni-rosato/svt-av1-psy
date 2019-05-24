@@ -485,7 +485,21 @@ EbErrorType picture_control_set_ctor(
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
+#if ATB_DC_CONTEXT_SUPPORT_2
+        // for each 4x4
+        return_error = neighbor_array_unit_ctor(
+            &object_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth],
+            MAX_PICTURE_WIDTH_SIZE,
+            MAX_PICTURE_HEIGHT_SIZE,
+            sizeof(uint8_t),
+            PU_NEIGHBOR_ARRAY_GRANULARITY,
+            PU_NEIGHBOR_ARRAY_GRANULARITY,
+            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
+        if (return_error == EB_ErrorInsufficientResources) {
+            return EB_ErrorInsufficientResources;
+        }
+#endif
         // for each 4x4
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth],

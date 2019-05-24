@@ -244,6 +244,17 @@ void mode_decision_update_neighbor_arrays(
                 bheight,
 #endif
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+#if ATB_DC_CONTEXT_SUPPORT_2
+            neighbor_array_unit_mode_write(
+                picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
+                (uint8_t*)&dcSignLevelCoeff,
+                origin_x - context_ptr->blk_geom->origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
+                origin_y - context_ptr->blk_geom->origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
+                context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][txb_itr],
+                context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][txb_itr],
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#endif            
         }
 
     }
@@ -556,6 +567,17 @@ void copy_neighbour_arrays(
         blk_geom->bwidth,
         blk_geom->bheight,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+#if ATB_DC_CONTEXT_SUPPORT_2
+    copy_neigh_arr(
+        picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[src_idx],
+        picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[dst_idx],
+        blk_org_x,
+        blk_org_y,
+        blk_geom->bwidth,
+        blk_geom->bheight,
+        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#endif
 
     if (blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
         copy_neigh_arr(
@@ -3416,15 +3438,32 @@ void perform_intra_atb_tx_search(
             context_ptr->blk_geom->bwidth,
             context_ptr->blk_geom->bheight,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
+#if ATB_DC_CONTEXT_SUPPORT_2
+        copy_neigh_arr(
+            picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
+            picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
+            context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x,
+            context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y,
+            context_ptr->blk_geom->bwidth,
+            context_ptr->blk_geom->bheight,
+            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#endif
     }
+       
     for (context_ptr->tx_depth = 0; context_ptr->tx_depth <= end_tx_depth; context_ptr->tx_depth++) {
 
         // Set recon neighbor array to be used @ intra compensation
         context_ptr->tx_search_luma_recon_neighbor_array =
             (context_ptr->tx_depth) ?
-            picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX] :
-            picture_control_set_ptr->md_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
-
+                picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX] :
+                picture_control_set_ptr->md_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
+#if ATB_DC_CONTEXT_SUPPORT_2
+        // Set luma dc sign level coeff
+        context_ptr->tx_search_luma_dc_sign_level_coeff_neighbor_array =
+            (context_ptr->tx_depth) ?
+                picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX] :
+                picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
+#endif
         // Initialize TU Split
         y_full_distortion[DIST_CALC_RESIDUAL] = 0;
         y_full_distortion[DIST_CALC_PREDICTION] = 0;
@@ -3442,9 +3481,9 @@ void perform_intra_atb_tx_search(
 #if ATB_DC_CONTEXT_SUPPORT_2
             get_txb_ctx(
                 COMPONENT_LUMA,
-                context_ptr->luma_dc_sign_level_coeff_neighbor_array,
-                tx_org_x,
-                tx_org_x,
+                context_ptr->tx_search_luma_dc_sign_level_coeff_neighbor_array,
+                context_ptr->sb_origin_x + tx_org_x,
+                context_ptr->sb_origin_y + tx_org_y,
                 context_ptr->blk_geom->bsize,
                 context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->cu_ptr->luma_txb_skip_context,
@@ -3856,6 +3895,31 @@ void perform_intra_atb_tx_search(
                     context_ptr->sb_origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->tx_depth][context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);
+
+#if ATB_DC_CONTEXT_SUPPORT_2
+                uint8_t y_has_coeff = context_ptr->cu_ptr->transform_unit_array[context_ptr->txb_itr].y_has_coeff;
+                int32_t lumaDcCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[0][context_ptr->txb_itr];
+
+                uint8_t dcSignCtx = 0;
+                if (lumaDcCoeff > 0)
+                    dcSignCtx = 2;
+                else if (lumaDcCoeff < 0)
+                    dcSignCtx = 1;
+                else
+                    dcSignCtx = 0;
+                uint8_t dcSignLevelCoeff = (uint8_t)((dcSignCtx << COEFF_CONTEXT_BITS) | y_has_coeff);
+                if (!y_has_coeff)
+                    dcSignLevelCoeff = 0;
+
+                neighbor_array_unit_mode_write(
+                    picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
+                    (uint8_t*)&dcSignLevelCoeff,
+                    context_ptr->sb_origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->tx_depth][context_ptr->txb_itr],
+                    context_ptr->sb_origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->tx_depth][context_ptr->txb_itr],
+                    context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][context_ptr->txb_itr],
+                    context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][context_ptr->txb_itr],
+                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);          
+#endif
             }
         } // Transform Loop
 
@@ -3916,6 +3980,18 @@ void perform_intra_atb_tx_search(
 
             uint16_t tx_org_x = context_ptr->blk_geom->tx_org_x[context_ptr->tx_depth][context_ptr->txb_itr];
             uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[context_ptr->tx_depth][context_ptr->txb_itr];
+
+#if ATB_DC_CONTEXT_SUPPORT_2
+            get_txb_ctx(
+                COMPONENT_LUMA,
+                picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
+                context_ptr->sb_origin_x + tx_org_x,
+                context_ptr->sb_origin_y + tx_org_y,
+                context_ptr->blk_geom->bsize,
+                context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
+                &context_ptr->cu_ptr->luma_txb_skip_context,
+                &context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr]);
+#endif
 
             tu_origin_index = tx_org_x + (tx_org_y * candidateBuffer->residual_ptr->stride_y);
             y_tu_coeff_bits = 0;

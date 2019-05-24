@@ -2491,7 +2491,12 @@ void coding_loop_context_generation(
     BlockSize plane_bsize = context_ptr->blk_geom->bsize;
 
     cu_ptr->luma_txb_skip_context = 0;
-#if !ATB_DC_CONTEXT_SUPPORT_0
+#if ATB_DC_CONTEXT_SUPPORT_0
+    cu_ptr->luma_dc_sign_context[0] = 0;
+    cu_ptr->luma_dc_sign_context[1] = 0;
+    cu_ptr->luma_dc_sign_context[2] = 0;
+    cu_ptr->luma_dc_sign_context[3] = 0;
+#else
     cu_ptr->luma_dc_sign_context = 0;
 #endif
     cu_ptr->cb_txb_skip_context = 0;
