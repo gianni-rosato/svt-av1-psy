@@ -5151,7 +5151,7 @@ uint8_t product_full_mode_decision(
 #endif
 
 #if ATB_DC_CONTEXT_SUPPORT_1
-        cu_ptr->quantized_dc[0][tu_index] = candidate_ptr->quantized_dc[tu_index];
+        cu_ptr->quantized_dc[0][tu_index] = candidate_ptr->quantized_dc[0][tu_index];
 #endif
 
 #if NO_ENCDEC

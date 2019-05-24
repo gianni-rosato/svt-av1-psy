@@ -197,9 +197,9 @@ void mode_decision_update_neighbor_arrays(
             bheight,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-#if ATB_DC_CONTEXT_SUPPORT_1
+#if ATB_DC_CONTEXT_SUPPORT_0
 #if ATB_SUPPORT
-        uint16_t txb_count = context_ptr->blk_geom->txb_count[cu_ptr->tx_depth];
+        uint16_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->cu_ptr->tx_depth];
 #else
         uint16_t txb_count = context_ptr->blk_geom->txb_count;
 #endif
@@ -225,12 +225,12 @@ void mode_decision_update_neighbor_arrays(
                 context_ptr->luma_dc_sign_level_coeff_neighbor_array,
                 (uint8_t*)&dcSignLevelCoeff,
 
-#if ATB_DC_CONTEXT_SUPPORT_1
+#if ATB_DC_CONTEXT_SUPPORT_0
 #if ATB_SUPPORT
-                origin_x - context_ptr->blk_geom->origin_x + context_ptr->blk_geom->tx_org_x[tx_depth][txb_itr],
-                origin_y - context_ptr->blk_geom->origin_y + context_ptr->blk_geom->tx_org_y[tx_depth][txb_itr],
-                context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
-                context_ptr->blk_geom->tx_height[tx_depth][txb_itr],
+                origin_x - context_ptr->blk_geom->origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
+                origin_y - context_ptr->blk_geom->origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
+                context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][txb_itr],
+                context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][txb_itr],
 #else
                 origin_x - context_ptr->blk_geom->origin_x + context_ptr->blk_geom->tx_org_x[txb_itr],
                 origin_y - context_ptr->blk_geom->origin_y + context_ptr->blk_geom->tx_org_y[txb_itr],
@@ -3439,6 +3439,17 @@ void perform_intra_atb_tx_search(
             uint16_t tx_org_x = context_ptr->blk_geom->tx_org_x[context_ptr->tx_depth][context_ptr->txb_itr];
             uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[context_ptr->tx_depth][context_ptr->txb_itr];
 
+#if ATB_DC_CONTEXT_SUPPORT_2
+            get_txb_ctx(
+                COMPONENT_LUMA,
+                context_ptr->luma_dc_sign_level_coeff_neighbor_array,
+                tx_org_x,
+                tx_org_x,
+                context_ptr->blk_geom->bsize,
+                context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
+                &context_ptr->cu_ptr->luma_txb_skip_context,
+                &context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr]);
+#endif
             tu_origin_index = tx_org_x + (tx_org_y * candidateBuffer->residual_ptr->stride_y);
 
             uint32_t input_tu_origin_index = (context_ptr->sb_origin_x + tx_org_x + input_picture_ptr->origin_x) + ((context_ptr->sb_origin_y + tx_org_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y);
@@ -3534,12 +3545,19 @@ void perform_intra_atb_tx_search(
                     tx_type,
                     candidateBuffer,
                     context_ptr->cu_ptr->luma_txb_skip_context,
+#if ATB_DC_CONTEXT_SUPPORT_0
+                    context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr],
+#else
                     context_ptr->cu_ptr->luma_dc_sign_context,
+#endif
                     candidateBuffer->candidate_ptr->pred_mode,
                     EB_FALSE);
 
+#if ATB_DC_CONTEXT_SUPPORT_1
+                candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
+#else
                 candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
-
+#endif
 
 
                 uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
@@ -3613,6 +3631,9 @@ void perform_intra_atb_tx_search(
                     NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
                     picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT_0
+                    context_ptr->txb_itr,
+#endif
                     candidateBuffer,
                     context_ptr->cu_ptr,
                     txb_1d_offset,
@@ -3699,12 +3720,18 @@ void perform_intra_atb_tx_search(
 #endif
                 candidateBuffer,
                 context_ptr->cu_ptr->luma_txb_skip_context,
+#if ATB_DC_CONTEXT_SUPPORT_0
+                context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr],
+#else
                 context_ptr->cu_ptr->luma_dc_sign_context,
+#endif
                 candidateBuffer->candidate_ptr->pred_mode,
                 EB_FALSE);
-
+#if ATB_DC_CONTEXT_SUPPORT_1
+            candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
+#else
             candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
-
+#endif
             uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
             if (y_has_coeff) {
@@ -3775,6 +3802,9 @@ void perform_intra_atb_tx_search(
                 NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
                 picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT_0
+                context_ptr->txb_itr,
+#endif
                 candidateBuffer,
                 context_ptr->cu_ptr,
                 txb_1d_offset,
@@ -3984,12 +4014,18 @@ void perform_intra_atb_tx_search(
                     tx_type,
                     candidateBuffer,
                     context_ptr->cu_ptr->luma_txb_skip_context,
+#if ATB_DC_CONTEXT_SUPPORT_0
+                    context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr],
+#else
                     context_ptr->cu_ptr->luma_dc_sign_context,
+#endif
                     candidateBuffer->candidate_ptr->pred_mode,
                     EB_FALSE);
-
+#if ATB_DC_CONTEXT_SUPPORT_1
+                candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
+#else
                 candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
-
+#endif
 
 
                 uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
@@ -4063,6 +4099,9 @@ void perform_intra_atb_tx_search(
                     NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
                     picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT_0
+                    context_ptr->txb_itr,
+#endif
                     candidateBuffer,
                     context_ptr->cu_ptr,
                     txb_1d_offset,
@@ -4149,12 +4188,18 @@ void perform_intra_atb_tx_search(
 #endif
                 candidateBuffer,
                 context_ptr->cu_ptr->luma_txb_skip_context,
+#if ATB_DC_CONTEXT_SUPPORT_0
+                context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr],
+#else
                 context_ptr->cu_ptr->luma_dc_sign_context,
+#endif
                 candidateBuffer->candidate_ptr->pred_mode,
                 EB_FALSE);
-
+#if ATB_DC_CONTEXT_SUPPORT_1
+            candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
+#else
             candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
-
+#endif
             uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
             if (y_has_coeff) {
@@ -4225,6 +4270,9 @@ void perform_intra_atb_tx_search(
                 NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
                 picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT_0
+                context_ptr->txb_itr,
+#endif
                 candidateBuffer,
                 context_ptr->cu_ptr,
                 txb_1d_offset,

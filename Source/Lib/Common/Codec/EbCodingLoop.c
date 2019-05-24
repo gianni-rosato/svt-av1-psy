@@ -2848,6 +2848,9 @@ void perform_intra_coding_loop(
                 1,//allow_update_cdf,
                 &picture_control_set_ptr->ec_ctx_array[tbAddr],
                 picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT_0
+                context_ptr->txb_itr,
+#endif
                 candidateBuffer,
                 cu_ptr,
                 coeff1dOffset,
