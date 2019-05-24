@@ -2517,7 +2517,7 @@ void coding_loop_context_generation(
 #if ATB_SUPPORT
         context_ptr->blk_geom->txsize[0][0],
 #else
-        context_ptr->blk_geom->txsize[txb_itr],
+        context_ptr->blk_geom->txsize[0],
 #endif
         &cu_ptr->luma_txb_skip_context,
         &cu_ptr->luma_dc_sign_context[0]);
@@ -2533,7 +2533,7 @@ void coding_loop_context_generation(
 #if ATB_SUPPORT
             context_ptr->blk_geom->txsize_uv[0][0],
 #else
-            context_ptr->blk_geom->txsize_uv[txb_itr],
+            context_ptr->blk_geom->txsize_uv[0],
 #endif
             &cu_ptr->cb_txb_skip_context,
             &cu_ptr->cb_dc_sign_context);
@@ -2546,7 +2546,7 @@ void coding_loop_context_generation(
 #if ATB_SUPPORT
             context_ptr->blk_geom->txsize_uv[0][0],
 #else
-            context_ptr->blk_geom->txsize_uv[txb_itr],
+            context_ptr->blk_geom->txsize_uv[0],
 #endif
             &cu_ptr->cr_txb_skip_context,
             &cu_ptr->cr_dc_sign_context);

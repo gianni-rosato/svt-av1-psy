@@ -245,7 +245,7 @@ void mode_decision_update_neighbor_arrays(
 #endif
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-#if ATB_DC_CONTEXT_SUPPORT_2
+#if ATB_SUPPORT && ATB_DC_CONTEXT_SUPPORT_2
             neighbor_array_unit_mode_write(
                 picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
                 (uint8_t*)&dcSignLevelCoeff,
@@ -4845,10 +4845,12 @@ void move_cu_data(
     dst_cu->cr_dc_sign_context = src_cu->cr_dc_sign_context;
     dst_cu->reference_mode_context = src_cu->reference_mode_context;
     dst_cu->compoud_reference_type_context = src_cu->compoud_reference_type_context;
-
+#if ATB_DC_CONTEXT_SUPPORT_1
+    memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * MAX_TXB_COUNT * sizeof(int32_t));
+#else
     //CHKN int32_t                        quantized_dc[3];
     memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * sizeof(int32_t));
-
+#endif
     //CHKN uint32_t   is_inter_ctx;
     //CHKN uint32_t                     interp_filters;
 
@@ -4966,10 +4968,12 @@ void move_cu_data_redund(
     dst_cu->cr_dc_sign_context = src_cu->cr_dc_sign_context;
     dst_cu->reference_mode_context = src_cu->reference_mode_context;
     dst_cu->compoud_reference_type_context = src_cu->compoud_reference_type_context;
-
+#if ATB_DC_CONTEXT_SUPPORT_1
+    memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * MAX_TXB_COUNT * sizeof(int32_t));
+#else
     //CHKN int32_t                        quantized_dc[3];
     memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * sizeof(int32_t));
-
+#endif
     //CHKN uint32_t   is_inter_ctx;
     //CHKN uint32_t                     interp_filters;
 
