@@ -227,8 +227,8 @@ void mode_decision_update_neighbor_arrays(
 
 #if ATB_DC_CONTEXT_SUPPORT_0
 #if ATB_SUPPORT
-                origin_x - context_ptr->blk_geom->origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
-                origin_y - context_ptr->blk_geom->origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
+                context_ptr->sb_origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
+                context_ptr->sb_origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][txb_itr],
 #else
@@ -249,8 +249,8 @@ void mode_decision_update_neighbor_arrays(
             neighbor_array_unit_mode_write(
                 picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
                 (uint8_t*)&dcSignLevelCoeff,
-                origin_x - context_ptr->blk_geom->origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
-                origin_y - context_ptr->blk_geom->origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
+                context_ptr->sb_origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
+                context_ptr->sb_origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][txb_itr],
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
@@ -3897,8 +3897,7 @@ void perform_intra_atb_tx_search(
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);
 
 #if ATB_DC_CONTEXT_SUPPORT_2
-                uint8_t y_has_coeff = context_ptr->cu_ptr->transform_unit_array[context_ptr->txb_itr].y_has_coeff;
-                int32_t lumaDcCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[0][context_ptr->txb_itr];
+                int32_t lumaDcCoeff = (int32_t)candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr];
 
                 uint8_t dcSignCtx = 0;
                 if (lumaDcCoeff > 0)
