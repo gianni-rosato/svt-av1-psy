@@ -1720,7 +1720,18 @@ void av1_optimize_b(
     }
 }
 #endif
+#if DC_SIGN_CONTEXT_FIX
+
+static INLINE void set_dc_sign(int32_t *cul_level, int32_t dc_val) {
+    if (dc_val < 0)
+        *cul_level |= 1 << COEFF_CONTEXT_BITS;
+    else if (dc_val > 0)
+        *cul_level += 2 << COEFF_CONTEXT_BITS;
+}
+int32_t av1_quantize_inv_quantize(
+#else
 void av1_quantize_inv_quantize(
+#endif
     PictureControlSet           *picture_control_set_ptr,
     ModeDecisionContext         *md_context,
     int32_t               *coeff,
@@ -2077,6 +2088,25 @@ void av1_quantize_inv_quantize(
 #endif
     *count_non_zero_coeffs = *eob;
 
+#if DC_SIGN_CONTEXT_FIX
+    // Derive cul_level 
+    int32_t cul_level = 0;
+    const int16_t *const scan = scan_order->scan;
+    for (int32_t c = 0; c < *eob; ++c) {
+
+        const int16_t pos = scan[c];
+        const int32_t v = coeff[pos];
+        int32_t level = ABS(v);
+        cul_level += level;
+
+        const int32_t sign = (v < 0) ? 1 : 0;
+    }
+
+    cul_level = AOMMIN(COEFF_CONTEXT_MASK, cul_level);
+    // DC value
+    set_dc_sign(&cul_level, coeff[0]);
+    return cul_level;
+#endif
 }
 
 /****************************************
@@ -2146,7 +2176,11 @@ void product_full_loop(
 #else
             context_ptr->pf_md_mode);
 #endif
+#if DC_SIGN_CONTEXT_FIX
+        candidateBuffer->candidate_ptr->quantized_dc[0][txb_itr] = av1_quantize_inv_quantize(
+#else
         av1_quantize_inv_quantize(
+#endif
             picture_control_set_ptr,
             context_ptr,
             &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr->buffer_y)[txb_1d_offset]),
@@ -2186,7 +2220,9 @@ void product_full_loop(
             candidateBuffer->candidate_ptr->pred_mode,
             EB_FALSE);
 #if ATB_DC_CONTEXT_SUPPORT_1
+#if !DC_SIGN_CONTEXT_FIX
         candidateBuffer->candidate_ptr->quantized_dc[0][txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
+#endif
 #else
         candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
 #endif
@@ -2625,7 +2661,9 @@ void product_full_loop_tx_search(
                 EB_FALSE);
 
 #if ATB_DC_CONTEXT_SUPPORT_1
+#if !DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[0][txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[tu_origin_index]);
+#endif
 #else
             candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[tu_origin_index]);
 #endif
@@ -3366,7 +3404,11 @@ void full_loop_r(
 #else
                 correctedPFMode);
 #endif
+#if DC_SIGN_CONTEXT_FIX
+            candidateBuffer->candidate_ptr->quantized_dc[1][0] = av1_quantize_inv_quantize(
+#else
             av1_quantize_inv_quantize(
+#endif
                 picture_control_set_ptr,
                 context_ptr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr->buffer_cb)[txb_1d_offset]),
@@ -3410,7 +3452,9 @@ void full_loop_r(
                 EB_FALSE);
 #endif
 #if ATB_DC_CONTEXT_SUPPORT_1
+#if !DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[1][0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cb)[txb_1d_offset]);
+#endif
 #else
             candidateBuffer->candidate_ptr->quantized_dc[1] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cb)[txb_1d_offset]);
 #endif
@@ -3511,8 +3555,11 @@ void full_loop_r(
 #else
                 correctedPFMode);
 #endif
-
+#if DC_SIGN_CONTEXT_FIX
+            candidateBuffer->candidate_ptr->quantized_dc[2][0] = av1_quantize_inv_quantize(
+#else
             av1_quantize_inv_quantize(
+#endif
                 picture_control_set_ptr,
                 context_ptr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr->buffer_cr)[txb_1d_offset]),
@@ -3555,7 +3602,9 @@ void full_loop_r(
                 EB_FALSE);
 #endif
 #if ATB_DC_CONTEXT_SUPPORT_1
+#if !DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[2][0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cr)[txb_1d_offset]);
+#endif
 #else
             candidateBuffer->candidate_ptr->quantized_dc[2] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cr)[txb_1d_offset]);
 #endif

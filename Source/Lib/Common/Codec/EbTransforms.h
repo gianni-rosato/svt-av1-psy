@@ -3906,8 +3906,11 @@ extern "C" {
         EbAsm                asm_type,
         PlaneType           component_type,
         EB_TRANS_COEFF_SHAPE trans_coeff_shape);
-
+#if DC_SIGN_CONTEXT_FIX
+    extern int32_t av1_quantize_inv_quantize(
+#else
     extern void av1_quantize_inv_quantize(
+#endif
         PictureControlSet *picture_control_set_ptr,
         ModeDecisionContext         *md_context,
         int32_t             *coeff,

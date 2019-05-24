@@ -51,6 +51,17 @@ extern "C" {
 #define QP_SCALING_OFF                    1
 
 
+// Lossless changes 
+#define ATB_LOSSLESS                      1 // Adaptive Transform Block Lossless
+#if ATB_LOSSLESS
+#define ATB_DC_CONTEXT_SUPPORT_0          1 
+#define ATB_DC_CONTEXT_SUPPORT_1          1
+#define ATB_DC_CONTEXT_SUPPORT_2          1 
+#endif
+#if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
+#define DC_SIGN_CONTEXT_FIX               1
+#endif
+
 #define ATB                               1 // Adaptive Transform Block Lossy
 #if ATB
 #define ATB_SUPPORT                       1
@@ -62,13 +73,8 @@ extern "C" {
 #define ATB_RATE                          1 // to check TXS_CTX_EP
 #define TRANSFORM_TYPE_SUPPORT            1 // Lossless M0 only
 
-    // Lossless changes 
-#define ATB_LOSSLESS                      1 // Adaptive Transform Block Lossless
-#if ATB_LOSSLESS
-#define ATB_DC_CONTEXT_SUPPORT_0          1 
-#define ATB_DC_CONTEXT_SUPPORT_1          1
-#define ATB_DC_CONTEXT_SUPPORT_2          1 
-#endif
+
+
 #endif
 
 // New  presets
