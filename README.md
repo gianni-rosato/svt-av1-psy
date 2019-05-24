@@ -92,6 +92,8 @@ The SVT-AV1 Encoder adapts to the system that is being ran on. The memory requir
 * __Build Instructions__
 	 -	./Build/linux/build.sh <release | debug> (if none specified, both release and debug will be built)
 
+  - __Note about macOS__
+    - It is necessary to increase the amount of available file descriptors due to the limit being very low. The instructions to do so can be found [here](https://apple.lib.utah.edu/open-file-limits-on-os-x-what-they-are-why-increase-them-and-how-to-increase-them/).
 
 * __Sample Binaries location__
      -    Binaries can be found under Bin/Release and / or Bin/Debug
@@ -107,7 +109,7 @@ For the binaries to operate properly on your system, the following conditions ha
 ## Demo features and limitations
 
 -  **Multi-instance support:** The multi-instance functionality is a demo feature implemented in the SVT-AV1 Encoder sample application as an example of one sample application using multiple encoding libraries. Encoding using the multi-instance support is limited to only 6 simultaneous streams. For example two channels encoding on Windows: SvtAV1EncApp.exe -nch 2 -c firstchannel.cfg secondchannel.cfg
--  **Features enabled:** The library will display an error message any feature combination that is not currently supported. 
+-  **Features enabled:** The library will display an error message any feature combination that is not currently supported.
 
 ## How to Contribute
 
