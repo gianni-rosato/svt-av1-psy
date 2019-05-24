@@ -558,7 +558,7 @@ uint64_t av1_cost_coeffs_txb(
     uint16_t                            eob,
     PlaneType                           plane_type,
     TxSize                              transform_size,
-#if TRANSFORM_TYPE_SUPPORT                         
+#if ATB_TX_TYPE_SUPPORT_PER_TU                         
     TxType                              transform_type,
 #endif
     int16_t                             txb_skip_ctx,
@@ -571,7 +571,7 @@ uint64_t av1_cost_coeffs_txb(
     //warehouse_efficients_txb
 
     const TxSize txs_ctx = (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
-#if !TRANSFORM_TYPE_SUPPORT
+#if !ATB_TX_TYPE_SUPPORT_PER_TU
     const TxType transform_type = candidate_buffer_ptr->candidate_ptr->transform_type[plane_type];
 #endif
     const TxClass tx_class = tx_type_to_class[transform_type];
@@ -1784,7 +1784,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
     uint64_t                            *cr_tu_coeff_bits,
     TxSize                               txsize,
     TxSize                               txsize_uv,
-#if TRANSFORM_TYPE_SUPPORT
+#if ATB_TX_TYPE_SUPPORT_PER_TU
     TxType                               tx_type,
     TxType                               tx_type_uv,
 #endif
@@ -1829,7 +1829,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
                 (uint16_t)y_eob,
                 PLANE_TYPE_Y,
                 txsize,
-#if TRANSFORM_TYPE_SUPPORT
+#if ATB_TX_TYPE_SUPPORT_PER_TU
                 tx_type,
 #endif
                 luma_txb_skip_context,
@@ -1867,7 +1867,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
                 (uint16_t)cb_eob,
                 PLANE_TYPE_UV,
                 txsize_uv,
-#if TRANSFORM_TYPE_SUPPORT
+#if ATB_TX_TYPE_SUPPORT_PER_TU
                 tx_type_uv,
 #endif
                 cb_txb_skip_context,
@@ -1905,7 +1905,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
                 (uint16_t)cr_eob,
                 PLANE_TYPE_UV,
                 txsize_uv,
-#if TRANSFORM_TYPE_SUPPORT
+#if ATB_TX_TYPE_SUPPORT_PER_TU
                 tx_type_uv,
 #endif
                 cr_txb_skip_context,
@@ -1929,6 +1929,19 @@ EbErrorType av1_tu_estimate_coeff_bits(
 
     return return_error;
 }
+
+#if ATB_MD
+uint64_t estimate_tx_size_bits(
+    PictureControlSet       *pcsPtr,
+    uint32_t                 cu_origin_x,
+    uint32_t                 cu_origin_y,
+    CodingUnit               *cu_ptr,
+    const BlockGeom          *blk_geom,
+    NeighborArrayUnit        *txfm_context_array,
+    uint8_t                   tx_depth,
+    MdRateEstimationContext  *md_rate_estimation_ptr);
+#endif
+
 /*********************************************************************************
 * av1_intra_full_cost function is used to estimate the cost of an intra candidate mode
 * for full mode decisoion module.
@@ -2493,20 +2506,26 @@ void coding_loop_context_generation(
     cu_ptr->luma_txb_skip_context = 0;
 
 #if ATB_DC_CONTEXT_SUPPORT_0
-    // Iinitialize luma_dc_sign_context ssuming no atb search
-    get_txb_ctx( 
+    // Initialize luma_dc_sign_context assuming no atb search (i.e. transform size equal to block size)
+    cu_ptr->luma_dc_sign_context[0] = 0;
+    cu_ptr->luma_dc_sign_context[1] = 0;
+    cu_ptr->luma_dc_sign_context[2] = 0;
+    cu_ptr->luma_dc_sign_context[3] = 0;
+
+    cu_ptr->cb_txb_skip_context = 0;
+    cu_ptr->cb_dc_sign_context  = 0;
+    cu_ptr->cr_txb_skip_context = 0;
+    cu_ptr->cr_dc_sign_context  = 0;
+
+    get_txb_ctx(
         COMPONENT_LUMA,
         luma_dc_sign_level_coeff_neighbor_array,
         cu_origin_x,
         cu_origin_y,
         plane_bsize,
-#if ATB_SUPPORT
         context_ptr->blk_geom->txsize[0][0],
-#else
-        context_ptr->blk_geom->txsize[txb_itr],
-#endif
         &cu_ptr->luma_txb_skip_context,
-        &cu_ptr->luma_dc_sign_context[0]);
+        &(cu_ptr->luma_dc_sign_context[0]));
 
 
     if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
@@ -2516,33 +2535,25 @@ void coding_loop_context_generation(
             context_ptr->round_origin_x >> 1,
             context_ptr->round_origin_y >> 1,
             context_ptr->blk_geom->bsize_uv,
-#if ATB_SUPPORT
             context_ptr->blk_geom->txsize_uv[0][0],
-#else
-            context_ptr->blk_geom->txsize_uv[txb_itr],
-#endif
             &cu_ptr->cb_txb_skip_context,
             &cu_ptr->cb_dc_sign_context);
+
         get_txb_ctx(
             COMPONENT_CHROMA,
             cr_dc_sign_level_coeff_neighbor_array,
             context_ptr->round_origin_x >> 1,
             context_ptr->round_origin_y >> 1,
             context_ptr->blk_geom->bsize_uv,
-#if ATB_SUPPORT
             context_ptr->blk_geom->txsize_uv[0][0],
-#else
-            context_ptr->blk_geom->txsize_uv[txb_itr],
-#endif
             &cu_ptr->cr_txb_skip_context,
             &cu_ptr->cr_dc_sign_context);
     }
-    
+
     cu_ptr->luma_dc_sign_context[0] = cu_ptr->luma_dc_sign_context[0];
     cu_ptr->luma_dc_sign_context[1] = cu_ptr->luma_dc_sign_context[0];
     cu_ptr->luma_dc_sign_context[2] = cu_ptr->luma_dc_sign_context[0];
     cu_ptr->luma_dc_sign_context[3] = cu_ptr->luma_dc_sign_context[0];
-
 #else
     cu_ptr->luma_dc_sign_context = 0;
     cu_ptr->cb_txb_skip_context = 0;
@@ -3033,7 +3044,7 @@ EbErrorType av1_encode_tu_calc_cost(
         //  PSNR = (LUMA_WEIGHT * PSNRy + PSNRu + PSNRv) / (2+LUMA_WEIGHT)
         yZeroCbfDistortion = LUMA_WEIGHT * (yZeroCbfDistortion << AV1_COST_PRECISION);
 #if ATB_SUPPORT
-        TxSize    txSize = context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr];
+        TxSize    txSize = context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
 #else
         TxSize    txSize = context_ptr->blk_geom->txsize[context_ptr->txb_itr];
 #endif

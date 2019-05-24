@@ -1720,7 +1720,18 @@ void av1_optimize_b(
     }
 }
 #endif
+#if DC_SIGN_CONTEXT_FIX
+
+static INLINE void set_dc_sign(int32_t *cul_level, int32_t dc_val) {
+    if (dc_val < 0)
+        *cul_level |= 1 << COEFF_CONTEXT_BITS;
+    else if (dc_val > 0)
+        *cul_level += 2 << COEFF_CONTEXT_BITS;
+}
+int32_t av1_quantize_inv_quantize(
+#else
 void av1_quantize_inv_quantize(
+#endif
     PictureControlSet           *picture_control_set_ptr,
     ModeDecisionContext         *md_context,
     int32_t               *coeff,
@@ -1923,7 +1934,7 @@ void av1_quantize_inv_quantize(
         // Use the 1st spot of the candidate buffer to hold cfl settings to use same kernel as MD for coef cost estimation
         if (is_encode_pass) 
         {
-#if !TRANSFORM_TYPE_SUPPORT
+#if !ATB_TX_TYPE_SUPPORT_PER_TU
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = tx_type;
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV] = tx_type;
 #endif
@@ -1943,7 +1954,7 @@ void av1_quantize_inv_quantize(
             *eob,
             (component_type == COMPONENT_LUMA) ? 0 : 1,
             txsize,
-#if TRANSFORM_TYPE_SUPPORT
+#if ATB_TX_TYPE_SUPPORT_PER_TU
             tx_type,
 #endif
             txb_skip_context,     
@@ -2008,7 +2019,7 @@ void av1_quantize_inv_quantize(
                     *eob,
                     (component_type == COMPONENT_LUMA) ? 0 : 1,
                     txsize,
-#if TRANSFORM_TYPE_SUPPORT
+#if ATB_TX_TYPE_SUPPORT_PER_TU
                     tx_type,
 #endif
                     txb_skip_context,    
@@ -2077,6 +2088,23 @@ void av1_quantize_inv_quantize(
 #endif
     *count_non_zero_coeffs = *eob;
 
+#if DC_SIGN_CONTEXT_FIX
+    // Derive cul_level 
+    int32_t cul_level = 0;
+    const int16_t *const scan = scan_order->scan;
+    for (int32_t c = 0; c < *eob; ++c) {
+
+        const int16_t pos = scan[c];
+        const int32_t v = coeff[pos];
+        int32_t level = ABS(v);
+        cul_level += level;
+    }
+
+    cul_level = AOMMIN(COEFF_CONTEXT_MASK, cul_level);
+    // DC value
+    set_dc_sign(&cul_level, coeff[0]);
+    return cul_level;
+#endif
 }
 
 /****************************************
@@ -2134,8 +2162,8 @@ void product_full_loop(
             &context_ptr->three_quad_energy,
             context_ptr->transform_inner_array_ptr,
             0,
-#if TRANSFORM_TYPE_SUPPORT
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+            candidateBuffer->candidate_ptr->transform_type[txb_itr],
 #else
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
 #endif
@@ -2146,7 +2174,11 @@ void product_full_loop(
 #else
             context_ptr->pf_md_mode);
 #endif
+#if DC_SIGN_CONTEXT_FIX
+        candidateBuffer->candidate_ptr->quantized_dc[0][txb_itr] = av1_quantize_inv_quantize(
+#else
         av1_quantize_inv_quantize(
+#endif
             picture_control_set_ptr,
             context_ptr,
             &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr->buffer_y)[txb_1d_offset]),
@@ -2171,8 +2203,8 @@ void product_full_loop(
 #endif
             COMPONENT_LUMA,
             BIT_INCREMENT_8BIT,
-#if TRANSFORM_TYPE_SUPPORT
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+            candidateBuffer->candidate_ptr->transform_type[txb_itr],
 #else
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
 #endif
@@ -2186,7 +2218,9 @@ void product_full_loop(
             candidateBuffer->candidate_ptr->pred_mode,
             EB_FALSE);
 #if ATB_DC_CONTEXT_SUPPORT_1
+#if !DC_SIGN_CONTEXT_FIX
         candidateBuffer->candidate_ptr->quantized_dc[0][txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
+#endif
 #else
         candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
 #endif
@@ -2222,8 +2256,8 @@ void product_full_loop(
 #else
                     context_ptr->blk_geom->txsize[txb_itr],
 #endif
-#if TRANSFORM_TYPE_SUPPORT
-                    candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+                    candidateBuffer->candidate_ptr->transform_type[txb_itr],
 #else
                     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
 #endif
@@ -2320,7 +2354,7 @@ void product_full_loop(
             tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
             //assert(context_ptr->three_quad_energy == 0 && context_ptr->cu_stats->size < 64);
 #if ATB_SUPPORT
-            TxSize tx_size = context_ptr->blk_geom->txsize[tx_depth][0]; // NM: why  tu_index 0?
+            TxSize tx_size = context_ptr->blk_geom->txsize[tx_depth][txb_itr];
 #else
             TxSize    tx_size = context_ptr->blk_geom->txsize[0];
 #endif
@@ -2389,9 +2423,9 @@ void product_full_loop(
             context_ptr->blk_geom->txsize[0],
             context_ptr->blk_geom->txsize_uv[0],
 #endif
-#if TRANSFORM_TYPE_SUPPORT
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+            candidateBuffer->candidate_ptr->transform_type[txb_itr],
+            candidateBuffer->candidate_ptr->transform_type_uv,
 #endif
             COMPONENT_LUMA,
             asm_type);
@@ -2562,8 +2596,8 @@ void product_full_loop_tx_search(
             y_tu_coeff_bits = 0;
 
 #if OPT_QUANT_COEFF
-#if TRANSFORM_TYPE_SUPPORT
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr] = tx_type;
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+            candidateBuffer->candidate_ptr->transform_type[txb_itr] = tx_type;
 #else
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = tx_type;
 #endif
@@ -2625,7 +2659,9 @@ void product_full_loop_tx_search(
                 EB_FALSE);
 
 #if ATB_DC_CONTEXT_SUPPORT_1
+#if !DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[0][txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[tu_origin_index]);
+#endif
 #else
             candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[tu_origin_index]);
 #endif
@@ -2697,9 +2733,9 @@ void product_full_loop_tx_search(
                 context_ptr->blk_geom->txsize[txb_itr],
                 context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
-#if TRANSFORM_TYPE_SUPPORT
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+                candidateBuffer->candidate_ptr->transform_type[txb_itr],
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #endif
                 COMPONENT_LUMA,
                 asm_type);
@@ -2739,12 +2775,12 @@ void product_full_loop_tx_search(
 
 
     }
-#if TRANSFORM_TYPE_SUPPORT
+#if ATB_TX_TYPE_SUPPORT_PER_TU
     // this kernel assumes no atb
-    candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][0] = best_tx_type;
+    candidateBuffer->candidate_ptr->transform_type[0] = best_tx_type;
     // For Inter blocks, transform type of chroma follows luma transfrom type
     if (is_inter)
-        candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0] = candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][0];
+        candidateBuffer->candidate_ptr->transform_type_uv = candidateBuffer->candidate_ptr->transform_type[0];
 #else
     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = best_tx_type;
     // For Inter blocks, transform type of chroma follows luma transfrom type
@@ -2757,19 +2793,19 @@ void encode_pass_tx_search(
     PictureControlSet            *picture_control_set_ptr,
     EncDecContext                *context_ptr,
     LargestCodingUnit            *sb_ptr,
-    uint32_t                       cb_qp,
+    uint32_t                      cb_qp,
     EbPictureBufferDesc          *coeffSamplesTB,          
     EbPictureBufferDesc          *residual16bit,           
     EbPictureBufferDesc          *transform16bit,          
     EbPictureBufferDesc          *inverse_quant_buffer,
-    int16_t                        *transformScratchBuffer,
-    EbAsm                          asm_type,
-    uint32_t                       *count_non_zero_coeffs,
-    uint32_t                       component_mask,
-    uint32_t                       use_delta_qp,
-    uint32_t                       dZoffset,
-    uint16_t                       *eob,
-    MacroblockPlane                *candidate_plane){
+    int16_t                      *transformScratchBuffer,
+    EbAsm                        asm_type,
+    uint32_t                     *count_non_zero_coeffs,
+    uint32_t                     component_mask,
+    uint32_t                     use_delta_qp,
+    uint32_t                     dZoffset,
+    uint16_t                     *eob,
+    MacroblockPlane              *candidate_plane){
 
     (void)dZoffset;
     (void)use_delta_qp;
@@ -2796,9 +2832,8 @@ void encode_pass_tx_search(
     TxType                 txk_end = TX_TYPES;
     TxType                 tx_type;
 #if ATB_SUPPORT 
-    uint8_t                tx_depth = context_ptr->tx_depth; // Hsan atb
-    TxSize                 txSize = context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr];
-    const uint32_t         scratchLumaOffset = context_ptr->blk_geom->tx_org_x[tx_depth][context_ptr->txb_itr] + context_ptr->blk_geom->tx_org_y[tx_depth][context_ptr->txb_itr] * SB_STRIDE_Y;
+    TxSize                 txSize = context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
+    const uint32_t         scratchLumaOffset = context_ptr->blk_geom->tx_org_x[cu_ptr->tx_depth][context_ptr->txb_itr] + context_ptr->blk_geom->tx_org_y[cu_ptr->tx_depth][context_ptr->txb_itr] * SB_STRIDE_Y;
 #else
     TxSize                 txSize = context_ptr->blk_geom->txsize[context_ptr->txb_itr];
 #endif
@@ -2838,7 +2873,7 @@ void encode_pass_tx_search(
             ((TranLow*)transform16bit->buffer_y) + coeff1dOffset,
             NOT_USED_VALUE,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
 #endif
@@ -2863,9 +2898,9 @@ void encode_pass_tx_search(
             ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->tx_width[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->tx_height[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->txb_itr],
@@ -2937,7 +2972,7 @@ void encode_pass_tx_search(
         // Set the Candidate Buffer
         candidateBuffer = candidate_buffer_ptr_array[0];
         // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-#if !TRANSFORM_TYPE_SUPPORT
+#if !ATB_TX_TYPE_SUPPORT_PER_TU
         candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
         candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
 #endif
@@ -2969,13 +3004,13 @@ void encode_pass_tx_search(
             &y_tu_coeff_bits,
             &y_tu_coeff_bits,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->txsize_uv[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
             context_ptr->blk_geom->txsize_uv[context_ptr->txb_itr],
 #endif
-#if TRANSFORM_TYPE_SUPPORT
+#if ATB_TX_TYPE_SUPPORT_PER_TU
             cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
             cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV],
 #endif
@@ -2987,7 +3022,7 @@ void encode_pass_tx_search(
             candidateBuffer->candidate_ptr,
             context_ptr->txb_itr,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
 #endif
@@ -3056,8 +3091,7 @@ void encode_pass_tx_search_hbd(
     TxType                      txk_end = TX_TYPES;
     TxType                      tx_type;
 #if ATB_SUPPORT
-    uint8_t tx_depth = context_ptr->tx_depth; // Hsan atb
-    TxSize                      txSize = context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr];
+    TxSize                      txSize = context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
 #else
     TxSize                      txSize = context_ptr->blk_geom->txsize[context_ptr->txb_itr];
 #endif
@@ -3091,7 +3125,7 @@ void encode_pass_tx_search_hbd(
             ((TranLow*)transform16bit->buffer_y) + coeff1dOffset,
             NOT_USED_VALUE,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
 #endif
@@ -3115,9 +3149,9 @@ void encode_pass_tx_search_hbd(
             ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->tx_width[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->tx_height[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->txb_itr],
@@ -3190,7 +3224,7 @@ void encode_pass_tx_search_hbd(
         // Set the Candidate Buffer
         candidateBuffer = candidate_buffer_ptr_array[0];
         // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-#if !TRANSFORM_TYPE_SUPPORT
+#if !ATB_TX_TYPE_SUPPORT_PER_TU
         candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
         candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
 #endif
@@ -3222,13 +3256,13 @@ void encode_pass_tx_search_hbd(
             &y_tu_coeff_bits,
             &y_tu_coeff_bits,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->txsize_uv[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
             context_ptr->blk_geom->txsize_uv[context_ptr->txb_itr],
 #endif
-#if TRANSFORM_TYPE_SUPPORT
+#if ATB_TX_TYPE_SUPPORT_PER_TU
             cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
             cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV],
 #endif
@@ -3240,7 +3274,7 @@ void encode_pass_tx_search_hbd(
             candidateBuffer->candidate_ptr,
             context_ptr->txb_itr,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
 #endif
@@ -3354,8 +3388,8 @@ void full_loop_r(
                 &context_ptr->three_quad_energy,
                 context_ptr->transform_inner_array_ptr,
                 0,
-#if TRANSFORM_TYPE_SUPPORT
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3366,7 +3400,11 @@ void full_loop_r(
 #else
                 correctedPFMode);
 #endif
+#if DC_SIGN_CONTEXT_FIX
+            candidateBuffer->candidate_ptr->quantized_dc[1][0] = av1_quantize_inv_quantize(
+#else
             av1_quantize_inv_quantize(
+#endif
                 picture_control_set_ptr,
                 context_ptr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr->buffer_cb)[txb_1d_offset]),
@@ -3391,8 +3429,8 @@ void full_loop_r(
 #endif
                 COMPONENT_CHROMA_CB,
                 BIT_INCREMENT_8BIT,
-#if TRANSFORM_TYPE_SUPPORT
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3410,7 +3448,9 @@ void full_loop_r(
                 EB_FALSE);
 #endif
 #if ATB_DC_CONTEXT_SUPPORT_1
+#if !DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[1][0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cb)[txb_1d_offset]);
+#endif
 #else
             candidateBuffer->candidate_ptr->quantized_dc[1] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cb)[txb_1d_offset]);
 #endif
@@ -3442,8 +3482,8 @@ void full_loop_r(
 #else
                         context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
-#if TRANSFORM_TYPE_SUPPORT
-                        candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+                        candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                         candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3499,8 +3539,8 @@ void full_loop_r(
                 &context_ptr->three_quad_energy,
                 context_ptr->transform_inner_array_ptr,
                 0,
-#if TRANSFORM_TYPE_SUPPORT
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3511,8 +3551,11 @@ void full_loop_r(
 #else
                 correctedPFMode);
 #endif
-
+#if DC_SIGN_CONTEXT_FIX
+            candidateBuffer->candidate_ptr->quantized_dc[2][0] = av1_quantize_inv_quantize(
+#else
             av1_quantize_inv_quantize(
+#endif
                 picture_control_set_ptr,
                 context_ptr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr->buffer_cr)[txb_1d_offset]),
@@ -3537,8 +3580,8 @@ void full_loop_r(
 #endif
                 COMPONENT_CHROMA_CR,
                 BIT_INCREMENT_8BIT,
-#if TRANSFORM_TYPE_SUPPORT
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3555,7 +3598,9 @@ void full_loop_r(
                 EB_FALSE);
 #endif
 #if ATB_DC_CONTEXT_SUPPORT_1
+#if !DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[2][0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cr)[txb_1d_offset]);
+#endif
 #else
             candidateBuffer->candidate_ptr->quantized_dc[2] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cr)[txb_1d_offset]);
 #endif
@@ -3584,8 +3629,8 @@ void full_loop_r(
 #else
                         context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
-#if TRANSFORM_TYPE_SUPPORT
-                        candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+                        candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                         candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3886,9 +3931,9 @@ void cu_full_distortion_fast_tu_mode_r(
                 context_ptr->blk_geom->txsize[txb_itr],
                 context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
-#if TRANSFORM_TYPE_SUPPORT
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+                candidateBuffer->candidate_ptr->transform_type[txb_itr],
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #endif
                 component_type,
                 asm_type);

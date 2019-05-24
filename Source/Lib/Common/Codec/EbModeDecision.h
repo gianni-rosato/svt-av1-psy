@@ -119,8 +119,9 @@ extern "C" {
 #endif
         EbBool                                 is_new_mv;
         EbBool                                 is_zero_mv;
-#if TRANSFORM_TYPE_SUPPORT
-        TxType                                 transform_type[PLANE_TYPES][MAX_TXB_COUNT];
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+        TxType                                 transform_type[MAX_TXB_COUNT];
+        TxType                                 transform_type_uv;
 #else
         TxType                                 transform_type[PLANE_TYPES];
 #endif

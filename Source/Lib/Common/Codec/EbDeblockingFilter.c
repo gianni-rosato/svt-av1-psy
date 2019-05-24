@@ -868,12 +868,7 @@ static TxSize get_transform_size(const MacroBlockD *const xd,
 #if ATB_SUPPORT
     if (((plane == COMPONENT_LUMA) && is_inter_block(mbmi) && !mbmi->skip)) {  // if split tx is used
 
-        const BlockSize sb_type = mbmi->sb_type;
-        const int32_t blk_row = mi_row & (mi_size_high[sb_type] - 1);
-        const int32_t blk_col = mi_col & (mi_size_wide[sb_type] - 1);
         const TxSize mb_tx_size = tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]; // tx_size
-       /* const TxSize mb_tx_size =
-            mbmi->inter_tx_size[av1_get_txb_size_index(sb_type, blk_row, blk_col)];*/
         assert(mb_tx_size < TX_SIZES_ALL);
         tx_size = mb_tx_size;
     }

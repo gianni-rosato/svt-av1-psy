@@ -46,30 +46,26 @@ extern "C" {
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
-// Testing only
-#define TXS_DISABLE_CFL                   1
-#define QP_SCALING_OFF                    1
-
-
-#define ATB                               1 // Adaptive Transform Block Lossy
+#define ATB                               1 // ATB Main Flag
 #if ATB
-#define ATB_SUPPORT                       1
-#define ATB_EP                            1
-#define ATB_EC                            1
-
-#define ATB_MD                            1 
-#define ATB_TX_SEARCH                     1
-#define ATB_RATE                          1 // to check TXS_CTX_EP
-#define TRANSFORM_TYPE_SUPPORT            1 // Lossless M0 only
-
-    // Lossless changes 
-#define ATB_LOSSLESS                      1 // Adaptive Transform Block Lossless
-#if ATB_LOSSLESS
-#define ATB_DC_CONTEXT_SUPPORT_0          1 
-#define ATB_DC_CONTEXT_SUPPORT_1          1
-#define ATB_DC_CONTEXT_SUPPORT_2          1 
+#define ATB_SUPPORT                       1 // Tranform block geometry, data structure(s), ..
+#define ATB_SUPPORT_1_DEPTH               1 // Undo trasnform depth 2 as ATB for INTER not yet active 
+#define ATB_EP                            1 // Tranform partitioning @ encode passs 
+#define ATB_EC                            1 // Tranform partitioning @ entropy coding 
+#define ATB_MD                            1 // Tranform partitioning @ mode decision
+#define ATB_RATE                          1 // 
+#define ATB_TX_TYPE_SUPPORT_PER_TU        1 // Added the ability to signal Tx type per tranform block 
+#define ATB_DC_CONTEXT_SUPPORT_0          1 // Added the ability to signal DC context per tranform block 
+#define ATB_DC_CONTEXT_SUPPORT_1          1 // Added the ability to signal DC level per tranform block 
+#define ATB_DC_CONTEXT_SUPPORT_2          1 // Added the ability to update DC context @ tranform block basis for only INTRA partitioning (128x128 not yet adressed)
+#if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
+#define DC_SIGN_CONTEXT_FIX               1 // Fixed DC level derivation and update @ mode decision 
+#define DC_SIGN_CONTEXT_EP                0 // Fixed DC level update @ encode pass
 #endif
+#define SHUT_ATB                          0 // ATB multi-mode signal
 #endif
+/**********************************************************************************/
+
 
 // New  presets
 #define NEW_PRESETS                       1
@@ -336,7 +332,7 @@ enum {
 #define ADD_DELTA_QP_SUPPORT                      0  // Add delta QP support - Please enable this flag and iproveSharpness (config) to test the QPM
 #define BLOCK_MAX_COUNT_SB_128                    4421  // TODO: reduce alloction for 64x64
 #define BLOCK_MAX_COUNT_SB_64                     1101  // TODO: reduce alloction for 64x64
-#if ATB_SUPPORT
+#if ATB_SUPPORT && !ATB_SUPPORT_1_DEPTH
 #define MAX_TXB_COUNT                             16 // Maximum number of transform blocks per depth
 #else
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
@@ -395,7 +391,11 @@ enum {
 // Maximum number of tile rows and tile columns
 #define MAX_TILE_ROWS 1024
 #define MAX_TILE_COLS 1024
+#if ATB_SUPPORT_1_DEPTH
+#define MAX_VARTX_DEPTH 1
+#else
 #define MAX_VARTX_DEPTH 2
+#endif
 #define MI_SIZE_64X64 (64 >> MI_SIZE_LOG2)
 #define MI_SIZE_128X128 (128 >> MI_SIZE_LOG2)
 #define MAX_PALETTE_SQUARE (64 * 64)

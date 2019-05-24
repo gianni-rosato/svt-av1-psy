@@ -1607,6 +1607,20 @@ EbErrorType signal_derivation_multi_processes_oq(
             CU_8x8_MODE_1 :
             CU_8x8_MODE_0;
 #endif
+
+
+
+#if ATB_SUPPORT
+        // Set tx mode
+        if (picture_control_set_ptr->enc_mode == ENC_M0 && sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT)
+#if SHUT_ATB
+            picture_control_set_ptr->tx_mode = TX_MODE_LARGEST;
+#else
+            picture_control_set_ptr->tx_mode = TX_MODE_SELECT;
+#endif
+        else
+            picture_control_set_ptr->tx_mode = TX_MODE_LARGEST;
+#endif
     return return_error;
 }
 

@@ -1112,7 +1112,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 blk_geom_mds[*idx_mds].tx_width_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].tx_width_uv[0][0];
                 blk_geom_mds[*idx_mds].tx_height_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].tx_height_uv[0][0];
             }
-
+#if !ATB_SUPPORT_1_DEPTH
             // tx_depth 2 geom settings
             tx_depth = 2;
             blk_geom_mds[*idx_mds].txb_count[tx_depth] = blk_geom_mds[*idx_mds].bsize == BLOCK_128X128 ? 4 :
@@ -1429,6 +1429,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 if (blk_geom_mds[*idx_mds].tx_width[tx_depth][txb_itr] == 0 || blk_geom_mds[*idx_mds].tx_height[tx_depth][txb_itr] == 0)
                     printf("error! invalid Tx side");
             }
+#endif
 #endif
 #else
             blk_geom_mds[*idx_mds].txb_count = blk_geom_mds[*idx_mds].bsize == BLOCK_128X128 ? 4 :

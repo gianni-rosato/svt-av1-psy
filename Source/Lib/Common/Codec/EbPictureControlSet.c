@@ -774,6 +774,53 @@ EbErrorType picture_control_set_ctor(
         object_ptr->ep_cb_recon_neighbor_array16bit = 0;
         object_ptr->ep_cr_recon_neighbor_array16bit = 0;
     }
+
+
+#if DC_SIGN_CONTEXT_EP
+
+    // for each 4x4
+    return_error = neighbor_array_unit_ctor(
+        &object_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+        MAX_PICTURE_WIDTH_SIZE,
+        MAX_PICTURE_HEIGHT_SIZE,
+        sizeof(uint8_t),
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+    if (return_error == EB_ErrorInsufficientResources) {
+        return EB_ErrorInsufficientResources;
+    }
+
+    // for each 4x4
+    return_error = neighbor_array_unit_ctor(
+        &object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+        MAX_PICTURE_WIDTH_SIZE,
+        MAX_PICTURE_HEIGHT_SIZE,
+        sizeof(uint8_t),
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+    if (return_error == EB_ErrorInsufficientResources) {
+        return EB_ErrorInsufficientResources;
+    }
+
+    // for each 4x4
+    return_error = neighbor_array_unit_ctor(
+        &object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+        MAX_PICTURE_WIDTH_SIZE,
+        MAX_PICTURE_HEIGHT_SIZE,
+        sizeof(uint8_t),
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+    if (return_error == EB_ErrorInsufficientResources) {
+        return EB_ErrorInsufficientResources;
+    }
+#endif
+
 #if !OPT_LOSSLESS_0
     return_error = neighbor_array_unit_ctor(
         &object_ptr->amvp_mv_merge_mv_neighbor_array,
