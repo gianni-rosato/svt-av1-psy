@@ -47,8 +47,8 @@ extern "C" {
 #define MRP_SUPPORT                       1// MRP Main Flag
 
 // Testing only
-#define TXS_DISABLE_CFL                   0
-#define QP_SCALING_OFF                    0
+#define TXS_DISABLE_CFL                   1
+#define QP_SCALING_OFF                    1
 
 // Lossless changes 
 #define ATB_LOSSLESS                      1 // Adaptive Transform Block Lossless
@@ -56,19 +56,20 @@ extern "C" {
 #define ATB_DC_CONTEXT_SUPPORT_0          1 
 #define ATB_DC_CONTEXT_SUPPORT_1          1
 #define ATB_DC_CONTEXT_SUPPORT_2          1 
+
 #endif
 
 
-#define ATB                               0 // Adaptive Transform Block Lossy
+#define ATB                               1 // Adaptive Transform Block Lossy
 #if ATB
 #define ATB_SUPPORT                       1
 #define ATB_EP                            1
 #define ATB_EC                            1
 
 #define ATB_MD                            1 
-#define TRANSFORM_TYPE_SUPPORT            1
 #define ATB_TX_SEARCH                     1
 #define ATB_RATE                          1 // to check TXS_CTX_EP
+#define TRANSFORM_TYPE_SUPPORT            1 // Lossless M0 only
 #endif
 
 // New  presets

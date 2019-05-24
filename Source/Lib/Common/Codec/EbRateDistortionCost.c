@@ -2491,24 +2491,10 @@ void coding_loop_context_generation(
     BlockSize plane_bsize = context_ptr->blk_geom->bsize;
 
     cu_ptr->luma_txb_skip_context = 0;
-#if ATB_DC_CONTEXT_SUPPORT_0
-    cu_ptr->luma_dc_sign_context[0] = 0;
-    cu_ptr->luma_dc_sign_context[1] = 0;
-    cu_ptr->luma_dc_sign_context[2] = 0;
-    cu_ptr->luma_dc_sign_context[3] = 0;
-#else
-    cu_ptr->luma_dc_sign_context = 0;
-#endif
-    cu_ptr->cb_txb_skip_context = 0;
-    cu_ptr->cb_dc_sign_context = 0;
-    cu_ptr->cr_txb_skip_context = 0;
-    cu_ptr->cr_dc_sign_context = 0;
-
 
 #if ATB_DC_CONTEXT_SUPPORT_0
-#if ATB_DC_CONTEXT_SUPPORT_2
-    // This kernel assumes no atb
-    get_txb_ctx(              
+    // Iinitialize luma_dc_sign_context ssuming no atb search
+    get_txb_ctx( 
         COMPONENT_LUMA,
         luma_dc_sign_level_coeff_neighbor_array,
         cu_origin_x,
@@ -2517,7 +2503,7 @@ void coding_loop_context_generation(
 #if ATB_SUPPORT
         context_ptr->blk_geom->txsize[0][0],
 #else
-        context_ptr->blk_geom->txsize[0],
+        context_ptr->blk_geom->txsize[txb_itr],
 #endif
         &cu_ptr->luma_txb_skip_context,
         &cu_ptr->luma_dc_sign_context[0]);
@@ -2533,7 +2519,7 @@ void coding_loop_context_generation(
 #if ATB_SUPPORT
             context_ptr->blk_geom->txsize_uv[0][0],
 #else
-            context_ptr->blk_geom->txsize_uv[0],
+            context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
             &cu_ptr->cb_txb_skip_context,
             &cu_ptr->cb_dc_sign_context);
@@ -2546,71 +2532,23 @@ void coding_loop_context_generation(
 #if ATB_SUPPORT
             context_ptr->blk_geom->txsize_uv[0][0],
 #else
-            context_ptr->blk_geom->txsize_uv[0],
+            context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
             &cu_ptr->cr_txb_skip_context,
             &cu_ptr->cr_dc_sign_context);
     }
+    
+    cu_ptr->luma_dc_sign_context[0] = cu_ptr->luma_dc_sign_context[0];
+    cu_ptr->luma_dc_sign_context[1] = cu_ptr->luma_dc_sign_context[0];
+    cu_ptr->luma_dc_sign_context[2] = cu_ptr->luma_dc_sign_context[0];
+    cu_ptr->luma_dc_sign_context[3] = cu_ptr->luma_dc_sign_context[0];
 
 #else
-#if ATB_SUPPORT // Hsan atb
-    uint8_t tx_depth = context_ptr->tx_depth = cu_ptr->tx_depth;
-    int32_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];
-#else
-    int32_t txb_count = context_ptr->blk_geom->txb_count;
-#endif
-    int32_t txb_itr = 0;
-
-
-    for (txb_itr = 0; txb_itr < txb_count; txb_itr++) {
-
-
-        get_txb_ctx(                  //SB128_TODO move inside Full loop
-            COMPONENT_LUMA,
-            luma_dc_sign_level_coeff_neighbor_array,
-            cu_origin_x,
-            cu_origin_y,
-            plane_bsize,
-#if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][txb_itr],
-#else
-            context_ptr->blk_geom->txsize[txb_itr],
-#endif
-            &cu_ptr->luma_txb_skip_context,
-            &cu_ptr->luma_dc_sign_context[txb_itr]);
-
-
-        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
-            get_txb_ctx(
-                COMPONENT_CHROMA,
-                cb_dc_sign_level_coeff_neighbor_array,
-                context_ptr->round_origin_x >> 1,
-                context_ptr->round_origin_y >> 1,
-                context_ptr->blk_geom->bsize_uv,
-#if ATB_SUPPORT
-                context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
-#else
-                context_ptr->blk_geom->txsize_uv[txb_itr],
-#endif
-                &cu_ptr->cb_txb_skip_context,
-                &cu_ptr->cb_dc_sign_context);
-            get_txb_ctx(
-                COMPONENT_CHROMA,
-                cr_dc_sign_level_coeff_neighbor_array,
-                context_ptr->round_origin_x >> 1,
-                context_ptr->round_origin_y >> 1,
-                context_ptr->blk_geom->bsize_uv,
-#if ATB_SUPPORT
-                context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
-#else
-                context_ptr->blk_geom->txsize_uv[txb_itr],
-#endif
-                &cu_ptr->cr_txb_skip_context,
-                &cu_ptr->cr_dc_sign_context);
-        }
-    }
-#endif
-#else
+    cu_ptr->luma_dc_sign_context = 0;
+    cu_ptr->cb_txb_skip_context = 0;
+    cu_ptr->cb_dc_sign_context = 0;
+    cu_ptr->cr_txb_skip_context = 0;
+    cu_ptr->cr_dc_sign_context = 0;
 #if ATB_SUPPORT // Hsan atb
     uint8_t tx_depth = context_ptr->tx_depth = cu_ptr->tx_depth;
     int32_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];
