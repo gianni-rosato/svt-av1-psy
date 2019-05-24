@@ -5605,9 +5605,6 @@ static INLINE int is_rect_tx(TxSize tx_size) { return tx_size >= TX_SIZES; }
 static INLINE int is_intrabc_block(const MbModeInfo *mbmi) {
     return mbmi->use_intrabc;
 }
-static INLINE int is_inter_block(const MbModeInfo *mbmi) {
-    return is_intrabc_block(mbmi) || mbmi->ref_frame[0] > INTRA_FRAME;
-}
 static INLINE int get_vartx_max_txsize(/*const MbModeInfo *xd,*/ BlockSize bsize,
     int plane) {
     /* if (xd->lossless[xd->mi[0]->segment_id]) return TX_4X4;*/
