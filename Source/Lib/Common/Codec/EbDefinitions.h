@@ -350,6 +350,8 @@ enum {
 // Mask to extract MI offset within max MIB
 #define MAX_MIB_MASK (MAX_MIB_SIZE - 1)
 
+// Maximum size of a loop restoration tile
+#define RESTORATION_TILESIZE_MAX 256
 // Maximum number of tile rows and tile columns
 #define MAX_TILE_ROWS 1024
 #define MAX_TILE_COLS 1024
@@ -1096,9 +1098,12 @@ typedef enum ATTRIBUTE_PACKED
 typedef enum 
 {
     COMPOUND_AVERAGE,
+    COMPOUND_DISTWTD,
     COMPOUND_WEDGE,
     COMPOUND_DIFFWTD,
-    COMPOUND_TYPES,
+    COMPOUND_INTRA,
+    COMPOUND_TYPES = 3,
+    MASKED_COMPOUND_TYPES = 2,
 } CompoundType;
 
 typedef enum ATTRIBUTE_PACKED 
@@ -1177,6 +1182,7 @@ typedef uint8_t TXFM_CONTEXT;
 #define ALTREF_FRAME 7
 #define LAST_REF_FRAMES (LAST3_FRAME - LAST_FRAME + 1)
 
+#define REFS_PER_FRAME 7
 #define INTER_REFS_PER_FRAME (ALTREF_FRAME - LAST_FRAME + 1)
 #define TOTAL_REFS_PER_FRAME (ALTREF_FRAME - INTRA_FRAME + 1)
 
@@ -1223,6 +1229,7 @@ typedef enum ATTRIBUTE_PACKED
     RESTORE_TYPES = 4,
 } RestorationType;
 
+#define SCALE_NUMERATOR 8
 #define SUPERRES_SCALE_BITS 3
 #define SUPERRES_SCALE_DENOMINATOR_MIN (SCALE_NUMERATOR + 1)
 
@@ -1601,13 +1608,6 @@ static const uint8_t mi_size_high_log2[BlockSizeS_ALL] = {
     0, 1, 0, 1, 2, 1, 2, 3, 2, 3, 4, 3, 4, 5, 4, 5, 2, 0, 3, 1, 4, 2
 };
 
-typedef enum AomBitDepth 
-{
-    AOM_BITS_8 = 8,   /**<  8 bits */
-    AOM_BITS_10 = 10, /**< 10 bits */
-    AOM_BITS_12 = 12, /**< 12 bits */
-} AomBitDepth;
-
 typedef struct SgrParamsType 
 {
     int32_t r[2];  // radii
@@ -1829,6 +1829,7 @@ typedef struct LoopFilterInfoN
 #define GM_TRANS_ONLY_PREC_DIFF (WARPEDMODEL_PREC_BITS - 3)
 #define GM_TRANS_DECODE_FACTOR (1 << GM_TRANS_PREC_DIFF)
 #define GM_TRANS_ONLY_DECODE_FACTOR (1 << GM_TRANS_ONLY_PREC_DIFF)
+#define GM_TRANS_ONLY_PREC_BITS 3
 
 #define GM_ALPHA_PREC_BITS 15
 #define GM_ABS_ALPHA_BITS 12

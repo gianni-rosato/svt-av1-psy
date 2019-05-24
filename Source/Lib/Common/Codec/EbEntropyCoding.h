@@ -36,6 +36,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define MAX_TILE_WIDTH (4096)        // Max Tile width in pixels
+#define MAX_TILE_AREA (4096 * 2304)  // Maximum tile area in pixels
+
     /*!\brief OBU types. */
     typedef enum ATTRIBUTE_PACKED 
     {

@@ -3322,15 +3322,13 @@ static void write_tile_info_max_tile(const PictureParentControlSet *const pcs_pt
     }
 }
 
-#define MAX_TILE_WIDTH (4096)        // Max Tile width in pixels
-#define MAX_TILE_AREA (4096 * 2304)  // Maximum tile area in pixels
-// Find smallest k>=0 such that (blk_size << k) >= target
 static int32_t tile_log2(int32_t blk_size, int32_t target) {
     int32_t k;
     for (k = 0; (blk_size << k) < target; k++) {
     }
     return k;
 }
+
 void av1_get_tile_limits(PictureParentControlSet * pcs_ptr) {
 
     Av1Common * cm = pcs_ptr->av1_cm;
@@ -3610,8 +3608,8 @@ static void write_color_config(
         printf("ERROR[AN]: is_monochrome not supported yet\n");
         return;
     }
-    if (0/*cm->color_primaries == AOM_CICP_CP_BT_709 &&
-         cm->transfer_characteristics == AOM_CICP_TC_SRGB &&
+    if (0/*cm->color_primaries == EB_CICP_CP_BT_709 &&
+         cm->transfer_characteristics == EB_CICP_TC_SRGB &&
          cm->matrix_coefficients ==
          AOM_CICP_MC_IDENTITY*/) {  // it would be better to remove this
          // dependency too

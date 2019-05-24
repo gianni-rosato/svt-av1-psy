@@ -96,6 +96,7 @@ typedef enum EbErrorType
     EB_DecUnsupportedBitstream     = (int32_t)0x40001000,
     EB_DecNoOutputPicture          = (int32_t)0x40001004,
     EB_DecDecodingError            = (int32_t)0x40001008,
+    EB_Corrupt_Frame               = (int32_t)0x4000100C,
     EB_ErrorInsufficientResources  = (int32_t)0x80001000,
     EB_ErrorUndefined              = (int32_t)0x80001001,
     EB_ErrorInvalidComponent       = (int32_t)0x80001004,
@@ -118,6 +119,12 @@ typedef enum EbAv1SeqProfile
     PROFESSIONAL_PROFILE = 2
 } EbAv1SeqProfile;
 
+
+typedef enum AomBitDepth {
+    AOM_BITS_8  = 8,   /**<  8 bits */
+    AOM_BITS_10 = 10, /**< 10 bits */
+    AOM_BITS_12 = 12, /**< 12 bits */
+} AomBitDepth;
 
 // For 8-bit and 10-bit packed inputs and outputs, the luma, cb, and cr fields should be used
 //   for the three input picture planes.  However, for 10-bit unpacked planes the

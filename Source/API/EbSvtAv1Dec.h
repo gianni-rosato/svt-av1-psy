@@ -1,5 +1,5 @@
 /*
-* Copyright(c) 2019 Intel Corporation
+* Copyright(c) 2019 Netflix, Inc.
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
@@ -14,15 +14,113 @@ extern "C" {
 #include "EbSvtAv1.h"
 #include "EbSvtAv1ExtFrameBuf.h"
 
-typedef struct EbAV1OperatingPoint
-{
+
+typedef struct EbOperatingParametersInfo {
+
+    /*!<Specifies the time interval between the arrival of the first bit in the
+     * smoothing buffer and the subsequent removal of the data that belongs to
+     * the first coded frame for operating point*/
+    uint32_t    decoder_buffer_delay;
+
+    /*!<Specifies, in combination with decoder_buffer_delay[op] syntax element,
+     * the first bit arrival time of frames to be decoded to the smoothing 
+     * buffer */
+    uint32_t    encoder_buffer_delay;
+
+    /*!< Equal to 1 indicates that the smoothing buffer operates in low-delay 
+     * mode for operating point*/
+    uint8_t     low_delay_mode_flag;
+
+} EbOperatingParametersInfo;
+
+typedef struct EbAV1OperatingPoint {
+
     uint32_t    op_idc;
     uint32_t    seq_level_idx;
     uint32_t    seq_tier;
-    uint32_t    display_model_param_present;
+
+    /*!< 1 -> Indicates that there is a decoder model associated with operating
+             point, 
+     *   0 -> Indicates that there is not a decoder model associated with 
+             operating point*/
+    uint8_t     decoder_model_present_for_this_op;
+
+    /*!< Operating Parameters Information structure*/
+    EbOperatingParametersInfo operating_parameters_info;
+
     uint32_t    initial_display_delay_present_for_this_op;
     uint32_t    initial_display_delay;
 } EbAv1OperatingPoint;
+
+typedef struct EbColorConfig {
+
+    /*!< bit depth */
+    AomBitDepth                     bit_depth;
+
+    /*!< 1: Indicates that the video does not contain U and V color planes.
+     *   0: Indicates that the video contains Y, U, and V color planes. */
+    EbBool                          mono_chrome;
+
+    /*!< Specify the chroma subsampling format */
+    uint8_t                         subsampling_x;
+
+    /*!< Specify the chroma subsampling format */
+    uint8_t                         subsampling_y;
+    
+    /*!< 1: Specifies that color_primaries, transfer_characteristics, and 
+            matrix_coefficients are present. color_description_present_flag 
+     *   0: Specifies that color_primaries, transfer_characteristics and 
+            matrix_coefficients are not present */
+    EbBool                         color_description_present_flag;
+
+    /*!< An integer that is defined by the "Color primaries" section of 
+     * ISO/IEC 23091-4/ITU-T H.273 */
+    EbColorPrimaries                   color_primaries;
+
+    /*!< An integer that is defined by the "Transfer characteristics" section 
+     * of ISO/IEC 23091-4/ITU-T H.273 */
+    EbTransferCharacteristics  transfer_characteristics;
+
+    /*!< An integer that is defined by the "Matrix coefficients" section of 
+     * ISO/IEC 23091-4/ITU-T H.273 */
+    EbMatrixCoefficients       matrix_coefficients;
+
+    /*!< 0: shall be referred to as the studio swing representation
+     *   1: shall be referred to as the full swing representation */
+    EbColorRange                         color_range;
+
+    /*!< Specifies the sample position for subsampled streams */
+    EbChromaSamplePosition    chroma_sample_position;
+
+    /*!< 1: Indicates that the U and V planes may have separate delta quantizer
+     *   0: Indicates that the U and V planes will share the same delta 
+            quantizer value */
+    EbBool                         separate_uv_delta_q;
+
+} EbColorConfig;
+
+typedef struct EbTimingInfo {
+    /*!< Timing info present flag */
+    EbBool      timing_info_present;
+    
+    /*!< Number of time units of a clock operating at the frequency time_scale 
+     * Hz that corresponds to one increment of a clock tick counter*/
+    uint32_t    num_units_in_display_tick; 
+
+    /*!< Number of time units that pass in one second*/
+    uint32_t    time_scale;
+
+    /*!< Equal to 1 indicates that pictures should be displayed according to
+     * their output order with the number of ticks between two consecutive 
+     * pictures specified by num_ticks_per_picture.*/
+    uint8_t     equal_picture_interval;
+
+    /*!< Specifies the number of clock ticks corresponding to output time 
+     * between two consecutive pictures in the output order. 
+     * Range - [0 to (1 << 32) - 2]*/
+    uint32_t    num_ticks_per_picture;
+
+} EbTimingInfo;
 
 typedef struct EbAV1StreamInfo
 {
@@ -38,26 +136,10 @@ typedef struct EbAV1StreamInfo
     EbAv1OperatingPoint op_points[EB_MAX_NUM_OPERATING_POINTS];
 
     /* Display Timing Info*/
-    EbBool      timing_info_present;  // check the names
-    uint32_t    num_units_in_display_tick;
-    uint32_t    time_scale;
-    uint32_t    equal_picture_interval;
-    uint32_t    num_ticks_per_picture;
-
-    /* Color format configuration */
-    EbBitDepth      bit_depth;
-    EbColorFormat   color_format;
+    EbTimingInfo    timing_info;
 
     /* Color description */
-    
-    EbBool          color_description_present_flag; 
-    
-    EbColorPrimaries color_primaries;
-    EbTransferCharacteristics transfer_characteristics;
-    EbMatrixCoefficients matrix_coefficients;
-
-    EbChromaSamplePosition chroma_sample_position;
-    EbColorRange color_range;
+    EbColorConfig    color_config;
 
     /* Film Grain Synthesis Present */
     EbBool    film_grain_params_present;
@@ -170,7 +252,7 @@ typedef struct EbSvtAv1DecConfiguration
      * @ *p_app_data     Callback data.
      * @ *config_ptr     Pointer passed back to the client during callbacks, it will be
      *                   loaded with default parameters from the library. */
-    EB_API EbErrorType eb_init_handle(
+    EB_API EbErrorType eb_dec_init_handle(
         EbComponentType** p_handle,
         void* p_app_data,
         EbSvtAv1DecConfiguration  *config_ptr);
@@ -288,7 +370,7 @@ typedef struct EbSvtAv1DecConfiguration
      *
      * Parameter:
      * @ *svt_dec_component     Decoder handle */
-    EB_API EbErrorType eb_deinit_handle(
+    EB_API EbErrorType eb_dec_deinit_handle(
         EbComponentType     *svt_dec_component);
 
     /*  Flush a decoder
@@ -333,5 +415,4 @@ typedef struct EbSvtAv1DecConfiguration
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-
 #endif // EbSvtAv1Dec_h

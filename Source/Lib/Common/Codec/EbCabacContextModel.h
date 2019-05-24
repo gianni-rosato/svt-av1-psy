@@ -953,15 +953,23 @@ extern "C" {
 
 #define KF_MODE_CONTEXTS 5
 
-    typedef struct ScanOrder 
-    {
+#define SEG_TEMPORAL_PRED_CTXS 3
+#define SPATIAL_PREDICTION_PROBS 3
+
+    typedef struct {
         const int16_t *scan;
         const int16_t *iscan;
         const int16_t *neighbors;
     } ScanOrder;
 
-    typedef struct FrameContexts
-    {
+    struct segmentation_probs {
+        AomCdfProb tree_cdf[CDF_SIZE(MAX_SEGMENTS)];
+        AomCdfProb pred_cdf[SEG_TEMPORAL_PRED_CTXS][CDF_SIZE(2)];
+        AomCdfProb spatial_pred_seg_cdf[SPATIAL_PREDICTION_PROBS]
+            [CDF_SIZE(MAX_SEGMENTS)];
+    };
+
+    typedef struct FrameContexts {
         AomCdfProb txb_skip_cdf[TX_SIZES][TXB_SKIP_CONTEXTS][CDF_SIZE(2)];
         AomCdfProb eob_extra_cdf[TX_SIZES][PLANE_TYPES][EOB_COEF_CONTEXTS]
             [CDF_SIZE(2)];
@@ -1022,7 +1030,7 @@ extern "C" {
         NmvContext nmvc;
         NmvContext ndvc;
         AomCdfProb intrabc_cdf[CDF_SIZE(2)];
-        //struct segmentation_probs seg;
+        struct segmentation_probs seg;
         AomCdfProb filter_intra_cdfs[BlockSizeS_ALL][CDF_SIZE(2)];
         AomCdfProb filter_intra_mode_cdf[CDF_SIZE(FILTER_INTRA_MODES)];
         AomCdfProb switchable_restore_cdf[CDF_SIZE(RESTORE_SWITCHABLE_TYPES)];
