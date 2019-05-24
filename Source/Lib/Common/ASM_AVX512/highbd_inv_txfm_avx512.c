@@ -815,8 +815,7 @@ static INLINE void round_shift_16x16_avx512(__m512i *in, const int8_t shift) {
     }
 }
 
-static INLINE void iidentity16_and_round_shift_avx512(__m512i *input, int32_t shift)
-{
+static INLINE void iidentity16_and_round_shift_avx512(__m512i *input, int32_t shift) {
     const __m512i scalar = _mm512_set1_epi32(NewSqrt2);
     const __m512i rnding = _mm512_set1_epi32((1 << (NewSqrt2Bits - 2)) +
         (!!(shift) << (shift + NewSqrt2Bits - 2)));
