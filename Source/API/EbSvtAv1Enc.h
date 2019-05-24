@@ -13,8 +13,8 @@ extern "C" {
 #include "stdint.h"
 #include "EbSvtAv1.h"
 
-#define  TILES    1
-
+#define TILES    1
+#define ALT_REF_OVERLAY_APP                         1
     //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT            2
@@ -166,6 +166,23 @@ typedef struct EbSvtAv1EncConfiguration
     *
     * Default is 4. */
     uint32_t                 partition_depth;
+
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
+    /* MRP (mm-signal; 0: MRP mode 0, 1: MRP mode 1)
+    *
+    * Default is 0. */
+    uint8_t                   mrp_mode;
+
+    /* CDF (mm-signal; 0: CDF update, 1: no CDF update)
+    *
+    * Default is 0. */
+    uint8_t                   cdf_mode;
+
+    /* NSQ present (mm-signal; 0: NSQ absent, 1: NSQ present)
+    *
+    * Default is 1. */
+    uint8_t                   nsq_present;
+#endif
 
     // Quantization
     /* Initial quantization parameter for the Intra pictures used under constant
@@ -405,6 +422,13 @@ typedef struct EbSvtAv1EncConfiguration
     uint32_t                 hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
 
     uint32_t                 ten_bit_format;
+
+    /* Variables to control the use of ALT-REF (temporally filtered frames)
+    */
+    EbBool                   enable_altrefs;
+    uint8_t                  altref_strength;
+    uint8_t                  altref_nframes;
+    EbBool                   enable_overlays;
 
 } EbSvtAv1EncConfiguration;
 

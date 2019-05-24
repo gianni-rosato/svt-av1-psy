@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <time.h>
+
 #include "EbDefinitions.h"
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
@@ -15,6 +17,9 @@
 #include "EbPictureDecisionResults.h"
 #include "EbReferenceObject.h"
 #include "EbSvtAv1ErrorCodes.h"
+#if ALTREF_FILTERING_SUPPORT
+#include "EbTemporalFiltering.h"
+#endif
 
 /************************************************
  * Defines
@@ -289,6 +294,7 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 #define OTH 64
 #define FC_SKIP_TX_SR_TH025                     125 // Fast cost skip tx search threshold.
 #define FC_SKIP_TX_SR_TH010                     110 // Fast cost skip tx search threshold.
+
  /************************************************
   * Picture Analysis Context Constructor
   ************************************************/
@@ -770,7 +776,11 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
 
                 // 3rd step: update the dependant count
                 dependant_list_removed_entries = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count - input_entry_ptr->dependent_count;
+#if ALT_REF_OVERLAY
+                input_entry_ptr->dep_list0_count = (input_entry_ptr->is_alt_ref) ? input_entry_ptr->list0.list_count + 1 : input_entry_ptr->list0.list_count;
+#else
                 input_entry_ptr->dep_list0_count = input_entry_ptr->list0.list_count;
+#endif
 #if BASE_LAYER_REF
                 if (input_entry_ptr->p_pcs_ptr->slice_type == I_SLICE)
                     input_entry_ptr->dep_list1_count = input_entry_ptr->list1.list_count + sequence_control_set_ptr->extra_frames_to_ref_islice;
@@ -918,6 +928,12 @@ EbErrorType signal_derivation_multi_processes_oq(
     //  PIC_SQ_NON4_DEPTH_MODE               ONLY sq: SB size -> 8x8  (No 4x4)
 
     uint8_t sc_content_detected = picture_control_set_ptr->sc_content_detected;
+
+#if SCREEN_CONTENT_SETTINGS && PCS_ME_FIX
+	picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
+	picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
+	picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
+#endif
 
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
@@ -1886,6 +1902,33 @@ void  Av1GenerateRpsInfo(
             break;
 
         case 3:
+#if ALT_REF_OVERLAY
+            // update RPS for the overlay frame.
+            if (picture_control_set_ptr->is_overlay) {
+                //{ 0, 0, 0, 0}         // GOP Index 1 - Ref List 0
+                //{ 0, 0, 0, 0 }       // GOP Index 1 - Ref List 1
+                av1Rps->ref_dpb_index[LAST]  = base1_idx;
+                av1Rps->ref_dpb_index[LAST2] = base1_idx;
+                av1Rps->ref_dpb_index[LAST3] = base1_idx;
+                av1Rps->ref_dpb_index[GOLD]  = base1_idx;
+
+                av1Rps->ref_dpb_index[BWD]  = base1_idx;
+                av1Rps->ref_dpb_index[ALT]  = base1_idx;
+                av1Rps->ref_dpb_index[ALT2] = base1_idx;
+#if REF_ORDER
+                av1Rps->ref_poc_array[LAST] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+                av1Rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+                av1Rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+                av1Rps->ref_poc_array[GOLD] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+
+                av1Rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+                av1Rps->ref_poc_array[ALT] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+                av1Rps->ref_poc_array[ALT2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+#endif
+            }
+            else
+#endif
+
             if (pictureIndex == 0) {
                 //{ 1, 3, 5, 9}         // GOP Index 1 - Ref List 0
                 //{ -1, -3, -7,  0 }    // GOP Index 1 - Ref List 1
@@ -2004,8 +2047,12 @@ void  Av1GenerateRpsInfo(
         }
 #endif
 
-
+#if ALT_REF_OVERLAY
+        // update RPS for the overlay frame.
+        if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_LOW_DELAY_P || picture_control_set_ptr->is_overlay) 
+#else
         if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_LOW_DELAY_P)
+#endif
         {
             //P frames 
             av1Rps->ref_dpb_index[4] = av1Rps->ref_dpb_index[5] = av1Rps->ref_dpb_index[6] = av1Rps->ref_dpb_index[0];
@@ -2056,7 +2103,7 @@ void  Av1GenerateRpsInfo(
                     else if (pictureIndex == 4) {
                         picture_control_set_ptr->show_existing_loc = lay2_1_idx;
                     }
-                    else if (pictureIndex == 6) {
+                    else if (pictureIndex == 6) { 
                         picture_control_set_ptr->show_existing_loc = base2_idx;
                     }
                     else {
@@ -2077,7 +2124,11 @@ void  Av1GenerateRpsInfo(
         //mini GOP toggling since last Key Frame.
         //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
         //whoever needs a miniGOP Level toggling, this is the time
+#if ALT_REF_OVERLAY
+        if (pictureIndex == context_ptr->mini_gop_end_index[0] && !picture_control_set_ptr->is_overlay) {
+#else
         if (pictureIndex == context_ptr->mini_gop_end_index[0]) {
+#endif
             //Layer0 toggle 0->1->2                
             context_ptr->lay0_toggle = circ_inc(3, 1, context_ptr->lay0_toggle);
             //Layer1 toggle 3->4
@@ -2322,6 +2373,7 @@ void  Av1GenerateRpsInfo(
 
 #if MRP_BASE
             //{16, 48, 0, 0},      // GOP Index 0 - Ref List 0
+            //{16, 48, 0, 0},      // GOP Index 0 - Ref List 0
            //{16, 32, 0, 0}       // GOP Index 0 - Ref List 1
             av1Rps->ref_dpb_index[LAST] = base1_idx;
             av1Rps->ref_dpb_index[LAST2] = base2_idx;
@@ -2547,6 +2599,32 @@ void  Av1GenerateRpsInfo(
             break;
 
         case 4:
+#if ALT_REF_OVERLAY
+            // update RPS for the overlay frame.
+            if (picture_control_set_ptr->is_overlay) {
+                //{ 0, 0, 0, 0}         // GOP Index 1 - Ref List 0
+                //{ 0, 0, 0, 0 }       // GOP Index 1 - Ref List 1
+                av1Rps->ref_dpb_index[LAST] = base1_idx;
+                av1Rps->ref_dpb_index[LAST2] = base1_idx;
+                av1Rps->ref_dpb_index[LAST3] = base1_idx;
+                av1Rps->ref_dpb_index[GOLD] = base1_idx;
+
+                av1Rps->ref_dpb_index[BWD] = base1_idx;
+                av1Rps->ref_dpb_index[ALT] = base1_idx;
+                av1Rps->ref_dpb_index[ALT2] = base1_idx;
+#if REF_ORDER
+                av1Rps->ref_poc_array[LAST] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+                av1Rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+                av1Rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+                av1Rps->ref_poc_array[GOLD] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+
+                av1Rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+                av1Rps->ref_poc_array[ALT] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+                av1Rps->ref_poc_array[ALT2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, 0);
+#endif
+            }
+            else
+#endif
             if (pictureIndex == 0) {
                 //{ 1, 5, 9, 17},  // GOP Index 1 - Ref List 0
                 //{ -1, -3, -7, 0 }   // GOP Index 1 - Ref List 1
@@ -2755,7 +2833,12 @@ void  Av1GenerateRpsInfo(
         }
 #endif
 
+#if ALT_REF_OVERLAY
+        // update RPS for the overlay frame.
+        if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_LOW_DELAY_P || picture_control_set_ptr->is_overlay)
+#else
         if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_LOW_DELAY_P)
+#endif
         {
             //P frames.
 #if MRP_FIX_CLOSE_GOP
@@ -2846,7 +2929,11 @@ void  Av1GenerateRpsInfo(
         //mini GOP toggling since last Key Frame.
         //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
         //whoever needs a miniGOP Level toggling, this is the time
+#if ALT_REF_OVERLAY
+        if (pictureIndex == context_ptr->mini_gop_end_index[0] && !picture_control_set_ptr->is_overlay) {
+#else
         if (pictureIndex == context_ptr->mini_gop_end_index[0]) {
+#endif
             //Layer0 toggle 0->1->2                
             context_ptr->lay0_toggle = circ_inc(3, 1, context_ptr->lay0_toggle);
             //Layer1 toggle 3->4
@@ -3024,8 +3111,8 @@ void  Av1GenerateRpsInfo(
                 picture_control_set_ptr->show_frame = EB_TRUE;
                 picture_control_set_ptr->has_show_existing = EB_FALSE;
             }
-    else
-    {
+            else
+            {
                 picture_control_set_ptr->show_frame = EB_FALSE;
                 picture_control_set_ptr->has_show_existing = EB_FALSE;
             }
@@ -3100,7 +3187,105 @@ void  Av1GenerateRpsInfo(
         exit(0);
     }
  }
+#if ALT_REF_OVERLAY
+/***************************************************************************************************
+// Perform Required Picture Analysis Processing for the Overlay frame
+***************************************************************************************************/
+void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *picture_control_set_ptr) {
+    EbPictureBufferDesc           *input_padded_picture_ptr;
+    EbPictureBufferDesc           *quarter_decimated_picture_ptr;
+    EbPictureBufferDesc           *sixteenth_decimated_picture_ptr;
+    EbPictureBufferDesc           *input_picture_ptr;
+    EbPaReferenceObject           *paReferenceObject;
+    uint32_t                        picture_width_in_sb;
+    uint32_t                        pictureHeighInLcu;
+    uint32_t                        sb_total_count;
 
+    SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+    input_picture_ptr               = picture_control_set_ptr->enhanced_picture_ptr;
+    paReferenceObject               = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+    input_padded_picture_ptr        = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
+    quarter_decimated_picture_ptr   = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
+    sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
+
+    picture_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+    pictureHeighInLcu   = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+    sb_total_count      = picture_width_in_sb * pictureHeighInLcu;
+
+    // Pad pictures to multiple min cu size
+    PadPictureToMultipleOfMinCuSizeDimensions(
+        sequence_control_set_ptr,
+        input_picture_ptr);
+
+    // Pre processing operations performed on the input picture
+    PicturePreProcessingOperations(
+        picture_control_set_ptr,
+        input_picture_ptr,
+        sequence_control_set_ptr,
+        quarter_decimated_picture_ptr,
+        sixteenth_decimated_picture_ptr,
+        sb_total_count,
+        sequence_control_set_ptr->encode_context_ptr->asm_type);
+
+    if (input_picture_ptr->color_format >= EB_YUV422) {
+        // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
+        //       Reuse the Y, only add cb/cr in the newly created buffer desc
+        //       NOTE: since denoise may change the src, so this part is after PicturePreProcessingOperations()
+        picture_control_set_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
+        DownSampleChroma(input_picture_ptr, picture_control_set_ptr->chroma_downsampled_picture_ptr);
+    }
+    else {
+        picture_control_set_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
+    }
+
+    // Pad input picture to complete border LCUs
+    PadPictureToMultipleOfLcuDimensions(
+        input_padded_picture_ptr);
+
+    // 1/4 & 1/16 input picture decimation
+    DecimateInputPicture(
+        picture_control_set_ptr,
+        input_padded_picture_ptr,
+        quarter_decimated_picture_ptr,
+        sixteenth_decimated_picture_ptr);
+
+    // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+    GatheringPictureStatistics(
+        sequence_control_set_ptr,
+        picture_control_set_ptr,
+        picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
+        input_padded_picture_ptr,
+        sixteenth_decimated_picture_ptr,
+        sb_total_count,
+        sequence_control_set_ptr->encode_context_ptr->asm_type);
+
+    picture_control_set_ptr->sc_content_detected = picture_control_set_ptr->alt_ref_ppcs_ptr->sc_content_detected;
+
+}
+/***************************************************************************************************
+ * Initialize the overlay frame
+***************************************************************************************************/
+void initialize_overlay_frame(PictureParentControlSet     *picture_control_set_ptr) {
+
+    picture_control_set_ptr->fade_out_from_black = picture_control_set_ptr->alt_ref_ppcs_ptr->fade_out_from_black;
+    picture_control_set_ptr->fade_in_to_black = picture_control_set_ptr->alt_ref_ppcs_ptr->fade_in_to_black;
+    picture_control_set_ptr->scene_change_flag = EB_FALSE;
+    picture_control_set_ptr->cra_flag = EB_FALSE;
+    picture_control_set_ptr->idr_flag = EB_FALSE;
+    picture_control_set_ptr->target_bit_rate = picture_control_set_ptr->alt_ref_ppcs_ptr->target_bit_rate;
+    picture_control_set_ptr->last_idr_picture = picture_control_set_ptr->alt_ref_ppcs_ptr->last_idr_picture;
+    picture_control_set_ptr->use_rps_in_sps = EB_FALSE;
+    picture_control_set_ptr->open_gop_cra_flag = EB_FALSE;
+    picture_control_set_ptr->pred_structure = picture_control_set_ptr->alt_ref_ppcs_ptr->pred_structure;
+    picture_control_set_ptr->pred_struct_ptr = picture_control_set_ptr->alt_ref_ppcs_ptr->pred_struct_ptr;
+    picture_control_set_ptr->hierarchical_levels = picture_control_set_ptr->alt_ref_ppcs_ptr->hierarchical_levels;
+    picture_control_set_ptr->hierarchical_layers_diff = 0;
+    picture_control_set_ptr->init_pred_struct_position_flag = EB_FALSE;
+    picture_control_set_ptr->pre_assignment_buffer_count = picture_control_set_ptr->alt_ref_ppcs_ptr->pre_assignment_buffer_count;
+
+    perform_simple_picture_analysis_for_overlay(picture_control_set_ptr);
+ }
+#endif
 /***************************************************************************************************
  * Picture Decision Kernel
  *
@@ -3267,20 +3452,29 @@ void* picture_decision_kernel(void *input_ptr)
         // P.S. Since the prior Picture Analysis processes stage is multithreaded, inputs to the Picture Decision Process
         // can arrive out-of-display-order, so a the Picture Decision Reordering Queue is used to enforce processing of
         // pictures in display order
+#if ALT_REF_OVERLAY
+        if (!picture_control_set_ptr->is_overlay ) {
+#endif
+            queueEntryIndex = (int32_t)(picture_control_set_ptr->picture_number - encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index]->picture_number);
+            queueEntryIndex += encode_context_ptr->picture_decision_reorder_queue_head_index;
+            queueEntryIndex = (queueEntryIndex > PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH - 1) ? queueEntryIndex - PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH : queueEntryIndex;
+            queueEntryPtr = encode_context_ptr->picture_decision_reorder_queue[queueEntryIndex];
+            if (queueEntryPtr->parent_pcs_wrapper_ptr != NULL) {
+                CHECK_REPORT_ERROR_NC(
+                    encode_context_ptr->app_callback_ptr,
+                    EB_ENC_PD_ERROR8);
+            }
+            else {
+                queueEntryPtr->parent_pcs_wrapper_ptr = inputResultsPtr->picture_control_set_wrapper_ptr;
+                queueEntryPtr->picture_number = picture_control_set_ptr->picture_number;
+            }
 
-        queueEntryIndex = (int32_t)(picture_control_set_ptr->picture_number - encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index]->picture_number);
-        queueEntryIndex += encode_context_ptr->picture_decision_reorder_queue_head_index;
-        queueEntryIndex = (queueEntryIndex > PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH - 1) ? queueEntryIndex - PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH : queueEntryIndex;
-        queueEntryPtr = encode_context_ptr->picture_decision_reorder_queue[queueEntryIndex];
-        if (queueEntryPtr->parent_pcs_wrapper_ptr != NULL) {
-            CHECK_REPORT_ERROR_NC(
-                encode_context_ptr->app_callback_ptr,
-                EB_ENC_PD_ERROR8);
+#if ALTREF_FILTERING_SUPPORT
+            picture_control_set_ptr->pic_decision_reorder_queue_idx = queueEntryIndex;
+#endif
+#if ALT_REF_OVERLAY
         }
-        else {
-            queueEntryPtr->parent_pcs_wrapper_ptr = inputResultsPtr->picture_control_set_wrapper_ptr;
-            queueEntryPtr->picture_number = picture_control_set_ptr->picture_number;
-        }
+#endif
         // Process the head of the Picture Decision Reordering Queue (Entry N)
         // P.S. The Picture Decision Reordering Queue should be parsed in the display order to be able to construct a pred structure
         queueEntryPtr = encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index];
@@ -3297,6 +3491,9 @@ void* picture_decision_kernel(void *input_ptr)
             windowAvail = EB_TRUE;
             previousEntryIndex = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
 
+#if ALTREF_FILTERING_SUPPORT
+            ParentPcsWindow[0] = ParentPcsWindow[1] = ParentPcsWindow[2] = ParentPcsWindow[3] = ParentPcsWindow[4] = ParentPcsWindow[5] = NULL;
+#endif
             if (encode_context_ptr->picture_decision_reorder_queue[previousEntryIndex]->parent_pcs_wrapper_ptr == NULL) {
                 windowAvail = EB_FALSE;
             }
@@ -3318,6 +3515,7 @@ void* picture_decision_kernel(void *input_ptr)
                     }
                 }
             }
+
             picture_control_set_ptr = (PictureParentControlSet*)queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr;
 
             picture_control_set_ptr->fade_out_from_black = 0;
@@ -3416,7 +3614,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                 // Determine if Pictures can be released from the Pre-Assignment Buffer
                 if ((encode_context_ptr->pre_assignment_buffer_intra_count > 0) ||
-                    (encode_context_ptr->pre_assignment_buffer_count == (uint32_t)(1 << sequence_control_set_ptr->static_config.hierarchical_levels)) || 
+                    (encode_context_ptr->pre_assignment_buffer_count == (uint32_t)(1 << sequence_control_set_ptr->static_config.hierarchical_levels)) ||
                     (encode_context_ptr->pre_assignment_buffer_eos_flag == EB_TRUE) ||
                     (picture_control_set_ptr->pred_structure == EB_PRED_LOW_DELAY_P) ||
                     (picture_control_set_ptr->pred_structure == EB_PRED_LOW_DELAY_B))
@@ -3492,7 +3690,6 @@ void* picture_decision_kernel(void *input_ptr)
 
                             // Update the Pred Structure if cutting short a Random Access period
                             if ((context_ptr->mini_gop_length[mini_gop_index] < picture_control_set_ptr->pred_struct_ptr->pred_struct_period || context_ptr->mini_gop_idr_count[mini_gop_index] > 0) &&
-
                                 picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_RANDOM_ACCESS &&
                                 picture_control_set_ptr->idr_flag == EB_FALSE &&
                                 picture_control_set_ptr->cra_flag == EB_FALSE)
@@ -3598,90 +3795,631 @@ void* picture_decision_kernel(void *input_ptr)
                                 encode_context_ptr->pred_struct_position;
 
                             predPositionPtr = picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[encode_context_ptr->pred_struct_position];
-
-                            // Set the Slice type
-                            picture_control_set_ptr->slice_type = picture_type;
-                            ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->slice_type = picture_control_set_ptr->slice_type;
-
-                            switch (picture_type) {
-
-                            case I_SLICE:
-
-                                // Reset Prediction Structure Position & Reference Struct Position
-                                if (picture_control_set_ptr->picture_number == 0) {
-                                    encode_context_ptr->intra_period_position = 0;
+#if ALT_REF_OVERLAY
+                            if (sequence_control_set_ptr->static_config.enable_overlays == EB_TRUE) {
+                                // At this stage we know the prediction structure and the location of ALT_REF pictures.
+                                // For every ALTREF picture, there is an overlay picture. They extra pictures are released
+                                // is_alt_ref flag is set for non-slice base layer pictures
+                                if (predPositionPtr->temporal_layer_index == 0 && picture_type != I_SLICE) {
+                                    picture_control_set_ptr->is_alt_ref = 1;
+                                    picture_control_set_ptr->showable_frame = 0;
+                                    ((PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex - 1]->object_ptr)->has_show_existing = EB_FALSE;
                                 }
-                                encode_context_ptr->elapsed_non_cra_count = 0;
-
-                                //-------------------------------
-                                // IDR
-                                //-------------------------------
-                                if (picture_control_set_ptr->idr_flag == EB_TRUE) {
-
-                                    // Set CRA flag
-                                    picture_control_set_ptr->cra_flag = EB_FALSE;
-
-                                    // Reset the pictures since last IDR counter
-                                    encode_context_ptr->elapsed_non_idr_count = 0;
-#if REF_ORDER
-                                    //log latest key frame poc
-                                    context_ptr->key_poc = picture_control_set_ptr->picture_number;
+                                // release the overlay PCS for non alt ref pictures. First picture does not have overlay PCS
+                                else if (picture_control_set_ptr->picture_number) {
+                                    eb_release_object(picture_control_set_ptr->overlay_ppcs_ptr->input_picture_wrapper_ptr);
+                                    // release the pa_reference_picture
+                                    eb_release_object(picture_control_set_ptr->overlay_ppcs_ptr->pa_reference_picture_wrapper_ptr);
+                                    // release the parent pcs
+                                    eb_release_object(picture_control_set_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
+#if !BUG_FIX_PCS_LIVE_COUNT
+                                    eb_release_object(picture_control_set_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
+                                    eb_release_object(picture_control_set_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
 #endif
-
+                                    picture_control_set_ptr->overlay_ppcs_ptr = EB_NULL;
                                 }
-                                //-------------------------------
-                                // CRA
-                                //-------------------------------
-                                else {
-
-                                    // Set a Random Access Point if not an IDR
-                                    picture_control_set_ptr->cra_flag = EB_TRUE;
-                                }
-#if BASE_LAYER_REF
-                                context_ptr->last_islice_picture_number = picture_control_set_ptr->picture_number;
-#endif
-                                break;
-
-                            case P_SLICE:
-                            case B_SLICE:
-
-                                // Reset CRA and IDR Flag
-                                picture_control_set_ptr->cra_flag = EB_FALSE;
-                                picture_control_set_ptr->idr_flag = EB_FALSE;
-
-                                // Increment & Clip the elapsed Non-IDR Counter. This is clipped rather than allowed to free-run
-                                // inorder to avoid rollover issues.  This assumes that any the GOP period is less than MAX_ELAPSED_IDR_COUNT
-                                encode_context_ptr->elapsed_non_idr_count = MIN(encode_context_ptr->elapsed_non_idr_count + 1, MAX_ELAPSED_IDR_COUNT);
-                                encode_context_ptr->elapsed_non_cra_count = MIN(encode_context_ptr->elapsed_non_cra_count + 1, MAX_ELAPSED_IDR_COUNT);
-
-                                CHECK_REPORT_ERROR(
-                                    (picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_count < MAX_ELAPSED_IDR_COUNT),
-                                    encode_context_ptr->app_callback_ptr,
-                                    EB_ENC_PD_ERROR1);
-
-                                break;
-
-                            default:
-
-                                CHECK_REPORT_ERROR_NC(
-                                    encode_context_ptr->app_callback_ptr,
-                                    EB_ENC_PD_ERROR2);
-
-                                break;
                             }
-                            picture_control_set_ptr->pred_struct_index = (uint8_t)encode_context_ptr->pred_struct_position;
-                            picture_control_set_ptr->temporal_layer_index = (uint8_t)predPositionPtr->temporal_layer_index;
-                            picture_control_set_ptr->is_used_as_reference_flag = predPositionPtr->is_referenced;
+                            PictureParentControlSet       *cur_picture_control_set_ptr = picture_control_set_ptr;
+                            for (uint8_t loop_index = 0; loop_index <= picture_control_set_ptr->is_alt_ref; loop_index++) {
+                                // Set missing parts in the overlay  pictures
+                                if (loop_index == 1) {
+                                    picture_control_set_ptr = picture_control_set_ptr->overlay_ppcs_ptr;
+                                    initialize_overlay_frame(picture_control_set_ptr);
+                                    picture_type = P_SLICE;
+                                }
+#endif
+                                // Set the Slice type
+                                picture_control_set_ptr->slice_type = picture_type;
+                                ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->slice_type = picture_control_set_ptr->slice_type;
+
+                                switch (picture_type) {
+
+                                case I_SLICE:
+
+                                    // Reset Prediction Structure Position & Reference Struct Position
+                                    if (picture_control_set_ptr->picture_number == 0) {
+                                        encode_context_ptr->intra_period_position = 0;
+                                    }
+                                    encode_context_ptr->elapsed_non_cra_count = 0;
+
+                                    //-------------------------------
+                                    // IDR
+                                    //-------------------------------
+                                    if (picture_control_set_ptr->idr_flag == EB_TRUE) {
+
+                                        // Set CRA flag
+                                        picture_control_set_ptr->cra_flag = EB_FALSE;
+
+                                        // Reset the pictures since last IDR counter
+                                        encode_context_ptr->elapsed_non_idr_count = 0;
+#if REF_ORDER
+                                        //log latest key frame poc
+                                        context_ptr->key_poc = picture_control_set_ptr->picture_number;
+#endif
+
+                                    }
+                                    //-------------------------------
+                                    // CRA
+                                    //-------------------------------
+                                    else {
+
+                                        // Set a Random Access Point if not an IDR
+                                        picture_control_set_ptr->cra_flag = EB_TRUE;
+                                    }
+#if BASE_LAYER_REF
+                                    context_ptr->last_islice_picture_number = picture_control_set_ptr->picture_number;
+#endif
+                                    break;
+
+                                case P_SLICE:
+                                case B_SLICE:
+
+                                    // Reset CRA and IDR Flag
+                                    picture_control_set_ptr->cra_flag = EB_FALSE;
+                                    picture_control_set_ptr->idr_flag = EB_FALSE;
+
+#if ALT_REF_OVERLAY
+                                    if (loop_index == 0) 
+#endif
+                                    {
+                                        // Increment & Clip the elapsed Non-IDR Counter. This is clipped rather than allowed to free-run
+                                        // inorder to avoid rollover issues.  This assumes that any the GOP period is less than MAX_ELAPSED_IDR_COUNT
+                                        encode_context_ptr->elapsed_non_idr_count = MIN(encode_context_ptr->elapsed_non_idr_count + 1, MAX_ELAPSED_IDR_COUNT);
+                                        encode_context_ptr->elapsed_non_cra_count = MIN(encode_context_ptr->elapsed_non_cra_count + 1, MAX_ELAPSED_IDR_COUNT);
+                                    }
+
+                                    CHECK_REPORT_ERROR(
+                                        (picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_count < MAX_ELAPSED_IDR_COUNT),
+                                        encode_context_ptr->app_callback_ptr,
+                                        EB_ENC_PD_ERROR1);
+
+                                    break;
+
+                                default:
+
+                                    CHECK_REPORT_ERROR_NC(
+                                        encode_context_ptr->app_callback_ptr,
+                                        EB_ENC_PD_ERROR2);
+
+                                    break;
+                                }
+                                picture_control_set_ptr->pred_struct_index = (uint8_t)encode_context_ptr->pred_struct_position;
+#if ALT_REF_OVERLAY
+                                if (picture_control_set_ptr->is_overlay) {
+                                    // set the overlay frame as non reference frame with max temporal layer index
+                                    picture_control_set_ptr->temporal_layer_index = (uint8_t)picture_control_set_ptr->hierarchical_levels;
+                                    picture_control_set_ptr->is_used_as_reference_flag = EB_FALSE;
+                                }
+                                else {
+                                    picture_control_set_ptr->temporal_layer_index = (uint8_t)predPositionPtr->temporal_layer_index;
+                                    picture_control_set_ptr->is_used_as_reference_flag = predPositionPtr->is_referenced;
+                                }
+#else
+                                picture_control_set_ptr->temporal_layer_index = (uint8_t)predPositionPtr->temporal_layer_index;
+                                picture_control_set_ptr->is_used_as_reference_flag = predPositionPtr->is_referenced;
+#endif
+
+#if !ALT_REF_OVERLAY
+
+                                // Set the Decode Order
+                                if ((context_ptr->mini_gop_idr_count[mini_gop_index] == 0) &&
+                                    (context_ptr->mini_gop_length[mini_gop_index] == picture_control_set_ptr->pred_struct_ptr->pred_struct_period))
+
+                                {
+                                    picture_control_set_ptr->decode_order = encode_context_ptr->decode_base_number + predPositionPtr->decode_order;
+                                }
+                                else {
+                                    picture_control_set_ptr->decode_order = picture_control_set_ptr->picture_number;
+                                }
+
+                                encode_context_ptr->terminating_sequence_flag_received = (picture_control_set_ptr->end_of_sequence_flag == EB_TRUE) ?
+                                    EB_TRUE :
+                                    encode_context_ptr->terminating_sequence_flag_received;
+
+                                encode_context_ptr->terminating_picture_number = (picture_control_set_ptr->end_of_sequence_flag == EB_TRUE) ?
+                                    picture_control_set_ptr->picture_number :
+                                    encode_context_ptr->terminating_picture_number;
+#endif
+
+                                preAssignmentBufferFirstPassFlag = EB_FALSE;
+
+                                // Film grain (assigning the random-seed)
+                                {
+                                    uint16_t *fgn_random_seed_ptr = &picture_control_set_ptr->sequence_control_set_ptr->film_grain_random_seed;
+                                    picture_control_set_ptr->film_grain_params.random_seed = *fgn_random_seed_ptr;
+                                    *fgn_random_seed_ptr += 3381;  // Changing random seed for film grain
+                                    if (!(*fgn_random_seed_ptr))     // Random seed should not be zero
+                                        *fgn_random_seed_ptr += 7391;
+                                }
+                                Av1GenerateRpsInfo(
+                                    picture_control_set_ptr,
+                                    encode_context_ptr,
+                                    context_ptr,
+                                    pictureIndex - context_ptr->mini_gop_start_index[mini_gop_index]);
+                                picture_control_set_ptr->allow_comp_inter_inter = 0;
+                                picture_control_set_ptr->is_skip_mode_allowed = 0;
+
+                                picture_control_set_ptr->reference_mode = (ReferenceMode)0xFF;
+
+                                if (picture_control_set_ptr->slice_type != I_SLICE) {
+#if BASE_LAYER_REF || MRP_REF_MODE
+                                    picture_control_set_ptr->allow_comp_inter_inter = 1;
+                                    if (picture_control_set_ptr->slice_type == P_SLICE) {
+                                        picture_control_set_ptr->is_skip_mode_allowed = 0;
+                                        picture_control_set_ptr->reference_mode = SINGLE_REFERENCE;
+                                        picture_control_set_ptr->skip_mode_flag = 0;
+                                    }
+                                    else if (picture_control_set_ptr->temporal_layer_index == 0) {
+                                        picture_control_set_ptr->reference_mode = REFERENCE_MODE_SELECT;
+                                        picture_control_set_ptr->skip_mode_flag = 0;
+                                    }
+                                    else {
+                                        picture_control_set_ptr->reference_mode = REFERENCE_MODE_SELECT;
+                                        picture_control_set_ptr->is_skip_mode_allowed = 1;
+                                        picture_control_set_ptr->skip_mode_flag = 1;
+                                    }
+#else
+                                    if (picture_control_set_ptr->temporal_layer_index == 0 || picture_control_set_ptr->slice_type == P_SLICE) {
+
+                                        picture_control_set_ptr->allow_comp_inter_inter = 1;
+
+                                        picture_control_set_ptr->reference_mode = SINGLE_REFERENCE;
+                                        picture_control_set_ptr->is_skip_mode_allowed = 0;
+                                        picture_control_set_ptr->skip_mode_flag = 0;
+                                    }
+                                    else {
+                                        picture_control_set_ptr->allow_comp_inter_inter = 1;
+                                        picture_control_set_ptr->reference_mode = REFERENCE_MODE_SELECT;
+                                        picture_control_set_ptr->is_skip_mode_allowed = 1;
+                                        picture_control_set_ptr->skip_mode_flag = 1;
+                                    }
+#endif
+                                }
+
+                                picture_control_set_ptr->av1_cm->mi_cols = picture_control_set_ptr->sequence_control_set_ptr->luma_width >> MI_SIZE_LOG2;
+                                picture_control_set_ptr->av1_cm->mi_rows = picture_control_set_ptr->sequence_control_set_ptr->luma_height >> MI_SIZE_LOG2;
+
+                                memset(picture_control_set_ptr->av1_cm->ref_frame_sign_bias, 0, 8 * sizeof(int32_t));
+#if BASE_LAYER_REF || MRP_REF_MODE
+                                if (picture_control_set_ptr->reference_mode == REFERENCE_MODE_SELECT && picture_control_set_ptr->temporal_layer_index)
+#else
+                                if (picture_control_set_ptr->reference_mode == REFERENCE_MODE_SELECT)
+#endif
+                                {
+                                    picture_control_set_ptr->av1_cm->ref_frame_sign_bias[ALTREF_FRAME] =
+                                        picture_control_set_ptr->av1_cm->ref_frame_sign_bias[ALTREF2_FRAME] =
+                                        picture_control_set_ptr->av1_cm->ref_frame_sign_bias[BWDREF_FRAME] = 1;
+                                }
+
+                                if (picture_control_set_ptr->slice_type == I_SLICE)
+                                    context_ptr->last_i_picture_sc_detection = picture_control_set_ptr->sc_content_detected;
+                                else
+                                    picture_control_set_ptr->sc_content_detected = context_ptr->last_i_picture_sc_detection;
+
+                                // TODO: put this in EbMotionEstimationProcess?
+                                // ME Kernel Multi-Processes Signal(s) derivation
+                                signal_derivation_multi_processes_oq(
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+                                sequence_control_set_ptr,
+#endif
+                                    picture_control_set_ptr);
+
+                                // Set the default settings of  subpel
+#if M9_SUBPEL
+                                {
+                                    if (picture_control_set_ptr->enc_mode <= ENC_M8)
+                                        picture_control_set_ptr->use_subpel_flag = 1;
+                                    else
+                                        picture_control_set_ptr->use_subpel_flag = (picture_control_set_ptr->temporal_layer_index == 0) ?
+                                        1 :
+                                        0;
+                                }
+#else
+#if SCREEN_CONTENT_SETTINGS
+                                if (picture_control_set_ptr->sc_content_detected)
+                                    if (picture_control_set_ptr->enc_mode <= ENC_M1)
+                                        picture_control_set_ptr->use_subpel_flag = 1;
+                                    else
+                                        picture_control_set_ptr->use_subpel_flag = 0;
+                                else
+#endif
+                                    picture_control_set_ptr->use_subpel_flag = 1;
+#endif
+
+                                picture_control_set_ptr->use_src_ref = EB_FALSE;
+                                picture_control_set_ptr->enable_in_loop_motion_estimation_flag = EB_FALSE;
+                                picture_control_set_ptr->limit_ois_to_dc_mode_flag = EB_FALSE;
+#if !M9_CU_8x8
+                                picture_control_set_ptr->cu8x8_mode = CU_8x8_MODE_0;
+#endif
+
+                                // Update the Dependant List Count - If there was an I-frame or Scene Change, then cleanup the Picture Decision PA Reference Queue Dependent Counts
+                                if (picture_control_set_ptr->slice_type == I_SLICE)
+                                {
+
+                                    inputQueueIndex = encode_context_ptr->picture_decision_pa_reference_queue_head_index;
+
+                                    while (inputQueueIndex != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) {
+
+                                        inputEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[inputQueueIndex];
+
+                                        // Modify Dependent List0
+                                        depListCount = inputEntryPtr->list0.list_count;
+                                        for (depIdx = 0; depIdx < depListCount; ++depIdx) {
+
+
+                                            // Adjust the latest current_input_poc in case we're in a POC rollover scenario
+                                            // current_input_poc += (current_input_poc < inputEntryPtr->pocNumber) ? (1 << sequence_control_set_ptr->bits_for_picture_order_count) : 0;
+
+                                            depPoc = POC_CIRCULAR_ADD(
+                                                inputEntryPtr->picture_number, // can't use a value that gets reset
+                                                inputEntryPtr->list0.list[depIdx]/*,
+                                                sequence_control_set_ptr->bits_for_picture_order_count*/);
+
+                                                // If Dependent POC is greater or equal to the IDR POC
+                                            if (depPoc >= picture_control_set_ptr->picture_number && inputEntryPtr->list0.list[depIdx]) {
+
+                                                inputEntryPtr->list0.list[depIdx] = 0;
+
+                                                // Decrement the Reference's referenceCount
+                                                --inputEntryPtr->dependent_count;
+
+                                                CHECK_REPORT_ERROR(
+                                                    (inputEntryPtr->dependent_count != ~0u),
+                                                    encode_context_ptr->app_callback_ptr,
+                                                    EB_ENC_PD_ERROR3);
+                                            }
+                                        }
+
+                                        // Modify Dependent List1
+                                        depListCount = inputEntryPtr->list1.list_count;
+                                        for (depIdx = 0; depIdx < depListCount; ++depIdx) {
+
+                                            // Adjust the latest current_input_poc in case we're in a POC rollover scenario
+                                            // current_input_poc += (current_input_poc < inputEntryPtr->pocNumber) ? (1 << sequence_control_set_ptr->bits_for_picture_order_count) : 0;
+
+                                            depPoc = POC_CIRCULAR_ADD(
+                                                inputEntryPtr->picture_number,
+                                                inputEntryPtr->list1.list[depIdx]/*,
+                                                sequence_control_set_ptr->bits_for_picture_order_count*/);
+
+                                                // If Dependent POC is greater or equal to the IDR POC
+                                            if (((depPoc >= picture_control_set_ptr->picture_number) || (((picture_control_set_ptr->pre_assignment_buffer_count != picture_control_set_ptr->pred_struct_ptr->pred_struct_period) || (picture_control_set_ptr->idr_flag == EB_TRUE)) && (depPoc > (picture_control_set_ptr->picture_number - picture_control_set_ptr->pre_assignment_buffer_count)))) && inputEntryPtr->list1.list[depIdx]) {
+                                                inputEntryPtr->list1.list[depIdx] = 0;
+
+                                                // Decrement the Reference's referenceCount
+                                                --inputEntryPtr->dependent_count;
+
+                                                CHECK_REPORT_ERROR(
+                                                    (inputEntryPtr->dependent_count != ~0u),
+                                                    encode_context_ptr->app_callback_ptr,
+                                                    EB_ENC_PD_ERROR3);
+                                            }
+
+                                        }
+
+                                        // Increment the inputQueueIndex Iterator
+                                        inputQueueIndex = (inputQueueIndex == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : inputQueueIndex + 1;
+                                    }
+
+                                }
+                                else if (picture_control_set_ptr->idr_flag == EB_TRUE) {
+
+                                    // Set the Picture Decision PA Reference Entry pointer
+                                    inputEntryPtr = (PaReferenceQueueEntry*)EB_NULL;
+                                }
+
+                                // Place Picture in Picture Decision PA Reference Queue
+#if ALT_REF_OVERLAY
+                                // there is no need to add the overlay frames in the PA Reference Queue
+                                if (!picture_control_set_ptr->is_overlay)
+#endif
+                                {
+                                    inputEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[encode_context_ptr->picture_decision_pa_reference_queue_tail_index];
+                                    inputEntryPtr->input_object_ptr = picture_control_set_ptr->pa_reference_picture_wrapper_ptr;
+                                    inputEntryPtr->picture_number = picture_control_set_ptr->picture_number;
+                                    inputEntryPtr->reference_entry_index = encode_context_ptr->picture_decision_pa_reference_queue_tail_index;
+#if ALT_REF_OVERLAY
+                                    inputEntryPtr->is_alt_ref = picture_control_set_ptr->is_alt_ref;
+#endif
+                                    encode_context_ptr->picture_decision_pa_reference_queue_tail_index =
+                                        (encode_context_ptr->picture_decision_pa_reference_queue_tail_index == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : encode_context_ptr->picture_decision_pa_reference_queue_tail_index + 1;
+
+                                    // Check if the Picture Decision PA Reference is full
+                                    CHECK_REPORT_ERROR(
+                                        (((encode_context_ptr->picture_decision_pa_reference_queue_head_index != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) ||
+                                        (encode_context_ptr->picture_decision_pa_reference_queue[encode_context_ptr->picture_decision_pa_reference_queue_head_index]->input_object_ptr == EB_NULL))),
+                                        encode_context_ptr->app_callback_ptr,
+                                        EB_ENC_PD_ERROR4);
+                                }
+                                // Copy the reference lists into the inputEntry and
+                                // set the Reference Counts Based on Temporal Layer and how many frames are active
+#if ALT_REF_OVERLAY
+                                picture_control_set_ptr->ref_list0_count = (picture_type == I_SLICE) ? 0 : 
+                                                                            (picture_control_set_ptr->is_overlay) ? 1 : (uint8_t)predPositionPtr->ref_list0.reference_list_count;
+                                picture_control_set_ptr->ref_list1_count = (picture_type == I_SLICE || picture_control_set_ptr->is_overlay) ? 0 : (uint8_t)predPositionPtr->ref_list1.reference_list_count;
+#else
+
+                                picture_control_set_ptr->ref_list0_count = (picture_type == I_SLICE) ? 0 : (uint8_t)predPositionPtr->ref_list0.reference_list_count;
+                                picture_control_set_ptr->ref_list1_count = (picture_type == I_SLICE) ? 0 : (uint8_t)predPositionPtr->ref_list1.reference_list_count;
+#endif
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
+#if NO_UNI
+                                //0: ON- full
+                                //1: ON- no-uniDirection
+                                //2: OFF                            
+                                picture_control_set_ptr->mrp_mode = picture_control_set_ptr->enc_mode == ENC_M0 ? 0 : 2;
+
+#endif
+#endif
+#if MRP_M0_ONLY
+#if NO_UNI
+                                if (picture_control_set_ptr->mrp_mode == 2) {
+#else
+                                if (picture_control_set_ptr->enc_mode >= ENC_M1) {
+#endif
+                                    if (picture_control_set_ptr->temporal_layer_index > 0) {
+                                        picture_control_set_ptr->ref_list0_count = MIN(picture_control_set_ptr->ref_list0_count, 1);
+                                        picture_control_set_ptr->ref_list1_count = MIN(picture_control_set_ptr->ref_list1_count, 1);
+                                    }
+                                }
+#endif
+#if BASE_LAYER_REF
+                                inputEntryPtr->list0_ptr->reference_list = predPositionPtr->ref_list0.reference_list;
+                                inputEntryPtr->list0_ptr->reference_list_count = predPositionPtr->ref_list0.reference_list_count;
+
+                                if (picture_control_set_ptr->temporal_layer_index == 0 && (picture_type != I_SLICE) && picture_control_set_ptr->picture_number < sequence_control_set_ptr->max_frame_window_to_ref_islice + picture_control_set_ptr->last_islice_picture_number)
+#if MRP_ME
+                                    inputEntryPtr->list1Ptr->reference_list[0] = picture_control_set_ptr->picture_number - picture_control_set_ptr->last_islice_picture_number; //NM: to be reviewed 
+#else                    
+                                    inputEntryPtr->list1_ptr->reference_list = picture_control_set_ptr->picture_number - picture_control_set_ptr->last_islice_picture_number;
+#endif
+                                else
+                                    inputEntryPtr->list1_ptr->reference_list = predPositionPtr->ref_list1.reference_list;
+                                inputEntryPtr->list1_ptr->reference_list_count = predPositionPtr->ref_list1.reference_list_count;
+#else
+#if ALT_REF_OVERLAY
+                                if (!picture_control_set_ptr->is_overlay) {
+                                    inputEntryPtr->list0_ptr = &predPositionPtr->ref_list0;
+                                    inputEntryPtr->list1_ptr = &predPositionPtr->ref_list1;
+                                }
+#else
+                                inputEntryPtr->list0_ptr = &predPositionPtr->ref_list0;
+                                inputEntryPtr->list1_ptr = &predPositionPtr->ref_list1;
+#endif
+#endif
+#if ALT_REF_OVERLAY
+                                if (!picture_control_set_ptr->is_overlay) 
+#endif
+                                {
+                                    // Copy the Dependent Lists
+                                    // *Note - we are removing any leading picture dependencies for now
+                                    inputEntryPtr->list0.list_count = 0;
+                                    for (depIdx = 0; depIdx < predPositionPtr->dep_list0.list_count; ++depIdx) {
+                                        if (predPositionPtr->dep_list0.list[depIdx] >= 0) {
+                                            inputEntryPtr->list0.list[inputEntryPtr->list0.list_count++] = predPositionPtr->dep_list0.list[depIdx];
+                                        }
+                                    }
+                                    inputEntryPtr->list1.list_count = predPositionPtr->dep_list1.list_count;
+                                    for (depIdx = 0; depIdx < predPositionPtr->dep_list1.list_count; ++depIdx) {
+                                        inputEntryPtr->list1.list[depIdx] = predPositionPtr->dep_list1.list[depIdx];
+                                    }
+#if ALT_REF_OVERLAY
+                                    // add the overlay picture to the dependant list
+                                    inputEntryPtr->dep_list0_count = (picture_control_set_ptr->is_alt_ref) ? inputEntryPtr->list0.list_count + 1 : inputEntryPtr->list0.list_count;
+#else
+                                    inputEntryPtr->dep_list0_count = inputEntryPtr->list0.list_count;
+#endif
+
+#if BASE_LAYER_REF
+                                    if (picture_control_set_ptr->slice_type == I_SLICE)
+                                        inputEntryPtr->dep_list1_count = inputEntryPtr->list1.list_count + sequence_control_set_ptr->extra_frames_to_ref_islice;
+                                    else if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->picture_number + (1 << sequence_control_set_ptr->static_config.hierarchical_levels) < sequence_control_set_ptr->max_frame_window_to_ref_islice + picture_control_set_ptr->last_islice_picture_number)
+                                        inputEntryPtr->dep_list1_count = MAX((int32_t)inputEntryPtr->list1.list_count - 1, 0);
+                                    else
+                                        inputEntryPtr->dep_list1_count = inputEntryPtr->list1.list_count;
+#else
+                                    inputEntryPtr->dep_list1_count = inputEntryPtr->list1.list_count;
+#endif
+                                    inputEntryPtr->dependent_count = inputEntryPtr->dep_list0_count + inputEntryPtr->dep_list1_count;
+
+                                    ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->dependent_pictures_count = inputEntryPtr->dependent_count;
+                                }
+
+
+                                /* uint32_t depCnt = ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->dependent_pictures_count;
+                                if (picture_control_set_ptr->picture_number>0 && picture_control_set_ptr->slice_type==I_SLICE && depCnt!=8 )
+                                printf("depCnt Error1  POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);
+                                else if (picture_control_set_ptr->slice_type==B_SLICE && picture_control_set_ptr->temporal_layer_index == 0 && depCnt!=8)
+                                printf("depCnt Error2  POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);
+                                else if (picture_control_set_ptr->slice_type==B_SLICE && picture_control_set_ptr->temporal_layer_index == 1 && depCnt!=4)
+                                printf("depCnt Error3  POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);
+                                else if (picture_control_set_ptr->slice_type==B_SLICE && picture_control_set_ptr->temporal_layer_index == 2 && depCnt!=2)
+                                printf("depCnt Error4  POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);
+                                else if (picture_control_set_ptr->slice_type==B_SLICE && picture_control_set_ptr->temporal_layer_index == 3 && depCnt!=0)
+                                printf("depCnt Error5  POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);*/
+                                //if (picture_control_set_ptr->slice_type==P_SLICE )
+                                //     printf("POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);
+#if MRP_ME
+                                CHECK_REPORT_ERROR(
+                                    (picture_control_set_ptr->pred_struct_ptr->pred_struct_period * REF_LIST_MAX_DEPTH < MAX_ELAPSED_IDR_COUNT),
+                                    encode_context_ptr->app_callback_ptr,
+                                    EB_ENC_PD_ERROR5);
+
+                                // Reset the PA Reference Lists
+                                EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
+                                EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
+
+                                EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint32_t));
+                                EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint32_t));
+
+#else
+                                CHECK_REPORT_ERROR(
+                                    (picture_control_set_ptr->pred_struct_ptr->pred_struct_period < MAX_ELAPSED_IDR_COUNT),
+                                    encode_context_ptr->app_callback_ptr,
+                                    EB_ENC_PD_ERROR5);
+
+                                // Reset the PA Reference Lists
+                                EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array, 0, 2 * sizeof(EbObjectWrapper*));
+
+                                EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array, 0, 2 * sizeof(uint32_t));
+#endif
+#if ALT_REF_OVERLAY
+                            }
+                            picture_control_set_ptr = cur_picture_control_set_ptr;
+#endif
+
+#if ALTREF_FILTERING_SUPPORT
+                            if ( sequence_control_set_ptr->enable_altrefs == EB_TRUE &&
+                                 picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) {
+
+                                int altref_nframes = picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes;
+                                int num_past_pics = altref_nframes / 2;
+                                int num_future_pics = altref_nframes - num_past_pics - 1;
+                                ASSERT(num_future_pics >= 0);
+                                //printf("TF-POC %i   ", picture_control_set_ptr->picture_number);
+
+                                //initilize list
+                                for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
+                                    picture_control_set_ptr->temp_filt_pcs_list[pic_itr] = NULL;
+
+                                //get previous+current pictures from the the pre-assign buffer
+                                for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
+
+                                    PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex - num_past_pics + pic_itr]->object_ptr;
+                                    picture_control_set_ptr->temp_filt_pcs_list[pic_itr] = pcs_itr;
+
+                                    // Set the default subpel settings
+                                    //list_picture_control_set_ptr[pic_itr]->use_subpel_flag = 1;
+                                }
+
+                                uint32_t actual_future_pics = 0;
+                                int pic_i;
+                                //search reord-queue to get the future pictures
+                                for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
+                                    int32_t q_index = QUEUE_GET_NEXT_SPOT(picture_control_set_ptr->pic_decision_reorder_queue_idx, pic_i + 1);
+                                    if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL) {
+                                        PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
+                                        picture_control_set_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
+                                        actual_future_pics++;
+                                    }
+                                    else {
+                                        break;
+                                    }
+
+                                }
+
+                                //search in pre-ass if still short
+                                if (pic_i < num_future_pics) {
+                                    actual_future_pics = 0;
+                                    for (int pic_i_future = 0; pic_i_future < num_future_pics; pic_i_future++) {
+                                        for (uint32_t pic_i_pa = 0; pic_i_pa < encode_context_ptr->pre_assignment_buffer_count; pic_i_pa++) {
+                                            PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_i_pa]->object_ptr;
+                                            if (pcs_itr->picture_number == picture_control_set_ptr->picture_number + pic_i_future + 1) {
+                                                picture_control_set_ptr->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
+                                                actual_future_pics++;
+                                                break; //exist the pre-ass loop, go search the next
+                                            }
+                                        }
+                                    }
+                                }
+
+                                //set the actual_number of final pics
+                                altref_nframes = (uint8_t)(num_past_pics + 1 + actual_future_pics);
+
+                                /*if(altref_nframes< picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes)
+                                    printf("TF %i  using only % frames/%i   \n", picture_control_set_ptr->picture_number, altref_nframes, picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes);
+                                for (int tt = 0; tt < altref_nframes; tt++)
+                                {
+                                    printf("%i   ", picture_control_set_ptr->temp_filt_pcs_list[tt]->picture_number);
+                                }*/
+                                picture_control_set_ptr->altref_nframes = altref_nframes;
+
+                                //clock_t start_time;
+                                //start_time = clock();
+
+                                picture_control_set_ptr->temp_filt_prep_done = 0;
+
+
+                                // Start Filtering in ME processes
+                                {
+                                    int16_t seg_idx;
+
+                                    // Initialize Segments
+                                    picture_control_set_ptr->tf_segments_column_count = sequence_control_set_ptr->tf_segment_column_count;
+                                    picture_control_set_ptr->tf_segments_row_count    = sequence_control_set_ptr->tf_segment_row_count;
+                                    picture_control_set_ptr->tf_segments_total_count = (uint16_t)(picture_control_set_ptr->tf_segments_column_count  * picture_control_set_ptr->tf_segments_row_count);
+
+                                    picture_control_set_ptr->temp_filt_seg_acc = 0;
+                                    picture_control_set_ptr->altref_strength = sequence_control_set_ptr->static_config.altref_strength;
+
+                                    for (seg_idx = 0; seg_idx < picture_control_set_ptr->tf_segments_total_count; ++seg_idx) {
+
+                                        eb_get_empty_object(
+                                            context_ptr->picture_decision_results_output_fifo_ptr,
+                                            &outputResultsWrapperPtr);
+                                        outputResultsPtr = (PictureDecisionResults*)outputResultsWrapperPtr->object_ptr;
+                                        outputResultsPtr->picture_control_set_wrapper_ptr = encode_context_ptr->pre_assignment_buffer[pictureIndex];
+                                        outputResultsPtr->segment_index = seg_idx;
+                                        outputResultsPtr->task_type = 1;
+                                        eb_post_full_object(outputResultsWrapperPtr);
+
+                                    }
+
+                                    eb_block_on_semaphore(picture_control_set_ptr->temp_filt_done_semaphore);
+                                }
+
+                                //clock_t elapsed_time = clock() - start_time;
+                                //double time_taken = ((double)elapsed_time) / CLOCKS_PER_SEC; // in seconds
+                                //printf("Producing the alt-ref frame at POC %d took %f seconds.\n", picture_control_set_ptr->picture_number, time_taken);
+
+                            }
+#endif
+
+
+
+                        }
+
+#if ALT_REF_OVERLAY
+                        // Add 1 to the loop for the overlay picture. If the last picture is alt ref, increase the loop by 1 to add the overlay picture
+                        uint32_t has_overlay = ((PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_end_index[mini_gop_index]]->object_ptr)->is_alt_ref ? 1 : 0;
+                        for (pictureIndex = context_ptr->mini_gop_start_index[mini_gop_index]; pictureIndex <= context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay; ++pictureIndex) {
+                            // 2nd Loop over Pictures in the Pre-Assignment Buffer
+                            // Assign the overlay pcs. Since Overlay picture is not added to the picture_decision_pa_reference_queue, in the next stage, the loop finds the alt_ref picture. The reference for overlay frame is hardcoded later
+                            if (has_overlay && pictureIndex == context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay)
+                                picture_control_set_ptr = ((PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_end_index[mini_gop_index]]->object_ptr)->overlay_ppcs_ptr;
+                            else
+                                picture_control_set_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex]->object_ptr;                  
+
+                            picture_control_set_ptr->picture_number_alt = encode_context_ptr->picture_number_alt++;
 
                             // Set the Decode Order
                             if ((context_ptr->mini_gop_idr_count[mini_gop_index] == 0) &&
-                                (context_ptr->mini_gop_length[mini_gop_index] == picture_control_set_ptr->pred_struct_ptr->pred_struct_period))
-
-                            {
-                                picture_control_set_ptr->decode_order = encode_context_ptr->decode_base_number + predPositionPtr->decode_order;
+                                (context_ptr->mini_gop_length[mini_gop_index] == picture_control_set_ptr->pred_struct_ptr->pred_struct_period) && !picture_control_set_ptr->is_overlay){
+                                picture_control_set_ptr->decode_order = encode_context_ptr->decode_base_number + picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[picture_control_set_ptr->pred_struct_index]->decode_order;
                             }
                             else {
-                                picture_control_set_ptr->decode_order = picture_control_set_ptr->picture_number;
+                                picture_control_set_ptr->decode_order = picture_control_set_ptr->picture_number_alt;
                             }
 
                             encode_context_ptr->terminating_sequence_flag_received = (picture_control_set_ptr->end_of_sequence_flag == EB_TRUE) ?
@@ -3689,338 +4427,14 @@ void* picture_decision_kernel(void *input_ptr)
                                 encode_context_ptr->terminating_sequence_flag_received;
 
                             encode_context_ptr->terminating_picture_number = (picture_control_set_ptr->end_of_sequence_flag == EB_TRUE) ?
-                                picture_control_set_ptr->picture_number :
+                                picture_control_set_ptr->picture_number_alt :
                                 encode_context_ptr->terminating_picture_number;
 
-                            preAssignmentBufferFirstPassFlag = EB_FALSE;
-
-                            // Film grain (assigning the random-seed)
-                            {
-                                uint16_t *fgn_random_seed_ptr = &picture_control_set_ptr->sequence_control_set_ptr->film_grain_random_seed;
-                                picture_control_set_ptr->film_grain_params.random_seed = *fgn_random_seed_ptr;
-                                *fgn_random_seed_ptr += 3381;  // Changing random seed for film grain
-                                if (!(*fgn_random_seed_ptr))     // Random seed should not be zero
-                                    *fgn_random_seed_ptr += 7391;
-                            }
-
-                            Av1GenerateRpsInfo(
-                                picture_control_set_ptr,
-                                encode_context_ptr,
-                                context_ptr,
-                                pictureIndex - context_ptr->mini_gop_start_index[mini_gop_index]);
-                            picture_control_set_ptr->allow_comp_inter_inter = 0;
-                            picture_control_set_ptr->is_skip_mode_allowed = 0;
-
-                            picture_control_set_ptr->reference_mode = (ReferenceMode)0xFF;
-
-                            if (picture_control_set_ptr->slice_type != I_SLICE) {
-#if BASE_LAYER_REF || MRP_REF_MODE
-                                picture_control_set_ptr->allow_comp_inter_inter = 1;
-                                if (picture_control_set_ptr->slice_type == P_SLICE) {
-                                    picture_control_set_ptr->is_skip_mode_allowed = 0;
-                                    picture_control_set_ptr->reference_mode = SINGLE_REFERENCE;
-                                    picture_control_set_ptr->skip_mode_flag = 0;
-                                }
-                                else if (picture_control_set_ptr->temporal_layer_index == 0) {
-                                    picture_control_set_ptr->reference_mode = REFERENCE_MODE_SELECT;
-                                    picture_control_set_ptr->skip_mode_flag = 0;
-                                }
-                                else {
-                                    picture_control_set_ptr->reference_mode = REFERENCE_MODE_SELECT;
-                                    picture_control_set_ptr->is_skip_mode_allowed = 1;
-                                    picture_control_set_ptr->skip_mode_flag = 1;
-                                }
 #else
-                                if (picture_control_set_ptr->temporal_layer_index == 0 || picture_control_set_ptr->slice_type == P_SLICE) {
-
-                                    picture_control_set_ptr->allow_comp_inter_inter = 1;
-
-                                    picture_control_set_ptr->reference_mode = SINGLE_REFERENCE;
-                                    picture_control_set_ptr->is_skip_mode_allowed = 0;
-                                    picture_control_set_ptr->skip_mode_flag = 0;
-                                }
-                                else {
-                                    picture_control_set_ptr->allow_comp_inter_inter = 1;
-                                    picture_control_set_ptr->reference_mode = REFERENCE_MODE_SELECT;
-                                    picture_control_set_ptr->is_skip_mode_allowed = 1;
-                                    picture_control_set_ptr->skip_mode_flag = 1;
-                                }
-#endif
-                            }
-
-                            picture_control_set_ptr->av1_cm->mi_cols = picture_control_set_ptr->sequence_control_set_ptr->luma_width >> MI_SIZE_LOG2;
-                            picture_control_set_ptr->av1_cm->mi_rows = picture_control_set_ptr->sequence_control_set_ptr->luma_height >> MI_SIZE_LOG2;
-
-                            memset(picture_control_set_ptr->av1_cm->ref_frame_sign_bias, 0, 8 * sizeof(int32_t));
-#if BASE_LAYER_REF || MRP_REF_MODE
-                            if (picture_control_set_ptr->reference_mode == REFERENCE_MODE_SELECT && picture_control_set_ptr->temporal_layer_index)
-#else
-                            if (picture_control_set_ptr->reference_mode == REFERENCE_MODE_SELECT)
-#endif
-                            {
-                                picture_control_set_ptr->av1_cm->ref_frame_sign_bias[ALTREF_FRAME] =
-                                    picture_control_set_ptr->av1_cm->ref_frame_sign_bias[ALTREF2_FRAME] =
-                                    picture_control_set_ptr->av1_cm->ref_frame_sign_bias[BWDREF_FRAME] = 1;
-                            }
-
-                            if (picture_control_set_ptr->slice_type == I_SLICE)
-                                context_ptr->last_i_picture_sc_detection = picture_control_set_ptr->sc_content_detected;
-                            else
-                                picture_control_set_ptr->sc_content_detected = context_ptr->last_i_picture_sc_detection;
-
-                            // ME Kernel Multi-Processes Signal(s) derivation
-                            signal_derivation_multi_processes_oq(
-#if MEMORY_FOOTPRINT_OPT_ME_MV
-                                sequence_control_set_ptr,
-#endif
-                                picture_control_set_ptr);
-
-                            // Set the default settings of  subpel
-#if M9_SUBPEL
-                            {
-                                if (picture_control_set_ptr->enc_mode <= ENC_M8)
-                                    picture_control_set_ptr->use_subpel_flag = 1;
-                                else
-                                    picture_control_set_ptr->use_subpel_flag = (picture_control_set_ptr->temporal_layer_index == 0) ?
-                                    1 :
-                                    0;
-                            }
-#else
-#if SCREEN_CONTENT_SETTINGS
-                            if (picture_control_set_ptr->sc_content_detected)
-                                if (picture_control_set_ptr->enc_mode <= ENC_M1)
-                                    picture_control_set_ptr->use_subpel_flag = 1;
-                                else
-                                    picture_control_set_ptr->use_subpel_flag = 0;
-                            else
-#endif
-                            picture_control_set_ptr->use_subpel_flag = 1;
-#endif
-
-                            picture_control_set_ptr->use_src_ref = EB_FALSE;
-                            picture_control_set_ptr->enable_in_loop_motion_estimation_flag = EB_FALSE;
-                            picture_control_set_ptr->limit_ois_to_dc_mode_flag = EB_FALSE;
-#if !M9_CU_8x8
-                            picture_control_set_ptr->cu8x8_mode = CU_8x8_MODE_0;
-#endif
-
-                            // Update the Dependant List Count - If there was an I-frame or Scene Change, then cleanup the Picture Decision PA Reference Queue Dependent Counts
-                            if (picture_control_set_ptr->slice_type == I_SLICE)
-                            {
-
-                                inputQueueIndex = encode_context_ptr->picture_decision_pa_reference_queue_head_index;
-
-                                while (inputQueueIndex != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) {
-
-                                    inputEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[inputQueueIndex];
-
-                                    // Modify Dependent List0
-                                    depListCount = inputEntryPtr->list0.list_count;
-                                    for (depIdx = 0; depIdx < depListCount; ++depIdx) {
-
-
-                                        // Adjust the latest current_input_poc in case we're in a POC rollover scenario
-                                        // current_input_poc += (current_input_poc < inputEntryPtr->pocNumber) ? (1 << sequence_control_set_ptr->bits_for_picture_order_count) : 0;
-
-                                        depPoc = POC_CIRCULAR_ADD(
-                                            inputEntryPtr->picture_number, // can't use a value that gets reset
-                                            inputEntryPtr->list0.list[depIdx]/*,
-                                            sequence_control_set_ptr->bits_for_picture_order_count*/);
-
-                                            // If Dependent POC is greater or equal to the IDR POC
-                                        if (depPoc >= picture_control_set_ptr->picture_number && inputEntryPtr->list0.list[depIdx]) {
-
-                                            inputEntryPtr->list0.list[depIdx] = 0;
-
-                                            // Decrement the Reference's referenceCount
-                                            --inputEntryPtr->dependent_count;
-
-                                            CHECK_REPORT_ERROR(
-                                                (inputEntryPtr->dependent_count != ~0u),
-                                                encode_context_ptr->app_callback_ptr,
-                                                EB_ENC_PD_ERROR3);
-                                        }
-                                    }
-
-                                    // Modify Dependent List1
-                                    depListCount = inputEntryPtr->list1.list_count;
-                                    for (depIdx = 0; depIdx < depListCount; ++depIdx) {
-
-                                        // Adjust the latest current_input_poc in case we're in a POC rollover scenario
-                                        // current_input_poc += (current_input_poc < inputEntryPtr->pocNumber) ? (1 << sequence_control_set_ptr->bits_for_picture_order_count) : 0;
-
-                                        depPoc = POC_CIRCULAR_ADD(
-                                            inputEntryPtr->picture_number,
-                                            inputEntryPtr->list1.list[depIdx]/*,
-                                            sequence_control_set_ptr->bits_for_picture_order_count*/);
-
-                                            // If Dependent POC is greater or equal to the IDR POC
-                                        if (((depPoc >= picture_control_set_ptr->picture_number) || (((picture_control_set_ptr->pre_assignment_buffer_count != picture_control_set_ptr->pred_struct_ptr->pred_struct_period) || (picture_control_set_ptr->idr_flag == EB_TRUE)) && (depPoc > (picture_control_set_ptr->picture_number - picture_control_set_ptr->pre_assignment_buffer_count)))) && inputEntryPtr->list1.list[depIdx]) {
-                                            inputEntryPtr->list1.list[depIdx] = 0;
-
-                                            // Decrement the Reference's referenceCount
-                                            --inputEntryPtr->dependent_count;
-
-                                            CHECK_REPORT_ERROR(
-                                                (inputEntryPtr->dependent_count != ~0u),
-                                                encode_context_ptr->app_callback_ptr,
-                                                EB_ENC_PD_ERROR3);
-                                        }
-
-                                    }
-
-                                    // Increment the inputQueueIndex Iterator
-                                    inputQueueIndex = (inputQueueIndex == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : inputQueueIndex + 1;
-                                }
-
-                            }
-                            else if (picture_control_set_ptr->idr_flag == EB_TRUE) {
-
-                                // Set the Picture Decision PA Reference Entry pointer
-                                inputEntryPtr = (PaReferenceQueueEntry*)EB_NULL;
-                            }
-
-                            // Place Picture in Picture Decision PA Reference Queue
-                            inputEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[encode_context_ptr->picture_decision_pa_reference_queue_tail_index];
-                            inputEntryPtr->input_object_ptr = picture_control_set_ptr->pa_reference_picture_wrapper_ptr;
-                            inputEntryPtr->picture_number = picture_control_set_ptr->picture_number;
-                            inputEntryPtr->reference_entry_index = encode_context_ptr->picture_decision_pa_reference_queue_tail_index;
-#if !BUG_FIX_PCS_LIVE_COUNT
-                            inputEntryPtr->p_pcs_ptr = picture_control_set_ptr;
-#endif
-#if BUG_FIX_INPUT_LIVE_COUNT
-                            inputEntryPtr->input_picture_wrapper_ptr = picture_control_set_ptr->input_picture_wrapper_ptr;
-#endif
-
-                            encode_context_ptr->picture_decision_pa_reference_queue_tail_index =
-                                (encode_context_ptr->picture_decision_pa_reference_queue_tail_index == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : encode_context_ptr->picture_decision_pa_reference_queue_tail_index + 1;
-
-                            // Check if the Picture Decision PA Reference is full
-                            CHECK_REPORT_ERROR(
-                                (((encode_context_ptr->picture_decision_pa_reference_queue_head_index != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) ||
-                                (encode_context_ptr->picture_decision_pa_reference_queue[encode_context_ptr->picture_decision_pa_reference_queue_head_index]->input_object_ptr == EB_NULL))),
-                                encode_context_ptr->app_callback_ptr,
-                                EB_ENC_PD_ERROR4);
-
-                            // Copy the reference lists into the inputEntry and
-                            // set the Reference Counts Based on Temporal Layer and how many frames are active
-                            picture_control_set_ptr->ref_list0_count = (picture_type == I_SLICE) ? 0 : (uint8_t)predPositionPtr->ref_list0.reference_list_count;
-                            picture_control_set_ptr->ref_list1_count = (picture_type == I_SLICE) ? 0 : (uint8_t)predPositionPtr->ref_list1.reference_list_count;
-#if !MEMORY_FOOTPRINT_OPT_ME_MV
-#if NO_UNI
-                            //0: ON- full
-                            //1: ON- no-uniDirection
-                            //2: OFF                            
-                            picture_control_set_ptr->mrp_mode = picture_control_set_ptr->enc_mode == ENC_M0 ? 0 : 2; 
-                            
-#endif
-#endif
-#if MRP_M0_ONLY
-#if NO_UNI
-                            if (picture_control_set_ptr->mrp_mode == 2) {
-#else
-                            if (picture_control_set_ptr->enc_mode >= ENC_M1) {
-#endif
-                                if (picture_control_set_ptr->temporal_layer_index > 0) {
-                                    picture_control_set_ptr->ref_list0_count = MIN(picture_control_set_ptr->ref_list0_count, 1);
-                                    picture_control_set_ptr->ref_list1_count = MIN(picture_control_set_ptr->ref_list1_count, 1);
-                                }
-                            }
-#endif
-#if BASE_LAYER_REF
-                            inputEntryPtr->list0_ptr->reference_list = predPositionPtr->ref_list0.reference_list;
-                            inputEntryPtr->list0_ptr->reference_list_count = predPositionPtr->ref_list0.reference_list_count;
-
-                            if (picture_control_set_ptr->temporal_layer_index == 0 && (picture_type != I_SLICE) && picture_control_set_ptr->picture_number < sequence_control_set_ptr->max_frame_window_to_ref_islice + picture_control_set_ptr->last_islice_picture_number)
-#if MRP_ME
-                                inputEntryPtr->list1Ptr->reference_list[0] = picture_control_set_ptr->picture_number - picture_control_set_ptr->last_islice_picture_number; //NM: to be reviewed 
-#else                    
-                                inputEntryPtr->list1_ptr->reference_list = picture_control_set_ptr->picture_number - picture_control_set_ptr->last_islice_picture_number;
-#endif
-                            else
-                                inputEntryPtr->list1_ptr->reference_list = predPositionPtr->ref_list1.reference_list;
-                            inputEntryPtr->list1_ptr->reference_list_count = predPositionPtr->ref_list1.reference_list_count;
-#else
-                            inputEntryPtr->list0_ptr = &predPositionPtr->ref_list0;
-                            inputEntryPtr->list1_ptr = &predPositionPtr->ref_list1;
-#endif
-                            {
-
-                                // Copy the Dependent Lists
-                                // *Note - we are removing any leading picture dependencies for now
-                                inputEntryPtr->list0.list_count = 0;
-                                for (depIdx = 0; depIdx < predPositionPtr->dep_list0.list_count; ++depIdx) {
-                                    if (predPositionPtr->dep_list0.list[depIdx] >= 0) {
-                                        inputEntryPtr->list0.list[inputEntryPtr->list0.list_count++] = predPositionPtr->dep_list0.list[depIdx];
-                                    }
-                                }
-
-                                inputEntryPtr->list1.list_count = predPositionPtr->dep_list1.list_count;
-                                for (depIdx = 0; depIdx < predPositionPtr->dep_list1.list_count; ++depIdx) {
-                                    inputEntryPtr->list1.list[depIdx] = predPositionPtr->dep_list1.list[depIdx];
-                                }
-
-                                inputEntryPtr->dep_list0_count = inputEntryPtr->list0.list_count;
-#if BASE_LAYER_REF
-                                if (picture_control_set_ptr->slice_type == I_SLICE)
-                                    inputEntryPtr->dep_list1_count = inputEntryPtr->list1.list_count + sequence_control_set_ptr->extra_frames_to_ref_islice;
-                                else if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->picture_number + (1 << sequence_control_set_ptr->static_config.hierarchical_levels) < sequence_control_set_ptr->max_frame_window_to_ref_islice + picture_control_set_ptr->last_islice_picture_number)
-                                    inputEntryPtr->dep_list1_count = MAX((int32_t)inputEntryPtr->list1.list_count - 1, 0);
-                                else
-                                    inputEntryPtr->dep_list1_count = inputEntryPtr->list1.list_count;
-#else
-                                inputEntryPtr->dep_list1_count = inputEntryPtr->list1.list_count;
-#endif
-                                inputEntryPtr->dependent_count = inputEntryPtr->dep_list0_count + inputEntryPtr->dep_list1_count;
-
-                            }
-
-                            ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->dependent_pictures_count = inputEntryPtr->dependent_count;
-
-                            /* uint32_t depCnt = ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->dependent_pictures_count;
-                            if (picture_control_set_ptr->picture_number>0 && picture_control_set_ptr->slice_type==I_SLICE && depCnt!=8 )
-                            printf("depCnt Error1  POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);
-                            else if (picture_control_set_ptr->slice_type==B_SLICE && picture_control_set_ptr->temporal_layer_index == 0 && depCnt!=8)
-                            printf("depCnt Error2  POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);
-                            else if (picture_control_set_ptr->slice_type==B_SLICE && picture_control_set_ptr->temporal_layer_index == 1 && depCnt!=4)
-                            printf("depCnt Error3  POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);
-                            else if (picture_control_set_ptr->slice_type==B_SLICE && picture_control_set_ptr->temporal_layer_index == 2 && depCnt!=2)
-                            printf("depCnt Error4  POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);
-                            else if (picture_control_set_ptr->slice_type==B_SLICE && picture_control_set_ptr->temporal_layer_index == 3 && depCnt!=0)
-                            printf("depCnt Error5  POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);*/
-                            //if (picture_control_set_ptr->slice_type==P_SLICE )
-                            //     printf("POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependent_count);
-#if MRP_ME
-                            CHECK_REPORT_ERROR(
-                                (picture_control_set_ptr->pred_struct_ptr->pred_struct_period * REF_LIST_MAX_DEPTH < MAX_ELAPSED_IDR_COUNT),
-                                encode_context_ptr->app_callback_ptr,
-                                EB_ENC_PD_ERROR5);
-
-                            // Reset the PA Reference Lists
-                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
-                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
-
-                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint32_t));
-                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint32_t));
-
-#else
-                            CHECK_REPORT_ERROR(
-                                (picture_control_set_ptr->pred_struct_ptr->pred_struct_period < MAX_ELAPSED_IDR_COUNT),
-                                encode_context_ptr->app_callback_ptr,
-                                EB_ENC_PD_ERROR5);
-
-                            // Reset the PA Reference Lists
-                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array, 0, 2 * sizeof(EbObjectWrapper*));
-
-                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array, 0, 2 * sizeof(uint32_t));
-#endif
-                        }
-
-                        // 2nd Loop over Pictures in the Pre-Assignment Buffer
                         for (pictureIndex = context_ptr->mini_gop_start_index[mini_gop_index]; pictureIndex <= context_ptr->mini_gop_end_index[mini_gop_index]; ++pictureIndex) {
-
+                            // 2nd Loop over Pictures in the Pre-Assignment Buffer
                             picture_control_set_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex]->object_ptr;
-
+#endif
                             // Find the Reference in the Picture Decision PA Reference Queue
                             inputQueueIndex = encode_context_ptr->picture_decision_pa_reference_queue_head_index;
 
@@ -4062,6 +4476,34 @@ void* picture_decision_kernel(void *input_ptr)
                                 uint8_t ref_pic_index;
                                 for (ref_pic_index = 0; ref_pic_index < picture_control_set_ptr->ref_list0_count; ++ref_pic_index) {
                                     if (picture_control_set_ptr->ref_list0_count) {
+#if ALT_REF_OVERLAY
+                                        // hardcode the reference for the overlay frame
+                                        if(picture_control_set_ptr->is_overlay){
+                                            paReferenceQueueIndex = (uint32_t)CIRCULAR_ADD(
+                                                (int32_t)inputEntryPtr->reference_entry_index,
+                                                PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
+
+                                            paReferenceEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[paReferenceQueueIndex];
+
+                                            // Calculate the Ref POC
+                                            ref_poc = POC_CIRCULAR_ADD(
+                                                picture_control_set_ptr->picture_number,
+                                                0);
+                                        }
+                                        else {
+                                            paReferenceQueueIndex = (uint32_t)CIRCULAR_ADD(
+                                                ((int32_t)inputEntryPtr->reference_entry_index) - inputEntryPtr->list0_ptr->reference_list[ref_pic_index],
+                                                PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
+
+                                            paReferenceEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[paReferenceQueueIndex];
+
+                                            // Calculate the Ref POC
+                                            ref_poc = POC_CIRCULAR_ADD(
+                                                picture_control_set_ptr->picture_number,
+                                                -inputEntryPtr->list0_ptr->reference_list[ref_pic_index] /*
+                                                sequence_control_set_ptr->bits_for_picture_order_count*/);
+                                        }
+#else
                                         paReferenceQueueIndex = (uint32_t)CIRCULAR_ADD(
                                             ((int32_t)inputEntryPtr->reference_entry_index) - inputEntryPtr->list0_ptr->reference_list[ref_pic_index],
                                             PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
@@ -4073,7 +4515,7 @@ void* picture_decision_kernel(void *input_ptr)
                                             picture_control_set_ptr->picture_number,
                                             -inputEntryPtr->list0_ptr->reference_list[ref_pic_index] /*
                                             sequence_control_set_ptr->bits_for_picture_order_count*/);
-
+#endif
                                             // Set the Reference Object
                                         picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0][ref_pic_index] = paReferenceEntryPtr->input_object_ptr;
                                         picture_control_set_ptr->ref_pic_poc_array[REF_LIST_0][ref_pic_index] = ref_poc;
@@ -4234,6 +4676,7 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
 #endif
 
+#if !ALT_REF_OVERLAY
                             // SB Loop to reset similarColocatedLcu Array
                             uint16_t *variancePtr;
                             uint32_t  NullVarCnt = 0;
@@ -4256,7 +4699,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     }
                                 }
                             }
-
+#endif
                             {
 
                                 picture_control_set_ptr->intensity_transition_flag = EB_FALSE;
@@ -4285,35 +4728,48 @@ void* picture_decision_kernel(void *input_ptr)
                             picture_control_set_ptr->me_segments_total_count = (uint16_t)(picture_control_set_ptr->me_segments_column_count  * picture_control_set_ptr->me_segments_row_count);
                             picture_control_set_ptr->me_segments_completion_mask = 0;
 
+
                             // Post the results to the ME processes
                             {
                                 uint32_t segment_index;
 
-                                for (segment_index = 0; segment_index < picture_control_set_ptr->me_segments_total_count; ++segment_index)
-                                {
+                                for (segment_index = 0; segment_index < picture_control_set_ptr->me_segments_total_count; ++segment_index) {
                                     // Get Empty Results Object
                                     eb_get_empty_object(
-                                        context_ptr->picture_decision_results_output_fifo_ptr,
-                                        &outputResultsWrapperPtr);
+                                            context_ptr->picture_decision_results_output_fifo_ptr,
+                                            &outputResultsWrapperPtr);
 
                                     outputResultsPtr = (PictureDecisionResults*)outputResultsWrapperPtr->object_ptr;
-
-                                    outputResultsPtr->picture_control_set_wrapper_ptr = encode_context_ptr->pre_assignment_buffer[pictureIndex];
+#if ALT_REF_OVERLAY
+                                    if (picture_control_set_ptr->is_overlay)
+                                        outputResultsPtr->picture_control_set_wrapper_ptr = picture_control_set_ptr->p_pcs_wrapper_ptr;
+                                    else
+#endif
+                                        outputResultsPtr->picture_control_set_wrapper_ptr = encode_context_ptr->pre_assignment_buffer[pictureIndex];
 
                                     outputResultsPtr->segment_index = segment_index;
-
+#if ALTREF_FILTERING_SUPPORT
+                                    outputResultsPtr->task_type = 0;
+#endif
                                     // Post the Full Results Object
                                     eb_post_full_object(outputResultsWrapperPtr);
+
                                 }
                             }
 
+#if ALT_REF_OVERLAY
+                            if (pictureIndex == context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay) {
+                                // Increment the Decode Base Number
+                                encode_context_ptr->decode_base_number += context_ptr->mini_gop_length[mini_gop_index] + has_overlay;
+                            }
+                            if (pictureIndex == encode_context_ptr->pre_assignment_buffer_count - 1 + has_overlay) {
+#else
                             if (pictureIndex == context_ptr->mini_gop_end_index[mini_gop_index]) {
-
                                 // Increment the Decode Base Number
                                 encode_context_ptr->decode_base_number += context_ptr->mini_gop_length[mini_gop_index];
                             }
-
                             if (pictureIndex == encode_context_ptr->pre_assignment_buffer_count - 1) {
+#endif
 
                                 // Reset the Pre-Assignment Buffer
                                 encode_context_ptr->pre_assignment_buffer_count = 0;
@@ -4322,6 +4778,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 encode_context_ptr->pre_assignment_buffer_scene_change_count = 0;
                                 encode_context_ptr->pre_assignment_buffer_eos_flag = EB_FALSE;
                             }
+
                         }
 
                     } // End MINI GOPs loop
@@ -4337,7 +4794,12 @@ void* picture_decision_kernel(void *input_ptr)
                     // Remove the entry
                     if ((inputEntryPtr->dependent_count == 0) &&
                         (inputEntryPtr->input_object_ptr)) {
+
 #if !BUG_FIX_PCS_LIVE_COUNT
+#if ALT_REF_OVERLAY
+                        if(inputEntryPtr->p_pcs_ptr->is_alt_ref)
+                            eb_release_object(inputEntryPtr->p_pcs_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
+#endif
                         eb_release_object(inputEntryPtr->p_pcs_ptr->p_pcs_wrapper_ptr);
 #endif
                         // Release the nominal live_count value

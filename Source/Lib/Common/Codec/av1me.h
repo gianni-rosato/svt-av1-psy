@@ -59,6 +59,22 @@ typedef struct {
   int coord_offset;
 } search_neighbors;
 
+typedef unsigned int(*aom_sad_fn_t)(const uint8_t *a, int a_stride,
+                                    const uint8_t *b, int b_stride);
+
+typedef unsigned int(*aom_variance_fn_t)(const uint8_t *a, int a_stride,
+                                         const uint8_t *b, int b_stride,
+                                         unsigned int *sse);
+
+typedef void(*aom_sad_multi_d_fn_t)(const uint8_t *a, int a_stride,
+                                    const uint8_t *const b_array[],
+                                    int b_stride, unsigned int *sad_array);
+
+typedef struct aom_variance_vtable {
+    aom_sad_fn_t sdf;
+    aom_variance_fn_t vf;
+    aom_sad_multi_d_fn_t sdx4df;
+} aom_variance_fn_ptr_t;
 
 void av1_init_dsmotion_compensation(SearchSiteConfig *cfg, int stride);
 void av1_init3smotion_compensation(SearchSiteConfig *cfg, int stride);

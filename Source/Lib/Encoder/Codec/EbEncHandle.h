@@ -55,6 +55,11 @@ typedef struct EbEncHandle
     EbSystemResource                    **reference_picture_pool_ptr_array;
     EbSystemResource                    **pa_reference_picture_pool_ptr_array;
 
+#if ALT_REF_OVERLAY
+    // Overlay input picture
+    EbSystemResource                    **overlay_input_picture_pool_ptr_array;
+    EbFifo                             ***overlay_input_picture_pool_producer_fifo_ptr_dbl_array;
+#endif
     // Picture Buffer Producer Fifos
     EbFifo                             ***reference_picture_pool_producer_fifo_ptr_dbl_array;
     EbFifo                             ***pa_reference_picture_pool_producer_fifo_ptr_dbl_array;

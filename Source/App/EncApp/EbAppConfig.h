@@ -359,13 +359,23 @@ typedef struct EbConfig
     uint32_t                active_channel_count;
     uint32_t                logical_processors;
     int32_t                 target_socket;
-    EbBool                 stop_encoder;         // to signal CTRL+C Event, need to stop encoding.
+    EbBool                  stop_encoder;         // to signal CTRL+C Event, need to stop encoding.
 
     uint64_t                processed_frame_count;
     uint64_t                processed_byte_count;
 
     uint64_t                byte_count_since_ivf;
     uint64_t                ivf_count;
+
+    // --- start: ALTREF_FILTERING_SUPPORT
+    /****************************************
+     * ALT-REF related Parameters
+     ****************************************/
+    EbBool                  enable_altrefs;
+    uint8_t                 altref_strength;
+    uint8_t                 altref_nframes;
+    EbBool                  enable_overlays;
+    // --- end: ALTREF_FILTERING_SUPPORT
 
 } EbConfig;
 

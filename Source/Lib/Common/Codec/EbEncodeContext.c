@@ -42,7 +42,9 @@ EbErrorType encode_context_ctor(
     // Picture Buffer Fifos
     encode_context_ptr->reference_picture_pool_fifo_ptr = (EbFifo*)EB_NULL;
     encode_context_ptr->pa_reference_picture_pool_fifo_ptr = (EbFifo*)EB_NULL;
-
+#if ALT_REF_OVERLAY
+    encode_context_ptr->overlay_input_picture_pool_fifo_ptr = (EbFifo*)EB_NULL;
+#endif
     // Picture Decision Reordering Queue
     encode_context_ptr->picture_decision_reorder_queue_head_index = 0;
     EB_MALLOC(PictureDecisionReorderEntry**, encode_context_ptr->picture_decision_reorder_queue, sizeof(PictureDecisionReorderEntry*) * PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
@@ -220,7 +222,9 @@ EbErrorType encode_context_ctor(
     encode_context_ptr->max_coded_poc_selected_ref_qp = 32;
 
     EB_CREATEMUTEX(EbHandle, encode_context_ptr->shared_reference_mutex, sizeof(EbHandle), EB_MUTEX);
-
+#if ALT_REF_OVERLAY
+    encode_context_ptr->picture_number_alt = 0;
+#endif
     return EB_ErrorNone;
 }
 

@@ -1159,49 +1159,63 @@ AppExitConditionType ProcessOutputStreamBuffer(
     // Local variables
     uint64_t                finishsTime     = 0;
     uint64_t                finishuTime     = 0;
+#if ALT_REF_OVERLAY_APP
+    uint8_t is_alt_ref = 1;
+    while (is_alt_ref) {
+        is_alt_ref = 0;
+#endif
+        // non-blocking call until all input frames are sent
+        stream_status = eb_svt_get_packet(componentHandle, &headerPtr, pic_send_done);
 
-    // non-blocking call until all input frames are sent
-    stream_status = eb_svt_get_packet(componentHandle, &headerPtr, pic_send_done);
+        if (stream_status == EB_ErrorMax) {
+            printf("\n");
+            LogErrorOutput(
+                config->error_log_file,
+                headerPtr->flags);
+            return APP_ExitConditionError;
+        }
+        else if (stream_status != EB_NoErrorEmptyQueue) {
+#if ALT_REF_OVERLAY_APP
+            is_alt_ref = headerPtr->is_alt_Ref;
+#endif
+            EbBool   has_tiles = (EbBool)(appCallBack->eb_enc_parameters.tile_columns || appCallBack->eb_enc_parameters.tile_rows);
+            uint8_t  obu_frame_header_size = has_tiles ? OBU_FRAME_HEADER_SIZE + 1 : OBU_FRAME_HEADER_SIZE;
+#if ALT_REF_OVERLAY_APP
+            if (!headerPtr->is_alt_Ref)
+#endif
+                ++(config->performance_context.frame_count);
+            *total_latency += (uint64_t)headerPtr->n_tick_count;
+            *max_latency = (headerPtr->n_tick_count > *max_latency) ? headerPtr->n_tick_count : *max_latency;
 
-    if (stream_status == EB_ErrorMax) {
-        printf("\n");
-        LogErrorOutput(
-            config->error_log_file,
-            headerPtr->flags);
-        return APP_ExitConditionError;
-    }
-    else if (stream_status != EB_NoErrorEmptyQueue) {
-        EbBool   has_tiles                = (EbBool)(appCallBack->eb_enc_parameters.tile_columns || appCallBack->eb_enc_parameters.tile_rows);
-        uint8_t  obu_frame_header_size    = has_tiles ? OBU_FRAME_HEADER_SIZE + 1 : OBU_FRAME_HEADER_SIZE;
-        ++(config->performance_context.frame_count);
-        *total_latency += (uint64_t)headerPtr->n_tick_count;
-        *max_latency = (headerPtr->n_tick_count > *max_latency) ? headerPtr->n_tick_count : *max_latency;
+            EbFinishTime((uint64_t*)&finishsTime, (uint64_t*)&finishuTime);
 
-        EbFinishTime((uint64_t*)&finishsTime, (uint64_t*)&finishuTime);
+            // total execution time, inc init time
+            EbComputeOverallElapsedTime(
+                config->performance_context.lib_start_time[0],
+                config->performance_context.lib_start_time[1],
+                finishsTime,
+                finishuTime,
+                &config->performance_context.total_execution_time);
 
-        // total execution time, inc init time
-        EbComputeOverallElapsedTime(
-            config->performance_context.lib_start_time[0],
-            config->performance_context.lib_start_time[1],
-            finishsTime,
-            finishuTime,
-            &config->performance_context.total_execution_time);
+            // total encode time
+            EbComputeOverallElapsedTime(
+                config->performance_context.encode_start_time[0],
+                config->performance_context.encode_start_time[1],
+                finishsTime,
+                finishuTime,
+                &config->performance_context.total_encode_time);
 
-        // total encode time
-        EbComputeOverallElapsedTime(
-            config->performance_context.encode_start_time[0],
-            config->performance_context.encode_start_time[1],
-            finishsTime,
-            finishuTime,
-            &config->performance_context.total_encode_time);
+            // Write Stream Data to file
+            if (streamFile) {
+#if ALT_REF_OVERLAY_APP
+                if (config->performance_context.frame_count ==  1 && !headerPtr->is_alt_Ref){
+#else
+                if (config->performance_context.frame_count == 1) {
+#endif
+                    write_ivf_stream_header(config);
+                }
 
-        // Write Stream Data to file
-        if (streamFile) {
-            if (config->performance_context.frame_count == 1){
-                write_ivf_stream_header(config);
-            }
-
-            switch(headerPtr->flags & 0x00000006){ // Check for the flags EB_BUFFERFLAG_HAS_TD and EB_BUFFERFLAG_SHOW_EXT
+                switch (headerPtr->flags & 0x00000006) { // Check for the flags EB_BUFFERFLAG_HAS_TD and EB_BUFFERFLAG_SHOW_EXT
 
                 case (EB_BUFFERFLAG_HAS_TD | EB_BUFFERFLAG_SHOW_EXT):
 
@@ -1254,39 +1268,45 @@ AppExitConditionType ProcessOutputStreamBuffer(
                     // this packet will be part of the previous IVF header
                     config->byte_count_since_ivf += (headerPtr->n_filled_len);
                     break;
+                }
             }
-        }
-        config->performance_context.byte_count += headerPtr->n_filled_len;
+            config->performance_context.byte_count += headerPtr->n_filled_len;
 
-        // Update Output Port Activity State
-        *portState = (headerPtr->flags & EB_BUFFERFLAG_EOS) ? APP_PortInactive : *portState;
-        return_value = (headerPtr->flags & EB_BUFFERFLAG_EOS) ? APP_ExitConditionFinished : APP_ExitConditionNone;
+            // Update Output Port Activity State
+            *portState = (headerPtr->flags & EB_BUFFERFLAG_EOS) ? APP_PortInactive : *portState;
+            return_value = (headerPtr->flags & EB_BUFFERFLAG_EOS) ? APP_ExitConditionFinished : APP_ExitConditionNone;
 
-        // Release the output buffer
-        eb_svt_release_out_buffer(&headerPtr);
+            // Release the output buffer
+            eb_svt_release_out_buffer(&headerPtr);
 
 #if DEADLOCK_DEBUG
-        ++frame_count;
+            ++frame_count;
 #else
-        //++frame_count;
-        printf("\b\b\b\b\b\b\b\b\b%9d", ++frame_count);
+            //++frame_count;
+#if ALT_REF_OVERLAY_APP
+            if (!headerPtr->is_alt_Ref)
+#endif
+                printf("\b\b\b\b\b\b\b\b\b%9d", ++frame_count);
 #endif
 
-        //++frame_count;
-        fflush(stdout);
+            //++frame_count;
+            fflush(stdout);
 
-        {
-            config->performance_context.average_speed = (config->performance_context.frame_count) / config->performance_context.total_encode_time;
-            config->performance_context.average_latency = config->performance_context.total_latency / (double)(config->performance_context.frame_count);
-        }
-
-        if (!(frame_count % SPEED_MEASUREMENT_INTERVAL)) {
             {
-                printf("\n");
-                printf("Average System Encoding Speed:        %.2f\n", (double)(frame_count) / config->performance_context.total_encode_time);
+                config->performance_context.average_speed = (config->performance_context.frame_count) / config->performance_context.total_encode_time;
+                config->performance_context.average_latency = config->performance_context.total_latency / (double)(config->performance_context.frame_count);
+            }
+
+            if (!(frame_count % SPEED_MEASUREMENT_INTERVAL)) {
+                {
+                    printf("\n");
+                    printf("Average System Encoding Speed:        %.2f\n", (double)(frame_count) / config->performance_context.total_encode_time);
+                }
             }
         }
-    }
+#if ALT_REF_OVERLAY_APP
+    } 
+#endif
     return return_value;
 }
 AppExitConditionType ProcessOutputReconBuffer(

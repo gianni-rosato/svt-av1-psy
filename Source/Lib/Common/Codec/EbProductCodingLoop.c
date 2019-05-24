@@ -1039,7 +1039,9 @@ void init_nsq_block(
     do {
 
         const BlockGeom * blk_geom = get_blk_geom_mds(blk_idx);
+#if RED_CU
         context_ptr->md_local_cu_unit[blk_idx].avail_blk_flag = EB_FALSE;
+#endif
         if (blk_geom->shape == PART_N)
         {
             context_ptr->md_cu_arr_nsq[blk_idx].split_flag = EB_TRUE; 

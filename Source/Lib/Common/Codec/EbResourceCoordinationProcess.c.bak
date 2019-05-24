@@ -786,7 +786,6 @@ void* resource_coordination_kernel(void *input_ptr)
             picture_control_set_ptr->input_picture_wrapper_ptr = input_picture_wrapper_ptr;
             picture_control_set_ptr->end_of_sequence_flag = end_of_sequence_flag;
 
-#if ALT_REF_OVERLAY
             if (loop_index == 1) {
                 // Get a new input picture for overlay.
                 EbObjectWrapper     *input_pic_wrapper_ptr;
@@ -808,7 +807,6 @@ void* resource_coordination_kernel(void *input_ptr)
                 picture_control_set_ptr->enhanced_picture_ptr = (EbPictureBufferDesc*)picture_control_set_ptr->input_ptr->p_buffer;
                 picture_control_set_ptr->input_picture_wrapper_ptr = input_pic_wrapper_ptr;
             }
-#endif
 #if BUG_FIX_INPUT_LIVE_COUNT
         eb_object_inc_live_count(
             picture_control_set_ptr->input_picture_wrapper_ptr,

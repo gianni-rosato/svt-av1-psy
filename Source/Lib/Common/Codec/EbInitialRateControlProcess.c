@@ -1738,7 +1738,7 @@ void* initial_rate_control_kernel(void *input_ptr)
             context_ptr->motion_estimation_results_input_fifo_ptr,
             &inputResultsWrapperPtr);
 
-        inputResultsPtr = (MotionEstimationResults*)inputResultsWrapperPtr->object_ptr;
+        inputResultsPtr = (MotionEstimationResults*)inputResultsWrapperPtr->object_ptr; 
         picture_control_set_ptr = (PictureParentControlSet*)inputResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
 
         segment_index = inputResultsPtr->segment_index;
@@ -1750,7 +1750,6 @@ void* initial_rate_control_kernel(void *input_ptr)
         if (SEGMENT_COMPLETION_MASK_TEST(picture_control_set_ptr->me_segments_completion_mask, picture_control_set_ptr->me_segments_total_count)) {
             sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
             encode_context_ptr = (EncodeContext*)sequence_control_set_ptr->encode_context_ptr;
-
             // Mark picture when global motion is detected using ME results
             //reset intraCodedEstimationLcu
             MeBasedGlobalMotionDetection(
@@ -1771,6 +1770,9 @@ void* initial_rate_control_kernel(void *input_ptr)
             // Input Motion Analysis Results into Reordering Queue
             //****************************************************
 
+#if ALT_REF_OVERLAY
+            if(!picture_control_set_ptr->is_overlay)
+#endif
             // Determine offset from the Head Ptr
             queueEntryPtr = DeterminePictureOffsetInQueue(
                 encode_context_ptr,
@@ -1928,139 +1930,167 @@ void* initial_rate_control_kernel(void *input_ptr)
                     queueEntryPtr = encode_context_ptr->initial_rate_control_reorder_queue[encode_context_ptr->initial_rate_control_reorder_queue_head_index];
                     picture_control_set_ptr = ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr)->object_ptr);
                     sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-                    picture_control_set_ptr->frames_in_sw = frames_in_sw;
-                    queueEntryIndexTemp = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-                    end_of_sequence_flag = EB_FALSE;
-                    // find the frames_in_interval for the peroid I frames
-                    while (!end_of_sequence_flag &&
-                        queueEntryIndexTemp <= encode_context_ptr->initial_rate_control_reorder_queue_head_index + sequence_control_set_ptr->static_config.look_ahead_distance) {
+#if ALT_REF_OVERLAY
+                    // overlay picture was not added to the queue. For the alt_ref picture with an overlay picture, it loops on both alt ref and overlay pictures
+                    uint8_t has_overlay = picture_control_set_ptr->is_alt_ref ? 1 : 0;
+                    for (uint8_t loop_index = 0; loop_index <= has_overlay; loop_index++) {
+                        if (loop_index)
+                            picture_control_set_ptr = picture_control_set_ptr->overlay_ppcs_ptr;
+#endif
+                        picture_control_set_ptr->frames_in_sw = frames_in_sw;
+                        queueEntryIndexTemp = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
+                        end_of_sequence_flag = EB_FALSE;
+                        // find the frames_in_interval for the peroid I frames
+                        while (!end_of_sequence_flag &&
+                            queueEntryIndexTemp <= encode_context_ptr->initial_rate_control_reorder_queue_head_index + sequence_control_set_ptr->static_config.look_ahead_distance) {
 
-                        queueEntryIndexTemp2 = (queueEntryIndexTemp > INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1) ? queueEntryIndexTemp - INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH : queueEntryIndexTemp;
-                        pictureControlSetPtrTemp = ((PictureParentControlSet*)(encode_context_ptr->initial_rate_control_reorder_queue[queueEntryIndexTemp2]->parent_pcs_wrapper_ptr)->object_ptr);
-                        if (sequence_control_set_ptr->intra_period_length != -1) {
-                            if (picture_control_set_ptr->picture_number % ((sequence_control_set_ptr->intra_period_length + 1)) == 0) {
-                                picture_control_set_ptr->frames_in_interval[pictureControlSetPtrTemp->temporal_layer_index] ++;
-                                if (pictureControlSetPtrTemp->scene_change_flag)
-                                    picture_control_set_ptr->scene_change_in_gop = EB_TRUE;
+                            queueEntryIndexTemp2 = (queueEntryIndexTemp > INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1) ? queueEntryIndexTemp - INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH : queueEntryIndexTemp;
+                            pictureControlSetPtrTemp = ((PictureParentControlSet*)(encode_context_ptr->initial_rate_control_reorder_queue[queueEntryIndexTemp2]->parent_pcs_wrapper_ptr)->object_ptr);
+                            if (sequence_control_set_ptr->intra_period_length != -1) {
+                                if (picture_control_set_ptr->picture_number % ((sequence_control_set_ptr->intra_period_length + 1)) == 0) {
+                                    picture_control_set_ptr->frames_in_interval[pictureControlSetPtrTemp->temporal_layer_index] ++;
+                                    if (pictureControlSetPtrTemp->scene_change_flag)
+                                        picture_control_set_ptr->scene_change_in_gop = EB_TRUE;
+                                }
+                            }
+
+                            pictureControlSetPtrTemp->historgram_life_count++;
+                            end_of_sequence_flag = pictureControlSetPtrTemp->end_of_sequence_flag;
+                            queueEntryIndexTemp++;
+                        }
+
+                        if ((sequence_control_set_ptr->static_config.look_ahead_distance != 0) && (frames_in_sw < (sequence_control_set_ptr->static_config.look_ahead_distance + 1)))
+                            picture_control_set_ptr->end_of_sequence_region = EB_TRUE;
+                        else
+                            picture_control_set_ptr->end_of_sequence_region = EB_FALSE;
+
+                        if (sequence_control_set_ptr->static_config.rate_control_mode)
+                        {
+                            // Determine offset from the Head Ptr for HLRC histogram queue and set the life count
+                            if (sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
+
+                                // Update Histogram Queue Entry Life count
+                                UpdateHistogramQueueEntry(
+                                    sequence_control_set_ptr,
+                                    encode_context_ptr,
+#if RC
+                                    picture_control_set_ptr,
+                                    frames_in_sw);
+#else
+                                    picture_control_set_ptr);
+#endif
                             }
                         }
 
-                        pictureControlSetPtrTemp->historgram_life_count++;
-                        end_of_sequence_flag = pictureControlSetPtrTemp->end_of_sequence_flag;
-                        queueEntryIndexTemp++;
-                    }
+                        // Mark each input picture as PAN or not
+                        // If a lookahead is present then check PAN for a period of time
+                        if (!picture_control_set_ptr->end_of_sequence_flag && sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
 
-
-
-                    if ((sequence_control_set_ptr->static_config.look_ahead_distance != 0) && (frames_in_sw < (sequence_control_set_ptr->static_config.look_ahead_distance + 1)))
-                        picture_control_set_ptr->end_of_sequence_region = EB_TRUE;
-                    else
-                        picture_control_set_ptr->end_of_sequence_region = EB_FALSE;
-
-                    if (sequence_control_set_ptr->static_config.rate_control_mode)
-                    {
-                        // Determine offset from the Head Ptr for HLRC histogram queue and set the life count
-                        if (sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
-
-                            // Update Histogram Queue Entry Life count
-                            UpdateHistogramQueueEntry(
-                                sequence_control_set_ptr,
+                            // Check for Pan,Tilt, Zoom and other global motion detectors over the future pictures in the lookahead
+                            UpdateGlobalMotionDetectionOverTime(
                                 encode_context_ptr,
-#if RC
-                                picture_control_set_ptr,
-                                frames_in_sw);
-#else
+                                sequence_control_set_ptr,
                                 picture_control_set_ptr);
-#endif
                         }
-                    }
-
-                    // Mark each input picture as PAN or not
-                    // If a lookahead is present then check PAN for a period of time
-                    if (!picture_control_set_ptr->end_of_sequence_flag && sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
-
-                        // Check for Pan,Tilt, Zoom and other global motion detectors over the future pictures in the lookahead
-                        UpdateGlobalMotionDetectionOverTime(
-                            encode_context_ptr,
-                            sequence_control_set_ptr,
-                            picture_control_set_ptr);
-                    }
-                    else {
-                        if (picture_control_set_ptr->slice_type != I_SLICE) {
-                            DetectGlobalMotion(picture_control_set_ptr);
+                        else {
+                            if (picture_control_set_ptr->slice_type != I_SLICE) {
+                                DetectGlobalMotion(picture_control_set_ptr);
+                            }
                         }
-                    }
 
-                    // BACKGROUND ENHANCEMENT PART II
-                    if (!picture_control_set_ptr->end_of_sequence_flag && sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
-                        // Update BEA information based on Lookahead information
-                        UpdateBeaInfoOverTime(
-                            encode_context_ptr,
-                            picture_control_set_ptr);
+                        // BACKGROUND ENHANCEMENT PART II
+                        if (!picture_control_set_ptr->end_of_sequence_flag && sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
+                            // Update BEA information based on Lookahead information
+                            UpdateBeaInfoOverTime(
+                                encode_context_ptr,
+                                picture_control_set_ptr);
 
-                    }
-                    else {
-                        // Reset zzCost information to default When there's no lookahead available
-                        InitZzCostInfo(
-                            picture_control_set_ptr);
-                    }
+                        }
+                        else {
+                            // Reset zzCost information to default When there's no lookahead available
+                            InitZzCostInfo(
+                                picture_control_set_ptr);
+                        }
 
-                    // Use the temporal layer 0 isLcuMotionFieldNonUniform array for all the other layer pictures in the mini GOP
-                    if (!picture_control_set_ptr->end_of_sequence_flag && sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
+                        // Use the temporal layer 0 isLcuMotionFieldNonUniform array for all the other layer pictures in the mini GOP
+                        if (!picture_control_set_ptr->end_of_sequence_flag && sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
 
-                        // Updat uniformly moving LCUs based on Collocated LCUs in LookAhead window
-                        UpdateMotionFieldUniformityOverTime(
-                            encode_context_ptr,
-                            sequence_control_set_ptr,
-                            picture_control_set_ptr);
-                    }
+                            // Updat uniformly moving LCUs based on Collocated LCUs in LookAhead window
+                            UpdateMotionFieldUniformityOverTime(
+                                encode_context_ptr,
+                                sequence_control_set_ptr,
+                                picture_control_set_ptr);
+                        }
 #if !MEMORY_FOOTPRINT_OPT  
-                    if (!picture_control_set_ptr->end_of_sequence_flag && sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
-                        // Compute and store variance of LCus over time and determine homogenuity temporally
-                        UpdateHomogeneityOverTime(
-                            encode_context_ptr,
+                        if (!picture_control_set_ptr->end_of_sequence_flag && sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
+                            // Compute and store variance of LCus over time and determine homogenuity temporally
+                            UpdateHomogeneityOverTime(
+                                encode_context_ptr,
+                                picture_control_set_ptr);
+                        }
+                        else {
+                            // Reset Homogeneity Structures to default if no lookahead is detected
+                            ResetHomogeneityStructures(
+                                picture_control_set_ptr);
+                        }
+#endif
+                        // Derive blockinessPresentFlag
+                        DeriveBlockinessPresentFlag(
+                            sequence_control_set_ptr,
                             picture_control_set_ptr);
-                    }
-                    else {
-                        // Reset Homogeneity Structures to default if no lookahead is detected
-                        ResetHomogeneityStructures(
-                            picture_control_set_ptr);
+
+                        // Get Empty Reference Picture Object
+                        eb_get_empty_object(
+                            sequence_control_set_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
+                            &reference_picture_wrapper_ptr);
+#if ALT_REF_OVERLAY
+                        if (loop_index) {
+                            picture_control_set_ptr->reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
+                            // Give the new Reference a nominal live_count of 1
+                            eb_object_inc_live_count(
+                                picture_control_set_ptr->reference_picture_wrapper_ptr,
+                                1);
+                        }
+                        else {
+                            ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
+                            // Give the new Reference a nominal live_count of 1
+                            eb_object_inc_live_count(
+                                ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->reference_picture_wrapper_ptr,
+                                1);
+                        }
+#else
+                        ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
+
+                        // Give the new Reference a nominal live_count of 1
+                        eb_object_inc_live_count(
+                            ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->reference_picture_wrapper_ptr,
+                            1);
+#endif
+                        //OPTION 1:  get the output stream buffer in ressource coordination
+                        eb_get_empty_object(
+                            sequence_control_set_ptr->encode_context_ptr->stream_output_fifo_ptr,
+                            &output_stream_wrapper_ptr);
+
+                        picture_control_set_ptr->output_stream_wrapper_ptr = output_stream_wrapper_ptr;
+
+                        // Get Empty Results Object
+                        eb_get_empty_object(
+                            context_ptr->initialrate_control_results_output_fifo_ptr,
+                            &outputResultsWrapperPtr);
+
+                        outputResultsPtr = (InitialRateControlResults*)outputResultsWrapperPtr->object_ptr;
+
+#if ALT_REF_OVERLAY
+                        if (loop_index)
+                            outputResultsPtr->picture_control_set_wrapper_ptr = picture_control_set_ptr->p_pcs_wrapper_ptr;
+                        else
+#endif
+                        outputResultsPtr->picture_control_set_wrapper_ptr = queueEntryPtr->parent_pcs_wrapper_ptr;
+                        // Post the Full Results Object
+                        eb_post_full_object(outputResultsWrapperPtr);
+#if ALT_REF_OVERLAY
                     }
 #endif
-                    // Derive blockinessPresentFlag
-                    DeriveBlockinessPresentFlag(
-                        sequence_control_set_ptr,
-                        picture_control_set_ptr);
-
-                    // Get Empty Reference Picture Object
-                    eb_get_empty_object(
-                        sequence_control_set_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
-                        &reference_picture_wrapper_ptr);
-                    ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
-
-                    // Give the new Reference a nominal live_count of 1
-                    eb_object_inc_live_count(
-                        ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->reference_picture_wrapper_ptr,
-                        1);
-                    //OPTION 1:  get the output stream buffer in ressource coordination
-                    eb_get_empty_object(
-                        sequence_control_set_ptr->encode_context_ptr->stream_output_fifo_ptr,
-                        &output_stream_wrapper_ptr);
-
-                    picture_control_set_ptr->output_stream_wrapper_ptr = output_stream_wrapper_ptr;
-
-
-                    // Get Empty Results Object
-                    eb_get_empty_object(
-                        context_ptr->initialrate_control_results_output_fifo_ptr,
-                        &outputResultsWrapperPtr);
-
-                    outputResultsPtr = (InitialRateControlResults*)outputResultsWrapperPtr->object_ptr;
-                    outputResultsPtr->picture_control_set_wrapper_ptr = queueEntryPtr->parent_pcs_wrapper_ptr;
-                    /////////////////////////////
-                    // Post the Full Results Object
-                    eb_post_full_object(outputResultsWrapperPtr);
-
                     // Reset the Reorder Queue Entry
                     queueEntryPtr->picture_number += INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH;
                     queueEntryPtr->parent_pcs_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
