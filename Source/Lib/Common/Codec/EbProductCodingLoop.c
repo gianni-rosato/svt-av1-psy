@@ -4587,7 +4587,7 @@ void AV1PerformFullLoop(
         }
 #endif
 #if ATB_MD
-        if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == 1 && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
+        if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
             perform_intra_atb_tx_search(
                 candidateBuffer,
                 context_ptr,

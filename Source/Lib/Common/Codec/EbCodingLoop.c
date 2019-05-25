@@ -2631,6 +2631,7 @@ void perform_intra_coding_loop(
     uint8_t   cb_qp = cu_ptr->qp;
     uint32_t  component_mask = context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK;
 
+    // Luma path
     for (context_ptr->txb_itr = 0; context_ptr->txb_itr < totTu; context_ptr->txb_itr++) {
 
         uint8_t uv_pass = 0;
@@ -2908,8 +2909,8 @@ void perform_intra_coding_loop(
 
     } // Transform Loop
 
-#if 1
-    //for (context_ptr->txb_itr = 0; context_ptr->txb_itr < totTu; context_ptr->txb_itr++)
+
+    // Chroma path
     context_ptr->txb_itr = 0;
     if(context_ptr->blk_geom->has_uv)
     {
@@ -3103,7 +3104,7 @@ void perform_intra_coding_loop(
 
 
 
-#if  0//CABAC_UP 
+#if  CABAC_UP 
         if (picture_control_set_ptr->update_cdf)
         {
             ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
@@ -3129,6 +3130,9 @@ void perform_intra_coding_loop(
                 1,//allow_update_cdf,
                 &picture_control_set_ptr->ec_ctx_array[tbAddr],
                 picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT_0
+                context_ptr->txb_itr,
+#endif
                 candidateBuffer,
                 cu_ptr,
                 coeff1dOffset,
@@ -3185,7 +3189,7 @@ void perform_intra_coding_loop(
         context_ptr->coded_area_sb_uv += context_ptr->blk_geom->tx_width_uv[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height_uv[context_ptr->tx_depth][context_ptr->txb_itr];
 
     } // Transform Loop
-#endif
+
     for (context_ptr->txb_itr = 0; context_ptr->txb_itr < totTu; context_ptr->txb_itr++) {
 
         uint8_t uv_pass = context_ptr->tx_depth && context_ptr->txb_itr ? 0 : 1;
