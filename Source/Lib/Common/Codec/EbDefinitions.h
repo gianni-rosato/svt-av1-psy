@@ -46,20 +46,24 @@ extern "C" {
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
+/**********************************************************************************/
 // Testing only
-#define TXS_DISABLE_CFL                   0
-#define QP_SCALING_OFF                    1
+#define TXS_DISABLE_CFL                   1 // <-- off
+#define QP_SCALING_OFF                    1 // <-- off
+#define SHUT_UPDATE_CDF                   0 // <-- off
 
-#define ATB                               1 // Adaptive Transform Block Lossy
+
+#define ATB                               1 
 #if ATB
-#define SHUT_ATB                          0
+#define SHUT_ATB                          1 // <-- button
 #define ATB_SUPPORT                       1
 #define ATB_EP                            1
+#define ATB_EC_NO_CFL                     0 // <-- button
 #define ATB_EC                            1
 
 #define ATB_MD                            1 
 #define ATB_TX_SEARCH                     1
-#define ATB_RATE                          1 
+#define ATB_RATE                          0 // <-- off to make atb infra lossless in term of yuv
 #define TRANSFORM_TYPE_SUPPORT            1 
 
 #define ATB_DC_CONTEXT_SUPPORT_0          1 
@@ -67,10 +71,12 @@ extern "C" {
 #define ATB_DC_CONTEXT_SUPPORT_2          1 
 
 #if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
-#define DC_SIGN_CONTEXT_FIX               1
+#define DC_SIGN_CONTEXT_FIX               0 // <-- off to make atb infra lossless in term of yuv
 #endif
 
 #endif
+/**********************************************************************************/
+
 
 // New  presets
 #define NEW_PRESETS                       1

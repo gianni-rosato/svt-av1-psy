@@ -2030,6 +2030,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #endif
     picture_control_set_ptr->update_cdf = (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
 
+#if SHUT_UPDATE_CDF
+    picture_control_set_ptr->update_cdf = 0;
+#endif
+
 #if MEMORY_FOOTPRINT_OPT_ME_MV
     if(picture_control_set_ptr->update_cdf)
         assert(sequence_control_set_ptr->cdf_mode == 0 && "use cdf_mode 0");
