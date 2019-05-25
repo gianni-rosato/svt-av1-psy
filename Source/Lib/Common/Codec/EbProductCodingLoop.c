@@ -1356,8 +1356,9 @@ void AV1PerformInverseTransformReconLuma(
 #endif
         txb_itr = 0;
         uint32_t txb_1d_offset = 0;
-        uint32_t recLumaOffset = (blk_geom->origin_y) * candidateBuffer->recon_ptr->stride_y +
-            (blk_geom->origin_x);
+#if !ATB_SUPPORT
+        uint32_t recLumaOffset = (blk_geom->origin_y) * candidateBuffer->recon_ptr->stride_y + (blk_geom->origin_x);
+#endif
         do {
 #if ATB_SUPPORT
             txb_origin_x = context_ptr->blk_geom->tx_org_x[tx_depth][txb_itr];
@@ -1371,7 +1372,9 @@ void AV1PerformInverseTransformReconLuma(
             tu_height = context_ptr->blk_geom->tx_height[txb_itr];
 #endif
             tu_origin_index = txb_origin_x + txb_origin_y * candidateBuffer->prediction_ptr->stride_y;
-
+#if ATB_SUPPORT
+            uint32_t recLumaOffset = txb_origin_x + txb_origin_y * candidateBuffer->recon_ptr->stride_y;
+#endif
             uint32_t y_has_coeff = (candidateBuffer->candidate_ptr->y_has_coeff & (1 << txb_itr)) > 0;
 
             if (y_has_coeff) {

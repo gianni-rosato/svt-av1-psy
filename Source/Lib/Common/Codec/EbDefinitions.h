@@ -48,7 +48,7 @@ extern "C" {
 
 /**********************************************************************************/
 // Testing only
-#define TXS_DISABLE_CFL                   1 // <-- off
+#define TXS_DISABLE_CFL                   0 // <-- off
 #define QP_SCALING_OFF                    1 // <-- off
 #define SHUT_UPDATE_CDF                   0 // <-- off
 
