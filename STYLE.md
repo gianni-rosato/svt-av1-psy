@@ -1,5 +1,5 @@
 
-## Code Style
+# Code Style
 
 This style guide comes from `dav1d`: https://code.videolan.org/videolan/dav1d/wikis/Coding-style
 
