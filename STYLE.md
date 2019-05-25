@@ -1,7 +1,7 @@
 
 # Code Style
 
-This style guide comes from `dav1d`: https://code.videolan.org/videolan/dav1d/wikis/Coding-style
+This style guide comes from `dav1d`: <https://code.videolan.org/videolan/dav1d/wikis/Coding-style>
 
 Tabs vs Spaces
 **No tabs,** only spaces; 4-space indentation;
