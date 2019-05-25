@@ -593,6 +593,14 @@ EbErrorType load_default_buffer_configuration_settings(
     //#====================== Data Structures and Picture Buffers ======================
 #if BUG_FIX_LOOKAHEAD
     sequence_control_set_ptr->picture_control_set_pool_init_count       = input_pic + SCD_LAD + sequence_control_set_ptr->static_config.look_ahead_distance;
+#if ALT_REF_OVERLAY
+    if (sequence_control_set_ptr->static_config.enable_overlays)
+        sequence_control_set_ptr->picture_control_set_pool_init_count = MAX(sequence_control_set_ptr->picture_control_set_pool_init_count,
+            sequence_control_set_ptr->static_config.look_ahead_distance + // frames in the LAD
+            sequence_control_set_ptr->static_config.look_ahead_distance / (1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 1 +  // number of overlayes in the LAD 
+            ((1 << sequence_control_set_ptr->static_config.hierarchical_levels) + SCD_LAD) * 2 +// minigop formation in PD + SCD_LAD *(normal pictures + potential pictures ) 
+            (1 << sequence_control_set_ptr->static_config.hierarchical_levels)); // minigop in PM
+#endif
 #else
     sequence_control_set_ptr->picture_control_set_pool_init_count       = input_pic + sequence_control_set_ptr->static_config.look_ahead_distance + SCD_LAD;
 #endif
