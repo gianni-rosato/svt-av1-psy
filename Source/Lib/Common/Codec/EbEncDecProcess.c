@@ -1690,16 +1690,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->redundant_blk = EB_FALSE;
 #endif
 
-#if ATB_SUPPORT
-    // Set atb level
-    // Level                Settings
-    // 0                    Off
-    // 1                    Full search @ MD
-    if (picture_control_set_ptr->enc_mode == ENC_M0)
-        context_ptr->atb_level = 1;
-    else
-        context_ptr->atb_level = 0;
-#endif
     return return_error;
 }
 

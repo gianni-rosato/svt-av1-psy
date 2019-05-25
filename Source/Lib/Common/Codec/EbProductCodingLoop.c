@@ -4431,13 +4431,13 @@ void AV1PerformFullLoop(
     CodingUnit            *cu_ptr,
     ModeDecisionContext   *context_ptr,
     EbPictureBufferDesc   *input_picture_ptr,
-    uint32_t                 inputOriginIndex,
-    uint32_t                 inputCbOriginIndex,
-    uint32_t                 cuOriginIndex,
-    uint32_t                 cuChromaOriginIndex,
-    uint32_t                 fullCandidateTotalCount,
-    uint64_t                 ref_fast_cost,
-    EbAsm                    asm_type)
+    uint32_t               inputOriginIndex,
+    uint32_t               inputCbOriginIndex,
+    uint32_t               cuOriginIndex,
+    uint32_t               cuChromaOriginIndex,
+    uint32_t               fullCandidateTotalCount,
+    uint64_t               ref_fast_cost,
+    EbAsm                  asm_type)
 {
     uint32_t       best_inter_luma_zero_coeff;
     uint64_t      bestfullCost;
@@ -4587,7 +4587,7 @@ void AV1PerformFullLoop(
         }
 #endif
 #if ATB_MD
-        if (context_ptr->atb_level == 1 && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
+        if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == 1 && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
             perform_intra_atb_tx_search(
                 candidateBuffer,
                 context_ptr,

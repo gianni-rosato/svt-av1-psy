@@ -254,9 +254,6 @@ extern "C" {
         uint8_t                         txb_itr;
 #endif
         // Multi-modes signal(s) 
-#if ATB_SUPPORT
-        uint8_t                         atb_level;
-#endif
         uint8_t                         nfl_level;
         uint8_t                         skip_interpolation_search;
         uint8_t                         parent_sq_type[MAX_PARENT_SQ];
