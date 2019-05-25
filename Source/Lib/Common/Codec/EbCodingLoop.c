@@ -3151,7 +3151,7 @@ void perform_intra_coding_loop(
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][context_ptr->txb_itr],
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][context_ptr->txb_itr],
 #endif
-                PICTURE_BUFFER_DESC_CHROMA_MASK,
+                COMPONENT_CHROMA,
                 asm_type);
 
         }
