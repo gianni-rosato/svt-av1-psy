@@ -63,7 +63,7 @@ extern "C" {
 
 #define ATB_MD                            1 
 #define ATB_TX_SEARCH                     1
-#define ATB_RATE                          0 // <-- off to make atb infra lossless in term of yuv
+#define ATB_RATE                          1 // <-- off to make atb infra lossless in term of yuv
 #define TRANSFORM_TYPE_SUPPORT            1 
 
 #define ATB_DC_CONTEXT_SUPPORT_0          1 
@@ -71,7 +71,7 @@ extern "C" {
 #define ATB_DC_CONTEXT_SUPPORT_2          1 
 
 #if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
-#define DC_SIGN_CONTEXT_FIX               0 // <-- off to make atb infra lossless in term of yuv
+#define DC_SIGN_CONTEXT_FIX               1 // <-- off to make atb infra lossless in term of yuv
 #endif
 
 #endif
