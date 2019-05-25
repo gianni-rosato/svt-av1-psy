@@ -55,7 +55,7 @@ extern "C" {
 
 #define ATB                               1 
 #if ATB
-#define SHUT_ATB                          1 // <-- button
+#define SHUT_ATB                          0 // <-- button
 #define ATB_SUPPORT                       1
 #define ATB_EP                            1
 #define ATB_EC_NO_CFL                     0 // <-- button
