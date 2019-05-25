@@ -43,7 +43,7 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 *------------------------------------------------------------------
 */
-#include "EbString.h"
+#include "EbAppString.h"
 
 /* SAFE STRING LIBRARY */
 

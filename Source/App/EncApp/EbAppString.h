@@ -43,8 +43,8 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 *------------------------------------------------------------------
 */
-#ifndef EbString_h
-#define EbString_h
+#ifndef EbAppString_h
+#define EbAppString_h
 
 #include <stddef.h>
 #include <stdint.h>
@@ -168,5 +168,5 @@ rsize_t strnlen_ss(
 }
 #endif // __cplusplus
 
-#endif // EbString_h
+#endif // EbAppString_h
 /* File EOF */

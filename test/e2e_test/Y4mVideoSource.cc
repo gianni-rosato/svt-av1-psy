@@ -17,7 +17,6 @@
 #include "Y4mVideoSource.h"
 extern "C" {
 #include "EbAppInputy4m.h"
-#include "EbString.c"
 }
 using namespace svt_av1_video_source;
 
