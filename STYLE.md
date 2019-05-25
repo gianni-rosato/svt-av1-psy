@@ -3,7 +3,7 @@
 
 This style guide comes from `dav1d`: <https://code.videolan.org/videolan/dav1d/wikis/Coding-style>
 
-Tabs vs Spaces
+Tabs vs Spaces\
 **No tabs,** only spaces; 4-space indentation;
 
 Be aware that some tools might add tabs when auto aligning the code, please check your commits with a diff tool for tabs.
