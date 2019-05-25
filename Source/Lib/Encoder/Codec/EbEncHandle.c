@@ -1095,6 +1095,8 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 
         inputData.in_loop_me_flag = (uint8_t)enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.in_loop_me_flag;
 #if MEMORY_FOOTPRINT_OPT_ME_MV
+        inputData.mrp_mode = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->mrp_mode;
+        inputData.nsq_present = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->nsq_present;
 #endif
         return_error = eb_system_resource_ctor(
             &(enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index]),
