@@ -49,7 +49,7 @@ extern "C" {
 /**********************************************************************************/
 // Testing only
 #define TXS_DISABLE_CFL                   0 // <-- off
-#define QP_SCALING_OFF                    1 // <-- off
+#define QP_SCALING_OFF                    0 // <-- off
 #define SHUT_UPDATE_CDF                   0 // <-- off
 
 
@@ -72,6 +72,7 @@ extern "C" {
 
 #if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
 #define DC_SIGN_CONTEXT_FIX               1 // <-- off to make atb infra lossless in term of yuv
+#define DC_SIGN_CONTEXT_EP                1 // <-- off to make atb infra lossless in term of yuv
 #endif
 
 #endif

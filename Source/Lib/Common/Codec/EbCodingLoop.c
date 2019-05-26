@@ -136,18 +136,24 @@ typedef void(*EB_AV1_GENERATE_RECON_FUNC_PTR)(
 * Update Intra Mode Neighbor Arrays
 ***************************************************/
 static void EncodePassUpdateIntraModeNeighborArrays(
-    NeighborArrayUnit     *mode_type_neighbor_array,
-    NeighborArrayUnit     *intra_luma_mode_neighbor_array,
-    NeighborArrayUnit     *intra_chroma_mode_neighbor_array,
-    uint8_t                    luma_mode,
-    uint8_t                    chroma_mode,
-    uint32_t                   origin_x,
-    uint32_t                   origin_y,
-    uint32_t                   width,
-    uint32_t                   height,
-    uint32_t                   width_uv,
-    uint32_t                   height_uv,
-    uint32_t                   component_mask)
+#if DC_SIGN_CONTEXT_EP
+    EncDecContext     *context_ptr,
+    NeighborArrayUnit *luma_dc_sign_level_coeff_neighbor_array,
+    NeighborArrayUnit *cb_dc_sign_level_coeff_neighbor_array,
+    NeighborArrayUnit *cr_dc_sign_level_coeff_neighbor_array,
+#endif                
+    NeighborArrayUnit *mode_type_neighbor_array,
+    NeighborArrayUnit *intra_luma_mode_neighbor_array,
+    NeighborArrayUnit *intra_chroma_mode_neighbor_array,
+    uint8_t            luma_mode,
+    uint8_t            chroma_mode,
+    uint32_t           origin_x,
+    uint32_t           origin_y,
+    uint32_t           width,
+    uint32_t           height,
+    uint32_t           width_uv,
+    uint32_t           height_uv,
+    uint32_t           component_mask)
 {
     uint8_t modeType = INTRA_MODE;
 
@@ -186,6 +192,50 @@ static void EncodePassUpdateIntraModeNeighborArrays(
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
     }
 
+
+#if DC_SIGN_CONTEXT_EP
+    uint8_t dcSignLevelCoeff;
+    uint16_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->cu_ptr->tx_depth];
+
+    for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++) {
+
+        dcSignLevelCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[0][txb_itr];
+
+        neighbor_array_unit_mode_write(
+            luma_dc_sign_level_coeff_neighbor_array,
+            (uint8_t*)&dcSignLevelCoeff,
+            origin_x - context_ptr->blk_geom->origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
+            origin_y - context_ptr->blk_geom->origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
+            context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][txb_itr],
+            context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][txb_itr],
+            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+    }
+
+    if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
+
+        dcSignLevelCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[1][0];
+
+        neighbor_array_unit_mode_write(
+            cb_dc_sign_level_coeff_neighbor_array,
+            (uint8_t*)&dcSignLevelCoeff,
+            ((origin_x >> 3) << 3) / 2,
+            ((origin_y >> 3) << 3) / 2,
+            width_uv,
+            height_uv,
+            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+        dcSignLevelCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[2][0];
+
+        neighbor_array_unit_mode_write(
+            cr_dc_sign_level_coeff_neighbor_array,
+            (uint8_t*)&dcSignLevelCoeff,
+            ((origin_x >> 3) << 3) / 2,
+            ((origin_y >> 3) << 3) / 2,
+            width_uv,
+            height_uv,
+            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+    }
+#endif
     return;
 }
 
@@ -193,15 +243,21 @@ static void EncodePassUpdateIntraModeNeighborArrays(
 * Update Inter Mode Neighbor Arrays
 ***************************************************/
 static void EncodePassUpdateInterModeNeighborArrays(
-    NeighborArrayUnit     *mode_type_neighbor_array,
-    NeighborArrayUnit     *mv_neighbor_array,
-    NeighborArrayUnit     *skipNeighborArray,
-    MvUnit                *mv_unit,
-    uint8_t                   *skip_flag,
-    uint32_t                   origin_x,
-    uint32_t                   origin_y,
-    uint32_t                   bwidth,
-    uint32_t                   bheight)
+#if DC_SIGN_CONTEXT_EP
+    EncDecContext     *context_ptr,
+    NeighborArrayUnit *luma_dc_sign_level_coeff_neighbor_array,
+    NeighborArrayUnit *cb_dc_sign_level_coeff_neighbor_array,
+    NeighborArrayUnit *cr_dc_sign_level_coeff_neighbor_array,
+#endif       
+    NeighborArrayUnit *mode_type_neighbor_array,
+    NeighborArrayUnit *mv_neighbor_array,
+    NeighborArrayUnit *skipNeighborArray,
+    MvUnit            *mv_unit,
+    uint8_t           *skip_flag,
+    uint32_t           origin_x,
+    uint32_t           origin_y,
+    uint32_t           bwidth,
+    uint32_t           bheight)
 {
     uint8_t modeType = INTER_MODE;
 
@@ -235,6 +291,48 @@ static void EncodePassUpdateInterModeNeighborArrays(
         bheight,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
+
+#if DC_SIGN_CONTEXT_EP
+    uint8_t dcSignLevelCoeff;
+    uint16_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->cu_ptr->tx_depth];
+
+    for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++) {
+
+        dcSignLevelCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[0][txb_itr];
+
+        neighbor_array_unit_mode_write(
+            luma_dc_sign_level_coeff_neighbor_array,
+            (uint8_t*)&dcSignLevelCoeff,
+            origin_x - context_ptr->blk_geom->origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
+            origin_y - context_ptr->blk_geom->origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
+            context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][txb_itr],
+            context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][txb_itr],
+            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+    }
+
+    dcSignLevelCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[1][0];
+
+    neighbor_array_unit_mode_write(
+        cb_dc_sign_level_coeff_neighbor_array,
+        (uint8_t*)&dcSignLevelCoeff,
+        ((origin_x >> 3) << 3) / 2,
+        ((origin_y >> 3) << 3) / 2,
+        context_ptr->blk_geom->bwidth_uv,
+        context_ptr->blk_geom->bheight_uv,
+        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+    dcSignLevelCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[2][0];
+
+    neighbor_array_unit_mode_write(
+        cr_dc_sign_level_coeff_neighbor_array,
+        (uint8_t*)&dcSignLevelCoeff,
+        ((origin_x >> 3) << 3) / 2,
+        ((origin_y >> 3) << 3) / 2,
+        context_ptr->blk_geom->bwidth_uv,
+        context_ptr->blk_geom->bheight_uv,
+        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+    
+#endif
     return;
 }
 
@@ -602,7 +700,11 @@ static void Av1EncodeLoop(
             context_ptr->trans_coeff_shape_luma);
 #endif
 
+#if DC_SIGN_CONTEXT_EP
+        cu_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
         av1_quantize_inv_quantize(
+#endif
             sb_ptr->picture_control_set_ptr,
             context_ptr->md_context,
             ((TranLow*)transform16bit->buffer_y) + coeff1dOffset,
@@ -1032,8 +1134,11 @@ static void Av1EncodeLoop(
 #else
             context_ptr->trans_coeff_shape_chroma);
 #endif
-
+#if DC_SIGN_CONTEXT_EP
+        cu_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
         av1_quantize_inv_quantize(
+#endif
             sb_ptr->picture_control_set_ptr,
             context_ptr->md_context,
             ((TranLow*)transform16bit->buffer_cb) + context_ptr->coded_area_sb_uv,
@@ -1098,8 +1203,11 @@ static void Av1EncodeLoop(
 #else
             context_ptr->trans_coeff_shape_chroma);
 #endif
-
+#if DC_SIGN_CONTEXT_EP
+        cu_ptr->quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
         av1_quantize_inv_quantize(
+#endif
             sb_ptr->picture_control_set_ptr,
             context_ptr->md_context,
             ((TranLow*)transform16bit->buffer_cr) + context_ptr->coded_area_sb_uv,
@@ -3027,6 +3135,19 @@ void perform_intra_coding_loop(
         uint32_t cu_originy_uv = (context_ptr->cu_origin_y >> 3 << 3) >> 1;
         uint32_t cu_originx_uv = (context_ptr->cu_origin_x >> 3 << 3) >> 1;
 
+#if DC_SIGN_CONTEXT_EP
+        context_ptr->cu_ptr->luma_txb_skip_context = 0;
+        context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr] = 0;
+        get_txb_ctx(
+            COMPONENT_LUMA,
+            picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+            txb_origin_x,
+            txb_origin_y,
+            context_ptr->blk_geom->bsize,
+            context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
+            &context_ptr->cu_ptr->luma_txb_skip_context,
+            &context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr]);
+#endif
         if (is16bit) {
             uint16_t    topNeighArray[64 * 2 + 1];
             uint16_t    leftNeighArray[64 * 2 + 1];
@@ -3684,6 +3805,11 @@ EB_EXTERN void av1_encode_pass(
     NeighborArrayUnit      *ep_cb_recon_neighbor_array = is16bit ? picture_control_set_ptr->ep_cb_recon_neighbor_array16bit : picture_control_set_ptr->ep_cb_recon_neighbor_array;
     NeighborArrayUnit      *ep_cr_recon_neighbor_array = is16bit ? picture_control_set_ptr->ep_cr_recon_neighbor_array16bit : picture_control_set_ptr->ep_cr_recon_neighbor_array;
     NeighborArrayUnit      *ep_skip_flag_neighbor_array = picture_control_set_ptr->ep_skip_flag_neighbor_array;
+#if DC_SIGN_CONTEXT_EP
+    NeighborArrayUnit      *ep_luma_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array;
+    NeighborArrayUnit      *ep_cr_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array;
+    NeighborArrayUnit      *ep_cb_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array;
+#endif
 
     EbBool                 constrained_intra_flag = picture_control_set_ptr->constrained_intra_flag;
 
@@ -4096,11 +4222,11 @@ EB_EXTERN void av1_encode_pass(
 
                         // Update the Intra-specific Neighbor Arrays
                         EncodePassUpdateIntraModeNeighborArrays(
-#if TXS_CTX_EP    
+#if DC_SIGN_CONTEXT_EP    
                             context_ptr,
                             ep_luma_dc_sign_level_coeff_neighbor_array,
-                            ep_cr_dc_sign_level_coeff_neighbor_array,
                             ep_cb_dc_sign_level_coeff_neighbor_array,
+                            ep_cr_dc_sign_level_coeff_neighbor_array,                    
 #endif
                             ep_mode_type_neighbor_array,
                             ep_intra_luma_mode_neighbor_array,
@@ -4496,6 +4622,12 @@ EB_EXTERN void av1_encode_pass(
 
                             // Update the Intra-specific Neighbor Arrays
                             EncodePassUpdateIntraModeNeighborArrays(
+#if DC_SIGN_CONTEXT_EP    
+                                context_ptr,
+                                ep_luma_dc_sign_level_coeff_neighbor_array,
+                                ep_cb_dc_sign_level_coeff_neighbor_array,
+                                ep_cr_dc_sign_level_coeff_neighbor_array,
+#endif
                                 ep_mode_type_neighbor_array,
                                 ep_intra_luma_mode_neighbor_array,
                                 ep_intra_chroma_mode_neighbor_array,
@@ -5290,6 +5422,12 @@ EB_EXTERN void av1_encode_pass(
                         {
                             uint8_t skip_flag = (uint8_t)cu_ptr->skip_flag;
                             EncodePassUpdateInterModeNeighborArrays(
+#if DC_SIGN_CONTEXT_EP    
+                                context_ptr,
+                                ep_luma_dc_sign_level_coeff_neighbor_array,
+                                ep_cb_dc_sign_level_coeff_neighbor_array,
+                                ep_cr_dc_sign_level_coeff_neighbor_array,
+#endif
                                 ep_mode_type_neighbor_array,
                                 ep_mv_neighbor_array,
                                 ep_skip_flag_neighbor_array,
