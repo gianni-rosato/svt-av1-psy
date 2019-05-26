@@ -204,8 +204,8 @@ static void EncodePassUpdateIntraModeNeighborArrays(
         neighbor_array_unit_mode_write(
             luma_dc_sign_level_coeff_neighbor_array,
             (uint8_t*)&dcSignLevelCoeff,
-            origin_x - context_ptr->blk_geom->origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
-            origin_y - context_ptr->blk_geom->origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
+            context_ptr->cu_origin_x + context_ptr->blk_geom->tx_boff_x[context_ptr->tx_depth][txb_itr],
+            context_ptr->cu_origin_y + context_ptr->blk_geom->tx_boff_y[context_ptr->tx_depth][txb_itr],
             context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][txb_itr],
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
@@ -303,8 +303,8 @@ static void EncodePassUpdateInterModeNeighborArrays(
         neighbor_array_unit_mode_write(
             luma_dc_sign_level_coeff_neighbor_array,
             (uint8_t*)&dcSignLevelCoeff,
-            origin_x - context_ptr->blk_geom->origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
-            origin_y - context_ptr->blk_geom->origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
+            context_ptr->cu_origin_x + context_ptr->blk_geom->tx_boff_x[context_ptr->tx_depth][txb_itr],
+            context_ptr->cu_origin_y + context_ptr->blk_geom->tx_boff_y[context_ptr->tx_depth][txb_itr],
             context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][txb_itr],
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
