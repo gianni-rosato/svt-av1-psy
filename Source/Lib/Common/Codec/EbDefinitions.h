@@ -53,7 +53,7 @@ extern "C" {
 #define SHUT_UPDATE_CDF                   0 // <-- off
 
 
-#define ATB                               0 
+#define ATB                               1 
 #if ATB
 #define SHUT_ATB                          0 // <-- button
 #define ATB_SUPPORT                       1

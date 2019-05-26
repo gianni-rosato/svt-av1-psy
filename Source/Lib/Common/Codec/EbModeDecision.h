@@ -120,7 +120,8 @@ extern "C" {
         EbBool                                 is_new_mv;
         EbBool                                 is_zero_mv;
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-        TxType                                 transform_type[PLANE_TYPES][MAX_TXB_COUNT];
+        TxType                                 transform_type[MAX_TXB_COUNT];
+        TxType                                 transform_type_uv;
 #else
         TxType                                 transform_type[PLANE_TYPES];
 #endif

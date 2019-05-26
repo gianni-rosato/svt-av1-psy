@@ -2165,7 +2165,7 @@ void product_full_loop(
             context_ptr->transform_inner_array_ptr,
             0,
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
+            candidateBuffer->candidate_ptr->transform_type[txb_itr],
 #else
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
 #endif
@@ -2206,7 +2206,7 @@ void product_full_loop(
             COMPONENT_LUMA,
             BIT_INCREMENT_8BIT,
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
+            candidateBuffer->candidate_ptr->transform_type[txb_itr],
 #else
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
 #endif
@@ -2259,7 +2259,7 @@ void product_full_loop(
                     context_ptr->blk_geom->txsize[txb_itr],
 #endif
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-                    candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
+                    candidateBuffer->candidate_ptr->transform_type[txb_itr],
 #else
                     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
 #endif
@@ -2426,8 +2426,8 @@ void product_full_loop(
             context_ptr->blk_geom->txsize_uv[0],
 #endif
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+            candidateBuffer->candidate_ptr->transform_type[txb_itr],
+            candidateBuffer->candidate_ptr->transform_type_uv,
 #endif
             COMPONENT_LUMA,
             asm_type);
@@ -2599,7 +2599,7 @@ void product_full_loop_tx_search(
 
 #if OPT_QUANT_COEFF
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr] = tx_type;
+            candidateBuffer->candidate_ptr->transform_type[txb_itr] = tx_type;
 #else
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = tx_type;
 #endif
@@ -2736,8 +2736,8 @@ void product_full_loop_tx_search(
                 context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type[txb_itr],
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #endif
                 COMPONENT_LUMA,
                 asm_type);
@@ -2779,10 +2779,10 @@ void product_full_loop_tx_search(
     }
 #if ATB_TX_TYPE_SUPPORT_PER_TU
     // this kernel assumes no atb
-    candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][0] = best_tx_type;
+    candidateBuffer->candidate_ptr->transform_type[0] = best_tx_type;
     // For Inter blocks, transform type of chroma follows luma transfrom type
     if (is_inter)
-        candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][0] = candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][0];
+        candidateBuffer->candidate_ptr->transform_type_uv = candidateBuffer->candidate_ptr->transform_type[0];
 #else
     candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = best_tx_type;
     // For Inter blocks, transform type of chroma follows luma transfrom type
@@ -3393,7 +3393,7 @@ void full_loop_r(
                 context_ptr->transform_inner_array_ptr,
                 0,
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3434,7 +3434,7 @@ void full_loop_r(
                 COMPONENT_CHROMA_CB,
                 BIT_INCREMENT_8BIT,
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3487,7 +3487,7 @@ void full_loop_r(
                         context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-                        candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                        candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                         candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3544,7 +3544,7 @@ void full_loop_r(
                 context_ptr->transform_inner_array_ptr,
                 0,
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3585,7 +3585,7 @@ void full_loop_r(
                 COMPONENT_CHROMA_CR,
                 BIT_INCREMENT_8BIT,
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3634,7 +3634,7 @@ void full_loop_r(
                         context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-                        candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                        candidateBuffer->candidate_ptr->transform_type_uv,
 #else
                         candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV],
 #endif
@@ -3936,8 +3936,8 @@ void cu_full_distortion_fast_tu_mode_r(
                 context_ptr->blk_geom->txsize_uv[txb_itr],
 #endif
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y][txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV][txb_itr],
+                candidateBuffer->candidate_ptr->transform_type[txb_itr],
+                candidateBuffer->candidate_ptr->transform_type_uv,
 #endif
                 component_type,
                 asm_type);
