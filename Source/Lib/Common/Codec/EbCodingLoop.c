@@ -3436,31 +3436,32 @@ void perform_intra_coding_loop(
         uint16_t txb_origin_x = context_ptr->cu_origin_x + context_ptr->blk_geom->tx_boff_x[context_ptr->tx_depth][context_ptr->txb_itr];
         uint16_t txb_origin_y = context_ptr->cu_origin_y + context_ptr->blk_geom->tx_boff_y[context_ptr->tx_depth][context_ptr->txb_itr];
 
-        uint32_t cu_originy_uv = (context_ptr->cu_origin_y >> 3 << 3) >> 1;
         uint32_t cu_originx_uv = (context_ptr->cu_origin_x >> 3 << 3) >> 1;
+        uint32_t cu_originy_uv = (context_ptr->cu_origin_y >> 3 << 3) >> 1;
 
 #if DC_SIGN_CONTEXT_EP
         cu_ptr->cb_txb_skip_context = 0;
         cu_ptr->cb_dc_sign_context = 0;
         get_txb_ctx(
             COMPONENT_CHROMA,
-            picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
-            cu_originy_uv,
+            picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,      
             cu_originx_uv,
+            cu_originy_uv,
             context_ptr->blk_geom->bsize_uv,
-            context_ptr->blk_geom->txsize_uv[0][0],
+            context_ptr->blk_geom->txsize_uv[context_ptr->tx_depth][context_ptr->txb_itr],
             &cu_ptr->cb_txb_skip_context,
             &cu_ptr->cb_dc_sign_context);
+
 
         cu_ptr->cr_txb_skip_context = 0;
         cu_ptr->cr_dc_sign_context = 0;
         get_txb_ctx(
             COMPONENT_CHROMA,
             picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
-            cu_originy_uv,
             cu_originx_uv,
+            cu_originy_uv,
             context_ptr->blk_geom->bsize_uv,
-            context_ptr->blk_geom->txsize_uv[0][0],
+            context_ptr->blk_geom->txsize_uv[context_ptr->tx_depth][context_ptr->txb_itr],
             &cu_ptr->cr_txb_skip_context,
             &cu_ptr->cr_dc_sign_context);
 #endif
