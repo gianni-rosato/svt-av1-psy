@@ -188,3 +188,24 @@ struct {
 *
 ********************************************************************************/
 ```
+
+## Post-coding
+
+After coding, make sure to trim any trailing white space
+E.g.
+`find . -name <Filename> -type f -exec sed -i 's/[[:space:]]*$//' {} \;`
+or
+`sed -i 's/[[:space:]]*$//' <Filename>`
+for bash
+
+``` Powershell
+ls -Recurse -File [-Filter *.c] | ForEach-Object{$(Get-Content $_.FullName | Foreach {Write-Output "$($_.TrimEnd())`n"}) | Set-Content -NoNewline $_.FullName}
+```
+
+Or
+
+``` Powershell
+Get-content <filename> | Foreach {Write-Output "$($_.TrimEnd())`n"}) | Set-Content -NoNewline <filename>
+```
+
+For Powershell
