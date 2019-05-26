@@ -791,9 +791,10 @@ EbErrorType picture_control_set_ctor(
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
+
     // for each 4x4
     return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+        &object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
         MAX_PICTURE_HEIGHT_SIZE,
         sizeof(uint8_t),
@@ -804,9 +805,10 @@ EbErrorType picture_control_set_ctor(
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
+
     // for each 4x4
     return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+        &object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
         MAX_PICTURE_HEIGHT_SIZE,
         sizeof(uint8_t),

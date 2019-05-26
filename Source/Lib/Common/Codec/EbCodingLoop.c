@@ -211,7 +211,8 @@ static void EncodePassUpdateIntraModeNeighborArrays(
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
     }
 
-    if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
+    if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK)
+    {
 
         dcSignLevelCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[1][0];
 
@@ -1443,8 +1444,11 @@ static void Av1EncodeLoop16bit(
 #else
                 context_ptr->trans_coeff_shape_luma);
 #endif
-
+#if DC_SIGN_CONTEXT_EP
+            cu_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
             av1_quantize_inv_quantize(
+#endif
                 sb_ptr->picture_control_set_ptr,
                 context_ptr->md_context,
                 ((int32_t*)transform16bit->buffer_y) + coeff1dOffset,
@@ -1663,8 +1667,11 @@ static void Av1EncodeLoop16bit(
 #else
                 context_ptr->trans_coeff_shape_chroma);
 #endif
-
+#if DC_SIGN_CONTEXT_EP
+            cu_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
             av1_quantize_inv_quantize(
+#endif
                 sb_ptr->picture_control_set_ptr,
                 context_ptr->md_context,
                 ((int32_t*)transform16bit->buffer_cb) + context_ptr->coded_area_sb_uv,
@@ -1733,8 +1740,11 @@ static void Av1EncodeLoop16bit(
                 context_ptr->trans_coeff_shape_chroma);
 #endif
 
-
+#if DC_SIGN_CONTEXT_EP
+            cu_ptr->quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
             av1_quantize_inv_quantize(
+#endif
                 sb_ptr->picture_control_set_ptr,
                 context_ptr->md_context,
                 ((int32_t*)transform16bit->buffer_cr) + context_ptr->coded_area_sb_uv,
@@ -3429,6 +3439,32 @@ void perform_intra_coding_loop(
         uint32_t cu_originy_uv = (context_ptr->cu_origin_y >> 3 << 3) >> 1;
         uint32_t cu_originx_uv = (context_ptr->cu_origin_x >> 3 << 3) >> 1;
 
+#if DC_SIGN_CONTEXT_EP
+        cu_ptr->cb_txb_skip_context = 0;
+        cu_ptr->cb_dc_sign_context = 0;
+        get_txb_ctx(
+            COMPONENT_CHROMA,
+            picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+            cu_originy_uv,
+            cu_originx_uv,
+            context_ptr->blk_geom->bsize_uv,
+            context_ptr->blk_geom->txsize_uv[0][0],
+            &cu_ptr->cb_txb_skip_context,
+            &cu_ptr->cb_dc_sign_context);
+
+        cu_ptr->cr_txb_skip_context = 0;
+        cu_ptr->cr_dc_sign_context = 0;
+        get_txb_ctx(
+            COMPONENT_CHROMA,
+            picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+            cu_originy_uv,
+            cu_originx_uv,
+            context_ptr->blk_geom->bsize_uv,
+            context_ptr->blk_geom->txsize_uv[0][0],
+            &cu_ptr->cr_txb_skip_context,
+            &cu_ptr->cr_dc_sign_context);
+#endif
+
         if (is16bit) {
             uint16_t    topNeighArray[64 * 2 + 1];
             uint16_t    leftNeighArray[64 * 2 + 1];
@@ -3807,8 +3843,8 @@ EB_EXTERN void av1_encode_pass(
     NeighborArrayUnit      *ep_skip_flag_neighbor_array = picture_control_set_ptr->ep_skip_flag_neighbor_array;
 #if DC_SIGN_CONTEXT_EP
     NeighborArrayUnit      *ep_luma_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array;
-    NeighborArrayUnit      *ep_cr_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array;
     NeighborArrayUnit      *ep_cb_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array;
+    NeighborArrayUnit      *ep_cr_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array;
 #endif
 
     EbBool                 constrained_intra_flag = picture_control_set_ptr->constrained_intra_flag;
