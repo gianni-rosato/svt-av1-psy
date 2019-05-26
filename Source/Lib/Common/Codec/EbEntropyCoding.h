@@ -100,7 +100,7 @@ extern "C" {
         uint64_t                            *cr_tu_coeff_bits,
         TxSize                               txsize,
         TxSize                               txsize_uv,
-#if TRANSFORM_TYPE_SUPPORT
+#if ATB_TX_TYPE_SUPPORT_PER_TU
         TxType                               tx_type,
         TxType                               tx_type_uv,
 #endif

@@ -53,7 +53,7 @@ extern "C" {
 #define SHUT_UPDATE_CDF                   0 // <-- off
 
 
-#define ATB                               1 
+#define ATB                               0 
 #if ATB
 #define SHUT_ATB                          0 // <-- button
 #define ATB_SUPPORT                       1
@@ -64,7 +64,7 @@ extern "C" {
 #define ATB_MD                            1 
 #define ATB_TX_SEARCH                     1
 #define ATB_RATE                          1 // <-- off to make atb infra lossless in term of yuv
-#define TRANSFORM_TYPE_SUPPORT            1 
+#define ATB_TX_TYPE_SUPPORT_PER_TU        1 
 
 #define ATB_DC_CONTEXT_SUPPORT_0          1 
 #define ATB_DC_CONTEXT_SUPPORT_1          1
