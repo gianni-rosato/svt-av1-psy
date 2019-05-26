@@ -4295,13 +4295,50 @@ EB_EXTERN void av1_encode_pass(
 
                         {
 
-                            //   if (picture_control_set_ptr->picture_number == 0 && context_ptr->cu_origin_x == 384 && context_ptr->cu_origin_y == 160)
-                             //      printf("CHEDD");
+
+ 
+#if DC_SIGN_CONTEXT_EP
+                           uint32_t cu_originy_uv = (context_ptr->cu_origin_y >> 3 << 3) >> 1;
+                           uint32_t cu_originx_uv = (context_ptr->cu_origin_x >> 3 << 3) >> 1;
+
+                            context_ptr->cu_ptr->luma_txb_skip_context = 0;
+                            context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr] = 0;
+                            get_txb_ctx(
+                                COMPONENT_LUMA,
+                                picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+                                context_ptr->cu_origin_x,
+                                context_ptr->cu_origin_y,
+                                context_ptr->blk_geom->bsize,
+                                context_ptr->blk_geom->txsize[0][0],
+                                &context_ptr->cu_ptr->luma_txb_skip_context,
+                                &context_ptr->cu_ptr->luma_dc_sign_context[0]);
+
+                            cu_ptr->cb_txb_skip_context = 0;
+                            cu_ptr->cb_dc_sign_context = 0;
+                            get_txb_ctx(
+                                COMPONENT_CHROMA,
+                                picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+                                cu_originx_uv,
+                                cu_originy_uv,
+                                context_ptr->blk_geom->bsize_uv,
+                                context_ptr->blk_geom->txsize_uv[0][0],
+                                &cu_ptr->cb_txb_skip_context,
+                                &cu_ptr->cb_dc_sign_context);
 
 
+                            cu_ptr->cr_txb_skip_context = 0;
+                            cu_ptr->cr_dc_sign_context = 0;
+                            get_txb_ctx(
+                                COMPONENT_CHROMA,
+                                picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+                                cu_originx_uv,
+                                cu_originy_uv,
+                                context_ptr->blk_geom->bsize_uv,
+                                context_ptr->blk_geom->txsize_uv[0][0],
+                                &cu_ptr->cr_txb_skip_context,
+                                &cu_ptr->cr_dc_sign_context);
+#endif
 
-                            uint32_t cu_originy_uv = (context_ptr->cu_origin_y >> 3 << 3) >> 1;
-                            uint32_t cu_originx_uv = (context_ptr->cu_origin_x >> 3 << 3) >> 1;
                             if (cu_ptr->av1xd->use_intrabc)
                             {
                                 MvReferenceFrame ref_frame = INTRA_FRAME;
@@ -4962,6 +4999,48 @@ EB_EXTERN void av1_encode_pass(
 #else
                             txb_origin_x = context_ptr->cu_origin_x + context_ptr->blk_geom->tx_boff_x[tuIt];
                             txb_origin_y = context_ptr->cu_origin_y + context_ptr->blk_geom->tx_boff_y[tuIt];
+#endif
+
+#if DC_SIGN_CONTEXT_EP
+                            uint32_t cu_originy_uv = (context_ptr->cu_origin_y >> 3 << 3) >> 1;
+                            uint32_t cu_originx_uv = (context_ptr->cu_origin_x >> 3 << 3) >> 1;
+
+                            context_ptr->cu_ptr->luma_txb_skip_context = 0;
+                            context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr] = 0;
+                            get_txb_ctx(
+                                COMPONENT_LUMA,
+                                picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+                                txb_origin_x,
+                                txb_origin_y,
+                                context_ptr->blk_geom->bsize,
+                                context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
+                                &context_ptr->cu_ptr->luma_txb_skip_context,
+                                &context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr]);
+
+                            cu_ptr->cb_txb_skip_context = 0;
+                            cu_ptr->cb_dc_sign_context = 0;
+                            get_txb_ctx(
+                                COMPONENT_CHROMA,
+                                picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+                                cu_originx_uv,
+                                cu_originy_uv,
+                                context_ptr->blk_geom->bsize_uv,
+                                context_ptr->blk_geom->txsize_uv[context_ptr->tx_depth][context_ptr->txb_itr],
+                                &cu_ptr->cb_txb_skip_context,
+                                &cu_ptr->cb_dc_sign_context);
+
+
+                            cu_ptr->cr_txb_skip_context = 0;
+                            cu_ptr->cr_dc_sign_context = 0;
+                            get_txb_ctx(
+                                COMPONENT_CHROMA,
+                                picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+                                cu_originx_uv,
+                                cu_originy_uv,
+                                context_ptr->blk_geom->bsize_uv,
+                                context_ptr->blk_geom->txsize_uv[context_ptr->tx_depth][context_ptr->txb_itr],
+                                &cu_ptr->cr_txb_skip_context,
+                                &cu_ptr->cr_dc_sign_context);
 #endif
                             if (!zeroLumaCbfMD)
                                 //inter mode  1
