@@ -4729,7 +4729,11 @@ void move_cu_data(
     dst_cu->skip_coeff_context = src_cu->skip_coeff_context;
     dst_cu->luma_txb_skip_context = src_cu->luma_txb_skip_context;
 #if ATB_DC_CONTEXT_SUPPORT_0
-    memcpy(dst_cu->luma_dc_sign_context, src_cu->luma_dc_sign_context, MAX_TXB_COUNT * sizeof(int16_t));
+    //memcpy(dst_cu->luma_dc_sign_context, src_cu->luma_dc_sign_context, MAX_TXB_COUNT * sizeof(int16_t));
+    dst_cu->luma_dc_sign_context[0] = src_cu->luma_dc_sign_context[0];
+    dst_cu->luma_dc_sign_context[1] = src_cu->luma_dc_sign_context[1];
+    dst_cu->luma_dc_sign_context[2] = src_cu->luma_dc_sign_context[2];
+    dst_cu->luma_dc_sign_context[3] = src_cu->luma_dc_sign_context[3];
 #else
     dst_cu->luma_dc_sign_context = src_cu->luma_dc_sign_context;
 #endif
@@ -4852,7 +4856,11 @@ void move_cu_data_redund(
     dst_cu->skip_coeff_context = src_cu->skip_coeff_context;
     dst_cu->luma_txb_skip_context = src_cu->luma_txb_skip_context;
 #if ATB_DC_CONTEXT_SUPPORT_0
-    memcpy(dst_cu->luma_dc_sign_context, src_cu->luma_dc_sign_context, MAX_TXB_COUNT * sizeof(int16_t));
+    //memcpy(dst_cu->luma_dc_sign_context, src_cu->luma_dc_sign_context, MAX_TXB_COUNT * sizeof(int16_t));
+    dst_cu->luma_dc_sign_context[0] = src_cu->luma_dc_sign_context[0];
+    dst_cu->luma_dc_sign_context[1] = src_cu->luma_dc_sign_context[1];
+    dst_cu->luma_dc_sign_context[2] = src_cu->luma_dc_sign_context[2];
+    dst_cu->luma_dc_sign_context[3] = src_cu->luma_dc_sign_context[3];
 #else
     dst_cu->luma_dc_sign_context = src_cu->luma_dc_sign_context;
 #endif
