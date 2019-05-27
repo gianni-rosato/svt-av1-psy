@@ -2356,7 +2356,7 @@ void product_full_loop(
             tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
             //assert(context_ptr->three_quad_energy == 0 && context_ptr->cu_stats->size < 64);
 #if ATB_SUPPORT
-            TxSize tx_size = context_ptr->blk_geom->txsize[tx_depth][0]; // NM: why  tu_index 0?
+            TxSize tx_size = context_ptr->blk_geom->txsize[tx_depth][txb_itr];
 #else
             TxSize    tx_size = context_ptr->blk_geom->txsize[0];
 #endif
