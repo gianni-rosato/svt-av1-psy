@@ -1862,9 +1862,8 @@ static void assign_32x32_input_from_64x64_avx512(const __m512i *in, __m512i *in3
 
 void av1_inv_txfm2d_add_32x32_avx512(const int32_t *coeff, uint16_t *output,
     int32_t stride, TxType tx_type, int32_t bd) {
-    __m256i in[128], out[128];
     __m512i in_avx512[64], out_avx512[128];
-    const int8_t *shift = inv_txfm_shift_ls[TX_32X32];
+    const int8_t *shift = eb_inv_txfm_shift_ls[TX_32X32];
     const int32_t txw_idx = get_txw_idx(TX_32X32);
     const int32_t txh_idx = get_txh_idx(TX_32X32);
     const int32_t txfm_size = 32;
@@ -1929,7 +1928,7 @@ static void write_buffer_64x64_avx512(__m512i *in, uint16_t *output, int32_t str
 void av1_inv_txfm2d_add_64x64_avx512(const int32_t *coeff, uint16_t *output,
     int32_t stride, TxType tx_type, int32_t bd) {
     __m512i in[64 * 64 / 16], out[64 * 64 / 16];
-    const int8_t *shift = inv_txfm_shift_ls[TX_64X64];
+    const int8_t *shift = eb_inv_txfm_shift_ls[TX_64X64];
     const int32_t txw_idx = tx_size_wide_log2[TX_64X64] - tx_size_wide_log2[0];
     const int32_t txh_idx = tx_size_high_log2[TX_64X64] - tx_size_high_log2[0];
 
@@ -1946,7 +1945,7 @@ void av1_inv_txfm2d_add_64x64_avx512(const int32_t *coeff, uint16_t *output,
         break;
 
     default:
-        av1_inv_txfm2d_add_64x64_c(coeff, output, stride, tx_type, bd);
+        eb_av1_inv_txfm2d_add_64x64_c(coeff, output, stride, tx_type, bd);
         break;
     }
 }
