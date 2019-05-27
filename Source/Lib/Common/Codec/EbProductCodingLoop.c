@@ -2932,7 +2932,9 @@ uint8_t get_end_tx_depth(BlockSize bsize, uint8_t btype) {
 
     uint8_t tx_depth = 0;
 
-    if (bsize == BLOCK_64X64 ||
+    if (
+        
+        bsize == BLOCK_64X64 ||
         bsize == BLOCK_32X32 ||
         bsize == BLOCK_16X16 ||
         bsize == BLOCK_64X32 ||
@@ -3418,6 +3420,7 @@ void perform_intra_atb_tx_search(
     ModeDecisionCandidateBuffer  *candidateBuffer,
     ModeDecisionContext          *context_ptr,
     PictureControlSet            *picture_control_set_ptr,
+    uint8_t                       end_tx_depth,
     uint32_t                      qp,
     uint32_t                     *y_count_non_zero_coeffs,
     uint64_t                     *y_coeff_bits,
@@ -3439,7 +3442,6 @@ void perform_intra_atb_tx_search(
 
     uint64_t best_distortion_search = (uint64_t)~0;
     uint64_t best_cost_search = (uint64_t)~0;
-    uint8_t end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
 
     // Hsan atb --> if atb on
     // Reset
@@ -4599,11 +4601,13 @@ void AV1PerformFullLoop(
         }
 #endif
 #if ATB_MD
-        if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
+        uint8_t end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+        if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT && end_tx_depth && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
             perform_intra_atb_tx_search(
                 candidateBuffer,
                 context_ptr,
                 picture_control_set_ptr,
+                end_tx_depth,
                 context_ptr->cu_ptr->qp,
                 &(*count_non_zero_coeffs[0]),
                 &y_coeff_bits,
