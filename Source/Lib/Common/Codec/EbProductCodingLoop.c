@@ -4559,6 +4559,15 @@ void AV1PerformFullLoop(
         candidate_ptr->u_has_coeff = 0;
         candidate_ptr->v_has_coeff = 0;
 
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+        // Initialize tx type
+        candidate_ptr->transform_type[0] = DCT_DCT;
+        candidate_ptr->transform_type[1] = DCT_DCT;
+        candidate_ptr->transform_type[2] = DCT_DCT;
+        candidate_ptr->transform_type[3] = DCT_DCT;
+#endif
+
+
         uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
 #if BYPASS_USELESS_TX_SEARCH
             context_ptr->blk_geom,
