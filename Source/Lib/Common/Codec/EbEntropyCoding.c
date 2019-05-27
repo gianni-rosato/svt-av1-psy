@@ -969,33 +969,33 @@ static EbErrorType Av1EncodeCoeff1D(
 
 #if ATB_SUPPORT
     if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->tx_depth) {
-    av1_encode_tx_coef_y(
-        pcs_ptr,
-        context_ptr,
-        frameContext,
-        ec_writer,
-        cu_ptr,
-        cu_origin_x,
-        cu_origin_y,
-        intraLumaDir,
-        plane_bsize,
-        coeff_ptr,
-        luma_dc_sign_level_coeff_neighbor_array);
+        av1_encode_tx_coef_y(
+            pcs_ptr,
+            context_ptr,
+            frameContext,
+            ec_writer,
+            cu_ptr,
+            cu_origin_x,
+            cu_origin_y,
+            intraLumaDir,
+            plane_bsize,
+            coeff_ptr,
+            luma_dc_sign_level_coeff_neighbor_array);
 
-    av1_encode_tx_coef_uv(
-        pcs_ptr,
-        context_ptr,
-        frameContext,
-        ec_writer,
-        cu_ptr,
-        cu_origin_x,
-        cu_origin_y,
-        intraLumaDir,
-        coeff_ptr,
-        cr_dc_sign_level_coeff_neighbor_array,
-        cb_dc_sign_level_coeff_neighbor_array);;
+        av1_encode_tx_coef_uv(
+            pcs_ptr,
+            context_ptr,
+            frameContext,
+            ec_writer,
+            cu_ptr,
+            cu_origin_x,
+            cu_origin_y,
+            intraLumaDir,
+            coeff_ptr,
+            cr_dc_sign_level_coeff_neighbor_array,
+            cb_dc_sign_level_coeff_neighbor_array);
     } else {
- 
+        // Transform partitioning free patch (except the 128x128 case)
         const BlockGeom *blk_geom = get_blk_geom_mds(cu_ptr->mds_idx);
         int32_t cul_level_y, cul_level_cb = 0, cul_level_cr = 0;
 
