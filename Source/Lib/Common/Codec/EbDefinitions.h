@@ -57,6 +57,7 @@ extern "C" {
 #if ATB
 #define SHUT_ATB                          0 // <-- button
 #define ATB_SUPPORT                       1
+#define ATB_SUPPORT_1_DEPTH               1
 #define ATB_EP                            1
 #define ATB_EC_NO_CFL                     0 // <-- button
 #define ATB_EC                            1
@@ -344,7 +345,7 @@ enum {
 #define ADD_DELTA_QP_SUPPORT                      0  // Add delta QP support - Please enable this flag and iproveSharpness (config) to test the QPM
 #define BLOCK_MAX_COUNT_SB_128                    4421  // TODO: reduce alloction for 64x64
 #define BLOCK_MAX_COUNT_SB_64                     1101  // TODO: reduce alloction for 64x64
-#if ATB_SUPPORT
+#if ATB_SUPPORT && !ATB_SUPPORT_1_DEPTH
 #define MAX_TXB_COUNT                             16 // Maximum number of transform blocks per depth
 #else
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
@@ -403,7 +404,11 @@ enum {
 // Maximum number of tile rows and tile columns
 #define MAX_TILE_ROWS 1024
 #define MAX_TILE_COLS 1024
+#if ATB_SUPPORT_1_DEPTH
+#define MAX_VARTX_DEPTH 1
+#else
 #define MAX_VARTX_DEPTH 2
+#endif
 #define MI_SIZE_64X64 (64 >> MI_SIZE_LOG2)
 #define MI_SIZE_128X128 (128 >> MI_SIZE_LOG2)
 #define MAX_PALETTE_SQUARE (64 * 64)
