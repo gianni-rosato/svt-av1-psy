@@ -4567,7 +4567,7 @@ void AV1PerformFullLoop(
         candidate_ptr->transform_type[3] = DCT_DCT;
 #endif
 
-
+#if !ATB_MD
         uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
 #if BYPASS_USELESS_TX_SEARCH
             context_ptr->blk_geom,
@@ -4580,7 +4580,7 @@ void AV1PerformFullLoop(
 
         tx_search_skip_fag = ( picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
 
-#if !ATB_MD
+
         if (!tx_search_skip_fag){
 
                 product_full_loop_tx_search(
@@ -4610,6 +4610,18 @@ void AV1PerformFullLoop(
                 &y_full_distortion[0]);
         } 
         else {
+            // Transform partitioning free path
+            uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
+#if BYPASS_USELESS_TX_SEARCH
+                context_ptr->blk_geom,
+#else  
+                context_ptr->blk_geom->sq_size,
+#endif
+                ref_fast_cost,
+                *candidateBuffer->fast_cost_ptr,
+                picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
+
+            tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
 
             if (!tx_search_skip_fag) {
 
