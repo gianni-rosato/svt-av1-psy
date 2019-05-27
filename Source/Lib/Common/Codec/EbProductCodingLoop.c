@@ -3420,7 +3420,7 @@ uint64_t estimate_tx_size_bits(
     return bits;
 }
 #endif
-void perform_intra_atb_tx_search(
+void perform_intra_transform_partitioning(
     ModeDecisionCandidateBuffer  *candidateBuffer,
     ModeDecisionContext          *context_ptr,
     PictureControlSet            *picture_control_set_ptr,
@@ -4310,6 +4310,7 @@ void AV1PerformFullLoop(
         candidate_ptr->chroma_distortion_inter_depth = 0;
         // Set Skip Flag
         candidate_ptr->skip_flag = EB_FALSE;
+#if !ATB_MD
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FULL_LOOP) {
             context_ptr->skip_interpolation_search = 0;
             context_ptr->skip_interpolation_search = (best_fastLoop_candidate_index > NFL_IT_TH) ? 1 : context_ptr->skip_interpolation_search;
@@ -4335,6 +4336,7 @@ void AV1PerformFullLoop(
             context_ptr->blk_geom->bheight);
 
         //TOADD
+#endif
         //Cb Residual
         if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
 
@@ -4361,6 +4363,7 @@ void AV1PerformFullLoop(
                 context_ptr->blk_geom->bheight_uv);
 
         }
+
         // initialize luma CBF
 
         candidate_ptr->y_has_coeff = 0;
@@ -4408,8 +4411,9 @@ void AV1PerformFullLoop(
 #endif
 #if ATB_MD
         uint8_t end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+        // Transform partitioning path (INTRA Luma)
         if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT && end_tx_depth && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
-            perform_intra_atb_tx_search(
+            perform_intra_transform_partitioning(
                 candidateBuffer,
                 context_ptr,
                 picture_control_set_ptr,
@@ -4418,8 +4422,33 @@ void AV1PerformFullLoop(
                 &(*count_non_zero_coeffs[0]),
                 &y_coeff_bits,
                 &y_full_distortion[0]);
-        } 
+        }
         else {
+            // Transform partitioning free patch (except the 128x128 case) 
+            if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FULL_LOOP) {
+                context_ptr->skip_interpolation_search = 0;
+                context_ptr->skip_interpolation_search = (best_fastLoop_candidate_index > NFL_IT_TH) ? 1 : context_ptr->skip_interpolation_search;
+                if (candidate_ptr->type != INTRA_MODE) {
+
+                    ProductPredictionFunTable[candidate_ptr->type](
+                        context_ptr,
+                        picture_control_set_ptr,
+                        candidateBuffer,
+                        asm_type);
+                }
+            }
+
+            //Y Residual
+            ResidualKernel(
+                &(input_picture_ptr->buffer_y[inputOriginIndex]),
+                input_picture_ptr->stride_y,
+                &(candidateBuffer->prediction_ptr->buffer_y[cuOriginIndex]),
+                candidateBuffer->prediction_ptr->stride_y/* 64*/,
+                &(((int16_t*)candidateBuffer->residual_ptr->buffer_y)[cuOriginIndex]),
+                candidateBuffer->residual_ptr->stride_y,
+                context_ptr->blk_geom->bwidth,
+                context_ptr->blk_geom->bheight);
+
             // Transform partitioning free path
             uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
 #if BYPASS_USELESS_TX_SEARCH
