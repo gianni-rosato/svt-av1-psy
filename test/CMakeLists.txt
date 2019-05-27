@@ -21,6 +21,7 @@ include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/)
 include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/)
 include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/)
 include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec)
+include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec)
 include_directories (${PROJECT_SOURCE_DIR}/Source/App/EncApp)
 include_directories (${PROJECT_SOURCE_DIR}/Source/API)
 
@@ -59,6 +60,8 @@ file(GLOB all_files
     "ref/*.h"
     "ref/*.cc"
     "../Source/Lib/Encoder/Codec/*.c"
+    "../Source/Lib/Decoder/Codec/EbDecBitReader.c"
+    "../Source/Lib/Decoder/Codec/EbDecBitstreamUnit.c"
     )
 
 if (UNIX)
