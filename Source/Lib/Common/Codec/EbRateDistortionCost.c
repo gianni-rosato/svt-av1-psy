@@ -3033,7 +3033,7 @@ EbErrorType av1_encode_tu_calc_cost(
         //  PSNR = (LUMA_WEIGHT * PSNRy + PSNRu + PSNRv) / (2+LUMA_WEIGHT)
         yZeroCbfDistortion = LUMA_WEIGHT * (yZeroCbfDistortion << AV1_COST_PRECISION);
 #if ATB_SUPPORT
-        TxSize    txSize = context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr];
+        TxSize    txSize = context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
 #else
         TxSize    txSize = context_ptr->blk_geom->txsize[context_ptr->txb_itr];
 #endif

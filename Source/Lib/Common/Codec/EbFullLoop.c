@@ -2795,19 +2795,19 @@ void encode_pass_tx_search(
     PictureControlSet            *picture_control_set_ptr,
     EncDecContext                *context_ptr,
     LargestCodingUnit            *sb_ptr,
-    uint32_t                       cb_qp,
+    uint32_t                      cb_qp,
     EbPictureBufferDesc          *coeffSamplesTB,          
     EbPictureBufferDesc          *residual16bit,           
     EbPictureBufferDesc          *transform16bit,          
     EbPictureBufferDesc          *inverse_quant_buffer,
-    int16_t                        *transformScratchBuffer,
-    EbAsm                          asm_type,
-    uint32_t                       *count_non_zero_coeffs,
-    uint32_t                       component_mask,
-    uint32_t                       use_delta_qp,
-    uint32_t                       dZoffset,
-    uint16_t                       *eob,
-    MacroblockPlane                *candidate_plane){
+    int16_t                      *transformScratchBuffer,
+    EbAsm                        asm_type,
+    uint32_t                     *count_non_zero_coeffs,
+    uint32_t                     component_mask,
+    uint32_t                     use_delta_qp,
+    uint32_t                     dZoffset,
+    uint16_t                     *eob,
+    MacroblockPlane              *candidate_plane){
 
     (void)dZoffset;
     (void)use_delta_qp;
@@ -2834,9 +2834,8 @@ void encode_pass_tx_search(
     TxType                 txk_end = TX_TYPES;
     TxType                 tx_type;
 #if ATB_SUPPORT 
-    uint8_t                tx_depth = context_ptr->tx_depth; // Hsan atb
-    TxSize                 txSize = context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr];
-    const uint32_t         scratchLumaOffset = context_ptr->blk_geom->tx_org_x[tx_depth][context_ptr->txb_itr] + context_ptr->blk_geom->tx_org_y[tx_depth][context_ptr->txb_itr] * SB_STRIDE_Y;
+    TxSize                 txSize = context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
+    const uint32_t         scratchLumaOffset = context_ptr->blk_geom->tx_org_x[cu_ptr->tx_depth][context_ptr->txb_itr] + context_ptr->blk_geom->tx_org_y[cu_ptr->tx_depth][context_ptr->txb_itr] * SB_STRIDE_Y;
 #else
     TxSize                 txSize = context_ptr->blk_geom->txsize[context_ptr->txb_itr];
 #endif
@@ -2876,7 +2875,7 @@ void encode_pass_tx_search(
             ((TranLow*)transform16bit->buffer_y) + coeff1dOffset,
             NOT_USED_VALUE,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
 #endif
@@ -2901,9 +2900,9 @@ void encode_pass_tx_search(
             ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->tx_width[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->tx_height[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->txb_itr],
@@ -3007,8 +3006,8 @@ void encode_pass_tx_search(
             &y_tu_coeff_bits,
             &y_tu_coeff_bits,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->txsize_uv[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
             context_ptr->blk_geom->txsize_uv[context_ptr->txb_itr],
@@ -3025,7 +3024,7 @@ void encode_pass_tx_search(
             candidateBuffer->candidate_ptr,
             context_ptr->txb_itr,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
 #endif
@@ -3094,8 +3093,7 @@ void encode_pass_tx_search_hbd(
     TxType                      txk_end = TX_TYPES;
     TxType                      tx_type;
 #if ATB_SUPPORT
-    uint8_t tx_depth = context_ptr->tx_depth; // Hsan atb
-    TxSize                      txSize = context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr];
+    TxSize                      txSize = context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
 #else
     TxSize                      txSize = context_ptr->blk_geom->txsize[context_ptr->txb_itr];
 #endif
@@ -3129,7 +3127,7 @@ void encode_pass_tx_search_hbd(
             ((TranLow*)transform16bit->buffer_y) + coeff1dOffset,
             NOT_USED_VALUE,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
 #endif
@@ -3153,9 +3151,9 @@ void encode_pass_tx_search_hbd(
             ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->tx_width[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->tx_height[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->txb_itr],
@@ -3260,8 +3258,8 @@ void encode_pass_tx_search_hbd(
             &y_tu_coeff_bits,
             &y_tu_coeff_bits,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->txsize_uv[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
             context_ptr->blk_geom->txsize_uv[context_ptr->txb_itr],
@@ -3278,7 +3276,7 @@ void encode_pass_tx_search_hbd(
             candidateBuffer->candidate_ptr,
             context_ptr->txb_itr,
 #if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
 #endif
