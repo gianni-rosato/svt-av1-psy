@@ -32,9 +32,7 @@ file(GLOB all_files
     "*.asm"
     "*.c")
 
-add_library(COMMON_ASM_SSE4_1
-    ${all_files}
-)
+add_library(COMMON_ASM_SSE4_1 OBJECT ${all_files})
 
 
 

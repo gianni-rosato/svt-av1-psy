@@ -3,6 +3,7 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
+#include "EbAppString.h"
 #include "EbAppInputy4m.h"
 #define YFM_HEADER_MAX 80
 #define YUV4MPEG2_IND_SIZE 9

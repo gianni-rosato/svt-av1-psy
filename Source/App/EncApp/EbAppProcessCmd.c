@@ -15,7 +15,7 @@
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbAppInputy4m.h"
 
-#include "EbSvtAv1Time.h"
+#include "EbTime.h"
 
 
 #define IVF_FRAME_HEADER_IN_LIB                     0
@@ -986,7 +986,7 @@ AppExitConditionType ProcessInputBuffer(
 
     if (config->injector && config->processed_frame_count)
     {
-        EbInjector(config->processed_frame_count, config->injector_frame_rate);
+        Injector(config->processed_frame_count, config->injector_frame_rate);
     }
 
     totalBytesToProcessCount = (frames_to_be_encoded < 0) ? -1 : (config->encoder_bit_depth == 10 && config->compressed_ten_bit_format == 1) ?
@@ -1177,10 +1177,10 @@ AppExitConditionType ProcessOutputStreamBuffer(
         *total_latency += (uint64_t)headerPtr->n_tick_count;
         *max_latency = (headerPtr->n_tick_count > *max_latency) ? headerPtr->n_tick_count : *max_latency;
 
-        EbFinishTime((uint64_t*)&finishsTime, (uint64_t*)&finishuTime);
+        FinishTime((uint64_t*)&finishsTime, (uint64_t*)&finishuTime);
 
         // total execution time, inc init time
-        EbComputeOverallElapsedTime(
+        ComputeOverallElapsedTime(
             config->performance_context.lib_start_time[0],
             config->performance_context.lib_start_time[1],
             finishsTime,
@@ -1188,7 +1188,7 @@ AppExitConditionType ProcessOutputStreamBuffer(
             &config->performance_context.total_execution_time);
 
         // total encode time
-        EbComputeOverallElapsedTime(
+        ComputeOverallElapsedTime(
             config->performance_context.encode_start_time[0],
             config->performance_context.encode_start_time[1],
             finishsTime,
