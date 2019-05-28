@@ -2968,30 +2968,30 @@ static void tx_search_update_recon_sample_neighbor_array(
     return;
 }
 
-uint8_t get_end_tx_depth(BlockSize bsize, uint8_t btype) {
-
+uint8_t get_end_tx_depth(EB_SLICE slice_type, BlockSize bsize, uint8_t btype) {
+   
     uint8_t tx_depth = 0;
 
-    if (
-        
-        bsize == BLOCK_64X64 ||
-        bsize == BLOCK_32X32 ||
-        bsize == BLOCK_16X16 ||
-        bsize == BLOCK_64X32 ||
-        bsize == BLOCK_32X64 ||
-        bsize == BLOCK_16X32 ||
-        bsize == BLOCK_32X16 ||
-        bsize == BLOCK_16X8 ||
-        bsize == BLOCK_8X16)
-        tx_depth = (btype == INTRA_MODE) ? 1 : 2;
-    else if (bsize == BLOCK_8X8 ||
-        bsize == BLOCK_64X16 ||
-        bsize == BLOCK_16X64 ||
-        bsize == BLOCK_32X8 ||
-        bsize == BLOCK_8X32 ||
-        bsize == BLOCK_16X4 ||
-        bsize == BLOCK_4X16)
-        tx_depth = 1;
+    if (slice_type == I_SLICE) {
+        if (bsize == BLOCK_16X16 ||
+            bsize == BLOCK_16X8  ||
+            bsize == BLOCK_8X16  ||
+            bsize == BLOCK_8X8   ){
+            tx_depth = 1;
+        }
+    }
+    else {
+        if (bsize == BLOCK_16X16 ||           
+            bsize == BLOCK_16X8  ||
+            bsize == BLOCK_8X16  ||
+            bsize == BLOCK_8X8   ||
+            bsize == BLOCK_4X16  || 
+            bsize == BLOCK_16X4  ||
+            bsize == BLOCK_32X8  ||
+            bsize == BLOCK_8X32  ){
+            tx_depth = 1;
+        }
+    }
 
     return tx_depth;
 }
@@ -4429,7 +4429,7 @@ void AV1PerformFullLoop(
         }
 #endif
 #if ATB_MD
-        uint8_t end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+        uint8_t end_tx_depth = get_end_tx_depth(picture_control_set_ptr->slice_type, context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
         // Transform partitioning path (INTRA Luma)
         if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT && end_tx_depth && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
             perform_intra_tx_partitioning(

@@ -66,12 +66,12 @@ extern "C" {
 #define ATB_RATE                          1 // <-- off to make atb infra lossless in term of yuv
 #define ATB_TX_TYPE_SUPPORT_PER_TU        1 
 
-#define ATB_DC_CONTEXT_SUPPORT_0          0 
-#define ATB_DC_CONTEXT_SUPPORT_1          0
-#define ATB_DC_CONTEXT_SUPPORT_2          0 
+#define ATB_DC_CONTEXT_SUPPORT_0          1 
+#define ATB_DC_CONTEXT_SUPPORT_1          1
+#define ATB_DC_CONTEXT_SUPPORT_2          1 
 
 #if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
-#define DC_SIGN_CONTEXT_FIX               0 // <-- off to make atb infra lossless in term of yuv
+#define DC_SIGN_CONTEXT_FIX               1 // <-- off to make atb infra lossless in term of yuv
 #define DC_SIGN_CONTEXT_EP                0 // <-- off to make atb infra lossless in term of yuv
 #endif
 
