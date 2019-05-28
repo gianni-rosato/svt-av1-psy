@@ -14,7 +14,7 @@
 #include "EbResourceCoordinationProcess.h"
 #include "EbResourceCoordinationResults.h"
 #include "EbTransforms.h"
-#include "EbSvtAv1Time.h"
+#include "EbTime.h"
 
 /************************************************
  * Resource Coordination Context Constructor

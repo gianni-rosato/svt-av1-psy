@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
-#include "EbSvtAv1Enc.h"
+#include "EbSvtAv1.h"
 #ifdef _WIN32
 #define inline __inline
 #elif __GNUC__
@@ -2684,106 +2684,14 @@ printf("Total Library Memory: %.2lf KB\n\n",*total_lib_memory/(double)1024);
 printf("Total Number of Mallocs in App: %d\n", app_malloc_count); \
 printf("Total App Memory: %.2lf KB\n\n",*total_app_memory/(double)1024);
 
-#ifndef EOK
-#define EOK             ( 0 )
-#endif
-
-#ifndef ESZEROL
-#define ESZEROL         ( 401 )       /* length is zero              */
-#endif
-
-#ifndef ESLEMIN
-#define ESLEMIN         ( 402 )       /* length is below min         */
-#endif
-
-#ifndef ESLEMAX
-#define ESLEMAX         ( 403 )       /* length exceeds max          */
-#endif
-
-#ifndef ESNULLP
-#define ESNULLP         ( 400 )       /* null ptr                    */
-#endif
-
-#ifndef ESOVRLP
-#define ESOVRLP         ( 404 )       /* overlap undefined           */
-#endif
-
-#ifndef ESEMPTY
-#define ESEMPTY         ( 405 )       /* empty string                */
-#endif
-
-#ifndef ESNOSPC
-#define ESNOSPC         ( 406 )       /* not enough space for s2     */
-#endif
-
-#ifndef ESUNTERM
-#define ESUNTERM        ( 407 )       /* unterminated string         */
-#endif
-
-#ifndef ESNODIFF
-#define ESNODIFF        ( 408 )       /* no difference               */
-#endif
-
-#ifndef ESNOTFND
-#define ESNOTFND        ( 409 )       /* not found                   */
-#endif
-
 #define RSIZE_MAX_MEM      ( 256UL << 20 )     /* 256MB */
 
-#define RCNEGATE(x)  (x)
-#define RSIZE_MAX_STR      ( 4UL << 10 )      /* 4KB */
-#define sl_default_handler ignore_handler_s
 #define EXPORT_SYMBOL(sym)
-
-#ifndef sldebug_printf
-#define sldebug_printf(...)
-#endif
-
-#ifndef _RSIZE_T_DEFINED
-typedef size_t rsize_t;
-#define _RSIZE_T_DEFINED
-#endif  /* _RSIZE_T_DEFINED */
 
 #ifndef _ERRNO_T_DEFINED
 #define _ERRNO_T_DEFINED
 typedef int32_t errno_t;
 #endif  /* _ERRNO_T_DEFINED */
-
-typedef void(*constraint_handler_t) (const char * /* msg */,
-    void *       /* ptr */,
-    errno_t      /* error */);
-extern void ignore_handler_s(const char *msg, void *ptr, errno_t error);
-
-/*
-* Function used by the libraries to invoke the registered
-* runtime-constraint handler. Always needed.
-*/
-extern void invoke_safe_str_constraint_handler(
-    const char *msg,
-    void *ptr,
-    errno_t error);
-
-static inline void handle_error(char *orig_dest, rsize_t orig_dmax,
-    char *err_msg, errno_t err_code)
-{
-    (void)orig_dmax;
-    *orig_dest = '\0';
-
-    invoke_safe_str_constraint_handler(err_msg, NULL, err_code);
-    return;
-}
-
-/* string copy */
-extern errno_t
-    strcpy_ss(char *dest, rsize_t dmax, const char *src);
-
-/* fitted string copy */
-extern errno_t
-    strncpy_ss(char *dest, rsize_t dmax, const char *src, rsize_t slen);
-
-/* string length */
-extern rsize_t
-    strnlen_ss(const char *s, rsize_t smax);
 
 extern void 
     eb_memcpy(void  *dst_ptr, void  *src_ptr, size_t size);
@@ -2793,18 +2701,6 @@ extern void
 
 #define EB_MEMSET(dst, val, count) \
 memset(dst, val, count)
-
-#define EB_STRNCPY(dst, src, count) \
-strncpy_ss(dst, dst_size, src, count)
-
-#define EB_STRCPY(dst, size, src) \
-strcpy_ss(dst, size, src)
-
-#define EB_STRCMP(target,token) \
-strcmp(target,token)
-
-#define EB_STRLEN(target, max_size) \
-strnlen_ss(target, max_size)
 
 //#ifdef __cplusplus
 //}

@@ -12,8 +12,9 @@ SVT-AV1 Encoder is licensed under the OSI-approved BSD+Patent license. See [LICE
 
 ## Documentation
 
-More details about the SVT-AV1 Encoder usage can be found under:
+More details about the SVT-AV1 usage can be found under:
 -   [svt-av1-encoder-user-guide](Docs/svt-av1_encoder_user_guide.md)
+-   [svt-av1-decoder-user-guide](Docs/svt-av1_decoder_user_guide.md)
 
 ## System Requirements
 
@@ -60,17 +61,17 @@ The SVT-AV1 Encoder adapts to the system that is being ran on. The memory requir
 ### Windows* Operating Systems (64-bit):
 
 * __Build Requirements__
-    -    Visual Studio* 2017 (can be downloaded [here](https://www.visualstudio.com/vs/older-downloads/))
-    -    CMake 3.5 or later (can be downloaded [here](https://github.com/Kitware/CMake/releases/download/v3.13.0/cmake-3.13.0-win64-x64.msi))
-    -   YASM Assembler version 1.2.0 or later
-    -    Download the yasm exe from the following [link](http://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win64.exe)
-    -    Rename yasm-1.3.0-win64.exe to yasm.exe
-    -   Copy yasm.exe into a location that is in the PATH environment variable
+  - Visual Studio* 2017 (download [here](https://www.visualstudio.com/vs/older-downloads/)) or 2019 (download [here](https://visualstudio.microsoft.com/downloads/))
+  - CMake 3.14 or later (download [here](https://github.com/Kitware/CMake/releases/download/v3.14.4/cmake-3.14.4-win64-x64.msi))
+  - YASM Assembler version 1.2.0 or later
+    - Download the yasm exe from the following [link](http://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win64.exe)
+    - Rename yasm-1.3.0-win64.exe to yasm.exe
+    - Copy yasm.exe into a location that is in the PATH environment variable
 
 * __Build Instructions__
-    -    Generate the Visual Studio* 2017 project files by following the steps below cd Build\windows
-        -    run generate_vs17.bat [such would generate the visual studio project files]
-    -    Open the "svt-av1.sln" using Visual Studio* 2017 and click on Build -- > Build Solution
+  - Build the project by following the steps below
+    - cd into `Build\windows`
+    - run `build.bat <2019|2017|2015>` [This will generate the .sln files and build the project]
 
 * __Binaries Location__
     -   Binaries can be found under <repo dir>\Bin/Release or <repo dir>\Bin/Debug, depending on whether Debug or Release were selected in the build mode

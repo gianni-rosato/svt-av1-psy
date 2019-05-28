@@ -2,7 +2,7 @@
 
 ## Table of Contents
 1. [Introduction](#introduction)
-2. [Known Limitations] (#known-limitations)
+2. [Known Limitations](#known-limitations)
 3. [Sample Application Guide](#sample-application-guide)    
     - [Running the decoder](#running-the-decoder)
 4. [Legal Disclaimer](#legal-disclaimer)

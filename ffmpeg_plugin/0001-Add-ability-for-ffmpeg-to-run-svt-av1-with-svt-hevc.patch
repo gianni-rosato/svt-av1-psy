@@ -1,7 +1,7 @@
-From 21af74a33a831a92879c426db6eff5ec00d974b6 Mon Sep 17 00:00:00 2001
+From 64932c76e3dd36f010b1643a70abcceae7fdfca8 Mon Sep 17 00:00:00 2001
 From: Daryl Seah <daryl.seah@intel.com>
 Date: Fri, 18 Jan 2019 02:11:38 +0000
-Subject: [PATCH 1/1] Add ability for ffmpeg to run svt-av1 with svt-hevc
+Subject: [PATCH] Add ability for ffmpeg to run svt-av1 with svt-hevc
 
 Change-Id: I37ee5414fdd99e0b3f112a6e5ede166f3e48d819
 Signed-off-by: Daryl Seah <daryl.seah@intel.com>
@@ -10,12 +10,12 @@ Signed-off-by: Jing SUN <jing.a.sun@intel.com>
  configure               |   4 +
  libavcodec/Makefile     |   1 +
  libavcodec/allcodecs.c  |   1 +
- libavcodec/libsvt_av1.c | 492 ++++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 498 insertions(+)
+ libavcodec/libsvt_av1.c | 491 ++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 497 insertions(+)
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
-index 06d5e8e..4114960 100755
+index 2f61c8296e..87e6696523 100755
 --- a/configure
 +++ b/configure
 @@ -263,6 +263,7 @@ External library support:
@@ -51,7 +51,7 @@ index 06d5e8e..4114960 100755
  enabled libtesseract      && require_pkg_config libtesseract tesseract tesseract/capi.h TessBaseAPICreate
  enabled libtheora         && require libtheora theora/theoraenc.h th_info_init -ltheoraenc -ltheoradec -logg
 diff --git a/libavcodec/Makefile b/libavcodec/Makefile
-index 728503b..a524f34 100644
+index 728503be9c..a524f34d9c 100644
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
 @@ -982,6 +982,7 @@ OBJS-$(CONFIG_LIBSHINE_ENCODER)           += libshine.o
@@ -63,7 +63,7 @@ index 728503b..a524f34 100644
  OBJS-$(CONFIG_LIBTWOLAME_ENCODER)         += libtwolame.o
  OBJS-$(CONFIG_LIBVO_AMRWBENC_ENCODER)     += libvo-amrwbenc.o
 diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
-index 5739d53..98f0c99 100644
+index 5739d53329..98f0c99883 100644
 --- a/libavcodec/allcodecs.c
 +++ b/libavcodec/allcodecs.c
 @@ -698,6 +698,7 @@ extern AVCodec ff_libshine_encoder;
@@ -76,10 +76,10 @@ index 5739d53..98f0c99 100644
  extern AVCodec ff_libvo_amrwbenc_encoder;
 diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
 new file mode 100644
-index 0000000..6ef262e
+index 0000000000..a044c1eac5
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
-@@ -0,0 +1,492 @@
+@@ -0,0 +1,491 @@
 +/*
 +* Scalable Video Technology for AV1 encoder library plugin
 +*
@@ -104,7 +104,6 @@ index 0000000..6ef262e
 +
 +#include <stdint.h>
 +#include "EbSvtAv1ErrorCodes.h"
-+#include "EbSvtAv1Time.h"
 +#include "EbSvtAv1Enc.h"
 +
 +#include "libavutil/common.h"
@@ -573,5 +572,5 @@ index 0000000..6ef262e
 +    .wrapper_name   = "libsvt_av1",
 +};
 -- 
-1.8.3.1
+2.20.1
 

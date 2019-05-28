@@ -13,7 +13,7 @@
 #include "EbPictureControlSet.h"
 #include "EbEntropyCoding.h"
 #include "EbRateControlTasks.h"
-#include "EbSvtAv1Time.h"
+#include "EbTime.h"
 #if RC
 #include "EbModeDecisionProcess.h"
 #endif

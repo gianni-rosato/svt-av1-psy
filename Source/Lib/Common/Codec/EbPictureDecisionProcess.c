@@ -1365,11 +1365,14 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
     if (picture_control_set_ptr->enc_mode <= ENC_M4)
         picture_control_set_ptr->tx_search_level = TX_SEARCH_FULL_LOOP;
-    else
-        if (picture_control_set_ptr->temporal_layer_index == 0)
-            picture_control_set_ptr->tx_search_level = TX_SEARCH_FULL_LOOP;
-        else
-            picture_control_set_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
+	else if (picture_control_set_ptr->enc_mode <= ENC_M7) {
+		if (picture_control_set_ptr->temporal_layer_index == 0)
+			picture_control_set_ptr->tx_search_level = TX_SEARCH_FULL_LOOP;
+		else
+			picture_control_set_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
+	}
+	else
+		picture_control_set_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
 #else
     if (picture_control_set_ptr->enc_mode <= ENC_M3)
         picture_control_set_ptr->tx_search_level = TX_SEARCH_FULL_LOOP;

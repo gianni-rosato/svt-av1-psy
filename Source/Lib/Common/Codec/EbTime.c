@@ -32,7 +32,7 @@ __attribute__((optimize("unroll-loops")))
 #endif
 #endif
 
-void StartTime(uint64_t *Startseconds, uint64_t *Startuseconds) {
+void EbStartTime(uint64_t *Startseconds, uint64_t *Startuseconds) {
 
 #if defined(__linux__) || defined(__APPLE__) //(LINUX_ENCODER_TIMING || LINUX_DECODER_TIMING)
     struct timeval start;
@@ -49,7 +49,7 @@ void StartTime(uint64_t *Startseconds, uint64_t *Startuseconds) {
 
 }
 
-void FinishTime(uint64_t *Finishseconds, uint64_t *Finishuseconds) {
+void EbFinishTime(uint64_t *Finishseconds, uint64_t *Finishuseconds) {
 
 #if defined(__linux__) || defined(__APPLE__) //(LINUX_ENCODER_TIMING || LINUX_DECODER_TIMING)
     struct timeval finish;
@@ -66,7 +66,7 @@ void FinishTime(uint64_t *Finishseconds, uint64_t *Finishuseconds) {
 
 }
 
-void ComputeOverallElapsedTime(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration)
+void EbComputeOverallElapsedTime(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration)
 {
 #if defined(__linux__) || defined(__APPLE__) //(LINUX_ENCODER_TIMING || LINUX_DECODER_TIMING)
     long   mtime, seconds, useconds;
@@ -91,7 +91,7 @@ void ComputeOverallElapsedTime(uint64_t Startseconds, uint64_t Startuseconds, ui
 
 }
 
-void ComputeOverallElapsedTimeMs(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration)
+void EbComputeOverallElapsedTimeMs(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration)
 {
 #if defined(__linux__) || defined(__APPLE__) //(LINUX_ENCODER_TIMING || LINUX_DECODER_TIMING)
     long   mtime, seconds, useconds;
@@ -116,7 +116,7 @@ void ComputeOverallElapsedTimeMs(uint64_t Startseconds, uint64_t Startuseconds, 
 
 }
 
-static void SleepMs(uint64_t milliSeconds)
+static void EbSleepMs(uint64_t milliSeconds)
 {
     if(milliSeconds) {
 #if defined(__linux__) || defined(__APPLE__)
@@ -133,7 +133,7 @@ static void SleepMs(uint64_t milliSeconds)
     }
 }
 
-void Injector(uint64_t processed_frame_count,
+void EbInjector(uint64_t processed_frame_count,
               uint32_t injector_frame_rate)
 {
 #if defined(__linux__) || defined(__APPLE__)
@@ -161,7 +161,7 @@ void Injector(uint64_t processed_frame_count,
         firstTime = 1;
 
 #if defined(__linux__) || defined(__APPLE__)
-        StartTime((uint64_t*)&startTimesSeconds, (uint64_t*)&startTimesuSeconds);
+        EbStartTime((uint64_t*)&startTimesSeconds, (uint64_t*)&startTimesuSeconds);
 #elif _WIN32
         QueryPerformanceFrequency(&counterFreq);
         QueryPerformanceCounter(&startCount);
@@ -171,8 +171,8 @@ void Injector(uint64_t processed_frame_count,
     {
 
 #if defined(__linux__) || defined(__APPLE__)
-        FinishTime((uint64_t*)&currentTimesSeconds, (uint64_t*)&currentTimesuSeconds);
-        ComputeOverallElapsedTime(startTimesSeconds, startTimesuSeconds, currentTimesSeconds, currentTimesuSeconds, &elapsedTime);
+        EbFinishTime((uint64_t*)&currentTimesSeconds, (uint64_t*)&currentTimesuSeconds);
+        EbComputeOverallElapsedTime(startTimesSeconds, startTimesuSeconds, currentTimesSeconds, currentTimesuSeconds, &elapsedTime);
 #elif _WIN32
         QueryPerformanceCounter(&nowCount);
         elapsedTime = (double)(nowCount.QuadPart - startCount.QuadPart) / (double)counterFreq.QuadPart;
@@ -183,7 +183,7 @@ void Injector(uint64_t processed_frame_count,
         if (milliSecAhead>0)
         {
             //  timeBeginPeriod(1);
-            SleepMs(milliSecAhead);
+            EbSleepMs(milliSecAhead);
             //  timeEndPeriod (1);
         }
     }

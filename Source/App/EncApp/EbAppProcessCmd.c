@@ -15,7 +15,7 @@
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbAppInputy4m.h"
 
-#include "EbSvtAv1Time.h"
+#include "EbTime.h"
 
 
 #define IVF_FRAME_HEADER_IN_LIB                     0
@@ -986,7 +986,7 @@ AppExitConditionType ProcessInputBuffer(
 
     if (config->injector && config->processed_frame_count)
     {
-        EbInjector(config->processed_frame_count, config->injector_frame_rate);
+        Injector(config->processed_frame_count, config->injector_frame_rate);
     }
 
     totalBytesToProcessCount = (frames_to_be_encoded < 0) ? -1 : (config->encoder_bit_depth == 10 && config->compressed_ten_bit_format == 1) ?
@@ -1216,7 +1216,6 @@ AppExitConditionType ProcessOutputStreamBuffer(
                 }
 
                 switch (headerPtr->flags & 0x00000006) { // Check for the flags EB_BUFFERFLAG_HAS_TD and EB_BUFFERFLAG_SHOW_EXT
-
                 case (EB_BUFFERFLAG_HAS_TD | EB_BUFFERFLAG_SHOW_EXT):
 
                     // terminate previous ivf packet, update the combined size of packets sent
