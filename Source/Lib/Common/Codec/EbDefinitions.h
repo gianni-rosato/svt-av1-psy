@@ -2606,6 +2606,9 @@ app_malloc_count++;
 #else
 #ifdef _MSC_VER
 #define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
+    return EB_ErrorInsufficientResources; \
+} \
 pointer = (type) _aligned_malloc(n_elements,ALVALUE); \
 if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
@@ -2620,13 +2623,13 @@ if (pointer == (type)EB_NULL) { \
         *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
-} \
 lib_malloc_count++;
 
 #else
 #define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
+    return EB_ErrorInsufficientResources; \
+    } \
 if (posix_memalign((void**)(&(pointer)), ALVALUE, n_elements) != 0) { \
     return EB_ErrorInsufficientResources; \
         } \
@@ -2641,13 +2644,13 @@ if (posix_memalign((void**)(&(pointer)), ALVALUE, n_elements) != 0) { \
         *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
-    } \
 lib_malloc_count++;
 #endif
 
 #define EB_MALLOC(type, pointer, n_elements, pointer_class) \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
+    return EB_ErrorInsufficientResources; \
+} \
 pointer = (type) malloc(n_elements); \
 if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
@@ -2662,12 +2665,12 @@ if (pointer == (type)EB_NULL) { \
         *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
-} \
 lib_malloc_count++;
 
 #define EB_CALLOC(type, pointer, count, size, pointer_class) \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
+    return EB_ErrorInsufficientResources; \
+} \
 pointer = (type) calloc(count, size); \
 if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
@@ -2682,12 +2685,12 @@ else { \
         *total_lib_memory += ((count) + (8 - ((count) % 8))); \
     } \
 } \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
-} \
 lib_malloc_count++;
 
 #define EB_CREATESEMAPHORE(type, pointer, n_elements, pointer_class, initial_count, max_count) \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
+    return EB_ErrorInsufficientResources; \
+} \
 pointer = eb_create_semaphore(initial_count, max_count); \
 if (pointer == (type)EB_NULL) { \
     return EB_ErrorInsufficientResources; \
@@ -2702,12 +2705,12 @@ else { \
         *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
 } \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
-} \
 lib_semaphore_count++;
 
 #define EB_CREATEMUTEX(type, pointer, n_elements, pointer_class) \
+if (*(memory_map_index) >= MAX_NUM_PTR) { \
+    return EB_ErrorInsufficientResources; \
+} \
 pointer = eb_create_mutex(); \
 if (pointer == (type)EB_NULL){ \
     return EB_ErrorInsufficientResources; \
@@ -2721,9 +2724,6 @@ else { \
     else { \
         *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
     } \
-} \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
 } \
 lib_mutex_count++;
 #endif
