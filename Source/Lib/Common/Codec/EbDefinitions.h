@@ -46,35 +46,23 @@ extern "C" {
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
-/**********************************************************************************/
-// Testing only
-#define TXS_DISABLE_CFL                   0 // <-- off
-#define QP_SCALING_OFF                    0 // <-- off
-#define SHUT_UPDATE_CDF                   0 // <-- off
-
-
-#define ATB                               1 
+#define ATB                               1 // ATB Main Flag
 #if ATB
-#define SHUT_ATB                          0 // <-- button
-#define ATB_SUPPORT                       1
-#define ATB_SUPPORT_1_DEPTH               1
-#define ATB_EP                            1
-#define ATB_EC                            1
-
-#define ATB_MD                            1 
-#define ATB_TX_SEARCH                     1
-#define ATB_RATE                          1 // <-- off to make atb infra lossless in term of yuv
-#define ATB_TX_TYPE_SUPPORT_PER_TU        1 
-
-#define ATB_DC_CONTEXT_SUPPORT_0          1 
-#define ATB_DC_CONTEXT_SUPPORT_1          1
-#define ATB_DC_CONTEXT_SUPPORT_2          1 
-
+#define ATB_SUPPORT                       1 // Tranform block geometry, data structure(s), ..
+#define ATB_SUPPORT_1_DEPTH               1 // Undo trasnform depth 2 as ATB for INTER not yet active 
+#define ATB_EP                            1 // Tranform partitioning @ encode passs 
+#define ATB_EC                            1 // Tranform partitioning @ entropy coding 
+#define ATB_MD                            1 // Tranform partitioning @ mode decision
+#define ATB_RATE                          1 // 
+#define ATB_TX_TYPE_SUPPORT_PER_TU        1 // Added the ability to signal Tx type per tranform block 
+#define ATB_DC_CONTEXT_SUPPORT_0          1 // Added the ability to signal DC context per tranform block 
+#define ATB_DC_CONTEXT_SUPPORT_1          1 // Added the ability to signal DC level per tranform block 
+#define ATB_DC_CONTEXT_SUPPORT_2          1 // Added the ability to update DC context @ tranform block basis for only INTRA partitioning (128x128 not yet adressed)
 #if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
-#define DC_SIGN_CONTEXT_FIX               1 // <-- off to make atb infra lossless in term of yuv
-#define DC_SIGN_CONTEXT_EP                0 // <-- off to make atb infra lossless in term of yuv
+#define DC_SIGN_CONTEXT_FIX               1 // Fixed DC level derivation and update @ mode decision 
+#define DC_SIGN_CONTEXT_EP                0 // Fixed DC level update @ encode pass
 #endif
-
+#define SHUT_ATB                          0 // ATB multi-mode signal
 #endif
 /**********************************************************************************/
 

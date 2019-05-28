@@ -3567,7 +3567,7 @@ void perform_intra_tx_partitioning(
             TxType txk_start = DCT_DCT;
             TxType txk_end = TX_TYPES;
             uint64_t best_cost_tx_search = (uint64_t)~0;
-#if ATB_TX_SEARCH
+
 #if 0
             const TxSetType tx_set_type = get_ext_tx_set_type(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr], is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
 #else
@@ -3770,7 +3770,7 @@ void perform_intra_tx_partitioning(
 
             //  Best Tx Type Pass
             candidateBuffer->candidate_ptr->transform_type[context_ptr->txb_itr] = best_tx_type;
-#endif
+
             y_tu_coeff_bits = 0;
 
             // Y: T Q iQ
