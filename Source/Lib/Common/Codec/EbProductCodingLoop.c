@@ -398,7 +398,7 @@ void mode_decision_update_neighbor_arrays(
             context_ptr->blk_geom->bwidth,
             context_ptr->blk_geom->bheight);
 #if ATB_MD
-        if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT) {
+        if (picture_control_set_ptr->parent_pcs_ptr->atb_mode) {
             update_recon_neighbor_array(
                 picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
                 context_ptr->cu_ptr->neigh_top_recon[0],
@@ -525,7 +525,7 @@ void copy_neighbour_arrays(
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
 #if ATB_MD
-    if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT) {
+    if (picture_control_set_ptr->parent_pcs_ptr->atb_mode) {
         copy_neigh_arr(
             picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[src_idx],
             picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[dst_idx],
@@ -1358,7 +1358,7 @@ void AV1PerformInverseTransformReconLuma(
 #endif
     if (picture_control_set_ptr->intra_md_open_loop_flag == EB_FALSE) {
 #if ATB_SUPPORT
-        uint8_t tx_depth = candidateBuffer->candidate_ptr->tx_depth; // Hsan atb
+        uint8_t tx_depth = candidateBuffer->candidate_ptr->tx_depth; 
         tuTotalCount = context_ptr->blk_geom->txb_count[tx_depth];
 #else
         tuTotalCount = blk_geom->txb_count;
@@ -2968,29 +2968,55 @@ static void tx_search_update_recon_sample_neighbor_array(
     return;
 }
 
-uint8_t get_end_tx_depth(EB_SLICE slice_type, BlockSize bsize, uint8_t btype) {
+uint8_t get_end_tx_depth(uint8_t atb_mode, EB_SLICE slice_type, BlockSize bsize, uint8_t btype) {
    
     uint8_t tx_depth = 0;
-
-    if (slice_type == I_SLICE) {
-        if (bsize == BLOCK_16X16 ||
-            bsize == BLOCK_16X8  ||
-            bsize == BLOCK_8X16  ||
-            bsize == BLOCK_8X8   ){
-            tx_depth = 1;
+    if (atb_mode == 1) {
+        if (slice_type == I_SLICE) {
+            if (bsize == BLOCK_16X16 ||
+                bsize == BLOCK_16X8 ||
+                bsize == BLOCK_8X16 ||
+                bsize == BLOCK_8X8) {
+                tx_depth = 1;
+            //if (bsize == BLOCK_16X16 ||
+            //    bsize == BLOCK_16X8  ||
+            //    bsize == BLOCK_8X16  ||
+            //    bsize == BLOCK_8X8   ||
+            //    bsize == BLOCK_4X16  ||
+            //    bsize == BLOCK_16X4  ||
+            //    bsize == BLOCK_32X8  ||
+            //    bsize == BLOCK_8X32) {
+            //    tx_depth = 1;
+            }
+        }
+        else {
+            if (bsize == BLOCK_16X16 ||
+                bsize == BLOCK_16X8 ||
+                bsize == BLOCK_8X16 ||
+                bsize == BLOCK_8X8) {
+                tx_depth = 1;
+            }
         }
     }
-    else {
-        if (bsize == BLOCK_16X16 ||           
+    else if (atb_mode == 2) {
+        if (bsize == BLOCK_64X64 ||
+            bsize == BLOCK_32X32 ||
+            bsize == BLOCK_16X16 ||
+            bsize == BLOCK_64X32 ||
+            bsize == BLOCK_32X64 ||
+            bsize == BLOCK_16X32 ||
+            bsize == BLOCK_32X16 ||
             bsize == BLOCK_16X8  ||
-            bsize == BLOCK_8X16  ||
-            bsize == BLOCK_8X8   ||
-            bsize == BLOCK_4X16  || 
-            bsize == BLOCK_16X4  ||
-            bsize == BLOCK_32X8  ||
-            bsize == BLOCK_8X32  ){
+            bsize == BLOCK_8X16)
+            tx_depth = (btype == INTRA_MODE) ? 1 : 2;
+        else if (bsize == BLOCK_8X8 ||
+            bsize == BLOCK_64X16 ||
+            bsize == BLOCK_16X64 ||
+            bsize == BLOCK_32X8 ||
+            bsize == BLOCK_8X32 ||
+            bsize == BLOCK_16X4 ||
+            bsize == BLOCK_4X16)
             tx_depth = 1;
-        }
     }
 
     return tx_depth;
@@ -4426,9 +4452,9 @@ void AV1PerformFullLoop(
         }
 #endif
 #if ATB_MD
-        uint8_t end_tx_depth = get_end_tx_depth(picture_control_set_ptr->slice_type, context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+        uint8_t end_tx_depth = get_end_tx_depth(picture_control_set_ptr->parent_pcs_ptr->atb_mode, picture_control_set_ptr->slice_type, context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
         // Transform partitioning path (INTRA Luma)
-        if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT && end_tx_depth && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
+        if (picture_control_set_ptr->parent_pcs_ptr->atb_mode && end_tx_depth && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
             perform_intra_tx_partitioning(
                 candidateBuffer,
                 context_ptr,
@@ -5642,6 +5668,10 @@ void search_best_independent_uv_mode(
             candidateBuffer->candidate_ptr->intra_chroma_mode = uv_mode;
             candidateBuffer->candidate_ptr->is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)uv_mode);
             candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_UV] = uv_angle_delta;
+#if ATB_SUPPORT
+            candidateBuffer->candidate_ptr->tx_depth = 0;
+#endif
+
 #if ATB_TX_TYPE_SUPPORT_PER_TU
             candidateBuffer->candidate_ptr->transform_type_uv =
                 av1_get_tx_type(
@@ -5654,7 +5684,7 @@ void search_best_independent_uv_mode(
                     0,
                     0,
 #if ATB_SUPPORT
-                    context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
+                    context_ptr->blk_geom->txsize_uv[0][0],
 #else
                     context_ptr->blk_geom->txsize_uv[0],
 #endif

@@ -2560,7 +2560,7 @@ void coding_loop_context_generation(
     cu_ptr->cb_dc_sign_context = 0;
     cu_ptr->cr_txb_skip_context = 0;
     cu_ptr->cr_dc_sign_context = 0;
-#if ATB_SUPPORT // Hsan atb
+#if ATB_SUPPORT 
     uint8_t tx_depth = context_ptr->tx_depth = cu_ptr->tx_depth;
     int32_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];
 #else

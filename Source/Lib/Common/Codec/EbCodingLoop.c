@@ -3535,7 +3535,7 @@ EB_EXTERN void av1_encode_pass(
                     context_ptr->txb_itr = 0;
 #if ATB_EP
                     // Transform partitioning path (INTRA Luma/Chroma)
-                    if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT && cu_ptr->av1xd->use_intrabc == 0) {
+                    if (picture_control_set_ptr->parent_pcs_ptr->atb_mode && cu_ptr->av1xd->use_intrabc == 0) {
 
                         // Set the PU Loop Variables
                         pu_ptr = cu_ptr->prediction_unit_array;
