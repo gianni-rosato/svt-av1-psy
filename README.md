@@ -12,8 +12,9 @@ SVT-AV1 Encoder is licensed under the OSI-approved BSD+Patent license. See [LICE
 
 ## Documentation
 
-More details about the SVT-AV1 Encoder usage can be found under:
+More details about the SVT-AV1 usage can be found under:
 -   [svt-av1-encoder-user-guide](Docs/svt-av1_encoder_user_guide.md)
+-   [svt-av1-decoder-user-guide](Docs/svt-av1_decoder_user_guide.md)
 
 ## System Requirements
 
