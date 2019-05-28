@@ -4110,7 +4110,7 @@ void  inject_intra_candidates_ois(
                     0,
                     0,
 #if ATB_SUPPORT
-                    context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
+                    context_ptr->blk_geom->txsize_uv[0][0], 
 #else
                     context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -4168,7 +4168,7 @@ void  inject_intra_candidates_ois(
                     0,
                     0,
 #if ATB_SUPPORT
-                    context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
+                    context_ptr->blk_geom->txsize_uv[0][0], 
 #else
                     context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -4707,7 +4707,7 @@ void  inject_intra_candidates(
                                 0,
                                 0,
 #if ATB_SUPPORT
-                                context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
+                                context_ptr->blk_geom->txsize_uv[0][0], 
 #else
                                 context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -4796,7 +4796,7 @@ void  inject_intra_candidates(
                     0,
                     0,
 #if ATB_SUPPORT
-                    context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
+                    context_ptr->blk_geom->txsize_uv[0][0], 
 #else
                     context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -5112,17 +5112,17 @@ uint8_t product_full_mode_decision(
     uint32_t tu_index;
     uint32_t tuTotalCount;
     uint32_t cu_size_log2 = context_ptr->cu_size_log2;
-
-    {
 #if ATB_SUPPORT
-        tuTotalCount = context_ptr->blk_geom->txb_count[cu_ptr->tx_depth]; // Hsan atb
+    tuTotalCount = context_ptr->blk_geom->txb_count[cu_ptr->tx_depth];
+    tu_index = 0;
+    txb_itr = 0;
 #else
+    {
         tuTotalCount = context_ptr->blk_geom->txb_count;
-#endif
         tu_index = 0;
         txb_itr = 0;
     }
-
+#endif
 #if NO_ENCDEC
     int32_t txb_1d_offset = 0, txb_1d_offset_uv = 0;
 

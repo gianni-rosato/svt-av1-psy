@@ -398,7 +398,7 @@ void mode_decision_update_neighbor_arrays(
             context_ptr->blk_geom->bwidth,
             context_ptr->blk_geom->bheight);
 #if ATB_MD
-        if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT) {
+        if (picture_control_set_ptr->parent_pcs_ptr->atb_mode) {
             update_recon_neighbor_array(
                 picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
                 context_ptr->cu_ptr->neigh_top_recon[0],
@@ -525,7 +525,7 @@ void copy_neighbour_arrays(
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
 #if ATB_MD
-    if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT) {
+    if (picture_control_set_ptr->parent_pcs_ptr->atb_mode) {
         copy_neigh_arr(
             picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[src_idx],
             picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[dst_idx],
@@ -1358,7 +1358,7 @@ void AV1PerformInverseTransformReconLuma(
 #endif
     if (picture_control_set_ptr->intra_md_open_loop_flag == EB_FALSE) {
 #if ATB_SUPPORT
-        uint8_t tx_depth = candidateBuffer->candidate_ptr->tx_depth; // Hsan atb
+        uint8_t tx_depth = candidateBuffer->candidate_ptr->tx_depth; 
         tuTotalCount = context_ptr->blk_geom->txb_count[tx_depth];
 #else
         tuTotalCount = blk_geom->txb_count;
@@ -1698,7 +1698,7 @@ void ProductCodingLoopInitFastLoop(
     context_ptr->luma_intra_ref_samples_gen_done = EB_FALSE;
     context_ptr->chroma_intra_ref_samples_gen_done = EB_FALSE;
 #endif
-#if ATB_SUPPORT // Hsan atb
+#if ATB_SUPPORT 
     context_ptr->tx_depth = context_ptr->cu_ptr->tx_depth = 0;
 #endif
     // Generate Split, Skip and intra mode contexts for the rate estimation
@@ -1816,8 +1816,8 @@ void perform_fast_loop(
         // Set the Candidate Buffer
         ModeDecisionCandidateBuffer   *candidateBuffer = candidateBufferPtrArrayBase[candidate_buffer_start_index];
         ModeDecisionCandidate         *candidate_ptr = candidateBuffer->candidate_ptr = &fast_candidate_array[fastLoopCandidateIndex];
-#if ATB_SUPPORT // Hsan atb
-        // init tx_depth candidate
+#if ATB_SUPPORT 
+        // Initialize tx_depth
         candidateBuffer->candidate_ptr->tx_depth = 0;
 #endif
         // Only check (src - src) candidates (Tier0 candidates)
@@ -1867,8 +1867,8 @@ void perform_fast_loop(
         ModeDecisionCandidateBuffer *candidateBuffer = candidateBufferPtrArrayBase[highestCostIndex];
         ModeDecisionCandidate       *candidate_ptr = candidateBuffer->candidate_ptr = &fast_candidate_array[fastLoopCandidateIndex];
         EbPictureBufferDesc         *prediction_ptr = candidateBuffer->prediction_ptr;
-#if ATB_SUPPORT // Hsan atb
-        // init tx_depth candidate
+#if ATB_SUPPORT 
+        // Initialize tx_depth
         candidateBuffer->candidate_ptr->tx_depth = 0;
 #endif
         if (!candidate_ptr->distortion_ready || fastLoopCandidateIndex == bestFirstFastCostSearchCandidateIndex) {
@@ -2745,7 +2745,7 @@ void check_best_indepedant_cfl(
                 0,
                 0,
 #if ATB_SUPPORT
-                context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
+                context_ptr->blk_geom->txsize_uv[0][0],
 #else             
                 context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -2968,29 +2968,34 @@ static void tx_search_update_recon_sample_neighbor_array(
     return;
 }
 
-uint8_t get_end_tx_depth(EB_SLICE slice_type, BlockSize bsize, uint8_t btype) {
+uint8_t get_end_tx_depth(ModeDecisionContext *context_ptr, uint8_t atb_mode, ModeDecisionCandidate *candidate_ptr, BlockSize bsize, uint8_t btype) {
    
     uint8_t tx_depth = 0;
 
-    if (slice_type == I_SLICE) {
-        if (bsize == BLOCK_16X16 ||
+
+    if (context_ptr->decoupled_fast_loop_search_method != SSD_SEARCH)
+        assert(atb_mode != 1 && "atb_mode 1 assumes SSD_SEARCH @ fast loop because of the energy threshold");
+
+    // Hsan: shut transform partitioning if low energy residual; energy = SSD and threshold normalized = f(width, height), and do not perform the check if ATB mode is full
+    if (atb_mode == 2 || ((context_ptr->decoupled_fast_loop_search_method == SSD_SEARCH) && (candidate_ptr->luma_fast_distortion > ((uint32_t) ((context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight) << 1))))) {
+        if (bsize == BLOCK_64X64 ||
+            bsize == BLOCK_32X32 ||
+            bsize == BLOCK_16X16 ||
+            bsize == BLOCK_64X32 ||
+            bsize == BLOCK_32X64 ||
+            bsize == BLOCK_16X32 ||
+            bsize == BLOCK_32X16 ||
             bsize == BLOCK_16X8  ||
-            bsize == BLOCK_8X16  ||
-            bsize == BLOCK_8X8   ){
+            bsize == BLOCK_8X16)
+            tx_depth = (btype == INTRA_MODE) ? 1 : 2;
+        else if (bsize == BLOCK_8X8 ||
+            bsize == BLOCK_64X16 ||
+            bsize == BLOCK_16X64 ||
+            bsize == BLOCK_32X8 ||
+            bsize == BLOCK_8X32 ||
+            bsize == BLOCK_16X4 ||
+            bsize == BLOCK_4X16)
             tx_depth = 1;
-        }
-    }
-    else {
-        if (bsize == BLOCK_16X16 ||           
-            bsize == BLOCK_16X8  ||
-            bsize == BLOCK_8X16  ||
-            bsize == BLOCK_8X8   ||
-            bsize == BLOCK_4X16  || 
-            bsize == BLOCK_16X4  ||
-            bsize == BLOCK_32X8  ||
-            bsize == BLOCK_8X32  ){
-            tx_depth = 1;
-        }
     }
 
     return tx_depth;
@@ -3118,11 +3123,8 @@ static uint64_t cost_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
     const int ctx = txfm_partition_context(xd->above_txfm_context + blk_col,
         xd->left_txfm_context + blk_row,
         mbmi->sb_type, tx_size);
-#if 0// ATB_RATE // Hsan atb
+
     const int write_txfm_partition = (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]);
-#else
-    const int write_txfm_partition = 1;
-#endif
 
     if (write_txfm_partition) {
         //aom_write_symbol(w, 0, ec_ctx->txfm_partition_cdf[ctx], 2);
@@ -3653,7 +3655,7 @@ void perform_intra_tx_partitioning(
 
 
                 uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
-                // Hsan atb 
+
                 // tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
                 if (y_has_coeff == 0 && tx_type != DCT_DCT) {
                     continue;
@@ -4429,9 +4431,9 @@ void AV1PerformFullLoop(
         }
 #endif
 #if ATB_MD
-        uint8_t end_tx_depth = get_end_tx_depth(picture_control_set_ptr->slice_type, context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+        uint8_t end_tx_depth = get_end_tx_depth(context_ptr, picture_control_set_ptr->parent_pcs_ptr->atb_mode, candidate_ptr, context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
         // Transform partitioning path (INTRA Luma)
-        if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT && end_tx_depth && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
+        if (picture_control_set_ptr->parent_pcs_ptr->atb_mode && end_tx_depth && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
             perform_intra_tx_partitioning(
                 candidateBuffer,
                 context_ptr,
@@ -5645,6 +5647,10 @@ void search_best_independent_uv_mode(
             candidateBuffer->candidate_ptr->intra_chroma_mode = uv_mode;
             candidateBuffer->candidate_ptr->is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)uv_mode);
             candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_UV] = uv_angle_delta;
+#if ATB_SUPPORT
+            candidateBuffer->candidate_ptr->tx_depth = 0;
+#endif
+
 #if ATB_TX_TYPE_SUPPORT_PER_TU
             candidateBuffer->candidate_ptr->transform_type_uv =
                 av1_get_tx_type(
@@ -5657,7 +5663,7 @@ void search_best_independent_uv_mode(
                     0,
                     0,
 #if ATB_SUPPORT
-                    context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
+                    context_ptr->blk_geom->txsize_uv[0][0],
 #else
                     context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -5675,7 +5681,7 @@ void search_best_independent_uv_mode(
                     0,
                     0,
 #if ATB_SUPPORT
-                    context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
+                    context_ptr->blk_geom->txsize_uv[0][0], 
 #else
                     context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -5825,7 +5831,7 @@ void search_best_independent_uv_mode(
                             0,
                             0,
 #if ATB_SUPPORT
-                            context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
+                            context_ptr->blk_geom->txsize_uv[0][0], 
 #else
                             context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -5842,7 +5848,7 @@ void search_best_independent_uv_mode(
                             0,
                             0,
 #if ATB_SUPPORT
-                            context_ptr->blk_geom->txsize_uv[0][0], // Hsan atb
+                            context_ptr->blk_geom->txsize_uv[0][0], 
 #else
                             context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -6499,7 +6505,8 @@ EB_EXTERN EbErrorType mode_decision_sb(
         }
         else
 #endif
-#if ATB_SUPPORT // Hsan atb
+#if ATB_SUPPORT
+        // Initialize tx_depth 
         cu_ptr->tx_depth = 0;
 #endif
         md_encode_block(

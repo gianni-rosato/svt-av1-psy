@@ -53,14 +53,14 @@ extern "C" {
 #define ATB_EP                            1 // Tranform partitioning @ encode passs 
 #define ATB_EC                            1 // Tranform partitioning @ entropy coding 
 #define ATB_MD                            1 // Tranform partitioning @ mode decision
-#define ATB_RATE                          1 // 
+#define ATB_RATE                          1 // Tranform partitioning tranform depth rate estimation
 #define ATB_TX_TYPE_SUPPORT_PER_TU        1 // Added the ability to signal Tx type per tranform block 
 #define ATB_DC_CONTEXT_SUPPORT_0          1 // Added the ability to signal DC context per tranform block 
 #define ATB_DC_CONTEXT_SUPPORT_1          1 // Added the ability to signal DC level per tranform block 
-#define ATB_DC_CONTEXT_SUPPORT_2          1 // Added the ability to update DC context @ tranform block basis for only INTRA partitioning (128x128 not yet adressed)
+#define ATB_DC_CONTEXT_SUPPORT_2          1 // Added the ability to update DC context @ tranform block basis for only INTRA partitioning (128x128 not yet addressed)
 #if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
 #define DC_SIGN_CONTEXT_FIX               1 // Fixed DC level derivation and update @ mode decision 
-#define DC_SIGN_CONTEXT_EP                0 // Fixed DC level update @ encode pass
+#define DC_SIGN_CONTEXT_EP                0 // Fixed DC level update @ encode pass (TBD)
 #endif
 #define SHUT_ATB                          0 // ATB multi-mode signal
 #endif
