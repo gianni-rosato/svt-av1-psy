@@ -81,9 +81,6 @@ typedef struct EbBufferHeaderType
 
     // pic flags
     uint32_t flags;
-#if 1 //ALT_REF_OVERLAY || ALT_REF_OVERLAY_APP   
-    uint8_t is_alt_Ref;
-#endif
 } EbBufferHeaderType;
 
 typedef struct EbComponentType

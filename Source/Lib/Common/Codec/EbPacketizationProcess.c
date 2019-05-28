@@ -596,9 +596,8 @@ void* packetization_kernel(void *input_ptr)
             output_stream_ptr->n_tick_count = (uint32_t)latency;
             output_stream_ptr->p_app_private = queueEntryPtr->out_meta_data;
 #if ALT_REF_OVERLAY
-            output_stream_ptr->is_alt_Ref = queueEntryPtr->is_alt_ref;
-#else
-            output_stream_ptr->is_alt_Ref = 0;
+            if (queueEntryPtr->is_alt_ref)
+                output_stream_ptr->flags |= (uint32_t)EB_BUFFERFLAG_IS_ALT_REF;
 #endif
  
             eb_post_full_object(output_stream_wrapper_ptr);

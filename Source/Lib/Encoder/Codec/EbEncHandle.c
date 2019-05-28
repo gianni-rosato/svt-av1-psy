@@ -613,7 +613,8 @@ EbErrorType load_default_buffer_configuration_settings(
                                                                           sequence_control_set_ptr->static_config.look_ahead_distance + SCD_LAD;
     sequence_control_set_ptr->output_recon_buffer_fifo_init_count       = sequence_control_set_ptr->reference_picture_buffer_init_count;
 #if ALT_REF_OVERLAY
-    sequence_control_set_ptr->overlay_input_picture_buffer_init_count   = sequence_control_set_ptr->static_config.enable_overlays ? 30 :1;
+    sequence_control_set_ptr->overlay_input_picture_buffer_init_count   = sequence_control_set_ptr->static_config.enable_overlays ? 
+                                                                          (2 << sequence_control_set_ptr->static_config.hierarchical_levels) + SCD_LAD : 1;
 #endif
 
     //#====================== Inter process Fifos ======================
@@ -1305,27 +1306,27 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         enc_handle_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->reference_picture_pool_fifo_ptr = (enc_handle_ptr->reference_picture_pool_producer_fifo_ptr_dbl_array[instance_index])[0];
         enc_handle_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->pa_reference_picture_pool_fifo_ptr = (enc_handle_ptr->pa_reference_picture_pool_producer_fifo_ptr_dbl_array[instance_index])[0];
 
-
 #if ALT_REF_OVERLAY
-        // Overlay Input Picture Buffers
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->overlay_input_picture_pool_ptr_array[instance_index],
-            enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->overlay_input_picture_buffer_init_count,
-            1,
-            0,
-            &enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array[instance_index],
-            (EbFifo ***)EB_NULL,
-            EB_FALSE,
-            EbInputBufferHeaderCtor,
-            enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr);
+        if (enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.enable_overlays) {
+            // Overlay Input Picture Buffers
+            return_error = eb_system_resource_ctor(
+                &enc_handle_ptr->overlay_input_picture_pool_ptr_array[instance_index],
+                enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->overlay_input_picture_buffer_init_count,
+                1,
+                0,
+                &enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array[instance_index],
+                (EbFifo ***)EB_NULL,
+                EB_FALSE,
+                EbInputBufferHeaderCtor,
+                enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr);
 
-        if (return_error == EB_ErrorInsufficientResources) {
-            return EB_ErrorInsufficientResources;
+            if (return_error == EB_ErrorInsufficientResources) {
+                return EB_ErrorInsufficientResources;
+            }
+
+            // Set the SequenceControlSet Overlay input Picture Pool Fifo Ptrs
+            enc_handle_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->overlay_input_picture_pool_fifo_ptr = (enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array[instance_index])[0];
         }
-
-        // Set the SequenceControlSet Overlay input Picture Pool Fifo Ptrs
-        enc_handle_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->overlay_input_picture_pool_fifo_ptr = (enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array[instance_index])[0];
-
 #endif
     }
 
@@ -3513,7 +3514,10 @@ EB_API EbErrorType eb_svt_get_packet(
     if (ebWrapperPtr) {
 
         packet = (EbBufferHeaderType*)ebWrapperPtr->object_ptr;
-
+#if ALT_REF_OVERLAY
+        if ( packet->flags & 0xfffffff0 )
+            return_error = EB_ErrorMax;
+#else
         if (packet->flags != EB_BUFFERFLAG_EOS &&
             packet->flags != EB_BUFFERFLAG_SHOW_EXT &&
             packet->flags != EB_BUFFERFLAG_HAS_TD &&
@@ -3524,7 +3528,7 @@ EB_API EbErrorType eb_svt_get_packet(
             packet->flags != 0) {
             return_error = EB_ErrorMax;
         }
-
+#endif
         // return the output stream buffer
         *p_buffer = packet;
 

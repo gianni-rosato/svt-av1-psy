@@ -1176,12 +1176,12 @@ AppExitConditionType ProcessOutputStreamBuffer(
         }
         else if (stream_status != EB_NoErrorEmptyQueue) {
 #if ALT_REF_OVERLAY_APP
-            is_alt_ref = headerPtr->is_alt_Ref;
+            is_alt_ref = (headerPtr->flags & EB_BUFFERFLAG_IS_ALT_REF);
 #endif
             EbBool   has_tiles = (EbBool)(appCallBack->eb_enc_parameters.tile_columns || appCallBack->eb_enc_parameters.tile_rows);
             uint8_t  obu_frame_header_size = has_tiles ? OBU_FRAME_HEADER_SIZE + 1 : OBU_FRAME_HEADER_SIZE;
 #if ALT_REF_OVERLAY_APP
-            if (!headerPtr->is_alt_Ref)
+            if (!(headerPtr->flags & EB_BUFFERFLAG_IS_ALT_REF))
 #endif
                 ++(config->performance_context.frame_count);
             *total_latency += (uint64_t)headerPtr->n_tick_count;
@@ -1208,7 +1208,7 @@ AppExitConditionType ProcessOutputStreamBuffer(
             // Write Stream Data to file
             if (streamFile) {
 #if ALT_REF_OVERLAY_APP
-                if (config->performance_context.frame_count ==  1 && !headerPtr->is_alt_Ref){
+                if (config->performance_context.frame_count ==  1 && !(headerPtr->flags & EB_BUFFERFLAG_IS_ALT_REF)){
 #else
                 if (config->performance_context.frame_count == 1) {
 #endif
@@ -1284,7 +1284,7 @@ AppExitConditionType ProcessOutputStreamBuffer(
 #else
             //++frame_count;
 #if ALT_REF_OVERLAY_APP
-            if (!headerPtr->is_alt_Ref)
+            if (!(headerPtr->flags & EB_BUFFERFLAG_IS_ALT_REF))
 #endif
                 printf("\b\b\b\b\b\b\b\b\b%9d", ++frame_count);
 #endif
