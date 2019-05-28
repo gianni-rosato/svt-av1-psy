@@ -3341,7 +3341,7 @@ void full_loop_r(
     tuCount = context_ptr->blk_geom->txb_count;
 #endif
     uint32_t  txb_1d_offset = 0;
-#if ATB_SUPPORT // Hsan atb
+#if ATB_SUPPORT 
     tuCount = tx_depth ? 1 : tuCount; //NM: 128x128 exeption
 
 #endif
@@ -3722,7 +3722,7 @@ void cu_full_distortion_fast_tu_mode_r(
     uint32_t  txb_1d_offset = 0;
     candidate_ptr->u_has_coeff = 0;
     candidate_ptr->v_has_coeff = 0;
-#if ATB_SUPPORT // Hsan atb
+#if ATB_SUPPORT 
     tuTotalCount = tx_depth ? 1 : tuTotalCount; //NM: 128x128 exeption
 #endif
     do {

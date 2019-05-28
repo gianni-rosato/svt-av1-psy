@@ -809,15 +809,10 @@ static EbErrorType av1_encode_tx_coef_uv(
 
 
     uint8_t tx_depth   = cu_ptr->tx_depth;
-    uint16_t txb_count = blk_geom->txb_count[cu_ptr->tx_depth];
+    uint16_t txb_count = 1;
     uint8_t txb_itr    = 0;
 
     uint8_t tx_index;
-
-#if ATB_SUPPORT // Hsan atb
-    if (cu_ptr->tx_depth)
-        txb_count = 1;
-#endif
 
     for (tx_index = 0; tx_index < txb_count; tx_index++) {
 
