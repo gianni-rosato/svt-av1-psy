@@ -1929,6 +1929,19 @@ EbErrorType av1_tu_estimate_coeff_bits(
 
     return return_error;
 }
+
+#if ATB_MD
+uint64_t estimate_tx_size_bits(
+    PictureControlSet       *pcsPtr,
+    uint32_t                 cu_origin_x,
+    uint32_t                 cu_origin_y,
+    CodingUnit               *cu_ptr,
+    const BlockGeom          *blk_geom,
+    NeighborArrayUnit        *txfm_context_array,
+    uint8_t                   tx_depth,
+    MdRateEstimationContext  *md_rate_estimation_ptr);
+#endif
+
 /*********************************************************************************
 * av1_intra_full_cost function is used to estimate the cost of an intra candidate mode
 * for full mode decisoion module.

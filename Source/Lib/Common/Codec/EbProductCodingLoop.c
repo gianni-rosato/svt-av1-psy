@@ -1336,18 +1336,23 @@ void AV1PerformInverseTransformReconLuma(
     PictureControlSet               *picture_control_set_ptr,
     ModeDecisionContext             *context_ptr,
     ModeDecisionCandidateBuffer     *candidateBuffer,
+#if !ATB_SUPPORT
     CodingUnit                      *cu_ptr,
-    const BlockGeom                   *blk_geom,
-    EbAsm                              asm_type) {
+    const BlockGeom                 *blk_geom,
+#endif
+    EbAsm                            asm_type) {
+#if !ATB_SUPPORT
     (void)cu_ptr;
-    uint32_t                              tu_width;
-    uint32_t                              tu_height;
-    uint32_t                              txb_origin_x;
-    uint32_t                              txb_origin_y;
-    uint32_t                              tu_origin_index;
-    uint32_t                              tuTotalCount;
+#endif
+    uint32_t   tu_width;
+    uint32_t   tu_height;
+    uint32_t   txb_origin_x;
+    uint32_t   txb_origin_y;
+    uint32_t   tu_origin_index;
+    uint32_t   tuTotalCount;
+               
+    uint32_t   txb_itr;
 
-    uint32_t                              txb_itr;
 #if CFL_FIX
     UNUSED(asm_type);
 #endif
@@ -2426,8 +2431,10 @@ static void CflPrediction(
         picture_control_set_ptr,
         context_ptr,
         candidateBuffer,
+#if !ATB_SUPPORT
         context_ptr->cu_ptr,
         context_ptr->blk_geom,
+#endif
         asm_type);
 
         uint32_t recLumaOffset = ((context_ptr->blk_geom->origin_y >> 3) << 3) * candidateBuffer->recon_ptr->stride_y +
@@ -2825,6 +2832,35 @@ void check_best_indepedant_cfl(
 
 
 #if ATB_MD
+EbErrorType av1_predict_intra_block(
+    TileInfo                    *tile,
+
+    STAGE                       stage,
+    const BlockGeom            *blk_geom,
+    const Av1Common *cm,
+    int32_t wpx,
+    int32_t hpx,
+    TxSize tx_size,
+    PredictionMode mode,
+    int32_t angle_delta,
+    int32_t use_palette,
+    FilterIntraMode filter_intra_mode,
+    uint8_t* topNeighArray,
+    uint8_t* leftNeighArray,
+    EbPictureBufferDesc  *recon_buffer,
+    int32_t col_off,
+    int32_t row_off,
+    int32_t plane,
+    BlockSize bsize,
+#if ATB_EP
+    uint32_t tu_org_x_pict,
+    uint32_t tu_org_y_pict,
+#endif
+    uint32_t bl_org_x_pict,
+    uint32_t bl_org_y_pict,
+    uint32_t bl_org_x_mb,
+    uint32_t bl_org_y_mb);
+
 EbErrorType av1_intra_luma_prediction(
     ModeDecisionContext         *md_context_ptr,
     PictureControlSet           *picture_control_set_ptr,
@@ -3082,7 +3118,7 @@ static uint64_t cost_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
     const int ctx = txfm_partition_context(xd->above_txfm_context + blk_col,
         xd->left_txfm_context + blk_row,
         mbmi->sb_type, tx_size);
-#if TXS_SPLIT
+#if TXS_SPLIT // Hsan atb
     const int write_txfm_partition =
         (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]);
 #else
@@ -3441,9 +3477,6 @@ void perform_intra_tx_partitioning(
 
     uint8_t  best_tx_depth = 0;
 
-
-    uint64_t cost;
-    uint64_t best_distortion_search = (uint64_t)~0;
     uint64_t best_cost_search = (uint64_t)~0;
 
     TxType best_tx_type_depth_0 = DCT_DCT; // Track the best tx type @ depth 0 to be used @ the final stage (i.e. avoid redoing the tx type search).
@@ -5593,10 +5626,7 @@ void search_best_independent_uv_mode(
 #else
     uint8_t uv_mode_end = is_16_bit ? UV_SMOOTH_H_PRED : UV_PAETH_PRED;
 #endif
-#if ATB_SUPPORT // Hsan atb
-    candidateBuffer->candidate_ptr->tx_depth = 0;
-    uint8_t tx_depth = candidateBuffer->candidate_ptr->tx_depth;
-#endif
+
     for (uv_mode = uv_mode_start; uv_mode <= uv_mode_end; uv_mode++) {
 
 #if SEARCH_UV_OPT_0

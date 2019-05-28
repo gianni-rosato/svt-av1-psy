@@ -2098,8 +2098,6 @@ void av1_quantize_inv_quantize(
         const int32_t v = coeff[pos];
         int32_t level = ABS(v);
         cul_level += level;
-
-        const int32_t sign = (v < 0) ? 1 : 0;
     }
 
     cul_level = AOMMIN(COEFF_CONTEXT_MASK, cul_level);
