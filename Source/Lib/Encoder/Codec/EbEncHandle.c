@@ -3117,10 +3117,64 @@ __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_svt_enc_stream_header(
     EbComponentType           *svt_enc_component,
-    EbBufferHeaderType        **output_stream_ptr){
-    EbErrorType             return_error = EB_ErrorNone;
-    UNUSED(svt_enc_component);
-    UNUSED(output_stream_ptr);
+    EbBufferHeaderType        **output_stream_ptr)
+{
+    EbErrorType              return_error = EB_ErrorNone;
+    EbEncHandle             *pEncCompData  = (EbEncHandle*)svt_enc_component->p_component_private;
+    SequenceControlSet      *sequenceControlSetPtr = pEncCompData->sequence_control_set_instance_array[0]->sequence_control_set_ptr;
+    Bitstream                bitstream;
+    OutputBitstreamUnit      output_bitstream;
+    EbBufferHeaderType      *outputStreamBuffer;
+
+    memset(&bitstream, 0, sizeof(Bitstream));
+    memset(&output_bitstream, 0, sizeof(OutputBitstreamUnit));
+    bitstream.output_bitstream_ptr = &output_bitstream;
+
+    outputStreamBuffer = (EbBufferHeaderType *)malloc(sizeof(EbBufferHeaderType));
+    if (!outputStreamBuffer) {
+        return EB_ErrorInsufficientResources;
+    }
+
+    outputStreamBuffer->p_buffer = (uint8_t *)malloc(sizeof(uint8_t) * PACKETIZATION_PROCESS_BUFFER_SIZE);
+    if (!outputStreamBuffer->p_buffer) {
+        free(outputStreamBuffer);
+        return EB_ErrorInsufficientResources;
+    }
+
+    outputStreamBuffer->size = sizeof(EbBufferHeaderType);
+    outputStreamBuffer->n_alloc_len = PACKETIZATION_PROCESS_BUFFER_SIZE;
+    outputStreamBuffer->p_app_private = NULL;
+    outputStreamBuffer->pic_type = EB_AV1_INVALID_PICTURE;
+    outputStreamBuffer->n_filled_len = 0;
+
+    ((OutputBitstreamUnit *)bitstream.output_bitstream_ptr)->buffer_begin_av1 = outputStreamBuffer->p_buffer;
+
+    output_bitstream_reset(bitstream.output_bitstream_ptr);
+
+    // Code the SPS
+    encode_sps_av1(&bitstream, sequenceControlSetPtr);
+
+    outputStreamBuffer->n_filled_len = (uint32_t)(((OutputBitstreamUnit *)bitstream.output_bitstream_ptr)->buffer_av1 - ((OutputBitstreamUnit *)bitstream.output_bitstream_ptr)->buffer_begin_av1);
+
+    *output_stream_ptr = outputStreamBuffer;
+
+    return return_error;
+}
+#if defined(__linux__) || defined(__APPLE__)
+__attribute__((visibility("default")))
+#endif
+EB_API EbErrorType eb_svt_release_enc_stream_header(
+    EbBufferHeaderType        *stream_header_ptr)
+{
+    EbErrorType           return_error = EB_ErrorNone;
+
+    if (!stream_header_ptr || !(stream_header_ptr->p_buffer)) {
+        return EB_ErrorBadParameter;
+    }
+
+    free(stream_header_ptr->p_buffer);
+    free(stream_header_ptr);
+
     return return_error;
 }
 //

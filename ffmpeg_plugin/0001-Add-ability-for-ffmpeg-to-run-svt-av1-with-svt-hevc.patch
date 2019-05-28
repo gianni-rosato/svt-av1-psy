@@ -10,8 +10,8 @@ Signed-off-by: Jing SUN <jing.a.sun@intel.com>
  configure               |   4 +
  libavcodec/Makefile     |   1 +
  libavcodec/allcodecs.c  |   1 +
- libavcodec/libsvt_av1.c | 491 ++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 497 insertions(+)
+ libavcodec/libsvt_av1.c | 484 ++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 490 insertions(+)
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
@@ -79,7 +79,7 @@ new file mode 100644
 index 0000000000..a044c1eac5
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
-@@ -0,0 +1,491 @@
+@@ -0,0 +1,484 @@
 +/*
 +* Scalable Video Technology for AV1 encoder library plugin
 +*
@@ -341,40 +341,33 @@ index 0000000000..a044c1eac5
 +        goto failed_init_handle;
 +    }
 +
-+ //   if (avctx->flags & AV_CODEC_FLAG_GLOBAL_HEADER) {
-+ //       EbBufferHeaderType* headerPtr;
-+ //       headerPtr->size       = sizeof(headerPtr);
-+ //       headerPtr->n_filled_len  = 0; /* in/out */
-+ //       headerPtr->p_buffer     = av_malloc(10 * 1024 * 1024);
-+ //       headerPtr->n_alloc_len   = (10 * 1024 * 1024);
-+ //
-+ //       if (!headerPtr->p_buffer) {
-+ //           av_log(avctx, AV_LOG_ERROR,
-+ //                  "Cannot allocate buffer size %d.\n", headerPtr->n_alloc_len);
-+ //           svt_ret = EB_ErrorInsufficientResources;
-+ //           goto failed_init_enc;
-+ //       }
-+ //
-+ //       svt_ret = eb_svt_enc_stream_header(svt_enc->svt_handle, &headerPtr);
-+ //       if (svt_ret != EB_ErrorNone) {
-+ //           av_log(avctx, AV_LOG_ERROR, "Error when build stream header.\n");
-+ //           av_freep(&headerPtr->p_buffer);
-+ //           goto failed_init_enc;
-+ //       }
-+ //
-+ //       avctx->extradata_size = headerPtr->n_filled_len;
-+ //       avctx->extradata = av_mallocz(avctx->extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
-+ //       if (!avctx->extradata) {
-+ //           av_log(avctx, AV_LOG_ERROR,
-+ //                  "Cannot allocate AV1 header of size %d.\n", avctx->extradata_size);
-+ //           av_freep(&headerPtr->p_buffer);
-+ //           svt_ret = EB_ErrorInsufficientResources;
-+ //           goto failed_init_enc;
-+ //       }
-+ //       memcpy(avctx->extradata, headerPtr->p_buffer, avctx->extradata_size);
-+ //
-+ //       av_freep(&headerPtr->p_buffer);
-+ //   }
++    if (avctx->flags & AV_CODEC_FLAG_GLOBAL_HEADER) {
++        EbBufferHeaderType *headerPtr = NULL;
++
++        svt_ret = eb_svt_enc_stream_header(svt_enc->svt_handle, &headerPtr);
++        if (svt_ret != EB_ErrorNone) {
++            av_log(avctx, AV_LOG_ERROR, "Error when build stream header.\n");
++            goto failed_init_enc;
++        }
++
++        avctx->extradata_size = headerPtr->n_filled_len;
++        avctx->extradata = av_mallocz(avctx->extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
++        if (!avctx->extradata) {
++            av_log(avctx, AV_LOG_ERROR,
++                   "Cannot allocate AV1 header of size %d.\n", avctx->extradata_size);
++            svt_ret = EB_ErrorInsufficientResources;
++            goto failed_init_enc;
++        }
++
++        memcpy(avctx->extradata, headerPtr->p_buffer, avctx->extradata_size);
++
++        svt_ret = eb_svt_release_enc_stream_header(headerPtr);
++        if (svt_ret != EB_ErrorNone) {
++            av_log(avctx, AV_LOG_ERROR, "Error when destroy stream header.\n");
++            goto failed_init_enc;
++        }
++    }
++
 +    return 0;
 +
 +failed_init_enc:
