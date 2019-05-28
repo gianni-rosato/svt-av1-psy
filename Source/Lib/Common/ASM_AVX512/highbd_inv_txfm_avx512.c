@@ -3152,7 +3152,6 @@ static const inv_transform_1d_avx512 row_invtxfm_16x32_arr[TX_TYPES] = {
 
 void av1_inv_txfm2d_add_16x32_avx512(const int32_t *coeff, uint16_t *output,
     int32_t stride, TxType tx_type, TxSize tx_size, int32_t eob, int32_t bd) {
-    (void)tx_type;
     (void)eob;
     __m512i in[32], out[32];
     const int8_t *shift = eb_inv_txfm_shift_ls[tx_size];
@@ -3185,7 +3184,6 @@ void av1_inv_txfm2d_add_16x32_avx512(const int32_t *coeff, uint16_t *output,
 
 void av1_inv_txfm2d_add_32x16_avx512(const int32_t *coeff, uint16_t *output,
     int32_t stride, TxType tx_type, TxSize tx_size, int32_t eob, int32_t bd) {
-    (void)tx_type;
     (void)eob;
     __m512i in[32], out[32];
     const int8_t *shift = eb_inv_txfm_shift_ls[tx_size];
