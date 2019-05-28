@@ -2519,7 +2519,7 @@ void coding_loop_context_generation(
         context_ptr->blk_geom->txsize[0],
 #endif
         &cu_ptr->luma_txb_skip_context,
-        &cu_ptr->luma_dc_sign_context[0]);
+        &(cu_ptr->luma_dc_sign_context[0]));
 
 
     if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
