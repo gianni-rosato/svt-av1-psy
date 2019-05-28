@@ -3420,7 +3420,7 @@ uint64_t estimate_tx_size_bits(
     return bits;
 }
 #endif
-void perform_intra_transform_partitioning(
+void perform_intra_tx_partitioning(
     ModeDecisionCandidateBuffer  *candidateBuffer,
     ModeDecisionContext          *context_ptr,
     PictureControlSet            *picture_control_set_ptr,
@@ -3898,7 +3898,6 @@ void perform_intra_transform_partitioning(
                 COMPONENT_LUMA,
                 asm_type);
 
-            //TODO: fix cbf decision
             av1_tu_calc_cost_luma(
                 context_ptr->cu_ptr->luma_txb_skip_context,
                 candidateBuffer->candidate_ptr,
@@ -3959,9 +3958,6 @@ void perform_intra_transform_partitioning(
             }
 } // Transform Loop
 
-#if 1
-
-
 #if ATB_RATE
         uint64_t tx_size_bits = 0;
 
@@ -3985,12 +3981,7 @@ void perform_intra_transform_partitioning(
             best_cost_search = cost;
             best_tx_depth = context_ptr->tx_depth;
         }
-#else
-        if (total_distortion < best_distortion_search) {
-            best_distortion_search = total_distortion;
-            best_tx_depth = context_ptr->tx_depth;
-        }
-#endif
+
 
     } // Transform Depth Loop
 
@@ -4413,7 +4404,7 @@ void AV1PerformFullLoop(
         uint8_t end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
         // Transform partitioning path (INTRA Luma)
         if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT && end_tx_depth && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
-            perform_intra_transform_partitioning(
+            perform_intra_tx_partitioning(
                 candidateBuffer,
                 context_ptr,
                 picture_control_set_ptr,

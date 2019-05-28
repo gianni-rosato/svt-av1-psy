@@ -59,7 +59,6 @@ extern "C" {
 #define ATB_SUPPORT                       1
 #define ATB_SUPPORT_1_DEPTH               1
 #define ATB_EP                            1
-#define ATB_EC_NO_CFL                     0 // <-- button
 #define ATB_EC                            1
 
 #define ATB_MD                            1 
