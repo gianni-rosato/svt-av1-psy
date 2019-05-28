@@ -11,11 +11,11 @@
 *.bin
 *.opensdf
 *.log
-Build/linux/debug/
-Build/linux/release/
-Build/VS/x64
+.vscode
 Bin
+Build
 build
 test/vectors/
 test/docs/
-.vscode
+!Build/linux/build.sh
+!Build/windows/build.bat

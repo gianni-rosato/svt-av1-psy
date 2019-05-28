@@ -68,9 +68,9 @@ The SVT-AV1 Encoder adapts to the system that is being ran on. The memory requir
     - Copy yasm.exe into a location that is in the PATH environment variable
 
 * __Build Instructions__
-    -    Generate the Visual Studio* 2017 project files by following the steps below cd Build\windows
-        -    run generate_vs17.bat [such would generate the visual studio project files]
-    -    Open the "svt-av1.sln" using Visual Studio* 2017 and click on Build -- > Build Solution
+  - Build the project by following the steps below
+    - cd into `Build\windows`
+    - run `build.bat <2019|2017|2015>` [This will generate the .sln files and build the project]
 
 * __Binaries Location__
     -   Binaries can be found under <repo dir>\Bin/Release or <repo dir>\Bin/Debug, depending on whether Debug or Release were selected in the build mode
