@@ -2968,12 +2968,12 @@ static void tx_search_update_recon_sample_neighbor_array(
     return;
 }
 
-uint8_t get_end_tx_depth(ModeDecisionContext *context_ptr, uint8_t atb_mode, EB_SLICE slice_type, ModeDecisionCandidate *candidate_ptr, BlockSize bsize, uint8_t btype) {
+uint8_t get_end_tx_depth(ModeDecisionContext *context_ptr, uint8_t atb_mode, ModeDecisionCandidate *candidate_ptr, BlockSize bsize, uint8_t btype) {
    
     uint8_t tx_depth = 0;
 
     // Hsan: shut transform partitioning if low energy residual; energy = SAD and threshold = f(width, height), and do not perform the check if ATB mode is full
-    if (atb_mode == 2 || ((context_ptr->decoupled_fast_loop_search_method == FULL_SAD_SEARCH) && (candidate_ptr->luma_fast_distortion > ((context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight) << 2)))) {
+    if (atb_mode == 2 || ((context_ptr->decoupled_fast_loop_search_method == FULL_SAD_SEARCH) && (candidate_ptr->luma_fast_distortion > ((uint32_t) ((context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight) << 2))))) {
         if (bsize == BLOCK_64X64 ||
             bsize == BLOCK_32X32 ||
             bsize == BLOCK_16X16 ||
@@ -4427,7 +4427,7 @@ void AV1PerformFullLoop(
         }
 #endif
 #if ATB_MD
-        uint8_t end_tx_depth = get_end_tx_depth(context_ptr, picture_control_set_ptr->parent_pcs_ptr->atb_mode, picture_control_set_ptr->slice_type, candidate_ptr, context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+        uint8_t end_tx_depth = get_end_tx_depth(context_ptr, picture_control_set_ptr->parent_pcs_ptr->atb_mode, candidate_ptr, context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
         // Transform partitioning path (INTRA Luma)
         if (picture_control_set_ptr->parent_pcs_ptr->atb_mode && end_tx_depth && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
             perform_intra_tx_partitioning(
