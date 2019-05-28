@@ -2972,8 +2972,12 @@ uint8_t get_end_tx_depth(ModeDecisionContext *context_ptr, uint8_t atb_mode, Mod
    
     uint8_t tx_depth = 0;
 
-    // Hsan: shut transform partitioning if low energy residual; energy = SAD and threshold = f(width, height), and do not perform the check if ATB mode is full
-    if (atb_mode == 2 || ((context_ptr->decoupled_fast_loop_search_method == FULL_SAD_SEARCH) && (candidate_ptr->luma_fast_distortion > ((uint32_t) ((context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight) << 2))))) {
+
+    if (context_ptr->decoupled_fast_loop_search_method != SSD_SEARCH)
+        assert(atb_mode != 1 && "atb_mode 1 assumes SSD_SEARCH @ fast loop because of the energy threshold");
+
+    // Hsan: shut transform partitioning if low energy residual; energy = SSD and threshold normalized = f(width, height), and do not perform the check if ATB mode is full
+    if (atb_mode == 2 || ((context_ptr->decoupled_fast_loop_search_method == SSD_SEARCH) && (candidate_ptr->luma_fast_distortion > ((uint32_t) ((context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight) << 2))))) {
         if (bsize == BLOCK_64X64 ||
             bsize == BLOCK_32X32 ||
             bsize == BLOCK_16X16 ||
