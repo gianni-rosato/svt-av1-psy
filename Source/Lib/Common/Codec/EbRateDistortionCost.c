@@ -2506,18 +2506,24 @@ void coding_loop_context_generation(
     cu_ptr->luma_txb_skip_context = 0;
 
 #if ATB_DC_CONTEXT_SUPPORT_0
-    // Initialize luma_dc_sign_context assuming no atb search
-    get_txb_ctx( 
+    // Initialize luma_dc_sign_context assuming no atb search (i.e. transform size equal to block size)
+    cu_ptr->luma_dc_sign_context[0] = 0;
+    cu_ptr->luma_dc_sign_context[1] = 0;
+    cu_ptr->luma_dc_sign_context[2] = 0;
+    cu_ptr->luma_dc_sign_context[3] = 0;
+
+    cu_ptr->cb_txb_skip_context = 0;
+    cu_ptr->cb_dc_sign_context  = 0;
+    cu_ptr->cr_txb_skip_context = 0;
+    cu_ptr->cr_dc_sign_context  = 0;
+
+    get_txb_ctx(
         COMPONENT_LUMA,
         luma_dc_sign_level_coeff_neighbor_array,
         cu_origin_x,
         cu_origin_y,
         plane_bsize,
-#if ATB_SUPPORT
         context_ptr->blk_geom->txsize[0][0],
-#else
-        context_ptr->blk_geom->txsize[0],
-#endif
         &cu_ptr->luma_txb_skip_context,
         &(cu_ptr->luma_dc_sign_context[0]));
 
@@ -2529,33 +2535,25 @@ void coding_loop_context_generation(
             context_ptr->round_origin_x >> 1,
             context_ptr->round_origin_y >> 1,
             context_ptr->blk_geom->bsize_uv,
-#if ATB_SUPPORT
             context_ptr->blk_geom->txsize_uv[0][0],
-#else
-            context_ptr->blk_geom->txsize_uv[0],
-#endif
             &cu_ptr->cb_txb_skip_context,
             &cu_ptr->cb_dc_sign_context);
+
         get_txb_ctx(
             COMPONENT_CHROMA,
             cr_dc_sign_level_coeff_neighbor_array,
             context_ptr->round_origin_x >> 1,
             context_ptr->round_origin_y >> 1,
             context_ptr->blk_geom->bsize_uv,
-#if ATB_SUPPORT
             context_ptr->blk_geom->txsize_uv[0][0],
-#else
-            context_ptr->blk_geom->txsize_uv[0],
-#endif
             &cu_ptr->cr_txb_skip_context,
             &cu_ptr->cr_dc_sign_context);
     }
-    
+
     cu_ptr->luma_dc_sign_context[0] = cu_ptr->luma_dc_sign_context[0];
     cu_ptr->luma_dc_sign_context[1] = cu_ptr->luma_dc_sign_context[0];
     cu_ptr->luma_dc_sign_context[2] = cu_ptr->luma_dc_sign_context[0];
     cu_ptr->luma_dc_sign_context[3] = cu_ptr->luma_dc_sign_context[0];
-
 #else
     cu_ptr->luma_dc_sign_context = 0;
     cu_ptr->cb_txb_skip_context = 0;
