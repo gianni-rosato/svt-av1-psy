@@ -2577,9 +2577,7 @@ void perform_intra_coding_loop(
             uint16_t    leftNeighArray[64 * 2 + 1];
             PredictionMode mode;
 
-            int32_t plane = 0;
-
-            TxSize  tx_size = plane ? context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr] : context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
+            TxSize  tx_size = context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
 
             if (txb_origin_y != 0)
                 memcpy(topNeighArray + 1, (uint16_t*)(ep_luma_recon_neighbor_array->top_array) + txb_origin_x, context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr] * 2 * sizeof(uint16_t));
@@ -2594,15 +2592,11 @@ void perform_intra_coding_loop(
                 &sb_ptr->tile_info,
                 context_ptr,
                 picture_control_set_ptr->parent_pcs_ptr->av1_cm,               
-                plane ? context_ptr->blk_geom->bwidth_uv : context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],                  
-                plane ? context_ptr->blk_geom->bheight_uv : context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],                
+                context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],                  
+                context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],                
                 tx_size,
-                mode,                                                 
-#if SEARCH_UV_MODE
-                plane ? pu_ptr->angle_delta[PLANE_TYPE_UV] : pu_ptr->angle_delta[PLANE_TYPE_Y],
-#else
-                plane ? 0 : pu_ptr->angle_delta[PLANE_TYPE_Y],            
-#endif
+                mode,  
+                pu_ptr->angle_delta[PLANE_TYPE_Y],
                 0,                                                        
                 FILTER_INTRA_MODES,                                       
                 topNeighArray + 1,
@@ -2610,24 +2604,18 @@ void perform_intra_coding_loop(
                 recon_buffer,       
                 0,                                                        
                 0,                                                        
-                plane,                                                    
+                0,                                                    
                 context_ptr->blk_geom->bsize,                                        
-                plane ? context_ptr->cu_origin_x : context_ptr->cu_origin_x,         
-                plane ? context_ptr->cu_origin_y : context_ptr->cu_origin_y);        
-
-       
+                context_ptr->cu_origin_x,         
+                context_ptr->cu_origin_y);        
+  
         }
         else {
             uint8_t    topNeighArray[64 * 2 + 1];
             uint8_t    leftNeighArray[64 * 2 + 1];
             PredictionMode mode;
 
-            // Partition Loop
-            int32_t plane_end = 1;
-
-            int32_t plane = 0;
-
-            TxSize  tx_size = plane ? context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr] : context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
+            TxSize  tx_size = context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
 
             if (txb_origin_y != 0)
                 memcpy(topNeighArray + 1, ep_luma_recon_neighbor_array->top_array + txb_origin_x, context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr] * 2);
@@ -2647,28 +2635,24 @@ void perform_intra_coding_loop(
                 ED_STAGE,
                 context_ptr->blk_geom,
                 picture_control_set_ptr->parent_pcs_ptr->av1_cm,
-                plane ? context_ptr->blk_geom->bwidth_uv : context_ptr->blk_geom->bwidth,
-                plane ? context_ptr->blk_geom->bheight_uv : context_ptr->blk_geom->bheight,
+                context_ptr->blk_geom->bwidth,
+                context_ptr->blk_geom->bheight,
                 tx_size,
                 mode,
-#if SEARCH_UV_MODE 
-                plane ? pu_ptr->angle_delta[PLANE_TYPE_UV] : pu_ptr->angle_delta[PLANE_TYPE_Y],
-#else
-                plane ? 0 : pu_ptr->angle_delta[PLANE_TYPE_Y],
-#endif
+                pu_ptr->angle_delta[PLANE_TYPE_Y],
                 0,
                 FILTER_INTRA_MODES,
                 topNeighArray + 1,
                 leftNeighArray + 1,
                 recon_buffer,
-                plane ? 0 : context_ptr->blk_geom->tx_boff_x[cu_ptr->tx_depth][context_ptr->txb_itr] >> 2,
-                plane ? 0 : context_ptr->blk_geom->tx_boff_y[cu_ptr->tx_depth][context_ptr->txb_itr] >> 2,
-                plane,
+                context_ptr->blk_geom->tx_boff_x[cu_ptr->tx_depth][context_ptr->txb_itr] >> 2,
+                context_ptr->blk_geom->tx_boff_y[cu_ptr->tx_depth][context_ptr->txb_itr] >> 2,
+                0,
                 context_ptr->blk_geom->bsize,
                 txb_origin_x,
                 txb_origin_y,
-                plane ? context_ptr->cu_origin_x : context_ptr->cu_origin_x,
-                plane ? context_ptr->cu_origin_y : context_ptr->cu_origin_y,
+                context_ptr->cu_origin_x,
+                context_ptr->cu_origin_y,
                 0,
                 0);
         }

@@ -3118,15 +3118,10 @@ static uint64_t cost_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
     const int ctx = txfm_partition_context(xd->above_txfm_context + blk_col,
         xd->left_txfm_context + blk_row,
         mbmi->sb_type, tx_size);
-#if TXS_SPLIT // Hsan atb
-    const int write_txfm_partition =
-        (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]);
+#if 0// ATB_RATE // Hsan atb
+    const int write_txfm_partition = (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]);
 #else
-    const int txb_size_index =
-        av1_get_txb_size_index(mbmi->sb_type, blk_row, blk_col);
-
-    const int write_txfm_partition =
-        (tx_size == tx_size);// mbmi->inter_tx_size[txb_size_index];// NM-TO BE FIXED
+    const int write_txfm_partition = 1;
 #endif
 
     if (write_txfm_partition) {
