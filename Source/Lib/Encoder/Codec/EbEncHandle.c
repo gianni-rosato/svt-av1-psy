@@ -2366,8 +2366,9 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
    // sequence_control_set_ptr->static_config.hierarchical_levels = (sequence_control_set_ptr->static_config.rate_control_mode > 1) ? 3 : sequence_control_set_ptr->static_config.hierarchical_levels;
 #endif
 #if ALT_REF_OVERLAY
-    sequence_control_set_ptr->static_config.enable_overlays = (sequence_control_set_ptr->static_config.rate_control_mode > 0) ||
-        //(sequence_control_set_ptr->static_config.enc_mode > ENC_M0) ||
+    sequence_control_set_ptr->static_config.enable_overlays = sequence_control_set_ptr->static_config.enable_altrefs == EB_FALSE ||
+        (sequence_control_set_ptr->static_config.rate_control_mode > 0) ||
+        (sequence_control_set_ptr->static_config.enc_mode > ENC_M0) ||
         sequence_control_set_ptr->static_config.encoder_bit_depth != EB_8BIT ?
         0 : sequence_control_set_ptr->static_config.enable_overlays;
 #endif
@@ -3061,11 +3062,10 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->recon_enabled = 0;
 
     // Alt-Ref default values
-	config_ptr->enable_altrefs = EB_TRUE;// EB_FALSE;
+	config_ptr->enable_altrefs = EB_TRUE;
     config_ptr->altref_nframes = 7;
     config_ptr->altref_strength = 5;
     config_ptr->enable_overlays = EB_TRUE;
-
 
     return return_error;
 }

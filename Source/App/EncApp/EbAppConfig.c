@@ -383,10 +383,10 @@ config_entry_t config_entry[] = {
     { ARRAY_INPUT,HME_LEVEL2_HEIGHT, "HmeLevel2SearchAreaInHeight", SetHmeLevel2SearchAreaInHeightArray },
 
     // --- start: ALTREF_FILTERING_SUPPORT
-    { SINGLE_INPUT, ENABLE_ALTREFS, "enableAltRefs", SetEnableAltRefs },
-    { SINGLE_INPUT, ALTREF_STRENGTH, "altRefStrength", SetAltRefStrength },
-    { SINGLE_INPUT, ALTREF_NFRAMES, "altRefNframes", SetAltRefNFrames },
-    { SINGLE_INPUT, ENABLE_OVERLAYS, "enableOverlays", SetEnableOverlays },
+    { SINGLE_INPUT, ENABLE_ALTREFS, "EnableAltRefs", SetEnableAltRefs },
+    { SINGLE_INPUT, ALTREF_STRENGTH, "AltRefStrength", SetAltRefStrength },
+    { SINGLE_INPUT, ALTREF_NFRAMES, "AltRefNframes", SetAltRefNFrames },
+    { SINGLE_INPUT, ENABLE_OVERLAYS, "EnableOverlays", SetEnableOverlays },
     // --- end: ALTREF_FILTERING_SUPPORT
 
     // Termination
@@ -531,7 +531,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->ivf_count                            = 0;
 
     // --- start: ALTREF_FILTERING_SUPPORT
-    config_ptr->enable_altrefs                       = EB_FALSE;
+    config_ptr->enable_altrefs                       = EB_TRUE;
     config_ptr->altref_strength                      = 5;
     config_ptr->altref_nframes                       = 7;
     config_ptr->enable_overlays                      = EB_TRUE;

@@ -460,8 +460,8 @@ extern "C" {
 
 #if ALTREF_FILTERING_SUPPORT
         // ------- Context for Alt-Ref ME ------
-		uint16_t                      adj_search_area_width;
-		uint16_t                      adj_search_area_height;
+        uint16_t                      adj_search_area_width;
+        uint16_t                      adj_search_area_height;
         EbBool                        me_alt_ref;
         void                          *alt_ref_reference_ptr;
         // -------

@@ -528,29 +528,29 @@ static EbErrorType copy_frame_buffer(
     else { // 10bit packed
 
 
-		EB_MEMCPY(dst_picture_ptr->buffer_y,
-			src_picture_ptr->buffer_y ,
-			src_picture_ptr->luma_size);
+        EB_MEMCPY(dst_picture_ptr->buffer_y,
+            src_picture_ptr->buffer_y ,
+            src_picture_ptr->luma_size);
 
-		EB_MEMCPY(dst_picture_ptr->buffer_cb,
-			src_picture_ptr->buffer_cb,
-			src_picture_ptr->chroma_size);
+        EB_MEMCPY(dst_picture_ptr->buffer_cb,
+            src_picture_ptr->buffer_cb,
+            src_picture_ptr->chroma_size);
 
-		EB_MEMCPY(dst_picture_ptr->buffer_cr,
-			src_picture_ptr->buffer_cr,
-			src_picture_ptr->chroma_size);
+        EB_MEMCPY(dst_picture_ptr->buffer_cr,
+            src_picture_ptr->buffer_cr,
+            src_picture_ptr->chroma_size);
 
-		EB_MEMCPY(dst_picture_ptr->buffer_bit_inc_y,
-			src_picture_ptr->buffer_bit_inc_y,
-			src_picture_ptr->luma_size);
+        EB_MEMCPY(dst_picture_ptr->buffer_bit_inc_y,
+            src_picture_ptr->buffer_bit_inc_y,
+            src_picture_ptr->luma_size);
 
-		EB_MEMCPY(dst_picture_ptr->buffer_bit_inc_cb,
-			src_picture_ptr->buffer_bit_inc_cb,
-			src_picture_ptr->chroma_size);
+        EB_MEMCPY(dst_picture_ptr->buffer_bit_inc_cb,
+            src_picture_ptr->buffer_bit_inc_cb,
+            src_picture_ptr->chroma_size);
 
-		EB_MEMCPY(dst_picture_ptr->buffer_bit_inc_cr,
-			src_picture_ptr->buffer_bit_inc_cr,
-			src_picture_ptr->chroma_size);
+        EB_MEMCPY(dst_picture_ptr->buffer_bit_inc_cr,
+            src_picture_ptr->buffer_bit_inc_cr,
+            src_picture_ptr->chroma_size);
        
     }
     return return_error;
@@ -699,9 +699,9 @@ void* resource_coordination_kernel(void *input_ptr)
             sb_geom_init(sequence_control_set_ptr);
 
 #if ALTREF_FILTERING_SUPPORT
-			sequence_control_set_ptr->enable_altrefs =  sequence_control_set_ptr->static_config.enable_altrefs && 
-				//sequence_control_set_ptr->static_config.enc_mode == ENC_M0  &&
-				sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT ? EB_TRUE : EB_FALSE;
+            sequence_control_set_ptr->enable_altrefs =  sequence_control_set_ptr->static_config.enable_altrefs &&
+                sequence_control_set_ptr->static_config.enc_mode == ENC_M0  &&
+                sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT ? EB_TRUE : EB_FALSE;
 #endif
 
             // Sep PM mode
