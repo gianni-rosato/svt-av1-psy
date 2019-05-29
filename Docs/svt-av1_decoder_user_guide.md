@@ -3,25 +3,25 @@
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Known Limitations](#known-limitations)
-3. [Sample Application Guide](#sample-application-guide)    
+3. [Sample Application Guide](#sample-application-guide)
     - [Running the decoder](#running-the-decoder)
 4. [Legal Disclaimer](#legal-disclaimer)
 
 ## Introduction
 
-This document describes how to use the Scalable Video Technology for AV1 Decoder (SVT-AV1).  In particular, this user guide describes how to run the sample application with the respective dynamically linked library.
+This document describes how to use the Scalable Video Technology for AV1 Decoder (SVT-AV1). In particular, this user guide describes how to run the sample application with the respective dynamically linked library.
 
 ## Known Limitations
 
-Initial version
-- Supports only I frames without loopfilter ( deblocking, cdef, self guided restoration filters not support)
+Initial version:
+- Supports only I-frames without loopfilter (deblocking, cdef and self guided restoration filters not supported)
 - Tiles not supported
-- Supports only Main profile 8bit 420
+- Supports only 8-bit 4:2:0 content
 - Tested only on Windows
 
 ## Sample Application Guide
 
-This section describes how to run the sample decoder application that uses the SVT-AV1 Decoder library.  It describes the command line input parameters and the resulting outputs.
+This section describes how to run the sample decoder application that uses the SVT-AV1 Decoder library. It describes the command line input parameters and the resulting outputs.
 
 ### Running the decoder
 
@@ -29,6 +29,7 @@ This section describes how to run the sample decoder application SvtAv1DecApp.ex
 
 The sample application typically takes the following command line parameters:
 
+```
 -help                     Show usage options and exit
 -i <arg>                  Input file name
 -o <arg>                  Output file name
@@ -39,13 +40,14 @@ The sample application typically takes the following command line parameters:
 -h <arg>                  Input picture height
 -colour-space <arg>       Input picture colour space
 -md5                      MD5 support flag
-
+```
 
 Sample usage 
-SvtAv1DecApp.exe  -i test.ivf -o out.yuv
+`SvtAv1DecApp.exe -i test.ivf -o out.yuv`
 
 #### List of all configuration parameters
 
+_WIP_
 
 ## Legal Disclaimer
 
@@ -61,7 +63,7 @@ Intel disclaims all express and implied warranties, including without limitation
 
 The products and services described may contain defects or errors known as errata which may cause deviations from published specifications. Current characterized errata are available on request.  ** ** No product or component can be absolutely secure.
 
-This document contains information on products, services and/or processes in development.  All information provided here is subject to change without notice. Contact your Intel representative to obtain the latest forecast, schedule, specifications and roadmaps.
+This document contains information on products, services and/or processes in development. All information provided here is subject to change without notice. Contact your Intel representative to obtain the latest forecast, schedule, specifications and roadmaps.
 
 Intel, Intel Xeon, Intel Core, the Intel logo and others are trademarks of Intel Corporation and its subsidiaries in the U.S. and/or other countries.
 
