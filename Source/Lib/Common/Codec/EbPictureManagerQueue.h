@@ -49,7 +49,10 @@ extern "C" {
         DependentList    list0;
         DependentList    list1;
         EbBool           is_used_as_reference_flag;
-        uint64_t                          rc_group_index;
+        uint64_t         rc_group_index;
+#if ALT_REF_OVERLAY               
+        EbBool           is_alt_ref;
+#endif 
 #if BASE_LAYER_REF
         EB_SLICE         slice_type;
         uint8_t          temporal_layer_index;

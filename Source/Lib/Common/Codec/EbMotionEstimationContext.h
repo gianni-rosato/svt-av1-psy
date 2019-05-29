@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-    // Max Search Area
+// Max Search Area
 #if SCREEN_CONTENT_SETTINGS
 #if REDUCE_ME_SEARCH_AREA
 #define MAX_SEARCH_AREA_WIDTH       1280
@@ -26,6 +26,9 @@ extern "C" {
 #define MAX_SEARCH_AREA_WIDTH       1350 // This should be a function for the MAX HME L0 * the multiplications per layers and per Hierarchichal structures
 #define MAX_SEARCH_AREA_HEIGHT      675 // This should be a function for the MAX HME L0 * the multiplications per layers and per Hierarchichal structures
 #endif
+#define MAX_SEARCH_AREA_WIDTH_CH       MAX_SEARCH_AREA_WIDTH  + PAD_VALUE
+#define MAX_SEARCH_AREA_HEIGHT_CH      MAX_SEARCH_AREA_HEIGHT  + PAD_VALUE
+
 // 1-D interpolation shift value
 #define IFShift                     6
 #define NUMBER_OF_SB_QUAD           4
@@ -454,6 +457,15 @@ extern "C" {
         uint16_t                      hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
         uint16_t                      hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
         uint8_t                       update_hme_search_center_flag;
+
+#if ALTREF_FILTERING_SUPPORT
+        // ------- Context for Alt-Ref ME ------
+        uint16_t                      adj_search_area_width;
+        uint16_t                      adj_search_area_height;
+        EbBool                        me_alt_ref;
+        void                          *alt_ref_reference_ptr;
+        // -------
+#endif
 
     } MeContext;
 

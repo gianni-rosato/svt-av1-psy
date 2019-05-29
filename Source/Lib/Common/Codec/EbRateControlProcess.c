@@ -3906,7 +3906,6 @@ void* rate_control_kernel(void *input_ptr)
             picture_control_set_ptr = (PictureControlSet  *)rate_control_tasks_ptr->picture_control_set_wrapper_ptr->object_ptr;
             sequence_control_set_ptr = (SequenceControlSet *)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 
-
             if (picture_control_set_ptr->picture_number == 0) {
 
                 rate_control_model_init(rc_model_ptr, sequence_control_set_ptr);
@@ -4358,7 +4357,6 @@ void* rate_control_kernel(void *input_ptr)
             // Release the SequenceControlSet
             eb_release_object(parentpicture_control_set_ptr->sequence_control_set_wrapper_ptr);
             // Release the ParentPictureControlSet
-
             eb_release_object(parentpicture_control_set_ptr->input_picture_wrapper_ptr);
             eb_release_object(rate_control_tasks_ptr->picture_control_set_wrapper_ptr);
 

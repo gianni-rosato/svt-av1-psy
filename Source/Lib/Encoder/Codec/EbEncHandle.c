@@ -540,9 +540,21 @@ EbErrorType load_default_buffer_configuration_settings(
     sequence_control_set_ptr->rest_segment_column_count = MIN(rest_seg_w,6);
     sequence_control_set_ptr->rest_segment_row_count    = MIN(rest_seg_h,4);
 
+#if ALTREF_FILTERING_SUPPORT
+	sequence_control_set_ptr->tf_segment_column_count = meSegW;//1;//
+	sequence_control_set_ptr->tf_segment_row_count =  meSegH;//1;//
+#endif
     //#====================== Data Structures and Picture Buffers ======================
 #if BUG_FIX_LOOKAHEAD
     sequence_control_set_ptr->picture_control_set_pool_init_count       = input_pic + SCD_LAD + sequence_control_set_ptr->static_config.look_ahead_distance;
+#if ALT_REF_OVERLAY
+    if (sequence_control_set_ptr->static_config.enable_overlays)
+        sequence_control_set_ptr->picture_control_set_pool_init_count = MAX(sequence_control_set_ptr->picture_control_set_pool_init_count,
+            sequence_control_set_ptr->static_config.look_ahead_distance + // frames in the LAD
+            sequence_control_set_ptr->static_config.look_ahead_distance / (1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 1 +  // number of overlayes in the LAD 
+            ((1 << sequence_control_set_ptr->static_config.hierarchical_levels) + SCD_LAD) * 2 +// minigop formation in PD + SCD_LAD *(normal pictures + potential pictures ) 
+            (1 << sequence_control_set_ptr->static_config.hierarchical_levels)); // minigop in PM
+#endif
 #else
     sequence_control_set_ptr->picture_control_set_pool_init_count       = input_pic + sequence_control_set_ptr->static_config.look_ahead_distance + SCD_LAD;
 #endif
@@ -554,6 +566,10 @@ EbErrorType load_default_buffer_configuration_settings(
                                                                           (uint32_t)((1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 2)) +
                                                                           sequence_control_set_ptr->static_config.look_ahead_distance + SCD_LAD;
     sequence_control_set_ptr->output_recon_buffer_fifo_init_count       = sequence_control_set_ptr->reference_picture_buffer_init_count;
+#if ALT_REF_OVERLAY
+    sequence_control_set_ptr->overlay_input_picture_buffer_init_count   = sequence_control_set_ptr->static_config.enable_overlays ? 
+                                                                          (2 << sequence_control_set_ptr->static_config.hierarchical_levels) + SCD_LAD : 1;
+#endif
 
     //#====================== Inter process Fifos ======================
     sequence_control_set_ptr->resource_coordination_fifo_init_count       = 300;
@@ -575,7 +591,7 @@ EbErrorType load_default_buffer_configuration_settings(
 #if NEW_BUFF_CFG
     if (core_count > 1){
         sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->picture_analysis_process_init_count            = MAX(MIN(15, core_count >> 1), core_count / 6));
-        sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->motion_estimation_process_init_count           = MAX(MIN(20, core_count >> 1), core_count / 3));
+		sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->motion_estimation_process_init_count =  MAX(MIN(20, core_count >> 1), core_count / 3));//1);//
         sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->source_based_operations_process_init_count     = MAX(MIN(3, core_count >> 1), core_count / 12));
         sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->mode_decision_configuration_process_init_count = MAX(MIN(3, core_count >> 1), core_count / 12));
         sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->enc_dec_process_init_count                     = MAX(MIN(40, core_count >> 1), core_count));
@@ -758,6 +774,11 @@ static EbErrorType eb_enc_handle_ctor(
     enc_handle_ptr->reference_picture_pool_ptr_array                      = (EbSystemResource**)EB_NULL;
     enc_handle_ptr->pa_reference_picture_pool_ptr_array                   = (EbSystemResource**)EB_NULL;
 
+#if ALT_REF_OVERLAY
+    // Overlay input picture
+    enc_handle_ptr->overlay_input_picture_pool_ptr_array = (EbSystemResource**)EB_NULL;
+    enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array = (EbFifo***)EB_NULL;
+#endif
     // Picture Buffer Producer Fifos
     enc_handle_ptr->reference_picture_pool_producer_fifo_ptr_dbl_array    = (EbFifo***)EB_NULL;
     enc_handle_ptr->pa_reference_picture_pool_producer_fifo_ptr_dbl_array = (EbFifo***)EB_NULL;
@@ -1116,6 +1137,10 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     EB_MALLOC(EbSystemResource**, enc_handle_ptr->reference_picture_pool_ptr_array, sizeof(EbSystemResource*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
     EB_MALLOC(EbSystemResource**, enc_handle_ptr->pa_reference_picture_pool_ptr_array, sizeof(EbSystemResource*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
 
+#if ALT_REF_OVERLAY
+    EB_MALLOC(EbSystemResource**, enc_handle_ptr->overlay_input_picture_pool_ptr_array, sizeof(EbSystemResource*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
+    EB_MALLOC(EbFifo***, enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array, sizeof(EbFifo**) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
+#endif
     // Allocate Producer Fifo Arrays
     EB_MALLOC(EbFifo***, enc_handle_ptr->reference_picture_pool_producer_fifo_ptr_dbl_array, sizeof(EbFifo**) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
     EB_MALLOC(EbFifo***, enc_handle_ptr->pa_reference_picture_pool_producer_fifo_ptr_dbl_array, sizeof(EbFifo**) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
@@ -1234,6 +1259,29 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         // Set the SequenceControlSet Picture Pool Fifo Ptrs
         enc_handle_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->reference_picture_pool_fifo_ptr = (enc_handle_ptr->reference_picture_pool_producer_fifo_ptr_dbl_array[instance_index])[0];
         enc_handle_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->pa_reference_picture_pool_fifo_ptr = (enc_handle_ptr->pa_reference_picture_pool_producer_fifo_ptr_dbl_array[instance_index])[0];
+
+#if ALT_REF_OVERLAY
+        if (enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.enable_overlays) {
+            // Overlay Input Picture Buffers
+            return_error = eb_system_resource_ctor(
+                &enc_handle_ptr->overlay_input_picture_pool_ptr_array[instance_index],
+                enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->overlay_input_picture_buffer_init_count,
+                1,
+                0,
+                &enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array[instance_index],
+                (EbFifo ***)EB_NULL,
+                EB_FALSE,
+                EbInputBufferHeaderCtor,
+                enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr);
+
+            if (return_error == EB_ErrorInsufficientResources) {
+                return EB_ErrorInsufficientResources;
+            }
+
+            // Set the SequenceControlSet Overlay input Picture Pool Fifo Ptrs
+            enc_handle_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->overlay_input_picture_pool_fifo_ptr = (enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array[instance_index])[0];
+        }
+#endif
     }
 
     /************************************
@@ -1255,6 +1303,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
+
     // EbBufferHeaderType Output Stream
     EB_MALLOC(EbSystemResource**, enc_handle_ptr->output_stream_buffer_resource_ptr_array, sizeof(EbSystemResource*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
     EB_MALLOC(EbFifo***, enc_handle_ptr->output_stream_buffer_producer_fifo_ptr_dbl_array, sizeof(EbFifo**)          * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
@@ -2271,6 +2320,13 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     sequence_control_set_ptr->static_config.super_block_size = (sequence_control_set_ptr->static_config.rate_control_mode > 1) ? 64 : sequence_control_set_ptr->static_config.super_block_size;
    // sequence_control_set_ptr->static_config.hierarchical_levels = (sequence_control_set_ptr->static_config.rate_control_mode > 1) ? 3 : sequence_control_set_ptr->static_config.hierarchical_levels;
 #endif
+#if ALT_REF_OVERLAY
+    sequence_control_set_ptr->static_config.enable_overlays = sequence_control_set_ptr->static_config.enable_altrefs == EB_FALSE ||
+        (sequence_control_set_ptr->static_config.rate_control_mode > 0) ||
+        (sequence_control_set_ptr->static_config.enc_mode > ENC_M0) ||
+        sequence_control_set_ptr->static_config.encoder_bit_depth != EB_8BIT ?
+        0 : sequence_control_set_ptr->static_config.enable_overlays;
+#endif
 
 #if MEMORY_FOOTPRINT_OPT_ME_MV
     //0: MRP Mode 0 (4,3)
@@ -2489,6 +2545,15 @@ void CopyApiFromApp(
 #endif
     else
         sequence_control_set_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&sequence_control_set_ptr->static_config);
+
+#if ALTREF_FILTERING_SUPPORT
+    sequence_control_set_ptr->static_config.enable_altrefs = pComponentParameterStructure->enable_altrefs;
+    sequence_control_set_ptr->static_config.altref_strength = pComponentParameterStructure->altref_strength;
+    sequence_control_set_ptr->static_config.altref_nframes = pComponentParameterStructure->altref_nframes;
+#endif
+#if ALT_REF_OVERLAY
+    sequence_control_set_ptr->static_config.enable_overlays = pComponentParameterStructure->enable_overlays;
+#endif
 
     return;
 }
@@ -2955,6 +3020,12 @@ EbErrorType eb_svt_enc_init_parameter(
     // Debug info
     config_ptr->recon_enabled = 0;
 
+    // Alt-Ref default values
+	config_ptr->enable_altrefs = EB_TRUE;
+    config_ptr->altref_nframes = 7;
+    config_ptr->altref_strength = 5;
+    config_ptr->enable_overlays = EB_TRUE;
+
     return return_error;
 }
 //#define DEBUG_BUFFERS
@@ -3401,7 +3472,10 @@ EB_API EbErrorType eb_svt_get_packet(
     if (ebWrapperPtr) {
 
         packet = (EbBufferHeaderType*)ebWrapperPtr->object_ptr;
-
+#if ALT_REF_OVERLAY
+        if ( packet->flags & 0xfffffff0 )
+            return_error = EB_ErrorMax;
+#else
         if (packet->flags != EB_BUFFERFLAG_EOS &&
             packet->flags != EB_BUFFERFLAG_SHOW_EXT &&
             packet->flags != EB_BUFFERFLAG_HAS_TD &&
@@ -3412,7 +3486,7 @@ EB_API EbErrorType eb_svt_get_packet(
             packet->flags != 0) {
             return_error = EB_ErrorMax;
         }
-
+#endif
         // return the output stream buffer
         *p_buffer = packet;
 
@@ -3432,7 +3506,7 @@ __attribute__((visibility("default")))
 EB_API void eb_svt_release_out_buffer(
     EbBufferHeaderType  **p_buffer)
 {
-    if (p_buffer&&(*p_buffer)->wrapper_ptr)
+    if (p_buffer && (*p_buffer)->wrapper_ptr)
         // Release out put buffer back into the pool
         eb_release_object((EbObjectWrapper  *)(*p_buffer)->wrapper_ptr);
     return;

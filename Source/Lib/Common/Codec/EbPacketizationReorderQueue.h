@@ -41,8 +41,10 @@ extern "C" {
         Av1RpsNode                          av1_ref_signal;
         EbBool                               show_frame;
         EbBool                               has_show_existing;
-        uint8_t                                 show_existing_loc;
-
+        uint8_t                              show_existing_loc;
+#if ALT_REF_OVERLAY
+        uint8_t                              is_alt_ref;
+#endif
 
     } PacketizationReorderEntry;
 

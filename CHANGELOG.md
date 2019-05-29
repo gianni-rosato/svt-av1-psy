@@ -1,5 +1,6 @@
 ## [upcoming]
 - Static library support  
+- Alt-ref pictures - temporal filtering
 
 ## [0.5.0] - 2019-05-17
 

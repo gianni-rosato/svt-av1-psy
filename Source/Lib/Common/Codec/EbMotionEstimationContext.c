@@ -154,5 +154,12 @@ EbErrorType me_context_ctor(
 #endif
     EB_MALLOC(uint16_t *, (*object_dbl_ptr)->p_eight_pos_sad16x16, sizeof(uint16_t) * 8 * 16, EB_N_PTR);//16= 16 16x16 blocks in a LCU.       8=8search points
 
+#if ALTREF_FILTERING_SUPPORT
+
+    // Initialize Alt-Ref parameters
+    (*object_dbl_ptr)->me_alt_ref = EB_FALSE;
+
+#endif
+
     return EB_ErrorNone;
 }

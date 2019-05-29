@@ -30,7 +30,6 @@ EbErrorType pa_reference_queue_entry_ctor(
     entryPtr->list1_ptr = (ReferenceList*)EB_NULL;
 #endif
     EB_MALLOC(int32_t*, entryPtr->list0.list, sizeof(int32_t) * (1 << MAX_TEMPORAL_LAYERS), EB_N_PTR);
-
     EB_MALLOC(int32_t*, entryPtr->list1.list, sizeof(int32_t) * (1 << MAX_TEMPORAL_LAYERS), EB_N_PTR);
 
     return EB_ErrorNone;

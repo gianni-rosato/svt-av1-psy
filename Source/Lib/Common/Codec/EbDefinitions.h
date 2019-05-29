@@ -34,6 +34,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define ALT_REF_SUPPORT                   1// ALT_REF main flag
+
+#if ALT_REF_SUPPORT
+#define ALTREF_FILTERING_SUPPORT          1 //Temporal filter
+#define ALT_REF_OVERLAY                   1 // support for ALT_REF overlay frames.
+#endif
+
+#define PCS_ME_FIX                        1 // pcs flags shall not be set in seg based process
+
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
@@ -53,9 +62,12 @@ extern "C" {
 #define MEM_MAP_OPT                       1
 #endif
 
+
 #define SHUT_LOOKAHEAD                    0
 #define MINI_GOP_PCS                      0
+
 #define CHECK_MEM_REDUCTION               0
+
 #define CDEF_AVX_OPT                      1
 #define MOD_M0                            0 // Sub-SAD for @ HME and ME, 12 NFL, frequency see
 #define HARD_CODE_SC_SETTING              0
@@ -142,7 +154,7 @@ extern "C" {
 #define TRELLIS_INTRA                                   0
 #define TRELLIS_CHROMA                                  0
 #define ENHANCED_TRELLIS                                0   // TBD
-#endif
+#endif 
 
 #define CHROMA_DC_ONLY                                  0
 #define SEARCH_UV_MODE                                  1
@@ -248,7 +260,6 @@ extern "C" {
 #define MAX_FRAMES_TO_REF_I                             64
 #endif
 #define NSQ_TAB_SIZE                                    6
-
 #define AOM_INTERP_EXTEND 4
 #define MRP_DISABLE_ADDED_CAND_M1                        0
 
@@ -1170,10 +1181,10 @@ typedef enum ATTRIBUTE_PACKED
 #define TXFM_PARTITION_CONTEXTS ((TX_SIZES - TX_8X8) * 6 - 3)
 typedef uint8_t TXFM_CONTEXT;
 
+// frame types
 #define NONE_FRAME -1
 #define INTRA_FRAME 0
 #define LAST_FRAME 1
-
 #define LAST2_FRAME 2
 #define LAST3_FRAME 3
 #define GOLDEN_FRAME 4
@@ -2731,6 +2742,8 @@ void(*ErrorHandler)(
 //***Encoding Parameters***
 #define MAX_PICTURE_WIDTH_SIZE                      4672u
 #define MAX_PICTURE_HEIGHT_SIZE                     2560u
+#define MAX_PICTURE_WIDTH_SIZE_CH                   2336u
+#define MAX_PICTURE_HEIGHT_SIZE_CH                  1280u
 #define INTERNAL_BIT_DEPTH                          8 // to be modified
 #define MAX_SAMPLE_VALUE                            ((1 << INTERNAL_BIT_DEPTH) - 1)
 #define MAX_SAMPLE_VALUE_10BIT                      0x3FF

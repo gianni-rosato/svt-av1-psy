@@ -537,136 +537,147 @@ void ReconOutput(
     //   the encoder might not properly terminate.
     eb_block_on_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
 
-    // Get Recon Buffer
-    eb_get_empty_object(
-        sequence_control_set_ptr->encode_context_ptr->recon_output_fifo_ptr,
-        &outputReconWrapperPtr);
-    outputReconPtr = (EbBufferHeaderType*)outputReconWrapperPtr->object_ptr;
-    outputReconPtr->flags = 0;
+#if ALT_REF_OVERLAY
+    if (!picture_control_set_ptr->parent_pcs_ptr->is_alt_ref) {
+#endif
+        // Get Recon Buffer
+        eb_get_empty_object(
+            sequence_control_set_ptr->encode_context_ptr->recon_output_fifo_ptr,
+            &outputReconWrapperPtr);
+        outputReconPtr = (EbBufferHeaderType*)outputReconWrapperPtr->object_ptr;
+        outputReconPtr->flags = 0;
 
-    // START READ/WRITE PROTECTED SECTION
-    if (encode_context_ptr->total_number_of_recon_frames == encode_context_ptr->terminating_picture_number)
-        outputReconPtr->flags = EB_BUFFERFLAG_EOS;
+        // START READ/WRITE PROTECTED SECTION
+        if (encode_context_ptr->total_number_of_recon_frames == encode_context_ptr->terminating_picture_number)
+            outputReconPtr->flags = EB_BUFFERFLAG_EOS;
 
-    encode_context_ptr->total_number_of_recon_frames++;
+        encode_context_ptr->total_number_of_recon_frames++;
 
-    //eb_release_mutex(encode_context_ptr->terminating_conditions_mutex);
+        //eb_release_mutex(encode_context_ptr->terminating_conditions_mutex);
 
-    // STOP READ/WRITE PROTECTED SECTION
-    outputReconPtr->n_filled_len = 0;
+        // STOP READ/WRITE PROTECTED SECTION
+        outputReconPtr->n_filled_len = 0;
 
-    // Copy the Reconstructed Picture to the Output Recon Buffer
-    {
-        uint32_t sampleTotalCount;
-        uint8_t *reconReadPtr;
-        uint8_t *reconWritePtr;
-
-        EbPictureBufferDesc *recon_ptr;
+        // Copy the Reconstructed Picture to the Output Recon Buffer
         {
-            if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                recon_ptr = is16bit ?
-                ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit :
-                ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
-            else {
-                if (is16bit)
-                    recon_ptr = picture_control_set_ptr->recon_picture16bit_ptr;
-                else
-                    recon_ptr = picture_control_set_ptr->recon_picture_ptr;
-            }
-        }
+            uint32_t sampleTotalCount;
+            uint8_t *reconReadPtr;
+            uint8_t *reconWritePtr;
 
-        // FGN: Create a buffer if needed, copy the reconstructed picture and run the film grain synthesis algorithm
-
-        if (sequence_control_set_ptr->film_grain_params_present) {
-            EbPictureBufferDesc  *intermediateBufferPtr;
+            EbPictureBufferDesc *recon_ptr;
             {
-                if (is16bit)
-                    intermediateBufferPtr = picture_control_set_ptr->film_grain_picture16bit_ptr;
-                else
-                    intermediateBufferPtr = picture_control_set_ptr->film_grain_picture_ptr;
+                if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+                    recon_ptr = is16bit ?
+                    ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit :
+                    ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
+                else {
+                    if (is16bit)
+                        recon_ptr = picture_control_set_ptr->recon_picture16bit_ptr;
+                    else
+                        recon_ptr = picture_control_set_ptr->recon_picture_ptr;
+                }
             }
 
-            aom_film_grain_t *film_grain_ptr;
+            // FGN: Create a buffer if needed, copy the reconstructed picture and run the film grain synthesis algorithm
 
-            if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                film_grain_ptr = &((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->film_grain_params;
-            else
-                film_grain_ptr = &picture_control_set_ptr->parent_pcs_ptr->film_grain_params;
+            if (sequence_control_set_ptr->film_grain_params_present) {
+                EbPictureBufferDesc  *intermediateBufferPtr;
+                {
+                    if (is16bit)
+                        intermediateBufferPtr = picture_control_set_ptr->film_grain_picture16bit_ptr;
+                    else
+                        intermediateBufferPtr = picture_control_set_ptr->film_grain_picture_ptr;
+                }
 
-            av1_add_film_grain(recon_ptr, intermediateBufferPtr, film_grain_ptr);
-            recon_ptr = intermediateBufferPtr;
+                aom_film_grain_t *film_grain_ptr;
+
+                if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+                    film_grain_ptr = &((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->film_grain_params;
+                else
+                    film_grain_ptr = &picture_control_set_ptr->parent_pcs_ptr->film_grain_params;
+
+                av1_add_film_grain(recon_ptr, intermediateBufferPtr, film_grain_ptr);
+                recon_ptr = intermediateBufferPtr;
+            }
+
+            // End running the film grain
+            // Y Recon Samples
+            sampleTotalCount = ((recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->max_height - sequence_control_set_ptr->max_input_pad_bottom)) << is16bit;
+            reconReadPtr = recon_ptr->buffer_y + (recon_ptr->origin_y << is16bit) * recon_ptr->stride_y + (recon_ptr->origin_x << is16bit);
+            reconWritePtr = &(outputReconPtr->p_buffer[outputReconPtr->n_filled_len]);
+
+            CHECK_REPORT_ERROR(
+                (outputReconPtr->n_filled_len + sampleTotalCount <= outputReconPtr->n_alloc_len),
+                encode_context_ptr->app_callback_ptr,
+                EB_ENC_ROB_OF_ERROR);
+
+            // Initialize Y recon buffer
+            picture_copy_kernel(
+                reconReadPtr,
+                recon_ptr->stride_y,
+                reconWritePtr,
+                recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right,
+                recon_ptr->width - sequence_control_set_ptr->pad_right,
+                recon_ptr->height - sequence_control_set_ptr->pad_bottom,
+                1 << is16bit);
+
+            outputReconPtr->n_filled_len += sampleTotalCount;
+
+            // U Recon Samples
+            sampleTotalCount = ((recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->max_height - sequence_control_set_ptr->max_input_pad_bottom) >> 2) << is16bit;
+            reconReadPtr = recon_ptr->buffer_cb + ((recon_ptr->origin_y << is16bit) >> 1) * recon_ptr->stride_cb + ((recon_ptr->origin_x << is16bit) >> 1);
+            reconWritePtr = &(outputReconPtr->p_buffer[outputReconPtr->n_filled_len]);
+
+            CHECK_REPORT_ERROR(
+                (outputReconPtr->n_filled_len + sampleTotalCount <= outputReconPtr->n_alloc_len),
+                encode_context_ptr->app_callback_ptr,
+                EB_ENC_ROB_OF_ERROR);
+
+            // Initialize U recon buffer
+            picture_copy_kernel(
+                reconReadPtr,
+                recon_ptr->stride_cb,
+                reconWritePtr,
+                (recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) >> 1,
+                (recon_ptr->width - sequence_control_set_ptr->pad_right) >> 1,
+                (recon_ptr->height - sequence_control_set_ptr->pad_bottom) >> 1,
+                1 << is16bit);
+            outputReconPtr->n_filled_len += sampleTotalCount;
+
+            // V Recon Samples
+            sampleTotalCount = ((recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->max_height - sequence_control_set_ptr->max_input_pad_bottom) >> 2) << is16bit;
+            reconReadPtr = recon_ptr->buffer_cr + ((recon_ptr->origin_y << is16bit) >> 1) * recon_ptr->stride_cr + ((recon_ptr->origin_x << is16bit) >> 1);
+            reconWritePtr = &(outputReconPtr->p_buffer[outputReconPtr->n_filled_len]);
+
+            CHECK_REPORT_ERROR(
+                (outputReconPtr->n_filled_len + sampleTotalCount <= outputReconPtr->n_alloc_len),
+                encode_context_ptr->app_callback_ptr,
+                EB_ENC_ROB_OF_ERROR);
+
+            // Initialize V recon buffer
+
+            picture_copy_kernel(
+                reconReadPtr,
+                recon_ptr->stride_cr,
+                reconWritePtr,
+                (recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) >> 1,
+                (recon_ptr->width - sequence_control_set_ptr->pad_right) >> 1,
+                (recon_ptr->height - sequence_control_set_ptr->pad_bottom) >> 1,
+                1 << is16bit);
+            outputReconPtr->n_filled_len += sampleTotalCount;
+            outputReconPtr->pts = picture_control_set_ptr->picture_number;
         }
 
-        // End running the film grain
-        // Y Recon Samples
-        sampleTotalCount = ((recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->max_height - sequence_control_set_ptr->max_input_pad_bottom)) << is16bit;
-        reconReadPtr = recon_ptr->buffer_y + (recon_ptr->origin_y << is16bit) * recon_ptr->stride_y + (recon_ptr->origin_x << is16bit);
-        reconWritePtr = &(outputReconPtr->p_buffer[outputReconPtr->n_filled_len]);
-
-        CHECK_REPORT_ERROR(
-            (outputReconPtr->n_filled_len + sampleTotalCount <= outputReconPtr->n_alloc_len),
-            encode_context_ptr->app_callback_ptr,
-            EB_ENC_ROB_OF_ERROR);
-
-        // Initialize Y recon buffer
-        picture_copy_kernel(
-            reconReadPtr,
-            recon_ptr->stride_y,
-            reconWritePtr,
-            recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right,
-            recon_ptr->width - sequence_control_set_ptr->pad_right,
-            recon_ptr->height - sequence_control_set_ptr->pad_bottom,
-            1 << is16bit);
-
-        outputReconPtr->n_filled_len += sampleTotalCount;
-
-        // U Recon Samples
-        sampleTotalCount = ((recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->max_height - sequence_control_set_ptr->max_input_pad_bottom) >> 2) << is16bit;
-        reconReadPtr = recon_ptr->buffer_cb + ((recon_ptr->origin_y << is16bit) >> 1) * recon_ptr->stride_cb + ((recon_ptr->origin_x << is16bit) >> 1);
-        reconWritePtr = &(outputReconPtr->p_buffer[outputReconPtr->n_filled_len]);
-
-        CHECK_REPORT_ERROR(
-            (outputReconPtr->n_filled_len + sampleTotalCount <= outputReconPtr->n_alloc_len),
-            encode_context_ptr->app_callback_ptr,
-            EB_ENC_ROB_OF_ERROR);
-
-        // Initialize U recon buffer
-        picture_copy_kernel(
-            reconReadPtr,
-            recon_ptr->stride_cb,
-            reconWritePtr,
-            (recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) >> 1,
-            (recon_ptr->width - sequence_control_set_ptr->pad_right) >> 1,
-            (recon_ptr->height - sequence_control_set_ptr->pad_bottom) >> 1,
-            1 << is16bit);
-        outputReconPtr->n_filled_len += sampleTotalCount;
-
-        // V Recon Samples
-        sampleTotalCount = ((recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) * (recon_ptr->max_height - sequence_control_set_ptr->max_input_pad_bottom) >> 2) << is16bit;
-        reconReadPtr = recon_ptr->buffer_cr + ((recon_ptr->origin_y << is16bit) >> 1) * recon_ptr->stride_cr + ((recon_ptr->origin_x << is16bit) >> 1);
-        reconWritePtr = &(outputReconPtr->p_buffer[outputReconPtr->n_filled_len]);
-
-        CHECK_REPORT_ERROR(
-            (outputReconPtr->n_filled_len + sampleTotalCount <= outputReconPtr->n_alloc_len),
-            encode_context_ptr->app_callback_ptr,
-            EB_ENC_ROB_OF_ERROR);
-
-        // Initialize V recon buffer
-
-        picture_copy_kernel(
-            reconReadPtr,
-            recon_ptr->stride_cr,
-            reconWritePtr,
-            (recon_ptr->max_width - sequence_control_set_ptr->max_input_pad_right) >> 1,
-            (recon_ptr->width - sequence_control_set_ptr->pad_right) >> 1,
-            (recon_ptr->height - sequence_control_set_ptr->pad_bottom) >> 1,
-            1 << is16bit);
-        outputReconPtr->n_filled_len += sampleTotalCount;
-        outputReconPtr->pts = picture_control_set_ptr->picture_number;
+        // Post the Recon object
+        eb_post_full_object(outputReconWrapperPtr);
+#if ALT_REF_OVERLAY
     }
-
-    // Post the Recon object
-    eb_post_full_object(outputReconWrapperPtr);
+    else {
+        // Overlay and altref have 1 recon only, which is from overlay pictures. So the recon of the alt_ref is not sent to the application.
+        // However, to hanlde the end of sequence properly, total_number_of_recon_frames is increamented
+        encode_context_ptr->total_number_of_recon_frames++;
+    }
+#endif
     eb_release_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
 }
 

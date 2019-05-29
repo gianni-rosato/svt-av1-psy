@@ -13978,7 +13978,7 @@ extern "C" {
 
     //CHKN
     // Add the concept of PictureParentControlSet which is a subset of the old PictureControlSet.
-    // It actually holds only high level Pciture based control data:(GOP management,when to start a picture, when to release the PCS, ....).
+    // It actually holds only high level Picture based control data:(GOP management,when to start a picture, when to release the PCS, ....).
     // The regular PictureControlSet(Child) will be dedicated to store SB based encoding results and information.
     // Parent is created before the Child, and continue to live more. Child PCS only lives the exact time needed to encode the picture: from ME to EC/ALF.
     typedef struct PictureParentControlSet
@@ -14387,8 +14387,30 @@ extern "C" {
         uint8_t                              mrp_mode;
 #endif
 #endif
-    } PictureParentControlSet;
+#if ALT_REF_OVERLAY
+        uint64_t                             picture_number_alt; // The picture number overlay includes all the overlay frames
+        uint8_t                              is_alt_ref;
+        uint8_t                              is_overlay;
+        struct PictureParentControlSet      *overlay_ppcs_ptr;
+        struct PictureParentControlSet      *alt_ref_ppcs_ptr;
+#endif
+#if ALTREF_FILTERING_SUPPORT
+		uint8_t                               altref_strength;
+		int32_t                               pic_decision_reorder_queue_idx;
+		struct PictureParentControlSet       *temp_filt_pcs_list[15];
+		EbHandle temp_filt_done_semaphore;
+		EbHandle temp_filt_mutex;
+		EbHandle debug_mutex;
 
+		uint8_t  temp_filt_prep_done;
+		uint16_t temp_filt_seg_acc;
+
+		int16_t                               tf_segments_total_count;
+		uint8_t                               tf_segments_column_count;
+		uint8_t                               tf_segments_row_count;
+#endif
+		uint8_t                               altref_nframes;
+    } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData
     {

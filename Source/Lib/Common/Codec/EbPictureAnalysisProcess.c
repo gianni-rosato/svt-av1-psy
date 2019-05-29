@@ -98,8 +98,11 @@ EbErrorType picture_analysis_context_ctor(
 
 
 }
-
+#if ALT_REF_OVERLAY
+void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBufferDesc* outputPicturePtr)
+#else
 static void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBufferDesc* outputPicturePtr)
+#endif
 {
     uint32_t input_color_format = input_picture_ptr->color_format;
     const uint16_t input_subsampling_x = (input_color_format == EB_YUV444 ? 1 : 2) - 1;
@@ -5002,7 +5005,6 @@ static int is_screen_content(const uint8_t *src, int use_hbd,
     return counts * blk_h * blk_w * 10 > width * height;
 }
 
-
 /************************************************
  * Picture Analysis Kernel
  * The Picture Analysis Process pads & decimates the input pictures.
@@ -5030,10 +5032,10 @@ void* picture_analysis_kernel(void *input_ptr)
     EbPictureBufferDesc           *input_picture_ptr;
 
     // Variance
-    uint32_t                          picture_width_in_sb;
-    uint32_t                          pictureHeighInLcu;
-    uint32_t                          sb_total_count;
-    EbAsm                          asm_type;
+    uint32_t                        picture_width_in_sb;
+    uint32_t                        pictureHeighInLcu;
+    uint32_t                        sb_total_count;
+    EbAsm                           asm_type;
 
     for (;;) {
 
@@ -5044,98 +5046,104 @@ void* picture_analysis_kernel(void *input_ptr)
 
         inputResultsPtr = (ResourceCoordinationResults*)inputResultsWrapperPtr->object_ptr;
         picture_control_set_ptr = (PictureParentControlSet*)inputResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
-        sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-        input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
+#if ALT_REF_OVERLAY
+        // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
+        if (!picture_control_set_ptr->is_overlay) 
+        {
+#endif
+            sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+            input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
+            paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+            input_padded_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
+            quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
+            sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
 
-        paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-        input_padded_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
-        quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
-        sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
+            // Variance
+            picture_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+            pictureHeighInLcu = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+            sb_total_count = picture_width_in_sb * pictureHeighInLcu;
 
-        // Variance
-        picture_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-        pictureHeighInLcu = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-        sb_total_count = picture_width_in_sb * pictureHeighInLcu;
+            asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
 
-        asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
+            // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
+            SetPictureParametersForStatisticsGathering(
+                sequence_control_set_ptr);
 
-        // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
-        SetPictureParametersForStatisticsGathering(
-            sequence_control_set_ptr);
+            // Pad pictures to multiple min cu size
+            PadPictureToMultipleOfMinCuSizeDimensions(
+                sequence_control_set_ptr,
+                input_picture_ptr);
 
+            // Pre processing operations performed on the input picture
+            PicturePreProcessingOperations(
+                picture_control_set_ptr,
+                input_picture_ptr,
+                sequence_control_set_ptr,
+                quarter_decimated_picture_ptr,
+                sixteenth_decimated_picture_ptr,
+                sb_total_count,
+                asm_type);
 
-
-        // Pad pictures to multiple min cu size
-        PadPictureToMultipleOfMinCuSizeDimensions(
-            sequence_control_set_ptr,
-            input_picture_ptr);
-
-        // Pre processing operations performed on the input picture
-        PicturePreProcessingOperations(
-            picture_control_set_ptr,
-            input_picture_ptr,
-            sequence_control_set_ptr,
-            quarter_decimated_picture_ptr,
-            sixteenth_decimated_picture_ptr,
-            sb_total_count,
-            asm_type);
-
-        if (input_picture_ptr->color_format >= EB_YUV422) {
-            // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
-            //       Reuse the Y, only add cb/cr in the newly created buffer desc
-            //       NOTE: since denoise may change the src, so this part is after PicturePreProcessingOperations()
-            picture_control_set_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
-            DownSampleChroma(input_picture_ptr, picture_control_set_ptr->chroma_downsampled_picture_ptr);
-        } else {
-            picture_control_set_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
-        }
-
-        // Pad input picture to complete border LCUs
-        PadPictureToMultipleOfLcuDimensions(
-            input_padded_picture_ptr);
-
-        // 1/4 & 1/16 input picture decimation
-        DecimateInputPicture(
-            picture_control_set_ptr,
-            input_padded_picture_ptr,
-            quarter_decimated_picture_ptr,
-            sixteenth_decimated_picture_ptr);
-
-        // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
-        GatheringPictureStatistics(
-            sequence_control_set_ptr,
-            picture_control_set_ptr,
-            picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
-            input_padded_picture_ptr,
-            sixteenth_decimated_picture_ptr,
-            sb_total_count,
-            asm_type);
-        if (sequence_control_set_ptr->static_config.screen_content_mode == 2){ // auto detect
-            picture_control_set_ptr->sc_content_detected = is_screen_content(
-                input_picture_ptr->buffer_y + input_picture_ptr->origin_x + input_picture_ptr->origin_y*input_picture_ptr->stride_y,
-                0,
-                input_picture_ptr->stride_y,
-                sequence_control_set_ptr->luma_width, sequence_control_set_ptr->luma_height);
-            if (picture_control_set_ptr->sc_content_detected) {
-                if (picture_control_set_ptr->pic_avg_variance > 1000)
-                    picture_control_set_ptr->sc_content_detected = 1;
-                else
-                    picture_control_set_ptr->sc_content_detected = 0;
+            if (input_picture_ptr->color_format >= EB_YUV422) {
+                // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
+                //       Reuse the Y, only add cb/cr in the newly created buffer desc
+                //       NOTE: since denoise may change the src, so this part is after PicturePreProcessingOperations()
+                picture_control_set_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
+                DownSampleChroma(input_picture_ptr, picture_control_set_ptr->chroma_downsampled_picture_ptr);
             }
-        }else // off / on
-            picture_control_set_ptr->sc_content_detected = sequence_control_set_ptr->static_config.screen_content_mode;
+            else {
+                picture_control_set_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
+            }
+
+            // Pad input picture to complete border LCUs
+            PadPictureToMultipleOfLcuDimensions(
+                input_padded_picture_ptr);
+
+            // 1/4 & 1/16 input picture decimation
+            DecimateInputPicture(
+                picture_control_set_ptr,
+                input_padded_picture_ptr,
+                quarter_decimated_picture_ptr,
+                sixteenth_decimated_picture_ptr);
+
+            // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+            GatheringPictureStatistics(
+                sequence_control_set_ptr,
+                picture_control_set_ptr,
+                picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
+                input_padded_picture_ptr,
+                sixteenth_decimated_picture_ptr,
+                sb_total_count,
+                asm_type);
+            if (sequence_control_set_ptr->static_config.screen_content_mode == 2) { // auto detect
+                picture_control_set_ptr->sc_content_detected = is_screen_content(
+                    input_picture_ptr->buffer_y + input_picture_ptr->origin_x + input_picture_ptr->origin_y*input_picture_ptr->stride_y,
+                    0,
+                    input_picture_ptr->stride_y,
+                    sequence_control_set_ptr->luma_width, sequence_control_set_ptr->luma_height);
+                if (picture_control_set_ptr->sc_content_detected) {
+                    if (picture_control_set_ptr->pic_avg_variance > 1000)
+                        picture_control_set_ptr->sc_content_detected = 1;
+                    else
+                        picture_control_set_ptr->sc_content_detected = 0;
+                }
+            }
+            else // off / on
+                picture_control_set_ptr->sc_content_detected = sequence_control_set_ptr->static_config.screen_content_mode;
         
 #if HARD_CODE_SC_SETTING
-        picture_control_set_ptr->sc_content_detected = EB_TRUE;
+            picture_control_set_ptr->sc_content_detected = EB_TRUE;
 #endif
-        // Hold the 64x64 variance and mean in the reference frame
-        uint32_t sb_index;
-        for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-            paReferenceObject->variance[sb_index] = picture_control_set_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64];
-            paReferenceObject->y_mean[sb_index] = picture_control_set_ptr->y_mean[sb_index][ME_TIER_ZERO_PU_64x64];
+            // Hold the 64x64 variance and mean in the reference frame
+            uint32_t sb_index;
+            for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
+                paReferenceObject->variance[sb_index] = picture_control_set_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64];
+                paReferenceObject->y_mean[sb_index] = picture_control_set_ptr->y_mean[sb_index][ME_TIER_ZERO_PU_64x64];
 
+            }
+#if ALT_REF_OVERLAY
         }
-
+#endif
         // Get Empty Results Object
         eb_get_empty_object(
             context_ptr->picture_analysis_results_output_fifo_ptr,

@@ -281,16 +281,17 @@ void* packetization_kernel(void *input_ptr)
         picture_control_set_ptr = (PictureControlSet*)entropyCodingResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
         sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
         encode_context_ptr = (EncodeContext*)sequence_control_set_ptr->encode_context_ptr;
-
         //****************************************************
         // Input Entropy Results into Reordering Queue
         //****************************************************
-
         //get a new entry spot
         queueEntryIndex = picture_control_set_ptr->parent_pcs_ptr->decode_order % PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
         queueEntryPtr = encode_context_ptr->packetization_reorder_queue[queueEntryIndex];
         queueEntryPtr->start_time_seconds = picture_control_set_ptr->parent_pcs_ptr->start_time_seconds;
         queueEntryPtr->start_time_u_seconds = picture_control_set_ptr->parent_pcs_ptr->start_time_u_seconds;
+#if ALT_REF_OVERLAY
+        queueEntryPtr->is_alt_ref = picture_control_set_ptr->parent_pcs_ptr->is_alt_ref;
+#endif
 
         //TODO: The output buffer should be big enough to avoid a deadlock here. Add an assert that make the warning
         // Get  Output Bitstream buffer
@@ -315,7 +316,7 @@ void* packetization_kernel(void *input_ptr)
         rateControlTasksPtr->task_type = RC_PACKETIZATION_FEEDBACK_RESULT;
 
         // slice_type = picture_control_set_ptr->slice_type;
-         // Reset the bitstream before writing to it
+            // Reset the bitstream before writing to it
         reset_bitstream(
             picture_control_set_ptr->bitstream_ptr->output_bitstream_ptr);
 
@@ -594,6 +595,11 @@ void* packetization_kernel(void *input_ptr)
 
             output_stream_ptr->n_tick_count = (uint32_t)latency;
             output_stream_ptr->p_app_private = queueEntryPtr->out_meta_data;
+#if ALT_REF_OVERLAY
+            if (queueEntryPtr->is_alt_ref)
+                output_stream_ptr->flags |= (uint32_t)EB_BUFFERFLAG_IS_ALT_REF;
+#endif
+ 
             eb_post_full_object(output_stream_wrapper_ptr);
             queueEntryPtr->out_meta_data = (EbLinkedListNode *)EB_NULL;
 

@@ -37,8 +37,6 @@ typedef struct dist_wtd_comp_params {
     int fwd_offset;
     int bck_offset;
 } DIST_WTD_COMP_PARAMS;
-typedef unsigned int(*aom_sad_fn_t)(const uint8_t *a, int a_stride,
-    const uint8_t *b, int b_stride);
 
 typedef unsigned int(*aom_sad_avg_fn_t)(const uint8_t *a, int a_stride,
     const uint8_t *b, int b_stride,
@@ -46,14 +44,6 @@ typedef unsigned int(*aom_sad_avg_fn_t)(const uint8_t *a, int a_stride,
 
 typedef void(*aom_copy32xn_fn_t)(const uint8_t *a, int a_stride, uint8_t *b,
     int b_stride, int n);
-
-typedef void(*aom_sad_multi_d_fn_t)(const uint8_t *a, int a_stride,
-    const uint8_t *const b_array[],
-    int b_stride, unsigned int *sad_array);
-
-typedef unsigned int(*aom_variance_fn_t)(const uint8_t *a, int a_stride,
-    const uint8_t *b, int b_stride,
-    unsigned int *sse);
 
 typedef unsigned int(*aom_subpixvariance_fn_t)(const uint8_t *a, int a_stride,
     int xoffset, int yoffset,
@@ -93,12 +83,6 @@ typedef unsigned int(*aom_obmc_variance_fn_t)(const uint8_t *pred,
 typedef unsigned int(*aom_obmc_subpixvariance_fn_t)(
     const uint8_t *pred, int pred_stride, int xoffset, int yoffset,
     const int32_t *wsrc, const int32_t *msk, unsigned int *sse);
-
-typedef struct aom_variance_vtable {
-    aom_sad_fn_t sdf;                   
-    aom_variance_fn_t vf; 
-    aom_sad_multi_d_fn_t sdx4df;         
-} aom_variance_fn_ptr_t;
 
 int av1_refining_search_sad(IntraBcContext  *x, MV *ref_mv, int error_per_bit,
     int search_range,

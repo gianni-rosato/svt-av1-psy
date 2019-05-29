@@ -1198,6 +1198,12 @@ EbErrorType picture_parent_control_set_ctor(
 
     EB_MALLOC(EB_SB_DEPTH_MODE*, object_ptr->sb_depth_mode_array, sizeof(EB_SB_DEPTH_MODE) * object_ptr->sb_total_count, EB_N_PTR);
 
+#if ALTREF_FILTERING_SUPPORT
+	EB_CREATESEMAPHORE(EbHandle, object_ptr->temp_filt_done_semaphore, sizeof(EbHandle), EB_SEMAPHORE, 0, 1);
+	EB_CREATEMUTEX(EbHandle, object_ptr->temp_filt_mutex, sizeof(EbHandle), EB_MUTEX);
+	EB_CREATEMUTEX(EbHandle, object_ptr->debug_mutex, sizeof(EbHandle), EB_MUTEX);
+#endif
+
     EB_MALLOC(Av1Common*, object_ptr->av1_cm, sizeof(Av1Common), EB_N_PTR);
 
 
