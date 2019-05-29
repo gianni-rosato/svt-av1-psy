@@ -63,30 +63,30 @@ file(GLOB all_files
 
 if (UNIX)
   # App Source Files
-    add_executable (SvtAv1UnitTests 
+    add_executable (SvtAv1UnitTests
       ${all_files})
 
     # Link the Encoder App
      target_link_libraries (SvtAv1UnitTests
-        COMMON_CODEC
-        COMMON_C_DEFAULT
-        COMMON_ASM_SSE2
-        COMMON_ASM_SSSE3
-        COMMON_ASM_SSE4_1
-        COMMON_ASM_AVX2
-        gtest_all 
+        $<TARGET_OBJECTS:COMMON_CODEC>
+        $<TARGET_OBJECTS:COMMON_C_DEFAULT>
+        $<TARGET_OBJECTS:COMMON_ASM_SSE2>
+        $<TARGET_OBJECTS:COMMON_ASM_SSSE3>
+        $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
+        $<TARGET_OBJECTS:COMMON_ASM_AVX2>
+        gtest_all
         pthread
         m)
 endif(UNIX)
 
 if (MSVC OR MSYS OR MINGW OR WIN32)
     set (lib_list
-    COMMON_CODEC
-    COMMON_C_DEFAULT
-    COMMON_ASM_SSE2
-    COMMON_ASM_SSSE3
-    COMMON_ASM_SSE4_1
-    COMMON_ASM_AVX2
+    $<TARGET_OBJECTS:COMMON_CODEC>
+    $<TARGET_OBJECTS:COMMON_C_DEFAULT>
+    $<TARGET_OBJECTS:COMMON_ASM_SSE2>
+    $<TARGET_OBJECTS:COMMON_ASM_SSSE3>
+    $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
+    $<TARGET_OBJECTS:COMMON_ASM_AVX2>
     gtest_all)
     cxx_executable_with_flags(SvtAv1UnitTests "${cxx_default}"
       "${lib_list}" ${all_files})
