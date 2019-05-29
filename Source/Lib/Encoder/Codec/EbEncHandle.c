@@ -2546,10 +2546,14 @@ void CopyApiFromApp(
     else
         sequence_control_set_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&sequence_control_set_ptr->static_config);
 
+#if ALTREF_FILTERING_SUPPORT
     sequence_control_set_ptr->static_config.enable_altrefs = pComponentParameterStructure->enable_altrefs;
     sequence_control_set_ptr->static_config.altref_strength = pComponentParameterStructure->altref_strength;
     sequence_control_set_ptr->static_config.altref_nframes = pComponentParameterStructure->altref_nframes;
+#endif
+#if ALT_REF_OVERLAY
     sequence_control_set_ptr->static_config.enable_overlays = pComponentParameterStructure->enable_overlays;
+#endif
 
     return;
 }
