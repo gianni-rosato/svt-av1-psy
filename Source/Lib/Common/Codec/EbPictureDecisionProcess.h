@@ -8,7 +8,7 @@
 
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
-#if ALTREF_FILTERING_SUPPORT
+#if ALT_REF_SUPPORT
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
 #endif
@@ -72,12 +72,16 @@ extern EbErrorType picture_decision_context_ctor(
 
 extern void* picture_decision_kernel(void *input_ptr);
 
-#if ALTREF_FILTERING_SUPPORT
+#if ALT_REF_SUPPORT
 
 void DecimateInputPicture(PictureParentControlSet       *picture_control_set_ptr,
                           EbPictureBufferDesc           *inputPaddedPicturePtr,
                           EbPictureBufferDesc           *quarterDecimatedPicturePtr,
                           EbPictureBufferDesc           *sixteenthDecimatedPicturePtr);
+
+#endif
+
+#if ALT_REF_OVERLAY
 
 void PadPictureToMultipleOfMinCuSizeDimensions(
         SequenceControlSet            *sequence_control_set_ptr,
@@ -104,10 +108,8 @@ void GatheringPictureStatistics(
         uint32_t                      sb_total_count,
         EbAsm                         asm_type);
 
-#if ALT_REF_OVERLAY
 void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr,
                       EbPictureBufferDesc* outputPicturePtr);
-#endif
 
 #endif
 
