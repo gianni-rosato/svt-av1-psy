@@ -2818,7 +2818,7 @@ void encode_pass_tx_search(
     TransformUnit       *txb_ptr = &cu_ptr->transform_unit_array[context_ptr->txb_itr];
     uint32_t               qp = cu_ptr->qp;
 #if !ATB_SUPPORT
-    const uint32_t         scratchLumaOffset = context_ptr->blk_geom->tx_org_x[context_ptr->txb_itr] + context_ptr->blk_geom->tx_org_y[context_ptr->txb_itr] * SB_STRIDE_Y;
+    const uint32_t         scratch_luma_offset = context_ptr->blk_geom->tx_org_x[context_ptr->txb_itr] + context_ptr->blk_geom->tx_org_y[context_ptr->txb_itr] * SB_STRIDE_Y;
 #endif
     const uint32_t         coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -2833,7 +2833,7 @@ void encode_pass_tx_search(
     TxType                 tx_type;
 #if ATB_SUPPORT 
     TxSize                 txSize = context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
-    const uint32_t         scratchLumaOffset = context_ptr->blk_geom->tx_org_x[cu_ptr->tx_depth][context_ptr->txb_itr] + context_ptr->blk_geom->tx_org_y[cu_ptr->tx_depth][context_ptr->txb_itr] * SB_STRIDE_Y;
+    const uint32_t         scratch_luma_offset = context_ptr->blk_geom->tx_org_x[cu_ptr->tx_depth][context_ptr->txb_itr] + context_ptr->blk_geom->tx_org_y[cu_ptr->tx_depth][context_ptr->txb_itr] * SB_STRIDE_Y;
 #else
     TxSize                 txSize = context_ptr->blk_geom->txsize[context_ptr->txb_itr];
 #endif
@@ -2868,7 +2868,7 @@ void encode_pass_tx_search(
 
 
         av1_estimate_transform(
-            ((int16_t*)residual16bit->buffer_y) + scratchLumaOffset,
+            ((int16_t*)residual16bit->buffer_y) + scratch_luma_offset,
             residual16bit->stride_y,
             ((TranLow*)transform16bit->buffer_y) + coeff1dOffset,
             NOT_USED_VALUE,
@@ -3076,7 +3076,7 @@ void encode_pass_tx_search_hbd(
     CodingUnit    *cu_ptr               = context_ptr->cu_ptr;
     TransformUnit *txb_ptr              = &cu_ptr->transform_unit_array[context_ptr->txb_itr];
     uint32_t         qp                   = cu_ptr->qp;
-    const uint32_t   scratchLumaOffset    = context_ptr->blk_geom->origin_x + context_ptr->blk_geom->origin_y * SB_STRIDE_Y;
+    const uint32_t   scratch_luma_offset    = context_ptr->blk_geom->origin_x + context_ptr->blk_geom->origin_y * SB_STRIDE_Y;
     const uint32_t   coeff1dOffset        = context_ptr->coded_area_sb;
 
     //Update QP for Quant
@@ -3120,7 +3120,7 @@ void encode_pass_tx_search_hbd(
 
 
         av1_estimate_transform(
-            ((int16_t*)residual16bit->buffer_y) + scratchLumaOffset,
+            ((int16_t*)residual16bit->buffer_y) + scratch_luma_offset,
             residual16bit->stride_y,
             ((TranLow*)transform16bit->buffer_y) + coeff1dOffset,
             NOT_USED_VALUE,

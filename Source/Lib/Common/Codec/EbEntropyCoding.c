@@ -767,11 +767,11 @@ static EbErrorType av1_encode_tx_coef_y(
 
         // Update the luma Dc Sign Level Coeff Neighbor Array
         {
-            uint8_t dcSignLevelCoeff = (uint8_t)cul_level_y;
+            uint8_t dc_sign_level_coeff = (uint8_t)cul_level_y;
 
             neighbor_array_unit_mode_write(
                 luma_dc_sign_level_coeff_neighbor_array,
-                (uint8_t*)&dcSignLevelCoeff,
+                (uint8_t*)&dc_sign_level_coeff,
                 cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x,
                 cu_origin_y + blk_geom->tx_org_y[tx_depth][txb_itr] - blk_geom->origin_y,
                 blk_geom->tx_width[tx_depth][txb_itr],
@@ -908,10 +908,10 @@ static EbErrorType av1_encode_tx_coef_uv(
 
         if (blk_geom->has_uv)
         {
-            uint8_t dcSignLevelCoeff = (uint8_t)cul_level_cb;
+            uint8_t dc_sign_level_coeff = (uint8_t)cul_level_cb;
             neighbor_array_unit_mode_write(
                 cb_dc_sign_level_coeff_neighbor_array,
-                (uint8_t*)&dcSignLevelCoeff,
+                (uint8_t*)&dc_sign_level_coeff,
                 ROUND_UV(cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
                 ROUND_UV(cu_origin_y + blk_geom->tx_org_y[tx_depth][txb_itr] - blk_geom->origin_y) >> 1,
                 blk_geom->tx_width_uv[tx_depth][txb_itr],
@@ -923,10 +923,10 @@ static EbErrorType av1_encode_tx_coef_uv(
         if (blk_geom->has_uv)
             // Update the cr DC Sign Level Coeff Neighbor Array
         {
-            uint8_t dcSignLevelCoeff = (uint8_t)cul_level_cr;
+            uint8_t dc_sign_level_coeff = (uint8_t)cul_level_cr;
             neighbor_array_unit_mode_write(
                 cr_dc_sign_level_coeff_neighbor_array,
-                (uint8_t*)&dcSignLevelCoeff,
+                (uint8_t*)&dc_sign_level_coeff,
                 ROUND_UV(cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
                 ROUND_UV(cu_origin_y + blk_geom->tx_org_y[tx_depth][txb_itr] - blk_geom->origin_y) >> 1,
                 blk_geom->tx_width_uv[tx_depth][txb_itr],
@@ -1117,12 +1117,12 @@ static EbErrorType Av1EncodeCoeff1D(
 
             // Update the luma Dc Sign Level Coeff Neighbor Array
             {
-                uint8_t dcSignLevelCoeff = (uint8_t)cul_level_y;
+                uint8_t dc_sign_level_coeff = (uint8_t)cul_level_y;
                 //if (!txb_ptr->lumaCbf)
-                //    dcSignLevelCoeff = 0;
+                //    dc_sign_level_coeff = 0;
                 neighbor_array_unit_mode_write(
                     luma_dc_sign_level_coeff_neighbor_array,
-                    (uint8_t*)&dcSignLevelCoeff,
+                    (uint8_t*)&dc_sign_level_coeff,
                     cu_origin_x + blk_geom->tx_org_x[cu_ptr->tx_depth][txb_itr] - blk_geom->origin_x,
                     cu_origin_y + blk_geom->tx_org_y[cu_ptr->tx_depth][txb_itr] - blk_geom->origin_y,
                     blk_geom->tx_width[cu_ptr->tx_depth][txb_itr],
@@ -1134,10 +1134,10 @@ static EbErrorType Av1EncodeCoeff1D(
 
             if (blk_geom->has_uv)
             {
-                uint8_t dcSignLevelCoeff = (uint8_t)cul_level_cb;
+                uint8_t dc_sign_level_coeff = (uint8_t)cul_level_cb;
                 neighbor_array_unit_mode_write(
                     cb_dc_sign_level_coeff_neighbor_array,
-                    (uint8_t*)&dcSignLevelCoeff,
+                    (uint8_t*)&dc_sign_level_coeff,
                     ROUND_UV(cu_origin_x + blk_geom->tx_org_x[cu_ptr->tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
                     ROUND_UV(cu_origin_y + blk_geom->tx_org_y[cu_ptr->tx_depth][txb_itr] - blk_geom->origin_y) >> 1,
                     blk_geom->tx_width_uv[cu_ptr->tx_depth][txb_itr],
@@ -1149,10 +1149,10 @@ static EbErrorType Av1EncodeCoeff1D(
             if (blk_geom->has_uv)
                 // Update the cr DC Sign Level Coeff Neighbor Array
             {
-                uint8_t dcSignLevelCoeff = (uint8_t)cul_level_cr;
+                uint8_t dc_sign_level_coeff = (uint8_t)cul_level_cr;
                 neighbor_array_unit_mode_write(
                     cr_dc_sign_level_coeff_neighbor_array,
-                    (uint8_t*)&dcSignLevelCoeff,
+                    (uint8_t*)&dc_sign_level_coeff,
                     ROUND_UV(cu_origin_x + blk_geom->tx_org_x[cu_ptr->tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
                     ROUND_UV(cu_origin_y + blk_geom->tx_org_y[cu_ptr->tx_depth][txb_itr] - blk_geom->origin_y) >> 1,
                     blk_geom->tx_width_uv[cu_ptr->tx_depth][txb_itr],
@@ -1298,12 +1298,12 @@ static EbErrorType Av1EncodeCoeff1D(
 
         // Update the luma Dc Sign Level Coeff Neighbor Array
         {
-            uint8_t dcSignLevelCoeff = (uint8_t)cul_level_y;
+            uint8_t dc_sign_level_coeff = (uint8_t)cul_level_y;
             //if (!txb_ptr->lumaCbf)
-            //    dcSignLevelCoeff = 0;
+            //    dc_sign_level_coeff = 0;
             neighbor_array_unit_mode_write(
                 luma_dc_sign_level_coeff_neighbor_array,
-                (uint8_t*)&dcSignLevelCoeff,
+                (uint8_t*)&dc_sign_level_coeff,
                 cu_origin_x + blk_geom->tx_org_x[txb_itr] - blk_geom->origin_x,
                 cu_origin_y + blk_geom->tx_org_y[txb_itr] - blk_geom->origin_y,
                 blk_geom->tx_width[txb_itr],
@@ -1315,10 +1315,10 @@ static EbErrorType Av1EncodeCoeff1D(
 
         if (blk_geom->has_uv)
         {
-            uint8_t dcSignLevelCoeff = (uint8_t)cul_level_cb;
+            uint8_t dc_sign_level_coeff = (uint8_t)cul_level_cb;
             neighbor_array_unit_mode_write(
                 cb_dc_sign_level_coeff_neighbor_array,
-                (uint8_t*)&dcSignLevelCoeff,
+                (uint8_t*)&dc_sign_level_coeff,
                 ROUND_UV(cu_origin_x + blk_geom->tx_org_x[txb_itr] - blk_geom->origin_x) >> 1,
                 ROUND_UV(cu_origin_y + blk_geom->tx_org_y[txb_itr] - blk_geom->origin_y) >> 1,
                 blk_geom->tx_width_uv[txb_itr],
@@ -1330,10 +1330,10 @@ static EbErrorType Av1EncodeCoeff1D(
         if (blk_geom->has_uv)
             // Update the cr DC Sign Level Coeff Neighbor Array
         {
-            uint8_t dcSignLevelCoeff = (uint8_t)cul_level_cr;
+            uint8_t dc_sign_level_coeff = (uint8_t)cul_level_cr;
             neighbor_array_unit_mode_write(
                 cr_dc_sign_level_coeff_neighbor_array,
-                (uint8_t*)&dcSignLevelCoeff,
+                (uint8_t*)&dc_sign_level_coeff,
                 ROUND_UV(cu_origin_x + blk_geom->tx_org_x[txb_itr] - blk_geom->origin_x) >> 1,
                 ROUND_UV(cu_origin_y + blk_geom->tx_org_y[txb_itr] - blk_geom->origin_y) >> 1,
                 blk_geom->tx_width_uv[txb_itr],
@@ -5591,11 +5591,11 @@ EbErrorType ec_update_neighbors(
 
     if (skipCoeff)
     {
-        uint8_t dcSignLevelCoeff = 0;
+        uint8_t dc_sign_level_coeff = 0;
 
         neighbor_array_unit_mode_write(
             luma_dc_sign_level_coeff_neighbor_array,
-            (uint8_t*)&dcSignLevelCoeff,
+            (uint8_t*)&dc_sign_level_coeff,
             blkOriginX,
             blkOriginY,
             blk_geom->bwidth,
@@ -5605,7 +5605,7 @@ EbErrorType ec_update_neighbors(
         if (blk_geom->has_uv)
             neighbor_array_unit_mode_write(
                 cb_dc_sign_level_coeff_neighbor_array,
-                (uint8_t*)&dcSignLevelCoeff,
+                (uint8_t*)&dc_sign_level_coeff,
                 ((blkOriginX >> 3) << 3) >> 1,
                 ((blkOriginY >> 3) << 3) >> 1,
                 blk_geom->bwidth_uv,
@@ -5615,7 +5615,7 @@ EbErrorType ec_update_neighbors(
         if (blk_geom->has_uv)
             neighbor_array_unit_mode_write(
                 cr_dc_sign_level_coeff_neighbor_array,
-                (uint8_t*)&dcSignLevelCoeff,
+                (uint8_t*)&dc_sign_level_coeff,
                 ((blkOriginX >> 3) << 3) >> 1,
                 ((blkOriginY >> 3) << 3) >> 1,
                 blk_geom->bwidth_uv,
