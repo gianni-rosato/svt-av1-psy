@@ -10,6 +10,7 @@
 #include "EbSystemResourceManager.h"
 #if ALTREF_FILTERING_SUPPORT
 #include "EbPictureControlSet.h"
+#include "EbSequenceControlSet.h"
 #endif
 
 /**************************************
@@ -72,10 +73,42 @@ extern EbErrorType picture_decision_context_ctor(
 extern void* picture_decision_kernel(void *input_ptr);
 
 #if ALTREF_FILTERING_SUPPORT
+
 void DecimateInputPicture(PictureParentControlSet       *picture_control_set_ptr,
                           EbPictureBufferDesc           *inputPaddedPicturePtr,
                           EbPictureBufferDesc           *quarterDecimatedPicturePtr,
                           EbPictureBufferDesc           *sixteenthDecimatedPicturePtr);
+
+void PadPictureToMultipleOfMinCuSizeDimensions(
+        SequenceControlSet            *sequence_control_set_ptr,
+        EbPictureBufferDesc           *input_picture_ptr);
+
+void PicturePreProcessingOperations(
+        PictureParentControlSet       *picture_control_set_ptr,
+        EbPictureBufferDesc           *input_picture_ptr,
+        SequenceControlSet            *sequence_control_set_ptr,
+        EbPictureBufferDesc           *quarter_decimated_picture_ptr,
+        EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
+        uint32_t                           sb_total_count,
+        EbAsm                           asm_type);
+
+void PadPictureToMultipleOfLcuDimensions(
+        EbPictureBufferDesc   *input_padded_picture_ptr);
+
+void GatheringPictureStatistics(
+        SequenceControlSet            *sequence_control_set_ptr,
+        PictureParentControlSet       *picture_control_set_ptr,
+        EbPictureBufferDesc           *input_picture_ptr,
+        EbPictureBufferDesc           *input_padded_picture_ptr,
+        EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
+        uint32_t                      sb_total_count,
+        EbAsm                         asm_type);
+
+#if ALT_REF_OVERLAY
+void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr,
+                      EbPictureBufferDesc* outputPicturePtr);
+#endif
+
 #endif
 
 #endif // EbPictureDecision_h

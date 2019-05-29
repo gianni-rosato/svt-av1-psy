@@ -535,6 +535,8 @@ void apply_filtering_c(const uint8_t *y_src,
     memset(u_diff_sse, 0, BLK_PELS * sizeof(uint16_t));
     memset(v_diff_sse, 0, BLK_PELS * sizeof(uint16_t));
 
+    assert(use_whole_blk == 0);
+
     // Calculate squared differences for each pixel of the block (pred-orig)
     calculate_squared_errors(y_src, y_src_stride, y_pre, y_pre_stride, y_diff_sse,
                              block_width, block_height);
@@ -1654,6 +1656,7 @@ int pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_p
 
 }
 
+#if LIBAOM_FILTERING
 int read_YUV_frame_from_file(uint8_t **alt_ref_buffer, int picture_number, int width, int height, int stride){
 
     char filename[30] = "filtered_frame_libaom_";
@@ -1689,6 +1692,7 @@ int read_YUV_frame_from_file(uint8_t **alt_ref_buffer, int picture_number, int w
 
     return 0;
 }
+#endif
 
 void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_ptr,
                                     PictureParentControlSet *picture_control_set_ptr_central,
