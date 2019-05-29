@@ -159,17 +159,18 @@ int dec_is_inter_block(const ModeInfo_t *mbmi) {
     return is_intrabc_block(mbmi) || mbmi->ref_frame[0] > INTRA_FRAME;
 }
 
-
-int max_block_wide(BlockSize bsize) {
-    int max_blocks_wide = block_size_wide[bsize];
-
-    // Scale the width in the transform block unit.
+int max_block_wide(PartitionInfo_t *part_info, int plane_bsize, int subx) {
+    int max_blocks_wide = block_size_wide[plane_bsize];
+    if (part_info->mb_to_right_edge < 0)
+        max_blocks_wide += part_info->mb_to_right_edge >> (3 + subx); 
+    //Scale width in the transform block unit.
     return max_blocks_wide >> tx_size_wide_log2[0];
 }
 
-int max_block_high(BlockSize bsize) {
-    int max_blocks_high = block_size_high[bsize];
-
+int max_block_high(PartitionInfo_t *part_info, int plane_bsize, int suby) {
+    int max_blocks_high = block_size_high[plane_bsize];
+    if (part_info->mb_to_bottom_edge < 0)
+        max_blocks_high += part_info->mb_to_bottom_edge >> (3 + suby);
     // Scale the height in the transform block unit.
     return max_blocks_high >> tx_size_high_log2[0];
 }

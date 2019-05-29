@@ -56,10 +56,10 @@ static void showHelp()
     H0( " -o <arg>                  Output file name \n");
     H0( " -skip <arg>               Skip the first n input frames \n");
     H0( " -limit <arg>              Stop decoding after n frames \n");
-    H0( " -bit-depth <arg>          Input bitdepth. [400, 420, 422, 444]\n");
+    H0( " -bit-depth <arg>          Input bitdepth. [8, 10] \n");
     H0( " -w <arg>                  Input picture width \n");
     H0( " -h <arg>                  Input picture height \n");
-    H0( " -colour-space <arg>       Input picture colour space \n");
+    H0( " -colour-space <arg>       Input picture colour space. [400, 420, 422, 444]\n");
     H0( " -md5                      MD5 support flag \n");
 
     exit(1);

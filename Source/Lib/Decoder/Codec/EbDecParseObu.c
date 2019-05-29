@@ -2170,7 +2170,7 @@ void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header,
 
 // Read Tile group information
 EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
-                                TilesInfo *tiles_info, ObuHeader obu_header)
+                                TilesInfo *tiles_info, ObuHeader *obu_header)
 {
     EbErrorType status = EB_ErrorNone;
 
@@ -2186,7 +2186,8 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         tile_start_and_end_present_flag = dec_get_bits(bs, 1);
         PRINT_FRAME("tile_start_and_end_present_flag", tile_start_and_end_present_flag);
     }
-    if (obu_header.obu_type == OBU_FRAME)
+
+    if (obu_header->obu_type == OBU_FRAME)
         assert(tile_start_and_end_present_flag == 0);
     if (num_tiles == 1 || !tile_start_and_end_present_flag) {
         tg_start = 0;
@@ -2204,7 +2205,7 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     byte_alignment(bs);
     end_position = get_position(bs);
     header_bytes = (end_position - start_position) / 8;
-    obu_header.payload_size -= header_bytes;
+    obu_header->payload_size -= header_bytes;
 
     for (int tile_num = tg_start; tile_num <= tg_end; tile_num++) {
 
@@ -2212,11 +2213,12 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         tile_col = tile_num % tiles_info->tile_cols;
 
         if (tile_num == tg_end) {
-            tile_size = obu_header.payload_size;
+            tile_size = obu_header->payload_size;
         }
         else {
-            tile_size = dec_get_bits_le(bs, tiles_info->tile_size_bytes + 1) + 1;
-            PRINT_FRAME("tile_size_minus_1", (tile_size-1));
+            tile_size = dec_get_bits_le(bs, tiles_info->tile_size_bytes) + 1;
+            obu_header->payload_size -= (tiles_info->tile_size_bytes + tile_size);
+            PRINT_FRAME("tile_size_minus_1", (tile_size));
         }
         
         svt_tile_init(&parse_ctxt->cur_tile_info, &dec_handle_ptr->frame_header,
@@ -2235,6 +2237,9 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
         /* TO DO decode_tile() */
         status = parse_tile(bs, dec_handle_ptr, tiles_info, tile_row, tile_col);
+
+        dec_bits_init(bs, (uint8_t *)parse_ctxt->r.ec.bptr, obu_header->payload_size);
+
         if (status != EB_ErrorNone)
             return status;
     }
@@ -2333,7 +2338,7 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, const uint8_t *data
             if (!dec_handle_ptr->seen_frame_header)
                 return EB_Corrupt_Frame;
             status = read_tile_group_obu(&bs, dec_handle_ptr, 
-                &dec_handle_ptr->frame_header.tiles_info, obu_header);
+                &dec_handle_ptr->frame_header.tiles_info, &obu_header);
             if (status != EB_ErrorNone) return status;
             break;
 

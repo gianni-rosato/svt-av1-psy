@@ -60,8 +60,9 @@ void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
     EbSvtIOFormat* img = (EbSvtIOFormat*)recon_buffer->p_buffer;
 
     // Support only for 420 images
-    assert(cli->bit_depth == EB_EIGHT_BIT);
     assert(cli->fmt == EB_YUV420);
+
+    const int bytes_per_sample = (cli->bit_depth == EB_EIGHT_BIT) ? 1 : 2;
 
     // Write luma plane
     unsigned char *buf = img->luma;
@@ -70,8 +71,8 @@ void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
     int h = cli->height;
     int y = 0;
     for (y = 0; y < h; ++y) {
-        fwrite(buf, 1, w, cli->outFile);
-        buf += stride;
+        fwrite(buf, bytes_per_sample, w, cli->outFile);
+        buf += (stride* bytes_per_sample);
     }
 
     //Write chroma planes
@@ -80,15 +81,15 @@ void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
     w /= 2;
     h /= 2;
     for (y = 0; y < h; ++y) {
-        fwrite(buf, 1, w, cli->outFile);
-        buf += stride;
+        fwrite(buf, bytes_per_sample, w, cli->outFile);
+        buf += (stride* bytes_per_sample);
     }
 
     buf = img->cr;
     stride = img->cr_stride;
     for (y = 0; y < h; ++y) {
-        fwrite(buf, 1, w, cli->outFile);
-        buf += stride;
+        fwrite(buf, bytes_per_sample, w, cli->outFile);
+        buf += (stride* bytes_per_sample);
     }
 
     fflush(cli->outFile);
@@ -162,14 +163,18 @@ int32_t main(int32_t argc, char* argv[])
         }
 
         assert(config_ptr->max_color_format == EB_YUV420);
-        assert(config_ptr->max_bit_depth == EB_EIGHT_BIT);
+        assert(config_ptr->max_bit_depth < EB_TWELVE_BIT);
 
         int enable_md5 = cli.enable_md5;
 
         EbBufferHeaderType *recon_buffer = NULL;
         recon_buffer = (EbBufferHeaderType*)malloc(sizeof(EbBufferHeaderType));
         recon_buffer->p_buffer = (uint8_t *)malloc(sizeof(EbSvtIOFormat));
-        int size = sizeof(uint8_t) * cli.height * cli.width;
+
+        int size = (config_ptr->max_bit_depth == EB_EIGHT_BIT) ? 
+                                sizeof(uint8_t) : sizeof(uint16_t);
+        size = size * cli.height * cli.width;
+
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->luma = (uint8_t*)malloc(size);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cb = (uint8_t*)malloc(size >> 2);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cr = (uint8_t*)malloc(size >> 2);
