@@ -8,16 +8,9 @@ include(CheckCCompilerFlag)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0>=1.8)
-include_directories(${GSTREAMER_INCLUDE_DIRS})
-
 pkg_check_modules(GSTREAMER_BASE REQUIRED gstreamer-base-1.0>=1.8)
-include_directories(${GSTREAMER_BASE_INCLUDE_DIRS})
-
 pkg_check_modules(GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0>=1.8)
-include_directories(${GSTREAMER_VIDEO_INCLUDE_DIRS})
-
 pkg_check_modules(SVT_AV1 REQUIRED SvtAv1Enc)
-include_directories (${SVT_AV1_INCLUDE_DIRS})
 
 set(CMAKE_C_FLAGS "-fstack-protector-strong -fPIE -fPIC -D_FORTIFY_SOURCE=2 -O2 -flto -Wall -Wextra -Wformat -Wformat-security")
 set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now -pie ")
