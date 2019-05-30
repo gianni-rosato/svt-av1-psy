@@ -14135,6 +14135,10 @@ extern "C" {
         uint32_t                              zz_cost_average;                    // used by ModeDecisionConfigurationProcess()
 #endif
         uint16_t                              non_moving_index_average;            // used by ModeDecisionConfigurationProcess()
+
+#if ADAPTIVE_QP_SCALING
+        uint16_t                              qp_scaling_average_complexity;
+#endif
 #if !MEMORY_FOOTPRINT_OPT
         EbBool                               *sb_isolated_non_homogeneous_area_array;            // used by ModeDecisionConfigurationProcess()
         uint8_t                              *cu32x32_clean_sparse_coeff_map_array; //32x32 cu array for clean sparse coeff

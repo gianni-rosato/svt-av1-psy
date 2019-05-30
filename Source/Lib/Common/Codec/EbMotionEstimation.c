@@ -9762,9 +9762,11 @@ EbErrorType motion_estimate_lcu(
 #endif
 
     }
-
+#if ADAPTIVE_QP_SCALING
+    {
+#else
     if (sequence_control_set_ptr->static_config.rate_control_mode) {
-
+#endif
         // Compute the sum of the distortion of all 16 16x16 (best) blocks in the LCU
         picture_control_set_ptr->rc_me_distortion[sb_index] = 0;
 #if MRP_ME
