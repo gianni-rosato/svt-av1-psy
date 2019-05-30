@@ -3024,7 +3024,7 @@ EbErrorType eb_svt_enc_init_parameter(
 	config_ptr->enable_altrefs = EB_TRUE;
     config_ptr->altref_nframes = 7;
     config_ptr->altref_strength = 5;
-    config_ptr->enable_overlays = EB_TRUE;
+    config_ptr->enable_overlays = EB_FALSE;
 
     return return_error;
 }
