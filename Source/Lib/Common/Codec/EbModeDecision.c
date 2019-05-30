@@ -70,7 +70,7 @@ uint8_t get_list_idx(uint8_t ref_type) {
 };
 #endif
 
-#if  MCP_4XN_FIX 
+#if  MCP_4XN_FIX
 uint8_t get_ref_frame_idx(uint8_t ref_type) {
 
 #if NORMAL_ORDER
@@ -661,7 +661,7 @@ int8_t BIPRED_3x3_Y_POS[BIPRED_3x3_REFINMENT_POSITIONS] = { 0, 1, 1, 1, 0, -1, -
 
 void Unipred3x3CandidatesInjection(
 #if MEMORY_FOOTPRINT_OPT_ME_MV
-    const SequenceControlSet  *sequence_control_set_ptr, 
+    const SequenceControlSet  *sequence_control_set_ptr,
 #endif
     PictureControlSet         *picture_control_set_ptr,
     ModeDecisionContext       *context_ptr,
@@ -826,14 +826,14 @@ void Unipred3x3CandidatesInjection(
                     continue;
             }
 #if MD_INJECTION
-#if MEMORY_FOOTPRINT_OPT_ME_MV  
+#if MEMORY_FOOTPRINT_OPT_ME_MV
 #if FROM_7_TO_4_MV
             int16_t to_inject_mv_x = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2) + list1_ref_index].x_mv + BIPRED_3x3_X_POS[bipredIndex]) << 1;
             int16_t to_inject_mv_y = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2) + list1_ref_index].y_mv + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
 #else
             int16_t to_inject_mv_x = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_results->me_mv_array[me2Nx2NTableOffset][4 + list1_ref_index].x_mv + BIPRED_3x3_X_POS[bipredIndex]) << 1;
             int16_t to_inject_mv_y = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_results->me_mv_array[me2Nx2NTableOffset][4 + list1_ref_index].y_mv + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
-#endif                     
+#endif
 #else
             int16_t to_inject_mv_x = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_block_results_ptr->x_mv_l1 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
             int16_t to_inject_mv_y = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_block_results_ptr->y_mv_l1 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
@@ -841,7 +841,7 @@ void Unipred3x3CandidatesInjection(
 #else
             int16_t to_inject_mv_x = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (mePuResult->x_mv_l1 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
             int16_t to_inject_mv_y = use_close_loop_me ? (inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (mePuResult->y_mv_l1 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
-#endif  
+#endif
 #if MRP_DUPLICATION_FIX
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
             if (context_ptr->injected_mv_count_l1 == 0 || mrp_is_already_injected_mv_l1(context_ptr, to_inject_mv_x, to_inject_mv_y, to_inject_ref_type) == EB_FALSE) {
@@ -856,13 +856,13 @@ void Unipred3x3CandidatesInjection(
                 candidateArray[canTotalCnt].inter_mode = NEWMV;
                 candidateArray[canTotalCnt].pred_mode = NEWMV;
                 candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
-            
+
                 candidateArray[canTotalCnt].is_compound = 0;
                 candidateArray[canTotalCnt].is_new_mv = 1;
                 candidateArray[canTotalCnt].is_zero_mv = 0;
-            
+
                 candidateArray[canTotalCnt].drl_index = 0;
-            
+
                 // Set the MV to ME result
                 candidateArray[canTotalCnt].motion_vector_xl1 = to_inject_mv_x;
                 candidateArray[canTotalCnt].motion_vector_yl1 = to_inject_mv_y;
@@ -875,14 +875,14 @@ void Unipred3x3CandidatesInjection(
                 candidateArray[canTotalCnt].ref_frame_index_l1 = list1_ref_index;
 #else
                 candidateArray[canTotalCnt].ref_frame_type = BWDREF_FRAME;
-#endif            
+#endif
 #if ATB_TX_TYPE_SUPPORT_PER_TU
                 candidateArray[canTotalCnt].transform_type[0] = DCT_DCT;
                 candidateArray[canTotalCnt].transform_type_uv = DCT_DCT;
-#else  
+#else
                 candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                 candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
-#endif   
+#endif
                 ChooseBestAv1MvPred(
                     context_ptr,
                     candidateArray[canTotalCnt].md_rate_estimation_ptr,
@@ -895,12 +895,12 @@ void Unipred3x3CandidatesInjection(
                     0, 0,
                     &candidateArray[canTotalCnt].drl_index,
                     bestPredmv);
-            
+
                 candidateArray[canTotalCnt].motion_vector_pred_x[REF_LIST_1] = bestPredmv[0].as_mv.col;
                 candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_1] = bestPredmv[0].as_mv.row;
 #if CHECK_CAND
                 INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else           
+#else
                 ++canTotalCnt;
 #endif
                 context_ptr->injected_mv_x_l1_array[context_ptr->injected_mv_count_l1] = to_inject_mv_x;
@@ -1060,7 +1060,7 @@ void Bipred3x3CandidatesInjection(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
             candidateArray[canTotalCnt].transform_type[0] = DCT_DCT;
             candidateArray[canTotalCnt].transform_type_uv = DCT_DCT;
-#else  
+#else
             candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
             candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -1185,7 +1185,7 @@ void Bipred3x3CandidatesInjection(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
                 candidateArray[canTotalCnt].transform_type[0] = DCT_DCT;
                 candidateArray[canTotalCnt].transform_type_uv = DCT_DCT;
-#else  
+#else
                 candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                 candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -1362,7 +1362,7 @@ void eighth_pel_unipred_refinement(
                         candidateArray[canTotalCnt].pred_mv_weight = 0;
                         candidateArray[canTotalCnt].ref_frame_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
                         candidateArray[canTotalCnt].ref_frame_index_l0 = -1;
-                        candidateArray[canTotalCnt].ref_frame_index_l1 = list1_ref_index;          
+                        candidateArray[canTotalCnt].ref_frame_index_l1 = list1_ref_index;
                         candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                         candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 
@@ -1573,7 +1573,7 @@ void eighth_pel_bipred_refinement(
     (*candidateTotalCnt) = canTotalCnt;
     return;
 }
-    
+
 #endif
 
 uint8_t GetMaxDrlIndex(uint8_t  refmvCnt, PredictionMode   mode)
@@ -1672,7 +1672,7 @@ void inject_mvp_candidates_II(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
             candidateArray[canIdx].transform_type[0] = DCT_DCT;
             candidateArray[canIdx].transform_type_uv = DCT_DCT;
-#else  
+#else
             candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
             candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -1743,7 +1743,7 @@ void inject_mvp_candidates_II(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
                 candidateArray[canIdx].transform_type[0] = DCT_DCT;
                 candidateArray[canIdx].transform_type_uv = DCT_DCT;
-#else  
+#else
                 candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                 candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -1773,7 +1773,7 @@ void inject_mvp_candidates_II(
         uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
         uint8_t ref_idx_1 = get_ref_frame_idx(rf[1]);
 
-#if !MRP_MD_UNI_DIR_BIPRED    
+#if !MRP_MD_UNI_DIR_BIPRED
         if (list_idx_0 != list_idx_1) //only bi-directional compound for now
 #endif
         {
@@ -1819,7 +1819,7 @@ void inject_mvp_candidates_II(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
                 candidateArray[canIdx].transform_type[0] = DCT_DCT;
                 candidateArray[canIdx].transform_type_uv = DCT_DCT;
-#else  
+#else
                 candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                 candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -1887,7 +1887,7 @@ void inject_mvp_candidates_II(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
                     candidateArray[canIdx].transform_type[0] = DCT_DCT;
                     candidateArray[canIdx].transform_type_uv = DCT_DCT;
-#else  
+#else
                     candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                     candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -1916,9 +1916,9 @@ void InjectAv1MvpCandidates(
     MvReferenceFrame               *ref_frames,
     PictureControlSet              *picture_control_set_ptr,
     uint32_t                            lcuAddr,
-#if !M8_SKIP_BLK    
+#if !M8_SKIP_BLK
     uint32_t                            leaf_index,
-#endif    
+#endif
     EbBool                           allow_bipred,
     uint32_t                           *candTotCnt)
 {
@@ -1930,7 +1930,7 @@ void InjectAv1MvpCandidates(
 //MRP_LIST_REF_IDX_TYPE_LT
     // CHECK_CAND  (x5)
     // MRP_DUPLICATION_FIX (x12)
-#if !M8_SKIP_BLK  
+#if !M8_SKIP_BLK
     (void)leaf_index;
 #endif
     (void)lcuAddr;
@@ -2265,7 +2265,7 @@ void inject_warped_motion_candidates(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
         candidateArray[canIdx].transform_type[0] = DCT_DCT;
         candidateArray[canIdx].transform_type_uv = DCT_DCT;
-#else  
+#else
         candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
         candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -2347,7 +2347,7 @@ void inject_warped_motion_candidates(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
             candidateArray[canIdx].transform_type[0] = DCT_DCT;
             candidateArray[canIdx].transform_type_uv = DCT_DCT;
-#else  
+#else
             candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
             candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -2465,7 +2465,7 @@ void inject_warped_motion_candidates(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
         candidateArray[canIdx].transform_type[0] = DCT_DCT;
         candidateArray[canIdx].transform_type_uv = DCT_DCT;
-#else  
+#else
         candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
         candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -2566,9 +2566,9 @@ void  inject_inter_candidates(
 
 
     max_number_of_pus_per_sb = picture_control_set_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
-#if MEMORY_FOOTPRINT_OPT_ME_MV   
+#if MEMORY_FOOTPRINT_OPT_ME_MV
     context_ptr->me_block_offset =
-        (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 || context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) ? 
+        (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 || context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) ?
             0 :
             get_me_info_index(max_number_of_pus_per_sb, context_ptr->blk_geom, geom_offset_x, geom_offset_y);
 #else
@@ -2582,7 +2582,7 @@ void  inject_inter_candidates(
 #if MD_INJECTION
     MeLcuResults *me_results            = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
 
-#if MEMORY_FOOTPRINT_OPT_ME_MV 
+#if MEMORY_FOOTPRINT_OPT_ME_MV
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
     const MeCandidate *me_block_results = me_results->me_candidate[context_ptr->me_block_offset];
 #else
@@ -2602,13 +2602,13 @@ void  inject_inter_candidates(
 #if MRP_DISABLE_ADDED_CAND_M1
     allow_bipred = (picture_control_set_ptr->enc_mode >= ENC_M1 && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_FALSE : allow_bipred;
 #endif
-#if !INJ_MVP 
+#if !INJ_MVP
    EbBool amp_allow_bipred = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0 || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
 #endif
 #else
     EbBool allow_bipred = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0 || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
 #endif
-#else    
+#else
     EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
 #endif
     IntMv  bestPredmv[2] = { {0}, {0} };
@@ -2697,7 +2697,7 @@ void  inject_inter_candidates(
 
             if (inter_direction == 0) {
 
-#if MEMORY_FOOTPRINT_OPT_ME_MV                               
+#if MEMORY_FOOTPRINT_OPT_ME_MV
                 int16_t to_inject_mv_x = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].x_mv << 1;
                 int16_t to_inject_mv_y = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].y_mv << 1;
 #else
@@ -2745,7 +2745,7 @@ void  inject_inter_candidates(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
                     candidateArray[canTotalCnt].transform_type[0] = DCT_DCT;
                     candidateArray[canTotalCnt].transform_type_uv = DCT_DCT;
-#else  
+#else
                     candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                     candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -2787,13 +2787,13 @@ void  inject_inter_candidates(
                    NEWMV L1
                ************* */
                 if (inter_direction == 1) {
-#if MEMORY_FOOTPRINT_OPT_ME_MV     
+#if MEMORY_FOOTPRINT_OPT_ME_MV
 #if FROM_7_TO_4_MV
                     int16_t to_inject_mv_x = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2) + list1_ref_index].x_mv << 1;
                     int16_t to_inject_mv_y = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2) + list1_ref_index].y_mv << 1;
 #else
                     int16_t to_inject_mv_x = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][4 + list1_ref_index].x_mv << 1;
-                    int16_t to_inject_mv_y = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][4 + list1_ref_index].y_mv << 1;                
+                    int16_t to_inject_mv_y = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][4 + list1_ref_index].y_mv << 1;
 #endif
 #else
                     int16_t to_inject_mv_x = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_block_results_ptr->x_mv_l1 << 1;
@@ -2880,13 +2880,13 @@ void  inject_inter_candidates(
                 if (allow_bipred) {
 
                     if (inter_direction == 2) {
-#if MEMORY_FOOTPRINT_OPT_ME_MV      
+#if MEMORY_FOOTPRINT_OPT_ME_MV
                         int16_t to_inject_mv_x_l0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].x_mv << 1;
                         int16_t to_inject_mv_y_l0 = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][list0_ref_index].y_mv << 1;
 #if FROM_7_TO_4_MV
                         int16_t to_inject_mv_x_l1 = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? (me_block_results_ptr->ref1_list << 2) : (me_block_results_ptr->ref1_list << 1)) + list1_ref_index].x_mv << 1;
                         int16_t to_inject_mv_y_l1 = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? (me_block_results_ptr->ref1_list << 2) : (me_block_results_ptr->ref1_list << 1)) + list1_ref_index].y_mv << 1;
-#else   
+#else
                         int16_t to_inject_mv_x_l1 = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][(me_block_results_ptr->ref1_list << 2) + list1_ref_index].x_mv << 1;
                         int16_t to_inject_mv_y_l1 = use_close_loop_me ? ss_mecontext->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[context_ptr->me_block_offset][(me_block_results_ptr->ref1_list << 2) + list1_ref_index].y_mv << 1;
 #endif
@@ -3051,7 +3051,7 @@ void  inject_inter_candidates(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
                 candidateArray[canTotalCnt].transform_type[0] = DCT_DCT;
                 candidateArray[canTotalCnt].transform_type_uv = DCT_DCT;
-#else  
+#else
                 candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                 candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -3122,7 +3122,7 @@ void  inject_inter_candidates(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
                 candidateArray[canTotalCnt].transform_type[0] = DCT_DCT;
                 candidateArray[canTotalCnt].transform_type_uv = DCT_DCT;
-#else  
+#else
                 candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                 candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 #endif
@@ -3223,7 +3223,7 @@ void  inject_inter_candidates(
                     ss_mecontext,
                     use_close_loop_me,
                     close_loop_me_index,
-#if !MEMORY_FOOTPRINT_OPT_ME_MV 
+#if !MEMORY_FOOTPRINT_OPT_ME_MV
                     me2Nx2NTableOffset,
 #endif
                     &canTotalCnt);
@@ -3257,7 +3257,7 @@ void  inject_inter_candidates(
                             use_close_loop_me,
                             close_loop_me_index,
                             &canTotalCnt);
-                
+
 #endif
 #if BASE_LAYER_REF
             }
@@ -3335,7 +3335,7 @@ void  inject_inter_candidates(
     uint32_t max_number_of_pus_per_sb;
 
     max_number_of_pus_per_sb = picture_control_set_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
-    
+
     uint32_t me2Nx2NTableOffset;
 
         me2Nx2NTableOffset = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 || context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) ? 0 :
@@ -4049,18 +4049,18 @@ void  inject_intra_candidates_ois(
 #if CFL_FIX
     EbBool                      disable_cfl_flag = (MAX(context_ptr->blk_geom->bheight, context_ptr->blk_geom->bwidth) > 32) ? EB_TRUE : EB_FALSE;
 #else
-    EbBool                      disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 || 
-                                                    context_ptr->blk_geom->bwidth == 4  ||   
+    EbBool                      disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 ||
+                                                    context_ptr->blk_geom->bwidth == 4  ||
                                                     context_ptr->blk_geom->bheight == 4)    ? EB_TRUE : EB_FALSE;
 #endif
 
     OisSbResults    *ois_sb_results_ptr = picture_control_set_ptr->parent_pcs_ptr->ois_sb_results[sb_ptr->index];
     OisCandidate     *ois_blk_ptr = ois_sb_results_ptr->ois_candidate_array[ep_to_pa_block_index[context_ptr->blk_geom->blkidx_mds]];
     uint8_t              total_intra_luma_mode = ois_sb_results_ptr-> total_ois_intra_candidate[ep_to_pa_block_index[context_ptr->blk_geom->blkidx_mds]];
-    
+
 
     for (intra_candidate_counter = 0; intra_candidate_counter < total_intra_luma_mode; ++intra_candidate_counter) {
-                
+
 
         intra_mode = ois_blk_ptr[can_total_cnt].intra_mode;
         assert(intra_mode < INTRA_MODES);
@@ -4077,7 +4077,7 @@ void  inject_intra_candidates_ois(
             candidate_array[can_total_cnt].use_angle_delta = use_angle_delta ? candidate_array[can_total_cnt].is_directional_mode_flag : 0;
 #endif
             candidate_array[can_total_cnt].angle_delta[PLANE_TYPE_Y] = angle_delta;
-            candidate_array[can_total_cnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[intra_mode] : 
+            candidate_array[can_total_cnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[intra_mode] :
                                                                context_ptr->chroma_level <= CHROMA_MODE_1 ? UV_CFL_PRED : UV_DC_PRED;
 
             candidate_array[can_total_cnt].cfl_alpha_signs = 0;
@@ -4092,7 +4092,7 @@ void  inject_intra_candidates_ois(
                 candidate_array[can_total_cnt].transform_type_uv = DCT_DCT;
             else
                 candidate_array[can_total_cnt].transform_type_uv =
-#else  
+#else
             candidate_array[can_total_cnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
 
             if (candidate_array[can_total_cnt].intra_chroma_mode == UV_CFL_PRED)
@@ -4110,7 +4110,7 @@ void  inject_intra_candidates_ois(
                     0,
                     0,
 #if ATB_SUPPORT
-                    context_ptr->blk_geom->txsize_uv[0][0], 
+                    context_ptr->blk_geom->txsize_uv[0][0],
 #else
                     context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -4136,7 +4136,7 @@ void  inject_intra_candidates_ois(
             candidate_array[can_total_cnt].use_angle_delta = candidate_array[can_total_cnt].is_directional_mode_flag;
 #endif
             candidate_array[can_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
-            candidate_array[can_total_cnt].intra_chroma_mode =  disable_cfl_flag ? intra_luma_to_chroma[intra_mode] : 
+            candidate_array[can_total_cnt].intra_chroma_mode =  disable_cfl_flag ? intra_luma_to_chroma[intra_mode] :
                                                                 context_ptr->chroma_level <= CHROMA_MODE_1 ? UV_CFL_PRED : UV_DC_PRED;
 
             candidate_array[can_total_cnt].cfl_alpha_signs = 0;
@@ -4168,7 +4168,7 @@ void  inject_intra_candidates_ois(
                     0,
                     0,
 #if ATB_SUPPORT
-                    context_ptr->blk_geom->txsize_uv[0][0], 
+                    context_ptr->blk_geom->txsize_uv[0][0],
 #else
                     context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -4550,8 +4550,8 @@ void  inject_intra_candidates(
 #if CFL_FIX
     EbBool                      disable_cfl_flag = (MAX(context_ptr->blk_geom->bheight, context_ptr->blk_geom->bwidth) > 32) ? EB_TRUE : EB_FALSE;
 #else
-    EbBool                      disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 || 
-                                                    context_ptr->blk_geom->bwidth == 4  ||   
+    EbBool                      disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 ||
+                                                    context_ptr->blk_geom->bwidth == 4  ||
                                                     context_ptr->blk_geom->bheight == 4)    ? EB_TRUE : EB_FALSE;
 #endif
 
@@ -4667,8 +4667,8 @@ void  inject_intra_candidates(
                         }
 #else
                         const int32_t disable_ang_uv = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) && context_ptr->blk_geom->has_uv ? 1 : 0;
-                        candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ? 
-                            intra_luma_to_chroma[openLoopIntraCandidate] : 
+                        candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ?
+                            intra_luma_to_chroma[openLoopIntraCandidate] :
                             (context_ptr->chroma_level <= CHROMA_MODE_1) ?
                                 UV_CFL_PRED :
                                 UV_DC_PRED;
@@ -4707,7 +4707,7 @@ void  inject_intra_candidates(
                                 0,
                                 0,
 #if ATB_SUPPORT
-                                context_ptr->blk_geom->txsize_uv[0][0], 
+                                context_ptr->blk_geom->txsize_uv[0][0],
 #else
                                 context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -4755,8 +4755,8 @@ void  inject_intra_candidates(
             }
 #else
             const int32_t disable_ang_uv = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) && context_ptr->blk_geom->has_uv ? 1 : 0;
-            candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ? 
-                intra_luma_to_chroma[openLoopIntraCandidate] : 
+            candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ?
+                intra_luma_to_chroma[openLoopIntraCandidate] :
                 (context_ptr->chroma_level <= CHROMA_MODE_1) ?
                     UV_CFL_PRED :
                     UV_DC_PRED;
@@ -4796,7 +4796,7 @@ void  inject_intra_candidates(
                     0,
                     0,
 #if ATB_SUPPORT
-                    context_ptr->blk_geom->txsize_uv[0][0], 
+                    context_ptr->blk_geom->txsize_uv[0][0],
 #else
                     context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -4890,7 +4890,7 @@ EbErrorType ProductGenerateMdCandidatesCu(
                 context_ptr,
                 sb_ptr,
                 &canTotalCnt);
-        else 
+        else
             if (inject_intra_candidate)
             inject_intra_candidates(
                 picture_control_set_ptr,

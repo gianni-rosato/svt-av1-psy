@@ -42,7 +42,7 @@ extern "C" {
 #define INVALID_FAST_CANDIDATE_INDEX    ~0
 #define MAX_OIS_CANDIDATES  61  //18//18
 
-    static const uint32_t intra_hev_cmode_to_intra_av1_mode[35] = 
+    static const uint32_t intra_hev_cmode_to_intra_av1_mode[35] =
     {
         /*SMOOTH_PRED   */  SMOOTH_PRED,                                                        // EB_INTRA_PLANAR
         /*DC_PRED       */  DC_PRED,                                                            // EB_INTRA_DC
@@ -55,7 +55,7 @@ extern "C" {
         /*D67_PRED      */  D67_PRED, D67_PRED, D67_PRED,                                       // EB_INTRA_MODE_28 -> EB_INTRA_MODE_30
         /*D45_PRED      */  D45_PRED, D45_PRED, D45_PRED, D45_PRED,                             // EB_INTRA_MODE_31 -> EB_INTRA_MODE_34
     };
-    static const int8_t hevcMode_to_angle_delta_map[35] = 
+    static const int8_t hevcMode_to_angle_delta_map[35] =
     {
         /*SMOOTH_PRED   */   0,                                                                 // EB_INTRA_PLANAR ->
         /*DC_PRED       */   0,                                                                 // EB_INTRA_DC
@@ -69,7 +69,7 @@ extern "C" {
         /*D45_PRED      */   3, 2, 0, -2,                                                       // EB_INTRA_MODE_31 -> EB_INTRA_MODE_34
     };
     static const uint32_t intra_luma_to_chroma[INTRA_MODES] = // EB_INTRA_PLANAR
-    {                     
+    {
        UV_DC_PRED,        // Average of above and left pixels
        UV_V_PRED,         // Vertical
        UV_H_PRED,         // Horizontal
@@ -85,7 +85,7 @@ extern "C" {
        UV_PAETH_PRED,     // Predict from the direction of smallest gradient
     };
 
-    static const TxType chroma_transform_type[14] = 
+    static const TxType chroma_transform_type[14] =
     {
         /*UV_DC_PRED,          */   DCT_DCT   ,
         /*UV_V_PRED,           */   ADST_DCT  ,
@@ -102,7 +102,7 @@ extern "C" {
         /*UV_PAETH_PRED,       */   ADST_ADST ,
         /*UV_CFL_PRED,          */  DCT_DCT,
     };
-    static const uint8_t av1_is_directional_chroma[UV_INTRA_MODES] = 
+    static const uint8_t av1_is_directional_chroma[UV_INTRA_MODES] =
     {
         /*UV_DC_PRED,        */  0,
         /*UV_V_PRED,         */  0,
@@ -119,7 +119,7 @@ extern "C" {
         /* UV_SMOOTH_H_PRED, */  0,
         /* UV_PAETH_PRED,    */  0,
     };
-    static const uint8_t av1_is_directional[35] = 
+    static const uint8_t av1_is_directional[35] =
     {
         0,                           // EB_INTRA_PLANAR
         0,                           // EB_INTRA_DC
@@ -140,19 +140,19 @@ extern "C" {
     }
     struct PictureControlSet;
 
-    typedef struct MV 
+    typedef struct MV
     {
         int16_t row;
         int16_t col;
     } MV;
 
-    typedef union  IntMv 
+    typedef union  IntMv
     {
         uint32_t as_int;
         MV as_mv;
     } IntMv; /* facilitates faster equality tests and copies */
 
-    typedef struct CandidateMv 
+    typedef struct CandidateMv
     {
         IntMv this_mv;
         IntMv comp_mv;
@@ -163,7 +163,7 @@ extern "C" {
 #define INTER_TX_SIZE_BUF_LEN 16
 #define TXK_TYPE_BUF_LEN 64
 #endif
-    typedef struct MbModeInfo 
+    typedef struct MbModeInfo
     {
         // Common for both INTER and INTRA blocks
         BlockSize sb_type;
@@ -204,7 +204,7 @@ extern "C" {
         MbModeInfo mbmi;
     } ModeInfo;
 
-    typedef struct TileInfo 
+    typedef struct TileInfo
     {
         int32_t mi_row_start, mi_row_end;
         int32_t mi_col_start, mi_col_end;
@@ -213,7 +213,7 @@ extern "C" {
         int32_t tile_col;
     } TileInfo;
 
-    typedef struct MacroBlockDPlane 
+    typedef struct MacroBlockDPlane
     {
 
         int subsampling_x;
@@ -225,7 +225,7 @@ extern "C" {
 
     } MacroBlockDPlane;
 
-    typedef struct MacroBlockPlane 
+    typedef struct MacroBlockPlane
     {
         struct Buf2D src;
 /*
@@ -268,13 +268,13 @@ extern "C" {
     } MACROBLOCKD_PLANE;
 #endif
 
-    typedef struct MacroBlockD 
+    typedef struct MacroBlockD
     {
         // block dimension in the unit of mode_info.
         uint8_t n8_w, n8_h;
         uint8_t n4_w, n4_h;  // for warped motion
         uint8_t ref_mv_count[MODE_CTX_REF_FRAMES];
-        CandidateMv final_ref_mv_stack[MAX_REF_MV_STACK_SIZE];       
+        CandidateMv final_ref_mv_stack[MAX_REF_MV_STACK_SIZE];
         uint8_t is_sec_rect;
         int32_t up_available;
         int32_t left_available;
@@ -305,7 +305,7 @@ extern "C" {
 #endif
     } MacroBlockD;
 
-    typedef struct Macroblock 
+    typedef struct Macroblock
     {
         int32_t rdmult;
         int32_t switchable_restore_cost[RESTORE_SWITCHABLE_TYPES];
@@ -313,7 +313,7 @@ extern "C" {
         int32_t sgrproj_restore_cost[2];
     } Macroblock;
 
-    typedef struct IntraBcContext 
+    typedef struct IntraBcContext
     {
         int32_t rdmult;
         struct MacroBlockDPlane xdplane[MAX_MB_PLANE];
@@ -355,11 +355,11 @@ extern "C" {
 
 #if !ADD_DELTA_QP_SUPPORT
         unsigned                    qp                      : 6;
-#if !MEMORY_FOOTPRINT_OPT  
+#if !MEMORY_FOOTPRINT_OPT
         unsigned                    ref_qp                  : 6;
 #endif
         signed                      delta_qp                : 8; // can be signed 8bits
-#if !MEMORY_FOOTPRINT_OPT  
+#if !MEMORY_FOOTPRINT_OPT
         signed                      org_delta_qp            : 8;
 #endif
 #else
@@ -421,7 +421,7 @@ extern "C" {
 #endif
     } CodingUnit;
 
-        typedef struct OisCandidate 
+        typedef struct OisCandidate
         {
         union {
             struct {
@@ -448,28 +448,28 @@ extern "C" {
         int8_t   delta_qp;
         int8_t   inner_sb_cu_delta_qp;
     } QpmLcuResults_t; // to be cleaned up
-    typedef struct EdgeLcuResults 
+    typedef struct EdgeLcuResults
     {
         uint8_t  edge_block_num;
         uint8_t  isolated_high_intensity_sb; // to be cleanedup
     } EdgeLcuResults;
 
-    typedef struct LargestCodingUnit 
+    typedef struct LargestCodingUnit
     {
         struct PictureControlSet     *picture_control_set_ptr;
-   
+
         CodingUnit                   *final_cu_arr;
-#if !MEMORY_FOOTPRINT_OPT            
+#if !MEMORY_FOOTPRINT_OPT
         uint32_t                        tot_final_cu;
 #endif
         PartitionType                  *cu_partition_array;
-#if !MEMORY_FOOTPRINT_OPT  
+#if !MEMORY_FOOTPRINT_OPT
         // Coding Units
         EbAuraStatus                    aura_status_iii; // aura status for Gold 4K only, used in testing more depths
 #endif
 #if !ADD_DELTA_QP_SUPPORT
         unsigned                        qp                      : 8;
-#endif                                                          
+#endif
         unsigned                        picture_left_edge_flag  : 1;
         unsigned                        picture_top_edge_flag   : 1;
         unsigned                        picture_right_edge_flag : 1;
@@ -487,7 +487,7 @@ extern "C" {
 #if !MEMORY_FOOTPRINT_OPT
         //Bits only used for quantized coeffs
         uint32_t                        quantized_coeffs_bits;
- #endif      
+ #endif
         uint32_t                        total_bits;
 
         // Quantized Coefficients

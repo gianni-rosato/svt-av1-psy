@@ -35,8 +35,8 @@ typedef struct SourceBasedOperationsContext
 
     int16_t     min_delta_qp_weight[3][4];
     int16_t     max_delta_qp_weight[3][4];
-                
-    // Skin     
+
+    // Skin
     uint8_t     grass_percentage_in_picture;
 #if !MEMORY_FOOTPRINT_OPT
     // Variance

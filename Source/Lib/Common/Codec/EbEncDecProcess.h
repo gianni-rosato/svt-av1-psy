@@ -59,7 +59,7 @@ extern "C" {
         // Intra Reference Samples
         IntraReferenceSamples               *intra_ref_ptr;
         IntraReference16bitSamples          *intra_ref_ptr16;  //We need a different buffer for ENC pass then the MD one.
-        
+
         // Coding Unit Workspace---------------------------
         EbPictureBufferDesc                 *residual_buffer;
         EbPictureBufferDesc                 *transform_buffer;
@@ -104,9 +104,9 @@ extern "C" {
         int8_t                                 non_moving_delta_qp;
         EbBool                                 grass_enhancement_flag;
         EbBool                                 backgorund_enhancement;
-#if ADD_DELTA_QP_SUPPORT                       
+#if ADD_DELTA_QP_SUPPORT
         uint16_t                               qpm_qp;
-#else                                          
+#else
         uint8_t                                qpm_qp;
 #endif
 #if !PF_N2_SUPPORT
@@ -123,7 +123,7 @@ extern "C" {
         uint8_t                                upsample_left;
         uint8_t                                upsample_above;
         uint8_t                                upsample_left_chroma;
-        uint8_t                                upsample_above_chroma; 
+        uint8_t                                upsample_above_chroma;
 
         uint16_t                               coded_area_sb;
         uint16_t                               coded_area_sb_uv;
@@ -133,7 +133,7 @@ extern "C" {
         EbBool                                 evaluate_cfl_ep; // 0: CFL is evaluated @ mode decision, 1: CFL is evaluated @ encode pass
 #if  BLK_SKIP_DECISION
         uint8_t                                md_skip_blk;
-#endif    
+#endif
     } EncDecContext;
 
     /**************************************

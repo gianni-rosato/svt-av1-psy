@@ -34,7 +34,7 @@ EbErrorType encode_context_ctor(
     EB_CREATEMUTEX(EbHandle, encode_context_ptr->total_number_of_recon_frame_mutex, sizeof(EbHandle), EB_MUTEX);
     encode_context_ptr->total_number_of_recon_frames = 0;
     encode_context_ptr->statistics_port_active = EB_FALSE;
-    
+
     // Output Buffer Fifos
     encode_context_ptr->stream_output_fifo_ptr = (EbFifo*)EB_NULL;
     encode_context_ptr->recon_output_fifo_ptr = (EbFifo*)EB_NULL;

@@ -16,7 +16,7 @@ extern "C" {
         EbPtr output_bitstream_ptr;
     } Bitstream;
 
-    typedef struct EntropyCoder 
+    typedef struct EntropyCoder
     {
         EbPtr cabac_encode_context_ptr;
         FRAME_CONTEXT   *fc;              /* this frame entropy */

@@ -216,7 +216,7 @@ extern "C" {
     /**************************************
     * Mode Decision Candidate Buffer
     **************************************/
-    typedef struct IntraChromaCandidateBuffer 
+    typedef struct IntraChromaCandidateBuffer
     {
         uint32_t                              mode;
         uint64_t                              cost;
@@ -228,7 +228,7 @@ extern "C" {
     /**************************************
     * Mode Decision Candidate Buffer
     **************************************/
-    typedef struct ModeDecisionCandidateBuffer 
+    typedef struct ModeDecisionCandidateBuffer
     {
         // Candidate Ptr
         ModeDecisionCandidate                *candidate_ptr;
@@ -248,13 +248,13 @@ extern "C" {
         uint64_t                                residual_luma_sad;
         uint64_t                                full_lambda_rate;
         uint64_t                                full_cost_luma;
-                                               
-        // Costs                               
+
+        // Costs
         uint64_t                               *fast_cost_ptr;
         uint64_t                               *full_cost_ptr;
         uint64_t                               *full_cost_skip_ptr;
         uint64_t                               *full_cost_merge_ptr;
-        //                                     
+        //
         uint64_t                                cb_coeff_bits;
         uint64_t                                cb_distortion[2];
         uint64_t                                cr_coeff_bits;
@@ -327,7 +327,7 @@ extern "C" {
       |-------------------------------------------------------------|
     */
 #define INVALID_REF 0xF
-#if  MCP_4XN_FIX 
+#if  MCP_4XN_FIX
     uint8_t get_ref_frame_idx(uint8_t ref_type);
 #else
     extern uint8_t get_ref_frame_idx(uint8_t list, uint8_t ref_type);

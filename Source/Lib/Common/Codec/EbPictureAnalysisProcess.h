@@ -126,7 +126,7 @@ typedef void(*EbWeakChromaFilterType)(
     EbPictureBufferDesc *input_picture_ptr,
     EbPictureBufferDesc *denoised_picture_ptr,
     uint32_t               sb_origin_y,
-    uint32_t               sb_origin_x); 
+    uint32_t               sb_origin_x);
 
 static EbWeakChromaFilterType FUNC_TABLE weak_chroma_filter_func_ptr_array[ASM_TYPE_TOTAL] =
 {

@@ -838,7 +838,7 @@ void tf_inter_prediction(
         }
         else {
 
-            uint32_t	bsize = 16;
+            uint32_t    bsize = 16;
 
             for (uint32_t idx_16x16 = 0; idx_16x16 < 4; idx_16x16++) {
 
@@ -1508,11 +1508,11 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
     free(pos_b_buffer_ch[0]);
     free(pos_h_buffer_ch[0]);
     free(pos_j_buffer_ch[0]);
-    
+
     free(pos_b_buffer_ch[1]);
     free(pos_h_buffer_ch[1]);
     free(pos_j_buffer_ch[1]); //TODO: to fix this
-    
+
     free(one_d_intermediate_results_buf_ch[0]);
     free(one_d_intermediate_results_buf_ch[1]);
 #endif

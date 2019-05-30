@@ -4134,7 +4134,7 @@ void PicturePreProcessingOperations(
             picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
         }
         picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
-        
+
     }
     return;
 
@@ -5048,7 +5048,7 @@ void* picture_analysis_kernel(void *input_ptr)
         picture_control_set_ptr = (PictureParentControlSet*)inputResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
 #if ALT_REF_OVERLAY
         // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
-        if (!picture_control_set_ptr->is_overlay) 
+        if (!picture_control_set_ptr->is_overlay)
         {
 #endif
             sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
@@ -5130,7 +5130,7 @@ void* picture_analysis_kernel(void *input_ptr)
             }
             else // off / on
                 picture_control_set_ptr->sc_content_detected = sequence_control_set_ptr->static_config.screen_content_mode;
-        
+
 #if HARD_CODE_SC_SETTING
             picture_control_set_ptr->sc_content_detected = EB_TRUE;
 #endif

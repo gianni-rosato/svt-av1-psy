@@ -109,7 +109,7 @@ typedef enum EbColorRange {
 typedef enum EbBitDepth {
     EB_EIGHT_BIT = 8,
     EB_TEN_BIT  = 10,
-    EB_TWELVE_BIT = 12    
+    EB_TWELVE_BIT = 12
 } EbBitDepth;
 
 /* AV1 Chroma Format */

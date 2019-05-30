@@ -19,7 +19,7 @@ extern "C" {
     {
         uint8_t  list_size;
         uint16_t blk_mds_table[3]; //stores a max of 3 redundant blocks
-    }BlockList_t;  
+    }BlockList_t;
 #endif
 
     void build_blk_geom();
@@ -29,7 +29,7 @@ extern "C" {
         PART       shape;                       // P_N..P_V4 . P_S is not used.
         uint8_t    origin_x;                    // orgin x from topleft of sb
         uint8_t    origin_y;                    // orgin x from topleft of sb
-                   
+
         uint8_t    d1i;                         // index of the block in d1 dimension 0..24  (0 is parent square, 1 top half of H , ...., 24:last quarter of V4)
         uint16_t   sqi_mds;                     // index of the parent square in md  scan.
         uint8_t    totns;                       // max number of ns blocks within one partition 1..4 (N:1,H:2,V:2,HA:3,HB:3,VA:3,VB:3,H4:4,V4:4)
@@ -38,11 +38,11 @@ extern "C" {
         uint8_t        similar;                 // 1: means that this block is similar (same shape/location) to another
         uint8_t        quadi;                   // parent square is in which quadrant 0..3
         uint8_t        redund;                  // 1: means that this block is redundant to another
-        BlockList_t    redund_list;             // the list where the block is redundant 
-        BlockList_t    similar_list;       
+        BlockList_t    redund_list;             // the list where the block is redundant
+        BlockList_t    similar_list;
 #endif
-                   
-                   
+
+
         uint8_t    bwidth;                      // block width
         uint8_t    bheight;                     // block height
         uint8_t    bwidth_uv;                   // block width for Chroma 4:2:0
@@ -75,8 +75,8 @@ extern "C" {
         uint8_t    tx_height[MAX_TXB_COUNT];    //tx_size_wide
         uint8_t    tx_width_uv[MAX_TXB_COUNT];  //tx_size_wide
         uint8_t    tx_height_uv[MAX_TXB_COUNT]; //tx_size_wide
-#endif           
-                   
+#endif
+
         uint16_t   blkidx_mds;                  // block index in md scan
         uint16_t   blkidx_dps;                  // block index in depth scan
         int32_t    has_uv;
@@ -214,7 +214,7 @@ extern "C" {
      //**************************************************
 #define MAX(x, y)                       ((x)>(y)?(x):(y))
 #define MIN(x, y)                       ((x)<(y)?(x):(y))
-#define MEDIAN(a,b,c)                   ((a)>(b)?(a)>©?(b)>©?(b):©:(a):(b)>©?(a)>©?(a):©:(b))
+#define MEDIAN(a,b,c)                   ((a)>(b)?(a)>?(b)>?(b)::(a):(b)>?(a)>?(a)::(b))
 #define CLIP3(min_val, max_val, a)        (((a)<(min_val)) ? (min_val) : (((a)>(max_val)) ? (max_val) :(a)))
 #define CLIP3EQ(min_val, max_val, a)        (((a)<=(min_val)) ? (min_val) : (((a)>=(max_val)) ? (max_val) :(a)))
 #define BITDEPTH_MIDRANGE_VALUE(precision)  (1 << ((precision) - 1))

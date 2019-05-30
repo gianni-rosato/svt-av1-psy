@@ -348,7 +348,7 @@ void RefinementPredictionLoop(
             sb_ptr->pred64 = (cu_index == 0) ? EB_TRUE : sb_ptr->pred64;
 #endif
             uint32_t depth = get_coded_unit_stats(cu_index)->depth;
-            uint8_t refinementLevel;   
+            uint8_t refinementLevel;
             {
                 if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_PRED_OPEN_LOOP_DEPTH_MODE) {
 
@@ -470,7 +470,7 @@ void ForwardCuToModeDecision(
 
     // CU Loop
     const CodedUnitStats *cuStatsPtr = get_coded_unit_stats(0);
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
     SbStat *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
     EbBool    testAllDepthIntraSliceFlag = EB_FALSE;
     testAllDepthIntraSliceFlag = slice_type == I_SLICE &&
@@ -500,7 +500,7 @@ void ForwardCuToModeDecision(
 
 
                 if (slice_type == I_SLICE) {
-#if MEMORY_FOOTPRINT_OPT 
+#if MEMORY_FOOTPRINT_OPT
                     cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
                     cuClass = local_cu_array[cu_index].stop_split == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
 #else

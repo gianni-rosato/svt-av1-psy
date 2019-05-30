@@ -840,7 +840,7 @@ extern "C" {
 
 /* Symbols for coding which components are zero jointly */
 #define MV_JOINTS 4
-    typedef enum MvJointType 
+    typedef enum MvJointType
     {
         MV_JOINT_ZERO = 0,   /* Zero vector */
         MV_JOINT_HNZVZ = 1,  /* Vert zero, hor nonzero */
@@ -858,7 +858,7 @@ extern "C" {
 
     /* Symbols for coding magnitude class of nonzero components */
 #define MV_CLASSES 11
-    typedef enum MvClassType 
+    typedef enum MvClassType
     {
         MV_CLASS_0 = 0,   /* (0, 2]     integer pel */
         MV_CLASS_1 = 1,   /* (2, 4]     integer pel */
@@ -887,7 +887,7 @@ extern "C" {
 #define MV_UPP (1 << MV_IN_USE_BITS)
 #define MV_LOW (-(1 << MV_IN_USE_BITS))
 
-    typedef struct NmvComponent 
+    typedef struct NmvComponent
     {
         AomCdfProb classes_cdf[CDF_SIZE(MV_CLASSES)];
         AomCdfProb class0_fp_cdf[CLASS0_SIZE][CDF_SIZE(MV_FP_SIZE)];
@@ -899,7 +899,7 @@ extern "C" {
         AomCdfProb bits_cdf[MV_OFFSET_BITS][CDF_SIZE(2)];
     } NmvComponent;
 
-    typedef struct NmvContext 
+    typedef struct NmvContext
     {
         AomCdfProb joints_cdf[CDF_SIZE(MV_JOINTS)];
         NmvComponent comps[2];

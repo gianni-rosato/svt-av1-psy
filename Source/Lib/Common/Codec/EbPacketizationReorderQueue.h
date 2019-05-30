@@ -16,7 +16,7 @@ extern "C" {
     /************************************************
      * Packetization Reorder Queue Entry
      ************************************************/
-    typedef struct PacketizationReorderEntry 
+    typedef struct PacketizationReorderEntry
     {
         uint64_t                          picture_number;
         EbObjectWrapper              *output_stream_wrapper_ptr;

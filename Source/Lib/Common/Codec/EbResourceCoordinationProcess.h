@@ -25,7 +25,7 @@ extern "C" {
         EbObjectWrapper                      **sequenceControlSetActiveArray;
         EbFifo                                *sequence_control_set_empty_fifo_ptr;
         EbCallback                           **app_callback_ptr_array;
-        
+
         // Compute Segments
 #if MEM_MAP_OPT
         uint32_t                               compute_segments_total_count_array;
@@ -41,7 +41,7 @@ extern "C" {
         uint8_t                                prev_enc_mod;
         int8_t                                 prev_enc_mode_delta;
         uint8_t                                prev_change_cond;
-                                               
+
         int64_t                                previous_mode_change_buffer;
         int64_t                                previous_mode_change_frame_in;
         int64_t                                previous_buffer_check1;

@@ -22,7 +22,7 @@ extern "C" {
 
     } EncDecResults;
 
-    typedef struct DlfResults 
+    typedef struct DlfResults
     {
         EbObjectWrapper *picture_control_set_wrapper_ptr;
         uint32_t         segment_index;

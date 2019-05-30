@@ -17,7 +17,7 @@ typedef struct PictureDecisionResults
     EbObjectWrapper   *picture_control_set_wrapper_ptr;
     uint32_t               segment_index;
 #if ALTREF_FILTERING_SUPPORT
-	uint8_t           task_type; //0:ME   1:Temporal Filtering
+    uint8_t           task_type; //0:ME   1:Temporal Filtering
 #endif
 } PictureDecisionResults;
 

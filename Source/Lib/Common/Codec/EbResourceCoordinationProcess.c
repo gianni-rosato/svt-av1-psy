@@ -552,7 +552,7 @@ static EbErrorType copy_frame_buffer(
         EB_MEMCPY(dst_picture_ptr->buffer_bit_inc_cr,
             src_picture_ptr->buffer_bit_inc_cr,
             src_picture_ptr->chroma_size);
-       
+
     }
     return return_error;
 }
@@ -720,12 +720,12 @@ void* resource_coordination_kernel(void *input_ptr)
             sequence_control_set_ptr->max_frame_window_to_ref_islice = (sequence_control_set_ptr->static_config.intra_period_length == -1) ? MAX_FRAMES_TO_REF_I : MIN(MAX_FRAMES_TO_REF_I, sequence_control_set_ptr->static_config.intra_period_length);
             sequence_control_set_ptr->extra_frames_to_ref_islice = MAX(sequence_control_set_ptr->max_frame_window_to_ref_islice / (1 << sequence_control_set_ptr->static_config.hierarchical_levels) - 1, 0);
             sequence_control_set_ptr->max_frame_window_to_ref_islice = (sequence_control_set_ptr->extra_frames_to_ref_islice + 1)*(1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 1;
-#endif  
+#endif
         }
 #if ALT_REF_OVERLAY
-        // Since at this stage we do not know the prediction structure and the location of ALT_REF pictures, 
-        // for every picture (except first picture), we allocate two: 1. original picture, 2. potential Overlay picture. 
-        // In Picture Decision Process, where the overlay frames are known, they extra pictures are released      
+        // Since at this stage we do not know the prediction structure and the location of ALT_REF pictures,
+        // for every picture (except first picture), we allocate two: 1. original picture, 2. potential Overlay picture.
+        // In Picture Decision Process, where the overlay frames are known, they extra pictures are released
         uint8_t has_overlay = (sequence_control_set_ptr->static_config.enable_overlays == EB_FALSE ||
             context_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->initial_picture) ? 0 : 1;
         for (uint8_t loop_index = 0; loop_index <= has_overlay && !end_of_sequence_flag; loop_index++) {

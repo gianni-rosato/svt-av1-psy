@@ -357,8 +357,8 @@ EbErrorType copy_sequence_control_set(
     dst->cdf_mode       = src->cdf_mode;
 #endif
 #if ALTREF_FILTERING_SUPPORT
-	dst->tf_segment_column_count = src->tf_segment_column_count;
-	dst->tf_segment_row_count = src->tf_segment_row_count;
+    dst->tf_segment_column_count = src->tf_segment_column_count;
+    dst->tf_segment_row_count = src->tf_segment_row_count;
 #endif
 #if BASE_LAYER_REF
     dst->extra_frames_to_ref_islice = src->extra_frames_to_ref_islice;
@@ -580,7 +580,7 @@ EbErrorType sb_geom_init(SequenceControlSet * sequence_control_set_ptr)
                 1 :
                 0);
 
-        
+
         uint16_t max_block_count = sequence_control_set_ptr->max_block_cnt;
 
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count ; md_scan_block_index++) {

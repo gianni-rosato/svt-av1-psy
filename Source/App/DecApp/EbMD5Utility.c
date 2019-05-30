@@ -159,7 +159,7 @@ void md5_final(unsigned char digest[16], MD5Context *ctx){
  * the data and converts bytes into longwords for this routine.
  */
 void md5_transform(unsigned int buf[4],
-                   unsigned int const in[16]) 
+                   unsigned int const in[16])
 {
     register unsigned int a, b, c, d;
 
@@ -244,7 +244,7 @@ void md5_transform(unsigned int buf[4],
 
 void print_md5(unsigned char digest[16]) {
     int i;
-    
+
     printf("\n");
     for (i = 0; i < 16; ++i) printf("%02x", digest[i]);
 }
@@ -272,7 +272,7 @@ void write_md5(EbBufferHeaderType *recon_buffer, CLInput *cli, MD5Context *md5) 
     w = w / 2;
     h = h / 2;
     stride = img->cb_stride;
-   
+
 
     //cb MD5 generation
     buf = img->cb;

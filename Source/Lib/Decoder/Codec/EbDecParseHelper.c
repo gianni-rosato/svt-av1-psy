@@ -48,7 +48,7 @@ int neg_deinterleave(const int diff, int ref, int max) {
     }
 }
 
-void set_segment_id(EbDecHandle *dec_handle, int mi_offset, int x_mis, int y_mis, int segment_id) 
+void set_segment_id(EbDecHandle *dec_handle, int mi_offset, int x_mis, int y_mis, int segment_id)
 {
     assert(segment_id >= 0 && segment_id < MAX_SEGMENTS);
     FrameHeader *frm_header = &dec_handle->frame_header;
@@ -162,7 +162,7 @@ int dec_is_inter_block(const ModeInfo_t *mbmi) {
 int max_block_wide(PartitionInfo_t *part_info, int plane_bsize, int subx) {
     int max_blocks_wide = block_size_wide[plane_bsize];
     if (part_info->mb_to_right_edge < 0)
-        max_blocks_wide += part_info->mb_to_right_edge >> (3 + subx); 
+        max_blocks_wide += part_info->mb_to_right_edge >> (3 + subx);
     //Scale width in the transform block unit.
     return max_blocks_wide >> tx_size_wide_log2[0];
 }
@@ -295,7 +295,7 @@ int filter_intra_allowed_bsize(EbDecHandle *dec_handle, BlockSize bs) {
 }
 
 int filter_intra_allowed(EbDecHandle *dec_handle,
-    const ModeInfo_t *mbmi) 
+    const ModeInfo_t *mbmi)
 {
     return mbmi->mode == DC_PRED &&
         /* TO DO : Add when palette support comes */
@@ -304,7 +304,7 @@ int filter_intra_allowed(EbDecHandle *dec_handle,
 }
 
 int allow_intrabc(const EbDecHandle *dec_handle) {
-    return  (dec_handle->frame_header.frame_type == KEY_FRAME 
+    return  (dec_handle->frame_header.frame_type == KEY_FRAME
             || dec_handle->frame_header.frame_type == INTRA_ONLY_FRAME)
             && dec_handle->seq_header.seq_force_screen_content_tools
             && dec_handle->frame_header.allow_intrabc;

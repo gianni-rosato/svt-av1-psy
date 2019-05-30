@@ -57,7 +57,7 @@ EbErrorType packetization_context_ctor(
 #define OBU_FRAME_HEADER_SIZE       3
 #define TILES_GROUP_SIZE            1
 
-// Write TD after offsetting the stream buffer 
+// Write TD after offsetting the stream buffer
 static void write_td (
     EbBufferHeaderType  *out_str_ptr,
     EbBool               show_ex,
@@ -83,7 +83,7 @@ static void write_td (
         encode_td_av1((uint8_t*)(&td_buff));
 
         EB_MEMCPY(src_address,
-                  &td_buff, 
+                  &td_buff,
                   TD_SIZE);
     }
 }
@@ -262,7 +262,7 @@ void* packetization_kernel(void *input_ptr)
     EbBufferHeaderType             *output_stream_ptr;
     EbObjectWrapper              *rateControlTasksWrapperPtr;
     RateControlTasks             *rateControlTasksPtr;
-    
+
     // Queue variables
     int32_t                         queueEntryIndex;
     PacketizationReorderEntry    *queueEntryPtr;
@@ -384,7 +384,7 @@ void* packetization_kernel(void *input_ptr)
         queueEntryPtr->ref_poc_list0 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0];
         queueEntryPtr->ref_poc_list1 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1];
 #endif
-#if REF_ORDER        
+#if REF_ORDER
         memcpy(queueEntryPtr->ref_poc_array, picture_control_set_ptr->parent_pcs_ptr->av1RefSignal.ref_poc_array, 7 * sizeof(uint64_t));
 #endif
 #endif
@@ -564,7 +564,7 @@ void* packetization_kernel(void *input_ptr)
             }
 #endif
 #if ADP_STATS_PER_LAYER
-            if (queueEntryPtr->picture_number == sequence_control_set_ptr->static_config.frames_to_be_encoded - 1) {         
+            if (queueEntryPtr->picture_number == sequence_control_set_ptr->static_config.frames_to_be_encoded - 1) {
                 uint8_t layerIndex;
                 SVT_LOG("\nsq_search_count\tsq_non4_search_count\tmdc_count\tpred_count\tpred1_nfl_count");
                 for (layerIndex = 0; layerIndex < 5; layerIndex++) {
@@ -599,7 +599,7 @@ void* packetization_kernel(void *input_ptr)
             if (queueEntryPtr->is_alt_ref)
                 output_stream_ptr->flags |= (uint32_t)EB_BUFFERFLAG_IS_ALT_REF;
 #endif
- 
+
             eb_post_full_object(output_stream_wrapper_ptr);
             queueEntryPtr->out_meta_data = (EbLinkedListNode *)EB_NULL;
 

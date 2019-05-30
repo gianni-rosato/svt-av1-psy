@@ -49,7 +49,7 @@ uint32_t                         lib_mutex_count = 0;
 
 void init_intra_dc_predictors_c_internal(void);
 void init_intra_predictors_internal(void);
-EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, 
+EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr,
             const uint8_t *data, uint32_t data_size);
 
 void SwitchToRealTime(){
@@ -91,7 +91,7 @@ static EbErrorType eb_dec_handle_ctor(
     dec_handle_ptr->memory_map_index = 0;
     dec_handle_ptr->total_lib_memory = sizeof(EbDecHandle) + sizeof(EbMemoryMapEntry) * MAX_NUM_PTR;
 #endif
-    // Save Memory Map Pointers 
+    // Save Memory Map Pointers
     svt_dec_total_lib_memory = &dec_handle_ptr->total_lib_memory;
     svt_dec_memory_map = dec_handle_ptr->memory_map;
     svt_dec_memory_map_index = &dec_handle_ptr->memory_map_index;
@@ -127,7 +127,7 @@ int svt_dec_out_buf(
     uint8_t *src;
 
     /* Luma */
-    dst = out_img->luma + out_img->origin_x + 
+    dst = out_img->luma + out_img->origin_x +
             (out_img->origin_y * out_img->y_stride);
     src = recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
         (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
@@ -250,9 +250,9 @@ static EbErrorType init_svt_av1_decoder_handle(
 
     printf("SVT [version]:\tSVT-AV1 Decoder Lib v%d.%d.%d\n",
         SVT_VERSION_MAJOR, SVT_VERSION_MINOR, SVT_VERSION_PATCHLEVEL);
-#if ( defined( _MSC_VER ) && (_MSC_VER < 1910) ) 
+#if ( defined( _MSC_VER ) && (_MSC_VER < 1910) )
     printf("SVT [build]  : Visual Studio 2013");
-#elif ( defined( _MSC_VER ) && (_MSC_VER >= 1910) ) 
+#elif ( defined( _MSC_VER ) && (_MSC_VER >= 1910) )
     printf("SVT [build]  :\tVisual Studio 2017");
 #elif defined(__GNUC__)
     printf("SVT [build]  :\tGCC %d.%d.%d\t", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
@@ -349,7 +349,7 @@ EB_API EbErrorType eb_init_decoder(
         return EB_ErrorBadParameter;
 
     EbDecHandle     *dec_handle_ptr = (EbDecHandle   *)svt_dec_component->p_component_private;
-    
+
     dec_handle_ptr->dec_cnt = -1;
     dec_handle_ptr->num_frms_prll   = 1;
     if(dec_handle_ptr->num_frms_prll > DEC_MAX_NUM_FRM_PRLL)
@@ -412,7 +412,7 @@ EB_API EbErrorType eb_svt_dec_get_picture(
 {
     (void)stream_info;
     (void)frame_info;
-    
+
     EbErrorType return_error = EB_ErrorNone;
     if (svt_dec_component == NULL)
         return EB_ErrorBadParameter;

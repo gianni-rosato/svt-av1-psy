@@ -20,7 +20,7 @@
 #include "EbIntraPrediction.h"
 //#include "EbUtility.h"           //->It seems not required
 //#include "EbModeDecision.h"      //->It seems not required
-#include "EbCodingUnit.h"         
+#include "EbCodingUnit.h"
 //#include "EbModeDecisionProcess.h" //->It seems not required
 #include "aom_dsp_rtcd.h"
 //#include "EbTransforms.h"
@@ -186,7 +186,7 @@ void cfl_luma_subsampling_444_hbd_c(
 CFL_GET_SUBSAMPLE_FUNCTION(c)
 
 static INLINE cfl_subsample_hbd_fn cfl_subsampling_hbd(TxSize tx_size,
-                                                       int32_t sub_x, 
+                                                       int32_t sub_x,
                                                        int32_t sub_y)
 {
     if (sub_x == 1) {
@@ -247,7 +247,7 @@ void cfl_compute_parameters(CflCtx *cfl_ctx, TxSize tx_size) {
 
 void cfl_predict_block(PartitionInfo_t *xd, CflCtx *cfl_ctx, uint8_t *dst,
                        int32_t dst_stride, TxSize tx_size, int32_t plane,
-                       EbColorConfig *cc, FrameHeader *fh) 
+                       EbColorConfig *cc, FrameHeader *fh)
 {
     ModeInfo_t *mbmi = xd->mi;
     assert(is_cfl_allowed(xd,cc,fh));
@@ -270,7 +270,7 @@ void cfl_predict_block(PartitionInfo_t *xd, CflCtx *cfl_ctx, uint8_t *dst,
         alpha_q3, cc->bit_depth,
         tx_size_wide[tx_size], tx_size_high[tx_size]);
 }
-   
+
 
 static void cfl_store(CflCtx *cfl_ctx, const uint8_t *input, int input_stride,
                       int row, int col, TxSize tx_size, uint8_t use_hbd)
@@ -321,7 +321,7 @@ static void cfl_store(CflCtx *cfl_ctx, const uint8_t *input, int input_stride,
 // Adjust the row and column of blocks smaller than 8X8, as chroma-referenced
 // and non-chroma-referenced blocks are stored together in the CfL buffer.
 static INLINE void sub8x8_adjust_offset(PartitionInfo_t *xd, const CflCtx *cfl_ctx, int *row_out,
-                                        int *col_out) 
+                                        int *col_out)
 {
     // Increment row index for bottom: 8x4, 16x4 or both bottom 4x4s.
     if ((xd->mi_row & 0x01) && cfl_ctx->subsampling_y) {
@@ -416,7 +416,7 @@ static void decode_build_intra_predictors(
             dst += dst_stride;
         }
         return;
-    
+
     }
     // NEED_LEFT
     if (need_left) {
@@ -767,8 +767,8 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
                                 int32_t blk_mi_col_off, int32_t blk_mi_row_off,
                                 EbBitDepthEnum bit_depth)
 {
-    //ToDo:are_parameters_computed variable for CFL so that cal part for V plane we can skip, 
-    //once we compute for U plane, this parameter is block level parameter. 
+    //ToDo:are_parameters_computed variable for CFL so that cal part for V plane we can skip,
+    //once we compute for U plane, this parameter is block level parameter.
     const EbColorConfig *cc = &seq_header->color_config;
     int32_t sub_x = plane ? cc->subsampling_x : 0;
     int32_t sub_y = plane ? cc->subsampling_y : 0;
@@ -809,10 +809,10 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
     const int yd_chr_offset = 0;
 
     // Distance between right edge of this pred block to frame right edge
-    const int xr = (xd->mb_to_right_edge >> (3 + sub_x)) + (xd->wpx[plane] - 
+    const int xr = (xd->mb_to_right_edge >> (3 + sub_x)) + (xd->wpx[plane] -
         (blk_mi_col_off<< MI_SIZE_LOG2) - txwpx) - xr_chr_offset;
     // Distance between bottom edge of this pred block to frame bottom edge
-    const int yd =(xd->mb_to_bottom_edge >> (3 + sub_y)) + (xd->hpx[plane] - 
+    const int yd =(xd->mb_to_bottom_edge >> (3 + sub_y)) + (xd->hpx[plane] -
         (blk_mi_row_off << MI_SIZE_LOG2) - txhpx) - yd_chr_offset;
     const int right_available =
         mi_col + ((blk_mi_col_off + txw) << sub_x) < td->mi_col_end;
@@ -866,19 +866,19 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
 }
 
 void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
-    int32_t plane, 
+    int32_t plane,
     TxSize tx_size, TileInfo *td,
     void *pv_blk_recon_buf, int32_t recon_strd,
     EbBitDepthEnum bit_depth, int32_t blk_mi_col_off, int32_t blk_mi_row_off )
 {
     int32_t i, wpx, hpx;
     EbDecHandle *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
-    
+
     //assert(part_info->wpx[plane] <= 64);
     //assert(part_info->hpx[plane] <= 64);
-    wpx = AOMMIN(part_info->wpx[plane], plane ? 
+    wpx = AOMMIN(part_info->wpx[plane], plane ?
         (64 >> dec_handle->seq_header.color_config.subsampling_x) : 64);
-    hpx = AOMMIN(part_info->hpx[plane], plane ? 
+    hpx = AOMMIN(part_info->hpx[plane], plane ?
         (64 >> dec_handle->seq_header.color_config.subsampling_y) : 64);
 
     void *pv_topNeighArray  = (void *)dec_mod_ctxt->topNeighArray;;
@@ -932,6 +932,6 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
         tx_size, td,
         pv_blk_recon_buf, recon_strd,
         pv_topNeighArray, pv_leftNeighArray,
-        &dec_handle->seq_header, 
+        &dec_handle->seq_header,
         blk_mi_col_off, blk_mi_row_off, bit_depth);
 }

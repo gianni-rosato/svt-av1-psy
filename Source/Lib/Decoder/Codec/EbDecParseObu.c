@@ -1971,7 +1971,7 @@ void clear_loop_filter_delta(FrameHeader *fr_header, int num_planes)
     for (int lf_id = 0; lf_id < frame_lf_count; ++lf_id)
     {
         fr_header->loop_filter_params.loop_filter_ref_deltas[lf_id] = 0;
-        fr_header->loop_filter_params.loop_filter_mode_deltas[lf_id] = 0;     
+        fr_header->loop_filter_params.loop_filter_mode_deltas[lf_id] = 0;
     }
 }
 
@@ -2004,12 +2004,12 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     clear_above_context(dec_handle_ptr, tile_info->tile_col_start_sb[tile_col],
                         tile_info->tile_col_start_sb[tile_col + 1], 0 /*TODO: For MultiThread*/);
     clear_loop_filter_delta(&dec_handle_ptr->frame_header, num_planes);
-    
+
     // to-do access to wiener info that is currently part of PartitionInfo_t
     //clear_loop_restoration(num_planes, part_info);
 
-    for (uint32_t mi_row = tile_info->tile_row_start_sb[tile_row]; 
-         mi_row < tile_info->tile_row_start_sb[tile_row + 1]; 
+    for (uint32_t mi_row = tile_info->tile_row_start_sb[tile_row];
+         mi_row < tile_info->tile_row_start_sb[tile_row + 1];
          mi_row += dec_handle_ptr->seq_header.sb_mi_size)
     {
         int32_t sb_row = (mi_row << 2) >> dec_handle_ptr->seq_header.sb_size_log2;
@@ -2035,7 +2035,7 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             CurFrameBuf    *frame_buf        = &master_frame_buf->cur_frame_bufs[0];
             int32_t num_mis_in_sb = master_frame_buf->num_mis_in_sb;
 
-            SBInfo  *sb_info = frame_buf->sb_info + 
+            SBInfo  *sb_info = frame_buf->sb_info +
                     (sb_row * master_frame_buf->sb_cols) + sb_col;
             SBInfo  *left_sb_info = NULL;
             if(mi_col != tile_info->tile_col_start_sb[tile_col])
@@ -2046,12 +2046,12 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                 above_sb_info = frame_buf->sb_info +
                     ((sb_row-1) * master_frame_buf->sb_cols) + sb_col;
 
-            sb_info->sb_mode_info = frame_buf->mode_info + 
-                (sb_row * num_mis_in_sb * master_frame_buf->sb_cols) + 
+            sb_info->sb_mode_info = frame_buf->mode_info +
+                (sb_row * num_mis_in_sb * master_frame_buf->sb_cols) +
                  sb_col * num_mis_in_sb;
 
             sb_info->sb_luma_trans_info = frame_buf->luma_trans_info +
-                (sb_row * num_mis_in_sb * master_frame_buf->sb_cols) + 
+                (sb_row * num_mis_in_sb * master_frame_buf->sb_cols) +
                  sb_col * num_mis_in_sb;
 
             sb_info->sb_chroma_trans_info = frame_buf->chroma_trans_info +
@@ -2086,7 +2086,7 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             parse_ctx->left_sb_info = left_sb_info;
             parse_ctx->above_sb_info= above_sb_info;
             parse_ctx->prev_blk_has_chroma = 1; //default at start of frame / tile
-            
+
             /* Init DecModCtxt */
             DecModCtxt *dec_mod_ctxt = (DecModCtxt*)dec_handle_ptr->pv_dec_mod_ctxt;
 
@@ -2220,12 +2220,12 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             obu_header->payload_size -= (tiles_info->tile_size_bytes + tile_size);
             PRINT_FRAME("tile_size_minus_1", (tile_size));
         }
-        
+
         svt_tile_init(&parse_ctxt->cur_tile_info, &dec_handle_ptr->frame_header,
                         tile_row, tile_col);
 
         //init_symbol(tileSize)
-        
+
         status = init_svt_reader(&parse_ctxt->r,
             (const uint8_t *)get_bitsteam_buf(bs), bs->buf_max, tile_size,
             !(dec_handle_ptr->frame_header.disable_cdf_update));
@@ -2337,7 +2337,7 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, const uint8_t *data
             PRINT_NAME("**************OBU_TILE_GROUP*******************");
             if (!dec_handle_ptr->seen_frame_header)
                 return EB_Corrupt_Frame;
-            status = read_tile_group_obu(&bs, dec_handle_ptr, 
+            status = read_tile_group_obu(&bs, dec_handle_ptr,
                 &dec_handle_ptr->frame_header.tiles_info, &obu_header);
             if (status != EB_ErrorNone) return status;
             break;

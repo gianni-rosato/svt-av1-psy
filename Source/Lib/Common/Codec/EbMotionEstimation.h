@@ -77,7 +77,7 @@ void interpolate_search_region_AVC_chroma(
         uint32_t                   decim_stride,
         uint32_t                   decim_step);
 
-    
+
     extern EbErrorType open_loop_intra_search_sb(
         PictureParentControlSet   *picture_control_set_ptr,
         uint32_t                       sb_index,

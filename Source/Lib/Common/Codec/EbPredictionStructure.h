@@ -73,7 +73,7 @@ extern "C" {
      *   configurations for each Prediction Structure
      *   Config Entry.
      ************************************************/
-    typedef struct PredictionStructureConfigEntry 
+    typedef struct PredictionStructureConfigEntry
     {
         uint32_t temporal_layer_index;
         uint32_t decode_order;
@@ -91,7 +91,7 @@ extern "C" {
      *   Contains a collection of basic control data
      *   for the basic prediction structure.
      ************************************************/
-    typedef struct PredictionStructureConfig 
+    typedef struct PredictionStructureConfig
     {
         uint32_t                          entry_count;
         PredictionStructureConfigEntry   *entry_array;
@@ -103,7 +103,7 @@ extern "C" {
      *   for a particular picture in the Prediction
      *   Structure.
      ************************************************/
-    typedef struct PredictionStructureEntry 
+    typedef struct PredictionStructureEntry
     {
         ReferenceList                     ref_list0;
         ReferenceList                     ref_list1;
@@ -166,7 +166,7 @@ extern "C" {
      *   Contains a collection of control and RPS
      *   data types for an entire Prediction Structure
      ************************************************/
-    typedef struct PredictionStructure 
+    typedef struct PredictionStructure
     {
 
         uint32_t                              pred_struct_entry_count;
@@ -195,7 +195,7 @@ extern "C" {
      *   Contains the control structures for all
      *   supported prediction structures.
      ************************************************/
-    typedef struct PredictionStructureGroup 
+    typedef struct PredictionStructureGroup
     {
         PredictionStructure             **prediction_structure_ptr_array;
         uint32_t                              prediction_structure_count;
@@ -227,7 +227,7 @@ extern "C" {
         ALT = 6
     } REF_FRAME_MINUS1;
 #endif
-    typedef struct Av1RpsNode 
+    typedef struct Av1RpsNode
     {
         uint8_t refresh_frame_mask;
         uint8_t ref_dpb_index[7];//LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT

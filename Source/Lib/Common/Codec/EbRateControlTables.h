@@ -40,7 +40,7 @@ typedef uint16_t EbBitNumber;
 /**************************************
  * Initial Rate Control Structure
  **************************************/
-typedef struct InitialRateControlTables 
+typedef struct InitialRateControlTables
 {
 #if RC
     EbBitNumber  sad_bits_array[MAX_TEMPORAL_LAYERS][NUMBER_OF_SAD_INTERVALS];

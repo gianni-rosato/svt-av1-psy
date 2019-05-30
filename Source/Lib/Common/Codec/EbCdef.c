@@ -1158,7 +1158,7 @@ static uint64_t search_one(int32_t *lev, int32_t nb_strengths,
             }
         }
         /* Find best mse when adding each possible new option. */
-        
+
         for (j = start_gi; j < total_strengths; j++) {
             uint64_t best = best_mse;
             if (mse[i][j] < best) best = mse[i][j];
@@ -1528,7 +1528,7 @@ void finish_cdef_search(
 
         switch (sb_type)
         {
-        case BLOCK_128X128: 
+        case BLOCK_128X128:
             picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64]->mbmi.cdef_strength = (int8_t)best_gi;
             picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64 * picture_control_set_ptr->mi_stride]->mbmi.cdef_strength = (int8_t)best_gi;
             picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64 * picture_control_set_ptr->mi_stride + MI_SIZE_64X64]->mbmi.cdef_strength = (int8_t)best_gi;
@@ -1539,8 +1539,8 @@ void finish_cdef_search(
         case BLOCK_64X128:
             picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64 * picture_control_set_ptr->mi_stride]->mbmi.cdef_strength = (int8_t)best_gi;
             break;
-        default:          
-            break;            
+        default:
+            break;
         }
 
 

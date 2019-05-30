@@ -1371,7 +1371,7 @@ void update_av1_mi_map(
                 miPtr[miX + miY * mi_stride].mbmi.mode = cu_ptr->pred_mode;
 #if FIX_INTRA_UV
                 miPtr[miX + miY * mi_stride].mbmi.uv_mode = cu_ptr->prediction_unit_array->intra_chroma_mode;
-#endif 
+#endif
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4) {
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = 0;
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = BLOCK_4X4;
@@ -1454,7 +1454,7 @@ void update_mi_map(
                 miPtr[miX + miY * mi_stride].mbmi.mode = cu_ptr->pred_mode;
 #if FIX_INTRA_UV
                 miPtr[miX + miY * mi_stride].mbmi.uv_mode = cu_ptr->prediction_unit_array->intra_chroma_mode;
-#endif 
+#endif
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4) {
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = 0;
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = BLOCK_4X4;
@@ -1774,9 +1774,9 @@ void wm_count_samples(
 
         if (xd->n4_w <= n4_w) {
             int col_offset = -mi_col % n4_w;
-            if (col_offset < 0) 
+            if (col_offset < 0)
                 do_tl = 0;
-            if (col_offset + n4_w > xd->n4_w) 
+            if (col_offset + n4_w > xd->n4_w)
                 do_tr = 0;
 
             if (mbmi->ref_frame[0] == rf[0] && mbmi->ref_frame[1] == NONE_FRAME) {
@@ -1812,7 +1812,7 @@ void wm_count_samples(
         uint8_t n4_h = mi_size_high[mbmi->sb_type];
         if (xd->n4_h <= n4_h) {
             int row_offset = -mi_row % n4_h;
-            if (row_offset < 0) 
+            if (row_offset < 0)
                 do_tl = 0;
              if (mbmi->ref_frame[0] == rf[0] && mbmi->ref_frame[1] == NONE_FRAME) {
                 np++;
@@ -2154,7 +2154,7 @@ int av1_is_dv_valid(const MV dv,
     //add a SW-Wavefront constraint
     if (sb_size == 64)
     {
-        if (src_sb64_col > active_sb64_col + (active_sb_row - src_sb_row))           
+        if (src_sb64_col > active_sb64_col + (active_sb_row - src_sb_row))
             return 0;
     }
     else
@@ -2162,7 +2162,7 @@ int av1_is_dv_valid(const MV dv,
         const int src_sb128_col = ((src_right_edge >> 3) - 1) >> 7;
         const int active_sb128_col = (mi_col * MI_SIZE) >> 7;
 
-        if (src_sb128_col > active_sb128_col + (active_sb_row - src_sb_row))          
+        if (src_sb128_col > active_sb128_col + (active_sb_row - src_sb_row))
             return 0;
 
     }

@@ -21,7 +21,7 @@
 #else
 #define ChromaMinusOffset1 MinusOffset1
 #endif
-#if !UNPACK_REF_POST_EP  
+#if !UNPACK_REF_POST_EP
 EbErrorType motion_compensation_prediction_context_ctor(
     MotionCompensationPredictionContext **context_dbl_ptr,
     EbColorFormat                             color_format,
@@ -34,7 +34,7 @@ EbErrorType motion_compensation_prediction_context_ctor(
     EB_MALLOC(MotionCompensationPredictionContext *, context_ptr, sizeof(MotionCompensationPredictionContext), EB_N_PTR);
     *(context_dbl_ptr) = context_ptr;
     UNUSED(color_format);
- 
+
 
     // context_ptr->localReferenceBlock = (uint16_t*)malloc(sizeof(uint16_t)*( (max_cu_width+8)*(max_cu_height+8)));
 

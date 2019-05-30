@@ -112,7 +112,7 @@ EbErrorType    rate_control_update_model(EbRateControlModel *model_ptr, PictureP
 
       model_ptr->model_variation = model_ptr->model_variation * (model_ptr->model_variation_reported - 1) / model_ptr->model_variation_reported + variation / model_ptr->model_variation_reported;
     }
-    
+
     return EB_ErrorNone;
 }
 
@@ -130,7 +130,7 @@ uint8_t    rate_control_get_quantizer(EbRateControlModel *model_ptr, PicturePare
 
 uint32_t get_inter_qp_for_size(EbRateControlModel *model_ptr, uint32_t desired_size) {
     uint8_t     qp;
-    
+
     for (qp = 0; qp < MAX_QP_VALUE; qp++) {
         float    size = model_ptr->inter_size_predictions[qp];
 
@@ -162,7 +162,7 @@ static void record_new_gop(EbRateControlModel *model_ptr, PictureParentControlSe
         EbRateControlGopInfo *previousGop = get_gop_infos(model_ptr->gop_infos, pictureNumber - 1);
 
         previousGop->length = gop->index - previousGop->index;
-    } 
+    }
 }
 
 uint32_t get_gop_size_in_bytes(EbRateControlModel *model_ptr) {

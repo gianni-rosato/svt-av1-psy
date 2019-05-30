@@ -13,7 +13,7 @@ extern "C" {
 #include "EbIntraPrediction.h"
 
 typedef struct DecModCtxt {
-    
+
     /** Decoder Handle */
     void *dec_handle_ptr;
 

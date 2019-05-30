@@ -14,105 +14,105 @@ extern "C" {
 
     // SSSE3 functions
     void chroma_interpolation_copy_ssse3(
-        EbByte   ref_pic, 
-        uint32_t src_stride, 
-        EbByte   dst, 
-        uint32_t dst_stride, 
-        uint32_t pu_width, 
-        uint32_t pu_height, 
-        int16_t *first_pass_if_dst, 
-        uint32_t frac_pos_x, 
+        EbByte   ref_pic,
+        uint32_t src_stride,
+        EbByte   dst,
+        uint32_t dst_stride,
+        uint32_t pu_width,
+        uint32_t pu_height,
+        int16_t *first_pass_if_dst,
+        uint32_t frac_pos_x,
         uint32_t frac_pos_y);
 
     void chroma_interpolation_filter_one_d_horizontal_ssse3(
-        EbByte   ref_pic, 
-        uint32_t src_stride, 
-        EbByte   dst, 
-        uint32_t dst_stride, 
-        uint32_t pu_width, 
-        uint32_t pu_height, 
-        int16_t *first_pass_if_dst, 
-        uint32_t frac_pos_x, 
+        EbByte   ref_pic,
+        uint32_t src_stride,
+        EbByte   dst,
+        uint32_t dst_stride,
+        uint32_t pu_width,
+        uint32_t pu_height,
+        int16_t *first_pass_if_dst,
+        uint32_t frac_pos_x,
         uint32_t frac_pos_y);
 
     void chroma_interpolation_filter_one_d_out_raw_horizontal_ssse3(
-        EbByte   ref_pic, 
-        uint32_t src_stride, 
-        int16_t *dst, 
-        uint32_t pu_width, 
-        uint32_t pu_height, 
-        int16_t *first_pass_if_dst, 
-        uint32_t frac_pos_x, 
+        EbByte   ref_pic,
+        uint32_t src_stride,
+        int16_t *dst,
+        uint32_t pu_width,
+        uint32_t pu_height,
+        int16_t *first_pass_if_dst,
+        uint32_t frac_pos_x,
         uint32_t frac_pos_y);
 
     void chroma_interpolation_filter_one_d_vertical_ssse3(
-        EbByte   ref_pic, 
-        uint32_t src_stride, 
-        EbByte   dst, 
-        uint32_t dst_stride, 
+        EbByte   ref_pic,
+        uint32_t src_stride,
+        EbByte   dst,
+        uint32_t dst_stride,
         uint32_t pu_width,
-        uint32_t pu_height, 
+        uint32_t pu_height,
         int16_t *first_pass_if_dst,
-        uint32_t frac_pos_x, 
+        uint32_t frac_pos_x,
         uint32_t frac_pos_y);
 
     void chroma_interpolation_filter_one_d_out_raw_vertical_ssse3(
-        EbByte   ref_pic, 
-        uint32_t src_stride, 
-        int16_t *dst, 
-        uint32_t pu_width, 
-        uint32_t pu_height, 
-        int16_t *first_pass_if_dst, 
-        uint32_t frac_pos_x, 
+        EbByte   ref_pic,
+        uint32_t src_stride,
+        int16_t *dst,
+        uint32_t pu_width,
+        uint32_t pu_height,
+        int16_t *first_pass_if_dst,
+        uint32_t frac_pos_x,
         uint32_t frac_pos_y);
 
     void chroma_interpolation_filter_two_d_ssse3(
-        EbByte   ref_pic, 
-        uint32_t src_stride, 
-        EbByte   dst, 
+        EbByte   ref_pic,
+        uint32_t src_stride,
+        EbByte   dst,
         uint32_t dst_stride,
-        uint32_t pu_width, 
-        uint32_t pu_height, 
-        int16_t *first_pass_if_dst, 
-        uint32_t frac_pos_x, 
+        uint32_t pu_width,
+        uint32_t pu_height,
+        int16_t *first_pass_if_dst,
+        uint32_t frac_pos_x,
         uint32_t frac_pos_y);
 
     void chroma_interpolation_filter_two_d_out_raw_ssse3(
-        EbByte   ref_pic, 
-        uint32_t src_stride, 
+        EbByte   ref_pic,
+        uint32_t src_stride,
         int16_t *dst,
-        uint32_t pu_width, 
-        uint32_t pu_height, 
+        uint32_t pu_width,
+        uint32_t pu_height,
         int16_t *first_pass_if_dst,
-        uint32_t frac_pos_x, 
+        uint32_t frac_pos_x,
         uint32_t frac_pos_y);
 
     void chroma_interpolation_copy_out_raw_ssse3(
-        EbByte   ref_pic, 
+        EbByte   ref_pic,
         uint32_t src_stride,
-        int16_t *dst, 
-        uint32_t pu_width, 
-        uint32_t pu_height, 
+        int16_t *dst,
+        uint32_t pu_width,
+        uint32_t pu_height,
         int16_t *first_pass_if_dst,
-        uint32_t frac_pos_x, 
+        uint32_t frac_pos_x,
         uint32_t frac_pos_y);
 
     void luma_interpolation_copy_ssse3(
-        EbByte   ref_pic, 
-        uint32_t src_stride, 
-        EbByte   dst, 
-        uint32_t dst_stride, 
-        uint32_t pu_width, 
-        uint32_t pu_height, 
+        EbByte   ref_pic,
+        uint32_t src_stride,
+        EbByte   dst,
+        uint32_t dst_stride,
+        uint32_t pu_width,
+        uint32_t pu_height,
         int16_t *first_pass_if_dst);
 
     void luma_interpolation_filter_posa_ssse3(
-        EbByte   ref_pic, 
-        uint32_t src_stride, 
-        EbByte   dst, 
-        uint32_t dst_stride, 
-        uint32_t pu_width, 
-        uint32_t pu_height, 
+        EbByte   ref_pic,
+        uint32_t src_stride,
+        EbByte   dst,
+        uint32_t dst_stride,
+        uint32_t pu_width,
+        uint32_t pu_height,
         int16_t *first_pass_if_dst);
 
     void luma_interpolation_filter_posb_ssse3(
@@ -242,19 +242,19 @@ extern "C" {
         int16_t *first_pass_if_dst);
 
     void luma_interpolation_copy_out_raw_ssse3(
-        EbByte   ref_pic, 
-        uint32_t src_stride, 
-        int16_t *dst, 
-        uint32_t pu_width, 
-        uint32_t pu_height, 
+        EbByte   ref_pic,
+        uint32_t src_stride,
+        int16_t *dst,
+        uint32_t pu_width,
+        uint32_t pu_height,
         int16_t *first_pass_if_dst);
 
     void luma_interpolation_filter_posa_out_raw_ssse3(
-        EbByte   ref_pic, 
-        uint32_t src_stride, 
-        int16_t *dst, 
-        uint32_t pu_width, 
-        uint32_t pu_height, 
+        EbByte   ref_pic,
+        uint32_t src_stride,
+        int16_t *dst,
+        uint32_t pu_width,
+        uint32_t pu_height,
         int16_t *first_pass_if_dst);
 
     void luma_interpolation_filter_posb_out_raw_ssse3(

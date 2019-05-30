@@ -14,7 +14,7 @@
 /************************************************
  * Initial Rate Control Reorder Queue Entry
  ************************************************/
-typedef struct InitialRateControlReorderEntry 
+typedef struct InitialRateControlReorderEntry
 {
     uint64_t                          picture_number;
     EbObjectWrapper              *parent_pcs_wrapper_ptr;
@@ -28,7 +28,7 @@ extern EbErrorType initial_rate_control_reorder_entry_ctor(
 /************************************************
  * High Level Rate Control Histogram Queue Entry
  ************************************************/
-typedef struct HlRateControlHistogramEntry 
+typedef struct HlRateControlHistogramEntry
 {
     uint64_t                          picture_number;
 #if RC

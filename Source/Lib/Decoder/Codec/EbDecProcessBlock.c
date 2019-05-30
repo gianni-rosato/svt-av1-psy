@@ -28,7 +28,7 @@
 
 CflAllowedType store_cfl_required(const EbColorConfig *cc,
                                   const PartitionInfo_t  *xd)
-                                  
+
 {
     const ModeInfo_t *mbmi = xd->mi;
 
@@ -144,13 +144,13 @@ static void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t 
         *recon_strd = recon_picture_buf->stride_y;
     }
     else if (plane == 1) {
-        block_offset = ((recon_picture_buf->origin_y >> sub_y) + 
+        block_offset = ((recon_picture_buf->origin_y >> sub_y) +
             blk_row * MI_SIZE) * recon_picture_buf->stride_cb +
             ((recon_picture_buf->origin_x >> sub_x) + blk_col * MI_SIZE);
         *recon_strd = recon_picture_buf->stride_cb;
     }
     else {
-        block_offset = ((recon_picture_buf->origin_y >> sub_y) + 
+        block_offset = ((recon_picture_buf->origin_y >> sub_y) +
                 blk_row * MI_SIZE) * recon_picture_buf->stride_cr +
             ((recon_picture_buf->origin_x >> sub_x) + blk_col * MI_SIZE);
         *recon_strd = recon_picture_buf->stride_cr;
@@ -158,7 +158,7 @@ static void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t 
 
     if (recon_picture_buf->bit_depth != EB_8BIT) {//16bit
         if (plane == 0)
-            *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_y 
+            *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_y
                                         + block_offset);
         else if (plane == 1)
             *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_cb
@@ -174,7 +174,7 @@ static void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t 
         else if (plane == 1)
             *pp_blk_recon_buf = (void *)((uint8_t*)recon_picture_buf->buffer_cb
                                         + block_offset);
-        else 
+        else
             *pp_blk_recon_buf = (void *)((uint8_t*)recon_picture_buf->buffer_cr
                                         + block_offset);
     }
@@ -204,7 +204,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     sub_y = color_config->subsampling_y;
     int is_chroma_reference = dec_is_chroma_reference(mi_row, mi_col, bsize,
         sub_x, sub_y);
-    
+
 
     /* TODO: Can move to a common init fun for parse & decode */
     PartitionInfo_t part_info;
@@ -222,7 +222,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     part_info.mb_to_right_edge = ((mi_cols - bw4 - mi_col) * MI_SIZE) * 8;
 
     /*!< Block Size width & height in pixels. */
-    /* For Luma bock */ 
+    /* For Luma bock */
     part_info.wpx[0] = bw4 * MI_SIZE;
     part_info.hpx[0] = bh4 * MI_SIZE;
 
@@ -239,7 +239,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     part_info.left_available = (mi_col > tile->mi_col_start);
     part_info.chroma_up_available = part_info.up_available;
     part_info.chroma_left_available = part_info.left_available;
-    
+
     if (part_info.has_chroma) {
         if (bh4 == 1 && sub_y)
             part_info.chroma_up_available = (mi_row - 1) > tile->mi_row_start;
@@ -373,7 +373,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
                                             (dec_mod_ctxt->cur_luma_coeff += (n_coeffs + 1));
 
                                     if (recon_picture_buf->bit_depth == EB_8BIT)
-                                        av1_inv_transform_recon8bit(qcoeffs, 
+                                        av1_inv_transform_recon8bit(qcoeffs,
                                             (uint8_t *)blk_recon_buf,
                                             recon_strd, tx_size, tx_type, plane, n_coeffs);
                                     else

@@ -21,14 +21,14 @@ extern "C" {
     struct ModeDecisionContext;
     struct InterPredictionContext;
 
-    typedef enum TmvpPos 
+    typedef enum TmvpPos
     {
         TmvpColocatedBottomRight = 0,
         TmvpColocatedCenter = 1
     } TmvpPos;
 
     // TMVP items corresponding to one LCU
-    typedef struct TmvpUnit 
+    typedef struct TmvpUnit
     {
         Mv              mv[MAX_NUM_OF_REF_PIC_LIST][MAX_TMVP_CAND_PER_LCU];
         uint64_t            ref_pic_poc[MAX_NUM_OF_REF_PIC_LIST][MAX_TMVP_CAND_PER_LCU];

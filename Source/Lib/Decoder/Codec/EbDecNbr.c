@@ -21,8 +21,8 @@ void update_nbrs_before_sb(FrameMiMap *frame_mi_map, int32_t sb_col) {
     int32_t num_mis_in_sb_wd = frame_mi_map->num_mis_in_sb_wd;
 
     /* Update from top sbrow to current SB top */
-    memcpy(&frame_mi_map->cur_sb_mi_map[0][1], &frame_mi_map->top_sbrow_mi_map[sb_col*num_mis_in_sb_wd], 
-        num_mis_in_sb_wd * sizeof(int16_t));   
+    memcpy(&frame_mi_map->cur_sb_mi_map[0][1], &frame_mi_map->top_sbrow_mi_map[sb_col*num_mis_in_sb_wd],
+        num_mis_in_sb_wd * sizeof(int16_t));
 }
 
 /* TODO : Should be moved to nbr file */
@@ -36,7 +36,7 @@ void update_nbrs_after_sb(FrameMiMap *frame_mi_map, int32_t sb_col) {
     }
     /* Update bottom 4x4 of cur as top 4x4 for next row */
     memcpy(&frame_mi_map->top_sbrow_mi_map[sb_col*num_mis_in_sb_wd], &frame_mi_map->cur_sb_mi_map[num_mis_in_sb_wd][1],
-        num_mis_in_sb_wd * sizeof(int16_t));    
+        num_mis_in_sb_wd * sizeof(int16_t));
 }
 
 /* TODO : Should be moved to nbr file */

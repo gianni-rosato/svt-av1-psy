@@ -606,7 +606,7 @@ static SgrprojInfo search_selfguided_restoration(
     const uint8_t *dat8, int32_t width, int32_t height, int32_t dat_stride,
     const uint8_t *src8, int32_t src_stride, int32_t use_highbitdepth, int32_t bit_depth,
     int32_t pu_width, int32_t pu_height, int32_t *rstbuf
-    , 
+    ,
     int8_t sg_ref_frame_ep[2],
     int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS],
     int8_t step
@@ -1718,7 +1718,7 @@ static void search_sgrproj_seg(const RestorationTileLimits *limits,
 
     rusi->sse[RESTORE_SGRPROJ] = try_restoration_unit_seg(rsc, limits, tile, &rui);
 
-   
+
 }
 
 static void search_sgrproj_finish(const RestorationTileLimits *limits,
@@ -1731,11 +1731,11 @@ static void search_sgrproj_finish(const RestorationTileLimits *limits,
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
 
     const Macroblock *const x = rsc->x;
-   
+
 
     rusi->sse[RESTORE_SGRPROJ] = rsc->rusi_pic[rest_unit_idx].sse[RESTORE_SGRPROJ];
     rusi->sgrproj = rsc->rusi_pic[rest_unit_idx].sgrproj;
-  
+
     const int64_t bits_none = x->sgrproj_restore_cost[0];
     const int64_t bits_sgr = x->sgrproj_restore_cost[1] +
         (count_sgrproj_bits(&rusi->sgrproj, &rsc->sgrproj)
@@ -1768,7 +1768,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
     int64_t H[WIENER_WIN2 * WIENER_WIN2];
     int32_t vfilterd[WIENER_WIN], hfilterd[WIENER_WIN];
 
-    
+
     if (cm->use_highbitdepth)
     {
         if (rsc->plane == AOM_PLANE_Y) {
@@ -1798,11 +1798,11 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
 
     }
 
-   
+
 
     if (!wiener_decompose_sep_sym(wiener_win, M, H, vfilterd, hfilterd)) {
 
-        printf("CHKN never get here\n");      
+        printf("CHKN never get here\n");
         rusi->best_rtype[RESTORE_WIENER - 1] = RESTORE_NONE;
         rusi->sse[RESTORE_WIENER] = INT64_MAX;
         return;
@@ -1819,7 +1819,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
     // reduction in the function, the filter is reverted back to identity
     if (compute_score(wiener_win, M, H, rui.wiener_info.vfilter,
         rui.wiener_info.hfilter) > 0) {
-     
+
         rusi->sse[RESTORE_WIENER] = INT64_MAX;
         return;
     }
@@ -1836,8 +1836,8 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
         assert(rui.wiener_info.hfilter[0] == 0 &&
             rui.wiener_info.hfilter[WIENER_WIN - 1] == 0);
     }
-    
-   
+
+
 }
 static void search_wiener_finish(const RestorationTileLimits *limits,
     const AV1PixelRect *tile_rect, int32_t rest_unit_idx,
@@ -1850,23 +1850,23 @@ static void search_wiener_finish(const RestorationTileLimits *limits,
     int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP : cm->wn_filter_mode == 2 ? WIENER_WIN_CHROMA : WIENER_WIN;
     const int32_t wiener_win = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP :
         (rsc->plane == AOM_PLANE_Y) ? wn_luma : WIENER_WIN_CHROMA;
-    
-   
+
+
     const Macroblock *const x = rsc->x;
     const int64_t bits_none = x->wiener_restore_cost[0];
 
-   
+
 
     RestorationUnitInfo rui;
     memset(&rui, 0, sizeof(rui));
     rui.restoration_type = RESTORE_WIENER;
-    
+
     // Filter score computes the value of the function x'*A*x - x'*b for the
     // learned filter and compares it against identity filer. If there is no
     // reduction in the function, the filter is reverted back to identity
 
     rusi->sse[RESTORE_WIENER] = rsc->rusi_pic[rest_unit_idx].sse[RESTORE_WIENER];
-    if (rusi->sse[RESTORE_WIENER] == INT64_MAX) 
+    if (rusi->sse[RESTORE_WIENER] == INT64_MAX)
     {
         rsc->bits += bits_none;
         rsc->sse += rusi->sse[RESTORE_NONE];
@@ -1878,7 +1878,7 @@ static void search_wiener_finish(const RestorationTileLimits *limits,
     aom_clear_system_state();
 
     rusi->wiener = rsc->rusi_pic[rest_unit_idx].wiener;
-         
+
 
     const int64_t bits_wiener =
         x->wiener_restore_cost[1] +
@@ -1922,7 +1922,7 @@ static void search_norestore_finish(const RestorationTileLimits *limits,
 
     rusi->sse[RESTORE_NONE] = rsc->rusi_pic[rest_unit_idx].sse[RESTORE_NONE];
 
-    rsc->sse += rusi->sse[RESTORE_NONE];  
+    rsc->sse += rusi->sse[RESTORE_NONE];
 }
 static double search_rest_type_finish(RestSearchCtxt *rsc, RestorationType rtype)
 {
@@ -1947,10 +1947,10 @@ void restoration_seg_search(
     uint32_t                segment_index )
 {
     Av1Common *const cm = pcs_ptr->parent_pcs_ptr->av1_cm;
-    Macroblock *x = pcs_ptr->parent_pcs_ptr->av1x;   
+    Macroblock *x = pcs_ptr->parent_pcs_ptr->av1x;
     const int32_t num_planes = 3;
 
-    
+
     // If the restoration unit dimensions are not multiples of
     // rsi->restoration_unit_size then some elements of the rusi array may be
     // left uninitialised when we reach copy_unit_info(...). This is not a
@@ -1966,28 +1966,28 @@ void restoration_seg_search(
     for (int32_t plane = plane_start; plane <= plane_end; ++plane)
     {
         RestUnitSearchInfo *rusi = pcs_ptr->parent_pcs_ptr->rusi_picture[plane];
-              
+
         init_rsc_seg(org_fts,src, cm, x, plane, rusi, trial_frame_rst, &rsc);
-       
+
         rsc_p->tmpbuf = context_ptr->rst_tmpbuf;
 
-    
+
         const int32_t highbd = rsc.cm->use_highbitdepth;
         extend_frame(rsc.dgd_buffer, rsc.plane_width, rsc.plane_height,
             rsc.dgd_stride, RESTORATION_BORDER, RESTORATION_BORDER,
-            highbd);       
+            highbd);
 
         av1_foreach_rest_unit_in_frame_seg(rsc_p->cm, rsc_p->plane, rsc_on_tile, search_norestore_seg, rsc_p, pcs_ptr, segment_index);
         if (cm->wn_filter_mode)
             av1_foreach_rest_unit_in_frame_seg(rsc_p->cm, rsc_p->plane, rsc_on_tile, search_wiener_seg,  rsc_p, pcs_ptr, segment_index);
-        av1_foreach_rest_unit_in_frame_seg(rsc_p->cm, rsc_p->plane, rsc_on_tile, search_sgrproj_seg, rsc_p, pcs_ptr, segment_index);       
+        av1_foreach_rest_unit_in_frame_seg(rsc_p->cm, rsc_p->plane, rsc_on_tile, search_sgrproj_seg, rsc_p, pcs_ptr, segment_index);
 
     }
 
-    
+
 }
 void rest_finish_search(Macroblock *x, Av1Common *const cm)
-{      
+{
     const int32_t num_planes = 3;
     RestorationType force_restore_type_d = (cm->wn_filter_mode) ? RESTORE_TYPES : RESTORE_SGRPROJ;
     int32_t ntiles[2];
@@ -2009,7 +2009,7 @@ void rest_finish_search(Macroblock *x, Av1Common *const cm)
     const int32_t plane_start = AOM_PLANE_Y;
     const int32_t plane_end = num_planes > 1 ? AOM_PLANE_V : AOM_PLANE_Y;
     for (int32_t plane = plane_start; plane <= plane_end; ++plane) {
-       
+
         //init rsc context for this plane
         rsc.cm = cm;
         rsc.x = x;
@@ -2024,8 +2024,8 @@ void rest_finish_search(Macroblock *x, Av1Common *const cm)
 
         double best_cost = 0;
         RestorationType best_rtype = RESTORE_NONE;
-       
-       
+
+
         for (int32_t restType = 0; restType < num_rtypes; ++restType) {
 
             RestorationType r = (RestorationType)restType;

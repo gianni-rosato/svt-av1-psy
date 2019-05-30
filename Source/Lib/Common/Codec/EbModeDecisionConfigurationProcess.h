@@ -70,14 +70,14 @@ extern "C" {
         uint32_t                             sb_min_score;
         uint32_t                             sb_max_score;
         uint32_t                             sb_average_score;
-                                            
+
         const BlockGeom                     *blk_geom;
         ModeDecisionCandidate             *mdc_candidate_ptr;
         CandidateMv                         *mdc_ref_mv_stack;
         CodingUnit                        *mdc_cu_ptr;
         uint8_t                              qp_index;
-                                            
-        // Multi - Mode signal(s)           
+
+        // Multi - Mode signal(s)
         uint8_t                             adp_level;
 
     } ModeDecisionConfigurationContext;

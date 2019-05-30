@@ -1529,7 +1529,7 @@ EbErrorType aom_denoise_and_model_alloc(struct aom_denoise_and_model_t **ctx,
     int32_t bit_depth,
     int32_t block_size,
     float noise_level) {
-    
+
     ASSERT(ctx != NULL);
     EB_MALLOC(struct aom_denoise_and_model_t*, (*ctx), sizeof(struct aom_denoise_and_model_t), EB_N_PTR);
 

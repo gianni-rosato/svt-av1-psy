@@ -24,7 +24,7 @@ typedef struct CurFrameBuf {
     SBInfo          *sb_info;
 
     ModeInfo_t      *mode_info;
-    
+
     int32_t         *luma_coeff;
     int32_t         *chroma_coeff;
 
@@ -49,7 +49,7 @@ typedef struct FrameMiMap {
     /* 2(for 4x4 chroma case) Top SB 4x4 row MI map */
     int16_t      *top_sbrow_mi_map;
 
-    /*  number of MI in SB width, 
+    /*  number of MI in SB width,
         is same as number of MI in SB height */
     int32_t     num_mis_in_sb_wd;
 }FrameMiMap;
@@ -74,7 +74,7 @@ typedef struct MasterFrameBuf {
  * Component Private Data
  **************************************/
 typedef struct EbDecHandle {
-    
+
     uint32_t size;
     uint32_t dec_cnt;
 
@@ -102,7 +102,7 @@ typedef struct EbDecHandle {
     void   *pv_parse_ctxt;
 
     void   *pv_dec_mod_ctxt;
-    
+
 
     // Callbacks
 

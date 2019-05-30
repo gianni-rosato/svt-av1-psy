@@ -58,7 +58,7 @@ extern "C" {
 #define default_scan_16x64_neighbors default_scan_16x32_neighbors
 #define default_scan_64x16_neighbors default_scan_32x16_neighbors
 
-    static const int8_t txsize_log2_minus4[TX_SIZES_ALL] = 
+    static const int8_t txsize_log2_minus4[TX_SIZES_ALL] =
     {
         0,  // TX_4X4
         2,  // TX_8X8
@@ -84,19 +84,19 @@ extern "C" {
     // TranHigh is the datatype used for intermediate transform stages.
     typedef int64_t TranHigh;
 
-    static const TxType1D vtx_tab[TX_TYPES] = 
+    static const TxType1D vtx_tab[TX_TYPES] =
     {
         DCT_1D, ADST_1D, DCT_1D, ADST_1D,
         FLIPADST_1D, DCT_1D, FLIPADST_1D, ADST_1D, FLIPADST_1D, IDTX_1D,
         DCT_1D, IDTX_1D, ADST_1D, IDTX_1D, FLIPADST_1D, IDTX_1D,
     };
-    static const TxType1D htx_tab[TX_TYPES] = 
+    static const TxType1D htx_tab[TX_TYPES] =
     {
         DCT_1D, DCT_1D, ADST_1D, ADST_1D,
         DCT_1D, FLIPADST_1D, FLIPADST_1D, FLIPADST_1D, ADST_1D, IDTX_1D,
         IDTX_1D, DCT_1D, IDTX_1D, ADST_1D, IDTX_1D, FLIPADST_1D,
     };
-    static const BlockSize txsize_to_bsize[TX_SIZES_ALL] = 
+    static const BlockSize txsize_to_bsize[TX_SIZES_ALL] =
     {
         BLOCK_4X4,    // TX_4X4
         BLOCK_8X8,    // TX_8X8
@@ -138,7 +138,7 @@ extern "C" {
     static const int8_t fwd_shift_16x64[3] = { 0, -2, 0 };
     static const int8_t fwd_shift_64x16[3] = { 2, -4, 0 };
 
-    static const int8_t fwd_cos_bit_col[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] = 
+    static const int8_t fwd_cos_bit_col[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] =
     {
         { 13, 13, 13, 0, 0 },
         { 13, 13, 13, 12, 0 },
@@ -146,7 +146,7 @@ extern "C" {
         { 0, 13, 13, 12, 13 },
         { 0, 0, 13, 12, 13 }
     };
-    static const int8_t fwd_cos_bit_row[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] = 
+    static const int8_t fwd_cos_bit_row[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] =
     {
         { 13, 13, 12, 0, 0 },
         { 13, 13, 13, 12, 0 },
@@ -155,7 +155,7 @@ extern "C" {
         { 0, 0, 12, 11, 10 }
     };
 
-    typedef struct TransformParam 
+    typedef struct TransformParam
     {
         // for both forward and inverse transforms
         TxType transform_type;
@@ -169,7 +169,7 @@ extern "C" {
 
     // Utility function that returns the log of the ratio of the col and row
     // sizes.
-    typedef enum TxfmType 
+    typedef enum TxfmType
     {
         TXFM_TYPE_DCT4,
         TXFM_TYPE_DCT8,
@@ -188,7 +188,7 @@ extern "C" {
         TXFM_TYPES,
         TXFM_TYPE_INVALID,
     } TxfmType;
-    typedef struct Txfm2DFlipCfg 
+    typedef struct Txfm2DFlipCfg
     {
         TxSize tx_size;
         int32_t ud_flip;  // flip upside down
@@ -204,7 +204,7 @@ extern "C" {
         int32_t stage_num_row;
     } Txfm2DFlipCfg;
 
-    static const TxfmType av1_txfm_type_ls[5][TX_TYPES_1D] = 
+    static const TxfmType av1_txfm_type_ls[5][TX_TYPES_1D] =
     {
         { TXFM_TYPE_DCT4, TXFM_TYPE_ADST4, TXFM_TYPE_ADST4, TXFM_TYPE_IDENTITY4 },
         { TXFM_TYPE_DCT8, TXFM_TYPE_ADST8, TXFM_TYPE_ADST8, TXFM_TYPE_IDENTITY8 },
@@ -213,7 +213,7 @@ extern "C" {
         { TXFM_TYPE_DCT64, TXFM_TYPE_INVALID, TXFM_TYPE_INVALID,
         TXFM_TYPE_IDENTITY64 }
     };
-    static const int8_t av1_txfm_stage_num_list[TXFM_TYPES] = 
+    static const int8_t av1_txfm_stage_num_list[TXFM_TYPES] =
     {
         4,   // TXFM_TYPE_DCT4
         6,   // TXFM_TYPE_DCT8
@@ -249,7 +249,7 @@ extern "C" {
     static const int8_t fidtx16_range_mult2[1] = { 3 };
     static const int8_t fidtx32_range_mult2[1] = { 4 };
     static const int8_t fidtx64_range_mult2[1] = { 5 };
-    static const int8_t inv_cos_bit_col[MAX_TXWH_IDX][MAX_TXWH_IDX] = 
+    static const int8_t inv_cos_bit_col[MAX_TXWH_IDX][MAX_TXWH_IDX] =
     {
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0, 0 },
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0 },
@@ -257,7 +257,7 @@ extern "C" {
         { 0, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT },
         { 0, 0, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT }
     };
-    static const int8_t inv_cos_bit_row[MAX_TXWH_IDX][MAX_TXWH_IDX] = 
+    static const int8_t inv_cos_bit_row[MAX_TXWH_IDX][MAX_TXWH_IDX] =
     {
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0, 0 },
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0 },
@@ -314,7 +314,7 @@ extern "C" {
         7,  // 64x16 transform
     };
     ////////////////////// QUANTIZATION//////////////
-    typedef struct QuantParam 
+    typedef struct QuantParam
     {
         int32_t log_scale;
         TxSize tx_size;
@@ -3924,9 +3924,9 @@ extern "C" {
         uint16_t                      *eob,
         EbAsm                          asm_type,
         uint32_t                      *y_count_non_zero_coeffs,
-#if !PF_N2_SUPPORT                              
+#if !PF_N2_SUPPORT
         EbPfMode                       pf_mode,
-#endif                               
+#endif
         uint32_t                       component_type,
         uint32_t                       bit_increment,
         TxType                         tx_type,

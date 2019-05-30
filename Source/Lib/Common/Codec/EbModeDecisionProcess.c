@@ -81,7 +81,7 @@ EbErrorType mode_decision_context_ctor(
             return EB_ErrorInsufficientResources;
         }
     }
-#if !UNPACK_REF_POST_EP 
+#if !UNPACK_REF_POST_EP
     // Inter Prediction Context
     return_error = inter_prediction_context_ctor(
         &context_ptr->inter_prediction_context,
@@ -367,7 +367,7 @@ void reset_mode_decision(
     uint32_t                   segment_index)
 {
     EB_SLICE                     slice_type;
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
     uint32_t                       lcuRowIndex;
 #endif
     MdRateEstimationContext   *md_rate_estimation_array;
@@ -427,7 +427,7 @@ void reset_mode_decision(
     // Reset Neighbor Arrays at start of new Segment / Picture
     if (segment_index == 0) {
         reset_mode_decision_neighbor_arrays(picture_control_set_ptr);
-#if !MEMORY_FOOTPRINT_OPT        
+#if !MEMORY_FOOTPRINT_OPT
         ResetMdRefinmentNeighborArrays(picture_control_set_ptr);
         for (lcuRowIndex = 0; lcuRowIndex < ((sequence_control_set_ptr->luma_height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64); lcuRowIndex++) {
             picture_control_set_ptr->enc_prev_coded_qp[lcuRowIndex] = (uint8_t)picture_control_set_ptr->picture_qp;

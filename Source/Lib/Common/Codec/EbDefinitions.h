@@ -42,24 +42,24 @@ extern "C" {
 #endif
 
 #define PCS_ME_FIX                        1 // pcs flags shall not be set in seg based process
-#define ADAPTIVE_QP_SCALING               1 // Adaptive QP scaling. Change the QP based on the content. 
+#define ADAPTIVE_QP_SCALING               1 // Adaptive QP scaling. Change the QP based on the content.
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
 #define ATB                               1 // ATB Main Flag
 #if ATB
 #define ATB_SUPPORT                       1 // Tranform block geometry, data structure(s), ..
-#define ATB_SUPPORT_1_DEPTH               1 // Undo trasnform depth 2 as ATB for INTER not yet active 
-#define ATB_EP                            1 // Tranform partitioning @ encode passs 
-#define ATB_EC                            1 // Tranform partitioning @ entropy coding 
+#define ATB_SUPPORT_1_DEPTH               1 // Undo trasnform depth 2 as ATB for INTER not yet active
+#define ATB_EP                            1 // Tranform partitioning @ encode passs
+#define ATB_EC                            1 // Tranform partitioning @ entropy coding
 #define ATB_MD                            1 // Tranform partitioning @ mode decision
 #define ATB_RATE                          1 // Tranform partitioning tranform depth rate estimation
-#define ATB_TX_TYPE_SUPPORT_PER_TU        1 // Added the ability to signal Tx type per tranform block 
-#define ATB_DC_CONTEXT_SUPPORT_0          1 // Added the ability to signal DC context per tranform block 
-#define ATB_DC_CONTEXT_SUPPORT_1          1 // Added the ability to signal DC level per tranform block 
+#define ATB_TX_TYPE_SUPPORT_PER_TU        1 // Added the ability to signal Tx type per tranform block
+#define ATB_DC_CONTEXT_SUPPORT_0          1 // Added the ability to signal DC context per tranform block
+#define ATB_DC_CONTEXT_SUPPORT_1          1 // Added the ability to signal DC level per tranform block
 #define ATB_DC_CONTEXT_SUPPORT_2          1 // Added the ability to update DC context @ tranform block basis for only INTRA partitioning (128x128 not yet addressed)
 #if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
-#define DC_SIGN_CONTEXT_FIX               1 // Fixed DC level derivation and update @ mode decision 
+#define DC_SIGN_CONTEXT_FIX               1 // Fixed DC level derivation and update @ mode decision
 #define DC_SIGN_CONTEXT_EP                0 // Fixed DC level update @ encode pass (TBD)
 #endif
 #define SHUT_ATB                          0 // ATB multi-mode signal
@@ -73,7 +73,7 @@ extern "C" {
 /************************* Omar to remove disable_ang_uv *************************/
 #define MEMORY_FOOTPRINT_OPT_ME_MV        1
 #if MEMORY_FOOTPRINT_OPT_ME_MV
-#define MEMORY_FOOTPRINT_OPT              1     
+#define MEMORY_FOOTPRINT_OPT              1
 #define FROM_7_TO_4_MV                    1
 #define REDUCE_BLOCK_COUNT_ME             1
 #define REDUCE_ME_SEARCH_AREA             1
@@ -99,7 +99,7 @@ extern "C" {
 #define QUICK_ME_CLEANUP                  1
 #define SCREEN_CONTENT_SETTINGS           1
 
-// M9 settings toward 4K 60 fps           
+// M9 settings toward 4K 60 fps
 #define M9_SETTINGS                       1
 
 #if M9_SETTINGS
@@ -141,13 +141,13 @@ extern "C" {
 // Testing MACROS
 #define M9_NEAR_INJECTION                 0
 // Under testing
-#define M9_FRAC_ME_SEARCH_METHOD          0 // VP9 4K fractional search method; SUB_SAD_SEARCH vs. FULL_SAD_SEARCH 
+#define M9_FRAC_ME_SEARCH_METHOD          0 // VP9 4K fractional search method; SUB_SAD_SEARCH vs. FULL_SAD_SEARCH
 #define M9_FRAC_ME_SEARCH_64x64           0 // VP9 4K 64x64 search; OFF vs. ON
 #define M9_SUBPEL                         0 // VP9 4K subpel settings; subpel ON base
-#define M9_NFL                            0 // VP9 4K NFL settings; NFL = 3 
+#define M9_NFL                            0 // VP9 4K NFL settings; NFL = 3
 #define M9_CDEF                           0 // CDEF off
 #define M9_TX_SEARCH                      0 // Tx search off
-#define VP9_ADP                           0 // VP9 4K ADP budget;  (121,110,100 but different injection) (budget = f (layer index))      
+#define VP9_ADP                           0 // VP9 4K ADP budget;  (121,110,100 but different injection) (budget = f (layer index))
 #define DIS_EDGE_FIL                      0
 #define NFL_PER_SQ_SIZE                   0
 #define SC_HME_ME                         0 // Use sc detector for hme/me setting
@@ -175,7 +175,7 @@ extern "C" {
 #define TRELLIS_INTRA                                   0
 #define TRELLIS_CHROMA                                  0
 #define ENHANCED_TRELLIS                                0   // TBD
-#endif 
+#endif
 
 #define CHROMA_DC_ONLY                                  0
 #define SEARCH_UV_MODE                                  1
@@ -187,7 +187,7 @@ extern "C" {
 #define SEARCH_SMOOTH_OFF                               0
 #define SEARCH_UV_CLEAN_UP                              1
 #endif
-#define FIX_INTRA_UV                                    1   //mismatch in intra prediction 
+#define FIX_INTRA_UV                                    1   //mismatch in intra prediction
 
 #if !M9_SETTINGS || M9_ADP
 #define FRAC_64x64_BUG_FIX                              1
@@ -236,25 +236,25 @@ extern "C" {
 #define MRP_PRED_STRUCTURE        1
 #define EC_UPDATE                 1
 #define MRP_ME                    1
-#define MRP_CONNECTION            1 
-#define MD_INJECTION              1 
-#define MRP_MD                    1 
+#define MRP_CONNECTION            1
+#define MD_INJECTION              1
+#define MRP_MD                    1
 #define MRP_MD_UNI_DIR_BIPRED     1
 #define NEW_RPS                   1  //RPS supporting MRP
 #define MRP_5L_STRUCT             1  //New 5L prediction structure supporting MRP
-#define MRP_LIST_REF_IDX_TYPE_LT  1  
+#define MRP_LIST_REF_IDX_TYPE_LT  1
 #define MRP_MVP                   1 //MVP upgrade to support MRP
 #define MCP_4XN_FIX               1 //Fix for MCP chroma for 4xN modes
 #define CHECK_CAND                1 //increased and added a safety check for number of fast candidates
 #define MRP_COST_EST              1
 #define MRP_BASE                  1 //enable MRP for Base
-#define MRP_REF_MODE              1  
+#define MRP_REF_MODE              1
 #define MRP_DUPLICATION_FIX       1
 #define MRP_ENABLE_BI_FOR_BASE    1
 #define SETUP_SKIP                1
 #define INJ_MVP                   1   //new injection of MVP supporting MRP case.
 #define FIX_INIT                  1   //fix ref_poc_array init
-#define NORMAL_ORDER              1   //  order(ALT/ALT2) 
+#define NORMAL_ORDER              1   //  order(ALT/ALT2)
 #define REF_ORDER                 1  //correctly construct decoder based ref order hint array
 //#define FIX_INTRA_UV              1   //mismatch in intra prediction
 #define RPS_4L                    1 //RPS for 4L case
@@ -286,7 +286,7 @@ extern "C" {
 
 #define EIGTH_PEL_MV                                    0
 
-struct Buf2D 
+struct Buf2D
 {
     uint8_t *buf;
     uint8_t *buf0;
@@ -461,7 +461,7 @@ one more than the minimum. */
 
 // AV1 Loop Filter
 #define AV1_LF                                    1  // AV1 Loop Filter
-#if AV1_LF 
+#if AV1_LF
 #define LF_SHARPNESS 0
 #endif
 
@@ -583,7 +583,7 @@ static __inline void mem_put_le32(void *vmem, MEM_VALUE_T val) {
 
 typedef uint16_t ConvBufType;
 
-typedef struct ConvolveParams 
+typedef struct ConvolveParams
 {
     int32_t ref;
     int32_t do_average;
@@ -655,7 +655,7 @@ typedef enum ATTRIBUTE_PACKED
 }InterpFilter;
 
 
-typedef struct InterpFilterParams 
+typedef struct InterpFilterParams
 {
     const int16_t *filter_ptr;
     uint16_t taps;
@@ -663,7 +663,7 @@ typedef struct InterpFilterParams
     InterpFilter interp_filter;
 } InterpFilterParams;
 
-typedef enum TxSearchLevel 
+typedef enum TxSearchLevel
 {
     TX_SEARCH_OFF,
     TX_SEARCH_ENC_DEC,
@@ -671,7 +671,7 @@ typedef enum TxSearchLevel
     TX_SEARCH_FULL_LOOP
 } TxSearchLevel;
 
-typedef enum InterpolationSearchLevel 
+typedef enum InterpolationSearchLevel
 {
     IT_SEARCH_OFF,
     IT_SEARCH_INTER_DEPTH,
@@ -680,7 +680,7 @@ typedef enum InterpolationSearchLevel
     IT_SEARCH_FAST_LOOP,
 } InterpolationSearchLevel;
 
-typedef enum NsqSearchLevel 
+typedef enum NsqSearchLevel
 {
     NSQ_SEARCH_OFF,
     NSQ_SEARCH_LEVEL1,
@@ -852,7 +852,7 @@ static const TxSize tx_depth_to_tx_size[3][BlockSizeS_ALL] = {
         TX_64X16
     },
 
-    // tx_depth 1: 
+    // tx_depth 1:
     {
         TX_4X4,
         TX_4X8,
@@ -917,7 +917,7 @@ static const int32_t tx_size_high[TX_SIZES_ALL] = {
 typedef int32_t TranLow;
 typedef uint8_t QmVal;
 
-typedef enum TxClass 
+typedef enum TxClass
 {
     TX_CLASS_2D = 0,
     TX_CLASS_HORIZ = 1,
@@ -926,7 +926,7 @@ typedef enum TxClass
 } TxClass;
 
 
-static INLINE TxSize av1_get_adjusted_tx_size(TxSize tx_size) 
+static INLINE TxSize av1_get_adjusted_tx_size(TxSize tx_size)
 {
     switch (tx_size) {
     case TX_64X64:
@@ -964,7 +964,7 @@ static const int32_t tx_size_high_log2[TX_SIZES_ALL] = {
 
 
 // frame transform mode
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     ONLY_4X4,         // use only 4x4 transform
     TX_MODE_LARGEST,  // transform size is the largest possible for pu size
@@ -973,7 +973,7 @@ typedef enum ATTRIBUTE_PACKED
 } TxMode;
 
 // 1D tx types
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     DCT_1D,
     ADST_1D,
@@ -984,7 +984,7 @@ typedef enum ATTRIBUTE_PACKED
     TX_TYPES_1D,
 } TxType1D;
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     DCT_DCT,    // DCT  in both horizontal and vertical
     ADST_DCT,   // ADST in vertical, DCT in horizontal
@@ -1005,7 +1005,7 @@ typedef enum ATTRIBUTE_PACKED
     TX_TYPES,
 } TxType;
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     // DCT only
     EXT_TX_SET_DCTONLY,
@@ -1022,7 +1022,7 @@ typedef enum ATTRIBUTE_PACKED
     EXT_TX_SET_TYPES
 } TxSetType;
 
-typedef struct TxfmParam 
+typedef struct TxfmParam
 {
     // for both forward and inverse transforms
     TxType tx_type;
@@ -1042,14 +1042,14 @@ typedef struct TxfmParam
 #define EXT_TX_SETS_INTER 4  // Sets of transform selections for INTER
 #define EXT_TX_SETS_INTRA 3  // Sets of transform selections for INTRA
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     UNIDIR_COMP_REFERENCE,
     BIDIR_COMP_REFERENCE,
     COMP_REFERENCE_TYPES,
 } CompReferenceType;
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     PLANE_TYPE_Y,
     PLANE_TYPE_UV,
@@ -1062,14 +1062,14 @@ typedef enum ATTRIBUTE_PACKED
 #define CFL_IDX_U(idx) (idx >> CFL_ALPHABET_SIZE_LOG2)
 #define CFL_IDX_V(idx) (idx & (CFL_ALPHABET_SIZE - 1))
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     CFL_PRED_U,
     CFL_PRED_V,
     CFL_PRED_PLANES
 } CflPredType;
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     CFL_SIGN_ZERO,
     CFL_SIGN_NEG,
@@ -1077,7 +1077,7 @@ typedef enum ATTRIBUTE_PACKED
     CFL_SIGNS
 } CflSignType;
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     CFL_DISALLOWED,
     CFL_ALLOWED,
@@ -1115,7 +1115,7 @@ typedef enum ATTRIBUTE_PACKED {
     PALETTE_SIZES
 } PaletteSize;
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     PALETTE_COLOR_ONE,
     PALETTE_COLOR_TWO,
@@ -1130,7 +1130,7 @@ typedef enum ATTRIBUTE_PACKED
 
 // Note: All directional predictors must be between V_PRED and D67_PRED (both
 // inclusive).
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     DC_PRED,        // Average of above and left pixels
     V_PRED,         // Vertical
@@ -1178,7 +1178,7 @@ typedef enum ATTRIBUTE_PACKED
 
 // TODO(ltrudeau) Do we really want to pack this?
 // TODO(ltrudeau) Do we match with PredictionMode?
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     UV_DC_PRED,        // Average of above and left pixels
     UV_V_PRED,         // Vertical
@@ -1198,7 +1198,7 @@ typedef enum ATTRIBUTE_PACKED
     UV_MODE_INVALID,  // For uv_mode in inter blocks
 } UvPredictionMode;
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     SIMPLE_TRANSLATION,
     OBMC_CAUSAL,    // 2-sided OBMC
@@ -1206,7 +1206,7 @@ typedef enum ATTRIBUTE_PACKED
     MOTION_MODES
 } MotionMode;
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     II_DC_PRED,
     II_V_PRED,
@@ -1215,7 +1215,7 @@ typedef enum ATTRIBUTE_PACKED
     INTERINTRA_MODES
 } InterIntraMode;
 
-typedef enum 
+typedef enum
 {
     COMPOUND_AVERAGE,
     COMPOUND_DISTWTD,
@@ -1226,7 +1226,7 @@ typedef enum
     MASKED_COMPOUND_TYPES = 2,
 } CompoundType;
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     FILTER_DC_PRED,
     FILTER_V_PRED,
@@ -1313,7 +1313,7 @@ typedef uint8_t TXFM_CONTEXT;
 
 #define SINGLE_REFS (FWD_REFS + BWD_REFS)
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     LAST_LAST2_FRAMES,      // { LAST_FRAME, LAST2_FRAME }
     LAST_LAST3_FRAMES,      // { LAST_FRAME, LAST3_FRAME }
@@ -1339,7 +1339,7 @@ typedef enum ATTRIBUTE_PACKED
 //       possible to have a reference pair not listed for explicit signaling.
 #define MODE_CTX_REF_FRAMES (TOTAL_REFS_PER_FRAME + TOTAL_COMP_REFS)
 
-typedef enum ATTRIBUTE_PACKED 
+typedef enum ATTRIBUTE_PACKED
 {
     RESTORE_NONE,
     RESTORE_WIENER,
@@ -1403,7 +1403,7 @@ MAX_NUM_TEMPORAL_LAYERS * MAX_NUM_SPATIAL_LAYERS
 static INLINE int32_t is_valid_seq_level_idx(uint8_t seq_level_idx) {
     return seq_level_idx < 24 || seq_level_idx == 31;
 }
-typedef struct BitstreamLevel 
+typedef struct BitstreamLevel
 {
     uint8_t major;
     uint8_t minor;
@@ -1414,7 +1414,7 @@ typedef struct BitstreamLevel
 #define TXCOEFF_TIMER 0
 #define TXCOEFF_COST_TIMER 0
 
-typedef enum 
+typedef enum
 {
     SINGLE_REFERENCE = 0,
     COMPOUND_REFERENCE = 1,
@@ -1422,7 +1422,7 @@ typedef enum
     REFERENCE_MODES = 3,
 } ReferenceMode;
 
-typedef enum RefreshFrameContextMode 
+typedef enum RefreshFrameContextMode
 {
     /**
     * Frame context updates are disabled
@@ -1439,7 +1439,7 @@ typedef enum RefreshFrameContextMode
 //**********************************************************************************************************************//
 // aom_codec.h
 /*!\brief Algorithm return codes */
-typedef enum AomCodecErr 
+typedef enum AomCodecErr
 {
     /*!\brief Operation completed without error */
     AOM_CODEC_OK,
@@ -1544,7 +1544,7 @@ static const TxSize txsize_sqr_up_map[TX_SIZES_ALL] = {
 };
 
 // above and left partition
-typedef struct PartitionContext 
+typedef struct PartitionContext
 {
     PartitionContextType above;
     PartitionContextType left;
@@ -1553,7 +1553,7 @@ typedef struct PartitionContext
 // a BlockSize partition  11111 means we split 128x128, 64x64, 32x32, 16x16
 // and 8x8.  10000 means we just split the 128x128 to 64x64
 /* clang-format off */
-static const struct 
+static const struct
 {
     PartitionContextType above;
     PartitionContextType left;
@@ -1728,7 +1728,7 @@ static const uint8_t mi_size_high_log2[BlockSizeS_ALL] = {
     0, 1, 0, 1, 2, 1, 2, 3, 2, 3, 4, 3, 4, 5, 4, 5, 2, 0, 3, 1, 4, 2
 };
 
-typedef struct SgrParamsType 
+typedef struct SgrParamsType
 {
     int32_t r[2];  // radii
     int32_t s[2];  // sgr parameters for r[0] and r[1], based on GenSgrprojVtable()
@@ -1736,7 +1736,7 @@ typedef struct SgrParamsType
 
 //**********************************************************************************************************************//
 // blockd.h
-typedef enum FrameType 
+typedef enum FrameType
 {
     KEY_FRAME = 0,
     INTER_FRAME = 1,
@@ -1813,7 +1813,7 @@ static INLINE int is_inter_singleref_mode(PredictionMode mode) {
 
 //**********************************************************************************************************************//
 // encoder.h
-typedef enum FrameContextIndex 
+typedef enum FrameContextIndex
 {
     // regular inter frame
     REGULAR_FRAME = 0,
@@ -1891,14 +1891,14 @@ struct LoopFilter {
 #define SIMD_WIDTH 16
 // Need to align this structure so when it is declared and
 // passed it can be loaded into vector registers.
-typedef struct LoopFilterThresh 
+typedef struct LoopFilterThresh
 {
     DECLARE_ALIGNED(SIMD_WIDTH, uint8_t, mblim[SIMD_WIDTH]);
     DECLARE_ALIGNED(SIMD_WIDTH, uint8_t, lim[SIMD_WIDTH]);
     DECLARE_ALIGNED(SIMD_WIDTH, uint8_t, hev_thr[SIMD_WIDTH]);
 } LoopFilterThresh;
 
-typedef struct LoopFilterInfoN 
+typedef struct LoopFilterInfoN
 {
     LoopFilterThresh lfthr[MAX_LOOP_FILTER + 1];
     uint8_t lvl[MAX_MB_PLANE][MAX_SEGMENTS][2][REF_FRAMES][MAX_MODE_LF_DELTAS];
@@ -1970,7 +1970,7 @@ typedef struct LoopFilterInfoN
 #define GM_ALPHA_MIN -GM_ALPHA_MAX
 #define GM_ROW3HOMO_MIN -GM_ROW3HOMO_MAX
 /* clang-format off */
-typedef enum TransformationType 
+typedef enum TransformationType
 {
     IDENTITY = 0,      // identity transformation, 0-parameter
     TRANSLATION = 1,   // translational motion 2-parameter
@@ -1983,7 +1983,7 @@ typedef enum TransformationType
 //      [x'     (m2 m3 m0   [x
 //  z .  y'  =   m4 m5 m1 *  y
 //       1]      m6 m7 1)    1]
-typedef struct EbWarpedMotionParams 
+typedef struct EbWarpedMotionParams
 {
     TransformationType wmtype;
     int32_t wmmat[8];
@@ -2068,7 +2068,7 @@ static const EbWarpedMotionParams default_warp_params = {
 #define EB_NORMAL_LATENCY        0
 #define EB_LOW_LATENCY           1
 
-typedef enum EbBitFieldMasks 
+typedef enum EbBitFieldMasks
 {
     BITMASK_0 = 1,
     BITMASK_1 = 2,
@@ -2199,7 +2199,7 @@ The pointer is word aligned and the buffer is byte aligned.
 
 /** The EbBitDepthEnum type is used to describe the bitdepth of video data.
 */
-typedef enum EbBitDepthEnum 
+typedef enum EbBitDepthEnum
 {
     EB_8BIT = 8,
     EB_10BIT = 10,
@@ -2268,7 +2268,7 @@ typedef uint8_t EbPartMode;
 
 /** The EbIntraRefreshType is used to describe the intra refresh type.
 */
-typedef enum EbIntraRefreshType 
+typedef enum EbIntraRefreshType
 {
     NO_REFRESH = 0,
     CRA_REFRESH = 1,
@@ -2296,8 +2296,8 @@ typedef enum EbIntraRefreshType
 #define ENC_M5          5
 #define ENC_M6          6
 #define ENC_M7          7
-#define ENC_M8          8 
-#define ENC_M9          9 
+#define ENC_M8          8
+#define ENC_M9          9
 #define ENC_M10         10
 #define ENC_M11         11
 #define ENC_M12         12
@@ -2307,7 +2307,7 @@ typedef enum EbIntraRefreshType
 #define SPEED_CONTROL_INIT_MOD ENC_M4;
 /** The EB_TUID type is used to identify a TU within a CU.
 */
-typedef enum EbTuSize 
+typedef enum EbTuSize
 {
     TU_2Nx2N       = 0,
     TU_NxN_0       = 1,
@@ -2367,7 +2367,7 @@ static const uint8_t QP_OFFSET_WEIGHT[3][4] = { // [Slice Type][QP Offset Weight
 };
 /** Assembly Types
 */
-typedef enum EbAsm 
+typedef enum EbAsm
 {
     ASM_NON_AVX2,
     ASM_AVX2,
@@ -2434,14 +2434,14 @@ typedef struct EbLinkedListNode
     struct EbLinkedListNode  *next;                      // pointer to next node (null when last)
 } EbLinkedListNode;
 
-typedef enum DistCalcType 
+typedef enum DistCalcType
 {
     DIST_CALC_RESIDUAL = 0,    // SSE(Coefficients - ReconCoefficients)
     DIST_CALC_PREDICTION = 1,    // SSE(Coefficients) *Note - useful in modes that don't send residual coeff bits
     DIST_CALC_TOTAL = 2
 } DistCalcType;
 
-typedef enum EbPtrType 
+typedef enum EbPtrType
 {
     EB_N_PTR        = 0,     // malloc'd pointer
     EB_A_PTR        = 1,     // malloc'd pointer aligned
@@ -2541,7 +2541,7 @@ if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
 app_malloc_count++;
 
 #define ALVALUE 32
-#if MEM_MAP_OPT 
+#if MEM_MAP_OPT
 #ifdef _MSC_VER
 #define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \
     pointer = (type) _aligned_malloc(n_elements,ALVALUE); \
@@ -2802,7 +2802,7 @@ printf("Total App Memory: %.2lf KB\n\n",*total_app_memory/(double)1024);
 typedef int32_t errno_t;
 #endif  /* _ERRNO_T_DEFINED */
 
-extern void 
+extern void
     eb_memcpy(void  *dst_ptr, void  *src_ptr, size_t size);
 
 #define EB_MEMCPY(dst, src, size) \
@@ -3235,7 +3235,7 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define CHROMA_MODE_2  2 // Chroma blind @ MD + no CFL @ EP
 #define CHROMA_MODE_3  3 // Chroma blind @ MD + no CFL @ EP
 
-typedef enum EbSbComplexityStatus 
+typedef enum EbSbComplexityStatus
 {
     SB_COMPLEXITY_STATUS_0 = 0,
     SB_COMPLEXITY_STATUS_1 = 1,
@@ -3243,32 +3243,32 @@ typedef enum EbSbComplexityStatus
     SB_COMPLEXITY_STATUS_INVALID = (uint8_t)~0
 } EbSbComplexityStatus;
 
-typedef enum EbCleanUpMode 
+typedef enum EbCleanUpMode
 {
     CLEAN_UP_MODE_0 = 0,
     CLEAN_UP_MODE_1 = 1
 } EbCleanUpMode;
 
-typedef enum EbSaoMode 
+typedef enum EbSaoMode
 {
     SAO_MODE_0 = 0,
     SAO_MODE_1 = 1
 } EbSaoMode;
 
-typedef enum EbCu8x8Mode 
+typedef enum EbCu8x8Mode
 {
     CU_8x8_MODE_0 = 0,  // Perform OIS, Full_Search, Fractional_Search & Bipred for CU_8x8
     CU_8x8_MODE_1 = 1   // Perform OIS and only Full_Search for CU_8x8
 } EbCu8x8Mode;
 
-typedef enum EbPictureDepthMode 
+typedef enum EbPictureDepthMode
 {
-    PIC_ALL_DEPTH_MODE          = 0, // ALL sq and nsq:  SB size -> 4x4 
-    PIC_ALL_C_DEPTH_MODE        = 1, // ALL sq and nsq with control :  SB size -> 4x4 
-    PIC_SQ_DEPTH_MODE           = 2, // ALL sq:  SB size -> 4x4 
-    PIC_SQ_NON4_DEPTH_MODE      = 3, // SQ:  SB size -> 8x8 
-#if OPT_LOSSLESS_0             
-    PIC_OPEN_LOOP_DEPTH_MODE = 4, // Early Inter Depth Decision:  SB size -> 8x8 
+    PIC_ALL_DEPTH_MODE          = 0, // ALL sq and nsq:  SB size -> 4x4
+    PIC_ALL_C_DEPTH_MODE        = 1, // ALL sq and nsq with control :  SB size -> 4x4
+    PIC_SQ_DEPTH_MODE           = 2, // ALL sq:  SB size -> 4x4
+    PIC_SQ_NON4_DEPTH_MODE      = 3, // SQ:  SB size -> 8x8
+#if OPT_LOSSLESS_0
+    PIC_OPEN_LOOP_DEPTH_MODE = 4, // Early Inter Depth Decision:  SB size -> 8x8
     PIC_SB_SWITCH_DEPTH_MODE = 5  // Adaptive Depth Partitioning
 #else
     PIC_BDP_DEPTH_MODE          = 4,
@@ -3285,7 +3285,7 @@ typedef enum EbPictureDepthMode
 #define SB_FAST_OPEN_LOOP_DEPTH_MODE        4
 #define SB_PRED_OPEN_LOOP_DEPTH_MODE        5
 
-typedef enum EbIntrA4x4SearchMethod 
+typedef enum EbIntrA4x4SearchMethod
 {
     INTRA4x4_OFF = 0,
     INTRA4x4_INLINE_SEARCH = 1,
@@ -3319,7 +3319,7 @@ static const int32_t hme_level_0_search_area_multiplier_y[MAX_HIERARCHICAL_LEVEL
     { 525, 350, 200, 100, 100, 100 }
 };
 
-typedef enum RasterScanCuIndex 
+typedef enum RasterScanCuIndex
 {
     // 2Nx2N [85 partitions]
     RASTER_SCAN_CU_INDEX_64x64 = 0,
@@ -3649,7 +3649,7 @@ static const uint32_t MD_SCAN_TO_OIS_32x32_SCAN[CU_MAX_COUNT] =
                             ME/HME settings
 *******************************************************************************/
 #if NEW_PRESETS
-//     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12    
+//     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
 static const uint8_t enable_hme_level0_flag[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {
         {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
@@ -3932,7 +3932,7 @@ static const uint16_t hme_level2_search_area_in_height_array_bottom[SC_MAX_LEVEL
     }
 };
 #else
-//     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12    
+//     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
 static const uint8_t enable_hme_level0_flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
@@ -4256,7 +4256,7 @@ static const uint16_t search_area_height[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUP
 /******************************************************************************
                             ME/HME settings
 *******************************************************************************/
-//     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12    
+//     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
 static const uint8_t enable_hme_level0_flag[INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
     {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
@@ -4475,7 +4475,7 @@ static const uint16_t ep_to_pa_block_index[BLOCK_MAX_COUNT_SB_64] = {
     81,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
     82,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
     83,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    84,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0   
+    84,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0
 };
 #ifdef __cplusplus
 }

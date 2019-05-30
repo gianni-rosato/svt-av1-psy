@@ -540,11 +540,11 @@ static INLINE int32_t av1_cost_skip_txb(
     const TxSize txs_ctx = (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
     assert(txs_ctx < TX_SIZES);
     const LvMapCoeffCost *const coeff_costs = &candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->coeff_fac_bits[txs_ctx][plane_type];
-#if CABAC_UP   
+#if CABAC_UP
     if (allow_update_cdf) {
         update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], 1, 2);
     }
-#endif 
+#endif
     return coeff_costs->txb_skip_cost[txb_skip_ctx][1];
 }
 // Note: don't call this function when eob is 0.
@@ -558,7 +558,7 @@ uint64_t av1_cost_coeffs_txb(
     uint16_t                            eob,
     PlaneType                           plane_type,
     TxSize                              transform_size,
-#if ATB_TX_TYPE_SUPPORT_PER_TU                         
+#if ATB_TX_TYPE_SUPPORT_PER_TU
     TxType                              transform_type,
 #endif
     int16_t                             txb_skip_ctx,
@@ -593,11 +593,11 @@ uint64_t av1_cost_coeffs_txb(
     assert(eob > 0);
     cost = coeff_costs->txb_skip_cost[txb_skip_ctx][0];
 
-#if CABAC_UP   
+#if CABAC_UP
     if (allow_update_cdf) {
         update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], eob == 0, 2);
     }
-#endif 
+#endif
     av1_txb_init_levels(qcoeff, width, height, levels); // NM - Needs to be optimized - to be combined with the quantisation.
 
 
@@ -793,7 +793,7 @@ uint64_t av1_intra_fast_cost(
 #if MRP_COST_EST
     UNUSED(md_pass);
 #endif
-   
+
     if (av1_allow_intrabc(picture_control_set_ptr->parent_pcs_ptr->av1_cm) && candidate_ptr->use_intrabc) {
 
         uint64_t lumaSad = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
@@ -832,7 +832,7 @@ uint64_t av1_intra_fast_cost(
         chromaSad = chroma_distortion << AV1_COST_PRECISION;
         totalDistortion = lumaSad + chromaSad;
 
-       
+
         return(RDCOST(lambda, rate, totalDistortion));
 
     }
@@ -1405,7 +1405,7 @@ static INLINE int16_t Av1ModeContextAnalyzer(
     return comp_ctx;
 }
 
-uint64_t av1_inter_fast_cost(  
+uint64_t av1_inter_fast_cost(
     CodingUnit            *cu_ptr,
     ModeDecisionCandidate *candidate_ptr,
     uint32_t                 qp,
@@ -1986,7 +1986,7 @@ EbErrorType Av1FullCost(
     uint64_t chromaSse;
     uint64_t totalDistortion;
     uint64_t rate;
-    
+
     //Estimate the rate of the transform type and coefficient for Luma
     // Add fast rate to get the total rate of the subject mode
     lumaRate += candidate_buffer_ptr->candidate_ptr->fast_luma_rate;
@@ -2560,7 +2560,7 @@ void coding_loop_context_generation(
     cu_ptr->cb_dc_sign_context = 0;
     cu_ptr->cr_txb_skip_context = 0;
     cu_ptr->cr_dc_sign_context = 0;
-#if ATB_SUPPORT 
+#if ATB_SUPPORT
     uint8_t tx_depth = context_ptr->tx_depth = cu_ptr->tx_depth;
     int32_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];
 #else

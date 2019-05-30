@@ -11,7 +11,7 @@
 /**************************************
  * Enums
  **************************************/
-typedef enum EbPicType 
+typedef enum EbPicType
 {
     EB_PIC_INVALID = 0,
     EB_PIC_INPUT = 1,

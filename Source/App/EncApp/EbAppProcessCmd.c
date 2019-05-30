@@ -1304,7 +1304,7 @@ AppExitConditionType ProcessOutputStreamBuffer(
             }
         }
 #if ALT_REF_OVERLAY_APP
-    } 
+    }
 #endif
     return return_value;
 }

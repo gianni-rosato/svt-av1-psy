@@ -40,7 +40,7 @@ EbErrorType output_bitstream_unit_ctor(
         bitstream_ptr->buffer_av1 = 0;
     }
     bitstream_ptr->written_bits_count = 0;
-    
+
     return EB_ErrorNone;
 }
 

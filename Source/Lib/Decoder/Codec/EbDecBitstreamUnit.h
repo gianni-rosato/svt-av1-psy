@@ -18,9 +18,9 @@
 #define EbDecBitstreamUnit_h
 
 #include "EbCabacContextModel.h"
-#include "EbBitstreamUnit.h" 
-//Added this EbBitstreamUnit.h because od_ec_window is defined in it, but 
-//we also defining it, so it leads to warning,  so i commented our defination & added EbBitstreamUnit.h file.  
+#include "EbBitstreamUnit.h"
+//Added this EbBitstreamUnit.h because od_ec_window is defined in it, but
+//we also defining it, so it leads to warning,  so i commented our defination & added EbBitstreamUnit.h file.
 
 #ifdef __cplusplus
 extern "C" {

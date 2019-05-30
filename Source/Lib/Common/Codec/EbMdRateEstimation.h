@@ -31,7 +31,7 @@ extern "C" {
         int32_t eob_cost[2][11];
     } LvMapEobCost;
 
-    typedef struct LvMapCoeffCost 
+    typedef struct LvMapCoeffCost
     {
         int32_t txb_skip_cost[TXB_SKIP_CONTEXTS][2];
         int32_t base_eob_cost[SIG_COEF_CONTEXTS_EOB][3];
@@ -50,7 +50,7 @@ extern "C" {
     /**************************************
      * MD Rate Estimation Structure
      **************************************/
-    typedef struct MdRateEstimationContext 
+    typedef struct MdRateEstimationContext
     {
         EbBitFraction  split_flag_bits[NUMBER_OF_SPLIT_FLAG_CASES];
         EbBitFraction  mvd_bits[NUMBER_OF_MVD_CASES];
@@ -189,7 +189,7 @@ extern "C" {
     typedef uint8_t *WedgeMasksType[MAX_WEDGE_TYPES];
     static WedgeMasksType wedge_masks[BlockSizeS_ALL][2];
     // Angles are with respect to horizontal anti-clockwise
-    typedef enum WedgeDirectionType 
+    typedef enum WedgeDirectionType
     {
         WEDGE_HORIZONTAL = 0,
         WEDGE_VERTICAL = 1,
@@ -200,14 +200,14 @@ extern "C" {
         WEDGE_DIRECTIONS
     } WedgeDirectionType;
     // 3-tuple: {direction, x_offset, y_offset}
-    typedef struct WedgeCodeType 
+    typedef struct WedgeCodeType
     {
         WedgeDirectionType direction;
         int32_t x_offset;
         int32_t y_offset;
     } WedgeCodeType;
 
-    typedef struct WedgeParamsType 
+    typedef struct WedgeParamsType
     {
         int32_t bits;
         const WedgeCodeType *codebook;

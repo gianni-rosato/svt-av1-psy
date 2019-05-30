@@ -50,7 +50,7 @@ extern "C" {
 #define TC_OFFSET_VALUE                     12//12 // range -12 to 12
 
 #if AV1_LF
-    typedef enum LpfPickMethod 
+    typedef enum LpfPickMethod
     {
         // Try the full image with different values.
         LPF_PICK_FROM_FULL_IMAGE,
@@ -117,7 +117,7 @@ extern "C" {
         const MacroblockdPlane *const plane_ptr,
         const uint32_t mi_row, const uint32_t mi_col);
 
-    typedef struct LoopFilterWorkerData 
+    typedef struct LoopFilterWorkerData
     {
         EbPictureBufferDesc *frame_buffer;//reconpicture,
         PictureControlSet *pcs_ptr;

@@ -1911,7 +1911,7 @@ void av1_pick_filter_level(
         if (scs_ptr->static_config.encoder_bit_depth != EB_8BIT && pcs_ptr->parent_pcs_ptr->av1_frame_type == KEY_FRAME)
             filt_guess -= 4;
 
-   
+
         filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
         int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
 

@@ -36,7 +36,7 @@ extern "C" {
         65, 61, 57, 54, 50, 47, 44, 41, 38, 35, 32, 29, 27, 25, 22, 20, 18, 16, 15,
         13, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4,
     };
-    
+
     void intra_mode_angular_av1_z1_16bit_4x4_avx2(
         const uint32_t  size,
         uint16_t       *ref_samples,

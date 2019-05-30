@@ -35,13 +35,13 @@ extern "C" {
       /**************************************
        * Member definitions
        **************************************/
-    typedef struct EncDecSegDependencyMap 
+    typedef struct EncDecSegDependencyMap
     {
         uint8_t      *dependency_map;
         EbHandle   update_mutex;
     } EncDecSegDependencyMap;
 
-    typedef struct EncDecSegSegmentRow 
+    typedef struct EncDecSegSegmentRow
     {
         uint16_t      starting_seg_index;
         uint16_t      ending_seg_index;

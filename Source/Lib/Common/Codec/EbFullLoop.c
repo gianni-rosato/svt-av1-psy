@@ -489,7 +489,7 @@ void av1_quantize_b_facade_II(
 }
 
 #if OPT_QUANT_COEFF
-// Hsan: code clean up; from static to extern as now used @ more than 1 file 
+// Hsan: code clean up; from static to extern as now used @ more than 1 file
 
 static const int16_t k_eob_group_start[12] = { 0, 1, 2, 3, 5, 9, 17, 33, 65, 129, 257, 513 };
 
@@ -1346,23 +1346,23 @@ static AOM_FORCE_INLINE void update_coeff_eob(
     }
 }
 static INLINE void update_coeff_general(
-    int *accu_rate, 
-    int64_t *accu_dist, 
-    int si, 
-    int eob, 
+    int *accu_rate,
+    int64_t *accu_dist,
+    int si,
+    int eob,
     TxSize tx_size,
-    TxClass tx_class, 
-    int bwl, 
-    int height, 
-    int64_t rdmult, 
+    TxClass tx_class,
+    int bwl,
+    int height,
+    int64_t rdmult,
     int shift,
-    int dc_sign_ctx, 
-    const int16_t *dequant, 
+    int dc_sign_ctx,
+    const int16_t *dequant,
     const int16_t *scan,
-    const LvMapCoeffCost *txb_costs, 
+    const LvMapCoeffCost *txb_costs,
     const TranLow *tcoeff,
-    TranLow *qcoeff, 
-    TranLow *dqcoeff, 
+    TranLow *qcoeff,
+    TranLow *dqcoeff,
     uint8_t *levels) {
     const int dqv = dequant[si != 0];
     const int ci = scan[si];
@@ -1419,19 +1419,19 @@ static INLINE void update_coeff_general(
 }
 
 static AOM_FORCE_INLINE void update_coeff_simple(
-    int *accu_rate, 
-    int si, 
-    int eob, 
-    TxSize tx_size, 
+    int *accu_rate,
+    int si,
+    int eob,
+    TxSize tx_size,
     TxClass tx_class,
-    int bwl, 
-    int64_t rdmult, 
-    int shift, 
+    int bwl,
+    int64_t rdmult,
+    int shift,
     const int16_t *dequant,
-    const int16_t *scan, 
+    const int16_t *scan,
     const LvMapCoeffCost *txb_costs,
-    const TranLow *tcoeff, 
-    TranLow *qcoeff, 
+    const TranLow *tcoeff,
+    TranLow *qcoeff,
     TranLow *dqcoeff,
     uint8_t *levels) {
     const int dqv = dequant[1];
@@ -1513,11 +1513,11 @@ static INLINE int32_t av1_cost_skip_txb(
     assert(txs_ctx < TX_SIZES);
     const LvMapCoeffCost *const coeff_costs = &candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->coeff_fac_bits[txs_ctx][plane_type];
 
-#if CABAC_UP   
+#if CABAC_UP
     if (allow_update_cdf) {
         update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], 1, 2);
     }
-#endif 
+#endif
     return coeff_costs->txb_skip_cost[txb_skip_ctx][1];
 }
 #endif
@@ -1746,7 +1746,7 @@ void av1_quantize_inv_quantize(
     //  MacroblockPlane      candidate_plane,
     EbAsm                asm_type,
     uint32_t                      *count_non_zero_coeffs,
-#if !PF_N2_SUPPORT                
+#if !PF_N2_SUPPORT
     EbPfMode              pf_mode,
 #endif
     uint32_t                component_type,
@@ -1901,8 +1901,8 @@ void av1_quantize_inv_quantize(
 
 #if OPT_QUANT_COEFF
     EbBool is_inter = (pred_mode >= NEARESTMV);
-    // Hsan (Trellis) : only luma for now and only @ encode pass  
-#if TRELLIS_MD  
+    // Hsan (Trellis) : only luma for now and only @ encode pass
+#if TRELLIS_MD
 #if TRELLIS_INTRA
     if (md_context->trellis_quant_coeff_optimization && *eob != 0 && component_type == COMPONENT_LUMA) {
 #else
@@ -1923,7 +1923,7 @@ void av1_quantize_inv_quantize(
 
         uint64_t cost_non_opt;
         uint64_t cost_opt;
-        
+
 #if TRELLIS_SKIP
         uint64_t coeff_rate_skip_non_opt;
         uint64_t coeff_rate_skip_opt;
@@ -1932,7 +1932,7 @@ void av1_quantize_inv_quantize(
         uint64_t cost_skip_opt;
 #endif
         // Use the 1st spot of the candidate buffer to hold cfl settings to use same kernel as MD for coef cost estimation
-        if (is_encode_pass) 
+        if (is_encode_pass)
         {
 #if !ATB_TX_TYPE_SUPPORT_PER_TU
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = tx_type;
@@ -1945,7 +1945,7 @@ void av1_quantize_inv_quantize(
             candidateBuffer->candidate_ptr->md_rate_estimation_ptr = md_context->md_rate_estimation_ptr;
         }
 
-        // Compute the cost when using non-optimized coefficients (i.e. original coefficients) 
+        // Compute the cost when using non-optimized coefficients (i.e. original coefficients)
         coeff_rate_non_opt = av1_cost_coeffs_txb(
             0,//picture_control_set_ptr->update_cdf,
             0,//picture_control_set_ptr->ec_ctx_array[sb_index],
@@ -1957,8 +1957,8 @@ void av1_quantize_inv_quantize(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
             tx_type,
 #endif
-            txb_skip_context,     
-            dc_sign_context,    
+            txb_skip_context,
+            dc_sign_context,
             picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
 
 #if TRELLIS_SKIP
@@ -1992,8 +1992,8 @@ void av1_quantize_inv_quantize(
         if (*eob != 0) {
             av1_optimize_b(
                 md_context,
-                txb_skip_context,  
-                dc_sign_context,   
+                txb_skip_context,
+                dc_sign_context,
                 (TranLow*)coeff,
                 coeff_stride,
                 n_coeffs,
@@ -2022,8 +2022,8 @@ void av1_quantize_inv_quantize(
 #if ATB_TX_TYPE_SUPPORT_PER_TU
                     tx_type,
 #endif
-                    txb_skip_context,    
-                    dc_sign_context,   
+                    txb_skip_context,
+                    dc_sign_context,
                     picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
 
 #if TRELLIS_SKIP
@@ -2089,7 +2089,7 @@ void av1_quantize_inv_quantize(
     *count_non_zero_coeffs = *eob;
 
 #if DC_SIGN_CONTEXT_FIX
-    // Derive cul_level 
+    // Derive cul_level
     int32_t cul_level = 0;
     const int16_t *const scan = scan_order->scan;
     for (int32_t c = 0; c < *eob; ++c) {
@@ -2794,9 +2794,9 @@ void encode_pass_tx_search(
     EncDecContext                *context_ptr,
     LargestCodingUnit            *sb_ptr,
     uint32_t                      cb_qp,
-    EbPictureBufferDesc          *coeffSamplesTB,          
-    EbPictureBufferDesc          *residual16bit,           
-    EbPictureBufferDesc          *transform16bit,          
+    EbPictureBufferDesc          *coeffSamplesTB,
+    EbPictureBufferDesc          *residual16bit,
+    EbPictureBufferDesc          *transform16bit,
     EbPictureBufferDesc          *inverse_quant_buffer,
     int16_t                      *transformScratchBuffer,
     EbAsm                        asm_type,
@@ -2831,7 +2831,7 @@ void encode_pass_tx_search(
     TxType                 txk_start = DCT_DCT;
     TxType                 txk_end = TX_TYPES;
     TxType                 tx_type;
-#if ATB_SUPPORT 
+#if ATB_SUPPORT
     TxSize                 txSize = context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
     const uint32_t         scratch_luma_offset = context_ptr->blk_geom->tx_org_x[cu_ptr->tx_depth][context_ptr->txb_itr] + context_ptr->blk_geom->tx_org_y[cu_ptr->tx_depth][context_ptr->txb_itr] * SB_STRIDE_Y;
 #else
@@ -3341,7 +3341,7 @@ void full_loop_r(
     tuCount = context_ptr->blk_geom->txb_count;
 #endif
     uint32_t  txb_1d_offset = 0;
-#if ATB_SUPPORT 
+#if ATB_SUPPORT
     tuCount = tx_depth ? 1 : tuCount; //NM: 128x128 exeption
 
 #endif
@@ -3514,7 +3514,7 @@ void full_loop_r(
                         asm_type);
                 }
             }
-#endif        
+#endif
         }
 
 
@@ -3660,7 +3660,7 @@ void full_loop_r(
                         asm_type);
                 }
             }
-#endif        
+#endif
         }
 #if ATB_SUPPORT
         txb_1d_offset += context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr] * context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr];
@@ -3722,7 +3722,7 @@ void cu_full_distortion_fast_tu_mode_r(
     uint32_t  txb_1d_offset = 0;
     candidate_ptr->u_has_coeff = 0;
     candidate_ptr->v_has_coeff = 0;
-#if ATB_SUPPORT 
+#if ATB_SUPPORT
     tuTotalCount = tx_depth ? 1 : tuTotalCount; //NM: 128x128 exeption
 #endif
     do {
@@ -4142,7 +4142,7 @@ void   compute_depth_costs(
             sequence_control_set_ptr->max_sb_depth);
 #endif
         *above_depth_cost = context_ptr->md_local_cu_unit[above_depth_mds].cost + above_non_split_rate;
-#if SPLIT_RATE_FIX 
+#if SPLIT_RATE_FIX
         // Compute curr depth  cost
         av1_split_flag_rate(
             sequence_control_set_ptr,
@@ -4222,7 +4222,7 @@ void   compute_depth_costs(
                 context_ptr->md_rate_estimation_ptr,
                 sequence_control_set_ptr->max_sb_depth);
     }
-    //curr_non_split_rate_344 = splitflag_mdc_344 || 4x4 ? 0 : compute; 
+    //curr_non_split_rate_344 = splitflag_mdc_344 || 4x4 ? 0 : compute;
 
 
     *curr_depth_cost =

@@ -3,7 +3,7 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-// Command line argument parsing 
+// Command line argument parsing
 
 /***************************************
  * Includes

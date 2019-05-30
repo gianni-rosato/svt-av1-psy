@@ -3,7 +3,7 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-// Command line argument parsing 
+// Command line argument parsing
 
 /***************************************
  * Includes
@@ -43,7 +43,7 @@ ConfigEntry config_entry[] = {
     { PIC_HEIGHT_TOKEN, "PictureHeight", 1, set_pic_height},
     { COLOUR_SPACE_TOKEN,"InputColourSpace", 1, set_colour_space},
 
-    // Termination 
+    // Termination
     { NULL, NULL, 0, NULL}
 };
 
@@ -66,7 +66,7 @@ static void showHelp()
 }
 
 EbErrorType read_command_line(int32_t argc, char *const argv[],
-                              EbSvtAv1DecConfiguration *configs, 
+                              EbSvtAv1DecConfiguration *configs,
                               CLInput *cli)
 {
     char    *cmd_copy[MAX_NUM_TOKENS] = { NULL };
@@ -87,7 +87,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
         }
     }
 
-    token_index = 0;  
+    token_index = 0;
     // Parse command line for tokens
     while (token_index < cmd_token_cnt) {
         if (cmd_copy[token_index] != NULL) {
@@ -139,7 +139,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
                                 printf("Invalid CLI option: %s \n", cmd_copy[token_index]);
                                 return EB_ErrorBadParameter;
                             }
-                            else 
+                            else
                                 config_strings[token_index] = "1";
                         }
                         (*config_entry[temp_ind].scf)(config_strings[token_index], configs);

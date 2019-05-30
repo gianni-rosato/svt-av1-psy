@@ -39,7 +39,7 @@ extern "C" {
 #define HME_DECIM_FILTER_TAP        9
 
 // Quater pel refinement methods
-    typedef enum EbQuarterPelRefinementMethod 
+    typedef enum EbQuarterPelRefinementMethod
     {
         EB_QUARTER_IN_FULL,
         EB_QUARTER_IN_HALF_HORIZONTAL,
@@ -47,7 +47,7 @@ extern "C" {
         EB_QUARTER_IN_HALF_DIAGONAL
     } EbQuarterPelInterpolationMethod;
 
-    typedef struct MePredictionUnit 
+    typedef struct MePredictionUnit
     {
         uint64_t  distortion;
         int16_t   x_mv;
@@ -55,7 +55,7 @@ extern "C" {
         uint32_t  sub_pel_direction;
     } MePredictionUnit;
 
-    typedef enum EbMeTierZeroPu 
+    typedef enum EbMeTierZeroPu
     {
 
         // 2Nx2N [85 partitions]
@@ -285,7 +285,7 @@ extern "C" {
         MePredictionUnit  pu[MAX_ME_PU_COUNT];
     } MeTierZero;
 
-    typedef struct IntraReferenceSamplesOpenLoop 
+    typedef struct IntraReferenceSamplesOpenLoop
     {
         uint8_t                  *y_intra_reference_array;
         uint8_t                  *y_intra_reference_array_reverse;
@@ -297,7 +297,7 @@ extern "C" {
         EbBool                    left_ready_flag_y;
     }IntraReferenceSamplesOpenLoop;
 
-    typedef struct MePredUnit 
+    typedef struct MePredUnit
     {
 #if MRP_ME
         uint8_t          ref_index[MAX_NUM_OF_REF_PIC_LIST];
@@ -317,7 +317,7 @@ extern "C" {
         MePredUnit  pu[MAX_ME_PU_COUNT];
     } MotionEstimationTierZero;
 
-    typedef struct MeContext 
+    typedef struct MeContext
     {
         // Search region stride
         uint32_t                      interpolated_stride;
@@ -392,7 +392,7 @@ extern "C" {
         uint8_t                       psub_pel_direction8x32[16];
         uint8_t                       psub_pel_direction64x16[4];
         uint8_t                       psub_pel_direction16x64[4];
-                                      
+
         uint32_t                      p_sb_best_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
         uint32_t                      p_sb_best_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
         uint32_t                      p_sb_bipred_sad[MAX_ME_PU_COUNT];//needs to be upgraded to 209 pus
@@ -469,7 +469,7 @@ extern "C" {
 
     } MeContext;
 
-    typedef struct SsMeContext 
+    typedef struct SsMeContext
     {
         // Search region stride
         uint32_t                      interpolated_stride;
@@ -500,110 +500,110 @@ extern "C" {
         uint32_t                     *p_best_mv64x128;
         uint32_t                      p_sad64x128[2];
         uint8_t                       psub_pel_direction64x128[2];
-                                     
+
         uint32_t                     *p_best_sad128x64;
         uint32_t                     *p_best_mv128x64;
         uint32_t                      p_sad128x64[2];
         uint8_t                       psub_pel_direction128x64[2];
-                                     
+
         uint32_t                     *p_best_sad128x128;
         uint32_t                     *p_best_mv128x128;
         uint32_t                      p_sad128x128;
         uint8_t                       psub_pel_direction128x128;
-                                     
+
         uint32_t                     *p_best_sad4x4;
         uint32_t                     *p_best_mv4x4;
         uint32_t                      p_sad4x4[256 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction4x4[256 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad8x4;
         uint32_t                     *p_best_mv8x4;
         uint32_t                      p_sad8x4[128 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction8x4[128 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad4x8;
         uint32_t                     *p_best_mv4x8;
         uint32_t                      p_sad4x8[128 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction4x8[128 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad8x8;
         uint32_t                     *p_best_mv8x8;
         uint32_t                      p_sad8x8[64 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction8x8[64 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad16x8;
         uint32_t                     *p_best_mv16x8;
         uint32_t                      p_sad16x8[32 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction16x8[32 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad8x16;
         uint32_t                     *p_best_mv8x16;
         uint32_t                      p_sad8x16[32 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction8x16[32 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad16x4;
         uint32_t                     *p_best_mv16x4;
         uint32_t                      p_sad16x4[64 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad4x16;
         uint32_t                     *p_best_mv4x16;
         uint32_t                      p_sad4x16[64 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad16x16;
         uint32_t                     *p_best_mv16x16;
         uint32_t                      p_sad16x16[16 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction16x16[16 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad32x8;
         uint32_t                     *p_best_mv32x8;
         uint32_t                      p_sad32x8[16 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction32x8[16 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad8x32;
         uint32_t                     *p_best_mv8x32;
         uint32_t                      p_sad8x32[16 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction8x32[16 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad32x16;
         uint32_t                     *p_best_mv32x16;
         uint32_t                      p_sad32x16[8 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction32x16[8 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad16x32;
         uint32_t                     *p_best_mv16x32;
         uint32_t                      p_sad16x32[8 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction16x32[8 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad32x32;
         uint32_t                     *p_best_mv32x32;
         uint32_t                      p_sad32x32[4 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction32x32[4 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad64x16;
         uint32_t                     *p_best_mv64x16;
         uint32_t                      p_sad64x16[4 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction64x16[4 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad16x64;
         uint32_t                     *p_best_mv16x64;
         uint32_t                      p_sad16x64[4 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction16x64[4 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad32x64;
         uint32_t                     *p_best_mv32x64;
         uint32_t                      p_sad32x64[2 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction32x64[2 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad64x32;
         uint32_t                     *p_best_mv64x32;
         uint32_t                      p_sad64x32[2 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction64x32[2 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                     *p_best_sad64x64;
         uint32_t                     *p_best_mv64x64;
         uint32_t                      p_sad64x64[1 * NUMBER_OF_SB_QUAD];
         uint8_t                       psub_pel_direction64x64[1 * NUMBER_OF_SB_QUAD];
-                                     
+
         uint32_t                      p_sb_best_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_SS_ME_PU_COUNT];
         uint32_t                      p_sb_best_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_SS_ME_PU_COUNT];
 
@@ -618,7 +618,7 @@ extern "C" {
         // ME
         uint8_t                       search_area_width;
         uint8_t                       search_area_height;
-                                      
+
         BlockSize                     sb_size;
         uint32_t                      sb_side;
 

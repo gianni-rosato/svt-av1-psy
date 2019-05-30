@@ -228,7 +228,7 @@ static INLINE int is_mv_in(const MvLimits *mv_limits, const MV *mv) {
 int av1_get_mvpred_var(const IntraBcContext *x, const MV *best_mv,
                        const MV *center_mv, const aom_variance_fn_ptr_t *vfp,
                        int use_mvcost) {
-   
+
   const struct Buf2D *const what = &x->plane[0].src;
   const struct Buf2D *const in_what = &x->xdplane[0].pre[0];
   const MV mv = { best_mv->row * 8, best_mv->col * 8 };
@@ -247,7 +247,7 @@ static int exhuastive_mesh_search(IntraBcContext  *x, MV *ref_mv, MV *best_mv,
                                   int range, int step, int sad_per_bit,
                                   const aom_variance_fn_ptr_t *fn_ptr,
                                   const MV *center_mv) {
-   
+
   const struct Buf2D *const what = &x->plane[0].src;
   const struct Buf2D *const in_what = &x->xdplane[0].pre[0];
   MV fcenter_mv = { center_mv->row, center_mv->col };
@@ -340,7 +340,7 @@ int av1_diamond_search_sad_c(IntraBcContext  *x, const SearchSiteConfig *cfg,
                              const MV *center_mv) {
   int i, j, step;
 
- 
+
   uint8_t *what = x->plane[0].src.buf;
   const int what_stride = x->plane[0].src.stride;
   const uint8_t *in_what;
@@ -618,7 +618,7 @@ int av1_refining_search_sad(IntraBcContext  *x, MV *ref_mv, int error_per_bit,
                             int search_range,
                             const aom_variance_fn_ptr_t *fn_ptr,
                             const MV *center_mv) {
-  
+
   const MV neighbors[4] = { { -1, 0 }, { 0, -1 }, { 0, 1 }, { 1, 0 } };
   const struct Buf2D *const what = &x->plane[0].src;
   const struct Buf2D *const in_what = &x->xdplane[0].pre[0];
@@ -797,7 +797,7 @@ int av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext  *x, BlockSize 
         if (count <= (intra ? 1 : 0)) {
           break;
         }
- 
+
         Iterator iterator =
             av1_hash_get_first_iterator(ref_frame_hash, hash_value1);
         for (int i = 0; i < count; i++, iterator_increment(&iterator)) {

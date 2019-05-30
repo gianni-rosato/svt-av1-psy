@@ -230,7 +230,7 @@ static PredictionStructureConfigEntry four_level_hierarchical_pred_struct[] = {
         3,                  // GOP Index 3 - Temporal Layer
         4,                  // GOP Index 3 - Decode Order
 #if RPS_4L
-       { 1,   3, 5,  7},    //    GOP Index 3 - Ref List 0  
+       { 1,   3, 5,  7},    //    GOP Index 3 - Ref List 0
        {-1,  -5, 0,  0}     //     GOP Index 3 - Ref List 1
 #else
         { 1,  3,  5, 0},    // GOP Index 3 - Ref List 0
@@ -242,7 +242,7 @@ static PredictionStructureConfigEntry four_level_hierarchical_pred_struct[] = {
         1,                  // GOP Index 4 - Temporal Layer
         1,                  // GOP Index 4 - Decode Order
 #if RPS_4L
-        { 4, 8, 12,  0},    // GOP Index 4 - Ref List 0   
+        { 4, 8, 12,  0},    // GOP Index 4 - Ref List 0
         {-4,   0, 0,  0}   // GOP Index 4 - Ref List 1
 #else
         { 4, 12,  0,  0},   // GOP Index 4 - Ref List 0
@@ -333,7 +333,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
         4,                  // GOP Index 1 - Temporal Layer
         4,                  // GOP Index 1 - Decode Order
 
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
        { 1, 5, 9, 17},  // GOP Index 1 - Ref List 0
        { -1, -3, -7, 0 }   // GOP Index 1 - Ref List 1
 #else
@@ -346,7 +346,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
         3,                  // GOP Index 2 - Temporal Layer
         3,                  // GOP Index 2 - Decode Order
 
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
     { 2, 4, 6, 10},        // GOP Index 2 - Ref List 0
     { -2, -6, -14,  0 }   // GOP Index 2 - Ref List 1
 #else
@@ -358,7 +358,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 3 - Temporal Layer
         5,                  // GOP Index 3 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
          { 1, 3, 7, 11},     // GOP Index 3 - Ref List 0
          { -1, -5, -13, 0 }   // GOP Index 3 - Ref List 1
 #else
@@ -370,7 +370,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         2,                  // GOP Index 4 - Temporal Layer
         2,                  // GOP Index 4 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
     {  4,   8,  12,  20 },  // GOP Index 4 - Ref List 0
     { -4, -12,  0,  0 }     // GOP Index 4 - Ref List 1
 #else
@@ -382,7 +382,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 5 - Temporal Layer
         7,                  // GOP Index 5 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
     { 1, 5, 9, 13},      // GOP Index 5 - Ref List 0
     { -1, -3, -11, 0 }   // GOP Index 5 - Ref List 1
 #else
@@ -394,7 +394,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         3,                  // GOP Index 6 - Temporal Layer
         6,                  // GOP Index 6 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
         { 2, 4, 6, 10},        // GOP Index 6 - Ref List 0
         { -2, -10,  0,  0 }    // GOP Index 6 - Ref List 1
 #else
@@ -406,7 +406,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 7 - Temporal Layer
         8,                  // GOP Index 7 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
         { 1, 3, 7, 11},    // GOP Index 7 - Ref List 0
         { -1, -9, 0, 0 }   // GOP Index 7 - Ref List 1
 #else
@@ -418,7 +418,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         1,                  // GOP Index 8 - Temporal Layer
         1,                  // GOP Index 8 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
         {  8, 16, 24, 0},   // GOP Index 8 - Ref List 0
         { -8, 0, 0, 0}      // GOP Index 8 - Ref List 1
 #else
@@ -430,7 +430,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 9 - Temporal Layer
         11,                 // GOP Index 9 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
         { 1, 5, 9, 17},     // GOP Index 9 - Ref List 0
         { -1, -3, -7, 0 }   // GOP Index 9 - Ref List 1
 #else
@@ -443,7 +443,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         3,                  // GOP Index 10 - Temporal Layer
         10,                 // GOP Index 10 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
          { 2, 4, 6, 10},       // GOP Index 10 - Ref List 0
          { -2, -6,  0,  0 }    // GOP Index 10 - Ref List 1
 #else
@@ -455,7 +455,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 11 - Temporal Layer
         12,                 // GOP Index 11 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
        { 1, 3, 7, 11},    // GOP Index 11 - Ref List 0
        { -1, -5, 0, 0 }   // GOP Index 11 - Ref List 1
 #else
@@ -467,7 +467,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         2,                  // GOP Index 12 - Temporal Layer
         9,                  // GOP Index 12 - Decode Order
- #if MRP_5L_STRUCT    
+ #if MRP_5L_STRUCT
          { 4, 8, 12, 0},       // GOP Index 12 - Ref List 0
          { -4,  0, 0,  0 }     // GOP Index 12 - Ref List 1
 #else
@@ -479,7 +479,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 13 - Temporal Layer
         14,                 // GOP Index 13 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
          { 1, 5, 9, 13},  // GOP Index 13 - Ref List 0
          { -1, -3, 0, 0 }   // GOP Index 13 - Ref List 1
 #else
@@ -491,7 +491,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         3,                  // GOP Index 14 - Temporal Layer
         13,                 // GOP Index 14 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
         { 2, 4, 6, 14},    // GOP Index 14 - Ref List 0
         { -2, 0,  0, 0 }   // GOP Index 14 - Ref List 1
 
@@ -504,7 +504,7 @@ static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 15 - Temporal Layer
         15,                 // GOP Index 15 - Decode Order
-#if MRP_5L_STRUCT  
+#if MRP_5L_STRUCT
         { 1, 3, 7, 11},  // GOP Index 15 - Ref List 0
        { -1, 0, 0, 0 }   // GOP Index 15 - Ref List 1
 #else

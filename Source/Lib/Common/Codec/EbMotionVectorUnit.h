@@ -13,7 +13,7 @@ extern "C" {
 #endif
 #pragma pack(push, 1)
 
-    typedef union Mv 
+    typedef union Mv
     {
         struct
         {

@@ -698,7 +698,7 @@ static INLINE TxSize av1_get_tx_size(
     UNUSED(plane);
 }
 
-#if RED_CU 
+#if RED_CU
 void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t y, int32_t is_last_quadrant, uint8_t quad_it)
 #else
 void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t y, int32_t is_last_quadrant)
@@ -736,7 +736,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
 
             blk_geom_mds[*idx_mds].sq_size = sq_size;
             blk_geom_mds[*idx_mds].is_last_quadrant = is_last_quadrant;
-#if RED_CU 
+#if RED_CU
             blk_geom_mds[*idx_mds].quadi = quad_it;
 #endif
 
@@ -863,8 +863,8 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
                     uint8_t offsetx[4] = { 0,32,0,32 };
                     uint8_t offsety[4] = { 0,0,32,32 };
-                    //   0  1   
-                    //   2  3   
+                    //   0  1
+                    //   2  3
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -877,7 +877,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
                     uint8_t offsetx[2] = { 0,32 };
                     uint8_t offsety[2] = { 0,0 };
-                    //   0  1     
+                    //   0  1
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -890,7 +890,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
                     uint8_t offsetx[2] = { 0,0 };
                     uint8_t offsety[2] = { 0,32 };
-                    //   0  1     
+                    //   0  1
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -903,8 +903,8 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
                     uint8_t offsetx[4] = { 0,16,0,16 };
                     uint8_t offsety[4] = { 0,0,16,16 };
-                    //   0  1   
-                    //   2  3   
+                    //   0  1
+                    //   2  3
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -917,7 +917,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
                     uint8_t offsetx[2] = { 0,16 };
                     uint8_t offsety[2] = { 0,0 };
-                    //   0  1   
+                    //   0  1
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -930,7 +930,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
                     uint8_t offsetx[2] = { 0,0 };
                     uint8_t offsety[2] = { 0,16 };
-                    //   0  1   
+                    //   0  1
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -943,8 +943,8 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
                     uint8_t offsetx[4] = { 0,8,0,8 };
                     uint8_t offsety[4] = { 0,0,8,8 };
-                    //   0  1   
-                    //   2  3 
+                    //   0  1
+                    //   2  3
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -957,7 +957,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
                     uint8_t offsetx[2] = { 0,8 };
                     uint8_t offsety[2] = { 0,0 };
-                    //   0  1   
+                    //   0  1
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -971,7 +971,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
                     uint8_t offsetx[2] = { 0,0 };
                     uint8_t offsety[2] = { 0,8 };
-                    //   0  1   
+                    //   0  1
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -984,8 +984,8 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
                     uint8_t offsetx[4] = { 0,4,0,4 };
                     uint8_t offsety[4] = { 0,0,4,4 };
-                    //   0  1   
-                    //   2  3   
+                    //   0  1
+                    //   2  3
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -997,7 +997,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 {
                     blk_geom_mds[*idx_mds].txsize[tx_depth][txb_itr] = av1_get_tx_size(BLOCK_16X16, 0);
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
-                    //   0  1 2 3  
+                    //   0  1 2 3
                     uint8_t offsetx[4] = { 0,16, 32, 48 };
                     uint8_t offsety[4] = { 0,0,  0,   0 };
                     uint8_t tbx = offsetx[txb_itr];
@@ -1010,7 +1010,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 {
                     blk_geom_mds[*idx_mds].txsize[tx_depth][txb_itr] = av1_get_tx_size(BLOCK_16X16, 0);
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
-                    //   0  1 2 3  
+                    //   0  1 2 3
                     uint8_t offsetx[4] = { 0,0,  0, 0 };
                     uint8_t offsety[4] = { 0,16,32, 48 };
                     uint8_t tbx = offsetx[txb_itr];
@@ -1023,7 +1023,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 {
                     blk_geom_mds[*idx_mds].txsize[tx_depth][txb_itr] = av1_get_tx_size(BLOCK_8X8, 0);
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
-                    //   0  1 2 3  
+                    //   0  1 2 3
                     uint8_t offsetx[4] = { 0,8, 16, 24 };
                     uint8_t offsety[4] = { 0,0,  0,   0 };
                     uint8_t tbx = offsetx[txb_itr];
@@ -1036,7 +1036,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 {
                     blk_geom_mds[*idx_mds].txsize[tx_depth][txb_itr] = av1_get_tx_size(BLOCK_8X8, 0);
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
-                    //   0  1 2 3  
+                    //   0  1 2 3
                     uint8_t offsetx[4] = { 0,0,  0, 0 };
                     uint8_t offsety[4] = { 0,8,16, 24 };
                     uint8_t tbx = offsetx[txb_itr];
@@ -1049,7 +1049,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 {
                     blk_geom_mds[*idx_mds].txsize[tx_depth][txb_itr] = av1_get_tx_size(BLOCK_4X4, 0);
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
-                    //   0  1 2 3  
+                    //   0  1 2 3
                     uint8_t offsetx[4] = { 0,4, 8, 12 };
                     uint8_t offsety[4] = { 0,0,  0,   0 };
                     uint8_t tbx = offsetx[txb_itr];
@@ -1062,7 +1062,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 {
                     blk_geom_mds[*idx_mds].txsize[tx_depth][txb_itr] = av1_get_tx_size(BLOCK_4X4, 0);
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
-                    //   0  1 2 3  
+                    //   0  1 2 3
                     uint8_t offsetx[4] = { 0,0,  0, 0 };
                     uint8_t offsety[4] = { 0,4,8, 12 };
                     uint8_t tbx = offsetx[txb_itr];
@@ -1152,7 +1152,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     //   0  1   4   5
                     //   2  3   6   7
                     //   8  9   12 13
-                    //   10 11  14 15  
+                    //   10 11  14 15
 
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
@@ -1180,7 +1180,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
                     uint8_t offsetx[8] = { 0, 16, 0, 16, 0, 16, 0, 16 };
                     uint8_t offsety[8] = { 0, 0, 16, 16, 32 , 32, 48, 48 };
-                    //   0  1  
+                    //   0  1
                     //   2  3
                     //   4  5
                     //   6  7
@@ -1204,7 +1204,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     //   0  1   4   5
                     //   2  3   6   7
                     //   8  9   12 13
-                    //   10 11  14 15  
+                    //   10 11  14 15
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -1230,8 +1230,8 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize[tx_depth][txb_itr] = av1_get_tx_size(BLOCK_8X8, 0);
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
 
-                    //   0  1   
-                    //   2  3   
+                    //   0  1
+                    //   2  3
                     //   4  5
                     //   6  7
                     uint8_t offsetx[8] = { 0,8,0,8,0,8,0,8 };
@@ -1261,8 +1261,8 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 else if (blk_geom_mds[*idx_mds].bsize == BLOCK_8X16) {
                     blk_geom_mds[*idx_mds].txsize[tx_depth][txb_itr] = av1_get_tx_size(BLOCK_4X4, 0);
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
-                    //   0  1   
-                    //   2  3   
+                    //   0  1
+                    //   2  3
                     //   4  5
                     //   6  7
                     uint8_t offsetx[8] = { 0,4,0,4,0,4,0,4 };
@@ -1288,7 +1288,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     //   0  1   4   5
                     //   2  3   6   7
                     //   8  9   12 13
-                    //   10 11  14 15  
+                    //   10 11  14 15
                     uint8_t tbx = offsetx[txb_itr];
                     uint8_t tby = offsety[txb_itr];
 
@@ -1314,11 +1314,11 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize[tx_depth][txb_itr] = av1_get_tx_size(BLOCK_8X8, 0);
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
 
-                    //   0   1         
-                    //   2   3         
+                    //   0   1
+                    //   2   3
                     //   4   5
                     //   6   7
-                    //   8   9 
+                    //   8   9
                     //   10 11
                     //   12 13
                     //   14 15
@@ -1350,11 +1350,11 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].txsize[tx_depth][txb_itr] = av1_get_tx_size(BLOCK_4X4, 0);
                     blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].txsize_uv[0][0];
 
-                    //   0   1         
-                    //   2   3         
+                    //   0   1
+                    //   2   3
                     //   4   5
                     //   6   7
-                    //   8   9 
+                    //   8   9
                     //   10 11
                     //   12 13
                     //   14 15
@@ -1460,7 +1460,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
     uint32_t min_size = max_sb >> (max_depth - 1);
     if (halfsize >= min_size)
     {
-#if RED_CU 
+#if RED_CU
         md_scan_all_blks(idx_mds, halfsize, x, y, 0,0);
         md_scan_all_blks(idx_mds, halfsize, x + halfsize, y, 0,1);
         md_scan_all_blks(idx_mds, halfsize, x, y + halfsize, 0,2);
@@ -1682,15 +1682,15 @@ void log_redundancy_similarity(uint32_t  max_block_count)
 
             }
         }
-    }    
-    
+    }
+
 }
 #endif
 void build_blk_geom(int32_t use_128x128)
 {
     max_sb = use_128x128 ? 128 : 64;
     max_depth = use_128x128 ? 6 : 5;
-    uint32_t  max_block_count = use_128x128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64; 
+    uint32_t  max_block_count = use_128x128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64;
 
     //(0)compute total number of blocks using the information provided
     max_num_active_blocks = count_total_num_of_active_blks();
@@ -1702,7 +1702,7 @@ void build_blk_geom(int32_t use_128x128)
 
     //(2) Construct md scan blk_geom_mds:  use info from dps
     uint32_t idx_mds = 0;
-#if RED_CU  
+#if RED_CU
     md_scan_all_blks(&idx_mds, max_sb, 0, 0, 0,0);
 #else
     md_scan_all_blks(&idx_mds, max_sb, 0, 0, 0);
@@ -1711,7 +1711,7 @@ void build_blk_geom(int32_t use_128x128)
     //(3) Fill more info from mds to dps - print using dps
     finish_depth_scan_all_blks();
 
-#if RED_CU 
+#if RED_CU
     log_redundancy_similarity(max_block_count);
 #endif
 

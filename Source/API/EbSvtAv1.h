@@ -112,7 +112,7 @@ typedef enum EbErrorType
 } EbErrorType;
 
 /* AV1 bistream profile (seq_profile syntax element) */
-typedef enum EbAv1SeqProfile 
+typedef enum EbAv1SeqProfile
 {
     MAIN_PROFILE         = 0,
     HIGH_PROFILE         = 1,

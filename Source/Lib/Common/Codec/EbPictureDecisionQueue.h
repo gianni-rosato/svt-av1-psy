@@ -15,7 +15,7 @@
 /************************************************
  * PA Reference Queue Entry
  ************************************************/
-typedef struct PaReferenceQueueEntry 
+typedef struct PaReferenceQueueEntry
 {
     EbObjectWrapper              *input_object_ptr;
     uint64_t                      picture_number;

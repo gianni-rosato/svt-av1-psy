@@ -79,7 +79,7 @@ EbErrorType source_based_operations_context_ctor(
     return EB_ErrorNone;
 }
 
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
 /****************************************
 * Init BEA QPM array to 0
 ** Used when no Lookahead is available
@@ -133,8 +133,8 @@ void DerivePictureActivityStatistics(
     uint32_t               sb_index;
     for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
         SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-        if (sb_params->is_complete_sb) 
-        { 
+        if (sb_params->is_complete_sb)
+        {
             nonMovingIndexMin = picture_control_set_ptr->non_moving_index_array[sb_index] < nonMovingIndexMin ?
                 picture_control_set_ptr->non_moving_index_array[sb_index] :
                 nonMovingIndexMin;
@@ -161,7 +161,7 @@ void DerivePictureActivityStatistics(
         picture_control_set_ptr->kf_zeromotion_pct = (non_moving_sb_count * 100) / complete_sb_count;
     }
 
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
     InitBeaQpmInfo(
         picture_control_set_ptr,
         sequence_control_set_ptr);
@@ -204,7 +204,7 @@ void FailingMotionLcu(
             cuMeSAD = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortion_direction[0].distortion;
 #endif
 
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];    
+            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[raster_scan_to_md_scan[rasterScanCuIndex]];
             sortedcuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[raster_scan_to_md_scan[rasterScanCuIndex]]].distortion;
 
@@ -261,7 +261,7 @@ void DetectUncoveredLcu(
                 cuMeSAD = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortion_direction[0].distortion;
 #endif
 
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];    
+            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[raster_scan_to_md_scan[rasterScanCuIndex]];
             sortedcuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[raster_scan_to_md_scan[rasterScanCuIndex]]].distortion;
 
@@ -373,7 +373,7 @@ void LumaContrastDetectorLcu(
         if (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) {
 
 
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];    
+            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[0];
             cuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[0]].distortion;
 
@@ -1070,7 +1070,7 @@ void* source_based_operations_kernel(void *input_ptr)
             context_ptr,
             picture_control_set_ptr);
 #endif
-#if !MEMORY_FOOTPRINT_OPT        
+#if !MEMORY_FOOTPRINT_OPT
         if (picture_control_set_ptr->slice_type == I_SLICE) {
             DetectCu32x32CleanSparsePicture(
                 picture_control_set_ptr);

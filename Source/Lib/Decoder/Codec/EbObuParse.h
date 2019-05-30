@@ -113,7 +113,7 @@ typedef struct ParseNbr4x4Ctxt {
     uint8_t *segment_maps;
 
     /* Buffer holding the transform sizes of the previous 4x4 block row. */
-    uint8_t *above_tx_wd; 
+    uint8_t *above_tx_wd;
 
     /* Buffer holding the transform sizes of the left 4x4 blocks corresponding
      to the current super block row. */
@@ -127,22 +127,22 @@ typedef struct ParseNbr4x4Ctxt {
     uint8_t *left_part_ht;
 
     /* Buffer holding the sign of the DC coefficients of the previous 4x4 block row. */
-    uint8_t *above_dc_ctx[MAX_MB_PLANE]; 
+    uint8_t *above_dc_ctx[MAX_MB_PLANE];
 
-    /* Buffer holding the sign of the DC coefficients of the left 4x4 blocks 
+    /* Buffer holding the sign of the DC coefficients of the left 4x4 blocks
      corresponding to the current super block row. */
     uint8_t *left_dc_ctx[MAX_MB_PLANE];
 
-    /* Buffer holding the cumulative sum of the coefficient levels of the 
+    /* Buffer holding the cumulative sum of the coefficient levels of the
      previous 4x4 block row. */
     uint8_t *above_level_ctx[MAX_MB_PLANE];
 
-    /* Buffer holding the cumulative sum of the coefficient levels of the 
+    /* Buffer holding the cumulative sum of the coefficient levels of the
      left 4x4 blocks corresponding to the current super block row. */
     uint8_t *left_level_ctx[MAX_MB_PLANE];
 
     /* Buffer holding the seg_id_predicted of the previous 4x4 block row. */
-    uint8_t *left_seg_pred_ctx; 
+    uint8_t *left_seg_pred_ctx;
 
     /* Buffer holding the seg_id_predicted of the left 4x4 blocks corresponding
      to the current super block row. */
@@ -151,7 +151,7 @@ typedef struct ParseNbr4x4Ctxt {
 } ParseNbr4x4Ctxt;
 
 typedef struct ParseCtxt {
-    
+
     /** Decoder Handle */
     void *dec_handle_ptr;
 
@@ -189,12 +189,12 @@ typedef struct ParseCtxt {
     /* Left and above SBInfo pointers */
     SBInfo  *left_sb_info;
     SBInfo  *above_sb_info;
-        
+
     /*!< Chroma mode indo state acroos sub 8x8 blocks
      * if Prev block does not have chroma info then this state is remembered in this variable to be used in next block
-    */    
+    */
     int32_t  prev_blk_has_chroma;
-        
+
 } ParseCtxt;
 
 int get_qindex(SegmentationParams *seg_params, int segment_id, int base_q_idx);

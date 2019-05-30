@@ -1115,8 +1115,8 @@ void PadRefAndSetFlags(
             refPic16BitPtr->origin_x,
             refPic16BitPtr->origin_y >> 1);
 
-#if UNPACK_REF_POST_EP 
-        // Hsan: unpack ref samples (to be used @ MD) 
+#if UNPACK_REF_POST_EP
+        // Hsan: unpack ref samples (to be used @ MD)
         un_pack2d(
             (uint16_t*) refPic16BitPtr->buffer_y,
             refPic16BitPtr->stride_y,
@@ -1215,7 +1215,7 @@ void CopyStatisticsToRefObject(
     ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->sg_frame_ep = cm->sg_frame_ep;
 }
 
-#if !MEMORY_FOOTPRINT_OPT  
+#if !MEMORY_FOOTPRINT_OPT
 EbErrorType QpmDeriveWeightsMinAndMax(
     PictureControlSet                    *picture_control_set_ptr,
     EncDecContext                        *context_ptr)
@@ -1298,8 +1298,8 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 3                  10
     // 4                  8
     // 5                  6
-    // 6                  4  
-    // 7                  3 
+    // 6                  4
+    // 7                  3
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
@@ -1380,7 +1380,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // CHROMA_MODE_1  1     Fast chroma search @ MD
     // CHROMA_MODE_2  2     Chroma blind @ MD + CFL @ EP
     // CHROMA_MODE_3  3     Chroma blind @ MD + no CFL @ EP
-#if SEARCH_UV_MODE    
+#if SEARCH_UV_MODE
 #if SCREEN_CONTENT_SETTINGS
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
         if (picture_control_set_ptr->enc_mode <= ENC_M6)
@@ -1400,21 +1400,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (picture_control_set_ptr->enc_mode == ENC_M0)
 #endif
         context_ptr->chroma_level = CHROMA_MODE_0;
-    else 
+    else
 #endif
     if (picture_control_set_ptr->enc_mode <= ENC_M4)
         context_ptr->chroma_level = CHROMA_MODE_1;
-    else 
+    else
         context_ptr->chroma_level = (sequence_control_set_ptr->encoder_bit_depth == EB_8BIT) ?
             CHROMA_MODE_2 :
             CHROMA_MODE_3 ;
 
-    
+
     // Set fast loop method
-    // 1 fast loop: SSD_SEARCH not supported    
+    // 1 fast loop: SSD_SEARCH not supported
     // Level                Settings
     //  0                   Collapsed fast loop
-    //  1                   Decoupled fast loops ( intra/inter) 
+    //  1                   Decoupled fast loops ( intra/inter)
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
@@ -1432,7 +1432,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->decouple_intra_inter_fast_loop = 1;
 #endif
 
-    // Set the search method when decoupled fast loop is used 
+    // Set the search method when decoupled fast loop is used
     // Hsan: FULL_SAD_SEARCH not supported
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
@@ -1520,7 +1520,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             1 :
             0;
 #endif
-    
+
     // Set warped motion injection
     // Level                Settings
     // 0                    OFF
@@ -1571,7 +1571,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->unipred3x3_injection = 0;
 #endif
 
-    
+
     // Set bipred3x3 injection
     // Level                Settings
     // 0                    OFF
@@ -1616,7 +1616,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->interpolation_filter_search_blk_size = 0;
     else if (picture_control_set_ptr->enc_mode <= ENC_M2)
         context_ptr->interpolation_filter_search_blk_size = 1;
-    else        
+    else
         context_ptr->interpolation_filter_search_blk_size = 2;
 #endif
 
@@ -1641,7 +1641,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->spatial_sse_full_loop = EB_FALSE;
 #else
-    if (picture_control_set_ptr->enc_mode == ENC_M0) 
+    if (picture_control_set_ptr->enc_mode == ENC_M0)
 #if MOD_M0
         context_ptr->spatial_sse_full_loop = EB_FALSE;
 #else
@@ -1686,7 +1686,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (picture_control_set_ptr->enc_mode <= ENC_M1)
             context_ptr->redundant_blk = EB_TRUE;
         else
-            context_ptr->redundant_blk = EB_FALSE;  
+            context_ptr->redundant_blk = EB_FALSE;
     else
 #endif
     if (picture_control_set_ptr->enc_mode <= ENC_M5)
@@ -1915,7 +1915,7 @@ void* enc_dec_kernel(void *input_ptr)
                         int16_t mv_l0_y;
                         int16_t mv_l1_x;
                         int16_t mv_l1_y;
-                        
+
 #if MRP_ME
                         mv_l0_x = 0;
                         mv_l0_y = 0;

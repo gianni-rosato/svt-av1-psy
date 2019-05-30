@@ -607,7 +607,7 @@ static INLINE void dc_top_predictor_32xh(uint16_t *const dst,
     const __m128i round = _mm_cvtsi32_si128(16);
     __m128i sum;
     (void) bd;
- 
+
     sum = dc_sum_32(above);
     sum = _mm_add_epi32(sum, round);
     sum = _mm_srli_epi32(sum, 5);

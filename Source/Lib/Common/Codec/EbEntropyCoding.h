@@ -41,7 +41,7 @@ extern "C" {
 #define MAX_TILE_AREA (4096 * 2304)  // Maximum tile area in pixels
 
     /*!\brief OBU types. */
-    typedef enum ATTRIBUTE_PACKED 
+    typedef enum ATTRIBUTE_PACKED
     {
         OBU_SEQUENCE_HEADER        = 1,
         OBU_TEMPORAL_DELIMITER     = 2,
@@ -155,7 +155,7 @@ extern "C" {
 
     //*******************************************************************************************//
     // bitwriter_buffer.h
-    struct AomWriteBitBuffer 
+    struct AomWriteBitBuffer
     {
         uint8_t *bit_buffer;
         uint32_t bit_offset;

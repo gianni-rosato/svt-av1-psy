@@ -19,7 +19,7 @@ extern "C" {
 /**********************************
  * Bitstream Unit Types
  **********************************/
-    typedef struct OutputBitstreamUnit 
+    typedef struct OutputBitstreamUnit
     {
         uint32_t  size;                               // allocated buffer size
         uint32_t  written_bits_count;                   // count of written bits
@@ -184,7 +184,7 @@ on a larger type, you can speed up the decoder by using it here.*/
 #define OD_MEASURE_EC_OVERHEAD (0)
 
     /*The entropy encoder context.*/
-    struct OdEcEnc 
+    struct OdEcEnc
     {
         /*Buffered output.
         This contains only the raw bits until the final call to od_ec_enc_done(),
@@ -274,7 +274,7 @@ on a larger type, you can speed up the decoder by using it here.*/
     // bitwriter.h
     typedef struct DaalaWriter AomWriter;
 
-    typedef struct TokenStats 
+    typedef struct TokenStats
     {
         int32_t cost;
 #if CONFIG_RD_DEBUG

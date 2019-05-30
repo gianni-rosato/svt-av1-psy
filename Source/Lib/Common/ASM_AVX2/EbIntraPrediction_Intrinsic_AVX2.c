@@ -1154,7 +1154,7 @@ void intra_mode_vertical_luma_avx2_intrin(
     uint8_t            *ref_samples,             //input parameter, pointer to the reference samples
     uint8_t            *prediction_ptr,          //output parameter, pointer to the prediction
     const uint32_t      prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
-    const EbBool     skip                    //skip one row 
+    const EbBool     skip                    //skip one row
     )
 {
     uint32_t topLeftOffset = size << 1;
@@ -1268,7 +1268,7 @@ void intra_mode_dc_luma_avx2_intrin(
     uint8_t            *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
     const uint32_t      prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
-    const EbBool     skip)                       //skip one row 
+    const EbBool     skip)                       //skip one row
 {
     __m128i xmm0 = _mm_setzero_si128();
     uint32_t pStride = prediction_buffer_stride;
@@ -1525,7 +1525,7 @@ void intra_mode_dc_luma_avx2_intrin(
         xmm_sum256 = _mm256_castsi128_si256(xmm_sum1);
 
 
-        //#endif      
+        //#endif
         xmm_set = _mm256_castsi128_si256(_mm_set1_epi32(32));
 
         xmm_sum128_2 = _mm256_add_epi32(xmm_sum256, xmm_set); // add offset
@@ -2114,7 +2114,7 @@ void intra_mode_angular_2_avx2_intrin(
     uint8_t            *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
     const uint32_t      prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
-    const EbBool     skip)                       //skip one row 
+    const EbBool     skip)                       //skip one row
 {
     uint32_t pStride = prediction_buffer_stride;
     uint32_t leftOffset = 0;
@@ -2224,7 +2224,7 @@ void intra_mode_angular_18_avx2_intrin(
     uint8_t            *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
     const uint32_t      prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
-    const EbBool     skip)                    //skip one row 
+    const EbBool     skip)                    //skip one row
 {
     uint32_t pStride = prediction_buffer_stride;
     uint32_t topLeftOffset = (size << 1);
@@ -2336,7 +2336,7 @@ void intra_mode_angular_34_avx2_intrin(
     uint8_t            *ref_samples,                 //input parameter, pointer to the reference samples
     uint8_t            *prediction_ptr,              //output parameter, pointer to the prediction
     const uint32_t      prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
-    const EbBool     skip)                       //skip one row 
+    const EbBool     skip)                       //skip one row
 {
     uint32_t pStride = prediction_buffer_stride;
     uint32_t topOffset = ((size << 1) + 1);
@@ -2439,7 +2439,7 @@ void intra_mode_angular_34_avx2_intrin(
     }
 }
 
-// only define these intrinsics if immintrin.h doesn't have them 
+// only define these intrinsics if immintrin.h doesn't have them
 #ifdef _WIN32
 #if _MSC_VER < 1910
 static inline int32_t _mm256_extract_epi32(__m256i a, const int32_t i)

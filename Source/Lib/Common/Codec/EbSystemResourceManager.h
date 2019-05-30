@@ -22,7 +22,7 @@ extern "C" {
       *   encoder system (i.e. SequenceControlSet, PictureBufferDesc,
       *   ProcessResults, and GracefulDegradation)
       *********************************************************************/
-    typedef struct EbObjectWrapper 
+    typedef struct EbObjectWrapper
     {
         // object_ptr - pointer to the object being managed.
         void                     *object_ptr;
@@ -55,7 +55,7 @@ extern "C" {
      *   The Fifo also contains a counting_semaphore for OS thread-blocking
      *   and dynamic EbObjectWrapper counting.
      *********************************************************************/
-    typedef struct EbFifo 
+    typedef struct EbFifo
     {
         // counting_semaphore - used for OS thread-blocking & dynamically
         //   counting the number of EbObjectWrappers currently in the
@@ -81,7 +81,7 @@ extern "C" {
     /*********************************************************************
      * CircularBuffer
      *********************************************************************/
-    typedef struct EbCircularBuffer 
+    typedef struct EbCircularBuffer
     {
         EbPtr *array_ptr;
         uint32_t  head_index;
@@ -94,7 +94,7 @@ extern "C" {
     /*********************************************************************
      * MuxingQueue
      *********************************************************************/
-    typedef struct EbMuxingQueue 
+    typedef struct EbMuxingQueue
     {
         EbHandle           lockout_mutex;
         EbCircularBuffer *object_queue;
@@ -113,7 +113,7 @@ extern "C" {
      *   fullFifo provides downstream pipeline data flow control.  The
      *   emptyFifo provides upstream pipeline backpressure flow control.
      *********************************************************************/
-    typedef struct EbSystemResource 
+    typedef struct EbSystemResource
     {
         // object_total_count - A count of the number of objects contained in the
         //   System Resoruce.

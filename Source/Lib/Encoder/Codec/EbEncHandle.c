@@ -389,23 +389,23 @@ int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config, uint32_t core_count, 
         fps        = fps < 24  ? 24    : fps;
 
 #if MINI_GOP_PCS
-        if (core_count == 4) 
+        if (core_count == 4)
             return min_ppcs_count;
         else
             ppcs_count = MAX(min_ppcs_count, fps);
 #else
         ppcs_count = MAX(min_ppcs_count, fps);
 #endif
-#if NEW_BUFF_CFG        
+#if NEW_BUFF_CFG
         if (core_count <= SINGLE_CORE_COUNT)
             ppcs_count = min_ppcs_count;
         else{
             if (res_class < INPUT_SIZE_1080i_RANGE){
                 if (core_count < CONS_CORE_COUNT)
                     ppcs_count = ppcs_count * 1;                // 1 sec
-                else if (core_count < LOW_SERVER_CORE_COUNT)    
+                else if (core_count < LOW_SERVER_CORE_COUNT)
                     ppcs_count = (ppcs_count * 3) >> 1;         // 1.5 sec
-                else if (core_count < MED_SERVER_CORE_COUNT)    
+                else if (core_count < MED_SERVER_CORE_COUNT)
                     ppcs_count = ppcs_count << 1;               // 2 sec
                 else
                     ppcs_count = ppcs_count * 3;                // 3 sec
@@ -414,7 +414,7 @@ int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config, uint32_t core_count, 
                     ppcs_count = min_ppcs_count;
                 else if (core_count < LOW_SERVER_CORE_COUNT)
                     ppcs_count = (ppcs_count * 3) >> 1;         // 1.5 sec
-                else if (core_count < MED_SERVER_CORE_COUNT)    
+                else if (core_count < MED_SERVER_CORE_COUNT)
                     ppcs_count = ppcs_count << 1;               // 2 sec
                 else
                     ppcs_count = ppcs_count * 3;                // 3 sec
@@ -485,7 +485,7 @@ EbErrorType load_default_buffer_configuration_settings(
 #if CHECK_MEM_REDUCTION
     core_count = 4;
 #endif
-    int32_t return_ppcs = set_parent_pcs(&sequence_control_set_ptr->static_config, 
+    int32_t return_ppcs = set_parent_pcs(&sequence_control_set_ptr->static_config,
                     core_count, sequence_control_set_ptr->input_resolution);
     if (return_ppcs == -1)
         return EB_ErrorInsufficientResources;
@@ -541,8 +541,8 @@ EbErrorType load_default_buffer_configuration_settings(
     sequence_control_set_ptr->rest_segment_row_count    = MIN(rest_seg_h,4);
 
 #if ALTREF_FILTERING_SUPPORT
-	sequence_control_set_ptr->tf_segment_column_count = meSegW;//1;//
-	sequence_control_set_ptr->tf_segment_row_count =  meSegH;//1;//
+    sequence_control_set_ptr->tf_segment_column_count = meSegW;//1;//
+    sequence_control_set_ptr->tf_segment_row_count =  meSegH;//1;//
 #endif
     //#====================== Data Structures and Picture Buffers ======================
 #if BUG_FIX_LOOKAHEAD
@@ -551,8 +551,8 @@ EbErrorType load_default_buffer_configuration_settings(
     if (sequence_control_set_ptr->static_config.enable_overlays)
         sequence_control_set_ptr->picture_control_set_pool_init_count = MAX(sequence_control_set_ptr->picture_control_set_pool_init_count,
             sequence_control_set_ptr->static_config.look_ahead_distance + // frames in the LAD
-            sequence_control_set_ptr->static_config.look_ahead_distance / (1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 1 +  // number of overlayes in the LAD 
-            ((1 << sequence_control_set_ptr->static_config.hierarchical_levels) + SCD_LAD) * 2 +// minigop formation in PD + SCD_LAD *(normal pictures + potential pictures ) 
+            sequence_control_set_ptr->static_config.look_ahead_distance / (1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 1 +  // number of overlayes in the LAD
+            ((1 << sequence_control_set_ptr->static_config.hierarchical_levels) + SCD_LAD) * 2 +// minigop formation in PD + SCD_LAD *(normal pictures + potential pictures )
             (1 << sequence_control_set_ptr->static_config.hierarchical_levels)); // minigop in PM
 #endif
 #else
@@ -567,7 +567,7 @@ EbErrorType load_default_buffer_configuration_settings(
                                                                           sequence_control_set_ptr->static_config.look_ahead_distance + SCD_LAD;
     sequence_control_set_ptr->output_recon_buffer_fifo_init_count       = sequence_control_set_ptr->reference_picture_buffer_init_count;
 #if ALT_REF_OVERLAY
-    sequence_control_set_ptr->overlay_input_picture_buffer_init_count   = sequence_control_set_ptr->static_config.enable_overlays ? 
+    sequence_control_set_ptr->overlay_input_picture_buffer_init_count   = sequence_control_set_ptr->static_config.enable_overlays ?
                                                                           (2 << sequence_control_set_ptr->static_config.hierarchical_levels) + SCD_LAD : 1;
 #endif
 
@@ -591,7 +591,7 @@ EbErrorType load_default_buffer_configuration_settings(
 #if NEW_BUFF_CFG
     if (core_count > 1){
         sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->picture_analysis_process_init_count            = MAX(MIN(15, core_count >> 1), core_count / 6));
-		sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->motion_estimation_process_init_count =  MAX(MIN(20, core_count >> 1), core_count / 3));//1);//
+        sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->motion_estimation_process_init_count =  MAX(MIN(20, core_count >> 1), core_count / 3));//1);//
         sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->source_based_operations_process_init_count     = MAX(MIN(3, core_count >> 1), core_count / 12));
         sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->mode_decision_configuration_process_init_count = MAX(MIN(3, core_count >> 1), core_count / 12));
         sequence_control_set_ptr->total_process_init_count += (sequence_control_set_ptr->enc_dec_process_init_count                     = MAX(MIN(40, core_count >> 1), core_count));
@@ -2330,16 +2330,16 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
 
 #if MEMORY_FOOTPRINT_OPT_ME_MV
     //0: MRP Mode 0 (4,3)
-    //1: MRP Mode 1 (2,2)                            
+    //1: MRP Mode 1 (2,2)
     sequence_control_set_ptr->mrp_mode = (uint8_t) (sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 0 : 1;
 
     //0: ON
-    //1: OFF                            
+    //1: OFF
     sequence_control_set_ptr->cdf_mode = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode <= ENC_M6) ? 0 : 1;
 
 
     //0: NSQ absent
-    //1: NSQ present    
+    //1: NSQ present
 #if REDUCE_BLOCK_COUNT_ME
     sequence_control_set_ptr->nsq_present = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
 #else
@@ -3001,7 +3001,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->injector_frame_rate = 60 << 16;
     config_ptr->speed_control_flag = 0;
     config_ptr->super_block_size = 128;
- 
+
     config_ptr->sb_sz = 64;
     config_ptr->partition_depth = (uint8_t)EB_MAX_LCU_DEPTH;
     //config_ptr->latency_mode = 0;
@@ -3021,7 +3021,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->recon_enabled = 0;
 
     // Alt-Ref default values
-	config_ptr->enable_altrefs = EB_TRUE;
+    config_ptr->enable_altrefs = EB_TRUE;
     config_ptr->altref_nframes = 7;
     config_ptr->altref_strength = 5;
     config_ptr->enable_overlays = EB_FALSE;

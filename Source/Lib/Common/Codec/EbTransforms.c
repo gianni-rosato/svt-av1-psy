@@ -4955,7 +4955,7 @@ EbErrorType av1_estimate_transform(
                 residual_stride,
                 transform_type,
                 bit_depth);
-        
+
         *three_quad_energy = HandleTransform64x32_c(coeff_buffer,
             64);
 
@@ -8779,7 +8779,7 @@ EbErrorType av1_inv_transform_recon(
     UNUSED(component_type);
     EbErrorType return_error = EB_ErrorNone;
     TxfmParam txfm_param;
-    
+
     txfm_param.tx_type = transform_type;
 
     txfm_param.tx_size = txsize;

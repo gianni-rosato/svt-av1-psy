@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 /*******************************************
- * early_mode_decision_lcu 
+ * early_mode_decision_lcu
  *   predicts candidates (LCU)
  *******************************************/
 extern EbErrorType early_mode_decision_lcu(
@@ -47,7 +47,7 @@ void qpm_derive_delta_qp_map_weights(
 extern uint8_t derive_contouring_class(
     PictureParentControlSet   *parent_pcs_ptr,
     uint16_t                       sb_index,
-    uint8_t                        leaf_index);  
+    uint8_t                        leaf_index);
 #endif
 /**************************************
 * Function Ptrs Definitions

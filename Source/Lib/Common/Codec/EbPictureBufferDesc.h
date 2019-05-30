@@ -69,7 +69,7 @@ extern "C" {
 #define YV12_FLAG_HIGHBITDEPTH 8
 
     /*!\brief List of supported color primaries */
-    typedef enum AomColorPrimaries 
+    typedef enum AomColorPrimaries
     {
         AOM_CICP_CP_RESERVED_0 = 0,  /**< For future use */
         AOM_CICP_CP_BT_709 = 1,      /**< BT.709 */
@@ -91,7 +91,7 @@ extern "C" {
     } AomColorPrimaries;        /**< alias for enum AomColorPrimaries */
 
     /*!\brief List of supported transfer functions */
-    typedef enum AomTransferCharacteristics 
+    typedef enum AomTransferCharacteristics
     {
         AOM_CICP_TC_RESERVED_0 = 0,  /**< For future use */
         AOM_CICP_TC_BT_709 = 1,      /**< BT.709 */
@@ -117,7 +117,7 @@ extern "C" {
     } AomTransferCharacteristics;  /**< alias for enum aom_transfer_function */
 
     /*!\brief List of supported matrix coefficients */
-    typedef enum AomMatrixCoefficients 
+    typedef enum AomMatrixCoefficients
     {
         AOM_CICP_MC_IDENTITY = 0,    /**< Identity matrix */
         AOM_CICP_MC_BT_709 = 1,      /**< BT.709 */
@@ -140,14 +140,14 @@ extern "C" {
     } AomMatrixCoefficients;
 
     /*!\brief List of supported color range */
-    typedef enum AomColorRange 
+    typedef enum AomColorRange
     {
         AOM_CR_STUDIO_RANGE = 0, /**< Y [16..235], UV [16..240] */
         AOM_CR_FULL_RANGE = 1    /**< YUV/RGB [0..255] */
     } AomColorRange;       /**< alias for enum AomColorRange */
 
     /*!\brief List of chroma sample positions */
-    typedef enum AomChromaSamplePosition 
+    typedef enum AomChromaSamplePosition
     {
         AOM_CSP_UNKNOWN = 0,          /**< Unknown */
         AOM_CSP_VERTICAL = 1,         /**< Horizontally co-located with luma(0, 0)*/
@@ -156,7 +156,7 @@ extern "C" {
         AOM_CSP_RESERVED = 3          /**< Reserved value */
     } AomChromaSamplePosition; /**< alias for enum aom_transfer_function */
 
-    typedef struct Yv12BufferConfig 
+    typedef struct Yv12BufferConfig
     {
         union {
             struct {
@@ -249,7 +249,7 @@ extern "C" {
         Yv12BufferConfig             *aomBuffDsc
     );
 
-    typedef struct AomCodecFrameBuffer 
+    typedef struct AomCodecFrameBuffer
     {
         uint8_t *data; /**< pointer to the data buffer */
         size_t size;   /**< Size of data in bytes */

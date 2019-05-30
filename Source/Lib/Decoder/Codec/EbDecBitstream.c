@@ -46,7 +46,7 @@ uint32_t dec_get_bits(bitstrm_t *bs, uint32_t numbits) {
 
 /* Get unsigned integer represented by a variable number of little-endian bytes */
 void dec_get_bits_leb128(bitstrm_t *bs, size_t available, size_t *value,
-    size_t *length) 
+    size_t *length)
 {
     (void)available;
     *value = 0;
@@ -106,7 +106,7 @@ uint32_t dec_get_bits_le(bitstrm_t *bs, uint32_t n) {
 }
 
 uint32_t get_position(bitstrm_t *bs) {
-    return (uint32_t)( (( ((uint8_t *)bs->buf) - bs->buf_base) * 8) - WORD_SIZE/*nxt_word*/ 
+    return (uint32_t)( (( ((uint8_t *)bs->buf) - bs->buf_base) * 8) - WORD_SIZE/*nxt_word*/
             - (WORD_SIZE - bs->bit_ofst)/*cur_word*/ );
 }
 
@@ -114,7 +114,7 @@ uint8_t * get_bitsteam_buf(bitstrm_t *bs) {
 
     uint8_t *bitsteam_buf = (uint8_t *)bs->buf;
     bitsteam_buf -= ((WORD_SIZE/*nxt_word*/ >> 3) + ((WORD_SIZE - bs->bit_ofst)/*cur_word*/ >> 3));
-    
+
     assert(bitsteam_buf == (bs->buf_base + (get_position(bs) >> 3) ) );
 
     return bitsteam_buf;

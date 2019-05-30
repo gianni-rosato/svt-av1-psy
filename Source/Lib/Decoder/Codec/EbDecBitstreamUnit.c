@@ -136,7 +136,7 @@ static void od_ec_dec_refill(od_ec_dec *dec) {
   Return: ret.
           This allows the compiler to jump to this function via a tail-call.*/
 static int od_ec_dec_normalize(od_ec_dec *dec, od_ec_window dif, unsigned rng,
-                               int ret) 
+                               int ret)
 {
   int d;
   assert(rng <= 65535U);

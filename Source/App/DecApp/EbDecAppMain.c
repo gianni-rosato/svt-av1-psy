@@ -23,12 +23,12 @@
 
 int init_pic_buffer(EbSvtIOFormat *pic_buffer, CLInput *cli) {
     switch (cli->fmt) {
-    case EB_YUV420: 
+    case EB_YUV420:
         pic_buffer->cb_stride = cli->width / 2;
         pic_buffer->cr_stride = cli->width / 2;
         pic_buffer->y_stride = cli->width;
         break;
-    default: 
+    default:
         printf("Unsupported colour format. \n");
         return 0;
     }
@@ -47,7 +47,7 @@ int read_input_frame(CLInput *cli, uint8_t **buffer, size_t *bytes_read,
 {
     switch (cli->inFileType)
     {
-    case FILE_TYPE_IVF: 
+    case FILE_TYPE_IVF:
         return read_ivf_frame(cli->inFile, buffer, bytes_read, buffer_size, pts);
         break;
     default:
@@ -120,7 +120,7 @@ int32_t main(int32_t argc, char* argv[])
     uint64_t stop_after = 0;
     uint32_t in_frame = 0;
 
-    
+
     MD5Context md5_ctx;
     unsigned char md5_digest[16];
 
@@ -154,7 +154,7 @@ int32_t main(int32_t argc, char* argv[])
     return_error |= eb_dec_init_handle(&p_handle, p_app_data, config_ptr);
     if (return_error != EB_ErrorNone) goto fail;
 
-    if (read_command_line(argc, argv, config_ptr, &cli) == 0 && 
+    if (read_command_line(argc, argv, config_ptr, &cli) == 0 &&
         !eb_svt_dec_set_parameter(p_handle, config_ptr)) {
 
         return_error = eb_init_decoder(p_handle);
@@ -172,7 +172,7 @@ int32_t main(int32_t argc, char* argv[])
         recon_buffer = (EbBufferHeaderType*)malloc(sizeof(EbBufferHeaderType));
         recon_buffer->p_buffer = (uint8_t *)malloc(sizeof(EbSvtIOFormat));
 
-        int size = (config_ptr->max_bit_depth == EB_EIGHT_BIT) ? 
+        int size = (config_ptr->max_bit_depth == EB_EIGHT_BIT) ?
                                 sizeof(uint8_t) : sizeof(uint16_t);
         size = size * cli.height * cli.width;
 

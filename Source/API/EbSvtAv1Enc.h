@@ -23,9 +23,9 @@ extern "C" {
 
 #define EB_BUFFERFLAG_EOS           0x00000001  // signals the last packet of the stream
 #define EB_BUFFERFLAG_SHOW_EXT      0x00000002  // signals that the packet contains a show existing frame at the end
-#define EB_BUFFERFLAG_HAS_TD        0x00000004  // signals that the packet contains a TD 
-#define EB_BUFFERFLAG_IS_ALT_REF    0x00000008  // signals that the packet contains an ALT_REF frame 
-#define EB_BUFFERFLAG_ERROR_MASK    0xFFFFFFF0  // mask for signalling error assuming top flags fit in 4 bits. To be changed, if more flags are added. 
+#define EB_BUFFERFLAG_HAS_TD        0x00000004  // signals that the packet contains a TD
+#define EB_BUFFERFLAG_IS_ALT_REF    0x00000008  // signals that the packet contains an ALT_REF frame
+#define EB_BUFFERFLAG_ERROR_MASK    0xFFFFFFF0  // mask for signalling error assuming top flags fit in 4 bits. To be changed, if more flags are added.
 
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.

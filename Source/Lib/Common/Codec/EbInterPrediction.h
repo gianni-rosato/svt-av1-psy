@@ -23,7 +23,7 @@ extern "C" {
     typedef struct InterPredictionContext {
         MotionCompensationPredictionContext  *mcp_context;
     } InterPredictionContext;
-#if !UNPACK_REF_POST_EP 
+#if !UNPACK_REF_POST_EP
     extern EbErrorType inter_prediction_context_ctor(
         InterPredictionContext   **inter_prediction_context,
         EbColorFormat                color_format,

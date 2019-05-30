@@ -1021,7 +1021,7 @@ void UpdateBeaInfoOverTime(
 #endif
     // SB Loop
     for (lcuIdx = 0; lcuIdx < picture_control_set_ptr->sb_total_count; ++lcuIdx) {
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
         uint32_t zzCostOverSlidingWindow = picture_control_set_ptr->zz_cost_array[lcuIdx];
 #endif
         uint16_t nonMovingIndexOverSlidingWindow = picture_control_set_ptr->non_moving_index_array[lcuIdx];
@@ -1038,7 +1038,7 @@ void UpdateBeaInfoOverTime(
             if (temporaryPictureControlSetPtr->slice_type == I_SLICE || temporaryPictureControlSetPtr->end_of_sequence_flag) {
                 break;
             }
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
             zzCostOverSlidingWindow += temporaryPictureControlSetPtr->zz_cost_array[lcuIdx];
 #endif
 #if ADAPTIVE_QP_SCALING
@@ -1051,7 +1051,7 @@ void UpdateBeaInfoOverTime(
             // Increment the inputQueueIndex Iterator
             inputQueueIndex = (inputQueueIndex == INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1) ? 0 : inputQueueIndex + 1;
         }
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
         picture_control_set_ptr->zz_cost_array[lcuIdx] = (uint8_t)(zzCostOverSlidingWindow / (framesToCheckIndex + 1));
 #endif
         picture_control_set_ptr->non_moving_index_array[lcuIdx] = (uint8_t)(nonMovingIndexOverSlidingWindow / (framesToCheckIndex + 1));
@@ -1060,7 +1060,7 @@ void UpdateBeaInfoOverTime(
     }
 
     picture_control_set_ptr->non_moving_index_average = (uint16_t)nonMovingIndexSum / picture_control_set_ptr->sb_total_count;
-#if ADAPTIVE_QP_SCALING    
+#if ADAPTIVE_QP_SCALING
     me_dist_pic_count = MAX(me_dist_pic_count, 1);
     picture_control_set_ptr->qp_scaling_average_complexity = (uint16_t)((uint64_t)me_dist / picture_control_set_ptr->sb_total_count / 256 / me_dist_pic_count);
 #endif
@@ -1075,7 +1075,7 @@ void InitZzCostInfo(
     PictureParentControlSet         *picture_control_set_ptr)
 {
     uint16_t lcuIdx;
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
     // SB loop
     for (lcuIdx = 0; lcuIdx < picture_control_set_ptr->sb_total_count; ++lcuIdx) {
         picture_control_set_ptr->zz_cost_array[lcuIdx] = INVALID_ZZ_COST;
@@ -1363,7 +1363,7 @@ void UpdateHistogramQueueEntry(
     return;
 
 }
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
 /******************************************************
 * Derive Similar Collocated Flag
 ******************************************************/
@@ -1449,7 +1449,7 @@ void QpmGatherStatisticsSW(
 
 
             OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
-    
+
             OisCandidate *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
             oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
 
@@ -1483,10 +1483,10 @@ void QpmGatherStatisticsSW(
     cu_depth = 2;
     for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_16x16_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_16x16_15; rasterScanCuIndex++) {
         if (sb_params.raster_scan_cu_validity[rasterScanCuIndex]) {
-            
+
             mdScanCuIndex = raster_scan_to_md_scan[rasterScanCuIndex];
 
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];    
+            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
             oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
 #if MRP_CONNECTION
@@ -1513,7 +1513,7 @@ void QpmGatherStatisticsSW(
 
              mdScanCuIndex = raster_scan_to_md_scan[rasterScanCuIndex];
 
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];    
+            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
             oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
 #if MRP_CONNECTION
@@ -1539,7 +1539,7 @@ void QpmGatherStatisticsSW(
     if (sb_params.raster_scan_cu_validity[RASTER_SCAN_CU_INDEX_64x64]) {
             mdScanCuIndex = 0;
 
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];    
+            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
             oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
 #if MRP_CONNECTION
@@ -1749,7 +1749,7 @@ void* initial_rate_control_kernel(void *input_ptr)
             context_ptr->motion_estimation_results_input_fifo_ptr,
             &inputResultsWrapperPtr);
 
-        inputResultsPtr = (MotionEstimationResults*)inputResultsWrapperPtr->object_ptr; 
+        inputResultsPtr = (MotionEstimationResults*)inputResultsWrapperPtr->object_ptr;
         picture_control_set_ptr = (PictureParentControlSet*)inputResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
 
         segment_index = inputResultsPtr->segment_index;
@@ -1765,7 +1765,7 @@ void* initial_rate_control_kernel(void *input_ptr)
             //reset intraCodedEstimationLcu
             MeBasedGlobalMotionDetection(
                 picture_control_set_ptr);
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
             // Derive Similar Collocated Flag
             DeriveSimilarCollocatedFlag(
                 picture_control_set_ptr);
@@ -2032,7 +2032,7 @@ void* initial_rate_control_kernel(void *input_ptr)
                                 sequence_control_set_ptr,
                                 picture_control_set_ptr);
                         }
-#if !MEMORY_FOOTPRINT_OPT  
+#if !MEMORY_FOOTPRINT_OPT
                         if (!picture_control_set_ptr->end_of_sequence_flag && sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
                             // Compute and store variance of LCus over time and determine homogenuity temporally
                             UpdateHomogeneityOverTime(

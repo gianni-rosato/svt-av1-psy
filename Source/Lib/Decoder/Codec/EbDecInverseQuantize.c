@@ -207,7 +207,7 @@ int32_t inverse_quantize(EbDecHandle * dec_handle, PartitionInfo_t *part, ModeIn
 
     const int shift = av1_get_tx_scale(tx_size);
 
-    // Level is 1D array with eob length as first value then continued by 
+    // Level is 1D array with eob length as first value then continued by
     // coeffs value to the length of eob.
 #if SVT_DEC_COEFF_DEBUG
     int16_t *cur_coeff = (int16_t *)level;

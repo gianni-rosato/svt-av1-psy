@@ -20,7 +20,7 @@ extern "C" {
      ************************************************/
     struct ReferenceQueueEntry;   // empty struct definition
 
-    typedef struct InputQueueEntry 
+    typedef struct InputQueueEntry
     {
         EbObjectWrapper *input_object_ptr;
         uint32_t         dependent_count;
@@ -36,7 +36,7 @@ extern "C" {
     /************************************************
      * Reference Queue Entry
      ************************************************/
-    typedef struct ReferenceQueueEntry 
+    typedef struct ReferenceQueueEntry
     {
         uint64_t         picture_number;
         uint64_t         decode_order;
@@ -50,24 +50,24 @@ extern "C" {
         DependentList    list1;
         EbBool           is_used_as_reference_flag;
         uint64_t         rc_group_index;
-#if ALT_REF_OVERLAY               
+#if ALT_REF_OVERLAY
         EbBool           is_alt_ref;
-#endif 
+#endif
 #if BASE_LAYER_REF
         EB_SLICE         slice_type;
         uint8_t          temporal_layer_index;
-        uint64_t         last_islice_picture_number;      
+        uint64_t         last_islice_picture_number;
 #endif
-#if RC_FEEDBACK         
+#if RC_FEEDBACK
         EbBool           feedback_arrived;
-#endif 
+#endif
     } ReferenceQueueEntry;
 
     /************************************************
      * Rate Control Input Queue Entry
      ************************************************/
 
-    typedef struct RcInputQueueEntry 
+    typedef struct RcInputQueueEntry
     {
         uint64_t         picture_number;
         EbObjectWrapper *input_object_ptr;
@@ -82,7 +82,7 @@ extern "C" {
     /************************************************
      * Rate Control FeedBack  Queue Entry
      ************************************************/
-    typedef struct RcFeedbackQueueEntry 
+    typedef struct RcFeedbackQueueEntry
     {
         uint64_t  picture_number;
         EbObjectWrapper              *feedback_object_ptr;

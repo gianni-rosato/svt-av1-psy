@@ -938,7 +938,7 @@ void bi_pred_i_free_ref8_bit(
             picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->buffer_y + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
         }
     }
-    
+
     //uni-prediction List0 chroma
     if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
 

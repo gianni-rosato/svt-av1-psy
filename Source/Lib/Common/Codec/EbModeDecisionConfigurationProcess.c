@@ -61,13 +61,13 @@ static uint8_t intrabc_max_mesh_pct[MAX_MESH_SPEED + 1] = { 100, 100, 100,
 #define OVER_SHOOTING                         1
 #define TBD_SHOOTING                          2
 
-#define SB_PRED_OPEN_LOOP_COST      100 // Let's assume PRED_OPEN_LOOP_COST costs ~100 U   
+#define SB_PRED_OPEN_LOOP_COST      100 // Let's assume PRED_OPEN_LOOP_COST costs ~100 U
 #define U_101                       101
 #define U_102                       102
 #define U_103                       103
-#define U_104                       104  
-#define U_105                       105    
-#define U_107                       107  
+#define U_104                       104
+#define U_105                       105
+#define U_107                       107
 #define SB_FAST_OPEN_LOOP_COST      108
 #define U_109                       109
 #define SB_OPEN_LOOP_COST           110 // F_MDC is ~10% slower than PRED_OPEN_LOOP_COST
@@ -75,7 +75,7 @@ static uint8_t intrabc_max_mesh_pct[MAX_MESH_SPEED + 1] = { 100, 100, 100,
 #define U_112                       112
 #define U_113                       113
 #define U_114                       114
-#define U_115                       115  
+#define U_115                       115
 #define U_116                       116
 #define U_117                       117
 #define U_118                       118
@@ -95,8 +95,8 @@ static uint8_t intrabc_max_mesh_pct[MAX_MESH_SPEED + 1] = { 100, 100, 100,
 #define U_152                       152
 #define SQ_NON4_BLOCKS_SEARCH_COST  155
 #define SQ_BLOCKS_SEARCH_COST       190
-#define HIGH_SB_SCORE             60000  
-#define MEDIUM_SB_SCORE           16000 
+#define HIGH_SB_SCORE             60000
+#define MEDIUM_SB_SCORE           16000
 #define LOW_SB_SCORE               6000
 #define MAX_LUMINOSITY_BOOST         10
 #if M9_ADP
@@ -775,7 +775,7 @@ EbErrorType mode_decision_configuration_context_ctor(
     EB_MALLOC(uint32_t*, context_ptr->sb_score_array, sizeof(uint32_t) * sb_total_count, EB_N_PTR);
     EB_MALLOC(uint8_t *, context_ptr->sb_cost_array, sizeof(uint8_t) * sb_total_count, EB_N_PTR);
 
-    // Open Loop Partitioning 
+    // Open Loop Partitioning
     EB_MALLOC(ModeDecisionCandidate*, context_ptr->mdc_candidate_ptr, sizeof(ModeDecisionCandidate), EB_N_PTR);
     EB_MALLOC(CandidateMv*, context_ptr->mdc_ref_mv_stack, sizeof(CandidateMv), EB_N_PTR);
     EB_MALLOC(CodingUnit*, context_ptr->mdc_cu_ptr, sizeof(CodingUnit), EB_N_PTR);
@@ -1352,7 +1352,7 @@ void DetectComplexNonFlatMovingLcu(
     }
 }
 #endif
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
 EbAuraStatus AuraDetection64x64Gold(
     PictureControlSet           *picture_control_set_ptr,
     uint8_t                          picture_qp,
@@ -1514,7 +1514,7 @@ EbAuraStatus AuraDetection64x64Gold(
 
 }
 #endif
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
 /******************************************************
 * Aura detection
 ******************************************************/
@@ -1703,10 +1703,10 @@ void  derive_optimal_budget_per_sb(
     ModeDecisionConfigurationContext *context_ptr)
 {
     uint32_t sb_index;
-    // Initialize the deviation between the picture predicted cost & the target budget to 100, 
+    // Initialize the deviation between the picture predicted cost & the target budget to 100,
     uint32_t deviation_to_target = 1000;
 
-    // Set the adjustment step to 1 (could be increased for faster convergence), 
+    // Set the adjustment step to 1 (could be increased for faster convergence),
     int8_t  adjustement_step = 1;
 
     // Set the initial shooting state & the final shooting state to TBD
@@ -1739,7 +1739,7 @@ void  derive_optimal_budget_per_sb(
                 context_ptr);
         }
 
-        // Compute the deviation between the predicted budget & the target budget 
+        // Compute the deviation between the predicted budget & the target budget
         deviation_to_target = (ABS((int32_t)(context_ptr->predicted_cost - context_ptr->budget)) * 1000) / context_ptr->budget;
         // Derive shooting status
         if (context_ptr->predicted_cost < context_ptr->budget) {
@@ -1904,7 +1904,7 @@ void set_target_budget_oq(
     uint32_t budget;
 
 
-    // Luminosity-based budget boost - if P or B only; add 1 U for each 1 current-to-ref diff 
+    // Luminosity-based budget boost - if P or B only; add 1 U for each 1 current-to-ref diff
     uint32_t luminosity_change_boost = 0;
     if (picture_control_set_ptr->slice_type != I_SLICE) {
         if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
@@ -1940,7 +1940,7 @@ void set_target_budget_oq(
     budget = sequence_control_set_ptr->sb_tot_cnt * budget_per_sb;
 
 
-  
+
     context_ptr->budget = budget;
 }
 
@@ -1955,7 +1955,7 @@ void derive_sb_md_mode(
     PictureControlSet                *picture_control_set_ptr,
     ModeDecisionConfigurationContext *context_ptr) {
 
-    // Configure ADP 
+    // Configure ADP
     configure_adp(
         picture_control_set_ptr,
         context_ptr);
@@ -1974,7 +1974,7 @@ void derive_sb_md_mode(
             sequence_control_set_ptr,
             picture_control_set_ptr,
             context_ptr);
-    else 
+    else
         set_target_budget_layer_based(
             sequence_control_set_ptr,
             picture_control_set_ptr,
@@ -2231,7 +2231,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         rateControlResultsPtr = (RateControlResults*)rateControlResultsWrapperPtr->object_ptr;
         picture_control_set_ptr = (PictureControlSet*)rateControlResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
         sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-      
+
         // Mode Decision Configuration Kernel Signal(s) derivation
         signal_derivation_mode_decision_config_kernel_oq(
 #if MEMORY_FOOTPRINT_OPT
@@ -2286,12 +2286,12 @@ void* mode_decision_configuration_kernel(void *input_ptr)
             picture_control_set_ptr,
             picture_control_set_ptr->slice_type == I_SLICE ? EB_FALSE : picture_control_set_ptr->parent_pcs_ptr->scene_transition_flag[REF_LIST_0]);
 #endif
-        // Set reference cdef strength 
+        // Set reference cdef strength
         set_reference_cdef_strength(
             picture_control_set_ptr);
 
 
-        // Set reference sg ep 
+        // Set reference sg ep
         set_reference_sg_ep(
             picture_control_set_ptr);
         SetGlobalMotionField(
@@ -2328,7 +2328,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
             quantsMd,
             dequantsMd);
 
-        // Hsan: collapse spare code 
+        // Hsan: collapse spare code
         MdRateEstimationContext   *md_rate_estimation_array;
         uint32_t                     entropyCodingQp;
 

@@ -31,7 +31,7 @@
 
 #define RC_QPMOD_MAXQP             54
 
-static const uint32_t  rate_percentage_layer_array[EB_MAX_TEMPORAL_LAYERS][EB_MAX_TEMPORAL_LAYERS] = 
+static const uint32_t  rate_percentage_layer_array[EB_MAX_TEMPORAL_LAYERS][EB_MAX_TEMPORAL_LAYERS] =
 {
     {100,  0,  0,  0,  0,  0 },
     { 70, 30,  0,  0,  0,  0 },
@@ -43,7 +43,7 @@ static const uint32_t  rate_percentage_layer_array[EB_MAX_TEMPORAL_LAYERS][EB_MA
 
 // range from 0 to 51
 // precision is 16 bits
-static const uint64_t two_to_power_qp_over_three[] = 
+static const uint64_t two_to_power_qp_over_three[] =
 {
          0x10000,      0x1428A,     0x19660,     0x20000,
          0x28514,      0x32CC0,     0x40000,     0x50A29,
@@ -62,7 +62,7 @@ static const uint64_t two_to_power_qp_over_three[] =
 /**************************************
  * Input Port Types
  **************************************/
-typedef enum RateControlInputPortTypes 
+typedef enum RateControlInputPortTypes
 {
     RATE_CONTROL_INPUT_PORT_PICTURE_MANAGER = 0,
     RATE_CONTROL_INPUT_PORT_PACKETIZATION = 1,
@@ -74,7 +74,7 @@ typedef enum RateControlInputPortTypes
 /**************************************
  * Input Port Config
  **************************************/
-typedef struct RateControlPorts 
+typedef struct RateControlPorts
 {
     RateControlInputPortTypes    type;
     uint32_t                           count;
@@ -83,7 +83,7 @@ typedef struct RateControlPorts
 /**************************************
  * Coded Frames Stats
  **************************************/
-typedef struct CodedFramesStatsEntry 
+typedef struct CodedFramesStatsEntry
 {
     uint64_t               picture_number;
     int64_t               frame_total_bit_actual;
