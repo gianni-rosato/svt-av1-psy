@@ -3758,13 +3758,18 @@ static int adaptive_qindex_calc(
     int active_worst_quality = qindex;
     rc->arf_q = 0;
     int q;
+#if ADAPTIVE_QP_SCALING
+    int is_src_frame_alt_ref, refresh_golden_frame, refresh_alt_ref_frame, is_intrl_arf_boost, rf_level, update_type;
+#else
     int is_src_frame_alt_ref, refresh_golden_frame, refresh_alt_ref_frame, new_bwdref_update_rule, is_intrl_arf_boost, rf_level, update_type, this_height;
-
+#endif
     is_src_frame_alt_ref = 0;
     refresh_golden_frame = frame_is_intra_only(picture_control_set_ptr->parent_pcs_ptr) ? 1 : 0;
     refresh_alt_ref_frame = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
     is_intrl_arf_boost = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 1 : 0;
+#if !ADAPTIVE_QP_SCALING
     new_bwdref_update_rule = (picture_control_set_ptr->slice_type != P_SLICE) ? 1 : 0;
+#endif
     rf_level = (frame_is_intra_only(picture_control_set_ptr->parent_pcs_ptr)) ? KF_STD :
         (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? GF_ARF_STD :
         picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ? GF_ARF_LOW : INTER_NORMAL;
@@ -3772,9 +3777,10 @@ static int adaptive_qindex_calc(
     update_type = (frame_is_intra_only(picture_control_set_ptr->parent_pcs_ptr)) ? KF_UPDATE :
         (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? ARF_UPDATE :
         picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ? INTNL_ARF_UPDATE : LF_UPDATE;
+#if !ADAPTIVE_QP_SCALING
     this_height = (frame_is_intra_only(picture_control_set_ptr->parent_pcs_ptr)) ? 0 :
         picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels - picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index;
-
+#endif
     const int bit_depth = sequence_control_set_ptr->static_config.encoder_bit_depth;
 #if ADAPTIVE_QP_SCALING
     // Since many frames can be processed at the same time, storing/using arf_q in rc param is not sufficient and will create a run to run.
@@ -3800,7 +3806,7 @@ static int adaptive_qindex_calc(
         // Update the complexity for very fast moving content
         if (picture_control_set_ptr->parent_pcs_ptr->kf_zeromotion_pct <= FAST_MOVING_KF_GROUP_THRESH)
             picture_control_set_ptr->parent_pcs_ptr->qp_scaling_average_complexity <<= 1;
-        picture_control_set_ptr->parent_pcs_ptr->qp_scaling_average_complexity = CLIP3(0, max_qp_scaling_avg_comp_I, picture_control_set_ptr->parent_pcs_ptr->qp_scaling_average_complexity);
+        picture_control_set_ptr->parent_pcs_ptr->qp_scaling_average_complexity = MIN(max_qp_scaling_avg_comp_I, picture_control_set_ptr->parent_pcs_ptr->qp_scaling_average_complexity);
 
         // cross multiplication to derive kf_boost from non_moving_average_score; kf_boost range is [kf_low,kf_high], and non_moving_average_score range [0,max_qp_scaling_avg_comp_I]
         rc->kf_boost = (((max_qp_scaling_avg_comp_I - (picture_control_set_ptr->parent_pcs_ptr->qp_scaling_average_complexity))  * (kf_high - kf_low)) / max_qp_scaling_avg_comp_I) + kf_low;

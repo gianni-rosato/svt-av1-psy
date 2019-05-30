@@ -496,18 +496,14 @@ EbErrorType ComputeDecimatedZzSad(
             }
 #if ADAPTIVE_QP_SCALING
             // Keep track of non moving LCUs for QP modulation
-            if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 2)) {
+            if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 2)) 
                 previous_picture_control_set_wrapper_ptr->non_moving_index_array[sb_index] = BEA_CLASS_0_ZZ_COST;
-            }
-            else if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 4)) {
+            else if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 4)) 
                 previous_picture_control_set_wrapper_ptr->non_moving_index_array[sb_index] = BEA_CLASS_1_ZZ_COST;
-            }
-            else if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 8)) {
+            else if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 8)) 
                 previous_picture_control_set_wrapper_ptr->non_moving_index_array[sb_index] = BEA_CLASS_2_ZZ_COST;
-            }
-            else {
+            else 
                 previous_picture_control_set_wrapper_ptr->non_moving_index_array[sb_index] = BEA_CLASS_3_ZZ_COST;
-            }
 #else
             // Keep track of non moving LCUs for QP modulation
             if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 2) >> non_moving_th_shift[sequence_control_set_ptr->input_resolution]) {
