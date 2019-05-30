@@ -15,8 +15,7 @@ This document describes how to use the Scalable Video Technology for AV1 Decoder
 
 Initial version:
 - Supports only I-frames without loopfilter (deblocking, cdef and self guided restoration filters not supported)
-- Tiles not supported
-- Supports only 8-bit 4:2:0 content
+- Supports only 8-bit and 10-bit 4:2:0 content
 - Tested only on Windows
 
 ## Sample Application Guide
@@ -35,10 +34,10 @@ The sample application typically takes the following command line parameters:
 -o <arg>                  Output file name
 -skip <arg>               Skip the first n input frames
 -limit <arg>              Stop decoding after n frames
--bit-depth <arg>          Input bitdepth. [400, 420, 422, 444]
+-bit-depth <arg>          Input bitdepth. [8, 10, 12]
 -w <arg>                  Input picture width
 -h <arg>                  Input picture height
--colour-space <arg>       Input picture colour space
+-colour-space <arg>       Input picture colour space. [400, 420, 422, 444]
 -md5                      MD5 support flag
 ```
 

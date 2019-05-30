@@ -132,37 +132,51 @@ PartitionType get_partition(DecModCtxt *dec_mod_ctxt, FrameHeader *frame_header,
 }
 
 static void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
-    int32_t blk_col, int32_t blk_row,uint8_t **pp_blk_recon_buf, int32_t *recon_strd,
+    int32_t blk_col, int32_t blk_row,void **pp_blk_recon_buf, int32_t *recon_strd,
                                 int32_t sub_x, int32_t sub_y)
 {
     int32_t block_offset;
-
-    if (recon_picture_buf->bit_depth != EB_8BIT) {//16bit
-        assert(0);
-        *pp_blk_recon_buf = NULL;
-        return;
-    }
 
     if (plane == 0) {
         block_offset = (recon_picture_buf->origin_y + blk_row * MI_SIZE) *
             recon_picture_buf->stride_y + (recon_picture_buf->origin_x +
             blk_col * MI_SIZE);
-        *pp_blk_recon_buf = recon_picture_buf->buffer_y + block_offset;
         *recon_strd = recon_picture_buf->stride_y;
     }
     else if (plane == 1) {
         block_offset = ((recon_picture_buf->origin_y >> sub_y) + 
             blk_row * MI_SIZE) * recon_picture_buf->stride_cb +
             ((recon_picture_buf->origin_x >> sub_x) + blk_col * MI_SIZE);
-        *pp_blk_recon_buf = recon_picture_buf->buffer_cb + block_offset;
         *recon_strd = recon_picture_buf->stride_cb;
     }
     else {
         block_offset = ((recon_picture_buf->origin_y >> sub_y) + 
-              blk_row * MI_SIZE) * recon_picture_buf->stride_cr +
+                blk_row * MI_SIZE) * recon_picture_buf->stride_cr +
             ((recon_picture_buf->origin_x >> sub_x) + blk_col * MI_SIZE);
-        *pp_blk_recon_buf = recon_picture_buf->buffer_cr + block_offset;
         *recon_strd = recon_picture_buf->stride_cr;
+    }
+
+    if (recon_picture_buf->bit_depth != EB_8BIT) {//16bit
+        if (plane == 0)
+            *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_y 
+                                        + block_offset);
+        else if (plane == 1)
+            *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_cb
+                                        + block_offset);
+        else
+            *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_cr
+                                        + block_offset);
+    }
+    else {
+        if (plane == 0)
+            *pp_blk_recon_buf = (void *)((uint8_t*)recon_picture_buf->buffer_y
+                                        + block_offset);
+        else if (plane == 1)
+            *pp_blk_recon_buf = (void *)((uint8_t*)recon_picture_buf->buffer_cb
+                                        + block_offset);
+        else 
+            *pp_blk_recon_buf = (void *)((uint8_t*)recon_picture_buf->buffer_cr
+                                        + block_offset);
     }
 }
 
@@ -209,16 +223,16 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
     /*!< Block Size width & height in pixels. */
     /* For Luma bock */ 
-    part_info.wpx[0] = AOMMIN(bw4 * MI_SIZE, 64);
-    part_info.hpx[0] = AOMMIN(bh4 * MI_SIZE, 64);
+    part_info.wpx[0] = bw4 * MI_SIZE;
+    part_info.hpx[0] = bh4 * MI_SIZE;
 
     /* For U plane chroma bock */
-    part_info.wpx[1] = AOMMIN((AOMMAX(1, bw4 >> sub_x)) * MI_SIZE, 64 >> sub_x);
-    part_info.hpx[1] = AOMMIN((AOMMAX(1, bh4 >> sub_y)) * MI_SIZE, 64 >> sub_y);
+    part_info.wpx[1] = (AOMMAX(1, bw4 >> sub_x)) * MI_SIZE;
+    part_info.hpx[1] = (AOMMAX(1, bh4 >> sub_y)) * MI_SIZE;
 
     /* For V plane chroma bock */
-    part_info.wpx[2] = AOMMIN((AOMMAX(1, bw4 >> sub_x)) * MI_SIZE, 64 >> sub_x);
-    part_info.hpx[2] = AOMMIN((AOMMAX(1, bh4 >> sub_y)) * MI_SIZE, 64 >> sub_y);
+    part_info.wpx[2] = (AOMMAX(1, bw4 >> sub_x)) * MI_SIZE;
+    part_info.hpx[2] = (AOMMAX(1, bh4 >> sub_y)) * MI_SIZE;
 
     /* TODO : tile->tile_rows boundary condn check is wrong */
     part_info.up_available = (mi_row > tile->mi_row_start);
@@ -272,8 +286,10 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     {
         // Decode Intra block
         int blk_row, blk_col;
-        const int max_blocks_wide = max_block_wide(bsize);
-        const int max_blocks_high = max_block_high(bsize);
+
+        //Get luma block's width and height
+        const int max_blocks_wide = max_block_wide(&part_info, bsize, 0);
+        const int max_blocks_high = max_block_high(&part_info, bsize, 0);
         const BlockSize max_unit_bsize = BLOCK_64X64;
         int mu_blocks_wide =
             block_size_wide[max_unit_bsize] >> tx_size_wide_log2[0];
@@ -318,7 +334,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
                     {
                         for (blk_col = col >> sub_x; blk_col < unit_width; blk_col += stepc)
                         {
-                            uint8_t *blk_recon_buf;
+                            void *blk_recon_buf;
                             int32_t recon_strd;
 
                             coeffs = plane ? dec_mod_ctxt->cur_chroma_coeff :
@@ -357,10 +373,14 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
                                             (dec_mod_ctxt->cur_luma_coeff += (n_coeffs + 1));
 
                                     if (recon_picture_buf->bit_depth == EB_8BIT)
-                                        av1_inv_transform_recon8bit(qcoeffs, blk_recon_buf,
+                                        av1_inv_transform_recon8bit(qcoeffs, 
+                                            (uint8_t *)blk_recon_buf,
                                             recon_strd, tx_size, tx_type, plane, n_coeffs);
                                     else
-                                        assert(0);
+                                        av1_inv_transform_recon(qcoeffs,
+                                        CONVERT_TO_BYTEPTR(blk_recon_buf), recon_strd,
+                                        tx_size, recon_picture_buf->bit_depth,
+                                        tx_type, plane, n_coeffs);
                                 }
                             }
 

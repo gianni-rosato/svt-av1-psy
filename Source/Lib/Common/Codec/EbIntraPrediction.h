@@ -169,6 +169,13 @@ void dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size,
 
 void filter_intra_edge_corner(uint8_t *p_above, uint8_t *p_left);
 
+void highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride,
+    TxSize tx_size, const uint16_t *above,
+    const uint16_t *left, int32_t upsample_above,
+    int32_t upsample_left, int32_t angle, int32_t bd);
+
+void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left);
+
 void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
                                           TxSize tx_size,
                                           const uint16_t *above,

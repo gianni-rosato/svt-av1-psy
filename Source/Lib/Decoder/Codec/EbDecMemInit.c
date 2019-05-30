@@ -232,6 +232,7 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
     return return_error;
 }
 
+/*TODO: Move to module files */
 static EbErrorType init_parse_context (EbDecHandle  *dec_handle_ptr) {
 
     EbErrorType return_error = EB_ErrorNone;
@@ -281,6 +282,7 @@ static EbErrorType init_parse_context (EbDecHandle  *dec_handle_ptr) {
     return return_error;
 }
 
+/*TODO: Move to module files */
 static EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr)
 {
     EbErrorType return_error = EB_ErrorNone;

@@ -427,7 +427,7 @@ extern "C" {
 
 
     // AMIR
-    //void av1_upsample_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t bd);
+    void av1_upsample_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t bd);
     //void av1_upsample_intra_edge_high_sse4_1(uint16_t *p, int32_t sz, int32_t bd);
     //RTCD_EXTERN void(*av1_upsample_intra_edge_high)(uint16_t *p, int32_t sz, int32_t bd);
 /* DC_PRED top */

@@ -3494,7 +3494,7 @@ void av1_highbd_dr_prediction_z3_c(uint16_t *dst, ptrdiff_t stride, int32_t bw,
     }
 }
 
-static void highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride,
+void highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride,
     TxSize tx_size, const uint16_t *above,
     const uint16_t *left, int32_t upsample_above,
     int32_t upsample_left, int32_t angle, int32_t bd) {
@@ -3548,7 +3548,7 @@ void av1_filter_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t strength) {
     }
 }
 
-static void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left) {
+void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left) {
     const int32_t kernel[3] = { 5, 6, 5 };
 
     int32_t s = (p_left[0] * kernel[0]) + (p_above[-1] * kernel[1]) +

@@ -44,7 +44,7 @@ extern "C" {
 //typedef uint32_t od_ec_window;
 
 /*The size in bits of od_ec_window.*/
-#define OD_EC_WINDOW_SIZE ((int)sizeof(od_ec_window) * CHAR_BIT)
+//#define OD_EC_WINDOW_SIZE ((int)sizeof(od_ec_window) * CHAR_BIT)
 
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/

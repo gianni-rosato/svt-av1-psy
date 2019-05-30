@@ -162,8 +162,44 @@ int svt_dec_out_buf(
         src += recon_picture_buf->stride_cr;
     }
     } else {
-        assert(0);
-        return 0;
+        uint16_t *pu2_dst;
+        uint16_t *pu2_src;
+
+        /* Luma */
+        pu2_dst = (uint16_t *)out_img->luma + out_img->origin_x +
+                (out_img->origin_y * out_img->y_stride);
+        pu2_src = (uint16_t *)recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
+            (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
+
+        for (i = 0; i < ht; i++) {
+            memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd);
+            pu2_dst += out_img->y_stride;
+            pu2_src += recon_picture_buf->stride_y;
+        }
+
+        /* Cb */
+        pu2_dst = (uint16_t *)out_img->cb + (out_img->origin_x >> sx) +
+            ((out_img->origin_y >> sy) * out_img->cb_stride);
+        pu2_src = (uint16_t *)recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
+            ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
+
+        for (i = 0; i < ht >> sy; i++) {
+            memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
+            pu2_dst += out_img->cb_stride;
+            pu2_src += recon_picture_buf->stride_cb;
+        }
+
+        /* Cr */
+        pu2_dst = (uint16_t *)out_img->cr + (out_img->origin_x >> sx) +
+            ((out_img->origin_y >> sy) * out_img->cr_stride);
+        pu2_src = (uint16_t *)recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
+            ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
+
+        for (i = 0; i < ht >> sy; i++) {
+            memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
+            pu2_dst += out_img->cr_stride;
+            pu2_src += recon_picture_buf->stride_cr;
+        }
     }
     return 1;
 }
