@@ -2708,18 +2708,15 @@ void perform_intra_coding_loop(
     EntropyCoder           *coeff_est_entropy_coder_ptr = picture_control_set_ptr->coeff_est_entropy_coder_ptr;
 
 
-    if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
+    if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
         //get the 16bit form of the input LCU
-        if (is16bit) {
+        if (is16bit) 
             recon_buffer = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
-        }
-        else {
+        else 
             recon_buffer = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
-        }
-    }
-    else { // non ref pictures
+    else  // non ref pictures
         recon_buffer = is16bit ? picture_control_set_ptr->recon_picture16bit_ptr : picture_control_set_ptr->recon_picture_ptr;
-    }
+    
 
     uint32_t totTu = context_ptr->blk_geom->txb_count[cu_ptr->tx_depth];
 
@@ -3403,23 +3400,14 @@ EB_EXTERN void av1_encode_pass(
 
     encode_context_ptr = ((SequenceControlSet*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr))->encode_context_ptr;
 
-    if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
-
+    if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) 
         //get the 16bit form of the input LCU
-        if (is16bit) {
-
+        if (is16bit)
             recon_buffer = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
-
-        }
-
-        else {
+        else
             recon_buffer = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
-        }
-    }
-    else { // non ref pictures
+    else  // non ref pictures
         recon_buffer = is16bit ? picture_control_set_ptr->recon_picture16bit_ptr : picture_control_set_ptr->recon_picture_ptr;
-    }
-
 
     EbBool use_delta_qp = (EbBool)sequence_control_set_ptr->static_config.improve_sharpness;
     EbBool oneSegment = (sequence_control_set_ptr->enc_dec_segment_col_count_array[picture_control_set_ptr->temporal_layer_index] == 1) && (sequence_control_set_ptr->enc_dec_segment_row_count_array[picture_control_set_ptr->temporal_layer_index] == 1);

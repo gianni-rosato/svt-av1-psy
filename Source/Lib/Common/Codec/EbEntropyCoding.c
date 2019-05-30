@@ -5890,8 +5890,7 @@ static void write_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
         xd->left_txfm_context + blk_row,
         mbmi->sb_type, tx_size);
 #if ATB_SUPPORT
-    const int write_txfm_partition =
-        (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]);
+    const int write_txfm_partition = (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]);
 #else
     const int txb_size_index =
         av1_get_txb_size_index(mbmi->sb_type, blk_row, blk_col);
@@ -5905,7 +5904,6 @@ static void write_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
 
         txfm_partition_update(xd->above_txfm_context + blk_col,
             xd->left_txfm_context + blk_row, tx_size, tx_size);
-        // TODO(yuec): set correct txfm partition update for qttx
     }
     else {
         const TxSize sub_txs = sub_tx_size_map[tx_size];
@@ -6142,19 +6140,15 @@ static INLINE void set_mi_row_col(
     const int32_t offset = mi_row * mi_stride + mi_col;
     xd->mi = picture_control_set_ptr->mi_grid_base + offset;
 
-    if (xd->up_available) {
+    if (xd->up_available) 
         xd->above_mbmi = &xd->mi[-xd->mi_stride]->mbmi;
-    }
-    else {
+    else 
         xd->above_mbmi = NULL;
-    }
 
-    if (xd->left_available) {
+    if (xd->left_available) 
         xd->left_mbmi = &xd->mi[-1]->mbmi;
-    }
-    else {
+    else
         xd->left_mbmi = NULL;
-    }
 
     xd->n8_h = bh;
     xd->n8_w = bw;

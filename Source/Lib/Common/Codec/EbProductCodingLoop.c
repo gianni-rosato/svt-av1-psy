@@ -3127,19 +3127,16 @@ static uint64_t cost_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
     const int write_txfm_partition = (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]);
 
     if (write_txfm_partition) {
-        //aom_write_symbol(w, 0, ec_ctx->txfm_partition_cdf[ctx], 2);
         bits += md_rate_estimation_ptr->txfm_partition_fac_bits[ctx][0];
 
         txfm_partition_update(xd->above_txfm_context + blk_col,
             xd->left_txfm_context + blk_row, tx_size, tx_size);
-        // TODO(yuec): set correct txfm partition update for qttx
     }
     else {
         const TxSize sub_txs = sub_tx_size_map[tx_size];
         const int bsw = tx_size_wide_unit[sub_txs];
         const int bsh = tx_size_high_unit[sub_txs];
 
-        //aom_write_symbol(w, 1, ec_ctx->txfm_partition_cdf[ctx], 2);
         bits += md_rate_estimation_ptr->txfm_partition_fac_bits[ctx][1];
         if (sub_txs == TX_4X4) {
             txfm_partition_update(xd->above_txfm_context + blk_col,
@@ -3370,19 +3367,15 @@ static INLINE void set_mi_row_col(
     const int32_t offset = mi_row * mi_stride + mi_col;
     xd->mi = picture_control_set_ptr->mi_grid_base + offset;
 
-    if (xd->up_available) {
+    if (xd->up_available) 
         xd->above_mbmi = &xd->mi[-xd->mi_stride]->mbmi;
-    }
-    else {
+    else 
         xd->above_mbmi = NULL;
-    }
 
-    if (xd->left_available) {
+    if (xd->left_available) 
         xd->left_mbmi = &xd->mi[-1]->mbmi;
-    }
-    else {
+    else 
         xd->left_mbmi = NULL;
-    }
 
     xd->n8_h = bh;
     xd->n8_w = bw;
