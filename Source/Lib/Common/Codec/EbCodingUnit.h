@@ -159,6 +159,10 @@ extern "C" {
         int32_t weight;
     } CandidateMv;
 
+#if ATB_EC
+#define INTER_TX_SIZE_BUF_LEN 16
+#define TXK_TYPE_BUF_LEN 64
+#endif
     typedef struct MbModeInfo 
     {
         // Common for both INTER and INTRA blocks
@@ -188,6 +192,12 @@ extern "C" {
         int8_t skip;
         int8_t cdef_strength;
         TxSize tx_size;
+#if ATB_EC
+        uint8_t inter_tx_size[INTER_TX_SIZE_BUF_LEN];
+#endif
+#if ATB_SUPPORT
+        uint8_t tx_depth;
+#endif
     } MbModeInfo;
 
     typedef struct ModeInfo {
@@ -239,6 +249,25 @@ extern "C" {
 */
     } MacroBlockPlane;
 
+#if ATB_EC
+    struct buf_2d {
+        uint8_t *buf;
+        uint8_t *buf0;
+        int width;
+        int height;
+        int stride;
+    };
+    typedef struct macroblockd_plane {
+
+        int subsampling_x;
+        int subsampling_y;
+        struct buf_2d dst;
+        struct buf_2d pre[2];
+        uint8_t width, height;
+
+    } MACROBLOCKD_PLANE;
+#endif
+
     typedef struct MacroBlockD 
     {
         // block dimension in the unit of mode_info.
@@ -267,6 +296,12 @@ extern "C" {
         MbModeInfo *chroma_left_mbmi;
 #if EC_UPDATE
         FRAME_CONTEXT *tile_ctx;
+#endif
+#if ATB_EC
+        TXFM_CONTEXT *above_txfm_context;
+        TXFM_CONTEXT *left_txfm_context;
+        TXFM_CONTEXT left_txfm_context_buffer[MAX_MIB_SIZE];
+        struct macroblockd_plane plane[MAX_MB_PLANE];
 #endif
     } MacroBlockD;
 
@@ -357,14 +392,22 @@ extern "C" {
         IntMv                       predmv[2];
         uint8_t                     skip_coeff_context;
         int16_t                     luma_txb_skip_context;
+#if ATB_DC_CONTEXT_SUPPORT_0
+        int16_t                     luma_dc_sign_context[MAX_TXB_COUNT];
+#else
         int16_t                     luma_dc_sign_context;
+#endif
         int16_t                     cb_txb_skip_context;
         int16_t                     cb_dc_sign_context;
         int16_t                     cr_txb_skip_context;
         int16_t                     cr_dc_sign_context;
         uint8_t                     reference_mode_context;
         uint8_t                     compoud_reference_type_context;
+#if ATB_DC_CONTEXT_SUPPORT_1
+        int32_t                     quantized_dc[3][MAX_TXB_COUNT];
+#else
         int32_t                     quantized_dc[3];
+#endif
         uint32_t                    is_inter_ctx;
         uint32_t                    interp_filters;
         PartitionType               part;
@@ -373,6 +416,9 @@ extern "C" {
         uint8_t                    *neigh_left_recon[3];  //only for MD
         uint8_t                    *neigh_top_recon[3];
         uint32_t                    best_d1_blk;
+#if ATB_SUPPORT
+        uint8_t                     tx_depth;
+#endif
     } CodingUnit;
 
         typedef struct OisCandidate 

@@ -119,10 +119,19 @@ extern "C" {
 #endif
         EbBool                                 is_new_mv;
         EbBool                                 is_zero_mv;
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+        TxType                                 transform_type[MAX_TXB_COUNT];
+        TxType                                 transform_type_uv;
+#else
         TxType                                 transform_type[PLANE_TYPES];
+#endif
         MacroblockPlane                        candidate_plane[MAX_MB_PLANE];
         uint16_t                               eob[MAX_MB_PLANE][MAX_TXB_COUNT];
+#if ATB_DC_CONTEXT_SUPPORT_1
+        int32_t                                quantized_dc[3][MAX_TXB_COUNT];
+#else
         int32_t                                quantized_dc[3];
+#endif
         uint32_t                               interp_filters;
         uint8_t                                tu_width;
         uint8_t                                tu_height;
@@ -130,6 +139,9 @@ extern "C" {
         uint16_t                               num_proj_ref;
         EbBool                                 local_warp_valid;
         EbWarpedMotionParams                   wm_params;
+#if ATB_SUPPORT
+        uint8_t                                tx_depth;
+#endif
     } ModeDecisionCandidate;
 
 

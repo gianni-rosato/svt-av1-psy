@@ -51,6 +51,19 @@ extern "C" {
         uint8_t    bheight_log2;                // block height log2
         BlockSize bsize;                       // bloc size
         BlockSize bsize_uv;                    // bloc size for Chroma 4:2:0
+#if ATB_SUPPORT
+        uint16_t   txb_count[MAX_VARTX_DEPTH + 1];                   //4-2-1
+        TxSize     txsize[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];
+        TxSize     txsize_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];
+        uint16_t   tx_org_x[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];     //orgin is SB
+        uint16_t   tx_org_y[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];     //origin is SB
+        uint16_t   tx_boff_x[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];    //block offset , origin is block
+        uint16_t   tx_boff_y[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];    //block offset , origin is block
+        uint8_t    tx_width[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];     //tx_size_wide
+        uint8_t    tx_height[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];    //tx_size_wide
+        uint8_t    tx_width_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];  //tx_size_wide
+        uint8_t    tx_height_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
+#else
         uint16_t   txb_count;                   //4-2-1
         TxSize     txsize[MAX_TXB_COUNT];
         TxSize     txsize_uv[MAX_TXB_COUNT];
@@ -62,7 +75,7 @@ extern "C" {
         uint8_t    tx_height[MAX_TXB_COUNT];    //tx_size_wide
         uint8_t    tx_width_uv[MAX_TXB_COUNT];  //tx_size_wide
         uint8_t    tx_height_uv[MAX_TXB_COUNT]; //tx_size_wide
-                   
+#endif           
                    
         uint16_t   blkidx_mds;                  // block index in md scan
         uint16_t   blkidx_dps;                  // block index in depth scan

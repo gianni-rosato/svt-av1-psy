@@ -71,6 +71,9 @@ static void EntropyCodingResetNeighborArrays(PictureControlSet *picture_control_
 
     neighbor_array_unit_reset(picture_control_set_ptr->intra_luma_mode_neighbor_array);
     neighbor_array_unit_reset32(picture_control_set_ptr->interpolation_type_neighbor_array);
+#if ATB_EC
+    neighbor_array_unit_reset(picture_control_set_ptr->txfm_context_array);
+#endif
     return;
 }
 

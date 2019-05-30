@@ -3906,28 +3906,31 @@ extern "C" {
         EbAsm                asm_type,
         PlaneType           component_type,
         EB_TRANS_COEFF_SHAPE trans_coeff_shape);
-
+#if DC_SIGN_CONTEXT_FIX
+    extern int32_t av1_quantize_inv_quantize(
+#else
     extern void av1_quantize_inv_quantize(
-        PictureControlSet *picture_control_set_ptr,
-        ModeDecisionContext         *md_context,
-        int32_t             *coeff,
-        const uint32_t       coeff_stride,
-        int32_t             *quant_coeff,
-        int32_t             *recon_coeff,
-        uint32_t             qp,
-        uint32_t             width,
-        uint32_t             height,
-        TxSize               txsize,
-        uint16_t            *eob,
-        EbAsm                asm_type,
-        uint32_t            *y_count_non_zero_coeffs,
-#if !PF_N2_SUPPORT                    
-        EbPfMode             pf_mode,
 #endif
-        uint32_t             component_type,
-        uint32_t             bit_increment,
-        TxType               tx_type,
-        ModeDecisionCandidateBuffer *candidateBuffer,
+        PictureControlSet             *picture_control_set_ptr,
+        ModeDecisionContext           *md_context,
+        int32_t                       *coeff,
+        const uint32_t                 coeff_stride,
+        int32_t                       *quant_coeff,
+        int32_t                       *recon_coeff,
+        uint32_t                       qp,
+        uint32_t                       width,
+        uint32_t                       height,
+        TxSize                         txsize,
+        uint16_t                      *eob,
+        EbAsm                          asm_type,
+        uint32_t                      *y_count_non_zero_coeffs,
+#if !PF_N2_SUPPORT                              
+        EbPfMode                       pf_mode,
+#endif                               
+        uint32_t                       component_type,
+        uint32_t                       bit_increment,
+        TxType                         tx_type,
+        ModeDecisionCandidateBuffer   *candidateBuffer,
         int16_t                        txb_skip_context,
         int16_t                        dc_sign_context,
         PredictionMode                 pred_mode,

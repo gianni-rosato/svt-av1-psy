@@ -1655,15 +1655,15 @@ static void pack_2d_pic(EbPictureBufferDesc *inputPicture,
     uint16_t *packed[3],
     EbAsm asm_type) {
 
-    const uint32_t inputLumaOffset = ((inputPicture->origin_y)      * inputPicture->stride_y) + (inputPicture->origin_x);
+    const uint32_t input_luma_offset = ((inputPicture->origin_y)      * inputPicture->stride_y) + (inputPicture->origin_x);
     const uint32_t inputBitIncLumaOffset = ((inputPicture->origin_y)      * inputPicture->stride_bit_inc_y) + (inputPicture->origin_x);
-    const uint32_t inputCbOffset = (((inputPicture->origin_y) >> 1) * inputPicture->stride_cb) + ((inputPicture->origin_x) >> 1);
+    const uint32_t input_cb_offset = (((inputPicture->origin_y) >> 1) * inputPicture->stride_cb) + ((inputPicture->origin_x) >> 1);
     const uint32_t inputBitIncCbOffset = (((inputPicture->origin_y) >> 1) * inputPicture->stride_bit_inc_cb) + ((inputPicture->origin_x) >> 1);
-    const uint32_t inputCrOffset = (((inputPicture->origin_y) >> 1) * inputPicture->stride_cr) + ((inputPicture->origin_x) >> 1);
+    const uint32_t input_cr_offset = (((inputPicture->origin_y) >> 1) * inputPicture->stride_cr) + ((inputPicture->origin_x) >> 1);
     const uint32_t inputBitIncCrOffset = (((inputPicture->origin_y) >> 1) * inputPicture->stride_bit_inc_cr) + ((inputPicture->origin_x) >> 1);
 
     pack2d_src(
-        inputPicture->buffer_y + inputLumaOffset,
+        inputPicture->buffer_y + input_luma_offset,
         inputPicture->stride_y,
         inputPicture->buffer_bit_inc_y + inputBitIncLumaOffset,
         inputPicture->stride_bit_inc_y,
@@ -1674,7 +1674,7 @@ static void pack_2d_pic(EbPictureBufferDesc *inputPicture,
         asm_type);
 
     pack2d_src(
-        inputPicture->buffer_cb + inputCbOffset,
+        inputPicture->buffer_cb + input_cb_offset,
         inputPicture->stride_cr,
         inputPicture->buffer_bit_inc_cb + inputBitIncCbOffset,
         inputPicture->stride_bit_inc_cr,
@@ -1685,7 +1685,7 @@ static void pack_2d_pic(EbPictureBufferDesc *inputPicture,
         asm_type);
 
     pack2d_src(
-        inputPicture->buffer_cr + inputCrOffset,
+        inputPicture->buffer_cr + input_cr_offset,
         inputPicture->stride_cr,
         inputPicture->buffer_bit_inc_cr + inputBitIncCrOffset,
         inputPicture->stride_bit_inc_cr,
