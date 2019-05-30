@@ -2552,9 +2552,9 @@ extern "C" {
         if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_32x32 = av1_inv_txfm2d_add_32x32_avx512;
         if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_64x64 = av1_inv_txfm2d_add_64x64_avx512;
         if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_16x64 = av1_inv_txfm2d_add_16x64_avx512;
-        //if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_64x16 = av1_inv_txfm2d_add_64x16_avx512;
+        if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_64x16 = av1_inv_txfm2d_add_64x16_avx512;
         if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_32x64 = av1_inv_txfm2d_add_32x64_avx512;
-        //if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_64x32 = av1_inv_txfm2d_add_64x32_avx512;
+        if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_64x32 = av1_inv_txfm2d_add_64x32_avx512;
         if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_16x32 = av1_inv_txfm2d_add_16x32_avx512;
         if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_32x16 = av1_inv_txfm2d_add_32x16_avx512;
 
