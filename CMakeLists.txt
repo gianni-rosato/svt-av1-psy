@@ -15,6 +15,12 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+find_program(YASM_EXE yasm)
+if(YASM_EXE AND NOT CMAKE_ASM_NASM_COMPILER MATCHES "yasm")
+    set(CMAKE_ASM_NASM_COMPILER ${YASM_EXE})
+    message(STATUS "Found YASM: ${YASM_EXE}")
+endif()
+
 project(${project_name} C CXX ASM_NASM)
 
 include(GNUInstallDirs)
@@ -39,11 +45,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CAN_USE_ASSEMBLER TRUE)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Prepare for Coveralls
-if(COVERAGE)
-    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} --coverage")
-        set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} --coverage")
+
     endif()
 endif()
 
