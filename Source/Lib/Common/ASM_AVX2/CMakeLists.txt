@@ -38,6 +38,3 @@ file(GLOB all_files
     "*.c")
 
 add_library(COMMON_ASM_AVX2 OBJECT ${all_files})
-
-
-
