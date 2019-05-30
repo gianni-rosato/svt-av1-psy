@@ -1,6 +1,7 @@
 ## [upcoming]
 - Static library support  
 - Alt-ref pictures - temporal filtering
+- Decoder - Support for Tiles and 10bit
 
 ## [0.5.0] - 2019-05-17
 
