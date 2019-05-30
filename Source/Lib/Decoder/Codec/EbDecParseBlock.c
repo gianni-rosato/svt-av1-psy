@@ -910,7 +910,8 @@ int read_inter_segment_id(EbDecHandle *dec_handle, PartitionInfo_t *xd,
 
     int segment_id;
     if (preskip) {
-        if (!seg->seg_id_pre_skip) return 0;
+        if (!seg->seg_id_pre_skip)
+          return 0;
     }
     else {
         if (mbmi->skip) {

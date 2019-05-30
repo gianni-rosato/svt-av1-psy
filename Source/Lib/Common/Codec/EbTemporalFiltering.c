@@ -789,9 +789,7 @@ void tf_inter_prediction(
     prediction_ptr.stride_cr = BW_CH;
 
     for (uint32_t idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
-        if (use_16x16_subblocks[idx_32x32] == 0) {
-        }
-        else {
+        if (use_16x16_subblocks[idx_32x32] != 0) {
             uint32_t    bsize = 16;
 
             for (uint32_t idx_16x16 = 0; idx_16x16 < 4; idx_16x16++) {

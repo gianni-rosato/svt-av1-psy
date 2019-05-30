@@ -218,6 +218,7 @@ void av1_filter_intra_edge_high_c_left(uint8_t *p, int32_t sz, int32_t strength,
         p[i - 1] = (uint8_t)s;
     }
 }
+
 int32_t intra_edge_filter_strength(int32_t bs0, int32_t bs1, int32_t delta, int32_t type) {
     const int32_t d = abs(delta);
     int32_t strength = 0;
@@ -225,42 +226,58 @@ int32_t intra_edge_filter_strength(int32_t bs0, int32_t bs1, int32_t delta, int3
     const int32_t blk_wh = bs0 + bs1;
     if (type == 0) {
         if (blk_wh <= 8) {
-            if (d >= 56) strength = 1;
+            if (d >= 56)
+                strength = 1;
         }
         else if (blk_wh <= 12) {
-            if (d >= 40) strength = 1;
+            if (d >= 40)
+                strength = 1;
         }
         else if (blk_wh <= 16) {
-            if (d >= 40) strength = 1;
+            if (d >= 40)
+                strength = 1;
         }
         else if (blk_wh <= 24) {
-            if (d >= 8) strength = 1;
-            if (d >= 16) strength = 2;
-            if (d >= 32) strength = 3;
+            if (d >= 8)
+                strength = 1;
+            if (d >= 16)
+                strength = 2;
+            if (d >= 32)
+                strength = 3;
         }
         else if (blk_wh <= 32) {
-            if (d >= 1) strength = 1;
-            if (d >= 4) strength = 2;
-            if (d >= 32) strength = 3;
+            if (d >= 1)
+                strength = 1;
+            if (d >= 4)
+                strength = 2;
+            if (d >= 32)
+                strength = 3;
         }
         else {
-            if (d >= 1) strength = 3;
+            if (d >= 1)
+                strength = 3;
         }
     }
     else {
         if (blk_wh <= 8) {
-            if (d >= 40) strength = 1;
-            if (d >= 64) strength = 2;
+            if (d >= 40)
+                strength = 1;
+            if (d >= 64)
+                strength = 2;
         }
         else if (blk_wh <= 16) {
-            if (d >= 20) strength = 1;
-            if (d >= 48) strength = 2;
+            if (d >= 20)
+                strength = 1;
+            if (d >= 48)
+                strength = 2;
         }
         else if (blk_wh <= 24) {
-            if (d >= 4) strength = 3;
+            if (d >= 4)
+                strength = 3;
         }
         else {
-            if (d >= 1) strength = 3;
+            if (d >= 1)
+                strength = 3;
         }
     }
     return strength;
