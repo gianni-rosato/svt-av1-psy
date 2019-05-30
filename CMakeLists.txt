@@ -46,6 +46,88 @@ set(CAN_USE_ASSEMBLER TRUE)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
+if(WIN32)
+    set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -DWIN64")
+else()
+    set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -DUNIX64")
+endif()
+
+if(UNIX)
+    if(APPLE)
+        set(CMAKE_MACOSX_RPATH 1)
+        set(CMAKE_C_ARCHIVE_CREATE   "<CMAKE_AR> Scr <TARGET> <LINK_FLAGS> <OBJECTS>")
+        set(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> Scr <TARGET> <LINK_FLAGS> <OBJECTS>")
+        set(CMAKE_C_ARCHIVE_FINISH   "<CMAKE_RANLIB> -no_warning_for_no_symbols -c <TARGET>")
+        set(CMAKE_CXX_ARCHIVE_FINISH "<CMAKE_RANLIB> -no_warning_for_no_symbols -c <TARGET>")
+    else()
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie -z noexecstack -z relro -z now")
+    endif()
+endif()
+
+set(flags_to_test
+    -Wextra
+    -Wformat
+    -Wformat-security
+    -fstack-protector-strong
+    -fPIE
+    -fPIC
+    -D_FORTIFY_SOURCE=2)
+if(NOT MSVC)
+    list(INSERT flags_to_test 0 -Wall)
+else()
+    list(APPEND flags_to_test /MP)
+endif()
+set(release_flags_to_test
+    -O2
+    -O3)
+set(debug_flags_to_test
+    -g
+    -O0
+    -Og)
+
+foreach(flag ${flags_to_test};${release_flags_to_test};${debug_flags_to_test})
+    string(REGEX REPLACE "[^A-Za-z0-9]" "_" flag_var "${flag}")
+    set(test_c_flag "C_FLAG${flag_var}")
+    set(test_cxx_flag "CXX_FLAG${flag_var}")
+    check_c_compiler_flag(${flag} "${test_c_flag}")
+    check_cxx_compiler_flag(${flag} "${test_cxx_flag}")
+    if(${flag} IN_LIST release_flags_to_test)
+        if(${test_c_flag})
+            set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${flag}")
+        endif()
+        if(${test_cxx_flag})
+            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${flag}")
+        endif()
+    elseif(${flag} IN_LIST debug_flags_to_test)
+        if(${test_c_flag})
+            set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${flag}")
+        endif()
+        if(${test_cxx_flag})
+            set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${flag}")
+        endif()
+    else()
+        if(${test_c_flag})
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}")
+        endif()
+        if(${test_cxx_flag})
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}")
+        endif()
+    endif()
+endforeach()
+
+if(CMAKE_ASM_NASM_OBJECT_FORMAT MATCHES "win")
+    set(CMAKE_ASM_NASM_FLAGS_DEBUG "${CMAKE_ASM_NASM_FLAGS_DEBUG} -gcv8")
+elseif(CMAKE_ASM_NASM_OBJECT_FORMAT MATCHES "macho")
+    if(CMAKE_ASM_NASM_COMPILER MATCHES "nasm")
+        set(CMAKE_ASM_NASM_FLAGS_DEBUG "${CMAKE_ASM_NASM_FLAGS_DEBUG} -gdwarf")
+    elseif(CMAKE_ASM_NASM_COMPILER MATCHES "yasm")
+        set(CMAKE_ASM_NASM_FLAGS_DEBUG "${CMAKE_ASM_NASM_FLAGS_DEBUG} -gnull")
+    endif()
+else()
+    if(CMAKE_ASM_NASM_COMPILER MATCHES "nasm")
+        set(CMAKE_ASM_NASM_FLAGS_DEBUG "${CMAKE_ASM_NASM_FLAGS_DEBUG} -gdwarf")
+    elseif(CMAKE_ASM_NASM_COMPILER MATCHES "yasm")
+        set(CMAKE_ASM_NASM_FLAGS_DEBUG "${CMAKE_ASM_NASM_FLAGS_DEBUG} -gdwarf2")
     endif()
 endif()
 
