@@ -29,11 +29,4 @@ if (UNIX)
         m)
 endif()
 
-if (MSVC OR MSYS OR MINGW OR WIN32)
-
-    # Link the Encoder App
-    target_link_libraries (SvtAv1EncApp
-                            SvtAv1Enc)
-endif()
-
-install(TARGETS SvtAv1EncApp RUNTIME DESTINATION bin)
+install(TARGETS SvtAv1EncApp RUNTIME DESTINATION ${CMAKE_INSTALL_FULL_BINDIR})
