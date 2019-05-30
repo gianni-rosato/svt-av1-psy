@@ -76,6 +76,8 @@ if(NOT MSVC)
     list(INSERT flags_to_test 0 -Wall)
 else()
     list(APPEND flags_to_test /MP)
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Od")
 endif()
 set(release_flags_to_test
     -O2
