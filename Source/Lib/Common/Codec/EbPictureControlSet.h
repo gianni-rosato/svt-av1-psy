@@ -13828,14 +13828,23 @@ extern "C" {
         NeighborArrayUnit                  *md_mode_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_leaf_depth_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#if ATB_MD
+        NeighborArrayUnit                  *md_tx_depth_1_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#endif
         NeighborArrayUnit                  *md_cb_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_cr_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
         NeighborArrayUnit                  *md_skip_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
 #endif
         NeighborArrayUnit                  *md_luma_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#if ATB_DC_CONTEXT_SUPPORT_2
+        NeighborArrayUnit                  *md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#endif
         NeighborArrayUnit                  *md_cb_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_cr_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#if ATB_RATE
+        NeighborArrayUnit                  *md_txfm_context_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#endif
         NeighborArrayUnit                  *md_inter_pred_dir_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_ref_frame_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
 
@@ -13861,6 +13870,11 @@ extern "C" {
         NeighborArrayUnit                  *ep_luma_recon_neighbor_array16bit;
         NeighborArrayUnit                  *ep_cb_recon_neighbor_array16bit;
         NeighborArrayUnit                  *ep_cr_recon_neighbor_array16bit;
+#if DC_SIGN_CONTEXT_EP
+        NeighborArrayUnit                  *ep_luma_dc_sign_level_coeff_neighbor_array;
+        NeighborArrayUnit                  *ep_cr_dc_sign_level_coeff_neighbor_array;
+        NeighborArrayUnit                  *ep_cb_dc_sign_level_coeff_neighbor_array;
+#endif
 #if !OPT_LOSSLESS_0
         // AMVP & MV Merge Neighbor Arrays
         NeighborArrayUnit                  *amvp_mv_merge_mv_neighbor_array;
@@ -13875,10 +13889,12 @@ extern "C" {
         NeighborArrayUnit                  *luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
         NeighborArrayUnit                  *cr_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
         NeighborArrayUnit                  *cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
+#if ATB_EC
+        NeighborArrayUnit                  *txfm_context_array;
+#endif
         NeighborArrayUnit                  *inter_pred_dir_neighbor_array;
         NeighborArrayUnit                  *ref_frame_type_neighbor_array;
         NeighborArrayUnit32                *interpolation_type_neighbor_array;
-
         ModeInfo                            **mi_grid_base; //2 SB Rows of mi Data are enough
 
         ModeInfo                             *mip;
@@ -14135,6 +14151,10 @@ extern "C" {
         uint32_t                              zz_cost_average;                    // used by ModeDecisionConfigurationProcess()
 #endif
         uint16_t                              non_moving_index_average;            // used by ModeDecisionConfigurationProcess()
+
+#if ADAPTIVE_QP_SCALING
+        uint16_t                              qp_scaling_average_complexity;
+#endif
 #if !MEMORY_FOOTPRINT_OPT
         EbBool                               *sb_isolated_non_homogeneous_area_array;            // used by ModeDecisionConfigurationProcess()
         uint8_t                              *cu32x32_clean_sparse_coeff_map_array; //32x32 cu array for clean sparse coeff
@@ -14221,6 +14241,9 @@ extern "C" {
         uint8_t                               intra_pred_mode;
 #if M8_SKIP_BLK
         uint8_t                               skip_sub_blks;
+#endif
+#if ATB_SUPPORT
+        uint8_t                               atb_mode;
 #endif
         //**********************************************************************************************************//
         FrameType                            av1_frame_type;

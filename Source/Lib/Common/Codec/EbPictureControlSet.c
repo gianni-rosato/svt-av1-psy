@@ -419,6 +419,20 @@ EbErrorType picture_control_set_ctor(
             return EB_ErrorInsufficientResources;
         }
 
+#if ATB_MD
+        return_error = neighbor_array_unit_ctor(
+            &object_ptr->md_tx_depth_1_luma_recon_neighbor_array[depth],
+            MAX_PICTURE_WIDTH_SIZE,
+            MAX_PICTURE_HEIGHT_SIZE,
+            sizeof(uint8_t),
+            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
+        if (return_error == EB_ErrorInsufficientResources) {
+            return EB_ErrorInsufficientResources;
+        }
+#endif
+
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_cb_recon_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
@@ -471,6 +485,21 @@ EbErrorType picture_control_set_ctor(
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
+#if ATB_DC_CONTEXT_SUPPORT_2
+        // for each 4x4
+        return_error = neighbor_array_unit_ctor(
+            &object_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth],
+            MAX_PICTURE_WIDTH_SIZE,
+            MAX_PICTURE_HEIGHT_SIZE,
+            sizeof(uint8_t),
+            PU_NEIGHBOR_ARRAY_GRANULARITY,
+            PU_NEIGHBOR_ARRAY_GRANULARITY,
+            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+        if (return_error == EB_ErrorInsufficientResources) {
+            return EB_ErrorInsufficientResources;
+        }
+#endif
         // for each 4x4
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth],
@@ -484,6 +513,7 @@ EbErrorType picture_control_set_ctor(
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
+
         // for each 4x4
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_cb_dc_sign_level_coeff_neighbor_array[depth],
@@ -497,6 +527,21 @@ EbErrorType picture_control_set_ctor(
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
+
+#if ATB_RATE
+        return_error = neighbor_array_unit_ctor(
+            &object_ptr->md_txfm_context_array[depth],
+            MAX_PICTURE_WIDTH_SIZE,
+            MAX_PICTURE_HEIGHT_SIZE,
+            sizeof(TXFM_CONTEXT),
+            PU_NEIGHBOR_ARRAY_GRANULARITY,
+            PU_NEIGHBOR_ARRAY_GRANULARITY,
+            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+        if (return_error == EB_ErrorInsufficientResources) {
+            return EB_ErrorInsufficientResources;
+        }
+#endif
 
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_inter_pred_dir_neighbor_array[depth],
@@ -535,8 +580,6 @@ EbErrorType picture_control_set_ctor(
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
-
-
 
     }
 #if !MEMORY_FOOTPRINT_OPT
@@ -731,6 +774,53 @@ EbErrorType picture_control_set_ctor(
         object_ptr->ep_cb_recon_neighbor_array16bit = 0;
         object_ptr->ep_cr_recon_neighbor_array16bit = 0;
     }
+
+
+#if DC_SIGN_CONTEXT_EP
+
+    // for each 4x4
+    return_error = neighbor_array_unit_ctor(
+        &object_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+        MAX_PICTURE_WIDTH_SIZE,
+        MAX_PICTURE_HEIGHT_SIZE,
+        sizeof(uint8_t),
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+    if (return_error == EB_ErrorInsufficientResources) {
+        return EB_ErrorInsufficientResources;
+    }
+
+    // for each 4x4
+    return_error = neighbor_array_unit_ctor(
+        &object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+        MAX_PICTURE_WIDTH_SIZE,
+        MAX_PICTURE_HEIGHT_SIZE,
+        sizeof(uint8_t),
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+    if (return_error == EB_ErrorInsufficientResources) {
+        return EB_ErrorInsufficientResources;
+    }
+
+    // for each 4x4
+    return_error = neighbor_array_unit_ctor(
+        &object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+        MAX_PICTURE_WIDTH_SIZE,
+        MAX_PICTURE_HEIGHT_SIZE,
+        sizeof(uint8_t),
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+    if (return_error == EB_ErrorInsufficientResources) {
+        return EB_ErrorInsufficientResources;
+    }
+#endif
+
 #if !OPT_LOSSLESS_0
     return_error = neighbor_array_unit_ctor(
         &object_ptr->amvp_mv_merge_mv_neighbor_array,
@@ -898,6 +988,20 @@ EbErrorType picture_control_set_ctor(
         return EB_ErrorInsufficientResources;
     }
 
+
+#if ATB_EC
+    return_error = neighbor_array_unit_ctor(
+        &object_ptr->txfm_context_array,
+        MAX_PICTURE_WIDTH_SIZE,
+        MAX_PICTURE_HEIGHT_SIZE,
+        sizeof(TXFM_CONTEXT),
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        PU_NEIGHBOR_ARRAY_GRANULARITY,
+        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+    if (return_error == EB_ErrorInsufficientResources) {
+        return EB_ErrorInsufficientResources;
+    }
+#endif
     // Note - non-zero offsets are not supported (to be fixed later in DLF chroma filtering)
     object_ptr->cb_qp_offset = 0;
     object_ptr->cr_qp_offset = 0;

@@ -4245,6 +4245,10 @@ extern void av1_predict_intra_block(
     int32_t row_off,
     int32_t plane,
     BlockSize bsize,
+#if ATB_EP
+    uint32_t tu_org_x_pict,
+    uint32_t tu_org_y_pict,
+#endif
     uint32_t bl_org_x_pict,
     uint32_t bl_org_y_pict,
     uint32_t bl_org_x_mb,
@@ -4257,10 +4261,14 @@ extern void av1_predict_intra_block(
     uint32_t  pred_buf_x_offest;
     uint32_t  pred_buf_y_offest;
 
-    if (stage == ED_STAGE) { // EncDec
+    if (stage == ED_STAGE) { // EncDec 
+#if ATB_EP 
+        pred_buf_x_offest = plane ? ((bl_org_x_pict >> 3) << 3) >> 1 : tu_org_x_pict;
+        pred_buf_y_offest = plane ? ((bl_org_y_pict >> 3) << 3) >> 1 : tu_org_y_pict;
+#else
         pred_buf_x_offest = plane ? ((bl_org_x_pict >> 3) << 3) >> 1 : bl_org_x_pict;
         pred_buf_y_offest = plane ? ((bl_org_y_pict >> 3) << 3) >> 1 : bl_org_y_pict;
-
+#endif
     }
     else { // MD
         pred_buf_x_offest = bl_org_x_mb;
@@ -4778,8 +4786,13 @@ EbErrorType av1_intra_prediction_cl(
     md_context_ptr->intra_chroma_top_mode = (uint32_t)(
         (md_context_ptr->mode_type_neighbor_array->top_array[modeTypeTopNeighborIndex] != INTRA_MODE) ? UV_DC_PRED :
         (uint32_t)md_context_ptr->intra_chroma_mode_neighbor_array->top_array[intraChromaModeTopNeighborIndex]);       //   use DC. This seems like we could use a LCU-width
+#if ATB_SUPPORT
+    TxSize  tx_size = md_context_ptr->blk_geom->txsize[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; // Nader - Intra 128x128 not supported
+    TxSize  tx_size_Chroma = md_context_ptr->blk_geom->txsize_uv[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; //Nader - Intra 128x128 not supported
+#else
     TxSize  tx_size = md_context_ptr->blk_geom->txsize[0]; // Nader - Intra 128x128 not supported
     TxSize  tx_size_Chroma = md_context_ptr->blk_geom->txsize_uv[0]; //Nader - Intra 128x128 not supported
+#endif
     uint8_t    topNeighArray[64 * 2 + 1];
     uint8_t    leftNeighArray[64 * 2 + 1];
     PredictionMode mode;
@@ -4858,6 +4871,10 @@ EbErrorType av1_intra_prediction_cl(
             0,                                                                              //int32_t row_off,
             plane,                                                                          //int32_t plane,
             md_context_ptr->blk_geom->bsize,       //uint32_t puSize,
+#if ATB_EP
+            md_context_ptr->cu_origin_x,
+            md_context_ptr->cu_origin_y,
+#endif
             md_context_ptr->cu_origin_x,                  //uint32_t cuOrgX,
             md_context_ptr->cu_origin_y,                  //uint32_t cuOrgY
             plane ? ((md_context_ptr->blk_geom->origin_x >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_x,  //uint32_t cuOrgX used only for prediction Ptr

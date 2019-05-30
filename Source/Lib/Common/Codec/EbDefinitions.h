@@ -42,9 +42,30 @@ extern "C" {
 #endif
 
 #define PCS_ME_FIX                        1 // pcs flags shall not be set in seg based process
-
+#define ADAPTIVE_QP_SCALING               1 // Adaptive QP scaling. Change the QP based on the content. 
 
 #define MRP_SUPPORT                       1// MRP Main Flag
+
+#define ATB                               1 // ATB Main Flag
+#if ATB
+#define ATB_SUPPORT                       1 // Tranform block geometry, data structure(s), ..
+#define ATB_SUPPORT_1_DEPTH               1 // Undo trasnform depth 2 as ATB for INTER not yet active 
+#define ATB_EP                            1 // Tranform partitioning @ encode passs 
+#define ATB_EC                            1 // Tranform partitioning @ entropy coding 
+#define ATB_MD                            1 // Tranform partitioning @ mode decision
+#define ATB_RATE                          1 // Tranform partitioning tranform depth rate estimation
+#define ATB_TX_TYPE_SUPPORT_PER_TU        1 // Added the ability to signal Tx type per tranform block 
+#define ATB_DC_CONTEXT_SUPPORT_0          1 // Added the ability to signal DC context per tranform block 
+#define ATB_DC_CONTEXT_SUPPORT_1          1 // Added the ability to signal DC level per tranform block 
+#define ATB_DC_CONTEXT_SUPPORT_2          1 // Added the ability to update DC context @ tranform block basis for only INTRA partitioning (128x128 not yet addressed)
+#if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
+#define DC_SIGN_CONTEXT_FIX               1 // Fixed DC level derivation and update @ mode decision 
+#define DC_SIGN_CONTEXT_EP                0 // Fixed DC level update @ encode pass (TBD)
+#endif
+#define SHUT_ATB                          0 // ATB multi-mode signal
+#endif
+/**********************************************************************************/
+
 
 // New  presets
 #define NEW_PRESETS                       1
@@ -311,7 +332,11 @@ enum {
 #define ADD_DELTA_QP_SUPPORT                      0  // Add delta QP support - Please enable this flag and iproveSharpness (config) to test the QPM
 #define BLOCK_MAX_COUNT_SB_128                    4421  // TODO: reduce alloction for 64x64
 #define BLOCK_MAX_COUNT_SB_64                     1101  // TODO: reduce alloction for 64x64
+#if ATB_SUPPORT && !ATB_SUPPORT_1_DEPTH
+#define MAX_TXB_COUNT                             16 // Maximum number of transform blocks per depth
+#else
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
+#endif
 #define MAX_NFL                                   40
 #define MAX_LAD                                   120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x)>>3)<<3)
@@ -366,7 +391,11 @@ enum {
 // Maximum number of tile rows and tile columns
 #define MAX_TILE_ROWS 1024
 #define MAX_TILE_COLS 1024
+#if ATB_SUPPORT_1_DEPTH
+#define MAX_VARTX_DEPTH 1
+#else
 #define MAX_VARTX_DEPTH 2
+#endif
 #define MI_SIZE_64X64 (64 >> MI_SIZE_LOG2)
 #define MI_SIZE_128X128 (128 >> MI_SIZE_LOG2)
 #define MAX_PALETTE_SQUARE (64 * 64)
@@ -795,7 +824,87 @@ typedef enum ATTRIBUTE_PACKED {
 #else
 } TxSize;
 #endif
+#if ATB_SUPPORT
+static const TxSize tx_depth_to_tx_size[3][BlockSizeS_ALL] = {
+    // tx_depth 0
+    {
+        TX_4X4,
+        TX_4X8,
+        TX_8X4,
+        TX_8X8,
+        TX_8X16,
+        TX_16X8,
+        TX_16X16,
+        TX_16X32,
+        TX_32X16,
+        TX_32X32,
+        TX_32X64,
+        TX_64X32,
+        TX_64X64,
+        TX_64X64,//TX_64X128,
+        TX_64X64,//TX_128X64,
+        TX_64X64,//TX_128X128,
+        TX_4X16,
+        TX_16X4,
+        TX_8X32,
+        TX_32X8,
+        TX_16X64,
+        TX_64X16
+    },
 
+    // tx_depth 1: 
+    {
+        TX_4X4,
+        TX_4X8,
+        TX_8X4,
+        TX_4X4,
+        TX_8X8,
+        TX_8X8,
+        TX_8X8,
+        TX_16X16,
+        TX_16X16,
+        TX_16X16,
+        TX_32X32,
+        TX_32X32,
+        TX_32X32,
+        TX_64X64,//TX_64X128,
+        TX_64X64,//TX_128X64,
+        TX_64X64,//TX_128X128,
+        TX_4X4,
+        TX_4X4,
+        TX_8X8,
+        TX_8X8,
+        TX_16X16,
+        TX_16X16
+    },
+
+    // tx_depth 2
+    {
+        TX_4X4,
+        TX_4X8,
+        TX_8X4,
+        TX_8X8,
+        TX_4X4,
+        TX_4X4,
+        TX_4X4,
+        TX_8X8,
+        TX_8X8,
+        TX_8X8,
+        TX_16X16,
+        TX_16X16,
+        TX_16X16,
+        TX_64X64,//TX_64X128,
+        TX_64X64,//TX_128X64,
+        TX_64X64,//TX_128X128,
+        TX_4X16, // No depth 2
+        TX_16X4, // No depth 2
+        TX_4X4,
+        TX_4X4,
+        TX_8X8,
+        TX_8X8
+    }
+};
+#endif
 static const int32_t tx_size_wide[TX_SIZES_ALL] = {
     4, 8, 16, 32, 64, 4, 8, 8, 16, 16, 32, 32, 64, 4, 16, 8, 32, 16, 64,
 };
