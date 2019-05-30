@@ -3570,41 +3570,19 @@ void perform_intra_tx_partitioning(
             TxType txk_end = TX_TYPES;
             uint64_t best_cost_tx_search = (uint64_t)~0;
 
-#if 0
-            const TxSetType tx_set_type = get_ext_tx_set_type(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr], is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
-#else
-            const TxSetType tx_set_type = get_ext_tx_set_type(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr], 0, 0);
+            const TxSetType tx_set_type = get_ext_tx_set_type(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr], 0, 0); // assumes INTRA 
 
-#endif
             for (int32_t tx_type = txk_start; tx_type < txk_end; ++tx_type) {
 
                 y_tu_coeff_bits = 0;
-#if 0
-                if (is_inter) {
-                    TxSize max_tx_size = context_ptr->blk_geom->txsize_uv[0][txb_itr];
-                    const TxSetType                tx_set_type =
-                        get_ext_tx_set_type(max_tx_size, is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
 
-                    int32_t eset = get_ext_tx_set(max_tx_size, is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
-                    // eset == 0 should correspond to a set with only DCT_DCT and there
-                    // is no need to send the tx_type
-                    if (eset <= 0) continue;
-                    else if (av1_ext_tx_used[tx_set_type][tx_type] == 0) continue;
-                    else if (tx_height > 32 || tx_width > 32) continue;
-        }
-                int32_t eset = get_ext_tx_set(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr], is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
-#else
-                int32_t eset = get_ext_tx_set(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr], 0, 0);
-#endif
+                int32_t eset = get_ext_tx_set(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr], 0, 0); // assumes INTRA 
                 // eset == 0 should correspond to a set with only DCT_DCT and there
                 // is no need to send the tx_type
                 if (eset <= 0) continue;
                 else if (av1_ext_tx_used[tx_set_type][tx_type] == 0) continue;
                 else if (context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] > 32 || context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] > 32) continue;
-#if 0
-                if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set)
-                    if (!allowed_tx_set_a[context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr]][tx_type]) continue;
-#endif
+
                 // Y: T Q iQ
                 av1_estimate_transform(
                     &(((int16_t*)candidateBuffer->residual_ptr->buffer_y)[tu_origin_index]),
@@ -3746,26 +3724,13 @@ void perform_intra_tx_partitioning(
                     candidateBuffer->candidate_ptr->transform_type_uv,
                     COMPONENT_LUMA,
                     asm_type);
-#if 0
-                //TODO: fix cbf decision
-                av1_tu_calc_cost_luma(
-                    context_ptr->cu_ptr->luma_txb_skip_context,
-                    candidateBuffer->candidate_ptr,
-                    context_ptr->txb_itr,
-                    context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
-                    y_count_non_zero_coeffs[context_ptr->txb_itr],
-                    tuFullDistortion[0],
-                    &y_tu_coeff_bits,
-                    &y_full_cost,
-                    context_ptr->full_lambda);
-#endif
 
                 uint64_t cost = RDCOST(context_ptr->full_lambda, y_tu_coeff_bits, tuFullDistortion[0][DIST_CALC_RESIDUAL]);
                 if (cost < best_cost_tx_search) {
                     best_cost_tx_search = cost;
                     best_tx_type = tx_type;
                 }
-    }
+            }
 
             // Record the best tx type @ depth 0
             best_tx_type_depth_0 = (context_ptr->tx_depth == 0) ? best_tx_type : best_tx_type_depth_0;
@@ -4234,7 +4199,6 @@ void perform_intra_tx_partitioning(
                 COMPONENT_LUMA,
                 asm_type);
 
-            //TODO: fix cbf decision
             av1_tu_calc_cost_luma(
                 context_ptr->cu_ptr->luma_txb_skip_context,
                 candidateBuffer->candidate_ptr,
@@ -4985,8 +4949,12 @@ void inter_depth_tx_search(
     uint64_t                                ref_fast_cost,
     EbAsm                                   asm_type)
 {
-
+#if ATB_MD
+    // Hsan: if Transform Search ON and INTRA, then Tx Type search is performed @ the full loop 
+    uint8_t  tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_INTER_DEPTH && (picture_control_set_ptr->parent_pcs_ptr->atb_mode == 0 || candidateBuffer ->candidate_ptr->type == INTER_MODE)) ? get_skip_tx_search_flag(
+#else
     uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_INTER_DEPTH ? get_skip_tx_search_flag(
+#endif
 #if BYPASS_USELESS_TX_SEARCH
         context_ptr->blk_geom,
 #else  
