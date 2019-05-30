@@ -17,9 +17,8 @@ file(GLOB all_files
     "*.c")
 
 # App Source Files
-add_executable (SvtAv1DecApp
-    ${all_files}
-)
+add_executable(SvtAv1DecApp
+    ${all_files})
 
 #********** SET COMPILE FLAGS************
 
