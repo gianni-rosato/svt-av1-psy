@@ -5,19 +5,8 @@
 # ctest.  You can select which tests to run using 'ctest -R regex'.
 # For more options, run 'ctest --help'.
 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-
-# BUILD_SHARED_LIBS is a standard CMake variable, but we declare it here to
-# make it prominent in the GUI.
-if (UNIX)
-option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." OFF)
-endif()
-
-if (MSVC OR MSYS OR MINGW OR WIN32)
-option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
-endif()
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 
 # When other libraries are using a shared version of runtime libraries,
 # Google Test also has to use one.
