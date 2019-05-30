@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 #define PCS_ME_FIX                        1 // pcs flags shall not be set in seg based process
-
+#define ADAPTIVE_QP_SCALING               1 // Adaptive QP scaling. Change the QP based on the content. 
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
