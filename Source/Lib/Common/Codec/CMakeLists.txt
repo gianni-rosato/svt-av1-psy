@@ -13,10 +13,6 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    SET(CMAKE_C_FLAGS "/MP")
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-
 file(GLOB all_files
     "*.h"
     "*.c")
