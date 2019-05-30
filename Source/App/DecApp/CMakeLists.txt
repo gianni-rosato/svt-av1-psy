@@ -30,11 +30,4 @@ if (UNIX)
         m)
 endif()
 
-if (MSVC OR MSYS OR MINGW OR WIN32)
-
-    # Link the Decoder App
-    target_link_libraries (SvtAv1DecApp
-                           SvtAv1Dec)
-endif()
-
-install(TARGETS SvtAv1DecApp RUNTIME DESTINATION bin)
+install(TARGETS SvtAv1DecApp RUNTIME DESTINATION ${CMAKE_INSTALL_FULL_BINDIR})
