@@ -32,4 +32,3 @@ file(GLOB all_files
     "*.c")
 
 add_library(COMMON_ASM_SSSE3 OBJECT ${all_files})
-
