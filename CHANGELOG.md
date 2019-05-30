@@ -1,6 +1,7 @@
 ## [upcoming]
 - Static library support  
 - Alt-ref pictures - temporal filtering
+- Adaptive Transform Block for INTRA
 
 ## [0.5.0] - 2019-05-17
 
