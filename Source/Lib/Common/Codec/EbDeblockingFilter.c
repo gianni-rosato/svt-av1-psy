@@ -857,9 +857,22 @@ static TxSize get_transform_size(const MacroBlockD *const xd,
     //if (xd->lossless[mbmi->segment_id]) return TX_4X4;
 
     TxSize tx_size = (plane == COMPONENT_LUMA)
+#if ATB_SUPPORT
+        ? (is_inter_block(mbmi) ? tx_depth_to_tx_size[0][mbmi->sb_type] : tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]) // use max_tx_size
+#else
         ? mbmi->tx_size
+#endif
+
         : av1_get_max_uv_txsize(mbmi->sb_type, plane_ptr);
     assert(tx_size < TX_SIZES_ALL);
+#if ATB_SUPPORT
+    if (((plane == COMPONENT_LUMA) && is_inter_block(mbmi) && !mbmi->skip)) {  // if split tx is used
+
+        const TxSize mb_tx_size = tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]; // tx_size
+        assert(mb_tx_size < TX_SIZES_ALL);
+        tx_size = mb_tx_size;
+    }
+#else
     //if ((plane == COMPONENT_LUMA) && is_inter_block(mbmi) && !mbmi->skip) {
     //    const BlockSize sb_type = mbmi->sb_type;
     //    const int32_t blk_row = mi_row & (mi_size_high[sb_type] - 1);
@@ -869,7 +882,7 @@ static TxSize get_transform_size(const MacroBlockD *const xd,
     //    assert(mb_tx_size < TX_SIZES_ALL);
     //    tx_size = mb_tx_size;
     //}
-
+#endif
     // since in case of chrominance or non-square transorm need to convert
     // transform size into transform size in particular direction.
     // for vertical edge, filter direction is horizontal, for horizontal
