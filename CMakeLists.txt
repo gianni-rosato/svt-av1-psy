@@ -6,6 +6,15 @@
 cmake_minimum_required(VERSION 3.5)
 set(project_name "svt-av1")
 
+if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
+    message(WARNING "Building in-source is highly not recommended\n"
+                    "Please use the Build folder or create your own.")
+endif()
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
 project(${project_name} C CXX ASM_NASM)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib)
