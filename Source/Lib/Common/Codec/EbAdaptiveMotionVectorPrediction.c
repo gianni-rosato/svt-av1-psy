@@ -1380,11 +1380,10 @@ void update_av1_mi_map(
 #endif
                 }
                 else {
-                    int32_t txb_itr;
 #if ATB_SUPPORT
-                    for (txb_itr = 0; txb_itr < blk_geom->txb_count[cu_ptr->tx_depth]; txb_itr++) 
-                        miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[cu_ptr->tx_depth][txb_itr];
+                    miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[cu_ptr->tx_depth][0]; // inherit tx_size from 1st transform block
 #else
+                    int32_t txb_itr;
                     for (txb_itr = 0; txb_itr < blk_geom->txb_count; txb_itr++) {
                         miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[txb_itr]; // Nader - TO_DO
                     }
@@ -1465,11 +1464,10 @@ void update_mi_map(
                 }
                 else {
 
-                    int32_t txb_itr;
 #if ATB_SUPPORT
-                    for (txb_itr = 0; txb_itr < blk_geom->txb_count[cu_ptr->tx_depth]; txb_itr++)
-                        miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[cu_ptr->tx_depth][txb_itr];
+                    miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[cu_ptr->tx_depth][0]; // inherit tx_size from 1st transform block
 #else
+                    int32_t txb_itr;
                     for (txb_itr = 0; txb_itr < blk_geom->txb_count; txb_itr++) {
                         miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[txb_itr]; // Nader - TO_DO
                     }
