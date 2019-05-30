@@ -38,8 +38,8 @@ static void ConfigurePictureEdges(
     PictureControlSet  *ppsPtr)
 {
     // Tiles Initialisation
-    const uint16_t picture_width_in_sb = (scs_ptr->luma_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
-    const uint16_t picture_height_in_sb = (scs_ptr->luma_height + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
+    const uint16_t picture_width_in_sb = (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
+    const uint16_t picture_height_in_sb = (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
     unsigned x_lcu_index, y_lcu_index, sb_index;
 
     // LCU-loops
@@ -840,8 +840,8 @@ void* picture_manager_kernel(void *input_ptr)
                         ChildPictureControlSetPtr->enc_mode = entryPictureControlSetPtr->enc_mode;
 
                         //3.make all  init for ChildPCS
-                        picture_width_in_sb = (uint8_t)((entrySequenceControlSetPtr->luma_width + entrySequenceControlSetPtr->sb_size_pix - 1) / entrySequenceControlSetPtr->sb_size_pix);
-                        picture_height_in_sb = (uint8_t)((entrySequenceControlSetPtr->luma_height + entrySequenceControlSetPtr->sb_size_pix - 1) / entrySequenceControlSetPtr->sb_size_pix);
+                        picture_width_in_sb = (uint8_t)((entrySequenceControlSetPtr->seq_header.max_frame_width + entrySequenceControlSetPtr->sb_size_pix - 1) / entrySequenceControlSetPtr->sb_size_pix);
+                        picture_height_in_sb = (uint8_t)((entrySequenceControlSetPtr->seq_header.max_frame_height + entrySequenceControlSetPtr->sb_size_pix - 1) / entrySequenceControlSetPtr->sb_size_pix);
 
                         // EncDec Segments
                         enc_dec_segments_init(

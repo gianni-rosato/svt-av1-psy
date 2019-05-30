@@ -3219,7 +3219,7 @@ EbErrorType DetectInputPictureNoise(
     }
 
     //the variance of a 64x64 noise area tends to be bigger for small resolutions.
-    if (sequence_control_set_ptr->luma_height <= 720)
+    if (sequence_control_set_ptr->seq_header.max_frame_height <= 720)
         noiseTh = 25;
     else
         noiseTh = 0;
@@ -3279,7 +3279,7 @@ EbErrorType denoise_estimate_film_grain(
             return 1;
     }
 
-    sequence_control_set_ptr->film_grain_params_present |= picture_control_set_ptr->film_grain_params.apply_grain;
+    sequence_control_set_ptr->seq_header.film_grain_params_present |= picture_control_set_ptr->film_grain_params.apply_grain;
 
     return return_error;  //todo: add proper error handling
 }
@@ -3608,9 +3608,9 @@ EbErrorType QuarterSampleDetectNoise(
     }
 
     //the variance of a 64x64 noise area tends to be bigger for small resolutions.
-    //if (sequence_control_set_ptr->luma_height <= 720)
+    //if (sequence_control_set_ptr->seq_header.max_frame_height <= 720)
     //    noiseTh = 25;
-    //else if (sequence_control_set_ptr->luma_height <= 1080)
+    //else if (sequence_control_set_ptr->seq_header.max_frame_height <= 1080)
     //    noiseTh = 10;
     //else
     noiseTh = 0;
@@ -3734,9 +3734,9 @@ EbErrorType SubSampleDetectNoise(
     }
 
     //the variance of a 64x64 noise area tends to be bigger for small resolutions.
-    if (sequence_control_set_ptr->luma_height <= 720)
+    if (sequence_control_set_ptr->seq_header.max_frame_height <= 720)
         noiseTh = 25;
-    else if (sequence_control_set_ptr->luma_height <= 1080)
+    else if (sequence_control_set_ptr->seq_header.max_frame_height <= 1080)
         noiseTh = 10;
     else
         noiseTh = 0;
@@ -4164,8 +4164,8 @@ void EdgeDetection(
     uint32_t sb_total_count = picture_control_set_ptr->sb_total_count;
     uint64_t thrsldLevel0 = (picture_control_set_ptr->pic_avg_variance * 70) / 100;
     uint8_t  *meanPtr;
-    uint32_t picture_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-    uint32_t picture_height_in_sb = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+    uint32_t picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+    uint32_t picture_height_in_sb = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
     uint32_t neighbourLcuIndex = 0;
     uint64_t similarityCount = 0;
     uint64_t similarityCount0 = 0;
@@ -4773,33 +4773,37 @@ void* picture_analysis_kernel(void *input_ptr)
 
         inputResultsPtr = (ResourceCoordinationResults*)inputResultsWrapperPtr->object_ptr;
         picture_control_set_ptr = (PictureParentControlSet*)inputResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
+
 #if ALT_REF_OVERLAY
         // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
         if (!picture_control_set_ptr->is_overlay)
         {
 #endif
-            sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-            input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
-            paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-            input_padded_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
-            quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
-            sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
+        sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+        input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
 
-            // Variance
-            picture_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-            pictureHeighInLcu = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-            sb_total_count = picture_width_in_sb * pictureHeighInLcu;
+        paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+        input_padded_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
+        quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
+        sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
 
-            asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
+        // Variance
+        picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+        pictureHeighInLcu = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+        sb_total_count = picture_width_in_sb * pictureHeighInLcu;
 
-            // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
-            SetPictureParametersForStatisticsGathering(
-                sequence_control_set_ptr);
+        asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
 
-            // Pad pictures to multiple min cu size
-            PadPictureToMultipleOfMinCuSizeDimensions(
-                sequence_control_set_ptr,
-                input_picture_ptr);
+        // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
+        SetPictureParametersForStatisticsGathering(
+            sequence_control_set_ptr);
+
+
+
+        // Pad pictures to multiple min cu size
+        PadPictureToMultipleOfMinCuSizeDimensions(
+            sequence_control_set_ptr,
+            input_picture_ptr);
 
             // Pre processing operations performed on the input picture
             PicturePreProcessingOperations(
@@ -4831,7 +4835,7 @@ void* picture_analysis_kernel(void *input_ptr)
                 quarter_decimated_picture_ptr,
                 sixteenth_decimated_picture_ptr);
 
-            // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+        // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
             GatheringPictureStatistics(
                 sequence_control_set_ptr,
                 picture_control_set_ptr,
@@ -4840,12 +4844,12 @@ void* picture_analysis_kernel(void *input_ptr)
                 sixteenth_decimated_picture_ptr,
                 sb_total_count,
                 asm_type);
-            if (sequence_control_set_ptr->static_config.screen_content_mode == 2) { // auto detect
+            if (sequence_control_set_ptr->static_config.screen_content_mode == 2){ // auto detect
                 picture_control_set_ptr->sc_content_detected = is_screen_content(
                     input_picture_ptr->buffer_y + input_picture_ptr->origin_x + input_picture_ptr->origin_y*input_picture_ptr->stride_y,
                     0,
                     input_picture_ptr->stride_y,
-                    sequence_control_set_ptr->luma_width, sequence_control_set_ptr->luma_height);
+                    sequence_control_set_ptr->seq_header.max_frame_width, sequence_control_set_ptr->seq_header.max_frame_height);
                 if (picture_control_set_ptr->sc_content_detected) {
                     if (picture_control_set_ptr->pic_avg_variance > 1000)
                         picture_control_set_ptr->sc_content_detected = 1;

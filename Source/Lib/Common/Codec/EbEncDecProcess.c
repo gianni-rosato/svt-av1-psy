@@ -553,7 +553,7 @@ void ReconOutput(
 
             // FGN: Create a buffer if needed, copy the reconstructed picture and run the film grain synthesis algorithm
 
-            if (sequence_control_set_ptr->film_grain_params_present) {
+            if (sequence_control_set_ptr->seq_header.film_grain_params_present) {
                 EbPictureBufferDesc  *intermediateBufferPtr;
                 {
                     if (is16bit)
@@ -681,9 +681,9 @@ void PsnrCalculations(
 
         residualDistortion = 0;
 
-        while (row_index < sequence_control_set_ptr->luma_height) {
+        while (row_index < sequence_control_set_ptr->seq_header.max_frame_height) {
             columnIndex = 0;
-            while (columnIndex < sequence_control_set_ptr->luma_width) {
+            while (columnIndex < sequence_control_set_ptr->seq_header.max_frame_width) {
                 residualDistortion += (int64_t)SQR((int64_t)(inputBuffer[columnIndex]) - (reconCoeffBuffer[columnIndex]));
                 ++columnIndex;
             }
@@ -754,8 +754,8 @@ void PsnrCalculations(
         uint16_t*  reconCoeffBuffer;
 
         if (sequence_control_set_ptr->static_config.ten_bit_format == 1) {
-            const uint32_t luma_width = sequence_control_set_ptr->luma_width;
-            const uint32_t luma_height = sequence_control_set_ptr->luma_height;
+            const uint32_t luma_width = sequence_control_set_ptr->seq_header.max_frame_width;
+            const uint32_t luma_height = sequence_control_set_ptr->seq_header.max_frame_height;
             const uint32_t chroma_width = sequence_control_set_ptr->chroma_width;
             const uint32_t picture_width_in_sb = (luma_width + 64 - 1) / 64;
             const uint32_t pictureHeighInLcu = (luma_height + 64 - 1) / 64;
@@ -912,9 +912,9 @@ void PsnrCalculations(
 
             residualDistortion = 0;
 
-            while (row_index < sequence_control_set_ptr->luma_height) {
+            while (row_index < sequence_control_set_ptr->seq_header.max_frame_height) {
                 columnIndex = 0;
-                while (columnIndex < sequence_control_set_ptr->luma_width) {
+                while (columnIndex < sequence_control_set_ptr->seq_header.max_frame_width) {
                     residualDistortion += (int64_t)SQR((int64_t)((((inputBuffer[columnIndex]) << 2) | ((inputBufferBitInc[columnIndex] >> 6) & 3))) - (reconCoeffBuffer[columnIndex]));
 
                     ++columnIndex;
@@ -1107,7 +1107,7 @@ void CopyStatisticsToRefObject(
     SequenceControlSet   *sequence_control_set_ptr
 )
 {
-    picture_control_set_ptr->intra_coded_area = (100 * picture_control_set_ptr->intra_coded_area) / (sequence_control_set_ptr->luma_width * sequence_control_set_ptr->luma_height);
+    picture_control_set_ptr->intra_coded_area = (100 * picture_control_set_ptr->intra_coded_area) / (sequence_control_set_ptr->seq_header.max_frame_width * sequence_control_set_ptr->seq_header.max_frame_height);
     if (picture_control_set_ptr->slice_type == I_SLICE)
         picture_control_set_ptr->intra_coded_area = 0;
 
@@ -1692,7 +1692,7 @@ void* enc_dec_kernel(void *input_ptr)
         sb_sz = (uint8_t)sequence_control_set_ptr->sb_size_pix;
         lcuSizeLog2 = (uint8_t)Log2f(sb_sz);
         context_ptr->sb_sz = sb_sz;
-        picture_width_in_sb = (sequence_control_set_ptr->luma_width + sb_sz - 1) >> lcuSizeLog2;
+        picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sb_sz - 1) >> lcuSizeLog2;
         endOfRowFlag = EB_FALSE;
         lcuRowIndexStart = lcuRowIndexCount = 0;
         context_ptr->tot_intra_coded_area = 0;
@@ -1799,8 +1799,8 @@ void* enc_dec_kernel(void *input_ptr)
                         uint32_t bufferIndex = (input_picture_ptr->origin_y + sb_origin_y) * input_picture_ptr->stride_y + input_picture_ptr->origin_x + sb_origin_x;
 
                         // Copy the source superblock to the me local buffer
-                        uint32_t sb_height = (sequence_control_set_ptr->luma_height - sb_origin_y) < MAX_SB_SIZE ? sequence_control_set_ptr->luma_height - sb_origin_y : MAX_SB_SIZE;
-                        uint32_t sb_width = (sequence_control_set_ptr->luma_width - sb_origin_x) < MAX_SB_SIZE ? sequence_control_set_ptr->luma_width - sb_origin_x : MAX_SB_SIZE;
+                        uint32_t sb_height = (sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y) < MAX_SB_SIZE ? sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y : MAX_SB_SIZE;
+                        uint32_t sb_width = (sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x) < MAX_SB_SIZE ? sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x : MAX_SB_SIZE;
                         uint32_t is_complete_sb = sequence_control_set_ptr->sb_geom[sb_index].is_complete_sb;
 
                         if (!is_complete_sb)
@@ -1826,8 +1826,8 @@ void* enc_dec_kernel(void *input_ptr)
                         uint32_t me_sb_addr;
                         if (sequence_control_set_ptr->sb_size == BLOCK_128X128) {
                             uint32_t me_sb_size = sequence_control_set_ptr->sb_sz;
-                            uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->luma_width + me_sb_size - 1) / me_sb_size;
-                            uint32_t me_pic_height_in_sb = (sequence_control_set_ptr->luma_height + me_sb_size - 1) / me_sb_size;
+                            uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->seq_header.frame_width_bits + me_sb_size - 1) / me_sb_size;
+                            uint32_t me_pic_height_in_sb = (sequence_control_set_ptr->seq_header.max_frame_height + me_sb_size - 1) / me_sb_size;
                             uint32_t me_sb_x = (sb_origin_x / me_sb_size);
                             uint32_t me_sb_y = (sb_origin_y / me_sb_size);
                             uint32_t me_sb_addr_0 = me_sb_x + me_sb_y * me_pic_width_in_sb;
@@ -1930,7 +1930,7 @@ void* enc_dec_kernel(void *input_ptr)
 
         if (lastLcuFlag) {
             // Copy film grain data from parent picture set to the reference object for further reference
-            if (sequence_control_set_ptr->film_grain_params_present)
+            if (sequence_control_set_ptr->seq_header.film_grain_params_present)
             {
                 if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE && picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr) {
                     ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->film_grain_params
@@ -1954,7 +1954,7 @@ void* enc_dec_kernel(void *input_ptr)
             encDecResultsPtr->picture_control_set_wrapper_ptr = encDecTasksPtr->picture_control_set_wrapper_ptr;
             //CHKN these are not needed for DLF
             encDecResultsPtr->completed_lcu_row_index_start = 0;
-            encDecResultsPtr->completed_lcu_row_count = ((sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_size_pix - 1) >> lcuSizeLog2);
+            encDecResultsPtr->completed_lcu_row_count = ((sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_size_pix - 1) >> lcuSizeLog2);
             // Post EncDec Results
             eb_post_full_object(encDecResultsWrapperPtr);
         }

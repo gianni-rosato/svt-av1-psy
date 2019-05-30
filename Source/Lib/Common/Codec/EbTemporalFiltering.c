@@ -802,7 +802,7 @@ void tf_inter_prediction(
                 uint16_t pu_origin_y = sb_origin_y + local_origin_y;
                 uint32_t mirow = pu_origin_y >> MI_SIZE_LOG2;
                 uint32_t micol = pu_origin_x >> MI_SIZE_LOG2;
-                cu_ptr.mds_idx = get_mds_idx(local_origin_x, local_origin_y, bsize, picture_control_set_ptr->sequence_control_set_ptr->sb_size == BLOCK_128X128);
+                cu_ptr.mds_idx = get_mds_idx(local_origin_x, local_origin_y, bsize, picture_control_set_ptr->sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128);
 
                 const int32_t bw = mi_size_wide[BLOCK_16X16];
                 const int32_t bh = mi_size_high[BLOCK_16X16];

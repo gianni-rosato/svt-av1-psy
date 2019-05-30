@@ -20,6 +20,7 @@
 #include "EbUtility.h"
 #include "EbEntropyCoding.h"
 
+#include"EbAv1Structs.h"
 #include "EbDecStruct.h"
 #include "EbDecBlock.h"
 
@@ -33,6 +34,7 @@
 #include "EbDecProcessFrame.h"
 
 #include "EbDecNbr.h"
+
 
 #define CONFIG_MAX_DECODE_PROFILE 2
 
@@ -270,14 +272,14 @@ EbErrorType read_sequence_header_obu(bitstrm_t *bs, SeqHeader   *seq_header)
         seq_header->decoder_model_info_present_flag = 0;
         seq_header->initial_display_delay_present_flag = 0;
         seq_header->operating_points_cnt_minus_1 = 0;
-        seq_header->operating_point_prms[0].op_idc = 0;
-        seq_header->operating_point_prms[0].seq_level_idx = dec_get_bits(bs, LEVEL_BITS);
-        PRINT("seq_level_idx", seq_header->operating_point_prms[0].seq_level_idx);
-        if (!is_valid_seq_level_idx(seq_header->operating_point_prms->seq_level_idx))
+        seq_header->operating_point[0].op_idc = 0;
+        seq_header->operating_point[0].seq_level_idx = dec_get_bits(bs, LEVEL_BITS);
+        PRINT("seq_level_idx", seq_header->operating_point[0].seq_level_idx);
+        if (!is_valid_seq_level_idx(seq_header->operating_point->seq_level_idx))
             return EB_Corrupt_Frame;
-        seq_header->operating_point_prms[0].seq_tier = 0;
-        seq_header->operating_point_prms[0].decoder_model_present_for_this_op = 0;
-        seq_header->operating_point_prms[0].initial_display_delay_present_for_this_op = 0;
+        seq_header->operating_point[0].seq_tier = 0;
+        seq_header->operating_point[0].decoder_model_present_for_this_op = 0;
+        seq_header->operating_point[0].initial_display_delay_present_for_this_op = 0;
     }
     else {
         seq_header->timing_info.timing_info_present = dec_get_bits(bs, 1);
@@ -303,44 +305,44 @@ EbErrorType read_sequence_header_obu(bitstrm_t *bs, SeqHeader   *seq_header)
     PRINT("operating_points_cnt_minus_1", seq_header->operating_points_cnt_minus_1);
     for (int i = 0; i <= seq_header->operating_points_cnt_minus_1; i++)
     {
-        seq_header->operating_point_prms[i].op_idc =
+        seq_header->operating_point[i].op_idc =
             dec_get_bits(bs, OP_POINTS_IDC_BITS);
         PRINT("operating_point_idc",
             seq_header->operating_point_prms[i].op_idc);
-        seq_header->operating_point_prms[i].seq_level_idx = dec_get_bits(bs, LEVEL_BITS);
-        PRINT("seq_level_idx", seq_header->operating_point_prms[i].seq_level_idx);
-        if (!is_valid_seq_level_idx(seq_header->operating_point_prms[i].seq_level_idx))
+        seq_header->operating_point[i].seq_level_idx = dec_get_bits(bs, LEVEL_BITS);
+        PRINT("seq_level_idx", seq_header->operating_point[i].seq_level_idx);
+        if (!is_valid_seq_level_idx(seq_header->operating_point[i].seq_level_idx))
             return EB_Corrupt_Frame;
-        if (seq_header->operating_point_prms[i].seq_level_idx > 7) {
-            seq_header->operating_point_prms[i].seq_tier = dec_get_bits(bs, 1);
+        if (seq_header->operating_point[i].seq_level_idx > 7) {
+            seq_header->operating_point[i].seq_tier = dec_get_bits(bs, 1);
             PRINT("seq_tier", seq_header->operating_point_prms[i].seq_tier);
         }
         else
-            seq_header->operating_point_prms[i].seq_tier = 0;
+            seq_header->operating_point[i].seq_tier = 0;
 
         if (seq_header->decoder_model_info_present_flag) {
-            seq_header->operating_point_prms[i].decoder_model_present_for_this_op =
+            seq_header->operating_point[i].decoder_model_present_for_this_op =
                 dec_get_bits(bs, 1);
             PRINT("decoder_model_present_for_this_op",
-                seq_header->operating_point_prms[i].decoder_model_present_for_this_op);
-            if (seq_header->operating_point_prms[i].decoder_model_present_for_this_op)
+                seq_header->operating_point[i].decoder_model_present_for_this_op);
+            if (seq_header->operating_point[i].decoder_model_present_for_this_op)
                 read_operating_params_info(bs,
-                    &seq_header->operating_point_prms[i].operating_parameters_info,
+                    &seq_header->operating_point[i].operating_parameters_info,
                     &seq_header->decoder_model_info, i);
         }
         else
-            seq_header->operating_point_prms[i].decoder_model_present_for_this_op = 0;
+            seq_header->operating_point[i].decoder_model_present_for_this_op = 0;
 
         if (seq_header->initial_display_delay_present_flag) {
-            seq_header->operating_point_prms[i].initial_display_delay_present_for_this_op
+            seq_header->operating_point[i].initial_display_delay_present_for_this_op
                 = dec_get_bits(bs, 1);
             PRINT("initial_display_delay_present_for_this_op",
-                seq_header->operating_point_prms[i].initial_display_delay_present_for_this_op);
-            if (seq_header->operating_point_prms[i].initial_display_delay_present_for_this_op)
-                seq_header->operating_point_prms[i].initial_display_delay
+                seq_header->operating_point[i].initial_display_delay_present_for_this_op);
+            if (seq_header->operating_point[i].initial_display_delay_present_for_this_op)
+                seq_header->operating_point[i].initial_display_delay
                 = dec_get_bits(bs, 4) + 1;
             PRINT("initial_display_delay_minus_1",
-                seq_header->operating_point_prms[i].initial_display_delay - 1);
+                seq_header->operating_point[i].initial_display_delay - 1);
         }
     }
 
@@ -362,12 +364,12 @@ EbErrorType read_sequence_header_obu(bitstrm_t *bs, SeqHeader   *seq_header)
         PRINT("frame_id_numbers_present_flag", seq_header->frame_id_numbers_present_flag);
     }
     if (seq_header->frame_id_numbers_present_flag) {
-        seq_header->delta_frame_id_length_minus_2 = dec_get_bits(bs, 4);
-        PRINT("delta_frame_id_length_minus_2", seq_header->delta_frame_id_length_minus_2);
-        seq_header->additional_frame_id_length_minus_1 = dec_get_bits(bs, 3);
+        seq_header->delta_frame_id_length = dec_get_bits(bs, 4) + 2;
+        PRINT("delta_frame_id_length", seq_header->delta_frame_id_length);
+        seq_header->frame_id_length = dec_get_bits(bs, 3) + 1;
         PRINT("additional_frame_id_length_minus_1",
-            seq_header->additional_frame_id_length_minus_1);
-        if (seq_header->additional_frame_id_length_minus_1 > 16)
+            seq_header->frame_id_length - 1);
+        if (seq_header->frame_id_length - 1 > 16)
             return EB_Corrupt_Frame;
     }
 
@@ -1493,8 +1495,8 @@ void read_uncompressed_header(bitstrm_t *bs, SeqHeader *seq_header,
     uint8_t expected_frame_id, display_frame_id;
 
     if (seq_header->frame_id_numbers_present_flag) {
-        id_len = seq_header->additional_frame_id_length_minus_1 +
-            seq_header->delta_frame_id_length_minus_2 + 3;
+        id_len = seq_header->frame_id_length - 1 +
+            seq_header->delta_frame_id_length -2 + 3;
         assert(id_len <= 16);
     }
     allFrames = (1 << NUM_REF_FRAMES) - 1;
@@ -1610,7 +1612,7 @@ void read_uncompressed_header(bitstrm_t *bs, SeqHeader *seq_header,
         }
 
         //mark_ref_frames( id_len )
-        diff_len = seq_header->delta_frame_id_length_minus_2 + 2;
+        diff_len = seq_header->delta_frame_id_length;
         for (i = 0; i < REF_FRAMES; i++) {
             if (frame_info->current_frame_id > (uint32_t)(1 << diff_len)) {
                 if (frame_info->ref_frame_idx[i] > frame_info->current_frame_id ||
@@ -1650,10 +1652,10 @@ void read_uncompressed_header(bitstrm_t *bs, SeqHeader *seq_header,
         if (frame_info->buffer_removal_time_present_flag) {
             for (int opNum = 0;
                 opNum <= seq_header->operating_points_cnt_minus_1; opNum++) {
-                if (seq_header->operating_point_prms[opNum].
+                if (seq_header->operating_point[opNum].
                     decoder_model_present_for_this_op)
                 {
-                    opPtIdc = seq_header->operating_point_prms[opNum].op_idc;
+                    opPtIdc = seq_header->operating_point[opNum].op_idc;
                     inTemporalLayer = (opPtIdc >> obu_header->temporal_id) & 1;
                     inSpatialLayer = (opPtIdc >> (obu_header->spatial_id + 8)) & 1;
                     if (opPtIdc == 0 || (inTemporalLayer && inSpatialLayer))
@@ -1731,7 +1733,7 @@ void read_uncompressed_header(bitstrm_t *bs, SeqHeader *seq_header,
             }
             if (seq_header->frame_id_numbers_present_flag) {
                 delta_frame_id_length_minus_1 = dec_get_bits(bs,
-                    seq_header->delta_frame_id_length_minus_2 + 2);
+                    seq_header->delta_frame_id_length);
                 PRINT_FRAME("delta_frame_id_length_minus_1",
                     delta_frame_id_length_minus_1);
                 expected_frame_id = ((frame_info->current_frame_id + (1 << id_len) -

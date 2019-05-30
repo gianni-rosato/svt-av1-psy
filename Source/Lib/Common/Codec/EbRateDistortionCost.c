@@ -2786,8 +2786,8 @@ EbErrorType av1_split_flag_rate(
 
     if (is_partition_point) {
         const int32_t hbs = (mi_size_wide[bsize] << 2) >> 1;
-        const int32_t hasRows = (cu_origin_y + hbs) < sequence_control_set_ptr->luma_height;
-        const int32_t hasCols = (cu_origin_x + hbs) < sequence_control_set_ptr->luma_width;
+        const int32_t hasRows = (cu_origin_y + hbs) < sequence_control_set_ptr->seq_header.max_frame_height;
+        const int32_t hasCols = (cu_origin_x + hbs) < sequence_control_set_ptr->seq_header.max_frame_width;
 
         uint32_t contextIndex = 0;
 

@@ -75,35 +75,6 @@ static const int segmentation_feature_max[SEG_LVL_MAX] = { MAXQ,
                                                        0,
                                                        0 };
 
-/*!@file
- * @brief OBU header syntax structures.
- */
-typedef struct ObuHeader {
-    /*!<Size (1 or 2 B) of OBU header (including optional OBU extension header) */
-    size_t size;
-
-    /*!<Must be set to 0*/
-    uint8_t obu_forbidden_bit;
-
-    /*!<Specifies the type of data structure contained in the OBU payload*/
-    obuType obu_type;
-
-    /*!<Indicates if the optional obu_extension_header is present*/
-    uint8_t obu_extension_flag;
-
-    /*!< 1: indicates that the obu_size syntax element will be present
-     *   0: Indicates that the obu_size syntax element will not be present*/
-    uint8_t obu_has_size_field;
-
-    /*!<Specifies the temporal level of the data contained in the OBU*/
-    uint8_t temporal_id;
-
-    /*!<Specifies the spatial level of the data contained in the OBU*/
-    uint8_t spatial_id;
-
-    size_t payload_size;
-} ObuHeader;
-
 typedef struct ParseNbr4x4Ctxt {
     /* Buffer holding the segment ID of all 4x4 blocks in the frame. */
     uint8_t *segment_maps;

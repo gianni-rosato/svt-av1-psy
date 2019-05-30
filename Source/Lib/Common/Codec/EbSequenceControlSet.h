@@ -18,6 +18,7 @@
 #define EbSequenceControlSet_h
 
 #include "EbDefinitions.h"
+#include "EbAv1Structs.h"
 #include "EbThreads.h"
 #include "EbSystemResourceManager.h"
 #include "EbEncodeContext.h"
@@ -58,8 +59,6 @@ extern "C" {
         uint16_t                                max_input_pad_bottom;
         uint16_t                                max_input_pad_right;
 
-        uint16_t                                luma_width;
-        uint16_t                                luma_height;
         uint32_t                                chroma_width;
         uint32_t                                chroma_height;
         uint32_t                                pad_right;
@@ -203,56 +202,8 @@ extern "C" {
 #endif
         uint8_t                                 trans_coeff_shape_array[2][8][4];    // [componantTypeIndex][resolutionIndex][levelIndex][tuSizeIndex]
         EbBlockMeanPrec                         block_mean_calc_prec;
-
-        int32_t                                 num_bits_width;
-        int32_t                                 num_bits_height;
-        int32_t                                 frame_id_numbers_present_flag;
-        int32_t                                 frame_id_length;
-        int32_t                                 delta_frame_id_length;
-        BlockSize                               sb_size;                            // Size of the superblock used for this frame
-        int32_t                                 mib_size;                           // Size of the superblock in units of MI blocks
-        int32_t                                 mib_size_log2;                      // Log 2 of above.
-        int32_t                                 order_hint_bits_minus1;
-        int32_t                                 force_screen_content_tools;         // 0 - force off
-                                                                                    // 1 - force on
-                                                                                    // 2 - adaptive
-        int32_t                                 force_integer_mv;                   // 0 - Not to force. MV can be in 1/4 or 1/8
-                                                                                    // 1 - force to integer
-                                                                                    // 2 - adaptive
-        int32_t                                 monochrome;
-        int32_t                                 enable_filter_intra;                // enables/disables filterintra
-        int32_t                                 enable_intra_edge_filter;           // enables/disables corner/edge/upsampling
-        int32_t                                 enable_interintra_compound;         // enables/disables interintra_compound
-        int32_t                                 enable_masked_compound;             // enables/disables masked compound
-        int32_t                                 enable_dual_filter;                 // 0 - disable dual interpolation filter
-                                                                                    // 1 - enable vertical and horiz filter selection
-        int32_t                                 enable_order_hint;                  // 0 - disable order hint, and related tools:
-                                                                                    // jnt_comp, ref_frame_mvs, frame_sign_bias
-                                                                                    // if 0, enable_jnt_comp must be set zs 0.
-        int32_t                                 enable_jnt_comp;                    // 0 - disable joint compound modes
-                                                                                    // 1 - enable it
-        int32_t                                 enable_ref_frame_mvs;               // 0 - disable ref frame mvs
-                                                                                    // 1 - enable it
-        int32_t                                 enable_superres;                    // 0 - Disable superres for the sequence, and disable
-                                                                                    //     transmitting per-frame superres enabled flag.
-                                                                                    // 1 - Enable superres for the sequence, and also
-                                                                                    //     enable per-frame flag to denote if superres is
-                                                                                    //     enabled for that frame.
-        int32_t                                 enable_cdef;                        // To turn on/off CDEF
-        int32_t                                 enable_restoration;                 // To turn on/off loop restoration
-
-        int32_t                                 operating_point_idc[MAX_NUM_OPERATING_POINTS];
         BitstreamLevel                          level[MAX_NUM_OPERATING_POINTS];
-        int32_t                                 tier[MAX_NUM_OPERATING_POINTS];
-        int32_t                                 reduced_still_picture_hdr;
-        int32_t                                 still_picture;
-        int32_t                                 timing_info_present;
-        int32_t                                 operating_points_decoder_model_cnt;
-
-        int32_t                                 decoder_model_info_present_flag;
-        int32_t                                 display_model_info_present_flag;
         int32_t                                 film_grain_denoise_strength;
-        int32_t                                 film_grain_params_present;  // To turn on/off film grain (on a sequence basis)
 #if BASE_LAYER_REF
         int32_t                                 extra_frames_to_ref_islice;
         int32_t                                 max_frame_window_to_ref_islice;
@@ -269,6 +220,8 @@ extern "C" {
         uint64_t                                pred_count[5];
         uint64_t                                pred1_nfl_count[5];
 #endif
+
+        SeqHeader								seq_header;
     } SequenceControlSet;
 
     typedef struct EbSequenceControlSetInitData

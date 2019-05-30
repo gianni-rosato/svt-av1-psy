@@ -5161,9 +5161,9 @@ void  order_nsq_table(
     uint32_t geom_offset_x = 0;
     uint32_t geom_offset_y = 0;
     uint8_t cnt[PART_S + 1] = { 0 };
-    if (sequence_control_set_ptr->sb_size == BLOCK_128X128) {
+    if (sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128) {
         uint32_t me_sb_size = sequence_control_set_ptr->sb_sz;
-        uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / me_sb_size;
+        uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / me_sb_size;
         uint32_t me_sb_x = (context_ptr->cu_origin_x / me_sb_size);
         uint32_t me_sb_y = (context_ptr->cu_origin_y / me_sb_size);
         me_sb_addr = me_sb_x + me_sb_y * me_pic_width_in_sb;
@@ -6049,7 +6049,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
 #endif
     // Pre Intra Search
 #if !OPT_LOSSLESS_0
-    const uint32_t                         sb_height = MIN(BLOCK_SIZE_64, (uint32_t)(sequence_control_set_ptr->luma_height - sb_origin_y));
+    const uint32_t                         sb_height = MIN(BLOCK_SIZE_64, (uint32_t)(sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y));
 #endif
     uint32_t                               leaf_count = mdcResultTbPtr->leaf_count;
     const EbMdcLeafData *const           leaf_data_array = mdcResultTbPtr->leaf_data_array;
@@ -9481,8 +9481,8 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
     int16_t                  xTopLeftSearchRegion;
     int16_t                  yTopLeftSearchRegion;
     uint32_t                  searchRegionIndex;
-    int16_t                  picture_width = (int16_t)((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_width;
-    int16_t                  picture_height = (int16_t)((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_height;
+    int16_t                  picture_width = (int16_t)((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->seq_header.max_frame_width;
+    int16_t                  picture_height = (int16_t)((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->seq_header.max_frame_height;
 
     int16_t                  padWidth = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t                  padHeight = (int16_t)BLOCK_SIZE_64 - 1;
@@ -9505,9 +9505,9 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
 
     EbAsm                  asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
 
-    uint32_t                  number_of_sb_quad = sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 4 : 1;
-    context_ptr->sb_size = sequence_control_set_ptr->sb_size;
-    context_ptr->sb_side = sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 128 : 64;
+    uint32_t                  number_of_sb_quad = sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? 4 : 1;
+    context_ptr->sb_size = sequence_control_set_ptr->seq_header.sb_size;
+    context_ptr->sb_side = sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;
 
     const uint32_t start_idx_8x8 = 256 * number_of_sb_quad;
     const uint32_t start_idx_16x16 = 320 * number_of_sb_quad;
@@ -9566,7 +9566,7 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
             x_search_area_origin;
 
         // //check whether the needed search area is coverd by the reference picture and adjust its origin to satisfy the condition if not.
-        if (sequence_control_set_ptr->sb_size == BLOCK_128X128) {
+        if (sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128) {
             int32_t righ_sa_pos_x = refPicPtr->origin_x + origin_x + x_search_area_origin + search_area_width + (context_ptr->sb_side - 1) + (ME_FILTER_TAP >> 1);
             int32_t righ_ref_pos_x = picture_width - 1 + (2 * refPicPtr->origin_x);
 
@@ -9696,7 +9696,7 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
         context_ptr->p_best_sad32x64 = &(context_ptr->p_sb_best_sad[listIndex][refPicIndex][847 * number_of_sb_quad]);
         context_ptr->p_best_mv32x64 = &(context_ptr->p_sb_best_mv[listIndex][refPicIndex][847 * number_of_sb_quad]);
 
-        if (sequence_control_set_ptr->sb_size == BLOCK_128X128) {
+        if (sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128) {
             context_ptr->p_best_sad128x64 = &(context_ptr->p_sb_best_sad[listIndex][refPicIndex][849 * number_of_sb_quad]);
             context_ptr->p_best_mv128x64 = &(context_ptr->p_sb_best_mv[listIndex][refPicIndex][849 * number_of_sb_quad]);
 
@@ -9762,8 +9762,7 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
     }
 
     // Nader - Bipred candidate can be generated here if needed.
-
-    uint32_t max_number_of_block_in_sb = sequence_control_set_ptr->sb_size == BLOCK_128X128 ? MAX_SS_ME_PU_COUNT : 849;
+    uint32_t max_number_of_block_in_sb = sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? MAX_SS_ME_PU_COUNT : 849;
 
     for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch; ++listIndex) {
         uint32_t block_index;

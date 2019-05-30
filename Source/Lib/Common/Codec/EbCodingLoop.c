@@ -3075,8 +3075,8 @@ EB_EXTERN void av1_encode_pass(
     EbBool                    isDeltaQpNotCoded = EB_TRUE;
 #endif
     // SB Stats
-    uint32_t                  sb_width = MIN(sequence_control_set_ptr->sb_size_pix, sequence_control_set_ptr->luma_width - sb_origin_x);
-    uint32_t                  sb_height = MIN(sequence_control_set_ptr->sb_size_pix, sequence_control_set_ptr->luma_height - sb_origin_y);
+    uint32_t                  sb_width = MIN(sequence_control_set_ptr->sb_size_pix, sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x);
+    uint32_t                  sb_height = MIN(sequence_control_set_ptr->sb_size_pix, sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y);
     // MV merge mode
     uint32_t                  y_has_coeff;
     uint32_t                  u_has_coeff;
@@ -3581,7 +3581,7 @@ EB_EXTERN void av1_encode_pass(
                                     nearmv.as_int = 0;
                                 IntMv dv_ref = nearestmv.as_int == 0 ? nearmv : nearestmv;
                                 if (dv_ref.as_int == 0)
-                                    av1_find_ref_dv(&dv_ref, &cu_ptr->av1xd->tile, sequence_control_set_ptr->mib_size, context_ptr->cu_origin_y >> MI_SIZE_LOG2, context_ptr->cu_origin_x >> MI_SIZE_LOG2);
+                                    av1_find_ref_dv(&dv_ref, &cu_ptr->av1xd->tile, sequence_control_set_ptr->seq_header.sb_mi_size, context_ptr->cu_origin_y >> MI_SIZE_LOG2, context_ptr->cu_origin_x >> MI_SIZE_LOG2);
                                 // Ref DV should not have sub-pel.
                                 assert((dv_ref.as_mv.col & 7) == 0);
                                 assert((dv_ref.as_mv.row & 7) == 0);
@@ -4792,10 +4792,10 @@ EB_EXTERN void av1_encode_pass(
                     move_cu_data(src_cu, dst_cu);
                 }
             }
-            blk_it += ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
+            blk_it += ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
         }
         else
-            blk_it += d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
+            blk_it += d1_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
     } // CU Loop
 #if !MEMORY_FOOTPRINT_OPT
     sb_ptr->tot_final_cu = final_cu_itr;
@@ -4804,7 +4804,7 @@ EB_EXTERN void av1_encode_pass(
     // First Pass Deblocking
     if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 1) {
         if (picture_control_set_ptr->parent_pcs_ptr->lf.filter_level[0] || picture_control_set_ptr->parent_pcs_ptr->lf.filter_level[1]) {
-            uint8_t LastCol = ((sb_origin_x)+sb_width == sequence_control_set_ptr->luma_width) ? 1 : 0;
+            uint8_t LastCol = ((sb_origin_x)+sb_width == sequence_control_set_ptr->seq_header.max_frame_width) ? 1 : 0;
             loop_filter_sb(
                 recon_buffer,
                 picture_control_set_ptr,

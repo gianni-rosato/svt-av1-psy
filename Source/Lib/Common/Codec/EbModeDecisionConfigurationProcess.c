@@ -994,7 +994,7 @@ void forward_sq_blocks_to_md(
 
         resultsPtr->leaf_count = 0;
 
-        uint32_t  blk_index = picture_control_set_ptr->slice_type == I_SLICE && sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 17 : 0;
+        uint32_t  blk_index = picture_control_set_ptr->slice_type == I_SLICE && sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? 17 : 0;
 
         while (blk_index < sequence_control_set_ptr->max_block_cnt)
         {
@@ -1026,8 +1026,7 @@ void forward_sq_blocks_to_md(
                     split_flag = EB_FALSE;
                 }
             }
-
-            blk_index += split_flag ? d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth] : ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth];
+            blk_index += split_flag ? d1_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth] : ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
         }
     }
 
@@ -1042,7 +1041,7 @@ void sb_forward_sq_blocks_to_md(
     EbBool   split_flag;
     MdcLcuData *resultsPtr = &picture_control_set_ptr->mdc_sb_array[sb_index];
     resultsPtr->leaf_count = 0;
-    uint32_t  blk_index = picture_control_set_ptr->slice_type == I_SLICE && sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 17 : 0;
+    uint32_t  blk_index = picture_control_set_ptr->slice_type == I_SLICE && sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? 17 : 0;
 
     while (blk_index < sequence_control_set_ptr->max_block_cnt)
     {
@@ -1066,7 +1065,7 @@ void sb_forward_sq_blocks_to_md(
                 split_flag = EB_FALSE;
             }
         }
-        blk_index += split_flag ? d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth] : ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth];
+        blk_index += split_flag ? d1_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth] : ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
     }
     picture_control_set_ptr->parent_pcs_ptr->average_qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
 }
@@ -1280,8 +1279,8 @@ EbAuraStatus AuraDetection64x64Gold(
 )
 {
     SequenceControlSet  *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-    int32_t                 picture_width_in_sb = (sequence_control_set_ptr->luma_width + BLOCK_SIZE_64 - 1) >> LOG2_64_SIZE;
-    int32_t                 picture_height_in_sb = (sequence_control_set_ptr->luma_height + BLOCK_SIZE_64 - 1) >> LOG2_64_SIZE;
+    int32_t                 picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + BLOCK_SIZE_64 - 1) >> LOG2_64_SIZE;
+    int32_t                 picture_height_in_sb = (sequence_control_set_ptr->seq_header.max_frame_height + BLOCK_SIZE_64 - 1) >> LOG2_64_SIZE;
     uint32_t                 sb_index = y_lcu_index * picture_width_in_sb + x_lcu_index;
     uint32_t                 currDist;
     uint32_t                 topDist, topLDist, topRDist;
@@ -1918,7 +1917,7 @@ void forward_sq_non4_blocks_to_md(
 
         resultsPtr->leaf_count = 0;
 
-        uint32_t  blk_index = picture_control_set_ptr->slice_type == I_SLICE && sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 17 : 0;
+        uint32_t  blk_index = picture_control_set_ptr->slice_type == I_SLICE && sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? 17 : 0;
 
         while (blk_index < sequence_control_set_ptr->max_block_cnt)
         {
@@ -1951,7 +1950,7 @@ void forward_sq_non4_blocks_to_md(
                 }
             }
 
-            blk_index += split_flag ? d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth] : ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth];
+            blk_index += split_flag ? d1_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth] : ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
         }
     }
 
@@ -1966,7 +1965,7 @@ void sb_forward_sq_non4_blocks_to_md(
     EbBool split_flag;
     MdcLcuData *resultsPtr = &picture_control_set_ptr->mdc_sb_array[sb_index];
     resultsPtr->leaf_count = 0;
-    uint32_t blk_index = picture_control_set_ptr->slice_type == I_SLICE && sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 17 : 0;
+    uint32_t blk_index = picture_control_set_ptr->slice_type == I_SLICE && sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? 17 : 0;
 
     while (blk_index < sequence_control_set_ptr->max_block_cnt)
     {
@@ -1989,7 +1988,7 @@ void sb_forward_sq_non4_blocks_to_md(
                 split_flag = EB_FALSE;
             }
         }
-        blk_index += split_flag ? d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth] : ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth];
+        blk_index += split_flag ? d1_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth] : ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
     }
     picture_control_set_ptr->parent_pcs_ptr->average_qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
 }
@@ -2035,7 +2034,7 @@ void forward_all_c_blocks_to_md(
                     blk_index++;
                 }
             }
-            blk_index += (d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth] - tot_d1_blocks);
+            blk_index += (d1_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth] - tot_d1_blocks);
         }
     }
 
@@ -2324,8 +2323,8 @@ void* mode_decision_configuration_kernel(void *input_ptr)
 
             {
                 // add to hash table
-                const int pic_width = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->luma_width;
-                const int pic_height = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->luma_height;
+                const int pic_width = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_width;
+                const int pic_height = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_height;
                 uint32_t *block_hash_values[2][2];
                 int8_t *is_block_same[2][3];
                 int k, j;

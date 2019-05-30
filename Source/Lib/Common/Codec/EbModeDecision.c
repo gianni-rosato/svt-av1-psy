@@ -441,8 +441,8 @@ EbErrorType SetMvpClipMVs(
 {
     EbErrorType  return_error = EB_ErrorNone;
 
-    uint32_t        picture_width = ((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_width;
-    uint32_t        picture_height = ((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_height;
+    uint32_t        picture_width = ((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->seq_header.max_frame_width;
+    uint32_t        picture_height = ((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->seq_header.max_frame_height;
 
     candidate_ptr->motion_vector_pred_idx[REF_LIST_0] = 0;
     candidate_ptr->motion_vector_pred_x[REF_LIST_0] = 0;
@@ -523,10 +523,10 @@ void LimitMvOverBound(
     mvxF = (*mvx) >> 2;
     mvyF = (*mvy) >> 2;
 
-    if ((int32_t)ctxtPtr->cu_origin_x + mvxF + (int32_t)ctxtPtr->blk_geom->bwidth > (int32_t)sCSet->luma_width)
-        *mvx = (int16_t)(sCSet->luma_width - ctxtPtr->blk_geom->bwidth - ctxtPtr->cu_origin_x);
-    if ((int32_t)ctxtPtr->cu_origin_y + mvyF + (int32_t)ctxtPtr->blk_geom->bheight > (int32_t)sCSet->luma_height)
-        *mvy = (int16_t)(sCSet->luma_height - ctxtPtr->blk_geom->bheight - ctxtPtr->cu_origin_y);
+    if ((int32_t)ctxtPtr->cu_origin_x + mvxF + (int32_t)ctxtPtr->blk_geom->bwidth > (int32_t)sCSet->seq_header.max_frame_width)
+        *mvx = (int16_t)(sCSet->seq_header.max_frame_width - ctxtPtr->blk_geom->bwidth - ctxtPtr->cu_origin_x);
+    if ((int32_t)ctxtPtr->cu_origin_y + mvyF + (int32_t)ctxtPtr->blk_geom->bheight > (int32_t)sCSet->seq_header.max_frame_height)
+        *mvy = (int16_t)(sCSet->seq_header.max_frame_height - ctxtPtr->blk_geom->bheight - ctxtPtr->cu_origin_y);
     if ((int32_t)ctxtPtr->cu_origin_x + mvxF < 0)
         *mvx = -(int16_t)ctxtPtr->cu_origin_x;
     if ((int32_t)ctxtPtr->cu_origin_y + mvyF < 0)
@@ -2470,9 +2470,9 @@ void  inject_inter_candidates(
     uint32_t geom_offset_x = 0;
     uint32_t geom_offset_y = 0;
 
-    if (sequence_control_set_ptr->sb_size == BLOCK_128X128) {
+    if (sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128) {
         uint32_t me_sb_size = sequence_control_set_ptr->sb_sz;
-        uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / me_sb_size;
+        uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / me_sb_size;
         uint32_t me_sb_x = (context_ptr->cu_origin_x / me_sb_size);
         uint32_t me_sb_y = (context_ptr->cu_origin_y / me_sb_size);
 
@@ -2514,7 +2514,7 @@ void  inject_inter_candidates(
     EbBool use_close_loop_me = picture_control_set_ptr->parent_pcs_ptr->enable_in_loop_motion_estimation_flag &&
         ((context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) || (context_ptr->blk_geom->bwidth > 64 || context_ptr->blk_geom->bheight > 64)) ? EB_TRUE : EB_FALSE;
 
-    uint32_t close_loop_me_index = use_close_loop_me ? get_in_loop_me_info_index(MAX_SS_ME_PU_COUNT, sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 1 : 0, context_ptr->blk_geom) : 0;
+    uint32_t close_loop_me_index = use_close_loop_me ? get_in_loop_me_info_index(MAX_SS_ME_PU_COUNT, sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? 1 : 0, context_ptr->blk_geom) : 0;
 #if BASE_LAYER_REF || MRP_REF_MODE
 #if MRP_ENABLE_BI_FOR_BASE
     EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
@@ -3215,7 +3215,7 @@ void  inject_inter_candidates(
 
     if (sequence_control_set_ptr->sb_size == BLOCK_128X128) {
         uint32_t me_sb_size = sequence_control_set_ptr->sb_sz;
-        uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / me_sb_size;
+        uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->seq_header.frame_width_bits + sequence_control_set_ptr->sb_sz - 1) / me_sb_size;
         uint32_t me_sb_x = (context_ptr->cu_origin_x / me_sb_size);
         uint32_t me_sb_y = (context_ptr->cu_origin_y / me_sb_size);
 
@@ -4174,8 +4174,8 @@ void  intra_bc_search(
     const int mi_col = -xd->mb_to_left_edge / (8 * MI_SIZE);
     const int w = block_size_wide[bsize];
     const int h = block_size_high[bsize];
-    const int sb_row = mi_row >> scs->mib_size_log2;
-    const int sb_col = mi_col >> scs->mib_size_log2;
+    const int sb_row = mi_row >> scs->seq_header.sb_size_log2;
+    const int sb_col = mi_col >> scs->seq_header.sb_size_log2;
 
     // Set up limit values for MV components.
     // Mv beyond the range do not produce new/different prediction block.
@@ -4204,7 +4204,7 @@ void  intra_bc_search(
         nearmv.as_int = 0;
     IntMv dv_ref = nearestmv.as_int == 0 ? nearmv : nearestmv;
     if (dv_ref.as_int == 0)
-        av1_find_ref_dv(&dv_ref, tile, scs->mib_size, mi_row, mi_col);
+        av1_find_ref_dv(&dv_ref, tile, scs->seq_header.sb_mi_size, mi_row, mi_col);
     // Ref DV should not have sub-pel.
     assert((dv_ref.as_mv.col & 7) == 0);
     assert((dv_ref.as_mv.row & 7) == 0);
@@ -4241,17 +4241,17 @@ void  intra_bc_search(
             x->mv_limits.col_max = (tile->mi_col_end - mi_col) * MI_SIZE - w;
             x->mv_limits.row_min = (tile->mi_row_start - mi_row) * MI_SIZE;
             x->mv_limits.row_max =
-                (sb_row * scs->mib_size - mi_row) * MI_SIZE - h;
+                (sb_row * scs->seq_header.sb_mi_size - mi_row) * MI_SIZE - h;
             break;
         case IBC_MOTION_LEFT:
             x->mv_limits.col_min = (tile->mi_col_start - mi_col) * MI_SIZE;
             x->mv_limits.col_max =
-                (sb_col * scs->mib_size - mi_col) * MI_SIZE - w;
+                (sb_col * scs->seq_header.sb_mi_size - mi_col) * MI_SIZE - w;
             // TODO: Minimize the overlap between above and
             // left areas.
             x->mv_limits.row_min = (tile->mi_row_start - mi_row) * MI_SIZE;
             int bottom_coded_mi_edge =
-                AOMMIN((sb_row + 1) * scs->mib_size, tile->mi_row_end);
+                AOMMIN((sb_row + 1) * scs->seq_header.sb_mi_size, tile->mi_row_end);
             x->mv_limits.row_max = (bottom_coded_mi_edge - mi_row) * MI_SIZE - h;
             break;
         default: assert(0);
@@ -4290,7 +4290,7 @@ void  intra_bc_search(
         const MV dv = { .row = mvp_full.row * 8,.col = mvp_full.col * 8 };
         if (mv_check_bounds(&x->mv_limits, &dv)) continue;
         if (!av1_is_dv_valid(dv, xd, mi_row, mi_col, bsize,
-            scs->mib_size_log2))
+            scs->seq_header.sb_size_log2))
             continue;
 
         // DV should not have sub-pel.

@@ -155,11 +155,13 @@ void   get_own_recon(
         uint16_t*  org_ptr_cb = (uint16_t*)org_rec->buffer_cb + org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cb;
         uint16_t*  org_ptr_cr = (uint16_t*)org_rec->buffer_cr + org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cr;
 
-        for (int r = 0; r < sequence_control_set_ptr->luma_height; ++r)
-            memcpy(org_ptr + r * org_rec->stride_y, rec_ptr + r * recon_picture_ptr->stride_y, sequence_control_set_ptr->luma_width << 1);
-        for (int r = 0; r < sequence_control_set_ptr->luma_height / 2; ++r) {
-            memcpy(org_ptr_cb + r * org_rec->stride_cb, rec_ptr_cb + r * recon_picture_ptr->stride_cb, (sequence_control_set_ptr->luma_width / 2) << 1);
-            memcpy(org_ptr_cr + r * org_rec->stride_cr, rec_ptr_cr + r * recon_picture_ptr->stride_cr, (sequence_control_set_ptr->luma_width / 2) << 1);
+        for (int r = 0; r < sequence_control_set_ptr->seq_header.max_frame_height; ++r) {
+            memcpy(org_ptr + r * org_rec->stride_y, rec_ptr + r * recon_picture_ptr->stride_y, sequence_control_set_ptr->seq_header.max_frame_width << 1);
+        }
+
+        for (int r = 0; r < sequence_control_set_ptr->seq_header.max_frame_height / 2; ++r) {
+            memcpy(org_ptr_cb + r * org_rec->stride_cb, rec_ptr_cb + r * recon_picture_ptr->stride_cb, (sequence_control_set_ptr->seq_header.max_frame_width / 2) << 1);
+            memcpy(org_ptr_cr + r * org_rec->stride_cr, rec_ptr_cr + r * recon_picture_ptr->stride_cr, (sequence_control_set_ptr->seq_header.max_frame_width / 2) << 1);
         }
     }
     else {
@@ -177,11 +179,13 @@ void   get_own_recon(
         uint8_t *  org_ptr_cb = &((org_rec->buffer_cb)[org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cb]);
         uint8_t *  org_ptr_cr = &((org_rec->buffer_cr)[org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cr]);
 
-        for (int r = 0; r < sequence_control_set_ptr->luma_height; ++r)
-            memcpy(org_ptr + r * org_rec->stride_y, rec_ptr + r * recon_picture_ptr->stride_y, sequence_control_set_ptr->luma_width);
-        for (int r = 0; r < sequence_control_set_ptr->luma_height / 2; ++r) {
-            memcpy(org_ptr_cb + r * org_rec->stride_cb, rec_ptr_cb + r * recon_picture_ptr->stride_cb, (sequence_control_set_ptr->luma_width / 2));
-            memcpy(org_ptr_cr + r * org_rec->stride_cr, rec_ptr_cr + r * recon_picture_ptr->stride_cr, (sequence_control_set_ptr->luma_width / 2));
+        for (int r = 0; r < sequence_control_set_ptr->seq_header.max_frame_height; ++r) {
+            memcpy(org_ptr + r * org_rec->stride_y, rec_ptr + r * recon_picture_ptr->stride_y, sequence_control_set_ptr->seq_header.max_frame_width);
+        }
+
+        for (int r = 0; r < sequence_control_set_ptr->seq_header.max_frame_height / 2; ++r) {
+            memcpy(org_ptr_cb + r * org_rec->stride_cb, rec_ptr_cb + r * recon_picture_ptr->stride_cb, (sequence_control_set_ptr->seq_header.max_frame_width / 2));
+            memcpy(org_ptr_cr + r * org_rec->stride_cr, rec_ptr_cr + r * recon_picture_ptr->stride_cr, (sequence_control_set_ptr->seq_header.max_frame_width / 2));
         }
     }
 }
@@ -220,7 +224,7 @@ void* rest_kernel(void *input_ptr)
         EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
         Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
 
-        if (sequence_control_set_ptr->enable_restoration && picture_control_set_ptr->parent_pcs_ptr->allow_intrabc == 0)
+        if (sequence_control_set_ptr->seq_header.enable_restoration && picture_control_set_ptr->parent_pcs_ptr->allow_intrabc == 0)
         {
             get_own_recon(sequence_control_set_ptr, picture_control_set_ptr, context_ptr, is16bit);
 
@@ -254,7 +258,7 @@ void* rest_kernel(void *input_ptr)
         picture_control_set_ptr->tot_seg_searched_rest++;
         if (picture_control_set_ptr->tot_seg_searched_rest == picture_control_set_ptr->rest_segments_total_count)
         {
-            if (sequence_control_set_ptr->enable_restoration && picture_control_set_ptr->parent_pcs_ptr->allow_intrabc == 0) {
+            if (sequence_control_set_ptr->seq_header.enable_restoration && picture_control_set_ptr->parent_pcs_ptr->allow_intrabc == 0) {
                 rest_finish_search(
                     picture_control_set_ptr->parent_pcs_ptr->av1x,
                     picture_control_set_ptr->parent_pcs_ptr->av1_cm);
@@ -393,7 +397,7 @@ void* rest_kernel(void *input_ptr)
             rest_results_ptr = (struct RestResults*)rest_results_wrapper_ptr->object_ptr;
             rest_results_ptr->picture_control_set_wrapper_ptr = cdef_results_ptr->picture_control_set_wrapper_ptr;
             rest_results_ptr->completed_lcu_row_index_start = 0;
-            rest_results_ptr->completed_lcu_row_count = ((sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_size_pix - 1) >> lcuSizeLog2);
+            rest_results_ptr->completed_lcu_row_count = ((sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_size_pix - 1) >> lcuSizeLog2);
             // Post Rest Results
             eb_post_full_object(rest_results_wrapper_ptr);
         }
