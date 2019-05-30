@@ -55,7 +55,6 @@ static const ITX_TYPE_1D hitx_1d_tab[TX_TYPES] = {
     IIDENTITY_1D, IADST_1D, IIDENTITY_1D, IFLIPADST_1D,
 };
 
-
 //const int8_t **inv_cos_bit_row;
 //const int8_t **inv_cos_bit_col;
 // Transform block width in log2
@@ -834,7 +833,6 @@ static __m128i get_recon_8x8(const __m128i pred, __m128i res_lo, __m128i res_hi,
         res_hi = _mm_shuffle_epi32(res_hi, 0x1B);
         x0 = _mm_add_epi32(res_hi, x0);
         x1 = _mm_add_epi32(res_lo, x1);
-
     }
     else {
         x0 = _mm_add_epi32(res_lo, x0);
@@ -2374,8 +2372,6 @@ static void highbd_clamp_epi32_sse4_1(const __m128i *in, __m128i *out,
     }
 }
 
-
-
 static void addsub_shift_sse4_1(const __m128i in0, const __m128i in1,
     __m128i *out0, __m128i *out1,
     const __m128i *clamp_lo,
@@ -2492,7 +2488,6 @@ static INLINE void av1_round_shift_rect_array_32_sse4_1(__m128i *input,
         }
     }
 }
-
 
 static void iidentity4_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t do_cols,
     int32_t bd, int32_t out_shift) {

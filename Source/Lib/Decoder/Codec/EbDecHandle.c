@@ -122,7 +122,6 @@ int svt_dec_out_buf(
     }
 
     if (recon_picture_buf->bit_depth == EB_8BIT) {
-
     uint8_t *dst;
     uint8_t *src;
 
@@ -292,14 +291,12 @@ EB_API EbErrorType eb_dec_init_handle(
     *p_handle = (EbComponentType*) malloc(sizeof(EbComponentType));
 
     if (*p_handle != (EbComponentType*)NULL) {
-
         // Init Component OS objects (threads, semaphores, etc.)
         // also links the various Component control functions
         return_error = init_svt_av1_decoder_handle(*p_handle);
 
         if (return_error == EB_ErrorNone) {
             ((EbComponentType*)(*p_handle))->p_application_private = p_app_data;
-
         }
         else if (return_error == EB_ErrorInsufficientResources) {
             eb_deinit_decoder((EbComponentType*)NULL);
@@ -336,7 +333,6 @@ EB_API EbErrorType eb_svt_dec_set_parameter(
 
     return EB_ErrorNone;
 }
-
 
 #if defined(__linux__) || defined(__APPLE__)
 __attribute__((visibility("default")))
@@ -377,7 +373,6 @@ EB_API EbErrorType eb_init_decoder(
     return return_error;
 }
 
-
 #if defined(__linux__) || defined(__APPLE__)
 __attribute__((visibility("default")))
 #endif
@@ -399,7 +394,6 @@ EB_API EbErrorType eb_svt_decode_frame(
 
     return return_error;
 }
-
 
 #if defined(__linux__) || defined(__APPLE__)
 __attribute__((visibility("default")))
@@ -425,7 +419,6 @@ EB_API EbErrorType eb_svt_dec_get_picture(
 
     return return_error;
 }
-
 
 #if defined(__linux__) || defined(__APPLE__)
 __attribute__((visibility("default")))
@@ -516,7 +509,6 @@ EB_API EbErrorType eb_deinit_decoder(
             if (dec_handle_ptr->memory_map != (EbMemoryMapEntry*)NULL) {
                 free(dec_handle_ptr->memory_map);
             }
-
         }
     }
 #endif

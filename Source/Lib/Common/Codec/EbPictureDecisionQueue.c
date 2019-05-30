@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include "EbPictureDecisionQueue.h"
 
-
 EbErrorType pa_reference_queue_entry_ctor(
     PaReferenceQueueEntry   **entry_dbl_ptr)
 {
@@ -34,5 +33,3 @@ EbErrorType pa_reference_queue_entry_ctor(
 
     return EB_ErrorNone;
 }
-
-

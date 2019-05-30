@@ -25,7 +25,6 @@
 #include "EbDecParseHelper.h"
 
 int neg_deinterleave(const int diff, int ref, int max) {
-
     if (!ref) return diff;
     if (ref >= max - 1) return max - diff - 1;
     if (2 * ref < max) {
@@ -133,7 +132,6 @@ void update_tx_context(ParseCtxt *parse_ctxt,
     memset(above_ctx, tx_wide, bw);
     memset(left_ctx, tx_high, bh);
 }
-
 
 TxSize read_selected_tx_size(PartitionInfo_t *xd, SvtReader *r, EbDecHandle *dec_handle) {
     ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
@@ -389,7 +387,6 @@ static INLINE void integer_mv_precision(MV_dec *mv) {
     }
 }
 
-
 static INLINE int block_center_x(int mi_col, BlockSize bs) {
     const int bw = block_size_wide[bs];
     return mi_col * MI_SIZE + bw / 2 - 1;
@@ -491,7 +488,6 @@ static INLINE int has_uni_comp_refs(const ModeInfo_t *mbmi) {
 }
 
 int get_comp_reference_type_context(const PartitionInfo_t *xd) {
-
 #define CHECK_BACKWARD_REFS(ref_frame) \
   (((ref_frame) >= BWDREF_FRAME) && ((ref_frame) <= ALTREF_FRAME))
 #define IS_BACKWARD_REF_FRAME(ref_frame) CHECK_BACKWARD_REFS(ref_frame)
@@ -626,7 +622,6 @@ int get_comp_index_context() {
     return above_ctx + left_ctx + 3 * offset;*/
     return -1;
 }
-
 
 int is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);

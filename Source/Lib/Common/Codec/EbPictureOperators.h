@@ -93,7 +93,6 @@ extern "C" {
         uint32_t       height,
         EbAsm          asm_type);
 
-
     void pack2d_src(
         uint8_t  *in8_bit_buffer,
         uint32_t  in8_stride,
@@ -447,7 +446,6 @@ extern "C" {
             spatial_full_distortion_kernel128x_n_avx2_intrin
         },
     };
-
 
     void picture_addition_kernel16_bit(
         uint16_t *pred_ptr,

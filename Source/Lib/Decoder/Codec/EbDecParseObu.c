@@ -372,7 +372,6 @@ EbErrorType read_sequence_header_obu(bitstrm_t *bs, SeqHeader   *seq_header)
             return EB_Corrupt_Frame;
     }
 
-
     seq_header->use_128x128_superblock = dec_get_bits(bs, 1);
     seq_header->sb_size         = seq_header->use_128x128_superblock ?
                                   BLOCK_128X128 : BLOCK_64X64;
@@ -396,7 +395,6 @@ EbErrorType read_sequence_header_obu(bitstrm_t *bs, SeqHeader   *seq_header)
         seq_header->order_hint_info.order_hint_bits = 0;
     }
     else {
-
         seq_header->enable_interintra_compound = dec_get_bits(bs, 1);
         PRINT("enable_interintra_compound", seq_header->enable_interintra_compound);
         seq_header->enable_masked_compound = dec_get_bits(bs, 1);
@@ -493,7 +491,6 @@ EbErrorType read_obu_header(bitstrm_t *bs, ObuHeader   *header)
     PRINT_NAME("obu_reserved_1bit");
 
     if (header->obu_extension_flag) {
-
         header->size += 1;
 
         header->temporal_id = dec_get_bits(bs, 3);
@@ -650,7 +647,6 @@ void read_interpolation_filter(bitstrm_t *bs, FrameHeader *frame_info)
     else
         frame_info->interpolation_filter = dec_get_bits(bs, 2);
     PRINT_FRAME("interpolation_filter", frame_info->interpolation_filter);
-
 }
 
 // Read Tile information
@@ -739,7 +735,6 @@ void read_tile_info(bitstrm_t *bs, TilesInfo *tile_info, SeqHeader *seq_header,
         else
             max_tile_area_sb = sb_rows * sb_cols;
         tile_info->max_tile_height_sb = MAX(max_tile_area_sb / widest_tile_sb, 1);
-
 
         start_sb = 0;
         for (i = 0; start_sb < sb_rows; i++) {
@@ -1021,7 +1016,6 @@ void read_loop_filter_params(bitstrm_t *bs, FrameHeader *frame_info, int num_pla
         }
     }
 }
-
 
 void read_tx_mode(bitstrm_t *bs, FrameHeader *frame_info)
 {
@@ -1925,7 +1919,6 @@ void clear_above_context(EbDecHandle *dec_handle_ptr, int mi_col_start,
 
     memset((&parse_ctxt->parse_nbr4x4_ctxt.above_tx_wd[tile_row]) + mi_col_start,
         tx_size_wide[TX_SIZES_LARGEST], width_y * sizeof(uint8_t));
-
 }
 
 void clear_left_context(EbDecHandle *dec_handle_ptr)
@@ -2208,7 +2201,6 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     obu_header->payload_size -= header_bytes;
 
     for (int tile_num = tg_start; tile_num <= tg_end; tile_num++) {
-
         tile_row = tile_num / tiles_info->tile_cols;
         tile_col = tile_num % tiles_info->tile_cols;
 
@@ -2246,7 +2238,6 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
     return status;
 }
-
 
 EbErrorType decode_obu(EbDecHandle *dec_handle_ptr, unsigned char *data, unsigned int data_size)
 {
@@ -2289,7 +2280,6 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, const uint8_t *data
         dec_bits_init(&bs, data, payload_size);
 
         switch (obu_header.obu_type) {
-
         case OBU_TEMPORAL_DELIMITER:
             PRINT_NAME("**************OBU_TEMPORAL_DELIMITER*******************");
             read_temporal_delimitor_obu(&dec_handle_ptr->seen_frame_header);

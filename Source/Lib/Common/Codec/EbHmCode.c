@@ -123,7 +123,6 @@ uint64_t compute4x4_satd(
     return satdBlock4x4;
 }
 
-
 uint64_t compute4x4_satd_u8(
     uint8_t *src,       // input parameter, diff samples Ptr
     uint64_t *dc_value,
@@ -210,5 +209,3 @@ uint64_t compute4x4_satd_u8(
     *dc_value += d[0];
     return satdBlock4x4;
 }
-
-

@@ -24,7 +24,6 @@ extern EbErrorType initial_rate_control_reorder_entry_ctor(
     InitialRateControlReorderEntry   **entry_dbl_ptr,
     uint32_t                               picture_number);
 
-
 /************************************************
  * High Level Rate Control Histogram Queue Entry
  ************************************************/
@@ -48,7 +47,6 @@ typedef struct HlRateControlHistogramEntry
     EB_SLICE                        slice_type;
     uint32_t                          temporal_layer_index;
     uint32_t                        frames_in_sw;
-
 
     // Motion Estimation Distortion and OIS Historgram
     uint16_t                         *me_distortion_histogram;

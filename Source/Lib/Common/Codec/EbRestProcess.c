@@ -23,7 +23,6 @@
 #include "EbPictureDemuxResults.h"
 #include "EbReferenceObject.h"
 
-
 void ReconOutput(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr);
@@ -78,7 +77,6 @@ EbErrorType rest_context_ctor(
     context_ptr->rest_output_fifo_ptr = rest_output_fifo_ptr;
     context_ptr->picture_demux_fifo_ptr = picture_demux_fifo_ptr;
 
-
     {
         EbPictureBufferDescInitData initData;
 
@@ -106,8 +104,6 @@ EbErrorType rest_context_ctor(
                 (EbPtr)&initData);
 
          EB_MALLOC(int32_t *, context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE, EB_N_PTR);
-
-
     }
 
     context_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)EB_NULL;
@@ -136,7 +132,6 @@ EbErrorType rest_context_ctor(
             (EbPtr*)&(context_ptr->temp_lf_recon_picture_ptr),
             (EbPtr)&tempLfReconDescInitData);
     }
-
 
     return EB_ErrorNone;
 }
@@ -197,7 +192,6 @@ void   get_own_recon(
     }
 }
 
-
 /******************************************************
  * Rest Kernel
  ******************************************************/
@@ -219,9 +213,7 @@ void* rest_kernel(void *input_ptr)
     PictureDemuxResults                   *picture_demux_results_rtr;
     // SB Loop variables
 
-
     for (;;) {
-
         // Get Cdef Results
         eb_get_full_object(
             context_ptr->rest_input_fifo_ptr,
@@ -233,7 +225,6 @@ void* rest_kernel(void *input_ptr)
         uint8_t lcuSizeLog2 = (uint8_t)Log2f(sequence_control_set_ptr->sb_size_pix);
         EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
         Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
-
 
         if (sequence_control_set_ptr->enable_restoration && picture_control_set_ptr->parent_pcs_ptr->allow_intrabc == 0)
         {
@@ -299,7 +290,6 @@ void* rest_kernel(void *input_ptr)
                 }
             }
             cm->sg_frame_ep = best_ep;
-
 
             if (picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
                 // copy stat to ref object (intra_coded_area, Luminance, Scene change detection flags)
@@ -385,10 +375,8 @@ void* rest_kernel(void *input_ptr)
                     sequence_control_set_ptr);
             }
 
-
             if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
             {
-
                 // Get Empty PicMgr Results
                 eb_get_empty_object(
                     context_ptr->picture_demux_fifo_ptr,
@@ -404,8 +392,6 @@ void* rest_kernel(void *input_ptr)
                 eb_post_full_object(picture_demux_results_wrapper_ptr);
             }
 
-
-
             // Get Empty rest Results to EC
             eb_get_empty_object(
                 context_ptr->rest_output_fifo_ptr,
@@ -416,14 +402,11 @@ void* rest_kernel(void *input_ptr)
             rest_results_ptr->completed_lcu_row_count = ((sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_size_pix - 1) >> lcuSizeLog2);
             // Post Rest Results
             eb_post_full_object(rest_results_wrapper_ptr);
-
         }
         eb_release_mutex(picture_control_set_ptr->rest_search_mutex);
 
-
         // Release input Results
         eb_release_object(cdef_results_wrapper_ptr);
-
     }
 
     return EB_NULL;

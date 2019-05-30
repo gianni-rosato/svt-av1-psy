@@ -9,7 +9,6 @@
 #include <immintrin.h>
 #include <stdint.h>
 
-
 void eb_enc_un_pack8_bit_data_avx2_intrin(
     uint16_t *in_16bit_buffer,
     uint32_t  in_stride,
@@ -162,7 +161,6 @@ void eb_enc_un_pack8_bit_data_avx2_intrin(
 
             for (x = 0; x < height; x += 1) {
                 for (y = 0; y < width; y += 64) {
-
                     in_pixel0 = _mm256_loadu_si256((__m256i*)in_16bit_buffer);
                     in_pixel1 = _mm256_loadu_si256(
                         (__m256i*)(in_16bit_buffer + 16));
@@ -361,4 +359,3 @@ void eb_enc_un_pack8_bit_data_avx2_intrin(
         }
     }
 }
-

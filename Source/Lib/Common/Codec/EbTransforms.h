@@ -3880,7 +3880,6 @@ extern "C" {
     }
     static const uint32_t q_func[] = { 26214,23302,20560,18396,16384,14564 };
 
-
     extern EbErrorType encode_transform(
         int16_t             *residual_buffer,
         uint32_t             residual_stride,
@@ -3949,7 +3948,6 @@ extern "C" {
         EbAsm     asm_type,
         uint32_t  partial_frequency_n2_flag);
 
-
     EbErrorType av1_inv_transform_recon(
         int32_t    *coeff_buffer,//1D buffer
         uint8_t    *recon_buffer,
@@ -3984,7 +3982,6 @@ extern "C" {
     extern uint8_t map_chroma_qp(
         uint8_t qp
     );
-
 
     /*****************************
     * Function pointer Typedef
@@ -4074,7 +4071,6 @@ extern "C" {
             pfreq_transform8x8_sse2_intrin,
             transform4x4_sse2_intrin,
             dst_transform4x4_sse2_intrin
-
         },
         // AVX2
         {
@@ -4146,5 +4142,3 @@ extern "C" {
 #endif
 
 #endif // EbTransforms_h
-
-

@@ -14,10 +14,8 @@
 
 #include "EbDecNbr.h"
 
-
 /* TODO : Should be moved to nbr file */
 void update_nbrs_before_sb(FrameMiMap *frame_mi_map, int32_t sb_col) {
-
     int32_t num_mis_in_sb_wd = frame_mi_map->num_mis_in_sb_wd;
 
     /* Update from top sbrow to current SB top */
@@ -27,7 +25,6 @@ void update_nbrs_before_sb(FrameMiMap *frame_mi_map, int32_t sb_col) {
 
 /* TODO : Should be moved to nbr file */
 void update_nbrs_after_sb(FrameMiMap *frame_mi_map, int32_t sb_col) {
-
     int32_t num_mis_in_sb_wd = frame_mi_map->num_mis_in_sb_wd;
 
     /* Update cur right 4x4 col as next left 4x4 */

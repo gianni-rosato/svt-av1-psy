@@ -26,8 +26,6 @@ static INLINE int32_t get_interinter_wedge_bits(BlockSize sb_type) {
     return (wbits > 0) ? wbits + 1 : 0;
 }
 
-
-
 /**************************************************************
 * AV1GetCostSymbold
 * Calculate the cost of a symbol with
@@ -40,7 +38,6 @@ static INLINE int32_t av1_cost_symbol(AomCdfProb p15) {
     assert(prob >= 128);
     return av1_prob_cost[prob - 128] + av1_cost_literal(shift);
 }
-
 
 /*************************************************************
 * av1_get_syntax_rate_from_cdf
@@ -322,7 +319,6 @@ void av1_estimate_syntax_rate(
     }
 }
 
-
 static const uint8_t log_in_base_2[] = {
     0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
@@ -396,7 +392,6 @@ void av1_estimate_mv_rate(
     MdRateEstimationContext  *md_rate_estimation_array,
     NmvContext                *nmv_ctx)
 {
-
     int32_t *nmvcost[2];
     int32_t *nmvcost_hp[2];
 
@@ -411,7 +406,6 @@ void av1_estimate_mv_rate(
         nmv_ctx,
         picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv);
 
-
     md_rate_estimation_array->nmvcoststack[0] = &md_rate_estimation_array->nmv_costs[0][MV_MAX];
     md_rate_estimation_array->nmvcoststack[1] = &md_rate_estimation_array->nmv_costs[1][MV_MAX];
 
@@ -420,7 +414,6 @@ void av1_estimate_mv_rate(
         av1_build_nmv_cost_table(md_rate_estimation_array->dv_joint_cost, dvcost, &picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc->ndvc,
             MV_SUBPEL_NONE);
     }
-
 }
 /**************************************************************************
 * av1_estimate_coefficients_rate()
@@ -523,9 +516,6 @@ void av1_estimate_coefficients_rate(
     }
 }
 
-
-
-
 EbErrorType md_rate_estimation_context_ctor(MdRateEstimationContext *md_rate_estimation_array)
 {
     uint32_t                      caseIndex1;
@@ -539,11 +529,9 @@ EbErrorType md_rate_estimation_context_ctor(MdRateEstimationContext *md_rate_est
 
     // Loop over all slice types
     for (sliceIndex = 0; sliceIndex < TOTAL_NUMBER_OF_SLICE_TYPES; sliceIndex++) {
-
         cabacContextModelArrayOffset1 = sliceIndex * TOTAL_NUMBER_OF_QP_VALUES;
         // Loop over all Qps
         for (qp_index = 0; qp_index < TOTAL_NUMBER_OF_QP_VALUES; qp_index++) {
-
             cabacContextModelArrayOffset2 = qp_index;
             mdRateEstimationTemp = (&md_rate_estimation_array[cabacContextModelArrayOffset1 + cabacContextModelArrayOffset2]);
 
@@ -564,7 +552,6 @@ EbErrorType md_rate_estimation_context_ctor(MdRateEstimationContext *md_rate_est
             }
 
             mdRateEstimationTemp->initialized = 0;
-
         }
     }
     return EB_ErrorNone;

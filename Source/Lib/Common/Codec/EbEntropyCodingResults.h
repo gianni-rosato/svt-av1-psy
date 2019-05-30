@@ -16,7 +16,6 @@ extern "C" {
      **************************************/
     typedef struct EntropyCodingResults {
         EbObjectWrapper      *picture_control_set_wrapper_ptr;
-
     } EntropyCodingResults;
 
     typedef struct EntropyCodingResultsInitData {
@@ -29,7 +28,6 @@ extern "C" {
     extern EbErrorType entropy_coding_results_ctor(
         EbPtr *object_dbl_ptr,
         EbPtr object_init_data_ptr);
-
 
 #ifdef __cplusplus
 }

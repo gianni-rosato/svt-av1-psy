@@ -116,5 +116,3 @@ extern "C" {
 }
 #endif
 #endif // EbTransforms_AVX2_h
-
-

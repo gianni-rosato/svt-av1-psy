@@ -87,7 +87,6 @@ extern "C" {
         uint32_t                               ref1_num_available_amvp_cand,
         PictureControlSet                   *picture_control_set_ptr);
 
-
     EbErrorType warped_motion_prediction(
         MvUnit                               *mv_unit,
         uint16_t                                pu_origin_x,

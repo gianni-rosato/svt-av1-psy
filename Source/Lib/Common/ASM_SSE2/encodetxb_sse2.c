@@ -15,7 +15,6 @@
 #include "EbDefinitions.h"
 #include "EbCabacContextModel.h"
 
-
 static INLINE __m128i loadh_epi64(const void *const src, const __m128i s) {
     return _mm_castps_si128(
         _mm_loadh_pi(_mm_castsi128_ps(s), (const __m64 *)src));
@@ -475,7 +474,6 @@ void av1_get_nz_map_contexts_sse2(
     const TxClass tx_class,
     int8_t *const coeff_contexts
 ) {
-
     const int32_t last_idx = eob - 1;
     if (!last_idx) {
         coeff_contexts[0] = 0;

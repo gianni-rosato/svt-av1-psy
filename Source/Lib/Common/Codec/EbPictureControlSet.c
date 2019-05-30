@@ -24,7 +24,6 @@ void *aom_memalign(size_t align, size_t size);
 void aom_free(void *memblk);
 void *aom_malloc(size_t size);
 
-
 EbErrorType av1_alloc_restoration_buffers(Av1Common *cm);
 
 EbErrorType av1_hash_table_create(HashTable *p_hash_table);
@@ -37,7 +36,6 @@ static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx,
     (void)sy;
 
     int32_t s = 0;
-
 
     if (width * height > 352 * 288)
         rst[0].restoration_unit_size = RESTORATION_UNITSIZE_MAX;
@@ -55,7 +53,6 @@ EbErrorType me_sb_results_ctor(
     uint8_t            mrp_mode,
 #endif
     uint32_t           maxNumberOfMeCandidatesPerPU){
-
     uint32_t  puIndex;
     MeLcuResults *objectPtr;
 
@@ -191,7 +188,6 @@ EbErrorType picture_control_set_ctor(
     }
     else
     {
-
         return_error = eb_recon_picture_buffer_desc_ctor(
             (EbPtr*) &(object_ptr->recon_picture_ptr),
             (EbPtr)&input_picture_buffer_desc_init_data);
@@ -200,7 +196,6 @@ EbErrorType picture_control_set_ctor(
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
-
 
     // Film Grain Picture Buffer
     if (initDataPtr->film_grain_noise_level) {
@@ -229,7 +224,6 @@ EbErrorType picture_control_set_ctor(
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
-
 
     // Entropy Coder
     return_error = entropy_coder_ctor(
@@ -272,7 +266,6 @@ EbErrorType picture_control_set_ctor(
     const uint16_t all_sb = picture_sb_w * picture_sb_h;
 
     for (sb_index = 0; sb_index < all_sb; ++sb_index) {
-
         return_error = largest_coding_unit_ctor(
             &(object_ptr->sb_ptr_array[sb_index]),
             (uint8_t)initDataPtr->sb_size_pix,
@@ -286,7 +279,6 @@ EbErrorType picture_control_set_ctor(
         // Increment the Order in coding order (Raster Scan Order)
         sb_origin_y = (sb_origin_x == picture_sb_w - 1) ? sb_origin_y + 1 : sb_origin_y;
         sb_origin_x = (sb_origin_x == picture_sb_w - 1) ? 0 : sb_origin_x + 1;
-
     }
 
 #if CABAC_UP
@@ -311,7 +303,6 @@ EbErrorType picture_control_set_ctor(
     object_ptr->qp_array_stride = (uint16_t)((initDataPtr->picture_width + MIN_BLOCK_SIZE - 1) / MIN_BLOCK_SIZE);
     object_ptr->qp_array_size = ((initDataPtr->picture_width + MIN_BLOCK_SIZE - 1) / MIN_BLOCK_SIZE) *
         ((initDataPtr->picture_height + MIN_BLOCK_SIZE - 1) / MIN_BLOCK_SIZE);
-
 
     // Allocate memory for qp array (used by DLF)
     EB_MALLOC(uint8_t*, object_ptr->qp_array, sizeof(uint8_t) * object_ptr->qp_array_size, EB_N_PTR);
@@ -565,7 +556,6 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-
         return_error = neighbor_array_unit_ctor32(
             &object_ptr->md_interpolation_type_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE,
@@ -575,12 +565,9 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-
-
         if (return_error == EB_ErrorInsufficientResources) {
             return EB_ErrorInsufficientResources;
         }
-
     }
 #if !MEMORY_FOOTPRINT_OPT
     return_error = neighbor_array_unit_ctor(
@@ -687,7 +674,6 @@ EbErrorType picture_control_set_ctor(
         sizeof(uint8_t),
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         PU_NEIGHBOR_ARRAY_GRANULARITY,
-
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
     if (return_error == EB_ErrorInsufficientResources) {
@@ -774,7 +760,6 @@ EbErrorType picture_control_set_ctor(
         object_ptr->ep_cb_recon_neighbor_array16bit = 0;
         object_ptr->ep_cr_recon_neighbor_array16bit = 0;
     }
-
 
 #if DC_SIGN_CONTEXT_EP
 
@@ -974,8 +959,6 @@ EbErrorType picture_control_set_ctor(
         return EB_ErrorInsufficientResources;
     }
 
-
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->intra_luma_mode_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -987,7 +970,6 @@ EbErrorType picture_control_set_ctor(
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
-
 
 #if ATB_EC
     return_error = neighbor_array_unit_ctor(
@@ -1010,7 +992,6 @@ EbErrorType picture_control_set_ctor(
     // slice level chroma QP offsets
     object_ptr->slice_cb_qp_offset = 0;
     object_ptr->slice_cr_qp_offset = 0;
-
 
     //object_ptr->total_num_bits = 0;
 
@@ -1048,9 +1029,7 @@ EbErrorType picture_control_set_ctor(
         EB_MALLOC(uint16_t*,object_ptr->ref_coeff[2],sizeof(object_ptr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
     }
 
-
     EB_CREATEMUTEX(EbHandle, object_ptr->rest_search_mutex, sizeof(EbHandle), EB_MUTEX);
-
 
 #if !MEMORY_FOOTPRINT_OPT
     object_ptr->cu32x32_quant_coeff_num_map_array_stride = (uint16_t)((initDataPtr->picture_width + 32 - 1) / 32);
@@ -1067,7 +1046,6 @@ EbErrorType picture_control_set_ctor(
 
     uint32_t miIdx;
     for (miIdx = 0; miIdx < object_ptr->sb_total_count*(BLOCK_SIZE_64 >> MI_SIZE_LOG2)*(BLOCK_SIZE_64 >> MI_SIZE_LOG2); ++miIdx) {
-
         object_ptr->mi_grid_base[miIdx] = object_ptr->mip + miIdx;
     }
 
@@ -1076,7 +1054,6 @@ EbErrorType picture_control_set_ctor(
     av1_hash_table_create(&object_ptr->hash_table);
     return EB_ErrorNone;
 }
-
 
 EbErrorType picture_parent_control_set_ctor(
     EbPtr *object_dbl_ptr,
@@ -1161,7 +1138,6 @@ EbErrorType picture_parent_control_set_ctor(
         }
     }
 
-
     for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < MAX_NUMBER_OF_REGIONS_IN_WIDTH; regionInPictureWidthIndex++) {  // loop over horizontal regions
         for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < MAX_NUMBER_OF_REGIONS_IN_HEIGHT; regionInPictureHeightIndex++) { // loop over vertical regions
             for (videoComponent = 0; videoComponent < 3; ++videoComponent) {
@@ -1172,7 +1148,6 @@ EbErrorType picture_parent_control_set_ctor(
         EB_MALLOC(OisSbResults**, object_ptr->ois_sb_results, sizeof(OisSbResults*) * object_ptr->sb_total_count, EB_N_PTR);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
-
         EB_MALLOC(OisSbResults*, object_ptr->ois_sb_results[sb_index], sizeof(OisSbResults), EB_N_PTR);
 
         OisCandidate* contigousCand;
@@ -1203,7 +1178,6 @@ EbErrorType picture_parent_control_set_ctor(
     EB_MALLOC(MeLcuResults**, object_ptr->me_results, sizeof(MeLcuResults*) * object_ptr->sb_total_count, EB_N_PTR);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
-
 
         return_error = me_sb_results_ctor(
             &(object_ptr->me_results[sb_index]),
@@ -1310,7 +1284,6 @@ EbErrorType picture_parent_control_set_ctor(
 
     EB_MALLOC(Av1Common*, object_ptr->av1_cm, sizeof(Av1Common), EB_N_PTR);
 
-
     object_ptr->av1_cm->interp_filter = SWITCHABLE;
 
     object_ptr->av1_cm->mi_stride = pictureLcuWidth * (BLOCK_SIZE_64 / 4);
@@ -1358,7 +1331,6 @@ EbErrorType picture_parent_control_set_ctor(
     memset(object_ptr->rusi_picture[1], 0, sizeof(RestUnitSearchInfo) * ntiles[1]);
     memset(object_ptr->rusi_picture[2], 0, sizeof(RestUnitSearchInfo) * ntiles[1]);
 
-
     EB_MALLOC(Macroblock*, object_ptr->av1x, sizeof(Macroblock), EB_N_PTR);
 
     // Film grain noise model if film grain is applied
@@ -1382,4 +1354,3 @@ EbErrorType picture_parent_control_set_ctor(
 
     return return_error;
 }
-

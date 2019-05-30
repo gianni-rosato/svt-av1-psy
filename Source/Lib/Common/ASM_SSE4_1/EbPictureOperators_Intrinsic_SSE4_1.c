@@ -6,7 +6,6 @@
 #include "EbPictureOperators_SSE4_1.h"
 #include "smmintrin.h"
 
-
 uint64_t compute8x8_satd_sse4(
     int16_t *diff)       // input parameter, diff samples Ptr
 {
@@ -39,7 +38,6 @@ uint64_t compute8x8_satd_sse4(
         s1 = _mm_hadd_epi16(s1, s8);
         m2[j][0] = _mm_extract_epi16(s1, 0);
         m2[j + 1][0] = _mm_extract_epi16(s1, 2);
-
 
         //m2[j][1]
         //diff[jj] + diff[jj + 4] + diff[jj + 2] + diff[jj + 6] - diff[jj + 1] - diff[jj + 5] - diff[jj + 3] - diff[jj + 7]
@@ -142,7 +140,6 @@ uint64_t compute8x8_satd_sse4(
     s10 = _mm_add_epi32(s10, s11);
     s10 = _mm_hadd_epi32(s10, s8);
     s10 = _mm_hadd_epi32(s10, s8);
-
 
     //m2[1][i] = m1[0][i] - m1[1][i]
     //m2[1][i] = m3[0][i] + m3[2][i] -(m3[1][i] + m3[3][i])
@@ -283,7 +280,6 @@ uint64_t compute8x8_satd_u8_sse4(
         m2[j][0] = _mm_extract_epi16(s1, 0);
         m2[j + 1][0] = _mm_extract_epi16(s1, 2);
 
-
         //m2[j][1]
         //diff[jj] + diff[jj + 4] + diff[jj + 2] + diff[jj + 6] - diff[jj + 1] - diff[jj + 5] - diff[jj + 3] - diff[jj + 7]
         //diff[jj] - diff[jj + 1] + diff[jj + 2] - diff[jj + 3] + diff[jj + 4] - diff[jj + 5] + diff[jj + 6] - diff[jj + 7]
@@ -387,7 +383,6 @@ uint64_t compute8x8_satd_u8_sse4(
     s10 = _mm_add_epi32(s10, s11);
     s10 = _mm_hadd_epi32(s10, s8);
     s10 = _mm_hadd_epi32(s10, s8);
-
 
     //m2[1][i] = m1[0][i] - m1[1][i]
     //m2[1][i] = m3[0][i] + m3[2][i] -(m3[1][i] + m3[3][i])

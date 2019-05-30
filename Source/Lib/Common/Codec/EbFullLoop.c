@@ -39,7 +39,6 @@ PARTITION_VERT_B,
 PARTITION_HORZ_4,
 PARTITION_VERT_4,
 PARTITION_SPLIT
-
 };
 void quantize_b_helper_c_II(const TranLow *coeff_ptr, intptr_t n_coeffs,
     int32_t skip_block, const int16_t *zbin_ptr,
@@ -146,7 +145,6 @@ void quantize_b_helper_c(
 #
     int32_t width,
     int32_t height,
-
     intptr_t n_coeffs,
     int32_t skip_block,
     const int16_t *zbin_ptr,
@@ -163,7 +161,6 @@ void quantize_b_helper_c(
     const QmVal *iqm_ptr,
     const int32_t log_scale)
 {
-
     const int32_t zbins[2] = {
         ROUND_POWER_OF_TWO(zbin_ptr[0], log_scale),
         ROUND_POWER_OF_TWO(zbin_ptr[1], log_scale)
@@ -178,7 +175,6 @@ void quantize_b_helper_c(
         memset(dqcoeff_ptr + (x * stride), 0, width /*n_coeffs*/ * sizeof(*dqcoeff_ptr));
     }
 
-
     if (!skip_block) {
         // Pre-scan pass
         for (i = (int32_t)n_coeffs - 1; i >= 0; i--) {
@@ -188,7 +184,6 @@ void quantize_b_helper_c(
 
             const QmVal wt = qm_ptr != NULL ? qm_ptr[rc] : (1 << AOM_QM_BITS);
             const int32_t coeff = coeff_ptr[rc] * wt;
-
 
             ////if (mapRc != NewTab[rc])
             //printf("%d\n", coeff);
@@ -213,7 +208,6 @@ void quantize_b_helper_c(
             const QmVal wt = qm_ptr != NULL ? qm_ptr[mapRc] : (1 << AOM_QM_BITS);
 
             if (abs_coeff * wt >= (zbins[rc != 0] << AOM_QM_BITS)) {
-
                 int64_t tmp = clamp(abs_coeff + ROUND_POWER_OF_TWO(round_ptr[rc != 0], log_scale), INT16_MIN, INT16_MAX);
 
                 tmp *= wt;
@@ -232,7 +226,6 @@ void quantize_b_helper_c(
             }
         }
     }
-
 
     *eob_ptr = (uint16_t)(eob + 1);
 }
@@ -353,15 +346,12 @@ void av1_highbd_quantize_b_facade(const TranLow *coeff_ptr,
         switch (qparam->log_scale) {
         case 0:
             if (LIKELY(n_coeffs >= 8)) {
-
                 aom_highbd_quantize_b(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
                     p->round_QTX, p->quant_QTX, p->quant_shift_QTX,
                     qcoeff_ptr, dqcoeff_ptr, p->dequant_QTX,
                     eob_ptr, sc->scan, sc->iscan);
-
             }
             else {
-
                 aom_highbd_quantize_b_c(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
                     p->round_QTX, p->quant_QTX,
                     p->quant_shift_QTX, qcoeff_ptr, dqcoeff_ptr,
@@ -424,7 +414,6 @@ void av1_quantize_b_facade_II(
     int32_t                width,
     int32_t                height,
     intptr_t n_coeffs,
-
     const MacroblockPlane *p,
     TranLow *qcoeff_ptr,
     TranLow *dqcoeff_ptr,
@@ -1508,7 +1497,6 @@ static INLINE int32_t av1_cost_skip_txb(
     TxSize                                  transform_size,
     PlaneType                               plane_type,
     int16_t                                   txb_skip_ctx){
-
     const TxSize txs_ctx = (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
     assert(txs_ctx < TX_SIZES);
     const LvMapCoeffCost *const coeff_costs = &candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->coeff_fac_bits[txs_ctx][plane_type];
@@ -1615,7 +1603,6 @@ void av1_optimize_b(
     const int eob_cost = get_eob_cost(*eob, txb_eob_costs, txb_costs, (TxType)tx_class);
     int accu_rate = eob_cost;
 
-
     int64_t accu_dist = 0;
     int si = *eob - 1;
     const int ci = scan[si];
@@ -1667,7 +1654,6 @@ void av1_optimize_b(
         const int64_t dist0 = get_coeff_dist(tqc, 0, shift);
         accu_dist += dist - dist0;
         --si;
-
     }
 
 #define UPDATE_COEFF_EOB_CASE(tx_class_literal)                                       \
@@ -1751,7 +1737,6 @@ void av1_quantize_inv_quantize(
 #endif
     uint32_t                component_type,
     uint32_t                bit_increment,
-
     TxType               tx_type,
     ModeDecisionCandidateBuffer *candidateBuffer,
     int16_t                        txb_skip_context,    // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
@@ -1816,7 +1801,6 @@ void av1_quantize_inv_quantize(
             candidate_plane.zbin_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.u_zbin[qIndex];
             candidate_plane.round_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.u_round[qIndex];
             candidate_plane.dequant_QTX = picture_control_set_ptr->parent_pcs_ptr->deqMd.u_dequant_QTX[qIndex];
-
         }
 
         if (component_type == COMPONENT_CHROMA_CR) {
@@ -1827,9 +1811,7 @@ void av1_quantize_inv_quantize(
             candidate_plane.zbin_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.v_zbin[qIndex];
             candidate_plane.round_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.v_round[qIndex];
             candidate_plane.dequant_QTX = picture_control_set_ptr->parent_pcs_ptr->deqMd.v_dequant_QTX[qIndex];
-
         }
-
     }
     else {
         if (component_type == COMPONENT_LUMA) {
@@ -1850,7 +1832,6 @@ void av1_quantize_inv_quantize(
             candidate_plane.zbin_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.u_zbin[qIndex];
             candidate_plane.round_QTX = picture_control_set_ptr->parent_pcs_ptr->quants.u_round[qIndex];
             candidate_plane.dequant_QTX = picture_control_set_ptr->parent_pcs_ptr->deq.u_dequant_QTX[qIndex];
-
         }
 
         if (component_type == COMPONENT_CHROMA_CR) {
@@ -2093,7 +2074,6 @@ void av1_quantize_inv_quantize(
     int32_t cul_level = 0;
     const int16_t *const scan = scan_order->scan;
     for (int32_t c = 0; c < *eob; ++c) {
-
         const int16_t pos = scan[c];
         const int32_t v = coeff[pos];
         int32_t level = ABS(v);
@@ -2247,7 +2227,6 @@ void product_full_loop(
 #endif
 
                 av1_inv_transform_recon8bit(
-
                     &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[txb_1d_offset]),
                     rec_buffer,
                     candidateBuffer->recon_ptr->stride_y,
@@ -2263,10 +2242,8 @@ void product_full_loop(
 #endif
                     PLANE_TYPE_Y,
                     (uint16_t)candidateBuffer->candidate_ptr->eob[0][txb_itr]);
-
             }
             else {
-
                 picture_copy8_bit(
                     candidateBuffer->prediction_ptr,
                     tu_origin_index,
@@ -2349,7 +2326,6 @@ void product_full_loop(
                 COMPONENT_LUMA,
                 asm_type);
 
-
             tuFullDistortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
             tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
             //assert(context_ptr->three_quad_energy == 0 && context_ptr->cu_stats->size < 64);
@@ -2383,7 +2359,6 @@ void product_full_loop(
             0,
             COMPONENT_LUMA,
             asm_type);
-
 
         tuFullDistortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
         tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
@@ -2430,8 +2405,6 @@ void product_full_loop(
             COMPONENT_LUMA,
             asm_type);
 
-
-
         //TODO: fix cbf decision
         av1_tu_calc_cost_luma(
             context_ptr->cu_ptr->luma_txb_skip_context,//this should be updated here.
@@ -2448,7 +2421,6 @@ void product_full_loop(
             &y_full_cost,
             context_ptr->full_lambda);
 
-
         (*y_coeff_bits) += y_tu_coeff_bits;
 
         y_full_distortion[DIST_CALC_RESIDUAL] += tuFullDistortion[0][DIST_CALC_RESIDUAL];
@@ -2458,8 +2430,6 @@ void product_full_loop(
 #else
         txb_1d_offset += context_ptr->blk_geom->tx_width[txb_itr] * context_ptr->blk_geom->tx_height[txb_itr];
 #endif
-
-
     }
 }
 // T1
@@ -2554,7 +2524,6 @@ void product_full_loop_tx_search(
             if (allowed_tx_mask[tx_type]) {
                 const TxType ref_tx_type = ((!av1_ext_tx_used[tx_set_type][tx_type]) || txsize_sqr_up_map[txSize] > TX_32X32) ? DCT_DCT : tx_type;
                 if (tx_type != ref_tx_type) {
-
                     allowed_tx_mask[tx_type] = 0;
                 }
             }
@@ -2606,7 +2575,6 @@ void product_full_loop_tx_search(
             av1_estimate_transform(
                 &(((int16_t*)candidateBuffer->residual_ptr->buffer_y)[tu_origin_index]),
                 candidateBuffer->residual_ptr->stride_y,
-
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr->buffer_y)[tu_origin_index]),
                 NOT_USED_VALUE,
 #if ATB_SUPPORT
@@ -2668,11 +2636,8 @@ void product_full_loop_tx_search(
 
             //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
             if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT) {
-
                 continue;
             }
-
-
 
             // LUMA DISTORTION
             picture_full_distortion32_bits(
@@ -2754,13 +2719,11 @@ void product_full_loop_tx_search(
                 &y_tu_coeff_bits,
                 &y_full_cost,
                 context_ptr->full_lambda);
-
         }
 
         if (y_full_cost < bestFullCost) {
             bestFullCost = y_full_cost;
             best_tx_type = tx_type;
-
         }
 
         //if (cpi->sf.adaptive_txb_search_level) {
@@ -2772,8 +2735,6 @@ void product_full_loop_tx_search(
         //// Skip transform type search when we found the block has been quantized to
         //// all zero and at the same time, it has better rdcost than doing transform.
         //if (cpi->sf.tx_type_search.skip_tx_search && !best_eob) break;
-
-
     }
 #if ATB_TX_TYPE_SUPPORT_PER_TU
     // this kernel assumes no atb
@@ -2806,7 +2767,6 @@ void encode_pass_tx_search(
     uint32_t                     dZoffset,
     uint16_t                     *eob,
     MacroblockPlane              *candidate_plane){
-
     (void)dZoffset;
     (void)use_delta_qp;
     (void)cb_qp;
@@ -2865,7 +2825,6 @@ void encode_pass_tx_search(
         context_ptr->three_quad_energy = 0;
 
         y_tu_coeff_bits = 0;
-
 
         av1_estimate_transform(
             ((int16_t*)residual16bit->buffer_y) + scratch_luma_offset,
@@ -2932,7 +2891,6 @@ void encode_pass_tx_search(
         if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT) {
             continue;
         }
-
 
         // LUMA DISTORTION
         picture_full_distortion32_bits(
@@ -3036,8 +2994,6 @@ void encode_pass_tx_search(
             bestFullCost = y_full_cost;
             best_tx_type = tx_type;
         }
-
-
     }
 
     txb_ptr->transform_type[PLANE_TYPE_Y] = best_tx_type;
@@ -3045,7 +3001,6 @@ void encode_pass_tx_search(
     // For Inter blocks, transform type of chroma follows luma transfrom type
     if (is_inter)
         txb_ptr->transform_type[PLANE_TYPE_UV] = txb_ptr->transform_type[PLANE_TYPE_Y];
-
 }
 
 void encode_pass_tx_search_hbd(
@@ -3065,7 +3020,6 @@ void encode_pass_tx_search_hbd(
     uint32_t                       dZoffset,
     uint16_t                       *eob,
     MacroblockPlane                *candidate_plane){
-
     (void)dZoffset;
     (void)use_delta_qp;
     (void)cb_qp;
@@ -3115,9 +3069,7 @@ void encode_pass_tx_search_hbd(
 
         context_ptr->three_quad_energy = 0;
 
-
         y_tu_coeff_bits = 0;
-
 
         av1_estimate_transform(
             ((int16_t*)residual16bit->buffer_y) + scratch_luma_offset,
@@ -3185,7 +3137,6 @@ void encode_pass_tx_search_hbd(
             continue;
         }
 
-
         // LUMA DISTORTION
         picture_full_distortion32_bits(
             transform16bit,
@@ -3288,17 +3239,13 @@ void encode_pass_tx_search_hbd(
             bestFullCost = y_full_cost;
             best_tx_type = tx_type;
         }
-
-
     }
-
 
     txb_ptr->transform_type[PLANE_TYPE_Y] = best_tx_type;
 
     // For Inter blocks, transform type of chroma follows luma transfrom type
     if (is_inter)
         txb_ptr->transform_type[PLANE_TYPE_UV] = txb_ptr->transform_type[PLANE_TYPE_Y];
-
 }
 /****************************************
  ************  Full loop ****************
@@ -3327,7 +3274,6 @@ void full_loop_r(
     uint32_t                 txb_itr;
     uint32_t                 txb_origin_x;
     uint32_t                 txb_origin_y;
-
 
     SequenceControlSet    *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     EbAsm     asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
@@ -3372,7 +3318,6 @@ void full_loop_r(
             chromaResidualPtr = //(candidateBuffer->candidate_ptr->type  == INTRA_MODE )?
                   //&(((int16_t*) candidateBuffer->intraChromaResidualPtr->buffer_cb)[tu_chroma_origin_index]):
                 &(((int16_t*)candidateBuffer->residual_ptr->buffer_cb)[tuCbOriginIndex]);
-
 
             // Cb Transform
             av1_estimate_transform(
@@ -3489,10 +3434,8 @@ void full_loop_r(
 #endif
                         PLANE_TYPE_UV,
                         (uint16_t)candidateBuffer->candidate_ptr->eob[1][txb_itr]);
-
                 }
                 else {
-
                     picture_copy8_bit(
                         candidateBuffer->prediction_ptr,
                         0,
@@ -3516,7 +3459,6 @@ void full_loop_r(
             }
 #endif
         }
-
 
         if (component_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
             // Configure the Chroma Residual Ptr
@@ -3636,10 +3578,8 @@ void full_loop_r(
 #endif
                         PLANE_TYPE_UV,
                         (uint16_t)candidateBuffer->candidate_ptr->eob[2][txb_itr]);
-
                 }
                 else {
-
                     picture_copy8_bit(
                         candidateBuffer->prediction_ptr,
                         0,
@@ -3669,9 +3609,7 @@ void full_loop_r(
 #endif
 
         ++txb_itr;
-
     } while (txb_itr < tuCount);
-
 }
 
 //****************************************
@@ -3717,7 +3655,6 @@ void cu_full_distortion_fast_tu_mode_r(
 #endif
     currentTuIndex = 0;
     transform_buffer = context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr;
-
 
     uint32_t  txb_1d_offset = 0;
     candidate_ptr->u_has_coeff = 0;
@@ -3828,7 +3765,6 @@ void cu_full_distortion_fast_tu_mode_r(
             //    calculated.  The amount of scaling between the two arrays is not
             //    equivalent.
 
-
             picture_full_distortion32_bits(
                 transform_buffer,
                 NOT_USED_VALUE,
@@ -3863,15 +3799,12 @@ void cu_full_distortion_fast_tu_mode_r(
             tuFullDistortion[1][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[1][DIST_CALC_PREDICTION], chromaShift);
             tuFullDistortion[2][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[2][DIST_CALC_RESIDUAL], chromaShift);
             tuFullDistortion[2][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[2][DIST_CALC_PREDICTION], chromaShift);
-
-
             }
 #else
             // *Full Distortion (SSE)
             // *Note - there are known issues with how this distortion metric is currently
             //    calculated.  The amount of scaling between the two arrays is not
             //    equivalent.
-
 
             picture_full_distortion32_bits(
                 transform_buffer,
@@ -3899,7 +3832,6 @@ void cu_full_distortion_fast_tu_mode_r(
             tuFullDistortion[1][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[1][DIST_CALC_PREDICTION], chromaShift);
             tuFullDistortion[2][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[2][DIST_CALC_RESIDUAL], chromaShift);
             tuFullDistortion[2][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[2][DIST_CALC_PREDICTION], chromaShift);
-
 
 #endif
             //CHROMA-ONLY
@@ -3938,7 +3870,6 @@ void cu_full_distortion_fast_tu_mode_r(
                 component_type,
                 asm_type);
 
-
             // OMK Useless ? We don't calculate Chroma CBF here
             av1_tu_calc_cost(
                 candidate_ptr,
@@ -3961,15 +3892,12 @@ void cu_full_distortion_fast_tu_mode_r(
 #endif
                 context_ptr->full_lambda);
 
-
-
             *cb_coeff_bits += cb_tu_coeff_bits;
             *cr_coeff_bits += cr_tu_coeff_bits;
             cbFullDistortion[DIST_CALC_RESIDUAL] += tuFullDistortion[1][DIST_CALC_RESIDUAL];
             crFullDistortion[DIST_CALC_RESIDUAL] += tuFullDistortion[2][DIST_CALC_RESIDUAL];
             cbFullDistortion[DIST_CALC_PREDICTION] += tuFullDistortion[1][DIST_CALC_PREDICTION];
             crFullDistortion[DIST_CALC_PREDICTION] += tuFullDistortion[2][DIST_CALC_PREDICTION];
-
         }
 
 #if ATB_SUPPORT
@@ -3979,10 +3907,7 @@ void cu_full_distortion_fast_tu_mode_r(
 #endif
         currentTuIndex++;
 
-
         ++txb_itr;
-
-
     } while (txb_itr < tuTotalCount);
 }
 
@@ -4079,10 +4004,7 @@ void  d1_non_square_block_decision(
         context_ptr->md_cu_arr_nsq[context_ptr->blk_geom->sqi_mds].part = from_shape_to_part[context_ptr->blk_geom->shape];
         context_ptr->md_cu_arr_nsq[context_ptr->blk_geom->sqi_mds].best_d1_blk = first_blk_idx;
     }
-
-
 }
-
 
 /// compute the cost of curr depth, and the depth above
 void   compute_depth_costs(
@@ -4096,7 +4018,6 @@ void   compute_depth_costs(
 {
     uint64_t       above_non_split_rate = 0;
     uint64_t       above_split_rate = 0;
-
 
     /*
     ___________
@@ -4117,7 +4038,6 @@ void   compute_depth_costs(
     uint64_t       curr_non_split_rate_blk1 = 0;
     uint64_t       curr_non_split_rate_blk2 = 0;
     uint64_t       curr_non_split_rate_blk3 = 0;
-
 
     context_ptr->md_local_cu_unit[above_depth_mds].left_neighbor_mode = context_ptr->md_local_cu_unit[curr_depth_blk0_mds].left_neighbor_mode;
     context_ptr->md_local_cu_unit[above_depth_mds].left_neighbor_depth = context_ptr->md_local_cu_unit[curr_depth_blk0_mds].left_neighbor_depth;
@@ -4173,7 +4093,6 @@ void   compute_depth_costs(
         sequence_control_set_ptr->max_sb_depth);
 #endif
     if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
-
         if (context_ptr->md_cu_arr_nsq[curr_depth_blk0_mds].mdc_split_flag == 0)
             av1_split_flag_rate(
                 sequence_control_set_ptr,
@@ -4224,14 +4143,12 @@ void   compute_depth_costs(
     }
     //curr_non_split_rate_344 = splitflag_mdc_344 || 4x4 ? 0 : compute;
 
-
     *curr_depth_cost =
         context_ptr->md_local_cu_unit[curr_depth_mds].cost + curr_non_split_rate_blk3 +
         context_ptr->md_local_cu_unit[curr_depth_mds - 1 * step].cost + curr_non_split_rate_blk2 +
         context_ptr->md_local_cu_unit[curr_depth_mds - 2 * step].cost + curr_non_split_rate_blk1 +
         context_ptr->md_local_cu_unit[curr_depth_mds - 3 * step].cost + curr_non_split_rate_blk0 +
         above_split_rate;
-
 }
 
 uint32_t d2_inter_depth_block_decision(
@@ -4272,14 +4189,12 @@ uint32_t d2_inter_depth_block_decision(
 
     if (lastDepthFlag) {
         while (blk_geom->is_last_quadrant) {
-
             //get parent idx
             parent_depth_idx_mds = current_depth_idx_mds - parent_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth];
             if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0) {
                 parent_depth_cost = MAX_MODE_COST;
             }
             else {
-
                 compute_depth_costs(context_ptr, sequence_control_set_ptr, current_depth_idx_mds, parent_depth_idx_mds, ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth], &parent_depth_cost, &current_depth_cost);
             }
             if (parent_depth_cost <= current_depth_cost) {
@@ -4298,9 +4213,5 @@ uint32_t d2_inter_depth_block_decision(
         }
     }
 
-
     return lastCuIndex;
 }
-
-
-

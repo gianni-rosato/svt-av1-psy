@@ -20,7 +20,6 @@ extern "C" {
 
 /* Frame level buffers */
 typedef struct CurFrameBuf {
-
     SBInfo          *sb_info;
 
     ModeInfo_t      *mode_info;
@@ -37,7 +36,6 @@ typedef struct CurFrameBuf {
 
     /* Tile Map at SB level : TODO. Can be removed? */
     uint8_t         *tile_map_sb;
-
 } CurFrameBuf;
 
 /* Frame level buffers */
@@ -74,7 +72,6 @@ typedef struct MasterFrameBuf {
  * Component Private Data
  **************************************/
 typedef struct EbDecHandle {
-
     uint32_t size;
     uint32_t dec_cnt;
 
@@ -103,7 +100,6 @@ typedef struct EbDecHandle {
 
     void   *pv_dec_mod_ctxt;
 
-
     // Callbacks
 
     //DPB + MV, ... buf
@@ -122,7 +118,6 @@ typedef struct EbDecHandle {
     EbMemoryMapEntry            *memory_map;
     uint32_t                     memory_map_index;
     uint64_t                     total_lib_memory;
-
 }EbDecHandle;
 
 #ifdef __cplusplus

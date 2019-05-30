@@ -150,9 +150,6 @@ void md5_final(unsigned char digest[16], MD5Context *ctx){
     memset(ctx, 0, sizeof(*ctx)); /* In case it's sensitive */
 }
 
-
-
-
 /*
  * The core of the MD5 algorithm, this alters an existing MD5 hash to
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
@@ -272,7 +269,6 @@ void write_md5(EbBufferHeaderType *recon_buffer, CLInput *cli, MD5Context *md5) 
     w = w / 2;
     h = h / 2;
     stride = img->cb_stride;
-
 
     //cb MD5 generation
     buf = img->cb;

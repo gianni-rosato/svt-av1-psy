@@ -1171,15 +1171,12 @@ void aom_smooth_h_predictor_64x16_ssse3(uint8_t *dst, ptrdiff_t stride,
     smooth_h_predictor_wxh(dst, stride, above, left, 64, 16);
 }
 
-
 void eb_smooth_v_predictor_all_ssse3(uint8_t *dst, ptrdiff_t stride, int32_t bw,
     int32_t bh, const uint8_t *above,
     const uint8_t *left) {
-
     (void)bh;
 
     switch (bw) {
-
     case 4:
         aom_smooth_v_predictor_4x4_ssse3(
             dst,
@@ -1224,16 +1221,13 @@ void eb_smooth_v_predictor_all_ssse3(uint8_t *dst, ptrdiff_t stride, int32_t bw,
 
         break;
     }
-
 }
 void eb_smooth_h_predictor_all_ssse3(uint8_t *dst, ptrdiff_t stride, int32_t bw,
     int32_t bh, const uint8_t *above,
     const uint8_t *left) {
-
     (void)bh;
     //printf("here");
     switch (bw) {
-
     case 4:
         aom_smooth_h_predictor_4x4_ssse3(
             dst,
@@ -1278,5 +1272,4 @@ void eb_smooth_h_predictor_all_ssse3(uint8_t *dst, ptrdiff_t stride, int32_t bw,
 
         break;
     }
-
 }

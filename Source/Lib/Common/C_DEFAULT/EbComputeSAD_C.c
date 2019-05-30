@@ -101,7 +101,6 @@ void sad_loop_kernel(
                 {
                     sad += EB_ABS_DIFF(src[y*src_stride + x], ref[xSearchIndex + y * ref_stride + x]);
                 }
-
             }
 
             // Update results
@@ -118,7 +117,6 @@ void sad_loop_kernel(
 
     return;
 }
-
 
 /* Sum the difference between every corresponding element of the buffers. */
 static INLINE uint32_t sad_inline_c(const uint8_t *a, int a_stride,
@@ -231,4 +229,3 @@ sadMxN(16, 64);
 sadMxNx4D(16, 64);
 sadMxN(64, 16);
 sadMxNx4D(64, 16);
-

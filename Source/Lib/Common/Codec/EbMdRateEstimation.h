@@ -41,7 +41,6 @@ extern "C" {
         int32_t lps_cost[LEVEL_CONTEXTS][COEFF_BASE_RANGE + 1 + COEFF_BASE_RANGE + 1];
     } LvMapCoeffCost;
 
-
     /**************************************
      * The EbBitFraction is used to define the bit fraction numbers
      **************************************/
@@ -123,7 +122,6 @@ extern "C" {
         int32_t inter_tx_type_fac_bits[EXT_TX_SETS_INTER][EXT_TX_SIZES][CDF_SIZE(TX_TYPES)];
         int32_t switchable_interp_fac_bitss[SWITCHABLE_FILTER_CONTEXTS][SWITCHABLE_FILTERS];
         int32_t initialized;
-
     } MdRateEstimationContext;
 
     /**************************************
@@ -328,7 +326,6 @@ extern "C" {
         struct PictureControlSet     *picture_control_set_ptr,
         MdRateEstimationContext  *md_rate_estimation_array,
         NmvContext                *nmv_ctx);
-
 
 #ifdef __cplusplus
 }

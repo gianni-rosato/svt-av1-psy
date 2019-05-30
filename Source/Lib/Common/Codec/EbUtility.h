@@ -42,7 +42,6 @@ extern "C" {
         BlockList_t    similar_list;
 #endif
 
-
         uint8_t    bwidth;                      // block width
         uint8_t    bheight;                     // block height
         uint8_t    bwidth_uv;                   // block width for Chroma 4:2:0
@@ -82,8 +81,6 @@ extern "C" {
         int32_t    has_uv;
         int32_t    sq_size;
         int32_t    is_last_quadrant;            // only for square bloks, is this the fourth quadrant block?
-
-
     } BlockGeom;
 
     static const BlockSize ss_size_lookup[BlockSizeS_ALL][2][2] = {
@@ -133,11 +130,7 @@ extern "C" {
         /*128x128*/{ 17 , 25,25,25, 5 ,1 }
     };
 
-
     const BlockGeom * get_blk_geom_mds(uint32_t bidx_mds);
-
-
-
 
     // CU Stats Helper Functions
     typedef struct CodedUnitStats
@@ -149,7 +142,6 @@ extern "C" {
         uint16_t  origin_y;
         uint8_t   cu_num_in_depth;
         uint8_t   parent32x32_index;
-
     } CodedUnitStats;
 
     // PU Stats Helper Functions
@@ -159,7 +151,6 @@ extern "C" {
         uint8_t  height;
         uint8_t  offset_x;
         uint8_t  offset_y;
-
     } PredictionUnitStats;
 
     // TU Stats Helper Functions
@@ -168,7 +159,6 @@ extern "C" {
         uint8_t  depth;
         uint8_t  offset_x;
         uint8_t  offset_y;
-
     } TransformUnitStats;
 
     extern uint64_t log2f_high_precision(uint64_t x, uint8_t precision);
@@ -287,7 +277,6 @@ extern "C" {
 #define MIN_SIGNED_VALUE       ~0 - ((signed) (~0u >> 1))
 #define MAX_SIGNED_VALUE       ((signed) (~0u >> 1))
 
-
 // Helper functions for EbLinkedListNode.
 
 // concatenate two linked list, and return the pointer to the new concatenated list
@@ -311,7 +300,6 @@ extern "C" {
         uint32_t  start_index;
         uint32_t  end_index;
         uint32_t  lenght;
-
     } MiniGopStats;
     extern const MiniGopStats* get_mini_gop_stats(const uint32_t mini_gop_index);
     typedef enum MiniGopIndex {

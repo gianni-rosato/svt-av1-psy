@@ -19,7 +19,5 @@ EbErrorType resource_coordination_result_ctor(
     object_init_data_ptr = 0;
     (void)object_init_data_ptr;
 
-
     return EB_ErrorNone;
 }
-

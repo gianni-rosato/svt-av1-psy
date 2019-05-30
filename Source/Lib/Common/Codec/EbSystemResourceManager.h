@@ -44,7 +44,6 @@ extern "C" {
         // next_ptr - a pointer to a different EbObjectWrapper.  Used
         //   only in the implemenation of a single-linked Fifo.
         struct EbObjectWrapper *next_ptr;
-
     } EbObjectWrapper;
 
     /*********************************************************************
@@ -75,7 +74,6 @@ extern "C" {
         // queue_ptr - pointer to MuxingQueue that the EbFifo is
         //   associated with.
         struct EbMuxingQueue *queue_ptr;
-
     } EbFifo;
 
     /*********************************************************************
@@ -88,7 +86,6 @@ extern "C" {
         uint32_t  tail_index;
         uint32_t  buffer_total_count;
         uint32_t  current_count;
-
     } EbCircularBuffer;
 
     /*********************************************************************
@@ -101,7 +98,6 @@ extern "C" {
         EbCircularBuffer *process_queue;
         uint32_t              process_total_count;
         EbFifo          **process_fifo_ptr_array;
-
     } EbMuxingQueue;
 
     /*********************************************************************
@@ -128,7 +124,6 @@ extern "C" {
 
         // The full FIFO contains a queue of completed buffers
         EbMuxingQueue     *full_queue;
-
     } EbSystemResource;
 
     /*********************************************************************

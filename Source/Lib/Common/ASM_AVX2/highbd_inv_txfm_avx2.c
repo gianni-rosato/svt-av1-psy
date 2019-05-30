@@ -60,7 +60,6 @@ static INLINE __m256i half_btf_avx2(const __m256i *w0, const __m256i *n0,
     return x;
 }
 
-
 static void addsub_avx2(const __m256i in0, const __m256i in1, __m256i *out0,
     __m256i *out1, const __m256i *clamp_lo,
     const __m256i *clamp_hi) {
@@ -321,7 +320,6 @@ static INLINE void idct32_stage9_avx2(__m256i *bf1, __m256i *out,
     }
 }
 
-
 static INLINE void idct64_stage8_avx2(
     __m256i *u, const __m256i *cospim32, const __m256i *cospi32,
     const __m256i *cospim16, const __m256i *cospi48, const __m256i *cospi16,
@@ -547,7 +545,6 @@ static INLINE void highbd_write_buffer_16xn_avx2(__m256i *in, uint16_t *output,
         _mm256_storeu_si256((__m256i *)(output + i * stride), u);
     }
 }
-
 
 static INLINE void load_buffer_4x4(const int32_t *coeff, __m256i *in) {
     in[0] = _mm256_loadu_si256((const __m256i *)coeff);
@@ -1066,7 +1063,6 @@ static INLINE void round_shift_8x8_double(__m256i *in, int32_t first, int32_t se
         i++;
     }
 }
-
 
 static INLINE void idct8_col_avx2(__m256i *in, __m256i *out, int32_t bit) {
     const int32_t *cospi = cospi_arr(bit);
@@ -1625,7 +1621,6 @@ static INLINE void iadst16_col_avx2(__m256i *in, __m256i *out,
         tmp2[13] = _mm256_sub_epi32(tmp[5], tmp[13]);
         tmp2[14] = _mm256_sub_epi32(tmp[6], tmp[14]);
         tmp2[15] = _mm256_sub_epi32(tmp[7], tmp[15]);
-
 
         //stage 4
         tmp[8] = half_btf_avx2(
@@ -6191,7 +6186,6 @@ highbd_txfm_all_1d_zeros_w8_arr[TX_SIZES][ITX_TYPES_1D][4] = {
     { { idct32_low1_avx2, idct32_low8_avx2, idct32_low16_avx2, idct32_avx2_new },
     { NULL, NULL, NULL, NULL },
     { iidentity32_avx2, iidentity32_avx2, iidentity32_avx2, iidentity32_avx2 } },
-
     { { idct64_low1_avx2, idct64_low8_avx2, idct64_low16_avx2, idct64_avx2 },
     { NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, NULL } }
@@ -6504,7 +6498,6 @@ static void highbd_inv_txfm2d_add_h_identity_avx2(const int32_t *input,
         highbd_write_buffer_8xn_avx2(buf1, output, stride, ud_flip, txfm_size_row,
             bd);
     }
-
 }
 void av1_highbd_inv_txfm2d_add_universe_avx2(const int32_t *input,
     uint16_t *output, int32_t stride,

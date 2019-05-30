@@ -21,18 +21,15 @@ extern "C" {
 
     typedef struct RegistedUserData
     {
-
         uint8_t   *user_data;    // First byte is itu_t_t35_country_code.
                               // If itu_t_t35_country_code  ==  0xFF, second byte is itu_t_t35_country_code_extension_byte.
                               // the rest are the payloadByte
         uint32_t   user_data_size;
-
     } RegistedUserData;
 
     // SEI structures
     typedef struct AppHrdParameters
     {
-
         EbBool                            nal_hrd_parameters_present_flag;
         EbBool                            vcl_hrd_parameters_present_flag;
         EbBool                            sub_pic_cpb_params_present_flag;
@@ -69,12 +66,10 @@ extern "C" {
         EbBool                            cbr_flag[MAX_TEMPORAL_LAYERS][2][MAX_CPB_COUNT];
 
         EbBool                            cpb_dpb_delays_present_flag;
-
     } AppHrdParameters;
 
     typedef struct AppVideoUsabilityInfo
     {
-
         EbBool            aspect_ratio_info_present_flag;
         uint32_t          aspect_ratio_idc;
         uint32_t          sar_width;
@@ -95,7 +90,6 @@ extern "C" {
         EbBool            chroma_loc_info_present_flag;
         uint32_t          chroma_sample_loc_type_top_field;
         uint32_t          chroma_sample_loc_type_bottom_field;
-
 
         EbBool            neutral_chroma_indication_flag;
         EbBool            field_seq_flag;
@@ -128,7 +122,6 @@ extern "C" {
         uint32_t          log2_max_mv_length_vertical;
 
         AppHrdParameters *hrd_parameters_ptr;
-
     } AppVideoUsabilityInfo;
 
     typedef struct AppPictureTimingSei
@@ -212,7 +205,6 @@ extern "C" {
 
         // Hold the DifCUDeltaQpDepth in this struct so that it is simpler to access it in the Lib,
         // rather than having to reference something deep
-
     } EbCuQpCfg;
 
     // Signals that the default prediction structure and controls are to be
@@ -254,7 +246,6 @@ extern "C" {
         //   an address by one line without changing the horizontal
         //   positioning.
         uint32_t stride;
-
     } EbPicturePlane;
 
     // EbInputPictureDef defines the data formatting of an input picture. Note, each
@@ -283,7 +274,6 @@ extern "C" {
         EbPicturePlane y_aux_plane;
         EbPicturePlane cb_aux_plane;
         EbPicturePlane cr_aux_plane;
-
     } EbInputPictureDef;
 
     typedef struct EbEosDataDef
@@ -292,7 +282,6 @@ extern "C" {
                                                 //   If the last frame is valid, the data will be included in the bistream
                                                 //   If the last frame is NOT valid, the frame will be coded as IDR in the encoder, but
                                                 //   not included in the bitstream.
-
     } EbEosDataDef;
 
     extern EbErrorType eb_app_video_usability_info_ctor(

@@ -32,17 +32,14 @@ static void set_colour_space(const char *value, EbSvtAv1DecConfiguration *cfg) {
   * Config Entry Array
   **********************************/
 ConfigEntry config_entry[] = {
-
     // Decoder settings
     { SKIP_FRAME_TOKEN, "SkipFrame", 1, set_skip_frame },
     { LIMIT_FRAME_TOKEN, "LimitFrame", 1, set_limit_frame },
-
     // Picture properties
     { BIT_DEPTH_TOKEN,"InputBitDepth", 1, set_bit_depth },
     { PIC_WIDTH_TOKEN, "PictureWidth", 1, set_pic_width},
     { PIC_HEIGHT_TOKEN, "PictureHeight", 1, set_pic_height},
     { COLOUR_SPACE_TOKEN,"InputColourSpace", 1, set_colour_space},
-
     // Termination
     { NULL, NULL, 0, NULL}
 };

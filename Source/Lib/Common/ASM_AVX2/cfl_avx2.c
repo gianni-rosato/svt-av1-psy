@@ -46,7 +46,6 @@ void cfl_predict_lbd_avx2(const int16_t *pred_buf_q3,
         int32_t bit_depth,
         int32_t width,
         int32_t height) {
-
     (void) bit_depth;
     if (width <= 16)
     {
@@ -170,7 +169,6 @@ void cfl_predict_hbd_avx2(
         } while ((row += CFL_BUF_LINE_I256) < row_end);
     }
 }
-
 
 // Returns a vector where all the (32-bits) elements are the sum of all the
 // lanes in a.

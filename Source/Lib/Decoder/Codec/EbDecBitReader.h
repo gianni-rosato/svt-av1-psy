@@ -43,7 +43,6 @@ extern "C" {
 #define svt_read_symbol(r, cdf, nsymbs, ACCT_STR_NAME) \
   aom_read_symbol_(r, cdf, nsymbs ACCT_STR_ARG(ACCT_STR_NAME))
 
-
 typedef DaalaReader_t SvtReader;
 
 int svt_reader_init(SvtReader   *r,

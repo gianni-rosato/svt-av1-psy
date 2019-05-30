@@ -16,8 +16,6 @@ extern "C" {
     CflAllowedType store_cfl_required(const EbColorConfig *cc,
                                       const PartitionInfo_t  *xd);
 
-
-
 void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
         int32_t plane,
         TxSize tx_size, TileInfo *td,

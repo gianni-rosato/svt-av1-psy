@@ -45,13 +45,11 @@ extern "C" {
 #if ALT_REF_OVERLAY
         uint8_t                              is_alt_ref;
 #endif
-
     } PacketizationReorderEntry;
 
     extern EbErrorType packetization_reorder_entry_ctor(
         PacketizationReorderEntry **entry_dbl_ptr,
         uint32_t                      picture_number);
-
 
 #ifdef __cplusplus
 }

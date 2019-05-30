@@ -185,7 +185,6 @@ static INLINE void transpose_8nx8n(const __m256i *input, __m256i *output,
 }
 
 static INLINE void transpose_4x8_avx2(const __m256i *in, __m256i *out) {
-
     __m256i perm = _mm256_set_epi32(7, 3, 6, 2, 5, 1, 4, 0);
 
     TRANSPOSE_4X4_AVX2(in[0], in[1], in[2], in[3], out[0], out[1], out[2], out[3]);
@@ -956,7 +955,6 @@ static INLINE void convert_8x8_to_16x16(const __m256i *in, __m256i *out) {
     } while (row_index < 16);
 }
 
-
 static INLINE void load_buffer_16x16(const int16_t *input, __m256i *out,
     int32_t stride, int32_t flipud, int32_t fliplr, int32_t shift) {
     __m256i in[32];
@@ -1006,9 +1004,7 @@ static INLINE void col_txfm_16x16_rounding(__m256i *in, int32_t shift) {
     col_txfm_8x8_rounding(&in[8], shift);
     col_txfm_8x8_rounding(&in[16], shift);
     col_txfm_8x8_rounding(&in[24], shift);
-
 }
-
 
 static void fidtx16x16_avx2(const __m256i *in, __m256i *out, int8_t bit, int32_t col_num) {
     (void)bit;
@@ -2207,7 +2203,6 @@ static INLINE void fadst4x8_col_avx2(__m256i *in, __m256i *output, int32_t bit,
     out[2] = _mm256_unpacklo_epi64(v1, v3);
     out[3] = _mm256_unpackhi_epi64(v1, v3);
 
-
     output[0] = _mm256_permute2x128_si256(out[0], out[1], 0x20);
     output[1] = _mm256_permute2x128_si256(out[2], out[3], 0x20);
     output[2] = _mm256_permute2x128_si256(out[0], out[1], 0x31);
@@ -2315,7 +2310,6 @@ static INLINE void fdct4x8_avx2(__m256i *input, __m256i *output,
     v[0] = _mm_sub_epi32(v[1], v[0]);
     v[0] = _mm_add_epi32(v[0], rnding);
     out[3] = _mm_srai_epi32(v[0], bit);  // buf0[6]
-
 }
 
 static void fadst16x16_avx2(const __m256i *in, __m256i *out, int8_t bit, const int32_t col_num) {
@@ -4001,7 +3995,6 @@ void av1_idtx32_new_avx2(const __m256i *input, __m256i *output, int8_t cos_bit,
     }
 }
 
-
 static void fidtx32x32_avx2(const __m256i *input, __m256i *output,
     const int8_t cos_bit, const int8_t *stage_range) {
     (void)stage_range;
@@ -4193,7 +4186,6 @@ static INLINE void load_buffer_32_avx2(const int16_t *input, __m256i *in,
         temp[1] = _mm_load_si128((const __m128i *)(input + 1 * stride));
         temp[2] = _mm_load_si128((const __m128i *)(input + 2 * stride));
         temp[3] = _mm_load_si128((const __m128i *)(input + 3 * stride));
-
     }
     else {
         temp[0] = _mm_load_si128((const __m128i *)(input + 3 * stride));
@@ -4213,7 +4205,6 @@ static INLINE void load_buffer_32_avx2(const int16_t *input, __m256i *in,
     in[1] = _mm256_cvtepi16_epi32(temp[1]);
     in[2] = _mm256_cvtepi16_epi32(temp[2]);
     in[3] = _mm256_cvtepi16_epi32(temp[3]);
-
 
     in[0] = _mm256_slli_epi32(in[0], shift);
     in[1] = _mm256_slli_epi32(in[1], shift);
@@ -4391,7 +4382,6 @@ void av1_fwd_txfm2d_64x32_avx2(int16_t *input, int32_t *output, uint32_t stride,
 
     av1_fdct32_new_avx2(in, in, bitcol, txfm_size_col, num_col);
 
-
     for (int32_t i = 0; i < num_col; i++) {
         col_txfm_16x16_rounding((in + i * txfm_size_row), -shift[1]);
     }
@@ -4536,7 +4526,6 @@ static const fwd_transform_1d_avx2 row_fwdtxfm_32x8_arr[TX_TYPES] = {
     NULL,             // V_FLIPADST
     NULL,             // H_FLIPADST
 };
-
 
 static const fwd_transform_1d_avx2 col_fwdtxfm_8x16_arr[TX_TYPES] = {
     fdct16x16_avx2,   // DCT_DCT
@@ -5003,7 +4992,6 @@ void av1_fwd_txfm2d_8x4_avx2(int16_t *input, int32_t *output, uint32_t stride,
     const int32_t txh_idx = get_txh_idx(TX_8X4);
     int32_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
     int32_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
-
 
     switch (tx_type) {
     case DCT_DCT:
@@ -5490,5 +5478,4 @@ void av1_fwd_txfm2d_16x4_avx2(int16_t *input, int32_t *output, uint32_t stride,
     default: assert(0);
     }
     (void)bd;
-
 }

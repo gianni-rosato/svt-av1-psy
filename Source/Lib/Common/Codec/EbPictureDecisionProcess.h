@@ -69,7 +69,6 @@ extern EbErrorType picture_decision_context_ctor(
     EbFifo                  *picture_analysis_results_input_fifo_ptr,
     EbFifo                  *picture_decision_results_output_fifo_ptr);
 
-
 extern void* picture_decision_kernel(void *input_ptr);
 
 #if ALT_REF_SUPPORT

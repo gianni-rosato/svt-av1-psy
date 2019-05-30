@@ -92,7 +92,6 @@ void cfl_init(CflCtx *cfl, EbColorConfig *cc) {
 // repeating the last columns and/or rows.
 
 static INLINE void cfl_pad(CflCtx *cfl, int32_t width, int32_t height) {
-
     const int32_t diff_width = width - cfl->buf_width;
     const int32_t diff_height = height - cfl->buf_height;
 
@@ -151,7 +150,6 @@ void cfl_luma_subsampling_444_lbd_c(const uint8_t *input,
         output_q3 += CFL_BUF_LINE;
     }
 }
-
 
 void cfl_luma_subsampling_422_hbd_c(
     const uint16_t *input,
@@ -235,7 +233,6 @@ static INLINE CflAllowedType is_cfl_allowed(const PartitionInfo_t *xd,
         block_size_high[bsize] <= 32);
 }
 
-
 void cfl_compute_parameters(CflCtx *cfl_ctx, TxSize tx_size) {
     //CFL_CTX *const cfl = &xd->cfl;
     // Do not call cfl_compute_parameters multiple time on the same values.
@@ -270,7 +267,6 @@ void cfl_predict_block(PartitionInfo_t *xd, CflCtx *cfl_ctx, uint8_t *dst,
         alpha_q3, cc->bit_depth,
         tx_size_wide[tx_size], tx_size_high[tx_size]);
 }
-
 
 static void cfl_store(CflCtx *cfl_ctx, const uint8_t *input, int input_stride,
                       int row, int col, TxSize tx_size, uint8_t use_hbd)
@@ -335,7 +331,6 @@ static INLINE void sub8x8_adjust_offset(PartitionInfo_t *xd, const CflCtx *cfl_c
         (*col_out)++;
     }
 }
-
 
 void cfl_store_tx(PartitionInfo_t *xd, CflCtx *cfl_ctx, int row, int col, TxSize tx_size,
                   BlockSize  bsize, EbColorConfig *cc, uint8_t *dst_buff,
@@ -402,7 +397,6 @@ static void decode_build_intra_predictors(
     assert(n_left_px >= 0);
     assert(n_bottomleft_px >= 0);
 
-
     if ((!need_above && n_left_px == 0) || (!need_left && n_top_px == 0)) {
         int32_t val;
         if (need_left) {
@@ -416,7 +410,6 @@ static void decode_build_intra_predictors(
             dst += dst_stride;
         }
         return;
-
     }
     // NEED_LEFT
     if (need_left) {
@@ -487,7 +480,6 @@ static void decode_build_intra_predictors(
         }
         left_col[-1] = above_row[-1];
     }
-
 
       if (use_filter_intra) {
           av1_filter_intra_predictor(dst, dst_stride, tx_size, above_row, left_col,
@@ -562,7 +554,6 @@ static void decode_build_intra_predictors_high(
     FilterIntraMode filter_intra_mode, TxSize tx_size,
     int32_t disable_edge_filter, int32_t n_top_px, int32_t n_topright_px, int32_t n_left_px,
     int32_t n_bottomleft_px, int32_t plane, int32_t bd) {
-
     int32_t i;
 
     DECLARE_ALIGNED(16, uint16_t, left_data[MAX_TX_SIZE * 2 + 32]);
@@ -717,7 +708,6 @@ static void decode_build_intra_predictors_high(
                         intra_edge_filter_strength(txwpx, txhpx, p_angle - 90, filt_type);
                     const int32_t n_px = n_top_px + ab_le + (need_right ? txhpx : 0);
                     av1_filter_intra_edge_high(above_row - ab_le, n_px, strength);
-
                 }
                 if (need_left && n_left_px > 0) {
                     const int32_t strength = intra_edge_filter_strength(
@@ -725,7 +715,6 @@ static void decode_build_intra_predictors_high(
                     const int32_t n_px = n_left_px + ab_le + (need_bottom ? txwpx : 0);
 
                     av1_filter_intra_edge_high(left_col - ab_le, n_px, strength);
-
                 }
             }
             upsample_above =
@@ -912,7 +901,6 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
     }
 
     if (plane != AOM_PLANE_Y && part_info->mi->uv_mode == UV_CFL_PRED) {
-
         svtav1_predict_intra_block(part_info, plane,
             tx_size, td,
             pv_blk_recon_buf, recon_strd,

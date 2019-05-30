@@ -140,7 +140,6 @@ typedef struct EbEncHandle
     EbFifo                              **cdef_results_producer_fifo_ptr_array;
     EbFifo                              **rest_results_producer_fifo_ptr_array;
 
-
     // Inter-Process Consumer Fifos
     EbFifo                              **input_buffer_consumer_fifo_ptr_array;
     EbFifo                             ***output_stream_buffer_consumer_fifo_ptr_dbl_array;
@@ -171,8 +170,6 @@ typedef struct EbEncHandle
     EbMemoryMapEntry                       *memory_map;
     uint32_t                                memory_map_index;
     uint64_t                                total_lib_memory;
-
 } EbEncHandle;
-
 
 #endif // EbEncHandle_h

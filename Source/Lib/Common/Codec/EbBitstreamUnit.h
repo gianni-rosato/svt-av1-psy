@@ -235,7 +235,6 @@ on a larger type, you can speed up the decoder by using it here.*/
     OD_WARN_UNUSED_RESULT int32_t od_ec_enc_tell(const OdEcEnc *enc)
         OD_ARG_NONNULL(1);
 
-
     void od_ec_enc_checkpoint(OdEcEnc *dst, const OdEcEnc *src);
     void od_ec_enc_rollback(OdEcEnc *dst, const OdEcEnc *src);
 
@@ -326,7 +325,6 @@ on a larger type, you can speed up the decoder by using it here.*/
         aom_write_cdf(w, symb, cdf, nsymbs);
         if (w->allow_update_cdf) update_cdf(cdf, symb, nsymbs);
     }
-
 
     /********************************************************************************************************************************/
     /********************************************************************************************************************************/

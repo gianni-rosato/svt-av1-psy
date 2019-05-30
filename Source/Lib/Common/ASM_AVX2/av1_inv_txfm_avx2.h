@@ -246,7 +246,6 @@ static INLINE void av1_round_shift_array_32_avx2(__m256i *input,
         }
     }
 
-
     typedef void(*transform_1d_avx2)(__m256i *in, __m256i *out, int32_t bit,
         int32_t do_cols, int32_t bd, int32_t out_shift);
 

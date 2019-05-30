@@ -8,11 +8,9 @@
 
 #include "EbMotionEstimationContext.h"
 
-
 void MotionEstimetionPredUnitCtor(
     MePredUnit   *pu)
 {
-
     pu->distortion = 0xFFFFFFFFull;
 
     pu->prediction_direction = UNI_PRED_LIST_0;
@@ -107,7 +105,6 @@ EbErrorType me_context_ctor(
     // O   O   O
 
     for (listIndex = 0; listIndex < MAX_NUM_OF_REF_PIC_LIST; listIndex++) {
-
         for (refPicIndex = 0; refPicIndex < MAX_REF_IDX; refPicIndex++) {
 #if REDUCE_ME_SEARCH_AREA
             EB_MALLOC(uint8_t *, (*object_dbl_ptr)->pos_b_buffer[listIndex][refPicIndex], sizeof(uint8_t) * (*object_dbl_ptr)->interpolated_stride * max_search_area_height, EB_N_PTR);
@@ -123,7 +120,6 @@ EbErrorType me_context_ctor(
             EB_MALLOC(uint8_t *, (*object_dbl_ptr)->pos_j_buffer[listIndex][refPicIndex], sizeof(uint8_t) * (*object_dbl_ptr)->interpolated_stride * MAX_SEARCH_AREA_HEIGHT, EB_N_PTR);
 #endif
         }
-
     }
 
     EB_MALLOC(EbByte, (*object_dbl_ptr)->one_d_intermediate_results_buf0, sizeof(uint8_t)*BLOCK_SIZE_64*BLOCK_SIZE_64, EB_N_PTR);

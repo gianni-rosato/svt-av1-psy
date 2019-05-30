@@ -57,7 +57,6 @@ extern "C" {
 
     typedef enum EbMeTierZeroPu
     {
-
         // 2Nx2N [85 partitions]
         ME_TIER_ZERO_PU_64x64 = 0,
         ME_TIER_ZERO_PU_32x32_0 = 1,
@@ -80,7 +79,6 @@ extern "C" {
         ME_TIER_ZERO_PU_16x16_13 = 18,
         ME_TIER_ZERO_PU_16x16_14 = 19,
         ME_TIER_ZERO_PU_16x16_15 = 20,
-
         ME_TIER_ZERO_PU_8x8_0 = 21,
         ME_TIER_ZERO_PU_8x8_1 = 22,
         ME_TIER_ZERO_PU_8x8_2 = 23,
@@ -148,7 +146,6 @@ extern "C" {
         // H  [42 partitions]
         ME_TIER_ZERO_PU_64x32_0 = 85,
         ME_TIER_ZERO_PU_64x32_1 = 86,
-
         ME_TIER_ZERO_PU_32x16_0 = 87,
         ME_TIER_ZERO_PU_32x16_1 = 88,
         ME_TIER_ZERO_PU_32x16_2 = 89,
@@ -157,7 +154,6 @@ extern "C" {
         ME_TIER_ZERO_PU_32x16_5 = 92,
         ME_TIER_ZERO_PU_32x16_6 = 93,
         ME_TIER_ZERO_PU_32x16_7 = 94,
-
         ME_TIER_ZERO_PU_16x8_0 = 95,
         ME_TIER_ZERO_PU_16x8_1 = 96,
         ME_TIER_ZERO_PU_16x8_2 = 97,
@@ -193,7 +189,6 @@ extern "C" {
         // V  [42 partitions]
         ME_TIER_ZERO_PU_32x64_0 = 127,
         ME_TIER_ZERO_PU_32x64_1 = 128,
-
         ME_TIER_ZERO_PU_16x32_0 = 129,
         ME_TIER_ZERO_PU_16x32_1 = 130,
         ME_TIER_ZERO_PU_16x32_2 = 131,
@@ -202,7 +197,6 @@ extern "C" {
         ME_TIER_ZERO_PU_16x32_5 = 134,
         ME_TIER_ZERO_PU_16x32_6 = 135,
         ME_TIER_ZERO_PU_16x32_7 = 136,
-
         ME_TIER_ZERO_PU_8x16_0 = 137,
         ME_TIER_ZERO_PU_8x16_1 = 138,
         ME_TIER_ZERO_PU_8x16_2 = 139,
@@ -235,7 +229,6 @@ extern "C" {
         ME_TIER_ZERO_PU_8x16_29 = 166,
         ME_TIER_ZERO_PU_8x16_30 = 167,
         ME_TIER_ZERO_PU_8x16_31 = 168,
-
         // H4 [16 partitions]
         ME_TIER_ZERO_PU_32x8_0 = 169,
         ME_TIER_ZERO_PU_32x8_1 = 170,
@@ -253,7 +246,6 @@ extern "C" {
         ME_TIER_ZERO_PU_32x8_13 = 182,
         ME_TIER_ZERO_PU_32x8_14 = 183,
         ME_TIER_ZERO_PU_32x8_15 = 184,
-
         // V4 [16 partitions]
         ME_TIER_ZERO_PU_8x32_0 = 185,
         ME_TIER_ZERO_PU_8x32_1 = 186,
@@ -431,7 +423,6 @@ extern "C" {
         uint8_t   fractional_search_method;
         EbBool                        fractional_search64x64;
 
-
 #if M9_SUBPEL_SELECTION
         uint8_t                       fractional_search_model;
 #endif
@@ -466,7 +457,6 @@ extern "C" {
         void                          *alt_ref_reference_ptr;
         // -------
 #endif
-
     } MeContext;
 
     typedef struct SsMeContext
@@ -621,7 +611,6 @@ extern "C" {
 
         BlockSize                     sb_size;
         uint32_t                      sb_side;
-
     } SsMeContext;
 
     typedef uint64_t(*EB_ME_DISTORTION_FUNC)(

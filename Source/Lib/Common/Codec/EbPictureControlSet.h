@@ -29,7 +29,6 @@
 
 #include "EbCdef.h"
 
-
 #include"av1me.h"
 #include "hash_motion.h"
 
@@ -13490,7 +13489,6 @@ extern "C" {
 
     typedef struct MacroblockPlane
     {
-
         // Quantizer setings
         // These are used/accessed only in the quantization process
         // RDO does not / must not depend on any of these values
@@ -13582,7 +13580,6 @@ extern "C" {
 
     typedef struct Av1Common
     {
-
         int32_t  mi_rows;
         int32_t  mi_cols;
         int32_t ref_frame_sign_bias[REF_FRAMES]; /* Two state 0, 1 */
@@ -13631,7 +13628,6 @@ extern "C" {
         int8_t  sg_ref_frame_ep[2];
         int8_t  wn_filter_mode;
 
-
         struct PictureControlSet               *pcs_ptr;
     } Av1Common;
 
@@ -13647,7 +13643,6 @@ extern "C" {
         EbBool            split_flag;
     } EbMdcLeafData;
 
-
     typedef struct MdcLcuData
     {
         // Rate Control
@@ -13657,9 +13652,7 @@ extern "C" {
         uint64_t          treeblock_variance;
         uint32_t          leaf_count;
         EbMdcLeafData   leaf_data_array[BLOCK_MAX_COUNT_SB_128];
-
     } MdcLcuData;
-
 
     /**************************************
      * MD Segment Control
@@ -13673,7 +13666,6 @@ extern "C" {
         uint32_t row_count;
         EbBool   in_progress;
         uint32_t current_row_idx;
-
     } MdSegmentCtrl;
 
     /**************************************
@@ -13691,7 +13683,6 @@ extern "C" {
 
     typedef struct SpeedFeatures
     {
-
         // TODO(jingning): combine the related motion search speed features
         // This allows us to use motion search at other sizes as a starting
         // point for this motion search and limits the search range around it.
@@ -13708,7 +13699,6 @@ extern "C" {
 
         // Pattern to be used for any exhaustive mesh searches.
         MeshPattern mesh_patterns[MAX_MESH_STEP];
-
     } SpeedFeatures;
 
     typedef struct PictureControlSet
@@ -13770,7 +13760,6 @@ extern "C" {
 
         uint16_t *src[3];        //dlfed recon in 16bit form
         uint16_t *ref_coeff[3];  //input video in 16bit form
-
 
         uint32_t                              tot_seg_searched_rest;
         EbHandle                              rest_search_mutex;
@@ -13847,7 +13836,6 @@ extern "C" {
 #endif
         NeighborArrayUnit                  *md_inter_pred_dir_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_ref_frame_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-
 
         NeighborArrayUnit32                *md_interpolation_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
 
@@ -13957,7 +13945,6 @@ extern "C" {
         uint8_t   is_edge_sb;
     } SbParams;
 
-
     typedef struct SbGeom
     {
         uint16_t   horizontal_index;
@@ -13989,7 +13976,6 @@ extern "C" {
         uint8_t           check1_for_logo_stationary_edge_over_time_flag;
         uint8_t           check2_for_logo_stationary_edge_over_time_flag;
         uint8_t           low_dist_logo;
-
     } SbStat;
 
     //CHKN

@@ -34,7 +34,6 @@ static EbErrorType EbFifoCtor(
     return EB_ErrorNone;
 }
 
-
 /**************************************
  * EbFifoPushBack
  **************************************/
@@ -109,8 +108,6 @@ static EbErrorType EbCircularBufferCtor(
 
     return EB_ErrorNone;
 }
-
-
 
 /**************************************
  * EbCircularBufferEmptyCheck
@@ -509,8 +506,6 @@ EbErrorType eb_system_resource_ctor(
     return return_error;
 }
 
-
-
 /*********************************************************************
  * EbSystemResourceReleaseProcess
  *********************************************************************/
@@ -583,14 +578,12 @@ EbErrorType eb_release_object(
     object_ptr->live_count = (object_ptr->live_count == 0) ? object_ptr->live_count : object_ptr->live_count - 1;
 
     if ((object_ptr->release_enable == EB_TRUE) && (object_ptr->live_count == 0)) {
-
         // Set live_count to EB_ObjectWrapperReleasedValue
         object_ptr->live_count = EB_ObjectWrapperReleasedValue;
 
         EbMuxingQueueObjectPushFront(
             object_ptr->system_resource_ptr->empty_queue,
             object_ptr);
-
     }
 
     eb_release_mutex(object_ptr->system_resource_ptr->empty_queue->lockout_mutex);
@@ -691,7 +684,6 @@ EbErrorType eb_get_full_object(
 static EbBool EbFifoPeakFront(
     EbFifo            *fifoPtr)
 {
-
     // Set wrapper_ptr to head of BufferPool
     if (fifoPtr->first_ptr == (EbObjectWrapper*)EB_NULL) {
         return EB_TRUE;
@@ -700,7 +692,6 @@ static EbBool EbFifoPeakFront(
         return EB_FALSE;
     }
 }
-
 
 EbErrorType eb_get_full_object_non_blocking(
     EbFifo   *full_fifo_ptr,

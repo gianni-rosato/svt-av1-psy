@@ -63,7 +63,6 @@ typedef struct SourceBasedOperationsContext
     uint8_t    *y_mean_ptr;
     uint8_t    *cr_mean_ptr;
     uint8_t    *cb_mean_ptr;
-
 } SourceBasedOperationsContext;
 
 /***************************************
@@ -76,6 +75,5 @@ extern EbErrorType source_based_operations_context_ctor(
     SequenceControlSet            *sequence_control_set_ptr);
 
 extern void* source_based_operations_kernel(void *input_ptr);
-
 
 #endif // EbSourceBasedOperations_h

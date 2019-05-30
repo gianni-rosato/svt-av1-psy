@@ -53,7 +53,6 @@ decode_block(dec_mod_ctxt, db_r, db_c, db_subsize,          \
 decode_partition(dec_mod_ctxt, (db_r), (db_c),              \
                    (db_subsize), sb_info)
 
-
     switch ((int)partition) {
         case PARTITION_NONE:
             DECODE_BLOCK(mi_row, mi_col, subsize);
@@ -128,5 +127,4 @@ void decode_super_block(DecModCtxt *dec_mod_ctxt,
     /* Decode partition */
     decode_partition(dec_mod_ctxt, mi_row, mi_col,
                      dec_handle->seq_header.sb_size, sb_info);
-
 }

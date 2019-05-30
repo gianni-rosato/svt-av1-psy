@@ -12,7 +12,6 @@
 #ifndef AV1_COMMON_RESTORATION_H_
 #define AV1_COMMON_RESTORATION_H_
 
-
 #include <math.h>
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
@@ -21,13 +20,11 @@
 extern "C" {
 #endif
 
-
     void apply_selfguided_restoration_c(const uint8_t *dat8, int32_t width, int32_t height,
         int32_t stride, int32_t eps, const int32_t *xqd,
         uint8_t *dst8, int32_t dst_stride,
         int32_t *tmpbuf, int32_t bit_depth,
         int32_t highbd);
-
 
 #define CLIP(x, lo, hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
 #define RINT(x) ((x) < 0 ? (int32_t)((x)-0.5) : (int32_t)((x) + 0.5))
@@ -303,7 +300,6 @@ extern "C" {
     // be at least SGRPROJ_TMPBUF_SIZE big.
     void av1_loop_restoration_filter_unit(
         uint8_t need_bounadaries,
-
         const RestorationTileLimits *limits, const RestorationUnitInfo *rui,
         const RestorationStripeBoundaries *rsb, RestorationLineBuffers *rlbs,
         const AV1PixelRect *tile_rect, int32_t tile_stripe0, int32_t ss_x, int32_t ss_y,
@@ -344,9 +340,6 @@ extern "C" {
     //                                              struct AV1Common *cm,
     //                                              int32_t after_cdef);
 
-
-
-
     static const double TINY_NEAR_ZERO = 1.0E-16;
 
     // Solves Ax = b, where x and b are column vectors of size nx1 and A is nxn
@@ -386,17 +379,12 @@ extern "C" {
         return 1;
     }
 
-
-
 #define RDDIV_BITS 7
 #define RD_EPB_SHIFT 6
 
 #define RDCOST_DBL(RM, R, D)                                       \
   (((((double)(R)) * (RM)) / (double)(1 << AV1_PROB_COST_SHIFT)) + \
    ((double)(D) * (1 << RDDIV_BITS)))
-
-
-
 
     typedef struct RestUnitSearchInfo
     {
@@ -411,7 +399,6 @@ extern "C" {
         // index. Indices: WIENER, SGRPROJ, SWITCHABLE.
         RestorationType best_rtype[RESTORE_TYPES - 1];
     } RestUnitSearchInfo;
-
 
 #ifdef __cplusplus
 }  // extern "C"

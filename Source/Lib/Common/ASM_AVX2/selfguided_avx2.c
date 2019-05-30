@@ -551,7 +551,6 @@ void av1_selfguided_restoration_avx2(const uint8_t *dgd8, int32_t width, int32_t
     int32_t *flt1, int32_t flt_stride,
     int32_t sgr_params_idx, int32_t bit_depth,
     int32_t highbd) {
-
     // The ALIGN_POWER_OF_TWO macro here ensures that column 1 of Atl, Btl,
     // Ctl and Dtl is 32-byte aligned.
     const int32_t buf_elts = ALIGN_POWER_OF_TWO(RESTORATION_PROC_UNIT_PELS, 3);
@@ -642,7 +641,6 @@ void apply_selfguided_restoration_avx2(const uint8_t *dat8, int32_t width,
     const SgrParamsType *const params = &sgr_params[eps];
     int32_t xq[2];
     decode_xq(xqd, xq, params);
-
 
     __m256i xq0 = _mm256_set1_epi32(xq[0]);
     __m256i xq1 = _mm256_set1_epi32(xq[1]);

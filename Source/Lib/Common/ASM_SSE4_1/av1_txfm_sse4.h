@@ -9,7 +9,6 @@
 * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
 */
 
-
 #ifndef AV1_TXFM_SSE4_H_
 #define AV1_TXFM_SSE4_H_
 
@@ -23,7 +22,6 @@ extern "C" {
     // 2^12 * sqrt(2)
     static const int32_t NewSqrt2 = 5793;
     static INLINE __m128i av1_round_shift_32_sse4_1(__m128i vec, int32_t bit) {
-
         __m128i tmp, round;
         round = _mm_set1_epi32(1 << (bit - 1));
         tmp = _mm_add_epi32(vec, round);

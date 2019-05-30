@@ -10,7 +10,6 @@ extern "C" {
 
 #include "EbDefinitions.h"
 
-
     void eb_enc_msb_pack2_d(
         uint8_t  *in8_bit_buffer,
         uint32_t  in8_stride,

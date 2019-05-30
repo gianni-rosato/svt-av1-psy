@@ -116,19 +116,15 @@ typedef struct CandidateMv_dec {
 } CandidateMv_dec;
 
 typedef struct FilterIntraModeInfo {
-
     /*!< Specifies the type of intra filtering, and can represent any of the following:
      * FILTER_DC_PRED, FILTER_V_PRED, FILTER_H_PRED, FILTER_D157_PRED, FILTER_PAETH_PRED */
     FilterIntraMode filter_intra_mode;
 
     /*!< This bit specifies whether or not intra filtering can be used. */
     uint8_t use_filter_intra;
-
 } FilterIntraModeInfo_t;
 
-
 typedef struct InterIntraMode {
-
     /*!< Specifies the type of intra prediction to be used */
     InterIntraMode interintra_mode;
 
@@ -141,11 +137,9 @@ typedef struct InterIntraMode {
 
     /*!< Specifies the sign of the wedge blend. */
     // int interintra_wedge_sign; Always 0
-
 } InterIntraMode_t;
 
 typedef struct {
-
     /*!< Indicates that the compound_idx syntax element should be read or not. */
     uint8_t comp_group_idx;
 
@@ -164,11 +158,9 @@ typedef struct {
 
     /*!< Specifies the type of mask to be used during blending. */
     COMPOUND_MASK_TYPE mask_type;
-
 } InterCompoundData_t;
 
 typedef struct TransformInfo {
-
     /*!< Specifies the transform size to be used for this TU. */
     TxSize tx_size;
 
@@ -176,11 +168,9 @@ typedef struct TransformInfo {
     TxType txk_type;
 
     int8_t  cbf;
-
 } TransformInfo_t;
 
 typedef struct ModeInfo_t {
-
     // Common for both INTER and INTRA blocks
     BlockSize          sb_type;
     PredictionMode      mode;
@@ -257,7 +247,6 @@ typedef struct ModeInfo_t {
 } ModeInfo_t;
 
 typedef struct SBInfo {
-
     int8_t      *sb_cdef_strength; /*!< At 64x64 blk level */
     int32_t     *sb_delta_q; /*!< At SB level */
     int32_t     *sb_delta_lf; /*!< At SB level */
@@ -273,11 +262,9 @@ typedef struct SBInfo {
     //Add buffer for coeff storage
 
     //Add buffer for coeff storage
-
 } SBInfo;
 
 typedef struct PartitionInfo {
-
     /*!< Specifies the vertical location of the block in units of 4x4 luma samples. */
     uint16_t     mi_row;
 
@@ -348,7 +335,6 @@ typedef struct PartitionInfo {
 
     /* CFL ctxt */
     void    *pv_cfl_ctxt;
-
 } PartitionInfo_t;
 
 #endif //EbDecBlock_h

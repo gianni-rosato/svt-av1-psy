@@ -122,7 +122,6 @@ strncpy_ss(char *dest, rsize_t dmax, const char *src, rsize_t slen)
         return RCNEGATE(ESLEMAX);
     }
 
-
     if (dest < src) {
         overlap_bumper = src;
 
@@ -153,7 +152,6 @@ strncpy_ss(char *dest, rsize_t dmax, const char *src, rsize_t slen)
             dest++;
             src++;
         }
-
     }
     else {
         overlap_bumper = dest;
@@ -256,7 +254,6 @@ strcpy_ss(char *dest, rsize_t dmax, const char *src)
             dest++;
             src++;
         }
-
     }
     else {
         overlap_bumper = dest;

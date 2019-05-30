@@ -12,7 +12,6 @@
 extern "C" {
 #endif
 
-
     void aom_highbd_lpf_horizontal_14_sse2(
         uint16_t      *s,
         int32_t        pitch,

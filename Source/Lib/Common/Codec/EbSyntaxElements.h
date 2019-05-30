@@ -16,7 +16,6 @@ extern "C" {
         NAL_REF_IDC_PRIORITY_HIGHEST
     } NalRefIdc;
 
-
 #define EB_INTRA_PLANAR     0
 #define EB_INTRA_DC         1
 #define EB_INTRA_MODE_2     2
@@ -63,7 +62,6 @@ extern "C" {
 #define EB_INTRA_CHROMA_DM          4
 #define EB_INTRA_CHROMA_TOTAL_COUNT 5
 #define EB_INTRA_CHROMA_INVALID     ~0u
-
 
 #ifdef __cplusplus
 }

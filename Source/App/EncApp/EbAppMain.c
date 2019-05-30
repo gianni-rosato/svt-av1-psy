@@ -95,7 +95,6 @@ int32_t main(int32_t argc, char* argv[])
     AppExitConditionType    exitConditionsRecon[MAX_CHANNEL_NUMBER];         // Processing loop exit condition
     AppExitConditionType    exitConditionsInput[MAX_CHANNEL_NUMBER];          // Processing loop exit condition
 
-
     EbBool                 channelActive[MAX_CHANNEL_NUMBER];
 
     EbConfig             *configs[MAX_CHANNEL_NUMBER];        // Encoder Configuration
@@ -107,7 +106,6 @@ int32_t main(int32_t argc, char* argv[])
     printf("-------------------------------------------\n");
     printf("SVT-AV1 Encoder\n");
     if (!get_help(argc, argv)) {
-
         // Get num_channels
         num_channels = get_number_of_channels(argc, argv);
         if (num_channels == 0) {
@@ -144,7 +142,6 @@ int32_t main(int32_t argc, char* argv[])
         // Process any command line options, including the configuration file
 
         if (return_error == EB_ErrorNone) {
-
             // Set main thread affinity
             if (configs[0]->target_socket != -1)
                 AssignAppThreadGroup(configs[0]->target_socket);
@@ -152,7 +149,6 @@ int32_t main(int32_t argc, char* argv[])
             // Init the Encoder
             for (instanceCount = 0; instanceCount < num_channels; ++instanceCount) {
                 if (return_errors[instanceCount] == EB_ErrorNone) {
-
                     configs[instanceCount]->active_channel_count = num_channels;
                     configs[instanceCount]->channel_id = instanceCount;
 
@@ -177,7 +173,6 @@ int32_t main(int32_t argc, char* argv[])
                         exitConditionsInput[instanceCount]  = APP_ExitConditionNone;
                         channelActive[instanceCount]        = EB_TRUE;
                         StartTime((uint64_t*)&configs[instanceCount]->performance_context.encode_start_time[0], (uint64_t*)&configs[instanceCount]->performance_context.encode_start_time[1]);
-
                     }
                     else {
                         exitConditions[instanceCount]       = APP_ExitConditionError;
@@ -232,7 +227,6 @@ int32_t main(int32_t argc, char* argv[])
                         double frame_rate;
 
                         if ((configs[instanceCount]->frame_rate_numerator != 0 && configs[instanceCount]->frame_rate_denominator != 0) || configs[instanceCount]->frame_rate != 0) {
-
                             if (configs[instanceCount]->frame_rate_numerator && configs[instanceCount]->frame_rate_denominator && (configs[instanceCount]->frame_rate_numerator != 0 && configs[instanceCount]->frame_rate_denominator != 0)) {
                                 frame_rate = ((double)configs[instanceCount]->frame_rate_numerator) / ((double)configs[instanceCount]->frame_rate_denominator);
                             }
@@ -266,11 +260,9 @@ int32_t main(int32_t argc, char* argv[])
             }
             for (instanceCount = 0; instanceCount < num_channels; ++instanceCount) {
                 if (exitConditions[instanceCount] == APP_ExitConditionFinished && return_errors[instanceCount] == EB_ErrorNone) {
-
                     if (configs[instanceCount]->stop_encoder == EB_FALSE) {
                         // Interlaced Video
                         if (configs[instanceCount]->interlaced_video || configs[instanceCount]->separate_fields) {
-
                             printf("\nChannel %u\nAverage Speed:\t\t%.0f fields per sec\nTotal Encoding Time:\t\t%.0f ms\nTotal Execution Time:\t\t%.2f ms\nAverage Latency:\t%.0f ms\nMax Latency:\t\t%u ms\n",
                                 (uint32_t)(instanceCount + 1),
                                 configs[instanceCount]->performance_context.average_speed,
@@ -287,7 +279,6 @@ int32_t main(int32_t argc, char* argv[])
                                 configs[instanceCount]->performance_context.total_execution_time * 1000,
                                 configs[instanceCount]->performance_context.average_latency,
                                 (uint32_t)(configs[instanceCount]->performance_context.max_latency));
-
                         }
                     }
                     else {
@@ -327,4 +318,3 @@ int32_t main(int32_t argc, char* argv[])
 
     return (return_error == 0) ? 0 : 1;
 }
-

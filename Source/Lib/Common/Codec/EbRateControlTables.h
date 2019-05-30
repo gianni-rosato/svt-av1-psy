@@ -10,7 +10,6 @@
 #include "EbDefinitions.h"
 #include "EbUtility.h"
 
-
 /**************************************
  * Rate Control Defines
  **************************************/
@@ -67,7 +66,5 @@ static const uint8_t ref_qp_list_table[] =
 extern EbErrorType rate_control_tables_ctor(
     RateControlTables *rate_control_tables_array
 );
-
-
 
 #endif //EbRateControlTables_h

@@ -24,7 +24,6 @@ extern EbErrorType early_mode_decision_lcu(
     uint32_t                                  sb_index,
     ModeDecisionConfigurationContext     *context_ptr);
 
-
 /*******************************************
 * derive_delta_qp_for_each_leaf_lcu
 *   Derive Lcu For Each Leaf (LCU)

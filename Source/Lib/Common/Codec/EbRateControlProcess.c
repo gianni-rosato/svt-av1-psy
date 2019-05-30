@@ -35,7 +35,6 @@ uint32_t qp_scaling_calc(
     uint32_t            temporal_layer_index,
     uint32_t            base_qp);
 
-
 /*****************************
 * Internal Typedefs
 *****************************/
@@ -46,7 +45,6 @@ void rate_control_layer_reset(
     uint32_t                 picture_area_in_pixel,
     EbBool                  was_used)
 {
-
     SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet *)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     uint32_t            slice_num;
     uint32_t            temporal_layer_index;
@@ -133,7 +131,6 @@ void rate_control_layer_reset(
     rate_control_layer_ptr->channel_bit_rate = (uint64_t)MAX((int64_t)1, (int64_t)rate_control_layer_ptr->channel_bit_rate);
     rate_control_layer_ptr->ec_bit_constraint = rate_control_layer_ptr->channel_bit_rate;
 
-
     // This is only for the initial frame, because the feedback is from packetization now and all of these are considered
     // considering the bits for slice header
     // *Note - only one-slice-per picture is supported for UHD
@@ -195,7 +192,6 @@ void rate_control_layer_reset_part2(
 
 EbErrorType high_level_rate_control_context_ctor(
     HighLevelRateControlContext **entry_dbl_ptr) {
-
     HighLevelRateControlContext *entry_ptr;
     EB_MALLOC(HighLevelRateControlContext*, entry_ptr, sizeof(HighLevelRateControlContext), EB_N_PTR);
     *entry_dbl_ptr = entry_ptr;
@@ -205,7 +201,6 @@ EbErrorType high_level_rate_control_context_ctor(
 
 EbErrorType rate_control_layer_context_ctor(
     RateControlLayerContext **entry_dbl_ptr) {
-
     RateControlLayerContext *entry_ptr;
     EB_MALLOC(RateControlLayerContext*, entry_ptr, sizeof(RateControlLayerContext), EB_N_PTR);
 
@@ -220,7 +215,6 @@ EbErrorType rate_control_layer_context_ctor(
 
 EbErrorType rate_control_interval_param_context_ctor(
     RateControlIntervalParamContext **entry_dbl_ptr) {
-
     uint32_t temporal_index;
     EbErrorType return_error = EB_ErrorNone;
     RateControlIntervalParamContext *entry_ptr;
@@ -262,7 +256,6 @@ EbErrorType rate_control_interval_param_context_ctor(
 EbErrorType rate_control_coded_frames_stats_context_ctor(
     CodedFramesStatsEntry **entry_dbl_ptr,
     uint64_t                picture_number) {
-
     CodedFramesStatsEntry *entry_ptr;
     EB_MALLOC(CodedFramesStatsEntry*, entry_ptr, sizeof(CodedFramesStatsEntry), EB_N_PTR);
 
@@ -351,12 +344,10 @@ EbErrorType rate_control_context_ctor(
     context_ptr->base_layer_frames_avg_qp = 0;
     context_ptr->base_layer_intra_frames_avg_qp = 0;
 
-
     context_ptr->intra_coef_rate = 4;
     context_ptr->extra_bits = 0;
     context_ptr->extra_bits_gen = 0;
     context_ptr->max_rate_adjust_delta_qp = 0;
-
 
     return EB_ErrorNone;
 }
@@ -399,7 +390,6 @@ uint64_t predict_bits(
             {
                 accum += (uint32_t)((uint32_t)hl_rate_control_histogram_ptr_temp->me_distortion_histogram[i] * (uint32_t)sad_bits_array_ptr[i]);
                 accum_intra += (uint32_t)((uint32_t)hl_rate_control_histogram_ptr_temp->ois_distortion_histogram[i] * (uint32_t)intra_sad_bits_array_ptr[i]);
-
             }
             if (accum > accum_intra * 3)
                 pred_bits_ref_qp = accum_intra;
@@ -411,7 +401,6 @@ uint64_t predict_bits(
         // Scale for in complete LCSs
         //  total_bits is normalized based on the area because of the sbs at the picture boundries
         total_bits = total_bits * (uint64_t)area_in_pixel / (hl_rate_control_histogram_ptr_temp->full_sb_count << 12);
-
     }
     return total_bits;
 }
@@ -423,7 +412,6 @@ void high_level_rc_input_picture_vbr(
     RateControlContext          *context_ptr,
     HighLevelRateControlContext *high_level_rate_control_ptr)
 {
-
     EbBool                      end_of_sequence_flag = EB_TRUE;
 
     HlRateControlHistogramEntry *hl_rate_control_histogram_ptr_temp;
@@ -431,7 +419,6 @@ void high_level_rc_input_picture_vbr(
     uint32_t                     queue_entry_index_temp;
     uint32_t                     queue_entry_index_temp2;
     uint32_t                     queue_entry_index_head_temp;
-
 
     uint64_t                     min_la_bit_distance;
     uint32_t                     selected_ref_qp_table_index;
@@ -442,7 +429,6 @@ void high_level_rc_input_picture_vbr(
     uint32_t                     previous_selected_ref_qp = encode_context_ptr->previous_selected_ref_qp;
     uint64_t                     max_coded_poc = encode_context_ptr->max_coded_poc;
     uint32_t                     max_coded_poc_selected_ref_qp = encode_context_ptr->max_coded_poc_selected_ref_qp;
-
 
     uint32_t                     ref_qp_index;
     uint32_t                     ref_qp_index_temp;
@@ -476,11 +462,9 @@ void high_level_rc_input_picture_vbr(
     tables_updated = sequence_control_set_ptr->encode_context_ptr->rate_control_tables_array_updated;
     picture_control_set_ptr->percentage_updated = EB_FALSE;
     if (sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
-
         // Increamenting the head of the hl_rate_control_historgram_queue and clean up the entores
         hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[encode_context_ptr->hl_rate_control_historgram_queue_head_index]);
         while ((hl_rate_control_histogram_ptr_temp->life_count == 0) && hl_rate_control_histogram_ptr_temp->passed_to_hlrc) {
-
             eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
             // Reset the Reorder Queue Entry
             hl_rate_control_histogram_ptr_temp->picture_number += INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH;
@@ -494,11 +478,9 @@ void high_level_rc_input_picture_vbr(
                 (encode_context_ptr->hl_rate_control_historgram_queue_head_index == HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ? 0 : encode_context_ptr->hl_rate_control_historgram_queue_head_index + 1;
             eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
             hl_rate_control_histogram_ptr_temp = encode_context_ptr->hl_rate_control_historgram_queue[encode_context_ptr->hl_rate_control_historgram_queue_head_index];
-
         }
         // For the case that number of frames in the sliding window is less than size of the look ahead or intra Refresh. i.e. end of sequence
         if ((picture_control_set_ptr->frames_in_sw < MIN(sequence_control_set_ptr->static_config.look_ahead_distance + 1, (uint32_t)sequence_control_set_ptr->intra_period_length + 1))) {
-
             selected_ref_qp = max_coded_poc_selected_ref_qp;
 
             // Update the QP for the sliding window based on the status of RC
@@ -533,7 +515,6 @@ void high_level_rc_input_picture_vbr(
 
             queue_entry_index_temp = queue_entry_index_head_temp;
             {
-
                 hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_temp]);
 
                 if (hl_rate_control_histogram_ptr_temp->slice_type == I_SLICE)
@@ -580,7 +561,6 @@ void high_level_rc_input_picture_vbr(
 
                         pred_bits_ref_qp = accum;
                         num_of_full_sbs = hl_rate_control_histogram_ptr_temp->full_sb_count;
-
                     }
                     hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp] += pred_bits_ref_qp;
                 }
@@ -591,7 +571,6 @@ void high_level_rc_input_picture_vbr(
 
                 // Store the pred_bits_ref_qp for the first frame in the window to PCS
                 picture_control_set_ptr->pred_bits_ref_qp[ref_qp_index_temp] = hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp];
-
             }
         }
         else {
@@ -640,7 +619,6 @@ void high_level_rc_input_picture_vbr(
             selected_ref_qp = selected_ref_qp_table_index;
             best_qp_found = EB_FALSE;
             while (ref_qp_table_index >= qp_search_min && ref_qp_table_index <= qp_search_max && !best_qp_found) {
-
                 ref_qp_index = CLIP3(
                     sequence_control_set_ptr->static_config.min_qp_allowed,
                     MAX_REF_QP_NUM,//sequence_control_set_ptr->static_config.max_qp_allowed,
@@ -660,7 +638,6 @@ void high_level_rc_input_picture_vbr(
 
                 while (!end_of_sequence_flag &&
                     queue_entry_index_temp <= queue_entry_index_head_temp + sequence_control_set_ptr->static_config.look_ahead_distance) {
-
                     queue_entry_index_temp2 = (queue_entry_index_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ? queue_entry_index_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH : queue_entry_index_temp;
                     hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_temp2]);
 
@@ -714,7 +691,6 @@ void high_level_rc_input_picture_vbr(
                     }
                 }
                 ref_qp_table_index = (uint32_t)(ref_qp_table_index + qp_step);
-
             }
         }
 
@@ -729,7 +705,6 @@ void high_level_rc_input_picture_vbr(
             high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_index] = 0;
 
             if (high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_index] == 0) {
-
                 // Finding the predicted bits for each frame in the sliding window at the reference Qp(s)
                 //queue_entry_index_temp = encode_context_ptr->hl_rate_control_historgram_queue_head_index;
                 queue_entry_index_head_temp = (int32_t)(picture_control_set_ptr->picture_number - encode_context_ptr->hl_rate_control_historgram_queue[encode_context_ptr->hl_rate_control_historgram_queue_head_index]->picture_number);
@@ -746,7 +721,6 @@ void high_level_rc_input_picture_vbr(
                 while (!end_of_sequence_flag &&
                     //queue_entry_index_temp <= encode_context_ptr->hl_rate_control_historgram_queue_head_index+sequence_control_set_ptr->static_config.look_ahead_distance){
                     queue_entry_index_temp <= queue_entry_index_head_temp + sequence_control_set_ptr->static_config.look_ahead_distance) {
-
                     queue_entry_index_temp2 = (queue_entry_index_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ? queue_entry_index_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH : queue_entry_index_temp;
                     hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_temp2]);
 
@@ -787,7 +761,6 @@ void high_level_rc_input_picture_vbr(
             uint64_t i_slice_bits = 0;
 
             if (picture_control_set_ptr->picture_number % ((sequence_control_set_ptr->intra_period_length + 1)) == 0) {
-
                 queue_entry_index_head_temp = (int32_t)(picture_control_set_ptr->picture_number - encode_context_ptr->hl_rate_control_historgram_queue[encode_context_ptr->hl_rate_control_historgram_queue_head_index]->picture_number);
                 queue_entry_index_head_temp += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
                 queue_entry_index_head_temp = (queue_entry_index_head_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
@@ -801,7 +774,6 @@ void high_level_rc_input_picture_vbr(
 
                 while (!end_of_sequence_flag &&
                     queue_entry_index_temp <= queue_entry_index_head_temp + sequence_control_set_ptr->intra_period_length) {
-
                     queue_entry_index_temp2 = (queue_entry_index_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ? queue_entry_index_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH : queue_entry_index_temp;
                     hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_temp2]);
 
@@ -855,13 +827,11 @@ void high_level_rc_input_picture_vbr(
         // Set the QP
         previous_selected_ref_qp = selected_ref_qp;
         if (picture_control_set_ptr->picture_number > max_coded_poc && picture_control_set_ptr->temporal_layer_index < 2 && !picture_control_set_ptr->end_of_sequence_region) {
-
             max_coded_poc = picture_control_set_ptr->picture_number;
             max_coded_poc_selected_ref_qp = previous_selected_ref_qp;
             encode_context_ptr->previous_selected_ref_qp = previous_selected_ref_qp;
             encode_context_ptr->max_coded_poc = max_coded_poc;
             encode_context_ptr->max_coded_poc_selected_ref_qp = max_coded_poc_selected_ref_qp;
-
         }
 
         if (picture_control_set_ptr->slice_type == I_SLICE)
@@ -914,7 +884,6 @@ void frame_level_rc_input_picture_vbr(
     RateControlLayerContext         *rate_control_layer_ptr,
     RateControlIntervalParamContext *rate_control_param_ptr)
 {
-
     RateControlLayerContext *rate_control_layer_temp_ptr;
 
     // Tiles
@@ -955,7 +924,6 @@ void frame_level_rc_input_picture_vbr(
     area_in_pixel = 0;
 
     for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-
         sb_params_ptr = &sequence_control_set_ptr->sb_params_array[sb_index];
 
         if (sb_params_ptr->is_complete_sb) {
@@ -972,7 +940,6 @@ void frame_level_rc_input_picture_vbr(
 
     if (picture_control_set_ptr->parent_pcs_ptr->first_frame_in_temporal_layer || (picture_control_set_ptr->picture_number == rate_control_param_ptr->first_poc)) {
         if (sequence_control_set_ptr->static_config.enable_qp_scaling_flag && (picture_control_set_ptr->picture_number != rate_control_param_ptr->first_poc)) {
-
             picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
                 (int32_t)sequence_control_set_ptr->static_config.min_qp_allowed,
                 (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed,
@@ -996,7 +963,6 @@ void frame_level_rc_input_picture_vbr(
 
             if ((context_ptr->extra_bits > (int64_t)(context_ptr->virtual_buffer_size >> 8)) ||
                 (context_ptr->extra_bits < -(int64_t)(context_ptr->virtual_buffer_size >> 8))) {
-
                 int64_t extra_bits_per_gop = 0;
 
                 if (picture_control_set_ptr->parent_pcs_ptr->end_of_sequence_region) {
@@ -1019,7 +985,6 @@ void frame_level_rc_input_picture_vbr(
                         }
                         else if ((context_ptr->extra_bits > (int64_t)(context_ptr->virtual_buffer_size << 2)) ||
                             (context_ptr->extra_bits < -(int64_t)(context_ptr->virtual_buffer_size << 2))) {
-
                             extra_bits_per_gop = CLIP3(
                                 -(int64_t)context_ptr->vb_fill_threshold2 << 1,
                                 (int64_t)context_ptr->vb_fill_threshold2 << 1,
@@ -1043,7 +1008,6 @@ void frame_level_rc_input_picture_vbr(
                     }
                     else if ((context_ptr->extra_bits > (int64_t)(context_ptr->virtual_buffer_size << 2)) ||
                         (context_ptr->extra_bits < -(int64_t)(context_ptr->virtual_buffer_size << 2))) {
-
                         extra_bits_per_gop = CLIP3(
                             -(int64_t)context_ptr->vb_fill_threshold2 << 1,
                             (int64_t)context_ptr->vb_fill_threshold2 << 1,
@@ -1057,7 +1021,6 @@ void frame_level_rc_input_picture_vbr(
             }
 
             for (temporal_layer_idex = 0; temporal_layer_idex < EB_MAX_TEMPORAL_LAYERS; temporal_layer_idex++) {
-
                 rate_control_layer_temp_ptr = rate_control_param_ptr->rate_control_layer_array[temporal_layer_idex];
                 rate_control_layer_reset(
                     rate_control_layer_temp_ptr,
@@ -1103,7 +1066,6 @@ void frame_level_rc_input_picture_vbr(
                         picture_control_set_ptr->picture_qp = (uint8_t)MAX((int32_t)picture_control_set_ptr->picture_qp - (int32_t)THRESHOLD2QPINCREASE, 0);
             }
             else {
-
                 if (rate_control_param_ptr->virtual_buffer_level >= context_ptr->vb_fill_threshold2) {
                     picture_control_set_ptr->picture_qp = picture_control_set_ptr->picture_qp + (uint8_t)THRESHOLD2QPINCREASE;
                 }
@@ -1121,10 +1083,8 @@ void frame_level_rc_input_picture_vbr(
                 picture_control_set_ptr->picture_qp);
         }
         else {
-
             // LCU Loop
             for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-
                 sb_params_ptr = &sequence_control_set_ptr->sb_params_array[sb_index];
 
                 if (sb_params_ptr->is_complete_sb) {
@@ -1137,7 +1097,6 @@ void frame_level_rc_input_picture_vbr(
 
             // totalSquareMad has RC_PRECISION precision
             picture_control_set_ptr->parent_pcs_ptr->sad_me <<= RC_PRECISION;
-
         }
 
         temp_qp = picture_control_set_ptr->picture_qp;
@@ -1159,7 +1118,6 @@ void frame_level_rc_input_picture_vbr(
         }
     }
     else {
-
         picture_control_set_ptr->parent_pcs_ptr->sad_me = 0;
 
         // if the pixture is an I slice, for now we set the QP as the QP of the previous frame
@@ -1182,7 +1140,6 @@ void frame_level_rc_input_picture_vbr(
                 picture_control_set_ptr->picture_qp);
 
             temp_qp = picture_control_set_ptr->picture_qp;
-
         }
 
         else { // Not an I slice
@@ -1199,7 +1156,6 @@ void frame_level_rc_input_picture_vbr(
 
             // LCU Loop
             for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-
                 sb_params_ptr = &sequence_control_set_ptr->sb_params_array[sb_index];
 
                 if (sb_params_ptr->is_complete_sb) {
@@ -1246,11 +1202,9 @@ void frame_level_rc_input_picture_vbr(
         }
         if (picture_control_set_ptr->parent_pcs_ptr->first_non_intra_frame_in_temporal_layer && picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
             picture_control_set_ptr->picture_qp = (uint8_t)(rate_control_param_ptr->intra_frames_qp + context_ptr->qp_scaling_map[picture_control_set_ptr->temporal_layer_index][rate_control_param_ptr->intra_frames_qp_bef_scal] - context_ptr->qp_scaling_map_I_SLICE[rate_control_param_ptr->intra_frames_qp_bef_scal]);
-
         }
 
         if (!rate_control_layer_ptr->feedback_arrived && picture_control_set_ptr->slice_type != I_SLICE) {
-
             picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
                 (int32_t)sequence_control_set_ptr->static_config.min_qp_allowed,
                 (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed,
@@ -1274,15 +1228,11 @@ void frame_level_rc_input_picture_vbr(
         }
         else {
 
-
             if (rate_control_param_ptr->virtual_buffer_level > context_ptr->vb_fill_threshold2 << 2) {
                 picture_control_set_ptr->picture_qp = picture_control_set_ptr->picture_qp + (uint8_t)THRESHOLD2QPINCREASE + 2;
-
             }
             else if (rate_control_param_ptr->virtual_buffer_level > context_ptr->vb_fill_threshold2 << 1) {
                 picture_control_set_ptr->picture_qp = picture_control_set_ptr->picture_qp + (uint8_t)THRESHOLD2QPINCREASE + 1;
-
-
             }
             else if (rate_control_param_ptr->virtual_buffer_level > context_ptr->vb_fill_threshold2) {
                 picture_control_set_ptr->picture_qp = picture_control_set_ptr->picture_qp + (uint8_t)THRESHOLD2QPINCREASE + 1;
@@ -1291,7 +1241,6 @@ void frame_level_rc_input_picture_vbr(
                 rate_control_param_ptr->virtual_buffer_level < context_ptr->vb_fill_threshold2) {
                 picture_control_set_ptr->picture_qp = picture_control_set_ptr->picture_qp + (uint8_t)THRESHOLD1QPINCREASE;
             }
-
         }
         if (picture_control_set_ptr->parent_pcs_ptr->end_of_sequence_region) {
             if (rate_control_param_ptr->virtual_buffer_level < -(context_ptr->vb_fill_threshold2 << 2))
@@ -1302,7 +1251,6 @@ void frame_level_rc_input_picture_vbr(
                 picture_control_set_ptr->picture_qp = (uint8_t)MAX((int32_t)picture_control_set_ptr->picture_qp - (int32_t)THRESHOLD2QPINCREASE, 0);
         }
         else {
-
             if (rate_control_param_ptr->virtual_buffer_level < -(context_ptr->vb_fill_threshold2 << 2))
                 picture_control_set_ptr->picture_qp = (uint8_t)MAX((int32_t)picture_control_set_ptr->picture_qp - (int32_t)THRESHOLD2QPINCREASE - 1, 0);
             else if (rate_control_param_ptr->virtual_buffer_level < -context_ptr->vb_fill_threshold2)
@@ -1322,7 +1270,6 @@ void frame_level_rc_input_picture_vbr(
                     (uint32_t)MAX((int32_t)picture_control_set_ptr->parent_pcs_ptr->best_pred_qp - 8, 0),
                     (uint32_t)picture_control_set_ptr->parent_pcs_ptr->best_pred_qp + 8,
                     (uint32_t)picture_control_set_ptr->picture_qp);
-
             }
         }
         if (picture_control_set_ptr->picture_number != rate_control_param_ptr->first_poc &&
@@ -1520,7 +1467,6 @@ void frame_level_rc_feedback_picture_vbr(
         }
     }
 
-
     {
         uint64_t previous_frame_ec_bits = 0;
         EbBool picture_min_qp_allowed = EB_TRUE;
@@ -1604,7 +1550,6 @@ void frame_level_rc_feedback_picture_vbr(
         }
 
         if (previous_frame_bit_actual) {
-
             uint64_t bit_changes_rate;
             // Updating virtual buffer level and it can be negative
             if ((parentpicture_control_set_ptr->picture_number == rate_control_param_ptr->first_poc) &&
@@ -1657,7 +1602,6 @@ void frame_level_rc_feedback_picture_vbr(
         // check if all the frames in the interval have arrived
         if (rate_control_param_ptr->processed_frames_number == (rate_control_param_ptr->last_poc - rate_control_param_ptr->first_poc + 1) &&
             sequence_control_set_ptr->intra_period_length != -1) {
-
             uint32_t temporal_index;
             int64_t extra_bits;
             rate_control_param_ptr->first_poc += PARALLEL_GOP_MAX_NUMBER * (uint32_t)(sequence_control_set_ptr->intra_period_length + 1);
@@ -1677,7 +1621,6 @@ void frame_level_rc_feedback_picture_vbr(
 
             rate_control_param_ptr->virtual_buffer_level = context_ptr->virtual_buffer_size >> 1;
             context_ptr->extra_bits += extra_bits;
-
         }
         // Allocate the extra_bits among other GOPs
         if ((parentpicture_control_set_ptr->temporal_layer_index <= 2) &&
@@ -1742,7 +1685,6 @@ void frame_level_rc_feedback_picture_vbr(
                     interval_in_use_count = 0;
                     // Distribute it among those that are consuming less
                     for (interval_index_temp = 0; interval_index_temp < PARALLEL_GOP_MAX_NUMBER; interval_index_temp++) {
-
                         if (context_ptr->rate_control_param_queue[interval_index_temp]->in_use &&
                             context_ptr->rate_control_param_queue[interval_index_temp]->virtual_buffer_level <= ((int64_t)context_ptr->virtual_buffer_size >> 1)) {
                             interval_in_use_count++;
@@ -1762,7 +1704,6 @@ void frame_level_rc_feedback_picture_vbr(
                                 extra_bits_per_gop);
                         // Distribute the rate among them
                         for (interval_index_temp = 0; interval_index_temp < PARALLEL_GOP_MAX_NUMBER; interval_index_temp++) {
-
                             if (context_ptr->rate_control_param_queue[interval_index_temp]->in_use &&
                                 context_ptr->rate_control_param_queue[interval_index_temp]->virtual_buffer_level <= ((int64_t)context_ptr->virtual_buffer_size >> 1)) {
                                 context_ptr->rate_control_param_queue[interval_index_temp]->virtual_buffer_level -= extra_bits_per_gop;
@@ -1776,7 +1717,6 @@ void frame_level_rc_feedback_picture_vbr(
             else {
                 // Distribute it among those that are consuming less
                 for (interval_index_temp = 0; interval_index_temp < PARALLEL_GOP_MAX_NUMBER; interval_index_temp++) {
-
                     if (context_ptr->rate_control_param_queue[interval_index_temp]->in_use &&
                         context_ptr->rate_control_param_queue[interval_index_temp]->virtual_buffer_level < ((int64_t)context_ptr->virtual_buffer_size >> 1)) {
                         interval_in_use_count++;
@@ -1808,7 +1748,6 @@ void frame_level_rc_feedback_picture_vbr(
                 else {
                     interval_in_use_count = 0;
                     for (interval_index_temp = 0; interval_index_temp < PARALLEL_GOP_MAX_NUMBER; interval_index_temp++) {
-
                         if (context_ptr->rate_control_param_queue[interval_index_temp]->in_use &&
                             context_ptr->rate_control_param_queue[interval_index_temp]->virtual_buffer_level < (int64_t)(context_ptr->virtual_buffer_size)) {
                             interval_in_use_count++;
@@ -1828,7 +1767,6 @@ void frame_level_rc_feedback_picture_vbr(
                                 extra_bits_per_gop);
                         // Distribute the rate among them
                         for (interval_index_temp = 0; interval_index_temp < PARALLEL_GOP_MAX_NUMBER; interval_index_temp++) {
-
                             if (context_ptr->rate_control_param_queue[interval_index_temp]->in_use &&
                                 context_ptr->rate_control_param_queue[interval_index_temp]->virtual_buffer_level < (int64_t)(context_ptr->virtual_buffer_size)) {
                                 context_ptr->rate_control_param_queue[interval_index_temp]->virtual_buffer_level -= extra_bits_per_gop;
@@ -1863,8 +1801,6 @@ void frame_level_rc_feedback_picture_vbr(
             (int)context_ptr->extra_bits);
     }
 #endif
-
-
 }
 void high_level_rc_input_picture_cvbr(
     PictureParentControlSet     *picture_control_set_ptr,
@@ -1873,7 +1809,6 @@ void high_level_rc_input_picture_cvbr(
     RateControlContext          *context_ptr,
     HighLevelRateControlContext *high_level_rate_control_ptr)
 {
-
     EbBool                      end_of_sequence_flag = EB_TRUE;
 
     HlRateControlHistogramEntry *hl_rate_control_histogram_ptr_temp;
@@ -1881,7 +1816,6 @@ void high_level_rc_input_picture_cvbr(
     uint32_t                     queue_entry_index_temp;
     uint32_t                     queue_entry_index_temp2;
     uint32_t                     queue_entry_index_head_temp;
-
 
     uint64_t                     min_la_bit_distance;
     uint32_t                     selected_ref_qp_table_index;
@@ -1892,7 +1826,6 @@ void high_level_rc_input_picture_cvbr(
     uint32_t                     previous_selected_ref_qp = encode_context_ptr->previous_selected_ref_qp;
     uint64_t                     max_coded_poc = encode_context_ptr->max_coded_poc;
     uint32_t                     max_coded_poc_selected_ref_qp = encode_context_ptr->max_coded_poc_selected_ref_qp;
-
 
     uint32_t                     ref_qp_index;
     uint32_t                     ref_qp_index_temp;
@@ -1927,7 +1860,6 @@ void high_level_rc_input_picture_cvbr(
     tables_updated = sequence_control_set_ptr->encode_context_ptr->rate_control_tables_array_updated;
     picture_control_set_ptr->percentage_updated = EB_FALSE;
     if (sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
-
         // Increamenting the head of the hl_rate_control_historgram_queue and clean up the entores
         hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[encode_context_ptr->hl_rate_control_historgram_queue_head_index]);
 
@@ -1940,18 +1872,14 @@ void high_level_rc_input_picture_cvbr(
             hl_rate_control_histogram_ptr_temp->is_coded = EB_FALSE;
             hl_rate_control_histogram_ptr_temp->total_num_bits_coded = 0;
 
-
-
             // Increment the Reorder Queue head Ptr
             encode_context_ptr->hl_rate_control_historgram_queue_head_index =
                 (encode_context_ptr->hl_rate_control_historgram_queue_head_index == HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ? 0 : encode_context_ptr->hl_rate_control_historgram_queue_head_index + 1;
             eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
             hl_rate_control_histogram_ptr_temp = encode_context_ptr->hl_rate_control_historgram_queue[encode_context_ptr->hl_rate_control_historgram_queue_head_index];
-
         }
         // For the case that number of frames in the sliding window is less than size of the look ahead or intra Refresh. i.e. end of sequence
         if ((picture_control_set_ptr->frames_in_sw < MIN(sequence_control_set_ptr->static_config.look_ahead_distance + 1, (uint32_t)sequence_control_set_ptr->intra_period_length + 1))) {
-
             selected_ref_qp = max_coded_poc_selected_ref_qp;
 
             // Update the QP for the sliding window based on the status of RC
@@ -1986,7 +1914,6 @@ void high_level_rc_input_picture_cvbr(
 
             queue_entry_index_temp = queue_entry_index_head_temp;
             {
-
                 hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_temp]);
 
                 if (hl_rate_control_histogram_ptr_temp->slice_type == I_SLICE)
@@ -2033,7 +1960,6 @@ void high_level_rc_input_picture_cvbr(
 
                         pred_bits_ref_qp = accum;
                         num_of_full_sbs = hl_rate_control_histogram_ptr_temp->full_sb_count;
-
                     }
                     hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp] += pred_bits_ref_qp;
                 }
@@ -2044,7 +1970,6 @@ void high_level_rc_input_picture_cvbr(
 
                 // Store the pred_bits_ref_qp for the first frame in the window to PCS
                 picture_control_set_ptr->pred_bits_ref_qp[ref_qp_index_temp] = hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp];
-
             }
         }
         else {
@@ -2096,7 +2021,6 @@ void high_level_rc_input_picture_cvbr(
                 (int32_t)picture_control_set_ptr->frames_in_sw > sequence_control_set_ptr->intra_period_length) {
                 best_qp_found = EB_FALSE;
                 while (ref_qp_table_index >= qp_search_min && ref_qp_table_index <= qp_search_max && !best_qp_found) {
-
                     ref_qp_index = CLIP3(
                         sequence_control_set_ptr->static_config.min_qp_allowed,
                         MAX_REF_QP_NUM,//sequence_control_set_ptr->static_config.max_qp_allowed,
@@ -2116,7 +2040,6 @@ void high_level_rc_input_picture_cvbr(
 
                     while (!end_of_sequence_flag &&
                         queue_entry_index_temp <= queue_entry_index_head_temp + sequence_control_set_ptr->static_config.look_ahead_distance) {
-
                         queue_entry_index_temp2 = (queue_entry_index_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ? queue_entry_index_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH : queue_entry_index_temp;
                         hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_temp2]);
 
@@ -2168,9 +2091,7 @@ void high_level_rc_input_picture_cvbr(
                         }
                     }
                     ref_qp_table_index = (uint32_t)(ref_qp_table_index + qp_step);
-
                 }
-
 
                 if (ref_qp_index == sequence_control_set_ptr->static_config.max_qp_allowed && high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_index] > bit_constraint_per_sw) {
                     delta_qp = (int)((high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_index] - bit_constraint_per_sw) * 100 / (high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_index - 1] - high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_index]));
@@ -2189,7 +2110,6 @@ void high_level_rc_input_picture_cvbr(
             high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_index] = 0;
 
             if (high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_index] == 0) {
-
                 // Finding the predicted bits for each frame in the sliding window at the reference Qp(s)
                 //queue_entry_index_temp = encode_context_ptr->hl_rate_control_historgram_queue_head_index;
                 queue_entry_index_head_temp = (int32_t)(picture_control_set_ptr->picture_number - encode_context_ptr->hl_rate_control_historgram_queue[encode_context_ptr->hl_rate_control_historgram_queue_head_index]->picture_number);
@@ -2206,7 +2126,6 @@ void high_level_rc_input_picture_cvbr(
                 while (!end_of_sequence_flag &&
                     //queue_entry_index_temp <= encode_context_ptr->hl_rate_control_historgram_queue_head_index+sequence_control_set_ptr->static_config.look_ahead_distance){
                     queue_entry_index_temp <= queue_entry_index_head_temp + sequence_control_set_ptr->static_config.look_ahead_distance) {
-
                     queue_entry_index_temp2 = (queue_entry_index_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ? queue_entry_index_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH : queue_entry_index_temp;
                     hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_temp2]);
 
@@ -2244,9 +2163,7 @@ void high_level_rc_input_picture_cvbr(
         if ((sequence_control_set_ptr->intra_period_length != -1) &&
             ((int32_t)picture_control_set_ptr->frames_in_sw > sequence_control_set_ptr->intra_period_length) &&
             ((int32_t)picture_control_set_ptr->frames_in_sw > sequence_control_set_ptr->intra_period_length)) {
-
             if (picture_control_set_ptr->picture_number % ((sequence_control_set_ptr->intra_period_length + 1)) == 0) {
-
                 queue_entry_index_head_temp = (int32_t)(picture_control_set_ptr->picture_number - encode_context_ptr->hl_rate_control_historgram_queue[encode_context_ptr->hl_rate_control_historgram_queue_head_index]->picture_number);
                 queue_entry_index_head_temp += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
                 queue_entry_index_head_temp = (queue_entry_index_head_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
@@ -2260,7 +2177,6 @@ void high_level_rc_input_picture_cvbr(
 
                 while (!end_of_sequence_flag &&
                     queue_entry_index_temp <= queue_entry_index_head_temp + sequence_control_set_ptr->intra_period_length) {
-
                     queue_entry_index_temp2 = (queue_entry_index_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ? queue_entry_index_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH : queue_entry_index_temp;
                     hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_temp2]);
 
@@ -2297,7 +2213,6 @@ void high_level_rc_input_picture_cvbr(
         // Set the QP
         previous_selected_ref_qp = selected_ref_qp;
         if (picture_control_set_ptr->picture_number > max_coded_poc && picture_control_set_ptr->temporal_layer_index < 2 && !picture_control_set_ptr->end_of_sequence_region) {
-
             max_coded_poc = picture_control_set_ptr->picture_number;
             max_coded_poc_selected_ref_qp = previous_selected_ref_qp;
             encode_context_ptr->previous_selected_ref_qp = previous_selected_ref_qp;
@@ -2355,7 +2270,6 @@ void frame_level_rc_input_picture_cvbr(
     RateControlLayerContext         *rate_control_layer_ptr,
     RateControlIntervalParamContext *rate_control_param_ptr)
 {
-
     RateControlLayerContext *rate_control_layer_temp_ptr;
 
     // Tiles
@@ -2396,7 +2310,6 @@ void frame_level_rc_input_picture_cvbr(
     area_in_pixel = 0;
 
     for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-
         sb_params_ptr = &sequence_control_set_ptr->sb_params_array[sb_index];
 
         if (sb_params_ptr->is_complete_sb) {
@@ -2413,7 +2326,6 @@ void frame_level_rc_input_picture_cvbr(
 
     if (picture_control_set_ptr->parent_pcs_ptr->first_frame_in_temporal_layer || (picture_control_set_ptr->picture_number == rate_control_param_ptr->first_poc)) {
         if (sequence_control_set_ptr->static_config.enable_qp_scaling_flag && (picture_control_set_ptr->picture_number != rate_control_param_ptr->first_poc)) {
-
             picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
                 (int32_t)sequence_control_set_ptr->static_config.min_qp_allowed,
                 (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed,
@@ -2436,7 +2348,6 @@ void frame_level_rc_input_picture_cvbr(
             }
 
             for (temporal_layer_idex = 0; temporal_layer_idex < EB_MAX_TEMPORAL_LAYERS; temporal_layer_idex++) {
-
                 rate_control_layer_temp_ptr = rate_control_param_ptr->rate_control_layer_array[temporal_layer_idex];
                 rate_control_layer_reset(
                     rate_control_layer_temp_ptr,
@@ -2467,10 +2378,8 @@ void frame_level_rc_input_picture_cvbr(
                 picture_control_set_ptr->picture_qp);
         }
         else {
-
             // LCU Loop
             for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-
                 sb_params_ptr = &sequence_control_set_ptr->sb_params_array[sb_index];
 
                 if (sb_params_ptr->is_complete_sb) {
@@ -2483,7 +2392,6 @@ void frame_level_rc_input_picture_cvbr(
 
             // totalSquareMad has RC_PRECISION precision
             picture_control_set_ptr->parent_pcs_ptr->sad_me <<= RC_PRECISION;
-
         }
 
         temp_qp = picture_control_set_ptr->picture_qp;
@@ -2505,9 +2413,7 @@ void frame_level_rc_input_picture_cvbr(
         }
     }
     else {
-
         picture_control_set_ptr->parent_pcs_ptr->sad_me = 0;
-
 
         HighLevelRateControlContext *high_level_rate_control_ptr = context_ptr->high_level_rate_control_ptr;
         EncodeContext               *encode_context_ptr = sequence_control_set_ptr->encode_context_ptr;
@@ -2517,12 +2423,10 @@ void frame_level_rc_input_picture_cvbr(
         uint32_t                     queue_entry_index_temp2;
         uint32_t                     queue_entry_index_head_temp;
 
-
         uint64_t                     min_la_bit_distance;
         uint32_t                     selected_ref_qp_table_index;
         uint32_t                     selected_ref_qp;
         uint32_t                     previous_selected_ref_qp = encode_context_ptr->previous_selected_ref_qp;
-
 
         uint32_t                     ref_qp_index;
         uint32_t                     ref_qp_index_temp;
@@ -2535,8 +2439,6 @@ void frame_level_rc_input_picture_cvbr(
 
         uint64_t                     bit_constraint_per_sw = 0;
         EbBool                      end_of_sequence_flag = EB_TRUE;
-
-
 
         // Loop over the QPs and find the best QP
         min_la_bit_distance = MAX_UNSIGNED_VALUE;
@@ -2578,7 +2480,6 @@ void frame_level_rc_input_picture_cvbr(
         selected_ref_qp = selected_ref_qp_table_index;
         best_qp_found = EB_FALSE;
         while (ref_qp_table_index >= qp_search_min && ref_qp_table_index <= qp_search_max && !best_qp_found) {
-
             ref_qp_index = CLIP3(
                 sequence_control_set_ptr->static_config.min_qp_allowed,
                 MAX_REF_QP_NUM,
@@ -2592,7 +2493,6 @@ void frame_level_rc_input_picture_cvbr(
             while (!end_of_sequence_flag &&
                 //queue_entry_index_temp <= queue_entry_index_head_temp + sequence_control_set_ptr->static_config.look_ahead_distance) {
                 queue_entry_index_temp <= queue_entry_index_head_temp + encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_head_temp]->frames_in_sw - 1) {
-
                 queue_entry_index_temp2 = (queue_entry_index_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ? queue_entry_index_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH : queue_entry_index_temp;
                 hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_temp2]);
 
@@ -2645,9 +2545,7 @@ void frame_level_rc_input_picture_cvbr(
                 }
             }
             ref_qp_table_index = (uint32_t)(ref_qp_table_index + qp_step);
-
         }
-
 
         int delta_qp = 0;
         if (ref_qp_index == sequence_control_set_ptr->static_config.max_qp_allowed && high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_index] > bit_constraint_per_sw) {
@@ -2664,7 +2562,6 @@ void frame_level_rc_input_picture_cvbr(
             sequence_control_set_ptr->static_config.min_qp_allowed,
             sequence_control_set_ptr->static_config.max_qp_allowed,
             (uint8_t)((int)picture_control_set_ptr->parent_pcs_ptr->best_pred_qp + delta_qp));
-
 
         // if the pixture is an I slice, for now we set the QP as the QP of the previous frame
         if (picture_control_set_ptr->slice_type == I_SLICE) {
@@ -2686,7 +2583,6 @@ void frame_level_rc_input_picture_cvbr(
                 picture_control_set_ptr->picture_qp);
 
             temp_qp = picture_control_set_ptr->picture_qp;
-
         }
 
         else { // Not an I slice
@@ -2703,7 +2599,6 @@ void frame_level_rc_input_picture_cvbr(
 
             // LCU Loop
             for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-
                 sb_params_ptr = &sequence_control_set_ptr->sb_params_array[sb_index];
 
                 if (sb_params_ptr->is_complete_sb) {
@@ -2750,11 +2645,9 @@ void frame_level_rc_input_picture_cvbr(
         }
         if (picture_control_set_ptr->parent_pcs_ptr->first_non_intra_frame_in_temporal_layer && picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
             picture_control_set_ptr->picture_qp = (uint8_t)(rate_control_param_ptr->intra_frames_qp + context_ptr->qp_scaling_map[picture_control_set_ptr->temporal_layer_index][rate_control_param_ptr->intra_frames_qp_bef_scal] - context_ptr->qp_scaling_map_I_SLICE[rate_control_param_ptr->intra_frames_qp_bef_scal]);
-
         }
 
         if (!rate_control_layer_ptr->feedback_arrived && picture_control_set_ptr->slice_type != I_SLICE) {
-
             picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
                 (int32_t)sequence_control_set_ptr->static_config.min_qp_allowed,
                 (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed,
@@ -2778,16 +2671,13 @@ void frame_level_rc_input_picture_cvbr(
         }
         else {
 
-
             //if (rate_control_param_ptr->virtual_buffer_level > context_ptr->vb_fill_threshold2 << 2){
             if (rate_control_param_ptr->virtual_buffer_level > context_ptr->vb_fill_threshold2 + (int64_t)(context_ptr->virtual_buffer_size * 2 / 3)) {
                 picture_control_set_ptr->picture_qp = picture_control_set_ptr->picture_qp + (uint8_t)THRESHOLD2QPINCREASE + 2;
-
             }
             //else if (rate_control_param_ptr->virtual_buffer_level > context_ptr->vb_fill_threshold2 << 1){
             else if (rate_control_param_ptr->virtual_buffer_level > context_ptr->vb_fill_threshold2 + (int64_t)(context_ptr->virtual_buffer_size / 3)) {
                 picture_control_set_ptr->picture_qp = picture_control_set_ptr->picture_qp + (uint8_t)THRESHOLD2QPINCREASE + 1;
-
             }
             else if (rate_control_param_ptr->virtual_buffer_level > context_ptr->vb_fill_threshold2) {
                 picture_control_set_ptr->picture_qp = picture_control_set_ptr->picture_qp + (uint8_t)THRESHOLD2QPINCREASE + 1;
@@ -2796,7 +2686,6 @@ void frame_level_rc_input_picture_cvbr(
                 rate_control_param_ptr->virtual_buffer_level < context_ptr->vb_fill_threshold2) {
                 picture_control_set_ptr->picture_qp = picture_control_set_ptr->picture_qp + (uint8_t)THRESHOLD1QPINCREASE;
             }
-
         }
         if (picture_control_set_ptr->parent_pcs_ptr->end_of_sequence_region) {
             if (rate_control_param_ptr->virtual_buffer_level < -(context_ptr->vb_fill_threshold2 << 2))
@@ -2807,7 +2696,6 @@ void frame_level_rc_input_picture_cvbr(
                 picture_control_set_ptr->picture_qp = (uint8_t)MAX((int32_t)picture_control_set_ptr->picture_qp - (int32_t)THRESHOLD2QPINCREASE, 0);
         }
         else {
-
             if (rate_control_param_ptr->virtual_buffer_level < -(context_ptr->vb_fill_threshold2 << 2))
                 picture_control_set_ptr->picture_qp = (uint8_t)MAX((int32_t)picture_control_set_ptr->picture_qp - (int32_t)THRESHOLD2QPINCREASE - 1, 0);
             else if (rate_control_param_ptr->virtual_buffer_level < -context_ptr->vb_fill_threshold2)
@@ -2900,7 +2788,6 @@ void frame_level_rc_feedback_picture_cvbr(
     SequenceControlSet      *sequence_control_set_ptr,
     RateControlContext      *context_ptr)
 {
-
     RateControlLayerContext             *rate_control_layer_temp_ptr;
     RateControlIntervalParamContext     *rate_control_param_ptr;
     RateControlLayerContext             *rate_control_layer_ptr;
@@ -2996,7 +2883,6 @@ void frame_level_rc_feedback_picture_cvbr(
         }
     }
 
-
     {
         uint64_t previous_frame_ec_bits = 0;
         EbBool picture_min_qp_allowed = EB_TRUE;
@@ -3080,7 +2966,6 @@ void frame_level_rc_feedback_picture_cvbr(
         }
 
         if (previous_frame_bit_actual) {
-
             uint64_t bit_changes_rate;
             // Updating virtual buffer level and it can be negative
             context_ptr->extra_bits_gen = 0;
@@ -3124,7 +3009,6 @@ void frame_level_rc_feedback_picture_cvbr(
         // check if all the frames in the interval have arrived
         if (rate_control_param_ptr->processed_frames_number == (rate_control_param_ptr->last_poc - rate_control_param_ptr->first_poc + 1) &&
             sequence_control_set_ptr->intra_period_length != -1) {
-
             uint32_t temporal_index;
             int64_t extra_bits;
             rate_control_param_ptr->first_poc += PARALLEL_GOP_MAX_NUMBER * (uint32_t)(sequence_control_set_ptr->intra_period_length + 1);
@@ -3144,7 +3028,6 @@ void frame_level_rc_feedback_picture_cvbr(
 
             rate_control_param_ptr->virtual_buffer_level = context_ptr->virtual_buffer_size >> 1;
             context_ptr->extra_bits += extra_bits;
-
         }
         context_ptr->extra_bits = 0;
     }
@@ -3176,15 +3059,12 @@ void high_level_rc_feed_back_picture(
     PictureParentControlSet *picture_control_set_ptr,
     SequenceControlSet      *sequence_control_set_ptr)
 {
-
     // Queue variables
     HlRateControlHistogramEntry *hl_rate_control_histogram_ptr_temp;
     uint32_t                     queue_entry_index_head_temp;
 
-
     //SVT_LOG("\nOut:%d Slidings: ",picture_control_set_ptr->picture_number);
     if (sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
-
         // Update the coded rate in the histogram queue
         if (picture_control_set_ptr->picture_number >= sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue[sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_head_index]->picture_number) {
             queue_entry_index_head_temp = (int32_t)(picture_control_set_ptr->picture_number - sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue[sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_head_index]->picture_number);
@@ -3202,7 +3082,6 @@ void high_level_rc_feed_back_picture(
                 eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
             }
         }
-
     }
 }
 // rate control QP refinement
@@ -3212,7 +3091,6 @@ void rate_control_refinement(
     RateControlIntervalParamContext *rate_control_param_ptr,
     RateControlIntervalParamContext *prev_gop_rate_control_param_ptr,
     RateControlIntervalParamContext *next_gop_rate_control_param_ptr) {
-
     if (picture_control_set_ptr->picture_number == rate_control_param_ptr->first_poc && picture_control_set_ptr->picture_number != 0 && !prev_gop_rate_control_param_ptr->scene_change_in_gop) {
         int16_t deltaApQp = (int16_t)prev_gop_rate_control_param_ptr->first_pic_actual_qp - (int16_t)prev_gop_rate_control_param_ptr->first_pic_pred_qp;
         int64_t extraApBitRatio = (prev_gop_rate_control_param_ptr->first_pic_pred_bits != 0) ?
@@ -3264,7 +3142,6 @@ void rate_control_refinement(
     // Scene change
     if (picture_control_set_ptr->slice_type == I_SLICE && picture_control_set_ptr->picture_number != rate_control_param_ptr->first_poc) {
         if (next_gop_rate_control_param_ptr->first_pic_actual_qp_assigned) {
-
             picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
                 (uint32_t)MAX((int32_t)next_gop_rate_control_param_ptr->first_pic_actual_qp - (int32_t)1, 0),
                 (uint32_t)next_gop_rate_control_param_ptr->first_pic_actual_qp + 8,
@@ -3282,15 +3159,12 @@ void rate_control_refinement(
                     (uint32_t)MAX((int32_t)rate_control_param_ptr->first_pic_actual_qp - (int32_t)4, 0),
                     (uint32_t)rate_control_param_ptr->first_pic_actual_qp + 8,
                     picture_control_set_ptr->picture_qp);
-
             }
-
         }
     }
 
     if (sequence_control_set_ptr->intra_period_length != -1 && picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels < 2 && (int32_t)picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
         if (next_gop_rate_control_param_ptr->first_pic_actual_qp_assigned || next_gop_rate_control_param_ptr->was_used) {
-
             picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
                 (uint32_t)MAX((int32_t)next_gop_rate_control_param_ptr->first_pic_actual_qp - (int32_t)4, 0),
                 (uint32_t)picture_control_set_ptr->picture_qp,
@@ -3309,7 +3183,6 @@ void init_rc(
     RateControlContext *context_ptr,
     PictureControlSet  *picture_control_set_ptr,
     SequenceControlSet *sequence_control_set_ptr) {
-
     context_ptr->high_level_rate_control_ptr->target_bit_rate = sequence_control_set_ptr->static_config.target_bit_rate;
     context_ptr->high_level_rate_control_ptr->frame_rate = sequence_control_set_ptr->frame_rate;
     context_ptr->high_level_rate_control_ptr->channel_bit_rate_per_frame = (uint64_t)MAX((int64_t)1, (int64_t)((context_ptr->high_level_rate_control_ptr->target_bit_rate << RC_PRECISION) / context_ptr->high_level_rate_control_ptr->frame_rate));
@@ -3360,9 +3233,7 @@ void init_rc(
         context_ptr->vb_fill_threshold2 = context_ptr->virtual_buffer_level_initial_value + (context_ptr->virtual_buffer_size / 3);
         context_ptr->base_layer_frames_avg_qp = sequence_control_set_ptr->qp;
         context_ptr->base_layer_intra_frames_avg_qp = sequence_control_set_ptr->qp;
-
     }
-
 
     for (uint32_t base_qp = 0; base_qp < MAX_REF_QP_NUM; base_qp++) {
         if (base_qp < 64) {
@@ -3374,7 +3245,6 @@ void init_rc(
         }
         else {
             context_ptr->qp_scaling_map_I_SLICE[base_qp] = (uint32_t)CLIP3(0, 63, (int)base_qp - (63 - (int)context_ptr->qp_scaling_map_I_SLICE[63]));
-
         }
 
         for (uint32_t temporal_layer_index = 0; temporal_layer_index < sequence_control_set_ptr->static_config.hierarchical_levels+1; temporal_layer_index++) {
@@ -3455,34 +3325,28 @@ uint32_t qp_scaling_calc(
     { { 0.40, 0.7, 0.85, 1.0, 1.0, 1.0 },
     { 0.35, 0.6, 0.8,  0.9, 1.0, 1.0 } };
 
-
     int qindex = quantizer_to_qindex[base_qp];
     const double q = av1_convert_qindex_to_q(qindex, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
     int delta_qindex;
 
     if (slice_type == I_SLICE) {
-
         delta_qindex = av1_compute_qdelta(
             q,
             q* 0.25,
             (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
-
     }
     else {
-
         delta_qindex = av1_compute_qdelta(
             q,
             q* delta_rate_new[sequence_control_set_ptr->static_config.hierarchical_levels == 4][temporal_layer_index], // RC does not support 5L
             //q* delta_rate_new[0][temporal_layer_index], // RC does not support 5L
             (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
-
     }
 
     base_qindex = MAX(qindex + delta_qindex, MIN_Q_INDEX);
     scaled_qp = (uint32_t)(base_qindex) >> 2;
 
     return scaled_qp;
-
 }
 #endif
 typedef struct {
@@ -3749,7 +3613,6 @@ static int adaptive_qindex_calc(
     PictureControlSet         *picture_control_set_ptr,
     RATE_CONTROL                *rc,
     int                          qindex) {
-
     SequenceControlSet        *sequence_control_set_ptr = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr;
     const Av1Common  *const cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
 
@@ -3793,7 +3656,6 @@ static int adaptive_qindex_calc(
     }
 #endif
     if (frame_is_intra_only(picture_control_set_ptr->parent_pcs_ptr)) {
-
         // Not forced keyframe.
         double q_adj_factor = 1.0;
         double q_val;
@@ -3930,7 +3792,6 @@ void* rate_control_kernel(void *input_ptr)
     rate_control_model_ctor(&rc_model_ptr);
 
     for (;;) {
-
         // Get RateControl Task
         eb_get_full_object(
             context_ptr->rate_control_input_tasks_fifo_ptr,
@@ -3941,14 +3802,12 @@ void* rate_control_kernel(void *input_ptr)
 
         // Modify these for different temporal layers later
         switch (task_type) {
-
         case RC_PICTURE_MANAGER_RESULT:
 
             picture_control_set_ptr = (PictureControlSet  *)rate_control_tasks_ptr->picture_control_set_wrapper_ptr->object_ptr;
             sequence_control_set_ptr = (SequenceControlSet *)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 
             if (picture_control_set_ptr->picture_number == 0) {
-
                 rate_control_model_init(rc_model_ptr, sequence_control_set_ptr);
 
                 av1_rc_init_minq_luts();
@@ -3957,7 +3816,6 @@ void* rate_control_kernel(void *input_ptr)
                     context_ptr,
                     picture_control_set_ptr,
                     sequence_control_set_ptr);
-
             }
             if (sequence_control_set_ptr->static_config.rate_control_mode)
             {
@@ -3989,7 +3847,6 @@ void* rate_control_kernel(void *input_ptr)
                 uint32_t interval_index_temp = 0;
                 EbBool intervalFound = EB_FALSE;
                 while ((interval_index_temp < PARALLEL_GOP_MAX_NUMBER) && !intervalFound) {
-
                     if (picture_control_set_ptr->picture_number >= context_ptr->rate_control_param_queue[interval_index_temp]->first_poc &&
                         picture_control_set_ptr->picture_number <= context_ptr->rate_control_param_queue[interval_index_temp]->last_poc) {
                         intervalFound = EB_TRUE;
@@ -4014,7 +3871,6 @@ void* rate_control_kernel(void *input_ptr)
             }
 
             rate_control_layer_ptr = rate_control_param_ptr->rate_control_layer_array[picture_control_set_ptr->temporal_layer_index];
-
 
             if (sequence_control_set_ptr->static_config.rate_control_mode == 0) {
                 // if RC mode is 0,  fixed QP is used
@@ -4071,7 +3927,6 @@ void* rate_control_kernel(void *input_ptr)
                         const int32_t delta_qindex = av1_compute_qdelta(
                             q_val,
                             q_val * delta_rate_new[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels == 4][picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index],
-
                             (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
 
                         picture_control_set_ptr->parent_pcs_ptr->base_qindex =
@@ -4079,13 +3934,11 @@ void* rate_control_kernel(void *input_ptr)
                             (int32_t)quantizer_to_qindex[sequence_control_set_ptr->static_config.min_qp_allowed],
                                 (int32_t)quantizer_to_qindex[sequence_control_set_ptr->static_config.max_qp_allowed],
                                 (int32_t)(qindex + delta_qindex));
-
                     }
                     picture_control_set_ptr->picture_qp = (uint8_t)CLIP3((int32_t)sequence_control_set_ptr->static_config.min_qp_allowed, (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed, picture_control_set_ptr->parent_pcs_ptr->base_qindex >> 2);
                 }
 
                 else if (picture_control_set_ptr->parent_pcs_ptr->qp_on_the_fly == EB_TRUE) {
-
                     picture_control_set_ptr->picture_qp = (uint8_t)CLIP3((int32_t)sequence_control_set_ptr->static_config.min_qp_allowed, (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed, picture_control_set_ptr->parent_pcs_ptr->picture_qp);
                     picture_control_set_ptr->parent_pcs_ptr->base_qindex = quantizer_to_qindex[picture_control_set_ptr->picture_qp];
                 }
@@ -4112,17 +3965,14 @@ void* rate_control_kernel(void *input_ptr)
                         rate_control_param_ptr,
                         prev_gop_rate_control_param_ptr,
                         next_gop_rate_control_param_ptr);
-
                 }
                 else if (sequence_control_set_ptr->static_config.rate_control_mode == 3) {
-
                     frame_level_rc_input_picture_cvbr(
                         picture_control_set_ptr,
                         sequence_control_set_ptr,
                         context_ptr,
                         rate_control_layer_ptr,
                         rate_control_param_ptr);
-
                 }
                 picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
                     sequence_control_set_ptr->static_config.min_qp_allowed,
@@ -4132,7 +3982,6 @@ void* rate_control_kernel(void *input_ptr)
             }
 
             picture_control_set_ptr->parent_pcs_ptr->picture_qp = picture_control_set_ptr->picture_qp;
-
 
             if (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0 && sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
                 context_ptr->base_layer_frames_avg_qp = (3 * context_ptr->base_layer_frames_avg_qp + picture_control_set_ptr->picture_qp + 2) >> 2;
@@ -4161,7 +4010,6 @@ void* rate_control_kernel(void *input_ptr)
                                 break;
                             }
                         }
-
                     }
                 }
             }
@@ -4170,7 +4018,6 @@ void* rate_control_kernel(void *input_ptr)
             LargestCodingUnit         *sb_ptr;
             uint32_t                       lcuCodingOrder;
             for (lcuCodingOrder = 0; lcuCodingOrder < sequence_control_set_ptr->sb_tot_cnt; ++lcuCodingOrder) {
-
                 sb_ptr = picture_control_set_ptr->sb_ptr_array[lcuCodingOrder];
 #if ADD_DELTA_QP_SUPPORT
 
@@ -4210,17 +4057,14 @@ void* rate_control_kernel(void *input_ptr)
                 reference_queue_index = encode_context_ptr->reference_picture_queue_head_index;
                 // Find the Reference in the Reference Queue
                 do {
-
                     reference_entry_ptr = encode_context_ptr->reference_picture_queue[reference_queue_index];
                     if (reference_entry_ptr->picture_number == parentpicture_control_set_ptr->picture_number) {
-
                         // Set the feedback arrived
                         reference_entry_ptr->feedback_arrived = EB_TRUE;
                     }
 
                     // Increment the reference_queue_index Iterator
                     reference_queue_index = (reference_queue_index == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : reference_queue_index + 1;
-
                 } while ((reference_queue_index != encode_context_ptr->reference_picture_queue_tail_index) && (reference_entry_ptr->picture_number != parentpicture_control_set_ptr->picture_number));
             }
 #endif
@@ -4229,7 +4073,6 @@ void* rate_control_kernel(void *input_ptr)
                 rate_control_param_ptr = context_ptr->rate_control_param_queue[0];
                 prev_gop_rate_control_param_ptr = context_ptr->rate_control_param_queue[0];
                 if (parentpicture_control_set_ptr->slice_type == I_SLICE) {
-
                     if (parentpicture_control_set_ptr->total_num_bits > MAX_BITS_PER_FRAME) {
                         context_ptr->max_rate_adjust_delta_qp++;
                     }
@@ -4244,7 +4087,6 @@ void* rate_control_kernel(void *input_ptr)
                 uint32_t interval_index_temp = 0;
                 EbBool intervalFound = EB_FALSE;
                 while ((interval_index_temp < PARALLEL_GOP_MAX_NUMBER) && !intervalFound) {
-
                     if (parentpicture_control_set_ptr->picture_number >= context_ptr->rate_control_param_queue[interval_index_temp]->first_poc &&
                         parentpicture_control_set_ptr->picture_number <= context_ptr->rate_control_param_queue[interval_index_temp]->last_poc) {
                         intervalFound = EB_TRUE;
@@ -4263,10 +4105,8 @@ void* rate_control_kernel(void *input_ptr)
                 prev_gop_rate_control_param_ptr = (interval_index_temp == 0) ?
                     context_ptr->rate_control_param_queue[PARALLEL_GOP_MAX_NUMBER - 1] :
                     context_ptr->rate_control_param_queue[interval_index_temp - 1];
-
             }
             if (sequence_control_set_ptr->static_config.rate_control_mode != 0) {
-
                 context_ptr->previous_virtual_buffer_level = context_ptr->virtual_buffer_level;
 
                 context_ptr->virtual_buffer_level =
@@ -4296,16 +4136,12 @@ void* rate_control_kernel(void *input_ptr)
                             0;
                         rate_control_param_ptr->extra_ap_bit_ratio_i += (int64_t)deltaApQp * 15;
                     }
-
-
                 }
-
             }
 
             // Queue variables
 #if OVERSHOOT_STAT_PRINT
             if (sequence_control_set_ptr->intra_period_length != -1) {
-
                 int32_t                       queueEntryIndex;
                 uint32_t                       queueEntryIndexTemp;
                 uint32_t                       queueEntryIndexTemp2;
@@ -4357,7 +4193,6 @@ void* rate_control_kernel(void *input_ptr)
                         }
                         queue_entry_index_temp =
                             (queue_entry_index_temp == CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1) ? 0 : queue_entry_index_temp + 1;
-
                     }
 
                     if (move_slide_wondow_flag) {
@@ -4380,7 +4215,6 @@ void* rate_control_kernel(void *input_ptr)
 
                             queue_entry_index_temp =
                                 (queue_entry_index_temp == CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1) ? 0 : queue_entry_index_temp + 1;
-
                         }
                         //
 
@@ -4414,13 +4248,11 @@ void* rate_control_kernel(void *input_ptr)
                             (context_ptr->coded_frames_stat_queue_head_index == CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1) ? 0 : context_ptr->coded_frames_stat_queue_head_index + 1;
 
                         queue_entry_ptr = (context_ptr->coded_frames_stat_queue[context_ptr->coded_frames_stat_queue_head_index]);
-
                     }
                 }
             }
 #endif
             total_number_of_fb_frames++;
-
 
             // Release the SequenceControlSet
             eb_release_object(parentpicture_control_set_ptr->sequence_control_set_wrapper_ptr);

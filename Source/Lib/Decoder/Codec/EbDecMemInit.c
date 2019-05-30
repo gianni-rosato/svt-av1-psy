@@ -67,30 +67,24 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
 
     // Allocate the Picture Buffers (luma & chroma)
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
-
         EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_y, picture_buffer_desc_ptr->luma_size * bytesPerPixel, EB_A_PTR);
         memset(picture_buffer_desc_ptr->buffer_y, 0, picture_buffer_desc_ptr->luma_size      * bytesPerPixel);
-
     }
     else {
         picture_buffer_desc_ptr->buffer_y = 0;
     }
 
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
-
         EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_cb, picture_buffer_desc_ptr->chroma_size * bytesPerPixel, EB_A_PTR);
         memset(picture_buffer_desc_ptr->buffer_cb, 0, picture_buffer_desc_ptr->chroma_size      * bytesPerPixel);
-
     }
     else {
         picture_buffer_desc_ptr->buffer_cb = 0;
     }
 
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
-
         EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_cr, picture_buffer_desc_ptr->chroma_size * bytesPerPixel, EB_A_PTR);
         memset(picture_buffer_desc_ptr->buffer_cr, 0, picture_buffer_desc_ptr->chroma_size      * bytesPerPixel);
-
     }
     else {
         picture_buffer_desc_ptr->buffer_cr = 0;
@@ -105,7 +99,6 @@ for all the frames in parallel
 **********************************/
 
 static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
-
     EbErrorType return_error = EB_ErrorNone;
 
     int32_t i, num_sb;
@@ -141,7 +134,6 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
     dec_handle_ptr->master_frame_buf.sb_rows = sb_rows;
 
     for (i = 0; i < dec_handle_ptr->num_frms_prll; i++) {
-
         cur_frame_buf = &dec_handle_ptr->master_frame_buf.cur_frame_bufs[i];
 
         /* SuperBlock str allocation at SB level */
@@ -151,7 +143,6 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
         /* ModeInfo str allocation at 4x4 level */
         EB_MALLOC_DEC(ModeInfo_t*, cur_frame_buf->mode_info,
                     (num_sb * num_mis_in_sb * sizeof(ModeInfo_t)), EB_N_PTR);
-
 
         /* TransformInfo str allocation at 4x4 level */
         EB_MALLOC_DEC(TransformInfo_t*, cur_frame_buf->luma_trans_info,
@@ -234,7 +225,6 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
 
 /*TODO: Move to module files */
 static EbErrorType init_parse_context (EbDecHandle  *dec_handle_ptr) {
-
     EbErrorType return_error = EB_ErrorNone;
 
     EB_MALLOC_DEC(void *, dec_handle_ptr->pv_parse_ctxt, sizeof(ParseCtxt), EB_N_PTR);
@@ -303,7 +293,6 @@ static EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr)
 }
 
 EbErrorType dec_mem_init(EbDecHandle  *dec_handle_ptr) {
-
     EbErrorType return_error = EB_ErrorNone;
 
     if (0 == dec_handle_ptr->seq_header_done)

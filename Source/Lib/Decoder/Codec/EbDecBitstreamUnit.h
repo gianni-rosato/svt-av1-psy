@@ -100,7 +100,6 @@ static INLINE void dec_update_cdf(AomCdfProb *cdf, int8_t val, int nsymbs) {
 
 /*The entropy decoder context.*/
 typedef struct od_ec_dec {
-
     /*The start of the current input buffer.*/
     const unsigned char *buf;
 

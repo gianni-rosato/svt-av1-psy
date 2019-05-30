@@ -50,7 +50,6 @@ extern "C" {
         EbByte   dst,
         uint32_t area_width);
 
-
 #ifdef __cplusplus
 }
 #endif

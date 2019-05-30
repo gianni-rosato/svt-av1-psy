@@ -60,7 +60,6 @@ enum {
   SEQ_LEVEL_MAX = 31
 } UENUM1BYTE(AV1_LEVEL);
 
-
 static const int segmentation_feature_signed[SEG_LVL_MAX] = {
   1, 1, 1, 1, 1, 0, 0, 0
 };
@@ -80,7 +79,6 @@ static const int segmentation_feature_max[SEG_LVL_MAX] = { MAXQ,
  * @brief OBU header syntax structures.
  */
 typedef struct ObuHeader {
-
     /*!<Size (1 or 2 B) of OBU header (including optional OBU extension header) */
     size_t size;
 
@@ -104,11 +102,9 @@ typedef struct ObuHeader {
     uint8_t spatial_id;
 
     size_t payload_size;
-
 } ObuHeader;
 
 typedef struct ParseNbr4x4Ctxt {
-
     /* Buffer holding the segment ID of all 4x4 blocks in the frame. */
     uint8_t *segment_maps;
 
@@ -147,11 +143,9 @@ typedef struct ParseNbr4x4Ctxt {
     /* Buffer holding the seg_id_predicted of the left 4x4 blocks corresponding
      to the current super block row. */
     uint8_t *above_seg_pred_ctx;
-
 } ParseNbr4x4Ctxt;
 
 typedef struct ParseCtxt {
-
     /** Decoder Handle */
     void *dec_handle_ptr;
 
@@ -194,7 +188,6 @@ typedef struct ParseCtxt {
      * if Prev block does not have chroma info then this state is remembered in this variable to be used in next block
     */
     int32_t  prev_blk_has_chroma;
-
 } ParseCtxt;
 
 int get_qindex(SegmentationParams *seg_params, int segment_id, int base_q_idx);

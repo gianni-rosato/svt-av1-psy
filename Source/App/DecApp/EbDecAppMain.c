@@ -3,7 +3,6 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-
 /***************************************
  * Includes
  ***************************************/
@@ -57,7 +56,6 @@ int read_input_frame(CLInput *cli, uint8_t **buffer, size_t *bytes_read,
 }
 
 void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
-
     EbSvtIOFormat* img = (EbSvtIOFormat*)recon_buffer->p_buffer;
 
     // Support only for 420 images
@@ -96,9 +94,6 @@ void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
     fflush(cli->outFile);
 }
 
-
-
-
 /***************************************
  * Decoder App Main
  ***************************************/
@@ -119,7 +114,6 @@ int32_t main(int32_t argc, char* argv[])
 
     uint64_t stop_after = 0;
     uint32_t in_frame = 0;
-
 
     MD5Context md5_ctx;
     unsigned char md5_digest[16];
@@ -156,7 +150,6 @@ int32_t main(int32_t argc, char* argv[])
 
     if (read_command_line(argc, argv, config_ptr, &cli) == 0 &&
         !eb_svt_dec_set_parameter(p_handle, config_ptr)) {
-
         return_error = eb_init_decoder(p_handle);
         if (return_error != EB_ErrorNone) {
             return_error |= eb_dec_deinit_handle(p_handle);
@@ -180,7 +173,6 @@ int32_t main(int32_t argc, char* argv[])
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cb = (uint8_t*)malloc(size >> 2);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cr = (uint8_t*)malloc(size >> 2);
         if (!init_pic_buffer((EbSvtIOFormat*)recon_buffer->p_buffer, &cli)) {
-
             printf("Decoding \n");
             EbAV1StreamInfo *stream_info = (EbAV1StreamInfo*)malloc(sizeof(EbAV1StreamInfo));
             EbAV1FrameInfo *frame_info = (EbAV1FrameInfo*)malloc(sizeof(EbAV1FrameInfo));

@@ -57,7 +57,6 @@ extern "C" {
         int8_t                               min_delta_qp[4];
         int8_t                               max_delta_qp[4];
 
-
         // Adaptive Depth Partitioning
         uint32_t                            *sb_score_array;
         uint8_t                              cost_depth_mode[SB_PRED_OPEN_LOOP_DEPTH_MODE];
@@ -79,10 +78,7 @@ extern "C" {
 
         // Multi - Mode signal(s)
         uint8_t                             adp_level;
-
     } ModeDecisionConfigurationContext;
-
-
 
     /**************************************
      * Extern Function Declarations
@@ -92,7 +88,6 @@ extern "C" {
         EbFifo                            *rate_control_input_fifo_ptr,
         EbFifo                            *mode_decision_configuration_output_fifo_ptr,
         uint16_t                           sb_total_count);
-
 
     extern void* mode_decision_configuration_kernel(void *input_ptr);
 #ifdef __cplusplus

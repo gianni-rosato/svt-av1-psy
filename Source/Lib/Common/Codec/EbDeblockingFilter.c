@@ -47,7 +47,6 @@ void set_qp_array_based_on_cu(
     return;
 }
 
-
 static INLINE int8_t signed_char_clamp(int32_t t) {
     return (int8_t)clamp(t, -128, 127);
 }
@@ -178,7 +177,6 @@ void aom_lpf_horizontal_4_c(uint8_t *s, int32_t p /* pitch */,
         ++s;
     }
 }
-
 
 void aom_lpf_vertical_4_c(uint8_t *s, int32_t pitch, const uint8_t *blimit,
     const uint8_t *limit, const uint8_t *thresh) {
@@ -365,8 +363,6 @@ static INLINE void filter14(int8_t mask, uint8_t thresh, int8_t flat,
     }
 }
 
-
-
 static void mb_lpf_vertical_edge_w(uint8_t *s, int32_t p, const uint8_t *blimit,
     const uint8_t *limit, const uint8_t *thresh,
     int32_t count) {
@@ -387,7 +383,6 @@ static void mb_lpf_vertical_edge_w(uint8_t *s, int32_t p, const uint8_t *blimit,
         s += p;
     }
 }
-
 
 void aom_lpf_vertical_14_dual_c(uint8_t *s, int32_t p, const uint8_t *blimit,
     const uint8_t *limit, const uint8_t *thresh) {
@@ -567,7 +562,6 @@ void aom_highbd_lpf_horizontal_8_c(uint16_t *s, int32_t p, const uint8_t *blimit
     }
 }
 
-
 void aom_highbd_lpf_vertical_8_c(uint16_t *s, int32_t pitch, const uint8_t *blimit,
     const uint8_t *limit, const uint8_t *thresh,
     int32_t bd) {
@@ -587,7 +581,6 @@ void aom_highbd_lpf_vertical_8_c(uint16_t *s, int32_t pitch, const uint8_t *blim
     }
 }
 
-
 //**********************************************************************************************************************//
 
 //static const SEG_LVL_FEATURES seg_lvl_lf_lut[MAX_MB_PLANE][2] = {
@@ -595,7 +588,6 @@ void aom_highbd_lpf_vertical_8_c(uint16_t *s, int32_t pitch, const uint8_t *blim
 //    { SEG_LVL_ALT_LF_U, SEG_LVL_ALT_LF_U },
 //    { SEG_LVL_ALT_LF_V, SEG_LVL_ALT_LF_V }
 //};
-
 
 typedef enum EDGE_DIR { VERT_EDGE = 0, HORZ_EDGE = 1, NUM_EDGE_DIRS } EDGE_DIR;
 
@@ -630,7 +622,6 @@ static uint8_t get_filter_level(
     const LoopFilterInfoN *lfi_n,
     const int32_t dir_idx, int32_t plane,
     const MbModeInfo *mbmi) {
-
     (void)pcs_ptr;
     const int32_t segment_id = 0;// mbmi->segment_id;
     PredictionMode mode; // Added to address 4x4 problem
@@ -833,10 +824,8 @@ void av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
 
 #define INTER_TX_SIZE_BUF_LEN 16
 
-
 static INLINE TxSize
 av1_get_max_uv_txsize(BlockSize bsize, const struct MacroblockdPlane *pd) {
-
     const BlockSize plane_bsize = get_plane_block_size(bsize, pd->subsampling_x, pd->subsampling_y);
 
     assert(plane_bsize < BlockSizeS_ALL);
@@ -1030,7 +1019,6 @@ void av1_filter_block_plane_vert(
     const MacroBlockD *const xd, const int32_t plane,
     const MacroblockdPlane *const plane_ptr,
     const uint32_t mi_row, const uint32_t mi_col) {
-
     SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     EbBool is16bit = scs_ptr->static_config.encoder_bit_depth > 8;
     const int32_t row_step = MI_SIZE >> MI_SIZE_LOG2;
@@ -1152,7 +1140,6 @@ void av1_filter_block_plane_horz(
     const MacroBlockD *const xd, const int32_t plane,
     const MacroblockdPlane *const plane_ptr,
     const uint32_t mi_row, const uint32_t mi_col) {
-
     SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     EbBool is16bit = scs_ptr->static_config.encoder_bit_depth > 8;
     const int32_t col_step = MI_SIZE >> MI_SIZE_LOG2;
@@ -1176,7 +1163,6 @@ void av1_filter_block_plane_horz(
             TxSize tx_size;
             AV1_DEBLOCKING_PARAMETERS params;
             memset(&params, 0, sizeof(params));
-
 
             tx_size =
                 set_lpf_parameters(
@@ -1282,7 +1268,6 @@ void av1_filter_block_plane_horz(
     }
 }
 
-
 // New function to filter each sb (64x64)
 void loop_filter_sb(
     EbPictureBufferDesc *frame_buffer,//reconpicture,
@@ -1291,7 +1276,6 @@ void loop_filter_sb(
     MacroBlockD *xd, int32_t mi_row, int32_t mi_col,
     int32_t plane_start, int32_t plane_end,
     uint8_t LastCol) {
-
     struct MacroblockdPlane pd[3];
     int32_t plane;
 
@@ -1332,7 +1316,6 @@ void loop_filter_sb(
                     plane + 1);
                 av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row,
                     mi_col - max_mib_size);
-
             }
             // Filter the horizontal edges of the last lcu in each row
             if (LastCol) {
@@ -1341,9 +1324,7 @@ void loop_filter_sb(
                     plane + 1);
                 av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row,
                     mi_col);
-
             }
-
         }
         else {
             // filter all vertical edges in every 64x64 super block
@@ -1366,7 +1347,6 @@ void av1_loop_filter_frame(
     EbPictureBufferDesc *frame_buffer,
     PictureControlSet *picture_control_set_ptr,
     int32_t plane_start, int32_t plane_end) {
-
     SequenceControlSet *scs_ptr = (SequenceControlSet*)picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     //LargestCodingUnit                     *sb_ptr;
     //uint16_t                                   sb_index;
@@ -1400,7 +1380,6 @@ void av1_loop_filter_frame(
                 endOfRowFlag);
         }
     }
-
 }
 extern int16_t av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
@@ -1409,7 +1388,6 @@ void EbCopyBuffer(
     EbPictureBufferDesc  *dstBuffer,
     PictureControlSet    *pcs_ptr,
     uint8_t                   plane) {
-
     EbBool is16bit = (EbBool)(pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
     dstBuffer->origin_x = srcBuffer->origin_x;
     dstBuffer->origin_y = srcBuffer->origin_y;
@@ -1437,7 +1415,6 @@ void EbCopyBuffer(
                 (srcBuffer->buffer_y + lumaBufferOffset + stride_y * inputRowIndex),
                 luma_width);
         }
-
     }
     else if (plane == 1) {
         uint16_t stride_cb = srcBuffer->stride_cb << is16bit;
@@ -1450,7 +1427,6 @@ void EbCopyBuffer(
             EB_MEMCPY((dstBuffer->buffer_cb + chromaBufferOffset + stride_cb * inputRowIndex),
                 (srcBuffer->buffer_cb + chromaBufferOffset + stride_cb * inputRowIndex),
                 chroma_width);
-
         }
     }
     else if (plane == 2) {
@@ -1466,10 +1442,8 @@ void EbCopyBuffer(
                 (srcBuffer->buffer_cr + chromaBufferOffset + stride_cr * inputRowIndex),
                 chroma_width);
         }
-
     }
 }
-
 
 //int32_t av1_get_max_filter_level(const Av1Comp *cpi) {
 //    if (cpi->oxcf.pass == 2) {
@@ -1491,7 +1465,6 @@ uint64_t PictureSseCalculations(
     EbBool is16bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
     if (!is16bit) {
-
         EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 
         uint32_t   columnIndex;
@@ -1506,7 +1479,6 @@ uint64_t PictureSseCalculations(
             residualDistortion = 0;
 
             while (row_index < sequence_control_set_ptr->luma_height) {
-
                 columnIndex = 0;
                 while (columnIndex < sequence_control_set_ptr->luma_width) {
                     residualDistortion += (int64_t)SQR((int64_t)(inputBuffer[columnIndex]) - (reconCoeffBuffer[columnIndex]));
@@ -1521,14 +1493,12 @@ uint64_t PictureSseCalculations(
         }
 
         else if (plane == 1) {
-
             reconCoeffBuffer = &((recon_ptr->buffer_cb)[recon_ptr->origin_x / 2 + recon_ptr->origin_y / 2 * recon_ptr->stride_cb]);
             inputBuffer = &((input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
 
             residualDistortion = 0;
             row_index = 0;
             while (row_index < sequence_control_set_ptr->chroma_height) {
-
                 columnIndex = 0;
                 while (columnIndex < sequence_control_set_ptr->chroma_width) {
                     residualDistortion += (int64_t)SQR((int64_t)(inputBuffer[columnIndex]) - (reconCoeffBuffer[columnIndex]));
@@ -1549,7 +1519,6 @@ uint64_t PictureSseCalculations(
             row_index = 0;
 
             while (row_index < sequence_control_set_ptr->chroma_height) {
-
                 columnIndex = 0;
                 while (columnIndex < sequence_control_set_ptr->chroma_width) {
                     residualDistortion += (int64_t)SQR((int64_t)(inputBuffer[columnIndex]) - (reconCoeffBuffer[columnIndex]));
@@ -1580,7 +1549,6 @@ uint64_t PictureSseCalculations(
             residualDistortion = 0;
 
             while (row_index < sequence_control_set_ptr->luma_height) {
-
                 columnIndex = 0;
                 while (columnIndex < sequence_control_set_ptr->luma_width) {
                     residualDistortion += (int64_t)SQR(((int64_t)inputBuffer[columnIndex]) - (int64_t)(reconCoeffBuffer[columnIndex]));
@@ -1596,14 +1564,12 @@ uint64_t PictureSseCalculations(
         }
 
         else if (plane == 1) {
-
             reconCoeffBuffer = (uint16_t*)&((recon_ptr->buffer_cb)[(recon_ptr->origin_x / 2 + recon_ptr->origin_y / 2 * recon_ptr->stride_cb) << is16bit]);
             inputBuffer = (uint16_t*)&((input_picture_ptr->buffer_cb)[(input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb) << is16bit]);
 
             residualDistortion = 0;
             row_index = 0;
             while (row_index < sequence_control_set_ptr->chroma_height) {
-
                 columnIndex = 0;
                 while (columnIndex < sequence_control_set_ptr->chroma_width) {
                     residualDistortion += (int64_t)SQR(((int64_t)inputBuffer[columnIndex]) - (int64_t)(reconCoeffBuffer[columnIndex]));
@@ -1624,7 +1590,6 @@ uint64_t PictureSseCalculations(
             row_index = 0;
 
             while (row_index < sequence_control_set_ptr->chroma_height) {
-
                 columnIndex = 0;
                 while (columnIndex < sequence_control_set_ptr->chroma_width) {
                     residualDistortion += (int64_t)SQR(((int64_t)inputBuffer[columnIndex]) - (int64_t)(reconCoeffBuffer[columnIndex]));
@@ -1664,7 +1629,6 @@ static int64_t try_filter_frame(
     EbBool is16bit = (EbBool)(pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
     EbPictureBufferDesc  *recon_buffer = is16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
     if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
-
         //get the 16bit form of the input LCU
         if (is16bit) {
             recon_buffer = ((EbReferenceObject*)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
@@ -1690,8 +1654,6 @@ static int64_t try_filter_frame(
     av1_loop_filter_frame(recon_buffer, pcs_ptr, plane, plane + 1);
 
     filt_err = PictureSseCalculations(pcs_ptr, recon_buffer, plane);
-
-
 
     // Re-instate the unfiltered frame
     EbCopyBuffer(tempLfReconBuffer/*cpi->last_frame_uf*/, recon_buffer /*cm->frame_to_show*/, pcs_ptr, (uint8_t)plane);
@@ -1729,7 +1691,6 @@ static int32_t search_filter_level(
     EbPictureBufferDesc  *recon_buffer = is16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
 
     if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
-
         //get the 16bit form of the input LCU
         if (is16bit) {
             recon_buffer = ((EbReferenceObject*)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
@@ -1799,7 +1760,6 @@ static int32_t search_filter_level(
         }
     }
     else {
-
         while (filter_step > 0) {
             const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
             const int32_t filt_low = AOMMAX(filt_mid - filter_step, min_filter_level);
@@ -1867,7 +1827,6 @@ void av1_pick_filter_level(
     EbPictureBufferDesc   *srcBuffer, // source input
     PictureControlSet     *pcs_ptr,
     LpfPickMethod          method) {
-
     SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     const int32_t num_planes = 3;
     (void)srcBuffer;
@@ -1911,7 +1870,6 @@ void av1_pick_filter_level(
         if (scs_ptr->static_config.encoder_bit_depth != EB_8BIT && pcs_ptr->parent_pcs_ptr->av1_frame_type == KEY_FRAME)
             filt_guess -= 4;
 
-
         filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
         int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
 
@@ -1920,7 +1878,6 @@ void av1_pick_filter_level(
         lf->filter_level[1] = clamp(filt_guess, min_filter_level, max_filter_level);
         lf->filter_level_u = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
         lf->filter_level_v = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
-
     }
     else {
         const int32_t last_frame_filter_level[4] = { lf->filter_level[0],
@@ -1943,5 +1900,3 @@ void av1_pick_filter_level(
         }
     }
 }
-
-

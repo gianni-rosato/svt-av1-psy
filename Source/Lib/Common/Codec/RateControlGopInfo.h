@@ -3,7 +3,6 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-
 #ifndef RateControlGopInfo_h
 #define RateControlGopInfo_h
 

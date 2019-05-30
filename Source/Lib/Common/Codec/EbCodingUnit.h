@@ -215,14 +215,12 @@ extern "C" {
 
     typedef struct MacroBlockDPlane
     {
-
         int subsampling_x;
         int subsampling_y;
         struct Buf2D dst;
         struct Buf2D pre[2];
         // block size in pixels
         uint8_t width, height;
-
     } MacroBlockDPlane;
 
     typedef struct MacroBlockPlane
@@ -258,13 +256,11 @@ extern "C" {
         int stride;
     };
     typedef struct macroblockd_plane {
-
         int subsampling_x;
         int subsampling_y;
         struct buf_2d dst;
         struct buf_2d pre[2];
         uint8_t width, height;
-
     } MACROBLOCKD_PLANE;
 #endif
 
@@ -340,7 +336,6 @@ extern "C" {
         uint8_t  is_exhaustive_allowed;
         CRC_CALCULATOR crc_calculator1;
         CRC_CALCULATOR crc_calculator2;
-
     } IntraBcContext;
 
     typedef struct CodingUnit
@@ -375,7 +370,6 @@ extern "C" {
             unsigned                split_flag           : 1;
             unsigned                skip_flag            : 1;
             unsigned                mdc_split_flag      : 1;
-
         };
 #if NO_ENCDEC
         EbPictureBufferDesc      *quant_tmp;
@@ -493,7 +487,6 @@ extern "C" {
         // Quantized Coefficients
         EbPictureBufferDesc          *quantized_coeff;
         TileInfo tile_info;
-
     } LargestCodingUnit;
 
     extern EbErrorType largest_coding_unit_ctor(

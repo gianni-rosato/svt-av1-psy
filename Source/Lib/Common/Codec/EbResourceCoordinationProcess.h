@@ -17,7 +17,6 @@ extern "C" {
      ***************************************/
     typedef struct ResourceCoordinationContext
     {
-
         EbFifo                                *input_buffer_fifo_ptr;
         EbFifo                                *resource_coordination_results_output_fifo_ptr;
         EbFifo                               **picture_control_set_fifo_ptr_array;
@@ -49,7 +48,6 @@ extern "C" {
         int64_t                                previous_frame_in_check2;
         int64_t                                previous_frame_in_check3;
 
-
         uint64_t                               cur_speed; // speed x 1000
         uint64_t                               prevs_time_seconds;
         uint64_t                               prevs_timeu_seconds;
@@ -58,9 +56,6 @@ extern "C" {
         uint64_t                               first_in_pic_arrived_time_seconds;
         uint64_t                               first_in_pic_arrived_timeu_seconds;
         EbBool                                 start_flag;
-
-
-
     } ResourceCoordinationContext;
 
     /***************************************

@@ -24,7 +24,6 @@
 #include "EbPredictionStructure.h"
 #include "noise_model.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -270,7 +269,6 @@ extern "C" {
         uint64_t                                pred_count[5];
         uint64_t                                pred1_nfl_count[5];
 #endif
-
     } SequenceControlSet;
 
     typedef struct EbSequenceControlSetInitData
@@ -284,7 +282,6 @@ extern "C" {
         EncodeContext            *encode_context_ptr;
         SequenceControlSet       *sequence_control_set_ptr;
         EbHandle                    config_mutex;
-
     } EbSequenceControlSetInstance;
 
     /**************************************

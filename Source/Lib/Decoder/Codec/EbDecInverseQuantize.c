@@ -177,7 +177,6 @@ int32_t inverse_quantize(EbDecHandle * dec_handle, PartitionInfo_t *part, ModeIn
     const QmVal *iqmatrix;
     const TxSize qm_tx_size = av1_get_adjusted_tx_size(tx_size);
 
-
     int using_qm = frame->quantization_params.using_qmatrix;
     int lossless = frame->lossless_array[mode->segment_id];
     if (plane == 0) {

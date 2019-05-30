@@ -1002,5 +1002,3 @@ void av1_apply_temporal_filter_sse4_1(
             strength, blk_fw_ptr, use_whole_blk, u_accum, u_count, v_accum, v_count,
             y_dist_ptr, u_dist_ptr, v_dist_ptr);
 }
-
-

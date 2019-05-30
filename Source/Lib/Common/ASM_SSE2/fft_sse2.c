@@ -120,4 +120,3 @@ void aom_ifft4x4_float_sse2(const float *input, float *temp, float *output) {
     aom_ifft_2d_gen(input, temp, output, 4, aom_fft1d_4_float, aom_fft1d_4_sse2,
         aom_ifft1d_4_sse2, aom_transpose_float_sse2, 4);
 }
-

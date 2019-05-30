@@ -212,7 +212,6 @@ static void noise_strength_solver_copy(aom_noise_strength_solver_t *dest,
     dest->total = src->total;
 }
 
-
 // Return the number of coefficients required for the given parameters
 static int32_t num_coeffs(const aom_noise_model_params_t params) {
     const int32_t n = 2 * params.lag + 1;
@@ -1143,7 +1142,6 @@ aom_noise_status_t aom_noise_model_update(
     }
 
     return AOM_NOISE_STATUS_OK;
-
 }
 
 void aom_noise_model_save_latest(aom_noise_model_t *noise_model) {
@@ -1524,12 +1522,10 @@ struct aom_denoise_and_model_t {
     aom_noise_model_t noise_model;
 };
 
-
 EbErrorType aom_denoise_and_model_alloc(struct aom_denoise_and_model_t **ctx,
     int32_t bit_depth,
     int32_t block_size,
     float noise_level) {
-
     ASSERT(ctx != NULL);
     EB_MALLOC(struct aom_denoise_and_model_t*, (*ctx), sizeof(struct aom_denoise_and_model_t), EB_N_PTR);
 
@@ -1558,7 +1554,6 @@ EbErrorType aom_denoise_and_model_alloc(struct aom_denoise_and_model_t **ctx,
 
 EbErrorType denoise_and_model_ctor(EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr) {
-
     struct aom_denoise_and_model_t *object_ptr = 0;
     denoise_and_model_init_data_t *init_data_ptr = (denoise_and_model_init_data_t*)object_init_data_ptr;
     EbErrorType return_error = EB_ErrorNone;
@@ -1611,7 +1606,6 @@ void aom_denoise_and_model_free(struct aom_denoise_and_model_t *ctx, int32_t use
 
 static int32_t denoise_and_model_realloc_if_necessary(struct aom_denoise_and_model_t *ctx,
     EbPictureBufferDesc *sd, int32_t use_highbd) {
-
     int32_t chroma_sub_log2[2] = { 1, 1 };  //todo: send chroma subsampling
 
     const int32_t block_size = ctx->block_size;
@@ -1654,7 +1648,6 @@ static int32_t denoise_and_model_realloc_if_necessary(struct aom_denoise_and_mod
 static void pack_2d_pic(EbPictureBufferDesc *inputPicture,
     uint16_t *packed[3],
     EbAsm asm_type) {
-
     const uint32_t input_luma_offset = ((inputPicture->origin_y)      * inputPicture->stride_y) + (inputPicture->origin_x);
     const uint32_t inputBitIncLumaOffset = ((inputPicture->origin_y)      * inputPicture->stride_bit_inc_y) + (inputPicture->origin_x);
     const uint32_t input_cb_offset = (((inputPicture->origin_y) >> 1) * inputPicture->stride_cb) + ((inputPicture->origin_x) >> 1);
@@ -1694,13 +1687,11 @@ static void pack_2d_pic(EbPictureBufferDesc *inputPicture,
         inputPicture->width >> 1,
         inputPicture->height >> 1,
         asm_type);
-
 }
 
 static void unpack_2d_pic(uint8_t *packed[3],
     EbPictureBufferDesc  *outputPicturePtr,
     EbAsm asm_type) {
-
     uint32_t lumaBufferOffset = ((outputPicturePtr->origin_y)      * outputPicturePtr->stride_y) + (outputPicturePtr->origin_x);
     uint32_t chromaBufferOffset = (((outputPicturePtr->origin_y) >> 1) * outputPicturePtr->stride_cb) + ((outputPicturePtr->origin_x) >> 1);
     uint16_t luma_width = (uint16_t)(outputPicturePtr->width);
@@ -1740,7 +1731,6 @@ static void unpack_2d_pic(uint8_t *packed[3],
         chroma_width,
         chroma_height,
         asm_type);
-
 }
 
 int32_t aom_denoise_and_model_run(struct aom_denoise_and_model_t *ctx,
@@ -1748,7 +1738,6 @@ int32_t aom_denoise_and_model_run(struct aom_denoise_and_model_t *ctx,
     aom_film_grain_t *film_grain,
     int32_t use_highbd,
     EbAsm asm_type) {
-
     const int32_t block_size = ctx->block_size;
     uint8_t *raw_data[3];
     int32_t chroma_sub_log2[2] = { 1, 1 };  //todo: send chroma subsampling

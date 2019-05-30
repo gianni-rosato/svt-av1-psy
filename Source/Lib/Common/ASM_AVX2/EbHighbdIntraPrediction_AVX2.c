@@ -9,7 +9,6 @@
 #include "aom_dsp_rtcd.h"
 #include "EbIntraPrediction_AVX2.h"
 
-
 // =============================================================================
 
 // DC RELATED PRED
@@ -2909,4 +2908,3 @@ void aom_highbd_smooth_v_predictor_64x64_avx2(uint16_t *dst, ptrdiff_t stride,
         smooth_v_pred_64x8(sm_weights_d_64 + 32 * i, rep, ab, &dst, stride);
     }
 }
-

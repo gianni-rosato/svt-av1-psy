@@ -52,11 +52,9 @@ EbErrorType largest_coding_unit_ctor(
     uint32_t cu_i;
     uint32_t  tot_cu_num = sb_size_pix == 128 ? 1024 : 256;
 
-
     EB_MALLOC(CodingUnit*, largestCodingUnitPtr->final_cu_arr, sizeof(CodingUnit) * tot_cu_num, EB_N_PTR);
 
     for (cu_i = 0; cu_i < tot_cu_num; ++cu_i) {
-
         for (tu_index = 0; tu_index < TRANSFORM_UNIT_MAX_COUNT; ++tu_index) {
             largestCodingUnitPtr->final_cu_arr[cu_i].transform_unit_array[tu_index].tu_index = tu_index;
         }

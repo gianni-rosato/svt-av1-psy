@@ -197,4 +197,3 @@ void aom_ifft2x2_float_c(const float *input, float *temp, float *output) {
     aom_ifft_2d_gen(input, temp, output, 2, aom_fft1d_2_float, aom_fft1d_2_float,
         aom_ifft1d_2_float, simple_transpose, 1);
 }
-

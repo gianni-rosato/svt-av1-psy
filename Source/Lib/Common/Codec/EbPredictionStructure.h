@@ -43,7 +43,6 @@ extern "C" {
         int32_t                              reference_list;
 #endif
         uint32_t                              reference_list_count;
-
     } ReferenceList;
 
     /************************************************
@@ -64,7 +63,6 @@ extern "C" {
     {
         int32_t                             *list;
         uint32_t                              list_count;
-
     } DependentList;
 
     /************************************************
@@ -158,7 +156,6 @@ extern "C" {
         uint32_t                              list1_mod_index[MAX_NUM_OF_REF_PICS_TOTAL];
 
         // Lists Combination (STUB)
-
     } PredictionStructureEntry;
 
     /************************************************
@@ -168,7 +165,6 @@ extern "C" {
      ************************************************/
     typedef struct PredictionStructure
     {
-
         uint32_t                              pred_struct_entry_count;
         PredictionStructureEntry        **pred_struct_entry_ptr_array;
         EbPred                             pred_type;
@@ -187,7 +183,6 @@ extern "C" {
         EbBool                             long_term_enable_flag;
         uint32_t                              default_ref_pics_list0_total_count_minus1;
         uint32_t                              default_ref_pics_list1_total_count_minus1;
-
     } PredictionStructure;
 
     /************************************************
@@ -235,8 +230,6 @@ extern "C" {
         uint64_t ref_poc_array[7]; //decoder based ref poc array //LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
 #endif
     } Av1RpsNode;
-
-
 
 #ifdef __cplusplus
 }

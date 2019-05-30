@@ -16,7 +16,6 @@
 #include "hash_motion.h"
 #include "EbPictureControlSet.h"
 
-
 void aom_free(void *memblk);
 static const int crc_bits = 16;
 static const int block_size_bits = 3;
@@ -121,7 +120,6 @@ void av1_hash_table_destroy(HashTable *p_hash_table) {
 }
 
 EbErrorType  av1_hash_table_create(HashTable *p_hash_table) {
-
     EbErrorType err_code = EB_ErrorNone;;
 
   if (p_hash_table->p_lookup_table != NULL) {

@@ -52,7 +52,6 @@ extern "C" {
         const uint32_t  area_size,
         uint32_t       *nonzerocoeff);
 
-
     void low_precision_transform16x16_ssse3(
         int16_t *src,
         uint32_t src_stride,
@@ -89,4 +88,3 @@ extern "C" {
 }
 #endif
 #endif // EbTransforms_SSSE3_h
-

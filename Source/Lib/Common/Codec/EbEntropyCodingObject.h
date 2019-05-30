@@ -29,11 +29,9 @@ extern "C" {
         Bitstream **bitstream_dbl_ptr,
         uint32_t buffer_size);
 
-
     extern EbErrorType entropy_coder_ctor(
         EntropyCoder **entropy_coder_dbl_ptr,
         uint32_t buffer_size);
-
 
     extern EbPtr entropy_coder_get_bitstream_ptr(
         EntropyCoder *entropy_coder_ptr);

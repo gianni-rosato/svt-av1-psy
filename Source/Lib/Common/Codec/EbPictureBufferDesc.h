@@ -12,7 +12,6 @@
 #include "grainSynthesis.h"
 #include "EbSvtAv1Formats.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -61,10 +60,7 @@ extern "C" {
         EbBool            packedFlag;       // Indicates if sample buffers are packed or not
 
         EbBool            film_grain_flag;  // Indicates if film grain parameters are present for the frame
-
     } EbPictureBufferDesc;
-
-
 
 #define YV12_FLAG_HIGHBITDEPTH 8
 
@@ -283,9 +279,7 @@ extern "C" {
 #define align_addr(addr, align) \
   (void *)(((size_t)(addr) + ((align)-1)) & ~(size_t)((align)-1))
 
-
 #define AOM_BORDER_IN_PIXELS 288
-
 
 /************************************
  * EbPictureBufferDesc Init Data
@@ -302,7 +296,6 @@ extern "C" {
         uint16_t          top_padding;
         uint16_t          bot_padding;
         EbBool            split_mode;         //ON: allocate 8bit data seperately from nbit data
-
     } EbPictureBufferDescInitData;
 
     /**************************************

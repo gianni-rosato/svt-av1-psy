@@ -5,7 +5,6 @@
 #ifndef EbDecBitstream_h
 #define EbDecBitstream_h
 
-
 // Defines the maximum number of bits in a bitstream word
 #define WORD_SIZE         32
 
@@ -44,9 +43,7 @@ typedef struct
 
     /* Max address for bitstream */
     uint8_t *buf_max;
-
 } bitstrm_t;
-
 
 // Get m_cnt number of bits and update bffer pointers and offset.
 #define GET_BITS(bits, m_pu4_buf, bit_ofst,                   \

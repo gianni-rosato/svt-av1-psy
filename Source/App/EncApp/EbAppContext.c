@@ -12,7 +12,6 @@
 #include "EbAppContext.h"
 #include "EbAppConfig.h"
 
-
 #define INPUT_SIZE_576p_TH                0x90000        // 0.58 Million
 #define INPUT_SIZE_1080i_TH                0xB71B0        // 0.75 Million
 #define INPUT_SIZE_1080p_TH                0x1AB3F0    // 1.75 Million
@@ -62,7 +61,6 @@ void AllocateMemoryTable(
     return;
 }
 
-
 /*************************************
 **************************************
 *** Helper functions Input / Output **
@@ -84,7 +82,6 @@ void ProcessInputFieldBufferingMode(
     uint32_t                      input_padded_height,
     uint8_t                       is16bit) {
 
-
     uint64_t  sourceLumaRowSize   = (uint64_t)(input_padded_width << is16bit);
     uint64_t  sourceChromaRowSize = sourceLumaRowSize >> 1;
 
@@ -98,7 +95,6 @@ void ProcessInputFieldBufferingMode(
         fseeko64(input_file, (long)sourceLumaRowSize, SEEK_CUR);
 
     for (inputRowIndex = 0; inputRowIndex < input_padded_height; inputRowIndex++) {
-
         *filledLen += (uint32_t)fread(ebInputPtr, 1, sourceLumaRowSize, input_file);
         // Skip 1 luma row (only fields)
         fseeko64(input_file, (long)sourceLumaRowSize, SEEK_CUR);
@@ -114,7 +110,6 @@ void ProcessInputFieldBufferingMode(
     }
 
     for (inputRowIndex = 0; inputRowIndex < input_padded_height >> 1; inputRowIndex++) {
-
         *filledLen += (uint32_t)fread(ebInputPtr, 1, sourceChromaRowSize, input_file);
         // Skip 1 chroma row (only fields)
         fseeko64(input_file, (long)sourceChromaRowSize, SEEK_CUR);
@@ -126,9 +121,7 @@ void ProcessInputFieldBufferingMode(
     // Step back 1 chroma row if bottom field (undo the previous jump), and skip 1 chroma row if bottom field (point to the bottom field)
     // => no action
 
-
     for (inputRowIndex = 0; inputRowIndex < input_padded_height >> 1; inputRowIndex++) {
-
         *filledLen += (uint32_t)fread(ebInputPtr, 1, sourceChromaRowSize, input_file);
         // Skip 1 chroma row (only fields)
         fseeko64(input_file, (long)sourceChromaRowSize, SEEK_CUR);
@@ -140,7 +133,6 @@ void ProcessInputFieldBufferingMode(
         fseeko64(input_file, -(long)sourceChromaRowSize, SEEK_CUR);
     }
 }
-
 
 /***********************************************
 * Copy configuration parameters from
@@ -236,13 +228,11 @@ EbErrorType CopyConfigurationParameters(
     }
 
     return return_error;
-
 }
 
 static EbErrorType AllocateFrameBuffer(
     EbConfig          *config,
     uint8_t               *p_buffer){
-
     EbErrorType   return_error = EB_ErrorNone;
     const int32_t tenBitPackedMode = (config->encoder_bit_depth > 8) && (config->compressed_ten_bit_format == 0) ? 1 : 0;
     const EbColorFormat color_format = config->encoder_color_format;    // Chroma subsampling
@@ -301,7 +291,6 @@ static EbErrorType AllocateFrameBuffer(
 
     if (chroma10bitSize) {
         EB_APP_MALLOC(uint8_t*, inputPtr->cr_ext, chroma10bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
-
     }
     else {
         inputPtr->cr_ext = 0;
@@ -309,7 +298,6 @@ static EbErrorType AllocateFrameBuffer(
 
     return return_error;
 }
-
 
 EbErrorType AllocateInputBuffers(
     EbConfig                *config,
@@ -325,7 +313,6 @@ EbErrorType AllocateInputBuffers(
         EB_APP_MALLOC(uint8_t*, callback_data->input_buffer_pool->p_buffer, sizeof(EbSvtIOFormat), EB_N_PTR, EB_ErrorInsufficientResources);
 
         if (config->buffered_input == -1) {
-
             // Allocate frame buffer for the p_buffer
             AllocateFrameBuffer(
                     config,
@@ -343,7 +330,6 @@ EbErrorType AllocateOutputReconBuffers(
     EbConfig                *config,
     EbAppContext            *callback_data)
 {
-
     EbErrorType   return_error = EB_ErrorNone;
     const size_t luma_size =
         config->input_padded_width    *
@@ -370,7 +356,6 @@ EbErrorType AllocateOutputBuffers(
     EbConfig                *config,
     EbAppContext            *callback_data)
 {
-
     EbErrorType   return_error = EB_ErrorNone;
     uint32_t           outputStreamBufferSize = (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(config->input_padded_height * config->input_padded_width));;
     {
@@ -410,14 +395,12 @@ EbErrorType PreloadFramesIntoRam(
     }
     EB_APP_MALLOC(uint8_t **, config->sequence_buffer, sizeof(uint8_t*) * config->buffered_input, EB_N_PTR, EB_ErrorInsufficientResources);
 
-
     for (processed_frame_count = 0; processed_frame_count < config->buffered_input; ++processed_frame_count) {
         EB_APP_MALLOC(uint8_t*, config->sequence_buffer[processed_frame_count], readSize, EB_N_PTR, EB_ErrorInsufficientResources);
         // Interlaced Video
         if (config->separate_fields) {
             EbBool is16bit = config->encoder_bit_depth > 8;
             if (is16bit == 0 || (is16bit == 1 && config->compressed_ten_bit_format == 0)) {
-
                 const int32_t tenBitPackedMode = (config->encoder_bit_depth > 8) && (config->compressed_ten_bit_format == 0) ? 1 : 0;
 
                 const size_t luma8bitSize =
@@ -440,11 +423,9 @@ EbErrorType PreloadFramesIntoRam(
                     config->sequence_buffer[processed_frame_count] + luma8bitSize + chroma8bitSize,
                     (uint32_t)input_padded_width,
                     (uint32_t)input_padded_height,
-
                     is16bit);
 
                 if (readSize != filledLen) {
-
                     fseek(input_file, 0, SEEK_SET);
                     filledLen = 0;
 
@@ -457,7 +438,6 @@ EbErrorType PreloadFramesIntoRam(
                         config->sequence_buffer[processed_frame_count] + luma8bitSize + chroma8bitSize,
                         (uint32_t)input_padded_width,
                         (uint32_t)input_padded_height,
-
                         is16bit);
                 }
 
@@ -468,7 +448,6 @@ EbErrorType PreloadFramesIntoRam(
             }
             // Unpacked 10 bit
             else {
-
                 const int32_t tenBitPackedMode = (config->encoder_bit_depth > 8) && (config->compressed_ten_bit_format == 0) ? 1 : 0;
 
                 const size_t luma8bitSize =
@@ -506,7 +485,6 @@ EbErrorType PreloadFramesIntoRam(
                     0);
 
                 if (readSize != filledLen) {
-
                     fseek(input_file, 0, SEEK_SET);
                     filledLen = 0;
 
@@ -531,7 +509,6 @@ EbErrorType PreloadFramesIntoRam(
                         (uint32_t)input_padded_width,
                         (uint32_t)input_padded_height,
                         0);
-
                 }
 
                 // Reset the pointer position after a top field
@@ -639,7 +616,6 @@ EbErrorType init_encoder(
 
     // Allocate the Sequence Buffer
     if (config->buffered_input != -1) {
-
         // Preload frames into the ram for a faster yuv access time
         PreloadFramesIntoRam(
             config);
@@ -651,7 +627,6 @@ EbErrorType init_encoder(
     if (return_error != EB_ErrorNone) {
         return return_error;
     }
-
 
     ///********************** APPLICATION INIT [END] ******************////////
 

@@ -14,9 +14,7 @@ extern "C" {
 #include "EbSvtAv1.h"
 #include "EbSvtAv1ExtFrameBuf.h"
 
-
 typedef struct EbOperatingParametersInfo {
-
     /*!<Specifies the time interval between the arrival of the first bit in the
      * smoothing buffer and the subsequent removal of the data that belongs to
      * the first coded frame for operating point*/
@@ -30,11 +28,9 @@ typedef struct EbOperatingParametersInfo {
     /*!< Equal to 1 indicates that the smoothing buffer operates in low-delay
      * mode for operating point*/
     uint8_t     low_delay_mode_flag;
-
 } EbOperatingParametersInfo;
 
 typedef struct EbAV1OperatingPoint {
-
     uint32_t    op_idc;
     uint32_t    seq_level_idx;
     uint32_t    seq_tier;
@@ -53,7 +49,6 @@ typedef struct EbAV1OperatingPoint {
 } EbAv1OperatingPoint;
 
 typedef struct EbColorConfig {
-
     /*!< bit depth */
     AomBitDepth                     bit_depth;
 
@@ -96,7 +91,6 @@ typedef struct EbColorConfig {
      *   0: Indicates that the U and V planes will share the same delta
             quantizer value */
     EbBool                         separate_uv_delta_q;
-
 } EbColorConfig;
 
 typedef struct EbTimingInfo {
@@ -119,7 +113,6 @@ typedef struct EbTimingInfo {
      * between two consecutive pictures in the output order.
      * Range - [0 to (1 << 32) - 2]*/
     uint32_t    num_ticks_per_picture;
-
 } EbTimingInfo;
 
 typedef struct EbAV1StreamInfo
@@ -146,23 +139,19 @@ typedef struct EbAV1StreamInfo
 
     /* The stream is in annex_b format */
     EbBool    is_annex_b;
-
 } EbAV1StreamInfo;
 
 typedef struct EbAV1FrameInfo
 {
-
     /* Layer to which the current frame belong */
     uint32_t    layer;
 
     /* Frame presentation time */
     uint64_t    frame_presentation_time;
-
 } EbAV1FrameInfo;
 
 typedef struct EbSvtAv1DecConfiguration
 {
-
     /* Bitstream operating point to decode.
      *
      * Default is -1, the highest operating point present in the bitstream
@@ -194,7 +183,6 @@ typedef struct EbSvtAv1DecConfiguration
      *
      * Default is 0. */
     uint64_t                 frames_to_be_decoded;
-
 
     /* Offline packing of the 2bits: requires two bits packed input.
      *
@@ -240,9 +228,7 @@ typedef struct EbSvtAv1DecConfiguration
     uint32_t                 active_channel_count;
 
     uint32_t                 stat_report;
-
 } EbSvtAv1DecConfiguration;
-
 
     /* STEP 1: Call the library to construct a Component Handle.
      *

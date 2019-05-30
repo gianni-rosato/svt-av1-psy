@@ -8,7 +8,6 @@
 #include "EbDefinitions.h"
 #include "EbEntropyCodingResults.h"
 
-
 EbErrorType entropy_coding_results_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
@@ -22,4 +21,3 @@ EbErrorType entropy_coding_results_ctor(
 
     return EB_ErrorNone;
 }
-

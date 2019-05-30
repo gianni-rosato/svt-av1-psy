@@ -33,7 +33,6 @@ extern "C" {
         uint8_t prediction_direction;
     } MvMergeCandidate;
 
-
 #ifdef __cplusplus
 }
 #endif

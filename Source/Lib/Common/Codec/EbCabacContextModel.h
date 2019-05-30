@@ -701,7 +701,6 @@ extern "C" {
 
 #define BASE_CONTEXT_POSITION_NUM 12
 
-
 #define DCT_MAX_VALUE 16384
 #define DCT_MAX_VALUE_HIGH10 65536
 #define DCT_MAX_VALUE_HIGH12 262144
@@ -811,8 +810,6 @@ extern "C" {
         return combine_entropy_contexts(above_ec, left_ec);
     }
 
-
-
     //**********************************************************************************************************************//
     // txb_Common.h
     static const TxClass tx_type_to_class[TX_TYPES] = {
@@ -904,7 +901,6 @@ extern "C" {
         AomCdfProb joints_cdf[CDF_SIZE(MV_JOINTS)];
         NmvComponent comps[2];
     } NmvContext;
-
 
     MvClassType av1_get_mv_class(int32_t z, int32_t *offset);
 
@@ -1065,11 +1061,7 @@ extern "C" {
         AomCdfProb cfl_sign_cdf[CDF_SIZE(CFL_JOINT_SIGNS)];
         AomCdfProb cfl_alpha_cdf[CFL_ALPHA_CONTEXTS][CDF_SIZE(CFL_ALPHABET_SIZE)];
         int32_t initialized;
-
-
     } FRAME_CONTEXT;
-
-
 
     extern const AomCdfProb default_kf_y_mode_cdf[KF_MODE_CONTEXTS]
         [KF_MODE_CONTEXTS]
@@ -1093,7 +1085,6 @@ extern "C" {
         { 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 4, 5, 3, 6, 7, 8 },
     };
 
-
     void av1_set_default_ref_deltas(int8_t *ref_deltas);
     void av1_set_default_mode_deltas(int8_t *mode_deltas);
     void av1_setup_frame_contexts(struct AV1Common *cm);
@@ -1109,14 +1100,8 @@ extern "C" {
         return i;
     }
 
-
-
-
     /**********************************************************************************************************************/
     // onyxc_int.h
-
-
-
 
     /**********************************************************************************************************************/
     /**********************************************************************************************************************/

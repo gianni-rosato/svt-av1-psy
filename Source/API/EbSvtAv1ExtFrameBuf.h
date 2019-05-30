@@ -17,7 +17,6 @@ extern "C" {
  * This structure holds allocated frame buffers used by the decoder.
  */
 typedef struct EbExtFrameBuf {
-
    /* Pointer to the memory allocates externally for the codec
     * picture buffer */
   uint8_t       *buffer;
@@ -28,9 +27,7 @@ typedef struct EbExtFrameBuf {
 
   /* Pointer to private data associated with allocating the memory */
   void          *private_data;
-
 } EbExtFrameBuf;
-
 
 /* Callback function to allocate frame buffer.
  *

@@ -16,9 +16,7 @@ extern "C" {
 #define SHIFT_INV_1ST          7
 #define SHIFT_INV_2ND          12
 
-
 #ifdef __cplusplus
 }
 #endif
 #endif // EbTransforms_C_h
-

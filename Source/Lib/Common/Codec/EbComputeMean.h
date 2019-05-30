@@ -14,7 +14,6 @@
 extern "C" {
 #endif
 
-
     typedef uint64_t(*EbComputeMeanFunc)(
         uint8_t *input_samples,
         uint32_t input_stride,

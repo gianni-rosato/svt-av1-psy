@@ -18,7 +18,6 @@ EbErrorType initial_rate_control_reorder_entry_ctor(
     return EB_ErrorNone;
 }
 
-
 EbErrorType hl_rate_control_histogram_entry_ctor(
     HlRateControlHistogramEntry   **entry_dbl_ptr,
     uint32_t                          picture_number)
@@ -40,6 +39,3 @@ EbErrorType hl_rate_control_histogram_entry_ctor(
 
     return EB_ErrorNone;
 }
-
-
-

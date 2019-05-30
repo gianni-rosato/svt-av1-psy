@@ -27,14 +27,12 @@
 #include "EbModeDecisionProcess.h"
 #include <smmintrin.h> /* SSE4.1 */
 
-
 #include "convolve.h"
 #include "aom_dsp_rtcd.h"
 
 #define MVBOUNDLOW    36    //  (80-71)<<2 // 80 = ReferencePadding ; minus 71 is derived from the expression -64 + 1 - 8, and plus 7 is derived from expression -1 + 8
 #define MVBOUNDHIGH   348   //  (80+7)<<2
 #define REFPADD_QPEL  320   //  (16+64)<<2
-
 
 #define UNUSED_VARIABLE(x) (void)(x)
 
@@ -99,8 +97,6 @@ static INLINE MV clamp_mv_to_umv_border_sb(const MacroBlockD *xd,
 
     return clamped_mv;
 }
-
-
 
 DECLARE_ALIGNED(256, static const InterpKernel,
 sub_pel_filters_8[SUBPEL_SHIFTS]) = {
@@ -330,7 +326,6 @@ void av1_jnt_convolve_2d_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8
             else {
                 dst[y * dst_stride + x] = res;
             }
-
         }
     }
 }
@@ -384,7 +379,6 @@ void av1_jnt_convolve_y_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
             else {
                 dst[y * dst_stride + x] = (ConvBufType)res;
             }
-
         }
     }
 }
@@ -424,7 +418,6 @@ void av1_jnt_convolve_x_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
             if (conv_params->do_average) {
                 int32_t tmp = dst[y * dst_stride + x];
                 if (conv_params->use_jnt_comp_avg) {
-
                     tmp = tmp * conv_params->fwd_offset + res * conv_params->bck_offset;
                     tmp = tmp >> DIST_PRECISION_BITS;
                 }
@@ -788,7 +781,6 @@ void av1_highbd_jnt_convolve_2d_c(const uint16_t *src, int32_t src_stride,
         2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
     assert(round_bits >= 0);
 
-
     // horizontal filter
     const uint16_t *src_horiz = src - fo_vert * src_stride;
     const int16_t *x_filter = av1_get_interp_filter_subpel_kernel(
@@ -959,7 +951,6 @@ static void av1_get_convolve_filter_params( uint32_t interp_filters,
     *params_y = av1_get_interp_filter_params_with_block_size(filter_y, h);
 }
 
-
 int32_t is_inter_block(const MbModeInfo *mbmi);
 BlockSize scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x,
     int32_t subsampling_y);
@@ -1061,7 +1052,6 @@ EbErrorType av1_inter_prediction(
 
     const BlockGeom * blk_geom = get_blk_geom_mds(cu_ptr->mds_idx);
 
-
     //special treatment for chroma in 4XN/NX4 blocks
     //if one of the neighbour blocks of the parent square is intra the chroma prediction will follow the normal path using the luma MV of the current nsq block which is the latest sub8x8.
     //for this case: only uniPred is allowed.
@@ -1070,7 +1060,6 @@ EbErrorType av1_inter_prediction(
     if(perform_chroma && (blk_geom->has_uv && (blk_geom->bwidth == 4 || blk_geom->bheight == 4)))
 
     {
-
         //CHKN setup input param
 
         int32_t bw = blk_geom->bwidth_uv;
@@ -1105,7 +1094,6 @@ EbErrorType av1_inter_prediction(
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_1].y;
                     }
                     else {
-
                         // printf("ERRRRRRR");
 
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
@@ -1113,7 +1101,6 @@ EbErrorType av1_inter_prediction(
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[1].as_mv.col = mv_unit->mv[REF_LIST_1].x;
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[1].as_mv.row = mv_unit->mv[REF_LIST_1].y;
                     }
-
                 }
             }
         }
@@ -1147,7 +1134,6 @@ EbErrorType av1_inter_prediction(
         if (sub8x8_inter) {
             for (int32_t row = row_start; row <= 0 && sub8x8_inter; ++row) {
                 for (int32_t col = col_start; col <= 0; ++col) {
-
                     ModeInfo *miPtr = *xd->mi;
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
 
@@ -1178,7 +1164,6 @@ EbErrorType av1_inter_prediction(
             for (int32_t y = 0; y < b8_h; y += b4_h) {
                 int32_t col = col_start;
                 for (int32_t x = 0; x < b8_w; x += b4_w) {
-
                     ModeInfo *miPtr = *xd->mi;
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
 
@@ -1218,7 +1203,6 @@ EbErrorType av1_inter_prediction(
 
                     av1_get_convolve_filter_params(interp_filters, &filter_params_x,
                         &filter_params_y, blk_geom->bwidth_uv, blk_geom->bheight_uv);
-
 
                     convolve[subpel_x != 0][subpel_y != 0][is_compound](
                         src_ptr,
@@ -1267,7 +1251,6 @@ EbErrorType av1_inter_prediction(
                         subpel_y,
                         &conv_params);
 
-
                     ++col;
                 }
                 ++row;
@@ -1277,13 +1260,9 @@ EbErrorType av1_inter_prediction(
 
             //return;
         }
-
-
     }
 
-
     if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
-
         //List0-Y
         mv.col = mv_unit->mv[REF_LIST_0].x;
         mv.row = mv_unit->mv[REF_LIST_0].y;
@@ -1314,7 +1293,6 @@ EbErrorType av1_inter_prediction(
             subpel_y,
             &conv_params);
         if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
-
             //List0-Cb
             src_ptr = ref_pic_list0->buffer_cb + (ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list0->stride_cb;
             dst_ptr = prediction_ptr->buffer_cb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->stride_cb;
@@ -1326,7 +1304,6 @@ EbErrorType av1_inter_prediction(
             subpel_y = mv_q4.row & SUBPEL_MASK;
             src_ptr = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
             conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstCb, 64, is_compound, EB_8BIT);
-
 
             av1_get_convolve_filter_params(interp_filters, &filter_params_x,
                 &filter_params_y, blk_geom->bwidth_uv, blk_geom->bheight_uv);
@@ -1344,7 +1321,6 @@ EbErrorType av1_inter_prediction(
                 blk_geom->bheight_uv,
                 &filter_params_x,//puSize > 8 ? &av1RegularFilter : &av1RegularFilterW4,
                 &filter_params_y,//puSize > 8 ? &av1RegularFilter : &av1RegularFilterW4,
-
                 subpel_x,
                 subpel_y,
                 &conv_params);
@@ -1381,7 +1357,6 @@ EbErrorType av1_inter_prediction(
     }
 
     if ((mv_unit->pred_direction == UNI_PRED_LIST_1 || mv_unit->pred_direction == BI_PRED) ) {
-
         //List0-Y
         mv.col = mv_unit->mv[REF_LIST_1].x;
         mv.row = mv_unit->mv[REF_LIST_1].y;
@@ -1409,12 +1384,10 @@ EbErrorType av1_inter_prediction(
             bheight,
             &filter_params_x,//&av1RegularFilter,
             &filter_params_y,//&av1RegularFilter,
-
             subpel_x,
             subpel_y,
             &conv_params);
         if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
-
             //List0-Cb
             src_ptr = ref_pic_list1->buffer_cb + (ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->stride_cb;
             dst_ptr = prediction_ptr->buffer_cb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->stride_cb;
@@ -1429,7 +1402,6 @@ EbErrorType av1_inter_prediction(
 
             av1_get_convolve_filter_params(interp_filters, &filter_params_x,
                 &filter_params_y, blk_geom->bwidth_uv, blk_geom->bheight_uv);
-
 
             convolve[subpel_x != 0][subpel_y != 0][is_compound](
                 src_ptr,
@@ -1468,10 +1440,7 @@ EbErrorType av1_inter_prediction(
                 subpel_y,
                 &conv_params);
         }
-
-
     }
-
 
     return return_error;
 }
@@ -1491,7 +1460,6 @@ void Av1UnPackReferenceBlock(
     EbAsm                 asm_type,
     uint8_t                  Tap)
 {
-
     pu_width += Tap;
     pu_height += Tap;
     uint16_t *ptr16 = (uint16_t *)SrcBuffer - (Tap >> 1) - ((Tap >> 1)*SrcStride);
@@ -1537,8 +1505,6 @@ EbErrorType AV1InterPrediction10BitMD(
     DECLARE_ALIGNED(32, uint16_t, tmp_dstCb[64 * 64]);
     DECLARE_ALIGNED(32, uint16_t, tmp_dstCr[64 * 64]);
 
-
-
     MV  mv, mv_q4;
 
     int32_t subpel_x, subpel_y;
@@ -1562,7 +1528,6 @@ EbErrorType AV1InterPrediction10BitMD(
     int32_t sub8x8_inter = 0;
     if (perform_chroma && blk_geom->has_uv && (blk_geom->bwidth == 4 || blk_geom->bheight == 4))
     {
-
         //CHKN setup input param
 
         int32_t bw = blk_geom->bwidth_uv;
@@ -1597,7 +1562,6 @@ EbErrorType AV1InterPrediction10BitMD(
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_1].y;
                     }
                     else {
-
                         // printf("ERRRRRRR");
 
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
@@ -1605,7 +1569,6 @@ EbErrorType AV1InterPrediction10BitMD(
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[1].as_mv.col = mv_unit->mv[REF_LIST_1].x;
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[1].as_mv.row = mv_unit->mv[REF_LIST_1].y;
                     }
-
                 }
             }
         }
@@ -1638,7 +1601,6 @@ EbErrorType AV1InterPrediction10BitMD(
         if (sub8x8_inter) {
             for (int32_t row = row_start; row <= 0 && sub8x8_inter; ++row) {
                 for (int32_t col = col_start; col <= 0; ++col) {
-
                     ModeInfo *miPtr = *xd->mi;
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
 
@@ -1668,7 +1630,6 @@ EbErrorType AV1InterPrediction10BitMD(
             for (int32_t y = 0; y < b8_h; y += b4_h) {
                 int32_t col = col_start;
                 for (int32_t x = 0; x < b8_w; x += b4_w) {
-
                     ModeInfo *miPtr = *xd->mi;
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
 
@@ -1737,7 +1698,6 @@ EbErrorType AV1InterPrediction10BitMD(
                         subpel_y,
                         &conv_params);
 
-
                     //Cr
                     conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstCr, BLOCK_SIZE_64, is_compound, EB_8BIT);
                     conv_params.use_jnt_comp_avg = 0;
@@ -1801,14 +1761,9 @@ EbErrorType AV1InterPrediction10BitMD(
 
             //return;
         }
-
-
     }
 
-
-
     if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
-
         //List0-Y
         mv.col = mv_unit->mv[REF_LIST_0].x;
         mv.row = mv_unit->mv[REF_LIST_0].y;
@@ -1993,12 +1948,9 @@ EbErrorType AV1InterPrediction10BitMD(
                     subpel_y,
                     &conv_params);
         }
-
     }
 
-
     if (mv_unit->pred_direction == UNI_PRED_LIST_1 || mv_unit->pred_direction == BI_PRED) {
-
         //List1-Y
         mv.col = mv_unit->mv[REF_LIST_1].x;
         mv.row = mv_unit->mv[REF_LIST_1].y;
@@ -2055,7 +2007,6 @@ EbErrorType AV1InterPrediction10BitMD(
             &conv_params);
 
         if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
-
             //List1-Cb
 #if UNPACK_REF_POST_EP
             src_ptr = ref_pic_list1->buffer_cb + (ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->stride_cb;
@@ -2070,7 +2021,6 @@ EbErrorType AV1InterPrediction10BitMD(
             subpel_y = mv_q4.row & SUBPEL_MASK;
             src_ptr = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
             conv_params = get_conv_params_no_round(0, (mv_unit->pred_direction == BI_PRED) ? 1 : 0, 0, tmp_dstCb, 64, is_compound, EB_8BIT);
-
 
             av1_get_convolve_filter_params(interp_filters, &filter_params_x,
                 &filter_params_y, blk_geom->bwidth_uv, blk_geom->bheight_uv);
@@ -2150,14 +2100,11 @@ EbErrorType AV1InterPrediction10BitMD(
                 subpel_y,
                 &conv_params);
         }
-
     }
-
 
     return return_error;
 }
 #endif
-
 
 EbErrorType av1_inter_prediction_hbd(
     PictureControlSet                    *picture_control_set_ptr,
@@ -2205,7 +2152,6 @@ EbErrorType av1_inter_prediction_hbd(
         (blk_geom->bwidth == 4 || blk_geom->bheight == 4)
         )
     {
-
         //CHKN setup input param
 
         int32_t bw = blk_geom->bwidth_uv;
@@ -2240,7 +2186,6 @@ EbErrorType av1_inter_prediction_hbd(
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_1].y;
                     }
                     else {
-
                         // printf("ERRRRRRR");
 
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
@@ -2248,7 +2193,6 @@ EbErrorType av1_inter_prediction_hbd(
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[1].as_mv.col = mv_unit->mv[REF_LIST_1].x;
                         miPtr[miX + miY * xd->mi_stride].mbmi.mv[1].as_mv.row = mv_unit->mv[REF_LIST_1].y;
                     }
-
                 }
             }
         }
@@ -2281,7 +2225,6 @@ EbErrorType av1_inter_prediction_hbd(
         if (sub8x8_inter) {
             for (int32_t row = row_start; row <= 0 && sub8x8_inter; ++row) {
                 for (int32_t col = col_start; col <= 0; ++col) {
-
                     ModeInfo *miPtr = *xd->mi;
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
 
@@ -2312,7 +2255,6 @@ EbErrorType av1_inter_prediction_hbd(
             for (int32_t y = 0; y < b8_h; y += b4_h) {
                 int32_t col = col_start;
                 for (int32_t x = 0; x < b8_w; x += b4_w) {
-
                     ModeInfo *miPtr = *xd->mi;
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
 
@@ -2409,14 +2351,9 @@ EbErrorType av1_inter_prediction_hbd(
 
             //return;
         }
-
-
     }
 
-
-
     if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
-
         //List0-Y
         mv.col = mv_unit->mv[REF_LIST_0].x;
         mv.row = mv_unit->mv[REF_LIST_0].y;
@@ -2449,7 +2386,6 @@ EbErrorType av1_inter_prediction_hbd(
             bit_depth);
 
         if (blk_geom->has_uv && sub8x8_inter == 0) {
-
             //List0-Cb
             src_ptr = (uint16_t*)ref_pic_list0->buffer_cb + (ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list0->stride_cb;
             dst_ptr = (uint16_t*)prediction_ptr->buffer_cb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->stride_cb;
@@ -2461,7 +2397,6 @@ EbErrorType av1_inter_prediction_hbd(
             subpel_y = mv_q4.row & SUBPEL_MASK;
             src_ptr = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
             conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstCb, 64, is_compound, bit_depth);
-
 
             av1_get_convolve_filter_params(cu_ptr->interp_filters, &filter_params_x,
                 &filter_params_y, blk_geom->bwidth_uv, blk_geom->bheight_uv);
@@ -2519,12 +2454,9 @@ EbErrorType av1_inter_prediction_hbd(
                 &conv_params,
                 bit_depth);
         }
-
     }
 
-
     if (mv_unit->pred_direction == UNI_PRED_LIST_1 || mv_unit->pred_direction == BI_PRED) {
-
         //List0-Y
         mv.col = mv_unit->mv[REF_LIST_1].x;
         mv.row = mv_unit->mv[REF_LIST_1].y;
@@ -2558,7 +2490,6 @@ EbErrorType av1_inter_prediction_hbd(
             bit_depth);
 
         if (blk_geom->has_uv && sub8x8_inter == 0) {
-
             //List0-Cb
             src_ptr = (uint16_t*)ref_pic_list1->buffer_cb + (ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->stride_cb;
             dst_ptr = (uint16_t*)prediction_ptr->buffer_cb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->stride_cb;
@@ -2612,14 +2543,10 @@ EbErrorType av1_inter_prediction_hbd(
                 &conv_params,
                 bit_depth);
         }
-
-
     }
-
 
     return return_error;
 }
-
 
 EbErrorType warped_motion_prediction(
     MvUnit                               *mv_unit,
@@ -2634,7 +2561,6 @@ EbErrorType warped_motion_prediction(
     EbWarpedMotionParams                   *wm_params,
     uint8_t                                 bit_depth,
     EbBool                                  perform_chroma,
-
     EbAsm                                   asm_type)
 {
     (void)asm_type;
@@ -2687,9 +2613,7 @@ EbErrorType warped_motion_prediction(
         if (!blk_geom->has_uv)
             return return_error;
 
-
         if (perform_chroma) {
-
          if (blk_geom->bwidth >= 16  && blk_geom->bheight >= 16 ) {
             // Cb
             src_ptr = ref_pic_list0->buffer_cb + ref_pic_list0->origin_x / 2 + (ref_pic_list0->origin_y / 2) * ref_pic_list0->stride_cb;
@@ -2807,7 +2731,6 @@ EbErrorType warped_motion_prediction(
                 &conv_params);
             }
         }
-
     } else { // HBD
         uint16_t *src_ptr;
         uint16_t *dst_ptr;
@@ -2843,7 +2766,6 @@ EbErrorType warped_motion_prediction(
             return return_error;
 
         if (perform_chroma) {
-
          if (blk_geom->bwidth >= 16  && blk_geom->bheight >= 16 ) {
             // Cb
             src_ptr = (uint16_t *)ref_pic_list0->buffer_cb + ref_pic_list0->origin_x / 2 + (ref_pic_list0->origin_y / 2) * ref_pic_list0->stride_cb;
@@ -2966,7 +2888,6 @@ EbErrorType warped_motion_prediction(
     return return_error;
 }
 
-
 EbErrorType warped_motion_prediction_md(
     MvUnit                               *mv_unit,
     ModeDecisionContext                  *md_context_ptr,
@@ -3057,7 +2978,6 @@ EbErrorType warped_motion_prediction_md(
     if (!blk_geom->has_uv)
         return return_error;
     if (md_context_ptr->chroma_level <= CHROMA_MODE_1) {
-
      if (blk_geom->bwidth >= 16  && blk_geom->bheight >= 16 ) {
         // Cb
 #if UNPACK_REF_POST_EP
@@ -3118,7 +3038,6 @@ EbErrorType warped_motion_prediction_md(
 
         dst_ptr = prediction_ptr->buffer_cr + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->stride_cr;
         dst_stride = prediction_ptr->stride_cr;
-
 
             conv_params = get_conv_params_no_round(0, 0, 0, NULL, 64, is_compound, EB_8BIT);
 #if !UNPACK_REF_POST_EP
@@ -3184,7 +3103,6 @@ EbErrorType warped_motion_prediction_md(
         subpel_y = mv_q4.row & SUBPEL_MASK;
         src_ptr = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
         conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstCb, 64, is_compound, EB_8BIT);
-
 
             av1_get_convolve_filter_params(interp_filters, &filter_params_x,
                 &filter_params_y, blk_geom->bwidth_uv, blk_geom->bheight_uv);
@@ -3268,7 +3186,6 @@ EbErrorType warped_motion_prediction_md(
     return return_error;
 }
 
-
 #define SWITCHABLE_INTERP_RATE_FACTOR 1
 extern int32_t av1_get_pred_context_switchable_interp(
     NeighborArrayUnit     *ref_frame_type_neighbor_array,
@@ -3279,7 +3196,6 @@ extern int32_t av1_get_pred_context_switchable_interp(
     uint32_t cu_origin_y,
     int32_t dir
 );
-
 
 int32_t av1_get_switchable_rate(
     ModeDecisionCandidateBuffer *candidate_buffer_ptr,
@@ -3294,7 +3210,6 @@ int32_t av1_get_switchable_rate(
         int32_t dir;
 
         for (dir = 0; dir < 2; ++dir) {
-
             MvReferenceFrame rf[2];
             av1_set_ref_frame(rf, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
             const int32_t ctx = av1_get_pred_context_switchable_interp(
@@ -3324,9 +3239,6 @@ int32_t av1_get_switchable_rate(
 
  // The functions described below are sampled at the four most significant
  // bits of x^2 + 8 / 256.
-
-
-
 
 void highbd_variance64_c(const uint8_t *a8, int32_t a_stride,
     const uint8_t *b8, int32_t b_stride, int32_t w, int32_t h,
@@ -3400,13 +3312,10 @@ void highbd_8_variance(const uint8_t *a8, int32_t a_stride,
     *sum = (int64_t)_mm_extract_epi32(y0, 0);
 }
 
-
 #define RDDIV_BITS 7
 #define RDCOST(RM, R, D)                                            \
   (ROUND_POWER_OF_TWO(((uint64_t)(R)) * (RM), AV1_PROB_COST_SHIFT) + \
    ((D) * (1 << RDDIV_BITS)))
-
-
 
 static void model_rd_norm(int32_t xsq_q10, int32_t *r_q10, int32_t *d_q10) {
     // NOTE: The tables below must be of the same size.
@@ -3509,7 +3418,6 @@ void av1_model_rd_from_var_lapndz(int64_t var, uint32_t n_log2,
     uint64_t sse,
     uint32_t *rate,
     uint64_t *dist){
-
     // OMK
   //const struct MacroblockdPlane *const pd = &xd->plane[plane];
     int32_t dequant_shift = 3;
@@ -3528,7 +3436,6 @@ void av1_model_rd_from_var_lapndz(int64_t var, uint32_t n_log2,
         *dist = (uint64_t)(square_error * quantizer) >> 8;
     }
     else {
-
         av1_model_rd_from_var_lapndz((uint64_t)sse, num_pels_log2_lookup[bsize],
             quantizer >> dequant_shift, (int32_t*)rate,
             (int64_t*)dist);
@@ -3538,7 +3445,6 @@ void av1_model_rd_from_var_lapndz(int64_t var, uint32_t n_log2,
 }
 
 extern /*static*/ void model_rd_for_sb(
-
     PictureControlSet *picture_control_set_ptr,
     EbPictureBufferDesc *prediction_ptr,
     ModeDecisionContext *md_context_ptr,
@@ -3565,7 +3471,6 @@ extern /*static*/ void model_rd_for_sb(
     uint64_t dist_sum = 0;
     uint64_t total_sse = 0;
 
-
     EbPictureBufferDesc                  *input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
     const uint32_t inputOriginIndex = (md_context_ptr->cu_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y + (md_context_ptr->cu_origin_x + input_picture_ptr->origin_x);
     const uint32_t inputChromaOriginIndex = ((md_context_ptr->cu_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_cb + (md_context_ptr->cu_origin_x + input_picture_ptr->origin_x)) / 2;
@@ -3585,7 +3490,6 @@ extern /*static*/ void model_rd_for_sb(
          // variance as well.
         uint32_t offset;
 
-
         if (plane)
             offset = (prediction_ptr->origin_x + md_context_ptr->blk_geom->origin_x + (prediction_ptr->origin_y + md_context_ptr->blk_geom->origin_y) * prediction_ptr->stride_cb) / 2;
         else
@@ -3600,7 +3504,6 @@ extern /*static*/ void model_rd_for_sb(
             plane == 0 ? md_context_ptr->blk_geom->bheight : md_context_ptr->blk_geom->bheight_uv,
             &sse
         );
-
 
         total_sse += sse;
 
@@ -3697,7 +3600,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
     int32_t *const skip_txfm_sb,
     int64_t *const skip_sse_sb) {
 
-
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;//&cpi->common;
     EbBool use_uv = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
         picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level != IT_SEARCH_FAST_LOOP_UV_BLIND) ? EB_TRUE : EB_FALSE;
@@ -3745,7 +3647,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         use_uv,
         asm_type);
 
-
     model_rd_for_sb(
         picture_control_set_ptr,
         prediction_ptr,
@@ -3764,7 +3665,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         // do interp_filter search
 
         if (av1_is_interp_needed(candidate_buffer_ptr, picture_control_set_ptr, md_context_ptr->blk_geom->bsize) /*&& av1_is_interp_search_needed(xd)*/) {
-
             const int32_t filter_set_size = DUAL_FILTER_SET_SIZE;
             int32_t best_in_temp = 0;
             uint32_t best_filters = 0;// mbmi->interp_filters;
@@ -3893,7 +3793,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         md_context_ptr->blk_geom->origin_y,
                         use_uv,
                         asm_type);
-
 
                     model_rd_for_sb(
                         picture_control_set_ptr,
@@ -4038,7 +3937,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
     int32_t *const switchable_rate,
     int32_t *const skip_txfm_sb,
     int64_t *const skip_sse_sb) {
-
 
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;//&cpi->common;
 
@@ -4237,7 +4135,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         use_uv,
                         asm_type);
 
-
                     model_rd_for_sb(
                         picture_control_set_ptr,
                         prediction_ptr,
@@ -4360,7 +4257,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
     //  return 0;
 }
 
-
 #endif
 
 EbErrorType inter_pu_prediction_av1(
@@ -4418,7 +4314,6 @@ EbErrorType inter_pu_prediction_av1(
         return return_error;
 #else
         if (is16bit) {
-
 #if !UNPACK_REF_POST_EP
             ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
 #endif
@@ -4440,12 +4335,9 @@ EbErrorType inter_pu_prediction_av1(
                 md_context_ptr->blk_geom->origin_x,
                 md_context_ptr->blk_geom->origin_y,
                 md_context_ptr->chroma_level <= CHROMA_MODE_1,
-
                 asm_type);
 
             return return_error;
-
-
         }
         else {
 #if !UNPACK_REF_POST_EP
@@ -4556,7 +4448,6 @@ EbErrorType inter_pu_prediction_av1(
                 &candidate_ptr->wm_params,
                 (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
                 md_context_ptr->chroma_level <= CHROMA_MODE_1,
-
                 asm_type);
         }
         return return_error;
@@ -4564,7 +4455,6 @@ EbErrorType inter_pu_prediction_av1(
 
     uint16_t capped_size = md_context_ptr->interpolation_filter_search_blk_size == 0 ? 4 :
                            md_context_ptr->interpolation_filter_search_blk_size == 1 ? 8 : 16 ;
-
 
 #if REMOVE_UNPACK_REF
 
@@ -4711,7 +4601,6 @@ EbErrorType inter_prediction_context_ctor(
     return EB_ErrorNone;
 }
 
-
 void RoundMvOnTheFly(
     int16_t *motionVector_x,
     int16_t *motionVector_y)
@@ -4722,7 +4611,6 @@ void RoundMvOnTheFly(
     return;
 }
 #endif
-
 
 /***************************************************
 *  PreLoad Reference Block  for 16bit mode
@@ -4737,7 +4625,6 @@ void UnPackReferenceLumaBlock(
     EbBool                sub_pred,
     EbAsm                 asm_type)
 {
-
     pu_width += 4;
     pu_height += 4;
     uint32_t inPosx = (pos_x >> 2) - 2;
@@ -4785,7 +4672,6 @@ EbErrorType choose_mvp_idx_v2(
     EbErrorType  return_error = EB_ErrorNone;
     uint8_t         mvpRef0Idx;
     uint8_t         mvpRef1Idx;
-
 
     uint32_t        picture_width = ((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_width;
     uint32_t        picture_height = ((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->luma_height;
@@ -4864,8 +4750,6 @@ EbErrorType choose_mvp_idx_v2(
 
             mvpRef1Idx = ((mvd0) <= (mvd1)) ? 0 : 1;
 
-
-
             candidate_ptr->motion_vector_pred_idx[REF_LIST_1] = mvpRef1Idx;
             candidate_ptr->motion_vector_pred_x[REF_LIST_1] = ref1_amvp_cand_array_x[mvpRef1Idx];
             candidate_ptr->motion_vector_pred_y[REF_LIST_1] = ref1_amvp_cand_array_y[mvpRef1Idx];
@@ -4913,8 +4797,6 @@ EbErrorType choose_mvp_idx_v2(
                 EB_ABS_DIFF(ref0_amvp_cand_array_y[1], candidate_ptr->motion_vector_yl0);
 
             mvpRef0Idx = ((mvd0) <= (mvd1)) ? 0 : 1;
-
-
 
             candidate_ptr->motion_vector_pred_idx[REF_LIST_0] = mvpRef0Idx;
             candidate_ptr->motion_vector_pred_x[REF_LIST_0] = ref0_amvp_cand_array_x[mvpRef0Idx];

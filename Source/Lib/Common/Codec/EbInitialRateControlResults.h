@@ -27,5 +27,4 @@ extern EbErrorType initial_rate_control_results_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr);
 
-
 #endif //EbInitialRateControlResults_h

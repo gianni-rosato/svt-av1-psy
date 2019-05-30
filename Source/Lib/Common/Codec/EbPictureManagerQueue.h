@@ -78,7 +78,6 @@ extern "C" {
         uint32_t         gop_index;
     } RcInputQueueEntry;
 
-
     /************************************************
      * Rate Control FeedBack  Queue Entry
      ************************************************/
@@ -94,7 +93,6 @@ extern "C" {
         uint64_t  gop_first_poc;
         uint32_t  gop_index;
     } RcFeedbackQueueEntry;
-
 
     extern EbErrorType input_queue_entry_ctor(
         InputQueueEntry **entry_dbl_ptr);

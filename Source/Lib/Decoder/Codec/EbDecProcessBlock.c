@@ -205,7 +205,6 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     int is_chroma_reference = dec_is_chroma_reference(mi_row, mi_col, bsize,
         sub_x, sub_y);
 
-
     /* TODO: Can move to a common init fun for parse & decode */
     PartitionInfo_t part_info;
     part_info.mi = mode_info;
@@ -303,7 +302,6 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
         for (row = 0; row < max_blocks_high; row += mu_blocks_high) {
             for (col = 0; col < max_blocks_wide; col += mu_blocks_wide) {
                 for (int plane = 0; plane < num_planes; ++plane) {
-
                     sub_x = (plane > 0) ? color_config->subsampling_x : 0;
                     sub_y = (plane > 0) ? color_config->subsampling_y : 0;
 

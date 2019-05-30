@@ -16,7 +16,6 @@ void InitializeSamplesNeighboringReferencePicture16Bit(
     uint16_t   reconHeight,
     uint16_t   left_padding,
     uint16_t   top_padding) {
-
     uint16_t  *reconSamplesPtr;
     uint16_t   sampleCount;
 
@@ -48,7 +47,6 @@ void InitializeSamplesNeighboringReferencePicture8Bit(
     uint16_t   reconHeight,
     uint16_t   left_padding,
     uint16_t   top_padding) {
-
     uint8_t   *reconSamplesPtr;
     uint16_t   sampleCount;
 
@@ -77,9 +75,7 @@ void InitializeSamplesNeighboringReferencePicture(
     EbReferenceObject              *referenceObject,
     EbPictureBufferDescInitData    *pictureBufferDescInitDataPtr,
     EbBitDepthEnum                       bit_depth) {
-
     if (bit_depth == EB_10BIT) {
-
         InitializeSamplesNeighboringReferencePicture16Bit(
             referenceObject->reference_picture16bit->buffer_y,
             referenceObject->reference_picture16bit->stride_y,
@@ -105,7 +101,6 @@ void InitializeSamplesNeighboringReferencePicture(
             pictureBufferDescInitDataPtr->top_padding >> 1);
     }
     else {
-
         InitializeSamplesNeighboringReferencePicture8Bit(
             referenceObject->reference_picture->buffer_y,
             referenceObject->reference_picture->stride_y,
@@ -132,7 +127,6 @@ void InitializeSamplesNeighboringReferencePicture(
     }
 }
 
-
 /*****************************************
  * eb_picture_buffer_desc_ctor
  *  Initializes the Buffer Descriptor's
@@ -143,7 +137,6 @@ EbErrorType eb_reference_object_ctor(
     EbPtr  *object_dbl_ptr,
     EbPtr   object_init_data_ptr)
 {
-
     EbReferenceObject              *referenceObject;
     EbPictureBufferDescInitData    *pictureBufferDescInitDataPtr = (EbPictureBufferDescInitData*)object_init_data_ptr;
     EbPictureBufferDescInitData    pictureBufferDescInitData16BitPtr = *pictureBufferDescInitDataPtr;
@@ -152,10 +145,8 @@ EbErrorType eb_reference_object_ctor(
 
     *object_dbl_ptr = (EbPtr)referenceObject;
 
-
     //TODO:12bit
     if (pictureBufferDescInitData16BitPtr.bit_depth == EB_10BIT) {
-
 #if UNPACK_REF_POST_EP // constructor
         // Hsan: set split_mode to 0 to construct the packed reference buffer (used @ EP)
         pictureBufferDescInitData16BitPtr.split_mode = EB_FALSE;
@@ -194,7 +185,6 @@ EbErrorType eb_reference_object_ctor(
     if (return_error == EB_ErrorInsufficientResources) {
         return EB_ErrorInsufficientResources;
     }
-
 
 #if !OPT_LOSSLESS_1
     // Allocate SB based TMVP map
@@ -236,7 +226,6 @@ EbErrorType eb_pa_reference_object_ctor(
     EbPtr  *object_dbl_ptr,
     EbPtr   object_init_data_ptr)
 {
-
     EbPaReferenceObject               *paReferenceObject;
     EbPictureBufferDescInitData       *pictureBufferDescInitDataPtr = (EbPictureBufferDescInitData*)object_init_data_ptr;
     EbErrorType return_error = EB_ErrorNone;
@@ -271,6 +260,3 @@ EbErrorType eb_pa_reference_object_ctor(
 
     return EB_ErrorNone;
 }
-
-
-

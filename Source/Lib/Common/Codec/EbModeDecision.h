@@ -144,7 +144,6 @@ extern "C" {
 #endif
     } ModeDecisionCandidate;
 
-
     /**************************************
     * Function Ptrs Definitions
     **************************************/
@@ -261,7 +260,6 @@ extern "C" {
         uint64_t                                cr_distortion[2];
         uint64_t                                y_full_distortion[DIST_CALC_TOTAL];
         uint64_t                                y_coeff_bits;
-
     } ModeDecisionCandidateBuffer;
 
     /**************************************

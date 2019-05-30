@@ -16,7 +16,6 @@
 
 typedef __m128i v128;
 
-
 SIMD_INLINE uint32_t v128_low_u32(v128 a) {
     return (uint32_t)_mm_cvtsi128_si32(a);
 }
@@ -508,6 +507,5 @@ SIMD_INLINE v128 v128_shr_s32(v128 a, uint32_t c) {
 #define v128_shl_n_32(a, c) _mm_slli_epi32(a, c)
 #define v128_shr_n_u32(a, c) _mm_srli_epi32(a, c)
 #define v128_shr_n_s32(a, c) _mm_srai_epi32(a, c)
-
 
 #endif /* _V128_INTRINSICS_H */

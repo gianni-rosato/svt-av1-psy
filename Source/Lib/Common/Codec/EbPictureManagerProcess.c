@@ -25,7 +25,6 @@ void av1_tile_set_col(TileInfo *tile, PictureParentControlSet * pcs_ptr, int col
 void av1_tile_set_row(TileInfo *tile, PictureParentControlSet * pcs_ptr, int row);
 void set_tile_info(PictureParentControlSet * pcs_ptr);
 
-
 /************************************************
  * Defines
  ************************************************/
@@ -77,9 +76,6 @@ EbErrorType picture_manager_context_ctor(
     return EB_ErrorNone;
 }
 
-
-
-
 /***************************************************************************************************
  * Picture Manager Kernel
  *
@@ -110,7 +106,6 @@ void* picture_manager_kernel(void *input_ptr)
     PictureParentControlSet       *picture_control_set_ptr;
     SequenceControlSet            *sequence_control_set_ptr;
     EncodeContext                 *encode_context_ptr;
-
 
     EbObjectWrapper               *inputPictureDemuxWrapperPtr;
     PictureDemuxResults           *inputPictureDemuxPtr;
@@ -143,7 +138,6 @@ void* picture_manager_kernel(void *input_ptr)
     uint32_t loopCount = 0;
 
     for (;;) {
-
         // Get Input Full Object
         eb_get_full_object(
             context_ptr->picture_input_fifo_ptr,
@@ -156,7 +150,6 @@ void* picture_manager_kernel(void *input_ptr)
         loopCount++;
 
         switch (inputPictureDemuxPtr->picture_type) {
-
         case EB_PIC_INPUT:
 
             picture_control_set_ptr = (PictureParentControlSet*)inputPictureDemuxPtr->picture_control_set_wrapper_ptr->object_ptr;
@@ -190,13 +183,11 @@ void* picture_manager_kernel(void *input_ptr)
             queueEntryPtr = encode_context_ptr->picture_manager_reorder_queue[encode_context_ptr->picture_manager_reorder_queue_head_index];
 
             while (queueEntryPtr->parent_pcs_wrapper_ptr != EB_NULL) {
-
                 picture_control_set_ptr = (PictureParentControlSet*)queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr;
 
                 predPositionPtr = picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[picture_control_set_ptr->pred_struct_index];
                 // If there was a change in the number of temporal layers, then cleanup the Reference Queue's Dependent Counts
                 if (picture_control_set_ptr->hierarchical_layers_diff != 0) {
-
                     // Dynamic GOP
                     PredictionStructure          *next_pred_struct_ptr;
                     PredictionStructureEntry     *next_base_layer_pred_position_ptr;
@@ -207,7 +198,6 @@ void* picture_manager_kernel(void *input_ptr)
                     referenceQueueIndex = encode_context_ptr->reference_picture_queue_head_index;
 
                     while (referenceQueueIndex != encode_context_ptr->reference_picture_queue_tail_index) {
-
                         referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
 
                         if (referenceEntryPtr->picture_number == (picture_control_set_ptr->picture_number - 1)) { // Picture where the change happened
@@ -225,7 +215,6 @@ void* picture_manager_kernel(void *input_ptr)
 
                             // Get the prediction struct of a picture in temporal layer 0 (from the new GOP structure)
                             next_base_layer_pred_position_ptr = next_pred_struct_ptr->pred_struct_entry_ptr_array[next_pred_struct_ptr->pred_struct_entry_count - 1];
-
 
                             // Remove all positive entries from the dependant lists
                             dependant_list_positive_entries = 0;
@@ -249,7 +238,6 @@ void* picture_manager_kernel(void *input_ptr)
                                     referenceEntryPtr->list0.list[referenceEntryPtr->list0.list_count++] = next_base_layer_pred_position_ptr->dep_list0.list[depIdx];
                                 }
                             }
-
 
                             for (depIdx = 0; depIdx < next_base_layer_pred_position_ptr->dep_list1.list_count; ++depIdx) {
                                 if (next_base_layer_pred_position_ptr->dep_list1.list[depIdx] >= 0) {
@@ -275,14 +263,11 @@ void* picture_manager_kernel(void *input_ptr)
                             referenceEntryPtr->dep_list1_count = referenceEntryPtr->list1.list_count;
 #endif
                             referenceEntryPtr->dependent_count = referenceEntryPtr->dep_list0_count + referenceEntryPtr->dep_list1_count - dependant_list_removed_entries;
-
                         }
                         else {
-
                             // Modify Dependent List0
                             depListCount = referenceEntryPtr->list0.list_count;
                             for (depIdx = 0; depIdx < depListCount; ++depIdx) {
-
 
                                 // Adjust the latest currentInputPoc in case we're in a POC rollover scenario
                                 // currentInputPoc += (currentInputPoc < referenceEntryPtr->pocNumber) ? (1 << sequence_control_set_ptr->bitsForPictureOrderCount) : 0;
@@ -294,7 +279,6 @@ void* picture_manager_kernel(void *input_ptr)
 
                                     // If Dependent POC is greater or equal to the IDR POC
                                 if (depPoc >= picture_control_set_ptr->picture_number && referenceEntryPtr->list0.list[depIdx]) {
-
                                     referenceEntryPtr->list0.list[depIdx] = 0;
 
                                     // Decrement the Reference's referenceCount
@@ -310,7 +294,6 @@ void* picture_manager_kernel(void *input_ptr)
                             // Modify Dependent List1
                             depListCount = referenceEntryPtr->list1.list_count;
                             for (depIdx = 0; depIdx < depListCount; ++depIdx) {
-
                                 // Adjust the latest currentInputPoc in case we're in a POC rollover scenario
                                 // currentInputPoc += (currentInputPoc < referenceEntryPtr->pocNumber) ? (1 << sequence_control_set_ptr->bitsForPictureOrderCount) : 0;
 
@@ -341,16 +324,13 @@ void* picture_manager_kernel(void *input_ptr)
                 // If there was an I-frame or Scene Change, then cleanup the Reference Queue's Dependent Counts
                 if (picture_control_set_ptr->slice_type == I_SLICE)
                 {
-
                     referenceQueueIndex = encode_context_ptr->reference_picture_queue_head_index;
                     while (referenceQueueIndex != encode_context_ptr->reference_picture_queue_tail_index) {
-
                         referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
 
                         // Modify Dependent List0
                         depListCount = referenceEntryPtr->list0.list_count;
                         for (depIdx = 0; depIdx < depListCount; ++depIdx) {
-
                             current_input_poc = picture_control_set_ptr->picture_number;
 
                             // Adjust the latest current_input_poc in case we're in a POC rollover scenario
@@ -363,7 +343,6 @@ void* picture_manager_kernel(void *input_ptr)
 
                                 // If Dependent POC is greater or equal to the IDR POC
                             if (depPoc >= current_input_poc && referenceEntryPtr->list0.list[depIdx]) {
-
                                 referenceEntryPtr->list0.list[depIdx] = 0;
 
                                 // Decrement the Reference's referenceCount
@@ -378,7 +357,6 @@ void* picture_manager_kernel(void *input_ptr)
                         // Modify Dependent List1
                         depListCount = referenceEntryPtr->list1.list_count;
                         for (depIdx = 0; depIdx < depListCount; ++depIdx) {
-
                             current_input_poc = picture_control_set_ptr->picture_number;
 
                             // Adjust the latest current_input_poc in case we're in a POC rollover scenario
@@ -391,7 +369,6 @@ void* picture_manager_kernel(void *input_ptr)
 
                                 // If Dependent POC is greater or equal to the IDR POC or if we inserted trailing Ps
                             if (((depPoc >= current_input_poc) || (((picture_control_set_ptr->pre_assignment_buffer_count != picture_control_set_ptr->pred_struct_ptr->pred_struct_period) || (picture_control_set_ptr->idr_flag == EB_TRUE)) && (depPoc > (current_input_poc - picture_control_set_ptr->pre_assignment_buffer_count)))) && referenceEntryPtr->list1.list[depIdx]) {
-
                                 referenceEntryPtr->list1.list[depIdx] = 0;
 
                                 // Decrement the Reference's referenceCount
@@ -401,16 +378,13 @@ void* picture_manager_kernel(void *input_ptr)
                                     encode_context_ptr->app_callback_ptr,
                                     EB_ENC_PM_ERROR3);
                             }
-
                         }
 
                         // Increment the referenceQueueIndex Iterator
                         referenceQueueIndex = (referenceQueueIndex == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : referenceQueueIndex + 1;
                     }
-
                 }
                 else if (picture_control_set_ptr->idr_flag == EB_TRUE) {
-
                     // Set Reference Entry pointer
                     referenceEntryPtr = (ReferenceQueueEntry*)EB_NULL;
                 }
@@ -563,7 +537,6 @@ void* picture_manager_kernel(void *input_ptr)
 
                 // Get the next entry from the Picture Manager Reorder Queue (Entry N+1)
                 queueEntryPtr = encode_context_ptr->picture_manager_reorder_queue[encode_context_ptr->picture_manager_reorder_queue_head_index];
-
             }
 
             break;
@@ -582,11 +555,9 @@ void* picture_manager_kernel(void *input_ptr)
             referenceQueueIndex = encode_context_ptr->reference_picture_queue_head_index;
             // Find the Reference in the Reference Queue
             do {
-
                 referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
 
                 if (referenceEntryPtr->picture_number == inputPictureDemuxPtr->picture_number) {
-
                     // Assign the reference object if there is a match
                     referenceEntryPtr->reference_object_ptr = inputPictureDemuxPtr->reference_picture_wrapper_ptr;
 
@@ -596,9 +567,7 @@ void* picture_manager_kernel(void *input_ptr)
 
                 // Increment the referenceQueueIndex Iterator
                 referenceQueueIndex = (referenceQueueIndex == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : referenceQueueIndex + 1;
-
             } while ((referenceQueueIndex != encode_context_ptr->reference_picture_queue_tail_index) && (referenceEntryPtr->picture_number != inputPictureDemuxPtr->picture_number));
-
 
             CHECK_REPORT_ERROR(
                 (referenceEntryPtr->picture_number == inputPictureDemuxPtr->picture_number),
@@ -634,11 +603,9 @@ void* picture_manager_kernel(void *input_ptr)
         if (encode_context_ptr != (EncodeContext*)EB_NULL) {
             inputQueueIndex = encode_context_ptr->input_picture_queue_head_index;
             while (inputQueueIndex != encode_context_ptr->input_picture_queue_tail_index) {
-
                 inputEntryPtr = encode_context_ptr->input_picture_queue[inputQueueIndex];
 
                 if (inputEntryPtr->input_object_ptr != EB_NULL) {
-
                     entryPictureControlSetPtr = (PictureParentControlSet*)inputEntryPtr->input_object_ptr->object_ptr;
                     entrySequenceControlSetPtr = (SequenceControlSet*)entryPictureControlSetPtr->sequence_control_set_wrapper_ptr->object_ptr;
 
@@ -653,7 +620,6 @@ void* picture_manager_kernel(void *input_ptr)
 #if ALT_REF_OVERLAY
                             // hardcode the reference for the overlay frame
                             if (entryPictureControlSetPtr->is_overlay) {
-
                                 referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
                                     ((int32_t)inputEntryPtr->reference_entry_index),
                                     REFERENCE_QUEUE_MAX_DEPTH);
@@ -688,7 +654,6 @@ void* picture_manager_kernel(void *input_ptr)
                                     entrySequenceControlSetPtr->bits_for_picture_order_count*/);
                             }
 #else
-
 
                             referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
                                 ((int32_t)inputEntryPtr->reference_entry_index) -     // Base
@@ -760,12 +725,10 @@ void* picture_manager_kernel(void *input_ptr)
 #endif
                             (referenceEntryPtr->reference_available) ? EB_TRUE :   // The Reference has been completed
                             EB_FALSE;     // The Reference has not been completed
-
                     }
 #endif
                     // Check RefList1 Availability
                     if (entryPictureControlSetPtr->slice_type == B_SLICE) {
-
 #if MRP_ME
                         uint8_t refIdx;
                         for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list1_count; ++refIdx) {
@@ -773,7 +736,6 @@ void* picture_manager_kernel(void *input_ptr)
                             {
                                 // If Reference is valid (non-zero), update the availability
                                 if (inputEntryPtr->list1_ptr->reference_list[refIdx] != (int32_t)INVALID_POC) {
-
                                     referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
                                         ((int32_t)inputEntryPtr->reference_entry_index) -     // Base
                                         inputEntryPtr->list1_ptr->reference_list[refIdx],     // Offset
@@ -814,7 +776,6 @@ void* picture_manager_kernel(void *input_ptr)
                         if (entryPictureControlSetPtr->ref_list1_count) {
                             // If Reference is valid (non-zero), update the availability
                             if (inputEntryPtr->list1_ptr->reference_list != (int32_t)INVALID_POC) {
-
                                 referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
                                     ((int32_t)inputEntryPtr->reference_entry_index) -     // Base
                                     inputEntryPtr->list1_ptr->reference_list,     // Offset
@@ -854,7 +815,6 @@ void* picture_manager_kernel(void *input_ptr)
                     }
 
                     if (availabilityFlag == EB_TRUE) {
-
                         // Get New  Empty Child PCS from PCS Pool
                         eb_get_empty_object(
                             context_ptr->picture_control_set_fifo_ptr_array[0],
@@ -871,9 +831,7 @@ void* picture_manager_kernel(void *input_ptr)
                         ChildPictureControlSetPtr->picture_parent_control_set_wrapper_ptr = inputEntryPtr->input_object_ptr;
                         ChildPictureControlSetPtr->parent_pcs_ptr = entryPictureControlSetPtr;
 
-
                         ChildPictureControlSetPtr->parent_pcs_ptr->childPcs = ChildPictureControlSetPtr;
-
 
                         //2. Have some common information between  ChildPCS and ParentPCS.
                         ChildPictureControlSetPtr->sequence_control_set_wrapper_ptr = entryPictureControlSetPtr->sequence_control_set_wrapper_ptr;
@@ -945,14 +903,11 @@ void* picture_manager_kernel(void *input_ptr)
                             }
                         }
 
-
-
                         // Picture edges
                         ConfigurePictureEdges(entrySequenceControlSetPtr, ChildPictureControlSetPtr);
 
                         // Reset the qp array for DLF
                         EB_MEMSET(ChildPictureControlSetPtr->qp_array, 0, sizeof(uint8_t)*ChildPictureControlSetPtr->qp_array_size);
-
 
                         // Error resilience related
                         ChildPictureControlSetPtr->colocated_pu_ref_list = REF_LIST_0;     // to be modified
@@ -984,7 +939,6 @@ void* picture_manager_kernel(void *input_ptr)
 #endif
                         // Configure List0
                         if ((entryPictureControlSetPtr->slice_type == P_SLICE) || (entryPictureControlSetPtr->slice_type == B_SLICE)) {
-
 #if MRP_MD
                             uint8_t refIdx;
                             for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list0_count; ++refIdx) {
@@ -1025,7 +979,6 @@ void* picture_manager_kernel(void *input_ptr)
                                         (referenceEntryPtr->dependent_count != ~0u),
                                         encode_context_ptr->app_callback_ptr,
                                         EB_ENC_PM_ERROR1);
-
                                 }
                             }
 #else
@@ -1058,14 +1011,12 @@ void* picture_manager_kernel(void *input_ptr)
                                     (referenceEntryPtr->dependent_count != ~0u),
                                     encode_context_ptr->app_callback_ptr,
                                     EB_ENC_PM_ERROR1);
-
                             }
 #endif
                         }
 
                         // Configure List1
                         if (entryPictureControlSetPtr->slice_type == B_SLICE) {
-
 #if MRP_MD
                             uint8_t refIdx;
                             for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list1_count; ++refIdx) {
@@ -1081,8 +1032,6 @@ void* picture_manager_kernel(void *input_ptr)
 
                                     ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_1][refIdx] = (uint8_t)((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->qp;
                                     ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1][refIdx] = ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->slice_type;
-
-
 
                                     // Increment the Reference's liveCount by the number of tiles in the input picture
                                     eb_object_inc_live_count(
@@ -1112,8 +1061,6 @@ void* picture_manager_kernel(void *input_ptr)
                                 ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_1] = (uint8_t)((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->qp;
                                 ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1] = ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->slice_type;
 
-
-
                                 // Increment the Reference's live_count by the number of tiles in the input picture
                                 eb_object_inc_live_count(
                                     referenceEntryPtr->reference_object_ptr,
@@ -1136,14 +1083,12 @@ void* picture_manager_kernel(void *input_ptr)
                             (entryPictureControlSetPtr->ref_list0_count > 0) ? P_SLICE :
                             I_SLICE;
 
-
                         // Increment the sequenceControlSet Wrapper's live count by 1 for only the pictures which are used as reference
                         if (ChildPictureControlSetPtr->parent_pcs_ptr->is_used_as_reference_flag) {
                             eb_object_inc_live_count(
                                 ChildPictureControlSetPtr->parent_pcs_ptr->sequence_control_set_wrapper_ptr,
                                 1);
                         }
-
 
                         // Get Empty Results Object
                         eb_get_empty_object(
@@ -1159,7 +1104,6 @@ void* picture_manager_kernel(void *input_ptr)
 
                         // Remove the Input Entry from the Input Queue
                         inputEntryPtr->input_object_ptr = (EbObjectWrapper*)EB_NULL;
-
                     }
                 }
 
@@ -1171,13 +1115,11 @@ void* picture_manager_kernel(void *input_ptr)
 
                 // Increment the inputQueueIndex Iterator
                 inputQueueIndex = (inputQueueIndex == INPUT_QUEUE_MAX_DEPTH - 1) ? 0 : inputQueueIndex + 1;
-
             }
 
             // Walk the reference queue and remove entries that have been completely referenced.
             referenceQueueIndex = encode_context_ptr->reference_picture_queue_head_index;
             while (referenceQueueIndex != encode_context_ptr->reference_picture_queue_tail_index) {
-
                 referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
 
                 // Remove the entry & release the reference if there are no remaining references
@@ -1208,7 +1150,6 @@ void* picture_manager_kernel(void *input_ptr)
 
         // Release the Input Picture Demux Results
         eb_release_object(inputPictureDemuxWrapperPtr);
-
     }
     return EB_NULL;
 }

@@ -83,5 +83,4 @@ extern EbErrorType eb_pa_reference_object_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr  object_init_data_ptr);
 
-
 #endif //EbReferenceObject_h

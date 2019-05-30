@@ -111,7 +111,6 @@ uint32_t get_position(bitstrm_t *bs) {
 }
 
 uint8_t * get_bitsteam_buf(bitstrm_t *bs) {
-
     uint8_t *bitsteam_buf = (uint8_t *)bs->buf;
     bitsteam_buf -= ((WORD_SIZE/*nxt_word*/ >> 3) + ((WORD_SIZE - bs->bit_ofst)/*cur_word*/ >> 3));
 

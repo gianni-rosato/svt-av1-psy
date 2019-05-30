@@ -20,7 +20,6 @@
 extern "C" {
 #endif // __cplusplus
 
-
 /*!\brief List of supported color primaries */
 typedef enum EbColorPrimaries {
     EB_CICP_CP_RESERVED_0 = 0,  /**< For future use */
@@ -128,7 +127,6 @@ typedef enum EbChromaSamplePosition {
     EB_CSP_COLOCATED = 2,        /**< Co-located with luma(0, 0) sample */
     EB_CSP_RESERVED = 3          /**< Reserved value */
 } EbChromaSamplePosition; /**< alias for enum aom_transfer_function */
-
 
 #ifdef __cplusplus
 }

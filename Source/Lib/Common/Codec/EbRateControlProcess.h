@@ -93,7 +93,6 @@ typedef struct CodedFramesStatsEntry
  * Context
  **************************************/
 
-
 #if RC
 typedef struct RateControlLayerContext
 {
@@ -143,7 +142,6 @@ typedef struct RateControlLayerContext
     uint32_t   temporal_index;
 
     uint64_t   alpha;
-
 } RateControlLayerContext;
 
 typedef struct RateControlIntervalParamContext
@@ -170,7 +168,6 @@ typedef struct RateControlIntervalParamContext
     EbBool                       scene_change_in_gop;
     EbBool                       min_target_rate_assigned;
     int64_t                      extra_ap_bit_ratio_i;
-
 } RateControlIntervalParamContext;
 
 typedef struct HighLevelRateControlContext
@@ -225,7 +222,6 @@ typedef struct RateControlContext
 
 #endif
 
-
     uint64_t                           rate_average_periodin_frames;
     uint32_t                           base_layer_frames_avg_qp;
     uint32_t                           base_layer_intra_frames_avg_qp;
@@ -241,7 +237,6 @@ typedef struct RateControlContext
 
     uint32_t                           qp_scaling_map[EB_MAX_TEMPORAL_LAYERS][MAX_REF_QP_NUM];
     uint32_t                           qp_scaling_map_I_SLICE[MAX_REF_QP_NUM];
-
 } RateControlContext;
 #else
 typedef struct RateControlLayerContext
@@ -294,7 +289,6 @@ typedef struct RateControlLayerContext
     uint32_t                  temporalIndex;
 
     uint64_t                  alpha;
-
 } RateControlLayerContext;
 
 typedef struct RateControlIntervalParamContext
@@ -321,12 +315,10 @@ typedef struct RateControlIntervalParamContext
     EbBool                      scene_change_in_gop;
     EbBool                      min_target_rate_assigned;
     int64_t                       extraApBitRatioI;
-
 } RateControlIntervalParamContext;
 
 typedef struct HighLevelRateControlContext
 {
-
     uint64_t                       targetBitsPerSlidingWindow;
     uint64_t                       target_bit_rate;
     uint64_t                       frame_rate;
@@ -339,8 +331,6 @@ typedef struct HighLevelRateControlContext
     uint32_t                       prevIntraOrgSelectedRefQp;
     uint64_t                       previousUpdatedBitConstraintPerSw;
 #endif
-
-
 } HighLevelRateControlContext;
 
 typedef struct RateControlContext
@@ -378,7 +368,6 @@ typedef struct RateControlContext
 
 #endif
 
-
     uint64_t                       rateAveragePeriodinFrames;
     uint32_t                       baseLayerFramesAvgQp;
     uint32_t                       baseLayerIntraFramesAvgQp;
@@ -393,8 +382,6 @@ typedef struct RateControlContext
     int64_t                       extraBits;
     int64_t                       extraBitsGen;
     int16_t                      maxRateAdjustDeltaQP;
-
-
 } RateControlContext;
 #endif
 /**************************************

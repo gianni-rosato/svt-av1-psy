@@ -237,7 +237,6 @@ static int32_t grain_max;
 
 static uint16_t random_register = 0;  // random number generator register
 
-
 //----------------------------------------------------------------------
 // todo: aomlib memory functions (to be replaced by Eb functions)
 /*
@@ -300,8 +299,6 @@ void aom_free(void *memblk) {
 }
 */
 //--------------------------------------------------------------------
-
-
 
 static void init_arrays(aom_film_grain_t *params, int32_t luma_stride,
     int32_t chroma_stride, int32_t ***pred_pos_luma_p,
@@ -843,7 +840,6 @@ static void add_noise_to_block_hbd(
 }
 
 int32_t film_grain_params_equal(aom_film_grain_t *pars_a, aom_film_grain_t *pars_b) {
-
     if (pars_a->apply_grain != pars_b->apply_grain)
         return 0;
     if (pars_a->overlap_flag != pars_b->overlap_flag)
@@ -989,8 +985,6 @@ static void hor_boundary_overlap(int32_t *top_block, int32_t top_stride,
         return;
     }
 }
-
-
 
 void av1_add_film_grain_run(aom_film_grain_t *params, uint8_t *luma,
     uint8_t *cb, uint8_t *cr, int32_t height, int32_t width,

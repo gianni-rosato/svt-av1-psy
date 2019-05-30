@@ -62,9 +62,7 @@ extern "C" {
         uint32_t                    y_has_coeff;
         uint64_t                    fast_luma_rate;
         uint16_t                    y_count_non_zero_coeffs[4];// Store nonzero CoeffNum, per TU. If one TU, stored in 0, otherwise 4 tus stored in 0 to 3
-
     } MdEncPassCuData;
-
 
     typedef struct MdCodingUnit
     {
@@ -91,9 +89,7 @@ extern "C" {
 #if RED_CU
         uint8_t                     avail_blk_flag ;   //tells whether this CU is tested in MD and have a valid cu data
 #endif
-
     } MdCodingUnit;
-
 
     typedef struct ModeDecisionContext
     {
@@ -288,7 +284,6 @@ extern "C" {
 #if OPT_QUANT_COEFF
         EbBool                          trellis_quant_coeff_optimization;
 #endif
-
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(
@@ -367,7 +362,6 @@ extern "C" {
         uint8_t                  picture_qp,
         uint8_t                  sb_qp);
 
-
     extern void cfl_rd_pick_alpha(
         PictureControlSet             *picture_control_set_ptr,
         ModeDecisionCandidateBuffer   *candidateBuffer,
@@ -377,7 +371,6 @@ extern "C" {
         uint32_t                         inputCbOriginIndex,
         uint32_t                         cuChromaOriginIndex,
         EbAsm                            asm_type);
-
 
 #ifdef __cplusplus
 }

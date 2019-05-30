@@ -9,7 +9,6 @@
 #include "EbModeDecisionProcess.h"
 #include "EbLambdaRateTables.h"
 
-
 /******************************************************
  * Mode Decision Context Constructor
  ******************************************************/
@@ -18,7 +17,6 @@ EbErrorType mode_decision_context_ctor(
     EbColorFormat         color_format,
     EbFifo                *mode_decision_configuration_input_fifo_ptr,
     EbFifo                *mode_decision_output_fifo_ptr){
-
     uint32_t bufferIndex;
     uint32_t candidateIndex;
     EbErrorType return_error = EB_ErrorNone;
@@ -52,7 +50,6 @@ EbErrorType mode_decision_context_ctor(
     // Transform and Quantization Buffers
     EB_MALLOC(EbTransQuantBuffers*, context_ptr->trans_quant_buffers_ptr, sizeof(EbTransQuantBuffers), EB_N_PTR);
 
-
     return_error = eb_trans_quant_buffers_ctor(
         context_ptr->trans_quant_buffers_ptr);
 
@@ -69,7 +66,6 @@ EbErrorType mode_decision_context_ctor(
     EB_MALLOC(ModeDecisionCandidateBuffer**, context_ptr->candidate_buffer_ptr_array, sizeof(ModeDecisionCandidateBuffer*) * (MAX_NFL + 1 + 1), EB_N_PTR);
 
     for (bufferIndex = 0; bufferIndex < (MAX_NFL + 1 + 1); ++bufferIndex) {
-
         return_error = mode_decision_candidate_buffer_ctor(
             &(context_ptr->candidate_buffer_ptr_array[bufferIndex]),
             &(context_ptr->fast_cost_array[bufferIndex]),
@@ -100,7 +96,6 @@ EbErrorType mode_decision_context_ctor(
     uint32_t codedLeafIndex, tu_index;
 
     for (codedLeafIndex = 0; codedLeafIndex < BLOCK_MAX_COUNT_SB_128; ++codedLeafIndex) {
-
         for (tu_index = 0; tu_index < TRANSFORM_UNIT_MAX_COUNT; ++tu_index) {
             context_ptr->md_cu_arr_nsq[codedLeafIndex].transform_unit_array[tu_index].tu_index = tu_index;
         }
@@ -225,14 +220,12 @@ extern void lambda_assign_low_delay(
     uint8_t                      chroma_qp)
 
 {
-
     if (qp_hierarchical_position == 0) {
         *fast_lambda = lambda_mode_decision_ld_sad[qp];
         *fast_chroma_lambda = lambda_mode_decision_ld_sad[qp];
         *full_lambda = lambda_mode_decision_ld_sse[qp];
         *full_chroma_lambda = lambda_mode_decision_ld_sse[qp];
         *full_chroma_lambda_sao = lambda_mode_decision_ld_sse[chroma_qp];
-
     }
     else { // Hierarchical postions 1, 2, 3, 4, 5
         *fast_lambda = lambda_mode_decision_ld_sad_qp_scaling[qp];
@@ -241,7 +234,6 @@ extern void lambda_assign_low_delay(
         *full_chroma_lambda = lambda_mode_decision_ld_sse_qp_scaling[qp];
         *full_chroma_lambda_sao = lambda_mode_decision_ld_sse_qp_scaling[chroma_qp];
     }
-
 }
 
 void lambda_assign_random_access(
@@ -255,14 +247,12 @@ void lambda_assign_random_access(
     uint8_t                      chroma_qp)
 
 {
-
     if (qp_hierarchical_position == 0) {
         *fast_lambda = lambda_mode_decision_ra_sad[qp];
         *fast_chroma_lambda = lambda_mode_decision_ra_sad[qp];
         *full_lambda = lambda_mode_decision_ra_sse[qp];
         *full_chroma_lambda = lambda_mode_decision_ra_sse[qp];
         *full_chroma_lambda_sao = lambda_mode_decision_ra_sse[chroma_qp];
-
     }
     else if (qp_hierarchical_position < 3) { // Hierarchical postions 1, 2
 
@@ -279,7 +269,6 @@ void lambda_assign_random_access(
         *full_chroma_lambda = lambda_mode_decision_ra_sse_qp_scaling_l3[qp];
         *full_chroma_lambda_sao = lambda_mode_decision_ra_sse_qp_scaling_l3[chroma_qp];
     }
-
 }
 
 void lambdaAssignISlice(
@@ -293,19 +282,15 @@ void lambdaAssignISlice(
     uint8_t                      chroma_qp)
 
 {
-
     if (qp_hierarchical_position == 0) {
         *fast_lambda = lambda_mode_decision_i_slice_sad[qp];
         *fast_chroma_lambda = lambda_mode_decision_i_slice_sad[qp];
         *full_lambda = lambda_mode_decision_i_slice_sse[qp];
         *full_chroma_lambda = lambda_mode_decision_i_slice_sse[qp];
         *full_chroma_lambda_sao = lambda_mode_decision_i_slice_sse[chroma_qp];
-
     }
     else {
-
     }
-
 }
 const EbLambdaAssignFunc lambda_assignment_function_table[4] = {
     lambda_assign_low_delay, // low delay P
@@ -323,22 +308,17 @@ void Av1lambdaAssign(
     uint16_t                     qp_index)
 
 {
-
     if (bit_depth == 8) {
-
         *full_lambda = av1_lambda_mode_decision8_bit_sse[qp_index];
         *fast_lambda = av1_lambda_mode_decision8_bit_sad[qp_index];
-
     }
     else if (bit_depth == 10) {
         *full_lambda = av1lambda_mode_decision10_bit_sse[qp_index];
         *fast_lambda = av1lambda_mode_decision10_bit_sad[qp_index];
-
     }
     else if (bit_depth == 12) {
         *full_lambda = av1lambda_mode_decision12_bit_sse[qp_index];
         *fast_lambda = av1lambda_mode_decision12_bit_sad[qp_index];
-
     }
     else {
         assert(bit_depth >= 8);
@@ -351,7 +331,6 @@ void Av1lambdaAssign(
     *full_chroma_lambda = *full_lambda;
 
     // NM: To be done: tune lambda based on the picture type and layer.
-
 }
 const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4] = {
     Av1lambdaAssign,
@@ -459,8 +438,6 @@ void reset_mode_decision(
     return;
 }
 
-
-
 /******************************************************
  * Mode Decision Configure LCU
  ******************************************************/
@@ -471,7 +448,6 @@ void mode_decision_configure_lcu(
     SequenceControlSet    *sequence_control_set_ptr,
     uint8_t                    picture_qp,
     uint8_t                    sb_qp){
-
     (void)picture_control_set_ptr;
     //Disable Lambda update per LCU
 
@@ -501,8 +477,6 @@ void mode_decision_configure_lcu(
         &context_ptr->full_chroma_lambda,
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
         context_ptr->qp_index);
-
-
 
     return;
 }

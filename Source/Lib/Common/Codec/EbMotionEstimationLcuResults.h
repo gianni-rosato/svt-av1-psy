@@ -113,7 +113,6 @@ extern "C" {
         unsigned    direction : 2;
     } DistDir;
 
-
     typedef struct MeCuResults
     {
         union {

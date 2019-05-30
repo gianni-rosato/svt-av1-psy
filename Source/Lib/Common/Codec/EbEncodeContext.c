@@ -71,7 +71,6 @@ EbErrorType encode_context_ctor(
         }
     }
 
-
     // Picture Manager Pre-Assignment Buffer
     encode_context_ptr->pre_assignment_buffer_intra_count = 0;
     encode_context_ptr->pre_assignment_buffer_idr_count = 0;
@@ -227,4 +226,3 @@ EbErrorType encode_context_ctor(
 #endif
     return EB_ErrorNone;
 }
-

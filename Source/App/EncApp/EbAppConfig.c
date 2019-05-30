@@ -120,7 +120,6 @@
  **********************************/
 static void SetCfgInputFile                     (const char *value, EbConfig *cfg)
 {
-
     if (cfg->input_file && cfg->input_file != stdin) {
         fclose(cfg->input_file);
     }
@@ -141,7 +140,6 @@ static void SetCfgInputFile                     (const char *value, EbConfig *cf
     }else{
         cfg->y4m_input = EB_FALSE;
     }
-
 };
 static void SetCfgStreamFile                    (const char *value, EbConfig *cfg)
 {
@@ -276,22 +274,18 @@ typedef struct config_entry_s {
  * Config Entry Array
  **********************************/
 config_entry_t config_entry[] = {
-
     // File I/O
     { SINGLE_INPUT, INPUT_FILE_TOKEN, "InputFile", SetCfgInputFile },
     { SINGLE_INPUT, OUTPUT_BITSTREAM_TOKEN,   "StreamFile",       SetCfgStreamFile },
     { SINGLE_INPUT, ERROR_FILE_TOKEN, "ErrorFile", SetCfgErrorFile },
     { SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", SetCfgReconFile },
     { SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", SetCfgQpFile },
-
     // Interlaced Video
     { SINGLE_INPUT, INTERLACED_VIDEO_TOKEN , "InterlacedVideo" , SetInterlacedVideo },
     { SINGLE_INPUT, SEPERATE_FILDS_TOKEN, "SeperateFields", SetSeperateFields },
-
     // Picture Dimensions
     { SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", SetCfgSourceWidth },
     { SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", SetCfgSourceHeight },
-
     // Prediction Structure
     { SINGLE_INPUT, NUMBER_OF_PICTURES_TOKEN, "FrameToBeEncoded", SetCfgFramesToBeEncoded },
     { SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "BufferedInput", SetBufferedInput },
@@ -307,10 +301,8 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, INPUT_COMPRESSED_TEN_BIT_FORMAT, "CompressedTenBitFormat", SetcompressedTenBitFormat },
     { SINGLE_INPUT, HIERARCHICAL_LEVELS_TOKEN, "HierarchicalLevels", SetHierarchicalLevels },
     { SINGLE_INPUT, PRED_STRUCT_TOKEN, "PredStructure", SetCfgPredStructure },
-
      { SINGLE_INPUT, TILE_ROW_TOKEN, "TileRow", SetTileRow},
      { SINGLE_INPUT, TILE_COL_TOKEN, "TileCol", SetTileCol},
-
     // Rate Control
     { SINGLE_INPUT, SCENE_CHANGE_DETECTION_TOKEN, "SceneChangeDetection", SetSceneChangeDetection},
     { SINGLE_INPUT, QP_TOKEN, "QP", SetCfgQp },
@@ -320,13 +312,10 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", SetTargetBitRate },
     { SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", SetMaxQpAllowed },
     { SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", SetMinQpAllowed },
-
     // DLF
     { SINGLE_INPUT, LOOP_FILTER_DISABLE_TOKEN, "LoopFilterDisable", SetDisableDlfFlag },
-
     // LOCAL WARPED MOTION
     { SINGLE_INPUT, LOCAL_WARPED_ENABLE_TOKEN, "LocalWarpedMotion", SetEnableLocalWarpedMotionFlag },
-
     // ME Tools
     { SINGLE_INPUT, USE_DEFAULT_ME_HME_TOKEN, "UseDefaultMeHme", SetCfgUseDefaultMeHme },
     { SINGLE_INPUT, HME_ENABLE_TOKEN, "HME", SetEnableHmeFlag },
@@ -335,46 +324,37 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, HME_L2_ENABLE_TOKEN, "HMELevel2", SetEnableHmeLevel2Flag },
     { SINGLE_INPUT, EXT_BLOCK, "ExtBlockFlag", SetEnableExtBlockFlag },
     { SINGLE_INPUT, IN_LOOP_ME, "InLoopMeFlag", SetEnableInLoopMeFlag },
-
     // ME Parameters
     { SINGLE_INPUT, SEARCH_AREA_WIDTH_TOKEN, "SearchAreaWidth", SetCfgSearchAreaWidth },
     { SINGLE_INPUT, SEARCH_AREA_HEIGHT_TOKEN, "SearchAreaHeight", SetCfgSearchAreaHeight },
-
     // HME Parameters
     { SINGLE_INPUT, NUM_HME_SEARCH_WIDTH_TOKEN, "number_hme_search_region_in_width", SetCfgNumberHmeSearchRegionInWidth },
     { SINGLE_INPUT, NUM_HME_SEARCH_HEIGHT_TOKEN, "NumberHmeSearchRegionInHeight", SetCfgNumberHmeSearchRegionInHeight },
     { SINGLE_INPUT, HME_SRCH_T_L0_WIDTH_TOKEN, "HmeLevel0TotalSearchAreaWidth", SetCfgHmeLevel0TotalSearchAreaWidth },
     { SINGLE_INPUT, HME_SRCH_T_L0_HEIGHT_TOKEN, "HmeLevel0TotalSearchAreaHeight", SetCfgHmeLevel0TotalSearchAreaHeight },
-
     // MD Parameters
     { SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", SetScreenContentMode},
     { SINGLE_INPUT, CONSTRAINED_INTRA_ENABLE_TOKEN, "ConstrainedIntra", SetEnableConstrainedIntra},
-
     // Thread Management
     { SINGLE_INPUT, THREAD_MGMNT, "logicalProcessors", SetLogicalProcessors },
     { SINGLE_INPUT, TARGET_SOCKET, "TargetSocket", SetTargetSocket },
-
     // Optional Features
 
 //    { SINGLE_INPUT, BITRATE_REDUCTION_TOKEN, "bit_rate_reduction", SetBitRateReduction },
     { SINGLE_INPUT, IMPROVE_SHARPNESS_TOKEN,"ImproveSharpness", SetImproveSharpness},
     { SINGLE_INPUT, HDR_INPUT_TOKEN, "HighDynamicRangeInput", SetHighDynamicRangeInput },
-
     // Latency
     { SINGLE_INPUT, INJECTOR_TOKEN, "Injector", SetInjector },
     { SINGLE_INPUT, INJECTOR_FRAMERATE_TOKEN, "InjectorFrameRate", SetInjectorFrameRate },
     { SINGLE_INPUT, SPEED_CONTROL_TOKEN, "SpeedControlFlag", SpeedControlFlag },
-
     // Annex A parameters
     { SINGLE_INPUT, PROFILE_TOKEN, "Profile", SetProfile },
     { SINGLE_INPUT, TIER_TOKEN, "Tier", SetTier },
     { SINGLE_INPUT, LEVEL_TOKEN, "Level", SetLevel },
     { SINGLE_INPUT, LATENCY_MODE, "LatencyMode", SetLatencyMode },
     { SINGLE_INPUT, FILM_GRAIN_TOKEN, "FilmGrain", SetCfgFilmGrain },
-
     // Asm Type
     { SINGLE_INPUT, ASM_TYPE_TOKEN, "AsmType", SetAsmType },
-
     // HME
     { ARRAY_INPUT,HME_LEVEL0_WIDTH, "HmeLevel0SearchAreaInWidth", SetHmeLevel0SearchAreaInWidthArray },
     { ARRAY_INPUT,HME_LEVEL0_HEIGHT, "HmeLevel0SearchAreaInHeight", SetHmeLevel0SearchAreaInHeightArray },
@@ -382,7 +362,6 @@ config_entry_t config_entry[] = {
     { ARRAY_INPUT,HME_LEVEL1_HEIGHT, "HmeLevel1SearchAreaInHeight", SetHmeLevel1SearchAreaInHeightArray },
     { ARRAY_INPUT,HME_LEVEL2_WIDTH, "HmeLevel2SearchAreaInWidth", SetHmeLevel2SearchAreaInWidthArray },
     { ARRAY_INPUT,HME_LEVEL2_HEIGHT, "HmeLevel2SearchAreaInHeight", SetHmeLevel2SearchAreaInHeightArray },
-
     // --- start: ALTREF_FILTERING_SUPPORT
     { SINGLE_INPUT, ENABLE_ALTREFS, "EnableAltRefs", SetEnableAltRefs },
     { SINGLE_INPUT, ALTREF_STRENGTH, "AltRefStrength", SetAltRefStrength },
@@ -495,7 +474,6 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->injector_frame_rate                    = 60 << 16;
     config_ptr->speed_control_flag                     = 0;
 
-
     // Testing
     config_ptr->eos_flag                                = 0;
 
@@ -546,7 +524,6 @@ void eb_config_ctor(EbConfig *config_ptr)
  **********************************/
 void eb_config_dtor(EbConfig *config_ptr)
 {
-
     // Close any files that are open
     if (config_ptr->config_file) {
         fclose(config_ptr->config_file);
@@ -643,7 +620,6 @@ static void lineSplit(
     return;
 }
 
-
 /**********************************
 * Set Config value
 **********************************/
@@ -705,7 +681,6 @@ static void ParseConfigFile(
                 varName[argLen[0]] = CONFIG_FILE_NULL_CHAR;
 
                 for(valueIndex=0; (valueIndex < CONFIG_FILE_MAX_ARG_COUNT - 2) && (valueIndex < (argc - 2)); ++valueIndex) {
-
                     // Cap the length of the variable
                     argLen[valueIndex+2] = (argLen[valueIndex+2] > CONFIG_FILE_MAX_VAR_LEN - 1) ? CONFIG_FILE_MAX_VAR_LEN - 1 : argLen[valueIndex+2];
                     // Copy the variable name
@@ -934,7 +909,6 @@ uint32_t get_help(
             printf("%-25s\t%-25s\t%-25s\t\n", config_entry[token_index].token, config_entry[token_index].name, config_entry[token_index].type ? "Array input": "Single input");
         }
         return 1;
-
     }
     else {
         return 0;
@@ -951,7 +925,6 @@ uint32_t get_number_of_channels(
     char config_string[COMMAND_LINE_MAX_SIZE];
     uint32_t channelNumber;
     if (FindToken(argc, argv, CHANNEL_NUMBER_TOKEN, config_string) == 0) {
-
         // Set the input file
         channelNumber = strtol(config_string,  NULL, 0);
         if ((channelNumber > (uint32_t) MAX_CHANNEL_NUMBER) || channelNumber == 0){
@@ -1023,7 +996,6 @@ int32_t ComputeFramesToBeEncoded(
         return -1;
 
     return frame_count;
-
 }
 
 /******************************************
@@ -1036,7 +1008,6 @@ EbErrorType read_command_line(
     uint32_t       num_channels,
     EbErrorType  *return_errors)
 {
-
     EbErrorType return_error = EB_ErrorBadParameter;
     char            config_string[COMMAND_LINE_MAX_SIZE];        // for one input options
     char           *config_strings[MAX_CHANNEL_NUMBER]; // for multiple input options
@@ -1064,7 +1035,6 @@ EbErrorType read_command_line(
 
     // Find the Config File Path in the command line
     if (FindTokenMultipleInputs(argc, argv, CONFIG_FILE_TOKEN, config_strings) == 0) {
-
         mark_token_as_read(CONFIG_FILE_TOKEN, cmd_copy, &cmd_token_cnt);
         // Parse the config file
         for (index = 0; index < num_channels; ++index){
@@ -1082,7 +1052,6 @@ EbErrorType read_command_line(
         }
     }
 
-
     /***************************************************************************************************/
     /***********   Find SINGLE_INPUT configuration parameter tokens and call respective functions  **********/
     /***************************************************************************************************/
@@ -1090,9 +1059,7 @@ EbErrorType read_command_line(
     // Parse command line for tokens
     while (config_entry[++token_index].name != NULL){
         if (config_entry[token_index].type == SINGLE_INPUT){
-
             if (FindTokenMultipleInputs(argc, argv, config_entry[token_index].token, config_strings) == 0) {
-
                 // When a token is found mark it as found in the temp token buffer
                 mark_token_as_read(config_entry[token_index].token, cmd_copy, &cmd_token_cnt);
 
@@ -1148,10 +1115,8 @@ EbErrorType read_command_line(
         }
     }
 
-
     //// Parse command line for search region at level 0 height token
     if (FindTokenMultipleInputs(argc, argv, HME_LEVEL0_HEIGHT, config_strings) == 0) {
-
         uint32_t inputIndex = 0, lastIndex = 0;
         uint32_t done = 1;
 
@@ -1173,7 +1138,6 @@ EbErrorType read_command_line(
 
     // Parse command line for search region at level 1 Height token
     if (FindTokenMultipleInputs(argc, argv, HME_LEVEL1_HEIGHT, config_strings) == 0) {
-
         uint32_t inputIndex = 0, lastIndex = 0;
         uint32_t done = 1;
 
@@ -1195,7 +1159,6 @@ EbErrorType read_command_line(
 
     // Parse command line for search region at level 1 width token
     if (FindTokenMultipleInputs(argc, argv, HME_LEVEL1_WIDTH, config_strings) == 0) {
-
         uint32_t inputIndex = 0, lastIndex = 0;
         uint32_t done = 1;
 
@@ -1217,7 +1180,6 @@ EbErrorType read_command_line(
 
     // Parse command line for search region at level 2 width token
     if (FindTokenMultipleInputs(argc, argv, HME_LEVEL2_WIDTH, config_strings) == 0) {
-
         uint32_t inputIndex = 0, lastIndex = 0;
         uint32_t done = 1;
 
@@ -1239,7 +1201,6 @@ EbErrorType read_command_line(
 
     // Parse command line for search region at level 2 height token
     if (FindTokenMultipleInputs(argc, argv, HME_LEVEL2_HEIGHT, config_strings) == 0) {
-
         uint32_t inputIndex = 0, lastIndex = 0;
         uint32_t done = 1;
 
@@ -1275,7 +1236,6 @@ EbErrorType read_command_line(
                     configs[index]->input_padded_height = configs[index]->source_height;
                 }
 
-
                 // Assuming no errors, set the frames to be encoded to the number of frames in the input yuv
                 if (return_errors[index] == EB_ErrorNone && configs[index]->frames_to_be_encoded == 0)
                     configs[index]->frames_to_be_encoded = ComputeFramesToBeEncoded(configs[index]);
@@ -1289,7 +1249,6 @@ EbErrorType read_command_line(
                 if (return_errors[index] == EB_ErrorNone && configs[index]->speed_control_flag == 1) {
                     configs[index]->injector    = 1;
                 }
-
             }
             return_error = (EbErrorType)(return_error & return_errors[index]);
         }
