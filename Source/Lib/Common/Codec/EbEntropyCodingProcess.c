@@ -114,10 +114,8 @@ static void build_nmv_component_cost_table(int32_t *mvcost,
     av1_cost_tokens_from_cdf(sign_cost, mvcomp->sign_cdf, NULL);
     av1_cost_tokens_from_cdf(class_cost, mvcomp->classes_cdf, NULL);
     av1_cost_tokens_from_cdf(class0_cost, mvcomp->class0_cdf, NULL);
-    for (i = 0; i < MV_OFFSET_BITS; ++i) {
+    for (i = 0; i < MV_OFFSET_BITS; ++i)
         av1_cost_tokens_from_cdf(bits_cost[i], mvcomp->bits_cdf[i], NULL);
-    }
-
     for (i = 0; i < CLASS0_SIZE; ++i)
         av1_cost_tokens_from_cdf(class0_fp_cost[i], mvcomp->class0_fp_cdf[i], NULL);
     av1_cost_tokens_from_cdf(fp_cost, mvcomp->fp_cdf, NULL);
@@ -135,27 +133,22 @@ static void build_nmv_component_cost_table(int32_t *mvcost,
         d = (o >> 3);     /* int32_t mv data */
         f = (o >> 1) & 3; /* fractional pel mv data */
         e = (o & 1);      /* high precision mv data */
-        if (c == MV_CLASS_0) {
+        if (c == MV_CLASS_0)
             cost += class0_cost[d];
-        }
         else {
             const int32_t b = c + CLASS0_BITS - 1; /* number of bits */
             for (i = 0; i < b; ++i) cost += bits_cost[i][((d >> i) & 1)];
         }
         if (precision > MV_SUBPEL_NONE) {
-            if (c == MV_CLASS_0) {
+            if (c == MV_CLASS_0)
                 cost += class0_fp_cost[d][f];
-            }
-            else {
+            else
                 cost += fp_cost[f];
-            }
             if (precision > MV_SUBPEL_LOW_PRECISION) {
-                if (c == MV_CLASS_0) {
+                if (c == MV_CLASS_0)
                     cost += class0_hp_cost[e];
-                }
-                else {
+                else
                     cost += hp_cost[e];
-                }
             }
         }
         mvcost[v] = cost + sign_cost[0];
@@ -194,13 +187,10 @@ static void ResetEntropyCodingPicture(
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
 
     context_ptr->chroma_qp = context_ptr->qp;
-    if (picture_control_set_ptr->use_delta_qp) {
+    if (picture_control_set_ptr->use_delta_qp)
         entropyCodingQp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
-    }
-    else {
+    else
         entropyCodingQp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
-    }
-
     // Reset CABAC Contexts
     // Reset QP Assignement
     picture_control_set_ptr->prev_coded_qp = picture_control_set_ptr->picture_qp;
@@ -269,13 +259,10 @@ static void reset_ec_tile(
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
 
     context_ptr->chroma_qp = context_ptr->qp;
-    if (picture_control_set_ptr->use_delta_qp) {
+    if (picture_control_set_ptr->use_delta_qp)
         entropy_coding_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
-    }
-    else {
+    else
         entropy_coding_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
-    }
-
     // Reset CABAC Contexts
     // Reset QP Assignement
     picture_control_set_ptr->prev_coded_qp = picture_control_set_ptr->picture_qp;
@@ -457,10 +444,8 @@ static EbBool UpdateEntropyCodingRows(
     if (*initialProcessCall == EB_TRUE) {
         unsigned i;
 
-        for (i = *row_index; i < *row_index + row_count; ++i) {
+        for (i = *row_index; i < *row_index + row_count; ++i)
             picture_control_set_ptr->entropy_coding_row_array[i] = EB_TRUE;
-        }
-
         while (picture_control_set_ptr->entropy_coding_row_array[picture_control_set_ptr->entropy_coding_current_available_row] == EB_TRUE &&
             picture_control_set_ptr->entropy_coding_current_available_row < picture_control_set_ptr->entropy_coding_row_count)
         {
@@ -469,10 +454,8 @@ static EbBool UpdateEntropyCodingRows(
     }
 
     // Release in_progress token
-    if (*initialProcessCall == EB_FALSE && picture_control_set_ptr->entropy_coding_in_progress == EB_TRUE) {
+    if (*initialProcessCall == EB_FALSE && picture_control_set_ptr->entropy_coding_in_progress == EB_TRUE)
         picture_control_set_ptr->entropy_coding_in_progress = EB_FALSE;
-    }
-
     // Test if the picture is not already complete AND not currently being worked on by another ENCDEC process
     if (picture_control_set_ptr->entropy_coding_current_row < picture_control_set_ptr->entropy_coding_row_count &&
         picture_control_set_ptr->entropy_coding_row_array[picture_control_set_ptr->entropy_coding_current_row] == EB_TRUE &&
@@ -566,7 +549,6 @@ void* entropy_coding_kernel(void *input_ptr)
 
                 for (x_lcu_index = 0; x_lcu_index < picture_width_in_sb; ++x_lcu_index)
                 {
-
                     sb_index = (uint16_t)(x_lcu_index + y_lcu_index * picture_width_in_sb);
                     sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
 
@@ -664,13 +646,11 @@ void* entropy_coding_kernel(void *input_ptr)
                         // Release the List 1 Reference Pictures
                         for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list1_count; ++ref_idx) {
 #if MRP_MD
-                            if (picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL) {
+                            if (picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL)
                                 eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx]);
-                            }
 #else
-                            if (picture_control_set_ptr->ref_pic_ptr_array[1] != EB_NULL) {
+                            if (picture_control_set_ptr->ref_pic_ptr_array[1] != EB_NULL)
                                 eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1]);
-                            }
 #endif
                         }
 
@@ -708,13 +688,10 @@ void* entropy_coding_kernel(void *input_ptr)
                      const int tile_idx = tile_row * tile_cols + tile_col;
                      uint32_t is_last_tile_in_tg = 0;
 
-                     if ( tile_idx == (tile_cols * tile_rows - 1)) {
+                     if ( tile_idx == (tile_cols * tile_rows - 1))
                          is_last_tile_in_tg = 1;
-                     }
-                     else {
+                     else
                          is_last_tile_in_tg = 0;
-                     }
-
                      reset_ec_tile(
                          total_size,
                          is_last_tile_in_tg,
@@ -798,26 +775,22 @@ void* entropy_coding_kernel(void *input_ptr)
                  // Release the List 0 Reference Pictures
                  for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list0_count; ++ref_idx) {
 #if MRP_MD
-                     if (picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL) {
+                     if (picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL)
                          eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx]);
-                     }
 #else
-                     if (picture_control_set_ptr->ref_pic_ptr_array[0] != EB_NULL) {
+                     if (picture_control_set_ptr->ref_pic_ptr_array[0] != EB_NULL)
                          eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0]);
-                     }
 #endif
                  }
 
                  // Release the List 1 Reference Pictures
                  for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list1_count; ++ref_idx) {
 #if MRP_MD
-                     if (picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL) {
+                     if (picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL)
                          eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx]);
-                     }
 #else
-                     if (picture_control_set_ptr->ref_pic_ptr_array[1] != EB_NULL) {
+                     if (picture_control_set_ptr->ref_pic_ptr_array[1] != EB_NULL)
                          eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1]);
-                     }
 #endif
                  }
 

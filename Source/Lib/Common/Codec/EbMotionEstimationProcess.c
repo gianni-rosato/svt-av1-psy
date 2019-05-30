@@ -245,24 +245,19 @@ EbErrorType signal_derivation_me_kernel_oq(
     // 2: off
     if (picture_control_set_ptr->use_subpel_flag == 1) {
 #if NEW_PRESETS
-        if (picture_control_set_ptr->enc_mode <= ENC_M6) {
+        if (picture_control_set_ptr->enc_mode <= ENC_M6)
             context_ptr->me_context_ptr->fractional_search_model = 0;
-        }
-        else {
+        else
             context_ptr->me_context_ptr->fractional_search_model = 1;
-        }
 #else
-        if (picture_control_set_ptr->enc_mode <= ENC_M8) {
+        if (picture_control_set_ptr->enc_mode <= ENC_M8)
             context_ptr->me_context_ptr->fractional_search_model = 0;
-        }
-        else {
+        else
             context_ptr->me_context_ptr->fractional_search_model = 1;
-        }
 #endif
     }
-    else {
+    else
         context_ptr->me_context_ptr->fractional_search_model = 2;
-    }
 #endif
 
 #if USE_SAD_HME
@@ -347,10 +342,8 @@ EbErrorType motion_estimation_context_ctor(
     context_ptr->picture_decision_results_input_fifo_ptr = picture_decision_results_input_fifo_ptr;
     context_ptr->motion_estimation_results_output_fifo_ptr = motion_estimation_results_output_fifo_ptr;
     return_error = intra_open_loop_reference_samples_ctor(&context_ptr->intra_ref_ptr);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
 #if MEMORY_FOOTPRINT_OPT_ME_MV
     return_error = me_context_ctor(
         &(context_ptr->me_context_ptr),
@@ -363,10 +356,8 @@ EbErrorType motion_estimation_context_ctor(
 #else
     return_error = me_context_ctor(&(context_ptr->me_context_ptr));
 #endif
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return EB_ErrorNone;
 }
 
@@ -459,21 +450,16 @@ EbErrorType ComputeDecimatedZzSad(
                 // 1. Avoid improving moving objects.
                 // 2. Do not modulate when all the picture is background
                 // 3. Do give different importance to different regions
-                if (decimatedLcuCollocatedSad < BEA_CLASS_0_0_DEC_TH) {
+                if (decimatedLcuCollocatedSad < BEA_CLASS_0_0_DEC_TH)
                     previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = BEA_CLASS_0_ZZ_COST;
-                }
-                else if (decimatedLcuCollocatedSad < BEA_CLASS_0_DEC_TH) {
+                else if (decimatedLcuCollocatedSad < BEA_CLASS_0_DEC_TH)
                     previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = BEA_CLASS_0_1_ZZ_COST;
-                }
-                else if (decimatedLcuCollocatedSad < BEA_CLASS_1_DEC_TH) {
+                else if (decimatedLcuCollocatedSad < BEA_CLASS_1_DEC_TH)
                     previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = BEA_CLASS_1_ZZ_COST;
-                }
-                else if (decimatedLcuCollocatedSad < BEA_CLASS_2_DEC_TH) {
+                else if (decimatedLcuCollocatedSad < BEA_CLASS_2_DEC_TH)
                     previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = BEA_CLASS_2_ZZ_COST;
-                }
-                else {
+                else
                     previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = BEA_CLASS_3_ZZ_COST;
-                }
 #endif
             }
             else {
@@ -494,18 +480,14 @@ EbErrorType ComputeDecimatedZzSad(
                 previous_picture_control_set_wrapper_ptr->non_moving_index_array[sb_index] = BEA_CLASS_3_ZZ_COST;
 #else
             // Keep track of non moving LCUs for QP modulation
-            if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 2) >> non_moving_th_shift[sequence_control_set_ptr->input_resolution]) {
+            if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 2) >> non_moving_th_shift[sequence_control_set_ptr->input_resolution])
                 previous_picture_control_set_wrapper_ptr->non_moving_index_array[sb_index] = BEA_CLASS_0_ZZ_COST;
-            }
-            else if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 4) >> non_moving_th_shift[sequence_control_set_ptr->input_resolution]) {
+            else if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 4) >> non_moving_th_shift[sequence_control_set_ptr->input_resolution])
                 previous_picture_control_set_wrapper_ptr->non_moving_index_array[sb_index] = BEA_CLASS_1_ZZ_COST;
-            }
-            else if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 8) >> non_moving_th_shift[sequence_control_set_ptr->input_resolution]) {
+            else if (decimatedLcuCollocatedSad < ((decimatedLcuWidth * decimatedLcuHeight) * 8) >> non_moving_th_shift[sequence_control_set_ptr->input_resolution])
                 previous_picture_control_set_wrapper_ptr->non_moving_index_array[sb_index] = BEA_CLASS_2_ZZ_COST;
-            }
-            else {
+            else
                 previous_picture_control_set_wrapper_ptr->non_moving_index_array[sb_index] = BEA_CLASS_3_ZZ_COST;
-            }
 #endif
         }
     }
@@ -570,7 +552,6 @@ void* motion_estimation_kernel(void *input_ptr)
     MdRateEstimationContext   *md_rate_estimation_array;
 
     for (;;) {
-
         // Get Input Full Object
         eb_get_full_object(
             context_ptr->picture_decision_results_input_fifo_ptr,
@@ -606,23 +587,18 @@ void* motion_estimation_kernel(void *input_ptr)
 
         // Lambda Assignement
         if (sequence_control_set_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS) {
-            if (picture_control_set_ptr->temporal_layer_index == 0) {
+            if (picture_control_set_ptr->temporal_layer_index == 0)
                 context_ptr->me_context_ptr->lambda = lambda_mode_decision_ra_sad[picture_control_set_ptr->picture_qp];
-            }
-            else if (picture_control_set_ptr->temporal_layer_index < 3) {
+            else if (picture_control_set_ptr->temporal_layer_index < 3)
                 context_ptr->me_context_ptr->lambda = lambda_mode_decision_ra_sad_qp_scaling_l1[picture_control_set_ptr->picture_qp];
-            }
-            else {
+            else
                 context_ptr->me_context_ptr->lambda = lambda_mode_decision_ra_sad_qp_scaling_l3[picture_control_set_ptr->picture_qp];
-            }
         }
         else {
-            if (picture_control_set_ptr->temporal_layer_index == 0) {
+            if (picture_control_set_ptr->temporal_layer_index == 0)
                 context_ptr->me_context_ptr->lambda = lambda_mode_decision_ld_sad[picture_control_set_ptr->picture_qp];
-            }
-            else {
+            else
                 context_ptr->me_context_ptr->lambda = lambda_mode_decision_ld_sad_qp_scaling[picture_control_set_ptr->picture_qp];
-            }
         }
 #if ALTREF_FILTERING_SUPPORT
         if (inputResultsPtr->task_type == 0)
@@ -791,7 +767,6 @@ void* motion_estimation_kernel(void *input_ptr)
                             picture_control_set_ptr->intra_sad_interval_index[sb_index] = 0;
 
                             if (sb_width == BLOCK_SIZE_64 && sb_height == BLOCK_SIZE_64) {
-
                                 sadIntervalIndex = (uint16_t)(picture_control_set_ptr->rc_me_distortion[sb_index] >> (12 - SAD_PRECISION_INTERVAL));//change 12 to 2*log2(64)
 
                                 // printf("%d\n", sadIntervalIndex);

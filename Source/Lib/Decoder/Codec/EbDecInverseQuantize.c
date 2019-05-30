@@ -81,9 +81,8 @@ void av1_inverse_qm_init(FrameHeader *frame, EbColorConfig *color_config)
             for (t = 0; t < TX_SIZES_ALL; ++t) {
                 const int size = tx_size_2d[t];
                 const uint8_t qm_tx_size = av1_get_adjusted_tx_size(t);
-                if (q == NUM_QM_LEVELS - 1) {
+                if (q == NUM_QM_LEVELS - 1)
                     frame->giqmatrix[q][c][t] = NULL;
-                }
                 else if (t != qm_tx_size) {  // Reuse matrices for 'qm_tx_size'
                     frame->giqmatrix[q][c][t] =
                         frame->giqmatrix[q][c][qm_tx_size];
@@ -117,9 +116,8 @@ void update_dequant(EbDecHandle *dec_handle, SBInfo *sb_info)
     SeqHeader *seq_header = &dec_handle->seq_header;
     FrameHeader *frame = &dec_handle->frame_header;
 
-    if (!frame->delta_q_params.delta_q_present) {
+    if (!frame->delta_q_params.delta_q_present)
         frame->dequants_delta_q = &frame->dequants;
-    }
     else {
         for (int i = 0; i < MAX_SEGMENTS; i++) {
             current_qindex =

@@ -186,9 +186,8 @@ void quantize_inv_quantize_nxn_avx2_intrin(
                     x = _mm256_packs_epi32(b0, b1);
                     _mm256_storeu_si256((__m256i *)(recon_coeff + coeff_stride * row + col), x);
                 }
-                else {
+                else
                     _mm256_storeu_si256((__m256i *)(recon_coeff + coeff_stride * row + col), zer);
-                }
                 col += 16;
             } while (col < area_size);
 

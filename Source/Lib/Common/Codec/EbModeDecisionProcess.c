@@ -53,9 +53,8 @@ EbErrorType mode_decision_context_ctor(
     return_error = eb_trans_quant_buffers_ctor(
         context_ptr->trans_quant_buffers_ptr);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     // Cost Arrays
     // Hsan: MAX_NFL + 1 scratch buffer for intra + 1 scratch buffer for inter
     EB_MALLOC(uint64_t*, context_ptr->fast_cost_array, sizeof(uint64_t) * (MAX_NFL + 1 + 1), EB_N_PTR);
@@ -73,9 +72,8 @@ EbErrorType mode_decision_context_ctor(
             &(context_ptr->full_cost_skip_ptr[bufferIndex]),
             &(context_ptr->full_cost_merge_ptr[bufferIndex])
         );
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 #if !UNPACK_REF_POST_EP
     // Inter Prediction Context
@@ -84,22 +82,18 @@ EbErrorType mode_decision_context_ctor(
         color_format,
         SB_STRIDE_Y,
         SB_STRIDE_Y);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
 #endif
     // Intra Reference Samples
     return_error = intra_reference_samples_ctor(&context_ptr->intra_ref_ptr);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     uint32_t codedLeafIndex, tu_index;
 
     for (codedLeafIndex = 0; codedLeafIndex < BLOCK_MAX_COUNT_SB_128; ++codedLeafIndex) {
-        for (tu_index = 0; tu_index < TRANSFORM_UNIT_MAX_COUNT; ++tu_index) {
+        for (tu_index = 0; tu_index < TRANSFORM_UNIT_MAX_COUNT; ++tu_index)
             context_ptr->md_cu_arr_nsq[codedLeafIndex].transform_unit_array[tu_index].tu_index = tu_index;
-        }
-
         const BlockGeom * blk_geom = get_blk_geom_mds(codedLeafIndex);
         UNUSED(blk_geom);
         EB_MALLOC(MacroBlockD*, context_ptr->md_cu_arr_nsq[codedLeafIndex].av1xd, sizeof(MacroBlockD), EB_N_PTR);
@@ -130,10 +124,8 @@ EbErrorType mode_decision_context_ctor(
                 (EbPtr*)&context_ptr->md_cu_arr_nsq[codedLeafIndex].coeff_tmp,
                 (EbPtr)&initData);
 
-            if (return_error == EB_ErrorInsufficientResources) {
+            if (return_error == EB_ErrorInsufficientResources)
                 return EB_ErrorInsufficientResources;
-            }
-
             initData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
             initData.max_width = SB_STRIDE_Y;
             initData.max_height = SB_STRIDE_Y;
@@ -149,9 +141,8 @@ EbErrorType mode_decision_context_ctor(
                 (EbPtr*)&context_ptr->md_cu_arr_nsq[codedLeafIndex].recon_tmp,
                 (EbPtr)&initData);
 
-            if (return_error == EB_ErrorInsufficientResources) {
+            if (return_error == EB_ErrorInsufficientResources)
                 return EB_ErrorInsufficientResources;
-            }
         }
 #endif
     }
@@ -289,8 +280,6 @@ void lambdaAssignISlice(
         *full_chroma_lambda = lambda_mode_decision_i_slice_sse[qp];
         *full_chroma_lambda_sao = lambda_mode_decision_i_slice_sse[chroma_qp];
     }
-    else {
-    }
 }
 const EbLambdaAssignFunc lambda_assignment_function_table[4] = {
     lambda_assign_low_delay, // low delay P
@@ -389,10 +378,8 @@ void reset_mode_decision(
 
     context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
     uint32_t  candidateIndex;
-    for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex) {
+    for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex)
         context_ptr->fast_candidate_ptr_array[candidateIndex]->md_rate_estimation_ptr = md_rate_estimation_array;
-    }
-
 #if !OPT_LOSSLESS_0
     // TMVP Map Writer pointer
     if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
@@ -457,10 +444,8 @@ void mode_decision_configure_lcu(
         sb_ptr->qp = (uint8_t)context_ptr->qp;
     }
     //RC is on
-    else {
+    else
         context_ptr->qp = (uint8_t)sb_qp;
-    }
-
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
 
     context_ptr->chroma_qp = context_ptr->qp;

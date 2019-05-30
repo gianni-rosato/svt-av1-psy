@@ -458,7 +458,6 @@ void* cdef_kernel(void *input_ptr)
         picture_control_set_ptr->tot_seg_searched_cdef++;
         if (picture_control_set_ptr->tot_seg_searched_cdef == picture_control_set_ptr->cdef_segments_total_count)
         {
-
            // printf("    CDEF all seg here  %i\n", picture_control_set_ptr->picture_number);
 
         if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode) {

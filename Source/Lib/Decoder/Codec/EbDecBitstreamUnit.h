@@ -85,9 +85,8 @@ static INLINE void dec_update_cdf(AomCdfProb *cdf, int8_t val, int nsymbs) {
     tmp = (i == val) ? 0 : tmp;
     if (tmp < cdf[i]) {
       cdf[i] -= (AomCdfProb)((cdf[i] - tmp) >> rate);
-    } else {
+    } else
       cdf[i] += (AomCdfProb)((tmp - cdf[i]) >> rate);
-    }
   }
   cdf[nsymbs] += (cdf[nsymbs] < 32);
 }

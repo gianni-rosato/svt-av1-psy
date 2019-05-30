@@ -21,9 +21,8 @@ double aom_sse_to_psnr(double samples, double peak, double sse) {
         const double psnr = 10.0 * log10(samples * peak * peak / sse);
         return psnr > MAX_PSNR ? MAX_PSNR : psnr;
     }
-    else {
+    else
         return MAX_PSNR;
-    }
 }
 
 /* TODO(yaowu): The block_variance calls the unoptimized versions of variance()

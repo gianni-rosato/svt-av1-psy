@@ -285,9 +285,8 @@ on a larger type, you can speed up the decoder by using it here.*/
 #if CONFIG_RD_DEBUG
         int32_t r, c;
         for (r = 0; r < TXB_COEFF_COST_MAP_SIZE; ++r) {
-            for (c = 0; c < TXB_COEFF_COST_MAP_SIZE; ++c) {
+            for (c = 0; c < TXB_COEFF_COST_MAP_SIZE; ++c)
                 token_stats->txb_coeff_cost_map[r][c] = 0;
-            }
         }
 #endif
         token_stats->cost = 0;

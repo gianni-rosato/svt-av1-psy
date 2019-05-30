@@ -54,14 +54,12 @@ extern "C" {
     static INLINE void round_shift_16bit_ssse3(__m128i *in, int32_t size, int32_t bit) {
         if (bit < 0) {
             const __m128i scale = _mm_set1_epi16(1 << (15 + bit));
-            for (int32_t i = 0; i < size; ++i) {
+            for (int32_t i = 0; i < size; ++i)
                 in[i] = _mm_mulhrs_epi16(in[i], scale);
-            }
         }
         else if (bit > 0) {
-            for (int32_t i = 0; i < size; ++i) {
+            for (int32_t i = 0; i < size; ++i)
                 in[i] = _mm_slli_epi16(in[i], bit);
-            }
         }
     }
 

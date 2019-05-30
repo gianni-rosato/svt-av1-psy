@@ -39,24 +39,18 @@ EbErrorType neighbor_array_unit_ctor32(
     if (na_unit_ptr->left_array_size) {
         EB_MALLOC(uint32_t*, na_unit_ptr->left_array, na_unit_ptr->unit_size * na_unit_ptr->left_array_size, EB_N_PTR);
     }
-    else {
+    else
         na_unit_ptr->left_array = (uint32_t*)EB_NULL;
-    }
-
     if (na_unit_ptr->top_array_size) {
         EB_MALLOC(uint32_t*, na_unit_ptr->top_array, na_unit_ptr->unit_size * na_unit_ptr->top_array_size, EB_N_PTR);
     }
-    else {
+    else
         na_unit_ptr->top_array = (uint32_t*)EB_NULL;
-    }
-
     if (na_unit_ptr->top_left_array_size) {
         EB_MALLOC(uint32_t*, na_unit_ptr->top_left_array, na_unit_ptr->unit_size * na_unit_ptr->top_left_array_size, EB_N_PTR);
     }
-    else {
+    else
         na_unit_ptr->top_left_array = (uint32_t*)EB_NULL;
-    }
-
     return EB_ErrorNone;
 }
 
@@ -85,24 +79,18 @@ EbErrorType neighbor_array_unit_ctor(
     if (na_unit_ptr->left_array_size) {
         EB_MALLOC(uint8_t*, na_unit_ptr->left_array, na_unit_ptr->unit_size * na_unit_ptr->left_array_size, EB_N_PTR);
     }
-    else {
+    else
         na_unit_ptr->left_array = (uint8_t*)EB_NULL;
-    }
-
     if (na_unit_ptr->top_array_size) {
         EB_MALLOC(uint8_t*, na_unit_ptr->top_array, na_unit_ptr->unit_size * na_unit_ptr->top_array_size, EB_N_PTR);
     }
-    else {
+    else
         na_unit_ptr->top_array = (uint8_t*)EB_NULL;
-    }
-
     if (na_unit_ptr->top_left_array_size) {
         EB_MALLOC(uint8_t*, na_unit_ptr->top_left_array, na_unit_ptr->unit_size * na_unit_ptr->top_left_array_size, EB_N_PTR);
     }
-    else {
+    else
         na_unit_ptr->top_left_array = (uint8_t*)EB_NULL;
-    }
-
     return EB_ErrorNone;
 }
 
@@ -949,7 +937,6 @@ void copy_neigh_arr_32(
         EB_MEMCPY(dst_ptr, src_ptr, naUnitSize*count);
     }
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOPLEFT_MASK) {
-
         /*
         //   Top-left Neighbor Array
         //

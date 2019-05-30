@@ -243,9 +243,8 @@ int od_ec_decode_cdf_q15(od_ec_dec *dec, const uint16_t *icdf, int nsyms) {
 // daalaboolreader.c from AOM
 
 int aom_daala_reader_init(DaalaReader_t *r, const uint8_t *buffer, int size) {
-  if (size && !buffer) {
+  if (size && !buffer)
     return 1;
-  }
   r->buffer_end = buffer + size;
   r->buffer = buffer;
   od_ec_dec_init(&r->ec, buffer, size);

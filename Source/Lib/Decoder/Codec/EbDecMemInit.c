@@ -70,26 +70,20 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
         EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_y, picture_buffer_desc_ptr->luma_size * bytesPerPixel, EB_A_PTR);
         memset(picture_buffer_desc_ptr->buffer_y, 0, picture_buffer_desc_ptr->luma_size      * bytesPerPixel);
     }
-    else {
+    else
         picture_buffer_desc_ptr->buffer_y = 0;
-    }
-
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
         EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_cb, picture_buffer_desc_ptr->chroma_size * bytesPerPixel, EB_A_PTR);
         memset(picture_buffer_desc_ptr->buffer_cb, 0, picture_buffer_desc_ptr->chroma_size      * bytesPerPixel);
     }
-    else {
+    else
         picture_buffer_desc_ptr->buffer_cb = 0;
-    }
-
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
         EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_cr, picture_buffer_desc_ptr->chroma_size * bytesPerPixel, EB_A_PTR);
         memset(picture_buffer_desc_ptr->buffer_cr, 0, picture_buffer_desc_ptr->chroma_size      * bytesPerPixel);
     }
-    else {
+    else
         picture_buffer_desc_ptr->buffer_cr = 0;
-    }
-
     return EB_ErrorNone;
 }
 

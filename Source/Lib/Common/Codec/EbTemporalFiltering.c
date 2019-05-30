@@ -157,9 +157,8 @@ void copy_pixels(EbByte dst, int stride_dst, EbByte src, int stride_src, int wid
 
 // assign a single value to all elements in an array
 static void populate_list_with_value(int *list, int nelements, const int value){
-    for(int i=0; i<nelements; i++){
+    for(int i=0; i<nelements; i++)
         list[i] = value;
-    }
 }
 
 // get block filter weights using a distance metric
@@ -1661,10 +1660,8 @@ void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_
 
     // populate source frames picture buffer list
     EbPictureBufferDesc *list_input_picture_ptr[ALTREF_MAX_NFRAMES] = { NULL };
-    for(int i=0; i<altref_nframes; i++){
+    for(int i=0; i<altref_nframes; i++)
         list_input_picture_ptr[i] = list_picture_control_set_ptr[i]->enhanced_picture_ptr;
-    }
-
     alt_ref_buffer[C_Y] = picture_control_set_ptr_central->enhanced_picture_ptr->buffer_y +
                           picture_control_set_ptr_central->enhanced_picture_ptr->origin_x +
                           picture_control_set_ptr_central->enhanced_picture_ptr->origin_y*picture_control_set_ptr_central->enhanced_picture_ptr->stride_y;

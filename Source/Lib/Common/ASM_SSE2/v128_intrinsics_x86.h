@@ -283,10 +283,8 @@ SIMD_INLINE v128 v128_shuffle_8(v128 x, v128 pattern) {
     char *selected = (char *)&output;
     int32_t counter;
 
-    for (counter = 0; counter < 16; counter++) {
+    for (counter = 0; counter < 16; counter++)
         selected[counter] = input[index[counter] & 15];
-    }
-
     return output;
 #endif
 }

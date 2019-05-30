@@ -1194,14 +1194,11 @@ void av1_gen_fwd_stage_range(int8_t *stage_range_col, int8_t *stage_range_row,
     // Take the shift from the larger dimension in the rectangular case.
     const int8_t *shift = cfg->shift;
     // i < MAX_TXFM_STAGE_NUM will mute above array bounds warning
-    for (int32_t i = 0; i < cfg->stage_num_col && i < MAX_TXFM_STAGE_NUM; ++i) {
+    for (int32_t i = 0; i < cfg->stage_num_col && i < MAX_TXFM_STAGE_NUM; ++i)
         stage_range_col[i] = (int8_t)(cfg->stage_range_col[i] + shift[0] + bd + 1);
-    }
-
     // i < MAX_TXFM_STAGE_NUM will mute above array bounds warning
-    for (int32_t i = 0; i < cfg->stage_num_row && i < MAX_TXFM_STAGE_NUM; ++i) {
+    for (int32_t i = 0; i < cfg->stage_num_row && i < MAX_TXFM_STAGE_NUM; ++i)
         stage_range_row[i] = (int8_t)(cfg->stage_range_row[i] + shift[0] + shift[1] + bd + 1);
-    }
 }
 
 typedef void(*TxfmFunc)(const int32_t *input, int32_t *output, int8_t cos_bit,
@@ -3665,19 +3662,16 @@ static INLINE TxfmFunc fwd_txfm_type_to_func(TxfmType TxfmType) {
 
 void av1_round_shift_array_c(int32_t *arr, int32_t size, int32_t bit) {
     int32_t i;
-    if (bit == 0) {
+    if (bit == 0)
         return;
-    }
     else {
         if (bit > 0) {
-            for (i = 0; i < size; i++) {
+            for (i = 0; i < size; i++)
                 arr[i] = round_shift(arr[i], bit);
-            }
         }
         else {
-            for (i = 0; i < size; i++) {
+            for (i = 0; i < size; i++)
                 arr[i] = arr[i] * (1 << (-bit));
-            }
         }
     }
 }
@@ -3720,9 +3714,8 @@ static INLINE void Av1TranformTwoDCore_c(
 
     // Columns
     for (c = 0; c < txfm_size_col; ++c) {
-        if (cfg->ud_flip == 0) {
+        if (cfg->ud_flip == 0)
             for (r = 0; r < txfm_size_row; ++r) temp_in[r] = input[r * input_stride + c];
-        }
         else {
             for (r = 0; r < txfm_size_row; ++r)
                 // flip upside down
@@ -3765,20 +3758,17 @@ static INLINE void Av1TranformTwoDCore_c(
 void av1_round_shift_array_pf_c(int32_t *arr_in, int32_t *arr_out, int32_t size, int32_t bit) {
     int32_t i;
     if (bit == 0) {
-        for (i = 0; i < size; i++) {
+        for (i = 0; i < size; i++)
             arr_out[i] = arr_in[i];
-        }
     }
     else {
         if (bit > 0) {
-            for (i = 0; i < size; i++) {
+            for (i = 0; i < size; i++)
                 arr_out[i] = round_shift(arr_in[i], bit);
-            }
         }
         else {
-            for (i = 0; i < size; i++) {
+            for (i = 0; i < size; i++)
                 arr_out[i] = arr_in[i] * (1 << (-bit));
-            }
         }
     }
 }
@@ -4201,9 +4191,8 @@ static INLINE void Av1TranformTwoDCore_pf_c(
 
     // Columns
     for (c = 0; c < txfm_size_col; ++c) {
-        if (cfg->ud_flip == 0) {
+        if (cfg->ud_flip == 0)
             for (r = 0; r < txfm_size_row; ++r) temp_in[r] = input[r * inputStride + c];
-        }
         else {
             for (r = 0; r < txfm_size_row; ++r)
                 // flip upside down
@@ -4375,9 +4364,8 @@ uint64_t  HandleTransform64x64_c(
 
     uint32_t row;
     // Zero out top-right 32x32 area.
-    for (row = 0; row < 32; ++row) {
+    for (row = 0; row < 32; ++row)
         memset(output + row * 64 + 32, 0, 32 * sizeof(*output));
-    }
     // Zero out the bottom 64x32 area.
     memset(output + 32 * 64, 0, 32 * 64 * sizeof(*output));
     //// Re-pack non-zero coeffs in the first 32x32 indices.
@@ -4568,10 +4556,8 @@ uint64_t  HandleTransform64x32_c(
         32);
 
     // Zero out right 32x32 area.
-    for (int32_t row = 0; row < 32; ++row) {
+    for (int32_t row = 0; row < 32; ++row)
         memset(output + row * 64 + 32, 0, 32 * sizeof(*output));
-    }
-
     return three_quad_energy;
 }
 
@@ -4647,10 +4633,8 @@ uint64_t  HandleTransform64x16_c(
         16);
 
     // Zero out right 32x16 area.
-    for (int32_t row = 0; row < 16; ++row) {
+    for (int32_t row = 0; row < 16; ++row)
         memset(output + row * 64 + 32, 0, 32 * sizeof(*output));
-    }
-
     return three_quad_energy;
 }
 
@@ -4924,9 +4908,8 @@ EbErrorType av1_estimate_transform(
             64);
 
         // Re-pack non-zero coeffs in the first 32x32 indices.
-        for (int32_t row = 1; row < 32; ++row) {
+        for (int32_t row = 1; row < 32; ++row)
             memcpy(coeff_buffer + row * 32, coeff_buffer + row * 64, 32 * sizeof(int32_t));
-        }
         break;
 
     case TX_32X64:
@@ -4969,9 +4952,8 @@ EbErrorType av1_estimate_transform(
         *three_quad_energy = HandleTransform64x16_c(coeff_buffer,
             64);
         // Re-pack non-zero coeffs in the first 32x16 indices.
-        for (int32_t row = 1; row < 16; ++row) {
+        for (int32_t row = 1; row < 16; ++row)
             memcpy(coeff_buffer + row * 32, coeff_buffer + row * 64, 32 * sizeof(int32_t));
-        }
         break;
     case TX_16X64:
         if (transform_type == DCT_DCT)
@@ -5130,10 +5112,8 @@ EbErrorType av1_estimate_transform(
 
         uint32_t row;
         // Re-pack non-zero coeffs in the first 32x32 indices.
-        for (row = 1; row < 32; ++row) {
+        for (row = 1; row < 32; ++row)
             memcpy(coeff_buffer + row * 32, coeff_buffer + row * 64, 32 * sizeof(int32_t));
-        }
-
         break;
 
     case TX_32X32:
@@ -5291,13 +5271,11 @@ void Av1InverseTransformConfig(
     cfg->cos_bit_col = inv_cos_bit_col[txw_idx][txh_idx];
     cfg->cos_bit_row = inv_cos_bit_row[txw_idx][txh_idx];
     cfg->txfm_type_col = av1_txfm_type_ls[txh_idx][tx_type_1d_col];
-    if (cfg->txfm_type_col == TXFM_TYPE_ADST4) {
+    if (cfg->txfm_type_col == TXFM_TYPE_ADST4)
         memcpy(cfg->stage_range_col, iadst4_range, sizeof(iadst4_range));
-    }
     cfg->txfm_type_row = av1_txfm_type_ls[txw_idx][tx_type_1d_row];
-    if (cfg->txfm_type_row == TXFM_TYPE_ADST4) {
+    if (cfg->txfm_type_row == TXFM_TYPE_ADST4)
         memcpy(cfg->stage_range_row, iadst4_range, sizeof(iadst4_range));
-    }
     cfg->stage_num_col = av1_txfm_stage_num_list[cfg->txfm_type_col];
     cfg->stage_num_row = av1_txfm_stage_num_list[cfg->txfm_type_row];
 }
@@ -7756,16 +7734,14 @@ static INLINE void Av1InverseTransformTwoDCore_c(
     // Rows
     for (r = 0; r < txfm_size_row; ++r) {
         if (abs(rect_type) == 1) {
-            for (c = 0; c < txfm_size_col; ++c) {
+            for (c = 0; c < txfm_size_col; ++c)
                 temp_in[c] = round_shift((int64_t)input[c] * NewInvSqrt2, NewSqrt2Bits);
-            }
             clamp_buf(temp_in, txfm_size_col, (int8_t)(bd + 8));
             txfm_func_row(temp_in, buf_ptr, cos_bit_row, stage_range_row);
         }
         else {
-            for (c = 0; c < txfm_size_col; ++c) {
+            for (c = 0; c < txfm_size_col; ++c)
                 temp_in[c] = input[c];
-            }
             clamp_buf(temp_in, txfm_size_col, (int8_t)(bd + 8));
             txfm_func_row(temp_in, buf_ptr, cos_bit_row, stage_range_row);
         }
@@ -7788,15 +7764,13 @@ static INLINE void Av1InverseTransformTwoDCore_c(
         txfm_func_col(temp_in, temp_out, cos_bit_col, stage_range_col);
         av1_round_shift_array_c(temp_out, txfm_size_row, -shift[1]);
         if (cfg->ud_flip == 0) {
-            for (r = 0; r < txfm_size_row; ++r) {
+            for (r = 0; r < txfm_size_row; ++r)
                 output[r * ouputStride + c] = temp_out[r];
-            }
         }
         else {
             // flip upside down
-            for (r = 0; r < txfm_size_row; ++r) {
+            for (r = 0; r < txfm_size_row; ++r)
                 output[r * ouputStride + c] = temp_out[txfm_size_row - r - 1];
-            }
         }
     }
 }
@@ -8064,13 +8038,11 @@ void av1_get_inv_txfm_cfg(TxType tx_type, TxSize tx_size,
     cfg->cos_bit_col = inv_cos_bit_col[txw_idx][txh_idx];
     cfg->cos_bit_row = inv_cos_bit_row[txw_idx][txh_idx];
     cfg->txfm_type_col = av1_txfm_type_ls[txh_idx][tx_type_1d_col];
-    if (cfg->txfm_type_col == TXFM_TYPE_ADST4) {
+    if (cfg->txfm_type_col == TXFM_TYPE_ADST4)
         memcpy(cfg->stage_range_col, iadst4_range, sizeof(iadst4_range));
-    }
     cfg->txfm_type_row = av1_txfm_type_ls[txw_idx][tx_type_1d_row];
-    if (cfg->txfm_type_row == TXFM_TYPE_ADST4) {
+    if (cfg->txfm_type_row == TXFM_TYPE_ADST4)
         memcpy(cfg->stage_range_row, iadst4_range, sizeof(iadst4_range));
-    }
     cfg->stage_num_col = av1_txfm_stage_num_list[cfg->txfm_type_col];
     cfg->stage_num_row = av1_txfm_stage_num_list[cfg->txfm_type_row];
 }
@@ -8114,16 +8086,14 @@ static INLINE void inv_txfm2d_add_c(const int32_t *input, uint16_t *output,
     // Rows
     for (r = 0; r < txfm_size_row; ++r) {
         if (abs(rect_type) == 1) {
-            for (c = 0; c < txfm_size_col; ++c) {
+            for (c = 0; c < txfm_size_col; ++c)
                 temp_in[c] = round_shift((int64_t)input[c] * NewInvSqrt2, NewSqrt2Bits);
-            }
             clamp_buf(temp_in, txfm_size_col, (int8_t)(bd + 8));
             txfm_func_row(temp_in, buf_ptr, cos_bit_row, stage_range_row);
         }
         else {
-            for (c = 0; c < txfm_size_col; ++c) {
+            for (c = 0; c < txfm_size_col; ++c)
                 temp_in[c] = input[c];
-            }
             clamp_buf(temp_in, txfm_size_col, (int8_t)(bd + 8));
             txfm_func_row(temp_in, buf_ptr, cos_bit_row, stage_range_row);
         }
@@ -8699,18 +8669,16 @@ void av1_inv_txfm_add_c(const TranLow *dqcoeff, uint8_t *dst, int32_t stride,
     int32_t w = tx_size_wide[tx_size];
     int32_t h = tx_size_high[tx_size];
     for (int32_t r = 0; r < h; ++r) {
-        for (int32_t c = 0; c < w; ++c) {
+        for (int32_t c = 0; c < w; ++c)
             tmp[r * tmp_stride + c] = dst[r * stride + c];
-        }
     }
 
     highbd_inv_txfm_add(dqcoeff, CONVERT_TO_BYTEPTR(tmp), tmp_stride,
         txfm_param);
 
     for (int32_t r = 0; r < h; ++r) {
-        for (int32_t c = 0; c < w; ++c) {
+        for (int32_t c = 0; c < w; ++c)
             dst[r * stride + c] = (uint8_t)tmp[r * tmp_stride + c];
-        }
     }
 }
 
@@ -8848,32 +8816,19 @@ uint8_t ConstructPmTransCoeffShapingKnob(const uint16_t *masking_matrix, uint8_t
         row_index = index / stride;
         columnIndex = index % stride;
         if ((columnIndex >= strideN2) && (row_index < strideN2))
-        {
             h1 += masking_matrix[index];
-        }
         else if ((row_index >= strideN2) && (columnIndex < strideN2))
-        {
             h2 += masking_matrix[index];
-        }
         else if ((row_index > strideN2) && (columnIndex > strideN2))
-        {
             h3 += masking_matrix[index];
-        }
         else if ((columnIndex >= strideN4) && (row_index < strideN4))
-        {
             q1 += masking_matrix[index];
-        }
         else if ((row_index >= strideN4) && (columnIndex < strideN4))
-        {
             q2 += masking_matrix[index];
-        }
         else if ((row_index > strideN4) && (columnIndex > strideN4))
-        {
             q3 += masking_matrix[index];
-        }
-        else if ((row_index != 0) && (columnIndex != 0)) {
+        else if ((row_index != 0) && (columnIndex != 0))
             dc += masking_matrix[index];
-        }
     }
 
     if ((h1 == 0) && (h2 == 0) && (h3 == 0)) {
@@ -8898,9 +8853,8 @@ uint8_t ConstructPmTransCoeffShapingKnob(const uint16_t *masking_matrix, uint8_t
                 return(1);
         }
     }
-    else {
+    else
         return(0);
-    }
 }
 void construct_pm_trans_coeff_shaping(
     SequenceControlSet  *sequence_control_set_ptr)
@@ -8912,9 +8866,8 @@ void construct_pm_trans_coeff_shaping(
 
     for (resolutionIndex = 0; resolutionIndex < 2; resolutionIndex++) {
         for (levelIndex = 0; levelIndex < 8; levelIndex++) {
-            for (tuSizeIndex = 0; tuSizeIndex < 4; tuSizeIndex++) {
+            for (tuSizeIndex = 0; tuSizeIndex < 4; tuSizeIndex++)
                 sequence_control_set_ptr->trans_coeff_shape_array[resolutionIndex][levelIndex][tuSizeIndex] = ConstructPmTransCoeffShapingKnob(masking_matrix[resolutionIndex][levelIndex][tuSizeIndex], arrayLength[tuSizeIndex]);
-            }
         }
     }
 }

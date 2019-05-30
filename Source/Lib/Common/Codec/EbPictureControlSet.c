@@ -193,10 +193,8 @@ EbErrorType picture_control_set_ctor(
             (EbPtr)&input_picture_buffer_desc_init_data);
     }
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     // Film Grain Picture Buffer
     if (initDataPtr->film_grain_noise_level) {
         if (is16bit) {
@@ -211,9 +209,8 @@ EbErrorType picture_control_set_ctor(
                 (EbPtr)&input_picture_buffer_desc_init_data);
         }
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 
     if (is16bit) {
@@ -221,34 +218,28 @@ EbErrorType picture_control_set_ctor(
             (EbPtr*)&(object_ptr->input_frame16bit),
             (EbPtr)&coeffBufferDescInitData);
     }
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     // Entropy Coder
     return_error = entropy_coder_ctor(
         &object_ptr->entropy_coder_ptr,
         SEGMENT_ENTROPY_BUFFER_SIZE);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     // Packetization process Bitstream
     return_error = bitstream_ctor(
         &object_ptr->bitstream_ptr,
         PACKETIZATION_PROCESS_BUFFER_SIZE);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     // Rate estimation entropy coder
     return_error = entropy_coder_ctor(
         &object_ptr->coeff_est_entropy_coder_ptr,
         SEGMENT_ENTROPY_BUFFER_SIZE);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     // GOP
     object_ptr->picture_number = 0;
     object_ptr->temporal_layer_index = 0;
@@ -273,9 +264,8 @@ EbErrorType picture_control_set_ctor(
             (uint16_t)(sb_origin_y * maxCuSize),
             (uint16_t)sb_index,
             object_ptr);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
         // Increment the Order in coding order (Raster Scan Order)
         sb_origin_y = (sb_origin_x == picture_sb_w - 1) ? sb_origin_y + 1 : sb_origin_y;
         sb_origin_x = (sb_origin_x == picture_sb_w - 1) ? 0 : sb_origin_x + 1;
@@ -333,9 +323,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_mv_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE,
@@ -345,9 +334,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_skip_flag_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE,
@@ -357,9 +345,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_mode_type_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE,
@@ -369,9 +356,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_leaf_depth_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE,
@@ -381,10 +367,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
-
         return_error = neighbor_array_unit_ctor(
             &object_ptr->mdleaf_partition_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE,
@@ -394,10 +378,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
-
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_luma_recon_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE,
@@ -406,10 +388,8 @@ EbErrorType picture_control_set_ctor(
             SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
             SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
-
 #if ATB_MD
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_tx_depth_1_luma_recon_neighbor_array[depth],
@@ -419,9 +399,8 @@ EbErrorType picture_control_set_ctor(
             SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
             SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
 #endif
 
         return_error = neighbor_array_unit_ctor(
@@ -433,10 +412,8 @@ EbErrorType picture_control_set_ctor(
             SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
-
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_cr_recon_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
@@ -445,10 +422,8 @@ EbErrorType picture_control_set_ctor(
             SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
             SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
-
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_skip_coeff_neighbor_array[depth],
@@ -459,9 +434,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
 #endif
         // for each 4x4
         return_error = neighbor_array_unit_ctor(
@@ -473,9 +447,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
 #if ATB_DC_CONTEXT_SUPPORT_2
         // for each 4x4
         return_error = neighbor_array_unit_ctor(
@@ -487,9 +460,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
 #endif
         // for each 4x4
         return_error = neighbor_array_unit_ctor(
@@ -501,10 +473,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
-
         // for each 4x4
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_cb_dc_sign_level_coeff_neighbor_array[depth],
@@ -515,10 +485,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
-
 #if ATB_RATE
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_txfm_context_array[depth],
@@ -529,9 +497,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
 #endif
 
         return_error = neighbor_array_unit_ctor(
@@ -543,10 +510,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
-
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_ref_frame_type_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE,
@@ -565,9 +530,8 @@ EbErrorType picture_control_set_ctor(
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 #if !MEMORY_FOOTPRINT_OPT
     return_error = neighbor_array_unit_ctor(
@@ -579,10 +543,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->md_refinement_mode_type_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -592,10 +554,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->md_refinement_luma_recon_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -604,9 +564,8 @@ EbErrorType picture_control_set_ctor(
         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
 #endif
     // Encode Pass Neighbor Arrays
     return_error = neighbor_array_unit_ctor(
@@ -628,9 +587,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ep_mv_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -640,9 +598,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ep_skip_flag_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -652,9 +609,8 @@ EbErrorType picture_control_set_ctor(
         CU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ep_mode_type_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -664,9 +620,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ep_leaf_depth_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -676,10 +631,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ep_luma_recon_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -689,9 +642,8 @@ EbErrorType picture_control_set_ctor(
         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ep_cb_recon_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
@@ -701,10 +653,8 @@ EbErrorType picture_control_set_ctor(
         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ep_cr_recon_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
@@ -714,10 +664,8 @@ EbErrorType picture_control_set_ctor(
         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     if (is16bit) {
         return_error = neighbor_array_unit_ctor(
             &object_ptr->ep_luma_recon_neighbor_array16bit,
@@ -728,9 +676,8 @@ EbErrorType picture_control_set_ctor(
             SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
         return_error = neighbor_array_unit_ctor(
             &object_ptr->ep_cb_recon_neighbor_array16bit,
             MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
@@ -740,9 +687,8 @@ EbErrorType picture_control_set_ctor(
             SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
         return_error = neighbor_array_unit_ctor(
             &object_ptr->ep_cr_recon_neighbor_array16bit,
             MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
@@ -751,9 +697,8 @@ EbErrorType picture_control_set_ctor(
             SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
             SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
     else {
         object_ptr->ep_luma_recon_neighbor_array16bit = 0;
@@ -773,10 +718,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     // for each 4x4
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
@@ -787,10 +730,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     // for each 4x4
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
@@ -801,9 +742,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
 #endif
 
 #if !OPT_LOSSLESS_0
@@ -816,9 +756,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     return_error = neighbor_array_unit_ctor(
         &object_ptr->amvp_mv_merge_mode_type_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -828,9 +767,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
 #endif
     // Entropy Coding Neighbor Arrays
     return_error = neighbor_array_unit_ctor(
@@ -842,10 +780,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->partition_context_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -855,10 +791,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->skip_flag_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -868,10 +802,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->skip_coeff_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -881,9 +813,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     // for each 4x4
     return_error = neighbor_array_unit_ctor(
         &object_ptr->luma_dc_sign_level_coeff_neighbor_array,
@@ -894,9 +825,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     // for each 4x4
     return_error = neighbor_array_unit_ctor(
         &object_ptr->cr_dc_sign_level_coeff_neighbor_array,
@@ -907,9 +837,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     // for each 4x4
     return_error = neighbor_array_unit_ctor(
         &object_ptr->cb_dc_sign_level_coeff_neighbor_array,
@@ -920,10 +849,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->inter_pred_dir_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -933,10 +860,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ref_frame_type_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -955,10 +880,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = neighbor_array_unit_ctor(
         &object_ptr->intra_luma_mode_neighbor_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -967,10 +890,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
 #if ATB_EC
     return_error = neighbor_array_unit_ctor(
         &object_ptr->txfm_context_array,
@@ -980,9 +901,8 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
 #endif
     // Note - non-zero offsets are not supported (to be fixed later in DLF chroma filtering)
     object_ptr->cb_qp_offset = 0;
@@ -1003,9 +923,8 @@ EbErrorType picture_control_set_ctor(
         &object_ptr->enc_dec_segment_ctrl,
         initDataPtr->enc_dec_segment_col,
         initDataPtr->enc_dec_segment_row);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     // Entropy Rows
     EB_CREATEMUTEX(EbHandle, object_ptr->entropy_coding_mutex, sizeof(EbHandle), EB_MUTEX);
 
@@ -1045,10 +964,8 @@ EbErrorType picture_control_set_ctor(
     // pictureLcuWidth * pictureLcuHeight
 
     uint32_t miIdx;
-    for (miIdx = 0; miIdx < object_ptr->sb_total_count*(BLOCK_SIZE_64 >> MI_SIZE_LOG2)*(BLOCK_SIZE_64 >> MI_SIZE_LOG2); ++miIdx) {
+    for (miIdx = 0; miIdx < object_ptr->sb_total_count*(BLOCK_SIZE_64 >> MI_SIZE_LOG2)*(BLOCK_SIZE_64 >> MI_SIZE_LOG2); ++miIdx)
         object_ptr->mi_grid_base[miIdx] = object_ptr->mip + miIdx;
-    }
-
     object_ptr->mi_stride = pictureLcuWidth * (BLOCK_SIZE_64 / 4);
     object_ptr->hash_table.p_lookup_table = NULL;
     av1_hash_table_create(&object_ptr->hash_table);
@@ -1093,15 +1010,12 @@ EbErrorType picture_parent_control_set_ctor(
         return_error = eb_picture_buffer_desc_ctor(
                 (EbPtr*) &(object_ptr->chroma_downsampled_picture_ptr),
                 (EbPtr) &input_picture_buffer_desc_init_data);
-        if (return_error == EB_ErrorInsufficientResources){
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     } else if(initDataPtr->color_format == EB_YUV420) {
         object_ptr->chroma_downsampled_picture_ptr = NULL;
-    } else {
+    } else
         return EB_ErrorBadParameter;
-    }
-
     // GOP
     object_ptr->pred_struct_index = 0;
     object_ptr->picture_number = 0;
@@ -1154,9 +1068,8 @@ EbErrorType picture_parent_control_set_ctor(
         EB_MALLOC(OisCandidate*, contigousCand, sizeof(OisCandidate) * MAX_OIS_CANDIDATES * CU_MAX_COUNT, EB_N_PTR);
 
         uint32_t cuIdx;
-        for (cuIdx = 0; cuIdx < CU_MAX_COUNT; ++cuIdx) {
+        for (cuIdx = 0; cuIdx < CU_MAX_COUNT; ++cuIdx)
             object_ptr->ois_sb_results[sb_index]->ois_candidate_array[cuIdx] = &contigousCand[cuIdx*MAX_OIS_CANDIDATES];
-        }
     }
 
 #if !REDUCE_BLOCK_COUNT_ME
@@ -1178,7 +1091,6 @@ EbErrorType picture_parent_control_set_ctor(
     EB_MALLOC(MeLcuResults**, object_ptr->me_results, sizeof(MeLcuResults*) * object_ptr->sb_total_count, EB_N_PTR);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
-
         return_error = me_sb_results_ctor(
             &(object_ptr->me_results[sb_index]),
 #if REDUCE_BLOCK_COUNT_ME
@@ -1347,9 +1259,8 @@ EbErrorType picture_parent_control_set_ctor(
         return_error = denoise_and_model_ctor((EbPtr*)&(object_ptr->denoise_and_model),
             (EbPtr)&fg_init_data);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 
     return return_error;

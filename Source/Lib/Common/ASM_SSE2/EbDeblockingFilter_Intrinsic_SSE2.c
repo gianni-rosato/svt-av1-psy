@@ -2121,10 +2121,8 @@ static AOM_FORCE_INLINE void highbd_lpf_internal_14_sse2(
     // filters - hev and filter4
     __m128i hevhev;
     __m128i abs_p1p0;
-    for (i = 0; i < 6; i++) {
+    for (i = 0; i < 6; i++)
         pq[i] = _mm_unpacklo_epi64(p[i], q[i]);
-    }
-
     highbd_hev_mask(&pq[0], &pq[1], &thresh, &abs_p1p0, &hevhev);
 
     p1p0 = _mm_unpacklo_epi64(p[0], p[1]);

@@ -502,9 +502,8 @@ static const int8_t eob_to_pos_large[17] = {
 static INLINE int32_t get_eob_pos_token(const int32_t eob, int32_t *const extra) {
     int32_t t;
 
-    if (eob < 33) {
+    if (eob < 33)
         t = eob_to_pos_small[eob];
-    }
     else {
         const int32_t e = AOMMIN((eob - 1) >> 5, 16);
         t = eob_to_pos_large[e];
@@ -1102,19 +1101,15 @@ static INLINE int get_coeff_cost_general(int is_last, int ci, TranLow abs_qc,
     int bwl, TxClass tx_class,
     const uint8_t *levels) {
     int cost = 0;
-    if (is_last) {
+    if (is_last)
         cost += txb_costs->base_eob_cost[coeff_ctx][AOMMIN(abs_qc, 3) - 1];
-    }
-    else {
+    else
         cost += txb_costs->base_cost[coeff_ctx][AOMMIN(abs_qc, 3)];
-    }
     if (abs_qc != 0) {
-        if (ci == 0) {
+        if (ci == 0)
             cost += txb_costs->dc_sign_cost[dc_sign_ctx][sign];
-        }
-        else {
+        else
             cost += av1_cost_literal(1);
-        }
         if (abs_qc > NUM_BASE_LEVELS) {
             int br_ctx;
             if (is_last)
@@ -1205,12 +1200,10 @@ static INLINE int get_coeff_cost_eob(int ci, TranLow abs_qc, int sign,
     int cost = 0;
     cost += txb_costs->base_eob_cost[coeff_ctx][AOMMIN(abs_qc, 3) - 1];
     if (abs_qc != 0) {
-        if (ci == 0) {
+        if (ci == 0)
             cost += txb_costs->dc_sign_cost[dc_sign_ctx][sign];
-        }
-        else {
+        else
             cost += av1_cost_literal(1);
-        }
         if (abs_qc > NUM_BASE_LEVELS) {
             int br_ctx;
             br_ctx = get_br_ctx_eob(ci, bwl, tx_class);
@@ -1233,9 +1226,8 @@ static AOM_FORCE_INLINE void update_coeff_eob(
     const TranLow qc = qcoeff[ci];
     const int coeff_ctx =
         get_lower_levels_ctx(levels, ci, bwl, tx_size, tx_class);
-    if (qc == 0) {
+    if (qc == 0)
         *accu_rate += txb_costs->base_cost[coeff_ctx][0];
-    }
     else {
         int lower_level = 0;
         const TranLow abs_qc = abs(qc);
@@ -1359,9 +1351,8 @@ static INLINE void update_coeff_general(
     const int is_last = si == (eob - 1);
     const int coeff_ctx = get_lower_levels_ctx_general(
         is_last, si, bwl, height, levels, ci, tx_size, tx_class);
-    if (qc == 0) {
+    if (qc == 0)
         *accu_rate += txb_costs->base_cost[coeff_ctx][0];
-    }
     else {
         const int sign = (qc < 0) ? 1 : 0;
         const TranLow abs_qc = abs(qc);
@@ -1433,9 +1424,8 @@ static AOM_FORCE_INLINE void update_coeff_simple(
     const TranLow qc = qcoeff[ci];
     const int coeff_ctx =
         get_lower_levels_ctx(levels, ci, bwl, tx_size, tx_class);
-    if (qc == 0) {
+    if (qc == 0)
         *accu_rate += txb_costs->base_cost[coeff_ctx][0];
-    }
     else {
         const TranLow abs_qc = abs(qc);
         const TranLow abs_tqc = abs(tcoeff[ci]);
@@ -1463,9 +1453,8 @@ static AOM_FORCE_INLINE void update_coeff_simple(
             levels[get_padded_idx(ci, bwl)] = AOMMIN(abs_qc_low, INT8_MAX);
             *accu_rate += rate_low;
         }
-        else {
+        else
             *accu_rate += rate;
-        }
     }
 }
 static INLINE void update_skip(int *accu_rate, int64_t accu_dist, uint16_t *eob,
@@ -1502,9 +1491,8 @@ static INLINE int32_t av1_cost_skip_txb(
     const LvMapCoeffCost *const coeff_costs = &candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->coeff_fac_bits[txs_ctx][plane_type];
 
 #if CABAC_UP
-    if (allow_update_cdf) {
+    if (allow_update_cdf)
         update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], 1, 2);
-    }
 #endif
     return coeff_costs->txb_skip_cost[txb_skip_ctx][1];
 }
@@ -2523,18 +2511,16 @@ void product_full_loop_tx_search(
         if (plane == 0) {
             if (allowed_tx_mask[tx_type]) {
                 const TxType ref_tx_type = ((!av1_ext_tx_used[tx_set_type][tx_type]) || txsize_sqr_up_map[txSize] > TX_32X32) ? DCT_DCT : tx_type;
-                if (tx_type != ref_tx_type) {
+                if (tx_type != ref_tx_type)
                     allowed_tx_mask[tx_type] = 0;
-                }
             }
         }
 
         allowed_tx_num += allowed_tx_mask[tx_type];
     }
     // Need to have at least one transform type allowed.
-    if (allowed_tx_num == 0) {
+    if (allowed_tx_num == 0)
         allowed_tx_mask[plane ? uv_tx_type : DCT_DCT] = 1;
-    }
     TxType best_tx_type = DCT_DCT;
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
 #if SCREEN_CONTENT_SETTINGS
@@ -2635,10 +2621,8 @@ void product_full_loop_tx_search(
 #endif
 
             //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
-            if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT) {
+            if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT)
                 continue;
-            }
-
             // LUMA DISTORTION
             picture_full_distortion32_bits(
                 context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr,
@@ -2888,10 +2872,8 @@ void encode_pass_tx_search(
 #endif
 
         //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
-        if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT) {
+        if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT)
             continue;
-        }
-
         // LUMA DISTORTION
         picture_full_distortion32_bits(
             transform16bit,
@@ -3133,10 +3115,8 @@ void encode_pass_tx_search_hbd(
 #endif
 
         //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
-        if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT) {
+        if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT)
             continue;
-        }
-
         // LUMA DISTORTION
         picture_full_distortion32_bits(
             transform16bit,
@@ -3932,14 +3912,12 @@ EbBool merge_1D_inter_block(
     if (parent_diriction == child_0_diriction && child_eob == 0) {
         switch (parent_diriction) {
         case UNI_PRED_LIST_0:
-            if (parent_mv_l0 == child_0_mv_l0) {
+            if (parent_mv_l0 == child_0_mv_l0)
                 merge_blocks = EB_TRUE;
-            }
             break;
         case UNI_PRED_LIST_1:
-            if (parent_mv_l1 == child_0_mv_l1) {
+            if (parent_mv_l1 == child_0_mv_l1)
                 merge_blocks = EB_TRUE;
-            }
             break;
         case BI_PRED:
             if (parent_mv_l0 == child_0_mv_l0 &&
@@ -4076,9 +4054,8 @@ void   compute_depth_costs(
             sequence_control_set_ptr->max_sb_depth);
 #endif
     }
-    else {
+    else
         *above_depth_cost = MAX_MODE_COST;
-    }
 #if !SPLIT_RATE_FIX
     // Compute curr depth  cost
     av1_split_flag_rate(
@@ -4191,12 +4168,10 @@ uint32_t d2_inter_depth_block_decision(
         while (blk_geom->is_last_quadrant) {
             //get parent idx
             parent_depth_idx_mds = current_depth_idx_mds - parent_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth];
-            if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0) {
+            if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0)
                 parent_depth_cost = MAX_MODE_COST;
-            }
-            else {
+            else
                 compute_depth_costs(context_ptr, sequence_control_set_ptr, current_depth_idx_mds, parent_depth_idx_mds, ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth], &parent_depth_cost, &current_depth_cost);
-            }
             if (parent_depth_cost <= current_depth_cost) {
                 context_ptr->md_cu_arr_nsq[parent_depth_idx_mds].split_flag = EB_FALSE;
                 context_ptr->md_local_cu_unit[parent_depth_idx_mds].cost = parent_depth_cost;

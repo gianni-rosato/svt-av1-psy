@@ -227,9 +227,8 @@ int get_intra_inter_context(PartitionInfo_t *xd) {
     else if (has_above || has_left) {  // one edge available
         return 2 * !dec_is_inter_block(has_above ? above_mbmi : left_mbmi);
     }
-    else {
+    else
         return 0;
-    }
 }
 
 int use_angle_delta(BlockSize bsize) {
@@ -364,12 +363,10 @@ static INLINE void integer_mv_precision(MV_dec *mv) {
     if (mod != 0) {
         mv->row -= mod;
         if (abs(mod) > 4) {
-            if (mod > 0) {
+            if (mod > 0)
                 mv->row += 8;
-            }
-            else {
+            else
                 mv->row -= 8;
-            }
         }
     }
 
@@ -377,12 +374,10 @@ static INLINE void integer_mv_precision(MV_dec *mv) {
     if (mod != 0) {
         mv->col -= mod;
         if (abs(mod) > 4) {
-            if (mod > 0) {
+            if (mod > 0)
                 mv->col += 8;
-            }
-            else {
+            else
                 mv->col -= 8;
-            }
         }
     }
 }
@@ -422,9 +417,8 @@ IntMv_dec gm_get_motion_vector(const EbWarpedMotionParams *gm,
         res.as_mv.row = gm->wmmat[0] >> GM_TRANS_ONLY_PREC_DIFF;
         res.as_mv.col = gm->wmmat[1] >> GM_TRANS_ONLY_PREC_DIFF;
         assert(IMPLIES(1 & (res.as_mv.row | res.as_mv.col), allow_hp));
-        if (is_integer) {
+        if (is_integer)
             integer_mv_precision(&res.as_mv);
-        }
         return res;
     }
 
@@ -446,9 +440,8 @@ IntMv_dec gm_get_motion_vector(const EbWarpedMotionParams *gm,
     res.as_mv.row = ty;
     res.as_mv.col = tx;
 
-    if (is_integer) {
+    if (is_integer)
         integer_mv_precision(&res.as_mv);
-    }
     return res;
 }
 

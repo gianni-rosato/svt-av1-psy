@@ -59,9 +59,7 @@ uint32_t fast_loop_nx_m_sad_kernel(
     for (y = 0; y < height; y++)
     {
         for (x = 0; x < width; x++)
-        {
             sad += EB_ABS_DIFF(src[x], ref[x]);
-        }
         src += src_stride;
         ref += ref_stride;
     }
@@ -98,9 +96,7 @@ void sad_loop_kernel(
             for (y = 0; y < height; y++)
             {
                 for (x = 0; x < width; x++)
-                {
                     sad += EB_ABS_DIFF(src[y*src_stride + x], ref[xSearchIndex + y * ref_stride + x]);
-                }
             }
 
             // Update results
@@ -125,10 +121,8 @@ static INLINE uint32_t sad_inline_c(const uint8_t *a, int a_stride,
     unsigned int sad = 0;
 
     for (y = 0; y < height; y++) {
-        for (x = 0; x < width; x++) {
+        for (x = 0; x < width; x++)
             sad += EB_ABS_DIFF(a[x], b[x]);
-        }
-
         a += a_stride;
         b += b_stride;
     }

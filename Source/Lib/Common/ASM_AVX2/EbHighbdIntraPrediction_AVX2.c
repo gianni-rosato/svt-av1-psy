@@ -887,9 +887,8 @@ void aom_highbd_h_predictor_16x64_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)above;
     (void)bd;
 
-    for (int32_t i = 0; i < 8; i++, left += 8) {
+    for (int32_t i = 0; i < 8; i++, left += 8)
         h_pred_16x8(&dst, stride, left);
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -946,9 +945,8 @@ void aom_highbd_h_predictor_32x64_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)above;
     (void)bd;
 
-    for (int32_t i = 0; i < 8; i++, left += 8) {
+    for (int32_t i = 0; i < 8; i++, left += 8)
         h_pred_32x8(&dst, stride, left);
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -996,9 +994,8 @@ void aom_highbd_h_predictor_64x16_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)above;
     (void)bd;
 
-    for (int32_t i = 0; i < 2; i++, left += 8) {
+    for (int32_t i = 0; i < 2; i++, left += 8)
         h_pred_64x8(&dst, stride, left);
-    }
 }
 
 // 64x32
@@ -1009,9 +1006,8 @@ void aom_highbd_h_predictor_64x32_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)above;
     (void)bd;
 
-    for (int32_t i = 0; i < 4; i++, left += 8) {
+    for (int32_t i = 0; i < 4; i++, left += 8)
         h_pred_64x8(&dst, stride, left);
-    }
 }
 
 // 64x64
@@ -1022,9 +1018,8 @@ void aom_highbd_h_predictor_64x64_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)above;
     (void)bd;
 
-    for (int32_t i = 0; i < 8; i++, left += 8) {
+    for (int32_t i = 0; i < 8; i++, left += 8)
         h_pred_64x8(&dst, stride, left);
-    }
 }
 
 // =============================================================================
@@ -1108,9 +1103,8 @@ void aom_highbd_v_predictor_16x16_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)left;
     (void)bd;
 
-    for (int32_t i = 0; i < 2; i++) {
+    for (int32_t i = 0; i < 2; i++)
         v_pred_16x8(&dst, stride, above0);
-    }
 }
 
 // 16x32
@@ -1124,9 +1118,8 @@ void aom_highbd_v_predictor_16x32_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)left;
     (void)bd;
 
-    for (int32_t i = 0; i < 4; i++) {
+    for (int32_t i = 0; i < 4; i++)
         v_pred_16x8(&dst, stride, above0);
-    }
 }
 
 // 16x64
@@ -1140,9 +1133,8 @@ void aom_highbd_v_predictor_16x64_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)left;
     (void)bd;
 
-    for (int32_t i = 0; i < 8; i++) {
+    for (int32_t i = 0; i < 8; i++)
         v_pred_16x8(&dst, stride, above0);
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1202,9 +1194,8 @@ void aom_highbd_v_predictor_32x16_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)left;
     (void)bd;
 
-    for (int32_t i = 0; i < 2; i++) {
+    for (int32_t i = 0; i < 2; i++)
         v_pred_32x8(&dst, stride, above0, above1);
-    }
 }
 
 // 32x32
@@ -1219,9 +1210,8 @@ void aom_highbd_v_predictor_32x32_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)left;
     (void)bd;
 
-    for (int32_t i = 0; i < 4; i++) {
+    for (int32_t i = 0; i < 4; i++)
         v_pred_32x8(&dst, stride, above0, above1);
-    }
 }
 
 // 32x64
@@ -1236,9 +1226,8 @@ void aom_highbd_v_predictor_32x64_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)left;
     (void)bd;
 
-    for (int32_t i = 0; i < 8; i++) {
+    for (int32_t i = 0; i < 8; i++)
         v_pred_32x8(&dst, stride, above0, above1);
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1289,9 +1278,8 @@ void aom_highbd_v_predictor_64x16_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)left;
     (void)bd;
 
-    for (int32_t i = 0; i < 2; i++) {
+    for (int32_t i = 0; i < 2; i++)
         v_pred_64x8(&dst, stride, above0, above1, above2, above3);
-    }
 }
 
 // 64x32
@@ -1308,9 +1296,8 @@ void aom_highbd_v_predictor_64x32_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)left;
     (void)bd;
 
-    for (int32_t i = 0; i < 4; i++) {
+    for (int32_t i = 0; i < 4; i++)
         v_pred_64x8(&dst, stride, above0, above1, above2, above3);
-    }
 }
 
 // 64x64
@@ -1327,9 +1314,8 @@ void aom_highbd_v_predictor_64x64_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)left;
     (void)bd;
 
-    for (int32_t i = 0; i < 8; i++) {
+    for (int32_t i = 0; i < 8; i++)
         v_pred_64x8(&dst, stride, above0, above1, above2, above3);
-    }
 }
 
 // =============================================================================
@@ -2553,9 +2539,8 @@ void aom_highbd_smooth_v_predictor_8x16_avx2(uint16_t *dst, ptrdiff_t stride,
 
     smooth_v_init_8(above, left, 16, ab, rep);
 
-    for (int32_t i = 0; i < 2; i++) {
+    for (int32_t i = 0; i < 2; i++)
         smooth_v_pred_8x8(sm_weights_d_16 + 32 * i, rep, ab, &dst, stride);
-    }
 }
 
 // 8x32
@@ -2568,9 +2553,8 @@ void aom_highbd_smooth_v_predictor_8x32_avx2(uint16_t *dst, ptrdiff_t stride,
 
     smooth_v_init_8(above, left, 32, ab, rep);
 
-    for (int32_t i = 0; i < 4; i++) {
+    for (int32_t i = 0; i < 4; i++)
         smooth_v_pred_8x8(sm_weights_d_32 + 32 * i, rep, ab, &dst, stride);
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -2659,9 +2643,8 @@ void aom_highbd_smooth_v_predictor_16x16_avx2(uint16_t *dst, ptrdiff_t stride,
 
     smooth_v_init_16(above, left, 16, ab, rep);
 
-    for (int32_t i = 0; i < 2; i++) {
+    for (int32_t i = 0; i < 2; i++)
         smooth_v_pred_16x8(sm_weights_d_16 + 32 * i, rep, ab, &dst, stride);
-    }
 }
 
 // 16x32
@@ -2674,9 +2657,8 @@ void aom_highbd_smooth_v_predictor_16x32_avx2(uint16_t *dst, ptrdiff_t stride,
 
     smooth_v_init_16(above, left, 32, ab, rep);
 
-    for (int32_t i = 0; i < 4; i++) {
+    for (int32_t i = 0; i < 4; i++)
         smooth_v_pred_16x8(sm_weights_d_32 + 32 * i, rep, ab, &dst, stride);
-    }
 }
 
 // 16x64
@@ -2689,9 +2671,8 @@ void aom_highbd_smooth_v_predictor_16x64_avx2(uint16_t *dst, ptrdiff_t stride,
 
     smooth_v_init_16(above, left, 64, ab, rep);
 
-    for (int32_t i = 0; i < 8; i++) {
+    for (int32_t i = 0; i < 8; i++)
         smooth_v_pred_16x8(sm_weights_d_64 + 32 * i, rep, ab, &dst, stride);
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -2768,9 +2749,8 @@ void aom_highbd_smooth_v_predictor_32x16_avx2(uint16_t *dst, ptrdiff_t stride,
 
     smooth_v_init_32(above, left, 16, ab, rep);
 
-    for (int32_t i = 0; i < 2; i++) {
+    for (int32_t i = 0; i < 2; i++)
         smooth_v_pred_32x8(sm_weights_d_16 + 32 * i, rep, ab, &dst, stride);
-    }
 }
 
 // 32x32
@@ -2783,9 +2763,8 @@ void aom_highbd_smooth_v_predictor_32x32_avx2(uint16_t *dst, ptrdiff_t stride,
 
     smooth_v_init_32(above, left, 32, ab, rep);
 
-    for (int32_t i = 0; i < 4; i++) {
+    for (int32_t i = 0; i < 4; i++)
         smooth_v_pred_32x8(sm_weights_d_32 + 32 * i, rep, ab, &dst, stride);
-    }
 }
 
 // 32x64
@@ -2798,9 +2777,8 @@ void aom_highbd_smooth_v_predictor_32x64_avx2(uint16_t *dst, ptrdiff_t stride,
 
     smooth_v_init_32(above, left, 64, ab, rep);
 
-    for (int32_t i = 0; i < 8; i++) {
+    for (int32_t i = 0; i < 8; i++)
         smooth_v_pred_32x8(sm_weights_d_64 + 32 * i, rep, ab, &dst, stride);
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -2874,9 +2852,8 @@ void aom_highbd_smooth_v_predictor_64x16_avx2(uint16_t *dst, ptrdiff_t stride,
 
     smooth_v_init_64(above, left, 16, ab, rep);
 
-    for (int32_t i = 0; i < 2; i++) {
+    for (int32_t i = 0; i < 2; i++)
         smooth_v_pred_64x8(sm_weights_d_16 + 32 * i, rep, ab, &dst, stride);
-    }
 }
 
 // 64x32
@@ -2889,9 +2866,8 @@ void aom_highbd_smooth_v_predictor_64x32_avx2(uint16_t *dst, ptrdiff_t stride,
 
     smooth_v_init_64(above, left, 32, ab, rep);
 
-    for (int32_t i = 0; i < 4; i++) {
+    for (int32_t i = 0; i < 4; i++)
         smooth_v_pred_64x8(sm_weights_d_32 + 32 * i, rep, ab, &dst, stride);
-    }
 }
 
 // 64x64
@@ -2904,7 +2880,6 @@ void aom_highbd_smooth_v_predictor_64x64_avx2(uint16_t *dst, ptrdiff_t stride,
 
     smooth_v_init_64(above, left, 64, ab, rep);
 
-    for (int32_t i = 0; i < 8; i++) {
+    for (int32_t i = 0; i < 8; i++)
         smooth_v_pred_64x8(sm_weights_d_64 + 32 * i, rep, ab, &dst, stride);
-    }
 }

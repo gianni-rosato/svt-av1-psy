@@ -63,24 +63,19 @@ EbErrorType picture_analysis_context_ctor(
         // If 444, re-use luma for Cr
         if (input_picture_buffer_desc_init_data->color_format != EB_YUV444) {
             input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
-        } else {
+        } else
             input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG | PICTURE_BUFFER_DESC_Cb_FLAG;
-        }
         return_error = eb_picture_buffer_desc_ctor(
             (EbPtr*)&(context_ptr->denoised_picture_ptr),
             (EbPtr)input_picture_buffer_desc_init_data);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
-
         if (input_picture_buffer_desc_init_data->color_format != EB_YUV444) {
             context_ptr->denoised_picture_ptr->buffer_cb = context_ptr->denoised_picture_ptr->buffer_y;
             context_ptr->denoised_picture_ptr->buffer_cr = context_ptr->denoised_picture_ptr->buffer_y + context_ptr->denoised_picture_ptr->chroma_size;
-        } else {
+        } else
             context_ptr->denoised_picture_ptr->buffer_cr = context_ptr->denoised_picture_ptr->buffer_y;
-        }
-
         // noise
         input_picture_buffer_desc_init_data->max_height = BLOCK_SIZE_64;
         input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
@@ -89,9 +84,8 @@ EbErrorType picture_analysis_context_ctor(
             (EbPtr*)&(context_ptr->noise_picture_ptr),
             (EbPtr)input_picture_buffer_desc_init_data);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
     return EB_ErrorNone;
 }
@@ -179,9 +173,8 @@ void decimation_2d(
     uint32_t vertical_index;
 
     for (vertical_index = 0; vertical_index < input_area_height; vertical_index += decim_step) {
-        for (horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step) {
+        for (horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step)
             decim_samples[(horizontal_index >> (decim_step >> 1))] = input_samples[horizontal_index];
-        }
         input_samples += (input_stride << (decim_step >> 1));
         decim_samples += decim_stride;
     }
@@ -415,7 +408,6 @@ uint64_t ComputeVariance64x64(
     uint64_t                        *variance32x32,
     EbAsm                         asm_type)
 {
-
     uint32_t blockIndex;
 
     uint64_t mean_of8x8_blocks[64];
@@ -1262,7 +1254,6 @@ uint8_t  getFilteredTypes(uint8_t  *ptr,
         //a= (a*2730)>>15;
     }
     else if (filterType == 2) {
-
         a = (4 * p[1] +
             4 * p[0 + stride] + 4 * p[1 + stride] + 4 * p[2 + stride] +
             4 * p[1 + 2 * stride]) / 20;
@@ -1332,12 +1323,10 @@ void noise_extract_luma_strong(
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < picWidth; ii++) {
-                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1) {
+                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1)
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 4);
-                }
-                else {
+                else
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                }
             }
         }
     }
@@ -1386,13 +1375,10 @@ void noise_extract_chroma_strong(
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < picWidth; ii++) {
-
-                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1) {
+                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 6);
-                }
-                else {
+                else
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                }
             }
         }
     }
@@ -1414,12 +1400,10 @@ void noise_extract_chroma_strong(
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < picWidth; ii++) {
-                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1) {
+                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 6);
-                }
-                else {
+                else
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                }
             }
         }
     }
@@ -1472,13 +1456,10 @@ void noise_extract_chroma_weak(
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < picWidth; ii++) {
-
-                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1) {
+                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 4);
-                }
-                else {
+                else
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                }
             }
         }
     }
@@ -1499,12 +1480,10 @@ void noise_extract_chroma_weak(
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < picWidth; ii++) {
-                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1) {
+                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 4);
-                }
-                else {
+                else
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                }
             }
         }
     }
@@ -3139,7 +3118,6 @@ EbErrorType DenoiseInputPicture(
             uint32_t denLumaOffSet = denoised_picture_ptr->origin_x + sb_origin_x + (denoised_picture_ptr->origin_y + sb_origin_y) * denoised_picture_ptr->stride_y;
 
             if (picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] == 1) {
-
                 for (verticalIdx = 0; verticalIdx < sb_height; ++verticalIdx) {
                     EB_MEMCPY(input_picture_ptr->buffer_y + inLumaOffSet + verticalIdx * input_picture_ptr->stride_y,
                         denoised_picture_ptr->buffer_y + denLumaOffSet + verticalIdx * denoised_picture_ptr->stride_y,
@@ -3229,10 +3207,8 @@ EbErrorType DetectInputPictureNoise(
                 denoiseBlkVar32x32,
                 asm_type) >> 16;
 
-            if (denBlkVar < denBlkVarTh && noiseBlkVar > noiseBlkVarTh) {
+            if (denBlkVar < denBlkVarTh && noiseBlkVar > noiseBlkVarTh)
                 picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 1;
-            }
-
             totLcuCount++;
         }
     }
@@ -3281,7 +3257,6 @@ static int32_t apply_denoise_2d(SequenceControlSet        *scs_ptr,
     PictureParentControlSet   *pcs_ptr,
     EbPictureBufferDesc *inputPicturePointer,
     EbAsm asm_type) {
-
     if (aom_denoise_and_model_run(pcs_ptr->denoise_and_model, inputPicturePointer,
         &pcs_ptr->film_grain_params,
         scs_ptr->static_config.encoder_bit_depth > EB_8BIT, asm_type)) {
@@ -3325,10 +3300,8 @@ EbErrorType FullSampleDenoise(
     EbPictureBufferDesc    *noise_picture_ptr = context_ptr->noise_picture_ptr;
 
     //Reset the flat noise flag array to False for both RealTime/HighComplexity Modes
-    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
+    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder)
         picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
-    }
-
     picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
 
     DetectInputPictureNoise(
@@ -3501,9 +3474,8 @@ EbErrorType SubSampleFilterNoise(
                     //printf("POC %i (%i,%i) denBlkVar: %i  noiseBlkVar :%i\n", picture_control_set_ptr->picture_number,sb_origin_x,sb_origin_y, denBlkVar, noiseBlkVar);
                     newTotFN++;
                 }
-                else {
+                else
                     picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
-                }
             }
         }
 
@@ -3513,7 +3485,6 @@ EbErrorType SubSampleFilterNoise(
 
             if (sb_origin_x + 64 <= input_picture_ptr->width && sb_origin_y + 64 <= input_picture_ptr->height)
             {
-
                 //use the denoised for FN LCUs
                 if (picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] == 1) {
                     uint32_t  sb_height = MIN(BLOCK_SIZE_64, input_picture_ptr->height - sb_origin_y);
@@ -3622,10 +3593,8 @@ EbErrorType QuarterSampleDetectNoise(
 
                         uint64_t denBlkVarDecTh;
                         denBlkVarDecTh = NOISE_MIN_LEVEL_DECIM_M6_M7;
-                        if (denBlkVar < FLAT_MAX_VAR_DECIM && noiseBlkVar> denBlkVarDecTh) {
+                        if (denBlkVar < FLAT_MAX_VAR_DECIM && noiseBlkVar> denBlkVarDecTh)
                             picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 1;
-                        }
-
                         totLcuCount++;
                     }
                 }
@@ -3750,9 +3719,8 @@ EbErrorType SubSampleDetectNoise(
                         uint64_t denBlkVarDecTh = FLAT_MAX_VAR_DECIM;
 
                         noiseBlkVarDecTh = NOISE_MIN_LEVEL_DECIM_M6_M7;
-                        if (denBlkVar < denBlkVarDecTh && noiseBlkVar> noiseBlkVarDecTh) {
+                        if (denBlkVar < denBlkVarDecTh && noiseBlkVar> noiseBlkVarDecTh)
                             picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 1;
-                        }
                         totLcuCount++;
                     }
                 }
@@ -3804,10 +3772,8 @@ EbErrorType QuarterSampleDenoise(
     EbPictureBufferDesc    *noise_picture_ptr = context_ptr->noise_picture_ptr;
 
     //Reset the flat noise flag array to False for both RealTime/HighComplexity Modes
-    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
+    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder)
         picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
-    }
-
     picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
 
     decimation_2d(
@@ -3865,10 +3831,8 @@ EbErrorType SubSampleDenoise(
     EbPictureBufferDesc    *noise_picture_ptr = context_ptr->noise_picture_ptr;
 
     //Reset the flat noise flag array to False for both RealTime/HighComplexity Modes
-    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
+    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder)
         picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
-    }
-
     picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
 
     decimation_2d(
@@ -3951,9 +3915,8 @@ void PicturePreProcessingOperations(
     }
     else {
         //Reset the flat noise flag array to False for both RealTime/HighComplexity Modes
-        for (uint32_t lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
+        for (uint32_t lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder)
             picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
-        }
         picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
     }
     return;
@@ -4164,9 +4127,8 @@ void EdgeDetectionMeanLumaChroma16x16(
 
                     grady = grady / nbcompy;
                     sb_stat_ptr->cu_stat_array[rasterScanCuIndex].grad = (uint32_t)ABS(gradx) + ABS(grady);
-                    if (sb_stat_ptr->cu_stat_array[rasterScanCuIndex].grad > maxGrad) {
+                    if (sb_stat_ptr->cu_stat_array[rasterScanCuIndex].grad > maxGrad)
                         maxGrad = sb_stat_ptr->cu_stat_array[rasterScanCuIndex].grad;
-                    }
                 }
             }
         }
@@ -4177,9 +4139,8 @@ void EdgeDetectionMeanLumaChroma16x16(
                 SbStat *sb_stat_ptr = &picture_control_set_ptr->sb_stat_array[sb_index];
 
                 uint32_t rasterScanCuIndex;
-                for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_16x16_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_16x16_15; rasterScanCuIndex++) {
+                for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_16x16_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_16x16_15; rasterScanCuIndex++)
                     sb_stat_ptr->cu_stat_array[rasterScanCuIndex].edge_cu = (uint16_t)MIN(((sb_stat_ptr->cu_stat_array[rasterScanCuIndex].grad * (255 * 3)) / maxGrad), 255) < 30 ? 0 : 1;
-                }
             }
         }
     }
@@ -4248,13 +4209,10 @@ void EdgeDetection(
             edge_results_ptr[sb_index].edge_block_num = highVarianceLucFlag;
             if (variancePtr[0] > highIntensityTh1) {
                 uint8_t sharpEdge = 0;
-                for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_16x16_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_16x16_15; rasterScanCuIndex++) {
+                for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_16x16_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_16x16_15; rasterScanCuIndex++)
                     sharpEdge = (variancePtr[rasterScanCuIndex] < veryLowIntensityTh) ? sharpEdge + 1 : sharpEdge;
-                }
                 if (sharpEdge > 4)
-                {
                     picture_control_set_ptr->sharp_edge_sb_flag[sb_index] = 1;
-                }
             }
 
             if (sb_x > 3 && sb_x < (uint32_t)(picture_width_in_sb - 4) && sb_y >  3 && sb_y < (uint32_t)(picture_height_in_sb - 4)) {
@@ -4283,7 +4241,6 @@ void EdgeDetection(
                     similarityCount = similarityCount0 + similarityCount1 + similarityCount2 + similarityCount3;
 
                     if (similarityCount > 0) {
-
                         for (i = -4; i < 5; i++) {
                             for (j = -4; j < 5; j++) {
                                 neighbourLcuIndex = sb_index + (i * picture_width_in_sb) + j;
@@ -4294,9 +4251,8 @@ void EdgeDetection(
                 }
             }
 
-            if (highVarianceLucFlag) {
+            if (highVarianceLucFlag)
                 numberOfEdgeLcu += edge_results_ptr[sb_index].edge_block_num;
-            }
         }
     }
     return;
@@ -4394,9 +4350,7 @@ void DetermineHomogeneousRegionInPicture(
 
                 // Turn off detail preservation if the varOfVar is greater than a threshold
                 if (varOfVar64x64Based > VAR_BASED_DETAIL_PRESERVATION_SELECTOR_THRSLHD)
-                {
                     picture_control_set_ptr->sb_homogeneous_area_array[sb_index] = EB_FALSE;
-                }
             }
 #endif
         }
@@ -4411,15 +4365,11 @@ void DetermineHomogeneousRegionInPicture(
 #endif
     }
     picture_control_set_ptr->very_low_var_pic_flag = EB_FALSE;
-    if ((varLcuCnt > 0) && (((veryLowVarCnt * 100) / varLcuCnt) > PIC_LOW_VAR_PERCENTAGE_TH)) {
+    if ((varLcuCnt > 0) && (((veryLowVarCnt * 100) / varLcuCnt) > PIC_LOW_VAR_PERCENTAGE_TH))
         picture_control_set_ptr->very_low_var_pic_flag = EB_TRUE;
-    }
-
     picture_control_set_ptr->logo_pic_flag = EB_FALSE;
-    if ((varLcuCnt > 0) && (((veryLowVarCnt * 100) / varLcuCnt) > 80)) {
+    if ((varLcuCnt > 0) && (((veryLowVarCnt * 100) / varLcuCnt) > 80))
         picture_control_set_ptr->logo_pic_flag = EB_TRUE;
-    }
-
     return;
 }
 /************************************************
@@ -4523,16 +4473,14 @@ void CalculateInputAverageIntensity(
         // Loop over 8x8 blocks and calculates the mean value
         if (sequence_control_set_ptr->block_mean_calc_prec == BLOCK_MEAN_PREC_FULL) {
             for (blockIndexInHeight = 0; blockIndexInHeight < input_picture_ptr->height >> 3; ++blockIndexInHeight) {
-                for (blockIndexInWidth = 0; blockIndexInWidth < input_picture_ptr->width >> 3; ++blockIndexInWidth) {
+                for (blockIndexInWidth = 0; blockIndexInWidth < input_picture_ptr->width >> 3; ++blockIndexInWidth)
                     mean += compute_mean_func[0][asm_type](&(input_picture_ptr->buffer_y[(blockIndexInWidth << 3) + (blockIndexInHeight << 3) * input_picture_ptr->stride_y]), input_picture_ptr->stride_y, 8, 8);
-                }
             }
         }
         else {
             for (blockIndexInHeight = 0; blockIndexInHeight < input_picture_ptr->height >> 3; ++blockIndexInHeight) {
-                for (blockIndexInWidth = 0; blockIndexInWidth < input_picture_ptr->width >> 3; ++blockIndexInWidth) {
+                for (blockIndexInWidth = 0; blockIndexInWidth < input_picture_ptr->width >> 3; ++blockIndexInWidth)
                     mean += compute_sub_mean8x8_sse2_intrin(&(input_picture_ptr->buffer_y[(blockIndexInWidth << 3) + (blockIndexInHeight << 3) * stride_y]), stride_y);
-                }
             }
         }
         mean = ((mean + ((input_picture_ptr->height* input_picture_ptr->width) >> 7)) / ((input_picture_ptr->height* input_picture_ptr->width) >> 6));
@@ -4704,7 +4652,6 @@ void DecimateInputPicture(
     EbPictureBufferDesc           *input_padded_picture_ptr,
     EbPictureBufferDesc           *quarter_decimated_picture_ptr,
     EbPictureBufferDesc           *sixteenth_decimated_picture_ptr) {
-
     // Decimate input picture for HME L0 and L1
     if (picture_control_set_ptr->enable_hme_flag) {
         if (picture_control_set_ptr->enable_hme_level1_flag) {
@@ -4758,9 +4705,8 @@ int av1_count_colors(const uint8_t *src, int stride, int rows, int cols,
         }
     }
     int n = 0;
-    for (int i = 0; i < max_pix_val; ++i) {
+    for (int i = 0; i < max_pix_val; ++i)
         if (val_count[i]) ++n;
-    }
     return n;
 }
 // Estimate if the source frame is screen content, based on the portion of
@@ -4872,10 +4818,8 @@ void* picture_analysis_kernel(void *input_ptr)
                 picture_control_set_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
                 DownSampleChroma(input_picture_ptr, picture_control_set_ptr->chroma_downsampled_picture_ptr);
             }
-            else {
+            else
                 picture_control_set_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
-            }
-
             // Pad input picture to complete border LCUs
             PadPictureToMultipleOfLcuDimensions(
                 input_padded_picture_ptr);

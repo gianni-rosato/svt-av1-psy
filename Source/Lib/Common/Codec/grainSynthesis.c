@@ -405,14 +405,12 @@ static void dealloc_arrays(aom_film_grain_t *params, int32_t ***pred_pos_luma,
     int32_t num_pos_luma = 2 * params->ar_coeff_lag * (params->ar_coeff_lag + 1);
     int32_t num_pos_chroma = num_pos_luma + 1;
 
-    for (int32_t row = 0; row < num_pos_luma; row++) {
+    for (int32_t row = 0; row < num_pos_luma; row++)
         free((*pred_pos_luma)[row]);
-    }
     free(*pred_pos_luma);
 
-    for (int32_t row = 0; row < num_pos_chroma; row++) {
+    for (int32_t row = 0; row < num_pos_chroma; row++)
         free((*pred_pos_chroma)[row]);
-    }
     free((*pred_pos_chroma));
 
     free(*y_line_buf);
@@ -676,10 +674,8 @@ static void add_noise_to_block(aom_film_grain_t *params, uint8_t *luma,
                     1) >>
                     1;
             }
-            else {
+            else
                 average_luma = luma[(i << chroma_subsamp_y) * luma_stride + j];
-            }
-
             if (apply_cb) {
                 cb[i * chroma_stride + j] = clamp(
                     cb[i * chroma_stride + j] +
@@ -786,10 +782,8 @@ static void add_noise_to_block_hbd(
                     1) >>
                     1;
             }
-            else {
+            else
                 average_luma = luma[(i << chroma_subsamp_y) * luma_stride + j];
-            }
-
             if (apply_cb) {
                 cb[i * chroma_stride + j] = clamp(
                     cb[i * chroma_stride + j] +

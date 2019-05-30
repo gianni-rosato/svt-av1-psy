@@ -438,13 +438,9 @@ static void invTransform16Partial(int16_t *src, uint32_t src_stride, int16_t *ds
 {
     uint32_t numRows = 16 - 4 * (pattern & 2);
     if (pattern & 1)
-    {
         invTransform16Half(src, src_stride, dst, dst_stride, shift, numRows);
-    }
     else
-    {
         invTransform16(src, src_stride, dst, dst_stride, shift, numRows);
-    }
 }
 
 // inverse 16x16 transform

@@ -709,12 +709,10 @@ void AdaptiveDlfParameterComputation(
             refObjL0 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
             refObjL1 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
 
-            if (picture_control_set_ptr->temporal_layer_index == 0) {
+            if (picture_control_set_ptr->temporal_layer_index == 0)
                 highIntra = (picture_control_set_ptr->parent_pcs_ptr->intra_coded_block_probability > intra_area_th_class_1[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][picture_control_set_ptr->temporal_layer_index]) ? 1 : 0;
-            }
-            else {
+            else
                 highIntra = (refObjL0->penalize_skipflag || refObjL1->penalize_skipflag) ? 1 : 0;
-            }
         }
     }
 
@@ -1151,9 +1149,8 @@ void Forward84CuToModeDecision(
             {
                 switch (cuStatsPtr->depth) {
                 case 0:
-                    if (picture_control_set_ptr->slice_type == I_SLICE) {
+                    if (picture_control_set_ptr->slice_type == I_SLICE)
                         split_flag = EB_TRUE;
-                    }
                     else {
                         resultsPtr->leaf_data_array[resultsPtr->leaf_count].leaf_index = cu_index;
                         resultsPtr->leaf_data_array[resultsPtr->leaf_count++].split_flag = split_flag = EB_TRUE;
@@ -1234,7 +1231,6 @@ void DetectComplexNonFlatMovingLcu(
     PictureControlSet       *picture_control_set_ptr,
     uint32_t                    picture_width_in_sb,
     uint32_t                    picture_height_in_sb) {
-
     LargestCodingUnit *sb_ptr;
     uint32_t               sb_index;
     uint32_t                 sb_x;
@@ -1359,7 +1355,6 @@ EbAuraStatus AuraDetection64x64Gold(
                 abs(xMv1) > global_motion_threshold[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index] ||
                 abs(yMv1) > global_motion_threshold[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index]))
         {
-
             //Top Distortion
             lcuOffset = -picture_width_in_sb;
 #if MRP_CONNECTION
@@ -1496,21 +1491,16 @@ void derive_search_method(
     uint32_t sb_index;
 
     for (sb_index = 0; sb_index < picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_tot_cnt; sb_index++) {
-        if (context_ptr->sb_cost_array[sb_index] == context_ptr->cost_depth_mode[SB_PRED_OPEN_LOOP_DEPTH_MODE - 1]) {
+        if (context_ptr->sb_cost_array[sb_index] == context_ptr->cost_depth_mode[SB_PRED_OPEN_LOOP_DEPTH_MODE - 1])
             picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_PRED_OPEN_LOOP_DEPTH_MODE;
-        }
-        else if (context_ptr->sb_cost_array[sb_index] == context_ptr->cost_depth_mode[SB_FAST_OPEN_LOOP_DEPTH_MODE - 1]) {
+        else if (context_ptr->sb_cost_array[sb_index] == context_ptr->cost_depth_mode[SB_FAST_OPEN_LOOP_DEPTH_MODE - 1])
             picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_FAST_OPEN_LOOP_DEPTH_MODE;
-        }
-        else if (context_ptr->sb_cost_array[sb_index] == context_ptr->cost_depth_mode[SB_OPEN_LOOP_DEPTH_MODE - 1]) {
+        else if (context_ptr->sb_cost_array[sb_index] == context_ptr->cost_depth_mode[SB_OPEN_LOOP_DEPTH_MODE - 1])
             picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_OPEN_LOOP_DEPTH_MODE;
-        }
-        else if (context_ptr->sb_cost_array[sb_index] == context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1]) {
+        else if (context_ptr->sb_cost_array[sb_index] == context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1])
             picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_SQ_NON4_BLOCKS_DEPTH_MODE;
-        }
-        else {
+        else
             picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_SQ_BLOCKS_DEPTH_MODE;
-        }
     }
 
 #if ADP_STATS_PER_LAYER
@@ -1519,25 +1509,18 @@ void derive_search_method(
     for (sb_index = 0; sb_index < picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_tot_cnt; sb_index++) {
         sequence_control_set_ptr->total_count[picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index] ++;
 
-        if (picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_SQ_BLOCKS_DEPTH_MODE) {
+        if (picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_SQ_BLOCKS_DEPTH_MODE)
             sequence_control_set_ptr->sq_search_count[picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index]  ++;
-        }
-        else if (picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_SQ_NON4_BLOCKS_DEPTH_MODE) {
+        else if (picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_SQ_NON4_BLOCKS_DEPTH_MODE)
             sequence_control_set_ptr->sq_non4_search_count[picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index]  ++;
-        }
-        else if (picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_OPEN_LOOP_DEPTH_MODE) {
+        else if (picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_OPEN_LOOP_DEPTH_MODE)
             sequence_control_set_ptr->mdc_count[picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index]  ++;
-        }
-        else if (picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_FAST_OPEN_LOOP_DEPTH_MODE) {
+        else if (picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_FAST_OPEN_LOOP_DEPTH_MODE)
             sequence_control_set_ptr->pred_count[picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index]  ++;
-        }
-        else if (picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_PRED_OPEN_LOOP_DEPTH_MODE) {
+        else if (picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_PRED_OPEN_LOOP_DEPTH_MODE)
             sequence_control_set_ptr->pred1_nfl_count[picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index]  ++;
-        }
         else
-        {
             SVT_LOG("error");
-        }
     }
 #endif
 }
@@ -1618,13 +1601,10 @@ void  derive_optimal_budget_per_sb(
     uint8_t adjustement_iteration = 0;
 
     while (deviation_to_target != 0 && (initial_shooting == final_shooting) && adjustement_iteration <= max_adjustement_iteration) {
-        if (context_ptr->predicted_cost < context_ptr->budget) {
+        if (context_ptr->predicted_cost < context_ptr->budget)
             initial_shooting = UNDER_SHOOTING;
-        }
-        else {
+        else
             initial_shooting = OVER_SHOOTING;
-        }
-
         // reset running cost
         context_ptr->predicted_cost = 0;
 
@@ -1726,9 +1706,8 @@ void derive_sb_score(
 
     for (sb_index = 0; sb_index < sequence_control_set_ptr->sb_tot_cnt; sb_index++) {
         SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-        if (picture_control_set_ptr->slice_type == I_SLICE) {
+        if (picture_control_set_ptr->slice_type == I_SLICE)
             assert(0);
-        }
         else {
             if (sb_params->raster_scan_cu_validity[RASTER_SCAN_CU_INDEX_64x64]== EB_FALSE) {
                 uint8_t cu8x8Index;
@@ -1819,16 +1798,12 @@ void set_target_budget_oq(
     // Hsan: cross multiplication to derive budget_per_sb from sb_average_score; budget_per_sb range is [SB_PRED_OPEN_LOOP_COST,U_150], and sb_average_score range [0,HIGH_SB_SCORE]
     // Hsan: 3 segments [0,LOW_SB_SCORE], [LOW_SB_SCORE,MEDIUM_SB_SCORE] and [MEDIUM_SB_SCORE,U_150]
     uint32_t budget_per_sb;
-    if (context_ptr->sb_average_score <= LOW_SB_SCORE) {
+    if (context_ptr->sb_average_score <= LOW_SB_SCORE)
         budget_per_sb = ((context_ptr->sb_average_score * (SB_OPEN_LOOP_COST - SB_PRED_OPEN_LOOP_COST)) / LOW_SB_SCORE) + SB_PRED_OPEN_LOOP_COST;
-    }
-    else if (context_ptr->sb_average_score <= MEDIUM_SB_SCORE) {
+    else if (context_ptr->sb_average_score <= MEDIUM_SB_SCORE)
         budget_per_sb = (((context_ptr->sb_average_score - LOW_SB_SCORE) * (U_125 - SB_OPEN_LOOP_COST)) / (MEDIUM_SB_SCORE - LOW_SB_SCORE)) + SB_OPEN_LOOP_COST;
-    }
-    else {
+    else
         budget_per_sb = (((context_ptr->sb_average_score - MEDIUM_SB_SCORE) * (U_150 - U_125)) / (HIGH_SB_SCORE - MEDIUM_SB_SCORE)) + U_125;
-    }
-
     budget_per_sb = CLIP3(SB_PRED_OPEN_LOOP_COST, U_150, budget_per_sb + budget_per_sb_boost[context_ptr->adp_level] + luminosity_change_boost);
 
     //printf("picture_number = %d\tsb_average_score = %d\n", picture_control_set_ptr->picture_number, budget_per_sb);
@@ -2053,12 +2028,9 @@ void forward_all_c_blocks_to_md(
                         resultsPtr->leaf_data_array[resultsPtr->leaf_count].leaf_index = 0;//valid only for square 85 world. will be removed.
                         resultsPtr->leaf_data_array[resultsPtr->leaf_count].mds_idx = blk_index;
                         if (blk_geom->sq_size > 4)
-                        {
                             resultsPtr->leaf_data_array[resultsPtr->leaf_count++].split_flag = EB_TRUE;
-                        }
-                        else {
+                        else
                             resultsPtr->leaf_data_array[resultsPtr->leaf_count++].split_flag = EB_FALSE;
-                        }
                     }
                     blk_index++;
                 }
@@ -2359,13 +2331,10 @@ void* mode_decision_configuration_kernel(void *input_ptr)
                 int k, j;
 
                 for (k = 0; k < 2; k++) {
-                    for (j = 0; j < 2; j++) {
+                    for (j = 0; j < 2; j++)
                         block_hash_values[k][j] = malloc(sizeof(uint32_t) * pic_width * pic_height);
-                    }
-
-                    for (j = 0; j < 3; j++) {
+                    for (j = 0; j < 3; j++)
                         is_block_same[k][j] = malloc(sizeof(int8_t) * pic_width * pic_height);
-                    }
                 }
 
                 //picture_control_set_ptr->hash_table.p_lookup_table = NULL;
@@ -2420,13 +2389,10 @@ void* mode_decision_configuration_kernel(void *input_ptr)
                     pic_width, pic_height, 128);
 
                 for (k = 0; k < 2; k++) {
-                    for (j = 0; j < 2; j++) {
+                    for (j = 0; j < 2; j++)
                         free(block_hash_values[k][j]);
-                    }
-
-                    for (j = 0; j < 3; j++) {
+                    for (j = 0; j < 3; j++)
                         free(is_block_same[k][j]);
-                    }
                 }
             }
 

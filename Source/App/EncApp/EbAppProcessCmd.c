@@ -671,9 +671,8 @@ void ProcessInputFieldStandardMode(
     }
 
     // Step back 1 chroma row if bottom field (undo the previous jump)
-    if (config->processed_frame_count % 2 != 0) {
+    if (config->processed_frame_count % 2 != 0)
         fseeko64(input_file, -(long)source_chroma_row_size, SEEK_CUR);
-    }
 }
 
 //************************************/
@@ -795,16 +794,13 @@ void ReadInputFrames(
                 }
 
                 // Reset the pointer position after a top field
-                if (config->processed_frame_count % 2 == 0) {
+                if (config->processed_frame_count % 2 == 0)
                     fseek(input_file, -(long)(readSize << 1), SEEK_CUR);
-                }
             }
             else {
                 /* if input is a y4m file, read next line which contains "FRAME" */
-                if(config->y4m_input==EB_TRUE) {
+                if(config->y4m_input==EB_TRUE)
                     read_y4m_frame_delimiter(config);
-                }
-
                 uint64_t lumaReadSize = (uint64_t)input_padded_width*input_padded_height << is16bit;
                 ebInputPtr = inputPtr->luma;
                 if(config->y4m_input==EB_FALSE && config->processed_frame_count == 0 && config->input_file == stdin) {
@@ -899,10 +895,8 @@ void ReadInputFrames(
     }
 
     // If we reached the end of file, loop over again
-    if (feof(input_file) != 0) {
+    if (feof(input_file) != 0)
         fseek(input_file, 0, SEEK_SET);
-    }
-
     return;
 }
 
@@ -968,10 +962,7 @@ AppExitConditionType ProcessInputBuffer(
     compressed10bitFrameSize += compressed10bitFrameSize / 4;
 
     if (config->injector && config->processed_frame_count)
-    {
         Injector(config->processed_frame_count, config->injector_frame_rate);
-    }
-
     totalBytesToProcessCount = (frames_to_be_encoded < 0) ? -1 : (config->encoder_bit_depth == 10 && config->compressed_ten_bit_format == 1) ?
         frames_to_be_encoded * (int64_t)compressed10bitFrameSize:
         frames_to_be_encoded * SIZE_OF_ONE_FRAME_IN_BYTES(input_padded_width, input_padded_height, color_format, is16bit);
@@ -996,10 +987,8 @@ AppExitConditionType ProcessInputBuffer(
                 config,
                 headerPtr);
 
-        if (keepRunning == 0 && !config->stop_encoder) {
+        if (keepRunning == 0 && !config->stop_encoder)
             config->stop_encoder = EB_TRUE;
-        }
-
         // Fill in Buffers Header control data
         headerPtr->pts          = config->processed_frame_count-1;
         headerPtr->pic_type    = EB_AV1_INVALID_PICTURE;

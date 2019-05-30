@@ -77,9 +77,8 @@ void ext_sad_calculation_8x8_16x16_avx2_intrin(
     sad8x8_0_3_256 = _mm256_add_epi32(_mm256_sad_epu8(src_256, ref_256),
         sad8x8_0_3_256);
 
-    if (sub_sad) {
+    if (sub_sad)
         sad8x8_0_3_256 = _mm256_slli_epi32(sad8x8_0_3_256, 1);
-    }
     else {
         src_256 = _mm256_setr_m128i(
             _mm_loadu_si128((__m128i const*)(src + 1 * src_stride)),
@@ -171,9 +170,8 @@ void sad_loop_kernel_sparse_avx2_intrin(
     __m256i ss0, ss1, ss2, ss3, ss4, ss5, ss6, ss7, ss8;
 
     if (leftover) {
-        for (k = 0; k < leftover; k++) {
+        for (k = 0; k < leftover; k++)
             s8 = _mm_slli_si128(s8, 2);
-        }
     }
 
     switch (width) {
@@ -1751,9 +1749,8 @@ void sad_loop_kernel_avx2_intrin(
     __m256i ss0, ss1, ss2, ss3, ss4, ss5, ss6, ss7, ss8;
 
     if (leftover) {
-        for (k = 0; k < leftover; k++) {
+        for (k = 0; k < leftover; k++)
             s8 = _mm_slli_si128(s8, 2);
-        }
     }
 
     switch (width) {
@@ -3881,9 +3878,8 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     bestMV64x64 = 0;
     //sad_0
     temSum = _mm_extract_epi32(sad_0, 0);
-    if (temSum < bestSad64x64) {
+    if (temSum < bestSad64x64)
         bestSad64x64 = temSum;
-    }
     temSum = _mm_extract_epi32(sad_0, 1);
     if (temSum < bestSad64x64) {
         bestSad64x64 = temSum;

@@ -169,26 +169,20 @@ EbErrorType eb_recon_picture_buffer_desc_ctor(
         EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_y, pictureBufferDescPtr->luma_size * bytesPerPixel, EB_A_PTR);
         memset(pictureBufferDescPtr->buffer_y, 0, pictureBufferDescPtr->luma_size      * bytesPerPixel);
     }
-    else {
+    else
         pictureBufferDescPtr->buffer_y = 0;
-    }
-
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
         EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cb, pictureBufferDescPtr->chroma_size * bytesPerPixel, EB_A_PTR);
         memset(pictureBufferDescPtr->buffer_cb, 0, pictureBufferDescPtr->chroma_size      * bytesPerPixel);
     }
-    else {
+    else
         pictureBufferDescPtr->buffer_cb = 0;
-    }
-
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
         EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cr, pictureBufferDescPtr->chroma_size * bytesPerPixel, EB_A_PTR);
         memset(pictureBufferDescPtr->buffer_cr, 0, pictureBufferDescPtr->chroma_size      * bytesPerPixel);
     }
-    else {
+    else
         pictureBufferDescPtr->buffer_cr = 0;
-    }
-
     return EB_ErrorNone;
 }
 void link_Eb_to_aom_buffer_desc_8bit(
@@ -421,10 +415,8 @@ int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t h
             buf = CONVERT_TO_BYTEPTR(ybf->buffer_alloc);
             ybf->flags = YV12_FLAG_HIGHBITDEPTH;
         }
-        else {
+        else
             ybf->flags = 0;
-        }
-
         ybf->y_buffer = (uint8_t *)yv12_align_addr(
             buf + (border * y_stride) + border, aom_byte_align);
         ybf->u_buffer = (uint8_t *)yv12_align_addr(

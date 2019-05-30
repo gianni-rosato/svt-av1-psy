@@ -1836,7 +1836,6 @@ static void Av1EncodeGenerateRecon(
         // Cb
         //**********************************
         if (txb_ptr->u_has_coeff == EB_TRUE && cu_ptr->skip_flag == EB_FALSE) {
-
             uint8_t     *predBuffer = predSamples->buffer_cb + predChromaOffset;
 
             av1_inv_transform_recon8bit(
@@ -1960,7 +1959,6 @@ static void Av1EncodeGenerateRecon16bit(
         predChromaOffset = (((predSamples->origin_y + round_origin_y) >> 1)           * predSamples->stride_cb) + ((predSamples->origin_x + round_origin_x) >> 1);
 
         if (txb_ptr->u_has_coeff == EB_TRUE && cu_ptr->skip_flag == EB_FALSE) {
-
             uint16_t     *predBuffer = ((uint16_t*)predSamples->buffer_cb) + predChromaOffset;
             av1_inv_transform_recon(
                 ((int32_t*)residual16bit->buffer_cb) + context_ptr->coded_area_sb_uv,
@@ -2045,10 +2043,8 @@ static void EncodePassUpdateQp(
 
     // CU larger than the quantization group
 
-    if (Log2f(context_ptr->blk_geom->bwidth) >= log2MinCuQpDeltaSize) {
+    if (Log2f(context_ptr->blk_geom->bwidth) >= log2MinCuQpDeltaSize)
         *isDeltaQpNotCoded = EB_TRUE;
-    }
-
     // At the beginning of a new quantization group
     if (((context_ptr->cu_origin_x & ((1 << log2MinCuQpDeltaSize) - 1)) == 0) &&
         ((context_ptr->cu_origin_y & ((1 << log2MinCuQpDeltaSize) - 1)) == 0))
@@ -2056,15 +2052,11 @@ static void EncodePassUpdateQp(
         *isDeltaQpNotCoded = EB_TRUE;
         newQuantGroup = EB_TRUE;
     }
-    else {
+    else
         newQuantGroup = EB_FALSE;
-    }
-
     // setting the previous Quantization Group QP
-    if (newQuantGroup == EB_TRUE) {
+    if (newQuantGroup == EB_TRUE)
         *prev_coded_qp = *prev_quant_group_coded_qp;
-    }
-
     if (sameLcuCheckTop) {
         qpTopNeighborIndex =
             LUMA_SAMPLE_PIC_WISE_LOCATION_TO_QP_ARRAY_IDX(
@@ -2073,10 +2065,8 @@ static void EncodePassUpdateQp(
                 picture_control_set_ptr->qp_array_stride);
         qpTopNeighbor = picture_control_set_ptr->qp_array[qpTopNeighborIndex];
     }
-    else {
+    else
         qpTopNeighbor = *prev_coded_qp;
-    }
-
     if (sameLcuCheckLeft) {
         qpLeftNeighborIndex =
             LUMA_SAMPLE_PIC_WISE_LOCATION_TO_QP_ARRAY_IDX(
@@ -2086,10 +2076,8 @@ static void EncodePassUpdateQp(
 
         qpLeftNeighbor = picture_control_set_ptr->qp_array[qpLeftNeighborIndex];
     }
-    else {
+    else
         qpLeftNeighbor = *prev_coded_qp;
-    }
-
     ref_qp = (qpLeftNeighbor + qpTopNeighbor + 1) >> 1;
 
     qp = (uint8_t)context_ptr->cu_ptr->qp;
@@ -2108,9 +2096,8 @@ static void EncodePassUpdateQp(
             }
         }
     }
-    else {
+    else
         qp = (uint8_t)sb_qp;
-    }
     context_ptr->cu_ptr->qp = qp;
     return;
 }
@@ -2152,14 +2139,11 @@ EbErrorType QpmDeriveBeaAndSkipQpmFlagLcu(
 
     context_ptr->skip_qpm_flag = sequence_control_set_ptr->static_config.improve_sharpness ? EB_FALSE : EB_TRUE;
 #if !DISABLE_OIS_USE
-    if ((picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag == EB_FALSE) && ((picture_control_set_ptr->parent_pcs_ptr->pic_noise_class >= PIC_NOISE_CLASS_3_1) || (picture_control_set_ptr->parent_pcs_ptr->high_dark_low_light_area_density_flag) || (picture_control_set_ptr->parent_pcs_ptr->intra_coded_block_probability > 90))) {
+    if ((picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag == EB_FALSE) && ((picture_control_set_ptr->parent_pcs_ptr->pic_noise_class >= PIC_NOISE_CLASS_3_1) || (picture_control_set_ptr->parent_pcs_ptr->high_dark_low_light_area_density_flag) || (picture_control_set_ptr->parent_pcs_ptr->intra_coded_block_probability > 90)))
         context_ptr->skip_qpm_flag = EB_TRUE;
-    }
 #endif
-    if (sequence_control_set_ptr->input_resolution < INPUT_SIZE_4K_RANGE) {
+    if (sequence_control_set_ptr->input_resolution < INPUT_SIZE_4K_RANGE)
         context_ptr->skip_qpm_flag = EB_TRUE;
-    }
-
 #if ADD_DELTA_QP_SUPPORT
     context_ptr->skip_qpm_flag = EB_FALSE;
 #endif
@@ -2214,7 +2198,6 @@ EbErrorType Av1QpModulationLcu(
     if (!context_ptr->skip_qpm_flag) {
         // INTRA MODE
         if (type == INTRA_MODE) {
-
             OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->parent_pcs_ptr->ois_sb_results[sb_index];
             OisCandidate *OisCuPtr = ois_sb_results_ptr->sorted_ois_candidate[from_1101_to_85[cu_index]];
             distortion = OisCuPtr[ois_sb_results_ptr->best_distortion_index[from_1101_to_85[cu_index]]].distortion;
@@ -2222,27 +2205,22 @@ EbErrorType Av1QpModulationLcu(
             distortion = (uint32_t)CLIP3(picture_control_set_ptr->parent_pcs_ptr->intra_complexity_min[0], picture_control_set_ptr->parent_pcs_ptr->intra_complexity_max[0], distortion);
             complexityDistance = ((int32_t)distortion - (int32_t)picture_control_set_ptr->parent_pcs_ptr->intra_complexity_avg[0]);
 
-            if (complexityDistance < 0) {
+            if (complexityDistance < 0)
                 delta_qp = (picture_control_set_ptr->parent_pcs_ptr->intra_min_distance[0] != 0) ? (int8_t)((context_ptr->min_delta_qp_weight * context_ptr->min_delta_qp[0] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->intra_min_distance[0])) : 0;
-            }
-            else {
+            else
                 delta_qp = (picture_control_set_ptr->parent_pcs_ptr->intra_max_distance[0] != 0) ? (int8_t)((context_ptr->max_delta_qp_weight * context_ptr->max_delta_qp[0] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->intra_max_distance[0])) : 0;
-            }
         }
         // INTER MODE
         else {
-
             distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][0].distortion_direction[0].distortion;
 
             distortion = (uint32_t)CLIP3(picture_control_set_ptr->parent_pcs_ptr->inter_complexity_min[0], picture_control_set_ptr->parent_pcs_ptr->inter_complexity_max[0], distortion);
             complexityDistance = ((int32_t)distortion - (int32_t)picture_control_set_ptr->parent_pcs_ptr->inter_complexity_avg[0]);
 
-            if (complexityDistance < 0) {
+            if (complexityDistance < 0)
                 delta_qp = (picture_control_set_ptr->parent_pcs_ptr->inter_min_distance[0] != 0) ? (int8_t)((context_ptr->min_delta_qp_weight * context_ptr->min_delta_qp[0] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->inter_min_distance[0])) : 0;
-            }
-            else {
+            else
                 delta_qp = (picture_control_set_ptr->parent_pcs_ptr->inter_max_distance[0] != 0) ? (int8_t)((context_ptr->max_delta_qp_weight * context_ptr->max_delta_qp[0] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->inter_max_distance[0])) : 0;
-            }
         }
 
         if (context_ptr->backgorund_enhancement) {
@@ -2250,23 +2228,18 @@ EbErrorType Av1QpModulationLcu(
             bea64x64DeltaQp = non_moving_delta_qp;
 
             if ((picture_control_set_ptr->parent_pcs_ptr->y_mean[sb_index][0] > ANTI_CONTOURING_LUMA_T2) || (picture_control_set_ptr->parent_pcs_ptr->y_mean[sb_index][0] < ANTI_CONTOURING_LUMA_T1)) {
-                if (bea64x64DeltaQp < 0) {
+                if (bea64x64DeltaQp < 0)
                     bea64x64DeltaQp = 0;
-                }
             }
 
             delta_qp += bea64x64DeltaQp;
         }
 
-        if ((picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag)) {
+        if ((picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag))
             delta_qp = (delta_qp < context_ptr->min_delta_qp[0]) ? delta_qp : context_ptr->min_delta_qp[0];
-        }
-
         SbStat *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
-        if (sb_stat_ptr->stationary_edge_over_time_flag && delta_qp > 0) {
+        if (sb_stat_ptr->stationary_edge_over_time_flag && delta_qp > 0)
             delta_qp = 0;
-        }
-
         if (acEnergyBasedAntiContouring) {
             lowerQPClass = derive_contouring_class(
                 sb_ptr->picture_control_set_ptr->parent_pcs_ptr,
@@ -2288,10 +2261,8 @@ EbErrorType Av1QpModulationLcu(
         delta_qp *= deltaQpRes;
 
         if (sequence_control_set_ptr->static_config.rate_control_mode == 1 || sequence_control_set_ptr->static_config.rate_control_mode == 2) {
-            if (qpm_qp > (RC_QPMOD_MAXQP * deltaQpRes)) {
+            if (qpm_qp > (RC_QPMOD_MAXQP * deltaQpRes))
                 delta_qp = MIN(0, delta_qp);
-            }
-
             cu_qp = (uint32_t)(qpm_qp + delta_qp);
 
             if ((qpm_qp <= (RC_QPMOD_MAXQP *deltaQpRes))) {
@@ -2301,10 +2272,8 @@ EbErrorType Av1QpModulationLcu(
                     cu_qp);
             }
         }
-        else {
+        else
             cu_qp = (uint8_t)(qpm_qp + delta_qp);
-        }
-
         cu_qp = (uint8_t)CLIP3(
             min_qp_allowed,
             max_qp_allowed,
@@ -2379,12 +2348,10 @@ EbErrorType EncQpmDeriveDeltaQPForEachLeafLcu(
             distortion = (uint32_t)CLIP3(picture_control_set_ptr->parent_pcs_ptr->intra_complexity_min[usedDepth], picture_control_set_ptr->parent_pcs_ptr->intra_complexity_max[usedDepth], distortion);
             complexityDistance = ((int32_t)distortion - (int32_t)picture_control_set_ptr->parent_pcs_ptr->intra_complexity_avg[usedDepth]);
 
-            if (complexityDistance < 0) {
+            if (complexityDistance < 0)
                 delta_qp = (picture_control_set_ptr->parent_pcs_ptr->intra_min_distance[usedDepth] != 0) ? (int8_t)((context_ptr->min_delta_qp_weight * context_ptr->min_delta_qp[usedDepth] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->intra_min_distance[usedDepth])) : 0;
-            }
-            else {
+            else
                 delta_qp = (picture_control_set_ptr->parent_pcs_ptr->intra_max_distance[usedDepth] != 0) ? (int8_t)((context_ptr->max_delta_qp_weight * context_ptr->max_delta_qp[usedDepth] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->intra_max_distance[usedDepth])) : 0;
-            }
         }
         // INTER MODE
         else {
@@ -2405,12 +2372,10 @@ EbErrorType EncQpmDeriveDeltaQPForEachLeafLcu(
             distortion = (uint32_t)CLIP3(picture_control_set_ptr->parent_pcs_ptr->inter_complexity_min[usedDepth], picture_control_set_ptr->parent_pcs_ptr->inter_complexity_max[usedDepth], distortion);
             complexityDistance = ((int32_t)distortion - (int32_t)picture_control_set_ptr->parent_pcs_ptr->inter_complexity_avg[usedDepth]);
 
-            if (complexityDistance < 0) {
+            if (complexityDistance < 0)
                 delta_qp = (picture_control_set_ptr->parent_pcs_ptr->inter_min_distance[usedDepth] != 0) ? (int8_t)((context_ptr->min_delta_qp_weight * context_ptr->min_delta_qp[usedDepth] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->inter_min_distance[usedDepth])) : 0;
-            }
-            else {
+            else
                 delta_qp = (picture_control_set_ptr->parent_pcs_ptr->inter_max_distance[usedDepth] != 0) ? (int8_t)((context_ptr->max_delta_qp_weight * context_ptr->max_delta_qp[usedDepth] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->inter_max_distance[usedDepth])) : 0;
-            }
         }
 
         if (context_ptr->backgorund_enhancement) {
@@ -2419,22 +2384,18 @@ EbErrorType EncQpmDeriveDeltaQPForEachLeafLcu(
 
             if (((cu_index > 0) && ((picture_control_set_ptr->parent_pcs_ptr->y_mean[sb_index][parent32x32_index]) > ANTI_CONTOURING_LUMA_T2 || (picture_control_set_ptr->parent_pcs_ptr->y_mean[sb_index][parent32x32_index]) < ANTI_CONTOURING_LUMA_T1)) ||
                 ((cu_index == 0) && ((picture_control_set_ptr->parent_pcs_ptr->y_mean[sb_index][0]) > ANTI_CONTOURING_LUMA_T2 || (picture_control_set_ptr->parent_pcs_ptr->y_mean[sb_index][0]) < ANTI_CONTOURING_LUMA_T1))) {
-                if (bea64x64DeltaQp < 0) {
+                if (bea64x64DeltaQp < 0)
                     bea64x64DeltaQp = 0;
-                }
             }
 
             delta_qp += bea64x64DeltaQp;
         }
 
-        if ((picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag)) {
+        if ((picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag))
             delta_qp = (delta_qp < context_ptr->min_delta_qp[0]) ? delta_qp : context_ptr->min_delta_qp[0];
-        }
-
         SbStat *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
-        if (sb_stat_ptr->stationary_edge_over_time_flag && delta_qp > 0) {
+        if (sb_stat_ptr->stationary_edge_over_time_flag && delta_qp > 0)
             delta_qp = 0;
-        }
 #if !OPT_LOSSLESS_0
         if (acEnergyBasedAntiContouring) {
             lowerQPClass = derive_contouring_class(
@@ -2456,10 +2417,8 @@ EbErrorType EncQpmDeriveDeltaQPForEachLeafLcu(
         delta_qp -= context_ptr->grass_enhancement_flag ? 3 : 0;
 
         if (sequence_control_set_ptr->static_config.rate_control_mode == 1 || sequence_control_set_ptr->static_config.rate_control_mode == 2) {
-            if (qpm_qp > RC_QPMOD_MAXQP) {
+            if (qpm_qp > RC_QPMOD_MAXQP)
                 delta_qp = MIN(0, delta_qp);
-            }
-
             cu_qp = (uint32_t)(qpm_qp + delta_qp);
 
             if ((qpm_qp <= RC_QPMOD_MAXQP)) {
@@ -2469,10 +2428,8 @@ EbErrorType EncQpmDeriveDeltaQPForEachLeafLcu(
                     cu_qp);
             }
         }
-        else {
+        else
             cu_qp = (uint8_t)(qpm_qp + delta_qp);
-        }
-
         cu_qp = (uint8_t)CLIP3(
             min_qp_allowed,
             max_qp_allowed,
@@ -2505,10 +2462,7 @@ void Store16bitInputSrc(
     toPtr = (uint16_t*)picture_control_set_ptr->input_frame16bit->buffer_y + (lcuX + picture_control_set_ptr->input_frame16bit->origin_x) + (lcuY + picture_control_set_ptr->input_frame16bit->origin_y)*picture_control_set_ptr->input_frame16bit->stride_y;
 
     for (rowIt = 0; rowIt < lcuH; rowIt++)
-    {
         memcpy(toPtr + rowIt * picture_control_set_ptr->input_frame16bit->stride_y, fromPtr + rowIt * context_ptr->input_sample16bit_buffer->stride_y, lcuW * 2);
-    }
-
     lcuX = lcuX / 2;
     lcuY = lcuY / 2;
     lcuW = lcuW / 2;
@@ -2518,17 +2472,12 @@ void Store16bitInputSrc(
     toPtr = (uint16_t*)picture_control_set_ptr->input_frame16bit->buffer_cb + (lcuX + picture_control_set_ptr->input_frame16bit->origin_x / 2) + (lcuY + picture_control_set_ptr->input_frame16bit->origin_y / 2)*picture_control_set_ptr->input_frame16bit->stride_cb;
 
     for (rowIt = 0; rowIt < lcuH; rowIt++)
-    {
         memcpy(toPtr + rowIt * picture_control_set_ptr->input_frame16bit->stride_cb, fromPtr + rowIt * context_ptr->input_sample16bit_buffer->stride_cb, lcuW * 2);
-    }
-
     fromPtr = (uint16_t*)context_ptr->input_sample16bit_buffer->buffer_cr;
     toPtr = (uint16_t*)picture_control_set_ptr->input_frame16bit->buffer_cr + (lcuX + picture_control_set_ptr->input_frame16bit->origin_x / 2) + (lcuY + picture_control_set_ptr->input_frame16bit->origin_y / 2)*picture_control_set_ptr->input_frame16bit->stride_cb;
 
     for (rowIt = 0; rowIt < lcuH; rowIt++)
-    {
         memcpy(toPtr + rowIt * picture_control_set_ptr->input_frame16bit->stride_cr, fromPtr + rowIt * context_ptr->input_sample16bit_buffer->stride_cr, lcuW * 2);
-    }
 }
 
 void update_av1_mi_map(
@@ -3067,13 +3016,10 @@ void perform_intra_coding_loop(
                 cu_ptr->transform_unit_array[context_ptr->txb_itr].u_has_coeff |
                 cu_ptr->transform_unit_array[context_ptr->txb_itr].v_has_coeff;
 
-            if (cu_ptr->transform_unit_array[context_ptr->txb_itr].u_has_coeff) {
+            if (cu_ptr->transform_unit_array[context_ptr->txb_itr].u_has_coeff)
                 cu_ptr->transform_unit_array[0].u_has_coeff = EB_TRUE;
-            }
-
-            if (cu_ptr->transform_unit_array[context_ptr->txb_itr].v_has_coeff) {
+            if (cu_ptr->transform_unit_array[context_ptr->txb_itr].v_has_coeff)
                 cu_ptr->transform_unit_array[0].v_has_coeff = EB_TRUE;
-            }
         }
         else {
             cu_ptr->block_has_coeff = cu_ptr->block_has_coeff |
@@ -3210,15 +3156,12 @@ EB_EXTERN void av1_encode_pass(
 
                 if (dzCondition) {
                     if (picture_control_set_ptr->scene_caracteristic_id == EB_FRAME_CARAC_1) {
-                        if (picture_control_set_ptr->slice_type == I_SLICE) {
+                        if (picture_control_set_ptr->slice_type == I_SLICE)
                             dZoffset = sb_stat_ptr->cu_stat_array[0].grass_area ? 10 : dZoffset;
-                        }
-                        else if (picture_control_set_ptr->temporal_layer_index == 0) {
+                        else if (picture_control_set_ptr->temporal_layer_index == 0)
                             dZoffset = sb_stat_ptr->cu_stat_array[0].grass_area ? 9 : dZoffset;
-                        }
-                        else if (picture_control_set_ptr->temporal_layer_index == 1) {
+                        else if (picture_control_set_ptr->temporal_layer_index == 1)
                             dZoffset = sb_stat_ptr->cu_stat_array[0].grass_area ? 5 : dZoffset;
-                        }
                     }
                 }
             }
@@ -3236,9 +3179,8 @@ EB_EXTERN void av1_encode_pass(
             tbAddr,
             context_ptr);
     }
-    else {
+    else
         context_ptr->skip_qpm_flag = EB_TRUE;
-    }
 #endif
 
     encode_context_ptr = ((SequenceControlSet*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr))->encode_context_ptr;
@@ -3261,7 +3203,6 @@ EB_EXTERN void av1_encode_pass(
     EbBool  checkZeroLumaCbf = EB_FALSE;
 
     if (is16bit) {
-
         //SB128_TODO change 10bit SB creation
 
         if ((sequence_control_set_ptr->static_config.ten_bit_format == 1) || (sequence_control_set_ptr->static_config.compressed_ten_bit_format == 1))
@@ -3366,9 +3307,8 @@ EB_EXTERN void av1_encode_pass(
                 if ((refObjL0->tmp_layer_idx == 2 && refObjL0->intra_coded_area > TH) || (refObjL1->tmp_layer_idx == 2 && refObjL1->intra_coded_area > TH))
                     highIntraRef = EB_TRUE;
             }
-            if (highIntraRef == EB_FALSE) {
+            if (highIntraRef == EB_FALSE)
                 checkZeroLumaCbf = EB_TRUE;
-            }
         }
     }
     context_ptr->intra_coded_area_sb[tbAddr] = 0;
@@ -3426,7 +3366,6 @@ EB_EXTERN void av1_encode_pass(
         sb_ptr->cu_partition_array[blk_it] = context_ptr->md_context->md_cu_arr_nsq[blk_it].part;
 
         if (part != PARTITION_SPLIT) {
-
             int32_t offset_d1 = ns_blk_offset[(int32_t)part]; //cu_ptr->best_d1_blk; // TOCKECK
             int32_t num_d1_block = ns_blk_num[(int32_t)part]; // context_ptr->blk_geom->totns; // TOCKECK
 
@@ -3509,10 +3448,8 @@ EB_EXTERN void av1_encode_pass(
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE) {
                     context_ptr->is_inter = cu_ptr->av1xd->use_intrabc;
                     context_ptr->tot_intra_coded_area += blk_geom->bwidth* blk_geom->bheight;
-                    if (picture_control_set_ptr->slice_type != I_SLICE) {
+                    if (picture_control_set_ptr->slice_type != I_SLICE)
                         context_ptr->intra_coded_area_sb[tbAddr] += blk_geom->bwidth* blk_geom->bheight;
-                    }
-
                     // *Note - Transforms are the same size as predictions
                     // Partition Loop
                     context_ptr->txb_itr = 0;
@@ -3638,13 +3575,10 @@ EB_EXTERN void av1_encode_pass(
                                 av1_find_best_ref_mvs_from_stack(0, context_ptr->md_context->md_local_cu_unit[blk_geom->blkidx_mds].ed_ref_mv_stack, cu_ptr->av1xd, ref_frame, &nearestmv, &nearmv,
                                     0);
 
-                                if (nearestmv.as_int == INVALID_MV) {
+                                if (nearestmv.as_int == INVALID_MV)
                                     nearestmv.as_int = 0;
-                                }
-                                if (nearmv.as_int == INVALID_MV) {
+                                if (nearmv.as_int == INVALID_MV)
                                     nearmv.as_int = 0;
-                                }
-
                                 IntMv dv_ref = nearestmv.as_int == 0 ? nearmv : nearestmv;
                                 if (dv_ref.as_int == 0)
                                     av1_find_ref_dv(&dv_ref, &cu_ptr->av1xd->tile, sequence_control_set_ptr->mib_size, context_ptr->cu_origin_y >> MI_SIZE_LOG2, context_ptr->cu_origin_x >> MI_SIZE_LOG2);
@@ -4000,13 +3934,10 @@ EB_EXTERN void av1_encode_pass(
                                     cu_ptr->transform_unit_array[context_ptr->txb_itr].u_has_coeff |
                                     cu_ptr->transform_unit_array[context_ptr->txb_itr].v_has_coeff;
 
-                                if (cu_ptr->transform_unit_array[context_ptr->txb_itr].u_has_coeff) {
+                                if (cu_ptr->transform_unit_array[context_ptr->txb_itr].u_has_coeff)
                                     cu_ptr->transform_unit_array[0].u_has_coeff = EB_TRUE;
-                                }
-
-                                if (cu_ptr->transform_unit_array[context_ptr->txb_itr].v_has_coeff) {
+                                if (cu_ptr->transform_unit_array[context_ptr->txb_itr].v_has_coeff)
                                     cu_ptr->transform_unit_array[0].v_has_coeff = EB_TRUE;
-                                }
                             }
                             else {
                                 cu_ptr->block_has_coeff = cu_ptr->block_has_coeff |
@@ -4075,9 +4006,7 @@ EB_EXTERN void av1_encode_pass(
                     if (cu_ptr->prediction_unit_array[0].merge_flag == EB_TRUE)
                     {
                         if (isFirstCUinRow == EB_FALSE)
-                        {
                             isCuSkip = mdcontextPtr->md_ep_pipe_sb[cu_ptr->mds_idx].skip_cost <= mdcontextPtr->md_ep_pipe_sb[cu_ptr->mds_idx].merge_cost ? 1 : 0;
-                        }
                     }
 
                     //MC could be avoided in some cases below
@@ -4725,10 +4654,8 @@ EB_EXTERN void av1_encode_pass(
                             u_has_coeff |= cu_ptr->transform_unit_array[context_ptr->txb_itr].u_has_coeff;
                             v_has_coeff |= cu_ptr->transform_unit_array[context_ptr->txb_itr].v_has_coeff;
                         }
-                        else {
+                        else
                             y_has_coeff |= cu_ptr->transform_unit_array[context_ptr->txb_itr].y_has_coeff;
-                        }
-
 #if ATB_SUPPORT
                         context_ptr->coded_area_sb += blk_geom->tx_width[cu_ptr->tx_depth][tuIt] * blk_geom->tx_height[cu_ptr->tx_depth][tuIt];
 
@@ -4829,10 +4756,8 @@ EB_EXTERN void av1_encode_pass(
                                 cu_ptr->transform_unit_array[0].v_has_coeff ||
                                 cu_ptr->transform_unit_array[0].u_has_coeff) ? EB_TRUE : EB_FALSE;
                     }
-                    else {
+                    else
                         availableCoeff = (cu_ptr->transform_unit_array[0].y_has_coeff) ? EB_TRUE : EB_FALSE;
-                    }
-
                     // Assign the LCU-level QP
                     //NM - To be revisited
                     EncodePassUpdateQp(
@@ -4869,9 +4794,8 @@ EB_EXTERN void av1_encode_pass(
             }
             blk_it += ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
         }
-        else {
+        else
             blk_it += d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
-        }
     } // CU Loop
 #if !MEMORY_FOOTPRINT_OPT
     sb_ptr->tot_final_cu = final_cu_itr;
@@ -4916,7 +4840,6 @@ EB_EXTERN void no_enc_dec_pass(
     uint32_t    blk_it = 0;
 
     while (blk_it < sequence_control_set_ptr->max_block_cnt) {
-
         CodingUnit  *cu_ptr = context_ptr->cu_ptr = &context_ptr->md_context->md_cu_arr_nsq[blk_it];
         PartitionType part = cu_ptr->part;
         const BlockGeom * blk_geom = context_ptr->blk_geom = get_blk_geom_mds(blk_it);
@@ -4924,7 +4847,6 @@ EB_EXTERN void no_enc_dec_pass(
         sb_ptr->cu_partition_array[blk_it] = context_ptr->md_context->md_cu_arr_nsq[blk_it].part;
 
         if (part != PARTITION_SPLIT) {
-
             int32_t offset_d1 = ns_blk_offset[(int32_t)part]; //cu_ptr->best_d1_blk; // TOCKECK
             int32_t num_d1_block = ns_blk_num[(int32_t)part]; // context_ptr->blk_geom->totns; // TOCKECK
 
@@ -4958,10 +4880,7 @@ EB_EXTERN void no_enc_dec_pass(
 
                     uint32_t j;
                     for (j = 0; j < bheight; j++)
-                    {
                         memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
-                    }
-
                     if (context_ptr->blk_geom->has_uv)
                     {
                         // Cb
@@ -4972,18 +4891,13 @@ EB_EXTERN void no_enc_dec_pass(
                         dst_ptr = &(((int32_t*)sb_ptr->quantized_coeff->buffer_cb)[context_ptr->coded_area_sb_uv]);
 
                         for (j = 0; j < bheight; j++)
-                        {
                             memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
-                        }
-
                         //Cr
                         src_ptr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->buffer_cr)[txb_1d_offset_uv]);
                         dst_ptr = &(((int32_t*)sb_ptr->quantized_coeff->buffer_cr)[context_ptr->coded_area_sb_uv]);
 
                         for (j = 0; j < bheight; j++)
-                        {
                             memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
-                        }
                     }
 
                     context_ptr->coded_area_sb += context_ptr->blk_geom->tx_width[txb_itr] * context_ptr->blk_geom->tx_height[txb_itr];
@@ -5006,10 +4920,7 @@ EB_EXTERN void no_enc_dec_pass(
                         ref_pic = refObj->reference_picture;
                     }
                     else
-                    {
                         ref_pic = picture_control_set_ptr->recon_picture_ptr;
-                    }
-
                     context_ptr->cu_origin_x = sb_origin_x + context_ptr->blk_geom->origin_x;
                     context_ptr->cu_origin_y = sb_origin_y + context_ptr->blk_geom->origin_y;
 
@@ -5021,10 +4932,7 @@ EB_EXTERN void no_enc_dec_pass(
 
                     uint32_t j;
                     for (j = 0; j < bheight; j++)
-                    {
                         memcpy(dst_ptr + j * ref_pic->stride_y, src_ptr + j * 128, bwidth * sizeof(uint8_t));
-                    }
-
                     if (context_ptr->blk_geom->has_uv)
                     {
                         bwidth = context_ptr->blk_geom->bwidth_uv;
@@ -5035,27 +4943,20 @@ EB_EXTERN void no_enc_dec_pass(
                         dst_ptr = ref_pic->buffer_cb + ref_pic->origin_x / 2 + ((context_ptr->cu_origin_x >> 3) << 3) / 2 + (ref_pic->origin_y / 2 + ((context_ptr->cu_origin_y >> 3) << 3) / 2)*ref_pic->stride_cb;
 
                         for (j = 0; j < bheight; j++)
-                        {
                             memcpy(dst_ptr + j * ref_pic->stride_cb, src_ptr + j * 64, bwidth * sizeof(uint8_t));
-                        }
-
                         src_ptr = &(((uint8_t*)context_ptr->cu_ptr->recon_tmp->buffer_cr)[0]);
 
                         dst_ptr = ref_pic->buffer_cr + ref_pic->origin_x / 2 + ((context_ptr->cu_origin_x >> 3) << 3) / 2 + (ref_pic->origin_y / 2 + ((context_ptr->cu_origin_y >> 3) << 3) / 2)*ref_pic->stride_cr;
 
                         for (j = 0; j < bheight; j++)
-                        {
                             memcpy(dst_ptr + j * ref_pic->stride_cr, src_ptr + j * 64, bwidth * sizeof(uint8_t));
-                        }
                     }
                 }
             }
             blk_it += ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
         }
         else
-        {
             blk_it += d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
-        }
     } // CU Loop
 
     return;

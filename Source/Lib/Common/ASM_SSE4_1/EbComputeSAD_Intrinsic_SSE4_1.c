@@ -99,9 +99,8 @@ void sad_loop_kernel_sse4_1_intrin(
     __m128i s0, s1, s2, s3, s4, s5, s6, s7, s8 = _mm_set1_epi32(-1);
 
     if (leftover) {
-        for (k = 0; k < leftover; k++) {
+        for (k = 0; k < leftover; k++)
             s8 = _mm_slli_si128(s8, 2);
-        }
     }
 
     switch (width) {
@@ -1758,9 +1757,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
     __m128i s0, s1, s2, s3, s4, s5, s6, s7, s8 = _mm_set1_epi32(-1);
 
     if (leftover) {
-        for (k = 0; k < leftover; k++) {
+        for (k = 0; k < leftover; k++)
             s8 = _mm_slli_si128(s8, 2);
-        }
     }
 
     switch (width) {

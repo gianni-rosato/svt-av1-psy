@@ -120,21 +120,16 @@
  **********************************/
 static void SetCfgInputFile                     (const char *value, EbConfig *cfg)
 {
-    if (cfg->input_file && cfg->input_file != stdin) {
+    if (cfg->input_file && cfg->input_file != stdin)
         fclose(cfg->input_file);
-    }
-    if (!strcmp(value, "stdin")) {
+    if (!strcmp(value, "stdin"))
         cfg->input_file = stdin;
-    }
-    else {
+    else
         FOPEN(cfg->input_file, value, "rb");
-    }
-
     /* if input is a YUV4MPEG2 (y4m) file, read header and parse parameters */
     if(cfg->input_file!=NULL){
-        if(check_if_y4m(cfg) == EB_TRUE) {
+        if(check_if_y4m(cfg) == EB_TRUE)
             cfg->y4m_input = EB_TRUE;
-        }
         else
             cfg->y4m_input = EB_FALSE;
     }else{
@@ -169,12 +164,10 @@ static void SetCfgFramesToBeEncoded             (const char *value, EbConfig *cf
 static void SetBufferedInput                    (const char *value, EbConfig *cfg) {cfg->buffered_input = (strtol(value, NULL, 0) != -1 && cfg->separate_fields) ? strtol(value, NULL, 0) << cfg->separate_fields : strtol(value, NULL, 0);};
 static void SetFrameRate                        (const char *value, EbConfig *cfg) {
     cfg->frame_rate = strtoul(value, NULL, 0);
-    if (cfg->frame_rate > 1000 ){
+    if (cfg->frame_rate > 1000 )
         cfg->frame_rate = cfg->frame_rate;
-    }
-    else{
+    else
         cfg->frame_rate = cfg->frame_rate << 16;
-    }
 }
 
 static void SetFrameRateNumerator               (const char *value, EbConfig *cfg) { cfg->frame_rate_numerator = strtoul(value, NULL, 0);};
@@ -243,12 +236,10 @@ static void SetInjector                         (const char *value, EbConfig *cf
 static void SpeedControlFlag                    (const char *value, EbConfig *cfg) { cfg->speed_control_flag = strtol(value, NULL, 0); };
 static void SetInjectorFrameRate                (const char *value, EbConfig *cfg) {
     cfg->injector_frame_rate = strtoul(value, NULL, 0);
-    if (cfg->injector_frame_rate > 1000 ){
+    if (cfg->injector_frame_rate > 1000 )
         cfg->injector_frame_rate = cfg->injector_frame_rate;
-    }
-    else{
+    else
         cfg->injector_frame_rate = cfg->injector_frame_rate << 16;
-    }
 }
 static void SetLatencyMode                      (const char *value, EbConfig *cfg)  {cfg->latency_mode               = (uint8_t)strtol(value, NULL, 0);};
 static void SetAsmType                          (const char *value, EbConfig *cfg)  {cfg->asm_type                   = (uint32_t)strtoul(value, NULL, 0);};
@@ -590,10 +581,8 @@ static void lineSplit(
             (*linePtr != CONFIG_FILE_COMMENT_CHAR) &&
             (*argc < CONFIG_FILE_MAX_ARG_COUNT)) {
         // Increment past whitespace
-        while((*linePtr == CONFIG_FILE_SPACE_CHAR || *linePtr == CONFIG_FILE_TAB_CHAR) && (*linePtr != CONFIG_FILE_NEWLINE_CHAR)) {
+        while((*linePtr == CONFIG_FILE_SPACE_CHAR || *linePtr == CONFIG_FILE_TAB_CHAR) && (*linePtr != CONFIG_FILE_NEWLINE_CHAR))
             ++linePtr;
-        }
-
         // Set arg
         if ((*linePtr != CONFIG_FILE_NEWLINE_CHAR) &&
                 (*linePtr != CONFIG_FILE_RETURN_CHAR) &&
@@ -631,9 +620,8 @@ static void SetConfigValue(
     int32_t i=0;
 
     while(config_entry[i].name != NULL) {
-        if(EB_STRCMP(config_entry[i].name, name) == 0)  {
+        if(EB_STRCMP(config_entry[i].name, name) == 0)
             (*config_entry[i].scf)((const char *) value, config);
-        }
         ++i;
     }
 
@@ -905,14 +893,12 @@ uint32_t get_help(
 
         printf("\n%-25s\t%-25s\t%-25s\t\n\n" ,"TOKEN", "DESCRIPTION", "INPUT TYPE");
         printf("%-25s\t%-25s\t%-25s\t\n" ,"-nch", "NumberOfChannels", "Single input");
-        while (config_entry[++token_index].token != NULL) {
+        while (config_entry[++token_index].token != NULL)
             printf("%-25s\t%-25s\t%-25s\t\n", config_entry[token_index].token, config_entry[token_index].name, config_entry[token_index].type ? "Array input": "Single input");
-        }
         return 1;
     }
-    else {
+    else
         return 0;
-    }
 }
 
 /******************************************************
@@ -945,9 +931,8 @@ void mark_token_as_read(
 {
     int32_t cmd_copy_index;
     for (cmd_copy_index = 0; cmd_copy_index < *(cmd_token_cnt); ++cmd_copy_index) {
-        if (!EB_STRCMP(cmd_copy[cmd_copy_index], token)) {
+        if (!EB_STRCMP(cmd_copy[cmd_copy_index], token))
             cmd_copy[cmd_copy_index] = cmd_copy[--(*cmd_token_cnt)];
-        }
     }
 }
 
@@ -1017,16 +1002,13 @@ EbErrorType read_command_line(
     int32_t             token_index     = -1;
     int32_t ret_y4m;
 
-    for (index = 0; index < MAX_CHANNEL_NUMBER; ++index){
+    for (index = 0; index < MAX_CHANNEL_NUMBER; ++index)
         config_strings[index] = (char*)malloc(sizeof(char)*COMMAND_LINE_MAX_SIZE);
-    }
-
     // Copy tokens (except for CHANNEL_NUMBER_TOKEN ) into a temp token buffer hosting all tokens that are passed through the command line
     size_t len = EB_STRLEN(CHANNEL_NUMBER_TOKEN, COMMAND_LINE_MAX_SIZE);
     for (token_index = 0; token_index < argc; ++token_index) {
-        if ((argv[token_index][0] == '-') && strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) && !is_negative_number(argv[token_index])) {
+        if ((argv[token_index][0] == '-') && strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) && !is_negative_number(argv[token_index]))
                 cmd_copy[cmd_token_cnt++] = argv[token_index];
-        }
     }
 
     /***************************************************************************************************/
@@ -1047,9 +1029,8 @@ EbErrorType read_command_line(
             printf("Error: Config File Token Not Found\n");
             return EB_ErrorBadParameter;
         }
-        else {
+        else
             return_error = EB_ErrorNone;
-        }
     }
 
     /***************************************************************************************************/
@@ -1065,12 +1046,10 @@ EbErrorType read_command_line(
 
                 // Fill up the values corresponding to each channel
                 for (index = 0; index < num_channels; ++index) {
-                    if (EB_STRCMP(config_strings[index], " ")) {
+                    if (EB_STRCMP(config_strings[index], " "))
                         (*config_entry[token_index].scf)(config_strings[index], configs[index]);
-                    }
-                    else {
+                    else
                         break;
-                    }
                 }
             }
         }
@@ -1246,9 +1225,8 @@ EbErrorType read_command_line(
                 }
 
                 // Force the injector latency mode, and injector frame rate when speed control is on
-                if (return_errors[index] == EB_ErrorNone && configs[index]->speed_control_flag == 1) {
+                if (return_errors[index] == EB_ErrorNone && configs[index]->speed_control_flag == 1)
                     configs[index]->injector    = 1;
-                }
             }
             return_error = (EbErrorType)(return_error & return_errors[index]);
         }
@@ -1258,16 +1236,13 @@ EbErrorType read_command_line(
     if (cmd_token_cnt > 0) {
         int32_t cmd_copy_index;
         printf("Unprocessed tokens: ");
-        for (cmd_copy_index = 0; cmd_copy_index < cmd_token_cnt; ++cmd_copy_index) {
+        for (cmd_copy_index = 0; cmd_copy_index < cmd_token_cnt; ++cmd_copy_index)
             printf(" %s ", cmd_copy[cmd_copy_index]);
-        }
         printf("\n\n");
         return_error = EB_ErrorBadParameter;
     }
 
-    for (index = 0; index < MAX_CHANNEL_NUMBER; ++index){
+    for (index = 0; index < MAX_CHANNEL_NUMBER; ++index)
         free(config_strings[index]);
-    }
-
     return return_error;
 }

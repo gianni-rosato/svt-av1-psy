@@ -81,7 +81,6 @@ void intra_mode_dc_16x16_av1_sse2_intrin(
     const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
-
     uint32_t leftOffset = 0;
     uint32_t topOffset = (size << 1) + 1;
     uint32_t rowStride = skip ? 2 : 1;
@@ -142,7 +141,6 @@ void intra_mode_dc_8x8_av1_sse2_intrin(
     const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
-
     uint32_t leftOffset = 0;
     uint32_t topOffset = (size << 1) + 1;
     uint32_t rowStride = skip ? 2 : 1;
@@ -202,7 +200,6 @@ void intra_mode_dc_4x4_av1_sse2_intrin(
     const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
-
     uint32_t leftOffset = 0;
     uint32_t topOffset = (size << 1) + 1;
     uint32_t rowStride = skip ? 2 : 1;

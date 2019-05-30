@@ -81,7 +81,6 @@ void ProcessInputFieldBufferingMode(
     uint32_t                      input_padded_width,
     uint32_t                      input_padded_height,
     uint8_t                       is16bit) {
-
     uint64_t  sourceLumaRowSize   = (uint64_t)(input_padded_width << is16bit);
     uint64_t  sourceChromaRowSize = sourceLumaRowSize >> 1;
 
@@ -129,9 +128,8 @@ void ProcessInputFieldBufferingMode(
     }
 
     // Step back 1 chroma row if bottom field (undo the previous jump)
-    if (processed_frame_count % 2 != 0) {
+    if (processed_frame_count % 2 != 0)
         fseeko64(input_file, -(long)sourceChromaRowSize, SEEK_CUR);
-    }
 }
 
 /***********************************************
@@ -258,44 +256,33 @@ static EbErrorType AllocateFrameBuffer(
     if (luma8bitSize) {
         EB_APP_MALLOC(uint8_t*, inputPtr->luma, luma8bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
     }
-    else {
+    else
         inputPtr->luma = 0;
-    }
     if (chroma8bitSize) {
         EB_APP_MALLOC(uint8_t*, inputPtr->cb, chroma8bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
     }
-    else {
+    else
         inputPtr->cb = 0;
-    }
-
     if (chroma8bitSize) {
         EB_APP_MALLOC(uint8_t*, inputPtr->cr, chroma8bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
     }
-    else {
+    else
         inputPtr->cr = 0;
-    }
-
     if (luma10bitSize) {
         EB_APP_MALLOC(uint8_t*, inputPtr->luma_ext, luma10bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
     }
-    else {
+    else
         inputPtr->luma_ext = 0;
-    }
-
     if (chroma10bitSize) {
         EB_APP_MALLOC(uint8_t*, inputPtr->cb_ext, chroma10bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
     }
-    else {
+    else
         inputPtr->cb_ext = 0;
-    }
-
     if (chroma10bitSize) {
         EB_APP_MALLOC(uint8_t*, inputPtr->cr_ext, chroma10bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
     }
-    else {
+    else
         inputPtr->cr_ext = 0;
-    }
-
     return return_error;
 }
 
@@ -390,9 +377,8 @@ EbErrorType PreloadFramesIntoRam(
     readSize += 2 * (readSize >> (3 - color_format)); // Add Chroma
     if (config->encoder_bit_depth == 10 && config->compressed_ten_bit_format == 1) {
         readSize += readSize / 4;
-    } else {
+    } else
         readSize *= (config->encoder_bit_depth > 8 ? 2 : 1); //10 bit
-    }
     EB_APP_MALLOC(uint8_t **, config->sequence_buffer, sizeof(uint8_t*) * config->buffered_input, EB_N_PTR, EB_ErrorInsufficientResources);
 
     for (processed_frame_count = 0; processed_frame_count < config->buffered_input; ++processed_frame_count) {
@@ -442,9 +428,8 @@ EbErrorType PreloadFramesIntoRam(
                 }
 
                 // Reset the pointer position after a top field
-                if (processed_frame_count % 2 == 0) {
+                if (processed_frame_count % 2 == 0)
                     fseek(input_file, -(long)(readSize << 1), SEEK_CUR);
-                }
             }
             // Unpacked 10 bit
             else {
@@ -512,9 +497,8 @@ EbErrorType PreloadFramesIntoRam(
                 }
 
                 // Reset the pointer position after a top field
-                if (processed_frame_count % 2 == 0) {
+                if (processed_frame_count % 2 == 0)
                     fseek(input_file, -(long)(readSize << 1), SEEK_CUR);
-                }
             }
         } else {
             // Fill the buffer with a complete frame
@@ -555,30 +539,24 @@ EbErrorType init_encoder(
     // STEP 1: Call the library to construct a Component Handle
     return_error = eb_init_handle(&callback_data->svt_encoder_handle, callback_data, &callback_data->eb_enc_parameters);
 
-    if (return_error != EB_ErrorNone) {
+    if (return_error != EB_ErrorNone)
         return return_error;
-    }
-
     // STEP 3: Copy all configuration parameters into the callback structure
     return_error = CopyConfigurationParameters(
                     config,
                     callback_data,
                     instance_idx);
 
-    if (return_error != EB_ErrorNone) {
+    if (return_error != EB_ErrorNone)
         return return_error;
-    }
-
     // STEP 4: Send over all configuration parameters
     // Set the Parameters
     return_error = eb_svt_enc_set_parameter(
                        callback_data->svt_encoder_handle,
                        &callback_data->eb_enc_parameters);
 
-    if (return_error != EB_ErrorNone) {
+    if (return_error != EB_ErrorNone)
         return return_error;
-    }
-
     // STEP 5: Init Encoder
     return_error = eb_init_encoder(callback_data->svt_encoder_handle);
     if (return_error != EB_ErrorNone) { return return_error; }
@@ -592,42 +570,32 @@ EbErrorType init_encoder(
         config,
         callback_data);
 
-    if (return_error != EB_ErrorNone) {
+    if (return_error != EB_ErrorNone)
         return return_error;
-    }
-
     // STEP 7: Allocate output buffers carrying the bitstream out
     return_error = AllocateOutputBuffers(
         config,
         callback_data);
 
-    if (return_error != EB_ErrorNone) {
+    if (return_error != EB_ErrorNone)
         return return_error;
-    }
-
     // STEP 8: Allocate output Recon Buffer
     return_error = AllocateOutputReconBuffers(
         config,
         callback_data);
 
-    if (return_error != EB_ErrorNone) {
+    if (return_error != EB_ErrorNone)
         return return_error;
-    }
-
     // Allocate the Sequence Buffer
     if (config->buffered_input != -1) {
         // Preload frames into the ram for a faster yuv access time
         PreloadFramesIntoRam(
             config);
     }
-    else {
+    else
         config->sequence_buffer = 0;
-    }
-
-    if (return_error != EB_ErrorNone) {
+    if (return_error != EB_ErrorNone)
         return return_error;
-    }
-
     ///********************** APPLICATION INIT [END] ******************////////
 
     return return_error;
@@ -644,15 +612,11 @@ EbErrorType de_init_encoder(
     int32_t              ptrIndex        = 0;
     EbMemoryMapEntry*   memory_entry     = (EbMemoryMapEntry*)0;
 
-    if (((EbComponentType*)(callback_data_ptr->svt_encoder_handle)) != NULL) {
+    if (((EbComponentType*)(callback_data_ptr->svt_encoder_handle)) != NULL)
             return_error = eb_deinit_encoder(callback_data_ptr->svt_encoder_handle);
-    }
-
     // Destruct the buffer memory pool
-    if (return_error != EB_ErrorNone) {
+    if (return_error != EB_ErrorNone)
         return return_error;
-    }
-
     // Loop through the ptr table and free all malloc'd pointers per channel
     for (ptrIndex = appMemoryMapIndexAllChannels[instance_index] - 1; ptrIndex >= 0; --ptrIndex) {
         memory_entry = &appMemoryMapAllChannels[instance_index][ptrIndex];

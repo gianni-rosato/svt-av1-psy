@@ -66,9 +66,8 @@ int file_is_ivf(CLInput *cli) {
         rewind(cli->inFile);
         cli->detect.buf_read = 0;
     }
-    else {
+    else
         cli->detect.position = 4;
-    }
     return is_ivf;
 }
 

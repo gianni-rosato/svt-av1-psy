@@ -58,13 +58,11 @@ EbErrorType motion_compensation_prediction_context_ctor(
         initData.max_height = max_cu_height + 32;
 
         return_error = eb_picture_buffer_desc_ctor((EbPtr*)&context_ptr->local_reference_block8_bitl0, (EbPtr)&initData);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
         return_error = eb_picture_buffer_desc_ctor((EbPtr*)&context_ptr->local_reference_block8_bitl1, (EbPtr)&initData);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
     return EB_ErrorNone;
 }

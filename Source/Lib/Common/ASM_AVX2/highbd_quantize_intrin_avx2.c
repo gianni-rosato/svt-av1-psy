@@ -35,9 +35,8 @@ static INLINE void init_one_qp(const __m128i *p, __m256i *qp) {
 
 static INLINE void update_qp(__m256i *qp) {
     int32_t i;
-    for (i = 0; i < 5; ++i) {
+    for (i = 0; i < 5; ++i)
         qp[i] = _mm256_permute2x128_si256(qp[i], qp[i], 0x11);
-    }
 }
 
 static INLINE void init_qp(const int16_t *zbin_ptr, const int16_t *round_ptr,

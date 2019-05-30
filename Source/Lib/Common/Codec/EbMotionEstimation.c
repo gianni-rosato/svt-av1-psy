@@ -4302,30 +4302,22 @@ static void PU_HalfPelRefinement(
 
     bestHalfSad = MIN(distortionLeftPosition, MIN(distortionRightPosition, MIN(distortionTopPosition, MIN(distortionBottomPosition, MIN(distortionTopLeftPosition, MIN(distortionTopRightPosition, MIN(distortionBottomLeftPosition, distortionBottomRightPosition)))))));
 
-    if (bestHalfSad == distortionLeftPosition) {
+    if (bestHalfSad == distortionLeftPosition)
         *psubPelDirection = LEFT_POSITION;
-    }
-    else if (bestHalfSad == distortionRightPosition) {
+    else if (bestHalfSad == distortionRightPosition)
         *psubPelDirection = RIGHT_POSITION;
-    }
-    else if (bestHalfSad == distortionTopPosition) {
+    else if (bestHalfSad == distortionTopPosition)
         *psubPelDirection = TOP_POSITION;
-    }
-    else if (bestHalfSad == distortionBottomPosition) {
+    else if (bestHalfSad == distortionBottomPosition)
         *psubPelDirection = BOTTOM_POSITION;
-    }
-    else if (bestHalfSad == distortionTopLeftPosition) {
+    else if (bestHalfSad == distortionTopLeftPosition)
         *psubPelDirection = TOP_LEFT_POSITION;
-    }
-    else if (bestHalfSad == distortionTopRightPosition) {
+    else if (bestHalfSad == distortionTopRightPosition)
         *psubPelDirection = TOP_RIGHT_POSITION;
-    }
-    else if (bestHalfSad == distortionBottomLeftPosition) {
+    else if (bestHalfSad == distortionBottomLeftPosition)
         *psubPelDirection = BOTTOM_LEFT_POSITION;
-    }
-    else if (bestHalfSad == distortionBottomRightPosition) {
+    else if (bestHalfSad == distortionBottomRightPosition)
         *psubPelDirection = BOTTOM_RIGHT_POSITION;
-    }
     return;
 }
 
@@ -4484,7 +4476,6 @@ void HalfPelSearch_LCU(
     if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
         // 64x32
         for (pu_index = 0; pu_index < 2; ++pu_index) {
-
             puShiftXIndex = 0;
             puShiftYIndex = pu_index << 5;
 
@@ -4549,7 +4540,6 @@ void HalfPelSearch_LCU(
 
         // 16x8
         for (pu_index = 0; pu_index < 32; ++pu_index) {
-
             idx = tab16x8[pu_index];
 
             puShiftXIndex = (pu_index & 0x03) << 4;
@@ -6062,9 +6052,7 @@ void HmeOneQuadrantLevel0(
     else {
 #if !QUICK_ME_CLEANUP
         if ((search_area_width & 15) != 0)
-        {
             search_area_width = (int16_t)(floor((double)((search_area_width >> 4) << 4)));
-        }
 #endif
         if (((search_area_width & 15) == 0) && (asm_type == ASM_AVX2))
         {
@@ -6354,7 +6342,6 @@ void HmeLevel1(
         int16_t                  *yLevel1SearchCenter,               // output parameter, Level1 yMV at (searchRegionNumberInWidth, searchRegionNumberInHeight)
         EbAsm                   asm_type)
 {
-
     int16_t xTopLeftSearchRegion;
     int16_t yTopLeftSearchRegion;
     uint32_t searchRegionIndex;
@@ -6491,7 +6478,6 @@ void HmeLevel2(
         int16_t                  *yLevel2SearchCenter,               // output parameter, Level2 yMV at (searchRegionNumberInWidth, searchRegionNumberInHeight)
         EbAsm                   asm_type)
 {
-
     int16_t xTopLeftSearchRegion;
     int16_t yTopLeftSearchRegion;
     uint32_t searchRegionIndex;
@@ -6680,7 +6666,6 @@ static void QuarterPelCompensation(
         uint32_t                 DstStride,                       //[IN]
         EbAsm                 asm_type)
 {
-
     uint32_t puShiftXIndex = pu_search_index_map[pu_index][0];
     uint32_t puShiftYIndex = pu_search_index_map[pu_index][1];
     uint32_t refStride1 = refHalfStride;
@@ -7287,43 +7272,30 @@ EbErrorType  BiPredictionCompensation(
 
     uint32_t nIndex;
 
-    if (pu_index > 200) {
+    if (pu_index > 200)
         nIndex = pu_index;
-    }
-    else if (pu_index > 184) {
+    else if (pu_index > 184)
         nIndex = tab8x32[pu_index - 185] + 185;
-    }
-    else if (pu_index > 168) {
+    else if (pu_index > 168)
         nIndex = tab32x8[pu_index - 169] + 169;
-    }
-    else if (pu_index > 136) {
+    else if (pu_index > 136)
         nIndex = tab8x16[pu_index - 137] + 137;
-    }
-    else if (pu_index > 128) {
+    else if (pu_index > 128)
         nIndex = tab16x32[pu_index - 129] + 129;
-    }
-    else if (pu_index > 126) {
+    else if (pu_index > 126)
         nIndex = pu_index;
-    }
-    else if (pu_index > 94) {
+    else if (pu_index > 94)
         nIndex = tab16x8[pu_index - 95] + 95;
-    }
-    else if (pu_index > 86) {
+    else if (pu_index > 86)
         nIndex = tab32x16[pu_index - 87] + 87;
-    }
-    else if (pu_index > 84) {
+    else if (pu_index > 84)
         nIndex = pu_index;
-    }
-    else if (pu_index > 20) {
+    else if (pu_index > 20)
         nIndex = tab8x8[pu_index - 21] + 21;
-    }
-    else if (pu_index > 4) {
+    else if (pu_index > 4)
         nIndex = tab16x16[pu_index - 5] + 5;
-    }
-    else {
+    else
         nIndex = pu_index;
-    }
-
     context_ptr->p_sb_bipred_sad[nIndex] =
 
             BiPredAverging(
@@ -7397,43 +7369,30 @@ EbErrorType  BiPredictionSearch(
 
     uint32_t nIndex;
 
-    if (pu_index > 200) {
+    if (pu_index > 200)
         nIndex = pu_index;
-    }
-    else if (pu_index > 184) {
+    else if (pu_index > 184)
         nIndex = tab8x32[pu_index - 185] + 185;
-    }
-    else if (pu_index > 168) {
+    else if (pu_index > 168)
         nIndex = tab32x8[pu_index - 169] + 169;
-    }
-    else if (pu_index > 136) {
+    else if (pu_index > 136)
         nIndex = tab8x16[pu_index - 137] + 137;
-    }
-    else if (pu_index > 128) {
+    else if (pu_index > 128)
         nIndex = tab16x32[pu_index - 129] + 129;
-    }
-    else if (pu_index > 126) {
+    else if (pu_index > 126)
         nIndex = pu_index;
-    }
-    else if (pu_index > 94) {
+    else if (pu_index > 94)
         nIndex = tab16x8[pu_index - 95] + 95;
-    }
-    else if (pu_index > 86) {
+    else if (pu_index > 86)
         nIndex = tab32x16[pu_index - 87] + 87;
-    }
-    else if (pu_index > 84) {
+    else if (pu_index > 84)
         nIndex = pu_index;
-    }
-    else if (pu_index > 20) {
+    else if (pu_index > 20)
         nIndex = tab8x8[pu_index - 21] + 21;
-    }
-    else if (pu_index > 4) {
+    else if (pu_index > 4)
         nIndex = tab16x16[pu_index - 5] + 5;
-    }
-    else {
+    else
         nIndex = pu_index;
-    }
-
     // NM: Inter list bipred.
     //(LAST,BWD) , (LAST,ALT)  and (LAST,ALT2)
     //(LAST2,BWD), (LAST2,ALT) and (LAST2,ALT2)
@@ -7536,7 +7495,6 @@ uint32_t get_me_info_index(
             (blk_geom->bheight == partition_height[block_index]) &&
             ((blk_geom->origin_x - geom_offset_x) == pu_search_index_map[block_index][0]) &&
             ((blk_geom->origin_y - geom_offset_y) == pu_search_index_map[block_index][1])) {
-
             me_info_index = block_index;
             break;
         }
@@ -7589,28 +7547,21 @@ uint32_t get_in_loop_me_info_index(
 int8_t sort_3_elements(uint32_t a, uint32_t b, uint32_t c) {
     uint8_t sortCode = 0;
     if (a <= b && a <= c) {
-        if (b <= c) {
+        if (b <= c)
             sortCode = a_b_c;
-        }
-        else {
+        else
             sortCode = a_c_b;
-        }
     }
     else if (b <= a && b <= c) {
-        if (a <= c) {
+        if (a <= c)
             sortCode = b_a_c;
-        }
-        else {
+        else
             sortCode = b_c_a;
-        }
     }
-    else if (a <= b) {
+    else if (a <= b)
         sortCode = c_a_b;
-    }
-    else {
+    else
         sortCode = c_b_a;
-    }
-
     return sortCode;
 }
 
@@ -7802,218 +7753,122 @@ EbErrorType     suPelEnable(
     {
         //32x32
         if ((mvMag32x32 < SQR(48)) && (avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_TRUE; //CLASS_0
-        }
         else if ((mvMag32x32 < SQR(48)) && !(avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_FALSE; //CLASS_1
-        }
         else if (!(mvMag32x32 < SQR(48)) && (avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_TRUE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel32x32 = EB_FALSE; //CLASS_3
-        }
         //16x16
         if ((mvMag16x16 < SQR(48)) && (avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_FALSE; //CLASS_0
-        }
         else if ((mvMag16x16 < SQR(48)) && !(avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_TRUE; //CLASS_1
-        }
         else if (!(mvMag16x16 < SQR(48)) && (avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_FALSE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel16x16 = EB_TRUE; //CLASS_3
-        }
         //8x8
         if ((mvMag8x8 < SQR(48)) && (avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_FALSE; //CLASS_0
-        }
         else if ((mvMag8x8 < SQR(48)) && !(avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_TRUE; //CLASS_1
-        }
         else if (!(mvMag8x8 < SQR(48)) && (avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_FALSE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel8x8 = EB_TRUE; //CLASS_3
-        }
     }
 
     else if (picture_control_set_ptr->temporal_layer_index == 1)
     {
         //32x32
         if ((mvMag32x32 < SQR(32)) && (avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_TRUE; //CLASS_0
-        }
         else if ((mvMag32x32 < SQR(32)) && !(avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_FALSE; //CLASS_1
-        }
         else if (!(mvMag32x32 < SQR(32)) && (avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_TRUE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel32x32 = EB_TRUE; //CLASS_3
-        }
         //16x16
         if ((mvMag16x16 < SQR(32)) && (avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_FALSE; //CLASS_0
-        }
         else if ((mvMag16x16 < SQR(32)) && !(avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_TRUE; //CLASS_1
-        }
         else if (!(mvMag16x16 < SQR(32)) && (avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_FALSE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel16x16 = EB_TRUE; //CLASS_3
-        }
         //8x8
         if ((mvMag8x8 < SQR(32)) && (avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_FALSE; //CLASS_0
-        }
         else if ((mvMag8x8 < SQR(32)) && !(avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_TRUE; //CLASS_1
-        }
         else if (!(mvMag8x8 < SQR(32)) && (avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_FALSE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel8x8 = EB_TRUE; //CLASS_3
-        }
     }
     else if (picture_control_set_ptr->temporal_layer_index == 2)
     {
         //32x32
         if ((mvMag32x32 < SQR(80)) && (avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_TRUE; //CLASS_0
-        }
         else if ((mvMag32x32 < SQR(80)) && !(avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_FALSE; //CLASS_1
-        }
         else if (!(mvMag32x32 < SQR(80)) && (avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_TRUE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel32x32 = EB_FALSE; //CLASS_3
-        }
         //16x16
         if ((mvMag16x16 < SQR(80)) && (avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_FALSE; //CLASS_0
-        }
         else if ((mvMag16x16 < SQR(80)) && !(avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_TRUE; //CLASS_1
-        }
         else if (!(mvMag16x16 < SQR(80)) && (avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_FALSE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel16x16 = EB_TRUE; //CLASS_3
-        }
         //8x8
         if ((mvMag8x8 < SQR(80)) && (avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_FALSE; //CLASS_0
-        }
         else if ((mvMag8x8 < SQR(80)) && !(avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_TRUE; //CLASS_1
-        }
         else if (!(mvMag8x8 < SQR(80)) && (avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_FALSE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel8x8 = EB_TRUE; //CLASS_3
-        }
     }
     else
     {
         //32x32
         if ((mvMag32x32 < SQR(48)) && (avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_TRUE; //CLASS_0
-        }
         else if ((mvMag32x32 < SQR(48)) && !(avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_TRUE; //CLASS_1
-        }
         else if (!(mvMag32x32 < SQR(48)) && (avgSad32x32 < 32 * 32 * 6))
-        {
             *enableHalfPel32x32 = EB_TRUE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel32x32 = EB_FALSE; //CLASS_3
-        }
         //16x16
         if ((mvMag16x16 < SQR(48)) && (avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_FALSE; //CLASS_0
-        }
         else if ((mvMag16x16 < SQR(48)) && !(avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_TRUE; //CLASS_1
-        }
         else if (!(mvMag16x16 < SQR(48)) && (avgSad16x16 < 16 * 16 * 2))
-        {
             *enableHalfPel16x16 = EB_FALSE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel16x16 = EB_TRUE; //CLASS_3
-        }
         //8x8
         if ((mvMag8x8 < SQR(48)) && (avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_FALSE; //CLASS_0
-        }
         else if ((mvMag8x8 < SQR(48)) && !(avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_TRUE; //CLASS_1
-        }
         else if (!(mvMag8x8 < SQR(48)) && (avgSad8x8 < 8 * 8 * 2))
-        {
             *enableHalfPel8x8 = EB_FALSE; //CLASS_2
-        }
         else
-        {
             *enableHalfPel8x8 = EB_FALSE;// EB_TRUE; //CLASS_3
-        }
     }
 
     return return_error;
@@ -8272,10 +8127,8 @@ static void hme_mv_center_check(
         search_center_y = (context_ptr->hme_level0_total_search_area_height * sparce_scale);
     }
 
-    else {
+    else
         SVT_LOG("error no center selected");
-    }
-
     *xsc = search_center_x;
     *ysc = search_center_y;
 }
@@ -8425,15 +8278,13 @@ EbErrorType motion_estimate_lcu(
 #endif
 
 #if ALTREF_FILTERING_SUPPORT
-    if(context_ptr->me_alt_ref == EB_TRUE){
+    if(context_ptr->me_alt_ref == EB_TRUE)
         numOfListToSearch = 0;
-    }
 #endif
 
     // Uni-Prediction motion estimation loop
     // List Loop
     for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch; ++listIndex) {
-
 #if MRP_ME
 
 #if ALTREF_FILTERING_SUPPORT
@@ -8724,7 +8575,6 @@ EbErrorType motion_estimate_lcu(
                         if ((ref0Poc == ref1Poc) && (listIndex == 1) && (totalMeQuad > 1)) {
                             for (quadIndex = 0; quadIndex < totalMeQuad - 1; ++quadIndex) {
                                 for (nextQuadIndex = quadIndex + 1; nextQuadIndex < totalMeQuad; ++nextQuadIndex) {
-
                                     if (hmeLevel2Sad[quadIndex / numQuadInWidth][quadIndex%numQuadInWidth] > hmeLevel2Sad[nextQuadIndex / numQuadInWidth][nextQuadIndex%numQuadInWidth]) {
                                         tempXHmeSearchCenter = xHmeLevel2SearchCenter[quadIndex / numQuadInWidth][quadIndex%numQuadInWidth];
                                         tempYHmeSearchCenter = yHmeLevel2SearchCenter[quadIndex / numQuadInWidth][quadIndex%numQuadInWidth];
@@ -9240,43 +9090,30 @@ EbErrorType motion_estimate_lcu(
 
         uint32_t nIdx;
 
-        if (pu_index > 200) {
+        if (pu_index > 200)
             nIdx = pu_index;
-        }
-        else if (pu_index > 184) {
+        else if (pu_index > 184)
             nIdx = tab8x32[pu_index - 185] + 185;
-        }
-        else if (pu_index > 168) {
+        else if (pu_index > 168)
             nIdx = tab32x8[pu_index - 169] + 169;
-        }
-        else if (pu_index > 136) {
+        else if (pu_index > 136)
             nIdx = tab8x16[pu_index - 137] + 137;
-        }
-        else if (pu_index > 128) {
+        else if (pu_index > 128)
             nIdx = tab16x32[pu_index - 129] + 129;
-        }
-        else if (pu_index > 126) {
+        else if (pu_index > 126)
             nIdx = pu_index;
-        }
-        else if (pu_index > 94) {
+        else if (pu_index > 94)
             nIdx = tab16x8[pu_index - 95] + 95;
-        }
-        else if (pu_index > 86) {
+        else if (pu_index > 86)
             nIdx = tab32x16[pu_index - 87] + 87;
-        }
-        else if (pu_index > 84) {
+        else if (pu_index > 84)
             nIdx = pu_index;
-        }
-        else if (pu_index > 20) {
+        else if (pu_index > 20)
             nIdx = tab8x8[pu_index - 21] + 21;
-        }
-        else if (pu_index > 4) {
+        else if (pu_index > 4)
             nIdx = tab16x16[pu_index - 5] + 5;
-        }
-        else {
+        else
             nIdx = pu_index;
-        }
-
         for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch; ++listIndex) {
 #if MRP_ME
             num_of_ref_pic_to_search = (picture_control_set_ptr->slice_type == P_SLICE) ? picture_control_set_ptr->ref_list0_count : (listIndex == REF_LIST_0) ?
@@ -9490,13 +9327,11 @@ EbErrorType motion_estimate_lcu(
         // Compute the sum of the distortion of all 16 16x16 (best) blocks in the LCU
         picture_control_set_ptr->rc_me_distortion[sb_index] = 0;
 #if MRP_ME
-        for (i = 0; i < 16; i++) {
+        for (i = 0; i < 16; i++)
             picture_control_set_ptr->rc_me_distortion[sb_index] += picture_control_set_ptr->me_results[sb_index]->me_candidate[5 + i][0].distortion;
-        }
 #else
-        for (i = 0; i < 16; i++) {
+        for (i = 0; i < 16; i++)
             picture_control_set_ptr->rc_me_distortion[sb_index] += picture_control_set_ptr->me_results[sb_index][5 + i].distortion_direction[0].distortion;
-        }
 #endif
     }
 
@@ -9667,65 +9502,57 @@ EbBool IsComplexLcu(
     // Check the variance of left SB if available
     if (sb_origin_x != 0) {
         availableLcusCount++;
-        if ((currentParentPcs->variance[lcuAdrr - 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH) {
+        if ((currentParentPcs->variance[lcuAdrr - 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
             highVarianceLcusCount++;
-        }
     }
 
     // Check the variance of right SB if available
     if ((sb_origin_x + BLOCK_SIZE_64) < currentParentPcs->enhanced_picture_ptr->width) {
         availableLcusCount++;
-        if ((currentParentPcs->variance[lcuAdrr + 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH) {
+        if ((currentParentPcs->variance[lcuAdrr + 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
             highVarianceLcusCount++;
-        }
     }
 
     // Check the variance of top SB if available
     if (sb_origin_y != 0) {
         availableLcusCount++;
-        if ((currentParentPcs->variance[lcuAdrr - pictureWidthInLcus][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH) {
+        if ((currentParentPcs->variance[lcuAdrr - pictureWidthInLcus][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
             highVarianceLcusCount++;
-        }
     }
 
     // Check the variance of bottom LCU
     if ((sb_origin_y + BLOCK_SIZE_64) < currentParentPcs->enhanced_picture_ptr->height) {
         availableLcusCount++;
-        if ((currentParentPcs->variance[lcuAdrr + pictureWidthInLcus][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH) {
+        if ((currentParentPcs->variance[lcuAdrr + pictureWidthInLcus][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
             highVarianceLcusCount++;
-        }
     }
 
     // Check the variance of top-left LCU
     if ((sb_origin_x >= BLOCK_SIZE_64) && (sb_origin_y >= BLOCK_SIZE_64)) {
         availableLcusCount++;
-        if ((currentParentPcs->variance[lcuAdrr - pictureWidthInLcus - 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH) {
+        if ((currentParentPcs->variance[lcuAdrr - pictureWidthInLcus - 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
             highVarianceLcusCount++;
-        }
     }
 
     // Check the variance of top-right LCU
     if ((sb_origin_x < currentParentPcs->enhanced_picture_ptr->width - BLOCK_SIZE_64) && (sb_origin_y >= BLOCK_SIZE_64)) {
         availableLcusCount++;
-        if ((currentParentPcs->variance[lcuAdrr - pictureWidthInLcus + 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH) {
+        if ((currentParentPcs->variance[lcuAdrr - pictureWidthInLcus + 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
             highVarianceLcusCount++;
-        }
     }
 
     // Check the variance of bottom-left LCU
     if ((sb_origin_x >= BLOCK_SIZE_64) && (sb_origin_y < currentParentPcs->enhanced_picture_ptr->height - BLOCK_SIZE_64)) {
         availableLcusCount++;
-        if ((currentParentPcs->variance[lcuAdrr + pictureWidthInLcus - 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH) {
+        if ((currentParentPcs->variance[lcuAdrr + pictureWidthInLcus - 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
             highVarianceLcusCount++;
-        }
     }
 
     // Check the variance of bottom-right LCU
     if ((sb_origin_x < currentParentPcs->enhanced_picture_ptr->width - BLOCK_SIZE_64) && (sb_origin_y < currentParentPcs->enhanced_picture_ptr->height - BLOCK_SIZE_64)) {
         availableLcusCount++;
-        if ((currentParentPcs->variance[lcuAdrr + pictureWidthInLcus + 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH) {
+        if ((currentParentPcs->variance[lcuAdrr + pictureWidthInLcus + 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
             highVarianceLcusCount++;
-        }
     }
 
     EbBool varianceFluctuateFlag = EB_FALSE;

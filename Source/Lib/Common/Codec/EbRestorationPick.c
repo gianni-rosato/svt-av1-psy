@@ -402,9 +402,8 @@ static int64_t finer_search_pixel_proj_error(
     int32_t tap_max[] = { SGRPROJ_PRJ_MAX0, SGRPROJ_PRJ_MAX1 };
     for (int32_t s = start_step; s >= 1; s >>= 1) {
         for (int32_t p = 0; p < 2; ++p) {
-            if ((params->r[0] == 0 && p == 0) || (params->r[1] == 0 && p == 1)) {
+            if ((params->r[0] == 0 && p == 0) || (params->r[1] == 0 && p == 1))
                 continue;
-            }
             int32_t skip = 0;
             do {
                 if (xqd[p] - s >= tap_min[p]) {
@@ -413,9 +412,8 @@ static int64_t finer_search_pixel_proj_error(
                         get_pixel_proj_error(src8, width, height, src_stride, dat8,
                             dat_stride, use_highbitdepth, flt0,
                             flt0_stride, flt1, flt1_stride, xqd, params);
-                    if (err2 > err) {
+                    if (err2 > err)
                         xqd[p] += s;
-                    }
                     else {
                         err = err2;
                         skip = 1;
@@ -433,9 +431,8 @@ static int64_t finer_search_pixel_proj_error(
                         get_pixel_proj_error(src8, width, height, src_stride, dat8,
                             dat_stride, use_highbitdepth, flt0,
                             flt0_stride, flt1, flt1_stride, xqd, params);
-                    if (err2 > err) {
+                    if (err2 > err)
                         xqd[p] -= s;
-                    }
                     else {
                         err = err2;
                         // At the highest step size continue moving in the same direction
@@ -786,9 +783,8 @@ void av1_compute_stats_c(int32_t wiener_win, const uint8_t *dgd, const uint8_t *
         }
     }
     for (k = 0; k < wiener_win2; ++k) {
-        for (l = k + 1; l < wiener_win2; ++l) {
+        for (l = k + 1; l < wiener_win2; ++l)
             H[l * wiener_win2 + k] = H[k * wiener_win2 + l];
-        }
     }
 }
 
@@ -875,9 +871,8 @@ static int32_t linsolve_wiener(int32_t n, int64_t *A, int32_t stride, int64_t *b
             if (A[k * stride + k] == 0) return 0;
             const int64_t c = A[(i + 1) * stride + k];
             const int64_t cd = A[k * stride + k];
-            for (int32_t j = 0; j < n; j++) {
+            for (int32_t j = 0; j < n; j++)
                 A[(i + 1) * stride + j] -= c / 256 * A[k * stride + j] / cd * 256;
-            }
             b[i + 1] -= c * b[k] / cd;
         }
     }
@@ -885,9 +880,8 @@ static int32_t linsolve_wiener(int32_t n, int64_t *A, int32_t stride, int64_t *b
     for (int32_t i = n - 1; i >= 0; i--) {
         if (A[i * stride + i] == 0) return 0;
         int64_t c = 0;
-        for (int32_t j = i + 1; j <= n - 1; j++) {
+        for (int32_t j = i + 1; j <= n - 1; j++)
             c += A[i * stride + j] * x[j] / WIENER_TAP_SCALE_FACTOR;
-        }
         // Store filter taps x in scaled form.
         x[i] = (int32_t)(WIENER_TAP_SCALE_FACTOR * (b[i] - c) / A[i * stride + i]);
     }
@@ -962,9 +956,8 @@ static void update_b_sep_sym(int32_t wiener_win, int64_t **Mc, int64_t **Hc,
     memset(B, 0, sizeof(B));
     for (i = 0; i < wiener_win; i++) {
         const int32_t ii = wrap_index(i, wiener_win);
-        for (j = 0; j < wiener_win; j++) {
+        for (j = 0; j < wiener_win; j++)
             A[ii] += Mc[i][j] * a[j] / WIENER_TAP_SCALE_FACTOR;
-        }
     }
 
     for (i = 0; i < wiener_win; i++) {
@@ -1088,12 +1081,10 @@ static void finalize_sym_filter(int32_t wiener_win, int32_t *f, InterpKernel fi)
         const int64_t dividend = f[i] * WIENER_FILT_STEP;
         const int64_t divisor = WIENER_TAP_SCALE_FACTOR;
         // Perform this division with proper rounding rather than truncation
-        if (dividend < 0) {
+        if (dividend < 0)
             fi[i] = (int16_t)((dividend - (divisor / 2)) / divisor);
-        }
-        else {
+        else
             fi[i] = (int16_t)((dividend + (divisor / 2)) / divisor);
-        }
     }
     // Specialize for 7-tap filter
     if (wiener_win == WIENER_WIN) {
@@ -1503,17 +1494,14 @@ static void search_switchable(const RestorationTileLimits *limits,
 
     //CHKN for (RestorationType r = 0; r < RESTORE_SWITCHABLE_TYPES; ++r) {
     for (int32_t restType = 0; restType < RESTORE_SWITCHABLE_TYPES; ++restType) {
-
         RestorationType r = (RestorationType)restType;
 
         // Check for the condition that wiener or sgrproj search could not
         // find a solution or the solution was worse than RESTORE_NONE.
         // In either case the best_rtype will be set as RESTORE_NONE. These
         // should be skipped from the test below.
-        if (r > RESTORE_NONE) {
+        if (r > RESTORE_NONE)
             if (rusi->best_rtype[r - 1] == RESTORE_NONE) continue;
-        }
-
         const int64_t sse = rusi->sse[r];
         int64_t coeff_pcost = 0;
         switch (r) {
@@ -1619,7 +1607,6 @@ void av1_pick_filter_restoration(const Yv12BufferConfig *src, Yv12BufferConfig *
 
         //CHKN  for (RestorationType r = 0; r < num_rtypes; ++r) {
         for (int32_t restType = 0; restType < num_rtypes; ++restType) {
-
             RestorationType r = (RestorationType)restType;
 
             if ((force_restore_type_d != RESTORE_TYPES) && (r != RESTORE_NONE) &&
@@ -1639,9 +1626,8 @@ void av1_pick_filter_restoration(const Yv12BufferConfig *src, Yv12BufferConfig *
             assert(best_rtype == force_restore_type_d || best_rtype == RESTORE_NONE);
 
         if (best_rtype != RESTORE_NONE) {
-            for (int32_t u = 0; u < plane_ntiles; ++u) {
+            for (int32_t u = 0; u < plane_ntiles; ++u)
                 copy_unit_info(best_rtype, &rusi[u], &cm->rst_info[plane].unit_info[u]);
-            }
         }
     }
 
@@ -1982,9 +1968,8 @@ void rest_finish_search(Macroblock *x, Av1Common *const cm)
             assert(best_rtype == force_restore_type_d || best_rtype == RESTORE_NONE);
 
         if (best_rtype != RESTORE_NONE) {
-            for (int32_t u = 0; u < plane_ntiles; ++u) {
+            for (int32_t u = 0; u < plane_ntiles; ++u)
                 copy_unit_info(best_rtype, &rusi[u], &cm->rst_info[plane].unit_info[u]);
-            }
         }
     }
 

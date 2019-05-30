@@ -169,9 +169,8 @@ int32_t cdef_find_dir_c(const uint16_t *img, int32_t stride, int32_t *var,
     cost[4] += partial[4][7] * partial[4][7] * div_table[8];
     for (i = 1; i < 8; i += 2) {
         int32_t j;
-        for (j = 0; j < 4 + 1; j++) {
+        for (j = 0; j < 4 + 1; j++)
             cost[i] += partial[i][3 + j] * partial[i][3 + j];
-        }
         cost[i] *= div_table[8];
         for (j = 0; j < 4 - 1; j++) {
             cost[i] += (partial[i][j] * partial[i][j] +
@@ -423,9 +422,8 @@ int32_t sb_compute_cdef_list(PictureControlSet            *picture_control_set_p
 void copy_rect8_8bit_to_16bit_c(uint16_t *dst, int32_t dstride, const uint8_t *src,
     int32_t sstride, int32_t v, int32_t h) {
     for (int32_t i = 0; i < v; i++) {
-        for (int32_t j = 0; j < h; j++) {
+        for (int32_t j = 0; j < h; j++)
             dst[i * dstride + j] = src[i * sstride + j];
-        }
     }
 }
 
@@ -442,18 +440,16 @@ static void copy_sb8_16(uint16_t *dst, int32_t dstride,
 static INLINE void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h,
     uint16_t x) {
     for (int32_t i = 0; i < v; i++) {
-        for (int32_t j = 0; j < h; j++) {
+        for (int32_t j = 0; j < h; j++)
             dst[i * dstride + j] = x;
-        }
     }
 }
 
 static INLINE void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src,
     int32_t sstride, int32_t v, int32_t h) {
     for (int32_t i = 0; i < v; i++) {
-        for (int32_t j = 0; j < h; j++) {
+        for (int32_t j = 0; j < h; j++)
             dst[i * dstride + j] = src[i * sstride + j];
-        }
     }
 }
 
@@ -1110,9 +1106,8 @@ static uint64_t search_one(int32_t *lev, int32_t nb_strengths,
         uint64_t best_mse = (uint64_t)1 << 63;
         /* Find best mse among already selected options. */
         for (gi = 0; gi < nb_strengths; gi++) {
-            if (mse[i][lev[gi]] < best_mse) {
+            if (mse[i][lev[gi]] < best_mse)
                 best_mse = mse[i][lev[gi]];
-            }
         }
         /* Find best mse when adding each possible new option. */
 
@@ -1152,9 +1147,8 @@ uint64_t search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
         for (gi = 0; gi < nb_strengths; gi++) {
             uint64_t curr = mse[0][i][lev0[gi]];
             curr += mse[1][i][lev1[gi]];
-            if (curr < best_mse) {
+            if (curr < best_mse)
                 best_mse = curr;
-            }
         }
         /* Find best mse when adding each possible new option. */
         for (j = start_gi; j < total_strengths; j++) {
@@ -1192,9 +1186,8 @@ static uint64_t joint_strength_search(int32_t *best_lev, int32_t nb_strengths,
     int32_t i;
     best_tot_mse = (uint64_t)1 << 63;
     /* Greedy search: add one strength options at a time. */
-    for (i = 0; i < nb_strengths; i++) {
+    for (i = 0; i < nb_strengths; i++)
         best_tot_mse = search_one(best_lev, i, mse, sb_count, fast, start_gi, end_gi);
-    }
     /* Trying to refine the greedy search by reconsidering each
     already-selected option. */
     if (!fast) {
@@ -1217,9 +1210,8 @@ static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev
     int32_t i;
     best_tot_mse = (uint64_t)1 << 63;
     /* Greedy search: add one strength options at a time. */
-    for (i = 0; i < nb_strengths; i++) {
+    for (i = 0; i < nb_strengths; i++)
         best_tot_mse = search_one_dual(best_lev0, best_lev1, i, mse, sb_count, fast, start_gi, end_gi);
-    }
     /* Trying to refine the greedy search by reconsidering each
     already-selected option. */
     for (i = 0; i < 4 * nb_strengths; i++) {
@@ -1310,9 +1302,8 @@ uint64_t compute_cdef_dist_c(const uint16_t *dst, int32_t dstride, const uint16_
                 sum += dist_8x8_16bit_c(&src[bi << (3 + 3)], &dst[(by << 3) * dstride + (bx << 3)], dstride,
                     coeff_shift);
             }
-            else {
+            else
                 sum += mse_8_16bit(&src[bi << (3 + 3)], &dst[(by << 3) * dstride + (bx << 3)], dstride, 8);
-            }
         }
     }
     else if (bsize == BLOCK_4X8) {
@@ -1501,9 +1492,8 @@ void finish_cdef_search(
     }
     pPcs->cdef_pri_damping = pri_damping;
     pPcs->cdef_sec_damping = sec_damping;
-    for (int i = 0; i < total_strengths; i++) {
+    for (int i = 0; i < total_strengths; i++)
         best_frame_gi_cnt += selected_strength_cnt[i] > best_frame_gi_cnt ? 1 : 0;
-    }
     pPcs->cdef_frame_strength = ((best_frame_gi_cnt + 4) / 4) * 4;
 
     free(mse[0]);
@@ -1818,13 +1808,9 @@ void av1_cdef_search(
             picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64 * picture_control_set_ptr->mi_stride + MI_SIZE_64X64]->mbmi.cdef_strength = (int8_t)best_gi;
         }
         else if (sb_type == BLOCK_128X64)
-        {
             picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64]->mbmi.cdef_strength = (int8_t)best_gi;
-        }
         else if (sb_type == BLOCK_64X128)
-        {
             picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64 * picture_control_set_ptr->mi_stride]->mbmi.cdef_strength = (int8_t)best_gi;
-        }
     }
 
     if (fast) {
@@ -1834,9 +1820,8 @@ void av1_cdef_search(
         }
     }
 
-    for (int i = 0; i < total_strengths; i++) {
+    for (int i = 0; i < total_strengths; i++)
         best_frame_gi_cnt += selected_strength_cnt[i] > best_frame_gi_cnt ? 1 : 0;
-    }
     pPcs->cdef_frame_strength = ((best_frame_gi_cnt + 4) / 4) * 4;
 
     pPcs->cdef_pri_damping = pri_damping;
@@ -2158,14 +2143,9 @@ void av1_cdef_search16bit(
             picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64 * picture_control_set_ptr->mi_stride + MI_SIZE_64X64]->mbmi.cdef_strength = (int8_t)best_gi;
         }
         else if (sb_type == BLOCK_128X64)
-        {
             picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64]->mbmi.cdef_strength = (int8_t)best_gi;
-        }
         else if (sb_type == BLOCK_64X128)
-        {
             picture_control_set_ptr->mi_grid_base[sb_index[i] + MI_SIZE_64X64 * picture_control_set_ptr->mi_stride]->mbmi.cdef_strength = (int8_t)best_gi;
-        }
-
         //ModeInfo *miPtr = *(picture_control_set_ptr->mi_grid_base + sb_index[i]);
         //uint8_t  miX, miY;
         //for (miY = 0; miY < (block_size_high[sb_type] >> MI_SIZE_LOG2); miY++) {
@@ -2184,9 +2164,8 @@ void av1_cdef_search16bit(
     pPcs->cdef_pri_damping = pri_damping;
     pPcs->cdef_sec_damping = sec_damping;
 
-    for (int i = 0; i < total_strengths; i++) {
+    for (int i = 0; i < total_strengths; i++)
         best_frame_gi_cnt += selected_strength_cnt[i] > best_frame_gi_cnt ? 1 : 0;
-    }
     pPcs->cdef_frame_strength = ((best_frame_gi_cnt + 4) / 4) * 4;
 
     aom_free(mse[0]);

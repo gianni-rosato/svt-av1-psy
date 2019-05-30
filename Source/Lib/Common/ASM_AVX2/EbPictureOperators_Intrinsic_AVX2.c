@@ -38,7 +38,6 @@ void compressed_packmsb_avx2_intrin(
         //processing 2 lines for chroma
         for (y = 0; y < height; y += 2)
         {
-
             in2Bit = _mm_loadu_si128((__m128i*)inn_bit_buffer); //2 Lines Stored in 1D format-Could be replaced by 2 _mm_loadl_epi64
 
             ext0 = _mm_and_si128(in2Bit, msk0);
@@ -174,7 +173,6 @@ void c_pack_avx2_intrin(
         //One row per iter
         for (y = 0; y < height; y++)
         {
-
             inNBit = _mm256_loadu_si256((__m256i*)inn_bit_buffer);
 
             ext0 = _mm256_and_si256(inNBit, msk0);
@@ -210,7 +208,6 @@ void c_pack_avx2_intrin(
 
             for (y = 0; y < height; y++)
             {
-
                 inNBit = _mm256_loadu_si256((__m256i*)inn_bit_buffer);
 
                 ext0 = _mm256_and_si256(inNBit, msk0);
@@ -259,7 +256,6 @@ void c_pack_avx2_intrin(
             //One row per iter
             for (y = 0; y < height; y++)
             {
-
                 inNBit = _mm256_loadu_si256((__m256i*)inn_bit_buffer);
 
                 ext0 = _mm256_and_si256(inNBit, msk0);
@@ -828,7 +824,6 @@ void unpack_avg_avx2_intrin(
     }
     else if (width == 64)
     {
-
 #if B256
         __m256i inVal16b_0, inVal16b_1, inVal16b_2, inVal16b_3;
         __m256i data8b_32_0_L0, data8b_32_1_L0, data8b_32_0_L1, data8b_32_1_L1;
@@ -1089,7 +1084,6 @@ void memset16bit_block_avx2_intrin(
     int16_t   value
 )
 {
-
     if (size == 4) {
         __m128i line = _mm_set1_epi16(value);
 
@@ -1211,9 +1205,8 @@ void memset16bit_block_avx2_intrin(
         _mm256_storeu_si256((__m256i *)(in_ptr + 7 * stride_in + 16), line);
     }
 
-    else {
+    else
         printf("\n add the rest \n");
-    }
 }
 
 void unpack_avg_safe_sub_avx2_intrin(
@@ -1462,7 +1455,6 @@ void unpack_avg_safe_sub_avx2_intrin(
 
         for (y = 0; y < height; ++y)
         {
-
             //List0
             inVal16b_0 = _mm256_loadu_si256((__m256i*) ref16_l0);
             inVal16b_1 = _mm256_loadu_si256((__m256i*)(ref16_l0 + 16));

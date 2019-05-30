@@ -108,9 +108,7 @@ void PictureCopyKernel_SSSE3(
         } while (row_count != 0);
         area_width -= 2;
         if (area_width == 0)
-        {
             return;
-        }
         src += 2;
         dst += 2;
     }
@@ -130,9 +128,7 @@ void PictureCopyKernel_SSSE3(
         } while (row_count != 0);
         area_width -= 4;
         if (area_width == 0)
-        {
             return;
-        }
         src += 4;
         dst += 4;
     }
@@ -152,9 +148,7 @@ void PictureCopyKernel_SSSE3(
         } while (row_count != 0);
         area_width -= 8;
         if (area_width == 0)
-        {
             return;
-        }
         src += 8;
         dst += 8;
     }
@@ -270,10 +264,7 @@ void LumaInterpolationFilterTwoDInRaw7_SSSE3(int16_t *first_pass_if_dst, EbByte 
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         first_pass_if_dst += (frac_pos_y == 2) ? 32 : 24;
         dst += 4;
     }
@@ -365,10 +356,7 @@ void LumaInterpolationFilterTwoDInRawOutRaw7_SSSE3(int16_t *first_pass_if_dst, i
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         first_pass_if_dst += (frac_pos_y == 2) ? 32 : 24;
     }
 
@@ -471,10 +459,7 @@ void LumaInterpolationFilterTwoDInRawM_SSSE3(int16_t *first_pass_if_dst, EbByte 
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         first_pass_if_dst += 32;
         dst += 4;
     }
@@ -564,10 +549,7 @@ void LumaInterpolationFilterTwoDInRawOutRawM_SSSE3(int16_t *first_pass_if_dst, i
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         first_pass_if_dst += 32;
     }
 
@@ -644,10 +626,7 @@ void PictureCopyKernelOutRaw_SSSE3(
 
         pu_width -= 2;
         if (pu_width == 0)
-        {
             return;
-        }
-
         ref_pic += 2;
     }
 
@@ -670,10 +649,7 @@ void PictureCopyKernelOutRaw_SSSE3(
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         ref_pic += 4;
     }
 
@@ -762,9 +738,7 @@ void ChromaInterpolationFilterTwoDInRaw_SSSE3(int16_t *first_pass_if_dst, EbByte
 
         pu_width -= 2;
         if (pu_width == 0)
-        {
             return;
-        }
         first_pass_if_dst += 8;
         dst += 2;
     }
@@ -802,10 +776,7 @@ void ChromaInterpolationFilterTwoDInRaw_SSSE3(int16_t *first_pass_if_dst, EbByte
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         first_pass_if_dst += 16;
         dst += 4;
     }
@@ -916,10 +887,7 @@ void chroma_interpolation_filter_one_d_horizontal_ssse3(
 
         pu_width -= 2;
         if (pu_width == 0)
-        {
             return;
-        }
-
         ref_pic += 2;
         dst += 2;
     }
@@ -952,10 +920,7 @@ void chroma_interpolation_filter_one_d_horizontal_ssse3(
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         ref_pic += 4;
         dst += 4;
     }
@@ -1041,10 +1006,7 @@ void chroma_interpolation_filter_one_d_out_raw_horizontal_ssse3(
 
         pu_width -= 2;
         if (pu_width == 0)
-        {
             return;
-        }
-
         ref_pic += 2;
     }
 
@@ -1160,10 +1122,7 @@ void chroma_interpolation_filter_one_d_vertical_ssse3(
 
         pu_width -= 2;
         if (pu_width == 0)
-        {
             return;
-        }
-
         ref_pic += 2;
         dst += 2;
     }
@@ -1292,10 +1251,7 @@ void chroma_interpolation_filter_one_d_out_raw_vertical_ssse3(
 
         pu_width -= 2;
         if (pu_width == 0)
-        {
             return;
-        }
-
         ref_pic += 2;
     }
 
@@ -1408,9 +1364,7 @@ void ChromaInterpolationFilterTwoDInRawOutRaw_SSSE3(int16_t *first_pass_if_dst, 
 
         pu_width -= 2;
         if (pu_width == 0)
-        {
             return;
-        }
         first_pass_if_dst += 8;
     }
 
@@ -1444,10 +1398,7 @@ void ChromaInterpolationFilterTwoDInRawOutRaw_SSSE3(int16_t *first_pass_if_dst, 
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         first_pass_if_dst += 16;
     }
 
@@ -1555,10 +1506,7 @@ void LumaInterpolationFilterOneDHorizontal_SSSE3(
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         ref_pic += 4;
         dst += 4;
     }
@@ -1641,10 +1589,7 @@ void LumaInterpolationFilterOneDOutRawHorizontal_SSSE3(
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         ref_pic += 4;
     }
 
@@ -1743,10 +1688,7 @@ void LumaInterpolationFilterOneDVertical_SSSE3(
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         ref_pic += 4;
         dst += 4;
     }
@@ -1882,10 +1824,7 @@ void LumaInterpolationFilterOneDOutRawVertical_SSSE3(
 
         pu_width -= 4;
         if (pu_width == 0)
-        {
             return;
-        }
-
         ref_pic += 4;
     }
 

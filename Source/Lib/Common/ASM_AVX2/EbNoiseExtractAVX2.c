@@ -656,9 +656,8 @@ void noise_extract_luma_strong_avx2_intrin(
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = 0; ii < picWidth; ii++) {
-                if (!((jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1)) {
+                if (!((jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1))
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                }
             }
         }
     }

@@ -29,15 +29,12 @@ void InitializeSamplesNeighboringReferencePicture16Bit(
 
     // 3. Zero out the left column
     reconSamplesPtr = (uint16_t*)reconSamplesBufferPtr + top_padding * stride + left_padding - 1;
-    for (sampleCount = 0; sampleCount < reconHeight; sampleCount++) {
+    for (sampleCount = 0; sampleCount < reconHeight; sampleCount++)
         reconSamplesPtr[sampleCount * stride] = 0;
-    }
-
     // 4. Zero out the right column
     reconSamplesPtr = (uint16_t*)reconSamplesBufferPtr + top_padding * stride + left_padding + reconWidth;
-    for (sampleCount = 0; sampleCount < reconHeight; sampleCount++) {
+    for (sampleCount = 0; sampleCount < reconHeight; sampleCount++)
         reconSamplesPtr[sampleCount * stride] = 0;
-    }
 }
 
 void InitializeSamplesNeighboringReferencePicture8Bit(
@@ -60,15 +57,12 @@ void InitializeSamplesNeighboringReferencePicture8Bit(
 
     // 3. Zero out the left column
     reconSamplesPtr = reconSamplesBufferPtr + top_padding * stride + left_padding - 1;
-    for (sampleCount = 0; sampleCount < reconHeight; sampleCount++) {
+    for (sampleCount = 0; sampleCount < reconHeight; sampleCount++)
         reconSamplesPtr[sampleCount * stride] = 0;
-    }
-
     // 4. Zero out the right column
     reconSamplesPtr = reconSamplesBufferPtr + top_padding * stride + left_padding + reconWidth;
-    for (sampleCount = 0; sampleCount < reconHeight; sampleCount++) {
+    for (sampleCount = 0; sampleCount < reconHeight; sampleCount++)
         reconSamplesPtr[sampleCount * stride] = 0;
-    }
 }
 
 void InitializeSamplesNeighboringReferencePicture(
@@ -182,10 +176,8 @@ EbErrorType eb_reference_object_ctor(
             pictureBufferDescInitDataPtr,
             pictureBufferDescInitData16BitPtr.bit_depth);
     }
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
 #if !OPT_LOSSLESS_1
     // Allocate SB based TMVP map
     EB_MALLOC(TmvpUnit *, referenceObject->tmvp_map, (sizeof(TmvpUnit) * (((pictureBufferDescInitDataPtr->max_width + (64 - 1)) >> 6) * ((pictureBufferDescInitDataPtr->max_height + (64 - 1)) >> 6))), EB_N_PTR);
@@ -236,27 +228,21 @@ EbErrorType eb_pa_reference_object_ctor(
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*) &(paReferenceObject->input_padded_picture_ptr),
         (EbPtr)pictureBufferDescInitDataPtr);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     // Quarter Decim reference picture constructor
     paReferenceObject->quarter_decimated_picture_ptr = (EbPictureBufferDesc*)EB_NULL;
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*) &(paReferenceObject->quarter_decimated_picture_ptr),
         (EbPtr)(pictureBufferDescInitDataPtr + 1));
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     // Sixteenth Decim reference picture constructor
     paReferenceObject->sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)EB_NULL;
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*) &(paReferenceObject->sixteenth_decimated_picture_ptr),
         (EbPtr)(pictureBufferDescInitDataPtr + 2));
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return EB_ErrorNone;
 }

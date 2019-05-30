@@ -234,9 +234,8 @@ static void extend_frame_lowbd(uint8_t *data, int32_t width, int32_t height, int
         memset(data_p + width, data_p[width - 1], border_horz);
     }
     data_p = data - border_horz;
-    for (i = -border_vert; i < 0; ++i) {
+    for (i = -border_vert; i < 0; ++i)
         memcpy(data_p + i * stride, data_p, width + 2 * border_horz);
-    }
     for (i = height; i < height + border_vert; ++i) {
         memcpy(data_p + i * stride, data_p + (height - 1) * stride,
             width + 2 * border_horz);
@@ -1021,16 +1020,14 @@ void av1_selfguided_restoration_c(const uint8_t *dgd8, int32_t width, int32_t he
     if (highbd) {
         const uint16_t *dgd16 = CONVERT_TO_SHORTPTR(dgd8);
         for (int32_t i = -SGRPROJ_BORDER_VERT; i < height + SGRPROJ_BORDER_VERT; ++i) {
-            for (int32_t j = -SGRPROJ_BORDER_HORZ; j < width + SGRPROJ_BORDER_HORZ; ++j) {
+            for (int32_t j = -SGRPROJ_BORDER_HORZ; j < width + SGRPROJ_BORDER_HORZ; ++j)
                 dgd32[i * dgd32_stride + j] = dgd16[i * dgd_stride + j];
-            }
         }
     }
     else {
         for (int32_t i = -SGRPROJ_BORDER_VERT; i < height + SGRPROJ_BORDER_VERT; ++i) {
-            for (int32_t j = -SGRPROJ_BORDER_HORZ; j < width + SGRPROJ_BORDER_HORZ; ++j) {
+            for (int32_t j = -SGRPROJ_BORDER_HORZ; j < width + SGRPROJ_BORDER_HORZ; ++j)
                 dgd32[i * dgd32_stride + j] = dgd8[i * dgd_stride + j];
-            }
         }
     }
 
@@ -1285,10 +1282,8 @@ void av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
         RestorationType rtype = rsi->frame_restoration_type;
         rsi->optimized_lr = optimized_lr;
 
-        if (rtype == RESTORE_NONE) {
+        if (rtype == RESTORE_NONE)
             continue;
-        }
-
         const int32_t is_uv = plane > 0;
         const int32_t plane_width = frame->crop_widths[is_uv];
         const int32_t plane_height = frame->crop_heights[is_uv];
@@ -1722,9 +1717,8 @@ void av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
     Av1Common *cm, int32_t after_cdef) {
     const int32_t num_planes = 3;// av1_num_planes(cm);
     const int32_t use_highbd = cm->use_highbitdepth;
-    for (int32_t p = 0; p < num_planes; ++p) {
+    for (int32_t p = 0; p < num_planes; ++p)
         save_tile_row_boundary_lines(frame, use_highbd, p, cm, after_cdef);
-    }
 }
 
 // Assumes cm->rst_info[p].restoration_unit_size is already initialized

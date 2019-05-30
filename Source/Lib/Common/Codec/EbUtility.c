@@ -104,7 +104,6 @@ void eb_memcpy(void  *dst_ptr, void  *src_ptr, size_t size) {
  * Z-Order
  *****************************************/
 static TxSize blocksize_to_txsize[BlockSizeS_ALL] = {
-
       TX_4X4    ,      // BLOCK_4X4
       TX_4X8    ,      // BLOCK_4X8
       TX_8X4    ,      // BLOCK_8X4
@@ -471,16 +470,12 @@ EbLinkedListNode* concat_eb_linked_list(EbLinkedListNode* a, EbLinkedListNode* b
     if (a)
     {
         while (a->next)
-        {
             a = a->next;
-        }
         a->next = b;
         return a;
     }
     else
-    {
         return b;
-    }
 }
 
 // split a linked list
@@ -494,13 +489,9 @@ EbLinkedListNode* split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode
         EbLinkedListNode* next = input->next;
         input->next = (EbLinkedListNode *)EB_NULL;
         if (predicate_func(input))
-        {
             llTruePtr = concat_eb_linked_list(input, llTruePtr);
-        }
         else
-        {
             llRestPtr = concat_eb_linked_list(input, llRestPtr);
-        }
         input = next;
     }
 
@@ -1606,9 +1597,7 @@ uint32_t count_total_num_of_active_blks()
                         part_it < 7 ? 3 : 4;
 
                     for (nsq_it = 0; nsq_it < tot_num_ns_per_part; nsq_it++)
-                    {
                         depth_scan_idx++;
-                    }
                 }
             }
         }

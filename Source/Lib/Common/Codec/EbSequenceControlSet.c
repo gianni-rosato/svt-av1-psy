@@ -57,13 +57,10 @@ EbErrorType eb_sequence_control_set_ctor(
     }
 
     // Encode Context
-    if (scsInitData != EB_NULL) {
+    if (scsInitData != EB_NULL)
         sequence_control_set_ptr->encode_context_ptr = scsInitData->encode_context_ptr;
-    }
-    else {
+    else
         sequence_control_set_ptr->encode_context_ptr = (EncodeContext *)EB_NULL;
-    }
-
     sequence_control_set_ptr->conformance_window_flag = 0;
 
     // Profile & ID
@@ -391,9 +388,8 @@ EbErrorType eb_sequence_control_set_instance_ctor(
     return_error = encode_context_ctor(
         (void **) &(*object_dbl_ptr)->encode_context_ptr,
         EB_NULL);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     scsInitData.encode_context_ptr = (*object_dbl_ptr)->encode_context_ptr;
 
     scsInitData.sb_size = 64;
@@ -401,10 +397,8 @@ EbErrorType eb_sequence_control_set_instance_ctor(
     return_error = eb_sequence_control_set_ctor(
         (void **) &(*object_dbl_ptr)->sequence_control_set_ptr,
         (void *)&scsInitData);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     EB_CREATEMUTEX(EbHandle*, (*object_dbl_ptr)->config_mutex, sizeof(EbHandle), EB_MUTEX);
 
     return EB_ErrorNone;

@@ -176,10 +176,8 @@ void* dlf_kernel(void *input_ptr)
                 recon_picture_ptr,
                 cm->frame_to_show);
 
-            if (sequence_control_set_ptr->enable_restoration) {
+            if (sequence_control_set_ptr->enable_restoration)
                 av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
-            }
-
             if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode)
             {
                 if (is16bit)

@@ -95,10 +95,8 @@ EbErrorType rest_context_ctor(
             (EbPtr*)&context_ptr->trial_frame_rst,
             (EbPtr)&initData);
 
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
-
          return_error = eb_picture_buffer_desc_ctor(
             (EbPtr*)&context_ptr->org_rec_frame,
                 (EbPtr)&initData);
@@ -157,10 +155,8 @@ void   get_own_recon(
         uint16_t*  org_ptr_cb = (uint16_t*)org_rec->buffer_cb + org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cb;
         uint16_t*  org_ptr_cr = (uint16_t*)org_rec->buffer_cr + org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cr;
 
-        for (int r = 0; r < sequence_control_set_ptr->luma_height; ++r) {
+        for (int r = 0; r < sequence_control_set_ptr->luma_height; ++r)
             memcpy(org_ptr + r * org_rec->stride_y, rec_ptr + r * recon_picture_ptr->stride_y, sequence_control_set_ptr->luma_width << 1);
-        }
-
         for (int r = 0; r < sequence_control_set_ptr->luma_height / 2; ++r) {
             memcpy(org_ptr_cb + r * org_rec->stride_cb, rec_ptr_cb + r * recon_picture_ptr->stride_cb, (sequence_control_set_ptr->luma_width / 2) << 1);
             memcpy(org_ptr_cr + r * org_rec->stride_cr, rec_ptr_cr + r * recon_picture_ptr->stride_cr, (sequence_control_set_ptr->luma_width / 2) << 1);
@@ -181,10 +177,8 @@ void   get_own_recon(
         uint8_t *  org_ptr_cb = &((org_rec->buffer_cb)[org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cb]);
         uint8_t *  org_ptr_cr = &((org_rec->buffer_cr)[org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cr]);
 
-        for (int r = 0; r < sequence_control_set_ptr->luma_height; ++r) {
+        for (int r = 0; r < sequence_control_set_ptr->luma_height; ++r)
             memcpy(org_ptr + r * org_rec->stride_y, rec_ptr + r * recon_picture_ptr->stride_y, sequence_control_set_ptr->luma_width);
-        }
-
         for (int r = 0; r < sequence_control_set_ptr->luma_height / 2; ++r) {
             memcpy(org_ptr_cb + r * org_rec->stride_cb, rec_ptr_cb + r * recon_picture_ptr->stride_cb, (sequence_control_set_ptr->luma_width / 2));
             memcpy(org_ptr_cr + r * org_rec->stride_cr, rec_ptr_cr + r * recon_picture_ptr->stride_cr, (sequence_control_set_ptr->luma_width / 2));

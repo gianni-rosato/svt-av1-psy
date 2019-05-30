@@ -460,9 +460,8 @@ int av1_diamond_search_sad_c(IntraBcContext  *x, const SearchSiteConfig *cfg,
         break;
       }
 #endif
-    } else if (best_address == in_what) {
+    } else if (best_address == in_what)
       (*num00)++;
-    }
   }
   return bestsad;
 }
@@ -780,10 +779,8 @@ int av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext  *x, BlockSize 
 
         const int count = av1_hash_table_count(ref_frame_hash, hash_value1);
         // for intra, at least one matching can be found, itself.
-        if (count <= (intra ? 1 : 0)) {
+        if (count <= (intra ? 1 : 0))
           break;
-        }
-
         Iterator iterator =
             av1_hash_get_first_iterator(ref_frame_hash, hash_value1);
         for (int i = 0; i < count; i++, iterator_increment(&iterator)) {

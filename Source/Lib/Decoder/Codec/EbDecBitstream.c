@@ -58,9 +58,8 @@ void dec_get_bits_leb128(bitstrm_t *bs, size_t available, size_t *value,
         leb128_byte = dec_get_bits(bs, 8);
         *value |= (((uint64_t)leb128_byte & 0x7f) << (i * 7));
         *length += 1;
-        if (!(leb128_byte & 0x80)) {
+        if (!(leb128_byte & 0x80))
             break;
-        }
     }
 }
 

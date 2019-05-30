@@ -53,9 +53,8 @@ EbErrorType encode_context_ctor(
         return_error = picture_decision_reorder_entry_ctor(
             &(encode_context_ptr->picture_decision_reorder_queue[pictureIndex]),
             pictureIndex);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 
     // Picture Manager Reordering Queue
@@ -66,9 +65,8 @@ EbErrorType encode_context_ctor(
         return_error = picture_manager_reorder_entry_ctor(
             &(encode_context_ptr->picture_manager_reorder_queue[pictureIndex]),
             pictureIndex);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 
     // Picture Manager Pre-Assignment Buffer
@@ -83,10 +81,8 @@ EbErrorType encode_context_ctor(
 
     EB_MALLOC(EbObjectWrapper**, encode_context_ptr->pre_assignment_buffer, sizeof(EbObjectWrapper*) * PRE_ASSIGNMENT_MAX_DEPTH, EB_N_PTR);
 
-    for (pictureIndex = 0; pictureIndex < PRE_ASSIGNMENT_MAX_DEPTH; ++pictureIndex) {
+    for (pictureIndex = 0; pictureIndex < PRE_ASSIGNMENT_MAX_DEPTH; ++pictureIndex)
         encode_context_ptr->pre_assignment_buffer[pictureIndex] = (EbObjectWrapper*)EB_NULL;
-    }
-
     // Picture Manager Input Queue
     encode_context_ptr->input_picture_queue_head_index = 0;
     encode_context_ptr->input_picture_queue_tail_index = 0;
@@ -95,9 +91,8 @@ EbErrorType encode_context_ctor(
     for (pictureIndex = 0; pictureIndex < INPUT_QUEUE_MAX_DEPTH; ++pictureIndex) {
         return_error = input_queue_entry_ctor(
             &(encode_context_ptr->input_picture_queue[pictureIndex]));
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 
     // Picture Manager Reference Queue
@@ -108,9 +103,8 @@ EbErrorType encode_context_ctor(
     for (pictureIndex = 0; pictureIndex < REFERENCE_QUEUE_MAX_DEPTH; ++pictureIndex) {
         return_error = reference_queue_entry_ctor(
             &(encode_context_ptr->reference_picture_queue[pictureIndex]));
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 
     // Picture Decision PA Reference Queue
@@ -121,9 +115,8 @@ EbErrorType encode_context_ctor(
     for (pictureIndex = 0; pictureIndex < PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH; ++pictureIndex) {
         return_error = pa_reference_queue_entry_ctor(
             &(encode_context_ptr->picture_decision_pa_reference_queue[pictureIndex]));
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 
     // Initial Rate Control Reordering Queue
@@ -134,9 +127,8 @@ EbErrorType encode_context_ctor(
         return_error = initial_rate_control_reorder_entry_ctor(
             &(encode_context_ptr->initial_rate_control_reorder_queue[pictureIndex]),
             pictureIndex);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 
     // High level Rate Control histogram Queue
@@ -148,9 +140,8 @@ EbErrorType encode_context_ctor(
         return_error = hl_rate_control_histogram_entry_ctor(
             &(encode_context_ptr->hl_rate_control_historgram_queue[pictureIndex]),
             pictureIndex);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
     // HLRateControl Historgram Queue Mutex
     EB_CREATEMUTEX(EbHandle, encode_context_ptr->hl_rate_control_historgram_queue_mutex, sizeof(EbHandle), EB_MUTEX);
@@ -163,9 +154,8 @@ EbErrorType encode_context_ctor(
         return_error = packetization_reorder_entry_ctor(
             &(encode_context_ptr->packetization_reorder_queue[pictureIndex]),
             pictureIndex);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 
     encode_context_ptr->intra_period_position = 0;
@@ -193,19 +183,16 @@ EbErrorType encode_context_ctor(
     memset(encode_context_ptr->md_rate_estimation_array, 0, sizeof(MdRateEstimationContext) * TOTAL_NUMBER_OF_MD_RATE_ESTIMATION_CASE_BUFFERS);
 
     return_error = md_rate_estimation_context_ctor(encode_context_ptr->md_rate_estimation_array);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     // Temporal Filter
 
     // Rate Control Bit Tables
     EB_MALLOC(RateControlTables*, encode_context_ptr->rate_control_tables_array, sizeof(RateControlTables) * TOTAL_NUMBER_OF_INITIAL_RC_TABLES_ENTRY, EB_N_PTR);
 
     return_error = rate_control_tables_ctor(encode_context_ptr->rate_control_tables_array);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     // RC Rate Table Update Mutex
     EB_CREATEMUTEX(EbHandle, encode_context_ptr->rate_table_update_mutex, sizeof(EbHandle), EB_MUTEX);
 

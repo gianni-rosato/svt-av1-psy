@@ -228,9 +228,8 @@ const int16_t KEobGroupStart[12] = { 0,  1,  2,  3,   5,   9,
 static INLINE int16_t GetEobPosToken(const int16_t eob, int16_t *const extra) {
     int16_t t;
 
-    if (eob < 33) {
+    if (eob < 33)
         t = EobToPosSmall[eob];
-    }
     else {
         const int16_t e = MIN((eob - 1) >> 5, 16);
         t = EobToPosLarge[e];
@@ -260,12 +259,10 @@ static INLINE void av1TxbInitLevels(
         sizeof(*levels) * (TX_PAD_BOTTOM * stride + TX_PAD_END));
 
     for (int16_t i = 0; i < height; i++) {
-        for (int16_t j = 0; j < width; j++) {
+        for (int16_t j = 0; j < width; j++)
             *ls++ = (uint8_t)CLIP3(0, INT8_MAX, abs(coeffBufferPtr[i * coeff_stride + j]));
-        }
-        for (int16_t j = 0; j < TX_PAD_HOR; j++) {
+        for (int16_t j = 0; j < TX_PAD_HOR; j++)
             *ls++ = 0;
-        }
     }
 }
 
@@ -378,9 +375,8 @@ void get_txb_ctx(
         *dc_sign_ctx = 0;
 
     if (plane == 0) {
-        if (plane_bsize == txsize_to_bsize[tx_size]) {
+        if (plane_bsize == txsize_to_bsize[tx_size])
             *txb_skip_ctx = 0;
-        }
         else {
             static const uint8_t skip_contexts[5][5] = { { 1, 2, 2, 2, 3 },
             { 1, 4, 4, 4, 5 },
@@ -476,7 +472,6 @@ void Av1WriteTxType(
                 av1_num_ext_tx_set[txSetType]);
         }
         else {
-
             aom_write_symbol(
                 ec_writer, av1_ext_tx_ind[txSetType][txType],
                 frameContext->intra_ext_tx_cdf[eset][squareTxSize][intraDir],
@@ -655,9 +650,8 @@ int32_t  Av1WriteCoeffsTxb1D(
                 aom_write_symbol(
                     ec_writer, sign, frameContext->dc_sign_cdf[component_type][dcSignCtx], 2);
             }
-            else {
+            else
                 aom_write_bit(ec_writer, sign);
-            }
             if (level > COEFF_BASE_RANGE + NUM_BASE_LEVELS) {
                 WriteGolomb(ec_writer,
                     level - COEFF_BASE_RANGE - 1 - NUM_BASE_LEVELS);
@@ -1309,7 +1303,6 @@ static int32_t cdf_element_prob(const AomCdfProb *const cdf,
 static void partition_gather_horz_alike(AomCdfProb *out,
     const AomCdfProb *const in,
     BlockSize bsize) {
-
     out[0] = CDF_PROB_TOP;
     out[0] -= cdf_element_prob(in, PARTITION_HORZ);
     out[0] -= cdf_element_prob(in, PARTITION_SPLIT);
@@ -1657,16 +1650,12 @@ static void EncodePredModeAv1(
         contextIndex = (mode_type_neighbor_array->left_array[modeTypeLeftNeighborIndex] == (uint8_t)INTRA_MODE && mode_type_neighbor_array->top_array[modeTypeTopNeighborIndex] == (uint8_t)INTRA_MODE) ? 3 :
             (mode_type_neighbor_array->left_array[modeTypeLeftNeighborIndex] == (uint8_t)INTRA_MODE || mode_type_neighbor_array->top_array[modeTypeTopNeighborIndex] == (uint8_t)INTRA_MODE) ? 1 : 0;
     }
-    else  if (mode_type_neighbor_array->left_array[modeTypeLeftNeighborIndex] != (uint8_t)INVALID_MODE) {
+    else  if (mode_type_neighbor_array->left_array[modeTypeLeftNeighborIndex] != (uint8_t)INVALID_MODE)
         contextIndex = (mode_type_neighbor_array->left_array[modeTypeLeftNeighborIndex] == (uint8_t)INTRA_MODE) ? 2 : 0;
-    }
-    else if (mode_type_neighbor_array->top_array[modeTypeTopNeighborIndex] != (uint8_t)INVALID_MODE) {
+    else if (mode_type_neighbor_array->top_array[modeTypeTopNeighborIndex] != (uint8_t)INVALID_MODE)
         contextIndex = (mode_type_neighbor_array->top_array[modeTypeTopNeighborIndex] == (uint8_t)INTRA_MODE) ? 2 : 0;
-    }
-    else {
+    else
         contextIndex = 0;
-    }
-
     aom_write_symbol(
         ec_writer,
         predModeFlag == INTER_MODE ? 1 : 0,
@@ -2090,9 +2079,8 @@ static void encode_mv_component(AomWriter *w, int32_t comp, NmvComponent *mvcomp
     aom_write_symbol(w, mv_class, mvcomp->classes_cdf, MV_CLASSES);
 
     // Integer bits
-    if (mv_class == MV_CLASS_0) {
+    if (mv_class == MV_CLASS_0)
         aom_write_symbol(w, d, mvcomp->class0_cdf, CLASS0_SIZE);
-    }
     else {
         int32_t i;
         const int32_t n = mv_class + CLASS0_BITS - 1;  // number of bits
@@ -2115,12 +2103,10 @@ static void encode_mv_component(AomWriter *w, int32_t comp, NmvComponent *mvcomp
 }
 
 MvJointType av1_get_mv_joint_diff(int32_t diff[2]) {
-    if (diff[0] == 0) {
+    if (diff[0] == 0)
         return diff[1] == 0 ? MV_JOINT_ZERO : MV_JOINT_HNZVZ;
-    }
-    else {
+    else
         return diff[1] == 0 ? MV_JOINT_HZVNZ : MV_JOINT_HNZVNZ;
-    }
 }
 
 static INLINE int32_t is_mv_valid(const MV *mv) {
@@ -2135,16 +2121,14 @@ void av1_encode_mv(
     const MV *ref,
     NmvContext *mvctx,
     int32_t usehp) {
-
     if (is_mv_valid(mv) == 0)
         printf("Corrupted MV\n");
 
     int32_t diff[2] = { mv->row - ref->row, mv->col - ref->col };
     const MvJointType j = av1_get_mv_joint_diff(diff);
 
-    if (pcs_ptr->cur_frame_force_integer_mv) {
+    if (pcs_ptr->cur_frame_force_integer_mv)
         usehp = MV_SUBPEL_NONE;
-    }
     aom_write_symbol(ec_writer, j, mvctx->joints_cdf, MV_JOINTS);
     if (mv_joint_vertical(j))
         encode_mv_component(ec_writer, diff[0], &mvctx->comps[0], (MvSubpelPrecision)usehp);
@@ -2221,9 +2205,8 @@ int32_t av1_get_pred_context_switchable_interp(
         //get_ref_filter_type(xd->mi[-xd->mi_stride], xd, dir, ref_frame);
     }
 
-    if (left_type == above_type) {
+    if (left_type == above_type)
         filter_type_ctx += left_type;
-    }
     else if (left_type == SWITCHABLE_FILTERS) {
         assert(above_type != SWITCHABLE_FILTERS);
         filter_type_ctx += above_type;
@@ -2232,9 +2215,8 @@ int32_t av1_get_pred_context_switchable_interp(
         assert(left_type != SWITCHABLE_FILTERS);
         filter_type_ctx += left_type;
     }
-    else {
+    else
         filter_type_ctx += SWITCHABLE_FILTERS;
-    }
     //  printf("\t %d\t %d\t %d",filter_type_ctx,left_type ,above_type);
 
     return filter_type_ctx;
@@ -2347,7 +2329,6 @@ int32_t av1_get_reference_mode_context(
     NeighborArrayUnit    *mode_type_neighbor_array,
     NeighborArrayUnit    *inter_pred_dir_neighbor_array)
 {
-
     uint32_t modeTypeLeftNeighborIndex = get_neighbor_array_unit_left_index(
         mode_type_neighbor_array,
         cu_origin_y);
@@ -2695,9 +2676,8 @@ INLINE void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd) {
     // Above neighbor
     if (above_in_image && is_inter_block(above_mbmi)) {
         ref_counts[above_mbmi->ref_frame[0]]++;
-        if (has_second_ref(above_mbmi)) {
+        if (has_second_ref(above_mbmi))
             ref_counts[above_mbmi->ref_frame[1]]++;
-        }
     }
 
     // Left neighbor
@@ -2818,7 +2798,6 @@ void av1_collect_neighbors_ref_counts(
     NeighborArrayUnit     *mode_type_neighbor_array,
     NeighborArrayUnit     *inter_pred_dir_neighbor_array,
     NeighborArrayUnit     *ref_frame_type_neighbor_array) {
-
     av1_zero(cu_ptr->av1xd->neighbors_ref_counts);
 
     uint8_t *const ref_counts = cu_ptr->av1xd->neighbors_ref_counts;
@@ -3111,9 +3090,8 @@ static void write_ref_frames(
         // does the feature use compound prediction or not
         // (if not specified at the frame/segment level)
         if (pcs_ptr->reference_mode == REFERENCE_MODE_SELECT) {
-            if (is_comp_ref_allowed(mbmi->sb_type)) {
+            if (is_comp_ref_allowed(mbmi->sb_type))
                 aom_write_symbol(w, is_compound, av1_get_reference_mode_cdf(xd), 2);
-            }
         }
         else {
             assert((!is_compound) ==
@@ -3141,10 +3119,8 @@ static void write_ref_frames(
                         WRITE_REF_BIT(bit2, uni_comp_ref_p2);
                     }
                 }
-                else {
+                else
                     assert(mbmi->ref_frame[1] == ALTREF_FRAME);
-                }
-
                 return;
             }
 
@@ -3177,9 +3153,8 @@ static void write_ref_frames(
             if (bit0) {
                 const int bit1 = mbmi->ref_frame[0] == ALTREF_FRAME;
                 WRITE_REF_BIT(bit1, single_ref_p2);
-                if (!bit1) {
+                if (!bit1)
                     WRITE_REF_BIT(mbmi->ref_frame[0] == ALTREF2_FRAME, single_ref_p6);
-                }
             }
             else {
                 const int bit2 = (mbmi->ref_frame[0] == LAST3_FRAME ||
@@ -3242,10 +3217,8 @@ static void WriteRefFrames(
                 aom_write_symbol(ec_writer, is_compound, frameContext->comp_inter_cdf[context], 2);
             }
         }
-        else {
+        else
             assert((!is_compound) == (pcs_ptr->reference_mode == SINGLE_REFERENCE));
-        }
-
         int32_t context = 0;
         if (is_compound) {
             const CompReferenceType comp_ref_type = /*has_uni_comp_refs(mbmi)
@@ -3434,12 +3407,10 @@ static void encode_restoration_mode(PictureParentControlSet *pcs_ptr,
         assert(rsi->restoration_unit_size >= sb_size);
         assert(RESTORATION_UNITSIZE_MAX == 256);
 
-        if (sb_size == 64) {
+        if (sb_size == 64)
             aom_wb_write_bit(wb, rsi->restoration_unit_size > 64);
-        }
-        if (rsi->restoration_unit_size > 64) {
+        if (rsi->restoration_unit_size > 64)
             aom_wb_write_bit(wb, rsi->restoration_unit_size > 128);
-        }
     }
 
     if (num_planes > 1) {
@@ -3547,9 +3518,8 @@ static void write_delta_q(struct AomWriteBitBuffer *wb, int32_t delta_q) {
         aom_wb_write_bit(wb, 1);
         aom_wb_write_inv_signed_literal(wb, delta_q, 6);
     }
-    else {
+    else
         aom_wb_write_bit(wb, 0);
-    }
 }
 
 static void encode_quantization(const PictureParentControlSet *const pcs_ptr,
@@ -3582,7 +3552,6 @@ static void encode_quantization(const PictureParentControlSet *const pcs_ptr,
 
 static void write_tile_info_max_tile(const PictureParentControlSet *const pcs_ptr,
     struct AomWriteBitBuffer *wb) {
-
     Av1Common * cm = pcs_ptr->av1_cm;
     aom_wb_write_bit(wb, pcs_ptr->uniform_tile_spacing_flag);
 
@@ -3590,21 +3559,16 @@ static void write_tile_info_max_tile(const PictureParentControlSet *const pcs_pt
         // Uniform spaced tiles with power-of-two number of rows and columns
         // tile columns
         int32_t ones = cm->log2_tile_cols - cm->min_log2_tile_cols;
-        while (ones--) {
+        while (ones--)
             aom_wb_write_bit(wb, 1);
-        }
-        if (cm->log2_tile_cols < cm->max_log2_tile_cols) {
+        if (cm->log2_tile_cols < cm->max_log2_tile_cols)
             aom_wb_write_bit(wb, 0);
-        }
-
         // rows
         ones = cm->log2_tile_rows - cm->min_log2_tile_rows;
-        while (ones--) {
+        while (ones--)
             aom_wb_write_bit(wb, 1);
-        }
-        if (cm->log2_tile_rows < cm->max_log2_tile_rows) {
+        if (cm->log2_tile_rows < cm->max_log2_tile_rows)
             aom_wb_write_bit(wb, 0);
-        }
     }
     else {
         // Explicit tiles with configurable tile widths and heights
@@ -3719,9 +3683,8 @@ void av1_calculate_tile_rows(PictureParentControlSet * pcs_ptr)
         cm->tile_height = size_sb << pcs_ptr->sequence_control_set_ptr->mib_size_log2;
         cm->tile_height = AOMMIN(cm->tile_height, cm->mi_rows);
     }
-    else {
+    else
         cm->log2_tile_rows = tile_log2(1, cm->tile_rows);
-    }
 }
 
  void set_tile_info(PictureParentControlSet * pcs_ptr)
@@ -4011,27 +3974,23 @@ void write_sequence_header(SequenceControlSet *scs_ptr/*Av1Comp *cpi*/, struct A
             aom_wb_write_bit(wb, scs_ptr->enable_ref_frame_mvs);
         }
 
-        if (scs_ptr->force_screen_content_tools == 2) {
+        if (scs_ptr->force_screen_content_tools == 2)
             aom_wb_write_bit(wb, 1);
-        }
         else {
             aom_wb_write_bit(wb, 0);
             aom_wb_write_bit(wb, scs_ptr->force_screen_content_tools);
         }
         //
         if (scs_ptr->force_screen_content_tools > 0) {
-            if (scs_ptr->force_integer_mv == 2) {
+            if (scs_ptr->force_integer_mv == 2)
                 aom_wb_write_bit(wb, 1);
-            }
             else {
                 aom_wb_write_bit(wb, 0);
                 aom_wb_write_bit(wb, scs_ptr->force_integer_mv);
             }
         }
-        else {
+        else
             assert(scs_ptr->force_integer_mv == 2);
-        }
-
         if (scs_ptr->enable_order_hint)
             aom_wb_write_literal(wb, scs_ptr->order_hint_bits_minus1, 3);
     }
@@ -4054,12 +4013,10 @@ static uint16_t recenter_nonneg(uint16_t r, uint16_t v) {
 // Recenters a non-negative literal v in [0, n-1] around a
 // reference r also in [0, n-1]
 static uint16_t recenter_finite_nonneg(uint16_t n, uint16_t r, uint16_t v) {
-    if ((r << 1) <= n) {
+    if ((r << 1) <= n)
         return recenter_nonneg(r, v);
-    }
-    else {
+    else
         return recenter_nonneg(n - 1 - r, n - 1 - v);
-    }
 }
 
 int32_t aom_count_primitive_symmetric(int16_t v, uint32_t abs_bits) {
@@ -4071,9 +4028,8 @@ void aom_write_primitive_quniform(AomWriter *w, uint16_t n, uint16_t v) {
     if (n <= 1) return;
     const int32_t l = get_msb(n - 1) + 1;
     const int32_t m = (1 << l) - n;
-    if (v < m) {
+    if (v < m)
         aom_write_literal(w, v, l - 1);
-    }
     else {
         aom_write_literal(w, m + ((v - m) >> 1), l - 1);
         aom_write_bit(w, (v - m) & 1);
@@ -4085,9 +4041,8 @@ static void aom_wb_write_primitive_quniform(struct AomWriteBitBuffer *wb,
     if (n <= 1) return;
     const int32_t l = get_msb(n - 1) + 1;
     const int32_t m = (1 << l) - n;
-    if (v < m) {
+    if (v < m)
         aom_wb_write_literal(wb, v, l - 1);
-    }
     else {
         aom_wb_write_literal(wb, m + ((v - m) >> 1), l - 1);
         aom_wb_write_bit(wb, (v - m) & 1);
@@ -4478,10 +4433,8 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
 
             return;
         }
-        else {
+        else
             aom_wb_write_bit(wb, 0);  // show_existing_frame
-        }
-
         //pcs_ptr->av1_frame_type = pcs_ptr->intra_only ? INTRA_ONLY_FRAME : pcs_ptr->av1_frame_type;
 
         aom_wb_write_literal(wb, pcs_ptr->av1_frame_type, 2);
@@ -4490,40 +4443,31 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
 
         aom_wb_write_bit(wb, pcs_ptr->show_frame);
 
-        if (!pcs_ptr->show_frame) {
+        if (!pcs_ptr->show_frame)
             aom_wb_write_bit(wb, pcs_ptr->showable_frame);
-        }
-        if (pcs_ptr->av1_frame_type == S_FRAME) {
+        if (pcs_ptr->av1_frame_type == S_FRAME)
             assert(pcs_ptr->error_resilient_mode);
-        }
-
-        else if (!(pcs_ptr->av1_frame_type == KEY_FRAME && pcs_ptr->show_frame)) {
+        else if (!(pcs_ptr->av1_frame_type == KEY_FRAME && pcs_ptr->show_frame))
             aom_wb_write_bit(wb, pcs_ptr->error_resilient_mode);
-        }
     }
 
     aom_wb_write_bit(wb, pcs_ptr->disable_cdf_update);
 
-    if (scs_ptr->force_screen_content_tools == 2) {
+    if (scs_ptr->force_screen_content_tools == 2)
         aom_wb_write_bit(wb, pcs_ptr->allow_screen_content_tools);
-    }
     else {
         assert(pcs_ptr->allow_screen_content_tools ==
             scs_ptr->force_screen_content_tools);
     }
 
     if (pcs_ptr->allow_screen_content_tools) {
-        if (scs_ptr->force_integer_mv == 2) {
+        if (scs_ptr->force_integer_mv == 2)
             aom_wb_write_bit(wb, pcs_ptr->cur_frame_force_integer_mv);
-        }
-        else {
+        else
             assert(pcs_ptr->cur_frame_force_integer_mv == scs_ptr->force_integer_mv);
-        }
     }
-    else {
+    else
         assert(pcs_ptr->cur_frame_force_integer_mv == 0);
-    }
-
     if (!scs_ptr->reduced_still_picture_hdr) {
         if (scs_ptr->frame_id_numbers_present_flag) {
             int32_t frame_id_len = scs_ptr->frame_id_length;
@@ -4546,15 +4490,13 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
             aom_wb_write_literal(wb, (int32_t)pcs_ptr->frame_offset,
                 scs_ptr->order_hint_bits_minus1 + 1);
 
-        if (!pcs_ptr->error_resilient_mode && !frame_is_intra_only(pcs_ptr)) {
+        if (!pcs_ptr->error_resilient_mode && !frame_is_intra_only(pcs_ptr))
             aom_wb_write_literal(wb, pcs_ptr->primary_ref_frame, PRIMARY_REF_BITS);
-        }
     }
     int32_t frame_size_override_flag = 0;
     if (pcs_ptr->av1_frame_type == KEY_FRAME) {
-        if (!pcs_ptr->show_frame) {
+        if (!pcs_ptr->show_frame)
             aom_wb_write_literal(wb, pcs_ptr->av1_ref_signal.refresh_frame_mask, REF_FRAMES);
-        }
     }
     else {
         if (pcs_ptr->av1_frame_type == INTRA_ONLY_FRAME) {
@@ -4575,13 +4517,10 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
         }
         else if (pcs_ptr->av1_frame_type == INTER_FRAME || frame_is_sframe(pcs_ptr)) {
             //pcs_ptr->refresh_frame_mask = get_refresh_mask(cpi);
-            if (pcs_ptr->av1_frame_type == INTER_FRAME) {
+            if (pcs_ptr->av1_frame_type == INTER_FRAME)
                 aom_wb_write_literal(wb, pcs_ptr->av1_ref_signal.refresh_frame_mask, REF_FRAMES);
-            }
-            else {
+            else
                 assert(frame_is_sframe(pcs_ptr) && pcs_ptr->av1_ref_signal.refresh_frame_mask == 0xFF);
-            }
-
             int32_t updated_fb = -1;
             for (int32_t i = 0; i < REF_FRAMES; i++) {
                 // If more than one frame is refreshed, it doesn't matter which one
@@ -4592,10 +4531,8 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
                 }
             }
             // large scale tile sometimes won't refresh any fbs
-            if (updated_fb >= 0) {
+            if (updated_fb >= 0)
                 pcs_ptr->fb_of_context_type[pcs_ptr->frame_context_idx] = updated_fb;
-            }
-
             if (!pcs_ptr->av1_ref_signal.refresh_frame_mask) {
                 // NOTE: "cpi->refresh_frame_mask == 0" indicates that the coded frame
                 //       will not be used as a reference
@@ -4661,17 +4598,12 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
                 printf("ERROR[AN]: frame_size_override_flag not supported yet\n");
                 //write_frame_size_with_refs(pcs_ptr, wb);
             }
-            else {
+            else
                 write_frame_size(pcs_ptr, frame_size_override_flag, wb);
-            }
-
-            if (pcs_ptr->cur_frame_force_integer_mv) {
+            if (pcs_ptr->cur_frame_force_integer_mv)
                 pcs_ptr->allow_high_precision_mv = 0;
-            }
-            else {
+            else
                 aom_wb_write_bit(wb, pcs_ptr->allow_high_precision_mv);
-            }
-
 #define LOG_SWITCHABLE_FILTERS  2
 
             // OPT fix_interp_filter(cm, cpi->td.counts);
@@ -4681,9 +4613,8 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
                 aom_wb_write_literal(wb, pcs_ptr->av1_cm->interp_filter, LOG_SWITCHABLE_FILTERS);
 
             aom_wb_write_bit(wb, pcs_ptr->switchable_motion_mode);
-            if (frame_might_allow_ref_frame_mvs(pcs_ptr, scs_ptr)) {
+            if (frame_might_allow_ref_frame_mvs(pcs_ptr, scs_ptr))
                 aom_wb_write_bit(wb, pcs_ptr->allow_ref_frame_mvs);
-            }
         }
     }
 
@@ -4753,13 +4684,11 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
     else {
         if (!pcs_ptr->coded_lossless) {
             encode_loopfilter(pcs_ptr, wb);
-            if (scs_ptr->enable_cdef) {
+            if (scs_ptr->enable_cdef)
                 encode_cdef(pcs_ptr, wb);
-            }
         }
-        if (scs_ptr->enable_restoration) {
+        if (scs_ptr->enable_restoration)
             encode_restoration_mode(pcs_ptr, wb);
-        }
     }
 
     aom_wb_write_bit(wb, pcs_ptr->tx_mode == TX_MODE_SELECT);
@@ -4785,9 +4714,8 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
         WriteGlobalMotion(pcs_ptr, wb);
     }
 
-    if (scs_ptr->film_grain_params_present && (pcs_ptr->show_frame || pcs_ptr->showable_frame)) {
+    if (scs_ptr->film_grain_params_present && (pcs_ptr->show_frame || pcs_ptr->showable_frame))
         write_film_grain_params(pcs_ptr, wb);
-    }
 }
 
 uint32_t WriteObuHeader(obuType obuType, int32_t obuExtension,
@@ -4801,10 +4729,8 @@ uint32_t WriteObuHeader(obuType obuType, int32_t obuExtension,
     aom_wb_write_literal(&wb, 1, 1);  // obu_has_payload_length_field
     aom_wb_write_literal(&wb, 0, 1);  // reserved
 
-    if (obuExtension) {
+    if (obuExtension)
         aom_wb_write_literal(&wb, obuExtension & 0xFF, 8);
-    }
-
     size = aom_wb_bytes_written(&wb);
     return size;
 }
@@ -4836,9 +4762,8 @@ static size_t ObuMemMove(
 }
 
 static void add_trailing_bits(struct AomWriteBitBuffer *wb) {
-    if (aom_wb_is_byte_aligned(wb)) {
+    if (aom_wb_is_byte_aligned(wb))
         aom_wb_write_literal(wb, 0x80, 8);
-    }
     else {
         // assumes that the other bits are already 0s
         aom_wb_write_bit(wb, 1);
@@ -5081,9 +5006,8 @@ EbErrorType encode_td_av1(
         OBU_TEMPORAL_DELIMITER, 0, data);
 
     // OBUs are preceded/succeeded by an unsigned leb128 coded integer.
-    if (WriteUlebObuSize(obu_header_size, obu_payload_size, data) != AOM_CODEC_OK) {
+    if (WriteUlebObuSize(obu_header_size, obu_payload_size, data) != AOM_CODEC_OK)
         //return AOM_CODEC_ERROR;
-    }
     data += obu_header_size + obu_payload_size + length_field_size;
     output_bitstream_ptr = data;
 
@@ -5111,9 +5035,8 @@ static void Av1writeDeltaQindex(
         aom_write_literal(w, rem_bits - 1, 3);
         aom_write_literal(w, abs - thr, rem_bits);
     }
-    if (abs > 0) {
+    if (abs > 0)
         aom_write_bit(w, sign);
-    }
 }
 #endif
 
@@ -5550,7 +5473,6 @@ static void write_intrabc_info(
     FRAME_CONTEXT           *ec_ctx,
     CodingUnit            *cu_ptr,
     AomWriter *w) {
-
     int use_intrabc = cu_ptr->av1xd->use_intrabc;
     aom_write_symbol(w, use_intrabc, ec_ctx->intrabc_cdf, 2);
     if (use_intrabc) {
@@ -6053,19 +5975,14 @@ assert(bsize < BlockSizeS_ALL);
 
     cu_ptr->av1xd->up_available = (mi_row > tb_ptr->tile_info.mi_row_start);
     cu_ptr->av1xd->left_available = (mi_col > tb_ptr->tile_info.mi_col_start);
-    if (cu_ptr->av1xd->up_available) {
+    if (cu_ptr->av1xd->up_available)
         cu_ptr->av1xd->above_mbmi = &mi_ptr[-mi_stride].mbmi;
-    }
-    else {
+    else
         cu_ptr->av1xd->above_mbmi = NULL;
-    }
-
-    if (cu_ptr->av1xd->left_available) {
+    if (cu_ptr->av1xd->left_available)
         cu_ptr->av1xd->left_mbmi = &mi_ptr[-1].mbmi;
-    }
-    else {
+    else
         cu_ptr->av1xd->left_mbmi = NULL;
-    }
     cu_ptr->av1xd->tile_ctx = frameContext;
 #endif
     if (picture_control_set_ptr->slice_type == I_SLICE) {
@@ -6095,9 +6012,8 @@ assert(bsize < BlockSizeS_ALL);
             /*((mi_row & (cm->seq_params.mib_size - 1)) == 0) && ((mi_col & (cm->seq_params.mib_size - 1)) == 0);*/
 
             BlockSize bsize = cu_size == 64 ? BLOCK_64X64 : cu_size == 32 ? BLOCK_32X32 : cu_size == 16 ? BLOCK_16X16 : cu_size == 8 ? BLOCK_8X8 : BLOCK_4X4;
-            if (cu_size == 8 && cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4) {
+            if (cu_size == 8 && cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4)
                 bsize = BLOCK_4X4;
-            }
             if ((bsize != sequence_control_set_ptr->sb_size || skipCoeff == 0) && super_block_upper_left) {
                 assert(current_q_index > 0);
                 int32_t reduced_delta_qindex = (current_q_index - picture_control_set_ptr->parent_pcs_ptr->prev_qindex) / picture_control_set_ptr->parent_pcs_ptr->delta_q_res;
@@ -6213,10 +6129,8 @@ assert(bsize < BlockSizeS_ALL);
                 blkOriginY,
                 skip_flag_neighbor_array);
         }
-        if (!picture_control_set_ptr->parent_pcs_ptr->skip_mode_flag && cu_ptr->skip_flag) {
+        if (!picture_control_set_ptr->parent_pcs_ptr->skip_mode_flag && cu_ptr->skip_flag)
             printf("ERROR[AN]: SKIP not supported\n");
-        }
-
         if (!cu_ptr->skip_flag) {
             //const int32_t skip = write_skip(cm, xd, mbmi->segment_id, mi, w);
             EncodeSkipCoeffAv1(
@@ -6244,10 +6158,8 @@ assert(bsize < BlockSizeS_ALL);
             /*((mi_row & (cm->seq_params.mib_size - 1)) == 0) && ((mi_col & (cm->seq_params.mib_size - 1)) == 0);*/
 
             BlockSize bsize = cu_size == 64 ? BLOCK_64X64 : cu_size == 32 ? BLOCK_32X32 : cu_size == 16 ? BLOCK_16X16 : cu_size == 8 ? BLOCK_8X8 : BLOCK_4X4;
-            if (cu_size == 8 && cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4) {
+            if (cu_size == 8 && cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4)
                 bsize = BLOCK_4X4;
-            }
-
             if ((bsize != sequence_control_set_ptr->sb_size || skipCoeff == 0) && super_block_upper_left) {
                 assert(current_q_index > 0);
 
@@ -6282,7 +6194,6 @@ assert(bsize < BlockSizeS_ALL);
         }
 #endif
         if (!cu_ptr->skip_flag) {
-
             //write_is_inter(cm, xd, mbmi->segment_id, w, is_inter)
             EncodePredModeAv1(
                 frameContext,
@@ -6567,9 +6478,8 @@ EB_EXTERN EbErrorType write_sb(
 
     SbGeom * sb_geom = &sequence_control_set_ptr->sb_geom[tb_ptr->index];// .block_is_inside_md_scan[blk_index])
 
-    if (!(sb_geom->is_complete_sb)) {
+    if (!(sb_geom->is_complete_sb))
         checkCuOutOfBound = EB_TRUE;
-    }
     do {
         EbBool codeCuCond = EB_TRUE; // Code cu only if it is inside the picture
 
@@ -6845,9 +6755,8 @@ EB_EXTERN EbErrorType write_sb(
                 final_cu_index++;
                 cu_index += ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth];
             }
-            else {
+            else
                 cu_index += d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth];
-            }
         }
         else
             ++cu_index;

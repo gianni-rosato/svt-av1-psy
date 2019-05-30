@@ -78,9 +78,8 @@ static EbErrorType eb_dec_handle_ctor(
     // Allocate Memory
     EbDecHandle   *dec_handle_ptr = (EbDecHandle  *)malloc(sizeof(EbDecHandle  ));
     *decHandleDblPtr = dec_handle_ptr;
-    if (dec_handle_ptr == (EbDecHandle  *)EB_NULL) {
+    if (dec_handle_ptr == (EbDecHandle  *)EB_NULL)
         return EB_ErrorInsufficientResources;
-    }
 #if MEM_MAP_OPT
     dec_handle_ptr->memory_map = (EbMemoryMapEntry*)malloc(sizeof(EbMemoryMapEntry));
     dec_handle_ptr->memory_map_index = 0;
@@ -295,16 +294,14 @@ EB_API EbErrorType eb_dec_init_handle(
         // also links the various Component control functions
         return_error = init_svt_av1_decoder_handle(*p_handle);
 
-        if (return_error == EB_ErrorNone) {
+        if (return_error == EB_ErrorNone)
             ((EbComponentType*)(*p_handle))->p_application_private = p_app_data;
-        }
         else if (return_error == EB_ErrorInsufficientResources) {
             eb_deinit_decoder((EbComponentType*)NULL);
             *p_handle = (EbComponentType*)NULL;
         }
-        else {
+        else
             return_error = EB_ErrorInvalidComponent;
-        }
     }
     else {
         //SVT_LOG("Error: Component Struct Malloc Failed\n");
@@ -413,10 +410,8 @@ EB_API EbErrorType eb_svt_dec_get_picture(
 
     EbDecHandle     *dec_handle_ptr = (EbDecHandle   *)svt_dec_component->p_component_private;
     /* Copy from recon pointer and return! TODO: Should remove the memcpy! */
-    if (0 == svt_dec_out_buf(dec_handle_ptr, p_buffer)) {
+    if (0 == svt_dec_out_buf(dec_handle_ptr, p_buffer))
         return_error = EB_DecNoOutputPicture;
-    }
-
     return return_error;
 }
 
@@ -506,9 +501,8 @@ EB_API EbErrorType eb_deinit_decoder(
                     break;
                 }
             }
-            if (dec_handle_ptr->memory_map != (EbMemoryMapEntry*)NULL) {
+            if (dec_handle_ptr->memory_map != (EbMemoryMapEntry*)NULL)
                 free(dec_handle_ptr->memory_map);
-            }
         }
     }
 #endif
@@ -522,13 +516,10 @@ EbErrorType eb_dec_component_de_init(EbComponentType  *svt_dec_component)
 {
     EbErrorType       return_error = EB_ErrorNone;
 
-    if (svt_dec_component->p_component_private) {
+    if (svt_dec_component->p_component_private)
         free((EbDecHandle *)svt_dec_component->p_component_private);
-    }
-    else {
+    else
         return_error = EB_ErrorUndefined;
-    }
-
     return return_error;
 }
 
@@ -545,10 +536,8 @@ EB_API EbErrorType eb_dec_deinit_handle(
 
         free(svt_dec_component);
     }
-    else {
+    else
         return_error = EB_ErrorInvalidComponent;
-    }
-
     return return_error;
 }
 

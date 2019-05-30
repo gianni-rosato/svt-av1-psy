@@ -90,7 +90,6 @@ static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
     return diff;
 }
 void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
-
     RefFrameInfo ref_frame_arr_single[7];
 
 #if REF_ORDER
@@ -105,10 +104,8 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
 #endif
     }
 #else
-    for (uint8_t i = 0; i < 7; ++i) {
+    for (uint8_t i = 0; i < 7; ++i)
         ref_frame_arr_single[i].used = 0;
-    }
-
     for (uint8_t i = 0; i < parent_pcs_ptr->ref_list0_count; ++i) {
         ref_frame_arr_single[i].used = 1;
         ref_frame_arr_single[i].ref_type = i + 1;
@@ -457,10 +454,8 @@ EbBool SceneTransitionDetector(
                 (ahdErrorCr > regionThreshHoldChroma && ahdCr >= ahdErrorCr)) {
                 isAbruptChange = EB_TRUE;
             }
-            else if ((ahdError > (regionThreshHold >> 1)) && ahd >= ahdError) {
+            else if ((ahdError > (regionThreshHold >> 1)) && ahd >= ahdError)
                 gradualChange = EB_TRUE;
-            }
-
             if (isAbruptChange)
             {
                 aidFuturePast = (uint8_t)ABS((int16_t)futurePictureControlSetPtr->average_intensity_per_region[regionInPictureWidthIndex][regionInPictureHeightIndex][0] - (int16_t)previousPictureControlSetPtr->average_intensity_per_region[regionInPictureWidthIndex][regionInPictureHeightIndex][0]);
@@ -493,10 +488,8 @@ EbBool SceneTransitionDetector(
                     ahd_running_avg[regionInPictureWidthIndex][regionInPictureHeightIndex] = (3 * ahd_running_avg[regionInPictureWidthIndex][regionInPictureHeightIndex] + ahd) / 4;
                 }
             }
-            else {
+            else
                 ahd_running_avg[regionInPictureWidthIndex][regionInPictureHeightIndex] = (3 * ahd_running_avg[regionInPictureWidthIndex][regionInPictureHeightIndex] + ahd) / 4;
-            }
-
             isAbruptChangeCount += isAbruptChange;
             isSceneChangeCount += is_scene_change;
         }
@@ -506,19 +499,14 @@ EbBool SceneTransitionDetector(
     (void)isFlash;
     (void)isFade;
 
-    if (isAbruptChangeCount >= regionCountThreshold) {
+    if (isAbruptChangeCount >= regionCountThreshold)
         context_ptr->reset_running_avg = EB_TRUE;
-    }
-    else {
+    else
         context_ptr->reset_running_avg = EB_FALSE;
-    }
-
-    if ((isSceneChangeCount >= regionCountThreshold) && ((!ParentPcsWindow[1]->fade_in_to_black) && (!ParentPcsWindow[1]->fade_out_from_black))) {
+    if ((isSceneChangeCount >= regionCountThreshold) && ((!ParentPcsWindow[1]->fade_in_to_black) && (!ParentPcsWindow[1]->fade_out_from_black)))
         return(EB_TRUE);
-    }
-    else {
+    else
         return(EB_FALSE);
-    }
 }
 
 /***************************************************************************************************
@@ -698,16 +686,14 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                 // 1st step: remove all positive entries from the dependant list0 and dependant list1
                 dependant_list_positive_entries = 0;
                 for (dep_idx = 0; dep_idx < input_entry_ptr->list0.list_count; ++dep_idx) {
-                    if (input_entry_ptr->list0.list[dep_idx] >= 0) {
+                    if (input_entry_ptr->list0.list[dep_idx] >= 0)
                         dependant_list_positive_entries++;
-                    }
                 }
                 input_entry_ptr->list0.list_count = input_entry_ptr->list0.list_count - dependant_list_positive_entries;
                 dependant_list_positive_entries = 0;
                 for (dep_idx = 0; dep_idx < input_entry_ptr->list1.list_count; ++dep_idx) {
-                    if (input_entry_ptr->list1.list[dep_idx] >= 0) {
+                    if (input_entry_ptr->list1.list[dep_idx] >= 0)
                         dependant_list_positive_entries++;
-                    }
                 }
                 input_entry_ptr->list1.list_count = input_entry_ptr->list1.list_count - dependant_list_positive_entries;
 
@@ -727,15 +713,13 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                 next_base_layer_pred_position_ptr = next_pred_struct_ptr->pred_struct_entry_ptr_array[next_pred_struct_ptr->pred_struct_entry_count - 1];
 
                 for (dep_idx = 0; dep_idx < next_base_layer_pred_position_ptr->dep_list0.list_count; ++dep_idx) {
-                    if (next_base_layer_pred_position_ptr->dep_list0.list[dep_idx] >= 0) {
+                    if (next_base_layer_pred_position_ptr->dep_list0.list[dep_idx] >= 0)
                         input_entry_ptr->list0.list[input_entry_ptr->list0.list_count++] = next_base_layer_pred_position_ptr->dep_list0.list[dep_idx];
-                    }
                 }
 
                 for (dep_idx = 0; dep_idx < next_base_layer_pred_position_ptr->dep_list1.list_count; ++dep_idx) {
-                    if (next_base_layer_pred_position_ptr->dep_list1.list[dep_idx] >= 0) {
+                    if (next_base_layer_pred_position_ptr->dep_list1.list[dep_idx] >= 0)
                         input_entry_ptr->list1.list[input_entry_ptr->list1.list_count++] = next_base_layer_pred_position_ptr->dep_list1.list[dep_idx];
-                    }
                 }
 
                 // 3rd step: update the dependant count
@@ -819,9 +803,8 @@ EbBool is_supposedly_4L_reference_frame(
         (context_ptr->mini_gop_hierarchical_levels[MiniGopIndex] == 5 && context_ptr->mini_gop_length[MiniGopIndex] == 32 && (picture_index == 7 || picture_index == 23))) { // supposedly a 4L reference frame for 6L prediction structure
         return(EB_TRUE);
     }
-    else {
+    else
         return(EB_FALSE);
-    }
 }
 
 /***************************************************************************************************
@@ -1068,12 +1051,10 @@ EbErrorType signal_derivation_multi_processes_oq(
         break;
     }
 
-    if (picture_control_set_ptr->nsq_search_level == NSQ_SEARCH_OFF) {
+    if (picture_control_set_ptr->nsq_search_level == NSQ_SEARCH_OFF)
         if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) picture_control_set_ptr->pic_depth_mode = PIC_SQ_DEPTH_MODE;
-    }
-    if (picture_control_set_ptr->pic_depth_mode > PIC_SQ_DEPTH_MODE) {
+    if (picture_control_set_ptr->pic_depth_mode > PIC_SQ_DEPTH_MODE)
         assert(picture_control_set_ptr->nsq_search_level == NSQ_SEARCH_OFF);
-    }
     // Interpolation search Level                     Settings
     // 0                                              OFF
     // 1                                              Interpolation search at inter-depth
@@ -1174,10 +1155,8 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->loop_filter_mode = 1;
 #endif
     }
-    else {
+    else
         picture_control_set_ptr->loop_filter_mode = 0;
-    }
-
     // CDEF Level                                   Settings
     // 0                                            OFF
     // 1                                            1 step refinement
@@ -1808,7 +1787,6 @@ void  Av1GenerateRpsInfo(
         case 2:
 
             if (pictureIndex == 1) {
-
                 //{  2,  4,  6,  10}    // GOP Index 2 - Ref List 0
                 //{ -2, -6,  0,   0}    // GOP Index 2 - Ref List 1
 
@@ -1984,9 +1962,8 @@ void  Av1GenerateRpsInfo(
                 av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
 #endif
             }
-            else {
+            else
                 printf("Error in GOp indexing\n");
-            }
             av1Rps->refresh_frame_mask = 0;
             break;
 
@@ -2054,21 +2031,16 @@ void  Av1GenerateRpsInfo(
                     picture_control_set_ptr->show_frame = EB_TRUE;
                     picture_control_set_ptr->has_show_existing = EB_TRUE;
 
-                    if (pictureIndex == 0) {
+                    if (pictureIndex == 0)
                         picture_control_set_ptr->show_existing_loc = lay2_1_idx;
-                    }
-                    else if (pictureIndex == 2) {
+                    else if (pictureIndex == 2)
                         picture_control_set_ptr->show_existing_loc = lay1_1_idx;
-                    }
-                    else if (pictureIndex == 4) {
+                    else if (pictureIndex == 4)
                         picture_control_set_ptr->show_existing_loc = lay2_1_idx;
-                    }
-                    else if (pictureIndex == 6) {
+                    else if (pictureIndex == 6)
                         picture_control_set_ptr->show_existing_loc = base2_idx;
-                    }
-                    else {
+                    else
                         printf("Error in GOp indexing2\n");
-                    }
                 }
             }
         }
@@ -2154,9 +2126,8 @@ void  Av1GenerateRpsInfo(
                 av1Rps->ref_dpb_index[0] = layer1_idx;
                 av1Rps->ref_dpb_index[6] = base1_idx;
             }
-            else {
+            else
                 printf("Error in GOp indexing\n");
-            }
             av1Rps->refresh_frame_mask = 4;
             break;
         case 3:
@@ -2176,9 +2147,8 @@ void  Av1GenerateRpsInfo(
                 av1Rps->ref_dpb_index[0] = layer2_idx;
                 av1Rps->ref_dpb_index[6] = base1_idx;
             }
-            else {
+            else
                 printf("Error in GOp indexing\n");
-            }
             av1Rps->refresh_frame_mask = 0;
             break;
         default:
@@ -2230,21 +2200,16 @@ void  Av1GenerateRpsInfo(
                     picture_control_set_ptr->show_frame = EB_TRUE;
                     picture_control_set_ptr->has_show_existing = EB_TRUE;
 
-                    if (pictureIndex == 0) {
+                    if (pictureIndex == 0)
                         picture_control_set_ptr->show_existing_loc = layer2_idx;
-                    }
-                    else if (pictureIndex == 2) {
+                    else if (pictureIndex == 2)
                         picture_control_set_ptr->show_existing_loc = layer1_idx;
-                    }
-                    else if (pictureIndex == 4) {
+                    else if (pictureIndex == 4)
                         picture_control_set_ptr->show_existing_loc = layer2_idx;
-                    }
-                    else if (pictureIndex == 6) {
+                    else if (pictureIndex == 6)
                         picture_control_set_ptr->show_existing_loc = base1_idx;
-                    }
-                    else {
+                    else
                         printf("Error in GOp indexing2\n");
-                    }
                 }
             }
         }
@@ -2533,10 +2498,8 @@ void  Av1GenerateRpsInfo(
                 av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
 #endif
             }
-            else {
+            else
                 printf("Error in GOp indexing\n");
-            }
-
             av1Rps->refresh_frame_mask = 1 << 7;
             break;
 
@@ -2751,9 +2714,8 @@ void  Av1GenerateRpsInfo(
                 av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
 #endif
             }
-            else {
+            else
                 printf("Error in GOp indexing\n");
-            }
             av1Rps->refresh_frame_mask = 0;
             break;
 
@@ -2828,33 +2790,24 @@ void  Av1GenerateRpsInfo(
                     picture_control_set_ptr->show_frame = EB_TRUE;
                     picture_control_set_ptr->has_show_existing = EB_TRUE;
 
-                    if (pictureIndex == 0) {
+                    if (pictureIndex == 0)
                         picture_control_set_ptr->show_existing_loc = lay3_idx;
-                    }
-                    else if (pictureIndex == 2) {
+                    else if (pictureIndex == 2)
                         picture_control_set_ptr->show_existing_loc = lay2_1_idx;
-                    }
-                    else if (pictureIndex == 4) {
+                    else if (pictureIndex == 4)
                         picture_control_set_ptr->show_existing_loc = lay3_idx;
-                    }
-                    else if (pictureIndex == 6) {
+                    else if (pictureIndex == 6)
                         picture_control_set_ptr->show_existing_loc = lay1_1_idx;
-                    }
-                    else if (pictureIndex == 8) {
+                    else if (pictureIndex == 8)
                         picture_control_set_ptr->show_existing_loc = lay3_idx;
-                    }
-                    else if (pictureIndex == 10) {
+                    else if (pictureIndex == 10)
                         picture_control_set_ptr->show_existing_loc = lay2_1_idx;
-                    }
-                    else if (pictureIndex == 12) {
+                    else if (pictureIndex == 12)
                         picture_control_set_ptr->show_existing_loc = lay3_idx;
-                    }
-                    else if (pictureIndex == 14) {
+                    else if (pictureIndex == 14)
                         picture_control_set_ptr->show_existing_loc = base2_idx;
-                    }
-                    else {
+                    else
                         printf("Error in GOp indexing2\n");
-                    }
                 }
             }
         }
@@ -2971,9 +2924,8 @@ void  Av1GenerateRpsInfo(
             av1Rps->ref_dpb_index[6] = base1_idx;
             av1Rps->refresh_frame_mask = 32;
         }
-        else {
+        else
             printf("Error in GOp indexing\n");
-        }
         break;
     case 4:
         if (pictureIndex == 0) {
@@ -3008,9 +2960,8 @@ void  Av1GenerateRpsInfo(
             av1Rps->ref_dpb_index[0] = layer3_idx2;
             av1Rps->ref_dpb_index[6] = base1_idx;
         }
-        else {
+        else
             printf("Error in GOp indexing\n");
-        }
         av1Rps->refresh_frame_mask = 0;
         break;
     default:
@@ -3067,33 +3018,24 @@ void  Av1GenerateRpsInfo(
                 picture_control_set_ptr->show_frame = EB_TRUE;
                 picture_control_set_ptr->has_show_existing = EB_TRUE;
 
-                if (pictureIndex == 0) {
+                if (pictureIndex == 0)
                     picture_control_set_ptr->show_existing_loc = layer3_idx1;
-                }
-                else if (pictureIndex == 2) {
+                else if (pictureIndex == 2)
                     picture_control_set_ptr->show_existing_loc = layer2_idx;
-                }
-                else if (pictureIndex == 4) {
+                else if (pictureIndex == 4)
                     picture_control_set_ptr->show_existing_loc = layer3_idx2;
-                }
-                else if (pictureIndex == 6) {
+                else if (pictureIndex == 6)
                     picture_control_set_ptr->show_existing_loc = layer1_idx;
-                }
-                else if (pictureIndex == 8) {
+                else if (pictureIndex == 8)
                     picture_control_set_ptr->show_existing_loc = layer3_idx1;
-                }
-                else if (pictureIndex == 10) {
+                else if (pictureIndex == 10)
                     picture_control_set_ptr->show_existing_loc = layer2_idx;
-                }
-                else if (pictureIndex == 12) {
+                else if (pictureIndex == 12)
                     picture_control_set_ptr->show_existing_loc = layer3_idx2;
-                }
-                else if (pictureIndex == 14) {
+                else if (pictureIndex == 14)
                     picture_control_set_ptr->show_existing_loc = base1_idx;
-                }
-                else {
+                else
                     printf("Error in GOp indexing2\n");
-                }
             }
         }
     }
@@ -3166,10 +3108,8 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         picture_control_set_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
         DownSampleChroma(input_picture_ptr, picture_control_set_ptr->chroma_downsampled_picture_ptr);
     }
-    else {
+    else
         picture_control_set_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
-    }
-
     // Pad input picture to complete border LCUs
     PadPictureToMultipleOfLcuDimensions(
         input_padded_picture_ptr);
@@ -3413,18 +3353,16 @@ void* picture_decision_kernel(void *input_ptr)
                 ((PictureParentControlSet *)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->end_of_sequence_flag == EB_TRUE){
                 framePasseThru = EB_TRUE;
             }
-            else {
+            else
                 framePasseThru = EB_FALSE;
-            }
             windowAvail = EB_TRUE;
             previousEntryIndex = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
 
 #if ALTREF_FILTERING_SUPPORT
             ParentPcsWindow[0] = ParentPcsWindow[1] = ParentPcsWindow[2] = ParentPcsWindow[3] = ParentPcsWindow[4] = ParentPcsWindow[5] = NULL;
 #endif
-            if (encode_context_ptr->picture_decision_reorder_queue[previousEntryIndex]->parent_pcs_wrapper_ptr == NULL) {
+            if (encode_context_ptr->picture_decision_reorder_queue[previousEntryIndex]->parent_pcs_wrapper_ptr == NULL)
                 windowAvail = EB_FALSE;
-            }
             else {
                 ParentPcsWindow[0] = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[previousEntryIndex]->parent_pcs_wrapper_ptr->object_ptr;
                 ParentPcsWindow[1] = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index]->parent_pcs_wrapper_ptr->object_ptr;
@@ -3460,9 +3398,8 @@ void* picture_decision_kernel(void *input_ptr)
                         ParentPcsWindow,
                         FUTURE_WINDOW_WIDTH);
                 }
-                else {
+                else
                     picture_control_set_ptr->scene_change_flag = EB_FALSE;
-                }
                 picture_control_set_ptr->cra_flag = (picture_control_set_ptr->scene_change_flag == EB_TRUE) ?
                     EB_TRUE :
                     picture_control_set_ptr->cra_flag;
@@ -3496,9 +3433,8 @@ void* picture_decision_kernel(void *input_ptr)
                     encode_context_ptr);
 
                 // If the Intra period length is 0, then introduce an intra for every picture
-                if (sequence_control_set_ptr->intra_period_length == 0) {
+                if (sequence_control_set_ptr->intra_period_length == 0)
                     picture_control_set_ptr->cra_flag = EB_TRUE;
-                }
                 // If an #IntraPeriodLength has passed since the last Intra, then introduce a CRA or IDR based on Intra Refresh type
                 else if (sequence_control_set_ptr->intra_period_length != -1) {
                     picture_control_set_ptr->cra_flag =
@@ -3614,10 +3550,8 @@ void* picture_decision_kernel(void *input_ptr)
                                 picture_control_set_ptr->cra_flag == EB_FALSE)
                             {
                                 // Correct the Pred Index before switching structures
-                                if (preAssignmentBufferFirstPassFlag == EB_TRUE) {
+                                if (preAssignmentBufferFirstPassFlag == EB_TRUE)
                                     encode_context_ptr->pred_struct_position -= picture_control_set_ptr->pred_struct_ptr->init_pic_index;
-                                }
-
                                 picture_control_set_ptr->pred_struct_ptr = get_prediction_structure(
                                     encode_context_ptr->prediction_structure_group_ptr,
                                     EB_PRED_LOW_DELAY_P,
@@ -3667,13 +3601,10 @@ void* picture_decision_kernel(void *input_ptr)
                                 encode_context_ptr->pred_struct_position;
 
                             // If Intra, reset position
-                            if (picture_control_set_ptr->idr_flag == EB_TRUE) {
+                            if (picture_control_set_ptr->idr_flag == EB_TRUE)
                                 encode_context_ptr->pred_struct_position = picture_control_set_ptr->pred_struct_ptr->init_pic_index;
-                            }
-
-                            else if (picture_control_set_ptr->cra_flag == EB_TRUE && context_ptr->mini_gop_length[mini_gop_index] < picture_control_set_ptr->pred_struct_ptr->pred_struct_period) {
+                            else if (picture_control_set_ptr->cra_flag == EB_TRUE && context_ptr->mini_gop_length[mini_gop_index] < picture_control_set_ptr->pred_struct_ptr->pred_struct_period)
                                 encode_context_ptr->pred_struct_position = picture_control_set_ptr->pred_struct_ptr->init_pic_index;
-                            }
                             else if (encode_context_ptr->elapsed_non_cra_count == 0) {
                                 // If we are the picture directly after a CRA, we have to not use references that violate the CRA
                                 encode_context_ptr->pred_struct_position = picture_control_set_ptr->pred_struct_ptr->init_pic_index + 1;
@@ -3689,21 +3620,16 @@ void* picture_decision_kernel(void *input_ptr)
                             //    }
                             //}
                             // Else, Increment the position normally
-                            else {
+                            else
                                 ++encode_context_ptr->pred_struct_position;
-                            }
-
                             // The poc number of the latest IDR picture is stored so that last_idr_picture (present in PCS) for the incoming pictures can be updated.
                             // The last_idr_picture is used in reseting the poc (in entropy coding) whenever IDR is encountered.
                             // Note IMP: This logic only works when display and decode order are the same. Currently for Random Access, IDR is inserted (similar to CRA) by using trailing P pictures (low delay fashion) and breaking prediction structure.
                             // Note: When leading P pictures are implemented, this logic has to change..
-                            if (picture_control_set_ptr->idr_flag == EB_TRUE) {
+                            if (picture_control_set_ptr->idr_flag == EB_TRUE)
                                 encode_context_ptr->last_idr_picture = picture_control_set_ptr->picture_number;
-                            }
-                            else {
+                            else
                                 picture_control_set_ptr->last_idr_picture = encode_context_ptr->last_idr_picture;
-                            }
-
                             // Cycle the PredStructPosition if its overflowed
                             encode_context_ptr->pred_struct_position = (encode_context_ptr->pred_struct_position == picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_count) ?
                                 encode_context_ptr->pred_struct_position - picture_control_set_ptr->pred_struct_ptr->pred_struct_period :
@@ -3751,9 +3677,8 @@ void* picture_decision_kernel(void *input_ptr)
                                 case I_SLICE:
 
                                     // Reset Prediction Structure Position & Reference Struct Position
-                                    if (picture_control_set_ptr->picture_number == 0) {
+                                    if (picture_control_set_ptr->picture_number == 0)
                                         encode_context_ptr->intra_period_position = 0;
-                                    }
                                     encode_context_ptr->elapsed_non_cra_count = 0;
 
                                     //-------------------------------
@@ -3839,10 +3764,8 @@ void* picture_decision_kernel(void *input_ptr)
                                 {
                                     picture_control_set_ptr->decode_order = encode_context_ptr->decode_base_number + predPositionPtr->decode_order;
                                 }
-                                else {
+                                else
                                     picture_control_set_ptr->decode_order = picture_control_set_ptr->picture_number;
-                                }
-
                                 encode_context_ptr->terminating_sequence_flag_received = (picture_control_set_ptr->end_of_sequence_flag == EB_TRUE) ?
                                     EB_TRUE :
                                     encode_context_ptr->terminating_sequence_flag_received;
@@ -3981,7 +3904,6 @@ void* picture_decision_kernel(void *input_ptr)
                                         // Modify Dependent List0
                                         depListCount = inputEntryPtr->list0.list_count;
                                         for (depIdx = 0; depIdx < depListCount; ++depIdx) {
-
                                             // Adjust the latest current_input_poc in case we're in a POC rollover scenario
                                             // current_input_poc += (current_input_poc < inputEntryPtr->pocNumber) ? (1 << sequence_control_set_ptr->bits_for_picture_order_count) : 0;
 
@@ -4125,14 +4047,12 @@ void* picture_decision_kernel(void *input_ptr)
                                     // *Note - we are removing any leading picture dependencies for now
                                     inputEntryPtr->list0.list_count = 0;
                                     for (depIdx = 0; depIdx < predPositionPtr->dep_list0.list_count; ++depIdx) {
-                                        if (predPositionPtr->dep_list0.list[depIdx] >= 0) {
+                                        if (predPositionPtr->dep_list0.list[depIdx] >= 0)
                                             inputEntryPtr->list0.list[inputEntryPtr->list0.list_count++] = predPositionPtr->dep_list0.list[depIdx];
-                                        }
                                     }
                                     inputEntryPtr->list1.list_count = predPositionPtr->dep_list1.list_count;
-                                    for (depIdx = 0; depIdx < predPositionPtr->dep_list1.list_count; ++depIdx) {
+                                    for (depIdx = 0; depIdx < predPositionPtr->dep_list1.list_count; ++depIdx)
                                         inputEntryPtr->list1.list[depIdx] = predPositionPtr->dep_list1.list[depIdx];
-                                    }
 #if ALT_REF_OVERLAY
                                     // add the overlay picture to the dependant list
                                     inputEntryPtr->dep_list0_count = (picture_control_set_ptr->is_alt_ref) ? inputEntryPtr->list0.list_count + 1 : inputEntryPtr->list0.list_count;
@@ -4216,9 +4136,8 @@ void* picture_decision_kernel(void *input_ptr)
                                         picture_control_set_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
                                         actual_future_pics++;
                                     }
-                                    else {
+                                    else
                                         break;
-                                    }
                                 }
 
                                 //search in pre-ass if still short
@@ -4303,10 +4222,8 @@ void* picture_decision_kernel(void *input_ptr)
                                 (context_ptr->mini_gop_length[mini_gop_index] == picture_control_set_ptr->pred_struct_ptr->pred_struct_period) && !picture_control_set_ptr->is_overlay){
                                 picture_control_set_ptr->decode_order = encode_context_ptr->decode_base_number + picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[picture_control_set_ptr->pred_struct_index]->decode_order;
                             }
-                            else {
+                            else
                                 picture_control_set_ptr->decode_order = picture_control_set_ptr->picture_number_alt;
-                            }
-
                             encode_context_ptr->terminating_sequence_flag_received = (picture_control_set_ptr->end_of_sequence_flag == EB_TRUE) ?
                                 EB_TRUE :
                                 encode_context_ptr->terminating_sequence_flag_received;
@@ -4584,13 +4501,10 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
                             {
                                 picture_control_set_ptr->intensity_transition_flag = EB_FALSE;
-                                if (picture_control_set_ptr->ref_list0_count) {
+                                if (picture_control_set_ptr->ref_list0_count)
                                     picture_control_set_ptr->scene_transition_flag[REF_LIST_0] = EB_FALSE;
-                                }
-
-                                if (picture_control_set_ptr->ref_list1_count) {
+                                if (picture_control_set_ptr->ref_list1_count)
                                     picture_control_set_ptr->scene_transition_flag[REF_LIST_1] = EB_FALSE;
-                                }
                             }
 
 #if MRP_MVP

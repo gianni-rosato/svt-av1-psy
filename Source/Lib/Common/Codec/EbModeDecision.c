@@ -271,49 +271,38 @@ EbErrorType mode_decision_candidate_buffer_ctor(
         (EbPtr*)&(bufferPtr->prediction_ptr_temp),
         (EbPtr)&pictureBufferDescInitData);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*)&(bufferPtr->cfl_temp_prediction_ptr),
         (EbPtr)&pictureBufferDescInitData);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*)&(bufferPtr->residual_ptr),
         (EbPtr)&doubleWidthPictureBufferDescInitData);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*)&(bufferPtr->residual_quant_coeff_ptr),
         (EbPtr)&ThirtyTwoWidthPictureBufferDescInitData);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*)&(bufferPtr->recon_coeff_ptr),
         (EbPtr)&ThirtyTwoWidthPictureBufferDescInitData);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*)&(bufferPtr->recon_ptr),
         (EbPtr)&pictureBufferDescInitData);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     //Distortion
     bufferPtr->residual_luma_sad = 0;
 
@@ -534,21 +523,14 @@ void LimitMvOverBound(
     mvxF = (*mvx) >> 2;
     mvyF = (*mvy) >> 2;
 
-    if ((int32_t)ctxtPtr->cu_origin_x + mvxF + (int32_t)ctxtPtr->blk_geom->bwidth > (int32_t)sCSet->luma_width) {
+    if ((int32_t)ctxtPtr->cu_origin_x + mvxF + (int32_t)ctxtPtr->blk_geom->bwidth > (int32_t)sCSet->luma_width)
         *mvx = (int16_t)(sCSet->luma_width - ctxtPtr->blk_geom->bwidth - ctxtPtr->cu_origin_x);
-    }
-
-    if ((int32_t)ctxtPtr->cu_origin_y + mvyF + (int32_t)ctxtPtr->blk_geom->bheight > (int32_t)sCSet->luma_height) {
+    if ((int32_t)ctxtPtr->cu_origin_y + mvyF + (int32_t)ctxtPtr->blk_geom->bheight > (int32_t)sCSet->luma_height)
         *mvy = (int16_t)(sCSet->luma_height - ctxtPtr->blk_geom->bheight - ctxtPtr->cu_origin_y);
-    }
-
-    if ((int32_t)ctxtPtr->cu_origin_x + mvxF < 0) {
+    if ((int32_t)ctxtPtr->cu_origin_x + mvxF < 0)
         *mvx = -(int16_t)ctxtPtr->cu_origin_x;
-    }
-
-    if ((int32_t)ctxtPtr->cu_origin_y + mvyF < 0) {
+    if ((int32_t)ctxtPtr->cu_origin_y + mvyF < 0)
         *mvy = -(int16_t)ctxtPtr->cu_origin_y;
-    }
 }
 
 void sort_fast_loop_candidates(
@@ -564,12 +546,10 @@ void sort_fast_loop_candidates(
     uint32_t best_candidate_start_index = 0;
     uint32_t best_candidate_end_index = buffer_total_count - 1;
     for (uint8_t full_buffer_index = 0; full_buffer_index < buffer_total_count; full_buffer_index++) {
-        if (*(buffer_ptr_array[full_buffer_index]->fast_cost_ptr) == MAX_CU_COST) {
+        if (*(buffer_ptr_array[full_buffer_index]->fast_cost_ptr) == MAX_CU_COST)
             best_candidate_index_array[best_candidate_end_index--] = full_buffer_index;
-        }
-        else {
+        else
             best_candidate_index_array[best_candidate_start_index++] = full_buffer_index;
-        }
     }
 
     // fl escape: inter then intra
@@ -587,9 +567,8 @@ void sort_fast_loop_candidates(
 
 #if M9_FULL_LOOP_ESCAPE
     // fl escape level 2: inter then intra
-    for (i = 0; i < fullReconCandidateCount; ++i) {
+    for (i = 0; i < fullReconCandidateCount; ++i)
         sorted_candidate_index_array[i] = best_candidate_index_array[i];
-    }
     for (i = 0; i < fullReconCandidateCount - 1; ++i) {
         for (j = i + 1; j < fullReconCandidateCount; ++j) {
             if (*(buffer_ptr_array[sorted_candidate_index_array[j]]->fast_cost_ptr) < *(buffer_ptr_array[sorted_candidate_index_array[i]]->fast_cost_ptr)) {
@@ -604,13 +583,11 @@ void sort_fast_loop_candidates(
 #else
     // tx search
     for (i = 0; i < fullReconCandidateCount; i++) {
-        if (*(buffer_ptr_array[i]->fast_cost_ptr) < *ref_fast_cost) {
+        if (*(buffer_ptr_array[i]->fast_cost_ptr) < *ref_fast_cost)
             *ref_fast_cost = *(buffer_ptr_array[i]->fast_cost_ptr);
-        }
     }
-    for (i = 0; i < MAX_NFL; ++i) {
+    for (i = 0; i < MAX_NFL; ++i)
         sorted_candidate_index_array[i] = best_candidate_index_array[i];
-    }
     for (i = 0; i < fullReconCandidateCount - 1; ++i) {
         for (j = i + 1; j < fullReconCandidateCount; ++j) {
             if (*(buffer_ptr_array[j]->fast_cost_ptr) < *(buffer_ptr_array[i]->fast_cost_ptr)) {
@@ -2504,10 +2481,8 @@ void  inject_inter_candidates(
         geom_offset_x = (me_sb_x & 0x1) * me_sb_size;
         geom_offset_y = (me_sb_y & 0x1) * me_sb_size;
     }
-    else {
+    else
         me_sb_addr = lcuAddr;
-    }
-
     uint32_t max_number_of_pus_per_sb;
 
     max_number_of_pus_per_sb = picture_control_set_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
@@ -3249,10 +3224,8 @@ void  inject_inter_candidates(
         geom_offset_x = (me_sb_x & 0x1) * me_sb_size;
         geom_offset_y = (me_sb_y & 0x1) * me_sb_size;
     }
-    else {
+    else
         me_sb_addr = lcuAddr;
-    }
-
     uint32_t max_number_of_pus_per_sb;
 
     max_number_of_pus_per_sb = picture_control_set_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
@@ -3912,9 +3885,8 @@ static INLINE TxType av1_get_tx_type(
         /*av1_*/get_ext_tx_set_type(tx_size, is_inter, reduced_tx_set);
 
     TxType tx_type = DCT_DCT;
-    if ( /*xd->lossless[mbmi->segment_id] ||*/ txsize_sqr_up_map[tx_size] > TX_32X32) {
+    if ( /*xd->lossless[mbmi->segment_id] ||*/ txsize_sqr_up_map[tx_size] > TX_32X32)
         tx_type = DCT_DCT;
-    }
     else {
         if (plane_type == PLANE_TYPE_Y) {
             //const int32_t txk_type_idx =
@@ -3962,7 +3934,6 @@ void  inject_intra_candidates_ois(
     uint8_t              total_intra_luma_mode = ois_sb_results_ptr-> total_ois_intra_candidate[ep_to_pa_block_index[context_ptr->blk_geom->blkidx_mds]];
 
     for (intra_candidate_counter = 0; intra_candidate_counter < total_intra_luma_mode; ++intra_candidate_counter) {
-
         intra_mode = ois_blk_ptr[can_total_cnt].intra_mode;
         assert(intra_mode < INTRA_MODES);
         if (av1_is_directional_mode((PredictionMode)intra_mode)) {
@@ -4227,12 +4198,10 @@ void  intra_bc_search(
     IntMv nearestmv, nearmv;
     av1_find_best_ref_mvs_from_stack(0, context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack /*mbmi_ext*/, xd, ref_frame, &nearestmv, &nearmv,
         0);
-    if (nearestmv.as_int == INVALID_MV) {
+    if (nearestmv.as_int == INVALID_MV)
         nearestmv.as_int = 0;
-    }
-    if (nearmv.as_int == INVALID_MV) {
+    if (nearmv.as_int == INVALID_MV)
         nearmv.as_int = 0;
-    }
     IntMv dv_ref = nearestmv.as_int == 0 ? nearmv : nearestmv;
     if (dv_ref.as_int == 0)
         av1_find_ref_dv(&dv_ref, tile, scs->mib_size, mi_row, mi_col);
@@ -4248,9 +4217,8 @@ void  intra_bc_search(
         &cur_buf);
     struct Buf2D yv12_mb[MAX_MB_PLANE];
     av1_setup_pred_block(bsize, yv12_mb, &cur_buf, mi_row, mi_col);
-    for (int i = 0; i < num_planes; ++i) {
+    for (int i = 0; i < num_planes; ++i)
         x->xdplane[i].pre[0] = yv12_mb[i];  //ref in ME
-    }
     //setup src for DV search same as ref
     x->plane[0].src = x->xdplane[0].pre[0];
 
@@ -4870,10 +4838,8 @@ uint8_t product_full_mode_decision(
     context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].merge_cost = *buffer_ptr_array[lowestCostIndex]->full_cost_merge_ptr;
     context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].skip_cost = *buffer_ptr_array[lowestCostIndex]->full_cost_skip_ptr;
 
-    if (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE) {
+    if (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE)
         context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].chroma_distortion = buffer_ptr_array[lowestCostIndex]->candidate_ptr->chroma_distortion;
-    }
-
     context_ptr->md_local_cu_unit[cu_ptr->mds_idx].full_distortion = buffer_ptr_array[lowestCostIndex]->candidate_ptr->full_distortion;
     context_ptr->md_local_cu_unit[cu_ptr->mds_idx].chroma_distortion = (uint32_t)buffer_ptr_array[lowestCostIndex]->candidate_ptr->chroma_distortion;
     context_ptr->md_local_cu_unit[cu_ptr->mds_idx].chroma_distortion_inter_depth = (uint32_t)buffer_ptr_array[lowestCostIndex]->candidate_ptr->chroma_distortion_inter_depth;
@@ -5035,10 +5001,8 @@ uint8_t product_full_mode_decision(
             cu_ptr->block_has_coeff |= txb_ptr->u_has_coeff;
             cu_ptr->block_has_coeff |= txb_ptr->v_has_coeff;
         }
-        else {
+        else
             cu_ptr->block_has_coeff |= txb_ptr->y_has_coeff;
-        }
-
         cu_ptr->cand_buff_index = lowestCostIndex;
 
         cu_ptr->skip_flag = 0;   //SKIP is turned OFF for this case!!
@@ -5073,10 +5037,7 @@ uint8_t product_full_mode_decision(
             uint32_t j;
 
             for (j = 0; j < bheight; j++)
-            {
                 memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
-            }
-
             if (context_ptr->blk_geom->has_uv)
             {
                 // Cb
@@ -5087,17 +5048,12 @@ uint8_t product_full_mode_decision(
                 dst_ptr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->buffer_cb)[txb_1d_offset_uv]);
 
                 for (j = 0; j < bheight; j++)
-                {
                     memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
-                }
-
                 src_ptr = &(((int32_t*)buffer_ptr_array[lowestCostIndex]->residual_quant_coeff_ptr->buffer_cr)[txb_1d_offset_uv]);
                 dst_ptr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->buffer_cr)[txb_1d_offset_uv]);
 
                 for (j = 0; j < bheight; j++)
-                {
                     memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
-                }
             }
 
             txb_1d_offset += context_ptr->blk_geom->tx_width[txb_itr] * context_ptr->blk_geom->tx_height[txb_itr];

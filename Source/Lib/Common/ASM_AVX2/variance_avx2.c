@@ -269,10 +269,8 @@ void highbd_variance64_avx2(const uint8_t *a8, int32_t a_stride,
         variance_final_from_32bit_no_sum_avx2(vsse, &tsse);
         *sse = tsse;
     }
-    else {
+    else
         highbd_variance64_c(a, a_stride, b, b_stride, w, h, sse);
-    }
-
 #ifdef _WIN32
     // Add this redundant instruction to fix a Visual Studio compiler bug, which
     // falsely loads 64-bit intermediate result into *sse in

@@ -249,34 +249,26 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
         part_info.chroma_left_available = 0;
     }
 
-    if (part_info.up_available) {
+    if (part_info.up_available)
         part_info.above_mbmi = get_top_mode_info(dec_handle, mi_row, mi_col, sb_info);
-    }
-    else {
+    else
         part_info.above_mbmi = NULL;
-    }
-    if (part_info.left_available) {
+    if (part_info.left_available)
         part_info.left_mbmi = get_left_mode_info(dec_handle, mi_row, mi_col, sb_info);
-    }
-    else {
+    else
         part_info.left_mbmi = NULL;
-    }
-
     if (part_info.chroma_up_available) {
         part_info.chroma_above_mbmi = get_top_mode_info
             (dec_handle, (mi_row & (~sub_x)), (mi_col & (~sub_y)), sb_info); // floored to nearest 4x4 based on sub subsampling x & y
     }
-    else {
+    else
         part_info.chroma_above_mbmi = NULL;
-    }
     if (part_info.chroma_left_available) {
         part_info.chroma_left_mbmi = get_left_mode_info
             (dec_handle, (mi_row & (~sub_x)), (mi_col & (~sub_y)), sb_info); // floored to nearest 4x4 based on sub subsampling x & y
     }
-    else {
+    else
         part_info.chroma_left_mbmi = NULL;
-    }
-
     int32_t *qcoeffs = dec_mod_ctxt->sb_iquant_ptr;
     TxType tx_type;
     int32_t *coeffs;

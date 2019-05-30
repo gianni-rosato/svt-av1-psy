@@ -46,9 +46,8 @@ int av1_check_trailing_bits(bitstrm_t *bs)
     // bit_offset is set to 0 (mod 8) when the reader is already byte aligned
     int bits_before_alignment = 8 - bs->bit_ofst % 8;
     int trailing = dec_get_bits(bs, bits_before_alignment);
-    if (trailing != (1 << (bits_before_alignment - 1))) {
+    if (trailing != (1 << (bits_before_alignment - 1)))
         return EB_Corrupt_Frame;
-    }
     return 0;
 }
 
@@ -763,9 +762,8 @@ void read_tile_info(bitstrm_t *bs, TilesInfo *tile_info, SeqHeader *seq_header,
             tile_info->tile_size_bytes = dec_get_bits(bs, 2) + 1;
         PRINT("tile_size_bytes", tile_info->tile_size_bytes)
     }
-    else {
+    else
         tile_info->context_update_tile_id = 0;
-    }
     assert(tile_info->context_update_tile_id < (tile_info->tile_cols * tile_info->tile_rows));
 }
 
@@ -940,9 +938,8 @@ void read_segmentation_params(bitstrm_t *bs, SegmentationParams *seg_params, Fra
         for (j = 0; j < SEG_LVL_MAX; j++) {
             if (seg_params->feature_enabled[i][j]) {
                 seg_params->last_active_seg_id = i;
-                if (j >= SEG_LVL_REF_FRAME) {
+                if (j >= SEG_LVL_REF_FRAME)
                     seg_params->seg_id_pre_skip = 1;
-                }
             }
         }
     }
@@ -962,9 +959,8 @@ void read_loop_filter_params(bitstrm_t *bs, FrameHeader *frame_info, int num_pla
         frame_info->loop_filter_params.loop_filter_ref_deltas[GOLDEN_FRAME] = -1;
         frame_info->loop_filter_params.loop_filter_ref_deltas[ALTREF_FRAME] = -1;
         frame_info->loop_filter_params.loop_filter_ref_deltas[ALTREF2_FRAME] = -1;
-        for (i = 0; i < 2; i++) {
+        for (i = 0; i < 2; i++)
             frame_info->loop_filter_params.loop_filter_mode_deltas[i] = 0;
-        }
         return;
     }
     frame_info->loop_filter_params.loop_filter_level[0] = dec_get_bits(bs, 6);
@@ -1052,9 +1048,8 @@ void read_lr_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *seq_heade
         frame_info->LR_params[i].frame_restoration_type = Remap_Lr_Type[lr_type];
         if (frame_info->LR_params[i].frame_restoration_type != RESTORE_NONE) {
             uses_lr = 1;
-            if (i > 0) {
+            if (i > 0)
                 uses_chroma_lr = 1;
-            }
         }
     }
     if (uses_lr) {
@@ -1078,9 +1073,8 @@ void read_lr_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *seq_heade
             lr_uv_shift = dec_get_bits(bs, 1);
             PRINT_FRAME("lr_uv_shift", lr_uv_shift);
         }
-        else {
+        else
             lr_uv_shift = 0;
-        }
         frame_info->LR_params[1].loop_restoration_size
             = frame_info->LR_params[0].loop_restoration_size >> lr_uv_shift;
         frame_info->LR_params[2].loop_restoration_size
@@ -1153,12 +1147,10 @@ int decode_subexp(bitstrm_t *bs, int numSyms)
 int decode_unsigned_subexp_with_ref(bitstrm_t *bs, int mx, int r)
 {
     int v = decode_subexp(bs, mx);
-    if ((r << 1) <= mx) {
+    if ((r << 1) <= mx)
         return inverse_recenter(r, v);
-    }
-    else {
+    else
         return mx - 1 - inverse_recenter(mx - 1 - r, v);
-    }
 }
 
 int decode_signed_subexp_with_ref(bitstrm_t *bs, int low, int high, int r)
@@ -1216,12 +1208,10 @@ void read_global_motion_params(bitstrm_t *bs, FrameHeader *frame_info, int Frame
         PRINT_NAME("Some read");
         if (dec_get_bits(bs, 1)) {
             PRINT_NAME("Some read");
-            if (dec_get_bits(bs, 1)) {
+            if (dec_get_bits(bs, 1))
                 type = ROTZOOM;
-            }
-            else {
+            else
                 type = dec_get_bits(bs, 1) ? TRANSLATION : AFFINE;
-            }
         }
         else
             type = IDENTITY;
@@ -1430,9 +1420,8 @@ void read_film_grain_params(bitstrm_t *bs, FilmGrainParams *grain_params,
             PRINT_FRAME("ar_coeffs_y[i]", grain_params->ar_coeffs_y[i]);
         }
     }
-    else {
+    else
         numPosChroma = numPosLuma;
-    }
     if (grain_params->chroma_scaling_from_luma || grain_params->num_cb_points) {
         for (i = 0; i < numPosChroma; i++) {
             grain_params->ar_coeffs_cb[i] = dec_get_bits(bs, 8);
@@ -1608,9 +1597,8 @@ void read_uncompressed_header(bitstrm_t *bs, SeqHeader *seq_header,
         PRINT_FRAME("current_frame_id", frame_info->current_frame_id);
 
         if (have_prev_frame_id) {
-            if (frame_info->current_frame_id > prev_frame_id) {
+            if (frame_info->current_frame_id > prev_frame_id)
                 diff_frame_id = frame_info->current_frame_id - prev_frame_id;
-            }
             else {
                 diff_frame_id =
                     (1 << id_len) + frame_info->current_frame_id - prev_frame_id;
@@ -1638,9 +1626,8 @@ void read_uncompressed_header(bitstrm_t *bs, SeqHeader *seq_header,
             }
         }
     }
-    else {
+    else
         frame_info->current_frame_id = 0;
-    }
     if (frame_info->frame_type == S_FRAME)
         frame_size_override_flag = 1;
     else if (seq_header->reduced_still_picture_header)
@@ -1808,9 +1795,8 @@ void read_uncompressed_header(bitstrm_t *bs, SeqHeader *seq_header,
             frame_info->quantization_params.delta_q_u_dc == 0 &&
             frame_info->quantization_params.delta_q_v_ac == 0 &&
             frame_info->quantization_params.delta_q_v_dc == 0;
-        if (!frame_info->lossless_array[i]) {
+        if (!frame_info->lossless_array[i])
             frame_info->coded_lossless = 0;
-        }
         if (frame_info->quantization_params.using_qmatrix) {
             if (frame_info->lossless_array[i]) {
                 frame_info->segmentation_params.seg_qm_level[0][i] = 15;
@@ -2129,9 +2115,8 @@ EbErrorType init_svt_reader(SvtReader   *r,
         else
             status = EB_Corrupt_Frame;
     }
-    else {
+    else
         status = EB_Corrupt_Frame;
-    }
     return status;
 }
 
@@ -2204,9 +2189,8 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         tile_row = tile_num / tiles_info->tile_cols;
         tile_col = tile_num % tiles_info->tile_cols;
 
-        if (tile_num == tg_end) {
+        if (tile_num == tg_end)
             tile_size = obu_header->payload_size;
-        }
         else {
             tile_size = dec_get_bits_le(bs, tiles_info->tile_size_bytes) + 1;
             obu_header->payload_size -= (tiles_info->tile_size_bytes + tile_size);
@@ -2288,9 +2272,8 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, const uint8_t *data
         case OBU_SEQUENCE_HEADER:
             PRINT_NAME("**************OBU_SEQUENCE_HEADER*******************")
                 status = read_sequence_header_obu(&bs, &dec_handle_ptr->seq_header);
-            if (status != EB_ErrorNone) {
+            if (status != EB_ErrorNone)
                 return status;
-            }
             dec_handle_ptr->seq_header_done = 1;
             break;
 

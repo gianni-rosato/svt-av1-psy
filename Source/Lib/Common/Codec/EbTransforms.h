@@ -3870,12 +3870,10 @@ extern "C" {
         },
     };
     static INLINE int32_t av1_get_max_eob(TxSize tx_size) {
-        if (tx_size == TX_64X64 || tx_size == TX_64X32 || tx_size == TX_32X64) {
+        if (tx_size == TX_64X64 || tx_size == TX_64X32 || tx_size == TX_32X64)
             return 1024;
-        }
-        if (tx_size == TX_16X64 || tx_size == TX_64X16) {
+        if (tx_size == TX_16X64 || tx_size == TX_64X16)
             return 512;
-        }
         return tx_size_2d[tx_size];
     }
     static const uint32_t q_func[] = { 26214,23302,20560,18396,16384,14564 };

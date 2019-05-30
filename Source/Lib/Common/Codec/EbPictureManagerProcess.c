@@ -219,30 +219,26 @@ void* picture_manager_kernel(void *input_ptr)
                             // Remove all positive entries from the dependant lists
                             dependant_list_positive_entries = 0;
                             for (depIdx = 0; depIdx < referenceEntryPtr->list0.list_count; ++depIdx) {
-                                if (referenceEntryPtr->list0.list[depIdx] >= 0) {
+                                if (referenceEntryPtr->list0.list[depIdx] >= 0)
                                     dependant_list_positive_entries++;
-                                }
                             }
                             referenceEntryPtr->list0.list_count = referenceEntryPtr->list0.list_count - dependant_list_positive_entries;
 
                             dependant_list_positive_entries = 0;
                             for (depIdx = 0; depIdx < referenceEntryPtr->list1.list_count; ++depIdx) {
-                                if (referenceEntryPtr->list1.list[depIdx] >= 0) {
+                                if (referenceEntryPtr->list1.list[depIdx] >= 0)
                                     dependant_list_positive_entries++;
-                                }
                             }
                             referenceEntryPtr->list1.list_count = referenceEntryPtr->list1.list_count - dependant_list_positive_entries;
 
                             for (depIdx = 0; depIdx < next_base_layer_pred_position_ptr->dep_list0.list_count; ++depIdx) {
-                                if (next_base_layer_pred_position_ptr->dep_list0.list[depIdx] >= 0) {
+                                if (next_base_layer_pred_position_ptr->dep_list0.list[depIdx] >= 0)
                                     referenceEntryPtr->list0.list[referenceEntryPtr->list0.list_count++] = next_base_layer_pred_position_ptr->dep_list0.list[depIdx];
-                                }
                             }
 
                             for (depIdx = 0; depIdx < next_base_layer_pred_position_ptr->dep_list1.list_count; ++depIdx) {
-                                if (next_base_layer_pred_position_ptr->dep_list1.list[depIdx] >= 0) {
+                                if (next_base_layer_pred_position_ptr->dep_list1.list[depIdx] >= 0)
                                     referenceEntryPtr->list1.list[referenceEntryPtr->list1.list_count++] = next_base_layer_pred_position_ptr->dep_list1.list[depIdx];
-                                }
                             }
 
                             // Update the dependant count update
@@ -268,7 +264,6 @@ void* picture_manager_kernel(void *input_ptr)
                             // Modify Dependent List0
                             depListCount = referenceEntryPtr->list0.list_count;
                             for (depIdx = 0; depIdx < depListCount; ++depIdx) {
-
                                 // Adjust the latest currentInputPoc in case we're in a POC rollover scenario
                                 // currentInputPoc += (currentInputPoc < referenceEntryPtr->pocNumber) ? (1 << sequence_control_set_ptr->bitsForPictureOrderCount) : 0;
 
@@ -480,15 +475,13 @@ void* picture_manager_kernel(void *input_ptr)
                     // *Note - we are removing any leading picture dependencies for now
                     referenceEntryPtr->list0.list_count = 0;
                     for (depIdx = 0; depIdx < predPositionPtr->dep_list0.list_count; ++depIdx) {
-                        if (predPositionPtr->dep_list0.list[depIdx] >= 0) {
+                        if (predPositionPtr->dep_list0.list[depIdx] >= 0)
                             referenceEntryPtr->list0.list[referenceEntryPtr->list0.list_count++] = predPositionPtr->dep_list0.list[depIdx];
-                        }
                     }
 
                     referenceEntryPtr->list1.list_count = predPositionPtr->dep_list1.list_count;
-                    for (depIdx = 0; depIdx < predPositionPtr->dep_list1.list_count; ++depIdx) {
+                    for (depIdx = 0; depIdx < predPositionPtr->dep_list1.list_count; ++depIdx)
                         referenceEntryPtr->list1.list[depIdx] = predPositionPtr->dep_list1.list[depIdx];
-                    }
 #if ALT_REF_OVERLAY
                     referenceEntryPtr->dep_list0_count = (picture_control_set_ptr->is_alt_ref) ? referenceEntryPtr->list0.list_count + 1 : referenceEntryPtr->list0.list_count;
 #else
@@ -867,9 +860,8 @@ void* picture_manager_kernel(void *input_ptr)
                             ChildPictureControlSetPtr->entropy_coding_row_count = picture_height_in_sb;
                             ChildPictureControlSetPtr->entropy_coding_in_progress = EB_FALSE;
 
-                            for (row_index = 0; row_index < MAX_LCU_ROWS; ++row_index) {
+                            for (row_index = 0; row_index < MAX_LCU_ROWS; ++row_index)
                                 ChildPictureControlSetPtr->entropy_coding_row_array[row_index] = EB_FALSE;
-                            }
                         }
 
                         ChildPictureControlSetPtr->parent_pcs_ptr->av1_cm->pcs_ptr = ChildPictureControlSetPtr;

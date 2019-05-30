@@ -146,9 +146,8 @@ void av1_convolve_2d_sr_c(const uint8_t *src, int32_t src_stride, uint8_t *dst,
     for (int32_t y = 0; y < im_h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t sum = (1 << (bd + FILTER_BITS - 1));
-            for (int32_t k = 0; k < filter_params_x->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_x->taps; ++k)
                 sum += x_filter[k] * src_horiz[y * src_stride + x - fo_horiz + k];
-            }
             assert(0 <= sum && sum < (1 << (bd + FILTER_BITS + 1)));
             im_block[y * im_stride + x] =
                 (int16_t)ROUND_POWER_OF_TWO(sum, conv_params->round_0);
@@ -163,9 +162,8 @@ void av1_convolve_2d_sr_c(const uint8_t *src, int32_t src_stride, uint8_t *dst,
     for (int32_t y = 0; y < h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t sum = 1 << offset_bits;
-            for (int32_t k = 0; k < filter_params_y->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_y->taps; ++k)
                 sum += y_filter[k] * src_vert[(y - fo_vert + k) * im_stride + x];
-            }
             assert(0 <= sum && sum < (1 << (offset_bits + 2)));
             int16_t res = (ConvBufType)(ROUND_POWER_OF_TWO(sum, conv_params->round_1) -
                 ((1 << (offset_bits - conv_params->round_1)) +
@@ -199,9 +197,8 @@ void av1_convolve_y_sr_c(const uint8_t *src, int32_t src_stride, uint8_t *dst,
     for (int32_t y = 0; y < h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t res = 0;
-            for (int32_t k = 0; k < filter_params_y->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_y->taps; ++k)
                 res += y_filter[k] * src[(y - fo_vert + k) * src_stride + x];
-            }
             dst[y * dst_stride + x] =
                 (uint8_t)clip_pixel_highbd(ROUND_POWER_OF_TWO(res, FILTER_BITS), 8);
         }
@@ -232,9 +229,8 @@ void av1_convolve_x_sr_c(const uint8_t *src, int32_t src_stride, uint8_t *dst,
     for (int32_t y = 0; y < h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t res = 0;
-            for (int32_t k = 0; k < filter_params_x->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_x->taps; ++k)
                 res += x_filter[k] * src[y * src_stride + x - fo_horiz + k];
-            }
             res = ROUND_POWER_OF_TWO(res, conv_params->round_0);
             dst[y * dst_stride + x] = (uint8_t)clip_pixel_highbd(ROUND_POWER_OF_TWO(res, bits), 8);
         }
@@ -254,9 +250,8 @@ void av1_convolve_2d_copy_sr_c(const uint8_t *src, int32_t src_stride, uint8_t *
     (void)conv_params;
 
     for (int32_t y = 0; y < h; ++y) {
-        for (int32_t x = 0; x < w; ++x) {
+        for (int32_t x = 0; x < w; ++x)
             dst[y * dst_stride + x] = src[y * src_stride + x];
-        }
     }
 }
 
@@ -285,9 +280,8 @@ void av1_jnt_convolve_2d_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8
     for (int32_t y = 0; y < im_h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t sum = (1 << (bd + FILTER_BITS - 1));
-            for (int32_t k = 0; k < filter_params_x->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_x->taps; ++k)
                 sum += x_filter[k] * src_horiz[y * src_stride + x - fo_horiz + k];
-            }
             assert(0 <= sum && sum < (1 << (bd + FILTER_BITS + 1)));
             im_block[y * im_stride + x] =
                 (int16_t)ROUND_POWER_OF_TWO(sum, conv_params->round_0);
@@ -302,9 +296,8 @@ void av1_jnt_convolve_2d_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8
     for (int32_t y = 0; y < h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t sum = 1 << offset_bits;
-            for (int32_t k = 0; k < filter_params_y->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_y->taps; ++k)
                 sum += y_filter[k] * src_vert[(y - fo_vert + k) * im_stride + x];
-            }
             assert(0 <= sum && sum < (1 << (offset_bits + 2)));
             ConvBufType res = (ConvBufType)ROUND_POWER_OF_TWO(sum, conv_params->round_1);
             if (conv_params->do_average) {
@@ -323,9 +316,8 @@ void av1_jnt_convolve_2d_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8
                 dst8[y * dst8_stride + x] =
                     (uint8_t)clip_pixel_highbd(ROUND_POWER_OF_TWO(tmp, round_bits), 8);
             }
-            else {
+            else
                 dst[y * dst_stride + x] = res;
-            }
         }
     }
 }
@@ -356,9 +348,8 @@ void av1_jnt_convolve_y_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
     for (int32_t y = 0; y < h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t res = 0;
-            for (int32_t k = 0; k < filter_params_y->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_y->taps; ++k)
                 res += y_filter[k] * src[(y - fo_vert + k) * src_stride + x];
-            }
             res *= (1 << bits);
             res = ROUND_POWER_OF_TWO(res, conv_params->round_1) + round_offset;
 
@@ -376,9 +367,8 @@ void av1_jnt_convolve_y_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
                 dst8[y * dst8_stride + x] =
                     (uint8_t)clip_pixel_highbd(ROUND_POWER_OF_TWO(tmp, round_bits), 8);
             }
-            else {
+            else
                 dst[y * dst_stride + x] = (ConvBufType)res;
-            }
         }
     }
 }
@@ -409,9 +399,8 @@ void av1_jnt_convolve_x_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
     for (int32_t y = 0; y < h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t res = 0;
-            for (int32_t k = 0; k < filter_params_x->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_x->taps; ++k)
                 res += x_filter[k] * src[y * src_stride + x - fo_horiz + k];
-            }
             res = (1 << bits) * ROUND_POWER_OF_TWO(res, conv_params->round_0);
             res += round_offset;
 
@@ -429,9 +418,8 @@ void av1_jnt_convolve_x_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
                 dst8[y * dst8_stride + x] =
                     (uint8_t)clip_pixel_highbd(ROUND_POWER_OF_TWO(tmp, round_bits), 8);
             }
-            else {
+            else
                 dst[y * dst_stride + x] = (ConvBufType)res;
-            }
         }
     }
 }
@@ -474,9 +462,8 @@ void av1_jnt_convolve_2d_copy_c(const uint8_t *src, int32_t src_stride,
                 tmp -= round_offset;
                 dst8[y * dst8_stride + x] = (uint8_t)clip_pixel_highbd(ROUND_POWER_OF_TWO(tmp, bits), 8);
             }
-            else {
+            else
                 dst[y * dst_stride + x] = res;
-            }
         }
     }
 }
@@ -494,9 +481,8 @@ void av1_highbd_convolve_2d_copy_sr_c(
     (void)bd;
 
     for (int32_t y = 0; y < h; ++y) {
-        for (int32_t x = 0; x < w; ++x) {
+        for (int32_t x = 0; x < w; ++x)
             dst[y * dst_stride + x] = src[y * src_stride + x];
-        }
     }
 }
 
@@ -521,9 +507,8 @@ void av1_highbd_convolve_x_sr_c(const uint16_t *src, int32_t src_stride,
     for (int32_t y = 0; y < h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t res = 0;
-            for (int32_t k = 0; k < filter_params_x->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_x->taps; ++k)
                 res += x_filter[k] * src[y * src_stride + x - fo_horiz + k];
-            }
             res = ROUND_POWER_OF_TWO(res, conv_params->round_0);
             dst[y * dst_stride + x] =
                 clip_pixel_highbd(ROUND_POWER_OF_TWO(res, bits), bd);
@@ -552,9 +537,8 @@ void av1_highbd_convolve_y_sr_c(const uint16_t *src, int32_t src_stride,
     for (int32_t y = 0; y < h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t res = 0;
-            for (int32_t k = 0; k < filter_params_y->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_y->taps; ++k)
                 res += y_filter[k] * src[(y - fo_vert + k) * src_stride + x];
-            }
             dst[y * dst_stride + x] =
                 clip_pixel_highbd(ROUND_POWER_OF_TWO(res, FILTER_BITS), bd);
         }
@@ -583,9 +567,8 @@ void av1_highbd_convolve_2d_sr_c(const uint16_t *src, int32_t src_stride,
     for (int32_t y = 0; y < im_h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t sum = (1 << (bd + FILTER_BITS - 1));
-            for (int32_t k = 0; k < filter_params_x->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_x->taps; ++k)
                 sum += x_filter[k] * src_horiz[y * src_stride + x - fo_horiz + k];
-            }
             assert(0 <= sum && sum < (1 << (bd + FILTER_BITS + 1)));
             im_block[y * im_stride + x] = (ConvBufType)
                 ROUND_POWER_OF_TWO(sum, conv_params->round_0);
@@ -600,9 +583,8 @@ void av1_highbd_convolve_2d_sr_c(const uint16_t *src, int32_t src_stride,
     for (int32_t y = 0; y < h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t sum = 1 << offset_bits;
-            for (int32_t k = 0; k < filter_params_y->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_y->taps; ++k)
                 sum += y_filter[k] * src_vert[(y - fo_vert + k) * im_stride + x];
-            }
             assert(0 <= sum && sum < (1 << (offset_bits + 2)));
             int32_t res = ROUND_POWER_OF_TWO(sum, conv_params->round_1) -
                 ((1 << (offset_bits - conv_params->round_1)) +
@@ -638,9 +620,8 @@ void av1_highbd_jnt_convolve_x_c(const uint16_t *src, int32_t src_stride,
     for (int32_t y = 0; y < h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t res = 0;
-            for (int32_t k = 0; k < filter_params_x->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_x->taps; ++k)
                 res += x_filter[k] * src[y * src_stride + x - fo_horiz + k];
-            }
             res = (1 << bits) * ROUND_POWER_OF_TWO(res, conv_params->round_0);
             res += round_offset;
 
@@ -658,9 +639,8 @@ void av1_highbd_jnt_convolve_x_c(const uint16_t *src, int32_t src_stride,
                 dst16[y * dst16_stride + x] =
                     clip_pixel_highbd(ROUND_POWER_OF_TWO(tmp, round_bits), bd);
             }
-            else {
+            else
                 dst[y * dst_stride + x] = (ConvBufType)res;
-            }
         }
     }
 }
@@ -690,9 +670,8 @@ void av1_highbd_jnt_convolve_y_c(const uint16_t *src, int32_t src_stride,
     for (int32_t y = 0; y < h; ++y) {
         for (int32_t x = 0; x < w; ++x) {
             int32_t res = 0;
-            for (int32_t k = 0; k < filter_params_y->taps; ++k) {
+            for (int32_t k = 0; k < filter_params_y->taps; ++k)
                 res += y_filter[k] * src[(y - fo_vert + k) * src_stride + x];
-            }
             res *= (1 << bits);
             res = ROUND_POWER_OF_TWO(res, conv_params->round_1) + round_offset;
 
@@ -710,9 +689,8 @@ void av1_highbd_jnt_convolve_y_c(const uint16_t *src, int32_t src_stride,
                 dst16[y * dst16_stride + x] =
                     clip_pixel_highbd(ROUND_POWER_OF_TWO(tmp, round_bits), bd);
             }
-            else {
+            else
                 dst[y * dst_stride + x] = (ConvBufType)res;
-            }
         }
     }
 }
@@ -753,9 +731,8 @@ void av1_highbd_jnt_convolve_2d_copy_c(
                 dst16[y * dst16_stride + x] =
                     clip_pixel_highbd(ROUND_POWER_OF_TWO(tmp, bits), bd);
             }
-            else {
+            else
                 dst[y * dst_stride + x] = res;
-            }
         }
     }
 }
@@ -788,9 +765,8 @@ void av1_highbd_jnt_convolve_2d_c(const uint16_t *src, int32_t src_stride,
     for (y = 0; y < im_h; ++y) {
         for (x = 0; x < w; ++x) {
             int32_t sum = (1 << (bd + FILTER_BITS - 1));
-            for (k = 0; k < filter_params_x->taps; ++k) {
+            for (k = 0; k < filter_params_x->taps; ++k)
                 sum += x_filter[k] * src_horiz[y * src_stride + x - fo_horiz + k];
-            }
             assert(0 <= sum && sum < (1 << (bd + FILTER_BITS + 1)));
             (void)bd;
             im_block[y * im_stride + x] =
@@ -806,9 +782,8 @@ void av1_highbd_jnt_convolve_2d_c(const uint16_t *src, int32_t src_stride,
     for (y = 0; y < h; ++y) {
         for (x = 0; x < w; ++x) {
             int32_t sum = 1 << offset_bits;
-            for (k = 0; k < filter_params_y->taps; ++k) {
+            for (k = 0; k < filter_params_y->taps; ++k)
                 sum += y_filter[k] * src_vert[(y - fo_vert + k) * im_stride + x];
-            }
             assert(0 <= sum && sum < (1 << (offset_bits + 2)));
             ConvBufType res = (ConvBufType)ROUND_POWER_OF_TWO(sum, conv_params->round_1);
             if (conv_params->do_average) {
@@ -826,9 +801,8 @@ void av1_highbd_jnt_convolve_2d_c(const uint16_t *src, int32_t src_stride,
                 dst16[y * dst16_stride + x] =
                     clip_pixel_highbd(ROUND_POWER_OF_TWO(tmp, round_bits), bd);
             }
-            else {
+            else
                 dst[y * dst_stride + x] = res;
-            }
         }
     }
 }
@@ -3230,9 +3204,8 @@ int32_t av1_get_switchable_rate(
         }
         return SWITCHABLE_INTERP_RATE_FACTOR * inter_filter_cost;
     }
-    else {
+    else
         return 0;
-    }
 }
 //void model_rd_norm(int32_t xsq_q10, int32_t *r_q10, int32_t *d_q10) {
  // NOTE: The tables below must be of the same size.
@@ -3599,7 +3572,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
     int32_t *const switchable_rate,
     int32_t *const skip_txfm_sb,
     int64_t *const skip_sse_sb) {
-
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;//&cpi->common;
     EbBool use_uv = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
         picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level != IT_SEARCH_FAST_LOOP_UV_BLIND) ? EB_TRUE : EB_FALSE;
@@ -3937,7 +3909,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
     int32_t *const switchable_rate,
     int32_t *const skip_txfm_sb,
     int64_t *const skip_sse_sb) {
-
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;//&cpi->common;
 
     EbBool use_uv = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
@@ -4595,9 +4566,8 @@ EbErrorType inter_prediction_context_ctor(
         max_cu_width,
         max_cu_height);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     return EB_ErrorNone;
 }
 

@@ -103,9 +103,8 @@ void InitBeaQpmInfo(
         }
     }
 
-    if (complete_sb_count > 0) {
+    if (complete_sb_count > 0)
         zz_cost_average = zzSum / complete_sb_count;
-    }
     picture_control_set_ptr->low_motion_content_flag = zz_cost_average == 0 ? EB_TRUE : EB_FALSE;
     picture_control_set_ptr->zz_cost_average = zz_cost_average;
 
@@ -140,9 +139,8 @@ void DerivePictureActivityStatistics(
             nonMovingIndexMax = picture_control_set_ptr->non_moving_index_array[sb_index] > nonMovingIndexMax ?
                 picture_control_set_ptr->non_moving_index_array[sb_index] :
                 nonMovingIndexMax;
-            if (picture_control_set_ptr->non_moving_index_array[sb_index] < NON_MOVING_SCORE_1) {
+            if (picture_control_set_ptr->non_moving_index_array[sb_index] < NON_MOVING_SCORE_1)
                 non_moving_sb_count++;
-            }
             complete_sb_count++;
 
             nonMovingIndexSum += picture_control_set_ptr->non_moving_index_array[sb_index];
@@ -203,9 +201,8 @@ void FailingMotionLcu(
             int64_t  meToOisSadDiff = (int32_t)cuMeSAD - (int32_t)sortedcuOisSAD;
             meToOisSadDeviation = (sortedcuOisSAD == 0) || (meToOisSadDiff < 0) ? 0 : (meToOisSadDiff * 100) / sortedcuOisSAD;
 
-            if (meToOisSadDeviation > SAD_DEVIATION_LCU_TH) {
+            if (meToOisSadDeviation > SAD_DEVIATION_LCU_TH)
                 failing_motion_sb_flag += 1;
-            }
         }
 
         // Update failing motion flag
@@ -234,9 +231,7 @@ void DetectUncoveredLcu(
 
     if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
         if (sb_params->is_complete_sb && (!picture_control_set_ptr->similar_colocated_sb_array[sb_index])) {
-
             for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_64x64; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_32x32_3; rasterScanCuIndex++) {
-
                 meToOisSadDeviation = 0;
 
                 // Get ME SAD
@@ -254,9 +249,8 @@ void DetectUncoveredLcu(
                 meToOisSadDeviation = (sortedcuOisSAD == 0) || (meToOisSadDiff < 0) ? 0 : (meToOisSadDiff * 100) / sortedcuOisSAD;
 
                 if (raster_scan_cu_size[rasterScanCuIndex] > 16) {
-                    if (meToOisSadDeviation > SAD_DEVIATION_LCU_NON_M4_TH) {
+                    if (meToOisSadDeviation > SAD_DEVIATION_LCU_NON_M4_TH)
                         uncovered_area_sb_flag += 1;
-                    }
                 }
             }
 
@@ -344,7 +338,6 @@ void LumaContrastDetectorLcu(
     SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
     if (sb_params->is_complete_sb) {
         if (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) {
-
             OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[0];
             cuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[0]].distortion;
@@ -383,9 +376,8 @@ void LumaContrastDetectorPicture(
 
     picture_control_set_ptr->intra_coded_block_probability = 0;
 
-    if (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) {
+    if (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0)
         picture_control_set_ptr->intra_coded_block_probability = (uint8_t)(context_ptr->depth1_block_num != 0 ? context_ptr->to_be_intra_coded_probability * 100 / context_ptr->depth1_block_num : 0);
-    }
 }
 #endif
 void GrassLcu(
@@ -527,9 +519,7 @@ void DetermineIsolatedNonHomogeneousRegionInPicture(
                     for (cuuIndex = 0; cuuIndex < 4; cuuIndex++)
                     {
                         if (picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][cuuIndex] > VAR_BASED_DETAIL_PRESERVATION_SELECTOR_THRSLHD)
-                        {
                             picture_control_set_ptr->sb_isolated_non_homogeneous_area_array[sb_index] = EB_TRUE;
-                        }
                     }
                 }
             }
@@ -604,9 +594,8 @@ void DetermineMorePotentialAuraAreas(
                 }
             }
 
-            if (countOfNonEdgeBlocks > 1) {
+            if (countOfNonEdgeBlocks > 1)
                 countOfEdgeBlocks++;
-            }
         }
     }
 
@@ -620,7 +609,6 @@ void DetermineMorePotentialAuraAreas(
 void DeriveHighDarkAreaDensityFlag(
     SequenceControlSet                *sequence_control_set_ptr,
     PictureParentControlSet           *picture_control_set_ptr) {
-
     uint32_t    regionInPictureWidthIndex;
     uint32_t    regionInPictureHeightIndex;
     uint32_t    lumaHistogramBin;
@@ -647,9 +635,8 @@ void DeriveHighDarkAreaDensityFlag(
             for (lumaHistogramBin = 0; lumaHistogramBin < LOW_MEAN_THLD1; lumaHistogramBin++) { // loop over the 1st LOW_MEAN_THLD bins
                 blackSamplesCount += picture_control_set_ptr->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][lumaHistogramBin];
             }
-            for (lumaHistogramBin = HIGH_MEAN_THLD1; lumaHistogramBin < HISTOGRAM_NUMBER_OF_BINS; lumaHistogramBin++) {
+            for (lumaHistogramBin = HIGH_MEAN_THLD1; lumaHistogramBin < HISTOGRAM_NUMBER_OF_BINS; lumaHistogramBin++)
                 whiteSamplesCount += picture_control_set_ptr->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][lumaHistogramBin];
-            }
         }
     }
 
@@ -682,7 +669,6 @@ void TemporalHighContrastClassifier(
     uint32_t meDist = 0;
 
     if (picture_control_set_ptr->slice_type == B_SLICE) {
-
         for (blkIt = 0; blkIt < 4; blkIt++) {
 #if MRP_CONNECTION
             nsad = ((uint32_t)picture_control_set_ptr->me_results[sb_index]->me_candidate[1 + blkIt][0].distortion) >> NORM_FACTOR;
@@ -743,9 +729,8 @@ void DeriveComplexityContrastPicture(
 
     //look only for isolated shapes.
     if ((context_ptr->complete_sb_count > 0) && ((context_ptr->sb_cmplx_contrast_count * 100) / context_ptr->complete_sb_count > 10)) {
-        for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
+        for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index)
             picture_control_set_ptr->sb_cmplx_contrast_array[sb_index] = 0;
-        }
     }
 
     //look only for isolated shapes.
@@ -771,9 +756,8 @@ void DeriveComplexityContrastPicture(
                 else
                 {
                     for (j = 0; j < 2; j++) {
-                        for (i = 0; i < 3; i++) {
+                        for (i = 0; i < 3; i++)
                             ptr[i + j * sequence_control_set_ptr->picture_width_in_sb] = 4;
-                        }
                     }
                 }
             }
@@ -804,12 +788,10 @@ void DetectCu32x32CleanSparseLcu(
                 cu32x32Index = blockIndexX + (blockIndexY << 1) + 1;
                 blockIndex = ((sb_params->horizontal_index << 1) + blockIndexX) + ((sb_params->vertical_index << 1) + blockIndexY) * picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array_stride;
 
-                if ((meanPtr[cu32x32Index]) > 130 && (meanPtr[cu32x32Index]) < 220 && (variancePtr[cu32x32Index]) < 30) {
+                if ((meanPtr[cu32x32Index]) > 130 && (meanPtr[cu32x32Index]) < 220 && (variancePtr[cu32x32Index]) < 30)
                     picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array[blockIndex] = 2;
-                }
-                else if ((meanPtr[cu32x32Index]) > 130 && (meanPtr[cu32x32Index]) < 220) {
+                else if ((meanPtr[cu32x32Index]) > 130 && (meanPtr[cu32x32Index]) < 220)
                     picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array[blockIndex] = 1;
-                }
             }
         }
     }
@@ -833,9 +815,8 @@ void DetectCu32x32CleanSparsePicture(
                 for (blockIndexYTemp = -1; blockIndexYTemp <= 1; ++blockIndexYTemp) {
                     for (blockIndexXTemp = -1; blockIndexXTemp <= 1; ++blockIndexXTemp) {
                         blockIndexTemp = blockIndex + blockIndexXTemp + blockIndexYTemp * picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array_stride;
-                        if (picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array[blockIndexTemp] == 2) {
+                        if (picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array[blockIndexTemp] == 2)
                             neighCount++;
-                        }
                     }
                 }
                 if (neighCount >= 6)

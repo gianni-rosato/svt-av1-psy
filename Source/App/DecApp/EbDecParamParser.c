@@ -74,9 +74,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
     for (token_index = 1; token_index < argc; token_index++, cmd_token_cnt++) {
         if (argv[token_index][0] == '-') {
             cmd_copy[cmd_token_cnt] = argv[token_index];
-            if (argv[token_index + 1] != NULL && (argv[token_index + 1][0] != '-')) {
+            if (argv[token_index + 1] != NULL && (argv[token_index + 1][0] != '-'))
                 config_strings[cmd_token_cnt] = argv[++token_index];
-            }
         }
         else {
             printf(" Invalid CLI: %s \n", argv[token_index]);
@@ -98,9 +97,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
                 else {
                     cli->inFile = fin;
                     cli->inFilename = config_strings[token_index];
-                    if (file_is_ivf(cli)) {
+                    if (file_is_ivf(cli))
                         cli->inFileType = FILE_TYPE_IVF;
-                    }
                     else {
                         printf("Unsupported input file format. \n");
                         return EB_ErrorBadParameter;
@@ -119,12 +117,10 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
                     cli->outFilename = config_strings[token_index];
                 }
             }
-            else if (EB_STRCMP(cmd_copy[token_index], MD5_SUPPORT_TOKEN) == 0) {
+            else if (EB_STRCMP(cmd_copy[token_index], MD5_SUPPORT_TOKEN) == 0)
                 cli->enable_md5 = 1;
-            }
-            else if (EB_STRCMP(cmd_copy[token_index], HELP_TOKEN) == 0) {
+            else if (EB_STRCMP(cmd_copy[token_index], HELP_TOKEN) == 0)
                 showHelp();
-            }
             else {
                 int temp_ind = 0;
                 int cli_read = 0;

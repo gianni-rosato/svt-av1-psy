@@ -141,9 +141,8 @@ void estimate_bi_pred_interpolation_unpacked_avc_style(
 
     // bi-pred luma
     picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->buffer_y + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
-    if (sub_sample_pred_flag) {
+    if (sub_sample_pred_flag)
         picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->buffer_y + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
-    }
 }
 
 /*******************************************************************************
@@ -352,9 +351,8 @@ void estimate_bi_pred_interpolation_avc_luma(
 
         // bi-pred luma
         picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->buffer_y + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
-        if (sub_sample_pred_flag) {
+        if (sub_sample_pred_flag)
             picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->buffer_y + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
-        }
     }
 
     //uni-prediction List0 chroma
@@ -915,9 +913,8 @@ void bi_pred_i_free_ref8_bit(
 
         // bi-pred luma
         picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->buffer_y + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
-        if (sub_sample_pred_flag) {
+        if (sub_sample_pred_flag)
             picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->buffer_y + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
-        }
     }
 
     //uni-prediction List0 chroma

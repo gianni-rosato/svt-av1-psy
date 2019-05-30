@@ -72,12 +72,10 @@ static void *memset_zero_avx(void *dest, const __m256i *zero, size_t count) {
         _mm256_storeu_si256((__m256i *)((int32_t *)dest + i + 16), *zero);
         _mm256_storeu_si256((__m256i *)((int32_t *)dest + i + 24), *zero);
     }
-    for (; i < (count & 0xfffffff8); i += 8) {
+    for (; i < (count & 0xfffffff8); i += 8)
         _mm256_storeu_si256((__m256i *)((int32_t *)dest + i), *zero);
-    }
-    for (; i < count; i++) {
+    for (; i < count; i++)
         *(int32_t *)dest = 0;
-    }
     return dest;
 }
 

@@ -199,9 +199,8 @@ uint64_t ComputeNxMSatd8x8Units_U8(
     EbSatdU8Type Compute8x8SatdFunction = compute8x8_satd_u8_func_ptr_array[asm_type];
 
     for (blockIndexInHeight = 0; blockIndexInHeight < height >> 3; ++blockIndexInHeight) {
-        for (blockIndexInWidth = 0; blockIndexInWidth < width >> 3; ++blockIndexInWidth) {
+        for (blockIndexInWidth = 0; blockIndexInWidth < width >> 3; ++blockIndexInWidth)
             satd += Compute8x8SatdFunction(&(src[(blockIndexInWidth << 3) + (blockIndexInHeight << 3) * src_stride]), dc_value, src_stride);
-        }
     }
 
     return satd;
@@ -219,9 +218,8 @@ uint64_t ComputeNxMSatd4x4Units_U8(
     uint32_t blockIndexInHeight;
 
     for (blockIndexInHeight = 0; blockIndexInHeight < height >> 2; ++blockIndexInHeight) {
-        for (blockIndexInWidth = 0; blockIndexInWidth < width >> 2; ++blockIndexInWidth) {
+        for (blockIndexInWidth = 0; blockIndexInWidth < width >> 2; ++blockIndexInWidth)
             satd += compute4x4_satd_u8(&(src[(blockIndexInWidth << 2) + (blockIndexInHeight << 2) * src_stride]), dc_value, src_stride);
-        }
     }
 
     return satd;
@@ -584,7 +582,6 @@ void compressed_pack_lcu(
     EbAsm     asm_type
 )
 {
-
     compressed_pack_func_ptr_array[(width == 64 || width == 32) ? asm_type : ASM_NON_AVX2](
         in8_bit_buffer,
         in8_stride,
@@ -626,9 +623,8 @@ void memcpy16bit(
 {
     uint64_t i;
 
-    for (i = 0; i < num_of_elements; i++) {
+    for (i = 0; i < num_of_elements; i++)
         out_ptr[i] = in_ptr[i];
-    }
 }
 
 /*******************************************
@@ -641,9 +637,8 @@ void memcpy32bit(
 {
     uint64_t i;
 
-    for (i = 0; i < num_of_elements; i++) {
+    for (i = 0; i < num_of_elements; i++)
         out_ptr[i] = in_ptr[i];
-    }
 }
 
 int32_t  sum_residual(int16_t * in_ptr,

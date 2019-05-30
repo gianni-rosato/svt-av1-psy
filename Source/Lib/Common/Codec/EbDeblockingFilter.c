@@ -215,9 +215,8 @@ static INLINE void filter6(int8_t mask, uint8_t thresh, int8_t flat,
         *oq0 = ROUND_POWER_OF_TWO(p1 + p0 * 2 + q0 * 2 + q1 * 2 + q2, 3);
         *oq1 = ROUND_POWER_OF_TWO(p0 + q0 * 2 + q1 * 2 + q2 * 3, 3);
     }
-    else {
+    else
         filter4(mask, thresh, op1, op0, oq0, oq1);
-    }
 }
 
 static INLINE void filter8(int8_t mask, uint8_t thresh, int8_t flat,
@@ -236,9 +235,8 @@ static INLINE void filter8(int8_t mask, uint8_t thresh, int8_t flat,
         *oq1 = ROUND_POWER_OF_TWO(p1 + p0 + q0 + 2 * q1 + q2 + q3 + q3, 3);
         *oq2 = ROUND_POWER_OF_TWO(p0 + q0 + q1 + 2 * q2 + q3 + q3 + q3, 3);
     }
-    else {
+    else
         filter4(mask, thresh, op1, op0, oq0, oq1);
-    }
 }
 
 void aom_lpf_horizontal_6_c(uint8_t *s, int32_t p, const uint8_t *blimit,
@@ -358,9 +356,8 @@ static INLINE void filter14(int8_t mask, uint8_t thresh, int8_t flat,
         *oq5 = ROUND_POWER_OF_TWO(p0 + q0 + q1 + q2 + q3 + q4 * 2 + q5 * 2 + q6 * 7,
             4);
     }
-    else {
+    else
         filter8(mask, thresh, flat, op3, op2, op1, op0, oq0, oq1, oq2, oq3);
-    }
 }
 
 static void mb_lpf_vertical_edge_w(uint8_t *s, int32_t p, const uint8_t *blimit,
@@ -535,9 +532,8 @@ static INLINE void highbd_filter8(int8_t mask, uint8_t thresh, int8_t flat,
         *oq1 = ROUND_POWER_OF_TWO(p1 + p0 + q0 + 2 * q1 + q2 + q3 + q3, 3);
         *oq2 = ROUND_POWER_OF_TWO(p0 + q0 + q1 + 2 * q2 + q3 + q3 + q3, 3);
     }
-    else {
+    else
         highbd_filter4(mask, thresh, op1, op0, oq0, oq1, bd);
-    }
 }
 
 void aom_highbd_lpf_horizontal_8_c(uint16_t *s, int32_t p, const uint8_t *blimit,
@@ -978,9 +974,8 @@ static TxSize set_lpf_parameters(
                     if ((curr_level || pv_lvl) &&
                         (!pv_skip || !curr_skipped || pu_edge)) {
                         const TxSize min_ts = AOMMIN(ts, pv_ts);
-                        if (TX_4X4 >= min_ts) {
+                        if (TX_4X4 >= min_ts)
                             params->filter_length = 4;
-                        }
                         else if (TX_8X8 == min_ts) {
                             if (plane != 0)
                                 params->filter_length = 6;
@@ -990,9 +985,8 @@ static TxSize set_lpf_parameters(
                         else {
                             params->filter_length = 14;
                             // No wide filtering for chroma plane
-                            if (plane != 0) {
+                            if (plane != 0)
                                 params->filter_length = 6;
-                            }
                         }
 
                         // update the level if the current block is skipped,
@@ -1630,12 +1624,10 @@ static int64_t try_filter_frame(
     EbPictureBufferDesc  *recon_buffer = is16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
     if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
         //get the 16bit form of the input LCU
-        if (is16bit) {
+        if (is16bit)
             recon_buffer = ((EbReferenceObject*)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
-        }
-        else {
+        else
             recon_buffer = ((EbReferenceObject*)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
-        }
     }
     else { // non ref pictures
         recon_buffer = is16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
@@ -1692,12 +1684,10 @@ static int32_t search_filter_level(
 
     if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
         //get the 16bit form of the input LCU
-        if (is16bit) {
+        if (is16bit)
             recon_buffer = ((EbReferenceObject*)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
-        }
-        else {
+        else
             recon_buffer = ((EbReferenceObject*)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
-        }
     }
     else { // non ref pictures
         recon_buffer = is16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
@@ -1738,9 +1728,8 @@ static int32_t search_filter_level(
             // filter value.
             if (ss_err[filt_low] < (best_err + bias)) {
                 // Was it actually better than the previous best?
-                if (ss_err[filt_low] < best_err) {
+                if (ss_err[filt_low] < best_err)
                     best_err = ss_err[filt_low];
-                }
                 filt_best = filt_low;
             }
         }
@@ -1783,9 +1772,8 @@ static int32_t search_filter_level(
                 // filter value.
                 if (ss_err[filt_low] < (best_err + bias)) {
                     // Was it actually better than the previous best?
-                    if (ss_err[filt_low] < best_err) {
+                    if (ss_err[filt_low] < best_err)
                         best_err = ss_err[filt_low];
-                    }
                     filt_best = filt_low;
                 }
             }

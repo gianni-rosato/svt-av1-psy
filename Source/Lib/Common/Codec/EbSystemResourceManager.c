@@ -97,10 +97,8 @@ static EbErrorType EbCircularBufferCtor(
 
     EB_MALLOC(EbPtr*, bufferPtr->array_ptr, sizeof(EbPtr) * bufferPtr->buffer_total_count, EB_N_PTR);
 
-    for (bufferIndex = 0; bufferIndex < bufferPtr->buffer_total_count; ++bufferIndex) {
+    for (bufferIndex = 0; bufferIndex < bufferPtr->buffer_total_count; ++bufferIndex)
         bufferPtr->array_ptr[bufferIndex] = EB_NULL;
-    }
-
     bufferPtr->head_index = 0;
     bufferPtr->tail_index = 0;
 
@@ -207,16 +205,14 @@ static EbErrorType EbMuxingQueueCtor(
     return_error = EbCircularBufferCtor(
         &queue_ptr->object_queue,
         object_total_count);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     // Construct Process Circular Buffer
     return_error = EbCircularBufferCtor(
         &queue_ptr->process_queue,
         queue_ptr->process_total_count);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     // Construct the Process Fifos
     EB_MALLOC(EbFifo**, queue_ptr->process_fifo_ptr_array, sizeof(EbFifo*) * queue_ptr->process_total_count, EB_N_PTR);
 
@@ -229,9 +225,8 @@ static EbErrorType EbMuxingQueueCtor(
             (EbObjectWrapper *)EB_NULL,
             (EbObjectWrapper *)EB_NULL,
             queue_ptr);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
 
     *processFifoPtrArrayPtr = queue_ptr->process_fifo_ptr_array;
@@ -465,9 +460,8 @@ EbErrorType eb_system_resource_ctor(
             return_error = object_ctor(
                 &resource_ptr->wrapper_ptr_pool[wrapperIndex]->object_ptr,
                 object_init_data_ptr);
-            if (return_error == EB_ErrorInsufficientResources) {
+            if (return_error == EB_ErrorInsufficientResources)
                 return EB_ErrorInsufficientResources;
-            }
         }
     }
 
@@ -477,9 +471,8 @@ EbErrorType eb_system_resource_ctor(
         resource_ptr->object_total_count,
         producer_process_total_count,
         producer_fifo_ptr_array_ptr);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     // Fill the Empty Fifo with every ObjectWrapper
     for (wrapperIndex = 0; wrapperIndex < resource_ptr->object_total_count; ++wrapperIndex) {
         EbMuxingQueueObjectPushBack(
@@ -494,9 +487,8 @@ EbErrorType eb_system_resource_ctor(
             resource_ptr->object_total_count,
             consumer_process_total_count,
             consumer_fifo_ptr_array_ptr);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
     }
     else {
         resource_ptr->full_queue = (EbMuxingQueue *)EB_NULL;
@@ -685,12 +677,10 @@ static EbBool EbFifoPeakFront(
     EbFifo            *fifoPtr)
 {
     // Set wrapper_ptr to head of BufferPool
-    if (fifoPtr->first_ptr == (EbObjectWrapper*)EB_NULL) {
+    if (fifoPtr->first_ptr == (EbObjectWrapper*)EB_NULL)
         return EB_TRUE;
-    }
-    else {
+    else
         return EB_FALSE;
-    }
 }
 
 EbErrorType eb_get_full_object_non_blocking(

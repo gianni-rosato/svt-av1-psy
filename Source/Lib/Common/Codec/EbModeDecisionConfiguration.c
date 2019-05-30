@@ -112,14 +112,11 @@ EbErrorType MdcRefinement(
     EbErrorType return_error = EB_ErrorNone;
 
     if (refinementLevel & REFINEMENT_P) {
-        if (lowestLevel == REFINEMENT_P) {
+        if (lowestLevel == REFINEMENT_P)
             local_cu_array[cu_index].stop_split = EB_TRUE;
-        }
     }
-    else {
+    else
         local_cu_array[cu_index].selected_cu = EB_FALSE;
-    }
-
     if (refinementLevel & REFINEMENT_Pp1) {
         if (depth < 3 && cu_index < 81) {
             local_cu_array[cu_index + 1].selected_cu = EB_TRUE;
@@ -190,17 +187,15 @@ EbErrorType MdcRefinement(
         uint8_t cu_index = 2;
         if (depth == 0) {
             for (outLoop = 0; outLoop < 16; ++outLoop) {
-                for (inLoop = 0; inLoop < 4; ++inLoop) {
+                for (inLoop = 0; inLoop < 4; ++inLoop)
                     local_cu_array[++cu_index].selected_cu = EB_TRUE;
-                }
                 cu_index += cu_index == 21 ? 2 : cu_index == 42 ? 2 : cu_index == 63 ? 2 : 1;
             }
             if (lowestLevel == REFINEMENT_Pp3) {
                 cu_index = 2;
                 for (outLoop = 0; outLoop < 16; ++outLoop) {
-                    for (inLoop = 0; inLoop < 4; ++inLoop) {
+                    for (inLoop = 0; inLoop < 4; ++inLoop)
                         local_cu_array[++cu_index].stop_split = EB_TRUE;
-                    }
                     cu_index += cu_index == 21 ? 2 : cu_index == 42 ? 2 : cu_index == 63 ? 2 : 1;
                 }
             }
@@ -208,20 +203,17 @@ EbErrorType MdcRefinement(
     }
 
     if (refinementLevel & REFINEMENT_Pm1) {
-        if (depth > 0) {
+        if (depth > 0)
             local_cu_array[cu_index - 1 - parentCuIndex[cu_index]].selected_cu = EB_TRUE;
-        }
         if (lowestLevel == REFINEMENT_Pm1) {
-            if (depth > 0) {
+            if (depth > 0)
                 local_cu_array[cu_index - 1 - parentCuIndex[cu_index]].stop_split = EB_TRUE;
-            }
         }
     }
 
     if (refinementLevel & REFINEMENT_Pm2) {
-        if (depth == 2) {
+        if (depth == 2)
             local_cu_array[0].selected_cu = EB_TRUE;
-        }
         if (depth == 3) {
             local_cu_array[1].selected_cu = EB_TRUE;
             local_cu_array[22].selected_cu = EB_TRUE;
@@ -229,9 +221,8 @@ EbErrorType MdcRefinement(
             local_cu_array[64].selected_cu = EB_TRUE;
         }
         if (lowestLevel == REFINEMENT_Pm2) {
-            if (depth == 2) {
+            if (depth == 2)
                 local_cu_array[0].stop_split = EB_TRUE;
-            }
             if (depth == 3) {
                 local_cu_array[1].stop_split = EB_TRUE;
                 local_cu_array[22].stop_split = EB_TRUE;
@@ -242,13 +233,11 @@ EbErrorType MdcRefinement(
     }
 
     if (refinementLevel & REFINEMENT_Pm3) {
-        if (depth == 3) {
+        if (depth == 3)
             local_cu_array[0].selected_cu = EB_TRUE;
-        }
         if (lowestLevel == REFINEMENT_Pm2) {
-            if (depth == 3) {
+            if (depth == 3)
                 local_cu_array[0].stop_split = EB_TRUE;
-            }
         }
     }
 
@@ -274,26 +263,20 @@ uint8_t derive_contouring_class(
         if (leaf_index > 0) {
             SbParams            *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
             if (sb_params->is_edge_sb) {
-                if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1) {
+                if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1)
                     contouringClass = 2;
-                }
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2) {
+                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2)
                     contouringClass = 3;
-                }
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < (ANTI_CONTOURING_TH_1 + ANTI_CONTOURING_TH_2)) {
+                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < (ANTI_CONTOURING_TH_1 + ANTI_CONTOURING_TH_2))
                     contouringClass = 3;
-                }
             }
             else {
-                if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_0) {
+                if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_0)
                     contouringClass = 1;
-                }
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1) {
+                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1)
                     contouringClass = 2;
-                }
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2) {
+                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2)
                     contouringClass = 3;
-                }
             }
         }
     }
@@ -327,14 +310,12 @@ void RefinementPredictionLoop(
             uint32_t depth = get_coded_unit_stats(cu_index)->depth;
             uint8_t refinementLevel;
             {
-                if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_PRED_OPEN_LOOP_DEPTH_MODE) {
+                if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_PRED_OPEN_LOOP_DEPTH_MODE)
                     refinementLevel = Pred;
-                }
                 else
 
-                    if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_FAST_OPEN_LOOP_DEPTH_MODE) {
+                    if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_FAST_OPEN_LOOP_DEPTH_MODE)
                         refinementLevel = ndp_level_1[depth];
-                    }
                     else  { // SB_OPEN_LOOP_DEPTH_MODE
                         refinementLevel = ndp_level_0[depth];
                     }
@@ -361,9 +342,8 @@ void RefinementPredictionLoop(
 
             cu_index += depth_offset[depth];
         }
-        else {
+        else
             cu_index++;
-        }
     } // End while 1 CU Loop
 }
 
@@ -388,23 +368,17 @@ void PrePredictionRefinement(
 
     uint8_t           aura_status_iii = sb_ptr->aura_status_iii;
 
-    if (picture_control_set_ptr->parent_pcs_ptr->high_dark_low_light_area_density_flag && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 && picture_control_set_ptr->parent_pcs_ptr->sharp_edge_sb_flag[sb_index] && !picture_control_set_ptr->parent_pcs_ptr->similar_colocated_sb_array_ii[sb_index]) {
+    if (picture_control_set_ptr->parent_pcs_ptr->high_dark_low_light_area_density_flag && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 && picture_control_set_ptr->parent_pcs_ptr->sharp_edge_sb_flag[sb_index] && !picture_control_set_ptr->parent_pcs_ptr->similar_colocated_sb_array_ii[sb_index])
         *startDepth = DEPTH_16;
-    }
-
     if ((slice_type != I_SLICE && picture_control_set_ptr->high_intra_slection == 0) && (sb_params->is_complete_sb)) {
         if (picture_control_set_ptr->scene_caracteristic_id == EB_FRAME_CARAC_0) {
-            if (picture_control_set_ptr->parent_pcs_ptr->grass_percentage_in_picture > 60 && aura_status_iii) {
+            if (picture_control_set_ptr->parent_pcs_ptr->grass_percentage_in_picture > 60 && aura_status_iii)
                 *startDepth = DEPTH_16;
-            }
         }
     }
 
     if (picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag && edge_block_num)
-    {
         *startDepth = DEPTH_16;
-    }
-
     // S-LOGO
 
     if (stationary_edge_over_time_flag > 0) {
@@ -412,9 +386,8 @@ void PrePredictionRefinement(
         *endDepth = DEPTH_16;
     }
 
-    if (picture_control_set_ptr->parent_pcs_ptr->complex_sb_array[sb_ptr->index] == SB_COMPLEXITY_STATUS_2) {
+    if (picture_control_set_ptr->parent_pcs_ptr->complex_sb_array[sb_ptr->index] == SB_COMPLEXITY_STATUS_2)
         *startDepth = DEPTH_16;
-    }
 }
 #endif
 
@@ -467,9 +440,8 @@ void ForwardCuToModeDecision(
                     cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
                     cuClass = local_cu_array[cu_index].stop_split == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
 #else
-                    if (testAllDepthIntraSliceFlag) {
+                    if (testAllDepthIntraSliceFlag)
                         cuClass = ADD_CU_CONTINUE_SPLIT;
-                    }
                     else {
                         cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
                         cuClass = local_cu_array[cu_index].stop_split == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
@@ -687,9 +659,8 @@ void MdcInterDepthDecision(
         if (get_coded_unit_stats(depthZeroCandidateCuIndex)->depth == 0) {
             // Compute depth N cost
             depthNCost = (&local_cu_array[depthZeroCandidateCuIndex])->early_cost + depthNRate;
-            if (endDepth < 1) {
+            if (endDepth < 1)
                 (&local_cu_array[depthZeroCandidateCuIndex])->early_split_flag = EB_FALSE;
-            }
             else {
                 // Compute depth N+1 cost
                 depthNPlusOneCost = local_cu_array[depthOneCandidateCuIndex].early_cost +
@@ -876,13 +847,10 @@ void PredictionPartitionLoop(
                         DC_PRED);       // Hsan: neighbor not generated @ open loop partitioning
                 }
 
-                if (endDepth == 2) {
+                if (endDepth == 2)
                     context_ptr->group_of8x8_blocks_count = depth == 2 ? incrementalCount[cuIndexInRaterScan] : 0;
-                }
-
-                if (endDepth == 1) {
+                if (endDepth == 1)
                     context_ptr->group_of16x16_blocks_count = depth == 1 ? incrementalCount[cuIndexInRaterScan] : 0;
-                }
                 MdcInterDepthDecision(
                     context_ptr,
                     cuStatsPtr->origin_x,
@@ -890,9 +858,8 @@ void PredictionPartitionLoop(
                     endDepth,
                     cu_index);
             }
-            else {
+            else
                 cu_ptr->early_cost = ~0u;
-            }
         }
     }// End CU Loop
 }

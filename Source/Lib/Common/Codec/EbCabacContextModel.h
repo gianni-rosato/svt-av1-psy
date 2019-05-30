@@ -661,12 +661,10 @@ extern "C" {
         // Single loop (faster)
         for (i = 0; i < nsymbs - 1; ++i) {
             tmp = (i == val) ? 0 : tmp;
-            if (tmp < cdf[i]) {
+            if (tmp < cdf[i])
                 cdf[i] -= ((cdf[i] - tmp) >> rate);
-            }
-            else {
+            else
                 cdf[i] += ((tmp - cdf[i]) >> rate);
-            }
         }
         cdf[nsymbs] += (cdf[nsymbs] < 32);
     }

@@ -101,9 +101,8 @@ static INLINE void cfl_pad(CflCtx *cfl, int32_t width, int32_t height) {
         for (int j = 0; j < min_height; j++) {
             const int16_t last_pixel = recon_buf_q3[-1];
             assert(recon_buf_q3 + diff_width <= cfl->recon_buf_q3 + CFL_BUF_SQUARE);
-            for (int i = 0; i < diff_width; i++) {
+            for (int i = 0; i < diff_width; i++)
                 recon_buf_q3[i] = last_pixel;
-            }
             recon_buf_q3 += CFL_BUF_LINE;
         }
         cfl->buf_width = width;
@@ -114,9 +113,8 @@ static INLINE void cfl_pad(CflCtx *cfl, int32_t width, int32_t height) {
         for (int j = 0; j < diff_height; j++) {
             const int16_t *last_row_q3 = recon_buf_q3 - CFL_BUF_LINE;
             assert(recon_buf_q3 + width <= cfl->recon_buf_q3 + CFL_BUF_SQUARE);
-            for (int i = 0; i < width; i++) {
+            for (int i = 0; i < width; i++)
                 recon_buf_q3[i] = last_row_q3[i];
-            }
             recon_buf_q3 += CFL_BUF_LINE;
         }
         cfl->buf_height = height;
@@ -129,9 +127,8 @@ void cfl_luma_subsampling_422_lbd_c(const uint8_t *input,
 {
     assert((height - 1) * CFL_BUF_LINE + width <= CFL_BUF_SQUARE);
     for (int j = 0; j < height; j++) {
-        for (int i = 0; i < width; i += 2) {
+        for (int i = 0; i < width; i += 2)
             output_q3[i >> 1] = (input[i] + input[i + 1]) << 2;
-        }
         input += input_stride;
         output_q3 += CFL_BUF_LINE;
     }
@@ -143,9 +140,8 @@ void cfl_luma_subsampling_444_lbd_c(const uint8_t *input,
 {
     assert((height - 1) * CFL_BUF_LINE + width <= CFL_BUF_SQUARE);
     for (int j = 0; j < height; j++) {
-        for (int i = 0; i < width; i++) {
+        for (int i = 0; i < width; i++)
             output_q3[i] = input[i] << 3;
-        }
         input += input_stride;
         output_q3 += CFL_BUF_LINE;
     }
@@ -158,9 +154,8 @@ void cfl_luma_subsampling_422_hbd_c(
 {
     assert((height - 1) * CFL_BUF_LINE + width <= CFL_BUF_SQUARE);
     for (int j = 0; j < height; j++) {
-        for (int i = 0; i < width; i += 2) {
+        for (int i = 0; i < width; i += 2)
             output_q3[i >> 1] = (input[i] + input[i + 1]) << 2;
-        }
         input += input_stride;
         output_q3 += CFL_BUF_LINE;
     }
@@ -173,9 +168,8 @@ void cfl_luma_subsampling_444_hbd_c(
 {
     assert((height - 1) * CFL_BUF_LINE + width <= CFL_BUF_SQUARE);
     for (int j = 0; j < height; j++) {
-        for (int i = 0; i < width; i++) {
+        for (int i = 0; i < width; i++)
             output_q3[i] = input[i] << 3;
-        }
         input += input_stride;
         output_q3 += CFL_BUF_LINE;
     }
@@ -188,9 +182,8 @@ static INLINE cfl_subsample_hbd_fn cfl_subsampling_hbd(TxSize tx_size,
                                                        int32_t sub_y)
 {
     if (sub_x == 1) {
-        if (sub_y == 1) {
+        if (sub_y == 1)
             return cfl_get_luma_subsampling_420_hbd(tx_size);
-        }
         return cfl_get_luma_subsampling_422_hbd(tx_size);
     }
     return cfl_get_luma_subsampling_444_hbd(tx_size);
@@ -201,9 +194,8 @@ static INLINE cfl_subsample_lbd_fn cfl_subsampling_lbd(TxSize tx_size,
                                                        int32_t sub_y)
 {
     if (sub_x == 1) {
-        if (sub_y == 1) {
+        if (sub_y == 1)
             return cfl_get_luma_subsampling_420_lbd(tx_size);
-        }
         return cfl_get_luma_subsampling_422_lbd(tx_size);
     }
     return cfl_get_luma_subsampling_444_lbd(tx_size);
@@ -399,12 +391,10 @@ static void decode_build_intra_predictors(
 
     if ((!need_above && n_left_px == 0) || (!need_left && n_top_px == 0)) {
         int32_t val;
-        if (need_left) {
+        if (need_left)
             val = (n_top_px > 0) ? above_ref[0] : 129;
-        }
-        else {
+        else
             val = (n_left_px > 0) ? left_ref[0] : 127;
-        }
         for (i = 0; i < txhpx; ++i) {
             memset(dst, val, txwpx);
             dst += dst_stride;
@@ -429,12 +419,10 @@ static void decode_build_intra_predictors(
                 memset(&left_col[i], left_col[i - 1], num_left_pixels_needed - i);
         }
         else {
-            if (n_top_px > 0) {
+            if (n_top_px > 0)
                 memset(left_col, above_ref[0], num_left_pixels_needed);
-            }
-            else {
+            else
                 memset(left_col, 129, num_left_pixels_needed);
-            }
         }
     }
 
@@ -456,28 +444,22 @@ static void decode_build_intra_predictors(
                 memset(&above_row[i], above_row[i - 1], num_top_pixels_needed - i);
         }
         else {
-            if (n_left_px > 0) {
+            if (n_left_px > 0)
                 memset(above_row, left_ref[0], num_top_pixels_needed);
-            }
-            else {
+            else
                 memset(above_row, 127, num_top_pixels_needed);
-            }
         }
     }
 
     if (need_above_left) {
-        if (n_top_px > 0 && n_left_px > 0) {
+        if (n_top_px > 0 && n_left_px > 0)
             above_row[-1] = above_ref[-1];
-        }
-        else if (n_top_px > 0) {
+        else if (n_top_px > 0)
             above_row[-1] = above_ref[0];
-        }
-        else if (n_left_px > 0) {
+        else if (n_left_px > 0)
             above_row[-1] = left_ref[0];
-        }
-        else {
+        else
             above_row[-1] = 128;
-        }
         left_col[-1] = above_row[-1];
     }
 
@@ -498,9 +480,8 @@ static void decode_build_intra_predictors(
 
             if (p_angle != 90 && p_angle != 180) {
                 const int32_t ab_le = need_above_left ? 1 : 0;
-                if (need_above && need_left && (txwpx + txhpx >= 24)) {
+                if (need_above && need_left && (txwpx + txhpx >= 24))
                     filter_intra_edge_corner(above_row, left_col);
-                }
                 if (need_above && n_top_px > 0) {
                     const int32_t strength =
                         intra_edge_filter_strength(txwpx, txhpx, p_angle - 90, filt_type);
@@ -539,9 +520,8 @@ static void decode_build_intra_predictors(
         dc_pred[n_left_px > 0][n_top_px > 0][tx_size](dst, dst_stride, above_row,
             left_col);
     }
-    else {
+    else
         pred[mode][tx_size](dst, dst_stride, above_row, left_col);
-    }
 }
 
 /* TODO : Harmonize with Encoder! */
@@ -600,12 +580,10 @@ static void decode_build_intra_predictors_high(
 
     if ((!need_above && n_left_px == 0) || (!need_left && n_top_px == 0)) {
         int32_t val;
-        if (need_left) {
+        if (need_left)
             val = (n_top_px > 0) ? above_ref[0] : base + 1;
-        }
-        else {
+        else
             val = (n_left_px > 0) ? left_ref[0] : base - 1;
-        }
         for (i = 0; i < txhpx; ++i) {
             aom_memset16(dst, val, txwpx);
             dst += dst_stride;
@@ -631,12 +609,10 @@ static void decode_build_intra_predictors_high(
                 aom_memset16(&left_col[i], left_col[i - 1], num_left_pixels_needed - i);
         }
         else {
-            if (n_top_px > 0) {
+            if (n_top_px > 0)
                 aom_memset16(left_col, above_ref[0], num_left_pixels_needed);
-            }
-            else {
+            else
                 aom_memset16(left_col, base + 1, num_left_pixels_needed);
-            }
         }
     }
 
@@ -660,28 +636,22 @@ static void decode_build_intra_predictors_high(
                     num_top_pixels_needed - i);
         }
         else {
-            if (n_left_px > 0) {
+            if (n_left_px > 0)
                 aom_memset16(above_row, left_ref[0], num_top_pixels_needed);
-            }
-            else {
+            else
                 aom_memset16(above_row, base - 1, num_top_pixels_needed);
-            }
         }
     }
 
     if (need_above_left) {
-        if (n_top_px > 0 && n_left_px > 0) {
+        if (n_top_px > 0 && n_left_px > 0)
             above_row[-1] = above_ref[-1];
-        }
-        else if (n_top_px > 0) {
+        else if (n_top_px > 0)
             above_row[-1] = above_ref[0];
-        }
-        else if (n_left_px > 0) {
+        else if (n_left_px > 0)
             above_row[-1] = left_ref[0];
-        }
-        else {
+        else
             above_row[-1] = (uint16_t)base;
-        }
         left_col[-1] = above_row[-1];
     }
 
@@ -700,9 +670,8 @@ static void decode_build_intra_predictors_high(
             const int32_t filt_type = dec_get_filt_type(part_info, plane);
             if (p_angle != 90 && p_angle != 180) {
                 const int32_t ab_le = need_above_left ? 1 : 0;
-                if (need_above && need_left && (txwpx + txhpx >= 24)) {
+                if (need_above && need_left && (txwpx + txhpx >= 24))
                     filter_intra_edge_corner_high(above_row, left_col);
-                }
                 if (need_above && n_top_px > 0) {
                     const int32_t strength =
                         intra_edge_filter_strength(txwpx, txhpx, p_angle - 90, filt_type);
@@ -742,9 +711,8 @@ static void decode_build_intra_predictors_high(
         dc_pred_high[n_left_px > 0][n_top_px > 0][tx_size](
             dst, dst_stride, above_row, left_col, bd);
     }
-    else {
+    else
         pred_high[mode][tx_size](dst, dst_stride, above_row, left_col, bd);
-    }
 }
 
 void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
@@ -772,10 +740,8 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
     //->Since we are not supporting currently, we can keep it as zero.
     const int use_palette = 0; //mbmi->palette_mode_info.palette_size[plane != 0] > 0;
 
-    if (use_palette) {
+    if (use_palette)
         assert(0);
-    }
-
     const FilterIntraMode filter_intra_mode =
         (plane == AOM_PLANE_Y && mbmi->filter_intra_mode_info.use_filter_intra)
             ? mbmi->filter_intra_mode_info.filter_intra_mode

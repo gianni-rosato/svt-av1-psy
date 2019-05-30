@@ -185,9 +185,8 @@ int32_t main(int32_t argc, char* argv[])
                 skip_frame--;
             }
             stop_after = config_ptr->frames_to_be_decoded;
-            if (enable_md5) {
+            if (enable_md5)
                 md5_init(&md5_ctx);
-            }
             // Input Loop Thread
             while (read_input_frame(&cli, &buf, &bytes_in_buffer, &buffer_size, NULL)) {
                 if (!stop_after || in_frame < stop_after) {
@@ -197,12 +196,10 @@ int32_t main(int32_t argc, char* argv[])
                     in_frame++;
 
                     if (eb_svt_dec_get_picture(p_handle, recon_buffer, stream_info, frame_info) != EB_DecNoOutputPicture) {
-                        if (enable_md5) {
+                        if (enable_md5)
                             write_md5(recon_buffer, &cli, &md5_ctx);
-                        }
-                        else {
+                        else
                             write_frame(recon_buffer, &cli);
-                        }
                     }
                 }
                 else break;
@@ -225,10 +222,8 @@ int32_t main(int32_t argc, char* argv[])
         free(recon_buffer);
         free(buf);
     }
-    else {
+    else
         printf("Error in configuration. \n");
-    }
-
     return_error |= eb_dec_deinit_handle(p_handle);
 
 fail:

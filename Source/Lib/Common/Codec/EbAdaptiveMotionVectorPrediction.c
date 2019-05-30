@@ -573,9 +573,8 @@ static int32_t has_top_right(const Av1Common *cm, const MacroBlockD *xd,
                 break;
             }
         }
-        else {
+        else
             break;
-        }
         bs <<= 1;
     }
 
@@ -1049,12 +1048,10 @@ static INLINE void integer_mv_precision(MV *mv) {
     if (mod != 0) {
         mv->row -= (int16_t)mod;
         if (abs(mod) > 4) {
-            if (mod > 0) {
+            if (mod > 0)
                 mv->row += 8;
-            }
-            else {
+            else
                 mv->row -= 8;
-            }
         }
     }
 
@@ -1062,12 +1059,10 @@ static INLINE void integer_mv_precision(MV *mv) {
     if (mod != 0) {
         mv->col -= (int16_t)mod;
         if (abs(mod) > 4) {
-            if (mod > 0) {
+            if (mod > 0)
                 mv->col += 8;
-            }
-            else {
+            else
                 mv->col -= 8;
-            }
         }
     }
 }
@@ -1102,10 +1097,8 @@ static INLINE IntMv gm_get_motion_vector(
         res.as_mv.col = (int16_t)(gm->wmmat[1] >> GM_TRANS_ONLY_PREC_DIFF);
         assert(IMPLIES(1 & (res.as_mv.row | res.as_mv.col), allow_hp));
 
-        if (is_integer) {
+        if (is_integer)
             integer_mv_precision(&res.as_mv);
-        }
-
         return res;
     }
     /*else
@@ -1195,9 +1188,8 @@ void generate_av1_mvp_table(
                 .as_int
                 : 0;
         }
-        else {
+        else
             zeromv[0].as_int = zeromv[1].as_int = 0;
-        }
         setup_ref_mv_list(cm,
             xd,
             ref_frame,
@@ -1345,9 +1337,8 @@ void update_av1_mi_map(
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[cu_ptr->tx_depth][0]; // inherit tx_size from 1st transform block
 #else
                     int32_t txb_itr;
-                    for (txb_itr = 0; txb_itr < blk_geom->txb_count; txb_itr++) {
+                    for (txb_itr = 0; txb_itr < blk_geom->txb_count; txb_itr++)
                         miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[txb_itr]; // Nader - TO_DO
-                    }
 #endif
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = blk_geom->bsize;
 #if ATB_SUPPORT
@@ -1422,9 +1413,8 @@ void update_mi_map(
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[cu_ptr->tx_depth][0]; // inherit tx_size from 1st transform block
 #else
                     int32_t txb_itr;
-                    for (txb_itr = 0; txb_itr < blk_geom->txb_count; txb_itr++) {
+                    for (txb_itr = 0; txb_itr < blk_geom->txb_count; txb_itr++)
                         miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[txb_itr]; // Nader - TO_DO
-                    }
 #endif
 
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = blk_geom->bsize;
@@ -1513,9 +1503,8 @@ int select_samples(
     i = 0;
     j = l - 1;
     for (k = 0; k < l - ret; k++) {
-        while (pts_mvd[i] != -1) {
+        while (pts_mvd[i] != -1)
             i++;
-        }
         if (j < 0)
             break;
         while (pts_mvd[j] == -1) {
@@ -2127,9 +2116,8 @@ IntMv av1_get_ref_mv_from_stack(int ref_idx,
     ref_mv.as_int = INVALID_MV;
 
     if (ref_frame[1] > INTRA_FRAME) {
-        if (ref_idx == 0) {
+        if (ref_idx == 0)
             ref_mv = curr_ref_mv_stack[ref_mv_idx].this_mv;
-        }
         else {
             assert(ref_idx == 1);
             ref_mv = curr_ref_mv_stack[ref_mv_idx].comp_mv;
@@ -2137,9 +2125,8 @@ IntMv av1_get_ref_mv_from_stack(int ref_idx,
     }
     else {
         assert(ref_idx == 0);
-        if (ref_mv_idx < /*mbmi_ext->*/xd->ref_mv_count[ref_frame_type]) {
+        if (ref_mv_idx < /*mbmi_ext->*/xd->ref_mv_count[ref_frame_type])
             ref_mv = curr_ref_mv_stack[ref_mv_idx].this_mv;
-        }
         else {
             //CHKN got this from decoder read_intrabc_info global_mvs[ref_frame].as_int = INVALID_MV;
             ref_mv.as_int = INVALID_MV;// mbmi_ext->global_mvs[ref_frame_type];
@@ -2149,9 +2136,8 @@ IntMv av1_get_ref_mv_from_stack(int ref_idx,
 }
 
 static INLINE void lower_mv_precision(MV *mv, int allow_hp, int is_integer) {
-    if (is_integer) {
+    if (is_integer)
         integer_mv_precision(mv);
-    }
     else {
         if (!allow_hp) {
             if (mv->row & 1) mv->row += (mv->row > 0 ? -1 : 1);

@@ -114,10 +114,8 @@ uint64_t compute4x4_satd(
     d[14] = m[14] + m[15];
     d[15] = m[15] - m[14];
 
-    for (k = 0; k < 16; ++k) {
+    for (k = 0; k < 16; ++k)
         satdBlock4x4 += ABS(d[k]);
-    }
-
     satdBlock4x4 = ((satdBlock4x4 + 1) >> 1);
 
     return satdBlock4x4;
@@ -201,10 +199,8 @@ uint64_t compute4x4_satd_u8(
     d[14] = m[14] + m[15];
     d[15] = m[15] - m[14];
 
-    for (k = 0; k < 16; ++k) {
+    for (k = 0; k < 16; ++k)
         satdBlock4x4 += ABS(d[k]);
-    }
-
     satdBlock4x4 = ((satdBlock4x4 + 1) >> 1);
     *dc_value += d[0];
     return satdBlock4x4;
