@@ -50,7 +50,7 @@ install:
   #- if [ $TRAVIS_OS_NAME = osx ]; then brew install --HEAD valgrind; fi
 base_script: &base_script |
   cd $TRAVIS_BUILD_DIR/Build/linux/$build_type
-  cmake $TRAVIS_BUILD_DIR -G"Unix Makefiles" -DCMAKE_ASM_NASM_COMPILER=yasm -DCMAKE_BUILD_TYPE=$build_type ${CMAKE_EFLAGS[@]}
+  cmake $TRAVIS_BUILD_DIR -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=$build_type ${CMAKE_EFLAGS[@]}
   cmake -j $(if [ $TRAVIS_OS_NAME = osx ]; then sysctl -n hw.ncpu; else nproc; fi) --build . &&
   sudo cmake --build . --target install && cd $TRAVIS_BUILD_DIR
 coveralls_script: &coveralls_script |
@@ -128,7 +128,7 @@ matrix:
         - git clone https://github.com/FFmpeg/FFmpeg --branch release/4.1 --depth=1 ffmpeg && cd ffmpeg
         - git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
         - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig
-        - ./configure --enable-libsvtav1
+        - ./configure --enable-libsvtav1 || less ffbuild/config.log
         - make --quiet -j$(nproc) && sudo make install
     # GStreamer interation build
     - name: GStreamer patch
