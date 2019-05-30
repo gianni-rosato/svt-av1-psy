@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include "EbSvtAv1Dec.h"
 #include "EbDecParamParser.h"
@@ -180,7 +181,7 @@ int32_t main(int32_t argc, char* argv[])
             EbAV1FrameInfo *frame_info = (EbAV1FrameInfo*)malloc(sizeof(EbAV1FrameInfo));
 
             if (config_ptr->skip_frames)
-                fprintf(stderr, "Skipping first %llu frames.\n", config_ptr->skip_frames);
+                fprintf(stderr, "Skipping first %" PRIu64 " frames.\n", config_ptr->skip_frames);
             uint64_t skip_frame = config_ptr->skip_frames;
             while (skip_frame) {
                 if (!read_input_frame(&cli, &buf, &bytes_in_buffer, &buffer_size, NULL)) break;
