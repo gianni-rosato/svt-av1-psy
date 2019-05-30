@@ -4,6 +4,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 project(gst-svt-av1 C)
 
+set(POSITION_INDEPENDENT_CODE ON)
+
 include(CheckCCompilerFlag)
 
 find_package(PkgConfig REQUIRED)
