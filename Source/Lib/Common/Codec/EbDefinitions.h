@@ -50,9 +50,17 @@ extern "C" {
 
 #define SPATIAL_SSE_TX_SEARCH             1 // Spatial SSE @ the full loop Tx search
 #define ENHANCED_Nx4_4xN_NEW_MV           1 // Nx4 and 4xN MVs to be inherited from the parent block rather than from the 64x64
+#define MISSING_COMPOUND                  1 // Missing inter candidates NEARETSEST/NEW, NEW/NEARETSEST, NEAR/NEW, NEW/NEAR.
+#if MISSING_COMPOUND
+#define NEW_NEARESTMV_INJECTION           1
+#define NEAREST_NEWMV_INJECTION           1
+#define NEW_NEARMV_INJECTION              0
+#define NEAR_NEWMV_INJECTION              0
+#endif
 
-#define DC_SIGN_CONTEXT_EP                0 // Fixed DC level derivation & update @ encode pass
-#define RDOQ_INTRA                        0 // Enable RDOQ for INTRA for 16x16 and larger
+
+#define RDOQ_INTRA                        1 // Enable RDOQ for INTRA for 16x16 and larger
+#define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass
 
 #define ATB                               1 // ATB Main Flag
 #if ATB
