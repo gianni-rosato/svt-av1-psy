@@ -2487,10 +2487,36 @@ void  inject_inter_candidates(
 
     max_number_of_pus_per_sb = picture_control_set_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
 #if MEMORY_FOOTPRINT_OPT_ME_MV
+#if ENHANCED_Nx4_4xN_NEW_MV
+    if (context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) {
+        context_ptr->me_block_offset = 0;
+    }
+    else if (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) {
+        context_ptr->me_block_offset =
+            get_me_info_index(
+                max_number_of_pus_per_sb,
+                context_ptr->blk_geom,
+                (context_ptr->blk_geom->bwidth == 4) ? 4 : 0,
+                (context_ptr->blk_geom->bheight == 4) ? 4 : 0,
+                geom_offset_x + ((context_ptr->blk_geom->origin_x % 8) ? 4 : 0),
+                geom_offset_y + ((context_ptr->blk_geom->origin_y % 8) ? 4 : 0));
+    }
+    else {
+        context_ptr->me_block_offset =
+            get_me_info_index(
+                max_number_of_pus_per_sb,
+                context_ptr->blk_geom,
+                0,
+                0,
+                geom_offset_x,
+                geom_offset_y);
+    }
+#else
     context_ptr->me_block_offset =
         (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 || context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) ?
             0 :
             get_me_info_index(max_number_of_pus_per_sb, context_ptr->blk_geom, geom_offset_x, geom_offset_y);
+#endif
 #else
     uint32_t me2Nx2NTableOffset;
 

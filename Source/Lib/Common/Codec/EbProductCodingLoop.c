@@ -5174,7 +5174,17 @@ void  order_nsq_table(
         me_sb_addr = lcuAddr;
     max_number_of_pus_per_sb = picture_control_set_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
     me2Nx2NTableOffset = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 || context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) ? 0 :
-        get_me_info_index(max_number_of_pus_per_sb, context_ptr->blk_geom, geom_offset_x, geom_offset_y);
+
+        get_me_info_index(
+            max_number_of_pus_per_sb, 
+            context_ptr->blk_geom,
+#if ENHANCED_Nx4_4xN_NEW_MV
+            0,
+            0,
+#endif
+            geom_offset_x, 
+            geom_offset_y);
+
 #if MD_INJECTION
     const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
     uint8_t nsq0 = me_results->me_nsq_0[me2Nx2NTableOffset];

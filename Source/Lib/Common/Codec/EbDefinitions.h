@@ -47,10 +47,12 @@ extern "C" {
 #define MRP_SUPPORT                       1// MRP Main Flag
 
 
-#define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass
-#define RDOQ_INTRA                        1 // Enable RDOQ for INTRA for 16x16 and larger
-#define SPATIAL_SSE_TX_SEARCH             1 // Spatial SSE @ the full loop Tx search
 
+#define SPATIAL_SSE_TX_SEARCH             1 // Spatial SSE @ the full loop Tx search
+#define ENHANCED_Nx4_4xN_NEW_MV           1 // Nx4 and 4xN MVs to be inherited from the parent block rather than from the 64x64
+
+#define DC_SIGN_CONTEXT_EP                0 // Fixed DC level derivation & update @ encode pass
+#define RDOQ_INTRA                        0 // Enable RDOQ for INTRA for 16x16 and larger
 
 #define ATB                               1 // ATB Main Flag
 #if ATB

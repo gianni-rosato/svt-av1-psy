@@ -1548,11 +1548,14 @@ void interpolate_search_region_AVC_chroma(
     *   md candidate
     *******************************************/
     extern uint32_t get_me_info_index(
-        uint32_t                  max_me_block,
-        const BlockGeom        *blk_geom
-        , uint32_t               geom_offset_x,
-        uint32_t                 geom_offset_y
-    );
+        uint32_t         max_me_block,
+        const BlockGeom *blk_geom,
+#if ENHANCED_Nx4_4xN_NEW_MV
+        uint32_t         geom_offset_width,
+        uint32_t         geom_offset_height,
+#endif
+        uint32_t         geom_offset_x,
+        uint32_t         geom_offset_y);
 
 #ifdef __cplusplus
 }
