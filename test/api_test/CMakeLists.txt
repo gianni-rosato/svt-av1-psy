@@ -37,6 +37,12 @@ file(GLOB all_files
     "*.h"
     "*.cc")
 
+if(BUILD_SHARED_LIBS)
+    set (SvtAv1EncLib SvtAv1EncShared)
+else()
+    set (SvtAv1EncLib SvtAv1EncStatic)
+endif()
+
 if (UNIX)
         
   # App Source Files
@@ -45,7 +51,7 @@ if (UNIX)
 
     # Link the Encoder App
      target_link_libraries (SvtAv1ApiTests
-        SvtAv1Enc
+        ${SvtAv1EncLib}
         gtest_all 
         pthread
         m)
