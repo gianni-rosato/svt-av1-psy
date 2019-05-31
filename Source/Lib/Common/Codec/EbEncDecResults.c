@@ -20,4 +20,3 @@ EbErrorType enc_dec_results_ctor(
 
     return EB_ErrorNone;
 }
-

@@ -28,7 +28,6 @@ extern "C" {
 
 #define EB_MAX_TEMPORAL_LAYERS              MAX_TEMPORAL_LAYERS
 
-
 /********************************
 * Defines
 ********************************/
@@ -112,13 +111,12 @@ typedef enum EbErrorType
 } EbErrorType;
 
 /* AV1 bistream profile (seq_profile syntax element) */
-typedef enum EbAv1SeqProfile 
+typedef enum EbAv1SeqProfile
 {
     MAIN_PROFILE         = 0,
     HIGH_PROFILE         = 1,
     PROFESSIONAL_PROFILE = 2
 } EbAv1SeqProfile;
-
 
 typedef enum AomBitDepth {
     AOM_BITS_8  = 8,   /**<  8 bits */
@@ -151,7 +149,6 @@ typedef struct EbSvtIOFormat            //former EbSvtEncInput
 
     uint32_t origin_x;
     uint32_t origin_y;
-
 } EbSvtIOFormat;
 
 #ifdef __cplusplus

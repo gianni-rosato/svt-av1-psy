@@ -33,7 +33,6 @@ extern "C" {
         uint64_t   dpb_disp_order[8], dpb_dec_order[8];
         uint64_t   tot_shown_frames;
         uint64_t   disp_order_continuity_count;
-
     } PacketizationContext;
 
     /**************************************
@@ -43,8 +42,6 @@ extern "C" {
         PacketizationContext **context_dbl_ptr,
         EbFifo                *entropy_coding_input_fifo_ptr,
         EbFifo                *rate_control_tasks_output_fifo_ptr);
-
-
 
     extern void* packetization_kernel(void *input_ptr);
 #ifdef __cplusplus

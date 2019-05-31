@@ -66,9 +66,8 @@ static INLINE void av1_round_shift_array_32_avx2(__m256i *input,
             output[i] = _mm256_srai_epi32(r0, bit);
         }
     } else {
-        for (i = 0; i < size; i++) {
+        for (i = 0; i < size; i++)
             output[i] = _mm256_slli_epi32(input[i], -bit);
-        }
     }
 }
 
@@ -141,9 +140,8 @@ static INLINE void av1_round_shift_array_32_avx2(__m256i *input,
     static INLINE void load_buffer_32bit_to_16bit_w16_avx2(const int32_t *in,
         int32_t stride, __m256i *out,
         int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             out[i] = load_32bit_to_16bit_w16_avx2(in + i * stride);
-        }
     }
 
     static INLINE void transpose_16bit_16x16_avx2(const __m256i *const in,
@@ -203,29 +201,25 @@ static INLINE void av1_round_shift_array_32_avx2(__m256i *input,
     static INLINE void round_shift_16bit_w16_avx2(__m256i *in, int32_t size, int32_t bit) {
         if (bit < 0) {
             __m256i scale = _mm256_set1_epi16(1 << (bit + 15));
-            for (int32_t i = 0; i < size; ++i) {
+            for (int32_t i = 0; i < size; ++i)
                 in[i] = _mm256_mulhrs_epi16(in[i], scale);
-            }
         }
         else if (bit > 0) {
-            for (int32_t i = 0; i < size; ++i) {
+            for (int32_t i = 0; i < size; ++i)
                 in[i] = _mm256_slli_epi16(in[i], bit);
-            }
         }
     }
 
     static INLINE void round_shift_avx2(const __m256i *input, __m256i *output,
         int32_t size) {
         const __m256i scale = _mm256_set1_epi16(NewInvSqrt2 * 8);
-        for (int32_t i = 0; i < size; ++i) {
+        for (int32_t i = 0; i < size; ++i)
             output[i] = _mm256_mulhrs_epi16(input[i], scale);
-        }
     }
 
     static INLINE void flip_buf_av2(__m256i *in, __m256i *out, int32_t size) {
-        for (int32_t i = 0; i < size; ++i) {
+        for (int32_t i = 0; i < size; ++i)
             out[size - i - 1] = in[i];
-        }
     }
 
     static INLINE void write_recon_w16_avx2(__m256i res, uint8_t *output) {
@@ -241,11 +235,9 @@ static INLINE void av1_round_shift_array_32_avx2(__m256i *input,
         int32_t height) {
         int32_t j = flipud ? (height - 1) : 0;
         const int32_t step = flipud ? -1 : 1;
-        for (int32_t i = 0; i < height; ++i, j += step) {
+        for (int32_t i = 0; i < height; ++i, j += step)
             write_recon_w16_avx2(in[j], output + i * stride);
-        }
     }
-
 
     typedef void(*transform_1d_avx2)(__m256i *in, __m256i *out, int32_t bit,
         int32_t do_cols, int32_t bd, int32_t out_shift);

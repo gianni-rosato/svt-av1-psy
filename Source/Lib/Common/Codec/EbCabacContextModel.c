@@ -4468,9 +4468,8 @@ void av1_default_coef_probs(FRAME_CONTEXT *fc, int32_t base_qindex) {
 
 static void reset_cdf_symbol_counter(AomCdfProb *cdf_ptr, int32_t num_cdfs,
     int32_t cdf_stride, int32_t nsymbs) {
-    for (int32_t i = 0; i < num_cdfs; i++) {
+    for (int32_t i = 0; i < num_cdfs; i++)
         cdf_ptr[i * cdf_stride + nsymbs] = 0;
-    }
 }
 
 #define RESET_CDF_COUNTER(cname, nsymbs) \
@@ -4563,15 +4562,12 @@ void av1_reset_cdf_symbol_counters(FRAME_CONTEXT *fc) {
         CDF_SIZE(UV_INTRA_MODES));
     RESET_CDF_COUNTER(fc->uv_mode_cdf[1], UV_INTRA_MODES);
     for (int32_t i = 0; i < PARTITION_CONTEXTS; i++) {
-        if (i < 4) {
+        if (i < 4)
             RESET_CDF_COUNTER_STRIDE(fc->partition_cdf[i], 4, CDF_SIZE(10));
-        }
-        else if (i < 16) {
+        else if (i < 16)
             RESET_CDF_COUNTER(fc->partition_cdf[i], 10);
-        }
-        else {
+        else
             RESET_CDF_COUNTER_STRIDE(fc->partition_cdf[i], 8, CDF_SIZE(10));
-        }
     }
     RESET_CDF_COUNTER(fc->switchable_interp_cdf, SWITCHABLE_FILTERS);
     RESET_CDF_COUNTER(fc->kf_y_cdf, INTRA_MODES);
@@ -4583,9 +4579,8 @@ void av1_reset_cdf_symbol_counters(FRAME_CONTEXT *fc) {
     RESET_CDF_COUNTER(fc->tx_size_cdf[3], MAX_TX_DEPTH + 1);
     RESET_CDF_COUNTER(fc->delta_q_cdf, DELTA_Q_PROBS + 1);
     RESET_CDF_COUNTER(fc->delta_lf_cdf, DELTA_LF_PROBS + 1);
-    for (int32_t i = 0; i < FRAME_LF_COUNT; i++) {
+    for (int32_t i = 0; i < FRAME_LF_COUNT; i++)
         RESET_CDF_COUNTER(fc->delta_lf_multi_cdf[i], DELTA_LF_PROBS + 1);
-    }
     RESET_CDF_COUNTER_STRIDE(fc->intra_ext_tx_cdf[1], 7, CDF_SIZE(TX_TYPES));
     RESET_CDF_COUNTER_STRIDE(fc->intra_ext_tx_cdf[2], 5, CDF_SIZE(TX_TYPES));
     RESET_CDF_COUNTER_STRIDE(fc->inter_ext_tx_cdf[1], 16, CDF_SIZE(TX_TYPES));
@@ -4594,7 +4589,6 @@ void av1_reset_cdf_symbol_counters(FRAME_CONTEXT *fc) {
     RESET_CDF_COUNTER(fc->cfl_sign_cdf, CFL_JOINT_SIGNS);
     RESET_CDF_COUNTER(fc->cfl_alpha_cdf, CFL_ALPHABET_SIZE);
 }
-
 
 /********************************************************************************************************************************/
 

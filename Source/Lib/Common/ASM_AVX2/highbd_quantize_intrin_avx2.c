@@ -12,9 +12,7 @@
 #include "EbDefinitions.h"
 #include <immintrin.h>
 
-
 #include "aom_dsp_rtcd.h"
-
 
 #ifdef __GNUC__
 #define LIKELY(v) __builtin_expect(v, 1)
@@ -23,7 +21,6 @@
 #define LIKELY(v) (v)
 #define UNLIKELY(v) (v)
 #endif
-
 
  // Note:
  // TranHigh is the datatype used for intermediate transform stages.
@@ -38,9 +35,8 @@ static INLINE void init_one_qp(const __m128i *p, __m256i *qp) {
 
 static INLINE void update_qp(__m256i *qp) {
     int32_t i;
-    for (i = 0; i < 5; ++i) {
+    for (i = 0; i < 5; ++i)
         qp[i] = _mm256_permute2x128_si256(qp[i], qp[i], 0x11);
-    }
 }
 
 static INLINE void init_qp(const int16_t *zbin_ptr, const int16_t *round_ptr,
@@ -134,7 +130,6 @@ void aom_highbd_quantize_b_avx2(const TranLow *coeff_ptr, intptr_t n_coeffs,
     const int16_t *scan, const int16_t *iscan) {
     (void)scan;
     const uint32_t step = 8;
-
 
     if (LIKELY(!skip_block)) {
         __m256i qp[5], coeff;
@@ -283,7 +278,6 @@ void aom_highbd_quantize_b_64x64_avx2(const TranLow *coeff_ptr, intptr_t n_coeff
     (void)scan;
     const uint32_t step = 8;
 
-
     if (LIKELY(!skip_block)) {
         __m256i qp[5], coeff;
         init_qp_64x64(zbin_ptr, round_ptr, quant_ptr, dequant_ptr, quant_shift_ptr, qp);
@@ -429,7 +423,6 @@ void aom_highbd_quantize_b_32x32_avx2(const TranLow *coeff_ptr, intptr_t n_coeff
     const int16_t *scan, const int16_t *iscan) {
     (void)scan;
     const unsigned int step = 8;
-
 
     if (LIKELY(!skip_block)) {
         __m256i qp[5], coeff;

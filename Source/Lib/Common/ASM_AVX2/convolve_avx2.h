@@ -129,9 +129,8 @@ static INLINE void add_store_aligned_256(ConvBufType *const dst,
         d = _mm256_add_epi32(d, *res);
         d = _mm256_srai_epi32(d, 1);
     }
-    else {
+    else
         d = *res;
-    }
     _mm256_store_si256((__m256i *)dst, d);
 }
 

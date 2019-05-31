@@ -414,9 +414,8 @@ static void av1_apply_temporal_filter_luma_16(
         if (!use_whole_blk && h == block_height / 2) {
             if (blk_fw) {
                 blk_fw += 2;
-            } else {
+            } else
                 weight = bottom_weight;
-            }
         }
         // Shift the rows up
         sum_row_1_first = sum_row_2_first;
@@ -699,9 +698,8 @@ static void av1_apply_temporal_filter_chroma_8(
         if (h == uv_block_height / 2) {
             if (blk_fw) {
                 blk_fw += 2;
-            } else {
+            } else
                 weight = bottom_weight;
-            }
         }
 
         // Shift the rows up
@@ -813,10 +811,8 @@ static void av1_apply_temporal_filter_chroma(
 
         if (ss_y) {
             neighbors = CHROMA_DOUBLE_SS_SINGLE_COLUMN_NEIGHBORS;
-        } else {
+        } else
             neighbors = CHROMA_SINGLE_SS_SINGLE_COLUMN_NEIGHBORS;
-        }
-
         if (use_whole_blk) {
             av1_apply_temporal_filter_chroma_8(
                     y_src + blk_col, y_src_stride, y_pre + blk_col, y_pre_stride,
@@ -845,10 +841,8 @@ static void av1_apply_temporal_filter_chroma(
         neighbors = CHROMA_DOUBLE_SS_LEFT_COLUMN_NEIGHBORS;
     } else if (ss_x || ss_y) {
         neighbors = CHROMA_SINGLE_SS_LEFT_COLUMN_NEIGHBORS;
-    } else {
+    } else
         neighbors = CHROMA_NO_SS_LEFT_COLUMN_NEIGHBORS;
-    }
-
     av1_apply_temporal_filter_chroma_8(
             y_src + blk_col, y_src_stride, y_pre + blk_col, y_pre_stride,
             u_src + uv_blk_col, v_src + uv_blk_col, uv_src_stride, u_pre + uv_blk_col,
@@ -866,10 +860,8 @@ static void av1_apply_temporal_filter_chroma(
         neighbors = CHROMA_DOUBLE_SS_MIDDLE_COLUMN_NEIGHBORS;
     } else if (ss_x || ss_y) {
         neighbors = CHROMA_SINGLE_SS_MIDDLE_COLUMN_NEIGHBORS;
-    } else {
+    } else
         neighbors = CHROMA_NO_SS_MIDDLE_COLUMN_NEIGHBORS;
-    }
-
     for (; uv_blk_col < uv_mid_width;
            blk_col += blk_col_step, uv_blk_col += uv_blk_col_step) {
         av1_apply_temporal_filter_chroma_8(
@@ -905,10 +897,8 @@ static void av1_apply_temporal_filter_chroma(
         neighbors = CHROMA_DOUBLE_SS_RIGHT_COLUMN_NEIGHBORS;
     } else if (ss_x || ss_y) {
         neighbors = CHROMA_SINGLE_SS_RIGHT_COLUMN_NEIGHBORS;
-    } else {
+    } else
         neighbors = CHROMA_NO_SS_RIGHT_COLUMN_NEIGHBORS;
-    }
-
     av1_apply_temporal_filter_chroma_8(
             y_src + blk_col, y_src_stride, y_pre + blk_col, y_pre_stride,
             u_src + uv_blk_col, v_src + uv_blk_col, uv_src_stride, u_pre + uv_blk_col,
@@ -1002,5 +992,3 @@ void av1_apply_temporal_filter_sse4_1(
             strength, blk_fw_ptr, use_whole_blk, u_accum, u_count, v_accum, v_count,
             y_dist_ptr, u_dist_ptr, v_dist_ptr);
 }
-
-

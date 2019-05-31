@@ -32,9 +32,7 @@ extern "C" {
         uint64_t                          cbFullDistortion[DIST_CALC_TOTAL],
         uint64_t                          crFullDistortion[DIST_CALC_TOTAL],
         uint32_t                          count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU],
-
         COMPONENT_TYPE                  component_type,
-
         uint64_t                         *cb_coeff_bits,
         uint64_t                         *cr_coeff_bits,
 #if SPATIAL_SSE
@@ -51,7 +49,6 @@ extern "C" {
         uint64_t                         *y_coeff_bits,
         uint64_t                         *y_full_distortion);
 
-
     void product_full_loop_tx_search(
         ModeDecisionCandidateBuffer  *candidateBuffer,
         ModeDecisionContext          *context_ptr,
@@ -67,12 +64,9 @@ extern "C" {
         MdRateEstimationContext      *md_rate_estimation_ptr,
         PictureControlSet            *picture_control_set_ptr);
 
-
     void  d1_non_square_block_decision(
         ModeDecisionContext               *context_ptr
     );
-
-
 
 #ifdef __cplusplus
 }

@@ -15,7 +15,7 @@
 /************************************************
  * PA Reference Queue Entry
  ************************************************/
-typedef struct PaReferenceQueueEntry 
+typedef struct PaReferenceQueueEntry
 {
     EbObjectWrapper              *input_object_ptr;
     uint64_t                      picture_number;
@@ -38,9 +38,7 @@ typedef struct PaReferenceQueueEntry
 #endif
 } PaReferenceQueueEntry;
 
-
 extern EbErrorType pa_reference_queue_entry_ctor(
     PaReferenceQueueEntry  **entry_dbl_ptr);
-
 
 #endif // EbPictureDecisionQueue_h

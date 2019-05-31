@@ -10,8 +10,6 @@
 #include "EbSystemResourceManager.h"
 #include "EbRateControlProcess.h"
 
-
-
 /**************************************
  * Context
  **************************************/

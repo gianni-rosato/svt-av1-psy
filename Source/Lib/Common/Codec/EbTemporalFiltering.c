@@ -115,7 +115,6 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
                       uint16_t width, uint16_t height,
                       uint16_t stride_y, uint16_t stride_u, uint16_t stride_v,
                       uint16_t origin_y, uint16_t origin_x){
-
     FILE *fid = NULL;
     EbByte pic_point;
     int h;
@@ -124,7 +123,6 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
     if ((fid = fopen(filename, "wb")) == NULL) {
         printf("Unable to open file %s to write.\n", "temp_picture.yuv");
     }else{
-
         // the source picture saved in the enchanced_picture_ptr contains a border in x and y dimensions
         pic_point = buffer_y + (origin_y*stride_y) + origin_x;
         for (h = 0; h < height; h++) {
@@ -147,7 +145,6 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
 
 // Copy block/picture of size width x height from src to dst
 void copy_pixels(EbByte dst, int stride_dst, EbByte src, int stride_src, int width, int height){
-
     int h;
     EbByte src_cpy = src, dst_cpy = dst;
 
@@ -156,46 +153,35 @@ void copy_pixels(EbByte dst, int stride_dst, EbByte src, int stride_src, int wid
         dst_cpy += stride_dst;
         src_cpy += stride_src;
     }
-
 }
 
 // assign a single value to all elements in an array
 static void populate_list_with_value(int *list, int nelements, const int value){
-
-    for(int i=0; i<nelements; i++){
+    for(int i=0; i<nelements; i++)
         list[i] = value;
-    }
-
 }
 
 // get block filter weights using a distance metric
 void get_blk_fw_using_dist(int const *me_32x32_subblock_sad, int const *me_16x16_subblock_sad, EbBool use_16x16_subblocks_only, int *blk_fw){
-
     uint32_t blk_idx, idx_32x32;
 
     int me_sum_16x16_subblock_sad[4] = {0};
     int max_me_sad[4] = {INT_MIN_TF, INT_MIN_TF, INT_MIN_TF, INT_MIN_TF}, min_me_sad[4] = {INT_MAX_TF, INT_MAX_TF, INT_MAX_TF, INT_MAX_TF};
 
     if(use_16x16_subblocks_only) {
-
         for (idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
-
             // split into 16x16 sub-blocks
 
             for (blk_idx = 0; blk_idx < N_16X16_BLOCKS; blk_idx++) {
-
                 if (subblocks_from32x32_to_16x16[blk_idx] == idx_32x32) {
                     blk_fw[blk_idx] = me_16x16_subblock_sad[blk_idx] < THRES_LOW
                                       ? 2
                                       : me_16x16_subblock_sad[blk_idx] < THRES_HIGH ? 1 : 0;
                 }
             }
-
         }
     }else {
-
         for (blk_idx = 0; blk_idx < N_16X16_BLOCKS; blk_idx++) {
-
             idx_32x32 = subblocks_from32x32_to_16x16[blk_idx];
 
             if (min_me_sad[idx_32x32] > me_16x16_subblock_sad[blk_idx])
@@ -207,12 +193,10 @@ void get_blk_fw_using_dist(int const *me_32x32_subblock_sad, int const *me_16x16
         }
 
         for (idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
-
             if (((me_32x32_subblock_sad[idx_32x32] * 15 < (me_sum_16x16_subblock_sad[idx_32x32] << 4)) &&
                  max_me_sad - min_me_sad < THRES_DIFF_HIGH) ||
                 ((me_32x32_subblock_sad[idx_32x32] * 14 < (me_sum_16x16_subblock_sad[idx_32x32] << 4)) &&
                  max_me_sad - min_me_sad < THRES_DIFF_LOW)) {
-
                 // split into 32x32 sub-blocks
 
                 int weight = me_32x32_subblock_sad[idx_32x32] < (THRES_LOW << THR_SHIFT)
@@ -223,13 +207,10 @@ void get_blk_fw_using_dist(int const *me_32x32_subblock_sad, int const *me_16x16
                     if (subblocks_from32x32_to_16x16[blk_idx] == idx_32x32)
                         blk_fw[blk_idx] = weight;
                 }
-
             } else {
-
                 // split into 16x16 sub-blocks
 
                 for (blk_idx = 0; blk_idx < N_16X16_BLOCKS; blk_idx++) {
-
                     if (subblocks_from32x32_to_16x16[blk_idx] == idx_32x32) {
                         blk_fw[blk_idx] = me_16x16_subblock_sad[blk_idx] < THRES_LOW
                                           ? 2
@@ -239,7 +220,6 @@ void get_blk_fw_using_dist(int const *me_32x32_subblock_sad, int const *me_16x16
             }
         }
     }
-
 }
 
 // compute variance for the MC block residuals
@@ -249,14 +229,12 @@ void get_ME_distortion(int* me_32x32_subblock_sad,
                        int stride_pred_Y,
                        uint8_t* src_Y,
                        int stride_src_Y){
-
     unsigned int sse;
 
     uint8_t * pred_Y_ptr;
     uint8_t * src_Y_ptr;
 
     for(uint32_t index_32x32 = 0; index_32x32 < 4; index_32x32++) {
-
         int row = subblock_xy_32x32[index_32x32][0];
         int col = subblock_xy_32x32[index_32x32][1];
 
@@ -266,11 +244,9 @@ void get_ME_distortion(int* me_32x32_subblock_sad,
         const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[BLOCK_32X32];
 
         me_32x32_subblock_sad[index_32x32] = fn_ptr->vf(pred_Y_ptr, stride_pred_Y, src_Y_ptr, stride_src_Y, &sse );
-
     }
 
     for(uint32_t index_16x16 = 0; index_16x16 < 16; index_16x16++) {
-
         int row = subblock_xy_16x16[index_16x16][0];
         int col = subblock_xy_16x16[index_16x16][1];
 
@@ -280,9 +256,7 @@ void get_ME_distortion(int* me_32x32_subblock_sad,
         const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[BLOCK_16X16];
 
         me_16x16_subblock_sad[index_16x16] = fn_ptr->vf(pred_Y_ptr, stride_pred_Y, src_Y_ptr, stride_src_Y, &sse );
-
     }
-
 }
 
 // Create and initialize all necessary ME context structures
@@ -292,7 +266,6 @@ void create_ME_context_and_picture_control(MotionEstimationContext_t *context_pt
                                             EbPictureBufferDesc *input_picture_ptr_central,
                                             int blk_row,
                                             int blk_col){
-
     uint32_t lcuRow;
 
     // set reference picture for alt-refs
@@ -372,9 +345,7 @@ void create_ME_context_and_picture_control(MotionEstimationContext_t *context_pt
                 framePtr += sixteenth_pic_ptr->stride_y << 1;
             }
         }
-
     }
-
 }
 
 // Get sub-block filter weights for the 16 subblocks case
@@ -383,7 +354,6 @@ static INLINE int get_subblock_filter_weight_16subblocks(unsigned int y,
                                                          unsigned int block_height,
                                                          unsigned int block_width,
                                                          const int *blk_fw) {
-
     const unsigned int block_width_div4 = block_width / 4;
     const unsigned int block_height_div4 = block_height / 4;
 
@@ -427,7 +397,6 @@ static INLINE int get_subblock_filter_weight_16subblocks(unsigned int y,
     }
 
     return filter_weight;
-
 }
 
 // Get sub-block filter weights for the 4 subblocks case
@@ -436,7 +405,6 @@ static INLINE int get_subblock_filter_weight_4subblocks(unsigned int y,
                                                         unsigned int block_height,
                                                         unsigned int block_width,
                                                         const int *blk_fw) {
-
     int filter_weight = 0;
     if (y < block_height / 2) {
         if (x < block_width / 2)
@@ -458,7 +426,6 @@ static INLINE int adjust_modifier(int sum_dist,
                                   int rounding,
                                   int strength,
                                   int filter_weight) {
-
     assert(index >= 0 && index <= 13);
     assert(index_mult[index] != 0);
 
@@ -472,7 +439,6 @@ static INLINE int adjust_modifier(int sum_dist,
     mod *= filter_weight;
 
     return mod;
-
 }
 
 static INLINE void calculate_squared_errors(const uint8_t *s,
@@ -482,7 +448,6 @@ static INLINE void calculate_squared_errors(const uint8_t *s,
                                             uint16_t *diff_sse,
                                             unsigned int w,
                                             unsigned int h) {
-
     int idx = 0;
     unsigned int i, j;
 
@@ -493,7 +458,6 @@ static INLINE void calculate_squared_errors(const uint8_t *s,
             idx++;
         }
     }
-
 }
 
 // Main function that applies filtering to a block according to the weights
@@ -547,7 +511,6 @@ void apply_filtering_c(const uint8_t *y_src,
 
     for (i = 0; i < block_height; i++) {
         for (j = 0; j < block_width; j++) {
-
             const int pixel_value = y_pre[i * y_pre_stride + j];
 
             int filter_weight;
@@ -642,7 +605,6 @@ void apply_filtering_c(const uint8_t *y_src,
 
                 v_count[m] += v_mod;
                 v_accum[m] += v_mod * v_pixel_value;
-
             }
         }
     }
@@ -663,7 +625,6 @@ void apply_filtering_block(int block_row,
                            int altref_strength,
                            const int *blk_fw,
                            EbAsm asm_type) {
-
     int offset_src_buffer_Y = block_row * (BH>>1) * stride[C_Y] + block_col * (BW>>1);
     int offset_src_buffer_U = block_row * (BH>>2) * stride[C_U] + block_col * (BW>>2);
     int offset_src_buffer_V = block_row * (BH>>2) * stride[C_V] + block_col * (BW>>2);
@@ -682,11 +643,9 @@ void apply_filtering_block(int block_row,
     uint16_t *count_ptr[COLOR_CHANNELS];
 
     for (int ifw = 0; ifw < 4; ifw++) {
-
         int ifw_index = index_16x16_from_subindexes[idx_32x32][ifw];
 
         blk_fw_32x32[ifw] = blk_fw[ifw_index];
-
     }
 
     src_ptr[C_Y] = src[C_Y] + offset_src_buffer_Y;
@@ -731,7 +690,6 @@ void apply_filtering_block(int block_row,
                                count_ptr[C_U],
                                accum_ptr[C_V],
                                count_ptr[C_V]);
-
 }
 
 // Apply filtering to the central picture
@@ -740,7 +698,6 @@ static void apply_filtering_central(EbByte *pred,
                                     uint16_t **count,
                                     uint16_t blk_height,
                                     uint16_t blk_width) {
-
     EbByte pred_y = pred[0], pred_u = pred[1], pred_v = pred[2];
     uint32_t *accum_y = accum[0], *accum_u = accum[1], *accum_v = accum[2];
     uint16_t *count_y = count[0], *count_u = count[1], *count_v = count[2];
@@ -778,7 +735,6 @@ static void apply_filtering_central(EbByte *pred,
             ++k;
         }
     }
-
 }
 
 EbErrorType av1_inter_prediction(
@@ -832,16 +788,10 @@ void tf_inter_prediction(
     prediction_ptr.stride_cr = BW_CH;
 
     for (uint32_t idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
-
-        if (use_16x16_subblocks[idx_32x32] == 0) {
-
-        }
-        else {
-
-            uint32_t	bsize = 16;
+        if (use_16x16_subblocks[idx_32x32] != 0) {
+            uint32_t    bsize = 16;
 
             for (uint32_t idx_16x16 = 0; idx_16x16 < 4; idx_16x16++) {
-
                 uint32_t pu_index = index_16x16_from_subindexes[idx_32x32][idx_16x16];
 
                 uint32_t idx_y = subblock_xy_16x16[pu_index][0];
@@ -886,14 +836,9 @@ void tf_inter_prediction(
                     local_origin_y,
                     1,//perform_chroma,
                     asm_type);
-
             }
-
         }
-
     }
-
-
 }
 
 void compensate_block(MeContext* context_ptr,
@@ -910,7 +855,6 @@ void compensate_block(MeContext* context_ptr,
                       uint8_t **pos_j_buffer_ch,
                       uint8_t **one_d_intermediate_results_buf_ch,
                       EbAsm asm_type){
-
     int16_t first_ref_pos_x;
     int16_t first_ref_pos_y;
     int16_t first_ref_integ_pos_x;
@@ -1060,7 +1004,6 @@ void compensate_block(MeContext* context_ptr,
                        asm_type);
 
     copy_pixels(pred_ptr[2], BW_CH, comp_block, comp_block_stride, subblock_w>>1, subblock_h>>1);
-
 }
 
 // Unidirectional motion compensation using open-loop ME results and MC
@@ -1075,7 +1018,6 @@ void uni_motion_compensation(MeContext* context_ptr,
                             uint8_t **one_d_intermediate_results_buf_ch,
                             int *use_16x16_subblocks,
                             EbAsm asm_type){
-
     uint32_t pu_index;
 
     uint8_t *input_padded_ch[2];
@@ -1121,9 +1063,7 @@ void uni_motion_compensation(MeContext* context_ptr,
     // ----- Loop over all sub-blocks -----
 
     for(uint32_t idx_32x32 = 0; idx_32x32 < 4; idx_32x32++){
-
         if(use_16x16_subblocks[idx_32x32] == 0){
-
             pu_index = idx_32x32 + 1;
             subblock_h = 32;
             subblock_w = 32;
@@ -1142,12 +1082,8 @@ void uni_motion_compensation(MeContext* context_ptr,
                              pos_j_buffer_ch,
                              one_d_intermediate_results_buf_ch,
                              asm_type);
-
-
         }else{
-
             for(uint32_t idx_16x16 = 0; idx_16x16 < 4; idx_16x16++){
-
                 uint32_t idx = index_16x16_from_subindexes[idx_32x32][idx_16x16];
                 pu_index = idx + 5;
                 subblock_h = 16;
@@ -1167,13 +1103,9 @@ void uni_motion_compensation(MeContext* context_ptr,
                                  pos_j_buffer_ch,
                                  one_d_intermediate_results_buf_ch,
                                  asm_type);
-
             }
-
         }
-
     }
-
 }
 
 // Produce the filtered alt-ref picture
@@ -1184,7 +1116,6 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                                             uint8_t **alt_ref_buffer,
                                             MotionEstimationContext_t *me_context_ptr,
                                             int32_t segment_index) {
-
     int frame_index;
     DECLARE_ALIGNED(16, uint32_t, accumulator[BLK_PELS * COLOR_CHANNELS]);
     DECLARE_ALIGNED(16, uint16_t, counter[BLK_PELS * COLOR_CHANNELS]);
@@ -1258,7 +1189,6 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
 
     for (blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
-
             blk_y_offset      = (blk_col * BW) + (blk_row * BH) * stride[C_Y];
             blk_y_src_offset  = (blk_col * BW) + (blk_row * BH) * stride[C_Y];
 
@@ -1278,7 +1208,6 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
 
             // for every frame to filter
             for (frame_index = 0; frame_index < altref_nframes; frame_index++) {
-
                 // first position of the frame buffer according to frame index
                 src_frame_index[C_Y] = list_input_picture_ptr[frame_index]->buffer_y +
                         list_input_picture_ptr[frame_index]->origin_y*list_input_picture_ptr[frame_index]->stride_y +
@@ -1315,7 +1244,6 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
 
                 // if frame to process is the center frame
                 if (frame_index == index_center) {
-
                     // skip MC (central frame)
 
                     populate_list_with_value(blk_fw, N_16X16_BLOCKS, 2);
@@ -1324,9 +1252,7 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                     copy_pixels(pred[C_Y], BW, src_frame_index[C_Y] + blk_y_src_offset, stride[C_Y], BW, BH);
                     copy_pixels(pred[C_U], BW_CH, src_frame_index[C_U] + blk_ch_src_offset, stride[C_U], BW_CH, BH_CH);
                     copy_pixels(pred[C_V], BW_CH, src_frame_index[C_V] + blk_ch_src_offset, stride[C_V], BW_CH, BH_CH);
-
                 }else{
-
                     // Initialize ME context
                     create_ME_context_and_picture_control(me_context_ptr,
                                                           list_picture_control_set_ptr[frame_index],
@@ -1384,7 +1310,6 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
 
                     // Get sub-block filter weights depending on the SAD
                     get_blk_fw_using_dist(me_32x32_subblock_sad, me_16x16_subblock_sad, use_16x16_subblocks_only, blk_fw);
-
                 }
 
 #if DEBUG_TF
@@ -1417,20 +1342,16 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
 
                 // if frame to process is the center frame
                 if (frame_index == index_center) {
-
                     apply_filtering_central(pred,
                                             accum,
                                             count,
                                             BH,
                                             BW);
-
                 }else{
-
                     // split filtering function into 32x32 blocks
                     // TODO: implement a 64x64 SIMD version
                     for(int block_row = 0; block_row<2; block_row++){
                         for(int block_col = 0; block_col<2; block_col++) {
-
                             apply_filtering_block(block_row,
                                                   block_col,
                                                   src_altref_index,
@@ -1446,7 +1367,6 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                                                   altref_strength,
                                                   blk_fw,
                                                   asm_type);
-
                         }
                     }
                 }
@@ -1508,11 +1428,11 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
     free(pos_b_buffer_ch[0]);
     free(pos_h_buffer_ch[0]);
     free(pos_j_buffer_ch[0]);
-    
+
     free(pos_b_buffer_ch[1]);
     free(pos_h_buffer_ch[1]);
     free(pos_j_buffer_ch[1]); //TODO: to fix this
-    
+
     free(one_d_intermediate_results_buf_ch[0]);
     free(one_d_intermediate_results_buf_ch[1]);
 #endif
@@ -1570,7 +1490,6 @@ static double estimate_noise(EbByte src, uint16_t width, uint16_t height,
 static void adjust_filter_params(EbPictureBufferDesc *input_picture_ptr,
                         uint8_t *altref_strength,
                         uint8_t *altref_nframes) {
-
     EbByte src;
     double noiselevel;
     int nframes = *altref_nframes;
@@ -1628,11 +1547,9 @@ static void adjust_filter_params(EbPictureBufferDesc *input_picture_ptr,
 #if DEBUG_TF
     printf("[DEBUG] noise level: %g, strength = %d, adj_strength = %d\n", noiselevel, strength, adj_strength);
 #endif
-
 }
 
 int pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_ptr_central){
-
     // reference structures (padded pictures + downsampled versions)
     EbPaReferenceObject *src_object = (EbPaReferenceObject*)picture_control_set_ptr_central->pa_reference_picture_wrapper_ptr->object_ptr;
     EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_picture_ptr;
@@ -1653,12 +1570,10 @@ int pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_p
         sixteenth_pic_ptr);
 
     return 0;
-
 }
 
 #if LIBAOM_FILTERING
 int read_YUV_frame_from_file(uint8_t **alt_ref_buffer, int picture_number, int width, int height, int stride){
-
     char filename[30] = "filtered_frame_libaom_";
     char pic_num_str[4];
     snprintf(pic_num_str, 4, "%d", picture_number);
@@ -1671,7 +1586,6 @@ int read_YUV_frame_from_file(uint8_t **alt_ref_buffer, int picture_number, int w
     if ((fid = fopen(filename, "rb")) == NULL) {
         printf("Unable to open file %s for reading.\n", filename);
     }else {
-
         uint8_t* pic_point = alt_ref_buffer[C_Y];
         for (int h = 0; h < height; h++) {
             fread(pic_point, sizeof(uint8_t), (size_t)width, fid);
@@ -1698,7 +1612,6 @@ void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_
                                     PictureParentControlSet *picture_control_set_ptr_central,
                                     MotionEstimationContext_t *me_context_ptr,
                                     int32_t segment_index) {
-
     uint8_t altref_strength, altref_nframes, index_center;
     EbPictureBufferDesc *input_picture_ptr;
     uint8_t *alt_ref_buffer[COLOR_CHANNELS];
@@ -1716,7 +1629,6 @@ void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_
     //only one performs any picture based prep
     eb_block_on_mutex(picture_control_set_ptr_central->temp_filt_mutex);
     if (picture_control_set_ptr_central->temp_filt_prep_done == 0){
-
         //printf("PIC %i , filter strength done by seg :%i\n ", picture_control_set_ptr_central->picture_number,segment_index);
         picture_control_set_ptr_central->temp_filt_prep_done = 1;
 
@@ -1725,7 +1637,6 @@ void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_
 
         // Pad chroma reference samples - once only per picture
         for (int i = 0; i < altref_nframes; i++) {
-
             if (i != index_center) {
                 EbPictureBufferDesc *pic_ptr_ref = list_picture_control_set_ptr[i]->enhanced_picture_ptr;
 
@@ -1744,16 +1655,13 @@ void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_
                     pic_ptr_ref->origin_y >> 1);
             }
         }
-
     }
     eb_release_mutex(picture_control_set_ptr_central->temp_filt_mutex);
 
     // populate source frames picture buffer list
     EbPictureBufferDesc *list_input_picture_ptr[ALTREF_MAX_NFRAMES] = { NULL };
-    for(int i=0; i<altref_nframes; i++){
+    for(int i=0; i<altref_nframes; i++)
         list_input_picture_ptr[i] = list_picture_control_set_ptr[i]->enhanced_picture_ptr;
-    }
-
     alt_ref_buffer[C_Y] = picture_control_set_ptr_central->enhanced_picture_ptr->buffer_y +
                           picture_control_set_ptr_central->enhanced_picture_ptr->origin_x +
                           picture_control_set_ptr_central->enhanced_picture_ptr->origin_y*picture_control_set_ptr_central->enhanced_picture_ptr->stride_y;
@@ -1778,7 +1686,6 @@ void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_
     picture_control_set_ptr_central->temp_filt_seg_acc++;
 
     if (picture_control_set_ptr_central->temp_filt_seg_acc == picture_control_set_ptr_central->tf_segments_total_count){
-
         pad_and_decimate_filtered_pic(picture_control_set_ptr_central);
 
 #if DEBUG_TF
@@ -1803,11 +1710,9 @@ void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_
 
         // signal that temp filt is done
         eb_post_semaphore(picture_control_set_ptr_central->temp_filt_done_semaphore);
-
     }
 
     eb_release_mutex(picture_control_set_ptr_central->temp_filt_mutex);
-
 }
 
 #endif

@@ -114,9 +114,8 @@ void aom_noise_tx_filter(struct aom_noise_tx_t *noise_tx, const float *psd) {
 void aom_noise_tx_inverse(struct aom_noise_tx_t *noise_tx, float *data) {
     const int32_t n = noise_tx->block_size * noise_tx->block_size;
     noise_tx->ifft(noise_tx->tx_block, noise_tx->temp, data);
-    for (int32_t i = 0; i < n; ++i) {
+    for (int32_t i = 0; i < n; ++i)
         data[i] /= n;
-    }
 }
 
 void aom_noise_tx_free(struct aom_noise_tx_t *noise_tx) {

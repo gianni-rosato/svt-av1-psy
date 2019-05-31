@@ -79,7 +79,7 @@ EbErrorType source_based_operations_context_ctor(
     return EB_ErrorNone;
 }
 
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
 /****************************************
 * Init BEA QPM array to 0
 ** Used when no Lookahead is available
@@ -95,7 +95,6 @@ void InitBeaQpmInfo(
     picture_control_set_ptr->low_motion_content_flag = EB_FALSE;
     picture_control_set_ptr->zz_cost_average = INVALID_ZZ_COST;
 
-
     for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
         SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
         if (sb_params->is_complete_sb) {
@@ -104,9 +103,8 @@ void InitBeaQpmInfo(
         }
     }
 
-    if (complete_sb_count > 0) {
+    if (complete_sb_count > 0)
         zz_cost_average = zzSum / complete_sb_count;
-    }
     picture_control_set_ptr->low_motion_content_flag = zz_cost_average == 0 ? EB_TRUE : EB_FALSE;
     picture_control_set_ptr->zz_cost_average = zz_cost_average;
 
@@ -121,7 +119,6 @@ void DerivePictureActivityStatistics(
     PictureParentControlSet       *picture_control_set_ptr)
 
 {
-
     uint64_t               nonMovingIndexMin = ~0u;
     uint64_t               nonMovingIndexMax = 0;
     uint64_t               nonMovingIndexSum = 0;
@@ -133,8 +130,8 @@ void DerivePictureActivityStatistics(
     uint32_t               sb_index;
     for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
         SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-        if (sb_params->is_complete_sb) 
-        { 
+        if (sb_params->is_complete_sb)
+        {
             nonMovingIndexMin = picture_control_set_ptr->non_moving_index_array[sb_index] < nonMovingIndexMin ?
                 picture_control_set_ptr->non_moving_index_array[sb_index] :
                 nonMovingIndexMin;
@@ -142,18 +139,15 @@ void DerivePictureActivityStatistics(
             nonMovingIndexMax = picture_control_set_ptr->non_moving_index_array[sb_index] > nonMovingIndexMax ?
                 picture_control_set_ptr->non_moving_index_array[sb_index] :
                 nonMovingIndexMax;
-            if (picture_control_set_ptr->non_moving_index_array[sb_index] < NON_MOVING_SCORE_1) {
+            if (picture_control_set_ptr->non_moving_index_array[sb_index] < NON_MOVING_SCORE_1)
                 non_moving_sb_count++;
-            }
             complete_sb_count++;
 
             nonMovingIndexSum += picture_control_set_ptr->non_moving_index_array[sb_index];
 
-
             if (picture_control_set_ptr->non_moving_index_array[sb_index] < NON_MOVING_SCORE_1)
                 totNmvIdx++;
         }
-
     }
 
     if (complete_sb_count > 0) {
@@ -161,15 +155,13 @@ void DerivePictureActivityStatistics(
         picture_control_set_ptr->kf_zeromotion_pct = (non_moving_sb_count * 100) / complete_sb_count;
     }
 
-#if !MEMORY_FOOTPRINT_OPT 
+#if !MEMORY_FOOTPRINT_OPT
     InitBeaQpmInfo(
         picture_control_set_ptr,
         sequence_control_set_ptr);
 #endif
     return;
 }
-
-
 
 #if !DISABLE_OIS_USE
 /******************************************************
@@ -179,7 +171,6 @@ void FailingMotionLcu(
     SequenceControlSet            *sequence_control_set_ptr,
     PictureParentControlSet        *picture_control_set_ptr,
     uint32_t                             sb_index) {
-
     uint32_t rasterScanCuIndex;
 
     // SB Loop : Failing motion detector for L2 only
@@ -194,7 +185,6 @@ void FailingMotionLcu(
 
     if (picture_control_set_ptr->slice_type != I_SLICE && sb_params->is_complete_sb && (!picture_control_set_ptr->similar_colocated_sb_array[sb_index])) {
         for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_64x64; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_32x32_3; rasterScanCuIndex++) {
-
             meToOisSadDeviation = 0;
 
             // Get ME SAD
@@ -204,24 +194,20 @@ void FailingMotionLcu(
             cuMeSAD = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortion_direction[0].distortion;
 #endif
 
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];    
+            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[raster_scan_to_md_scan[rasterScanCuIndex]];
             sortedcuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[raster_scan_to_md_scan[rasterScanCuIndex]]].distortion;
-
-
 
             int64_t  meToOisSadDiff = (int32_t)cuMeSAD - (int32_t)sortedcuOisSAD;
             meToOisSadDeviation = (sortedcuOisSAD == 0) || (meToOisSadDiff < 0) ? 0 : (meToOisSadDiff * 100) / sortedcuOisSAD;
 
-            if (meToOisSadDeviation > SAD_DEVIATION_LCU_TH) {
+            if (meToOisSadDeviation > SAD_DEVIATION_LCU_TH)
                 failing_motion_sb_flag += 1;
-            }
         }
 
         // Update failing motion flag
         picture_control_set_ptr->failing_motion_sb_flag[sb_index] = (failing_motion_sb_flag && (picture_control_set_ptr->intensity_transition_flag == EB_FALSE)) ? EB_TRUE : EB_FALSE;
     }
-
 }
 
 /******************************************************
@@ -231,7 +217,6 @@ void DetectUncoveredLcu(
     SequenceControlSet            *sequence_control_set_ptr,
     PictureParentControlSet        *picture_control_set_ptr,
     uint32_t                             sb_index) {
-
     uint32_t rasterScanCuIndex;
 
     // SB Loop : Uncovered area detector -- ON only for 4k
@@ -244,14 +229,9 @@ void DetectUncoveredLcu(
 
     int64_t uncovered_area_sb_flag = 0;
 
-
     if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
         if (sb_params->is_complete_sb && (!picture_control_set_ptr->similar_colocated_sb_array[sb_index])) {
-
-
             for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_64x64; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_32x32_3; rasterScanCuIndex++) {
-
-
                 meToOisSadDeviation = 0;
 
                 // Get ME SAD
@@ -261,31 +241,24 @@ void DetectUncoveredLcu(
                 cuMeSAD = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortion_direction[0].distortion;
 #endif
 
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];    
+            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[raster_scan_to_md_scan[rasterScanCuIndex]];
             sortedcuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[raster_scan_to_md_scan[rasterScanCuIndex]]].distortion;
-
 
                 int64_t  meToOisSadDiff = (int32_t)cuMeSAD - (int32_t)sortedcuOisSAD;
                 meToOisSadDeviation = (sortedcuOisSAD == 0) || (meToOisSadDiff < 0) ? 0 : (meToOisSadDiff * 100) / sortedcuOisSAD;
 
-
                 if (raster_scan_cu_size[rasterScanCuIndex] > 16) {
-
-                    if (meToOisSadDeviation > SAD_DEVIATION_LCU_NON_M4_TH) {
+                    if (meToOisSadDeviation > SAD_DEVIATION_LCU_NON_M4_TH)
                         uncovered_area_sb_flag += 1;
-                    }
-
                 }
             }
 
             // Update Uncovered area flag
             picture_control_set_ptr->uncovered_area_sb_flag[sb_index] = (uncovered_area_sb_flag && (picture_control_set_ptr->intensity_transition_flag == EB_FALSE)) ? EB_TRUE : EB_FALSE;
         }
-
     }
 }
-
 
 #endif
 #if !MEMORY_FOOTPRINT_OPT
@@ -296,7 +269,6 @@ void CalculateAcEnergy(
     SequenceControlSet            *sequence_control_set_ptr,
     PictureParentControlSet        *picture_control_set_ptr,
     uint32_t                             sb_index) {
-
     EbPictureBufferDesc    *input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
     uint32_t                     inputLumaStride = input_picture_ptr->stride_y;
     uint32_t                   inputOriginIndex;
@@ -306,11 +278,9 @@ void CalculateAcEnergy(
     inputOriginIndex = (sb_params->origin_y + input_picture_ptr->origin_y) * inputLumaStride + (sb_params->origin_x + input_picture_ptr->origin_x);
 
     if (sb_params->is_complete_sb && picture_control_set_ptr->slice_type == I_SLICE) {
-
         uint32_t inputCuOriginIndex;
         uint32_t cuNum, cu_size;
         uint16_t cuH, cuW;
-
 
         picture_control_set_ptr->sb_y_src_energy_cu_array[sb_index][0] = compute_nx_m_satd_sad_lcu(
             &(input_picture_ptr->buffer_y[inputOriginIndex]),
@@ -338,8 +308,6 @@ void CalculateAcEnergy(
                 picture_control_set_ptr->sb_y_src_mean_cu_array[sb_index][1 + cuH * cuNum + cuW] = meanPtr[1 + cuH * cuNum + cuW];
             }
         }
-
-
     }
     else {
         picture_control_set_ptr->sb_y_src_energy_cu_array[sb_index][0] = 100000000;
@@ -362,7 +330,6 @@ void LumaContrastDetectorLcu(
     SequenceControlSet           *sequence_control_set_ptr,
     PictureParentControlSet       *picture_control_set_ptr,
     uint32_t                            sb_index) {
-
     uint64_t                  cuOisSAD = 0;
     uint64_t                  cuMeSAD = 0;
 
@@ -371,9 +338,7 @@ void LumaContrastDetectorLcu(
     SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
     if (sb_params->is_complete_sb) {
         if (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) {
-
-
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];    
+            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[0];
             cuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[0]].distortion;
 
@@ -402,7 +367,6 @@ void LumaContrastDetectorLcu(
 void LumaContrastDetectorPicture(
     SourceBasedOperationsContext        *context_ptr,
     PictureParentControlSet            *picture_control_set_ptr) {
-
     context_ptr->y_non_moving_mean = (context_ptr->countOfNonMovingLcus != 0) ? (context_ptr->y_non_moving_mean / context_ptr->countOfNonMovingLcus) : 0;
     context_ptr->y_moving_mean = (context_ptr->count_of_moving_sbs != 0) ? (context_ptr->y_moving_mean / context_ptr->count_of_moving_sbs) : 0;
 
@@ -412,9 +376,8 @@ void LumaContrastDetectorPicture(
 
     picture_control_set_ptr->intra_coded_block_probability = 0;
 
-    if (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) {
+    if (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0)
         picture_control_set_ptr->intra_coded_block_probability = (uint8_t)(context_ptr->depth1_block_num != 0 ? context_ptr->to_be_intra_coded_probability * 100 / context_ptr->depth1_block_num : 0);
-    }
 }
 #endif
 void GrassLcu(
@@ -422,7 +385,6 @@ void GrassLcu(
     SequenceControlSet                *sequence_control_set_ptr,
     PictureParentControlSet            *picture_control_set_ptr,
     uint32_t                                 sb_index) {
-
     uint32_t                  childIndex;
 
     EbBool                 lcuGrassFlag = EB_FALSE;
@@ -440,14 +402,12 @@ void GrassLcu(
     grassLcuInrange = 0;
     processedCus = 0;
 
-
     for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_16x16_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_16x16_15; rasterScanCuIndex++) {
         if (sb_params->raster_scan_cu_validity[rasterScanCuIndex]) {
             const uint32_t mdScanCuIndex = raster_scan_to_md_scan[rasterScanCuIndex];
             const uint32_t rasterScanParentCuIndex = raster_scan_cu_parent_index[rasterScanCuIndex];
             const uint32_t mdScanParentCuIndex = raster_scan_to_md_scan[rasterScanParentCuIndex];
             CuStat *cuStatPtr = &(sb_stat_ptr->cu_stat_array[mdScanCuIndex]);
-
 
             const uint32_t perfectCondition = 7;
             const uint8_t y_mean = context_ptr->y_mean_ptr[rasterScanCuIndex];
@@ -456,12 +416,10 @@ void GrassLcu(
             uint32_t grassCondition = 0;
             uint32_t skinCondition = 0;
 
-
             // GRASS
             grassCondition += (y_mean > Y_MEAN_RANGE_02 && y_mean < Y_MEAN_RANGE_01) ? 1 : 0;
             grassCondition += (cbMean > CB_MEAN_RANGE_00 && cbMean < CB_MEAN_RANGE_02) ? 2 : 0;
             grassCondition += (crMean > CR_MEAN_RANGE_00 && crMean < CR_MEAN_RANGE_02) ? 4 : 0;
-
 
             grassLcuInrange += (grassCondition == perfectCondition) ? 1 : 0;
             processedCus++;
@@ -488,7 +446,6 @@ void GrassLcu(
                 sb_stat_ptr->cu_stat_array[mdScanParentCuIndex].skin_area;
             sb_stat_ptr->cu_stat_array[0].skin_area = cuStatPtr->skin_area ? EB_TRUE :
                 sb_stat_ptr->cu_stat_array[0].skin_area;
-
         }
     }
 
@@ -516,7 +473,6 @@ void DetermineIsolatedNonHomogeneousRegionInPicture(
     uint32_t picture_height_in_sb = sequence_control_set_ptr->picture_height_in_sb;
 
     for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
-
         SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
         // Initialize
         picture_control_set_ptr->sb_isolated_non_homogeneous_area_array[sb_index] = EB_FALSE;
@@ -554,7 +510,6 @@ void DetermineIsolatedNonHomogeneousRegionInPicture(
                         for (lcuHor = -1; lcuHor <= 1; lcuHor++) {
                             if (lcuVer != 0 && lcuHor != 0)
                                 countOfHomogeneousNeighborLcus += (picture_control_set_ptr->sb_homogeneous_area_array[sb_index + lcuVerOffset + lcuHor] == EB_TRUE);
-
                         }
                     }
                 }
@@ -564,12 +519,9 @@ void DetermineIsolatedNonHomogeneousRegionInPicture(
                     for (cuuIndex = 0; cuuIndex < 4; cuuIndex++)
                     {
                         if (picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][cuuIndex] > VAR_BASED_DETAIL_PRESERVATION_SELECTOR_THRSLHD)
-                        {
                             picture_control_set_ptr->sb_isolated_non_homogeneous_area_array[sb_index] = EB_TRUE;
-                        }
                     }
                 }
-
             }
         }
     }
@@ -582,7 +534,6 @@ void SetDefaultDeltaQpRange(
     SourceBasedOperationsContext    *context_ptr,
     PictureParentControlSet        *picture_control_set_ptr,
     EbBool                             scene_transition_flag) {
-
     int8_t    min_delta_qp;
     uint8_t    max_delta_qp;
     if (picture_control_set_ptr->temporal_layer_index == 0) {
@@ -611,7 +562,6 @@ void SetDefaultDeltaQpRange(
     context_ptr->max_delta_qp = max_delta_qp;
 }
 
-
 void DetermineMorePotentialAuraAreas(
     SequenceControlSet        *sequence_control_set_ptr,
     PictureParentControlSet    *picture_control_set_ptr)
@@ -635,7 +585,6 @@ void DetermineMorePotentialAuraAreas(
             countOfNonEdgeBlocks = 0;
             if (picture_control_set_ptr->edge_results_ptr[sb_index].edge_block_num
                 && picture_control_set_ptr->y_mean[sb_index][ME_TIER_ZERO_PU_64x64] >= lightLumaValue) {
-
                 for (lcuVer = -1; lcuVer <= 1; lcuVer++) {
                     lcuVerOffset = lcuVer * (int32_t)sequence_control_set_ptr->picture_width_in_sb;
                     for (lcuHor = -1; lcuHor <= 1; lcuHor++) {
@@ -645,16 +594,13 @@ void DetermineMorePotentialAuraAreas(
                 }
             }
 
-            if (countOfNonEdgeBlocks > 1) {
+            if (countOfNonEdgeBlocks > 1)
                 countOfEdgeBlocks++;
-            }
         }
     }
 
-
     // To check the percentage of potential aura in the picture.. If a large area is detected then this is not isolated
     picture_control_set_ptr->percentage_of_edgein_light_background = (uint8_t)(countOfEdgeBlocks * 100 / sb_total_count);
-
 }
 
 /***************************************************
@@ -663,8 +609,6 @@ void DetermineMorePotentialAuraAreas(
 void DeriveHighDarkAreaDensityFlag(
     SequenceControlSet                *sequence_control_set_ptr,
     PictureParentControlSet           *picture_control_set_ptr) {
-
-
     uint32_t    regionInPictureWidthIndex;
     uint32_t    regionInPictureHeightIndex;
     uint32_t    lumaHistogramBin;
@@ -691,17 +635,14 @@ void DeriveHighDarkAreaDensityFlag(
             for (lumaHistogramBin = 0; lumaHistogramBin < LOW_MEAN_THLD1; lumaHistogramBin++) { // loop over the 1st LOW_MEAN_THLD bins
                 blackSamplesCount += picture_control_set_ptr->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][lumaHistogramBin];
             }
-            for (lumaHistogramBin = HIGH_MEAN_THLD1; lumaHistogramBin < HISTOGRAM_NUMBER_OF_BINS; lumaHistogramBin++) {
+            for (lumaHistogramBin = HIGH_MEAN_THLD1; lumaHistogramBin < HISTOGRAM_NUMBER_OF_BINS; lumaHistogramBin++)
                 whiteSamplesCount += picture_control_set_ptr->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][lumaHistogramBin];
-            }
         }
     }
 
     blackAreaPercentage = (blackSamplesCount * 100) / (sequence_control_set_ptr->luma_width * sequence_control_set_ptr->luma_height);
     whiteAreaPercentage = (whiteSamplesCount * 100) / (sequence_control_set_ptr->luma_width * sequence_control_set_ptr->luma_height);
     picture_control_set_ptr->high_dark_low_light_area_density_flag = (EbBool)(blackAreaPercentage >= MIN_BLACK_AREA_PERCENTAGE) && (whiteAreaPercentage >= MIN_WHITE_AREA_PERCENTAGE);
-
-
 }
 #define NORM_FACTOR    10
 #define VAR_MIN        10
@@ -721,7 +662,6 @@ void TemporalHighContrastClassifier(
     PictureParentControlSet       *picture_control_set_ptr,
     uint32_t                           sb_index)
 {
-
     uint32_t blkIt;
     uint32_t nsadTable[] = { 10, 5, 5, 5, 5, 5 };
     uint32_t thRes = 0;
@@ -729,8 +669,6 @@ void TemporalHighContrastClassifier(
     uint32_t meDist = 0;
 
     if (picture_control_set_ptr->slice_type == B_SLICE) {
-
-
         for (blkIt = 0; blkIt < 4; blkIt++) {
 #if MRP_CONNECTION
             nsad = ((uint32_t)picture_control_set_ptr->me_results[sb_index]->me_candidate[1 + blkIt][0].distortion) >> NORM_FACTOR;
@@ -740,7 +678,6 @@ void TemporalHighContrastClassifier(
             if (nsad >= nsadTable[picture_control_set_ptr->temporal_layer_index] + thRes)
                 meDist++;
         }
-
     }
     context_ptr->high_dist = meDist > 0 ? EB_TRUE : EB_FALSE;
 }
@@ -750,20 +687,17 @@ void SpatialHighContrastClassifier(
     PictureParentControlSet       *picture_control_set_ptr,
     uint32_t                           sb_index)
 {
-
     uint32_t                 blkIt;
 
     context_ptr->high_contrast_num = 0;
     context_ptr->high_contrast_num_ii = 0;
     //16x16 blocks
     for (blkIt = 0; blkIt < 16; blkIt++) {
-
         uint8_t y_mean = context_ptr->y_mean_ptr[5 + blkIt];
         uint8_t umean = context_ptr->cb_mean_ptr[5 + blkIt];
         uint8_t vmean = context_ptr->cr_mean_ptr[5 + blkIt];
 
         uint16_t var = picture_control_set_ptr->variance[sb_index][5 + blkIt];
-
 
         if (var > VAR_MIN && var<VAR_MAX            &&  //medium texture
             y_mean>MIN_Y && y_mean < MAX_Y            &&  //medium brightness(not too dark and not too bright)
@@ -772,9 +706,7 @@ void SpatialHighContrastClassifier(
             )
         {
             context_ptr->high_contrast_num++;
-
         }
-
 
         if (
             y_mean < 30 &&  //medium brightness(not too dark and not too bright)
@@ -783,7 +715,6 @@ void SpatialHighContrastClassifier(
             )
         {
             context_ptr->high_contrast_num_ii++;
-
         }
     }
 }
@@ -798,14 +729,12 @@ void DeriveComplexityContrastPicture(
 
     //look only for isolated shapes.
     if ((context_ptr->complete_sb_count > 0) && ((context_ptr->sb_cmplx_contrast_count * 100) / context_ptr->complete_sb_count > 10)) {
-        for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
+        for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index)
             picture_control_set_ptr->sb_cmplx_contrast_array[sb_index] = 0;
-        }
     }
 
     //look only for isolated shapes.
     if ((context_ptr->complete_sb_count > 0) && ((context_ptr->sb_high_contrast_count * 100) / context_ptr->complete_sb_count <= 10)) {
-
         for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index)
         {
             SbParams     *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
@@ -827,10 +756,8 @@ void DeriveComplexityContrastPicture(
                 else
                 {
                     for (j = 0; j < 2; j++) {
-                        for (i = 0; i < 3; i++) {
-
+                        for (i = 0; i < 3; i++)
                             ptr[i + j * sequence_control_set_ptr->picture_width_in_sb] = 4;
-                        }
                     }
                 }
             }
@@ -861,13 +788,10 @@ void DetectCu32x32CleanSparseLcu(
                 cu32x32Index = blockIndexX + (blockIndexY << 1) + 1;
                 blockIndex = ((sb_params->horizontal_index << 1) + blockIndexX) + ((sb_params->vertical_index << 1) + blockIndexY) * picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array_stride;
 
-                if ((meanPtr[cu32x32Index]) > 130 && (meanPtr[cu32x32Index]) < 220 && (variancePtr[cu32x32Index]) < 30) {
-
+                if ((meanPtr[cu32x32Index]) > 130 && (meanPtr[cu32x32Index]) < 220 && (variancePtr[cu32x32Index]) < 30)
                     picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array[blockIndex] = 2;
-                }
-                else if ((meanPtr[cu32x32Index]) > 130 && (meanPtr[cu32x32Index]) < 220) {
+                else if ((meanPtr[cu32x32Index]) > 130 && (meanPtr[cu32x32Index]) < 220)
                     picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array[blockIndex] = 1;
-                }
             }
         }
     }
@@ -878,7 +802,6 @@ void DetectCu32x32CleanSparseLcu(
 void DetectCu32x32CleanSparsePicture(
     PictureParentControlSet    *picture_control_set_ptr)
 {
-
     int32_t  blockIndex, blockIndexX, blockIndexY;
     int32_t  blockIndexTemp, blockIndexXTemp, blockIndexYTemp;
     uint32_t  row_number = picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array_size / picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array_stride;
@@ -892,10 +815,8 @@ void DetectCu32x32CleanSparsePicture(
                 for (blockIndexYTemp = -1; blockIndexYTemp <= 1; ++blockIndexYTemp) {
                     for (blockIndexXTemp = -1; blockIndexXTemp <= 1; ++blockIndexXTemp) {
                         blockIndexTemp = blockIndex + blockIndexXTemp + blockIndexYTemp * picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array_stride;
-                        if (picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array[blockIndexTemp] == 2) {
+                        if (picture_control_set_ptr->cu32x32_clean_sparse_coeff_map_array[blockIndexTemp] == 2)
                             neighCount++;
-
-                        }
                     }
                 }
                 if (neighCount >= 6)
@@ -921,7 +842,6 @@ void* source_based_operations_kernel(void *input_ptr)
     PictureDemuxResults           *outputResultsPtr;
 
     for (;;) {
-
         // Get Input Full Object
         eb_get_full_object(
             context_ptr->initial_rate_control_results_input_fifo_ptr,
@@ -1018,7 +938,6 @@ void* source_based_operations_kernel(void *input_ptr)
             picture_control_set_ptr->failing_motion_sb_flag[sb_index] = EB_FALSE;
 
             if (picture_control_set_ptr->slice_type != I_SLICE && is_complete_sb) {
-
                 FailingMotionLcu(
                     sequence_control_set_ptr,
                     picture_control_set_ptr,
@@ -1027,7 +946,6 @@ void* source_based_operations_kernel(void *input_ptr)
 
             picture_control_set_ptr->uncovered_area_sb_flag[sb_index] = EB_FALSE;
             if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
-
                 if (is_complete_sb && (!picture_control_set_ptr->similar_colocated_sb_array[sb_index])) {
                     DetectUncoveredLcu(
                         sequence_control_set_ptr,
@@ -1048,7 +966,6 @@ void* source_based_operations_kernel(void *input_ptr)
                     picture_control_set_ptr,
                     sb_index);
 
-
                 if (context_ptr->high_contrast_num > 0 && context_ptr->high_dist == EB_TRUE) {
                     picture_control_set_ptr->sb_cmplx_contrast_array[sb_index] = 4;
                     context_ptr->sb_cmplx_contrast_count++;
@@ -1061,7 +978,6 @@ void* source_based_operations_kernel(void *input_ptr)
 #endif
                 context_ptr->complete_sb_count++;
             }
-
         }
 
         /*********************************************Picture-based operations**********************************************************/
@@ -1070,7 +986,7 @@ void* source_based_operations_kernel(void *input_ptr)
             context_ptr,
             picture_control_set_ptr);
 #endif
-#if !MEMORY_FOOTPRINT_OPT        
+#if !MEMORY_FOOTPRINT_OPT
         if (picture_control_set_ptr->slice_type == I_SLICE) {
             DetectCu32x32CleanSparsePicture(
                 picture_control_set_ptr);
@@ -1125,7 +1041,6 @@ void* source_based_operations_kernel(void *input_ptr)
 
         // Post the Full Results Object
         eb_post_full_object(outputResultsWrapperPtr);
-
     }
     return EB_NULL;
 }

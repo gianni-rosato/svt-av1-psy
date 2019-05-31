@@ -77,9 +77,8 @@ void ext_sad_calculation_8x8_16x16_avx2_intrin(
     sad8x8_0_3_256 = _mm256_add_epi32(_mm256_sad_epu8(src_256, ref_256),
         sad8x8_0_3_256);
 
-    if (sub_sad) {
+    if (sub_sad)
         sad8x8_0_3_256 = _mm256_slli_epi32(sad8x8_0_3_256, 1);
-    }
     else {
         src_256 = _mm256_setr_m128i(
             _mm_loadu_si128((__m128i const*)(src + 1 * src_stride)),
@@ -144,7 +143,6 @@ void ext_sad_calculation_8x8_16x16_avx2_intrin(
         p_best_sad16x16[0] = p_sad16x16[0];
         p_best_mv16x16[0] = mv;
     }
-
 }
 
 void sad_loop_kernel_sparse_avx2_intrin(
@@ -172,9 +170,8 @@ void sad_loop_kernel_sparse_avx2_intrin(
     __m256i ss0, ss1, ss2, ss3, ss4, ss5, ss6, ss7, ss8;
 
     if (leftover) {
-        for (k = 0; k < leftover; k++) {
+        for (k = 0; k < leftover; k++)
             s8 = _mm_slli_si128(s8, 2);
-        }
     }
 
     switch (width) {
@@ -411,10 +408,8 @@ void sad_loop_kernel_sparse_avx2_intrin(
     case 16:
         if (height <= 16) {
             for (i = 0; i < search_area_height; i++) {
-
                 uint32_t startW = (i & 1) << 3;
                 for (j = startW; j <= search_area_width - 8; j += 16) {
-
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
@@ -1718,7 +1713,6 @@ void sad_loop_kernel_sparse_avx2_intrin(
         assert(0);
         break;
     }
-
 
     *best_sad = lowSum;
     *x_search_center = xBest;
@@ -1755,9 +1749,8 @@ void sad_loop_kernel_avx2_intrin(
     __m256i ss0, ss1, ss2, ss3, ss4, ss5, ss6, ss7, ss8;
 
     if (leftover) {
-        for (k = 0; k < leftover; k++) {
+        for (k = 0; k < leftover; k++)
             s8 = _mm_slli_si128(s8, 2);
-        }
     }
 
     switch (width) {
@@ -3298,7 +3291,6 @@ void sad_loop_kernel_avx2_intrin(
         assert(0);
         break;
     }
-
 
     *best_sad = lowSum;
     *x_search_center = xBest;
@@ -3610,7 +3602,6 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_avx2_intrin(
     uint16_t  *p_sad16x16,
     EbBool     sub_sad)
 {
-
     int16_t x_mv, y_mv;
     __m128i s3;
     __m128i sad_0, sad_1, sad_2, sad_3;
@@ -3714,7 +3705,6 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_avx2_intrin(
     sad_2 = _mm_and_si128(sad_2, s3);
     sad_2 = _mm_or_si128(sad_2, sad_3);
     _mm_storeu_si128((__m128i*)p_best_mv8x8, sad_2);
-
 }
 
 /*******************************************
@@ -3765,13 +3755,11 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     ss6 = _mm256_setzero_si256();
     ss7 = _mm256_setzero_si256();
 
-
     /*--------------------
     |  32x32_0  |  32x32_1
     ----------------------
     |  32x32_2  |  32x32_3
     ----------------------*/
-
 
     /*  data ordering in p_sad16x16 buffer
 
@@ -3890,9 +3878,8 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     bestMV64x64 = 0;
     //sad_0
     temSum = _mm_extract_epi32(sad_0, 0);
-    if (temSum < bestSad64x64) {
+    if (temSum < bestSad64x64)
         bestSad64x64 = temSum;
-    }
     temSum = _mm_extract_epi32(sad_0, 1);
     if (temSum < bestSad64x64) {
         bestSad64x64 = temSum;
@@ -3981,7 +3968,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     ss2 = _mm256_min_epi32(ss2, ss3);
     ss5 = _mm256_sub_epi32(ss5, _mm256_set1_epi32(2)); // ss5-2
 
-
     // *** 4 search points per position ***
     ss6 = _mm256_cmpgt_epi32(ss0, ss2);
     //ss6 = _mm256_or_si256(_mm256_cmpgt_epi32(ss0, ss2), _mm256_cmpeq_epi32(ss0, ss2));
@@ -4031,7 +4017,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     //printf("mv0 %d, %d, %d, %d\n", _mm_extract_epi32(s2, 0), _mm_extract_epi32(s2, 1), _mm_extract_epi32(s2, 2), _mm_extract_epi32(s2, 3)); // DEBUG
     //printf("mv1 %d, %d, %d, %d\n", _mm_extract_epi32(s3, 0), _mm_extract_epi32(s3, 1), _mm_extract_epi32(s3, 2), _mm_extract_epi32(s3, 3)); // DEBUG
 
-
     // Choose the best MV out of the two, use s4 to hold results of min
     s4 = _mm_cmpgt_epi32(s0, s1);
 
@@ -4040,8 +4025,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
 
     //s4 = _mm_or_si128(_mm_cmpgt_epi32(s0, s1), _mm_cmpeq_epi32(s0, s1));
     s0 = _mm_min_epi32(s0, s1);
-
-
 
     // Extract MV's based on the blocks to s2
     s3 = _mm_sub_epi32(s3, _mm_set1_epi32(4)); // s3-4
@@ -4054,7 +4037,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     // Convert MV's into encoders format
     s2 = _mm_sub_epi32(_mm_setzero_si128(), s2);
     s2 = _mm_slli_epi32(s2, 2); // mv info
-
 
     // ***SAD***
     // s0: current SAD candidates for each 32x32
@@ -4072,7 +4054,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     s0 = _mm_min_epu32(s0, s1);
     // Store new best SAD's back to memory
     _mm_storeu_si128((__m128i*)p_best_sad32x32, s0);
-
 
     // ***Motion Vectors***
     // Load best MV's
@@ -4095,7 +4076,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     // Store back to memory
     _mm_storeu_si128((__m128i*)p_best_mv32x32, s3);
 }
-
 
 /*******************************************************************************
 * Requirement: width   = 4, 8, 16, 24, 32, 48 or 64
@@ -4931,7 +4911,6 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
         assert(0);
         break;
     }
-
 
     *best_sad = lowSum;
     *x_search_center = xBest;
@@ -6129,7 +6108,6 @@ void ext_eigth_sad_calculation_nsq_avx2(
     uint32_t  *p_best_sad16x64,
     uint32_t  *p_best_mv16x64,
     uint32_t   mv) {
-
     avx2_find_min_pos_init();
     uint8_t search_index;
     DECLARE_ALIGNED(32, uint32_t, sad[8]);
@@ -6525,6 +6503,5 @@ void ext_eight_sad_calculation_32x32_64x64_avx2(
         p_best_sad64x64[0] = sad64x64[si_e];
         p_best_mv64x64[0] = computed_idx[si_e];
     }
-
 }
 #endif /* NSQ_ME_OPT */

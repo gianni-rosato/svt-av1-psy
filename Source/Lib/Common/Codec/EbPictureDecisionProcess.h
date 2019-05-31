@@ -20,11 +20,11 @@ typedef struct PictureDecisionContext
 {
     EbFifo       *picture_analysis_results_input_fifo_ptr;
     EbFifo       *picture_decision_results_output_fifo_ptr;
-                 
+
     uint64_t      last_solid_color_frame_poc;
-                 
+
     EbBool        reset_running_avg;
-                 
+
     uint32_t    **ahd_running_avg_cb;
     uint32_t    **ahd_running_avg_cr;
     uint32_t    **ahd_running_avg;
@@ -34,7 +34,7 @@ typedef struct PictureDecisionContext
     uint32_t        totalRegionActivityCost[MAX_NUMBER_OF_REGIONS_IN_WIDTH][MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
 
     uint32_t      total_number_of_mini_gops;
-                  
+
     uint32_t      mini_gop_start_index[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t      mini_gop_end_index[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t      mini_gop_length[MINI_GOP_WINDOW_MAX_COUNT];
@@ -68,7 +68,6 @@ extern EbErrorType picture_decision_context_ctor(
     PictureDecisionContext **context_dbl_ptr,
     EbFifo                  *picture_analysis_results_input_fifo_ptr,
     EbFifo                  *picture_decision_results_output_fifo_ptr);
-
 
 extern void* picture_decision_kernel(void *input_ptr);
 

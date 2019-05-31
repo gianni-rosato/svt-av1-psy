@@ -28,7 +28,7 @@ static void decode_partition(DecModCtxt *dec_mod_ctxt,
     EbDecHandle *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
     BlockSize  subsize;
     PartitionType partition;
-    
+
     uint8_t num4x4 = mi_size_wide[bsize];
     uint32_t half_block_4x4 =(uint32_t)num4x4 >> 1;
     uint32_t quarter_block_4x4 = half_block_4x4 >> 1;
@@ -36,7 +36,7 @@ static void decode_partition(DecModCtxt *dec_mod_ctxt,
     uint32_t has_rows = (mi_row + half_block_4x4) < dec_handle->frame_header.mi_rows;
     uint32_t has_cols = (mi_col + half_block_4x4) < dec_handle->frame_header.mi_cols;
 
-    if (mi_row >= dec_handle->frame_header.mi_rows || 
+    if (mi_row >= dec_handle->frame_header.mi_rows ||
         mi_col >= dec_handle->frame_header.mi_cols) return;
 
     partition = get_partition(dec_mod_ctxt, &dec_handle->frame_header,
@@ -52,7 +52,6 @@ decode_block(dec_mod_ctxt, db_r, db_c, db_subsize,          \
 #define DECODE_PARTITION(db_r, db_c, db_subsize)            \
 decode_partition(dec_mod_ctxt, (db_r), (db_c),              \
                    (db_subsize), sb_info)
-
 
     switch ((int)partition) {
         case PARTITION_NONE:
@@ -128,5 +127,4 @@ void decode_super_block(DecModCtxt *dec_mod_ctxt,
     /* Decode partition */
     decode_partition(dec_mod_ctxt, mi_row, mi_col,
                      dec_handle->seq_header.sb_size, sb_info);
-
 }

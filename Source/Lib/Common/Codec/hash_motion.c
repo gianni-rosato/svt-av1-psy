@@ -16,15 +16,13 @@
 #include "hash_motion.h"
 #include "EbPictureControlSet.h"
 
-
 void aom_free(void *memblk);
 static const int crc_bits = 16;
 static const int block_size_bits = 3;
 
 static void hash_table_clear_all(HashTable *p_hash_table) {
-  if (p_hash_table->p_lookup_table == NULL) {
+  if (p_hash_table->p_lookup_table == NULL)
     return;
-  }
   int max_addr = 1 << (crc_bits + block_size_bits);
   for (int i = 0; i < max_addr; i++) {
     if (p_hash_table->p_lookup_table[i] != NULL) {
@@ -42,9 +40,8 @@ static void get_pixels_in_1D_char_array_by_block_2x2(uint8_t *y_src, int stride,
   uint8_t *p_pel = y_src;
   int index = 0;
   for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++) {
+    for (int j = 0; j < 2; j++)
       p_pixels_in1D[index++] = p_pel[j];
-    }
     p_pel += stride;
   }
 }
@@ -55,38 +52,33 @@ static void get_pixels_in_1D_short_array_by_block_2x2(uint16_t *y_src,
   uint16_t *p_pel = y_src;
   int index = 0;
   for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++) {
+    for (int j = 0; j < 2; j++)
       p_pixels_in1D[index++] = p_pel[j];
-    }
     p_pel += stride;
   }
 }
 
 static int is_block_2x2_row_same_value(uint8_t *p) {
-  if (p[0] != p[1] || p[2] != p[3]) {
+  if (p[0] != p[1] || p[2] != p[3])
     return 0;
-  }
   return 1;
 }
 
 static int is_block16_2x2_row_same_value(uint16_t *p) {
-  if (p[0] != p[1] || p[2] != p[3]) {
+  if (p[0] != p[1] || p[2] != p[3])
     return 0;
-  }
   return 1;
 }
 
 static int is_block_2x2_col_same_value(uint8_t *p) {
-  if ((p[0] != p[2]) || (p[1] != p[3])) {
+  if ((p[0] != p[2]) || (p[1] != p[3]))
     return 0;
-  }
   return 1;
 }
 
 static int is_block16_2x2_col_same_value(uint16_t *p) {
-  if ((p[0] != p[2]) || (p[1] != p[3])) {
+  if ((p[0] != p[2]) || (p[1] != p[3]))
     return 0;
-  }
   return 1;
 }
 
@@ -121,7 +113,6 @@ void av1_hash_table_destroy(HashTable *p_hash_table) {
 }
 
 EbErrorType  av1_hash_table_create(HashTable *p_hash_table) {
-
     EbErrorType err_code = EB_ErrorNone;;
 
   if (p_hash_table->p_lookup_table != NULL) {
@@ -157,9 +148,8 @@ int32_t av1_hash_table_count(const HashTable *p_hash_table,
                              uint32_t hash_value) {
   if (p_hash_table->p_lookup_table[hash_value] == NULL) {
     return 0;
-  } else {
+  } else
     return (int32_t)(p_hash_table->p_lookup_table[hash_value]->size);
-  }
 }
 
 Iterator av1_hash_get_first_iterator(HashTable *p_hash_table,
@@ -170,16 +160,14 @@ Iterator av1_hash_get_first_iterator(HashTable *p_hash_table,
 
 int32_t av1_has_exact_match(HashTable *p_hash_table, uint32_t hash_value1,
                             uint32_t hash_value2) {
-  if (p_hash_table->p_lookup_table[hash_value1] == NULL) {
+  if (p_hash_table->p_lookup_table[hash_value1] == NULL)
     return 0;
-  }
   Iterator iterator =
       aom_vector_begin(p_hash_table->p_lookup_table[hash_value1]);
   Iterator last = aom_vector_end(p_hash_table->p_lookup_table[hash_value1]);
   for (; !iterator_equals(&iterator, &last); iterator_increment(&iterator)) {
-    if ((*(block_hash *)iterator_get(&iterator)).hash_value2 == hash_value2) {
+    if ((*(block_hash *)iterator_get(&iterator)).hash_value2 == hash_value2)
       return 1;
-    }
   }
   return 0;
 }
@@ -349,18 +337,16 @@ int av1_hash_is_horizontal_perfect(const Yv12BufferConfig *picture,
     const uint16_t *p16 = CONVERT_TO_SHORTPTR(p);
     for (int i = 0; i < block_size; i++) {
       for (int j = 1; j < block_size; j++) {
-        if (p16[j] != p16[0]) {
+        if (p16[j] != p16[0])
           return 0;
-        }
       }
       p16 += stride;
     }
   } else {
     for (int i = 0; i < block_size; i++) {
       for (int j = 1; j < block_size; j++) {
-        if (p[j] != p[0]) {
+        if (p[j] != p[0])
           return 0;
-        }
       }
       p += stride;
     }
@@ -378,17 +364,15 @@ int av1_hash_is_vertical_perfect(const Yv12BufferConfig *picture,
     const uint16_t *p16 = CONVERT_TO_SHORTPTR(p);
     for (int i = 0; i < block_size; i++) {
       for (int j = 1; j < block_size; j++) {
-        if (p16[j * stride + i] != p16[i]) {
+        if (p16[j * stride + i] != p16[i])
           return 0;
-        }
       }
     }
   } else {
     for (int i = 0; i < block_size; i++) {
       for (int j = 1; j < block_size; j++) {
-        if (p[j * stride + i] != p[i]) {
+        if (p[j * stride + i] != p[i])
           return 0;
-        }
       }
     }
   }

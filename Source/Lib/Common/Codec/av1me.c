@@ -20,7 +20,6 @@
 #include "EbComputeSAD.h"
 #include "aom_dsp_rtcd.h"
 
-
 int av1_is_dv_valid(const MV dv,
     const MacroBlockD *xd, int mi_row, int mi_col,
     BlockSize bsize, int mib_size_log2);
@@ -122,7 +121,6 @@ void init_fn_ptr(void)
         BFP0(BLOCK_4X4, aom_sad4x4, aom_variance4x4, aom_sad4x4x4d)
 }
 
-
 // #define NEW_DIAMOND_SEARCH
 
 static INLINE const uint8_t *get_buf_from_mv(const struct Buf2D *buf,
@@ -149,8 +147,6 @@ void av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv) {
   if (mv_limits->row_max > row_max) mv_limits->row_max = row_max;
 }
 
-
-
 MvJointType av1_get_mv_joint(const MV *mv);
 
 static INLINE int mv_cost(const MV *mv, const int *joint_cost,
@@ -158,7 +154,6 @@ static INLINE int mv_cost(const MV *mv, const int *joint_cost,
   return joint_cost[av1_get_mv_joint(mv)] + comp_cost[0][mv->row] +
          comp_cost[1][mv->col];
 }
-
 
 #define PIXEL_TRANSFORM_ERROR_SCALE 4
 static int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost,
@@ -228,7 +223,6 @@ static INLINE int is_mv_in(const MvLimits *mv_limits, const MV *mv) {
 int av1_get_mvpred_var(const IntraBcContext *x, const MV *best_mv,
                        const MV *center_mv, const aom_variance_fn_ptr_t *vfp,
                        int use_mvcost) {
-   
   const struct Buf2D *const what = &x->plane[0].src;
   const struct Buf2D *const in_what = &x->xdplane[0].pre[0];
   const MV mv = { best_mv->row * 8, best_mv->col * 8 };
@@ -247,7 +241,6 @@ static int exhuastive_mesh_search(IntraBcContext  *x, MV *ref_mv, MV *best_mv,
                                   int range, int step, int sad_per_bit,
                                   const aom_variance_fn_ptr_t *fn_ptr,
                                   const MV *center_mv) {
-   
   const struct Buf2D *const what = &x->plane[0].src;
   const struct Buf2D *const in_what = &x->xdplane[0].pre[0];
   MV fcenter_mv = { center_mv->row, center_mv->col };
@@ -332,7 +325,6 @@ static int exhuastive_mesh_search(IntraBcContext  *x, MV *ref_mv, MV *best_mv,
   return best_sad;
 }
 
-
 int av1_diamond_search_sad_c(IntraBcContext  *x, const SearchSiteConfig *cfg,
                              MV *ref_mv, MV *best_mv, int search_param,
                              int sad_per_bit, int *num00,
@@ -340,7 +332,6 @@ int av1_diamond_search_sad_c(IntraBcContext  *x, const SearchSiteConfig *cfg,
                              const MV *center_mv) {
   int i, j, step;
 
- 
   uint8_t *what = x->plane[0].src.buf;
   const int what_stride = x->plane[0].src.stride;
   const uint8_t *in_what;
@@ -469,14 +460,11 @@ int av1_diamond_search_sad_c(IntraBcContext  *x, const SearchSiteConfig *cfg,
         break;
       }
 #endif
-    } else if (best_address == in_what) {
+    } else if (best_address == in_what)
       (*num00)++;
-    }
   }
   return bestsad;
 }
-
-
 
 /* do_refine: If last step (1-away) of n-step search doesn't pick the center
               point as the best match, we will do a final 1-away diamond
@@ -613,12 +601,10 @@ static int full_pixel_exhaustive(PictureControlSet *pcs, IntraBcContext  *x,
   return bestsme;
 }
 
-
 int av1_refining_search_sad(IntraBcContext  *x, MV *ref_mv, int error_per_bit,
                             int search_range,
                             const aom_variance_fn_ptr_t *fn_ptr,
                             const MV *center_mv) {
-  
   const MV neighbors[4] = { { -1, 0 }, { 0, -1 }, { 0, 1 }, { 1, 0 } };
   const struct Buf2D *const what = &x->plane[0].src;
   const struct Buf2D *const in_what = &x->xdplane[0].pre[0];
@@ -769,7 +755,6 @@ int av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext  *x, BlockSize 
     default: assert(0 && "Invalid search method.");
   }
 
-
   do {
     //CHKN if (!intra || !av1_use_hash_me(&cpi->common)) break;
 
@@ -794,10 +779,8 @@ int av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext  *x, BlockSize 
 
         const int count = av1_hash_table_count(ref_frame_hash, hash_value1);
         // for intra, at least one matching can be found, itself.
-        if (count <= (intra ? 1 : 0)) {
+        if (count <= (intra ? 1 : 0))
           break;
-        }
- 
         Iterator iterator =
             av1_hash_get_first_iterator(ref_frame_hash, hash_value1);
         for (int i = 0; i < count; i++, iterator_increment(&iterator)) {
@@ -831,13 +814,9 @@ int av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext  *x, BlockSize 
           x->best_mv.as_mv = best_hash_mv;
           var = best_hash_cost;
         }
-
-
       }
     }
   } while (0);
 
-
   return 0;//CHKN  var;
 }
-

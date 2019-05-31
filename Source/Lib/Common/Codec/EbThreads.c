@@ -86,7 +86,6 @@ EbHandle eb_create_thread(
 
         if (ret != 0) {
             if (ret == EPERM) {
-
                 pthread_cancel(*((pthread_t*)thread_handle));
                 free(thread_handle);
 
@@ -219,7 +218,6 @@ EbHandle eb_create_semaphore(uint32_t initial_count, uint32_t max_count)
     sem_unlink(name);
     return s;
 #endif // _WIN32
-
 }
 
 /***************************************

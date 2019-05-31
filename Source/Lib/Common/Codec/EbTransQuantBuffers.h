@@ -19,13 +19,10 @@ extern "C" {
         EbPictureBufferDesc         *tu_trans_coeff_n2x_n2_ptr;
         EbPictureBufferDesc         *tu_quant_coeff_nxn_ptr;
         EbPictureBufferDesc         *tu_quant_coeff_n2x_n2_ptr;
-
     } EbTransQuantBuffers;
-
 
     extern EbErrorType eb_trans_quant_buffers_ctor(
         EbTransQuantBuffers            *trans_quant_buffers_ptr);
-
 
 #ifdef __cplusplus
 }

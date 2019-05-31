@@ -132,99 +132,87 @@ extern "C" {
         const int32_t stride,
         __m128i *const out,
         const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             out[i] = _mm_loadl_epi64((const __m128i *)(in + i * stride));
-        }
     }
 
     static INLINE void load_buffer_16bit_to_16bit_w4_flip(const int16_t *const in,
         const int32_t stride,
         __m128i *const out,
         const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             out[out_size - i - 1] = _mm_loadl_epi64((const __m128i *)(in + i * stride));
-        }
     }
 
     static INLINE void load_buffer_16bit_to_16bit(const int16_t *in, int32_t stride,
         __m128i *out, int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             out[i] = load_16bit_to_16bit(in + i * stride);
-        }
     }
 
     static INLINE void load_buffer_16bit_to_16bit_flip(const int16_t *in,
         int32_t stride, __m128i *out,
         int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             out[out_size - i - 1] = load_16bit_to_16bit(in + i * stride);
-        }
     }
 
     static INLINE void load_buffer_32bit_to_16bit(const int32_t *in, int32_t stride,
         __m128i *out, int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             out[i] = load_32bit_to_16bit(in + i * stride);
-        }
     }
 
     static INLINE void load_buffer_32bit_to_16bit_w4(const int32_t *in, int32_t stride,
         __m128i *out, int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             out[i] = load_32bit_to_16bit_w4(in + i * stride);
-        }
     }
 
     static INLINE void load_buffer_32bit_to_16bit_flip(const int32_t *in,
         int32_t stride, __m128i *out,
         int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             out[out_size - i - 1] = load_32bit_to_16bit(in + i * stride);
-        }
     }
 
     static INLINE void store_buffer_16bit_to_32bit_w4(const __m128i *const in,
         int32_t *const out,
         const int32_t stride,
         const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             store_16bit_to_32bit_w4(in[i], out + i * stride);
-        }
     }
 
     static INLINE void store_buffer_16bit_to_32bit_w8(const __m128i *const in,
         int32_t *const out,
         const int32_t stride,
         const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             store_16bit_to_32bit(in[i], out + i * stride);
-        }
     }
 
     static INLINE void store_rect_buffer_16bit_to_32bit_w4(const __m128i *const in,
         int32_t *const out,
         const int32_t stride,
         const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             store_rect_16bit_to_32bit_w4(in[i], out + i * stride);
-        }
     }
 
     static INLINE void store_rect_buffer_16bit_to_32bit_w8(const __m128i *const in,
         int32_t *const out,
         const int32_t stride,
         const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i) {
+        for (int32_t i = 0; i < out_size; ++i)
             store_rect_16bit_to_32bit(in[i], out + i * stride);
-        }
     }
 
     static INLINE void store_buffer_16bit_to_16bit_8x8(const __m128i *in,
         uint16_t *out,
         const int32_t stride) {
-        for (int32_t i = 0; i < 8; ++i) {
+        for (int32_t i = 0; i < 8; ++i)
             _mm_store_si128((__m128i *)(out + i * stride), in[i]);
-        }
     }
 
     static INLINE void round_shift_16bit(__m128i *in, int32_t size, int32_t bit) {
@@ -237,16 +225,14 @@ extern "C" {
             }
         }
         else if (bit > 0) {
-            for (int32_t i = 0; i < size; ++i) {
+            for (int32_t i = 0; i < size; ++i)
                 in[i] = _mm_slli_epi16(in[i], bit);
-            }
         }
     }
 
     static INLINE void flip_buf_sse2(__m128i *in, __m128i *out, int32_t size) {
-        for (int32_t i = 0; i < size; ++i) {
+        for (int32_t i = 0; i < size; ++i)
             out[size - i - 1] = in[i];
-        }
     }
 
     void av1_lowbd_fwd_txfm2d_4x4_sse2(const int16_t *input, int32_t *output,

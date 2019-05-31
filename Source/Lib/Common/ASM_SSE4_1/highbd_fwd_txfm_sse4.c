@@ -17,7 +17,6 @@
 #include <assert.h>
 #include <smmintrin.h> /* SSE4.1 */
 
-
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
 #include "emmintrin.h"
@@ -74,7 +73,6 @@ static INLINE void load_buffer_4x4(const int16_t *input, __m128i *in,
     in[2] = _mm_slli_epi32(in[2], shift);
     in[3] = _mm_slli_epi32(in[3], shift);
 }
-
 
 static void fidtx4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t col_num) {
     (void)bit;

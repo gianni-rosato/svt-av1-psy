@@ -34,9 +34,8 @@ extern "C" {
         int32_t v_start, int32_t v_end, int32_t stride) {
         uint64_t sum = 0;
         for (int32_t i = v_start; i < v_end; i++) {
-            for (int32_t j = h_start; j < h_end; j++) {
+            for (int32_t j = h_start; j < h_end; j++)
                 sum += src[i * stride + j];
-            }
         }
         uint64_t avg = sum / ((v_end - v_start) * (h_end - h_start));
         return (uint8_t)avg;
@@ -47,9 +46,8 @@ extern "C" {
         int32_t stride) {
         uint64_t sum = 0;
         for (int32_t i = v_start; i < v_end; i++) {
-            for (int32_t j = h_start; j < h_end; j++) {
+            for (int32_t j = h_start; j < h_end; j++)
                 sum += src[i * stride + j];
-            }
         }
         uint64_t avg = sum / ((v_end - v_start) * (h_end - h_start));
         return (uint16_t)avg;

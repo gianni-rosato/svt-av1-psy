@@ -189,7 +189,6 @@ extern "C" {
         EbBool                subSamplePredFlagChroma,
         EbAsm                 asm_type);
 
-
     typedef void(*AvcStyleInterpolationFilterNew)(
         EbByte               ref_pic,
         uint32_t                src_stride,
@@ -222,7 +221,6 @@ extern "C" {
         uint32_t                   dst_stride,
         uint32_t                   area_width,
         uint32_t                   area_height);
-
 
     /***************************************
     * Function Tables

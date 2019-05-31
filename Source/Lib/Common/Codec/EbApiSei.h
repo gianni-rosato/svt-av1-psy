@@ -19,27 +19,24 @@ extern "C" {
 
 // User defined structures for passing data from application to the library should be added here
 
-    typedef struct RegistedUserData 
+    typedef struct RegistedUserData
     {
-
         uint8_t   *user_data;    // First byte is itu_t_t35_country_code.
                               // If itu_t_t35_country_code  ==  0xFF, second byte is itu_t_t35_country_code_extension_byte.
                               // the rest are the payloadByte
         uint32_t   user_data_size;
-
     } RegistedUserData;
 
     // SEI structures
-    typedef struct AppHrdParameters 
+    typedef struct AppHrdParameters
     {
-
         EbBool                            nal_hrd_parameters_present_flag;
         EbBool                            vcl_hrd_parameters_present_flag;
         EbBool                            sub_pic_cpb_params_present_flag;
-                                          
+
         uint32_t                          tick_divisor_minus2;
         uint32_t                          du_cpb_removal_delay_length_minus1;
-                                          
+
         EbBool                            sub_pic_cpb_params_pic_timing_sei_flag;
 
         uint32_t                          dpb_output_delay_du_length_minus1;
@@ -69,12 +66,10 @@ extern "C" {
         EbBool                            cbr_flag[MAX_TEMPORAL_LAYERS][2][MAX_CPB_COUNT];
 
         EbBool                            cpb_dpb_delays_present_flag;
-
     } AppHrdParameters;
 
-    typedef struct AppVideoUsabilityInfo 
+    typedef struct AppVideoUsabilityInfo
     {
-
         EbBool            aspect_ratio_info_present_flag;
         uint32_t          aspect_ratio_idc;
         uint32_t          sar_width;
@@ -83,55 +78,53 @@ extern "C" {
         EbBool            overscan_info_present_flag;
         EbBool            overscan_approriate_flag;
         EbBool            video_signal_type_present_flag;
-                         
+
         uint32_t          video_format;
         EbBool            video_full_range_flag;
         EbBool            color_description_present_flag;
-                         
+
         uint32_t          color_primaries;
         uint32_t          transfer_characteristics;
         uint32_t          matrix_coeffs;
-                         
+
         EbBool            chroma_loc_info_present_flag;
         uint32_t          chroma_sample_loc_type_top_field;
         uint32_t          chroma_sample_loc_type_bottom_field;
-                         
-                         
+
         EbBool            neutral_chroma_indication_flag;
         EbBool            field_seq_flag;
         EbBool            frame_field_info_present_flag;
-                         
+
         EbBool            default_display_window_flag;
         uint32_t          default_display_win_left_offset;
         uint32_t          default_display_win_right_offset;
         uint32_t          default_display_win_top_offset;
         uint32_t          default_display_win_bottom_offset;
-                         
+
         EbBool            vui_timing_info_present_flag;
         uint32_t          vui_num_units_in_tick;
         uint32_t          vui_time_scale;
-                         
+
         EbBool            vui_poc_propotional_timing_flag;
         uint32_t          vui_num_ticks_poc_diff_one_minus1;
-                         
+
         EbBool            vui_hrd_parameters_present_flag;
-                          
+
         EbBool            bitstream_restriction_flag;
-                          
+
         EbBool            motion_vectors_over_pic_boundaries_flag;
         EbBool            restricted_ref_pic_lists_flag;
-                         
+
         uint32_t          min_spatial_segmentation_idc;
         uint32_t          max_bytes_per_pic_denom;
         uint32_t          max_bits_per_min_cu_denom;
         uint32_t          log2_max_mv_length_horizontal;
         uint32_t          log2_max_mv_length_vertical;
-                         
-        AppHrdParameters *hrd_parameters_ptr;
 
+        AppHrdParameters *hrd_parameters_ptr;
     } AppVideoUsabilityInfo;
 
-    typedef struct AppPictureTimingSei 
+    typedef struct AppPictureTimingSei
     {
         uint32_t   pic_struct;
         uint32_t   source_scan_type;
@@ -146,7 +139,7 @@ extern "C" {
         uint32_t   du_cpb_removal_delay_minus1[MAX_DECODING_UNIT_COUNT];
     } AppPictureTimingSei;
 
-    typedef struct AppBufferingPeriodSei 
+    typedef struct AppBufferingPeriodSei
     {
         uint32_t  bp_seq_parameter_set_id;
         EbBool    rap_cpb_params_present_flag;
@@ -160,7 +153,7 @@ extern "C" {
         uint32_t  initial_alt_cpb_removal_delay_offset[2][MAX_CPB_COUNT];
     } AppBufferingPeriodSei;
 
-    typedef struct AppRecoveryPoint 
+    typedef struct AppRecoveryPoint
     {
         uint32_t recovery_poc_cnt;
         EbBool   exact_matching_flag;
@@ -169,17 +162,17 @@ extern "C" {
 
     // Below is an example of PanScanRectangle SEI data structure
     // Other SEI messages can have data structure in this format
-    typedef struct AppPanScanRectangleSei 
+    typedef struct AppPanScanRectangleSei
     {
         uint32_t pan_scan_rect_id;
         EbBool   pan_scan_rect_cancel_flag;
-                 
+
         uint32_t pan_scan_count_minus1;
         uint32_t pan_scan_rect_left_offset[3];
         uint32_t pan_scan_rect_right_offset[3];
         uint32_t pan_scan_rect_top_offset[3];
         uint32_t pan_scan_rect_bottom_offset[3];
-                 
+
         EbBool   pan_scan_rect_persist_flag;
     }AppPanScanRectangleSei;
 
@@ -212,7 +205,6 @@ extern "C" {
 
         // Hold the DifCUDeltaQpDepth in this struct so that it is simpler to access it in the Lib,
         // rather than having to reference something deep
-
     } EbCuQpCfg;
 
     // Signals that the default prediction structure and controls are to be
@@ -254,7 +246,6 @@ extern "C" {
         //   an address by one line without changing the horizontal
         //   positioning.
         uint32_t stride;
-
     } EbPicturePlane;
 
     // EbInputPictureDef defines the data formatting of an input picture. Note, each
@@ -283,7 +274,6 @@ extern "C" {
         EbPicturePlane y_aux_plane;
         EbPicturePlane cb_aux_plane;
         EbPicturePlane cr_aux_plane;
-
     } EbInputPictureDef;
 
     typedef struct EbEosDataDef
@@ -292,7 +282,6 @@ extern "C" {
                                                 //   If the last frame is valid, the data will be included in the bistream
                                                 //   If the last frame is NOT valid, the frame will be coded as IDR in the encoder, but
                                                 //   not included in the bitstream.
-
     } EbEosDataDef;
 
     extern EbErrorType eb_app_video_usability_info_ctor(

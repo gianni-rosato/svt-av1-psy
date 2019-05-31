@@ -2187,10 +2187,6 @@ static const EbBitNumber initial_rate_control_intra_sad64x64_tables[] = {
 286,    305,    276,    321
 };
 
-
-
-
-
 /**************************************
  * Function Declarations
  **************************************/
@@ -2212,10 +2208,8 @@ EbErrorType rate_control_tables_ctor(
                         CLIP3(1,
                         (uint16_t)((1 << 15) - 1),
                             (uint16_t)initial_rate_control_intra_sad64x64_tables[qp_index*(NUMBER_OF_SAD_INTERVALS >> 1) + interval_index]);
-
                 }
                 else {
-
                     initial_rate_control_tables_array[qp_index].sad_bits_array[temporal_index][interval_index] =
                         CLIP3(1,
                         (uint16_t)((1 << 15) - 1),
@@ -2224,16 +2218,12 @@ EbErrorType rate_control_tables_ctor(
                         CLIP3(1,
                         (uint16_t)((1 << 15) - 1),
                             initial_rate_control_intra_sad64x64_tables[qp_index*(NUMBER_OF_SAD_INTERVALS >> 1) + ((NUMBER_OF_SAD_INTERVALS >> 1) - 1)]);
-
                 }
-
-
             }
         }
     }
     return EB_ErrorNone;
 }
-
 
 #else
 
@@ -2443,7 +2433,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
     19006,    19015,    19146,    19329,
     19273,    19408,    19481,    19571,
     19620,    19679,    19709,    20724,
-
     // QP = 12 NEW
         0,        0,        0,        0,
         0,        0,     5252,     7138,
@@ -2461,7 +2450,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
     17939,    17949,    18080,    18263,
     18206,    18341,    18416,    18505,
     18554,    18613,    18644,    19661,
-
     // QP = 13 NEW
         0,        0,        0,        0,
         0,        0,     4362,     6083,
@@ -2479,7 +2467,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
     16717,    16728,    16860,    17041,
     16982,    17119,    17193,    17282,
     17332,    17391,    17421,    18442,
-
     // QP = 14
         0,        0,        0,        0,
         0,        0,     3448,     4986,
@@ -2497,7 +2484,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
     15374,    15384,    15515,    15699,
     15639,    15774,    15848,    15939,
     15987,    16047,    16078,    17105,
-
     // QP = 15 NEW
         0,        0,        0,        0,
         0,        0,     2694,     4201,
@@ -2515,7 +2501,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
     14243,    14251,    14381,    14562,
     14505,    14639,    14712,    14801,
     14852,    14909,    14940,    15967,
-
     // QP = 16 NEW
         0,        0,        0,        0,
         0,        0,     1798,     3038,
@@ -2533,7 +2518,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
     12935,    12942,    13073,    13253,
     13195,    13329,    13403,    13490,
     13543,    13600,    13631,    14672,
-
     // QP = 17 NEW
         0,        0,        0,        0,
         0,        0,     1179,     2079,
@@ -2551,7 +2535,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
     11541,    11547,    11679,    11858,
     11797,    11931,    12005,    12092,
     12145,    12201,    12232,    13285,
-
     // QP = 18 NEW
         0,        0,        0,        0,
         0,        0,      916,     1661,
@@ -2569,7 +2552,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
     10642,    10650,    10778,    10951,
     10893,    11025,    11095,    11183,
     11234,    11290,    11319,    12364,
-
     // QP = 19 NEW
         0,        0,        0,        0,
         0,        0,      542,     1148,
@@ -2587,7 +2569,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
      9410,     9414,     9543,     9715,
      9661,     9792,     9859,     9950,
      9996,    10055,    10084,    11139,
-
      // QP = 20 NEW
          0,        0,        0,        0,
              0,       0,     452,     957,
@@ -2605,7 +2586,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
           8813,    8825,    8918,    9078,
           9040,    9138,    9204,    9280,
           9310,    9358,    9389,    10165,
-
           // QP = 21 NEW
              0,        0,        0,        0,
                  0,       0,     376,     797,
@@ -2623,7 +2603,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
               8254,    8273,    8334,    8483,
               8459,    8527,    8593,    8655,
               8670,    8709,    8741,    9277,
-
               // QP = 22 NEW
                  0,        0,        0,        0,
                      0,       0,     314,     664,
@@ -2641,7 +2620,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                   7731,    7755,    7788,    7928,
                   7915,    7958,    8022,    8072,
                   8075,    8105,    8138,    8466,
-
                   // QP = 23 NEW
                      0,        0,        0,        0,
                          0,       0,     261,     554,
@@ -2659,7 +2637,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                       7240,    7270,    7278,    7408,
                       7407,    7426,    7489,    7529,
                       7520,    7543,    7577,    7726,
-
                       // QP = 24 NEW
                          0,        0,        0,        0,
                              0,       0,     218,     461,
@@ -2677,7 +2654,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                           6781,    6815,    6801,    6923,
                           6930,    6930,    6991,    7022,
                           7004,    7020,    7055,    7050,
-
                           // QP = 25 NEW
                               0,        0,        0,        0,
                               0,        7,       19,       48,
@@ -2695,7 +2671,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                            6351,     6389,     6356,     6469,
                            6485,     6467,     6527,     6549,
                            6523,     6533,     6568,     6434,
-
                            // QP = 26 NEW
                                0,        0,        0,        0,
                                0,        2,       12,       29,
@@ -2713,7 +2688,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                             5375,     5408,     5390,     5488,
                             5504,     5491,     5546,     5570,
                             5553,     5558,     5590,     5504,
-
                             // QP = 27 NEW
                                 0,        0,        0,        0,
                                 0,        2,        9,       20,
@@ -2731,7 +2705,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                              4583,     4616,     4602,     4693,
                              4707,     4702,     4745,     4770,
                              4759,     4766,     4795,     4750,
-
                              // QP = 28 NEW
                                  0,        0,        0,        0,
                                  0,        1,        7,       15,
@@ -2749,7 +2722,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                               3854,     3885,     3877,     3961,
                               3973,     3972,     4010,     4031,
                               4032,     4037,     4067,     4060,
-
                               // QP = 29 NEW
                                   0,        0,        0,        0,
                                   0,        2,        6,       11,
@@ -2767,7 +2739,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                3167,     3199,     3201,     3272,
                                3283,     3287,     3321,     3340,
                                3348,     3350,     3377,     3410,
-
                                // QP = 30 NEW
                                    0,        0,        0,        0,
                                    0,        0,        5,        9,
@@ -2785,7 +2756,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                 2777,     2809,     2809,     2881,
                                 2887,     2891,     2920,     2936,
                                 2958,     2954,     2978,     3037,
-
                                 // QP = 31 NEW
                                     0,        0,        0,        0,
                                     0,        1,        4,        8,
@@ -2803,7 +2773,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                  2277,     2305,     2313,     2378,
                                  2384,     2390,     2414,     2428,
                                  2454,     2450,     2475,     2562,
-
                                  // QP = 32 NEW
                                      0,        0,        0,        0,
                                      0,        0,        3,        6,
@@ -2821,7 +2790,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                   1861,     1887,     1899,     1955,
                                   1959,     1968,     1986,     2004,
                                   2031,     2027,     2048,     2152,
-
                                   // QP = 33 NEW
                                       0,        0,        0,        0,
                                       0,        1,        3,        5,
@@ -2839,7 +2807,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                    1553,     1580,     1592,     1641,
                                    1646,     1656,     1671,     1688,
                                    1713,     1712,     1733,     1841,
-
                                    // QP = 34 NEW
                                        0,        0,        0,        0,
                                        0,        0,        2,        4,
@@ -2857,7 +2824,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                     1315,     1339,     1352,     1398,
                                     1402,     1410,     1425,     1440,
                                     1467,     1466,     1483,     1591,
-
                                     // QP = 35 NEW
                                         0,        0,        0,        0,
                                         0,        0,        2,        3,
@@ -2875,7 +2841,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                      1137,     1164,     1180,     1223,
                                      1228,     1237,     1249,     1266,
                                      1293,     1288,     1309,     1419,
-
                                      // QP = 36 NEW
                                          0,        0,        0,        0,
                                          0,        1,        1,        3,
@@ -2893,7 +2858,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                        972,      994,     1015,     1056,
                                       1060,     1072,     1083,     1099,
                                       1124,     1125,     1142,     1246,
-
                                       // QP = 37 NEW
                                           0,        0,        0,        0,
                                           0,        1,        1,        2,
@@ -2911,7 +2875,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                         853,      874,      894,      929,
                                         937,      951,      960,      977,
                                         999,     1001,     1018,     1120,
-
                                         // QP = 38 NEW
                                             0,        0,        0,        0,
                                             0,        0,        1,        2,
@@ -2929,7 +2892,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                           718,      736,      757,      787,
                                           795,      808,      816,      833,
                                           852,      853,      871,      965,
-
                                           // QP = 39 NEW
                                               0,        0,        0,        0,
                                               0,        1,        1,        2,
@@ -2947,7 +2909,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                             630,      647,      668,      698,
                                             703,      718,      727,      745,
                                             761,      763,      779,      873,
-
                                             // QP = 40 NEW
                                                 0,        0,        0,        0,
                                                 0,        0,        1,        1,
@@ -2965,7 +2926,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                               528,      544,      563,      592,
                                               597,      610,      620,      637,
                                               652,      655,      671,      759,
-
                                               // QP = 41 NEW
                                                   0,        0,        0,        0,
                                                   0,        0,        1,        1,
@@ -2983,7 +2943,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                                 446,      461,      481,      511,
                                                 515,      529,      539,      556,
                                                 571,      577,      591,      679,
-
                                                 // QP = 42 NEW
                                                     0,        0,        0,        0,
                                                     0,        0,        1,        1,
@@ -3001,7 +2960,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                                   363,      375,      395,      421,
                                                   426,      440,      448,      469,
                                                   478,      490,      500,      588,
-
                                                   // QP = 43 NEW
                                                       0,        0,        0,        0,
                                                       0,        0,        1,        1,
@@ -3019,7 +2977,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                                     297,      311,      328,      349,
                                                     356,      367,      377,      396,
                                                     404,      418,      430,      521,
-
                                                     // QP = 44 NEW
                                                         0,        0,        0,        0,
                                                         0,        0,        1,        1,
@@ -3037,7 +2994,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                                       234,      247,      261,      279,
                                                       282,      295,      301,      320,
                                                       328,      341,      349,      437,
-
                                                       // QP = 45 NEW
                                                           0,        0,        0,        0,
                                                           0,        0,        1,        1,
@@ -3055,7 +3011,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                                         186,      196,      208,      223,
                                                         226,      238,      242,      260,
                                                         266,      278,      288,      371,
-
                                                         // QP = 46 NEW
                                                             0,        0,        0,        0,
                                                             0,        0,        0,        1,
@@ -3073,7 +3028,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                                           149,      157,      167,      179,
                                                           180,      191,      197,      212,
                                                           215,      226,      235,      312,
-
                                                           // QP = 47 NEW
                                                               0,        0,        0,        0,
                                                               0,        0,        0,        1,
@@ -3091,7 +3045,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                                             117,      123,      133,      143,
                                                             145,      154,      158,      170,
                                                             174,      184,      189,      260,
-
                                                             // QP = 48 NEW
                                                                 0,        0,        0,        0,
                                                                 0,        0,        0,        0,
@@ -3109,7 +3062,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                                                94,      100,      106,      115,
                                                               116,      124,      129,      138,
                                                               141,      150,      155,      218,
-
                                                               // QP = 49 NEW
                                                                   0,        0,        0,        0,
                                                                   0,        0,        0,        0,
@@ -3127,7 +3079,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                                                  76,       80,       86,       92,
                                                                  93,       99,      104,      112,
                                                                 114,      121,      127,      181,
-
                                                                 // QP = 50
                                                                     0,        0,        0,        0,
                                                                     0,        0,        0,        0,
@@ -3145,7 +3096,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                                                    60,       64,       67,       73,
                                                                    74,       79,       83,       90,
                                                                    91,       97,      102,      148,
-
                                                                    // QP = 51
                                                                        0,        0,        0,        0,
                                                                        0,        0,        0,        0,
@@ -3164,8 +3114,6 @@ static const EbBitNumber initialRateControlSad64x64Tables[] = {
                                                                       61,       64,       67,       73,
                                                                       73,       77,       83,      122,
 };
-
-
 
 static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     // QP = 0 NEW
@@ -3373,7 +3321,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     21732,    20708,    20418,    21640,
     21691,    20988,    21828,    21315,
     21796,    21639,    21631,    22465,
-
     // QP = 12 NEW
         0,        0,        0,        0,
         0,        0,        0,     9344,
@@ -3391,7 +3338,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     20554,    19543,    19182,    20473,
     20487,    19760,    20636,    20171,
     20629,    20462,    20377,    21271,
-
     // QP = 13 NEW
         0,        0,        0,        0,
         0,        0,        0,     8432,
@@ -3409,7 +3355,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     19406,    18392,    18068,    19397,
     19393,    18734,    19512,    19065,
     19520,    19379,    19308,    20139,
-
     // QP = 14 NEW
         0,        0,        0,        0,
         0,        0,        0,     7285,
@@ -3427,7 +3372,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     18197,    17164,    16858,    18147,
     18142,    17480,    18283,    17773,
     18286,    18110,    18084,    18902,
-
     // QP = 15 NEW
         0,        0,        0,        0,
         0,        0,        0,     6214,
@@ -3445,7 +3389,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     17139,    16112,    15795,    17090,
     17063,    16422,    17253,    16707,
     17208,    17077,    17011,    17839,
-
     // QP = 16 NEW
         0,        0,        0,        0,
         0,        0,        0,     5089,
@@ -3463,7 +3406,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     15971,    14933,    14689,    15883,
     15940,    15238,    16039,    15559,
     16021,    15913,    15859,    16669,
-
     // QP = 17 NEW
         0,        0,        0,        0,
         0,        0,        0,     4258,
@@ -3481,7 +3423,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     14980,    13929,    13593,    14932,
     14914,    14211,    15021,    14514,
     15051,    14897,    14839,    15651,
-
     // QP = 18 NEW
         0,        0,        0,        0,
         0,        0,        0,     3353,
@@ -3499,7 +3440,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     13775,    12697,    12444,    13776,
     13699,    13087,    13831,    13356,
     13842,    13685,    13659,    14495,
-
     // QP = 19 NEW
         0,        0,        0,        0,
         0,        0,        0,     2656,
@@ -3517,7 +3457,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     12715,    11708,    11417,    12699,
     12698,    12094,    12816,    12368,
     12822,    12686,    12596,    13468,
-
     // QP = 20 NEW
         0,        0,        0,        0,
         0,        0,        0,     1940,
@@ -3535,7 +3474,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     11532,    10521,    10271,    11524,
     11478,    10898,    11633,    11217,
     11601,    11546,    11426,    12284,
-
     // QP = 21 NEW
         0,        0,        0,        0,
         0,        0,        0,     1406,
@@ -3553,7 +3491,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
     10484,     9483,     9189,    10483,
     10406,     9902,    10581,    10189,
     10561,    10487,    10412,    11239,
-
     // QP = 22 NEW
         0,        0,        0,        0,
         0,        0,        0,      935,
@@ -3571,7 +3508,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
      9399,     8372,     8132,     9400,
      9335,     8789,     9462,     9097,
      9512,     9361,     9293,    10111,
-
      // QP = 23 NEW
          0,        0,        0,        0,
          0,        0,        0,      661,
@@ -3589,7 +3525,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
       8405,     7457,     7194,     8406,
       8305,     7845,     8424,     8076,
       8507,     8377,     8315,     9114,
-
       // QP = 24 NEW
           0,        0,        0,        0,
           0,        0,        0,      433,
@@ -3607,7 +3542,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
        7417,     6535,     6309,     7431,
        7362,     6959,     7490,     7128,
        7533,     7408,     7376,     8135,
-
        // QP = 25 NEW
            0,        0,        0,        0,
            0,        0,        0,      281,
@@ -3625,7 +3559,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
         6459,     5649,     5452,     6503,
         6372,     6088,     6481,     6208,
         6612,     6534,     6456,     7192,
-
         // QP = 26 NEW
             0,        0,        0,        0,
             0,        0,        0,      168,
@@ -3643,7 +3576,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
          5468,     4758,     4631,     5521,
          5401,     5183,     5452,     5219,
          5575,     5535,     5480,     6192,
-
          // QP = 27 NEW
              0,        0,        0,        0,
              0,        0,        0,      121,
@@ -3661,7 +3593,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
           4619,     3989,     3880,     4674,
           4623,     4438,     4639,     4398,
           4764,     4760,     4683,     5368,
-
           // QP = 28 NEW
               0,        0,        0,        0,
               0,        0,        0,       88,
@@ -3679,7 +3610,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
            3734,     3254,     3196,     3810,
            3805,     3686,     3766,     3622,
            3874,     3949,     3861,     4527,
-
            // QP = 29 NEW
                0,        0,        0,        0,
                0,        0,        0,       70,
@@ -3697,7 +3627,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
             3021,     2630,     2690,     3092,
             3118,     3042,     3067,     2908,
             3158,     3250,     3187,     3812,
-
             // QP = 30 NEW
                 0,        0,        0,        0,
                 0,        0,        0,       58,
@@ -3715,7 +3644,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
              2522,     2199,     2278,     2595,
              2641,     2613,     2566,     2501,
              2601,     2743,     2741,     3315,
-
              // QP = 31 NEW
                  0,        0,        0,        0,
                  0,        0,        0,       52,
@@ -3733,7 +3661,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
               1945,     1757,     1857,     2028,
               2138,     2102,     2059,     2018,
               2065,     2198,     2204,     2733,
-
               // QP = 32 NEW
                   0,        0,        0,        0,
                   0,        0,        0,       46,
@@ -3751,7 +3678,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                1490,     1344,     1505,     1539,
                1686,     1665,     1569,     1580,
                1625,     1698,     1766,     2206,
-
                // QP = 33 NEW
                    0,        0,        0,        0,
                    0,        0,        0,       43,
@@ -3769,7 +3695,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                 1145,     1066,     1242,     1204,
                 1335,     1360,     1294,     1299,
                 1281,     1328,     1440,     1815,
-
                 // QP = 34 NEW
                     0,        0,        0,        0,
                     0,        0,        0,       37,
@@ -3787,7 +3712,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                   885,      856,     1040,      954,
                  1069,     1077,     1039,     1062,
                  1041,     1069,     1200,     1503,
-
                  // QP = 35 NEW
                      0,        0,        0,        0,
                      0,        0,        0,       33,
@@ -3805,7 +3729,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                    750,      763,      919,      820,
                    925,      920,      911,      940,
                    892,      914,     1057,     1317,
-
                    // QP = 36 NEW
                        0,        0,        0,        0,
                        0,        0,        0,       30,
@@ -3823,7 +3746,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                      611,      657,      784,      697,
                      796,      771,      773,      785,
                      767,      781,      883,     1131,
-
                      // QP = 37 NEW
                          0,        0,        0,        0,
                          0,        0,        0,       28,
@@ -3841,7 +3763,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                        553,      587,      704,      609,
                        723,      691,      682,      704,
                        675,      680,      814,     1022,
-
                        // QP = 38 NEW
                            0,        0,        0,        0,
                            0,        0,        0,       25,
@@ -3859,7 +3780,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                          484,      513,      603,      519,
                          613,      587,      590,      608,
                          602,      580,      696,      888,
-
                          // QP = 39 NEW
                              0,        0,        0,        0,
                              0,        0,        0,       23,
@@ -3877,7 +3797,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                            432,      455,      543,      480,
                            562,      536,      527,      560,
                            550,      534,      639,      812,
-
                            // QP = 40 NEW
                                0,        0,        0,        0,
                                0,        0,        0,       22,
@@ -3895,7 +3814,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                              379,      413,      477,      419,
                              490,      455,      463,      474,
                              480,      463,      562,      714,
-
                              // QP = 41 NEW
                                  0,        0,        0,        0,
                                  0,        0,        0,       21,
@@ -3913,7 +3831,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                                352,      375,      425,      388,
                                438,      420,      418,      427,
                                450,      420,      497,      653,
-
                                // QP = 42 NEW
                                    0,        0,        0,        0,
                                    0,        0,        0,       19,
@@ -3931,7 +3848,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                                  305,      325,      376,      340,
                                  376,      366,      363,      375,
                                  396,      370,      447,      574,
-
                                  // QP = 43 NEW
                                      0,        0,        0,        0,
                                      0,        0,        0,       19,
@@ -3949,7 +3865,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                                    280,      296,      332,      308,
                                    333,      324,      316,      341,
                                    361,      335,      404,      524,
-
                                    // QP = 44 NEW
                                        0,        0,        0,        0,
                                        0,        0,        0,       17,
@@ -3967,7 +3882,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                                      239,      255,      286,      275,
                                      273,      281,      284,      283,
                                      307,      281,      334,      453,
-
                                      // QP = 45 NEW
                                          0,        0,        0,        0,
                                          0,        0,        0,       15,
@@ -3985,7 +3899,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                                        200,      224,      249,      239,
                                        246,      244,      240,      254,
                                        280,      247,      302,      395,
-
                                        // QP = 46 NEW
                                            0,        0,        0,        0,
                                            0,        0,        0,       14,
@@ -4003,7 +3916,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                                          182,      193,      210,      207,
                                          220,      217,      220,      212,
                                          234,      218,      259,      343,
-
                                          // QP = 47 NEW
                                              0,        0,        0,        0,
                                              0,        0,        0,       13,
@@ -4021,7 +3933,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                                            160,      163,      180,      182,
                                            185,      184,      183,      188,
                                            202,      183,      221,      297,
-
                                            // QP = 48 NEW
                                                0,        0,        0,        0,
                                                0,        0,        0,       12,
@@ -4039,7 +3950,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                                              135,      145,      149,      158,
                                              158,      160,      151,      160,
                                              183,      160,      190,      259,
-
                                              // QP = 49 NEW
                                                  0,        0,        0,        0,
                                                  0,        0,        0,       11,
@@ -4057,7 +3967,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                                                121,      128,      128,      142,
                                                132,      139,      137,      135,
                                                158,      139,      162,      223,
-
                                                // QP = 50 NEW
                                                    0,        0,        0,        0,
                                                    0,        0,        0,       11,
@@ -4075,7 +3984,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                                                  101,      105,      109,      124,
                                                  109,      109,      113,      111,
                                                  135,      120,      142,      191,
-
                                                  // QP = 51 NEW
                                                      0,        0,        0,        0,
                                                      0,        0,        0,       10,
@@ -4094,10 +4002,6 @@ static const EbBitNumber initialRateControlIntraSad64x64Tables[] = {
                                                     96,      103,       96,       98,
                                                    122,      104,      119,      166,
 };
-
-
-
-
 
 /**************************************
  * Function Declarations
@@ -4120,10 +4024,8 @@ EbErrorType rate_control_tables_ctor(
                         CLIP3(1,
                         (uint16_t)((1 << 15) - 1),
                             (uint16_t)initialRateControlIntraSad64x64Tables[qp_index*(NUMBER_OF_SAD_INTERVALS >> 1) + intervalIndex]);
-
                 }
                 else {
-
                     initialRateControlTablesArray[qp_index].sad_bits_array[temporalIndex][intervalIndex] =
                         CLIP3(1,
                         (uint16_t)((1 << 15) - 1),
@@ -4132,10 +4034,7 @@ EbErrorType rate_control_tables_ctor(
                         CLIP3(1,
                         (uint16_t)((1 << 15) - 1),
                             initialRateControlIntraSad64x64Tables[qp_index*(NUMBER_OF_SAD_INTERVALS >> 1) + ((NUMBER_OF_SAD_INTERVALS >> 1) - 1)]);
-
                 }
-
-
             }
         }
     }

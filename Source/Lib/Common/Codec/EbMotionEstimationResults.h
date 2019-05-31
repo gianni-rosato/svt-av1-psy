@@ -31,7 +31,6 @@ extern "C" {
         EbPtr *object_dbl_ptr,
         EbPtr object_init_data_ptr);
 
-
 #ifdef __cplusplus
 }
 #endif

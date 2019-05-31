@@ -33,7 +33,6 @@ EbErrorType resource_coordination_context_ctor(
     uint32_t                      *compute_segments_total_count_array,
 #endif
     uint32_t                        encode_instances_total_count){
-
     uint32_t instance_index;
 
     ResourceCoordinationContext *context_ptr;
@@ -53,17 +52,13 @@ EbErrorType resource_coordination_context_ctor(
     // Allocate SequenceControlSetActiveArray
     EB_MALLOC(EbObjectWrapper**, context_ptr->sequenceControlSetActiveArray, sizeof(EbObjectWrapper*) * context_ptr->encode_instances_total_count, EB_N_PTR);
 
-    for (instance_index = 0; instance_index < context_ptr->encode_instances_total_count; ++instance_index) {
+    for (instance_index = 0; instance_index < context_ptr->encode_instances_total_count; ++instance_index)
         context_ptr->sequenceControlSetActiveArray[instance_index] = 0;
-    }
-
     // Picture Stats
     EB_MALLOC(uint64_t*, context_ptr->picture_number_array, sizeof(uint64_t) * context_ptr->encode_instances_total_count, EB_N_PTR);
 
-    for (instance_index = 0; instance_index < context_ptr->encode_instances_total_count; ++instance_index) {
+    for (instance_index = 0; instance_index < context_ptr->encode_instances_total_count; ++instance_index)
         context_ptr->picture_number_array[instance_index] = 0;
-    }
-
     context_ptr->average_enc_mod = 0;
     context_ptr->prev_enc_mod = 0;
     context_ptr->prev_enc_mode_delta = 0;
@@ -94,7 +89,6 @@ Output  : Pre-Analysis signal(s)
 EbErrorType signal_derivation_pre_analysis_oq(
     SequenceControlSet       *sequence_control_set_ptr,
     PictureParentControlSet  *picture_control_set_ptr) {
-
     EbErrorType return_error = EB_ErrorNone;
     uint8_t input_resolution = sequence_control_set_ptr->input_resolution;
 
@@ -146,7 +140,6 @@ void SpeedBufferControl(
     PictureParentControlSet       *picture_control_set_ptr,
     SequenceControlSet            *sequence_control_set_ptr)
 {
-
     uint64_t cursTimeSeconds = 0;
     uint64_t cursTimeuSeconds = 0;
     double overallDuration = 0.0;
@@ -156,19 +149,15 @@ void SpeedBufferControl(
     int8_t changeCond = 0;
     int64_t targetFps = (sequence_control_set_ptr->static_config.injector_frame_rate >> 16);
 
-
     int64_t bufferTrshold1 = SC_FRAMES_INTERVAL_T1;
     int64_t bufferTrshold2 = SC_FRAMES_INTERVAL_T2;
     int64_t bufferTrshold3 = MIN(targetFps * 3, SC_FRAMES_INTERVAL_T3);
     eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->sc_buffer_mutex);
 
-    if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in == 0) {
+    if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in == 0)
         EbStartTime(&context_ptr->first_in_pic_arrived_time_seconds, &context_ptr->first_in_pic_arrived_timeu_seconds);
-    }
-    else if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in == SC_FRAMES_TO_IGNORE) {
+    else if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in == SC_FRAMES_TO_IGNORE)
         context_ptr->start_flag = EB_TRUE;
-    }
-
     // Compute duration since the start of the encode and since the previous checkpoint
     EbFinishTime(&cursTimeSeconds, &cursTimeuSeconds);
 
@@ -262,15 +251,12 @@ void SpeedBufferControl(
             context_ptr->previous_mode_change_frame_in = sequence_control_set_ptr->encode_context_ptr->sc_frame_in;
             context_ptr->prev_enc_mode_delta = encoderModeDelta;
         }
-
     }
     // Check every SC_FRAMES_INTERVAL_SPEED frames for the speed calculation (previous_frame_in_check3 variable)
     if (context_ptr->start_flag || (sequence_control_set_ptr->encode_context_ptr->sc_frame_in > context_ptr->previous_frame_in_check3 + SC_FRAMES_INTERVAL_SPEED && sequence_control_set_ptr->encode_context_ptr->sc_frame_in >= SC_FRAMES_TO_IGNORE)) {
-        if (context_ptr->start_flag) {
+        if (context_ptr->start_flag)
             context_ptr->cur_speed = (uint64_t)(sequence_control_set_ptr->encode_context_ptr->sc_frame_out - 0) * 1000 / (uint64_t)(overallDuration);
-        }
         else {
-
             if (instDuration != 0)
                 context_ptr->cur_speed = (uint64_t)(sequence_control_set_ptr->encode_context_ptr->sc_frame_out - context_ptr->prev_frame_out) * 1000 / (uint64_t)(instDuration);
         }
@@ -281,23 +267,16 @@ void SpeedBufferControl(
         context_ptr->prevs_time_seconds = cursTimeSeconds;
         context_ptr->prevs_timeu_seconds = cursTimeuSeconds;
         context_ptr->prev_frame_out = sequence_control_set_ptr->encode_context_ptr->sc_frame_out;
-
     }
-    else if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in < SC_FRAMES_TO_IGNORE && (overallDuration != 0)) {
+    else if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in < SC_FRAMES_TO_IGNORE && (overallDuration != 0))
         context_ptr->cur_speed = (uint64_t)(sequence_control_set_ptr->encode_context_ptr->sc_frame_out - 0) * 1000 / (uint64_t)(overallDuration);
-    }
-
-    if (changeCond) {
+    if (changeCond)
         context_ptr->prev_change_cond = changeCond;
-    }
     sequence_control_set_ptr->encode_context_ptr->sc_frame_in++;
-    if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in >= SC_FRAMES_TO_IGNORE) {
+    if (sequence_control_set_ptr->encode_context_ptr->sc_frame_in >= SC_FRAMES_TO_IGNORE)
         context_ptr->average_enc_mod += sequence_control_set_ptr->encode_context_ptr->enc_mode;
-    }
-    else {
+    else
         context_ptr->average_enc_mod = 0;
-    }
-
     // Set the encoder level
     picture_control_set_ptr->enc_mode = sequence_control_set_ptr->encode_context_ptr->enc_mode;
 
@@ -376,9 +355,8 @@ void ResetPcsAv1(
     picture_control_set_ptr->reduced_tx_set_used = 0;
     picture_control_set_ptr->reference_mode = SINGLE_REFERENCE;
     picture_control_set_ptr->frame_context_idx = 0; /* Context to use/update */
-    for (int32_t i = 0; i < REF_FRAMES; i++) {
+    for (int32_t i = 0; i < REF_FRAMES; i++)
         picture_control_set_ptr->fb_of_context_type[i] = 0;
-    }
     picture_control_set_ptr->primary_ref_frame = PRIMARY_REF_NONE;
     picture_control_set_ptr->frame_offset = picture_control_set_ptr->picture_number;
     picture_control_set_ptr->error_resilient_mode = 0;
@@ -394,7 +372,6 @@ void ResetPcsAv1(
     }
     picture_control_set_ptr->cdef_bits = 0;
 
-
 #if ADD_DELTA_QP_SUPPORT
     picture_control_set_ptr->delta_q_present_flag = 1;
     picture_control_set_ptr->delta_lf_present_flag = 0;
@@ -407,12 +384,10 @@ void ResetPcsAv1(
     picture_control_set_ptr->delta_lf_res = 0;
     picture_control_set_ptr->delta_lf_multi = 0;
 
-
     picture_control_set_ptr->current_frame_id = 0;
     picture_control_set_ptr->frame_refs_short_signaling = 0;
     picture_control_set_ptr->allow_comp_inter_inter = 0;
     //  int32_t all_one_sided_refs;
-
 }
 #if ALT_REF_OVERLAY
 /***********************************************
@@ -435,7 +410,6 @@ static EbErrorType copy_frame_buffer(
     // Need to include for Interlacing on the fly with pictureScanType = 1
 
     if (!is16BitInput) {
-
         uint32_t     lumaBufferOffset = (dst_picture_ptr->stride_y*sequence_control_set_ptr->top_padding + sequence_control_set_ptr->left_padding) << is16BitInput;
         uint32_t     chromaBufferOffset = (dst_picture_ptr->stride_cr*(sequence_control_set_ptr->top_padding >> 1) + (sequence_control_set_ptr->left_padding >> 1)) << is16BitInput;
         uint16_t     lumaStride = dst_picture_ptr->stride_y << is16BitInput;
@@ -447,7 +421,6 @@ static EbErrorType copy_frame_buffer(
         //uint16_t     lumaHeight  = input_picture_ptr->max_height;
         // Y
         for (inputRowIndex = 0; inputRowIndex < lumaHeight; inputRowIndex++) {
-
             EB_MEMCPY((dst_picture_ptr->buffer_y + lumaBufferOffset + lumaStride * inputRowIndex),
                 (src_picture_ptr->buffer_y + lumaBufferOffset + lumaStride * inputRowIndex),
                 lumaWidth);
@@ -466,7 +439,6 @@ static EbErrorType copy_frame_buffer(
                 (src_picture_ptr->buffer_cr + chromaBufferOffset + chromaStride * inputRowIndex),
                 chromaWidth);
         }
-
     }
     else if (is16BitInput && config->compressed_ten_bit_format == 1)
     {
@@ -481,7 +453,6 @@ static EbErrorType copy_frame_buffer(
 
             // Y 8bit
             for (inputRowIndex = 0; inputRowIndex < lumaHeight; inputRowIndex++) {
-
                 EB_MEMCPY((dst_picture_ptr->buffer_y + lumaBufferOffset + lumaStride * inputRowIndex),
                     (src_picture_ptr->buffer_y + lumaBufferOffset + lumaStride * inputRowIndex),
                     lumaWidth);
@@ -489,7 +460,6 @@ static EbErrorType copy_frame_buffer(
 
             // U 8bit
             for (inputRowIndex = 0; inputRowIndex < lumaHeight >> 1; inputRowIndex++) {
-
                 EB_MEMCPY((dst_picture_ptr->buffer_cb + chromaBufferOffset + chromaStride * inputRowIndex),
                     (src_picture_ptr->buffer_cb + chromaBufferOffset + chromaStride * inputRowIndex),
                     chromaWidth);
@@ -497,7 +467,6 @@ static EbErrorType copy_frame_buffer(
 
             // V 8bit
             for (inputRowIndex = 0; inputRowIndex < lumaHeight >> 1; inputRowIndex++) {
-
                 EB_MEMCPY((dst_picture_ptr->buffer_cr + chromaBufferOffset + chromaStride * inputRowIndex),
                     (src_picture_ptr->buffer_cr + chromaBufferOffset + chromaStride * inputRowIndex),
                     chromaWidth);
@@ -522,12 +491,9 @@ static EbErrorType copy_frame_buffer(
             //        EB_MEMCPY(input_picture_ptr->buffer_bit_inc_cr + (luma2BitWidth >> 1)*inputRowIndex, inputPtr->cr_ext + sourceChroma2BitStride * inputRowIndex, luma2BitWidth >> 1);
             //    }
             //}
-
         }
-
     }
     else { // 10bit packed
-
 
         EB_MEMCPY(dst_picture_ptr->buffer_y,
             src_picture_ptr->buffer_y ,
@@ -552,7 +518,6 @@ static EbErrorType copy_frame_buffer(
         EB_MEMCPY(dst_picture_ptr->buffer_bit_inc_cr,
             src_picture_ptr->buffer_bit_inc_cr,
             src_picture_ptr->chroma_size);
-       
     }
     return return_error;
 }
@@ -607,7 +572,6 @@ void* resource_coordination_kernel(void *input_ptr)
     EbObjectWrapper               *prevPictureControlSetWrapperPtr = 0;
 
     for (;;) {
-
         // Tie instance_index to zero for now...
         instance_index = 0;
 
@@ -623,7 +587,6 @@ void* resource_coordination_kernel(void *input_ptr)
         //   of the previous Active SequenceControlSet
         eb_block_on_mutex(context_ptr->sequence_control_set_instance_array[instance_index]->config_mutex);
         if (context_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->initial_picture) {
-
             // Update picture width, picture height, cropping right offset, cropping bottom offset, and conformance windows
             if (context_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->initial_picture)
 
@@ -638,16 +601,12 @@ void* resource_coordination_kernel(void *input_ptr)
                 context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_bottom = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_pad_bottom;
                 context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->cropping_bottom_offset = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_bottom;
 
-                if (context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_right != 0 || context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_bottom != 0) {
+                if (context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_right != 0 || context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pad_bottom != 0)
                     context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->conformance_window_flag = 1;
-                }
-                else {
+                else
                     context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->conformance_window_flag = 0;
-                }
-
                 input_size = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->luma_width * context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->luma_height;
             }
-
 
             // Copy previous Active SequenceControlSetPtr to a place holder
             previousSequenceControlSetWrapperPtr = context_ptr->sequenceControlSetActiveArray[instance_index];
@@ -667,7 +626,6 @@ void* resource_coordination_kernel(void *input_ptr)
                 context_ptr->sequenceControlSetActiveArray[instance_index]);
 
             if (previousSequenceControlSetWrapperPtr != EB_NULL) {
-
                 // Enable releaseFlag of old SequenceControlSet
                 eb_object_release_enable(
                     previousSequenceControlSetWrapperPtr);
@@ -712,20 +670,19 @@ void* resource_coordination_kernel(void *input_ptr)
 
             // Construct PM Trans Coeff Shaping
             if (context_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->initial_picture) {
-                if (sequence_control_set_ptr->pm_mode == PM_MODE_0) {
+                if (sequence_control_set_ptr->pm_mode == PM_MODE_0)
                     construct_pm_trans_coeff_shaping(sequence_control_set_ptr);
-                }
             }
 #if BASE_LAYER_REF
             sequence_control_set_ptr->max_frame_window_to_ref_islice = (sequence_control_set_ptr->static_config.intra_period_length == -1) ? MAX_FRAMES_TO_REF_I : MIN(MAX_FRAMES_TO_REF_I, sequence_control_set_ptr->static_config.intra_period_length);
             sequence_control_set_ptr->extra_frames_to_ref_islice = MAX(sequence_control_set_ptr->max_frame_window_to_ref_islice / (1 << sequence_control_set_ptr->static_config.hierarchical_levels) - 1, 0);
             sequence_control_set_ptr->max_frame_window_to_ref_islice = (sequence_control_set_ptr->extra_frames_to_ref_islice + 1)*(1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 1;
-#endif  
+#endif
         }
 #if ALT_REF_OVERLAY
-        // Since at this stage we do not know the prediction structure and the location of ALT_REF pictures, 
-        // for every picture (except first picture), we allocate two: 1. original picture, 2. potential Overlay picture. 
-        // In Picture Decision Process, where the overlay frames are known, they extra pictures are released      
+        // Since at this stage we do not know the prediction structure and the location of ALT_REF pictures,
+        // for every picture (except first picture), we allocate two: 1. original picture, 2. potential Overlay picture.
+        // In Picture Decision Process, where the overlay frames are known, they extra pictures are released
         uint8_t has_overlay = (sequence_control_set_ptr->static_config.enable_overlays == EB_FALSE ||
             context_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->initial_picture) ? 0 : 1;
         for (uint8_t loop_index = 0; loop_index <= has_overlay && !end_of_sequence_flag; loop_index++) {
@@ -756,7 +713,6 @@ void* resource_coordination_kernel(void *input_ptr)
 
                 picture_control_set_ptr->alt_ref_ppcs_ptr = ((PictureParentControlSet*)alt_ref_picture_control_set_wrapper_ptr->object_ptr);
                 picture_control_set_ptr->alt_ref_ppcs_ptr->overlay_ppcs_ptr = picture_control_set_ptr;
-
             }
             else {
                 picture_control_set_ptr->is_overlay = 0;
@@ -829,10 +785,8 @@ void* resource_coordination_kernel(void *input_ptr)
                     picture_control_set_ptr,
                     sequence_control_set_ptr);
             }
-            else {
+            else
                 picture_control_set_ptr->enc_mode = (EbEncMode)sequence_control_set_ptr->static_config.enc_mode;
-            }
-
             aspectRatio = (sequence_control_set_ptr->luma_width * 10) / sequence_control_set_ptr->luma_height;
             aspectRatio = (aspectRatio <= ASPECT_RATIO_4_3) ? ASPECT_RATIO_CLASS_0 : (aspectRatio <= ASPECT_RATIO_16_9) ? ASPECT_RATIO_CLASS_1 : ASPECT_RATIO_CLASS_2;
 
@@ -924,9 +878,8 @@ void* resource_coordination_kernel(void *input_ptr)
                 outputResultsPtr->picture_control_set_wrapper_ptr = prevPictureControlSetWrapperPtr;
 #if ALT_REF_OVERLAY
                 // since overlay frame has the end of sequence set properly, set the end of sequence to true in the alt ref picture
-                if (((PictureParentControlSet       *)prevPictureControlSetWrapperPtr->object_ptr)->is_overlay && end_of_sequence_flag) {
+                if (((PictureParentControlSet       *)prevPictureControlSetWrapperPtr->object_ptr)->is_overlay && end_of_sequence_flag)
                     ((PictureParentControlSet       *)prevPictureControlSetWrapperPtr->object_ptr)->alt_ref_ppcs_ptr->end_of_sequence_flag = EB_TRUE;
-                }
 #endif
                 // Post the finished Results Object
                 eb_post_full_object(outputWrapperPtr);

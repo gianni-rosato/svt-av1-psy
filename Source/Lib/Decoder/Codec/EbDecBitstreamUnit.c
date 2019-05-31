@@ -73,13 +73,11 @@
 //#include "EbBitstreamUnit.h"
 #include "EbDecBitstreamUnit.h"
 
-
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/
 // entdec.c from AOM
-
 
 /*This is meant to be a large, positive constant that can still be efficiently
    loaded as an immediate (on platforms like ARM, for example).
@@ -136,7 +134,7 @@ static void od_ec_dec_refill(od_ec_dec *dec) {
   Return: ret.
           This allows the compiler to jump to this function via a tail-call.*/
 static int od_ec_dec_normalize(od_ec_dec *dec, od_ec_window dif, unsigned rng,
-                               int ret) 
+                               int ret)
 {
   int d;
   assert(rng <= 65535U);
@@ -245,9 +243,8 @@ int od_ec_decode_cdf_q15(od_ec_dec *dec, const uint16_t *icdf, int nsyms) {
 // daalaboolreader.c from AOM
 
 int aom_daala_reader_init(DaalaReader_t *r, const uint8_t *buffer, int size) {
-  if (size && !buffer) {
+  if (size && !buffer)
     return 1;
-  }
   r->buffer_end = buffer + size;
   r->buffer = buffer;
   od_ec_dec_init(&r->ec, buffer, size);

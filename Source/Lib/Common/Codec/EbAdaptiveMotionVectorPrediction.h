@@ -21,14 +21,14 @@ extern "C" {
     struct ModeDecisionContext;
     struct InterPredictionContext;
 
-    typedef enum TmvpPos 
+    typedef enum TmvpPos
     {
         TmvpColocatedBottomRight = 0,
         TmvpColocatedCenter = 1
     } TmvpPos;
 
     // TMVP items corresponding to one LCU
-    typedef struct TmvpUnit 
+    typedef struct TmvpUnit
     {
         Mv              mv[MAX_NUM_OF_REF_PIC_LIST][MAX_TMVP_CAND_PER_LCU];
         uint64_t            ref_pic_poc[MAX_NUM_OF_REF_PIC_LIST][MAX_TMVP_CAND_PER_LCU];
@@ -36,7 +36,6 @@ extern "C" {
         EbBool              availability_flag[MAX_TMVP_CAND_PER_LCU];
 
         //*Note- list 1 motion info will be added when B-slices are ready
-
     } TmvpUnit;
 
     extern EbErrorType clip_mv(
@@ -121,7 +120,6 @@ extern "C" {
         uint8_t                           ref_frame_type,
         EbWarpedMotionParams             *wm_params,
         uint16_t                         *num_samples);
-
 
     static INLINE EbBool is_motion_variation_allowed_bsize(const BlockSize bsize)
     {

@@ -22,4 +22,3 @@ EbErrorType rate_control_tasks_ctor(
 
     return EB_ErrorNone;
 }
-

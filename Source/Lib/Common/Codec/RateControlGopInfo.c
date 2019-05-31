@@ -14,13 +14,10 @@ EbRateControlGopInfo *get_gop_infos(EbRateControlGopInfo *gop_info,
     while (1) { // First frame is always guaranteed to exist
         current = &gop_info[position];
 
-        if (current->exists) {
+        if (current->exists)
             return current;
-        }
-
-        if (position == 0) {
+        if (position == 0)
             return EB_NULL;
-        }
         position--;
     }
 

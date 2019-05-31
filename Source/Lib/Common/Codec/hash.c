@@ -37,16 +37,13 @@ static void crc_calculator_init_table(CRC_CALCULATOR *p_crc_calculator) {
   for (uint32_t value = 0; value < 256; value++) {
     uint32_t remainder = 0;
     for (uint8_t mask = byte_high_bit; mask != 0; mask >>= 1) {
-      if (value & mask) {
+      if (value & mask)
         remainder ^= high_bit;
-      }
-
       if (remainder & high_bit) {
         remainder <<= 1;
         remainder ^= p_crc_calculator->trunc_poly;
-      } else {
+      } else
         remainder <<= 1;
-      }
     }
     p_crc_calculator->table[value] = remainder;
   }

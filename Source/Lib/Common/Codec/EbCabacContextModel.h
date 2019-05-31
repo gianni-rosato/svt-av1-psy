@@ -661,12 +661,10 @@ extern "C" {
         // Single loop (faster)
         for (i = 0; i < nsymbs - 1; ++i) {
             tmp = (i == val) ? 0 : tmp;
-            if (tmp < cdf[i]) {
+            if (tmp < cdf[i])
                 cdf[i] -= ((cdf[i] - tmp) >> rate);
-            }
-            else {
+            else
                 cdf[i] += ((tmp - cdf[i]) >> rate);
-            }
         }
         cdf[nsymbs] += (cdf[nsymbs] < 32);
     }
@@ -700,7 +698,6 @@ extern "C" {
 #define MAX_BASE_BR_RANGE (COEFF_BASE_RANGE + NUM_BASE_LEVELS + 1)
 
 #define BASE_CONTEXT_POSITION_NUM 12
-
 
 #define DCT_MAX_VALUE 16384
 #define DCT_MAX_VALUE_HIGH10 65536
@@ -811,8 +808,6 @@ extern "C" {
         return combine_entropy_contexts(above_ec, left_ec);
     }
 
-
-
     //**********************************************************************************************************************//
     // txb_Common.h
     static const TxClass tx_type_to_class[TX_TYPES] = {
@@ -840,7 +835,7 @@ extern "C" {
 
 /* Symbols for coding which components are zero jointly */
 #define MV_JOINTS 4
-    typedef enum MvJointType 
+    typedef enum MvJointType
     {
         MV_JOINT_ZERO = 0,   /* Zero vector */
         MV_JOINT_HNZVZ = 1,  /* Vert zero, hor nonzero */
@@ -858,7 +853,7 @@ extern "C" {
 
     /* Symbols for coding magnitude class of nonzero components */
 #define MV_CLASSES 11
-    typedef enum MvClassType 
+    typedef enum MvClassType
     {
         MV_CLASS_0 = 0,   /* (0, 2]     integer pel */
         MV_CLASS_1 = 1,   /* (2, 4]     integer pel */
@@ -887,7 +882,7 @@ extern "C" {
 #define MV_UPP (1 << MV_IN_USE_BITS)
 #define MV_LOW (-(1 << MV_IN_USE_BITS))
 
-    typedef struct NmvComponent 
+    typedef struct NmvComponent
     {
         AomCdfProb classes_cdf[CDF_SIZE(MV_CLASSES)];
         AomCdfProb class0_fp_cdf[CLASS0_SIZE][CDF_SIZE(MV_FP_SIZE)];
@@ -899,12 +894,11 @@ extern "C" {
         AomCdfProb bits_cdf[MV_OFFSET_BITS][CDF_SIZE(2)];
     } NmvComponent;
 
-    typedef struct NmvContext 
+    typedef struct NmvContext
     {
         AomCdfProb joints_cdf[CDF_SIZE(MV_JOINTS)];
         NmvComponent comps[2];
     } NmvContext;
-
 
     MvClassType av1_get_mv_class(int32_t z, int32_t *offset);
 
@@ -1065,11 +1059,7 @@ extern "C" {
         AomCdfProb cfl_sign_cdf[CDF_SIZE(CFL_JOINT_SIGNS)];
         AomCdfProb cfl_alpha_cdf[CFL_ALPHA_CONTEXTS][CDF_SIZE(CFL_ALPHABET_SIZE)];
         int32_t initialized;
-
-
     } FRAME_CONTEXT;
-
-
 
     extern const AomCdfProb default_kf_y_mode_cdf[KF_MODE_CONTEXTS]
         [KF_MODE_CONTEXTS]
@@ -1093,7 +1083,6 @@ extern "C" {
         { 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 4, 5, 3, 6, 7, 8 },
     };
 
-
     void av1_set_default_ref_deltas(int8_t *ref_deltas);
     void av1_set_default_mode_deltas(int8_t *mode_deltas);
     void av1_setup_frame_contexts(struct AV1Common *cm);
@@ -1109,14 +1098,8 @@ extern "C" {
         return i;
     }
 
-
-
-
     /**********************************************************************************************************************/
     // onyxc_int.h
-
-
-
 
     /**********************************************************************************************************************/
     /**********************************************************************************************************************/

@@ -18,7 +18,6 @@
 extern "C" {
 #endif
 
-
     /***************************************
     * Function Ptr Types
     ***************************************/
@@ -194,7 +193,6 @@ extern "C" {
         // AVX2
         sad_loop_kernel_sparse_avx2_intrin,
     };
-
 
     static EbSadLoopKernelNxMType FUNC_TABLE nxm_sad_loop_kernel_func_ptr_array[ASM_TYPE_TOTAL] =
     {

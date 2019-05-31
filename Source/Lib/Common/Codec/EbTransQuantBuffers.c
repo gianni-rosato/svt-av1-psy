@@ -3,11 +3,9 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-
 #include "EbDefinitions.h"
 #include "EbTransQuantBuffers.h"
 #include "EbPictureBufferDesc.h"
-
 
 EbErrorType eb_trans_quant_buffers_ctor(
     EbTransQuantBuffers          *trans_quant_buffers_ptr)
@@ -40,38 +38,27 @@ EbErrorType eb_trans_quant_buffers_ctor(
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*) &(trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr),
         (EbPtr)&ThirtyTwoBittransCoeffInitArray);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*) &(trans_quant_buffers_ptr->tu_trans_coeff_nxn_ptr),
         (EbPtr)&ThirtyTwoBittransCoeffInitArray);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
-
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*) &(trans_quant_buffers_ptr->tu_trans_coeff_n2x_n2_ptr),
         (EbPtr)&transCoeffInitArray);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*) &(trans_quant_buffers_ptr->tu_quant_coeff_nxn_ptr),
         (EbPtr)&transCoeffInitArray);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return_error = eb_picture_buffer_desc_ctor(
         (EbPtr*) &(trans_quant_buffers_ptr->tu_quant_coeff_n2x_n2_ptr),
         (EbPtr)&transCoeffInitArray);
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return EB_ErrorNone;
 }
-

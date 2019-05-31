@@ -57,10 +57,8 @@ extern "C" {
         int32_t                      cfl_alpha_idx;
         // Joint sign of alpha Cb and alpha Cr
         int32_t                      cfl_alpha_signs;
-
     } PredictionUnit;
 #pragma pack(pop)
-
 
 #ifdef __cplusplus
 }

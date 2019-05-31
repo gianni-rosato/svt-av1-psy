@@ -20,4 +20,3 @@ EbErrorType picture_analysis_result_ctor(
 
     return EB_ErrorNone;
 }
-

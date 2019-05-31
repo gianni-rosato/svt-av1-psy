@@ -25,7 +25,6 @@
 #include "EbDecParseHelper.h"
 
 int neg_deinterleave(const int diff, int ref, int max) {
-
     if (!ref) return diff;
     if (ref >= max - 1) return max - diff - 1;
     if (2 * ref < max) {
@@ -48,7 +47,7 @@ int neg_deinterleave(const int diff, int ref, int max) {
     }
 }
 
-void set_segment_id(EbDecHandle *dec_handle, int mi_offset, int x_mis, int y_mis, int segment_id) 
+void set_segment_id(EbDecHandle *dec_handle, int mi_offset, int x_mis, int y_mis, int segment_id)
 {
     assert(segment_id >= 0 && segment_id < MAX_SEGMENTS);
     FrameHeader *frm_header = &dec_handle->frame_header;
@@ -134,7 +133,6 @@ void update_tx_context(ParseCtxt *parse_ctxt,
     memset(left_ctx, tx_high, bh);
 }
 
-
 TxSize read_selected_tx_size(PartitionInfo_t *xd, SvtReader *r, EbDecHandle *dec_handle) {
     ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
     const BlockSize bsize = xd->mi->sb_type;
@@ -162,7 +160,7 @@ int dec_is_inter_block(const ModeInfo_t *mbmi) {
 int max_block_wide(PartitionInfo_t *part_info, int plane_bsize, int subx) {
     int max_blocks_wide = block_size_wide[plane_bsize];
     if (part_info->mb_to_right_edge < 0)
-        max_blocks_wide += part_info->mb_to_right_edge >> (3 + subx); 
+        max_blocks_wide += part_info->mb_to_right_edge >> (3 + subx);
     //Scale width in the transform block unit.
     return max_blocks_wide >> tx_size_wide_log2[0];
 }
@@ -229,9 +227,8 @@ int get_intra_inter_context(PartitionInfo_t *xd) {
     else if (has_above || has_left) {  // one edge available
         return 2 * !dec_is_inter_block(has_above ? above_mbmi : left_mbmi);
     }
-    else {
+    else
         return 0;
-    }
 }
 
 int use_angle_delta(BlockSize bsize) {
@@ -295,7 +292,7 @@ int filter_intra_allowed_bsize(EbDecHandle *dec_handle, BlockSize bs) {
 }
 
 int filter_intra_allowed(EbDecHandle *dec_handle,
-    const ModeInfo_t *mbmi) 
+    const ModeInfo_t *mbmi)
 {
     return mbmi->mode == DC_PRED &&
         /* TO DO : Add when palette support comes */
@@ -304,7 +301,7 @@ int filter_intra_allowed(EbDecHandle *dec_handle,
 }
 
 int allow_intrabc(const EbDecHandle *dec_handle) {
-    return  (dec_handle->frame_header.frame_type == KEY_FRAME 
+    return  (dec_handle->frame_header.frame_type == KEY_FRAME
             || dec_handle->frame_header.frame_type == INTRA_ONLY_FRAME)
             && dec_handle->seq_header.seq_force_screen_content_tools
             && dec_handle->frame_header.allow_intrabc;
@@ -366,12 +363,10 @@ static INLINE void integer_mv_precision(MV_dec *mv) {
     if (mod != 0) {
         mv->row -= mod;
         if (abs(mod) > 4) {
-            if (mod > 0) {
+            if (mod > 0)
                 mv->row += 8;
-            }
-            else {
+            else
                 mv->row -= 8;
-            }
         }
     }
 
@@ -379,16 +374,13 @@ static INLINE void integer_mv_precision(MV_dec *mv) {
     if (mod != 0) {
         mv->col -= mod;
         if (abs(mod) > 4) {
-            if (mod > 0) {
+            if (mod > 0)
                 mv->col += 8;
-            }
-            else {
+            else
                 mv->col -= 8;
-            }
         }
     }
 }
-
 
 static INLINE int block_center_x(int mi_col, BlockSize bs) {
     const int bw = block_size_wide[bs];
@@ -425,9 +417,8 @@ IntMv_dec gm_get_motion_vector(const EbWarpedMotionParams *gm,
         res.as_mv.row = gm->wmmat[0] >> GM_TRANS_ONLY_PREC_DIFF;
         res.as_mv.col = gm->wmmat[1] >> GM_TRANS_ONLY_PREC_DIFF;
         assert(IMPLIES(1 & (res.as_mv.row | res.as_mv.col), allow_hp));
-        if (is_integer) {
+        if (is_integer)
             integer_mv_precision(&res.as_mv);
-        }
         return res;
     }
 
@@ -449,9 +440,8 @@ IntMv_dec gm_get_motion_vector(const EbWarpedMotionParams *gm,
     res.as_mv.row = ty;
     res.as_mv.col = tx;
 
-    if (is_integer) {
+    if (is_integer)
         integer_mv_precision(&res.as_mv);
-    }
     return res;
 }
 
@@ -491,7 +481,6 @@ static INLINE int has_uni_comp_refs(const ModeInfo_t *mbmi) {
 }
 
 int get_comp_reference_type_context(const PartitionInfo_t *xd) {
-
 #define CHECK_BACKWARD_REFS(ref_frame) \
   (((ref_frame) >= BWDREF_FRAME) && ((ref_frame) <= ALTREF_FRAME))
 #define IS_BACKWARD_REF_FRAME(ref_frame) CHECK_BACKWARD_REFS(ref_frame)
@@ -626,7 +615,6 @@ int get_comp_index_context() {
     return above_ctx + left_ctx + 3 * offset;*/
     return -1;
 }
-
 
 int is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);

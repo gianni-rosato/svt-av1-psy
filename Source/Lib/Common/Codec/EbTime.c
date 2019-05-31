@@ -33,7 +33,6 @@ __attribute__((optimize("unroll-loops")))
 #endif
 
 void EbStartTime(uint64_t *Startseconds, uint64_t *Startuseconds) {
-
 #if defined(__linux__) || defined(__APPLE__) //(LINUX_ENCODER_TIMING || LINUX_DECODER_TIMING)
     struct timeval start;
     gettimeofday(&start, NULL);
@@ -46,11 +45,9 @@ void EbStartTime(uint64_t *Startseconds, uint64_t *Startuseconds) {
     (void)(*Startuseconds);
     (void)(*Startseconds);
 #endif
-
 }
 
 void EbFinishTime(uint64_t *Finishseconds, uint64_t *Finishuseconds) {
-
 #if defined(__linux__) || defined(__APPLE__) //(LINUX_ENCODER_TIMING || LINUX_DECODER_TIMING)
     struct timeval finish;
     gettimeofday(&finish, NULL);
@@ -63,7 +60,6 @@ void EbFinishTime(uint64_t *Finishseconds, uint64_t *Finishuseconds) {
     (void)(*Finishuseconds);
     (void)(*Finishseconds);
 #endif
-
 }
 
 void EbComputeOverallElapsedTime(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration)
@@ -88,7 +84,6 @@ void EbComputeOverallElapsedTime(uint64_t Startseconds, uint64_t Startuseconds, 
     (void)(Finishseconds);
 
 #endif
-
 }
 
 void EbComputeOverallElapsedTimeMs(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration)
@@ -113,7 +108,6 @@ void EbComputeOverallElapsedTimeMs(uint64_t Startseconds, uint64_t Startuseconds
     (void)(Finishseconds);
 
 #endif
-
 }
 
 static void EbSleepMs(uint64_t milliSeconds)
@@ -169,7 +163,6 @@ void EbInjector(uint64_t processed_frame_count,
     }
     else
     {
-
 #if defined(__linux__) || defined(__APPLE__)
         EbFinishTime((uint64_t*)&currentTimesSeconds, (uint64_t*)&currentTimesuSeconds);
         EbComputeOverallElapsedTime(startTimesSeconds, startTimesuSeconds, currentTimesSeconds, currentTimesuSeconds, &elapsedTime);

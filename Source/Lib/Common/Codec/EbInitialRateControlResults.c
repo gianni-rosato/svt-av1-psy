@@ -19,4 +19,3 @@ EbErrorType initial_rate_control_results_ctor(
 
     return EB_ErrorNone;
 }
-

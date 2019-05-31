@@ -19,7 +19,7 @@ extern "C" {
 /**********************************
  * Bitstream Unit Types
  **********************************/
-    typedef struct OutputBitstreamUnit 
+    typedef struct OutputBitstreamUnit
     {
         uint32_t  size;                               // allocated buffer size
         uint32_t  written_bits_count;                   // count of written bits
@@ -184,7 +184,7 @@ on a larger type, you can speed up the decoder by using it here.*/
 #define OD_MEASURE_EC_OVERHEAD (0)
 
     /*The entropy encoder context.*/
-    struct OdEcEnc 
+    struct OdEcEnc
     {
         /*Buffered output.
         This contains only the raw bits until the final call to od_ec_enc_done(),
@@ -235,7 +235,6 @@ on a larger type, you can speed up the decoder by using it here.*/
     OD_WARN_UNUSED_RESULT int32_t od_ec_enc_tell(const OdEcEnc *enc)
         OD_ARG_NONNULL(1);
 
-
     void od_ec_enc_checkpoint(OdEcEnc *dst, const OdEcEnc *src);
     void od_ec_enc_rollback(OdEcEnc *dst, const OdEcEnc *src);
 
@@ -274,7 +273,7 @@ on a larger type, you can speed up the decoder by using it here.*/
     // bitwriter.h
     typedef struct DaalaWriter AomWriter;
 
-    typedef struct TokenStats 
+    typedef struct TokenStats
     {
         int32_t cost;
 #if CONFIG_RD_DEBUG
@@ -286,9 +285,8 @@ on a larger type, you can speed up the decoder by using it here.*/
 #if CONFIG_RD_DEBUG
         int32_t r, c;
         for (r = 0; r < TXB_COEFF_COST_MAP_SIZE; ++r) {
-            for (c = 0; c < TXB_COEFF_COST_MAP_SIZE; ++c) {
+            for (c = 0; c < TXB_COEFF_COST_MAP_SIZE; ++c)
                 token_stats->txb_coeff_cost_map[r][c] = 0;
-            }
         }
 #endif
         token_stats->cost = 0;
@@ -326,7 +324,6 @@ on a larger type, you can speed up the decoder by using it here.*/
         aom_write_cdf(w, symb, cdf, nsymbs);
         if (w->allow_update_cdf) update_cdf(cdf, symb, nsymbs);
     }
-
 
     /********************************************************************************************************************************/
     /********************************************************************************************************************************/

@@ -3,15 +3,12 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-
 #include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "immintrin.h"
 #include "EbMemory_AVX2.h"
 
-
 #define _mm256_set_m128i(/* __m128i */ hi, /* __m128i */ lo) \
     _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)
-
 
 uint32_t combined_averaging8x_msad_avx2_intrin(
     uint8_t  *src,
@@ -274,7 +271,6 @@ uint64_t compute_mean8x8_avx2_intrin(
 
     result = (uint64_t)_mm_cvtsi128_si32(mean) << 2;
     return result;
-
 }
 
 /********************************************************************************************************************************/
@@ -284,7 +280,6 @@ void  compute_interm_var_four8x8_avx2_intrin(
     uint64_t * mean_of8x8_blocks,      // mean of four  8x8
     uint64_t * mean_of_squared8x8_blocks)  // meanSquared
 {
-
     __m256i ymm1, ymm2, ymm3, ymm4, ymm_sum1, ymm_sum2, ymm_FinalSum, ymm_shift,/* ymm_blockMeanSquared*///,
         ymm_in, ymm_in_2S, ymm_in_second, ymm_in_2S_second, ymm_shiftSquared, ymm_permute8,
         ymm_result, ymm_blockMeanSquaredlow, ymm_blockMeanSquaredHi, ymm_inputlo, ymm_inputhi;
@@ -361,7 +356,6 @@ void  compute_interm_var_four8x8_avx2_intrin(
     ymm_resultlo = _mm_unpacklo_epi64(_mm256_castsi256_si128(ymm_result), xmm_zero);
     ymm_resulthi = _mm_unpackhi_epi64(_mm256_castsi256_si128(ymm_result), xmm_zero);
 
-
     ymm_result = _mm256_set_m128i(ymm_resulthi, ymm_resultlo);
 
     ymm_permute8 = _mm256_set_epi32(7, 5, 6, 4, 3, 1, 2, 0);
@@ -371,10 +365,7 @@ void  compute_interm_var_four8x8_avx2_intrin(
 
     ymm_result = _mm256_sllv_epi64(ymm_result, ymm_shiftSquared);
 
-
     _mm256_storeu_si256((__m256i *)(mean_of_squared8x8_blocks), ymm_result);
-
-
 }
 
 uint32_t combined_averaging_ssd_avx2(
@@ -422,6 +413,3 @@ uint32_t combined_averaging_ssd_avx2(
     sum1_128 = _mm_add_epi64(sum1_128, sum2_128);
     return _mm_cvtsi128_si32(sum1_128);
 }
-
-
-

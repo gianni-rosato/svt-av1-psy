@@ -46,10 +46,6 @@ EbErrorType ProductGenerateMdCandidatesCu(
     EbPtr                           interPredContextPtr,
     PictureControlSet            *picture_control_set_ptr);
 
-
-
-
-
 /*******************************************
 * set Penalize Skip Flag
 *
@@ -65,7 +61,6 @@ const EbPredictionFunc  ProductPredictionFunTable[3] = { NULL, inter_pu_predicti
 const EbFastCostFunc   Av1ProductFastCostFuncTable[3] =
 {
     NULL,
-
     av1_inter_fast_cost, /*INTER */
     av1_intra_fast_cost /*INTRA */
 };
@@ -75,9 +70,7 @@ const EbAv1FullCostFunc   Av1ProductFullCostFuncTable[3] =
     NULL,
     av1_inter_full_cost, /*INTER */
     av1_intra_full_cost/*INTRA */
-
 };
-
 
 /***************************************************
 * Update Recon Samples Neighbor Arrays
@@ -90,7 +83,6 @@ void mode_decision_update_neighbor_arrays(
     uint32_t               index_mds,
     EbBool                 intraMdOpenLoop,
     EbBool                 intra4x4Selected){
-
     uint32_t  bwdith = context_ptr->blk_geom->bwidth;
     uint32_t  bheight = context_ptr->blk_geom->bheight;
 
@@ -117,7 +109,6 @@ void mode_decision_update_neighbor_arrays(
     uint8_t skipCoeff = !availableCoeff;
 #endif
 
-
     context_ptr->mv_unit.pred_direction = (uint8_t)(context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].inter_pred_direction_index);
     context_ptr->mv_unit.mv[REF_LIST_0].mv_union = context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].mv[REF_LIST_0].mv_union;
     context_ptr->mv_unit.mv[REF_LIST_1].mv_union = context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].mv[REF_LIST_1].mv_union;
@@ -138,7 +129,6 @@ void mode_decision_update_neighbor_arrays(
 #endif
     uint8_t                    inter_pred_direction_index = (uint8_t)context_ptr->cu_ptr->prediction_unit_array->inter_pred_direction_index;
     uint8_t                    ref_frame_type = (uint8_t)context_ptr->cu_ptr->prediction_unit_array[0].ref_frame_type;
-
 
 #if OPT_LOSSLESS_0
     if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level != IT_SEARCH_OFF)
@@ -178,7 +168,7 @@ void mode_decision_update_neighbor_arrays(
 #if OPT_LOSSLESS_0
         if (picture_control_set_ptr->parent_pcs_ptr->skip_sub_blks)
 #endif
-#if M8_SKIP_BLK        
+#if M8_SKIP_BLK
         // Intra Luma Mode Update
         neighbor_array_unit_mode_write(
             context_ptr->leaf_depth_neighbor_array,
@@ -229,7 +219,6 @@ void mode_decision_update_neighbor_arrays(
             neighbor_array_unit_mode_write(
                 context_ptr->luma_dc_sign_level_coeff_neighbor_array,
                 (uint8_t*)&dc_sign_level_coeff,
-
 #if ATB_DC_CONTEXT_SUPPORT_0
 #if ATB_SUPPORT
                 context_ptr->sb_origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
@@ -259,14 +248,12 @@ void mode_decision_update_neighbor_arrays(
                 context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][txb_itr],
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-#endif            
+#endif
         }
-
     }
 
-    // Hsan: chroma mode rate estimation is kept even for chroma blind 
+    // Hsan: chroma mode rate estimation is kept even for chroma blind
     if (context_ptr->blk_geom->has_uv) {
-
         // Intra Chroma Mode Update
         neighbor_array_unit_mode_write(
             context_ptr->intra_chroma_mode_neighbor_array,
@@ -275,7 +262,6 @@ void mode_decision_update_neighbor_arrays(
             cu_origin_y_uv,
             bwdith_uv,
             bwheight_uv,
-
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
     }
 
@@ -352,7 +338,6 @@ void mode_decision_update_neighbor_arrays(
                 bwheight_uv,
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
         }
-
     }
 
 #if ATB_RATE
@@ -408,9 +393,8 @@ void mode_decision_update_neighbor_arrays(
                 context_ptr->blk_geom->bwidth,
                 context_ptr->blk_geom->bheight);
         }
-#endif  
+#endif
     }
-
 
     if (intraMdOpenLoop == EB_FALSE) {
         if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
@@ -432,7 +416,6 @@ void mode_decision_update_neighbor_arrays(
                 bwheight_uv);
         }
     }
-
 
     return;
 }
@@ -538,7 +521,6 @@ void copy_neighbour_arrays(
 #endif
 
     if (blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
-
         //neighbor_array_unit_reset(picture_control_set_ptr->md_cb_recon_neighbor_array[depth]);
 
         copy_neigh_arr(
@@ -559,8 +541,6 @@ void copy_neighbour_arrays(
             bwidth_uv,
             bheight_uv,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-
-
     }
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
     //neighbor_array_unit_reset(picture_control_set_ptr->md_skip_coeff_neighbor_array[depth]);
@@ -662,13 +642,11 @@ void md_update_all_neighbour_arrays(
     uint32_t                            sb_origin_x,
     uint32_t                            sb_origin_y)
 {
-
     context_ptr->blk_geom = get_blk_geom_mds(lastCuIndex_mds);
     context_ptr->cu_origin_x = sb_origin_x + context_ptr->blk_geom->origin_x;
     context_ptr->cu_origin_y = sb_origin_y + context_ptr->blk_geom->origin_y;
     context_ptr->round_origin_x = ((context_ptr->cu_origin_x >> 3) << 3);
     context_ptr->round_origin_y = ((context_ptr->cu_origin_y >> 3) << 3);
-
 
     context_ptr->cu_ptr = &context_ptr->md_cu_arr_nsq[lastCuIndex_mds];
 
@@ -683,16 +661,12 @@ void md_update_all_neighbour_arrays(
 
     update_mi_map(
         context_ptr,
-
         context_ptr->cu_ptr,
         context_ptr->cu_origin_x,
         context_ptr->cu_origin_y,
         context_ptr->blk_geom,
         0,
         picture_control_set_ptr);
-
-
-
 }
 
 void md_update_all_neighbour_arrays_multiple(
@@ -701,13 +675,11 @@ void md_update_all_neighbour_arrays_multiple(
     uint32_t                            blk_mds,
     uint32_t                            sb_origin_x,
     uint32_t                            sb_origin_y){
-
     context_ptr->blk_geom = get_blk_geom_mds(blk_mds);
 
     uint32_t blk_it;
     for (blk_it = 0; blk_it < context_ptr->blk_geom->totns; blk_it++)
     {
-
         md_update_all_neighbour_arrays(
             picture_control_set_ptr,
             context_ptr,
@@ -746,7 +718,6 @@ void set_nfl(
 #endif
     ModeDecisionContext     *context_ptr
     ){
-
     // NFL Level MD       Settings
     // 0                  MAX_NFL 40
     // 1                  30
@@ -754,9 +725,9 @@ void set_nfl(
     // 3                  10
     // 4                  8
     // 5                  6
-    // 6                  4  
-    // 7                  3 
-    
+    // 6                  4
+    // 7                  3
+
     switch (context_ptr->nfl_level) {
    case 0:
         context_ptr->full_recon_search_count = MAX_NFL;
@@ -788,22 +759,19 @@ void set_nfl(
     }
 #if NFL_PER_SQ_SIZE
     uint8_t nfl_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
-    if (picture_control_set_ptr->slice_type == I_SLICE) {
+    if (picture_control_set_ptr->slice_type == I_SLICE)
         context_ptr->full_recon_search_count = 6;
-    }
-    else if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+    else if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
         context_ptr->full_recon_search_count = nfl_ref[nfl_index];
-    }
-    else {
+    else
         context_ptr->full_recon_search_count = nfl_non_ref[nfl_index];
-    }
 #endif
 
     ASSERT(context_ptr->full_recon_search_count <= MAX_NFL);
 }
 
 #if OPT_LOSSLESS_0
-#define TOTAL_SQ_BLOCK_COUNT 341  
+#define TOTAL_SQ_BLOCK_COUNT 341
 int sq_block_index[TOTAL_SQ_BLOCK_COUNT] = {
     0,
     25,
@@ -1145,20 +1113,18 @@ int sq_block_index[TOTAL_SQ_BLOCK_COUNT] = {
     1097,
     1098,
     1099,
-    1100 
+    1100
 };
-void init_nsq_block(   
+void init_nsq_block(
     SequenceControlSet    *sequence_control_set_ptr,
     ModeDecisionContext   *context_ptr){
-
     uint32_t blk_idx = 0;
     do {
-
         const BlockGeom * blk_geom = get_blk_geom_mds(blk_idx);
         context_ptr->md_local_cu_unit[blk_idx].avail_blk_flag = EB_FALSE;
         if (blk_geom->shape == PART_N)
         {
-            context_ptr->md_cu_arr_nsq[blk_idx].split_flag = EB_TRUE; 
+            context_ptr->md_cu_arr_nsq[blk_idx].split_flag = EB_TRUE;
             context_ptr->md_cu_arr_nsq[blk_idx].part = PARTITION_SPLIT;
             context_ptr->md_local_cu_unit[blk_idx].tested_cu_flag = EB_FALSE;
         }
@@ -1183,7 +1149,6 @@ void Initialize_cu_data_structure(
     SequenceControlSet    *sequence_control_set_ptr,
     LargestCodingUnit        *sb_ptr,
     const MdcLcuData        * const mdcResultTbPtr){
-
     UNUSED(*sequence_control_set_ptr);
     UNUSED(*sb_ptr);
     UNUSED(*mdcResultTbPtr);
@@ -1258,7 +1223,6 @@ void picture_addition_kernel(
         //printf("Reconstruction---------------------------------------------------\n");
 
     while (row_index < height) {
-
         columnIndex = 0;
         while (columnIndex < width) {
             //recon_ptr[columnIndex] = (uint8_t)CLIP3(0, maxValue, ((int32_t)residual_ptr[columnIndex]) + ((int32_t)pred_ptr[columnIndex]));
@@ -1300,7 +1264,6 @@ void picture_addition_kernel16_bit(
         //printf("Reconstruction---------------------------------------------------\n");
 
     while (row_index < height) {
-
         columnIndex = 0;
         while (columnIndex < width) {
             //recon_ptr[columnIndex] = (uint8_t)CLIP3(0, maxValue, ((int32_t)residual_ptr[columnIndex]) + ((int32_t)pred_ptr[columnIndex]));
@@ -1350,7 +1313,7 @@ void AV1PerformInverseTransformReconLuma(
     uint32_t   txb_origin_y;
     uint32_t   tu_origin_index;
     uint32_t   tuTotalCount;
-               
+
     uint32_t   txb_itr;
 
 #if CFL_FIX
@@ -1358,7 +1321,7 @@ void AV1PerformInverseTransformReconLuma(
 #endif
     if (picture_control_set_ptr->intra_md_open_loop_flag == EB_FALSE) {
 #if ATB_SUPPORT
-        uint8_t tx_depth = candidateBuffer->candidate_ptr->tx_depth; 
+        uint8_t tx_depth = candidateBuffer->candidate_ptr->tx_depth;
         tuTotalCount = context_ptr->blk_geom->txb_count[tx_depth];
 #else
         tuTotalCount = blk_geom->txb_count;
@@ -1401,7 +1364,6 @@ void AV1PerformInverseTransformReconLuma(
                     memcpy(recBuffer + j * candidateBuffer->recon_ptr->stride_y, predBuffer + j * candidateBuffer->prediction_ptr->stride_y, tu_width);
 
                 av1_inv_transform_recon8bit(
-
                     &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[txb_1d_offset]),
                     recBuffer,
                     candidateBuffer->recon_ptr->stride_y,
@@ -1417,7 +1379,6 @@ void AV1PerformInverseTransformReconLuma(
 #endif
                     PLANE_TYPE_Y,
                     (uint16_t)candidateBuffer->candidate_ptr->eob[0][txb_itr]);
-
             }
             else {
 #if CFL_FIX
@@ -1450,7 +1411,6 @@ void AV1PerformInverseTransformReconLuma(
             txb_1d_offset += context_ptr->blk_geom->tx_width[txb_itr] * context_ptr->blk_geom->tx_height[txb_itr];
 #endif
             ++txb_itr;
-
         } while (txb_itr < tuTotalCount);
     }
 }
@@ -1461,7 +1421,6 @@ void AV1PerformInverseTransformRecon(
     CodingUnit                      *cu_ptr,
     const BlockGeom                   *blk_geom,
     EbAsm                              asm_type) {
-
     uint32_t                           tu_width;
     uint32_t                           tu_height;
     uint32_t                           txb_origin_x;
@@ -1471,7 +1430,7 @@ void AV1PerformInverseTransformRecon(
     uint32_t                           tu_index;
     uint32_t                           txb_itr;
     TransformUnit                   *txb_ptr;
-    
+
     UNUSED(blk_geom);
 
     if (picture_control_set_ptr->intra_md_open_loop_flag == EB_FALSE) {
@@ -1553,7 +1512,7 @@ void AV1PerformInverseTransformRecon(
             uint8_t tx_depth = candidateBuffer->candidate_ptr->tx_depth;
             if (tx_depth == 0 || txb_itr == 0) {
 #endif
-            if (context_ptr->chroma_level <= CHROMA_MODE_1) 
+            if (context_ptr->chroma_level <= CHROMA_MODE_1)
             {
             //CHROMA
 #if ATB_SUPPORT
@@ -1567,7 +1526,6 @@ void AV1PerformInverseTransformRecon(
             uint32_t crTuChromaOriginIndex = ((((txb_origin_x >> 3) << 3) + ((txb_origin_y >> 3) << 3) * candidateBuffer->recon_coeff_ptr->stride_cr) >> 1);
 
             if (context_ptr->blk_geom->has_uv && txb_ptr->u_has_coeff) {
-                
                 uint8_t     *predBuffer = &(candidateBuffer->prediction_ptr->buffer_cb[cbTuChromaOriginIndex]);
                 uint8_t     *recBuffer = &(candidateBuffer->recon_ptr->buffer_cb[recCbOffset]);
                 uint32_t j;
@@ -1592,7 +1550,6 @@ void AV1PerformInverseTransformRecon(
                     (uint16_t)candidateBuffer->candidate_ptr->eob[1][txb_itr]);
             }
             else {
-
                 picture_copy8_bit(
                     candidateBuffer->prediction_ptr,
                     0,
@@ -1633,7 +1590,6 @@ void AV1PerformInverseTransformRecon(
                     (uint16_t)candidateBuffer->candidate_ptr->eob[2][txb_itr]);
                 }
                 else {
-
                 picture_copy8_bit(
                     candidateBuffer->prediction_ptr,
                     0,
@@ -1647,8 +1603,6 @@ void AV1PerformInverseTransformRecon(
                     chroma_tu_height,
                     PICTURE_BUFFER_DESC_Cr_FLAG,
                     asm_type);
-
-
                 }
                 //CHROMA END
                 if (context_ptr->blk_geom->has_uv)
@@ -1668,7 +1622,6 @@ void AV1PerformInverseTransformRecon(
 #endif
             ++tu_index;
             ++txb_itr;
-
         } while (txb_itr < tuTotalCount);
     }
 }
@@ -1698,7 +1651,7 @@ void ProductCodingLoopInitFastLoop(
     context_ptr->luma_intra_ref_samples_gen_done = EB_FALSE;
     context_ptr->chroma_intra_ref_samples_gen_done = EB_FALSE;
 #endif
-#if ATB_SUPPORT 
+#if ATB_SUPPORT
     context_ptr->tx_depth = context_ptr->cu_ptr->tx_depth = 0;
 #endif
     // Generate Split, Skip and intra mode contexts for the rate estimation
@@ -1721,9 +1674,8 @@ void ProductCodingLoopInitFastLoop(
         mode_type_neighbor_array,
         leaf_depth_neighbor_array,
         leaf_partition_neighbor_array);
-    for (uint32_t index = 0; index < (MAX_NFL + 1 + 1); ++index) {
+    for (uint32_t index = 0; index < (MAX_NFL + 1 + 1); ++index)
         context_ptr->fast_cost_array[index] = MAX_CU_COST;
-    }
     return;
 }
 #if !OPT_LOSSLESS_0
@@ -1733,25 +1685,20 @@ uint64_t ProductGenerateChromaWeight(
 {
     uint64_t weight;
 
-    if (picture_control_set_ptr->slice_type == I_SLICE) {
+    if (picture_control_set_ptr->slice_type == I_SLICE)
         weight = chroma_weight_factor_ld[qp];
-    }
     else {
         // Random Access
-        if (picture_control_set_ptr->temporal_layer_index == 0) {
+        if (picture_control_set_ptr->temporal_layer_index == 0)
             weight = chroma_weight_factor_ra[qp];
-        }
-        else if (picture_control_set_ptr->temporal_layer_index < 3) {
+        else if (picture_control_set_ptr->temporal_layer_index < 3)
             weight = chroma_weight_factor_ra_qp_scaling_l1[qp];
-        }
-        else {
+        else
             weight = chroma_weight_factor_ra_qp_scaling_l3[qp];
-        }
     }
     return (weight << 1);
 }
 #endif
-
 
 void ProductMdFastPuPrediction(
     PictureControlSet                 *picture_control_set_ptr,
@@ -1776,7 +1723,6 @@ void ProductMdFastPuPrediction(
         picture_control_set_ptr,
         candidateBuffer,
         asm_type);
-
 }
 void generate_intra_reference_samples(
     const Av1Common         *cm,
@@ -1801,7 +1747,6 @@ void perform_fast_loop(
     EbBool                               scratch_buffer_pesent_flag,
     EbBool                               use_ssd,
     EbAsm                                asm_type) {
-
     int32_t  fastLoopCandidateIndex;
     uint64_t lumaFastDistortion;
     uint64_t chromaFastDistortion;
@@ -1816,13 +1761,12 @@ void perform_fast_loop(
         // Set the Candidate Buffer
         ModeDecisionCandidateBuffer   *candidateBuffer = candidateBufferPtrArrayBase[candidate_buffer_start_index];
         ModeDecisionCandidate         *candidate_ptr = candidateBuffer->candidate_ptr = &fast_candidate_array[fastLoopCandidateIndex];
-#if ATB_SUPPORT 
+#if ATB_SUPPORT
         // Initialize tx_depth
         candidateBuffer->candidate_ptr->tx_depth = 0;
 #endif
         // Only check (src - src) candidates (Tier0 candidates)
         if (candidate_ptr->distortion_ready) {
-
             // Distortion
             lumaFastDistortion = candidate_ptr->me_distortion;
 
@@ -1854,7 +1798,6 @@ void perform_fast_loop(
 
             // Initialize Fast Cost - to do not interact with the second Fast-Cost Search
             *(candidateBuffer->fast_cost_ptr) = MAX_CU_COST;
-
         }
         --fastLoopCandidateIndex;
     }
@@ -1867,12 +1810,11 @@ void perform_fast_loop(
         ModeDecisionCandidateBuffer *candidateBuffer = candidateBufferPtrArrayBase[highestCostIndex];
         ModeDecisionCandidate       *candidate_ptr = candidateBuffer->candidate_ptr = &fast_candidate_array[fastLoopCandidateIndex];
         EbPictureBufferDesc         *prediction_ptr = candidateBuffer->prediction_ptr;
-#if ATB_SUPPORT 
+#if ATB_SUPPORT
         // Initialize tx_depth
         candidateBuffer->candidate_ptr->tx_depth = 0;
 #endif
         if (!candidate_ptr->distortion_ready || fastLoopCandidateIndex == bestFirstFastCostSearchCandidateIndex) {
-
             // Prediction
             ProductMdFastPuPrediction(
                 picture_control_set_ptr,
@@ -1894,7 +1836,6 @@ void perform_fast_loop(
                     prediction_ptr->stride_y,
                     context_ptr->blk_geom->bwidth,
                     context_ptr->blk_geom->bheight);
-
             }
             else {
                 assert((context_ptr->blk_geom->bwidth >> 3) < 17);
@@ -1906,8 +1847,6 @@ void perform_fast_loop(
                     context_ptr->blk_geom->bheight,
                     context_ptr->blk_geom->bwidth));
             }
-
-
 
             if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
                 if (use_ssd) {
@@ -1945,13 +1884,9 @@ void perform_fast_loop(
                         context_ptr->blk_geom->bheight_uv,
                         context_ptr->blk_geom->bwidth_uv);
                 }
-
             }
-            else {
+            else
                 chromaFastDistortion = 0;
-            }
-
-
             // Fast Cost
             *(candidateBuffer->fast_cost_ptr) = Av1ProductFastCostFuncTable[candidate_ptr->type](
                 cu_ptr,
@@ -1997,24 +1932,21 @@ void perform_fast_loop(
 
                 if (fast_cost_array[bufferIndex] > highestCost)
                     highestCostIndex = bufferIndex;
-
             } while (++bufferIndex < bufferIndexEnd);
         }
         --fastLoopCandidateIndex;
     }
 
-    // Set the cost of the scratch canidate to max to get discarded @ the sorting phase 
+    // Set the cost of the scratch canidate to max to get discarded @ the sorting phase
     *(candidateBufferPtrArrayBase[highestCostIndex]->fast_cost_ptr) = (scratch_buffer_pesent_flag) ?
         MAX_CU_COST :
         *(candidateBufferPtrArrayBase[highestCostIndex]->fast_cost_ptr);
-
 }
 #if !OPT_LOSSLESS_0 && !DISABLE_OIS_USE
 void ProductConfigureChroma(
     PictureControlSet                 *picture_control_set_ptr,
     ModeDecisionContext               *context_ptr,
     LargestCodingUnit                 *sb_ptr) {
-
     uint32_t  lcuAddr = sb_ptr->index;
     uint32_t  lcuEdgeNum = picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[lcuAddr].edge_block_num;
     uint64_t  chroma_weight = 1;
@@ -2032,11 +1964,9 @@ void ProductDerivePartialFrequencyN2Flag(
     SequenceControlSet               *sequence_control_set_ptr,
     PictureControlSet                *picture_control_set_ptr,
     ModeDecisionContext              *context_ptr){
-
     UNUSED(sequence_control_set_ptr);
     UNUSED(picture_control_set_ptr);
     context_ptr->pf_md_mode = PF_OFF;
-
 }
 #endif
 void AV1CostCalcCfl(
@@ -2054,7 +1984,6 @@ void AV1CostCalcCfl(
     EbBool                              check_dc,
 #endif
     EbAsm                               asm_type) {
-
     ModeDecisionCandidate            *candidate_ptr = candidateBuffer->candidate_ptr;
     uint32_t                            count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
     uint64_t                            cbFullDistortion[DIST_CALC_TOTAL];
@@ -2071,7 +2000,7 @@ void AV1CostCalcCfl(
     full_distortion[DIST_CALC_RESIDUAL] = 0;
     full_distortion[DIST_CALC_PREDICTION] = 0;
     *coeffBits = 0;
-    
+
     // Loop over alphas and find the best
     if (component_mask == COMPONENT_CHROMA_CB || component_mask == COMPONENT_CHROMA || component_mask == COMPONENT_ALL) {
         cbFullDistortion[DIST_CALC_RESIDUAL] = 0;
@@ -2127,7 +2056,6 @@ void AV1CostCalcCfl(
             &(*count_non_zero_coeffs[1]),
             &(*count_non_zero_coeffs[2]));
 
-
         // Create new function
         cu_full_distortion_fast_tu_mode_r(
             sb_ptr,
@@ -2149,10 +2077,8 @@ void AV1CostCalcCfl(
         full_distortion[DIST_CALC_RESIDUAL] += cbFullDistortion[DIST_CALC_RESIDUAL];
         full_distortion[DIST_CALC_PREDICTION] += cbFullDistortion[DIST_CALC_PREDICTION];
         *coeffBits += cb_coeff_bits;
-
     }
     if (component_mask == COMPONENT_CHROMA_CR || component_mask == COMPONENT_CHROMA || component_mask == COMPONENT_ALL) {
-
         cbFullDistortion[DIST_CALC_RESIDUAL] = 0;
         crFullDistortion[DIST_CALC_RESIDUAL] = 0;
         cbFullDistortion[DIST_CALC_PREDICTION] = 0;
@@ -2245,7 +2171,6 @@ void cfl_rd_pick_alpha(
     uint32_t                   inputCbOriginIndex,
     uint32_t                     cuChromaOriginIndex,
     EbAsm                    asm_type) {
-
     int64_t                  best_rd = INT64_MAX;
     uint64_t                  full_distortion[DIST_CALC_TOTAL];
     uint64_t                  coeffBits;
@@ -2383,7 +2308,6 @@ void cfl_rd_pick_alpha(
     int64_t dc_rd =
         RDCOST(context_ptr->full_lambda, coeffBits, full_distortion[DIST_CALC_RESIDUAL]);
 
-
     dc_rd += dc_mode_rd;
     if (dc_rd <= best_rd) {
         candidateBuffer->candidate_ptr->intra_chroma_mode = UV_DC_PRED;
@@ -2398,16 +2322,12 @@ void cfl_rd_pick_alpha(
             const int32_t v = best_c[best_joint_sign][CFL_PRED_V];
             ind = (u << CFL_ALPHABET_SIZE_LOG2) + v;
         }
-        else {
+        else
             best_joint_sign = 0;
-        }
         candidateBuffer->candidate_ptr->cfl_alpha_idx = ind;
         candidateBuffer->candidate_ptr->cfl_alpha_signs = best_joint_sign;
     }
-
 }
-
-
 
 // If mode is CFL:
 // 1: recon the Luma
@@ -2447,7 +2367,6 @@ static void CflPrediction(
     uint32_t chroma_width = context_ptr->blk_geom->bwidth_uv;
     uint32_t chroma_height = context_ptr->blk_geom->bheight_uv;
 
-
     // Down sample Luma
     cfl_luma_subsampling_420_lbd_c(
 #if CFL_FIX
@@ -2464,7 +2383,6 @@ static void CflPrediction(
         context_ptr->blk_geom->bheight);
 #endif
 
-
     int32_t round_offset = chroma_width * chroma_height / 2;
 
     subtract_average(
@@ -2473,7 +2391,6 @@ static void CflPrediction(
         chroma_height,
         round_offset,
         LOG2F(chroma_width) + LOG2F(chroma_height));
-
 
     // 3: Loop over alphas and find the best or choose DC
     cfl_rd_pick_alpha(
@@ -2486,9 +2403,7 @@ static void CflPrediction(
         cuChromaOriginIndex,
         asm_type);
 
-
     if (candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
-
         // 4: Recalculate the prediction and the residual
         int32_t alpha_q3_cb =
             cfl_idx_to_alpha(candidateBuffer->candidate_ptr->cfl_alpha_idx, candidateBuffer->candidate_ptr->cfl_alpha_signs, CFL_PRED_U);
@@ -2520,7 +2435,6 @@ static void CflPrediction(
             chroma_width,
             chroma_height);
 
-
         //Cb Residual
         ResidualKernel(
             &(input_picture_ptr->buffer_cb[inputCbOriginIndex]),
@@ -2531,7 +2445,6 @@ static void CflPrediction(
             candidateBuffer->residual_ptr->stride_cb,
             context_ptr->blk_geom->bwidth_uv,
             context_ptr->blk_geom->bheight_uv);
-
 
         //Cr Residual
         ResidualKernel(
@@ -2555,14 +2468,14 @@ static void CflPrediction(
 uint8_t get_skip_tx_search_flag(
 #if BYPASS_USELESS_TX_SEARCH
     const BlockGeom *blk_geom,
-#else              
+#else
     int32_t                  sq_size,
-#endif             
+#endif
     uint64_t                 ref_fast_cost,
     uint64_t                 cu_cost,
     uint64_t                 weight)
 {
-    //NM: Skip tx search when the fast cost of the current mode candidate is substansially 
+    //NM: Skip tx search when the fast cost of the current mode candidate is substansially
     // Larger than the best fast_cost (
     uint8_t  tx_search_skip_fag = cu_cost >= ((ref_fast_cost * weight) / 100) ? 1 : 0;
 #if BYPASS_USELESS_TX_SEARCH
@@ -2640,16 +2553,14 @@ static INLINE TxType av1_get_tx_type(
     mbmi.mode = pred_mode;
     mbmi.uv_mode = pred_mode_uv;
 
-
     // const MbModeInfo *const mbmi = xd->mi[0];
     // const struct MacroblockdPlane *const pd = &xd->plane[plane_type];
     const TxSetType tx_set_type =
         /*av1_*/get_ext_tx_set_type(tx_size, is_inter, reduced_tx_set);
 
     TxType tx_type = DCT_DCT;
-    if ( /*xd->lossless[mbmi->segment_id] ||*/ txsize_sqr_up_map[tx_size] > TX_32X32) {
+    if ( /*xd->lossless[mbmi->segment_id] ||*/ txsize_sqr_up_map[tx_size] > TX_32X32)
         tx_type = DCT_DCT;
-    }
     else {
         if (plane_type == PLANE_TYPE_Y) {
             //const int32_t txk_type_idx =
@@ -2690,8 +2601,7 @@ void check_best_indepedant_cfl(
     uint64_t                      *cb_coeff_bits,
     uint64_t                      *cr_coeff_bits,
     EbAsm                          asm_type) {
-
-    // cfl cost 
+    // cfl cost
     uint64_t chromaRate = 0;
 
     chromaRate += candidateBuffer->candidate_ptr->md_rate_estimation_ptr->cfl_alpha_fac_bits[candidateBuffer->candidate_ptr->cfl_alpha_signs][CFL_PRED_U][CFL_IDX_U(candidateBuffer->candidate_ptr->cfl_alpha_idx)] +
@@ -2707,7 +2617,6 @@ void check_best_indepedant_cfl(
 
     // cfl vs. best independant
     if (context_ptr->best_uv_cost[candidateBuffer->candidate_ptr->intra_luma_mode][3 + candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_Y]] < cfl_uv_cost) {
-
         // Update the current candidate
         candidateBuffer->candidate_ptr->intra_chroma_mode = context_ptr->best_uv_mode[candidateBuffer->candidate_ptr->intra_luma_mode][MAX_ANGLE_DELTA + candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_Y]];
         candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_UV] = context_ptr->best_uv_angle[candidateBuffer->candidate_ptr->intra_luma_mode][MAX_ANGLE_DELTA + candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_Y]];
@@ -2729,7 +2638,7 @@ void check_best_indepedant_cfl(
                 0,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->txsize_uv[0][0],
-#else             
+#else
                 context_ptr->blk_geom->txsize_uv[0],
 #endif
                 picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
@@ -2746,7 +2655,7 @@ void check_best_indepedant_cfl(
                 0,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->txsize_uv[0][0],
-#else             
+#else
                 context_ptr->blk_geom->txsize_uv[0],
 #endif
                 picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
@@ -2830,11 +2739,9 @@ void check_best_indepedant_cfl(
 }
 #endif
 
-
 #if ATB_MD
 EbErrorType av1_predict_intra_block(
     TileInfo                    *tile,
-
     STAGE                       stage,
     const BlockGeom            *blk_geom,
     const Av1Common *cm,
@@ -2866,7 +2773,6 @@ EbErrorType av1_intra_luma_prediction(
     PictureControlSet           *picture_control_set_ptr,
     ModeDecisionCandidateBuffer *candidate_buffer_ptr)
 {
-
     EbErrorType return_error = EB_ErrorNone;
 
     uint16_t txb_origin_x = md_context_ptr->cu_origin_x + md_context_ptr->blk_geom->tx_boff_x[md_context_ptr->tx_depth][md_context_ptr->txb_itr];
@@ -2952,7 +2858,6 @@ static void tx_search_update_recon_sample_neighbor_array(
     uint32_t               width,
     uint32_t               height)
 {
-
     neighbor_array_unit_sample_write(
         lumaReconSampleNeighborArray,
         recon_buffer->buffer_y,
@@ -2969,9 +2874,7 @@ static void tx_search_update_recon_sample_neighbor_array(
 }
 
 uint8_t get_end_tx_depth(ModeDecisionContext *context_ptr, uint8_t atb_mode, ModeDecisionCandidate *candidate_ptr, BlockSize bsize, uint8_t btype) {
-   
     uint8_t tx_depth = 0;
-
 
     if (context_ptr->decoupled_fast_loop_search_method != SSD_SEARCH)
         assert(atb_mode != 1 && "atb_mode 1 assumes SSD_SEARCH @ fast loop because of the energy threshold");
@@ -3000,7 +2903,6 @@ uint8_t get_end_tx_depth(ModeDecisionContext *context_ptr, uint8_t atb_mode, Mod
 
     return tx_depth;
 }
-
 
 #if ATB_RATE
 static INLINE int block_signals_txsize(BlockSize bsize) {
@@ -3107,7 +3009,6 @@ static INLINE int av1_get_txb_size_index(BlockSize bsize, int blk_row,
 static uint64_t cost_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
     TxSize tx_size, int depth, int blk_row,
     int blk_col, MdRateEstimationContext  *md_rate_estimation_ptr) {
-
     uint64_t bits = 0;
     const int max_blocks_high = max_block_high(xd, mbmi->sb_type, 0);
     const int max_blocks_wide = max_block_wide(xd, mbmi->sb_type, 0);
@@ -3307,7 +3208,6 @@ static uint64_t tx_size_bits(
     TxMode              tx_mode,
     BlockSize          bsize,
     uint8_t             skip) {
-
     uint64_t bits = 0;
     int is_inter_tx = is_inter_block(mbmi) || is_intrabc_block(mbmi);
     //int skip = mbmi->skip;
@@ -3349,7 +3249,6 @@ static INLINE void set_mi_row_col(
     uint32_t                mi_stride,
     int                     mi_rows,
     int                     mi_cols) {
-
     xd->mb_to_top_edge = -((mi_row * MI_SIZE) * 8);
     xd->mb_to_bottom_edge = ((mi_rows - bh - mi_row) * MI_SIZE) * 8;
     xd->mb_to_left_edge = -((mi_col * MI_SIZE) * 8);
@@ -3367,14 +3266,14 @@ static INLINE void set_mi_row_col(
     const int32_t offset = mi_row * mi_stride + mi_col;
     xd->mi = picture_control_set_ptr->mi_grid_base + offset;
 
-    if (xd->up_available) 
+    if (xd->up_available)
         xd->above_mbmi = &xd->mi[-xd->mi_stride]->mbmi;
-    else 
+    else
         xd->above_mbmi = NULL;
 
-    if (xd->left_available) 
+    if (xd->left_available)
         xd->left_mbmi = &xd->mi[-1]->mbmi;
-    else 
+    else
         xd->left_mbmi = NULL;
 
     xd->n8_h = bh;
@@ -3400,7 +3299,6 @@ uint64_t estimate_tx_size_bits(
     NeighborArrayUnit        *txfm_context_array,
     uint8_t                   tx_depth,
     MdRateEstimationContext  *md_rate_estimation_ptr) {
-
     uint32_t txfm_context_left_index = get_neighbor_array_unit_left_index(
         txfm_context_array,
         cu_origin_y);
@@ -3495,7 +3393,6 @@ void perform_intra_tx_partitioning(
 
     // Transform Depth Loop
     for (context_ptr->tx_depth = 0; context_ptr->tx_depth <= end_tx_depth; context_ptr->tx_depth++) {
-
         // Set recon neighbor array to be used @ intra compensation
         context_ptr->tx_search_luma_recon_neighbor_array =
             (context_ptr->tx_depth) ?
@@ -3520,7 +3417,6 @@ void perform_intra_tx_partitioning(
 
         uint16_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];
         for (context_ptr->txb_itr = 0; context_ptr->txb_itr < txb_count; context_ptr->txb_itr++) {
-
             uint16_t tx_org_x = context_ptr->blk_geom->tx_org_x[context_ptr->tx_depth][context_ptr->txb_itr];
             uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[context_ptr->tx_depth][context_ptr->txb_itr];
 
@@ -3563,13 +3459,12 @@ void perform_intra_tx_partitioning(
             TxType txk_end = TX_TYPES;
             uint64_t best_cost_tx_search = (uint64_t)~0;
 
-            const TxSetType tx_set_type = get_ext_tx_set_type(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr], 0, 0); // assumes INTRA 
+            const TxSetType tx_set_type = get_ext_tx_set_type(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr], 0, 0); // assumes INTRA
 
             for (int32_t tx_type = txk_start; tx_type < txk_end; ++tx_type) {
-
                 y_tu_coeff_bits = 0;
 
-                int32_t eset = get_ext_tx_set(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr], 0, 0); // assumes INTRA 
+                int32_t eset = get_ext_tx_set(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr], 0, 0); // assumes INTRA
                 // eset == 0 should correspond to a set with only DCT_DCT and there
                 // is no need to send the tx_type
                 if (eset <= 0) continue;
@@ -3624,16 +3519,12 @@ void perform_intra_tx_partitioning(
                 candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
 #endif
 
-
                 uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
                 // tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
-                if (y_has_coeff == 0 && tx_type != DCT_DCT) {
+                if (y_has_coeff == 0 && tx_type != DCT_DCT)
                     continue;
-                }
-
                 if (y_has_coeff) {
-
                     uint8_t *pred_buffer = &(candidateBuffer->prediction_ptr->buffer_y[tu_origin_index]);
                     uint8_t *rec_buffer = &(candidateBuffer->recon_ptr->buffer_y[tu_origin_index]);
 
@@ -3642,7 +3533,6 @@ void perform_intra_tx_partitioning(
                         memcpy(rec_buffer + j * candidateBuffer->recon_ptr->stride_y, pred_buffer + j * candidateBuffer->prediction_ptr->stride_y, context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr]);
 
                     av1_inv_transform_recon8bit(
-
                         &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[txb_1d_offset]),
                         rec_buffer,
                         candidateBuffer->recon_ptr->stride_y,
@@ -3650,10 +3540,8 @@ void perform_intra_tx_partitioning(
                         tx_type,
                         PLANE_TYPE_Y,
                         (uint16_t)candidateBuffer->candidate_ptr->eob[0][context_ptr->txb_itr]);
-
                 }
                 else {
-
                     picture_copy8_bit(
                         candidateBuffer->prediction_ptr,
                         tu_origin_index,
@@ -3687,7 +3575,6 @@ void perform_intra_tx_partitioning(
 
                 tuFullDistortion[0][DIST_CALC_PREDICTION] <<= 4;
                 tuFullDistortion[0][DIST_CALC_RESIDUAL] <<= 4;
-
 
                 //LUMA-ONLY
                 av1_tu_estimate_coeff_bits(
@@ -3795,7 +3682,6 @@ void perform_intra_tx_partitioning(
             uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
             if (y_has_coeff) {
-
                 uint8_t *pred_buffer = &(candidateBuffer->prediction_ptr->buffer_y[tu_origin_index]);
                 uint8_t *rec_buffer = &(candidateBuffer->recon_ptr->buffer_y[tu_origin_index]);
 
@@ -3804,7 +3690,6 @@ void perform_intra_tx_partitioning(
                     memcpy(rec_buffer + j * candidateBuffer->recon_ptr->stride_y, pred_buffer + j * candidateBuffer->prediction_ptr->stride_y, context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr]);
 
                 av1_inv_transform_recon8bit(
-
                     &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[txb_1d_offset]),
                     rec_buffer,
                     candidateBuffer->recon_ptr->stride_y,
@@ -3816,10 +3701,8 @@ void perform_intra_tx_partitioning(
 #endif
                     PLANE_TYPE_Y,
                     (uint16_t)candidateBuffer->candidate_ptr->eob[0][context_ptr->txb_itr]);
-
             }
             else {
-
                 picture_copy8_bit(
                     candidateBuffer->prediction_ptr,
                     tu_origin_index,
@@ -3853,7 +3736,6 @@ void perform_intra_tx_partitioning(
 
             tuFullDistortion[0][DIST_CALC_PREDICTION] <<= 4;
             tuFullDistortion[0][DIST_CALC_RESIDUAL] <<= 4;
-
 
             //LUMA-ONLY
             av1_tu_estimate_coeff_bits(
@@ -3969,16 +3851,12 @@ void perform_intra_tx_partitioning(
             best_cost_search = cost;
             best_tx_depth = context_ptr->tx_depth;
         }
-
-
     } // Transform Depth Loop
-
 
     // ATB Recon
     context_ptr->tx_depth = candidateBuffer->candidate_ptr->tx_depth = best_tx_depth;
 
     if (context_ptr->tx_depth == 0) {
-
         // Set recon neighbor array to be used @ intra compensation
         context_ptr->tx_search_luma_recon_neighbor_array = picture_control_set_ptr->md_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
 
@@ -3992,7 +3870,6 @@ void perform_intra_tx_partitioning(
 
         uint16_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];
         for (context_ptr->txb_itr = 0; context_ptr->txb_itr < txb_count; context_ptr->txb_itr++) {
-
             uint16_t tx_org_x = context_ptr->blk_geom->tx_org_x[context_ptr->tx_depth][context_ptr->txb_itr];
             uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[context_ptr->tx_depth][context_ptr->txb_itr];
 
@@ -4012,7 +3889,6 @@ void perform_intra_tx_partitioning(
 
             tu_origin_index = tx_org_x + (tx_org_y * candidateBuffer->residual_ptr->stride_y);
             y_tu_coeff_bits = 0;
-
 
             uint32_t input_tu_origin_index = (context_ptr->sb_origin_x + tx_org_x + input_picture_ptr->origin_x) + ((context_ptr->sb_origin_y + tx_org_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y);
 
@@ -4101,7 +3977,6 @@ void perform_intra_tx_partitioning(
             uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
             if (y_has_coeff) {
-
                 uint8_t *pred_buffer = &(candidateBuffer->prediction_ptr->buffer_y[tu_origin_index]);
                 uint8_t *rec_buffer = &(candidateBuffer->recon_ptr->buffer_y[tu_origin_index]);
 
@@ -4110,7 +3985,6 @@ void perform_intra_tx_partitioning(
                     memcpy(rec_buffer + j * candidateBuffer->recon_ptr->stride_y, pred_buffer + j * candidateBuffer->prediction_ptr->stride_y, context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr]);
 
                 av1_inv_transform_recon8bit(
-
                     &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[txb_1d_offset]),
                     rec_buffer,
                     candidateBuffer->recon_ptr->stride_y,
@@ -4122,10 +3996,8 @@ void perform_intra_tx_partitioning(
 #endif
                     PLANE_TYPE_Y,
                     (uint16_t)candidateBuffer->candidate_ptr->eob[0][context_ptr->txb_itr]);
-
             }
             else {
-
                 picture_copy8_bit(
                     candidateBuffer->prediction_ptr,
                     tu_origin_index,
@@ -4159,7 +4031,6 @@ void perform_intra_tx_partitioning(
 
             tuFullDistortion[0][DIST_CALC_PREDICTION] <<= 4;
             tuFullDistortion[0][DIST_CALC_RESIDUAL] <<= 4;
-
 
             //LUMA-ONLY
             av1_tu_estimate_coeff_bits(
@@ -4209,7 +4080,6 @@ void perform_intra_tx_partitioning(
             y_full_distortion[DIST_CALC_PREDICTION] += tuFullDistortion[0][DIST_CALC_PREDICTION];
 
             txb_1d_offset += context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr];
-
         } // Transform Loop
     }
 }
@@ -4267,7 +4137,6 @@ void AV1PerformFullLoop(
         candidateBuffer = candidate_buffer_ptr_array[candidateIndex];
         candidate_ptr = candidateBuffer->candidate_ptr;//this is the FastCandidateStruct
 
-
         if (picture_control_set_ptr->slice_type != I_SLICE) {
             if ((candidate_ptr->type == INTRA_MODE || context_ptr->full_loop_escape == 2) && best_inter_luma_zero_coeff == 0) {
                 // Update # of NFL
@@ -4282,8 +4151,6 @@ void AV1PerformFullLoop(
         memset(candidate_ptr->eob[1], 0, sizeof(uint16_t));
         memset(candidate_ptr->eob[2], 0, sizeof(uint16_t));
 
-
-
         candidate_ptr->chroma_distortion = 0;
         candidate_ptr->chroma_distortion_inter_depth = 0;
         // Set Skip Flag
@@ -4293,12 +4160,11 @@ void AV1PerformFullLoop(
             context_ptr->skip_interpolation_search = 0;
             context_ptr->skip_interpolation_search = (best_fastLoop_candidate_index > NFL_IT_TH) ? 1 : context_ptr->skip_interpolation_search;
             if (candidate_ptr->type != INTRA_MODE) {
-
             ProductPredictionFunTable[candidate_ptr->type](
                 context_ptr,
                 picture_control_set_ptr,
                 candidateBuffer,
-                asm_type);               
+                asm_type);
             }
         }
 
@@ -4317,8 +4183,6 @@ void AV1PerformFullLoop(
 #endif
         //Cb Residual
         if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
-
-
             ResidualKernel(
                 &(input_picture_ptr->buffer_cb[inputCbOriginIndex]),
                 input_picture_ptr->stride_cb,
@@ -4339,7 +4203,6 @@ void AV1PerformFullLoop(
                 candidateBuffer->residual_ptr->stride_cr,
                 context_ptr->blk_geom->bwidth_uv,
                 context_ptr->blk_geom->bheight_uv);
-
         }
 
         // initialize luma CBF
@@ -4360,7 +4223,7 @@ void AV1PerformFullLoop(
         uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
 #if BYPASS_USELESS_TX_SEARCH
             context_ptr->blk_geom,
-#else  
+#else
             context_ptr->blk_geom->sq_size,
 #endif
             ref_fast_cost,
@@ -4369,9 +4232,7 @@ void AV1PerformFullLoop(
 
         tx_search_skip_fag = ( picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
 
-
         if (!tx_search_skip_fag){
-
                 product_full_loop_tx_search(
                     candidateBuffer,
                     context_ptr,
@@ -4379,9 +4240,7 @@ void AV1PerformFullLoop(
 
             candidate_ptr->full_distortion = 0;
 
-
             memset(candidate_ptr->eob[0], 0, sizeof(uint16_t));
-
 
             //re-init
             candidate_ptr->y_has_coeff = 0;
@@ -4402,12 +4261,11 @@ void AV1PerformFullLoop(
                 &y_full_distortion[0]);
         }
         else {
-            // Transform partitioning free patch (except the 128x128 case) 
+            // Transform partitioning free patch (except the 128x128 case)
             if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FULL_LOOP) {
                 context_ptr->skip_interpolation_search = 0;
                 context_ptr->skip_interpolation_search = (best_fastLoop_candidate_index > NFL_IT_TH) ? 1 : context_ptr->skip_interpolation_search;
                 if (candidate_ptr->type != INTRA_MODE) {
-
                     ProductPredictionFunTable[candidate_ptr->type](
                         context_ptr,
                         picture_control_set_ptr,
@@ -4431,7 +4289,7 @@ void AV1PerformFullLoop(
             uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
 #if BYPASS_USELESS_TX_SEARCH
                 context_ptr->blk_geom,
-#else  
+#else
                 context_ptr->blk_geom->sq_size,
 #endif
                 ref_fast_cost,
@@ -4441,7 +4299,6 @@ void AV1PerformFullLoop(
             tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
 
             if (!tx_search_skip_fag) {
-
                 product_full_loop_tx_search(
                     candidateBuffer,
                     context_ptr,
@@ -4449,9 +4306,7 @@ void AV1PerformFullLoop(
 
                 candidate_ptr->full_distortion = 0;
 
-
                 memset(candidate_ptr->eob[0], 0, sizeof(uint16_t));
-
 
                 //re-init
                 candidate_ptr->y_has_coeff = 0;
@@ -4469,9 +4324,7 @@ void AV1PerformFullLoop(
         }
 #endif
 
-
         if (candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
-
             // If mode is CFL:
             // 1: recon the Luma
             // 2: Form the pred_buf_q3
@@ -4486,14 +4339,12 @@ void AV1PerformFullLoop(
                 inputCbOriginIndex,
                 cuChromaOriginIndex,
                 asm_type);
-
         }
 
         candidate_ptr->chroma_distortion_inter_depth = 0;
         candidate_ptr->chroma_distortion = 0;
 
         //CHROMA
-
 
         cbFullDistortion[DIST_CALC_RESIDUAL] = 0;
         crFullDistortion[DIST_CALC_RESIDUAL] = 0;
@@ -4508,7 +4359,6 @@ void AV1PerformFullLoop(
         uint8_t cr_qp = context_ptr->qp;
 
         if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
-
             full_loop_r(
                 sb_ptr,
                 candidateBuffer,
@@ -4577,9 +4427,6 @@ void AV1PerformFullLoop(
             &cr_coeff_bits,
             context_ptr->blk_geom->bsize);
 
-
-
-
         candidateBuffer->cb_distortion[DIST_CALC_RESIDUAL] = cbFullDistortion[DIST_CALC_RESIDUAL];
         candidateBuffer->cb_distortion[DIST_CALC_PREDICTION] = cbFullDistortion[DIST_CALC_PREDICTION];
         candidateBuffer->cb_coeff_bits = cb_coeff_bits;
@@ -4592,7 +4439,7 @@ void AV1PerformFullLoop(
         candidateBuffer->y_coeff_bits = y_coeff_bits;
         candidate_ptr->full_distortion = (uint32_t)(y_full_distortion[0]);
 
-        if (context_ptr->full_loop_escape) 
+        if (context_ptr->full_loop_escape)
         {
             if (picture_control_set_ptr->slice_type != I_SLICE) {
                 if (candidate_ptr->type == INTER_MODE) {
@@ -4601,10 +4448,8 @@ void AV1PerformFullLoop(
                         bestfullCost = *candidateBuffer->full_cost_ptr;
                     }
                 }
-
             }
         }
-
     }//end for( full loop)
 }
 
@@ -4612,11 +4457,8 @@ void move_cu_data(
     CodingUnit *src_cu,
     CodingUnit *dst_cu)
 {
-
-
     //CHKN TransformUnit             transform_unit_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
     memcpy(dst_cu->transform_unit_array, src_cu->transform_unit_array, TRANSFORM_UNIT_MAX_COUNT * sizeof(TransformUnit));
-
 
     //CHKN PredictionUnit            prediction_unit_array[MAX_NUM_OF_PU_PER_CU];    // 35-bytes * 4 = 140 bytes
     memcpy(dst_cu->prediction_unit_array, src_cu->prediction_unit_array, MAX_NUM_OF_PU_PER_CU * sizeof(PredictionUnit));
@@ -4670,16 +4512,13 @@ void move_cu_data(
     dst_cu->split_flag = src_cu->split_flag;
     dst_cu->skip_flag = src_cu->skip_flag;
 
-
     //CHKN    MacroBlockD*  av1xd;
     memcpy(dst_cu->av1xd, src_cu->av1xd, sizeof(MacroBlockD));
-
 
     // uint8_t ref_mv_count[MODE_CTX_REF_FRAMES];
 
     //CHKN int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
     memcpy(dst_cu->inter_mode_ctx, src_cu->inter_mode_ctx, MODE_CTX_REF_FRAMES * sizeof(int16_t));
-
 
     //CHKN IntMv ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES]; //used only for nonCompound modes.
     memcpy(dst_cu->ref_mvs, src_cu->ref_mvs, MODE_CTX_REF_FRAMES*MAX_MV_REF_CANDIDATES * sizeof(IntMv));
@@ -4741,7 +4580,6 @@ void move_cu_data(
 void move_cu_data_redund(
     CodingUnit *src_cu,
     CodingUnit *dst_cu){
-
     //CHKN TransformUnit_t             transform_unit_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
     memcpy(dst_cu->transform_unit_array, src_cu->transform_unit_array, TRANSFORM_UNIT_MAX_COUNT * sizeof(TransformUnit));
 
@@ -4801,12 +4639,10 @@ void move_cu_data_redund(
     //CHKN    MacroBlockD*  av1xd;
     memcpy(dst_cu->av1xd, src_cu->av1xd, sizeof(MacroBlockD));
 
-
     // uint8_t ref_mv_count[MODE_CTX_REF_FRAMES];
 
     //CHKN int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
     memcpy(dst_cu->inter_mode_ctx, src_cu->inter_mode_ctx, MODE_CTX_REF_FRAMES * sizeof(int16_t));
-
 
     //CHKN IntMv ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES]; //used only for nonCompound modes.
     memcpy(dst_cu->ref_mvs, src_cu->ref_mvs, MODE_CTX_REF_FRAMES*MAX_MV_REF_CANDIDATES * sizeof(IntMv));
@@ -4888,25 +4724,22 @@ EbBool allowed_ns_cu(
     uint8_t                            nsq_max_shapes_md,
     ModeDecisionContext              *context_ptr,
     uint8_t                            is_complete_sb){
-  
     EbBool  ret = 1;
 #if NSQ_FIX
     UNUSED(is_complete_sb);
 #else
     // Disable NSQ for non-complete LCU
     if (!is_complete_sb) {
-        if (context_ptr->blk_geom->shape != PART_N) {
+        if (context_ptr->blk_geom->shape != PART_N)
             ret = 0;
-        }
     }
 #endif
     if (is_nsq_table_used) {
         if (context_ptr->blk_geom->shape != PART_N) {
             ret = 0;
             for (int i = 0; i < nsq_max_shapes_md; i++) {
-                if (context_ptr->blk_geom->shape == context_ptr->nsq_table[i]) {
+                if (context_ptr->blk_geom->shape == context_ptr->nsq_table[i])
                     ret = 1;
-                }
             }
         }
     }
@@ -4943,21 +4776,20 @@ void inter_depth_tx_search(
     EbAsm                                   asm_type)
 {
 #if ATB_MD
-    // Hsan: if Transform Search ON and INTRA, then Tx Type search is performed @ the full loop 
+    // Hsan: if Transform Search ON and INTRA, then Tx Type search is performed @ the full loop
     uint8_t  tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_INTER_DEPTH && (picture_control_set_ptr->parent_pcs_ptr->atb_mode == 0 || candidateBuffer ->candidate_ptr->type == INTER_MODE)) ? get_skip_tx_search_flag(
 #else
     uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_INTER_DEPTH ? get_skip_tx_search_flag(
 #endif
 #if BYPASS_USELESS_TX_SEARCH
         context_ptr->blk_geom,
-#else  
+#else
         context_ptr->blk_geom->sq_size,
 #endif
         ref_fast_cost,
         *candidateBuffer->fast_cost_ptr,
         picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
     if (!tx_search_skip_fag) {
-
         uint64_t      y_full_distortion[DIST_CALC_TOTAL] = { 0 };
         uint32_t      count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
 
@@ -4974,16 +4806,13 @@ void inter_depth_tx_search(
             candidate_ptr,
             count_non_zero_coeffs);
 
-
         product_full_loop_tx_search(
             candidateBuffer,
             context_ptr,
             picture_control_set_ptr
         );
 
-
         candidate_ptr->full_distortion = 0;
-
 
         memset(candidate_ptr->eob[0], 0, sizeof(uint16_t)*MAX_TXB_COUNT);
 
@@ -4998,7 +4827,6 @@ void inter_depth_tx_search(
             &(*count_non_zero_coeffs[0]),
             &y_coeff_bits,
             &y_full_distortion[0]);
-
 
         candidate_ptr->chroma_distortion_inter_depth = 0;
         candidate_ptr->chroma_distortion = 0;
@@ -5046,7 +4874,6 @@ void inter_depth_tx_search(
                 asm_type);
 
             candidate_ptr->block_has_coeff = (candidate_ptr->y_has_coeff | candidate_ptr->u_has_coeff | candidate_ptr->v_has_coeff) ? EB_TRUE : EB_FALSE;
-
         }
 
         Av1ProductFullCostFuncTable[candidate_ptr->type](
@@ -5082,16 +4909,11 @@ void inter_depth_tx_search(
         if (candidate_ptr->type == INTRA_MODE)
             context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost_luma = candidateBuffer->full_cost_luma;
 
-
         context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].merge_cost = *candidateBuffer->full_cost_merge_ptr;
         context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].skip_cost = *candidateBuffer->full_cost_skip_ptr;
 
-
-        if (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE) {
+        if (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE)
             context_ptr->md_ep_pipe_sb[cu_ptr->leaf_index].chroma_distortion = candidateBuffer->candidate_ptr->chroma_distortion;
-        }
-
-
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].full_distortion = candidateBuffer->candidate_ptr->full_distortion;
 
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].chroma_distortion = (uint32_t)candidateBuffer->candidate_ptr->chroma_distortion;
@@ -5124,7 +4946,6 @@ void inter_depth_tx_search(
 #endif
         tu_index = 0;
         txb_itr = 0;
-        
 
 #if NO_ENCDEC
         int32_t txb_1d_offset = 0, txb_1d_offset_uv = 0;
@@ -5132,10 +4953,8 @@ void inter_depth_tx_search(
         cu_ptr->block_has_coeff = 0;
 #endif
 
-
         // Set TU
         do {
-
             txb_ptr = &cu_ptr->transform_unit_array[tu_index];
 
             txb_ptr->split_flag = EB_FALSE;
@@ -5157,11 +4976,8 @@ void inter_depth_tx_search(
                 cu_ptr->block_has_coeff |= txb_ptr->u_has_coeff;
                 cu_ptr->block_has_coeff |= txb_ptr->v_has_coeff;
             }
-            else {
+            else
                 cu_ptr->block_has_coeff |= txb_ptr->y_has_coeff;
-            }
-
-
             cu_ptr->cand_buff_index = lowestCostIndex;
 
             cu_ptr->skip_flag = 0;   //SKIP is turned OFF for this case!!
@@ -5187,7 +5003,6 @@ void inter_depth_tx_search(
 #if NO_ENCDEC
             //copy coeff
             {
-
                 uint32_t  bwidth = context_ptr->blk_geom->tx_width[txb_itr] < 64 ? context_ptr->blk_geom->tx_width[txb_itr] : 32;
                 uint32_t  bheight = context_ptr->blk_geom->tx_height[txb_itr] < 64 ? context_ptr->blk_geom->tx_height[txb_itr] : 32;
 
@@ -5197,10 +5012,7 @@ void inter_depth_tx_search(
                 uint32_t j;
 
                 for (j = 0; j < bheight; j++)
-                {
                     memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
-                }
-
                 if (context_ptr->blk_geom->has_uv)
                 {
                     // Cb
@@ -5211,30 +5023,23 @@ void inter_depth_tx_search(
                     dst_ptr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->buffer_cb)[txb_1d_offset_uv]);
 
                     for (j = 0; j < bheight; j++)
-                    {
                         memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
-                    }
-
                     src_ptr = &(((int32_t*)buffer_ptr_array[lowestCostIndex]->residual_quant_coeff_ptr->buffer_cr)[txb_1d_offset_uv]);
                     dst_ptr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->buffer_cr)[txb_1d_offset_uv]);
 
                     for (j = 0; j < bheight; j++)
-                    {
                         memcpy(dst_ptr + j * bwidth, src_ptr + j * bwidth, bwidth * sizeof(int32_t));
-                    }
                 }
 
                 txb_1d_offset += context_ptr->blk_geom->tx_width[txb_itr] * context_ptr->blk_geom->tx_height[txb_itr];
                 if (context_ptr->blk_geom->has_uv)
                     txb_1d_offset_uv += context_ptr->blk_geom->tx_width_uv[txb_itr] * context_ptr->blk_geom->tx_height_uv[txb_itr];
-
             }
 
 #endif
 
             ++tu_index;
             ++txb_itr;
-
         } while (txb_itr < tuTotalCount);
     }
 }
@@ -5270,7 +5075,7 @@ uint8_t get_part_side(
     }
 }
 /****************************************************
-* Return a predicted Shape based on the above and 
+* Return a predicted Shape based on the above and
 * left partitions
 ****************************************************/
 PART get_partition_shape(
@@ -5282,12 +5087,10 @@ PART get_partition_shape(
     uint8_t left_size = get_part_side(left);
     PART part = PART_N;
 
-    if (above_size == width && left_size == height) {
+    if (above_size == width && left_size == height)
         part = PART_N;
-    }
-    else if (above_size > width && left_size > height) {
+    else if (above_size > width && left_size > height)
         part = PART_N;
-    }
     else if (above_size > width) {
         if (left_size == height)
             part = PART_N;
@@ -5336,13 +5139,12 @@ PART get_partition_shape(
         else
             printf("error: unsupported above_size\n");
     }
-    else {
+    else
         printf("error: unsupported above_size && left_size\n");
-    }
     return part;
 };
 /****************************************************
-* Reorder the nsq_table in order to keep the most 
+* Reorder the nsq_table in order to keep the most
 * probable Shape to be selected in the lowest index
 ****************************************************/
 void  order_nsq_table(
@@ -5368,9 +5170,8 @@ void  order_nsq_table(
         geom_offset_x = (me_sb_x & 0x1) * me_sb_size;
         geom_offset_y = (me_sb_y & 0x1) * me_sb_size;
     }
-    else {
+    else
         me_sb_addr = lcuAddr;
-    }
     max_number_of_pus_per_sb = picture_control_set_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
     me2Nx2NTableOffset = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 || context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) ? 0 :
         get_me_info_index(max_number_of_pus_per_sb, context_ptr->blk_geom, geom_offset_x, geom_offset_y);
@@ -5497,26 +5298,22 @@ void  order_nsq_table(
             context_ptr->nsq_table[1] = context_ptr->nsq_table[0];
             context_ptr->nsq_table[0] = neighbor_part;
         }
-        else {
+        else
             context_ptr->nsq_table[5] = neighbor_part != PART_N && neighbor_part != PART_S ? neighbor_part : me_part_0;
-        }
     }
 
     // Remove duplicate candidates
-    for (int pidx = 0; pidx < NSQ_TAB_SIZE; pidx++) {
+    for (int pidx = 0; pidx < NSQ_TAB_SIZE; pidx++)
         cnt[context_ptr->nsq_table[pidx]]++;
-    }
     cnt[context_ptr->nsq_table[0]] = 1;
     for (int iter = 0; iter < NSQ_TAB_SIZE - 1; iter++) {
         for (int idx = 1 + iter; idx < NSQ_TAB_SIZE; idx++) {
-            if (context_ptr->nsq_table[iter] != context_ptr->nsq_table[idx]) {
+            if (context_ptr->nsq_table[iter] != context_ptr->nsq_table[idx])
                 continue;
-            }
             else {
                 for (int i = idx; i < NSQ_TAB_SIZE; i++) {
-                    if (idx < NSQ_TAB_SIZE - 1) {
+                    if (idx < NSQ_TAB_SIZE - 1)
                         context_ptr->nsq_table[idx] = context_ptr->nsq_table[idx + 1];
-                    }
                     else if (idx == NSQ_TAB_SIZE - 1) {
                         for (int pidx = 1; pidx < PART_S; pidx++) {
                             if (cnt[pidx] == 0)
@@ -5535,7 +5332,6 @@ uint8_t check_skip_sub_blks(
     CodingUnit                     *cu_ptr,
     uint8_t                           is_complete_sb,
     uint32_t                          sb_index) {
-
     uint8_t skip_sub_blocks = 0;
     if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_OPEN_LOOP_DEPTH_MODE || (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] >= SB_OPEN_LOOP_DEPTH_MODE))
         if (is_complete_sb)
@@ -5569,7 +5365,7 @@ void search_best_independent_uv_mode(
 
     int coeff_rate[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
     int distortion[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
-    
+
     // Use the 1st spot of the candidate buffer to hold cfl settings to use same kernel as MD for coef cost estimation
     ModeDecisionCandidateBuffer  *candidateBuffer = &(context_ptr->candidate_buffer_ptr_array[0][0]);
     candidateBuffer->candidate_ptr = &(context_ptr->fast_candidate_array[0]);
@@ -5586,7 +5382,6 @@ void search_best_independent_uv_mode(
 #endif
 
     for (uv_mode = uv_mode_start; uv_mode <= uv_mode_end; uv_mode++) {
-
 #if SEARCH_UV_OPT_0
         uint8_t uv_angleDeltaCandidateCount = 1;
 #else
@@ -5604,7 +5399,7 @@ void search_best_independent_uv_mode(
 
         for (uint8_t uv_angleDeltaCounter = 0; uv_angleDeltaCounter < uv_angleDeltaCandidateCount; ++uv_angleDeltaCounter) {
             int32_t uv_angle_delta = CLIP(uv_angle_delta_shift * (uv_angleDeltaCandidateCount == 1 ? 0 : uv_angleDeltaCounter - (uv_angleDeltaCandidateCount >> 1)), -MAX_ANGLE_DELTA, MAX_ANGLE_DELTA);
-        
+
             candidateBuffer->candidate_ptr->intra_chroma_mode = uv_mode;
             candidateBuffer->candidate_ptr->is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)uv_mode);
             candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_UV] = uv_angle_delta;
@@ -5642,7 +5437,7 @@ void search_best_independent_uv_mode(
                     0,
                     0,
 #if ATB_SUPPORT
-                    context_ptr->blk_geom->txsize_uv[0][0], 
+                    context_ptr->blk_geom->txsize_uv[0][0],
 #else
                     context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -5663,7 +5458,6 @@ void search_best_independent_uv_mode(
                 picture_control_set_ptr,
                 candidateBuffer,
                 asm_type);
-
 
             ResidualKernel(
                 &(input_picture_ptr->buffer_cb[inputCbOriginIndex]),
@@ -5697,7 +5491,6 @@ void search_best_independent_uv_mode(
                 &(*count_non_zero_coeffs[1]),
                 &(*count_non_zero_coeffs[2]));
 
-
             cu_full_distortion_fast_tu_mode_r(
                 context_ptr->sb_ptr,
                 candidateBuffer,
@@ -5715,10 +5508,8 @@ void search_best_independent_uv_mode(
 #endif
                 asm_type);
 
-
             coeff_rate[uv_mode][MAX_ANGLE_DELTA + uv_angle_delta] = cb_coeff_bits + cr_coeff_bits;
             distortion[uv_mode][MAX_ANGLE_DELTA + uv_angle_delta] = cbFullDistortion[DIST_CALC_RESIDUAL] + crFullDistortion[DIST_CALC_RESIDUAL];
-
         }
     }
 
@@ -5727,7 +5518,6 @@ void search_best_independent_uv_mode(
 
     // Loop over all intra mode, then over all uv move to derive the best uv mode for a given intra mode in term of rate
     for (uint8_t intra_mode = intra_mode_start; intra_mode <= intra_mode_end; ++intra_mode) {
-
         uint8_t angleDeltaCandidateCount = (use_angle_delta && av1_is_directional_mode((PredictionMode)intra_mode)) ? 7 : 1;
         uint8_t angle_delta_shift = 1;
 
@@ -5754,7 +5544,6 @@ void search_best_independent_uv_mode(
 
             //int32_t  p_angle = mode_to_angle_map[(PredictionMode)openLoopIntraCandidate] + angle_delta * ANGLE_STEP;
             //if (!disable_z2_prediction || (p_angle <= 90 || p_angle >= 180)) {
-
             // uv mode loop
             context_ptr->best_uv_cost[intra_mode][MAX_ANGLE_DELTA + angle_delta] = (uint64_t)~0;
             for (uv_mode = uv_mode_start; uv_mode <= uv_mode_end; uv_mode++) {
@@ -5792,7 +5581,7 @@ void search_best_independent_uv_mode(
                             0,
                             0,
 #if ATB_SUPPORT
-                            context_ptr->blk_geom->txsize_uv[0][0], 
+                            context_ptr->blk_geom->txsize_uv[0][0],
 #else
                             context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -5809,7 +5598,7 @@ void search_best_independent_uv_mode(
                             0,
                             0,
 #if ATB_SUPPORT
-                            context_ptr->blk_geom->txsize_uv[0][0], 
+                            context_ptr->blk_geom->txsize_uv[0][0],
 #else
                             context_ptr->blk_geom->txsize_uv[0],
 #endif
@@ -5840,14 +5629,12 @@ void search_best_independent_uv_mode(
                     uint64_t uv_cost = RDCOST(context_ptr->full_lambda, rate, distortion[uv_mode][MAX_ANGLE_DELTA + uv_angle_delta]);
 
                     if (uv_cost < context_ptr->best_uv_cost[intra_mode][MAX_ANGLE_DELTA + angle_delta]) {
-
                         context_ptr->best_uv_mode[intra_mode][MAX_ANGLE_DELTA + angle_delta] = uv_mode;
                         context_ptr->best_uv_angle[intra_mode][MAX_ANGLE_DELTA + angle_delta] = uv_angle_delta;
 
                         context_ptr->best_uv_cost[intra_mode][MAX_ANGLE_DELTA + angle_delta] = uv_cost;
                         context_ptr->fast_luma_rate[intra_mode][MAX_ANGLE_DELTA + angle_delta] = candidateBuffer->candidate_ptr->fast_luma_rate;
                         context_ptr->fast_chroma_rate[intra_mode][MAX_ANGLE_DELTA + angle_delta] = candidateBuffer->candidate_ptr->fast_chroma_rate;
-
                     }
                 }
             }
@@ -5871,7 +5658,6 @@ void md_encode_block(
     uint32_t                          lcuAddr,
     ModeDecisionCandidateBuffer    *bestCandidateBuffers[5])
 {
-
     ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->candidate_buffer_ptr_array;
     ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array;
     const BlockGeom                          *blk_geom = context_ptr->blk_geom;
@@ -5928,20 +5714,19 @@ void md_encode_block(
             context_ptr->cr_dc_sign_level_coeff_neighbor_array,
             context_ptr->inter_pred_dir_neighbor_array,
             context_ptr->ref_frame_type_neighbor_array,
-
             context_ptr->intra_luma_mode_neighbor_array,
             context_ptr->skip_flag_neighbor_array,
             context_ptr->mode_type_neighbor_array,
             context_ptr->leaf_depth_neighbor_array,
             context_ptr->leaf_partition_neighbor_array);
-#if M8_SKIP_BLK        
+#if M8_SKIP_BLK
          // Skip sub blocks if the current block has the same depth as the left block and above block
-        if (picture_control_set_ptr->parent_pcs_ptr->skip_sub_blks) 
+        if (picture_control_set_ptr->parent_pcs_ptr->skip_sub_blks)
             *skip_sub_blocks =check_skip_sub_blks(picture_control_set_ptr,
                                                   context_ptr,
                                                   cu_ptr,
                                                   is_complete_sb,
-                                                  lcuAddr);     
+                                                  lcuAddr);
 #endif
         set_nfl(
 #if NFL_PER_SQ_SIZE
@@ -5950,9 +5735,8 @@ void md_encode_block(
             context_ptr
         );
 
-
 #if SEARCH_UV_MODE
-        // Initialize uv_search_path     
+        // Initialize uv_search_path
         context_ptr->uv_search_path = EB_FALSE;
         // Search the best independent intra chroma mode
         if (context_ptr->chroma_level == CHROMA_MODE_0) {
@@ -5982,7 +5766,7 @@ void md_encode_block(
             (void*)context_ptr->inter_prediction_context,
             picture_control_set_ptr);
 #if M9_INTRA
-        if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode >= 5 && picture_control_set_ptr->slice_type == I_SLICE) 
+        if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode >= 5 && picture_control_set_ptr->slice_type == I_SLICE)
             context_ptr->full_recon_search_count = 1;
 #endif
         EbBool decouple_intra_inter_fast_loop = context_ptr->decouple_intra_inter_fast_loop  && (context_ptr->blk_geom->sq_size > 4 && context_ptr->blk_geom->shape == PART_N && context_ptr->full_recon_search_count > 1);
@@ -5997,7 +5781,7 @@ void md_encode_block(
                 context_ptr->full_recon_search_count :
                 1;//MIN(context_ptr->full_recon_search_count >> 1, context_ptr->fast_candidate_intra_count);
             uint32_t full_recon_inter_search_count = MIN(context_ptr->full_recon_search_count - full_recon_intra_search_count, context_ptr->fast_candidate_inter_count);
-            // Update full_recon_search_count; number of full loop candidates could not exceed number of fast loop candidates 
+            // Update full_recon_search_count; number of full loop candidates could not exceed number of fast loop candidates
             context_ptr->full_recon_search_count = full_recon_intra_search_count + full_recon_inter_search_count;
             // Derive intra and inter full buffer total count
             uint32_t intra_buffer_count = context_ptr->fast_candidate_intra_count > full_recon_intra_search_count ? (full_recon_intra_search_count + 1) : full_recon_intra_search_count;
@@ -6077,7 +5861,6 @@ void md_encode_block(
                 fastCandidateTotalCount > context_ptr->full_recon_search_count,
                 0,
                 asm_type);
-
         }
 
         uint64_t ref_fast_cost = MAX_MODE_COST;
@@ -6123,9 +5906,7 @@ void md_encode_block(
         bestCandidateBuffers[0] = candidateBuffer;
 
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_INTER_DEPTH) {
-
             if (candidateBuffer->candidate_ptr->type != INTRA_MODE && candidateBuffer->candidate_ptr->motion_mode == SIMPLE_TRANSLATION) {
-
                 context_ptr->skip_interpolation_search = 0;
                 ProductPredictionFunTable[candidateBuffer->candidate_ptr->type](
                     context_ptr,
@@ -6146,7 +5927,6 @@ void md_encode_block(
 
         uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
         if (context_ptr->blk_geom->shape == PART_N) {
-
             context_ptr->parent_sq_type[sq_index] = candidateBuffer->candidate_ptr->type;
 
             context_ptr->parent_sq_has_coeff[sq_index] = (candidateBuffer->candidate_ptr->y_has_coeff ||
@@ -6166,13 +5946,11 @@ void md_encode_block(
 
 #if CFL_FIX
         if (!context_ptr->blk_geom->has_uv && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
-
             // Store the luma data for 4x* and *x4 blocks to be used for CFL
             EbPictureBufferDesc  *recon_ptr = candidateBuffer->recon_ptr;
             uint32_t rec_luma_offset = context_ptr->blk_geom->origin_x + context_ptr->blk_geom->origin_y * recon_ptr->stride_y;
-            for (uint32_t j = 0; j < context_ptr->blk_geom->bheight; ++j) {
+            for (uint32_t j = 0; j < context_ptr->blk_geom->bheight; ++j)
                 memcpy(&context_ptr->cfl_temp_luma_recon[rec_luma_offset + j* recon_ptr->stride_y], recon_ptr->buffer_y + rec_luma_offset + j * recon_ptr->stride_y, context_ptr->blk_geom->bwidth);
-            }
         }
 #endif
         //copy neigh recon data in cu_ptr
@@ -6202,11 +5980,9 @@ void md_encode_block(
             }
         }
 
-
 #if NO_ENCDEC
         //copy recon
         {
-
             uint32_t  tu_origin_index = context_ptr->blk_geom->origin_x + (context_ptr->blk_geom->origin_y * 128);
             uint32_t  bwidth = context_ptr->blk_geom->bwidth;
             uint32_t  bheight = context_ptr->blk_geom->bheight;
@@ -6216,14 +5992,10 @@ void md_encode_block(
 
             uint32_t j;
             for (j = 0; j < bheight; j++)
-            {
                 memcpy(dst_ptr + j * 128, src_ptr + j * 128, bwidth * sizeof(uint8_t));
-            }
-
             // Cb
             if (context_ptr->blk_geom->has_uv)
             {
-
                 uint32_t tu_origin_index = ((((context_ptr->blk_geom->origin_x >> 3) << 3) + ((context_ptr->blk_geom->origin_y >> 3) << 3) * candidateBuffer->recon_ptr->stride_cb) >> 1);
 
                 bwidth = context_ptr->blk_geom->bwidth_uv;
@@ -6233,29 +6005,21 @@ void md_encode_block(
                 dst_ptr = &(((uint8_t*)context_ptr->cu_ptr->recon_tmp->buffer_cb)[0]);
 
                 for (j = 0; j < bheight; j++)
-                {
                     memcpy(dst_ptr + j * 64, src_ptr + j * 64, bwidth * sizeof(uint8_t));
-                }
-
                 // Cr
 
                 src_ptr = &(((uint8_t*)candidateBuffer->recon_ptr->buffer_cr)[tu_origin_index]);
                 dst_ptr = &(((uint8_t*)context_ptr->cu_ptr->recon_tmp->buffer_cr)[0]);
 
                 for (j = 0; j < bheight; j++)
-                {
                     memcpy(dst_ptr + j * 64, src_ptr + j * 64, bwidth * sizeof(uint8_t));
-                }
-
             }
-
         }
 #endif
 
 #if RED_CU
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].avail_blk_flag = EB_TRUE;
 #endif
-
     }
     else
     {
@@ -6263,7 +6027,6 @@ void md_encode_block(
         cu_ptr->prediction_unit_array->ref_frame_type = 0;
     }
 }
-
 
 EB_EXTERN EbErrorType mode_decision_sb(
     SequenceControlSet                *sequence_control_set_ptr,
@@ -6363,7 +6126,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
     uint8_t skip_sub_blocks;
 #endif
     do {
-#if M8_SKIP_BLK     
+#if M8_SKIP_BLK
         skip_sub_blocks = 0;
 #endif
         blk_idx_mds = leaf_data_array[cuIdx].mds_idx;
@@ -6390,7 +6153,6 @@ EB_EXTERN EbErrorType mode_decision_sb(
         cu_ptr->mds_idx = blk_idx_mds;
         context_ptr->md_cu_arr_nsq[blk_idx_mds].mdc_split_flag = (uint16_t)leafDataPtr->split_flag;
 
-
         cu_ptr->split_flag = (uint16_t)leafDataPtr->split_flag; //mdc indicates smallest or non valid CUs with split flag=
         cu_ptr->qp = context_ptr->qp;
         cu_ptr->best_d1_blk = blk_idx_mds;
@@ -6416,19 +6178,14 @@ EB_EXTERN EbErrorType mode_decision_sb(
             ModeInfo *mi_ptr = *cu_ptr->av1xd->mi;
             cu_ptr->av1xd->up_available = (mi_row > sb_ptr->tile_info.mi_row_start);
             cu_ptr->av1xd->left_available = (mi_col > sb_ptr->tile_info.mi_col_start);
-            if (cu_ptr->av1xd->up_available) {
+            if (cu_ptr->av1xd->up_available)
                 cu_ptr->av1xd->above_mbmi = &mi_ptr[-mi_stride].mbmi;
-            }
-            else {
+            else
                 cu_ptr->av1xd->above_mbmi = NULL;
-            }
-
-            if (cu_ptr->av1xd->left_available) {
+            if (cu_ptr->av1xd->left_available)
                 cu_ptr->av1xd->left_mbmi = &mi_ptr[-1].mbmi;
-            }
-            else {
+            else
                 cu_ptr->av1xd->left_mbmi = NULL;
-            }
 #endif
 
 #if RED_CU
@@ -6436,7 +6193,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
         uint16_t redundant_blk_mds;
 
         check_redundant_block(blk_geom, context_ptr, &redundant_blk_avail, &redundant_blk_mds);
-       
+
 #if NEW_PRESETS
         if (redundant_blk_avail && context_ptr->redundant_blk)
 #else
@@ -6454,12 +6211,11 @@ EB_EXTERN EbErrorType mode_decision_sb(
             memcpy(dst_cu->neigh_left_recon[2], src_cu->neigh_left_recon[2], 128);
             memcpy(dst_cu->neigh_top_recon[0], src_cu->neigh_top_recon[0], 128);
             memcpy(dst_cu->neigh_top_recon[1], src_cu->neigh_top_recon[1], 128);
-            memcpy(dst_cu->neigh_top_recon[2], src_cu->neigh_top_recon[2], 128); 
+            memcpy(dst_cu->neigh_top_recon[2], src_cu->neigh_top_recon[2], 128);
             memcpy(&context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx], &context_ptr->md_ep_pipe_sb[redundant_blk_mds], sizeof(MdEncPassCuData));
             if (context_ptr->blk_geom->shape == PART_N) {
-
                 uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
-                context_ptr->parent_sq_type[sq_index] = src_cu->prediction_mode_flag;               
+                context_ptr->parent_sq_type[sq_index] = src_cu->prediction_mode_flag;
                 context_ptr->parent_sq_has_coeff[sq_index] = src_cu->block_has_coeff;
                 context_ptr->parent_sq_pred_mode[sq_index] = src_cu->pred_mode;
             }
@@ -6467,7 +6223,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
         else
 #endif
 #if ATB_SUPPORT
-        // Initialize tx_depth 
+        // Initialize tx_depth
         cu_ptr->tx_depth = 0;
 #endif
         md_encode_block(
@@ -6504,13 +6260,10 @@ EB_EXTERN EbErrorType mode_decision_sb(
                     sb_origin_y);
         }
 
-
-
         d1_blocks_accumlated = blk_geom->shape == PART_N ? 1 : d1_blocks_accumlated + 1;
 
         if (d1_blocks_accumlated == leafDataPtr->tot_d1_blocks)
         {
-
             uint32_t  lastCuIndex_mds = d2_inter_depth_block_decision(
                 context_ptr,
                 blk_geom->sqi_mds,//input is parent square
@@ -6522,20 +6275,15 @@ EB_EXTERN EbErrorType mode_decision_sb(
                 context_ptr->md_rate_estimation_ptr,
                 picture_control_set_ptr);
 
-
             if (context_ptr->md_cu_arr_nsq[lastCuIndex_mds].split_flag == EB_FALSE)
             {
-
                 md_update_all_neighbour_arrays_multiple(
                     picture_control_set_ptr,
                     context_ptr,
                     context_ptr->md_cu_arr_nsq[lastCuIndex_mds].best_d1_blk,
                     sb_origin_x,
                     sb_origin_y);
-
             }
-
-
         }
 #if !M8_SKIP_BLK
 
@@ -6550,20 +6298,14 @@ EB_EXTERN EbErrorType mode_decision_sb(
                 else
                     break;
             }
-
         }
         else
             cuIdx++;
 #endif
     } while (cuIdx < leaf_count);// End of CU loop
 
-
-
-
     return return_error;
 }
-
-
 
 /*******************************************
 * Compute4x4SAD_Default
@@ -6602,7 +6344,6 @@ static EbSadKernelNxMType FUNC_TABLE compute4x4SAD_funcPtrArray[ASM_TYPE_TOTAL] 
     compute4x_m_sad_avx2_intrin,
 };
 
-
 static uint32_t tab4x4[256] = {
     0, 1, 4, 5, 16, 17, 20, 21, 64, 65, 68, 69, 80, 81, 84, 85,
     2, 3, 6, 7, 18, 19, 22, 23, 66, 67, 70, 71, 82, 83, 86, 87,
@@ -6620,7 +6361,6 @@ static uint32_t tab4x4[256] = {
     162, 163, 166, 167, 178, 179, 182, 183, 226, 227, 230, 231, 242, 243, 246, 247,
     168, 169, 172, 173, 184, 185, 188, 189, 232, 233, 236, 237, 248, 249, 252, 253,
     170, 171, 174, 175, 186, 187, 190, 191, 234, 235, 238, 239, 250, 251, 254, 255,
-
 };
 
 static uint32_t tab8x4[128] = {
@@ -6653,7 +6393,6 @@ static uint32_t tab4x8[128] = {
     84, 85, 86, 87, 92, 93, 94, 95, 116, 117, 118, 119, 124, 125, 126, 127
 };
 
-
 static uint32_t tab16x4[64] = {
      0    ,        4,        16,            20,
      1    ,        5,        17,            21,
@@ -6671,7 +6410,6 @@ static uint32_t tab16x4[64] = {
      41,        45,        57,            61,
      42,        46,        58,            62,
      43,        47,        59,            63
-
 };
 static uint32_t tab4x16[64] = {
     0,    1,    2,    3,    8,    9,    10,    11,    16,    17,    18,    19,    24,    25,    26,    27,
@@ -6712,7 +6450,6 @@ static void in_loop_me_8xN_Nx8_distortion_update(
     uint32_t square_block_index;
     uint32_t first_rec_block_index;
     uint32_t second_rec_block_index;
-
 
     //8x4
     first_rec_block_index = (block_4x4_index - 3) / 2;
@@ -7376,27 +7113,22 @@ static void in_loop_me_get_search_point_results_block(
 
     for (block_64x64_y = 0; block_64x64_y < quad_offset; block_64x64_y++) {
         for (block_64x64_x = 0; block_64x64_x < quad_offset; block_64x64_x++) {
-
             block_64x64_index = block_64x64_x + (block_64x64_y * 2);
 
             for (block_32x32_y = 0; block_32x32_y < 2; block_32x32_y++) {
                 for (block_32x32_x = 0; block_32x32_x < 2; block_32x32_x++) {
-
                     block_32x32_index = (block_64x64_index * 4) + block_32x32_x + (block_32x32_y * 2);
 
                     for (block_16x16_y = 0; block_16x16_y < 2; block_16x16_y++) {
                         for (block_16x16_x = 0; block_16x16_x < 2; block_16x16_x++) {
-
                             block_16x16_index = (block_32x32_index * 4) + block_16x16_x + (block_16x16_y * 2);
 
                             for (block_8x8_y = 0; block_8x8_y < 2; block_8x8_y++) {
                                 for (block_8x8_x = 0; block_8x8_x < 2; block_8x8_x++) {
-
                                     block_8x8_index = (block_16x16_index * 4) + block_8x8_x + (block_8x8_y * 2);
 
                                     for (block_4x4_y = 0; block_4x4_y < 2; block_4x4_y++) {
                                         for (block_4x4_x = 0; block_4x4_x < 2; block_4x4_x++) {
-
                                             block_4x4_index = (block_8x8_index * 4) + block_4x4_x + (block_4x4_y * 2);
 
                                             uint32_t block_4x4_addr_y = (block_64x64_y * 64) + (block_32x32_y * 32) + (block_16x16_y * 16) + (block_8x8_y * 8) + (block_4x4_y * 4);
@@ -7523,9 +7255,7 @@ static void in_loop_me_get_search_point_results_block(
         }
     }
 
-
     if (number_of_sb_quad > 1) {
-
         // Nader - Full-pel search for depth 0 blocks
         in_loop_me_128xN_Nx128_distortion_update(
             //Inputs
@@ -7565,9 +7295,7 @@ static void in_loop_me_fullpel_search_sblock(
     uint32_t x_search_index, y_search_index;
 
     for (y_search_index = 0; y_search_index < search_area_height; y_search_index++) {
-
         for (x_search_index = 0; x_search_index < search_area_width; x_search_index++) {
-
             in_loop_me_get_search_point_results_block(
                 context_ptr,
                 list_index,
@@ -7577,7 +7305,6 @@ static void in_loop_me_fullpel_search_sblock(
                 number_of_sb_quad,
                 asm_type);
         }
-
     }
 }
 
@@ -7588,7 +7315,6 @@ static void in_loop_me_fullpel_search_sblock(
 EbErrorType in_loop_me_context_ctor(
     SsMeContext                          **object_dbl_ptr)
 {
-
     uint32_t                   listIndex;
     uint32_t                   refPicIndex;
 
@@ -7597,12 +7323,9 @@ EbErrorType in_loop_me_context_ctor(
     // Intermediate LCU-sized buffer to retain the input samples
     (*object_dbl_ptr)->sb_buffer_stride = MAX_SB_SIZE;
 
-
     EB_ALLIGN_MALLOC(uint8_t *, (*object_dbl_ptr)->sb_buffer, sizeof(uint8_t) * MAX_SB_SIZE * (*object_dbl_ptr)->sb_buffer_stride, EB_A_PTR);
 
     EB_MEMSET((*object_dbl_ptr)->sb_buffer, 0, sizeof(uint8_t) * MAX_SB_SIZE * (*object_dbl_ptr)->sb_buffer_stride);
-
-
 
     (*object_dbl_ptr)->interpolated_stride = MAX_SEARCH_AREA_WIDTH;
 
@@ -7649,9 +7372,7 @@ EbErrorType in_loop_me_context_ctor(
     // O   O   O
 
     for (listIndex = 0; listIndex < MAX_NUM_OF_REF_PIC_LIST; listIndex++) {
-
         for (refPicIndex = 0; refPicIndex < MAX_REF_IDX; refPicIndex++) {
-
             EB_MALLOC(uint8_t *, (*object_dbl_ptr)->integer_buffer[listIndex][refPicIndex], sizeof(uint8_t) * (*object_dbl_ptr)->interpolated_stride * MAX_SEARCH_AREA_HEIGHT, EB_N_PTR);
 
             EB_MALLOC(uint8_t *, (*object_dbl_ptr)->pos_b_buffer[listIndex][refPicIndex], sizeof(uint8_t) * (*object_dbl_ptr)->interpolated_stride * MAX_SEARCH_AREA_HEIGHT, EB_N_PTR);
@@ -7659,17 +7380,13 @@ EbErrorType in_loop_me_context_ctor(
             EB_MALLOC(uint8_t *, (*object_dbl_ptr)->pos_h_buffer[listIndex][refPicIndex], sizeof(uint8_t) * (*object_dbl_ptr)->interpolated_stride * MAX_SEARCH_AREA_HEIGHT, EB_N_PTR);
 
             EB_MALLOC(uint8_t *, (*object_dbl_ptr)->pos_j_buffer[listIndex][refPicIndex], sizeof(uint8_t) * (*object_dbl_ptr)->interpolated_stride * MAX_SEARCH_AREA_HEIGHT, EB_N_PTR);
-
         }
-
     }
 
     EB_MALLOC(uint8_t *, (*object_dbl_ptr)->avctemp_buffer, sizeof(uint8_t) * (*object_dbl_ptr)->interpolated_stride * MAX_SEARCH_AREA_HEIGHT, EB_N_PTR);
 
     return EB_ErrorNone;
 }
-
-
 
 /***************************************************************
 * in_loop_me_interpolate_search_region_avc_style
@@ -7685,7 +7402,6 @@ static void in_loop_me_interpolate_search_region_avc_style(
     uint32_t                   inputBitDepth,                    // input parameter, input sample bit depth
     EbAsm                   asm_type)
 {
-
     //      0    1    2    3
     // 0    A    a    b    c
     // 1    d    e    f    g
@@ -7716,11 +7432,9 @@ static void in_loop_me_interpolate_search_region_avc_style(
     // Also the search area must be oversized by 2 to account for edge conditions
     uint32_t searchAreaWidthForAsm = ROUND_UP_MUL_8(search_area_width + 2);
 
-
     (void)inputBitDepth;
     // Half pel interpolation of the search region using f1 -> pos_b_buffer
     if (searchAreaWidthForAsm) {
-
         avc_style_uni_pred_luma_if_function_ptr_array[asm_type][2](
             searchRegionBuffer - (ME_FILTER_TAP >> 1) * lumaStride - (ME_FILTER_TAP >> 1) + 1,
             lumaStride,
@@ -7764,7 +7478,6 @@ static void in_loop_me_interpolate_search_region_avc_style(
     return;
 }
 
-
 /***************************************************************
 * in_loop_me_halfpel_refinement_block
 *   performs Half Pel refinement for one block
@@ -7786,7 +7499,6 @@ static void in_loop_me_halfpel_refinement_block(
     uint8_t                   *psubPelDirection
 )
 {
-
     EncodeContext         *encode_context_ptr = sequence_control_set_ptr->encode_context_ptr;
 
     int32_t searchRegionIndex;
@@ -7831,8 +7543,6 @@ static void in_loop_me_halfpel_refinement_block(
     yMvHalf[6] = y_mv + 2; // BR position
     yMvHalf[7] = y_mv + 2; // BL position
 
-
-
     // L position
     searchRegionIndex = xSearchIndex + (int16_t)context_ptr->interpolated_stride * ySearchIndex;
     distortionLeftPosition = (nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](&(context_ptr->sb_src_ptr[block_index_in_sb_buffer]), context_ptr->sb_src_stride << 1, &(pos_b_buffer[searchRegionIndex]), context_ptr->interpolated_stride << 1, pu_height >> 1, pu_width)) << 1;
@@ -7858,7 +7568,6 @@ static void in_loop_me_halfpel_refinement_block(
         *pBestMV = ((uint16_t)yMvHalf[2] << 16) | ((uint16_t)xMvHalf[2]);
     }
 
-
     // B position
     searchRegionIndex += (int16_t)context_ptr->interpolated_stride;
     distortionBottomPosition = (nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](&(context_ptr->sb_src_ptr[block_index_in_sb_buffer]), context_ptr->sb_src_stride << 1, &(pos_h_buffer[searchRegionIndex]), context_ptr->interpolated_stride << 1, pu_height >> 1, pu_width)) << 1;
@@ -7866,7 +7575,6 @@ static void in_loop_me_halfpel_refinement_block(
         *pBestSad = (uint32_t)distortionBottomPosition;
         *pBestMV = ((uint16_t)yMvHalf[3] << 16) | ((uint16_t)xMvHalf[3]);
     }
-
 
     //TL position
     searchRegionIndex = xSearchIndex + (int16_t)context_ptr->interpolated_stride * ySearchIndex;
@@ -7876,7 +7584,6 @@ static void in_loop_me_halfpel_refinement_block(
         *pBestMV = ((uint16_t)yMvHalf[4] << 16) | ((uint16_t)xMvHalf[4]);
     }
 
-
     //TR position
     searchRegionIndex++;
     distortionTopRightPosition = (nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](&(context_ptr->sb_src_ptr[block_index_in_sb_buffer]), context_ptr->sb_src_stride << 1, &(pos_j_buffer[searchRegionIndex]), context_ptr->interpolated_stride << 1, pu_height >> 1, pu_width)) << 1;
@@ -7884,7 +7591,6 @@ static void in_loop_me_halfpel_refinement_block(
         *pBestSad = (uint32_t)distortionTopRightPosition;
         *pBestMV = ((uint16_t)yMvHalf[5] << 16) | ((uint16_t)xMvHalf[5]);
     }
-
 
     //BR position
     searchRegionIndex += (int16_t)context_ptr->interpolated_stride;
@@ -7894,7 +7600,6 @@ static void in_loop_me_halfpel_refinement_block(
         *pBestMV = ((uint16_t)yMvHalf[6] << 16) | ((uint16_t)xMvHalf[6]);
     }
 
-
     //BL position
     searchRegionIndex--;
     distortionBottomLeftPosition = (nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](&(context_ptr->sb_src_ptr[block_index_in_sb_buffer]), context_ptr->sb_src_stride << 1, &(pos_j_buffer[searchRegionIndex]), context_ptr->interpolated_stride << 1, pu_height >> 1, pu_width)) << 1;
@@ -7903,38 +7608,26 @@ static void in_loop_me_halfpel_refinement_block(
         *pBestMV = ((uint16_t)yMvHalf[7] << 16) | ((uint16_t)xMvHalf[7]);
     }
 
-
-
     bestHalfSad = MIN(distortionLeftPosition, MIN(distortionRightPosition, MIN(distortionTopPosition, MIN(distortionBottomPosition, MIN(distortionTopLeftPosition, MIN(distortionTopRightPosition, MIN(distortionBottomLeftPosition, distortionBottomRightPosition)))))));
 
-
-    if (bestHalfSad == distortionLeftPosition) {
+    if (bestHalfSad == distortionLeftPosition)
         *psubPelDirection = LEFT_POSITION;
-    }
-    else if (bestHalfSad == distortionRightPosition) {
+    else if (bestHalfSad == distortionRightPosition)
         *psubPelDirection = RIGHT_POSITION;
-    }
-    else if (bestHalfSad == distortionTopPosition) {
+    else if (bestHalfSad == distortionTopPosition)
         *psubPelDirection = TOP_POSITION;
-    }
-    else if (bestHalfSad == distortionBottomPosition) {
+    else if (bestHalfSad == distortionBottomPosition)
         *psubPelDirection = BOTTOM_POSITION;
-    }
-    else if (bestHalfSad == distortionTopLeftPosition) {
+    else if (bestHalfSad == distortionTopLeftPosition)
         *psubPelDirection = TOP_LEFT_POSITION;
-    }
-    else if (bestHalfSad == distortionTopRightPosition) {
+    else if (bestHalfSad == distortionTopRightPosition)
         *psubPelDirection = TOP_RIGHT_POSITION;
-    }
-    else if (bestHalfSad == distortionBottomLeftPosition) {
+    else if (bestHalfSad == distortionBottomLeftPosition)
         *psubPelDirection = BOTTOM_LEFT_POSITION;
-    }
-    else if (bestHalfSad == distortionBottomRightPosition) {
+    else if (bestHalfSad == distortionBottomRightPosition)
         *psubPelDirection = BOTTOM_RIGHT_POSITION;
-    }
     return;
 }
-
 
 /***************************************************************
 * in_loop_me_halfpel_search_sblock
@@ -7950,7 +7643,6 @@ void in_loop_me_halfpel_search_sblock(
     int16_t                   y_search_area_origin,                 // input parameter, search area origin in the vertical direction, used to point to reference samples
     EbAsm                   asm_type)
 {
-
     uint32_t idx;
     uint32_t block_index;
     uint32_t block_shift_x;
@@ -7969,16 +7661,13 @@ void in_loop_me_halfpel_search_sblock(
     // 4x4   [256 4x4 blocks]
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 256; ++block_index) {
-
             block_offset = (quad_index * 256);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
             idx = tab4x4[block_index] + block_offset;
             block_shift_x = ((block_index & 0xf) << 2) + x_offset;
             block_shift_y = ((block_index >> 4) << 2) + y_offset;
-
 
             block_index_in_sb_buffer = block_shift_x + block_shift_y * context_ptr->sb_src_stride;
 
@@ -8004,13 +7693,10 @@ void in_loop_me_halfpel_search_sblock(
         }
     }
 
-
     // 8x4   [128 8x4 blocks]
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 128; ++block_index) {
-
             block_offset = (quad_index * 128);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8039,16 +7725,13 @@ void in_loop_me_halfpel_search_sblock(
                 &context_ptr->p_best_sad8x4[idx],
                 &context_ptr->p_best_mv8x4[idx],
                 &context_ptr->psub_pel_direction8x4[idx]);
-
         }
     }
 
     // 4x8   [128 4x8 blocks]
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 128; ++block_index) {
-
             block_offset = (quad_index * 128);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8080,12 +7763,9 @@ void in_loop_me_halfpel_search_sblock(
         }
     }
 
-
     // 8x8   [64 8x8 blocks]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 64; ++block_index) {
-
             block_offset = (quad_index * 64);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8114,15 +7794,12 @@ void in_loop_me_halfpel_search_sblock(
                 &context_ptr->p_best_sad8x8[idx],
                 &context_ptr->p_best_mv8x8[idx],
                 &context_ptr->psub_pel_direction8x8[idx]);
-
         }
     }
 
     // 16x8 [32 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 32; ++block_index) {
-
             block_offset = (quad_index * 32);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8157,9 +7834,7 @@ void in_loop_me_halfpel_search_sblock(
     // 8x16 [32 partitions]
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 32; ++block_index) {
-
             block_offset = (quad_index * 32);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8193,9 +7868,7 @@ void in_loop_me_halfpel_search_sblock(
 
     // 32x8 [16 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 16; ++block_index) {
-
             block_offset = (quad_index * 16);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8224,16 +7897,12 @@ void in_loop_me_halfpel_search_sblock(
                 &context_ptr->p_best_sad32x8[idx],
                 &context_ptr->p_best_mv32x8[idx],
                 &context_ptr->psub_pel_direction32x8[idx]);
-
         }
-
     }
 
     // 8x32 [16 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 16; ++block_index) {
-
             block_offset = (quad_index * 16);
             idx = tab8x32[block_index] + block_offset;
             x_offset = (quad_index & 0x01) << 6;
@@ -8262,17 +7931,12 @@ void in_loop_me_halfpel_search_sblock(
                 &context_ptr->p_best_sad8x32[idx],
                 &context_ptr->p_best_mv8x32[idx],
                 &context_ptr->psub_pel_direction8x32[idx]);
-
         }
     }
 
     // 16x16 [16 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 16; ++block_index) {
-
-
-
             block_offset = (quad_index * 16);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8307,9 +7971,7 @@ void in_loop_me_halfpel_search_sblock(
     // 32x16 [8 partitions]
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 8; ++block_index) {
-
             block_offset = (quad_index * 8);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8338,15 +8000,12 @@ void in_loop_me_halfpel_search_sblock(
                 &context_ptr->p_best_sad32x16[idx],
                 &context_ptr->p_best_mv32x16[idx],
                 &context_ptr->psub_pel_direction32x16[idx]);
-
         }
     }
 
     // 16x32 [8 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 8; ++block_index) {
-
             block_offset = (quad_index * 8);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8375,16 +8034,13 @@ void in_loop_me_halfpel_search_sblock(
                 &context_ptr->p_best_sad16x32[idx],
                 &context_ptr->p_best_mv16x32[idx],
                 &context_ptr->psub_pel_direction16x32[idx]);
-
         }
     }
 
     // 32x32 [4 partitions]
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 4; ++block_index) {
-
             block_offset = (quad_index * 4);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8414,14 +8070,11 @@ void in_loop_me_halfpel_search_sblock(
                 &context_ptr->p_best_mv32x32[idx],
                 &context_ptr->psub_pel_direction32x32[idx]);
         }
-
     }
 
     // 64x32 [2 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 2; ++block_index) {
-
             block_offset = (quad_index * 2);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8450,15 +8103,12 @@ void in_loop_me_halfpel_search_sblock(
                 &context_ptr->p_best_sad64x32[idx],
                 &context_ptr->p_best_mv64x32[idx],
                 &context_ptr->psub_pel_direction64x32[idx]);
-
         }
     }
 
     // 32x64 [2 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 2; ++block_index) {
-
             block_offset = (quad_index * 2);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -8484,13 +8134,10 @@ void in_loop_me_halfpel_search_sblock(
                 x_search_area_origin,
                 y_search_area_origin,
                 asm_type,
-
                 &context_ptr->p_best_sad32x64[idx],
                 &context_ptr->p_best_mv32x64[idx],
                 &context_ptr->psub_pel_direction32x64[idx]);
-
         }
-
     }
 
     // 64x64 [1 partition]
@@ -8524,11 +8171,9 @@ void in_loop_me_halfpel_search_sblock(
             &context_ptr->psub_pel_direction64x64[idx]);
     }
 
-
     if (0) {
         // 128x64 [2 partitions]
         for (block_index = 0; block_index < 2; ++block_index) {
-
             block_shift_x = 0;
             block_shift_y = block_index << 6;
 
@@ -8557,8 +8202,6 @@ void in_loop_me_halfpel_search_sblock(
 
         // 64x128 [2 partitions]
         for (block_index = 0; block_index < 2; ++block_index) {
-
-
             block_shift_x = block_index << 6;
             block_shift_y = 0;
 
@@ -8637,7 +8280,6 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
     uint32_t                *pBestMV,
     uint8_t                  sub_pel_direction)
 {
-
     int16_t x_mv = _MVXT(*pBestMV);
     int16_t y_mv = _MVYT(*pBestMV);
 
@@ -8654,7 +8296,6 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
     int32_t searchRegionIndex2 = 0;
 
     if ((y_mv & 2) + ((x_mv & 2) >> 1)) {
-
         validTL = (EbBool)(sub_pel_direction == RIGHT_POSITION || sub_pel_direction == BOTTOM_RIGHT_POSITION || sub_pel_direction == BOTTOM_POSITION);
         validT = (EbBool)(sub_pel_direction == BOTTOM_RIGHT_POSITION || sub_pel_direction == BOTTOM_POSITION || sub_pel_direction == BOTTOM_LEFT_POSITION);
         validTR = (EbBool)(sub_pel_direction == BOTTOM_POSITION || sub_pel_direction == BOTTOM_LEFT_POSITION || sub_pel_direction == LEFT_POSITION);
@@ -8663,10 +8304,8 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
         validB = (EbBool)(sub_pel_direction == TOP_LEFT_POSITION || sub_pel_direction == TOP_POSITION || sub_pel_direction == TOP_RIGHT_POSITION);
         validBL = (EbBool)(sub_pel_direction == TOP_POSITION || sub_pel_direction == TOP_RIGHT_POSITION || sub_pel_direction == RIGHT_POSITION);
         validL = (EbBool)(sub_pel_direction == TOP_RIGHT_POSITION || sub_pel_direction == RIGHT_POSITION || sub_pel_direction == BOTTOM_RIGHT_POSITION);
-
     }
     else {
-
         validTL = (EbBool)(sub_pel_direction == LEFT_POSITION || sub_pel_direction == TOP_LEFT_POSITION || sub_pel_direction == TOP_POSITION);
         validT = (EbBool)(sub_pel_direction == TOP_LEFT_POSITION || sub_pel_direction == TOP_POSITION || sub_pel_direction == TOP_RIGHT_POSITION);
         validTR = (EbBool)(sub_pel_direction == TOP_POSITION || sub_pel_direction == TOP_RIGHT_POSITION || sub_pel_direction == RIGHT_POSITION);
@@ -8695,10 +8334,8 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
     yMvQuarter[6] = y_mv + 1; // BR position
     yMvQuarter[7] = y_mv + 1; // BL position
 
-
     // L position
     if (validL) {
-
         searchRegionIndex1 = (int32_t)xSearchIndex + (int32_t)buf1Stride[0] * (int32_t)ySearchIndex;
         searchRegionIndex2 = (int32_t)xSearchIndex + (int32_t)buf2Stride[0] * (int32_t)ySearchIndex;
 
@@ -8714,12 +8351,10 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
 
     // R positions
     if (validR) {
-
         searchRegionIndex1 = (int32_t)xSearchIndex + (int32_t)buf1Stride[1] * (int32_t)ySearchIndex;
         searchRegionIndex2 = (int32_t)xSearchIndex + (int32_t)buf2Stride[1] * (int32_t)ySearchIndex;
         dist = nxm_sad_averaging_kernel_func_ptr_array[asm_type][pu_width >> 3](&(context_ptr->sb_buffer[block_index_in_sb_buffer]), context_ptr->sb_src_stride << 1, buf1[1] + searchRegionIndex1, buf1Stride[1] << 1, buf2[1] + searchRegionIndex2, buf2Stride[1] << 1, pu_height >> 1, pu_width);
         dist = dist << 1;
-
 
         if (dist < *pBestSad) {
             *pBestSad = (uint32_t)dist;
@@ -8729,7 +8364,6 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
 
     // T position
     if (validT) {
-
         searchRegionIndex1 = (int32_t)xSearchIndex + (int32_t)buf1Stride[2] * (int32_t)ySearchIndex;
         searchRegionIndex2 = (int32_t)xSearchIndex + (int32_t)buf2Stride[2] * (int32_t)ySearchIndex;
 
@@ -8744,13 +8378,11 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
 
     // B position
     if (validB) {
-
         searchRegionIndex1 = (int32_t)xSearchIndex + (int32_t)buf1Stride[3] * (int32_t)ySearchIndex;
         searchRegionIndex2 = (int32_t)xSearchIndex + (int32_t)buf2Stride[3] * (int32_t)ySearchIndex;
 
         dist = nxm_sad_averaging_kernel_func_ptr_array[asm_type][pu_width >> 3](&(context_ptr->sb_buffer[block_index_in_sb_buffer]), context_ptr->sb_src_stride << 1, buf1[3] + searchRegionIndex1, buf1Stride[3] << 1, buf2[3] + searchRegionIndex2, buf2Stride[3] << 1, pu_height >> 1, pu_width);
         dist = dist << 1;
-
 
         if (dist < *pBestSad) {
             *pBestSad = (uint32_t)dist;
@@ -8760,7 +8392,6 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
 
     //TL position
     if (validTL) {
-
         searchRegionIndex1 = (int32_t)xSearchIndex + (int32_t)buf1Stride[4] * (int32_t)ySearchIndex;
         searchRegionIndex2 = (int32_t)xSearchIndex + (int32_t)buf2Stride[4] * (int32_t)ySearchIndex;
 
@@ -8775,7 +8406,6 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
 
     //TR position
     if (validTR) {
-
         searchRegionIndex1 = (int32_t)xSearchIndex + (int32_t)buf1Stride[5] * (int32_t)ySearchIndex;
         searchRegionIndex2 = (int32_t)xSearchIndex + (int32_t)buf2Stride[5] * (int32_t)ySearchIndex;
 
@@ -8790,7 +8420,6 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
 
     //BR position
     if (validBR) {
-
         searchRegionIndex1 = (int32_t)xSearchIndex + (int32_t)buf1Stride[6] * (int32_t)ySearchIndex;
         searchRegionIndex2 = (int32_t)xSearchIndex + (int32_t)buf2Stride[6] * (int32_t)ySearchIndex;
 
@@ -8805,7 +8434,6 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
 
     //BL position
     if (validBL) {
-
         searchRegionIndex1 = (int32_t)xSearchIndex + (int32_t)buf1Stride[7] * (int32_t)ySearchIndex;
         searchRegionIndex2 = (int32_t)xSearchIndex + (int32_t)buf2Stride[7] * (int32_t)ySearchIndex;
 
@@ -8818,10 +8446,8 @@ static void in_loop_me_quarterpel_refinement_on_the_fly_block(
         }
     }
 
-
     return;
 }
-
 
 /***************************************************************
 * set_quarterpel_refinement_inputs_on_the_fly_block
@@ -8843,7 +8469,6 @@ static void set_quarterpel_refinement_inputs_on_the_fly_block(
     uint32_t  *buf2Stride  //[OUT]
 )
 {
-
     uint32_t  quarterPelRefinementMethod = (y_mv & 2) + ((x_mv & 2) >> 1);
 
     //for each one of the 8 postions, we need to determine the 2 half pel buffers to  do averaging
@@ -8854,7 +8479,6 @@ static void set_quarterpel_refinement_inputs_on_the_fly_block(
     //     n    p    q    r
 
     switch (quarterPelRefinementMethod) {
-
     case EB_QUARTER_IN_FULL:
 
         /*c=b+A*/ buf1[0] = pos_b;                     buf1Stride[0] = Stride;        buf2[0] = pos_Full;             buf2Stride[0] = FullStride;
@@ -8909,7 +8533,6 @@ static void set_quarterpel_refinement_inputs_on_the_fly_block(
 
     default:
         break;
-
     }
 
     return;
@@ -8956,9 +8579,7 @@ static void in_loop_me_quarterpel_search_sblock(
     // 4x4   [256 partitions]
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 256; ++block_index) {
-
             block_offset = (quad_index * 256);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9010,10 +8631,7 @@ static void in_loop_me_quarterpel_search_sblock(
     // 8x4   [128 8x4 blocks]
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 128; ++block_index) {
-
-
             block_offset = (quad_index * 128);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9021,9 +8639,7 @@ static void in_loop_me_quarterpel_search_sblock(
             block_shift_x = ((block_index & 0x07) << 3) + x_offset;
             block_shift_y = ((block_index >> 3) << 2) + y_offset;
 
-
             block_index_in_sb_buffer = block_shift_x + block_shift_y * context_ptr->sb_src_stride;
-
 
             x_mv = _MVXT(context_ptr->p_best_mv8x4[nidx]);
             y_mv = _MVYT(context_ptr->p_best_mv8x4[nidx]);
@@ -9061,16 +8677,12 @@ static void in_loop_me_quarterpel_search_sblock(
                 &context_ptr->p_best_sad8x4[nidx],
                 &context_ptr->p_best_mv8x4[nidx],
                 context_ptr->psub_pel_direction8x4[nidx]);
-
         }
-
     }
 
     // 4x8   [128 4x8 blocks]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 128; ++block_index) {
-
             block_offset = (quad_index * 128);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9079,7 +8691,6 @@ static void in_loop_me_quarterpel_search_sblock(
             block_shift_y = ((block_index >> 4) << 3) + y_offset;
 
             block_index_in_sb_buffer = block_shift_x + block_shift_y * context_ptr->sb_src_stride;
-
 
             x_mv = _MVXT(context_ptr->p_best_mv4x8[nidx]);
             y_mv = _MVYT(context_ptr->p_best_mv4x8[nidx]);
@@ -9117,18 +8728,13 @@ static void in_loop_me_quarterpel_search_sblock(
                 &context_ptr->p_best_sad4x8[nidx],
                 &context_ptr->p_best_mv4x8[nidx],
                 context_ptr->psub_pel_direction4x8[nidx]);
-
         }
-
     }
 
     // 8x8   [64 8x8 blocks]
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 64; ++block_index) {
-
-
             block_offset = (quad_index * 64);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9180,10 +8786,7 @@ static void in_loop_me_quarterpel_search_sblock(
     // 16x8 [32 partitions]
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 32; ++block_index) {
-
-
             block_offset = (quad_index * 32);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9230,15 +8833,12 @@ static void in_loop_me_quarterpel_search_sblock(
                 &context_ptr->p_best_mv16x8[nidx],
                 context_ptr->psub_pel_direction16x8[nidx]);
         }
-
     }
 
     // 8x16 [32 partitions]
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 32; ++block_index) {
-
             block_offset = (quad_index * 32);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9284,15 +8884,12 @@ static void in_loop_me_quarterpel_search_sblock(
                 &context_ptr->p_best_sad8x16[nidx],
                 &context_ptr->p_best_mv8x16[nidx],
                 context_ptr->psub_pel_direction8x16[nidx]);
-
         }
-
     }
 
     // 32x8 [16 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
         for (block_index = 0; block_index < 16; ++block_index) {
-
             block_offset = (quad_index * 16);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9344,7 +8941,6 @@ static void in_loop_me_quarterpel_search_sblock(
     // 8x32 [16 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
         for (block_index = 0; block_index < 16; ++block_index) {
-
             block_offset = (quad_index * 16);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9395,9 +8991,7 @@ static void in_loop_me_quarterpel_search_sblock(
 
     // 16x16 [16 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 16; ++block_index) {
-
             block_offset = (quad_index * 16);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9450,8 +9044,6 @@ static void in_loop_me_quarterpel_search_sblock(
 
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
         for (block_index = 0; block_index < 8; ++block_index) {
-
-
             block_offset = (quad_index * 8);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9502,9 +9094,7 @@ static void in_loop_me_quarterpel_search_sblock(
 
     // 16x32 [8 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 8; ++block_index) {
-
             block_offset = (quad_index * 8);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9550,15 +9140,12 @@ static void in_loop_me_quarterpel_search_sblock(
                 &context_ptr->p_best_sad16x32[nidx],
                 &context_ptr->p_best_mv16x32[nidx],
                 context_ptr->psub_pel_direction16x32[nidx]);
-
         }
     }
 
     // 32x32 [4 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 4; ++block_index) {
-
             block_offset = (quad_index * 4);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9569,7 +9156,6 @@ static void in_loop_me_quarterpel_search_sblock(
 
             x_mv = _MVXT(context_ptr->p_best_mv32x32[nidx]);
             y_mv = _MVYT(context_ptr->p_best_mv32x32[nidx]);
-
 
             set_quarterpel_refinement_inputs_on_the_fly_block(
                 pos_Full,
@@ -9601,18 +9187,15 @@ static void in_loop_me_quarterpel_search_sblock(
                 x_search_area_origin,
                 y_search_area_origin,
                 asm_type,
-
                 &context_ptr->p_best_sad32x32[nidx],
                 &context_ptr->p_best_mv32x32[nidx],
                 context_ptr->psub_pel_direction32x32[nidx]);
-
         }
     }
 
     // 64x32 [2 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
         for (block_index = 0; block_index < 2; ++block_index) {
-
             block_offset = (quad_index * 2);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9624,7 +9207,6 @@ static void in_loop_me_quarterpel_search_sblock(
 
             x_mv = _MVXT(context_ptr->p_best_mv64x32[nidx]);
             y_mv = _MVYT(context_ptr->p_best_mv64x32[nidx]);
-
 
             set_quarterpel_refinement_inputs_on_the_fly_block(
                 pos_Full,
@@ -9656,7 +9238,6 @@ static void in_loop_me_quarterpel_search_sblock(
                 x_search_area_origin,
                 y_search_area_origin,
                 asm_type,
-
                 &context_ptr->p_best_sad64x32[nidx],
                 &context_ptr->p_best_mv64x32[nidx],
                 context_ptr->psub_pel_direction64x32[nidx]);
@@ -9665,9 +9246,7 @@ static void in_loop_me_quarterpel_search_sblock(
 
     // 32x64 [2 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
         for (block_index = 0; block_index < 2; ++block_index) {
-
             block_offset = (quad_index * 2);
             x_offset = (quad_index & 0x01) << 6;
             y_offset = (quad_index >> 1) << 6;
@@ -9714,13 +9293,10 @@ static void in_loop_me_quarterpel_search_sblock(
                 &context_ptr->p_best_mv32x64[nidx],
                 context_ptr->psub_pel_direction32x64[nidx]);
         }
-
     }
 
     // 64x64 [1 partitions]
     for (quad_index = 0; quad_index < number_of_sb_quad; quad_index++) {
-
-
         block_index = 0;
 
         block_offset = quad_index;
@@ -9734,7 +9310,6 @@ static void in_loop_me_quarterpel_search_sblock(
 
         x_mv = _MVXT(context_ptr->p_best_mv64x64[nidx]);
         y_mv = _MVYT(context_ptr->p_best_mv64x64[nidx]);
-
 
         set_quarterpel_refinement_inputs_on_the_fly_block(
             pos_Full,
@@ -9760,14 +9335,11 @@ static void in_loop_me_quarterpel_search_sblock(
             &context_ptr->p_best_sad64x64[nidx],
             &context_ptr->p_best_mv64x64[nidx],
             context_ptr->psub_pel_direction64x64[nidx]);
-
     }
-
 
     if (0) {
         // 128x64 [2 partitions]
         for (block_index = 0; block_index < 2; ++block_index) {
-
             block_index = 0;
 
             block_shift_x = 0;
@@ -9802,11 +9374,9 @@ static void in_loop_me_quarterpel_search_sblock(
                 &context_ptr->p_best_sad128x64[block_index],
                 &context_ptr->p_best_mv128x64[block_index],
                 context_ptr->psub_pel_direction128x64[block_index]);
-
         }
         // 64x128 [2 partitions]
         for (block_index = 0; block_index < 2; ++block_index) {
-
             block_index = 0;
 
             block_shift_x = block_index << 6;
@@ -9841,7 +9411,6 @@ static void in_loop_me_quarterpel_search_sblock(
                 &context_ptr->p_best_sad64x128[block_index],
                 &context_ptr->p_best_mv64x128[block_index],
                 context_ptr->psub_pel_direction64x128[block_index]);
-
         }
         // 128x128 [1 partitions]
         block_index = 0;
@@ -9887,7 +9456,6 @@ static void in_loop_me_quarterpel_search_sblock(
 
 #define MAX_TATAL_SEARCH_AREA_WIDTH        (MAX_SB_SIZE + MAX_SEARCH_POINT_WIDTH  + ME_FILTER_TAP)
 #define MAX_TATAL_SEARCH_AREA_HEIGHT       (MAX_SB_SIZE + MAX_SEARCH_POINT_HEIGHT  + ME_FILTER_TAP)
-
 
 #define MAX_SEARCH_AREA_SIZE     MAX_TATAL_SEARCH_AREA_WIDTH * MAX_TATAL_SEARCH_AREA_HEIGHT
 /***************************************************************
@@ -9968,7 +9536,6 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
     // Uni-Prediction motion estimation loop
     // List Loop
     for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch; ++listIndex) {
-
         EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 #if MRP_MD
         referenceObject = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[listIndex][0]->object_ptr;
@@ -10000,7 +9567,6 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
 
         // //check whether the needed search area is coverd by the reference picture and adjust its origin to satisfy the condition if not.
         if (sequence_control_set_ptr->sb_size == BLOCK_128X128) {
-
             int32_t righ_sa_pos_x = refPicPtr->origin_x + origin_x + x_search_area_origin + search_area_width + (context_ptr->sb_side - 1) + (ME_FILTER_TAP >> 1);
             int32_t righ_ref_pos_x = picture_width - 1 + (2 * refPicPtr->origin_x);
 
@@ -10011,7 +9577,6 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
 
             y_search_area_origin = bottom_sa_pos_x > bottom_ref_pos_x ? y_search_area_origin - (bottom_sa_pos_x - bottom_ref_pos_x) : y_search_area_origin;
         }
-
 
         search_area_width = ((origin_x + x_search_area_origin + search_area_width) > picture_width) ?
             MAX(1, search_area_width - ((origin_x + x_search_area_origin + search_area_width) - picture_width)) :
@@ -10044,7 +9609,6 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
 
         // Umpack the reference for 16bit reference picture.
         if (is16bit) {
-
             uint16_t *ptr16 = (uint16_t *)refPicPtr->buffer_y + searchRegionIndex;
 
             uint8_t searchAreaBuffer[MAX_SEARCH_AREA_SIZE];
@@ -10061,7 +9625,6 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
 
             context_ptr->integer_buffer_ptr[listIndex][0] = &(searchAreaBuffer[0]);
             context_ptr->interpolated_full_stride[listIndex][0] = MAX_TATAL_SEARCH_AREA_WIDTH;
-
         }
         else {
             context_ptr->integer_buffer_ptr[listIndex][0] = &(refPicPtr->buffer_y[searchRegionIndex]);
@@ -10134,7 +9697,6 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
         context_ptr->p_best_mv32x64 = &(context_ptr->p_sb_best_mv[listIndex][refPicIndex][847 * number_of_sb_quad]);
 
         if (sequence_control_set_ptr->sb_size == BLOCK_128X128) {
-
             context_ptr->p_best_sad128x64 = &(context_ptr->p_sb_best_sad[listIndex][refPicIndex][849 * number_of_sb_quad]);
             context_ptr->p_best_mv128x64 = &(context_ptr->p_sb_best_mv[listIndex][refPicIndex][849 * number_of_sb_quad]);
 
@@ -10143,9 +9705,7 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
 
             context_ptr->p_best_sad128x128 = &(context_ptr->p_sb_best_sad[listIndex][refPicIndex][(849 * number_of_sb_quad) + 4]);
             context_ptr->p_best_mv128x128 = &(context_ptr->p_sb_best_mv[listIndex][refPicIndex][(849 * number_of_sb_quad) + 4]);
-
         }
-
 
         in_loop_me_fullpel_search_sblock(
             context_ptr,
@@ -10158,8 +9718,6 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
             asm_type);
 
         if (picture_control_set_ptr->parent_pcs_ptr->use_subpel_flag == 1) {
-
-
             // Move to the top left of the search region
             xTopLeftSearchRegion = (int16_t)(refPicPtr->origin_x + sb_origin_x) + x_search_area_origin;
             yTopLeftSearchRegion = (int16_t)(refPicPtr->origin_y + sb_origin_y) + y_search_area_origin;
@@ -10200,25 +9758,20 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
                 x_search_area_origin,
                 y_search_area_origin,
                 asm_type);
-
         }
-
     }
 
     // Nader - Bipred candidate can be generated here if needed.
 
-
     uint32_t max_number_of_block_in_sb = sequence_control_set_ptr->sb_size == BLOCK_128X128 ? MAX_SS_ME_PU_COUNT : 849;
 
     for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch; ++listIndex) {
-
         uint32_t block_index;
         uint32_t block_offset;
         uint32_t nidx;
         uint32_t candidate_cnt = 0;
 
         for (block_index = 0; block_index < max_number_of_block_in_sb; ++block_index) {
-
             //4x4
             if (block_index < start_idx_8x8) {
                 block_offset = (block_index / 256) * 256;
@@ -10263,7 +9816,6 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
             else if (block_index < start_idx_32x8) {
                 block_offset = ((block_index - start_idx_8x16) / 32) * 32;
                 nidx = tab8x16[block_index - start_idx_8x16 - block_offset] + block_offset + start_idx_8x16;
-
             }//32x8
             else if (block_index < start_idx_8x32) {
                 block_offset = ((block_index - start_idx_32x8) / 16) * 16;
@@ -10272,7 +9824,6 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
             else if (block_index < start_idx_32x16) {
                 block_offset = ((block_index - start_idx_8x32) / 16) * 16;
                 nidx = tab8x32[block_index - start_idx_8x32 - block_offset] + block_offset + start_idx_8x32;
-
             }//32x16
             else if (block_index < start_idx_16x32) {
                 block_offset = ((block_index - start_idx_32x16) / 8) * 8;
@@ -10285,7 +9836,6 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
             else if (block_index < start_idx_16x64) {
                 block_offset = ((block_index - start_idx_64x16) / 4) * 4;
                 nidx = tab64x16[block_index - start_idx_64x16 - block_offset] + block_offset + start_idx_64x16;
-
             }//16x64
             else if (block_index < start_idx_64x32) {
                 block_offset = ((block_index - start_idx_16x64) / 4) * 4;
@@ -10294,26 +9844,20 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
             else if (block_index < start_idx_32x64) {
                 block_offset = ((block_index - start_idx_64x32) / 2) * 2;
                 nidx = tab64x32[block_index - start_idx_64x32 - block_offset] + block_offset + start_idx_64x32;
-
             }//32x64
             else if (block_index < start_idx_128x64) {
                 block_offset = ((block_index - start_idx_32x64) / 2) * 2;
                 nidx = tab32x64[block_index - start_idx_32x64 - block_offset] + block_offset + start_idx_32x64;
-
             }//128x64, //64x128 and 128x128
-            else {
+            else
                 nidx = block_index;
-            }
-
             context_ptr->inloop_me_mv[0][0][candidate_cnt][0] = _MVXT(context_ptr->p_sb_best_mv[0][0][nidx]);
             context_ptr->inloop_me_mv[0][0][candidate_cnt][1] = _MVYT(context_ptr->p_sb_best_mv[0][0][nidx]);
             context_ptr->inloop_me_mv[1][0][candidate_cnt][0] = _MVXT(context_ptr->p_sb_best_mv[1][0][nidx]);
             context_ptr->inloop_me_mv[1][0][candidate_cnt][1] = _MVYT(context_ptr->p_sb_best_mv[1][0][nidx]);
             candidate_cnt++;
         }
-
     }
 
     return return_error;
 }
-

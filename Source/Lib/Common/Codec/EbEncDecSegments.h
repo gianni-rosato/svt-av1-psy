@@ -35,13 +35,13 @@ extern "C" {
       /**************************************
        * Member definitions
        **************************************/
-    typedef struct EncDecSegDependencyMap 
+    typedef struct EncDecSegDependencyMap
     {
         uint8_t      *dependency_map;
         EbHandle   update_mutex;
     } EncDecSegDependencyMap;
 
-    typedef struct EncDecSegSegmentRow 
+    typedef struct EncDecSegSegmentRow
     {
         uint16_t      starting_seg_index;
         uint16_t      ending_seg_index;
@@ -70,7 +70,6 @@ extern "C" {
         uint32_t                    segment_max_band_count;
         uint32_t                    segment_max_row_count;
         uint32_t                    segment_max_total_count;
-
     } EncDecSegments;
 
     /**************************************
@@ -80,7 +79,6 @@ extern "C" {
         EncDecSegments **segments_dbl_ptr,
         uint32_t             segment_col_count,
         uint32_t             segment_row_count);
-
 
     extern void enc_dec_segments_init(
         EncDecSegments *segments_ptr,

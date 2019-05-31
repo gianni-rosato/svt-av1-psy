@@ -312,7 +312,6 @@ void av1_jnt_convolve_y_avx2(const uint8_t *src, int32_t src_stride, uint8_t *ds
                     _mm_storeu_si128((__m128i *)(&dst0[i * dst_stride0 + j]), res_0);
                     _mm_storeu_si128(
                         (__m128i *)((&dst0[i * dst_stride0 + j + dst_stride0])), res_1);
-
                 }
                 else {
                     const __m128i res_lo_0 = _mm256_castsi256_si128(res_lo_unsigned);
@@ -501,7 +500,6 @@ void av1_jnt_convolve_2d_avx2(const uint8_t *src, int32_t src_stride, uint8_t *d
                             _mm_cvtsi128_si32(res_0);
                         *(uint32_t *)(&dst0[i * dst_stride0 + j + dst_stride0]) =
                             _mm_cvtsi128_si32(res_1);
-
                     }
                     else {
                         const __m128i res_0 = _mm256_castsi256_si128(res_unsigned);

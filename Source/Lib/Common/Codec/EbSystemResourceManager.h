@@ -22,7 +22,7 @@ extern "C" {
       *   encoder system (i.e. SequenceControlSet, PictureBufferDesc,
       *   ProcessResults, and GracefulDegradation)
       *********************************************************************/
-    typedef struct EbObjectWrapper 
+    typedef struct EbObjectWrapper
     {
         // object_ptr - pointer to the object being managed.
         void                     *object_ptr;
@@ -44,7 +44,6 @@ extern "C" {
         // next_ptr - a pointer to a different EbObjectWrapper.  Used
         //   only in the implemenation of a single-linked Fifo.
         struct EbObjectWrapper *next_ptr;
-
     } EbObjectWrapper;
 
     /*********************************************************************
@@ -55,7 +54,7 @@ extern "C" {
      *   The Fifo also contains a counting_semaphore for OS thread-blocking
      *   and dynamic EbObjectWrapper counting.
      *********************************************************************/
-    typedef struct EbFifo 
+    typedef struct EbFifo
     {
         // counting_semaphore - used for OS thread-blocking & dynamically
         //   counting the number of EbObjectWrappers currently in the
@@ -75,33 +74,30 @@ extern "C" {
         // queue_ptr - pointer to MuxingQueue that the EbFifo is
         //   associated with.
         struct EbMuxingQueue *queue_ptr;
-
     } EbFifo;
 
     /*********************************************************************
      * CircularBuffer
      *********************************************************************/
-    typedef struct EbCircularBuffer 
+    typedef struct EbCircularBuffer
     {
         EbPtr *array_ptr;
         uint32_t  head_index;
         uint32_t  tail_index;
         uint32_t  buffer_total_count;
         uint32_t  current_count;
-
     } EbCircularBuffer;
 
     /*********************************************************************
      * MuxingQueue
      *********************************************************************/
-    typedef struct EbMuxingQueue 
+    typedef struct EbMuxingQueue
     {
         EbHandle           lockout_mutex;
         EbCircularBuffer *object_queue;
         EbCircularBuffer *process_queue;
         uint32_t              process_total_count;
         EbFifo          **process_fifo_ptr_array;
-
     } EbMuxingQueue;
 
     /*********************************************************************
@@ -113,7 +109,7 @@ extern "C" {
      *   fullFifo provides downstream pipeline data flow control.  The
      *   emptyFifo provides upstream pipeline backpressure flow control.
      *********************************************************************/
-    typedef struct EbSystemResource 
+    typedef struct EbSystemResource
     {
         // object_total_count - A count of the number of objects contained in the
         //   System Resoruce.
@@ -128,7 +124,6 @@ extern "C" {
 
         // The full FIFO contains a queue of completed buffers
         EbMuxingQueue     *full_queue;
-
     } EbSystemResource;
 
     /*********************************************************************

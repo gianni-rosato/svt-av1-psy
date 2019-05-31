@@ -10,7 +10,6 @@
 #include "EbPictureBufferDesc.h"
 #include "EbPictureOperators.h"
 
-
 #if (InternalBitDepthIncrement == 0)
 #define ChromaOffset4 (1 << (Shift4 - 1))
 #else
@@ -21,7 +20,7 @@
 #else
 #define ChromaMinusOffset1 MinusOffset1
 #endif
-#if !UNPACK_REF_POST_EP  
+#if !UNPACK_REF_POST_EP
 EbErrorType motion_compensation_prediction_context_ctor(
     MotionCompensationPredictionContext **context_dbl_ptr,
     EbColorFormat                             color_format,
@@ -34,7 +33,6 @@ EbErrorType motion_compensation_prediction_context_ctor(
     EB_MALLOC(MotionCompensationPredictionContext *, context_ptr, sizeof(MotionCompensationPredictionContext), EB_N_PTR);
     *(context_dbl_ptr) = context_ptr;
     UNUSED(color_format);
- 
 
     // context_ptr->localReferenceBlock = (uint16_t*)malloc(sizeof(uint16_t)*( (max_cu_width+8)*(max_cu_height+8)));
 
@@ -60,15 +58,11 @@ EbErrorType motion_compensation_prediction_context_ctor(
         initData.max_height = max_cu_height + 32;
 
         return_error = eb_picture_buffer_desc_ctor((EbPtr*)&context_ptr->local_reference_block8_bitl0, (EbPtr)&initData);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
         return_error = eb_picture_buffer_desc_ctor((EbPtr*)&context_ptr->local_reference_block8_bitl1, (EbPtr)&initData);
-        if (return_error == EB_ErrorInsufficientResources) {
+        if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        }
-
-
     }
     return EB_ErrorNone;
 }
@@ -92,7 +86,6 @@ void encode_uni_pred_interpolation(
     uint8_t    frac_pos_y;
     uint32_t   chromaPuWidth = pu_width >> 1;
     uint32_t   chromaPuHeight = pu_height >> 1;
-
 
     (void)tempBuf1;
 
@@ -119,7 +112,6 @@ void encode_uni_pred_interpolation(
     frac_pos_x = pos_x & 0x07;
     frac_pos_y = pos_y & 0x07;
 
-
     uni_pred_chroma_if_function_ptr_array_new[asm_type][frac_pos_x + (frac_pos_y << 3)](
         ref_pic->buffer_cb + integPosx + integPosy * ref_pic->stride_cb,
         ref_pic->stride_cb,
@@ -143,7 +135,6 @@ void encode_uni_pred_interpolation(
         frac_pos_x,
         frac_pos_y);
 }
-
 
 /** generate_padding()
         is used to pad the target picture. The horizontal padding happens first and then the vertical padding.
@@ -241,7 +232,6 @@ void generate_padding16_bit(
     return;
 }
 
-
 /** pad_input_picture()
 is used to pad the input picture in order to get . The horizontal padding happens first and then the vertical padding.
 */
@@ -253,20 +243,17 @@ void pad_input_picture(
     uint32_t   pad_right,                //input paramter, the padding right.
     uint32_t   pad_bottom)             //input paramter, the padding bottom.
 {
-
     uint32_t   verticalIdx;
     EbByte  tempSrcPic0;
     EbByte  tempSrcPic1;
 
     if (pad_right) {
-
         // Add padding @ the right
         verticalIdx = original_src_height;
         tempSrcPic0 = src_pic;
 
         while (verticalIdx)
         {
-
             EB_MEMSET(tempSrcPic0 + original_src_width, *(tempSrcPic0 + original_src_width - 1), pad_right);
             tempSrcPic0 += src_stride;
             --verticalIdx;
@@ -274,7 +261,6 @@ void pad_input_picture(
     }
 
     if (pad_bottom) {
-
         // Add padding @ the bottom
         verticalIdx = pad_bottom;
         tempSrcPic0 = src_pic + (original_src_height - 1) * src_stride;
@@ -290,4 +276,3 @@ void pad_input_picture(
 
     return;
 }
-

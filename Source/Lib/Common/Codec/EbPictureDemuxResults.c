@@ -24,5 +24,3 @@ EbErrorType picture_results_ctor(
 
     return EB_ErrorNone;
 }
-
-

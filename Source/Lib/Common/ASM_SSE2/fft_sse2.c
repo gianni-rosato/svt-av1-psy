@@ -29,9 +29,8 @@ static INLINE void transpose4x4(const float *A, float *B, const int32_t lda,
 
 void aom_transpose_float_sse2(const float *A, float *B, int32_t n) {
     for (int32_t y = 0; y < n; y += 4) {
-        for (int32_t x = 0; x < n; x += 4) {
+        for (int32_t x = 0; x < n; x += 4)
             transpose4x4(A + y * n + x, B + x * n + y, n, n);
-        }
     }
 }
 
@@ -120,4 +119,3 @@ void aom_ifft4x4_float_sse2(const float *input, float *temp, float *output) {
     aom_ifft_2d_gen(input, temp, output, 4, aom_fft1d_4_float, aom_fft1d_4_sse2,
         aom_ifft1d_4_sse2, aom_transpose_float_sse2, 4);
 }
-

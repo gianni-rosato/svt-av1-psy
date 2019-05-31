@@ -264,10 +264,8 @@ SIMD_INLINE v64 v64_shuffle_8(v64 x, v64 pattern) {
     char *selected = (char *)&output;
     int32_t counter;
 
-    for (counter = 0; counter < 8; counter++) {
+    for (counter = 0; counter < 8; counter++)
         selected[counter] = input[index[counter]];
-    }
-
     return output;
 #endif
 }

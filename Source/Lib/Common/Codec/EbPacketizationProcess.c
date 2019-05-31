@@ -18,7 +18,6 @@
 #include "EbModeDecisionProcess.h"
 #endif
 
-
 #define DETAILED_FRAME_OUTPUT 0
 
 static EbBool IsPassthroughData(EbLinkedListNode* dataNode)
@@ -35,7 +34,6 @@ static EbLinkedListNode* ExtractPassthroughData(EbLinkedListNode** llPtrPtr)
     *llPtrPtr = llRestPtr;
     return llPassPtr;
 }
-
 
 EbErrorType packetization_context_ctor(
     PacketizationContext **context_dbl_ptr,
@@ -57,17 +55,15 @@ EbErrorType packetization_context_ctor(
 #define OBU_FRAME_HEADER_SIZE       3
 #define TILES_GROUP_SIZE            1
 
-// Write TD after offsetting the stream buffer 
+// Write TD after offsetting the stream buffer
 static void write_td (
     EbBufferHeaderType  *out_str_ptr,
     EbBool               show_ex,
     EbBool               has_tiles){
-
     uint8_t  td_buff[TD_SIZE] = { 0,0 };
     uint8_t  obu_frame_header_size = has_tiles ? OBU_FRAME_HEADER_SIZE + TILES_GROUP_SIZE : OBU_FRAME_HEADER_SIZE;
     if (out_str_ptr &&
         (out_str_ptr->n_alloc_len > (out_str_ptr->n_filled_len + 2))) {
-
         uint8_t *src_address = (show_ex == EB_FALSE) ?  out_str_ptr->p_buffer :
                 out_str_ptr->p_buffer + out_str_ptr->n_filled_len - (obu_frame_header_size);
 
@@ -83,7 +79,7 @@ static void write_td (
         encode_td_av1((uint8_t*)(&td_buff));
 
         EB_MEMCPY(src_address,
-                  &td_buff, 
+                  &td_buff,
                   TD_SIZE);
     }
 }
@@ -92,7 +88,6 @@ static void write_td (
 void update_rc_rate_tables(
     PictureControlSet            *picture_control_set_ptr,
     SequenceControlSet           *sequence_control_set_ptr) {
-
     EncodeContext* encode_context_ptr = (EncodeContext*)sequence_control_set_ptr->encode_context_ptr;
 
     uint32_t  intra_sad_interval_index;
@@ -104,7 +99,6 @@ void update_rc_rate_tables(
     uint32_t  sb_index;
     int32_t   qp_index;
 
-
     // LCU Loop
     if (sequence_control_set_ptr->static_config.rate_control_mode > 0) {
         uint64_t  sadBits[NUMBER_OF_SAD_INTERVALS] = { 0 };
@@ -113,25 +107,21 @@ void update_rc_rate_tables(
         encode_context_ptr->rate_control_tables_array_updated = EB_TRUE;
 
         for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-
             sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
             sb_params_ptr = &sequence_control_set_ptr->sb_params_array[sb_index];
 
             if (sb_params_ptr->is_complete_sb) {
                 if (picture_control_set_ptr->slice_type == I_SLICE) {
-
                     intra_sad_interval_index = picture_control_set_ptr->parent_pcs_ptr->intra_sad_interval_index[sb_index];
 
                     sadBits[intra_sad_interval_index] += sb_ptr->total_bits;
                     count[intra_sad_interval_index] ++;
-
                 }
                 else {
                     sad_interval_index = picture_control_set_ptr->parent_pcs_ptr->inter_sad_interval_index[sb_index];
 
                     sadBits[sad_interval_index] += sb_ptr->total_bits;
                     count[sad_interval_index] ++;
-
                 }
             }
         }
@@ -206,7 +196,6 @@ void update_rc_rate_tables(
                                             + (10 - weight) * (uint32_t)encode_context_ptr->rate_control_tables_array[qp_index].sad_bits_array[picture_control_set_ptr->temporal_layer_index][sad_interval_index] + 5) / 10);
                                     encode_context_ptr->rate_control_tables_array[qp_index].sad_bits_array[picture_control_set_ptr->temporal_layer_index][sad_interval_index] =
                                         MIN((uint16_t)encode_context_ptr->rate_control_tables_array[qp_index].sad_bits_array[picture_control_set_ptr->temporal_layer_index][sad_interval_index], (uint16_t)((1 << 15) - 1));
-
                                 }
                             }
                         }
@@ -228,7 +217,6 @@ void update_rc_rate_tables(
                                             + (10 - weight) * (uint32_t)encode_context_ptr->rate_control_tables_array[qp_index].sad_bits_array[picture_control_set_ptr->temporal_layer_index][sad_interval_index] + 5) / 10);
                                     encode_context_ptr->rate_control_tables_array[qp_index].sad_bits_array[picture_control_set_ptr->temporal_layer_index][sad_interval_index] =
                                         MIN((uint16_t)encode_context_ptr->rate_control_tables_array[qp_index].sad_bits_array[picture_control_set_ptr->temporal_layer_index][sad_interval_index], (uint16_t)((1 << 15) - 1));
-
                                 }
                             }
                         }
@@ -262,7 +250,7 @@ void* packetization_kernel(void *input_ptr)
     EbBufferHeaderType             *output_stream_ptr;
     EbObjectWrapper              *rateControlTasksWrapperPtr;
     RateControlTasks             *rateControlTasksPtr;
-    
+
     // Queue variables
     int32_t                         queueEntryIndex;
     PacketizationReorderEntry    *queueEntryPtr;
@@ -272,7 +260,6 @@ void* packetization_kernel(void *input_ptr)
     context_ptr->disp_order_continuity_count = 0;
 
     for (;;) {
-
         // Get EntropyCoding Results
         eb_get_full_object(
             context_ptr->entropy_coding_input_fifo_ptr,
@@ -359,7 +346,6 @@ void* packetization_kernel(void *input_ptr)
                 encode_context_ptr);
 
             output_stream_ptr->flags |= EB_BUFFERFLAG_SHOW_EXT;
-
         }
 
         // Send the number of bytes per frame to RC
@@ -384,7 +370,7 @@ void* packetization_kernel(void *input_ptr)
         queueEntryPtr->ref_poc_list0 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0];
         queueEntryPtr->ref_poc_list1 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1];
 #endif
-#if REF_ORDER        
+#if REF_ORDER
         memcpy(queueEntryPtr->ref_poc_array, picture_control_set_ptr->parent_pcs_ptr->av1RefSignal.ref_poc_array, 7 * sizeof(uint64_t));
 #endif
 #endif
@@ -405,10 +391,8 @@ void* packetization_kernel(void *input_ptr)
         // Calling callback functions to release the memory allocated for data linked list in the application
         while (picture_control_set_ptr->parent_pcs_ptr->data_ll_head_ptr != EB_NULL) {
             appDataLLHeadTempPtr = picture_control_set_ptr->parent_pcs_ptr->data_ll_head_ptr->next;
-            if (picture_control_set_ptr->parent_pcs_ptr->data_ll_head_ptr->release_cb_fnc_ptr != EB_NULL) {
+            if (picture_control_set_ptr->parent_pcs_ptr->data_ll_head_ptr->release_cb_fnc_ptr != EB_NULL)
                 picture_control_set_ptr->parent_pcs_ptr->data_ll_head_ptr->release_cb_fnc_ptr(picture_control_set_ptr->parent_pcs_ptr->data_ll_head_ptr);
-            }
-
             picture_control_set_ptr->parent_pcs_ptr->data_ll_head_ptr = appDataLLHeadTempPtr;
         }
 
@@ -427,7 +411,6 @@ void* packetization_kernel(void *input_ptr)
 
         // Release the Entropy Coding Result
         eb_release_object(entropyCodingResultsWrapperPtr);
-
 
         //****************************************************
         // Process the head of the queue
@@ -497,7 +480,6 @@ void* packetization_kernel(void *input_ptr)
                         context_ptr->dpb_disp_order[i] = queueEntryPtr->poc;
                     }
                     SVT_LOG("%i  %i  %c ****KEY***** %i frames\n", (int32_t)queueEntryPtr->picture_number, (int32_t)queueEntryPtr->poc, showTab[queueEntryPtr->show_frame], (int32_t)context_ptr->tot_shown_frames);
-
                 }
                 else
                 {
@@ -528,7 +510,6 @@ void* packetization_kernel(void *input_ptr)
                             exit(0);
                         }
 
-
 #if REF_ORDER
                         for (int rr = 0; rr < 7; rr++)
                         {
@@ -538,7 +519,6 @@ void* packetization_kernel(void *input_ptr)
                                 printf("REF_POC MISMATCH POC:%i  ref:%i\n", (int32_t)queueEntryPtr->poc, rr);
                         }
 #endif
-
                     }
                     else
                     {
@@ -549,7 +529,6 @@ void* packetization_kernel(void *input_ptr)
                             printf("%i  %i  %c   ----INTRA---- %i frames\n", (int32_t)queueEntryPtr->picture_number, (int32_t)queueEntryPtr->poc,
                             (int32_t)showTab[queueEntryPtr->show_frame], (int32_t)context_ptr->tot_shown_frames);
                     }
-
 
                     //Update the DPB
                     for (i = 0; i < 8; i++)
@@ -564,7 +543,7 @@ void* packetization_kernel(void *input_ptr)
             }
 #endif
 #if ADP_STATS_PER_LAYER
-            if (queueEntryPtr->picture_number == sequence_control_set_ptr->static_config.frames_to_be_encoded - 1) {         
+            if (queueEntryPtr->picture_number == sequence_control_set_ptr->static_config.frames_to_be_encoded - 1) {
                 uint8_t layerIndex;
                 SVT_LOG("\nsq_search_count\tsq_non4_search_count\tmdc_count\tpred_count\tpred1_nfl_count");
                 for (layerIndex = 0; layerIndex < 5; layerIndex++) {
@@ -599,7 +578,7 @@ void* packetization_kernel(void *input_ptr)
             if (queueEntryPtr->is_alt_ref)
                 output_stream_ptr->flags |= (uint32_t)EB_BUFFERFLAG_IS_ALT_REF;
 #endif
- 
+
             eb_post_full_object(output_stream_wrapper_ptr);
             queueEntryPtr->out_meta_data = (EbLinkedListNode *)EB_NULL;
 
@@ -607,17 +586,14 @@ void* packetization_kernel(void *input_ptr)
             queueEntryPtr->picture_number += PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
             queueEntryPtr->output_stream_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
 
-            if (encode_context_ptr->statistics_port_active) {
+            if (encode_context_ptr->statistics_port_active)
                 queueEntryPtr->outputStatisticsWrapperPtr = (EbObjectWrapper *)EB_NULL;
-            }
             // Increment the Reorder Queue head Ptr
             encode_context_ptr->packetization_reorder_queue_head_index =
                 (encode_context_ptr->packetization_reorder_queue_head_index == PACKETIZATION_REORDER_QUEUE_MAX_DEPTH - 1) ? 0 : encode_context_ptr->packetization_reorder_queue_head_index + 1;
 
             queueEntryPtr = encode_context_ptr->packetization_reorder_queue[encode_context_ptr->packetization_reorder_queue_head_index];
-
         }
-
     }
     return EB_NULL;
 }

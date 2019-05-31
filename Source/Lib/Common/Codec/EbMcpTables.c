@@ -163,7 +163,6 @@ const ChromaFilterNew uni_pred_chroma_if_function_ptr_array_new[ASM_TYPE_TOTAL][
     },
     // AVX2
     {
-
         chroma_interpolation_copy_ssse3,                       //B
         chroma_interpolation_filter_one_d_horizontal_ssse3,         //ab
         chroma_interpolation_filter_one_d_horizontal_ssse3,       //ac
@@ -367,4 +366,3 @@ const ChromaFilterOutRaw bi_pred_chroma_if_function_ptr_array_new[ASM_TYPE_TOTAL
         chroma_interpolation_filter_two_d_out_raw_ssse3,            //hh
     },
 };
-

@@ -51,12 +51,12 @@ typedef struct    RateControlModel {
      * @variable int32_t. Number of variation from model calculated so far
      */
     int32_t     model_variation_reported;
-  
+
     /*
      * @variable uint32_t. Sum of the bytes of all the encoded frames
      */
     uint64_t    total_bytes;
-  
+
     /*
      * @variable uint64_t. Number of frames encoded so far
      */

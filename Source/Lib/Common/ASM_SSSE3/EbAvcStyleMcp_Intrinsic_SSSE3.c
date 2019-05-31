@@ -11,7 +11,6 @@
 #include "emmintrin.h"
 #include "tmmintrin.h"
 
-
 EB_EXTERN EB_ALIGN(16) const int8_t AvcStyleLumaIFCoeff8_SSSE3[] = {
     -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25,
      9, -1,  9, -1,  9, -1,  9, -1,  9, -1,  9, -1,  9, -1,  9, -1,
@@ -20,7 +19,6 @@ EB_EXTERN EB_ALIGN(16) const int8_t AvcStyleLumaIFCoeff8_SSSE3[] = {
     -1,  9, -1,  9, -1,  9, -1,  9, -1,  9, -1,  9, -1,  9, -1,  9,
     25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1
 };
-
 
 void PictureCopyKernel_SSSE3(
     EbByte                  src,
@@ -123,7 +121,6 @@ void avc_style_luma_interpolation_filter_posj_ssse3(
     avc_style_luma_interpolation_filter_vertical_ssse3_intrin(temp_buf + pu_width, pu_width, dst, dst_stride, pu_width, pu_height, 0, skip, 2);
 }
 
-
 void avc_style_luma_interpolation_filter_posk_ssse3(
     EbByte               ref_pic,
     uint32_t                src_stride,
@@ -159,7 +156,6 @@ void avc_style_luma_interpolation_filter_posp_ssse3(
     avc_style_luma_interpolation_filter_horizontal_ssse3_intrin(ref_pic + src_stride, src_stride, temp_buf + tempBufSize, pu_width, pu_width, pu_height, 0, skip, 2);
     picture_average_kernel_sse2(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
 }
-
 
 void avc_style_luma_interpolation_filter_posq_ssse3(
     EbByte               ref_pic,
@@ -264,9 +260,7 @@ void avc_style_luma_interpolation_filter_horizontal_ssse3_intrin(
                 sum_clip_U8 = _mm_packus_epi16(sum_lo, sum_hi);
                 _mm_storeu_si128((__m128i *)(dst + width_cnt), sum_clip_U8);
             }
-
         }
-
     }
     else { //8x
         __m128i  sum01, sum23, sum;
@@ -304,9 +298,7 @@ void avc_style_luma_interpolation_filter_horizontal_ssse3_intrin(
 
                 _mm_storel_epi64((__m128i *)(dst + width_cnt), sum_clip_U8);
             }
-
         }
-
     }
 }
 
@@ -340,7 +332,6 @@ void avc_style_luma_interpolation_filter_vertical_ssse3_intrin(
         __m128i sum_lo, sum_hi, ref0, refs, ref2s, ref3s;
 
         for (width_cnt = 0; width_cnt < pu_width; width_cnt += 16) {
-
             refPicTemp = ref_pic;
             dstTemp = dst;
 
@@ -365,7 +356,6 @@ void avc_style_luma_interpolation_filter_vertical_ssse3_intrin(
             }
             //do the last row if sub-pred is ON.
             if (skip) {
-
                 dstTemp -= (dst_stride >> 1);
                 refPicTemp -= (srcStrideSkip >> 1);
                 {
@@ -384,9 +374,7 @@ void avc_style_luma_interpolation_filter_vertical_ssse3_intrin(
                     sum_hi = _mm_srai_epi16(_mm_add_epi16(sum_hi, IFOffset), IFShift);
                     sum_clip_U8 = _mm_packus_epi16(sum_lo, sum_hi);
                     _mm_storeu_si128((__m128i *)(dstTemp), sum_clip_U8);
-
                 }
-
             }
             ref_pic += 16;
             dst += 16;
@@ -396,7 +384,6 @@ void avc_style_luma_interpolation_filter_vertical_ssse3_intrin(
         __m128i sum, sum01, sum23;
 
         for (width_cnt = 0; width_cnt < pu_width; width_cnt += 8) {
-
             refPicTemp = ref_pic;
             dstTemp = dst;
 
@@ -416,7 +403,6 @@ void avc_style_luma_interpolation_filter_vertical_ssse3_intrin(
             }
             //do the last row if sub-pred is ON.
             if (skip) {
-
                 dstTemp -= (dst_stride >> 1);
                 refPicTemp -= (srcStrideSkip >> 1);
                 {
@@ -429,9 +415,7 @@ void avc_style_luma_interpolation_filter_vertical_ssse3_intrin(
                     sum = _mm_srai_epi16(_mm_add_epi16(_mm_add_epi16(sum01, sum23), IFOffset), IFShift);
                     sum_clip_U8 = _mm_packus_epi16(sum, sum);
                     _mm_storel_epi64((__m128i *)(dstTemp), sum_clip_U8);
-
                 }
-
             }
             ref_pic += 8;
             dst += 8;

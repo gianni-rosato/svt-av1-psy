@@ -23,7 +23,7 @@ extern "C" {
     typedef struct InterPredictionContext {
         MotionCompensationPredictionContext  *mcp_context;
     } InterPredictionContext;
-#if !UNPACK_REF_POST_EP 
+#if !UNPACK_REF_POST_EP
     extern EbErrorType inter_prediction_context_ctor(
         InterPredictionContext   **inter_prediction_context,
         EbColorFormat                color_format,
@@ -86,7 +86,6 @@ extern "C" {
         int16_t                               *ref1_amvp_cand_array_y,
         uint32_t                               ref1_num_available_amvp_cand,
         PictureControlSet                   *picture_control_set_ptr);
-
 
     EbErrorType warped_motion_prediction(
         MvUnit                               *mv_unit,

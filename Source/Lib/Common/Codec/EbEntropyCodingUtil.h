@@ -36,7 +36,6 @@ extern "C" {
         BacEncContext            bac_enc_context;
     } CabacEncodeContext;
 
-
 #ifdef __cplusplus
 }
 #endif

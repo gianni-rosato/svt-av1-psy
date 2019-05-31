@@ -6,7 +6,6 @@
 #ifndef EbRateDistortionCost_h
 #define EbRateDistortionCost_h
 
-
 /***************************************
  * Includes
  ***************************************/
@@ -31,7 +30,7 @@ extern "C" {
         uint16_t                            eob,
         PlaneType                           plane_type,
         TxSize                              transform_size,
-#if ATB_TX_TYPE_SUPPORT_PER_TU                         
+#if ATB_TX_TYPE_SUPPORT_PER_TU
         TxType                              transform_type,
 #endif
         int16_t                             txb_skip_ctx,
@@ -143,7 +142,7 @@ extern "C" {
         uint64_t                   lambda,
         MdRateEstimationContext *md_rate_estimation_ptr,
         uint32_t                   tb_max_depth);
-                                  
+
 #define RDDIV_BITS 7
 
 #define RDCOST(RM, R, D)                                            \
@@ -187,7 +186,6 @@ extern "C" {
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
 
-
     extern uint64_t av1_inter_fast_cost(
         CodingUnit            *cu_ptr,
         ModeDecisionCandidate *candidate_ptr,
@@ -206,8 +204,6 @@ extern "C" {
 #endif
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
-
-
 
     extern EbErrorType av1_intra_full_cost(
         PictureControlSet                    *picture_control_set_ptr,

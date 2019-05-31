@@ -41,7 +41,7 @@ extern "C" {
 #define MAX_TILE_AREA (4096 * 2304)  // Maximum tile area in pixels
 
     /*!\brief OBU types. */
-    typedef enum ATTRIBUTE_PACKED 
+    typedef enum ATTRIBUTE_PACKED
     {
         OBU_SEQUENCE_HEADER        = 1,
         OBU_TEMPORAL_DELIMITER     = 2,
@@ -63,7 +63,6 @@ extern "C" {
         PictureControlSet     *picture_control_set_ptr,
         EntropyCoder          *entropy_coder_ptr,
         EbPictureBufferDesc   *coeff_ptr);
-
 
     extern EbErrorType encode_slice_finish(
         EntropyCoder        *entropy_coder_ptr);
@@ -114,7 +113,6 @@ extern "C" {
         uint32_t      *output_buffer_size,
         EncodeContext         *encode_context_ptr);
 
-
     //**********************************************************************************************************//
     //onyxc_int.h
     static INLINE int32_t frame_is_intra_only(const PictureParentControlSet *const pcs_ptr) {
@@ -155,7 +153,7 @@ extern "C" {
 
     //*******************************************************************************************//
     // bitwriter_buffer.h
-    struct AomWriteBitBuffer 
+    struct AomWriteBitBuffer
     {
         uint8_t *bit_buffer;
         uint32_t bit_offset;
@@ -278,7 +276,6 @@ extern "C" {
     // For the bit to signal whether the single reference is ALTREF2_FRAME or
     // BWDREF_FRAME, knowing that it shall be either of these 2 choices.
     extern int32_t av1_get_pred_context_single_ref_p6(const MacroBlockD *xd);
-
 
     extern EbErrorType write_frame_header_av1(
         Bitstream *bitstream_ptr,

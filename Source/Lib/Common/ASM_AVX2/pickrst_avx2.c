@@ -361,7 +361,6 @@ void av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8,
     int32_t v_start, int32_t v_end, int32_t dgd_stride,
     int32_t src_stride, int64_t *M, int64_t *H,
     AomBitDepth bit_depth) {
-
     if (wiener_win == WIENER_WIN) {
         compute_stats_highbd_win7_opt_avx2(dgd8, src8, h_start, h_end, v_start,
             v_end, dgd_stride, src_stride, M, H,
@@ -725,7 +724,6 @@ int64_t av1_highbd_pixel_proj_error_avx2(
     const uint8_t *src8, int32_t width, int32_t height, int32_t src_stride,
     const uint8_t *dat8, int32_t dat_stride, int32_t *flt0, int32_t flt0_stride,
     int32_t *flt1, int32_t flt1_stride, int32_t xq[2], const SgrParamsType *params) {
-
     int32_t i, j, k;
     const int32_t shift = SGRPROJ_RST_BITS + SGRPROJ_PRJ_BITS;
     const __m256i rounding = _mm256_set1_epi32(1 << (shift - 1));

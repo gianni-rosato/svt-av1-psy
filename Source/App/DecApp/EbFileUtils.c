@@ -66,9 +66,8 @@ int file_is_ivf(CLInput *cli) {
         rewind(cli->inFile);
         cli->detect.buf_read = 0;
     }
-    else {
+    else
         cli->detect.position = 4;
-    }
     return is_ivf;
 }
 
@@ -79,7 +78,8 @@ int read_ivf_frame(FILE *infile, uint8_t **buffer, size_t *bytes_read,
     size_t frame_size = 0;
 
     if (fread(raw_header, IVF_FRAME_HDR_SZ, 1, infile) != 1) {
-        if (!feof(infile)) printf("Failed to read frame size. \n");
+        if (!feof(infile))
+            printf("Failed to read frame size. \n");
     }
     else {
         frame_size = mem_get_le32(raw_header);

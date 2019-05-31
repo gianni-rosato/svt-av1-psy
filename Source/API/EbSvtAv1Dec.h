@@ -14,34 +14,30 @@ extern "C" {
 #include "EbSvtAv1.h"
 #include "EbSvtAv1ExtFrameBuf.h"
 
-
 typedef struct EbOperatingParametersInfo {
-
     /*!<Specifies the time interval between the arrival of the first bit in the
      * smoothing buffer and the subsequent removal of the data that belongs to
      * the first coded frame for operating point*/
     uint32_t    decoder_buffer_delay;
 
     /*!<Specifies, in combination with decoder_buffer_delay[op] syntax element,
-     * the first bit arrival time of frames to be decoded to the smoothing 
+     * the first bit arrival time of frames to be decoded to the smoothing
      * buffer */
     uint32_t    encoder_buffer_delay;
 
-    /*!< Equal to 1 indicates that the smoothing buffer operates in low-delay 
+    /*!< Equal to 1 indicates that the smoothing buffer operates in low-delay
      * mode for operating point*/
     uint8_t     low_delay_mode_flag;
-
 } EbOperatingParametersInfo;
 
 typedef struct EbAV1OperatingPoint {
-
     uint32_t    op_idc;
     uint32_t    seq_level_idx;
     uint32_t    seq_tier;
 
     /*!< 1 -> Indicates that there is a decoder model associated with operating
-             point, 
-     *   0 -> Indicates that there is not a decoder model associated with 
+             point,
+     *   0 -> Indicates that there is not a decoder model associated with
              operating point*/
     uint8_t     decoder_model_present_for_this_op;
 
@@ -53,7 +49,6 @@ typedef struct EbAV1OperatingPoint {
 } EbAv1OperatingPoint;
 
 typedef struct EbColorConfig {
-
     /*!< bit depth */
     AomBitDepth                     bit_depth;
 
@@ -66,22 +61,22 @@ typedef struct EbColorConfig {
 
     /*!< Specify the chroma subsampling format */
     uint8_t                         subsampling_y;
-    
-    /*!< 1: Specifies that color_primaries, transfer_characteristics, and 
-            matrix_coefficients are present. color_description_present_flag 
-     *   0: Specifies that color_primaries, transfer_characteristics and 
+
+    /*!< 1: Specifies that color_primaries, transfer_characteristics, and
+            matrix_coefficients are present. color_description_present_flag
+     *   0: Specifies that color_primaries, transfer_characteristics and
             matrix_coefficients are not present */
     EbBool                         color_description_present_flag;
 
-    /*!< An integer that is defined by the "Color primaries" section of 
+    /*!< An integer that is defined by the "Color primaries" section of
      * ISO/IEC 23091-4/ITU-T H.273 */
     EbColorPrimaries                   color_primaries;
 
-    /*!< An integer that is defined by the "Transfer characteristics" section 
+    /*!< An integer that is defined by the "Transfer characteristics" section
      * of ISO/IEC 23091-4/ITU-T H.273 */
     EbTransferCharacteristics  transfer_characteristics;
 
-    /*!< An integer that is defined by the "Matrix coefficients" section of 
+    /*!< An integer that is defined by the "Matrix coefficients" section of
      * ISO/IEC 23091-4/ITU-T H.273 */
     EbMatrixCoefficients       matrix_coefficients;
 
@@ -93,33 +88,31 @@ typedef struct EbColorConfig {
     EbChromaSamplePosition    chroma_sample_position;
 
     /*!< 1: Indicates that the U and V planes may have separate delta quantizer
-     *   0: Indicates that the U and V planes will share the same delta 
+     *   0: Indicates that the U and V planes will share the same delta
             quantizer value */
     EbBool                         separate_uv_delta_q;
-
 } EbColorConfig;
 
 typedef struct EbTimingInfo {
     /*!< Timing info present flag */
     EbBool      timing_info_present;
-    
-    /*!< Number of time units of a clock operating at the frequency time_scale 
+
+    /*!< Number of time units of a clock operating at the frequency time_scale
      * Hz that corresponds to one increment of a clock tick counter*/
-    uint32_t    num_units_in_display_tick; 
+    uint32_t    num_units_in_display_tick;
 
     /*!< Number of time units that pass in one second*/
     uint32_t    time_scale;
 
     /*!< Equal to 1 indicates that pictures should be displayed according to
-     * their output order with the number of ticks between two consecutive 
+     * their output order with the number of ticks between two consecutive
      * pictures specified by num_ticks_per_picture.*/
     uint8_t     equal_picture_interval;
 
-    /*!< Specifies the number of clock ticks corresponding to output time 
-     * between two consecutive pictures in the output order. 
+    /*!< Specifies the number of clock ticks corresponding to output time
+     * between two consecutive pictures in the output order.
      * Range - [0 to (1 << 32) - 2]*/
     uint32_t    num_ticks_per_picture;
-
 } EbTimingInfo;
 
 typedef struct EbAV1StreamInfo
@@ -131,7 +124,7 @@ typedef struct EbAV1StreamInfo
     uint32_t    max_picture_width;
     uint32_t    max_picture_height;
 
-    /* Operating points present in the bitstream */    
+    /* Operating points present in the bitstream */
     uint32_t    num_operating_points;
     EbAv1OperatingPoint op_points[EB_MAX_NUM_OPERATING_POINTS];
 
@@ -146,40 +139,36 @@ typedef struct EbAV1StreamInfo
 
     /* The stream is in annex_b format */
     EbBool    is_annex_b;
-
 } EbAV1StreamInfo;
 
 typedef struct EbAV1FrameInfo
 {
-
     /* Layer to which the current frame belong */
     uint32_t    layer;
 
     /* Frame presentation time */
     uint64_t    frame_presentation_time;
-
 } EbAV1FrameInfo;
 
-typedef struct EbSvtAv1DecConfiguration 
+typedef struct EbSvtAv1DecConfiguration
 {
-
-    /* Bitstream operating point to decode. 
-     * 
+    /* Bitstream operating point to decode.
+     *
      * Default is -1, the highest operating point present in the bitstream
-     * A value higher than the maximum number of operating points present 
+     * A value higher than the maximum number of operating points present
      * returns the highest available operating point. */
 
     int32_t                operating_point;   // Operating point to decode
 
-    /* When set to 1, returns output pictures from all scalable layers present in the bitstream. 
-     * 
+    /* When set to 1, returns output pictures from all scalable layers present in the bitstream.
+     *
      * Default is 0, only one output layer is returned, defined by operating_point parameter */
-    uint32_t                output_all_layers; 
+    uint32_t                output_all_layers;
 
-    /* Skip film grain synthesis if it is present in the bitstream. Can be used for debugging purpose.  
-     * 
+    /* Skip film grain synthesis if it is present in the bitstream. Can be used for debugging purpose.
+     *
      * Default is 0 */
-    EbBool                  skip_film_grain; 
+    EbBool                  skip_film_grain;
 
     /* Skip N output frames in the display order.
      *
@@ -194,7 +183,6 @@ typedef struct EbSvtAv1DecConfiguration
      *
      * Default is 0. */
     uint64_t                 frames_to_be_decoded;
-
 
     /* Offline packing of the 2bits: requires two bits packed input.
      *
@@ -240,9 +228,7 @@ typedef struct EbSvtAv1DecConfiguration
     uint32_t                 active_channel_count;
 
     uint32_t                 stat_report;
-
 } EbSvtAv1DecConfiguration;
-
 
     /* STEP 1: Call the library to construct a Component Handle.
      *
@@ -375,17 +361,17 @@ typedef struct EbSvtAv1DecConfiguration
 
     /*  Flush a decoder
      *
-     *  Clears the decoder frame buffers. 
+     *  Clears the decoder frame buffers.
      *  The decoder is ready to parse a new sequence header.
      *
      *  Parameter:
      *  @ *svt_dec_component     Decoder handle
      *
      *  Returns EB_ErrorNone if the decode buffer has been flushed successfully.
-     */    
+     */
     EB_API EbErrorType eb_dec_flush(
         EbComponentType     *svt_dec_component);
-    
+
     /* Initialize callback functions.
      *
      * Parameter:
@@ -393,7 +379,7 @@ typedef struct EbSvtAv1DecConfiguration
      * @ allocate_buffer        callback function to allocate frame buffer
      * @ release_buffer         callback function to release frame buffer
      * @ priv_data              private data used by the allocator */
-    
+
     EB_API EbErrorType eb_dec_set_frame_buffer_callbacks(
         EbComponentType             *svt_dec_component,
         eb_allocate_frame_buffer    allocate_buffer,

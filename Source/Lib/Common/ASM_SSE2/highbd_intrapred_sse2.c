@@ -281,9 +281,8 @@ static INLINE void dc_store_4xh(uint16_t *dst, ptrdiff_t stride, int32_t height,
     const __m128i *dc) {
     const __m128i dc_dup = _mm_shufflelo_epi16(*dc, 0x0);
     int32_t i;
-    for (i = 0; i < height; ++i, dst += stride) {
+    for (i = 0; i < height; ++i, dst += stride)
         _mm_storel_epi64((__m128i *)dst, dc_dup);
-    }
 }
 
 void aom_highbd_dc_left_predictor_4x4_sse2(uint16_t *dst, ptrdiff_t stride,
@@ -407,9 +406,8 @@ static INLINE void dc_store_8xh(uint16_t *dst, ptrdiff_t stride, int32_t height,
     const __m128i dc_dup_lo = _mm_shufflelo_epi16(*dc, 0);
     const __m128i dc_dup = _mm_unpacklo_epi64(dc_dup_lo, dc_dup_lo);
     int32_t i;
-    for (i = 0; i < height; ++i, dst += stride) {
+    for (i = 0; i < height; ++i, dst += stride)
         _mm_store_si128((__m128i *)dst, dc_dup);
-    }
 }
 
 // -----------------------------------------------------------------------------

@@ -59,9 +59,7 @@ uint32_t fast_loop_nx_m_sad_kernel(
     for (y = 0; y < height; y++)
     {
         for (x = 0; x < width; x++)
-        {
             sad += EB_ABS_DIFF(src[x], ref[x]);
-        }
         src += src_stride;
         ref += ref_stride;
     }
@@ -98,10 +96,7 @@ void sad_loop_kernel(
             for (y = 0; y < height; y++)
             {
                 for (x = 0; x < width; x++)
-                {
                     sad += EB_ABS_DIFF(src[y*src_stride + x], ref[xSearchIndex + y * ref_stride + x]);
-                }
-
             }
 
             // Update results
@@ -119,7 +114,6 @@ void sad_loop_kernel(
     return;
 }
 
-
 /* Sum the difference between every corresponding element of the buffers. */
 static INLINE uint32_t sad_inline_c(const uint8_t *a, int a_stride,
     const uint8_t *b, int b_stride, int width, int height) {
@@ -127,10 +121,8 @@ static INLINE uint32_t sad_inline_c(const uint8_t *a, int a_stride,
     unsigned int sad = 0;
 
     for (y = 0; y < height; y++) {
-        for (x = 0; x < width; x++) {
+        for (x = 0; x < width; x++)
             sad += EB_ABS_DIFF(a[x], b[x]);
-        }
-
         a += a_stride;
         b += b_stride;
     }
@@ -231,4 +223,3 @@ sadMxN(16, 64);
 sadMxNx4D(16, 64);
 sadMxN(64, 16);
 sadMxNx4D(64, 16);
-
