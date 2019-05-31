@@ -49,7 +49,7 @@ extern "C" {
 
 #define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass
 #define RDOQ_INTRA                        1 // Enable RDOQ for INTRA for 16x16 and larger
-
+#define SPATIAL_SSE_TX_SEARCH             1 // Spatial SSE @ the full loop Tx search
 
 
 #define ATB                               1 // ATB Main Flag
