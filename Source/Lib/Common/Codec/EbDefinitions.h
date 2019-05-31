@@ -46,6 +46,10 @@ extern "C" {
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
+
+#define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass
+#define RDOQ_OPT                          1
+
 #define ATB                               1 // ATB Main Flag
 #if ATB
 #define ATB_SUPPORT                       1 // Tranform block geometry, data structure(s), ..
@@ -60,7 +64,6 @@ extern "C" {
 #define ATB_DC_CONTEXT_SUPPORT_2          1 // Added the ability to update DC context @ tranform block basis for only INTRA partitioning (128x128 not yet addressed)
 #if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
 #define DC_SIGN_CONTEXT_FIX               1 // Fixed DC level derivation and update @ mode decision
-#define DC_SIGN_CONTEXT_EP                0 // Fixed DC level update @ encode pass (TBD)
 #endif
 #define SHUT_ATB                          0 // ATB multi-mode signal
 #endif

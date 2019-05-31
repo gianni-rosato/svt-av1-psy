@@ -2058,6 +2058,22 @@ void av1_quantize_inv_quantize(
     *count_non_zero_coeffs = *eob;
 
 #if DC_SIGN_CONTEXT_FIX
+#if DC_SIGN_CONTEXT_EP
+    // Derive cul_level
+    int32_t cul_level = 0;
+    const int16_t *const scan = scan_order->scan;
+    for (int32_t c = 0; c < *eob; ++c) {
+        const int16_t pos = scan[c];
+        const int32_t v = quant_coeff[pos];
+        int32_t level = ABS(v);
+        cul_level += level;
+    }
+
+    cul_level = AOMMIN(COEFF_CONTEXT_MASK, cul_level);
+    // DC value
+    set_dc_sign(&cul_level, quant_coeff[0]);
+    return cul_level;
+#else
     // Derive cul_level
     int32_t cul_level = 0;
     const int16_t *const scan = scan_order->scan;
@@ -2072,6 +2088,7 @@ void av1_quantize_inv_quantize(
     // DC value
     set_dc_sign(&cul_level, coeff[0]);
     return cul_level;
+#endif
 #endif
 }
 
