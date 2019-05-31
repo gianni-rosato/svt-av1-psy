@@ -1872,8 +1872,8 @@ void av1_quantize_inv_quantize(
     EbBool is_inter = (pred_mode >= NEARESTMV);
     // Hsan (Trellis) : only luma for now and only @ encode pass
 #if TRELLIS_MD
-#if TRELLIS_INTRA
-    if (md_context->trellis_quant_coeff_optimization && *eob != 0 && component_type == COMPONENT_LUMA) {
+#if RDOQ_INTRA
+    if (md_context->trellis_quant_coeff_optimization && *eob != 0  && component_type == COMPONENT_LUMA && (is_inter || (width >= 16 && height >= 16))) {
 #else
 #if TRELLIS_CHROMA
     if (md_context->trellis_quant_coeff_optimization && *eob != 0 && is_inter) {
@@ -1884,6 +1884,7 @@ void av1_quantize_inv_quantize(
 #else
     if (*eob != 0 && is_encode_pass && is_inter && component_type == COMPONENT_LUMA) {
 #endif
+#if !RDOQ_INTRA
         uint64_t coeff_rate_non_opt;
         uint64_t coeff_rate_opt;
 
@@ -1892,7 +1893,7 @@ void av1_quantize_inv_quantize(
 
         uint64_t cost_non_opt;
         uint64_t cost_opt;
-
+#endif
 #if TRELLIS_SKIP
         uint64_t coeff_rate_skip_non_opt;
         uint64_t coeff_rate_skip_opt;
@@ -1900,6 +1901,7 @@ void av1_quantize_inv_quantize(
         uint64_t cost_skip_non_opt;
         uint64_t cost_skip_opt;
 #endif
+#if !RDOQ_INTRA
         // Use the 1st spot of the candidate buffer to hold cfl settings to use same kernel as MD for coef cost estimation
         if (is_encode_pass)
         {
@@ -1929,7 +1931,7 @@ void av1_quantize_inv_quantize(
             txb_skip_context,
             dc_sign_context,
             picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
-
+#endif
 #if TRELLIS_SKIP
         coeff_rate_skip_non_opt = av1_cost_skip_txb(
             0,//picture_control_set_ptr->update_cdf,
@@ -1939,6 +1941,7 @@ void av1_quantize_inv_quantize(
             (component_type == COMPONENT_LUMA) ? 0 : 1,
             txb_skip_context);
 #endif
+#if !RDOQ_INTRA
         full_distortion_kernel32_bits_func_ptr_array[asm_type](
             coeff,
             get_txb_wide(txsize),
@@ -1952,6 +1955,7 @@ void av1_quantize_inv_quantize(
         distortion_non_opt[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(distortion_non_opt[DIST_CALC_PREDICTION], shift);
 
         cost_non_opt = RDCOST(md_context->full_lambda, coeff_rate_non_opt, distortion_non_opt[DIST_CALC_RESIDUAL]);
+#endif
 #if TRELLIS_SKIP // To test
         cost_skip_non_opt = RDCOST(md_context->full_lambda, coeff_rate_skip_non_opt, distortion_non_opt[DIST_CALC_PREDICTION]);
         if (cost_skip_non_opt < cost_non_opt)
@@ -1977,7 +1981,7 @@ void av1_quantize_inv_quantize(
                 is_inter,
                 bit_increment,
                 (component_type == COMPONENT_LUMA) ? 0 : 1);
-
+#if !RDOQ_INTRA
             // Compute the cost when using optimized coefficients(i.e.after Trellis coefficients)
             if (*eob != 0) {
                 coeff_rate_opt = av1_cost_coeffs_txb(
@@ -2051,6 +2055,7 @@ void av1_quantize_inv_quantize(
                         scan_order,
                         &qparam);
             }
+#endif
         }
     }
 

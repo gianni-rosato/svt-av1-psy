@@ -48,7 +48,9 @@ extern "C" {
 
 
 #define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass
-#define RDOQ_OPT                          1
+#define RDOQ_INTRA                        1 // Enable RDOQ for INTRA for 16x16 and larger
+
+
 
 #define ATB                               1 // ATB Main Flag
 #if ATB
@@ -173,7 +175,6 @@ extern "C" {
 #define DEBUG_TRELLIS                                   0
 #define TRELLIS_SKIP                                    0
 #define TRELLIS_MD                                      1
-#define TRELLIS_INTRA                                   0
 #define TRELLIS_CHROMA                                  0
 #define ENHANCED_TRELLIS                                0   // TBD
 #endif
