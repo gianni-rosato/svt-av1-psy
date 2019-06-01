@@ -1326,7 +1326,7 @@ void read_skip_mode_params(bitstrm_t *bs, FrameHeader *frame_info, int FrameIsIn
 void read_film_grain_params(bitstrm_t *bs, FilmGrainParams *grain_params,
     SeqHeader *seq_header, FrameHeader *frame_info)
 {
-    int film_grain_params_ref_idx, temp_grain_seed, i, numPosLuma, numPosChroma;
+    int /*film_grain_params_ref_idx,*/ temp_grain_seed, i, numPosLuma, numPosChroma;
 
     if (!seq_header->film_grain_params_present || (!frame_info->show_frame &&
         !frame_info->showable_frame)) {
@@ -1347,8 +1347,8 @@ void read_film_grain_params(bitstrm_t *bs, FilmGrainParams *grain_params,
         grain_params->update_grain = 1;
     PRINT_FRAME("grain_seed", grain_params->update_grain);
     if (!grain_params->update_grain) {
-        film_grain_params_ref_idx = dec_get_bits(bs, 3);
-        PRINT_FRAME("film_grain_params_ref_idx", film_grain_params_ref_idx);
+        /*film_grain_params_ref_idx = */dec_get_bits(bs, 3);
+        /*PRINT_FRAME("film_grain_params_ref_idx", film_grain_params_ref_idx);*/
         temp_grain_seed = grain_params->grain_seed;
         // TODO: Handle while implementing Inter
         // load_grain_params( film_grain_params_ref_idx );
@@ -1488,9 +1488,9 @@ void read_uncompressed_header(bitstrm_t *bs, SeqHeader *seq_header,
     int id_len=0, allFrames, FrameIsIntra = 0, i, frame_size_override_flag = 0;
     uint32_t diff_len;
     int delta_frame_id_length_minus_1, frame_refs_short_signaling;
-    int gold_frame_idx, frame_to_show_map_idx;
+    int /*gold_frame_idx, */frame_to_show_map_idx;
     int have_prev_frame_id, diff_frame_id;
-    int last_frame_idx;
+    /*int last_frame_idx;*/
     uint32_t prev_frame_id = 0;
     uint8_t expected_frame_id, display_frame_id;
 
@@ -1716,10 +1716,10 @@ void read_uncompressed_header(bitstrm_t *bs, SeqHeader *seq_header,
             frame_refs_short_signaling = dec_get_bits(bs, 1);
             PRINT_FRAME("frame_refs_short_signaling", frame_refs_short_signaling);
             if (frame_refs_short_signaling) {
-                last_frame_idx = dec_get_bits(bs, 3);
-                gold_frame_idx = dec_get_bits(bs, 3);
-                PRINT_FRAME("last_frame_idx", last_frame_idx);
-                PRINT_FRAME("gold_frame_idx", gold_frame_idx);
+                /*last_frame_idx = */dec_get_bits(bs, 3);
+                /*gold_frame_idx = */dec_get_bits(bs, 3);
+                /*PRINT_FRAME("last_frame_idx", last_frame_idx);*/
+                /*PRINT_FRAME("gold_frame_idx", gold_frame_idx);*/
                 //TODO: Implement set_frame_refs(last_frame_idx, gold_frame_idx)
                 // remapped_ref_idx variable required (ref. liaom)
             }

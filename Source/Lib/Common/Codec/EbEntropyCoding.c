@@ -3974,7 +3974,7 @@ void write_sequence_header(SequenceControlSet *scs_ptr/*Av1Comp *cpi*/, struct A
             aom_wb_write_bit(wb, scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs);
         }
 
-        if (scs_ptr->seq_header.seq_force_screen_content_tools == 2) 
+        if (scs_ptr->seq_header.seq_force_screen_content_tools == 2)
             aom_wb_write_bit(wb, 1);
         else {
             aom_wb_write_bit(wb, 0);
@@ -3982,14 +3982,14 @@ void write_sequence_header(SequenceControlSet *scs_ptr/*Av1Comp *cpi*/, struct A
         }
         //
         if (scs_ptr->seq_header.seq_force_screen_content_tools > 0) {
-            if (scs_ptr->seq_header.seq_force_integer_mv == 2) 
+            if (scs_ptr->seq_header.seq_force_integer_mv == 2)
                 aom_wb_write_bit(wb, 1);
             else {
                 aom_wb_write_bit(wb, 0);
                 aom_wb_write_bit(wb, scs_ptr->seq_header.seq_force_integer_mv);
             }
         }
-        else 
+        else
             assert(scs_ptr->seq_header.seq_force_integer_mv == 2);
         if (scs_ptr->seq_header.order_hint_info.enable_order_hint)
             aom_wb_write_literal(wb, scs_ptr->seq_header.order_hint_info.order_hint_bits - 1, 3);
@@ -4453,7 +4453,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
 
     aom_wb_write_bit(wb, pcs_ptr->disable_cdf_update);
 
-    if (scs_ptr->seq_header.seq_force_screen_content_tools == 2) 
+    if (scs_ptr->seq_header.seq_force_screen_content_tools == 2)
         aom_wb_write_bit(wb, pcs_ptr->allow_screen_content_tools);
     else {
         assert(pcs_ptr->allow_screen_content_tools ==
@@ -4461,9 +4461,9 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
     }
 
     if (pcs_ptr->allow_screen_content_tools) {
-        if (scs_ptr->seq_header.seq_force_integer_mv == 2) 
+        if (scs_ptr->seq_header.seq_force_integer_mv == 2)
             aom_wb_write_bit(wb, pcs_ptr->cur_frame_force_integer_mv);
-        else 
+        else
             assert(pcs_ptr->cur_frame_force_integer_mv == scs_ptr->seq_header.seq_force_integer_mv);
     }
     else
@@ -4685,11 +4685,11 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
     else {
         if (!pcs_ptr->coded_lossless) {
             encode_loopfilter(pcs_ptr, wb);
-            if (scs_ptr->seq_header.enable_cdef) 
+            if (scs_ptr->seq_header.enable_cdef)
                 encode_cdef(pcs_ptr, wb);
         }
 
-        if (scs_ptr->seq_header.enable_restoration) 
+        if (scs_ptr->seq_header.enable_restoration)
             encode_restoration_mode(pcs_ptr, wb);
     }
 
@@ -4715,7 +4715,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
         //  printf("ERROR[AN]: Global motion not supported yet\n");
         WriteGlobalMotion(pcs_ptr, wb);
     }
-    if (scs_ptr->seq_header.film_grain_params_present && (pcs_ptr->show_frame || pcs_ptr->showable_frame)) 
+    if (scs_ptr->seq_header.film_grain_params_present && (pcs_ptr->show_frame || pcs_ptr->showable_frame))
         write_film_grain_params(pcs_ptr, wb);
 }
 

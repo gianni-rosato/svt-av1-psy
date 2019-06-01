@@ -4779,31 +4779,29 @@ void* picture_analysis_kernel(void *input_ptr)
         if (!picture_control_set_ptr->is_overlay)
         {
 #endif
-        sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-        input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
+            sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+            input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
 
-        paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-        input_padded_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
-        quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
-        sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
+            paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+            input_padded_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
+            quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
+            sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
 
-        // Variance
-        picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-        pictureHeighInLcu = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-        sb_total_count = picture_width_in_sb * pictureHeighInLcu;
+            // Variance
+            picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+            pictureHeighInLcu = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+            sb_total_count = picture_width_in_sb * pictureHeighInLcu;
 
-        asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
+            asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
 
-        // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
-        SetPictureParametersForStatisticsGathering(
-            sequence_control_set_ptr);
+            // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
+            SetPictureParametersForStatisticsGathering(
+                sequence_control_set_ptr);
 
-
-
-        // Pad pictures to multiple min cu size
-        PadPictureToMultipleOfMinCuSizeDimensions(
-            sequence_control_set_ptr,
-            input_picture_ptr);
+            // Pad pictures to multiple min cu size
+            PadPictureToMultipleOfMinCuSizeDimensions(
+                sequence_control_set_ptr,
+                input_picture_ptr);
 
             // Pre processing operations performed on the input picture
             PicturePreProcessingOperations(

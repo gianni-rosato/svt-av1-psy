@@ -35,36 +35,36 @@ typedef struct ObuHeader {
 
     /*!<Indicates if the optional obu_extension_header is present*/
     uint8_t obu_extension_flag;
-    
+
     /*!< 1: indicates that the obu_size syntax element will be present
      *   0: Indicates that the obu_size syntax element will not be present*/
     uint8_t obu_has_size_field;
-    
+
     /*!<Specifies the temporal level of the data contained in the OBU*/
     uint8_t temporal_id;
-    
+
     /*!<Specifies the spatial level of the data contained in the OBU*/
     uint8_t spatial_id;
 
     size_t payload_size;
-    
+
 } ObuHeader;
 
 
 typedef struct DecoderModelInfo {
 
-    /*!< Specifies the length of the decoder_buffer_delay and the 
+    /*!< Specifies the length of the decoder_buffer_delay and the
      * encoder_buffer_delay syntax elements, in bits*/
     uint8_t     buffer_delay_length_minus_1;
 
-    /*!< Number of time units of a decoding clock operating at the frequency 
+    /*!< Number of time units of a decoding clock operating at the frequency
      *time_scale Hz that corresponds to one increment of a clock tick counter*/
     uint32_t    num_units_in_decoding_tick;
 
     /*!<Specifies the length of the buffer_removal_time syntax element,in bits*/
     uint8_t     buffer_removal_time_length_minus_1;
 
-    /*!< Specifies the length of the frame_presentation_time syntax element, 
+    /*!< Specifies the length of the frame_presentation_time syntax element,
      * in bits*/
     uint8_t     frame_presentation_time_length_minus_1;
 
@@ -78,12 +78,12 @@ typedef struct OrderHintInfo {
      *  0: Indicates that tools based on order hints are disabled */
     uint8_t             enable_order_hint;
 
-    /*!< 1: Indicates that the distance weights process may be used for 
+    /*!< 1: Indicates that the distance weights process may be used for
      * inter prediction */
     uint8_t             enable_jnt_comp;
 
     /*!< 1: Indicates that the use_ref_frame_mvs syntax element may be present.
-     *   0: Indicates that the use_ref_frame_mvs syntax element will not be 
+     *   0: Indicates that the use_ref_frame_mvs syntax element will not be
             present */
     uint8_t             enable_ref_frame_mvs;
 

@@ -821,7 +821,7 @@ void* motion_estimation_kernel(void *input_ptr)
                             sb_origin_y = y_lcu_index * sequence_control_set_ptr->sb_sz;
                             sb_width = (sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x) < BLOCK_SIZE_64 ? sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x : BLOCK_SIZE_64;
                             sb_height = (sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y) < BLOCK_SIZE_64 ? sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y : BLOCK_SIZE_64;
-                            
+
                             sb_index = (uint16_t)(x_lcu_index + y_lcu_index * picture_width_in_sb);
 
                             picture_control_set_ptr->inter_sad_interval_index[sb_index] = 0;

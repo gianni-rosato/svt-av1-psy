@@ -493,7 +493,6 @@ extern EbErrorType sb_params_init(
                 potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_y >= (sequence_control_set_ptr->seq_header.max_frame_height - (4 * sequence_control_set_ptr->sb_sz))) ? 1 : potential_logo_sb;
             }
             else {
-
                 potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x >= (sequence_control_set_ptr->seq_header.max_frame_width - (14 * sequence_control_set_ptr->sb_sz))) && (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < 8 * sequence_control_set_ptr->sb_sz) ? 1 : potential_logo_sb;
                 potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x < ((14 * sequence_control_set_ptr->sb_sz))) && (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < 8 * sequence_control_set_ptr->sb_sz) ? 1 : potential_logo_sb;
                 potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_y >= (sequence_control_set_ptr->seq_header.max_frame_height - (8 * sequence_control_set_ptr->sb_sz))) ? 1 : potential_logo_sb;

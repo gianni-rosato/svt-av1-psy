@@ -8161,21 +8161,23 @@ EbErrorType motion_estimate_lcu(
 
     SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet *) picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 
-    int16_t                  xTopLeftSearchRegion;
-    int16_t                  yTopLeftSearchRegion;
-    uint32_t                  searchRegionIndex;
-    int16_t                  picture_width = (int16_t)((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->seq_header.max_frame_width;
-    int16_t                  picture_height = (int16_t)((SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr)->seq_header.max_frame_height;
-    uint32_t                  sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64 ? input_ptr->width - sb_origin_x : BLOCK_SIZE_64;
-    uint32_t                  sb_height = (input_ptr->height - sb_origin_y) < BLOCK_SIZE_64 ? input_ptr->height - sb_origin_y : BLOCK_SIZE_64;
-    int16_t                  padWidth = (int16_t)BLOCK_SIZE_64 - 1;
-    int16_t                  padHeight = (int16_t)BLOCK_SIZE_64 - 1;
-    int16_t                  search_area_width;
-    int16_t                  search_area_height;
-    int16_t                  x_search_area_origin;
-    int16_t                  y_search_area_origin;
-    int16_t                  origin_x = (int16_t)sb_origin_x;
-    int16_t                  origin_y = (int16_t)sb_origin_y;
+    int16_t xTopLeftSearchRegion;
+    int16_t yTopLeftSearchRegion;
+    uint32_t searchRegionIndex;
+    int16_t picture_width = (int16_t)((SequenceControlSet*)picture_control_set_ptr->
+                            sequence_control_set_wrapper_ptr->object_ptr)->seq_header.max_frame_width;
+    int16_t picture_height = (int16_t)((SequenceControlSet*)picture_control_set_ptr->
+                            sequence_control_set_wrapper_ptr->object_ptr)->seq_header.max_frame_height;
+    uint32_t sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64 ? input_ptr->width - sb_origin_x : BLOCK_SIZE_64;
+    uint32_t sb_height = (input_ptr->height - sb_origin_y) < BLOCK_SIZE_64 ? input_ptr->height - sb_origin_y : BLOCK_SIZE_64;
+    int16_t padWidth = (int16_t)BLOCK_SIZE_64 - 1;
+    int16_t padHeight = (int16_t)BLOCK_SIZE_64 - 1;
+    int16_t search_area_width;
+    int16_t search_area_height;
+    int16_t x_search_area_origin;
+    int16_t y_search_area_origin;
+    int16_t origin_x = (int16_t)sb_origin_x;
+    int16_t origin_y = (int16_t)sb_origin_y;
 
     // HME
     uint32_t searchRegionNumberInWidth = 0;
