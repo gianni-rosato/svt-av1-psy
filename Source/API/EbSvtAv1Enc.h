@@ -169,6 +169,11 @@ typedef struct EbSvtAv1EncConfiguration
     * Default is 4. */
     uint32_t                 partition_depth;
 
+    /* Instruct the library to calculate the recon to source for PSNR calculation
+    *
+    * Default is 0.*/
+    uint32_t                 stat_report;
+
     // Quantization
     /* Initial quantization parameter for the Intra pictures used under constant
      * qp rate control mode.
@@ -373,8 +378,6 @@ typedef struct EbSvtAv1EncConfiguration
 
 /* To be deprecated.
  * Encoder configuration parameters below this line are to be deprecated. */
-
-    uint32_t                 stat_report;
 
     /* Flag to enable Hierarchical Motion Estimation 1/16th of the picture
     *

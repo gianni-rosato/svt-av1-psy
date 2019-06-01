@@ -222,7 +222,7 @@ int32_t main(int32_t argc, char* argv[])
                 for (instanceCount = 0; instanceCount < num_channels; ++instanceCount) {
                     if (exitConditions[instanceCount] == APP_ExitConditionFinished && return_errors[instanceCount] == EB_ErrorNone) {
                         double frame_rate;
-
+                        uint64_t frame_count = (uint32_t)configs[instanceCount]->performance_context.frame_count;
                         if ((configs[instanceCount]->frame_rate_numerator != 0 && configs[instanceCount]->frame_rate_denominator != 0) || configs[instanceCount]->frame_rate != 0) {
                             if (configs[instanceCount]->frame_rate_numerator && configs[instanceCount]->frame_rate_denominator && (configs[instanceCount]->frame_rate_numerator != 0 && configs[instanceCount]->frame_rate_denominator != 0))
                                 frame_rate = ((double)configs[instanceCount]->frame_rate_numerator) / ((double)configs[instanceCount]->frame_rate_denominator);
@@ -232,18 +232,51 @@ int32_t main(int32_t argc, char* argv[])
                             }
                             else
                                 frame_rate = (double)configs[instanceCount]->frame_rate;
-                            printf("\nSUMMARY --------------------------------- Channel %u  --------------------------------\n", instanceCount + 1);
 
-                            // Interlaced Video
-                            if (configs[instanceCount]->interlaced_video || configs[instanceCount]->separate_fields)
-                                printf("Total Fields\t\tFrame Rate\t\tByte Count\t\tBitrate\n");
-                            else
-                                printf("Total Frames\t\tFrame Rate\t\tByte Count\t\tBitrate\n");
-                            printf("%12d\t\t%4.2f fps\t\t%10.0f\t\t%5.2f kbps\n",
-                                (int32_t)configs[instanceCount]->performance_context.frame_count,
-                                (double)frame_rate,
-                                (double)configs[instanceCount]->performance_context.byte_count,
-                                ((double)(configs[instanceCount]->performance_context.byte_count << 3) * frame_rate / (configs[instanceCount]->frames_encoded * 1000)));
+                            if (configs[instanceCount]->stat_report) {
+                                if (configs[instanceCount]->stat_file) {
+                                    fprintf(configs[instanceCount]->stat_file, "\nSUMMARY ---------------------------------------------------------------------\n");
+
+                                    // Interlaced Video
+                                    if (configs[instanceCount]->interlaced_video || configs[instanceCount]->separate_fields)
+                                        fprintf(configs[instanceCount]->stat_file, "Total Fields\tAverage QP  \tY-PSNR   \tU-PSNR   \tV-PSNR   \tBitrate\n");
+                                    else
+
+                                        fprintf(configs[instanceCount]->stat_file, "Total Frames\tAverage QP  \tY-PSNR   \tU-PSNR   \tV-PSNR   \tBitrate\n");
+                                    fprintf(configs[instanceCount]->stat_file, "%10ld  \t   %2.2f    \t%3.2f dB\t%3.2f dB\t%3.2f dB\t%.2f kbps\n",
+                                         (long int)frame_count,
+                                         (float)configs[instanceCount]->performance_context.sum_qp        / frame_count,
+                                         (float)configs[instanceCount]->performance_context.sum_luma_psnr / frame_count,
+                                         (float)configs[instanceCount]->performance_context.sum_cr_psnr   / frame_count,
+                                         (float)configs[instanceCount]->performance_context.sum_cb_psnr   / frame_count,
+                                        ((double)(configs[instanceCount]->performance_context.byte_count << 3) * frame_rate / (configs[instanceCount]->frames_encoded * 1000)));
+                                }
+                            }
+
+                            printf("\nSUMMARY --------------------------------- Channel %u  --------------------------------\n", instanceCount + 1);
+                            {
+                                // Interlaced Video
+                                if (configs[instanceCount]->interlaced_video || configs[instanceCount]->separate_fields)
+                                    printf("Total Fields\t\tFrame Rate\t\tByte Count\t\tBitrate\n");
+                                else
+                                    printf("Total Frames\t\tFrame Rate\t\tByte Count\t\tBitrate\n");
+                                printf("%12d\t\t%4.2f fps\t\t%10.0f\t\t%5.2f kbps\n",
+                                    (int32_t)frame_count,
+                                    (double)frame_rate,
+                                    (double)configs[instanceCount]->performance_context.byte_count,
+                                    ((double)(configs[instanceCount]->performance_context.byte_count << 3) * frame_rate / (configs[instanceCount]->frames_encoded * 1000)));
+                            }
+
+                            if (configs[instanceCount]->stat_report) {
+                                // Interlaced Video
+                                printf("\nAverage QP\t\tY-PSNR\t\t\tU-PSNR\t\t\tV-PSNR\t\n");
+                                printf("%11.2f\t\t%4.2f dB\t\t%8.2fdB\t\t%5.2fdB\n",
+                                    (float)configs[instanceCount]->performance_context.sum_qp / frame_count,
+                                    (float)configs[instanceCount]->performance_context.sum_luma_psnr / frame_count,
+                                    (float)configs[instanceCount]->performance_context.sum_cr_psnr / frame_count,
+                                    (float)configs[instanceCount]->performance_context.sum_cb_psnr / frame_count);
+                            }
+
                             fflush(stdout);
                         }
                     }
