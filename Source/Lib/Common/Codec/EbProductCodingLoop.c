@@ -5178,10 +5178,6 @@ void  order_nsq_table(
         get_me_info_index(
             max_number_of_pus_per_sb, 
             context_ptr->blk_geom,
-#if ENHANCED_Nx4_4xN_NEW_MV
-            0,
-            0,
-#endif
             geom_offset_x, 
             geom_offset_y);
 

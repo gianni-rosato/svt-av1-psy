@@ -7482,10 +7482,6 @@ EbErrorType  BiPredictionSearch(
 uint32_t get_me_info_index(
     uint32_t          max_me_block,
     const BlockGeom  *blk_geom,
-#if ENHANCED_Nx4_4xN_NEW_MV
-    uint32_t          geom_offset_width,
-    uint32_t          geom_offset_height,
-#endif
     uint32_t          geom_offset_x,
     uint32_t          geom_offset_y
 )
@@ -7495,17 +7491,10 @@ uint32_t get_me_info_index(
     uint32_t                  me_info_index = 0xFFFFFFF;
 
     for (block_index = 0; block_index < max_me_block; block_index++) {
-#if ENHANCED_Nx4_4xN_NEW_MV
-        if (((blk_geom->bwidth  + geom_offset_width ) == partition_width[block_index]) &&
-            ((blk_geom->bheight + geom_offset_height) == partition_height[block_index]) &&
-            ((blk_geom->origin_x - geom_offset_x) == pu_search_index_map[block_index][0]) &&
-            ((blk_geom->origin_y - geom_offset_y) == pu_search_index_map[block_index][1])) {
-#else
         if ((blk_geom->bwidth == partition_width[block_index]) &&
             (blk_geom->bheight == partition_height[block_index]) &&
             ((blk_geom->origin_x - geom_offset_x) == pu_search_index_map[block_index][0]) &&
             ((blk_geom->origin_y - geom_offset_y) == pu_search_index_map[block_index][1])) {
-#endif
             me_info_index = block_index;
             break;
         }
