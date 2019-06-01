@@ -2063,7 +2063,7 @@ void av1_quantize_inv_quantize(
     *count_non_zero_coeffs = *eob;
 
 #if DC_SIGN_CONTEXT_FIX
-#if 0//DC_SIGN_CONTEXT_EP
+#if DC_SIGN_CONTEXT_EP
     // Derive cul_level
     int32_t cul_level = 0;
     const int16_t *const scan = scan_order->scan;
