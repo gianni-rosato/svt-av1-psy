@@ -78,7 +78,6 @@ before_cache:
 matrix:
   fast_finish: true
   allow_failures:
-    - stage: style   ### REMOVE ASAP ###
     - name: Valgrind
     - env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
     - name: Unit Tests Linux+gcc
