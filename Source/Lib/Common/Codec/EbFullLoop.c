@@ -1708,29 +1708,31 @@ void av1_quantize_inv_quantize(
 #endif
     PictureControlSet           *picture_control_set_ptr,
     ModeDecisionContext         *md_context,
-    int32_t               *coeff,
-    const uint32_t          coeff_stride,
-    int32_t               *quant_coeff,
-    int32_t               *recon_coeff,
-    uint32_t                qp,
-    uint32_t                width,
-    uint32_t                height,
-    TxSize                         txsize,
-    uint16_t                *eob,
-    //  MacroblockPlane      candidate_plane,
-    EbAsm                asm_type,
-    uint32_t                      *count_non_zero_coeffs,
+    int32_t                     *coeff,
+    const uint32_t               coeff_stride,
+    int32_t                     *quant_coeff,
+    int32_t                     *recon_coeff,
+    uint32_t                     qp,
+    uint32_t                     width,
+    uint32_t                     height,
+    TxSize                       txsize,
+    uint16_t                    *eob,
+    EbAsm                        asm_type,
+    uint32_t                    *count_non_zero_coeffs,
 #if !PF_N2_SUPPORT
-    EbPfMode              pf_mode,
+    EbPfMode                     pf_mode,
 #endif
-    uint32_t                component_type,
-    uint32_t                bit_increment,
-    TxType               tx_type,
+    uint32_t                     component_type,
+    uint32_t                     bit_increment,
+    TxType                       tx_type,
     ModeDecisionCandidateBuffer *candidateBuffer,
-    int16_t                        txb_skip_context,    // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
-    int16_t                        dc_sign_context,     // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
-    PredictionMode                 pred_mode,
-    EbBool                         is_encode_pass)
+    int16_t                      txb_skip_context,    // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
+    int16_t                      dc_sign_context,     // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
+    PredictionMode               pred_mode,
+#if RDOQ_INTRA
+    EbBool                       is_intra_bc,
+#endif
+    EbBool                       is_encode_pass)
 {
     (void)coeff_stride;
 #if !PF_N2_SUPPORT
@@ -1750,18 +1752,6 @@ void av1_quantize_inv_quantize(
         memset(recon_coeff + i * width, 0, width * sizeof(int32_t));
     }
     MacroblockPlane      candidate_plane ;
-
-    //    EB_SLICE          slice_type = picture_control_set_ptr->slice_type;
-    //    uint32_t            temporal_layer_index = picture_control_set_ptr->temporal_layer_index;
-
-    // Use a flat matrix (i.e. no weighting) for 1D and Identity transforms
-    //const QmVal *qmatrix =
-    //    IS_2D_TRANSFORM(tx_type) ? pd->seg_qmatrix[seg_id][qm_tx_size]
-    //    : cm->gqmatrix[NUM_QM_LEVELS - 1][0][qm_tx_size];
-    //const QmVal *iqmatrix =
-    //    IS_2D_TRANSFORM(tx_type)
-    //    ? pd->seg_iqmatrix[seg_id][qm_tx_size]
-    //    : cm->giqmatrix[NUM_QM_LEVELS - 1][0][qm_tx_size];
 
     const QmVal *qMatrix = picture_control_set_ptr->parent_pcs_ptr->gqmatrix[NUM_QM_LEVELS - 1][0][txsize];
     const QmVal *iqMatrix = picture_control_set_ptr->parent_pcs_ptr->giqmatrix[NUM_QM_LEVELS - 1][0][txsize];
@@ -1870,10 +1860,9 @@ void av1_quantize_inv_quantize(
 
 #if OPT_QUANT_COEFF
     EbBool is_inter = (pred_mode >= NEARESTMV);
-    // Hsan (Trellis) : only luma for now and only @ encode pass
 #if TRELLIS_MD
 #if RDOQ_INTRA
-    if (md_context->trellis_quant_coeff_optimization && *eob != 0  && component_type == COMPONENT_LUMA && (is_inter || (width >= 16 && height >= 16))) {
+    if (md_context->trellis_quant_coeff_optimization && *eob != 0 && component_type == COMPONENT_LUMA && !is_intra_bc) {
 #else
 #if TRELLIS_CHROMA
     if (md_context->trellis_quant_coeff_optimization && *eob != 0 && is_inter) {
@@ -2206,6 +2195,9 @@ void product_full_loop(
             context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
             candidateBuffer->candidate_ptr->pred_mode,
+#if RDOQ_INTRA
+            candidateBuffer->candidate_ptr->use_intrabc,
+#endif
             EB_FALSE);
 #if ATB_DC_CONTEXT_SUPPORT_1
 #if !DC_SIGN_CONTEXT_FIX
@@ -2632,6 +2624,9 @@ void product_full_loop_tx_search(
                 context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
                 candidateBuffer->candidate_ptr->pred_mode,
+#if RDOQ_INTRA
+                candidateBuffer->candidate_ptr->use_intrabc,
+#endif
                 EB_FALSE);
 
 #if ATB_DC_CONTEXT_SUPPORT_1
@@ -2756,7 +2751,7 @@ void product_full_loop_tx_search(
                 0,
                 COMPONENT_LUMA,
                 asm_type);
-#endif
+
 
             tuFullDistortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
             tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
@@ -2764,6 +2759,7 @@ void product_full_loop_tx_search(
             int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale(txSize)) * 2;
             tuFullDistortion[0][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_RESIDUAL], shift);
             tuFullDistortion[0][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_PREDICTION], shift);
+#endif
 #if !OPT_QUANT_COEFF
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = tx_type;
 #endif
@@ -2982,6 +2978,9 @@ void encode_pass_tx_search(
             0,
             0,
             0,
+#if RDOQ_INTRA
+            cu_ptr->av1xd->use_intrabc,
+#endif
             EB_FALSE);
 #endif
 
@@ -3225,6 +3224,9 @@ void encode_pass_tx_search_hbd(
             0,
             0,
             0,
+#if RDOQ_INTRA
+            cu_ptr->av1xd->use_intrabc,
+#endif
             EB_FALSE);
 #endif
 
@@ -3484,6 +3486,9 @@ void full_loop_r(
                 0,
                 0,
                 0,
+#if RDOQ_INTRA
+                candidateBuffer->candidate_ptr->use_intrabc,
+#endif
                 EB_FALSE);
 #endif
 #if ATB_DC_CONTEXT_SUPPORT_1
@@ -3631,6 +3636,9 @@ void full_loop_r(
                 0,
                 0,
                 0,
+#if RDOQ_INTRA
+                candidateBuffer->candidate_ptr->use_intrabc,
+#endif
                 EB_FALSE);
 #endif
 #if ATB_DC_CONTEXT_SUPPORT_1

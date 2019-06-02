@@ -3200,7 +3200,7 @@ void  inject_inter_candidates(
     const uint32_t             lcuAddr = sb_ptr->index;
     ModeDecisionCandidate    *candidateArray = context_ptr->fast_candidate_array;
     EbBool isCompoundEnabled = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
-#if !MISSING_COMPOUND
+#if !MISSING_COMPOUND && !ENHANCED_Nx4_4xN_NEW_MV
     uint32_t me_sb_addr;
 #endif
     uint32_t geom_offset_x = 0;
@@ -3211,7 +3211,7 @@ void  inject_inter_candidates(
         uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / me_sb_size;
         uint32_t me_sb_x = (context_ptr->cu_origin_x / me_sb_size);
         uint32_t me_sb_y = (context_ptr->cu_origin_y / me_sb_size);
-#if MISSING_COMPOUND
+#if MISSING_COMPOUND || ENHANCED_Nx4_4xN_NEW_MV
         context_ptr->me_sb_addr = me_sb_x + me_sb_y * me_pic_width_in_sb;
 #else
         me_sb_addr = me_sb_x + me_sb_y * me_pic_width_in_sb;
@@ -3220,7 +3220,7 @@ void  inject_inter_candidates(
         geom_offset_y = (me_sb_y & 0x1) * me_sb_size;
     }
     else
-#if MISSING_COMPOUND
+#if MISSING_COMPOUND || ENHANCED_Nx4_4xN_NEW_MV
         context_ptr->me_sb_addr = lcuAddr;
 #else
         me_sb_addr = lcuAddr;
@@ -3380,7 +3380,7 @@ void  inject_inter_candidates(
             isCompoundEnabled,
             allow_bipred,
             sb_ptr,
-            me_sb_addr,
+            context_ptr->me_sb_addr,
             ss_mecontext,
             use_close_loop_me,
             close_loop_me_index,
@@ -3414,7 +3414,7 @@ void  inject_inter_candidates(
                 isCompoundEnabled,
                 allow_bipred,
                 sb_ptr,
-                me_sb_addr,
+                context_ptr->me_sb_addr,
                 ss_mecontext,
                 use_close_loop_me,
                 close_loop_me_index,
