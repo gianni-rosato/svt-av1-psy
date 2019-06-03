@@ -286,6 +286,8 @@ typedef struct EbConfig
     uint32_t                 max_qp_allowed;
     uint32_t                 min_qp_allowed;
 
+    EbBool                 enable_adaptive_quantization;
+
     /****************************************
      * Optional Features
      ****************************************/

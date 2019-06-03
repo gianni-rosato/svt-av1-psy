@@ -142,6 +142,9 @@ typedef struct RateControlLayerContext
     uint32_t   temporal_index;
 
     uint64_t   alpha;
+    //segmentation
+    int32_t                    prev_segment_qps[MAX_SEGMENTS];
+
 } RateControlLayerContext;
 
 typedef struct RateControlIntervalParamContext
@@ -290,6 +293,7 @@ typedef struct RateControlLayerContext
 
     uint64_t                  alpha;
 } RateControlLayerContext;
+
 
 typedef struct RateControlIntervalParamContext
 {
