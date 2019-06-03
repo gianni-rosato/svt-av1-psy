@@ -47,8 +47,6 @@ EbErrorType dlf_context_ctor(
     context_ptr->dlf_input_fifo_ptr = dlf_input_fifo_ptr;
     context_ptr->dlf_output_fifo_ptr = dlf_output_fifo_ptr;
 
-
-
     context_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)EB_NULL;
     context_ptr->temp_lf_recon_picture_ptr = (EbPictureBufferDesc *)EB_NULL;
     EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
@@ -77,7 +75,6 @@ EbErrorType dlf_context_ctor(
             (EbPtr)&temp_lf_recon_desc_init_data);
     }
 
-
     return return_error;
 }
 
@@ -101,7 +98,6 @@ void* dlf_kernel(void *input_ptr)
 
     // SB Loop variables
     for (;;) {
-
         // Get EncDec Results
         eb_get_full_object(
             context_ptr->dlf_input_fifo_ptr,
@@ -118,26 +114,20 @@ void* dlf_kernel(void *input_ptr)
                 sequence_control_set_ptr->static_config.stat_report));
 
         if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode >= 2) {
-
             EbPictureBufferDesc  *recon_buffer = is16bit ? picture_control_set_ptr->recon_picture16bit_ptr : picture_control_set_ptr->recon_picture_ptr;
-            if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
 
+            if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                 //get the 16bit form of the input LCU
-                if (is16bit) {
+                if (is16bit)
                     recon_buffer = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
-                }
-                else {
+                else
                     recon_buffer = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
-                }
-            }
-            else { // non ref pictures
+            else  // non ref pictures
                 recon_buffer = is16bit ? picture_control_set_ptr->recon_picture16bit_ptr : picture_control_set_ptr->recon_picture_ptr;
-            }
 
             av1_loop_filter_init(picture_control_set_ptr);
 
             if (picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
-
                 av1_pick_filter_level(
                     context_ptr,
                     (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
@@ -186,13 +176,10 @@ void* dlf_kernel(void *input_ptr)
                 recon_picture_ptr,
                 cm->frame_to_show);
 
-            if (sequence_control_set_ptr->enable_restoration) {
+            if (sequence_control_set_ptr->enable_restoration)
                 av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
-            }
-
             if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode)
             {
-
                 if (is16bit)
                 {
                     picture_control_set_ptr->src[0] = (uint16_t*)recon_picture_ptr->buffer_y + (recon_picture_ptr->origin_x + recon_picture_ptr->origin_y     * recon_picture_ptr->stride_y);
@@ -203,7 +190,6 @@ void* dlf_kernel(void *input_ptr)
                     picture_control_set_ptr->ref_coeff[0] = (uint16_t*)input_picture_ptr->buffer_y + (input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y);
                     picture_control_set_ptr->ref_coeff[1] = (uint16_t*)input_picture_ptr->buffer_cb + (input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb);
                     picture_control_set_ptr->ref_coeff[2] = (uint16_t*)input_picture_ptr->buffer_cr + (input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr);
-
                 }
                 else
                 {
@@ -234,7 +220,6 @@ void* dlf_kernel(void *input_ptr)
                     }
                 }
             }
-
         }
 
         picture_control_set_ptr->cdef_segments_column_count =  sequence_control_set_ptr->cdef_segment_column_count;
@@ -256,10 +241,8 @@ void* dlf_kernel(void *input_ptr)
             eb_post_full_object(dlf_results_wrapper_ptr);
         }
 
-
             // Release EncDec Results
             eb_release_object(enc_dec_results_wrapper_ptr);
-
         }
 
     return EB_NULL;

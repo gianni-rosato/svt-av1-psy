@@ -26,9 +26,6 @@ static const   uint8_t  integer_posoffset_tab_y[16] = { 0, 0, 0, 0,
     0, 0, 0, 0,
     0, 1, 1, 1 };
 
-
-
-
 void estimate_uni_pred_interpolation_unpacked_avc_style(
     EbPictureBufferDesc   *ref_pic,
     uint32_t                 pos_x,
@@ -119,7 +116,6 @@ void estimate_bi_pred_interpolation_unpacked_avc_style(
     mapped_frac_posx = frac_posx;
     mapped_frac_posy = frac_posy;
 
-
     avc_style_uni_pred_luma_if_function_ptr_array[asm_type][mapped_frac_posx + (mapped_frac_posy << 2)](
         ref_pic_list0->buffer_y + integ_pos_x + integ_pos_y * ref_luma_stride, ref_luma_stride,
         ref_list0_temp_dst, pu_width,
@@ -145,11 +141,9 @@ void estimate_bi_pred_interpolation_unpacked_avc_style(
 
     // bi-pred luma
     picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->buffer_y + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
-    if (sub_sample_pred_flag) {
+    if (sub_sample_pred_flag)
         picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->buffer_y + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
-    }
 }
-
 
 /*******************************************************************************
 * Requirement: pu_width      = 8, 16, 24, 32, 48 or 64
@@ -215,7 +209,6 @@ void estimate_uni_pred_interpolation_avc_luma(
             temp_buf,
             sub_sample_pred_flag,
             mapped_frac_posx ? mapped_frac_posx : mapped_frac_posy);
-
     }
     //chroma
     if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
@@ -224,7 +217,6 @@ void estimate_uni_pred_interpolation_avc_luma(
         integ_pos_y = (pos_y >> 3);
         frac_posx = pos_x & 0x07;
         frac_posy = pos_y & 0x07;
-
 
         mapped_frac_posx = 0;
         if (frac_posx > 4)
@@ -258,7 +250,6 @@ void estimate_uni_pred_interpolation_avc_luma(
             temp_buf,
             sub_sample_pred_flag,
             mapped_frac_posx ? mapped_frac_posx : mapped_frac_posy);
-
     }
 }
 
@@ -308,7 +299,6 @@ void estimate_bi_pred_interpolation_avc_luma(
 
     //Luma
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
-
         //uni-prediction List0 luma
         //compute the luma fractional position
         integ_pos_x = (ref_list0_pos_x >> 2);
@@ -359,17 +349,14 @@ void estimate_bi_pred_interpolation_avc_luma(
             sub_sample_pred_flag,
             mapped_frac_posx ? mapped_frac_posx : mapped_frac_posy);
 
-
         // bi-pred luma
         picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->buffer_y + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
-        if (sub_sample_pred_flag) {
+        if (sub_sample_pred_flag)
             picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->buffer_y + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
-        }
     }
 
     //uni-prediction List0 chroma
     if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
-
         // bi-pred chroma  Cb
         // Note: chroma_pu_width equals 4 is only supported in Intrinsic
         //       for integer positions ( mapped_frac_posx + (mapped_frac_posy << 3) equals 0 )
@@ -398,7 +385,6 @@ void estimate_bi_pred_interpolation_avc_luma(
             sub_sample_pred_flag,
             mapped_frac_posx ? mapped_frac_posx : mapped_frac_posy);
 
-
         //doing the chroma Cb interpolation list 1
 
         integ_pos_x = (ref_list1_pos_x >> 3);
@@ -424,7 +410,6 @@ void estimate_bi_pred_interpolation_avc_luma(
             sub_sample_pred_flag,
             mapped_frac_posx ? mapped_frac_posx : mapped_frac_posy);
 
-
         // bi-pred Chroma Cb
         picture_average_array[asm_type](
             ref_list0_temp_dst,
@@ -436,7 +421,6 @@ void estimate_bi_pred_interpolation_avc_luma(
             chroma_pu_width,
             chroma_pu_height >> shift
             );
-
 
         // bi-pred chroma  Cr
         // Note: chroma_pu_width equals 4 is only supported in Intrinsic
@@ -465,7 +449,6 @@ void estimate_bi_pred_interpolation_avc_luma(
             first_pass_if_temp_dst,
             sub_sample_pred_flag,
             mapped_frac_posx ? mapped_frac_posx : mapped_frac_posy);
-
 
         //doing the chroma Cb interpolation list 1
 
@@ -503,10 +486,8 @@ void estimate_bi_pred_interpolation_avc_luma(
             chroma_pu_width,
             chroma_pu_height >> shift
             );
-
     }
 }
-
 
 void estimate_uni_pred_interpolation_avc_lumaRef10Bit(
     EbPictureBufferDesc   *ref_frame_pic_list0,
@@ -701,7 +682,6 @@ void estimate_bi_pred_interpolation_avc_luma_ref10_bit(
 
     //Luma
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
-
         (void)first_pass_if_temp_dst;
         (void)ref_list0_temp_dst;
         (void)ref_list1_temp_dst;
@@ -880,7 +860,6 @@ void bi_pred_i_free_ref8_bit(
 
     //Luma
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
-
         //uni-prediction List0 luma
         //compute the luma fractional position
         integ_pos_x = (ref_list0_pos_x >> 2);
@@ -934,14 +913,12 @@ void bi_pred_i_free_ref8_bit(
 
         // bi-pred luma
         picture_average_array[asm_type](ref_list0_temp_dst, pu_width << sub_sample_pred_flag, ref_list1_temp_dst, pu_width << sub_sample_pred_flag, bi_dst->buffer_y + dst_luma_index, luma_stride << sub_sample_pred_flag, pu_width, pu_height >> sub_sample_pred_flag);
-        if (sub_sample_pred_flag) {
+        if (sub_sample_pred_flag)
             picture_average1_line_array[asm_type](ref_list0_temp_dst + (pu_height - 1)*pu_width, ref_list1_temp_dst + (pu_height - 1)*pu_width, bi_dst->buffer_y + dst_luma_index + (pu_height - 1)*luma_stride, pu_width);
-        }
     }
-    
+
     //uni-prediction List0 chroma
     if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
-
         shift = sub_sample_pred_flag_chroma ? 1 : 0;
 
         // bi-pred chroma  Cb

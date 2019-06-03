@@ -43,7 +43,6 @@ extern "C" {
         int32_t                              reference_list;
 #endif
         uint32_t                              reference_list_count;
-
     } ReferenceList;
 
     /************************************************
@@ -64,7 +63,6 @@ extern "C" {
     {
         int32_t                             *list;
         uint32_t                              list_count;
-
     } DependentList;
 
     /************************************************
@@ -73,7 +71,7 @@ extern "C" {
      *   configurations for each Prediction Structure
      *   Config Entry.
      ************************************************/
-    typedef struct PredictionStructureConfigEntry 
+    typedef struct PredictionStructureConfigEntry
     {
         uint32_t temporal_layer_index;
         uint32_t decode_order;
@@ -91,7 +89,7 @@ extern "C" {
      *   Contains a collection of basic control data
      *   for the basic prediction structure.
      ************************************************/
-    typedef struct PredictionStructureConfig 
+    typedef struct PredictionStructureConfig
     {
         uint32_t                          entry_count;
         PredictionStructureConfigEntry   *entry_array;
@@ -103,7 +101,7 @@ extern "C" {
      *   for a particular picture in the Prediction
      *   Structure.
      ************************************************/
-    typedef struct PredictionStructureEntry 
+    typedef struct PredictionStructureEntry
     {
         ReferenceList                     ref_list0;
         ReferenceList                     ref_list1;
@@ -158,7 +156,6 @@ extern "C" {
         uint32_t                              list1_mod_index[MAX_NUM_OF_REF_PICS_TOTAL];
 
         // Lists Combination (STUB)
-
     } PredictionStructureEntry;
 
     /************************************************
@@ -166,9 +163,8 @@ extern "C" {
      *   Contains a collection of control and RPS
      *   data types for an entire Prediction Structure
      ************************************************/
-    typedef struct PredictionStructure 
+    typedef struct PredictionStructure
     {
-
         uint32_t                              pred_struct_entry_count;
         PredictionStructureEntry        **pred_struct_entry_ptr_array;
         EbPred                             pred_type;
@@ -187,7 +183,6 @@ extern "C" {
         EbBool                             long_term_enable_flag;
         uint32_t                              default_ref_pics_list0_total_count_minus1;
         uint32_t                              default_ref_pics_list1_total_count_minus1;
-
     } PredictionStructure;
 
     /************************************************
@@ -195,7 +190,7 @@ extern "C" {
      *   Contains the control structures for all
      *   supported prediction structures.
      ************************************************/
-    typedef struct PredictionStructureGroup 
+    typedef struct PredictionStructureGroup
     {
         PredictionStructure             **prediction_structure_ptr_array;
         uint32_t                              prediction_structure_count;
@@ -227,7 +222,7 @@ extern "C" {
         ALT = 6
     } REF_FRAME_MINUS1;
 #endif
-    typedef struct Av1RpsNode 
+    typedef struct Av1RpsNode
     {
         uint8_t refresh_frame_mask;
         uint8_t ref_dpb_index[7];//LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
@@ -235,8 +230,6 @@ extern "C" {
         uint64_t ref_poc_array[7]; //decoder based ref poc array //LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
 #endif
     } Av1RpsNode;
-
-
 
 #ifdef __cplusplus
 }

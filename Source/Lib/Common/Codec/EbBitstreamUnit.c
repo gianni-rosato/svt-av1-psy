@@ -28,7 +28,6 @@
 EbErrorType output_bitstream_unit_ctor(
     OutputBitstreamUnit   *bitstream_ptr,
     uint32_t                 buffer_size){
-
     if (buffer_size) {
         bitstream_ptr->size = buffer_size / sizeof(uint32_t);
         EB_MALLOC(uint8_t*, bitstream_ptr->buffer_begin_av1, sizeof(uint8_t) * bitstream_ptr->size, EB_N_PTR);
@@ -40,7 +39,7 @@ EbErrorType output_bitstream_unit_ctor(
         bitstream_ptr->buffer_av1 = 0;
     }
     bitstream_ptr->written_bits_count = 0;
-    
+
     return EB_ErrorNone;
 }
 
@@ -270,7 +269,6 @@ void od_ec_enc_init(OdEcEnc *enc, uint32_t size) {
 
 /*Reinitializes the encoder.*/
 void od_ec_enc_reset(OdEcEnc *enc) {
-
     enc->offs = 0;
     enc->low = 0;
     enc->rng = 0x8000;

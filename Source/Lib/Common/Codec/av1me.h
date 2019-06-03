@@ -16,8 +16,6 @@
 #include "EbCodingUnit.h"
 #include "EbUtility.h"
 
-
-
 //#include "av1/encoder/block.h"
 //#include "aom_dsp/variance.h"
 
@@ -59,6 +57,22 @@ typedef struct {
   int coord_offset;
 } search_neighbors;
 
+typedef unsigned int(*aom_sad_fn_t)(const uint8_t *a, int a_stride,
+                                    const uint8_t *b, int b_stride);
+
+typedef unsigned int(*aom_variance_fn_t)(const uint8_t *a, int a_stride,
+                                         const uint8_t *b, int b_stride,
+                                         unsigned int *sse);
+
+typedef void(*aom_sad_multi_d_fn_t)(const uint8_t *a, int a_stride,
+                                    const uint8_t *const b_array[],
+                                    int b_stride, unsigned int *sad_array);
+
+typedef struct aom_variance_vtable {
+    aom_sad_fn_t sdf;
+    aom_variance_fn_t vf;
+    aom_sad_multi_d_fn_t sdx4df;
+} aom_variance_fn_ptr_t;
 
 void av1_init_dsmotion_compensation(SearchSiteConfig *cfg, int stride);
 void av1_init3smotion_compensation(SearchSiteConfig *cfg, int stride);
@@ -71,7 +85,6 @@ int av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MACROB
                           int method, int run_mesh_search, int error_per_bit,
                           int *cost_list, const MV *ref_mv, int var_max, int rd,
                           int x_pos, int y_pos, int intra);
-
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -86,7 +86,6 @@ EbHandle eb_create_thread(
 
         if (ret != 0) {
             if (ret == EPERM) {
-
                 pthread_cancel(*((pthread_t*)thread_handle));
                 free(thread_handle);
 
@@ -196,7 +195,7 @@ EbHandle eb_create_semaphore(uint32_t initial_count, uint32_t max_count)
         NULL);                          // semaphore is not named
     return semaphore_handle;
 
-#elif defined(__linux__) 
+#elif defined(__linux__)
     EbHandle semaphore_handle = NULL;
     (void)max_count;
 
@@ -216,9 +215,9 @@ EbHandle eb_create_semaphore(uint32_t initial_count, uint32_t max_count)
         fprintf(stderr, "errno: %d\n", errno);
         return NULL;
     }
+    sem_unlink(name);
     return s;
 #endif // _WIN32
-
 }
 
 /***************************************
@@ -268,11 +267,12 @@ EbErrorType eb_destroy_semaphore(EbHandle semaphore_handle)
 
 #ifdef _WIN32
     return_error = !CloseHandle((HANDLE)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
-#elif defined(__linux__) 
+#elif defined(__linux__)
     return_error = sem_destroy((sem_t*)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
     free(semaphore_handle);
 #elif defined(__APPLE__)
     return_error = sem_close(semaphore_handle);
+
 #endif // _WIN32
 
     return return_error;

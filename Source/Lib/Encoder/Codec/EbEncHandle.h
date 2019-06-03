@@ -55,6 +55,11 @@ typedef struct EbEncHandle
     EbSystemResource                    **reference_picture_pool_ptr_array;
     EbSystemResource                    **pa_reference_picture_pool_ptr_array;
 
+#if ALT_REF_OVERLAY
+    // Overlay input picture
+    EbSystemResource                    **overlay_input_picture_pool_ptr_array;
+    EbFifo                             ***overlay_input_picture_pool_producer_fifo_ptr_dbl_array;
+#endif
     // Picture Buffer Producer Fifos
     EbFifo                             ***reference_picture_pool_producer_fifo_ptr_dbl_array;
     EbFifo                             ***pa_reference_picture_pool_producer_fifo_ptr_dbl_array;
@@ -135,7 +140,6 @@ typedef struct EbEncHandle
     EbFifo                              **cdef_results_producer_fifo_ptr_array;
     EbFifo                              **rest_results_producer_fifo_ptr_array;
 
-
     // Inter-Process Consumer Fifos
     EbFifo                              **input_buffer_consumer_fifo_ptr_array;
     EbFifo                             ***output_stream_buffer_consumer_fifo_ptr_dbl_array;
@@ -166,8 +170,6 @@ typedef struct EbEncHandle
     EbMemoryMapEntry                       *memory_map;
     uint32_t                                memory_map_index;
     uint64_t                                total_lib_memory;
-
 } EbEncHandle;
-
 
 #endif // EbEncHandle_h

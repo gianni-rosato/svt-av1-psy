@@ -39,19 +39,19 @@ extern "C" {
         uint32_t       *nonzerocoeff);
 
     void low_precision_transform16x16_avx2_intrin(
-        int16_t *src, 
-        uint32_t src_stride, 
-        int16_t *dst, 
-        uint32_t dst_stride, 
-        int16_t *intermediate, 
+        int16_t *src,
+        uint32_t src_stride,
+        int16_t *dst,
+        uint32_t dst_stride,
+        int16_t *intermediate,
         uint32_t addshift);
 
     void low_precision_transform32x32_avx2_intrin(
-        int16_t *src, 
-        uint32_t src_stride, 
-        int16_t *dst, 
-        uint32_t dst_stride, 
-        int16_t *intermediate, 
+        int16_t *src,
+        uint32_t src_stride,
+        int16_t *dst,
+        uint32_t dst_stride,
+        int16_t *intermediate,
         uint32_t addshift);
 
     void pfreq_transform32x32_avx2_intrin(
@@ -116,5 +116,3 @@ extern "C" {
 }
 #endif
 #endif // EbTransforms_AVX2_h
-
-

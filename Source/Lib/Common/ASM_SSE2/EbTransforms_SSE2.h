@@ -147,4 +147,3 @@ extern "C" {
 }
 #endif
 #endif // EbTransforms_SSE2_h
-

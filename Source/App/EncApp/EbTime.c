@@ -2,11 +2,13 @@
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
+
 #include <stdint.h>
+
 #ifdef _WIN32
-#include <stdlib.h>
 //#if  (WIN_ENCODER_TIMING || WIN_DECODER_TIMING)
 #include <time.h>
+#include <stdio.h>
 #include <windows.h>
 //#endif
 
@@ -22,75 +24,94 @@
 #error OS/Platform not supported.
 #endif
 
-void EbStartTime(
-    uint64_t *Startseconds,
-    uint64_t *Startuseconds)
-{
+#include "EbTime.h"
 
+#if defined(__linux__)
+#ifndef __clang__
+__attribute__((optimize("unroll-loops")))
+#endif
+#endif
+
+void StartTime(uint64_t *Startseconds, uint64_t *Startuseconds) {
 #if defined(__linux__) || defined(__APPLE__) //(LINUX_ENCODER_TIMING || LINUX_DECODER_TIMING)
     struct timeval start;
     gettimeofday(&start, NULL);
-    *Startseconds=start.tv_sec;
-    *Startuseconds=start.tv_usec;
+    *Startseconds = start.tv_sec;
+    *Startuseconds = start.tv_usec;
 #elif _WIN32 //(WIN_ENCODER_TIMING || WIN_DECODER_TIMING)
-    *Startseconds = (uint64_t) clock();
-    (void) (*Startuseconds);
+    *Startseconds = (uint64_t)clock();
+    (void)(*Startuseconds);
 #else
-    (void) (*Startuseconds);
-    (void) (*Startseconds);
+    (void)(*Startuseconds);
+    (void)(*Startseconds);
 #endif
-
 }
-void EbFinishTime(
-    uint64_t *Finishseconds,
-    uint64_t *Finishuseconds)
-{
 
+void FinishTime(uint64_t *Finishseconds, uint64_t *Finishuseconds) {
 #if defined(__linux__) || defined(__APPLE__) //(LINUX_ENCODER_TIMING || LINUX_DECODER_TIMING)
     struct timeval finish;
     gettimeofday(&finish, NULL);
-    *Finishseconds=finish.tv_sec;
-    *Finishuseconds=finish.tv_usec;
+    *Finishseconds = finish.tv_sec;
+    *Finishuseconds = finish.tv_usec;
 #elif _WIN32 //(WIN_ENCODER_TIMING || WIN_DECODER_TIMING)
-    *Finishseconds= (uint64_t)clock();
-    (void) (*Finishuseconds);
+    *Finishseconds = (uint64_t)clock();
+    (void)(*Finishuseconds);
 #else
-    (void) (*Finishuseconds);
-    (void) (*Finishseconds);
+    (void)(*Finishuseconds);
+    (void)(*Finishseconds);
 #endif
-
 }
-void EbComputeOverallElapsedTime(
-    uint64_t Startseconds,
-    uint64_t Startuseconds,
-    uint64_t Finishseconds,
-    uint64_t Finishuseconds,
-    double *duration){
+
+void ComputeOverallElapsedTime(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration)
+{
 #if defined(__linux__) || defined(__APPLE__) //(LINUX_ENCODER_TIMING || LINUX_DECODER_TIMING)
     long   mtime, seconds, useconds;
-    seconds  = Finishseconds - Startseconds;
+    seconds = Finishseconds - Startseconds;
     useconds = Finishuseconds - Startuseconds;
-    mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
-    *duration = (double)mtime/1000;
+    mtime = ((seconds) * 1000 + useconds / 1000.0) + 0.5;
+    *duration = (double)mtime / 1000;
     //printf("\nElapsed time: %3.3ld seconds\n", mtime/1000);
 #elif _WIN32 //(WIN_ENCODER_TIMING || WIN_DECODER_TIMING)
     //double  duration;
     *duration = (double)(Finishseconds - Startseconds) / CLOCKS_PER_SEC;
     //printf("\nElapsed time: %3.3f seconds\n", *duration);
-    (void) (Startuseconds);
-    (void) (Finishuseconds);
+    (void)(Startuseconds);
+    (void)(Finishuseconds);
 #else
-    (void) (Startuseconds);
-    (void) (Startseconds);
-    (void) (Finishuseconds);
-    (void) (Finishseconds);
+    (void)(Startuseconds);
+    (void)(Startseconds);
+    (void)(Finishuseconds);
+    (void)(Finishseconds);
 
 #endif
-
 }
-void EbSleep(
-    uint64_t milliSeconds){
 
+void ComputeOverallElapsedTimeMs(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration)
+{
+#if defined(__linux__) || defined(__APPLE__) //(LINUX_ENCODER_TIMING || LINUX_DECODER_TIMING)
+    long   mtime, seconds, useconds;
+    seconds = Finishseconds - Startseconds;
+    useconds = Finishuseconds - Startuseconds;
+    mtime = ((seconds) * 1000 + useconds / 1000.0) + 0.5;
+    *duration = (double)mtime;
+    //printf("\nElapsed time: %3.3ld seconds\n", mtime/1000);
+#elif _WIN32 //(WIN_ENCODER_TIMING || WIN_DECODER_TIMING)
+    //double  duration;
+    *duration = (double)(Finishseconds - Startseconds);
+    //printf("\nElapsed time: %3.3f seconds\n", *duration);
+    (void)(Startuseconds);
+    (void)(Finishuseconds);
+#else
+    (void)(Startuseconds);
+    (void)(Startseconds);
+    (void)(Finishuseconds);
+    (void)(Finishseconds);
+
+#endif
+}
+
+static void SleepMs(uint64_t milliSeconds)
+{
     if(milliSeconds) {
 #if defined(__linux__) || defined(__APPLE__)
         struct timespec req,rem;
@@ -105,10 +126,10 @@ void EbSleep(
 #endif
     }
 }
-void EbInjector(
-    uint64_t processed_frame_count,
-    uint32_t injector_frame_rate){
 
+void Injector(uint64_t processed_frame_count,
+              uint32_t injector_frame_rate)
+{
 #if defined(__linux__) || defined(__APPLE__)
     uint64_t                  currentTimesSeconds = 0;
     uint64_t                  currentTimesuSeconds = 0;
@@ -134,7 +155,7 @@ void EbInjector(
         firstTime = 1;
 
 #if defined(__linux__) || defined(__APPLE__)
-        EbStartTime((uint64_t*)&startTimesSeconds, (uint64_t*)&startTimesuSeconds);
+        StartTime((uint64_t*)&startTimesSeconds, (uint64_t*)&startTimesuSeconds);
 #elif _WIN32
         QueryPerformanceFrequency(&counterFreq);
         QueryPerformanceCounter(&startCount);
@@ -142,10 +163,9 @@ void EbInjector(
     }
     else
     {
-
 #if defined(__linux__) || defined(__APPLE__)
-        EbFinishTime((uint64_t*)&currentTimesSeconds, (uint64_t*)&currentTimesuSeconds);
-        EbComputeOverallElapsedTime(startTimesSeconds, startTimesuSeconds, currentTimesSeconds, currentTimesuSeconds, &elapsedTime);
+        FinishTime((uint64_t*)&currentTimesSeconds, (uint64_t*)&currentTimesuSeconds);
+        ComputeOverallElapsedTime(startTimesSeconds, startTimesuSeconds, currentTimesSeconds, currentTimesuSeconds, &elapsedTime);
 #elif _WIN32
         QueryPerformanceCounter(&nowCount);
         elapsedTime = (double)(nowCount.QuadPart - startCount.QuadPart) / (double)counterFreq.QuadPart;
@@ -156,7 +176,7 @@ void EbInjector(
         if (milliSecAhead>0)
         {
             //  timeBeginPeriod(1);
-            EbSleep(milliSecAhead);
+            SleepMs(milliSecAhead);
             //  timeEndPeriod (1);
         }
     }

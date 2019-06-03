@@ -29,9 +29,7 @@ typedef struct EbAppContext {
 
     // Instance Index
     uint8_t                            instance_idx;
-
 } EbAppContext;
-
 
 /********************************
  * External Function

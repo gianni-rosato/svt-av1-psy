@@ -30,8 +30,9 @@ notifications:
 env:
   - build_type=release
 stages:
+  - name: style
   - name: test
-  - name: unittest 
+  - name: unittest
   - name: coveralls
     if: type != pull_request
   - name: valgrind
@@ -40,7 +41,7 @@ before_install:
   - "sudo chown -R travis: $HOME/.ccache"
   - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig PATH="/usr/local/opt/ccache/libexec:$PATH"
   - cd $TRAVIS_BUILD_DIR
-  - wget -nc http://github.com/OpenVisualCloud/SVT-AV1-Resources/raw/master/video.tar.gz
+  - wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
   - tar xf video.tar.gz
   - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/$build_type
 install:
@@ -77,6 +78,7 @@ before_cache:
 matrix:
   fast_finish: true
   allow_failures:
+    - stage: style   ### REMOVE ASAP ###
     - name: Valgrind
     - env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
     - name: Unit Tests Linux+gcc
@@ -86,6 +88,35 @@ matrix:
     - os: osx
       compiler: gcc # gcc = clang in macOS, unecessary duplicate
   include:
+    # Coding style check
+    - name: Style check
+      stage: style
+      addons: skip
+      before_install: skip
+      install: skip
+      script:
+        - git grep -I -n -P "\t|\r| $" -- . ':(exclude)third_party/**/*' && exit 1
+        - git grep -I -l -z "" -- . ':(exclude)third_party/**/*' | while IFS= read -r -d '' i; do
+              if [ -n "$(tail -c 1 "$i")" ]; then
+                  echo "No newline at end of $i";
+                  exit 1;
+              fi;
+          done
+        - git remote rm upstream 2> /dev/null || true
+        - git remote add upstream https://github.com/OpenVisualCloud/SVT-AV1.git
+        - git fetch -q upstream master
+        - for i in $(git rev-list HEAD ^upstream/master); do
+              echo "Checking commit message of $i";
+              msg="$(git log --format=%B -n 1 $i)";
+              if [ -n "$(echo "$msg" | awk "NR==2")" ]; then
+                  echo "Malformed commit message in $i, second line must be empty";
+                  exit 1;
+              fi;
+              if echo "$msg" | head -1 | grep -q '\.$'; then
+                  echo "Malformed commit message in $i, trailing period in subject line";
+                  exit 1;
+              fi;
+          done
     # FFmpeg interation build
     - name: FFmpeg patch
       stage: test

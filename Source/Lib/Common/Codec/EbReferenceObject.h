@@ -10,7 +10,7 @@
 #include "EbDefinitions.h"
 #include "EbAdaptiveMotionVectorPrediction.h"
 
-typedef struct EbReferenceObject 
+typedef struct EbReferenceObject
 {
     EbPictureBufferDesc          *reference_picture;
     EbPictureBufferDesc          *reference_picture16bit;
@@ -47,7 +47,7 @@ typedef struct EbReferenceObjectDescInitData {
     EbPictureBufferDescInitData   reference_picture_desc_init_data;
 } EbReferenceObjectDescInitData;
 
-typedef struct EbPaReferenceObject 
+typedef struct EbPaReferenceObject
 {
     EbPictureBufferDesc          *input_padded_picture_ptr;
     EbPictureBufferDesc          *quarter_decimated_picture_ptr;
@@ -65,7 +65,7 @@ typedef struct EbPaReferenceObject
 #endif
 } EbPaReferenceObject;
 
-typedef struct EbPaReferenceObjectDescInitData 
+typedef struct EbPaReferenceObjectDescInitData
 {
     EbPictureBufferDescInitData   reference_picture_desc_init_data;
     EbPictureBufferDescInitData   quarter_picture_desc_init_data;
@@ -82,6 +82,5 @@ extern EbErrorType eb_reference_object_ctor(
 extern EbErrorType eb_pa_reference_object_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr  object_init_data_ptr);
-
 
 #endif //EbReferenceObject_h

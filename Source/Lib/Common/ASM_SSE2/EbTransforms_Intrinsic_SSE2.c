@@ -1,8 +1,7 @@
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
-*/ 
-
+*/
 
 #include "EbTransforms_SSE2.h"
 #include "EbIntrinMacros16bit_SSE2.h"
@@ -335,7 +334,6 @@ EB_ALIGN(16) const int16_t inv_dst_transform_asm_const_sse2[] = {
     -74, -29, -74, -29, -74, -29, -74, -29,
 };
 
-
 // Coefficients for inverse 32-point transform
 EB_EXTERN const int16_t coeff_tbl2[48 * 8] =
 {
@@ -423,7 +421,6 @@ static void Transform16(short *src, int32_t src_stride, short *dst, int32_t dst_
 
         y0 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x00));
         y1 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x08));
-
 
         // 16-point butterfly
         y1 = reverse_epi16(y1);
@@ -520,7 +517,6 @@ static void InvTransform16(
         a3 = _mm_add_epi32(a3, _mm_madd_epi16(_mm_shuffle_epi32(x1, 0x55), coeff32[11]));
         a3 = _mm_add_epi32(a3, _mm_madd_epi16(_mm_shuffle_epi32(x1, 0xaa), coeff32[13]));
         a3 = _mm_add_epi32(a3, _mm_madd_epi16(_mm_shuffle_epi32(x1, 0xff), coeff32[15]));
-
 
         a0 = _mm_add_epi32(a0, o0);
         a1 = _mm_add_epi32(a1, o0);
@@ -731,7 +727,6 @@ static void PfreqN4SecTranspose32_SSE2(
             _mm_storeu_si128((__m128i *)(dst + (8 * j + 5)*dst_stride + 8 * i), b5);
             _mm_storeu_si128((__m128i *)(dst + (8 * j + 6)*dst_stride + 8 * i), b6);
             _mm_storeu_si128((__m128i *)(dst + (8 * j + 7)*dst_stride + 8 * i), b7);
-
         }
     }
 }
@@ -748,7 +743,6 @@ static void PfreqN4FirstTranspose32_SSE2(
         //for (j = 0; j < 2; j++)
         j = 0;
         {
-
             __m128i a0, a1, a2, a3, a4, a5, a6, a7;
             __m128i b0, b1, b2, b3, b4, b5, b6, b7;
 
@@ -796,7 +790,6 @@ static void PfreqN4FirstTranspose32_SSE2(
             _mm_storeu_si128((__m128i *)(dst + (8 * j + 5)*dst_stride + 8 * i), b5);
             _mm_storeu_si128((__m128i *)(dst + (8 * j + 6)*dst_stride + 8 * i), b6);
             _mm_storeu_si128((__m128i *)(dst + (8 * j + 7)*dst_stride + 8 * i), b7);
-
         }
     }
 }
@@ -1362,8 +1355,6 @@ void estimate_inv_transform32x32_sse2(
     InvTransform32_SSE2(intermediate, 32, dst, dst_stride, 12 - addshift);
 }
 
-
-
 // forward 16x16 transform
 void transform16x16_sse2(
     int16_t *src,
@@ -1379,7 +1370,6 @@ void transform16x16_sse2(
     Transpose16(intermediate, 16, dst, dst_stride);
 }
 
-
 // inverse 16x16 transform
 void estimate_inv_transform16x16_sse2(
     int16_t  *src,
@@ -1394,7 +1384,6 @@ void estimate_inv_transform16x16_sse2(
     Transpose16(dst, dst_stride, intermediate, 16);
     InvTransform16(intermediate, 16, dst, dst_stride, 12 - addshift);
 }
-
 
 static void Transform32_SSE2(
     int16_t *src,
@@ -1544,7 +1533,6 @@ static void Pfreq1DTransform32_SSE2(
         __m128i a0, a2, a4, a5;
         __m128i b0, b1, b2, b3, b4, b5;
 
-
         b1 = s0;
         b3 = s0;
 
@@ -1552,7 +1540,6 @@ static void Pfreq1DTransform32_SSE2(
         x1 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x08));
         x2 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x10));
         x3 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x18));
-
 
         // 32-point butterfly
         x2 = reverse_epi16(x2);
@@ -1570,11 +1557,8 @@ static void Pfreq1DTransform32_SSE2(
         x0 = _mm_add_epi16(y0, y1);
         x1 = _mm_sub_epi16(y0, y1);
 
-
         x2 = y2;
         x3 = y3;
-
-
 
         a0 = _mm_madd_epi16(_mm_shuffle_epi32(x0, 0x00), coeff32[0]);
         a0 = _mm_add_epi32(a0, _mm_madd_epi16(_mm_shuffle_epi32(x0, 0x55), coeff32[2]));
@@ -1688,7 +1672,6 @@ static void Pfreq2DTransform32_SSE2(
         x2 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x10));
         x3 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x18));
 
-
         // 32-point butterfly
         x2 = reverse_epi16(x2);
         x3 = reverse_epi16(x3);
@@ -1705,11 +1688,8 @@ static void Pfreq2DTransform32_SSE2(
         x0 = _mm_add_epi16(y0, y1);
         x1 = _mm_sub_epi16(y0, y1);
 
-
         x2 = y2;
         x3 = y3;
-
-
 
         a0 = _mm_madd_epi16(_mm_shuffle_epi32(x0, 0x00), coeff32[0]);
         a0 = _mm_add_epi32(a0, _mm_madd_epi16(_mm_shuffle_epi32(x0, 0x55), coeff32[2]));
@@ -1816,7 +1796,6 @@ static void PfreqN41DTransform32_SSE2(
         __m128i a0, a2, a4/*, a5*/;
         __m128i b0, b1, b2, b3, b4/*, b5*/;
 
-
         b1 = s0;
         b3 = s0;
 
@@ -1824,7 +1803,6 @@ static void PfreqN41DTransform32_SSE2(
         x1 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x08));
         x2 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x10));
         x3 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x18));
-
 
         // 32-point butterfly
         x2 = reverse_epi16(x2);
@@ -1842,11 +1820,8 @@ static void PfreqN41DTransform32_SSE2(
         x0 = _mm_add_epi16(y0, y1);
         x1 = _mm_sub_epi16(y0, y1);
 
-
         x2 = y2;
         x3 = y3;
-
-
 
         a0 = _mm_madd_epi16(_mm_shuffle_epi32(x0, 0x00), coeff32[0]);
         a0 = _mm_add_epi32(a0, _mm_madd_epi16(_mm_shuffle_epi32(x0, 0x55), coeff32[2]));
@@ -1962,7 +1937,6 @@ static void PfreqN42DTransform32_SSE2(
         x2 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x10));
         x3 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x18));
 
-
         // 32-point butterfly
         x2 = reverse_epi16(x2);
         x3 = reverse_epi16(x3);
@@ -1979,11 +1953,8 @@ static void PfreqN42DTransform32_SSE2(
         x0 = _mm_add_epi16(y0, y1);
         x1 = _mm_sub_epi16(y0, y1);
 
-
         x2 = y2;
         x3 = y3;
-
-
 
         a0 = _mm_madd_epi16(_mm_shuffle_epi32(x0, 0x00), coeff32[0]);
         a0 = _mm_add_epi32(a0, _mm_madd_epi16(_mm_shuffle_epi32(x0, 0x55), coeff32[2]));
@@ -2145,7 +2116,6 @@ static void Pfreq1DTransform16_SSE2(
         y0 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x00));
         y1 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x08));
 
-
         // 16-point butterfly
         y1 = reverse_epi16(y1);
 
@@ -2199,7 +2169,6 @@ static void Pfreq2DTransform16_SSE2(
         y0 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x00));
         y1 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x08));
 
-
         // 16-point butterfly
         y1 = reverse_epi16(y1);
 
@@ -2211,12 +2180,10 @@ static void Pfreq2DTransform16_SSE2(
         a0 = _mm_add_epi32(a0, _mm_madd_epi16(_mm_shuffle_epi32(x0, 0xaa), coeff32[4]));
         a0 = _mm_add_epi32(a0, _mm_madd_epi16(_mm_shuffle_epi32(x0, 0xff), coeff32[6]));
 
-
         a2 = _mm_madd_epi16(_mm_shuffle_epi32(x1, 0x00), coeff32[8]);
         a2 = _mm_add_epi32(a2, _mm_madd_epi16(_mm_shuffle_epi32(x1, 0x55), coeff32[10]));
         a2 = _mm_add_epi32(a2, _mm_madd_epi16(_mm_shuffle_epi32(x1, 0xaa), coeff32[12]));
         a2 = _mm_add_epi32(a2, _mm_madd_epi16(_mm_shuffle_epi32(x1, 0xff), coeff32[14]));
-
 
         b0 = _mm_sra_epi32(_mm_add_epi32(a0, o0), s0);
         b2 = _mm_sra_epi32(_mm_add_epi32(a2, o0), s0);
@@ -2332,7 +2299,6 @@ static void PfreqN42DTransform16_SSE2(
         y0 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x00));
         y1 = _mm_loadu_si128((const __m128i *)(src + i * src_stride + 0x08));
 
-
         // 16-point butterfly
         y1 = reverse_epi16(y1);
 
@@ -2344,12 +2310,10 @@ static void PfreqN42DTransform16_SSE2(
         a0 = _mm_add_epi32(a0, _mm_madd_epi16(_mm_shuffle_epi32(x0, 0xaa), coeff32[4]));
         a0 = _mm_add_epi32(a0, _mm_madd_epi16(_mm_shuffle_epi32(x0, 0xff), coeff32[6]));
 
-
         a2 = _mm_madd_epi16(_mm_shuffle_epi32(x1, 0x00), coeff32[8]);
         a2 = _mm_add_epi32(a2, _mm_madd_epi16(_mm_shuffle_epi32(x1, 0x55), coeff32[10]));
         a2 = _mm_add_epi32(a2, _mm_madd_epi16(_mm_shuffle_epi32(x1, 0xaa), coeff32[12]));
         a2 = _mm_add_epi32(a2, _mm_madd_epi16(_mm_shuffle_epi32(x1, 0xff), coeff32[14]));
-
 
         b0 = _mm_sra_epi32(_mm_add_epi32(a0, o0), s0);
         b2 = _mm_sra_epi32(_mm_add_epi32(a2, o0), s0);
@@ -2480,7 +2444,6 @@ void pfreq_n4_transform16x16_sse2(
     return;
 }
 
-
 void transform4x4_sse2_intrin(
     int16_t                  *residual,
     const uint32_t             src_stride,
@@ -2497,7 +2460,6 @@ void transform4x4_sse2_intrin(
 #define OFFSET_N64_64 40
 #define OFFSET_36_N83 48
 #define OFFSET_83_N36 56
-
 
     EB_ALIGN(16) int16_t transformIntrinConst_SSE2[] = {
          128, 0,   128, 0,   128, 0,   128, 0,
@@ -2743,7 +2705,6 @@ void transform8x8_sse2_intrin(
         (void)transform_inner_array_ptr;
 }
 
-
 void pfreq_transform8x8_sse2_intrin(
     int16_t                  *residual,
     const uint32_t             src_stride,
@@ -2857,7 +2818,6 @@ void pfreq_transform8x8_sse2_intrin(
 
         (void)transform_inner_array_ptr;
 }
-
 
 void pfreq_n4_transform8x8_sse2_intrin(
     int16_t                  *residual,

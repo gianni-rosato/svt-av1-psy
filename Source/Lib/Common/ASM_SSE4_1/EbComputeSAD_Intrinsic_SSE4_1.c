@@ -37,7 +37,6 @@ void ext_sad_calculation_32x32_64x64_sse4_intrin(
     xmm_sad64x64 = _mm_add_epi32(_mm_add_epi32(_mm_unpacklo_epi64(Sad16x16_0_7_lo, Sad16x16_8_15_lo), _mm_unpackhi_epi64(Sad16x16_0_7_lo, Sad16x16_8_15_lo)),
         _mm_add_epi32(_mm_unpacklo_epi64(Sad16x16_0_7_hi, Sad16x16_8_15_hi), _mm_unpackhi_epi64(Sad16x16_0_7_hi, Sad16x16_8_15_hi)));
 
-
     p_sad32x32[0] = _mm_extract_epi32(xmm_sad64x64, 0);
     p_sad32x32[1] = _mm_extract_epi32(xmm_sad64x64, 1);
     p_sad32x32[2] = _mm_extract_epi32(xmm_sad64x64, 2);
@@ -64,7 +63,6 @@ void ext_sad_calculation_32x32_64x64_sse4_intrin(
 
     _mm_storeu_si128((__m128i*)p_best_sad32x32, BestSad32x32);
     _mm_storeu_si128((__m128i*)p_best_mv32x32, BestMV32x32);
-
 
     uint32_t sad64x64 = _mm_cvtsi128_si32(xmm_sad64x64_total);
     if (sad64x64 < p_best_sad64x64[0]) {
@@ -101,9 +99,8 @@ void sad_loop_kernel_sse4_1_intrin(
     __m128i s0, s1, s2, s3, s4, s5, s6, s7, s8 = _mm_set1_epi32(-1);
 
     if (leftover) {
-        for (k = 0; k < leftover; k++) {
+        for (k = 0; k < leftover; k++)
             s8 = _mm_slli_si128(s8, 2);
-        }
     }
 
     switch (width) {
@@ -1760,9 +1757,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
     __m128i s0, s1, s2, s3, s4, s5, s6, s7, s8 = _mm_set1_epi32(-1);
 
     if (leftover) {
-        for (k = 0; k < leftover; k++) {
+        for (k = 0; k < leftover; k++)
             s8 = _mm_slli_si128(s8, 2);
-        }
     }
 
     switch (width) {
@@ -3423,7 +3419,6 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
     const uint8_t *pRef, *pSrc;
     __m128i s0, s1, s2, s3, s4, s5, s6, s7, s9, s10, s11;
 
-
     switch (width) {
     case 4:
         for (i = 0; i < search_area_height; i++) {
@@ -4373,7 +4368,6 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin(
     uint16_t  *p_sad16x16,
     EbBool     sub_sad)
 {
-
     int16_t x_mv, y_mv;
     __m128i s0, s1, s3;
     __m128i sad[4];
@@ -4414,7 +4408,6 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin(
    |  16x16_10 |  16x16_11 |  16x16_14 |  16x16_15 |
    -----------------------   -----------------------
    */
-
 
    //8x8_0
     sad_eight_8x4_sse41_intrin(src + 0 * src_stride + 0, src_stride, ref + 0 * ref_stride + 0, ref_stride, &sad[0]);
@@ -4492,8 +4485,6 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin(
             p_best_mv16x16[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
         }
     }
-
-
 }
 
 /*******************************************
@@ -4522,7 +4513,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin(
     |  32x32_2  |  32x32_3
     ----------------------*/
 
-
     /*  data ordering in p_sad16x16 buffer
 
                   Search    Search            Search
@@ -4538,7 +4528,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin(
      16x16_15   |    x    |    x    | ...... |    x    |
                 ---------------------------------------
     */
-
 
     //32x32_0
     s0 = _mm_loadu_si128((__m128i*)(p_sad16x16 + 0 * 8));
@@ -4690,8 +4679,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin(
         p_best_mv32x32[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
 
-
-
     //32x32_2
     s0 = _mm_loadu_si128((__m128i*)(p_sad16x16 + 8 * 8));
     s1 = _mm_loadu_si128((__m128i*)(p_sad16x16 + 9 * 8));
@@ -4766,8 +4753,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin(
         x_mv = _MVXT(mv) + (4 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv32x32[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
-
-
 
     //32x32_3
     s0 = _mm_loadu_si128((__m128i*)(p_sad16x16 + 12 * 8));
@@ -4844,7 +4829,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin(
         p_best_mv32x32[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
 
-
     sad_0 = _mm_add_epi32(_mm_add_epi32(sad_00, sad_10), _mm_add_epi32(sad_20, sad_30));
     sad_1 = _mm_add_epi32(_mm_add_epi32(sad_01, sad_11), _mm_add_epi32(sad_21, sad_31));
 
@@ -4899,5 +4883,4 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin(
         x_mv = _MVXT(mv) + (4 + 3) * 4;  y_mv = _MVYT(mv);
         p_best_mv64x64[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
     }
-
 }

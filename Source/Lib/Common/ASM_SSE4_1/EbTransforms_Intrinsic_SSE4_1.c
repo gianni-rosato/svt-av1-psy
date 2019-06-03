@@ -158,7 +158,6 @@ void transform8x8_sse4_1_intrin(
         MACRO_UNPACK(16, xmm_trans0, xmm_trans1, xmm_trans2, xmm_trans3, xmm_trans4, xmm_trans5, xmm_trans6, xmm_trans7, xmm_trans01_hi, xmm_trans23_hi, xmm_trans45_hi, xmm_trans67_hi)
         MACRO_UNPACK(32, xmm_trans0, xmm_trans2, xmm_trans01_hi, xmm_trans23_hi, xmm_trans4, xmm_trans6, xmm_trans45_hi, xmm_trans67_hi, xmm_trans02_hi, xmm_trans01234_hi, xmm_trans46_hi, xmm_trans4567_hi)
 
-
         //---- Second Partial Butterfly ----
 
         // Calculate low and high
@@ -257,7 +256,6 @@ void transform8x8_sse4_1_intrin(
 
         (void)bit_increment;
     (void)transform_inner_array_ptr;
-
 }
 void pfreq_transform8x8_sse4_1_intrin(
     int16_t                  *residual,
@@ -398,7 +396,6 @@ void pfreq_transform8x8_sse4_1_intrin(
     xmm_trans2 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(transform_asm_const_sse4_1 + OFFSET_83_36)), _mm_unpacklo_epi16(xmm_evenOdd0, xmm_evenOdd1)), xmm_offset), 2),
         _mm_srai_epi32(_mm_add_epi32(_mm_madd_epi16(_mm_load_si128((__m128i *)(transform_asm_const_sse4_1 + OFFSET_83_36)), _mm_unpackhi_epi16(xmm_evenOdd0, xmm_evenOdd1)), xmm_offset), 2));
 
-
     // transform_coefficients 1, 3, 5, 7
     xmm_odd01_lo = _mm_unpacklo_epi16(xmm_odd0, xmm_odd1);
     xmm_odd01_hi = _mm_unpackhi_epi16(xmm_odd0, xmm_odd1);
@@ -408,7 +405,6 @@ void pfreq_transform8x8_sse4_1_intrin(
     MACRO_TRANS_4MAC_NO_SAVE(xmm_odd01_lo, xmm_odd01_hi, xmm_odd23_lo, xmm_odd23_hi, xmm_trans1, xmm_offset, transform_asm_const_sse4_1, OFFSET_89_75, OFFSET_50_18, 2)
         MACRO_TRANS_4MAC_NO_SAVE(xmm_odd01_lo, xmm_odd01_hi, xmm_odd23_lo, xmm_odd23_hi, xmm_trans3, xmm_offset, transform_asm_const_sse4_1, OFFSET_75_N18, OFFSET_N89_N50, 2)
 
-
 #define MACRO_UNPACK_PF(ARG1, ARG2, ARG3, ARG4, ARG5, ARG10, ARG11)\
     ARG10 = _mm_unpackhi_epi##ARG1(ARG2, ARG3);\
     ARG2  = _mm_unpacklo_epi##ARG1(ARG2, ARG3);\
@@ -417,8 +413,6 @@ void pfreq_transform8x8_sse4_1_intrin(
 
         MACRO_UNPACK_PF(16, xmm_trans0, xmm_trans1, xmm_trans2, xmm_trans3, xmm_trans01_hi, xmm_trans23_hi)
         MACRO_UNPACK_PF(32, xmm_trans0, xmm_trans2, xmm_trans01_hi, xmm_trans23_hi, xmm_trans02_hi, xmm_trans01234_hi)
-
-
 
         //---- Second Partial Butterfly ----
 
@@ -431,7 +425,6 @@ void pfreq_transform8x8_sse4_1_intrin(
     xmm_res5L = _mm_unpackhi_epi16(xmm_trans01_hi, _mm_srai_epi16(xmm_trans01_hi, 15));
     xmm_res6L = _mm_unpacklo_epi16(xmm_trans01234_hi, _mm_srai_epi16(xmm_trans01234_hi, 15));
     xmm_res7L = _mm_unpackhi_epi16(xmm_trans01234_hi, _mm_srai_epi16(xmm_trans01234_hi, 15));
-
 
     xmm_even0L = _mm_add_epi32(xmm_res0L, xmm_res7L);
     xmm_odd0L = _mm_sub_epi32(xmm_res0L, xmm_res7L);
@@ -462,7 +455,6 @@ void pfreq_transform8x8_sse4_1_intrin(
         _mm_mullo_epi32(_mm_load_si128((__m128i *)(transform_asm_const_sse4_1 + OFFSET_36)), xmm_evenOdd1L)),
         xmm_offset), 9), xmm_junk);
 
-
     _mm_storeu_si128((__m128i *)(transform_coefficients + 2 * dst_stride), xmm_trans2);
 
     MACRO_TRANS_4MAC_PMULLD_PF(xmm_odd0L, xmm_odd1L, xmm_odd2L, xmm_odd3L, xmm_junk, xmm_junk, xmm_junk, xmm_junk, xmm_offset, transform_asm_const_sse4_1, OFFSET_89, OFFSET_75, OFFSET_50, OFFSET_18, add_epi32, add_epi32, add_epi32, 9, dst_stride)
@@ -470,7 +462,6 @@ void pfreq_transform8x8_sse4_1_intrin(
 
         (void)bit_increment;
     (void)transform_inner_array_ptr;
-
 }
 
 void pfreq_n4_transform8x8_sse4_1_intrin(
@@ -619,7 +610,6 @@ void pfreq_n4_transform8x8_sse4_1_intrin(
     MACRO_TRANS_4MAC_NO_SAVE(xmm_odd01_lo, xmm_odd01_hi, xmm_odd23_lo, xmm_odd23_hi, xmm_trans1, xmm_offset, transform_asm_const_sse4_1, OFFSET_89_75, OFFSET_50_18, 2)
         MACRO_TRANS_4MAC_NO_SAVE(xmm_odd01_lo, xmm_odd01_hi, xmm_odd23_lo, xmm_odd23_hi, xmm_trans3, xmm_offset, transform_asm_const_sse4_1, OFFSET_75_N18, OFFSET_N89_N50, 2)
 
-
 #define MACRO_UNPACK_PF(ARG1, ARG2, ARG3, ARG4, ARG5, ARG10, ARG11)\
     ARG10 = _mm_unpackhi_epi##ARG1(ARG2, ARG3);\
     ARG2  = _mm_unpacklo_epi##ARG1(ARG2, ARG3);\
@@ -632,8 +622,6 @@ void pfreq_n4_transform8x8_sse4_1_intrin(
 
         MACRO_UNPACK_PF(16, xmm_trans0, xmm_trans1, xmm_trans2, xmm_trans3, xmm_trans01_hi, xmm_trans23_hi)
         MACRO_UNPACK_PF(32, xmm_trans0, xmm_trans2, xmm_trans01_hi, xmm_trans23_hi, xmm_trans02_hi, xmm_trans01234_hi)
-
-
 
         //---- Second Partial Butterfly ----
 
@@ -675,7 +663,6 @@ void pfreq_n4_transform8x8_sse4_1_intrin(
     xmm_trans2 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(_mm_mullo_epi32(_mm_load_si128((__m128i *)(transform_asm_const_sse4_1 + OFFSET_83)), xmm_evenOdd0L),
         _mm_mullo_epi32(_mm_load_si128((__m128i *)(transform_asm_const_sse4_1 + OFFSET_36)), xmm_evenOdd1L)),
         xmm_offset), 9),
-
         xmm_junk);
 
     _mm_storeu_si128((__m128i *)(transform_coefficients + 2 * dst_stride), xmm_trans2);
@@ -685,5 +672,4 @@ void pfreq_n4_transform8x8_sse4_1_intrin(
 
         (void)bit_increment;
     (void)transform_inner_array_ptr;
-
 }

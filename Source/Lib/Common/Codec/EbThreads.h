@@ -132,7 +132,7 @@ extern    cpu_set_t                   group_affinity;
             *total_lib_memory += (((n_elements)+(8 - ((n_elements) % 8))) + sizeof(EbMemoryMapEntry)); \
         lib_thread_count++; \
     }
-    
+
 #else
 #define EB_CREATETHREAD(type, pointer, n_elements, pointer_class, thread_function, thread_context) \
     pointer = eb_create_thread(thread_function, thread_context); \

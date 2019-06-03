@@ -216,9 +216,8 @@ static INLINE int32_t svdcmp(double **u, int32_t m, int32_t n, double w[], doubl
             }
             for (j = i; j < m; j++) u[j][i] *= g;
         }
-        else {
+        else
             for (j = i; j < m; j++) u[j][i] = 0.0;
-        }
         ++u[i][i];
     }
     for (k = n - 1; k >= 0; k--) {
@@ -329,12 +328,10 @@ static INLINE int32_t SVD(double *U, double *W, double *V, double *matx, int32_t
 
     problem = !(nrU && nrV);
     if (!problem) {
-        for (i = 0; i < M; i++) {
+        for (i = 0; i < M; i++)
             nrU[i] = &U[i * N];
-        }
-        for (i = 0; i < N; i++) {
+        for (i = 0; i < N; i++)
             nrV[i] = &V[i * N];
-        }
     }
     else {
         if (nrU) free(nrU);
@@ -343,10 +340,8 @@ static INLINE int32_t SVD(double *U, double *W, double *V, double *matx, int32_t
     }
 
     /* copy from given matx into nrU */
-    for (i = 0; i < M; i++) {
+    for (i = 0; i < M; i++)
         memcpy(&(nrU[i][0]), matx + N * i, N * sizeof(*matx));
-    }
-
     /* HERE IT IS: do SVD */
     if (svdcmp(nrU, M, N, W, nrV)) {
         free(nrU);

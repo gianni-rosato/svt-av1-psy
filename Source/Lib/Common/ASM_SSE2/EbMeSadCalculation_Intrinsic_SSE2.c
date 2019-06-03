@@ -128,14 +128,12 @@ void sad_calculation_32x32_64x64_sse2_intrin(
     _mm_storeu_si128((__m128i*)p_best_sad32x32, BestSad32x32);
     _mm_storeu_si128((__m128i*)p_best_mv32x32, BestMV32x32);
 
-
     uint32_t sad64x64 = _mm_cvtsi128_si32(xmm_sad64x64_total);
     if (sad64x64 < p_best_sad64x64[0]) {
         p_best_sad64x64[0] = sad64x64;
         p_best_mv64x64[0] = _mm_cvtsi128_si32(xmm_mv);
     }
 }
-
 
 void initialize_buffer_32bits_sse2_intrin(
     uint32_t*        pointer,

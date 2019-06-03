@@ -47,7 +47,6 @@ extern "C" {
         uint8_t    granularity_normal_log2;
         uint8_t    granularity_top_left;
         uint8_t    granularity_top_left_log2;
-
     } NeighborArrayUnit;
 
     typedef struct NeighborArrayUnit32
@@ -63,7 +62,6 @@ extern "C" {
         uint8_t    granularity_normal_log2;
         uint8_t    granularity_top_left;
         uint8_t    granularity_top_left_log2;
-
     } NeighborArrayUnit32;
 
     extern EbErrorType neighbor_array_unit_ctor32(
@@ -74,7 +72,6 @@ extern "C" {
         uint32_t   granularity_normal,
         uint32_t   granularity_top_left,
         uint32_t   type_mask);
-
 
     extern EbErrorType neighbor_array_unit_ctor(
         NeighborArrayUnit **na_unit_dbl_ptr,
@@ -88,7 +85,6 @@ extern "C" {
     extern void neighbor_array_unit_reset(NeighborArrayUnit *na_unit_ptr);
 
     extern void neighbor_array_unit_reset32(NeighborArrayUnit32 *na_unit_ptr);
-
 
     /*************************************************
      * Neighbor Array Unit Get Left Index
@@ -149,7 +145,6 @@ extern "C" {
         uint32_t             pic_origin_y,
         uint32_t             block_width,
         uint32_t             block_height);
-
 
     void copy_neigh_arr(
         NeighborArrayUnit *na_src,

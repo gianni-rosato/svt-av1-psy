@@ -52,21 +52,17 @@ EbErrorType largest_coding_unit_ctor(
     uint32_t cu_i;
     uint32_t  tot_cu_num = sb_size_pix == 128 ? 1024 : 256;
 
-
     EB_MALLOC(CodingUnit*, largestCodingUnitPtr->final_cu_arr, sizeof(CodingUnit) * tot_cu_num, EB_N_PTR);
 
     for (cu_i = 0; cu_i < tot_cu_num; ++cu_i) {
-
-        for (tu_index = 0; tu_index < TRANSFORM_UNIT_MAX_COUNT; ++tu_index) {
+        for (tu_index = 0; tu_index < TRANSFORM_UNIT_MAX_COUNT; ++tu_index)
             largestCodingUnitPtr->final_cu_arr[cu_i].transform_unit_array[tu_index].tu_index = tu_index;
-        }
-
         largestCodingUnitPtr->final_cu_arr[cu_i].leaf_index = cu_i;
 
         EB_MALLOC(MacroBlockD*, largestCodingUnitPtr->final_cu_arr[cu_i].av1xd, sizeof(MacroBlockD), EB_N_PTR);
     }
 
-    uint32_t  max_block_count = sb_size_pix == 128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64; 
+    uint32_t  max_block_count = sb_size_pix == 128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64;
 
     EB_MALLOC(PartitionType*, largestCodingUnitPtr->cu_partition_array, sizeof(PartitionType) * max_block_count, EB_N_PTR);
 
@@ -85,9 +81,7 @@ EbErrorType largest_coding_unit_ctor(
         (EbPtr*) &(largestCodingUnitPtr->quantized_coeff),
         (EbPtr)&coeffInitData);
 
-    if (return_error == EB_ErrorInsufficientResources) {
+    if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    }
-
     return EB_ErrorNone;
 }

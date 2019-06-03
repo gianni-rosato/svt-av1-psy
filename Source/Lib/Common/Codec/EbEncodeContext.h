@@ -49,6 +49,10 @@ typedef struct EncodeContext
     EbHandle                                         total_number_of_recon_frame_mutex;
     uint64_t                                         total_number_of_recon_frames;
 
+#if ALT_REF_OVERLAY
+    // Overlay input picture fifo
+    EbFifo                                          *overlay_input_picture_pool_fifo_ptr;
+#endif
     // Output Buffer Fifos
     EbFifo                                        *stream_output_fifo_ptr;
     EbFifo                                        *recon_output_fifo_ptr;
@@ -120,33 +124,36 @@ typedef struct EncodeContext
 
     // Prediction Structure
     PredictionStructureGroup                       *prediction_structure_group_ptr;
-                                                     
-    // MD Rate Estimation Table                      
+
+    // MD Rate Estimation Table
     MdRateEstimationContext                        *md_rate_estimation_array;
 
     // Rate Control Bit Tables
     RateControlTables                              *rate_control_tables_array;
     EbBool                                            rate_control_tables_array_updated;
     EbHandle                                          rate_table_update_mutex;
-                                                     
-    // Speed Control                                 
+
+    // Speed Control
     int64_t                                           sc_buffer;
     int64_t                                           sc_frame_in;
     int64_t                                           sc_frame_out;
     EbHandle                                          sc_buffer_mutex;
     EbEncMode                                         enc_mode;
-                                                     
-    // Rate Control                                  
+
+    // Rate Control
     uint32_t                                          previous_selected_ref_qp;
     uint64_t                                          max_coded_poc;
     uint32_t                                          max_coded_poc_selected_ref_qp;
-                                                     
-    // Dynamic GOP                                   
+
+    // Dynamic GOP
     uint32_t                                          previous_mini_gop_hierarchical_levels;
     EbAsm                                             asm_type;
     EbObjectWrapper                                  *previous_picture_control_set_wrapper_ptr;
     EbHandle                                          shared_reference_mutex;
 
+#if ALT_REF_OVERLAY
+    uint64_t                                          picture_number_alt; // The picture number overlay includes all the overlay frames
+#endif
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

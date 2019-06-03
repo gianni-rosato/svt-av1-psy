@@ -18,7 +18,6 @@
 
 #include "EbPictureBufferDesc.h"
 
-
 /*****************************************
  * eb_picture_buffer_desc_ctor
  *  Initializes the Buffer Descriptor's
@@ -82,7 +81,6 @@ EbErrorType eb_picture_buffer_desc_ctor(
         }
 
         memset(pictureBufferDescPtr->buffer_y, 0, pictureBufferDescPtr->luma_size * bytesPerPixel * sizeof(uint8_t));
-
     }
     else {
         pictureBufferDescPtr->buffer_y = 0;
@@ -99,7 +97,6 @@ EbErrorType eb_picture_buffer_desc_ctor(
         }
 
         memset(pictureBufferDescPtr->buffer_cb, 0, pictureBufferDescPtr->chroma_size * bytesPerPixel * sizeof(uint8_t));
-
     }
     else {
         pictureBufferDescPtr->buffer_cb = 0;
@@ -116,7 +113,6 @@ EbErrorType eb_picture_buffer_desc_ctor(
         }
 
         memset(pictureBufferDescPtr->buffer_cr, 0, pictureBufferDescPtr->chroma_size * bytesPerPixel * sizeof(uint8_t));
-
     }
     else {
         pictureBufferDescPtr->buffer_cr = 0;
@@ -125,7 +121,6 @@ EbErrorType eb_picture_buffer_desc_ctor(
 
     return EB_ErrorNone;
 }
-
 
 /*****************************************
  * eb_recon_picture_buffer_desc_ctor
@@ -171,35 +166,23 @@ EbErrorType eb_recon_picture_buffer_desc_ctor(
 
     // Allocate the Picture Buffers (luma & chroma)
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
-
         EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_y, pictureBufferDescPtr->luma_size * bytesPerPixel, EB_A_PTR);
         memset(pictureBufferDescPtr->buffer_y, 0, pictureBufferDescPtr->luma_size      * bytesPerPixel);
-
     }
-    else {
+    else
         pictureBufferDescPtr->buffer_y = 0;
-    }
-
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
-
         EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cb, pictureBufferDescPtr->chroma_size * bytesPerPixel, EB_A_PTR);
         memset(pictureBufferDescPtr->buffer_cb, 0, pictureBufferDescPtr->chroma_size      * bytesPerPixel);
-
     }
-    else {
+    else
         pictureBufferDescPtr->buffer_cb = 0;
-    }
-
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
-
         EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cr, pictureBufferDescPtr->chroma_size * bytesPerPixel, EB_A_PTR);
         memset(pictureBufferDescPtr->buffer_cr, 0, pictureBufferDescPtr->chroma_size      * bytesPerPixel);
-
     }
-    else {
+    else
         pictureBufferDescPtr->buffer_cr = 0;
-    }
-
     return EB_ErrorNone;
 }
 void link_Eb_to_aom_buffer_desc_8bit(
@@ -244,21 +227,17 @@ void link_eb_to_aom_buffer_desc(
     Yv12BufferConfig             *aomBuffDsc
 )
 {
-
     //NOTe:  Not all fileds are connected. add more connections as needed.
     if (picBuffDsc->bit_depth == EB_8BIT) {
-
         aomBuffDsc->y_buffer = picBuffDsc->buffer_y + picBuffDsc->origin_x + (picBuffDsc->origin_y     * picBuffDsc->stride_y);
         aomBuffDsc->u_buffer = picBuffDsc->buffer_cb + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->stride_cb);
         aomBuffDsc->v_buffer = picBuffDsc->buffer_cr + picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->stride_cb);
-
 
         aomBuffDsc->y_width = picBuffDsc->width;
         aomBuffDsc->uv_width = picBuffDsc->width / 2;
 
         aomBuffDsc->y_height = picBuffDsc->height;
         aomBuffDsc->uv_height = picBuffDsc->height / 2;
-
 
         aomBuffDsc->y_stride = picBuffDsc->stride_y;
         aomBuffDsc->uv_stride = picBuffDsc->stride_cb;
@@ -273,11 +252,9 @@ void link_eb_to_aom_buffer_desc(
         aomBuffDsc->y_crop_height = aomBuffDsc->y_height;
         aomBuffDsc->uv_crop_height = aomBuffDsc->uv_height;
 
-
         aomBuffDsc->flags = 0;
     }
     else {
-
         /*
         Moving within a 16bit memory area: 2 possible mecanisms:
 
@@ -312,13 +289,11 @@ void link_eb_to_aom_buffer_desc(
         aomBuffDsc->u_buffer += picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->stride_cb);
         aomBuffDsc->v_buffer += picBuffDsc->origin_x / 2 + (picBuffDsc->origin_y / 2 * picBuffDsc->stride_cb);
 
-
         aomBuffDsc->y_width = picBuffDsc->width;
         aomBuffDsc->uv_width = picBuffDsc->width / 2;
 
         aomBuffDsc->y_height = picBuffDsc->height;
         aomBuffDsc->uv_height = picBuffDsc->height / 2;
-
 
         aomBuffDsc->y_stride = picBuffDsc->stride_y;
         aomBuffDsc->uv_stride = picBuffDsc->stride_cb;
@@ -333,20 +308,14 @@ void link_eb_to_aom_buffer_desc(
         aomBuffDsc->y_crop_height = aomBuffDsc->y_height;
         aomBuffDsc->uv_crop_height = aomBuffDsc->uv_height;
         aomBuffDsc->flags = YV12_FLAG_HIGHBITDEPTH;
-
     }
-
 }
-
-
 
 void *aom_memalign(size_t align, size_t size);
 void aom_free(void *memblk);
 
 #define yv12_align_addr(addr, align) \
   (void *)(((size_t)(addr) + ((align)-1)) & (size_t) - (align))
-
-
 
 int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t height,
     int32_t ss_x, int32_t ss_y, int32_t use_highbitdepth,
@@ -404,7 +373,6 @@ int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t h
 
             if (frame_size != (size_t)frame_size) return -1;
 
-
             EB_MALLOC(uint8_t *, ybf->buffer_alloc, frame_size, EB_N_PTR);
 
             if (!ybf->buffer_alloc) return -1;
@@ -447,10 +415,8 @@ int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t h
             buf = CONVERT_TO_BYTEPTR(ybf->buffer_alloc);
             ybf->flags = YV12_FLAG_HIGHBITDEPTH;
         }
-        else {
+        else
             ybf->flags = 0;
-        }
-
         ybf->y_buffer = (uint8_t *)yv12_align_addr(
             buf + (border * y_stride) + border, aom_byte_align);
         ybf->u_buffer = (uint8_t *)yv12_align_addr(

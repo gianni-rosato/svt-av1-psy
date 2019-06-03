@@ -1,14 +1,13 @@
-; 
+;
 ; Copyright(c) 2019 Intel Corporation
 ; SPDX - License - Identifier: BSD - 2 - Clause - Patent
-; 
+;
 
 %include "x64inc.asm"
 %include "x64Macro.asm"
 section .text
 ; ----------------------------------------------------------------------------------------
 
-cglobal _picture_copy_kernel_sse2
 cglobal picture_copy_kernel_sse2
 
 ; Requirement: areaWidthInBytes = 4, 8, 12, 16, 24, 32, 48, 64 or 128
@@ -210,7 +209,6 @@ Label_PictureCopyKernel_SSE2_WIDTH16:
     ret
 ; ----------------------------------------------------------------------------------------
 
-cglobal _zero_out_coeff4x4_sse
 cglobal zero_out_coeff4x4_sse
 
     lea             r0,             [r0+2*r2]
@@ -230,7 +228,6 @@ cglobal zero_out_coeff4x4_sse
 
 ; ----------------------------------------------------------------------------------------
 
-cglobal _zero_out_coeff8x8_sse2
 cglobal zero_out_coeff8x8_sse2
 
 ; TODO: use "movdqa" if coeff_buffer is guaranteed to be 16-byte aligned.
@@ -253,7 +250,6 @@ cglobal zero_out_coeff8x8_sse2
 
 ; ----------------------------------------------------------------------------------------
 
-cglobal _zero_out_coeff16x16_sse2
 cglobal zero_out_coeff16x16_sse2
 
 ; TODO: use "movdqa" if coeff_buffer is guaranteed to be 16-byte aligned.
@@ -303,7 +299,6 @@ cglobal zero_out_coeff16x16_sse2
 
 ; ----------------------------------------------------------------------------------------
 
-cglobal _zero_out_coeff32x32_sse2
 cglobal zero_out_coeff32x32_sse2
 
 ; TODO: use "movdqa" if coeff_buffer is guaranteed to be 16-byte aligned.
@@ -355,7 +350,6 @@ Label_ZeroOutCoeff32x32_SSE2_01:
 
 ; ----------------------------------------------------------------------------------------
 
-cglobal _picture_average_kernel_sse2
 cglobal picture_average_kernel_sse2
 
 ; Requirement: pu_width         = 4, 8, 12, 16, 24, 32, 48 or 64
@@ -526,7 +520,7 @@ Label_PictureAverageKernel_SSE2_WIDTH48:
     pavgb           xmm0,            xmm6
     movdqu          xmm6,            [src1+16]
     pavgb           xmm1,            xmm6
-    movdqu          xmm6,            [src1+32]            
+    movdqu          xmm6,            [src1+32]
     pavgb           xmm2,            xmm6
     movdqu          xmm6,            [src1+src1_stride]
     pavgb           xmm3,            xmm6
@@ -626,8 +620,6 @@ Label_PictureAverageKernel_SSE2_WIDTH16:
     ret
 
 ; ----------------------------------------------------------------------------------------
-    cglobal _Log2f_SSE2
     cglobal Log2f_SSE2
     bsr rax, r0
     ret
-

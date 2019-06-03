@@ -8,27 +8,25 @@
     - [Running the encoder](#running-the-encoder)
 3. [Legal Disclaimer](#legal-disclaimer)
 
-
 ## Introduction
 
-This document describes how to use the Scalable Video Technology for AV1 Encoder (SVT-AV1).  In particular, this user guide describes how to run the sample application with the respective dynamically linked library.
-
+This document describes how to use the Scalable Video Technology for AV1 Encoder (SVT-AV1). In particular, this user guide describes how to run the sample application with the respective dynamically linked library.
 
 ## Sample Application Guide
 
-This section describes how to run the sample encoder application that uses the SVT-AV1 Encoder library.  It describes the input video format, the command line input parameters and the resulting outputs.
+This section describes how to run the sample encoder application that uses the SVT-AV1 Encoder library. It describes the input video format, the command line input parameters and the resulting outputs.
 
 ### Input Video Format
 
 The SVT-AV1 Encoder supports the following input formats:
 
-8-bit yuv420p:
+![alt](8bit_yuv420p.png)
+ 
+_8-bit yuv420p_
 
- ![alt](8bit_yuv420p.png)
+![alt](10bit_yuv420p.png)
 
-10-bit yuv420p10le:
-
- ![alt](10bit_yuv420p.png)
+_10-bit yuv420p10le_
 
 ### Compressed 10-bit format
 
@@ -40,8 +38,7 @@ This step consists of separating the 10 bit video samples into 8 bit and 2 bit p
 
  ![alt](10bit_unpacked.png)
 
-
-10-bit yuv420p10le unpacked
+_10-bit yuv420p10le unpacked_
 
 #### Compress the 2 bit Plane
 
@@ -49,17 +46,19 @@ The unpacking steps separates the 10bits into a group of 8 bits and a group of 2
 
  ![alt](10bit_packed.png)
  
+ _10-bit yuv420p10le compressed_
+ 
 #### Unroll the 64x64
 
 Now for a faster read of the samples, every 64x64 block of the 2 bit picture should be written into a one dimensional array. Therefore, the top left 64x64 sample block which is now written into a 16 bytes x 64 bytes after the compression of the 2bit samples, will be written into a 1024 bytes x 1 byte array as shown in the picture below.
 
-64x64 block after 2 bit compression: 
-
  ![alt](64x64_after_2bit_compression.png)
-
-64x64 block after unrolling:
+ 
+_64x64 block after 2 bit compression_
 
  ![alt](64x64_after_unrolling.png)
+ 
+ _64x64 block after unrolling_
 
 ### Running the encoder
 
@@ -67,54 +66,49 @@ This section describes how to run the sample encoder application SvtAv1EncApp.ex
 
 The sample application typically takes the following command line parameters:
 
--c filename [**Optional**]
+`-c filename` **[Optional]**
 
 A text file that contains encoder parameters such as input file name, quantization parameter etc. Refer to the comments in the Config/Sample.cfg for specific details. The list of encoder parameters are also listed below. Note that command line parameters take precedence over the parameters included in the configuration file when there is a conflict.
 
+`-i filename` **[Required]**
 
+A YUV file (e.g. 8 bit 4:2:0 planar) containing the video sequence that will be encoded. The dimensions of each image are specified by –w and –h as indicated below.
 
--i filename **[Required]**
-
-A YUV file (e.g. 8 bit 4:2:0 planar) containing the video sequence that will be encoded.  The dimensions of each image are specified by –w and –h as indicated below.
-
--b filename **[Optional]**
+`-b filename` **[Optional]**
 
 The resulting encoded bit stream file in binary format. If none specified, no output bit stream will be produced by the encoder.
 
--w integer **[Required]**
+`-w integer` **[Required]**
 
-The width of each input image in units of picture luma pixels,  e.g. 1920
+The width of each input image in units of picture luma pixels, e.g. 1920
 
--h integer **[Required]**]
+`-h integer` **[Required]**]
 
-The height of each input image in units of picture luma pixels,  e.g. 1080
+The height of each input image in units of picture luma pixels, e.g. 1080
 
--n integer **[Optional]**
+`-n integer` **[Optional]**
 
-The number of frames of the sequence to encode.  e.g. 100. If the input frame count is larger than the number of frames in the input video, the encoder will loopback to the first frame when it is done.
+The number of frames of the sequence to encode. e.g. 100. If the input frame count is larger than the number of frames in the input video, the encoder will loopback to the first frame when it is done.
 
--intra-period integer **[Optional]**
+`-intra-period integer` **[Optional]**
 
 The intra period defines the interval of frames after which you insert an Intra refresh. It is strongly recommended to use (multiple of 8) -1 the closest to 1 second (e.g. 55, 47, 31, 23 should be used for 60, 50, 30, (24 or 25) respectively). When using closed gop (-irefresh-type 2) add 1 to the value above (e.g. 56 instead of 55).
 
--rc integer **[Optional]**
+`-rc integer` **[Optional]**
 
-This token sets the bitrate control encoding mode [1: Variable Bitrate, 0: Constant QP]. When rc is set to 1, it is best to match the –lad (lookahead distance described in the next section) parameter to the -intra-period. When –rc is set to 0, a qp value is expected with the use of the –q command line option otherwise a default value is assigned (25).
+This token sets the bitrate control encoding mode [1: Variable Bitrate, 0: Constant QP]. When `-rc` is set to 1, it is best to match the –lad (lookahead distance described in the next section) parameter to the `-intra-period`. When `–rc` is set to 0, a qp value is expected with the use of the `–q` command line option otherwise a default value is assigned (25).
 
+For example, the following command encodes 100 frames of the YUV video sequence into the bin bit stream file. The picture is 1920 luma pixels wide and 1080 pixels high using the `Sample.cfg` configuration. The QP equals 30 and the md5 checksum is not included in the bit stream.
 
+`SvtAv1EncApp.exe -c Sample.cfg -i CrowdRun\_1920x1080.yuv -w 1920 -h 1080 -n 100 -q 30 -intra-period 31 -b CrowdRun\_1920x1080\_qp30.bin`
 
-For example, the following command encodes 100 frames of the YUV video sequence into the bin bit stream file.  The picture is 1920 luma pixels wide and 1080 pixels high using the Sample.cfg configuration. The QP equals 30 and the md5 checksum is not included in the bit stream.
-
-SvtAv1EncApp.exe -c Sample.cfg -i CrowdRun\_1920x1080.yuv -w 1920 -h 1080 -n 100 -q 30 -intra-period 31 -b CrowdRun\_1920x1080\_qp30.bin
-
-It should be noted that not all the encoder parameters present in the Sample.cfg can be changed using the command line.
+It should be noted that not all the encoder parameters present in the `Sample.cfg` can be changed using the command line.
 
 #### List of all configuration parameters
 
-The encoder parameters present in the Sample.cfg file are listed in this table below along with their status of support, command line parameter and the range of values that the parameters can take.
+The encoder parameters present in the `Sample.cfg` file are listed in this table below along with their status of support, command line parameter and the range of values that the parameters can take.
 
-
-| **Configuration file parameter** | **Command line** |   **Range**   | **Default** | **Description** |
+| **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
 | --- | --- | --- | --- | --- |
 | **ChannelNumber** | -nch | [1 - 6] | 1 | Number of encode instances |
 | **ConfigFile** | -c | any string | null | Configuration file path |
@@ -164,7 +158,7 @@ The encoder parameters present in the Sample.cfg file are listed in this table b
 | **AsmType** | -asm | [0 - 1] | 1 | Assembly instruction set (0: Automatically select lowest assembly instruction set supported, 1: Automatically select highest assembly instruction set supported,) |
 | **LogicalProcessorNumber** | -lp | [0, total number of logical processor] | 0 | The number of logical processor which encoder threads run on.Refer to Appendix A.1 |
 | **TargetSocket** | -ss | [-1,1] | -1 | For dual socket systems, this can specify which socket the encoder runs on.Refer to Appendix A.1 |
-| **ReconFile**   | -o | any string | null | Recon file path. Optional output of recon. |
+| **ReconFile** | -o | any string | null | Recon file path. Optional output of recon. |
 | **ImproveSharpness** | -sharp | [0-1] | 0 | Improve sharpness (0= OFF, 1=ON ) |
 | **TileRow** | -tile-rows | [0-6] | 0 | log2 of tile rows |
 | **TileCol** | -tile-columns | [0-6] | 0 | log2 of tile columns |
@@ -172,24 +166,23 @@ The encoder parameters present in the Sample.cfg file are listed in this table b
 ## Appendix A Encoder Parameters
 ### 1. Thread management parameters
 
-LogicalProcessorNumber (-lp) and TargetSocket (-ss) parameters are used to management thread affinity on Windows and Ubuntu OS. These are some examples how you use them together.
+LogicalProcessorNumber (`-lp`) and TargetSocket (`-ss`) parameters are used to management thread affinity on Windows and Ubuntu OS. These are some examples how you use them together.
 
 If LogicalProcessorNumber and TargetSocket are not set, threads are managed by OS thread scheduler.
 
->SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –lp 40
+`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –lp 40`
 
 If only LogicalProcessorNumber is set, threads run on 40 logical processors. Threads may run on dual sockets if 40 is larger than logical processor number of a socket.
 
 NOTE: On Windows, thread affinity can be set only by group on system with more than 64 logical processors. So, if 40 is larger than logical processor number of a single socket, threads run on all logical processors of both sockets.
 
->SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –ss 1
+`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –ss 1`
 
 If only TargetSocket is set, threads run on all the logical processors of socket 1.
 
->SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –lp 20 –ss 0
+`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –lp 20 –ss 0`
 
 If both LogicalProcessorNumber and TargetSocket are set, threads run on 20 logical processors of socket 0. Threads guaranteed to run only on socket 0 if 20 is larger than logical processor number of socket 0.
-
 
 ## Legal Disclaimer
 
@@ -205,7 +198,7 @@ Intel disclaims all express and implied warranties, including without limitation
 
 The products and services described may contain defects or errors known as errata which may cause deviations from published specifications. Current characterized errata are available on request.  ** ** No product or component can be absolutely secure.
 
-This document contains information on products, services and/or processes in development.  All information provided here is subject to change without notice. Contact your Intel representative to obtain the latest forecast, schedule, specifications and roadmaps.
+This document contains information on products, services and/or processes in development. All information provided here is subject to change without notice. Contact your Intel representative to obtain the latest forecast, schedule, specifications and roadmaps.
 
 Intel, Intel Xeon, Intel Core, the Intel logo and others are trademarks of Intel Corporation and its subsidiaries in the U.S. and/or other countries.
 

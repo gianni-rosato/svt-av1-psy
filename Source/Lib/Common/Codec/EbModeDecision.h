@@ -119,10 +119,19 @@ extern "C" {
 #endif
         EbBool                                 is_new_mv;
         EbBool                                 is_zero_mv;
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+        TxType                                 transform_type[MAX_TXB_COUNT];
+        TxType                                 transform_type_uv;
+#else
         TxType                                 transform_type[PLANE_TYPES];
+#endif
         MacroblockPlane                        candidate_plane[MAX_MB_PLANE];
         uint16_t                               eob[MAX_MB_PLANE][MAX_TXB_COUNT];
+#if ATB_DC_CONTEXT_SUPPORT_1
+        int32_t                                quantized_dc[3][MAX_TXB_COUNT];
+#else
         int32_t                                quantized_dc[3];
+#endif
         uint32_t                               interp_filters;
         uint8_t                                tu_width;
         uint8_t                                tu_height;
@@ -130,8 +139,10 @@ extern "C" {
         uint16_t                               num_proj_ref;
         EbBool                                 local_warp_valid;
         EbWarpedMotionParams                   wm_params;
+#if ATB_SUPPORT
+        uint8_t                                tx_depth;
+#endif
     } ModeDecisionCandidate;
-
 
     /**************************************
     * Function Ptrs Definitions
@@ -204,7 +215,7 @@ extern "C" {
     /**************************************
     * Mode Decision Candidate Buffer
     **************************************/
-    typedef struct IntraChromaCandidateBuffer 
+    typedef struct IntraChromaCandidateBuffer
     {
         uint32_t                              mode;
         uint64_t                              cost;
@@ -216,7 +227,7 @@ extern "C" {
     /**************************************
     * Mode Decision Candidate Buffer
     **************************************/
-    typedef struct ModeDecisionCandidateBuffer 
+    typedef struct ModeDecisionCandidateBuffer
     {
         // Candidate Ptr
         ModeDecisionCandidate                *candidate_ptr;
@@ -236,20 +247,19 @@ extern "C" {
         uint64_t                                residual_luma_sad;
         uint64_t                                full_lambda_rate;
         uint64_t                                full_cost_luma;
-                                               
-        // Costs                               
+
+        // Costs
         uint64_t                               *fast_cost_ptr;
         uint64_t                               *full_cost_ptr;
         uint64_t                               *full_cost_skip_ptr;
         uint64_t                               *full_cost_merge_ptr;
-        //                                     
+        //
         uint64_t                                cb_coeff_bits;
         uint64_t                                cb_distortion[2];
         uint64_t                                cr_coeff_bits;
         uint64_t                                cr_distortion[2];
         uint64_t                                y_full_distortion[DIST_CALC_TOTAL];
         uint64_t                                y_coeff_bits;
-
     } ModeDecisionCandidateBuffer;
 
     /**************************************
@@ -315,7 +325,7 @@ extern "C" {
       |-------------------------------------------------------------|
     */
 #define INVALID_REF 0xF
-#if  MCP_4XN_FIX 
+#if  MCP_4XN_FIX
     uint8_t get_ref_frame_idx(uint8_t ref_type);
 #else
     extern uint8_t get_ref_frame_idx(uint8_t list, uint8_t ref_type);

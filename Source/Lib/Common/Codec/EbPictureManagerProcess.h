@@ -14,13 +14,12 @@ extern "C" {
     /***************************************
      * Context
      ***************************************/
-    typedef struct PictureManagerContext 
+    typedef struct PictureManagerContext
     {
         EbFifo  *picture_input_fifo_ptr;
         EbFifo  *picture_manager_output_fifo_ptr;
         EbFifo **picture_control_set_fifo_ptr_array;
     } PictureManagerContext;
-
 
     /***************************************
      * Extern Function Declaration

@@ -32,7 +32,6 @@ extern "C" {
         uint32_t  height,                         // input parameter, block height (M)
         uint32_t  width);                         // input parameter, block width (N)
 
-
     uint32_t Compute4xMSadSub_AVX2_INTRIN(
         const uint8_t  *src,                       // input parameter, source samples Ptr
         uint32_t  src_stride,                      // input parameter, source stride
@@ -206,4 +205,3 @@ extern "C" {
 }
 #endif
 #endif // EbComputeSAD_AVX2_h
-

@@ -23,10 +23,9 @@ EbErrorType input_queue_entry_ctor(
     entryPtr->list0_ptr = (ReferenceList*)EB_NULL;
     entryPtr->list1_ptr = (ReferenceList*)EB_NULL;
 #endif
+
     return EB_ErrorNone;
 }
-
-
 
 EbErrorType reference_queue_entry_ctor(
     ReferenceQueueEntry  **entry_dbl_ptr)

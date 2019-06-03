@@ -3,7 +3,6 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-
 /*
 * Copyright (c) 2016, Alliance for Open Media. All rights reserved
 *
@@ -50,7 +49,7 @@ extern "C" {
 #define TC_OFFSET_VALUE                     12//12 // range -12 to 12
 
 #if AV1_LF
-    typedef enum LpfPickMethod 
+    typedef enum LpfPickMethod
     {
         // Try the full image with different values.
         LPF_PICK_FROM_FULL_IMAGE,
@@ -70,7 +69,6 @@ extern "C" {
         uint32_t               cu_size_in_min_cu_size,             //input parameter
         uint32_t               cu_qp);                         //input parameter, Qp of the CU
 
-
     /* assorted LoopFilter functions which get used elsewhere */
     struct AV1Common;
     struct macroblockd;
@@ -80,7 +78,6 @@ extern "C" {
 
     void av1_loop_filter_frame_init(PictureControlSet *pcs_ptr, int32_t plane_start,
         int32_t plane_end);
-
 
     void loop_filter_sb(
         EbPictureBufferDesc *frame_buffer,//reconpicture,
@@ -103,7 +100,6 @@ extern "C" {
         PictureControlSet     *pcs_ptr,
         LpfPickMethod          method);
 
-
     void av1_filter_block_plane_vert(
         const PictureControlSet *const  pcs_ptr,
         const MacroBlockD *const xd,
@@ -117,7 +113,7 @@ extern "C" {
         const MacroblockdPlane *const plane_ptr,
         const uint32_t mi_row, const uint32_t mi_col);
 
-    typedef struct LoopFilterWorkerData 
+    typedef struct LoopFilterWorkerData
     {
         EbPictureBufferDesc *frame_buffer;//reconpicture,
         PictureControlSet *pcs_ptr;
@@ -126,8 +122,6 @@ extern "C" {
         // add lossless as a member here.
         MacroBlockD *xd;
     } LFWorkerData;
-
-
 
     void aom_highbd_lpf_horizontal_14_sse2(uint16_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh, int32_t bd);
 #define aom_highbd_lpf_horizontal_14 aom_highbd_lpf_horizontal_14_sse2
@@ -181,7 +175,6 @@ extern "C" {
     void aom_highbd_lpf_vertical_8_dual_avx2(uint16_t *s, int32_t pitch, const uint8_t *blimit0, const uint8_t *limit0, const uint8_t *thresh0, const uint8_t *blimit1, const uint8_t *limit1, const uint8_t *thresh1, int32_t bd);
     //RTCD_EXTERN void(*aom_highbd_lpf_vertical_8_dual)(uint16_t *s, int32_t pitch, const uint8_t *blimit0, const uint8_t *limit0, const uint8_t *thresh0, const uint8_t *blimit1, const uint8_t *limit1, const uint8_t *thresh1, int32_t bd);
 
-
     void aom_lpf_horizontal_14_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh);
 #define aom_lpf_horizontal_14 aom_lpf_horizontal_14_sse2
 
@@ -228,9 +221,6 @@ extern "C" {
 
     void aom_lpf_vertical_8_dual_c(uint8_t *s, int32_t pitch, const uint8_t *blimit0, const uint8_t *limit0, const uint8_t *thresh0, const uint8_t *blimit1, const uint8_t *limit1, const uint8_t *thresh1);
 #define aom_lpf_vertical_8_dual aom_lpf_vertical_8_dual_c
-
-
-
 
 #ifdef __cplusplus
 }

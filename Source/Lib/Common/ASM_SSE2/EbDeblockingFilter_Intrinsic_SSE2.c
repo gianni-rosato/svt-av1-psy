@@ -1,13 +1,12 @@
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
-*/ 
+*/
 
 #include "emmintrin.h"
 #include "EbDefinitions.h"
 
 #include "EbDeblockingFilter_SSE2.h"
-
 
 /***********************************************************************************/
 // synonyms.h
@@ -26,7 +25,6 @@ static INLINE void xx_storel_32(void *const a, const __m128i v) {
 
 /***********************************************************************************/
 // lpf_common_sse2.h
-
 
 static INLINE void highbd_transpose6x6_sse2(__m128i *x0, __m128i *x1,
     __m128i *x2, __m128i *x3,
@@ -194,7 +192,6 @@ static INLINE void highbd_transpose8x8_sse2(
 
 /***********************************************************************************/
 // loopfilter_sse2.c
-
 
 static INLINE __m128i abs_diff(__m128i a, __m128i b) {
     return _mm_or_si128(_mm_subs_epu8(a, b), _mm_subs_epu8(b, a));
@@ -2040,7 +2037,6 @@ static AOM_FORCE_INLINE void highbd_filter4_sse2(__m128i *p1p0, __m128i *q1q0,
 static INLINE void highbd_filter4_dual_sse2(__m128i *p, __m128i *q, __m128i *ps,
     __m128i *qs, const __m128i *mask,
     const __m128i *th, int32_t bd,
-
     __m128i *t80) {
     __m128i ps0 = _mm_subs_epi16(p[0], *t80);
     __m128i ps1 = _mm_subs_epi16(p[1], *t80);
@@ -2125,10 +2121,8 @@ static AOM_FORCE_INLINE void highbd_lpf_internal_14_sse2(
     // filters - hev and filter4
     __m128i hevhev;
     __m128i abs_p1p0;
-    for (i = 0; i < 6; i++) {
+    for (i = 0; i < 6; i++)
         pq[i] = _mm_unpacklo_epi64(p[i], q[i]);
-    }
-
     highbd_hev_mask(&pq[0], &pq[1], &thresh, &abs_p1p0, &hevhev);
 
     p1p0 = _mm_unpacklo_epi64(p[0], p[1]);
@@ -3340,8 +3334,3 @@ void aom_highbd_lpf_vertical_14_dual_sse2(uint16_t *s, int32_t pitch,
     _mm_storeu_si128((__m128i *)(s + 6 * pitch), d6_out);
     _mm_storeu_si128((__m128i *)(s + 7 * pitch), d7_out);
 }
-
-
-
-
-

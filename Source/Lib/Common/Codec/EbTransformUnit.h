@@ -16,7 +16,7 @@ extern "C" {
 #define TRANSFORM_UNIT_NxN_AREA     4
 
 #pragma pack(push, 1)
-    typedef struct TransformUnit 
+    typedef struct TransformUnit
     {
         unsigned                tu_index                    : 5;
         unsigned                split_flag                  : 1;

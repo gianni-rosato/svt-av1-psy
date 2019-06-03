@@ -29,7 +29,6 @@ extern "C" {
         uint32_t                             lcuAddr,
         ModeDecisionContext               *context_ptr);
 
-
     extern EbErrorType AV1ProductModeDecisionLcu(
         SequenceControlSet                *sequence_control_set_ptr,
         PictureControlSet                 *picture_control_set_ptr,
@@ -39,7 +38,6 @@ extern "C" {
         uint32_t                             sb_origin_y,
         uint32_t                             lcuAddr,
         ModeDecisionContext               *context_ptr);
-
 
     extern EbErrorType in_loop_motion_estimation_sblock(
         PictureControlSet                 *picture_control_set_ptr,  // input parameter, Picture Control Set Ptr
@@ -61,8 +59,6 @@ extern "C" {
         uint32_t                             lcuAddr,
         SsMeContext                       *ss_mecontext,
         ModeDecisionContext               *context_ptr);
-
-
 
     extern EbErrorType ModeDecisionRefinementLcu(
         SequenceControlSet                *sequence_control_set_ptr,
@@ -97,7 +93,6 @@ extern "C" {
         uint32_t                   sb_qp,
 #endif
         EncDecContext         *context_ptr);
-
 
 #if NO_ENCDEC
 

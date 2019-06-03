@@ -1,8 +1,7 @@
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
-*/ 
-
+*/
 
 #include "EbNoiseExtractAVX2.h"
 #include "EbDefinitions.h"
@@ -19,7 +18,6 @@ EB_EXTERN EB_ALIGN(16) const uint8_t WeakChromafilter[2][32] = {
 };
 
 inline void luma_weak_filter_avx2_intrin(
-
     __m256i                        top,
     __m256i                        curr,
     __m256i                        bottom,
@@ -51,14 +49,12 @@ inline void luma_weak_filter_avx2_intrin(
     currNextSecondHalf = _mm256_unpackhi_epi8(currNextPermutation, _mm256_setzero_si256());
     currLeftMidFirstHalfhi = _mm256_add_epi16(currNextSecondHalf, currLeftMidFirstHalfWeight);
 
-
     topPermutation = _mm256_permute4x64_epi64(top, 216);
     topFirstHalf = _mm256_unpacklo_epi8(topPermutation, _mm256_setzero_si256());
     bottomPermutation = _mm256_permute4x64_epi64(bottom, 216);
     bottomFirstHalf = _mm256_unpacklo_epi8(bottomPermutation, _mm256_setzero_si256());
     filterFirstHalf = _mm256_adds_epi16(_mm256_adds_epi16(bottomFirstHalf, topFirstHalf), currLeftMidFirstHalflo);
     filterFirstHalf = _mm256_srli_epi16(filterFirstHalf, 3);
-
 
     topFirstHalf = _mm256_unpackhi_epi8(topPermutation, _mm256_setzero_si256());
     bottomFirstHalf = _mm256_unpackhi_epi8(bottomPermutation, _mm256_setzero_si256());
@@ -69,10 +65,8 @@ inline void luma_weak_filter_avx2_intrin(
     _mm256_storeu_si256((__m256i *)(ptr_denoised), filterFirstHalf);
 
     _mm256_storeu_si256((__m256i *)(ptr_noise), _mm256_subs_epu8(curr, filterFirstHalf));
-
 }
 inline void chroma_weak_luma_strong_filter_avx2_intrin(
-
     __m256i                        top,
     __m256i                        curr,
     __m256i                        bottom,
@@ -94,7 +88,6 @@ inline void chroma_weak_luma_strong_filter_avx2_intrin(
         topNextPermutation, topLeftMidFirstHalfhi, topNextSecondHalf,
         bottomPrevPermutation, bottomLeftMidFirstHalflo, bottomLeftMidFirstHalfWeight, bottomNextPermutation,
         bottomNextFirstHalf, bottomLeftMidFirstHalfhi, bottomNextSecondHalf;
-
 
     //  Curr
     currPrevPermutation = _mm256_permute4x64_epi64(curr_prev, 216);
@@ -130,7 +123,6 @@ inline void chroma_weak_luma_strong_filter_avx2_intrin(
     topNextSecondHalf = _mm256_unpackhi_epi8(topNextPermutation, _mm256_setzero_si256());
     topLeftMidFirstHalfhi = _mm256_add_epi16(topNextSecondHalf, topLeftMidFirstHalfWeight);
 
-
     // Bottom
     bottomPrevPermutation = _mm256_permute4x64_epi64(bottom_prev, 216);
     bottomPermutation = _mm256_permute4x64_epi64(bottom, 216);
@@ -147,21 +139,16 @@ inline void chroma_weak_luma_strong_filter_avx2_intrin(
     bottomNextSecondHalf = _mm256_unpackhi_epi8(bottomNextPermutation, _mm256_setzero_si256());
     bottomLeftMidFirstHalfhi = _mm256_add_epi16(bottomNextSecondHalf, bottomLeftMidFirstHalfWeight);
 
-
     filterFirstHalf = _mm256_adds_epi16(_mm256_adds_epi16(bottomLeftMidFirstHalflo, topLeftMidFirstHalflo), currLeftMidFirstHalflo);
     filterFirstHalf = _mm256_srli_epi16(filterFirstHalf, 4);
     filterSecondHalf = _mm256_adds_epi16(_mm256_adds_epi16(bottomLeftMidFirstHalfhi, topLeftMidFirstHalfhi), currLeftMidFirstHalfhi);
     filterSecondHalf = _mm256_srli_epi16(filterSecondHalf, 4);
 
-
     filterFirstHalf = _mm256_permute4x64_epi64(_mm256_packus_epi16(filterFirstHalf, filterSecondHalf), 216);
     _mm256_storeu_si256((__m256i *)(ptr_denoised), filterFirstHalf);
-
-
 }
 
 inline void chroma_strong_avx2_intrin(
-
     __m256i                        top,
     __m256i                        curr,
     __m256i                        bottom,
@@ -178,7 +165,6 @@ inline void chroma_strong_avx2_intrin(
         topPermutation, topPrevPermutation, topLeftMidFirstHalflo, topNextPermutation, topLeftMidFirstHalfhi,
         bottomPermutation, bottomPrevPermutation, bottomLeftMidFirstHalflo, bottomNextPermutation, bottomLeftMidFirstHalfhi;
 
-
     currPrevPermutation = _mm256_permute4x64_epi64(curr_prev, 216);
     currPermutation = _mm256_permute4x64_epi64(curr, 216);
     currNextPermutation = _mm256_permute4x64_epi64(curr_next, 216);
@@ -191,22 +177,17 @@ inline void chroma_strong_avx2_intrin(
         _mm256_unpackhi_epi8(currPrevPermutation, _mm256_setzero_si256()));
     currLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_unpackhi_epi8(currNextPermutation, _mm256_setzero_si256()), currLeftMidFirstHalfhi);
 
-
     topPrevPermutation = _mm256_permute4x64_epi64(top_prev, 216);
     topPermutation = _mm256_permute4x64_epi64(top, 216);
     topNextPermutation = _mm256_permute4x64_epi64(top_next, 216);
-
 
     topLeftMidFirstHalflo = _mm256_add_epi16(_mm256_unpacklo_epi8(topPermutation, _mm256_setzero_si256()),
         _mm256_unpacklo_epi8(topPrevPermutation, _mm256_setzero_si256()));
     topLeftMidFirstHalflo = _mm256_add_epi16(_mm256_unpacklo_epi8(topNextPermutation, _mm256_setzero_si256()), topLeftMidFirstHalflo);
 
-
     topLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_unpackhi_epi8(topPermutation, _mm256_setzero_si256()),
         _mm256_unpackhi_epi8(topPrevPermutation, _mm256_setzero_si256()));
     topLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_unpackhi_epi8(topNextPermutation, _mm256_setzero_si256()), topLeftMidFirstHalfhi);
-
-
 
     bottomPrevPermutation = _mm256_permute4x64_epi64(bottom_prev, 216);
     bottomPermutation = _mm256_permute4x64_epi64(bottom, 216);
@@ -216,11 +197,9 @@ inline void chroma_strong_avx2_intrin(
         _mm256_unpacklo_epi8(bottomPrevPermutation, _mm256_setzero_si256()));
     bottomLeftMidFirstHalflo = _mm256_add_epi16(_mm256_unpacklo_epi8(bottomNextPermutation, _mm256_setzero_si256()), bottomLeftMidFirstHalflo);
 
-
     bottomLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_unpackhi_epi8(bottomPermutation, _mm256_setzero_si256()),
         _mm256_unpackhi_epi8(bottomPrevPermutation, _mm256_setzero_si256()));
     bottomLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_unpackhi_epi8(bottomNextPermutation, _mm256_setzero_si256()), bottomLeftMidFirstHalfhi);
-
 
     currLeftMidFirstHalflo = _mm256_add_epi16(_mm256_add_epi16(currLeftMidFirstHalflo, topLeftMidFirstHalflo), bottomLeftMidFirstHalflo);
     currLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_add_epi16(currLeftMidFirstHalfhi, topLeftMidFirstHalfhi), bottomLeftMidFirstHalfhi);
@@ -235,7 +214,6 @@ inline void chroma_strong_avx2_intrin(
 
     currLeftMidFirstHalflo = _mm256_insertf128_si256(_mm256_setzero_si256(), _mm_packus_epi16(_mm256_extracti128_si256(currLeftMidFirstHalflo, 0), _mm256_extracti128_si256(currLeftMidFirstHalflo, 1)), 0);
 
-
     topLeftMidFirstHalfhi = _mm256_unpacklo_epi16(currLeftMidFirstHalfhi, _mm256_setzero_si256());
     topLeftMidFirstHalfhi = _mm256_mullo_epi32(topLeftMidFirstHalfhi, _mm256_set1_epi32(7282));
     topLeftMidFirstHalfhi = _mm256_srli_epi32(topLeftMidFirstHalfhi, 16);
@@ -247,8 +225,6 @@ inline void chroma_strong_avx2_intrin(
 
     currLeftMidFirstHalflo = _mm256_insertf128_si256(currLeftMidFirstHalflo, _mm_packus_epi16(_mm256_extracti128_si256(currLeftMidFirstHalfhi, 0), _mm256_extracti128_si256(currLeftMidFirstHalfhi, 1)), 1);
     _mm256_storeu_si256((__m256i *)(ptr_denoised), currLeftMidFirstHalflo);
-
-
 }
 /*******************************************
 * noise_extract_luma_weak
@@ -331,7 +307,6 @@ void noise_extract_luma_weak_avx2_intrin(
                     secondbottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + (2 + jj)* stride_in));
                     ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj)*strideOut);
                     ptrNoiseInterm = ptr_noise + kk + ((1 + jj)*strideOut);
-
                 }
                 else
                 {
@@ -350,7 +325,6 @@ void noise_extract_luma_weak_avx2_intrin(
                     secondbottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + (2 + jj)* stride_in - stride_in));
                     ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj)*strideOut - strideOut);
                     ptrNoiseInterm = ptr_noise + kk + jj * strideOut;
-
                 }
 
                 luma_weak_filter_avx2_intrin(
@@ -375,28 +349,20 @@ void noise_extract_luma_weak_avx2_intrin(
                 curr = bottom;
                 secondtop = secondcurr;
                 secondcurr = secondbottom;
-
             }
-
-
         }
 
         sb_height = MIN(BLOCK_SIZE_64, picHeight - sb_origin_y);
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = 0; ii < picWidth; ii++) {
-
                 if (!((jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1)) {
-
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
                     ptr_noise[ii + jj * strideOut] = 0;
                 }
-
             }
         }
-
     }
-
 }
 
 void noise_extract_luma_weak_lcu_avx2_intrin(
@@ -477,7 +443,6 @@ void noise_extract_luma_weak_lcu_avx2_intrin(
                     secondbottom = _mm256_loadu_si256((__m256i*)((ptrIn + 32) + (2 + jj)* stride_in));
                     ptrDenoisedInterm = ptr_denoised + ((1 + jj)*strideOut);
                     ptrNoiseInterm = ptr_noise + ((1 + jj)*strideOut);
-
                 }
                 else
                 {
@@ -496,7 +461,6 @@ void noise_extract_luma_weak_lcu_avx2_intrin(
                     secondbottom = _mm256_loadu_si256((__m256i*)((ptrIn + 32) + (2 + jj)* stride_in - stride_in));
                     ptrDenoisedInterm = ptr_denoised + ((1 + jj)*strideOut - strideOut);
                     ptrNoiseInterm = ptr_noise + jj * strideOut;
-
                 }
 
                 luma_weak_filter_avx2_intrin(
@@ -521,28 +485,20 @@ void noise_extract_luma_weak_lcu_avx2_intrin(
                 curr = bottom;
                 secondtop = secondcurr;
                 secondcurr = secondbottom;
-
             }
-
-
         }
 
         sb_height = MIN(BLOCK_SIZE_64, picHeight - sb_origin_y);
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = 0; ii < sb_width; ii++) {
-
                 if (!((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && (ii > 0 || sb_origin_x > 0) && (ii + sb_origin_x) < picWidth - 1)) {
-
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
                     ptr_noise[ii + jj * strideOut] = 0;
                 }
-
             }
         }
-
     }
-
 }
 /*******************************************
 * noise_extract_luma_strong
@@ -584,7 +540,6 @@ void noise_extract_luma_strong_avx2_intrin(
         strideOut = denoised_picture_ptr->stride_y;
         ptr_denoised = &(denoised_picture_ptr->buffer_y[inputOriginIndexPad]);
         ptrDenoisedInterm = ptr_denoised;
-
 
         top = curr = secondtop = secondcurr = top_next = top_prev = curr_next = curr_prev = secondcurrPrev = secondcurrNext = secondtopPrev = secondtopNext = _mm256_setzero_si256();
         for (kk = 0; kk + BLOCK_SIZE_64 <= picWidth; kk += BLOCK_SIZE_64)
@@ -656,7 +611,6 @@ void noise_extract_luma_strong_avx2_intrin(
                     secondbottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + (2 + jj)* stride_in - stride_in));
 
                     ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj)*strideOut - strideOut);
-
                 }
 
                 chroma_weak_luma_strong_filter_avx2_intrin(
@@ -671,7 +625,6 @@ void noise_extract_luma_strong_avx2_intrin(
                     bottom_next,
                     ptrDenoisedInterm);
 
-
                 chroma_weak_luma_strong_filter_avx2_intrin(
                     secondtop,
                     secondcurr,
@@ -683,7 +636,6 @@ void noise_extract_luma_strong_avx2_intrin(
                     secondbottomPrev,
                     secondbottomNext,
                     ptrDenoisedInterm + 32);
-
 
                 top = curr;
                 curr = bottom;
@@ -697,26 +649,18 @@ void noise_extract_luma_strong_avx2_intrin(
                 secondtopNext = secondcurrNext;
                 secondcurrPrev = secondbottomPrev;
                 secondcurrNext = secondbottomNext;
-
             }
-
-
         }
 
         sb_height = MIN(BLOCK_SIZE_64, picHeight - sb_origin_y);
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = 0; ii < picWidth; ii++) {
-
-                if (!((jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1)) {
+                if (!((jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1))
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                }
-
             }
         }
-
     }
-
 }
 
 /*******************************************
@@ -777,7 +721,6 @@ void noise_extract_chroma_strong_avx2_intrin(
 
         for (kk = 0; kk + BLOCK_SIZE_64 / 2 <= picWidth; kk += BLOCK_SIZE_64 / 2)
         {
-
             for (jj = 0; jj < sb_height; jj++)
             {
                 if (sb_origin_y == 0)
@@ -833,8 +776,6 @@ void noise_extract_chroma_strong_avx2_intrin(
                     bottomNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((2 + jj)*strideInCr) - strideInCr));
                     bottomCr = _mm256_loadu_si256((__m256i*)((ptrInCr + kk) + (2 + jj)* strideInCr - strideInCr));
                     ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj)*strideOutCr - strideOutCr);
-
-
                 }
 
                 chroma_strong_avx2_intrin(
@@ -873,27 +814,20 @@ void noise_extract_chroma_strong_avx2_intrin(
                 topNextCr = currNextCr;
                 currPrevCr = bottomPrevCr;
                 currNextCr = bottomNextCr;
-
             }
-
-
         }
 
         sb_height = MIN(BLOCK_SIZE_64 / 2, picHeight - sb_origin_y);
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = 0; ii < picWidth; ii++) {
-
                 if (!((jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)) {
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
                     ptrDenoisedCr[ii + jj * strideOut] = ptrInCr[ii + jj * stride_in];
                 }
-
             }
         }
     }
-
-
 }
 
 /*******************************************
@@ -943,7 +877,6 @@ void noise_extract_chroma_weak_avx2_intrin(
         ptr_denoised = &(denoised_picture_ptr->buffer_cb[inputOriginIndexPad]);
         ptrDenoisedInterm = ptr_denoised;
 
-
         strideInCr = input_picture_ptr->stride_cr;
         inputOriginIndex = input_picture_ptr->origin_x / 2 + (input_picture_ptr->origin_y / 2 + sb_origin_y)  * input_picture_ptr->stride_cr;
         ptrInCr = &(input_picture_ptr->buffer_cr[inputOriginIndex]);
@@ -956,7 +889,6 @@ void noise_extract_chroma_weak_avx2_intrin(
         top = curr = top_next = top_prev = curr_next = curr_prev = topCr = currCr = topNextCr = topPrevCr = currNextCr = currPrevCr = _mm256_setzero_si256();
         for (kk = 0; kk + BLOCK_SIZE_64 / 2 <= picWidth; kk += BLOCK_SIZE_64 / 2)
         {
-
             for (jj = 0; jj < sb_height; jj++)
             {
                 if (sb_origin_y == 0)
@@ -1012,7 +944,6 @@ void noise_extract_chroma_weak_avx2_intrin(
                     bottomNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((2 + jj)*strideInCr) - strideInCr));
                     bottomCr = _mm256_loadu_si256((__m256i*)((ptrInCr + kk) + (2 + jj)* strideInCr - strideInCr));
                     ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj)*strideOutCr - strideOutCr);
-
                 }
 
                 chroma_weak_luma_strong_filter_avx2_intrin(
@@ -1039,7 +970,6 @@ void noise_extract_chroma_weak_avx2_intrin(
                     bottomNextCr,
                     ptrDenoisedIntermCr);
 
-
                 top = curr;
                 curr = bottom;
                 top_prev = curr_prev;
@@ -1052,25 +982,17 @@ void noise_extract_chroma_weak_avx2_intrin(
                 topNextCr = currNextCr;
                 currPrevCr = bottomPrevCr;
                 currNextCr = bottomNextCr;
-
             }
-
-
         }
-
 
         sb_height = MIN(BLOCK_SIZE_64 / 2, picHeight - sb_origin_y);
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = 0; ii < picWidth; ii++) {
-
                 if (!((jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)) {
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
                     ptrDenoisedCr[ii + jj * strideOut] = ptrInCr[ii + jj * strideInCr];
                 }
-
             }
         }
     }
-
-
 }

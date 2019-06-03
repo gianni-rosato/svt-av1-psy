@@ -51,7 +51,6 @@ uint64_t spatial_full_distortion_kernel(
     uint64_t  spatialDistortion = 0;
 
     while (row_index < area_height) {
-
         columnIndex = 0;
         while (columnIndex < area_width) {
             spatialDistortion += (int64_t)SQR((int64_t)(input[columnIndex]) - (recon[columnIndex]));
@@ -64,8 +63,3 @@ uint64_t spatial_full_distortion_kernel(
     }
     return spatialDistortion;
 }
-
-
-
-
-

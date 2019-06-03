@@ -36,8 +36,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define MAX_TILE_WIDTH (4096)        // Max Tile width in pixels
+#define MAX_TILE_AREA (4096 * 2304)  // Maximum tile area in pixels
+
     /*!\brief OBU types. */
-    typedef enum ATTRIBUTE_PACKED 
+    typedef enum ATTRIBUTE_PACKED
     {
         OBU_SEQUENCE_HEADER        = 1,
         OBU_TEMPORAL_DELIMITER     = 2,
@@ -60,7 +64,6 @@ extern "C" {
         EntropyCoder          *entropy_coder_ptr,
         EbPictureBufferDesc   *coeff_ptr);
 
-
     extern EbErrorType encode_slice_finish(
         EntropyCoder        *entropy_coder_ptr);
 
@@ -75,26 +78,33 @@ extern "C" {
 
     extern EbErrorType av1_tu_estimate_coeff_bits(
 #if CABAC_UP
-        uint8_t        allow_update_cdf,
-        FRAME_CONTEXT *ec_ctx,
+        uint8_t                             allow_update_cdf,
+        FRAME_CONTEXT                      *ec_ctx,
 #endif
-        PictureControlSet                    *picture_control_set_ptr,
-        struct ModeDecisionCandidateBuffer   *candidate_buffer_ptr,
-        CodingUnit                           *cu_ptr,
-        uint32_t                                  tu_origin_index,
-        uint32_t                                  tu_chroma_origin_index,
-        EntropyCoder                         *entropy_coder_ptr,
-        EbPictureBufferDesc                  *coeff_buffer_sb,
-        uint32_t                                 y_eob,
-        uint32_t                                 cb_eob,
-        uint32_t                                 cr_eob,
-        uint64_t                                 *y_tu_coeff_bits,
-        uint64_t                                 *cb_tu_coeff_bits,
-        uint64_t                                 *cr_tu_coeff_bits,
-        TxSize                                 txsize,
-        TxSize                                 txsize_uv,
-        COMPONENT_TYPE                          component_type,
-        EbAsm                                  asm_type);
+        PictureControlSet                  *picture_control_set_ptr,
+#if ATB_DC_CONTEXT_SUPPORT_0
+        uint8_t                             txb_itr,
+#endif
+        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+        CodingUnit                         *cu_ptr,
+        uint32_t                            tu_origin_index,
+        uint32_t                            tu_chroma_origin_index,
+        EntropyCoder                       *entropy_coder_ptr,
+        EbPictureBufferDesc                *coeff_buffer_sb,
+        uint32_t                            y_eob,
+        uint32_t                            cb_eob,
+        uint32_t                            cr_eob,
+        uint64_t                            *y_tu_coeff_bits,
+        uint64_t                            *cb_tu_coeff_bits,
+        uint64_t                            *cr_tu_coeff_bits,
+        TxSize                               txsize,
+        TxSize                               txsize_uv,
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+        TxType                               tx_type,
+        TxType                               tx_type_uv,
+#endif
+        COMPONENT_TYPE                       component_type,
+        EbAsm                                asm_type);
 
     extern EbErrorType copy_rbsp_bitstream_to_payload(
         Bitstream *bitstream_ptr,
@@ -102,7 +112,6 @@ extern "C" {
         uint32_t      *output_buffer_index,
         uint32_t      *output_buffer_size,
         EncodeContext         *encode_context_ptr);
-
 
     //**********************************************************************************************************//
     //onyxc_int.h
@@ -144,7 +153,7 @@ extern "C" {
 
     //*******************************************************************************************//
     // bitwriter_buffer.h
-    struct AomWriteBitBuffer 
+    struct AomWriteBitBuffer
     {
         uint8_t *bit_buffer;
         uint32_t bit_offset;
@@ -267,7 +276,6 @@ extern "C" {
     // For the bit to signal whether the single reference is ALTREF2_FRAME or
     // BWDREF_FRAME, knowing that it shall be either of these 2 choices.
     extern int32_t av1_get_pred_context_single_ref_p6(const MacroBlockD *xd);
-
 
     extern EbErrorType write_frame_header_av1(
         Bitstream *bitstream_ptr,

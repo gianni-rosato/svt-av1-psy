@@ -3,7 +3,6 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-
 #include "EbAvcStyleMcp_SSE2.h"
 #include "EbMcp_SSE2.h" // THIS SHOULD BE _SSE2 in the future
 #include "emmintrin.h"
@@ -70,7 +69,6 @@ void picture_average_kernel_sse2_intrin(
         else if (area_width == 32)
         {
             for (y = 0; y < area_height; y += 2) {
-
                 xmm_avg1 = _mm_avg_epu8(_mm_loadu_si128((__m128i*)src0), _mm_loadu_si128((__m128i*)src1));
                 xmm_avg2 = _mm_avg_epu8(_mm_loadu_si128((__m128i*)(src0 + 16)), _mm_loadu_si128((__m128i*)(src1 + 16)));
                 xmm_avg3 = _mm_avg_epu8(_mm_loadu_si128((__m128i*)(src0 + src0_stride)), _mm_loadu_si128((__m128i*)(src1 + src1_stride)));
@@ -107,7 +105,6 @@ void picture_average_kernel_sse2_intrin(
                 src0 += src0_stride << 1;
                 src1 += src1_stride << 1;
                 dst += dst_stride << 1;
-
             }
         }
         else
@@ -158,7 +155,6 @@ void picture_average_kernel_sse2_intrin(
         else if (area_width == 4)
         {
             for (y = 0; y < area_height; y += 2) {
-
                 xmm_avg1 = _mm_avg_epu8(_mm_cvtsi32_si128(*(uint32_t *)src0), _mm_cvtsi32_si128(*(uint32_t *)src1));
                 xmm_avg2 = _mm_avg_epu8(_mm_cvtsi32_si128(*(uint32_t *)(src0 + src0_stride)), _mm_cvtsi32_si128(*(uint32_t *)(src1 + src1_stride)));
 
@@ -173,7 +169,6 @@ void picture_average_kernel_sse2_intrin(
         else if (area_width == 8)
         {
             for (y = 0; y < area_height; y += 2) {
-
                 xmm_avg1 = _mm_avg_epu8(_mm_loadl_epi64((__m128i*)src0), _mm_loadl_epi64((__m128i*)src1));
                 xmm_avg2 = _mm_avg_epu8(_mm_loadl_epi64((__m128i*)(src0 + src0_stride)), _mm_loadl_epi64((__m128i*)(src1 + src1_stride)));
 
@@ -188,7 +183,6 @@ void picture_average_kernel_sse2_intrin(
         else
         {
             for (y = 0; y < area_height; y += 2) {
-
                 xmm_avg1 = _mm_avg_epu8(_mm_loadl_epi64((__m128i*)src0), _mm_loadl_epi64((__m128i*)src1));
                 xmm_avg2 = _mm_avg_epu8(_mm_cvtsi32_si128(*(uint32_t *)(src0 + 8)), _mm_cvtsi32_si128(*(uint32_t *)(src1 + 8)));
 
@@ -221,7 +215,6 @@ void picture_average_kernel1_line_sse2_intrin(
         {
             //for (y = 0; y < area_height; y += 2)
             {
-
                 xmm_avg1 = _mm_avg_epu8(_mm_loadu_si128((__m128i*)src0), _mm_loadu_si128((__m128i*)src1));
                 xmm_avg2 = _mm_avg_epu8(_mm_loadu_si128((__m128i*)(src0 + 16)), _mm_loadu_si128((__m128i*)(src1 + 16)));
                 //xmm_avg3 = _mm_avg_epu8(_mm_loadu_si128((__m128i*)(src0 + src0_stride)), _mm_loadu_si128((__m128i*)(src1 + src1_stride)));
@@ -288,7 +281,6 @@ void picture_average_kernel1_line_sse2_intrin(
         {
             //for (y = 0; y < area_height; y += 2)
             {
-
                 xmm_avg1 = _mm_avg_epu8(_mm_cvtsi32_si128(*(uint32_t *)src0), _mm_cvtsi32_si128(*(uint32_t *)src1));
                 //xmm_avg2 = _mm_avg_epu8(_mm_cvtsi32_si128(*(uint32_t *)(src0 + src0_stride)), _mm_cvtsi32_si128(*(uint32_t *)(src1 + src1_stride)));
 
@@ -304,7 +296,6 @@ void picture_average_kernel1_line_sse2_intrin(
         {
             //for (y = 0; y < area_height; y += 2)
             {
-
                 xmm_avg1 = _mm_avg_epu8(_mm_loadl_epi64((__m128i*)src0), _mm_loadl_epi64((__m128i*)src1));
                 //xmm_avg2 = _mm_avg_epu8(_mm_loadl_epi64((__m128i*)(src0 + src0_stride)), _mm_loadl_epi64((__m128i*)(src1 + src1_stride)));
 
@@ -320,7 +311,6 @@ void picture_average_kernel1_line_sse2_intrin(
         {
             //for (y = 0; y < area_height; y += 2)
             {
-
                 xmm_avg1 = _mm_avg_epu8(_mm_loadl_epi64((__m128i*)src0), _mm_loadl_epi64((__m128i*)src1));
                 xmm_avg2 = _mm_avg_epu8(_mm_cvtsi32_si128(*(uint32_t *)(src0 + 8)), _mm_cvtsi32_si128(*(uint32_t *)(src1 + 8)));
 

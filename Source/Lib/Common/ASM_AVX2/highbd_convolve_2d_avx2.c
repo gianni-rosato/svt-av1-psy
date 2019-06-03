@@ -220,7 +220,6 @@ static INLINE void copy_128(const uint16_t *src, uint16_t *dst) {
     _mm256_storeu_si256((__m256i *)(dst + 7 * 16), s[7]);
 }
 
-
 void av1_highbd_convolve_2d_copy_sr_avx2(
     const uint16_t *src, int32_t src_stride, uint16_t *dst, int32_t dst_stride, int32_t w,
     int32_t h, const InterpFilterParams *filter_params_x,

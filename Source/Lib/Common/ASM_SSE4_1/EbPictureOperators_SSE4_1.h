@@ -20,9 +20,7 @@ extern "C" {
         uint64_t *dc_value,
         uint32_t  src_stride);
 
-
 #ifdef __cplusplus
 }
 #endif
 #endif // EbPictureOperators_SSE4_1_h
-

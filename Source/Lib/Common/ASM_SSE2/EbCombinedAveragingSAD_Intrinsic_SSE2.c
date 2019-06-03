@@ -23,7 +23,6 @@ uint32_t combined_averaging4x_msad_sse2_intrin(
     sad0 = sad1 = _mm_setzero_si128();
 
     for (y = 0; y < height; y += 2) {
-
         sad0 = _mm_add_epi32(sad0, _mm_sad_epu8(_mm_cvtsi32_si128(*(uint32_t *)src), _mm_avg_epu8(_mm_cvtsi32_si128(*(uint32_t *)ref1), _mm_cvtsi32_si128(*(uint32_t *)ref2))));
 
         sad1 = _mm_add_epi32(sad1, _mm_sad_epu8(_mm_cvtsi32_si128(*(uint32_t *)(src + src_stride)), _mm_avg_epu8(_mm_cvtsi32_si128(*(uint32_t *)(ref1 + ref1_stride)), _mm_cvtsi32_si128(*(uint32_t *)(ref2 + ref2_stride)))));

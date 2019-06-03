@@ -21,7 +21,6 @@
 #include "vector.h"
 #include "EbPictureBufferDesc.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif

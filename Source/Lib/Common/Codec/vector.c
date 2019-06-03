@@ -141,9 +141,8 @@ int aom_vector_push_back(Vector *vector, void *element) {
   assert(element != NULL);
 
   if (_vector_should_grow(vector)) {
-    if (_vector_adjust_capacity(vector) == VECTOR_ERROR) {
+    if (_vector_adjust_capacity(vector) == VECTOR_ERROR)
       return VECTOR_ERROR;
-    }
   }
 
   _vector_assign(vector, vector->size, element);
@@ -170,16 +169,13 @@ int aom_vector_insert(Vector *vector, size_t index, void *element) {
   if (index > vector->size) return VECTOR_ERROR;
 
   if (_vector_should_grow(vector)) {
-    if (_vector_adjust_capacity(vector) == VECTOR_ERROR) {
+    if (_vector_adjust_capacity(vector) == VECTOR_ERROR)
       return VECTOR_ERROR;
-    }
   }
 
   /* Move other elements to the right */
-  if (_vector_move_right(vector, index) == VECTOR_ERROR) {
+  if (_vector_move_right(vector, index) == VECTOR_ERROR)
     return VECTOR_ERROR;
-  }
-
   /* Insert the element */
   offset = _vector_offset(vector, index);
   memcpy(offset, element, vector->element_size);
@@ -214,9 +210,8 @@ int aom_vector_pop_back(Vector *vector) {
   --vector->size;
 
 #ifndef VECTOR_NO_SHRINK
-  if (_vector_should_shrink(vector)) {
+  if (_vector_should_shrink(vector))
     _vector_adjust_capacity(vector);
-  }
 #endif
 
   return VECTOR_SUCCESS;
@@ -236,9 +231,8 @@ int aom_vector_erase(Vector *vector, size_t index) {
   _vector_move_left(vector, index);
 
 #ifndef VECTOR_NO_SHRINK
-  if (--vector->size == vector->capacity / 4) {
+  if (--vector->size == vector->capacity / 4)
     _vector_adjust_capacity(vector);
-  }
 #endif
 
   return VECTOR_SUCCESS;
@@ -295,13 +289,11 @@ bool aom_vector_is_empty(const Vector *vector) { return vector->size == 0; }
 int aom_vector_resize(Vector *vector, size_t new_size) {
   if (new_size <= vector->capacity * VECTOR_SHRINK_THRESHOLD) {
     vector->size = new_size;
-    if (_vector_reallocate(vector, new_size * VECTOR_GROWTH_FACTOR) == -1) {
+    if (_vector_reallocate(vector, new_size * VECTOR_GROWTH_FACTOR) == -1)
       return VECTOR_ERROR;
-    }
   } else if (new_size > vector->capacity) {
-    if (_vector_reallocate(vector, new_size * VECTOR_GROWTH_FACTOR) == -1) {
+    if (_vector_reallocate(vector, new_size * VECTOR_GROWTH_FACTOR) == -1)
       return VECTOR_ERROR;
-    }
   }
 
   vector->size = new_size;
@@ -311,9 +303,8 @@ int aom_vector_resize(Vector *vector, size_t new_size) {
 
 int aom_vector_reserve(Vector *vector, size_t minimum_capacity) {
   if (minimum_capacity > vector->capacity) {
-    if (_vector_reallocate(vector, minimum_capacity) == VECTOR_ERROR) {
+    if (_vector_reallocate(vector, minimum_capacity) == VECTOR_ERROR)
       return VECTOR_ERROR;
-    }
   }
 
   return VECTOR_SUCCESS;
@@ -351,10 +342,8 @@ void *iterator_get(Iterator *iterator) { return iterator->pointer; }
 int iterator_erase(Vector *vector, Iterator *iterator) {
   size_t index = iterator_index(vector, iterator);
 
-  if (aom_vector_erase(vector, index) == VECTOR_ERROR) {
+  if (aom_vector_erase(vector, index) == VECTOR_ERROR)
     return VECTOR_ERROR;
-  }
-
   *iterator = aom_vector_iterator(vector, index);
 
   return VECTOR_SUCCESS;
@@ -512,10 +501,8 @@ int _vector_reallocate(Vector *vector, size_t new_capacity) {
   new_capacity_in_bytes = new_capacity * vector->element_size;
   old = vector->data;
 
-  if ((vector->data = malloc(new_capacity_in_bytes)) == NULL) {
+  if ((vector->data = malloc(new_capacity_in_bytes)) == NULL)
     return VECTOR_ERROR;
-  }
-
 #ifdef __STDC_LIB_EXT1__
   /* clang-format off */
     if (memcpy_s(vector->data,

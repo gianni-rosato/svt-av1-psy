@@ -24,10 +24,16 @@ add_executable (SvtAv1DecApp
 
 #********** SET COMPILE FLAGS************
 
+if(BUILD_SHARED_LIBS)
+    set (SvtAv1DecLib SvtAv1DecShared)
+else()
+    set (SvtAv1DecLib SvtAv1DecStatic)
+endif()
+
 if (UNIX)
     # Link the Decoder App
      target_link_libraries (SvtAv1DecApp
-        SvtAv1Dec
+        ${SvtAv1DecLib}
         pthread
         m)
 endif()
@@ -36,7 +42,7 @@ if (MSVC OR MSYS OR MINGW OR WIN32)
 
     # Link the Decoder App
     target_link_libraries (SvtAv1DecApp
-                           SvtAv1Dec)
+                           ${SvtAv1DecLib})
 endif()
 
 install(TARGETS SvtAv1DecApp RUNTIME DESTINATION bin)

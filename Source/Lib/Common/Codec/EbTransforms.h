@@ -58,7 +58,7 @@ extern "C" {
 #define default_scan_16x64_neighbors default_scan_16x32_neighbors
 #define default_scan_64x16_neighbors default_scan_32x16_neighbors
 
-    static const int8_t txsize_log2_minus4[TX_SIZES_ALL] = 
+    static const int8_t txsize_log2_minus4[TX_SIZES_ALL] =
     {
         0,  // TX_4X4
         2,  // TX_8X8
@@ -84,19 +84,19 @@ extern "C" {
     // TranHigh is the datatype used for intermediate transform stages.
     typedef int64_t TranHigh;
 
-    static const TxType1D vtx_tab[TX_TYPES] = 
+    static const TxType1D vtx_tab[TX_TYPES] =
     {
         DCT_1D, ADST_1D, DCT_1D, ADST_1D,
         FLIPADST_1D, DCT_1D, FLIPADST_1D, ADST_1D, FLIPADST_1D, IDTX_1D,
         DCT_1D, IDTX_1D, ADST_1D, IDTX_1D, FLIPADST_1D, IDTX_1D,
     };
-    static const TxType1D htx_tab[TX_TYPES] = 
+    static const TxType1D htx_tab[TX_TYPES] =
     {
         DCT_1D, DCT_1D, ADST_1D, ADST_1D,
         DCT_1D, FLIPADST_1D, FLIPADST_1D, FLIPADST_1D, ADST_1D, IDTX_1D,
         IDTX_1D, DCT_1D, IDTX_1D, ADST_1D, IDTX_1D, FLIPADST_1D,
     };
-    static const BlockSize txsize_to_bsize[TX_SIZES_ALL] = 
+    static const BlockSize txsize_to_bsize[TX_SIZES_ALL] =
     {
         BLOCK_4X4,    // TX_4X4
         BLOCK_8X8,    // TX_8X8
@@ -138,7 +138,7 @@ extern "C" {
     static const int8_t fwd_shift_16x64[3] = { 0, -2, 0 };
     static const int8_t fwd_shift_64x16[3] = { 2, -4, 0 };
 
-    static const int8_t fwd_cos_bit_col[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] = 
+    static const int8_t fwd_cos_bit_col[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] =
     {
         { 13, 13, 13, 0, 0 },
         { 13, 13, 13, 12, 0 },
@@ -146,7 +146,7 @@ extern "C" {
         { 0, 13, 13, 12, 13 },
         { 0, 0, 13, 12, 13 }
     };
-    static const int8_t fwd_cos_bit_row[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] = 
+    static const int8_t fwd_cos_bit_row[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] =
     {
         { 13, 13, 12, 0, 0 },
         { 13, 13, 13, 12, 0 },
@@ -155,7 +155,7 @@ extern "C" {
         { 0, 0, 12, 11, 10 }
     };
 
-    typedef struct TransformParam 
+    typedef struct TransformParam
     {
         // for both forward and inverse transforms
         TxType transform_type;
@@ -169,7 +169,7 @@ extern "C" {
 
     // Utility function that returns the log of the ratio of the col and row
     // sizes.
-    typedef enum TxfmType 
+    typedef enum TxfmType
     {
         TXFM_TYPE_DCT4,
         TXFM_TYPE_DCT8,
@@ -188,7 +188,7 @@ extern "C" {
         TXFM_TYPES,
         TXFM_TYPE_INVALID,
     } TxfmType;
-    typedef struct Txfm2DFlipCfg 
+    typedef struct Txfm2DFlipCfg
     {
         TxSize tx_size;
         int32_t ud_flip;  // flip upside down
@@ -204,7 +204,7 @@ extern "C" {
         int32_t stage_num_row;
     } Txfm2DFlipCfg;
 
-    static const TxfmType av1_txfm_type_ls[5][TX_TYPES_1D] = 
+    static const TxfmType av1_txfm_type_ls[5][TX_TYPES_1D] =
     {
         { TXFM_TYPE_DCT4, TXFM_TYPE_ADST4, TXFM_TYPE_ADST4, TXFM_TYPE_IDENTITY4 },
         { TXFM_TYPE_DCT8, TXFM_TYPE_ADST8, TXFM_TYPE_ADST8, TXFM_TYPE_IDENTITY8 },
@@ -213,7 +213,7 @@ extern "C" {
         { TXFM_TYPE_DCT64, TXFM_TYPE_INVALID, TXFM_TYPE_INVALID,
         TXFM_TYPE_IDENTITY64 }
     };
-    static const int8_t av1_txfm_stage_num_list[TXFM_TYPES] = 
+    static const int8_t av1_txfm_stage_num_list[TXFM_TYPES] =
     {
         4,   // TXFM_TYPE_DCT4
         6,   // TXFM_TYPE_DCT8
@@ -249,7 +249,7 @@ extern "C" {
     static const int8_t fidtx16_range_mult2[1] = { 3 };
     static const int8_t fidtx32_range_mult2[1] = { 4 };
     static const int8_t fidtx64_range_mult2[1] = { 5 };
-    static const int8_t inv_cos_bit_col[MAX_TXWH_IDX][MAX_TXWH_IDX] = 
+    static const int8_t inv_cos_bit_col[MAX_TXWH_IDX][MAX_TXWH_IDX] =
     {
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0, 0 },
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0 },
@@ -257,7 +257,7 @@ extern "C" {
         { 0, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT },
         { 0, 0, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT }
     };
-    static const int8_t inv_cos_bit_row[MAX_TXWH_IDX][MAX_TXWH_IDX] = 
+    static const int8_t inv_cos_bit_row[MAX_TXWH_IDX][MAX_TXWH_IDX] =
     {
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0, 0 },
         { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, 0 },
@@ -314,7 +314,7 @@ extern "C" {
         7,  // 64x16 transform
     };
     ////////////////////// QUANTIZATION//////////////
-    typedef struct QuantParam 
+    typedef struct QuantParam
     {
         int32_t log_scale;
         TxSize tx_size;
@@ -3870,16 +3870,13 @@ extern "C" {
         },
     };
     static INLINE int32_t av1_get_max_eob(TxSize tx_size) {
-        if (tx_size == TX_64X64 || tx_size == TX_64X32 || tx_size == TX_32X64) {
+        if (tx_size == TX_64X64 || tx_size == TX_64X32 || tx_size == TX_32X64)
             return 1024;
-        }
-        if (tx_size == TX_16X64 || tx_size == TX_64X16) {
+        if (tx_size == TX_16X64 || tx_size == TX_64X16)
             return 512;
-        }
         return tx_size_2d[tx_size];
     }
     static const uint32_t q_func[] = { 26214,23302,20560,18396,16384,14564 };
-
 
     extern EbErrorType encode_transform(
         int16_t             *residual_buffer,
@@ -3906,28 +3903,31 @@ extern "C" {
         EbAsm                asm_type,
         PlaneType           component_type,
         EB_TRANS_COEFF_SHAPE trans_coeff_shape);
-
+#if DC_SIGN_CONTEXT_FIX
+    extern int32_t av1_quantize_inv_quantize(
+#else
     extern void av1_quantize_inv_quantize(
-        PictureControlSet *picture_control_set_ptr,
-        ModeDecisionContext         *md_context,
-        int32_t             *coeff,
-        const uint32_t       coeff_stride,
-        int32_t             *quant_coeff,
-        int32_t             *recon_coeff,
-        uint32_t             qp,
-        uint32_t             width,
-        uint32_t             height,
-        TxSize               txsize,
-        uint16_t            *eob,
-        EbAsm                asm_type,
-        uint32_t            *y_count_non_zero_coeffs,
-#if !PF_N2_SUPPORT                    
-        EbPfMode             pf_mode,
 #endif
-        uint32_t             component_type,
-        uint32_t             bit_increment,
-        TxType               tx_type,
-        ModeDecisionCandidateBuffer *candidateBuffer,
+        PictureControlSet             *picture_control_set_ptr,
+        ModeDecisionContext           *md_context,
+        int32_t                       *coeff,
+        const uint32_t                 coeff_stride,
+        int32_t                       *quant_coeff,
+        int32_t                       *recon_coeff,
+        uint32_t                       qp,
+        uint32_t                       width,
+        uint32_t                       height,
+        TxSize                         txsize,
+        uint16_t                      *eob,
+        EbAsm                          asm_type,
+        uint32_t                      *y_count_non_zero_coeffs,
+#if !PF_N2_SUPPORT
+        EbPfMode                       pf_mode,
+#endif
+        uint32_t                       component_type,
+        uint32_t                       bit_increment,
+        TxType                         tx_type,
+        ModeDecisionCandidateBuffer   *candidateBuffer,
         int16_t                        txb_skip_context,
         int16_t                        dc_sign_context,
         PredictionMode                 pred_mode,
@@ -3945,7 +3945,6 @@ extern "C" {
         uint32_t  eob,
         EbAsm     asm_type,
         uint32_t  partial_frequency_n2_flag);
-
 
     EbErrorType av1_inv_transform_recon(
         int32_t    *coeff_buffer,//1D buffer
@@ -3981,7 +3980,6 @@ extern "C" {
     extern uint8_t map_chroma_qp(
         uint8_t qp
     );
-
 
     /*****************************
     * Function pointer Typedef
@@ -4071,7 +4069,6 @@ extern "C" {
             pfreq_transform8x8_sse2_intrin,
             transform4x4_sse2_intrin,
             dst_transform4x4_sse2_intrin
-
         },
         // AVX2
         {
@@ -4143,5 +4140,3 @@ extern "C" {
 #endif
 
 #endif // EbTransforms_h
-
-

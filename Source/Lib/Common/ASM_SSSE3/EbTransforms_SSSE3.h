@@ -52,41 +52,39 @@ extern "C" {
         const uint32_t  area_size,
         uint32_t       *nonzerocoeff);
 
-
     void low_precision_transform16x16_ssse3(
-        int16_t *src, 
-        uint32_t src_stride, 
-        int16_t *dst, 
-        uint32_t dst_stride, 
-        int16_t *intermediate, 
+        int16_t *src,
+        uint32_t src_stride,
+        int16_t *dst,
+        uint32_t dst_stride,
+        int16_t *intermediate,
         uint32_t addshift);
 
     void low_precision_transform32x32_ssse3(
-        int16_t *src, 
-        uint32_t src_stride, 
-        int16_t *dst, 
-        uint32_t dst_stride, 
-        int16_t *intermediate, 
+        int16_t *src,
+        uint32_t src_stride,
+        int16_t *dst,
+        uint32_t dst_stride,
+        int16_t *intermediate,
         uint32_t addshift);
 
     void p_finv_transform32x32_ssse3(
-        int16_t *src, 
-        uint32_t src_stride, 
-        int16_t *dst, 
-        uint32_t dst_stride, 
-        int16_t *intermediate, 
+        int16_t *src,
+        uint32_t src_stride,
+        int16_t *dst,
+        uint32_t dst_stride,
+        int16_t *intermediate,
         uint32_t addshift);
 
     void p_finv_transform16x16_ssse3(
-        int16_t *src, 
-        uint32_t src_stride, 
-        int16_t *dst, 
-        uint32_t dst_stride, 
-        int16_t *intermediate, 
+        int16_t *src,
+        uint32_t src_stride,
+        int16_t *dst,
+        uint32_t dst_stride,
+        int16_t *intermediate,
         uint32_t addshift);
 
 #ifdef __cplusplus
 }
 #endif
 #endif // EbTransforms_SSSE3_h
-

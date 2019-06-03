@@ -21,9 +21,8 @@ double aom_sse_to_psnr(double samples, double peak, double sse) {
         const double psnr = 10.0 * log10(samples * peak * peak / sse);
         return psnr > MAX_PSNR ? MAX_PSNR : psnr;
     }
-    else {
+    else
         return MAX_PSNR;
-    }
 }
 
 /* TODO(yaowu): The block_variance calls the unoptimized versions of variance()
@@ -94,7 +93,6 @@ uint32_t aom_mse16x16_c(const uint8_t *src_ptr, int32_t  source_stride,
     return *sse - (uint32_t)(((int64_t)sum * sum) / (16 * 16));
 }
 
-
 static int64_t get_sse(const uint8_t *a, int32_t a_stride, const uint8_t *b,
     int32_t b_stride, int32_t width, int32_t height) {
     const int32_t dw = width % 16;
@@ -119,7 +117,6 @@ static int64_t get_sse(const uint8_t *a, int32_t a_stride, const uint8_t *b,
         const uint8_t *pa = a;
         const uint8_t *pb = b;
         for (x = 0; x < width / 16; ++x) {
-
             aom_mse16x16(pa, a_stride, pb, b_stride, &sse);
 
             total_sse += sse;
@@ -278,7 +275,3 @@ int64_t aom_highbd_get_v_sse(const Yv12BufferConfig *a,
     return highbd_get_sse(a->v_buffer, a->uv_stride, b->v_buffer, b->uv_stride,
         a->uv_crop_width, a->uv_crop_height);
 }
-
-
-
-

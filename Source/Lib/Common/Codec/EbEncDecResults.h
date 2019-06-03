@@ -19,10 +19,9 @@ extern "C" {
         EbObjectWrapper *picture_control_set_wrapper_ptr;
         uint32_t         completed_lcu_row_index_start;
         uint32_t         completed_lcu_row_count;
-
     } EncDecResults;
 
-    typedef struct DlfResults 
+    typedef struct DlfResults
     {
         EbObjectWrapper *picture_control_set_wrapper_ptr;
         uint32_t         segment_index;
@@ -51,7 +50,6 @@ extern "C" {
     extern EbErrorType enc_dec_results_ctor(
         EbPtr *object_dbl_ptr,
         EbPtr object_init_data_ptr);
-
 
 #ifdef __cplusplus
 }

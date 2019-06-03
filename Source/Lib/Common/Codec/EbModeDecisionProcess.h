@@ -26,9 +26,13 @@ extern "C" {
 #define IBC_CAND 2 //two intra bc candidates
 #if CHECK_CAND
 #if MRP_DUPLICATION_FIX
-#define MODE_DECISION_CANDIDATE_MAX_COUNT               (440 +IBC_CAND) 
+#if EIGTH_PEL_MV
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               (470+IBC_CAND )
 #else
-#define MODE_DECISION_CANDIDATE_MAX_COUNT               (170 +IBC_CAND) 
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               (440 +IBC_CAND)
+#endif
+#else
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               (170 +IBC_CAND)
 #endif
 #else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (124+IBC_CAND) /* 61 Intra & 18+2x8+2x8 Inter*/
@@ -58,9 +62,7 @@ extern "C" {
         uint32_t                    y_has_coeff;
         uint64_t                    fast_luma_rate;
         uint16_t                    y_count_non_zero_coeffs[4];// Store nonzero CoeffNum, per TU. If one TU, stored in 0, otherwise 4 tus stored in 0 to 3
-
     } MdEncPassCuData;
-
 
     typedef struct MdCodingUnit
     {
@@ -87,9 +89,7 @@ extern "C" {
 #if RED_CU
         uint8_t                     avail_blk_flag ;   //tells whether this CU is tested in MD and have a valid cu data
 #endif
-
     } MdCodingUnit;
-
 
     typedef struct ModeDecisionContext
     {
@@ -114,12 +114,21 @@ extern "C" {
         NeighborArrayUnit            *luma_recon_neighbor_array;
         NeighborArrayUnit            *cb_recon_neighbor_array;
         NeighborArrayUnit            *cr_recon_neighbor_array;
+#if ATB_MD
+        NeighborArrayUnit            *tx_search_luma_recon_neighbor_array;
+#endif
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
         NeighborArrayUnit            *skip_coeff_neighbor_array;
 #endif
         NeighborArrayUnit            *luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
+#if ATB_DC_CONTEXT_SUPPORT_2
+        NeighborArrayUnit            *tx_search_luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
+#endif
         NeighborArrayUnit            *cr_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
         NeighborArrayUnit            *cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
+#if ATB_RATE
+        NeighborArrayUnit            *txfm_context_array;
+#endif
         NeighborArrayUnit            *inter_pred_dir_neighbor_array;
         NeighborArrayUnit            *ref_frame_type_neighbor_array;
         NeighborArrayUnit            *leaf_partition_neighbor_array;
@@ -214,62 +223,66 @@ extern "C" {
         uint8_t                         intra_chroma_top_mode;
         int16_t                         pred_buf_q3[CFL_BUF_SQUARE]; // Hsan: both MD and EP to use pred_buf_q3 (kept 1, and removed the 2nd)
 #if MRP_DUPLICATION_FIX
-        uint8_t                           injected_ref_type_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-        uint8_t                           injected_ref_type_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-        uint8_t                           injected_ref_type_bipred_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
+        uint8_t                         injected_ref_type_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
+        uint8_t                         injected_ref_type_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
+        uint8_t                         injected_ref_type_bipred_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
 #endif
-        int16_t                           injected_mv_x_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-        int16_t                           injected_mv_y_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-        uint8_t                           injected_mv_count_l0;
-                                          
-        int16_t                           injected_mv_x_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-        int16_t                           injected_mv_y_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-        uint8_t                           injected_mv_count_l1;
-                                          
-        int16_t                           injected_mv_x_bipred_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-        int16_t                           injected_mv_y_bipred_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-        int16_t                           injected_mv_x_bipred_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-        int16_t                           injected_mv_y_bipred_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-        uint8_t                           injected_mv_count_bipred;
-        uint32_t                          fast_candidate_intra_count;
-        uint32_t                          fast_candidate_inter_count;
-#if MEMORY_FOOTPRINT_OPT_ME_MV   
-        uint32_t                          me_block_offset;
+        int16_t                         injected_mv_x_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
+        int16_t                         injected_mv_y_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
+        uint8_t                         injected_mv_count_l0;
+
+        int16_t                         injected_mv_x_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
+        int16_t                         injected_mv_y_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
+        uint8_t                         injected_mv_count_l1;
+
+        int16_t                         injected_mv_x_bipred_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
+        int16_t                         injected_mv_y_bipred_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
+        int16_t                         injected_mv_x_bipred_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
+        int16_t                         injected_mv_y_bipred_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
+        uint8_t                         injected_mv_count_bipred;
+        uint32_t                        fast_candidate_intra_count;
+        uint32_t                        fast_candidate_inter_count;
+#if MEMORY_FOOTPRINT_OPT_ME_MV
+        uint32_t                        me_block_offset;
 #endif
-        // Multi-modes signal(s) 
-        uint8_t                           nfl_level;
-        uint8_t                           skip_interpolation_search;
-        uint8_t                           parent_sq_type[MAX_PARENT_SQ];
-        uint8_t                           parent_sq_has_coeff[MAX_PARENT_SQ];
-        uint8_t                           parent_sq_pred_mode[MAX_PARENT_SQ];
-        uint8_t                           chroma_level;
-        PART                              nsq_table[NSQ_TAB_SIZE];
-        uint8_t                           decoupled_fast_loop_search_method; 
-        uint8_t                           decouple_intra_inter_fast_loop;
-        uint8_t                           full_loop_escape;
-        uint8_t                           global_mv_injection;
+#if ATB_SUPPORT
+        uint8_t                         tx_depth;
+        uint8_t                         txb_itr;
+#endif
+        // Multi-modes signal(s)
+        uint8_t                         nfl_level;
+        uint8_t                         skip_interpolation_search;
+        uint8_t                         parent_sq_type[MAX_PARENT_SQ];
+        uint8_t                         parent_sq_has_coeff[MAX_PARENT_SQ];
+        uint8_t                         parent_sq_pred_mode[MAX_PARENT_SQ];
+        uint8_t                         chroma_level;
+        PART                            nsq_table[NSQ_TAB_SIZE];
+        uint8_t                         decoupled_fast_loop_search_method;
+        uint8_t                         decouple_intra_inter_fast_loop;
+        uint8_t                         full_loop_escape;
+        uint8_t                         global_mv_injection;
 #if M9_NEAR_INJECTION
-        uint8_t                           near_mv_injection;
+        uint8_t                         near_mv_injection;
 #endif
-        uint8_t                           warped_motion_injection;
-        uint8_t                           unipred3x3_injection;
-        uint8_t                           bipred3x3_injection;
-        uint8_t                           interpolation_filter_search_blk_size;
-        uint8_t                           redundant_blk;
+        uint8_t                         warped_motion_injection;
+        uint8_t                         unipred3x3_injection;
+        uint8_t                         bipred3x3_injection;
+        uint8_t                         interpolation_filter_search_blk_size;
+        uint8_t                         redundant_blk;
 #if CFL_FIX
-        uint8_t                            cfl_temp_luma_recon[128 * 128];
+        uint8_t                          cfl_temp_luma_recon[128 * 128];
 #endif
 #if SPATIAL_SSE
-        EbBool                            spatial_sse_full_loop;
+        EbBool                          spatial_sse_full_loop;
 #endif
 #if M9_INTER_SRC_SRC_FAST_LOOP
-        uint8_t                           inter_fast_loop_src_src;
+        uint8_t                         inter_fast_loop_src_src;
 #endif
 #if  BLK_SKIP_DECISION
-        EbBool                            blk_skip_decision;
-#endif  
+        EbBool                          blk_skip_decision;
+#endif
 #if OPT_QUANT_COEFF
-        EbBool                            trellis_quant_coeff_optimization;
+        EbBool                          trellis_quant_coeff_optimization;
 #endif
     } ModeDecisionContext;
 
@@ -349,7 +362,6 @@ extern "C" {
         uint8_t                  picture_qp,
         uint8_t                  sb_qp);
 
-
     extern void cfl_rd_pick_alpha(
         PictureControlSet             *picture_control_set_ptr,
         ModeDecisionCandidateBuffer   *candidateBuffer,
@@ -359,7 +371,6 @@ extern "C" {
         uint32_t                         inputCbOriginIndex,
         uint32_t                         cuChromaOriginIndex,
         EbAsm                            asm_type);
-
 
 #ifdef __cplusplus
 }

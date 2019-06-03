@@ -264,7 +264,6 @@ void inv_transform4x4_sse2_intrin(
     (void)transform_inner_array_ptr;
 }
 
-
 void inv_transform8x8_sse2_intrin(
     int16_t                  *transform_coefficients,
     const uint32_t             src_stride,
@@ -467,8 +466,6 @@ void inv_transform8x8_sse2_intrin(
     _mm_storeu_si128((__m128i *)(residual + 3 * dst_stride), xmm_res37_hi);
 }
 
-
-
 void inv_dst_transform4x4_sse2_intrin(
     int16_t                  *transform_coefficients,
     const uint32_t             src_stride,
@@ -506,7 +503,6 @@ void inv_dst_transform4x4_sse2_intrin(
     xmm_res_hi = _mm_unpackhi_epi16(xmm_res_1_3, xmm_res_2_4);\
     xmm_res_lo_32 = _mm_unpacklo_epi32(xmm_res_lo, xmm_res_hi);\
     xmm_res_hi_32 = _mm_unpackhi_epi32(xmm_res_lo, xmm_res_hi);
-
 
     __m128i xmm_shift, xmm_offset, xmm_trans1, xmm_trans2, xmm_trans3, xmm_trans4, xmm_trans_1_3, xmm_trans_2_4;
     __m128i xmm_res1, xmm_res2, xmm_res3, xmm_res4, xmm_res_1_3, xmm_res_2_4, xmm_res_lo_32, xmm_res_hi_32, xmm_res_lo, xmm_res_hi;

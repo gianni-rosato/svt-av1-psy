@@ -21,7 +21,7 @@ extern "C" {
         uint32_t  out_stride,
         uint32_t  width,
         uint32_t  height);
-                 
+
     extern void compressed_packmsb_avx2_intrin(
         uint8_t  *in8_bit_buffer,
         uint32_t  in8_stride,

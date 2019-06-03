@@ -26,8 +26,6 @@ already selected nb_strengths options. */
 uint64_t search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths,
     uint64_t(**mse)[TOTAL_STRENGTHS], int sb_count,
     int fast, int start_gi, int end_gi) {
-
-
   DECLARE_ALIGNED(32, uint64_t, tot_mse[TOTAL_STRENGTHS][TOTAL_STRENGTHS]);
   int i, j;
   uint64_t best_tot_mse = (uint64_t)1 << 62;
@@ -51,9 +49,8 @@ uint64_t search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths,
     for (gi = 0; gi < nb_strengths; gi++) {
       uint64_t curr = mse[0][i][lev0[gi]];
       curr += mse[1][i][lev1[gi]];
-      if (curr < best_mse) {
+      if (curr < best_mse)
         best_mse = curr;
-      }
     }
     best_mse_ = _mm256_set1_epi64x(best_mse);
     /* Find best mse when adding each possible new option. */

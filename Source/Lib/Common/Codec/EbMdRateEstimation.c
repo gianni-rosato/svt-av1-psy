@@ -26,8 +26,6 @@ static INLINE int32_t get_interinter_wedge_bits(BlockSize sb_type) {
     return (wbits > 0) ? wbits + 1 : 0;
 }
 
-
-
 /**************************************************************
 * AV1GetCostSymbold
 * Calculate the cost of a symbol with
@@ -40,7 +38,6 @@ static INLINE int32_t av1_cost_symbol(AomCdfProb p15) {
     assert(prob >= 128);
     return av1_prob_cost[prob - 128] + av1_cost_literal(shift);
 }
-
 
 /*************************************************************
 * av1_get_syntax_rate_from_cdf
@@ -83,24 +80,21 @@ void av1_estimate_syntax_rate___partial(
 
 #if CABAC_UP2
     //if (cm->skip_mode_flag) { // NM - Hardcoded to true
-    for (i = 0; i < SKIP_CONTEXTS; ++i) {
+    for (i = 0; i < SKIP_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->skipModeFacBits[i], fc->skip_mode_cdfs[i], NULL);
-    }
     //}
 #endif
 
     for (i = TX_4X4; i < EXT_TX_SIZES; ++i) {
         int32_t s;
         for (s = 1; s < EXT_TX_SETS_INTER; ++s) {
-            if (use_inter_ext_tx_for_txsize[s][i]) {
+            if (use_inter_ext_tx_for_txsize[s][i])
                 av1_get_syntax_rate_from_cdf(md_rate_estimation_array->inter_tx_type_fac_bits[s][i], fc->inter_ext_tx_cdf[s][i], av1_ext_tx_inv[av1_ext_tx_set_idx_to_type[1][s]]);
-            }
         }
         for (s = 1; s < EXT_TX_SETS_INTRA; ++s) {
             if (use_intra_ext_tx_for_txsize[s][i]) {
-                for (j = 0; j < INTRA_MODES; ++j) {
+                for (j = 0; j < INTRA_MODES; ++j)
                     av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intra_tx_type_fac_bits[s][i][j], fc->intra_ext_tx_cdf[s][i][j], av1_ext_tx_inv[av1_ext_tx_set_idx_to_type[0][s]]);
-                }
             }
         }
     }
@@ -124,15 +118,12 @@ void av1_estimate_syntax_rate(
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->partition_fac_bits[i], fc->partition_cdf[i], NULL);
 
     //if (cm->skip_mode_flag) { // NM - Hardcoded to true
-    for (i = 0; i < SKIP_CONTEXTS; ++i) {
+    for (i = 0; i < SKIP_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->skip_mode_fac_bits[i], fc->skip_mode_cdfs[i], NULL);
-    }
     //}
 
-    for (i = 0; i < SKIP_CONTEXTS; ++i) {
+    for (i = 0; i < SKIP_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->skip_fac_bits[i], fc->skip_cdfs[i], NULL);
-    }
-
     for (i = 0; i < KF_MODE_CONTEXTS; ++i)
         for (j = 0; j < KF_MODE_CONTEXTS; ++j)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->y_mode_fac_bits[i][j], fc->kf_y_cdf[i][j], NULL);
@@ -141,9 +132,8 @@ void av1_estimate_syntax_rate(
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->mb_mode_fac_bits[i], fc->y_mode_cdf[i], NULL);
 
     for (i = 0; i < CFL_ALLOWED_TYPES; ++i) {
-        for (j = 0; j < INTRA_MODES; ++j) {
+        for (j = 0; j < INTRA_MODES; ++j)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intra_uv_mode_fac_bits[i][j], fc->uv_mode_cdf[i][j], NULL);
-        }
     }
 
     av1_get_syntax_rate_from_cdf(md_rate_estimation_array->filter_intra_mode_fac_bits, fc->filter_intra_mode_cdf, NULL);
@@ -163,15 +153,12 @@ void av1_estimate_syntax_rate(
     for (i = 0; i < PALATTE_BSIZE_CTXS; ++i) {
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_ysize_fac_bits[i], fc->palette_y_size_cdf[i], NULL);
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_uv_size_fac_bits[i], fc->palette_uv_size_cdf[i], NULL);
-        for (j = 0; j < PALETTE_Y_MODE_CONTEXTS; ++j) {
+        for (j = 0; j < PALETTE_Y_MODE_CONTEXTS; ++j)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_ymode_fac_bits[i][j], fc->palette_y_mode_cdf[i][j], NULL);
-        }
     }
 
-    for (i = 0; i < PALETTE_UV_MODE_CONTEXTS; ++i) {
+    for (i = 0; i < PALETTE_UV_MODE_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_uv_mode_fac_bits[i], fc->palette_uv_mode_cdf[i], NULL);
-    }
-
     for (i = 0; i < PALETTE_SIZES; ++i) {
         for (j = 0; j < PALETTE_COLOR_INDEX_CONTEXTS; ++j) {
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_ycolor_fac_bitss[i][j], fc->palette_y_color_index_cdf[i][j], NULL);
@@ -184,16 +171,14 @@ void av1_estimate_syntax_rate(
     for (int32_t joint_sign = 0; joint_sign < CFL_JOINT_SIGNS; joint_sign++) {
         int32_t *FacBits_u = md_rate_estimation_array->cfl_alpha_fac_bits[joint_sign][CFL_PRED_U];
         int32_t *FacBits_v = md_rate_estimation_array->cfl_alpha_fac_bits[joint_sign][CFL_PRED_V];
-        if (CFL_SIGN_U(joint_sign) == CFL_SIGN_ZERO) {
+        if (CFL_SIGN_U(joint_sign) == CFL_SIGN_ZERO)
             memset(FacBits_u, 0, CFL_ALPHABET_SIZE * sizeof(*FacBits_u));
-        }
         else {
             const AomCdfProb *cdf_u = fc->cfl_alpha_cdf[CFL_CONTEXT_U(joint_sign)];
             av1_get_syntax_rate_from_cdf(FacBits_u, cdf_u, NULL);
         }
-        if (CFL_SIGN_V(joint_sign) == CFL_SIGN_ZERO) {
+        if (CFL_SIGN_V(joint_sign) == CFL_SIGN_ZERO)
             memset(FacBits_v, 0, CFL_ALPHABET_SIZE * sizeof(*FacBits_v));
-        }
         else {
             int32_t cdf_index = CFL_CONTEXT_V(joint_sign);
             if ((cdf_index < CFL_ALPHA_CONTEXTS) && (cdf_index >= 0)) {
@@ -218,21 +203,18 @@ void av1_estimate_syntax_rate(
     for (i = TX_4X4; i < EXT_TX_SIZES; ++i) {
         int32_t s;
         for (s = 1; s < EXT_TX_SETS_INTER; ++s) {
-            if (use_inter_ext_tx_for_txsize[s][i]) {
+            if (use_inter_ext_tx_for_txsize[s][i])
                 av1_get_syntax_rate_from_cdf(md_rate_estimation_array->inter_tx_type_fac_bits[s][i], fc->inter_ext_tx_cdf[s][i], av1_ext_tx_inv[av1_ext_tx_set_idx_to_type[1][s]]);
-            }
         }
         for (s = 1; s < EXT_TX_SETS_INTRA; ++s) {
             if (use_intra_ext_tx_for_txsize[s][i]) {
-                for (j = 0; j < INTRA_MODES; ++j) {
+                for (j = 0; j < INTRA_MODES; ++j)
                     av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intra_tx_type_fac_bits[s][i][j], fc->intra_ext_tx_cdf[s][i][j], av1_ext_tx_inv[av1_ext_tx_set_idx_to_type[0][s]]);
-                }
             }
         }
     }
-    for (i = 0; i < DIRECTIONAL_MODES; ++i) {
+    for (i = 0; i < DIRECTIONAL_MODES; ++i)
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->angle_delta_fac_bits[i], fc->angle_delta_cdf[i], NULL);
-    }
     av1_get_syntax_rate_from_cdf(md_rate_estimation_array->switchable_restore_fac_bits, fc->switchable_restore_cdf, NULL);
     av1_get_syntax_rate_from_cdf(md_rate_estimation_array->wiener_restore_fac_bits, fc->wiener_restore_cdf, NULL);
     av1_get_syntax_rate_from_cdf(md_rate_estimation_array->sgrproj_restore_fac_bits, fc->sgrproj_restore_cdf, NULL);
@@ -240,88 +222,64 @@ void av1_estimate_syntax_rate(
 
     if (!is_i_slice) { // NM - Hardcoded to true
     //if (1){
-        for (i = 0; i < COMP_INTER_CONTEXTS; ++i) {
+        for (i = 0; i < COMP_INTER_CONTEXTS; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->comp_inter_fac_bits[i], fc->comp_inter_cdf[i], NULL);
-        }
-
         for (i = 0; i < REF_CONTEXTS; ++i) {
-            for (j = 0; j < SINGLE_REFS - 1; ++j) {
+            for (j = 0; j < SINGLE_REFS - 1; ++j)
                 av1_get_syntax_rate_from_cdf(md_rate_estimation_array->single_ref_fac_bits[i][j], fc->single_ref_cdf[i][j], NULL);
-            }
         }
 
-        for (i = 0; i < COMP_REF_TYPE_CONTEXTS; ++i) {
+        for (i = 0; i < COMP_REF_TYPE_CONTEXTS; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->comp_ref_type_fac_bits[i], fc->comp_ref_type_cdf[i], NULL);
-        }
-
         for (i = 0; i < UNI_COMP_REF_CONTEXTS; ++i) {
-            for (j = 0; j < UNIDIR_COMP_REFS - 1; ++j) {
+            for (j = 0; j < UNIDIR_COMP_REFS - 1; ++j)
                 av1_get_syntax_rate_from_cdf(md_rate_estimation_array->uni_comp_ref_fac_bits[i][j], fc->uni_comp_ref_cdf[i][j], NULL);
-            }
         }
 
         for (i = 0; i < REF_CONTEXTS; ++i) {
-            for (j = 0; j < FWD_REFS - 1; ++j) {
+            for (j = 0; j < FWD_REFS - 1; ++j)
                 av1_get_syntax_rate_from_cdf(md_rate_estimation_array->comp_ref_fac_bits[i][j], fc->comp_ref_cdf[i][j], NULL);
-            }
         }
 
         for (i = 0; i < REF_CONTEXTS; ++i) {
-            for (j = 0; j < BWD_REFS - 1; ++j) {
+            for (j = 0; j < BWD_REFS - 1; ++j)
                 av1_get_syntax_rate_from_cdf(md_rate_estimation_array->comp_bwd_ref_fac_bits[i][j], fc->comp_bwdref_cdf[i][j], NULL);
-            }
         }
 
-        for (i = 0; i < INTRA_INTER_CONTEXTS; ++i) {
+        for (i = 0; i < INTRA_INTER_CONTEXTS; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intra_inter_fac_bits[i], fc->intra_inter_cdf[i], NULL);
-        }
-
-        for (i = 0; i < NEWMV_MODE_CONTEXTS; ++i) {
+        for (i = 0; i < NEWMV_MODE_CONTEXTS; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->new_mv_mode_fac_bits[i], fc->newmv_cdf[i], NULL);
-        }
-
-        for (i = 0; i < GLOBALMV_MODE_CONTEXTS; ++i) {
+        for (i = 0; i < GLOBALMV_MODE_CONTEXTS; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->zero_mv_mode_fac_bits[i], fc->zeromv_cdf[i], NULL);
-        }
-
-        for (i = 0; i < REFMV_MODE_CONTEXTS; ++i) {
+        for (i = 0; i < REFMV_MODE_CONTEXTS; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->ref_mv_mode_fac_bits[i], fc->refmv_cdf[i], NULL);
-        }
-
-        for (i = 0; i < DRL_MODE_CONTEXTS; ++i) {
+        for (i = 0; i < DRL_MODE_CONTEXTS; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->drl_mode_fac_bits[i], fc->drl_cdf[i], NULL);
-        }
         for (i = 0; i < INTER_MODE_CONTEXTS; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->inter_compound_mode_fac_bits[i], fc->inter_compound_mode_cdf[i], NULL);
         for (i = 0; i < BlockSizeS_ALL; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->compound_type_fac_bits[i], fc->compound_type_cdf[i], NULL);
         for (i = 0; i < BlockSizeS_ALL; ++i) {
-            if (get_interinter_wedge_bits((BlockSize)i)) {
+            if (get_interinter_wedge_bits((BlockSize)i))
                 av1_get_syntax_rate_from_cdf(md_rate_estimation_array->wedge_idx_fac_bits[i], fc->wedge_idx_cdf[i], NULL);
-            }
         }
         for (i = 0; i < BlockSize_GROUPS; ++i) {
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->inter_intra_fac_bits[i], fc->interintra_cdf[i], NULL);
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->inter_intra_mode_fac_bits[i], fc->interintra_mode_cdf[i], NULL);
         }
-        for (i = 0; i < BlockSizeS_ALL; ++i) {
+        for (i = 0; i < BlockSizeS_ALL; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->wedge_inter_intra_fac_bits[i], fc->wedge_interintra_cdf[i], NULL);
-        }
-        for (i = BLOCK_8X8; i < BlockSizeS_ALL; i++) {
+        for (i = BLOCK_8X8; i < BlockSizeS_ALL; i++)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->motion_mode_fac_bits[i], fc->motion_mode_cdf[i], NULL);
-        }
-        for (i = BLOCK_8X8; i < BlockSizeS_ALL; i++) {
+        for (i = BLOCK_8X8; i < BlockSizeS_ALL; i++)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->motion_mode_fac_bits1[i], fc->obmc_cdf[i], NULL);
-        }
-        for (i = 0; i < COMP_INDEX_CONTEXTS; ++i) {
+        for (i = 0; i < COMP_INDEX_CONTEXTS; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->comp_idx_fac_bits[i], fc->compound_index_cdf[i], NULL);
-        }
-        for (i = 0; i < COMP_GROUP_IDX_CONTEXTS; ++i) {
+        for (i = 0; i < COMP_GROUP_IDX_CONTEXTS; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->comp_group_idx_fac_bits[i], fc->comp_group_idx_cdf[i], NULL);
-        }
     }
 }
-
 
 static const uint8_t log_in_base_2[] = {
     0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -396,7 +354,6 @@ void av1_estimate_mv_rate(
     MdRateEstimationContext  *md_rate_estimation_array,
     NmvContext                *nmv_ctx)
 {
-
     int32_t *nmvcost[2];
     int32_t *nmvcost_hp[2];
 
@@ -411,7 +368,6 @@ void av1_estimate_mv_rate(
         nmv_ctx,
         picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv);
 
-
     md_rate_estimation_array->nmvcoststack[0] = &md_rate_estimation_array->nmv_costs[0][MV_MAX];
     md_rate_estimation_array->nmvcoststack[1] = &md_rate_estimation_array->nmv_costs[1][MV_MAX];
 
@@ -420,7 +376,6 @@ void av1_estimate_mv_rate(
         av1_build_nmv_cost_table(md_rate_estimation_array->dv_joint_cost, dvcost, &picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc->ndvc,
             MV_SUBPEL_NONE);
     }
-
 }
 /**************************************************************************
 * av1_estimate_coefficients_rate()
@@ -500,9 +455,8 @@ void av1_estimate_coefficients_rate(
                 //  printf("%4d ", br_rate[j]);
                 // printf("\n");
                 for (i = 0; i < COEFF_BASE_RANGE; i += BR_CDF_SIZE - 1) {
-                    for (j = 0; j < BR_CDF_SIZE - 1; j++) {
+                    for (j = 0; j < BR_CDF_SIZE - 1; j++)
                         pcost->lps_cost[ctx][i + j] = prev_cost + br_rate[j];
-                    }
                     prev_cost += br_rate[j];
                 }
                 pcost->lps_cost[ctx][i] = prev_cost;
@@ -523,9 +477,6 @@ void av1_estimate_coefficients_rate(
     }
 }
 
-
-
-
 EbErrorType md_rate_estimation_context_ctor(MdRateEstimationContext *md_rate_estimation_array)
 {
     uint32_t                      caseIndex1;
@@ -539,11 +490,9 @@ EbErrorType md_rate_estimation_context_ctor(MdRateEstimationContext *md_rate_est
 
     // Loop over all slice types
     for (sliceIndex = 0; sliceIndex < TOTAL_NUMBER_OF_SLICE_TYPES; sliceIndex++) {
-
         cabacContextModelArrayOffset1 = sliceIndex * TOTAL_NUMBER_OF_QP_VALUES;
         // Loop over all Qps
         for (qp_index = 0; qp_index < TOTAL_NUMBER_OF_QP_VALUES; qp_index++) {
-
             cabacContextModelArrayOffset2 = qp_index;
             mdRateEstimationTemp = (&md_rate_estimation_array[cabacContextModelArrayOffset1 + cabacContextModelArrayOffset2]);
 
@@ -555,16 +504,12 @@ EbErrorType md_rate_estimation_context_ctor(MdRateEstimationContext *md_rate_est
             // 4: Symbol = 1 & CtxSplit = 1
             // 5: Symbol = 1 & CtxSplit = 2
             for (caseIndex1 = 0; caseIndex1 < 2; caseIndex1++) {
-                for (caseIndex2 = 0; caseIndex2 < (NUMBER_OF_SPLIT_FLAG_CASES >> 1); caseIndex2++) {
+                for (caseIndex2 = 0; caseIndex2 < (NUMBER_OF_SPLIT_FLAG_CASES >> 1); caseIndex2++)
                     mdRateEstimationTemp->split_flag_bits[(NUMBER_OF_SPLIT_FLAG_CASES >> 1)*caseIndex1 + caseIndex2] = 0;
-                }
             }
-            for (caseIndex1 = 0; caseIndex1 < NUMBER_OF_MVD_CASES; caseIndex1++) {
+            for (caseIndex1 = 0; caseIndex1 < NUMBER_OF_MVD_CASES; caseIndex1++)
                 mdRateEstimationTemp->mvd_bits[caseIndex1] = 0;
-            }
-
             mdRateEstimationTemp->initialized = 0;
-
         }
     }
     return EB_ErrorNone;

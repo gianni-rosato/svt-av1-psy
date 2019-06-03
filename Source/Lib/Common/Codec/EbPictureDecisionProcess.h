@@ -8,6 +8,10 @@
 
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
+#if ALT_REF_SUPPORT
+#include "EbPictureControlSet.h"
+#include "EbSequenceControlSet.h"
+#endif
 
 /**************************************
  * Context
@@ -16,11 +20,11 @@ typedef struct PictureDecisionContext
 {
     EbFifo       *picture_analysis_results_input_fifo_ptr;
     EbFifo       *picture_decision_results_output_fifo_ptr;
-                 
+
     uint64_t      last_solid_color_frame_poc;
-                 
+
     EbBool        reset_running_avg;
-                 
+
     uint32_t    **ahd_running_avg_cb;
     uint32_t    **ahd_running_avg_cr;
     uint32_t    **ahd_running_avg;
@@ -30,7 +34,7 @@ typedef struct PictureDecisionContext
     uint32_t        totalRegionActivityCost[MAX_NUMBER_OF_REGIONS_IN_WIDTH][MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
 
     uint32_t      total_number_of_mini_gops;
-                  
+
     uint32_t      mini_gop_start_index[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t      mini_gop_end_index[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t      mini_gop_length[MINI_GOP_WINDOW_MAX_COUNT];
@@ -65,7 +69,47 @@ extern EbErrorType picture_decision_context_ctor(
     EbFifo                  *picture_analysis_results_input_fifo_ptr,
     EbFifo                  *picture_decision_results_output_fifo_ptr);
 
-
 extern void* picture_decision_kernel(void *input_ptr);
+
+#if ALT_REF_SUPPORT
+
+void DecimateInputPicture(PictureParentControlSet       *picture_control_set_ptr,
+                          EbPictureBufferDesc           *inputPaddedPicturePtr,
+                          EbPictureBufferDesc           *quarterDecimatedPicturePtr,
+                          EbPictureBufferDesc           *sixteenthDecimatedPicturePtr);
+
+#endif
+
+#if ALT_REF_OVERLAY
+
+void PadPictureToMultipleOfMinCuSizeDimensions(
+        SequenceControlSet            *sequence_control_set_ptr,
+        EbPictureBufferDesc           *input_picture_ptr);
+
+void PicturePreProcessingOperations(
+        PictureParentControlSet       *picture_control_set_ptr,
+        EbPictureBufferDesc           *input_picture_ptr,
+        SequenceControlSet            *sequence_control_set_ptr,
+        EbPictureBufferDesc           *quarter_decimated_picture_ptr,
+        EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
+        uint32_t                           sb_total_count,
+        EbAsm                           asm_type);
+
+void PadPictureToMultipleOfLcuDimensions(
+        EbPictureBufferDesc   *input_padded_picture_ptr);
+
+void GatheringPictureStatistics(
+        SequenceControlSet            *sequence_control_set_ptr,
+        PictureParentControlSet       *picture_control_set_ptr,
+        EbPictureBufferDesc           *input_picture_ptr,
+        EbPictureBufferDesc           *input_padded_picture_ptr,
+        EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
+        uint32_t                      sb_total_count,
+        EbAsm                         asm_type);
+
+void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr,
+                      EbPictureBufferDesc* outputPicturePtr);
+
+#endif
 
 #endif // EbPictureDecision_h

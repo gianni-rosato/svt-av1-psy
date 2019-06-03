@@ -18,7 +18,6 @@
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 
-
 DECLARE_ALIGNED(32, static const uint8_t, filt_center_global_avx2[32]) = {
   3, 255, 4, 255, 5, 255, 6, 255, 7, 255, 8, 255, 9, 255, 10, 255,
   3, 255, 4, 255, 5, 255, 6, 255, 7, 255, 8, 255, 9, 255, 10, 255
@@ -517,6 +516,3 @@ void av1_highbd_wiener_convolve_add_src_avx2(
         }
     }
 }
-
-
-

@@ -104,25 +104,22 @@ EbErrorType    rate_control_update_model(EbRateControlModel *model_ptr, PictureP
       model_ptr->model_variation_reported++;
       if (gop->actual_size > gop->desired_size) {
         variation = -((int64_t)gop->actual_size / (int64_t)gop->desired_size);
-      } else if (gop->desired_size > gop->actual_size) {
+      } else if (gop->desired_size > gop->actual_size)
         variation = ((int64_t)(gop->desired_size / (int64_t)gop->actual_size));
-      }
       variation = CLIP3(-100, 100, variation);
       variation -= gop->model_variation;
 
       model_ptr->model_variation = model_ptr->model_variation * (model_ptr->model_variation_reported - 1) / model_ptr->model_variation_reported + variation / model_ptr->model_variation_reported;
     }
-    
+
     return EB_ErrorNone;
 }
 
 uint8_t    rate_control_get_quantizer(EbRateControlModel *model_ptr, PictureParentControlSet *picture_ptr) {
     FrameType  type = picture_ptr->av1_frame_type;
 
-    if (type == INTRA_ONLY_FRAME || type == KEY_FRAME) {
+    if (type == INTRA_ONLY_FRAME || type == KEY_FRAME)
         record_new_gop(model_ptr, picture_ptr);
-    }
-
     EbRateControlGopInfo *gop = get_gop_infos(model_ptr->gop_infos, picture_ptr->picture_number);
 
     return gop->qp;
@@ -130,15 +127,14 @@ uint8_t    rate_control_get_quantizer(EbRateControlModel *model_ptr, PicturePare
 
 uint32_t get_inter_qp_for_size(EbRateControlModel *model_ptr, uint32_t desired_size) {
     uint8_t     qp;
-    
+
     for (qp = 0; qp < MAX_QP_VALUE; qp++) {
         float    size = model_ptr->inter_size_predictions[qp];
 
         size = (size / (1920 * 1080)) * model_ptr->pixels;
         // Scale size for current resolution
-        if (desired_size > size) {
+        if (desired_size > size)
             break;
-        }
     }
 
     return qp;
@@ -162,7 +158,7 @@ static void record_new_gop(EbRateControlModel *model_ptr, PictureParentControlSe
         EbRateControlGopInfo *previousGop = get_gop_infos(model_ptr->gop_infos, pictureNumber - 1);
 
         previousGop->length = gop->index - previousGop->index;
-    } 
+    }
 }
 
 uint32_t get_gop_size_in_bytes(EbRateControlModel *model_ptr) {
@@ -174,22 +170,17 @@ uint32_t get_gop_size_in_bytes(EbRateControlModel *model_ptr) {
 
     if (delta_bytes < 0) {
       extra = (uint64_t)((float)delta_bytes / (float)gop_size) + 1;
-    } else if (delta_bytes > 0) {
+    } else if (delta_bytes > 0)
       extra = (uint64_t)((float)delta_bytes / (float)gop_size) + 1;
-    }
-
     if (model_ptr->model_variation < 0) {
       gop_size = gop_size / -(model_ptr->model_variation);
-    } else if (model_ptr->model_variation > 0) {
+    } else if (model_ptr->model_variation > 0)
       gop_size = gop_size * model_ptr->model_variation;
-    }
-
     if (model_ptr->model_variation_reported > 5) {
       if (extra < 0) {
         gop_size = gop_size / -extra;
-      } else if (extra > 0) {
+      } else if (extra > 0)
         gop_size = gop_size * extra;
-      }
     }
 
     return gop_size + 1;

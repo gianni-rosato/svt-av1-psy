@@ -6,7 +6,6 @@
 #ifndef EbRateDistortionCost_h
 #define EbRateDistortionCost_h
 
-
 /***************************************
  * Includes
  ***************************************/
@@ -23,27 +22,28 @@ extern "C" {
 #endif
     extern uint64_t av1_cost_coeffs_txb(
 #if CABAC_UP
-        uint8_t        allow_update_cdf,
-        FRAME_CONTEXT *ec_ctx,
+        uint8_t                             allow_update_cdf,
+        FRAME_CONTEXT                      *ec_ctx,
 #endif
-        struct ModeDecisionCandidateBuffer    *candidate_buffer_ptr,
-        const TranLow                        *const qcoeff,
-        uint16_t                                   eob,
-        PlaneType                               plane_type,
-        TxSize                                  transform_size,
-        /*const uint32_t                             area_size,
-        const uint32_t                             stride,*/
-        int16_t                                   txb_skip_ctx,
-        int16_t                                   dc_sign_ctx,
-        EbBool                                  reducedTransformSetFlag);
+        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+        const TranLow                      *const qcoeff,
+        uint16_t                            eob,
+        PlaneType                           plane_type,
+        TxSize                              transform_size,
+#if ATB_TX_TYPE_SUPPORT_PER_TU
+        TxType                              transform_type,
+#endif
+        int16_t                             txb_skip_ctx,
+        int16_t                             dc_sign_ctx,
+        EbBool                              reducedTransformSetFlag);
 
     extern void coding_loop_context_generation(
         ModeDecisionContext   *context_ptr,
         CodingUnit            *cu_ptr,
-        uint32_t                 cu_origin_x,
-        uint32_t                 cu_origin_y,
+        uint32_t               cu_origin_x,
+        uint32_t               cu_origin_y,
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
-        uint32_t                 sb_sz,
+        uint32_t               sb_sz,
         NeighborArrayUnit     *skip_coeff_neighbor_array,
 #endif
         NeighborArrayUnit     *luma_dc_sign_level_coeff_neighbor_array,
@@ -142,7 +142,7 @@ extern "C" {
         uint64_t                   lambda,
         MdRateEstimationContext *md_rate_estimation_ptr,
         uint32_t                   tb_max_depth);
-                                  
+
 #define RDDIV_BITS 7
 
 #define RDCOST(RM, R, D)                                            \
@@ -186,7 +186,6 @@ extern "C" {
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
 
-
     extern uint64_t av1_inter_fast_cost(
         CodingUnit            *cu_ptr,
         ModeDecisionCandidate *candidate_ptr,
@@ -205,8 +204,6 @@ extern "C" {
 #endif
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
-
-
 
     extern EbErrorType av1_intra_full_cost(
         PictureControlSet                    *picture_control_set_ptr,

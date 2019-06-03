@@ -16,7 +16,7 @@ extern "C" {
     /************************************************
      * Packetization Reorder Queue Entry
      ************************************************/
-    typedef struct PacketizationReorderEntry 
+    typedef struct PacketizationReorderEntry
     {
         uint64_t                          picture_number;
         EbObjectWrapper              *output_stream_wrapper_ptr;
@@ -41,15 +41,15 @@ extern "C" {
         Av1RpsNode                          av1_ref_signal;
         EbBool                               show_frame;
         EbBool                               has_show_existing;
-        uint8_t                                 show_existing_loc;
-
-
+        uint8_t                              show_existing_loc;
+#if ALT_REF_OVERLAY
+        uint8_t                              is_alt_ref;
+#endif
     } PacketizationReorderEntry;
 
     extern EbErrorType packetization_reorder_entry_ctor(
         PacketizationReorderEntry **entry_dbl_ptr,
         uint32_t                      picture_number);
-
 
 #ifdef __cplusplus
 }
