@@ -1734,6 +1734,10 @@ void av1_quantize_inv_quantize(
 #endif
     EbBool                       is_encode_pass)
 {
+#if RDOQ_INTRA
+    (void)candidateBuffer;
+    (void)is_encode_pass;
+#endif
     (void)coeff_stride;
 #if !PF_N2_SUPPORT
     (void)pf_mode;

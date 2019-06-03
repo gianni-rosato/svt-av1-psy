@@ -47,18 +47,11 @@ extern "C" {
 #define MRP_SUPPORT                       1// MRP Main Flag
 
 
-
-#define SPATIAL_SSE_TX_SEARCH             1 // Spatial SSE @ the full loop Tx search
-#define ENHANCED_Nx4_4xN_NEW_MV           1 // Nx4 and 4xN MVs to be inherited from the parent block rather than from the 64x64
-#define MISSING_COMPOUND                  1 // Missing inter candidates NEARETSEST/NEW, NEW/NEARETSEST, NEAR/NEW, NEW/NEAR.
-#if MISSING_COMPOUND
-#define NEW_NEARESTMV_INJECTION           1
-#define NEAREST_NEWMV_INJECTION           1
-#define NEW_NEARMV_INJECTION              0
-#define NEAR_NEWMV_INJECTION              0
-#endif
 #define RDOQ_INTRA                        1 // Enable RDOQ INTRA (RDOQ INTER already active) 
 #define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass
+#define SPATIAL_SSE_TX_SEARCH             1 // Spatial SSE @ the full loop Tx search
+#define ENHANCED_Nx4_4xN_NEW_MV           1 // Nx4 and 4xN MVs to be inherited from the parent block rather than from the 64x64
+#define NEW_NEAREST_NEW_INJECTION         1 // Missing inter candidates NEARETSEST/NEW, NEW/NEARETSEST, NEAR/NEW, NEW/NEAR.
 
 #define ATB                               1 // ATB Main Flag
 #if ATB
