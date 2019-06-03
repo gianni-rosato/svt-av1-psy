@@ -29,7 +29,11 @@ extern "C" {
 #if EIGTH_PEL_MV
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (470+IBC_CAND )
 #else
+#if NEW_NEAREST_NEW_INJECTION
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               (486 +IBC_CAND) 
+#else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (440 +IBC_CAND)
+#endif
 #endif
 #else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (170 +IBC_CAND)
@@ -249,6 +253,9 @@ extern "C" {
         uint8_t                         tx_depth;
         uint8_t                         txb_itr;
 #endif
+#if NEW_NEAREST_NEW_INJECTION
+        uint32_t                        me_sb_addr;
+#endif
         // Multi-modes signal(s)
         uint8_t                         nfl_level;
         uint8_t                         skip_interpolation_search;
@@ -261,6 +268,12 @@ extern "C" {
         uint8_t                         decouple_intra_inter_fast_loop;
         uint8_t                         full_loop_escape;
         uint8_t                         global_mv_injection;
+#if ENHANCED_Nx4_4xN_NEW_MV
+        uint8_t                         nx4_4xn_parent_mv_injection;
+#endif
+#if NEW_NEAREST_NEW_INJECTION
+        uint8_t                         new_nearest_near_comb_injection;
+#endif
 #if M9_NEAR_INJECTION
         uint8_t                         near_mv_injection;
 #endif

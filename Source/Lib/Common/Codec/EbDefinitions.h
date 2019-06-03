@@ -46,6 +46,13 @@ extern "C" {
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
+
+#define RDOQ_INTRA                        1 // Enable RDOQ INTRA (RDOQ INTER already active) 
+#define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass
+#define SPATIAL_SSE_TX_SEARCH             1 // Spatial SSE @ the full loop Tx search
+#define ENHANCED_Nx4_4xN_NEW_MV           1 // Nx4 and 4xN MVs to be inherited from the parent block rather than from the 64x64
+#define NEW_NEAREST_NEW_INJECTION         1 // Missing inter candidates NEARETSEST/NEW, NEW/NEARETSEST, NEAR/NEW, NEW/NEAR.
+
 #define ATB                               1 // ATB Main Flag
 #if ATB
 #define ATB_SUPPORT                       1 // Tranform block geometry, data structure(s), ..
@@ -60,7 +67,6 @@ extern "C" {
 #define ATB_DC_CONTEXT_SUPPORT_2          1 // Added the ability to update DC context @ tranform block basis for only INTRA partitioning (128x128 not yet addressed)
 #if ATB_DC_CONTEXT_SUPPORT_0 && ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
 #define DC_SIGN_CONTEXT_FIX               1 // Fixed DC level derivation and update @ mode decision
-#define DC_SIGN_CONTEXT_EP                0 // Fixed DC level update @ encode pass (TBD)
 #endif
 #define SHUT_ATB                          0 // ATB multi-mode signal
 #endif
@@ -170,7 +176,6 @@ extern "C" {
 #define DEBUG_TRELLIS                                   0
 #define TRELLIS_SKIP                                    0
 #define TRELLIS_MD                                      1
-#define TRELLIS_INTRA                                   0
 #define TRELLIS_CHROMA                                  0
 #define ENHANCED_TRELLIS                                0   // TBD
 #endif

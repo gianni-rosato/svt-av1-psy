@@ -7480,10 +7480,10 @@ EbErrorType  BiPredictionSearch(
 *   md candidate
 *******************************************/
 uint32_t get_me_info_index(
-        uint32_t                  max_me_block,
-        const BlockGeom        *blk_geom,
-        uint32_t               geom_offset_x,
-        uint32_t                 geom_offset_y
+    uint32_t          max_me_block,
+    const BlockGeom  *blk_geom,
+    uint32_t          geom_offset_x,
+    uint32_t          geom_offset_y
 )
 {
     // search for motion info

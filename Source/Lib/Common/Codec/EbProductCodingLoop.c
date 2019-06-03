@@ -3511,6 +3511,9 @@ void perform_intra_tx_partitioning(
                     context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
                     candidateBuffer->candidate_ptr->pred_mode,
+#if RDOQ_INTRA
+                    EB_FALSE,
+#endif
                     EB_FALSE);
 
 #if ATB_DC_CONTEXT_SUPPORT_1
@@ -3671,6 +3674,9 @@ void perform_intra_tx_partitioning(
                 context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
                 candidateBuffer->candidate_ptr->pred_mode,
+#if RDOQ_INTRA
+                EB_FALSE,
+#endif
                 EB_FALSE);
 #if ATB_DC_CONTEXT_SUPPORT_1
 #if !DC_SIGN_CONTEXT_FIX
@@ -3815,7 +3821,16 @@ void perform_intra_tx_partitioning(
                 if (!y_has_coeff)
                     dc_sign_level_coeff = 0;
 #endif
-
+#if DC_SIGN_CONTEXT_EP
+                neighbor_array_unit_mode_write(
+                    picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
+                    (uint8_t*)&dc_sign_level_coeff,
+                    context_ptr->sb_origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->tx_depth][context_ptr->txb_itr],
+                    context_ptr->sb_origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->tx_depth][context_ptr->txb_itr],
+                    context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
+                    context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr],
+                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#else
                 neighbor_array_unit_mode_write(
                     picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
                     (uint8_t*)&dc_sign_level_coeff,
@@ -3824,6 +3839,7 @@ void perform_intra_tx_partitioning(
                     context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][context_ptr->txb_itr],
                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#endif
 #endif
             }
 } // Transform Loop
@@ -3966,6 +3982,9 @@ void perform_intra_tx_partitioning(
                 context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
                 candidateBuffer->candidate_ptr->pred_mode,
+#if RDOQ_INTRA
+                EB_FALSE,
+#endif
                 EB_FALSE);
 #if ATB_DC_CONTEXT_SUPPORT_1
 #if !DC_SIGN_CONTEXT_FIX
@@ -5174,7 +5193,13 @@ void  order_nsq_table(
         me_sb_addr = lcuAddr;
     max_number_of_pus_per_sb = picture_control_set_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
     me2Nx2NTableOffset = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 || context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) ? 0 :
-        get_me_info_index(max_number_of_pus_per_sb, context_ptr->blk_geom, geom_offset_x, geom_offset_y);
+
+        get_me_info_index(
+            max_number_of_pus_per_sb, 
+            context_ptr->blk_geom,
+            geom_offset_x, 
+            geom_offset_y);
+
 #if MD_INJECTION
     const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
     uint8_t nsq0 = me_results->me_nsq_0[me2Nx2NTableOffset];

@@ -1708,30 +1708,36 @@ void av1_quantize_inv_quantize(
 #endif
     PictureControlSet           *picture_control_set_ptr,
     ModeDecisionContext         *md_context,
-    int32_t               *coeff,
-    const uint32_t          coeff_stride,
-    int32_t               *quant_coeff,
-    int32_t               *recon_coeff,
-    uint32_t                qp,
-    uint32_t                width,
-    uint32_t                height,
-    TxSize                         txsize,
-    uint16_t                *eob,
-    //  MacroblockPlane      candidate_plane,
-    EbAsm                asm_type,
-    uint32_t                      *count_non_zero_coeffs,
+    int32_t                     *coeff,
+    const uint32_t               coeff_stride,
+    int32_t                     *quant_coeff,
+    int32_t                     *recon_coeff,
+    uint32_t                     qp,
+    uint32_t                     width,
+    uint32_t                     height,
+    TxSize                       txsize,
+    uint16_t                    *eob,
+    EbAsm                        asm_type,
+    uint32_t                    *count_non_zero_coeffs,
 #if !PF_N2_SUPPORT
-    EbPfMode              pf_mode,
+    EbPfMode                     pf_mode,
 #endif
-    uint32_t                component_type,
-    uint32_t                bit_increment,
-    TxType               tx_type,
+    uint32_t                     component_type,
+    uint32_t                     bit_increment,
+    TxType                       tx_type,
     ModeDecisionCandidateBuffer *candidateBuffer,
-    int16_t                        txb_skip_context,    // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
-    int16_t                        dc_sign_context,     // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
-    PredictionMode                 pred_mode,
-    EbBool                         is_encode_pass)
+    int16_t                      txb_skip_context,    // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
+    int16_t                      dc_sign_context,     // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
+    PredictionMode               pred_mode,
+#if RDOQ_INTRA
+    EbBool                       is_intra_bc,
+#endif
+    EbBool                       is_encode_pass)
 {
+#if RDOQ_INTRA
+    (void)candidateBuffer;
+    (void)is_encode_pass;
+#endif
     (void)coeff_stride;
 #if !PF_N2_SUPPORT
     (void)pf_mode;
@@ -1750,18 +1756,6 @@ void av1_quantize_inv_quantize(
         memset(recon_coeff + i * width, 0, width * sizeof(int32_t));
     }
     MacroblockPlane      candidate_plane ;
-
-    //    EB_SLICE          slice_type = picture_control_set_ptr->slice_type;
-    //    uint32_t            temporal_layer_index = picture_control_set_ptr->temporal_layer_index;
-
-    // Use a flat matrix (i.e. no weighting) for 1D and Identity transforms
-    //const QmVal *qmatrix =
-    //    IS_2D_TRANSFORM(tx_type) ? pd->seg_qmatrix[seg_id][qm_tx_size]
-    //    : cm->gqmatrix[NUM_QM_LEVELS - 1][0][qm_tx_size];
-    //const QmVal *iqmatrix =
-    //    IS_2D_TRANSFORM(tx_type)
-    //    ? pd->seg_iqmatrix[seg_id][qm_tx_size]
-    //    : cm->giqmatrix[NUM_QM_LEVELS - 1][0][qm_tx_size];
 
     const QmVal *qMatrix = picture_control_set_ptr->parent_pcs_ptr->gqmatrix[NUM_QM_LEVELS - 1][0][txsize];
     const QmVal *iqMatrix = picture_control_set_ptr->parent_pcs_ptr->giqmatrix[NUM_QM_LEVELS - 1][0][txsize];
@@ -1870,10 +1864,9 @@ void av1_quantize_inv_quantize(
 
 #if OPT_QUANT_COEFF
     EbBool is_inter = (pred_mode >= NEARESTMV);
-    // Hsan (Trellis) : only luma for now and only @ encode pass
 #if TRELLIS_MD
-#if TRELLIS_INTRA
-    if (md_context->trellis_quant_coeff_optimization && *eob != 0 && component_type == COMPONENT_LUMA) {
+#if RDOQ_INTRA
+    if (md_context->trellis_quant_coeff_optimization && *eob != 0 && component_type == COMPONENT_LUMA && !is_intra_bc) {
 #else
 #if TRELLIS_CHROMA
     if (md_context->trellis_quant_coeff_optimization && *eob != 0 && is_inter) {
@@ -1884,6 +1877,7 @@ void av1_quantize_inv_quantize(
 #else
     if (*eob != 0 && is_encode_pass && is_inter && component_type == COMPONENT_LUMA) {
 #endif
+#if !RDOQ_INTRA
         uint64_t coeff_rate_non_opt;
         uint64_t coeff_rate_opt;
 
@@ -1892,7 +1886,7 @@ void av1_quantize_inv_quantize(
 
         uint64_t cost_non_opt;
         uint64_t cost_opt;
-
+#endif
 #if TRELLIS_SKIP
         uint64_t coeff_rate_skip_non_opt;
         uint64_t coeff_rate_skip_opt;
@@ -1900,6 +1894,7 @@ void av1_quantize_inv_quantize(
         uint64_t cost_skip_non_opt;
         uint64_t cost_skip_opt;
 #endif
+#if !RDOQ_INTRA
         // Use the 1st spot of the candidate buffer to hold cfl settings to use same kernel as MD for coef cost estimation
         if (is_encode_pass)
         {
@@ -1929,7 +1924,7 @@ void av1_quantize_inv_quantize(
             txb_skip_context,
             dc_sign_context,
             picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
-
+#endif
 #if TRELLIS_SKIP
         coeff_rate_skip_non_opt = av1_cost_skip_txb(
             0,//picture_control_set_ptr->update_cdf,
@@ -1939,6 +1934,7 @@ void av1_quantize_inv_quantize(
             (component_type == COMPONENT_LUMA) ? 0 : 1,
             txb_skip_context);
 #endif
+#if !RDOQ_INTRA
         full_distortion_kernel32_bits_func_ptr_array[asm_type](
             coeff,
             get_txb_wide(txsize),
@@ -1952,6 +1948,7 @@ void av1_quantize_inv_quantize(
         distortion_non_opt[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(distortion_non_opt[DIST_CALC_PREDICTION], shift);
 
         cost_non_opt = RDCOST(md_context->full_lambda, coeff_rate_non_opt, distortion_non_opt[DIST_CALC_RESIDUAL]);
+#endif
 #if TRELLIS_SKIP // To test
         cost_skip_non_opt = RDCOST(md_context->full_lambda, coeff_rate_skip_non_opt, distortion_non_opt[DIST_CALC_PREDICTION]);
         if (cost_skip_non_opt < cost_non_opt)
@@ -1977,7 +1974,7 @@ void av1_quantize_inv_quantize(
                 is_inter,
                 bit_increment,
                 (component_type == COMPONENT_LUMA) ? 0 : 1);
-
+#if !RDOQ_INTRA
             // Compute the cost when using optimized coefficients(i.e.after Trellis coefficients)
             if (*eob != 0) {
                 coeff_rate_opt = av1_cost_coeffs_txb(
@@ -2051,6 +2048,7 @@ void av1_quantize_inv_quantize(
                         scan_order,
                         &qparam);
             }
+#endif
         }
     }
 
@@ -2058,6 +2056,22 @@ void av1_quantize_inv_quantize(
     *count_non_zero_coeffs = *eob;
 
 #if DC_SIGN_CONTEXT_FIX
+#if DC_SIGN_CONTEXT_EP
+    // Derive cul_level
+    int32_t cul_level = 0;
+    const int16_t *const scan = scan_order->scan;
+    for (int32_t c = 0; c < *eob; ++c) {
+        const int16_t pos = scan[c];
+        const int32_t v = quant_coeff[pos];
+        int32_t level = ABS(v);
+        cul_level += level;
+    }
+
+    cul_level = AOMMIN(COEFF_CONTEXT_MASK, cul_level);
+    // DC value
+    set_dc_sign(&cul_level, quant_coeff[0]);
+    return cul_level;
+#else
     // Derive cul_level
     int32_t cul_level = 0;
     const int16_t *const scan = scan_order->scan;
@@ -2072,6 +2086,7 @@ void av1_quantize_inv_quantize(
     // DC value
     set_dc_sign(&cul_level, coeff[0]);
     return cul_level;
+#endif
 #endif
 }
 
@@ -2184,6 +2199,9 @@ void product_full_loop(
             context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
             candidateBuffer->candidate_ptr->pred_mode,
+#if RDOQ_INTRA
+            candidateBuffer->candidate_ptr->use_intrabc,
+#endif
             EB_FALSE);
 #if ATB_DC_CONTEXT_SUPPORT_1
 #if !DC_SIGN_CONTEXT_FIX
@@ -2610,6 +2628,9 @@ void product_full_loop_tx_search(
                 context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
                 candidateBuffer->candidate_ptr->pred_mode,
+#if RDOQ_INTRA
+                candidateBuffer->candidate_ptr->use_intrabc,
+#endif
                 EB_FALSE);
 
 #if ATB_DC_CONTEXT_SUPPORT_1
@@ -2623,6 +2644,97 @@ void product_full_loop_tx_search(
             //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
             if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT)
                 continue;
+
+
+#if SPATIAL_SSE_TX_SEARCH
+            if (context_ptr->spatial_sse_full_loop) {
+                if (yCountNonZeroCoeffsTemp) {
+
+                    uint8_t *pred_buffer = &(candidateBuffer->prediction_ptr->buffer_y[tu_origin_index]);
+                    uint8_t *rec_buffer = &(candidateBuffer->recon_ptr->buffer_y[tu_origin_index]);
+
+                    uint32_t j;
+                    for (j = 0; j < context_ptr->blk_geom->tx_height[tx_depth][txb_itr]; j++)
+                        memcpy(rec_buffer + j * candidateBuffer->recon_ptr->stride_y, pred_buffer + j * candidateBuffer->prediction_ptr->stride_y, context_ptr->blk_geom->tx_width[tx_depth][txb_itr]);
+
+                    av1_inv_transform_recon8bit(
+                        &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[tu_origin_index]),
+                        rec_buffer,
+                        candidateBuffer->recon_ptr->stride_y,
+                        context_ptr->blk_geom->txsize[tx_depth][txb_itr],
+                        tx_type,
+                        PLANE_TYPE_Y,
+                        (uint16_t)candidateBuffer->candidate_ptr->eob[0][txb_itr]);
+
+                }
+                else {
+
+                    picture_copy8_bit(
+                        candidateBuffer->prediction_ptr,
+                        tu_origin_index,
+                        0,
+                        candidateBuffer->recon_ptr,
+                        tu_origin_index,
+                        0,
+                        context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
+                        context_ptr->blk_geom->tx_height[tx_depth][txb_itr],
+                        0,
+                        0,
+                        PICTURE_BUFFER_DESC_Y_FLAG,
+                        asm_type);
+                }
+                EbPictureBufferDesc *input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+                uint32_t input_tu_origin_index = (context_ptr->sb_origin_x + txb_origin_x + input_picture_ptr->origin_x) + ((context_ptr->sb_origin_y + txb_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y);
+
+                tuFullDistortion[0][DIST_CALC_PREDICTION] = spatial_full_distortion_kernel_func_ptr_array[asm_type][Log2f(context_ptr->blk_geom->tx_width[tx_depth][txb_itr]) - 2](
+                    input_picture_ptr->buffer_y + input_tu_origin_index,
+                    input_picture_ptr->stride_y,
+                    candidateBuffer->prediction_ptr->buffer_y + tu_origin_index,
+                    candidateBuffer->prediction_ptr->stride_y,
+                    context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
+                    context_ptr->blk_geom->tx_height[tx_depth][txb_itr]);
+
+                tuFullDistortion[0][DIST_CALC_RESIDUAL] = spatial_full_distortion_kernel_func_ptr_array[asm_type][Log2f(context_ptr->blk_geom->tx_width[tx_depth][txb_itr]) - 2](
+                    input_picture_ptr->buffer_y + input_tu_origin_index,
+                    input_picture_ptr->stride_y,
+                    &(((uint8_t*)candidateBuffer->recon_ptr->buffer_y)[tu_origin_index]),
+                    candidateBuffer->recon_ptr->stride_y,
+                    context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
+                    context_ptr->blk_geom->tx_height[tx_depth][txb_itr]);
+
+                tuFullDistortion[0][DIST_CALC_PREDICTION] <<= 4;
+                tuFullDistortion[0][DIST_CALC_RESIDUAL] <<= 4;
+            }
+            else {
+                // LUMA DISTORTION
+                picture_full_distortion32_bits(
+                    context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr,
+                    tu_origin_index,
+                    0,
+                    candidateBuffer->recon_coeff_ptr,
+                    tu_origin_index,
+                    0,
+                    context_ptr->blk_geom->bwidth,
+                    context_ptr->blk_geom->bheight,
+                    context_ptr->blk_geom->bwidth_uv,
+                    context_ptr->blk_geom->bheight_uv,
+                    tuFullDistortion[0],
+                    tuFullDistortion[0],
+                    tuFullDistortion[0],
+                    yCountNonZeroCoeffsTemp,
+                    0,
+                    0,
+                    COMPONENT_LUMA,
+                    asm_type);
+
+                tuFullDistortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
+                tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
+
+                int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale(txSize)) * 2;
+                tuFullDistortion[0][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_RESIDUAL], shift);
+                tuFullDistortion[0][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_PREDICTION], shift);
+            }
+#else
             // LUMA DISTORTION
             picture_full_distortion32_bits(
                 context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr,
@@ -2644,12 +2756,14 @@ void product_full_loop_tx_search(
                 COMPONENT_LUMA,
                 asm_type);
 
+
             tuFullDistortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
             tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
 
             int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale(txSize)) * 2;
             tuFullDistortion[0][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_RESIDUAL], shift);
             tuFullDistortion[0][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_PREDICTION], shift);
+#endif
 #if !OPT_QUANT_COEFF
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = tx_type;
 #endif
@@ -2868,6 +2982,9 @@ void encode_pass_tx_search(
             0,
             0,
             0,
+#if RDOQ_INTRA
+            cu_ptr->av1xd->use_intrabc,
+#endif
             EB_FALSE);
 #endif
 
@@ -3111,6 +3228,9 @@ void encode_pass_tx_search_hbd(
             0,
             0,
             0,
+#if RDOQ_INTRA
+            cu_ptr->av1xd->use_intrabc,
+#endif
             EB_FALSE);
 #endif
 
@@ -3370,6 +3490,9 @@ void full_loop_r(
                 0,
                 0,
                 0,
+#if RDOQ_INTRA
+                candidateBuffer->candidate_ptr->use_intrabc,
+#endif
                 EB_FALSE);
 #endif
 #if ATB_DC_CONTEXT_SUPPORT_1
@@ -3517,6 +3640,9 @@ void full_loop_r(
                 0,
                 0,
                 0,
+#if RDOQ_INTRA
+                candidateBuffer->candidate_ptr->use_intrabc,
+#endif
                 EB_FALSE);
 #endif
 #if ATB_DC_CONTEXT_SUPPORT_1
