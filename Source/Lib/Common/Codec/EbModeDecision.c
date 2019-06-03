@@ -3190,21 +3190,36 @@ void  inject_inter_candidates(
 
         if (context_ptr->nx4_4xn_parent_mv_injection) {
             // If Nx4 or 4xN the inject the MV of the aprent block
-            if (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) {
+
+
+            // Derive whether if current block would need to have offsets made 
+            uint32_t bwidth_offset_to_8 = (context_ptr->blk_geom->bwidth == 4) << 2;
+            uint32_t bheight_offset_to_8 = (context_ptr->blk_geom->bheight == 4) << 2;
+
+            // if there is an offset needed to set either dimension to 8
+            if (bwidth_offset_to_8 || bheight_offset_to_8) {
+
+                // Align parent block has dimensions inherited by current block, if current block has a dimension of 4
+                // add 4 so the resulting block follows an 8x8 basis
+                uint32_t bwidth_to_search = context_ptr->blk_geom->bwidth + bwidth_offset_to_8;
+                uint32_t bheight_to_search = context_ptr->blk_geom->bheight + bheight_offset_to_8;
+
+                // Align parent block has origin inherited by current block
+                uint32_t x_to_search = context_ptr->blk_geom->origin_x - (geom_offset_x + ((context_ptr->blk_geom->origin_x & 0x7) ? 4 : 0));
+                uint32_t y_to_search = context_ptr->blk_geom->origin_y - (geom_offset_y + ((context_ptr->blk_geom->origin_y & 0x7) ? 4 : 0));
 
                 // Search the me_info_index of the parent block
                 uint32_t me_info_index;
                 for (uint32_t block_index = 0; block_index < max_number_of_pus_per_sb; block_index++) {
 
                     if (
-                        ((uint32_t)(context_ptr->blk_geom->bwidth + ((context_ptr->blk_geom->bwidth == 4) ? 4 : 0)) == partition_width[block_index]) &&
-                        ((uint32_t)(context_ptr->blk_geom->bheight + ((context_ptr->blk_geom->bheight == 4) ? 4 : 0)) == partition_height[block_index]) &&
-                        ((uint32_t)(context_ptr->blk_geom->origin_x - (geom_offset_x + ((context_ptr->blk_geom->origin_x % 8) ? 4 : 0))) == pu_search_index_map[block_index][0]) &&
-                        ((uint32_t)(context_ptr->blk_geom->origin_y - (geom_offset_y + ((context_ptr->blk_geom->origin_y % 8) ? 4 : 0))) == pu_search_index_map[block_index][1])) {
-
+                        (bwidth_to_search == partition_width[block_index]) && 
+                        (bheight_to_search == partition_height[block_index]) &&
+                        (x_to_search == pu_search_index_map[block_index][0]) && 
+                        (y_to_search == pu_search_index_map[block_index][1]))
+                    {
                         me_info_index = block_index;
                         break;
-
                     }
                 }
 
