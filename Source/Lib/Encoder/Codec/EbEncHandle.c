@@ -2211,7 +2211,6 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
 #if ALT_REF_OVERLAY
     sequence_control_set_ptr->static_config.enable_overlays = sequence_control_set_ptr->static_config.enable_altrefs == EB_FALSE ||
         (sequence_control_set_ptr->static_config.rate_control_mode > 0) ||
-        (sequence_control_set_ptr->static_config.enc_mode > ENC_M0) ||
         sequence_control_set_ptr->static_config.encoder_bit_depth != EB_8BIT ?
         0 : sequence_control_set_ptr->static_config.enable_overlays;
 #endif
