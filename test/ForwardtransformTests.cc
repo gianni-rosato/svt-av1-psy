@@ -4,6 +4,7 @@
 #include "aom_dsp_rtcd.h"
 #include "EbTransforms.h"
 #include "EbUnitTestUtility.h"
+#include "EbUnitTest.h"
 #include <immintrin.h>
 
 typedef void(*av1_frwd_txfm_func)(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type, uint8_t bitDepth);
@@ -15,8 +16,8 @@ int tx_64[] = { 0 , 9 };
 int bitDepth[] = { 8, 10, 12 };
 
 static void init_data(int16_t **input, int16_t **input_opt, uint32_t input_stride) {
-    *input = (int16_t*)malloc(sizeof(**input) * MAX_SB_SIZE * input_stride);
-    *input_opt = (int16_t*)malloc(sizeof(**input_opt) * MAX_SB_SIZE * input_stride);
+    TEST_ALLIGN_MALLOC(int16_t*, *input, sizeof(int16_t) * MAX_SB_SIZE * input_stride);
+    TEST_ALLIGN_MALLOC(int16_t*, *input_opt, sizeof(int16_t) * MAX_SB_SIZE * input_stride);
     memset(*input, 0, MAX_SB_SIZE * input_stride);
     memset(*input_opt, 0, MAX_SB_SIZE * input_stride);
     eb_buf_random_s16(*input, MAX_SB_SIZE * input_stride);
@@ -24,19 +25,19 @@ static void init_data(int16_t **input, int16_t **input_opt, uint32_t input_strid
 }
 
 static void uninit_data(int16_t *input, int16_t *input_opt) {
-    free(input);
-    free(input_opt);
+    TEST_ALLIGN_FREE(input);
+    TEST_ALLIGN_FREE(input_opt);
 }
 
 static void uninit_coeff(int32_t *coeff, int32_t *coeff_opt) {
-    free(coeff);
-    free(coeff_opt);
+    TEST_ALLIGN_FREE(coeff);
+    TEST_ALLIGN_FREE(coeff_opt);
 }
 
 static void init_coeff(int32_t **coeff, int32_t **coeff_opt, uint32_t *stride) {
     *stride = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
-    *coeff = (int32_t*)malloc(sizeof(**coeff) * MAX_SB_SIZE * *stride);
-    *coeff_opt = (int32_t*)malloc(sizeof(**coeff_opt) * MAX_SB_SIZE * *stride);
+    TEST_ALLIGN_MALLOC(int32_t*, *coeff, sizeof(int32_t) * MAX_SB_SIZE * *stride);
+    TEST_ALLIGN_MALLOC(int32_t*, *coeff_opt, sizeof(int32_t) * MAX_SB_SIZE * *stride);
 }
 
 TEST(ForwardTransformTest, av1_frwd_txfm_kernels)
