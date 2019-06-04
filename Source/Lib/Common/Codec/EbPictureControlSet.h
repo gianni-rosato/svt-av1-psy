@@ -14212,7 +14212,10 @@ extern "C" {
         EbBool                                enable_hme_level0_flag;
         EbBool                                enable_hme_level1_flag;
         EbBool                                enable_hme_level2_flag;
-
+#if IMPROVED_SUBPEL_SEARCH
+        EbBool                                half_pel_mode;
+        EbBool                                quarter_pel_mode;
+#endif
         // MD
         EbEncMode                             enc_mode;
         EB_SB_DEPTH_MODE                     *sb_depth_mode_array;

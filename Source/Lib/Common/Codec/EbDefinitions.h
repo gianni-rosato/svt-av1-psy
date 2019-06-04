@@ -287,6 +287,19 @@ extern "C" {
 #define MRP_DISABLE_ADDED_CAND_M1                        0
 
 #define EIGTH_PEL_MV                                    0
+#define IMPROVED_SUBPEL_SEARCH                          1
+
+
+#if IMPROVED_SUBPEL_SEARCH
+typedef enum ME_HP_MODE { 
+    EX_HP_MODE = 0, 
+    REFINMENT_HP_MODE = 1 
+} ME_HP_MODE;
+typedef enum ME_QP_MODE {
+    EX_QP_MODE = 0,
+    REFINMENT_QP_MODE = 1 
+} ME_QP_MODE;
+#endif
 
 struct Buf2D
 {

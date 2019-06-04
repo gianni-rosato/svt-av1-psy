@@ -106,7 +106,9 @@ void interpolate_search_region_AVC_chroma(
 #define F0 0
 #define F1 1
 #define F2 2
-
+#if IMPROVED_SUBPEL_SEARCH
+#define MAX_SSE_VALUE 128 * 128 * 255 * 255
+#endif
 #define  MAX_SAD_VALUE 128*128*255
 
 // Interpolation Filters
@@ -1552,6 +1554,47 @@ void interpolate_search_region_AVC_chroma(
         const BlockGeom *blk_geom,
         uint32_t         geom_offset_x,
         uint32_t         geom_offset_y);
+#if IMPROVED_SUBPEL_SEARCH
+    void half_pel_refinement_sb(
+        SequenceControlSet
+            *sequence_control_set_ptr,  // input parameter, Sequence control set
+                                        // Ptr
+        PictureParentControlSet *picture_control_set_ptr,
+        MeContext *context_ptr,  // input/output parameter, ME context Ptr, used
+                                 // to get/update ME results
+        uint8_t *refBuffer, uint32_t ref_stride,
+        uint8_t *pos_b_buffer,  // input parameter, position "b" interpolated
+                                // search area Ptr
+        uint8_t *pos_h_buffer,  // input parameter, position "h" interpolated
+                                // search area Ptr
+        uint8_t *pos_j_buffer,  // input parameter, position "j" interpolated
+                                // search area Ptr
+        int16_t x_search_area_origin,  // input parameter, search area origin in
+                                       // the horizontal direction, used to
+                                       // point to reference samples
+        int16_t y_search_area_origin,  // input parameter, search area origin in
+                                       // the vertical direction, used to point
+                                       // to reference samples
+        uint32_t integer_mv,           // input parameter, integer MV
+        EbAsm asm_type);
+
+    static void quarter_pel_refinement_sb(
+        MeContext *context_ptr,  //[IN/OUT]  ME context Ptr, used to get/update
+                                 //ME results
+        uint8_t *pos_full,       //[IN]
+        uint32_t fullStride,     //[IN]
+        uint8_t *pos_b,          //[IN]
+        uint8_t *pos_h,          //[IN]
+        uint8_t *pos_j,          //[IN]
+        int16_t x_search_area_origin,  //[IN] search area origin in the
+                                       //horizontal direction, used to point to
+                                       //reference samples
+        int16_t y_search_area_origin,  //[IN] search area origin in the vertical
+                                       //direction, used to point to reference
+                                       //samples
+        uint32_t integer_mv,           // input parameter, integer MV
+        EbAsm asm_type);
+#endif
 
 #ifdef __cplusplus
 }
