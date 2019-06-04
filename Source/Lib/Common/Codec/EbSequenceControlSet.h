@@ -131,7 +131,7 @@ extern "C" {
 #if ALTREF_FILTERING_SUPPORT
         uint32_t                                tf_segment_column_count;
         uint32_t                                tf_segment_row_count;
-        uint8_t                                 enable_altrefs;
+        EbBool                                  enable_altrefs;
 #endif
         // Buffers
         uint32_t                                picture_control_set_pool_init_count;
