@@ -2,6 +2,7 @@
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
 #include "EbUnitTestUtility.h"
+#include "EbUnitTest.h"
 
 typedef void (*av1_inv_txfm_highbd_func)(const int32_t *coeff, uint16_t *output,int32_t stride, TxType tx_type, int32_t bd);
 typedef void (*av1_inv_txfm2d_highbd_rect_func)(const int32_t *input, uint16_t *output, int32_t stride, TxType tx_type, TxSize tx_size, int32_t eob, int32_t bd);
@@ -17,8 +18,8 @@ int bd[] = { 10, 12};
 
 static void init_data(int32_t **input, int32_t **input_opt, int32_t *input_stride) {
     *input_stride = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
-    *input = (int32_t*)malloc(sizeof(**input) * MAX_SB_SIZE * *input_stride);
-    *input_opt = (int32_t*)malloc(sizeof(**input_opt) * MAX_SB_SIZE * *input_stride);
+    TEST_ALLIGN_MALLOC(int32_t*, *input, sizeof(int32_t) * MAX_SB_SIZE * *input_stride);
+    TEST_ALLIGN_MALLOC(int32_t*, *input_opt, sizeof(int32_t) * MAX_SB_SIZE * *input_stride);
     memset(*input, 0, MAX_SB_SIZE * *input_stride);
     memset(*input_opt, 0, MAX_SB_SIZE * *input_stride);
     eb_buf_random_s32(*input, MAX_SB_SIZE * *input_stride);
@@ -27,8 +28,8 @@ static void init_data(int32_t **input, int32_t **input_opt, int32_t *input_strid
 
 static void init_data_with_max(int32_t **input, int32_t **input_opt, int32_t *input_stride) {
     *input_stride = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
-    *input = (int32_t*)malloc(sizeof(**input) * MAX_SB_SIZE * *input_stride);
-    *input_opt = (int32_t*)malloc(sizeof(**input_opt) * MAX_SB_SIZE * *input_stride);
+    TEST_ALLIGN_MALLOC(int32_t*, *input, sizeof(int32_t) * MAX_SB_SIZE * *input_stride);
+    TEST_ALLIGN_MALLOC(int32_t*, *input_opt, sizeof(int32_t) * MAX_SB_SIZE * *input_stride);
     memset(*input, 0, MAX_SB_SIZE * *input_stride);
     memset(*input_opt, 0, MAX_SB_SIZE * *input_stride);
     eb_buf_random_s32_with_max(*input, MAX_SB_SIZE * *input_stride, 1023);
@@ -36,18 +37,19 @@ static void init_data_with_max(int32_t **input, int32_t **input_opt, int32_t *in
 }
 
 static void uninit_data(int32_t *coeff, int32_t *coeff_opt,int32_t *stride) {
-    free(coeff);
-    free(coeff_opt);
+    (void)stride;
+    TEST_ALLIGN_FREE(coeff);
+    TEST_ALLIGN_FREE(coeff_opt);
 }
 
 static void uninit_output(uint16_t *output, uint16_t *output_opt) {
-    free(output);
-    free(output_opt);
+    TEST_ALLIGN_FREE(output);
+    TEST_ALLIGN_FREE(output_opt);
 }
 
 static void init_output(uint16_t **output,uint16_t **output_opt,int32_t num) {
-    *output = (uint16_t*)malloc(sizeof(**output) * MAX_SB_SIZE * num);
-    *output_opt = (uint16_t*)malloc(sizeof(**output) * MAX_SB_SIZE * num);
+    TEST_ALLIGN_MALLOC(uint16_t*, *output, sizeof(uint16_t) * MAX_SB_SIZE * num);
+    TEST_ALLIGN_MALLOC(uint16_t*, *output_opt, sizeof(uint16_t) * MAX_SB_SIZE * num);
     eb_buf_random_u16(*output, MAX_SB_SIZE * num);
     memcpy(*output_opt, *output, sizeof(**output) * MAX_SB_SIZE * num);
 }
