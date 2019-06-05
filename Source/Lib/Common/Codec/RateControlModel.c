@@ -80,8 +80,8 @@ EbErrorType rate_control_model_init(EbRateControlModel *model_ptr, SequenceContr
 
     model_ptr->desired_bitrate = sequenceControlSetPtr->static_config.target_bit_rate;
     model_ptr->frame_rate = sequenceControlSetPtr->static_config.frame_rate >> 16;
-    model_ptr->width = sequenceControlSetPtr->luma_width;
-    model_ptr->height = sequenceControlSetPtr->luma_height;
+    model_ptr->width = sequenceControlSetPtr->seq_header.max_frame_width;
+    model_ptr->height = sequenceControlSetPtr->seq_header.max_frame_height;
     model_ptr->pixels = model_ptr->width * model_ptr->height;
     model_ptr->gop_infos = gop_infos;
     model_ptr->intra_period = sequenceControlSetPtr->static_config.intra_period_length;

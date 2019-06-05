@@ -4266,11 +4266,11 @@ extern void av1_predict_intra_block(
     bsize = scale_chroma_bsize(bsize, pd->subsampling_x, pd->subsampling_y);
 
     const int32_t have_top_right = intra_has_top_right(
-        cm->p_pcs_ptr->sequence_control_set_ptr->sb_size, bsize,
+        cm->p_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, bsize,
         mi_row, mi_col, have_top, right_available, partition, tx_size,
         row_off, col_off, pd->subsampling_x, pd->subsampling_y);
     const int32_t have_bottom_left = intra_has_bottom_left(
-        cm->p_pcs_ptr->sequence_control_set_ptr->sb_size, bsize,
+        cm->p_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, bsize,
         mi_row, mi_col, bottom_available, have_left, partition,
         tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
 
@@ -4501,11 +4501,11 @@ void av1_predict_intra_block_16bit(
     bsize = scale_chroma_bsize(bsize, pd->subsampling_x, pd->subsampling_y);
 
     const int32_t have_top_right = intra_has_top_right(
-        cm->p_pcs_ptr->sequence_control_set_ptr->sb_size, bsize,
+        cm->p_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, bsize,
         mi_row, mi_col, have_top, right_available, partition, tx_size,
         row_off, col_off, pd->subsampling_x, pd->subsampling_y);
     const int32_t have_bottom_left = intra_has_bottom_left(
-        cm->p_pcs_ptr->sequence_control_set_ptr->sb_size, bsize,
+        cm->p_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, bsize,
         mi_row, mi_col, bottom_available, have_left, partition,
         tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
 

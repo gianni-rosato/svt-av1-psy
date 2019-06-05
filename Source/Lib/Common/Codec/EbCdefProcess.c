@@ -86,8 +86,8 @@ void cdef_seg_search(
     Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
     uint32_t  x_seg_idx;
     uint32_t  y_seg_idx;
-    uint32_t picture_width_in_b64 = (sequence_control_set_ptr->luma_width + 64 - 1) / 64;
-    uint32_t picture_height_in_b64 = (sequence_control_set_ptr->luma_height + 64 - 1) / 64;
+    uint32_t picture_width_in_b64 = (sequence_control_set_ptr->seq_header.max_frame_width + 64 - 1) / 64;
+    uint32_t picture_height_in_b64 = (sequence_control_set_ptr->seq_header.max_frame_height + 64 - 1) / 64;
     SEGMENT_CONVERT_IDX_TO_XY(segment_index, x_seg_idx, y_seg_idx, picture_control_set_ptr->cdef_segments_column_count);
     uint32_t x_b64_start_idx = SEGMENT_START_IDX(x_seg_idx, picture_width_in_b64, picture_control_set_ptr->cdef_segments_column_count);
     uint32_t x_b64_end_idx = SEGMENT_END_IDX(x_seg_idx, picture_width_in_b64, picture_control_set_ptr->cdef_segments_column_count);
@@ -253,8 +253,8 @@ void cdef_seg_search16bit(
     Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
     uint32_t  x_seg_idx;
     uint32_t  y_seg_idx;
-    uint32_t picture_width_in_b64 = (sequence_control_set_ptr->luma_width + 64 - 1) / 64;
-    uint32_t picture_height_in_b64 = (sequence_control_set_ptr->luma_height + 64 - 1) / 64;
+    uint32_t picture_width_in_b64 = (sequence_control_set_ptr->seq_header.max_frame_width + 64 - 1) / 64;
+    uint32_t picture_height_in_b64 = (sequence_control_set_ptr->seq_header.max_frame_height + 64 - 1) / 64;
     SEGMENT_CONVERT_IDX_TO_XY(segment_index, x_seg_idx, y_seg_idx, picture_control_set_ptr->cdef_segments_column_count);
     uint32_t x_b64_start_idx = SEGMENT_START_IDX(x_seg_idx, picture_width_in_b64, picture_control_set_ptr->cdef_segments_column_count);
     uint32_t x_b64_end_idx = SEGMENT_END_IDX(x_seg_idx, picture_width_in_b64, picture_control_set_ptr->cdef_segments_column_count);
@@ -438,7 +438,7 @@ void* cdef_kernel(void *input_ptr)
 
         int32_t selected_strength_cnt[64] = { 0 };
 
-        if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode)
+        if (sequence_control_set_ptr->seq_header.enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode)
         {
             if (is16bit)
                 cdef_seg_search16bit(
@@ -459,8 +459,7 @@ void* cdef_kernel(void *input_ptr)
         if (picture_control_set_ptr->tot_seg_searched_cdef == picture_control_set_ptr->cdef_segments_total_count)
         {
            // printf("    CDEF all seg here  %i\n", picture_control_set_ptr->picture_number);
-
-        if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode) {
+        if (sequence_control_set_ptr->seq_header.enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode) {
                 finish_cdef_search(
                     0,
                     sequence_control_set_ptr,
@@ -468,7 +467,7 @@ void* cdef_kernel(void *input_ptr)
                     selected_strength_cnt);
 
 #if CDEF_OFF_NON_REF
-                if (sequence_control_set_ptr->enable_restoration != 0 || picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag || sequence_control_set_ptr->static_config.recon_enabled){
+                if (sequence_control_set_ptr->seq_header.enable_restoration != 0 || picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag || sequence_control_set_ptr->static_config.recon_enabled){
 #endif
                     if (is16bit)
                         av1_cdef_frame16bit(
@@ -493,7 +492,7 @@ void* cdef_kernel(void *input_ptr)
 
         //restoration prep
 
-        if (sequence_control_set_ptr->enable_restoration)
+        if (sequence_control_set_ptr->seq_header.enable_restoration)
         {
             av1_loop_restoration_save_boundary_lines(
                 cm->frame_to_show,

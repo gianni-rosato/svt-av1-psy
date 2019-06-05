@@ -395,7 +395,7 @@ void reset_mode_decision(
         reset_mode_decision_neighbor_arrays(picture_control_set_ptr);
 #if !MEMORY_FOOTPRINT_OPT
         ResetMdRefinmentNeighborArrays(picture_control_set_ptr);
-        for (lcuRowIndex = 0; lcuRowIndex < ((sequence_control_set_ptr->luma_height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64); lcuRowIndex++) {
+        for (lcuRowIndex = 0; lcuRowIndex < ((sequence_control_set_ptr->seq_header.max_frame_height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64); lcuRowIndex++) {
             picture_control_set_ptr->enc_prev_coded_qp[lcuRowIndex] = (uint8_t)picture_control_set_ptr->picture_qp;
             picture_control_set_ptr->enc_prev_quant_group_coded_qp[lcuRowIndex] = (uint8_t)picture_control_set_ptr->picture_qp;
         }

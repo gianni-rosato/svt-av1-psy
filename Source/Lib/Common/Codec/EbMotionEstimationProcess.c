@@ -607,8 +607,8 @@ void* motion_estimation_kernel(void *input_ptr)
 
             // Segments
             segment_index = inputResultsPtr->segment_index;
-            picture_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-            picture_height_in_sb = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+            picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+            picture_height_in_sb = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
             SEGMENT_CONVERT_IDX_TO_XY(segment_index, xSegmentIndex, ySegmentIndex, picture_control_set_ptr->me_segments_column_count);
             xLcuStartIndex = SEGMENT_START_IDX(xSegmentIndex, picture_width_in_sb, picture_control_set_ptr->me_segments_column_count);
             xLcuEndIndex = SEGMENT_END_IDX(xSegmentIndex, picture_width_in_sb, picture_control_set_ptr->me_segments_column_count);
@@ -623,8 +623,8 @@ void* motion_estimation_kernel(void *input_ptr)
                         sb_origin_x = x_lcu_index * sequence_control_set_ptr->sb_sz;
                         sb_origin_y = y_lcu_index * sequence_control_set_ptr->sb_sz;
 
-                        sb_width = (sequence_control_set_ptr->luma_width - sb_origin_x) < BLOCK_SIZE_64 ? sequence_control_set_ptr->luma_width - sb_origin_x : BLOCK_SIZE_64;
-                        sb_height = (sequence_control_set_ptr->luma_height - sb_origin_y) < BLOCK_SIZE_64 ? sequence_control_set_ptr->luma_height - sb_origin_y : BLOCK_SIZE_64;
+                        sb_width = (sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x) < BLOCK_SIZE_64 ? sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x : BLOCK_SIZE_64;
+                        sb_height = (sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y) < BLOCK_SIZE_64 ? sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y : BLOCK_SIZE_64;
 
                         // Load the SB from the input to the intermediate SB buffer
                         bufferIndex = (input_picture_ptr->origin_y + sb_origin_y) * input_picture_ptr->stride_y + input_picture_ptr->origin_x + sb_origin_x;
@@ -759,8 +759,8 @@ void* motion_estimation_kernel(void *input_ptr)
                         for (x_lcu_index = xLcuStartIndex; x_lcu_index < xLcuEndIndex; ++x_lcu_index) {
                             sb_origin_x = x_lcu_index * sequence_control_set_ptr->sb_sz;
                             sb_origin_y = y_lcu_index * sequence_control_set_ptr->sb_sz;
-                            sb_width = (sequence_control_set_ptr->luma_width - sb_origin_x) < BLOCK_SIZE_64 ? sequence_control_set_ptr->luma_width - sb_origin_x : BLOCK_SIZE_64;
-                            sb_height = (sequence_control_set_ptr->luma_height - sb_origin_y) < BLOCK_SIZE_64 ? sequence_control_set_ptr->luma_height - sb_origin_y : BLOCK_SIZE_64;
+                            sb_width = (sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x) < BLOCK_SIZE_64 ? sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x : BLOCK_SIZE_64;
+                            sb_height = (sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y) < BLOCK_SIZE_64 ? sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y : BLOCK_SIZE_64;
 
                             sb_index = (uint16_t)(x_lcu_index + y_lcu_index * picture_width_in_sb);
                             picture_control_set_ptr->inter_sad_interval_index[sb_index] = 0;
@@ -819,8 +819,8 @@ void* motion_estimation_kernel(void *input_ptr)
                         for (x_lcu_index = xLcuStartIndex; x_lcu_index < xLcuEndIndex; ++x_lcu_index) {
                             sb_origin_x = x_lcu_index * sequence_control_set_ptr->sb_sz;
                             sb_origin_y = y_lcu_index * sequence_control_set_ptr->sb_sz;
-                            sb_width = (sequence_control_set_ptr->luma_width - sb_origin_x) < BLOCK_SIZE_64 ? sequence_control_set_ptr->luma_width - sb_origin_x : BLOCK_SIZE_64;
-                            sb_height = (sequence_control_set_ptr->luma_height - sb_origin_y) < BLOCK_SIZE_64 ? sequence_control_set_ptr->luma_height - sb_origin_y : BLOCK_SIZE_64;
+                            sb_width = (sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x) < BLOCK_SIZE_64 ? sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x : BLOCK_SIZE_64;
+                            sb_height = (sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y) < BLOCK_SIZE_64 ? sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y : BLOCK_SIZE_64;
 
                             sb_index = (uint16_t)(x_lcu_index + y_lcu_index * picture_width_in_sb);
 

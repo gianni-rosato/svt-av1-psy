@@ -39,20 +39,6 @@ extern "C" {
 
 #define MAX_TILE_WIDTH (4096)        // Max Tile width in pixels
 #define MAX_TILE_AREA (4096 * 2304)  // Maximum tile area in pixels
-
-    /*!\brief OBU types. */
-    typedef enum ATTRIBUTE_PACKED
-    {
-        OBU_SEQUENCE_HEADER        = 1,
-        OBU_TEMPORAL_DELIMITER     = 2,
-        OBU_FRAME_HEADER           = 3,
-        OBU_TILE_GROUP             = 4,
-        OBU_METADATA               = 5,
-        OBU_FRAME                  = 6,
-        OBU_REDUNDANT_FRAME_HEADER = 7,
-        OBU_PADDING                = 15,
-    } obuType;
-
     /**************************************
      * Extern Function Declarations
      **************************************/
@@ -128,8 +114,8 @@ extern "C" {
     static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControlSet *pcs_ptr,
         SequenceControlSet    *scs_ptr) {
         return !pcs_ptr->error_resilient_mode &&
-            scs_ptr->enable_ref_frame_mvs &&
-            scs_ptr->enable_order_hint && !frame_is_intra_only(pcs_ptr);
+            scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs &&
+            scs_ptr->seq_header.order_hint_info.enable_order_hint && !frame_is_intra_only(pcs_ptr);
     }
 
     // Returns 1 if this frame might use warped_motion

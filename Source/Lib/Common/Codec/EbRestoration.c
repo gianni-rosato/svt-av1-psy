@@ -1477,7 +1477,7 @@ int32_t av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
     int32_t *rcol0, int32_t *rcol1, int32_t *rrow0,
     int32_t *rrow1, int32_t *tile_tl_idx) {
     assert(rcol0 && rcol1 && rrow0 && rrow1);
-    if (bsize != cm->p_pcs_ptr->sequence_control_set_ptr->sb_size) return 0;
+    if (bsize != cm->p_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size) return 0;
     if (cm->rst_info[plane].frame_restoration_type == RESTORE_NONE) return 0;
 
     // assert(!cm->all_lossless);

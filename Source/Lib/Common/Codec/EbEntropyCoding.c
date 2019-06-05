@@ -107,84 +107,84 @@ static void SetBitstreamLevelTier(SequenceControlSet *scs_ptr) {
     // rate, etc. that are not covered by this function.
 
     BitstreamLevel bl = { 9, 3 };
-    if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16), 512,
+    if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16), 512,
         288, 30.0, 4)) {
         bl.major = 2;
         bl.minor = 0;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         704, 396, 30.0, 4)) {
         bl.major = 2;
         bl.minor = 1;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         1088, 612, 30.0, 4)) {
         bl.major = 3;
         bl.minor = 0;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         1376, 774, 30.0, 4)) {
         bl.major = 3;
         bl.minor = 1;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         2048, 1152, 30.0, 3)) {
         bl.major = 4;
         bl.minor = 0;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         2048, 1152, 60.0, 3)) {
         bl.major = 4;
         bl.minor = 1;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         4096, 2176, 30.0, 2)) {
         bl.major = 5;
         bl.minor = 0;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         4096, 2176, 60.0, 2)) {
         bl.major = 5;
         bl.minor = 1;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         4096, 2176, 120.0, 2)) {
         bl.major = 5;
         bl.minor = 2;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         8192, 4352, 30.0, 2)) {
         bl.major = 6;
         bl.minor = 0;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         8192, 4352, 60.0, 2)) {
         bl.major = 6;
         bl.minor = 1;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         8192, 4352, 120.0, 2)) {
         bl.major = 6;
         bl.minor = 2;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         16384, 8704, 30.0, 2)) {
         bl.major = 7;
         bl.minor = 0;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         16384, 8704, 60.0, 2)) {
         bl.major = 7;
         bl.minor = 1;
     }
-    else if (does_level_match(scs_ptr->luma_width, scs_ptr->luma_height, (scs_ptr->frame_rate >> 16),
+    else if (does_level_match(scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, (scs_ptr->frame_rate >> 16),
         16384, 8704, 120.0, 2)) {
         bl.major = 7;
         bl.minor = 2;
     }
     for (int32_t i = 0; i < MAX_NUM_OPERATING_POINTS; ++i) {
         scs_ptr->level[i] = bl;
-        scs_ptr->tier[i] = 0;  // setting main tier by default
+        scs_ptr->seq_header.operating_point[i].seq_tier = 0;  // setting main tier by default
     }
 }
 
@@ -1343,8 +1343,8 @@ static void EncodePartitionAv1(
     if (!is_partition_point) return;
 
     const int32_t hbs = (mi_size_wide[bsize] << 2) >> 1;
-    const int32_t hasRows = (cu_origin_y + hbs) < sequence_control_set_ptr->luma_height;
-    const int32_t hasCols = (cu_origin_x + hbs) < sequence_control_set_ptr->luma_width;
+    const int32_t hasRows = (cu_origin_y + hbs) < sequence_control_set_ptr->seq_header.max_frame_height;
+    const int32_t hasCols = (cu_origin_x + hbs) < sequence_control_set_ptr->seq_header.max_frame_width;
 
     uint32_t partitionContextLeftNeighborIndex = get_neighbor_array_unit_left_index(
         partition_context_neighbor_array,
@@ -2307,7 +2307,7 @@ void write_mb_interp_filter(
                 SWITCHABLE_FILTERS);
 
             // ++pcs_ptr->interp_filter_selected[0][filter];
-            if (pcs_ptr->sequence_control_set_ptr->enable_dual_filter == 0) return;
+            if (pcs_ptr->sequence_control_set_ptr->seq_header.enable_dual_filter == 0) return;
         }
     }
 }
@@ -3401,7 +3401,7 @@ static void encode_restoration_mode(PictureParentControlSet *pcs_ptr,
     if (!all_none) {
         //  assert(cm->seq_params.sb_size == BLOCK_64X64 ||
         //      cm->seq_params.sb_size == BLOCK_128X128);
-        const int32_t sb_size = pcs_ptr->sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 128 : 64;;
+        const int32_t sb_size = pcs_ptr->sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;;
         RestorationInfo *rsi = &pcs_ptr->av1_cm->rst_info[0];
 
         assert(rsi->restoration_unit_size >= sb_size);
@@ -3603,12 +3603,12 @@ static int32_t tile_log2(int32_t blk_size, int32_t target) {
 void av1_get_tile_limits(PictureParentControlSet * pcs_ptr) {
     Av1Common * cm = pcs_ptr->av1_cm;
 
-    int32_t mi_cols = ALIGN_POWER_OF_TWO(cm->mi_cols, pcs_ptr->sequence_control_set_ptr->mib_size_log2);
-    int32_t mi_rows = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->sequence_control_set_ptr->mib_size_log2);
-    int32_t sb_cols = mi_cols >> pcs_ptr->sequence_control_set_ptr->mib_size_log2;
-    int32_t sb_rows = mi_rows >> pcs_ptr->sequence_control_set_ptr->mib_size_log2;
+    int32_t mi_cols = ALIGN_POWER_OF_TWO(cm->mi_cols, pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2);
+    int32_t mi_rows = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2);
+    int32_t sb_cols = mi_cols >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
+    int32_t sb_rows = mi_rows >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
 
-    int32_t sb_size_log2 = pcs_ptr->sequence_control_set_ptr->mib_size_log2 + MI_SIZE_LOG2;
+    int32_t sb_size_log2 = pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2 + MI_SIZE_LOG2;
     cm->max_tile_width_sb = MAX_TILE_WIDTH >> sb_size_log2;
     int32_t max_tile_area_sb = MAX_TILE_AREA >> (2 * sb_size_log2);
 
@@ -3623,10 +3623,10 @@ void av1_get_tile_limits(PictureParentControlSet * pcs_ptr) {
 void av1_calculate_tile_cols(PictureParentControlSet * pcs_ptr) {
     Av1Common *const cm = pcs_ptr->av1_cm;
 
-    int mi_cols = ALIGN_POWER_OF_TWO(cm->mi_cols, pcs_ptr->sequence_control_set_ptr->mib_size_log2);
-    int mi_rows = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->sequence_control_set_ptr->mib_size_log2);
-    int sb_cols = mi_cols >> pcs_ptr->sequence_control_set_ptr->mib_size_log2;
-    int sb_rows = mi_rows >> pcs_ptr->sequence_control_set_ptr->mib_size_log2;
+    int mi_cols = ALIGN_POWER_OF_TWO(cm->mi_cols, pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2);
+    int mi_rows = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2);
+    int sb_cols = mi_cols >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
+    int sb_rows = mi_rows >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
     int i;
 
     if (cm->uniform_tile_spacing_flag) {
@@ -3643,7 +3643,7 @@ void av1_calculate_tile_cols(PictureParentControlSet * pcs_ptr) {
         cm->min_log2_tile_rows = AOMMAX(cm->min_log2_tiles - cm->log2_tile_cols, 0);
         cm->max_tile_height_sb = sb_rows >> cm->min_log2_tile_rows;
 
-        cm->tile_width = size_sb << pcs_ptr->sequence_control_set_ptr->mib_size_log2;
+        cm->tile_width = size_sb << pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         cm->tile_width = AOMMIN(cm->tile_width, cm->mi_cols);
     }
     else {
@@ -3665,8 +3665,8 @@ void av1_calculate_tile_rows(PictureParentControlSet * pcs_ptr)
 {
     Av1Common *const cm = pcs_ptr->av1_cm;
 
-    int mi_rows = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->sequence_control_set_ptr->mib_size_log2);
-    int sb_rows = mi_rows >> pcs_ptr->sequence_control_set_ptr->mib_size_log2;
+    int mi_rows = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2);
+    int sb_rows = mi_rows >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
     int start_sb, size_sb, i;
 
     if (cm->uniform_tile_spacing_flag) {
@@ -3680,7 +3680,7 @@ void av1_calculate_tile_rows(PictureParentControlSet * pcs_ptr)
         cm->tile_rows = i;
         cm->tile_row_start_sb[i] = sb_rows;
 
-        cm->tile_height = size_sb << pcs_ptr->sequence_control_set_ptr->mib_size_log2;
+        cm->tile_height = size_sb << pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         cm->tile_height = AOMMIN(cm->tile_height, cm->mi_rows);
     }
     else
@@ -3719,8 +3719,8 @@ void av1_calculate_tile_rows(PictureParentControlSet * pcs_ptr)
         cm->log2_tile_cols = AOMMIN(cm->log2_tile_cols, cm->max_log2_tile_cols);
     }
     else {
-        int mi_cols = ALIGN_POWER_OF_TWO(cm->mi_cols, pcs_ptr->sequence_control_set_ptr->mib_size_log2);
-        int sb_cols = mi_cols >> pcs_ptr->sequence_control_set_ptr->mib_size_log2;
+        int mi_cols = ALIGN_POWER_OF_TWO(cm->mi_cols, pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2);
+        int sb_cols = mi_cols >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         int size_sb, j = 0;
         cm->uniform_tile_spacing_flag = 0;
         for (i = 0, start_sb = 0; start_sb < sb_cols && i < MAX_TILE_COLS; i++) {
@@ -3740,8 +3740,8 @@ void av1_calculate_tile_rows(PictureParentControlSet * pcs_ptr)
         cm->log2_tile_rows = AOMMIN(cm->log2_tile_rows, cm->max_log2_tile_rows);
     }
     else {
-        int mi_rows = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->sequence_control_set_ptr->mib_size_log2);
-        int sb_rows = mi_rows >> pcs_ptr->sequence_control_set_ptr->mib_size_log2;
+        int mi_rows = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2);
+        int sb_rows = mi_rows >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         int size_sb, j = 0;
         for (i = 0, start_sb = 0; start_sb < sb_rows && i < MAX_TILE_ROWS; i++) {
             cm->tile_row_start_sb[i] = start_sb;
@@ -3760,8 +3760,8 @@ void av1_calculate_tile_rows(PictureParentControlSet * pcs_ptr)
      Av1Common *const cm = pcs_ptr->av1_cm;
 
      assert(row < cm->tile_rows);
-     int mi_row_start = cm->tile_row_start_sb[row]    << pcs_ptr->sequence_control_set_ptr->mib_size_log2;
-     int mi_row_end  = cm->tile_row_start_sb[row + 1] << pcs_ptr->sequence_control_set_ptr->mib_size_log2;
+     int mi_row_start = cm->tile_row_start_sb[row]    << pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
+     int mi_row_end  = cm->tile_row_start_sb[row + 1] << pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
      tile->tile_row = row;
      tile->mi_row_start = mi_row_start;
      tile->mi_row_end = AOMMIN(mi_row_end, cm->mi_rows);
@@ -3772,9 +3772,9 @@ void av1_calculate_tile_rows(PictureParentControlSet * pcs_ptr)
  void av1_tile_set_col(TileInfo *tile, PictureParentControlSet * pcs_ptr, int col) {
      Av1Common *const cm = pcs_ptr->av1_cm;
      assert(col < cm->tile_cols);
-     int mi_col_start = cm->tile_col_start_sb[col] << pcs_ptr->sequence_control_set_ptr->mib_size_log2;
+     int mi_col_start = cm->tile_col_start_sb[col] << pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
      int mi_col_end = cm->tile_col_start_sb[col + 1]
-         << pcs_ptr->sequence_control_set_ptr->mib_size_log2;
+         << pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
      tile->tile_col = col;
      tile->mi_col_start = mi_col_start;
      tile->mi_col_end = AOMMIN(mi_col_end, cm->mi_cols);
@@ -3811,7 +3811,7 @@ static void write_frame_size(PictureParentControlSet *pcs_ptr,
     //    aom_wb_write_literal(wb, coded_width, num_bits_width);
     //    aom_wb_write_literal(wb, coded_height, num_bits_height);
     //}
-    if (scs_ptr->enable_superres) {
+    if (scs_ptr->seq_header.enable_superres) {
         printf("ERROR[AN]: enable_superres not supported yet\n");
         //write_superres_scale(cm, wb);
     }
@@ -3918,86 +3918,86 @@ void write_sequence_header(SequenceControlSet *scs_ptr/*Av1Comp *cpi*/, struct A
     //    SequenceHeader *seq_params = &cm->seq_params;
     //
 
-    int32_t max_frame_width = scs_ptr->luma_width;
+    int32_t max_frame_width = scs_ptr->seq_header.max_frame_width;
     /*        cpi->oxcf.forced_max_frame_width
     ? cpi->oxcf.forced_max_frame_width
     : cpi->oxcf.width;*/
-    int32_t max_frame_height = scs_ptr->luma_height;
+    int32_t max_frame_height = scs_ptr->seq_header.max_frame_height;
     /*cpi->oxcf.forced_max_frame_height
     ? cpi->oxcf.forced_max_frame_height
     : cpi->oxcf.height;*/
 
-    aom_wb_write_literal(wb, scs_ptr->num_bits_width - 1, 4);
-    aom_wb_write_literal(wb, scs_ptr->num_bits_height - 1, 4);
-    aom_wb_write_literal(wb, max_frame_width - 1, scs_ptr->num_bits_width);
-    aom_wb_write_literal(wb, max_frame_height - 1, scs_ptr->num_bits_height);
+    aom_wb_write_literal(wb, scs_ptr->seq_header.frame_width_bits - 1, 4);
+    aom_wb_write_literal(wb, scs_ptr->seq_header.frame_height_bits - 1, 4);
+    aom_wb_write_literal(wb, max_frame_width - 1, scs_ptr->seq_header.frame_width_bits);
+    aom_wb_write_literal(wb, max_frame_height - 1, scs_ptr->seq_header.frame_height_bits);
     //
     /* Placeholder for actually writing to the bitstream */
 
-    if (!scs_ptr->reduced_still_picture_hdr) {
+    if (!scs_ptr->seq_header.reduced_still_picture_header) {
         //scs_ptr->frame_id_numbers_present_flag = 0;
         //    cm->large_scale_tile ? 0 : cm->error_resilient_mode;
 
-        aom_wb_write_bit(wb, scs_ptr->frame_id_numbers_present_flag);
-        if (scs_ptr->frame_id_numbers_present_flag) {
+        aom_wb_write_bit(wb, scs_ptr->seq_header.frame_id_numbers_present_flag);
+        if (scs_ptr->seq_header.frame_id_numbers_present_flag) {
             // We must always have delta_frame_id_length < frame_id_length,
             // in order for a frame to be referenced with a unique delta.
             // Avoid wasting bits by using a coding that enforces this restriction.
-            aom_wb_write_literal(wb, scs_ptr->delta_frame_id_length - 2, 4);
+            aom_wb_write_literal(wb, scs_ptr->seq_header.delta_frame_id_length - 2, 4);
             aom_wb_write_literal(
-                wb, scs_ptr->frame_id_length - scs_ptr->delta_frame_id_length - 1,
+                wb, ((scs_ptr->seq_header.frame_id_length) - (scs_ptr->seq_header.delta_frame_id_length) - 1),
                 3);
         }
     }
 
-    aom_wb_write_bit(wb, scs_ptr->sb_size == BLOCK_128X128 ? 1 : 0);
+    aom_wb_write_bit(wb, scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 1 : 0);
     //    write_sb_size(seq_params, wb);
-    aom_wb_write_bit(wb, scs_ptr->enable_filter_intra);
+    aom_wb_write_bit(wb, scs_ptr->seq_header.enable_filter_intra);
 
 #if  DIS_EDGE_FIL
         scs_ptr->enable_intra_edge_filter = 0;
 #else
-        scs_ptr->enable_intra_edge_filter = 1;
+        scs_ptr->seq_header.enable_intra_edge_filter = 1;
 #endif
-    aom_wb_write_bit(wb, scs_ptr->enable_intra_edge_filter);
+    aom_wb_write_bit(wb, scs_ptr->seq_header.enable_intra_edge_filter);
 
-    if (!scs_ptr->reduced_still_picture_hdr) {
-        aom_wb_write_bit(wb, scs_ptr->enable_interintra_compound);
-        aom_wb_write_bit(wb, scs_ptr->enable_masked_compound);
+    if (!scs_ptr->seq_header.reduced_still_picture_header) {
+        aom_wb_write_bit(wb, scs_ptr->seq_header.enable_interintra_compound);
+        aom_wb_write_bit(wb, scs_ptr->seq_header.enable_masked_compound);
         aom_wb_write_bit(wb, scs_ptr->static_config.enable_warped_motion);
-        aom_wb_write_bit(wb, scs_ptr->enable_dual_filter);
+        aom_wb_write_bit(wb, scs_ptr->seq_header.enable_dual_filter);
 
-        aom_wb_write_bit(wb, scs_ptr->enable_order_hint);
+        aom_wb_write_bit(wb, scs_ptr->seq_header.order_hint_info.enable_order_hint);
 
-        if (scs_ptr->enable_order_hint) {
-            aom_wb_write_bit(wb, scs_ptr->enable_jnt_comp);
-            aom_wb_write_bit(wb, scs_ptr->enable_ref_frame_mvs);
+        if (scs_ptr->seq_header.order_hint_info.enable_order_hint) {
+            aom_wb_write_bit(wb, scs_ptr->seq_header.order_hint_info.enable_jnt_comp);
+            aom_wb_write_bit(wb, scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs);
         }
 
-        if (scs_ptr->force_screen_content_tools == 2)
+        if (scs_ptr->seq_header.seq_force_screen_content_tools == 2)
             aom_wb_write_bit(wb, 1);
         else {
             aom_wb_write_bit(wb, 0);
-            aom_wb_write_bit(wb, scs_ptr->force_screen_content_tools);
+            aom_wb_write_bit(wb, scs_ptr->seq_header.seq_force_screen_content_tools);
         }
         //
-        if (scs_ptr->force_screen_content_tools > 0) {
-            if (scs_ptr->force_integer_mv == 2)
+        if (scs_ptr->seq_header.seq_force_screen_content_tools > 0) {
+            if (scs_ptr->seq_header.seq_force_integer_mv == 2)
                 aom_wb_write_bit(wb, 1);
             else {
                 aom_wb_write_bit(wb, 0);
-                aom_wb_write_bit(wb, scs_ptr->force_integer_mv);
+                aom_wb_write_bit(wb, scs_ptr->seq_header.seq_force_integer_mv);
             }
         }
         else
-            assert(scs_ptr->force_integer_mv == 2);
-        if (scs_ptr->enable_order_hint)
-            aom_wb_write_literal(wb, scs_ptr->order_hint_bits_minus1, 3);
+            assert(scs_ptr->seq_header.seq_force_integer_mv == 2);
+        if (scs_ptr->seq_header.order_hint_info.enable_order_hint)
+            aom_wb_write_literal(wb, scs_ptr->seq_header.order_hint_info.order_hint_bits - 1, 3);
     }
 
-    aom_wb_write_bit(wb, scs_ptr->enable_superres);
-    aom_wb_write_bit(wb, scs_ptr->enable_cdef);
-    aom_wb_write_bit(wb, scs_ptr->enable_restoration);
+    aom_wb_write_bit(wb, scs_ptr->seq_header.enable_superres);
+    aom_wb_write_bit(wb, scs_ptr->seq_header.enable_cdef);
+    aom_wb_write_bit(wb, scs_ptr->seq_header.enable_restoration);
 }
 
 // Recenters a non-negative literal v around a reference r
@@ -4317,12 +4317,12 @@ static void write_film_grain_params(PictureParentControlSet *pcs_ptr,
         aom_wb_write_literal(wb, pars->scaling_points_y[i][1], 8);
     }
 
-    if (!pcs_ptr->sequence_control_set_ptr->monochrome)
+    if (!pcs_ptr->sequence_control_set_ptr->seq_header.color_config.mono_chrome)
         aom_wb_write_bit(wb, pars->chroma_scaling_from_luma);
     else
         pars->chroma_scaling_from_luma = 0;  // for monochrome override to 0
 
-    if (pcs_ptr->sequence_control_set_ptr->monochrome || pars->chroma_scaling_from_luma ||
+    if (pcs_ptr->sequence_control_set_ptr->seq_header.color_config.mono_chrome || pars->chroma_scaling_from_luma ||
         // todo: add corresponding check when subsampling variables are present
         ((pcs_ptr->sequence_control_set_ptr->subsampling_x == 1) &&
         (pcs_ptr->sequence_control_set_ptr->subsampling_y == 1) &&
@@ -4401,7 +4401,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
     // NOTE: By default all coded frames to be used as a reference
     pcs_ptr->is_reference_frame = 1;
 
-    if (!scs_ptr->reduced_still_picture_hdr) {
+    if (!scs_ptr->seq_header.reduced_still_picture_header) {
         if (showExisting) {
             //printf("ERROR[AN]: show_existing_frame not supported yet\n");
             //RefCntBuffer *const frame_bufs = cm->buffer_pool->frame_bufs;
@@ -4417,7 +4417,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
             aom_wb_write_bit(wb, 1);  // show_existing_frame
             aom_wb_write_literal(wb, pcs_ptr->show_existing_loc, 3);
 
-            if (scs_ptr->frame_id_numbers_present_flag) {
+            if (scs_ptr->seq_header.frame_id_numbers_present_flag) {
                 printf("ERROR[AN]: frame_id_numbers_present_flag not supported yet\n");
                 /*int32_t frame_id_len = cm->seq_params.frame_id_length;
                 int32_t display_frame_id = cm->ref_frame_id[cpi->show_existing_loc];
@@ -4453,24 +4453,25 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
 
     aom_wb_write_bit(wb, pcs_ptr->disable_cdf_update);
 
-    if (scs_ptr->force_screen_content_tools == 2)
+    if (scs_ptr->seq_header.seq_force_screen_content_tools == 2)
         aom_wb_write_bit(wb, pcs_ptr->allow_screen_content_tools);
     else {
         assert(pcs_ptr->allow_screen_content_tools ==
-            scs_ptr->force_screen_content_tools);
+            scs_ptr->seq_header.seq_force_screen_content_tools);
     }
 
     if (pcs_ptr->allow_screen_content_tools) {
-        if (scs_ptr->force_integer_mv == 2)
+        if (scs_ptr->seq_header.seq_force_integer_mv == 2)
             aom_wb_write_bit(wb, pcs_ptr->cur_frame_force_integer_mv);
         else
-            assert(pcs_ptr->cur_frame_force_integer_mv == scs_ptr->force_integer_mv);
+            assert(pcs_ptr->cur_frame_force_integer_mv == scs_ptr->seq_header.seq_force_integer_mv);
     }
     else
         assert(pcs_ptr->cur_frame_force_integer_mv == 0);
-    if (!scs_ptr->reduced_still_picture_hdr) {
-        if (scs_ptr->frame_id_numbers_present_flag) {
-            int32_t frame_id_len = scs_ptr->frame_id_length;
+
+    if (!scs_ptr->seq_header.reduced_still_picture_header) {
+        if (scs_ptr->seq_header.frame_id_numbers_present_flag) {
+            int32_t frame_id_len = scs_ptr->seq_header.frame_id_length;
             aom_wb_write_literal(wb, pcs_ptr->current_frame_id, frame_id_len);
         }
 
@@ -4486,9 +4487,9 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
         cm->height != cm->seq_params.max_frame_height);*/
         if (pcs_ptr->av1_frame_type != S_FRAME) aom_wb_write_bit(wb, frame_size_override_flag);
 
-        if (scs_ptr->enable_order_hint)
+        if (scs_ptr->seq_header.order_hint_info.enable_order_hint)
             aom_wb_write_literal(wb, (int32_t)pcs_ptr->frame_offset,
-                scs_ptr->order_hint_bits_minus1 + 1);
+                scs_ptr->seq_header.order_hint_info.order_hint_bits);
 
         if (!pcs_ptr->error_resilient_mode && !frame_is_intra_only(pcs_ptr))
             aom_wb_write_literal(wb, pcs_ptr->primary_ref_frame, PRIMARY_REF_BITS);
@@ -4562,7 +4563,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
             assert(pcs_ptr->frame_refs_short_signaling == 0);
             // NOTE: Error resilient mode turns off frame_refs_short_signaling
             //       automatically.
-            if (scs_ptr->enable_order_hint)
+            if (scs_ptr->seq_header.order_hint_info.enable_order_hint)
                 aom_wb_write_bit(wb, pcs_ptr->frame_refs_short_signaling);
 
             if (pcs_ptr->frame_refs_short_signaling) {
@@ -4577,7 +4578,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
                     aom_wb_write_literal(wb, get_ref_frame_map_idx(pcs_ptr, ref_frame),
                         REF_FRAMES_LOG2);
 
-                if (scs_ptr->frame_id_numbers_present_flag) {
+                if (scs_ptr->seq_header.frame_id_numbers_present_flag) {
                     printf("ERROR[AN]: frame_id_numbers_present_flag not supported yet\n");
                     //int32_t i = get_ref_frame_map_idx(cpi, ref_frame);
                     //int32_t frame_id_len = cm->seq_params.frame_id_length;
@@ -4621,7 +4622,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
     //if (scs_ptr->frame_id_numbers_present_flag)
     //    pcs_ptr->refresh_mask = get_refresh_mask(pcs_ptr);
     const int32_t might_bwd_adapt =
-        !(scs_ptr->reduced_still_picture_hdr) && !(pcs_ptr->disable_cdf_update);
+        !(scs_ptr->seq_header.reduced_still_picture_header) && !(pcs_ptr->disable_cdf_update);
     if (pcs_ptr->large_scale_tile)
         pcs_ptr->refresh_frame_context = REFRESH_FRAME_CONTEXT_DISABLED;
     if (might_bwd_adapt) {
@@ -4684,10 +4685,11 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
     else {
         if (!pcs_ptr->coded_lossless) {
             encode_loopfilter(pcs_ptr, wb);
-            if (scs_ptr->enable_cdef)
+            if (scs_ptr->seq_header.enable_cdef)
                 encode_cdef(pcs_ptr, wb);
         }
-        if (scs_ptr->enable_restoration)
+
+        if (scs_ptr->seq_header.enable_restoration)
             encode_restoration_mode(pcs_ptr, wb);
     }
 
@@ -4713,8 +4715,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
         //  printf("ERROR[AN]: Global motion not supported yet\n");
         WriteGlobalMotion(pcs_ptr, wb);
     }
-
-    if (scs_ptr->film_grain_params_present && (pcs_ptr->show_frame || pcs_ptr->showable_frame))
+    if (scs_ptr->seq_header.film_grain_params_present && (pcs_ptr->show_frame || pcs_ptr->showable_frame))
         write_film_grain_params(pcs_ptr, wb);
 }
 
@@ -4788,28 +4789,28 @@ static uint32_t WriteSequenceHeaderObu(
     WriteProfile((BitstreamProfile)scs_ptr->static_config.profile, &wb);
 
     // Still picture or not
-    aom_wb_write_bit(&wb, scs_ptr->still_picture);
-    assert(IMPLIES(!scs_ptr->still_picture,
-        !scs_ptr->reduced_still_picture_hdr));
+    aom_wb_write_bit(&wb, scs_ptr->seq_header.still_picture);
+    assert(IMPLIES(!scs_ptr->seq_header.still_picture,
+        !scs_ptr->seq_header.reduced_still_picture_header));
 
     // whether to use reduced still picture header
-    aom_wb_write_bit(&wb, scs_ptr->reduced_still_picture_hdr);
+    aom_wb_write_bit(&wb, scs_ptr->seq_header.reduced_still_picture_header);
 
-    if (scs_ptr->reduced_still_picture_hdr) {
+    if (scs_ptr->seq_header.reduced_still_picture_header) {
         printf("ERROR[AN]: reduced_still_picture_hdr not supported\n");
         //write_bitstream_level(cm->seq_params.level[0], &wb);
     }
     else {
-        aom_wb_write_bit(&wb, scs_ptr->timing_info_present);  // timing info present flag
+        aom_wb_write_bit(&wb, scs_ptr->seq_header.timing_info.timing_info_present);  // timing info present flag
 
-        if (scs_ptr->timing_info_present) {
+        if (scs_ptr->seq_header.timing_info.timing_info_present) {
             // timing_info
             printf("ERROR[AN]: timing_info_present not supported\n");
             /*write_timing_info_header(cm, &wb);
             aom_wb_write_bit(&wb, cm->decoder_model_info_present_flag);
             if (cm->decoder_model_info_present_flag) write_decoder_model_info(cm, &wb);*/
         }
-        aom_wb_write_bit(&wb, scs_ptr->display_model_info_present_flag);
+        aom_wb_write_bit(&wb, scs_ptr->seq_header.initial_display_delay_present_flag);
 
         uint8_t operating_points_cnt_minus_1 =
             numberSpatialLayers > 1 ? numberSpatialLayers - 1 : 0;
@@ -4817,19 +4818,19 @@ static uint32_t WriteSequenceHeaderObu(
             OP_POINTS_CNT_MINUS_1_BITS);
         int32_t i;
         for (i = 0; i < operating_points_cnt_minus_1 + 1; i++) {
-            aom_wb_write_literal(&wb, scs_ptr->operating_point_idc[i],
+            aom_wb_write_literal(&wb, scs_ptr->seq_header.operating_point[i].op_idc,
                 OP_POINTS_IDC_BITS);
             write_bitstream_level(scs_ptr->level[i], &wb);
             if (scs_ptr->level[i].major > 3)
-                aom_wb_write_bit(&wb, scs_ptr->tier[i]);
-            if (scs_ptr->decoder_model_info_present_flag) {
+                aom_wb_write_bit(&wb, scs_ptr->seq_header.operating_point[i].seq_tier);
+            if (scs_ptr->seq_header.decoder_model_info_present_flag) {
                 printf("ERROR[AN]: decoder_model_info_present_flag not supported\n");
                 //aom_wb_write_bit(&wb,
                 //    cm->op_params[i].decoder_model_param_present_flag);
                 //if (cm->op_params[i].decoder_model_param_present_flag)
                 //    write_dec_model_op_parameters(cm, &wb, i);
             }
-            if (scs_ptr->display_model_info_present_flag) {
+            if (scs_ptr->seq_header.initial_display_delay_present_flag) {
                 printf("ERROR[AN]: display_model_info_present_flag not supported\n");
                 //aom_wb_write_bit(&wb,
                 //    cm->op_params[i].display_model_param_present_flag);
@@ -4845,7 +4846,7 @@ static uint32_t WriteSequenceHeaderObu(
 
     write_color_config(scs_ptr, &wb);
 
-    aom_wb_write_bit(&wb, scs_ptr->film_grain_params_present);
+    aom_wb_write_bit(&wb, scs_ptr->seq_header.film_grain_params_present);
 
     add_trailing_bits(&wb);
 
@@ -5066,15 +5067,15 @@ static void write_cdef(
     //cm->mi_grid_visible[(mi_row & m) * cm->mi_stride + (mi_col & m)];
 
 // Initialise when at top left part of the superblock
-    if (!(mi_row & (seqCSetPtr->mib_size - 1)) &&
-        !(mi_col & (seqCSetPtr->mib_size - 1))) {  // Top left?
+    if (!(mi_row & (seqCSetPtr->seq_header.sb_mi_size - 1)) &&
+        !(mi_col & (seqCSetPtr->seq_header.sb_mi_size - 1))) {  // Top left?
         p_pcs_ptr->cdef_preset[0] = p_pcs_ptr->cdef_preset[1] = p_pcs_ptr->cdef_preset[2] =
             p_pcs_ptr->cdef_preset[3] = -1;
     }
 
     // Emit CDEF param at first non-skip coding block
     const int32_t mask = 1 << (6 - MI_SIZE_LOG2);
-    const int32_t index = seqCSetPtr->sb_size == BLOCK_128X128
+    const int32_t index = seqCSetPtr->seq_header.sb_size == BLOCK_128X128
         ? !!(mi_col & mask) + 2 * !!(mi_row & mask)
         : 0;
 
@@ -6376,7 +6377,7 @@ assert(bsize < BlockSizeS_ALL);
                         picture_control_set_ptr);
                 }
 
-                if (sequence_control_set_ptr->enable_masked_compound || sequence_control_set_ptr->enable_jnt_comp)
+                if (sequence_control_set_ptr->seq_header.enable_masked_compound || sequence_control_set_ptr->seq_header.order_hint_info.enable_jnt_comp)
                     printf("ERROR[AN]: masked_compound_used and enable_jnt_comp not supported\n");
 
                 // No filter for Global MV
@@ -6494,7 +6495,7 @@ EB_EXTERN EbErrorType write_sb(
         if (checkCuOutOfBound) {
             codeCuCond = (EbBool)sb_geom->block_is_inside_md_scan[cu_index]; // check if cu is inside the picture
 
-            if ((cu_origin_x < sequence_control_set_ptr->luma_width) && (cu_origin_y < sequence_control_set_ptr->luma_height))
+            if ((cu_origin_x < sequence_control_set_ptr->seq_header.max_frame_width) && (cu_origin_y < sequence_control_set_ptr->seq_header.max_frame_height))
                 codeCuCond = EB_TRUE;
         }
 
@@ -6753,10 +6754,10 @@ EB_EXTERN EbErrorType write_sb(
 
             if (tb_ptr->cu_partition_array[cu_index] != PARTITION_SPLIT) {
                 final_cu_index++;
-                cu_index += ns_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth];
+                cu_index += ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
             }
             else
-                cu_index += d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][blk_geom->depth];
+                cu_index += d1_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
         }
         else
             ++cu_index;

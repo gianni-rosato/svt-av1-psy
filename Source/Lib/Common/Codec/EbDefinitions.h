@@ -1387,12 +1387,6 @@ MAX_NUM_TEMPORAL_LAYERS * MAX_NUM_SPATIAL_LAYERS
 static INLINE int32_t is_valid_seq_level_idx(uint8_t seq_level_idx) {
     return seq_level_idx < 24 || seq_level_idx == 31;
 }
-typedef struct BitstreamLevel
-{
-    uint8_t major;
-    uint8_t minor;
-} BitstreamLevel;
-
 // TODO(jingning): Turning this on to set up transform coefficient
 // processing timer.
 #define TXCOEFF_TIMER 0

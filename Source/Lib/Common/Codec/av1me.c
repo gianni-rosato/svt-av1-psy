@@ -793,7 +793,7 @@ int av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext  *x, BlockSize 
               const MV dv = { 8 * (ref_block_hash.y - y_pos),
                               8 * (ref_block_hash.x - x_pos) };
               if (!av1_is_dv_valid(dv, x->xd, mi_row, mi_col,
-                                   bsize, pcs->parent_pcs_ptr->sequence_control_set_ptr->mib_size_log2))
+                                   bsize, pcs->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2))
                 continue;
             }
             MV hash_mv;

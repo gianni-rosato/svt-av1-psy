@@ -431,7 +431,7 @@ void high_level_rc_input_picture_vbr(
         picture_control_set_ptr->bits_per_sw_per_layer[temporal_layer_index] = 0;
     picture_control_set_ptr->total_bits_per_gop = 0;
 
-    area_in_pixel = sequence_control_set_ptr->luma_width * sequence_control_set_ptr->luma_height;;
+    area_in_pixel = sequence_control_set_ptr->seq_header.max_frame_width * sequence_control_set_ptr->seq_header.max_frame_height;;
 
     eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->rate_table_update_mutex);
 
@@ -840,7 +840,7 @@ void frame_level_rc_input_picture_vbr(
     uint64_t                 temp_qp;
     uint32_t                 area_in_sbs;
 
-    picture_area_in_pixel = sequence_control_set_ptr->luma_height*sequence_control_set_ptr->luma_width;
+    picture_area_in_pixel = sequence_control_set_ptr->seq_header.max_frame_height*sequence_control_set_ptr->seq_header.max_frame_width;
 
     if (rate_control_layer_ptr->first_frame == 1) {
         rate_control_layer_ptr->first_frame = 0;
@@ -1758,7 +1758,7 @@ void high_level_rc_input_picture_cvbr(
         picture_control_set_ptr->bits_per_sw_per_layer[temporal_layer_index] = 0;
     picture_control_set_ptr->total_bits_per_gop = 0;
 
-    area_in_pixel = sequence_control_set_ptr->luma_width * sequence_control_set_ptr->luma_height;;
+    area_in_pixel = sequence_control_set_ptr->seq_header.max_frame_width * sequence_control_set_ptr->seq_header.max_frame_height;;
 
     eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->rate_table_update_mutex);
 
@@ -2160,7 +2160,7 @@ void frame_level_rc_input_picture_cvbr(
     uint64_t                 temp_qp;
     uint32_t                 area_in_sbs;
 
-    picture_area_in_pixel = sequence_control_set_ptr->luma_height*sequence_control_set_ptr->luma_width;
+    picture_area_in_pixel = sequence_control_set_ptr->seq_header.max_frame_height*sequence_control_set_ptr->seq_header.max_frame_width;
 
     if (rate_control_layer_ptr->first_frame == 1) {
         rate_control_layer_ptr->first_frame = 0;

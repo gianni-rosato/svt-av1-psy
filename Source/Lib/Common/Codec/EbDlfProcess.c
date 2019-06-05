@@ -176,9 +176,9 @@ void* dlf_kernel(void *input_ptr)
                 recon_picture_ptr,
                 cm->frame_to_show);
 
-            if (sequence_control_set_ptr->enable_restoration)
+            if (sequence_control_set_ptr->seq_header.enable_restoration)
                 av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
-            if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode)
+            if (sequence_control_set_ptr->seq_header.enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode)
             {
                 if (is16bit)
                 {
@@ -203,19 +203,19 @@ void* dlf_kernel(void *input_ptr)
                     EbByte  enh_ptr_cb = &((input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
                     EbByte  enh_ptr_cr = &((input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
 
-                    for (int r = 0; r < sequence_control_set_ptr->luma_height; ++r) {
-                        for (int c = 0; c < sequence_control_set_ptr->luma_width; ++c) {
-                        picture_control_set_ptr->src[0]      [r * sequence_control_set_ptr->luma_width + c] = rec_ptr[r * recon_picture_ptr->stride_y + c];
-                        picture_control_set_ptr->ref_coeff[0][r * sequence_control_set_ptr->luma_width + c] = enh_ptr[r * input_picture_ptr->stride_y + c];
+                    for (int r = 0; r < sequence_control_set_ptr->seq_header.max_frame_height; ++r) {
+                        for (int c = 0; c < sequence_control_set_ptr->seq_header.max_frame_width; ++c) {
+                        picture_control_set_ptr->src[0]      [r * sequence_control_set_ptr->seq_header.max_frame_width + c] = rec_ptr[r * recon_picture_ptr->stride_y + c];
+                        picture_control_set_ptr->ref_coeff[0][r * sequence_control_set_ptr->seq_header.max_frame_width + c] = enh_ptr[r * input_picture_ptr->stride_y + c];
                         }
                     }
 
-                for (int r = 0; r < sequence_control_set_ptr->luma_height/2; ++r) {
-                    for (int c = 0; c < sequence_control_set_ptr->luma_width/2; ++c) {
-                        picture_control_set_ptr->src[1][r * sequence_control_set_ptr->luma_width/2 + c] = rec_ptr_cb[r * recon_picture_ptr->stride_cb + c];
-                        picture_control_set_ptr->ref_coeff[1][r * sequence_control_set_ptr->luma_width/2 + c] = enh_ptr_cb[r * input_picture_ptr->stride_cb + c];
-                            picture_control_set_ptr->src[2][r * sequence_control_set_ptr->luma_width / 2 + c] = rec_ptr_cr[r * recon_picture_ptr->stride_cr + c];
-                            picture_control_set_ptr->ref_coeff[2][r * sequence_control_set_ptr->luma_width / 2 + c] = enh_ptr_cr[r * input_picture_ptr->stride_cr + c];
+                for (int r = 0; r < sequence_control_set_ptr->seq_header.max_frame_height/2; ++r) {
+                    for (int c = 0; c < sequence_control_set_ptr->seq_header.max_frame_width /2; ++c) {
+                        picture_control_set_ptr->src[1][r * sequence_control_set_ptr->seq_header.max_frame_width /2 + c] = rec_ptr_cb[r * recon_picture_ptr->stride_cb + c];
+                        picture_control_set_ptr->ref_coeff[1][r * sequence_control_set_ptr->seq_header.max_frame_width /2 + c] = enh_ptr_cb[r * input_picture_ptr->stride_cb + c];
+                            picture_control_set_ptr->src[2][r * sequence_control_set_ptr->seq_header.max_frame_width / 2 + c] = rec_ptr_cr[r * recon_picture_ptr->stride_cr + c];
+                            picture_control_set_ptr->ref_coeff[2][r * sequence_control_set_ptr->seq_header.max_frame_width / 2 + c] = enh_ptr_cr[r * input_picture_ptr->stride_cr + c];
                         }
                     }
                 }
