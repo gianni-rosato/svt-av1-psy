@@ -70,6 +70,10 @@ extern "C" {
 #endif
 #define SHUT_ATB                          0 // ATB multi-mode signal
 #endif
+
+#define CHROMA_SEARCH_FIX                 1 // Fix a few bugs related to Chroma search
+#define INTRA64_FIX                       1 // Fix a bug where 64x64 are disabled for sub 720P
+#define CHROMA_SEARCH_MR                  1 // Enable chroma search for all layers in MR mode
 /**********************************************************************************/
 
 // New  presets
