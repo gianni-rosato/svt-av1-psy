@@ -2262,6 +2262,21 @@ void product_full_loop(
         uint16_t tx_org_x = context_ptr->blk_geom->tx_org_x[txb_itr];
         uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[txb_itr];
 #endif
+
+#if FIXED_128x128_CONTEXT_UPDATE
+        context_ptr->cu_ptr->luma_txb_skip_context = 0;
+        context_ptr->cu_ptr->luma_dc_sign_context[txb_itr] = 0;
+        get_txb_ctx(
+            COMPONENT_LUMA,
+            context_ptr->luma_dc_sign_level_coeff_neighbor_array,
+            context_ptr->sb_origin_x + tx_org_x,
+            context_ptr->sb_origin_y + tx_org_y,
+            context_ptr->blk_geom->bsize,
+            context_ptr->blk_geom->txsize[tx_depth][txb_itr],
+            &context_ptr->cu_ptr->luma_txb_skip_context,
+            &context_ptr->cu_ptr->luma_dc_sign_context[txb_itr]);
+#endif
+
         tu_origin_index = tx_org_x + (tx_org_y * candidateBuffer->residual_ptr->stride_y);
         y_tu_coeff_bits = 0;
 

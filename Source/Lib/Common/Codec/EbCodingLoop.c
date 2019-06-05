@@ -3085,11 +3085,15 @@ EB_EXTERN void av1_encode_pass(
 
     EbBool                 constrained_intra_flag = picture_control_set_ptr->constrained_intra_flag;
 
+
+#if LOOP_FILTER_FIX
+    EbBool dlfEnableFlag = (EbBool) picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode;
+#else
     EbBool dlfEnableFlag = (EbBool)(picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode &&
         (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
             sequence_control_set_ptr->static_config.recon_enabled ||
             sequence_control_set_ptr->static_config.stat_report));
-
+#endif
     const EbBool isIntraLCU = picture_control_set_ptr->limit_intra ? EB_FALSE : EB_TRUE;
 
     EbBool doRecon = (EbBool)(
@@ -4581,6 +4585,53 @@ EB_EXTERN void av1_encode_pass(
 #else
                         txb_origin_x = context_ptr->cu_origin_x + context_ptr->blk_geom->tx_boff_x[tuIt];
                         txb_origin_y = context_ptr->cu_origin_y + context_ptr->blk_geom->tx_boff_y[tuIt];
+#endif
+
+
+
+#if FIXED_128x128_CONTEXT_UPDATE
+                            context_ptr->cu_ptr->luma_txb_skip_context = 0;
+                            context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr] = 0;
+                            get_txb_ctx(
+                                COMPONENT_LUMA,
+                                picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+                                txb_origin_x,
+                                txb_origin_y,
+                                context_ptr->blk_geom->bsize,
+                                context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
+                                &context_ptr->cu_ptr->luma_txb_skip_context,
+                                &context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr]);
+
+                            if (context_ptr->blk_geom->has_uv && uv_pass) {
+
+                                uint32_t cu_originy_uv = (context_ptr->cu_origin_y >> 3 << 3) >> 1;
+                                uint32_t cu_originx_uv = (context_ptr->cu_origin_x >> 3 << 3) >> 1;
+
+                                cu_ptr->cb_txb_skip_context = 0;
+                                cu_ptr->cb_dc_sign_context = 0;
+                                get_txb_ctx(
+                                    COMPONENT_CHROMA,
+                                    picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+                                    cu_originx_uv,
+                                    cu_originy_uv,
+                                    context_ptr->blk_geom->bsize_uv,
+                                    context_ptr->blk_geom->txsize_uv[context_ptr->cu_ptr->tx_depth][context_ptr->txb_itr],
+                                    &cu_ptr->cb_txb_skip_context,
+                                    &cu_ptr->cb_dc_sign_context);
+
+
+                                cu_ptr->cr_txb_skip_context = 0;
+                                cu_ptr->cr_dc_sign_context = 0;
+                                get_txb_ctx(
+                                    COMPONENT_CHROMA,
+                                    picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+                                    cu_originx_uv,
+                                    cu_originy_uv,
+                                    context_ptr->blk_geom->bsize_uv,
+                                    context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
+                                    &cu_ptr->cr_txb_skip_context,
+                                    &cu_ptr->cr_dc_sign_context);
+                            }
 #endif
                         if (cu_ptr->skip_flag == EB_TRUE) {
                             cu_ptr->transform_unit_array[context_ptr->txb_itr].y_has_coeff = EB_FALSE;
