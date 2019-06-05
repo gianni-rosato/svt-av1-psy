@@ -827,19 +827,6 @@ static EbErrorType VerifySettings(EbConfig *config, uint32_t channelNumber)
         return_error = EB_ErrorBadParameter;
     }
 
-    // --- start: ALTREF_FILTERING_SUPPORT
-    // alt-ref frames related
-    if (config->altref_strength > 6 ) {
-        fprintf(config->error_log_file, "Error instance %u: invalid altref-strength, should be in the range [0 - 6] \n",channelNumber+1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->altref_nframes > 15 ) {
-        fprintf(config->error_log_file, "Error instance %u: invalid altref-nframes, should be in the range [0 - 15] \n",channelNumber+1);
-        return_error = EB_ErrorBadParameter;
-    }
-    // --- end: ALTREF_FILTERING_SUPPORT
-
     return return_error;
 }
 

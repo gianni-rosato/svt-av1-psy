@@ -2771,6 +2771,17 @@ static EbErrorType VerifySettings(
         return_error = EB_ErrorBadParameter;
     }
 
+    // alt-ref frames related
+    if (config->altref_strength > 6 ) {
+        SVT_LOG("Error instance %u: invalid altref-strength, should be in the range [0 - 6] \n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->altref_nframes > 15 ) {
+        SVT_LOG("Error instance %u: invalid altref-nframes, should be in the range [0 - 15] \n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     return return_error;
 }
 
