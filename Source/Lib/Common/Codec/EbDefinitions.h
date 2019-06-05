@@ -327,6 +327,12 @@ enum {
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/
+
+#define ALTREF_MAX_NFRAMES 10 // maximum number of frames allowed for the Alt-ref picture computation
+                              // this number can be increased by increasing the constant
+                              // FUTURE_WINDOW_WIDTH defined in EbPictureDecisionProcess.c
+#define ALTREF_MAX_STRENGTH 6
+
 #define PAD_VALUE                                (128+32)
 
 //  Delta QP support
