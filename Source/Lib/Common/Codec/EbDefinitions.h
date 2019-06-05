@@ -53,6 +53,8 @@ extern "C" {
 #define ENHANCED_Nx4_4xN_NEW_MV           1 // Nx4 and 4xN MVs to be inherited from the parent block rather than from the 64x64
 #define NEW_NEAREST_NEW_INJECTION         1 // Missing inter candidates NEARETSEST/NEW, NEW/NEARETSEST, NEAR/NEW, NEW/NEAR.
 
+#define RDOQ_FP_QUANTIZATION              1 // Use FP quantization method if RDOQ ON 
+
 #define ATB                               1 // ATB Main Flag
 #if ATB
 #define ATB_SUPPORT                       1 // Tranform block geometry, data structure(s), ..

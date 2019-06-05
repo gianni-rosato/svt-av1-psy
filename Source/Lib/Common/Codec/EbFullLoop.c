@@ -375,39 +375,6 @@ void av1_highbd_quantize_b_facade(const TranLow *coeff_ptr,
     }
 }
 
-/*
-static INLINE void highbd_quantize_dc(
-    const TranLow *coeff_ptr, int32_t n_coeffs, int32_t skip_block,
-    const int16_t *round_ptr, const int16_t quant, TranLow *qcoeff_ptr,
-    TranLow *dqcoeff_ptr, const int16_t dequant_ptr, uint16_t *eob_ptr,
-    const QmVal *qm_ptr, const QmVal *iqm_ptr, const int32_t log_scale) {
-    int32_t eob = -1;
-
-    memset(qcoeff_ptr, 0, n_coeffs * sizeof(*qcoeff_ptr));
-    memset(dqcoeff_ptr, 0, n_coeffs * sizeof(*dqcoeff_ptr));
-
-    if (!skip_block) {
-        const QmVal wt = qm_ptr != NULL ? qm_ptr[0] : (1 << AOM_QM_BITS);
-        const QmVal iwt = iqm_ptr != NULL ? iqm_ptr[0] : (1 << AOM_QM_BITS);
-        const int32_t coeff = coeff_ptr[0];
-        const int32_t coeff_sign = (coeff >> 31);
-        const int32_t abs_coeff = (coeff ^ coeff_sign) - coeff_sign;
-        const int64_t tmp = abs_coeff + ROUND_POWER_OF_TWO(round_ptr[0], log_scale);
-        const int64_t tmpw = tmp * wt;
-        const int32_t abs_qcoeff =
-            (int32_t)((tmpw * quant) >> (16 - log_scale + AOM_QM_BITS));
-        qcoeff_ptr[0] = (TranLow)((abs_qcoeff ^ coeff_sign) - coeff_sign);
-        const int32_t dequant =
-            (dequant_ptr * iwt + (1 << (AOM_QM_BITS - 1))) >> AOM_QM_BITS;
-
-        const TranLow abs_dqcoeff = (abs_qcoeff * dequant) >> log_scale;
-        dqcoeff_ptr[0] = (TranLow)((abs_dqcoeff ^ coeff_sign) - coeff_sign);
-        if (abs_qcoeff) eob = 0;
-    }
-    *eob_ptr = (uint16_t)(eob + 1);
-}
-*/
-
 void av1_quantize_b_facade_II(
     const TranLow *coeff_ptr,
     int32_t stride,
@@ -476,6 +443,153 @@ void av1_quantize_b_facade_II(
         }
     }
 }
+
+
+#if RDOQ_FP_QUANTIZATION
+static void quantize_fp_helper_c(
+    const TranLow *coeff_ptr,
+    intptr_t n_coeffs, 
+    const int16_t *zbin_ptr,
+    const int16_t *round_ptr, 
+    const int16_t *quant_ptr,
+    const int16_t *quant_shift_ptr, 
+    TranLow *qcoeff_ptr,
+    TranLow *dqcoeff_ptr,
+    const int16_t *dequant_ptr, 
+    uint16_t *eob_ptr,
+    const int16_t *scan,
+    const int16_t *iscan, 
+    const QmVal *qm_ptr,
+    const QmVal *iqm_ptr,
+    int log_scale) {
+    int i, eob = -1;
+    const int rounding[2] = { ROUND_POWER_OF_TWO(round_ptr[0], log_scale),
+                              ROUND_POWER_OF_TWO(round_ptr[1], log_scale) };
+    // TODO(jingning) Decide the need of these arguments after the
+    // quantization process is completed.
+    (void)zbin_ptr;
+    (void)quant_shift_ptr;
+    (void)iscan;
+
+    memset(qcoeff_ptr, 0, n_coeffs * sizeof(*qcoeff_ptr));
+    memset(dqcoeff_ptr, 0, n_coeffs * sizeof(*dqcoeff_ptr));
+
+    if (qm_ptr == NULL && iqm_ptr == NULL) {
+        for (i = 0; i < n_coeffs; i++) {
+            const int rc = scan[i];
+            const int32_t thresh = (int32_t)(dequant_ptr[rc != 0]);
+            const int coeff = coeff_ptr[rc];
+            const int coeff_sign = (coeff >> 31);
+            int64_t abs_coeff = (coeff ^ coeff_sign) - coeff_sign;
+            int tmp32 = 0;
+            if ((abs_coeff << (1 + log_scale)) >= thresh) {
+                abs_coeff =
+                    clamp64(abs_coeff + rounding[rc != 0], INT16_MIN, INT16_MAX);
+                tmp32 = (int)((abs_coeff * quant_ptr[rc != 0]) >> (16 - log_scale));
+                if (tmp32) {
+                    qcoeff_ptr[rc] = (tmp32 ^ coeff_sign) - coeff_sign;
+                    const TranLow abs_dqcoeff =
+                        (tmp32 * dequant_ptr[rc != 0]) >> log_scale;
+                    dqcoeff_ptr[rc] = (abs_dqcoeff ^ coeff_sign) - coeff_sign;
+                }
+            }
+            if (tmp32) eob = i;
+        }
+    }
+    else {
+        // Quantization pass: All coefficients with index >= zero_flag are
+        // skippable. Note: zero_flag can be zero.
+        for (i = 0; i < n_coeffs; i++) {
+            const int rc = scan[i];
+            const int coeff = coeff_ptr[rc];
+            const QmVal wt = qm_ptr ? qm_ptr[rc] : (1 << AOM_QM_BITS);
+            const QmVal iwt = iqm_ptr ? iqm_ptr[rc] : (1 << AOM_QM_BITS);
+            const int dequant =
+                (dequant_ptr[rc != 0] * iwt + (1 << (AOM_QM_BITS - 1))) >>
+                AOM_QM_BITS;
+            const int coeff_sign = (coeff >> 31);
+            int64_t abs_coeff = (coeff ^ coeff_sign) - coeff_sign;
+            int tmp32 = 0;
+            if (abs_coeff * wt >=
+                (dequant_ptr[rc != 0] << (AOM_QM_BITS - (1 + log_scale)))) {
+                abs_coeff += rounding[rc != 0];
+                abs_coeff = clamp64(abs_coeff, INT16_MIN, INT16_MAX);
+                tmp32 = (int)((abs_coeff * wt * quant_ptr[rc != 0]) >>
+                    (16 - log_scale + AOM_QM_BITS));
+                qcoeff_ptr[rc] = (tmp32 ^ coeff_sign) - coeff_sign;
+                const QmVal abs_dqcoeff = (tmp32 * dequant) >> log_scale;
+                dqcoeff_ptr[rc] = (abs_dqcoeff ^ coeff_sign) - coeff_sign;
+            }
+
+            if (tmp32) eob = i;
+        }
+    }
+    *eob_ptr = eob + 1;
+}
+
+void av1_quantize_fp_facade(
+    const TranLow *coeff_ptr,
+    intptr_t n_coeffs,
+    const MacroblockPlane *p,
+    TranLow *qcoeff_ptr,
+    TranLow *dqcoeff_ptr,
+    uint16_t *eob_ptr,
+    const ScanOrder *sc,
+    const QuantParam *qparam)  {
+
+    const QmVal *qm_ptr = qparam->qmatrix;
+    const QmVal *iqm_ptr = qparam->iqmatrix;
+
+#if 1
+    quantize_fp_helper_c(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+        p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+        dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+        sc->iscan, qm_ptr, iqm_ptr, qparam->log_scale);
+#else
+    if (qm_ptr != NULL && iqm_ptr != NULL) {
+        quantize_fp_helper_c(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+            p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+            dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+            sc->iscan, qm_ptr, iqm_ptr, qparam->log_scale);
+    }
+    else {
+        switch (qparam->log_scale) {
+        case 0:
+            if (n_coeffs < 16) {
+                // TODO(jingning): Need SIMD implementation for smaller block size
+                // quantization.
+                quantize_fp_helper_c(
+                    coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+                    p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr, dqcoeff_ptr,
+                    p->dequant_QTX, eob_ptr, sc->scan, sc->iscan, NULL, NULL, 0);
+            }
+            else {
+                av1_quantize_fp(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+                    p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+                    dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+                    sc->iscan);
+            }
+            break;
+        case 1:
+            av1_quantize_fp_32x32(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+                p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+                dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+                sc->iscan);
+            break;
+        case 2:
+            av1_quantize_fp_64x64(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+                p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+                dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+                sc->iscan);
+            break;
+        default: assert(0);
+        }
+    }
+#endif
+}
+
+
+#endif
 
 #if OPT_QUANT_COEFF
 // Hsan: code clean up; from static to extern as now used @ more than 1 file
@@ -1838,9 +1952,15 @@ void av1_quantize_inv_quantize(
     qparam.qmatrix = qMatrix;
     qparam.iqmatrix = iqMatrix;
 
-    if (bit_increment)
-        av1_highbd_quantize_b_facade(
-        (TranLow*)coeff,
+
+#if RDOQ_FP_QUANTIZATION
+    EbBool is_inter = (pred_mode >= NEARESTMV);
+#endif
+#if RDOQ_FP_QUANTIZATION
+    EbBool perform_rdoq = (md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
+    if (perform_rdoq)
+        av1_quantize_fp_facade(
+            (TranLow*)coeff,
             n_coeffs,
             &candidate_plane,
             quant_coeff,
@@ -1849,24 +1969,38 @@ void av1_quantize_inv_quantize(
             scan_order,
             &qparam);
     else
-        av1_quantize_b_facade_II(
-        (TranLow*)coeff,
-            coeff_stride,
-            width,
-            height,
-            n_coeffs,
-            &candidate_plane,
-            quant_coeff,
-            (TranLow*)recon_coeff,
-            eob,
-            scan_order,
-            &qparam);
+#endif
+        if (bit_increment)
+            av1_highbd_quantize_b_facade(
+                (TranLow*)coeff,
+                n_coeffs,
+                &candidate_plane,
+                quant_coeff,
+                (TranLow*)recon_coeff,
+                eob,
+                scan_order,
+                &qparam);
+        else
+            av1_quantize_b_facade_II(
+                (TranLow*)coeff,
+                coeff_stride,
+                width,
+                height,
+                n_coeffs,
+                &candidate_plane,
+                quant_coeff,
+                (TranLow*)recon_coeff,
+                eob,
+                scan_order,
+                &qparam);
 
 #if OPT_QUANT_COEFF
+#if !RDOQ_FP_QUANTIZATION
     EbBool is_inter = (pred_mode >= NEARESTMV);
+#endif
 #if TRELLIS_MD
-#if RDOQ_INTRA
-    if (md_context->trellis_quant_coeff_optimization && *eob != 0 && component_type == COMPONENT_LUMA && !is_intra_bc) {
+#if RDOQ_FP_QUANTIZATION
+    if (perform_rdoq && *eob != 0) {
 #else
 #if TRELLIS_CHROMA
     if (md_context->trellis_quant_coeff_optimization && *eob != 0 && is_inter) {
