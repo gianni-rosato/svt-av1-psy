@@ -836,7 +836,7 @@ void av1_quantize_fp_32x32_avx2(
     __m256i coeff, thr;
     const int log_scale = 1;
 
-    init_qp(zbin_ptr, round_ptr, quant_ptr, dequant_ptr, quant_shift_ptr, qp);
+    init_qp_temp(zbin_ptr, round_ptr, quant_ptr, dequant_ptr, quant_shift_ptr, qp);
     //init_qp(round_ptr, quant_ptr, dequant_ptr, log_scale, &thr, qp);
     read_coeff(coeff_ptr, &coeff);
 
@@ -878,7 +878,7 @@ void av1_quantize_fp_64x64_avx2(
     __m256i coeff, thr;
     const int log_scale = 2;
 
-    init_qp(zbin_ptr, round_ptr, quant_ptr, dequant_ptr, quant_shift_ptr, qp);
+    init_qp_temp(zbin_ptr, round_ptr, quant_ptr, dequant_ptr, quant_shift_ptr, qp);
     //init_qp(round_ptr, quant_ptr, dequant_ptr, log_scale, &thr, qp);
     read_coeff(coeff_ptr, &coeff);
 
