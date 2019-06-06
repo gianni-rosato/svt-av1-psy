@@ -2081,7 +2081,7 @@ void av1_quantize_inv_quantize(
 
     EbBool perform_rdoq = (md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
     // Hsan: fp quant not yet supported for 10BIT
-    if (perform_rdoq && !bit_increment)
+    if (perform_rdoq && !is_inter && !bit_increment)
         av1_quantize_fp_facade(
             (TranLow*)coeff,
             n_coeffs,
