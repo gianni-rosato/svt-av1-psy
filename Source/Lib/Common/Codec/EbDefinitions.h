@@ -287,6 +287,7 @@ extern "C" {
 #define MRP_DISABLE_ADDED_CAND_M1                        0
 
 #define EIGTH_PEL_MV                                    0
+#define DISABLE_NSQ_TABLE_FOR_M0                        1
 
 struct Buf2D
 {
