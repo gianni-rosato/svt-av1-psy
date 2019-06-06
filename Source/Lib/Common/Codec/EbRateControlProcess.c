@@ -3090,6 +3090,8 @@ void init_rc(
     }
 }
 #endif
+
+#if !FIXED_128x128_CONTEXT_UPDATE
 static const uint8_t quantizer_to_qindex[] = {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48,
     52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100,
@@ -3097,6 +3099,7 @@ static const uint8_t quantizer_to_qindex[] = {
     156, 160, 164, 168, 172, 176, 180, 184, 188, 192, 196, 200, 204,
     208, 212, 216, 220, 224, 228, 232, 236, 240, 244, 249, 255,
 };
+#endif
 
 #define MAX_Q_INDEX 255
 #define MIN_Q_INDEX 0
@@ -3691,7 +3694,7 @@ void* rate_control_kernel(void *input_ptr)
                 // if RC mode is 0,  fixed QP is used
                 // QP scaling based on POC number for Flat IPPP structure
                 picture_control_set_ptr->parent_pcs_ptr->base_qindex = quantizer_to_qindex[picture_control_set_ptr->picture_qp];
-#if !DEBUG_TRELLIS
+
                 if (sequence_control_set_ptr->static_config.enable_qp_scaling_flag && picture_control_set_ptr->parent_pcs_ptr->qp_on_the_fly == EB_FALSE) {
                     const int32_t qindex = quantizer_to_qindex[(uint8_t)sequence_control_set_ptr->qp];
                     const double q_val = av1_convert_qindex_to_q(qindex, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
@@ -3757,7 +3760,7 @@ void* rate_control_kernel(void *input_ptr)
                     picture_control_set_ptr->picture_qp = (uint8_t)CLIP3((int32_t)sequence_control_set_ptr->static_config.min_qp_allowed, (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed, picture_control_set_ptr->parent_pcs_ptr->picture_qp);
                     picture_control_set_ptr->parent_pcs_ptr->base_qindex = quantizer_to_qindex[picture_control_set_ptr->picture_qp];
                 }
-#endif
+
                 picture_control_set_ptr->parent_pcs_ptr->picture_qp = picture_control_set_ptr->picture_qp;
             }
             else {

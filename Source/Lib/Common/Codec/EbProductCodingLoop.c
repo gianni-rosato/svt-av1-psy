@@ -189,7 +189,7 @@ void mode_decision_update_neighbor_arrays(
             bheight,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-#if ATB_DC_CONTEXT_SUPPORT_0
+#if DC_SIGN_CONTEXT_FIX
 #if ATB_SUPPORT
         uint16_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->cu_ptr->tx_depth];
 #else
@@ -198,28 +198,12 @@ void mode_decision_update_neighbor_arrays(
         for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++)
 #endif
         {
-#if DC_SIGN_CONTEXT_FIX
             uint8_t dc_sign_level_coeff = (int32_t)context_ptr->cu_ptr->quantized_dc[0][txb_itr];
-#else
-#if ATB_DC_CONTEXT_SUPPORT_1
-            uint8_t y_has_coeff = context_ptr->cu_ptr->transform_unit_array[txb_itr].y_has_coeff;
-            int32_t lumaDcCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[0][txb_itr];
-#endif
-            uint8_t dcSignCtx = 0;
-            if (lumaDcCoeff > 0)
-                dcSignCtx = 2;
-            else if (lumaDcCoeff < 0)
-                dcSignCtx = 1;
-            else
-                dcSignCtx = 0;
-            uint8_t dc_sign_level_coeff = (uint8_t)((dcSignCtx << COEFF_CONTEXT_BITS) | y_has_coeff);
-            if (!y_has_coeff)
-                dc_sign_level_coeff = 0;
-#endif
+
             neighbor_array_unit_mode_write(
                 context_ptr->luma_dc_sign_level_coeff_neighbor_array,
                 (uint8_t*)&dc_sign_level_coeff,
-#if ATB_DC_CONTEXT_SUPPORT_0
+#if DC_SIGN_CONTEXT_FIX
 #if ATB_SUPPORT
                 context_ptr->sb_origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
                 context_ptr->sb_origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
@@ -1634,9 +1618,11 @@ void ProductCodingLoopInitFastLoop(
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
     NeighborArrayUnit        *skip_coeff_neighbor_array,
 #endif
+#if !FIXED_128x128_CONTEXT_UPDATE
     NeighborArrayUnit        *luma_dc_sign_level_coeff_neighbor_array,
     NeighborArrayUnit        *cb_dc_sign_level_coeff_neighbor_array,
     NeighborArrayUnit        *cr_dc_sign_level_coeff_neighbor_array,
+#endif
     NeighborArrayUnit        *inter_pred_dir_neighbor_array,
     NeighborArrayUnit        *ref_frame_type_neighbor_array,
     NeighborArrayUnit        *intra_luma_mode_neighbor_array,
@@ -1664,9 +1650,11 @@ void ProductCodingLoopInitFastLoop(
         BLOCK_SIZE_64,
         skip_coeff_neighbor_array,
 #endif
+#if !FIXED_128x128_CONTEXT_UPDATE
         luma_dc_sign_level_coeff_neighbor_array,
         cb_dc_sign_level_coeff_neighbor_array,
         cr_dc_sign_level_coeff_neighbor_array,
+#endif
         inter_pred_dir_neighbor_array,
         ref_frame_type_neighbor_array,
         intra_luma_mode_neighbor_array,
@@ -3435,6 +3423,19 @@ void perform_intra_tx_partitioning(
             uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[context_ptr->tx_depth][context_ptr->txb_itr];
 
 #if ATB_DC_CONTEXT_SUPPORT_2
+#if FIXED_128x128_CONTEXT_UPDATE
+            context_ptr->luma_txb_skip_context = 0;
+            context_ptr->luma_dc_sign_context = 0;
+            get_txb_ctx(
+                COMPONENT_LUMA,
+                context_ptr->tx_search_luma_dc_sign_level_coeff_neighbor_array,
+                context_ptr->sb_origin_x + tx_org_x,
+                context_ptr->sb_origin_y + tx_org_y,
+                context_ptr->blk_geom->bsize,
+                context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
+                &context_ptr->luma_txb_skip_context,
+                &context_ptr->luma_dc_sign_context);
+#else
             context_ptr->cu_ptr->luma_txb_skip_context = 0;
             context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr] = 0;
             get_txb_ctx(
@@ -3446,6 +3447,7 @@ void perform_intra_tx_partitioning(
                 context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->cu_ptr->luma_txb_skip_context,
                 &context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr]);
+#endif
 #endif
             tu_origin_index = tx_org_x + (tx_org_y * candidateBuffer->residual_ptr->stride_y);
 
@@ -3518,10 +3520,11 @@ void perform_intra_tx_partitioning(
                     BIT_INCREMENT_8BIT,
                     tx_type,
                     candidateBuffer,
-                    context_ptr->cu_ptr->luma_txb_skip_context,
-#if ATB_DC_CONTEXT_SUPPORT_0
-                    context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr],
+#if FIXED_128x128_CONTEXT_UPDATE
+                    context_ptr->luma_txb_skip_context,
+                    context_ptr->luma_dc_sign_context,
 #else
+                    context_ptr->cu_ptr->luma_txb_skip_context,
                     context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
                     candidateBuffer->candidate_ptr->pred_mode,
@@ -3595,14 +3598,14 @@ void perform_intra_tx_partitioning(
 
                 //LUMA-ONLY
                 av1_tu_estimate_coeff_bits(
+#if FIXED_128x128_CONTEXT_UPDATE
+                    context_ptr,
+#endif
 #if CABAC_UP
                     0,   //allow_update_cdf,
                     NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
                     picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT_0
-                    context_ptr->txb_itr,
-#endif
                     candidateBuffer,
                     context_ptr->cu_ptr,
                     txb_1d_offset,
@@ -3681,10 +3684,11 @@ void perform_intra_tx_partitioning(
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
 #endif
                 candidateBuffer,
-                context_ptr->cu_ptr->luma_txb_skip_context,
-#if ATB_DC_CONTEXT_SUPPORT_0
-                context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr],
+#if FIXED_128x128_CONTEXT_UPDATE
+                context_ptr->luma_txb_skip_context,
+                context_ptr->luma_dc_sign_context,
 #else
+                context_ptr->cu_ptr->luma_txb_skip_context,
                 context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
                 candidateBuffer->candidate_ptr->pred_mode,
@@ -3759,14 +3763,14 @@ void perform_intra_tx_partitioning(
 
             //LUMA-ONLY
             av1_tu_estimate_coeff_bits(
+#if FIXED_128x128_CONTEXT_UPDATE
+                context_ptr,
+#endif
 #if CABAC_UP
                 0,   //allow_update_cdf,
                 NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
                 picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT_0
-                context_ptr->txb_itr,
-#endif
                 candidateBuffer,
                 context_ptr->cu_ptr,
                 txb_1d_offset,
@@ -3789,7 +3793,11 @@ void perform_intra_tx_partitioning(
                 asm_type);
 
             av1_tu_calc_cost_luma(
+#if FIXED_128x128_CONTEXT_UPDATE
+                context_ptr->luma_txb_skip_context,
+#else
                 context_ptr->cu_ptr->luma_txb_skip_context,
+#endif
                 candidateBuffer->candidate_ptr,
                 context_ptr->txb_itr,
                 context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
@@ -3904,6 +3912,19 @@ void perform_intra_tx_partitioning(
             uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[context_ptr->tx_depth][context_ptr->txb_itr];
 
 #if ATB_DC_CONTEXT_SUPPORT_2
+#if FIXED_128x128_CONTEXT_UPDATE
+            context_ptr->luma_txb_skip_context = 0;
+            context_ptr->luma_dc_sign_context = 0;
+            get_txb_ctx(
+                COMPONENT_LUMA,
+                picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
+                context_ptr->sb_origin_x + tx_org_x,
+                context_ptr->sb_origin_y + tx_org_y,
+                context_ptr->blk_geom->bsize,
+                context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
+                &context_ptr->luma_txb_skip_context,
+                &context_ptr->luma_dc_sign_context);
+#else
             context_ptr->cu_ptr->luma_txb_skip_context = 0;
             context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr] = 0;
             get_txb_ctx(
@@ -3915,6 +3936,7 @@ void perform_intra_tx_partitioning(
                 context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->cu_ptr->luma_txb_skip_context,
                 &context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr]);
+#endif
 #endif
 
             tu_origin_index = tx_org_x + (tx_org_y * candidateBuffer->residual_ptr->stride_y);
@@ -3989,10 +4011,11 @@ void perform_intra_tx_partitioning(
                 candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
 #endif
                 candidateBuffer,
-                context_ptr->cu_ptr->luma_txb_skip_context,
-#if ATB_DC_CONTEXT_SUPPORT_0
-                context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr],
+#if FIXED_128x128_CONTEXT_UPDATE
+                context_ptr->luma_txb_skip_context,
+                context_ptr->luma_dc_sign_context,
 #else
+                context_ptr->cu_ptr->luma_txb_skip_context,
                 context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
                 candidateBuffer->candidate_ptr->pred_mode,
@@ -4067,14 +4090,14 @@ void perform_intra_tx_partitioning(
 
             //LUMA-ONLY
             av1_tu_estimate_coeff_bits(
+#if FIXED_128x128_CONTEXT_UPDATE
+                context_ptr,
+#endif
 #if CABAC_UP
                 0,   //allow_update_cdf,
                 NULL,//FRAME_CONTEXT *ec_ctx,
 #endif
                 picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT_0
-                context_ptr->txb_itr,
-#endif
                 candidateBuffer,
                 context_ptr->cu_ptr,
                 txb_1d_offset,
@@ -4097,7 +4120,11 @@ void perform_intra_tx_partitioning(
                 asm_type);
 
             av1_tu_calc_cost_luma(
+#if FIXED_128x128_CONTEXT_UPDATE
+                context_ptr->luma_txb_skip_context,
+#else
                 context_ptr->cu_ptr->luma_txb_skip_context,
+#endif
                 candidateBuffer->candidate_ptr,
                 context_ptr->txb_itr,
                 context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
@@ -4568,7 +4595,6 @@ void move_cu_data(
     //CHKN IntMv  predmv[2];
 
     memcpy(dst_cu->predmv, src_cu->predmv, 2 * sizeof(IntMv));
-
     //CHKN uint8_t                         skip_coeff_context;
     //CHKN int16_t                        luma_txb_skip_context;
     //CHKN int16_t                        luma_dc_sign_context;
@@ -4581,20 +4607,14 @@ void move_cu_data(
     //CHKN uint32_t                        partitionContext;
 
     dst_cu->skip_coeff_context = src_cu->skip_coeff_context;
+#if !FIXED_128x128_CONTEXT_UPDATE
     dst_cu->luma_txb_skip_context = src_cu->luma_txb_skip_context;
-#if ATB_DC_CONTEXT_SUPPORT_0
-    //memcpy(dst_cu->luma_dc_sign_context, src_cu->luma_dc_sign_context, MAX_TXB_COUNT * sizeof(int16_t));
-    dst_cu->luma_dc_sign_context[0] = src_cu->luma_dc_sign_context[0];
-    dst_cu->luma_dc_sign_context[1] = src_cu->luma_dc_sign_context[1];
-    dst_cu->luma_dc_sign_context[2] = src_cu->luma_dc_sign_context[2];
-    dst_cu->luma_dc_sign_context[3] = src_cu->luma_dc_sign_context[3];
-#else
     dst_cu->luma_dc_sign_context = src_cu->luma_dc_sign_context;
-#endif
     dst_cu->cb_txb_skip_context = src_cu->cb_txb_skip_context;
     dst_cu->cb_dc_sign_context = src_cu->cb_dc_sign_context;
     dst_cu->cr_txb_skip_context = src_cu->cr_txb_skip_context;
     dst_cu->cr_dc_sign_context = src_cu->cr_dc_sign_context;
+#endif
     dst_cu->reference_mode_context = src_cu->reference_mode_context;
     dst_cu->compoud_reference_type_context = src_cu->compoud_reference_type_context;
 #if ATB_DC_CONTEXT_SUPPORT_1
@@ -4705,20 +4725,14 @@ void move_cu_data_redund(
     //CHKN uint32_t                        partitionContext;
 
     dst_cu->skip_coeff_context = src_cu->skip_coeff_context;
+#if !FIXED_128x128_CONTEXT_UPDATE
     dst_cu->luma_txb_skip_context = src_cu->luma_txb_skip_context;
-#if ATB_DC_CONTEXT_SUPPORT_0
-    //memcpy(dst_cu->luma_dc_sign_context, src_cu->luma_dc_sign_context, MAX_TXB_COUNT * sizeof(int16_t));
-    dst_cu->luma_dc_sign_context[0] = src_cu->luma_dc_sign_context[0];
-    dst_cu->luma_dc_sign_context[1] = src_cu->luma_dc_sign_context[1];
-    dst_cu->luma_dc_sign_context[2] = src_cu->luma_dc_sign_context[2];
-    dst_cu->luma_dc_sign_context[3] = src_cu->luma_dc_sign_context[3];
-#else
     dst_cu->luma_dc_sign_context = src_cu->luma_dc_sign_context;
-#endif
     dst_cu->cb_txb_skip_context = src_cu->cb_txb_skip_context;
     dst_cu->cb_dc_sign_context = src_cu->cb_dc_sign_context;
     dst_cu->cr_txb_skip_context = src_cu->cr_txb_skip_context;
     dst_cu->cr_dc_sign_context = src_cu->cr_dc_sign_context;
+#endif
     dst_cu->reference_mode_context = src_cu->reference_mode_context;
     dst_cu->compoud_reference_type_context = src_cu->compoud_reference_type_context;
 #if ATB_DC_CONTEXT_SUPPORT_1
@@ -5754,9 +5768,11 @@ void md_encode_block(
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
             context_ptr->skip_coeff_neighbor_array,
 #endif
+#if !FIXED_128x128_CONTEXT_UPDATE
             context_ptr->luma_dc_sign_level_coeff_neighbor_array,
             context_ptr->cb_dc_sign_level_coeff_neighbor_array,
             context_ptr->cr_dc_sign_level_coeff_neighbor_array,
+#endif
             context_ptr->inter_pred_dir_neighbor_array,
             context_ptr->ref_frame_type_neighbor_array,
             context_ptr->intra_luma_mode_neighbor_array,

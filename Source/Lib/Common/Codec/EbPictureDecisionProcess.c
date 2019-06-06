@@ -1123,17 +1123,33 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
     if (sc_content_detected)
+#if LOOP_FILTER_FIX
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            picture_control_set_ptr->loop_filter_mode = 3;
+        else if (picture_control_set_ptr->enc_mode == ENC_M1)
+            picture_control_set_ptr->loop_filter_mode = picture_control_set_ptr->is_used_as_reference_flag ? 3 : 0;
+#else
         if (picture_control_set_ptr->enc_mode <= ENC_M1)
             picture_control_set_ptr->loop_filter_mode = 3;
+#endif
         else
             picture_control_set_ptr->loop_filter_mode = 0;
     else
 
 #endif
+#if LOOP_FILTER_FIX
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            picture_control_set_ptr->loop_filter_mode = 3;
+        else if (picture_control_set_ptr->enc_mode <= ENC_M5)
+            picture_control_set_ptr->loop_filter_mode = picture_control_set_ptr->is_used_as_reference_flag ? 3 : 0;
+        else
+            picture_control_set_ptr->loop_filter_mode = picture_control_set_ptr->is_used_as_reference_flag ? 1 : 0;
+#else
         if (picture_control_set_ptr->enc_mode <= ENC_M5)
             picture_control_set_ptr->loop_filter_mode = 3;
         else
             picture_control_set_ptr->loop_filter_mode = 1;
+#endif
 #else
         if (picture_control_set_ptr->enc_mode <= ENC_M3)
             picture_control_set_ptr->loop_filter_mode = 3;
