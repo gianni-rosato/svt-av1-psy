@@ -4205,7 +4205,33 @@ EB_EXTERN void av1_encode_pass(
                                 context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                                 &context_ptr->cu_ptr->luma_txb_skip_context,
                                 &context_ptr->cu_ptr->luma_dc_sign_context[context_ptr->txb_itr]);
+#if FIXED_128x128_CONTEXT_UPDATE
+                            if (context_ptr->blk_geom->has_uv && uv_pass) {
+                                cu_ptr->cb_txb_skip_context = 0;
+                                cu_ptr->cb_dc_sign_context = 0;
+                                get_txb_ctx(
+                                    COMPONENT_CHROMA,
+                                    picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+                                    ROUND_UV(txb_origin_x) >> 1,
+                                    ROUND_UV(txb_origin_y) >> 1,
+                                    context_ptr->blk_geom->bsize_uv,
+                                    context_ptr->blk_geom->txsize_uv[context_ptr->cu_ptr->tx_depth][context_ptr->txb_itr],
+                                    &cu_ptr->cb_txb_skip_context,
+                                    &cu_ptr->cb_dc_sign_context);
 
+                                cu_ptr->cr_txb_skip_context = 0;
+                                cu_ptr->cr_dc_sign_context = 0;
+                                get_txb_ctx(
+                                    COMPONENT_CHROMA,
+                                    picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+                                    ROUND_UV(txb_origin_x) >> 1,
+                                    ROUND_UV(txb_origin_y) >> 1,
+                                    context_ptr->blk_geom->bsize_uv,
+                                    context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
+                                    &cu_ptr->cr_txb_skip_context,
+                                    &cu_ptr->cr_dc_sign_context);
+                            }
+#else
                             if (context_ptr->blk_geom->has_uv && uv_pass) {
 
                                 uint32_t cu_originy_uv = (context_ptr->cu_origin_y >> 3 << 3) >> 1;
@@ -4236,6 +4262,7 @@ EB_EXTERN void av1_encode_pass(
                                     &cu_ptr->cr_txb_skip_context,
                                     &cu_ptr->cr_dc_sign_context);
                             }
+#endif
 #endif
                             if (!zeroLumaCbfMD)
                                 //inter mode  1
@@ -4604,16 +4631,13 @@ EB_EXTERN void av1_encode_pass(
 
                             if (context_ptr->blk_geom->has_uv && uv_pass) {
 
-                                uint32_t cu_originy_uv = (context_ptr->cu_origin_y >> 3 << 3) >> 1;
-                                uint32_t cu_originx_uv = (context_ptr->cu_origin_x >> 3 << 3) >> 1;
-
                                 cu_ptr->cb_txb_skip_context = 0;
                                 cu_ptr->cb_dc_sign_context = 0;
                                 get_txb_ctx(
                                     COMPONENT_CHROMA,
                                     picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
-                                    cu_originx_uv,
-                                    cu_originy_uv,
+                                    ROUND_UV(txb_origin_x) >> 1,
+                                    ROUND_UV(txb_origin_y) >> 1,
                                     context_ptr->blk_geom->bsize_uv,
                                     context_ptr->blk_geom->txsize_uv[context_ptr->cu_ptr->tx_depth][context_ptr->txb_itr],
                                     &cu_ptr->cb_txb_skip_context,
@@ -4625,8 +4649,8 @@ EB_EXTERN void av1_encode_pass(
                                 get_txb_ctx(
                                     COMPONENT_CHROMA,
                                     picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
-                                    cu_originx_uv,
-                                    cu_originy_uv,
+                                    ROUND_UV(txb_origin_x) >> 1,
+                                    ROUND_UV(txb_origin_y) >> 1,
                                     context_ptr->blk_geom->bsize_uv,
                                     context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                                     &cu_ptr->cr_txb_skip_context,

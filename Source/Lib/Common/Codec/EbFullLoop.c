@@ -615,20 +615,6 @@ static void highbd_quantize_fp_helper_c(
     *eob_ptr = eob + 1;
 }
 
-void av1_highbd_quantize_fp_c(const TranLow *coeff_ptr, intptr_t count,
-    const int16_t *zbin_ptr, const int16_t *round_ptr,
-    const int16_t *quant_ptr,
-    const int16_t *quant_shift_ptr,
-    TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
-    const int16_t *dequant_ptr, uint16_t *eob_ptr,
-    const int16_t *scan, const int16_t *iscan,
-    int log_scale) {
-    highbd_quantize_fp_helper_c(coeff_ptr, count, zbin_ptr, round_ptr, quant_ptr,
-        quant_shift_ptr, qcoeff_ptr, dqcoeff_ptr,
-        dequant_ptr, eob_ptr, scan, iscan, NULL, NULL,
-        log_scale);
-}
-
 void av1_quantize_fp_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
     const int16_t *zbin_ptr, const int16_t *round_ptr,
     const int16_t *quant_ptr, const int16_t *quant_shift_ptr,
@@ -677,7 +663,7 @@ void av1_quantize_fp_facade(
     const QmVal *qm_ptr = qparam->qmatrix;
     const QmVal *iqm_ptr = qparam->iqmatrix;
 
-#if 0
+#if 1
     quantize_fp_helper_c(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
         p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
         dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
@@ -2094,7 +2080,8 @@ void av1_quantize_inv_quantize(
     EbBool is_inter = (pred_mode >= NEARESTMV);
 
     EbBool perform_rdoq = (md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
-    if (perform_rdoq)
+    // Hsan: fp quant not yet supported for 10BIT
+    if (perform_rdoq && !bit_increment)
         av1_quantize_fp_facade(
             (TranLow*)coeff,
             n_coeffs,
@@ -3690,6 +3677,33 @@ void full_loop_r(
         txb_origin_y = context_ptr->blk_geom->tx_org_y[txb_itr];
 #endif
 
+#if FIXED_128x128_CONTEXT_UPDATE
+        context_ptr->cu_ptr->cb_txb_skip_context = 0;
+        context_ptr->cu_ptr->cb_dc_sign_context = 0;
+        get_txb_ctx(
+            COMPONENT_CHROMA,
+            context_ptr->cb_dc_sign_level_coeff_neighbor_array,
+            ROUND_UV(context_ptr->sb_origin_x + txb_origin_x) >> 1,
+            ROUND_UV(context_ptr->sb_origin_y + txb_origin_y) >> 1,
+            context_ptr->blk_geom->bsize_uv,
+            context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
+            &context_ptr->cu_ptr->cb_txb_skip_context,
+            &context_ptr->cu_ptr->cb_dc_sign_context);
+
+
+        context_ptr->cu_ptr->cr_txb_skip_context = 0;
+        context_ptr->cu_ptr->cr_dc_sign_context = 0;
+        get_txb_ctx(
+            COMPONENT_CHROMA,
+            context_ptr->cr_dc_sign_level_coeff_neighbor_array,
+            ROUND_UV(context_ptr->sb_origin_x + txb_origin_x) >> 1,
+            ROUND_UV(context_ptr->sb_origin_y + txb_origin_y) >> 1,
+            context_ptr->blk_geom->bsize_uv,
+            context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
+            &context_ptr->cu_ptr->cr_txb_skip_context,
+            &context_ptr->cu_ptr->cr_dc_sign_context);
+        
+#endif
         // NADER - TU
         tu_origin_index = txb_origin_x + txb_origin_y * candidateBuffer->residual_quant_coeff_ptr->stride_y;
         tuCbOriginIndex = (((txb_origin_x >> 3) << 3) + (((txb_origin_y >> 3) << 3) * candidateBuffer->residual_quant_coeff_ptr->stride_cb)) >> 1;

@@ -2379,7 +2379,7 @@ void coding_loop_context_generation(
         (skip_coeff_neighbor_array->top_array[skipCoeffTopNeighborIndex] == (uint8_t)INVALID_NEIGHBOR_DATA) ? 0 :
         (skip_coeff_neighbor_array->top_array[skipCoeffTopNeighborIndex]) ? 1 : 0;
 #endif
-
+#if !FIXED_128x128_CONTEXT_UPDATE
     // Skip and Dc sign context generation
 
     BlockSize plane_bsize = context_ptr->blk_geom->bsize;
@@ -2492,6 +2492,7 @@ void coding_loop_context_generation(
                 &cu_ptr->cr_dc_sign_context);
         }
     }
+#endif
 #endif
     // Generate reference mode context
 
