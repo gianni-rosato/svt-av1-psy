@@ -148,9 +148,8 @@ static INLINE void write_zero(TranLow *qcoeff) {
         _mm256_storeu_si256((__m256i *)qcoeff, zero);
         _mm256_storeu_si256((__m256i *)qcoeff + 1, zero);
     }
-    else {
+    else
         _mm256_storeu_si256((__m256i *)qcoeff, zero);
-    }
 }
 static INLINE void quantize_fl(const __m256i *qp, __m256i *c,
     const int16_t *iscan_ptr, int log_scale,
