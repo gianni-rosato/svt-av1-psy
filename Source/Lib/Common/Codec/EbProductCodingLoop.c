@@ -1618,9 +1618,11 @@ void ProductCodingLoopInitFastLoop(
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
     NeighborArrayUnit        *skip_coeff_neighbor_array,
 #endif
+#if !FIXED_128x128_CONTEXT_UPDATE
     NeighborArrayUnit        *luma_dc_sign_level_coeff_neighbor_array,
     NeighborArrayUnit        *cb_dc_sign_level_coeff_neighbor_array,
     NeighborArrayUnit        *cr_dc_sign_level_coeff_neighbor_array,
+#endif
     NeighborArrayUnit        *inter_pred_dir_neighbor_array,
     NeighborArrayUnit        *ref_frame_type_neighbor_array,
     NeighborArrayUnit        *intra_luma_mode_neighbor_array,
@@ -5746,9 +5748,11 @@ void md_encode_block(
 #if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
             context_ptr->skip_coeff_neighbor_array,
 #endif
+#if !FIXED_128x128_CONTEXT_UPDATE
             context_ptr->luma_dc_sign_level_coeff_neighbor_array,
             context_ptr->cb_dc_sign_level_coeff_neighbor_array,
             context_ptr->cr_dc_sign_level_coeff_neighbor_array,
+#endif
             context_ptr->inter_pred_dir_neighbor_array,
             context_ptr->ref_frame_type_neighbor_array,
             context_ptr->intra_luma_mode_neighbor_array,
