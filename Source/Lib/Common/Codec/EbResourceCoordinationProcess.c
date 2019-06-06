@@ -659,7 +659,6 @@ void* resource_coordination_kernel(void *input_ptr)
 
 #if ALTREF_FILTERING_SUPPORT
             sequence_control_set_ptr->enable_altrefs =  sequence_control_set_ptr->static_config.enable_altrefs &&
-                sequence_control_set_ptr->static_config.enc_mode == ENC_M0  &&
                 sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT ? EB_TRUE : EB_FALSE;
 #endif
 
