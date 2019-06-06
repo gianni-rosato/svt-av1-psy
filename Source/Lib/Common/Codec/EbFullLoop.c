@@ -2002,10 +2002,14 @@ void av1_quantize_inv_quantize(
 #if RDOQ_FP_QUANTIZATION
     if (perform_rdoq && *eob != 0) {
 #else
+#if RDOQ_INTRA
+    if (md_context->trellis_quant_coeff_optimization && *eob != 0 && component_type == COMPONENT_LUMA && !is_intra_bc) {
+#else
 #if TRELLIS_CHROMA
     if (md_context->trellis_quant_coeff_optimization && *eob != 0 && is_inter) {
 #else
     if (md_context->trellis_quant_coeff_optimization && *eob != 0 && is_inter && component_type == COMPONENT_LUMA) {
+#endif
 #endif
 #endif
 #else
