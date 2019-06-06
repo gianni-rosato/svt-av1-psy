@@ -576,52 +576,10 @@ void av1_quantize_fp_facade(
     const QmVal *qm_ptr = qparam->qmatrix;
     const QmVal *iqm_ptr = qparam->iqmatrix;
 
-#if 1
     quantize_fp_helper_c(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
         p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
         dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
         sc->iscan, qm_ptr, iqm_ptr, qparam->log_scale);
-#else
-    if (qm_ptr != NULL && iqm_ptr != NULL) {
-        quantize_fp_helper_c(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
-            p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
-            dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
-            sc->iscan, qm_ptr, iqm_ptr, qparam->log_scale);
-    }
-    else {
-        switch (qparam->log_scale) {
-        case 0:
-            if (n_coeffs < 16) {
-                // TODO(jingning): Need SIMD implementation for smaller block size
-                // quantization.
-                quantize_fp_helper_c(
-                    coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
-                    p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr, dqcoeff_ptr,
-                    p->dequant_QTX, eob_ptr, sc->scan, sc->iscan, NULL, NULL, 0);
-            }
-            else {
-                av1_quantize_fp(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
-                    p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
-                    dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
-                    sc->iscan);
-            }
-            break;
-        case 1:
-            av1_quantize_fp_32x32(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
-                p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
-                dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
-                sc->iscan);
-            break;
-        case 2:
-            av1_quantize_fp_64x64(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
-                p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
-                dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
-                sc->iscan);
-            break;
-        default: assert(0);
-        }
-    }
-#endif
 }
 
 
@@ -1988,8 +1946,11 @@ void av1_quantize_inv_quantize(
     EbBool is_inter = (pred_mode >= NEARESTMV);
 
     EbBool perform_rdoq = (md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
-    // Hsan: fp quant not yet supported for 10BIT
-    if (perform_rdoq && !is_inter && !bit_increment)
+    
+    // Hsan: set to FALSE until adding x86 quantize_fp
+    EbBool perform_quantize_fp = EB_FALSE;
+
+    if (perform_rdoq && perform_quantize_fp && !is_inter)
         av1_quantize_fp_facade(
             (TranLow*)coeff,
             n_coeffs,
