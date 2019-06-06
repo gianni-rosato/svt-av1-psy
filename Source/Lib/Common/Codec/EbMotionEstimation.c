@@ -8266,6 +8266,9 @@ EbErrorType motion_estimate_lcu(
     EbBool is_nsq_table_used = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE &&
                                 picture_control_set_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
                                 picture_control_set_ptr->nsq_search_level < NSQ_SEARCH_FULL) ? EB_TRUE : EB_FALSE;
+#if DISABLE_NSQ_TABLE_FOR_M0
+    is_nsq_table_used = picture_control_set_ptr->enc_mode == ENC_M0 ?  EB_FALSE : is_nsq_table_used;      
+#endif
 
 #if !MRP_ME
     referenceObject = (EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[0]->object_ptr;
