@@ -53,9 +53,9 @@ extern "C" {
 #define ENHANCED_Nx4_4xN_NEW_MV           1 // Nx4 and 4xN MVs to be inherited from the parent block rather than from the 64x64
 #define NEW_NEAREST_NEW_INJECTION         1 // Missing inter candidates NEARETSEST/NEW, NEW/NEARETSEST, NEAR/NEW, NEW/NEAR.
 
-#define RDOQ_FP_QUANTIZATION              1 // Use FP quantization method if RDOQ ON 
+#define RDOQ_FP_QUANTIZATION              0 // Use FP quantization method if RDOQ ON 
 #define FIXED_128x128_CONTEXT_UPDATE      0 // Update txb_skip_context and dc_sign_context 
-#define LOOP_FILTER_FIX                   1 // Use the existing loop filter multi-mode signal, and removed the NRF checks @ Encode Pass and Loop Filter Processes to shut loop filter
+#define LOOP_FILTER_FIX                   0 // Use the existing loop filter multi-mode signal, and removed the NRF checks @ Encode Pass and Loop Filter Processes to shut loop filter
 
 #define ATB                               1 // ATB Main Flag
 #if ATB
