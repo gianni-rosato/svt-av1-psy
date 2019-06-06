@@ -189,7 +189,7 @@ void mode_decision_update_neighbor_arrays(
             bheight,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-#if ATB_DC_CONTEXT_SUPPORT_0
+#if DC_SIGN_CONTEXT_FIX
 #if ATB_SUPPORT
         uint16_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->cu_ptr->tx_depth];
 #else
@@ -198,28 +198,12 @@ void mode_decision_update_neighbor_arrays(
         for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++)
 #endif
         {
-#if DC_SIGN_CONTEXT_FIX
             uint8_t dc_sign_level_coeff = (int32_t)context_ptr->cu_ptr->quantized_dc[0][txb_itr];
-#else
-#if ATB_DC_CONTEXT_SUPPORT_1
-            uint8_t y_has_coeff = context_ptr->cu_ptr->transform_unit_array[txb_itr].y_has_coeff;
-            int32_t lumaDcCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[0][txb_itr];
-#endif
-            uint8_t dcSignCtx = 0;
-            if (lumaDcCoeff > 0)
-                dcSignCtx = 2;
-            else if (lumaDcCoeff < 0)
-                dcSignCtx = 1;
-            else
-                dcSignCtx = 0;
-            uint8_t dc_sign_level_coeff = (uint8_t)((dcSignCtx << COEFF_CONTEXT_BITS) | y_has_coeff);
-            if (!y_has_coeff)
-                dc_sign_level_coeff = 0;
-#endif
+
             neighbor_array_unit_mode_write(
                 context_ptr->luma_dc_sign_level_coeff_neighbor_array,
                 (uint8_t*)&dc_sign_level_coeff,
-#if ATB_DC_CONTEXT_SUPPORT_0
+#if DC_SIGN_CONTEXT_FIX
 #if ATB_SUPPORT
                 context_ptr->sb_origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
                 context_ptr->sb_origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
