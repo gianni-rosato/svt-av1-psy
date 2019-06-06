@@ -1431,7 +1431,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
     if (sc_content_detected)
-        if (picture_control_set_ptr->enc_mode <= ENC_M2)
+        if (picture_control_set_ptr->enc_mode == ENC_M0) 
+            picture_control_set_ptr->intra_pred_mode = 0;
+        else if (picture_control_set_ptr->enc_mode <= ENC_M2)
             if (picture_control_set_ptr->temporal_layer_index == 0)
                 picture_control_set_ptr->intra_pred_mode = 1;
             else
@@ -1446,7 +1448,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
 
 #endif
-        if (picture_control_set_ptr->enc_mode  <= ENC_M1)
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            picture_control_set_ptr->intra_pred_mode = 0;
+        else if (picture_control_set_ptr->enc_mode  <= ENC_M1)
             if (picture_control_set_ptr->temporal_layer_index == 0)
                 picture_control_set_ptr->intra_pred_mode = 1;
             else
