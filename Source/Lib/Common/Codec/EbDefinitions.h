@@ -54,7 +54,7 @@ extern "C" {
 #define NEW_NEAREST_NEW_INJECTION         1 // Missing inter candidates NEARETSEST/NEW, NEW/NEARETSEST, NEAR/NEW, NEW/NEAR.
 
 #define RDOQ_FP_QUANTIZATION              1 // Use FP quantization method if RDOQ ON and INTRA block and 8BIT (x86 WIP)
-#define FIXED_128x128_CONTEXT_UPDATE      1 // Fix txb_skip_context and dc_sign_context update for 128x128
+#define FIXED_128x128_CONTEXT_UPDATE      1 // Fix txb_skip_context and dc_sign_context update for 128x128, and move txb_skip_context and dc_sign_context from CU to MD context 
 #define LOOP_FILTER_FIX                   1 // Use the existing loop filter multi-mode signal to control loop filter and removed the NRF checks @ Encode Pass and Loop Filter Processes 
 
 #define ATB                               1 // ATB Main Flag
@@ -175,14 +175,9 @@ extern "C" {
 #define PF_N2_SUPPORT                     1
 #endif
 
-#define OPT_QUANT_COEFF                                 1
-#if OPT_QUANT_COEFF
-#define DEBUG_TRELLIS                                   0
-#define TRELLIS_SKIP                                    0
-#define TRELLIS_MD                                      1
-#define TRELLIS_CHROMA                                  0
-#define ENHANCED_TRELLIS                                0   // TBD
-#endif
+
+#define TRELLIS_SKIP                                    0 // Kept as still under testing
+
 
 #define CHROMA_DC_ONLY                                  0
 #define SEARCH_UV_MODE                                  1

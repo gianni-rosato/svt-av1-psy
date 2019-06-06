@@ -1593,14 +1593,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->blk_skip_decision = EB_TRUE;
 #endif
 #endif
-
-#if OPT_QUANT_COEFF
     // Derive Trellis Quant Coeff Optimization Flag
     if (picture_control_set_ptr->enc_mode == ENC_M0)
         context_ptr->trellis_quant_coeff_optimization = EB_TRUE;
     else
         context_ptr->trellis_quant_coeff_optimization = EB_FALSE;
-#endif
 
 #if NEW_PRESETS
     // Derive redundant block

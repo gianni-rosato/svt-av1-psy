@@ -46,9 +46,11 @@ extern "C" {
         uint32_t               sb_sz,
         NeighborArrayUnit     *skip_coeff_neighbor_array,
 #endif
+#if !FIXED_128x128_CONTEXT_UPDATE
         NeighborArrayUnit     *luma_dc_sign_level_coeff_neighbor_array,
         NeighborArrayUnit     *cb_dc_sign_level_coeff_neighbor_array,
         NeighborArrayUnit     *cr_dc_sign_level_coeff_neighbor_array,
+#endif
         NeighborArrayUnit     *inter_pred_dir_neighbor_array,
         NeighborArrayUnit     *ref_frame_type_neighbor_array,
         NeighborArrayUnit     *intra_luma_mode_neighbor_array,

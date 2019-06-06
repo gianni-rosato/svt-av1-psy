@@ -32,7 +32,9 @@
 #include "EbIntraPrediction.h"
 #include "EbBitstreamUnit.h"
 #include "EbPacketizationProcess.h"
-
+#if FIXED_128x128_CONTEXT_UPDATE
+#include "EbModeDecisionProcess.h"
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -63,14 +65,14 @@ extern "C" {
         EB_SLICE               slice_type);
 
     extern EbErrorType av1_tu_estimate_coeff_bits(
+#if FIXED_128x128_CONTEXT_UPDATE
+        struct ModeDecisionContext         *md_context,
+#endif
 #if CABAC_UP
         uint8_t                             allow_update_cdf,
         FRAME_CONTEXT                      *ec_ctx,
 #endif
         PictureControlSet                  *picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT_0
-        uint8_t                             txb_itr,
-#endif
         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
         CodingUnit                         *cu_ptr,
         uint32_t                            tu_origin_index,
