@@ -3419,7 +3419,7 @@ EB_EXTERN void av1_encode_pass(
 
                 // for now, segmentation independent of sharpness/delta QP.
                 if(picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled){
-                    ApplySegmentationBasedQuantization(
+                    apply_segmentation_based_quantization(
                             blk_geom,
                             picture_control_set_ptr,
                             sb_ptr,

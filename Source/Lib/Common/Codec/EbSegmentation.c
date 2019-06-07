@@ -1,3 +1,18 @@
+/*
+* Copyright(c) 2019 Intel Corporation
+* SPDX - License - Identifier: BSD - 2 - Clause - Patent
+*/
+
+/*
+* Copyright (c) 2016, Alliance for Open Media. All rights reserved
+*
+* This source code is subject to the terms of the BSD 2 Clause License and
+* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+* was not distributed with this source code in the LICENSE file, you can
+* obtain it at www.aomedia.org/license/software. If the Alliance for Open
+* Media Patent License 1.0 was not distributed with this source code in the
+* PATENTS file, you can obtain it at www.aomedia.org/license/patent.
+*/
 
 #include "EbSegmentation.h"
 #include "EbSegmentationParams.h"
@@ -102,7 +117,7 @@ uint16_t GetVarianceForCU(const BlockGeom *blk_geom,
 
 }
 
-void ApplySegmentationBasedQuantization(
+void apply_segmentation_based_quantization(
         const BlockGeom *blk_geom,
         PictureControlSet *picture_control_set_ptr,
         LargestCodingUnit *sb_ptr,
@@ -123,7 +138,7 @@ void ApplySegmentationBasedQuantization(
 
 }
 
-void SetupSegmentation(
+void setup_segmentation(
         PictureControlSet *picture_control_set_ptr,
         SequenceControlSet *sequence_control_set_ptr,
         RateControlContext *context_ptr,
@@ -137,17 +152,18 @@ void SetupSegmentation(
         segmentation_params->segmentation_update_data = 1; //always updating for now. Need to set this based on actual deltas
         segmentation_params->segmentation_update_map = 1;
         segmentation_params->segmentation_temporal_update = EB_FALSE; //!(picture_control_set_ptr->parent_pcs_ptr->av1FrameType == KEY_FRAME || picture_control_set_ptr->parent_pcs_ptr->av1FrameType == INTRA_ONLY_FRAME);
-        FindSegmentQps(segmentation_params, picture_control_set_ptr);
-        TemporallyUpdateQPs(segment_qps, rateControlLayerPtr->prev_segment_qps, segmentation_params->segmentation_temporal_update);
+        find_segment_qps(segmentation_params, picture_control_set_ptr);
+        temporally_update_qps(segment_qps, rateControlLayerPtr->prev_segment_qps,
+                              segmentation_params->segmentation_temporal_update);
         for (int i = 0; i < MAX_SEGMENTS; i++) {
             segmentation_params->feature_enabled[i][SEG_LVL_ALT_Q] = 1;
         }
-        CalculateSegmentationData(segmentation_params);
+        calculate_segmentation_data(segmentation_params);
     }
 
 }
 
-void CalculateSegmentationData(SegmentationParams *segmentation_params) {
+void calculate_segmentation_data(SegmentationParams *segmentation_params) {
     for (int i = 0; i < MAX_SEGMENTS; i++) {
         for (int j = 0; j < SEG_LVL_MAX; j++) {
             if (segmentation_params->feature_enabled[i][j]) {
@@ -160,7 +176,7 @@ void CalculateSegmentationData(SegmentationParams *segmentation_params) {
     }
 }
 
-void FindSegmentQps(
+void find_segment_qps(
         SegmentationParams *segmentation_params,
         PictureControlSet *picture_control_set_ptr
 ) { //QP needs to be specified as qpindex, not qp.
@@ -201,7 +217,7 @@ void FindSegmentQps(
 
 }
 
-void TemporallyUpdateQPs(
+void temporally_update_qps(
         int32_t *segment_qp_ptr,
         int32_t *prev_segment_qp_ptr,
         EbBool temporal_update

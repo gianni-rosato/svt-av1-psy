@@ -5973,8 +5973,7 @@ void code_tx_size(
 }
 #endif
 
-
-static INLINE int GetSegmentId(Av1Common *cm,
+static INLINE int get_segment_id(Av1Common *cm,
                                const uint8_t *segment_ids,
                                BlockSize bsize,
                                int mi_row, int mi_col) {
@@ -5994,10 +5993,10 @@ static INLINE int GetSegmentId(Av1Common *cm,
     return segment_id;
 }
 
-int GetSpatialSegPrediction(PictureControlSet *picture_control_set_ptr,
-                            uint32_t blkOriginX,
-                            uint32_t blkOriginY,
-                            int *cdf_index) {
+int get_spatial_seg_prediction(PictureControlSet *picture_control_set_ptr,
+                               uint32_t blkOriginX,
+                               uint32_t blkOriginY,
+                               int *cdf_index) {
 
     int prev_ul = -1;  // top left segment_id
     int prev_l = -1;   // left segment_id
@@ -6014,13 +6013,13 @@ int GetSpatialSegPrediction(PictureControlSet *picture_control_set_ptr,
 //    SVT_LOG("Left available = %d, Up Available = %d ", left_available, up_available);
 
     if ((up_available) && (left_available)) {
-        prev_ul = GetSegmentId(cm, segmentation_map->data, BLOCK_4X4, mi_row - 1, mi_col - 1);
+        prev_ul = get_segment_id(cm, segmentation_map->data, BLOCK_4X4, mi_row - 1, mi_col - 1);
     }
     if (up_available) {
-        prev_u = GetSegmentId(cm, segmentation_map->data, BLOCK_4X4, mi_row - 1, mi_col - 0);
+        prev_u = get_segment_id(cm, segmentation_map->data, BLOCK_4X4, mi_row - 1, mi_col - 0);
     }
     if (left_available) {
-        prev_l = GetSegmentId(cm, segmentation_map->data, BLOCK_4X4, mi_row - 0, mi_col - 1);
+        prev_l = get_segment_id(cm, segmentation_map->data, BLOCK_4X4, mi_row - 0, mi_col - 1);
     }
     // Pick CDF index based on number of matching/out-of-bounds segment IDs.
     if (prev_ul < 0 || prev_u < 0 || prev_l < 0) /* Edge case */
@@ -6125,7 +6124,7 @@ void WriteSegmentId(PictureControlSet *picture_control_set_ptr,
     if (!segmentationParams->segmentation_enabled)
         return;
     int cdf_num;
-    const int pred = GetSpatialSegPrediction(picture_control_set_ptr, blkOriginX, blkOriginY, &cdf_num);
+    const int pred = get_spatial_seg_prediction(picture_control_set_ptr, blkOriginX, blkOriginY, &cdf_num);
     if (skip_coeff) {
 //        SVT_LOG("BlockY = %d, BlockX = %d \n", blkOriginY>>2, blkOriginX>>2);
         UpdateSegmentationMap(picture_control_set_ptr, bsize, blkOriginX, blkOriginY, pred);

@@ -1005,7 +1005,7 @@ void init_mode_probs(FRAME_CONTEXT *fc) {
     av1_copy(fc->skip_mode_cdfs, default_skip_mode_cdfs);
     av1_copy(fc->skip_cdfs, default_skip_cdfs);
     av1_copy(fc->intra_inter_cdf, default_intra_inter_cdf);
-    for (int32_t i = 0; i < SPATIAL_PREDICTION_PROBS; i++)
+    for (uint32_t i = 0; i < SPATIAL_PREDICTION_PROBS; i++)
         av1_copy(fc->seg.spatial_pred_seg_cdf[i], default_spatial_pred_seg_tree_cdf[i]);
     av1_copy(fc->tx_size_cdf, default_tx_size_cdf);
     av1_copy(fc->delta_q_cdf, default_delta_q_cdf);

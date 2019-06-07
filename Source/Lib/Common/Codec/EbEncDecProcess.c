@@ -203,16 +203,13 @@ EbErrorType enc_dec_context_ctor(
     return EB_ErrorNone;
 }
 
-
 /**************************************************
  * Reset Segmentation Map
  *************************************************/
-static void ResetSegmentationMap(SegmentationNeighborMap *segmentation_map){
+static void reset_segmentation_map(SegmentationNeighborMap *segmentation_map){
     if(segmentation_map->data!=NULL)
         EB_MEMSET(segmentation_map->data, ~0, segmentation_map->map_size);
 }
-
-
 
 /**************************************************
  * Reset Mode Decision Neighbor Arrays
@@ -301,7 +298,7 @@ static void ResetEncDec(
 #endif
     if (segment_index == 0){
         ResetEncodePassNeighborArrays(picture_control_set_ptr);
-        ResetSegmentationMap(picture_control_set_ptr->segmentation_neighbor_map);
+        reset_segmentation_map(picture_control_set_ptr->segmentation_neighbor_map);
     }
 
     return;

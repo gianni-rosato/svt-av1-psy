@@ -3761,7 +3761,7 @@ void* rate_control_kernel(void *input_ptr)
                 }
 #endif
                 picture_control_set_ptr->parent_pcs_ptr->picture_qp = picture_control_set_ptr->picture_qp;
-                SetupSegmentation(
+                setup_segmentation(
                         picture_control_set_ptr,
                         sequence_control_set_ptr,
                         context_ptr,
