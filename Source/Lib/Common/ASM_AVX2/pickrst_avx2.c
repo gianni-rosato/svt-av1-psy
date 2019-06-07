@@ -47,7 +47,7 @@ static INLINE uint8_t find_average_avx2(const uint8_t *src, int32_t h_start,
         __m128i maskL, maskH;
 
         if (leftover >= 16) {
-            maskL = _mm_set1_epi8(255);
+            maskL = _mm_set1_epi8(-1);
             maskH = _mm_load_si128((__m128i *)(mask_8bit[leftover - 16]));
         } else {
             maskL = _mm_load_si128((__m128i *)(mask_8bit[leftover]));
@@ -1149,7 +1149,7 @@ static INLINE void compute_stats_win3_avx2(
     {
         const int16_t *dT = d;
         __m256i dd = _mm256_setzero_si256();  // Initialize to avoid warning.
-        __m256i deltas[WIENER_WIN_3TAP] = {0};
+        __m256i deltas[4] = {0};
         __m256i delta;
 
         dd = _mm256_insert_epi32(dd, *(int32_t *)(dT + 0 * d_stride), 0);
@@ -2772,7 +2772,7 @@ static INLINE void compute_stats_win7_avx2(
             const __m128i d0 = _mm_unpacklo_epi64(deltas128[0], deltas128[1]);
             const __m128i d1 = _mm_unpacklo_epi64(deltas128[2], deltas128[3]);
             const __m128i d2 = _mm_unpacklo_epi64(deltas128[4], deltas128[5]);
-            const __m128i d3 = _mm_unpacklo_epi64(deltas128[6], deltas128[7]);
+            const __m128i d3 = _mm_unpacklo_epi64(deltas128[6], deltas128[6]);
             const __m128i d4 = _mm_unpackhi_epi64(deltas128[0], deltas128[1]);
             const __m128i d5 = _mm_unpackhi_epi64(deltas128[2], deltas128[3]);
             const __m128i d6 = _mm_unpackhi_epi64(deltas128[4], deltas128[5]);
