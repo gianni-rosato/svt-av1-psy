@@ -33,6 +33,7 @@
 #include "util.h"
 #include "aom_dsp_rtcd.h"
 #include "EbTransforms.h"
+#include "EbUnitTestUtility.h"
 #include "TxfmCommon.h"
 #include "av1_inv_txfm_ssse3.h"
 
@@ -378,6 +379,137 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
         }
     }
 
+    void run_HandleTransform_match_test() {
+        using FwdTxfm2dFunc = void (*)(int16_t * input,
+                                       int32_t * output,
+                                       uint32_t stride,
+                                       TxType tx_type,
+                                       uint8_t bd);
+        using HandleTxfmFunc = uint64_t (*)(int32_t * output);
+        const int num_htf_sizes = 5;
+        const TxSize htf_tx_size[num_htf_sizes] = {
+            TX_16X64, TX_32X64, TX_64X16, TX_64X32, TX_64X64};
+        const HandleTxfmFunc htf_ref_funcs[num_htf_sizes] = {
+            HandleTransform16x64_c,
+            HandleTransform32x64_c,
+            HandleTransform64x16_c,
+            HandleTransform64x32_c,
+            HandleTransform64x64_c};
+        const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
+            HandleTransform16x64_avx2,
+            HandleTransform32x64_avx2,
+            HandleTransform64x16_avx2,
+            HandleTransform64x32_avx2,
+            HandleTransform64x64_avx2};
+        DECLARE_ALIGNED(32, int32_t, input[MAX_TX_SQUARE]);
+
+        for (int idx = 0; idx < num_htf_sizes; ++idx) {
+            const TxSize tx_size = htf_tx_size[idx];
+
+            eb_buf_random_s32(input_, sizeof(input_) / sizeof(*input_));
+            memcpy(input, input_, sizeof(input_));
+
+            const uint64_t energy_ref = htf_ref_funcs[idx](input_);
+            const uint64_t energy_asm = htf_asm_funcs[idx](input);
+
+            ASSERT_EQ(energy_ref, energy_asm);
+
+            for (int i = 0; i < MAX_TX_SIZE; i++) {
+                for (int j = 0; j < MAX_TX_SIZE; j++) {
+                    ASSERT_EQ(input_[i * MAX_TX_SIZE + j],
+                                input[i * MAX_TX_SIZE + j])
+                        << " tx_size: " << tx_size << " " << j << " x "
+                        << i;
+                }
+            }
+        }
+    }
+
+    void run_HandleTransform_speed_test() {
+        using FwdTxfm2dFunc = void (*)(int16_t * input,
+                                       int32_t * output,
+                                       uint32_t stride,
+                                       TxType tx_type,
+                                       uint8_t bd);
+        using HandleTxfmFunc = uint64_t (*)(int32_t * output);
+        const int num_htf_sizes = 5;
+        const TxSize htf_tx_size[num_htf_sizes] = {
+            TX_16X64, TX_32X64, TX_64X16, TX_64X32, TX_64X64};
+        const int widths[num_htf_sizes] = {16, 32, 64, 64, 64};
+        const int heights[num_htf_sizes] = {64, 64, 16, 32, 64};
+        const HandleTxfmFunc htf_ref_funcs[num_htf_sizes] = {
+            HandleTransform16x64_c,
+            HandleTransform32x64_c,
+            HandleTransform64x16_c,
+            HandleTransform64x32_c,
+            HandleTransform64x64_c};
+        const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
+            HandleTransform16x64_avx2,
+            HandleTransform32x64_avx2,
+            HandleTransform64x16_avx2,
+            HandleTransform64x32_avx2,
+            HandleTransform64x64_avx2};
+        DECLARE_ALIGNED(32, int32_t, input[MAX_TX_SQUARE]);
+        double time_c, time_o;
+        uint64_t start_time_seconds, start_time_useconds;
+        uint64_t middle_time_seconds, middle_time_useconds;
+        uint64_t finish_time_seconds, finish_time_useconds;
+
+        for (int idx = 0; idx < num_htf_sizes; ++idx) {
+            const TxSize tx_size = htf_tx_size[idx];
+            const uint64_t num_loop = 10000000;
+            uint64_t energy_ref, energy_asm;
+
+            eb_buf_random_s32(input_, sizeof(input_) / sizeof(*input_));
+            memcpy(input, input_, sizeof(input_));
+
+            EbStartTime(&start_time_seconds, &start_time_useconds);
+
+            for (uint64_t i = 0; i < num_loop; i++)
+                energy_ref = htf_ref_funcs[idx](input_);
+
+            EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+            for (uint64_t i = 0; i < num_loop; i++)
+                energy_asm = htf_asm_funcs[idx](input);
+
+            EbStartTime(&finish_time_seconds, &finish_time_useconds);
+            EbComputeOverallElapsedTimeMs(start_time_seconds,
+                                          start_time_useconds,
+                                          middle_time_seconds,
+                                          middle_time_useconds,
+                                          &time_c);
+            EbComputeOverallElapsedTimeMs(middle_time_seconds,
+                                          middle_time_useconds,
+                                          finish_time_seconds,
+                                          finish_time_useconds,
+                                          &time_o);
+
+            ASSERT_EQ(energy_ref, energy_asm);
+
+            for (int i = 0; i < MAX_TX_SIZE; i++) {
+                for (int j = 0; j < MAX_TX_SIZE; j++) {
+                    ASSERT_EQ(input_[i * MAX_TX_SIZE + j],
+                              input[i * MAX_TX_SIZE + j])
+                        << " tx_size: " << tx_size << " " << j << " x " << i;
+                }
+            }
+
+            printf("Average Nanoseconds per Function Call\n");
+            printf("    HandleTransform%dx%d_c     : %6.2f\n",
+                   widths[idx],
+                   heights[idx],
+                   1000000 * time_c / num_loop);
+            printf(
+                "    HandleTransform%dx%d_avx2) : %6.2f   (Comparison: "
+                "%5.2fx)\n",
+                widths[idx],
+                heights[idx],
+                1000000 * time_o / num_loop,
+                time_c / time_o);
+        }
+    }
+
   private:
     // clear the coeffs according to eob position, note the coeffs are
     // linear.
@@ -423,40 +555,23 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
         memset(lowbd_output_test_, 0, sizeof(lowbd_output_test_));
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
-                pixel_input_[i * stride_ + j] = s_bd_rnd_->random();
+                pixel_input_[i * stride_ + j] =
+                    static_cast<int16_t>(s_bd_rnd_->random());
                 output_ref_[i * stride_ + j] = output_test_[i * stride_ + j] =
-                    u_bd_rnd_->random();
+                    static_cast<uint16_t>(u_bd_rnd_->random());
             }
         }
 
-        fwd_txfm_func[tx_size](pixel_input_, input_, stride_, tx_type, bd_);
+        fwd_txfm_func[tx_size](pixel_input_, input_, stride_, tx_type,
+            static_cast<uint8_t>(bd_));
         // post-process, re-pack the coeffcients
         uint64_t energy = 0;
         switch (tx_size) {
-        case TX_64X64:
-            energy = HandleTransform64x64_c(input_, stride_);
-            for (int32_t row = 1; row < 32; ++row) {
-                memcpy(
-                    input_ + row * 32, input_ + row * 64, 32 * sizeof(int32_t));
-            }
-            break;
-        case TX_64X32:
-            energy = HandleTransform64x32_c(input_, stride_);
-            for (int32_t row = 1; row < 32; ++row) {
-                memcpy(
-                    input_ + row * 32, input_ + row * 64, 32 * sizeof(int32_t));
-            }
-            break;
-        case TX_32X64: energy = HandleTransform32x64_c(input_, stride_); break;
-        case TX_64X16:
-            energy = HandleTransform64x16_c(input_, stride_);
-            // Re-pack non-zero coeffs in the first 32x16 indices.
-            for (int32_t row = 1; row < 16; ++row) {
-                memcpy(
-                    input_ + row * 32, input_ + row * 64, 32 * sizeof(int32_t));
-            }
-            break;
-        case TX_16X64: energy = HandleTransform16x64_c(input_, stride_); break;
+        case TX_64X64: energy = HandleTransform64x64_c(input_); break;
+        case TX_64X32: energy = HandleTransform64x32_c(input_); break;
+        case TX_32X64: energy = HandleTransform32x64_c(input_); break;
+        case TX_64X16: energy = HandleTransform64x16_c(input_); break;
+        case TX_16X64: energy = HandleTransform16x64_c(input_); break;
         default: break;
         }
         return;
@@ -503,6 +618,14 @@ TEST_P(InvTxfm2dAsmTest, lowbd_txfm_match_test) {
         const TxSize tx_size = static_cast<TxSize>(i);
         run_lowbd_txfm_match_test(tx_size);
     }
+}
+
+TEST_P(InvTxfm2dAsmTest, HandleTransform_match_test) {
+    run_HandleTransform_match_test();
+}
+
+TEST_P(InvTxfm2dAsmTest, HandleTransform_speed_test) {
+    run_HandleTransform_speed_test();
 }
 
 INSTANTIATE_TEST_CASE_P(TX, InvTxfm2dAsmTest,

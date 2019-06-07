@@ -263,6 +263,26 @@ extern "C" {
     void get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int src_stride, const uint8_t *dat8, int dat_stride, int use_highbitdepth, int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride, int *xq, const SgrParamsType *params);
     RTCD_EXTERN void(*get_proj_subspace)(const uint8_t *src8, int width, int height, int src_stride, const uint8_t *dat8, int dat_stride, int use_highbitdepth, int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride, int *xq, const SgrParamsType *params);
 
+    uint64_t HandleTransform16x64_c(int32_t *output);
+    uint64_t HandleTransform16x64_avx2(int32_t *output);
+    RTCD_EXTERN uint64_t(*HandleTransform16x64)(int32_t *output);
+
+    uint64_t HandleTransform32x64_c(int32_t *output);
+    uint64_t HandleTransform32x64_avx2(int32_t *output);
+    RTCD_EXTERN uint64_t(*HandleTransform32x64)(int32_t *output);
+
+    uint64_t HandleTransform64x16_c(int32_t *output);
+    uint64_t HandleTransform64x16_avx2(int32_t *output);
+    RTCD_EXTERN uint64_t(*HandleTransform64x16)(int32_t *output);
+
+    uint64_t HandleTransform64x32_c(int32_t *output);
+    uint64_t HandleTransform64x32_avx2(int32_t *output);
+    RTCD_EXTERN uint64_t(*HandleTransform64x32)(int32_t *output);
+
+    uint64_t HandleTransform64x64_c(int32_t *output);
+    uint64_t HandleTransform64x64_avx2(int32_t *output);
+    RTCD_EXTERN uint64_t(*HandleTransform64x64)(int32_t *output);
+
     uint64_t search_one_dual_c(int *lev0, int *lev1, int nb_strengths, uint64_t(**mse)[64], int sb_count, int fast, int start_gi, int end_gi);
     uint64_t search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths, uint64_t(**mse)[64], int sb_count, int fast, int start_gi, int end_gi);
     RTCD_EXTERN uint64_t(*search_one_dual)(int *lev0, int *lev1, int nb_strengths, uint64_t(**mse)[64], int sb_count, int fast, int start_gi, int end_gi);
@@ -3192,6 +3212,17 @@ extern "C" {
         if (flags & HAS_AVX2) av1_fwd_txfm2d_8x8 = av1_fwd_txfm2d_8x8_avx2;
         av1_fwd_txfm2d_4x4 = Av1TransformTwoD_4x4_c;
         if (flags & HAS_SSE4_1) av1_fwd_txfm2d_4x4 = av1_fwd_txfm2d_4x4_sse4_1;
+
+        HandleTransform16x64 = HandleTransform16x64_c;
+        if (flags & HAS_AVX2) HandleTransform16x64 = HandleTransform16x64_avx2;
+        HandleTransform32x64 = HandleTransform32x64_c;
+        if (flags & HAS_AVX2) HandleTransform32x64 = HandleTransform32x64_avx2;
+        HandleTransform64x16 = HandleTransform64x16_c;
+        if (flags & HAS_AVX2) HandleTransform64x16 = HandleTransform64x16_avx2;
+        HandleTransform64x32 = HandleTransform64x32_c;
+        if (flags & HAS_AVX2) HandleTransform64x32 = HandleTransform64x32_avx2;
+        HandleTransform64x64 = HandleTransform64x64_c;
+        if (flags & HAS_AVX2) HandleTransform64x64 = HandleTransform64x64_avx2;
 
         // aom_highbd_v_predictor
         aom_highbd_v_predictor_16x16 = aom_highbd_v_predictor_16x16_c;
