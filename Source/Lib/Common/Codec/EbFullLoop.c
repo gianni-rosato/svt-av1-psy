@@ -2161,8 +2161,6 @@ void product_full_loop(
             context_ptr->pf_md_mode);
 #endif
 
-
-
         int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                          picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 #if DC_SIGN_CONTEXT_FIX

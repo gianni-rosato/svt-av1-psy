@@ -22,16 +22,16 @@ const int segmentation_feature_signed[SEG_LVL_MAX] = {
         1, 1, 1, 1, 1, 0, 0, 0
 };
 
-const int segmentation_feature_bits[SEG_LVL_MAX] = { 8, 6, 6, 6, 6, 3, 0, 0 };
+const int segmentation_feature_bits[SEG_LVL_MAX] = {8, 6, 6, 6, 6, 3, 0, 0};
 
-const int segmentation_feature_max[SEG_LVL_MAX] = { MAXQ,
-                                                           MAX_LOOP_FILTER,
-                                                           MAX_LOOP_FILTER,
-                                                           MAX_LOOP_FILTER,
-                                                           MAX_LOOP_FILTER,
-                                                           7,
-                                                           0,
-                                                           0 };
+const int segmentation_feature_max[SEG_LVL_MAX] = {MAXQ,
+                                                   MAX_LOOP_FILTER,
+                                                   MAX_LOOP_FILTER,
+                                                   MAX_LOOP_FILTER,
+                                                   MAX_LOOP_FILTER,
+                                                   7,
+                                                   0,
+                                                   0};
 
 
 static const uint8_t q_index_to_quantizer[] = {
@@ -51,8 +51,8 @@ static const uint8_t q_index_to_quantizer[] = {
 };
 
 
-uint16_t GetVarianceForCU(const BlockGeom *blk_geom,
-                          uint16_t *variance_ptr) {
+uint16_t get_variance_for_cu(const BlockGeom *blk_geom,
+                             uint16_t *variance_ptr) {
     int index0, index1;
     //Assumes max CU size is 64
     switch (blk_geom->bsize) {
@@ -96,12 +96,12 @@ uint16_t GetVarianceForCU(const BlockGeom *blk_geom,
             break;
 
         case BLOCK_32X64:
-            index0 =  ME_TIER_ZERO_PU_32x32_0 + ((blk_geom->origin_x >> 5) + (blk_geom->origin_y >> 4));
+            index0 = ME_TIER_ZERO_PU_32x32_0 + ((blk_geom->origin_x >> 5) + (blk_geom->origin_y >> 4));
             index1 = index0 + 1;
             break;
 
         case BLOCK_64X32:
-            index0 =  ME_TIER_ZERO_PU_32x32_0 + ((blk_geom->origin_x >> 5) + (blk_geom->origin_y >> 4));
+            index0 = ME_TIER_ZERO_PU_32x32_0 + ((blk_geom->origin_x >> 5) + (blk_geom->origin_y >> 4));
             index1 = index0 + (blk_geom->origin_y >> 4);
             break;
 
@@ -121,11 +121,10 @@ void apply_segmentation_based_quantization(
         const BlockGeom *blk_geom,
         PictureControlSet *picture_control_set_ptr,
         LargestCodingUnit *sb_ptr,
-        CodingUnit *cu_ptr
-) {
+        CodingUnit *cu_ptr) {
     uint16_t *variance_ptr = picture_control_set_ptr->parent_pcs_ptr->variance[sb_ptr->index];
     SegmentationParams *segmentation_params = &picture_control_set_ptr->parent_pcs_ptr->segmentation_params;
-    uint16_t variance = GetVarianceForCU(blk_geom, variance_ptr);
+    uint16_t variance = get_variance_for_cu(blk_geom, variance_ptr);
     for (int i = 0; i < MAX_SEGMENTS; i++) {
         if (variance <= segmentation_params->variance_bin_edge[i]) {
             cu_ptr->segment_id = i;
@@ -143,8 +142,7 @@ void setup_segmentation(
         SequenceControlSet *sequence_control_set_ptr,
         RateControlContext *context_ptr,
         RateControlLayerContext *rateControlLayerPtr,
-        RateControlIntervalParamContext *rateControlParamPtr
-) {
+        RateControlIntervalParamContext *rateControlParamPtr) {
     SegmentationParams *segmentation_params = &picture_control_set_ptr->parent_pcs_ptr->segmentation_params;
     segmentation_params->segmentation_enabled = (EbBool) sequence_control_set_ptr->static_config.enable_adaptive_quantization;
     if (segmentation_params->segmentation_enabled) {
@@ -155,9 +153,9 @@ void setup_segmentation(
         find_segment_qps(segmentation_params, picture_control_set_ptr);
         temporally_update_qps(segment_qps, rateControlLayerPtr->prev_segment_qps,
                               segmentation_params->segmentation_temporal_update);
-        for (int i = 0; i < MAX_SEGMENTS; i++) {
+        for (int i = 0; i < MAX_SEGMENTS; i++)
             segmentation_params->feature_enabled[i][SEG_LVL_ALT_Q] = 1;
-        }
+
         calculate_segmentation_data(segmentation_params);
     }
 
@@ -178,8 +176,7 @@ void calculate_segmentation_data(SegmentationParams *segmentation_params) {
 
 void find_segment_qps(
         SegmentationParams *segmentation_params,
-        PictureControlSet *picture_control_set_ptr
-) { //QP needs to be specified as qpindex, not qp.
+        PictureControlSet *picture_control_set_ptr) { //QP needs to be specified as qpindex, not qp.
 
     uint16_t *variancePtr;
     uint16_t min_var = MAX_UNSIGNED_VALUE, max_var = MIN_UNSIGNED_VALUE, avg_var = 0;
@@ -220,8 +217,7 @@ void find_segment_qps(
 void temporally_update_qps(
         int32_t *segment_qp_ptr,
         int32_t *prev_segment_qp_ptr,
-        EbBool temporal_update
-) {
+        EbBool temporal_update) {
     for (int i = 0; i < MAX_SEGMENTS; i++) {
         int32_t diff = segment_qp_ptr[i] - prev_segment_qp_ptr[i];
         prev_segment_qp_ptr[i] = segment_qp_ptr[i];

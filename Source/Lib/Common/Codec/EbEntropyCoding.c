@@ -6012,15 +6012,15 @@ int get_spatial_seg_prediction(PictureControlSet *picture_control_set_ptr,
 
 //    SVT_LOG("Left available = %d, Up Available = %d ", left_available, up_available);
 
-    if ((up_available) && (left_available)) {
+    if ((up_available) && (left_available))
         prev_ul = get_segment_id(cm, segmentation_map->data, BLOCK_4X4, mi_row - 1, mi_col - 1);
-    }
-    if (up_available) {
+
+    if (up_available)
         prev_u = get_segment_id(cm, segmentation_map->data, BLOCK_4X4, mi_row - 1, mi_col - 0);
-    }
-    if (left_available) {
+
+    if (left_available)
         prev_l = get_segment_id(cm, segmentation_map->data, BLOCK_4X4, mi_row - 0, mi_col - 1);
-    }
+
     // Pick CDF index based on number of matching/out-of-bounds segment IDs.
     if (prev_ul < 0 || prev_u < 0 || prev_l < 0) /* Edge case */
         *cdf_index = 0;
@@ -6088,11 +6088,11 @@ AomCdfProb *av1_get_pred_cdf_seg_id(PictureControlSet *picture_control_set_ptr,
     return segp->spatial_pred_seg_cdf[av1_get_pred_context_seg_id(picture_control_set_ptr, cu_ptr, blkOriginX, blkOriginY)];
 }
 
-static INLINE void UpdateSegmentationMap(PictureControlSet *picture_control_set_ptr,
-                                         BlockSize bsize,
-                                         uint32_t blkOriginX,
-                                         uint32_t blkOriginY,
-                                         uint8_t segment_id){
+static INLINE void update_segmentation_map(PictureControlSet *picture_control_set_ptr,
+                                           BlockSize bsize,
+                                           uint32_t blkOriginX,
+                                           uint32_t blkOriginY,
+                                           uint8_t segment_id){
 
     Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
     uint8_t *segment_ids = picture_control_set_ptr->segmentation_neighbor_map->data;
@@ -6111,14 +6111,14 @@ static INLINE void UpdateSegmentationMap(PictureControlSet *picture_control_set_
 
 }
 
-void WriteSegmentId(PictureControlSet *picture_control_set_ptr,
-                    FRAME_CONTEXT *frameContext,
-                    AomWriter *ecWriter,
-                    BlockSize bsize,
-                    uint32_t blkOriginX,
-                    uint32_t blkOriginY,
-                    CodingUnit *cu_ptr,
-                    EbBool skip_coeff) {
+void write_segment_id(PictureControlSet *picture_control_set_ptr,
+                      FRAME_CONTEXT *frameContext,
+                      AomWriter *ecWriter,
+                      BlockSize bsize,
+                      uint32_t blkOriginX,
+                      uint32_t blkOriginY,
+                      CodingUnit *cu_ptr,
+                      EbBool skip_coeff) {
 
     SegmentationParams *segmentationParams = &picture_control_set_ptr->parent_pcs_ptr->segmentation_params;
     if (!segmentationParams->segmentation_enabled)
@@ -6127,7 +6127,7 @@ void WriteSegmentId(PictureControlSet *picture_control_set_ptr,
     const int pred = get_spatial_seg_prediction(picture_control_set_ptr, blkOriginX, blkOriginY, &cdf_num);
     if (skip_coeff) {
 //        SVT_LOG("BlockY = %d, BlockX = %d \n", blkOriginY>>2, blkOriginX>>2);
-        UpdateSegmentationMap(picture_control_set_ptr, bsize, blkOriginX, blkOriginY, pred);
+        update_segmentation_map(picture_control_set_ptr, bsize, blkOriginX, blkOriginY, pred);
         cu_ptr->segment_id = pred;
         return;
     }
@@ -6135,20 +6135,20 @@ void WriteSegmentId(PictureControlSet *picture_control_set_ptr,
     struct segmentation_probs *segp = &frameContext->seg;
     AomCdfProb *pred_cdf = segp->spatial_pred_seg_cdf[cdf_num];
     aom_write_symbol(ecWriter, coded_id, pred_cdf, MAX_SEGMENTS);
-    UpdateSegmentationMap(picture_control_set_ptr, bsize, blkOriginX, blkOriginY, cu_ptr->segment_id);
+    update_segmentation_map(picture_control_set_ptr, bsize, blkOriginX, blkOriginY, cu_ptr->segment_id);
 //    SVT_LOG("BlockY = %d, BlockX = %d, Segmentation  pred = %d, skip_coeff = %d, coded_id = %d, pred_cdf = %d \n", blkOriginY>>2, blkOriginX>>2, pred, skip_coeff, coded_id, *pred_cdf);
 }
 
 
-void WriteInterSegmentId(PictureControlSet *picture_control_set_ptr,
-                         FRAME_CONTEXT *frameContext,
-                         AomWriter *ecWriter,
-                         const BlockGeom *blockGeom,
-                         uint32_t blkOriginX,
-                         uint32_t blkOriginY,
-                         CodingUnit *cu_ptr,
-                         EbBool skip,
-                         int pre_skip) {
+void write_inter_segment_id(PictureControlSet *picture_control_set_ptr,
+                            FRAME_CONTEXT *frameContext,
+                            AomWriter *ecWriter,
+                            const BlockGeom *blockGeom,
+                            uint32_t blkOriginX,
+                            uint32_t blkOriginY,
+                            CodingUnit *cu_ptr,
+                            EbBool skip,
+                            int pre_skip) {
     SegmentationParams *segmentationParams = &picture_control_set_ptr->parent_pcs_ptr->segmentation_params;
     if (!segmentationParams->segmentation_enabled)
         return;
@@ -6161,7 +6161,8 @@ void WriteInterSegmentId(PictureControlSet *picture_control_set_ptr,
             if (segmentationParams->seg_id_pre_skip)
                 return;
             if (skip) {
-                WriteSegmentId(picture_control_set_ptr, frameContext, ecWriter, blockGeom->bsize, blkOriginX, blkOriginY, cu_ptr, 1);
+                write_segment_id(picture_control_set_ptr, frameContext, ecWriter, blockGeom->bsize, blkOriginX,
+                                 blkOriginY, cu_ptr, 1);
                 if (segmentationParams->segmentation_temporal_update){
                     printf("ERROR: Temporal update is not supported yet! \n");
                     assert(0);
@@ -6181,7 +6182,7 @@ void WriteInterSegmentId(PictureControlSet *picture_control_set_ptr,
 //                WriteSegmentId(picture_control_set_ptr, frameContext, ecWriter, blockGeom->bsize, blkOriginX, blkOriginY, cu_ptr, 0);
 //            }
 //            if (pred_flag) {2
-//                UpdateSegmentationMap(picture_control_set_ptr, blockGeom->bsize, blkOriginX, blkOriginY, cu_ptr->segment_id);
+//                update_segmentation_map(picture_control_set_ptr, blockGeom->bsize, blkOriginX, blkOriginY, cu_ptr->segment_id);
 //            }
 //            neighbor_array_unit_mode_write(
 //                    picture_control_set_ptr->segmentation_id_pred_array,
@@ -6193,7 +6194,8 @@ void WriteInterSegmentId(PictureControlSet *picture_control_set_ptr,
 //                    NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
         } else {
-            WriteSegmentId(picture_control_set_ptr, frameContext, ecWriter, blockGeom->bsize, blkOriginX, blkOriginY, cu_ptr, 0);
+            write_segment_id(picture_control_set_ptr, frameContext, ecWriter, blockGeom->bsize, blkOriginX, blkOriginY,
+                             cu_ptr, 0);
         }
 
 
@@ -6260,8 +6262,9 @@ assert(bsize < BlockSizeS_ALL);
     if (picture_control_set_ptr->slice_type == I_SLICE) {
         //const int32_t skip = write_skip(cm, xd, mbmi->segment_id, mi, w);
         if (picture_control_set_ptr->parent_pcs_ptr->segmentation_params.seg_id_pre_skip)
-            WriteSegmentId(picture_control_set_ptr, frameContext, ec_writer,  blk_geom->bsize,  blkOriginX, blkOriginY, cu_ptr,
-                           skipCoeff);
+            write_segment_id(picture_control_set_ptr, frameContext, ec_writer, blk_geom->bsize, blkOriginX, blkOriginY,
+                             cu_ptr,
+                             skipCoeff);
 
         EncodeSkipCoeffAv1(
             frameContext,
@@ -6272,8 +6275,9 @@ assert(bsize < BlockSizeS_ALL);
             skip_coeff_neighbor_array);
 
         if (!picture_control_set_ptr->parent_pcs_ptr->segmentation_params.seg_id_pre_skip)
-            WriteSegmentId(picture_control_set_ptr, frameContext, ec_writer,  blk_geom->bsize,  blkOriginX, blkOriginY, cu_ptr,
-                           skipCoeff);
+            write_segment_id(picture_control_set_ptr, frameContext, ec_writer, blk_geom->bsize, blkOriginX, blkOriginY,
+                             cu_ptr,
+                             skipCoeff);
 
         write_cdef(
             sequence_control_set_ptr,
@@ -6400,8 +6404,9 @@ assert(bsize < BlockSizeS_ALL);
         }
     }
     else {
-        WriteInterSegmentId(picture_control_set_ptr, frameContext, ec_writer, blk_geom,  blkOriginX, blkOriginY, cu_ptr,
-                            0, 1);
+        write_inter_segment_id(picture_control_set_ptr, frameContext, ec_writer, blk_geom, blkOriginX, blkOriginY,
+                               cu_ptr,
+                               0, 1);
         if (picture_control_set_ptr->parent_pcs_ptr->skip_mode_flag && is_comp_ref_allowed(bsize)) {
             EncodeSkipModeAv1(
                 frameContext,
@@ -6424,8 +6429,9 @@ assert(bsize < BlockSizeS_ALL);
                 skip_coeff_neighbor_array);
         }
 
-        WriteInterSegmentId(picture_control_set_ptr, frameContext, ec_writer, blk_geom,  blkOriginX, blkOriginY, cu_ptr,
-                            skipCoeff, 0);
+        write_inter_segment_id(picture_control_set_ptr, frameContext, ec_writer, blk_geom, blkOriginX, blkOriginY,
+                               cu_ptr,
+                               skipCoeff, 0);
         write_cdef(
             sequence_control_set_ptr,
             picture_control_set_ptr, /*cm,*/
