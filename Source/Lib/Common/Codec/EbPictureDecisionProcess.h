@@ -92,8 +92,8 @@ void PicturePreProcessingOperations(
         SequenceControlSet            *sequence_control_set_ptr,
         EbPictureBufferDesc           *quarter_decimated_picture_ptr,
         EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
-        uint32_t                           sb_total_count,
-        EbAsm                           asm_type);
+        uint32_t                       sb_total_count,
+        EbAsm                          asm_type);
 
 void PadPictureToMultipleOfLcuDimensions(
         EbPictureBufferDesc   *input_padded_picture_ptr);

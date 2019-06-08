@@ -46,6 +46,7 @@ extern "C" {
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
+#define DOWN_SAMPLING_FILTERING           1 
 
 #define RDOQ_INTRA                        1 // Enable RDOQ INTRA (RDOQ INTER already active) 
 #define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass

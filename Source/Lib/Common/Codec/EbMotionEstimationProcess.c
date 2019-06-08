@@ -562,9 +562,13 @@ void* motion_estimation_kernel(void *input_ptr)
         sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 
         paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+#if DOWN_SAMPLING_FILTERING
+        quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr;
+        sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_filtered_picture_ptr;
+#else
         quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
         sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
-
+#endif
         input_padded_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
 
         input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
@@ -739,7 +743,11 @@ void* motion_estimation_kernel(void *input_ptr)
                             context_ptr,
                             sequence_control_set_ptr,
                             picture_control_set_ptr,
+#if DOWN_SAMPLING_FILTERING
+                            (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr,
+#else
                             sixteenth_decimated_picture_ptr,
+#endif
                             xLcuStartIndex,
                             xLcuEndIndex,
                             yLcuStartIndex,

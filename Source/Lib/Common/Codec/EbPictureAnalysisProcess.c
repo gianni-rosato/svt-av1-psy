@@ -155,7 +155,73 @@ static void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBu
 /************************************************
  * Picture Analysis Context Destructor
  ************************************************/
+#if DOWN_SAMPLING_FILTERING
+  /********************************************
+    * decimation_2d
+    *      decimates the input
+    ********************************************/
+void decimation_2d(
+    uint8_t *  input_samples,      // input parameter, input samples Ptr
+    uint32_t   input_stride,       // input parameter, input stride
+    uint32_t   input_area_width,    // input parameter, input area width
+    uint32_t   input_area_height,   // input parameter, input area height
+    uint8_t *  decim_samples,      // output parameter, decimated samples Ptr
+    uint32_t   decim_stride,       // input parameter, output stride
+    uint32_t   decim_step)        // input parameter, decimation amount in pixels
+{
+    uint32_t horizontal_index;
+    uint32_t vertical_index;
+    uint32_t input_stripe_stride = input_stride * decim_step;
 
+    for (vertical_index = 0; vertical_index < input_area_height; vertical_index += decim_step) {
+        for (horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step) {
+
+            decim_samples[(horizontal_index >> (decim_step >> 1))] = input_samples[horizontal_index];
+
+        }
+        input_samples += input_stripe_stride;
+        decim_samples += decim_stride;
+    }
+
+    return;
+}
+
+/********************************************
+ * downsample_2d
+ *      downsamples the input
+ * Alternative implementation to decimation_2d that performs filtering (2x2, 0-phase)
+ ********************************************/
+void downsample_2d(
+    uint8_t *  input_samples,      // input parameter, input samples Ptr
+    uint32_t   input_stride,       // input parameter, input stride
+    uint32_t   input_area_width,    // input parameter, input area width
+    uint32_t   input_area_height,   // input parameter, input area height
+    uint8_t *  decim_samples,      // output parameter, decimated samples Ptr
+    uint32_t   decim_stride,       // input parameter, output stride
+    uint32_t   decim_step)        // input parameter, decimation amount in pixels
+{
+
+    uint32_t horizontal_index;
+    uint32_t vertical_index;
+    uint32_t input_stripe_stride = input_stride * decim_step;
+    uint32_t decim_horizontal_index;
+    const uint32_t half_decim_step = decim_step >> 1;
+
+    for (input_samples += half_decim_step * input_stride, vertical_index = half_decim_step; vertical_index < input_area_height; vertical_index += decim_step) {
+        uint8_t *prev_input_line = input_samples - input_stride;
+        for (horizontal_index = half_decim_step, decim_horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step, decim_horizontal_index++) {
+            uint32_t sum = (uint32_t)prev_input_line[horizontal_index - 1] + (uint32_t)prev_input_line[horizontal_index] + (uint32_t)input_samples[horizontal_index - 1] + (uint32_t)input_samples[horizontal_index];
+            decim_samples[decim_horizontal_index] = (sum + 2) >> 2;
+
+        }
+        input_samples += input_stripe_stride;
+        decim_samples += decim_stride;
+    }
+
+    return;
+}
+
+#else
  /********************************************
   * decimation_2d
   *      decimates the input
@@ -181,7 +247,7 @@ void decimation_2d(
 
     return;
 }
-
+#endif
 /********************************************
 * CalculateHistogram
 *      creates n-bins histogram for the input
@@ -4733,6 +4799,75 @@ static int is_screen_content(const uint8_t *src, int use_hbd,
     return counts * blk_h * blk_w * 10 > width * height;
 }
 
+
+#if DOWN_SAMPLING_FILTERING
+/************************************************
+ * 1/4 & 1/16 input picture downsampling (filtering)
+ ************************************************/
+void DownsampleInputPicture(
+    PictureParentControlSet       *picture_control_set_ptr,
+    EbPictureBufferDesc           *input_padded_picture_ptr,
+    EbPictureBufferDesc           *quarter_picture_ptr,
+    EbPictureBufferDesc           *sixteenth_picture_ptr) {
+
+    // Downsample input picture for HME L0 and L1
+    if (picture_control_set_ptr->enable_hme_flag) {
+
+        if (picture_control_set_ptr->enable_hme_level1_flag) {
+            downsample_2d(
+                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
+                input_padded_picture_ptr->stride_y,
+                input_padded_picture_ptr->width,
+                input_padded_picture_ptr->height,
+                &quarter_picture_ptr->buffer_y[quarter_picture_ptr->origin_x + quarter_picture_ptr->origin_x * quarter_picture_ptr->stride_y],
+                quarter_picture_ptr->stride_y,
+                2);
+            generate_padding(
+                &quarter_picture_ptr->buffer_y[0],
+                quarter_picture_ptr->stride_y,
+                quarter_picture_ptr->width,
+                quarter_picture_ptr->height,
+                quarter_picture_ptr->origin_x,
+                quarter_picture_ptr->origin_y);
+
+        }
+
+        if (picture_control_set_ptr->enable_hme_level0_flag) {
+
+            // Sixteenth Input Picture Downsampling
+            if (picture_control_set_ptr->enable_hme_level1_flag) {
+                downsample_2d(
+                    &quarter_picture_ptr->buffer_y[quarter_picture_ptr->origin_x + quarter_picture_ptr->origin_y * quarter_picture_ptr->stride_y],
+                    quarter_picture_ptr->stride_y,
+                    quarter_picture_ptr->width,
+                    quarter_picture_ptr->height,
+                    &sixteenth_picture_ptr->buffer_y[sixteenth_picture_ptr->origin_x + sixteenth_picture_ptr->origin_x*sixteenth_picture_ptr->stride_y],
+                    sixteenth_picture_ptr->stride_y,
+                    2);
+            }
+            else {
+                downsample_2d(
+                    &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
+                    input_padded_picture_ptr->stride_y,
+                    input_padded_picture_ptr->width,
+                    input_padded_picture_ptr->height,
+                    &sixteenth_picture_ptr->buffer_y[sixteenth_picture_ptr->origin_x + sixteenth_picture_ptr->origin_x*sixteenth_picture_ptr->stride_y],
+                    sixteenth_picture_ptr->stride_y,
+                    4);
+            }
+            generate_padding(
+                &sixteenth_picture_ptr->buffer_y[0],
+                sixteenth_picture_ptr->stride_y,
+                sixteenth_picture_ptr->width,
+                sixteenth_picture_ptr->height,
+                sixteenth_picture_ptr->origin_x,
+                sixteenth_picture_ptr->origin_y);
+
+        }
+    }
+}
+#endif
+
 /************************************************
  * Picture Analysis Kernel
  * The Picture Analysis Process pads & decimates the input pictures.
@@ -4755,8 +4890,10 @@ void* picture_analysis_kernel(void *input_ptr)
     EbPaReferenceObject           *paReferenceObject;
 
     EbPictureBufferDesc           *input_padded_picture_ptr;
+#if !DOWN_SAMPLING_FILTERING
     EbPictureBufferDesc           *quarter_decimated_picture_ptr;
     EbPictureBufferDesc           *sixteenth_decimated_picture_ptr;
+#endif
     EbPictureBufferDesc           *input_picture_ptr;
 
     // Variance
@@ -4784,9 +4921,10 @@ void* picture_analysis_kernel(void *input_ptr)
 
             paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
             input_padded_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
+#if !DOWN_SAMPLING_FILTERING
             quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
             sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
-
+#endif
             // Variance
             picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
             pictureHeighInLcu = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
@@ -4808,8 +4946,13 @@ void* picture_analysis_kernel(void *input_ptr)
                 picture_control_set_ptr,
                 input_picture_ptr,
                 sequence_control_set_ptr,
+#if DOWN_SAMPLING_FILTERING
+                (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr,
+                (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr,
+#else
                 quarter_decimated_picture_ptr,
                 sixteenth_decimated_picture_ptr,
+#endif
                 sb_total_count,
                 asm_type);
 
@@ -4825,23 +4968,42 @@ void* picture_analysis_kernel(void *input_ptr)
             // Pad input picture to complete border LCUs
             PadPictureToMultipleOfLcuDimensions(
                 input_padded_picture_ptr);
+#if DOWN_SAMPLING_FILTERING
+            // 1/4 & 1/16 input picture decimation
+            DecimateInputPicture(
+                picture_control_set_ptr,
+                input_padded_picture_ptr,
+                (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr,
+                (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr);
 
+            // 1/4 & 1/16 input picture downsampling through filtering
+            DownsampleInputPicture(
+                picture_control_set_ptr,
+                input_padded_picture_ptr,
+                (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr,
+                (EbPictureBufferDesc*)paReferenceObject->sixteenth_filtered_picture_ptr);
+#else
             // 1/4 & 1/16 input picture decimation
             DecimateInputPicture(
                 picture_control_set_ptr,
                 input_padded_picture_ptr,
                 quarter_decimated_picture_ptr,
                 sixteenth_decimated_picture_ptr);
-
-        // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+#endif
+           // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
             GatheringPictureStatistics(
                 sequence_control_set_ptr,
                 picture_control_set_ptr,
                 picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
                 input_padded_picture_ptr,
+#if DOWN_SAMPLING_FILTERING
+                (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr,
+#else
                 sixteenth_decimated_picture_ptr,
+#endif
                 sb_total_count,
                 asm_type);
+
             if (sequence_control_set_ptr->static_config.screen_content_mode == 2){ // auto detect
                 picture_control_set_ptr->sc_content_detected = is_screen_content(
                     input_picture_ptr->buffer_y + input_picture_ptr->origin_x + input_picture_ptr->origin_y*input_picture_ptr->stride_y,
