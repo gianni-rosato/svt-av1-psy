@@ -1744,7 +1744,7 @@ static INLINE void EnergyComputation_kernel_avx2(const int32_t *const in,
     __m256i *const sum256)
 {
     const __m256i zero = _mm256_setzero_si256();
-    const __m256i input = _mm256_loadu_si256((__m256i *)in);
+    const __m256i input = _mm256_load_si256((__m256i *)in);
     const __m256i in_lo = _mm256_unpacklo_epi32(input, zero);
     const __m256i in_hi = _mm256_unpackhi_epi32(input, zero);
     const __m256i energy_lo = _mm256_mul_epi32(in_lo, in_lo);
@@ -1801,17 +1801,17 @@ static INLINE void clean_256_bytes_avx2(int32_t *buf, const uint32_t height) {
     uint32_t h = height;
 
     do {
-        _mm256_storeu_si256((__m256i *)(buf + 0 * 8), zero);
-        _mm256_storeu_si256((__m256i *)(buf + 1 * 8), zero);
-        _mm256_storeu_si256((__m256i *)(buf + 2 * 8), zero);
-        _mm256_storeu_si256((__m256i *)(buf + 3 * 8), zero);
+        _mm256_store_si256((__m256i *)(buf + 0 * 8), zero);
+        _mm256_store_si256((__m256i *)(buf + 1 * 8), zero);
+        _mm256_store_si256((__m256i *)(buf + 2 * 8), zero);
+        _mm256_store_si256((__m256i *)(buf + 3 * 8), zero);
         buf += 64;
     } while (--h);
 }
 
 static INLINE void copy_32_bytes_avx2(const int32_t *src, int32_t *dst) {
-    const __m256i val = _mm256_loadu_si256((__m256i *)(src + 0 * 8));
-    _mm256_storeu_si256((__m256i *)(dst + 0 * 8), val);
+    const __m256i val = _mm256_load_si256((__m256i *)(src + 0 * 8));
+    _mm256_store_si256((__m256i *)(dst + 0 * 8), val);
 }
 
 static INLINE void copy_256x_bytes_avx2(const int32_t *src, int32_t *dst,
