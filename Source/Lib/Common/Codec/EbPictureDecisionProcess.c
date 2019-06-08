@@ -4119,7 +4119,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 int num_past_pics = altref_nframes / 2;
                                 int num_future_pics = altref_nframes - num_past_pics - 1;
                                 ASSERT(num_future_pics >= 0);
-                                //printf("TF-POC %i   ", picture_control_set_ptr->picture_number);
 
                                 //initilize list
                                 for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
@@ -4129,12 +4128,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
                                     PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex - num_past_pics + pic_itr]->object_ptr;
                                     picture_control_set_ptr->temp_filt_pcs_list[pic_itr] = pcs_itr;
-
-                                    // Set the default subpel settings
-                                    //list_picture_control_set_ptr[pic_itr]->use_subpel_flag = 1;
                                 }
 
-                                uint32_t actual_future_pics = 0;
+                                int actual_future_pics = 0;
+                                int actual_past_pics = 0;
+
                                 int pic_i;
                                 //search reord-queue to get the future pictures
                                 for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
@@ -4142,7 +4140,6 @@ void* picture_decision_kernel(void *input_ptr)
                                     if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL) {
                                         PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
                                         picture_control_set_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
-                                        actual_future_pics++;
                                     }
                                     else
                                         break;
@@ -4150,32 +4147,43 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 //search in pre-ass if still short
                                 if (pic_i < num_future_pics) {
-                                    actual_future_pics = 0;
                                     for (int pic_i_future = 0; pic_i_future < num_future_pics; pic_i_future++) {
                                         for (uint32_t pic_i_pa = 0; pic_i_pa < encode_context_ptr->pre_assignment_buffer_count; pic_i_pa++) {
                                             PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_i_pa]->object_ptr;
                                             if (pcs_itr->picture_number == picture_control_set_ptr->picture_number + pic_i_future + 1) {
                                                 picture_control_set_ptr->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
-                                                actual_future_pics++;
                                                 break; //exist the pre-ass loop, go search the next
                                             }
                                         }
                                     }
                                 }
 
-                                //set the actual_number of final pics
-                                altref_nframes = (uint8_t)(num_past_pics + 1 + actual_future_pics);
+                                //get actual number of future pictures stored
+                                for(pic_i=0; pic_i<num_future_pics; pic_i++){
 
-                                /*if(altref_nframes< picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes)
-                                    printf("TF %i  using only % frames/%i   \n", picture_control_set_ptr->picture_number, altref_nframes, picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes);
-                                for (int tt = 0; tt < altref_nframes; tt++)
-                                {
-                                    printf("%i   ", picture_control_set_ptr->temp_filt_pcs_list[tt]->picture_number);
-                                }*/
-                                picture_control_set_ptr->altref_nframes = altref_nframes;
+                                    if(picture_control_set_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] != NULL)
+                                        actual_future_pics++;
 
-                                //clock_t start_time;
-                                //start_time = clock();
+                                }
+
+                                actual_past_pics = actual_future_pics;
+                                actual_past_pics += (altref_nframes + 1) & 0x1;
+
+                                //get the final number of pictures to use for the temporal filtering
+                                altref_nframes = (uint8_t)(actual_past_pics + 1 + actual_future_pics);
+
+                                picture_control_set_ptr->altref_nframes = (uint8_t)altref_nframes;
+
+                                // adjust the temporal filtering pcs buffer to remove unused past pictures
+                                if(actual_past_pics != num_past_pics) {
+
+                                    pic_i = 0;
+                                    while (picture_control_set_ptr->temp_filt_pcs_list[pic_i] != NULL){
+                                        picture_control_set_ptr->temp_filt_pcs_list[pic_i] = picture_control_set_ptr->temp_filt_pcs_list[pic_i + num_past_pics - actual_past_pics];
+                                        pic_i++;
+                                    }
+
+                                }
 
                                 picture_control_set_ptr->temp_filt_prep_done = 0;
 
@@ -4205,9 +4213,6 @@ void* picture_decision_kernel(void *input_ptr)
                                     eb_block_on_semaphore(picture_control_set_ptr->temp_filt_done_semaphore);
                                 }
 
-                                //clock_t elapsed_time = clock() - start_time;
-                                //double time_taken = ((double)elapsed_time) / CLOCKS_PER_SEC; // in seconds
-                                //printf("Producing the alt-ref frame at POC %d took %f seconds.\n", picture_control_set_ptr->picture_number, time_taken);
                             }
 #endif
                         }

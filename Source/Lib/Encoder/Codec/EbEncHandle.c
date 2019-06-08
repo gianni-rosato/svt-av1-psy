@@ -2210,6 +2210,7 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
 #endif
 #if ALT_REF_OVERLAY
     sequence_control_set_ptr->static_config.enable_overlays = sequence_control_set_ptr->static_config.enable_altrefs == EB_FALSE ||
+        (sequence_control_set_ptr->static_config.altref_nframes <= 1) ||
         (sequence_control_set_ptr->static_config.rate_control_mode > 0) ||
         sequence_control_set_ptr->static_config.encoder_bit_depth != EB_8BIT ?
         0 : sequence_control_set_ptr->static_config.enable_overlays;
@@ -2768,6 +2769,17 @@ static EbErrorType VerifySettings(
 
     if (config->target_socket != -1 && config->target_socket != 0 && config->target_socket != 1) {
         SVT_LOG("Error instance %u: Invalid target_socket. target_socket must be [-1 - 1] \n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    // alt-ref frames related
+    if (config->altref_strength > ALTREF_MAX_STRENGTH ) {
+        SVT_LOG("Error instance %u: invalid altref-strength, should be in the range [0 - %d] \n", channelNumber + 1, ALTREF_MAX_STRENGTH);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->altref_nframes > ALTREF_MAX_NFRAMES ) {
+        SVT_LOG("Error instance %u: invalid altref-nframes, should be in the range [0 - %d] \n", channelNumber + 1, ALTREF_MAX_NFRAMES);
         return_error = EB_ErrorBadParameter;
     }
 
