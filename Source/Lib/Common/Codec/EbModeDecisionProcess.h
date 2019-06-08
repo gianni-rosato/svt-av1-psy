@@ -256,6 +256,15 @@ extern "C" {
 #if NEW_NEAREST_NEW_INJECTION
         uint32_t                        me_sb_addr;
 #endif
+
+#if FIXED_128x128_CONTEXT_UPDATE
+        int16_t                         luma_txb_skip_context;
+        int16_t                         luma_dc_sign_context;
+        int16_t                         cb_txb_skip_context;
+        int16_t                         cb_dc_sign_context;
+        int16_t                         cr_txb_skip_context;
+        int16_t                         cr_dc_sign_context;
+#endif
         // Multi-modes signal(s)
         uint8_t                         nfl_level;
         uint8_t                         skip_interpolation_search;
@@ -294,9 +303,8 @@ extern "C" {
 #if  BLK_SKIP_DECISION
         EbBool                          blk_skip_decision;
 #endif
-#if OPT_QUANT_COEFF
         EbBool                          trellis_quant_coeff_optimization;
-#endif
+
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(

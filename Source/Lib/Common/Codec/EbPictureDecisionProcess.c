@@ -56,18 +56,6 @@ uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_num
 #if SETUP_SKIP
 
 typedef struct {
-    int enable_order_hint;           // 0 - disable order hint, and related tools
-    int order_hint_bits_minus_1;     // dist_wtd_comp, ref_frame_mvs,
-                                                           // frame_sign_bias
-                                                           // if 0, enable_dist_wtd_comp and
-                                                           // enable_ref_frame_mvs must be set as 0.
-    int enable_dist_wtd_comp;        // 0 - disable dist-wtd compound modes
-                                                           // 1 - enable it
-    int enable_ref_frame_mvs;        // 0 - disable ref frame mvs
-                                                           // 1 - enable it
-} OrderHintInfo;
-
-typedef struct {
     MvReferenceFrame ref_type;
     int used;
     uint64_t poc;
@@ -78,7 +66,7 @@ MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
     if (!oh->enable_order_hint) return 0;
 
-    const int bits = oh->order_hint_bits_minus_1 + 1;
+    const int bits = oh->order_hint_bits;
 
     assert(bits >= 1);
     assert(a >= 0 && a < (1 << bits));
@@ -98,7 +86,7 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
 
     for (uint8_t i = 0; i < 7; ++i) {
 #if FIX_ORDER_HINT
-        ref_frame_arr_single[i].poc = parent_pcs_ptr->av1_ref_signal.ref_poc_array[i] % (1 << (parent_pcs_ptr->sequence_control_set_ptr->order_hint_bits_minus1 + 1));
+        ref_frame_arr_single[i].poc = parent_pcs_ptr->av1_ref_signal.ref_poc_array[i] % (1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
 #else
         ref_frame_arr_single[i].poc = parent_pcs_ptr->av1RefSignal.ref_poc_array[i];
 #endif
@@ -135,7 +123,7 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
 
     OrderHintInfo order_hint_info_st;
     order_hint_info_st.enable_order_hint = 1;
-    order_hint_info_st.order_hint_bits_minus_1 = 6;
+    order_hint_info_st.order_hint_bits = 6+1;
 
     const OrderHintInfo *const order_hint_info = &order_hint_info_st;// cm->seq_params.order_hint_info;
     SkipModeInfo *const skip_mode_info = &parent_pcs_ptr->skip_mode_info;// cm->current_frame.skip_mode_info;
@@ -149,7 +137,7 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
         return;
 
 #if FIX_ORDER_HINT
-    const int cur_order_hint = parent_pcs_ptr->picture_number % (1 << (parent_pcs_ptr->sequence_control_set_ptr->order_hint_bits_minus1 + 1));
+    const int cur_order_hint = parent_pcs_ptr->picture_number % (1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
 #else
     const int cur_order_hint = parent_pcs_ptr->picture_number;// cm->current_frame.order_hint;
 #endif
@@ -1135,17 +1123,33 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
     if (sc_content_detected)
+#if LOOP_FILTER_FIX
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            picture_control_set_ptr->loop_filter_mode = 3;
+        else if (picture_control_set_ptr->enc_mode == ENC_M1)
+            picture_control_set_ptr->loop_filter_mode = picture_control_set_ptr->is_used_as_reference_flag ? 3 : 0;
+#else
         if (picture_control_set_ptr->enc_mode <= ENC_M1)
             picture_control_set_ptr->loop_filter_mode = 3;
+#endif
         else
             picture_control_set_ptr->loop_filter_mode = 0;
     else
 
 #endif
+#if LOOP_FILTER_FIX
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            picture_control_set_ptr->loop_filter_mode = 3;
+        else if (picture_control_set_ptr->enc_mode <= ENC_M5)
+            picture_control_set_ptr->loop_filter_mode = picture_control_set_ptr->is_used_as_reference_flag ? 3 : 0;
+        else
+            picture_control_set_ptr->loop_filter_mode = picture_control_set_ptr->is_used_as_reference_flag ? 1 : 0;
+#else
         if (picture_control_set_ptr->enc_mode <= ENC_M5)
             picture_control_set_ptr->loop_filter_mode = 3;
         else
             picture_control_set_ptr->loop_filter_mode = 1;
+#endif
 #else
         if (picture_control_set_ptr->enc_mode <= ENC_M3)
             picture_control_set_ptr->loop_filter_mode = 3;
@@ -1168,7 +1172,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     SequenceControlSet                    *sequence_control_set_ptr;
     sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
 #endif
-    if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->allow_intrabc == 0) {
+    if (sequence_control_set_ptr->seq_header.enable_cdef && picture_control_set_ptr->allow_intrabc == 0) {
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
         if (sc_content_detected)
@@ -1443,7 +1447,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
     if (sc_content_detected)
-        if (picture_control_set_ptr->enc_mode <= ENC_M2)
+        if (picture_control_set_ptr->enc_mode == ENC_M0) 
+            picture_control_set_ptr->intra_pred_mode = 0;
+        else if (picture_control_set_ptr->enc_mode <= ENC_M2)
             if (picture_control_set_ptr->temporal_layer_index == 0)
                 picture_control_set_ptr->intra_pred_mode = 1;
             else
@@ -1458,7 +1464,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
 
 #endif
-        if (picture_control_set_ptr->enc_mode  <= ENC_M1)
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            picture_control_set_ptr->intra_pred_mode = 0;
+        else if (picture_control_set_ptr->enc_mode  <= ENC_M1)
             if (picture_control_set_ptr->temporal_layer_index == 0)
                 picture_control_set_ptr->intra_pred_mode = 1;
             else
@@ -3082,8 +3090,8 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
     quarter_decimated_picture_ptr   = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
     sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
 
-    picture_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-    pictureHeighInLcu   = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+    picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+    pictureHeighInLcu   = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
     sb_total_count      = picture_width_in_sb * pictureHeighInLcu;
 
     // Pad pictures to multiple min cu size
@@ -3829,8 +3837,8 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
                                 }
 
-                                picture_control_set_ptr->av1_cm->mi_cols = picture_control_set_ptr->sequence_control_set_ptr->luma_width >> MI_SIZE_LOG2;
-                                picture_control_set_ptr->av1_cm->mi_rows = picture_control_set_ptr->sequence_control_set_ptr->luma_height >> MI_SIZE_LOG2;
+                                picture_control_set_ptr->av1_cm->mi_cols = picture_control_set_ptr->sequence_control_set_ptr->seq_header.max_frame_width >> MI_SIZE_LOG2;
+                                picture_control_set_ptr->av1_cm->mi_rows = picture_control_set_ptr->sequence_control_set_ptr->seq_header.max_frame_height >> MI_SIZE_LOG2;
 
                                 memset(picture_control_set_ptr->av1_cm->ref_frame_sign_bias, 0, 8 * sizeof(int32_t));
 #if BASE_LAYER_REF || MRP_REF_MODE
@@ -4503,7 +4511,7 @@ void* picture_decision_kernel(void *input_ptr)
                             uint32_t  sb_origin_y;
 
                             if ((picture_control_set_ptr->slice_type == P_SLICE) || (picture_control_set_ptr->slice_type == B_SLICE)) {
-                                picture_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+                                picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
                                 for (lcuCodingOrder = 0; lcuCodingOrder < picture_control_set_ptr->sb_total_count; ++lcuCodingOrder) {
                                     sb_origin_x = (lcuCodingOrder % picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
                                     sb_origin_y = (lcuCodingOrder / picture_width_in_sb) * sequence_control_set_ptr->sb_sz;

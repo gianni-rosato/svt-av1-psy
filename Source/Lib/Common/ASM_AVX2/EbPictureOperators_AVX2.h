@@ -6,7 +6,9 @@
 #ifndef EbPictureOperators_AVX2
 #define EbPictureOperators_AVX2
 
+#include <immintrin.h>
 #include "EbDefinitions.h"
+#include "EbPictureOperators_SSE2.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -145,6 +147,14 @@ extern "C" {
         uint64_t  distortion_result[DIST_CALC_TOTAL],
         uint32_t  area_width,
         uint32_t  area_height);
+
+    static INLINE int32_t Hadd32_AVX2_INTRIN(const __m256i src) {
+        const __m128i src_L = _mm256_extracti128_si256(src, 0);
+        const __m128i src_H = _mm256_extracti128_si256(src, 1);
+        const __m128i sum = _mm_add_epi32(src_L, src_H);
+
+        return Hadd32_SSE2_INTRIN(sum);
+    }
 
     uint64_t spatial_full_distortion_kernel4x_n_avx2_intrin(
         uint8_t   *input,

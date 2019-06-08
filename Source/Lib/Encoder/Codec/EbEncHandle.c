@@ -2191,14 +2191,14 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
 
     sequence_control_set_ptr->chroma_width = sequence_control_set_ptr->max_input_luma_width >> subsampling_x;
     sequence_control_set_ptr->chroma_height = sequence_control_set_ptr->max_input_luma_height >> subsampling_y;
-    sequence_control_set_ptr->luma_width = sequence_control_set_ptr->max_input_luma_width;
-    sequence_control_set_ptr->luma_height = sequence_control_set_ptr->max_input_luma_height;
+    sequence_control_set_ptr->seq_header.max_frame_width = sequence_control_set_ptr->max_input_luma_width;
+    sequence_control_set_ptr->seq_header.max_frame_height = sequence_control_set_ptr->max_input_luma_height;
     sequence_control_set_ptr->static_config.source_width = sequence_control_set_ptr->max_input_luma_width;
     sequence_control_set_ptr->static_config.source_height = sequence_control_set_ptr->max_input_luma_height;
 
     derive_input_resolution(
         sequence_control_set_ptr,
-        sequence_control_set_ptr->luma_width*sequence_control_set_ptr->luma_height);
+        sequence_control_set_ptr->seq_header.max_frame_width*sequence_control_set_ptr->seq_header.max_frame_height);
 #if NEW_PRESETS
     sequence_control_set_ptr->static_config.super_block_size       = (sequence_control_set_ptr->static_config.enc_mode == ENC_M0 && sequence_control_set_ptr->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 128 : 64;
 #else
@@ -2211,7 +2211,6 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
 #if ALT_REF_OVERLAY
     sequence_control_set_ptr->static_config.enable_overlays = sequence_control_set_ptr->static_config.enable_altrefs == EB_FALSE ||
         (sequence_control_set_ptr->static_config.rate_control_mode > 0) ||
-        (sequence_control_set_ptr->static_config.enc_mode > ENC_M0) ||
         sequence_control_set_ptr->static_config.encoder_bit_depth != EB_8BIT ?
         0 : sequence_control_set_ptr->static_config.enable_overlays;
 #endif
@@ -3567,8 +3566,8 @@ EbErrorType EbOutputReconBufferHeaderCtor(
     EbBufferHeaderType         *recon_buffer;
     SequenceControlSet        *sequence_control_set_ptr = (SequenceControlSet*)objectInitDataPtr;
     const uint32_t luma_size =
-        sequence_control_set_ptr->luma_width    *
-        sequence_control_set_ptr->luma_height;
+        sequence_control_set_ptr->seq_header.max_frame_width    *
+        sequence_control_set_ptr->seq_header.max_frame_height;
     // both u and v
     const uint32_t chroma_size = luma_size >> 1;
     const uint32_t tenBit = (sequence_control_set_ptr->static_config.encoder_bit_depth > 8);

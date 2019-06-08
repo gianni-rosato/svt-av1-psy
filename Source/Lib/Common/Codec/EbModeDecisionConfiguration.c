@@ -507,7 +507,7 @@ void ForwardCuToModeDecision(
                 if (enable_blk_4x4) {
                     resultsPtr->leaf_data_array[resultsPtr->leaf_count++].split_flag = split_flag = EB_TRUE;
 
-                    int first_4_index = pa_to_ep_block_index[cu_index] + d1_depth_offset[sequence_control_set_ptr->sb_size == BLOCK_128X128][cuStatsPtr->depth];
+                    int first_4_index = pa_to_ep_block_index[cu_index] + d1_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][cuStatsPtr->depth];
                     for (int i = 0; i < 4; ++i) {
                         resultsPtr->leaf_data_array[resultsPtr->leaf_count].leaf_index = cu_index;
 

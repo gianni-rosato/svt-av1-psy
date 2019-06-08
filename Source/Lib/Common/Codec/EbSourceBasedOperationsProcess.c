@@ -623,7 +623,7 @@ void DeriveHighDarkAreaDensityFlag(
         }
     }
 
-    blackAreaPercentage = (blackSamplesCount * 100) / (sequence_control_set_ptr->luma_width * sequence_control_set_ptr->luma_height);
+    blackAreaPercentage = (blackSamplesCount * 100) / (sequence_control_set_ptr->seq_header.max_frame_width * sequence_control_set_ptr->seq_header.max_frame_height);
     picture_control_set_ptr->high_dark_area_density_flag = (EbBool)(blackAreaPercentage >= MIN_BLACK_AREA_PERCENTAGE);
 
     blackSamplesCount = 0;
@@ -640,8 +640,8 @@ void DeriveHighDarkAreaDensityFlag(
         }
     }
 
-    blackAreaPercentage = (blackSamplesCount * 100) / (sequence_control_set_ptr->luma_width * sequence_control_set_ptr->luma_height);
-    whiteAreaPercentage = (whiteSamplesCount * 100) / (sequence_control_set_ptr->luma_width * sequence_control_set_ptr->luma_height);
+    blackAreaPercentage = (blackSamplesCount * 100) / (sequence_control_set_ptr->seq_header.max_frame_width * sequence_control_set_ptr->seq_header.max_frame_height);
+    whiteAreaPercentage = (whiteSamplesCount * 100) / (sequence_control_set_ptr->seq_header.max_frame_width * sequence_control_set_ptr->seq_header.max_frame_height);
     picture_control_set_ptr->high_dark_low_light_area_density_flag = (EbBool)(blackAreaPercentage >= MIN_BLACK_AREA_PERCENTAGE) && (whiteAreaPercentage >= MIN_WHITE_AREA_PERCENTAGE);
 }
 #define NORM_FACTOR    10

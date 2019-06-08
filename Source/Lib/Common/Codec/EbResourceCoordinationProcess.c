@@ -121,7 +121,7 @@ EbErrorType signal_derivation_pre_analysis_oq(
     }
 #if NEW_PRESETS
     if (picture_control_set_ptr->enc_mode >= ENC_M8)
-        sequence_control_set_ptr->enable_restoration = 0;
+        sequence_control_set_ptr->seq_header.enable_restoration = 0;
 #else
     if (picture_control_set_ptr->enc_mode >= ENC_M7)
         sequence_control_set_ptr->enable_restoration = 0;
@@ -591,8 +591,8 @@ void* resource_coordination_kernel(void *input_ptr)
             if (context_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->initial_picture)
 
             {
-                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->luma_width = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width;
-                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->luma_height = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height;
+                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->seq_header.max_frame_width = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width;
+                context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->seq_header.max_frame_height = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height;
                 context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->chroma_width = (context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width >> 1);
                 context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->chroma_height = (context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height >> 1);
 
@@ -605,7 +605,7 @@ void* resource_coordination_kernel(void *input_ptr)
                     context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->conformance_window_flag = 1;
                 else
                     context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->conformance_window_flag = 0;
-                input_size = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->luma_width * context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->luma_height;
+                input_size = context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->seq_header.max_frame_width * context_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->seq_header.max_frame_height;
             }
 
             // Copy previous Active SequenceControlSetPtr to a place holder
@@ -659,7 +659,6 @@ void* resource_coordination_kernel(void *input_ptr)
 
 #if ALTREF_FILTERING_SUPPORT
             sequence_control_set_ptr->enable_altrefs =  sequence_control_set_ptr->static_config.enable_altrefs &&
-                sequence_control_set_ptr->static_config.enc_mode == ENC_M0  &&
                 sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT ? EB_TRUE : EB_FALSE;
 #endif
 
@@ -787,7 +786,7 @@ void* resource_coordination_kernel(void *input_ptr)
             }
             else
                 picture_control_set_ptr->enc_mode = (EbEncMode)sequence_control_set_ptr->static_config.enc_mode;
-            aspectRatio = (sequence_control_set_ptr->luma_width * 10) / sequence_control_set_ptr->luma_height;
+            aspectRatio = (sequence_control_set_ptr->seq_header.max_frame_width * 10) / sequence_control_set_ptr->seq_header.max_frame_height;
             aspectRatio = (aspectRatio <= ASPECT_RATIO_4_3) ? ASPECT_RATIO_CLASS_0 : (aspectRatio <= ASPECT_RATIO_16_9) ? ASPECT_RATIO_CLASS_1 : ASPECT_RATIO_CLASS_2;
 
             // Set the SCD Mode

@@ -354,126 +354,6 @@ static int32_t get_eob_cost(int32_t eob, const LvMapEobCost *txb_eob_costs,
     }
     return eob_cost;
 }
-#if !OPT_QUANT_COEFF
-// The ctx offset table when TX is TX_CLASS_2D.
-// TX col and row indices are clamped to 4.
-const int8_t av1_nz_map_ctx_offset[TX_SIZES_ALL][5][5] = {
-    // TX_4X4
-    { { 0, 1, 6, 6, 0 },
-    { 1, 6, 6, 21, 0 },
-    { 6, 6, 21, 21, 0 },
-    { 6, 21, 21, 21, 0 },
-    { 0, 0, 0, 0, 0 } },
-    // TX_8X8
-    { { 0, 1, 6, 6, 21 },
-    { 1, 6, 6, 21, 21 },
-    { 6, 6, 21, 21, 21 },
-    { 6, 21, 21, 21, 21 },
-    { 21, 21, 21, 21, 21 } },
-    // TX_16X16
-    { { 0, 1, 6, 6, 21 },
-    { 1, 6, 6, 21, 21 },
-    { 6, 6, 21, 21, 21 },
-    { 6, 21, 21, 21, 21 },
-    { 21, 21, 21, 21, 21 } },
-    // TX_32X32
-    { { 0, 1, 6, 6, 21 },
-    { 1, 6, 6, 21, 21 },
-    { 6, 6, 21, 21, 21 },
-    { 6, 21, 21, 21, 21 },
-    { 21, 21, 21, 21, 21 } },
-    // TX_64X64
-    { { 0, 1, 6, 6, 21 },
-    { 1, 6, 6, 21, 21 },
-    { 6, 6, 21, 21, 21 },
-    { 6, 21, 21, 21, 21 },
-    { 21, 21, 21, 21, 21 } },
-    // TX_4X8
-    { { 0, 11, 11, 11, 0 },
-    { 11, 11, 11, 11, 0 },
-    { 6, 6, 21, 21, 0 },
-    { 6, 21, 21, 21, 0 },
-    { 21, 21, 21, 21, 0 } },
-    // TX_8X4
-    { { 0, 16, 6, 6, 21 },
-    { 16, 16, 6, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 0, 0, 0, 0, 0 } },
-    // TX_8X16
-    { { 0, 11, 11, 11, 11 },
-    { 11, 11, 11, 11, 11 },
-    { 6, 6, 21, 21, 21 },
-    { 6, 21, 21, 21, 21 },
-    { 21, 21, 21, 21, 21 } },
-    // TX_16X8
-    { { 0, 16, 6, 6, 21 },
-    { 16, 16, 6, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 } },
-    // TX_16X32
-    { { 0, 11, 11, 11, 11 },
-    { 11, 11, 11, 11, 11 },
-    { 6, 6, 21, 21, 21 },
-    { 6, 21, 21, 21, 21 },
-    { 21, 21, 21, 21, 21 } },
-    // TX_32X16
-    { { 0, 16, 6, 6, 21 },
-    { 16, 16, 6, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 } },
-    // TX_32X64
-    { { 0, 11, 11, 11, 11 },
-    { 11, 11, 11, 11, 11 },
-    { 6, 6, 21, 21, 21 },
-    { 6, 21, 21, 21, 21 },
-    { 21, 21, 21, 21, 21 } },
-    // TX_64X32
-    { { 0, 16, 6, 6, 21 },
-    { 16, 16, 6, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 } },
-    // TX_4X16
-    { { 0, 11, 11, 11, 0 },
-    { 11, 11, 11, 11, 0 },
-    { 6, 6, 21, 21, 0 },
-    { 6, 21, 21, 21, 0 },
-    { 21, 21, 21, 21, 0 } },
-    // TX_16X4
-    { { 0, 16, 6, 6, 21 },
-    { 16, 16, 6, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 0, 0, 0, 0, 0 } },
-    // TX_8X32
-    { { 0, 11, 11, 11, 11 },
-    { 11, 11, 11, 11, 11 },
-    { 6, 6, 21, 21, 21 },
-    { 6, 21, 21, 21, 21 },
-    { 21, 21, 21, 21, 21 } },
-    // TX_32X8
-    { { 0, 16, 6, 6, 21 },
-    { 16, 16, 6, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 } },
-    // TX_16X64
-    { { 0, 11, 11, 11, 11 },
-    { 11, 11, 11, 11, 11 },
-    { 6, 6, 21, 21, 21 },
-    { 6, 21, 21, 21, 21 },
-    { 21, 21, 21, 21, 21 } },
-    // TX_64X16
-    { { 0, 16, 6, 6, 21 },
-    { 16, 16, 6, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 },
-    { 16, 16, 21, 21, 21 } }
-};
-#endif
 
 static INLINE int32_t get_br_ctx(const uint8_t *const levels,
     const int32_t c,  // raster order
@@ -1682,14 +1562,14 @@ uint64_t av1_inter_fast_cost(
 }
 
 EbErrorType av1_tu_estimate_coeff_bits(
+#if FIXED_128x128_CONTEXT_UPDATE
+    struct ModeDecisionContext         *md_context,
+#endif
 #if CABAC_UP
     uint8_t                             allow_update_cdf,
     FRAME_CONTEXT                      *ec_ctx,
 #endif
     PictureControlSet                  *picture_control_set_ptr,
-#if ATB_DC_CONTEXT_SUPPORT_0
-    uint8_t                             txb_itr,
-#endif
     struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
     CodingUnit                         *cu_ptr,
     uint32_t                            tu_origin_index,
@@ -1699,34 +1579,38 @@ EbErrorType av1_tu_estimate_coeff_bits(
     uint32_t                            y_eob,
     uint32_t                            cb_eob,
     uint32_t                            cr_eob,
-    uint64_t                            *y_tu_coeff_bits,
-    uint64_t                            *cb_tu_coeff_bits,
-    uint64_t                            *cr_tu_coeff_bits,
-    TxSize                               txsize,
-    TxSize                               txsize_uv,
+    uint64_t                           *y_tu_coeff_bits,
+    uint64_t                           *cb_tu_coeff_bits,
+    uint64_t                           *cr_tu_coeff_bits,
+    TxSize                              txsize,
+    TxSize                              txsize_uv,
 #if ATB_TX_TYPE_SUPPORT_PER_TU
-    TxType                               tx_type,
-    TxType                               tx_type_uv,
+    TxType                              tx_type,
+    TxType                              tx_type_uv,
 #endif
-    COMPONENT_TYPE                       component_type,
-    EbAsm                                asm_type)
+    COMPONENT_TYPE                      component_type,
+    EbAsm                               asm_type)
 {
     (void)asm_type;
     (void)entropy_coder_ptr;
     EbErrorType return_error = EB_ErrorNone;
 
     int32_t *coeff_buffer;
-
-    int16_t  luma_txb_skip_context = cu_ptr->luma_txb_skip_context;
-#if ATB_DC_CONTEXT_SUPPORT_0
-    int16_t  luma_dc_sign_context = cu_ptr->luma_dc_sign_context[txb_itr];
+#if FIXED_128x128_CONTEXT_UPDATE
+    int16_t  luma_txb_skip_context = md_context->luma_txb_skip_context;
+    int16_t  luma_dc_sign_context = md_context->luma_dc_sign_context;
+    int16_t  cb_txb_skip_context = md_context->cb_txb_skip_context;
+    int16_t  cb_dc_sign_context = md_context->cb_dc_sign_context;
+    int16_t  cr_txb_skip_context = md_context->cr_txb_skip_context;
+    int16_t  cr_dc_sign_context = md_context->cr_dc_sign_context;
 #else
+    int16_t  luma_txb_skip_context = cu_ptr->luma_txb_skip_context;
     int16_t  luma_dc_sign_context = cu_ptr->luma_dc_sign_context;
-#endif
     int16_t  cb_txb_skip_context = cu_ptr->cb_txb_skip_context;
     int16_t  cb_dc_sign_context = cu_ptr->cb_dc_sign_context;
     int16_t  cr_txb_skip_context = cu_ptr->cr_txb_skip_context;
     int16_t  cr_dc_sign_context = cu_ptr->cr_dc_sign_context;
+#endif
 
     EbBool reducedTransformSetFlag = picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used ? EB_TRUE : EB_FALSE;
 
@@ -2265,9 +2149,11 @@ void coding_loop_context_generation(
     uint32_t                      sb_sz,
     NeighborArrayUnit        *skip_coeff_neighbor_array,
 #endif
+#if !FIXED_128x128_CONTEXT_UPDATE
     NeighborArrayUnit        *luma_dc_sign_level_coeff_neighbor_array,
     NeighborArrayUnit        *cb_dc_sign_level_coeff_neighbor_array,
     NeighborArrayUnit        *cr_dc_sign_level_coeff_neighbor_array,
+#endif
     NeighborArrayUnit        *inter_pred_dir_neighbor_array,
     NeighborArrayUnit        *ref_frame_type_neighbor_array,
     NeighborArrayUnit        *intra_luma_mode_neighbor_array,
@@ -2379,62 +2265,13 @@ void coding_loop_context_generation(
         (skip_coeff_neighbor_array->top_array[skipCoeffTopNeighborIndex] == (uint8_t)INVALID_NEIGHBOR_DATA) ? 0 :
         (skip_coeff_neighbor_array->top_array[skipCoeffTopNeighborIndex]) ? 1 : 0;
 #endif
-
+#if !FIXED_128x128_CONTEXT_UPDATE
     // Skip and Dc sign context generation
 
     BlockSize plane_bsize = context_ptr->blk_geom->bsize;
 
     cu_ptr->luma_txb_skip_context = 0;
 
-#if ATB_DC_CONTEXT_SUPPORT_0
-    // Initialize luma_dc_sign_context assuming no atb search (i.e. transform size equal to block size)
-    cu_ptr->luma_dc_sign_context[0] = 0;
-    cu_ptr->luma_dc_sign_context[1] = 0;
-    cu_ptr->luma_dc_sign_context[2] = 0;
-    cu_ptr->luma_dc_sign_context[3] = 0;
-
-    cu_ptr->cb_txb_skip_context = 0;
-    cu_ptr->cb_dc_sign_context  = 0;
-    cu_ptr->cr_txb_skip_context = 0;
-    cu_ptr->cr_dc_sign_context  = 0;
-
-    get_txb_ctx(
-        COMPONENT_LUMA,
-        luma_dc_sign_level_coeff_neighbor_array,
-        cu_origin_x,
-        cu_origin_y,
-        plane_bsize,
-        context_ptr->blk_geom->txsize[0][0],
-        &cu_ptr->luma_txb_skip_context,
-        &(cu_ptr->luma_dc_sign_context[0]));
-
-    if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
-        get_txb_ctx(
-            COMPONENT_CHROMA,
-            cb_dc_sign_level_coeff_neighbor_array,
-            context_ptr->round_origin_x >> 1,
-            context_ptr->round_origin_y >> 1,
-            context_ptr->blk_geom->bsize_uv,
-            context_ptr->blk_geom->txsize_uv[0][0],
-            &cu_ptr->cb_txb_skip_context,
-            &cu_ptr->cb_dc_sign_context);
-
-        get_txb_ctx(
-            COMPONENT_CHROMA,
-            cr_dc_sign_level_coeff_neighbor_array,
-            context_ptr->round_origin_x >> 1,
-            context_ptr->round_origin_y >> 1,
-            context_ptr->blk_geom->bsize_uv,
-            context_ptr->blk_geom->txsize_uv[0][0],
-            &cu_ptr->cr_txb_skip_context,
-            &cu_ptr->cr_dc_sign_context);
-    }
-
-    cu_ptr->luma_dc_sign_context[0] = cu_ptr->luma_dc_sign_context[0];
-    cu_ptr->luma_dc_sign_context[1] = cu_ptr->luma_dc_sign_context[0];
-    cu_ptr->luma_dc_sign_context[2] = cu_ptr->luma_dc_sign_context[0];
-    cu_ptr->luma_dc_sign_context[3] = cu_ptr->luma_dc_sign_context[0];
-#else
     cu_ptr->luma_dc_sign_context = 0;
     cu_ptr->cb_txb_skip_context = 0;
     cu_ptr->cb_dc_sign_context = 0;
@@ -2492,6 +2329,7 @@ void coding_loop_context_generation(
                 &cu_ptr->cr_dc_sign_context);
         }
     }
+
 #endif
     // Generate reference mode context
 
@@ -2786,8 +2624,8 @@ EbErrorType av1_split_flag_rate(
 
     if (is_partition_point) {
         const int32_t hbs = (mi_size_wide[bsize] << 2) >> 1;
-        const int32_t hasRows = (cu_origin_y + hbs) < sequence_control_set_ptr->luma_height;
-        const int32_t hasCols = (cu_origin_x + hbs) < sequence_control_set_ptr->luma_width;
+        const int32_t hasRows = (cu_origin_y + hbs) < sequence_control_set_ptr->seq_header.max_frame_height;
+        const int32_t hasCols = (cu_origin_x + hbs) < sequence_control_set_ptr->seq_header.max_frame_width;
 
         uint32_t contextIndex = 0;
 
@@ -2879,8 +2717,11 @@ EbErrorType av1_encode_tu_calc_cost(
     uint64_t yZeroCbfRate;
 
     uint64_t yZeroCbfCost = 0;
+#if FIXED_128x128_CONTEXT_UPDATE
+    int16_t  txb_skip_ctx = context_ptr->md_context->luma_txb_skip_context;
+#else
     int16_t  txb_skip_ctx = cu_ptr->luma_txb_skip_context;
-
+#endif
     // **Compute distortion
     if (component_mask == PICTURE_BUFFER_DESC_LUMA_MASK || component_mask == PICTURE_BUFFER_DESC_FULL_MASK) {
         // Non Zero Distortion

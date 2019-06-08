@@ -385,16 +385,14 @@ extern "C" {
         PredictionMode              pred_mode;
         IntMv                       predmv[2];
         uint8_t                     skip_coeff_context;
+#if !FIXED_128x128_CONTEXT_UPDATE
         int16_t                     luma_txb_skip_context;
-#if ATB_DC_CONTEXT_SUPPORT_0
-        int16_t                     luma_dc_sign_context[MAX_TXB_COUNT];
-#else
         int16_t                     luma_dc_sign_context;
-#endif
         int16_t                     cb_txb_skip_context;
         int16_t                     cb_dc_sign_context;
         int16_t                     cr_txb_skip_context;
         int16_t                     cr_dc_sign_context;
+#endif
         uint8_t                     reference_mode_context;
         uint8_t                     compoud_reference_type_context;
 #if ATB_DC_CONTEXT_SUPPORT_1

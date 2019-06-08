@@ -1020,8 +1020,8 @@ void av1_filter_block_plane_vert(
     const uint32_t scale_vert = plane_ptr->subsampling_y;
     uint8_t *const dst_ptr = plane_ptr->dst.buf;
     const int32_t dst_stride = plane_ptr->dst.stride;
-    const int32_t y_range = scs_ptr->sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_vert) : (SB64_MIB_SIZE >> scale_vert);
-    const int32_t x_range = scs_ptr->sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz) : (SB64_MIB_SIZE >> scale_horz);
+    const int32_t y_range = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_vert) : (SB64_MIB_SIZE >> scale_vert);
+    const int32_t x_range = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz) : (SB64_MIB_SIZE >> scale_horz);
     for (int32_t y = 0; y < y_range; y += row_step) {
         uint8_t *p = dst_ptr + ((y * MI_SIZE * dst_stride) << plane_ptr->is16Bit);
         for (int32_t x = 0; x < x_range;) {
@@ -1141,8 +1141,8 @@ void av1_filter_block_plane_horz(
     const uint32_t scale_vert = plane_ptr->subsampling_y;
     uint8_t *const dst_ptr = plane_ptr->dst.buf;
     const int32_t dst_stride = plane_ptr->dst.stride;
-    const int32_t y_range = scs_ptr->sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_vert) : (SB64_MIB_SIZE >> scale_vert);
-    const int32_t x_range = scs_ptr->sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz) : (SB64_MIB_SIZE >> scale_horz);
+    const int32_t y_range = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_vert) : (SB64_MIB_SIZE >> scale_vert);
+    const int32_t x_range = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz) : (SB64_MIB_SIZE >> scale_horz);
     uint32_t mi_stride = pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
     for (int32_t x = 0; x < x_range; x += col_step) {
         uint8_t *p = dst_ptr + ((x * MI_SIZE) << plane_ptr->is16Bit);
@@ -1297,15 +1297,15 @@ void loop_filter_sb(
         if (pcs_ptr->parent_pcs_ptr->lf.combine_vert_horz_lf) {
             // filter all vertical and horizontal edges in every 64x64 super block
             // filter vertical edges
-            av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_size, frame_buffer, mi_row,
+            av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer, mi_row,
                 mi_col, plane, plane + 1);
             av1_filter_block_plane_vert(pcs_ptr, xd, plane, &pd[plane], mi_row,
                 mi_col);
             // filter horizontal edges
-            int32_t max_mib_size = pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_size == BLOCK_128X128 ? MAX_MIB_SIZE : SB64_MIB_SIZE;
+            int32_t max_mib_size = pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? MAX_MIB_SIZE : SB64_MIB_SIZE;
 
             if (mi_col - max_mib_size >= 0) {
-                av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_size, frame_buffer,
+                av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer,
                     mi_row, mi_col - max_mib_size, plane,
                     plane + 1);
                 av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row,
@@ -1313,7 +1313,7 @@ void loop_filter_sb(
             }
             // Filter the horizontal edges of the last lcu in each row
             if (LastCol) {
-                av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_size, frame_buffer,
+                av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer,
                     mi_row, mi_col, plane,
                     plane + 1);
                 av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row,
@@ -1322,14 +1322,14 @@ void loop_filter_sb(
         }
         else {
             // filter all vertical edges in every 64x64 super block
-            av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_size, frame_buffer, mi_row,
+            av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer, mi_row,
                 mi_col, plane, plane + 1);
 
             av1_filter_block_plane_vert(pcs_ptr, xd, plane, &pd[plane], mi_row,
                 mi_col);
 
             // filter all horizontal edges in every 64x64 super block
-            av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_size, frame_buffer, mi_row,
+            av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer, mi_row,
                 mi_col, plane, plane + 1);
             av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row,
                 mi_col);
@@ -1351,8 +1351,8 @@ void av1_loop_filter_frame(
     uint32_t                                   sb_origin_y;
     EbBool                                  endOfRowFlag;
 
-    uint32_t picture_width_in_sb = (scs_ptr->luma_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
-    uint32_t picture_height_in_sb = (scs_ptr->luma_height + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
+    uint32_t picture_width_in_sb = (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
+    uint32_t picture_height_in_sb = (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
     av1_loop_filter_frame_init(picture_control_set_ptr, plane_start, plane_end);
 
     for (y_lcu_index = 0; y_lcu_index < picture_height_in_sb; ++y_lcu_index) {
@@ -1472,9 +1472,9 @@ uint64_t PictureSseCalculations(
 
             residualDistortion = 0;
 
-            while (row_index < sequence_control_set_ptr->luma_height) {
+            while (row_index < sequence_control_set_ptr->seq_header.max_frame_height) {
                 columnIndex = 0;
-                while (columnIndex < sequence_control_set_ptr->luma_width) {
+                while (columnIndex < sequence_control_set_ptr->seq_header.max_frame_width) {
                     residualDistortion += (int64_t)SQR((int64_t)(inputBuffer[columnIndex]) - (reconCoeffBuffer[columnIndex]));
                     ++columnIndex;
                 }
@@ -1542,9 +1542,9 @@ uint64_t PictureSseCalculations(
 
             residualDistortion = 0;
 
-            while (row_index < sequence_control_set_ptr->luma_height) {
+            while (row_index < sequence_control_set_ptr->seq_header.max_frame_height) {
                 columnIndex = 0;
-                while (columnIndex < sequence_control_set_ptr->luma_width) {
+                while (columnIndex < sequence_control_set_ptr->seq_header.max_frame_width) {
                     residualDistortion += (int64_t)SQR(((int64_t)inputBuffer[columnIndex]) - (int64_t)(reconCoeffBuffer[columnIndex]));
                     ++columnIndex;
                 }

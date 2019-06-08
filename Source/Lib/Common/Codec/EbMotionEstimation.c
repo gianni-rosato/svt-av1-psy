@@ -13608,6 +13608,7 @@ EbErrorType motion_estimate_lcu(
     int16_t xTopLeftSearchRegion;
     int16_t yTopLeftSearchRegion;
     uint32_t searchRegionIndex;
+
     int16_t picture_width =
         (int16_t)((SequenceControlSet *)picture_control_set_ptr
                       ->sequence_control_set_wrapper_ptr->object_ptr)
@@ -13622,6 +13623,7 @@ EbErrorType motion_estimate_lcu(
     uint32_t sb_height = (input_ptr->height - sb_origin_y) < BLOCK_SIZE_64
                              ? input_ptr->height - sb_origin_y
                              : BLOCK_SIZE_64;
+  
     int16_t padWidth = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t padHeight = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t search_area_width;
@@ -13739,6 +13741,10 @@ EbErrorType motion_estimate_lcu(
          picture_control_set_ptr->nsq_search_level < NSQ_SEARCH_FULL)
             ? EB_TRUE
             : EB_FALSE;
+
+#if DISABLE_NSQ_TABLE_FOR_M0
+    is_nsq_table_used = picture_control_set_ptr->enc_mode == ENC_M0 ?  EB_FALSE : is_nsq_table_used;      
+#endif
 
 #if !MRP_ME
     referenceObject =

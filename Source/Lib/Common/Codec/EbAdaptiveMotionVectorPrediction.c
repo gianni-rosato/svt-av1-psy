@@ -551,7 +551,7 @@ static int32_t has_top_right(const Av1Common *cm, const MacroBlockD *xd,
     int32_t mi_row, int32_t mi_col, int32_t bs) {
     (void)xd;
     (void)cm;
-    const int32_t sb_mi_size = mi_size_wide[cm->p_pcs_ptr->sequence_control_set_ptr->sb_size];
+    const int32_t sb_mi_size = mi_size_wide[cm->p_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size];
     const int32_t mask_row = mi_row & (sb_mi_size - 1);
     const int32_t mask_col = mi_col & (sb_mi_size - 1);
 

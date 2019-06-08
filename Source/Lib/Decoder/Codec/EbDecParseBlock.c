@@ -2465,7 +2465,7 @@ static INLINE void dec_get_txb_ctx(int plane_bsize, const TxSize tx_size, const 
 
 uint16_t parse_transform_block(EbDecHandle *dec_handle, PartitionInfo_t *pi, SvtReader *r,
                               int32_t *coeff, TransformInfo_t *trans_info, int plane,
-                              int blk_col, int blk_row, BlockSize mi_row, BlockSize mi_col,
+                              int blk_col, int blk_row, int mi_row, int mi_col,
                               TxSize tx_size, int is_inter, int skip)
 {
     // ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;

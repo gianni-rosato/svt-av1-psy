@@ -56,6 +56,7 @@ enable_testing()
 
 file(GLOB all_files
     "*.h"
+    "*.c"
     "*.cc"
     "ref/*.h"
     "ref/*.cc"
