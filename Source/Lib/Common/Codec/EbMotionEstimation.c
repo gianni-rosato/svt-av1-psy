@@ -13612,11 +13612,11 @@ EbErrorType motion_estimate_lcu(
     int16_t picture_width =
         (int16_t)((SequenceControlSet *)picture_control_set_ptr
                       ->sequence_control_set_wrapper_ptr->object_ptr)
-            ->luma_width;
+            ->seq_header.max_frame_width;
     int16_t picture_height =
         (int16_t)((SequenceControlSet *)picture_control_set_ptr
                       ->sequence_control_set_wrapper_ptr->object_ptr)
-            ->luma_height;
+            ->seq_header.max_frame_height;
     uint32_t sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64
                             ? input_ptr->width - sb_origin_x
                             : BLOCK_SIZE_64;
