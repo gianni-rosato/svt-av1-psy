@@ -117,6 +117,8 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **ErrorFile** | -errlog | any string | stderr | error log displaying configuration or encode errors |
 | **UseQpFile** | -use-q-file | [0 - 1] | 0 | When set to 1, overwrite the picture qp assignment using qp values in QpFile |
 | **QpFile** | -qp-file | any string | Null | Path to qp file |
+| **StatReport** | -stat-report | [0 - 1] | 0 | When set to 1, calculate and display PSNR values |
+| **StatFile** | -stat-file | any string | Null | Path to statistics file if specified and StatReport is set to 1, per picture statistics are outputted in the file|
 | **EncoderMode** | -enc-mode | [0 - 8] | 8 | Encoder Preset [0,1,2,3,4,5,6,7,8] 0 = highest quality, 8 = highest speed |
 | **EncoderBitDepth** | -bit-depth | [8 , 10] | 8 | specifies the bit depth of the input video |
 | **CompressedTenBitFormat** | -compressed-ten-bit-format | [0 - 1] | 0 | Offline packing of the 2bits: requires two bits packed input (0: OFF, 1: ON) |

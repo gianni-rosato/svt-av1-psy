@@ -654,7 +654,7 @@ void ReconOutput(
     eb_release_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
 }
 
-void PsnrCalculations(
+void psnr_calculations(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr){
     EbBool is16bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);

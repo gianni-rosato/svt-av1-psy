@@ -28,6 +28,7 @@
 #define OUTPUT_RECON_TOKEN              "-o"
 #define ERROR_FILE_TOKEN                "-errlog"
 #define QP_FILE_TOKEN                   "-qp-file"
+#define STAT_FILE_TOKEN                 "-stat-file"
 #define WIDTH_TOKEN                     "-w"
 #define HEIGHT_TOKEN                    "-h"
 #define NUMBER_OF_PICTURES_TOKEN        "-n"
@@ -35,6 +36,7 @@
 #define BASE_LAYER_SWITCH_MODE_TOKEN    "-base-layer-switch-mode" // no Eval
 #define QP_TOKEN                        "-q"
 #define USE_QP_FILE_TOKEN               "-use-q-file"
+#define STAT_REPORT_TOKEN               "-stat-report"
 #define FRAME_RATE_TOKEN                "-fps"
 #define FRAME_RATE_NUMERATOR_TOKEN      "-fps-num"
 #define FRAME_RATE_DENOMINATOR_TOKEN    "-fps-denom"
@@ -156,6 +158,12 @@ static void SetCfgQpFile                        (const char *value, EbConfig *cf
     if (cfg->qp_file) { fclose(cfg->qp_file); }
     FOPEN(cfg->qp_file,value, "r");
 };
+static void SetCfgStatFile(const char *value, EbConfig *cfg)
+{
+    if (cfg->stat_file) { fclose(cfg->stat_file); }
+    FOPEN(cfg->stat_file, value, "wb");
+};
+static void SetStatReport                       (const char *value, EbConfig *cfg) {cfg->stat_report = strtoul(value, NULL, 0);};
 static void SetCfgSourceWidth                   (const char *value, EbConfig *cfg) {cfg->source_width = strtoul(value, NULL, 0);};
 static void SetInterlacedVideo                  (const char *value, EbConfig *cfg) {cfg->interlaced_video  = (EbBool) strtoul(value, NULL, 0);};
 static void SetSeperateFields                   (const char *value, EbConfig *cfg) {cfg->separate_fields = (EbBool) strtoul(value, NULL, 0);};
@@ -271,6 +279,8 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, ERROR_FILE_TOKEN, "ErrorFile", SetCfgErrorFile },
     { SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", SetCfgReconFile },
     { SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", SetCfgQpFile },
+    { SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", SetCfgStatFile },
+
     // Interlaced Video
     { SINGLE_INPUT, INTERLACED_VIDEO_TOKEN , "InterlacedVideo" , SetInterlacedVideo },
     { SINGLE_INPUT, SEPERATE_FILDS_TOKEN, "SeperateFields", SetSeperateFields },
@@ -298,6 +308,7 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, SCENE_CHANGE_DETECTION_TOKEN, "SceneChangeDetection", SetSceneChangeDetection},
     { SINGLE_INPUT, QP_TOKEN, "QP", SetCfgQp },
     { SINGLE_INPUT, USE_QP_FILE_TOKEN, "UseQpFile", SetCfgUseQpFile },
+    { SINGLE_INPUT, STAT_REPORT_TOKEN, "StatReport", SetStatReport },
     { SINGLE_INPUT, RATE_CONTROL_ENABLE_TOKEN, "RateControlMode", SetRateControlMode },
     { SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN, "LookAheadDistance",                             SetLookAheadDistance},
     { SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", SetTargetBitRate },
@@ -375,6 +386,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->recon_file                            = NULL;
     config_ptr->error_log_file                         = stderr;
     config_ptr->qp_file                               = NULL;
+    config_ptr->stat_file                             = NULL;
 
     config_ptr->frame_rate                            = 30 << 16;
     config_ptr->frame_rate_numerator                   = 0;
@@ -396,6 +408,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->separate_fields                       = EB_FALSE;
     config_ptr->qp                                   = 50;
     config_ptr->use_qp_file                          = EB_FALSE;
+    config_ptr->stat_report                          = 0;
 
     config_ptr->scene_change_detection               = 0;
     config_ptr->rate_control_mode                      = 0;
@@ -478,13 +491,17 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->performance_context.total_execution_time = 0;
     config_ptr->performance_context.total_encode_time    = 0;
 
-    config_ptr->performance_context.frame_count        = 0;
-    config_ptr->performance_context.average_speed      = 0;
-    config_ptr->performance_context.starts_time        = 0;
-    config_ptr->performance_context.startu_time        = 0;
-    config_ptr->performance_context.max_latency        = 0;
-    config_ptr->performance_context.total_latency      = 0;
-    config_ptr->performance_context.byte_count         = 0;
+    config_ptr->performance_context.frame_count         = 0;
+    config_ptr->performance_context.average_speed       = 0;
+    config_ptr->performance_context.starts_time         = 0;
+    config_ptr->performance_context.startu_time         = 0;
+    config_ptr->performance_context.max_latency         = 0;
+    config_ptr->performance_context.total_latency       = 0;
+    config_ptr->performance_context.byte_count          = 0;
+    config_ptr->performance_context.sum_luma_psnr       = 0;
+    config_ptr->performance_context.sum_cr_psnr         = 0;
+    config_ptr->performance_context.sum_cb_psnr         = 0;
+    config_ptr->performance_context.sum_qp              = 0;
 
     // ASM Type
     config_ptr->asm_type                              = 1;
@@ -546,6 +563,10 @@ void eb_config_dtor(EbConfig *config_ptr)
         config_ptr->qp_file = (FILE *)NULL;
     }
 
+    if (config_ptr->stat_file) {
+        fclose(config_ptr->stat_file);
+        config_ptr->stat_file = (FILE *) NULL;
+    }
     return;
 }
 
