@@ -8329,8 +8329,14 @@ EbErrorType motion_estimate_lcu(
 
             refPicPtr = (EbPictureBufferDesc*)referenceObject->input_padded_picture_ptr;
 #if DOWN_SAMPLING_FILTERING
-            quarterRefPicPtr = (EbPictureBufferDesc*)referenceObject->quarter_filtered_picture_ptr;
-            sixteenthRefPicPtr = (EbPictureBufferDesc*)referenceObject->sixteenth_filtered_picture_ptr;
+            // Set 1/4 and 1/16 ME reference buffer(s); filtered or decimated
+            quarterRefPicPtr = (picture_control_set_ptr->down_sampling_method_me_search == 0) ?
+                (EbPictureBufferDesc*)referenceObject->quarter_filtered_picture_ptr :
+                (EbPictureBufferDesc*)referenceObject->quarter_decimated_picture_ptr;
+
+            sixteenthRefPicPtr = (picture_control_set_ptr->down_sampling_method_me_search == 0) ?
+                (EbPictureBufferDesc*)referenceObject->sixteenth_filtered_picture_ptr:
+                (EbPictureBufferDesc*)referenceObject->sixteenth_decimated_picture_ptr;
 #else
             quarterRefPicPtr = (EbPictureBufferDesc*)referenceObject->quarter_decimated_picture_ptr;
             sixteenthRefPicPtr = (EbPictureBufferDesc*)referenceObject->sixteenth_decimated_picture_ptr;

@@ -14231,6 +14231,9 @@ extern "C" {
 #if ATB_SUPPORT
         uint8_t                               atb_mode;
 #endif
+#if DOWN_SAMPLING_FILTERING
+        uint8_t                               down_sampling_method_me_search;
+#endif
         //**********************************************************************************************************//
         FrameType                            av1_frame_type;
         Av1RpsNode                          av1_ref_signal;

@@ -4941,13 +4941,13 @@ void* picture_analysis_kernel(void *input_ptr)
                 sequence_control_set_ptr,
                 input_picture_ptr);
 
-            // Pre processing operations performed on the input picture
+            // Pre processing operations performed on the input picture        
             PicturePreProcessingOperations(
                 picture_control_set_ptr,
                 input_picture_ptr,
                 sequence_control_set_ptr,
 #if DOWN_SAMPLING_FILTERING
-                (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr,
+                (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs 
                 (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr,
 #else
                 quarter_decimated_picture_ptr,
@@ -4997,7 +4997,7 @@ void* picture_analysis_kernel(void *input_ptr)
                 picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
                 input_padded_picture_ptr,
 #if DOWN_SAMPLING_FILTERING
-                (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr,
+                (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs 
 #else
                 sixteenth_decimated_picture_ptr,
 #endif

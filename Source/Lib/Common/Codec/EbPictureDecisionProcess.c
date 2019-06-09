@@ -1557,6 +1557,16 @@ EbErrorType signal_derivation_multi_processes_oq(
 
 #endif
 
+#if DOWN_SAMPLING_FILTERING
+        // Set down-sampling method     Settings
+        // 0                            0: filtering
+        // 1                            1: decimation
+        if (picture_control_set_ptr->enc_mode == ENC_M0) 
+            picture_control_set_ptr->down_sampling_method_me_search = 0;
+        else 
+            picture_control_set_ptr->down_sampling_method_me_search = 1;
+#endif
+
     return return_error;
 }
 
@@ -3108,7 +3118,7 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         input_picture_ptr,
         sequence_control_set_ptr,
 #if DOWN_SAMPLING_FILTERING
-        paReferenceObject->quarter_decimated_picture_ptr,
+        paReferenceObject->quarter_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs 
         paReferenceObject->sixteenth_decimated_picture_ptr,
 #else
         quarter_decimated_picture_ptr,
@@ -3158,7 +3168,7 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
         input_padded_picture_ptr,
 #if DOWN_SAMPLING_FILTERING
-        paReferenceObject->sixteenth_decimated_picture_ptr,
+        paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs 
 #else
         sixteenth_decimated_picture_ptr,
 #endif

@@ -276,8 +276,14 @@ void create_ME_context_and_picture_control(MotionEstimationContext_t *context_pt
     EbPaReferenceObject *src_object = (EbPaReferenceObject*)picture_control_set_ptr_central->pa_reference_picture_wrapper_ptr->object_ptr;
     EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_picture_ptr;
 #if DOWN_SAMPLING_FILTERING
-    EbPictureBufferDesc *quarter_pic_ptr = src_object->quarter_filtered_picture_ptr;
-    EbPictureBufferDesc *sixteenth_pic_ptr = src_object->sixteenth_filtered_picture_ptr;
+    // Set 1/4 and 1/16 ME reference buffer(s); filtered or decimated
+    EbPictureBufferDesc * quarter_pic_ptr = (picture_control_set_ptr_central->down_sampling_method_me_search == 0) ?
+        (EbPictureBufferDesc*)src_object->quarter_filtered_picture_ptr :
+        (EbPictureBufferDesc*)src_object->quarter_decimated_picture_ptr;
+
+    EbPictureBufferDesc *sixteenth_pic_ptr = (picture_control_set_ptr_central->down_sampling_method_me_search == 0) ?
+        (EbPictureBufferDesc*)src_object->sixteenth_filtered_picture_ptr :
+        (EbPictureBufferDesc*)src_object->sixteenth_decimated_picture_ptr;
 #else
     EbPictureBufferDesc *quarter_pic_ptr = src_object->quarter_decimated_picture_ptr;
     EbPictureBufferDesc *sixteenth_pic_ptr = src_object->sixteenth_decimated_picture_ptr;

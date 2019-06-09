@@ -563,8 +563,14 @@ void* motion_estimation_kernel(void *input_ptr)
 
         paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
 #if DOWN_SAMPLING_FILTERING
-        quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr;
-        sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_filtered_picture_ptr;
+        // Set 1/4 and 1/16 ME input buffer(s); filtered or decimated
+        quarter_decimated_picture_ptr = (picture_control_set_ptr->down_sampling_method_me_search == 0) ?
+            (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr :
+            (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
+
+        sixteenth_decimated_picture_ptr = (picture_control_set_ptr->down_sampling_method_me_search == 0) ?
+            (EbPictureBufferDesc*)paReferenceObject->sixteenth_filtered_picture_ptr :
+            (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
 #else
         quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
         sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
@@ -744,7 +750,7 @@ void* motion_estimation_kernel(void *input_ptr)
                             sequence_control_set_ptr,
                             picture_control_set_ptr,
 #if DOWN_SAMPLING_FILTERING
-                            (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr,
+                            (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated for ZZ SAD derivation until studying the trade offs and regenerating the activity threshold
 #else
                             sixteenth_decimated_picture_ptr,
 #endif
