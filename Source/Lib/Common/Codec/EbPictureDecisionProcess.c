@@ -3141,14 +3141,14 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         input_padded_picture_ptr);
 #if DOWN_SAMPLING_FILTERING
     // 1/4 & 1/16 input picture decimation
-    DecimateInputPicture(
+    DownsampleDecimationInputPicture(
         picture_control_set_ptr,
         input_padded_picture_ptr,
         (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr,
         (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr);
 
     // 1/4 & 1/16 input picture downsampling through filtering
-    DownsampleInputPicture(
+    DownsampleFilteringInputPicture(
         picture_control_set_ptr,
         input_padded_picture_ptr,
         (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr,

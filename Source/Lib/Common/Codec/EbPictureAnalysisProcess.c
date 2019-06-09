@@ -4713,11 +4713,19 @@ void PadPictureToMultipleOfLcuDimensions(
 /************************************************
 * 1/4 & 1/16 input picture decimation
 ************************************************/
+#if DOWN_SAMPLING_FILTERING
+void DownsampleDecimationInputPicture(
+    PictureParentControlSet       *picture_control_set_ptr,
+    EbPictureBufferDesc           *input_padded_picture_ptr,
+    EbPictureBufferDesc           *quarter_decimated_picture_ptr,
+    EbPictureBufferDesc           *sixteenth_decimated_picture_ptr) {
+#else
 void DecimateInputPicture(
     PictureParentControlSet       *picture_control_set_ptr,
     EbPictureBufferDesc           *input_padded_picture_ptr,
     EbPictureBufferDesc           *quarter_decimated_picture_ptr,
     EbPictureBufferDesc           *sixteenth_decimated_picture_ptr) {
+#endif
     // Decimate input picture for HME L0 and L1
     if (picture_control_set_ptr->enable_hme_flag) {
         if (picture_control_set_ptr->enable_hme_level1_flag) {
@@ -4804,7 +4812,7 @@ static int is_screen_content(const uint8_t *src, int use_hbd,
 /************************************************
  * 1/4 & 1/16 input picture downsampling (filtering)
  ************************************************/
-void DownsampleInputPicture(
+void DownsampleFilteringInputPicture(
     PictureParentControlSet       *picture_control_set_ptr,
     EbPictureBufferDesc           *input_padded_picture_ptr,
     EbPictureBufferDesc           *quarter_picture_ptr,
@@ -4970,14 +4978,14 @@ void* picture_analysis_kernel(void *input_ptr)
                 input_padded_picture_ptr);
 #if DOWN_SAMPLING_FILTERING
             // 1/4 & 1/16 input picture decimation
-            DecimateInputPicture(
+            DownsampleDecimationInputPicture(
                 picture_control_set_ptr,
                 input_padded_picture_ptr,
                 (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr,
                 (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr);
 
             // 1/4 & 1/16 input picture downsampling through filtering
-            DownsampleInputPicture(
+            DownsampleFilteringInputPicture(
                 picture_control_set_ptr,
                 input_padded_picture_ptr,
                 (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr,

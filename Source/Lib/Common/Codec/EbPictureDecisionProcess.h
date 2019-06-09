@@ -72,12 +72,18 @@ extern EbErrorType picture_decision_context_ctor(
 extern void* picture_decision_kernel(void *input_ptr);
 
 #if ALT_REF_SUPPORT
-
+#if DOWN_SAMPLING_FILTERING
+void DownsampleDecimationInputPicture(
+    PictureParentControlSet *picture_control_set_ptr,
+    EbPictureBufferDesc     *inputPaddedPicturePtr,
+    EbPictureBufferDesc     *quarterDecimatedPicturePtr,
+    EbPictureBufferDesc     *sixteenthDecimatedPicturePtr);
+#else
 void DecimateInputPicture(PictureParentControlSet       *picture_control_set_ptr,
                           EbPictureBufferDesc           *inputPaddedPicturePtr,
                           EbPictureBufferDesc           *quarterDecimatedPicturePtr,
                           EbPictureBufferDesc           *sixteenthDecimatedPicturePtr);
-
+#endif
 #endif
 
 #if ALT_REF_OVERLAY

@@ -1577,14 +1577,14 @@ int pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_p
 
 #if DOWN_SAMPLING_FILTERING
     // 1/4 & 1/16 input picture decimation
-    DecimateInputPicture(
+    DownsampleDecimationInputPicture(
         picture_control_set_ptr_central,
         padded_pic_ptr,
         (EbPictureBufferDesc*)src_object->quarter_decimated_picture_ptr,
         (EbPictureBufferDesc*)src_object->sixteenth_decimated_picture_ptr);
 
     // 1/4 & 1/16 input picture downsampling through filtering
-    DownsampleInputPicture(
+    DownsampleFilteringInputPicture(
         picture_control_set_ptr_central,
         padded_pic_ptr,
         (EbPictureBufferDesc*)src_object->quarter_filtered_picture_ptr,
