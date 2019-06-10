@@ -2845,6 +2845,14 @@ void(*ErrorHandler)(
 #define INVALID_POC                                 (((uint32_t) (~0)) - (((uint32_t) (~0)) >> 1))
 #define MAX_ELAPSED_IDR_COUNT                       1024
 
+#if DOWN_SAMPLING_FILTERING
+typedef enum DownSamplingMethod
+{
+    ME_FILTERED_DOWNSAMPLED  = 0,
+    ME_DECIMATED_DOWNSAMPLED = 1
+} DownSamplingMethod;
+#endif
+
 //***Segments***
 #define EB_SEGMENT_MIN_COUNT                        1
 #define EB_SEGMENT_MAX_COUNT                        64

@@ -3140,7 +3140,7 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr);
 
     // 1/4 & 1/16 input picture downsampling through filtering
-    if (sequence_control_set_ptr->down_sampling_method_me_search == 0) {
+    if (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
         DownsampleFilteringInputPicture(
             picture_control_set_ptr,
             input_padded_picture_ptr,

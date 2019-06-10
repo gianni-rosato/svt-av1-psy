@@ -534,9 +534,13 @@ void* motion_estimation_kernel(void *input_ptr)
     uint32_t                       lcuRow;
 
     EbPaReferenceObject       *paReferenceObject;
+#if DOWN_SAMPLING_FILTERING
+    EbPictureBufferDesc       *quarter_picture_ptr;
+    EbPictureBufferDesc       *sixteenth_picture_ptr;
+#else
     EbPictureBufferDesc       *quarter_decimated_picture_ptr;
     EbPictureBufferDesc       *sixteenth_decimated_picture_ptr;
-
+#endif
     // Segments
     uint32_t                      segment_index;
     uint32_t                      xSegmentIndex;
@@ -564,11 +568,11 @@ void* motion_estimation_kernel(void *input_ptr)
         paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
 #if DOWN_SAMPLING_FILTERING
         // Set 1/4 and 1/16 ME input buffer(s); filtered or decimated
-        quarter_decimated_picture_ptr = (sequence_control_set_ptr->down_sampling_method_me_search == 0) ?
+        quarter_picture_ptr = (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ?
             (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr :
             (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
 
-        sixteenth_decimated_picture_ptr = (sequence_control_set_ptr->down_sampling_method_me_search == 0) ?
+        sixteenth_picture_ptr = (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ?
             (EbPictureBufferDesc*)paReferenceObject->sixteenth_filtered_picture_ptr :
             (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
 #else
@@ -659,7 +663,48 @@ void* motion_estimation_kernel(void *input_ptr)
 
                         context_ptr->me_context_ptr->sb_src_ptr = &input_padded_picture_ptr->buffer_y[bufferIndex];
                         context_ptr->me_context_ptr->sb_src_stride = input_padded_picture_ptr->stride_y;
+#if DOWN_SAMPLING_FILTERING
+                        // Load the 1/4 decimated SB from the 1/4 decimated input to the 1/4 intermediate SB buffer
+                        if (picture_control_set_ptr->enable_hme_level1_flag) {
+                            bufferIndex = (quarter_picture_ptr->origin_y + (sb_origin_y >> 1)) * quarter_picture_ptr->stride_y + quarter_picture_ptr->origin_x + (sb_origin_x >> 1);
 
+                            for (lcuRow = 0; lcuRow < (sb_height >> 1); lcuRow++) {
+                                EB_MEMCPY((&(context_ptr->me_context_ptr->quarter_sb_buffer[lcuRow * context_ptr->me_context_ptr->quarter_sb_buffer_stride])), (&(quarter_picture_ptr->buffer_y[bufferIndex + lcuRow * quarter_picture_ptr->stride_y])), (sb_width >> 1) * sizeof(uint8_t));
+                            }
+                        }
+
+                        // Load the 1/16 decimated SB from the 1/16 decimated input to the 1/16 intermediate SB buffer
+                        if (picture_control_set_ptr->enable_hme_level0_flag) {
+                            bufferIndex = (sixteenth_picture_ptr->origin_y + (sb_origin_y >> 2)) * sixteenth_picture_ptr->stride_y + sixteenth_picture_ptr->origin_x + (sb_origin_x >> 2);
+
+                            {
+                                uint8_t  *framePtr = &sixteenth_picture_ptr->buffer_y[bufferIndex];
+                                uint8_t  *localPtr = context_ptr->me_context_ptr->sixteenth_sb_buffer;
+#if USE_SAD_HMEL0
+                                if (context_ptr->me_context_ptr->hme_search_method == FULL_SAD_SEARCH) {
+                                    for (lcuRow = 0; lcuRow < (sb_height >> 2); lcuRow += 1) {
+                                        EB_MEMCPY(localPtr, framePtr, (sb_width >> 2) * sizeof(uint8_t));
+                                        localPtr += 16;
+                                        framePtr += sixteenth_picture_ptr->stride_y;
+                                    }
+                                }
+                                else {
+                                    for (lcuRow = 0; lcuRow < (sb_height >> 2); lcuRow += 2) {
+                                        EB_MEMCPY(localPtr, framePtr, (sb_width >> 2) * sizeof(uint8_t));
+                                        localPtr += 16;
+                                        framePtr += sixteenth_picture_ptr->stride_y << 1;
+                                    }
+                                }
+#else
+                                for (lcuRow = 0; lcuRow < (sb_height >> 2); lcuRow += 2) {
+                                    EB_MEMCPY(localPtr, framePtr, (sb_width >> 2) * sizeof(uint8_t));
+                                    localPtr += 16;
+                                    framePtr += sixteenth_decimated_picture_ptr->stride_y << 1;
+                                }
+#endif
+                            }
+                        }
+#else
                         // Load the 1/4 decimated SB from the 1/4 decimated input to the 1/4 intermediate SB buffer
                         if (picture_control_set_ptr->enable_hme_level1_flag) {
                             bufferIndex = (quarter_decimated_picture_ptr->origin_y + (sb_origin_y >> 1)) * quarter_decimated_picture_ptr->stride_y + quarter_decimated_picture_ptr->origin_x + (sb_origin_x >> 1);
@@ -700,7 +745,7 @@ void* motion_estimation_kernel(void *input_ptr)
 #endif
                             }
                         }
-
+#endif
 #if ALTREF_FILTERING_SUPPORT
                         context_ptr->me_context_ptr->me_alt_ref = EB_FALSE;
 #endif

@@ -174,11 +174,9 @@ void decimation_2d(
     uint32_t input_stripe_stride = input_stride * decim_step;
 
     for (vertical_index = 0; vertical_index < input_area_height; vertical_index += decim_step) {
-        for (horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step) {
-
+        for (horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step) 
             decim_samples[(horizontal_index >> (decim_step >> 1))] = input_samples[horizontal_index];
 
-        }
         input_samples += input_stripe_stride;
         decim_samples += decim_stride;
     }
@@ -4874,7 +4872,7 @@ void DownsampleFilteringInputPicture(
         if (picture_control_set_ptr->enable_hme_level0_flag) {
 
             // Sixteenth Input Picture Downsampling
-            if (picture_control_set_ptr->enable_hme_level1_flag) {
+            if (picture_control_set_ptr->enable_hme_level1_flag)
                 downsample_2d(
                     &quarter_picture_ptr->buffer_y[quarter_picture_ptr->origin_x + quarter_picture_ptr->origin_y * quarter_picture_ptr->stride_y],
                     quarter_picture_ptr->stride_y,
@@ -4883,8 +4881,7 @@ void DownsampleFilteringInputPicture(
                     &sixteenth_picture_ptr->buffer_y[sixteenth_picture_ptr->origin_x + sixteenth_picture_ptr->origin_x*sixteenth_picture_ptr->stride_y],
                     sixteenth_picture_ptr->stride_y,
                     2);
-            }
-            else {
+            else
                 downsample_2d(
                     &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
                     input_padded_picture_ptr->stride_y,
@@ -4893,7 +4890,7 @@ void DownsampleFilteringInputPicture(
                     &sixteenth_picture_ptr->buffer_y[sixteenth_picture_ptr->origin_x + sixteenth_picture_ptr->origin_x*sixteenth_picture_ptr->stride_y],
                     sixteenth_picture_ptr->stride_y,
                     4);
-            }
+            
             generate_padding(
                 &sixteenth_picture_ptr->buffer_y[0],
                 sixteenth_picture_ptr->stride_y,
@@ -5018,7 +5015,7 @@ void* picture_analysis_kernel(void *input_ptr)
                 (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr);
 
             // 1/4 & 1/16 input picture downsampling through filtering
-            if (sequence_control_set_ptr->down_sampling_method_me_search == 0) {
+            if (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
                 DownsampleFilteringInputPicture(
                     picture_control_set_ptr,
                     input_padded_picture_ptr,

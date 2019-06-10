@@ -278,11 +278,11 @@ void create_ME_context_and_picture_control(MotionEstimationContext_t *context_pt
 #if DOWN_SAMPLING_FILTERING
     SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr_central->sequence_control_set_wrapper_ptr->object_ptr;
     // Set 1/4 and 1/16 ME reference buffer(s); filtered or decimated
-    EbPictureBufferDesc * quarter_pic_ptr = (sequence_control_set_ptr->down_sampling_method_me_search == 0) ?
+    EbPictureBufferDesc * quarter_pic_ptr = (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ?
         (EbPictureBufferDesc*)src_object->quarter_filtered_picture_ptr :
         (EbPictureBufferDesc*)src_object->quarter_decimated_picture_ptr;
 
-    EbPictureBufferDesc *sixteenth_pic_ptr = (sequence_control_set_ptr->down_sampling_method_me_search == 0) ?
+    EbPictureBufferDesc *sixteenth_pic_ptr = (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ?
         (EbPictureBufferDesc*)src_object->sixteenth_filtered_picture_ptr :
         (EbPictureBufferDesc*)src_object->sixteenth_decimated_picture_ptr;
 #else
@@ -1586,7 +1586,7 @@ int pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_p
 
     // 1/4 & 1/16 input picture downsampling through filtering
     SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr_central->sequence_control_set_wrapper_ptr->object_ptr;
-    if (sequence_control_set_ptr->down_sampling_method_me_search == 0)
+    if (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
         DownsampleFilteringInputPicture(
             picture_control_set_ptr_central,
             padded_pic_ptr,
