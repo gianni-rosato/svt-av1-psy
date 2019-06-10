@@ -20,6 +20,7 @@
 #include "EbFullLoop.h"
 #include "EbRateDistortionCost.h"
 #include "aom_dsp_rtcd.h"
+
 #ifdef __GNUC__
 #define LIKELY(v) __builtin_expect(v, 1)
 #define UNLIKELY(v) __builtin_expect(v, 0)
@@ -1816,12 +1817,14 @@ void av1_quantize_inv_quantize(
     int32_t                     *quant_coeff,
     int32_t                     *recon_coeff,
     uint32_t                     qp,
+    int32_t                segmentation_qp_offset,
     uint32_t                     width,
     uint32_t                     height,
     TxSize                       txsize,
     uint16_t                    *eob,
     EbAsm                        asm_type,
     uint32_t                    *count_non_zero_coeffs,
+
 #if !PF_N2_SUPPORT
     EbPfMode                     pf_mode,
 #endif
@@ -1865,7 +1868,7 @@ void av1_quantize_inv_quantize(
 #if ADD_DELTA_QP_SUPPORT
     uint32_t qIndex = qp;
 #else
-    uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
+    uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->base_qindex + segmentation_qp_offset ;
 #endif
     if (bit_increment == 0) {
         if (component_type == COMPONENT_LUMA) {
@@ -2295,6 +2298,9 @@ void product_full_loop(
 #else
             context_ptr->pf_md_mode);
 #endif
+
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 #if DC_SIGN_CONTEXT_FIX
         candidateBuffer->candidate_ptr->quantized_dc[0][txb_itr] = av1_quantize_inv_quantize(
 #else
@@ -2307,6 +2313,7 @@ void product_full_loop(
             &(((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]),
             &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[txb_1d_offset]),
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
             context_ptr->blk_geom->tx_height[tx_depth][txb_itr],
@@ -2737,6 +2744,9 @@ void product_full_loop_tx_search(
                 PLANE_TYPE_Y,
                 context_ptr->pf_md_mode);
 
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
             av1_quantize_inv_quantize(
                 picture_control_set_ptr,
                 context_ptr,
@@ -2745,6 +2755,8 @@ void product_full_loop_tx_search(
                 &(((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[tu_origin_index]),
                 &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[tu_origin_index]),
                 context_ptr->cu_ptr->qp,
+                seg_qp,
+
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height[tx_depth][txb_itr],
@@ -3090,6 +3102,9 @@ void encode_pass_tx_search(
 #else
             context_ptr->trans_coeff_shape_luma);
 #endif
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
 
         av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
@@ -3099,6 +3114,7 @@ void encode_pass_tx_search(
             ((int32_t*)coeffSamplesTB->buffer_y) + coeff1dOffset,
             ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -3334,6 +3350,9 @@ void encode_pass_tx_search_hbd(
 #else
             context_ptr->trans_coeff_shape_luma);
 #endif
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
         av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
             context_ptr->md_context,
@@ -3342,6 +3361,7 @@ void encode_pass_tx_search_hbd(
             ((int32_t*)coeffSamplesTB->buffer_y) + coeff1dOffset,
             ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -3612,6 +3632,9 @@ void full_loop_r(
 #else
                 correctedPFMode);
 #endif
+
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 #if DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[1][0] = av1_quantize_inv_quantize(
 #else
@@ -3624,6 +3647,7 @@ void full_loop_r(
                 &(((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cb)[txb_1d_offset]),
                 &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_cb)[txb_1d_offset]),
                 cb_qp,
+                seg_qp,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
@@ -3756,6 +3780,9 @@ void full_loop_r(
 #else
                 correctedPFMode);
 #endif
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
 #if DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[2][0] = av1_quantize_inv_quantize(
 #else
@@ -3768,6 +3795,7 @@ void full_loop_r(
                 &(((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cr)[txb_1d_offset]),
                 &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_cr)[txb_1d_offset]),
                 cb_qp,
+                seg_qp,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],

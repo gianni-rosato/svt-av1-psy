@@ -73,6 +73,7 @@ static void EntropyCodingResetNeighborArrays(PictureControlSet *picture_control_
 #if ATB_EC
     neighbor_array_unit_reset(picture_control_set_ptr->txfm_context_array);
 #endif
+    neighbor_array_unit_reset(picture_control_set_ptr->segmentation_id_pred_array);
     return;
 }
 

@@ -402,6 +402,8 @@ extern "C" {
 #endif
         uint32_t                    is_inter_ctx;
         uint32_t                    interp_filters;
+        uint8_t                      segment_id;
+        uint8_t                      seg_id_predicted;  // valid only when temporal_update is enabled
         PartitionType               part;
         PART                        shape;
         uint16_t                    mds_idx;     //equivalent of leaf_index in the nscu context. we will keep both for now and use the right one on a case by case basis.

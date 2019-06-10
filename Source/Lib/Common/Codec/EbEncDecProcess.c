@@ -204,6 +204,14 @@ EbErrorType enc_dec_context_ctor(
 }
 
 /**************************************************
+ * Reset Segmentation Map
+ *************************************************/
+static void reset_segmentation_map(SegmentationNeighborMap *segmentation_map){
+    if(segmentation_map->data!=NULL)
+        EB_MEMSET(segmentation_map->data, ~0, segmentation_map->map_size);
+}
+
+/**************************************************
  * Reset Mode Decision Neighbor Arrays
  *************************************************/
 static void ResetEncodePassNeighborArrays(PictureControlSet *picture_control_set_ptr)
@@ -288,8 +296,11 @@ static void ResetEncDec(
     else
         context_ptr->reference_object_write_ptr = (EbReferenceObject*)EB_NULL;
 #endif
-    if (segment_index == 0)
+    if (segment_index == 0){
         ResetEncodePassNeighborArrays(picture_control_set_ptr);
+        reset_segmentation_map(picture_control_set_ptr->segmentation_neighbor_map);
+    }
+
     return;
 }
 

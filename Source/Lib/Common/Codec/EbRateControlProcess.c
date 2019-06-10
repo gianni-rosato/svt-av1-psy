@@ -28,6 +28,8 @@
 #include "EbRateControlTasks.h"
 #include "RateControlModel.h"
 
+#include "EbSegmentation.h"
+
 // calculate the QP based on the QP scaling
 uint32_t qp_scaling_calc(
     SequenceControlSet *sequence_control_set_ptr,
@@ -3762,6 +3764,13 @@ void* rate_control_kernel(void *input_ptr)
                 }
 
                 picture_control_set_ptr->parent_pcs_ptr->picture_qp = picture_control_set_ptr->picture_qp;
+                setup_segmentation(
+                        picture_control_set_ptr,
+                        sequence_control_set_ptr,
+                        context_ptr,
+                        rate_control_layer_ptr,
+                        rate_control_param_ptr
+                );
             }
             else {
                 // ***Rate Control***

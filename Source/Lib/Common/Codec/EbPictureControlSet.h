@@ -22,6 +22,7 @@
 #include "EbRateControlTables.h"
 #include "EbRestoration.h"
 #include "noise_model.h"
+#include "EbSegmentationParams.h"
 
 #if CABAC_UP
 #include "EbMdRateEstimation.h"
@@ -13883,6 +13884,10 @@ extern "C" {
         NeighborArrayUnit                  *inter_pred_dir_neighbor_array;
         NeighborArrayUnit                  *ref_frame_type_neighbor_array;
         NeighborArrayUnit32                *interpolation_type_neighbor_array;
+
+        NeighborArrayUnit                  *segmentation_id_pred_array;
+        SegmentationNeighborMap              *segmentation_neighbor_map;
+
         ModeInfo                            **mi_grid_base; //2 SB Rows of mi Data are enough
 
         ModeInfo                             *mip;
@@ -14311,6 +14316,10 @@ extern "C" {
         int32_t                               cdef_uv_strengths[CDEF_MAX_STRENGTHS];
         int32_t                               cdef_bits;
         int32_t                               delta_q_present_flag;
+
+        // Segmentation related parameters
+        SegmentationParams                    segmentation_params;
+
 #if ADD_DELTA_QP_SUPPORT
         // Resolution of delta quant
         uint8_t                               delta_q_res;
@@ -14332,6 +14341,7 @@ extern "C" {
         // superblock's actual lf and current lf.
         int32_t                               prev_delta_lf_from_base;
         int32_t                               current_delta_lf_from_base;
+
         // For this experiment, we have four frame filter levels for different plane
         // and direction. So, to support the per superblock update, we need to add
         // a few more params as below.
@@ -14345,6 +14355,7 @@ extern "C" {
         // SEG_LVL_ALT_LF_Y_H = 2;
         // SEG_LVL_ALT_LF_U   = 3;
         // SEG_LVL_ALT_LF_V   = 4;
+//
         int32_t                               prev_delta_lf[FRAME_LF_COUNT];
         int32_t                               curr_delta_lf[FRAME_LF_COUNT];
 #endif

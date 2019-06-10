@@ -2122,6 +2122,9 @@ void SetDefaultConfigurationParameters(
     sequence_control_set_ptr->cropping_top_offset = 0;
     sequence_control_set_ptr->cropping_bottom_offset = 0;
 
+    //Segmentation
+    sequence_control_set_ptr->static_config.enable_adaptive_quantization = 0;
+
     return;
 }
 
@@ -2369,6 +2372,10 @@ void CopyApiFromApp(
     sequence_control_set_ptr->static_config.min_qp_allowed = (sequence_control_set_ptr->static_config.rate_control_mode) ?
         ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->min_qp_allowed :
         1; // lossless coding not supported
+
+    //Segmentation
+    //TODO: check RC mode and set only when RC is enabled in the final version.
+    sequence_control_set_ptr->static_config.enable_adaptive_quantization = pComponentParameterStructure->enable_adaptive_quantization;
 
     // Misc
     sequence_control_set_ptr->static_config.encoder_bit_depth = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->encoder_bit_depth;
@@ -2725,6 +2732,11 @@ static EbErrorType VerifySettings(
 
     if (config->screen_content_mode > 2) {
         SVT_LOG("Error instance %u : Invalid screen_content_mode. screen_content_mode must be [0 - 2]\n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if(sequence_control_set_ptr->static_config.enable_adaptive_quantization>1){
+        SVT_LOG("Error instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must be [0/1]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
 

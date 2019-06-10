@@ -90,6 +90,7 @@
 #define TARGET_BIT_RATE_TOKEN           "-tbr"
 #define MAX_QP_TOKEN                    "-max-qp"
 #define MIN_QP_TOKEN                    "-min-qp"
+#define ADAPTIVE_QP_ENABLE_TOKEN        "-adaptive-quantization"
 #define LOOK_AHEAD_DIST_TOKEN           "-lad"
 #define SUPER_BLOCK_SIZE_TOKEN          "-sb-size"
 #define TILE_ROW_TOKEN                   "-tile-rows"
@@ -205,6 +206,7 @@ static void SetRateControlMode                  (const char *value, EbConfig *cf
 static void SetTargetBitRate                    (const char *value, EbConfig *cfg) {cfg->target_bit_rate = strtoul(value, NULL, 0);};
 static void SetMaxQpAllowed                     (const char *value, EbConfig *cfg) {cfg->max_qp_allowed = strtoul(value, NULL, 0);};
 static void SetMinQpAllowed                     (const char *value, EbConfig *cfg) {cfg->min_qp_allowed = strtoul(value, NULL, 0);};
+static void SetAdaptiveQuantization             (const char *value, EbConfig *cfg) {cfg->enable_adaptive_quantization = (EbBool)strtol(value,  NULL, 0);};
 static void SetEnableHmeLevel1Flag              (const char *value, EbConfig *cfg) {cfg->enable_hme_level1_flag  = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableHmeLevel2Flag              (const char *value, EbConfig *cfg) {cfg->enable_hme_level2_flag  = (EbBool)strtoul(value, NULL, 0);};
 static void SetCfgSearchAreaWidth               (const char *value, EbConfig *cfg) {cfg->search_area_width = strtoul(value, NULL, 0);};
@@ -235,6 +237,7 @@ static void SetHighDynamicRangeInput            (const char *value, EbConfig *cf
 static void SetProfile                          (const char *value, EbConfig *cfg) {cfg->profile                          = strtol(value,  NULL, 0);};
 static void SetTier                             (const char *value, EbConfig *cfg) {cfg->tier                             = strtol(value,  NULL, 0);};
 static void SetLevel                            (const char *value, EbConfig *cfg) {
+
     if (strtoul( value, NULL,0) != 0 || EB_STRCMP(value, "0") == 0 )
         cfg->level = (uint32_t)(10*strtod(value,  NULL));
     else
@@ -314,6 +317,8 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", SetTargetBitRate },
     { SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", SetMaxQpAllowed },
     { SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", SetMinQpAllowed },
+    { SINGLE_INPUT, ADAPTIVE_QP_ENABLE_TOKEN, "AdaptiveQuantization", SetAdaptiveQuantization },
+
     // DLF
     { SINGLE_INPUT, LOOP_FILTER_DISABLE_TOKEN, "LoopFilterDisable", SetDisableDlfFlag },
     // LOCAL WARPED MOTION
@@ -420,6 +425,8 @@ void eb_config_ctor(EbConfig *config_ptr)
 #else
     config_ptr->min_qp_allowed                       = 0;
 #endif
+
+    config_ptr->enable_adaptive_quantization         = EB_FALSE;
     config_ptr->base_layer_switch_mode               = 0;
     config_ptr->enc_mode                              = MAX_ENC_PRESET;
     config_ptr->intra_period                          = -2;
