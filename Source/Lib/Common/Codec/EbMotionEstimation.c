@@ -1075,7 +1075,7 @@ void ExtSadCalculation(
     }
 
     sad_32x16[5] = p_sad16x16[10] + p_sad16x16[11];
-    if (sad < p_best_sad32x16[5]) {
+    if (sad_32x16[5] < p_best_sad32x16[5]) {
         p_best_sad32x16[5] = sad_32x16[5];
         p_best_mv32x16[5] = mv;
     }
