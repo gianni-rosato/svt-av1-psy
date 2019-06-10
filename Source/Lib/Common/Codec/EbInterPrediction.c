@@ -3236,54 +3236,6 @@ void highbd_8_variance(const uint8_t *a8, int32_t a_stride,
     highbd_variance64(a8, a_stride, b8, b_stride, w, h, &sse_long);
     *sse = (uint32_t)sse_long;
 }
-/*static*/ /*INLINE*/ void variance4x4_64_sse4_1(uint8_t *a8, int32_t a_stride,
-    uint8_t *b8, int32_t b_stride,
-    uint64_t *sse, int64_t *sum) {
-    __m128i u0, u1, u2, u3;
-    __m128i s0, s1, s2, s3;
-    __m128i t0, t1, x0, y0;
-    __m128i a0, a1, a2, a3;
-    __m128i b0, b1, b2, b3;
-    __m128i k_one_epi16 = _mm_set1_epi16((int16_t)1);
-
-    uint8_t *a = a8;//CONVERT_TO_SHORTPTR(a8);
-    uint8_t *b = b8;//CONVERT_TO_SHORTPTR(b8);
-
-    a0 = _mm_loadl_epi64((__m128i const *)(a + 0 * a_stride));
-    a1 = _mm_loadl_epi64((__m128i const *)(a + 1 * a_stride));
-    a2 = _mm_loadl_epi64((__m128i const *)(a + 2 * a_stride));
-    a3 = _mm_loadl_epi64((__m128i const *)(a + 3 * a_stride));
-
-    b0 = _mm_loadl_epi64((__m128i const *)(b + 0 * b_stride));
-    b1 = _mm_loadl_epi64((__m128i const *)(b + 1 * b_stride));
-    b2 = _mm_loadl_epi64((__m128i const *)(b + 2 * b_stride));
-    b3 = _mm_loadl_epi64((__m128i const *)(b + 3 * b_stride));
-
-    u0 = _mm_unpacklo_epi16(a0, a1);
-    u1 = _mm_unpacklo_epi16(a2, a3);
-    u2 = _mm_unpacklo_epi16(b0, b1);
-    u3 = _mm_unpacklo_epi16(b2, b3);
-
-    s0 = _mm_sub_epi16(u0, u2);
-    s1 = _mm_sub_epi16(u1, u3);
-
-    t0 = _mm_madd_epi16(s0, k_one_epi16);
-    t1 = _mm_madd_epi16(s1, k_one_epi16);
-
-    s2 = _mm_hadd_epi32(t0, t1);
-    s3 = _mm_hadd_epi32(s2, s2);
-    y0 = _mm_hadd_epi32(s3, s3);
-
-    t0 = _mm_madd_epi16(s0, s0);
-    t1 = _mm_madd_epi16(s1, s1);
-
-    s2 = _mm_hadd_epi32(t0, t1);
-    s3 = _mm_hadd_epi32(s2, s2);
-    x0 = _mm_hadd_epi32(s3, s3);
-
-    *sse = (uint64_t)_mm_extract_epi32(x0, 0);
-    *sum = (int64_t)_mm_extract_epi32(y0, 0);
-}
 
 #define RDDIV_BITS 7
 #define RDCOST(RM, R, D)                                            \
