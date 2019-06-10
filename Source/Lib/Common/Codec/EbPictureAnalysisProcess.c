@@ -163,11 +163,11 @@ static void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBu
 void decimation_2d(
     uint8_t *  input_samples,      // input parameter, input samples Ptr
     uint32_t   input_stride,       // input parameter, input stride
-    uint32_t   input_area_width,    // input parameter, input area width
-    uint32_t   input_area_height,   // input parameter, input area height
+    uint32_t   input_area_width,   // input parameter, input area width
+    uint32_t   input_area_height,  // input parameter, input area height
     uint8_t *  decim_samples,      // output parameter, decimated samples Ptr
     uint32_t   decim_stride,       // input parameter, output stride
-    uint32_t   decim_step)        // input parameter, decimation amount in pixels
+    uint32_t   decim_step)         // input parameter, decimation amount in pixels
 {
     uint32_t horizontal_index;
     uint32_t vertical_index;
@@ -4985,11 +4985,13 @@ void* picture_analysis_kernel(void *input_ptr)
                 (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr);
 
             // 1/4 & 1/16 input picture downsampling through filtering
-            DownsampleFilteringInputPicture(
-                picture_control_set_ptr,
-                input_padded_picture_ptr,
-                (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr,
-                (EbPictureBufferDesc*)paReferenceObject->sixteenth_filtered_picture_ptr);
+            if (sequence_control_set_ptr->down_sampling_method_me_search == 0) {
+                DownsampleFilteringInputPicture(
+                    picture_control_set_ptr,
+                    input_padded_picture_ptr,
+                    (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr,
+                    (EbPictureBufferDesc*)paReferenceObject->sixteenth_filtered_picture_ptr);
+            }
 #else
             // 1/4 & 1/16 input picture decimation
             DecimateInputPicture(
