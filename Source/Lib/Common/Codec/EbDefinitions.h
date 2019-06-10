@@ -47,6 +47,7 @@ extern "C" {
 #define MRP_SUPPORT                       1// MRP Main Flag
 
 #define DOWN_SAMPLING_FILTERING           1 // Use down-sampling filtering (instead of down-sampling decimation) for 1/16th and 1/4th reference frame(s) generation @ ME and temporal filtering search, added the multi-mode signal down_sampling_method_me_search; filtering if M0, and decimation for M1 & higher
+#define DECIMATION_BUG_FIX                1 // Removed HME Level0 check @ 1/16th decimation to guarantee valid ZZ SAD and SCD data when HME Level0 is OFF  
 
 #define RDOQ_INTRA                        1 // Enable RDOQ INTRA (RDOQ INTER already active) 
 #define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass

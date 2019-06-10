@@ -3961,18 +3961,26 @@ void SetPictureParametersForStatisticsGathering(
  ***** Borders preprocessing
  ***** Denoising
  ************************************************/
+#if DOWN_SAMPLING_FILTERING
+void PicturePreProcessingOperations(
+    PictureParentControlSet       *picture_control_set_ptr,
+    SequenceControlSet            *sequence_control_set_ptr,
+    uint32_t                       sb_total_count,
+    EbAsm                          asm_type) {
+#else
 void PicturePreProcessingOperations(
     PictureParentControlSet       *picture_control_set_ptr,
     EbPictureBufferDesc           *input_picture_ptr,
     SequenceControlSet            *sequence_control_set_ptr,
     EbPictureBufferDesc           *quarter_decimated_picture_ptr,
     EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
-    uint32_t                           sb_total_count,
-    EbAsm                           asm_type) {
+    uint32_t                       sb_total_count,
+    EbAsm                          asm_type) {
+   
     UNUSED(quarter_decimated_picture_ptr);
     UNUSED(sixteenth_decimated_picture_ptr);
     UNUSED(input_picture_ptr);
-
+#endif
     if (sequence_control_set_ptr->film_grain_denoise_strength) {
         denoise_estimate_film_grain(
             sequence_control_set_ptr,
@@ -4745,7 +4753,7 @@ void DecimateInputPicture(
                 quarter_decimated_picture_ptr->origin_x,
                 quarter_decimated_picture_ptr->origin_y);
         }
-
+#if !DECIMATION_BUG_FIX
         if (picture_control_set_ptr->enable_hme_level0_flag) {
             // Sixteenth Input Picture Decimation
             decimation_2d(
@@ -4765,7 +4773,30 @@ void DecimateInputPicture(
                 sixteenth_decimated_picture_ptr->origin_x,
                 sixteenth_decimated_picture_ptr->origin_y);
         }
+#endif
     }
+
+#if DECIMATION_BUG_FIX
+    // Always perform 1/16th decimation as 
+    // Sixteenth Input Picture Decimation
+    decimation_2d(
+        &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
+        input_padded_picture_ptr->stride_y,
+        input_padded_picture_ptr->width,
+        input_padded_picture_ptr->height,
+        &sixteenth_decimated_picture_ptr->buffer_y[sixteenth_decimated_picture_ptr->origin_x + sixteenth_decimated_picture_ptr->origin_x*sixteenth_decimated_picture_ptr->stride_y],
+        sixteenth_decimated_picture_ptr->stride_y,
+        4);
+
+    generate_padding(
+        &sixteenth_decimated_picture_ptr->buffer_y[0],
+        sixteenth_decimated_picture_ptr->stride_y,
+        sixteenth_decimated_picture_ptr->width,
+        sixteenth_decimated_picture_ptr->height,
+        sixteenth_decimated_picture_ptr->origin_x,
+        sixteenth_decimated_picture_ptr->origin_y);
+#endif
+
 }
 int av1_count_colors(const uint8_t *src, int stride, int rows, int cols,
     int *val_count) {
@@ -4950,20 +4981,22 @@ void* picture_analysis_kernel(void *input_ptr)
                 input_picture_ptr);
 
             // Pre processing operations performed on the input picture        
+#if DOWN_SAMPLING_FILTERING
+            PicturePreProcessingOperations(
+                picture_control_set_ptr,
+                sequence_control_set_ptr,
+                sb_total_count,
+                asm_type);
+#else
             PicturePreProcessingOperations(
                 picture_control_set_ptr,
                 input_picture_ptr,
                 sequence_control_set_ptr,
-#if DOWN_SAMPLING_FILTERING
-                (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs 
-                (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr,
-#else
                 quarter_decimated_picture_ptr,
                 sixteenth_decimated_picture_ptr,
-#endif
                 sb_total_count,
                 asm_type);
-
+#endif
             if (input_picture_ptr->color_format >= EB_YUV422) {
                 // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
                 //       Reuse the Y, only add cb/cr in the newly created buffer desc

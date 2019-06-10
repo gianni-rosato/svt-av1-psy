@@ -3103,20 +3103,22 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         input_picture_ptr);
 
     // Pre processing operations performed on the input picture
+#if DOWN_SAMPLING_FILTERING
+    PicturePreProcessingOperations(
+        picture_control_set_ptr,
+        sequence_control_set_ptr,
+        sb_total_count,
+        sequence_control_set_ptr->encode_context_ptr->asm_type);
+#else
     PicturePreProcessingOperations(
         picture_control_set_ptr,
         input_picture_ptr,
         sequence_control_set_ptr,
-#if DOWN_SAMPLING_FILTERING
-        paReferenceObject->quarter_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs 
-        paReferenceObject->sixteenth_decimated_picture_ptr,
-#else
         quarter_decimated_picture_ptr,
         sixteenth_decimated_picture_ptr,
-#endif
         sb_total_count,
         sequence_control_set_ptr->encode_context_ptr->asm_type);
-
+#endif
     if (input_picture_ptr->color_format >= EB_YUV422) {
         // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
         //       Reuse the Y, only add cb/cr in the newly created buffer desc
