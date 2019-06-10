@@ -3075,8 +3075,10 @@ void  Av1GenerateRpsInfo(
 ***************************************************************************************************/
 void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *picture_control_set_ptr) {
     EbPictureBufferDesc           *input_padded_picture_ptr;
+#if !DOWN_SAMPLING_FILTERING
     EbPictureBufferDesc           *quarter_decimated_picture_ptr;
     EbPictureBufferDesc           *sixteenth_decimated_picture_ptr;
+#endif
     EbPictureBufferDesc           *input_picture_ptr;
     EbPaReferenceObject           *paReferenceObject;
     uint32_t                        picture_width_in_sb;
@@ -3087,9 +3089,10 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
     input_picture_ptr               = picture_control_set_ptr->enhanced_picture_ptr;
     paReferenceObject               = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
     input_padded_picture_ptr        = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
+#if !DOWN_SAMPLING_FILTERING
     quarter_decimated_picture_ptr   = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
     sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
-
+#endif
     picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
     pictureHeighInLcu   = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
     sb_total_count      = picture_width_in_sb * pictureHeighInLcu;
@@ -3100,6 +3103,13 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         input_picture_ptr);
 
     // Pre processing operations performed on the input picture
+#if DOWN_SAMPLING_FILTERING
+    PicturePreProcessingOperations(
+        picture_control_set_ptr,
+        sequence_control_set_ptr,
+        sb_total_count,
+        sequence_control_set_ptr->encode_context_ptr->asm_type);
+#else
     PicturePreProcessingOperations(
         picture_control_set_ptr,
         input_picture_ptr,
@@ -3108,7 +3118,7 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         sixteenth_decimated_picture_ptr,
         sb_total_count,
         sequence_control_set_ptr->encode_context_ptr->asm_type);
-
+#endif
     if (input_picture_ptr->color_format >= EB_YUV422) {
         // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
         //       Reuse the Y, only add cb/cr in the newly created buffer desc
@@ -3121,21 +3131,41 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
     // Pad input picture to complete border LCUs
     PadPictureToMultipleOfLcuDimensions(
         input_padded_picture_ptr);
+#if DOWN_SAMPLING_FILTERING
+    // 1/4 & 1/16 input picture decimation
+    DownsampleDecimationInputPicture(
+        picture_control_set_ptr,
+        input_padded_picture_ptr,
+        (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr,
+        (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr);
 
+    // 1/4 & 1/16 input picture downsampling through filtering
+    if (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+        DownsampleFilteringInputPicture(
+            picture_control_set_ptr,
+            input_padded_picture_ptr,
+            (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr,
+            (EbPictureBufferDesc*)paReferenceObject->sixteenth_filtered_picture_ptr);
+    }
+#else
     // 1/4 & 1/16 input picture decimation
     DecimateInputPicture(
         picture_control_set_ptr,
         input_padded_picture_ptr,
         quarter_decimated_picture_ptr,
         sixteenth_decimated_picture_ptr);
-
+#endif
     // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
     GatheringPictureStatistics(
         sequence_control_set_ptr,
         picture_control_set_ptr,
         picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
         input_padded_picture_ptr,
+#if DOWN_SAMPLING_FILTERING
+        paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs 
+#else
         sixteenth_decimated_picture_ptr,
+#endif
         sb_total_count,
         sequence_control_set_ptr->encode_context_ptr->asm_type);
 

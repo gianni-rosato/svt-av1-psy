@@ -8151,10 +8151,10 @@ void SwapMeCandidate(
 *******************************************/
 EbErrorType motion_estimate_lcu(
         PictureParentControlSet   *picture_control_set_ptr,  // input parameter, Picture Control Set Ptr
-        uint32_t                       sb_index,              // input parameter, SB Index
-        uint32_t                       sb_origin_x,            // input parameter, SB Origin X
-        uint32_t                       sb_origin_y,            // input parameter, SB Origin X
-        MeContext                    *context_ptr,                        // input parameter, ME Context Ptr, used to store decimated/interpolated LCU/SR
+        uint32_t                   sb_index,              // input parameter, SB Index
+        uint32_t                   sb_origin_x,            // input parameter, SB Origin X
+        uint32_t                   sb_origin_y,            // input parameter, SB Origin X
+        MeContext                 *context_ptr,                        // input parameter, ME Context Ptr, used to store decimated/interpolated LCU/SR
         EbPictureBufferDesc       *input_ptr)              // input parameter, source Picture Ptr
 {
     EbErrorType return_error = EB_ErrorNone;
@@ -8328,9 +8328,19 @@ EbErrorType motion_estimate_lcu(
 #endif
 
             refPicPtr = (EbPictureBufferDesc*)referenceObject->input_padded_picture_ptr;
+#if DOWN_SAMPLING_FILTERING
+            // Set 1/4 and 1/16 ME reference buffer(s); filtered or decimated
+            quarterRefPicPtr = (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ?
+                (EbPictureBufferDesc*)referenceObject->quarter_filtered_picture_ptr :
+                (EbPictureBufferDesc*)referenceObject->quarter_decimated_picture_ptr;
+
+            sixteenthRefPicPtr = (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ?
+                (EbPictureBufferDesc*)referenceObject->sixteenth_filtered_picture_ptr:
+                (EbPictureBufferDesc*)referenceObject->sixteenth_decimated_picture_ptr;
+#else
             quarterRefPicPtr = (EbPictureBufferDesc*)referenceObject->quarter_decimated_picture_ptr;
             sixteenthRefPicPtr = (EbPictureBufferDesc*)referenceObject->sixteenth_decimated_picture_ptr;
-
+#endif
 #if BASE_LAYER_REF
             if (picture_control_set_ptr->temporal_layer_index > 0 || listIndex == 0 || ((ref0Poc != ref1Poc) && (listIndex == 1))) {
 #else
