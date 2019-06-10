@@ -293,13 +293,16 @@ extern "C" {
 #define IMPROVED_SUBPEL_SEARCH                          1
   
 #if IMPROVED_SUBPEL_SEARCH
+#define H_PEL_SEARCH_WIND 4  // 1/2-pel serach window 
+#define Q_PEL_SEARCH_WIND 2  // 1/4-pel serach window
+#define HP_REF_OPT        1  // Remove redundant positions. 
 typedef enum ME_HP_MODE { 
-    EX_HP_MODE = 0, 
-    REFINMENT_HP_MODE = 1 
+    EX_HP_MODE = 0,       // Exhaustive  1/2-pel serach mode.
+    REFINMENT_HP_MODE = 1 // Refinement 1/2-pel serach mode.
 } ME_HP_MODE;
 typedef enum ME_QP_MODE {
-    EX_QP_MODE = 0,
-    REFINMENT_QP_MODE = 1 
+    EX_QP_MODE = 0,       // Exhaustive  1/4-pel serach mode.
+    REFINMENT_QP_MODE = 1 // Refinement 1/4-pel serach mode.
 } ME_QP_MODE;
 #endif
 struct Buf2D

@@ -4270,8 +4270,6 @@ static void FullPelSearch_LCU(MeContext *context_ptr, uint32_t listIndex,
 }
 
 #if IMPROVED_SUBPEL_SEARCH
-#define H_PEL_SEARCH_WIND 4
-#define HP_REF_OPT 1
 /*******************************************
  * PU_HalfPelRefinement
  *   performs Half Pel refinement for one PU
@@ -9316,7 +9314,6 @@ static void quarter_pel_refinemnet_block(
 #endif
     return;
 }
-#define Q_PEL_SEARCH_WIND 2
 /*******************************************
  * quarter_pel_refinement_sb
  *   performs Quarter Pel refinement
