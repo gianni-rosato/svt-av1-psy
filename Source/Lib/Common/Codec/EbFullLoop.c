@@ -519,7 +519,7 @@ static void quantize_fp_helper_c(
                 tmp32 = (int)((abs_coeff * wt * quant_ptr[rc != 0]) >>
                     (16 - log_scale + AOM_QM_BITS));
                 qcoeff_ptr[rc] = (tmp32 ^ coeff_sign) - coeff_sign;
-                const QmVal abs_dqcoeff = (tmp32 * dequant) >> log_scale;
+                const TranLow abs_dqcoeff = (tmp32 * dequant) >> log_scale;
                 dqcoeff_ptr[rc] = (abs_dqcoeff ^ coeff_sign) - coeff_sign;
             }
 
