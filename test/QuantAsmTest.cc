@@ -75,14 +75,14 @@ using svt_av1_test_tool::SVTRandom;  // to generate the random
  * All combinations of all tx_size with 8bit/10bit.
  *
  * Test cases:
- * - AVX2/QuantizeTest.input_zero_all
- * - AVX2/QuantizeTest.input_dcac_minmax_q_n
- * - AVX2/QuantizeTest.input_random_dc_only
- * - AVX2/QuantizeTest.input_random_all_q_all
+ * - AVX2/QuantizeBTest.input_zero_all
+ * - AVX2/QuantizeBTest.input_dcac_minmax_q_n
+ * - AVX2/QuantizeBTest.input_random_dc_only
+ * - AVX2/QuantizeBTest.input_random_all_q_all
  */
-class QuantizeTest : public ::testing::TestWithParam<QuantizeParam> {
+class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
   protected:
-    QuantizeTest()
+    QuantizeBTest()
         : tx_size_(static_cast<TxSize>(TEST_GET_PARAM(0))),
           bd_(static_cast<AomBitDepth>(TEST_GET_PARAM(1))) {
         n_coeffs_ = av1_get_max_eob(tx_size_);
@@ -94,7 +94,7 @@ class QuantizeTest : public ::testing::TestWithParam<QuantizeParam> {
         setup_func_ptrs();
     }
 
-    virtual ~QuantizeTest() {
+    virtual ~QuantizeBTest() {
         delete rnd_;
         aom_clear_system_state();
     }
@@ -223,25 +223,25 @@ class QuantizeTest : public ::testing::TestWithParam<QuantizeParam> {
 };
 
 /**
- * @brief AVX2/QuantizeTest.input_zero_all
+ * @brief AVX2/QuantizeBTest.input_zero_all
  *
  * test output data consistency of quantize C and avx2 functions with
  * input coef: all 0
  * q_index: 0
  */
-TEST_P(QuantizeTest, input_zero_all) {
+TEST_P(QuantizeBTest, input_zero_all) {
     fill_coeff_const(0, n_coeffs_, 0);
     run_quantize(0);
 }
 
 /**
- * @brief AVX2/QuantizeTest.input_dcac_minmax_q_n
+ * @brief AVX2/QuantizeBTest.input_dcac_minmax_q_n
  *
  * test output data consistency of quantize C and avx2 functions with
  * input coef: combine dc min/max with 1st ac min/max, other ac all 0
  * q_index: 0 ~ QINDEX_RANGE, step 25
  */
-TEST_P(QuantizeTest, input_dcac_minmax_q_n) {
+TEST_P(QuantizeBTest, input_dcac_minmax_q_n) {
     fill_coeff_const(2, n_coeffs_, 0);
     for (int q = 0; q < QINDEX_RANGE; q += 25) {
         fill_coeff_const(0, 1, coeff_min_);
@@ -260,26 +260,26 @@ TEST_P(QuantizeTest, input_dcac_minmax_q_n) {
 }
 
 /**
- * @brief AVX2/QuantizeTest.input_random_dc_only
+ * @brief AVX2/QuantizeBTest.input_random_dc_only
  *
  * test output data consistency of quantize C and avx2 functions with
  * input coef: dc random and ac all 0
  * q_index: 0
  */
-TEST_P(QuantizeTest, input_random_dc_only) {
+TEST_P(QuantizeBTest, input_random_dc_only) {
     fill_coeff_const(1, n_coeffs_, 0);
     fill_coeff_random(0, 1);
     run_quantize(0);
 }
 
 /**
- * @brief AVX2/QuantizeTest.input_random_all_q_all
+ * @brief AVX2/QuantizeBTest.input_random_all_q_all
  *
  * loop test output data consistency of quantize C and avx2 functions with
  * input coef: dc random and ac all random
  * q_index: from 0 to QINDEX_RANGE-1
  */
-TEST_P(QuantizeTest, input_random_all_q_all) {
+TEST_P(QuantizeBTest, input_random_all_q_all) {
     const int num_tests = 10;
     for (int q = 0; q < QINDEX_RANGE; ++q) {
         for (int i = 0; i < num_tests; ++i) {
@@ -291,7 +291,7 @@ TEST_P(QuantizeTest, input_random_all_q_all) {
 
 #ifndef FULL_UNIT_TEST
 INSTANTIATE_TEST_CASE_P(
-    Quant, QuantizeTest,
+    Quant, QuantizeBTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
                                          static_cast<int>(TX_32X32),
                                          static_cast<int>(TX_64X64)),
@@ -299,7 +299,7 @@ INSTANTIATE_TEST_CASE_P(
                                          static_cast<int>(AOM_BITS_10))));
 #else
 INSTANTIATE_TEST_CASE_P(
-    Quant, QuantizeTest,
+    Quant, QuantizeBTest,
     ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
                                         static_cast<int>(TX_SIZES_ALL), 1),
                        ::testing::Values(static_cast<int>(AOM_BITS_8),
