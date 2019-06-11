@@ -38,7 +38,21 @@ static void init_coeff(int32_t **coeff, int32_t **coeff_opt, uint32_t *stride) {
     *stride = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
     TEST_ALLIGN_MALLOC(int32_t*, *coeff, sizeof(int32_t) * MAX_SB_SIZE * *stride);
     TEST_ALLIGN_MALLOC(int32_t*, *coeff_opt, sizeof(int32_t) * MAX_SB_SIZE * *stride);
+    memset(*coeff, 0, MAX_SB_SIZE * *stride);
+    memset(*coeff_opt, 0, MAX_SB_SIZE * *stride);
+
 }
+
+void compare_s32(int32_t *output_base, int32_t *output_opt, uint32_t stride, int height, int width) {
+    for (int x = 0; x < height; x++) {
+        for (int y = 0; y < width; y++) {
+            EXPECT_EQ(output_base[y], output_opt[y]);
+        }
+        output_base += stride;
+        output_opt += stride;
+    }
+}
+
 
 TEST(ForwardTransformTest, av1_frwd_txfm_kernels)
 {
@@ -49,15 +63,15 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels)
     ASSERT(eb_buf_compare_s32(coeff, coeff_opt, MAX_SB_SIZE * stride) == 1);
     for (int loop = 0; loop < 9; loop++) {         //Function Pairs
         for (int i = 0; i < 10; i++) {             //Number of Test Runs
-            for (int x = 0; x < AOM_BITS_12; x++) {//Bit Depth
+            for (int x = 0; x < 2; x++) {//Bit Depth
                 switch (loop) {
                 case 0://16x16
                     for (int j = 0; j < 16; j++) {
                         init_data(&input, &input_opt, stride);
                         ASSERT(eb_buf_compare_s16(input, input_opt, MAX_SB_SIZE * stride) == 1);
-                        av1_frwd_txfm_func_ptr_array_base[loop](input,coeff,stride, (TxType)tx_16[j], bitDepth[x]);
+                        av1_frwd_txfm_func_ptr_array_base[loop](input, coeff, stride, (TxType)tx_16[j], bitDepth[x]);
                         av1_frwd_txfm_func_ptr_array_opt[loop](input_opt, coeff_opt, stride, (TxType)tx_16[j], bitDepth[x]);
-                        EXPECT_EQ(eb_buf_compare_s32(coeff, coeff_opt, MAX_SB_SIZE * stride), 1);
+                        compare_s32(coeff, coeff_opt, stride, 16, 16);
                         uninit_data(input, input_opt);
                     }
                 break;
@@ -67,7 +81,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels)
                         ASSERT(eb_buf_compare_s16(input, input_opt, MAX_SB_SIZE * stride) == 1);
                         av1_frwd_txfm_func_ptr_array_base[loop](input, coeff, stride, (TxType)tx_32[j], bitDepth[x]);
                         av1_frwd_txfm_func_ptr_array_opt[loop](input_opt, coeff_opt, stride, (TxType)tx_32[j], bitDepth[x]);
-                        EXPECT_EQ(eb_buf_compare_s32(coeff, coeff_opt, MAX_SB_SIZE * stride), 1);
+                        compare_s32(coeff, coeff_opt, stride, 32, 32);
                         uninit_data(input, input_opt);
                     }
                 break;
@@ -77,7 +91,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels)
                         ASSERT(eb_buf_compare_s16(input, input_opt, MAX_SB_SIZE * stride) == 1);
                         av1_frwd_txfm_func_ptr_array_base[loop](input, coeff, stride, (TxType)tx_64[j], bitDepth[x]);
                         av1_frwd_txfm_func_ptr_array_opt[loop](input_opt, coeff_opt, stride, (TxType)tx_64[j], bitDepth[x]);
-                        EXPECT_EQ(eb_buf_compare_s32(coeff, coeff_opt, MAX_SB_SIZE * stride), 1);
+                        compare_s32(coeff, coeff_opt, stride, 32, 32); // top - left 32x32
                         uninit_data(input, input_opt);
                     }
                 break;
@@ -87,7 +101,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels)
                         ASSERT(eb_buf_compare_s16(input, input_opt, MAX_SB_SIZE * stride) == 1);
                         av1_frwd_txfm_func_ptr_array_base[loop](input, coeff, stride, (TxType)tx_64[j], bitDepth[x]);
                         av1_frwd_txfm_func_ptr_array_opt[loop](input_opt, coeff_opt, stride, (TxType)tx_64[j], bitDepth[x]);
-                        EXPECT_EQ(eb_buf_compare_s32(coeff, coeff_opt, MAX_SB_SIZE * stride), 1);
+                        compare_s32(coeff, coeff_opt, stride, 16, 32); // top - left 16x32
                         uninit_data(input, input_opt);
                     }
                     break;
@@ -97,7 +111,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels)
                         ASSERT(eb_buf_compare_s16(input, input_opt, MAX_SB_SIZE * stride) == 1);
                         av1_frwd_txfm_func_ptr_array_base[loop](input, coeff, stride, (TxType)tx_64[j], bitDepth[x]);
                         av1_frwd_txfm_func_ptr_array_opt[loop](input_opt, coeff_opt, stride, (TxType)tx_64[j], bitDepth[x]);
-                        EXPECT_EQ(eb_buf_compare_s32(coeff, coeff_opt, MAX_SB_SIZE * stride), 1);
+                        compare_s32(coeff, coeff_opt, stride, 32, 16); // top - left 32x16
                         uninit_data(input, input_opt);
                     }
                     break;
@@ -107,7 +121,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels)
                         ASSERT(eb_buf_compare_s16(input, input_opt, MAX_SB_SIZE * stride) == 1);
                         av1_frwd_txfm_func_ptr_array_base[loop](input, coeff, stride, (TxType)tx_64[j], bitDepth[x]);
                         av1_frwd_txfm_func_ptr_array_opt[loop](input_opt, coeff_opt, stride, (TxType)tx_64[j], bitDepth[x]);
-                        EXPECT_EQ(eb_buf_compare_s32(coeff, coeff_opt, MAX_SB_SIZE * stride), 1);
+                        compare_s32(coeff, coeff_opt, stride, 32, 32); // top - left 32x32
                         uninit_data(input, input_opt);
                     }
                     break;
@@ -117,7 +131,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels)
                         ASSERT(eb_buf_compare_s16(input, input_opt, MAX_SB_SIZE * stride) == 1);
                         av1_frwd_txfm_func_ptr_array_base[loop](input, coeff, stride, (TxType)tx_64[j], bitDepth[x]);
                         av1_frwd_txfm_func_ptr_array_opt[loop](input_opt, coeff_opt, stride, (TxType)tx_64[j], bitDepth[x]);
-                        EXPECT_EQ(eb_buf_compare_s32(coeff, coeff_opt, MAX_SB_SIZE * stride), 1);
+                        compare_s32(coeff, coeff_opt, stride, 32, 32); // top - left 32x32
                         uninit_data(input, input_opt);
                     }
                     break;
@@ -127,7 +141,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels)
                         ASSERT(eb_buf_compare_s16(input, input_opt, MAX_SB_SIZE * stride) == 1);
                         av1_frwd_txfm_func_ptr_array_base[loop](input, coeff, stride, (TxType)tx_32[j], bitDepth[x]);
                         av1_frwd_txfm_func_ptr_array_opt[loop](input_opt, coeff_opt, stride, (TxType)tx_32[j], bitDepth[x]);
-                        EXPECT_EQ(eb_buf_compare_s32(coeff, coeff_opt, MAX_SB_SIZE * stride), 1);
+                        compare_s32(coeff, coeff_opt, stride, 16, 32);
                         uninit_data(input, input_opt);
                     }
                     break;
@@ -137,7 +151,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels)
                         ASSERT(eb_buf_compare_s16(input, input_opt, MAX_SB_SIZE * stride) == 1);
                         av1_frwd_txfm_func_ptr_array_base[loop](input, coeff, stride, (TxType)tx_32[j], bitDepth[x]);
                         av1_frwd_txfm_func_ptr_array_opt[loop](input_opt, coeff_opt, stride, (TxType)tx_32[j], bitDepth[x]);
-                        EXPECT_EQ(eb_buf_compare_s32(coeff, coeff_opt, MAX_SB_SIZE * stride), 1);
+                        compare_s32(coeff, coeff_opt, stride, 32, 16);
                         uninit_data(input, input_opt);
                     }
                     break;
