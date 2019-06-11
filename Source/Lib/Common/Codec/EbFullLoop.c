@@ -542,8 +542,7 @@ void av1_quantize_fp_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
 
 void av1_quantize_fp_32x32_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
     const int16_t *zbin_ptr, const int16_t *round_ptr,
-    const int16_t *quant_ptr,
-    const int16_t *quant_shift_ptr,
+    const int16_t *quant_ptr, const int16_t *quant_shift_ptr,
     TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
     const int16_t *dequant_ptr, uint16_t *eob_ptr,
     const int16_t *scan, const int16_t *iscan) {
@@ -554,8 +553,7 @@ void av1_quantize_fp_32x32_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
 
 void av1_quantize_fp_64x64_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
     const int16_t *zbin_ptr, const int16_t *round_ptr,
-    const int16_t *quant_ptr,
-    const int16_t *quant_shift_ptr,
+    const int16_t *quant_ptr, const int16_t *quant_shift_ptr,
     TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
     const int16_t *dequant_ptr, uint16_t *eob_ptr,
     const int16_t *scan, const int16_t *iscan) {
@@ -577,12 +575,35 @@ void av1_quantize_fp_facade(
     const QmVal *qm_ptr = qparam->qmatrix;
     const QmVal *iqm_ptr = qparam->iqmatrix;
 
-    quantize_fp_helper_c(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
-        p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
-        dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
-        sc->iscan, qm_ptr, iqm_ptr, qparam->log_scale);
+    if (qm_ptr || iqm_ptr)
+        quantize_fp_helper_c(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+            p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+            dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+            sc->iscan, qm_ptr, iqm_ptr, qparam->log_scale);
+    else {
+        switch (qparam->log_scale) {
+        case 0:
+            av1_quantize_fp(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+                p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+                dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+                sc->iscan);
+            break;
+        case 1:
+            av1_quantize_fp_32x32(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+                p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+                dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+                sc->iscan);
+            break;
+        case 2:
+            av1_quantize_fp_64x64(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+                p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+                dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+                sc->iscan);
+            break;
+        default: assert(0);
+        }
+    }
 }
-
 
 #endif
 

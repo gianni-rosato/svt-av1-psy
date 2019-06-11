@@ -375,9 +375,7 @@ TEST(EbRestorationPick, compute_stats_highbd) {
     }
 }
 
-#if 0
-
-TEST(EbRestorationPick, compute_stats_speed) {
+TEST(EbRestorationPick, DISABLED_compute_stats_speed) {
     uint8_t *dgd, *src;
     int32_t dgd_stride, src_stride;
     int64_t M_org[WIENER_WIN2], M_opt[WIENER_WIN2];
@@ -465,7 +463,7 @@ TEST(EbRestorationPick, compute_stats_speed) {
     }
 }
 
-TEST(EbRestorationPick, compute_stats_highbd_speed) {
+TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
     uint16_t *dgd, *src;
     int32_t dgd_stride, src_stride;
     int64_t M_org[WIENER_WIN2], M_opt[WIENER_WIN2];
@@ -561,5 +559,3 @@ TEST(EbRestorationPick, compute_stats_highbd_speed) {
         }
     }
 }
-
-#endif
