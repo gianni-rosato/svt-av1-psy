@@ -18,6 +18,8 @@
 #define EbCabacContextModel_h
 
 #include "EbDefinitions.h"
+#include "EbSegmentationParams.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -45,6 +47,10 @@ extern "C" {
     inverse).*/
 #define AOM_ICDF(x) (CDF_PROB_TOP - (x))
 
+#define SEG_TEMPORAL_PRED_CTXS 3
+#define SPATIAL_PREDICTION_PROBS 3
+#define SEG_TREE_PROBS (MAX_SEGMENTS - 1)
+    
 #if CDF_SHIFT == 0
 
 #define AOM_CDF2(a0) AOM_ICDF(a0), AOM_ICDF(CDF_PROB_TOP), 0
@@ -1013,6 +1019,7 @@ extern "C" {
         AomCdfProb comp_ref_type_cdf[COMP_REF_TYPE_CONTEXTS][CDF_SIZE(2)];
         AomCdfProb uni_comp_ref_cdf[UNI_COMP_REF_CONTEXTS][UNIDIR_COMP_REFS - 1]
             [CDF_SIZE(2)];
+
         AomCdfProb comp_ref_cdf[REF_CONTEXTS][FWD_REFS - 1][CDF_SIZE(2)];
         AomCdfProb comp_bwdref_cdf[REF_CONTEXTS][BWD_REFS - 1][CDF_SIZE(2)];
         AomCdfProb txfm_partition_cdf[TXFM_PARTITION_CONTEXTS][CDF_SIZE(2)];

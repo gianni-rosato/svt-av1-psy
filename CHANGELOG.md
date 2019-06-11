@@ -5,6 +5,8 @@
 - Adaptive Transform Block for INTRA
 - Adaptive QP scaling
 - Decoder - Support for Tiles and 10bit
+- API - add option to calculate / report PSNR values
+- Support for segmentation
 
 ## [0.5.0] - 2019-05-17
 

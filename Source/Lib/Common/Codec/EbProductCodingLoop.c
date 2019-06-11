@@ -3487,6 +3487,8 @@ void perform_intra_tx_partitioning(
                 else if (av1_ext_tx_used[tx_set_type][tx_type] == 0) continue;
                 else if (context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] > 32 || context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] > 32) continue;
 
+                int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                                 picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
                 // Y: T Q iQ
                 av1_estimate_transform(
                     &(((int16_t*)candidateBuffer->residual_ptr->buffer_y)[tu_origin_index]),
@@ -3510,6 +3512,7 @@ void perform_intra_tx_partitioning(
                     &(((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]),
                     &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[txb_1d_offset]),
                     qp,
+                    seg_qp,
                     context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr],
                     context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
@@ -3640,6 +3643,7 @@ void perform_intra_tx_partitioning(
 
             y_tu_coeff_bits = 0;
 
+
             // Y: T Q iQ
             av1_estimate_transform(
                 &(((int16_t*)candidateBuffer->residual_ptr->buffer_y)[tu_origin_index]),
@@ -3658,6 +3662,10 @@ void perform_intra_tx_partitioning(
                 asm_type,
                 PLANE_TYPE_Y,
                 DEFAULT_SHAPE);
+
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
 #if DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
 #else
@@ -3670,6 +3678,7 @@ void perform_intra_tx_partitioning(
                 &(((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]),
                 &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[txb_1d_offset]),
                 qp,
+                seg_qp,
                 context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
@@ -3985,6 +3994,8 @@ void perform_intra_tx_partitioning(
                 PLANE_TYPE_Y,
                 DEFAULT_SHAPE);
 
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 #if DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
 #else
@@ -3997,6 +4008,7 @@ void perform_intra_tx_partitioning(
                 &(((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]),
                 &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[txb_1d_offset]),
                 qp,
+                seg_qp,
                 context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
@@ -4356,6 +4368,7 @@ void AV1PerformFullLoop(
                 *candidateBuffer->fast_cost_ptr,
                 picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
 
+
             tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
 
             if (!tx_search_skip_fag) {
@@ -4617,9 +4630,12 @@ void move_cu_data(
 #endif
     dst_cu->reference_mode_context = src_cu->reference_mode_context;
     dst_cu->compoud_reference_type_context = src_cu->compoud_reference_type_context;
+    dst_cu->segment_id = src_cu->segment_id;
+
 #if ATB_DC_CONTEXT_SUPPORT_1
     memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * MAX_TXB_COUNT * sizeof(int32_t));
 #else
+
     //CHKN int32_t                        quantized_dc[3];
     memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * sizeof(int32_t));
 #endif

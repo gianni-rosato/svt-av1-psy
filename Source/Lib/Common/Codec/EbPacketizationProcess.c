@@ -293,7 +293,18 @@ void* packetization_kernel(void *input_ptr)
             picture_control_set_ptr->parent_pcs_ptr->idr_flag ? EB_AV1_KEY_PICTURE :
             picture_control_set_ptr->slice_type : EB_AV1_NON_REF_PICTURE;
         output_stream_ptr->p_app_private = picture_control_set_ptr->parent_pcs_ptr->input_ptr->p_app_private;
+        output_stream_ptr->qp            = picture_control_set_ptr->parent_pcs_ptr->picture_qp;
 
+        if (sequence_control_set_ptr->static_config.stat_report){
+            output_stream_ptr->luma_sse = picture_control_set_ptr->parent_pcs_ptr->luma_sse;
+            output_stream_ptr->cr_sse   = picture_control_set_ptr->parent_pcs_ptr->cr_sse;
+            output_stream_ptr->cb_sse   = picture_control_set_ptr->parent_pcs_ptr->cb_sse;
+        } else {
+            output_stream_ptr->luma_sse = 0;
+            output_stream_ptr->cr_sse   = 0;
+            output_stream_ptr->cb_sse   = 0;
+        }
+            
         // Get Empty Rate Control Input Tasks
         eb_get_empty_object(
             context_ptr->rate_control_tasks_output_fifo_ptr,

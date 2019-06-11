@@ -25,8 +25,12 @@
 #define inline __inline
 #elif __GNUC__
 #define inline __inline__
+#ifndef fseeko64
 #define fseeko64 fseek
+#endif
+#ifndef ftello64
 #define ftello64 ftell
+#endif
 #else
 #error OS not supported
 #endif
@@ -46,6 +50,8 @@ extern "C" {
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
+#define DOWN_SAMPLING_FILTERING           1 // Use down-sampling filtering (instead of down-sampling decimation) for 1/16th and 1/4th reference frame(s) generation @ ME and temporal filtering search, added the multi-mode signal down_sampling_method_me_search; filtering if M0, and decimation for M1 & higher
+#define DECIMATION_BUG_FIX                1 // Removed HME Level0 check @ 1/16th decimation to guarantee valid ZZ SAD and SCD data when HME Level0 is OFF  
 
 #define RDOQ_INTRA                        1 // Enable RDOQ INTRA (RDOQ INTER already active) 
 #define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass
@@ -147,7 +153,7 @@ extern "C" {
 #define RC_FEEDBACK                       1 // Feedback from previous base layer is received before starting the next base layer frame
 #endif
 #define RED_CU                            1 // Bypass redundant CU
-#define NSQ_ME_OPT                        0 // NSQ ME Restructuring
+#define NSQ_ME_OPT                        1 // NSQ ME Restructuring
 #define BYPASS_USELESS_TX_SEARCH          0
 // Testing MACROS
 #define M9_NEAR_INJECTION                 0
@@ -344,6 +350,12 @@ enum {
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/
+
+#define ALTREF_MAX_NFRAMES 10 // maximum number of frames allowed for the Alt-ref picture computation
+                              // this number can be increased by increasing the constant
+                              // FUTURE_WINDOW_WIDTH defined in EbPictureDecisionProcess.c
+#define ALTREF_MAX_STRENGTH 6
+
 #define PAD_VALUE                                (128+32)
 
 //  Delta QP support
@@ -2856,6 +2868,14 @@ void(*ErrorHandler)(
 #endif
 #define INVALID_POC                                 (((uint32_t) (~0)) - (((uint32_t) (~0)) >> 1))
 #define MAX_ELAPSED_IDR_COUNT                       1024
+
+#if DOWN_SAMPLING_FILTERING
+typedef enum DownSamplingMethod
+{
+    ME_FILTERED_DOWNSAMPLED  = 0,
+    ME_DECIMATED_DOWNSAMPLED = 1
+} DownSamplingMethod;
+#endif
 
 //***Segments***
 #define EB_SEGMENT_MIN_COUNT                        1

@@ -22,6 +22,7 @@
 #include "EbDeblockingFilter.h"
 #include "EbPictureOperators.h"
 
+#include "EbSegmentation.h"
 #include "EbModeDecisionProcess.h"
 #include "EbEncDecProcess.h"
 #include "EbSvtAv1ErrorCodes.h"
@@ -586,9 +587,13 @@ static void Av1EncodeLoop(
             context_ptr->trans_coeff_shape_luma);
 #endif
 
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
 #if DC_SIGN_CONTEXT_EP
         cu_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
 #else
+
         av1_quantize_inv_quantize(
 #endif
             sb_ptr->picture_control_set_ptr,
@@ -598,11 +603,13 @@ static void Av1EncodeLoop(
             ((int32_t*)coeffSamplesTB->buffer_y) + coeff1dOffset,
             ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
+            seg_qp,
             context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->txb_itr],
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
@@ -1007,9 +1014,14 @@ static void Av1EncodeLoop(
 #else
             context_ptr->trans_coeff_shape_chroma);
 #endif
+
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
 #if DC_SIGN_CONTEXT_EP
         cu_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
 #else
+
         av1_quantize_inv_quantize(
 #endif
             sb_ptr->picture_control_set_ptr,
@@ -1019,6 +1031,7 @@ static void Av1EncodeLoop(
             ((int32_t*)coeffSamplesTB->buffer_cb) + context_ptr->coded_area_sb_uv,
             ((int32_t*)inverse_quant_buffer->buffer_cb) + context_ptr->coded_area_sb_uv,
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -1096,6 +1109,7 @@ static void Av1EncodeLoop(
             ((int32_t*)coeffSamplesTB->buffer_cr) + context_ptr->coded_area_sb_uv,
             ((TranLow*)inverse_quant_buffer->buffer_cr) + context_ptr->coded_area_sb_uv,
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -1328,6 +1342,9 @@ static void Av1EncodeLoop16bit(
 #else
                 context_ptr->trans_coeff_shape_luma);
 #endif
+
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 #if DC_SIGN_CONTEXT_EP
             cu_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
 #else
@@ -1340,6 +1357,7 @@ static void Av1EncodeLoop16bit(
                 ((int32_t*)coeffSamplesTB->buffer_y) + coeff1dOffset,
                 ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
                 qp,
+                seg_qp,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -1551,9 +1569,13 @@ static void Av1EncodeLoop16bit(
 #else
                 context_ptr->trans_coeff_shape_chroma);
 #endif
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
 #if DC_SIGN_CONTEXT_EP
             cu_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
 #else
+
             av1_quantize_inv_quantize(
 #endif
                 sb_ptr->picture_control_set_ptr,
@@ -1563,6 +1585,7 @@ static void Av1EncodeLoop16bit(
                 ((int32_t*)coeffSamplesTB->buffer_cb) + context_ptr->coded_area_sb_uv,
                 ((int32_t*)inverse_quant_buffer->buffer_cb) + context_ptr->coded_area_sb_uv,
                 qp,
+                seg_qp,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -1641,6 +1664,7 @@ static void Av1EncodeLoop16bit(
                 ((int32_t*)coeffSamplesTB->buffer_cr) + context_ptr->coded_area_sb_uv,
                 ((int32_t*)inverse_quant_buffer->buffer_cr) + context_ptr->coded_area_sb_uv,
                 qp,
+                seg_qp,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -2426,6 +2450,8 @@ void Store16bitInputSrc(
     for (rowIt = 0; rowIt < lcuH; rowIt++)
         memcpy(toPtr + rowIt * picture_control_set_ptr->input_frame16bit->stride_cr, fromPtr + rowIt * context_ptr->input_sample16bit_buffer->stride_cr, lcuW * 2);
 }
+
+
 
 void update_av1_mi_map(
     CodingUnit        *cu_ptr,
@@ -3456,12 +3482,23 @@ EB_EXTERN void av1_encode_pass(
                 }
 
 #else
-                cu_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
-                sb_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
-#if !MEMORY_FOOTPRINT_OPT
-                cu_ptr->org_delta_qp = cu_ptr->delta_qp;
+
+                // for now, segmentation independent of sharpness/delta QP.
+                if(picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled){
+                    apply_segmentation_based_quantization(
+                            blk_geom,
+                            picture_control_set_ptr,
+                            sb_ptr,
+                            cu_ptr);
+
+                    sb_ptr->qp = cu_ptr->qp;
+                } else{
+                    cu_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
+                    sb_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
+                }
+
 #endif
-#endif
+
 #if !MEMORY_FOOTPRINT_OPT
 #if !ADD_DELTA_QP_SUPPORT
                 //CHKN remove usage of depth

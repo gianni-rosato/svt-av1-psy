@@ -38,6 +38,7 @@ file(GLOB all_files
     "*.h"
     "*.c")
  
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND PLATFORM_LIBS m)
 endif()

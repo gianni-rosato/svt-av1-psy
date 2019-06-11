@@ -31,7 +31,7 @@ void av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
 void CopyStatisticsToRefObject(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr);
-void PsnrCalculations(
+void psnr_calculations(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr);
 void PadRefAndSetFlags(
@@ -294,12 +294,11 @@ void* rest_kernel(void *input_ptr)
                     sequence_control_set_ptr);
             }
 
-            //// PSNR Calculation
-            //if (sequence_control_set_ptr->static_config.stat_report) {
-            //    PsnrCalculations(
-            //        picture_control_set_ptr,
-            //        sequence_control_set_ptr);
-            //}
+            // PSNR Calculation
+            if (sequence_control_set_ptr->static_config.stat_report)
+                psnr_calculations(
+                    picture_control_set_ptr,
+                    sequence_control_set_ptr);
 
             // Pad the reference picture and set up TMVP flag and ref POC
             if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)

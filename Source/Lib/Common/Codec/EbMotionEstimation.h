@@ -77,6 +77,17 @@ void interpolate_search_region_AVC_chroma(
         uint32_t                   decim_stride,
         uint32_t                   decim_step);
 
+#if DOWN_SAMPLING_FILTERING
+    extern void downsample_2d(
+        uint8_t                   *input_samples,
+        uint32_t                   input_stride,
+        uint32_t                   input_area_width,
+        uint32_t                   input_area_height,
+        uint8_t                   *decim_samples,
+        uint32_t                   decim_stride,
+        uint32_t                   decim_step);
+#endif
+
     extern EbErrorType open_loop_intra_search_sb(
         PictureParentControlSet   *picture_control_set_ptr,
         uint32_t                       sb_index,

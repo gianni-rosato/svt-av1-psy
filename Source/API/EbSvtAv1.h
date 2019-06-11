@@ -77,6 +77,9 @@ typedef struct EbBufferHeaderType
     // pic info
     uint32_t qp;
     uint32_t pic_type;
+    uint32_t luma_sse;
+    uint32_t cr_sse;
+    uint32_t cb_sse;
 
     // pic flags
     uint32_t flags;

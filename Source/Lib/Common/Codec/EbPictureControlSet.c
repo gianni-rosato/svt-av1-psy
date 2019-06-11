@@ -45,6 +45,19 @@ static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx,
     rst[2].restoration_unit_size = rst[1].restoration_unit_size;
 }
 
+EbErrorType segmentation_map_ctor(SegmentationNeighborMap **seg_map_dbl_ptr,
+                                uint16_t pic_width, uint16_t pic_height){
+
+    SegmentationNeighborMap *seg_neighbor_map;
+    EB_CALLOC(SegmentationNeighborMap*, seg_neighbor_map, 1, sizeof(SegmentationNeighborMap), EB_N_PTR);
+    *seg_map_dbl_ptr = seg_neighbor_map;
+    uint32_t num_elements = (pic_width >> MI_SIZE_LOG2) * (pic_height >> MI_SIZE_LOG2);
+    seg_neighbor_map->map_size = num_elements;
+    EB_CALLOC(uint8_t*, seg_neighbor_map->data, num_elements, sizeof(uint8_t), EB_N_PTR);
+    return  EB_ErrorNone;
+
+}
+
 #if MRP_ME
 EbErrorType me_sb_results_ctor(
     MeLcuResults     **objectDblPtr,
@@ -892,6 +905,7 @@ EbErrorType picture_control_set_ctor(
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
+
 #if ATB_EC
     return_error = neighbor_array_unit_ctor(
         &object_ptr->txfm_context_array,
@@ -904,6 +918,27 @@ EbErrorType picture_control_set_ctor(
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
 #endif
+    //Segmentation neighbor arrays
+    return_error = segmentation_map_ctor(
+            &object_ptr->segmentation_neighbor_map,
+            initDataPtr->picture_width, initDataPtr->picture_height);
+
+    if (return_error == EB_ErrorInsufficientResources) {
+        return EB_ErrorInsufficientResources;
+    }
+
+    return_error = neighbor_array_unit_ctor(
+            &object_ptr->segmentation_id_pred_array,
+            MAX_PICTURE_WIDTH_SIZE,
+            MAX_PICTURE_HEIGHT_SIZE,
+            sizeof(uint8_t),
+            PU_NEIGHBOR_ARRAY_GRANULARITY,
+            PU_NEIGHBOR_ARRAY_GRANULARITY,
+            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
+    if (return_error == EB_ErrorInsufficientResources) {
+        return EB_ErrorInsufficientResources;
+    }
+
     // Note - non-zero offsets are not supported (to be fixed later in DLF chroma filtering)
     object_ptr->cb_qp_offset = 0;
     object_ptr->cr_qp_offset = 0;
