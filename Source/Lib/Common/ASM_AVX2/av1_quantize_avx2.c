@@ -20,9 +20,8 @@ static INLINE void read_coeff(const TranLow *coeff, __m256i *c) {
         *c = _mm256_packs_epi32(x0, x1);
         *c = _mm256_permute4x64_epi64(*c, 0xD8);
     }
-    else {
+    else
         *c = _mm256_loadu_si256((const __m256i *)coeff);
-    }
 }
 
 static INLINE void write_zero(TranLow *qcoeff) {
@@ -31,9 +30,8 @@ static INLINE void write_zero(TranLow *qcoeff) {
         _mm256_storeu_si256((__m256i *)qcoeff, zero);
         _mm256_storeu_si256((__m256i *)qcoeff + 1, zero);
     }
-    else {
+    else
         _mm256_storeu_si256((__m256i *)qcoeff, zero);
-    }
 }
 
 static INLINE void init_one_qp(const __m128i *p, __m256i *qp) {
@@ -57,9 +55,8 @@ static INLINE void init_qp(const int16_t *round_ptr, const int16_t *quant_ptr,
     init_one_qp(&round, &qp[0]);
     init_one_qp(&quant, &qp[1]);
 
-    if (log_scale == 1) {
+    if (log_scale == 1)
         qp[1] = _mm256_slli_epi16(qp[1], log_scale);
-    }
 
     init_one_qp(&dequant, &qp[2]);
     *thr = _mm256_srai_epi16(qp[2], 1 + log_scale);
