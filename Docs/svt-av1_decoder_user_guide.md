@@ -47,7 +47,7 @@ Sample usage: `SvtAv1DecApp.exe -i test.ivf -o out.yuv`
 
 #### List of all configuration parameters
 
-_WIP_
+- _WIP_
 
 ## Legal Disclaimer
 
