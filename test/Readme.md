@@ -21,27 +21,26 @@ The development of SVT-AV1 unit testing is in working progress, more test suites
 
 ### MacOS or Linux(64-bit)
 
-  Build the test program by running the build.sh with "test" as the second parameter:
+Build the test program by running the build.sh with "test" as the second parameter:
 
-  ```
-  ./build.sh release test
-  ```
+``` bash
+./build.sh release test
+```
 
-  The script will download test data automatically.
+The script will download test data automatically.
 
-  Binaries can be found under Bin/Release and/or Bin/Debug named SvtAv1UnitTests, SvtAv1ApiTests and SvtAv1E2ETests.
+Binaries can be found under `Bin/Release` and/or `Bin/Debug` named `SvtAv1UnitTests`, `SvtAv1ApiTests` and `SvtAv1E2ETests`.
 
-  Before running the test program, please register "SVT_AV1_TEST_VECTOR_PATH" in your environment path if you already downloaded test vector manually. The tests require a bash shell and can be run in the following manners:
+Before running the test program, please register `SVT_AV1_TEST_VECTOR_PATH` in your `PATH` if you already downloaded test vector manually. The tests require a bash shell and can be run in the following manners:
 
-  ```
-  # run all the tests in Unit tests
-  ./SvtAv1UnitTests
-  # list the available test cases:
-  ./SvtAv1UnitTests --gtest_list_tests
-  # or run the specific test cases, for example the test cases whose name contain "transform"
-  ./SvtAv1UnitTests --gtest_filter="*transform*"
-
-  ```
+``` bash
+# run all the tests in Unit tests
+./SvtAv1UnitTests
+# list the available test cases:
+./SvtAv1UnitTests --gtest_list_tests
+# or run the specific test cases, for example the test cases whose name contain "transform"
+./SvtAv1UnitTests --gtest_filter="*transform*"
+```
 
 ### Windows(64-bit)
 
