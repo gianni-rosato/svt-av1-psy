@@ -13,8 +13,9 @@ SVT-AV1 Encoder is licensed under the OSI-approved BSD+Patent license. See [LICE
 ## Documentation
 
 More details about the SVT-AV1 usage can be found under:
--   [svt-av1-encoder-user-guide](Docs/svt-av1_encoder_user_guide.md)
--   [svt-av1-decoder-user-guide](Docs/svt-av1_decoder_user_guide.md)
+
+- [svt-av1-encoder-user-guide](Docs/svt-av1_encoder_user_guide.md)
+- [svt-av1-decoder-user-guide](Docs/svt-av1_decoder_user_guide.md)
 
 ## System Requirements
 
@@ -22,32 +23,25 @@ More details about the SVT-AV1 usage can be found under:
 
 SVT-AV1 Encoder may run on any Windows* or Linux* 64 bit operating systems. The list below represents the operating systems that the encoder application and library were tested and validated on:
 
-* __Windows* Operating Systems (64-bit):__
-
-    -  Windows* Server 2016
-
-* __Linux* Operating Systems (64-bit):__
-
-    -  Ubuntu* 16.04 Server LTS
-
-    -  Ubuntu* 18.04 Server LTS
-
-* __Unix* Operating Systems (64-bit):__
-
-    -  MacOS
+- __Windows* Operating Systems (64-bit):__
+  - Windows* Server 2016
+- __Linux* Operating Systems (64-bit):__
+  - Ubuntu* 16.04 Server LTS
+  - Ubuntu* 18.04 Server LTS
+- __Unix* Operating Systems (64-bit):__
+  - MacOS
 
 ### Hardware
 
 The SVT-AV1 Encoder library supports the x86 architecture
 
-* __CPU Requirements__
+- __CPU Requirements__
 
     In order to achieve the performance targeted by the SVT-AV1 Encoder, the specific CPU model listed above would need to be used when running the encoder. Otherwise, the encoder runs on any 5th Generation Intel® Core™ processor, (Intel® Xeon® CPUs, E5-v4 or newer).
 
-* __RAM Requirements__
+- __RAM Requirements__
 
-    The SVT-AV1 Encoder adapts to the system that is being ran on. The memory requirements depend on the number of cores the system contains, the input frame rate of the input sequence (-fps) and the look ahead distance passed to the encoder (-lad). The SVT-AV1 Encoder application will display an error if the system does not have enough RAM to support the encode prior to the start of the encode. The following table shows the minimum amount of RAM required for some standard resolutions of 10bit video per stream:
-
+    The SVT-AV1 Encoder adapts to the system that is being ran on. The memory requirements depend on the number of cores the system contains, the input frame rate of the input sequence (`-fps`) and the look ahead distance passed to the encoder (`-lad`). The SVT-AV1 Encoder application will display an error if the system does not have enough RAM to support the encode prior to the start of the encode. The following table shows the minimum amount of RAM required for some standard resolutions of 10bit video per stream:
 
 |       Resolution      | 8-vCPU Commit Size (GB)| 40-vCPU Commit Size (GB)|
 |-----------------------|------------------------|-------------------------|
@@ -61,7 +55,7 @@ The SVT-AV1 Encoder library supports the x86 architecture
 
 ### Windows* Operating Systems (64-bit):
 
-* __Build Requirements__
+- __Build Requirements__
   - Visual Studio* 2017 (download [here](https://www.visualstudio.com/vs/older-downloads/)) or 2019 (download [here](https://visualstudio.microsoft.com/downloads/))
   - CMake 3.14 or later (download [here](https://github.com/Kitware/CMake/releases/download/v3.14.4/cmake-3.14.4-win64-x64.msi))
   - YASM Assembler version 1.2.0 or later
@@ -69,15 +63,15 @@ The SVT-AV1 Encoder library supports the x86 architecture
     - Rename yasm-1.3.0-win64.exe to yasm.exe
     - Copy yasm.exe into a location that is in the PATH environment variable
 
-* __Build Instructions__
+- __Build Instructions__
   - Build the project by following the steps below
     - cd into `Build\windows`
     - run `build.bat <2019|2017|2015>` [This will generate the .sln files and build the project]
 
-* __Binaries Location__
-  - Binaries can be found under <repo dir>\Bin/Release or <repo dir>\Bin/Debug, depending on whether Debug or Release were selected in the build mode.
+- __Binaries Location__
+  - Binaries can be found under `<repo dir>/Bin/Release` or `<repo dir>/Bin/Debug`, depending on whether Debug or Release were selected in the build mode.
 
-* __Installation__
+- __Installation__
 
   For the binaries to operate properly on your system, the following conditions have to be met:
   - On any of the Windows* Operating Systems listed in the OS requirements section, install Visual Studio* 2015/2017/2019
@@ -87,22 +81,23 @@ The SVT-AV1 Encoder library supports the x86 architecture
 
 ### Linux* Operating Systems (64-bit):
 
-* __Build Requirements__
+- __Build Requirements__
   - GCC 5.4.0 or later
   - CMake 3.5.1 or later
   - YASM Assembler version 1.2.0 or later
 
-* __Build Instructions__
-  - `./Build/linux/build.sh <release | debug>` (if none specified, both release and debug will be built)
+- __Build Instructions__
+  - `cd Build/linux`
+  - `./build.sh <release | debug>`
 
   - __Note about macOS__
 
     It is necessary to increase the amount of available file descriptors due to the limit being very low. The instructions to do so can be found [here](https://apple.lib.utah.edu/open-file-limits-on-os-x-what-they-are-why-increase-them-and-how-to-increase-them/).
 
-* __Sample Binaries location__
-  - Binaries can be found under Bin/Release and/or Bin/Debug
+- __Sample Binaries location__
+  - Binaries can be found under `Bin/Release` and/or `Bin/Debug`
 
-* __Installation__
+- __Installation__
 
   For the binaries to operate properly on your system, the following conditions have to be met:
 
@@ -114,8 +109,8 @@ The SVT-AV1 Encoder library supports the x86 architecture
 
 ## Demo features and limitations
 
--  **Multi-instance support:** The multi-instance functionality is a demo feature implemented in the SVT-AV1 Encoder sample application as an example of one sample application using multiple encoding libraries. Encoding using the multi-instance support is limited to only 6 simultaneous streams. For example two channels encoding on Windows: `SvtAV1EncApp.exe -nch 2 -c firstchannel.cfg secondchannel.cfg`
--  **Features enabled:** The library will display an error message any feature combination that is not currently supported.
+- **Multi-instance support:** The multi-instance functionality is a demo feature implemented in the SVT-AV1 Encoder sample application as an example of one sample application using multiple encoding libraries. Encoding using the multi-instance support is limited to only 6 simultaneous streams. For example two channels encoding on Windows: `SvtAV1EncApp.exe -nch 2 -c firstchannel.cfg secondchannel.cfg`
+- **Features enabled:** The library will display an error message any feature combination that is not currently supported.
 
 ## How to Contribute
 
@@ -123,13 +118,13 @@ We welcome community contributions to the SVT-AV1 Encoder. Thank you for your ti
 
 ### Contribution process
 
--  Follow the [coding guidelines](STYLE.md)
+- Follow the [coding guidelines](STYLE.md)
 
--  Validate that your changes do not break a build
+- Validate that your changes do not break a build
 
--  Perform smoke tests and ensure they pass
+- Perform smoke tests and ensure they pass
 
--  Submit a pull request for review to the maintainer
+- Submit a pull request for review to the maintainer
 
 ### How to Report Bugs and Provide Feedback
 
