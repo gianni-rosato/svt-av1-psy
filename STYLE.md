@@ -30,7 +30,7 @@ const int my_var = (something1 +
                     something2) * something3;
 ```
 
-use `CamelCase` for types and `under_score` for variable names (`TypeName my_instance;`)\
+Use `CamelCase` for types and `under_score` for variable names (`TypeName my_instance;`)\
 Use const where possible, except in forward function declarations in header files, where we only use it for const-arrays:
 
 ``` c
@@ -43,7 +43,7 @@ int my_func(const array *const values, const int num) {
 }
 ```
 
-braces go on the same line for single-line statements, but on a new line for multi-line statements:
+Braces go on the same line for single-line statements, but on a new line for multi-line statements:
 
 ``` c
 static void function(const int argument) {
@@ -61,7 +61,7 @@ static void function(const int argument1,
 }
 ```
 
-braces are only necessary for multi-line code blocks or multi-line condition statements;
+Braces are only necessary for multi-line code blocks or multi-line condition statements;
 
 ``` c
 if (condition1 && condition2)
@@ -87,7 +87,7 @@ if (condition1 &&
 }
 ```
 
-switch/case are indented at the same level, and the code block is indented one level deeper:
+Switch/case are indented at the same level, and the code block is indented one level deeper:
 
 ``` c
 switch (a) {
