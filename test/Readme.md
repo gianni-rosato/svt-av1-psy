@@ -9,13 +9,13 @@
 
 ## Introduction
 
-  This document gives a brief introduction on how to use the unit tests for SVT-AV1 encoder. The unit tests are developed based on gtest framework. The test suites will be published in 4 stages, the following is covered in Stage 1:
+This document gives a brief introduction on how to use the unit tests for SVT-AV1 encoder. The unit tests are developed based on gtest framework. The test suites will be published in 4 stages, the following is covered in Stage 1:
 
-  1. Unit tests for the modules, including: transform, quant, entropy coding.
-  2. API tests: verify the APIs by running with different parameters.
-  3. End-to-End tests: verify the encoder by checking reconstructed frame and decoded frame.
+1. Unit tests for the modules, including: transform, quant, entropy coding.
+2. API tests: verify the APIs by running with different parameters.
+3. End-to-End tests: verify the encoder by checking reconstructed frame and decoded frame.
 
-  The development of SVT-AV1 unit testing is in working progress, more test suites will be implemented and released in the later stages, and this document will be kept updating.
+The development of SVT-AV1 unit testing is in working progress, more test suites will be implemented and released in the later stages, and this document will be kept updating.
 
 ## Build and Run Tests
 
