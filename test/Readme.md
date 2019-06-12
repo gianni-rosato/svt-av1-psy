@@ -108,7 +108,7 @@
   ```
 
 ## FAQ
-1. All the End-to-End test cases fail, is that correct?  
-  The test vectors should be downloaded before running the End-to-End test. If the "SVT_AV1_TEST_VECTOR_PATH" is set, the test vectors will be downloaded in the folder. 
-  Otherwise, they will be downloaded into SVT-AV1/test/vectors. In this case, you should run the 
+1. All the End-to-End test cases fail, is that correct?
+  The test vectors should be downloaded before running the End-to-End test. If the "SVT_AV1_TEST_VECTOR_PATH" is set, the test vectors will be downloaded in the folder.
+  Otherwise, they will be downloaded into SVT-AV1/test/vectors. In this case, you should run the
   End-to-End test under Bin/Release or Bin/Debug directory.
