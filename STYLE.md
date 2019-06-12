@@ -196,14 +196,20 @@ After coding, make sure to trim any trailing white space\
 E.g. For bash:
 
 ``` bash
-find . -name <Filename> -type f -exec sed -i 's/[[:space:]]*$//' {} \;
+find . -name <Filename> -type f -exec sed -i 's/[[:space:]]*$//' {} +
 ```
 
-or
+Where `<Filename>` is `"*.c"` or `"*.(your file extention here)"`\
+Search the `find` man page or tips and tricks for more options.\
+**Do not** use find on root without a filter or with the `.git` folder still present. Doing so will corrupt your repo folder and you will need to copy a new `.git` folder and re-setup your folder.
+
+Alternatively, for single file(s):
 
 ``` bash
-sed -i 's/[[:space:]]*$//' <Filename>
+sed -i 's/[[:space:]]*$//' <Filename/Filepath>
 ```
+
+Note: For macOS and BSD related distros, you may need to use `sed -i ''` inplace due to differences with GNU sed.
 
 For Powershell:
 
