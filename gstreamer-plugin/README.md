@@ -75,18 +75,28 @@ sudo ninja -C build install
 
 Make sure first that SVT-AV1 library is installed and can be found using pkg-config. You can do that using CMake:
 
-    cmake -P SVT-AV1\Build\Windows\Source\Lib\Encoder\cmake_install.cmake
+``` batch
+cmake -P SVT-AV1\Build\Windows\Source\Lib\Encoder\cmake_install.cmake
+```
 
 The following commands should be run from a Visual Studio command prompt or another build environment like MinGW, not Windows built-in command prompt.
 
-Specify the path to pkgconfig configuration files for GStreamer and SVT-AV1, and installation prefix to _%GSTREAMER_1_0_ROOT_X86_64%_:
+Specify the path to pkgconfig configuration files for GStreamer and SVT-AV1, and installation prefix to `%GSTREAMER_1_0_ROOT_X86_64%`:
 
-    set PKG_CONFIG_PATH=%GSTREAMER_1_0_ROOT_X86_64%lib\pkgconfig;C:\svt-encoders\lib\pkgconfig
+``` batch
+set "PKG_CONFIG_PATH=%GSTREAMER_1_0_ROOT_X86_64%lib\pkgconfig;C:\svt-encoders\lib\pkgconfig"
+```
 
 Then the plugin can be compiled and installed using Ninja:
 
-    meson -Dprefix=%GSTREAMER_1_0_ROOT_X86_64% build && ninja -C build && ninja -C build install
+``` batch
+meson -Dprefix=%GSTREAMER_1_0_ROOT_X86_64% build
+ninja -C build
+ninja -C build install
+```
 
 Or made available as a Visual Studio project:
 
-    meson -Dprefix=%GSTREAMER_1_0_ROOT_X86_64% build --backend=vs2017
+``` batch
+meson -Dprefix=%GSTREAMER_1_0_ROOT_X86_64% build --backend=vs2017
+```
