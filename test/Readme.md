@@ -19,7 +19,7 @@ The development of SVT-AV1 unit testing is in working progress, more test suites
 
 ## Build and Run Tests
 
-### MacOS or Linux(64-bit):
+### MacOS or Linux(64-bit)
 
   Build the test program by running the build.sh with "test" as the second parameter:
 
@@ -43,7 +43,7 @@ The development of SVT-AV1 unit testing is in working progress, more test suites
 
   ```
 
-### Windows(64-bit):
+### Windows(64-bit)
 
   Generate the Visual Studio* 2017 project files by following the steps below cd Build\windows - run generate_vs17.bat
   [such would generate the visual studio project files]
