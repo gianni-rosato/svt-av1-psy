@@ -40,18 +40,18 @@ If you're not familiar with GStreamer, gst-launch-1.0 is part of GStreamer tools
 
 ### Build Dependencies
 
-  * GStreamer and GStreamer-plugins-base dev 1.8 or later
-      * on Debian/Ubuntu: `apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`
-      * on Windows: [gstreamer-1.0-devel-x86_64-*.msi](https://gstreamer.freedesktop.org/data/pkg/windows/)
-  * Scalable Video Technology for AV1 Encoder ([SVT-AV1](https://github.com/OpenVisualCloud/SVT-AV1))
-  * meson 0.29 or later
-      * install python3 and run `pip3 install meson`
-  * pkg-config
-      * on Debian/Ubuntu: `apt-get install pkg-config`
-      * on Windows, we recommend [pkgconfiglite](https://sourceforge.net/projects/pkgconfiglite/)
-  * *(optional on Windows)* ninja
-      * install python3 and run `pip3 install ninja`
-      * or on Ubuntu: `apt install ninja-build`
+* GStreamer and GStreamer-plugins-base dev 1.8 or later
+  * on Debian/Ubuntu: `sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`
+  * on Windows: [gstreamer-1.0-devel-x86_64-*.msi](https://gstreamer.freedesktop.org/data/pkg/windows/)
+* Scalable Video Technology for AV1 Encoder ([SVT-AV1](https://github.com/OpenVisualCloud/SVT-AV1))
+* meson 0.29 or later
+  * install python3 and run `pip3 install meson`
+* pkg-config
+  * on Debian/Ubuntu: `sudo apt install pkg-config`
+  * on Windows, we recommend [pkgconfiglite](https://sourceforge.net/projects/pkgconfiglite/)
+* *(optional on Windows)* ninja
+  * install python3 and run `pip3 install ninja`
+  * or on Ubuntu: `sudo apt install ninja-build`
 
 This plugin uses `meson` build tools and the dependency on SVT-AV1 library is set-up using `pkg-config`.
 
