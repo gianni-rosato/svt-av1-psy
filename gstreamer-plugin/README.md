@@ -6,11 +6,11 @@ This plugin provides svtav1enc element to GStreamer in order to use the Scalable
 
 ## Requirements
 
-  * GStreamer 1.8 or later
-  * Scalable Video Technology for AV1 Encoder
-      * SvtAv1Enc.dll or libSvtAv1Enc.so has to be in the PATH or next to the plugin's DLL/.so.
-  * Windows or Linux operating system
-  * A 64-bit CPU with AVX2 support
+* GStreamer 1.8 or later
+* Scalable Video Technology for AV1 Encoder
+  * `SvtAv1Enc.dll` or `libSvtAv1Enc.so` has to be in the `PATH` or next to the plugin's DLL/.so.
+* Windows or Linux operating system
+* A 64-bit CPU with AVX2 support
 
 ## Usage
 
