@@ -16,12 +16,23 @@ This plugin provides svtav1enc element to GStreamer in order to use the Scalable
 
 Make sure that the SvtAv1Enc library is in a path the OS looks for when loading dynamic libraries. If using default install locations, this means for example:
 
-    export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH # Linux
-    set PATH=C:\svt-encoders\lib;%PATH% # Windows
+For *nix:
+
+``` bash
+export LD_LIBRARY_PATH+=":/usr/local/lib"
+```
+
+for Windows:
+
+``` batch
+set "PATH=C:\svt-encoders\lib;%PATH%"
+```
 
 Then a sample GStreamer pipeline is:
 
-    gst-launch-1.0 -e videotestsrc ! video/x-raw ! svtav1enc ! matroskamux ! filesink location=out.mkv
+``` bash
+gst-launch-1.0 -e videotestsrc ! video/x-raw ! svtav1enc ! matroskamux ! filesink location=out.mkv
+```
 
 If you're not familiar with GStreamer, gst-launch-1.0 is part of GStreamer tools, and mpegtsmux is part of GStreamer Bad plugins, `-e` option allows CTRL+C to translate to an EOS (end of stream) signal on the pipeline.
 
