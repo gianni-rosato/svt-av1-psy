@@ -68,60 +68,60 @@ SvtAv1UnitTests --gtest_filter="*transform*"
 
 ## Test Results Summary
 
-  Here is the test results summary on commit: 3009e99. The developers can use this summary as a reference.
+Here is the test results summary on commit: [3009e99](https://github.com/OpenVisualCloud/SVT-AV1/commit/3009e99f32e3476e028aadd17a265630f80a8e36). The developers can use this summary as a reference.
 
-  Unit Tests on Ubuntu 16.04:
+Unit Tests on Ubuntu 16.04:
 
-  ```
-  [==========] 169 tests from 10 test cases ran. (116106 ms total)
-  [  PASSED  ] 163 tests.
-  [  FAILED  ] 6 tests, listed below:
-  [  FAILED  ] Quant/QuantizeTest.input_dcac_minmax_q_n/0, where GetParam() = (2, 8)
-  [  FAILED  ] Quant/QuantizeTest.input_dcac_minmax_q_n/2, where GetParam() = (3, 8)
-  [  FAILED  ] Quant/QuantizeTest.input_dcac_minmax_q_n/4, where GetParam() = (4, 8)
-  [  FAILED  ] Quant/QuantizeTest.input_random_all_q_all/0, where GetParam() = (2, 8)
-  [  FAILED  ] Quant/QuantizeTest.input_random_all_q_all/2, where GetParam() = (3, 8)
-  [  FAILED  ] Quant/QuantizeTest.input_random_all_q_all/4, where GetParam() = (4, 8)
-  ```
+``` none
+[==========] 169 tests from 10 test cases ran. (116106 ms total)
+[  PASSED  ] 163 tests.
+[  FAILED  ] 6 tests, listed below:
+[  FAILED  ] Quant/QuantizeTest.input_dcac_minmax_q_n/0, where GetParam() = (2, 8)
+[  FAILED  ] Quant/QuantizeTest.input_dcac_minmax_q_n/2, where GetParam() = (3, 8)
+[  FAILED  ] Quant/QuantizeTest.input_dcac_minmax_q_n/4, where GetParam() = (4, 8)
+[  FAILED  ] Quant/QuantizeTest.input_random_all_q_all/0, where GetParam() = (2, 8)
+[  FAILED  ] Quant/QuantizeTest.input_random_all_q_all/2, where GetParam() = (3, 8)
+[  FAILED  ] Quant/QuantizeTest.input_random_all_q_all/4, where GetParam() = (4, 8)
+```
 
-  API Tests on Ubuntu 16.04:
+API Tests on Ubuntu 16.04:
 
-  ```
-  [==========] 51 tests from 51 test cases ran. (30285 ms total)
-  [  PASSED  ] 29 tests.
-  [  FAILED  ] 22 tests, listed below:
-  [  FAILED  ] EncParamIntraPeridLenTest.run_paramter_check
-  [  FAILED  ] EncParamHierarchicalLvlTest.run_paramter_check
-  [  FAILED  ] EncParamFrameRateTest.run_paramter_check
-  [  FAILED  ] EncParamCompr10BitFmtTest.run_paramter_check
-  [  FAILED  ] EncParamSbSizeTest.run_paramter_check
-  [  FAILED  ] EncParamSuperBlockSizeTest.run_paramter_check
-  [  FAILED  ] EncParamPartitionDepthTest.run_paramter_check
-  [  FAILED  ] EncParamQPTest.run_paramter_check
-  [  FAILED  ] EncParamEnableWarpedMotionTest.run_paramter_check
-  [  FAILED  ] EncParamExtBlockTest.run_paramter_check
-  [  FAILED  ] EncParamRateCtrlModeTest.run_paramter_check
-  [  FAILED  ] EncParamSceneChangeDectTest.run_paramter_check
-  [  FAILED  ] EncParamLookAheadDistanceTest.run_paramter_check
-  [  FAILED  ] EncParamMaxQPAllowTest.run_paramter_check
-  [  FAILED  ] EncParamMinQPAllowTest.run_paramter_check
-  [  FAILED  ] EncParamProfileTest.run_paramter_check
-  [  FAILED  ] EncParamTierTest.run_paramter_check
-  [  FAILED  ] EncParamAsmTypeTest.run_paramter_check
-  [  FAILED  ] EncParamActiveChCountTest.run_paramter_check
-  [  FAILED  ] EncParamInjectorFrameRateTest.run_paramter_check
-  [  FAILED  ] EncParamReconEnabledTest.run_paramter_check
-  [  FAILED  ] EncApiTest.check_null_pointer
-  22 FAILED TESTS
-  YOU HAVE 2 DISABLED TESTS
-  ```
+``` none
+[==========] 51 tests from 51 test cases ran. (30285 ms total)
+[  PASSED  ] 29 tests.
+[  FAILED  ] 22 tests, listed below:
+[  FAILED  ] EncParamIntraPeridLenTest.run_paramter_check
+[  FAILED  ] EncParamHierarchicalLvlTest.run_paramter_check
+[  FAILED  ] EncParamFrameRateTest.run_paramter_check
+[  FAILED  ] EncParamCompr10BitFmtTest.run_paramter_check
+[  FAILED  ] EncParamSbSizeTest.run_paramter_check
+[  FAILED  ] EncParamSuperBlockSizeTest.run_paramter_check
+[  FAILED  ] EncParamPartitionDepthTest.run_paramter_check
+[  FAILED  ] EncParamQPTest.run_paramter_check
+[  FAILED  ] EncParamEnableWarpedMotionTest.run_paramter_check
+[  FAILED  ] EncParamExtBlockTest.run_paramter_check
+[  FAILED  ] EncParamRateCtrlModeTest.run_paramter_check
+[  FAILED  ] EncParamSceneChangeDectTest.run_paramter_check
+[  FAILED  ] EncParamLookAheadDistanceTest.run_paramter_check
+[  FAILED  ] EncParamMaxQPAllowTest.run_paramter_check
+[  FAILED  ] EncParamMinQPAllowTest.run_paramter_check
+[  FAILED  ] EncParamProfileTest.run_paramter_check
+[  FAILED  ] EncParamTierTest.run_paramter_check
+[  FAILED  ] EncParamAsmTypeTest.run_paramter_check
+[  FAILED  ] EncParamActiveChCountTest.run_paramter_check
+[  FAILED  ] EncParamInjectorFrameRateTest.run_paramter_check
+[  FAILED  ] EncParamReconEnabledTest.run_paramter_check
+[  FAILED  ] EncApiTest.check_null_pointer
+22 FAILED TESTS
+YOU HAVE 2 DISABLED TESTS
+```
 
-  End-to-End Tests on Ubuntu 16.04:
+End-to-End Tests on Ubuntu 16.04:
 
-  ```
-  [==========] 6 tests from 4 test cases ran. (81772 ms total)
-  [  PASSED  ] 6 tests.
-  ```
+``` none
+[==========] 6 tests from 4 test cases ran. (81772 ms total)
+[  PASSED  ] 6 tests.
+```
 
 ## FAQ
 
