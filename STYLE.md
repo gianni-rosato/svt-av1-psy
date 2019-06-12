@@ -193,7 +193,8 @@ struct {
 ## Post-coding
 
 After coding, make sure to trim any trailing white space\
-E.g. For bash:
+
+### For bash
 
 ``` bash
 find . -name <Filename> -type f -exec sed -i 's/[[:space:]]*$//' {} +
@@ -211,7 +212,7 @@ sed -i 's/[[:space:]]*$//' <Filename/Filepath>
 
 Note: For macOS and BSD related distros, you may need to use `sed -i ''` inplace due to differences with GNU sed.
 
-For Powershell:
+### For Powershell/pwsh
 
 ``` Powershell
 ls -Recurse -File -Filter *.c | ForEach-Object{$(Get-Content $_.FullName | Foreach {Write-Output "$($_.TrimEnd())`n"}) | Set-Content -NoNewline -Encoding utf8 $_.FullName}
