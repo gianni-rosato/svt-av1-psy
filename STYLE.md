@@ -215,7 +215,7 @@ Note: For macOS and BSD related distros, you may need to use `sed -i ''` inplace
 ### For Powershell/pwsh
 
 ``` Powershell
-ls -Recurse -File -Filter *.c | ForEach-Object{$(Get-Content $_.FullName | Foreach {Write-Output "$($_.TrimEnd())`n"}) | Set-Content -NoNewline -Encoding utf8 $_.FullName}
+ls -Recurse -File -Filter *.c | ForEach-Object{$(Get-Content $_.FullName | Foreach {Write-Output "$($_.TrimEnd().Replace("`t","    "))`n"}) | Set-Content -NoNewline -Encoding utf8 $_.FullName}
 ```
 
 Where `-Filter *.c` has your extention/filename(s).\
@@ -226,7 +226,7 @@ Search the docs for [`pwsh`](https://docs.microsoft.com/en-us/powershell/scripti
 Alternatively, for a single file:
 
 ``` Powershell
-$filename="<filename>"; Get-content $filename | Foreach {Write-Output "$($_.TrimEnd())`n"}) | Set-Content -NoNewline $filename
+$filename="<filename>"; Get-content $filename | Foreach {Write-Output "$($_.TrimEnd().Replace("`t","    "))`n"}) | Set-Content -NoNewline $filename
 ```
 
 Where `<filename>` is the specific file you want to trim.
