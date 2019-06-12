@@ -1195,10 +1195,10 @@ EbErrorType picture_parent_control_set_ctor(
     object_ptr->av1_cm->color_format = initDataPtr->color_format;
     object_ptr->av1_cm->subsampling_x = subsampling_x;
     object_ptr->av1_cm->subsampling_y = subsampling_y;
-    object_ptr->av1_cm->width = initDataPtr->picture_width;
-    object_ptr->av1_cm->height = initDataPtr->picture_height;
-    object_ptr->av1_cm->superres_upscaled_width = initDataPtr->picture_width;
-    object_ptr->av1_cm->superres_upscaled_height = initDataPtr->picture_height;
+    object_ptr->av1_cm->frm_size.frame_width = initDataPtr->picture_width;
+    object_ptr->av1_cm->frm_size.frame_height = initDataPtr->picture_height;
+    object_ptr->av1_cm->frm_size.superres_upscaled_width = initDataPtr->picture_width;
+    object_ptr->av1_cm->frm_size.superres_upscaled_height = initDataPtr->picture_height;
 
     object_ptr->av1_cm->mi_cols = initDataPtr->picture_width >> MI_SIZE_LOG2;
     object_ptr->av1_cm->mi_rows = initDataPtr->picture_height >> MI_SIZE_LOG2;

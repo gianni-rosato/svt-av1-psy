@@ -339,9 +339,11 @@ void reset_mode_decision(
     EB_SLICE                     slice_type;
     MdRateEstimationContext   *md_rate_estimation_array;
 
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
+
     // QP
 #if ADD_DELTA_QP_SUPPORT
-    uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
+    uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->quant_param.base_q_idx;
     context_ptr->qp = picture_qp;
     context_ptr->qp_index = context_ptr->qp;
 #else
@@ -349,7 +351,7 @@ void reset_mode_decision(
 #endif
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
     context_ptr->chroma_qp = context_ptr->qp;
-    context_ptr->qp_index = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->base_qindex;
+    context_ptr->qp_index = (uint8_t)frm_hdr->quantization_params.base_q_idx;
     (*av1_lambda_assignment_function_table[picture_control_set_ptr->parent_pcs_ptr->pred_structure])(
         &context_ptr->fast_lambda,
         &context_ptr->full_lambda,
@@ -398,10 +400,10 @@ void reset_mode_decision(
 
     EbBool enable_wm = (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) || MR_MODE ? EB_TRUE : EB_FALSE;
     enable_wm = picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 ? EB_FALSE : enable_wm;
-    picture_control_set_ptr->parent_pcs_ptr->allow_warped_motion = enable_wm
-        && !(picture_control_set_ptr->parent_pcs_ptr->av1_frame_type == KEY_FRAME || picture_control_set_ptr->parent_pcs_ptr->av1_frame_type == INTRA_ONLY_FRAME)
-        && !picture_control_set_ptr->parent_pcs_ptr->error_resilient_mode;
-    picture_control_set_ptr->parent_pcs_ptr->switchable_motion_mode = picture_control_set_ptr->parent_pcs_ptr->allow_warped_motion;
+    frm_hdr->allow_warped_motion = enable_wm
+        && !(frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME)
+        && !frm_hdr->error_resilient_mode;
+    frm_hdr->is_motion_mode_switchable = frm_hdr->allow_warped_motion;
 
     return;
 }
@@ -434,7 +436,7 @@ void mode_decision_configure_lcu(
     /* Note(CHKN) : when Qp modulation varies QP on a sub-LCU(CU) basis,  Lamda has to change based on Cu->QP , and then this code has to move inside the CU loop in MD */
 
     // Lambda Assignement
-    context_ptr->qp_index = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->base_qindex;
+    context_ptr->qp_index = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
 
     (*av1_lambda_assignment_function_table[picture_control_set_ptr->parent_pcs_ptr->pred_structure])(
         &context_ptr->fast_lambda,

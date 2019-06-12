@@ -622,10 +622,10 @@ static uint8_t get_filter_level(
     const int32_t segment_id = 0;// mbmi->segment_id;
     PredictionMode mode; // Added to address 4x4 problem
     mode = (mbmi->mode == INTRA_MODE_4x4) ? DC_PRED : mbmi->mode;
-    if (0/*pcs_ptr->parent_pcs_ptr->delta_lf_present_flag*/) {
-        printf("ERROR[AN]: delta_lf_present_flag not supported yet\n");
+    if (0/*pcs_ptr->parent_pcs_ptr->delta_lf_params.delta_lf_present*/) {
+        printf("ERROR[AN]: delta_lf_present not supported yet\n");
         //int32_t delta_lf;
-        //if (pcs_ptr->parent_pcs_ptr->delta_lf_multi) {
+        //if (pcs_ptr->parent_pcs_ptr->delta_lf_params.delta_lf_multi) {
         //    const int32_t delta_lf_idx = delta_lf_id_lut[plane][dir_idx];
         //    delta_lf = mbmi->curr_delta_lf[delta_lf_idx];
         //}
@@ -666,7 +666,7 @@ static uint8_t get_filter_level(
 void av1_loop_filter_init(PictureControlSet *pcs_ptr) {
     //assert(MB_MODE_COUNT == n_elements(mode_lf_lut));
     LoopFilterInfoN *lfi = &pcs_ptr->parent_pcs_ptr->lf_info;
-    struct LoopFilter *lf = &pcs_ptr->parent_pcs_ptr->lf;
+    struct LoopFilter *lf = &pcs_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params;
     int32_t lvl;
 
     lf->combine_vert_horz_lf = 1;
@@ -690,20 +690,21 @@ void av1_loop_filter_frame_init(PictureControlSet *pcs_ptr, int32_t plane_start,
     // n_shift is the multiplier for lf_deltas
     // the multiplier is 1 for when filter_lvl is between 0 and 31;
     // 2 when filter_lvl is between 32 and 63
+    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     LoopFilterInfoN *const lfi = &pcs_ptr->parent_pcs_ptr->lf_info;
-    struct LoopFilter *const lf = &pcs_ptr->parent_pcs_ptr->lf;
+    struct LoopFilter *const lf = &frm_hdr->loop_filter_params;
     // const struct segmentation *const seg = &pcs_ptr->parent_pcs_ptr->seg;
 
      // update sharpness limits
     update_sharpness(lfi, lf->sharpness_level);
 
-    filt_lvl[0] = pcs_ptr->parent_pcs_ptr->lf.filter_level[0];
-    filt_lvl[1] = pcs_ptr->parent_pcs_ptr->lf.filter_level_u;
-    filt_lvl[2] = pcs_ptr->parent_pcs_ptr->lf.filter_level_v;
+    filt_lvl[0] = frm_hdr->loop_filter_params.filter_level[0];
+    filt_lvl[1] = frm_hdr->loop_filter_params.filter_level_u;
+    filt_lvl[2] = frm_hdr->loop_filter_params.filter_level_v;
 
-    filt_lvl_r[0] = pcs_ptr->parent_pcs_ptr->lf.filter_level[1];
-    filt_lvl_r[1] = pcs_ptr->parent_pcs_ptr->lf.filter_level_u;
-    filt_lvl_r[2] = pcs_ptr->parent_pcs_ptr->lf.filter_level_v;
+    filt_lvl_r[0] = frm_hdr->loop_filter_params.filter_level[1];
+    filt_lvl_r[1] = frm_hdr->loop_filter_params.filter_level_u;
+    filt_lvl_r[2] = frm_hdr->loop_filter_params.filter_level_v;
 
     for (plane = plane_start; plane < plane_end; plane++) {
         if (plane == 0 && !filt_lvl[0] && !filt_lvl_r[0])
@@ -1261,6 +1262,7 @@ void loop_filter_sb(
     MacroBlockD *xd, int32_t mi_row, int32_t mi_col,
     int32_t plane_start, int32_t plane_end,
     uint8_t LastCol) {
+    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     struct MacroblockdPlane pd[3];
     int32_t plane;
 
@@ -1278,14 +1280,14 @@ void loop_filter_sb(
     pd[2].is16Bit = frame_buffer->bit_depth > 8;
 
     for (plane = plane_start; plane < plane_end; plane++) {
-        if (plane == 0 && !(pcs_ptr->parent_pcs_ptr->lf.filter_level[0]) && !(pcs_ptr->parent_pcs_ptr->lf.filter_level[1]))
+        if (plane == 0 && !(frm_hdr->loop_filter_params.filter_level[0]) && !(frm_hdr->loop_filter_params.filter_level[1]))
             break;
-        else if (plane == 1 && !(pcs_ptr->parent_pcs_ptr->lf.filter_level_u))
+        else if (plane == 1 && !(frm_hdr->loop_filter_params.filter_level_u))
             continue;
-        else if (plane == 2 && !(pcs_ptr->parent_pcs_ptr->lf.filter_level_v))
+        else if (plane == 2 && !(frm_hdr->loop_filter_params.filter_level_v))
             continue;
 
-        if (pcs_ptr->parent_pcs_ptr->lf.combine_vert_horz_lf) {
+        if (frm_hdr->loop_filter_params.combine_vert_horz_lf) {
             // filter all vertical and horizontal edges in every 64x64 super block
             // filter vertical edges
             av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer, mi_row,
@@ -1605,11 +1607,11 @@ static int64_t try_filter_frame(
     (void)partial_frame;
     (void)sd;
     int64_t filt_err;
-
+    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     assert(plane >= 0 && plane <= 2);
     int32_t filter_level[2] = { filt_level, filt_level };
-    if (plane == 0 && dir == 0) filter_level[1] = pcs_ptr->parent_pcs_ptr->lf.filter_level[1];
-    if (plane == 0 && dir == 1) filter_level[0] = pcs_ptr->parent_pcs_ptr->lf.filter_level[0];
+    if (plane == 0 && dir == 0) filter_level[1] = frm_hdr->loop_filter_params.filter_level[1];
+    if (plane == 0 && dir == 1) filter_level[0] = frm_hdr->loop_filter_params.filter_level[0];
 
     EbBool is16bit = (EbBool)(pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
     EbPictureBufferDesc  *recon_buffer = is16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
@@ -1627,11 +1629,11 @@ static int64_t try_filter_frame(
     // set base filters for use of get_filter_level when in DELTA_Q_LF mode
     switch (plane) {
     case 0:
-        pcs_ptr->parent_pcs_ptr->lf.filter_level[0] = filter_level[0];
-        pcs_ptr->parent_pcs_ptr->lf.filter_level[1] = filter_level[1];
+        frm_hdr->loop_filter_params.filter_level[0] = filter_level[0];
+        frm_hdr->loop_filter_params.filter_level[1] = filter_level[1];
         break;
-    case 1: pcs_ptr->parent_pcs_ptr->lf.filter_level_u = filter_level[0]; break;
-    case 2: pcs_ptr->parent_pcs_ptr->lf.filter_level_v = filter_level[0]; break;
+    case 1: frm_hdr->loop_filter_params.filter_level_u = filter_level[0]; break;
+    case 2: frm_hdr->loop_filter_params.filter_level_v = filter_level[0]; break;
     }
 
     av1_loop_filter_frame(recon_buffer, pcs_ptr, plane, plane + 1);
@@ -1656,6 +1658,7 @@ static int32_t search_filter_level(
     int32_t filt_direction = 0;
     int64_t best_err;
     int32_t filt_best;
+    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     //Macroblock *x = &cpi->td.mb;
 
     // Start the search at the previous frame filter level unless it is now out of
@@ -1707,7 +1710,7 @@ static int32_t search_filter_level(
         //    bias = (bias * cpi->twopass.section_intra_rating) / 20;
 
         // yx, bias less for large block size
-        if (pcs_ptr->parent_pcs_ptr->tx_mode != ONLY_4X4) bias >>= 1;
+        if (frm_hdr->tx_mode != ONLY_4X4) bias >>= 1;
 
         if (filt_direction <= 0 && filt_low != filt_mid) {
             // Get Low filter error score
@@ -1751,7 +1754,7 @@ static int32_t search_filter_level(
             //    bias = (bias * cpi->twopass.section_intra_rating) / 20;
 
             // yx, bias less for large block size
-            if (pcs_ptr->parent_pcs_ptr->tx_mode != ONLY_4X4) bias >>= 1;
+            if (frm_hdr->tx_mode != ONLY_4X4) bias >>= 1;
 
             if (filt_direction <= 0 && filt_low != filt_mid) {
                 // Get Low filter error score
@@ -1807,10 +1810,12 @@ void av1_pick_filter_level(
     PictureControlSet     *pcs_ptr,
     LpfPickMethod          method) {
     SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+
     const int32_t num_planes = 3;
     (void)srcBuffer;
-    struct LoopFilter *const lf = &pcs_ptr->parent_pcs_ptr->lf;
-    lf->sharpness_level = pcs_ptr->parent_pcs_ptr->av1_frame_type == KEY_FRAME ? 0 : LF_SHARPNESS;
+    struct LoopFilter *const lf = &frm_hdr->loop_filter_params;
+    lf->sharpness_level = frm_hdr->frame_type == KEY_FRAME ? 0 : LF_SHARPNESS;
 
     if (method == LPF_PICK_MINIMAL_LPF) {
         lf->filter_level[0] = 0;
@@ -1819,7 +1824,7 @@ void av1_pick_filter_level(
     else if (method >= LPF_PICK_FROM_Q) {
         const int32_t min_filter_level = 0;
         const int32_t max_filter_level = MAX_LOOP_FILTER;// av1_get_max_filter_level(cpi);
-        const int32_t q = av1_ac_quant_Q3(pcs_ptr->parent_pcs_ptr->base_qindex, 0, (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
+        const int32_t q = av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
         // These values were determined by linear fitting the result of the
         // searched level for 8 bit depth:
         // Keyframes: filt_guess = q * 0.06699 - 1.60817
@@ -1830,7 +1835,7 @@ void av1_pick_filter_level(
         int32_t filt_guess;
         switch (scs_ptr->static_config.encoder_bit_depth) {
         case EB_8BIT:
-            filt_guess = (pcs_ptr->parent_pcs_ptr->av1_frame_type == KEY_FRAME)
+            filt_guess = (frm_hdr->frame_type == KEY_FRAME)
                 ? ROUND_POWER_OF_TWO(q * 17563 - 421574, 18)
                 : ROUND_POWER_OF_TWO(q * 6017 + 650707, 18);
             break;
@@ -1846,7 +1851,7 @@ void av1_pick_filter_level(
                 "or AOM_BITS_12");
             return;
         }
-        if (scs_ptr->static_config.encoder_bit_depth != EB_8BIT && pcs_ptr->parent_pcs_ptr->av1_frame_type == KEY_FRAME)
+        if (scs_ptr->static_config.encoder_bit_depth != EB_8BIT && frm_hdr->frame_type == KEY_FRAME)
             filt_guess -= 4;
 
         filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;

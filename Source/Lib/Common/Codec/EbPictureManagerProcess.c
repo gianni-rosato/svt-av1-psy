@@ -671,8 +671,8 @@ void* picture_manager_kernel(void *input_ptr)
                         Av1Common *const cm = ppcs_ptr->av1_cm;
                         int tile_row, tile_col;
                         uint32_t  x_lcu_index,  y_lcu_index;
-                        const int tile_cols = ppcs_ptr->av1_cm->tile_cols;
-                        const int tile_rows = ppcs_ptr->av1_cm->tile_rows;
+                        const int tile_cols = ppcs_ptr->av1_cm->tiles_info.tile_cols;
+                        const int tile_rows = ppcs_ptr->av1_cm->tiles_info.tile_rows;
                         TileInfo tile_info;
                         //Tile Loop
                         for (tile_row = 0; tile_row < tile_rows; tile_row++)
@@ -683,9 +683,9 @@ void* picture_manager_kernel(void *input_ptr)
                             {
                                 av1_tile_set_col(&tile_info, ppcs_ptr, tile_col);
 
-                                for (y_lcu_index = cm->tile_row_start_sb[tile_row]; y_lcu_index < (uint32_t)cm->tile_row_start_sb[tile_row + 1]; ++y_lcu_index)
+                                for (y_lcu_index = cm->tiles_info.tile_row_start_sb[tile_row]; y_lcu_index < (uint32_t)cm->tiles_info.tile_row_start_sb[tile_row + 1]; ++y_lcu_index)
                                 {
-                                    for (x_lcu_index = cm->tile_col_start_sb[tile_col]; x_lcu_index < (uint32_t)cm->tile_col_start_sb[tile_col + 1]; ++x_lcu_index)
+                                    for (x_lcu_index = cm->tiles_info.tile_col_start_sb[tile_col]; x_lcu_index < (uint32_t)cm->tiles_info.tile_col_start_sb[tile_col + 1]; ++x_lcu_index)
                                     {
                                         int sb_index = (uint16_t)(x_lcu_index + y_lcu_index * picture_width_in_sb);
                                         ChildPictureControlSetPtr->sb_ptr_array[sb_index]->tile_info = tile_info;

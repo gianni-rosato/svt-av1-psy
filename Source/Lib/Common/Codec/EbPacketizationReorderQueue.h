@@ -34,11 +34,11 @@ extern "C" {
         uint64_t                                ref_poc_array[7];
         uint64_t                                 poc;
         uint64_t                                total_num_bits;
-        FrameType                            av1_frame_type;
+        FrameType                            frame_type;
         Av1RpsNode                          av1_ref_signal;
         EbBool                               show_frame;
         EbBool                               has_show_existing;
-        uint8_t                              show_existing_loc;
+        uint8_t                              show_existing_frame;
         uint8_t                              is_alt_ref;
     } PacketizationReorderEntry;
 

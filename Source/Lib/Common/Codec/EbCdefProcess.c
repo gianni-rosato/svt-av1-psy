@@ -79,6 +79,7 @@ void cdef_seg_search(
     uint32_t                        segment_index)
 {
     struct PictureParentControlSet     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
+    FrameHeader *frm_hdr = &pPcs->frm_hdr;
     Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
     uint32_t  x_seg_idx;
     uint32_t  y_seg_idx;
@@ -111,8 +112,8 @@ void cdef_seg_search(
     int32_t coeff_shift = AOMMAX(sequence_control_set_ptr->static_config.encoder_bit_depth - 8, 0);
     int32_t nvfb = (mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t nhfb = (mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
-    int32_t pri_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex >> 6);
-    int32_t sec_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex >> 6);
+    int32_t pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
+    int32_t sec_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
 
     const int32_t num_planes = 3;
     const int32_t total_strengths = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;
@@ -246,6 +247,7 @@ void cdef_seg_search16bit(
          picture_control_set_ptr->recon_picture16bit_ptr;
 
     struct PictureParentControlSet     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
+    FrameHeader *frm_hdr = &pPcs->frm_hdr;
     Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
     uint32_t  x_seg_idx;
     uint32_t  y_seg_idx;
@@ -279,8 +281,8 @@ void cdef_seg_search16bit(
     int32_t coeff_shift = AOMMAX(sequence_control_set_ptr->static_config.encoder_bit_depth - 8, 0);
     int32_t nvfb = (mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t nhfb = (mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
-    int32_t pri_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex >> 6);
-    int32_t sec_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex >> 6);
+    int32_t pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
+    int32_t sec_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
 
     const int32_t num_planes = 3;
     const int32_t total_strengths = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;
@@ -409,6 +411,8 @@ void* cdef_kernel(void *input_ptr)
     PictureControlSet                     *picture_control_set_ptr;
     SequenceControlSet                    *sequence_control_set_ptr;
 
+    FrameHeader                           *frm_hdr;
+
     //// Input
     EbObjectWrapper                       *dlf_results_wrapper_ptr;
     DlfResults                            *dlf_results_ptr;
@@ -431,7 +435,7 @@ void* cdef_kernel(void *input_ptr)
 
         EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
         Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
-
+        frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
         int32_t selected_strength_cnt[64] = { 0 };
 
         if (sequence_control_set_ptr->seq_header.enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode)
@@ -476,10 +480,11 @@ void* cdef_kernel(void *input_ptr)
                 }
         }
         else {
-            picture_control_set_ptr->parent_pcs_ptr->cdef_bits = 0;
-            picture_control_set_ptr->parent_pcs_ptr->cdef_strengths[0] = 0;
+
+            frm_hdr->CDEF_params.cdef_bits = 0;
+            frm_hdr->CDEF_params.cdef_y_strength[0] = 0;
             picture_control_set_ptr->parent_pcs_ptr->nb_cdef_strengths = 1;
-            picture_control_set_ptr->parent_pcs_ptr->cdef_uv_strengths[0] = 0;
+            frm_hdr->CDEF_params.cdef_uv_strength[0] = 0;
         }
 
         //restoration prep

@@ -596,6 +596,8 @@ void PredictionPartitionLoop(
 
     const CodedUnitStats *cuStatsPtr;
 
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
+
     for (cu_index = start_index; cu_index < CU_MAX_COUNT; ++cu_index)
 
     {
@@ -622,7 +624,7 @@ void PredictionPartitionLoop(
                     uint8_t me_index = 0;
                     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; me_candidate_index++) {
                         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
-                        if (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) {
+                        if (frm_hdr->reference_mode == SINGLE_REFERENCE) {
                             if (me_block_results_ptr->direction == 0) {
                                 me_index = me_candidate_index;
                                 break;

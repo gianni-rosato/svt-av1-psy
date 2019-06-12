@@ -116,7 +116,7 @@ EbErrorType    rate_control_update_model(EbRateControlModel *model_ptr, PictureP
 }
 
 uint8_t    rate_control_get_quantizer(EbRateControlModel *model_ptr, PictureParentControlSet *picture_ptr) {
-    FrameType  type = picture_ptr->av1_frame_type;
+    FrameType  type = picture_ptr->frm_hdr.frame_type;
 
     if (type == INTRA_ONLY_FRAME || type == KEY_FRAME)
         record_new_gop(model_ptr, picture_ptr);

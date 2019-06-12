@@ -2159,6 +2159,8 @@ void check_best_indepedant_cfl(
     uint64_t                      *cb_coeff_bits,
     uint64_t                      *cr_coeff_bits,
     EbAsm                          asm_type) {
+
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     // cfl cost
     uint64_t chromaRate = 0;
     if (candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
@@ -2196,7 +2198,7 @@ void check_best_indepedant_cfl(
                 0,
                 0,
                 context_ptr->blk_geom->txsize_uv[0][0],
-                picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+                frm_hdr->reduced_tx_set);
 
         // Start uv search path
         context_ptr->uv_search_path = EB_TRUE;
@@ -2784,7 +2786,7 @@ uint64_t estimate_tx_size_bits(
     uint32_t txfm_context_above_index = get_neighbor_array_unit_top_index(
         txfm_context_array,
         cu_origin_x);
-    TxMode tx_mode = pcsPtr->parent_pcs_ptr->tx_mode;
+    TxMode tx_mode = pcsPtr->parent_pcs_ptr->frm_hdr.tx_mode;
     Av1Common  *cm = pcsPtr->parent_pcs_ptr->av1_cm;
     MacroBlockD *xd = cu_ptr->av1xd;
     TileInfo * tile = &xd->tile;
@@ -2949,8 +2951,8 @@ void perform_intra_tx_partitioning(
                 else if (av1_ext_tx_used[tx_set_type][tx_type] == 0) continue;
                 else if (context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] > 32 || context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] > 32) continue;
 
-                int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                                 picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+                int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                                 picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
                 // Y: T Q iQ
                 av1_estimate_transform(
                     &(((int16_t*)candidateBuffer->residual_ptr->buffer_y)[tu_origin_index]),
@@ -3105,8 +3107,8 @@ void perform_intra_tx_partitioning(
                 PLANE_TYPE_Y,
                 DEFAULT_SHAPE);
 
-            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
             candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
                 picture_control_set_ptr,
@@ -3350,8 +3352,8 @@ void perform_intra_tx_partitioning(
                 PLANE_TYPE_Y,
                 DEFAULT_SHAPE);
 
-            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
             candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
                 picture_control_set_ptr,
                 context_ptr,
@@ -4393,8 +4395,9 @@ void  order_nsq_table(
     const SequenceControlSet     *sequence_control_set_ptr,
     LargestCodingUnit            *sb_ptr,
     NeighborArrayUnit            *leaf_partition_neighbor_array) {
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     const uint32_t             lcuAddr = sb_ptr->index;
-    EbBool isCompoundEnabled = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
+    EbBool isCompoundEnabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
     uint32_t me_sb_addr;
     uint32_t me2Nx2NTableOffset;
     uint32_t max_number_of_pus_per_sb;
@@ -4590,6 +4593,7 @@ void search_best_independent_uv_mode(
     uint32_t                 cuChromaOriginIndex,
     ModeDecisionContext   *context_ptr)
 {
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     // Start uv search path
     context_ptr->uv_search_path = EB_TRUE;
     EbAsm   asm_type  = sequence_control_set_ptr->encode_context_ptr->asm_type;
@@ -4636,7 +4640,7 @@ void search_best_independent_uv_mode(
                     0,
                     0,
                     context_ptr->blk_geom->txsize_uv[0][0],
-                    picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+                    frm_hdr->reduced_tx_set);
 
             uint8_t  cb_qp = context_ptr->qp;
             uint8_t  cr_qp = context_ptr->qp;
@@ -4756,7 +4760,7 @@ void search_best_independent_uv_mode(
                             0,
                             0,
                             context_ptr->blk_geom->txsize_uv[0][0],
-                            picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+                            frm_hdr->reduced_tx_set);
 
                     // Fast Cost
                     *(candidateBuffer->fast_cost_ptr) = Av1ProductFastCostFuncTable[candidateBuffer->candidate_ptr->type](

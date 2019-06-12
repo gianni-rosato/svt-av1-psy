@@ -513,11 +513,12 @@ void Unipred3x3CandidatesInjection(
     UNUSED(sb_ptr);
     uint32_t                   bipredIndex;
     uint32_t                   canTotalCnt = (*candidateTotalCnt);
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
     const MeCandidate *me_block_results = me_results->me_candidate[context_ptr->me_block_offset];
     ModeDecisionCandidate    *candidateArray = context_ptr->fast_candidate_array;
-    EbBool isCompoundEnabled = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
+    EbBool isCompoundEnabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
     IntMv  bestPredmv[2] = { {0}, {0} };
 
     // (8 Best_L0 neighbors)
@@ -689,11 +690,12 @@ void Bipred3x3CandidatesInjection(
     UNUSED(sb_ptr);
     uint32_t                   bipredIndex;
     uint32_t                   canTotalCnt = (*candidateTotalCnt);
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
     const MeCandidate *me_block_results = me_results->me_candidate[context_ptr->me_block_offset];
     ModeDecisionCandidate    *candidateArray = context_ptr->fast_candidate_array;
-    EbBool isCompoundEnabled = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
+    EbBool isCompoundEnabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
     IntMv  bestPredmv[2] = { {0}, {0} };
 
     if (isCompoundEnabled) {
@@ -1253,7 +1255,8 @@ void inject_mvp_candidates_II(
     MvReferenceFrame                 ref_pair,
     uint32_t                         *candTotCnt)
 {
-    EbBool allow_compound = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
+    EbBool allow_compound = (frm_hdr->reference_mode == SINGLE_REFERENCE || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
     uint8_t inj_mv;
     uint32_t                   canIdx = *candTotCnt;
     ModeDecisionCandidate    *candidateArray = context_ptr->fast_candidate_array;
@@ -1411,8 +1414,8 @@ void inject_mvp_candidates_II(
 
                 candidateArray[canIdx].merge_flag =
                     picture_control_set_ptr->parent_pcs_ptr->is_skip_mode_allowed &&
-                    (rf[0] == picture_control_set_ptr->parent_pcs_ptr->skip_mode_info.ref_frame_idx_0 + 1) &&
-                    (rf[1] == picture_control_set_ptr->parent_pcs_ptr->skip_mode_info.ref_frame_idx_1 + 1) ? EB_TRUE : EB_FALSE;
+                    (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0 + 1) &&
+                    (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1 + 1) ? EB_TRUE : EB_FALSE;
 
                 candidateArray[canIdx].prediction_direction[0] = BI_PRED;
                 candidateArray[canIdx].is_new_mv = 0;
@@ -2142,10 +2145,12 @@ void  inject_inter_candidates(
     uint32_t                       *candidateTotalCnt) {
 
     (void)sequence_control_set_ptr;
+
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     uint32_t                   canTotalCnt = *candidateTotalCnt;
     const uint32_t             lcuAddr = sb_ptr->index;
     ModeDecisionCandidate    *candidateArray = context_ptr->fast_candidate_array;
-    EbBool isCompoundEnabled = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
+    EbBool isCompoundEnabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
     uint32_t geom_offset_x = 0;
     uint32_t geom_offset_y = 0;
 
@@ -2224,7 +2229,7 @@ void  inject_inter_candidates(
     //    NEAREST_NEWMV, NEW_NEARESTMV, NEAR_NEWMV, NEW_NEARMV.
     //----------------------
     if (context_ptr->new_nearest_near_comb_injection) {
-        EbBool allow_compound = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
+        EbBool allow_compound = (frm_hdr->reference_mode == SINGLE_REFERENCE || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
         if (allow_compound) {
             //all of ref pairs: (1)single-ref List0  (2)single-ref List1  (3)compound Bi-Dir List0-List1  (4)compound Uni-Dir List0-List0  (5)compound Uni-Dir List1-List1
             for (refIt = 0; refIt < picture_control_set_ptr->parent_pcs_ptr->tot_ref_frame_types; ++refIt) {
@@ -2412,7 +2417,7 @@ void  inject_inter_candidates(
         }
 
     // Warped Motion
-    if (picture_control_set_ptr->parent_pcs_ptr->allow_warped_motion &&
+    if (frm_hdr->allow_warped_motion &&
         has_overlappable_candidates(context_ptr->cu_ptr) &&
         context_ptr->blk_geom->bwidth >= 8 &&
         context_ptr->blk_geom->bheight >= 8 &&
@@ -2626,6 +2631,7 @@ void  inject_intra_candidates_ois(
     OisSbResults    *ois_sb_results_ptr = picture_control_set_ptr->parent_pcs_ptr->ois_sb_results[sb_ptr->index];
     OisCandidate     *ois_blk_ptr = ois_sb_results_ptr->ois_candidate_array[ep_to_pa_block_index[context_ptr->blk_geom->blkidx_mds]];
     uint8_t              total_intra_luma_mode = ois_sb_results_ptr-> total_ois_intra_candidate[ep_to_pa_block_index[context_ptr->blk_geom->blkidx_mds]];
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
 
     for (intra_candidate_counter = 0; intra_candidate_counter < total_intra_luma_mode; ++intra_candidate_counter) {
         intra_mode = ois_blk_ptr[can_total_cnt].intra_mode;
@@ -2663,7 +2669,7 @@ void  inject_intra_candidates_ois(
                     0,
                     0,
                     context_ptr->blk_geom->txsize_uv[0][0],
-                    picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+                    frm_hdr->reduced_tx_set);
             candidate_array[can_total_cnt].ref_frame_type = INTRA_FRAME;
             candidate_array[can_total_cnt].pred_mode = (PredictionMode)intra_mode;
             candidate_array[can_total_cnt].motion_mode = SIMPLE_TRANSLATION;
@@ -2700,7 +2706,7 @@ void  inject_intra_candidates_ois(
                     0,
                     0,
                     context_ptr->blk_geom->txsize_uv[0][0],
-                    picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+                    frm_hdr->reduced_tx_set);
             candidate_array[can_total_cnt].ref_frame_type = INTRA_FRAME;
             candidate_array[can_total_cnt].pred_mode = (PredictionMode)intra_mode;
             candidate_array[can_total_cnt].motion_mode = SIMPLE_TRANSLATION;
@@ -2808,6 +2814,7 @@ void  intra_bc_search(
     x->mv_cost_stack = context_ptr->md_rate_estimation_ptr->nmvcoststack;
     BlockSize bsize = context_ptr->blk_geom->bsize;
     assert(bsize < BlockSizeS_ALL);
+    FrameHeader *frm_hdr = &pcs->parent_pcs_ptr->frm_hdr;
     const Av1Common *const cm = pcs->parent_pcs_ptr->av1_cm;
     MvReferenceFrame ref_frame = INTRA_FRAME;
     generate_av1_mvp_table(
@@ -2841,7 +2848,7 @@ void  intra_bc_search(
     x->mv_limits.row_max = (cm->mi_rows - mi_row) * MI_SIZE + AOM_INTERP_EXTEND;
     x->mv_limits.col_max = (cm->mi_cols - mi_col) * MI_SIZE + AOM_INTERP_EXTEND;
     //set search paramters
-    x->sadperbit16 = sad_per_bit16lut_8[pcs->parent_pcs_ptr->base_qindex];
+    x->sadperbit16 = sad_per_bit16lut_8[frm_hdr->quantization_params.base_q_idx];
     x->errorperbit = context_ptr->full_lambda >> RD_EPB_SHIFT;
     x->errorperbit += (x->errorperbit == 0);
     //temp buffer for hash me
@@ -3029,6 +3036,7 @@ void  inject_intra_candidates(
     uint32_t                       *candidateTotalCnt){
     (void)sequence_control_set_ptr;
     (void)sb_ptr;
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     uint8_t                     is16bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
     uint8_t                     intra_mode_start = DC_PRED;
     uint8_t                     intra_mode_end   = is16bit ? SMOOTH_H_PRED : PAETH_PRED;
@@ -3146,7 +3154,7 @@ void  inject_intra_candidates(
                                 0,
                                 0,
                                 context_ptr->blk_geom->txsize_uv[0][0],
-                                picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+                                frm_hdr->reduced_tx_set);
                         candidateArray[canTotalCnt].ref_frame_type = INTRA_FRAME;
                         candidateArray[canTotalCnt].pred_mode = (PredictionMode)openLoopIntraCandidate;
                         candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
@@ -3206,7 +3214,7 @@ void  inject_intra_candidates(
                     0,
                     0,
                     context_ptr->blk_geom->txsize_uv[0][0],
-                    picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+                    frm_hdr->reduced_tx_set);
             candidateArray[canTotalCnt].ref_frame_type = INTRA_FRAME;
             candidateArray[canTotalCnt].pred_mode = (PredictionMode)openLoopIntraCandidate;
             candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
@@ -3235,6 +3243,7 @@ EbErrorType ProductGenerateMdCandidatesCu(
 {
     (void)lcuAddr;
     (void)interPredContextPtr;
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     const SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     const EB_SLICE slice_type = picture_control_set_ptr->slice_type;
     uint32_t canTotalCnt = 0;
@@ -3272,7 +3281,7 @@ EbErrorType ProductGenerateMdCandidatesCu(
                 &canTotalCnt);
     }
 
-    if (picture_control_set_ptr->parent_pcs_ptr->allow_intrabc)
+    if (frm_hdr->allow_intrabc)
         inject_intra_bc_candidates(
             picture_control_set_ptr,
             context_ptr,

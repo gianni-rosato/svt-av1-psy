@@ -550,8 +550,8 @@ static void Av1EncodeLoop(
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
 
-        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
         cu_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
@@ -745,8 +745,8 @@ static void Av1EncodeLoop(
             PLANE_TYPE_UV,
             DEFAULT_SHAPE);
 
-        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
         cu_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
@@ -974,8 +974,8 @@ static void Av1EncodeLoop16bit(
                 PLANE_TYPE_Y,
                 DEFAULT_SHAPE);
 
-            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
             cu_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
                 sb_ptr->picture_control_set_ptr,
                 context_ptr->md_context,
@@ -1123,8 +1123,8 @@ static void Av1EncodeLoop16bit(
                 asm_type,
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
-            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
             cu_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
                 sb_ptr->picture_control_set_ptr,
@@ -2486,7 +2486,7 @@ EB_EXTERN void av1_encode_pass(
 #else
 
                 // for now, segmentation independent of sharpness/delta QP.
-                if(picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled){
+                if(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled){
                     apply_segmentation_based_quantization(
                             blk_geom,
                             picture_control_set_ptr,
@@ -3809,7 +3809,7 @@ EB_EXTERN void av1_encode_pass(
 #if AV1_LF
     // First Pass Deblocking
     if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 1) {
-        if (picture_control_set_ptr->parent_pcs_ptr->lf.filter_level[0] || picture_control_set_ptr->parent_pcs_ptr->lf.filter_level[1]) {
+        if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params.filter_level[0] || picture_control_set_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params.filter_level[1]) {
             uint8_t LastCol = ((sb_origin_x)+sb_width == sequence_control_set_ptr->seq_header.max_frame_width) ? 1 : 0;
             loop_filter_sb(
                 recon_buffer,

@@ -254,9 +254,9 @@ static void read_ref_frames(EbDecHandle *dec_handle, PartitionInfo_t *const pi,
     SegmentationParams *seg_params = &dec_handle->frame_header.segmentation_params;
     if (pi->mi->skip_mode) {
         ref_frame[0] = (MvReferenceFrame)(LAST_FRAME +
-            dec_handle->frame_header.skip_mode_params.skip_mode_frame[0]);
+            dec_handle->frame_header.skip_mode_params.ref_frame_idx_0);
         ref_frame[1] = (MvReferenceFrame)(LAST_FRAME +
-            dec_handle->frame_header.skip_mode_params.skip_mode_frame[1]);
+            dec_handle->frame_header.skip_mode_params.ref_frame_idx_1);
     }
     else if (seg_feature_active(seg_params, segment_id, SEG_LVL_REF_FRAME)) {
         ref_frame[0] = (MvReferenceFrame)get_segdata(seg_params, segment_id,

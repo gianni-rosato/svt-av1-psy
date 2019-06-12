@@ -35,15 +35,15 @@ extern "C" {
 
 typedef enum EbAv1PictureType
 {
-    EB_AV1_INTER_PICTURE         = 0,
-    EB_AV1_ALT_REF_PICTURE       = 1,
-    EB_AV1_INTRA_ONLY_PICTURE    = 2,
-    EB_AV1_KEY_PICTURE           = 3,
-    EB_AV1_NON_REF_PICTURE       = 4,
+    EB_AV1_INTER_PICTURE = 0,
+    EB_AV1_ALT_REF_PICTURE = 1,
+    EB_AV1_INTRA_ONLY_PICTURE = 2,
+    EB_AV1_KEY_PICTURE = 3,
+    EB_AV1_NON_REF_PICTURE = 4,
     EB_AV1_SHOW_EXISTING_PICTURE = 6,
-    EB_AV1_FW_KEY_PICTURE        = 5,
-    EB_AV1_SWITCH_PICTURE        = 7,
-    EB_AV1_INVALID_PICTURE       = 0xFF
+    EB_AV1_FW_KEY_PICTURE = 5,
+    EB_AV1_SWITCH_PICTURE = 7,
+    EB_AV1_INVALID_PICTURE = 0xFF
 } EbAv1PictureType;
 
 /** The EbBool type is intended to be used to represent a true or a false
@@ -54,6 +54,7 @@ EbBool is a 32 bit quantity and is aligned on a 32 bit word boundary.
 #define EbBool   uint8_t
 #define EB_FALSE  0
 #define EB_TRUE   1
+
 
 typedef struct EbBufferHeaderType
 {

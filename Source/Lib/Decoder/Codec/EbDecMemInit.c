@@ -302,7 +302,7 @@ static EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr)
     EB_MALLOC_DEC(int32_t*, dec_mod_ctxt->sb_iquant_ptr, (1 << sb_size_log2) *
                   (1 << sb_size_log2) * sizeof(int32_t), EB_N_PTR);
 
-    av1_inverse_qm_init(&dec_handle_ptr->frame_header, &dec_handle_ptr->seq_header.color_config);
+    av1_inverse_qm_init(dec_handle_ptr);
 
     return return_error;
 }

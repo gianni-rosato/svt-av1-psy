@@ -95,18 +95,18 @@ extern "C" {
     //**********************************************************************************************************//
     //onyxc_int.h
     static INLINE int32_t frame_is_intra_only(const PictureParentControlSet *const pcs_ptr) {
-        return pcs_ptr->av1_frame_type == KEY_FRAME || pcs_ptr->av1_frame_type == INTRA_ONLY_FRAME;
+        return pcs_ptr->frm_hdr.frame_type == KEY_FRAME || pcs_ptr->frm_hdr.frame_type == INTRA_ONLY_FRAME;
     }
 
     static INLINE int32_t frame_is_sframe(const PictureParentControlSet *pcs_ptr) {
-        return pcs_ptr->av1_frame_type == S_FRAME;
+        return pcs_ptr->frm_hdr.frame_type == S_FRAME;
     }
 
     // Returns 1 if this frame might allow mvs from some reference frame.
 
     static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControlSet *pcs_ptr,
         SequenceControlSet    *scs_ptr) {
-        return !pcs_ptr->error_resilient_mode &&
+        return !pcs_ptr->frm_hdr.error_resilient_mode &&
             scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs &&
             scs_ptr->seq_header.order_hint_info.enable_order_hint && !frame_is_intra_only(pcs_ptr);
     }
@@ -114,7 +114,7 @@ extern "C" {
     // Returns 1 if this frame might use warped_motion
     static INLINE int32_t frame_might_allow_warped_motion(const PictureParentControlSet *pcs_ptr,
         SequenceControlSet    *scs_ptr) {
-        return !pcs_ptr->error_resilient_mode && !frame_is_intra_only(pcs_ptr) &&
+        return !pcs_ptr->frm_hdr.error_resilient_mode && !frame_is_intra_only(pcs_ptr) &&
             scs_ptr->static_config.enable_warped_motion;
     }
 

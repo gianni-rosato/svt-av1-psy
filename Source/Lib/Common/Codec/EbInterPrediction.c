@@ -2828,7 +2828,7 @@ extern /*static*/ void model_rd_for_sb(
 
         total_sse += sse;
 
-        int32_t current_q_index = MAX(0, MIN(QINDEX_RANGE - 1, picture_control_set_ptr->parent_pcs_ptr->base_qindex));
+        int32_t current_q_index = MAX(0, MIN(QINDEX_RANGE - 1, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx));
         Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq;
 
         int16_t quantizer = dequants->y_dequant_Q3[current_q_index][1];
@@ -3311,7 +3311,7 @@ EbErrorType inter_pu_prediction_av1(
     else
         ref_pic_list1 = (EbPictureBufferDesc*)EB_NULL;
 
-    if (picture_control_set_ptr->parent_pcs_ptr->allow_warped_motion
+    if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_warped_motion
         && candidate_ptr->motion_mode != WARPED_CAUSAL)
             wm_count_samples(
                 md_context_ptr->cu_ptr,

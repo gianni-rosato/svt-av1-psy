@@ -1121,6 +1121,7 @@ void generate_av1_mvp_table(
     int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
     int32_t mi_col = cu_origin_x >> MI_SIZE_LOG2;
     Av1Common  *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     MacroBlockD  *xd = cu_ptr->av1xd;
     xd->n8_w = blk_geom->bwidth >> MI_SIZE_LOG2;
     xd->n8_h = blk_geom->bheight >> MI_SIZE_LOG2;
@@ -1181,14 +1182,14 @@ void generate_av1_mvp_table(
         if (ref_frame != INTRA_FRAME) {
             zeromv[0].as_int =
                 gm_get_motion_vector(&picture_control_set_ptr->parent_pcs_ptr->global_motion[rf[0]],
-                    picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv, bsize, mi_col, mi_row,
-                    picture_control_set_ptr->parent_pcs_ptr->cur_frame_force_integer_mv)
+                    frm_hdr->allow_high_precision_mv, bsize, mi_col, mi_row,
+                    frm_hdr->force_integer_mv)
                 .as_int;
             zeromv[1].as_int = (rf[1] != NONE_FRAME)
                 ? gm_get_motion_vector(&picture_control_set_ptr->parent_pcs_ptr->global_motion[rf[1]],
-                    picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv,
+                    frm_hdr->allow_high_precision_mv,
                     bsize, mi_col, mi_row,
-                    picture_control_set_ptr->parent_pcs_ptr->cur_frame_force_integer_mv)
+                    frm_hdr->force_integer_mv)
                 .as_int
                 : 0;
         }

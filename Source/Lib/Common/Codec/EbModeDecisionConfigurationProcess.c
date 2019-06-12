@@ -393,24 +393,26 @@ void av1_set_quantizer(
 {
     // quantizer has to be reinitialized with av1_init_quantizer() if any
     // delta_q changes.
-    picture_control_set_ptr->using_qmatrix = 0;
+    FrameHeader*frm_hdr = &picture_control_set_ptr->frm_hdr;
+
+    frm_hdr->quantization_params.using_qmatrix = 0;
     picture_control_set_ptr->min_qmlevel = 5;
     picture_control_set_ptr->max_qmlevel = 9;
 
-    picture_control_set_ptr->base_qindex = (uint16_t)AOMMAX(picture_control_set_ptr->delta_q_present_flag, q);
-    picture_control_set_ptr->y_dc_delta_q = 0;
-    picture_control_set_ptr->u_dc_delta_q = 0;
-    picture_control_set_ptr->u_ac_delta_q = 0;
-    picture_control_set_ptr->v_dc_delta_q = 0;
-    picture_control_set_ptr->v_ac_delta_q = 0;
-    picture_control_set_ptr->qm_y = aom_get_qmlevel(picture_control_set_ptr->base_qindex, picture_control_set_ptr->min_qmlevel, picture_control_set_ptr->max_qmlevel);
-    picture_control_set_ptr->qm_u = aom_get_qmlevel(picture_control_set_ptr->base_qindex + picture_control_set_ptr->u_ac_delta_q,
+    frm_hdr->quantization_params.base_q_idx = (uint16_t)AOMMAX(frm_hdr->delta_q_params.delta_q_present, q);
+    frm_hdr->quantization_params.delta_q_y_dc = 0;
+    frm_hdr->quantization_params.delta_q_u_dc = 0;
+    frm_hdr->quantization_params.delta_q_u_ac = 0;
+    frm_hdr->quantization_params.delta_q_v_dc = 0;
+    frm_hdr->quantization_params.delta_q_v_ac = 0;
+    frm_hdr->quantization_params.qm_y = aom_get_qmlevel(frm_hdr->quantization_params.base_q_idx, picture_control_set_ptr->min_qmlevel, picture_control_set_ptr->max_qmlevel);
+    frm_hdr->quantization_params.qm_u = aom_get_qmlevel(frm_hdr->quantization_params.base_q_idx + frm_hdr->quantization_params.delta_q_u_ac,
         picture_control_set_ptr->min_qmlevel, picture_control_set_ptr->max_qmlevel);
 
     if (!picture_control_set_ptr->separate_uv_delta_q)
-        picture_control_set_ptr->qm_v = picture_control_set_ptr->qm_u;
+        frm_hdr->quantization_params.qm_v = frm_hdr->quantization_params.qm_u;
     else
-        picture_control_set_ptr->qm_v = aom_get_qmlevel(picture_control_set_ptr->base_qindex + picture_control_set_ptr->v_ac_delta_q,
+        frm_hdr->quantization_params.qm_v = aom_get_qmlevel(frm_hdr->quantization_params.base_q_idx + frm_hdr->quantization_params.delta_q_v_ac,
             picture_control_set_ptr->min_qmlevel, picture_control_set_ptr->max_qmlevel);
 }
 
@@ -1708,7 +1710,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
     ModeDecisionConfigurationContext         *context_ptr = (ModeDecisionConfigurationContext*)input_ptr;
     PictureControlSet                        *picture_control_set_ptr;
     SequenceControlSet                       *sequence_control_set_ptr;
-
+    FrameHeader                              *frm_hdr;
     // Input
     EbObjectWrapper                          *rateControlResultsWrapperPtr;
     RateControlResults                       *rateControlResultsPtr;
@@ -1726,6 +1728,8 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         rateControlResultsPtr = (RateControlResults*)rateControlResultsWrapperPtr->object_ptr;
         picture_control_set_ptr = (PictureControlSet*)rateControlResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
         sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+
+        frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
 
         // Mode Decision Configuration Kernel Signal(s) derivation
         signal_derivation_mode_decision_config_kernel_oq(
@@ -1760,14 +1764,14 @@ void* mode_decision_configuration_kernel(void *input_ptr)
 
         av1_set_quantizer(
             picture_control_set_ptr->parent_pcs_ptr,
-            picture_control_set_ptr->parent_pcs_ptr->base_qindex);
+            frm_hdr->quantization_params.base_q_idx);
         av1_build_quantizer(
             (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth,
-            picture_control_set_ptr->parent_pcs_ptr->y_dc_delta_q,
-            picture_control_set_ptr->parent_pcs_ptr->u_dc_delta_q,
-            picture_control_set_ptr->parent_pcs_ptr->u_ac_delta_q,
-            picture_control_set_ptr->parent_pcs_ptr->v_dc_delta_q,
-            picture_control_set_ptr->parent_pcs_ptr->v_ac_delta_q,
+            frm_hdr->quantization_params.delta_q_y_dc,
+            frm_hdr->quantization_params.delta_q_u_dc,
+            frm_hdr->quantization_params.delta_q_u_ac,
+            frm_hdr->quantization_params.delta_q_v_dc,
+            frm_hdr->quantization_params.delta_q_v_ac,
             quants,
             dequants);
 
@@ -1775,11 +1779,11 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         Dequants *const dequantsMd = &picture_control_set_ptr->parent_pcs_ptr->deqMd;
         av1_build_quantizer(
             (AomBitDepth)8,
-            picture_control_set_ptr->parent_pcs_ptr->y_dc_delta_q,
-            picture_control_set_ptr->parent_pcs_ptr->u_dc_delta_q,
-            picture_control_set_ptr->parent_pcs_ptr->u_ac_delta_q,
-            picture_control_set_ptr->parent_pcs_ptr->v_dc_delta_q,
-            picture_control_set_ptr->parent_pcs_ptr->v_ac_delta_q,
+            frm_hdr->quantization_params.delta_q_y_dc,
+            frm_hdr->quantization_params.delta_q_u_dc,
+            frm_hdr->quantization_params.delta_q_u_ac,
+            frm_hdr->quantization_params.delta_q_v_dc,
+            frm_hdr->quantization_params.delta_q_v_ac,
             quantsMd,
             dequantsMd);
 
@@ -1791,7 +1795,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         context_ptr->qp = picture_control_set_ptr->picture_qp;
 
         // QP Index
-        context_ptr->qp_index = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->base_qindex;
+        context_ptr->qp_index = (uint8_t)frm_hdr->quantization_params.base_q_idx;
 
         // Lambda Assignement
         uint32_t lambdaSse;
@@ -1825,7 +1829,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         }
         context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
 
-        entropyCodingQp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
+        entropyCodingQp = frm_hdr->quantization_params.base_q_idx;
 
         // Reset CABAC Contexts
         reset_entropy_coder(
@@ -1912,7 +1916,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
             picture_control_set_ptr->parent_pcs_ptr->average_qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
         }
 
-        if (picture_control_set_ptr->parent_pcs_ptr->allow_intrabc)
+        if (frm_hdr->allow_intrabc)
         {
             int i;
             int speed = 1;

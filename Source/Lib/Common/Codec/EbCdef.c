@@ -461,6 +461,7 @@ void av1_cdef_frame(
 
     struct PictureParentControlSet     *pPcs = pCs->parent_pcs_ptr;
     Av1Common*   cm = pPcs->av1_cm;
+    FrameHeader *frm_hdr = &pPcs->frm_hdr;
 
     EbPictureBufferDesc  * recon_picture_ptr;
 
@@ -566,11 +567,11 @@ void av1_cdef_frame(
                 frame_right = 1;
 
             const int32_t mbmi_cdef_strength = pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc]->mbmi.cdef_strength;
-            level = pCs->parent_pcs_ptr->cdef_strengths[mbmi_cdef_strength] / CDEF_SEC_STRENGTHS;
-            sec_strength = pCs->parent_pcs_ptr->cdef_strengths[mbmi_cdef_strength] % CDEF_SEC_STRENGTHS;
+            level = frm_hdr->CDEF_params.cdef_y_strength[mbmi_cdef_strength] / CDEF_SEC_STRENGTHS;
+            sec_strength = frm_hdr->CDEF_params.cdef_y_strength[mbmi_cdef_strength] % CDEF_SEC_STRENGTHS;
             sec_strength += sec_strength == 3;
-            uv_level = pCs->parent_pcs_ptr->cdef_uv_strengths[mbmi_cdef_strength] / CDEF_SEC_STRENGTHS;
-            uv_sec_strength = pCs->parent_pcs_ptr->cdef_uv_strengths[mbmi_cdef_strength] % CDEF_SEC_STRENGTHS;
+            uv_level = frm_hdr->CDEF_params.cdef_uv_strength[mbmi_cdef_strength] / CDEF_SEC_STRENGTHS;
+            uv_sec_strength = frm_hdr->CDEF_params.cdef_uv_strength[mbmi_cdef_strength] % CDEF_SEC_STRENGTHS;
             uv_sec_strength += uv_sec_strength == 3;
             if ((level == 0 && sec_strength == 0 && uv_level == 0 && uv_sec_strength == 0) ||
                 (cdef_count = sb_compute_cdef_list(pCs, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, BLOCK_64X64)) == 0) {
@@ -582,8 +583,8 @@ void av1_cdef_frame(
             for (int32_t pli = 0; pli < num_planes; pli++) {
                 int32_t coffset;
                 int32_t rend, cend;
-                int32_t pri_damping = pCs->parent_pcs_ptr->cdef_pri_damping;
-                int32_t sec_damping = pCs->parent_pcs_ptr->cdef_sec_damping;
+                int32_t pri_damping = frm_hdr->CDEF_params.cdef_damping;
+                int32_t sec_damping = frm_hdr->CDEF_params.cdef_damping;
                 int32_t hsize = nhb << mi_wide_l2[pli];
                 int32_t vsize = nvb << mi_high_l2[pli];
 
@@ -775,6 +776,7 @@ void av1_cdef_frame16bit(
     (void)context_ptr;
     struct PictureParentControlSet     *pPcs = pCs->parent_pcs_ptr;
     Av1Common*   cm = pPcs->av1_cm;
+    FrameHeader *frm_hdr = &pPcs->frm_hdr;
 
     EbPictureBufferDesc  * recon_picture_ptr;
 
@@ -881,11 +883,11 @@ void av1_cdef_frame16bit(
                 frame_right = 1;
 
             const int32_t mbmi_cdef_strength = pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc]->mbmi.cdef_strength;
-            level = pCs->parent_pcs_ptr->cdef_strengths[mbmi_cdef_strength] / CDEF_SEC_STRENGTHS;
-            sec_strength = pCs->parent_pcs_ptr->cdef_strengths[mbmi_cdef_strength] % CDEF_SEC_STRENGTHS;
+            level = frm_hdr->CDEF_params.cdef_y_strength[mbmi_cdef_strength] / CDEF_SEC_STRENGTHS;
+            sec_strength = frm_hdr->CDEF_params.cdef_y_strength[mbmi_cdef_strength] % CDEF_SEC_STRENGTHS;
             sec_strength += sec_strength == 3;
-            uv_level = pCs->parent_pcs_ptr->cdef_uv_strengths[mbmi_cdef_strength] / CDEF_SEC_STRENGTHS;
-            uv_sec_strength = pCs->parent_pcs_ptr->cdef_uv_strengths[mbmi_cdef_strength] % CDEF_SEC_STRENGTHS;
+            uv_level = frm_hdr->CDEF_params.cdef_uv_strength[mbmi_cdef_strength] / CDEF_SEC_STRENGTHS;
+            uv_sec_strength = frm_hdr->CDEF_params.cdef_uv_strength[mbmi_cdef_strength] % CDEF_SEC_STRENGTHS;
             uv_sec_strength += uv_sec_strength == 3;
             if ((level == 0 && sec_strength == 0 && uv_level == 0 && uv_sec_strength == 0) ||
                 (cdef_count = sb_compute_cdef_list(pCs, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, BLOCK_64X64)) == 0) {
@@ -897,8 +899,8 @@ void av1_cdef_frame16bit(
             for (int32_t pli = 0; pli < num_planes; pli++) {
                 int32_t coffset;
                 int32_t rend, cend;
-                int32_t pri_damping = pCs->parent_pcs_ptr->cdef_pri_damping;
-                int32_t sec_damping = pCs->parent_pcs_ptr->cdef_sec_damping;
+                int32_t pri_damping = frm_hdr->CDEF_params.cdef_damping;
+                int32_t sec_damping = frm_hdr->CDEF_params.cdef_damping;
                 int32_t hsize = nhb << mi_wide_l2[pli];
                 int32_t vsize = nvb << mi_high_l2[pli];
 
@@ -1340,6 +1342,7 @@ void finish_cdef_search(
     (void)context_ptr;
     int32_t fast = 0;
     struct PictureParentControlSet     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
+    FrameHeader *frm_hdr = &pPcs->frm_hdr;
     Av1Common*   cm = pPcs->av1_cm;
     int32_t mi_rows = pPcs->av1_cm->mi_rows;
     int32_t mi_cols = pPcs->av1_cm->mi_cols;
@@ -1372,8 +1375,8 @@ void finish_cdef_search(
     end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : pPcs->cdef_filter_mode == 1 ? 8 : total_strengths;
 
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
-    int32_t pri_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex  >> 6);
-    int32_t sec_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex  >> 6);
+    int32_t pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
+    int32_t sec_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
     int32_t i;
     int32_t nb_strengths;
     int32_t nb_strength_bits;
@@ -1382,7 +1385,7 @@ void finish_cdef_search(
     const int32_t num_planes = 3;
 
     quantizer =
-        av1_ac_quant_Q3(pPcs->base_qindex, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
+        av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
     lambda = .12 * quantizer * quantizer / 256.;
 
     mse[0] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);
@@ -1436,14 +1439,14 @@ void finish_cdef_search(
             best_tot_mse = tot_mse;
             nb_strength_bits = i;
             for (j = 0; j < 1 << nb_strength_bits; j++) {
-                pPcs->cdef_strengths[j] = best_lev0[j];
-                pPcs->cdef_uv_strengths[j] = best_lev1[j];
+                frm_hdr->CDEF_params.cdef_y_strength[j] = best_lev0[j];
+                frm_hdr->CDEF_params.cdef_uv_strength[j] = best_lev1[j];
             }
         }
     }
     nb_strengths = 1 << nb_strength_bits;
 
-    pPcs->cdef_bits = nb_strength_bits;
+    frm_hdr->CDEF_params.cdef_bits = nb_strength_bits;
     pPcs->nb_cdef_strengths = nb_strengths;
     for (i = 0; i < sb_count; i++) {
         int32_t gi;
@@ -1451,8 +1454,8 @@ void finish_cdef_search(
         uint64_t best_mse = (uint64_t)1 << 63;
         best_gi = 0;
         for (gi = 0; gi < pPcs->nb_cdef_strengths; gi++) {
-            uint64_t curr = mse[0][i][pPcs->cdef_strengths[gi]];
-            if (num_planes >= 3) curr += mse[1][i][pPcs->cdef_uv_strengths[gi]];
+            uint64_t curr = mse[0][i][frm_hdr->CDEF_params.cdef_y_strength[gi]];
+            if (num_planes >= 3) curr += mse[1][i][frm_hdr->CDEF_params.cdef_uv_strength[gi]];
             if (curr < best_mse) {
                 best_gi = gi;
                 best_mse = curr;
@@ -1486,12 +1489,14 @@ void finish_cdef_search(
 
     if (fast) {
         for (int32_t j = 0; j < nb_strengths; j++) {
-            pPcs->cdef_strengths[j] = priconv[pPcs->cdef_strengths[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (pPcs->cdef_strengths[j] % CDEF_SEC_STRENGTHS);
-            pPcs->cdef_uv_strengths[j] = priconv[pPcs->cdef_uv_strengths[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (pPcs->cdef_uv_strengths[j] % CDEF_SEC_STRENGTHS);
+            frm_hdr->CDEF_params.cdef_y_strength[j] = priconv[frm_hdr->CDEF_params.cdef_y_strength[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (frm_hdr->CDEF_params.cdef_y_strength[j] % CDEF_SEC_STRENGTHS);
+            frm_hdr->CDEF_params.cdef_uv_strength[j] = priconv[frm_hdr->CDEF_params.cdef_uv_strength[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (frm_hdr->CDEF_params.cdef_uv_strength[j] % CDEF_SEC_STRENGTHS);
         }
     }
-    pPcs->cdef_pri_damping = pri_damping;
-    pPcs->cdef_sec_damping = sec_damping;
+    //cdef_pri_damping & cdef_sec_damping consolidated to cdef_damping
+    frm_hdr->CDEF_params.cdef_damping = pri_damping;
+    //pPcs->cdef_pri_damping = pri_damping;
+    //pPcs->cdef_sec_damping = sec_damping;
     for (int i = 0; i < total_strengths; i++)
         best_frame_gi_cnt += selected_strength_cnt[i] > best_frame_gi_cnt ? 1 : 0;
     pPcs->cdef_frame_strength = ((best_frame_gi_cnt + 4) / 4) * 4;
@@ -1516,6 +1521,7 @@ void av1_cdef_search(
     (void)context_ptr;
     int32_t fast = 0;
     struct PictureParentControlSet     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
+    FrameHeader *frm_hdr = &pPcs->frm_hdr;
     Av1Common*   cm = pPcs->av1_cm;
     int32_t mi_rows = pPcs->av1_cm->mi_rows;
     int32_t mi_cols = pPcs->av1_cm->mi_cols;
@@ -1568,8 +1574,8 @@ void av1_cdef_search(
     assert(selected_strength != NULL);
 
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
-    int32_t pri_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex /*cm->base_qindex*/ >> 6);
-    int32_t sec_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex /*cm->base_qindex*/ >> 6);
+    int32_t pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx /*cm->quant_param.base_q_idx*/ >> 6);
+    int32_t sec_damping = 3 + (frm_hdr->quantization_params.base_q_idx /*cm->quant_param.base_q_idx*/ >> 6);
     int32_t i;
     int32_t nb_strengths;
     int32_t nb_strength_bits;
@@ -1589,8 +1595,8 @@ void av1_cdef_search(
     int32_t end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : pPcs->cdef_filter_mode == 1 ? 8 : total_strengths;
 
     quantizer =
-        //CHKN av1_ac_quant_Q3(cm->base_qindex, 0, cm->bit_depth) >> (cm->bit_depth - 8);
-        av1_ac_quant_Q3(pPcs->base_qindex, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
+        //CHKN av1_ac_quant_Q3(cm->quant_param.base_q_idx, 0, cm->bit_depth) >> (cm->bit_depth - 8);
+        av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
     lambda = .12 * quantizer * quantizer / 256.;
 
     //av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0,    num_planes);
@@ -1770,14 +1776,14 @@ void av1_cdef_search(
             best_tot_mse = tot_mse;
             nb_strength_bits = i;
             for (j = 0; j < 1 << nb_strength_bits; j++) {
-                pPcs->cdef_strengths[j] = best_lev0[j];
-                pPcs->cdef_uv_strengths[j] = best_lev1[j];
+                frm_hdr->CDEF_params.cdef_y_strength[j] = best_lev0[j];
+                frm_hdr->CDEF_params.cdef_uv_strength[j] = best_lev1[j];
             }
         }
     }
     nb_strengths = 1 << nb_strength_bits;
 
-    /*cm*/pPcs->cdef_bits = nb_strength_bits;
+    /*cm*/frm_hdr->CDEF_params.cdef_bits = nb_strength_bits;
     /*cm*/pPcs->nb_cdef_strengths = nb_strengths;
     for (i = 0; i < sb_count; i++) {
         int32_t gi;
@@ -1785,8 +1791,8 @@ void av1_cdef_search(
         uint64_t best_mse = (uint64_t)1 << 63;
         best_gi = 0;
         for (gi = 0; gi < /*cm*/pPcs->nb_cdef_strengths; gi++) {
-            uint64_t curr = mse[0][i][/*cm*/pPcs->cdef_strengths[gi]];
-            if (num_planes >= 3) curr += mse[1][i][/*cm*/pPcs->cdef_uv_strengths[gi]];
+            uint64_t curr = mse[0][i][/*cm*/frm_hdr->CDEF_params.cdef_y_strength[gi]];
+            if (num_planes >= 3) curr += mse[1][i][/*cm*/frm_hdr->CDEF_params.cdef_uv_strength[gi]];
             if (curr < best_mse) {
                 best_gi = gi;
                 best_mse = curr;
@@ -1815,8 +1821,8 @@ void av1_cdef_search(
 
     if (fast) {
         for (int32_t j = 0; j < nb_strengths; j++) {
-            pPcs->cdef_strengths[j] = priconv[pPcs->cdef_strengths[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (pPcs->cdef_strengths[j] % CDEF_SEC_STRENGTHS);
-            pPcs->cdef_uv_strengths[j] = priconv[pPcs->cdef_uv_strengths[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (pPcs->cdef_uv_strengths[j] % CDEF_SEC_STRENGTHS);
+            frm_hdr->CDEF_params.cdef_y_strength[j] = priconv[frm_hdr->CDEF_params.cdef_y_strength[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (frm_hdr->CDEF_params.cdef_y_strength[j] % CDEF_SEC_STRENGTHS);
+            frm_hdr->CDEF_params.cdef_uv_strength[j] = priconv[frm_hdr->CDEF_params.cdef_uv_strength[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (frm_hdr->CDEF_params.cdef_uv_strength[j] % CDEF_SEC_STRENGTHS);
         }
     }
 
@@ -1824,8 +1830,9 @@ void av1_cdef_search(
         best_frame_gi_cnt += selected_strength_cnt[i] > best_frame_gi_cnt ? 1 : 0;
     pPcs->cdef_frame_strength = ((best_frame_gi_cnt + 4) / 4) * 4;
 
-    pPcs->cdef_pri_damping = pri_damping;
-    pPcs->cdef_sec_damping = sec_damping;
+    frm_hdr->CDEF_params.cdef_damping = pri_damping;
+    //pPcs->cdef_pri_damping = pri_damping;
+    //pPcs->cdef_sec_damping = sec_damping;
 
     aom_free(mse[0]);
     aom_free(mse[1]);
@@ -1851,6 +1858,7 @@ void av1_cdef_search16bit(
     (void)context_ptr;
     int32_t fast = 0;
     struct PictureParentControlSet     *pPcs = picture_control_set_ptr->parent_pcs_ptr;
+    FrameHeader *frm_hdr = &pPcs->frm_hdr;
     Av1Common*   cm = pPcs->av1_cm;
     int32_t mi_rows = pPcs->av1_cm->mi_rows;
     int32_t mi_cols = pPcs->av1_cm->mi_cols;
@@ -1904,8 +1912,8 @@ void av1_cdef_search16bit(
 
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
 
-    int32_t pri_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex /*cm->base_qindex*/ >> 6);
-    int32_t sec_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex /*cm->base_qindex*/ >> 6);
+    int32_t pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx /*cm->quant_param.base_q_idx*/ >> 6);
+    int32_t sec_damping = 3 + (frm_hdr->quantization_params.base_q_idx /*cm->quant_param.base_q_idx*/ >> 6);
     int32_t i;
     int32_t nb_strengths;
     int32_t nb_strength_bits;
@@ -1925,8 +1933,8 @@ void av1_cdef_search16bit(
     int32_t end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : pPcs->cdef_filter_mode == 1 ? 8 : total_strengths;
 
     quantizer =
-        //CHKN av1_ac_quant_Q3(cm->base_qindex, 0, cm->bit_depth) >> (cm->bit_depth - 8);
-        av1_ac_quant_Q3(pPcs->base_qindex, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
+        //CHKN av1_ac_quant_Q3(cm->quant_param.base_q_idx, 0, cm->bit_depth) >> (cm->bit_depth - 8);
+        av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
     lambda = .12 * quantizer * quantizer / 256.;
 
     //av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0,    num_planes);
@@ -2106,14 +2114,14 @@ void av1_cdef_search16bit(
             best_tot_mse = tot_mse;
             nb_strength_bits = i;
             for (j = 0; j < 1 << nb_strength_bits; j++) {
-                pPcs->cdef_strengths[j] = best_lev0[j];
-                pPcs->cdef_uv_strengths[j] = best_lev1[j];
+                frm_hdr->CDEF_params.cdef_y_strength[j] = best_lev0[j];
+                frm_hdr->CDEF_params.cdef_uv_strength[j] = best_lev1[j];
             }
         }
     }
     nb_strengths = 1 << nb_strength_bits;
 
-    /*cm*/pPcs->cdef_bits = nb_strength_bits;
+    /*cm*/frm_hdr->CDEF_params.cdef_bits = nb_strength_bits;
     /*cm*/pPcs->nb_cdef_strengths = nb_strengths;
     for (i = 0; i < sb_count; i++) {
         int32_t gi;
@@ -2121,8 +2129,8 @@ void av1_cdef_search16bit(
         uint64_t best_mse = (uint64_t)1 << 63;
         best_gi = 0;
         for (gi = 0; gi < /*cm*/pPcs->nb_cdef_strengths; gi++) {
-            uint64_t curr = mse[0][i][/*cm*/pPcs->cdef_strengths[gi]];
-            if (num_planes >= 3) curr += mse[1][i][/*cm*/pPcs->cdef_uv_strengths[gi]];
+            uint64_t curr = mse[0][i][/*cm*/frm_hdr->CDEF_params.cdef_y_strength[gi]];
+            if (num_planes >= 3) curr += mse[1][i][/*cm*/frm_hdr->CDEF_params.cdef_uv_strength[gi]];
             if (curr < best_mse) {
                 best_gi = gi;
                 best_mse = curr;
@@ -2157,12 +2165,13 @@ void av1_cdef_search16bit(
 
     if (fast) {
         for (int32_t j = 0; j < nb_strengths; j++) {
-            pPcs->cdef_strengths[j] = priconv[pPcs->cdef_strengths[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (pPcs->cdef_strengths[j] % CDEF_SEC_STRENGTHS);
-            pPcs->cdef_uv_strengths[j] = priconv[pPcs->cdef_uv_strengths[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (pPcs->cdef_uv_strengths[j] % CDEF_SEC_STRENGTHS);
+            frm_hdr->CDEF_params.cdef_y_strength[j] = priconv[frm_hdr->CDEF_params.cdef_y_strength[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (frm_hdr->CDEF_params.cdef_y_strength[j] % CDEF_SEC_STRENGTHS);
+            frm_hdr->CDEF_params.cdef_uv_strength[j] = priconv[frm_hdr->CDEF_params.cdef_uv_strength[j] / CDEF_SEC_STRENGTHS] * CDEF_SEC_STRENGTHS + (frm_hdr->CDEF_params.cdef_uv_strength[j] % CDEF_SEC_STRENGTHS);
         }
     }
-    pPcs->cdef_pri_damping = pri_damping;
-    pPcs->cdef_sec_damping = sec_damping;
+    frm_hdr->CDEF_params.cdef_damping = pri_damping;
+    //pPcs->cdef_pri_damping = pri_damping;
+    //pPcs->cdef_sec_damping = sec_damping;
 
     for (int i = 0; i < total_strengths; i++)
         best_frame_gi_cnt += selected_strength_cnt[i] > best_frame_gi_cnt ? 1 : 0;

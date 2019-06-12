@@ -1846,7 +1846,7 @@ int32_t av1_quantize_inv_quantize(
 #if ADD_DELTA_QP_SUPPORT
     uint32_t qIndex = qp;
 #else
-    uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->base_qindex + segmentation_qp_offset ;
+    uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx + segmentation_qp_offset ;
 #endif
     if (bit_increment == 0) {
         if (component_type == COMPONENT_LUMA) {
@@ -2075,8 +2075,8 @@ void product_full_loop(
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
 
-        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
         candidateBuffer->candidate_ptr->quantized_dc[0][txb_itr] = av1_quantize_inv_quantize(
             picture_control_set_ptr,
             context_ptr,
@@ -2310,7 +2310,7 @@ void product_full_loop_tx_search(
     TxSize                         txSize = context_ptr->blk_geom->txsize[tx_depth][txb_itr];
     assert(txSize < TX_SIZES_ALL);
     const TxSetType                tx_set_type =
-        get_ext_tx_set_type(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+        get_ext_tx_set_type(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
 
     int32_t allowed_tx_mask[TX_TYPES] = { 0 };  // 1: allow; 0: skip.
     int32_t allowed_tx_num = 0;
@@ -2373,8 +2373,8 @@ void product_full_loop_tx_search(
                 PLANE_TYPE_Y,
                 context_ptr->pf_md_mode);
 
-            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
             av1_quantize_inv_quantize(
                 picture_control_set_ptr,
@@ -2594,7 +2594,7 @@ void encode_pass_tx_search(
     const uint32_t         scratch_luma_offset = context_ptr->blk_geom->tx_org_x[cu_ptr->tx_depth][context_ptr->txb_itr] + context_ptr->blk_geom->tx_org_y[cu_ptr->tx_depth][context_ptr->txb_itr] * SB_STRIDE_Y;
     assert(txSize < TX_SIZES_ALL);
     const TxSetType        tx_set_type =
-        get_ext_tx_set_type(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+        get_ext_tx_set_type(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
 
     TxType best_tx_type = DCT_DCT;
     if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set == 2)
@@ -2607,7 +2607,7 @@ void encode_pass_tx_search(
         if(picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set)
             if (!allowed_tx_set_a[txSize][tx_type]) continue;
 
-        const int32_t eset = get_ext_tx_set(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+        const int32_t eset = get_ext_tx_set(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
         // eset == 0 should correspond to a set with only DCT_DCT and there
         // is no need to send the tx_type
         if (eset <= 0) continue;
@@ -2630,8 +2630,8 @@ void encode_pass_tx_search(
             asm_type,
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
-        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
 
         av1_quantize_inv_quantize(
@@ -2798,7 +2798,7 @@ void encode_pass_tx_search_hbd(
     TxSize                      txSize = context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr];
     assert(txSize < TX_SIZES_ALL);
     const TxSetType             tx_set_type =
-        get_ext_tx_set_type(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+        get_ext_tx_set_type(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
 
     TxType best_tx_type = DCT_DCT;
 
@@ -2808,7 +2808,7 @@ void encode_pass_tx_search_hbd(
         if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set)
             if (!allowed_tx_set_a[txSize][tx_type]) continue;
 
-        const int32_t eset = get_ext_tx_set(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+        const int32_t eset = get_ext_tx_set(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
         // eset == 0 should correspond to a set with only DCT_DCT and there
         // is no need to send the tx_type
         if (eset <= 0) continue;
@@ -2831,8 +2831,8 @@ void encode_pass_tx_search_hbd(
             asm_type,
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
-        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
         av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
@@ -3057,8 +3057,8 @@ void full_loop_r(
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
 
-            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
             candidateBuffer->candidate_ptr->quantized_dc[1][0] = av1_quantize_inv_quantize(
                 picture_control_set_ptr,
                 context_ptr,
@@ -3144,8 +3144,8 @@ void full_loop_r(
                 asm_type,
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
-            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
-                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
             candidateBuffer->candidate_ptr->quantized_dc[2][0] = av1_quantize_inv_quantize(
                 picture_control_set_ptr,
