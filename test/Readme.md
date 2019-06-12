@@ -44,26 +44,27 @@ Before running the test program, please register `SVT_AV1_TEST_VECTOR_PATH` in y
 
 ### Windows(64-bit)
 
-  Generate the Visual Studio* 2017 project files by following the steps below cd Build\windows - run generate_vs17.bat
-  [such would generate the visual studio project files]
+Generate the Visual Studio* 2017 project files by following the steps below
 
-  Open the "svt-av1.sln" using Visual Studio* 2017 and click on Build -- > Build Solution
+1. `cd Build\windows`
+2. run generate_vs17.bat [such would generate the visual studio project files]
+3. Open the "svt-av1.sln" using Visual Studio* 2017
+4. click on Build -- > Build Solution
 
-  Test program binaries can be found under Bin/Release and/or Bin/Debug named SvtAv1UnitTests, SvtAv1ApiTests and SvtAv1E2ETests.
+Test program binaries can be found under `Bin/Release` and/or `Bin/Debug` named `SvtAv1UnitTests`, `SvtAv1ApiTests` and `SvtAv1E2ETests`.
 
-  Before running the test program, please build "TestVectors" project to download the test vectors, or register "SVT_AV1_TEST_VECTOR_PATH" in your environment path if you already downloaded test vector manually.
+Before running the test program, please build `TestVectors` project to download the test vectors, or register `SVT_AV1_TEST_VECTOR_PATH` in your `PATH` if you already downloaded test vector manually.
 
-  The individual test program can be run in command terminal in the following manners:
+The individual test program can be run in command terminal in the following manners:
 
-  ```
-  # run all the tests in Unit tests
-  ./SvtAv1UnitTests
-  # list the available test cases:
-  ./SvtAv1UnitTests --gtest_list_tests
-  # or run the specific test cases, for example the test cases whose name contain "transform"
-  ./SvtAv1UnitTests --gtest_filter="*transform*"
-
-  ```
+``` batch
+rem run all the tests in Unit tests
+SvtAv1UnitTests
+rem list the available test cases:
+SvtAv1UnitTests --gtest_list_tests
+rem or run the specific test cases, for example the test cases whose name contain "transform"
+SvtAv1UnitTests --gtest_filter="*transform*"
+```
 
 ## Test Results Summary
 
