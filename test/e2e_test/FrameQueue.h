@@ -40,7 +40,7 @@ class FrameQueue {
         frame_size_ = VideoFrame::calculate_max_frame_size(param);
         frame_count_ = 0;
     }
-    /** Destructor of FrameQueue	  */
+    /** Destructor of FrameQueue      */
     virtual ~FrameQueue() {
     }
     /** Get queue type

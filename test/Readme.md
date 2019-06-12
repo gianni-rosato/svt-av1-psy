@@ -14,7 +14,7 @@
   The development of SVT-AV1 unit testing is in working progress, more test suites will be implemented and released in the later stages, and this document will be kept updating.
 
 ## Build and Run Tests
-  
+
 ### MacOS or Linux(64-bit):
   Build the test program by running the build.sh with "test" as the second parameter:
   ```
@@ -22,7 +22,7 @@
   ```
   The script will download test data automatically.
 
-  Binaries can be found under Bin/Release and/or Bin/Debug named SvtAv1UnitTests, SvtAv1ApiTests and SvtAv1E2ETests. 
+  Binaries can be found under Bin/Release and/or Bin/Debug named SvtAv1UnitTests, SvtAv1ApiTests and SvtAv1E2ETests.
 
   Before running the test program, please register "SVT_AV1_TEST_VECTOR_PATH" in your environment path if you already downloaded test vector manually. The tests require a bash shell and can be run in the following manners:
   ```
@@ -34,17 +34,17 @@
   ./SvtAv1UnitTests --gtest_filter="*transform*"
 
   ```
-  
+
 ### Windows(64-bit):
 
-  Generate the Visual Studio* 2017 project files by following the steps below cd Build\windows - run generate_vs17.bat 
+  Generate the Visual Studio* 2017 project files by following the steps below cd Build\windows - run generate_vs17.bat
   [such would generate the visual studio project files]
-  
+
   Open the "svt-av1.sln" using Visual Studio* 2017 and click on Build -- > Build Solution
 
   Test program binaries can be found under Bin/Release and/or Bin/Debug named SvtAv1UnitTests, SvtAv1ApiTests and SvtAv1E2ETests.
 
-  Before running the test program, please build "TestVectors" project to download the test vectors, or register "SVT_AV1_TEST_VECTOR_PATH" in your environment path if you already downloaded test vector manually.   
+  Before running the test program, please build "TestVectors" project to download the test vectors, or register "SVT_AV1_TEST_VECTOR_PATH" in your environment path if you already downloaded test vector manually.
 
   The individual test program can be run in command terminal in the following manners:
   ```
@@ -59,13 +59,13 @@
 ## Test Results Summary
   Here is the test results summary on commit: 3009e99. The developers can use this summary as a reference.
 
-  Unit Tests on Ubuntu 16.04: 
+  Unit Tests on Ubuntu 16.04:
   ```
   [==========] 169 tests from 10 test cases ran. (116106 ms total)
   [  PASSED  ] 163 tests.
   [  FAILED  ] 6 tests, listed below:
   [  FAILED  ] Quant/QuantizeTest.input_dcac_minmax_q_n/0, where GetParam() = (2, 8)
-  [  FAILED  ] Quant/QuantizeTest.input_dcac_minmax_q_n/2, where GetParam() = (3, 8) 
+  [  FAILED  ] Quant/QuantizeTest.input_dcac_minmax_q_n/2, where GetParam() = (3, 8)
   [  FAILED  ] Quant/QuantizeTest.input_dcac_minmax_q_n/4, where GetParam() = (4, 8)
   [  FAILED  ] Quant/QuantizeTest.input_random_all_q_all/0, where GetParam() = (2, 8)
   [  FAILED  ] Quant/QuantizeTest.input_random_all_q_all/2, where GetParam() = (3, 8)
@@ -108,7 +108,7 @@
   ```
 
 ## FAQ
-1. All the End-to-End test cases fail, is that correct?  
-  The test vectors should be downloaded before running the End-to-End test. If the "SVT_AV1_TEST_VECTOR_PATH" is set, the test vectors will be downloaded in the folder. 
-  Otherwise, they will be downloaded into SVT-AV1/test/vectors. In this case, you should run the 
+1. All the End-to-End test cases fail, is that correct?
+  The test vectors should be downloaded before running the End-to-End test. If the "SVT_AV1_TEST_VECTOR_PATH" is set, the test vectors will be downloaded in the folder.
+  Otherwise, they will be downloaded into SVT-AV1/test/vectors. In this case, you should run the
   End-to-End test under Bin/Release or Bin/Debug directory.

@@ -1,7 +1,7 @@
-# 
+#
 # Copyright(c) 2019 Netflix, Inc.
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
-# 
+#
 
 # APP Directory CMakeLists.txt
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
@@ -44,24 +44,24 @@ else()
 endif()
 
 if (UNIX)
-        
+
   # App Source Files
-    add_executable (SvtAv1ApiTests 
+    add_executable (SvtAv1ApiTests
       ${all_files})
 
     # Link the Encoder App
      target_link_libraries (SvtAv1ApiTests
         ${SvtAv1EncLib}
-        gtest_all 
+        gtest_all
         pthread
         m)
-        
+
 endif(UNIX)
 
 if (MSVC OR MSYS OR MINGW OR WIN32)
 
     set (lib_list SvtAv1Enc gtest_all)
-                        
+
     cxx_executable_with_flags(SvtAv1ApiTests "${cxx_default}"
       "${lib_list}" ${all_files})
 

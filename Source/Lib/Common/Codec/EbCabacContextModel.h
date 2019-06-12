@@ -50,7 +50,7 @@ extern "C" {
 #define SEG_TEMPORAL_PRED_CTXS 3
 #define SPATIAL_PREDICTION_PROBS 3
 #define SEG_TREE_PROBS (MAX_SEGMENTS - 1)
-    
+
 #if CDF_SHIFT == 0
 
 #define AOM_CDF2(a0) AOM_ICDF(a0), AOM_ICDF(CDF_PROB_TOP), 0

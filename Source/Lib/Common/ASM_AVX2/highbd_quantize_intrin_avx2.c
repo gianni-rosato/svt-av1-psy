@@ -22,8 +22,7 @@
 #define UNLIKELY(v) (v)
 #endif
 
- // Note:
- // TranHigh is the datatype used for intermediate transform stages.
+// Note: TranHigh is the datatype used for intermediate transform stages.
 typedef int64_t TranHigh;
 
 static INLINE void init_one_qp(const __m128i *p, __m256i *qp) {

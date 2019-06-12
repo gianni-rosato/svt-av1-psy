@@ -1,7 +1,7 @@
-# 
+#
 # Copyright(c) 2019 Intel Corporation
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
-# 
+#
 # DecoderLib Directory CMakeLists.txt
 
 # Include Decoder Subdirectories
@@ -27,7 +27,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-   SET(CMAKE_C_FLAGS "/MP")    
+   SET(CMAKE_C_FLAGS "/MP")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
@@ -37,7 +37,7 @@ endif()
 file(GLOB all_files
     "*.h"
     "*.c")
- 
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND PLATFORM_LIBS m)
 endif()
@@ -74,7 +74,7 @@ install(TARGETS SvtAv1DecStatic DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 if(NOT DEFINED CMAKE_INSTALL_INCLUDEDIR)
     set(CMAKE_INSTALL_INCLUDEDIR "include/svt-av1")
 endif()
-    
+
 configure_file(../pkg-config.pc.in ${CMAKE_BINARY_DIR}/SvtAv1Dec.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/SvtAv1Dec.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 install(DIRECTORY ../../../API/ DESTINATION "${CMAKE_INSTALL_PREFIX}/include/svt-av1" FILES_MATCHING PATTERN "*.h")
