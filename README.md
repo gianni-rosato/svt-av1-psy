@@ -50,10 +50,9 @@ The SVT-AV1 Encoder library supports the x86 architecture
 |       720p            |            4           |            7            |
 |       480p            |            3           |            5            |
 
-
 ## Build and Install
 
-### Windows* Operating Systems (64-bit):
+### Windows* Operating Systems (64-bit)
 
 - __Build Requirements__
   - Visual Studio* 2017 (download [here](https://www.visualstudio.com/vs/older-downloads/)) or 2019 (download [here](https://visualstudio.microsoft.com/downloads/))
@@ -79,7 +78,7 @@ The SVT-AV1 Encoder library supports the x86 architecture
   - Open the command prompt window at the chosen location and run the sample application to encode: `SvtAV1EncApp.exe -i [in.yuv] -w [width] -h [height] -b [out.ivf]`
   - Sample application supports reading from pipe. E.g. `ffmpeg -i [input.mp4] -nostdin -f rawvideo -pix_fmt yuv420p - | SvtAv1EncApp.exe -i stdin -n [number_of_frames_to_encode] -w [width] -h [height]`
 
-### Linux* Operating Systems (64-bit):
+### Linux* Operating Systems (64-bit)
 
 - __Build Requirements__
   - GCC 5.4.0 or later
