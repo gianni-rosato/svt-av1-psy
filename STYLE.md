@@ -105,11 +105,11 @@ case 1: bla(); break;
 }
 ```
 
-Lines should idealy not be longer than 80 characters. We allow exceptions if wrapping the line would lead to exceptional ugliness, and this is done on a case-by-case basis;
-don't use goto except for standard error handling;
-use native types (`int`, `unsigned`, etc.) for scalar variables where the upper bound of a size doesn't matter;
-use sized types (`uint8_t`, `int16_t`, etc.) for vector/array variables where the upper bound of the size matters;
-use dynamic types (`pixel`, `coef`, etc.) so multi-bitdepth templating works as it should.
+Lines should idealy not be longer than 80 characters. We allow exceptions if wrapping the line would lead to exceptional ugliness, and this is done on a case-by-case basis.\
+Don't use `goto` except for standard error handling.\
+Use native types (`int`, `unsigned`, etc.) for scalar variables where the upper bound of a size doesn't matter.\
+Use sized types (`uint8_t`, `int16_t`, etc.) for vector/array variables where the upper bound of the size matters.\
+Use dynamic types (`pixel`, `coef`, etc.) so multi-bitdepth templating works as it should.
 
 ## Doxygen Documentation
 
