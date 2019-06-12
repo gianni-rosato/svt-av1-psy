@@ -214,11 +214,18 @@ Note: For macOS and BSD related distros, you may need to use `sed -i ''` inplace
 For Powershell:
 
 ``` Powershell
-ls -Recurse -File [-Filter *.c] | ForEach-Object{$(Get-Content $_.FullName | Foreach {Write-Output "$($_.TrimEnd())`n"}) | Set-Content -NoNewline $_.FullName}
+ls -Recurse -File -Filter *.c | ForEach-Object{$(Get-Content $_.FullName | Foreach {Write-Output "$($_.TrimEnd())`n"}) | Set-Content -NoNewline -Encoding utf8 $_.FullName}
 ```
 
-Or
+Where `-Filter *.c` has your extention/filename(s).\
+This does not work with `pwsh` on non-windows OS.\
+Search the docs for [`pwsh`](https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-6) related commands and [`powershell`](https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-5.1) related commands for more information on what they do.\
+**Do not** use ls without a `-Filter` on the root directory or with the `.git` folder still present. Doing so will corrupt your repo folder and you will need to copy a new `.git` folder and re-setup your folder.
+
+Alternatively, for a single file:
 
 ``` Powershell
-Get-content <filename> | Foreach {Write-Output "$($_.TrimEnd())`n"}) | Set-Content -NoNewline <filename>
+$filename="<filename>"; Get-content $filename | Foreach {Write-Output "$($_.TrimEnd())`n"}) | Set-Content -NoNewline $filename
 ```
+
+Where `<filename>` is the specific file you want to trim.
