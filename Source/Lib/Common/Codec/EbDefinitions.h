@@ -51,17 +51,17 @@ extern "C" {
 #define MRP_SUPPORT                       1// MRP Main Flag
 
 #define DOWN_SAMPLING_FILTERING           1 // Use down-sampling filtering (instead of down-sampling decimation) for 1/16th and 1/4th reference frame(s) generation @ ME and temporal filtering search, added the multi-mode signal down_sampling_method_me_search; filtering if M0, and decimation for M1 & higher
-#define DECIMATION_BUG_FIX                1 // Removed HME Level0 check @ 1/16th decimation to guarantee valid ZZ SAD and SCD data when HME Level0 is OFF  
+#define DECIMATION_BUG_FIX                1 // Removed HME Level0 check @ 1/16th decimation to guarantee valid ZZ SAD and SCD data when HME Level0 is OFF
 
-#define RDOQ_INTRA                        1 // Enable RDOQ INTRA (RDOQ INTER already active) 
+#define RDOQ_INTRA                        1 // Enable RDOQ INTRA (RDOQ INTER already active)
 #define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass
 #define SPATIAL_SSE_TX_SEARCH             1 // Spatial SSE @ the full loop Tx search
 #define ENHANCED_Nx4_4xN_NEW_MV           1 // Nx4 and 4xN MVs to be inherited from the parent block rather than from the 64x64
 #define NEW_NEAREST_NEW_INJECTION         1 // Missing inter candidates NEARETSEST/NEW, NEW/NEARETSEST, NEAR/NEW, NEW/NEAR.
 
 #define RDOQ_FP_QUANTIZATION              1 // Use FP quantization method if RDOQ ON and INTRA block and 8BIT (x86 WIP)
-#define FIXED_128x128_CONTEXT_UPDATE      1 // Fix txb_skip_context and dc_sign_context update for 128x128, and move txb_skip_context and dc_sign_context from CU to MD context 
-#define LOOP_FILTER_FIX                   1 // Use the existing loop filter multi-mode signal to control loop filter and removed the NRF checks @ Encode Pass and Loop Filter Processes 
+#define FIXED_128x128_CONTEXT_UPDATE      1 // Fix txb_skip_context and dc_sign_context update for 128x128, and move txb_skip_context and dc_sign_context from CU to MD context
+#define LOOP_FILTER_FIX                   1 // Use the existing loop filter multi-mode signal to control loop filter and removed the NRF checks @ Encode Pass and Loop Filter Processes
 
 #define ATB                               1 // ATB Main Flag
 #if ATB

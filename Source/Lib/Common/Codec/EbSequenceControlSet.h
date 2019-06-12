@@ -228,7 +228,7 @@ extern "C" {
         uint64_t                                pred1_nfl_count[5];
 #endif
 
-        SeqHeader								seq_header;
+        SeqHeader                               seq_header;
     } SequenceControlSet;
 
     typedef struct EbSequenceControlSetInitData

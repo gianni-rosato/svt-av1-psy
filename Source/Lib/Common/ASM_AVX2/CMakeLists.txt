@@ -1,7 +1,7 @@
-# 
+#
 # Copyright(c) 2019 Intel Corporation
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
-# 
+#
 
 # Common/ASM_AVX2 Directory CMakeLists.txt
 
@@ -28,7 +28,7 @@ else()
     if("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W0 /Qwd10148 /Qwd10010 /Qwd10157")
     else()
-        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX2 /MP")    
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX2 /MP")
     endif()
 endif()
 

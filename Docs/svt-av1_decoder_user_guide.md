@@ -41,7 +41,7 @@ The sample application typically takes the following command line parameters:
 -md5                      MD5 support flag
 ```
 
-Sample usage 
+Sample usage
 `SvtAv1DecApp.exe -i test.ivf -o out.yuv`
 
 #### List of all configuration parameters

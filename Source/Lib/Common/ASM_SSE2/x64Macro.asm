@@ -1,7 +1,7 @@
-; 
+;
 ; Copyright(c) 2019 Intel Corporation
 ; SPDX - License - Identifier: BSD - 2 - Clause - Patent
-; 
+;
 
 %macro MACRO_INIT_MMX 3
     mov             %2,             %3

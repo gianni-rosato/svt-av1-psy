@@ -304,7 +304,7 @@ void* packetization_kernel(void *input_ptr)
             output_stream_ptr->cr_sse   = 0;
             output_stream_ptr->cb_sse   = 0;
         }
-            
+
         // Get Empty Rate Control Input Tasks
         eb_get_empty_object(
             context_ptr->rate_control_tasks_output_fifo_ptr,

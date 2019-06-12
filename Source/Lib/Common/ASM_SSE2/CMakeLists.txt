@@ -1,7 +1,7 @@
-# 
+#
 # Copyright(c) 2019 Intel Corporation
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
-# 
+#
 
 # ASM_SSE2 Directory CMakeLists.txt
 
@@ -12,7 +12,7 @@ include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/)
 include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    SET(CMAKE_C_FLAGS "/MP")    
+    SET(CMAKE_C_FLAGS "/MP")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")

@@ -1,7 +1,7 @@
-# 
+#
 # Copyright(c) 2019 Netflix, Inc
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
-# 
+#
 
 include(ProcessorCount)
 set(SVT_AV1_E2E_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -65,9 +65,9 @@ else()
 endif()
 
 if (UNIX)
-        
+
   # App Source Files
-    add_executable (SvtAv1E2ETests 
+    add_executable (SvtAv1E2ETests
       ${all_files})
 
     if (APPLE)
@@ -85,20 +85,20 @@ if (UNIX)
      target_link_libraries (SvtAv1E2ETests
         aom
         ${SvtAv1EncLib}
-        gtest_all 
+        gtest_all
         pthread
         m)
-        
+
 endif(UNIX)
 
 if (MSVC OR MSYS OR MINGW OR WIN32)
 
     set (lib_list ${SvtAv1EncLib} gtest_all)
-                        
+
     cxx_executable_with_flags(SvtAv1E2ETests "${cxx_default}"
       "${lib_list}" ${all_files})
-    target_link_libraries(SvtAv1E2ETests 
-    #SDL2.lib 
+    target_link_libraries(SvtAv1E2ETests
+    #SDL2.lib
     aom.lib)
     set_target_properties(SvtAv1E2ETests
                         PROPERTIES

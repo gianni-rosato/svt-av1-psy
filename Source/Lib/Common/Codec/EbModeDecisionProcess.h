@@ -30,7 +30,7 @@ extern "C" {
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (470+IBC_CAND )
 #else
 #if NEW_NEAREST_NEW_INJECTION
-#define MODE_DECISION_CANDIDATE_MAX_COUNT               (486 +IBC_CAND) 
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               (486 +IBC_CAND)
 #else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (440 +IBC_CAND)
 #endif

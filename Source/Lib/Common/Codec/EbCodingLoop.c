@@ -2728,7 +2728,7 @@ void perform_intra_coding_loop(
         context_ptr->coded_area_sb += context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr];
 
 
-#if DC_SIGN_CONTEXT_EP // TBD      
+#if DC_SIGN_CONTEXT_EP // TBD
         // Update the luma Dc Sign Level Coeff Neighbor Array
         {
             uint8_t dcSignLevelCoeff = (uint8_t)cu_ptr->quantized_dc[0][context_ptr->txb_itr];
@@ -3038,7 +3038,7 @@ void perform_intra_coding_loop(
 
         context_ptr->coded_area_sb_uv += context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr];
 
-#if DC_SIGN_CONTEXT_EP // TBD 
+#if DC_SIGN_CONTEXT_EP // TBD
 
         // Update the cb Dc Sign Level Coeff Neighbor Array
         {
@@ -4036,7 +4036,7 @@ EB_EXTERN void av1_encode_pass(
                                 is16bit);
 
 
-#if DC_SIGN_CONTEXT_EP // TBD 
+#if DC_SIGN_CONTEXT_EP // TBD
                             // Update the luma Dc Sign Level Coeff Neighbor Array
                             {
                                 uint8_t dcSignLevelCoeff = (uint8_t)cu_ptr->quantized_dc[0][context_ptr->txb_itr];
@@ -4679,7 +4679,7 @@ EB_EXTERN void av1_encode_pass(
 #endif
 
 
-#if DC_SIGN_CONTEXT_EP // TBD 
+#if DC_SIGN_CONTEXT_EP // TBD
 
                             // Update the luma Dc Sign Level Coeff Neighbor Array
                             {
@@ -4815,7 +4815,7 @@ EB_EXTERN void av1_encode_pass(
                             cu_ptr->transform_unit_array[context_ptr->txb_itr].v_has_coeff = EB_FALSE;
 
 
-#if DC_SIGN_CONTEXT_EP         
+#if DC_SIGN_CONTEXT_EP
                             context_ptr->cu_ptr->quantized_dc[0][context_ptr->txb_itr] = 0;
                             context_ptr->cu_ptr->quantized_dc[1][context_ptr->txb_itr] = 0;
                             context_ptr->cu_ptr->quantized_dc[2][context_ptr->txb_itr] = 0;
@@ -4964,7 +4964,7 @@ EB_EXTERN void av1_encode_pass(
                             context_ptr->coded_area_sb_uv += blk_geom->tx_width_uv[tuIt] * blk_geom->tx_height_uv[tuIt];
 #endif
 
-#if DC_SIGN_CONTEXT_EP // TBD 
+#if DC_SIGN_CONTEXT_EP // TBD
 
                         // Update the luma Dc Sign Level Coeff Neighbor Array
                         {
