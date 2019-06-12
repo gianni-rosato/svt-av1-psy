@@ -97,7 +97,7 @@ case 1:
 }
 ```
 
-but for very trivial blocks, you can also put everything on one single line
+but for very trivial blocks, you can also put everything on one single line:
 
 ``` c
 switch (a) {
