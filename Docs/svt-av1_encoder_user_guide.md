@@ -1,6 +1,7 @@
 # Scalable Video Technology for AV1 Encoder (SVT-AV1 Encoder) User Guide
 
 ## Table of Contents
+
 1. [Introduction](#introduction)
 2. [Sample Application Guide](#sample-application-guide)
     - [Input Video Format](#input-video-format)
@@ -166,6 +167,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **TileCol** | -tile-columns | [0-6] | 0 | log2 of tile columns |
 
 ## Appendix A Encoder Parameters
+
 ### 1. Thread management parameters
 
 LogicalProcessorNumber (`-lp`) and TargetSocket (`-ss`) parameters are used to management thread affinity on Windows and Ubuntu OS. These are some examples how you use them together.
