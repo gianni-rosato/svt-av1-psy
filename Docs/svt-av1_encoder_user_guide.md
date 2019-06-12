@@ -57,7 +57,7 @@ _64x64 block after unrolling_\
 
 ### Running the encoder
 
-This section describes how to run the sample encoder application SvtAv1EncApp.exe (on Windows\*) or SvtAv1EncApp (on Linux\*) from the command line, including descriptions of the most commonly used input parameters and outputs.
+This section describes how to run the sample encoder application `SvtAv1EncApp.exe` (on Windows\*) or `SvtAv1EncApp` (on Linux\*) from the command line, including descriptions of the most commonly used input parameters and outputs.
 
 The sample application typically takes the following command line parameters:
 
