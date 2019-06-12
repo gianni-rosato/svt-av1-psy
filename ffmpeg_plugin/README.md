@@ -1,9 +1,15 @@
 # svt-av1 ffmpeg plugin installation
 
-1. Build and install SVT-AV1
-- git clone https://github.com/OpenVisualCloud/SVT-AV1
-- cd SVT-AV1
-- cd Build && cmake .. && make -j `nproc` && sudo make install
+1\. Build and install SVT-AV1
+
+``` bash
+git clone https://github.com/OpenVisualCloud/SVT-AV1
+cd SVT-AV1
+cd Build
+cmake .. -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+make -j $(nproc)
+sudo make install
+```
 
 2. Apply SVT-AV1 plugin and enable libsvtav1 to FFmpeg
 - git clone https://github.com/FFmpeg/FFmpeg ffmpeg
