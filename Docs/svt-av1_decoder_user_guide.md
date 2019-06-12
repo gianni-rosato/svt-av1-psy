@@ -26,7 +26,7 @@ This section describes how to run the sample decoder application that uses the S
 
 ### Running the decoder
 
-This section describes how to run the sample decoder application SvtAv1DecApp.exe (on Windows\*) or SvtAv1DecApp (on Linux\*) from the command line, including descriptions of the most commonly used input parameters and outputs.
+This section describes how to run the sample decoder application `SvtAv1DecApp.exe` (on Windows\*) or `SvtAv1DecApp` (on Linux\*) from the command line, including descriptions of the most commonly used input parameters and outputs.
 
 The sample application typically takes the following command line parameters:
 
