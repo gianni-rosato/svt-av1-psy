@@ -31,7 +31,7 @@ const int my_var = (something1 +
 ```
 
 use `CamelCase` for types and `under_score` for variable names (`TypeName my_instance;`)\
-we use const where possible, except in forward function declarations in header files, where we only use it for const-arrays:
+Use const where possible, except in forward function declarations in header files, where we only use it for const-arrays:
 
 ``` c
 int my_func(const array *values, int arg);
