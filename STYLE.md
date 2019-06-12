@@ -137,7 +137,7 @@ Use dynamic types (`pixel`, `coef`, etc.) so multi-bitdepth templating works as 
 
 /* Macro Description */
 /** Brief description of MACRO */
-\#define MACRO   val
+#define MACRO   val
 
 /* enum Description : description for all entries */
 /** Brief description of ENUMs */
