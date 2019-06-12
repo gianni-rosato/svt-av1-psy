@@ -192,12 +192,12 @@ struct {
 
 ## Post-coding
 
-After coding, make sure to trim any trailing white space\
+After coding, make sure to trim any trailing white space and convert any tabs to 4 spaces
 
 ### For bash
 
 ``` bash
-find . -name <Filename> -type f -exec sed -i 's/[[:space:]]*$//' {} +
+find . -name <Filename> -type f -exec sed -i 's/[[:space:]]*$//;s/\t/    /' {} +
 ```
 
 Where `<Filename>` is `"*.c"` or `"*.(your file extention here)"`\
@@ -207,7 +207,7 @@ Search the `find` man page or tips and tricks for more options.\
 Alternatively, for single file(s):
 
 ``` bash
-sed -i 's/[[:space:]]*$//' <Filename/Filepath>
+sed -i 's/[[:space:]]*$//;s/\t/    /' <Filename/Filepath>
 ```
 
 Note: For macOS and BSD related distros, you may need to use `sed -i ''` inplace due to differences with GNU sed.
