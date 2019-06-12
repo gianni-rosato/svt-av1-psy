@@ -23,4 +23,3 @@
 3. Verify
 - ./ffmpeg  -i input.mp4 -c:v libsvt_av1 -g 30 -vframes 1000 -y test.ivf
 - ./ffmpeg  -video_size 720x480 -pixel_format yuv420p -f rawvideo -i input.yuv -c:v libsvt_av1 -y test.mp4
-
