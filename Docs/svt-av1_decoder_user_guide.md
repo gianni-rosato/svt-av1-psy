@@ -1,6 +1,7 @@
 # Scalable Video Technology for AV1 Decoder (SVT-AV1 Decoder) User Guide
 
 ## Table of Contents
+
 1. [Introduction](#introduction)
 2. [Known Limitations](#known-limitations)
 3. [Sample Application Guide](#sample-application-guide)
@@ -14,6 +15,7 @@ This document describes how to use the Scalable Video Technology for AV1 Decoder
 ## Known Limitations
 
 Initial version:
+
 - Supports only I-frames without loopfilter (deblocking, cdef and self guided restoration filters not supported)
 - Supports only 8-bit and 10-bit 4:2:0 content
 - Tested only on Windows
