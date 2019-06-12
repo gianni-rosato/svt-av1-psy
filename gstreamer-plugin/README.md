@@ -1,8 +1,11 @@
 # GStreamer-SVT-AV1
+
 ## Overview
+
 This plugin provides svtav1enc element to GStreamer in order to use the Scalable Video Technology for AV1 Encoder ([SVT-AV1](https://github.com/OpenVisualCloud/SVT-AV1)).
 
 ## Requirements
+
   * GStreamer 1.8 or later
   * Scalable Video Technology for AV1 Encoder
       * SvtAv1Enc.dll or libSvtAv1Enc.so has to be in the PATH or next to the plugin's DLL/.so.
@@ -10,6 +13,7 @@ This plugin provides svtav1enc element to GStreamer in order to use the Scalable
   * A 64-bit CPU with AVX2 support
 
 ## Usage
+
 Make sure that the SvtAv1Enc library is in a path the OS looks for when loading dynamic libraries. If using default install locations, this means for example:
 
     export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH # Linux
@@ -22,7 +26,9 @@ Then a sample GStreamer pipeline is:
 If you're not familiar with GStreamer, gst-launch-1.0 is part of GStreamer tools, and mpegtsmux is part of GStreamer Bad plugins, `-e` option allows CTRL+C to translate to an EOS (end of stream) signal on the pipeline.
 
 ## Compiling and Installing
+
 ### Build Dependencies
+
   * GStreamer and GStreamer-plugins-base dev 1.8 or later
       * on Debian/Ubuntu: `apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`
       * on Windows: [gstreamer-1.0-devel-x86_64-*.msi](https://gstreamer.freedesktop.org/data/pkg/windows/)
@@ -39,6 +45,7 @@ If you're not familiar with GStreamer, gst-launch-1.0 is part of GStreamer tools
 This plugin uses `meson` build tools and the dependency on SVT-AV1 library is set-up using `pkg-config`.
 
 ### Linux specific instructions
+
 Make sure first that SVT-AV1 library is installed and can be found using pkg-config. You can do that using CMake:
 
     cmake -P SVT-AV1/Build/linux/release/Source/Lib/Encoder/cmake_install.cmake
@@ -48,6 +55,7 @@ Then you can compile and install the plugin the following way:
     meson -Dprefix=/usr build && ninja -C build && sudo ninja -C build install
 
 ### Windows specific instructions
+
 Make sure first that SVT-AV1 library is installed and can be found using pkg-config. You can do that using CMake:
 
     cmake -P SVT-AV1\Build\Windows\Source\Lib\Encoder\cmake_install.cmake
