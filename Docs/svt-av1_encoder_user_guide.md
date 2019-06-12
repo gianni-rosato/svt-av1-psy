@@ -21,13 +21,11 @@ This section describes how to run the sample encoder application that uses the S
 
 The SVT-AV1 Encoder supports the following input formats:
 
+_8-bit yuv420p_\
 ![alt](8bit_yuv420p.png)
 
-_8-bit yuv420p_
-
+_10-bit yuv420p10le_\
 ![alt](10bit_yuv420p.png)
-
-_10-bit yuv420p10le_
 
 ### Compressed 10-bit format
 
