@@ -30,7 +30,7 @@ This section describes how to run the sample decoder application `SvtAv1DecApp.e
 
 The sample application typically takes the following command line parameters:
 
-```
+``` none
 -help                     Show usage options and exit
 -i <arg>                  Input file name
 -o <arg>                  Output file name
