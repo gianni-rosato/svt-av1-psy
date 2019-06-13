@@ -1,6 +1,7 @@
 # Scalable Video Technology for AV1 Decoder (SVT-AV1 Decoder) User Guide
 
 ## Table of Contents
+
 1. [Introduction](#introduction)
 2. [Known Limitations](#known-limitations)
 3. [Sample Application Guide](#sample-application-guide)
@@ -14,6 +15,7 @@ This document describes how to use the Scalable Video Technology for AV1 Decoder
 ## Known Limitations
 
 Initial version:
+
 - Supports only I-frames without loopfilter (deblocking, cdef and self guided restoration filters not supported)
 - Supports only 8-bit and 10-bit 4:2:0 content
 - Tested only on Windows
@@ -24,11 +26,11 @@ This section describes how to run the sample decoder application that uses the S
 
 ### Running the decoder
 
-This section describes how to run the sample decoder application SvtAv1DecApp.exe (on Windows\*) or SvtAv1DecApp (on Linux\*) from the command line, including descriptions of the most commonly used input parameters and outputs.
+This section describes how to run the sample decoder application `SvtAv1DecApp.exe` (on Windows\*) or `SvtAv1DecApp` (on Linux\*) from the command line, including descriptions of the most commonly used input parameters and outputs.
 
 The sample application typically takes the following command line parameters:
 
-```
+``` none
 -help                     Show usage options and exit
 -i <arg>                  Input file name
 -o <arg>                  Output file name
@@ -41,18 +43,19 @@ The sample application typically takes the following command line parameters:
 -md5                      MD5 support flag
 ```
 
-Sample usage
-`SvtAv1DecApp.exe -i test.ivf -o out.yuv`
+Sample usage: `SvtAv1DecApp.exe -i test.ivf -o out.yuv`
 
 #### List of all configuration parameters
 
-_WIP_
+- _WIP_
 
 ## Legal Disclaimer
 
-Optimization Notice: Intel compilers may or may not optimize to the same degree for non-Intel microprocessors for optimizations that are not unique to Intel microprocessors. These optimizations include SSE2, SSE3, and SSSE3 instruction sets and other optimizations. Intel does not guarantee the availability, functionality, or effectiveness of any optimization on microprocessors not manufactured by Intel. Microprocessor-dependent optimizations in this product are intended for use with Intel microprocessors. Certain optimizations not specific to Intel microarchitecture are reserved for Intel microprocessors. Please refer to the applicable product User and Reference Guides for more information regarding the specific instruction sets covered by this notice.
+### Optimization Notice
 
-Notice Revision #20110804
+Intel compilers may or may not optimize to the same degree for non-Intel microprocessors for optimizations that are not unique to Intel microprocessors. These optimizations include SSE2, SSE3, and SSSE3 instruction sets and other optimizations. Intel does not guarantee the availability, functionality, or effectiveness of any optimization on microprocessors not manufactured by Intel. Microprocessor-dependent optimizations in this product are intended for use with Intel microprocessors. Certain optimizations not specific to Intel microarchitecture are reserved for Intel microprocessors. Please refer to the applicable product User and Reference Guides for more information regarding the specific instruction sets covered by this notice.
+
+### Notice Revision #20110804
 
 Intel technologies features and benefits depend on system configuration and may require enabled hardware, software or service activation. Performance varies depending on system configuration. No computer system can be absolutely secure. Check with your system manufacturer or retailer.
 

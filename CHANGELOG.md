@@ -1,4 +1,7 @@
+# Changelog
+
 ## [upcoming]
+
 - Inital decoder implementation
 - Static library support
 - Alt-ref pictures - temporal filtering

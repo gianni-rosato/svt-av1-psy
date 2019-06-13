@@ -1,6 +1,6 @@
 # BSD+Patent
 
-**SPDX short identifier: BSD-2-Clause-Patent**
+## SPDX short identifier: BSD-2-Clause-Patent
 
 *Note: This license is designed to provide: a) a simple permissive license; b) that is compatible with the GNU General Public License (GPL), version 2; and c) which also has an express patent grant included.*
 

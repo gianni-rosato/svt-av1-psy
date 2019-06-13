@@ -1,14 +1,15 @@
 
 # Code Style
 
-This style guide comes from `dav1d`: <https://code.videolan.org/videolan/dav1d/wikis/Coding-style>
+This style guide comes from [`dav1d`](https://code.videolan.org/videolan/dav1d/wikis/Coding-style)
 
 Tabs vs Spaces\
-**No tabs,** only spaces; 4-space indentation;
+**No tabs,** only spaces; 4-space indentation
 
 Be aware that some tools might add tabs when auto aligning the code, please check your commits with a diff tool for tabs.
 
-for multi-line statements, the indentation of the next line depends on the context of the statement and braces around it. For example, if you have a long assignment, you can choose to either align it to the = of the first line, or (if that leads to less lines of code) just indent 1 level further from the first line's indentation level:
+for multi-line statements, the indentation of the next line depends on the context of the statement and braces around it.\
+For example, if you have a long assignment, you can choose to either align it to the = of the first line, or (if that leads to less lines of code) just indent 1 level further from the first line's indentation level:
 
 ``` c
 const int my_var = something1 &&
@@ -29,8 +30,8 @@ const int my_var = (something1 +
                     something2) * something3;
 ```
 
-use `CamelCase` for types and `under_score` for variable names (`TypeName my_instance;`)\
-we use const where possible, except in forward function declarations in header files, where we only use it for const-arrays:
+Use `CamelCase` for types and `under_score` for variable names (`TypeName my_instance;`)\
+Use const where possible, except in forward function declarations in header files, where we only use it for const-arrays:
 
 ``` c
 int my_func(const array *values, int arg);
@@ -42,7 +43,7 @@ int my_func(const array *const values, const int num) {
 }
 ```
 
-braces go on the same line for single-line statements, but on a new line for multi-line statements:
+Braces go on the same line for single-line statements, but on a new line for multi-line statements:
 
 ``` c
 static void function(const int argument) {
@@ -60,7 +61,7 @@ static void function(const int argument1,
 }
 ```
 
-braces are only necessary for multi-line code blocks or multi-line condition statements;
+Braces are only necessary for multi-line code blocks or multi-line condition statements;
 
 ``` c
 if (condition1 && condition2)
@@ -86,7 +87,7 @@ if (condition1 &&
 }
 ```
 
-switch/case are indented at the same level, and the code block is indented one level deeper:
+Switch/case are indented at the same level, and the code block is indented one level deeper:
 
 ``` c
 switch (a) {
@@ -96,7 +97,7 @@ case 1:
 }
 ```
 
-but for very trivial blocks, you can also put everything on one single line
+but for very trivial blocks, you can also put everything on one single line:
 
 ``` c
 switch (a) {
@@ -104,11 +105,11 @@ case 1: bla(); break;
 }
 ```
 
-lines should not be longer than 80 characters. We allow exceptions if wrapping the line would lead to exceptional ugliness, and this is done on a case-by-case basis;
-don't use goto except for standard error handling;
-use native types (`int`, `unsigned`, etc.) for scalar variables where the upper bound of a size doesn't matter;
-use sized types (`uint8_t`, `int16_t`, etc.) for vector/array variables where the upper bound of the size matters;
-use dynamic types (`pixel`, `coef`, etc.) so multi-bitdepth templating works as it should.
+Lines should idealy not be longer than 80 characters. We allow exceptions if wrapping the line would lead to exceptional ugliness, and this is done on a case-by-case basis.\
+Don't use `goto` except for standard error handling.\
+Use native types (`int`, `unsigned`, etc.) for scalar variables where the upper bound of a size doesn't matter.\
+Use sized types (`uint8_t`, `int16_t`, etc.) for vector/array variables where the upper bound of the size matters.\
+Use dynamic types (`pixel`, `coef`, etc.) so multi-bitdepth templating works as it should.
 
 ## Doxygen Documentation
 
@@ -136,7 +137,7 @@ use dynamic types (`pixel`, `coef`, etc.) so multi-bitdepth templating works as 
 
 /* Macro Description */
 /** Brief description of MACRO */
-\#define MACRO   val
+#define MACRO   val
 
 /* enum Description : description for all entries */
 /** Brief description of ENUMs */
@@ -191,27 +192,41 @@ struct {
 
 ## Post-coding
 
-After coding, make sure to trim any trailing white space\
-E.g. For bash:
+After coding, make sure to trim any trailing white space and convert any tabs to 4 spaces
+
+### For bash
 
 ``` bash
-find . -name <Filename> -type f -exec sed -i 's/[[:space:]]*$//' {} \;
+find . -name <Filename> -type f -exec sed -i 's/\t/    /;s/[[:space:]]*$//' {} +
 ```
 
-or
+Where `<Filename>` is `"*.c"` or `"*.(your file extention here)"`\
+Search the `find` man page or tips and tricks for more options.\
+**Do not** use find on root without a filter or with the `.git` folder still present. Doing so will corrupt your repo folder and you will need to copy a new `.git` folder and re-setup your folder.
+
+Alternatively, for single file(s):
 
 ``` bash
-sed -i 's/[[:space:]]*$//' <Filename>
+sed -i 's/\t/    /;s/[[:space:]]*$//' <Filename/Filepath>
 ```
 
-For Powershell:
+Note: For macOS and BSD related distros, you may need to use `sed -i ''` inplace due to differences with GNU sed.
+
+### For Powershell/pwsh
 
 ``` Powershell
-ls -Recurse -File [-Filter *.c] | ForEach-Object{$(Get-Content $_.FullName | Foreach {Write-Output "$($_.TrimEnd())`n"}) | Set-Content -NoNewline $_.FullName}
+ls -Recurse -File -Filter *.c | ForEach-Object{$(Get-Content $_.FullName | Foreach {Write-Output "$($_.TrimEnd().Replace("`t","    "))`n"}) | Set-Content -NoNewline -Encoding utf8 $_.FullName}
 ```
 
-Or
+Where `-Filter *.c` has your extention/filename(s).\
+This does not work with `pwsh` on non-windows OS.\
+Search the docs for [`pwsh`](https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-6) related commands and [`powershell`](https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-5.1) related commands for more information on what they do.\
+**Do not** use ls without a `-Filter` on the root directory or with the `.git` folder still present. Doing so will corrupt your repo folder and you will need to copy a new `.git` folder and re-setup your folder.
+
+Alternatively, for a single file:
 
 ``` Powershell
-Get-content <filename> | Foreach {Write-Output "$($_.TrimEnd())`n"}) | Set-Content -NoNewline <filename>
+$filename="<filename>"; Get-content $filename | Foreach {Write-Output "$($_.TrimEnd().Replace("`t","    "))`n"}) | Set-Content -NoNewline $filename
 ```
+
+Where `<filename>` is the specific file you want to trim.
