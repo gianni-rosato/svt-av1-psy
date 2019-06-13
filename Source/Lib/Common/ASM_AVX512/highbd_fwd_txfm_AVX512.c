@@ -12,7 +12,7 @@ void Av1TransformConfig(
     TxSize tx_size,
     Txfm2DFlipCfg *cfg);
 
-typedef void(*fwd_transform_1d_avx512)(const __m512i *in, __m512i *out, int8_t bit,
+typedef void(*fwd_transform_1d_avx512)(const __m512i *in, __m512i *out, const int8_t bit,
     const int32_t num_cols);
 
 #define btf_32_type0_avx512_new(ww0, ww1, in0, in1, out0, out1, r, bit) \
@@ -21,12 +21,12 @@ typedef void(*fwd_transform_1d_avx512)(const __m512i *in, __m512i *out, int8_t b
     const __m512i in1_w1 = _mm512_mullo_epi32(in1, ww1);                   \
     out0 = _mm512_add_epi32(in0_w0, in1_w1);                               \
     out0 = _mm512_add_epi32(out0, r);                                      \
-    out0 = _mm512_srai_epi32(out0, bit);                                   \
+    out0 = _mm512_srai_epi32(out0, (uint8_t)bit);                          \
     const __m512i in0_w1 = _mm512_mullo_epi32(in0, ww1);                   \
     const __m512i in1_w0 = _mm512_mullo_epi32(in1, ww0);                   \
     out1 = _mm512_sub_epi32(in0_w1, in1_w0);                               \
     out1 = _mm512_add_epi32(out1, r);                                      \
-    out1 = _mm512_srai_epi32(out1, bit);                                   \
+    out1 = _mm512_srai_epi32(out1, (uint8_t) bit);                         \
     } while (0)
 
 // out0 = in0*w0 + in1*w1
@@ -212,7 +212,7 @@ static INLINE void load_buffer_16x16_avx512(const int16_t *input, __m512i *out,
 
 }
 
-static void fidtx16x16_avx512(const __m512i *in, __m512i *out, int8_t bit, int32_t col_num) {
+static void fidtx16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit, const int32_t col_num) {
     (void)bit;
     const uint8_t bits = 12;       // NewSqrt2Bits = 12
     const int32_t sqrt = 2 * 5793; // 2 * NewSqrt2
@@ -259,7 +259,7 @@ static INLINE __m512i half_btf_avx512(const __m512i *w0, const __m512i *n0,
     return x;
 }
 
-static void fadst16x16_avx512(const __m512i *in, __m512i *out, int8_t bit, const int32_t col_num) {
+static void fadst16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit, const int32_t col_num) {
     const int32_t *cospi = cospi_arr(bit);
     const __m512i cospi32 = _mm512_set1_epi32(cospi[32]);
     const __m512i cospi48 = _mm512_set1_epi32(cospi[48]);
@@ -504,7 +504,7 @@ static void fadst16x16_avx512(const __m512i *in, __m512i *out, int8_t bit, const
         out[15 * col_num + col] = v[0];
     }
 }
-static void fdct16x16_avx512(const __m512i *in, __m512i *out, int8_t bit, const int32_t col_num) {
+static void fdct16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit, const int32_t col_num) {
     const int32_t *cospi = cospi_arr(bit);
     const __m512i cospi32 = _mm512_set1_epi32(cospi[32]);
     const __m512i cospim32 = _mm512_set1_epi32(-cospi[32]);
@@ -954,7 +954,7 @@ static INLINE void transpose_16nx16n_avx512(int32_t txfm_size, const __m512i *in
 }
 
 static void av1_fdct32_new_avx512(const __m512i *input, __m512i *output,
-    int8_t cos_bit, const int32_t col_num, const int32_t stride) {
+    const int8_t cos_bit, const int32_t col_num, const int32_t stride) {
     const int32_t *cospi = cospi_arr(cos_bit);
     const __m512i __rounding = _mm512_set1_epi32(1 << (cos_bit - 1));
     const int32_t columns = col_num >> 4;
@@ -1325,11 +1325,11 @@ static INLINE void fdct32x32_avx512(const __m512i *input, __m512i *output,
     av1_fdct32_new_avx512(input, output, cos_bit, txfm_size, col_num);
 }
 
-void av1_idtx32_new_avx512(const __m512i *input, __m512i *output, int8_t cos_bit,
+void av1_idtx32_new_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit,
     const int32_t col_num) {
     (void)cos_bit;
     for (int32_t i = 0; i < 32; i++) {
-        output[i * col_num] = _mm512_slli_epi32(input[i * col_num], 2);
+        output[i * col_num] = _mm512_slli_epi32(input[i * col_num], (uint8_t)2);
     }
 }
 
@@ -1342,10 +1342,10 @@ static void fidtx32x32_avx512(const __m512i *input, __m512i *output,
     }
 }
 
-typedef void(*TxfmFuncAVX2)(const __m512i *input, __m512i *output,
+typedef void(*TxfmFuncAVX512)(const __m512i *input, __m512i *output,
     const int8_t cos_bit, const int8_t *stage_range);
 
-static INLINE TxfmFuncAVX2 fwd_txfm_type_to_func(TxfmType TxfmType) {
+static INLINE TxfmFuncAVX512 fwd_txfm_type_to_func(TxfmType TxfmType) {
     switch (TxfmType) {
     case TXFM_TYPE_DCT32: return fdct32x32_avx512; break;
     case TXFM_TYPE_IDENTITY32: return fidtx32x32_avx512; break;
@@ -1403,8 +1403,8 @@ static INLINE void fwd_txfm2d_32x32_avx512(const int16_t *input, int32_t *output
     const int8_t *stage_range_row = cfg->stage_range_row;
     const int8_t cos_bit_col = cfg->cos_bit_col;
     const int8_t cos_bit_row = cfg->cos_bit_row;
-    const TxfmFuncAVX2 txfm_func_col = fwd_txfm_type_to_func(cfg->txfm_type_col);
-    const TxfmFuncAVX2 txfm_func_row = fwd_txfm_type_to_func(cfg->txfm_type_row);
+    const TxfmFuncAVX512 txfm_func_col = fwd_txfm_type_to_func(cfg->txfm_type_col);
+    const TxfmFuncAVX512 txfm_func_row = fwd_txfm_type_to_func(cfg->txfm_type_row);
     ASSERT(txfm_func_col);
     ASSERT(txfm_func_row);
     __m512i *buf_512 = (__m512i *)txfm_buf;
@@ -1475,7 +1475,7 @@ static INLINE void load_buffer_64x64_avx512(const int16_t *input,
 }
 
 static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output,
-    int8_t cos_bit, const int32_t col_num, const int32_t stride) {
+    const int8_t cos_bit, const int32_t col_num, const int32_t stride) {
     const int32_t *cospi = cospi_arr(cos_bit);
     const __m512i __rounding = _mm512_set1_epi32(1 << (cos_bit - 1));
     const int32_t columns = col_num >> 4;
@@ -2508,7 +2508,7 @@ static INLINE void av1_round_shift_rect_array_32_avx512(__m512i *input,
             r1 = _mm512_srai_epi32(r0, (uint8_t)bit);
             r2 = _mm512_mullo_epi32(sqrt2, r1);
             r3 = _mm512_add_epi32(r2, round2);
-            output[i] = _mm512_srai_epi32(r3, 12);
+            output[i] = _mm512_srai_epi32(r3, (uint8_t)12);
         }
     }
     else {
@@ -2517,7 +2517,7 @@ static INLINE void av1_round_shift_rect_array_32_avx512(__m512i *input,
             r0 = _mm512_slli_epi32(input[i], -bit);
             r1 = _mm512_mullo_epi32(sqrt2, r0);
             r2 = _mm512_add_epi32(r1, round2);
-            output[i] = _mm512_srai_epi32(r2, 12);
+            output[i] = _mm512_srai_epi32(r2, (uint8_t)12);
         }
     }
 }
@@ -2531,8 +2531,8 @@ void av1_fwd_txfm2d_32x64_avx512(int16_t *input, int32_t *output, uint32_t strid
     const int32_t txh_idx = get_txh_idx(TX_32X64);
     const int32_t txfm_size_col = tx_size_wide[TX_32X64];
     const int32_t txfm_size_row = tx_size_high[TX_32X64];
-    int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
+    const int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
+    const int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t num_row = txfm_size_row >> 4;
     const int32_t num_col = txfm_size_col >> 4;
 
@@ -2562,8 +2562,8 @@ void av1_fwd_txfm2d_64x32_avx512(int16_t *input, int32_t *output, uint32_t strid
     const int32_t txh_idx = get_txh_idx(TX_64X32);
     const int32_t txfm_size_col = tx_size_wide[TX_64X32];
     const int32_t txfm_size_row = tx_size_high[TX_64X32];
-    int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
+    const int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
+    const int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t num_row = txfm_size_row >> 4;
     const int32_t num_col = txfm_size_col >> 4;
 
@@ -2597,8 +2597,8 @@ void av1_fwd_txfm2d_16x64_avx512(int16_t *input, int32_t *output, uint32_t strid
     const int32_t txh_idx = get_txh_idx(TX_16X64);
     const int32_t txfm_size_col = tx_size_wide[TX_16X64];
     const int32_t txfm_size_row = tx_size_high[TX_16X64];
-    int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
+    const int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
+    const int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t num_row = txfm_size_row >> 4;
     const int32_t num_col = txfm_size_col >> 4;
 
@@ -2629,8 +2629,8 @@ void av1_fwd_txfm2d_64x16_avx512(int16_t *input, int32_t *output, uint32_t strid
     const int32_t txh_idx = get_txh_idx(TX_64X16);
     const int32_t txfm_size_col = tx_size_wide[TX_64X16];
     const int32_t txfm_size_row = tx_size_high[TX_64X16];
-    int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
+    const int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
+    const int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t num_row = txfm_size_row >> 4;
     const int32_t num_col = txfm_size_col >> 4;
     // column tranform
@@ -2658,7 +2658,7 @@ void av1_fwd_txfm2d_64x16_avx512(int16_t *input, int32_t *output, uint32_t strid
 }
 
 static void av1_fdct32_new_line_wraper_avx512(const __m512i *input,
-    __m512i *output, int8_t cos_bit, const int32_t stride) {
+    __m512i *output, const int8_t cos_bit, const int32_t stride) {
     av1_fdct32_new_avx512(input, output, cos_bit, 16, stride);
 }
 
@@ -2709,8 +2709,8 @@ void av1_fwd_txfm2d_16x32_avx512(int16_t *input, int32_t *output, uint32_t strid
     const int32_t txh_idx = get_txh_idx(TX_16X32);
     const fwd_transform_1d_avx512 col_txfm = col_fwdtxfm_16x32_arr[tx_type];
     const fwd_transform_1d_avx512 row_txfm = row_fwdtxfm_16x32_arr[tx_type];
-    int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
+    const int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
+    const int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t txfm_size_col = tx_size_wide[TX_16X32];
     const int32_t txfm_size_row = tx_size_high[TX_16X32];
     const int32_t num_row = txfm_size_row >> 4;
@@ -2742,8 +2742,8 @@ void av1_fwd_txfm2d_32x16_avx512(int16_t *input, int32_t *output, uint32_t strid
     const int32_t txh_idx = get_txh_idx(TX_32X16);
     const fwd_transform_1d_avx512 col_txfm = row_fwdtxfm_16x32_arr[tx_type];
     const fwd_transform_1d_avx512 row_txfm = col_fwdtxfm_16x32_arr[tx_type];
-    int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
+    const int8_t bitcol = fwd_cos_bit_col[txw_idx][txh_idx];
+    const int8_t bitrow = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t txfm_size_col = tx_size_wide[TX_32X16];
     const int32_t txfm_size_row = tx_size_high[TX_32X16];
     const int32_t num_row = txfm_size_row >> 4;
