@@ -8,7 +8,7 @@ extern const int8_t *eb_inv_txfm_shift_ls[];
 const int32_t *cospi_arr(int32_t n);
 const int32_t *sinpi_arr(int32_t n);
 
-typedef void(*inv_transform_1d_avx512)(__m512i *in, __m512i *out, int8_t bit,
+typedef void(*inv_transform_1d_avx512)(__m512i *in, __m512i *out, const int8_t bit,
     int32_t num_cols);
 
 #define TRANSPOSE_4X4_AVX512(x0, x1, x2, x3, y0, y1, y2, y3) \
@@ -705,7 +705,7 @@ static void load_buffer_16x16_avx512(const int32_t *coeff, __m512i *in) {
 static INLINE __m256i highbd_clamp_epi16_avx512(__m256i u, int32_t bd) {
     const __m256i zero = _mm256_setzero_si256();
     const __m256i one = _mm256_set1_epi16(1);
-    const __m256i max = _mm256_sub_epi16(_mm256_slli_epi16(one, bd), one);
+    const __m256i max = _mm256_sub_epi16(_mm256_slli_epi16(one, (uint8_t)bd), one);
     __m256i clamped, mask;
 
     mask = _mm256_cmpgt_epi16(u, max);
@@ -819,7 +819,7 @@ static INLINE void iidentity16_and_round_shift_avx512(__m512i *input, int32_t sh
     for (int32_t i = 0; i < 16; i++) {
         input[i] = _mm512_mullo_epi32(input[i], scalar);
         input[i] = _mm512_add_epi32(input[i], rnding);
-        input[i] = _mm512_srai_epi32(input[i], NewSqrt2Bits - 1 + shift);
+        input[i] = _mm512_srai_epi32(input[i], (uint8_t)(NewSqrt2Bits - 1 + shift));
     }
 }
 
@@ -1418,7 +1418,7 @@ static INLINE void transpose_16nx16n_avx512(int32_t txfm_size, const __m512i *in
     }
 }
 
-static void idct32_avx512(__m512i *in, __m512i *out, int8_t bit, int32_t col_num) {
+static void idct32_avx512(__m512i *in, __m512i *out, const int8_t bit, int32_t col_num) {
     const int32_t *cospi = cospi_arr(bit);
     const __m512i cospi62 = _mm512_set1_epi32(cospi[62]);
     const __m512i cospi30 = _mm512_set1_epi32(cospi[30]);
@@ -2060,7 +2060,7 @@ static void load_buffer_64_avx512(const int32_t *coeff, __m512i *in) {
     }
 }
 
-static INLINE void idct16_avx512(__m512i *in, __m512i *out, int8_t bit, int32_t col_num) {
+static INLINE void idct16_avx512(__m512i *in, __m512i *out, const int8_t bit, int32_t col_num) {
 
     const int32_t *cospi = cospi_arr(bit);
     const __m512i cospi60 = _mm512_set1_epi32(cospi[60]);
@@ -2208,7 +2208,7 @@ static INLINE void idct16_avx512(__m512i *in, __m512i *out, int8_t bit, int32_t 
     }
 }
 
-static void idct64_avx512(__m512i *in, __m512i *out, int32_t bit, int32_t do_cols,
+static void idct64_avx512(__m512i *in, __m512i *out, const int8_t bit, int32_t do_cols,
     int32_t bd) {
     int32_t i, j;
     const int32_t *cospi = cospi_arr(bit);
@@ -2675,7 +2675,7 @@ static void idct64_avx512(__m512i *in, __m512i *out, int32_t bit, int32_t do_col
     }
 }
 
-static void iidtx16_avx512(__m512i *in, __m512i *out, int8_t bit, int32_t col_num) {
+static void iidtx16_avx512(__m512i *in, __m512i *out, const int8_t bit, int32_t col_num) {
     (void)bit;
     const uint8_t bits = 12;       // NewSqrt2Bits = 12
     const int32_t sqrt = 2 * 5793; // 2 * NewSqrt2
@@ -2690,11 +2690,11 @@ static void iidtx16_avx512(__m512i *in, __m512i *out, int8_t bit, int32_t col_nu
     }
 }
 
-void iidtx32_avx512(__m512i *input, __m512i *output, int8_t cos_bit,
+void iidtx32_avx512(__m512i *input, __m512i *output, const int8_t cos_bit,
     int32_t col_num) {
     (void)cos_bit;
     for (int32_t i = 0; i < 32; i++) {
-        output[i * col_num] = _mm512_slli_epi32(input[i * col_num], 2);
+        output[i * col_num] = _mm512_slli_epi32(input[i * col_num], (uint8_t)2);
     }
 }
 
@@ -2957,7 +2957,7 @@ static INLINE void av1_round_shift_array_avx512(__m512i *input,
 static INLINE void av1_round_shift_rect_array_32_avx512(__m512i *input,
     __m512i *output,
     const int32_t size,
-    const int32_t bit,
+    const int8_t bit,
     const int32_t val) {
     const __m512i sqrt2 = _mm512_set1_epi32(val);
     const __m512i round2 = _mm512_set1_epi32(1 << (12 - 1));
@@ -2970,16 +2970,16 @@ static INLINE void av1_round_shift_rect_array_32_avx512(__m512i *input,
             r1 = _mm512_srai_epi32(r0, (uint8_t)bit);
             r2 = _mm512_mullo_epi32(sqrt2, r1);
             r3 = _mm512_add_epi32(r2, round2);
-            output[i] = _mm512_srai_epi32(r3, 12);
+            output[i] = _mm512_srai_epi32(r3, (uint8_t)12);
         }
     }
     else {
         __m512i r0, r1, r2;
         for (i = 0; i < size; i++) {
-            r0 = _mm512_slli_epi32(input[i], -bit);
+            r0 = _mm512_slli_epi32(input[i], (uint8_t)-bit);
             r1 = _mm512_mullo_epi32(sqrt2, r0);
             r2 = _mm512_add_epi32(r1, round2);
-            output[i] = _mm512_srai_epi32(r2, 12);
+            output[i] = _mm512_srai_epi32(r2, (uint8_t)12);
         }
     }
 }
