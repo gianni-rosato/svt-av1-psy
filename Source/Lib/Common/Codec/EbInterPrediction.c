@@ -25,7 +25,6 @@
 #include "EbAdaptiveMotionVectorPrediction.h"
 
 #include "EbModeDecisionProcess.h"
-#include <smmintrin.h> /* SSE4.1 */
 
 #include "convolve.h"
 #include "aom_dsp_rtcd.h"

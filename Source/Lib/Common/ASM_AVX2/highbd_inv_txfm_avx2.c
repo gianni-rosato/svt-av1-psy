@@ -14,14 +14,7 @@
 #include "aom_dsp_rtcd.h"
 #include "EbTransforms.h"
 #include "av1_inv_txfm_ssse3.h"
-#include "av1_inv_txfm_avx2.h"
-
-void get_flip_cfg(TxType tx_type, int32_t *ud_flip, int32_t *lr_flip);
-int32_t get_rect_tx_log_ratio(int32_t col, int32_t row);
-
-const int32_t *sinpi_arr(int32_t n);
-const int32_t *cospi_arr(int32_t n);
-extern const int8_t *inv_txfm_shift_ls[];
+#include "txfm_common_avx2.h"
 
 static INLINE void highbd_clamp_epi32(__m256i *x, int32_t bd) {
     const __m256i zero = _mm256_setzero_si256();
@@ -6140,6 +6133,9 @@ static void idct64_avx2(__m256i *in, __m256i *out, int32_t bit, int32_t do_cols,
         }
     }
 }
+
+typedef void(*transform_1d_avx2)(__m256i *in, __m256i *out, int32_t bit,
+    int32_t do_cols, int32_t bd, int32_t out_shift);
 
 static const transform_1d_avx2
 highbd_txfm_all_1d_zeros_w8_arr[TX_SIZES][ITX_TYPES_1D][4] = {

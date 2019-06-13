@@ -13,22 +13,11 @@
 #include "aom_dsp_rtcd.h"
 #include <tmmintrin.h>
 #include "EbTransforms.h"
-static const int32_t NewSqrt2Bits = 12;
-// 2^12 * sqrt(2)
-static const int32_t NewSqrt2 = 5793;
-// 2^12 / sqrt(2)
-static const int32_t NewInvSqrt2 = 2896;
 
 #include "av1_inv_txfm_ssse3.h"
 #include "txfm_common_sse2.h"
 #include "av1_txfm_sse2.h"
 #include "transpose_sse2.h"
-
-const int32_t *cospi_arr(int32_t n);
-const int32_t *sinpi_arr(int32_t n);
-extern const int8_t *inv_txfm_shift_ls[];
-int32_t get_rect_tx_log_ratio(int32_t col, int32_t row);
-void get_flip_cfg(TxType tx_type, int32_t *ud_flip, int32_t *lr_flip);
 
 // TODO(binpengsmail@gmail.com): replace some for loop with do {} while
 
@@ -59,7 +48,8 @@ static void idct4_new_sse2(const __m128i *input, __m128i *output,
     btf_16_adds_subs_out_sse2(output[1], output[2], x[1], x[2]);
 }
 
-void idct4_w4_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
+static void idct4_w4_new_sse2(const __m128i *input, __m128i *output,
+    int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *cospi = cospi_arr(INV_COS_BIT);
     const __m128i __rounding = _mm_set1_epi32(1 << (INV_COS_BIT - 1));
@@ -85,7 +75,7 @@ void idct4_w4_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
     btf_16_adds_subs_out_sse2(output[1], output[2], x[1], x[2]);
 }
 
-void idct8_low1_new_ssse3(const __m128i *input, __m128i *output,
+static void idct8_low1_new_ssse3(const __m128i *input, __m128i *output,
     int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *cospi = cospi_arr(INV_COS_BIT);
@@ -110,7 +100,8 @@ void idct8_low1_new_ssse3(const __m128i *input, __m128i *output,
     output[4] = x[0];
 }
 
-void idct8_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
+static void idct8_new_sse2(const __m128i *input, __m128i *output,
+    int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *cospi = cospi_arr(INV_COS_BIT);
     const __m128i __rounding = _mm_set1_epi32(1 << (INV_COS_BIT - 1));
@@ -158,7 +149,8 @@ void idct8_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
     btf_16_adds_subs_out_sse2(output[3], output[4], x[3], x[4]);
 }
 
-void idct8_w4_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
+static void idct8_w4_new_sse2(const __m128i *input, __m128i *output,
+    int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *cospi = cospi_arr(INV_COS_BIT);
     const __m128i __rounding = _mm_set1_epi32(1 << (INV_COS_BIT - 1));
@@ -326,7 +318,8 @@ static void idct16_low8_new_ssse3(const __m128i *input, __m128i *output,
     idct16_stage7_sse2(output, x);
 }
 
-void idct16_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
+static void idct16_new_sse2(const __m128i *input, __m128i *output,
+    int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *cospi = cospi_arr(INV_COS_BIT);
     const __m128i __rounding = _mm_set1_epi32(1 << (INV_COS_BIT - 1));
@@ -398,7 +391,8 @@ void idct16_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
     idct16_stage7_sse2(output, x);
 }
 
-void idct16_w4_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
+static void idct16_w4_new_sse2(const __m128i *input, __m128i *output,
+    int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *cospi = cospi_arr(INV_COS_BIT);
     const __m128i __rounding = _mm_set1_epi32(1 << (INV_COS_BIT - 1));
@@ -1619,7 +1613,8 @@ static void idct64_low32_new_ssse3(const __m128i *input, __m128i *output,
     idct64_stage11_sse2(output, x);
 }
 
-void iadst4_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
+static void iadst4_new_sse2(const __m128i *input, __m128i *output,
+    int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *sinpi = sinpi_arr(INV_COS_BIT);
     const __m128i sinpi_p01_p04 = pair_set_epi16(sinpi[1], sinpi[4]);
@@ -1683,7 +1678,8 @@ void iadst4_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
 // TODO(binpengsmail@gmail.com):
 // To explore the reuse of VP9 versions of corresponding SSE2 functions and
 // evaluate whether there is a possibility for further speedup.
-void iadst4_w4_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
+static void iadst4_w4_new_sse2(const __m128i *input, __m128i *output,
+    int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *sinpi = sinpi_arr(INV_COS_BIT);
     const __m128i sinpi_p01_p04 = pair_set_epi16(sinpi[1], sinpi[4]);
@@ -1775,7 +1771,8 @@ static void iadst8_low1_new_ssse3(const __m128i *input, __m128i *output,
     output[7] = _mm_subs_epi16(__zero, x[1]);
 }
 
-void iadst8_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
+static void iadst8_new_sse2(const __m128i *input, __m128i *output,
+    int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *cospi = cospi_arr(INV_COS_BIT);
     const __m128i __zero = _mm_setzero_si128();
@@ -1843,7 +1840,8 @@ void iadst8_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
     output[7] = _mm_subs_epi16(__zero, x[1]);
 }
 
-void iadst8_w4_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
+static void iadst8_w4_new_sse2(const __m128i *input, __m128i *output,
+    int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *cospi = cospi_arr(INV_COS_BIT);
     const __m128i __zero = _mm_setzero_si128();
@@ -2087,7 +2085,9 @@ static void iadst16_low8_new_ssse3(const __m128i *input, __m128i *output,
     iadst16_stage8_ssse3(x, cospi, __rounding, cos_bit);
     iadst16_stage9_ssse3(output, x);
 }
-void iadst16_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
+
+static void iadst16_new_sse2(const __m128i *input, __m128i *output,
+    int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *cospi = cospi_arr(INV_COS_BIT);
     const __m128i __rounding = _mm_set1_epi32(1 << (INV_COS_BIT - 1));
@@ -2147,7 +2147,7 @@ void iadst16_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
     iadst16_stage9_ssse3(output, x);
 }
 
-void iadst16_w4_new_sse2(const __m128i *input, __m128i *output,
+static void iadst16_w4_new_sse2(const __m128i *input, __m128i *output,
     int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *cospi = cospi_arr(INV_COS_BIT);
@@ -2307,51 +2307,54 @@ static INLINE void lowbd_write_buffer_8xn_sse2(__m128i *in, uint8_t *output,
 // 1D functions process process 8 pixels at one time.
 static const transform_1d_ssse3
 lowbd_txfm_all_1d_w8_arr[TX_SIZES][ITX_TYPES_1D] = {
-  { idct4_new_sse2, iadst4_new_sse2, iidentity4_new_ssse3 },
-  { idct8_new_sse2, iadst8_new_sse2, iidentity8_new_sse2 },
-  { idct16_new_sse2, iadst16_new_sse2, iidentity16_new_ssse3 },
-  { idct32_new_sse2, NULL, NULL },
-  { idct64_low32_new_ssse3, NULL, NULL },
+    { idct4_new_sse2, iadst4_new_sse2, iidentity4_new_ssse3 },
+    { idct8_new_sse2, iadst8_new_sse2, iidentity8_new_sse2 },
+    { idct16_new_sse2, iadst16_new_sse2, iidentity16_new_ssse3 },
+    { idct32_new_sse2, NULL, NULL },
+    { idct64_low32_new_ssse3, NULL, NULL },
 };
 
 // functions for blocks with eob at DC and within
 // topleft 8x8, 16x16, 32x32 corner
 static const transform_1d_ssse3
 lowbd_txfm_all_1d_zeros_w8_arr[TX_SIZES][ITX_TYPES_1D][4] = {
-  {
-      { idct4_new_sse2, idct4_new_sse2, NULL, NULL },
-      { iadst4_new_sse2, iadst4_new_sse2, NULL, NULL },
-      { iidentity4_new_ssse3, iidentity4_new_ssse3, NULL, NULL },
-  },
-  { { idct8_low1_new_ssse3, idct8_new_sse2, NULL, NULL },
-    { iadst8_low1_new_ssse3, iadst8_new_sse2, NULL, NULL },
-    { iidentity8_new_sse2, iidentity8_new_sse2, NULL, NULL } },
-  {
-      { idct16_low1_new_ssse3, idct16_low8_new_ssse3, idct16_new_sse2,
+    {
+        { idct4_new_sse2, idct4_new_sse2, NULL, NULL },
+        { iadst4_new_sse2, iadst4_new_sse2, NULL, NULL },
+        { iidentity4_new_ssse3, iidentity4_new_ssse3, NULL, NULL },
+    },
+    {
+        { idct8_low1_new_ssse3, idct8_new_sse2, NULL, NULL },
+        { iadst8_low1_new_ssse3, iadst8_new_sse2, NULL, NULL },
+        { iidentity8_new_sse2, iidentity8_new_sse2, NULL, NULL } },
+    {
+        { idct16_low1_new_ssse3, idct16_low8_new_ssse3, idct16_new_sse2,
         NULL },
-      { iadst16_low1_new_ssse3, iadst16_low8_new_ssse3, iadst16_new_sse2,
+        { iadst16_low1_new_ssse3, iadst16_low8_new_ssse3, iadst16_new_sse2,
         NULL },
-      { NULL, NULL, NULL, NULL },
-  },
-  { { idct32_low1_new_ssse3, idct32_low8_new_ssse3, idct32_low16_new_ssse3,
-      idct32_new_sse2 },
-    { NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL } },
-  { { idct64_low1_new_ssse3, idct64_low8_new_ssse3, idct64_low16_new_ssse3,
-      idct64_low32_new_ssse3 },
-    { NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL } }
+        { NULL, NULL, NULL, NULL },
+    },
+    {
+        { idct32_low1_new_ssse3, idct32_low8_new_ssse3, idct32_low16_new_ssse3,
+          idct32_new_sse2 },
+        { NULL, NULL, NULL, NULL },
+        { NULL, NULL, NULL, NULL } },
+    {
+        { idct64_low1_new_ssse3, idct64_low8_new_ssse3, idct64_low16_new_ssse3,
+          idct64_low32_new_ssse3 },
+        { NULL, NULL, NULL, NULL },
+        { NULL, NULL, NULL, NULL } }
 };
 
 // 1D functions process process 4 pixels at one time.
 // used in 4x4, 4x8, 4x16, 8x4, 16x4
 static const transform_1d_ssse3
 lowbd_txfm_all_1d_w4_arr[TX_SIZES][ITX_TYPES_1D] = {
-  { idct4_w4_new_sse2, iadst4_w4_new_sse2, iidentity4_new_ssse3 },
-  { idct8_w4_new_sse2, iadst8_w4_new_sse2, iidentity8_new_sse2 },
-  { idct16_w4_new_sse2, iadst16_w4_new_sse2, iidentity16_new_ssse3 },
-  { NULL, NULL, NULL },
-  { NULL, NULL, NULL },
+    { idct4_w4_new_sse2, iadst4_w4_new_sse2, iidentity4_new_ssse3 },
+    { idct8_w4_new_sse2, iadst8_w4_new_sse2, iidentity8_new_sse2 },
+    { idct16_w4_new_sse2, iadst16_w4_new_sse2, iidentity16_new_ssse3 },
+    { NULL, NULL, NULL },
+    { NULL, NULL, NULL },
 };
 
 static INLINE void iidentity_row_8xn_ssse3(__m128i *out, const int32_t *input,
@@ -2445,9 +2448,9 @@ static INLINE void lowbd_inv_txfm2d_add_idtx_ssse3(const int32_t *input,
     }
 }
 
-void lowbd_inv_txfm2d_add_4x4_ssse3(const int32_t *input, uint8_t *output,
-    int32_t stride, TxType tx_type,
-    TxSize tx_size_, int32_t eob) {
+static void lowbd_inv_txfm2d_add_4x4_ssse3(const int32_t *input,
+    uint8_t *output, int32_t stride, TxType tx_type, TxSize tx_size_,
+    int32_t eob) {
     (void)tx_size_;
     (void)eob;
     __m128i buf[4];
@@ -2715,9 +2718,9 @@ static INLINE void lowbd_inv_txfm2d_add_universe_ssse3(
     }
 }
 
-void lowbd_inv_txfm2d_add_4x8_ssse3(const int32_t *input, uint8_t *output,
-    int32_t stride, TxType tx_type,
-    TxSize tx_size_, int32_t eob) {
+static void lowbd_inv_txfm2d_add_4x8_ssse3(const int32_t *input,
+    uint8_t *output, int32_t stride, TxType tx_type, TxSize tx_size_,
+    int32_t eob) {
     (void)tx_size_;
     (void)eob;
     __m128i buf[8];
@@ -2754,9 +2757,9 @@ void lowbd_inv_txfm2d_add_4x8_ssse3(const int32_t *input, uint8_t *output,
     lowbd_write_buffer_4xn_sse2(buf, output, stride, ud_flip, txfm_size_row);
 }
 
-void lowbd_inv_txfm2d_add_8x4_ssse3(const int32_t *input, uint8_t *output,
-    int32_t stride, TxType tx_type,
-    TxSize tx_size_, int32_t eob) {
+static void lowbd_inv_txfm2d_add_8x4_ssse3(const int32_t *input,
+    uint8_t *output, int32_t stride, TxType tx_type, TxSize tx_size_,
+    int32_t eob) {
     (void)tx_size_;
     (void)eob;
     __m128i buf[8];
@@ -2793,9 +2796,9 @@ void lowbd_inv_txfm2d_add_8x4_ssse3(const int32_t *input, uint8_t *output,
     lowbd_write_buffer_8xn_sse2(buf, output, stride, ud_flip, txfm_size_row);
 }
 
-void lowbd_inv_txfm2d_add_4x16_ssse3(const int32_t *input, uint8_t *output,
-    int32_t stride, TxType tx_type,
-    TxSize tx_size_, int32_t eob) {
+static void lowbd_inv_txfm2d_add_4x16_ssse3(const int32_t *input,
+    uint8_t *output, int32_t stride, TxType tx_type, TxSize tx_size_,
+    int32_t eob) {
     (void)tx_size_;
     (void)eob;
     __m128i buf[16];
@@ -2838,9 +2841,9 @@ void lowbd_inv_txfm2d_add_4x16_ssse3(const int32_t *input, uint8_t *output,
     lowbd_write_buffer_4xn_sse2(buf, output, stride, ud_flip, txfm_size_row);
 }
 
-void lowbd_inv_txfm2d_add_16x4_ssse3(const int32_t *input, uint8_t *output,
-    int32_t stride, TxType tx_type,
-    TxSize tx_size_, int32_t eob) {
+static void lowbd_inv_txfm2d_add_16x4_ssse3(const int32_t *input,
+    uint8_t *output, int32_t stride, TxType tx_type, TxSize tx_size_,
+    int32_t eob) {
     (void)tx_size_;
     (void)eob;
     __m128i buf[16];
@@ -2919,6 +2922,7 @@ void av1_lowbd_inv_txfm2d_add_ssse3(const int32_t *input, uint8_t *output,
         break;
     }
 }
+
 void av1_inv_txfm_add_ssse3(const TranLow *dqcoeff, uint8_t *dst, int32_t stride,
     const TxfmParam *txfm_param) {
     const TxType tx_type = txfm_param->tx_type;

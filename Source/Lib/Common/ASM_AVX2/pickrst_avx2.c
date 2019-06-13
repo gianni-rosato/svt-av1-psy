@@ -3422,12 +3422,6 @@ void av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8,
     int32_t k;
     int16_t *d, *s;
 
-    uint8_t bit_depth_divider = 1;
-    if (bit_depth == AOM_BITS_12)
-        bit_depth_divider = 16;
-    else if (bit_depth == AOM_BITS_10)
-        bit_depth_divider = 4;
-
     assert(!(height % 2));
 
     // The maximum input size is width * height, which is

@@ -5971,8 +5971,6 @@ void ext_all_sad_calculation_8x8_16x16_avx2(
     //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
-            const uint32_t blockIndex = 16 * y * src_stride + 16 * x;
-            const uint32_t searchPositionIndex = 16 * y * ref_stride + 16 * x;
             const uint32_t start_16x16_pos = offsets[4 * y + x];
             const uint32_t start_8x8_pos = 4 * start_16x16_pos;
             const uint8_t *s = src + 16 * y * src_stride + 16 * x;

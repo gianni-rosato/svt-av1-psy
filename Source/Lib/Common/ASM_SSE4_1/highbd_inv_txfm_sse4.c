@@ -23,16 +23,6 @@
 #include "highbd_txfm_utility_sse4.h"
 #include "EbTransforms.h"
 
-const int32_t *cospi_arr(int32_t n);
-const int32_t *sinpi_arr(int32_t n);
-extern const int8_t *inv_txfm_shift_ls[];
-
-#define NewSqrt2Bits ((int32_t)12)
-// 2^12 * sqrt(2)
-static const int32_t NewSqrt2 = 5793;
-// 2^12 / sqrt(2)
-static const int32_t NewInvSqrt2 = 2896;
-
 typedef enum ATTRIBUTE_PACKED {
     IDCT_1D,
     IADST_1D,
@@ -69,8 +59,6 @@ static const ITX_TYPE_1D hitx_1d_tab[TX_TYPES] = {
 
 typedef void(*transform_1d_sse4_1)(__m128i *in, __m128i *out, int32_t bit,
     int32_t do_cols, int32_t bd, int32_t out_shift);
-
-void get_flip_cfg(TxType tx_type, int32_t *ud_flip, int32_t *lr_flip);
 
 static INLINE void load_buffer_4x4(const int32_t *coeff, __m128i *in) {
     in[0] = _mm_load_si128((const __m128i *)(coeff + 0));

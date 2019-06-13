@@ -49,6 +49,9 @@ using InvRectTxfm2dType1Func = void (*)(const int32_t *input, uint16_t *output,
 using InvRectTxfm2dType2Func = void (*)(const int32_t *input, uint16_t *output,
                                         int32_t stride, TxType tx_type,
                                         TxSize tx_size, int32_t bd);
+using LowbdInvTxfm2dFunc = void (*)(const int32_t *input, uint8_t *output,
+                                    int32_t stride, TxType tx_type,
+                                    TxSize tx_size, int32_t eob);
 typedef struct {
     const char *name;
     InvSqrTxfm2dFun ref_func;
@@ -164,9 +167,13 @@ static const InvRectType2TxfmFuncPair *get_rect_type2_func_pair(
  * AssembleType: avx2 and sse4_1
  *
  */
-class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
+
+using InvTxfm2dParam = std::tuple<LowbdInvTxfm2dFunc, int>;
+
+class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
   public:
-    InvTxfm2dAsmTest() : bd_(GetParam()) {
+    InvTxfm2dAsmTest()
+        : bd_(TEST_GET_PARAM(1)), target_func_(TEST_GET_PARAM(0)) {
         // unsigned bd_ bits random
         u_bd_rnd_ = new SVTRandom(0, (1 << bd_) - 1);
         s_bd_rnd_ = new SVTRandom(-(1 << bd_) + 1, (1 << bd_) - 1);
@@ -355,7 +362,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
                             static_cast<uint8_t>(output_test_[i * stride_ + j]);
                 }
 
-                av1_lowbd_inv_txfm2d_add_ssse3(
+                target_func_(
                     input_, lowbd_output_test_, stride_, type, tx_size, eob);
                 if (tx_size >= TX_SIZES)
                     lowbd_rect_ref_funcs[tx_size](
@@ -588,6 +595,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
     DECLARE_ALIGNED(32, uint16_t, output_test_[MAX_TX_SQUARE]);
     DECLARE_ALIGNED(32, uint16_t, output_ref_[MAX_TX_SQUARE]);
     DECLARE_ALIGNED(32, uint8_t, lowbd_output_test_[MAX_TX_SQUARE]);
+    LowbdInvTxfm2dFunc target_func_;
 };
 
 TEST_P(InvTxfm2dAsmTest, sqr_txfm_match_test) {
@@ -624,11 +632,24 @@ TEST_P(InvTxfm2dAsmTest, HandleTransform_match_test) {
     run_HandleTransform_match_test();
 }
 
-TEST_P(InvTxfm2dAsmTest, HandleTransform_speed_test) {
+TEST_P(InvTxfm2dAsmTest, DISABLED_HandleTransform_speed_test) {
     run_HandleTransform_speed_test();
 }
 
-INSTANTIATE_TEST_CASE_P(TX, InvTxfm2dAsmTest,
-                        ::testing::Values(static_cast<int>(AOM_BITS_8),
-                                          static_cast<int>(AOM_BITS_10)));
+INSTANTIATE_TEST_CASE_P(
+    TX, InvTxfm2dAsmTest,
+    ::testing::Combine(::testing::Values(av1_lowbd_inv_txfm2d_add_ssse3),
+                       ::testing::Values(static_cast<int>(AOM_BITS_8),
+                                         static_cast<int>(AOM_BITS_10))));
+
+extern "C" void av1_lowbd_inv_txfm2d_add_avx2(const int32_t *input,
+    uint8_t *output, int32_t stride, TxType tx_type, TxSize tx_size,
+    int32_t eob);
+
+INSTANTIATE_TEST_CASE_P(
+    TX_AVX2, InvTxfm2dAsmTest,
+    ::testing::Combine(::testing::Values(av1_lowbd_inv_txfm2d_add_avx2),
+                       ::testing::Values(static_cast<int>(AOM_BITS_8),
+                                         static_cast<int>(AOM_BITS_10))));
+
 }  // namespace
