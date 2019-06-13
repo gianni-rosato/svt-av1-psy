@@ -197,7 +197,7 @@ After coding, make sure to trim any trailing white space and convert any tabs to
 ### For bash
 
 ``` bash
-find . -name <Filename> -type f -exec sed -i 's/[[:space:]]*$//;s/\t/    /' {} +
+find . -name <Filename> -type f -exec sed -i 's/\t/    /;s/[[:space:]]*$//' {} +
 ```
 
 Where `<Filename>` is `"*.c"` or `"*.(your file extention here)"`\
@@ -207,7 +207,7 @@ Search the `find` man page or tips and tricks for more options.\
 Alternatively, for single file(s):
 
 ``` bash
-sed -i 's/[[:space:]]*$//;s/\t/    /' <Filename/Filepath>
+sed -i 's/\t/    /;s/[[:space:]]*$//' <Filename/Filepath>
 ```
 
 Note: For macOS and BSD related distros, you may need to use `sed -i ''` inplace due to differences with GNU sed.
