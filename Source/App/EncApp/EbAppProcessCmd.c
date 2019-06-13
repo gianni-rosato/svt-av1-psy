@@ -1212,10 +1212,10 @@ AppExitConditionType ProcessOutputStreamBuffer(
             *total_latency += (uint64_t)headerPtr->n_tick_count;
             *max_latency = (headerPtr->n_tick_count > *max_latency) ? headerPtr->n_tick_count : *max_latency;
 
-            EbFinishTime((uint64_t*)&finishsTime, (uint64_t*)&finishuTime);
+            FinishTime((uint64_t*)&finishsTime, (uint64_t*)&finishuTime);
 
             // total execution time, inc init time
-            EbComputeOverallElapsedTime(
+            ComputeOverallElapsedTime(
                 config->performance_context.lib_start_time[0],
                 config->performance_context.lib_start_time[1],
                 finishsTime,
@@ -1223,7 +1223,7 @@ AppExitConditionType ProcessOutputStreamBuffer(
                 &config->performance_context.total_execution_time);
 
             // total encode time
-            EbComputeOverallElapsedTime(
+            ComputeOverallElapsedTime(
                 config->performance_context.encode_start_time[0],
                 config->performance_context.encode_start_time[1],
                 finishsTime,
