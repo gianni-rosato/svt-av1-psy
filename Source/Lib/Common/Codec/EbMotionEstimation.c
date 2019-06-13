@@ -13619,7 +13619,7 @@ EbErrorType motion_estimate_lcu(
     uint32_t sb_height = (input_ptr->height - sb_origin_y) < BLOCK_SIZE_64
                              ? input_ptr->height - sb_origin_y
                              : BLOCK_SIZE_64;
-  
+
     int16_t padWidth = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t padHeight = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t search_area_width;
