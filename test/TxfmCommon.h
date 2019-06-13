@@ -215,15 +215,6 @@ static INLINE bool dct_adst_combine_imp(const TxType tx_type) {
     }
 }
 
-/* Implemented in EbTransforms.c, and used by InvTxfm2dAsmtest to prepare
-   the inv_input buffer.
- */
-uint64_t HandleTransform64x64_c(int32_t *output, uint32_t outputStride);
-uint64_t HandleTransform64x16_c(int32_t *output, uint32_t outputStride);
-uint64_t HandleTransform16x64_c(int32_t *output, uint32_t outputStride);
-uint64_t HandleTransform32x64_c(int32_t *output, uint32_t outputStride);
-uint64_t HandleTransform64x32_c(int32_t *output, uint32_t outputStride);
-
 #ifdef __cplusplus
 }
 #endif
