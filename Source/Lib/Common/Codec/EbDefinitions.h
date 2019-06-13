@@ -2460,7 +2460,7 @@ extern    uint32_t                   app_malloc_count;
 
 #define EB_ADD_APP_MEM(pointer, size, pointer_class, count, release, return_type) \
     do { \
-        if (！pointer) return return_type; \
+        if (!pointer) return return_type; \
         if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
             printf("Malloc has failed due to insuffucient resources"); \
             release(pointer); \
