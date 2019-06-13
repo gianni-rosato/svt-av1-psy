@@ -161,6 +161,11 @@ extern "C" {
         uint8_t  offset_y;
     } TransformUnitStats;
 
+    extern void *aom_memalign(size_t align, size_t size);
+    extern void *aom_malloc(size_t size);
+    extern void aom_free(void *memblk);
+    extern void *aom_memset16(void *dest, int32_t val, size_t length);
+
     extern uint64_t log2f_high_precision(uint64_t x, uint8_t precision);
 
     extern const CodedUnitStats* get_coded_unit_stats(const uint32_t cuIdx);
