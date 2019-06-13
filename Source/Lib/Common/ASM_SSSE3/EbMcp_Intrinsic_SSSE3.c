@@ -13,8 +13,6 @@
 #endif
 
 #include "tmmintrin.h"
-#include "smmintrin.h"
-// Note: _mm_extract_epi32 & _mm_extract_epi64 are SSE4 functions
 
 #if defined(__linux__) || defined(__APPLE__)
 #ifndef __cplusplus
@@ -255,8 +253,8 @@ void LumaInterpolationFilterTwoDInRaw7_SSSE3(int16_t *first_pass_if_dst, EbByte 
             sum0 = _mm_packs_epi32(sum0, sum1);
             sum0 = _mm_packus_epi16(sum0, sum0);
 
-            *(uint32_t *)qtr = _mm_extract_epi32(sum0, 0); qtr += dst_stride;
-            *(uint32_t *)qtr = _mm_extract_epi32(sum0, 1); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(sum0); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(_mm_srli_si128(sum0, 4)); qtr += dst_stride;
 
             first_pass_if_dst += 8;
             row_count -= 2;
@@ -451,8 +449,8 @@ void LumaInterpolationFilterTwoDInRawM_SSSE3(int16_t *first_pass_if_dst, EbByte 
             sum0 = _mm_packs_epi32(sum0, sum1);
             sum0 = _mm_packus_epi16(sum0, sum0);
 
-            *(uint32_t *)qtr = _mm_extract_epi32(sum0, 0); qtr += dst_stride;
-            *(uint32_t *)qtr = _mm_extract_epi32(sum0, 1); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(sum0); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(_mm_srli_si128(sum0, 4)); qtr += dst_stride;
             first_pass_if_dst += 8;
             row_count -= 2;
         } while (row_count > 0);
@@ -767,8 +765,8 @@ void ChromaInterpolationFilterTwoDInRaw_SSSE3(int16_t *first_pass_if_dst, EbByte
             sum0 = _mm_packs_epi32(sum0, sum1);
             sum0 = _mm_packus_epi16(sum0, sum0);
 
-            *(uint32_t *)qtr = _mm_extract_epi32(sum0, 0); qtr += dst_stride;
-            *(uint32_t *)qtr = _mm_extract_epi32(sum0, 1); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(sum0); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(_mm_srli_si128(sum0, 4)); qtr += dst_stride;
 
             first_pass_if_dst += 8;
             row_count -= 2;
@@ -912,8 +910,8 @@ void chroma_interpolation_filter_one_d_horizontal_ssse3(
             sum = _mm_srai_epi16(sum, 6);
             sum = _mm_packus_epi16(sum, sum);
 
-            *(uint32_t *)qtr = _mm_extract_epi32(sum, 0); qtr += dst_stride;
-            *(uint32_t *)qtr = _mm_extract_epi32(sum, 1); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(sum); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(_mm_srli_si128(sum, 4)); qtr += dst_stride;
 
             row_count -= 2;
         } while (row_count > 0);
@@ -1148,8 +1146,8 @@ void chroma_interpolation_filter_one_d_vertical_ssse3(
             sum = _mm_srai_epi16(sum, 6);
             sum = _mm_packus_epi16(sum, sum);
 
-            *(uint32_t *)qtr = _mm_extract_epi32(sum, 0); qtr += dst_stride;
-            *(uint32_t *)qtr = _mm_extract_epi32(sum, 1); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(sum); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(_mm_srli_si128(sum, 4)); qtr += dst_stride;
 
             row_count -= 2;
         } while (row_count > 0);
@@ -1498,8 +1496,8 @@ void LumaInterpolationFilterOneDHorizontal_SSSE3(
             sum = _mm_srai_epi16(sum, 6);
             sum = _mm_packus_epi16(sum, sum);
 
-            *(uint32_t *)qtr = _mm_extract_epi32(sum, 0); qtr += dst_stride;
-            *(uint32_t *)qtr = _mm_extract_epi32(sum, 1); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(sum); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(_mm_srli_si128(sum, 4)); qtr += dst_stride;
 
             row_count -= 2;
         } while (row_count > 0);
@@ -1680,8 +1678,8 @@ void LumaInterpolationFilterOneDVertical_SSSE3(
             sum = _mm_srai_epi16(sum, 6);
             sum = _mm_packus_epi16(sum, sum);
 
-            *(uint32_t *)qtr = _mm_extract_epi32(sum, 0); qtr += dst_stride;
-            *(uint32_t *)qtr = _mm_extract_epi32(sum, 1); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(sum); qtr += dst_stride;
+            *(uint32_t *)qtr = _mm_cvtsi128_si32(_mm_srli_si128(sum, 4)); qtr += dst_stride;
 
             row_count -= 2;
         } while (row_count > 0);

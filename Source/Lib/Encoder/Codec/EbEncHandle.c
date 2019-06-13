@@ -2764,7 +2764,7 @@ static EbErrorType VerifySettings(
     if (config->stat_report > 1) {
         SVT_LOG("Error instance %u : Invalid StatReport. StatReport must be [0 - 1]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
-    }    
+    }
 
     if (config->high_dynamic_range_input > 1) {
         SVT_LOG("Error instance %u : Invalid HighDynamicRangeInput. HighDynamicRangeInput must be [0 - 1]\n", channelNumber + 1);

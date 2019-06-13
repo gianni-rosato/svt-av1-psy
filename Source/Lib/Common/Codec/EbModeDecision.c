@@ -2668,7 +2668,7 @@ void inject_new_candidates(
         ************* */
         if (inter_direction == 0) {
 
-#if MEMORY_FOOTPRINT_OPT_ME_MV                               
+#if MEMORY_FOOTPRINT_OPT_ME_MV
             int16_t to_inject_mv_x = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[me_block_offset][list0_ref_index].x_mv << 1;
             int16_t to_inject_mv_y = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[me_block_offset][list0_ref_index].y_mv << 1;
 #else
@@ -2758,7 +2758,7 @@ void inject_new_candidates(
                NEWMV L1
            ************* */
             if (inter_direction == 1) {
-#if MEMORY_FOOTPRINT_OPT_ME_MV     
+#if MEMORY_FOOTPRINT_OPT_ME_MV
 #if FROM_7_TO_4_MV
                 int16_t to_inject_mv_x = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2) + list1_ref_index].x_mv << 1;
                 int16_t to_inject_mv_y = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2) + list1_ref_index].y_mv << 1;
@@ -2852,13 +2852,13 @@ void inject_new_candidates(
             if (allow_bipred) {
 
                 if (inter_direction == 2) {
-#if MEMORY_FOOTPRINT_OPT_ME_MV      
+#if MEMORY_FOOTPRINT_OPT_ME_MV
                     int16_t to_inject_mv_x_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[me_block_offset][list0_ref_index].x_mv << 1;
                     int16_t to_inject_mv_y_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[me_block_offset][list0_ref_index].y_mv << 1;
 #if FROM_7_TO_4_MV
                     int16_t to_inject_mv_x_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? (me_block_results_ptr->ref1_list << 2) : (me_block_results_ptr->ref1_list << 1)) + list1_ref_index].x_mv << 1;
                     int16_t to_inject_mv_y_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? (me_block_results_ptr->ref1_list << 2) : (me_block_results_ptr->ref1_list << 1)) + list1_ref_index].y_mv << 1;
-#else   
+#else
                     int16_t to_inject_mv_x_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[me_block_offset][(me_block_results_ptr->ref1_list << 2) + list1_ref_index].x_mv << 1;
                     int16_t to_inject_mv_y_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[me_block_offset][(me_block_results_ptr->ref1_list << 2) + list1_ref_index].y_mv << 1;
 #endif
@@ -3188,7 +3188,7 @@ void  inject_inter_candidates(
             // If Nx4 or 4xN the inject the MV of the aprent block
 
 
-            // Derive whether if current block would need to have offsets made 
+            // Derive whether if current block would need to have offsets made
             uint32_t bwidth_offset_to_8 = (context_ptr->blk_geom->bwidth == 4) << 2;
             uint32_t bheight_offset_to_8 = (context_ptr->blk_geom->bheight == 4) << 2;
 
@@ -3209,9 +3209,9 @@ void  inject_inter_candidates(
                 for (uint32_t block_index = 0; block_index < max_number_of_pus_per_sb; block_index++) {
 
                     if (
-                        (bwidth_to_search == partition_width[block_index]) && 
+                        (bwidth_to_search == partition_width[block_index]) &&
                         (bheight_to_search == partition_height[block_index]) &&
-                        (x_to_search == pu_search_index_map[block_index][0]) && 
+                        (x_to_search == pu_search_index_map[block_index][0]) &&
                         (y_to_search == pu_search_index_map[block_index][1]))
                     {
                         me_info_index = block_index;

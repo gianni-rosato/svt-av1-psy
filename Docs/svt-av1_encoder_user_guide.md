@@ -21,7 +21,7 @@ This section describes how to run the sample encoder application that uses the S
 The SVT-AV1 Encoder supports the following input formats:
 
 ![alt](8bit_yuv420p.png)
- 
+
 _8-bit yuv420p_
 
 ![alt](10bit_yuv420p.png)
@@ -45,19 +45,19 @@ _10-bit yuv420p10le unpacked_
 The unpacking steps separates the 10bits into a group of 8 bits and a group of 2 bits, where the 2 bits are stored in a byte. In this step, every group of consecutive 4 bytes, each containing 2bits from the unpacking step, are compressed into one byte. As a result, each 10bit picture will be represented as two separate pictures as shown in the figure below.
 
  ![alt](10bit_packed.png)
- 
+
  _10-bit yuv420p10le compressed_
- 
+
 #### Unroll the 64x64
 
 Now for a faster read of the samples, every 64x64 block of the 2 bit picture should be written into a one dimensional array. Therefore, the top left 64x64 sample block which is now written into a 16 bytes x 64 bytes after the compression of the 2bit samples, will be written into a 1024 bytes x 1 byte array as shown in the picture below.
 
  ![alt](64x64_after_2bit_compression.png)
- 
+
 _64x64 block after 2 bit compression_
 
  ![alt](64x64_after_unrolling.png)
- 
+
  _64x64 block after unrolling_
 
 ### Running the encoder

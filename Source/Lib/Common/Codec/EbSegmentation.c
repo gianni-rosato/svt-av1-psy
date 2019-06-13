@@ -179,7 +179,7 @@ void find_segment_qps(
         PictureControlSet *picture_control_set_ptr) { //QP needs to be specified as qpindex, not qp.
 
     uint16_t *variancePtr;
-    uint16_t min_var = MAX_UNSIGNED_VALUE, max_var = MIN_UNSIGNED_VALUE, avg_var = 0;
+    uint16_t min_var = UINT16_MAX, max_var = MIN_UNSIGNED_VALUE, avg_var = 0;
     float strength = 2;//to tune
 
     // get range of variance

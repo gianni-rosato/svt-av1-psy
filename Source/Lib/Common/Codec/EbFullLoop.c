@@ -1970,7 +1970,7 @@ void av1_quantize_inv_quantize(
     EbBool is_inter = (pred_mode >= NEARESTMV);
 
     EbBool perform_rdoq = (md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
-    
+
     // Hsan: set to FALSE until adding x86 quantize_fp
     EbBool perform_quantize_fp = picture_control_set_ptr->enc_mode == ENC_M0 ? EB_TRUE: EB_FALSE;
 
@@ -3607,7 +3607,7 @@ void full_loop_r(
             context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
             &context_ptr->cr_txb_skip_context,
             &context_ptr->cr_dc_sign_context);
-        
+
 #endif
         // NADER - TU
         tu_origin_index = txb_origin_x + txb_origin_y * candidateBuffer->residual_quant_coeff_ptr->stride_y;
@@ -4504,7 +4504,7 @@ uint32_t d2_inter_depth_block_decision(
 #if INTRA64_FIX
             if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0 && sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128)
 #else
-            if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0) 
+            if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0)
 #endif
                 parent_depth_cost = MAX_MODE_COST;
             else

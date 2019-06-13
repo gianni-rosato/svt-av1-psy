@@ -92,7 +92,7 @@ class RefDecoder {
      * @param ret the error code found in construction
      */
     RefDecoder(RefDecoderErr &ret);
-    /** Destructor of RefDecoder	  */
+    /** Destructor of RefDecoder      */
     virtual ~RefDecoder();
 
   public:

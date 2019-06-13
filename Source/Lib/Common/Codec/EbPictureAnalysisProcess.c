@@ -174,7 +174,7 @@ void decimation_2d(
     uint32_t input_stripe_stride = input_stride * decim_step;
 
     for (vertical_index = 0; vertical_index < input_area_height; vertical_index += decim_step) {
-        for (horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step) 
+        for (horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step)
             decim_samples[(horizontal_index >> (decim_step >> 1))] = input_samples[horizontal_index];
 
         input_samples += input_stripe_stride;
@@ -3974,7 +3974,7 @@ void PicturePreProcessingOperations(
     EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
     uint32_t                       sb_total_count,
     EbAsm                          asm_type) {
-   
+
     UNUSED(quarter_decimated_picture_ptr);
     UNUSED(sixteenth_decimated_picture_ptr);
     UNUSED(input_picture_ptr);
@@ -4775,7 +4775,7 @@ void DecimateInputPicture(
     }
 
 #if DECIMATION_BUG_FIX
-    // Always perform 1/16th decimation as 
+    // Always perform 1/16th decimation as
     // Sixteenth Input Picture Decimation
     decimation_2d(
         &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
@@ -4890,7 +4890,7 @@ void DownsampleFilteringInputPicture(
                     &sixteenth_picture_ptr->buffer_y[sixteenth_picture_ptr->origin_x + sixteenth_picture_ptr->origin_x*sixteenth_picture_ptr->stride_y],
                     sixteenth_picture_ptr->stride_y,
                     4);
-            
+
             generate_padding(
                 &sixteenth_picture_ptr->buffer_y[0],
                 sixteenth_picture_ptr->stride_y,
@@ -4977,7 +4977,7 @@ void* picture_analysis_kernel(void *input_ptr)
                 sequence_control_set_ptr,
                 input_picture_ptr);
 
-            // Pre processing operations performed on the input picture        
+            // Pre processing operations performed on the input picture
 #if DOWN_SAMPLING_FILTERING
             PicturePreProcessingOperations(
                 picture_control_set_ptr,
@@ -5037,7 +5037,7 @@ void* picture_analysis_kernel(void *input_ptr)
                 picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
                 input_padded_picture_ptr,
 #if DOWN_SAMPLING_FILTERING
-                (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs 
+                (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
 #else
                 sixteenth_decimated_picture_ptr,
 #endif

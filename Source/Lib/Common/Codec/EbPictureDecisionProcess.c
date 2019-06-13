@@ -15,6 +15,7 @@
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
+#include "EbPictureAnalysisProcess.h"
 #include "EbPictureAnalysisResults.h"
 #include "EbPictureDecisionProcess.h"
 #include "EbPictureDecisionResults.h"
@@ -1447,7 +1448,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
     if (sc_content_detected)
-        if (picture_control_set_ptr->enc_mode == ENC_M0) 
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
             picture_control_set_ptr->intra_pred_mode = 0;
         else if (picture_control_set_ptr->enc_mode <= ENC_M2)
             if (picture_control_set_ptr->temporal_layer_index == 0)
@@ -3162,7 +3163,7 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
         input_padded_picture_ptr,
 #if DOWN_SAMPLING_FILTERING
-        paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs 
+        paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
 #else
         sixteenth_decimated_picture_ptr,
 #endif
