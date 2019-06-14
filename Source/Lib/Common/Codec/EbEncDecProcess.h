@@ -56,10 +56,6 @@ extern "C" {
         MotionCompensationPredictionContext *mcp_context;
         SsMeContext                         *ss_mecontext;
 
-        // Intra Reference Samples
-        IntraReferenceSamples               *intra_ref_ptr;
-        IntraReference16bitSamples          *intra_ref_ptr16;  //We need a different buffer for ENC pass then the MD one.
-
         // Coding Unit Workspace---------------------------
         EbPictureBufferDesc                 *residual_buffer;
         EbPictureBufferDesc                 *transform_buffer;

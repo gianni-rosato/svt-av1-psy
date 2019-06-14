@@ -141,8 +141,6 @@ extern "C" {
         // TMVP
         EbReferenceObject            *reference_object_write_ptr;
 #endif
-        // Intra Reference Samples
-        IntraReferenceSamples        *intra_ref_ptr;
 
         // Transform and Quantization Buffers
         EbTransQuantBuffers          *trans_quant_buffers_ptr;
