@@ -13,12 +13,13 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include "aom_dsp_rtcd.h"
 #include "EbWarpedMotion.h"
 
 #define WARP_ERROR_BLOCK 32
 
 /* clang-format off */
-static const int error_measure_lut[512] = {
+const int error_measure_lut[512] = {
   // pow 0.7
   16384, 16339, 16294, 16249, 16204, 16158, 16113, 16068,
   16022, 15977, 15932, 15886, 15840, 15795, 15749, 15703,
@@ -572,10 +573,6 @@ static int64_t highbd_warp_error(
   return gm_sumerr;
 }
 
-static INLINE int error_measure(int err) {
-  return error_measure_lut[255 + err];
-}
-
 /* The warp filter for ROTZOOM and AFFINE models works as follows:
    * Split the input into 8x8 blocks
    * For each block, project the point (4, 4) within the block, to get the
@@ -801,14 +798,13 @@ static void warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref,
   const int16_t beta = wm->beta;
   const int16_t gamma = wm->gamma;
   const int16_t delta = wm->delta;
-  av1_warp_affine_c(mat, ref, width, height, stride, pred, p_col, p_row, p_width,
+  av1_warp_affine(mat, ref, width, height, stride, pred, p_col, p_row, p_width,
                   p_height, p_stride, subsampling_x, subsampling_y, conv_params,
                   alpha, beta, gamma, delta);
 }
 
-static int64_t frame_error(const uint8_t *const ref, int stride,
-                           const uint8_t *const dst, int p_width, int p_height,
-                           int p_stride) {
+int64_t av1_calc_frame_error_c(const uint8_t *const ref, int stride,
+    const uint8_t *const dst, int p_width, int p_height, int p_stride) {
   int64_t sum_error = 0;
   for (int i = 0; i < p_height; ++i) {
     for (int j = 0; j < p_width; ++j) {
@@ -842,7 +838,7 @@ static int64_t warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref,
       warp_plane(wm, ref, width, height, stride, tmp, j, i, warp_w, warp_h,
                  WARP_ERROR_BLOCK, subsampling_x, subsampling_y, &conv_params);
 
-      gm_sumerr += frame_error(tmp, WARP_ERROR_BLOCK, dst + j + i * p_stride,
+      gm_sumerr += av1_calc_frame_error(tmp, WARP_ERROR_BLOCK, dst + j + i * p_stride,
                                warp_w, warp_h, p_stride);
       if (gm_sumerr > best_error) return gm_sumerr;
     }
@@ -857,7 +853,7 @@ int64_t av1_frame_error(int use_hbd, int bd, const uint8_t *ref, int stride,
                               CONVERT_TO_SHORTPTR(dst), p_width, p_height,
                               p_stride, bd);
   }
-  return frame_error(ref, stride, dst, p_width, p_height, p_stride);
+  return av1_calc_frame_error(ref, stride, dst, p_width, p_height, p_stride);
 }
 
 int64_t av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd,
