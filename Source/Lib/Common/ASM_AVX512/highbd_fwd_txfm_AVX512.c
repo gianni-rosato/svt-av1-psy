@@ -76,7 +76,7 @@ static INLINE void transpose_16x16_avx512(int32_t stride, const __m512i *in, __m
     TRANSPOSE_4X4_AVX512(in[12 * stride], in[13 * stride], in[14 * stride], in[15 * stride], out1[12], out1[13], out1[14], out1[15]);
 
     __m128i * outptr = (__m128i *)(out + 0 * stride);
-
+    
     //will get first row of transpose matrix from corresponding 4 vectors in out1
     outptr[0] = _mm512_extracti32x4_epi32(out1[0], ZERO);
     outptr[1] = _mm512_extracti32x4_epi32(out1[4], ZERO);
@@ -2344,7 +2344,7 @@ static INLINE void transpose_16nx16m_avx512(const __m512i *in,
                 out1[12], out1[13], out1[14], out1[15]);
 
             __m128i * outptr = (__m128i *)(out + (j * height + i + (numcol * 0)));
-
+            
             //will get first row of transpose matrix from corresponding 4 vectors in out1
             outptr[0] = _mm512_extracti32x4_epi32(out1[0], ZERO);
             outptr[1] = _mm512_extracti32x4_epi32(out1[4], ZERO);

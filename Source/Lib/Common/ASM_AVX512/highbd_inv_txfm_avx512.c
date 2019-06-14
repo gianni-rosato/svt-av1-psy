@@ -8,6 +8,11 @@ extern const int8_t *eb_inv_txfm_shift_ls[];
 const int32_t *cospi_arr(int32_t n);
 const int32_t *sinpi_arr(int32_t n);
 
+#define ZERO (uint8_t)0U 
+#define ONE  (uint8_t)1U
+#define TWO  (uint8_t)2U
+#define THREE (uint8_t)3U
+
 typedef void(*inv_transform_1d_avx512)(__m512i *in, __m512i *out, const int8_t bit,
     int32_t num_cols);
 
@@ -33,135 +38,135 @@ static INLINE void transpose_16x16_avx512(int32_t stride, const __m512i *in, __m
     TRANSPOSE_4X4_AVX512(in[12 * stride], in[13 * stride], in[14 * stride], in[15 * stride], out1[12], out1[13], out1[14], out1[15]);
 
     __m128i * outptr = (__m128i *)(out + 0 * stride);
-
+    
     //will get first row of transpose matrix from corresponding 4 vectors in out1
-    outptr[0] = _mm512_extracti32x4_epi32(out1[0], 0);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[4], 0);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[8], 0);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[12], 0);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[0], ZERO);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[4], ZERO);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[8], ZERO);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[12], ZERO);
 
     //will get second row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 1 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[1], 0);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[5], 0);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[9], 0);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[13], 0);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[1], ZERO);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[5], ZERO);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[9], ZERO);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[13], ZERO);
 
     //will get 3rd row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 2 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[2], 0);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[6], 0);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[10], 0);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[14], 0);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[2], ZERO);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[6], ZERO);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[10], ZERO);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[14], ZERO);
 
     //will get 4th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 3 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[3], 0);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[7], 0);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[11], 0);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[15], 0);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[3], ZERO);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[7], ZERO);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[11], ZERO);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[15], ZERO);
 
     //will get 5th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 4 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[0], 1);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[4], 1);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[8], 1);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[12], 1);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[0], ONE);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[4], ONE);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[8], ONE);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[12], ONE);
 
     //will get 6th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 5 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[1], 1);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[5], 1);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[9], 1);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[13], 1);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[1], ONE);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[5], ONE);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[9], ONE);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[13], ONE);
 
     //will get 7th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 6 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[2], 1);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[6], 1);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[10], 1);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[14], 1);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[2], ONE);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[6], ONE);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[10], ONE);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[14], ONE);
 
     //will get 8th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 7 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[3], 1);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[7], 1);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[11], 1);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[15], 1);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[3], ONE);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[7], ONE);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[11], ONE);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[15], ONE);
 
     //will get 9th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 8 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[0], 2);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[4], 2);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[8], 2);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[12], 2);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[0], TWO);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[4], TWO);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[8], TWO);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[12], TWO);
 
     //will get 10th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 9 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[1], 2);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[5], 2);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[9], 2);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[13], 2);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[1], TWO);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[5], TWO);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[9], TWO);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[13], TWO);
 
     //will get 11th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 10 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[2], 2);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[6], 2);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[10], 2);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[14], 2);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[2], TWO);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[6], TWO);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[10], TWO);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[14], TWO);
 
     //will get 12th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 11 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[3], 2);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[7], 2);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[11], 2);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[15], 2);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[3], TWO);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[7], TWO);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[11], TWO);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[15], TWO);
 
     //will get 13th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 12 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[0], 3);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[4], 3);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[8], 3);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[12], 3);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[0], THREE);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[4], THREE);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[8], THREE);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[12], THREE);
 
     //will get 14th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 13 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[1], 3);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[5], 3);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[9], 3);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[13], 3);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[1], THREE);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[5], THREE);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[9], THREE);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[13], THREE);
 
     //will get 15th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 14 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[2], 3);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[6], 3);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[10], 3);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[14], 3);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[2], THREE);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[6], THREE);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[10], THREE);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[14], THREE);
 
     //will get 16th row of transpose matrix from corresponding 4 vectors in out1
     outptr = (__m128i *)(out + 15 * stride);
-    outptr[0] = _mm512_extracti32x4_epi32(out1[3], 3);
-    outptr[1] = _mm512_extracti32x4_epi32(out1[7], 3);
-    outptr[2] = _mm512_extracti32x4_epi32(out1[11], 3);
-    outptr[3] = _mm512_extracti32x4_epi32(out1[15], 3);
+    outptr[0] = _mm512_extracti32x4_epi32(out1[3], THREE);
+    outptr[1] = _mm512_extracti32x4_epi32(out1[7], THREE);
+    outptr[2] = _mm512_extracti32x4_epi32(out1[11], THREE);
+    outptr[3] = _mm512_extracti32x4_epi32(out1[15], THREE);
 }
 
 static void load_buffer_64x64_lower_32x32_avx512(const int32_t *coeff, __m512i *in) {
     int32_t i, j;
    
-    __m512i zero = _mm512_setzero_si512();
+    __m512i zeroes = _mm512_setzero_si512();
 
     for (i = 0; i < 32; ++i) {
         for (j = 0; j < 2; ++j) {
             in[4 * i + j] = _mm512_loadu_si512((const __m512i *)(coeff + 32 * i + 16 * j));
-            in[4 * i + j + 2] = zero;
+            in[4 * i + j + 2] = zeroes;
         }
     }
 
-    for (i = 0; i < 128; ++i) in[128 + i] = zero;
+    for (i = 0; i < 128; ++i) in[128 + i] = zeroes;
 }
 
-static void round_shift_64x64_avx512(__m512i *in, int32_t shift) {
+static void round_shift_64x64_avx512(__m512i *in, const int8_t shift) {
     uint8_t ushift = (uint8_t)shift;
     __m512i rnding = _mm512_set1_epi32(1 << (ushift - 1));
 
@@ -182,7 +187,7 @@ static void round_shift_64x64_avx512(__m512i *in, int32_t shift) {
 //  rounding = 1 << (bit - 1)
 static INLINE __m512i half_btf_avx512(const __m512i *w0, const __m512i *n0,
     const __m512i *w1, const __m512i *n1,
-    const __m512i *rounding, int32_t bit) {
+    const __m512i *rounding, const int8_t bit) {
     __m512i x, y;
 
     x = _mm512_mullo_epi32(*w0, *n0);
@@ -194,7 +199,7 @@ static INLINE __m512i half_btf_avx512(const __m512i *w0, const __m512i *n0,
 }
 
 static INLINE __m512i half_btf_0_avx512(const __m512i *w0, const __m512i *n0,
-    const __m512i *rounding, int32_t bit) {
+    const __m512i *rounding, const int8_t bit) {
     __m512i x;
 
     x = _mm512_mullo_epi32(*w0, *n0);
@@ -218,7 +223,7 @@ static void addsub_avx512(const __m512i in0, const __m512i in1, __m512i *out0,
     *out1 = a1;
 }
 
-static void idct64x64_avx512(__m512i *in, __m512i *out, int32_t bit, int32_t do_cols,
+static void idct64x64_avx512(__m512i *in, __m512i *out, const int8_t bit, int32_t do_cols,
     int32_t bd) {
     int32_t i, j;
     const int32_t *cospi = cospi_arr(bit);
@@ -686,11 +691,11 @@ static void idct64x64_avx512(__m512i *in, __m512i *out, int32_t bit, int32_t do_
 }
 
 static INLINE void highbd_clamp_epi32_avx512(__m512i *x, int32_t bd) {
-    const __m512i zero = _mm512_setzero_si512();
+    const __m512i zeroes = _mm512_setzero_si512();
     const __m512i max = _mm512_set1_epi32((1 << bd) - 1);
 
     *x = _mm512_min_epi32(*x, max);
-    *x = _mm512_max_epi32(*x, zero);
+    *x = _mm512_max_epi32(*x, zeroes);
 }
 
 
@@ -703,16 +708,16 @@ static void load_buffer_16x16_avx512(const int32_t *coeff, __m512i *in) {
 }
 
 static INLINE __m256i highbd_clamp_epi16_avx512(__m256i u, int32_t bd) {
-    const __m256i zero = _mm256_setzero_si256();
-    const __m256i one = _mm256_set1_epi16(1);
-    const __m256i max = _mm256_sub_epi16(_mm256_slli_epi16(one, (uint8_t)bd), one);
+    const __m256i zeroes = _mm256_setzero_si256();
+    const __m256i ONEs = _mm256_set1_epi16(1);
+    const __m256i max = _mm256_sub_epi16(_mm256_slli_epi16(ONEs, (uint8_t)bd), ONEs);
     __m256i clamped, mask;
 
     mask = _mm256_cmpgt_epi16(u, max);
     clamped = _mm256_andnot_si256(mask, u);
     mask = _mm256_and_si256(mask, max);
     clamped = _mm256_or_si256(mask, clamped);
-    mask = _mm256_cmpgt_epi16(clamped, zero);
+    mask = _mm256_cmpgt_epi16(clamped, zeroes);
     clamped = _mm256_and_si256(clamped, mask);
 
     return clamped;
@@ -744,16 +749,16 @@ static INLINE void write_buffer_16x16_avx512_new(__m512i *in, uint16_t *output,
 
         v0 = _mm512_add_epi32(v0, u1);
 
-        a = _mm512_extracti64x4_epi64(v0, 0);
-        b = _mm512_extracti64x4_epi64(v0, 1);
-        p = _mm256_extracti128_si256(a, 0);
-        q = _mm256_extracti128_si256(a, 1);
-        r = _mm256_extracti128_si256(b, 0);
-        s = _mm256_extracti128_si256(b, 1);
+        a = _mm512_extracti64x4_epi64(v0, ZERO);
+        b = _mm512_extracti64x4_epi64(v0, ONE);
+        p = _mm256_extracti128_si256(a, ZERO);
+        q = _mm256_extracti128_si256(a, ONE);
+        r = _mm256_extracti128_si256(b, ZERO);
+        s = _mm256_extracti128_si256(b, ONE);
         p = _mm_packus_epi32(p, q);
         r = _mm_packus_epi32(r, s);
-        u0 = _mm256_insertf128_si256(u0, p, 0);
-        u0 = _mm256_insertf128_si256(u0, r, 1);
+        u0 = _mm256_insertf128_si256(u0, p, ZERO);
+        u0 = _mm256_insertf128_si256(u0, r, ONE);
         u0 = highbd_clamp_epi16_avx512(u0, bd);
 
         _mm256_storeu_si256((__m256i *)output, u0);
@@ -798,7 +803,7 @@ static INLINE void write_buffer_16x16_avx512(__m512i *in, uint16_t *output,
     }
 }
 
-static INLINE void round_shift_16x16_avx512(__m512i *in, int32_t shift) {
+static INLINE void round_shift_16x16_avx512(__m512i *in, const int8_t shift) {
     uint8_t ushift = (uint8_t)shift;
     __m512i rnding = _mm512_set1_epi32(1 << (ushift - 1));
     int32_t i = 0;
@@ -823,8 +828,7 @@ static INLINE void iidentity16_and_round_shift_avx512(__m512i *input, int32_t sh
     }
 }
 
-static INLINE void idct16_col_avx512(__m512i *in, __m512i *out, int32_t bit)
-{
+static INLINE void idct16_col_avx512(__m512i *in, __m512i *out, const int8_t bit) {
 
     const int32_t *cospi = cospi_arr(bit);
     const __m512i cospi60 = _mm512_set1_epi32(cospi[60]);
@@ -970,7 +974,7 @@ static INLINE void idct16_col_avx512(__m512i *in, __m512i *out, int32_t bit)
 
 
 static INLINE void iadst16_col_avx512(__m512i *in, __m512i *out,
-    int8_t cos_bit) {
+    const int8_t cos_bit) {
     const int32_t *cospi = cospi_arr(cos_bit);
     const __m512i cospi2 = _mm512_set1_epi32(cospi[2]);
     const __m512i cospi62 = _mm512_set1_epi32(cospi[62]);
@@ -1165,61 +1169,61 @@ static INLINE void iadst16_col_avx512(__m512i *in, __m512i *out,
     &cospi32, &tmp2[14], &cospi32, &tmp2[15], &rounding, cos_bit);
 
     //stage 9
-    temp1 = _mm512_extracti64x4_epi64(tmp2[8], 0);
-    temp2 = _mm512_extracti64x4_epi64(tmp2[8], 1);
+    temp1 = _mm512_extracti64x4_epi64(tmp2[8], ZERO);
+    temp2 = _mm512_extracti64x4_epi64(tmp2[8], ONE);
     temp1 = _mm256_sign_epi32(temp1, negative);
     temp2 = _mm256_sign_epi32(temp2, negative);
-    out[1] = _mm512_inserti64x4(out[1], temp1, 0);
-    out[1] = _mm512_inserti64x4(out[1], temp2, 1);
+    out[1] = _mm512_inserti64x4(out[1], temp1, ZERO);
+    out[1] = _mm512_inserti64x4(out[1], temp2, ONE);
 
-    temp1 = _mm512_extracti64x4_epi64(tmp2[4], 0);
-    temp2 = _mm512_extracti64x4_epi64(tmp2[4], 1);
+    temp1 = _mm512_extracti64x4_epi64(tmp2[4], ZERO);
+    temp2 = _mm512_extracti64x4_epi64(tmp2[4], ONE);
     temp1 = _mm256_sign_epi32(temp1, negative);
     temp2 = _mm256_sign_epi32(temp2, negative);
-    out[3] = _mm512_inserti64x4(out[3], temp1, 0);
-    out[3] = _mm512_inserti64x4(out[3], temp2, 1);
+    out[3] = _mm512_inserti64x4(out[3], temp1, ZERO);
+    out[3] = _mm512_inserti64x4(out[3], temp2, ONE);
 
-    temp1 = _mm512_extracti64x4_epi64(tmp[14], 0);
-    temp2 = _mm512_extracti64x4_epi64(tmp[14], 1);
+    temp1 = _mm512_extracti64x4_epi64(tmp[14], ZERO);
+    temp2 = _mm512_extracti64x4_epi64(tmp[14], ONE);
     temp1 = _mm256_sign_epi32(temp1, negative);
     temp2 = _mm256_sign_epi32(temp2, negative);
-    out[5] = _mm512_inserti64x4(out[5], temp1, 0);
-    out[5] = _mm512_inserti64x4(out[5], temp2, 1);
+    out[5] = _mm512_inserti64x4(out[5], temp1, ZERO);
+    out[5] = _mm512_inserti64x4(out[5], temp2, ONE);
 
-    temp1 = _mm512_extracti64x4_epi64(tmp[2], 0);
-    temp2 = _mm512_extracti64x4_epi64(tmp[2], 1);
+    temp1 = _mm512_extracti64x4_epi64(tmp[2], ZERO);
+    temp2 = _mm512_extracti64x4_epi64(tmp[2], ONE);
     temp1 = _mm256_sign_epi32(temp1, negative);
     temp2 = _mm256_sign_epi32(temp2, negative);
-    out[7] = _mm512_inserti64x4(out[7], temp1, 0);
-    out[7] = _mm512_inserti64x4(out[7], temp2, 1);
+    out[7] = _mm512_inserti64x4(out[7], temp1, ZERO);
+    out[7] = _mm512_inserti64x4(out[7], temp2, ONE);
 
-    temp1 = _mm512_extracti64x4_epi64(tmp[11], 0);
-    temp2 = _mm512_extracti64x4_epi64(tmp[11], 1);
+    temp1 = _mm512_extracti64x4_epi64(tmp[11], ZERO);
+    temp2 = _mm512_extracti64x4_epi64(tmp[11], ONE);
     temp1 = _mm256_sign_epi32(temp1, negative);
     temp2 = _mm256_sign_epi32(temp2, negative);
-    out[9] = _mm512_inserti64x4(out[9], temp1, 0);
-    out[9] = _mm512_inserti64x4(out[9], temp2, 1);
+    out[9] = _mm512_inserti64x4(out[9], temp1, ZERO);
+    out[9] = _mm512_inserti64x4(out[9], temp2, ONE);
 
-    temp1 = _mm512_extracti64x4_epi64(tmp[7], 0);
-    temp2 = _mm512_extracti64x4_epi64(tmp[7], 1);
+    temp1 = _mm512_extracti64x4_epi64(tmp[7], ZERO);
+    temp2 = _mm512_extracti64x4_epi64(tmp[7], ONE);
     temp1 = _mm256_sign_epi32(temp1, negative);
     temp2 = _mm256_sign_epi32(temp2, negative);
-    out[11] = _mm512_inserti64x4(out[11], temp1, 0);
-    out[11] = _mm512_inserti64x4(out[11], temp2, 1);
+    out[11] = _mm512_inserti64x4(out[11], temp1, ZERO);
+    out[11] = _mm512_inserti64x4(out[11], temp2, ONE);
 
-    temp1 = _mm512_extracti64x4_epi64(tmp2[13], 0);
-    temp2 = _mm512_extracti64x4_epi64(tmp2[13], 1);
+    temp1 = _mm512_extracti64x4_epi64(tmp2[13], ZERO);
+    temp2 = _mm512_extracti64x4_epi64(tmp2[13], ONE);
     temp1 = _mm256_sign_epi32(temp1, negative);
     temp2 = _mm256_sign_epi32(temp2, negative);
-    out[13] = _mm512_inserti64x4(out[13], temp1, 0);
-    out[13] = _mm512_inserti64x4(out[13], temp2, 1);
+    out[13] = _mm512_inserti64x4(out[13], temp1, ZERO);
+    out[13] = _mm512_inserti64x4(out[13], temp2, ONE);
 
-    temp1 = _mm512_extracti64x4_epi64(tmp2[1], 0);
-    temp2 = _mm512_extracti64x4_epi64(tmp2[1], 1);
+    temp1 = _mm512_extracti64x4_epi64(tmp2[1], ZERO);
+    temp2 = _mm512_extracti64x4_epi64(tmp2[1], ONE);
     temp1 = _mm256_sign_epi32(temp1, negative);
     temp2 = _mm256_sign_epi32(temp2, negative);
-    out[15] = _mm512_inserti64x4(out[15], temp1, 0);
-    out[15] = _mm512_inserti64x4(out[15], temp2, 1);
+    out[15] = _mm512_inserti64x4(out[15], temp1, ZERO);
+    out[15] = _mm512_inserti64x4(out[15], temp2, ONE);
 }
 
 void av1_inv_txfm2d_add_16x16_avx512(const int32_t *coeff, uint16_t *output,
@@ -2700,9 +2704,12 @@ void iidtx32_avx512(__m512i *input, __m512i *output, const int8_t cos_bit,
 
 static INLINE void transpose_16nx16m_inv_avx512(const __m512i *in,
     __m512i *out, const int32_t width, const int32_t height) {
+
     const int32_t numcol = height >> 4;
     const int32_t numrow = width >> 4;
+    
     __m512i out1[16];
+    
     for (int32_t j = 0; j < numrow; j++) {
         for (int32_t i = 0; i < numcol; i++) {
             TRANSPOSE_4X4_AVX512(in[i * width + j + (numrow * 0)], in[i * width + j + (numrow * 1)],
@@ -2721,115 +2728,115 @@ static INLINE void transpose_16nx16m_inv_avx512(const __m512i *in,
             __m128i * outptr = (__m128i *)(out + (j * height + i + (numcol * 0)));
 
             //will get first row of transpose matrix from corresponding 4 vectors in out1
-            outptr[0] = _mm512_extracti32x4_epi32(out1[0], 0);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[4], 0);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[8], 0);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[12], 0);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[0], ZERO);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[4], ZERO);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[8], ZERO);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[12], ZERO);
 
             //will get second row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 1)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[1], 0);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[5], 0);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[9], 0);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[13], 0);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[1], ZERO);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[5], ZERO);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[9], ZERO);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[13], ZERO);
 
             //will get 3rd row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 2)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[2], 0);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[6], 0);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[10], 0);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[14], 0);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[2], ZERO);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[6], ZERO);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[10], ZERO);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[14], ZERO);
 
             //will get 4th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 3)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[3], 0);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[7], 0);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[11], 0);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[15], 0);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[3], ZERO);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[7], ZERO);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[11], ZERO);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[15], ZERO);
 
             //will get 5th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 4)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[0], 1);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[4], 1);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[8], 1);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[12], 1);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[0], ONE);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[4], ONE);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[8], ONE);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[12], ONE);
 
             //will get 6th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 5)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[1], 1);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[5], 1);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[9], 1);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[13], 1);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[1], ONE);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[5], ONE);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[9], ONE);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[13], ONE);
 
             //will get 7th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 6)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[2], 1);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[6], 1);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[10], 1);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[14], 1);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[2], ONE);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[6], ONE);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[10], ONE);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[14], ONE);
 
             //will get 8th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 7)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[3], 1);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[7], 1);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[11], 1);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[15], 1);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[3], ONE);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[7], ONE);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[11], ONE);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[15], ONE);
 
             //will get 9th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 8)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[0], 2);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[4], 2);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[8], 2);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[12], 2);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[0], TWO);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[4], TWO);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[8], TWO);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[12], TWO);
 
             //will get 10th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 9)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[1], 2);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[5], 2);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[9], 2);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[13], 2);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[1], TWO);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[5], TWO);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[9], TWO);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[13], TWO);
 
             //will get 11th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 10)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[2], 2);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[6], 2);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[10], 2);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[14], 2);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[2], TWO);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[6], TWO);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[10], TWO);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[14], TWO);
 
             //will get 12th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 11)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[3], 2);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[7], 2);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[11], 2);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[15], 2);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[3], TWO);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[7],TWO);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[11],TWO);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[15],TWO);
 
             //will get 13th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 12)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[0], 3);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[4], 3);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[8], 3);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[12], 3);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[0],THREE);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[4],THREE);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[8],THREE);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[12],THREE);
 
             //will get 14th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 13)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[1], 3);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[5], 3);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[9], 3);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[13], 3);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[1],THREE);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[5],THREE);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[9],THREE);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[13],THREE);
 
             //will get 15th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 14)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[2], 3);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[6], 3);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[10], 3);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[14], 3);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[2],THREE);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[6],THREE);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[10],THREE);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[14],THREE);
 
             //will get 16th row of transpose matrix from corresponding 4 vectors in out1
             outptr = (__m128i *)(out + (j * height + i + (numcol * 15)));
-            outptr[0] = _mm512_extracti32x4_epi32(out1[3], 3);
-            outptr[1] = _mm512_extracti32x4_epi32(out1[7], 3);
-            outptr[2] = _mm512_extracti32x4_epi32(out1[11], 3);
-            outptr[3] = _mm512_extracti32x4_epi32(out1[15], 3);
+            outptr[0] = _mm512_extracti32x4_epi32(out1[3],THREE);
+            outptr[1] = _mm512_extracti32x4_epi32(out1[7],THREE);
+            outptr[2] = _mm512_extracti32x4_epi32(out1[11],THREE);
+            outptr[3] = _mm512_extracti32x4_epi32(out1[15],THREE);
         }
     }
 }
@@ -2937,7 +2944,7 @@ static void write_buffer_32x16n_avx512(__m512i *in, uint16_t *output, int32_t st
 static INLINE void av1_round_shift_array_avx512(__m512i *input,
     __m512i *output,
     const int32_t size,
-    const int32_t bit) {
+    const int8_t bit) {
     if (bit > 0) {
         __m512i round = _mm512_set1_epi32(1 << (bit - 1));
         int32_t i;
@@ -3065,7 +3072,7 @@ void av1_inv_txfm2d_add_32x64_avx512(const int32_t *coeff, uint16_t *output,
         load_buffer_16_avx512(coeff + 16 + i * txfm_size_col, in + 1 + i * 2);
     }
     transpose_16nx16m_inv_avx512(in, out, txfm_size_col, txfm_size_row);
-    av1_round_shift_rect_array_32_avx512(out, out, 128, 0, 2896);
+    av1_round_shift_rect_array_32_avx512(out, out, 128, (int8_t)0, 2896);
     idct32_avx512(out, in, inv_cos_bit_row[txw_idx][txh_idx], num_row);
     for (int32_t i = 0; i < 8; i++) {
         round_shift_16x16_avx512((in + i * 16), -shift[0]);
@@ -3099,7 +3106,7 @@ void av1_inv_txfm2d_add_64x32_avx512(const int32_t *coeff, uint16_t *output,
         load_buffer_16_avx512(coeff + 48 + i * txfm_size_col, in + 3 + i * 4);
     }
     transpose_16nx16m_inv_avx512(in, out, 32, 32);
-    av1_round_shift_rect_array_32_avx512(out, out, 128, 0, 2896);
+    av1_round_shift_rect_array_32_avx512(out, out, 128, (int8_t)0, 2896);
     idct64_avx512(out, in, inv_cos_bit_row[txw_idx][txh_idx], num_row, bd);
     for (int32_t i = 0; i < 8; i++) {
         round_shift_16x16_avx512((in + i * 16), -shift[0]);
@@ -3169,7 +3176,7 @@ void av1_inv_txfm2d_add_16x32_avx512(const int32_t *coeff, uint16_t *output,
         load_buffer_16_avx512(coeff + i * txfm_size_col, in + i);
     }
     transpose_16nx16m_inv_avx512(in, out, txfm_size_col, txfm_size_row);
-    av1_round_shift_rect_array_32_avx512(out, out, 32, 0, 2896);
+    av1_round_shift_rect_array_32_avx512(out, out, 32, (int8_t)0, 2896);
     row_txfm(out, in, inv_cos_bit_row[txw_idx][txh_idx], num_row);
     for (int32_t i = 0; i < 2; i++) {
         round_shift_16x16_avx512((in + i * 16), -shift[0]);
@@ -3202,7 +3209,7 @@ void av1_inv_txfm2d_add_32x16_avx512(const int32_t *coeff, uint16_t *output,
         load_buffer_16_avx512(coeff + 16 + i * txfm_size_col, in + 1 + i * 2);
     }
     transpose_16nx16m_inv_avx512(in, out, txfm_size_col, txfm_size_row);
-    av1_round_shift_rect_array_32_avx512(out, out, 32, 0, 2896);
+    av1_round_shift_rect_array_32_avx512(out, out, 32, (int8_t)0, 2896);
     row_txfm(out, in, inv_cos_bit_row[txw_idx][txh_idx], num_row);
     for (int32_t i = 0; i < 2; i++) {
         round_shift_16x16_avx512((in + i * 16), -shift[0]);
