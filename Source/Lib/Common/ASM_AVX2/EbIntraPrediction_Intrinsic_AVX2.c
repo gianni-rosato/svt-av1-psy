@@ -11,6 +11,9 @@
 #include "EbIntraPrediction_AVX2.h"
 #include "lpf_common_sse2.h"
 #include "aom_dsp_rtcd.h"
+#include "transpose_avx2.h"
+#include "transpose_sse2.h"
+
 #ifndef _mm256_setr_m128i
 #define _mm256_setr_m128i(/* __m128i */ lo, /* __m128i */ hi) \
     _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)
@@ -6852,96 +6855,6 @@ static INLINE void transpose16x32_avx2(__m256i *x, __m256i *d) {
     d[15] = _mm256_unpackhi_epi64(w7, w15);
 }
 
-static INLINE void transpose16x16_sse2(__m128i *x, __m128i *d) {
-    __m128i w0, w1, w2, w3, w4, w5, w6, w7, w8, w9;
-    __m128i w10, w11, w12, w13, w14, w15;
-
-    w0 = _mm_unpacklo_epi8(x[0], x[1]);
-    w1 = _mm_unpacklo_epi8(x[2], x[3]);
-    w2 = _mm_unpacklo_epi8(x[4], x[5]);
-    w3 = _mm_unpacklo_epi8(x[6], x[7]);
-
-    w8 = _mm_unpacklo_epi8(x[8], x[9]);
-    w9 = _mm_unpacklo_epi8(x[10], x[11]);
-    w10 = _mm_unpacklo_epi8(x[12], x[13]);
-    w11 = _mm_unpacklo_epi8(x[14], x[15]);
-
-    w4 = _mm_unpacklo_epi16(w0, w1);
-    w5 = _mm_unpacklo_epi16(w2, w3);
-    w12 = _mm_unpacklo_epi16(w8, w9);
-    w13 = _mm_unpacklo_epi16(w10, w11);
-
-    w6 = _mm_unpacklo_epi32(w4, w5);
-    w7 = _mm_unpackhi_epi32(w4, w5);
-    w14 = _mm_unpacklo_epi32(w12, w13);
-    w15 = _mm_unpackhi_epi32(w12, w13);
-
-    // Store first 4-line result
-    d[0] = _mm_unpacklo_epi64(w6, w14);
-    d[1] = _mm_unpackhi_epi64(w6, w14);
-    d[2] = _mm_unpacklo_epi64(w7, w15);
-    d[3] = _mm_unpackhi_epi64(w7, w15);
-
-    w4 = _mm_unpackhi_epi16(w0, w1);
-    w5 = _mm_unpackhi_epi16(w2, w3);
-    w12 = _mm_unpackhi_epi16(w8, w9);
-    w13 = _mm_unpackhi_epi16(w10, w11);
-
-    w6 = _mm_unpacklo_epi32(w4, w5);
-    w7 = _mm_unpackhi_epi32(w4, w5);
-    w14 = _mm_unpacklo_epi32(w12, w13);
-    w15 = _mm_unpackhi_epi32(w12, w13);
-
-    // Store second 4-line result
-    d[4] = _mm_unpacklo_epi64(w6, w14);
-    d[5] = _mm_unpackhi_epi64(w6, w14);
-    d[6] = _mm_unpacklo_epi64(w7, w15);
-    d[7] = _mm_unpackhi_epi64(w7, w15);
-
-    // upper half
-    w0 = _mm_unpackhi_epi8(x[0], x[1]);
-    w1 = _mm_unpackhi_epi8(x[2], x[3]);
-    w2 = _mm_unpackhi_epi8(x[4], x[5]);
-    w3 = _mm_unpackhi_epi8(x[6], x[7]);
-
-    w8 = _mm_unpackhi_epi8(x[8], x[9]);
-    w9 = _mm_unpackhi_epi8(x[10], x[11]);
-    w10 = _mm_unpackhi_epi8(x[12], x[13]);
-    w11 = _mm_unpackhi_epi8(x[14], x[15]);
-
-    w4 = _mm_unpacklo_epi16(w0, w1);
-    w5 = _mm_unpacklo_epi16(w2, w3);
-    w12 = _mm_unpacklo_epi16(w8, w9);
-    w13 = _mm_unpacklo_epi16(w10, w11);
-
-    w6 = _mm_unpacklo_epi32(w4, w5);
-    w7 = _mm_unpackhi_epi32(w4, w5);
-    w14 = _mm_unpacklo_epi32(w12, w13);
-    w15 = _mm_unpackhi_epi32(w12, w13);
-
-    // Store first 4-line result
-    d[8] = _mm_unpacklo_epi64(w6, w14);
-    d[9] = _mm_unpackhi_epi64(w6, w14);
-    d[10] = _mm_unpacklo_epi64(w7, w15);
-    d[11] = _mm_unpackhi_epi64(w7, w15);
-
-    w4 = _mm_unpackhi_epi16(w0, w1);
-    w5 = _mm_unpackhi_epi16(w2, w3);
-    w12 = _mm_unpackhi_epi16(w8, w9);
-    w13 = _mm_unpackhi_epi16(w10, w11);
-
-    w6 = _mm_unpacklo_epi32(w4, w5);
-    w7 = _mm_unpackhi_epi32(w4, w5);
-    w14 = _mm_unpacklo_epi32(w12, w13);
-    w15 = _mm_unpackhi_epi32(w12, w13);
-
-    // Store second 4-line result
-    d[12] = _mm_unpacklo_epi64(w6, w14);
-    d[13] = _mm_unpackhi_epi64(w6, w14);
-    d[14] = _mm_unpacklo_epi64(w7, w15);
-    d[15] = _mm_unpackhi_epi64(w7, w15);
-}
-
 static void transpose_TX_8X8(const uint8_t *src, ptrdiff_t pitchSrc,
     uint8_t *dst, ptrdiff_t pitchDst) {
     __m128i r0, r1, r2, r3, r4, r5, r6, r7;
@@ -7152,7 +7065,7 @@ static void dr_prediction_z3_16x16_avx2(uint8_t *dst, ptrdiff_t stride,
     __m128i dstvec[16], d[16];
 
     dr_prediction_z1_16xN_internal_avx2(16, dstvec, left, upsample_left, dy);
-    transpose16x16_sse2(dstvec, d);
+    transpose_8bit_16x16_reg128bit_avx2(dstvec, d);
 
     for (int32_t i = 0; i < 16; i++)
         _mm_storeu_si128((__m128i *)(dst + i * stride), d[i]);
@@ -7211,7 +7124,7 @@ static void dr_prediction_z3_32x16_avx2(uint8_t *dst, ptrdiff_t stride,
 
     dr_prediction_z1_16xN_internal_avx2(32, dstvec, left, upsample_left, dy);
     for (int32_t i = 0; i < 32; i += 16) {
-        transpose16x16_sse2((dstvec + i), d);
+        transpose_8bit_16x16_reg128bit_avx2(dstvec + i, d);
         for (int32_t j = 0; j < 16; j++)
             _mm_storeu_si128((__m128i *)(dst + j * stride + i), d[j]);
     }
@@ -7249,7 +7162,7 @@ static void dr_prediction_z3_64x16_avx2(uint8_t *dst, ptrdiff_t stride,
 
     dr_prediction_z1_16xN_internal_avx2(64, dstvec, left, upsample_left, dy);
     for (int32_t i = 0; i < 64; i += 16) {
-        transpose16x16_sse2((dstvec + i), d);
+        transpose_8bit_16x16_reg128bit_avx2(dstvec + i, d);
         for (int32_t j = 0; j < 16; j++)
             _mm_storeu_si128((__m128i *)(dst + j * stride + i), d[j]);
     }
