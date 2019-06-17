@@ -1159,8 +1159,12 @@ void generate_av1_mvp_table(
     xd->tile.mi_row_start = tile->mi_row_start;
     xd->tile.mi_row_end = tile->mi_row_end;
 
+#if INCOMPLETE_SB_FIX
+    xd->mi_stride = picture_control_set_ptr->mi_stride;
+#else
     //these could be done at init time
     xd->mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 / 4);
+#endif
     const int32_t offset = mi_row * xd->mi_stride + mi_col;
     xd->mi = picture_control_set_ptr->mi_grid_base + offset;
 
@@ -1307,7 +1311,11 @@ void update_av1_mi_map(
     const BlockGeom                *blk_geom,
     PictureControlSet            *picture_control_set_ptr)
 {
+#if INCOMPLETE_SB_FIX
+    uint32_t mi_stride = picture_control_set_ptr->mi_stride;
+#else
     uint32_t mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
+#endif    
     int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
     int32_t mi_col = cu_origin_x >> MI_SIZE_LOG2;
 
@@ -1383,7 +1391,11 @@ void update_mi_map(
     PictureControlSet            *picture_control_set_ptr)
 {
     UNUSED(cu_stats);
+#if INCOMPLETE_SB_FIX
+    uint32_t mi_stride = picture_control_set_ptr->mi_stride;
+#else
     uint32_t mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
+#endif    
     int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
     int32_t mi_col = cu_origin_x >> MI_SIZE_LOG2;
 
