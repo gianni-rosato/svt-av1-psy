@@ -38,6 +38,14 @@ if(UNIX)
     set(LIBS_PRIVATE "-lpthread -lm")
 endif()
 
+if(COVERAGE)
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+        set(LIBS_PRIVATE "-lgcov ${LIBS_PRIVATE}")
+    else(CMAKE_C_COMPILER_ID MATCHES "Clang")
+        set(LIBS_PRIVATE "--coverage ${LIBS_PRIVATE}")
+    endif()
+endif()
+
 # Encoder Lib Source Files
 add_library(SvtAv1Enc
     ${all_files}
