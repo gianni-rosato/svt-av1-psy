@@ -50,8 +50,7 @@ file(GLOB all_files
     "ref/*.cc"
     "../Source/Lib/Encoder/Codec/*.c"
     "../Source/Lib/Decoder/Codec/EbDecBitReader.c"
-    "../Source/Lib/Decoder/Codec/EbDecBitstreamUnit.c"
-    )
+    "../Source/Lib/Decoder/Codec/EbDecBitstreamUnit.c")
 
 if (UNIX)
   # App Source Files
@@ -93,6 +92,5 @@ install(TARGETS SvtAv1UnitTests RUNTIME DESTINATION bin)
 
 add_test(SvtAv1UnitTests ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/SvtAv1UnitTests)
 
-add_subdirectory (api_test)
-add_subdirectory (e2e_test)
-
+add_subdirectory(api_test)
+add_subdirectory(e2e_test)
