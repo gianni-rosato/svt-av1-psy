@@ -42,6 +42,7 @@ file(GLOB all_files
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND PLATFORM_LIBS m)
 endif()
+
 message(STATUS "BUILD_SHARED_LIBS : " ${BUILD_SHARED_LIBS})
 # Encoder Lib Source Files
 add_library(SvtAv1Enc

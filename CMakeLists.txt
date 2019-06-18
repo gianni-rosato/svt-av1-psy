@@ -67,6 +67,10 @@ endif()
 #    setup_target_for_coverage(${PROJECT_NAME}_coverage ${PROJECT_TEST_NAME} coverage)
 #endif()
 
+if (BUILD_TESTING)
+    option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
+endif()
+
 # Add Subdirectories
 if (BUILD_TESTING)
     option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
