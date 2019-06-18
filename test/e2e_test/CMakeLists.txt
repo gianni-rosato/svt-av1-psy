@@ -3,15 +3,14 @@
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
 #
 
+# APP Directory CMakeLists.txt
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+
 include(ProcessorCount)
 set(SVT_AV1_E2E_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 include("${SVT_AV1_E2E_ROOT}/test_data_util.cmake")
 include("${SVT_AV1_E2E_ROOT}/libaom_dependency.cmake")
-
-# APP Directory CMakeLists.txt
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 
 # Include Subdirectories
 include_directories (${PROJECT_SOURCE_DIR}/test/)
