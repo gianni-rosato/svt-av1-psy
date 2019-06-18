@@ -137,14 +137,25 @@ else()
     endif()
 endif()
 
-#set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
-#if(USE_CODE_COVERAGE AND CMAKE_COMPILER_IS_GNUCXX)
-#    include(CodeCoverage)
-#    setup_target_for_coverage(${PROJECT_NAME}_coverage ${PROJECT_TEST_NAME} coverage)
-#endif()
-
-if (BUILD_TESTING)
+# BUILD_SHARED_LIBS is a standard CMake variable, but we declare it here to
+# make it prominent in the GUI.
+if(WIN32 OR MSYS OR BUILD_TESTING)
     option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
+else()
+    option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." OFF)
+endif()
+
+message(STATUS "BUILD_SHARED_LIBS : " ${BUILD_SHARED_LIBS})
+
+option(BUILD_TESTING "Build SvtAv1UnitTests, SvtAv1ApiTests, and SvtAv1E2ETests unit tests")
+option(COVERAGE "Generate coverage report")
+option(BUILD_APPS "Build Enc and Dec Apps" ON)
+
+# Prepare for Coveralls
+if(COVERAGE AND NOT MSVC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 endif()
 
 # Add Subdirectories
