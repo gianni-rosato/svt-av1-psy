@@ -759,7 +759,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     SequenceControlSet        *sequence_control_set_ptr,
     PictureParentControlSet   *picture_control_set_ptr) {
     EbErrorType return_error = EB_ErrorNone;
-	FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
+    FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
     //  MDC Partitioning Method              Settings
     //  PIC_ALL_DEPTH_MODE                   ALL sq and nsq: SB size -> 4x4
     //  PIC_ALL_C_DEPTH_MODE                 ALL sq and nsq: SB size -> 4x4  (No 4xN ; Nx4)
@@ -945,8 +945,8 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->ibc_mode = 1;
     }
     else {
-       frm_hdr->allow_screen_content_tools = 0;
-       frm_hdr->allow_intrabc = 0;
+        frm_hdr->allow_screen_content_tools = 0;
+        frm_hdr->allow_intrabc = 0;
     }
 
     if (!picture_control_set_ptr->sequence_control_set_ptr->static_config.disable_dlf_flag && frm_hdr->allow_intrabc == 0) {
@@ -3056,7 +3056,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 // Film grain (assigning the random-seed)
                                 {
                                     uint16_t *fgn_random_seed_ptr = &picture_control_set_ptr->sequence_control_set_ptr->film_grain_random_seed;
-                                	frm_hdr->film_grain_params.random_seed = *fgn_random_seed_ptr;
+                                    frm_hdr->film_grain_params.random_seed = *fgn_random_seed_ptr;
                                     *fgn_random_seed_ptr += 3381;  // Changing random seed for film grain
                                     if (!(*fgn_random_seed_ptr))     // Random seed should not be zero
                                         *fgn_random_seed_ptr += 7391;
@@ -3069,21 +3069,21 @@ void* picture_decision_kernel(void *input_ptr)
                                 picture_control_set_ptr->allow_comp_inter_inter = 0;
                                 picture_control_set_ptr->is_skip_mode_allowed = 0;
 
-	                            frm_hdr->reference_mode = (ReferenceMode)0xFF;
+                                frm_hdr->reference_mode = (ReferenceMode)0xFF;
 
                                 if (picture_control_set_ptr->slice_type != I_SLICE) {
                                     picture_control_set_ptr->allow_comp_inter_inter = 1;
                                     if (picture_control_set_ptr->slice_type == P_SLICE) {
                                         picture_control_set_ptr->is_skip_mode_allowed = 0;
-	                                    frm_hdr->reference_mode = SINGLE_REFERENCE;
+                                        frm_hdr->reference_mode = SINGLE_REFERENCE;
                                         picture_control_set_ptr->skip_mode_flag = 0;
                                     }
                                     else if (picture_control_set_ptr->temporal_layer_index == 0) {
-	                                    frm_hdr->reference_mode = REFERENCE_MODE_SELECT;
-    	                                frm_hdr->skip_mode_params.skip_mode_flag = 0;
+                                        frm_hdr->reference_mode = REFERENCE_MODE_SELECT;
+                                        frm_hdr->skip_mode_params.skip_mode_flag = 0;
                                     }
                                     else {
-	                                    frm_hdr->reference_mode = REFERENCE_MODE_SELECT;
+                                        frm_hdr->reference_mode = REFERENCE_MODE_SELECT;
                                         picture_control_set_ptr->is_skip_mode_allowed = 1;
                                         picture_control_set_ptr->skip_mode_flag = 1;
                                     }

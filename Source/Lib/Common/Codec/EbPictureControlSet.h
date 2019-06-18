@@ -14234,7 +14234,7 @@ extern "C" {
         uint64_t                              filtered_sse_uv;
 #endif
 
-        FrameHeader                         frm_hdr;
+        FrameHeader                           frm_hdr;
     } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData

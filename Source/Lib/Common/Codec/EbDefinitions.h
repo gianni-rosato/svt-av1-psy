@@ -21,7 +21,6 @@
 #include <string.h>
 #include <stddef.h>
 #include "EbSvtAv1.h"
-#include "EbSvtAv1Enc.h"
 #ifdef _WIN32
 #define inline __inline
 #elif __GNUC__

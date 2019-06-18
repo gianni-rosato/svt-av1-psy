@@ -1860,11 +1860,9 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             ? REFRESH_FRAME_CONTEXT_DISABLED : REFRESH_FRAME_CONTEXT_BACKWARD);
     }
 
-
     generate_next_ref_frame_map(dec_handle_ptr);
 
     read_tile_info(bs, &frame_info->tiles_info, seq_header, frame_info);
-
     read_quantization_params(bs, &frame_info->quantization_params,
         &seq_header->color_config, num_planes);
     read_segmentation_params(bs, &frame_info->segmentation_params, frame_info);

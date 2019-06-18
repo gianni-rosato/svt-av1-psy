@@ -480,7 +480,6 @@ void* cdef_kernel(void *input_ptr)
                 }
         }
         else {
-
             frm_hdr->CDEF_params.cdef_bits = 0;
             frm_hdr->CDEF_params.cdef_y_strength[0] = 0;
             picture_control_set_ptr->parent_pcs_ptr->nb_cdef_strengths = 1;

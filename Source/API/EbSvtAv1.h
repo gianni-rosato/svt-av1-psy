@@ -55,7 +55,6 @@ EbBool is a 32 bit quantity and is aligned on a 32 bit word boundary.
 #define EB_FALSE  0
 #define EB_TRUE   1
 
-
 typedef struct EbBufferHeaderType
 {
     // EbBufferHeaderType size

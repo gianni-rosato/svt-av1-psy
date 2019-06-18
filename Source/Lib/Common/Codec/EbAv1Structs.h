@@ -8,7 +8,6 @@
 
 #include "EbPictureBufferDesc.h"
 #include "EbSegmentationParams.h"
-//#include "EbPictureControlSet.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -169,7 +168,7 @@ typedef struct SeqHeader {
      *   0: Indicates that superblocks contain 64x64 luma samples.*/
     uint8_t             use_128x128_superblock;
 
-	/*Size of the superblock used for this frame*/
+    /*Size of the superblock used for this frame*/
     BlockSize         sb_size;
 
     /*!< superblock size in 4x4 MI unit */
@@ -338,48 +337,6 @@ typedef struct QuantizationParams {
      * chroma V plane decoding*/
     uint8_t     qm_v;
 } QuantizationParams;
-
-#if 0
-typedef struct SegmentationParams {
-
-    /*!< 1: Indicates that this frame makes use of the segmentation tool
-     *   0: Indicates that the frame does not use segmentation*/
-    uint8_t     segmentation_enabled;
-
-    /*!< 1: Indicates that the segmentation map are updated during the decoding
-     *      of this frame
-     *   0: Indicates that the segmentation map from the previous frame is used*/
-    uint8_t     segmentation_update_map;
-
-    /*!< 1: Indicates that the updates to the segmentation map are coded
-     *      relative to the existing segmentation map
-     *   0: Indicates that the new segmentation map is coded without reference
-     *      to the existing segmentation map */
-    uint8_t     segmentation_temporal_update;
-
-    /*!<1: Indicates that new parameters are about to be specified for each segment
-     *  0: Indicates that the segmentation parameters should keep their existing
-     *     values*/
-    uint8_t     segmentation_update_data;
-
-    /*!< Specifies the feature data for a segment feature */
-    int16_t     feature_data[MAX_SEGMENTS][SEG_LVL_MAX];
-
-    /*!< Specifies the feature enabled for a segment feature */
-    int16_t     feature_enabled[MAX_SEGMENTS][SEG_LVL_MAX];
-
-    /*!< Specifies the feature enabled for a segment feature */
-    int16_t     seg_qm_level[MAX_SEGMENTS][SEG_LVL_MAX];
-
-    /*!< Specifies the highest numbered segment id that has some enabled feature*/
-    uint8_t     last_active_seg_id;
-
-    /*!< 1: Indicates that the segment id will be read before the skip syntax element
-     *   0: Indicates that the skip syntax element will be read first */
-    uint8_t     seg_id_pre_skip;
-
-} SegmentationParams;
-#endif
 typedef struct DeltaQParams {
     /*!< Specifies whether quantizer index delta values are present */
     uint8_t     delta_q_present;
@@ -407,7 +364,7 @@ typedef struct CDEFParams {
     /*!< Controls the amount of damping in the deringing filter */
     uint8_t     cdef_damping;
     /*!< Specifies the number of bits needed to specify which CDEF filter to
-     * 	apply*/
+     *apply*/
     uint8_t     cdef_bits;
     /*!< Specify the strength of the primary and secondary filter of Y plane */
     uint8_t     cdef_y_strength[CDEF_MAX_STRENGTHS];
@@ -462,7 +419,6 @@ typedef struct GlobalMotionParams {
     /*!< Previous global motion parameter */
     //int32_t             prev_gm_params[6];
 } GlobalMotionParams;
-
 
 typedef struct FrameHeader {
 
