@@ -122,6 +122,9 @@ int32_t main(int32_t argc, char* argv[])
     size_t bytes_in_buffer = 0, buffer_size = 0;
 
     // Print Decoder Info
+    printf("\n**WARNING** decoder is not feature complete\n");
+    printf("Current support: intra tools (no SCC, no loop filters)\n\n");
+
     printf("-------------------------------------\n");
     printf("SVT-AV1 Decoder Sample Application v1.2.0\n");
     printf("Platform:   %u bit\n", (unsigned) sizeof(void*) * 8);
