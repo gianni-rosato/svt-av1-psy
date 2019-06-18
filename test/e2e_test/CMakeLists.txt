@@ -13,11 +13,12 @@ include("${SVT_AV1_E2E_ROOT}/test_data_util.cmake")
 include("${SVT_AV1_E2E_ROOT}/libaom_dependency.cmake")
 
 # Include Subdirectories
-include_directories (${PROJECT_SOURCE_DIR}/test/)
-include_directories (${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-include_directories(${PROJECT_SOURCE_DIR}/third_party/googletest/include third_party/googletest/src)
-include_directories(${PROJECT_SOURCE_DIR}/third_party/aom/inc)
-include_directories(${PROJECT_SOURCE_DIR}/Source/API)
+include_directories(${PROJECT_SOURCE_DIR}/test/
+    ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/
+    ${PROJECT_SOURCE_DIR}/third_party/googletest/include
+    ${PROJECT_SOURCE_DIR}/third_party/googletest/src
+    ${PROJECT_SOURCE_DIR}/third_party/aom/inc
+    ${PROJECT_SOURCE_DIR}/Source/API)
 
 # Link Subdirectories
 if (MSVC OR MSYS OR MINGW OR WIN32)
