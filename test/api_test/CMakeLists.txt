@@ -14,25 +14,6 @@ include_directories(${PROJECT_SOURCE_DIR}/test/
     ${PROJECT_SOURCE_DIR}/third_party/googletest/src
     ${PROJECT_SOURCE_DIR}/Source/API)
 
-# Define helper functions and macros used by Google Test.
-include(../../third_party/googletest/cmake/internal_utils.cmake)
-
-if(MSVC)
- set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4 -D_ALLOW_KEYWORD_MACROS")
- set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 -D_ALLOW_KEYWORD_MACROS")
-endif (MSVC)
-
-# When other libraries are using a shared version of runtime libraries,
-# Google Test also has to use one.
-option(
-  gtest_force_shared_crt
-  "Use shared (DLL) run-time lib even when Google Test is built as static lib."
-  OFF)
-
-add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
-
-enable_testing()
-
 file(GLOB all_files
     "*.h"
     "*.cc")
