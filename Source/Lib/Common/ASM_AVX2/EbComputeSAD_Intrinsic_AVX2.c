@@ -3777,9 +3777,7 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     ---------------------------------------
     */
 
-    //    __m128i Zero = _mm_setzero_si128();
-
-        //32x32_0
+    //32x32_0
     s0 = _mm_loadu_si128((__m128i*)(p_sad16x16 + 0 * 8));
     s1 = _mm_loadu_si128((__m128i*)(p_sad16x16 + 1 * 8));
     s2 = _mm_loadu_si128((__m128i*)(p_sad16x16 + 2 * 8));
@@ -3958,16 +3956,13 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     // ss3: Search Pos 3,7 for blocks 0,1,2,3
 
     ss4 = _mm256_cmpgt_epi32(ss0, ss1);
-    //ss4 = _mm256_or_si256(_mm256_cmpgt_epi32(ss0, ss1), _mm256_cmpeq_epi32(ss0, ss1));
     ss0 = _mm256_min_epi32(ss0, ss1);
     ss5 = _mm256_cmpgt_epi32(ss2, ss3);
-    //ss5 = _mm256_or_si256(_mm256_cmpgt_epi32(ss2, ss3), _mm256_cmpeq_epi32(ss2, ss3));
     ss2 = _mm256_min_epi32(ss2, ss3);
     ss5 = _mm256_sub_epi32(ss5, _mm256_set1_epi32(2)); // ss5-2
 
     // *** 4 search points per position ***
     ss6 = _mm256_cmpgt_epi32(ss0, ss2);
-    //ss6 = _mm256_or_si256(_mm256_cmpgt_epi32(ss0, ss2), _mm256_cmpeq_epi32(ss0, ss2));
     ss0 = _mm256_min_epi32(ss0, ss2);
     ss5 = _mm256_and_si256(ss5, ss6); // (ss5-2) & ss6
     ss4 = _mm256_andnot_si256(ss6, ss4); // ss4 & !ss6
@@ -4002,7 +3997,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     // Choose the best MV out of the two, use s4 to hold results of min
     s4 = _mm_cmpgt_epi32(s0, s1);
 
-    //s4 = _mm_or_si128(_mm_cmpgt_epi32(s0, s1), _mm_cmpeq_epi32(s0, s1));
     s0 = _mm_min_epi32(s0, s1);
 
     // Extract MV's based on the blocks to s2
@@ -4027,7 +4021,6 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     // Determine which candidates are better than the current best SAD's.
     // s4 is used to determine the MV's of the new best SAD's
     s4 = _mm_cmpgt_epi32(s1, s0);
-    //s4 = _mm_or_si128(_mm_cmpgt_epi32(s1, s0), _mm_cmpeq_epi32(s1, s0));
     // Combine old and new min SAD's
     s0 = _mm_min_epu32(s0, s1);
     // Store new best SAD's back to memory
