@@ -68,6 +68,9 @@ endif()
 #endif()
 
 # Add Subdirectories
+if (BUILD_TESTING)
+    option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
+endif()
 add_subdirectory (Source/Lib/Common)
 add_subdirectory (Source/Lib/Encoder)
 add_subdirectory (Source/App/EncApp)

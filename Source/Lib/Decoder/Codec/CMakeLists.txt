@@ -42,23 +42,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND PLATFORM_LIBS m)
 endif()
 
-if(BUILD_SHARED_LIBS)
-    # Decoder Lib Source Files
-    add_library(SvtAv1DecShared SHARED
-        ${all_files}
-        $<TARGET_OBJECTS:COMMON_CODEC>
-        $<TARGET_OBJECTS:COMMON_C_DEFAULT>
-        $<TARGET_OBJECTS:COMMON_ASM_SSE2>
-        $<TARGET_OBJECTS:COMMON_ASM_SSSE3>
-        $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
-        $<TARGET_OBJECTS:COMMON_ASM_AVX2>
-    )
-    set_target_properties(SvtAv1DecShared PROPERTIES OUTPUT_NAME SvtAv1Dec)
-    target_link_libraries(SvtAv1DecShared ${PLATFORM_LIBS})
-    install(TARGETS SvtAv1DecShared DESTINATION "${CMAKE_INSTALL_LIBDIR}")
-endif(BUILD_SHARED_LIBS)
-
-add_library(SvtAv1DecStatic STATIC
+# Decoder Lib Source Files
+add_library(SvtAv1Dec
     ${all_files}
     $<TARGET_OBJECTS:COMMON_CODEC>
     $<TARGET_OBJECTS:COMMON_C_DEFAULT>
@@ -67,9 +52,8 @@ add_library(SvtAv1DecStatic STATIC
     $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
     $<TARGET_OBJECTS:COMMON_ASM_AVX2>
 )
-set_target_properties(SvtAv1DecStatic PROPERTIES OUTPUT_NAME SvtAv1Dec)
-target_link_libraries(SvtAv1DecStatic ${PLATFORM_LIBS})
-install(TARGETS SvtAv1DecStatic DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+target_link_libraries(SvtAv1Dec ${PLATFORM_LIBS})
+install(TARGETS SvtAv1Dec DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 
 if(NOT DEFINED CMAKE_INSTALL_INCLUDEDIR)
     set(CMAKE_INSTALL_INCLUDEDIR "include/svt-av1")

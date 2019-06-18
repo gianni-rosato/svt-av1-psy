@@ -23,17 +23,10 @@ add_executable (SvtAv1EncApp
 )
 
 #********** SET COMPILE FLAGS************
-
-if(BUILD_SHARED_LIBS)
-    set (SvtAv1EncLib SvtAv1EncShared)
-else()
-    set (SvtAv1EncLib SvtAv1EncStatic)
-endif()
-
 if (UNIX)
     # Link the Encoder App
      target_link_libraries (SvtAv1EncApp
-        ${SvtAv1EncLib}
+        SvtAv1Enc
         pthread
         m)
 endif()
@@ -42,7 +35,7 @@ if (MSVC OR MSYS OR MINGW OR WIN32)
 
     # Link the Encoder App
     target_link_libraries (SvtAv1EncApp
-                           ${SvtAv1EncLib})
+                            SvtAv1Enc)
 endif()
 
 install(TARGETS SvtAv1EncApp RUNTIME DESTINATION bin)

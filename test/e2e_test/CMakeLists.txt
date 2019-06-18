@@ -58,12 +58,6 @@ file(GLOB all_files
     "../../Source/App/EncApp/EbAppInputy4m.c"
     "../../Source/App/EncApp/EbAppString.c")
 
-if(BUILD_SHARED_LIBS)
-    set (SvtAv1EncLib SvtAv1EncShared)
-else()
-    set (SvtAv1EncLib SvtAv1EncStatic)
-endif()
-
 if (UNIX)
 
   # App Source Files
@@ -84,7 +78,7 @@ if (UNIX)
     # Link the Encoder App
      target_link_libraries (SvtAv1E2ETests
         aom
-        ${SvtAv1EncLib}
+        SvtAv1Enc
         gtest_all
         pthread
         m)
@@ -93,7 +87,7 @@ endif(UNIX)
 
 if (MSVC OR MSYS OR MINGW OR WIN32)
 
-    set (lib_list ${SvtAv1EncLib} gtest_all)
+    set (lib_list SvtAv1Enc gtest_all)
 
     cxx_executable_with_flags(SvtAv1E2ETests "${cxx_default}"
       "${lib_list}" ${all_files})
