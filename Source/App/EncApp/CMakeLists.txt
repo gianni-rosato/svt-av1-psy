@@ -21,10 +21,11 @@ add_executable(SvtAv1EncApp
     ${all_files})
 
 #********** SET COMPILE FLAGS************
-if (UNIX)
-    # Link the Encoder App
-     target_link_libraries (SvtAv1EncApp
-        SvtAv1Enc
+# Link the Encoder App
+target_link_libraries(SvtAv1EncApp
+        SvtAv1Enc)
+if(UNIX)
+    target_link_libraries(SvtAv1EncApp
         pthread
         m)
 endif()
