@@ -21,11 +21,12 @@ add_executable(SvtAv1DecApp
     ${all_files})
 
 #********** SET COMPILE FLAGS************
+# Link the Decoder App
+target_link_libraries(SvtAv1DecApp
+    SvtAv1Dec)
 
-if (UNIX)
-    # Link the Decoder App
-     target_link_libraries (SvtAv1DecApp
-        SvtAv1Dec
+if(UNIX)
+    target_link_libraries(SvtAv1DecApp
         pthread
         m)
 endif()
