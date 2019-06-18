@@ -18,32 +18,30 @@ file(GLOB all_files
     "*.h"
     "*.cc")
 
-if (UNIX)
+set(lib_list
+    SvtAv1Enc
+    gtest_all)
 
+if(UNIX)
   # App Source Files
-    add_executable (SvtAv1ApiTests
+    add_executable(SvtAv1ApiTests
       ${all_files})
 
     # Link the Encoder App
-     target_link_libraries (SvtAv1ApiTests
-        SvtAv1Enc
-        gtest_all
+     target_link_libraries(SvtAv1ApiTests
+        ${lib_list}
         pthread
         m)
-
-endif(UNIX)
-
-if (MSVC OR MSYS OR MINGW OR WIN32)
-
-    set (lib_list SvtAv1Enc gtest_all)
-
-    cxx_executable_with_flags(SvtAv1ApiTests "${cxx_default}"
-      "${lib_list}" ${all_files})
+else()
+    cxx_executable_with_flags(SvtAv1ApiTests
+        "${cxx_default}"
+        "${lib_list}"
+        ${all_files})
 
     set_target_properties(SvtAv1ApiTests
-                        PROPERTIES
-                        COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
-endif(MSVC OR MSYS OR MINGW OR WIN32)
+        PROPERTIES
+        COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
+endif()
 
 install(TARGETS SvtAv1ApiTests RUNTIME DESTINATION bin)
 
