@@ -8,10 +8,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 
 # Include Subdirectories
-include_directories (${PROJECT_SOURCE_DIR}/test/)
-include_directories (${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-include_directories(${PROJECT_SOURCE_DIR}/third_party/googletest/include third_party/googletest/src)
-include_directories(${PROJECT_SOURCE_DIR}/Source/API)
+include_directories(${PROJECT_SOURCE_DIR}/test/
+    ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/
+    ${PROJECT_SOURCE_DIR}/third_party/googletest/include
+    ${PROJECT_SOURCE_DIR}/third_party/googletest/src
+    ${PROJECT_SOURCE_DIR}/Source/API)
 
 # Define helper functions and macros used by Google Test.
 include(../../third_party/googletest/cmake/internal_utils.cmake)
