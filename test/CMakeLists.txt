@@ -8,21 +8,21 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 
 # Include Subdirectories
-include_directories (${PROJECT_SOURCE_DIR}/test/)
-include_directories (${PROJECT_SOURCE_DIR}/test/ref)
-include_directories (${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-include_directories(${PROJECT_SOURCE_DIR}/third_party/googletest/include third_party/googletest/src)
-include_directories(${PROJECT_SOURCE_DIR}/Source/API )
-include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec )
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec)
-include_directories (${PROJECT_SOURCE_DIR}/Source/App/EncApp)
-include_directories (${PROJECT_SOURCE_DIR}/Source/API)
+include_directories(${PROJECT_SOURCE_DIR}/test/
+    ${PROJECT_SOURCE_DIR}/test/ref
+    ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/
+    ${PROJECT_SOURCE_DIR}/third_party/googletest/include third_party/googletest/src
+    ${PROJECT_SOURCE_DIR}/Source/API
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec
+    ${PROJECT_SOURCE_DIR}/Source/App/EncApp
+    ${PROJECT_SOURCE_DIR}/Source/API)
 
 # Define helper functions and macros used by Google Test.
 include(../third_party/googletest/cmake/internal_utils.cmake)
