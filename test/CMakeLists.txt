@@ -52,26 +52,7 @@ file(GLOB all_files
     "../Source/Lib/Decoder/Codec/EbDecBitReader.c"
     "../Source/Lib/Decoder/Codec/EbDecBitstreamUnit.c")
 
-if (UNIX)
-  # App Source Files
-    add_executable (SvtAv1UnitTests
-      ${all_files})
-
-    # Link the Encoder App
-     target_link_libraries (SvtAv1UnitTests
-        $<TARGET_OBJECTS:COMMON_CODEC>
-        $<TARGET_OBJECTS:COMMON_C_DEFAULT>
-        $<TARGET_OBJECTS:COMMON_ASM_SSE2>
-        $<TARGET_OBJECTS:COMMON_ASM_SSSE3>
-        $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
-        $<TARGET_OBJECTS:COMMON_ASM_AVX2>
-        gtest_all
-        pthread
-        m)
-endif(UNIX)
-
-if (MSVC OR MSYS OR MINGW OR WIN32)
-    set (lib_list
+set(lib_list
     $<TARGET_OBJECTS:COMMON_CODEC>
     $<TARGET_OBJECTS:COMMON_C_DEFAULT>
     $<TARGET_OBJECTS:COMMON_ASM_SSE2>
@@ -79,14 +60,26 @@ if (MSVC OR MSYS OR MINGW OR WIN32)
     $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
     $<TARGET_OBJECTS:COMMON_ASM_AVX2>
     gtest_all)
-    cxx_executable_with_flags(SvtAv1UnitTests "${cxx_default}"
-      "${lib_list}" ${all_files})
+if(UNIX)
+  # App Source Files
+    add_executable(SvtAv1UnitTests
+      ${all_files})
+
+    # Link the Encoder App
+    target_link_libraries(SvtAv1UnitTests
+        ${lib_list}
+        pthread
+        m)
+else()
+    cxx_executable_with_flags(SvtAv1UnitTests
+        "${cxx_default}"
+        "${lib_list}"
+        ${all_files})
 
     set_target_properties(SvtAv1UnitTests
-                        PROPERTIES
-                        COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
-
-endif(MSVC OR MSYS OR MINGW OR WIN32)
+        PROPERTIES
+        COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
+endif()
 
 install(TARGETS SvtAv1UnitTests RUNTIME DESTINATION bin)
 
