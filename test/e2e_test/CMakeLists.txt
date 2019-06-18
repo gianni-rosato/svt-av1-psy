@@ -76,8 +76,9 @@ add_dependencies(SvtAv1E2ETests DepLibAom)
 
 # testdata download targets.
 set(TEST_DATA_LIST_FILE "${SVT_AV1_E2E_ROOT}/test_vector_list.txt")
-make_test_data_lists("${TEST_DATA_LIST_FILE}" test_files
-                         test_file_checksums)
+make_test_data_lists("${TEST_DATA_LIST_FILE}"
+    test_files
+    test_file_checksums)
 list(LENGTH test_files num_test_files)
 list(LENGTH test_file_checksums num_test_file_checksums)
 
@@ -86,12 +87,11 @@ foreach(test_index RANGE ${max_file_index})
     list(GET test_files ${test_index} test_file)
     list(GET test_file_checksums ${test_index} test_file_checksum)
     add_custom_target(testdata_${test_file}
-                        COMMAND
-                          ${CMAKE_COMMAND}
-                          -DSVT_AV1_E2E_ROOT="${SVT_AV1_E2E_ROOT}"
-                          -DSVT_AV1_TEST_FILE="${test_file}"
-                          -DAVT_AV1_TEST_CHECKSUM=${test_file_checksum} -P
-                          "${SVT_AV1_E2E_ROOT}/test_data_download_worker.cmake")
+        COMMAND ${CMAKE_COMMAND}
+            -DSVT_AV1_E2E_ROOT="${SVT_AV1_E2E_ROOT}"
+            -DSVT_AV1_TEST_FILE="${test_file}"
+            -DAVT_AV1_TEST_CHECKSUM=${test_file_checksum} -P
+            "${SVT_AV1_E2E_ROOT}/test_data_download_worker.cmake")
     list(APPEND testdata_targets testdata_${test_file})
 endforeach()
 
