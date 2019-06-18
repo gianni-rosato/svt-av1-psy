@@ -37,7 +37,7 @@ void picture_copy_kernel(
 
 // C equivalents
 
-uint64_t spatial_full_distortion_kernel(
+uint64_t spatial_full_distortion_kernel_c(
     uint8_t   *input,
     uint32_t   input_stride,
     uint8_t   *recon,
