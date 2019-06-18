@@ -35,46 +35,39 @@ file(GLOB all_files
     "../../Source/App/EncApp/EbAppInputy4m.c"
     "../../Source/App/EncApp/EbAppString.c")
 
-if (UNIX)
+set(lib_list
+    SvtAv1Enc
+    gtest_all
+    #SDL2.lib
+    aom)
 
+if(UNIX)
   # App Source Files
-    add_executable (SvtAv1E2ETests
-      ${all_files})
+    add_executable(SvtAv1E2ETests
+        ${all_files})
 
-    if (APPLE)
-      add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
-                      COMMAND ${CMAKE_COMMAND} -E copy
-                           ${PROJECT_SOURCE_DIR}/third_party/aom/lib/mac/* ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-    endif(APPLE)
-    if (UNIX AND NOT APPLE)
-      add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
-                      COMMAND ${CMAKE_COMMAND} -E copy
-                           ${PROJECT_SOURCE_DIR}/third_party/aom/lib/linux/* ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-    endif(UNIX AND NOT APPLE)
+    if(APPLE)
+        add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/third_party/aom/lib/mac/* ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+    else()
+        add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/third_party/aom/lib/linux/* ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+    endif()
 
     # Link the Encoder App
-     target_link_libraries (SvtAv1E2ETests
-        aom
-        SvtAv1Enc
-        gtest_all
+     target_link_libraries(SvtAv1E2ETests
+        ${lib_list}
         pthread
         m)
-
-endif(UNIX)
-
-if (MSVC OR MSYS OR MINGW OR WIN32)
-
-    set (lib_list SvtAv1Enc gtest_all)
-
-    cxx_executable_with_flags(SvtAv1E2ETests "${cxx_default}"
-      "${lib_list}" ${all_files})
-    target_link_libraries(SvtAv1E2ETests
-    #SDL2.lib
-    aom.lib)
+else()
+    cxx_executable_with_flags(SvtAv1E2ETests
+        "${cxx_default}"
+        "${lib_list}"
+        ${all_files})
     set_target_properties(SvtAv1E2ETests
-                        PROPERTIES
-                        COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
-endif(MSVC OR MSYS OR MINGW OR WIN32)
+        PROPERTIES
+        COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
+endif()
 
 install(TARGETS SvtAv1E2ETests RUNTIME DESTINATION bin)
 
