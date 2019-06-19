@@ -6,7 +6,7 @@ os:
   - linux
   - osx
 dist: xenial
-osx_image: xcode10.1
+osx_image: xcode10.2
 compiler:
   - clang
   - gcc
