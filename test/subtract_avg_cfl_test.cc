@@ -82,8 +82,8 @@ class CflSubAvgTest : public ::testing::TestWithParam<TxSize> {
 
     void prepare_data() {
         SVTRandom rnd(15, false);
-        for (int j = 0; j < height_; j++) {
-            for (int i = 0; i < width_; i++) {
+        for (uint32_t j = 0; j < height_; j++) {
+            for (uint32_t i = 0; i < width_; i++) {
                 int pos = j * CFL_BUF_LINE + i;
                 data_tst_[pos] = data_ref_[pos] = data_origin_[pos] =
                     (int16_t)rnd.random();
@@ -92,8 +92,8 @@ class CflSubAvgTest : public ::testing::TestWithParam<TxSize> {
     }
 
     void compare_data() {
-        for (int j = 0; j < height_; j++) {
-            for (int i = 0; i < width_; i++) {
+        for (uint32_t j = 0; j < height_; j++) {
+            for (uint32_t i = 0; i < width_; i++) {
                 ASSERT_EQ(data_tst_[j * CFL_BUF_LINE + i],
                           data_ref_[j * CFL_BUF_LINE + i])
                     << print_data();
@@ -105,8 +105,8 @@ class CflSubAvgTest : public ::testing::TestWithParam<TxSize> {
         std::string print_str;
         std::stringstream ss(print_str);
         ss << "test input data dump:\n";
-        for (int j = 0; j < height_; j++) {
-            for (int i = 0; i < width_; i++) {
+        for (uint32_t j = 0; j < height_; j++) {
+            for (uint32_t i = 0; i < width_; i++) {
                 ss << data_origin_[j * CFL_BUF_LINE + i] << "\t";
             }
             ss << "\n";
@@ -118,7 +118,7 @@ class CflSubAvgTest : public ::testing::TestWithParam<TxSize> {
      * Feed the same data and check test output and reference output.
      */
     void run_asm_compare_test(uint32_t test_times) {
-        for (int it = 0; it < test_times; it++) {
+        for (uint32_t it = 0; it < test_times; it++) {
             prepare_data();
             if (sub_avg_tst_)
                 sub_avg_tst_(data_tst_);
