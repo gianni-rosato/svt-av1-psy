@@ -14,6 +14,7 @@
 #include "synonyms_avx2.h"
 #include "EbPictureOperators_AVX2.h"
 #include "EbRestorationPick.h"
+#include "EbUtility.h"
 
 static const int32_t sizes[2] = {RESTORATION_UNITSIZE_MAX,
                                  RESTORATION_UNITSIZE_MAX * 3 / 2};
@@ -380,7 +381,6 @@ TEST(EbRestorationPick, DISABLED_compute_stats_speed) {
     int32_t dgd_stride, src_stride;
     int64_t M_org[WIENER_WIN2], M_opt[WIENER_WIN2];
     int64_t H_org[WIENER_WIN2 * WIENER_WIN2], H_opt[WIENER_WIN2 * WIENER_WIN2];
-    bool result = EB_TRUE;
     double time_c, time_o;
     uint64_t start_time_seconds, start_time_useconds;
     uint64_t middle_time_seconds, middle_time_useconds;
@@ -468,7 +468,6 @@ TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
     int32_t dgd_stride, src_stride;
     int64_t M_org[WIENER_WIN2], M_opt[WIENER_WIN2];
     int64_t H_org[WIENER_WIN2 * WIENER_WIN2], H_opt[WIENER_WIN2 * WIENER_WIN2];
-    bool result = EB_TRUE;
     double time_c, time_o;
     uint64_t start_time_seconds, start_time_useconds;
     uint64_t middle_time_seconds, middle_time_useconds;
@@ -559,3 +558,385 @@ TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
         }
     }
 }
+
+#if 0
+// To test integral_images() and integral_images_highbd(), make them not static,
+// and add declarations to header file.
+static void init_data_integral_images(uint8_t **src8, uint16_t **src16,
+                                      int32_t *src_stride) {
+    *src_stride =
+        eb_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
+    *src8 = (uint8_t *)malloc(sizeof(**src8) * 2 * RESTORATION_UNITSIZE_MAX *
+                              *src_stride);
+    *src16 = (uint16_t *)malloc(sizeof(**src16) * 2 * RESTORATION_UNITSIZE_MAX *
+                                *src_stride);
+    eb_buf_random_u8(*src8, 2 * RESTORATION_UNITSIZE_MAX * *src_stride);
+    eb_buf_random_u16_with_bd(
+        *src16, 2 * RESTORATION_UNITSIZE_MAX * *src_stride, 12);
+}
+
+static void uninit_data_integral_images(uint8_t *src8, uint16_t *src16) {
+    free(src8);
+    free(src16);
+}
+
+static void integral_images_c(const uint8_t *src, int32_t src_stride,
+                              int32_t width, int32_t height, int32_t *A,
+                              int32_t *B, int32_t buf_stride) {
+    for (int x = 0; x < width; x++) {
+        A[x + 1] = 0;
+        B[x + 1] = 0;
+    }
+
+    for (int y = 0; y < height; y++) {
+        A[(y + 1) * buf_stride] = 0;
+        B[(y + 1) * buf_stride] = 0;
+        for (int x = 0; x < width; x++) {
+            A[(y + 1) * buf_stride + x + 1] =
+                A[(y + 1) * buf_stride + x] +
+                src[y * src_stride + x] * src[y * src_stride + x];
+            B[(y + 1) * buf_stride + x + 1] =
+                B[(y + 1) * buf_stride + x] + src[y * src_stride + x];
+        }
+    }
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            A[(y + 1) * buf_stride + x + 1] += A[y * buf_stride + x + 1];
+            B[(y + 1) * buf_stride + x + 1] += B[y * buf_stride + x + 1];
+        }
+    }
+}
+
+static void integral_images_highbd_c(const uint16_t *src, int32_t src_stride,
+                                     int32_t width, int32_t height, int32_t *A,
+                                     int32_t *B, int32_t buf_stride) {
+    for (int x = 0; x < width; x++) {
+        A[x + 1] = 0;
+        B[x + 1] = 0;
+    }
+
+    for (int y = 0; y < height; y++) {
+        A[(y + 1) * buf_stride] = 0;
+        B[(y + 1) * buf_stride] = 0;
+        for (int x = 0; x < width; x++) {
+            A[(y + 1) * buf_stride + x + 1] =
+                A[(y + 1) * buf_stride + x] +
+                src[y * src_stride + x] * src[y * src_stride + x];
+            B[(y + 1) * buf_stride + x + 1] =
+                B[(y + 1) * buf_stride + x] + src[y * src_stride + x];
+        }
+    }
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            A[(y + 1) * buf_stride + x + 1] += A[y * buf_stride + x + 1];
+            B[(y + 1) * buf_stride + x + 1] += B[y * buf_stride + x + 1];
+        }
+    }
+}
+
+TEST(EbRestorationPick, integral_images) {
+    uint8_t *src8;
+    uint16_t *src16;
+    int32_t src_stride;
+
+    // The ALIGN_POWER_OF_TWO macro here ensures that column 1 of Atl, Btl,
+    // Ctl and Dtl is 32-byte aligned.
+    const int32_t buf_elts = ALIGN_POWER_OF_TWO(RESTORATION_PROC_UNIT_PELS, 3);
+    int32_t *buf_c, *buf_o;
+
+    buf_c = (int32_t *)aom_memalign(32, sizeof(*buf_c) * 4 * buf_elts);
+    buf_o = (int32_t *)aom_memalign(32, sizeof(*buf_o) * 4 * buf_elts);
+
+    for (int i = 0; i < 10; i++) {
+        init_data_integral_images(&src8, &src16, &src_stride);
+
+        for (int height = 2; height < 32; height += 2) {
+            for (int width = 2; width < 32; width += 2) {
+                // From av1_selfguided_restoration_avx2()
+                const int32_t width_ext = width + 2 * SGRPROJ_BORDER_HORZ;
+                const int32_t height_ext = height + 2 * SGRPROJ_BORDER_VERT;
+
+                // Adjusting the stride of A and B here appears to avoid bad
+                // cache effects, leading to a significant speed
+                // improvement. We also align the stride to a multiple of 32
+                // bytes for efficiency.
+                int32_t buf_stride = ALIGN_POWER_OF_TWO(width_ext + 16, 3);
+
+                // The "tl" pointers point at the top-left of the
+                // initialised data for the array.
+                int32_t *Atl_c = buf_c + 0 * buf_elts + 7;
+                int32_t *Btl_c = buf_c + 1 * buf_elts + 7;
+                int32_t *Ctl_c = buf_c + 2 * buf_elts + 7;
+                int32_t *Dtl_c = buf_c + 3 * buf_elts + 7;
+                int32_t *Atl_o = buf_o + 0 * buf_elts + 7;
+                int32_t *Btl_o = buf_o + 1 * buf_elts + 7;
+                int32_t *Ctl_o = buf_o + 2 * buf_elts + 7;
+                int32_t *Dtl_o = buf_o + 3 * buf_elts + 7;
+
+                // The "0" pointers are (- SGRPROJ_BORDER_VERT,
+                // -SGRPROJ_BORDER_HORZ). Note there's a zero row and column
+                // in A, B (integral images), so we move down and right one
+                // for them.
+                const int32_t buf_diag_border =
+                    SGRPROJ_BORDER_HORZ + buf_stride * SGRPROJ_BORDER_VERT;
+
+                int32_t *A0_c = Atl_c + 1 + buf_stride;
+                int32_t *B0_c = Btl_c + 1 + buf_stride;
+                int32_t *C0_c = Ctl_c + 1 + buf_stride;
+                int32_t *D0_c = Dtl_c + 1 + buf_stride;
+                int32_t *A0_o = Atl_o + 1 + buf_stride;
+                int32_t *B0_o = Btl_o + 1 + buf_stride;
+                int32_t *C0_o = Ctl_o + 1 + buf_stride;
+                int32_t *D0_o = Dtl_o + 1 + buf_stride;
+
+                // Finally, A, B, C, D point at position (0, 0).
+                int32_t *A_c = A0_c + buf_diag_border;
+                int32_t *B_c = B0_c + buf_diag_border;
+                int32_t *C_c = C0_c + buf_diag_border;
+                int32_t *D_c = D0_c + buf_diag_border;
+                int32_t *A_o = A0_o + buf_diag_border;
+                int32_t *B_o = B0_o + buf_diag_border;
+                int32_t *C_o = C0_o + buf_diag_border;
+                int32_t *D_o = D0_o + buf_diag_border;
+
+                (void)A_c;
+                (void)A_o;
+                (void)B_c;
+                (void)B_o;
+                (void)C_c;
+                (void)C_o;
+                (void)D_c;
+                (void)D_o;
+
+                const int32_t dgd_diag_border =
+                    SGRPROJ_BORDER_HORZ + src_stride * SGRPROJ_BORDER_VERT;
+                // Done from av1_selfguided_restoration_avx2()
+
+                integral_images_c(src8,
+                                  src_stride,
+                                  width_ext,
+                                  height_ext,
+                                  Ctl_c,
+                                  Dtl_c,
+                                  buf_stride);
+
+                integral_images(src8,
+                                src_stride,
+                                width_ext,
+                                height_ext,
+                                Ctl_o,
+                                Dtl_o,
+                                buf_stride);
+
+                for (int y = 0; y < height_ext; y++) {
+                    for (int x = 0; x < width_ext; x++) {
+                        const int idx = y * buf_stride + x;
+                        EXPECT_EQ(C0_c[idx], C0_o[idx]);
+                        EXPECT_EQ(D0_c[idx], D0_o[idx]);
+                    }
+                }
+
+                integral_images_highbd_c(src16,
+                                         src_stride,
+                                         width_ext,
+                                         height_ext,
+                                         Ctl_c,
+                                         Dtl_c,
+                                         buf_stride);
+
+                integral_images_highbd(src16,
+                                       src_stride,
+                                       width_ext,
+                                       height_ext,
+                                       Ctl_o,
+                                       Dtl_o,
+                                       buf_stride);
+
+                for (int y = 0; y < height_ext; y++) {
+                    for (int x = 0; x < width_ext; x++) {
+                        const int idx = y * buf_stride + x;
+                        EXPECT_EQ(C0_c[idx], C0_o[idx]);
+                        EXPECT_EQ(D0_c[idx], D0_o[idx]);
+                    }
+                }
+            }
+        }
+
+        uninit_data_integral_images(src8, src16);
+    }
+
+    aom_free(buf_c);
+    aom_free(buf_o);
+}
+
+TEST(EbRestorationPick, DISABLED_integral_images_speed) {
+    uint8_t *src8;
+    uint16_t *src16;
+    int32_t src_stride;
+    double time_c, time_o;
+    uint64_t start_time_seconds, start_time_useconds;
+    uint64_t middle_time_seconds, middle_time_useconds;
+    uint64_t finish_time_seconds, finish_time_useconds;
+
+    // The ALIGN_POWER_OF_TWO macro here ensures that column 1 of Atl, Btl,
+    // Ctl and Dtl is 32-byte aligned.
+    const int32_t buf_elts = ALIGN_POWER_OF_TWO(RESTORATION_PROC_UNIT_PELS, 3);
+    int32_t *buf_c, *buf_o;
+
+    buf_c = (int32_t *)aom_memalign(32, sizeof(*buf_c) * 4 * buf_elts);
+    buf_o = (int32_t *)aom_memalign(32, sizeof(*buf_o) * 4 * buf_elts);
+
+    init_data_integral_images(&src8, &src16, &src_stride);
+    const int32_t width = 32;
+    const int32_t height = 32;
+
+    // From av1_selfguided_restoration_avx2()
+    const int32_t width_ext = width + 2 * SGRPROJ_BORDER_HORZ;
+    const int32_t height_ext = height + 2 * SGRPROJ_BORDER_VERT;
+
+    // Adjusting the stride of A and B here appears to avoid bad
+    // cache effects, leading to a significant speed
+    // improvement. We also align the stride to a multiple of 32
+    // bytes for efficiency.
+    int32_t buf_stride = ALIGN_POWER_OF_TWO(width_ext + 16, 3);
+
+    // The "tl" pointers point at the top-left of the
+    // initialised data for the array.
+    int32_t *Atl_c = buf_c + 0 * buf_elts + 7;
+    int32_t *Btl_c = buf_c + 1 * buf_elts + 7;
+    int32_t *Ctl_c = buf_c + 2 * buf_elts + 7;
+    int32_t *Dtl_c = buf_c + 3 * buf_elts + 7;
+    int32_t *Atl_o = buf_o + 0 * buf_elts + 7;
+    int32_t *Btl_o = buf_o + 1 * buf_elts + 7;
+    int32_t *Ctl_o = buf_o + 2 * buf_elts + 7;
+    int32_t *Dtl_o = buf_o + 3 * buf_elts + 7;
+
+    // The "0" pointers are (- SGRPROJ_BORDER_VERT,
+    // -SGRPROJ_BORDER_HORZ). Note there's a zero row and column
+    // in A, B (integral images), so we move down and right one
+    // for them.
+    const int32_t buf_diag_border =
+        SGRPROJ_BORDER_HORZ + buf_stride * SGRPROJ_BORDER_VERT;
+
+    int32_t *A0_c = Atl_c + 1 + buf_stride;
+    int32_t *B0_c = Btl_c + 1 + buf_stride;
+    int32_t *C0_c = Ctl_c + 1 + buf_stride;
+    int32_t *D0_c = Dtl_c + 1 + buf_stride;
+    int32_t *A0_o = Atl_o + 1 + buf_stride;
+    int32_t *B0_o = Btl_o + 1 + buf_stride;
+    int32_t *C0_o = Ctl_o + 1 + buf_stride;
+    int32_t *D0_o = Dtl_o + 1 + buf_stride;
+
+    // Finally, A, B, C, D point at position (0, 0).
+    int32_t *A_c = A0_c + buf_diag_border;
+    int32_t *B_c = B0_c + buf_diag_border;
+    int32_t *C_c = C0_c + buf_diag_border;
+    int32_t *D_c = D0_c + buf_diag_border;
+    int32_t *A_o = A0_o + buf_diag_border;
+    int32_t *B_o = B0_o + buf_diag_border;
+    int32_t *C_o = C0_o + buf_diag_border;
+    int32_t *D_o = D0_o + buf_diag_border;
+
+    (void)A_c;
+    (void)A_o;
+    (void)B_c;
+    (void)B_o;
+    (void)C_c;
+    (void)C_o;
+    (void)D_c;
+    (void)D_o;
+
+    const int32_t dgd_diag_border =
+        SGRPROJ_BORDER_HORZ + src_stride * SGRPROJ_BORDER_VERT;
+    // Done from av1_selfguided_restoration_avx2()
+
+    const uint64_t num_loop = 1000000;
+
+    EbStartTime(&start_time_seconds, &start_time_useconds);
+
+    for (uint64_t i = 0; i < num_loop; i++) {
+        integral_images_c(
+            src8, src_stride, width_ext, height_ext, Ctl_c, Dtl_c, buf_stride);
+    }
+
+    EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+    for (uint64_t i = 0; i < num_loop; i++) {
+        integral_images(
+            src8, src_stride, width_ext, height_ext, Ctl_o, Dtl_o, buf_stride);
+    }
+
+    EbStartTime(&finish_time_seconds, &finish_time_useconds);
+    EbComputeOverallElapsedTimeMs(start_time_seconds,
+                                  start_time_useconds,
+                                  middle_time_seconds,
+                                  middle_time_useconds,
+                                  &time_c);
+    EbComputeOverallElapsedTimeMs(middle_time_seconds,
+                                  middle_time_useconds,
+                                  finish_time_seconds,
+                                  finish_time_useconds,
+                                  &time_o);
+
+    for (int y = 0; y < height_ext; y++) {
+        for (int x = 0; x < width_ext; x++) {
+            const int idx = y * buf_stride + x;
+            EXPECT_EQ(C0_c[idx], C0_o[idx]);
+            EXPECT_EQ(D0_c[idx], D0_o[idx]);
+        }
+    }
+
+    printf("Average Nanoseconds per Function Call\n");
+    printf("    integral_images_c    : %6.2f\n", 1000000 * time_c / num_loop);
+    printf("    integral_images_avx2 : %6.2f   (Comparison: %5.2fx)\n",
+           1000000 * time_o / num_loop,
+           time_c / time_o);
+
+    EbStartTime(&start_time_seconds, &start_time_useconds);
+
+    for (uint64_t i = 0; i < num_loop; i++) {
+        integral_images_highbd_c(
+            src16, src_stride, width_ext, height_ext, Ctl_c, Dtl_c, buf_stride);
+    }
+
+    EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+    for (uint64_t i = 0; i < num_loop; i++) {
+        integral_images_highbd(
+            src16, src_stride, width_ext, height_ext, Ctl_o, Dtl_o, buf_stride);
+    }
+
+    EbStartTime(&finish_time_seconds, &finish_time_useconds);
+    EbComputeOverallElapsedTimeMs(start_time_seconds,
+                                  start_time_useconds,
+                                  middle_time_seconds,
+                                  middle_time_useconds,
+                                  &time_c);
+    EbComputeOverallElapsedTimeMs(middle_time_seconds,
+                                  middle_time_useconds,
+                                  finish_time_seconds,
+                                  finish_time_useconds,
+                                  &time_o);
+
+    for (int y = 0; y < height_ext; y++) {
+        for (int x = 0; x < width_ext; x++) {
+            const int idx = y * buf_stride + x;
+            EXPECT_EQ(C0_c[idx], C0_o[idx]);
+            EXPECT_EQ(D0_c[idx], D0_o[idx]);
+        }
+    }
+
+    printf("Average Nanoseconds per Function Call\n");
+    printf("    integral_images_highbd_c    : %6.2f\n",
+           1000000 * time_c / num_loop);
+    printf("    integral_images_highbd_avx2 : %6.2f   (Comparison: %5.2fx)\n",
+           1000000 * time_o / num_loop,
+           time_c / time_o);
+
+    uninit_data_integral_images(src8, src16);
+    aom_free(buf_c);
+    aom_free(buf_o);
+}
+#endif

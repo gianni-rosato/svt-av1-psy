@@ -15,160 +15,188 @@
 #include "EbRestoration.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"
+#include "transpose_avx2.h"
+#include "transpose_sse2.h"
 
- // Load 8 bytes from the possibly-misaligned pointer p, extend each byte to
- // 32-bit precision and return them in an AVX2 register.
-static __m256i yy256_load_extend_8_32(const void *p) {
-    return _mm256_cvtepu8_epi32(xx_loadl_64(p));
+static INLINE cvt_16to32bit_8x8(const __m128i s[8], __m256i r[8]) {
+    r[0] = _mm256_cvtepu16_epi32(s[0]);
+    r[1] = _mm256_cvtepu16_epi32(s[1]);
+    r[2] = _mm256_cvtepu16_epi32(s[2]);
+    r[3] = _mm256_cvtepu16_epi32(s[3]);
+    r[4] = _mm256_cvtepu16_epi32(s[4]);
+    r[5] = _mm256_cvtepu16_epi32(s[5]);
+    r[6] = _mm256_cvtepu16_epi32(s[6]);
+    r[7] = _mm256_cvtepu16_epi32(s[7]);
 }
 
-// Load 8 halfwords from the possibly-misaligned pointer p, extend each
-// halfword to 32-bit precision and return them in an AVX2 register.
-static __m256i yy256_load_extend_16_32(const void *p) {
-    return _mm256_cvtepu16_epi32(xx_loadu_128(p));
+static INLINE add_32bit_8x8(const __m256i neighbor, __m256i r[8]) {
+    r[0] = _mm256_add_epi32(neighbor, r[0]);
+    r[1] = _mm256_add_epi32(r[0], r[1]);
+    r[2] = _mm256_add_epi32(r[1], r[2]);
+    r[3] = _mm256_add_epi32(r[2], r[3]);
+    r[4] = _mm256_add_epi32(r[3], r[4]);
+    r[5] = _mm256_add_epi32(r[4], r[5]);
+    r[6] = _mm256_add_epi32(r[5], r[6]);
+    r[7] = _mm256_add_epi32(r[6], r[7]);
 }
 
-// Compute the scan of an AVX2 register holding 8 32-bit integers. If the
-// register holds x0..x7 then the scan will hold x0, x0+x1, x0+x1+x2, ...,
-// x0+x1+...+x7
-//
-// Let [...] represent a 128-bit block, and let a, ..., h be 32-bit integers
-// (assumed small enough to be able to add them without overflow).
-//
-// Use -> as shorthand for summing, i.e. h->a = h + g + f + e + d + c + b + a.
-//
-// x   = [h g f e][d c b a]
-// x01 = [g f e 0][c b a 0]
-// x02 = [g+h f+g e+f e][c+d b+c a+b a]
-// x03 = [e+f e 0 0][a+b a 0 0]
-// x04 = [e->h e->g e->f e][a->d a->c a->b a]
-// s   = a->d
-// s01 = [a->d a->d a->d a->d]
-// s02 = [a->d a->d a->d a->d][0 0 0 0]
-// ret = [a->h a->g a->f a->e][a->d a->c a->b a]
-static __m256i scan_32(__m256i x) {
-    const __m256i x01 = _mm256_slli_si256(x, 4);
-    const __m256i x02 = _mm256_add_epi32(x, x01);
-    const __m256i x03 = _mm256_slli_si256(x02, 8);
-    const __m256i x04 = _mm256_add_epi32(x02, x03);
-    const int32_t s = _mm256_extract_epi32(x04, 3);
-    const __m128i s01 = _mm_set1_epi32(s);
-    const __m256i s02 = _mm256_insertf128_si256(_mm256_setzero_si256(), s01, 1);
-    return _mm256_add_epi32(x04, s02);
+static INLINE store_32bit_8x8(const __m256i r[8], int32_t *const buf,
+    const int32_t buf_stride) {
+    _mm256_store_si256((__m256i *)(buf + 0 * buf_stride), r[0]);
+    _mm256_store_si256((__m256i *)(buf + 1 * buf_stride), r[1]);
+    _mm256_store_si256((__m256i *)(buf + 2 * buf_stride), r[2]);
+    _mm256_store_si256((__m256i *)(buf + 3 * buf_stride), r[3]);
+    _mm256_store_si256((__m256i *)(buf + 4 * buf_stride), r[4]);
+    _mm256_store_si256((__m256i *)(buf + 5 * buf_stride), r[5]);
+    _mm256_store_si256((__m256i *)(buf + 6 * buf_stride), r[6]);
+    _mm256_store_si256((__m256i *)(buf + 7 * buf_stride), r[7]);
 }
 
-// Compute two integral images from src. B sums elements; A sums their
-// squares. The images are offset by one pixel, so will have width and height
-// equal to width + 1, height + 1 and the first row and column will be zero.
-//
-// A+1 and B+1 should be aligned to 32 bytes. buf_stride should be a multiple
-// of 8.
+static void integral_images(const uint8_t *src, int32_t src_stride,
+    int32_t width, int32_t height, int32_t *A,
+    int32_t *B, int32_t buf_stride) {
+    const uint8_t *srcT = src;
+    int32_t *AT = A + buf_stride + 1;
+    int32_t *BT = B + buf_stride + 1;
 
-static void *memset_zero_avx(void *dest, const __m256i *zero, size_t count) {
-    uint32_t i = 0;
-    for (i = 0; i < (count & 0xffffffe0); i += 32) {
-        _mm256_storeu_si256((__m256i *)((int32_t *)dest + i), *zero);
-        _mm256_storeu_si256((__m256i *)((int32_t *)dest + i + 8), *zero);
-        _mm256_storeu_si256((__m256i *)((int32_t *)dest + i + 16), *zero);
-        _mm256_storeu_si256((__m256i *)((int32_t *)dest + i + 24), *zero);
-    }
-    for (; i < (count & 0xfffffff8); i += 8)
-        _mm256_storeu_si256((__m256i *)((int32_t *)dest + i), *zero);
-    for (; i < count; i++)
-        *(int32_t *)dest = 0;
-    return dest;
-}
+    memset(A + 1, 0, sizeof(*A) * width);
+    memset(B + 1, 0, sizeof(*B) * width);
 
-static void integral_images(const uint8_t *src, int32_t src_stride, int32_t width,
-    int32_t height, int32_t *A, int32_t *B,
-    int32_t buf_stride) {
-    const __m256i zero = _mm256_setzero_si256();
-    // Write out the zero top row
-    memset_zero_avx(A, &zero, (width + 1));
-    memset_zero_avx(B, &zero, (width + 1));
-    for (int32_t i = 0; i < height; ++i) {
-        // Zero the left column.
-        A[(i + 1) * buf_stride] = B[(i + 1) * buf_stride] = 0;
+    int y = 0;
+    do {
+        __m256i ALeft = _mm256_setzero_si256();
+        __m256i BLeft = _mm256_setzero_si256();
 
-        // ldiff is the difference H - D where H is the output sample immediately
-        // to the left and D is the output sample above it. These are scalars,
-        // replicated across the eight lanes.
-        __m256i ldiff1 = zero, ldiff2 = zero;
-        for (int32_t j = 0; j < width; j += 8) {
-            const int32_t ABj = 1 + j;
+        for (int x = 0; x < width; x += 8) {
+            __m128i s[8];
+            __m256i r32[8];
 
-            const __m256i above1 = yy_load_256(B + ABj + i * buf_stride);
-            const __m256i above2 = yy_load_256(A + ABj + i * buf_stride);
+            s[0] = _mm_loadl_epi64((__m128i *)(srcT + 0 * src_stride + x));
+            s[1] = _mm_loadl_epi64((__m128i *)(srcT + 1 * src_stride + x));
+            s[2] = _mm_loadl_epi64((__m128i *)(srcT + 2 * src_stride + x));
+            s[3] = _mm_loadl_epi64((__m128i *)(srcT + 3 * src_stride + x));
+            s[4] = _mm_loadl_epi64((__m128i *)(srcT + 4 * src_stride + x));
+            s[5] = _mm_loadl_epi64((__m128i *)(srcT + 5 * src_stride + x));
+            s[6] = _mm_loadl_epi64((__m128i *)(srcT + 6 * src_stride + x));
+            s[7] = _mm_loadl_epi64((__m128i *)(srcT + 7 * src_stride + x));
 
-            const __m256i x1 = yy256_load_extend_8_32(src + j + i * src_stride);
-            const __m256i x2 = _mm256_madd_epi16(x1, x1);
+            partial_transpose_8bit_8x8(s, s);
 
-            const __m256i sc1 = scan_32(x1);
-            const __m256i sc2 = scan_32(x2);
+            s[7] = _mm_unpackhi_epi8(s[3], _mm_setzero_si128());
+            s[6] = _mm_unpacklo_epi8(s[3], _mm_setzero_si128());
+            s[5] = _mm_unpackhi_epi8(s[2], _mm_setzero_si128());
+            s[4] = _mm_unpacklo_epi8(s[2], _mm_setzero_si128());
+            s[3] = _mm_unpackhi_epi8(s[1], _mm_setzero_si128());
+            s[2] = _mm_unpacklo_epi8(s[1], _mm_setzero_si128());
+            s[1] = _mm_unpackhi_epi8(s[0], _mm_setzero_si128());
+            s[0] = _mm_unpacklo_epi8(s[0], _mm_setzero_si128());
 
-            const __m256i row1 =
-                _mm256_add_epi32(_mm256_add_epi32(sc1, above1), ldiff1);
-            const __m256i row2 =
-                _mm256_add_epi32(_mm256_add_epi32(sc2, above2), ldiff2);
+            cvt_16to32bit_8x8(s, r32);
+            add_32bit_8x8(BLeft, r32);
+            BLeft = r32[7];
 
-            yy_store_256(B + ABj + (i + 1) * buf_stride, row1);
-            yy_store_256(A + ABj + (i + 1) * buf_stride, row2);
+            transpose_32bit_8x8_avx2(r32, r32);
 
-            // Calculate the new H - D.
-            ldiff1 = _mm256_set1_epi32(
-                _mm256_extract_epi32(_mm256_sub_epi32(row1, above1), 7));
-            ldiff2 = _mm256_set1_epi32(
-                _mm256_extract_epi32(_mm256_sub_epi32(row2, above2), 7));
+            const __m256i BTop =
+                _mm256_load_si256((__m256i *)(BT - buf_stride + x));
+            add_32bit_8x8(BTop, r32);
+            store_32bit_8x8(r32, BT + x, buf_stride);
+
+            s[0] = _mm_mullo_epi16(s[0], s[0]);
+            s[1] = _mm_mullo_epi16(s[1], s[1]);
+            s[2] = _mm_mullo_epi16(s[2], s[2]);
+            s[3] = _mm_mullo_epi16(s[3], s[3]);
+            s[4] = _mm_mullo_epi16(s[4], s[4]);
+            s[5] = _mm_mullo_epi16(s[5], s[5]);
+            s[6] = _mm_mullo_epi16(s[6], s[6]);
+            s[7] = _mm_mullo_epi16(s[7], s[7]);
+
+            cvt_16to32bit_8x8(s, r32);
+            add_32bit_8x8(ALeft, r32);
+            ALeft = r32[7];
+
+            transpose_32bit_8x8_avx2(r32, r32);
+
+            const __m256i ATop =
+                _mm256_load_si256((__m256i *)(AT - buf_stride + x));
+            add_32bit_8x8(ATop, r32);
+            store_32bit_8x8(r32, AT + x, buf_stride);
         }
-    }
+
+        srcT += 8 * src_stride;
+        AT += 8 * buf_stride;
+        BT += 8 * buf_stride;
+        y += 8;
+    } while (y < height);
 }
 
-// Compute two integral images from src. B sums elements; A sums their squares
-//
-// A and B should be aligned to 32 bytes. buf_stride should be a multiple of 8.
 static void integral_images_highbd(const uint16_t *src, int32_t src_stride,
     int32_t width, int32_t height, int32_t *A,
     int32_t *B, int32_t buf_stride) {
-    const __m256i zero = _mm256_setzero_si256();
-    // Write out the zero top row
-    memset_zero_avx(A, &zero, (width + 1));
-    memset_zero_avx(B, &zero, (width + 1));
+    const uint16_t *srcT = src;
+    int32_t *AT = A + buf_stride + 1;
+    int32_t *BT = B + buf_stride + 1;
 
-    for (int32_t i = 0; i < height; ++i) {
-        // Zero the left column.
-        A[(i + 1) * buf_stride] = B[(i + 1) * buf_stride] = 0;
+    memset(A + 1, 0, sizeof(*A) * width);
+    memset(B + 1, 0, sizeof(*B) * width);
 
-        // ldiff is the difference H - D where H is the output sample immediately
-        // to the left and D is the output sample above it. These are scalars,
-        // replicated across the eight lanes.
-        __m256i ldiff1 = zero, ldiff2 = zero;
-        for (int32_t j = 0; j < width; j += 8) {
-            const int32_t ABj = 1 + j;
+    int y = 0;
+    do {
+        __m256i ALeft = _mm256_setzero_si256();
+        __m256i BLeft = _mm256_setzero_si256();
 
-            const __m256i above1 = yy_load_256(B + ABj + i * buf_stride);
-            const __m256i above2 = yy_load_256(A + ABj + i * buf_stride);
+        for (int x = 0; x < width; x += 8) {
+            __m128i s[8];
+            __m256i r32[8], a32[8];
 
-            const __m256i x1 = yy256_load_extend_16_32(src + j + i * src_stride);
-            const __m256i x2 = _mm256_madd_epi16(x1, x1);
+            s[0] = _mm_loadu_si128((__m128i *)(srcT + 0 * src_stride + x));
+            s[1] = _mm_loadu_si128((__m128i *)(srcT + 1 * src_stride + x));
+            s[2] = _mm_loadu_si128((__m128i *)(srcT + 2 * src_stride + x));
+            s[3] = _mm_loadu_si128((__m128i *)(srcT + 3 * src_stride + x));
+            s[4] = _mm_loadu_si128((__m128i *)(srcT + 4 * src_stride + x));
+            s[5] = _mm_loadu_si128((__m128i *)(srcT + 5 * src_stride + x));
+            s[6] = _mm_loadu_si128((__m128i *)(srcT + 6 * src_stride + x));
+            s[7] = _mm_loadu_si128((__m128i *)(srcT + 7 * src_stride + x));
 
-            const __m256i sc1 = scan_32(x1);
-            const __m256i sc2 = scan_32(x2);
+            transpose_16bit_8x8(s, s);
 
-            const __m256i row1 =
-                _mm256_add_epi32(_mm256_add_epi32(sc1, above1), ldiff1);
-            const __m256i row2 =
-                _mm256_add_epi32(_mm256_add_epi32(sc2, above2), ldiff2);
+            cvt_16to32bit_8x8(s, r32);
 
-            yy_store_256(B + ABj + (i + 1) * buf_stride, row1);
-            yy_store_256(A + ABj + (i + 1) * buf_stride, row2);
+            a32[0] = _mm256_madd_epi16(r32[0], r32[0]);
+            a32[1] = _mm256_madd_epi16(r32[1], r32[1]);
+            a32[2] = _mm256_madd_epi16(r32[2], r32[2]);
+            a32[3] = _mm256_madd_epi16(r32[3], r32[3]);
+            a32[4] = _mm256_madd_epi16(r32[4], r32[4]);
+            a32[5] = _mm256_madd_epi16(r32[5], r32[5]);
+            a32[6] = _mm256_madd_epi16(r32[6], r32[6]);
+            a32[7] = _mm256_madd_epi16(r32[7], r32[7]);
 
-            // Calculate the new H - D.
-            ldiff1 = _mm256_set1_epi32(
-                _mm256_extract_epi32(_mm256_sub_epi32(row1, above1), 7));
-            ldiff2 = _mm256_set1_epi32(
-                _mm256_extract_epi32(_mm256_sub_epi32(row2, above2), 7));
+            add_32bit_8x8(ALeft, a32);
+            ALeft = a32[7];
+
+            transpose_32bit_8x8_avx2(a32, a32);
+
+            const __m256i ATop =
+                _mm256_load_si256((__m256i *)(AT - buf_stride + x));
+            add_32bit_8x8(ATop, a32);
+            store_32bit_8x8(a32, AT + x, buf_stride);
+
+            add_32bit_8x8(BLeft, r32);
+            BLeft = r32[7];
+
+            transpose_32bit_8x8_avx2(r32, r32);
+
+            const __m256i BTop =
+                _mm256_load_si256((__m256i *)(BT - buf_stride + x));
+            add_32bit_8x8(BTop, r32);
+            store_32bit_8x8(r32, BT + x, buf_stride);
         }
-    }
+
+        srcT += 8 * src_stride;
+        AT += 8 * buf_stride;
+        BT += 8 * buf_stride;
+        y += 8;
+    } while (y < height);
 }
 
 // Compute 8 values of boxsum from the given integral image. ii should point
