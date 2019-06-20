@@ -59,7 +59,6 @@ uint64_t ComputeMeanOfSquaredValues(
              horizontalIndex++) {
             blockMean +=
                 inputSamples[horizontalIndex] * inputSamples[horizontalIndex];
-            ;
         }
         inputSamples += inputStride;
     }

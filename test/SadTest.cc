@@ -69,12 +69,15 @@ class SADTestBase : public ::testing::Test {
         height_ = height;
         src_stride_ = ref1_stride_ = ref2_stride_ = width_ * 2;
         test_pattern_ = test_pattern;
-    };
+    }
 
     void SetUp() override {
-        src_aligned_ = (uint8_t *)(((intptr_t)src_data_ + 31) & ~31);
-        ref1_aligned_ = (uint8_t *)(((intptr_t)ref1_data_ + 31) & ~31);
-        ref2_aligned_ = (uint8_t *)(((intptr_t)ref2_data_ + 31) & ~31);
+        src_aligned_ =
+            reinterpret_cast<uint8_t *>(((intptr_t)src_data_ + 31) & ~31);
+        ref1_aligned_ =
+            reinterpret_cast<uint8_t *>(((intptr_t)ref1_data_ + 31) & ~31);
+        ref2_aligned_ =
+            reinterpret_cast<uint8_t *>(((intptr_t)ref2_data_ + 31) & ~31);
     }
 
     void prepare_data() {
@@ -427,7 +430,7 @@ class GetEightSadTest : public ::testing::WithParamInterface<TestPattern>,
   public:
     GetEightSadTest() : SADTestBase(16, 16, GetParam()) {
         src_stride_ = ref1_stride_ = 256;
-    };
+    }
 
   protected:
     void check_get_eight() {
