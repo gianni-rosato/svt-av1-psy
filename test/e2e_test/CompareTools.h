@@ -47,8 +47,6 @@ static inline bool compare_image(const VideoFrame *recon,
 
     uint32_t width = recon->width;
     uint32_t height = recon->height;
-    bool half_width = true;
-    bool half_height = true;
 
     // luma
     uint32_t index = 0;

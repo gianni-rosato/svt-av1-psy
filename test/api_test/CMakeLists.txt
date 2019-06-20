@@ -32,6 +32,7 @@ if(UNIX)
         ${lib_list}
         pthread
         m)
+
 else()
     cxx_executable_with_flags(SvtAv1ApiTests
         "${cxx_default}"

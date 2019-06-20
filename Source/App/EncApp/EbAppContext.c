@@ -197,7 +197,8 @@ EbErrorType CopyConfigurationParameters(
     callback_data->eb_enc_parameters.improve_sharpness = (uint8_t)config->improve_sharpness;
     callback_data->eb_enc_parameters.high_dynamic_range_input = config->high_dynamic_range_input;
     callback_data->eb_enc_parameters.encoder_bit_depth = config->encoder_bit_depth;
-    callback_data->eb_enc_parameters.encoder_color_format = config->encoder_color_format;
+    callback_data->eb_enc_parameters.encoder_color_format =
+        (EbColorFormat)config->encoder_color_format;
     callback_data->eb_enc_parameters.compressed_ten_bit_format = config->compressed_ten_bit_format;
     callback_data->eb_enc_parameters.profile = config->profile;
     callback_data->eb_enc_parameters.tier = config->tier;
@@ -235,7 +236,8 @@ static EbErrorType AllocateFrameBuffer(
     uint8_t               *p_buffer){
     EbErrorType   return_error = EB_ErrorNone;
     const int32_t tenBitPackedMode = (config->encoder_bit_depth > 8) && (config->compressed_ten_bit_format == 0) ? 1 : 0;
-    const EbColorFormat color_format = config->encoder_color_format;    // Chroma subsampling
+    const EbColorFormat color_format =
+        (EbColorFormat)config->encoder_color_format;  // Chroma subsampling
     const uint8_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
 
     // Determine size of each plane
@@ -371,7 +373,8 @@ EbErrorType PreloadFramesIntoRam(
     int32_t             input_padded_width = config->input_padded_width;
     int32_t             input_padded_height = config->input_padded_height;
     int32_t             readSize;
-    const EbColorFormat color_format = config->encoder_color_format;    // Chroma subsampling
+    const EbColorFormat color_format =
+        (EbColorFormat)config->encoder_color_format;  // Chroma subsampling
 
     FILE *input_file = config->input_file;
 

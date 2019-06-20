@@ -11,8 +11,10 @@
  * @author Cidana-Ryan
  *
  ******************************************************************************/
-#include "VideoSource.h"
 #include "stdio.h"
+#include "VideoSource.h"
+#include "../random.h"
+
 using namespace svt_av1_video_source;
 VideoSource::VideoSource(const VideoColorFormat format, const uint32_t width,
                          const uint32_t height, const uint8_t bit_depth,
@@ -33,6 +35,7 @@ VideoSource::VideoSource(const VideoColorFormat format, const uint32_t width,
         svt_compressed_2bit_plane_ = true;
     else
         svt_compressed_2bit_plane_ = false;
+    frame_qp_list_.clear();
 };  // namespace
 
 VideoSource::~VideoSource() {
@@ -189,7 +192,7 @@ VideoFileSource::VideoFileSource(const std::string &file_name,
 VideoFileSource::~VideoFileSource() {
 }
 /**
- * @brief      Use this funcion to get vector path defined by envrionment
+ * @brief      Use this function to get vector path defined by envrionment
  * variable SVT_AV1_TEST_VECTOR_PATH, or it will return a default path.
  *
  * @return     The vectors path.
@@ -497,6 +500,14 @@ EbErrorType VideoFileSource::open_source(const uint32_t init_pos,
         frame_count_ = (file_frames_ - init_pos_) > frame_count
                            ? frame_count
                            : (file_frames_ - init_pos_);
+
+    // generate frame qp from random if failed from file
+    if (true /* TODO: first from qp file */) {
+        svt_av1_test_tool::SVTRandom rnd(1, 63);
+        for (uint32_t i = 0; i < frame_count_; i++) {
+            frame_qp_list_.push_back(rnd.random());
+        }
+    }
 
     if (seek_to_frame(init_pos_) != EB_ErrorNone) {
         fclose(file_handle_);

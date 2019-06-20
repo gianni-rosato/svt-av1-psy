@@ -640,11 +640,8 @@ static void lineSplit(
 /**********************************
 * Set Config value
 **********************************/
-static void SetConfigValue(
-    EbConfig *config,
-    char       *name,
-    char       *value)
-{
+static void SetConfigValue(EbConfig *config, const char *name,
+                           const char *value) {
     int32_t i=0;
 
     while(config_entry[i].name != NULL) {
