@@ -6329,11 +6329,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
                 picture_control_set_ptr,
                 context_ptr,
                 ss_mecontext,
-#if M8_SKIP_BLK
                 &skip_sub_blocks,
-#else
-                0xFFFFFFFF,
-#endif
                 lcuAddr,
                 bestCandidateBuffers);
 
@@ -6354,11 +6350,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
             picture_control_set_ptr,
             context_ptr,
             ss_mecontext,
-#if M8_SKIP_BLK
             &skip_sub_blocks,
-#else
-            0xFFFFFFFF,
-#endif
             lcuAddr,
             bestCandidateBuffers);
 #endif
