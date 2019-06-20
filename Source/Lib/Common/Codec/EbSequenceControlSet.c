@@ -359,6 +359,9 @@ EbErrorType copy_sequence_control_set(
     dst->extra_frames_to_ref_islice = src->extra_frames_to_ref_islice;
     dst->max_frame_window_to_ref_islice = src->max_frame_window_to_ref_islice;
 #endif
+#if INCOMPLETE_SB_FIX
+    dst->over_boundary_block_mode = src->over_boundary_block_mode;
+#endif
     return EB_ErrorNone;
 }
 
@@ -567,7 +570,7 @@ EbErrorType sb_geom_init(SequenceControlSet * sequence_control_set_ptr)
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count ; md_scan_block_index++) {
             const BlockGeom * blk_geom = get_blk_geom_mds(md_scan_block_index);
 #if INCOMPLETE_SB_FIX
-            if (sequence_control_set_ptr->static_config.enc_mode == ENC_M0) {
+            if (sequence_control_set_ptr->over_boundary_block_mode == 1) {
                 sequence_control_set_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] =
                     ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth / 2 < sequence_control_set_ptr->seq_header.max_frame_width) &&
                     (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight / 2 < sequence_control_set_ptr->seq_header.max_frame_height)) ?

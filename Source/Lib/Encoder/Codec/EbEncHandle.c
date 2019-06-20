@@ -2285,6 +2285,15 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     else
         sequence_control_set_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
 #endif
+#if INCOMPLETE_SB_FIX
+    // Set over_boundary_block_mode     Settings
+    // 0                            0: not allowed
+    // 1                            1: allowed
+    if (sequence_control_set_ptr->static_config.enc_mode == ENC_M0)
+        sequence_control_set_ptr->over_boundary_block_mode = 1;
+    else
+        sequence_control_set_ptr->over_boundary_block_mode = 0;
+#endif
 #endif
 }
 

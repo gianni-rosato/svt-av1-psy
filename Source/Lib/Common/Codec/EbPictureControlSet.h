@@ -14469,6 +14469,9 @@ extern "C" {
         uint8_t                            cdf_mode;
         uint8_t                            nsq_present;
 #endif
+#if INCOMPLETE_SB_FIX
+        uint8_t                            over_boundary_block_mode;
+#endif
     } PictureControlSetInitData;
 
     typedef struct Av1Comp
