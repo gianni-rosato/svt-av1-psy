@@ -186,7 +186,7 @@ extern "C" {
 
 
 
-#define M0_ME_QUARTER_PEL_SEARCH                    1
+
 #define NSQ_OPTIMASATION                            1
 //
 #define DISABLE_IN_LOOP_ME                          1
