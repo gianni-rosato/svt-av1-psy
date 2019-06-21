@@ -171,9 +171,7 @@ extern "C" {
         const BlockGeom         *blk_geom,
         uint32_t                 miRow,
         uint32_t                 miCol,
-#if MRP_COST_EST
         uint8_t                 md_pass,
-#endif
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
 
@@ -190,9 +188,7 @@ extern "C" {
         const BlockGeom         *blk_geom,
         uint32_t                 miRow,
         uint32_t                 miCol,
-#if MRP_COST_EST
         uint8_t                 md_pass,
-#endif
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
 

@@ -221,7 +221,7 @@ extern "C" {
 
 
 
-#define MRP_COST_EST              1
+
 #define MRP_BASE                  1 //enable MRP for Base
 #define MRP_REF_MODE              1
 #define MRP_DUPLICATION_FIX       1

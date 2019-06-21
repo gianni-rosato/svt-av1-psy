@@ -1432,9 +1432,7 @@ void perform_fast_loop(
                 context_ptr->blk_geom,
                 context_ptr->cu_origin_y >> MI_SIZE_LOG2,
                 context_ptr->cu_origin_x >> MI_SIZE_LOG2,
-#if MRP_COST_EST
                 1,
-#endif
                 context_ptr->intra_luma_left_mode,
                 context_ptr->intra_luma_top_mode);
 
@@ -1547,9 +1545,7 @@ void perform_fast_loop(
                 context_ptr->blk_geom,
                 context_ptr->cu_origin_y >> MI_SIZE_LOG2,
                 context_ptr->cu_origin_x >> MI_SIZE_LOG2,
-#if MRP_COST_EST
                 1,
-#endif
                 context_ptr->intra_luma_left_mode,
                 context_ptr->intra_luma_top_mode);
         }
@@ -4834,9 +4830,7 @@ void search_best_independent_uv_mode(
                         context_ptr->blk_geom,
                         context_ptr->cu_origin_y >> MI_SIZE_LOG2,
                         context_ptr->cu_origin_x >> MI_SIZE_LOG2,
-#if MRP_COST_EST
                         1,
-#endif
                         context_ptr->intra_luma_left_mode,
                         context_ptr->intra_luma_top_mode);
 
@@ -5303,7 +5297,6 @@ EB_EXTERN EbErrorType mode_decision_sb(
                         sb_origin_y);
             }
 
-#if MRP_COST_EST
             int32_t mi_row = context_ptr->cu_origin_y >> MI_SIZE_LOG2;
             int32_t mi_col = context_ptr->cu_origin_x >> MI_SIZE_LOG2;
             int mi_stride = picture_control_set_ptr->parent_pcs_ptr->av1_cm->mi_stride;
@@ -5320,7 +5313,6 @@ EB_EXTERN EbErrorType mode_decision_sb(
                 cu_ptr->av1xd->left_mbmi = &mi_ptr[-1].mbmi;
             else
                 cu_ptr->av1xd->left_mbmi = NULL;
-#endif
 
         uint8_t redundant_blk_avail = 0;
         uint16_t redundant_blk_mds;

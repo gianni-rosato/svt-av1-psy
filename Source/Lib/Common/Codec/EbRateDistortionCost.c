@@ -597,9 +597,7 @@ uint64_t av1_intra_fast_cost(
     const BlockGeom         *blk_geom,
     uint32_t                 miRow,
     uint32_t                 miCol,
-#if MRP_COST_EST
     uint8_t                 md_pass,
-#endif
     uint32_t                 left_neighbor_mode,
     uint32_t                 top_neighbor_mode)
 
@@ -610,9 +608,7 @@ uint64_t av1_intra_fast_cost(
     UNUSED(miCol);
     UNUSED(left_neighbor_mode);
     UNUSED(top_neighbor_mode);
-#if MRP_COST_EST
     UNUSED(md_pass);
-#endif
 
     if (av1_allow_intrabc(picture_control_set_ptr->parent_pcs_ptr->av1_cm) && candidate_ptr->use_intrabc) {
         uint64_t lumaSad = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
@@ -791,7 +787,6 @@ static INLINE int32_t have_newmv_in_inter_mode(PredictionMode mode) {
 extern void av1_set_ref_frame(MvReferenceFrame *rf,
     int8_t ref_frame_type);
 
-#if MRP_COST_EST
 static INLINE int has_second_ref(const MbModeInfo *mbmi) {
     return mbmi->ref_frame[1] > INTRA_FRAME;
 }
@@ -800,7 +795,6 @@ static INLINE int has_uni_comp_refs(const MbModeInfo *mbmi) {
     return has_second_ref(mbmi) && (!((mbmi->ref_frame[0] >= BWDREF_FRAME) ^
         (mbmi->ref_frame[1] >= BWDREF_FRAME)));
 }
-#endif
 
 // This function encodes the reference frame
 uint64_t EstimateRefFramesNumBits(
@@ -810,14 +804,10 @@ uint64_t EstimateRefFramesNumBits(
     uint32_t                                 bwidth,
     uint32_t                                 bheight,
     uint8_t                                  ref_frame_type,
-#if MRP_COST_EST
     uint8_t                                   md_pass,
-#endif
     EbBool                                is_compound)
 {
     uint64_t refRateBits = 0;
-
-#if MRP_COST_EST
 
     if (md_pass == 1) {
         uint64_t refRateA = 0;
@@ -982,7 +972,6 @@ uint64_t EstimateRefFramesNumBits(
             refRateJ + refRateK + refRateL + refRateM + refRateN + refRateO + refRateP;
     }
     else {
-#endif
     uint64_t refRateA = 0;
     uint64_t refRateB = 0;
     uint64_t refRateC = 0;
@@ -1167,9 +1156,7 @@ uint64_t EstimateRefFramesNumBits(
 
     refRateBits = refRateA + refRateB + refRateC + refRateD + refRateE + refRateF + refRateG + refRateH + refRateI + refRateJ + refRateK + refRateL + refRateM;
 
-#if MRP_COST_EST
     }
-#endif
     return refRateBits;
 }
 //extern INLINE int16_t Av1ModeContextAnalyzer(const int16_t *const mode_context, const MvReferenceFrame *const rf);
@@ -1208,9 +1195,7 @@ uint64_t av1_inter_fast_cost(
     const BlockGeom         *blk_geom,
     uint32_t                 miRow,
     uint32_t                 miCol,
-#if MRP_COST_EST
     uint8_t                 md_pass,
-#endif
     uint32_t                 left_neighbor_mode,
     uint32_t                 top_neighbor_mode)
 
@@ -1261,9 +1246,7 @@ uint64_t av1_inter_fast_cost(
         blk_geom->bwidth,
         blk_geom->bheight,
         candidate_ptr->ref_frame_type,
-#if MRP_COST_EST
         md_pass,
-#endif
         candidate_ptr->is_compound);
 
     if (candidate_ptr->is_compound)
@@ -2189,17 +2172,7 @@ void coding_loop_context_generation(
         inter_pred_dir_neighbor_array);
 
     //Collect Neighbor ref cout
-#if MRP_COST_EST
     av1_collect_neighbors_ref_counts_new(cu_ptr->av1xd);
-#else
-    av1_collect_neighbors_ref_counts(
-        cu_ptr,
-        cu_origin_x,
-        cu_origin_y,
-        mode_type_neighbor_array,
-        inter_pred_dir_neighbor_array,
-        ref_frame_type_neighbor_array);
-#endif
 
     return;
 }
