@@ -4679,11 +4679,7 @@ void search_best_independent_uv_mode(
     candidateBuffer->candidate_ptr->angle_delta[PLANE_TYPE_UV] = 0;
 
     uint8_t uv_mode_start = UV_DC_PRED;
-#if SEARCH_SMOOTH_OFF
-    uint8_t uv_mode_end = UV_D67_PRED;
-#else
     uint8_t uv_mode_end = is_16_bit ? UV_SMOOTH_H_PRED : UV_PAETH_PRED;
-#endif
 
     for (uv_mode = uv_mode_start; uv_mode <= uv_mode_end; uv_mode++) {
         uint8_t uv_angleDeltaCandidateCount = (use_angle_delta && av1_is_directional_mode((PredictionMode)uv_mode)) ? 7 : 1;
