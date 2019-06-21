@@ -1627,9 +1627,6 @@ void InjectAv1MvpCandidates(
     uint32_t                   canIdx = *candTotCnt;
     ModeDecisionCandidate    *candidateArray = context_ptr->fast_candidate_array;
     EbBool isCompoundEnabled = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
-#if  !BASE_LAYER_REF && !MRP_REF_MODE
-    isCompoundEnabled = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : isCompoundEnabled;
-#endif
     MacroBlockD  *xd = cu_ptr->av1xd;
     uint8_t drli, maxDrlIndex;
     IntMv    nearestmv[2], nearmv[2], ref_mv[2];
@@ -1778,9 +1775,7 @@ void InjectAv1MvpCandidates(
             }
         }
 
-#if BASE_LAYER_REF || MRP_REF_MODE
         if (allow_bipred)
-#endif
         {
             //SKIP (NEAREST_NEAREST with LAST_BWD_FRAME)
             int16_t to_inject_mv_x_l0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].this_mv.as_mv.col;
@@ -2607,7 +2602,6 @@ void  inject_inter_candidates(
         ((context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) || (context_ptr->blk_geom->bwidth > 64 || context_ptr->blk_geom->bheight > 64)) ? EB_TRUE : EB_FALSE;
 
     uint32_t close_loop_me_index = use_close_loop_me ? get_in_loop_me_info_index(MAX_SS_ME_PU_COUNT, sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? 1 : 0, context_ptr->blk_geom) : 0;
-#if BASE_LAYER_REF || MRP_REF_MODE
 #if MRP_ENABLE_BI_FOR_BASE
     EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
 #if MRP_DISABLE_ADDED_CAND_M1
@@ -2618,9 +2612,6 @@ void  inject_inter_candidates(
 #endif
 #else
     EbBool allow_bipred = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0 || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
-#endif
-#else
-    EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
 #endif
     uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
     uint8_t inject_newmv_candidate = 1;
@@ -2905,12 +2896,8 @@ void  inject_inter_candidates(
     }
 
     if (inject_newmv_candidate) {
-#if BASE_LAYER_REF || MRP_REF_MODE
         if (isCompoundEnabled) {
             if (allow_bipred) {
-#else
-        if (allow_bipred) {
-#endif
 
             //----------------------
             // Bipred2Nx2N
@@ -2928,9 +2915,7 @@ void  inject_inter_candidates(
                         close_loop_me_index,
                         &canTotalCnt);
 
-#if BASE_LAYER_REF || MRP_REF_MODE
         }
-#endif
 
         //----------------------
         // Unipred2Nx2N

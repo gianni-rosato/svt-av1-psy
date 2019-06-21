@@ -3355,7 +3355,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 picture_control_set_ptr->reference_mode = (ReferenceMode)0xFF;
 
                                 if (picture_control_set_ptr->slice_type != I_SLICE) {
-#if BASE_LAYER_REF || MRP_REF_MODE
                                     picture_control_set_ptr->allow_comp_inter_inter = 1;
                                     if (picture_control_set_ptr->slice_type == P_SLICE) {
                                         picture_control_set_ptr->is_skip_mode_allowed = 0;
@@ -3371,32 +3370,13 @@ void* picture_decision_kernel(void *input_ptr)
                                         picture_control_set_ptr->is_skip_mode_allowed = 1;
                                         picture_control_set_ptr->skip_mode_flag = 1;
                                     }
-#else
-                                    if (picture_control_set_ptr->temporal_layer_index == 0 || picture_control_set_ptr->slice_type == P_SLICE) {
-                                        picture_control_set_ptr->allow_comp_inter_inter = 1;
-
-                                        picture_control_set_ptr->reference_mode = SINGLE_REFERENCE;
-                                        picture_control_set_ptr->is_skip_mode_allowed = 0;
-                                        picture_control_set_ptr->skip_mode_flag = 0;
-                                    }
-                                    else {
-                                        picture_control_set_ptr->allow_comp_inter_inter = 1;
-                                        picture_control_set_ptr->reference_mode = REFERENCE_MODE_SELECT;
-                                        picture_control_set_ptr->is_skip_mode_allowed = 1;
-                                        picture_control_set_ptr->skip_mode_flag = 1;
-                                    }
-#endif
                                 }
 
                                 picture_control_set_ptr->av1_cm->mi_cols = picture_control_set_ptr->sequence_control_set_ptr->seq_header.max_frame_width >> MI_SIZE_LOG2;
                                 picture_control_set_ptr->av1_cm->mi_rows = picture_control_set_ptr->sequence_control_set_ptr->seq_header.max_frame_height >> MI_SIZE_LOG2;
 
                                 memset(picture_control_set_ptr->av1_cm->ref_frame_sign_bias, 0, 8 * sizeof(int32_t));
-#if BASE_LAYER_REF || MRP_REF_MODE
                                 if (picture_control_set_ptr->reference_mode == REFERENCE_MODE_SELECT && picture_control_set_ptr->temporal_layer_index)
-#else
-                                if (picture_control_set_ptr->reference_mode == REFERENCE_MODE_SELECT)
-#endif
                                 {
                                     picture_control_set_ptr->av1_cm->ref_frame_sign_bias[ALTREF_FRAME] =
                                         picture_control_set_ptr->av1_cm->ref_frame_sign_bias[ALTREF2_FRAME] =
@@ -3836,14 +3816,12 @@ void* picture_decision_kernel(void *input_ptr)
                             //printf("POC:%i  skip_mode_allowed:%i  REF_SKIP_0: %i   REF_SKIP_1: %i \n",picture_control_set_ptr->picture_number, picture_control_set_ptr->skip_mode_info.skip_mode_allowed, picture_control_set_ptr->skip_mode_info.ref_frame_idx_0, picture_control_set_ptr->skip_mode_info.ref_frame_idx_1);
 #else
 
-#if BASE_LAYER_REF || MRP_REF_MODE
                             if (picture_control_set_ptr->temporal_layer_index == 0) {
                                 if (picture_control_set_ptr->ref_pic_poc_array[0] == picture_control_set_ptr->ref_pic_poc_array[1])
                                     picture_control_set_ptr->is_skip_mode_allowed = 0;
                                 else
                                     picture_control_set_ptr->is_skip_mode_allowed = 1;
                             }
-#endif
 #endif
 
                             {
