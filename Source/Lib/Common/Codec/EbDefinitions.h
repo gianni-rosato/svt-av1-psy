@@ -104,7 +104,7 @@ extern "C" {
 
 #define MR_MODE                           0
 
-#define M8_SKIP_BLK                       1
+
 #define M8_OIS                            1
 #define QUICK_ME_CLEANUP                  1
 #define SCREEN_CONTENT_SETTINGS           1
@@ -207,7 +207,7 @@ extern "C" {
 #define DISABLE_NSQ                                 1
 #define M0_ME_QUARTER_PEL_SEARCH                    1
 #define NSQ_OPTIMASATION                            1
-//#define M8_SKIP_BLK                               1
+//
 #define DISABLE_IN_LOOP_ME                          1
 #define TILES                                       1
 #define REMOVED_DUPLICATE_INTER                     1

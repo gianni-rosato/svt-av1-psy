@@ -38,9 +38,6 @@ EbErrorType ProductGenerateMdCandidatesCu(
     LargestCodingUnit             *sb_ptr,
     ModeDecisionContext           *context_ptr,
     SsMeContext                  *ss_mecontext,
-#if !M8_SKIP_BLK
-    const uint32_t                    leaf_index,
-#endif
     const uint32_t                    lcuAddr,
     uint32_t                         *fastCandidateTotalCount,
     EbPtr                           interPredContextPtr,
@@ -153,7 +150,6 @@ void mode_decision_update_neighbor_arrays(
 #if OPT_LOSSLESS_0
         if (picture_control_set_ptr->parent_pcs_ptr->skip_sub_blks)
 #endif
-#if M8_SKIP_BLK
         // Intra Luma Mode Update
         neighbor_array_unit_mode_write(
             context_ptr->leaf_depth_neighbor_array,
@@ -163,7 +159,6 @@ void mode_decision_update_neighbor_arrays(
             bwdith,
             bheight,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-#endif
         // Intra Luma Mode Update
         neighbor_array_unit_mode_write(
             context_ptr->intra_luma_mode_neighbor_array,
@@ -4912,7 +4907,6 @@ void  order_nsq_table(
         }
     }
 }
-#if M8_SKIP_BLK
 uint8_t check_skip_sub_blks(
     PictureControlSet              *picture_control_set_ptr,
     ModeDecisionContext            *context_ptr,
@@ -4928,8 +4922,6 @@ uint8_t check_skip_sub_blks(
             }
     return skip_sub_blocks;
 }
-
-#endif
 
 #if SEARCH_UV_MODE
 // Hsan (chroma search) : av1_get_tx_type() to define as extern
@@ -5184,11 +5176,7 @@ void md_encode_block(
     PictureControlSet              *picture_control_set_ptr,
     ModeDecisionContext            *context_ptr,
     SsMeContext                    *ss_mecontext,
-#if M8_SKIP_BLK
     uint8_t                          *skip_sub_blocks,
-#else
-    uint32_t                          leaf_index,
-#endif
     uint32_t                          lcuAddr,
     ModeDecisionCandidateBuffer    *bestCandidateBuffers[5])
 {
@@ -5252,7 +5240,6 @@ void md_encode_block(
             context_ptr->mode_type_neighbor_array,
             context_ptr->leaf_depth_neighbor_array,
             context_ptr->leaf_partition_neighbor_array);
-#if M8_SKIP_BLK
          // Skip sub blocks if the current block has the same depth as the left block and above block
         if (picture_control_set_ptr->parent_pcs_ptr->skip_sub_blks)
             *skip_sub_blocks =check_skip_sub_blks(picture_control_set_ptr,
@@ -5260,7 +5247,6 @@ void md_encode_block(
                                                   cu_ptr,
                                                   is_complete_sb,
                                                   lcuAddr);
-#endif
         set_nfl(
 #if NFL_PER_SQ_SIZE
             picture_control_set_ptr,
@@ -5291,9 +5277,6 @@ void md_encode_block(
             context_ptr->sb_ptr,
             context_ptr,
             ss_mecontext,
-#if !M8_SKIP_BLK
-            leaf_index,
-#endif
             lcuAddr,
             &fastCandidateTotalCount,
             (void*)context_ptr->inter_prediction_context,
@@ -5652,14 +5635,10 @@ EB_EXTERN EbErrorType mode_decision_sb(
 #if !OPT_LOSSLESS_0
     UNUSED(all_d1_blocks_done);
 #endif
-#if M8_SKIP_BLK
 
     uint8_t skip_sub_blocks;
-#endif
     do {
-#if M8_SKIP_BLK
         skip_sub_blocks = 0;
-#endif
         blk_idx_mds = leaf_data_array[cuIdx].mds_idx;
 
         const BlockGeom * blk_geom = context_ptr->blk_geom = get_blk_geom_mds(blk_idx_mds);
@@ -5829,10 +5808,6 @@ EB_EXTERN EbErrorType mode_decision_sb(
                     sb_origin_y);
             }
         }
-#if !M8_SKIP_BLK
-
-        cuIdx++;
-#else
         if (skip_sub_blocks && leaf_data_array[cuIdx].split_flag) {
             cuIdx++;
             while (cuIdx < leaf_count) {
@@ -5845,7 +5820,6 @@ EB_EXTERN EbErrorType mode_decision_sb(
         }
         else
             cuIdx++;
-#endif
     } while (cuIdx < leaf_count);// End of CU loop
 
     return return_error;

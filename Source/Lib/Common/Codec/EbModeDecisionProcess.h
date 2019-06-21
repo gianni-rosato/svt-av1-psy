@@ -69,13 +69,8 @@ extern "C" {
         unsigned                    tested_cu_flag                  : 1;   //tells whether this CU is tested in MD.
         unsigned                    mdc_array_index                 : 7;
         unsigned                    count_non_zero_coeffs           : 11;
-#if M8_SKIP_BLK
         unsigned                    top_neighbor_depth              : 8;
         unsigned                    left_neighbor_depth             : 8;
-#else
-        unsigned                    top_neighbor_depth              : 3;
-        unsigned                    left_neighbor_depth             : 3;
-#endif
         unsigned                    top_neighbor_mode               : 2;
         unsigned                    left_neighbor_mode              : 2;
         unsigned                    full_distortion                 : 32;

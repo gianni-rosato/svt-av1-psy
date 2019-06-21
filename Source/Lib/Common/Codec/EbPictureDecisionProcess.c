@@ -1263,13 +1263,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if RED_CU_DEBUG
     picture_control_set_ptr->intra_pred_mode = 0;
 #endif
-#if M8_SKIP_BLK
     // Skip sub blk based on neighbors depth        Settings
     // 0                                            OFF
     // 1                                            ON
     picture_control_set_ptr->skip_sub_blks =   0;
 
-#endif
 #if M9_CU_8x8
 #if SCREEN_CONTENT_SETTINGS
         if (picture_control_set_ptr->sc_content_detected)

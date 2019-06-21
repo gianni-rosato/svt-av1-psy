@@ -1746,9 +1746,6 @@ void InjectAv1MvpCandidates(
     MvReferenceFrame               *ref_frames,
     PictureControlSet              *picture_control_set_ptr,
     uint32_t                            lcuAddr,
-#if !M8_SKIP_BLK
-    uint32_t                            leaf_index,
-#endif
     EbBool                           allow_bipred,
     uint32_t                           *candTotCnt)
 {
@@ -1760,9 +1757,6 @@ void InjectAv1MvpCandidates(
 //MRP_LIST_REF_IDX_TYPE_LT
     // CHECK_CAND  (x5)
     // MRP_DUPLICATION_FIX (x12)
-#if !M8_SKIP_BLK
-    (void)leaf_index;
-#endif
     (void)lcuAddr;
     (void)ref_frames;
     uint32_t                   canIdx = *candTotCnt;
@@ -2799,12 +2793,7 @@ void  inject_inter_candidates(
     SsMeContext                  *ss_mecontext,
     const SequenceControlSet     *sequence_control_set_ptr,
     LargestCodingUnit            *sb_ptr,
-#if M8_SKIP_BLK
     uint32_t                       *candidateTotalCnt) {
-#else
-    uint32_t                       *candidateTotalCnt,
-    const uint32_t                  leaf_index){
-#endif
 
     (void)sequence_control_set_ptr;
     uint32_t                   canTotalCnt = *candidateTotalCnt;
@@ -2920,9 +2909,6 @@ void  inject_inter_candidates(
         refFrames,
         picture_control_set_ptr,
         lcuAddr,
-#if !M8_SKIP_BLK
-        leaf_index,
-#endif
         amp_allow_bipred,
         &canTotalCnt);
 
@@ -3272,12 +3258,7 @@ void  inject_inter_candidates(
     SsMeContext                  *ss_mecontext,
     const SequenceControlSet     *sequence_control_set_ptr,
     LargestCodingUnit            *sb_ptr,
-#if M8_SKIP_BLK
     uint32_t                       *candidateTotalCnt){
-#else
-    uint32_t                       *candidateTotalCnt,
-    const uint32_t                  leaf_index){
-#endif
 
     (void)sequence_control_set_ptr;
     uint32_t                   canTotalCnt = *candidateTotalCnt;
@@ -3359,9 +3340,6 @@ void  inject_inter_candidates(
         ref_frames,
         picture_control_set_ptr,
         lcuAddr,
-#if !M8_SKIP_BLK
-        leaf_index,
-#endif
         allow_bipred,
         &canTotalCnt);
 
@@ -4429,13 +4407,7 @@ void  inject_intra_candidates(
     ModeDecisionContext          *context_ptr,
     const SequenceControlSet     *sequence_control_set_ptr,
     LargestCodingUnit            *sb_ptr,
-#if M8_SKIP_BLK
     uint32_t                       *candidateTotalCnt){
-#else
-    uint32_t                       *candidateTotalCnt,
-    const uint32_t                  leaf_index){
-    (void)leaf_index;
-#endif
     (void)sequence_control_set_ptr;
     (void)sb_ptr;
     uint8_t                     is16bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
@@ -4723,9 +4695,6 @@ EbErrorType ProductGenerateMdCandidatesCu(
     LargestCodingUnit                 *sb_ptr,
     ModeDecisionContext             *context_ptr,
     SsMeContext                    *ss_mecontext,
-#if !M8_SKIP_BLK
-    const uint32_t                      leaf_index,
-#endif
     const uint32_t                      lcuAddr,
     uint32_t                           *candidateTotalCountPtr,
     EbPtr                              interPredContextPtr,
@@ -4778,12 +4747,7 @@ EbErrorType ProductGenerateMdCandidatesCu(
                 context_ptr,
                 sequence_control_set_ptr,
                 sb_ptr,
-#if M8_SKIP_BLK
                 &canTotalCnt);
-#else
-                &canTotalCnt,
-                leaf_index);
-#endif
     }
 
     if (picture_control_set_ptr->parent_pcs_ptr->allow_intrabc)
@@ -4807,12 +4771,7 @@ EbErrorType ProductGenerateMdCandidatesCu(
                 ss_mecontext,
                 sequence_control_set_ptr,
                 sb_ptr,
-#if M8_SKIP_BLK
                 &canTotalCnt);
-#else
-                &canTotalCnt,
-                leaf_index);
-#endif
     }
     *candidateTotalCountPtr = canTotalCnt;
     return EB_ErrorNone;
