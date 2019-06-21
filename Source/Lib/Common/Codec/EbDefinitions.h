@@ -158,7 +158,7 @@ extern "C" {
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
 
-#define CDEF_OFF_NON_REF                  1
+
 #define REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY  0
 #define PF_N2_SUPPORT                     1
 
