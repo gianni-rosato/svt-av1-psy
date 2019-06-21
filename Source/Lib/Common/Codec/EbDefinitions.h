@@ -177,7 +177,7 @@ extern "C" {
 
 
 
-#define USE_SAD_ME                                      1
+
 #define USE_SAD_HME                                     1
 #if USE_SAD_HME
 
