@@ -184,7 +184,7 @@ extern "C" {
 
 //NEDED FLAGS  ON
 
-#define DISABLE_NSQ_FOR_NON_REF                     1
+
 #define DISABLE_NSQ                                 1
 #define M0_ME_QUARTER_PEL_SEARCH                    1
 #define NSQ_OPTIMASATION                            1

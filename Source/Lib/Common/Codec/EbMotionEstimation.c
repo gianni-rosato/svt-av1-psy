@@ -14976,9 +14976,7 @@ EbErrorType motion_estimate_lcu(
 #if MRP_ME
                         HalfPelSearch_LCU(
                             sequence_control_set_ptr,
-#if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
                             picture_control_set_ptr,
-#endif
                             context_ptr,
 #if M0_HIGH_PRECISION_INTERPOLATION
                             context_ptr->integer_buffer_ptr[listIndex]
@@ -15088,16 +15086,11 @@ EbErrorType motion_estimate_lcu(
                             enableHalfPel16x16,
                             enableHalfPel8x8,
                             enableQuarterPel,
-#if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
 #if TEST5_DISABLE_NSQ_ME
                             EB_FALSE);
 #else
                             picture_control_set_ptr->pic_depth_mode <=
                                 PIC_ALL_C_DEPTH_MODE);
-#endif
-#else
-                            sequence_control_set_ptr->static_config
-                                .ext_block_flag);
 #endif
 #endif
 #if IMPROVED_SUBPEL_SEARCH
