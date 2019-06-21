@@ -4238,11 +4238,7 @@ void  inject_intra_candidates(
     if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 4) {
         if (picture_control_set_ptr->slice_type == I_SLICE) {
             intra_mode_end = is16bit ? SMOOTH_H_PRED : PAETH_PRED;
-#if M10_INTRA
-            angleDeltaCandidateCount = use_angle_delta ? 3 : 1;
-#else
             angleDeltaCandidateCount = use_angle_delta ? 5 : 1;
-#endif
             disable_angle_prediction = 0;
             angle_delta_shift = 2;
             disable_z2_prediction = 0;
