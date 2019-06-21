@@ -133,7 +133,7 @@ extern "C" {
 
 
 
-#define ENABLE_WARPED_MV                  1
+
 #define CABAC_UP                          1 // Update cabac probabilities. txb CDFs.
 #define RC                                1 // VBR Rate control integrated from SVT-VP9
 #if RC
