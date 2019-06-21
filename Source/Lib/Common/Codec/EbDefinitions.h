@@ -63,7 +63,7 @@ extern "C" {
 
 #define ATB                               1 // ATB Main Flag
 #if ATB
-#define ATB_SUPPORT                       1 // Tranform block geometry, data structure(s), ..
+
 
 #define ATB_EP                            1 // Tranform partitioning @ encode passs
 
@@ -827,7 +827,6 @@ typedef enum ATTRIBUTE_PACKED {
 #else
 } TxSize;
 #endif
-#if ATB_SUPPORT
 static const TxSize tx_depth_to_tx_size[3][BlockSizeS_ALL] = {
     // tx_depth 0
     {
@@ -905,7 +904,6 @@ static const TxSize tx_depth_to_tx_size[3][BlockSizeS_ALL] = {
         TX_8X8
     }
 };
-#endif
 static const int32_t tx_size_wide[TX_SIZES_ALL] = {
     4, 8, 16, 32, 64, 4, 8, 8, 16, 16, 32, 32, 64, 4, 16, 8, 32, 16, 64,
 };

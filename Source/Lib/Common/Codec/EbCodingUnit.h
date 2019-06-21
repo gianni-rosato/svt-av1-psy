@@ -191,9 +191,7 @@ extern "C" {
         int8_t cdef_strength;
         TxSize tx_size;
         uint8_t inter_tx_size[INTER_TX_SIZE_BUF_LEN];
-#if ATB_SUPPORT
         uint8_t tx_depth;
-#endif
     } MbModeInfo;
 
     typedef struct ModeInfo {
@@ -390,9 +388,7 @@ extern "C" {
         uint8_t                    *neigh_left_recon[3];  //only for MD
         uint8_t                    *neigh_top_recon[3];
         uint32_t                    best_d1_blk;
-#if ATB_SUPPORT
         uint8_t                     tx_depth;
-#endif
     } CodingUnit;
 
         typedef struct OisCandidate

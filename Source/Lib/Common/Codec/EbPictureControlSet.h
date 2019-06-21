@@ -14230,9 +14230,7 @@ extern "C" {
 #if M8_SKIP_BLK
         uint8_t                               skip_sub_blks;
 #endif
-#if ATB_SUPPORT
         uint8_t                               atb_mode;
-#endif
         //**********************************************************************************************************//
         FrameType                            av1_frame_type;
         Av1RpsNode                          av1_ref_signal;

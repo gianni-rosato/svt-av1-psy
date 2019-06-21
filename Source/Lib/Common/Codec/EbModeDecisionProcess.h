@@ -237,10 +237,8 @@ extern "C" {
 #if MEMORY_FOOTPRINT_OPT_ME_MV
         uint32_t                        me_block_offset;
 #endif
-#if ATB_SUPPORT
         uint8_t                         tx_depth;
         uint8_t                         txb_itr;
-#endif
         uint32_t                        me_sb_addr;
 
         int16_t                         luma_txb_skip_context;
