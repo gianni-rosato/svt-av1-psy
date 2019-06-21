@@ -146,7 +146,7 @@ extern "C" {
 
 
 
-#define M9_NFL                            0 // VP9 4K NFL settings; NFL = 3
+
 #define M9_CDEF                           0 // CDEF off
 #define M9_TX_SEARCH                      0 // Tx search off
 #define VP9_ADP                           0 // VP9 4K ADP budget;  (121,110,100 but different injection) (budget = f (layer index))
