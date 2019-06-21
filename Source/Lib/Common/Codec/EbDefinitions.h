@@ -171,7 +171,7 @@ extern "C" {
 
 
 
-#define SEARCH_UV_OPT_2                                 0
+
 #define SEARCH_SMOOTH_OFF                               0
 #define SEARCH_UV_CLEAN_UP                              1
 #define FIX_INTRA_UV                                    1   //mismatch in intra prediction
