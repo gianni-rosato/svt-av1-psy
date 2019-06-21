@@ -243,7 +243,7 @@ extern "C" {
 
 
 
-#define FIXED_MRP_10BIT           1
+
 #define FIX_WARP_TILE             1 //fix Warped motion in presnece of Tiles
 #define MRP_FIX_RC_WARNINGS       1
 

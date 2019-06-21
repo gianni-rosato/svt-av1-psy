@@ -3316,13 +3316,8 @@ EB_EXTERN void av1_encode_pass(
                                     context_ptr->cu_origin_y,
                                     blk_geom->bwidth,
                                     blk_geom->bheight,
-#if FIXED_MRP_10BIT
                                     cu_ptr->prediction_unit_array->ref_frame_index_l0 >= 0 ? refObj0->reference_picture16bit : (EbPictureBufferDesc*)EB_NULL,
                                     cu_ptr->prediction_unit_array->ref_frame_index_l1 >= 0 ? refObj1->reference_picture16bit : (EbPictureBufferDesc*)EB_NULL,
-#else
-                                    refObj0->reference_picture16bit,
-                                    picture_control_set_ptr->slice_type == B_SLICE ? refObj1->reference_picture16bit : 0,
-#endif
                                     recon_buffer,
                                     context_ptr->cu_origin_x,
                                     context_ptr->cu_origin_y,
