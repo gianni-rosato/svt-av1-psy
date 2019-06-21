@@ -97,9 +97,6 @@ extern "C" {
         int32_t                                angle_delta[PLANE_TYPES];
         EbBool                                 is_directional_mode_flag;
         EbBool                                 is_directional_chroma_mode_flag;
-#if !SEARCH_UV_CLEAN_UP
-        EbBool                                 use_angle_delta;
-#endif
         uint32_t                               intra_chroma_mode; // AV1 mode, no need to convert
 
         // Index of the alpha Cb and alpha Cr combination

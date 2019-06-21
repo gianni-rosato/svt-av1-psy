@@ -687,11 +687,7 @@ uint64_t av1_intra_fast_cost(
     // Estimate luma nominal intra mode bits
     intraLumaModeBitsNum = picture_control_set_ptr->slice_type == I_SLICE ? (uint64_t)candidate_ptr->md_rate_estimation_ptr->y_mode_fac_bits[AboveCtx][LeftCtx][intra_mode] : ZERO_COST;
     // Estimate luma angular mode bits
-#if SEARCH_UV_CLEAN_UP
     if (blk_geom->bsize >= BLOCK_8X8 && candidate_ptr->is_directional_mode_flag) {
-#else
-    if (candidate_ptr->is_directional_mode_flag && candidate_ptr->use_angle_delta) {
-#endif
         assert((intra_mode - V_PRED) < 8);
         assert((intra_mode - V_PRED) >= 0);
         intraLumaAngModeBitsNum = candidate_ptr->md_rate_estimation_ptr->angle_delta_fac_bits[intra_mode - V_PRED][MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_Y]];
@@ -728,11 +724,7 @@ uint64_t av1_intra_fast_cost(
             // Estimate luma nominal intra mode bits
             intraChromaModeBitsNum = (uint64_t)candidate_ptr->md_rate_estimation_ptr->intra_uv_mode_fac_bits[isCflAllowed][intra_mode][chroma_mode];
             // Estimate luma angular mode bits
-#if SEARCH_UV_CLEAN_UP
             if (blk_geom->bsize >= BLOCK_8X8 && candidate_ptr->is_directional_chroma_mode_flag) {
-#else
-            if (candidate_ptr->is_directional_chroma_mode_flag && candidate_ptr->use_angle_delta) {
-#endif
                 intraChromaAngModeBitsNum = candidate_ptr->md_rate_estimation_ptr->angle_delta_fac_bits[chroma_mode - V_PRED][MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_UV]];
             }
         }

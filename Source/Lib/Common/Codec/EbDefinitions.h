@@ -173,7 +173,7 @@ extern "C" {
 
 
 
-#define SEARCH_UV_CLEAN_UP                              1
+
 #define FIX_INTRA_UV                                    1   //mismatch in intra prediction
 
 #define FRAC_64x64_BUG_FIX                              1
