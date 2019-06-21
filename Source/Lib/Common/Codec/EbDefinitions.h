@@ -46,7 +46,7 @@ extern "C" {
 
 
 
-#define MRP_SUPPORT                       1// MRP Main Flag
+
 
 #define DOWN_SAMPLING_FILTERING           1 // Use down-sampling filtering (instead of down-sampling decimation) for 1/16th and 1/4th reference frame(s) generation @ ME and temporal filtering search, added the multi-mode signal down_sampling_method_me_search; filtering if M0, and decimation for M1 & higher
 #define DECIMATION_BUG_FIX                1 // Removed HME Level0 check @ 1/16th decimation to guarantee valid ZZ SAD and SCD data when HME Level0 is OFF
@@ -129,9 +129,6 @@ extern "C" {
 #define M9_INTRA                          1
 #define M10_INTRA                         0
 #define DISABLE_OIS_USE                   1
-#if !MRP_SUPPORT
-#define M9_INTER_SRC_SRC_FAST_LOOP        1
-#endif
 
 #define OPT_LOSSLESS_0                    1
 
@@ -210,12 +207,7 @@ extern "C" {
 #define USE_SAD_HMEL2                                   1
 #endif
 
-#if !MRP_SUPPORT
-#define BASE_LAYER_REF                                  1 // Base layer pictures use the previous I slice as the second reference
-#endif
-
 //NEDED FLAGS  ON
-#if MRP_SUPPORT
 #define M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH       1
 #define DISABLE_NSQ_FOR_NON_REF                     1
 #define DISABLE_NSQ                                 1
@@ -240,9 +232,7 @@ extern "C" {
 //ALIGN_MEM
 //TWO_FAST_LOOP
 //ADD_DELTA_QP_SUPPORT
-#endif
 
-#if MRP_SUPPORT
 #define MRP_PRED_STRUCTURE        1
 #define EC_UPDATE                 1
 #define MRP_ME                    1
@@ -281,7 +271,6 @@ extern "C" {
 #define FIXED_MRP_10BIT           1
 #define FIX_WARP_TILE             1 //fix Warped motion in presnece of Tiles
 #define MRP_FIX_RC_WARNINGS       1
-#endif
 
 #define ADP_STATS_PER_LAYER                             0
 #define NFL_TX_TH                                       12 // To be tuned
