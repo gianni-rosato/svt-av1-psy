@@ -38,223 +38,23 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#define ATB_EP                            1 // Tranform partitioning @ encode passs
-
-
-
-
-
-
-#if ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
-
-#endif
-
-
-
-
-#define INCOMPLETE_SB_FIX                 1 // Handle the incomplete SBs properly based on the standard and consider all allowed blocks
-/**********************************************************************************/
-
-// New  presets
-
-
-/************************* Omar to remove disable_ang_uv *************************/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#define CDEF_AVX_OPT                      1
-
-
-#define MR_MODE                           0
-
-
-
-
-
-
-// M9 settings toward 4K 60 fps
-
-
-// Adopted
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #define REMOVE_UNPACK_REF                 1
-
-
-
-
-
-
-
-
+#define ATB_EP                            1 // Tranform partitioning @ encode passs
+#define INCOMPLETE_SB_FIX                 1 // Handle the incomplete SBs properly based on the standard and consider all allowed blocks
+#define CDEF_AVX_OPT                      1
+#define MR_MODE                           0
+#define EIGTH_PEL_MV                      0
 #define RC_FEEDBACK                       1 // Feedback from previous base layer is received before starting the next base layer frame
-
-
-
-// Testing MACROS
-
-// Under testing
-
-
-
-
-
-
-
-
-
-
-
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//NEDED FLAGS  ON
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-//NEEDED FLAGS  OFF
-//M0_HIGH_PRECISION_INTERPOLATION
-//TEST5_DISABLE_NSQ_ME
-//ALIGN_MEM
-//TWO_FAST_LOOP
-//ADD_DELTA_QP_SUPPORT
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #define ADP_STATS_PER_LAYER                             0
 #define NFL_TX_TH                                       12 // To be tuned
 #define NFL_IT_TH                                       2 // To be tuned
 #define NSQ_TAB_SIZE                                    6
-#define AOM_INTERP_EXTEND 4
+#define AOM_INTERP_EXTEND                               4
 
 
-#define EIGTH_PEL_MV                                    0
 
 
 

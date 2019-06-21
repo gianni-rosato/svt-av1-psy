@@ -168,7 +168,6 @@ void mode_decision_update_neighbor_arrays(
                 context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][txb_itr],
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-#if ATB_SUPPORT && ATB_DC_CONTEXT_SUPPORT_2
             neighbor_array_unit_mode_write(
                 picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
                 (uint8_t*)&dc_sign_level_coeff,
@@ -177,7 +176,6 @@ void mode_decision_update_neighbor_arrays(
                 context_ptr->blk_geom->tx_width[context_ptr->cu_ptr->tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height[context_ptr->cu_ptr->tx_depth][txb_itr],
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-#endif
         }
     }
 

@@ -596,7 +596,7 @@ static void Av1EncodeLoop(
                 txb_ptr->transform_type[PLANE_TYPE_Y] = DCT_DCT;
             }
         }
-#if !ATB_EP || ATB_EC_NO_CFL
+#if !ATB_EP
         if (cu_ptr->prediction_mode_flag == INTRA_MODE && (context_ptr->evaluate_cfl_ep || cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED)) {
             EbPictureBufferDesc *reconSamples = predSamples;
             uint32_t reconLumaOffset = (reconSamples->origin_y + origin_y)            * reconSamples->stride_y + (reconSamples->origin_x + origin_x);
