@@ -26,11 +26,7 @@ extern "C" {
         EbCallback                           **app_callback_ptr_array;
 
         // Compute Segments
-#if MEM_MAP_OPT
         uint32_t                               compute_segments_total_count_array;
-#else
-        uint32_t                              *compute_segments_total_count_array;
-#endif
         uint32_t                               encode_instances_total_count;
 
         // Picture Number Array
@@ -69,11 +65,7 @@ extern "C" {
         EbSequenceControlSetInstance **sequence_control_set_instance_array,
         EbFifo                        *sequence_control_set_empty_fifo_ptr,
         EbCallback                   **app_callback_ptr_array,
-#if MEM_MAP_OPT
         uint32_t                       compute_segments_total_count_array,
-#else
-        uint32_t                      *compute_segments_total_count_array,
-#endif
         uint32_t                       encode_instances_total_count);
 
     extern void* resource_coordination_kernel(void *input_ptr);

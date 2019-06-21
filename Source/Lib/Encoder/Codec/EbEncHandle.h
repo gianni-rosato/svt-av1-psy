@@ -23,11 +23,7 @@ typedef struct EbEncHandle
 {
     // Encode Instances & Compute Segments
     uint32_t                                  encode_instance_total_count;
-#if MEM_MAP_OPT
     uint32_t                                  compute_segments_total_count_array;
-#else
-    uint32_t                                 *compute_segments_total_count_array;
-#endif
 
     // Config Set Counts
     uint32_t                                  sequence_control_set_pool_total_count;
@@ -162,9 +158,7 @@ typedef struct EbEncHandle
     EbCallback                          **app_callback_ptr_array;
 
     // Memory Map
-#if MEM_MAP_OPT
     EbMemoryMapEntry                       *memory_map_init_address;
-#endif
     EbMemoryMapEntry                       *memory_map;
     uint32_t                                memory_map_index;
     uint64_t                                total_lib_memory;

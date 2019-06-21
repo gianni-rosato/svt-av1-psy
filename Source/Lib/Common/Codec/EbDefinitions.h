@@ -94,7 +94,7 @@ extern "C" {
 
 
 
-#define MEM_MAP_OPT                       1
+
 #endif
 
 #define SHUT_LOOKAHEAD                    0
@@ -2405,9 +2405,7 @@ typedef struct EbMemoryMapEntry
 {
     EbPtr                    ptr;            // points to a memory pointer
     EbPtrType                ptr_type;       // pointer type
-#if MEM_MAP_OPT
     EbPtr                    prev_entry;     // pointer to the prev entry
-#endif
 } EbMemoryMapEntry;
 
 // Rate Control
@@ -2424,9 +2422,6 @@ typedef struct EbMemoryMapEntry
 #define OIS_MEDUIM_MODE          2
 #define OIS_COMPLEX_MODE         3
 #define OIS_VERY_COMPLEX_MODE    4
-#if !MEM_MAP_OPT
-#define MAX_NUM_PTR                                 (0x1312D00 << 2) //0x4C4B4000            // Maximum number of pointers to be allocated for the library
-#endif
 // Display Total Memory at the end of the memory allocations
 #define DISPLAY_MEMORY                              0
 
@@ -2471,7 +2466,6 @@ extern    uint32_t                   app_malloc_count;
     EB_ADD_APP_MEM(pointer, n_elements, pointer_class, app_malloc_count, return_type);
 
 #define ALVALUE 32
-#if MEM_MAP_OPT
 #define EB_ADD_MEM(pointer, size, pointer_class, count, release) \
     do { \
         EbMemoryMapEntry *node; \
@@ -2489,20 +2483,6 @@ extern    uint32_t                   app_malloc_count;
         *total_lib_memory += (size + 7) / 8 + sizeof(EbMemoryMapEntry); \
         count++; \
     } while (0)
-#else
-#define EB_ADD_MEM(pointer, size, pointer_class, count, release) \
-    do { \
-        if (!pointer) return EB_ErrorInsufficientResources; \
-        if (*(memory_map_index) >= MAX_NUM_PTR) { \
-            release(pointer); \
-            return EB_ErrorInsufficientResources; \
-        } \
-        memory_map[*(memory_map_index)].ptr_type = pointer_class; \
-        memory_map[(*(memory_map_index))++].ptr = pointer; \
-        *total_lib_memory += (size + 7) / 8; \
-        count++; \
-    } while (0)
-#endif
 
 #ifdef _MSC_VER
 #define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \

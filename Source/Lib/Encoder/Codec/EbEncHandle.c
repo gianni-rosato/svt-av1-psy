@@ -669,25 +669,16 @@ static EbErrorType eb_enc_handle_ctor(
     EbComponentType * ebHandlePtr)
 {
     EbErrorType return_error = EB_ErrorNone;
-#if !MEM_MAP_OPT
-    uint32_t instance_index  = 0;
-#endif
     // Allocate Memory
     EbEncHandle *enc_handle_ptr = (EbEncHandle*)malloc(sizeof(EbEncHandle));
 
     *encHandleDblPtr          = enc_handle_ptr;
     if (enc_handle_ptr == (EbEncHandle*)EB_NULL)
         return EB_ErrorInsufficientResources;
-#if MEM_MAP_OPT
     enc_handle_ptr->memory_map                = (EbMemoryMapEntry*)malloc(sizeof(EbMemoryMapEntry));
     enc_handle_ptr->memory_map_index          = 0;
     enc_handle_ptr->total_lib_memory          = sizeof(EbComponentType) + sizeof(EbEncHandle) + sizeof(EbMemoryMapEntry);
     enc_handle_ptr->memory_map_init_address   = enc_handle_ptr->memory_map;
-#else
-    enc_handle_ptr->memory_map = (EbMemoryMapEntry*)malloc(sizeof(EbMemoryMapEntry) * MAX_NUM_PTR);
-    enc_handle_ptr->memory_map_index = 0;
-    enc_handle_ptr->total_lib_memory = sizeof(EbEncHandle) + sizeof(EbMemoryMapEntry) * MAX_NUM_PTR;
-#endif
     // Save Memory Map Pointers
     total_lib_memory                        = &enc_handle_ptr->total_lib_memory;
     memory_map                              = enc_handle_ptr->memory_map;
@@ -704,18 +695,9 @@ static EbErrorType eb_enc_handle_ctor(
 
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-#if MEM_MAP_OPT
     enc_handle_ptr->memory_map->prev_entry                                = EB_NULL;
     enc_handle_ptr->encode_instance_total_count                           = EB_EncodeInstancesTotalCount;
     enc_handle_ptr->compute_segments_total_count_array                    = EB_ComputeSegmentInitCount;
-#else
-    enc_handle_ptr->encode_instance_total_count = EB_EncodeInstancesTotalCount;
-
-    EB_MALLOC(uint32_t*, enc_handle_ptr->compute_segments_total_count_array, sizeof(uint32_t) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-
-    for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index)
-        enc_handle_ptr->compute_segments_total_count_array[instance_index] = EB_ComputeSegmentInitCount;
-#endif
     // Config Set Count
     enc_handle_ptr->sequence_control_set_pool_total_count                 = EB_SequenceControlSetPoolInitCount;
 
@@ -814,31 +796,15 @@ static EbErrorType eb_enc_handle_ctor(
 
     // Initialize Callbacks
     EB_MALLOC(EbCallback**, enc_handle_ptr->app_callback_ptr_array, sizeof(EbCallback*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-#if MEM_MAP_OPT
     EB_MALLOC(EbCallback*, enc_handle_ptr->app_callback_ptr_array[0], sizeof(EbCallback), EB_N_PTR);
     enc_handle_ptr->app_callback_ptr_array[0]->ErrorHandler = lib_svt_encoder_send_error_exit;
     enc_handle_ptr->app_callback_ptr_array[0]->handle = ebHandlePtr;
-#else
-    for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
-        EB_MALLOC(EbCallback*, enc_handle_ptr->app_callback_ptr_array[instance_index], sizeof(EbCallback), EB_N_PTR);
-        enc_handle_ptr->app_callback_ptr_array[instance_index]->ErrorHandler = lib_svt_encoder_send_error_exit;
-        enc_handle_ptr->app_callback_ptr_array[instance_index]->handle = ebHandlePtr;
-    }
-#endif
 
     // Initialize Sequence Control Set Instance Array
     EB_MALLOC(EbSequenceControlSetInstance**, enc_handle_ptr->sequence_control_set_instance_array, sizeof(EbSequenceControlSetInstance*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-#if MEM_MAP_OPT
     return_error = eb_sequence_control_set_instance_ctor(&enc_handle_ptr->sequence_control_set_instance_array[0]);
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-#else
-    for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
-        return_error = eb_sequence_control_set_instance_ctor(&enc_handle_ptr->sequence_control_set_instance_array[instance_index]);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-    }
-#endif
     return EB_ErrorNone;
 }
 
@@ -1870,7 +1836,6 @@ __attribute__((visibility("default")))
 EB_API EbErrorType eb_deinit_encoder(EbComponentType *svt_enc_component){
     if(svt_enc_component == NULL)
         return EB_ErrorBadParameter;
-#if MEM_MAP_OPT
     EbEncHandle         *enc_handle_ptr = (EbEncHandle*)svt_enc_component->p_component_private;
     EbErrorType          return_error = EB_ErrorNone;
 
@@ -1912,47 +1877,6 @@ EB_API EbErrorType eb_deinit_encoder(EbComponentType *svt_enc_component){
             }
         }
     }
-#else
-    EbEncHandle *enc_handle_ptr = (EbEncHandle*)svt_enc_component->p_component_private;
-    EbErrorType return_error = EB_ErrorNone;
-    int32_t              ptrIndex = 0;
-    EbMemoryMapEntry*   memoryEntry = (EbMemoryMapEntry*)EB_NULL;
-
-    if (enc_handle_ptr) {
-        if (enc_handle_ptr->memory_map_index) {
-            // Loop through the ptr table and free all malloc'd pointers per channel
-            for (ptrIndex = (enc_handle_ptr->memory_map_index) - 1; ptrIndex >= 0; --ptrIndex) {
-                memoryEntry = &enc_handle_ptr->memory_map[ptrIndex];
-                switch (memoryEntry->ptr_type) {
-                case EB_N_PTR:
-                    free(memoryEntry->ptr);
-                    break;
-                case EB_A_PTR:
-#ifdef _WIN32
-                    _aligned_free(memoryEntry->ptr);
-#else
-                    free(memoryEntry->ptr);
-#endif
-                    break;
-                case EB_SEMAPHORE:
-                    eb_destroy_semaphore(memoryEntry->ptr);
-                    break;
-                case EB_THREAD:
-                    eb_destroy_thread(memoryEntry->ptr);
-                    break;
-                case EB_MUTEX:
-                    eb_destroy_mutex(memoryEntry->ptr);
-                    break;
-                default:
-                    return_error = EB_ErrorMax;
-                    break;
-                }
-            }
-            if (enc_handle_ptr->memory_map != (EbMemoryMapEntry*)NULL)
-                free(enc_handle_ptr->memory_map);
-        }
-    }
-#endif
     return return_error;
 }
 

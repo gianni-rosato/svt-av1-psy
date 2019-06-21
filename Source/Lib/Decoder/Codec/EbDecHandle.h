@@ -112,9 +112,7 @@ typedef struct EbDecHandle {
     EbPictureBufferDesc   *recon_picture_buf[DEC_MAX_NUM_FRM_PRLL];
 
     // Memory Map
-#if MEM_MAP_OPT
     EbMemoryMapEntry            *memory_map_init_address;
-#endif
     EbMemoryMapEntry            *memory_map;
     uint32_t                     memory_map_index;
     uint64_t                     total_lib_memory;
