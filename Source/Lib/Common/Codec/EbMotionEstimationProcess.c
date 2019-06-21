@@ -577,9 +577,7 @@ void* motion_estimation_kernel(void *input_ptr)
                     }
                 }
             }
-#if M9_INTRA
         if ( picture_control_set_ptr->intra_pred_mode > 4)
-#endif
                 // *** OPEN LOOP INTRA CANDIDATE SEARCH CODE ***
             {
                 // SB Loop

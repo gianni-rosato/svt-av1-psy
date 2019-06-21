@@ -120,7 +120,7 @@ extern "C" {
 #define M9_SUBPEL_SELECTION               1
 #define M9_CU_8x8                         1
 #define M9_ADP                            1
-#define M9_INTRA                          1
+
 
 
 
