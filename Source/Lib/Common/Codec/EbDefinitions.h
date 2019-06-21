@@ -103,7 +103,7 @@ extern "C" {
 
 
 #define MR_MODE                           0
-#define SHUT_FILTERING                    0 // CDEF RESTORATION DLF
+
 #define M8_SKIP_BLK                       1
 #define M8_OIS                            1
 #define QUICK_ME_CLEANUP                  1

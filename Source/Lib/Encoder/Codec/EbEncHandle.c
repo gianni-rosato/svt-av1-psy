@@ -2160,12 +2160,8 @@ void CopyApiFromApp(
     sequence_control_set_ptr->max_temporal_layers = sequence_control_set_ptr->static_config.hierarchical_levels;
     sequence_control_set_ptr->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->use_qp_file;
 
-#if SHUT_FILTERING
-    sequence_control_set_ptr->static_config.disable_dlf_flag = 1;//
-#else
     // Deblock Filter
     sequence_control_set_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->disable_dlf_flag;
-#endif
 
     // Local Warped Motion
 #if ENABLE_WARPED_MV
