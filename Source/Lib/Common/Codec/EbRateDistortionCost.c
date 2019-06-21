@@ -2073,10 +2073,8 @@ void coding_loop_context_generation(
     CodingUnit               *cu_ptr,
     uint32_t                      cu_origin_x,
     uint32_t                      cu_origin_y,
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
     uint32_t                      sb_sz,
     NeighborArrayUnit        *skip_coeff_neighbor_array,
-#endif
     NeighborArrayUnit        *inter_pred_dir_neighbor_array,
     NeighborArrayUnit        *ref_frame_type_neighbor_array,
     NeighborArrayUnit        *intra_luma_mode_neighbor_array,
@@ -2085,9 +2083,7 @@ void coding_loop_context_generation(
     NeighborArrayUnit        *leaf_depth_neighbor_array,
     NeighborArrayUnit       *leaf_partition_neighbor_array)
 {
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
     (void)sb_sz;
-#endif
     UNUSED(ref_frame_type_neighbor_array);
     uint32_t modeTypeLeftNeighborIndex = get_neighbor_array_unit_left_index(
         mode_type_neighbor_array,
@@ -2171,7 +2167,6 @@ void coding_loop_context_generation(
 
     context_ptr->md_local_cu_unit[cu_ptr->mds_idx].left_neighbor_partition = (((PartitionContext*)leaf_partition_neighbor_array->left_array)[partition_left_neighbor_index].left == (int8_t)INVALID_NEIGHBOR_DATA) ?
         0 : ((PartitionContext*)leaf_partition_neighbor_array->left_array)[partition_left_neighbor_index].left;
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
     // Skip Coeff AV1 Context
     uint32_t skipCoeffLeftNeighborIndex = get_neighbor_array_unit_left_index(
         skip_coeff_neighbor_array,
@@ -2187,7 +2182,6 @@ void coding_loop_context_generation(
     cu_ptr->skip_coeff_context +=
         (skip_coeff_neighbor_array->top_array[skipCoeffTopNeighborIndex] == (uint8_t)INVALID_NEIGHBOR_DATA) ? 0 :
         (skip_coeff_neighbor_array->top_array[skipCoeffTopNeighborIndex]) ? 1 : 0;
-#endif
     // Generate reference mode context
 
     cu_ptr->reference_mode_context = (uint8_t)av1_get_reference_mode_context(

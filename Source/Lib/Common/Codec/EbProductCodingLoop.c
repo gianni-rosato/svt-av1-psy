@@ -427,7 +427,6 @@ void copy_neighbour_arrays(
             bheight_uv,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
     }
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
     //neighbor_array_unit_reset(picture_control_set_ptr->md_skip_coeff_neighbor_array[depth]);
     copy_neigh_arr(
         picture_control_set_ptr->md_skip_coeff_neighbor_array[src_idx],
@@ -437,7 +436,6 @@ void copy_neighbour_arrays(
         blk_geom->bwidth,
         blk_geom->bheight,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-#endif
     //neighbor_array_unit_reset(picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth]);
     copy_neigh_arr(
         picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[src_idx],
@@ -1321,9 +1319,7 @@ void AV1PerformInverseTransformRecon(
 *******************************************/
 void ProductCodingLoopInitFastLoop(
     ModeDecisionContext      *context_ptr,
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
     NeighborArrayUnit        *skip_coeff_neighbor_array,
-#endif
     NeighborArrayUnit        *inter_pred_dir_neighbor_array,
     NeighborArrayUnit        *ref_frame_type_neighbor_array,
     NeighborArrayUnit        *intra_luma_mode_neighbor_array,
@@ -1340,10 +1336,8 @@ void ProductCodingLoopInitFastLoop(
         context_ptr->cu_ptr,
         context_ptr->cu_origin_x,
         context_ptr->cu_origin_y,
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
         BLOCK_SIZE_64,
         skip_coeff_neighbor_array,
-#endif
         inter_pred_dir_neighbor_array,
         ref_frame_type_neighbor_array,
         intra_luma_mode_neighbor_array,
@@ -4974,9 +4968,7 @@ void md_encode_block(
 #endif
         ProductCodingLoopInitFastLoop(
             context_ptr,
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
             context_ptr->skip_coeff_neighbor_array,
-#endif
             context_ptr->inter_pred_dir_neighbor_array,
             context_ptr->ref_frame_type_neighbor_array,
             context_ptr->intra_luma_mode_neighbor_array,
@@ -5314,9 +5306,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
     context_ptr->luma_recon_neighbor_array = picture_control_set_ptr->md_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
     context_ptr->cb_recon_neighbor_array = picture_control_set_ptr->md_cb_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
     context_ptr->cr_recon_neighbor_array = picture_control_set_ptr->md_cr_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
     context_ptr->skip_coeff_neighbor_array = picture_control_set_ptr->md_skip_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
-#endif
     context_ptr->luma_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
     context_ptr->cb_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->md_cb_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
     context_ptr->cr_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->md_cr_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];

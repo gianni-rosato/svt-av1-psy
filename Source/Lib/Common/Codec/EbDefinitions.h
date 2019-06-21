@@ -159,7 +159,7 @@ extern "C" {
 
 
 
-#define REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY  0
+
 #define PF_N2_SUPPORT                     1
 
 

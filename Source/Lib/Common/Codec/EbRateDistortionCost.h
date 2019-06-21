@@ -38,10 +38,8 @@ extern "C" {
         CodingUnit            *cu_ptr,
         uint32_t               cu_origin_x,
         uint32_t               cu_origin_y,
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
         uint32_t               sb_sz,
         NeighborArrayUnit     *skip_coeff_neighbor_array,
-#endif
         NeighborArrayUnit     *inter_pred_dir_neighbor_array,
         NeighborArrayUnit     *ref_frame_type_neighbor_array,
         NeighborArrayUnit     *intra_luma_mode_neighbor_array,

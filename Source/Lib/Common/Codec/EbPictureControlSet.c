@@ -406,7 +406,6 @@ EbErrorType picture_control_set_ctor(
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_skip_coeff_neighbor_array[depth],
             MAX_PICTURE_WIDTH_SIZE,
@@ -418,7 +417,6 @@ EbErrorType picture_control_set_ctor(
 
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-#endif
         // for each 4x4
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth],
