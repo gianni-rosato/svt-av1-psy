@@ -244,7 +244,7 @@ extern "C" {
 
 
 
-#define FIX_WARP_TILE             1 //fix Warped motion in presnece of Tiles
+
 #define MRP_FIX_RC_WARNINGS       1
 
 #define ADP_STATS_PER_LAYER                             0
