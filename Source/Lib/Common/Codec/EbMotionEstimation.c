@@ -49,7 +49,6 @@ int32_t OisPointTh[3][MAX_TEMPORAL_LAYERS][OIS_TH_COUNT] = {
      {-400, -300, -200, 0},
      {-400, -300, -200, 0}}};
 
-#if NSQ_ME_OPT
 void ext_all_sad_calculation_8x8_16x16_c(
     uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
     uint32_t mv, uint32_t *p_best_sad8x8, uint32_t *p_best_sad16x16,
@@ -72,7 +71,6 @@ void ext_eight_sad_calculation_32x32_64x64_c(
     uint32_t p_sad16x16[16][8], uint32_t *p_best_sad32x32,
     uint32_t *p_best_sad64x64, uint32_t *p_best_mv32x32,
     uint32_t *p_best_mv64x64, uint32_t mv, uint32_t p_sad32x32[4][8]);
-#endif
 
 #define AVCCODEL
 /********************************************
@@ -179,7 +177,6 @@ static EbSadCalculation32x32and64x64Type
         sad_calculation_32x32_64x64_sse2_intrin,
 };
 
-#if NSQ_ME_OPT
 static EB_EXT_ALL_SAD_CALCULATION_8x8_16x16_TYPE
     Ext_ext_all_sad_calculation_8x8_16x16_funcPtrArray[ASM_TYPE_TOTAL] = {
         // NON_AVX2
@@ -203,7 +200,6 @@ static EbExtEightSadCalculation32x3264x64Type
         // AVX2
         ext_eight_sad_calculation_32x32_64x64_avx2,
 };
-#endif
 
 /*******************************************
 Calcualte SAD for 16x16 and its 8x8 sublcoks
@@ -1827,7 +1823,6 @@ static EbExtSadCalculationType ExtSadCalculation_funcPtrArray[ASM_TYPE_TOTAL] =
         // Assembly
         ExtSadCalculation};
 
-#if NSQ_ME_OPT
 /****************************************************
 Calcualte SAD for Rect H, V and H4, V4 partitions
 and update its Motion info if the result SAD is better
@@ -3131,7 +3126,6 @@ static void open_loop_me_get_eight_search_point_results_block(
         context_ptr->p_best_mv16x64,
         currMV);
 }
-#endif
 
 /*******************************************
  * nsq_get_analysis_results_block returns the
@@ -5435,13 +5429,10 @@ static void open_loop_me_fullpel_search_sblock(
     int16_t x_search_area_origin, int16_t y_search_area_origin,
     uint32_t search_area_width, uint32_t search_area_height, EbAsm asm_type) {
     uint32_t xSearchIndex, ySearchIndex;
-#if NSQ_ME_OPT
     uint32_t searchAreaWidthRest8 = search_area_width & 7;
     uint32_t searchAreaWidthMult8 = search_area_width - searchAreaWidthRest8;
-#endif
 
     for (ySearchIndex = 0; ySearchIndex < search_area_height; ySearchIndex++) {
-#if NSQ_ME_OPT
         for (xSearchIndex = 0; xSearchIndex < searchAreaWidthMult8;
              xSearchIndex += 8) {
             // this function will do:  xSearchIndex, +1, +2, ..., +7
@@ -5467,11 +5458,6 @@ static void open_loop_me_fullpel_search_sblock(
         for (xSearchIndex = searchAreaWidthMult8;
              xSearchIndex < search_area_width;
              xSearchIndex++) {
-#else
-        for (xSearchIndex = 0 /*searchAreaWidthMult8*/;
-             xSearchIndex < search_area_width;
-             xSearchIndex++) {
-#endif
 
             open_loop_me_get_search_point_results_block(
                 context_ptr,

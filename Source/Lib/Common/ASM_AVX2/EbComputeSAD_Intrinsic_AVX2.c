@@ -5920,7 +5920,6 @@ void aom_sad128x128x4d_avx2(const uint8_t *src, int src_stride,
     res[2] = sum0[2] + sum1[2];
     res[3] = sum0[3] + sum1[3];
 }
-#if NSQ_ME_OPT
 
 void ext_all_sad_calculation_8x8_16x16_avx2(
     uint8_t   *src,
@@ -6475,4 +6474,3 @@ void ext_eight_sad_calculation_32x32_64x64_avx2(
         p_best_mv64x64[0] = computed_idx[si_e];
     }
 }
-#endif /* NSQ_ME_OPT */
