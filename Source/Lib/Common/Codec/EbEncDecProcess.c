@@ -1178,11 +1178,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (MR_MODE)
         context_ptr->chroma_level = CHROMA_MODE_0;
     else
-#if SEARCH_UV_BASE
     if (picture_control_set_ptr->enc_mode == ENC_M0 && picture_control_set_ptr->temporal_layer_index == 0)
-#else
-    if (picture_control_set_ptr->enc_mode == ENC_M0)
-#endif
         context_ptr->chroma_level = CHROMA_MODE_0;
     else
     if (picture_control_set_ptr->enc_mode <= ENC_M4)
