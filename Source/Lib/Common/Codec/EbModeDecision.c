@@ -3160,12 +3160,7 @@ void  inject_inter_candidates(
         // Eighth-pel refinement
         //----------------------
         if (inject_newmv_candidate && picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv) {
-#if BASE_LAYER_REF
-            if (isCompoundEnabled) {
-                if (allow_bipred) {
-#else
             if (allow_bipred) {
-#endif
 #if IMPROVED_BIPRED_INJECTION
                 //----------------------
                 // Inject eight-pel bi-pred
@@ -3182,9 +3177,6 @@ void  inject_inter_candidates(
                             close_loop_me_index,
                             &canTotalCnt);
 
-#endif
-#if BASE_LAYER_REF
-            }
 #endif
 #if IMPROVED_UNIPRED_INJECTION
             //----------------------

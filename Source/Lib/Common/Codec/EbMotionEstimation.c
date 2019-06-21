@@ -13696,13 +13696,8 @@ EbErrorType motion_estimate_lcu(
             sixteenthRefPicPtr = (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ?
                 (EbPictureBufferDesc*)referenceObject->sixteenth_filtered_picture_ptr:
                 (EbPictureBufferDesc*)referenceObject->sixteenth_decimated_picture_ptr;
-#if BASE_LAYER_REF
-            if (picture_control_set_ptr->temporal_layer_index > 0 ||
-                listIndex == 0 || ((ref0Poc != ref1Poc) && (listIndex == 1))) {
-#else
             if (picture_control_set_ptr->temporal_layer_index > 0 ||
                 listIndex == 0) {
-#endif
                 // A - The MV center for Tier0 search could be either (0,0), or
                 // HME A - Set HME MV Center
                 if (context_ptr->update_hme_search_center_flag)

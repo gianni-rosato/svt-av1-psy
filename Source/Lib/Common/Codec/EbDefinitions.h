@@ -250,9 +250,6 @@ extern "C" {
 #define ADP_STATS_PER_LAYER                             0
 #define NFL_TX_TH                                       12 // To be tuned
 #define NFL_IT_TH                                       2 // To be tuned
-#if BASE_LAYER_REF
-#define MAX_FRAMES_TO_REF_I                             64
-#endif
 #define NSQ_TAB_SIZE                                    6
 #define AOM_INTERP_EXTEND 4
 #define MRP_DISABLE_ADDED_CAND_M1                        0

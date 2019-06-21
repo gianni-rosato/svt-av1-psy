@@ -203,10 +203,6 @@ extern "C" {
         EbBlockMeanPrec                         block_mean_calc_prec;
         BitstreamLevel                          level[MAX_NUM_OPERATING_POINTS];
         int32_t                                 film_grain_denoise_strength;
-#if BASE_LAYER_REF
-        int32_t                                 extra_frames_to_ref_islice;
-        int32_t                                 max_frame_window_to_ref_islice;
-#endif
 #if MRP_ME
         uint32_t                                reference_count;
 #endif

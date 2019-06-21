@@ -645,11 +645,6 @@ void* resource_coordination_kernel(void *input_ptr)
                 if (sequence_control_set_ptr->pm_mode == PM_MODE_0)
                     construct_pm_trans_coeff_shaping(sequence_control_set_ptr);
             }
-#if BASE_LAYER_REF
-            sequence_control_set_ptr->max_frame_window_to_ref_islice = (sequence_control_set_ptr->static_config.intra_period_length == -1) ? MAX_FRAMES_TO_REF_I : MIN(MAX_FRAMES_TO_REF_I, sequence_control_set_ptr->static_config.intra_period_length);
-            sequence_control_set_ptr->extra_frames_to_ref_islice = MAX(sequence_control_set_ptr->max_frame_window_to_ref_islice / (1 << sequence_control_set_ptr->static_config.hierarchical_levels) - 1, 0);
-            sequence_control_set_ptr->max_frame_window_to_ref_islice = (sequence_control_set_ptr->extra_frames_to_ref_islice + 1)*(1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 1;
-#endif
         }
         // Since at this stage we do not know the prediction structure and the location of ALT_REF pictures,
         // for every picture (except first picture), we allocate two: 1. original picture, 2. potential Overlay picture.
