@@ -282,10 +282,8 @@ extern "C" {
     typedef struct MePredUnit
     {
         uint8_t          ref_index[MAX_NUM_OF_REF_PIC_LIST];
-#if MRP_MD_UNI_DIR_BIPRED
         uint8_t          ref0_list;
         uint8_t          ref1_list;
-#endif
         uint32_t         distortion;
         EbPredDirection  prediction_direction;
     } MePredUnit;

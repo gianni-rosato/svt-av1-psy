@@ -838,13 +838,8 @@ void Bipred3x3CandidatesInjection(
 
 #if MRP_DUPLICATION_FIX
         MvReferenceFrame rf[2];
-#if MRP_MD_UNI_DIR_BIPRED // move it out side the loop
         rf[0] = svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index);
         rf[1] = svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index);
-#else
-        rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
-        rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
-#endif
         uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
         if (context_ptr->injected_mv_count_bipred == 0 || mrp_is_already_injected_mv_bipred(context_ptr, to_inject_mv_x_l0, to_inject_mv_y_l0, to_inject_mv_x_l1, to_inject_mv_y_l1, to_inject_ref_type) == EB_FALSE) {
 #else
@@ -875,13 +870,8 @@ void Bipred3x3CandidatesInjection(
             candidateArray[canTotalCnt].prediction_direction[0] = (EbPredDirection)2;
 #if MRP_LIST_REF_IDX_TYPE_LT
             MvReferenceFrame rf[2];
-#if MRP_MD_UNI_DIR_BIPRED
             rf[0] = svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index);
             rf[1] = svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index);
-#else
-            rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
-            rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
-#endif
             candidateArray[canTotalCnt].ref_frame_type = av1_ref_frame_type(rf);
             candidateArray[canTotalCnt].ref_frame_index_l0 = list0_ref_index;
             candidateArray[canTotalCnt].ref_frame_index_l1 = list1_ref_index;
@@ -938,13 +928,8 @@ void Bipred3x3CandidatesInjection(
 
 #if MRP_DUPLICATION_FIX
             MvReferenceFrame rf[2];
-#if MRP_MD_UNI_DIR_BIPRED
             rf[0] = svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index);
             rf[1] = svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index);
-#else
-            rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
-            rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
-#endif
             uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
             if (context_ptr->injected_mv_count_bipred == 0 || mrp_is_already_injected_mv_bipred(context_ptr, to_inject_mv_x_l0, to_inject_mv_y_l0, to_inject_mv_x_l1, to_inject_mv_y_l1, to_inject_ref_type) == EB_FALSE) {
 #else
@@ -976,13 +961,8 @@ void Bipred3x3CandidatesInjection(
                 candidateArray[canTotalCnt].prediction_direction[0] = (EbPredDirection)2;
 #if MRP_LIST_REF_IDX_TYPE_LT
                 MvReferenceFrame rf[2];
-#if MRP_MD_UNI_DIR_BIPRED
                 rf[0] = svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index);
                 rf[1] = svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index);
-#else
-                rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
-                rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
-#endif
                 candidateArray[canTotalCnt].ref_frame_type = av1_ref_frame_type(rf);
                 candidateArray[canTotalCnt].ref_frame_index_l0 = list0_ref_index;
                 candidateArray[canTotalCnt].ref_frame_index_l1 = list1_ref_index;
@@ -1555,9 +1535,6 @@ void inject_mvp_candidates_II(
         uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
         uint8_t ref_idx_1 = get_ref_frame_idx(rf[1]);
 
-#if !MRP_MD_UNI_DIR_BIPRED
-        if (list_idx_0 != list_idx_1) //only bi-directional compound for now
-#endif
         {
             //NEAREST_NEAREST
             int16_t to_inject_mv_x_l0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.col;
@@ -2591,13 +2568,8 @@ void inject_new_candidates(
                     int16_t to_inject_mv_y_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? (me_block_results_ptr->ref1_list << 2) : (me_block_results_ptr->ref1_list << 1)) + list1_ref_index].y_mv << 1;
 #if MRP_DUPLICATION_FIX
                     MvReferenceFrame rf[2];
-#if MRP_MD_UNI_DIR_BIPRED
                     rf[0] = svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index);
                     rf[1] = svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index);
-#else
-                    rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
-                    rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
-#endif
                     uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
                     if (context_ptr->injected_mv_count_bipred == 0 || mrp_is_already_injected_mv_bipred(context_ptr, to_inject_mv_x_l0, to_inject_mv_y_l0, to_inject_mv_x_l1, to_inject_mv_y_l1, to_inject_ref_type) == EB_FALSE) {
 #else
@@ -2634,13 +2606,8 @@ void inject_new_candidates(
                         candidateArray[canTotalCnt].prediction_direction[0] = (EbPredDirection)2;
 #if MRP_LIST_REF_IDX_TYPE_LT
                         MvReferenceFrame rf[2];
-#if MRP_MD_UNI_DIR_BIPRED
                         rf[0] = svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index);
                         rf[1] = svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index);
-#else
-                        rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
-                        rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
-#endif
                         candidateArray[canTotalCnt].ref_frame_type = av1_ref_frame_type(rf);
 
                         candidateArray[canTotalCnt].ref_frame_index_l0 = list0_ref_index;

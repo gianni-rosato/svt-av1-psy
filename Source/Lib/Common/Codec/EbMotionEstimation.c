@@ -11863,9 +11863,7 @@ EbErrorType BiPredictionCompensation(MeContext *context_ptr, uint32_t pu_index,
     firstRefPosX = _MVXT(firstRefMv), firstRefPosY = _MVYT(firstRefMv),
 #endif
     me_candidate->ref_index[0] = (uint8_t)first_list_ref_pic_idx;
-#if MRP_MD_UNI_DIR_BIPRED
     me_candidate->ref0_list = (uint8_t)firstList;
-#endif
 
     firstRefIntegPosx = (firstRefPosX >> 2);
     firstRefIntegPosy = (firstRefPosY >> 2);
@@ -11908,9 +11906,7 @@ EbErrorType BiPredictionCompensation(MeContext *context_ptr, uint32_t pu_index,
     secondRefPosX = _MVXT(secondRefMv), secondRefPosY = _MVYT(secondRefMv),
 #endif
     me_candidate->ref_index[1] = (uint8_t)second_list_ref_pic_idx;
-#if MRP_MD_UNI_DIR_BIPRED
     me_candidate->ref1_list = (uint8_t)secondList;
-#endif
     secondRefIntegPosx = (secondRefPosX >> 2);
     secondRefIntegPosy = (secondRefPosY >> 2);
     secondRefFracPosx = (uint8_t)secondRefPosX & 0x03;
@@ -12083,7 +12079,6 @@ EbErrorType BiPredictionSearch(
         }
     }
 
-#if MRP_MD_UNI_DIR_BIPRED
 #if NO_UNI
     if (sequence_control_set_ptr->mrp_mode == 0)
     {
@@ -12128,7 +12123,6 @@ EbErrorType BiPredictionSearch(
         }
 #if NO_UNI
     }
-#endif
 #endif
     *total_me_candidate_index = candidateIndex;
 
@@ -14818,14 +14812,12 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
             picture_control_set_ptr->me_results[sb_index]
                 ->me_candidate[pu_index][candidateIndex]
                 .ref_idx_l1 = me_candidate->ref_index[1];
-#if MRP_MD_UNI_DIR_BIPRED
             picture_control_set_ptr->me_results[sb_index]
                 ->me_candidate[pu_index][candidateIndex]
                 .ref0_list = me_candidate->ref0_list;
             picture_control_set_ptr->me_results[sb_index]
                 ->me_candidate[pu_index][candidateIndex]
                 .ref1_list = me_candidate->ref1_list;
-#endif
         }
 
         for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch;
