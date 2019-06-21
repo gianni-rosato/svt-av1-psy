@@ -3856,11 +3856,7 @@ void write_sequence_header(SequenceControlSet *scs_ptr/*Av1Comp *cpi*/, struct A
     //    write_sb_size(seq_params, wb);
     aom_wb_write_bit(wb, scs_ptr->seq_header.enable_filter_intra);
 
-#if  DIS_EDGE_FIL
-        scs_ptr->enable_intra_edge_filter = 0;
-#else
         scs_ptr->seq_header.enable_intra_edge_filter = 1;
-#endif
     aom_wb_write_bit(wb, scs_ptr->seq_header.enable_intra_edge_filter);
 
     if (!scs_ptr->seq_header.reduced_still_picture_header) {
