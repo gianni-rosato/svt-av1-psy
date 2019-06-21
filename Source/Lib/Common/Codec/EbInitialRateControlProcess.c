@@ -416,9 +416,6 @@ void ReleasePaReferenceObjects(
 
             for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
                 if (picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index] != EB_NULL) {
-#if BUG_FIX_INPUT_LIVE_COUNT
-                    eb_release_object(picture_control_set_ptr->ref_input_ptr_array[listIndex][ref_pic_index]);
-#endif
                     eb_release_object(picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index]);
                 }
             }

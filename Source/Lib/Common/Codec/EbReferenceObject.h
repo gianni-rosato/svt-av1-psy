@@ -59,9 +59,6 @@ typedef struct EbPaReferenceObject
     EB_SLICE                      slice_type;
     uint32_t                      dependent_pictures_count; //number of pic using this reference frame
 
-#if BUG_FIX_INPUT_LIVE_COUNT
-    EbObjectWrapper              *input_picture_wrapper_ptr;
-#endif
 } EbPaReferenceObject;
 
 typedef struct EbPaReferenceObjectDescInitData

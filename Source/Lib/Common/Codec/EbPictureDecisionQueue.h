@@ -27,9 +27,6 @@ typedef struct PaReferenceQueueEntry
     uint32_t                      dep_list1_count;
     DependentList                 list0;
     DependentList                 list1;
-#if BUG_FIX_INPUT_LIVE_COUNT
-    EbObjectWrapper              *input_picture_wrapper_ptr;
-#endif
     uint8_t                       is_alt_ref;
 } PaReferenceQueueEntry;
 

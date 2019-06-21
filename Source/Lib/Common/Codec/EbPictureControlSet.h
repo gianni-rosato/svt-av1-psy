@@ -14048,9 +14048,6 @@ extern "C" {
         EbObjectWrapper                    *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST];
         uint64_t                              ref_pic_poc_array[MAX_NUM_OF_REF_PIC_LIST];
 #endif
-#if BUG_FIX_INPUT_LIVE_COUNT
-        EbObjectWrapper                      *ref_input_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
         uint16_t                            **variance;
         uint8_t                             **y_mean;
         uint8_t                             **cbMean;

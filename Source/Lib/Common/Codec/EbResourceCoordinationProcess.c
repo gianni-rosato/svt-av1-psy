@@ -740,11 +740,6 @@ void* resource_coordination_kernel(void *input_ptr)
                 picture_control_set_ptr->enhanced_picture_ptr = (EbPictureBufferDesc*)picture_control_set_ptr->input_ptr->p_buffer;
                 picture_control_set_ptr->input_picture_wrapper_ptr = input_pic_wrapper_ptr;
             }
-#if BUG_FIX_INPUT_LIVE_COUNT
-        eb_object_inc_live_count(
-            picture_control_set_ptr->input_picture_wrapper_ptr,
-            1);
-#endif
             // Set Picture Control Flags
             picture_control_set_ptr->idr_flag = sequence_control_set_ptr->encode_context_ptr->initial_picture || (picture_control_set_ptr->input_ptr->pic_type == EB_AV1_KEY_PICTURE);
             picture_control_set_ptr->cra_flag = (picture_control_set_ptr->input_ptr->pic_type == EB_AV1_INTRA_ONLY_PICTURE) ? EB_TRUE : EB_FALSE;
