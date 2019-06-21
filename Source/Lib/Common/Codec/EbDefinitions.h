@@ -77,7 +77,7 @@ extern "C" {
 
 
 
-#define CHROMA_SEARCH_MR                  1 // Enable chroma search for all layers in MR mode
+
 #define INCOMPLETE_SB_FIX                 1 // Handle the incomplete SBs properly based on the standard and consider all allowed blocks
 /**********************************************************************************/
 
