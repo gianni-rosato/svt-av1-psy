@@ -219,7 +219,7 @@ extern "C" {
 
 
 
-#define MCP_4XN_FIX               1 //Fix for MCP chroma for 4xN modes
+
 #define CHECK_CAND                1 //increased and added a safety check for number of fast candidates
 #define MRP_COST_EST              1
 #define MRP_BASE                  1 //enable MRP for Base

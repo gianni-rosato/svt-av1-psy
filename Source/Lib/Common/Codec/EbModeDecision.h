@@ -309,11 +309,7 @@ extern "C" {
       |-------------------------------------------------------------|
     */
 #define INVALID_REF 0xF
-#if  MCP_4XN_FIX
     uint8_t get_ref_frame_idx(uint8_t ref_type);
-#else
-    extern uint8_t get_ref_frame_idx(uint8_t list, uint8_t ref_type);
-#endif
     extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 #if INJ_MVP
     uint8_t get_list_idx(uint8_t ref_type);

@@ -67,7 +67,6 @@ uint8_t get_list_idx(uint8_t ref_type) {
 };
 #endif
 
-#if  MCP_4XN_FIX
 uint8_t get_ref_frame_idx(uint8_t ref_type) {
 #if NORMAL_ORDER
     if (ref_type == LAST_FRAME || ref_type == BWDREF_FRAME)
@@ -93,18 +92,6 @@ uint8_t get_ref_frame_idx(uint8_t ref_type) {
         return (INVALID_REF);
 #endif
 };
-#else
-uint8_t get_ref_frame_idx(uint8_t list, uint8_t ref_type) {
-    switch (list) {
-    case 0:
-        return (ref_type == LAST_FRAME ? 0 : ref_type == LAST2_FRAME ? 1 : ref_type == LAST3_FRAME ? 2 : ref_type == GOLDEN_FRAME ? 3 : INVALID_REF);
-    case 1:
-        return (ref_type == BWDREF_FRAME ? 0 : ref_type == ALTREF_FRAME ? 1 : ref_type == ALTREF2_FRAME ? 2 : INVALID_REF);
-    default:
-        return (INVALID_REF);
-    }
-};
-#endif
 MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) {
 #if NORMAL_ORDER
     switch (list) {
