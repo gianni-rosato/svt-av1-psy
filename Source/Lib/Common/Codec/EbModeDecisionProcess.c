@@ -75,16 +75,6 @@ EbErrorType mode_decision_context_ctor(
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
     }
-#if !UNPACK_REF_POST_EP
-    // Inter Prediction Context
-    return_error = inter_prediction_context_ctor(
-        &context_ptr->inter_prediction_context,
-        color_format,
-        SB_STRIDE_Y,
-        SB_STRIDE_Y);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-#endif
     uint32_t codedLeafIndex, tu_index;
     for (codedLeafIndex = 0; codedLeafIndex < BLOCK_MAX_COUNT_SB_128; ++codedLeafIndex) {
         for (tu_index = 0; tu_index < TRANSFORM_UNIT_MAX_COUNT; ++tu_index)

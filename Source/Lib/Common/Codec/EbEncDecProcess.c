@@ -1030,7 +1030,6 @@ void PadRefAndSetFlags(
             refPic16BitPtr->origin_x,
             refPic16BitPtr->origin_y >> 1);
 
-#if UNPACK_REF_POST_EP
         // Hsan: unpack ref samples (to be used @ MD)
         un_pack2d(
             (uint16_t*) refPic16BitPtr->buffer_y,
@@ -1064,7 +1063,6 @@ void PadRefAndSetFlags(
             (refPic16BitPtr->width + (refPicPtr->origin_x << 1)) >> 1,
             (refPic16BitPtr->height + (refPicPtr->origin_y << 1)) >> 1,
             sequence_control_set_ptr->static_config.asm_type);
-#endif
     }
     // set up the ref POC
     referenceObject->ref_poc = picture_control_set_ptr->parent_pcs_ptr->picture_number;

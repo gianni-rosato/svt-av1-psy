@@ -1042,11 +1042,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         referencePictureBufferDescInitData.right_padding = PAD_VALUE;
         referencePictureBufferDescInitData.top_padding = PAD_VALUE;
         referencePictureBufferDescInitData.bot_padding = PAD_VALUE;
-#if UNPACK_REF_POST_EP // constructor
         // Hsan: split_mode is set @ eb_reference_object_ctor() as both unpacked reference and packed reference are needed for a 10BIT input; unpacked reference @ MD, and packed reference @ EP
-#else
-        referencePictureBufferDescInitData.split_mode = EB_FALSE;
-#endif
 
         if (is16bit)
             referencePictureBufferDescInitData.bit_depth = EB_10BIT;
