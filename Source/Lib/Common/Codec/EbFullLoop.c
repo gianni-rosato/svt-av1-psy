@@ -1833,9 +1833,6 @@ int32_t av1_quantize_inv_quantize(
     EbAsm                        asm_type,
     uint32_t                    *count_non_zero_coeffs,
 
-#if !PF_N2_SUPPORT
-    EbPfMode                     pf_mode,
-#endif
     uint32_t                     component_type,
     uint32_t                     bit_increment,
     TxType                       tx_type,
@@ -1849,12 +1846,6 @@ int32_t av1_quantize_inv_quantize(
     (void)candidateBuffer;
     (void)is_encode_pass;
     (void)coeff_stride;
-#if !PF_N2_SUPPORT
-    (void)pf_mode;
-#endif
-#if !PF_N2_SUPPORT
-    (void)pf_mode;
-#endif
     (void)asm_type;
 #if !ADD_DELTA_QP_SUPPORT
     (void) qp;
@@ -2120,11 +2111,7 @@ void product_full_loop(
             candidateBuffer->candidate_ptr->transform_type[txb_itr],
             asm_type,
             PLANE_TYPE_Y,
-#if PF_N2_SUPPORT
             DEFAULT_SHAPE);
-#else
-            context_ptr->pf_md_mode);
-#endif
 
         int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                          picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
@@ -2143,9 +2130,6 @@ void product_full_loop(
             &candidateBuffer->candidate_ptr->eob[0][txb_itr],
             asm_type,
             &(y_count_non_zero_coeffs[txb_itr]),
-#if !PF_N2_SUPPORT
-            context_ptr->pf_md_mode,
-#endif
             COMPONENT_LUMA,
             BIT_INCREMENT_8BIT,
             candidateBuffer->candidate_ptr->transform_type[txb_itr],
@@ -2447,9 +2431,6 @@ void product_full_loop_tx_search(
                 &candidateBuffer->candidate_ptr->eob[0][txb_itr],
                 asm_type,
                 &yCountNonZeroCoeffsTemp,
-#if !PF_N2_SUPPORT
-                context_ptr->pf_md_mode,
-#endif
                 COMPONENT_LUMA,
                 BIT_INCREMENT_8BIT,
                 tx_type,
@@ -2688,11 +2669,7 @@ void encode_pass_tx_search(
             tx_type,
             asm_type,
             PLANE_TYPE_Y,
-#if PF_N2_SUPPORT
             DEFAULT_SHAPE);
-#else
-            context_ptr->trans_coeff_shape_luma);
-#endif
         int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                          picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
@@ -2712,9 +2689,6 @@ void encode_pass_tx_search(
             &eob[0],
             asm_type,
             &yCountNonZeroCoeffsTemp,
-#if !PF_N2_SUPPORT
-            0,
-#endif
             COMPONENT_LUMA,
             BIT_INCREMENT_8BIT,
             tx_type,
@@ -2897,11 +2871,7 @@ void encode_pass_tx_search_hbd(
             tx_type,
             asm_type,
             PLANE_TYPE_Y,
-#if PF_N2_SUPPORT
             DEFAULT_SHAPE);
-#else
-            context_ptr->trans_coeff_shape_luma);
-#endif
         int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                          picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
@@ -2920,9 +2890,6 @@ void encode_pass_tx_search_hbd(
             &eob[0],
             asm_type,
             &yCountNonZeroCoeffsTemp,
-#if !PF_N2_SUPPORT
-            0,
-#endif
             COMPONENT_LUMA,
             BIT_INCREMENT_10BIT,
             tx_type,
@@ -3110,9 +3077,6 @@ void full_loop_r(
         //    This function replaces the previous Intra Chroma mode if the LM fast
             //    cost is better.
             //    *Note - this might require that we have inv transform in the loop
-#if !PF_N2_SUPPORT
-        EbPfMode    correctedPFMode = PF_OFF;
-#endif
         if (component_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
             // Configure the Chroma Residual Ptr
 
@@ -3133,11 +3097,7 @@ void full_loop_r(
                 candidateBuffer->candidate_ptr->transform_type_uv,
                 asm_type,
                 PLANE_TYPE_UV,
-#if PF_N2_SUPPORT
                 DEFAULT_SHAPE);
-#else
-                correctedPFMode);
-#endif
 
             int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                              picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
@@ -3156,9 +3116,6 @@ void full_loop_r(
                 &candidateBuffer->candidate_ptr->eob[1][txb_itr],
                 asm_type,
                 &(cb_count_non_zero_coeffs[txb_itr]),
-#if !PF_N2_SUPPORT
-                context_ptr->pf_md_mode,
-#endif
                 COMPONENT_CHROMA_CB,
                 BIT_INCREMENT_8BIT,
                 candidateBuffer->candidate_ptr->transform_type_uv,
@@ -3228,11 +3185,7 @@ void full_loop_r(
                 candidateBuffer->candidate_ptr->transform_type_uv,
                 asm_type,
                 PLANE_TYPE_UV,
-#if PF_N2_SUPPORT
                 DEFAULT_SHAPE);
-#else
-                correctedPFMode);
-#endif
             int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                              picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
@@ -3251,9 +3204,6 @@ void full_loop_r(
                 &candidateBuffer->candidate_ptr->eob[2][txb_itr],
                 asm_type,
                 &(cr_count_non_zero_coeffs[txb_itr]),
-#if !PF_N2_SUPPORT
-                context_ptr->pf_md_mode,
-#endif
                 COMPONENT_CHROMA_CR,
                 BIT_INCREMENT_8BIT,
                 candidateBuffer->candidate_ptr->transform_type_uv,

@@ -550,11 +550,7 @@ static void Av1EncodeLoop(
             txb_ptr->transform_type[PLANE_TYPE_Y],
             asm_type,
             PLANE_TYPE_Y,
-#if PF_N2_SUPPORT
             DEFAULT_SHAPE);
-#else
-            context_ptr->trans_coeff_shape_luma);
-#endif
 
         int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                          picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
@@ -574,9 +570,6 @@ static void Av1EncodeLoop(
             &eob[0],
             asm_type,
             &(count_non_zero_coeffs[0]),
-#if !PF_N2_SUPPORT
-            0,
-#endif
             COMPONENT_LUMA,
             BIT_INCREMENT_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_Y],
@@ -881,11 +874,7 @@ static void Av1EncodeLoop(
             txb_ptr->transform_type[PLANE_TYPE_UV],
             asm_type,
             PLANE_TYPE_UV,
-#if PF_N2_SUPPORT
             DEFAULT_SHAPE);
-#else
-            context_ptr->trans_coeff_shape_chroma);
-#endif
 
         int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                          picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
@@ -905,9 +894,6 @@ static void Av1EncodeLoop(
             &eob[1],
             asm_type,
             &(count_non_zero_coeffs[1]),
-#if !PF_N2_SUPPORT
-            0,
-#endif
             COMPONENT_CHROMA_CB,
             BIT_INCREMENT_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
@@ -940,11 +926,7 @@ static void Av1EncodeLoop(
             txb_ptr->transform_type[PLANE_TYPE_UV],
             asm_type,
             PLANE_TYPE_UV,
-#if PF_N2_SUPPORT
             DEFAULT_SHAPE);
-#else
-            context_ptr->trans_coeff_shape_chroma);
-#endif
         cu_ptr->quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
             context_ptr->md_context,
@@ -960,9 +942,6 @@ static void Av1EncodeLoop(
             &eob[2],
             asm_type,
             &(count_non_zero_coeffs[2]),
-#if !PF_N2_SUPPORT
-            0,
-#endif
             COMPONENT_CHROMA_CR,
             BIT_INCREMENT_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
@@ -983,10 +962,6 @@ static void Av1EncodeLoop(
         txb_ptr->nz_coef_count[2] = (uint16_t)count_non_zero_coeffs[2];
 #endif
     }
-#if !PF_N2_SUPPORT
-    txb_ptr->trans_coeff_shape_luma = context_ptr->trans_coeff_shape_luma;
-    txb_ptr->trans_coeff_shape_chroma = context_ptr->trans_coeff_shape_chroma;
-#endif
 #if !ATB_EP
     txb_ptr->nz_coef_count[0] = (uint16_t)count_non_zero_coeffs[0];
     txb_ptr->nz_coef_count[1] = (uint16_t)count_non_zero_coeffs[1];
@@ -1135,11 +1110,7 @@ static void Av1EncodeLoop16bit(
                 txb_ptr->transform_type[PLANE_TYPE_Y],
                 asm_type,
                 PLANE_TYPE_Y,
-#if PF_N2_SUPPORT
                 DEFAULT_SHAPE);
-#else
-                context_ptr->trans_coeff_shape_luma);
-#endif
 
             int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                              picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
@@ -1158,9 +1129,6 @@ static void Av1EncodeLoop16bit(
                 &eob[0],
                 asm_type,
                 &(count_non_zero_coeffs[0]),
-#if !PF_N2_SUPPORT
-                0,
-#endif
                 COMPONENT_LUMA,
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_Y],
@@ -1294,11 +1262,7 @@ static void Av1EncodeLoop16bit(
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 asm_type,
                 PLANE_TYPE_UV,
-#if PF_N2_SUPPORT
                 DEFAULT_SHAPE);
-#else
-                context_ptr->trans_coeff_shape_chroma);
-#endif
             int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                              picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
@@ -1317,9 +1281,6 @@ static void Av1EncodeLoop16bit(
                 &eob[1],
                 asm_type,
                 &(count_non_zero_coeffs[1]),
-#if !PF_N2_SUPPORT
-                0,
-#endif
                 COMPONENT_CHROMA_CB,
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
@@ -1352,11 +1313,7 @@ static void Av1EncodeLoop16bit(
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 asm_type,
                 PLANE_TYPE_UV,
-#if PF_N2_SUPPORT
                 DEFAULT_SHAPE);
-#else
-                context_ptr->trans_coeff_shape_chroma);
-#endif
 
             cu_ptr->quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
                 sb_ptr->picture_control_set_ptr,
@@ -1373,9 +1330,6 @@ static void Av1EncodeLoop16bit(
                 &eob[2],
                 asm_type,
                 &(count_non_zero_coeffs[2]),
-#if !PF_N2_SUPPORT
-                0,
-#endif
                 COMPONENT_CHROMA_CR,
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
@@ -1397,11 +1351,6 @@ static void Av1EncodeLoop16bit(
 #endif
         }
     }
-
-#if !PF_N2_SUPPORT
-    txb_ptr->trans_coeff_shape_luma = context_ptr->trans_coeff_shape_luma;
-    txb_ptr->trans_coeff_shape_chroma = context_ptr->trans_coeff_shape_chroma;
-#endif
 
 #if !ATB_EP
     txb_ptr->nz_coef_count[0] = (uint16_t)count_non_zero_coeffs[0];
@@ -2603,10 +2552,6 @@ EB_EXTERN void av1_encode_pass(
         }
     }
     context_ptr->intra_coded_area_sb[tbAddr] = 0;
-#if !PF_N2_SUPPORT
-    context_ptr->trans_coeff_shape_luma = 0;
-    context_ptr->trans_coeff_shape_chroma = 0;
-#endif
     context_ptr->coded_area_sb = 0;
     context_ptr->coded_area_sb_uv = 0;
 
@@ -3539,11 +3484,7 @@ EB_EXTERN void av1_encode_pass(
                                     cuPlane);
 
                             // SKIP the CBF zero mode for DC path. There are problems with cost calculations
-#if PF_N2_SUPPORT
                             {
-#else
-                            if (context_ptr->trans_coeff_shape_luma != ONLY_DC_SHAPE) {
-#endif
                                 // Compute Tu distortion
                                 if (!zeroLumaCbfMD)
 

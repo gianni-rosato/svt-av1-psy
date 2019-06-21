@@ -1588,16 +1588,6 @@ void perform_fast_loop(
         MAX_CU_COST :
         *(candidateBufferPtrArrayBase[highestCostIndex]->fast_cost_ptr);
 }
-#if !PF_N2_SUPPORT
-void ProductDerivePartialFrequencyN2Flag(
-    SequenceControlSet               *sequence_control_set_ptr,
-    PictureControlSet                *picture_control_set_ptr,
-    ModeDecisionContext              *context_ptr){
-    UNUSED(sequence_control_set_ptr);
-    UNUSED(picture_control_set_ptr);
-    context_ptr->pf_md_mode = PF_OFF;
-}
-#endif
 void AV1CostCalcCfl(
     PictureControlSet                *picture_control_set_ptr,
     ModeDecisionCandidateBuffer      *candidateBuffer,
@@ -4959,13 +4949,6 @@ void md_encode_block(
     if (allowed_ns_cu(
         is_nsq_table_used, picture_control_set_ptr->parent_pcs_ptr->nsq_max_shapes_md,context_ptr,is_complete_sb ))
     {
-#if !PF_N2_SUPPORT
-        // Set PF Mode - should be done per TU (and not per CU) to avoid the correction
-        ProductDerivePartialFrequencyN2Flag(
-            sequence_control_set_ptr,
-            picture_control_set_ptr,
-            context_ptr);
-#endif
         ProductCodingLoopInitFastLoop(
             context_ptr,
             context_ptr->skip_coeff_neighbor_array,

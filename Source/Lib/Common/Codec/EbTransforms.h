@@ -3918,9 +3918,6 @@ extern "C" {
         uint16_t                      *eob,
         EbAsm                          asm_type,
         uint32_t                      *y_count_non_zero_coeffs,
-#if !PF_N2_SUPPORT
-        EbPfMode                       pf_mode,
-#endif
         uint32_t                       component_type,
         uint32_t                       bit_increment,
         TxType                         tx_type,

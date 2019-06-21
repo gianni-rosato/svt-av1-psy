@@ -105,10 +105,6 @@ extern "C" {
 #else
         uint8_t                                qpm_qp;
 #endif
-#if !PF_N2_SUPPORT
-        EB_TRANS_COEFF_SHAPE                   trans_coeff_shape_luma;
-        EB_TRANS_COEFF_SHAPE                   trans_coeff_shape_chroma;
-#endif
         EbPmCand                             pm_cand_buffer[5];
         uint16_t                               qp_index;
         uint64_t                               three_quad_energy;

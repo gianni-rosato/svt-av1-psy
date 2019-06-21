@@ -1318,10 +1318,8 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->interpolation_filter_search_blk_size = 1;
 
-#if PF_N2_SUPPORT
     // Set PF MD
     context_ptr->pf_md_mode = PF_OFF;
-#endif
 
     // Derive Spatial SSE Flag
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
