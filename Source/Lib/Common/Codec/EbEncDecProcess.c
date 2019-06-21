@@ -1164,7 +1164,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // CHROMA_MODE_1  1     Fast chroma search @ MD
     // CHROMA_MODE_2  2     Chroma blind @ MD + CFL @ EP
     // CHROMA_MODE_3  3     Chroma blind @ MD + no CFL @ EP
-#if SEARCH_UV_MODE
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
         if (picture_control_set_ptr->enc_mode <= ENC_M6)
             context_ptr->chroma_level = CHROMA_MODE_1;
@@ -1186,7 +1185,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
         context_ptr->chroma_level = CHROMA_MODE_0;
     else
-#endif
     if (picture_control_set_ptr->enc_mode <= ENC_M4)
         context_ptr->chroma_level = CHROMA_MODE_1;
     else

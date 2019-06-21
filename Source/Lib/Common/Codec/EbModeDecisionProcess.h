@@ -172,14 +172,12 @@ extern "C" {
         EbBool                          cu_use_ref_src_flag;
         uint16_t                        qp_index;
         uint64_t                        three_quad_energy;
-#if SEARCH_UV_MODE
         EbBool                          uv_search_path;
         UvPredictionMode                best_uv_mode    [UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
         int32_t                         best_uv_angle   [UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
         uint64_t                        best_uv_cost    [UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
         uint64_t                        fast_luma_rate  [UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
         uint64_t                        fast_chroma_rate[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
-#endif
         // Needed for DC prediction
         EbBool                          is_left_availble;
         EbBool                          is_above_availble;

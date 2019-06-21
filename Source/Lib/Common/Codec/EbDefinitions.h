@@ -167,15 +167,13 @@ extern "C" {
 
 
 
-#define SEARCH_UV_MODE                                  1
-#if SEARCH_UV_MODE
+
 #define SEARCH_UV_BASE                                  1
 #define SEARCH_UV_OPT_0                                 0
 #define SEARCH_UV_OPT_1                                 0
 #define SEARCH_UV_OPT_2                                 0
 #define SEARCH_SMOOTH_OFF                               0
 #define SEARCH_UV_CLEAN_UP                              1
-#endif
 #define FIX_INTRA_UV                                    1   //mismatch in intra prediction
 
 #define FRAC_64x64_BUG_FIX                              1

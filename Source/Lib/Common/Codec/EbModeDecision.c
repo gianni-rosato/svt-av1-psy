@@ -4249,7 +4249,6 @@ void  inject_intra_candidates(
                         candidateArray[canTotalCnt].use_angle_delta = use_angle_delta ? candidateArray[canTotalCnt].is_directional_mode_flag : 0;
 #endif
                         candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y] = angle_delta;
-#if SEARCH_UV_MODE
                         // Search the best independent intra chroma mode
                         if (context_ptr->chroma_level == CHROMA_MODE_0) {
                             candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ?
@@ -4273,16 +4272,6 @@ void  inject_intra_candidates(
                             candidateArray[canTotalCnt].is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)candidateArray[canTotalCnt].intra_chroma_mode);
                             candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_UV] = 0;
                         }
-#else
-                        const int32_t disable_ang_uv = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) && context_ptr->blk_geom->has_uv ? 1 : 0;
-                        candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ?
-                            intra_luma_to_chroma[openLoopIntraCandidate] :
-                            (context_ptr->chroma_level <= CHROMA_MODE_1) ?
-                                UV_CFL_PRED :
-                                UV_DC_PRED;
-                        candidateArray[canTotalCnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(candidateArray[canTotalCnt].intra_chroma_mode) ?
-                            UV_DC_PRED : candidateArray[canTotalCnt].intra_chroma_mode;
-#endif
                         candidateArray[canTotalCnt].cfl_alpha_signs = 0;
                         candidateArray[canTotalCnt].cfl_alpha_idx = 0;
                         candidateArray[canTotalCnt].transform_type[0] = DCT_DCT;
@@ -4324,7 +4313,6 @@ void  inject_intra_candidates(
             candidateArray[canTotalCnt].use_angle_delta = candidateArray[canTotalCnt].is_directional_mode_flag;
 #endif
             candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y] = 0;
-#if SEARCH_UV_MODE
             // Search the best independent intra chroma mode
             if (context_ptr->chroma_level == CHROMA_MODE_0) {
                 candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ?
@@ -4351,17 +4339,6 @@ void  inject_intra_candidates(
                 candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_UV] = 0;
 
             }
-#else
-            const int32_t disable_ang_uv = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) && context_ptr->blk_geom->has_uv ? 1 : 0;
-            candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ?
-                intra_luma_to_chroma[openLoopIntraCandidate] :
-                (context_ptr->chroma_level <= CHROMA_MODE_1) ?
-                    UV_CFL_PRED :
-                    UV_DC_PRED;
-
-            candidateArray[canTotalCnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(candidateArray[canTotalCnt].intra_chroma_mode) ?
-                UV_DC_PRED : candidateArray[canTotalCnt].intra_chroma_mode;
-#endif
             candidateArray[canTotalCnt].cfl_alpha_signs = 0;
             candidateArray[canTotalCnt].cfl_alpha_idx = 0;
             candidateArray[canTotalCnt].transform_type[0] = DCT_DCT;

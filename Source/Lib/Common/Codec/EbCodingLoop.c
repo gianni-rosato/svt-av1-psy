@@ -2108,11 +2108,7 @@ void perform_intra_coding_loop(
                     plane ? context_ptr->blk_geom->bheight_uv : context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
                     tx_size,
                     mode,
-#if SEARCH_UV_MODE // conformance
                     plane ? pu_ptr->angle_delta[PLANE_TYPE_UV] : pu_ptr->angle_delta[PLANE_TYPE_Y],
-#else
-                    plane ? 0 : pu_ptr->angle_delta[PLANE_TYPE_Y],
-#endif
                     0,
                     FILTER_INTRA_MODES,
                     topNeighArray + 1,
@@ -2172,11 +2168,7 @@ void perform_intra_coding_loop(
                     plane ? context_ptr->blk_geom->bheight_uv : context_ptr->blk_geom->bheight,
                     tx_size,
                     mode,
-#if SEARCH_UV_MODE // conformance
                     plane ? pu_ptr->angle_delta[PLANE_TYPE_UV] : pu_ptr->angle_delta[PLANE_TYPE_Y],
-#else
-                    plane ? 0 : pu_ptr->angle_delta[PLANE_TYPE_Y],
-#endif
                     0,
                     FILTER_INTRA_MODES,
                     topNeighArray + 1,
@@ -2921,11 +2913,7 @@ EB_EXTERN void av1_encode_pass(
                                         plane ? blk_geom->bheight_uv : blk_geom->bheight,                  //int32_t hpx,
                                         tx_size,
                                         mode,                                                       //PredictionMode mode,
-#if SEARCH_UV_MODE // conformance
                                         plane ? pu_ptr->angle_delta[PLANE_TYPE_UV] : pu_ptr->angle_delta[PLANE_TYPE_Y],
-#else
-                                        plane ? 0 : pu_ptr->angle_delta[PLANE_TYPE_Y],                //int32_t angle_delta,
-#endif
                                         0,                                                          //int32_t use_palette,
                                         FILTER_INTRA_MODES,                                         //CHKN FilterIntraMode filter_intra_mode,
                                         topNeighArray + 1,
@@ -2996,11 +2984,7 @@ EB_EXTERN void av1_encode_pass(
                                         plane ? blk_geom->bheight_uv : blk_geom->bheight,                  //int32_t hpx,
                                         tx_size,
                                         mode,                                                       //PredictionMode mode,
-#if SEARCH_UV_MODE // conformance
                                         plane ? pu_ptr->angle_delta[PLANE_TYPE_UV] : pu_ptr->angle_delta[PLANE_TYPE_Y],
-#else
-                                        plane ? 0 : pu_ptr->angle_delta[PLANE_TYPE_Y],                //int32_t angle_delta,
-#endif
                                         0,                                                          //int32_t use_palette,
                                         FILTER_INTRA_MODES,                                         //CHKN FilterIntraMode filter_intra_mode,
                                         topNeighArray + 1,

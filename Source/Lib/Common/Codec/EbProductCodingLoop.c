@@ -2151,7 +2151,6 @@ static INLINE TxType av1_get_tx_type(
     return tx_type;
 }
 
-#if SEARCH_UV_MODE
 void check_best_indepedant_cfl(
     PictureControlSet           *picture_control_set_ptr,
     EbPictureBufferDesc         *input_picture_ptr,
@@ -2279,7 +2278,6 @@ void check_best_indepedant_cfl(
         context_ptr->uv_search_path = EB_FALSE;
     }
 }
-#endif
 
 EbErrorType av1_predict_intra_block(
     TileInfo                    *tile,
@@ -3785,7 +3783,6 @@ void AV1PerformFullLoop(
                 asm_type);
         }
 
- #if SEARCH_UV_MODE
         // Check independant chroma vs. cfl
         if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level == CHROMA_MODE_0) {
             if (candidateBuffer->candidate_ptr->type == INTRA_MODE && (candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED || candidateBuffer->candidate_ptr->intra_chroma_mode == UV_DC_PRED)) {
@@ -3805,7 +3802,6 @@ void AV1PerformFullLoop(
                     asm_type);
             }
         }
-#endif
         candidate_ptr->block_has_coeff = (candidate_ptr->y_has_coeff | candidate_ptr->u_has_coeff | candidate_ptr->v_has_coeff) ? EB_TRUE : EB_FALSE;
 
         //ALL PLANE
@@ -4653,7 +4649,6 @@ uint8_t check_skip_sub_blks(
     return skip_sub_blocks;
 }
 
-#if SEARCH_UV_MODE
 // Hsan (chroma search) : av1_get_tx_type() to define as extern
 void search_best_independent_uv_mode(
     SequenceControlSet    *sequence_control_set_ptr,
@@ -4898,7 +4893,6 @@ void search_best_independent_uv_mode(
     // End uv search path
     context_ptr->uv_search_path = EB_FALSE;
 }
-#endif
 void md_encode_block(
     SequenceControlSet             *sequence_control_set_ptr,
     PictureControlSet              *picture_control_set_ptr,
@@ -4970,7 +4964,6 @@ void md_encode_block(
             context_ptr
         );
 
-#if SEARCH_UV_MODE
         // Initialize uv_search_path
         context_ptr->uv_search_path = EB_FALSE;
         // Search the best independent intra chroma mode
@@ -4987,7 +4980,6 @@ void md_encode_block(
                 }
             }
         }
-#endif
 
         ProductGenerateMdCandidatesCu(
             context_ptr->sb_ptr,

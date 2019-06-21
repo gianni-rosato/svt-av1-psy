@@ -4406,16 +4406,11 @@ EbErrorType av1_intra_prediction_cl(
     uint8_t    topNeighArray[64 * 2 + 1];
     uint8_t    leftNeighArray[64 * 2 + 1];
     PredictionMode mode;
-#if SEARCH_UV_MODE
     // Hsan: plane should be derived @ an earlier stage (e.g. @ the call of perform_fast_loop())
     int32_t start_plane = (md_context_ptr->uv_search_path) ? 1 : 0;
     int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int)MAX_MB_PLANE : 1;
 
     for (int32_t plane = start_plane; plane < end_plane; ++plane) {
-#else
-    uint8_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int) MAX_MB_PLANE : 1;
-    for (int32_t plane = 0; plane < end_plane; ++plane) {
-#endif
         if (plane == 0) {
             if (md_context_ptr->cu_origin_y != 0)
                 memcpy(topNeighArray + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->cu_origin_x, md_context_ptr->blk_geom->bwidth * 2);
@@ -4463,11 +4458,7 @@ EbErrorType av1_intra_prediction_cl(
             plane ? md_context_ptr->blk_geom->bheight_uv : md_context_ptr->blk_geom->bheight,          //int32_t hpx,
             plane ? tx_size_Chroma : tx_size,                                               //TxSize tx_size,
             mode,                                                                           //PredictionMode mode,
-#if SEARCH_UV_MODE // conformance
             plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
-#else
-            plane ? 0 : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],         //int32_t angle_delta,
-#endif
             0,                                                                              //int32_t use_palette,
             FILTER_INTRA_MODES,                                                             //CHKN FilterIntraMode filter_intra_mode,
             topNeighArray + 1,
