@@ -2298,11 +2298,7 @@ void CopyApiFromApp(
     if (sequence_control_set_ptr->static_config.intra_period_length == -2)
         sequence_control_set_ptr->intra_period_length = sequence_control_set_ptr->static_config.intra_period_length = compute_default_intra_period(sequence_control_set_ptr);
     if (sequence_control_set_ptr->static_config.look_ahead_distance == (uint32_t)~0)
-#if SHUT_LOOKAHEAD
-        sequence_control_set_ptr->static_config.look_ahead_distance = 0;
-#else
         sequence_control_set_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&sequence_control_set_ptr->static_config);
-#endif
     else
         sequence_control_set_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&sequence_control_set_ptr->static_config);
 
