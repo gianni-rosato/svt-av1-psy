@@ -1435,11 +1435,7 @@ void derive_sb_score(
                 distortion = 0;
                 for (cu8x8Index = RASTER_SCAN_CU_INDEX_8x8_0; cu8x8Index <= RASTER_SCAN_CU_INDEX_8x8_63; cu8x8Index++) {
                     if (sb_params->raster_scan_cu_validity[cu8x8Index]) {
-#if MRP_CONNECTION
                         distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[cu8x8Index][0].distortion;
-#else
-                        distortion += picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cu8x8Index].distortion_direction[0].distortion;
-#endif
                         validCu8x8Count++;
                     }
                 }
@@ -1450,11 +1446,7 @@ void derive_sb_score(
                 sb_score = distortion;
             }
             else {
-#if MRP_CONNECTION
                 distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[RASTER_SCAN_CU_INDEX_64x64][0].distortion;
-#else
-                distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][RASTER_SCAN_CU_INDEX_64x64].distortion_direction[0].distortion;
-#endif
                 // Perform SB score manipulation for incomplete SBs for SQ mode
                 sb_score = distortion;
             }

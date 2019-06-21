@@ -1011,7 +1011,6 @@ EbErrorType picture_parent_control_set_ctor(
             object_ptr->ois_sb_results[sb_index]->ois_candidate_array[cuIdx] = &contigousCand[cuIdx*MAX_OIS_CANDIDATES];
     }
 
-#if MRP_CONNECTION
 #if MRP_MEM_OPT
     object_ptr->max_number_of_candidates_per_block = (initDataPtr->mrp_mode == 0) ?
         ME_RES_CAND_MRP_MODE_0 : // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [UniDir = 4 = 3+1]
@@ -1029,14 +1028,6 @@ EbErrorType picture_parent_control_set_ctor(
             object_ptr->max_number_of_candidates_per_block);
     }
 
-#else
-
-    EB_MALLOC(MeCuResults**, object_ptr->me_results, sizeof(MeCuResults*) * object_ptr->sb_total_count, EB_N_PTR);
-
-    for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
-        EB_MALLOC(MeCuResults*, object_ptr->me_results[sb_index], sizeof(MeCuResults) * MAX_ME_PU_COUNT, EB_N_PTR);
-    }
-#endif
     EB_MALLOC(uint32_t*, object_ptr->rc_me_distortion, sizeof(uint32_t) * object_ptr->sb_total_count, EB_N_PTR);
     // ME and OIS Distortion Histograms
     EB_MALLOC(uint16_t*, object_ptr->me_distortion_histogram, sizeof(uint16_t) * NUMBER_OF_SAD_INTERVALS, EB_N_PTR);

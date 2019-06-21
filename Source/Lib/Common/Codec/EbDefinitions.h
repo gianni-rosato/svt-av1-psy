@@ -211,7 +211,7 @@ extern "C" {
 
 
 
-#define MRP_CONNECTION            1
+
 #define MD_INJECTION              1
 #define MRP_MD                    1
 #define MRP_MD_UNI_DIR_BIPRED     1

@@ -48,11 +48,7 @@ void GetMeDist(
     uint32_t                         sb_index,
     uint32_t                      *distortion)
 {
-#if MRP_CONNECTION
     *distortion = (uint32_t)picture_control_set_ptr->me_results[sb_index]->me_candidate[0][0].distortion;
-#else
-    *distortion = (uint32_t)(picture_control_set_ptr->me_results[sb_index][0].distortion_direction[0].distortion);
-#endif
 }
 
 EbBool CheckMvForPanHighAmp(
@@ -1062,11 +1058,7 @@ void QpmGatherStatisticsSW(
             OisCandidate *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
             oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
 
-#if MRP_CONNECTION
                 meSad = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
-#else
-                meSad = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortion_direction[0].distortion;
-#endif
 
                 //Keep track of the min,max and sum.
                 picture_control_set_ptr->intra_complexity_min[cu_depth] = oisSad < picture_control_set_ptr->intra_complexity_min[cu_depth] ? oisSad : picture_control_set_ptr->intra_complexity_min[cu_depth];
@@ -1089,11 +1081,7 @@ void QpmGatherStatisticsSW(
             OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
             oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
-#if MRP_CONNECTION
             meSad = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
-#else
-            meSad = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortion_direction[0].distortion;
-#endif
             //Keep track of the min,max and sum.
             picture_control_set_ptr->intra_complexity_min[cu_depth] = oisSad < picture_control_set_ptr->intra_complexity_min[cu_depth] ? oisSad : picture_control_set_ptr->intra_complexity_min[cu_depth];
             picture_control_set_ptr->intra_complexity_max[cu_depth] = oisSad > picture_control_set_ptr->intra_complexity_max[cu_depth] ? oisSad : picture_control_set_ptr->intra_complexity_max[cu_depth];
@@ -1115,11 +1103,7 @@ void QpmGatherStatisticsSW(
             OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
             oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
-#if MRP_CONNECTION
             meSad = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
-#else
-            meSad = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortion_direction[0].distortion;
-#endif
 
             //Keep track of the min,max and sum.
             picture_control_set_ptr->intra_complexity_min[cu_depth] = oisSad < picture_control_set_ptr->intra_complexity_min[cu_depth] ? oisSad : picture_control_set_ptr->intra_complexity_min[cu_depth];
@@ -1141,11 +1125,7 @@ void QpmGatherStatisticsSW(
             OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
             OisCandidate *ois_cu_ptr = ois_sb_results_ptr->ois_candidate_array[mdScanCuIndex];
             oisSad = ois_cu_ptr[ois_sb_results_ptr->best_distortion_index[mdScanCuIndex]].distortion;
-#if MRP_CONNECTION
         meSad = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
-#else
-        meSad = picture_control_set_ptr->me_results[sb_index][RASTER_SCAN_CU_INDEX_64x64].distortion_direction[0].distortion;
-#endif
 
         //Keep track of the min,max and sum.
         picture_control_set_ptr->intra_complexity_min[cu_depth] = oisSad < picture_control_set_ptr->intra_complexity_min[cu_depth] ? oisSad : picture_control_set_ptr->intra_complexity_min[cu_depth];
