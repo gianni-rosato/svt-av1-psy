@@ -3258,18 +3258,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 picture_control_set_ptr->ref_list0_count = (picture_type == I_SLICE) ? 0 :
                                                                             (picture_control_set_ptr->is_overlay) ? 1 : (uint8_t)predPositionPtr->ref_list0.reference_list_count;
                                 picture_control_set_ptr->ref_list1_count = (picture_type == I_SLICE || picture_control_set_ptr->is_overlay) ? 0 : (uint8_t)predPositionPtr->ref_list1.reference_list_count;
-#if MRP_M0_ONLY
-#if NO_UNI
-                                if (picture_control_set_ptr->mrp_mode == 2) {
-#else
-                                if (picture_control_set_ptr->enc_mode >= ENC_M1) {
-#endif
-                                    if (picture_control_set_ptr->temporal_layer_index > 0) {
-                                        picture_control_set_ptr->ref_list0_count = MIN(picture_control_set_ptr->ref_list0_count, 1);
-                                        picture_control_set_ptr->ref_list1_count = MIN(picture_control_set_ptr->ref_list1_count, 1);
-                                    }
-                                }
-#endif
                                 if (!picture_control_set_ptr->is_overlay) {
                                     inputEntryPtr->list0_ptr = &predPositionPtr->ref_list0;
                                     inputEntryPtr->list1_ptr = &predPositionPtr->ref_list1;
