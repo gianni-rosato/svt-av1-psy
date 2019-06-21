@@ -14,13 +14,11 @@ extern "C" {
     /****************************
      * UTILITY FUNCTIONS
      ****************************/
-#if RED_CU
     typedef struct BlockList_s
     {
         uint8_t  list_size;
         uint16_t blk_mds_table[3]; //stores a max of 3 redundant blocks
     }BlockList_t;
-#endif
 
     void build_blk_geom();
     typedef struct BlockGeom
@@ -34,13 +32,11 @@ extern "C" {
         uint16_t   sqi_mds;                     // index of the parent square in md  scan.
         uint8_t    totns;                       // max number of ns blocks within one partition 1..4 (N:1,H:2,V:2,HA:3,HB:3,VA:3,VB:3,H4:4,V4:4)
         uint8_t    nsi;                         // non square index within a partition  0..totns-1
-#if RED_CU
         uint8_t        similar;                 // 1: means that this block is similar (same shape/location) to another
         uint8_t        quadi;                   // parent square is in which quadrant 0..3
         uint8_t        redund;                  // 1: means that this block is redundant to another
         BlockList_t    redund_list;             // the list where the block is redundant
         BlockList_t    similar_list;
-#endif
 
         uint8_t    bwidth;                      // block width
         uint8_t    bheight;                     // block height
@@ -50,7 +46,6 @@ extern "C" {
         uint8_t    bheight_log2;                // block height log2
         BlockSize bsize;                       // bloc size
         BlockSize bsize_uv;                    // bloc size for Chroma 4:2:0
-#if ATB_SUPPORT
         uint16_t   txb_count[MAX_VARTX_DEPTH + 1];                   //4-2-1
         TxSize     txsize[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];
         TxSize     txsize_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];
@@ -62,19 +57,6 @@ extern "C" {
         uint8_t    tx_height[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];    //tx_size_wide
         uint8_t    tx_width_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];  //tx_size_wide
         uint8_t    tx_height_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
-#else
-        uint16_t   txb_count;                   //4-2-1
-        TxSize     txsize[MAX_TXB_COUNT];
-        TxSize     txsize_uv[MAX_TXB_COUNT];
-        uint16_t   tx_org_x[MAX_TXB_COUNT];     //orgin is SB
-        uint16_t   tx_org_y[MAX_TXB_COUNT];     //origin is SB
-        uint16_t   tx_boff_x[MAX_TXB_COUNT];    //block offset , origin is block
-        uint16_t   tx_boff_y[MAX_TXB_COUNT];    //block offset , origin is block
-        uint8_t    tx_width[MAX_TXB_COUNT];     //tx_size_wide
-        uint8_t    tx_height[MAX_TXB_COUNT];    //tx_size_wide
-        uint8_t    tx_width_uv[MAX_TXB_COUNT];  //tx_size_wide
-        uint8_t    tx_height_uv[MAX_TXB_COUNT]; //tx_size_wide
-#endif
 
         uint16_t   blkidx_mds;                  // block index in md scan
         uint16_t   blkidx_dps;                  // block index in depth scan

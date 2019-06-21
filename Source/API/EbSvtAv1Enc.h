@@ -374,13 +374,11 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 0. */
     uint32_t                 recon_enabled;
-#if TILES
     /* Log 2 Tile Rows and colums . 0 means no tiling,1 means that we split the dimension
         * into 2
         * Default is 0. */
     int32_t                  tile_columns;
     int32_t                  tile_rows;
-#endif
 
 /* To be deprecated.
  * Encoder configuration parameters below this line are to be deprecated. */

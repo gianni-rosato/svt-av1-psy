@@ -109,14 +109,7 @@ void* dlf_kernel(void *input_ptr)
 
         EbBool is16bit       = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
-#if LOOP_FILTER_FIX
         EbBool dlfEnableFlag = (EbBool) picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode;
-#else
-        EbBool dlfEnableFlag = (EbBool)(picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode &&
-            (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
-                sequence_control_set_ptr->static_config.recon_enabled ||
-                sequence_control_set_ptr->static_config.stat_report));
-#endif
         if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode >= 2) {
             EbPictureBufferDesc  *recon_buffer = is16bit ? picture_control_set_ptr->recon_picture16bit_ptr : picture_control_set_ptr->recon_picture_ptr;
 

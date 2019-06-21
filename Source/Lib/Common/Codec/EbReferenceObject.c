@@ -141,10 +141,8 @@ EbErrorType eb_reference_object_ctor(
 
     //TODO:12bit
     if (pictureBufferDescInitData16BitPtr.bit_depth == EB_10BIT) {
-#if UNPACK_REF_POST_EP // constructor
         // Hsan: set split_mode to 0 to construct the packed reference buffer (used @ EP)
         pictureBufferDescInitData16BitPtr.split_mode = EB_FALSE;
-#endif
         return_error = eb_picture_buffer_desc_ctor(
             (EbPtr*)&(referenceObject->reference_picture16bit),
             (EbPtr)&pictureBufferDescInitData16BitPtr);
@@ -154,19 +152,15 @@ EbErrorType eb_reference_object_ctor(
             &pictureBufferDescInitData16BitPtr,
             pictureBufferDescInitData16BitPtr.bit_depth);
 
-#if UNPACK_REF_POST_EP // constructor
         // Hsan: set split_mode to 1 to construct the unpacked reference buffer (used @ MD)
         pictureBufferDescInitData16BitPtr.split_mode = EB_TRUE;
         return_error = eb_picture_buffer_desc_ctor(
             (EbPtr*)&(referenceObject->reference_picture),
             (EbPtr)&pictureBufferDescInitData16BitPtr);
-#endif
     }
     else {
-#if UNPACK_REF_POST_EP // constructor
         // Hsan: set split_mode to 0 to as 8BIT input
         pictureBufferDescInitDataPtr->split_mode = EB_FALSE;
-#endif
         return_error = eb_picture_buffer_desc_ctor(
             (EbPtr*)&(referenceObject->reference_picture),
             (EbPtr)pictureBufferDescInitDataPtr);
@@ -178,31 +172,6 @@ EbErrorType eb_reference_object_ctor(
     }
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-#if !OPT_LOSSLESS_1
-    // Allocate SB based TMVP map
-    EB_MALLOC(TmvpUnit *, referenceObject->tmvp_map, (sizeof(TmvpUnit) * (((pictureBufferDescInitDataPtr->max_width + (64 - 1)) >> 6) * ((pictureBufferDescInitDataPtr->max_height + (64 - 1)) >> 6))), EB_N_PTR);
-
-    //RESTRICT THIS TO M4
-    {
-        EbPictureBufferDescInitData bufDesc;
-
-        bufDesc.max_width = pictureBufferDescInitDataPtr->max_width;
-        bufDesc.max_height = pictureBufferDescInitDataPtr->max_height;
-        bufDesc.bit_depth = EB_8BIT;
-        bufDesc.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-        bufDesc.left_padding = pictureBufferDescInitDataPtr->left_padding;
-        bufDesc.right_padding = pictureBufferDescInitDataPtr->right_padding;
-        bufDesc.top_padding = pictureBufferDescInitDataPtr->top_padding;
-        bufDesc.bot_padding = pictureBufferDescInitDataPtr->bot_padding;
-        bufDesc.split_mode = 0;
-        bufDesc.color_format = pictureBufferDescInitDataPtr->color_format;
-
-        return_error = eb_picture_buffer_desc_ctor((EbPtr*)&(referenceObject->ref_den_src_picture),
-            (EbPtr)&bufDesc);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-    }
-#endif
     memset(&referenceObject->film_grain_params, 0, sizeof(referenceObject->film_grain_params));
 
     return EB_ErrorNone;
@@ -244,7 +213,6 @@ EbErrorType eb_pa_reference_object_ctor(
         (EbPtr)(pictureBufferDescInitDataPtr + 2));
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-#if DOWN_SAMPLING_FILTERING
     // Quarter Filtered reference picture constructor
     paReferenceObject->quarter_filtered_picture_ptr = (EbPictureBufferDesc*)EB_NULL;
     if ((pictureBufferDescInitDataPtr + 1)->down_sampled_filtered) {
@@ -263,7 +231,6 @@ EbErrorType eb_pa_reference_object_ctor(
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
     }
-#endif
 
     return EB_ErrorNone;
 }

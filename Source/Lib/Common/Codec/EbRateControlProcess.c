@@ -333,7 +333,6 @@ EbErrorType rate_control_context_ctor(
 
     return EB_ErrorNone;
 }
-#if RC
 uint64_t predict_bits(
     EncodeContext                 *encode_context_ptr,
     HlRateControlHistogramEntry   *hl_rate_control_histogram_ptr_temp,
@@ -1209,7 +1208,6 @@ void frame_level_rc_input_picture_vbr(
 
         uint32_t ref_qp;
         if ((int32_t)picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
-#if MRP_FIX_RC_WARNINGS
             if (picture_control_set_ptr->ref_slice_type_array[0][0] == I_SLICE) {
                 picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
                     (uint32_t)picture_control_set_ptr->ref_pic_qp_array[0][0],
@@ -1236,34 +1234,6 @@ void frame_level_rc_input_picture_vbr(
                     picture_control_set_ptr->picture_qp);
             }
         }
-#else
-            if (picture_control_set_ptr->ref_slice_type_array[0] == I_SLICE) {
-                picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
-                    (uint32_t)picture_control_set_ptr->ref_pic_qp_array[0],
-                    (uint32_t)picture_control_set_ptr->picture_qp,
-                    picture_control_set_ptr->picture_qp);
-            }
-            else {
-                picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
-                    (uint32_t)MAX((int32_t)picture_control_set_ptr->ref_pic_qp_array[0] - 1, 0),
-                    (uint32_t)picture_control_set_ptr->picture_qp,
-                    picture_control_set_ptr->picture_qp);
-            }
-        }
-        else {
-            ref_qp = 0;
-            if (picture_control_set_ptr->ref_slice_type_array[0] != I_SLICE)
-                ref_qp = MAX(ref_qp, picture_control_set_ptr->ref_pic_qp_array[0]);
-            if ((picture_control_set_ptr->slice_type == B_SLICE) && (picture_control_set_ptr->ref_slice_type_array[1] != I_SLICE))
-                ref_qp = MAX(ref_qp, picture_control_set_ptr->ref_pic_qp_array[1]);
-            if (ref_qp > 0) {
-                picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
-                    (uint32_t)ref_qp - 1,
-                    picture_control_set_ptr->picture_qp,
-                    picture_control_set_ptr->picture_qp);
-            }
-        }
-#endif
         // limiting the QP between min Qp allowed and max Qp allowed
         picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
             sequence_control_set_ptr->static_config.min_qp_allowed,
@@ -2557,7 +2527,6 @@ void frame_level_rc_input_picture_cvbr(
 
         uint32_t ref_qp;
         if ((int32_t)picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
-#if MRP_FIX_RC_WARNINGS
             if (picture_control_set_ptr->ref_slice_type_array[0][0] == I_SLICE) {
                 /*    picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
                         (uint32_t)picture_control_set_ptr->ref_pic_qp_array[0],
@@ -2584,34 +2553,6 @@ void frame_level_rc_input_picture_cvbr(
                     picture_control_set_ptr->picture_qp);
             }
         }
-#else
-            if (picture_control_set_ptr->ref_slice_type_array[0] == I_SLICE) {
-                /*    picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
-                        (uint32_t)picture_control_set_ptr->ref_pic_qp_array[0],
-                        (uint32_t)picture_control_set_ptr->picture_qp,
-                        picture_control_set_ptr->picture_qp);*/
-            }
-            else {
-                picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
-                    (uint32_t)MAX((int32_t)picture_control_set_ptr->ref_pic_qp_array[0] - 1, 0),
-                    (uint32_t)picture_control_set_ptr->ref_pic_qp_array[0] + 3,
-                    picture_control_set_ptr->picture_qp);
-            }
-        }
-        else {
-            ref_qp = 0;
-            if (picture_control_set_ptr->ref_slice_type_array[0] != I_SLICE)
-                ref_qp = MAX(ref_qp, picture_control_set_ptr->ref_pic_qp_array[0]);
-            if ((picture_control_set_ptr->slice_type == B_SLICE) && (picture_control_set_ptr->ref_slice_type_array[1] != I_SLICE))
-                ref_qp = MAX(ref_qp, picture_control_set_ptr->ref_pic_qp_array[1]);
-            if (ref_qp > 0) {
-                picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
-                    (uint32_t)ref_qp - 1,
-                    picture_control_set_ptr->picture_qp,
-                    picture_control_set_ptr->picture_qp);
-            }
-        }
-#endif
         // limiting the QP between min Qp allowed and max Qp allowed
         picture_control_set_ptr->picture_qp = (uint8_t)CLIP3(
             sequence_control_set_ptr->static_config.min_qp_allowed,
@@ -3091,17 +3032,6 @@ void init_rc(
         }
     }
 }
-#endif
-
-#if !FIXED_128x128_CONTEXT_UPDATE
-static const uint8_t quantizer_to_qindex[] = {
-    0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48,
-    52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100,
-    104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 148, 152,
-    156, 160, 164, 168, 172, 176, 180, 184, 188, 192, 196, 200, 204,
-    208, 212, 216, 220, 224, 228, 232, 236, 240, 244, 249, 255,
-};
-#endif
 
 #define MAX_Q_INDEX 255
 #define MIN_Q_INDEX 0
@@ -3142,7 +3072,6 @@ int32_t av1_compute_qdelta(double qstart, double qtarget,
 
     return target_index - start_index;
 }
-#if RC
 // calculate the QP based on the QP scaling
 uint32_t qp_scaling_calc(
     SequenceControlSet *sequence_control_set_ptr,
@@ -3181,7 +3110,6 @@ uint32_t qp_scaling_calc(
 
     return scaled_qp;
 }
-#endif
 typedef struct {
     // Rate targetting variables
     int base_frame_target;  // A baseline frame target before adjustment
@@ -3305,12 +3233,10 @@ enum {
 
 // that are not marked as coded with 0,0 motion in the first pass.
 #define STATIC_KF_GROUP_THRESH 99
-#if ADAPTIVE_QP_SCALING
 #define FAST_MOVING_KF_GROUP_THRESH 5
 #define MAX_QPS_COMP_I        60
 #define MAX_QPS_COMP_NONI    200
 #define QPS_SW_THRESH          8
-#endif
 
 #define ASSIGN_MINQ_TABLE(bit_depth, name)                   \
   do {                                                       \
@@ -3450,18 +3376,11 @@ static int adaptive_qindex_calc(
     int active_worst_quality = qindex;
     rc->arf_q = 0;
     int q;
-#if ADAPTIVE_QP_SCALING
     int is_src_frame_alt_ref, refresh_golden_frame, refresh_alt_ref_frame, is_intrl_arf_boost, rf_level, update_type;
-#else
-    int is_src_frame_alt_ref, refresh_golden_frame, refresh_alt_ref_frame, new_bwdref_update_rule, is_intrl_arf_boost, rf_level, update_type, this_height;
-#endif
     is_src_frame_alt_ref = 0;
     refresh_golden_frame = frame_is_intra_only(picture_control_set_ptr->parent_pcs_ptr) ? 1 : 0;
     refresh_alt_ref_frame = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
     is_intrl_arf_boost = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 1 : 0;
-#if !ADAPTIVE_QP_SCALING
-    new_bwdref_update_rule = (picture_control_set_ptr->slice_type != P_SLICE) ? 1 : 0;
-#endif
     rf_level = (frame_is_intra_only(picture_control_set_ptr->parent_pcs_ptr)) ? KF_STD :
         (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? GF_ARF_STD :
         picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ? GF_ARF_LOW : INTER_NORMAL;
@@ -3469,19 +3388,13 @@ static int adaptive_qindex_calc(
     update_type = (frame_is_intra_only(picture_control_set_ptr->parent_pcs_ptr)) ? KF_UPDATE :
         (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? ARF_UPDATE :
         picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ? INTNL_ARF_UPDATE : LF_UPDATE;
-#if !ADAPTIVE_QP_SCALING
-    this_height = (frame_is_intra_only(picture_control_set_ptr->parent_pcs_ptr)) ? 0 :
-        picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels - picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index;
-#endif
     const int bit_depth = sequence_control_set_ptr->static_config.encoder_bit_depth;
-#if ADAPTIVE_QP_SCALING
     // Since many frames can be processed at the same time, storing/using arf_q in rc param is not sufficient and will create a run to run.
     // So, for each frame, arf_q is updated based on the qp of its references.
     if (picture_control_set_ptr->ref_slice_type_array[0][0] != I_SLICE)
         rc->arf_q = MAX(rc->arf_q, ((picture_control_set_ptr->ref_pic_qp_array[0][0] << 2) + 2));
     if ((picture_control_set_ptr->slice_type == B_SLICE) && (picture_control_set_ptr->ref_slice_type_array[1][0] != I_SLICE))
         rc->arf_q = MAX(rc->arf_q, ((picture_control_set_ptr->ref_pic_qp_array[1][0] << 2) + 2));
-#endif
     if (frame_is_intra_only(picture_control_set_ptr->parent_pcs_ptr)) {
         // Not forced keyframe.
         double q_adj_factor = 1.0;
@@ -3489,7 +3402,6 @@ static int adaptive_qindex_calc(
 
         rc->worst_quality = MAXQ;
         rc->best_quality = MINQ;
-#if ADAPTIVE_QP_SCALING
         int max_qp_scaling_avg_comp_I = sequence_control_set_ptr->input_resolution < 2 ? (MAX_QPS_COMP_I >> 1) : MAX_QPS_COMP_I;
 
         // Update the complexity for very fast moving content
@@ -3499,17 +3411,9 @@ static int adaptive_qindex_calc(
 
         // cross multiplication to derive kf_boost from non_moving_average_score; kf_boost range is [kf_low,kf_high], and non_moving_average_score range [0,max_qp_scaling_avg_comp_I]
         rc->kf_boost = (((max_qp_scaling_avg_comp_I - (picture_control_set_ptr->parent_pcs_ptr->qp_scaling_average_complexity))  * (kf_high - kf_low)) / max_qp_scaling_avg_comp_I) + kf_low;
-#else
-        // cross multiplication to derive kf_boost from non_moving_average_score; kf_boost range is [kf_low,kf_high], and non_moving_average_score range [NON_MOVING_SCORE_0,NON_MOVING_SCORE_3]
-        rc->kf_boost = (((NON_MOVING_SCORE_3 - picture_control_set_ptr->parent_pcs_ptr->non_moving_index_average)  * (kf_high - kf_low)) / NON_MOVING_SCORE_3) + kf_low;
-#endif
         // Baseline value derived from cpi->active_worst_quality and kf boost.
         active_best_quality =
             get_kf_active_quality(rc, active_worst_quality, bit_depth);
-#if !ADAPTIVE_QP_SCALING
-        if (picture_control_set_ptr->parent_pcs_ptr->kf_zeromotion_pct >= STATIC_KF_GROUP_THRESH)
-            active_best_quality /= 3;
-#endif
         // Allow somewhat lower kf minq with small image formats.
         if ((cm->width * cm->height) <= (352 * 288))
             q_adj_factor -= 0.25;
@@ -3525,11 +3429,7 @@ static int adaptive_qindex_calc(
     else if (!is_src_frame_alt_ref &&
         (refresh_golden_frame || is_intrl_arf_boost ||
             refresh_alt_ref_frame)) {
-#if ADAPTIVE_QP_SCALING
         rc->gfu_boost = (((MAX_QPS_COMP_NONI - (picture_control_set_ptr->parent_pcs_ptr->qp_scaling_average_complexity))  * (gf_high - gf_low)) / MAX_QPS_COMP_NONI) + gf_low;
-#else
-        rc->gfu_boost = (((NON_MOVING_SCORE_3 - picture_control_set_ptr->parent_pcs_ptr->non_moving_index_average)  * (gf_high - gf_low)) / NON_MOVING_SCORE_3) + gf_low;
-#endif
         rc->arf_boost_factor = 1;
         q = active_worst_quality;
 
@@ -3549,25 +3449,9 @@ static int adaptive_qindex_calc(
             }
             else
                 active_best_quality = rc->arf_q;
-#if ADAPTIVE_QP_SCALING
             // active_best_quality is updated with the q index of the reference
             if (rf_level == GF_ARF_LOW)
                 active_best_quality = (active_best_quality + cq_level + 1) / 2;
-#else
-            // non Based Ref frames && !P
-            if (new_bwdref_update_rule && is_intrl_arf_boost) {
-                while (this_height < picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels /*gf_group->pyramid_height*/) {
-                    active_best_quality = (active_best_quality + cq_level + 1) / 2;
-                    ++this_height;
-                }
-            }
-            else {
-                // Modify best quality for second level arfs. For mode AOM_Q this
-                // becomes the baseline frame q.
-                if (rf_level == GF_ARF_LOW)
-                    active_best_quality = (active_best_quality + cq_level + 1) / 2;
-            }
-#endif
         }
     }
     else
@@ -3700,7 +3584,6 @@ void* rate_control_kernel(void *input_ptr)
                 if (sequence_control_set_ptr->static_config.enable_qp_scaling_flag && picture_control_set_ptr->parent_pcs_ptr->qp_on_the_fly == EB_FALSE) {
                     const int32_t qindex = quantizer_to_qindex[(uint8_t)sequence_control_set_ptr->qp];
                     const double q_val = av1_convert_qindex_to_q(qindex, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
-#if ADAPTIVE_QP_SCALING
                     // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
                     if (picture_control_set_ptr->parent_pcs_ptr->frames_in_sw >= QPS_SW_THRESH) {
                         int32_t new_qindex = adaptive_qindex_calc(
@@ -3725,20 +3608,6 @@ void* rate_control_kernel(void *input_ptr)
                                 (int32_t)quantizer_to_qindex[sequence_control_set_ptr->static_config.max_qp_allowed],
                                 (int32_t)(qindex + delta_qindex));
                     }
-#else
-                    if (picture_control_set_ptr->slice_type == I_SLICE) {
-                        int32_t new_qindex = adaptive_qindex_calc(
-                            picture_control_set_ptr,
-                            &rc,
-                            qindex);
-
-                        picture_control_set_ptr->parent_pcs_ptr->base_qindex =
-                            (uint8_t)CLIP3(
-                            (int32_t)quantizer_to_qindex[sequence_control_set_ptr->static_config.min_qp_allowed],
-                                (int32_t)quantizer_to_qindex[sequence_control_set_ptr->static_config.max_qp_allowed],
-                                (int32_t)(new_qindex));
-                    }
-#endif
                     else {
                         const  double delta_rate_new[2][6] =
                         { { 0.40, 0.7, 0.85, 1.0, 1.0, 1.0 },
@@ -3871,7 +3740,6 @@ void* rate_control_kernel(void *input_ptr)
 
             parentpicture_control_set_ptr = (PictureParentControlSet  *)rate_control_tasks_ptr->picture_control_set_wrapper_ptr->object_ptr;
             sequence_control_set_ptr = (SequenceControlSet *)parentpicture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-#if RC_FEEDBACK
             if (sequence_control_set_ptr->static_config.rate_control_mode) {
                 if (sequence_control_set_ptr->static_config.rate_control_mode == 1)
                     rate_control_update_model(rc_model_ptr, parentpicture_control_set_ptr);
@@ -3891,7 +3759,6 @@ void* rate_control_kernel(void *input_ptr)
                     reference_queue_index = (reference_queue_index == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : reference_queue_index + 1;
                 } while ((reference_queue_index != encode_context_ptr->reference_picture_queue_tail_index) && (reference_entry_ptr->picture_number != parentpicture_control_set_ptr->picture_number));
             }
-#endif
             // Frame level RC
             if (sequence_control_set_ptr->intra_period_length == -1 || sequence_control_set_ptr->static_config.rate_control_mode == 0) {
                 rate_control_param_ptr = context_ptr->rate_control_param_queue[0];

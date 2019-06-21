@@ -3903,10 +3903,7 @@ extern "C" {
         EbAsm                asm_type,
         PlaneType           component_type,
         EB_TRANS_COEFF_SHAPE trans_coeff_shape);
-#if DC_SIGN_CONTEXT_FIX
     extern int32_t av1_quantize_inv_quantize(
-#else
-#endif
         PictureControlSet             *picture_control_set_ptr,
         ModeDecisionContext           *md_context,
         int32_t                       *coeff,
@@ -3921,9 +3918,6 @@ extern "C" {
         uint16_t                      *eob,
         EbAsm                          asm_type,
         uint32_t                      *y_count_non_zero_coeffs,
-#if !PF_N2_SUPPORT
-        EbPfMode                       pf_mode,
-#endif
         uint32_t                       component_type,
         uint32_t                       bit_increment,
         TxType                         tx_type,
@@ -3931,9 +3925,7 @@ extern "C" {
         int16_t                        txb_skip_context,
         int16_t                        dc_sign_context,
         PredictionMode                 pred_mode,
-#if RDOQ_INTRA
         EbBool                         is_intra_bc,
-#endif
         EbBool                         is_encode_pass);
 
     extern EbErrorType av1_estimate_inv_transform(

@@ -67,17 +67,8 @@ extern "C" {
         uint32_t                               sb_origin_x,
         uint32_t                               sb_origin_y,
         ModeDecisionContext               *context_ptr);
-#if !MEMORY_FOOTPRINT_OPT
-    extern EbErrorType QpmDeriveWeightsMinAndMax(
-        PictureControlSet                    *picture_control_set_ptr,
-        EncDecContext                        *context_ptr);
-#endif
     uint8_t get_skip_tx_search_flag(
-#if BYPASS_USELESS_TX_SEARCH
-        const BlockGeom         *blk_geom,
-#else
         int32_t                  sq_size,
-#endif
         uint64_t                 ref_fast_cost,
         uint64_t                 cu_cost,
         uint64_t                 weight);
@@ -89,9 +80,6 @@ extern "C" {
         uint32_t                   tbAddr,
         uint32_t                   sb_origin_x,
         uint32_t                   sb_origin_y,
-#if !MEMORY_FOOTPRINT_OPT
-        uint32_t                   sb_qp,
-#endif
         EncDecContext         *context_ptr);
 
 #if NO_ENCDEC

@@ -8,10 +8,8 @@
 
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
-#if ALT_REF_SUPPORT
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
-#endif
 
 /**************************************
  * Context
@@ -46,19 +44,12 @@ typedef struct PictureDecisionContext
 
     uint32_t        mini_gop_group_faded_in_pictures_count[MINI_GOP_MAX_COUNT];
     uint32_t        mini_gop_group_faded_out_pictures_count[MINI_GOP_MAX_COUNT];
-#if NEW_RPS
     uint8_t     lay0_toggle; //3 way toggle 0->1->2
     uint8_t     lay1_toggle; //2 way toggle 0->1
     uint8_t     lay2_toggle; //2 way toggle 0->1
-#endif
     EbBool        mini_gop_toggle;    //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
-#if BASE_LAYER_REF
-    uint64_t      last_islice_picture_number;
-#endif
     uint8_t       last_i_picture_sc_detection;
-#if REF_ORDER
     uint64_t         key_poc;
-#endif
 } PictureDecisionContext;
 
 /***************************************
@@ -71,42 +62,20 @@ extern EbErrorType picture_decision_context_ctor(
 
 extern void* picture_decision_kernel(void *input_ptr);
 
-#if ALT_REF_SUPPORT
-#if DOWN_SAMPLING_FILTERING
 void DownsampleDecimationInputPicture(
     PictureParentControlSet *picture_control_set_ptr,
     EbPictureBufferDesc     *inputPaddedPicturePtr,
     EbPictureBufferDesc     *quarterDecimatedPicturePtr,
     EbPictureBufferDesc     *sixteenthDecimatedPicturePtr);
-#else
-void DecimateInputPicture(PictureParentControlSet       *picture_control_set_ptr,
-                          EbPictureBufferDesc           *inputPaddedPicturePtr,
-                          EbPictureBufferDesc           *quarterDecimatedPicturePtr,
-                          EbPictureBufferDesc           *sixteenthDecimatedPicturePtr);
-#endif
-#endif
-
-#if ALT_REF_OVERLAY
 
 void PadPictureToMultipleOfMinCuSizeDimensions(
         SequenceControlSet            *sequence_control_set_ptr,
         EbPictureBufferDesc           *input_picture_ptr);
-#if DOWN_SAMPLING_FILTERING
 void PicturePreProcessingOperations(
     PictureParentControlSet       *picture_control_set_ptr,
     SequenceControlSet            *sequence_control_set_ptr,
     uint32_t                       sb_total_count,
     EbAsm                          asm_type);
-#else
-void PicturePreProcessingOperations(
-        PictureParentControlSet       *picture_control_set_ptr,
-        EbPictureBufferDesc           *input_picture_ptr,
-        SequenceControlSet            *sequence_control_set_ptr,
-        EbPictureBufferDesc           *quarter_decimated_picture_ptr,
-        EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
-        uint32_t                       sb_total_count,
-        EbAsm                          asm_type);
-#endif
 void PadPictureToMultipleOfLcuDimensions(
         EbPictureBufferDesc   *input_padded_picture_ptr);
 
@@ -121,7 +90,5 @@ void GatheringPictureStatistics(
 
 void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr,
                       EbPictureBufferDesc* outputPicturePtr);
-
-#endif
 
 #endif // EbPictureDecision_h
