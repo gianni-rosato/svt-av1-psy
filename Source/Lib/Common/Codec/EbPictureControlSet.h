@@ -14296,6 +14296,11 @@ extern "C" {
         uint8_t                               tf_segments_column_count;
         uint8_t                               tf_segments_row_count;
         uint8_t                               altref_nframes;
+#if QPS_TUNING
+        uint64_t                              filtered_sse; // the normalized SSE between filtered and original alt_ref with 8 bit precision.
+                                                            // I Slice has the value of the next ALT_REF picture
+        uint64_t                              filtered_sse_uv;
+#endif
     } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData

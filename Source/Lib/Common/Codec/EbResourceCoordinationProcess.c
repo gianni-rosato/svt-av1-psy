@@ -756,7 +756,10 @@ void* resource_coordination_kernel(void *input_ptr)
             signal_derivation_pre_analysis_oq(
                 sequence_control_set_ptr,
                 picture_control_set_ptr);
-
+#if QPS_TUNING
+            picture_control_set_ptr->filtered_sse = 0;
+            picture_control_set_ptr->filtered_sse_uv = 0;
+#endif
             // Rate Control
             // Set the ME Distortion and OIS Historgrams to zero
             if (sequence_control_set_ptr->static_config.rate_control_mode) {
