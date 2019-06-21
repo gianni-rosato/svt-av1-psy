@@ -64,7 +64,6 @@ uint8_t get_list_idx(uint8_t ref_type) {
 };
 
 uint8_t get_ref_frame_idx(uint8_t ref_type) {
-#if NORMAL_ORDER
     if (ref_type == LAST_FRAME || ref_type == BWDREF_FRAME)
         return 0;
     else if (ref_type == LAST2_FRAME || ref_type == ALTREF2_FRAME)
@@ -75,21 +74,8 @@ uint8_t get_ref_frame_idx(uint8_t ref_type) {
         return 3;
     else
         return (INVALID_REF);
-#else
-    if (ref_type == LAST_FRAME || ref_type == BWDREF_FRAME)
-        return 0;
-    else if (ref_type == LAST2_FRAME || ref_type == ALTREF_FRAME)
-        return 1;
-    else if (ref_type == LAST3_FRAME || ref_type == ALTREF2_FRAME)
-        return 2;
-    else if (ref_type == GOLDEN_FRAME)
-        return 3;
-    else
-        return (INVALID_REF);
-#endif
 };
 MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) {
-#if NORMAL_ORDER
     switch (list) {
     case 0:
         return (ref_idx == 0 ? LAST_FRAME : ref_idx == 1 ? LAST2_FRAME : ref_idx == 2 ? LAST3_FRAME : ref_idx == 3 ? GOLDEN_FRAME : INVALID_REF);
@@ -98,16 +84,6 @@ MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) {
     default:
         return (INVALID_REF);
     }
-#else
-    switch (list) {
-    case 0:
-        return (ref_idx == 0 ? LAST_FRAME : ref_idx == 1 ? LAST2_FRAME : ref_idx == 2 ? LAST3_FRAME : ref_idx == 3 ? GOLDEN_FRAME : INVALID_REF);
-    case 1:
-        return (ref_idx == 0 ? BWDREF_FRAME : ref_idx == 1 ? ALTREF_FRAME : ref_idx == 2 ? ALTREF2_FRAME : INVALID_REF);
-    default:
-        return (INVALID_REF);
-    }
-#endif
 };
 extern uint32_t stage1ModesArray[];
 

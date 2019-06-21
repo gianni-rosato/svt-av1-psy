@@ -229,7 +229,7 @@ extern "C" {
 
 
 
-#define NORMAL_ORDER              1   //  order(ALT/ALT2)
+
 #define REF_ORDER                 1  //correctly construct decoder based ref order hint array
 //
 #define RPS_4L                    1 //RPS for 4L case
