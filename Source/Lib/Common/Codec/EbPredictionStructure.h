@@ -37,11 +37,7 @@ extern "C" {
        ************************************************/
     typedef struct ReferenceList
     {
-#if MRP_ME
         int32_t                              *reference_list;
-#else
-        int32_t                              reference_list;
-#endif
         uint32_t                              reference_list_count;
     } ReferenceList;
 
@@ -75,13 +71,8 @@ extern "C" {
     {
         uint32_t temporal_layer_index;
         uint32_t decode_order;
-#if MRP_ME
         int32_t                              ref_list0[REF_LIST_MAX_DEPTH];
         int32_t                              ref_list1[REF_LIST_MAX_DEPTH];
-#else
-        int32_t  ref_list0;
-        int32_t  ref_list1;
-#endif
     } PredictionStructureConfigEntry;
 
     /************************************************

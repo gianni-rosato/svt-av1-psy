@@ -219,9 +219,7 @@ EbErrorType eb_sequence_control_set_ctor(
         sequence_control_set_ptr->pred1_nfl_count[temporal_layer_index] = 0;
     }
 #endif
-#if MRP_ME
     sequence_control_set_ptr->reference_count = 4;
-#endif
 
     return EB_ErrorNone;
 }
@@ -322,9 +320,7 @@ EbErrorType copy_sequence_control_set(
     dst->right_padding = src->right_padding; writeCount += sizeof(int16_t);
     dst->top_padding = src->top_padding; writeCount += sizeof(int16_t);
     dst->bot_padding = src->bot_padding; writeCount += sizeof(int16_t);
-#if MRP_ME
     dst->reference_count = src->reference_count; writeCount += sizeof(uint32_t);
-#endif
     for (uint8_t i = 0; i< MAX_HIERARCHICAL_LEVEL; i++) {
         dst->me_segment_column_count_array[i] = src->me_segment_column_count_array[i];
         dst->me_segment_row_count_array[i] = src->me_segment_row_count_array[i];

@@ -29,23 +29,19 @@ extern "C" {
 #if MRP_MEM_OPT
         unsigned    distortion : 20;     // 20-bits holds maximum SAD of 64x64 PU
         unsigned    direction  : 2;
-#if MRP_ME
         unsigned    ref_idx_l0 : 2;      // allows for up to 4 references
         unsigned    ref_idx_l1 : 2;
 #if MRP_MD_UNI_DIR_BIPRED
         unsigned    ref0_list : 1;
         unsigned    ref1_list : 1;
 #endif
-#endif
 #else
 
-#if MRP_ME
         unsigned    ref_idx_l0 : 8;      // allows for up to 4 references
         unsigned    ref_idx_l1 : 8;
 #if MRP_MD_UNI_DIR_BIPRED
         unsigned    ref0_list : 8;
         unsigned    ref1_list : 8;
-#endif
 #endif
         unsigned    distortion : 32;     // 20-bits holds maximum SAD of 64x64 PU
 
@@ -64,40 +60,13 @@ extern "C" {
         uint8_t          *total_me_candidate_index;
         MeCandidate     **me_candidate;
         MeCandidate      *me_candidate_array;
-#if MRP_ME
         uint8_t          *me_nsq_0; // 2 Number of reference lists
         uint8_t          *me_nsq_1; // 2 Number of reference lists
-#endif
 
         MvCandidate    **me_mv_array;
         // [PU][LAST, LAST2, LAST3, GOLD, BWD, ALT2, ALT] if MRP Mode 0,
         // [PU][LAST, LAST2, BWD, ALT2] if MRP Mode 1,
     } MeLcuResults;
-#if !MRP_ME
-    typedef struct  DistDir
-    {
-        unsigned    distortion : 32; //20bits are enough
-        unsigned    direction : 2;
-    } DistDir;
-
-    typedef struct MeCuResults
-    {
-        union {
-            struct {
-                signed short     x_mv_l0;
-                signed short     y_mv_l0;
-                signed short     x_mv_l1;
-                signed short     y_mv_l1;
-            };
-            uint64_t mvs;
-        };
-
-        DistDir    distortion_direction[3];
-
-        uint8_t        total_me_candidate_index;
-        uint8_t       me_nsq[2]; // 2 Number of reference lists
-    } MeCuResults;
-#endif
 #ifdef __cplusplus
 }
 #endif

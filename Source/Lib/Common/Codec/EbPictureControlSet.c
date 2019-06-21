@@ -58,7 +58,6 @@ EbErrorType segmentation_map_ctor(SegmentationNeighborMap **seg_map_dbl_ptr,
 
 }
 
-#if MRP_ME
 EbErrorType me_sb_results_ctor(
     MeLcuResults     **objectDblPtr,
     uint32_t           maxNumberOfPusPerLcu,
@@ -101,7 +100,6 @@ EbErrorType me_sb_results_ctor(
     //objectPtr->lcuDistortion = 0;
     return EB_ErrorNone;
 }
-#endif
 EbErrorType picture_control_set_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)

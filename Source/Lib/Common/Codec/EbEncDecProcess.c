@@ -1549,45 +1549,10 @@ void* enc_dec_kernel(void *input_ptr)
                         int16_t mv_l1_x;
                         int16_t mv_l1_y;
 
-#if MRP_ME
                         mv_l0_x = 0;
                         mv_l0_y = 0;
                         mv_l1_x = 0;
                         mv_l1_y = 0;
-#else
-                        uint32_t me_sb_addr;
-                        if (sequence_control_set_ptr->sb_size == BLOCK_128X128) {
-                            uint32_t me_sb_size = sequence_control_set_ptr->sb_sz;
-                            uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->seq_header.frame_width_bits + me_sb_size - 1) / me_sb_size;
-                            uint32_t me_pic_height_in_sb = (sequence_control_set_ptr->seq_header.max_frame_height + me_sb_size - 1) / me_sb_size;
-                            uint32_t me_sb_x = (sb_origin_x / me_sb_size);
-                            uint32_t me_sb_y = (sb_origin_y / me_sb_size);
-                            uint32_t me_sb_addr_0 = me_sb_x + me_sb_y * me_pic_width_in_sb;
-                            uint32_t me_sb_addr_1 = (me_sb_x + 1) < me_pic_width_in_sb ? (me_sb_x + 1) + ((me_sb_y + 0) * me_pic_width_in_sb) : me_sb_addr_0;
-                            uint32_t me_sb_addr_2 = (me_sb_y + 1) < me_pic_height_in_sb ? (me_sb_x + 0) + ((me_sb_y + 1) * me_pic_width_in_sb) : me_sb_addr_0;
-                            uint32_t me_sb_addr_3 = ((me_sb_x + 1) < me_pic_width_in_sb) && ((me_sb_y + 1) < me_pic_height_in_sb) ? (me_sb_x + 1) + ((me_sb_y + 1) * me_pic_width_in_sb) : me_sb_addr_0;
-
-                            MeCuResults * me_block_results_0 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_0][0];
-                            MeCuResults * me_block_results_1 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_1][0];
-                            MeCuResults * me_block_results_2 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_2][0];
-                            MeCuResults * me_block_results_3 = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr_3][0];
-
-                            // Compute average open_loop 64x64 mvs
-                            mv_l0_x = ((me_block_results_0->x_mv_l0 + me_block_results_1->x_mv_l0 + me_block_results_2->x_mv_l0 + me_block_results_3->x_mv_l0) >> 2) >> 2;
-                            mv_l0_y = ((me_block_results_0->y_mv_l0 + me_block_results_1->y_mv_l0 + me_block_results_2->y_mv_l0 + me_block_results_3->y_mv_l0) >> 2) >> 2;
-                            mv_l1_x = ((me_block_results_0->x_mv_l1 + me_block_results_1->x_mv_l1 + me_block_results_2->x_mv_l1 + me_block_results_3->x_mv_l1) >> 2) >> 2;
-                            mv_l1_y = ((me_block_results_0->y_mv_l1 + me_block_results_1->y_mv_l1 + me_block_results_2->y_mv_l1 + me_block_results_3->y_mv_l1) >> 2) >> 2;
-                        }
-                        else {
-                            me_sb_addr = sb_index;
-                            MeCuResults * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr][0];
-
-                            mv_l0_x = mePuResult->x_mv_l0 >> 2;
-                            mv_l0_y = mePuResult->y_mv_l0 >> 2;
-                            mv_l1_x = mePuResult->x_mv_l1 >> 2;
-                            mv_l1_y = mePuResult->y_mv_l1 >> 2;
-                        }
-#endif
 
                         context_ptr->ss_mecontext->search_area_width = 64;
                         context_ptr->ss_mecontext->search_area_height = 64;

@@ -210,7 +210,7 @@ extern "C" {
 
 
 
-#define MRP_ME                    1
+
 #define MRP_CONNECTION            1
 #define MD_INJECTION              1
 #define MRP_MD                    1
@@ -2581,16 +2581,10 @@ void(*ErrorHandler)(
                                                 ((MAX_PICTURE_HEIGHT_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64)
 
 //***Prediction Structure***
-#if MRP_ME
 #define REF_LIST_MAX_DEPTH                          4 // NM - To be specified
-#endif
 #define MAX_TEMPORAL_LAYERS                         6
 #define MAX_HIERARCHICAL_LEVEL                      6
-#if MRP_ME
 #define MAX_REF_IDX                                 4
-#else
-#define MAX_REF_IDX                                 1        // Set MAX_REF_IDX as 1 to avoid sending extra refPicIdc for each PU in IPPP flat GOP structure.
-#endif
 #define INVALID_POC                                 (((uint32_t) (~0)) - (((uint32_t) (~0)) >> 1))
 #define MAX_ELAPSED_IDR_COUNT                       1024
 

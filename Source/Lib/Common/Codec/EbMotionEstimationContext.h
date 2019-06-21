@@ -281,9 +281,7 @@ extern "C" {
 
     typedef struct MePredUnit
     {
-#if MRP_ME
         uint8_t          ref_index[MAX_NUM_OF_REF_PIC_LIST];
-#endif
 #if MRP_MD_UNI_DIR_BIPRED
         uint8_t          ref0_list;
         uint8_t          ref1_list;

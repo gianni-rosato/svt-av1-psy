@@ -14020,13 +14020,8 @@ extern "C" {
         uint32_t                              cb_sse;
 
         // Pre Analysis
-#if MRP_ME
         EbObjectWrapper                      *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
         uint64_t                              ref_pic_poc_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#else
-        EbObjectWrapper                    *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST];
-        uint64_t                              ref_pic_poc_array[MAX_NUM_OF_REF_PIC_LIST];
-#endif
         uint16_t                            **variance;
         uint8_t                             **y_mean;
         uint8_t                             **cbMean;
@@ -14087,12 +14082,8 @@ extern "C" {
 
         // Motion Estimation Results
         uint8_t                               max_number_of_pus_per_sb;
-#if MRP_ME
         uint8_t                               max_number_of_candidates_per_block;
         MeLcuResults                        **me_results;
-#else
-        MeCuResults                       **me_results;
-#endif
         uint32_t                             *rc_me_distortion;
 
         // Motion Estimation Distortion and OIS Historgram
@@ -14591,13 +14582,11 @@ extern "C" {
         EbPtr *object_dbl_ptr,
         EbPtr  object_init_data_ptr);
 
-#if MRP_ME
     extern EbErrorType me_sb_results_ctor(
         MeLcuResults     **objectDblPtr,
         uint32_t           maxNumberOfPusPerLcu,
         uint8_t            mrp_mode,
         uint32_t           maxNumberOfMeCandidatesPerPU);
-#endif
 #ifdef __cplusplus
 }
 #endif
