@@ -5315,7 +5315,6 @@ static void open_loop_me_half_pel_search_sblock(
                 picture_control_set_ptr,
                 context_ptr,
 #if M0_HIGH_PRECISION_INTERPOLATION
-#if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
                 context_ptr->integer_buffer_ptr[list_index][ref_pic_index] +
                     (ME_FILTER_PAD_DISTANCE >> 1) +
                     ((ME_FILTER_PAD_DISTANCE >> 1) *
@@ -5323,12 +5322,10 @@ static void open_loop_me_half_pel_search_sblock(
                          ->interpolated_full_stride[listIndex][ref_pic_index]),
                 context_ptr
                     ->interpolated_full_stride[list_index][ref_pic_index],
-#endif
                 &(context_ptr->pos_b_buffer[list_index][ref_pic_index]
                                            [(ME_FILTER_PAD_DISTANCE >> 1) *
                                             context_ptr->interpolated_stride]),
 #else
-#if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
                 context_ptr->integer_buffer_ptr[list_index][ref_pic_index] +
                     (ME_FILTER_TAP >> 1) +
                     ((ME_FILTER_TAP >> 1) *
@@ -5336,7 +5333,6 @@ static void open_loop_me_half_pel_search_sblock(
                          ->interpolated_full_stride[list_index][ref_pic_index]),
                 context_ptr
                     ->interpolated_full_stride[list_index][ref_pic_index],
-#endif
                 &(context_ptr->pos_b_buffer[list_index][ref_pic_index]
                                            [(ME_FILTER_TAP >> 1) *
                                             context_ptr->interpolated_stride]),
@@ -14429,8 +14425,6 @@ EbErrorType motion_estimate_lcu(
                             context_ptr->p_sb_best_mv[listIndex][ref_pic_index]
                                                      [ME_TIER_ZERO_PU_16x64_0]);
 
-#if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
-
                         context_ptr->p_best_ssd64x64 = &(
                             context_ptr->p_sb_best_ssd[listIndex][ref_pic_index]
                                                       [ME_TIER_ZERO_PU_64x64]);
@@ -14481,7 +14475,6 @@ EbErrorType motion_estimate_lcu(
                             &(context_ptr
                                   ->p_sb_best_ssd[listIndex][ref_pic_index]
                                                  [ME_TIER_ZERO_PU_16x64_0]);
-#endif
 #else
                         uint8_t refPicIndex = 0;
 
@@ -14834,7 +14827,6 @@ EbErrorType motion_estimate_lcu(
                             context_ptr->p_sb_best_mv[listIndex][ref_pic_index]
                                                      [ME_TIER_ZERO_PU_8x8_0]);
 
-#if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
                         context_ptr->p_best_ssd64x64 = &(
                             context_ptr->p_sb_best_ssd[listIndex][ref_pic_index]
                                                       [ME_TIER_ZERO_PU_64x64]);
@@ -14849,7 +14841,6 @@ EbErrorType motion_estimate_lcu(
                         context_ptr->p_best_ssd8x8 = &(
                             context_ptr->p_sb_best_ssd[listIndex][ref_pic_index]
                                                       [ME_TIER_ZERO_PU_8x8_0]);
-#endif
 #else
                         initialize_buffer32bits_func_ptr_array[asm_type](
                             context_ptr->p_sb_best_sad[listIndex][0],
@@ -14990,7 +14981,6 @@ EbErrorType motion_estimate_lcu(
 #endif
                             context_ptr,
 #if M0_HIGH_PRECISION_INTERPOLATION
-#if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
                             context_ptr->integer_buffer_ptr[listIndex]
                                                            [ref_pic_index] +
                                 (ME_FILTER_PAD_DISTANCE >> 1) +
@@ -15001,13 +14991,11 @@ EbErrorType motion_estimate_lcu(
                             context_ptr
                                 ->interpolated_full_stride[listIndex]
                                                           [ref_pic_index],
-#endif
                             &(context_ptr->pos_b_buffer
                                   [listIndex][ref_pic_index]
                                   [(ME_FILTER_PAD_DISTANCE >> 1) *
                                    context_ptr->interpolated_stride]),
 #else
-#if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
                             context_ptr->integer_buffer_ptr[listIndex]
                                                            [ref_pic_index] +
                                 (ME_FILTER_TAP >> 1) +
@@ -15018,7 +15006,6 @@ EbErrorType motion_estimate_lcu(
                             context_ptr
                                 ->interpolated_full_stride[listIndex]
                                                           [ref_pic_index],
-#endif
                             &(context_ptr->pos_b_buffer
                                   [listIndex][ref_pic_index]
                                   [(ME_FILTER_TAP >> 1) *
