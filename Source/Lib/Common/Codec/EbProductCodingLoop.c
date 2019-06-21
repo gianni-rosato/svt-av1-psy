@@ -573,28 +573,7 @@ void md_update_all_neighbour_arrays_multiple(
 // Based on the MDStage and the encodeMode
 // the NFL candidates numbers are set
 //*************************//
-#if NFL_PER_SQ_SIZE
-uint32_t nfl_ref[6] = {
-    4, // 4x4
-    2, // 8x8
-    4, // 16x16
-    4, // 32x32
-    3, // 64x64
-    4, // 128x128
-};
-uint32_t nfl_non_ref[6] = {
-    2, // 4x4
-    2, // 8x8
-    3, // 16x16
-    3, // 32x32
-    2, // 64x64
-    2, // 128x128
-};
-#endif
 void set_nfl(
-#if NFL_PER_SQ_SIZE
-    PictureControlSet       *picture_control_set_ptr,
-#endif
     ModeDecisionContext     *context_ptr
     ){
     // NFL Level MD       Settings
@@ -636,15 +615,6 @@ void set_nfl(
         context_ptr->full_recon_search_count = 4;
         break;
     }
-#if NFL_PER_SQ_SIZE
-    uint8_t nfl_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
-    if (picture_control_set_ptr->slice_type == I_SLICE)
-        context_ptr->full_recon_search_count = 6;
-    else if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-        context_ptr->full_recon_search_count = nfl_ref[nfl_index];
-    else
-        context_ptr->full_recon_search_count = nfl_non_ref[nfl_index];
-#endif
 
     ASSERT(context_ptr->full_recon_search_count <= MAX_NFL);
 }
@@ -5022,9 +4992,6 @@ void md_encode_block(
                                                   is_complete_sb,
                                                   lcuAddr);
         set_nfl(
-#if NFL_PER_SQ_SIZE
-            picture_control_set_ptr,
-#endif
             context_ptr
         );
 

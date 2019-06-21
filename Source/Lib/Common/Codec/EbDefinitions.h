@@ -151,7 +151,7 @@ extern "C" {
 
 
 
-#define NFL_PER_SQ_SIZE                   0
+
 #define SC_HME_ME                         0 // Use sc detector for hme/me setting
 #define RED_CU_DEBUG                      0 // Turn off some features known to not work with redudant CUs
 //FOR DEBUGGING - Do not remove
