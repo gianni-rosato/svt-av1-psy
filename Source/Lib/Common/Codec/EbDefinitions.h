@@ -76,7 +76,7 @@ extern "C" {
 #endif
 
 
-#define INTRA64_FIX                       1 // Fix a bug where 64x64 are disabled for sub 720P
+
 #define CHROMA_SEARCH_MR                  1 // Enable chroma search for all layers in MR mode
 #define INCOMPLETE_SB_FIX                 1 // Handle the incomplete SBs properly based on the standard and consider all allowed blocks
 /**********************************************************************************/
