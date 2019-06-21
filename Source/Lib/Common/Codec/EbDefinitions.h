@@ -139,7 +139,7 @@ extern "C" {
 #define RC_FEEDBACK                       1 // Feedback from previous base layer is received before starting the next base layer frame
 
 
-#define BYPASS_USELESS_TX_SEARCH          0
+
 // Testing MACROS
 #define M9_NEAR_INJECTION                 0
 // Under testing

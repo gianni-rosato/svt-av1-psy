@@ -68,11 +68,7 @@ extern "C" {
         uint32_t                               sb_origin_y,
         ModeDecisionContext               *context_ptr);
     uint8_t get_skip_tx_search_flag(
-#if BYPASS_USELESS_TX_SEARCH
-        const BlockGeom         *blk_geom,
-#else
         int32_t                  sq_size,
-#endif
         uint64_t                 ref_fast_cost,
         uint64_t                 cu_cost,
         uint64_t                 weight);
