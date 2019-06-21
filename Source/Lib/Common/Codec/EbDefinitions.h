@@ -224,7 +224,7 @@ extern "C" {
 
 
 
-#define MRP_DUPLICATION_FIX       1
+
 #define MRP_ENABLE_BI_FOR_BASE    1
 #define SETUP_SKIP                1
 #define INJ_MVP                   1   //new injection of MVP supporting MRP case.

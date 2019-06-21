@@ -24,14 +24,10 @@ extern "C" {
      * Defines
      **************************************/
 #define IBC_CAND 2 //two intra bc candidates
-#if MRP_DUPLICATION_FIX
 #if EIGTH_PEL_MV
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (470+IBC_CAND )
 #else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (486 +IBC_CAND)
-#endif
-#else
-#define MODE_DECISION_CANDIDATE_MAX_COUNT               (170 +IBC_CAND)
 #endif
 #define DEPTH_ONE_STEP   21
 #define DEPTH_TWO_STEP    5
@@ -183,11 +179,9 @@ extern "C" {
         uint8_t                         intra_chroma_left_mode;
         uint8_t                         intra_chroma_top_mode;
         int16_t                         pred_buf_q3[CFL_BUF_SQUARE]; // Hsan: both MD and EP to use pred_buf_q3 (kept 1, and removed the 2nd)
-#if MRP_DUPLICATION_FIX
         uint8_t                         injected_ref_type_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
         uint8_t                         injected_ref_type_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
         uint8_t                         injected_ref_type_bipred_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-#endif
         int16_t                         injected_mv_x_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
         int16_t                         injected_mv_y_l0_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
         uint8_t                         injected_mv_count_l0;
