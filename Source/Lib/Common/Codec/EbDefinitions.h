@@ -178,12 +178,9 @@ extern "C" {
 
 
 
-#define USE_SAD_HME                                     1
-#if USE_SAD_HME
 
 
 
-#endif
 
 //NEDED FLAGS  ON
 #define M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH       1

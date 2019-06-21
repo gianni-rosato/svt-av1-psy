@@ -192,7 +192,6 @@ EbErrorType signal_derivation_me_kernel_oq(
     else
         context_ptr->me_context_ptr->fractional_search_model = 2;
 
-#if USE_SAD_HME
     // HME Search Method
     if (picture_control_set_ptr->sc_content_detected)
         if (picture_control_set_ptr->enc_mode <= ENC_M6)
@@ -201,9 +200,6 @@ EbErrorType signal_derivation_me_kernel_oq(
             context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
     else
     context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
-#else
-    context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
-#endif
     // ME Search Method
     if (picture_control_set_ptr->sc_content_detected)
         if (picture_control_set_ptr->enc_mode <= ENC_M3)
