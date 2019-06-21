@@ -247,9 +247,7 @@ extern "C" {
         uint8_t                         interpolation_filter_search_blk_size;
         uint8_t                         redundant_blk;
         uint8_t                          cfl_temp_luma_recon[128 * 128];
-#if SPATIAL_SSE
         EbBool                          spatial_sse_full_loop;
-#endif
 #if  BLK_SKIP_DECISION
         EbBool                          blk_skip_decision;
 #endif

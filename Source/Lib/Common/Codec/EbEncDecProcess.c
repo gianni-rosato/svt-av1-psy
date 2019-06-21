@@ -1337,7 +1337,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     context_ptr->pf_md_mode = PF_OFF;
 #endif
 
-#if SPATIAL_SSE
     // Derive Spatial SSE Flag
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
         if (picture_control_set_ptr->enc_mode <= ENC_M6)
@@ -1349,7 +1348,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->spatial_sse_full_loop = EB_TRUE;
     else
         context_ptr->spatial_sse_full_loop = EB_FALSE;
-#endif
 
 #if BLK_SKIP_DECISION
     if (context_ptr->chroma_level <= CHROMA_MODE_1)

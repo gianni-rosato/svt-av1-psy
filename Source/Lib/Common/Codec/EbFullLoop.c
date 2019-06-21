@@ -2160,7 +2160,6 @@ void product_full_loop(
             candidateBuffer->candidate_ptr->use_intrabc,
             EB_FALSE);
 
-#if SPATIAL_SSE
         if (context_ptr->spatial_sse_full_loop) {
             EbPictureBufferDesc          *input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
             uint32_t input_tu_origin_index = (context_ptr->sb_origin_x + tx_org_x + input_picture_ptr->origin_x) + ((context_ptr->sb_origin_y + tx_org_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y);
@@ -2258,36 +2257,6 @@ void product_full_loop(
             tuFullDistortion[0][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_RESIDUAL], shift);
             tuFullDistortion[0][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_PREDICTION], shift);
         }
-#else
-        // LUMA DISTORTION
-        picture_full_distortion32_bits(
-            context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr,
-            txb_1d_offset,
-            0,
-            candidateBuffer->recon_coeff_ptr,
-            txb_1d_offset,
-            0,
-            context_ptr->blk_geom->tx_width[txb_itr],
-            context_ptr->blk_geom->tx_height[txb_itr],
-            NOT_USED_VALUE,
-            NOT_USED_VALUE,
-            tuFullDistortion[0],
-            NOT_USED_VALUE,
-            NOT_USED_VALUE,
-            y_count_non_zero_coeffs[txb_itr],
-            0,
-            0,
-            COMPONENT_LUMA,
-            asm_type);
-
-        tuFullDistortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
-        tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
-        //assert(context_ptr->three_quad_energy == 0 && context_ptr->cu_stats->size < 64);
-        TxSize    txSize = context_ptr->blk_geom->txsize[0];
-        int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale(txSize)) * 2;
-        tuFullDistortion[0][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_RESIDUAL], shift);
-        tuFullDistortion[0][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_PREDICTION], shift);
-#endif
 
         //LUMA-ONLY
         av1_tu_estimate_coeff_bits(
@@ -3212,7 +3181,6 @@ void full_loop_r(
                 candidateBuffer->candidate_ptr->use_intrabc,
                 EB_FALSE);
 
-#if SPATIAL_SSE
             if (context_ptr->spatial_sse_full_loop) {
                 uint32_t cb_has_coeff = cb_count_non_zero_coeffs[txb_itr] > 0;
 
@@ -3250,7 +3218,6 @@ void full_loop_r(
                         asm_type);
                 }
             }
-#endif
         }
 
         if (component_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
@@ -3309,7 +3276,6 @@ void full_loop_r(
                 candidateBuffer->candidate_ptr->use_intrabc,
                 EB_FALSE);
 
-#if SPATIAL_SSE
             if (context_ptr->spatial_sse_full_loop) {
                 uint32_t cr_has_coeff = cr_count_non_zero_coeffs[txb_itr] > 0;
                 if (cr_has_coeff) {
@@ -3345,7 +3311,6 @@ void full_loop_r(
                         asm_type);
                 }
             }
-#endif
         }
         txb_1d_offset += context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr] * context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr];
 
@@ -3368,9 +3333,7 @@ void cu_full_distortion_fast_tu_mode_r(
     COMPONENT_TYPE                component_type,
     uint64_t                      *cb_coeff_bits,
     uint64_t                      *cr_coeff_bits,
-#if SPATIAL_SSE
     EbBool                         is_full_loop,
-#endif
     EbAsm                          asm_type)
 {
     (void)sb_ptr;
@@ -3417,7 +3380,6 @@ void cu_full_distortion_fast_tu_mode_r(
             countNonZeroCoeffsAll[1] = count_non_zero_coeffs[1][currentTuIndex];
             countNonZeroCoeffsAll[2] = count_non_zero_coeffs[2][currentTuIndex];
 
-#if SPATIAL_SSE
             if (is_full_loop && context_ptr->spatial_sse_full_loop) {
                 EbPictureBufferDesc          *input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
                 uint32_t input_chroma_tu_origin_index = (((context_ptr->sb_origin_y + ((txb_origin_y >> 3) << 3)) >> 1) + (input_picture_ptr->origin_y >> 1)) * input_picture_ptr->stride_cb + (((context_ptr->sb_origin_x + ((txb_origin_x >> 3) << 3)) >> 1) + (input_picture_ptr->origin_x >> 1));
@@ -3511,40 +3473,6 @@ void cu_full_distortion_fast_tu_mode_r(
             tuFullDistortion[2][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[2][DIST_CALC_RESIDUAL], chromaShift);
             tuFullDistortion[2][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[2][DIST_CALC_PREDICTION], chromaShift);
             }
-#else
-            // *Full Distortion (SSE)
-            // *Note - there are known issues with how this distortion metric is currently
-            //    calculated.  The amount of scaling between the two arrays is not
-            //    equivalent.
-
-            picture_full_distortion32_bits(
-                transform_buffer,
-                NOT_USED_VALUE,
-                tuChromaOriginIndex,
-                candidateBuffer->recon_coeff_ptr,
-                NOT_USED_VALUE,
-                tuChromaOriginIndex,
-                NOT_USED_VALUE,
-                NOT_USED_VALUE,
-                context_ptr->blk_geom->tx_width_uv[txb_itr],
-                context_ptr->blk_geom->tx_height_uv[txb_itr],
-                tuFullDistortion[0],
-                tuFullDistortion[1],
-                tuFullDistortion[2],
-                countNonZeroCoeffsAll[0],
-                countNonZeroCoeffsAll[1],
-                countNonZeroCoeffsAll[2],
-                component_type,
-                asm_type);
-
-            TxSize    txSize = context_ptr->blk_geom->txsize_uv[txb_itr];
-            chromaShift = (MAX_TX_SCALE - av1_get_tx_scale(txSize)) * 2;
-            tuFullDistortion[1][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[1][DIST_CALC_RESIDUAL], chromaShift);
-            tuFullDistortion[1][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[1][DIST_CALC_PREDICTION], chromaShift);
-            tuFullDistortion[2][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[2][DIST_CALC_RESIDUAL], chromaShift);
-            tuFullDistortion[2][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[2][DIST_CALC_PREDICTION], chromaShift);
-
-#endif
             //CHROMA-ONLY
             av1_tu_estimate_coeff_bits(
                 context_ptr,

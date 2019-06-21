@@ -131,7 +131,7 @@ extern "C" {
 
 
 
-#define SPATIAL_SSE                       1 // Spatial SSE. Active for M0 only
+
 #define IMPROVE_1D_INTER_DEPTH_DECISION   1
 #define ENABLE_WARPED_MV                  1
 #define CABAC_UP                          1 // Update cabac probabilities. txb CDFs.
