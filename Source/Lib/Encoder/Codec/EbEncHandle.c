@@ -480,12 +480,7 @@ EbErrorType load_default_buffer_configuration_settings(
     if (return_ppcs == -1)
         return EB_ErrorInsufficientResources;
     uint32_t input_pic = (uint32_t)return_ppcs;
-#if BUG_FIX_LOOKAHEAD
     sequence_control_set_ptr->input_buffer_fifo_init_count = input_pic + SCD_LAD + sequence_control_set_ptr->static_config.look_ahead_distance;
-#else
-    sequence_control_set_ptr->input_buffer_fifo_init_count         =
-        input_pic + SCD_LAD + sequence_control_set_ptr->static_config.look_ahead_distance ;
-#endif
     sequence_control_set_ptr->output_stream_buffer_fifo_init_count =
         sequence_control_set_ptr->input_buffer_fifo_init_count + 4;
 
@@ -533,7 +528,6 @@ EbErrorType load_default_buffer_configuration_settings(
     sequence_control_set_ptr->tf_segment_column_count = meSegW;//1;//
     sequence_control_set_ptr->tf_segment_row_count =  meSegH;//1;//
     //#====================== Data Structures and Picture Buffers ======================
-#if BUG_FIX_LOOKAHEAD
     sequence_control_set_ptr->picture_control_set_pool_init_count       = input_pic + SCD_LAD + sequence_control_set_ptr->static_config.look_ahead_distance;
     if (sequence_control_set_ptr->static_config.enable_overlays)
         sequence_control_set_ptr->picture_control_set_pool_init_count = MAX(sequence_control_set_ptr->picture_control_set_pool_init_count,
@@ -541,9 +535,6 @@ EbErrorType load_default_buffer_configuration_settings(
             sequence_control_set_ptr->static_config.look_ahead_distance / (1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 1 +  // number of overlayes in the LAD
             ((1 << sequence_control_set_ptr->static_config.hierarchical_levels) + SCD_LAD) * 2 +// minigop formation in PD + SCD_LAD *(normal pictures + potential pictures )
             (1 << sequence_control_set_ptr->static_config.hierarchical_levels)); // minigop in PM
-#else
-    sequence_control_set_ptr->picture_control_set_pool_init_count       = input_pic + sequence_control_set_ptr->static_config.look_ahead_distance + SCD_LAD;
-#endif
     sequence_control_set_ptr->picture_control_set_pool_init_count_child = MAX(MAX(MIN(3, core_count/2), core_count / 6), 1);
     sequence_control_set_ptr->reference_picture_buffer_init_count       = MAX((uint32_t)(input_pic >> 1),
                                                                           (uint32_t)((1 << sequence_control_set_ptr->static_config.hierarchical_levels) + 2)) +
@@ -921,9 +912,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     uint32_t instance_index;
     uint32_t processIndex;
     uint32_t max_picture_width;
-#if !BUG_FIX_LOOKAHEAD
-    uint32_t maxLookAheadDistance = 0;
-#endif
     EbBool is16bit = (EbBool)(enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
     EbColorFormat color_format = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.encoder_color_format;
 
@@ -972,11 +960,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     EB_MALLOC(EbSystemResource**, enc_handle_ptr->picture_parent_control_set_pool_ptr_array, sizeof(EbSystemResource*)  * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
 
     EB_MALLOC(EbFifo***, enc_handle_ptr->picture_parent_control_set_pool_producer_fifo_ptr_dbl_array, sizeof(EbSystemResource**) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-#if !BUG_FIX_LOOKAHEAD
-    // Updating the picture_control_set_pool_total_count based on the maximum look ahead distance
-    for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index)
-        maxLookAheadDistance = MAX(maxLookAheadDistance, enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.look_ahead_distance);
-#endif
 
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
         // The segment Width & Height Arrays are in units of LCUs, not samples
@@ -994,9 +977,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.max_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_sb_depth;
         inputData.ten_bit_format = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.ten_bit_format;
         inputData.compressed_ten_bit_format = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.compressed_ten_bit_format;
-#if !BUG_FIX_LOOKAHEAD
-        enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->picture_control_set_pool_init_count += maxLookAheadDistance;
-#endif
         inputData.enc_mode = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.enc_mode;
         inputData.speed_control = (uint8_t)enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.speed_control_flag;
         inputData.film_grain_noise_level = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.film_grain_denoise_strength;
