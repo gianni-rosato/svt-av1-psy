@@ -53,7 +53,7 @@ extern "C" {
 
 
 
-#define SPATIAL_SSE_TX_SEARCH             1 // Spatial SSE @ the full loop Tx search
+
 #define ENHANCED_Nx4_4xN_NEW_MV           1 // Nx4 and 4xN MVs to be inherited from the parent block rather than from the 64x64
 #define NEW_NEAREST_NEW_INJECTION         1 // Missing inter candidates NEARETSEST/NEW, NEW/NEARETSEST, NEAR/NEW, NEW/NEAR.
 

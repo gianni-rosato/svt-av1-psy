@@ -2679,7 +2679,6 @@ void product_full_loop_tx_search(
                 continue;
 
 
-#if SPATIAL_SSE_TX_SEARCH
             if (context_ptr->spatial_sse_full_loop) {
                 if (yCountNonZeroCoeffsTemp) {
 
@@ -2767,36 +2766,6 @@ void product_full_loop_tx_search(
                 tuFullDistortion[0][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_RESIDUAL], shift);
                 tuFullDistortion[0][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_PREDICTION], shift);
             }
-#else
-            // LUMA DISTORTION
-            picture_full_distortion32_bits(
-                context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr,
-                tu_origin_index,
-                0,
-                candidateBuffer->recon_coeff_ptr,
-                tu_origin_index,
-                0,
-                context_ptr->blk_geom->bwidth,
-                context_ptr->blk_geom->bheight,
-                context_ptr->blk_geom->bwidth_uv,
-                context_ptr->blk_geom->bheight_uv,
-                tuFullDistortion[0],
-                tuFullDistortion[0],
-                tuFullDistortion[0],
-                yCountNonZeroCoeffsTemp,
-                0,
-                0,
-                COMPONENT_LUMA,
-                asm_type);
-
-
-            tuFullDistortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
-            tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
-
-            int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale(txSize)) * 2;
-            tuFullDistortion[0][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_RESIDUAL], shift);
-            tuFullDistortion[0][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(tuFullDistortion[0][DIST_CALC_PREDICTION], shift);
-#endif
             //LUMA-ONLY
             av1_tu_estimate_coeff_bits(
 #if FIXED_128x128_CONTEXT_UPDATE
