@@ -2109,7 +2109,6 @@ void product_full_loop(
         int32_t cropped_tx_width = MIN(context_ptr->blk_geom->tx_width[tx_depth][txb_itr], sequence_control_set_ptr->seq_header.max_frame_width - (context_ptr->sb_origin_x + tx_org_x));
         int32_t cropped_tx_height = MIN(context_ptr->blk_geom->tx_height[tx_depth][txb_itr], sequence_control_set_ptr->seq_header.max_frame_height - (context_ptr->sb_origin_y + tx_org_y));
 #endif
-#if FIXED_128x128_CONTEXT_UPDATE
         context_ptr->luma_txb_skip_context = 0;
         context_ptr->luma_dc_sign_context = 0;
         get_txb_ctx(
@@ -2124,7 +2123,6 @@ void product_full_loop(
             context_ptr->blk_geom->txsize[tx_depth][txb_itr],
             &context_ptr->luma_txb_skip_context,
             &context_ptr->luma_dc_sign_context);
-#endif
 
         tu_origin_index = tx_org_x + (tx_org_y * candidateBuffer->residual_ptr->stride_y);
         y_tu_coeff_bits = 0;
@@ -2194,13 +2192,8 @@ void product_full_loop(
             candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y],
 #endif
             candidateBuffer,
-#if FIXED_128x128_CONTEXT_UPDATE
             context_ptr->luma_txb_skip_context,
             context_ptr->luma_dc_sign_context,
-#else
-            context_ptr->cu_ptr->luma_txb_skip_context,
-            context_ptr->cu_ptr->luma_dc_sign_context,
-#endif
             candidateBuffer->candidate_ptr->pred_mode,
             candidateBuffer->candidate_ptr->use_intrabc,
             EB_FALSE);
@@ -2388,9 +2381,7 @@ void product_full_loop(
 
         //LUMA-ONLY
         av1_tu_estimate_coeff_bits(
-#if FIXED_128x128_CONTEXT_UPDATE
             context_ptr,
-#endif
 #if CABAC_UP
             0,//allow_update_cdf,
             NULL,//FRAME_CONTEXT *ec_ctx,
@@ -2424,11 +2415,7 @@ void product_full_loop(
 
         //TODO: fix cbf decision
         av1_tu_calc_cost_luma(
-#if FIXED_128x128_CONTEXT_UPDATE
             context_ptr->luma_txb_skip_context,
-#else
-            context_ptr->cu_ptr->luma_txb_skip_context,//this should be updated here.
-#endif
             candidateBuffer->candidate_ptr,
             txb_itr,
 #if ATB_SUPPORT
@@ -2641,13 +2628,8 @@ void product_full_loop_tx_search(
                 BIT_INCREMENT_8BIT,
                 tx_type,
                 candidateBuffer,
-#if FIXED_128x128_CONTEXT_UPDATE
                 context_ptr->luma_txb_skip_context,
                 context_ptr->luma_dc_sign_context,
-#else
-                context_ptr->cu_ptr->luma_txb_skip_context,
-                context_ptr->cu_ptr->luma_dc_sign_context,
-#endif
                 candidateBuffer->candidate_ptr->pred_mode,
                 candidateBuffer->candidate_ptr->use_intrabc,
                 EB_FALSE);
@@ -2754,9 +2736,7 @@ void product_full_loop_tx_search(
             }
             //LUMA-ONLY
             av1_tu_estimate_coeff_bits(
-#if FIXED_128x128_CONTEXT_UPDATE
                 context_ptr,
-#endif
 #if CABAC_UP
                 0,//allow_update_cdf,
                 NULL,//FRAME_CONTEXT *ec_ctx,
@@ -2789,11 +2769,7 @@ void product_full_loop_tx_search(
                 asm_type);
 
             av1_tu_calc_cost_luma(
-#if FIXED_128x128_CONTEXT_UPDATE
                 context_ptr->luma_txb_skip_context,
-#else
-                context_ptr->cu_ptr->luma_txb_skip_context,
-#endif
                 candidateBuffer->candidate_ptr,
                 txb_itr,
 #if ATB_SUPPORT
@@ -3025,9 +3001,7 @@ void encode_pass_tx_search(
         const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
         av1_tu_estimate_coeff_bits(
-#if FIXED_128x128_CONTEXT_UPDATE
             context_ptr->md_context,
-#endif
 #if CABAC_UP
             0,//allow_update_cdf,
             NULL,//FRAME_CONTEXT *ec_ctx,
@@ -3060,11 +3034,7 @@ void encode_pass_tx_search(
             asm_type);
 
         av1_tu_calc_cost_luma(
-#if FIXED_128x128_CONTEXT_UPDATE
             context_ptr->md_context->luma_txb_skip_context,
-#else
-            context_ptr->cu_ptr->luma_txb_skip_context,
-#endif
             candidateBuffer->candidate_ptr,
             context_ptr->txb_itr,
 #if ATB_SUPPORT
@@ -3270,9 +3240,7 @@ void encode_pass_tx_search_hbd(
         const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
         av1_tu_estimate_coeff_bits(
-#if FIXED_128x128_CONTEXT_UPDATE
             context_ptr->md_context,
-#endif
 #if CABAC_UP
             0,//allow_update_cdf,
             NULL,//FRAME_CONTEXT *ec_ctx,
@@ -3305,11 +3273,7 @@ void encode_pass_tx_search_hbd(
             asm_type);
 
         av1_tu_calc_cost_luma(
-#if FIXED_128x128_CONTEXT_UPDATE
             context_ptr->md_context->luma_txb_skip_context,
-#else
-            context_ptr->cu_ptr->luma_txb_skip_context,
-#endif
             candidateBuffer->candidate_ptr,
             context_ptr->txb_itr,
 #if ATB_SUPPORT
@@ -3389,7 +3353,6 @@ void full_loop_r(
         txb_origin_y = context_ptr->blk_geom->tx_org_y[txb_itr];
 #endif
 
-#if FIXED_128x128_CONTEXT_UPDATE
         context_ptr->cb_txb_skip_context = 0;
         context_ptr->cb_dc_sign_context = 0;
         get_txb_ctx(
@@ -3421,7 +3384,6 @@ void full_loop_r(
             &context_ptr->cr_txb_skip_context,
             &context_ptr->cr_dc_sign_context);
 
-#endif
         // NADER - TU
         tu_origin_index = txb_origin_x + txb_origin_y * candidateBuffer->residual_quant_coeff_ptr->stride_y;
         tuCbOriginIndex = (((txb_origin_x >> 3) << 3) + (((txb_origin_y >> 3) << 3) * candidateBuffer->residual_quant_coeff_ptr->stride_cb)) >> 1;
@@ -3978,9 +3940,7 @@ void cu_full_distortion_fast_tu_mode_r(
 #endif
             //CHROMA-ONLY
             av1_tu_estimate_coeff_bits(
-#if FIXED_128x128_CONTEXT_UPDATE
                 context_ptr,
-#endif
 #if CABAC_UP
                 0,//allow_update_cdf,
                 NULL,//FRAME_CONTEXT *ec_ctx,
@@ -4015,11 +3975,7 @@ void cu_full_distortion_fast_tu_mode_r(
             // OMK Useless ? We don't calculate Chroma CBF here
             av1_tu_calc_cost(
                 candidate_ptr,
-#if FIXED_128x128_CONTEXT_UPDATE
                 context_ptr->luma_txb_skip_context,
-#else
-                context_ptr->cu_ptr->luma_txb_skip_context,
-#endif
                 currentTuIndex,
                 count_non_zero_coeffs[0][currentTuIndex],
                 count_non_zero_coeffs[1][currentTuIndex],

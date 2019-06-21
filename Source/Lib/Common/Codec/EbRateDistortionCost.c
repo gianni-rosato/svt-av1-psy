@@ -1562,9 +1562,7 @@ uint64_t av1_inter_fast_cost(
 }
 
 EbErrorType av1_tu_estimate_coeff_bits(
-#if FIXED_128x128_CONTEXT_UPDATE
     struct ModeDecisionContext         *md_context,
-#endif
 #if CABAC_UP
     uint8_t                             allow_update_cdf,
     FRAME_CONTEXT                      *ec_ctx,
@@ -1596,21 +1594,12 @@ EbErrorType av1_tu_estimate_coeff_bits(
     EbErrorType return_error = EB_ErrorNone;
 
     int32_t *coeff_buffer;
-#if FIXED_128x128_CONTEXT_UPDATE
     int16_t  luma_txb_skip_context = md_context->luma_txb_skip_context;
     int16_t  luma_dc_sign_context = md_context->luma_dc_sign_context;
     int16_t  cb_txb_skip_context = md_context->cb_txb_skip_context;
     int16_t  cb_dc_sign_context = md_context->cb_dc_sign_context;
     int16_t  cr_txb_skip_context = md_context->cr_txb_skip_context;
     int16_t  cr_dc_sign_context = md_context->cr_dc_sign_context;
-#else
-    int16_t  luma_txb_skip_context = cu_ptr->luma_txb_skip_context;
-    int16_t  luma_dc_sign_context = cu_ptr->luma_dc_sign_context;
-    int16_t  cb_txb_skip_context = cu_ptr->cb_txb_skip_context;
-    int16_t  cb_dc_sign_context = cu_ptr->cb_dc_sign_context;
-    int16_t  cr_txb_skip_context = cu_ptr->cr_txb_skip_context;
-    int16_t  cr_dc_sign_context = cu_ptr->cr_dc_sign_context;
-#endif
 
     EbBool reducedTransformSetFlag = picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used ? EB_TRUE : EB_FALSE;
 
@@ -2149,11 +2138,6 @@ void coding_loop_context_generation(
     uint32_t                      sb_sz,
     NeighborArrayUnit        *skip_coeff_neighbor_array,
 #endif
-#if !FIXED_128x128_CONTEXT_UPDATE
-    NeighborArrayUnit        *luma_dc_sign_level_coeff_neighbor_array,
-    NeighborArrayUnit        *cb_dc_sign_level_coeff_neighbor_array,
-    NeighborArrayUnit        *cr_dc_sign_level_coeff_neighbor_array,
-#endif
     NeighborArrayUnit        *inter_pred_dir_neighbor_array,
     NeighborArrayUnit        *ref_frame_type_neighbor_array,
     NeighborArrayUnit        *intra_luma_mode_neighbor_array,
@@ -2264,72 +2248,6 @@ void coding_loop_context_generation(
     cu_ptr->skip_coeff_context +=
         (skip_coeff_neighbor_array->top_array[skipCoeffTopNeighborIndex] == (uint8_t)INVALID_NEIGHBOR_DATA) ? 0 :
         (skip_coeff_neighbor_array->top_array[skipCoeffTopNeighborIndex]) ? 1 : 0;
-#endif
-#if !FIXED_128x128_CONTEXT_UPDATE
-    // Skip and Dc sign context generation
-
-    BlockSize plane_bsize = context_ptr->blk_geom->bsize;
-
-    cu_ptr->luma_txb_skip_context = 0;
-
-    cu_ptr->luma_dc_sign_context = 0;
-    cu_ptr->cb_txb_skip_context = 0;
-    cu_ptr->cb_dc_sign_context = 0;
-    cu_ptr->cr_txb_skip_context = 0;
-    cu_ptr->cr_dc_sign_context = 0;
-#if ATB_SUPPORT
-    uint8_t tx_depth = context_ptr->tx_depth = cu_ptr->tx_depth;
-    int32_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];
-#else
-    int32_t txb_count = context_ptr->blk_geom->txb_count;
-#endif
-    int32_t txb_itr = 0;
-
-    for (txb_itr = 0; txb_itr < txb_count; txb_itr++) {
-        get_txb_ctx(                  //SB128_TODO move inside Full loop
-            COMPONENT_LUMA,
-            luma_dc_sign_level_coeff_neighbor_array,
-            cu_origin_x,
-            cu_origin_y,
-            plane_bsize,
-#if ATB_SUPPORT
-            context_ptr->blk_geom->txsize[tx_depth][txb_itr],
-#else
-            context_ptr->blk_geom->txsize[txb_itr],
-#endif
-            &cu_ptr->luma_txb_skip_context,
-            &cu_ptr->luma_dc_sign_context);
-
-        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
-            get_txb_ctx(
-                COMPONENT_CHROMA,
-                cb_dc_sign_level_coeff_neighbor_array,
-                context_ptr->round_origin_x >> 1,
-                context_ptr->round_origin_y >> 1,
-                context_ptr->blk_geom->bsize_uv,
-#if ATB_SUPPORT
-                context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
-#else
-                context_ptr->blk_geom->txsize_uv[txb_itr],
-#endif
-                &cu_ptr->cb_txb_skip_context,
-                &cu_ptr->cb_dc_sign_context);
-            get_txb_ctx(
-                COMPONENT_CHROMA,
-                cr_dc_sign_level_coeff_neighbor_array,
-                context_ptr->round_origin_x >> 1,
-                context_ptr->round_origin_y >> 1,
-                context_ptr->blk_geom->bsize_uv,
-#if ATB_SUPPORT
-                context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
-#else
-                context_ptr->blk_geom->txsize_uv[txb_itr],
-#endif
-                &cu_ptr->cr_txb_skip_context,
-                &cu_ptr->cr_dc_sign_context);
-        }
-    }
-
 #endif
     // Generate reference mode context
 
@@ -2717,11 +2635,7 @@ EbErrorType av1_encode_tu_calc_cost(
     uint64_t yZeroCbfRate;
 
     uint64_t yZeroCbfCost = 0;
-#if FIXED_128x128_CONTEXT_UPDATE
     int16_t  txb_skip_ctx = context_ptr->md_context->luma_txb_skip_context;
-#else
-    int16_t  txb_skip_ctx = cu_ptr->luma_txb_skip_context;
-#endif
     // **Compute distortion
     if (component_mask == PICTURE_BUFFER_DESC_LUMA_MASK || component_mask == PICTURE_BUFFER_DESC_FULL_MASK) {
         // Non Zero Distortion

@@ -249,14 +249,12 @@ extern "C" {
 #endif
         uint32_t                        me_sb_addr;
 
-#if FIXED_128x128_CONTEXT_UPDATE
         int16_t                         luma_txb_skip_context;
         int16_t                         luma_dc_sign_context;
         int16_t                         cb_txb_skip_context;
         int16_t                         cb_dc_sign_context;
         int16_t                         cr_txb_skip_context;
         int16_t                         cr_dc_sign_context;
-#endif
         // Multi-modes signal(s)
         uint8_t                         nfl_level;
         uint8_t                         skip_interpolation_search;
