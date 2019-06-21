@@ -14,9 +14,7 @@
 #include "EbEntropyCoding.h"
 #include "EbRateControlTasks.h"
 #include "EbTime.h"
-#if RC
 #include "EbModeDecisionProcess.h"
-#endif
 
 #define DETAILED_FRAME_OUTPUT 0
 
@@ -83,7 +81,6 @@ static void write_td (
                   TD_SIZE);
     }
 }
-#if  RC
 
 void update_rc_rate_tables(
     PictureControlSet            *picture_control_set_ptr,
@@ -227,7 +224,6 @@ void update_rc_rate_tables(
         }
     }
 }
-#endif
 void* packetization_kernel(void *input_ptr)
 {
     // Context
@@ -359,13 +355,11 @@ void* packetization_kernel(void *input_ptr)
 
         // Send the number of bytes per frame to RC
         picture_control_set_ptr->parent_pcs_ptr->total_num_bits = output_stream_ptr->n_filled_len << 3;
-#if  RC
         queueEntryPtr->total_num_bits = picture_control_set_ptr->parent_pcs_ptr->total_num_bits;
         // update the rate tables used in RC based on the encoded bits of each sb
         update_rc_rate_tables(
             picture_control_set_ptr,
             sequence_control_set_ptr);
-#endif
         queueEntryPtr->av1_frame_type = picture_control_set_ptr->parent_pcs_ptr->av1_frame_type;
         queueEntryPtr->poc = picture_control_set_ptr->picture_number;
         memcpy(&queueEntryPtr->av1_ref_signal, &picture_control_set_ptr->parent_pcs_ptr->av1_ref_signal, sizeof(Av1RpsNode));

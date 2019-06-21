@@ -30,17 +30,10 @@ extern EbErrorType initial_rate_control_reorder_entry_ctor(
 typedef struct HlRateControlHistogramEntry
 {
     uint64_t                          picture_number;
-#if RC
     int16_t                          life_count;
     EbBool                         passed_to_hlrc;
     EbBool                         is_coded;
     uint64_t                       total_num_bits_coded;
-#else
-    int16_t                          life_count;
-    EbBool                         passed_to_hlrc;
-    EbBool                         is_coded;
-    uint64_t                          total_num_bits_coded;
-#endif
     EbObjectWrapper              *parent_pcs_wrapper_ptr;
     EbBool                         end_of_sequence_flag;
     uint64_t                          pred_bits_ref_qp[MAX_REF_QP_NUM];

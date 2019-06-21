@@ -333,7 +333,6 @@ EbErrorType rate_control_context_ctor(
 
     return EB_ErrorNone;
 }
-#if RC
 uint64_t predict_bits(
     EncodeContext                 *encode_context_ptr,
     HlRateControlHistogramEntry   *hl_rate_control_histogram_ptr_temp,
@@ -3091,7 +3090,6 @@ void init_rc(
         }
     }
 }
-#endif
 
 #define MAX_Q_INDEX 255
 #define MIN_Q_INDEX 0
@@ -3132,7 +3130,6 @@ int32_t av1_compute_qdelta(double qstart, double qtarget,
 
     return target_index - start_index;
 }
-#if RC
 // calculate the QP based on the QP scaling
 uint32_t qp_scaling_calc(
     SequenceControlSet *sequence_control_set_ptr,
@@ -3171,7 +3168,6 @@ uint32_t qp_scaling_calc(
 
     return scaled_qp;
 }
-#endif
 typedef struct {
     // Rate targetting variables
     int base_frame_target;  // A baseline frame target before adjustment

@@ -34,9 +34,7 @@ extern "C" {
         uint64_t                                ref_poc_array[7];
 #endif
         uint64_t                                 poc;
-#if RC
         uint64_t                                total_num_bits;
-#endif
         FrameType                            av1_frame_type;
         Av1RpsNode                          av1_ref_signal;
         EbBool                               show_frame;
