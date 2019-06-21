@@ -117,7 +117,7 @@ extern "C" {
 #define M9_FULL_LOOP_ESCAPE               1 // Enhanced full loop escape
 #define M9_HME                            1 // VP9 4K HME, HME (L0 only 48x32)
 #define M9_ME                             1 // VP9 4K ME, ME (16x9)
-#define M9_SUBPEL_SELECTION               1
+
 
 
 

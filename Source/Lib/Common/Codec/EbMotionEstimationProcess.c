@@ -198,7 +198,6 @@ EbErrorType signal_derivation_me_kernel_oq(
     }
 #endif
 
-#if M9_SUBPEL_SELECTION
     // Set fractional search model
     // 0: search all blocks
     // 1: selective based on Full-Search SAD & MV.
@@ -211,7 +210,6 @@ EbErrorType signal_derivation_me_kernel_oq(
     }
     else
         context_ptr->me_context_ptr->fractional_search_model = 2;
-#endif
 
 #if USE_SAD_HME
     // HME Search Method

@@ -423,9 +423,7 @@ extern "C" {
         uint8_t   fractional_search_method;
         EbBool                        fractional_search64x64;
 
-#if M9_SUBPEL_SELECTION
         uint8_t                       fractional_search_model;
-#endif
         uint8_t                       hme_search_method;
         uint8_t                       me_search_method;
         // ME
