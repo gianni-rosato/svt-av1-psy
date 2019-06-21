@@ -122,10 +122,6 @@ extern "C" {
         NeighborArrayUnit            *ref_frame_type_neighbor_array;
         NeighborArrayUnit            *leaf_partition_neighbor_array;
         NeighborArrayUnit32          *interpolation_type_neighbor_array;
-#if !OPT_LOSSLESS_0
-        // TMVP
-        EbReferenceObject            *reference_object_write_ptr;
-#endif
 
         // Transform and Quantization Buffers
         EbTransQuantBuffers          *trans_quant_buffers_ptr;
@@ -160,19 +156,12 @@ extern "C" {
         // Entropy Coder
         EntropyCoder                 *coeff_est_entropy_coder_ptr;
         MdEncPassCuData               md_ep_pipe_sb[BLOCK_MAX_COUNT_SB_128];
-#if !OPT_LOSSLESS_0
-        uint8_t                         group_of8x8_blocks_count;
-        uint8_t                         group_of16x16_blocks_count;
-#endif
         uint8_t                         pu_itr;
         uint8_t                         cu_size_log2;
         uint8_t                         best_candidate_index_array[MAX_NFL + 2];
         uint8_t                         sorted_candidate_index_array[MAX_NFL];
         uint16_t                        cu_origin_x;
         uint16_t                        cu_origin_y;
-#if !OPT_LOSSLESS_0
-        uint64_t                        chroma_weight;
-#endif
         uint8_t                         sb_sz;
         uint32_t                        sb_origin_x;
         uint32_t                        sb_origin_y;
@@ -183,11 +172,6 @@ extern "C" {
         uint16_t                        pu_width;
         uint16_t                        pu_height;
         EbPfMode                        pf_md_mode;
-#if !OPT_LOSSLESS_0
-        unsigned                        luma_intra_ref_samples_gen_done      : 2; // only 1 bit is needed, but used two for rounding
-        unsigned                        chroma_intra_ref_samples_gen_done    : 2; // only 1 bit is needed, but used two for rounding
-        unsigned                        generate_mvp                         : 2; // only 1 bit is needed, but used two for rounding
-#endif
         uint32_t                        full_recon_search_count;
         EbBool                          cu_use_ref_src_flag;
         uint16_t                        qp_index;

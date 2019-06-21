@@ -497,14 +497,6 @@ static void Av1EncodeLoop(
     const uint32_t coeff1dOffsetChroma = context_ptr->coded_area_sb_uv;
     UNUSED(coeff1dOffsetChroma);
 
-#if !OPT_LOSSLESS_0
-    //uint8_t enable_contouring_qc_update_flag;
-    //enable_contouring_qc_update_flag = DeriveContouringClass(
-    //    sb_ptr->picture_control_set_ptr->parent_pcs_ptr,
-    //    sb_ptr->index,
-    //    cu_ptr->leaf_index) && (cu_ptr->qp < sb_ptr->picture_control_set_ptr->picture_qp);
-#endif
-
     context_ptr->three_quad_energy = 0;
     //**********************************
     // Luma

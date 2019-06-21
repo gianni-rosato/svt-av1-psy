@@ -73,9 +73,7 @@ const EbAv1FullCostFunc   Av1ProductFullCostFuncTable[3] =
 * Update Recon Samples Neighbor Arrays
 ***************************************************/
 void mode_decision_update_neighbor_arrays(
-#if OPT_LOSSLESS_0
     PictureControlSet     *picture_control_set_ptr,
-#endif
     ModeDecisionContext   *context_ptr,
     uint32_t               index_mds,
     EbBool                 intraMdOpenLoop,
@@ -97,24 +95,13 @@ void mode_decision_update_neighbor_arrays(
     uint8_t chroma_mode = (uint8_t)context_ptr->cu_ptr->prediction_unit_array->intra_chroma_mode;
     uint8_t skip_flag = (uint8_t)context_ptr->cu_ptr->skip_flag;
 
-#if !OPT_LOSSLESS_0
-    EbBool availableCoeff =
-        (context_ptr->cu_ptr->transform_unit_array[0].y_has_coeff ||
-            context_ptr->cu_ptr->transform_unit_array[0].v_has_coeff ||
-            context_ptr->cu_ptr->transform_unit_array[0].u_has_coeff) ? EB_TRUE : EB_FALSE;
-
-    uint8_t skipCoeff = !availableCoeff;
-#endif
-
     context_ptr->mv_unit.pred_direction = (uint8_t)(context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].inter_pred_direction_index);
     context_ptr->mv_unit.mv[REF_LIST_0].mv_union = context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].mv[REF_LIST_0].mv_union;
     context_ptr->mv_unit.mv[REF_LIST_1].mv_union = context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].mv[REF_LIST_1].mv_union;
     uint8_t                    inter_pred_direction_index = (uint8_t)context_ptr->cu_ptr->prediction_unit_array->inter_pred_direction_index;
     uint8_t                    ref_frame_type = (uint8_t)context_ptr->cu_ptr->prediction_unit_array[0].ref_frame_type;
 
-#if OPT_LOSSLESS_0
     if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level != IT_SEARCH_OFF)
-#endif
     neighbor_array_unit_mode_write32(
         context_ptr->interpolation_type_neighbor_array,
         context_ptr->cu_ptr->interp_filters,
@@ -147,9 +134,7 @@ void mode_decision_update_neighbor_arrays(
             bwdith,
             bheight,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-#if OPT_LOSSLESS_0
         if (picture_control_set_ptr->parent_pcs_ptr->skip_sub_blks)
-#endif
         // Intra Luma Mode Update
         neighbor_array_unit_mode_write(
             context_ptr->leaf_depth_neighbor_array,
@@ -217,18 +202,6 @@ void mode_decision_update_neighbor_arrays(
         bwdith,
         bheight,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-#if !OPT_LOSSLESS_0
-    //  Update skip_coeff_neighbor_array,
-    neighbor_array_unit_mode_write(
-        context_ptr->skip_coeff_neighbor_array,
-        &skipCoeff,
-        origin_x,
-        origin_y,
-        bwdith,
-        bheight,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-#endif
 
     if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
         //  Update chroma CB cbf and Dc context
@@ -559,9 +532,7 @@ void md_update_all_neighbour_arrays(
     context_ptr->cu_ptr = &context_ptr->md_cu_arr_nsq[lastCuIndex_mds];
 
     mode_decision_update_neighbor_arrays(
-#if OPT_LOSSLESS_0
         picture_control_set_ptr,
-#endif
         context_ptr,
         lastCuIndex_mds,
         picture_control_set_ptr->intra_md_open_loop_flag,
@@ -678,7 +649,6 @@ void set_nfl(
     ASSERT(context_ptr->full_recon_search_count <= MAX_NFL);
 }
 
-#if OPT_LOSSLESS_0
 #define TOTAL_SQ_BLOCK_COUNT 341
 int sq_block_index[TOTAL_SQ_BLOCK_COUNT] = {
     0,
@@ -1046,47 +1016,6 @@ void init_sq_non4_block(
         context_ptr->md_local_cu_unit[sq_block_index[blk_idx]].tested_cu_flag = EB_FALSE;
     }
 }
-#else
-//*************************//
-// SetNmm
-// Based on the MDStage and the encodeMode
-// the NMM candidates numbers are set
-//*************************//
-void Initialize_cu_data_structure(
-    ModeDecisionContext   *context_ptr,
-    SequenceControlSet    *sequence_control_set_ptr,
-    LargestCodingUnit        *sb_ptr,
-    const MdcLcuData        * const mdcResultTbPtr){
-    UNUSED(*sequence_control_set_ptr);
-    UNUSED(*sb_ptr);
-    UNUSED(*mdcResultTbPtr);
-    uint32_t blk_idx = 0;
-
-    blk_idx = 0;
-    do {
-        const BlockGeom * blk_geom = get_blk_geom_mds(blk_idx);
-
-#if RED_CU
-        context_ptr->md_local_cu_unit[blk_idx].avail_blk_flag = EB_FALSE;
-#endif
-        if (blk_geom->shape == PART_N)
-        {
-            context_ptr->md_cu_arr_nsq[blk_idx].split_flag = EB_TRUE;  //this means that all the CUs at init time are not finals. only idd makes them final.
-                                                                     //MDC would give us the split flag info for all the CUs, and we store in cu_ptr at the atrt of MD.
-                                                                     //splitFalg=1 : to be tested CU.
-                                                                     //split_flag=0 : to be tested CU + the CU could a final depth(smallest CU) or an invalid CU(out of pic bound)
-
-            context_ptr->md_cu_arr_nsq[blk_idx].part = PARTITION_SPLIT;
-
-            context_ptr->md_local_cu_unit[blk_idx].tested_cu_flag = EB_FALSE;
-            //TODO: try to move this whole function to init
-            context_ptr->md_cu_arr_nsq[blk_idx].mds_idx = blk_geom->blkidx_mds;
-        }
-
-        ++blk_idx;
-    } while (blk_idx < sequence_control_set_ptr->max_block_cnt);
-}
-#endif
 static INLINE TranHigh check_range(TranHigh input, int32_t bd) {
     // AV1 TX case
     // - 8 bit: signed 16 bit integer
@@ -1458,11 +1387,6 @@ void ProductCodingLoopInitFastLoop(
     NeighborArrayUnit        *leaf_partition_neighbor_array
 )
 {
-#if !OPT_LOSSLESS_0
-    // Keep track of the SB Ptr
-    context_ptr->luma_intra_ref_samples_gen_done = EB_FALSE;
-    context_ptr->chroma_intra_ref_samples_gen_done = EB_FALSE;
-#endif
     context_ptr->tx_depth = context_ptr->cu_ptr->tx_depth = 0;
     // Generate Split, Skip and intra mode contexts for the rate estimation
     coding_loop_context_generation(
@@ -1485,27 +1409,6 @@ void ProductCodingLoopInitFastLoop(
         context_ptr->fast_cost_array[index] = MAX_CU_COST;
     return;
 }
-#if !OPT_LOSSLESS_0
-uint64_t ProductGenerateChromaWeight(
-    PictureControlSet                 *picture_control_set_ptr,
-    uint32_t                               qp)
-{
-    uint64_t weight;
-
-    if (picture_control_set_ptr->slice_type == I_SLICE)
-        weight = chroma_weight_factor_ld[qp];
-    else {
-        // Random Access
-        if (picture_control_set_ptr->temporal_layer_index == 0)
-            weight = chroma_weight_factor_ra[qp];
-        else if (picture_control_set_ptr->temporal_layer_index < 3)
-            weight = chroma_weight_factor_ra_qp_scaling_l1[qp];
-        else
-            weight = chroma_weight_factor_ra_qp_scaling_l3[qp];
-    }
-    return (weight << 1);
-}
-#endif
 
 void ProductMdFastPuPrediction(
     PictureControlSet                 *picture_control_set_ptr,
@@ -5532,27 +5435,10 @@ EB_EXTERN EbErrorType mode_decision_sb(
 
     uint32_t                             cuIdx;
     ModeDecisionCandidateBuffer       *bestCandidateBuffers[5];
-#if !OPT_LOSSLESS_0
-    // CTB merge
-    uint32_t                               lastCuIndex;
-#endif
     // Pre Intra Search
-#if !OPT_LOSSLESS_0
-    const uint32_t                         sb_height = MIN(BLOCK_SIZE_64, (uint32_t)(sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y));
-#endif
     uint32_t                               leaf_count = mdcResultTbPtr->leaf_count;
     const EbMdcLeafData *const           leaf_data_array = mdcResultTbPtr->leaf_data_array;
-#if !OPT_LOSSLESS_0
-    UNUSED(sb_height);
-    UNUSED(asm_type);
-    UNUSED(lastCuIndex);
-#endif
     context_ptr->sb_ptr = sb_ptr;
-#if !OPT_LOSSLESS_0
-    context_ptr->group_of8x8_blocks_count = 0;
-    context_ptr->group_of16x16_blocks_count = 0;
-#endif
-#if OPT_LOSSLESS_0
     if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode <= PIC_SQ_DEPTH_MODE) {
         init_nsq_block(
             sequence_control_set_ptr,
@@ -5562,13 +5448,6 @@ EB_EXTERN EbErrorType mode_decision_sb(
         init_sq_non4_block(
             context_ptr);
     }
-#else
-    Initialize_cu_data_structure(
-        context_ptr,
-        sequence_control_set_ptr,
-        sb_ptr,
-        mdcResultTbPtr);
-#endif
     // Mode Decision Neighbor Arrays
     context_ptr->intra_luma_mode_neighbor_array = picture_control_set_ptr->md_intra_luma_mode_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
     context_ptr->intra_chroma_mode_neighbor_array = picture_control_set_ptr->md_intra_chroma_mode_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
@@ -5595,13 +5474,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
     cuIdx = 0;  //index over mdc array
 
     uint32_t blk_idx_mds = 0;
-#if !OPT_LOSSLESS_0
-    EbBool all_d1_blocks_done = 0;
-#endif
     uint32_t  d1_blocks_accumlated = 0;
-#if !OPT_LOSSLESS_0
-    UNUSED(all_d1_blocks_done);
-#endif
 
     uint8_t skip_sub_blocks;
     do {

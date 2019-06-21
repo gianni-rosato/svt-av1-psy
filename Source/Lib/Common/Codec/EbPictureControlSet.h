@@ -13838,11 +13838,6 @@ extern "C" {
         NeighborArrayUnit                  *ep_luma_dc_sign_level_coeff_neighbor_array;
         NeighborArrayUnit                  *ep_cr_dc_sign_level_coeff_neighbor_array;
         NeighborArrayUnit                  *ep_cb_dc_sign_level_coeff_neighbor_array;
-#if !OPT_LOSSLESS_0
-        // AMVP & MV Merge Neighbor Arrays
-        NeighborArrayUnit                  *amvp_mv_merge_mv_neighbor_array;
-        NeighborArrayUnit                  *amvp_mv_merge_mode_type_neighbor_array;
-#endif
         // Entropy Coding Neighbor Arrays
         NeighborArrayUnit                  *mode_type_neighbor_array;
         NeighborArrayUnit                  *partition_context_neighbor_array;

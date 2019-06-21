@@ -123,7 +123,7 @@ extern "C" {
 
 
 
-#define OPT_LOSSLESS_0                    1
+
 
 
 #define UNPACK_REF_POST_EP                1
@@ -160,7 +160,6 @@ extern "C" {
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
 #define BLK_SKIP_DECISION                 1 // For now enabled for all mode. to be evaluated. Lossless optimization can be performed.
-#if OPT_LOSSLESS_0
 #define CDEF_OFF_NON_REF                  1
 #if BLK_SKIP_DECISION
 #define REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY  0
@@ -168,7 +167,6 @@ extern "C" {
 #define REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY  1
 #endif
 #define PF_N2_SUPPORT                     1
-#endif
 
 
 #define TRELLIS_SKIP                                    0 // Kept as still under testing
@@ -2987,15 +2985,8 @@ typedef enum EbPictureDepthMode
     PIC_ALL_C_DEPTH_MODE        = 1, // ALL sq and nsq with control :  SB size -> 4x4
     PIC_SQ_DEPTH_MODE           = 2, // ALL sq:  SB size -> 4x4
     PIC_SQ_NON4_DEPTH_MODE      = 3, // SQ:  SB size -> 8x8
-#if OPT_LOSSLESS_0
     PIC_OPEN_LOOP_DEPTH_MODE = 4, // Early Inter Depth Decision:  SB size -> 8x8
     PIC_SB_SWITCH_DEPTH_MODE = 5  // Adaptive Depth Partitioning
-#else
-    PIC_BDP_DEPTH_MODE          = 4,
-    PIC_LIGHT_BDP_DEPTH_MODE    = 5,
-    PIC_SB_SWITCH_DEPTH_MODE    = 6,
-    PIC_OPEN_LOOP_DEPTH_MODE    = 7
-#endif
 } EbPictureDepthMode;
 
 #define EB_SB_DEPTH_MODE              uint8_t

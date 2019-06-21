@@ -243,46 +243,6 @@ EbErrorType MdcRefinement(
 
     return return_error;
 }
-#if !OPT_LOSSLESS_0
-/*******************************************
-Derive the contouring class
-If (AC energy < 32 * 32) then apply aggressive action (Class 1),
-else if (AC energy < 32 * 32 * 1.6) OR (32 * 32 * 3.5 < AC energy < 32 * 32 * 4.5 AND non-8x8) then moderate action (Class 2),
-else no action
-*******************************************/
-uint8_t derive_contouring_class(
-    PictureParentControlSet   *parent_pcs_ptr,
-    uint16_t                       sb_index,
-    uint8_t                        leaf_index)
-{
-    uint8_t contouringClass = 0;
-
-    SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-
-    if (parent_pcs_ptr->is_sb_homogeneous_over_time[sb_index]) {
-        if (leaf_index > 0) {
-            SbParams            *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-            if (sb_params->is_edge_sb) {
-                if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1)
-                    contouringClass = 2;
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2)
-                    contouringClass = 3;
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < (ANTI_CONTOURING_TH_1 + ANTI_CONTOURING_TH_2))
-                    contouringClass = 3;
-            }
-            else {
-                if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_0)
-                    contouringClass = 1;
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1)
-                    contouringClass = 2;
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2)
-                    contouringClass = 3;
-            }
-        }
-    }
-    return(contouringClass);
-}
-#endif
 
 void RefinementPredictionLoop(
     SequenceControlSet                   *sequence_control_set_ptr,
