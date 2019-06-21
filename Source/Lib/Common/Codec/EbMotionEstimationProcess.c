@@ -179,18 +179,6 @@ EbErrorType signal_derivation_me_kernel_oq(
         else
             context_ptr->me_context_ptr->fractional_search64x64 = EB_TRUE;
 
-#if M9_FRAC_ME_SEARCH_64x64
-    //if (picture_control_set_ptr->sc_content_detected)
-    //    context_ptr->fractional_search64x64 = EB_TRUE;
-    //else
-    {
-        if (picture_control_set_ptr->enc_mode <= ENC_M8)
-            context_ptr->me_context_ptr->fractional_search64x64 = EB_TRUE;
-        else
-            context_ptr->me_context_ptr->fractional_search64x64 = EB_FALSE;
-    }
-#endif
-
     // Set fractional search model
     // 0: search all blocks
     // 1: selective based on Full-Search SAD & MV.
