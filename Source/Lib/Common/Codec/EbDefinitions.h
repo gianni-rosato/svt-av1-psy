@@ -71,7 +71,7 @@ extern "C" {
 #define ATB_RATE                          1 // Tranform partitioning tranform depth rate estimation
 #define ATB_TX_TYPE_SUPPORT_PER_TU        1 // Added the ability to signal Tx type per tranform block
 #define ATB_DC_CONTEXT_SUPPORT_1          1 // Added the ability to signal DC level per tranform block
-#define ATB_DC_CONTEXT_SUPPORT_2          1 // Added the ability to update DC context @ tranform block basis for only INTRA partitioning (128x128 not yet addressed)
+
 #if ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
 
 #endif

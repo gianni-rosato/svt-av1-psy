@@ -462,7 +462,6 @@ EbErrorType picture_control_set_ctor(
 
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-#if ATB_DC_CONTEXT_SUPPORT_2
         // for each 4x4
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth],
@@ -475,7 +474,6 @@ EbErrorType picture_control_set_ctor(
 
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-#endif
         // for each 4x4
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth],
