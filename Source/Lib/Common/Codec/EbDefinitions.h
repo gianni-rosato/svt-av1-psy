@@ -233,7 +233,7 @@ extern "C" {
 
 //
 
-#define FIX_ORDER_HINT            1 //fix order hint usage.
+
 #define M8_CDEF_DEBUG             0 //Keep OFF Debug flag ofr M8
 #define MRP_M0_ONLY               0 // Enable MRP for Base only for M1-M9
 #define NO_CFG_FILE               1 //allocate ME results for 209 PUs
