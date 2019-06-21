@@ -114,7 +114,7 @@ extern "C" {
 
 #if M9_SETTINGS
 // Adopted
-#define M9_FULL_LOOP_ESCAPE               1 // Enhanced full loop escape
+
 
 
 

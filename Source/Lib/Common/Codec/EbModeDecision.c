@@ -565,7 +565,6 @@ void sort_fast_loop_candidates(
         }
     }
 
-#if M9_FULL_LOOP_ESCAPE
     // fl escape level 2: inter then intra
     for (i = 0; i < fullReconCandidateCount; ++i)
         sorted_candidate_index_array[i] = best_candidate_index_array[i];
@@ -580,24 +579,6 @@ void sort_fast_loop_candidates(
     }
     // tx search
     *ref_fast_cost = *(buffer_ptr_array[sorted_candidate_index_array[0]]->fast_cost_ptr);
-#else
-    // tx search
-    for (i = 0; i < fullReconCandidateCount; i++) {
-        if (*(buffer_ptr_array[i]->fast_cost_ptr) < *ref_fast_cost)
-            *ref_fast_cost = *(buffer_ptr_array[i]->fast_cost_ptr);
-    }
-    for (i = 0; i < MAX_NFL; ++i)
-        sorted_candidate_index_array[i] = best_candidate_index_array[i];
-    for (i = 0; i < fullReconCandidateCount - 1; ++i) {
-        for (j = i + 1; j < fullReconCandidateCount; ++j) {
-            if (*(buffer_ptr_array[j]->fast_cost_ptr) < *(buffer_ptr_array[i]->fast_cost_ptr)) {
-                index = sorted_candidate_index_array[i];
-                sorted_candidate_index_array[i] = (uint8_t)sorted_candidate_index_array[j];
-                sorted_candidate_index_array[j] = (uint8_t)index;
-            }
-        }
-    }
-#endif
 }
 
 #define BIPRED_3x3_REFINMENT_POSITIONS 8

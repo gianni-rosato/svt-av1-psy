@@ -3800,11 +3800,7 @@ void AV1PerformFullLoop(
     ModeDecisionCandidate                *candidate_ptr;
 
     for (fullLoopCandidateIndex = 0; fullLoopCandidateIndex < fullCandidateTotalCount; ++fullLoopCandidateIndex) {
-#if M9_FULL_LOOP_ESCAPE
         candidateIndex = (context_ptr->full_loop_escape == 2) ? context_ptr->sorted_candidate_index_array[fullLoopCandidateIndex]: context_ptr->best_candidate_index_array[fullLoopCandidateIndex];
-#else
-        candidateIndex = context_ptr->best_candidate_index_array[fullLoopCandidateIndex];
-#endif
         uint8_t best_fastLoop_candidate_index = context_ptr->sorted_candidate_index_array[fullLoopCandidateIndex];
 
         // initialize TU Split
@@ -5391,11 +5387,7 @@ void md_encode_block(
             context_ptr->blk_geom->bheight,
             candidate_buffer_ptr_array,
             context_ptr->full_recon_search_count,
-#if M9_FULL_LOOP_ESCAPE
             (context_ptr->full_loop_escape == 2) ? context_ptr->sorted_candidate_index_array : context_ptr->best_candidate_index_array,
-#else
-            context_ptr->best_candidate_index_array,
-#endif
             &best_intra_mode);
 
         candidateBuffer = candidate_buffer_ptr_array[candidateIndex];
