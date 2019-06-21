@@ -252,7 +252,7 @@ extern "C" {
 #define NFL_IT_TH                                       2 // To be tuned
 #define NSQ_TAB_SIZE                                    6
 #define AOM_INTERP_EXTEND 4
-#define MRP_DISABLE_ADDED_CAND_M1                        0
+
 
 #define EIGTH_PEL_MV                                    0
 #define DISABLE_NSQ_TABLE_FOR_M0                        1 // On wil disable the nsq_table ordering algrithm. This is a temporarily adoption that will be disable once we comeup with a better ordreing mecanisme when MRP i ON.
