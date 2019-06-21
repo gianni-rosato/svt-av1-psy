@@ -110,9 +110,8 @@ extern "C" {
 
 
 // M9 settings toward 4K 60 fps
-#define M9_SETTINGS                       1
 
-#if M9_SETTINGS
+
 // Adopted
 
 
@@ -161,7 +160,6 @@ extern "C" {
 #define RED_CU_DEBUG                      0 // Turn off some features known to not work with redudant CUs
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
-#endif
 
 #define BLK_SKIP_DECISION                 1 // For now enabled for all mode. to be evaluated. Lossless optimization can be performed.
 #if OPT_LOSSLESS_0
