@@ -118,7 +118,7 @@ extern "C" {
 #define M9_HME                            1 // VP9 4K HME, HME (L0 only 48x32)
 #define M9_ME                             1 // VP9 4K ME, ME (16x9)
 #define M9_SUBPEL_SELECTION               1
-#define M9_CU_8x8                         1
+
 
 
 
