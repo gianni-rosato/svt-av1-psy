@@ -894,7 +894,9 @@ void* picture_manager_kernel(void *input_ptr)
                                 }
                             }
                         }
-
+#if INCOMPLETE_SB_FIX
+                        cm->mi_stride = ChildPictureControlSetPtr->mi_stride;
+#endif
                         // Picture edges
                         ConfigurePictureEdges(entrySequenceControlSetPtr, ChildPictureControlSetPtr);
 

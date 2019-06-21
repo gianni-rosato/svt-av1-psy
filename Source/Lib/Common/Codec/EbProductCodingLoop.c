@@ -3316,8 +3316,11 @@ uint64_t estimate_tx_size_bits(
     BlockSize bsize = blk_geom->bsize;
     const int32_t bw = mi_size_wide[bsize];
     const int32_t bh = mi_size_high[bsize];
+#if INCOMPLETE_SB_FIX
+    uint32_t mi_stride = pcsPtr->mi_stride;
+#else
     uint32_t mi_stride = pcsPtr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
-
+#endif
     set_mi_row_col(
         pcsPtr,
         xd,
@@ -3427,6 +3430,9 @@ void perform_intra_tx_partitioning(
             context_ptr->luma_txb_skip_context = 0;
             context_ptr->luma_dc_sign_context = 0;
             get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                sequence_control_set_ptr,
+#endif
                 COMPONENT_LUMA,
                 context_ptr->tx_search_luma_dc_sign_level_coeff_neighbor_array,
                 context_ptr->sb_origin_x + tx_org_x,
@@ -3925,6 +3931,9 @@ void perform_intra_tx_partitioning(
             context_ptr->luma_txb_skip_context = 0;
             context_ptr->luma_dc_sign_context = 0;
             get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                sequence_control_set_ptr,
+#endif
                 COMPONENT_LUMA,
                 picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
                 context_ptr->sb_origin_x + tx_org_x,
@@ -4319,7 +4328,17 @@ void AV1PerformFullLoop(
         }
 #endif
 #if ATB_MD
+#if INCOMPLETE_SB_FIX
+        uint8_t end_tx_depth = 0;
+        // end_tx_depth set to zero for blocks which go beyond the picture boundaries
+        if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x + context_ptr->blk_geom->bwidth < picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_width &&
+            context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y + context_ptr->blk_geom->bheight < picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_height))
+            end_tx_depth = get_end_tx_depth(context_ptr, picture_control_set_ptr->parent_pcs_ptr->atb_mode, candidate_ptr, context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+        else
+            end_tx_depth = 0;
+#else
         uint8_t end_tx_depth = get_end_tx_depth(context_ptr, picture_control_set_ptr->parent_pcs_ptr->atb_mode, candidate_ptr, context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+#endif
         // Transform partitioning path (INTRA Luma)
         if (picture_control_set_ptr->parent_pcs_ptr->atb_mode && end_tx_depth && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->use_intrabc == 0) {
             perform_intra_tx_partitioning(
@@ -6303,19 +6322,38 @@ EB_EXTERN EbErrorType mode_decision_sb(
         // Initialize tx_depth
         cu_ptr->tx_depth = 0;
 #endif
+#if  INCOMPLETE_SB_FIX
+        if (picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[cu_ptr->mds_idx]) {
+            md_encode_block(
+                sequence_control_set_ptr,
+                picture_control_set_ptr,
+                context_ptr,
+                ss_mecontext,
+                &skip_sub_blocks,
+                lcuAddr,
+                bestCandidateBuffers);
+
+        }
+        else {
+            // If the block is out of the boundaries, md is not performed.
+            // - For square blocks, since the blocks can be further splitted, they are considered in d2_inter_depth_block_decision with cost of zero.
+            // - For non square blocks, since they can not be splitted further the cost is set to a large value (MAX_MODE_COST >> 4) to make sure they are not selected.
+            //   The value is set to MAX_MODE_COST >> 4 to make sure there is not overflow when adding costs.
+            if (context_ptr->blk_geom->shape != PART_N)
+                context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost = (MAX_MODE_COST >> 4);
+            else
+                context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost = 0;
+        }
+#else
         md_encode_block(
             sequence_control_set_ptr,
             picture_control_set_ptr,
             context_ptr,
             ss_mecontext,
-#if M8_SKIP_BLK
             &skip_sub_blocks,
-#else
-            0xFFFFFFFF,
-#endif
             lcuAddr,
             bestCandidateBuffers);
-
+#endif
         if (blk_geom->nsi + 1 == blk_geom->totns)
             d1_non_square_block_decision(context_ptr);
 
