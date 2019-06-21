@@ -236,7 +236,7 @@ extern "C" {
 
 
 
-#define NO_CFG_FILE               1 //allocate ME results for 209 PUs
+
 #define NO_UNI                    1
 #define MRP_MEM_OPT               1
 #define MRP_FLAG                  1
