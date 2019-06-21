@@ -180,21 +180,11 @@ EbErrorType enc_dec_context_ctor(
             return EB_ErrorInsufficientResources;
     }
 
-    // Intra Reference Samples
-    return_error = intra_reference_samples_ctor(&context_ptr->intra_ref_ptr);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    context_ptr->intra_ref_ptr16 = (IntraReference16bitSamples *)EB_NULL;
-    if (is16bit) {
-        return_error = intra_reference16bit_samples_ctor(&context_ptr->intra_ref_ptr16);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-    }
     // Mode Decision Context
     return_error = mode_decision_context_ctor(&context_ptr->md_context, color_format, 0, 0);
-
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
+
     // Second Stage ME Context
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;

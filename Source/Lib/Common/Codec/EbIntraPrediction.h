@@ -98,12 +98,6 @@ extern "C" {
         EbBool                  left_ready_flag_cr;
     } IntraReference16bitSamples;
 
-    extern EbErrorType intra_reference_samples_ctor(
-        IntraReferenceSamples **context_dbl_ptr);
-
-    extern EbErrorType intra_reference16bit_samples_ctor(
-        IntraReference16bitSamples **context_dbl_ptr);
-
 #define TOTAL_LUMA_MODES                   35
 #define TOTAL_CHROMA_MODES                  5
 #define TOTAL_INTRA_GROUPS                  5

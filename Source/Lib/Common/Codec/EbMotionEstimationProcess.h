@@ -19,7 +19,6 @@ typedef struct MotionEstimationContext
 {
     EbFifo                        *picture_decision_results_input_fifo_ptr;
     EbFifo                        *motion_estimation_results_output_fifo_ptr;
-    IntraReferenceSamplesOpenLoop *intra_ref_ptr;
     MeContext                     *me_context_ptr;
 
     uint8_t                       *indexTable0;

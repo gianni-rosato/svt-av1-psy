@@ -227,7 +227,13 @@ extern "C" {
         uint64_t                                pred_count[5];
         uint64_t                                pred1_nfl_count[5];
 #endif
-
+#if INCOMPLETE_SB_FIX
+        /* over_boundary_block (mm-signal; 0: No over boundary blk allowed, 1: over boundary blk allowed)
+        *
+        * Default is 0.
+        * To enable when md_skip_blk is on*/
+        uint8_t                                 over_boundary_block_mode;
+#endif
         SeqHeader                               seq_header;
     } SequenceControlSet;
 
