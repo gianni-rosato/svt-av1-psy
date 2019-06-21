@@ -2204,11 +2204,7 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
 
     //0: NSQ absent
     //1: NSQ present
-#if REDUCE_BLOCK_COUNT_ME
     sequence_control_set_ptr->nsq_present = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
-#else
-    sequence_control_set_ptr->nsq_present = 1;
-#endif
     // Set down-sampling method     Settings
     // 0                            0: filtering
     // 1                            1: decimation

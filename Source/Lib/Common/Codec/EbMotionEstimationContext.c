@@ -129,11 +129,7 @@ EbErrorType me_context_ctor(
 #if MEMORY_FOOTPRINT_OPT_ME_MV
     EB_MALLOC(MotionEstimationTierZero *, (*object_dbl_ptr)->me_candidate, sizeof(MotionEstimationTierZero) * ((mrp_mode == 0) ? ME_RES_CAND_MRP_MODE_0 : ME_RES_CAND_MRP_MODE_1), EB_N_PTR);
 #endif
-#if REDUCE_BLOCK_COUNT_ME
     for (pu_index = 0; pu_index < (nsq_present ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT); pu_index++) {
-#else
-    for (pu_index = 0; pu_index < MAX_ME_PU_COUNT; pu_index++) {
-#endif
 #if MEMORY_FOOTPRINT_OPT_ME_MV
         for (meCandidateIndex = 0; meCandidateIndex < ((mrp_mode == 0) ? ME_RES_CAND_MRP_MODE_0 : ME_RES_CAND_MRP_MODE_1); meCandidateIndex++) {
 #else

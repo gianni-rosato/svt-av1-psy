@@ -89,7 +89,7 @@ extern "C" {
 #if MEMORY_FOOTPRINT_OPT_ME_MV
 
 
-#define REDUCE_BLOCK_COUNT_ME             1
+
 #define REDUCE_ME_SEARCH_AREA             1
 #define BUG_FIX_LOOKAHEAD                 1
 #define BUG_FIX_PCS_LIVE_COUNT            1

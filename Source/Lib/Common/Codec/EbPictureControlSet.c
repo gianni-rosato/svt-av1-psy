@@ -1054,10 +1054,6 @@ EbErrorType picture_parent_control_set_ctor(
             object_ptr->ois_sb_results[sb_index]->ois_candidate_array[cuIdx] = &contigousCand[cuIdx*MAX_OIS_CANDIDATES];
     }
 
-#if !REDUCE_BLOCK_COUNT_ME
-    // Motion Estimation Results
-    object_ptr->max_number_of_pus_per_sb = (initDataPtr->ext_block_flag) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
-#endif
 #if MRP_CONNECTION
 #if MRP_MEM_OPT
 #if MEMORY_FOOTPRINT_OPT_ME_MV
@@ -1075,15 +1071,7 @@ EbErrorType picture_parent_control_set_ctor(
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
         return_error = me_sb_results_ctor(
             &(object_ptr->me_results[sb_index]),
-#if REDUCE_BLOCK_COUNT_ME
             (initDataPtr->nsq_present) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT,
-#else
-#if NO_CFG_FILE
-            MAX_ME_PU_COUNT,
-#else
-            object_ptr->max_number_of_pus_per_sb,
-#endif
-#endif
 #if MEMORY_FOOTPRINT_OPT_ME_MV
             initDataPtr->mrp_mode,
 #endif
