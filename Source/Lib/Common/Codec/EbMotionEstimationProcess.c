@@ -277,7 +277,6 @@ EbErrorType signal_derivation_me_kernel_oq(
 /************************************************
  * Motion Analysis Context Constructor
  ************************************************/
-#if MEMORY_FOOTPRINT_OPT_ME_MV
 EbErrorType motion_estimation_context_ctor(
     MotionEstimationContext_t   **context_dbl_ptr,
     EbFifo                       *picture_decision_results_input_fifo_ptr,
@@ -286,12 +285,6 @@ EbErrorType motion_estimation_context_ctor(
     uint16_t                      max_input_luma_height,
     uint8_t                       nsq_present,
     uint8_t                       mrp_mode) {
-#else
-EbErrorType motion_estimation_context_ctor(
-    MotionEstimationContext_t   **context_dbl_ptr,
-    EbFifo                     *picture_decision_results_input_fifo_ptr,
-    EbFifo                     *motion_estimation_results_output_fifo_ptr) {
-#endif
 
     EbErrorType return_error = EB_ErrorNone;
     MotionEstimationContext_t *context_ptr;
@@ -301,16 +294,12 @@ EbErrorType motion_estimation_context_ctor(
 
     context_ptr->picture_decision_results_input_fifo_ptr = picture_decision_results_input_fifo_ptr;
     context_ptr->motion_estimation_results_output_fifo_ptr = motion_estimation_results_output_fifo_ptr;
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     return_error = me_context_ctor(
         &(context_ptr->me_context_ptr),
         max_input_luma_width,
         max_input_luma_height,
         nsq_present,
         mrp_mode);
-#else
-    return_error = me_context_ctor(&(context_ptr->me_context_ptr));
-#endif
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
     return EB_ErrorNone;

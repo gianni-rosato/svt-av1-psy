@@ -341,11 +341,9 @@ EbErrorType copy_sequence_control_set(
 
     dst->rest_segment_column_count = src->rest_segment_column_count;
     dst->rest_segment_row_count = src->rest_segment_row_count;
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     dst->mrp_mode       = src->mrp_mode;
     dst->nsq_present    = src->nsq_present;
     dst->cdf_mode       = src->cdf_mode;
-#endif
     dst->down_sampling_method_me_search = src->down_sampling_method_me_search;
     dst->tf_segment_column_count = src->tf_segment_column_count;
     dst->tf_segment_row_count = src->tf_segment_row_count;

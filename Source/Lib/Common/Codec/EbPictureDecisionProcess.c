@@ -837,9 +837,7 @@ Input   : encoder mode and tune
 Output  : Multi-Processes signal(s)
 ******************************************************/
 EbErrorType signal_derivation_multi_processes_oq(
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     SequenceControlSet        *sequence_control_set_ptr,
-#endif
     PictureParentControlSet   *picture_control_set_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -893,10 +891,8 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 picture_control_set_ptr->pic_depth_mode = PIC_SB_SWITCH_DEPTH_MODE;
 
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         if (picture_control_set_ptr->pic_depth_mode < PIC_SQ_DEPTH_MODE)
             assert(sequence_control_set_ptr->nsq_present == 1 && "use nsq_present 1");
-#endif
 
     picture_control_set_ptr->max_number_of_pus_per_sb = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
 
@@ -944,10 +940,8 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_OFF;
 
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     if (picture_control_set_ptr->nsq_search_level > NSQ_SEARCH_OFF)
         assert(sequence_control_set_ptr->nsq_present == 1 && "use nsq_present 1");
-#endif
 
 #if  RED_CU_DEBUG
     picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_FULL;
@@ -1071,10 +1065,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 3                                            8 step refinement
     // 4                                            16 step refinement
     // 5                                            64 step refinement
-#if !MEMORY_FOOTPRINT_OPT_ME_MV
-    SequenceControlSet                    *sequence_control_set_ptr;
-    sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-#endif
     if (sequence_control_set_ptr->seq_header.enable_cdef && picture_control_set_ptr->allow_intrabc == 0) {
 #if SCREEN_CONTENT_SETTINGS
         if (sc_content_detected)
@@ -1315,11 +1305,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if MRP_MVP
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 //set the ref frame types used for this picture,
-#if MEMORY_FOOTPRINT_OPT_ME_MV
 void set_all_ref_frame_type(SequenceControlSet *sequence_control_set_ptr, PictureParentControlSet  *parent_pcs_ptr, MvReferenceFrame ref_frame_arr[], uint8_t* tot_ref_frames)
-#else
-void set_all_ref_frame_type(PictureParentControlSet  *parent_pcs_ptr, MvReferenceFrame ref_frame_arr[], uint8_t* tot_ref_frames)
-#endif
 {
     MvReferenceFrame rf[2];
     *tot_ref_frames = 0;
@@ -1349,11 +1335,7 @@ void set_all_ref_frame_type(PictureParentControlSet  *parent_pcs_ptr, MvReferenc
 
 #if NO_UNI
 #if MRP_FIX_CLOSE_GOP
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     if (sequence_control_set_ptr->mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
-#else
-    if (parent_pcs_ptr->mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
-#endif
 #else
     if (parent_pcs_ptr->mrp_mode == 0)
 #endif
@@ -3547,9 +3529,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 // TODO: put this in EbMotionEstimationProcess?
                                 // ME Kernel Multi-Processes Signal(s) derivation
                                 signal_derivation_multi_processes_oq(
-#if MEMORY_FOOTPRINT_OPT_ME_MV
                                 sequence_control_set_ptr,
-#endif
                                     picture_control_set_ptr);
 
                             // Set tx_mode
@@ -3695,15 +3675,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 picture_control_set_ptr->ref_list0_count = (picture_type == I_SLICE) ? 0 :
                                                                             (picture_control_set_ptr->is_overlay) ? 1 : (uint8_t)predPositionPtr->ref_list0.reference_list_count;
                                 picture_control_set_ptr->ref_list1_count = (picture_type == I_SLICE || picture_control_set_ptr->is_overlay) ? 0 : (uint8_t)predPositionPtr->ref_list1.reference_list_count;
-#if !MEMORY_FOOTPRINT_OPT_ME_MV
-#if NO_UNI
-                                //0: ON- full
-                                //1: ON- no-uniDirection
-                                //2: OFF
-                                picture_control_set_ptr->mrp_mode = picture_control_set_ptr->enc_mode == ENC_M0 ? 0 : 2;
-
-#endif
-#endif
 #if MRP_M0_ONLY
 #if NO_UNI
                                 if (picture_control_set_ptr->mrp_mode == 2) {
@@ -4124,11 +4095,7 @@ void* picture_decision_kernel(void *input_ptr)
 
 #if MRP_MVP
                             //set the ref frame types used for this picture,
-#if MEMORY_FOOTPRINT_OPT_ME_MV
                             set_all_ref_frame_type(sequence_control_set_ptr, picture_control_set_ptr, picture_control_set_ptr->ref_frame_type_arr, &picture_control_set_ptr->tot_ref_frame_types);
-#else
-                            set_all_ref_frame_type(picture_control_set_ptr, picture_control_set_ptr->ref_frame_type_arr, &picture_control_set_ptr->tot_ref_frame_types);
-#endif
 #endif
                             // Initialize Segments
                             picture_control_set_ptr->me_segments_column_count = (uint8_t)(sequence_control_set_ptr->me_segment_column_count_array[picture_control_set_ptr->temporal_layer_index]);

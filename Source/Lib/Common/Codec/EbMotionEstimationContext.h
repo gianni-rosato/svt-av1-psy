@@ -295,9 +295,6 @@ extern "C" {
 #endif
         uint32_t         distortion;
         EbPredDirection  prediction_direction;
-#if !MEMORY_FOOTPRINT_OPT_ME_MV
-        uint32_t         mv[MAX_NUM_OF_REF_PIC_LIST];
-#endif
     } MePredUnit;
 
     typedef struct MotionEstimationTierZero {
@@ -309,11 +306,7 @@ extern "C" {
         // Search region stride
         uint32_t                      interpolated_stride;
         uint32_t                      interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         MotionEstimationTierZero     *me_candidate;
-#else
-        MotionEstimationTierZero    me_candidate[MAX_ME_CANDIDATE_PER_PU];
-#endif
         // Intermediate LCU-sized buffer to retain the input samples
         uint8_t                      *sb_buffer;
         uint8_t                      *sb_buffer_ptr;
@@ -474,11 +467,7 @@ extern "C" {
         // Search region stride
         uint32_t                      interpolated_stride;
         uint32_t                      interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         MotionEstimationTierZero     *me_candidate;
-#else
-        MotionEstimationTierZero    me_candidate[MAX_ME_CANDIDATE_PER_PU];
-#endif
         // Intermediate LCU-sized buffer to retain the input samples
         uint8_t                      *sb_buffer;
         uint8_t                      *sb_buffer_ptr;
@@ -631,17 +620,12 @@ extern "C" {
         uint32_t                     width,
         uint32_t                     height);
 
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     extern EbErrorType me_context_ctor(
         MeContext     **object_dbl_ptr,
         uint16_t        max_input_luma_width,
         uint16_t        max_input_luma_height,
         uint8_t         nsq_present,
         uint8_t         mrp_mode);
-#else
-    extern EbErrorType me_context_ctor(
-        MeContext     **object_dbl_ptr);
-#endif
 
 #ifdef __cplusplus
 }

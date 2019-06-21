@@ -12061,9 +12061,6 @@ EbErrorType BiPredictionCompensation(MeContext *context_ptr, uint32_t pu_index,
 #else
     firstRefPosX = _MVXT(firstRefMv), firstRefPosY = _MVYT(firstRefMv),
 #endif
-#if !MEMORY_FOOTPRINT_OPT_ME_MV
-    me_candidate->mv[0] = firstRefMv;
-#endif
 #if MRP_ME
     me_candidate->ref_index[0] = (uint8_t)first_list_ref_pic_idx;
 #endif
@@ -12121,9 +12118,6 @@ EbErrorType BiPredictionCompensation(MeContext *context_ptr, uint32_t pu_index,
     secondRefPosY = _MVYT(secondRefMv);
 #else
     secondRefPosX = _MVXT(secondRefMv), secondRefPosY = _MVYT(secondRefMv),
-#endif
-#if !MEMORY_FOOTPRINT_OPT_ME_MV
-    me_candidate->mv[1] = secondRefMv;
 #endif
 #if MRP_ME
     me_candidate->ref_index[1] = (uint8_t)second_list_ref_pic_idx;
@@ -12270,9 +12264,7 @@ EbErrorType BiPredictionCompensation(MeContext *context_ptr, uint32_t pu_index,
  *******************************************/
 // This function enables all 16 Bipred candidates when MRP is ON
 EbErrorType BiPredictionSearch(
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     SequenceControlSet *sequence_control_set_ptr,
-#endif
     MeContext *context_ptr, uint32_t pu_index, uint8_t candidateIndex,
     uint32_t activeRefPicFirstLisNum, uint32_t activeRefPicSecondLisNum,
     uint8_t *total_me_candidate_index, EbAsm asm_type,
@@ -12346,11 +12338,7 @@ EbErrorType BiPredictionSearch(
 
 #if MRP_MD_UNI_DIR_BIPRED
 #if NO_UNI
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     if (sequence_control_set_ptr->mrp_mode == 0)
-#else
-    if (picture_control_set_ptr->mrp_mode == 0)
-#endif
     {
 #endif
         // NM: Within list 0    bipred: (LAST,LAST2)    (LAST,LAST3) (LAST,GOLD)
@@ -15446,10 +15434,6 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
                     &(context_ptr->me_candidate[candidateIndex].pu[pu_index]);
                 me_candidate->prediction_direction = listIndex;
                 me_candidate->ref_index[listIndex] = ref_pic_index;
-#if !MEMORY_FOOTPRINT_OPT_ME_MV
-                me_candidate->mv[listIndex] =
-                    context_ptr->p_sb_best_mv[listIndex][ref_pic_index][nIdx];
-#endif
                 me_candidate->distortion =
                     context_ptr->p_sb_best_sad[listIndex][ref_pic_index][nIdx];
 #endif
@@ -15467,9 +15451,7 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
                 (picture_control_set_ptr->pic_depth_mode <=
                  PIC_ALL_C_DEPTH_MODE)) {
                 BiPredictionSearch(
-#if MEMORY_FOOTPRINT_OPT_ME_MV
                     sequence_control_set_ptr,
-#endif
                     context_ptr,
                     pu_index,
                     candidateIndex,
@@ -15523,13 +15505,8 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
         mePuResult->me_nsq_1[pu_index] = l1_nsq;
 #endif
 
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         mePuResult->total_me_candidate_index[pu_index] =
             MIN(total_me_candidate_index, ME_RES_CAND_MRP_MODE_0);
-#else
-            mePuResult->total_me_candidate_index[pu_index] =
-                MIN(total_me_candidate_index, ME_RES_CAND);
-#endif
         // Assining the ME candidates to the me Results buffer
         for (candidateIndex = 0; candidateIndex < total_me_candidate_index;
              ++candidateIndex) {
@@ -15555,23 +15532,8 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
                 ->me_candidate[pu_index][candidateIndex]
                 .ref1_list = me_candidate->ref1_list;
 #endif
-#if !MEMORY_FOOTPRINT_OPT_ME_MV  // --->
-            picture_control_set_ptr->me_results[sb_index]
-                ->me_candidate[pu_index][candidateIndex]
-                .x_mv_l0 = _MVXT(me_candidate->mv[0]);
-            picture_control_set_ptr->me_results[sb_index]
-                ->me_candidate[pu_index][candidateIndex]
-                .y_mv_l0 = _MVYT(me_candidate->mv[0]);
-            picture_control_set_ptr->me_results[sb_index]
-                ->me_candidate[pu_index][candidateIndex]
-                .x_mv_l1 = _MVXT(me_candidate->mv[1]);
-            picture_control_set_ptr->me_results[sb_index]
-                ->me_candidate[pu_index][candidateIndex]
-                .y_mv_l1 = _MVYT(me_candidate->mv[1]);
-#endif
         }
 
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch;
              ++listIndex) {
             num_of_ref_pic_to_search =
@@ -15604,7 +15566,6 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
                     context_ptr->p_sb_best_mv[listIndex][ref_pic_index][nIdx]);
             }
         }
-#endif
 #else
             MeCuResults *mePuResult =
                 &picture_control_set_ptr->me_results[sb_index][pu_index];

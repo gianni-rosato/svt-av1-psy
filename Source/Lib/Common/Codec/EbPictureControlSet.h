@@ -14330,11 +14330,6 @@ extern "C" {
 #if SETUP_SKIP
         SkipModeInfo                         skip_mode_info;
 #endif
-#if !MEMORY_FOOTPRINT_OPT_ME_MV
-#if NO_UNI
-        uint8_t                              mrp_mode;
-#endif
-#endif
         uint64_t                             picture_number_alt; // The picture number overlay includes all the overlay frames
         uint8_t                              is_alt_ref;
         uint8_t                              is_overlay;
@@ -14380,11 +14375,9 @@ extern "C" {
         uint16_t                           film_grain_noise_level;
         EbBool                             ext_block_flag;
         EbBool                             in_loop_me_flag;
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         uint8_t                            mrp_mode;
         uint8_t                            cdf_mode;
         uint8_t                            nsq_present;
-#endif
 #if INCOMPLETE_SB_FIX
         uint8_t                            over_boundary_block_mode;
 #endif
@@ -14632,9 +14625,7 @@ extern "C" {
     extern EbErrorType me_sb_results_ctor(
         MeLcuResults     **objectDblPtr,
         uint32_t           maxNumberOfPusPerLcu,
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         uint8_t            mrp_mode,
-#endif
         uint32_t           maxNumberOfMeCandidatesPerPU);
 #endif
 #ifdef __cplusplus

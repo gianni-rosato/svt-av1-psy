@@ -951,10 +951,8 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.ext_block_flag = (uint8_t)enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.ext_block_flag;
 
         inputData.in_loop_me_flag = (uint8_t)enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.in_loop_me_flag;
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         inputData.mrp_mode = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->mrp_mode;
         inputData.nsq_present = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->nsq_present;
-#endif
         return_error = eb_system_resource_ctor(
             &(enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index]),
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->picture_control_set_pool_init_count,//enc_handle_ptr->picture_control_set_pool_total_count,
@@ -1003,9 +1001,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.sb_sz = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz;
         inputData.sb_size_pix = scs_init.sb_size;
         inputData.max_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_sb_depth;
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         inputData.cdf_mode = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->cdf_mode;
-#endif
         return_error = eb_system_resource_ctor(
             &(enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index]),
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->picture_control_set_pool_init_count_child, //EB_PictureControlSetPoolInitCountChild,
@@ -1554,7 +1550,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     EB_MALLOC(EbPtr*, enc_handle_ptr->motion_estimation_context_ptr_array, sizeof(EbPtr) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->motion_estimation_process_init_count, EB_N_PTR);
 
     for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->motion_estimation_process_init_count; ++processIndex) {
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         return_error = motion_estimation_context_ctor(
             (MotionEstimationContext_t**)&enc_handle_ptr->motion_estimation_context_ptr_array[processIndex],
             enc_handle_ptr->picture_decision_results_consumer_fifo_ptr_array[processIndex],
@@ -1563,12 +1558,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_height,
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->nsq_present,
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->mrp_mode);
-#else
-        return_error = motion_estimation_context_ctor(
-            (MotionEstimationContext_t**)&enc_handle_ptr->motion_estimation_context_ptr_array[processIndex],
-            enc_handle_ptr->picture_decision_results_consumer_fifo_ptr_array[processIndex],
-            enc_handle_ptr->motion_estimation_results_producer_fifo_ptr_array[processIndex]);
-#endif
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
     }
@@ -2095,7 +2084,6 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
         sequence_control_set_ptr->static_config.encoder_bit_depth != EB_8BIT ?
         0 : sequence_control_set_ptr->static_config.enable_overlays;
 
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     //0: MRP Mode 0 (4,3)
     //1: MRP Mode 1 (2,2)
     sequence_control_set_ptr->mrp_mode = (uint8_t) (sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 0 : 1;
@@ -2122,7 +2110,6 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
         sequence_control_set_ptr->over_boundary_block_mode = 1;
     else
         sequence_control_set_ptr->over_boundary_block_mode = 0;
-#endif
 #endif
 }
 

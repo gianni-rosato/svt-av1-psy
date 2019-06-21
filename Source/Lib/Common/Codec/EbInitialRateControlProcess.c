@@ -37,13 +37,8 @@ void GetMv(
     const MeCandidate *me_block_results = me_results->me_candidate[0];
     for (meCandidateIndex = 0; meCandidateIndex < total_me_cnt; meCandidateIndex++) {
         if (me_block_results->direction == UNI_PRED_LIST_0) {
-#if MEMORY_FOOTPRINT_OPT_ME_MV
             *xCurrentMv = me_results->me_mv_array[0][0].x_mv;
             *yCurrentMv = me_results->me_mv_array[0][0].y_mv;
-#else
-            *xCurrentMv = me_block_results->x_mv_l0;
-            *yCurrentMv = me_block_results->y_mv_l0;
-#endif
             break;
         }
     }

@@ -180,7 +180,6 @@ extern "C" {
         EbScdMode                               scd_mode;
         EbPmMode                                pm_mode;
 
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         /* MRP (mm-signal; 0: MRP mode 0, 1: MRP mode 1)
         *
         * Default is 0. */
@@ -200,7 +199,6 @@ extern "C" {
         *
         * Default is 0. */
         uint8_t                                 down_sampling_method_me_search;
-#endif
         uint8_t                                 trans_coeff_shape_array[2][8][4];    // [componantTypeIndex][resolutionIndex][levelIndex][tuSizeIndex]
         EbBlockMeanPrec                         block_mean_calc_prec;
         BitstreamLevel                          level[MAX_NUM_OPERATING_POINTS];

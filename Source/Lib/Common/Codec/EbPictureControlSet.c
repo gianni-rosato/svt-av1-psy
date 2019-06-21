@@ -62,9 +62,7 @@ EbErrorType segmentation_map_ctor(SegmentationNeighborMap **seg_map_dbl_ptr,
 EbErrorType me_sb_results_ctor(
     MeLcuResults     **objectDblPtr,
     uint32_t           maxNumberOfPusPerLcu,
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     uint8_t            mrp_mode,
-#endif
     uint32_t           maxNumberOfMeCandidatesPerPU){
     uint32_t  puIndex;
     MeLcuResults *objectPtr;
@@ -74,9 +72,7 @@ EbErrorType me_sb_results_ctor(
     *objectDblPtr = objectPtr;
 
     EB_MALLOC(MeCandidate**, objectPtr->me_candidate, sizeof(MeCandidate*) * maxNumberOfPusPerLcu, EB_N_PTR);
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     EB_MALLOC(MvCandidate**, objectPtr->me_mv_array, sizeof(MvCandidate*) * maxNumberOfPusPerLcu, EB_N_PTR);
-#endif
 #if ALIGN_MEM
     objectPtr->meCandidateArray = (MeCandidate_t*)EB_aligned_malloc(sizeof(MeCandidate_t) * maxNumberOfPusPerLcu * maxNumberOfMeCandidatesPerPU, 64);
 #else
@@ -95,9 +91,7 @@ EbErrorType me_sb_results_ctor(
         objectPtr->me_candidate[puIndex][0].direction = 0;
         objectPtr->me_candidate[puIndex][1].direction = 1;
         objectPtr->me_candidate[puIndex][2].direction = 2;
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         EB_MALLOC(MvCandidate*, objectPtr->me_mv_array[puIndex], sizeof(MvCandidate) * ((mrp_mode == 0) ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1), EB_N_PTR);
-#endif
     }
     EB_MALLOC(uint8_t*, objectPtr->total_me_candidate_index, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
 
@@ -281,15 +275,10 @@ EbErrorType picture_control_set_ctor(
     }
 
 #if CABAC_UP
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     if (initDataPtr->cdf_mode == 0) {
         EB_MALLOC(FRAME_CONTEXT*, object_ptr->ec_ctx_array, sizeof(FRAME_CONTEXT) * all_sb, EB_N_PTR);
         EB_MALLOC(MdRateEstimationContext*, object_ptr->rate_est_array, sizeof(MdRateEstimationContext) * all_sb, EB_N_PTR);
     }
-#else
-    EB_MALLOC(FRAME_CONTEXT*, object_ptr->ec_ctx_array, sizeof(FRAME_CONTEXT)             * all_sb, EB_N_PTR);
-    EB_MALLOC(MdRateEstimationContext*, object_ptr->rate_est_array, sizeof(MdRateEstimationContext) * all_sb, EB_N_PTR);
-#endif
 #endif
     // Mode Decision Control config
     EB_MALLOC(MdcLcuData*, object_ptr->mdc_sb_array, object_ptr->sb_total_count * sizeof(MdcLcuData), EB_N_PTR);
@@ -1056,13 +1045,9 @@ EbErrorType picture_parent_control_set_ctor(
 
 #if MRP_CONNECTION
 #if MRP_MEM_OPT
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     object_ptr->max_number_of_candidates_per_block = (initDataPtr->mrp_mode == 0) ?
         ME_RES_CAND_MRP_MODE_0 : // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [UniDir = 4 = 3+1]
         ME_RES_CAND_MRP_MODE_1 ; // [BiDir = 1] + [UniDir = 2 = 1 + 1]
-#else
-    object_ptr->max_number_of_candidates_per_block = ME_RES_CAND; //[Single Ref = 7] + [BiDir = 12 = 3*4 ] + [UniDir = 4 = 3+1]
-#endif
 #else
     object_ptr->max_number_of_candidates_per_block = 100;//(initDataPtr->mePictureSearchCount * initDataPtr->mePictureSearchCount) + (initDataPtr->mePictureSearchCount << 1);
 #endif
@@ -1072,9 +1057,7 @@ EbErrorType picture_parent_control_set_ctor(
         return_error = me_sb_results_ctor(
             &(object_ptr->me_results[sb_index]),
             (initDataPtr->nsq_present) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT,
-#if MEMORY_FOOTPRINT_OPT_ME_MV
             initDataPtr->mrp_mode,
-#endif
             object_ptr->max_number_of_candidates_per_block);
     }
 
