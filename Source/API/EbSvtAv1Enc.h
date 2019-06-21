@@ -463,6 +463,13 @@ typedef struct EbSvtAv1EncConfiguration
         EbComponentType           *svt_enc_component,
         EbBufferHeaderType       **output_stream_ptr);
 
+    /* OPTIONAL: Release stream headers at init time.
+     *
+     * Parameter:
+     * @ *stream_header_ptr  stream header buffer. */
+    EB_API EbErrorType eb_svt_release_enc_stream_header(
+        EbBufferHeaderType        *stream_header_ptr);
+
     /* OPTIONAL: Get the end of sequence Network Abstraction Layer.
      *
      * Parameter:
