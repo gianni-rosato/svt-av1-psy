@@ -5765,8 +5765,6 @@ void InterpolateSearchRegionAVC(
     return;
 }
 
-#if ALTREF_FILTERING_SUPPORT
-
 /*******************************************
  * InterpolateSearchRegion AVC
  *   interpolates the search area
@@ -5910,8 +5908,6 @@ void interpolate_search_region_AVC_chroma(
             2);
     }
 }
-
-#endif
 
 /*******************************************
  * PU_HalfPelRefinement
@@ -11646,8 +11642,6 @@ static void QuarterPelCompensation(
     return;
 }
 
-#if ALTREF_FILTERING_SUPPORT
-
 // TODO: Alt-refs - change previous SelectBuffer and QuarterPelCompensation to
 // be applicable for both chroma and luma
 static void select_buffer(
@@ -11884,8 +11878,6 @@ void uni_pred_averaging(uint32_t pu_index, EbBool chroma, uint8_t firstFracPos,
         *comp_blk_ptr_stride = BLOCK_SIZE_64;
     }
 }
-
-#endif
 
 /*******************************************************************************
  * Requirement: pu_width      = 8, 16, 24, 32, 48 or 64
@@ -13756,21 +13748,17 @@ EbErrorType motion_estimate_lcu(
     }
 #endif
 
-#if ALTREF_FILTERING_SUPPORT
     if (context_ptr->me_alt_ref == EB_TRUE)
         numOfListToSearch = 0;
-#endif
 
     // Uni-Prediction motion estimation loop
     // List Loop
     for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch; ++listIndex) {
 #if MRP_ME
 
-#if ALTREF_FILTERING_SUPPORT
         if (context_ptr->me_alt_ref == EB_TRUE) {
             num_of_ref_pic_to_search = 1;
         } else {
-#endif
             num_of_ref_pic_to_search =
                 (picture_control_set_ptr->slice_type == P_SLICE)
                     ? picture_control_set_ptr->ref_list0_count
@@ -13782,21 +13770,17 @@ EbErrorType motion_estimate_lcu(
                                   ->ref_pa_pic_ptr_array[0][0]
                                   ->object_ptr;
             ref0Poc = picture_control_set_ptr->ref_pic_poc_array[0][0];
-#if ALTREF_FILTERING_SUPPORT
         }
-#endif
 
         // Ref Picture Loop
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
              ++ref_pic_index)
 #endif
         {
-#if ALTREF_FILTERING_SUPPORT
             if (context_ptr->me_alt_ref == EB_TRUE) {
                 referenceObject =
                     (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr;
             } else {
-#endif
 #if MRP_ME
                 if (numOfListToSearch) {
                     referenceObject =
@@ -13815,9 +13799,7 @@ EbErrorType motion_estimate_lcu(
                                   ->ref_pa_pic_ptr_array[listIndex]
                                   ->object_ptr;
 #endif
-#if ALTREF_FILTERING_SUPPORT
             }
-#endif
 
             refPicPtr = (EbPictureBufferDesc*)referenceObject->input_padded_picture_ptr;
 #if DOWN_SAMPLING_FILTERING
@@ -14460,12 +14442,8 @@ EbErrorType motion_estimate_lcu(
                 y_search_area_origin;
 #endif
 
-#if ALTREF_FILTERING_SUPPORT
-
             context_ptr->adj_search_area_width = search_area_width;
             context_ptr->adj_search_area_height = search_area_height;
-
-#endif
 
             xTopLeftSearchRegion =
                 (int16_t)(refPicPtr->origin_x + sb_origin_x) -
@@ -15424,10 +15402,7 @@ EbErrorType motion_estimate_lcu(
     }
 }
 
-#if ALTREF_FILTERING_SUPPORT
-
 if (context_ptr->me_alt_ref == EB_FALSE) {
-#endif
 
     // Bi-Prediction motion estimation loop
     for (pu_index = 0; pu_index < max_number_of_pus_per_sb; ++pu_index) {
@@ -15776,9 +15751,7 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
 #endif
     }
 
-#if ALTREF_FILTERING_SUPPORT
 }
-#endif
 
 return return_error;
 }

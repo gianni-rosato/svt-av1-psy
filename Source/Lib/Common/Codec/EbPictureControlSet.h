@@ -14423,7 +14423,6 @@ extern "C" {
         struct PictureParentControlSet      *overlay_ppcs_ptr;
         struct PictureParentControlSet      *alt_ref_ppcs_ptr;
 #endif
-#if ALTREF_FILTERING_SUPPORT
         uint8_t                               altref_strength;
         int32_t                               pic_decision_reorder_queue_idx;
         struct PictureParentControlSet       *temp_filt_pcs_list[15];
@@ -14437,7 +14436,6 @@ extern "C" {
         int16_t                               tf_segments_total_count;
         uint8_t                               tf_segments_column_count;
         uint8_t                               tf_segments_row_count;
-#endif
         uint8_t                               altref_nframes;
     } PictureParentControlSet;
 

@@ -21,9 +21,7 @@
 #include "EbPictureDecisionResults.h"
 #include "EbReferenceObject.h"
 #include "EbSvtAv1ErrorCodes.h"
-#if ALTREF_FILTERING_SUPPORT
 #include "EbTemporalFiltering.h"
-#endif
 
 /************************************************
  * Defines
@@ -3377,9 +3375,7 @@ void* picture_decision_kernel(void *input_ptr)
                 queueEntryPtr->picture_number = picture_control_set_ptr->picture_number;
             }
 
-#if ALTREF_FILTERING_SUPPORT
             picture_control_set_ptr->pic_decision_reorder_queue_idx = queueEntryIndex;
-#endif
 #if ALT_REF_OVERLAY
         }
 #endif
@@ -3397,9 +3393,7 @@ void* picture_decision_kernel(void *input_ptr)
             windowAvail = EB_TRUE;
             previousEntryIndex = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
 
-#if ALTREF_FILTERING_SUPPORT
             ParentPcsWindow[0] = ParentPcsWindow[1] = ParentPcsWindow[2] = ParentPcsWindow[3] = ParentPcsWindow[4] = ParentPcsWindow[5] = NULL;
-#endif
             if (encode_context_ptr->picture_decision_reorder_queue[previousEntryIndex]->parent_pcs_wrapper_ptr == NULL)
                 windowAvail = EB_FALSE;
             else {
@@ -4161,7 +4155,6 @@ void* picture_decision_kernel(void *input_ptr)
                             picture_control_set_ptr = cur_picture_control_set_ptr;
 #endif
 
-#if ALTREF_FILTERING_SUPPORT
                             if ( sequence_control_set_ptr->enable_altrefs == EB_TRUE &&
                                  picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) {
                                 int altref_nframes = picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes;
@@ -4263,7 +4256,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
 
                             }
-#endif
                         }
 
 #if ALT_REF_OVERLAY
@@ -4602,9 +4594,7 @@ void* picture_decision_kernel(void *input_ptr)
                                         outputResultsPtr->picture_control_set_wrapper_ptr = encode_context_ptr->pre_assignment_buffer[pictureIndex];
 
                                     outputResultsPtr->segment_index = segment_index;
-#if ALTREF_FILTERING_SUPPORT
                                     outputResultsPtr->task_type = 0;
-#endif
                                     // Post the Full Results Object
                                     eb_post_full_object(outputResultsWrapperPtr);
                                 }

@@ -128,11 +128,9 @@ extern "C" {
 
         uint32_t                                rest_segment_column_count;
         uint32_t                                rest_segment_row_count;
-#if ALTREF_FILTERING_SUPPORT
         uint32_t                                tf_segment_column_count;
         uint32_t                                tf_segment_row_count;
         EbBool                                  enable_altrefs;
-#endif
         // Buffers
         uint32_t                                picture_control_set_pool_init_count;
         uint32_t                                picture_control_set_pool_init_count_child;

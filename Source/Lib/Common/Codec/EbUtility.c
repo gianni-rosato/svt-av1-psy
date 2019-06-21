@@ -1680,7 +1680,6 @@ const BlockGeom * get_blk_geom_mds(uint32_t bidx_mds)
     return &blk_geom_mds[bidx_mds];
 }
 
-#if ALTREF_FILTERING_SUPPORT
 uint32_t get_mds_idx(uint32_t  orgx, uint32_t  orgy, uint32_t  size, uint32_t use_128x128)
 {
     uint32_t  max_block_count = use_128x128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64;
@@ -1698,4 +1697,3 @@ uint32_t get_mds_idx(uint32_t  orgx, uint32_t  orgy, uint32_t  size, uint32_t us
     }
     return mds;
 }
-#endif

@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
 
-#define ALTREF_FILTERING_SUPPORT          1 //Temporal filter
+
 #define ALT_REF_OVERLAY                   1 // support for ALT_REF overlay frames.
 
 #define PCS_ME_FIX                        1 // pcs flags shall not be set in seg based process

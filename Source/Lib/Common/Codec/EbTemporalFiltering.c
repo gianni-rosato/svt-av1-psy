@@ -33,8 +33,6 @@
 #include "av1me.h"
 #include "EbTemporalFiltering_sse4.h"
 
-#if ALTREF_FILTERING_SUPPORT
-
 #define _MM_HINT_T2  1
 
 static unsigned int index_mult[14] = {
@@ -1692,4 +1690,3 @@ void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_
     eb_release_mutex(picture_control_set_ptr_central->temp_filt_mutex);
 }
 
-#endif

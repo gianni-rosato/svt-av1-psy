@@ -351,10 +351,8 @@ EbErrorType copy_sequence_control_set(
 #if DOWN_SAMPLING_FILTERING
     dst->down_sampling_method_me_search = src->down_sampling_method_me_search;
 #endif
-#if ALTREF_FILTERING_SUPPORT
     dst->tf_segment_column_count = src->tf_segment_column_count;
     dst->tf_segment_row_count = src->tf_segment_row_count;
-#endif
 #if BASE_LAYER_REF
     dst->extra_frames_to_ref_islice = src->extra_frames_to_ref_islice;
     dst->max_frame_window_to_ref_islice = src->max_frame_window_to_ref_islice;

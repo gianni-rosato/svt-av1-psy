@@ -19,9 +19,7 @@
 
 #include "emmintrin.h"
 
-#if ALTREF_FILTERING_SUPPORT
 #include "EbTemporalFiltering.h"
-#endif
 
 /* --32x32-
 |00||01|
@@ -107,10 +105,8 @@ void* set_me_hme_params_oq(
 
 #if SCREEN_CONTENT_SETTINGS
     uint8_t sc_content_detected = picture_control_set_ptr->sc_content_detected;
-#if ALTREF_FILTERING_SUPPORT
     if (me_context_ptr->me_alt_ref == EB_TRUE)
         sc_content_detected = 0;
-#endif
 #if SCREEN_CONTENT_SETTINGS && !PCS_ME_FIX
     picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[sc_content_detected][input_resolution][hmeMeLevel];
     picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[sc_content_detected][input_resolution][hmeMeLevel];
@@ -587,9 +583,7 @@ void* motion_estimation_kernel(void *input_ptr)
         // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
         EB_MEMCPY(&(context_ptr->me_context_ptr->mvd_bits_array[0]), &(md_rate_estimation_array->mvd_bits[0]), sizeof(EbBitFraction)*NUMBER_OF_MVD_CASES);
         ///context_ptr->me_context_ptr->lambda = lambda_mode_decision_ld_sad_qp_scaling[picture_control_set_ptr->picture_qp];
-#if ALTREF_FILTERING_SUPPORT
         context_ptr->me_context_ptr->me_alt_ref = inputResultsPtr->task_type == 1 ? EB_TRUE : EB_FALSE;
-#endif
         // ME Kernel Signal(s) derivation
         signal_derivation_me_kernel_oq(
             sequence_control_set_ptr,
@@ -611,10 +605,8 @@ void* motion_estimation_kernel(void *input_ptr)
             else
                 context_ptr->me_context_ptr->lambda = lambda_mode_decision_ld_sad_qp_scaling[picture_control_set_ptr->picture_qp];
         }
-#if ALTREF_FILTERING_SUPPORT
         if (inputResultsPtr->task_type == 0)
         {
-#endif
 
             // Segments
             segment_index = inputResultsPtr->segment_index;
@@ -743,9 +735,7 @@ void* motion_estimation_kernel(void *input_ptr)
                             }
                         }
 #endif
-#if ALTREF_FILTERING_SUPPORT
                         context_ptr->me_context_ptr->me_alt_ref = EB_FALSE;
-#endif
 
                         motion_estimate_lcu(
                             picture_control_set_ptr,
@@ -930,7 +920,6 @@ void* motion_estimation_kernel(void *input_ptr)
             // Post the Full Results Object
             eb_post_full_object(outputResultsWrapperPtr);
 
-#if ALTREF_FILTERING_SUPPORT
         }
         else {
             // temporal filtering start
@@ -940,7 +929,6 @@ void* motion_estimation_kernel(void *input_ptr)
              // Release the Input Results
              eb_release_object(inputResultsWrapperPtr);
         }
-#endif
     }
 
     return EB_NULL;
