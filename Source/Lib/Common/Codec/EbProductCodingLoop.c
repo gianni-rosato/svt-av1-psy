@@ -2292,10 +2292,8 @@ EbErrorType av1_predict_intra_block(
     int32_t row_off,
     int32_t plane,
     BlockSize bsize,
-#if ATB_EP
     uint32_t tu_org_x_pict,
     uint32_t tu_org_y_pict,
-#endif
     uint32_t bl_org_x_pict,
     uint32_t bl_org_y_pict,
     uint32_t bl_org_x_mb,
@@ -2368,10 +2366,8 @@ EbErrorType av1_intra_luma_prediction(
         md_context_ptr->blk_geom->tx_boff_y[md_context_ptr->tx_depth][md_context_ptr->txb_itr] >> 2,                                                                              //int32_t row_off,
         PLANE_TYPE_Y,                                                                          //int32_t plane,
         md_context_ptr->blk_geom->bsize,       //uint32_t puSize,
-#if ATB_EP
         md_context_ptr->cu_origin_x,
         md_context_ptr->cu_origin_y,
-#endif
         md_context_ptr->cu_origin_x,                  //uint32_t cuOrgX,
         md_context_ptr->cu_origin_y,                  //uint32_t cuOrgY
         md_context_ptr->blk_geom->tx_org_x[md_context_ptr->tx_depth][md_context_ptr->txb_itr],  //uint32_t cuOrgX used only for prediction Ptr

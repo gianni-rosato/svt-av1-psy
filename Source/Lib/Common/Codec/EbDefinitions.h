@@ -39,7 +39,7 @@
 extern "C" {
 #endif
 #define REMOVE_UNPACK_REF                 1
-#define ATB_EP                            1 // Tranform partitioning @ encode passs
+
 #define INCOMPLETE_SB_FIX                 1 // Handle the incomplete SBs properly based on the standard and consider all allowed blocks
 #define CDEF_AVX_OPT                      1
 #define MR_MODE                           0
