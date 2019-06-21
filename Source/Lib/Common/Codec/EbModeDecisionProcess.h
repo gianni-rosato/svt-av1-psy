@@ -268,9 +268,6 @@ extern "C" {
 #if SPATIAL_SSE
         EbBool                          spatial_sse_full_loop;
 #endif
-#if M9_INTER_SRC_SRC_FAST_LOOP
-        uint8_t                         inter_fast_loop_src_src;
-#endif
 #if  BLK_SKIP_DECISION
         EbBool                          blk_skip_decision;
 #endif

@@ -1392,14 +1392,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->spatial_sse_full_loop = EB_FALSE;
 #endif
 
-#if M9_INTER_SRC_SRC_FAST_LOOP
-    // Derive Spatial SSE Flag
-    if (picture_control_set_ptr->enc_mode <= ENC_M8)
-        context_ptr->inter_fast_loop_src_src = 0;
-    else
-        context_ptr->inter_fast_loop_src_src = 1;
-#endif
-
 #if BLK_SKIP_DECISION
     if (context_ptr->chroma_level <= CHROMA_MODE_1)
         context_ptr->blk_skip_decision = EB_TRUE;
