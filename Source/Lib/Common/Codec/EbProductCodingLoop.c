@@ -4140,15 +4140,7 @@ EbBool allowed_ns_cu(
     ModeDecisionContext              *context_ptr,
     uint8_t                            is_complete_sb){
     EbBool  ret = 1;
-#if NSQ_FIX
     UNUSED(is_complete_sb);
-#else
-    // Disable NSQ for non-complete LCU
-    if (!is_complete_sb) {
-        if (context_ptr->blk_geom->shape != PART_N)
-            ret = 0;
-    }
-#endif
     if (is_nsq_table_used) {
         if (context_ptr->blk_geom->shape != PART_N) {
             ret = 0;

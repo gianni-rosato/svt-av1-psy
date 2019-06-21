@@ -130,7 +130,7 @@ extern "C" {
 #define REMOVE_UNPACK_REF                 1
 
 
-#define NSQ_FIX                           1 // Inject NSQ blocks for incomplete CUs
+
 #define SPATIAL_SSE                       1 // Spatial SSE. Active for M0 only
 #define IMPROVE_1D_INTER_DEPTH_DECISION   1
 #define ENABLE_WARPED_MV                  1
