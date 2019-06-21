@@ -626,22 +626,15 @@ static void Av1EncodeLoop(
                     PLANE_TYPE_Y,
                     eob[0]);
             }
-#if CFL_FIX
             if (context_ptr->blk_geom->has_uv) {
                 reconLumaOffset = (reconSamples->origin_y + round_origin_y)            * reconSamples->stride_y + (reconSamples->origin_x + round_origin_x);
-#endif
                 // Down sample Luma
                 cfl_luma_subsampling_420_lbd_c(
                     reconSamples->buffer_y + reconLumaOffset,
                     reconSamples->stride_y,
                     context_ptr->md_context->pred_buf_q3,
-#if CFL_FIX
                     context_ptr->blk_geom->bwidth_uv == context_ptr->blk_geom->bwidth ? (context_ptr->blk_geom->bwidth_uv << 1) : context_ptr->blk_geom->bwidth,
                     context_ptr->blk_geom->bheight_uv == context_ptr->blk_geom->bheight ? (context_ptr->blk_geom->bheight_uv << 1) : context_ptr->blk_geom->bheight);
-#else
-                    context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
-                    context_ptr->blk_geom->tx_height[context_ptr->txb_itr]);
-#endif
                 int32_t round_offset = ((context_ptr->blk_geom->tx_width_uv[tx_depth][context_ptr->txb_itr])*(context_ptr->blk_geom->tx_height_uv[tx_depth][context_ptr->txb_itr])) / 2;
 
                 subtract_average(
@@ -738,9 +731,7 @@ static void Av1EncodeLoop(
                         context_ptr->blk_geom->tx_width_uv[tx_depth][context_ptr->txb_itr],
                         context_ptr->blk_geom->tx_height_uv[tx_depth][context_ptr->txb_itr]);
                 }
-#if CFL_FIX
             }
-#endif
         }
 #endif
 #if ATB_EP
@@ -759,13 +750,8 @@ static void Av1EncodeLoop(
                 reconSamples->buffer_y + reconLumaOffset,
                 reconSamples->stride_y,
                 context_ptr->md_context->pred_buf_q3,
-#if CFL_FIX
                 context_ptr->blk_geom->bwidth_uv == context_ptr->blk_geom->bwidth ? (context_ptr->blk_geom->bwidth_uv << 1) : context_ptr->blk_geom->bwidth,
                 context_ptr->blk_geom->bheight_uv == context_ptr->blk_geom->bheight ? (context_ptr->blk_geom->bheight_uv << 1) : context_ptr->blk_geom->bheight);
-#else
-                context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
-                context_ptr->blk_geom->tx_height[context_ptr->txb_itr]);
-#endif
             int32_t round_offset = ((context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr])*(context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr])) / 2;
 
             subtract_average(
@@ -1236,22 +1222,15 @@ static void Av1EncodeLoop16bit(
                     PLANE_TYPE_Y,
                     eob[0]);
             }
-#if CFL_FIX
             if (context_ptr->blk_geom->has_uv) {
                 reconLumaOffset = (reconSamples->origin_y + round_origin_y)            * reconSamples->stride_y + (reconSamples->origin_x + round_origin_x);
-#endif
             // Down sample Luma
             cfl_luma_subsampling_420_hbd_c(
                 ((uint16_t*)reconSamples->buffer_y) + reconLumaOffset,
                 reconSamples->stride_y,
                 context_ptr->md_context->pred_buf_q3,
-#if CFL_FIX
                 context_ptr->blk_geom->bwidth_uv == context_ptr->blk_geom->bwidth ? (context_ptr->blk_geom->bwidth_uv << 1) : context_ptr->blk_geom->bwidth,
                 context_ptr->blk_geom->bheight_uv == context_ptr->blk_geom->bheight ? (context_ptr->blk_geom->bheight_uv << 1) : context_ptr->blk_geom->bheight);
-#else
-                context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
-                context_ptr->blk_geom->tx_height[context_ptr->txb_itr]);
-#endif
             int32_t round_offset = ((context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr])*(context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr])) / 2;
 
             subtract_average(
@@ -1293,9 +1272,7 @@ static void Av1EncodeLoop16bit(
                 context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr]);
         }
-#if CFL_FIX
         }
-#endif
 
         if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK || component_mask == PICTURE_BUFFER_DESC_CHROMA_MASK) {
             //**********************************

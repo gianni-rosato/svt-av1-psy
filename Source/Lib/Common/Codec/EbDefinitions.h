@@ -128,7 +128,7 @@ extern "C" {
 
 
 #define REMOVE_UNPACK_REF                 1
-#define CFL_FIX                           1 // Fixes to CFL and enabling CFL for 4x*
+
 #define SPLIT_RATE_FIX                    1 // Split partition rate calculation fix
 #define NSQ_FIX                           1 // Inject NSQ blocks for incomplete CUs
 #define SPATIAL_SSE                       1 // Spatial SSE. Active for M0 only

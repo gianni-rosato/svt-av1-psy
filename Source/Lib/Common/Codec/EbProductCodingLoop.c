@@ -1123,7 +1123,6 @@ void picture_addition_kernel16_bit(
     return;
 }
 
-#if CFL_FIX
 void pic_copy_kernel(
     EbByte                     src,
     uint32_t                   src_stride,
@@ -1131,7 +1130,6 @@ void pic_copy_kernel(
     uint32_t                   dst_stride,
     uint32_t                   area_width,
     uint32_t                   area_height);
-#endif
 void AV1PerformInverseTransformReconLuma(
     PictureControlSet               *picture_control_set_ptr,
     ModeDecisionContext             *context_ptr,
@@ -1146,9 +1144,7 @@ void AV1PerformInverseTransformReconLuma(
 
     uint32_t   txb_itr;
 
-#if CFL_FIX
     UNUSED(asm_type);
-#endif
     if (picture_control_set_ptr->intra_md_open_loop_flag == EB_FALSE) {
         uint8_t tx_depth = candidateBuffer->candidate_ptr->tx_depth;
         tuTotalCount = context_ptr->blk_geom->txb_count[tx_depth];
@@ -1166,11 +1162,7 @@ void AV1PerformInverseTransformReconLuma(
             if (y_has_coeff) {
                 (void)context_ptr;
                 uint8_t     *predBuffer = &(candidateBuffer->prediction_ptr->buffer_y[tu_origin_index]);
-#if CFL_FIX
                 uint8_t     *recBuffer = &(context_ptr->cfl_temp_luma_recon[recLumaOffset]);
-#else
-                uint8_t     *recBuffer = &(candidateBuffer->recon_ptr->buffer_y[recLumaOffset]);
-#endif
 
                 uint32_t j;
 
@@ -1187,7 +1179,6 @@ void AV1PerformInverseTransformReconLuma(
                     (uint16_t)candidateBuffer->candidate_ptr->eob[0][txb_itr]);
             }
             else {
-#if CFL_FIX
                 pic_copy_kernel(
                     &(candidateBuffer->prediction_ptr->buffer_y[tu_origin_index]),
                     candidateBuffer->prediction_ptr->stride_y,
@@ -1195,21 +1186,6 @@ void AV1PerformInverseTransformReconLuma(
                     candidateBuffer->recon_ptr->stride_y,
                     tu_width,
                     tu_height);
-#else
-                picture_copy8_bit(
-                    candidateBuffer->prediction_ptr,
-                    tu_origin_index,
-                    0,//tu_chroma_origin_index,
-                    candidateBuffer->recon_ptr,
-                    recLumaOffset,
-                    0,//tu_chroma_origin_index,
-                    tu_width,
-                    tu_height,
-                    0,//chromaTuSize,
-                    0,//chromaTuSize,
-                    PICTURE_BUFFER_DESC_Y_FLAG,
-                    asm_type);
-#endif
             }
             txb_1d_offset += context_ptr->blk_geom->tx_width[tx_depth][txb_itr] * context_ptr->blk_geom->tx_height[tx_depth][txb_itr];
             ++txb_itr;
@@ -1669,9 +1645,7 @@ void AV1CostCalcCfl(
     uint32_t                            cuChromaOriginIndex,
     uint64_t                            full_distortion[DIST_CALC_TOTAL],
     uint64_t                           *coeffBits,
-#if CFL_FIX
     EbBool                              check_dc,
-#endif
     EbAsm                               asm_type) {
     ModeDecisionCandidate            *candidate_ptr = candidateBuffer->candidate_ptr;
     uint32_t                            count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
@@ -1698,15 +1672,8 @@ void AV1CostCalcCfl(
         crFullDistortion[DIST_CALC_PREDICTION] = 0;
         cb_coeff_bits = 0;
         cr_coeff_bits = 0;
-#if CFL_FIX
         alpha_q3 = (check_dc) ? 0:
             cfl_idx_to_alpha(candidate_ptr->cfl_alpha_idx, candidate_ptr->cfl_alpha_signs, CFL_PRED_U); // once for U, once for V
-#else
-        alpha_q3 =
-            cfl_idx_to_alpha(candidate_ptr->cfl_alpha_idx, candidate_ptr->cfl_alpha_signs, CFL_PRED_U); // once for U, once for V
-        if (candidate_ptr->cfl_alpha_idx == 0 && candidate_ptr->cfl_alpha_signs == 0)// To check DC
-            alpha_q3 = 0;
-#endif
         assert(chroma_width * CFL_BUF_LINE + chroma_height <=
             CFL_BUF_SQUARE);
 
@@ -1775,16 +1742,8 @@ void AV1CostCalcCfl(
 
         cb_coeff_bits = 0;
         cr_coeff_bits = 0;
-#if CFL_FIX
         alpha_q3 = (check_dc) ? 0 :
             cfl_idx_to_alpha(candidate_ptr->cfl_alpha_idx, candidate_ptr->cfl_alpha_signs, CFL_PRED_V); // once for U, once for V
-#else
-        alpha_q3 =
-            cfl_idx_to_alpha(candidate_ptr->cfl_alpha_idx, candidate_ptr->cfl_alpha_signs, CFL_PRED_V); // once for U, once for V
-
-        if (candidate_ptr->cfl_alpha_idx == 0 && candidate_ptr->cfl_alpha_signs == 0) // To check DC
-            alpha_q3 = 0;
-#endif
         assert(chroma_width * CFL_BUF_LINE + chroma_height <=
             CFL_BUF_SQUARE);
 
@@ -1897,9 +1856,7 @@ void cfl_rd_pick_alpha(
                     cuChromaOriginIndex,
                     full_distortion,
                     &coeffBits,
-#if CFL_FIX
                     0,
-#endif
                     asm_type);
 
                 if (coeffBits == INT64_MAX) break;
@@ -1939,9 +1896,7 @@ void cfl_rd_pick_alpha(
                             cuChromaOriginIndex,
                             full_distortion,
                             &coeffBits,
-#if CFL_FIX
                             0,
-#endif
                             asm_type);
 
                         if (coeffBits == INT64_MAX) break;
@@ -1989,9 +1944,7 @@ void cfl_rd_pick_alpha(
         cuChromaOriginIndex,
         full_distortion,
         &coeffBits,
-#if CFL_FIX
         1,
-#endif
         asm_type);
 
     int64_t dc_rd =
@@ -2033,7 +1986,6 @@ static void CflPrediction(
     uint32_t                     cuChromaOriginIndex,
     EbAsm                    asm_type)
 {
-#if CFL_FIX
     if (context_ptr->blk_geom->has_uv) {
     // 1: recon the Luma
     AV1PerformInverseTransformReconLuma(
@@ -2044,29 +1996,17 @@ static void CflPrediction(
 
         uint32_t recLumaOffset = ((context_ptr->blk_geom->origin_y >> 3) << 3) * candidateBuffer->recon_ptr->stride_y +
             ((context_ptr->blk_geom->origin_x >> 3) << 3);
-#else
-    uint32_t recLumaOffset = (context_ptr->blk_geom->origin_y) * candidateBuffer->recon_ptr->stride_y +
-        (context_ptr->blk_geom->origin_x);
-#endif
     // 2: Form the pred_buf_q3
     uint32_t chroma_width = context_ptr->blk_geom->bwidth_uv;
     uint32_t chroma_height = context_ptr->blk_geom->bheight_uv;
 
     // Down sample Luma
     cfl_luma_subsampling_420_lbd_c(
-#if CFL_FIX
         &(context_ptr->cfl_temp_luma_recon[recLumaOffset]),
         candidateBuffer->recon_ptr->stride_y,
         context_ptr->pred_buf_q3,
         context_ptr->blk_geom->bwidth_uv == context_ptr->blk_geom->bwidth ? (context_ptr->blk_geom->bwidth_uv << 1) : context_ptr->blk_geom->bwidth,
         context_ptr->blk_geom->bheight_uv == context_ptr->blk_geom->bheight ? (context_ptr->blk_geom->bheight_uv << 1) : context_ptr->blk_geom->bheight);
-#else
-        &(candidateBuffer->recon_ptr->buffer_y[recLumaOffset]),
-        candidateBuffer->recon_ptr->stride_y,
-        context_ptr->pred_buf_q3,
-        context_ptr->blk_geom->bwidth,
-        context_ptr->blk_geom->bheight);
-#endif
 
     int32_t round_offset = chroma_width * chroma_height / 2;
 
@@ -2146,9 +2086,7 @@ static void CflPrediction(
         // Alphas = 0, Preds are the same as DC. Switch to DC mode
         candidateBuffer->candidate_ptr->intra_chroma_mode = UV_DC_PRED;
     }
-#if CFL_FIX
     }
-#endif
 }
 uint8_t get_skip_tx_search_flag(
 #if BYPASS_USELESS_TX_SEARCH
@@ -5336,7 +5274,6 @@ void md_encode_block(
             context_ptr->blk_geom,
             asm_type);
 
-#if CFL_FIX
         if (!context_ptr->blk_geom->has_uv && candidateBuffer->candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
             // Store the luma data for 4x* and *x4 blocks to be used for CFL
             EbPictureBufferDesc  *recon_ptr = candidateBuffer->recon_ptr;
@@ -5344,7 +5281,6 @@ void md_encode_block(
             for (uint32_t j = 0; j < context_ptr->blk_geom->bheight; ++j)
                 memcpy(&context_ptr->cfl_temp_luma_recon[rec_luma_offset + j* recon_ptr->stride_y], recon_ptr->buffer_y + rec_luma_offset + j * recon_ptr->stride_y, context_ptr->blk_geom->bwidth);
         }
-#endif
         //copy neigh recon data in cu_ptr
         {
             uint32_t j;
