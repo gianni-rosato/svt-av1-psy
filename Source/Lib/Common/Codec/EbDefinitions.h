@@ -198,7 +198,7 @@ extern "C" {
 
 
 
-#define IMPROVED_BIPRED_INJECTION                   1
+
 #define IMPROVED_UNIPRED_INJECTION                  1
 
 //NEEDED FLAGS  OFF
