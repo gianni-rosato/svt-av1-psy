@@ -174,7 +174,7 @@ extern "C" {
 
 
 
-#define FIX_INTRA_UV                                    1   //mismatch in intra prediction
+
 
 #define FRAC_64x64_BUG_FIX                              1
 #define USE_SAD_ME                                      1
@@ -234,7 +234,7 @@ extern "C" {
 #define FIX_INIT                  1   //fix ref_poc_array init
 #define NORMAL_ORDER              1   //  order(ALT/ALT2)
 #define REF_ORDER                 1  //correctly construct decoder based ref order hint array
-//#define FIX_INTRA_UV              1   //mismatch in intra prediction
+//
 #define RPS_4L                    1 //RPS for 4L case
 #define FIX_ORDER_HINT            1 //fix order hint usage.
 #define M8_CDEF_DEBUG             0 //Keep OFF Debug flag ofr M8
