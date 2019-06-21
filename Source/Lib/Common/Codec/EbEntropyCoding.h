@@ -83,10 +83,8 @@ extern "C" {
         uint64_t                            *cr_tu_coeff_bits,
         TxSize                               txsize,
         TxSize                               txsize_uv,
-#if ATB_TX_TYPE_SUPPORT_PER_TU
         TxType                               tx_type,
         TxType                               tx_type_uv,
-#endif
         COMPONENT_TYPE                       component_type,
         EbAsm                                asm_type);
 

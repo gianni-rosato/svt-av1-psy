@@ -30,9 +30,7 @@ extern "C" {
         uint16_t                            eob,
         PlaneType                           plane_type,
         TxSize                              transform_size,
-#if ATB_TX_TYPE_SUPPORT_PER_TU
         TxType                              transform_type,
-#endif
         int16_t                             txb_skip_ctx,
         int16_t                             dc_sign_ctx,
         EbBool                              reducedTransformSetFlag);
