@@ -520,7 +520,6 @@ void* motion_estimation_kernel(void *input_ptr)
                             {
                                 uint8_t  *framePtr = &sixteenth_picture_ptr->buffer_y[bufferIndex];
                                 uint8_t  *localPtr = context_ptr->me_context_ptr->sixteenth_sb_buffer;
-#if USE_SAD_HMEL0
                                 if (context_ptr->me_context_ptr->hme_search_method == FULL_SAD_SEARCH) {
                                     for (lcuRow = 0; lcuRow < (sb_height >> 2); lcuRow += 1) {
                                         EB_MEMCPY(localPtr, framePtr, (sb_width >> 2) * sizeof(uint8_t));
@@ -535,13 +534,6 @@ void* motion_estimation_kernel(void *input_ptr)
                                         framePtr += sixteenth_picture_ptr->stride_y << 1;
                                     }
                                 }
-#else
-                                for (lcuRow = 0; lcuRow < (sb_height >> 2); lcuRow += 2) {
-                                    EB_MEMCPY(localPtr, framePtr, (sb_width >> 2) * sizeof(uint8_t));
-                                    localPtr += 16;
-                                    framePtr += sixteenth_decimated_picture_ptr->stride_y << 1;
-                                }
-#endif
                             }
                         }
                         context_ptr->me_context_ptr->me_alt_ref = EB_FALSE;
