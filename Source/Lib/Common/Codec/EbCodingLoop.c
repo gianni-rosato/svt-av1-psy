@@ -632,9 +632,7 @@ static void Av1EncodeLoop(
             cu_ptr->luma_dc_sign_context,
 #endif
             cu_ptr->pred_mode,
-#if RDOQ_INTRA
             cu_ptr->av1xd->use_intrabc,
-#endif
             EB_TRUE);
 
 #if BLK_SKIP_DECISION
@@ -1059,9 +1057,7 @@ static void Av1EncodeLoop(
             cu_ptr->cb_dc_sign_context,
 #endif
             cu_ptr->pred_mode,
-#if RDOQ_INTRA
             cu_ptr->av1xd->use_intrabc,
-#endif
             EB_TRUE);
 
 #if BLK_SKIP_DECISION
@@ -1137,9 +1133,7 @@ static void Av1EncodeLoop(
             cu_ptr->cr_dc_sign_context,
 #endif
             cu_ptr->pred_mode,
-#if RDOQ_INTRA
             cu_ptr->av1xd->use_intrabc,
-#endif
             EB_TRUE);
 #if BLK_SKIP_DECISION
         if (context_ptr->md_skip_blk) {
@@ -1385,9 +1379,7 @@ static void Av1EncodeLoop16bit(
                 cu_ptr->luma_dc_sign_context,
 #endif
                 cu_ptr->pred_mode,
-#if RDOQ_INTRA
                 cu_ptr->av1xd->use_intrabc,
-#endif
                 EB_TRUE);
 #if BLK_SKIP_DECISION
             if (context_ptr->md_skip_blk) {
@@ -1613,9 +1605,7 @@ static void Av1EncodeLoop16bit(
                 cu_ptr->cb_dc_sign_context,
 #endif
                 cu_ptr->pred_mode,
-#if RDOQ_INTRA
                 cu_ptr->av1xd->use_intrabc,
-#endif
                 EB_TRUE);
 
 #if BLK_SKIP_DECISION
@@ -1692,9 +1682,7 @@ static void Av1EncodeLoop16bit(
                 cu_ptr->cr_dc_sign_context,
 #endif
                 cu_ptr->pred_mode,
-#if RDOQ_INTRA
                 cu_ptr->av1xd->use_intrabc,
-#endif
                 EB_TRUE);
 #if BLK_SKIP_DECISION
             if (context_ptr->md_skip_blk) {

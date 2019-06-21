@@ -51,7 +51,7 @@ extern "C" {
 
 
 
-#define RDOQ_INTRA                        1 // Enable RDOQ INTRA (RDOQ INTER already active)
+
 #define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass
 #define SPATIAL_SSE_TX_SEARCH             1 // Spatial SSE @ the full loop Tx search
 #define ENHANCED_Nx4_4xN_NEW_MV           1 // Nx4 and 4xN MVs to be inherited from the parent block rather than from the 64x64

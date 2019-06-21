@@ -1856,15 +1856,11 @@ void av1_quantize_inv_quantize(
     int16_t                      txb_skip_context,    // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
     int16_t                      dc_sign_context,     // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
     PredictionMode               pred_mode,
-#if RDOQ_INTRA
     EbBool                       is_intra_bc,
-#endif
     EbBool                       is_encode_pass)
 {
-#if RDOQ_INTRA
     (void)candidateBuffer;
     (void)is_encode_pass;
-#endif
     (void)coeff_stride;
 #if !PF_N2_SUPPORT
     (void)pf_mode;
@@ -2017,60 +2013,15 @@ void av1_quantize_inv_quantize(
 #if RDOQ_FP_QUANTIZATION
     if (perform_rdoq && *eob != 0) {
 #else
-#if RDOQ_INTRA
     if (md_context->trellis_quant_coeff_optimization && *eob != 0 && component_type == COMPONENT_LUMA && !is_intra_bc) {
-#else
-    if (md_context->trellis_quant_coeff_optimization && *eob != 0 && is_inter && component_type == COMPONENT_LUMA) {
-#endif
 #endif
 
-#if !RDOQ_INTRA
-        uint64_t coeff_rate_non_opt;
-        uint64_t coeff_rate_opt;
-
-        uint64_t distortion_non_opt[2];
-        uint64_t distortion_opt[2];
-
-        uint64_t cost_non_opt;
-        uint64_t cost_opt;
-#endif
 #if TRELLIS_SKIP
         uint64_t coeff_rate_skip_non_opt;
         uint64_t coeff_rate_skip_opt;
 
         uint64_t cost_skip_non_opt;
         uint64_t cost_skip_opt;
-#endif
-#if !RDOQ_INTRA
-        // Use the 1st spot of the candidate buffer to hold cfl settings to use same kernel as MD for coef cost estimation
-        if (is_encode_pass)
-        {
-#if !ATB_TX_TYPE_SUPPORT_PER_TU
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_Y] = tx_type;
-            candidateBuffer->candidate_ptr->transform_type[PLANE_TYPE_UV] = tx_type;
-#endif
-            candidateBuffer->candidate_ptr->type = is_inter ?
-                INTER_MODE :
-                INTRA_MODE;
-            candidateBuffer->candidate_ptr->pred_mode = pred_mode;
-            candidateBuffer->candidate_ptr->md_rate_estimation_ptr = md_context->md_rate_estimation_ptr;
-        }
-
-        // Compute the cost when using non-optimized coefficients (i.e. original coefficients)
-        coeff_rate_non_opt = av1_cost_coeffs_txb(
-            0,//picture_control_set_ptr->update_cdf,
-            0,//picture_control_set_ptr->ec_ctx_array[sb_index],
-            candidateBuffer,
-            quant_coeff,
-            *eob,
-            (component_type == COMPONENT_LUMA) ? 0 : 1,
-            txsize,
-#if ATB_TX_TYPE_SUPPORT_PER_TU
-            tx_type,
-#endif
-            txb_skip_context,
-            dc_sign_context,
-            picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
 #endif
 #if TRELLIS_SKIP
         coeff_rate_skip_non_opt = av1_cost_skip_txb(
@@ -2080,21 +2031,6 @@ void av1_quantize_inv_quantize(
             txsize,
             (component_type == COMPONENT_LUMA) ? 0 : 1,
             txb_skip_context);
-#endif
-#if !RDOQ_INTRA
-        full_distortion_kernel32_bits_func_ptr_array[asm_type](
-            coeff,
-            get_txb_wide(txsize),
-            recon_coeff,
-            get_txb_wide(txsize),
-            distortion_non_opt,
-            get_txb_wide(txsize),
-            get_txb_wide(txsize));
-        int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale(txsize)) * 2;
-        distortion_non_opt[DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(distortion_non_opt[DIST_CALC_RESIDUAL], shift);
-        distortion_non_opt[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(distortion_non_opt[DIST_CALC_PREDICTION], shift);
-
-        cost_non_opt = RDCOST(md_context->full_lambda, coeff_rate_non_opt, distortion_non_opt[DIST_CALC_RESIDUAL]);
 #endif
 #if TRELLIS_SKIP // To test
         cost_skip_non_opt = RDCOST(md_context->full_lambda, coeff_rate_skip_non_opt, distortion_non_opt[DIST_CALC_PREDICTION]);
@@ -2121,81 +2057,6 @@ void av1_quantize_inv_quantize(
                 is_inter,
                 bit_increment,
                 (component_type == COMPONENT_LUMA) ? 0 : 1);
-#if !RDOQ_INTRA
-            // Compute the cost when using optimized coefficients(i.e.after Trellis coefficients)
-            if (*eob != 0) {
-                coeff_rate_opt = av1_cost_coeffs_txb(
-                    0,//picture_control_set_ptr->update_cdf,
-                    0,//picture_control_set_ptr->ec_ctx_array[sb_index],
-                    candidateBuffer,
-                    quant_coeff,
-                    *eob,
-                    (component_type == COMPONENT_LUMA) ? 0 : 1,
-                    txsize,
-#if ATB_TX_TYPE_SUPPORT_PER_TU
-                    tx_type,
-#endif
-                    txb_skip_context,
-                    dc_sign_context,
-                    picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
-
-#if TRELLIS_SKIP
-                coeff_rate_skip_opt = av1_cost_skip_txb(
-                    0,//picture_control_set_ptr->update_cdf,
-                    0,//picture_control_set_ptr->ec_ctx_array[sb_index],
-                    candidateBuffer,
-                    txsize,
-                    (component_type == COMPONENT_LUMA) ? 0 : 1,
-                    txb_skip_context);
-#endif
-                full_distortion_kernel32_bits_func_ptr_array[asm_type](
-                    coeff,
-                    get_txb_wide(txsize),
-                    recon_coeff,
-                    get_txb_wide(txsize),
-                    distortion_opt,
-                    get_txb_wide(txsize),
-                    get_txb_wide(txsize));
-
-                int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale(txsize)) * 2;
-                distortion_opt[DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(distortion_opt[DIST_CALC_RESIDUAL], shift);
-                distortion_opt[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(distortion_opt[DIST_CALC_PREDICTION], shift);
-
-                cost_opt = RDCOST(md_context->full_lambda, coeff_rate_opt, distortion_opt[0]);
-#if TRELLIS_SKIP // To test
-                cost_skip_opt = RDCOST(md_context->full_lambda, coeff_rate_skip_opt, distortion_opt[1]);
-                if (cost_skip_opt < cost_opt)
-                    *eob = 0;
-#endif
-            }
-
-            // Hsan (Trellis): redo Q/Q-1 if original cost better than Trellis cost (extra cycles are spent here but better than keeping a copy of original Q/Q-1 buffers then copy again to the final Q/Q-1 buffers
-            if (*eob != 0 && cost_non_opt < cost_opt) {
-                if (bit_increment)
-                    av1_highbd_quantize_b_facade(
-                    (TranLow*)coeff,
-                        n_coeffs,
-                        &candidate_plane,
-                        quant_coeff,
-                        (TranLow*)recon_coeff,
-                        eob,
-                        scan_order,
-                        &qparam);
-                else
-                    av1_quantize_b_facade_II(
-                    (TranLow*)coeff,
-                        coeff_stride,
-                        width,
-                        height,
-                        n_coeffs,
-                        &candidate_plane,
-                        quant_coeff,
-                        (TranLow*)recon_coeff,
-                        eob,
-                        scan_order,
-                        &qparam);
-            }
-#endif
         }
     }
 
@@ -2372,9 +2233,7 @@ void product_full_loop(
             context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
             candidateBuffer->candidate_ptr->pred_mode,
-#if RDOQ_INTRA
             candidateBuffer->candidate_ptr->use_intrabc,
-#endif
             EB_FALSE);
 #if ATB_DC_CONTEXT_SUPPORT_1
 #if !DC_SIGN_CONTEXT_FIX
@@ -2821,9 +2680,7 @@ void product_full_loop_tx_search(
                 context_ptr->cu_ptr->luma_dc_sign_context,
 #endif
                 candidateBuffer->candidate_ptr->pred_mode,
-#if RDOQ_INTRA
                 candidateBuffer->candidate_ptr->use_intrabc,
-#endif
                 EB_FALSE);
 
 #if ATB_DC_CONTEXT_SUPPORT_1
@@ -3174,9 +3031,7 @@ void encode_pass_tx_search(
             0,
             0,
             0,
-#if RDOQ_INTRA
             cu_ptr->av1xd->use_intrabc,
-#endif
             EB_FALSE);
 
 
@@ -3421,9 +3276,7 @@ void encode_pass_tx_search_hbd(
             0,
             0,
             0,
-#if RDOQ_INTRA
             cu_ptr->av1xd->use_intrabc,
-#endif
             EB_FALSE);
 
 
@@ -3717,9 +3570,7 @@ void full_loop_r(
                 0,
                 0,
                 0,
-#if RDOQ_INTRA
                 candidateBuffer->candidate_ptr->use_intrabc,
-#endif
                 EB_FALSE);
 
 #if ATB_DC_CONTEXT_SUPPORT_1
@@ -3865,9 +3716,7 @@ void full_loop_r(
                 0,
                 0,
                 0,
-#if RDOQ_INTRA
                 candidateBuffer->candidate_ptr->use_intrabc,
-#endif
                 EB_FALSE);
 
 #if ATB_DC_CONTEXT_SUPPORT_1

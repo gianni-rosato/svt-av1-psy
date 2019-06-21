@@ -3931,9 +3931,7 @@ extern "C" {
         int16_t                        txb_skip_context,
         int16_t                        dc_sign_context,
         PredictionMode                 pred_mode,
-#if RDOQ_INTRA
         EbBool                         is_intra_bc,
-#endif
         EbBool                         is_encode_pass);
 
     extern EbErrorType av1_estimate_inv_transform(
