@@ -719,8 +719,6 @@ EbErrorType picture_control_set_ctor(
         object_ptr->ep_cr_recon_neighbor_array16bit = 0;
     }
 
-#if DC_SIGN_CONTEXT_EP
-
     // for each 4x4
     return_error = neighbor_array_unit_ctor(
         &object_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
@@ -757,7 +755,6 @@ EbErrorType picture_control_set_ctor(
 
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-#endif
 
 #if !OPT_LOSSLESS_0
     return_error = neighbor_array_unit_ctor(
