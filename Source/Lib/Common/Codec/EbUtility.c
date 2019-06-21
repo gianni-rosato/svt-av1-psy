@@ -666,11 +666,7 @@ static INLINE TxSize av1_get_tx_size(
     UNUSED(plane);
 }
 
-#if RED_CU
 void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t y, int32_t is_last_quadrant, uint8_t quad_it)
-#else
-void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t y, int32_t is_last_quadrant)
-#endif
 {
     //the input block is the parent square block of size sq_size located at pos (x,y)
 
@@ -704,9 +700,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
 
             blk_geom_mds[*idx_mds].sq_size = sq_size;
             blk_geom_mds[*idx_mds].is_last_quadrant = is_last_quadrant;
-#if RED_CU
             blk_geom_mds[*idx_mds].quadi = quad_it;
-#endif
 
             blk_geom_mds[*idx_mds].shape = (PART)part_it;
             blk_geom_mds[*idx_mds].origin_x = x + quartsize * ns_quarter_off_mult[part_it][0][nsq_it];
@@ -1081,17 +1075,10 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
     uint32_t min_size = max_sb >> (max_depth - 1);
     if (halfsize >= min_size)
     {
-#if RED_CU
         md_scan_all_blks(idx_mds, halfsize, x, y, 0,0);
         md_scan_all_blks(idx_mds, halfsize, x + halfsize, y, 0,1);
         md_scan_all_blks(idx_mds, halfsize, x, y + halfsize, 0,2);
         md_scan_all_blks(idx_mds, halfsize, x + halfsize, y + halfsize, 1,3);
-#else
-        md_scan_all_blks(idx_mds, halfsize, x, y, 0);
-        md_scan_all_blks(idx_mds, halfsize, x + halfsize, y, 0);
-        md_scan_all_blks(idx_mds, halfsize, x, y + halfsize, 0);
-        md_scan_all_blks(idx_mds, halfsize, x + halfsize, y + halfsize, 1);
-#endif
     }
 }
 
@@ -1264,7 +1251,6 @@ uint32_t count_total_num_of_active_blks()
 
     return depth_scan_idx;
 }
-#if RED_CU
 void log_redundancy_similarity(uint32_t  max_block_count)
 {
     uint32_t blk_it, s_it;
@@ -1298,7 +1284,6 @@ void log_redundancy_similarity(uint32_t  max_block_count)
         }
     }
 }
-#endif
 void build_blk_geom(int32_t use_128x128)
 {
     max_sb = use_128x128 ? 128 : 64;
@@ -1315,18 +1300,12 @@ void build_blk_geom(int32_t use_128x128)
 
     //(2) Construct md scan blk_geom_mds:  use info from dps
     uint32_t idx_mds = 0;
-#if RED_CU
     md_scan_all_blks(&idx_mds, max_sb, 0, 0, 0,0);
-#else
-    md_scan_all_blks(&idx_mds, max_sb, 0, 0, 0);
-#endif
 
     //(3) Fill more info from mds to dps - print using dps
     finish_depth_scan_all_blks();
 
-#if RED_CU
     log_redundancy_similarity(max_block_count);
-#endif
 }
 
 //need to finish filling dps by inherting data from mds

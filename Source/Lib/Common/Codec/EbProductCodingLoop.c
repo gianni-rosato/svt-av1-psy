@@ -4004,7 +4004,6 @@ void move_cu_data(
     dst_cu->shape = src_cu->shape;
     dst_cu->mds_idx = src_cu->mds_idx;
 }
-#if RED_CU
 void move_cu_data_redund(
     CodingUnit *src_cu,
     CodingUnit *dst_cu){
@@ -4051,9 +4050,7 @@ void move_cu_data_redund(
     dst_cu->leaf_index = src_cu->leaf_index;
     dst_cu->split_flag = src_cu->split_flag;
     dst_cu->skip_flag = src_cu->skip_flag;
-#if RED_CU
     dst_cu->mdc_split_flag = src_cu->mdc_split_flag;
-#endif
 
     dst_cu->tx_depth = src_cu->tx_depth;
     //CHKN    MacroBlockD*  av1xd;
@@ -4115,7 +4112,6 @@ void check_redundant_block(const BlockGeom * blk_geom, ModeDecisionContext *cont
         }
     }
 }
-#endif
 /*******************************************
 * ModeDecision LCU
 *   performs CL (LCU)
@@ -5319,9 +5315,7 @@ void md_encode_block(
         }
 #endif
 
-#if RED_CU
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].avail_blk_flag = EB_TRUE;
-#endif
     }
     else
     {
@@ -5405,10 +5399,8 @@ EB_EXTERN EbErrorType mode_decision_sb(
         context_ptr->sb_origin_x = sb_origin_x;
         context_ptr->sb_origin_y = sb_origin_y;
         context_ptr->md_local_cu_unit[blk_idx_mds].tested_cu_flag = EB_TRUE;
-#if RED_CU
         context_ptr->md_ep_pipe_sb[blk_idx_mds].merge_cost = 0;
         context_ptr->md_ep_pipe_sb[blk_idx_mds].skip_cost = 0;
-#endif
 
         cu_ptr->mds_idx = blk_idx_mds;
         context_ptr->md_cu_arr_nsq[blk_idx_mds].mdc_split_flag = (uint16_t)leafDataPtr->split_flag;
@@ -5448,7 +5440,6 @@ EB_EXTERN EbErrorType mode_decision_sb(
                 cu_ptr->av1xd->left_mbmi = NULL;
 #endif
 
-#if RED_CU
         uint8_t redundant_blk_avail = 0;
         uint16_t redundant_blk_mds;
 
@@ -5477,7 +5468,6 @@ EB_EXTERN EbErrorType mode_decision_sb(
             }
         }
         else
-#endif
         // Initialize tx_depth
         cu_ptr->tx_depth = 0;
 #if  INCOMPLETE_SB_FIX
