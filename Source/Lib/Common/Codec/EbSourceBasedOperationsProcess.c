@@ -117,161 +117,6 @@ void DerivePictureActivityStatistics(
     return;
 }
 
-#if !DISABLE_OIS_USE
-/******************************************************
-* Pre-MD Uncovered Area Detection
-******************************************************/
-void FailingMotionLcu(
-    SequenceControlSet            *sequence_control_set_ptr,
-    PictureParentControlSet        *picture_control_set_ptr,
-    uint32_t                             sb_index) {
-    uint32_t rasterScanCuIndex;
-
-    // SB Loop : Failing motion detector for L2 only
-    SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-    // Detection variables
-    uint64_t                  sortedcuOisSAD = 0;
-    uint64_t                  cuMeSAD = 0;
-    int64_t                  meToOisSadDeviation = 0;
-    // SB loop variables
-
-    int64_t failing_motion_sb_flag = 0;
-
-    if (picture_control_set_ptr->slice_type != I_SLICE && sb_params->is_complete_sb && (!picture_control_set_ptr->similar_colocated_sb_array[sb_index])) {
-        for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_64x64; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_32x32_3; rasterScanCuIndex++) {
-            meToOisSadDeviation = 0;
-
-            // Get ME SAD
-#if MRP_CONNECTION
-            cuMeSAD = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
-#else
-            cuMeSAD = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortion_direction[0].distortion;
-#endif
-
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
-            OisCandidate *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[raster_scan_to_md_scan[rasterScanCuIndex]];
-            sortedcuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[raster_scan_to_md_scan[rasterScanCuIndex]]].distortion;
-
-            int64_t  meToOisSadDiff = (int32_t)cuMeSAD - (int32_t)sortedcuOisSAD;
-            meToOisSadDeviation = (sortedcuOisSAD == 0) || (meToOisSadDiff < 0) ? 0 : (meToOisSadDiff * 100) / sortedcuOisSAD;
-
-            if (meToOisSadDeviation > SAD_DEVIATION_LCU_TH)
-                failing_motion_sb_flag += 1;
-        }
-
-        // Update failing motion flag
-        picture_control_set_ptr->failing_motion_sb_flag[sb_index] = (failing_motion_sb_flag && (picture_control_set_ptr->intensity_transition_flag == EB_FALSE)) ? EB_TRUE : EB_FALSE;
-    }
-}
-
-/******************************************************
-* Pre-MD Uncovered Area Detection
-******************************************************/
-void DetectUncoveredLcu(
-    SequenceControlSet            *sequence_control_set_ptr,
-    PictureParentControlSet        *picture_control_set_ptr,
-    uint32_t                             sb_index) {
-    uint32_t rasterScanCuIndex;
-
-    // SB Loop : Uncovered area detector -- ON only for 4k
-    SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-    // Detection variables
-    uint64_t                  sortedcuOisSAD = 0;
-    uint64_t                  cuMeSAD = 0;
-    int64_t                  meToOisSadDeviation = 0;
-    // SB loop variables
-
-    int64_t uncovered_area_sb_flag = 0;
-
-    if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
-        if (sb_params->is_complete_sb && (!picture_control_set_ptr->similar_colocated_sb_array[sb_index])) {
-            for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_64x64; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_32x32_3; rasterScanCuIndex++) {
-                meToOisSadDeviation = 0;
-
-                // Get ME SAD
-#if MRP_CONNECTION
-                cuMeSAD = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
-#else
-                cuMeSAD = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortion_direction[0].distortion;
-#endif
-
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
-            OisCandidate *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[raster_scan_to_md_scan[rasterScanCuIndex]];
-            sortedcuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[raster_scan_to_md_scan[rasterScanCuIndex]]].distortion;
-
-                int64_t  meToOisSadDiff = (int32_t)cuMeSAD - (int32_t)sortedcuOisSAD;
-                meToOisSadDeviation = (sortedcuOisSAD == 0) || (meToOisSadDiff < 0) ? 0 : (meToOisSadDiff * 100) / sortedcuOisSAD;
-
-                if (raster_scan_cu_size[rasterScanCuIndex] > 16) {
-                    if (meToOisSadDeviation > SAD_DEVIATION_LCU_NON_M4_TH)
-                        uncovered_area_sb_flag += 1;
-                }
-            }
-
-            // Update Uncovered area flag
-            picture_control_set_ptr->uncovered_area_sb_flag[sb_index] = (uncovered_area_sb_flag && (picture_control_set_ptr->intensity_transition_flag == EB_FALSE)) ? EB_TRUE : EB_FALSE;
-        }
-    }
-}
-
-#endif
-#if !DISABLE_OIS_USE
-
-void LumaContrastDetectorLcu(
-    SourceBasedOperationsContext *context_ptr,
-    SequenceControlSet           *sequence_control_set_ptr,
-    PictureParentControlSet       *picture_control_set_ptr,
-    uint32_t                            sb_index) {
-    uint64_t                  cuOisSAD = 0;
-    uint64_t                  cuMeSAD = 0;
-
-    // Calculate Luma mean of the frame by averaging the mean of LCUs to Detect Dark Frames (On only for 4k and BQMode)
-    uint8_t  *y_mean_ptr = context_ptr->y_mean_ptr;
-    SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-    if (sb_params->is_complete_sb) {
-        if (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) {
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->ois_sb_results[sb_index];
-            OisCandidate *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[0];
-            cuOisSAD = OisCuPtr[ois_sb_results_ptr->best_distortion_index[0]].distortion;
-
-#if MRP_CONNECTION
-            cuMeSAD = picture_control_set_ptr->me_results[sb_index]->me_candidate[0][0].distortion;
-#else
-            cuMeSAD = picture_control_set_ptr->me_results[sb_index][0].distortion_direction[0].distortion;
-#endif
-
-            context_ptr->to_be_intra_coded_probability += cuOisSAD < cuMeSAD ? 1 : 0;
-            context_ptr->depth1_block_num++;
-        }
-    }
-
-    if (picture_control_set_ptr->non_moving_index_array[sb_index] < 10)
-    {
-        context_ptr->y_non_moving_mean += y_mean_ptr[0];
-        context_ptr->countOfNonMovingLcus++;
-    }
-    else {
-        context_ptr->y_moving_mean += y_mean_ptr[0];
-        context_ptr->count_of_moving_sbs++;
-    }
-}
-
-void LumaContrastDetectorPicture(
-    SourceBasedOperationsContext        *context_ptr,
-    PictureParentControlSet            *picture_control_set_ptr) {
-    context_ptr->y_non_moving_mean = (context_ptr->countOfNonMovingLcus != 0) ? (context_ptr->y_non_moving_mean / context_ptr->countOfNonMovingLcus) : 0;
-    context_ptr->y_moving_mean = (context_ptr->count_of_moving_sbs != 0) ? (context_ptr->y_moving_mean / context_ptr->count_of_moving_sbs) : 0;
-
-    picture_control_set_ptr->dark_back_groundlight_fore_ground = ((context_ptr->y_moving_mean > (2 * context_ptr->y_non_moving_mean)) && (context_ptr->y_non_moving_mean < DARK_FRM_TH)) ?
-        EB_TRUE :
-        EB_FALSE;
-
-    picture_control_set_ptr->intra_coded_block_probability = 0;
-
-    if (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0)
-        picture_control_set_ptr->intra_coded_block_probability = (uint8_t)(context_ptr->depth1_block_num != 0 ? context_ptr->to_be_intra_coded_probability * 100 / context_ptr->depth1_block_num : 0);
-}
-#endif
 void GrassLcu(
     SourceBasedOperationsContext        *context_ptr,
     SequenceControlSet                *sequence_control_set_ptr,
@@ -538,14 +383,6 @@ void* source_based_operations_kernel(void *input_ptr)
         context_ptr->sb_cmplx_contrast_count = 0;
         context_ptr->sb_high_contrast_count = 0;
         context_ptr->complete_sb_count = 0;
-#if !DISABLE_OIS_USE
-        context_ptr->count_of_moving_sbs = 0;
-        context_ptr->countOfNonMovingLcus = 0;
-        context_ptr->y_non_moving_mean = 0;
-        context_ptr->y_moving_mean = 0;
-        context_ptr->to_be_intra_coded_probability = 0;
-        context_ptr->depth1_block_num = 0;
-#endif
         uint32_t sb_total_count = picture_control_set_ptr->sb_total_count;
         uint32_t sb_index;
 
@@ -581,14 +418,6 @@ void* source_based_operations_kernel(void *input_ptr)
                     sb_index);
             }
 
-#if !DISABLE_OIS_USE
-            // Luma Contrast detection
-            LumaContrastDetectorLcu(
-                context_ptr,
-                sequence_control_set_ptr,
-                picture_control_set_ptr,
-                sb_index);
-#endif
 #if !OPT_LOSSLESS_0
             // AC energy computation
             CalculateAcEnergy(
@@ -596,38 +425,12 @@ void* source_based_operations_kernel(void *input_ptr)
                 picture_control_set_ptr,
                 sb_index);
 #endif
-#if !DISABLE_OIS_USE
-            // Failing Motion Detection
-            picture_control_set_ptr->failing_motion_sb_flag[sb_index] = EB_FALSE;
-
-            if (picture_control_set_ptr->slice_type != I_SLICE && is_complete_sb) {
-                FailingMotionLcu(
-                    sequence_control_set_ptr,
-                    picture_control_set_ptr,
-                    sb_index);
-            }
-
-            picture_control_set_ptr->uncovered_area_sb_flag[sb_index] = EB_FALSE;
-            if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
-                if (is_complete_sb && (!picture_control_set_ptr->similar_colocated_sb_array[sb_index])) {
-                    DetectUncoveredLcu(
-                        sequence_control_set_ptr,
-                        picture_control_set_ptr,
-                        sb_index);
-                }
-            }
-#endif
             if (is_complete_sb) {
                 context_ptr->complete_sb_count++;
             }
         }
 
         /*********************************************Picture-based operations**********************************************************/
-#if !DISABLE_OIS_USE
-        LumaContrastDetectorPicture(
-            context_ptr,
-            picture_control_set_ptr);
-#endif
         // Delta QP range adjustments
         SetDefaultDeltaQpRange(
             context_ptr,

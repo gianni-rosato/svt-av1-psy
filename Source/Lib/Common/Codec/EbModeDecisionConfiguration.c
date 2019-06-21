@@ -338,50 +338,6 @@ void RefinementPredictionLoop(
     } // End while 1 CU Loop
 }
 
-#if !DISABLE_OIS_USE
-void PrePredictionRefinement(
-    SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet                    *picture_control_set_ptr,
-    LargestCodingUnit                    *sb_ptr,
-    uint32_t                                  sb_index,
-    uint32_t                                 *startDepth,
-    uint32_t                                 *endDepth
-)
-{
-    SbParams    *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-
-    EB_SLICE        slice_type = picture_control_set_ptr->slice_type;
-
-    uint8_t           edge_block_num = picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index].edge_block_num;
-
-    SbStat      *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
-    uint8_t           stationary_edge_over_time_flag = sb_stat_ptr->stationary_edge_over_time_flag;
-
-    uint8_t           aura_status_iii = sb_ptr->aura_status_iii;
-
-    if (picture_control_set_ptr->parent_pcs_ptr->high_dark_low_light_area_density_flag && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 && picture_control_set_ptr->parent_pcs_ptr->sharp_edge_sb_flag[sb_index] && !picture_control_set_ptr->parent_pcs_ptr->similar_colocated_sb_array_ii[sb_index])
-        *startDepth = DEPTH_16;
-    if ((slice_type != I_SLICE && picture_control_set_ptr->high_intra_slection == 0) && (sb_params->is_complete_sb)) {
-        if (picture_control_set_ptr->scene_caracteristic_id == EB_FRAME_CARAC_0) {
-            if (picture_control_set_ptr->parent_pcs_ptr->grass_percentage_in_picture > 60 && aura_status_iii)
-                *startDepth = DEPTH_16;
-        }
-    }
-
-    if (picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag && edge_block_num)
-        *startDepth = DEPTH_16;
-    // S-LOGO
-
-    if (stationary_edge_over_time_flag > 0) {
-        *startDepth = DEPTH_16;
-        *endDepth = DEPTH_16;
-    }
-
-    if (picture_control_set_ptr->parent_pcs_ptr->complex_sb_array[sb_ptr->index] == SB_COMPLEXITY_STATUS_2)
-        *startDepth = DEPTH_16;
-}
-#endif
-
 void ForwardCuToModeDecision(
     SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet                    *picture_control_set_ptr,

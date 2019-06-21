@@ -1082,11 +1082,6 @@ EbErrorType picture_parent_control_set_ctor(
     EB_MALLOC(EdgeLcuResults*, object_ptr->edge_results_ptr, sizeof(EdgeLcuResults) * object_ptr->sb_total_count, EB_N_PTR);
 
     EB_MALLOC(uint8_t*, object_ptr->sharp_edge_sb_flag, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
-#if !DISABLE_OIS_USE
-    EB_MALLOC(uint8_t*, object_ptr->failing_motion_sb_flag, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
-
-    EB_MALLOC(EbBool*, object_ptr->uncovered_area_sb_flag, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
-#endif
 #if !OPT_LOSSLESS_0
     EB_MALLOC(uint64_t**, object_ptr->sb_y_src_energy_cu_array, sizeof(uint64_t*) * object_ptr->sb_total_count, EB_N_PTR);
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {

@@ -672,49 +672,6 @@ void set_reference_cdef_strength(
 /******************************************************
 * Compute Tc, and Beta offsets for a given picture
 ******************************************************/
-#if !DISABLE_OIS_USE
-void AdaptiveDlfParameterComputation(
-    ModeDecisionConfigurationContext     *context_ptr,
-    SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet                    *picture_control_set_ptr,
-    EbBool                                    scene_transition_flag)
-{
-    EbReferenceObject  * refObjL0, *refObjL1;
-    uint8_t                  highIntra = 0;
-    picture_control_set_ptr->high_intra_slection = highIntra;
-
-    (void)sequence_control_set_ptr;
-    (void)context_ptr;
-
-    if (picture_control_set_ptr->slice_type == B_SLICE) {
-        //MRP_MD
-
-        refObjL0 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
-        refObjL1 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
-
-        if ((refObjL0->intra_coded_area > intra_area_th_class_1[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][refObjL0->tmp_layer_idx]) && (refObjL1->intra_coded_area > intra_area_th_class_1[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][refObjL1->tmp_layer_idx]))
-
-            highIntra = 1;
-        else
-            highIntra = 0;
-    }
-
-    if (picture_control_set_ptr->slice_type == B_SLICE) {
-// MRP_MD
-        if (!scene_transition_flag && !picture_control_set_ptr->parent_pcs_ptr->fade_out_from_black && !picture_control_set_ptr->parent_pcs_ptr->fade_in_to_black) {
-            refObjL0 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
-            refObjL1 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
-
-            if (picture_control_set_ptr->temporal_layer_index == 0)
-                highIntra = (picture_control_set_ptr->parent_pcs_ptr->intra_coded_block_probability > intra_area_th_class_1[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][picture_control_set_ptr->temporal_layer_index]) ? 1 : 0;
-            else
-                highIntra = (refObjL0->penalize_skipflag || refObjL1->penalize_skipflag) ? 1 : 0;
-        }
-    }
-
-    picture_control_set_ptr->high_intra_slection = highIntra;
-}
-#endif
 
 /******************************************************
  * Mode Decision Configuration Context Constructor
@@ -1841,13 +1798,6 @@ void* mode_decision_configuration_kernel(void *input_ptr)
             picture_control_set_ptr);
 
         // Compute Tc, and Beta offsets for a given picture
-#if !DISABLE_OIS_USE
-        AdaptiveDlfParameterComputation( // HT done
-            context_ptr,
-            sequence_control_set_ptr,
-            picture_control_set_ptr,
-            picture_control_set_ptr->slice_type == I_SLICE ? EB_FALSE : picture_control_set_ptr->parent_pcs_ptr->scene_transition_flag[REF_LIST_0]);
-#endif
         // Set reference cdef strength
         set_reference_cdef_strength(
             picture_control_set_ptr);

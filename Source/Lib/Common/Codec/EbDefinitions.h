@@ -122,7 +122,7 @@ extern "C" {
 #define M9_ADP                            1
 #define M9_INTRA                          1
 #define M10_INTRA                         0
-#define DISABLE_OIS_USE                   1
+
 
 #define OPT_LOSSLESS_0                    1
 

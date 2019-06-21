@@ -13878,9 +13878,6 @@ extern "C" {
 
         EbEncMode                             enc_mode;
         EbBool                                intra_md_open_loop_flag;
-#if !DISABLE_OIS_USE
-        uint8_t                               high_intra_slection;
-#endif
         EbBool                                limit_intra;
         int32_t                               cdef_preset[4];
         WienerInfo                            wiener_info[MAX_MB_PLANE];
@@ -14068,14 +14065,7 @@ extern "C" {
         uint8_t                              *sb_flat_noise_array;
         EdgeLcuResults                     *edge_results_ptr;                // used by EncDecProcess()
         uint8_t                              *sharp_edge_sb_flag;
-#if !DISABLE_OIS_USE
-        uint8_t                              *failing_motion_sb_flag;        // used by EncDecProcess()  and ModeDecisionConfigurationProcess // USED for L2 to replace the uncovered detectors for L6 and L7
-        EbBool                               *uncovered_area_sb_flag;            // used by EncDecProcess()
-#endif
         EbBool                                logo_pic_flag;                    // used by EncDecProcess()
-#if !DISABLE_OIS_USE
-        uint8_t                               intra_coded_block_probability;    // used by EncDecProcess()
-#endif
         uint16_t                              non_moving_index_average;            // used by ModeDecisionConfigurationProcess()
 
         uint16_t                              qp_scaling_average_complexity;

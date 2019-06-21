@@ -1745,23 +1745,6 @@ void perform_fast_loop(
         MAX_CU_COST :
         *(candidateBufferPtrArrayBase[highestCostIndex]->fast_cost_ptr);
 }
-#if !OPT_LOSSLESS_0 && !DISABLE_OIS_USE
-void ProductConfigureChroma(
-    PictureControlSet                 *picture_control_set_ptr,
-    ModeDecisionContext               *context_ptr,
-    LargestCodingUnit                 *sb_ptr) {
-    uint32_t  lcuAddr = sb_ptr->index;
-    uint32_t  lcuEdgeNum = picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[lcuAddr].edge_block_num;
-    uint64_t  chroma_weight = 1;
-    UNUSED(lcuEdgeNum);
-
-    chroma_weight = ProductGenerateChromaWeight(
-        picture_control_set_ptr,
-        sb_ptr->qp);
-
-    context_ptr->chroma_weight = (picture_control_set_ptr->parent_pcs_ptr->failing_motion_sb_flag[lcuAddr]) ? chroma_weight << 1 : chroma_weight;
-}
-#endif
 #if !PF_N2_SUPPORT
 void ProductDerivePartialFrequencyN2Flag(
     SequenceControlSet               *sequence_control_set_ptr,
@@ -5578,12 +5561,6 @@ EB_EXTERN EbErrorType mode_decision_sb(
 #if !OPT_LOSSLESS_0
     context_ptr->group_of8x8_blocks_count = 0;
     context_ptr->group_of16x16_blocks_count = 0;
-#endif
-#if !OPT_LOSSLESS_0 && !DISABLE_OIS_USE
-    ProductConfigureChroma(
-        picture_control_set_ptr,
-        context_ptr,
-        sb_ptr);
 #endif
 #if OPT_LOSSLESS_0
     if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode <= PIC_SQ_DEPTH_MODE) {
