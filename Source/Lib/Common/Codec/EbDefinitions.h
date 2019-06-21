@@ -216,7 +216,7 @@ extern "C" {
 
 
 
-#define MRP_5L_STRUCT             1  //New 5L prediction structure supporting MRP
+
 #define MRP_LIST_REF_IDX_TYPE_LT  1
 #define MRP_MVP                   1 //MVP upgrade to support MRP
 #define MCP_4XN_FIX               1 //Fix for MCP chroma for 4xN modes
