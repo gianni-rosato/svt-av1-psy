@@ -232,7 +232,7 @@ extern "C" {
 
 
 //
-#define RPS_4L                    1 //RPS for 4L case
+
 #define FIX_ORDER_HINT            1 //fix order hint usage.
 #define M8_CDEF_DEBUG             0 //Keep OFF Debug flag ofr M8
 #define MRP_M0_ONLY               0 // Enable MRP for Base only for M1-M9

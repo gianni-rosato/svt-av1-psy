@@ -30,9 +30,7 @@
 #define  LAY1_OFF  3
 #define  LAY2_OFF  5
 #define  LAY3_OFF  7
-#if RPS_4L
 extern PredictionStructureConfigEntry four_level_hierarchical_pred_struct[];
-#endif
 extern PredictionStructureConfigEntry five_level_hierarchical_pred_struct[];
 
 uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_number, int32_t delta_poc)
@@ -1312,7 +1310,6 @@ void  Av1GenerateRpsInfo(
     }
     else if (picture_control_set_ptr->hierarchical_levels == 3)//RPS for 4L GOP
     {
-#if RPS_4L
 
         uint8_t gop_i;
 
@@ -1667,156 +1664,6 @@ void  Av1GenerateRpsInfo(
             //Layer1 toggle 3->4
             context_ptr->lay1_toggle = 1 - context_ptr->lay1_toggle;
         }
-#else
-        //Reset miniGop Toggling. The first miniGop after a KEY frame has toggle=0
-        if (picture_control_set_ptr->av1_frame_type == KEY_FRAME)
-        {
-            context_ptr->mini_gop_toggle = 0;
-            picture_control_set_ptr->show_frame = EB_TRUE;
-            picture_control_set_ptr->has_show_existing = EB_FALSE;
-            return;
-        }
-
-        //pictureIndex has this order:
-        //        0      2    4      6
-        //            1          5
-        //                 3
-        //                             8(could be an I)
-
-        //DPB: Loc7|Loc6|Loc5|Loc4|Loc3|Loc2|Loc1|Loc0
-        //Layer 0 : toggling bwteween DPB Location 0, and  locations 3-4-5-6-7
-        //Layer 1 : DPB Location 1
-        //Layer 2 : DPB Location 2
-
-        //         1     3    5      7
-        //            2          6
-        //                 4
-        //base0:0                      base1:8
-        const uint8_t  base0_idx = context_ptr->mini_gop_toggle ? 0 : 3; //Base layer for prediction from past
-        const uint8_t  base1_idx = context_ptr->mini_gop_toggle ? 3 : 0; //Base layer for prediction from future
-        const uint8_t  layer1_idx = 1;
-        const uint8_t  layer2_idx = 2;
-
-        switch (picture_control_set_ptr->temporal_layer_index) {
-        case 0:
-
-            av1Rps->ref_dpb_index[0] = base0_idx;
-            av1Rps->ref_dpb_index[6] = base0_idx;
-            av1Rps->refresh_frame_mask = context_ptr->mini_gop_toggle ? 248 : 1;
-            break;
-        case 1:
-            av1Rps->ref_dpb_index[0] = base0_idx;
-            av1Rps->ref_dpb_index[6] = base1_idx;
-            av1Rps->refresh_frame_mask = 2;
-            break;
-        case 2:
-
-            if (pictureIndex == 1) {
-                av1Rps->ref_dpb_index[0] = base0_idx;
-                av1Rps->ref_dpb_index[6] = layer1_idx;
-            }
-            else if (pictureIndex == 5) {
-                av1Rps->ref_dpb_index[0] = layer1_idx;
-                av1Rps->ref_dpb_index[6] = base1_idx;
-            }
-            else
-                printf("Error in GOp indexing\n");
-            av1Rps->refresh_frame_mask = 4;
-            break;
-        case 3:
-            if (pictureIndex == 0) {
-                av1Rps->ref_dpb_index[0] = base0_idx;
-                av1Rps->ref_dpb_index[6] = layer2_idx;
-            }
-            else if (pictureIndex == 2) {
-                av1Rps->ref_dpb_index[0] = layer2_idx;
-                av1Rps->ref_dpb_index[6] = layer1_idx;
-            }
-            else if (pictureIndex == 4) {
-                av1Rps->ref_dpb_index[0] = layer1_idx;
-                av1Rps->ref_dpb_index[6] = layer2_idx;
-            }
-            else if (pictureIndex == 6) {
-                av1Rps->ref_dpb_index[0] = layer2_idx;
-                av1Rps->ref_dpb_index[6] = base1_idx;
-            }
-            else
-                printf("Error in GOp indexing\n");
-            av1Rps->refresh_frame_mask = 0;
-            break;
-        default:
-            printf("Error: unexpected picture mini Gop number\n");
-            break;
-        }
-
-        if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_LOW_DELAY_P)
-        {
-            //P frames.
-            av1Rps->ref_dpb_index[1] = av1Rps->ref_dpb_index[2] = av1Rps->ref_dpb_index[3] = av1Rps->ref_dpb_index[0];
-            av1Rps->ref_dpb_index[4] = av1Rps->ref_dpb_index[5] = av1Rps->ref_dpb_index[6] = av1Rps->ref_dpb_index[0];
-            picture_control_set_ptr->show_frame = EB_TRUE;
-            picture_control_set_ptr->has_show_existing = EB_FALSE;
-        }
-        else if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_RANDOM_ACCESS)
-        {
-            av1Rps->ref_dpb_index[1] = av1Rps->ref_dpb_index[2] = av1Rps->ref_dpb_index[3] = av1Rps->ref_dpb_index[0];
-            av1Rps->ref_dpb_index[4] = av1Rps->ref_dpb_index[5] = av1Rps->ref_dpb_index[6];
-
-            //Decide on Show Mecanism
-            if (picture_control_set_ptr->slice_type == I_SLICE)
-            {
-                //3 cases for I slice:  1:Key Frame treated above.  2: broken MiniGop due to sc or intra refresh  3: complete miniGop due to sc or intra refresh
-                if (context_ptr->mini_gop_length[0] < picture_control_set_ptr->pred_struct_ptr->pred_struct_period)
-                {
-                    //Scene Change that breaks the mini gop and switch to LDP (if I scene change happens to be aligned with a complete miniGop, then we do not break the pred structure)
-                    picture_control_set_ptr->show_frame = EB_TRUE;
-                    picture_control_set_ptr->has_show_existing = EB_FALSE;
-                }
-                else
-                {
-                    picture_control_set_ptr->show_frame = EB_FALSE;
-                    picture_control_set_ptr->has_show_existing = EB_FALSE;
-                }
-            }
-            else//B pic
-            {
-                if (context_ptr->mini_gop_length[0] != picture_control_set_ptr->pred_struct_ptr->pred_struct_period)
-                    printf("Error in GOp indexing3\n");
-
-                if (picture_control_set_ptr->is_used_as_reference_flag)
-                {
-                    picture_control_set_ptr->show_frame = EB_FALSE;
-                    picture_control_set_ptr->has_show_existing = EB_FALSE;
-                }
-                else
-                {
-                    picture_control_set_ptr->show_frame = EB_TRUE;
-                    picture_control_set_ptr->has_show_existing = EB_TRUE;
-
-                    if (pictureIndex == 0)
-                        picture_control_set_ptr->show_existing_loc = layer2_idx;
-                    else if (pictureIndex == 2)
-                        picture_control_set_ptr->show_existing_loc = layer1_idx;
-                    else if (pictureIndex == 4)
-                        picture_control_set_ptr->show_existing_loc = layer2_idx;
-                    else if (pictureIndex == 6)
-                        picture_control_set_ptr->show_existing_loc = base1_idx;
-                    else
-                        printf("Error in GOp indexing2\n");
-                }
-            }
-        }
-        else {
-            printf("Error: Not supported GOP structure!");
-            exit(0);
-        }
-
-        //last pic in MiniGop: mGop Toggling
-        //mini GOP toggling since last Key Frame.
-        //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
-        if (pictureIndex == context_ptr->mini_gop_end_index[0])
-            context_ptr->mini_gop_toggle = 1 - context_ptr->mini_gop_toggle;
-#endif
     }
     else if (picture_control_set_ptr->hierarchical_levels == 4)//RPS for 4L GOP
     {
