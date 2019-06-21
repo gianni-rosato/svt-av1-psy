@@ -1220,14 +1220,12 @@ void set_all_ref_frame_type(SequenceControlSet *sequence_control_set_ptr, Pictur
         }
     }
 
-#if NO_UNI
 #if MRP_FIX_CLOSE_GOP
     if (sequence_control_set_ptr->mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
 #else
     if (parent_pcs_ptr->mrp_mode == 0)
 #endif
     {
-#endif
 
         //compound Uni-Dir
         if (parent_pcs_ptr->ref_list0_count > 1) {
@@ -1248,9 +1246,7 @@ void set_all_ref_frame_type(SequenceControlSet *sequence_control_set_ptr, Pictur
             rf[1] = ALTREF_FRAME;
             ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
         }
-#if NO_UNI
         }
-#endif
     }
 
 /*************************************************
