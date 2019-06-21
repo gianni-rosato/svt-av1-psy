@@ -215,9 +215,7 @@ extern "C" {
     {
         uint8_t refresh_frame_mask;
         uint8_t ref_dpb_index[7];//LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
-#if REF_ORDER
         uint64_t ref_poc_array[7]; //decoder based ref poc array //LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
-#endif
     } Av1RpsNode;
 
 #ifdef __cplusplus

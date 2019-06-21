@@ -296,11 +296,7 @@ static PredictionStructureConfigEntry four_level_hierarchical_pred_struct[] = {
  *                 0           1     2               3     4           5     6
  *
  ***********************************************************************************************************/
-#if REF_ORDER
 PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
-#else
-static PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
-#endif
 
     {
         0,                  // GOP Index 0 - Temporal Layer

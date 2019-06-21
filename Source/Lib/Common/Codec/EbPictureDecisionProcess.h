@@ -49,9 +49,7 @@ typedef struct PictureDecisionContext
     uint8_t     lay2_toggle; //2 way toggle 0->1
     EbBool        mini_gop_toggle;    //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
     uint8_t       last_i_picture_sc_detection;
-#if REF_ORDER
     uint64_t         key_poc;
-#endif
 } PictureDecisionContext;
 
 /***************************************

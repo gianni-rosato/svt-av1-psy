@@ -230,7 +230,7 @@ extern "C" {
 
 
 
-#define REF_ORDER                 1  //correctly construct decoder based ref order hint array
+
 //
 #define RPS_4L                    1 //RPS for 4L case
 #define FIX_ORDER_HINT            1 //fix order hint usage.

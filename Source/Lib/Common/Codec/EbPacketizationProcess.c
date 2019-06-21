@@ -368,9 +368,7 @@ void* packetization_kernel(void *input_ptr)
 #if DETAILED_FRAME_OUTPUT
         queueEntryPtr->ref_poc_list0 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0][0];
         queueEntryPtr->ref_poc_list1 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1][0];
-#if REF_ORDER
         memcpy(queueEntryPtr->ref_poc_array, picture_control_set_ptr->parent_pcs_ptr->av1RefSignal.ref_poc_array, 7 * sizeof(uint64_t));
-#endif
 #endif
         queueEntryPtr->show_frame = picture_control_set_ptr->parent_pcs_ptr->show_frame;
         queueEntryPtr->has_show_existing = picture_control_set_ptr->parent_pcs_ptr->has_show_existing;
@@ -508,7 +506,6 @@ void* packetization_kernel(void *input_ptr)
                             exit(0);
                         }
 
-#if REF_ORDER
                         for (int rr = 0; rr < 7; rr++)
                         {
                             uint8_t dpb_spot = queueEntryPtr->av1RefSignal.refDpbIndex[rr];
@@ -516,7 +513,6 @@ void* packetization_kernel(void *input_ptr)
                             if (queueEntryPtr->ref_poc_array[rr] != context_ptr->dpbDispOrder[dpb_spot])
                                 printf("REF_POC MISMATCH POC:%i  ref:%i\n", (int32_t)queueEntryPtr->poc, rr);
                         }
-#endif
                     }
                     else
                     {
