@@ -112,15 +112,6 @@ void mode_decision_update_neighbor_arrays(
     context_ptr->mv_unit.pred_direction = (uint8_t)(context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].inter_pred_direction_index);
     context_ptr->mv_unit.mv[REF_LIST_0].mv_union = context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].mv[REF_LIST_0].mv_union;
     context_ptr->mv_unit.mv[REF_LIST_1].mv_union = context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].mv[REF_LIST_1].mv_union;
-#if ATB_DC_CONTEXT_SUPPORT_1
-#else
-    uint8_t                    y_has_coeff = context_ptr->cu_ptr->transform_unit_array[0].y_has_coeff;
-    int32_t                   lumaDcCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[0];
-    uint8_t                    u_has_coeff = context_ptr->cu_ptr->transform_unit_array[0].u_has_coeff;
-    int32_t                   cbDcCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[1];
-    uint8_t                    v_has_coeff = context_ptr->cu_ptr->transform_unit_array[0].v_has_coeff;
-    int32_t                   crDcCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[2];
-#endif
     uint8_t                    inter_pred_direction_index = (uint8_t)context_ptr->cu_ptr->prediction_unit_array->inter_pred_direction_index;
     uint8_t                    ref_frame_type = (uint8_t)context_ptr->cu_ptr->prediction_unit_array[0].ref_frame_type;
 
@@ -3462,11 +3453,7 @@ void perform_intra_tx_partitioning(
                     EB_FALSE,
                     EB_FALSE);
 
-#if ATB_DC_CONTEXT_SUPPORT_1
                 candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
-#else
-                candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
-#endif
 
                 uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
@@ -3618,10 +3605,6 @@ void perform_intra_tx_partitioning(
                 candidateBuffer->candidate_ptr->pred_mode,
                 EB_FALSE,
                 EB_FALSE);
-#if ATB_DC_CONTEXT_SUPPORT_1
-#else
-            candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
-#endif
             uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
             if (y_has_coeff) {
@@ -3887,10 +3870,6 @@ void perform_intra_tx_partitioning(
                 candidateBuffer->candidate_ptr->pred_mode,
                 EB_FALSE,
                 EB_FALSE);
-#if ATB_DC_CONTEXT_SUPPORT_1
-#else
-            candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
-#endif
             uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
             if (y_has_coeff) {
@@ -4477,13 +4456,7 @@ void move_cu_data(
     dst_cu->compoud_reference_type_context = src_cu->compoud_reference_type_context;
     dst_cu->segment_id = src_cu->segment_id;
 
-#if ATB_DC_CONTEXT_SUPPORT_1
     memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * MAX_TXB_COUNT * sizeof(int32_t));
-#else
-
-    //CHKN int32_t                        quantized_dc[3];
-    memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * sizeof(int32_t));
-#endif
     //CHKN uint32_t   is_inter_ctx;
     //CHKN uint32_t                     interp_filters;
 
@@ -4588,12 +4561,7 @@ void move_cu_data_redund(
     dst_cu->skip_coeff_context = src_cu->skip_coeff_context;
     dst_cu->reference_mode_context = src_cu->reference_mode_context;
     dst_cu->compoud_reference_type_context = src_cu->compoud_reference_type_context;
-#if ATB_DC_CONTEXT_SUPPORT_1
     memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * MAX_TXB_COUNT * sizeof(int32_t));
-#else
-    //CHKN int32_t                        quantized_dc[3];
-    memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * sizeof(int32_t));
-#endif
     //CHKN uint32_t   is_inter_ctx;
     //CHKN uint32_t                     interp_filters;
 
@@ -4826,16 +4794,10 @@ void inter_depth_tx_search(
         //cu_ptr->prediction_mode_flag = candidate_ptr->type;
         cu_ptr->skip_flag = candidate_ptr->skip_flag; // note, the skip flag is re-checked in the ENCDEC process
         cu_ptr->block_has_coeff = ((candidate_ptr->block_has_coeff) > 0) ? EB_TRUE : EB_FALSE;
-#if ATB_DC_CONTEXT_SUPPORT_1
         // This kernel assumes no atb
         cu_ptr->quantized_dc[0][0] = candidateBuffer->candidate_ptr->quantized_dc[0][0];
         cu_ptr->quantized_dc[1][0] = candidateBuffer->candidate_ptr->quantized_dc[1][0];
         cu_ptr->quantized_dc[2][0] = candidateBuffer->candidate_ptr->quantized_dc[2][0];
-#else
-        cu_ptr->quantized_dc[0] = candidateBuffer->candidate_ptr->quantized_dc[0];
-        cu_ptr->quantized_dc[1] = candidateBuffer->candidate_ptr->quantized_dc[1];
-        cu_ptr->quantized_dc[2] = candidateBuffer->candidate_ptr->quantized_dc[2];
-#endif
 
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].count_non_zero_coeffs = candidate_ptr->count_non_zero_coeffs;
 

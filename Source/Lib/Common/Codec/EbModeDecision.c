@@ -5176,14 +5176,8 @@ uint8_t product_full_mode_decision(
 #endif
     cu_ptr->skip_flag = candidate_ptr->skip_flag; // note, the skip flag is re-checked in the ENCDEC process
     cu_ptr->block_has_coeff = ((candidate_ptr->block_has_coeff) > 0) ? EB_TRUE : EB_FALSE;
-#if ATB_DC_CONTEXT_SUPPORT_1
     cu_ptr->quantized_dc[1][0] = buffer_ptr_array[lowestCostIndex]->candidate_ptr->quantized_dc[1][0];
     cu_ptr->quantized_dc[2][0] = buffer_ptr_array[lowestCostIndex]->candidate_ptr->quantized_dc[2][0];
-#else
-    cu_ptr->quantized_dc[0] = buffer_ptr_array[lowestCostIndex]->candidate_ptr->quantized_dc[0];
-    cu_ptr->quantized_dc[1] = buffer_ptr_array[lowestCostIndex]->candidate_ptr->quantized_dc[1];
-    cu_ptr->quantized_dc[2] = buffer_ptr_array[lowestCostIndex]->candidate_ptr->quantized_dc[2];
-#endif
     context_ptr->md_local_cu_unit[cu_ptr->mds_idx].count_non_zero_coeffs = candidate_ptr->count_non_zero_coeffs;
 
     cu_ptr->av1xd->use_intrabc = candidate_ptr->use_intrabc;
@@ -5316,9 +5310,7 @@ uint8_t product_full_mode_decision(
         txb_ptr->transform_type[PLANE_TYPE_UV] = candidate_ptr->transform_type[PLANE_TYPE_UV];
 #endif
 
-#if ATB_DC_CONTEXT_SUPPORT_1
         cu_ptr->quantized_dc[0][tu_index] = candidate_ptr->quantized_dc[0][tu_index];
-#endif
 
 #if NO_ENCDEC
 

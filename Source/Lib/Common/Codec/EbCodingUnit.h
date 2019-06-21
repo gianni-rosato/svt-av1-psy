@@ -387,11 +387,7 @@ extern "C" {
         uint8_t                     skip_coeff_context;
         uint8_t                     reference_mode_context;
         uint8_t                     compoud_reference_type_context;
-#if ATB_DC_CONTEXT_SUPPORT_1
         int32_t                     quantized_dc[3][MAX_TXB_COUNT];
-#else
-        int32_t                     quantized_dc[3];
-#endif
         uint32_t                    is_inter_ctx;
         uint32_t                    interp_filters;
         uint8_t                      segment_id;

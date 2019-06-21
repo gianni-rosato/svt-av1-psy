@@ -2186,10 +2186,6 @@ void product_full_loop(
             candidateBuffer->candidate_ptr->pred_mode,
             candidateBuffer->candidate_ptr->use_intrabc,
             EB_FALSE);
-#if ATB_DC_CONTEXT_SUPPORT_1
-#else
-        candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
-#endif
 
 #if SPATIAL_SSE
         if (context_ptr->spatial_sse_full_loop) {
@@ -2619,11 +2615,6 @@ void product_full_loop_tx_search(
                 candidateBuffer->candidate_ptr->pred_mode,
                 candidateBuffer->candidate_ptr->use_intrabc,
                 EB_FALSE);
-
-#if ATB_DC_CONTEXT_SUPPORT_1
-#else
-            candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[tu_origin_index]);
-#endif
 
             //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
             if (yCountNonZeroCoeffsTemp == 0 && tx_type != DCT_DCT)
@@ -3452,10 +3443,6 @@ void full_loop_r(
                 candidateBuffer->candidate_ptr->use_intrabc,
                 EB_FALSE);
 
-#if ATB_DC_CONTEXT_SUPPORT_1
-#else
-            candidateBuffer->candidate_ptr->quantized_dc[1] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cb)[txb_1d_offset]);
-#endif
 #if SPATIAL_SSE
             if (context_ptr->spatial_sse_full_loop) {
                 uint32_t cb_has_coeff = cb_count_non_zero_coeffs[txb_itr] > 0;
@@ -3591,10 +3578,6 @@ void full_loop_r(
                 candidateBuffer->candidate_ptr->use_intrabc,
                 EB_FALSE);
 
-#if ATB_DC_CONTEXT_SUPPORT_1
-#else
-            candidateBuffer->candidate_ptr->quantized_dc[2] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cr)[txb_1d_offset]);
-#endif
 #if SPATIAL_SSE
             if (context_ptr->spatial_sse_full_loop) {
                 uint32_t cr_has_coeff = cr_count_non_zero_coeffs[txb_itr] > 0;
