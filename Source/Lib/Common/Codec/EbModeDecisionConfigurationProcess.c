@@ -98,11 +98,7 @@ static uint8_t intrabc_max_mesh_pct[MAX_MESH_SPEED + 1] = { 100, 100, 100,
 #define MEDIUM_SB_SCORE           16000
 #define LOW_SB_SCORE               6000
 #define MAX_LUMINOSITY_BOOST         10
-#if M9_ADP
 int32_t budget_per_sb_boost[MAX_SUPPORTED_MODES] = { 55,55,55,55,55,55,5,5,0,0,0,0,0 };
-#else
-uint32_t budget_per_sb_boost[MAX_SUPPORTED_MODES] = { 55,40,40,40,40,40,25,25,10,10,10,10,10 };
-#endif
 
 // Coefficient scaling and quantization with AV1 TX are tailored to
 // the AV1 TX transforms.  Regardless of the bit-depth of the input,

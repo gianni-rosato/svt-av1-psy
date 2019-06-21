@@ -119,7 +119,7 @@ extern "C" {
 #define M9_ME                             1 // VP9 4K ME, ME (16x9)
 #define M9_SUBPEL_SELECTION               1
 #define M9_CU_8x8                         1
-#define M9_ADP                            1
+
 
 
 
@@ -190,9 +190,7 @@ extern "C" {
 #endif
 #define FIX_INTRA_UV                                    1   //mismatch in intra prediction
 
-#if !M9_SETTINGS || M9_ADP
 #define FRAC_64x64_BUG_FIX                              1
-#endif
 #define USE_SAD_ME                                      1
 #define USE_SAD_HME                                     1
 #if USE_SAD_HME
