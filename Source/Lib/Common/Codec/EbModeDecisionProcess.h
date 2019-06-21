@@ -24,7 +24,6 @@ extern "C" {
      * Defines
      **************************************/
 #define IBC_CAND 2 //two intra bc candidates
-#if CHECK_CAND
 #if MRP_DUPLICATION_FIX
 #if EIGTH_PEL_MV
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (470+IBC_CAND )
@@ -33,9 +32,6 @@ extern "C" {
 #endif
 #else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (170 +IBC_CAND)
-#endif
-#else
-#define MODE_DECISION_CANDIDATE_MAX_COUNT               (124+IBC_CAND) /* 61 Intra & 18+2x8+2x8 Inter*/
 #endif
 #define DEPTH_ONE_STEP   21
 #define DEPTH_TWO_STEP    5

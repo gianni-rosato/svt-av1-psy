@@ -32,9 +32,7 @@
 #include "av1me.h"
 #include "hash.h"
 
-#if CHECK_CAND
 #define  INCRMENT_CAND_TOTAL_COUNT(cnt) cnt++; if(cnt>=MODE_DECISION_CANDIDATE_MAX_COUNT) printf(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n",cnt);
-#endif
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 /********************************************
 * Constants
@@ -662,11 +660,7 @@ void Unipred3x3CandidatesInjection(
 
             candidateArray[canTotalCnt].motion_vector_pred_x[REF_LIST_0] = bestPredmv[0].as_mv.col;
             candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_0] = bestPredmv[0].as_mv.row;
-#if CHECK_CAND
             INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else
-            ++canTotalCnt;
-#endif
             context_ptr->injected_mv_x_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_x;
             context_ptr->injected_mv_y_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_y;
 #if MRP_DUPLICATION_FIX
@@ -745,11 +739,7 @@ void Unipred3x3CandidatesInjection(
 
                 candidateArray[canTotalCnt].motion_vector_pred_x[REF_LIST_1] = bestPredmv[0].as_mv.col;
                 candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_1] = bestPredmv[0].as_mv.row;
-#if CHECK_CAND
                 INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else
-                ++canTotalCnt;
-#endif
                 context_ptr->injected_mv_x_l1_array[context_ptr->injected_mv_count_l1] = to_inject_mv_x;
                 context_ptr->injected_mv_y_l1_array[context_ptr->injected_mv_count_l1] = to_inject_mv_y;
 #if MRP_DUPLICATION_FIX
@@ -871,11 +861,7 @@ void Bipred3x3CandidatesInjection(
             candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_0] = bestPredmv[0].as_mv.row;
             candidateArray[canTotalCnt].motion_vector_pred_x[REF_LIST_1] = bestPredmv[1].as_mv.col;
             candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_1] = bestPredmv[1].as_mv.row;
-#if CHECK_CAND
             INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else
-            ++canTotalCnt;
-#endif
             context_ptr->injected_mv_x_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l0;
             context_ptr->injected_mv_y_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_y_l0;
             context_ptr->injected_mv_x_bipred_l1_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l1;
@@ -958,11 +944,7 @@ void Bipred3x3CandidatesInjection(
                 candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_0] = bestPredmv[0].as_mv.row;
                 candidateArray[canTotalCnt].motion_vector_pred_x[REF_LIST_1] = bestPredmv[1].as_mv.col;
                 candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_1] = bestPredmv[1].as_mv.row;
-#if CHECK_CAND
                 INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else
-                ++canTotalCnt;
-#endif
                 context_ptr->injected_mv_x_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l0;
                 context_ptr->injected_mv_y_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_y_l0;
                 context_ptr->injected_mv_x_bipred_l1_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l1;
@@ -2128,11 +2110,7 @@ void inject_warped_motion_candidates(
             &candidateArray[canIdx].num_proj_ref);
 
         if (candidateArray[canIdx].local_warp_valid)
-#if CHECK_CAND
             INCRMENT_CAND_TOTAL_COUNT(canIdx);
-#else
-            ++canIdx;
-#endif
 #if  !MRP_DUPLICATION_FIX
         context_ptr->injected_mv_x_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_x;
         context_ptr->injected_mv_y_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_y;
@@ -2203,11 +2181,7 @@ void inject_warped_motion_candidates(
                 &candidateArray[canIdx].num_proj_ref);
 
             if (candidateArray[canIdx].local_warp_valid)
-#if CHECK_CAND
                 INCRMENT_CAND_TOTAL_COUNT(canIdx);
-#else
-                ++canIdx;
-#endif
 #if !MRP_DUPLICATION_FIX
             context_ptr->injected_mv_x_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_x;
             context_ptr->injected_mv_y_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_y;
@@ -2310,11 +2284,7 @@ void inject_warped_motion_candidates(
             &candidateArray[canIdx].num_proj_ref);
 
         if (candidateArray[canIdx].local_warp_valid)
-#if CHECK_CAND
             INCRMENT_CAND_TOTAL_COUNT(canIdx);
-#else
-            ++canIdx;
-#endif
 #if !MRP_DUPLICATION_FIX
         context_ptr->injected_mv_x_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_x;
         context_ptr->injected_mv_y_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_y;
@@ -2419,11 +2389,7 @@ void inject_new_candidates(
                 candidateArray[canTotalCnt].motion_vector_pred_x[REF_LIST_0] = bestPredmv[0].as_mv.col;
                 candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_0] = bestPredmv[0].as_mv.row;
 
-#if CHECK_CAND
                 INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else
-                ++canTotalCnt;
-#endif
 
                 context_ptr->injected_mv_x_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_x;
                 context_ptr->injected_mv_y_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_y;
@@ -2494,11 +2460,7 @@ void inject_new_candidates(
 
                     candidateArray[canTotalCnt].motion_vector_pred_x[REF_LIST_1] = bestPredmv[0].as_mv.col;
                     candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_1] = bestPredmv[0].as_mv.row;
-#if CHECK_CAND
                     INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else
-                    ++canTotalCnt;
-#endif
 
                     context_ptr->injected_mv_x_l1_array[context_ptr->injected_mv_count_l1] = to_inject_mv_x;
                     context_ptr->injected_mv_y_l1_array[context_ptr->injected_mv_count_l1] = to_inject_mv_y;
@@ -2584,11 +2546,7 @@ void inject_new_candidates(
                         candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_0] = bestPredmv[0].as_mv.row;
                         candidateArray[canTotalCnt].motion_vector_pred_x[REF_LIST_1] = bestPredmv[1].as_mv.col;
                         candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_1] = bestPredmv[1].as_mv.row;
-#if CHECK_CAND
                         INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else
-                        ++canTotalCnt;
-#endif
 
                         context_ptr->injected_mv_x_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l0;
                         context_ptr->injected_mv_y_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_y_l0;
@@ -2854,11 +2812,7 @@ void  inject_inter_candidates(
                 candidateArray[canTotalCnt].motion_vector_xl0 = to_inject_mv_x;
                 candidateArray[canTotalCnt].motion_vector_yl0 = to_inject_mv_y;
 
-#if CHECK_CAND
                 INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else
-                ++canTotalCnt;
-#endif
 
                 context_ptr->injected_mv_x_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_x;
                 context_ptr->injected_mv_y_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_y;
@@ -2919,11 +2873,7 @@ void  inject_inter_candidates(
                 candidateArray[canTotalCnt].motion_vector_xl1 = to_inject_mv_x_l1;
                 candidateArray[canTotalCnt].motion_vector_yl1 = to_inject_mv_y_l1;
 
-#if CHECK_CAND
                 INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else
-                ++canTotalCnt;
-#endif
 
                 context_ptr->injected_mv_x_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l0;
                 context_ptr->injected_mv_y_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_y_l0;
@@ -3199,11 +3149,7 @@ void  inject_intra_candidates_ois(
             candidate_array[can_total_cnt].ref_frame_type = INTRA_FRAME;
             candidate_array[can_total_cnt].pred_mode = (PredictionMode)intra_mode;
             candidate_array[can_total_cnt].motion_mode = SIMPLE_TRANSLATION;
-#if CHECK_CAND
             INCRMENT_CAND_TOTAL_COUNT(can_total_cnt);
-#else
-            ++can_total_cnt;
-#endif
         }
         else {
             candidate_array[can_total_cnt].type = INTRA_MODE;
@@ -3240,11 +3186,7 @@ void  inject_intra_candidates_ois(
             candidate_array[can_total_cnt].ref_frame_type = INTRA_FRAME;
             candidate_array[can_total_cnt].pred_mode = (PredictionMode)intra_mode;
             candidate_array[can_total_cnt].motion_mode = SIMPLE_TRANSLATION;
-#if CHECK_CAND
             INCRMENT_CAND_TOTAL_COUNT(can_total_cnt);
-#else
-            ++can_total_cnt;
-#endif
         }
     }
 
@@ -3557,11 +3499,7 @@ void  inject_intra_bc_candidates(
         candidateArray[*cand_cnt].ref_mv_index = 0;
         candidateArray[*cand_cnt].pred_mv_weight = 0;
         candidateArray[*cand_cnt].interp_filters = av1_broadcast_interp_filter(BILINEAR);
-#if CHECK_CAND
         INCRMENT_CAND_TOTAL_COUNT( (*cand_cnt) );
-#else
-        ++(*cand_cnt);
-#endif
     }
 }
 // END of Function Declarations
@@ -3694,11 +3632,7 @@ void  inject_intra_candidates(
                         candidateArray[canTotalCnt].ref_frame_type = INTRA_FRAME;
                         candidateArray[canTotalCnt].pred_mode = (PredictionMode)openLoopIntraCandidate;
                         candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
-#if CHECK_CAND
                         INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else
-                        ++canTotalCnt;
-#endif
                     }
             }
         }
@@ -3758,11 +3692,7 @@ void  inject_intra_candidates(
             candidateArray[canTotalCnt].ref_frame_type = INTRA_FRAME;
             candidateArray[canTotalCnt].pred_mode = (PredictionMode)openLoopIntraCandidate;
             candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
-#if CHECK_CAND
             INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
-#else
-            ++canTotalCnt;
-#endif
         }
     }
 

@@ -220,7 +220,7 @@ extern "C" {
 
 
 
-#define CHECK_CAND                1 //increased and added a safety check for number of fast candidates
+
 #define MRP_COST_EST              1
 #define MRP_BASE                  1 //enable MRP for Base
 #define MRP_REF_MODE              1
