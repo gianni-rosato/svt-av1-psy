@@ -169,7 +169,7 @@ extern "C" {
 
 
 
-#define SEARCH_UV_OPT_0                                 0
+
 #define SEARCH_UV_OPT_1                                 0
 #define SEARCH_UV_OPT_2                                 0
 #define SEARCH_SMOOTH_OFF                               0
