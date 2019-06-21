@@ -187,7 +187,7 @@ extern "C" {
 
 
 
-#define NSQ_OPTIMASATION                            1
+
 //
 #define DISABLE_IN_LOOP_ME                          1
 #define TILES                                       1

@@ -15322,14 +15322,12 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
         mePuResult->total_me_candidate_index[pu_index] =
             total_me_candidate_index;
 
-#if NSQ_OPTIMASATION
         uint8_t l0_nsq =
             is_nsq_table_used ? context_ptr->p_sb_best_nsq[0][0][nIdx] : 0;
         uint8_t l1_nsq =
             is_nsq_table_used ? context_ptr->p_sb_best_nsq[1][0][nIdx] : 0;
         mePuResult->me_nsq_0[pu_index] = l0_nsq;
         mePuResult->me_nsq_1[pu_index] = l1_nsq;
-#endif
 
         mePuResult->total_me_candidate_index[pu_index] =
             MIN(total_me_candidate_index, ME_RES_CAND_MRP_MODE_0);

@@ -65,10 +65,8 @@ extern "C" {
         MeCandidate     **me_candidate;
         MeCandidate      *me_candidate_array;
 #if MRP_ME
-#if NSQ_OPTIMASATION
         uint8_t          *me_nsq_0; // 2 Number of reference lists
         uint8_t          *me_nsq_1; // 2 Number of reference lists
-#endif
 #endif
 
         MvCandidate    **me_mv_array;

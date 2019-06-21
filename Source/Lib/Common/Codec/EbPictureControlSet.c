@@ -95,10 +95,8 @@ EbErrorType me_sb_results_ctor(
     }
     EB_MALLOC(uint8_t*, objectPtr->total_me_candidate_index, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
 
-#if NSQ_OPTIMASATION
     EB_MALLOC(uint8_t*, objectPtr->me_nsq_0, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
     EB_MALLOC(uint8_t*, objectPtr->me_nsq_1, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
-#endif
 
     //objectPtr->lcuDistortion = 0;
     return EB_ErrorNone;
