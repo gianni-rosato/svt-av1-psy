@@ -125,11 +125,9 @@ extern "C" {
 
 #define OPT_LOSSLESS_0                    1
 
-#define OPT_LOSSLESS_1                    1
-#if OPT_LOSSLESS_1
+
 #define UNPACK_REF_POST_EP                1
 #define REMOVE_UNPACK_REF                 1
-#endif
 #define CFL_FIX                           1 // Fixes to CFL and enabling CFL for 4x*
 #define SPLIT_RATE_FIX                    1 // Split partition rate calculation fix
 #define NSQ_FIX                           1 // Inject NSQ blocks for incomplete CUs

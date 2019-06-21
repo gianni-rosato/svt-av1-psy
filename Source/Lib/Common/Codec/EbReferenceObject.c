@@ -178,31 +178,6 @@ EbErrorType eb_reference_object_ctor(
     }
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-#if !OPT_LOSSLESS_1
-    // Allocate SB based TMVP map
-    EB_MALLOC(TmvpUnit *, referenceObject->tmvp_map, (sizeof(TmvpUnit) * (((pictureBufferDescInitDataPtr->max_width + (64 - 1)) >> 6) * ((pictureBufferDescInitDataPtr->max_height + (64 - 1)) >> 6))), EB_N_PTR);
-
-    //RESTRICT THIS TO M4
-    {
-        EbPictureBufferDescInitData bufDesc;
-
-        bufDesc.max_width = pictureBufferDescInitDataPtr->max_width;
-        bufDesc.max_height = pictureBufferDescInitDataPtr->max_height;
-        bufDesc.bit_depth = EB_8BIT;
-        bufDesc.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-        bufDesc.left_padding = pictureBufferDescInitDataPtr->left_padding;
-        bufDesc.right_padding = pictureBufferDescInitDataPtr->right_padding;
-        bufDesc.top_padding = pictureBufferDescInitDataPtr->top_padding;
-        bufDesc.bot_padding = pictureBufferDescInitDataPtr->bot_padding;
-        bufDesc.split_mode = 0;
-        bufDesc.color_format = pictureBufferDescInitDataPtr->color_format;
-
-        return_error = eb_picture_buffer_desc_ctor((EbPtr*)&(referenceObject->ref_den_src_picture),
-            (EbPtr)&bufDesc);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-    }
-#endif
     memset(&referenceObject->film_grain_params, 0, sizeof(referenceObject->film_grain_params));
 
     return EB_ErrorNone;

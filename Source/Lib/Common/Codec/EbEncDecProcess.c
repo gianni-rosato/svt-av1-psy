@@ -1077,11 +1077,6 @@ void PadRefAndSetFlags(
             sequence_control_set_ptr->static_config.asm_type);
 #endif
     }
-#if !OPT_LOSSLESS_1
-    // set up TMVP flag for the reference picture
-
-    referenceObject->tmvp_enable_flag = (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? EB_TRUE : EB_FALSE;
-#endif
     // set up the ref POC
     referenceObject->ref_poc = picture_control_set_ptr->parent_pcs_ptr->picture_number;
 
