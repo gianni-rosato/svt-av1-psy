@@ -939,9 +939,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (picture_control_set_ptr->nsq_search_level > NSQ_SEARCH_OFF)
         assert(sequence_control_set_ptr->nsq_present == 1 && "use nsq_present 1");
 
-#if  RED_CU_DEBUG
-    picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_FULL;
-#endif
     switch (picture_control_set_ptr->nsq_search_level) {
     case NSQ_SEARCH_OFF:
         picture_control_set_ptr->nsq_max_shapes_md = 0;
@@ -1236,9 +1233,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (MR_MODE)
         picture_control_set_ptr->intra_pred_mode = 0;
 
-#if RED_CU_DEBUG
-    picture_control_set_ptr->intra_pred_mode = 0;
-#endif
     // Skip sub blk based on neighbors depth        Settings
     // 0                                            OFF
     // 1                                            ON
