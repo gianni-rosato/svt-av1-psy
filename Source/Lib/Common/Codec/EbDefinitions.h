@@ -106,7 +106,7 @@ extern "C" {
 
 
 
-#define QUICK_ME_CLEANUP                  1
+
 #define SCREEN_CONTENT_SETTINGS           1
 
 // M9 settings toward 4K 60 fps

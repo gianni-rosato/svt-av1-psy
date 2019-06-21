@@ -434,13 +434,8 @@ extern "C" {
         uint8_t                       hme_search_method;
         uint8_t                       me_search_method;
         // ME
-#if QUICK_ME_CLEANUP
         uint16_t                      search_area_width;
         uint16_t                      search_area_height;
-#else
-        uint8_t                       search_area_width;
-        uint8_t                       search_area_height;
-#endif
         // HME
         uint16_t                      number_hme_search_region_in_width;
         uint16_t                      number_hme_search_region_in_height;
