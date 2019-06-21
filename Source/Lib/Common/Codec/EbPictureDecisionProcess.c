@@ -3508,16 +3508,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 TX_MODE_LARGEST;
 
                             // Set the default settings of  subpel
-#if M9_SUBPEL
-                                {
-                                    if (picture_control_set_ptr->enc_mode <= ENC_M8)
-                                        picture_control_set_ptr->use_subpel_flag = 1;
-                                    else
-                                        picture_control_set_ptr->use_subpel_flag = (picture_control_set_ptr->temporal_layer_index == 0) ?
-                                        1 :
-                                        0;
-                                }
-#else
                                 if (picture_control_set_ptr->sc_content_detected)
                                     if (picture_control_set_ptr->enc_mode <= ENC_M1)
                                         picture_control_set_ptr->use_subpel_flag = 1;
@@ -3525,7 +3515,6 @@ void* picture_decision_kernel(void *input_ptr)
                                         picture_control_set_ptr->use_subpel_flag = 0;
                                 else
                                     picture_control_set_ptr->use_subpel_flag = 1;
-#endif
 #if IMPROVED_SUBPEL_SEARCH
                                 if (MR_MODE) {
                                     picture_control_set_ptr->half_pel_mode =

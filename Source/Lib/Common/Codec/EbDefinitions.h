@@ -145,7 +145,7 @@ extern "C" {
 // Under testing
 
 
-#define M9_SUBPEL                         0 // VP9 4K subpel settings; subpel ON base
+
 #define M9_NFL                            0 // VP9 4K NFL settings; NFL = 3
 #define M9_CDEF                           0 // CDEF off
 #define M9_TX_SEARCH                      0 // Tx search off
