@@ -75,7 +75,7 @@ extern "C" {
 #if ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
 #define DC_SIGN_CONTEXT_FIX               1 // Fixed DC level derivation and update @ mode decision
 #endif
-#define SHUT_ATB                          0 // ATB multi-mode signal
+
 #endif
 
 #define CHROMA_SEARCH_FIX                 1 // Fix a few bugs related to Chroma search
