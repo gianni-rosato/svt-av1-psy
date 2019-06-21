@@ -245,7 +245,7 @@ extern "C" {
 
 
 
-#define MRP_FIX_RC_WARNINGS       1
+
 
 #define ADP_STATS_PER_LAYER                             0
 #define NFL_TX_TH                                       12 // To be tuned
