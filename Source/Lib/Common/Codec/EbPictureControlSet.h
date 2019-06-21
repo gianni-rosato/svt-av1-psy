@@ -13466,14 +13466,12 @@ extern "C" {
                 32, 32, 32, 32 },
     },
     };
-#if SETUP_SKIP
     typedef struct {
         int skip_mode_allowed;
         int skip_mode_flag;
         int ref_frame_idx_0;
         int ref_frame_idx_1;
     } SkipModeInfo;
-#endif
     struct Buf2d
     {
         uint8_t *buf;
@@ -14280,9 +14278,7 @@ extern "C" {
         uint8_t                               nsq_max_shapes_md; // max number of shapes to be tested in MD
         uint8_t                              sc_content_detected;
         uint8_t                              ibc_mode;
-#if SETUP_SKIP
         SkipModeInfo                         skip_mode_info;
-#endif
         uint64_t                             picture_number_alt; // The picture number overlay includes all the overlay frames
         uint8_t                              is_alt_ref;
         uint8_t                              is_overlay;

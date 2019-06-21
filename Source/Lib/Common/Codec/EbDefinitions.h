@@ -226,7 +226,7 @@ extern "C" {
 
 
 
-#define SETUP_SKIP                1
+
 #define INJ_MVP                   1   //new injection of MVP supporting MRP case.
 #define FIX_INIT                  1   //fix ref_poc_array init
 #define NORMAL_ORDER              1   //  order(ALT/ALT2)
