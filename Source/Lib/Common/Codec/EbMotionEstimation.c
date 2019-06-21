@@ -16143,15 +16143,11 @@ EbErrorType open_loop_intra_search_sb(
 #else
                 uint8_t disable_angular_prediction = 0;
                 EbBool use_angle_delta = (bsize >= 8);
-#if M8_OIS
                 uint8_t angle_delta_candidate_count =
                     picture_control_set_ptr->intra_pred_mode >= 5
                         ? 1
                         : use_angle_delta ? 5 : 1;
                 ;
-#else
-                uint8_t angle_delta_candidate_count = use_angle_delta ? 5 : 1;
-#endif
 
                 disable_angular_prediction =
                     picture_control_set_ptr->temporal_layer_index > 0
@@ -16167,13 +16163,11 @@ EbErrorType open_loop_intra_search_sb(
                                      : bsize == 16
                                            ? TX_16X16
                                            : bsize == 32 ? TX_32X32 : TX_64X64;
-#if M8_OIS
                 intra_mode_end =
                     (picture_control_set_ptr->is_used_as_reference_flag == 0 &&
                      picture_control_set_ptr->intra_pred_mode >= 4)
                         ? DC_PRED
                         : intra_mode_end;
-#endif
 #endif
             for (ois_intra_mode = intra_mode_start;
                  ois_intra_mode <= intra_mode_end;

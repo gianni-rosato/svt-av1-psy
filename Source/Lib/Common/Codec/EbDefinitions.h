@@ -105,7 +105,7 @@ extern "C" {
 #define MR_MODE                           0
 
 
-#define M8_OIS                            1
+
 #define QUICK_ME_CLEANUP                  1
 #define SCREEN_CONTENT_SETTINGS           1
 
