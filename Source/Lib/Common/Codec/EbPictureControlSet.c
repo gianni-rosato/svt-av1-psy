@@ -498,7 +498,6 @@ EbErrorType picture_control_set_ctor(
 
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-#if ATB_RATE
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_txfm_context_array[depth],
             MAX_PICTURE_WIDTH_SIZE,
@@ -510,7 +509,6 @@ EbErrorType picture_control_set_ctor(
 
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-#endif
 
         return_error = neighbor_array_unit_ctor(
             &object_ptr->md_inter_pred_dir_neighbor_array[depth],

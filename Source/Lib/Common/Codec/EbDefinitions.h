@@ -68,7 +68,7 @@ extern "C" {
 #define ATB_EP                            1 // Tranform partitioning @ encode passs
 #define ATB_EC                            1 // Tranform partitioning @ entropy coding
 #define ATB_MD                            1 // Tranform partitioning @ mode decision
-#define ATB_RATE                          1 // Tranform partitioning tranform depth rate estimation
+
 
 
 

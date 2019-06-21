@@ -1805,7 +1805,6 @@ EbErrorType Av1FullCost(
 
     rate = lumaRate + chromaRate + coeffRate;
 
-#if ATB_RATE
     if (candidate_buffer_ptr->candidate_ptr->block_has_coeff) {
         uint64_t tx_size_bits = estimate_tx_size_bits(
             picture_control_set_ptr,
@@ -1819,7 +1818,6 @@ EbErrorType Av1FullCost(
 
         rate += tx_size_bits;
     }
-#endif
 
     // Assign full cost
     *(candidate_buffer_ptr->full_cost_ptr) = RDCOST(lambda, rate, totalDistortion);
@@ -1930,7 +1928,6 @@ EbErrorType  Av1MergeSkipFullCost(
 
     mergeRate += coeffRate;
 
-#if ATB_RATE
     if (candidate_buffer_ptr->candidate_ptr->block_has_coeff) {
         uint64_t tx_size_bits = estimate_tx_size_bits(
             picture_control_set_ptr,
@@ -1944,7 +1941,6 @@ EbErrorType  Av1MergeSkipFullCost(
 
         mergeRate += tx_size_bits;
     }
-#endif
 
     mergeDistortion = (mergeLumaSse + mergeChromaSse);
 

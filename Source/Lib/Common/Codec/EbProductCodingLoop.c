@@ -274,7 +274,6 @@ void mode_decision_update_neighbor_arrays(
         }
     }
 
-#if ATB_RATE
     neighbor_array_unit_mode_write(
         context_ptr->txfm_context_array,
         &context_ptr->cu_ptr->tx_depth,
@@ -283,7 +282,6 @@ void mode_decision_update_neighbor_arrays(
         bwdith,
         bheight,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-#endif
 
     // Update the Inter Pred Type Neighbor Array
 
@@ -527,7 +525,6 @@ void copy_neighbour_arrays(
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
     }
 
-#if ATB_RATE
     //neighbor_array_unit_reset(picture_control_set_ptr->md_txfm_context_array[depth]);
     copy_neigh_arr(
         picture_control_set_ptr->md_txfm_context_array[src_idx],
@@ -537,7 +534,6 @@ void copy_neighbour_arrays(
         blk_geom->bwidth,
         blk_geom->bheight,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-#endif
     //neighbor_array_unit_reset(picture_control_set_ptr->md_inter_pred_dir_neighbor_array[depth]);
     copy_neigh_arr(
         picture_control_set_ptr->md_inter_pred_dir_neighbor_array[src_idx],
@@ -2809,7 +2805,6 @@ uint8_t get_end_tx_depth(ModeDecisionContext *context_ptr, uint8_t atb_mode, Mod
     return tx_depth;
 }
 
-#if ATB_RATE
 static INLINE int block_signals_txsize(BlockSize bsize) {
     return bsize > BLOCK_4X4;
 }
@@ -3251,7 +3246,6 @@ uint64_t estimate_tx_size_bits(
 
     return bits;
 }
-#endif
 void perform_intra_tx_partitioning(
     ModeDecisionCandidateBuffer  *candidateBuffer,
     ModeDecisionContext          *context_ptr,
@@ -3685,7 +3679,6 @@ void perform_intra_tx_partitioning(
             }
 } // Transform Loop
 
-#if ATB_RATE
         uint64_t tx_size_bits = 0;
 
         if (candidateBuffer->candidate_ptr->y_has_coeff)
@@ -3700,9 +3693,6 @@ void perform_intra_tx_partitioning(
                 context_ptr->md_rate_estimation_ptr);
 
         uint64_t cost = RDCOST(context_ptr->full_lambda, ((*y_coeff_bits) + tx_size_bits), y_full_distortion[DIST_CALC_RESIDUAL]);
-#else
-        uint64_t cost = RDCOST(context_ptr->full_lambda, (*y_coeff_bits), y_full_distortion[DIST_CALC_RESIDUAL]);
-#endif
 
         if (cost < best_cost_search) {
             best_cost_search = cost;
@@ -5861,9 +5851,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
     context_ptr->luma_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
     context_ptr->cb_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->md_cb_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
     context_ptr->cr_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->md_cr_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
-#if ATB_RATE
     context_ptr->txfm_context_array = picture_control_set_ptr->md_txfm_context_array[MD_NEIGHBOR_ARRAY_INDEX];
-#endif
     context_ptr->inter_pred_dir_neighbor_array = picture_control_set_ptr->md_inter_pred_dir_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
     context_ptr->ref_frame_type_neighbor_array = picture_control_set_ptr->md_ref_frame_type_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
     context_ptr->interpolation_type_neighbor_array = picture_control_set_ptr->md_interpolation_type_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX];
