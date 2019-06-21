@@ -89,11 +89,7 @@ EbErrorType picture_analysis_context_ctor(
     }
     return EB_ErrorNone;
 }
-#if ALT_REF_OVERLAY
 void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBufferDesc* outputPicturePtr)
-#else
-static void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBufferDesc* outputPicturePtr)
-#endif
 {
     uint32_t input_color_format = input_picture_ptr->color_format;
     const uint16_t input_subsampling_x = (input_color_format == EB_YUV444 ? 1 : 2) - 1;
@@ -4947,11 +4943,9 @@ void* picture_analysis_kernel(void *input_ptr)
         inputResultsPtr = (ResourceCoordinationResults*)inputResultsWrapperPtr->object_ptr;
         picture_control_set_ptr = (PictureParentControlSet*)inputResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
 
-#if ALT_REF_OVERLAY
         // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
         if (!picture_control_set_ptr->is_overlay)
         {
-#endif
             sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
             input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
 
@@ -5069,9 +5063,7 @@ void* picture_analysis_kernel(void *input_ptr)
                 paReferenceObject->variance[sb_index] = picture_control_set_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64];
                 paReferenceObject->y_mean[sb_index] = picture_control_set_ptr->y_mean[sb_index][ME_TIER_ZERO_PU_64x64];
             }
-#if ALT_REF_OVERLAY
         }
-#endif
         // Get Empty Results Object
         eb_get_empty_object(
             context_ptr->picture_analysis_results_output_fifo_ptr,

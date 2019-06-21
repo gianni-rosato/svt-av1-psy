@@ -511,9 +511,7 @@ void ReconOutput(
     //   the encoder might not properly terminate.
     eb_block_on_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
 
-#if ALT_REF_OVERLAY
     if (!picture_control_set_ptr->parent_pcs_ptr->is_alt_ref) {
-#endif
         // Get Recon Buffer
         eb_get_empty_object(
             sequence_control_set_ptr->encode_context_ptr->recon_output_fifo_ptr,
@@ -644,14 +642,12 @@ void ReconOutput(
 
         // Post the Recon object
         eb_post_full_object(outputReconWrapperPtr);
-#if ALT_REF_OVERLAY
     }
     else {
         // Overlay and altref have 1 recon only, which is from overlay pictures. So the recon of the alt_ref is not sent to the application.
         // However, to hanlde the end of sequence properly, total_number_of_recon_frames is increamented
         encode_context_ptr->total_number_of_recon_frames++;
     }
-#endif
     eb_release_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
 }
 

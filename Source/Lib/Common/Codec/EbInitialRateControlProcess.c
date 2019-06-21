@@ -1560,9 +1560,7 @@ void* initial_rate_control_kernel(void *input_ptr)
             // Input Motion Analysis Results into Reordering Queue
             //****************************************************
 
-#if ALT_REF_OVERLAY
             if(!picture_control_set_ptr->is_overlay)
-#endif
             // Determine offset from the Head Ptr
             queueEntryPtr = DeterminePictureOffsetInQueue(
                 encode_context_ptr,
@@ -1701,13 +1699,11 @@ void* initial_rate_control_kernel(void *input_ptr)
                     queueEntryPtr = encode_context_ptr->initial_rate_control_reorder_queue[encode_context_ptr->initial_rate_control_reorder_queue_head_index];
                     picture_control_set_ptr = ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr)->object_ptr);
                     sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-#if ALT_REF_OVERLAY
                     // overlay picture was not added to the queue. For the alt_ref picture with an overlay picture, it loops on both alt ref and overlay pictures
                     uint8_t has_overlay = picture_control_set_ptr->is_alt_ref ? 1 : 0;
                     for (uint8_t loop_index = 0; loop_index <= has_overlay; loop_index++) {
                         if (loop_index)
                             picture_control_set_ptr = picture_control_set_ptr->overlay_ppcs_ptr;
-#endif
                         picture_control_set_ptr->frames_in_sw = frames_in_sw;
                         queueEntryIndexTemp = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
                         end_of_sequence_flag = EB_FALSE;
@@ -1808,7 +1804,6 @@ void* initial_rate_control_kernel(void *input_ptr)
                         eb_get_empty_object(
                             sequence_control_set_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
                             &reference_picture_wrapper_ptr);
-#if ALT_REF_OVERLAY
                         if (loop_index) {
                             picture_control_set_ptr->reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
                             // Give the new Reference a nominal live_count of 1
@@ -1823,14 +1818,6 @@ void* initial_rate_control_kernel(void *input_ptr)
                                 ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->reference_picture_wrapper_ptr,
                                 1);
                         }
-#else
-                        ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
-
-                        // Give the new Reference a nominal live_count of 1
-                        eb_object_inc_live_count(
-                            ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->reference_picture_wrapper_ptr,
-                            1);
-#endif
                         //OPTION 1:  get the output stream buffer in ressource coordination
                         eb_get_empty_object(
                             sequence_control_set_ptr->encode_context_ptr->stream_output_fifo_ptr,
@@ -1845,17 +1832,13 @@ void* initial_rate_control_kernel(void *input_ptr)
 
                         outputResultsPtr = (InitialRateControlResults*)outputResultsWrapperPtr->object_ptr;
 
-#if ALT_REF_OVERLAY
                         if (loop_index)
                             outputResultsPtr->picture_control_set_wrapper_ptr = picture_control_set_ptr->p_pcs_wrapper_ptr;
                         else
-#endif
                         outputResultsPtr->picture_control_set_wrapper_ptr = queueEntryPtr->parent_pcs_wrapper_ptr;
                         // Post the Full Results Object
                         eb_post_full_object(outputResultsWrapperPtr);
-#if ALT_REF_OVERLAY
                     }
-#endif
                     // Reset the Reorder Queue Entry
                     queueEntryPtr->picture_number += INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH;
                     queueEntryPtr->parent_pcs_wrapper_ptr = (EbObjectWrapper *)EB_NULL;

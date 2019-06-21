@@ -711,11 +711,7 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
 
                 // 3rd step: update the dependant count
                 dependant_list_removed_entries = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count - input_entry_ptr->dependent_count;
-#if ALT_REF_OVERLAY
                 input_entry_ptr->dep_list0_count = (input_entry_ptr->is_alt_ref) ? input_entry_ptr->list0.list_count + 1 : input_entry_ptr->list0.list_count;
-#else
-                input_entry_ptr->dep_list0_count = input_entry_ptr->list0.list_count;
-#endif
 #if BASE_LAYER_REF
                 if (input_entry_ptr->p_pcs_ptr->slice_type == I_SLICE)
                     input_entry_ptr->dep_list1_count = input_entry_ptr->list1.list_count + sequence_control_set_ptr->extra_frames_to_ref_islice;
@@ -1849,7 +1845,6 @@ void  Av1GenerateRpsInfo(
             break;
 
         case 3:
-#if ALT_REF_OVERLAY
             // update RPS for the overlay frame.
             if (picture_control_set_ptr->is_overlay) {
                 //{ 0, 0, 0, 0}         // GOP Index 1 - Ref List 0
@@ -1874,7 +1869,6 @@ void  Av1GenerateRpsInfo(
 #endif
             }
             else
-#endif
 
             if (pictureIndex == 0) {
                 //{ 1, 3, 5, 9}         // GOP Index 1 - Ref List 0
@@ -1991,12 +1985,8 @@ void  Av1GenerateRpsInfo(
         }
 #endif
 
-#if ALT_REF_OVERLAY
         // update RPS for the overlay frame.
         if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_LOW_DELAY_P || picture_control_set_ptr->is_overlay)
-#else
-        if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_LOW_DELAY_P)
-#endif
         {
             //P frames
             av1Rps->ref_dpb_index[4] = av1Rps->ref_dpb_index[5] = av1Rps->ref_dpb_index[6] = av1Rps->ref_dpb_index[0];
@@ -2060,11 +2050,7 @@ void  Av1GenerateRpsInfo(
         //mini GOP toggling since last Key Frame.
         //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
         //whoever needs a miniGOP Level toggling, this is the time
-#if ALT_REF_OVERLAY
         if (pictureIndex == context_ptr->mini_gop_end_index[0] && !picture_control_set_ptr->is_overlay) {
-#else
-        if (pictureIndex == context_ptr->mini_gop_end_index[0]) {
-#endif
             //Layer0 toggle 0->1->2
             context_ptr->lay0_toggle = circ_inc(3, 1, context_ptr->lay0_toggle);
             //Layer1 toggle 3->4
@@ -2511,7 +2497,6 @@ void  Av1GenerateRpsInfo(
             break;
 
         case 4:
-#if ALT_REF_OVERLAY
             // update RPS for the overlay frame.
             if (picture_control_set_ptr->is_overlay) {
                 //{ 0, 0, 0, 0}         // GOP Index 1 - Ref List 0
@@ -2536,7 +2521,6 @@ void  Av1GenerateRpsInfo(
 #endif
             }
             else
-#endif
             if (pictureIndex == 0) {
                 //{ 1, 5, 9, 17},  // GOP Index 1 - Ref List 0
                 //{ -1, -3, -7, 0 }   // GOP Index 1 - Ref List 1
@@ -2743,12 +2727,8 @@ void  Av1GenerateRpsInfo(
         }
 #endif
 
-#if ALT_REF_OVERLAY
         // update RPS for the overlay frame.
         if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_LOW_DELAY_P || picture_control_set_ptr->is_overlay)
-#else
-        if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_LOW_DELAY_P)
-#endif
         {
             //P frames.
 #if MRP_FIX_CLOSE_GOP
@@ -2827,11 +2807,7 @@ void  Av1GenerateRpsInfo(
         //mini GOP toggling since last Key Frame.
         //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
         //whoever needs a miniGOP Level toggling, this is the time
-#if ALT_REF_OVERLAY
         if (pictureIndex == context_ptr->mini_gop_end_index[0] && !picture_control_set_ptr->is_overlay) {
-#else
-        if (pictureIndex == context_ptr->mini_gop_end_index[0]) {
-#endif
             //Layer0 toggle 0->1->2
             context_ptr->lay0_toggle = circ_inc(3, 1, context_ptr->lay0_toggle);
             //Layer1 toggle 3->4
@@ -3068,7 +3044,6 @@ void  Av1GenerateRpsInfo(
         exit(0);
     }
  }
-#if ALT_REF_OVERLAY
 /***************************************************************************************************
 // Perform Required Picture Analysis Processing for the Overlay frame
 ***************************************************************************************************/
@@ -3192,7 +3167,6 @@ void initialize_overlay_frame(PictureParentControlSet     *picture_control_set_p
 
     perform_simple_picture_analysis_for_overlay(picture_control_set_ptr);
  }
-#endif
 /***************************************************************************************************
  * Picture Decision Kernel
  *
@@ -3358,9 +3332,7 @@ void* picture_decision_kernel(void *input_ptr)
         // P.S. Since the prior Picture Analysis processes stage is multithreaded, inputs to the Picture Decision Process
         // can arrive out-of-display-order, so a the Picture Decision Reordering Queue is used to enforce processing of
         // pictures in display order
-#if ALT_REF_OVERLAY
         if (!picture_control_set_ptr->is_overlay ) {
-#endif
             queueEntryIndex = (int32_t)(picture_control_set_ptr->picture_number - encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index]->picture_number);
             queueEntryIndex += encode_context_ptr->picture_decision_reorder_queue_head_index;
             queueEntryIndex = (queueEntryIndex > PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH - 1) ? queueEntryIndex - PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH : queueEntryIndex;
@@ -3376,9 +3348,7 @@ void* picture_decision_kernel(void *input_ptr)
             }
 
             picture_control_set_ptr->pic_decision_reorder_queue_idx = queueEntryIndex;
-#if ALT_REF_OVERLAY
         }
-#endif
         // Process the head of the Picture Decision Reordering Queue (Entry N)
         // P.S. The Picture Decision Reordering Queue should be parsed in the display order to be able to construct a pred structure
         queueEntryPtr = encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index];
@@ -3669,7 +3639,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 encode_context_ptr->pred_struct_position;
 
                             predPositionPtr = picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[encode_context_ptr->pred_struct_position];
-#if ALT_REF_OVERLAY
                             if (sequence_control_set_ptr->static_config.enable_overlays == EB_TRUE) {
                                 // At this stage we know the prediction structure and the location of ALT_REF pictures.
                                 // For every ALTREF picture, there is an overlay picture. They extra pictures are released
@@ -3701,7 +3670,6 @@ void* picture_decision_kernel(void *input_ptr)
                                     initialize_overlay_frame(picture_control_set_ptr);
                                     picture_type = P_SLICE;
                                 }
-#endif
                                 // Set the Slice type
                                 picture_control_set_ptr->slice_type = picture_type;
                                 ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->slice_type = picture_control_set_ptr->slice_type;
@@ -3747,9 +3715,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     picture_control_set_ptr->cra_flag = EB_FALSE;
                                     picture_control_set_ptr->idr_flag = EB_FALSE;
 
-#if ALT_REF_OVERLAY
                                     if (loop_index == 0)
-#endif
                                     {
                                         // Increment & Clip the elapsed Non-IDR Counter. This is clipped rather than allowed to free-run
                                         // inorder to avoid rollover issues.  This assumes that any the GOP period is less than MAX_ELAPSED_IDR_COUNT
@@ -3773,7 +3739,6 @@ void* picture_decision_kernel(void *input_ptr)
                                     break;
                                 }
                                 picture_control_set_ptr->pred_struct_index = (uint8_t)encode_context_ptr->pred_struct_position;
-#if ALT_REF_OVERLAY
                                 if (picture_control_set_ptr->is_overlay) {
                                     // set the overlay frame as non reference frame with max temporal layer index
                                     picture_control_set_ptr->temporal_layer_index = (uint8_t)picture_control_set_ptr->hierarchical_levels;
@@ -3783,30 +3748,6 @@ void* picture_decision_kernel(void *input_ptr)
                                     picture_control_set_ptr->temporal_layer_index = (uint8_t)predPositionPtr->temporal_layer_index;
                                     picture_control_set_ptr->is_used_as_reference_flag = predPositionPtr->is_referenced;
                                 }
-#else
-                                picture_control_set_ptr->temporal_layer_index = (uint8_t)predPositionPtr->temporal_layer_index;
-                                picture_control_set_ptr->is_used_as_reference_flag = predPositionPtr->is_referenced;
-#endif
-
-#if !ALT_REF_OVERLAY
-
-                                // Set the Decode Order
-                                if ((context_ptr->mini_gop_idr_count[mini_gop_index] == 0) &&
-                                    (context_ptr->mini_gop_length[mini_gop_index] == picture_control_set_ptr->pred_struct_ptr->pred_struct_period))
-
-                                {
-                                    picture_control_set_ptr->decode_order = encode_context_ptr->decode_base_number + predPositionPtr->decode_order;
-                                }
-                                else
-                                    picture_control_set_ptr->decode_order = picture_control_set_ptr->picture_number;
-                                encode_context_ptr->terminating_sequence_flag_received = (picture_control_set_ptr->end_of_sequence_flag == EB_TRUE) ?
-                                    EB_TRUE :
-                                    encode_context_ptr->terminating_sequence_flag_received;
-
-                                encode_context_ptr->terminating_picture_number = (picture_control_set_ptr->end_of_sequence_flag == EB_TRUE) ?
-                                    picture_control_set_ptr->picture_number :
-                                    encode_context_ptr->terminating_picture_number;
-#endif
 
                                 preAssignmentBufferFirstPassFlag = EB_FALSE;
 
@@ -4012,18 +3953,14 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
 
                                 // Place Picture in Picture Decision PA Reference Queue
-#if ALT_REF_OVERLAY
                                 // there is no need to add the overlay frames in the PA Reference Queue
                                 if (!picture_control_set_ptr->is_overlay)
-#endif
                                 {
                                     inputEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[encode_context_ptr->picture_decision_pa_reference_queue_tail_index];
                                     inputEntryPtr->input_object_ptr = picture_control_set_ptr->pa_reference_picture_wrapper_ptr;
                                     inputEntryPtr->picture_number = picture_control_set_ptr->picture_number;
                                     inputEntryPtr->reference_entry_index = encode_context_ptr->picture_decision_pa_reference_queue_tail_index;
-#if ALT_REF_OVERLAY
                                     inputEntryPtr->is_alt_ref = picture_control_set_ptr->is_alt_ref;
-#endif
                                     encode_context_ptr->picture_decision_pa_reference_queue_tail_index =
                                         (encode_context_ptr->picture_decision_pa_reference_queue_tail_index == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : encode_context_ptr->picture_decision_pa_reference_queue_tail_index + 1;
 
@@ -4036,15 +3973,9 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                                 // Copy the reference lists into the inputEntry and
                                 // set the Reference Counts Based on Temporal Layer and how many frames are active
-#if ALT_REF_OVERLAY
                                 picture_control_set_ptr->ref_list0_count = (picture_type == I_SLICE) ? 0 :
                                                                             (picture_control_set_ptr->is_overlay) ? 1 : (uint8_t)predPositionPtr->ref_list0.reference_list_count;
                                 picture_control_set_ptr->ref_list1_count = (picture_type == I_SLICE || picture_control_set_ptr->is_overlay) ? 0 : (uint8_t)predPositionPtr->ref_list1.reference_list_count;
-#else
-
-                                picture_control_set_ptr->ref_list0_count = (picture_type == I_SLICE) ? 0 : (uint8_t)predPositionPtr->ref_list0.reference_list_count;
-                                picture_control_set_ptr->ref_list1_count = (picture_type == I_SLICE) ? 0 : (uint8_t)predPositionPtr->ref_list1.reference_list_count;
-#endif
 #if !MEMORY_FOOTPRINT_OPT_ME_MV
 #if NO_UNI
                                 //0: ON- full
@@ -4080,19 +4011,12 @@ void* picture_decision_kernel(void *input_ptr)
                                     inputEntryPtr->list1_ptr->reference_list = predPositionPtr->ref_list1.reference_list;
                                 inputEntryPtr->list1_ptr->reference_list_count = predPositionPtr->ref_list1.reference_list_count;
 #else
-#if ALT_REF_OVERLAY
                                 if (!picture_control_set_ptr->is_overlay) {
                                     inputEntryPtr->list0_ptr = &predPositionPtr->ref_list0;
                                     inputEntryPtr->list1_ptr = &predPositionPtr->ref_list1;
                                 }
-#else
-                                inputEntryPtr->list0_ptr = &predPositionPtr->ref_list0;
-                                inputEntryPtr->list1_ptr = &predPositionPtr->ref_list1;
 #endif
-#endif
-#if ALT_REF_OVERLAY
                                 if (!picture_control_set_ptr->is_overlay)
-#endif
                                 {
                                     // Copy the Dependent Lists
                                     // *Note - we are removing any leading picture dependencies for now
@@ -4104,12 +4028,8 @@ void* picture_decision_kernel(void *input_ptr)
                                     inputEntryPtr->list1.list_count = predPositionPtr->dep_list1.list_count;
                                     for (depIdx = 0; depIdx < predPositionPtr->dep_list1.list_count; ++depIdx)
                                         inputEntryPtr->list1.list[depIdx] = predPositionPtr->dep_list1.list[depIdx];
-#if ALT_REF_OVERLAY
                                     // add the overlay picture to the dependant list
                                     inputEntryPtr->dep_list0_count = (picture_control_set_ptr->is_alt_ref) ? inputEntryPtr->list0.list_count + 1 : inputEntryPtr->list0.list_count;
-#else
-                                    inputEntryPtr->dep_list0_count = inputEntryPtr->list0.list_count;
-#endif
 
 #if BASE_LAYER_REF
                                     if (picture_control_set_ptr->slice_type == I_SLICE)
@@ -4150,10 +4070,8 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array, 0, 2 * sizeof(uint32_t));
 #endif
-#if ALT_REF_OVERLAY
                             }
                             picture_control_set_ptr = cur_picture_control_set_ptr;
-#endif
 
                             if ( sequence_control_set_ptr->enable_altrefs == EB_TRUE &&
                                  picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) {
@@ -4258,7 +4176,6 @@ void* picture_decision_kernel(void *input_ptr)
                             }
                         }
 
-#if ALT_REF_OVERLAY
                         // Add 1 to the loop for the overlay picture. If the last picture is alt ref, increase the loop by 1 to add the overlay picture
                         uint32_t has_overlay = ((PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_end_index[mini_gop_index]]->object_ptr)->is_alt_ref ? 1 : 0;
                         for (pictureIndex = context_ptr->mini_gop_start_index[mini_gop_index]; pictureIndex <= context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay; ++pictureIndex) {
@@ -4286,11 +4203,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 picture_control_set_ptr->picture_number_alt :
                                 encode_context_ptr->terminating_picture_number;
 
-#else
-                        for (pictureIndex = context_ptr->mini_gop_start_index[mini_gop_index]; pictureIndex <= context_ptr->mini_gop_end_index[mini_gop_index]; ++pictureIndex) {
-                            // 2nd Loop over Pictures in the Pre-Assignment Buffer
-                            picture_control_set_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex]->object_ptr;
-#endif
                             // Find the Reference in the Picture Decision PA Reference Queue
                             inputQueueIndex = encode_context_ptr->picture_decision_pa_reference_queue_head_index;
 
@@ -4329,7 +4241,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 uint8_t ref_pic_index;
                                 for (ref_pic_index = 0; ref_pic_index < picture_control_set_ptr->ref_list0_count; ++ref_pic_index) {
                                     if (picture_control_set_ptr->ref_list0_count) {
-#if ALT_REF_OVERLAY
                                         // hardcode the reference for the overlay frame
                                         if(picture_control_set_ptr->is_overlay){
                                             paReferenceQueueIndex = (uint32_t)CIRCULAR_ADD(
@@ -4356,19 +4267,6 @@ void* picture_decision_kernel(void *input_ptr)
                                                 -inputEntryPtr->list0_ptr->reference_list[ref_pic_index] /*
                                                 sequence_control_set_ptr->bits_for_picture_order_count*/);
                                         }
-#else
-                                        paReferenceQueueIndex = (uint32_t)CIRCULAR_ADD(
-                                            ((int32_t)inputEntryPtr->reference_entry_index) - inputEntryPtr->list0_ptr->reference_list[ref_pic_index],
-                                            PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
-
-                                        paReferenceEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[paReferenceQueueIndex];
-
-                                        // Calculate the Ref POC
-                                        ref_poc = POC_CIRCULAR_ADD(
-                                            picture_control_set_ptr->picture_number,
-                                            -inputEntryPtr->list0_ptr->reference_list[ref_pic_index] /*
-                                            sequence_control_set_ptr->bits_for_picture_order_count*/);
-#endif
                                             // Set the Reference Object
                                         picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0][ref_pic_index] = paReferenceEntryPtr->input_object_ptr;
                                         picture_control_set_ptr->ref_pic_poc_array[REF_LIST_0][ref_pic_index] = ref_poc;
@@ -4529,30 +4427,6 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
 #endif
 
-#if !ALT_REF_OVERLAY
-                            // SB Loop to reset similarColocatedLcu Array
-                            uint16_t *variancePtr;
-                            uint32_t  NullVarCnt = 0;
-                            uint32_t  varLcuCnt = 0;
-                            uint32_t  lcuCodingOrder;
-                            uint32_t  sb_origin_x;
-                            uint32_t  sb_origin_y;
-
-                            if ((picture_control_set_ptr->slice_type == P_SLICE) || (picture_control_set_ptr->slice_type == B_SLICE)) {
-                                picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-                                for (lcuCodingOrder = 0; lcuCodingOrder < picture_control_set_ptr->sb_total_count; ++lcuCodingOrder) {
-                                    sb_origin_x = (lcuCodingOrder % picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
-                                    sb_origin_y = (lcuCodingOrder / picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
-                                    variancePtr = picture_control_set_ptr->variance[lcuCodingOrder];
-                                    //do it only for complete 64x64 blocks
-                                    if (sb_origin_x + 64 <= picture_control_set_ptr->enhanced_picture_ptr->width && sb_origin_y + 64 <= picture_control_set_ptr->enhanced_picture_ptr->height)
-                                    {
-                                        NullVarCnt += (variancePtr[0] == 0) ? 1 : 0;
-                                        varLcuCnt++;
-                                    }
-                                }
-                            }
-#endif
                             {
                                 picture_control_set_ptr->intensity_transition_flag = EB_FALSE;
                                 if (picture_control_set_ptr->ref_list0_count)
@@ -4586,11 +4460,9 @@ void* picture_decision_kernel(void *input_ptr)
                                             &outputResultsWrapperPtr);
 
                                     outputResultsPtr = (PictureDecisionResults*)outputResultsWrapperPtr->object_ptr;
-#if ALT_REF_OVERLAY
                                     if (picture_control_set_ptr->is_overlay)
                                         outputResultsPtr->picture_control_set_wrapper_ptr = picture_control_set_ptr->p_pcs_wrapper_ptr;
                                     else
-#endif
                                         outputResultsPtr->picture_control_set_wrapper_ptr = encode_context_ptr->pre_assignment_buffer[pictureIndex];
 
                                     outputResultsPtr->segment_index = segment_index;
@@ -4600,19 +4472,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                             }
 
-#if ALT_REF_OVERLAY
                             if (pictureIndex == context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay) {
                                 // Increment the Decode Base Number
                                 encode_context_ptr->decode_base_number += context_ptr->mini_gop_length[mini_gop_index] + has_overlay;
                             }
                             if (pictureIndex == encode_context_ptr->pre_assignment_buffer_count - 1 + has_overlay) {
-#else
-                            if (pictureIndex == context_ptr->mini_gop_end_index[mini_gop_index]) {
-                                // Increment the Decode Base Number
-                                encode_context_ptr->decode_base_number += context_ptr->mini_gop_length[mini_gop_index];
-                            }
-                            if (pictureIndex == encode_context_ptr->pre_assignment_buffer_count - 1) {
-#endif
 
                                 // Reset the Pre-Assignment Buffer
                                 encode_context_ptr->pre_assignment_buffer_count = 0;
@@ -4635,10 +4499,8 @@ void* picture_decision_kernel(void *input_ptr)
                     if ((inputEntryPtr->dependent_count == 0) &&
                         (inputEntryPtr->input_object_ptr)) {
 #if !BUG_FIX_PCS_LIVE_COUNT
-#if ALT_REF_OVERLAY
                         if(inputEntryPtr->p_pcs_ptr->is_alt_ref)
                             eb_release_object(inputEntryPtr->p_pcs_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
-#endif
                         eb_release_object(inputEntryPtr->p_pcs_ptr->p_pcs_wrapper_ptr);
 #endif
                         // Release the nominal live_count value

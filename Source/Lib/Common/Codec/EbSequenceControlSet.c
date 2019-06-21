@@ -300,9 +300,7 @@ EbErrorType copy_sequence_control_set(
     dst->pa_reference_picture_buffer_init_count = src->pa_reference_picture_buffer_init_count; writeCount += sizeof(int32_t);
     dst->reference_picture_buffer_init_count = src->reference_picture_buffer_init_count; writeCount += sizeof(int32_t);
     dst->input_buffer_fifo_init_count = src->input_buffer_fifo_init_count; writeCount += sizeof(int32_t);
-#if ALT_REF_OVERLAY
     dst->overlay_input_picture_buffer_init_count = src->overlay_input_picture_buffer_init_count; writeCount += sizeof(int32_t);
-#endif
 
     dst->output_stream_buffer_fifo_init_count = src->output_stream_buffer_fifo_init_count; writeCount += sizeof(int32_t);
     dst->output_recon_buffer_fifo_init_count = src->output_recon_buffer_fifo_init_count; writeCount += sizeof(int32_t);

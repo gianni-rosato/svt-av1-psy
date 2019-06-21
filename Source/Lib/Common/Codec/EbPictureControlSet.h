@@ -14416,13 +14416,11 @@ extern "C" {
         uint8_t                              mrp_mode;
 #endif
 #endif
-#if ALT_REF_OVERLAY
         uint64_t                             picture_number_alt; // The picture number overlay includes all the overlay frames
         uint8_t                              is_alt_ref;
         uint8_t                              is_overlay;
         struct PictureParentControlSet      *overlay_ppcs_ptr;
         struct PictureParentControlSet      *alt_ref_ppcs_ptr;
-#endif
         uint8_t                               altref_strength;
         int32_t                               pic_decision_reorder_queue_idx;
         struct PictureParentControlSet       *temp_filt_pcs_list[15];

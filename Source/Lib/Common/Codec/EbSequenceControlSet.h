@@ -137,9 +137,7 @@ extern "C" {
         uint32_t                                pa_reference_picture_buffer_init_count;
         uint32_t                                reference_picture_buffer_init_count;
         uint32_t                                input_buffer_fifo_init_count;
-#if ALT_REF_OVERLAY
         uint32_t                                overlay_input_picture_buffer_init_count;
-#endif
         uint32_t                                output_stream_buffer_fifo_init_count;
         uint32_t                                output_recon_buffer_fifo_init_count;
         uint32_t                                resource_coordination_fifo_init_count;

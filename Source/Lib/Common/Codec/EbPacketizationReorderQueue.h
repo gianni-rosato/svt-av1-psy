@@ -42,9 +42,7 @@ extern "C" {
         EbBool                               show_frame;
         EbBool                               has_show_existing;
         uint8_t                              show_existing_loc;
-#if ALT_REF_OVERLAY
         uint8_t                              is_alt_ref;
-#endif
     } PacketizationReorderEntry;
 
     extern EbErrorType packetization_reorder_entry_ctor(

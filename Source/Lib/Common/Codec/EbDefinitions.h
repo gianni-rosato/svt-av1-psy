@@ -41,7 +41,7 @@ extern "C" {
 
 
 
-#define ALT_REF_OVERLAY                   1 // support for ALT_REF overlay frames.
+
 
 #define PCS_ME_FIX                        1 // pcs flags shall not be set in seg based process
 #define ADAPTIVE_QP_SCALING               1 // Adaptive QP scaling. Change the QP based on the content.

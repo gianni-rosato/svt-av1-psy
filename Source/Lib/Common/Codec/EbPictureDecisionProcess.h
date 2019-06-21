@@ -82,8 +82,6 @@ void DecimateInputPicture(PictureParentControlSet       *picture_control_set_ptr
                           EbPictureBufferDesc           *sixteenthDecimatedPicturePtr);
 #endif
 
-#if ALT_REF_OVERLAY
-
 void PadPictureToMultipleOfMinCuSizeDimensions(
         SequenceControlSet            *sequence_control_set_ptr,
         EbPictureBufferDesc           *input_picture_ptr);
@@ -117,7 +115,5 @@ void GatheringPictureStatistics(
 
 void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr,
                       EbPictureBufferDesc* outputPicturePtr);
-
-#endif
 
 #endif // EbPictureDecision_h

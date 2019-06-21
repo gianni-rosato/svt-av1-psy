@@ -276,9 +276,7 @@ void* packetization_kernel(void *input_ptr)
         queueEntryPtr = encode_context_ptr->packetization_reorder_queue[queueEntryIndex];
         queueEntryPtr->start_time_seconds = picture_control_set_ptr->parent_pcs_ptr->start_time_seconds;
         queueEntryPtr->start_time_u_seconds = picture_control_set_ptr->parent_pcs_ptr->start_time_u_seconds;
-#if ALT_REF_OVERLAY
         queueEntryPtr->is_alt_ref = picture_control_set_ptr->parent_pcs_ptr->is_alt_ref;
-#endif
 
         //TODO: The output buffer should be big enough to avoid a deadlock here. Add an assert that make the warning
         // Get  Output Bitstream buffer
@@ -585,10 +583,8 @@ void* packetization_kernel(void *input_ptr)
 
             output_stream_ptr->n_tick_count = (uint32_t)latency;
             output_stream_ptr->p_app_private = queueEntryPtr->out_meta_data;
-#if ALT_REF_OVERLAY
             if (queueEntryPtr->is_alt_ref)
                 output_stream_ptr->flags |= (uint32_t)EB_BUFFERFLAG_IS_ALT_REF;
-#endif
 
             eb_post_full_object(output_stream_wrapper_ptr);
             queueEntryPtr->out_meta_data = (EbLinkedListNode *)EB_NULL;
