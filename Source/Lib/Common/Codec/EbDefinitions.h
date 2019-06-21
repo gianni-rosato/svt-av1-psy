@@ -238,7 +238,7 @@ extern "C" {
 
 
 
-#define MRP_MEM_OPT               1
+
 #define MRP_FLAG                  1
 #define MRP_FIX_CLOSE_GOP         1
 

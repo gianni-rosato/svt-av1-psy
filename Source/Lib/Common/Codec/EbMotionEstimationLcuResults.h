@@ -26,23 +26,12 @@ extern "C" {
 #define SQUARE_PU_COUNT           85
     typedef struct MeCandidate
     {
-#if MRP_MEM_OPT
         unsigned    distortion : 20;     // 20-bits holds maximum SAD of 64x64 PU
         unsigned    direction  : 2;
         unsigned    ref_idx_l0 : 2;      // allows for up to 4 references
         unsigned    ref_idx_l1 : 2;
         unsigned    ref0_list : 1;
         unsigned    ref1_list : 1;
-#else
-
-        unsigned    ref_idx_l0 : 8;      // allows for up to 4 references
-        unsigned    ref_idx_l1 : 8;
-        unsigned    ref0_list : 8;
-        unsigned    ref1_list : 8;
-        unsigned    distortion : 32;     // 20-bits holds maximum SAD of 64x64 PU
-
-        unsigned    direction : 8;      // 0: uni-pred L0, 1: uni-pred L1, 2: bi-pred
-#endif
     } MeCandidate;
     typedef struct MvCandidate
     {
