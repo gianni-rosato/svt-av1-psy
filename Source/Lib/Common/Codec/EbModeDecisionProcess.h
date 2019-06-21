@@ -236,9 +236,6 @@ extern "C" {
         uint8_t                         global_mv_injection;
         uint8_t                         nx4_4xn_parent_mv_injection;
         uint8_t                         new_nearest_near_comb_injection;
-#if M9_NEAR_INJECTION
-        uint8_t                         near_mv_injection;
-#endif
         uint8_t                         warped_motion_injection;
         uint8_t                         unipred3x3_injection;
         uint8_t                         bipred3x3_injection;

@@ -1778,9 +1778,6 @@ void InjectAv1MvpCandidates(
     context_ptr->injected_mv_y_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_y;
     ++context_ptr->injected_mv_count_l0;
     }
-#if M9_NEAR_INJECTION
-    if (context_ptr->near_mv_injection) {
-#endif
     //NEAR_L0
     maxDrlIndex = GetMaxDrlIndex(xd->ref_mv_count[LAST_FRAME], NEARMV);
     //maxDrlIndex = 1;
@@ -1824,9 +1821,6 @@ void InjectAv1MvpCandidates(
         ++context_ptr->injected_mv_count_l0;
         }
     }
-#if M9_NEAR_INJECTION
-    }
-#endif
 
     if (isCompoundEnabled) {
         int16_t to_inject_mv_x = context_ptr->cu_ptr->ref_mvs[BWDREF_FRAME][0].as_mv.col;
@@ -1857,9 +1851,6 @@ void InjectAv1MvpCandidates(
         context_ptr->injected_mv_y_l1_array[context_ptr->injected_mv_count_l1] = to_inject_mv_y;
         ++context_ptr->injected_mv_count_l1;
     }
-#if M9_NEAR_INJECTION
-        if (context_ptr->near_mv_injection) {
-#endif
         //NEAR_L1
         maxDrlIndex = GetMaxDrlIndex(xd->ref_mv_count[BWDREF_FRAME], NEARMV);
 
@@ -1902,9 +1893,6 @@ void InjectAv1MvpCandidates(
             ++context_ptr->injected_mv_count_l1;
             }
         }
-#if M9_NEAR_INJECTION
-        }
-#endif
 
 #if BASE_LAYER_REF || MRP_REF_MODE
         if (allow_bipred)
@@ -1945,9 +1933,6 @@ void InjectAv1MvpCandidates(
                 ++context_ptr->injected_mv_count_bipred;
             }
         }
-#if M9_NEAR_INJECTION
-        if (context_ptr->near_mv_injection) {
-#endif
         //NEAR_NEAR
         if (allow_bipred) {
             maxDrlIndex = GetMaxDrlIndex(xd->ref_mv_count[LAST_BWD_FRAME], NEAR_NEARMV);
@@ -1998,9 +1983,6 @@ void InjectAv1MvpCandidates(
                 }
             }
         }
-#if M9_NEAR_INJECTION
-        }
-#endif
     }
     //update tot Candidate count
     *candTotCnt = canIdx;

@@ -1259,20 +1259,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->nx4_4xn_parent_mv_injection = 1;
     else
         context_ptr->nx4_4xn_parent_mv_injection = 0;
-#if M9_NEAR_INJECTION
-    // Set NEAR injection
-    // Level                Settings
-    // 0                    Off
-    // 1                    On
-    if (picture_control_set_ptr->enc_mode <= ENC_M8)
-        context_ptr->near_mv_injection = 1;
-    else
-        //context_ptr->near_mv_injection = 0;
-        context_ptr->near_mv_injection =
-        (picture_control_set_ptr->temporal_layer_index == 0) ?
-            1 :
-            0;
-#endif
 
     // Set warped motion injection
     // Level                Settings
