@@ -26,12 +26,10 @@
 /************************************************
  * Defines
  ************************************************/
-#if NEW_RPS
 #define  LAY0_OFF  0
 #define  LAY1_OFF  3
 #define  LAY2_OFF  5
 #define  LAY3_OFF  7
-#endif
 #if RPS_4L
 extern PredictionStructureConfigEntry four_level_hierarchical_pred_struct[];
 #endif
@@ -219,7 +217,6 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
 }
 #endif
 
-#if NEW_RPS
 uint8_t  circ_dec(uint8_t max, uint8_t off, uint8_t input)
 {
     int8_t x = input;
@@ -252,7 +249,6 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 
     return input;
 }
-#endif
 #define POC_CIRCULAR_ADD(base, offset/*, bits*/)             (/*(((int32_t) (base)) + ((int32_t) (offset)) > ((int32_t) (1 << (bits))))   ? ((base) + (offset) - (1 << (bits))) : \
                                                              (((int32_t) (base)) + ((int32_t) (offset)) < 0)                           ? ((base) + (offset) + (1 << (bits))) : \
                                                                                                                                        */((base) + (offset)))
@@ -1888,7 +1884,6 @@ void  Av1GenerateRpsInfo(
     }
     else if (picture_control_set_ptr->hierarchical_levels == 4)//RPS for 4L GOP
     {
-#if NEW_RPS
     if (1)//MRP
     {
 #if REF_ORDER
@@ -2484,7 +2479,6 @@ void  Av1GenerateRpsInfo(
     }
     else
     {
-#endif
     //Reset miniGop Toggling. The first miniGop after a KEY frame has toggle=0
     if (picture_control_set_ptr->av1_frame_type == KEY_FRAME)
     {
@@ -2690,9 +2684,7 @@ void  Av1GenerateRpsInfo(
     if (pictureIndex == context_ptr->mini_gop_end_index[0])
         context_ptr->mini_gop_toggle = 1 - context_ptr->mini_gop_toggle;
 
-#if NEW_RPS
         }
-#endif
     }
 
     else

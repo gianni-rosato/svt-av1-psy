@@ -202,7 +202,6 @@ extern "C" {
         EbPred                        pred_structure,
         uint32_t                         number_of_references,
         uint32_t                         levels_of_hierarchy);
-#if NEW_RPS
     typedef enum {
         LAST = 0,
         LAST2 = 1,
@@ -212,7 +211,6 @@ extern "C" {
         ALT2 = 5,
         ALT = 6
     } REF_FRAME_MINUS1;
-#endif
     typedef struct Av1RpsNode
     {
         uint8_t refresh_frame_mask;
