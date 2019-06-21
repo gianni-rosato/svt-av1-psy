@@ -208,7 +208,7 @@ extern "C" {
 //TWO_FAST_LOOP
 //ADD_DELTA_QP_SUPPORT
 
-#define MRP_PRED_STRUCTURE        1
+
 #define EC_UPDATE                 1
 #define MRP_ME                    1
 #define MRP_CONNECTION            1
