@@ -2693,16 +2693,11 @@ void  inject_inter_candidates(
         context_ptr->blk_geom,
         context_ptr->cu_origin_x,
         context_ptr->cu_origin_y,
-#if MRP_MVP
         picture_control_set_ptr->parent_pcs_ptr->ref_frame_type_arr,
 #if RPS_4L
         picture_control_set_ptr->parent_pcs_ptr->tot_ref_frame_types,
 #else
         (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 1 : picture_control_set_ptr->parent_pcs_ptr->tot_ref_frame_types,
-#endif
-#else
-        refFrames,
-        (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 1 : 3,
 #endif
         picture_control_set_ptr);
 

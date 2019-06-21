@@ -13975,10 +13975,8 @@ extern "C" {
         EbBool                                is_used_as_reference_flag;
         uint8_t                               ref_list0_count;
         uint8_t                               ref_list1_count;
-#if MRP_MVP
         MvReferenceFrame                      ref_frame_type_arr[MODE_CTX_REF_FRAMES];
         uint8_t                               tot_ref_frame_types;
-#endif
         // Rate Control
         uint64_t                              pred_bits_ref_qp[MAX_REF_QP_NUM];
         uint64_t                              target_bits_best_pred_qp;

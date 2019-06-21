@@ -1238,7 +1238,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     return return_error;
 }
 
-#if MRP_MVP
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 //set the ref frame types used for this picture,
 void set_all_ref_frame_type(SequenceControlSet *sequence_control_set_ptr, PictureParentControlSet  *parent_pcs_ptr, MvReferenceFrame ref_frame_arr[], uint8_t* tot_ref_frames)
@@ -1305,7 +1304,6 @@ void set_all_ref_frame_type(SequenceControlSet *sequence_control_set_ptr, Pictur
         }
 #endif
     }
-#endif
 
 /*************************************************
 * AV1 Reference Picture Signalling:
@@ -3869,10 +3867,8 @@ void* picture_decision_kernel(void *input_ptr)
                                     picture_control_set_ptr->scene_transition_flag[REF_LIST_1] = EB_FALSE;
                             }
 
-#if MRP_MVP
                             //set the ref frame types used for this picture,
                             set_all_ref_frame_type(sequence_control_set_ptr, picture_control_set_ptr, picture_control_set_ptr->ref_frame_type_arr, &picture_control_set_ptr->tot_ref_frame_types);
-#endif
                             // Initialize Segments
                             picture_control_set_ptr->me_segments_column_count = (uint8_t)(sequence_control_set_ptr->me_segment_column_count_array[picture_control_set_ptr->temporal_layer_index]);
                             picture_control_set_ptr->me_segments_row_count = (uint8_t)(sequence_control_set_ptr->me_segment_row_count_array[picture_control_set_ptr->temporal_layer_index]);
