@@ -131,7 +131,7 @@ extern "C" {
 #if ALTREF_FILTERING_SUPPORT
         uint32_t                                tf_segment_column_count;
         uint32_t                                tf_segment_row_count;
-        uint8_t                                 enable_altrefs;
+        EbBool                                  enable_altrefs;
 #endif
         // Buffers
         uint32_t                                picture_control_set_pool_init_count;
@@ -199,6 +199,13 @@ extern "C" {
         *
         * Default is 1. */
         uint8_t                                 nsq_present;
+
+#if DOWN_SAMPLING_FILTERING
+        /* Down-sampling method @ ME and alt-ref temporal filtering (mm-signal; 0: filtering, 1: decimation)
+        *
+        * Default is 0. */
+        uint8_t                                 down_sampling_method_me_search;
+#endif
 #endif
         uint8_t                                 trans_coeff_shape_array[2][8][4];    // [componantTypeIndex][resolutionIndex][levelIndex][tuSizeIndex]
         EbBlockMeanPrec                         block_mean_calc_prec;
@@ -220,8 +227,14 @@ extern "C" {
         uint64_t                                pred_count[5];
         uint64_t                                pred1_nfl_count[5];
 #endif
-
-        SeqHeader								seq_header;
+#if INCOMPLETE_SB_FIX
+        /* over_boundary_block (mm-signal; 0: No over boundary blk allowed, 1: over boundary blk allowed)
+        *
+        * Default is 0.
+        * To enable when md_skip_blk is on*/
+        uint8_t                                 over_boundary_block_mode;
+#endif
+        SeqHeader                               seq_header;
     } SequenceControlSet;
 
     typedef struct EbSequenceControlSetInitData

@@ -4319,7 +4319,7 @@ void Av1TransformConfig(
     set_fwd_txfm_non_scale_range(cfg);
 }
 
-uint64_t EnergyComputation(
+static uint64_t EnergyComputation(
     int32_t  *coeff,
     uint32_t   coeff_stride,
     uint32_t   area_width,
@@ -4343,32 +4343,24 @@ uint64_t EnergyComputation(
     return predictionDistortion;
 }
 
-uint64_t  HandleTransform64x64_c(
-    int32_t         *output,
-    uint32_t         outputStride)
-{
-    uint64_t three_quad_energy = 0;
+uint64_t HandleTransform64x64_c(int32_t *output) {
+    uint64_t three_quad_energy;
 
     // top - right 32x32 area.
-    three_quad_energy = EnergyComputation(
-        output + 32,
-        outputStride,
-        32,
-        32);
+    three_quad_energy = EnergyComputation(output + 32, 64, 32, 32);
     //bottom 64x32 area.
-    three_quad_energy += EnergyComputation(
-        output + (32 * outputStride),
-        outputStride,
-        64,
-        32);
+    three_quad_energy += EnergyComputation(output + 32 * 64, 64, 64, 32);
 
-    uint32_t row;
     // Zero out top-right 32x32 area.
-    for (row = 0; row < 32; ++row)
+    for (int32_t row = 0; row < 32; ++row)
         memset(output + row * 64 + 32, 0, 32 * sizeof(*output));
+
     // Zero out the bottom 64x32 area.
     memset(output + 32 * 64, 0, 32 * 64 * sizeof(*output));
-    //// Re-pack non-zero coeffs in the first 32x32 indices.
+
+    // Re-pack non-zero coeffs in the first 32x32 indices.
+    for (int32_t row = 1; row < 32; ++row)
+        memcpy(output + row * 32, output + row * 64, 32 * sizeof(*output));
 
     return three_quad_energy;
 }
@@ -4542,22 +4534,19 @@ void av1_fwd_txfm2d_64x32_c(
         bit_depth);
 }
 
-uint64_t  HandleTransform64x32_c(
-    int32_t         *output,
-    uint32_t         outputStride)
-{
-    uint64_t three_quad_energy = 0;
-
+uint64_t HandleTransform64x32_c(int32_t *output) {
     // top - right 32x32 area.
-    three_quad_energy = EnergyComputation(
-        output + 32,
-        outputStride,
-        32,
-        32);
+    const uint64_t three_quad_energy =
+        EnergyComputation(output + 32, 64, 32, 32);
 
     // Zero out right 32x32 area.
     for (int32_t row = 0; row < 32; ++row)
         memset(output + row * 64 + 32, 0, 32 * sizeof(*output));
+
+    // Re-pack non-zero coeffs in the first 32x32 indices.
+    for (int32_t row = 1; row < 32; ++row)
+        memcpy(output + row * 32, output + row * 64, 32 * sizeof(*output));
+
     return three_quad_energy;
 }
 
@@ -4581,18 +4570,11 @@ void av1_fwd_txfm2d_32x64_c(
         intermediateTransformBuffer,
         bit_depth);
 }
-uint64_t  HandleTransform32x64_c(
-    int32_t         *output,
-    uint32_t         outputStride)
-{
-    uint64_t three_quad_energy = 0;
 
+uint64_t HandleTransform32x64_c(int32_t *output) {
     //bottom 32x32 area.
-    three_quad_energy += EnergyComputation(
-        output + (32 * outputStride),
-        outputStride,
-        32,
-        32);
+    const uint64_t three_quad_energy =
+        EnergyComputation(output + 32 * 32, 32, 32, 32);
 
     // Zero out the bottom 32x32 area.
     memset(output + 32 * 32, 0, 32 * 32 * sizeof(*output));
@@ -4619,22 +4601,20 @@ void av1_fwd_txfm2d_64x16_c(
         intermediateTransformBuffer,
         bit_depth);
 }
-uint64_t  HandleTransform64x16_c(
-    int32_t         *output,
-    uint32_t         outputStride)
-{
-    uint64_t three_quad_energy = 0;
 
+uint64_t HandleTransform64x16_c(int32_t *output) {
     // top - right 32x16 area.
-    three_quad_energy = EnergyComputation(
-        output + 32,
-        outputStride,
-        32,
-        16);
+    const uint64_t three_quad_energy =
+        EnergyComputation(output + 32, 64, 32, 16);
 
     // Zero out right 32x16 area.
     for (int32_t row = 0; row < 16; ++row)
         memset(output + row * 64 + 32, 0, 32 * sizeof(*output));
+
+    // Re-pack non-zero coeffs in the first 32x16 indices.
+    for (int32_t row = 1; row < 16; ++row)
+        memcpy(output + row * 32, output + row * 64, 32 * sizeof(*output));
+
     return three_quad_energy;
 }
 
@@ -4659,18 +4639,10 @@ void av1_fwd_txfm2d_16x64_c(
         bit_depth);
 }
 
-uint64_t  HandleTransform16x64_c(
-    int32_t         *output,
-    uint32_t         outputStride)
-{
-    uint64_t three_quad_energy = 0;
-
+uint64_t HandleTransform16x64_c(int32_t *output) {
     //bottom 16x32 area.
-    three_quad_energy += EnergyComputation(
-        output + (32 * outputStride),
-        outputStride,
-        16,
-        32);
+    const uint64_t three_quad_energy =
+        EnergyComputation(output + 16 * 32, 16, 16, 32);
 
     // Zero out the bottom 16x32 area.
     memset(output + 16 * 32, 0, 16 * 32 * sizeof(*output));
@@ -4904,12 +4876,8 @@ EbErrorType av1_estimate_transform(
                 transform_type,
                 bit_depth);
 
-        *three_quad_energy = HandleTransform64x32_c(coeff_buffer,
-            64);
+        *three_quad_energy = HandleTransform64x32(coeff_buffer);
 
-        // Re-pack non-zero coeffs in the first 32x32 indices.
-        for (int32_t row = 1; row < 32; ++row)
-            memcpy(coeff_buffer + row * 32, coeff_buffer + row * 64, 32 * sizeof(int32_t));
         break;
 
     case TX_32X64:
@@ -4928,8 +4896,7 @@ EbErrorType av1_estimate_transform(
                 transform_type,
                 bit_depth);
 
-        *three_quad_energy = HandleTransform32x64_c(coeff_buffer,
-            32);
+        *three_quad_energy = HandleTransform32x64(coeff_buffer);
 
         break;
 
@@ -4949,12 +4916,10 @@ EbErrorType av1_estimate_transform(
                 transform_type,
                 bit_depth);
 
-        *three_quad_energy = HandleTransform64x16_c(coeff_buffer,
-            64);
-        // Re-pack non-zero coeffs in the first 32x16 indices.
-        for (int32_t row = 1; row < 16; ++row)
-            memcpy(coeff_buffer + row * 32, coeff_buffer + row * 64, 32 * sizeof(int32_t));
+        *three_quad_energy = HandleTransform64x16(coeff_buffer);
+
         break;
+
     case TX_16X64:
         if (transform_type == DCT_DCT)
             av1_fwd_txfm2d_16x64(
@@ -4970,8 +4935,8 @@ EbErrorType av1_estimate_transform(
                 residual_stride,
                 transform_type,
                 bit_depth);
-        *three_quad_energy = HandleTransform16x64_c(coeff_buffer,
-            16);
+
+        *three_quad_energy = HandleTransform16x64(coeff_buffer);
 
         break;
 
@@ -5107,13 +5072,8 @@ EbErrorType av1_estimate_transform(
             transform_type,
             bit_depth);
 
-        *three_quad_energy = HandleTransform64x64_c(coeff_buffer,
-            64);
+        *three_quad_energy = HandleTransform64x64(coeff_buffer);
 
-        uint32_t row;
-        // Re-pack non-zero coeffs in the first 32x32 indices.
-        for (row = 1; row < 32; ++row)
-            memcpy(coeff_buffer + row * 32, coeff_buffer + row * 64, 32 * sizeof(int32_t));
         break;
 
     case TX_32X32:

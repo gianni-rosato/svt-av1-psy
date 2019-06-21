@@ -40,7 +40,7 @@ class FrameQueue {
         frame_size_ = VideoFrame::calculate_max_frame_size(param);
         frame_count_ = 0;
     }
-    /** Destructor of FrameQueue	  */
+    /** Destructor of FrameQueue      */
     virtual ~FrameQueue() {
     }
     /** Get queue type
@@ -88,14 +88,19 @@ class FrameQueue {
      * VideoFrame -- a container of video frame
      * nullptr -- no available video frame by this timestamp
      */
-    virtual const VideoFrame* take_frame(const uint64_t time_stamp) = 0;
+    virtual VideoFrame* take_frame(const uint64_t time_stamp) = 0;
     /** Interface of get a video frame by index
      * @param index  the index of video to retreive
      * @return
      * VideoFrame -- a container of video frame
      * nullptr -- no available video frame by index
      */
-    virtual const VideoFrame* take_frame_inorder(const uint32_t index) = 0;
+    virtual VideoFrame* take_frame_inorder(const uint32_t index) = 0;
+    /** Interface of recycle a video frame with caculate its checksum and free
+     * the memory of buffer
+     * @param frame  the video frame to recycle
+     */
+    virtual void recycle_frame(VideoFrame* frame) = 0;
     /** Interface of destroy a video frame and remove from queue
      * @param frame  the video frame to distroy
      */
@@ -106,6 +111,13 @@ class FrameQueue {
      * false -- the queue is still available
      */
     virtual bool is_compelete() = 0;
+    /** Interface of compare with other frame queue
+     * @param other  other frame queue to compare
+     * @return
+     * true -- the queue is same
+     * false -- the queue is different
+     */
+    virtual bool compare(FrameQueue* other);
 
   protected:
     FrameQueueType queue_type_;   /**< type of queue*/
@@ -117,7 +129,7 @@ class FrameQueue {
 class ICompareQueue {
   public:
     virtual ~ICompareQueue(){};
-    virtual bool compare_video(const VideoFrame& frame) = 0;
+    virtual bool compare_video(VideoFrame& frame) = 0;
     virtual bool flush_video() = 0;
 };
 

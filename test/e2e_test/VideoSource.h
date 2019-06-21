@@ -15,6 +15,7 @@
 #ifndef _SVT_TEST_VIDEO_SOURCE_H_
 #define _SVT_TEST_VIDEO_SOURCE_H_
 #include <string>
+#include <vector>
 #include "EbSvtAv1Enc.h"
 #include "VideoFrame.h"
 #ifdef ENABLE_DEBUG_MONITOR
@@ -76,6 +77,12 @@ class VideoSource {
     virtual bool get_compressed_10bit_mode() const {
         return svt_compressed_2bit_plane_;
     }
+    /*!\brief Get the frame qp by index */
+    virtual uint32_t get_frame_qp(const uint32_t index) const {
+        if (index >= frame_qp_list_.size())
+            return INVALID_QP;
+        return frame_qp_list_.at(index);
+    }
 
   protected:
     bool is_10bit_mode();
@@ -93,6 +100,7 @@ class VideoSource {
     EbSvtIOFormat *frame_buffer_;
     VideoColorFormat image_format_;
     bool svt_compressed_2bit_plane_;
+    std::vector<uint32_t> frame_qp_list_;
 };
 
 /**

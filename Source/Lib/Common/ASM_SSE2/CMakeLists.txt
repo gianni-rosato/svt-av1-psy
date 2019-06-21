@@ -1,26 +1,31 @@
-# 
+#
 # Copyright(c) 2019 Intel Corporation
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
-# 
+#
 
 # ASM_SSE2 Directory CMakeLists.txt
 
 # Include Encoder Subdirectories
-include_directories (${PROJECT_SOURCE_DIR}/Source/API/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/)
-include_directories (${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/)
+include_directories(${PROJECT_SOURCE_DIR}/Source/API/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    SET(CMAKE_C_FLAGS "/MP")    
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+set(flags_to_test
+    -msse2
+    -static-intel)
 
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
-endif()
+foreach(cflag ${flags_to_test})
+    string(REGEX REPLACE "[^A-Za-z0-9]" "_" cflag_var "${cflag}")
+    set(test_c_flag "C_FLAG${cflag_var}")
+    check_c_compiler_flag(${cflag} "${test_c_flag}")
+    if(${test_c_flag})
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${cflag}")
+    endif()
+endforeach()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -static-intel -w")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
 endif()
 
 file(GLOB all_files
@@ -29,7 +34,3 @@ file(GLOB all_files
     "*.c")
 
 add_library(COMMON_ASM_SSE2 OBJECT ${all_files})
-
-
-
-

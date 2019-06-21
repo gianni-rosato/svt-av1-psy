@@ -186,7 +186,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pRef = ref + j;
                     ss3 = ss5 = _mm256_setzero_si256();
                     for (k = 0; k < height; k += 4) {
-                        ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride))), _mm_loadu_si128((__m128i*)pRef), 0x1);
+                        ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)pSrc), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)(pSrc + 2 * src_stride)), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + srcStrideT))), 0x1);
                         ss3 = _mm256_adds_epu16(ss3, _mm256_mpsadbw_epu8(ss0, ss2, 0));
@@ -1765,7 +1765,7 @@ void sad_loop_kernel_avx2_intrin(
                     pRef = ref + j;
                     ss3 = ss5 = _mm256_setzero_si256();
                     for (k = 0; k < height; k += 4) {
-                        ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride))), _mm_loadu_si128((__m128i*)pRef), 0x1);
+                        ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)pSrc), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)(pSrc + 2 * src_stride)), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + srcStrideT))), 0x1);
                         ss3 = _mm256_adds_epu16(ss3, _mm256_mpsadbw_epu8(ss0, ss2, 0));
@@ -4088,7 +4088,7 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                     pRef = ref + j;
                     ss3 = ss5 = _mm256_setzero_si256();
                     for (k = 0; k < height; k += 4) {
-                        ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride))), _mm_loadu_si128((__m128i*)pRef), 0x1);
+                        ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)pSrc), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)(pSrc + 2 * src_stride)), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + srcStrideT))), 0x1);
                         ss3 = _mm256_adds_epu16(ss3, _mm256_mpsadbw_epu8(ss0, ss2, 0));

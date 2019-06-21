@@ -20,6 +20,7 @@
 #include "EbFullLoop.h"
 #include "EbRateDistortionCost.h"
 #include "aom_dsp_rtcd.h"
+
 #ifdef __GNUC__
 #define LIKELY(v) __builtin_expect(v, 1)
 #define UNLIKELY(v) __builtin_expect(v, 0)
@@ -518,7 +519,7 @@ static void quantize_fp_helper_c(
                 tmp32 = (int)((abs_coeff * wt * quant_ptr[rc != 0]) >>
                     (16 - log_scale + AOM_QM_BITS));
                 qcoeff_ptr[rc] = (tmp32 ^ coeff_sign) - coeff_sign;
-                const QmVal abs_dqcoeff = (tmp32 * dequant) >> log_scale;
+                const TranLow abs_dqcoeff = (tmp32 * dequant) >> log_scale;
                 dqcoeff_ptr[rc] = (abs_dqcoeff ^ coeff_sign) - coeff_sign;
             }
 
@@ -541,8 +542,7 @@ void av1_quantize_fp_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
 
 void av1_quantize_fp_32x32_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
     const int16_t *zbin_ptr, const int16_t *round_ptr,
-    const int16_t *quant_ptr,
-    const int16_t *quant_shift_ptr,
+    const int16_t *quant_ptr, const int16_t *quant_shift_ptr,
     TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
     const int16_t *dequant_ptr, uint16_t *eob_ptr,
     const int16_t *scan, const int16_t *iscan) {
@@ -553,8 +553,7 @@ void av1_quantize_fp_32x32_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
 
 void av1_quantize_fp_64x64_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
     const int16_t *zbin_ptr, const int16_t *round_ptr,
-    const int16_t *quant_ptr,
-    const int16_t *quant_shift_ptr,
+    const int16_t *quant_ptr, const int16_t *quant_shift_ptr,
     TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
     const int16_t *dequant_ptr, uint16_t *eob_ptr,
     const int16_t *scan, const int16_t *iscan) {
@@ -576,12 +575,35 @@ void av1_quantize_fp_facade(
     const QmVal *qm_ptr = qparam->qmatrix;
     const QmVal *iqm_ptr = qparam->iqmatrix;
 
-    quantize_fp_helper_c(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
-        p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
-        dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
-        sc->iscan, qm_ptr, iqm_ptr, qparam->log_scale);
+    if (qm_ptr || iqm_ptr)
+        quantize_fp_helper_c(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+            p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+            dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+            sc->iscan, qm_ptr, iqm_ptr, qparam->log_scale);
+    else {
+        switch (qparam->log_scale) {
+        case 0:
+            av1_quantize_fp(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+                p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+                dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+                sc->iscan);
+            break;
+        case 1:
+            av1_quantize_fp_32x32(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+                p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+                dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+                sc->iscan);
+            break;
+        case 2:
+            av1_quantize_fp_64x64(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+                p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
+                dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
+                sc->iscan);
+            break;
+        default: assert(0);
+        }
+    }
 }
-
 
 #endif
 
@@ -1816,12 +1838,14 @@ void av1_quantize_inv_quantize(
     int32_t                     *quant_coeff,
     int32_t                     *recon_coeff,
     uint32_t                     qp,
+    int32_t                segmentation_qp_offset,
     uint32_t                     width,
     uint32_t                     height,
     TxSize                       txsize,
     uint16_t                    *eob,
     EbAsm                        asm_type,
     uint32_t                    *count_non_zero_coeffs,
+
 #if !PF_N2_SUPPORT
     EbPfMode                     pf_mode,
 #endif
@@ -1865,7 +1889,7 @@ void av1_quantize_inv_quantize(
 #if ADD_DELTA_QP_SUPPORT
     uint32_t qIndex = qp;
 #else
-    uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
+    uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->base_qindex + segmentation_qp_offset ;
 #endif
     if (bit_increment == 0) {
         if (component_type == COMPONENT_LUMA) {
@@ -1946,9 +1970,9 @@ void av1_quantize_inv_quantize(
     EbBool is_inter = (pred_mode >= NEARESTMV);
 
     EbBool perform_rdoq = (md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
-    
+
     // Hsan: set to FALSE until adding x86 quantize_fp
-    EbBool perform_quantize_fp = EB_FALSE;
+    EbBool perform_quantize_fp = picture_control_set_ptr->enc_mode == ENC_M0 ? EB_TRUE: EB_FALSE;
 
     if (perform_rdoq && perform_quantize_fp && !is_inter)
         av1_quantize_fp_facade(
@@ -2251,11 +2275,17 @@ void product_full_loop(
         uint16_t tx_org_x = context_ptr->blk_geom->tx_org_x[txb_itr];
         uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[txb_itr];
 #endif
-
+#if INCOMPLETE_SB_FIX
+        int32_t cropped_tx_width = MIN(context_ptr->blk_geom->tx_width[tx_depth][txb_itr], sequence_control_set_ptr->seq_header.max_frame_width - (context_ptr->sb_origin_x + tx_org_x));
+        int32_t cropped_tx_height = MIN(context_ptr->blk_geom->tx_height[tx_depth][txb_itr], sequence_control_set_ptr->seq_header.max_frame_height - (context_ptr->sb_origin_y + tx_org_y));
+#endif
 #if FIXED_128x128_CONTEXT_UPDATE
         context_ptr->luma_txb_skip_context = 0;
         context_ptr->luma_dc_sign_context = 0;
         get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+            sequence_control_set_ptr,
+#endif
             COMPONENT_LUMA,
             context_ptr->luma_dc_sign_level_coeff_neighbor_array,
             context_ptr->sb_origin_x + tx_org_x,
@@ -2295,6 +2325,9 @@ void product_full_loop(
 #else
             context_ptr->pf_md_mode);
 #endif
+
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 #if DC_SIGN_CONTEXT_FIX
         candidateBuffer->candidate_ptr->quantized_dc[0][txb_itr] = av1_quantize_inv_quantize(
 #else
@@ -2307,6 +2340,7 @@ void product_full_loop(
             &(((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]),
             &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[txb_1d_offset]),
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
             context_ptr->blk_geom->tx_height[tx_depth][txb_itr],
@@ -2418,8 +2452,13 @@ void product_full_loop(
                 candidateBuffer->prediction_ptr->buffer_y + tu_origin_index,
                 candidateBuffer->prediction_ptr->stride_y,
 #if ATB_SUPPORT
+#if INCOMPLETE_SB_FIX
+                cropped_tx_width,
+                cropped_tx_height);
+#else
                 context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height[tx_depth][txb_itr]);
+#endif
 #else
                 context_ptr->blk_geom->tx_width[txb_itr],
                 context_ptr->blk_geom->tx_height[txb_itr]);
@@ -2434,8 +2473,13 @@ void product_full_loop(
                 &(((uint8_t*)candidateBuffer->recon_ptr->buffer_y)[tu_origin_index]),
                 candidateBuffer->recon_ptr->stride_y,
 #if ATB_SUPPORT
+#if INCOMPLETE_SB_FIX
+                cropped_tx_width,
+                cropped_tx_height);
+#else
                 context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height[tx_depth][txb_itr]);
+#endif
 #else
                 context_ptr->blk_geom->tx_width[txb_itr],
                 context_ptr->blk_geom->tx_height[txb_itr]);
@@ -2737,6 +2781,9 @@ void product_full_loop_tx_search(
                 PLANE_TYPE_Y,
                 context_ptr->pf_md_mode);
 
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
             av1_quantize_inv_quantize(
                 picture_control_set_ptr,
                 context_ptr,
@@ -2745,6 +2792,8 @@ void product_full_loop_tx_search(
                 &(((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[tu_origin_index]),
                 &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_y)[tu_origin_index]),
                 context_ptr->cu_ptr->qp,
+                seg_qp,
+
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height[tx_depth][txb_itr],
@@ -3090,6 +3139,9 @@ void encode_pass_tx_search(
 #else
             context_ptr->trans_coeff_shape_luma);
 #endif
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
 
         av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
@@ -3099,6 +3151,7 @@ void encode_pass_tx_search(
             ((int32_t*)coeffSamplesTB->buffer_y) + coeff1dOffset,
             ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -3334,6 +3387,9 @@ void encode_pass_tx_search_hbd(
 #else
             context_ptr->trans_coeff_shape_luma);
 #endif
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
         av1_quantize_inv_quantize(
             sb_ptr->picture_control_set_ptr,
             context_ptr->md_context,
@@ -3342,6 +3398,7 @@ void encode_pass_tx_search_hbd(
             ((int32_t*)coeffSamplesTB->buffer_y) + coeff1dOffset,
             ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -3545,6 +3602,9 @@ void full_loop_r(
         context_ptr->cb_txb_skip_context = 0;
         context_ptr->cb_dc_sign_context = 0;
         get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+            sequence_control_set_ptr,
+#endif
             COMPONENT_CHROMA,
             context_ptr->cb_dc_sign_level_coeff_neighbor_array,
             ROUND_UV(context_ptr->sb_origin_x + txb_origin_x) >> 1,
@@ -3558,6 +3618,9 @@ void full_loop_r(
         context_ptr->cr_txb_skip_context = 0;
         context_ptr->cr_dc_sign_context = 0;
         get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+            sequence_control_set_ptr,
+#endif
             COMPONENT_CHROMA,
             context_ptr->cr_dc_sign_level_coeff_neighbor_array,
             ROUND_UV(context_ptr->sb_origin_x + txb_origin_x) >> 1,
@@ -3566,7 +3629,7 @@ void full_loop_r(
             context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
             &context_ptr->cr_txb_skip_context,
             &context_ptr->cr_dc_sign_context);
-        
+
 #endif
         // NADER - TU
         tu_origin_index = txb_origin_x + txb_origin_y * candidateBuffer->residual_quant_coeff_ptr->stride_y;
@@ -3612,6 +3675,9 @@ void full_loop_r(
 #else
                 correctedPFMode);
 #endif
+
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 #if DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[1][0] = av1_quantize_inv_quantize(
 #else
@@ -3624,6 +3690,7 @@ void full_loop_r(
                 &(((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cb)[txb_1d_offset]),
                 &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_cb)[txb_1d_offset]),
                 cb_qp,
+                seg_qp,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
@@ -3756,6 +3823,9 @@ void full_loop_r(
 #else
                 correctedPFMode);
 #endif
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
 #if DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[2][0] = av1_quantize_inv_quantize(
 #else
@@ -3768,6 +3838,7 @@ void full_loop_r(
                 &(((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_cr)[txb_1d_offset]),
                 &(((int32_t*)candidateBuffer->recon_coeff_ptr->buffer_cr)[txb_1d_offset]),
                 cb_qp,
+                seg_qp,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
@@ -3930,6 +4001,10 @@ void cu_full_distortion_fast_tu_mode_r(
         txb_origin_x = context_ptr->blk_geom->tx_org_x[txb_itr];
         txb_origin_y = context_ptr->blk_geom->tx_org_y[txb_itr];
 #endif
+#if INCOMPLETE_SB_FIX
+        int32_t cropped_tx_width_uv = MIN(context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr], picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_width / 2 - ((context_ptr->sb_origin_x + ((txb_origin_x >> 3) << 3)) >> 1));
+        int32_t cropped_tx_height_uv = MIN(context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr], picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_height / 2 - ((context_ptr->sb_origin_y + ((txb_origin_y >> 3) << 3)) >> 1));
+#endif
         tu_origin_index = txb_origin_x + txb_origin_y * candidateBuffer->residual_quant_coeff_ptr->stride_y;
         tu_chroma_origin_index = txb_1d_offset;
         // Reset the Bit Costs
@@ -3955,32 +4030,52 @@ void cu_full_distortion_fast_tu_mode_r(
                     input_picture_ptr->stride_cb,
                     candidateBuffer->prediction_ptr->buffer_cb + tu_uv_origin_index,
                     candidateBuffer->prediction_ptr->stride_cb,
+#if INCOMPLETE_SB_FIX
+                    cropped_tx_width_uv,
+                    cropped_tx_height_uv);
+#else
                     context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                     context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr]);
+#endif
 
                 tuFullDistortion[1][DIST_CALC_RESIDUAL] = spatial_full_distortion_kernel_func_ptr_array[asm_type][Log2f(context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr]) - 2](
                     input_picture_ptr->buffer_cb + input_chroma_tu_origin_index,
                     input_picture_ptr->stride_cb,
                     &(((uint8_t*)candidateBuffer->recon_ptr->buffer_cb)[tu_uv_origin_index]),
                     candidateBuffer->recon_ptr->stride_cb,
+#if INCOMPLETE_SB_FIX
+                    cropped_tx_width_uv,
+                    cropped_tx_height_uv);
+#else
                     context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                     context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr]);
+#endif
 
                 tuFullDistortion[2][DIST_CALC_PREDICTION] = spatial_full_distortion_kernel_func_ptr_array[asm_type][Log2f(context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr]) - 2](
                     input_picture_ptr->buffer_cr + input_chroma_tu_origin_index,
                     input_picture_ptr->stride_cr,
                     candidateBuffer->prediction_ptr->buffer_cr + tu_uv_origin_index,
                     candidateBuffer->prediction_ptr->stride_cr,
+#if INCOMPLETE_SB_FIX
+                    cropped_tx_width_uv,
+                    cropped_tx_height_uv);
+#else
                     context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                     context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr]);
+#endif
 
                 tuFullDistortion[2][DIST_CALC_RESIDUAL] = spatial_full_distortion_kernel_func_ptr_array[asm_type][Log2f(context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr]) - 2](
                     input_picture_ptr->buffer_cr + input_chroma_tu_origin_index,
                     input_picture_ptr->stride_cr,
                     &(((uint8_t*)candidateBuffer->recon_ptr->buffer_cr)[tu_uv_origin_index]),
                     candidateBuffer->recon_ptr->stride_cr,
+#if INCOMPLETE_SB_FIX
+                    cropped_tx_width_uv,
+                    cropped_tx_height_uv);
+#else
                     context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                     context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr]);
+#endif
 #else
                 tuFullDistortion[1][DIST_CALC_PREDICTION] = spatial_full_distortion_kernel_func_ptr_array[asm_type][Log2f(context_ptr->blk_geom->tx_width_uv[txb_itr]) - 2](
                     input_picture_ptr->buffer_cb + input_chroma_tu_origin_index,
@@ -4455,11 +4550,15 @@ uint32_t d2_inter_depth_block_decision(
 #if INTRA64_FIX
             if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0 && sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128)
 #else
-            if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0) 
+            if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0)
 #endif
                 parent_depth_cost = MAX_MODE_COST;
             else
                 compute_depth_costs(context_ptr, sequence_control_set_ptr, current_depth_idx_mds, parent_depth_idx_mds, ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth], &parent_depth_cost, &current_depth_cost);
+#if INCOMPLETE_SB_FIX
+            if (!sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[parent_depth_idx_mds])
+                parent_depth_cost = MAX_MODE_COST;
+#endif
             if (parent_depth_cost <= current_depth_cost) {
                 context_ptr->md_cu_arr_nsq[parent_depth_idx_mds].split_flag = EB_FALSE;
                 context_ptr->md_local_cu_unit[parent_depth_idx_mds].cost = parent_depth_cost;

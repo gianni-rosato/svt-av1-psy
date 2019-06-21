@@ -296,6 +296,9 @@ extern "C" {
         uint16_t          top_padding;
         uint16_t          bot_padding;
         EbBool            split_mode;         //ON: allocate 8bit data seperately from nbit data
+#if DOWN_SAMPLING_FILTERING
+        EbBool            down_sampled_filtered;
+#endif
     } EbPictureBufferDescInitData;
 
     /**************************************

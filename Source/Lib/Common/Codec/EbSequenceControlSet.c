@@ -348,6 +348,9 @@ EbErrorType copy_sequence_control_set(
     dst->nsq_present    = src->nsq_present;
     dst->cdf_mode       = src->cdf_mode;
 #endif
+#if DOWN_SAMPLING_FILTERING
+    dst->down_sampling_method_me_search = src->down_sampling_method_me_search;
+#endif
 #if ALTREF_FILTERING_SUPPORT
     dst->tf_segment_column_count = src->tf_segment_column_count;
     dst->tf_segment_row_count = src->tf_segment_row_count;
@@ -355,6 +358,9 @@ EbErrorType copy_sequence_control_set(
 #if BASE_LAYER_REF
     dst->extra_frames_to_ref_islice = src->extra_frames_to_ref_islice;
     dst->max_frame_window_to_ref_islice = src->max_frame_window_to_ref_islice;
+#endif
+#if INCOMPLETE_SB_FIX
+    dst->over_boundary_block_mode = src->over_boundary_block_mode;
 #endif
     return EB_ErrorNone;
 }
@@ -416,7 +422,9 @@ extern EbErrorType sb_params_init(
     EbErrorType return_error = EB_ErrorNone;
     uint16_t    sb_index;
     uint16_t    rasterScanCuIndex;
+#if  !INCOMPLETE_SB_FIX
     uint16_t    md_scan_block_index;
+#endif
     uint8_t   pictureLcuWidth = (uint8_t)((sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz);
     uint8_t    pictureLcuHeight = (uint8_t)((sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz);
     EB_MALLOC(SbParams*, sequence_control_set_ptr->sb_params_array, sizeof(SbParams) * pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
@@ -504,7 +512,7 @@ extern EbErrorType sb_params_init(
                 EB_FALSE :
                 EB_TRUE;
         }
-
+#if  !INCOMPLETE_SB_FIX
          uint16_t max_block_count = sequence_control_set_ptr->max_block_cnt;
 
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count; md_scan_block_index++) {
@@ -519,6 +527,7 @@ extern EbErrorType sb_params_init(
                 EB_FALSE :
                 EB_TRUE;
         }
+#endif
     }
 
     sequence_control_set_ptr->picture_width_in_sb = pictureLcuWidth;
@@ -560,7 +569,45 @@ EbErrorType sb_geom_init(SequenceControlSet * sequence_control_set_ptr)
 
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count ; md_scan_block_index++) {
             const BlockGeom * blk_geom = get_blk_geom_mds(md_scan_block_index);
+#if INCOMPLETE_SB_FIX
+            if (sequence_control_set_ptr->over_boundary_block_mode == 1) {
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth / 2 < sequence_control_set_ptr->seq_header.max_frame_width) &&
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight / 2 < sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_TRUE :
+                    EB_FALSE;
 
+                // Temporary if the cropped width is not 4, 8, 16, 32, 64 and 128, the block is not allowed. To be removed after intrinsic functions for NxM spatial_full_distortion_kernel_func_ptr_array are added
+                int32_t cropped_width = MIN(blk_geom->bwidth, sequence_control_set_ptr->seq_header.max_frame_width - (sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x));
+                if (cropped_width != 4 && cropped_width != 8 && cropped_width != 16 && cropped_width != 32 && cropped_width != 64 && cropped_width != 128)
+                    sequence_control_set_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = EB_FALSE;
+
+                if (blk_geom->shape != PART_N)
+                    blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x >= sequence_control_set_ptr->seq_header.max_frame_width) ||
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y >= sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_FALSE :
+                    EB_TRUE;
+            }
+            else {
+                if (blk_geom->shape != PART_N)
+                    blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
+
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->seq_header.max_frame_width) ||
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_FALSE :
+                    EB_TRUE;
+
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->seq_header.max_frame_width) ||
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_FALSE :
+                    EB_TRUE;
+
+            }
+#else
             if (blk_geom->shape != PART_N)
                 blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
 
@@ -569,6 +616,7 @@ EbErrorType sb_geom_init(SequenceControlSet * sequence_control_set_ptr)
                 (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->seq_header.max_frame_height)) ?
                 EB_FALSE :
                 EB_TRUE;
+#endif
         }
     }
 

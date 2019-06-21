@@ -1,6 +1,7 @@
 # Scalable Video Technology for AV1 Encoder (SVT-AV1 Encoder) User Guide
 
 ## Table of Contents
+
 1. [Introduction](#introduction)
 2. [Sample Application Guide](#sample-application-guide)
     - [Input Video Format](#input-video-format)
@@ -20,13 +21,11 @@ This section describes how to run the sample encoder application that uses the S
 
 The SVT-AV1 Encoder supports the following input formats:
 
-![alt](8bit_yuv420p.png)
- 
-_8-bit yuv420p_
+_8-bit yuv420p_\
+![8-bit yuv420p](8bit_yuv420p.png "8-bit yuv420p")
 
-![alt](10bit_yuv420p.png)
-
-_10-bit yuv420p10le_
+_10-bit yuv420p10le_\
+![10-bit yuv420p10le](10bit_yuv420p.png "10-bit yuv420p10le")
 
 ### Compressed 10-bit format
 
@@ -36,33 +35,29 @@ In order to reduce the size of the input original YUV file, the SVT-AV1 Encoder 
 
 This step consists of separating the 10 bit video samples into 8 bit and 2 bit planes so that each 10-bit picture will be represented as two separate pictures as shown in the figure below. As a result of the operation, the 2 least significant bits of the 10 bits will be written into a full byte.
 
- ![alt](10bit_unpacked.png)
-
-_10-bit yuv420p10le unpacked_
+_10-bit yuv420p10le unpacked_\
+![10-bit yuv420p10le unpacked](10bit_unpacked.png "10-bit yuv420p10le unpacked")
 
 #### Compress the 2 bit Plane
 
 The unpacking steps separates the 10bits into a group of 8 bits and a group of 2 bits, where the 2 bits are stored in a byte. In this step, every group of consecutive 4 bytes, each containing 2bits from the unpacking step, are compressed into one byte. As a result, each 10bit picture will be represented as two separate pictures as shown in the figure below.
 
- ![alt](10bit_packed.png)
- 
- _10-bit yuv420p10le compressed_
- 
+_10-bit yuv420p10le compressed_\
+![10-bit yuv420p10le compressed](10bit_packed.png "10-bit yuv420p10le compressed")
+
 #### Unroll the 64x64
 
 Now for a faster read of the samples, every 64x64 block of the 2 bit picture should be written into a one dimensional array. Therefore, the top left 64x64 sample block which is now written into a 16 bytes x 64 bytes after the compression of the 2bit samples, will be written into a 1024 bytes x 1 byte array as shown in the picture below.
 
- ![alt](64x64_after_2bit_compression.png)
- 
-_64x64 block after 2 bit compression_
+_64x64 block after 2 bit compression_\
+![64x64 block after 2 bit compression](64x64_after_2bit_compression.png "64x64 block after 2 bit compression")
 
- ![alt](64x64_after_unrolling.png)
- 
- _64x64 block after unrolling_
+_64x64 block after unrolling_\
+![64x64 block after unrolling](64x64_after_unrolling.png "64x64 block after unrolling")
 
 ### Running the encoder
 
-This section describes how to run the sample encoder application SvtAv1EncApp.exe (on Windows\*) or SvtAv1EncApp (on Linux\*) from the command line, including descriptions of the most commonly used input parameters and outputs.
+This section describes how to run the sample encoder application `SvtAv1EncApp.exe` (on Windows\*) or `SvtAv1EncApp` (on Linux\*) from the command line, including descriptions of the most commonly used input parameters and outputs.
 
 The sample application typically takes the following command line parameters:
 
@@ -72,7 +67,7 @@ A text file that contains encoder parameters such as input file name, quantizati
 
 `-i filename` **[Required]**
 
-A YUV file (e.g. 8 bit 4:2:0 planar) containing the video sequence that will be encoded. The dimensions of each image are specified by –w and –h as indicated below.
+A YUV file (e.g. 8 bit 4:2:0 planar) containing the video sequence that will be encoded. The dimensions of each image are specified by `–w` and `–h` as indicated below.
 
 `-b filename` **[Optional]**
 
@@ -96,7 +91,7 @@ The intra period defines the interval of frames after which you insert an Intra 
 
 `-rc integer` **[Optional]**
 
-This token sets the bitrate control encoding mode [1: Variable Bitrate, 0: Constant QP]. When `-rc` is set to 1, it is best to match the –lad (lookahead distance described in the next section) parameter to the `-intra-period`. When `–rc` is set to 0, a qp value is expected with the use of the `–q` command line option otherwise a default value is assigned (25).
+This token sets the bitrate control encoding mode [1: Variable Bitrate, 0: Constant QP]. When `-rc` is set to 1, it is best to match the `–lad` (lookahead distance described in the next section) parameter to the `-intra-period`. When `–rc` is set to 0, a qp value is expected with the use of the `–q` command line option otherwise a default value is assigned (25).
 
 For example, the following command encodes 100 frames of the YUV video sequence into the bin bit stream file. The picture is 1920 luma pixels wide and 1080 pixels high using the `Sample.cfg` configuration. The QP equals 30 and the md5 checksum is not included in the bit stream.
 
@@ -117,6 +112,8 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **ErrorFile** | -errlog | any string | stderr | error log displaying configuration or encode errors |
 | **UseQpFile** | -use-q-file | [0 - 1] | 0 | When set to 1, overwrite the picture qp assignment using qp values in QpFile |
 | **QpFile** | -qp-file | any string | Null | Path to qp file |
+| **StatReport** | -stat-report | [0 - 1] | 0 | When set to 1, calculate and display PSNR values |
+| **StatFile** | -stat-file | any string | Null | Path to statistics file if specified and StatReport is set to 1, per picture statistics are outputted in the file|
 | **EncoderMode** | -enc-mode | [0 - 8] | 8 | Encoder Preset [0,1,2,3,4,5,6,7,8] 0 = highest quality, 8 = highest speed |
 | **EncoderBitDepth** | -bit-depth | [8 , 10] | 8 | specifies the bit depth of the input video |
 | **CompressedTenBitFormat** | -compressed-ten-bit-format | [0 - 1] | 0 | Offline packing of the 2bits: requires two bits packed input (0: OFF, 1: ON) |
@@ -164,6 +161,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **TileCol** | -tile-columns | [0-6] | 0 | log2 of tile columns |
 
 ## Appendix A Encoder Parameters
+
 ### 1. Thread management parameters
 
 LogicalProcessorNumber (`-lp`) and TargetSocket (`-ss`) parameters are used to management thread affinity on Windows and Ubuntu OS. These are some examples how you use them together.
@@ -186,9 +184,11 @@ If both LogicalProcessorNumber and TargetSocket are set, threads run on 20 logic
 
 ## Legal Disclaimer
 
-Optimization Notice: Intel compilers may or may not optimize to the same degree for non-Intel microprocessors for optimizations that are not unique to Intel microprocessors. These optimizations include SSE2, SSE3, and SSSE3 instruction sets and other optimizations. Intel does not guarantee the availability, functionality, or effectiveness of any optimization on microprocessors not manufactured by Intel. Microprocessor-dependent optimizations in this product are intended for use with Intel microprocessors. Certain optimizations not specific to Intel microarchitecture are reserved for Intel microprocessors. Please refer to the applicable product User and Reference Guides for more information regarding the specific instruction sets covered by this notice.
+### Optimization Notice
 
-Notice Revision #20110804
+Intel compilers may or may not optimize to the same degree for non-Intel microprocessors for optimizations that are not unique to Intel microprocessors. These optimizations include SSE2, SSE3, and SSSE3 instruction sets and other optimizations. Intel does not guarantee the availability, functionality, or effectiveness of any optimization on microprocessors not manufactured by Intel. Microprocessor-dependent optimizations in this product are intended for use with Intel microprocessors. Certain optimizations not specific to Intel microarchitecture are reserved for Intel microprocessors. Please refer to the applicable product User and Reference Guides for more information regarding the specific instruction sets covered by this notice.
+
+### Notice Revision #20110804
 
 Intel technologies features and benefits depend on system configuration and may require enabled hardware, software or service activation. Performance varies depending on system configuration. No computer system can be absolutely secure. Check with your system manufacturer or retailer.
 

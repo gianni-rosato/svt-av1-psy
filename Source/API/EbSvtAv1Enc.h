@@ -113,7 +113,6 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 0. */
     uint32_t                 frame_rate_numerator;
-
     /* Frame rate denominator. When zero, the encoder will use -fps if
      * FrameRateNumerator is also zero, otherwise an error is returned.
      *
@@ -168,6 +167,11 @@ typedef struct EbSvtAv1EncConfiguration
     *
     * Default is 4. */
     uint32_t                 partition_depth;
+
+    /* Instruct the library to calculate the recon to source for PSNR calculation
+    *
+    * Default is 0.*/
+    uint32_t                 stat_report;
 
     // Quantization
     /* Initial quantization parameter for the Intra pictures used under constant
@@ -281,10 +285,17 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 0. */
     uint32_t                 min_qp_allowed;
+
     /* Flag to signal the content being a screen sharing content type
     *
     * Default is 2. */
     uint32_t                 screen_content_mode;
+
+    /* Enable adaptive quantization within a frame using segmentation.
+     *
+     * Default is FALSE. */
+     EbBool                 enable_adaptive_quantization;
+
     // Tresholds
     /* Flag to signal that the input yuv is HDR10 BT2020 using SMPTE ST2048, requires
      *
@@ -373,8 +384,6 @@ typedef struct EbSvtAv1EncConfiguration
 
 /* To be deprecated.
  * Encoder configuration parameters below this line are to be deprecated. */
-
-    uint32_t                 stat_report;
 
     /* Flag to enable Hierarchical Motion Estimation 1/16th of the picture
     *

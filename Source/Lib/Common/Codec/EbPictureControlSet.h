@@ -22,6 +22,7 @@
 #include "EbRateControlTables.h"
 #include "EbRestoration.h"
 #include "noise_model.h"
+#include "EbSegmentationParams.h"
 
 #if CABAC_UP
 #include "EbMdRateEstimation.h"
@@ -13883,6 +13884,10 @@ extern "C" {
         NeighborArrayUnit                  *inter_pred_dir_neighbor_array;
         NeighborArrayUnit                  *ref_frame_type_neighbor_array;
         NeighborArrayUnit32                *interpolation_type_neighbor_array;
+
+        NeighborArrayUnit                  *segmentation_id_pred_array;
+        SegmentationNeighborMap              *segmentation_neighbor_map;
+
         ModeInfo                            **mi_grid_base; //2 SB Rows of mi Data are enough
 
         ModeInfo                             *mip;
@@ -13940,7 +13945,9 @@ extern "C" {
         uint8_t   height;
         uint8_t   is_complete_sb;
         EbBool    raster_scan_cu_validity[CU_MAX_COUNT];
+#if !INCOMPLETE_SB_FIX
         EbBool    block_is_inside_md_scan[BLOCK_MAX_COUNT_SB_128];
+#endif
         uint8_t   potential_logo_sb;
         uint8_t   is_edge_sb;
     } SbParams;
@@ -13955,6 +13962,9 @@ extern "C" {
         uint8_t    height;
         uint8_t    is_complete_sb;
         EbBool     block_is_inside_md_scan[BLOCK_MAX_COUNT_SB_128];
+#if INCOMPLETE_SB_FIX
+        EbBool     block_is_allowed[BLOCK_MAX_COUNT_SB_128];
+#endif
     } SbGeom;
 
     typedef struct CuStat
@@ -14212,7 +14222,10 @@ extern "C" {
         EbBool                                enable_hme_level0_flag;
         EbBool                                enable_hme_level1_flag;
         EbBool                                enable_hme_level2_flag;
-
+#if IMPROVED_SUBPEL_SEARCH
+        EbBool                                half_pel_mode;
+        EbBool                                quarter_pel_mode;
+#endif
         // MD
         EbEncMode                             enc_mode;
         EB_SB_DEPTH_MODE                     *sb_depth_mode_array;
@@ -14311,6 +14324,10 @@ extern "C" {
         int32_t                               cdef_uv_strengths[CDEF_MAX_STRENGTHS];
         int32_t                               cdef_bits;
         int32_t                               delta_q_present_flag;
+
+        // Segmentation related parameters
+        SegmentationParams                    segmentation_params;
+
 #if ADD_DELTA_QP_SUPPORT
         // Resolution of delta quant
         uint8_t                               delta_q_res;
@@ -14332,6 +14349,7 @@ extern "C" {
         // superblock's actual lf and current lf.
         int32_t                               prev_delta_lf_from_base;
         int32_t                               current_delta_lf_from_base;
+
         // For this experiment, we have four frame filter levels for different plane
         // and direction. So, to support the per superblock update, we need to add
         // a few more params as below.
@@ -14345,6 +14363,7 @@ extern "C" {
         // SEG_LVL_ALT_LF_Y_H = 2;
         // SEG_LVL_ALT_LF_U   = 3;
         // SEG_LVL_ALT_LF_V   = 4;
+//
         int32_t                               prev_delta_lf[FRAME_LF_COUNT];
         int32_t                               curr_delta_lf[FRAME_LF_COUNT];
 #endif
@@ -14449,6 +14468,9 @@ extern "C" {
         uint8_t                            mrp_mode;
         uint8_t                            cdf_mode;
         uint8_t                            nsq_present;
+#endif
+#if INCOMPLETE_SB_FIX
+        uint8_t                            over_boundary_block_mode;
 #endif
     } PictureControlSetInitData;
 

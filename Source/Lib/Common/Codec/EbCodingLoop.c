@@ -22,6 +22,7 @@
 #include "EbDeblockingFilter.h"
 #include "EbPictureOperators.h"
 
+#include "EbSegmentation.h"
 #include "EbModeDecisionProcess.h"
 #include "EbEncDecProcess.h"
 #include "EbSvtAv1ErrorCodes.h"
@@ -586,9 +587,13 @@ static void Av1EncodeLoop(
             context_ptr->trans_coeff_shape_luma);
 #endif
 
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
 #if DC_SIGN_CONTEXT_EP
         cu_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
 #else
+
         av1_quantize_inv_quantize(
 #endif
             sb_ptr->picture_control_set_ptr,
@@ -598,11 +603,13 @@ static void Av1EncodeLoop(
             ((int32_t*)coeffSamplesTB->buffer_y) + coeff1dOffset,
             ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
 #else
+            seg_qp,
             context_ptr->blk_geom->tx_width[context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->txb_itr],
             context_ptr->blk_geom->txsize[context_ptr->txb_itr],
@@ -1007,9 +1014,14 @@ static void Av1EncodeLoop(
 #else
             context_ptr->trans_coeff_shape_chroma);
 #endif
+
+        int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                         picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
 #if DC_SIGN_CONTEXT_EP
         cu_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
 #else
+
         av1_quantize_inv_quantize(
 #endif
             sb_ptr->picture_control_set_ptr,
@@ -1019,6 +1031,7 @@ static void Av1EncodeLoop(
             ((int32_t*)coeffSamplesTB->buffer_cb) + context_ptr->coded_area_sb_uv,
             ((int32_t*)inverse_quant_buffer->buffer_cb) + context_ptr->coded_area_sb_uv,
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -1096,6 +1109,7 @@ static void Av1EncodeLoop(
             ((int32_t*)coeffSamplesTB->buffer_cr) + context_ptr->coded_area_sb_uv,
             ((TranLow*)inverse_quant_buffer->buffer_cr) + context_ptr->coded_area_sb_uv,
             qp,
+            seg_qp,
 #if ATB_SUPPORT
             context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -1328,6 +1342,9 @@ static void Av1EncodeLoop16bit(
 #else
                 context_ptr->trans_coeff_shape_luma);
 #endif
+
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 #if DC_SIGN_CONTEXT_EP
             cu_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
 #else
@@ -1340,6 +1357,7 @@ static void Av1EncodeLoop16bit(
                 ((int32_t*)coeffSamplesTB->buffer_y) + coeff1dOffset,
                 ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
                 qp,
+                seg_qp,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -1551,9 +1569,13 @@ static void Av1EncodeLoop16bit(
 #else
                 context_ptr->trans_coeff_shape_chroma);
 #endif
+            int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
+                             picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
+
 #if DC_SIGN_CONTEXT_EP
             cu_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
 #else
+
             av1_quantize_inv_quantize(
 #endif
                 sb_ptr->picture_control_set_ptr,
@@ -1563,6 +1585,7 @@ static void Av1EncodeLoop16bit(
                 ((int32_t*)coeffSamplesTB->buffer_cb) + context_ptr->coded_area_sb_uv,
                 ((int32_t*)inverse_quant_buffer->buffer_cb) + context_ptr->coded_area_sb_uv,
                 qp,
+                seg_qp,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -1641,6 +1664,7 @@ static void Av1EncodeLoop16bit(
                 ((int32_t*)coeffSamplesTB->buffer_cr) + context_ptr->coded_area_sb_uv,
                 ((int32_t*)inverse_quant_buffer->buffer_cr) + context_ptr->coded_area_sb_uv,
                 qp,
+                seg_qp,
 #if ATB_SUPPORT
                 context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -2427,6 +2451,8 @@ void Store16bitInputSrc(
         memcpy(toPtr + rowIt * picture_control_set_ptr->input_frame16bit->stride_cr, fromPtr + rowIt * context_ptr->input_sample16bit_buffer->stride_cr, lcuW * 2);
 }
 
+
+
 void update_av1_mi_map(
     CodingUnit        *cu_ptr,
     uint32_t           cu_origin_x,
@@ -2492,6 +2518,9 @@ void perform_intra_coding_loop(
         context_ptr->md_context->luma_txb_skip_context = 0;
         context_ptr->md_context->luma_dc_sign_context = 0;
         get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+            picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
             COMPONENT_LUMA,
             picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
             txb_origin_x,
@@ -2702,7 +2731,7 @@ void perform_intra_coding_loop(
         context_ptr->coded_area_sb += context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr];
 
 
-#if DC_SIGN_CONTEXT_EP // TBD      
+#if DC_SIGN_CONTEXT_EP // TBD
         // Update the luma Dc Sign Level Coeff Neighbor Array
         {
             uint8_t dcSignLevelCoeff = (uint8_t)cu_ptr->quantized_dc[0][context_ptr->txb_itr];
@@ -2737,6 +2766,9 @@ void perform_intra_coding_loop(
         context_ptr->md_context->cb_txb_skip_context = 0;
         context_ptr->md_context->cb_dc_sign_context = 0;
         get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+            picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
             COMPONENT_CHROMA,
             picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
             cu_originx_uv,
@@ -2749,6 +2781,9 @@ void perform_intra_coding_loop(
         context_ptr->md_context->cr_txb_skip_context = 0;
         context_ptr->md_context->cr_dc_sign_context = 0;
         get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+            picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
             COMPONENT_CHROMA,
             picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
             cu_originx_uv,
@@ -3012,7 +3047,7 @@ void perform_intra_coding_loop(
 
         context_ptr->coded_area_sb_uv += context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr];
 
-#if DC_SIGN_CONTEXT_EP // TBD 
+#if DC_SIGN_CONTEXT_EP // TBD
 
         // Update the cb Dc Sign Level Coeff Neighbor Array
         {
@@ -3399,10 +3434,12 @@ EB_EXTERN void av1_encode_pass(
 
         const BlockGeom * blk_geom = context_ptr->blk_geom = get_blk_geom_mds(blk_it);
         UNUSED(blk_geom);
-
         sb_ptr->cu_partition_array[blk_it] = context_ptr->md_context->md_cu_arr_nsq[blk_it].part;
-
+#if INCOMPLETE_SB_FIX
+        if (part != PARTITION_SPLIT && sequence_control_set_ptr->sb_geom[tbAddr].block_is_allowed[blk_it]) {
+#else
         if (part != PARTITION_SPLIT) {
+#endif
             int32_t offset_d1 = ns_blk_offset[(int32_t)part]; //cu_ptr->best_d1_blk; // TOCKECK
             int32_t num_d1_block = ns_blk_num[(int32_t)part]; // context_ptr->blk_geom->totns; // TOCKECK
 
@@ -3456,12 +3493,23 @@ EB_EXTERN void av1_encode_pass(
                 }
 
 #else
-                cu_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
-                sb_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
-#if !MEMORY_FOOTPRINT_OPT
-                cu_ptr->org_delta_qp = cu_ptr->delta_qp;
+
+                // for now, segmentation independent of sharpness/delta QP.
+                if(picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled){
+                    apply_segmentation_based_quantization(
+                            blk_geom,
+                            picture_control_set_ptr,
+                            sb_ptr,
+                            cu_ptr);
+
+                    sb_ptr->qp = cu_ptr->qp;
+                } else{
+                    cu_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
+                    sb_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
+                }
+
 #endif
-#endif
+
 #if !MEMORY_FOOTPRINT_OPT
 #if !ADD_DELTA_QP_SUPPORT
                 //CHKN remove usage of depth
@@ -3492,7 +3540,7 @@ EB_EXTERN void av1_encode_pass(
                     context_ptr->txb_itr = 0;
 #if ATB_EP
                     // Transform partitioning path (INTRA Luma/Chroma)
-                    if (cu_ptr->av1xd->use_intrabc == 0) {
+                    if (picture_control_set_ptr->parent_pcs_ptr->atb_mode && cu_ptr->av1xd->use_intrabc == 0) {
                         // Set the PU Loop Variables
                         pu_ptr = cu_ptr->prediction_unit_array;
                         // Generate Intra Luma Neighbor Modes
@@ -3556,6 +3604,9 @@ EB_EXTERN void av1_encode_pass(
                            context_ptr->md_context->luma_txb_skip_context = 0;
                            context_ptr->md_context->luma_dc_sign_context = 0;
                            get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                               picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
                                COMPONENT_LUMA,
                                picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
                                context_ptr->cu_origin_x,
@@ -3569,6 +3620,9 @@ EB_EXTERN void av1_encode_pass(
                                context_ptr->md_context->cb_txb_skip_context = 0;
                                context_ptr->md_context->cb_dc_sign_context = 0;
                                get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                                   picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
                                    COMPONENT_CHROMA,
                                    picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
                                    cu_originx_uv,
@@ -3582,6 +3636,9 @@ EB_EXTERN void av1_encode_pass(
                                context_ptr->md_context->cr_txb_skip_context = 0;
                                context_ptr->md_context->cr_dc_sign_context = 0;
                                get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                                   picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
                                    COMPONENT_CHROMA,
                                    picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
                                    cu_originx_uv,
@@ -3999,7 +4056,7 @@ EB_EXTERN void av1_encode_pass(
                                 is16bit);
 
 
-#if DC_SIGN_CONTEXT_EP // TBD 
+#if DC_SIGN_CONTEXT_EP // TBD
                             // Update the luma Dc Sign Level Coeff Neighbor Array
                             {
                                 uint8_t dcSignLevelCoeff = (uint8_t)cu_ptr->quantized_dc[0][context_ptr->txb_itr];
@@ -4301,6 +4358,9 @@ EB_EXTERN void av1_encode_pass(
                             context_ptr->md_context->luma_txb_skip_context = 0;
                             context_ptr->md_context->luma_dc_sign_context = 0;
                             get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                                picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
                                 COMPONENT_LUMA,
                                 picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
                                 txb_origin_x,
@@ -4314,6 +4374,9 @@ EB_EXTERN void av1_encode_pass(
                                 context_ptr->md_context->cb_txb_skip_context = 0;
                                 context_ptr->md_context->cb_dc_sign_context = 0;
                                 get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                                    picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
                                     COMPONENT_CHROMA,
                                     picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
                                     ROUND_UV(txb_origin_x) >> 1,
@@ -4326,6 +4389,9 @@ EB_EXTERN void av1_encode_pass(
                                 context_ptr->md_context->cr_txb_skip_context = 0;
                                 context_ptr->md_context->cr_dc_sign_context = 0;
                                 get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                                    picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
                                     COMPONENT_CHROMA,
                                     picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
                                     ROUND_UV(txb_origin_x) >> 1,
@@ -4642,7 +4708,7 @@ EB_EXTERN void av1_encode_pass(
 #endif
 
 
-#if DC_SIGN_CONTEXT_EP // TBD 
+#if DC_SIGN_CONTEXT_EP // TBD
 
                             // Update the luma Dc Sign Level Coeff Neighbor Array
                             {
@@ -4735,6 +4801,9 @@ EB_EXTERN void av1_encode_pass(
                             context_ptr->md_context->luma_txb_skip_context = 0;
                             context_ptr->md_context->luma_dc_sign_context = 0;
                             get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                                picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
                                 COMPONENT_LUMA,
                                 picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
                                 txb_origin_x,
@@ -4749,6 +4818,9 @@ EB_EXTERN void av1_encode_pass(
                                 context_ptr->md_context->cb_txb_skip_context = 0;
                                 context_ptr->md_context->cb_dc_sign_context = 0;
                                 get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                                    picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
                                     COMPONENT_CHROMA,
                                     picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
                                     ROUND_UV(txb_origin_x) >> 1,
@@ -4762,6 +4834,9 @@ EB_EXTERN void av1_encode_pass(
                                 context_ptr->md_context->cr_txb_skip_context = 0;
                                 context_ptr->md_context->cr_dc_sign_context = 0;
                                 get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                                    picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr,
+#endif
                                     COMPONENT_CHROMA,
                                     picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
                                     ROUND_UV(txb_origin_x) >> 1,
@@ -4778,7 +4853,7 @@ EB_EXTERN void av1_encode_pass(
                             cu_ptr->transform_unit_array[context_ptr->txb_itr].v_has_coeff = EB_FALSE;
 
 
-#if DC_SIGN_CONTEXT_EP         
+#if DC_SIGN_CONTEXT_EP
                             context_ptr->cu_ptr->quantized_dc[0][context_ptr->txb_itr] = 0;
                             context_ptr->cu_ptr->quantized_dc[1][context_ptr->txb_itr] = 0;
                             context_ptr->cu_ptr->quantized_dc[2][context_ptr->txb_itr] = 0;
@@ -4927,7 +5002,7 @@ EB_EXTERN void av1_encode_pass(
                             context_ptr->coded_area_sb_uv += blk_geom->tx_width_uv[tuIt] * blk_geom->tx_height_uv[tuIt];
 #endif
 
-#if DC_SIGN_CONTEXT_EP // TBD 
+#if DC_SIGN_CONTEXT_EP // TBD
 
                         // Update the luma Dc Sign Level Coeff Neighbor Array
                         {

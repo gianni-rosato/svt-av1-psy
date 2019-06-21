@@ -181,7 +181,7 @@ TEST(EncApiTest, DISABLED_repeat_normal_setup) {
         // TODO:if not calls eb_deinit_encoder, there is huge memory leak, fix
         // me
         // ASSERT_EQ(EB_ErrorNone, eb_deinit_encoder(context.enc_handle))
-        //	<< "eb_deinit_encoder failed";
+        //    << "eb_deinit_encoder failed";
         // destory encoder
         ASSERT_EQ(EB_ErrorNone, eb_deinit_handle(context.enc_handle))
             << "eb_deinit_handle failed at " << i << " times";

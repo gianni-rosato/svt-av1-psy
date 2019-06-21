@@ -15,6 +15,7 @@
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
+#include "EbPictureAnalysisProcess.h"
 #include "EbPictureAnalysisResults.h"
 #include "EbPictureDecisionProcess.h"
 #include "EbPictureDecisionResults.h"
@@ -1447,7 +1448,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
     if (sc_content_detected)
-        if (picture_control_set_ptr->enc_mode == ENC_M0) 
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
             picture_control_set_ptr->intra_pred_mode = 0;
         else if (picture_control_set_ptr->enc_mode <= ENC_M2)
             if (picture_control_set_ptr->temporal_layer_index == 0)
@@ -3075,8 +3076,10 @@ void  Av1GenerateRpsInfo(
 ***************************************************************************************************/
 void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *picture_control_set_ptr) {
     EbPictureBufferDesc           *input_padded_picture_ptr;
+#if !DOWN_SAMPLING_FILTERING
     EbPictureBufferDesc           *quarter_decimated_picture_ptr;
     EbPictureBufferDesc           *sixteenth_decimated_picture_ptr;
+#endif
     EbPictureBufferDesc           *input_picture_ptr;
     EbPaReferenceObject           *paReferenceObject;
     uint32_t                        picture_width_in_sb;
@@ -3087,9 +3090,10 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
     input_picture_ptr               = picture_control_set_ptr->enhanced_picture_ptr;
     paReferenceObject               = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
     input_padded_picture_ptr        = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
+#if !DOWN_SAMPLING_FILTERING
     quarter_decimated_picture_ptr   = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
     sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
-
+#endif
     picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
     pictureHeighInLcu   = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
     sb_total_count      = picture_width_in_sb * pictureHeighInLcu;
@@ -3100,6 +3104,13 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         input_picture_ptr);
 
     // Pre processing operations performed on the input picture
+#if DOWN_SAMPLING_FILTERING
+    PicturePreProcessingOperations(
+        picture_control_set_ptr,
+        sequence_control_set_ptr,
+        sb_total_count,
+        sequence_control_set_ptr->encode_context_ptr->asm_type);
+#else
     PicturePreProcessingOperations(
         picture_control_set_ptr,
         input_picture_ptr,
@@ -3108,7 +3119,7 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         sixteenth_decimated_picture_ptr,
         sb_total_count,
         sequence_control_set_ptr->encode_context_ptr->asm_type);
-
+#endif
     if (input_picture_ptr->color_format >= EB_YUV422) {
         // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
         //       Reuse the Y, only add cb/cr in the newly created buffer desc
@@ -3121,21 +3132,41 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
     // Pad input picture to complete border LCUs
     PadPictureToMultipleOfLcuDimensions(
         input_padded_picture_ptr);
+#if DOWN_SAMPLING_FILTERING
+    // 1/4 & 1/16 input picture decimation
+    DownsampleDecimationInputPicture(
+        picture_control_set_ptr,
+        input_padded_picture_ptr,
+        (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr,
+        (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr);
 
+    // 1/4 & 1/16 input picture downsampling through filtering
+    if (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+        DownsampleFilteringInputPicture(
+            picture_control_set_ptr,
+            input_padded_picture_ptr,
+            (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr,
+            (EbPictureBufferDesc*)paReferenceObject->sixteenth_filtered_picture_ptr);
+    }
+#else
     // 1/4 & 1/16 input picture decimation
     DecimateInputPicture(
         picture_control_set_ptr,
         input_padded_picture_ptr,
         quarter_decimated_picture_ptr,
         sixteenth_decimated_picture_ptr);
-
+#endif
     // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
     GatheringPictureStatistics(
         sequence_control_set_ptr,
         picture_control_set_ptr,
         picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
         input_padded_picture_ptr,
+#if DOWN_SAMPLING_FILTERING
+        paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
+#else
         sixteenth_decimated_picture_ptr,
+#endif
         sb_total_count,
         sequence_control_set_ptr->encode_context_ptr->asm_type);
 
@@ -3893,7 +3924,25 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
                                     picture_control_set_ptr->use_subpel_flag = 1;
 #endif
-
+#if IMPROVED_SUBPEL_SEARCH
+                                if (MR_MODE) {
+                                    picture_control_set_ptr->half_pel_mode =
+                                        EX_HP_MODE;
+                                    picture_control_set_ptr->quarter_pel_mode =
+                                        EX_QP_MODE;
+                                } else if (picture_control_set_ptr->enc_mode ==
+                                           ENC_M0) {
+                                    picture_control_set_ptr->half_pel_mode =
+                                        EX_HP_MODE;
+                                    picture_control_set_ptr->quarter_pel_mode =
+                                        REFINMENT_QP_MODE;
+                                } else {
+                                    picture_control_set_ptr->half_pel_mode =
+                                        REFINMENT_HP_MODE;
+                                    picture_control_set_ptr->quarter_pel_mode =
+                                        REFINMENT_QP_MODE;
+                                }
+#endif
                                 picture_control_set_ptr->use_src_ref = EB_FALSE;
                                 picture_control_set_ptr->enable_in_loop_motion_estimation_flag = EB_FALSE;
                                 picture_control_set_ptr->limit_ois_to_dc_mode_flag = EB_FALSE;
@@ -4119,7 +4168,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 int num_past_pics = altref_nframes / 2;
                                 int num_future_pics = altref_nframes - num_past_pics - 1;
                                 ASSERT(num_future_pics >= 0);
-                                //printf("TF-POC %i   ", picture_control_set_ptr->picture_number);
 
                                 //initilize list
                                 for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
@@ -4129,12 +4177,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
                                     PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex - num_past_pics + pic_itr]->object_ptr;
                                     picture_control_set_ptr->temp_filt_pcs_list[pic_itr] = pcs_itr;
-
-                                    // Set the default subpel settings
-                                    //list_picture_control_set_ptr[pic_itr]->use_subpel_flag = 1;
                                 }
 
-                                uint32_t actual_future_pics = 0;
+                                int actual_future_pics = 0;
+                                int actual_past_pics = 0;
+
                                 int pic_i;
                                 //search reord-queue to get the future pictures
                                 for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
@@ -4142,7 +4189,6 @@ void* picture_decision_kernel(void *input_ptr)
                                     if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL) {
                                         PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
                                         picture_control_set_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
-                                        actual_future_pics++;
                                     }
                                     else
                                         break;
@@ -4150,32 +4196,43 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 //search in pre-ass if still short
                                 if (pic_i < num_future_pics) {
-                                    actual_future_pics = 0;
                                     for (int pic_i_future = 0; pic_i_future < num_future_pics; pic_i_future++) {
                                         for (uint32_t pic_i_pa = 0; pic_i_pa < encode_context_ptr->pre_assignment_buffer_count; pic_i_pa++) {
                                             PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_i_pa]->object_ptr;
                                             if (pcs_itr->picture_number == picture_control_set_ptr->picture_number + pic_i_future + 1) {
                                                 picture_control_set_ptr->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
-                                                actual_future_pics++;
                                                 break; //exist the pre-ass loop, go search the next
                                             }
                                         }
                                     }
                                 }
 
-                                //set the actual_number of final pics
-                                altref_nframes = (uint8_t)(num_past_pics + 1 + actual_future_pics);
+                                //get actual number of future pictures stored
+                                for(pic_i=0; pic_i<num_future_pics; pic_i++){
 
-                                /*if(altref_nframes< picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes)
-                                    printf("TF %i  using only % frames/%i   \n", picture_control_set_ptr->picture_number, altref_nframes, picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes);
-                                for (int tt = 0; tt < altref_nframes; tt++)
-                                {
-                                    printf("%i   ", picture_control_set_ptr->temp_filt_pcs_list[tt]->picture_number);
-                                }*/
-                                picture_control_set_ptr->altref_nframes = altref_nframes;
+                                    if(picture_control_set_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] != NULL)
+                                        actual_future_pics++;
 
-                                //clock_t start_time;
-                                //start_time = clock();
+                                }
+
+                                actual_past_pics = actual_future_pics;
+                                actual_past_pics += (altref_nframes + 1) & 0x1;
+
+                                //get the final number of pictures to use for the temporal filtering
+                                altref_nframes = (uint8_t)(actual_past_pics + 1 + actual_future_pics);
+
+                                picture_control_set_ptr->altref_nframes = (uint8_t)altref_nframes;
+
+                                // adjust the temporal filtering pcs buffer to remove unused past pictures
+                                if(actual_past_pics != num_past_pics) {
+
+                                    pic_i = 0;
+                                    while (picture_control_set_ptr->temp_filt_pcs_list[pic_i] != NULL){
+                                        picture_control_set_ptr->temp_filt_pcs_list[pic_i] = picture_control_set_ptr->temp_filt_pcs_list[pic_i + num_past_pics - actual_past_pics];
+                                        pic_i++;
+                                    }
+
+                                }
 
                                 picture_control_set_ptr->temp_filt_prep_done = 0;
 
@@ -4205,9 +4262,6 @@ void* picture_decision_kernel(void *input_ptr)
                                     eb_block_on_semaphore(picture_control_set_ptr->temp_filt_done_semaphore);
                                 }
 
-                                //clock_t elapsed_time = clock() - start_time;
-                                //double time_taken = ((double)elapsed_time) / CLOCKS_PER_SEC; // in seconds
-                                //printf("Producing the alt-ref frame at POC %d took %f seconds.\n", picture_control_set_ptr->picture_number, time_taken);
                             }
 #endif
                         }

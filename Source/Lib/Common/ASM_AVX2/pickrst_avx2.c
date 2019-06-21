@@ -47,7 +47,7 @@ static INLINE uint8_t find_average_avx2(const uint8_t *src, int32_t h_start,
         __m128i maskL, maskH;
 
         if (leftover >= 16) {
-            maskL = _mm_set1_epi8(255);
+            maskL = _mm_set1_epi8(-1);
             maskH = _mm_load_si128((__m128i *)(mask_8bit[leftover - 16]));
         } else {
             maskL = _mm_load_si128((__m128i *)(mask_8bit[leftover]));
@@ -1149,7 +1149,7 @@ static INLINE void compute_stats_win3_avx2(
     {
         const int16_t *dT = d;
         __m256i dd = _mm256_setzero_si256();  // Initialize to avoid warning.
-        __m256i deltas[WIENER_WIN_3TAP] = {0};
+        __m256i deltas[4] = {0};
         __m256i delta;
 
         dd = _mm256_insert_epi32(dd, *(int32_t *)(dT + 0 * d_stride), 0);
@@ -2772,7 +2772,7 @@ static INLINE void compute_stats_win7_avx2(
             const __m128i d0 = _mm_unpacklo_epi64(deltas128[0], deltas128[1]);
             const __m128i d1 = _mm_unpacklo_epi64(deltas128[2], deltas128[3]);
             const __m128i d2 = _mm_unpacklo_epi64(deltas128[4], deltas128[5]);
-            const __m128i d3 = _mm_unpacklo_epi64(deltas128[6], deltas128[7]);
+            const __m128i d3 = _mm_unpacklo_epi64(deltas128[6], deltas128[6]);
             const __m128i d4 = _mm_unpackhi_epi64(deltas128[0], deltas128[1]);
             const __m128i d5 = _mm_unpackhi_epi64(deltas128[2], deltas128[3]);
             const __m128i d6 = _mm_unpackhi_epi64(deltas128[4], deltas128[5]);
@@ -3341,6 +3341,9 @@ static INLINE void compute_stats_win7_avx2(
     } while (++i < wiener_win);
 }
 
+void *aom_memalign(size_t align, size_t size);
+void aom_free(void *memblk);
+
 void av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd,
                             const uint8_t *src, int32_t h_start, int32_t h_end,
                             int32_t v_start, int32_t v_end, int32_t dgd_stride,
@@ -3353,14 +3356,15 @@ void av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd,
     const int32_t height = v_end - v_start;
     const int32_t d_stride = (width + 2 * wiener_halfwin + 15) & ~15;
     const int32_t s_stride = (width + 15) & ~15;
+    int16_t *d, *s;
+
     // The maximum input size is width * height, which is
     // (9 / 4) * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX. Enlarge to
     // 3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX considering
     // paddings.
-    EB_ALIGN(32)
-    int16_t d[3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX];
-    EB_ALIGN(32)
-    int16_t s[3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX];
+    d = aom_memalign(32,
+            sizeof(*d) * 6 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX);
+    s = d + 3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX;
 
     assert(!(height % 2));
 
@@ -3395,6 +3399,8 @@ void av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd,
     // H is a symmetric matrix, so we only need to fill out the upper triangle.
     // We can copy it down to the lower triangle outside the (i, j) loops.
     diagonal_copy_stats_avx2(wiener_win2, H);
+
+    aom_free(d);
 }
 
 void av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8,
@@ -3413,15 +3419,8 @@ void av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8,
     const int32_t height = v_end - v_start;
     const int32_t d_stride = (width + 2 * wiener_halfwin + 15) & ~15;
     const int32_t s_stride = (width + 15) & ~15;
-    // The maximum input size is width * height, which is
-    // (9 / 4) * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX. Enlarge to
-    // 3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX considering
-    // paddings.
-    EB_ALIGN(32)
-    int16_t d[3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX];
-    EB_ALIGN(32)
-    int16_t s[3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX];
     int32_t k;
+    int16_t *d, *s;
 
     uint8_t bit_depth_divider = 1;
     if (bit_depth == AOM_BITS_12)
@@ -3430,6 +3429,14 @@ void av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8,
         bit_depth_divider = 4;
 
     assert(!(height % 2));
+
+    // The maximum input size is width * height, which is
+    // (9 / 4) * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX. Enlarge to
+    // 3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX considering
+    // paddings.
+    d = aom_memalign(32,
+            sizeof(*d) * 6 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX);
+    s = d + 3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX;
 
     sub_avg_block_highbd_avx2(src + v_start * src_stride + h_start,
                               src_stride,
@@ -3502,6 +3509,8 @@ void av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8,
 
         div16_diagonal_copy_stats_avx2(wiener_win2, H);
     }
+
+    aom_free(d);
 }
 
 static INLINE __m256i pair_set_epi16(uint16_t a, uint16_t b) {

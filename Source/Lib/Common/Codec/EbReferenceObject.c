@@ -244,5 +244,26 @@ EbErrorType eb_pa_reference_object_ctor(
         (EbPtr)(pictureBufferDescInitDataPtr + 2));
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
+#if DOWN_SAMPLING_FILTERING
+    // Quarter Filtered reference picture constructor
+    paReferenceObject->quarter_filtered_picture_ptr = (EbPictureBufferDesc*)EB_NULL;
+    if ((pictureBufferDescInitDataPtr + 1)->down_sampled_filtered) {
+        return_error = eb_picture_buffer_desc_ctor(
+            (EbPtr*) &(paReferenceObject->quarter_filtered_picture_ptr),
+            (EbPtr)(pictureBufferDescInitDataPtr + 1));
+        if (return_error == EB_ErrorInsufficientResources)
+            return EB_ErrorInsufficientResources;
+    }
+    // Sixteenth Filtered reference picture constructor
+    paReferenceObject->sixteenth_filtered_picture_ptr = (EbPictureBufferDesc*)EB_NULL;
+    if ((pictureBufferDescInitDataPtr + 2)->down_sampled_filtered) {
+        return_error = eb_picture_buffer_desc_ctor(
+            (EbPtr*) &(paReferenceObject->sixteenth_filtered_picture_ptr),
+            (EbPtr)(pictureBufferDescInitDataPtr + 2));
+        if (return_error == EB_ErrorInsufficientResources)
+            return EB_ErrorInsufficientResources;
+    }
+#endif
+
     return EB_ErrorNone;
 }

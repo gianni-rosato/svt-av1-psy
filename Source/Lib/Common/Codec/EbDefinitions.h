@@ -25,8 +25,12 @@
 #define inline __inline
 #elif __GNUC__
 #define inline __inline__
+#ifndef fseeko64
 #define fseeko64 fseek
+#endif
+#ifndef ftello64
 #define ftello64 ftell
+#endif
 #else
 #error OS not supported
 #endif
@@ -46,16 +50,18 @@ extern "C" {
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
+#define DOWN_SAMPLING_FILTERING           1 // Use down-sampling filtering (instead of down-sampling decimation) for 1/16th and 1/4th reference frame(s) generation @ ME and temporal filtering search, added the multi-mode signal down_sampling_method_me_search; filtering if M0, and decimation for M1 & higher
+#define DECIMATION_BUG_FIX                1 // Removed HME Level0 check @ 1/16th decimation to guarantee valid ZZ SAD and SCD data when HME Level0 is OFF
 
-#define RDOQ_INTRA                        1 // Enable RDOQ INTRA (RDOQ INTER already active) 
+#define RDOQ_INTRA                        1 // Enable RDOQ INTRA (RDOQ INTER already active)
 #define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass
 #define SPATIAL_SSE_TX_SEARCH             1 // Spatial SSE @ the full loop Tx search
 #define ENHANCED_Nx4_4xN_NEW_MV           1 // Nx4 and 4xN MVs to be inherited from the parent block rather than from the 64x64
 #define NEW_NEAREST_NEW_INJECTION         1 // Missing inter candidates NEARETSEST/NEW, NEW/NEARETSEST, NEAR/NEW, NEW/NEAR.
 
 #define RDOQ_FP_QUANTIZATION              1 // Use FP quantization method if RDOQ ON and INTRA block and 8BIT (x86 WIP)
-#define FIXED_128x128_CONTEXT_UPDATE      1 // Fix txb_skip_context and dc_sign_context update for 128x128, and move txb_skip_context and dc_sign_context from CU to MD context 
-#define LOOP_FILTER_FIX                   1 // Use the existing loop filter multi-mode signal to control loop filter and removed the NRF checks @ Encode Pass and Loop Filter Processes 
+#define FIXED_128x128_CONTEXT_UPDATE      1 // Fix txb_skip_context and dc_sign_context update for 128x128, and move txb_skip_context and dc_sign_context from CU to MD context
+#define LOOP_FILTER_FIX                   1 // Use the existing loop filter multi-mode signal to control loop filter and removed the NRF checks @ Encode Pass and Loop Filter Processes
 
 #define ATB                               1 // ATB Main Flag
 #if ATB
@@ -77,6 +83,7 @@ extern "C" {
 #define CHROMA_SEARCH_FIX                 1 // Fix a few bugs related to Chroma search
 #define INTRA64_FIX                       1 // Fix a bug where 64x64 are disabled for sub 720P
 #define CHROMA_SEARCH_MR                  1 // Enable chroma search for all layers in MR mode
+#define INCOMPLETE_SB_FIX                 1 // Handle the incomplete SBs properly based on the standard and consider all allowed blocks
 /**********************************************************************************/
 
 // New  presets
@@ -147,7 +154,7 @@ extern "C" {
 #define RC_FEEDBACK                       1 // Feedback from previous base layer is received before starting the next base layer frame
 #endif
 #define RED_CU                            1 // Bypass redundant CU
-#define NSQ_ME_OPT                        0 // NSQ ME Restructuring
+#define NSQ_ME_OPT                        1 // NSQ ME Restructuring
 #define BYPASS_USELESS_TX_SEARCH          0
 // Testing MACROS
 #define M9_NEAR_INJECTION                 0
@@ -290,7 +297,21 @@ extern "C" {
 
 #define EIGTH_PEL_MV                                    0
 #define DISABLE_NSQ_TABLE_FOR_M0                        1 // On wil disable the nsq_table ordering algrithm. This is a temporarily adoption that will be disable once we comeup with a better ordreing mecanisme when MRP i ON.
+#define IMPROVED_SUBPEL_SEARCH                          1
 
+#if IMPROVED_SUBPEL_SEARCH
+#define H_PEL_SEARCH_WIND 4  // 1/2-pel serach window
+#define Q_PEL_SEARCH_WIND 2  // 1/4-pel serach window
+#define HP_REF_OPT        1  // Remove redundant positions.
+typedef enum ME_HP_MODE {
+    EX_HP_MODE = 0,       // Exhaustive  1/2-pel serach mode.
+    REFINMENT_HP_MODE = 1 // Refinement 1/2-pel serach mode.
+} ME_HP_MODE;
+typedef enum ME_QP_MODE {
+    EX_QP_MODE = 0,       // Exhaustive  1/4-pel serach mode.
+    REFINMENT_QP_MODE = 1 // Refinement 1/4-pel serach mode.
+} ME_QP_MODE;
+#endif
 struct Buf2D
 {
     uint8_t *buf;
@@ -330,6 +351,12 @@ enum {
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/
+
+#define ALTREF_MAX_NFRAMES 10 // maximum number of frames allowed for the Alt-ref picture computation
+                              // this number can be increased by increasing the constant
+                              // FUTURE_WINDOW_WIDTH defined in EbPictureDecisionProcess.c
+#define ALTREF_MAX_STRENGTH 6
+
 #define PAD_VALUE                                (128+32)
 
 //  Delta QP support
@@ -2445,290 +2472,92 @@ extern    uint32_t                   lib_mutex_count;
 extern    uint32_t                   app_malloc_count;
 
 #define ALVALUE 32
-#define EB_APP_MALLOC(type, pointer, n_elements, pointer_class, return_type) \
-pointer = (type)malloc(n_elements); \
-if (pointer == (type)EB_NULL){ \
-    return return_type; \
-    } \
-    else { \
-    app_memory_map[*(app_memory_map_index)].ptr_type = pointer_class; \
-    app_memory_map[(*(app_memory_map_index))++].ptr = pointer; \
-    if (n_elements % 8 == 0) { \
-        *total_app_memory += (n_elements); \
-            } \
-            else { \
-        *total_app_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
-    } \
-} \
-if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
-    return return_type; \
+
+#define EB_ADD_APP_MEM(pointer, size, pointer_class, count, release, return_type) \
+    do { \
+        if (!pointer) return return_type; \
+        if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
+            printf("Malloc has failed due to insuffucient resources"); \
+            release(pointer); \
+            return return_type; \
         } \
-app_malloc_count++;
+        app_memory_map[*(app_memory_map_index)].ptr_type = pointer_class; \
+        app_memory_map[(*(app_memory_map_index))++].ptr = pointer; \
+        *total_app_memory += (size + 7) / 8; \
+        count++; \
+    } while (0)
+
+#define EB_APP_MALLOC(type, pointer, n_elements, pointer_class, return_type) \
+    pointer = (type)malloc(n_elements); \
+    EB_ADD_APP_MEM(pointer, n_elements, pointer_class, app_malloc_count, return_type);
+
 
 #define EB_APP_MALLOC_NR(type, pointer, n_elements, pointer_class,return_type) \
-(void)return_type; \
-pointer = (type)malloc(n_elements); \
-if (pointer == (type)EB_NULL){ \
-    return_type = EB_ErrorInsufficientResources; \
-    printf("Malloc has failed due to insuffucient resources"); \
-    return; \
-    } \
-else { \
-    app_memory_map[*(app_memory_map_index)].ptr_type = pointer_class; \
-    app_memory_map[(*(app_memory_map_index))++].ptr = pointer; \
-    if (n_elements % 8 == 0) { \
-        *total_app_memory += (n_elements); \
-            } \
-            else { \
-        *total_app_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
-    } \
-} \
-if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
-    return_type = EB_ErrorInsufficientResources; \
-    printf("Malloc has failed due to insuffucient resources"); \
-    return; \
-        } \
-app_malloc_count++;
+    pointer = (type)malloc(n_elements); \
+    EB_ADD_APP_MEM(pointer, n_elements, pointer_class, app_malloc_count, return_type);
 
 #define ALVALUE 32
 #if MEM_MAP_OPT
-#ifdef _MSC_VER
-#define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \
-    pointer = (type) _aligned_malloc(n_elements,ALVALUE); \
-    if (pointer == (type)EB_NULL) \
-        return EB_ErrorInsufficientResources; \
-    else { \
-        EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry)); \
-        if (node == (EbMemoryMapEntry*)EB_NULL) return EB_ErrorInsufficientResources; \
+#define EB_ADD_MEM(pointer, size, pointer_class, count, release) \
+    do { \
+        EbMemoryMapEntry *node; \
+        if (!pointer) return EB_ErrorInsufficientResources; \
+        node = malloc(sizeof(EbMemoryMapEntry)); \
+        if (!node) { \
+            release(pointer); \
+            return EB_ErrorInsufficientResources; \
+        } \
         node->ptr_type         = pointer_class; \
         node->ptr              = (EbPtr)pointer;\
         node->prev_entry       = (EbPtr)memory_map;   \
         memory_map             = node;          \
         (*memory_map_index)++; \
-        if (n_elements % 8 == 0) \
-            *total_lib_memory += ((n_elements) + sizeof(EbMemoryMapEntry)); \
-        else \
-            *total_lib_memory += (((n_elements)+(8 - ((n_elements) % 8))) + sizeof(EbMemoryMapEntry)); \
-        lib_malloc_count++; \
-    }
+        *total_lib_memory += (size + 7) / 8 + sizeof(EbMemoryMapEntry); \
+        count++; \
+    } while (0)
 #else
-#define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \
-    if (posix_memalign((void**)(&(pointer)), ALVALUE, n_elements) != 0) \
-        return EB_ErrorInsufficientResources; \
-    else { \
-        pointer = (type) pointer;  \
-        EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry)); \
-        if (node == (EbMemoryMapEntry*)EB_NULL) return EB_ErrorInsufficientResources; \
-        node->ptr_type         = pointer_class; \
-        node->ptr              = (EbPtr)pointer;\
-        node->prev_entry       = (EbPtr)memory_map;   \
-        memory_map             = node;          \
-        (*memory_map_index)++; \
-        if (n_elements % 8 == 0) \
-            *total_lib_memory += ((n_elements) + sizeof(EbMemoryMapEntry)); \
-        else \
-            *total_lib_memory += (((n_elements)+(8 - ((n_elements) % 8))) + sizeof(EbMemoryMapEntry)); \
-        lib_malloc_count++; \
-    }
+#define EB_ADD_MEM(pointer, size, pointer_class, count, release) \
+    do { \
+        if (!pointer) return EB_ErrorInsufficientResources; \
+        if (*(memory_map_index) >= MAX_NUM_PTR) { \
+            release(pointer); \
+            return EB_ErrorInsufficientResources; \
+        } \
+        memory_map[*(memory_map_index)].ptr_type = pointer_class; \
+        memory_map[(*(memory_map_index))++].ptr = pointer; \
+        *total_lib_memory += (size + 7) / 8; \
+        count++; \
+    } while (0)
 #endif
-#define EB_MALLOC(type, pointer, n_elements, pointer_class) \
-    pointer = (type) malloc(n_elements); \
-    if (pointer == (type)EB_NULL) \
-        return EB_ErrorInsufficientResources; \
-    else { \
-        EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry)); \
-        if (node == (EbMemoryMapEntry*)EB_NULL) return EB_ErrorInsufficientResources; \
-        node->ptr_type         = pointer_class; \
-        node->ptr              = (EbPtr)pointer;\
-        node->prev_entry       = (EbPtr)memory_map;   \
-        memory_map             = node;          \
-        (*memory_map_index)++; \
-        if (n_elements % 8 == 0) \
-            *total_lib_memory += ((n_elements) + sizeof(EbMemoryMapEntry)); \
-        else \
-            *total_lib_memory += (((n_elements)+(8 - ((n_elements) % 8))) + sizeof(EbMemoryMapEntry)); \
-        lib_malloc_count++; \
-    }
 
-#define EB_CALLOC(type, pointer, n_elements, size, pointer_class) \
-    pointer = (type) calloc(n_elements, size); \
-    if (pointer == (type)EB_NULL) \
-        return EB_ErrorInsufficientResources; \
-    else { \
-        EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry)); \
-        if (node == (EbMemoryMapEntry*)EB_NULL) return EB_ErrorInsufficientResources; \
-        node->ptr_type         = pointer_class; \
-        node->ptr              = (EbPtr)pointer;\
-        node->prev_entry       = (EbPtr)memory_map;   \
-        memory_map             = node;          \
-        (*memory_map_index)++; \
-        if (n_elements % 8 == 0) \
-            *total_lib_memory += ((n_elements) + sizeof(EbMemoryMapEntry)); \
-        else \
-            *total_lib_memory += (((n_elements)+(8 - ((n_elements) % 8))) + sizeof(EbMemoryMapEntry)); \
-        lib_malloc_count++; \
-    }
-
-#define EB_CREATESEMAPHORE(type, pointer, n_elements, pointer_class, initial_count, max_count) \
-    pointer = (type)eb_create_semaphore(initial_count, max_count); \
-    if (pointer == (type)EB_NULL) \
-        return EB_ErrorInsufficientResources; \
-    else { \
-        EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry)); \
-        if (node == (EbMemoryMapEntry*)EB_NULL) return EB_ErrorInsufficientResources; \
-        node->ptr_type         = pointer_class; \
-        node->ptr              = (EbPtr)pointer;\
-        node->prev_entry       = (EbPtr)memory_map;   \
-        memory_map             = node;          \
-        (*memory_map_index)++;                  \
-        if (n_elements % 8 == 0)                \
-            *total_lib_memory += ((n_elements) + sizeof(EbMemoryMapEntry)); \
-        else \
-            *total_lib_memory += (((n_elements)+(8 - ((n_elements) % 8))) + sizeof(EbMemoryMapEntry)); \
-        lib_semaphore_count++; \
-    }
-#define EB_CREATEMUTEX(type, pointer, n_elements, pointer_class) \
-    pointer = eb_create_mutex(); \
-    if (pointer == (type)EB_NULL) \
-        return EB_ErrorInsufficientResources; \
-    else { \
-            EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry)); \
-            if (node == (EbMemoryMapEntry*)EB_NULL) return EB_ErrorInsufficientResources; \
-            node->ptr_type         = pointer_class; \
-            node->ptr              = (EbPtr)pointer;\
-            node->prev_entry       = (EbPtr)memory_map;   \
-            memory_map             = node;          \
-            (*memory_map_index)++; \
-        if (n_elements % 8 == 0) \
-            *total_lib_memory += ((n_elements) + sizeof(EbMemoryMapEntry)); \
-        else \
-            *total_lib_memory += (((n_elements)+(8 - ((n_elements) % 8))) + sizeof(EbMemoryMapEntry)); \
-        lib_mutex_count++;\
-    }
-#else
 #ifdef _MSC_VER
 #define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \
 pointer = (type) _aligned_malloc(n_elements,ALVALUE); \
-if (pointer == (type)EB_NULL) { \
-    return EB_ErrorInsufficientResources; \
-    } \
-    else { \
-    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
-    memory_map[(*(memory_map_index))++].ptr = pointer; \
-    if (n_elements % 8 == 0) { \
-        *total_lib_memory += (n_elements); \
-    } \
-    else { \
-        *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
-    } \
-} \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
-} \
-lib_malloc_count++;
+EB_ADD_MEM(pointer, n_elements, pointer_class, lib_malloc_count, _aligned_free);
 
 #else
 #define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \
 if (posix_memalign((void**)(&(pointer)), ALVALUE, n_elements) != 0) { \
     return EB_ErrorInsufficientResources; \
-        } \
-            else { \
-    pointer = (type) pointer;  \
-    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
-    memory_map[(*(memory_map_index))++].ptr = pointer; \
-    if (n_elements % 8 == 0) { \
-        *total_lib_memory += (n_elements); \
-            } \
-            else { \
-        *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
-    } \
 } \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
-    } \
-lib_malloc_count++;
+EB_ADD_MEM(pointer, n_elements, pointer_class, lib_malloc_count, free);
 #endif
 
 #define EB_MALLOC(type, pointer, n_elements, pointer_class) \
 pointer = (type) malloc(n_elements); \
-if (pointer == (type)EB_NULL) { \
-    return EB_ErrorInsufficientResources; \
-    } \
-    else { \
-    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
-    memory_map[(*(memory_map_index))++].ptr = pointer; \
-    if (n_elements % 8 == 0) { \
-        *total_lib_memory += (n_elements); \
-    } \
-    else { \
-        *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
-    } \
-} \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
-} \
-lib_malloc_count++;
+EB_ADD_MEM(pointer, n_elements, pointer_class, lib_malloc_count, free);
 
 #define EB_CALLOC(type, pointer, count, size, pointer_class) \
 pointer = (type) calloc(count, size); \
-if (pointer == (type)EB_NULL) { \
-    return EB_ErrorInsufficientResources; \
-} \
-else { \
-    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
-    memory_map[(*(memory_map_index))++].ptr = pointer; \
-    if (count % 8 == 0) { \
-        *total_lib_memory += (count); \
-    } \
-    else { \
-        *total_lib_memory += ((count) + (8 - ((count) % 8))); \
-    } \
-} \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
-} \
-lib_malloc_count++;
+EB_ADD_MEM(pointer, (count)*(size), pointer_class, lib_malloc_count, free);
 
 #define EB_CREATESEMAPHORE(type, pointer, n_elements, pointer_class, initial_count, max_count) \
 pointer = eb_create_semaphore(initial_count, max_count); \
-if (pointer == (type)EB_NULL) { \
-    return EB_ErrorInsufficientResources; \
-} \
-else { \
-    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
-    memory_map[(*(memory_map_index))++].ptr = pointer; \
-    if (n_elements % 8 == 0) { \
-        *total_lib_memory += (n_elements); \
-    } \
-    else { \
-        *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
-    } \
-} \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
-} \
-lib_semaphore_count++;
+EB_ADD_MEM(pointer, n_elements, pointer_class, lib_semaphore_count, eb_destroy_semaphore);
 
 #define EB_CREATEMUTEX(type, pointer, n_elements, pointer_class) \
 pointer = eb_create_mutex(); \
-if (pointer == (type)EB_NULL){ \
-    return EB_ErrorInsufficientResources; \
-} \
-else { \
-    memory_map[*(memory_map_index)].ptr_type = pointer_class; \
-    memory_map[(*(memory_map_index))++].ptr = pointer; \
-    if (n_elements % 8 == 0) { \
-        *total_lib_memory += (n_elements); \
-    } \
-    else { \
-        *total_lib_memory += ((n_elements) + (8 - ((n_elements) % 8))); \
-    } \
-} \
-if (*(memory_map_index) >= MAX_NUM_PTR) { \
-    return EB_ErrorInsufficientResources; \
-} \
-lib_mutex_count++;
-#endif
+EB_ADD_MEM(pointer, n_elements, pointer_class, lib_mutex_count, eb_destroy_mutex);
 
 #define EB_MEMORY() \
 printf("Total Number of Mallocs in Library: %d\n", lib_malloc_count); \
@@ -2842,6 +2671,14 @@ void(*ErrorHandler)(
 #endif
 #define INVALID_POC                                 (((uint32_t) (~0)) - (((uint32_t) (~0)) >> 1))
 #define MAX_ELAPSED_IDR_COUNT                       1024
+
+#if DOWN_SAMPLING_FILTERING
+typedef enum DownSamplingMethod
+{
+    ME_FILTERED_DOWNSAMPLED  = 0,
+    ME_DECIMATED_DOWNSAMPLED = 1
+} DownSamplingMethod;
+#endif
 
 //***Segments***
 #define EB_SEGMENT_MIN_COUNT                        1

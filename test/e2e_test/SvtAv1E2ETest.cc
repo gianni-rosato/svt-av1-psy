@@ -8,7 +8,7 @@
  *
  * @brief Impelmentation of SVT-AV1 encoder E2E test
  *
- * @author Cidana-Edmond
+ * @author Cidana-Edmond, Cidana-Wenyao
  *
  ******************************************************************************/
 
@@ -18,6 +18,22 @@
 
 using namespace svt_av1_e2e_test;
 using namespace svt_av1_e2e_test_vector;
+using std::string;
+
+// generate all available enc mode settings
+const std::vector<EncTestSetting> generate_enc_mode_settings() {
+    string test = "EncModeTest";
+    std::vector<EncTestSetting> settings;
+    for (int i = 0; i <= MAX_ENC_PRESET; ++i) {
+        string idx = std::to_string(i);
+        string name = test + idx;
+        EncTestSetting setting{
+            name, {{"EncoderMode", idx}}, default_test_vectors};
+        settings.push_back(setting);
+    }
+
+    return settings;
+}
 
 /**
  * @brief SVT-AV1 encoder simple E2E test
@@ -27,59 +43,33 @@ using namespace svt_av1_e2e_test_vector;
  * frames.
  *
  * Expected result:
- * No error is reported in encoding progress. The output compressed data
+ * No crash should occur in encoding progress. The output compressed data
  * is complete.
  *
  * Test coverage:
  * All test vectors
  */
-class SvtAv1E2ESimpleTest : public SvtAv1E2ETestFramework {};
-
-TEST_P(SvtAv1E2ESimpleTest, run_smoking_test) {
-    run_encode_process();
-}
-
-INSTANTIATE_TEST_CASE_P(
-    SVT_AV1, SvtAv1E2ESimpleTest,
-    ::testing::ValuesIn(generate_vector_from_config("video_src.cfg")));
-
-/**
- * @brief SVT-AV1 encoder simple E2E test with save compressed data in file
- *
- * Test strategy:
- * Setup SVT-AV1 encoder with default parameter, and encode the input YUV data
- * frames. Save the compressed data into IVF file.
- *
- * Expected result:
- * No error is reported in encoding progress. The output compressed data
- * is saved into IVF file.
- *
- * Test coverage:
- * Smoking test vectors
- */
-class SvtAv1E2ESimpleFileTest : public SvtAv1E2ETestFramework {
+class CrashDeathTest : public SvtAv1E2ETestFramework {
   protected:
-    /** initialization for test */
-    void init_test() override {
-        output_file_ = new IvfFile("output.av1");
-        SvtAv1E2ETestFramework::init_test();
+    void config_test() override {
+        enable_stat = true;
     }
 };
 
-TEST_P(SvtAv1E2ESimpleFileTest, run_smoking_with_output_test) {
-    run_encode_process();
+TEST_P(CrashDeathTest, NotCrashTest) {
+    run_death_test();
 }
 
-INSTANTIATE_TEST_CASE_P(
-    SVT_AV1, SvtAv1E2ESimpleFileTest,
-    ::testing::ValuesIn(generate_vector_from_config("smoking_test.cfg")));
+INSTANTIATE_TEST_CASE_P(SvtAv1, CrashDeathTest,
+                        ::testing::ValuesIn(generate_enc_mode_settings()),
+                        GetSettingName);
 
 /**
  * @brief SVT-AV1 encoder E2E test with comparing the reconstructed frame with
  * output frame from decoder buffer list
  *
  * Test strategy:
- * Setup SVT-AV1 encoder with default parameter, and encode the input YUV data
+ * Setup SVT-AV1 encoder with different parameter, and encode the input YUV data
  * frames. Collect the reconstructed frames and compared them with reference
  * decoder output.
  *
@@ -90,35 +80,45 @@ INSTANTIATE_TEST_CASE_P(
  * Test coverage:
  * All test vectors
  */
-class SvtAv1E2EConformanceTest : public SvtAv1E2ETestFramework {
+class ConformanceDeathTest : public SvtAv1E2ETestFramework {
   protected:
-    /** initialization for test */
-    void init_test() override {
-        // create recon sink before setup parameter of encoder
-        VideoFrameParam param;
-        memset(&param, 0, sizeof(param));
-        param.format = video_src_->get_image_format();
-        param.width = video_src_->get_width_with_padding();
-        param.height = video_src_->get_height_with_padding();
-        recon_queue_ = create_frame_queue(param);
-        ASSERT_NE(recon_queue_, nullptr) << "can not create recon sink!!";
-        if (recon_queue_)
-            av1enc_ctx_.enc_params.recon_enabled = 1;
-
-        // create reference decoder
-        refer_dec_ = create_reference_decoder();
-        ASSERT_NE(refer_dec_, nullptr) << "can not create reference decoder!!";
-
-        collect_ = new PerformanceCollect(typeid(this).name());
-
-        SvtAv1E2ETestFramework::init_test();
+    void config_test() override {
+        enable_decoder = true;
+        enable_recon = true;
+        enable_stat = true;
     }
 };
 
-TEST_P(SvtAv1E2EConformanceTest, run_conformance_test) {
-    run_encode_process();
+TEST_P(ConformanceDeathTest, DefaultSettingTest) {
+    run_death_test();
 }
 
-INSTANTIATE_TEST_CASE_P(
-    SVT_AV1, SvtAv1E2EConformanceTest,
-    ::testing::ValuesIn(generate_vector_from_config("conformance_test.cfg")));
+static const std::vector<EncTestSetting> default_enc_settings = {
+    {"EncModeTest1", {{"EncoderMode", "1"}}, default_test_vectors},
+    {"EncModeTest2", {{"EncoderMode", "3"}}, default_test_vectors},
+    {"EncModeTest3", {{"EncoderMode", "5"}}, default_test_vectors},
+    {"EncModeTest4", {{"EncoderMode", "8"}}, default_test_vectors},
+
+    // test intra period, default is -2;
+    {"IntraPeriodTest1", {{"IntraPeriod", "-1"}}, default_test_vectors},
+    {"IntraPeriodTest2", {{"IntraPeriod", "10"}}, default_test_vectors},
+
+    {"IntraRefreshTest1", {{"IntraRefreshType", "2"}}, default_test_vectors},
+
+    {"SharpnessTest1", {{"ImproveSharpness", "1"}}, default_test_vectors},
+    {"AdapQTest1", {{"AdaptiveQuantization", "1"}}, default_test_vectors},
+    {"AltrefTest1", {{"EnableAltRefs", "0"}}, default_test_vectors},
+
+    {"ExtBlockTest1", {{"ExtBlockFlag", "1"}}, default_test_vectors},
+    {"DlfTest1", {{"LoopFilterDisable", "1"}}, default_test_vectors},
+    {"WarpTest1", {{"LocalWarpedMotion", "1"}}, default_test_vectors},
+    {"TileTest1", {{"TileRow", "1"}}, default_test_vectors},
+    {"TileTest2", {{"TileCol", "1"}}, default_test_vectors},
+    {"TileTest3", {{"TileCol", "1"}, {"TileRow", "1"}}, default_test_vectors},
+    {"ScreenToolTest1", {{"ScreenContentMode", "0"}}, default_test_vectors},
+    {"ConstrainIntraTest1", {{"ConstrainedIntra", "1"}}, default_test_vectors},
+};
+
+INSTANTIATE_TEST_CASE_P(SvtAv1, ConformanceDeathTest,
+                        ::testing::ValuesIn(default_enc_settings),
+                        GetSettingName);

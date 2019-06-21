@@ -3906,7 +3906,6 @@ extern "C" {
 #if DC_SIGN_CONTEXT_FIX
     extern int32_t av1_quantize_inv_quantize(
 #else
-    extern void av1_quantize_inv_quantize(
 #endif
         PictureControlSet             *picture_control_set_ptr,
         ModeDecisionContext           *md_context,
@@ -3915,6 +3914,7 @@ extern "C" {
         int32_t                       *quant_coeff,
         int32_t                       *recon_coeff,
         uint32_t                       qp,
+        int32_t              segmentation_qp_offset,
         uint32_t                       width,
         uint32_t                       height,
         TxSize                         txsize,

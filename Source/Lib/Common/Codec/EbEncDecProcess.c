@@ -180,27 +180,25 @@ EbErrorType enc_dec_context_ctor(
             return EB_ErrorInsufficientResources;
     }
 
-    // Intra Reference Samples
-    return_error = intra_reference_samples_ctor(&context_ptr->intra_ref_ptr);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    context_ptr->intra_ref_ptr16 = (IntraReference16bitSamples *)EB_NULL;
-    if (is16bit) {
-        return_error = intra_reference16bit_samples_ctor(&context_ptr->intra_ref_ptr16);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-    }
     // Mode Decision Context
     return_error = mode_decision_context_ctor(&context_ptr->md_context, color_format, 0, 0);
-
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
+
     // Second Stage ME Context
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
     context_ptr->md_context->enc_dec_context_ptr = context_ptr;
 
     return EB_ErrorNone;
+}
+
+/**************************************************
+ * Reset Segmentation Map
+ *************************************************/
+static void reset_segmentation_map(SegmentationNeighborMap *segmentation_map){
+    if(segmentation_map->data!=NULL)
+        EB_MEMSET(segmentation_map->data, ~0, segmentation_map->map_size);
 }
 
 /**************************************************
@@ -288,8 +286,11 @@ static void ResetEncDec(
     else
         context_ptr->reference_object_write_ptr = (EbReferenceObject*)EB_NULL;
 #endif
-    if (segment_index == 0)
+    if (segment_index == 0){
         ResetEncodePassNeighborArrays(picture_control_set_ptr);
+        reset_segmentation_map(picture_control_set_ptr->segmentation_neighbor_map);
+    }
+
     return;
 }
 
@@ -654,7 +655,7 @@ void ReconOutput(
     eb_release_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
 }
 
-void PsnrCalculations(
+void psnr_calculations(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr){
     EbBool is16bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
@@ -1308,7 +1309,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 CHROMA_MODE_3;
     else
 #endif
-#if CHROMA_SEARCH_MR    
+#if CHROMA_SEARCH_MR
     if (MR_MODE)
         context_ptr->chroma_level = CHROMA_MODE_0;
     else

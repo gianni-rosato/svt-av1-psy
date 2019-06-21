@@ -1127,9 +1127,13 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         EbReferenceObjectDescInitData     EbReferenceObjectDescInitDataStructure;
         EbPaReferenceObjectDescInitData   EbPaReferenceObjectDescInitDataStructure;
         EbPictureBufferDescInitData       referencePictureBufferDescInitData;
+#if DOWN_SAMPLING_FILTERING
+        EbPictureBufferDescInitData       quarterPictureBufferDescInitData;
+        EbPictureBufferDescInitData       sixteenthPictureBufferDescInitData;
+#else
         EbPictureBufferDescInitData       quarterDecimPictureBufferDescInitData;
         EbPictureBufferDescInitData       sixteenthDecimPictureBufferDescInitData;
-
+#endif
         // Initialize the various Picture types
         referencePictureBufferDescInitData.max_width = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width;
         referencePictureBufferDescInitData.max_height = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height;
@@ -1178,7 +1182,35 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         referencePictureBufferDescInitData.top_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz + ME_FILTER_TAP;
         referencePictureBufferDescInitData.bot_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz + ME_FILTER_TAP;
         referencePictureBufferDescInitData.split_mode = EB_FALSE;
+#if DOWN_SAMPLING_FILTERING
+        quarterPictureBufferDescInitData.max_width = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width >> 1;
+        quarterPictureBufferDescInitData.max_height = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height >> 1;
+        quarterPictureBufferDescInitData.bit_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
+        quarterPictureBufferDescInitData.color_format = EB_YUV420;
+        quarterPictureBufferDescInitData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
+        quarterPictureBufferDescInitData.left_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 1;
+        quarterPictureBufferDescInitData.right_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 1;
+        quarterPictureBufferDescInitData.top_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 1;
+        quarterPictureBufferDescInitData.bot_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 1;
+        quarterPictureBufferDescInitData.split_mode = EB_FALSE;
+        quarterPictureBufferDescInitData.down_sampled_filtered = (enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? EB_TRUE : EB_FALSE;
 
+        sixteenthPictureBufferDescInitData.max_width = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width >> 2;
+        sixteenthPictureBufferDescInitData.max_height = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height >> 2;
+        sixteenthPictureBufferDescInitData.bit_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
+        sixteenthPictureBufferDescInitData.color_format = EB_YUV420;
+        sixteenthPictureBufferDescInitData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
+        sixteenthPictureBufferDescInitData.left_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 2;
+        sixteenthPictureBufferDescInitData.right_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 2;
+        sixteenthPictureBufferDescInitData.top_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 2;
+        sixteenthPictureBufferDescInitData.bot_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 2;
+        sixteenthPictureBufferDescInitData.split_mode = EB_FALSE;
+        sixteenthPictureBufferDescInitData.down_sampled_filtered = (enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? EB_TRUE : EB_FALSE;
+
+        EbPaReferenceObjectDescInitDataStructure.reference_picture_desc_init_data = referencePictureBufferDescInitData;
+        EbPaReferenceObjectDescInitDataStructure.quarter_picture_desc_init_data = quarterPictureBufferDescInitData;
+        EbPaReferenceObjectDescInitDataStructure.sixteenth_picture_desc_init_data = sixteenthPictureBufferDescInitData;
+#else
         quarterDecimPictureBufferDescInitData.max_width = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width >> 1;
         quarterDecimPictureBufferDescInitData.max_height = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height >> 1;
         quarterDecimPictureBufferDescInitData.bit_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
@@ -1204,7 +1236,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         EbPaReferenceObjectDescInitDataStructure.reference_picture_desc_init_data = referencePictureBufferDescInitData;
         EbPaReferenceObjectDescInitDataStructure.quarter_picture_desc_init_data = quarterDecimPictureBufferDescInitData;
         EbPaReferenceObjectDescInitDataStructure.sixteenth_picture_desc_init_data = sixteenthDecimPictureBufferDescInitData;
-
+#endif
         // Reference Picture Buffers
         return_error = eb_system_resource_ctor(
             &enc_handle_ptr->pa_reference_picture_pool_ptr_array[instance_index],
@@ -2122,6 +2154,9 @@ void SetDefaultConfigurationParameters(
     sequence_control_set_ptr->cropping_top_offset = 0;
     sequence_control_set_ptr->cropping_bottom_offset = 0;
 
+    //Segmentation
+    sequence_control_set_ptr->static_config.enable_adaptive_quantization = 0;
+
     return;
 }
 
@@ -2184,10 +2219,12 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     sequence_control_set_ptr->max_input_chroma_height = sequence_control_set_ptr->max_input_luma_height >> subsampling_y;
 
     // Configure the padding
+#if !INCOMPLETE_SB_FIX
     sequence_control_set_ptr->left_padding  = BLOCK_SIZE_64 + 4;
     sequence_control_set_ptr->top_padding = BLOCK_SIZE_64 + 4;
     sequence_control_set_ptr->right_padding = BLOCK_SIZE_64 + 4;
     sequence_control_set_ptr->bot_padding = BLOCK_SIZE_64 + 4;
+#endif
 
     sequence_control_set_ptr->chroma_width = sequence_control_set_ptr->max_input_luma_width >> subsampling_x;
     sequence_control_set_ptr->chroma_height = sequence_control_set_ptr->max_input_luma_height >> subsampling_y;
@@ -2208,8 +2245,16 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     sequence_control_set_ptr->static_config.super_block_size = (sequence_control_set_ptr->static_config.rate_control_mode > 1) ? 64 : sequence_control_set_ptr->static_config.super_block_size;
    // sequence_control_set_ptr->static_config.hierarchical_levels = (sequence_control_set_ptr->static_config.rate_control_mode > 1) ? 3 : sequence_control_set_ptr->static_config.hierarchical_levels;
 #endif
+#if INCOMPLETE_SB_FIX
+    // Configure the padding
+    sequence_control_set_ptr->left_padding = BLOCK_SIZE_64 + 4;
+    sequence_control_set_ptr->top_padding = BLOCK_SIZE_64 + 4;
+    sequence_control_set_ptr->right_padding = BLOCK_SIZE_64 + 4;
+    sequence_control_set_ptr->bot_padding = sequence_control_set_ptr->static_config.super_block_size + 4;
+#endif
 #if ALT_REF_OVERLAY
     sequence_control_set_ptr->static_config.enable_overlays = sequence_control_set_ptr->static_config.enable_altrefs == EB_FALSE ||
+        (sequence_control_set_ptr->static_config.altref_nframes <= 1) ||
         (sequence_control_set_ptr->static_config.rate_control_mode > 0) ||
         sequence_control_set_ptr->static_config.encoder_bit_depth != EB_8BIT ?
         0 : sequence_control_set_ptr->static_config.enable_overlays;
@@ -2230,6 +2275,24 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     sequence_control_set_ptr->nsq_present = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
 #else
     sequence_control_set_ptr->nsq_present = 1;
+#endif
+#if DOWN_SAMPLING_FILTERING
+    // Set down-sampling method     Settings
+    // 0                            0: filtering
+    // 1                            1: decimation
+    if (sequence_control_set_ptr->static_config.enc_mode == ENC_M0)
+        sequence_control_set_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
+    else
+        sequence_control_set_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
+#endif
+#if INCOMPLETE_SB_FIX
+    // Set over_boundary_block_mode     Settings
+    // 0                            0: not allowed
+    // 1                            1: allowed
+    if (sequence_control_set_ptr->static_config.enc_mode == ENC_M0)
+        sequence_control_set_ptr->over_boundary_block_mode = 1;
+    else
+        sequence_control_set_ptr->over_boundary_block_mode = 0;
 #endif
 #endif
 }
@@ -2368,6 +2431,10 @@ void CopyApiFromApp(
     sequence_control_set_ptr->static_config.min_qp_allowed = (sequence_control_set_ptr->static_config.rate_control_mode) ?
         ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->min_qp_allowed :
         1; // lossless coding not supported
+
+    //Segmentation
+    //TODO: check RC mode and set only when RC is enabled in the final version.
+    sequence_control_set_ptr->static_config.enable_adaptive_quantization = pComponentParameterStructure->enable_adaptive_quantization;
 
     // Misc
     sequence_control_set_ptr->static_config.encoder_bit_depth = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->encoder_bit_depth;
@@ -2712,6 +2779,11 @@ static EbErrorType VerifySettings(
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->stat_report > 1) {
+        SVT_LOG("Error instance %u : Invalid StatReport. StatReport must be [0 - 1]\n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (config->high_dynamic_range_input > 1) {
         SVT_LOG("Error instance %u : Invalid HighDynamicRangeInput. HighDynamicRangeInput must be [0 - 1]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
@@ -2719,6 +2791,11 @@ static EbErrorType VerifySettings(
 
     if (config->screen_content_mode > 2) {
         SVT_LOG("Error instance %u : Invalid screen_content_mode. screen_content_mode must be [0 - 2]\n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if(sequence_control_set_ptr->static_config.enable_adaptive_quantization>1){
+        SVT_LOG("Error instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must be [0/1]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -2768,6 +2845,17 @@ static EbErrorType VerifySettings(
 
     if (config->target_socket != -1 && config->target_socket != 0 && config->target_socket != 1) {
         SVT_LOG("Error instance %u: Invalid target_socket. target_socket must be [-1 - 1] \n", channelNumber + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    // alt-ref frames related
+    if (config->altref_strength > ALTREF_MAX_STRENGTH ) {
+        SVT_LOG("Error instance %u: invalid altref-strength, should be in the range [0 - %d] \n", channelNumber + 1, ALTREF_MAX_STRENGTH);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->altref_nframes > ALTREF_MAX_NFRAMES ) {
+        SVT_LOG("Error instance %u: invalid altref-nframes, should be in the range [0 - %d] \n", channelNumber + 1, ALTREF_MAX_NFRAMES);
         return_error = EB_ErrorBadParameter;
     }
 
