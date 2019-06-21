@@ -2418,51 +2418,6 @@ EbErrorType av1_tu_calc_cost_luma(
 
     return return_error;
     }
-#if !SPLIT_RATE_FIX
-static INLINE int32_t partition_cdf_length(BlockSize bsize) {
-    if (bsize <= BLOCK_8X8)
-        return PARTITION_TYPES;
-    else if (bsize == BLOCK_128X128)
-        return EXT_PARTITION_TYPES - 2;
-    else
-        return EXT_PARTITION_TYPES;
-}
-#endif
-
-#if !SPLIT_RATE_FIX
-static int32_t cdf_element_prob(const int32_t *cdf,
-    size_t element) {
-    assert(cdf != NULL);
-    return (element > 0 ? cdf[element - 1] : CDF_PROB_TOP) - cdf[element];
-}
-static void partition_gather_horz_alike(int32_t *out,
-    BlockSize bsize,
-    const int32_t *const in) {
-    out[0] = CDF_PROB_TOP;
-    out[0] -= cdf_element_prob(in, PARTITION_HORZ);
-    out[0] -= cdf_element_prob(in, PARTITION_SPLIT);
-    out[0] -= cdf_element_prob(in, PARTITION_HORZ_A);
-    out[0] -= cdf_element_prob(in, PARTITION_HORZ_B);
-    out[0] -= cdf_element_prob(in, PARTITION_VERT_A);
-    if (bsize != BLOCK_128X128) out[0] -= cdf_element_prob(in, PARTITION_HORZ_4);
-    out[0] = AOM_ICDF(out[0]);
-    out[1] = AOM_ICDF(CDF_PROB_TOP);
-}
-
-static void partition_gather_vert_alike(int32_t *out,
-    BlockSize bsize,
-    const int32_t *const in) {
-    out[0] = CDF_PROB_TOP;
-    out[0] -= cdf_element_prob(in, PARTITION_VERT);
-    out[0] -= cdf_element_prob(in, PARTITION_SPLIT);
-    out[0] -= cdf_element_prob(in, PARTITION_HORZ_A);
-    out[0] -= cdf_element_prob(in, PARTITION_VERT_A);
-    out[0] -= cdf_element_prob(in, PARTITION_VERT_B);
-    if (bsize != BLOCK_128X128) out[0] -= cdf_element_prob(in, PARTITION_VERT_4);
-    out[0] = AOM_ICDF(out[0]);
-    out[1] = AOM_ICDF(CDF_PROB_TOP);
-}
-#endif
 
 //static INLINE int32_t partition_plane_context(const MacroBlockD *xd, int32_t mi_row,
 //    int32_t mi_col, BlockSize bsize) {
@@ -2541,34 +2496,16 @@ EbErrorType av1_split_flag_rate(
         contextIndex = (left * 2 + above) + bsl * PARTITION_PLOFFSET;
 
         if (hasRows && hasCols) {
-#if SPLIT_RATE_FIX
             *split_rate = (uint64_t)md_rate_estimation_ptr->partition_fac_bits[contextIndex][partitionType];
 
-#else
-            *split_rate = (uint64_t)md_rate_estimation_ptr->partition_fac_bits[partition_cdf_length(bsize)][partitionType];
-#endif
         }
         else if (!hasRows && hasCols) {
-#if SPLIT_RATE_FIX
             *split_rate = (uint64_t)md_rate_estimation_ptr->partition_fac_bits[2][p == PARTITION_SPLIT];
 
-#else
-            int32_t cdf[2];
-            partition_gather_vert_alike(cdf, bsize, md_rate_estimation_ptr->partition_fac_bits[contextIndex]);
-            *split_rate = (uint64_t)md_rate_estimation_ptr->partition_fac_bits[partition_cdf_length(bsize)][partitionType];
-
-            *split_rate = (uint64_t)cdf[p == PARTITION_SPLIT];
-#endif
         }
         else {
-#if SPLIT_RATE_FIX
             *split_rate = (uint64_t)md_rate_estimation_ptr->partition_fac_bits[2][p == PARTITION_SPLIT];
 
-#else
-            int32_t cdf[2];
-            partition_gather_horz_alike(cdf, bsize, md_rate_estimation_ptr->partition_fac_bits[contextIndex]);
-            *split_rate = (uint64_t)cdf[p == PARTITION_SPLIT];
-#endif
         }
     }
     else

@@ -3666,7 +3666,6 @@ void  d1_non_square_block_decision(
         merge_block_cnt += merge_1D_inter_block(context_ptr, context_ptr->blk_geom->sqi_mds, first_blk_idx + blk_it);
 #endif
     }
-#if SPLIT_RATE_FIX
     if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
         uint64_t split_cost = 0;
         uint32_t parent_depth_idx_mds = context_ptr->blk_geom->sqi_mds;
@@ -3683,7 +3682,6 @@ void  d1_non_square_block_decision(
 
         tot_cost += split_cost;
     }
-#endif
 #if IMPROVE_1D_INTER_DEPTH_DECISION
     if (merge_block_cnt == context_ptr->blk_geom->totns) merge_block_flag = EB_TRUE;
     if (context_ptr->blk_geom->shape == PART_N || (tot_cost < context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].cost && merge_block_flag == EB_FALSE))
@@ -3741,20 +3739,7 @@ void   compute_depth_costs(
     // Compute above depth  cost
     if (context_ptr->md_local_cu_unit[above_depth_mds].tested_cu_flag == EB_TRUE)
     {
-#if !SPLIT_RATE_FIX
-        av1_split_flag_rate(
-            sequence_control_set_ptr,
-            context_ptr,
-            &context_ptr->md_cu_arr_nsq[above_depth_mds],
-            0,
-            PARTITION_NONE,//shouldn't this be final partition for above depth?
-            &above_non_split_rate,
-            context_ptr->full_lambda,
-            context_ptr->md_rate_estimation_ptr,
-            sequence_control_set_ptr->max_sb_depth);
-#endif
         *above_depth_cost = context_ptr->md_local_cu_unit[above_depth_mds].cost + above_non_split_rate;
-#if SPLIT_RATE_FIX
         // Compute curr depth  cost
         av1_split_flag_rate(
             sequence_control_set_ptr,
@@ -3766,23 +3751,9 @@ void   compute_depth_costs(
             context_ptr->full_lambda,
             context_ptr->md_rate_estimation_ptr,
             sequence_control_set_ptr->max_sb_depth);
-#endif
     }
     else
         *above_depth_cost = MAX_MODE_COST;
-#if !SPLIT_RATE_FIX
-    // Compute curr depth  cost
-    av1_split_flag_rate(
-        sequence_control_set_ptr,
-        context_ptr,
-        &context_ptr->md_cu_arr_nsq[above_depth_mds],
-        0,
-        PARTITION_SPLIT,
-        &above_split_rate,
-        context_ptr->full_lambda,
-        context_ptr->md_rate_estimation_ptr,
-        sequence_control_set_ptr->max_sb_depth);
-#endif
     if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
         if (context_ptr->md_cu_arr_nsq[curr_depth_blk0_mds].mdc_split_flag == 0)
             av1_split_flag_rate(
