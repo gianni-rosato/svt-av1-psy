@@ -3533,7 +3533,6 @@ void cu_full_distortion_fast_tu_mode_r(
     } while (txb_itr < tuTotalCount);
 }
 
-#if IMPROVE_1D_INTER_DEPTH_DECISION
 /***************************************
  * Check merge_block algorithm
  ***************************************/
@@ -3574,7 +3573,6 @@ EbBool merge_1D_inter_block(
     }
     return merge_blocks;
 }
-#endif
 void  d1_non_square_block_decision(
     ModeDecisionContext               *context_ptr
 )
@@ -3583,16 +3581,12 @@ void  d1_non_square_block_decision(
     uint64_t tot_cost = 0;
     uint32_t first_blk_idx = context_ptr->cu_ptr->mds_idx - (context_ptr->blk_geom->totns - 1);//index of first block in this partition
     uint32_t blk_it;
-#if IMPROVE_1D_INTER_DEPTH_DECISION
     uint32_t merge_block_cnt = 0;
     EbBool merge_block_flag = EB_FALSE;
-#endif
     for (blk_it = 0; blk_it < context_ptr->blk_geom->totns; blk_it++)
     {
         tot_cost += context_ptr->md_local_cu_unit[first_blk_idx + blk_it].cost;
-#if IMPROVE_1D_INTER_DEPTH_DECISION
         merge_block_cnt += merge_1D_inter_block(context_ptr, context_ptr->blk_geom->sqi_mds, first_blk_idx + blk_it);
-#endif
     }
     if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
         uint64_t split_cost = 0;
@@ -3610,12 +3604,8 @@ void  d1_non_square_block_decision(
 
         tot_cost += split_cost;
     }
-#if IMPROVE_1D_INTER_DEPTH_DECISION
     if (merge_block_cnt == context_ptr->blk_geom->totns) merge_block_flag = EB_TRUE;
     if (context_ptr->blk_geom->shape == PART_N || (tot_cost < context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].cost && merge_block_flag == EB_FALSE))
-#else
-    if (context_ptr->blk_geom->shape == PART_N || tot_cost < context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].cost)
-#endif
     {
         //store best partition cost in parent square
         context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].cost = tot_cost;
