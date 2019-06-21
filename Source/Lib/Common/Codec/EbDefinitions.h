@@ -73,7 +73,7 @@ extern "C" {
 #define ATB_DC_CONTEXT_SUPPORT_1          1 // Added the ability to signal DC level per tranform block
 #define ATB_DC_CONTEXT_SUPPORT_2          1 // Added the ability to update DC context @ tranform block basis for only INTRA partitioning (128x128 not yet addressed)
 #if ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
-#define DC_SIGN_CONTEXT_FIX               1 // Fixed DC level derivation and update @ mode decision
+
 #endif
 
 #endif

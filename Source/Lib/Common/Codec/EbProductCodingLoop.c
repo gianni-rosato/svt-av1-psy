@@ -113,12 +113,6 @@ void mode_decision_update_neighbor_arrays(
     context_ptr->mv_unit.mv[REF_LIST_0].mv_union = context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].mv[REF_LIST_0].mv_union;
     context_ptr->mv_unit.mv[REF_LIST_1].mv_union = context_ptr->md_cu_arr_nsq[index_mds].prediction_unit_array[0].mv[REF_LIST_1].mv_union;
 #if ATB_DC_CONTEXT_SUPPORT_1
-#if !DC_SIGN_CONTEXT_FIX
-    uint8_t u_has_coeff = context_ptr->cu_ptr->transform_unit_array[0].u_has_coeff;
-    int32_t cbDcCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[1][0];
-    uint8_t v_has_coeff = context_ptr->cu_ptr->transform_unit_array[0].v_has_coeff;
-    int32_t crDcCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[2][0];
-#endif
 #else
     uint8_t                    y_has_coeff = context_ptr->cu_ptr->transform_unit_array[0].y_has_coeff;
     int32_t                   lumaDcCoeff = (int32_t)context_ptr->cu_ptr->quantized_dc[0];
@@ -189,21 +183,18 @@ void mode_decision_update_neighbor_arrays(
             bheight,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-#if DC_SIGN_CONTEXT_FIX
 #if ATB_SUPPORT
         uint16_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->cu_ptr->tx_depth];
 #else
         uint16_t txb_count = context_ptr->blk_geom->txb_count;
 #endif
         for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++)
-#endif
         {
             uint8_t dc_sign_level_coeff = (int32_t)context_ptr->cu_ptr->quantized_dc[0][txb_itr];
 
             neighbor_array_unit_mode_write(
                 context_ptr->luma_dc_sign_level_coeff_neighbor_array,
                 (uint8_t*)&dc_sign_level_coeff,
-#if DC_SIGN_CONTEXT_FIX
 #if ATB_SUPPORT
                 context_ptr->sb_origin_x + context_ptr->blk_geom->tx_org_x[context_ptr->cu_ptr->tx_depth][txb_itr],
                 context_ptr->sb_origin_y + context_ptr->blk_geom->tx_org_y[context_ptr->cu_ptr->tx_depth][txb_itr],
@@ -214,12 +205,6 @@ void mode_decision_update_neighbor_arrays(
                 origin_y - context_ptr->blk_geom->origin_y + context_ptr->blk_geom->tx_org_y[txb_itr],
                 context_ptr->blk_geom->tx_width[txb_itr],
                 context_ptr->blk_geom->tx_height[txb_itr],
-#endif
-#else
-                origin_x,
-                origin_y,
-                bwdith,
-                bheight,
 #endif
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
@@ -273,20 +258,7 @@ void mode_decision_update_neighbor_arrays(
     if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
         //  Update chroma CB cbf and Dc context
         {
-#if DC_SIGN_CONTEXT_FIX
             uint8_t dc_sign_level_coeff = (int32_t)context_ptr->cu_ptr->quantized_dc[1][0];
-#else
-            uint8_t dcSignCtx = 0;
-            if (cbDcCoeff > 0)
-                dcSignCtx = 2;
-            else if (cbDcCoeff < 0)
-                dcSignCtx = 1;
-            else
-                dcSignCtx = 0;
-            uint8_t dc_sign_level_coeff = (uint8_t)((dcSignCtx << COEFF_CONTEXT_BITS) | u_has_coeff);
-            if (!u_has_coeff)
-                dc_sign_level_coeff = 0;
-#endif
             neighbor_array_unit_mode_write(
                 context_ptr->cb_dc_sign_level_coeff_neighbor_array,
                 (uint8_t*)&dc_sign_level_coeff,
@@ -299,20 +271,7 @@ void mode_decision_update_neighbor_arrays(
 
         //  Update chroma CR cbf and Dc context
         {
-#if DC_SIGN_CONTEXT_FIX
             uint8_t dc_sign_level_coeff = (int32_t)context_ptr->cu_ptr->quantized_dc[2][0];
-#else
-            uint8_t dcSignCtx = 0;
-            if (crDcCoeff > 0)
-                dcSignCtx = 2;
-            else if (crDcCoeff < 0)
-                dcSignCtx = 1;
-            else
-                dcSignCtx = 0;
-            uint8_t dc_sign_level_coeff = (uint8_t)((dcSignCtx << COEFF_CONTEXT_BITS) | v_has_coeff);
-            if (!v_has_coeff)
-                dc_sign_level_coeff = 0;
-#endif
             neighbor_array_unit_mode_write(
                 context_ptr->cr_dc_sign_level_coeff_neighbor_array,
                 (uint8_t*)&dc_sign_level_coeff,
@@ -3639,11 +3598,7 @@ void perform_intra_tx_partitioning(
             int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                              picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
 
-#if DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
-#else
-            av1_quantize_inv_quantize(
-#endif
                 picture_control_set_ptr,
                 context_ptr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr->buffer_y)[txb_1d_offset]),
@@ -3672,9 +3627,6 @@ void perform_intra_tx_partitioning(
                 EB_FALSE,
                 EB_FALSE);
 #if ATB_DC_CONTEXT_SUPPORT_1
-#if !DC_SIGN_CONTEXT_FIX
-            candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
-#endif
 #else
             candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
 #endif
@@ -3796,22 +3748,7 @@ void perform_intra_tx_partitioning(
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);
 
 #if ATB_DC_CONTEXT_SUPPORT_2
-#if DC_SIGN_CONTEXT_FIX
                 int8_t dc_sign_level_coeff = candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr];
-#else
-                int32_t lumaDcCoeff = (int32_t)candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr];
-
-                uint8_t dcSignCtx = 0;
-                if (lumaDcCoeff > 0)
-                    dcSignCtx = 2;
-                else if (lumaDcCoeff < 0)
-                    dcSignCtx = 1;
-                else
-                    dcSignCtx = 0;
-                uint8_t dc_sign_level_coeff = (uint8_t)((dcSignCtx << COEFF_CONTEXT_BITS) | y_has_coeff);
-                if (!y_has_coeff)
-                    dc_sign_level_coeff = 0;
-#endif
                 neighbor_array_unit_mode_write(
                     picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
                     (uint8_t*)&dc_sign_level_coeff,
@@ -3934,11 +3871,7 @@ void perform_intra_tx_partitioning(
 
             int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->segmentation_params.segmentation_enabled ?
                              picture_control_set_ptr->parent_pcs_ptr->segmentation_params.feature_data[context_ptr->cu_ptr->segment_id][SEG_LVL_ALT_Q] : 0;
-#if DC_SIGN_CONTEXT_FIX
             candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
-#else
-            av1_quantize_inv_quantize(
-#endif
                 picture_control_set_ptr,
                 context_ptr,
                 &(((int32_t*)context_ptr->trans_quant_buffers_ptr->tu_trans_coeff2_nx2_n_ptr->buffer_y)[txb_1d_offset]),
@@ -3967,9 +3900,6 @@ void perform_intra_tx_partitioning(
                 EB_FALSE,
                 EB_FALSE);
 #if ATB_DC_CONTEXT_SUPPORT_1
-#if !DC_SIGN_CONTEXT_FIX
-            candidateBuffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
-#endif
 #else
             candidateBuffer->candidate_ptr->quantized_dc[0] = (((int32_t*)candidateBuffer->residual_quant_coeff_ptr->buffer_y)[txb_1d_offset]);
 #endif
