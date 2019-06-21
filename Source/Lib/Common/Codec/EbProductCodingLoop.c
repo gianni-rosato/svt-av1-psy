@@ -314,7 +314,6 @@ void mode_decision_update_neighbor_arrays(
             origin_y,
             context_ptr->blk_geom->bwidth,
             context_ptr->blk_geom->bheight);
-#if ATB_MD
         if (picture_control_set_ptr->parent_pcs_ptr->atb_mode) {
             update_recon_neighbor_array(
                 picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
@@ -325,7 +324,6 @@ void mode_decision_update_neighbor_arrays(
                 context_ptr->blk_geom->bwidth,
                 context_ptr->blk_geom->bheight);
         }
-#endif
     }
 
     if (intraMdOpenLoop == EB_FALSE) {
@@ -439,7 +437,6 @@ void copy_neighbour_arrays(
         blk_geom->bheight,
         NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
-#if ATB_MD
     if (picture_control_set_ptr->parent_pcs_ptr->atb_mode) {
         copy_neigh_arr(
             picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[src_idx],
@@ -450,7 +447,6 @@ void copy_neighbour_arrays(
             blk_geom->bheight,
             NEIGHBOR_ARRAY_UNIT_FULL_MASK);
     }
-#endif
 
     if (blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
         //neighbor_array_unit_reset(picture_control_set_ptr->md_cb_recon_neighbor_array[depth]);
@@ -2640,7 +2636,6 @@ void check_best_indepedant_cfl(
 }
 #endif
 
-#if ATB_MD
 EbErrorType av1_predict_intra_block(
     TileInfo                    *tile,
     STAGE                       stage,
@@ -3904,7 +3899,6 @@ void perform_intra_tx_partitioning(
         } // Transform Loop
     }
 }
-#endif
 void AV1PerformFullLoop(
     PictureControlSet     *picture_control_set_ptr,
     LargestCodingUnit     *sb_ptr,
@@ -3976,32 +3970,6 @@ void AV1PerformFullLoop(
         candidate_ptr->chroma_distortion_inter_depth = 0;
         // Set Skip Flag
         candidate_ptr->skip_flag = EB_FALSE;
-#if !ATB_MD
-        if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FULL_LOOP) {
-            context_ptr->skip_interpolation_search = 0;
-            context_ptr->skip_interpolation_search = (best_fastLoop_candidate_index > NFL_IT_TH) ? 1 : context_ptr->skip_interpolation_search;
-            if (candidate_ptr->type != INTRA_MODE) {
-            ProductPredictionFunTable[candidate_ptr->type](
-                context_ptr,
-                picture_control_set_ptr,
-                candidateBuffer,
-                asm_type);
-            }
-        }
-
-        //Y Residual
-        ResidualKernel(
-            &(input_picture_ptr->buffer_y[inputOriginIndex]),
-            input_picture_ptr->stride_y,
-            &(candidateBuffer->prediction_ptr->buffer_y[cuOriginIndex]),
-            candidateBuffer->prediction_ptr->stride_y/* 64*/,
-            &(((int16_t*)candidateBuffer->residual_ptr->buffer_y)[cuOriginIndex]),
-            candidateBuffer->residual_ptr->stride_y,
-            context_ptr->blk_geom->bwidth,
-            context_ptr->blk_geom->bheight);
-
-        //TOADD
-#endif
         //Cb Residual
         if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
             ResidualKernel(
@@ -4038,34 +4006,6 @@ void AV1PerformFullLoop(
         candidate_ptr->transform_type[2] = DCT_DCT;
         candidate_ptr->transform_type[3] = DCT_DCT;
 
-#if !ATB_MD
-        uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
-#if BYPASS_USELESS_TX_SEARCH
-            context_ptr->blk_geom,
-#else
-            context_ptr->blk_geom->sq_size,
-#endif
-            ref_fast_cost,
-            *candidateBuffer->fast_cost_ptr,
-            picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
-
-        tx_search_skip_fag = ( picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
-
-        if (!tx_search_skip_fag){
-                product_full_loop_tx_search(
-                    candidateBuffer,
-                    context_ptr,
-                    picture_control_set_ptr);
-
-            candidate_ptr->full_distortion = 0;
-
-            memset(candidate_ptr->eob[0], 0, sizeof(uint16_t));
-
-            //re-init
-            candidate_ptr->y_has_coeff = 0;
-        }
-#endif
-#if ATB_MD
 #if INCOMPLETE_SB_FIX
         uint8_t end_tx_depth = 0;
         // end_tx_depth set to zero for blocks which go beyond the picture boundaries
@@ -4141,7 +4081,6 @@ void AV1PerformFullLoop(
                 //re-init
                 candidate_ptr->y_has_coeff = 0;
             }
-#endif
             product_full_loop(
                 candidateBuffer,
                 context_ptr,
@@ -4150,9 +4089,7 @@ void AV1PerformFullLoop(
                 &(*count_non_zero_coeffs[0]),
                 &y_coeff_bits,
                 &y_full_distortion[0]);
-#if ATB_MD
         }
-#endif
 
         if (candidate_ptr->type == INTRA_MODE && candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
             // If mode is CFL:
@@ -4572,12 +4509,8 @@ void inter_depth_tx_search(
     uint64_t                                ref_fast_cost,
     EbAsm                                   asm_type)
 {
-#if ATB_MD
     // Hsan: if Transform Search ON and INTRA, then Tx Type search is performed @ the full loop
     uint8_t  tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_INTER_DEPTH && (picture_control_set_ptr->parent_pcs_ptr->atb_mode == 0 || candidateBuffer ->candidate_ptr->type == INTER_MODE)) ? get_skip_tx_search_flag(
-#else
-    uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_INTER_DEPTH ? get_skip_tx_search_flag(
-#endif
 #if BYPASS_USELESS_TX_SEARCH
         context_ptr->blk_geom,
 #else
