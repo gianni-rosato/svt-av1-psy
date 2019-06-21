@@ -4483,15 +4483,9 @@ void  order_nsq_table(
             geom_offset_x,
             geom_offset_y);
 
-#if MD_INJECTION
     const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
     uint8_t nsq0 = me_results->me_nsq_0[me2Nx2NTableOffset];
     uint8_t nsq1 = me_results->me_nsq_1[me2Nx2NTableOffset];
-#else
-    MeCuResults * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr][me2Nx2NTableOffset];
-    uint8_t nsq0 = mePuResult->me_nsq[0];
-    uint8_t nsq1 = mePuResult->me_nsq[1];
-#endif
     uint8_t me_part_0 = nsq0 == 0 ? PART_N : nsq0 == 1 ? PART_H : nsq0 == 2 ? PART_V : nsq0 == 3 ? PART_H4 : nsq0 == 4 ? PART_V4 : nsq0 == 5 ? PART_S : 0;
     uint8_t me_part_1 = nsq1 == 0 ? PART_N : nsq1 == 1 ? PART_H : nsq1 == 2 ? PART_V : nsq1 == 3 ? PART_H4 : nsq1 == 4 ? PART_V4 : nsq1 == 5 ? PART_S : 0;
 

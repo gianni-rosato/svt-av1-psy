@@ -616,7 +616,6 @@ void PredictionPartitionLoop(
                 //reset the flags here:   all CU splitFalg=TRUE. default: we always split. interDepthDecision will select where  to stop splitting(ie setting the flag to False)
 
                 if (picture_control_set_ptr->slice_type != I_SLICE) {
-#if MD_INJECTION
                     const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index];
                     const MeCandidate *me_block_results = me_results->me_candidate[cuIndexInRaterScan];
                     uint8_t total_me_cnt = me_results->total_me_candidate_index[cuIndexInRaterScan];
@@ -639,9 +638,6 @@ void PredictionPartitionLoop(
 
                     //const MeCandidate_t *me_results = &me_block_results[me_index];
 
-#else
-                    MeCuResults * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cuIndexInRaterScan];
-#endif
                     // Initialize the mdc candidate (only av1 rate estimation inputs)
                     // Hsan: mode, direction, .. could be modified toward better early inter depth decision (e.g. NEARESTMV instead of NEWMV)
                     context_ptr->mdc_candidate_ptr->md_rate_estimation_ptr = context_ptr->md_rate_estimation_ptr;
@@ -649,11 +645,7 @@ void PredictionPartitionLoop(
                     context_ptr->mdc_candidate_ptr->merge_flag = EB_FALSE;
                     context_ptr->mdc_candidate_ptr->prediction_direction[0] = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ?
                         UNI_PRED_LIST_0 :
-#if MD_INJECTION
                         me_block_results[me_index].direction;
-#else
-                        mePuResult->distortion_direction[0].direction;
-#endif
                     // Hsan: what's the best mode for rate simulation
                     context_ptr->mdc_candidate_ptr->inter_mode = NEARESTMV;
                     context_ptr->mdc_candidate_ptr->pred_mode = NEARESTMV;
@@ -661,20 +653,10 @@ void PredictionPartitionLoop(
                     context_ptr->mdc_candidate_ptr->is_new_mv = 1;
                     context_ptr->mdc_candidate_ptr->is_zero_mv = 0;
                     context_ptr->mdc_candidate_ptr->drl_index = 0;
-#if MD_INJECTION
                     context_ptr->mdc_candidate_ptr->motion_vector_xl0 = me_results->me_mv_array[cuIndexInRaterScan][0].x_mv << 1;
                     context_ptr->mdc_candidate_ptr->motion_vector_yl0 = me_results->me_mv_array[cuIndexInRaterScan][0].y_mv << 1;
-#else
-                    context_ptr->mdc_candidate_ptr->motion_vector_xl0 = mePuResult->x_mv_l0 << 1;
-                    context_ptr->mdc_candidate_ptr->motion_vector_yl0 = mePuResult->y_mv_l0 << 1;
-#endif
-#if MD_INJECTION
                     context_ptr->mdc_candidate_ptr->motion_vector_xl1 = me_results->me_mv_array[cuIndexInRaterScan][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2)].x_mv << 1;
                     context_ptr->mdc_candidate_ptr->motion_vector_yl1 = me_results->me_mv_array[cuIndexInRaterScan][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2)].y_mv << 1;
-#else
-                    context_ptr->mdc_candidate_ptr->motion_vector_xl1 = mePuResult->x_mv_l1 << 1;
-                    context_ptr->mdc_candidate_ptr->motion_vector_yl1 = mePuResult->y_mv_l1 << 1;
-#endif
                     context_ptr->mdc_candidate_ptr->ref_mv_index = 0;
                     context_ptr->mdc_candidate_ptr->pred_mv_weight = 0;
                     if (context_ptr->mdc_candidate_ptr->prediction_direction[0] == BI_PRED) {
@@ -707,11 +689,7 @@ void PredictionPartitionLoop(
                         context_ptr->mdc_cu_ptr,
                         context_ptr->mdc_candidate_ptr,
                         context_ptr->qp,
-#if MD_INJECTION
                         me_block_results[me_index].distortion,
-#else
-                        mePuResult->distortion_direction[0].distortion,
-#endif
                         (uint64_t) 0,
                         context_ptr->lambda,
                         0,
