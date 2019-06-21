@@ -1936,7 +1936,6 @@ void  Av1GenerateRpsInfo(
         switch (picture_control_set_ptr->temporal_layer_index) {
         case 0:
 
-#if MRP_BASE
             //{16, 48, 0, 0},      // GOP Index 0 - Ref List 0
            //{16, 32, 0, 0}       // GOP Index 0 - Ref List 1
             av1Rps->ref_dpb_index[LAST] = base1_idx;
@@ -1960,18 +1959,6 @@ void  Av1GenerateRpsInfo(
             av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
 #endif
 
-#else
-            //{16, 48, 0, 0},      // GOP Index 0 - Ref List 0
-            //{32, 0, 0, 0}       // GOP Index 0 - Ref List 1
-            av1Rps->ref_dpb_index[LAST] = base1_idx;
-            av1Rps->ref_dpb_index[LAST2] = base2_idx;
-            av1Rps->ref_dpb_index[LAST3] = av1Rps->ref_dpb_index[LAST];
-            av1Rps->ref_dpb_index[GOLD] = av1Rps->ref_dpb_index[LAST];
-
-            av1Rps->ref_dpb_index[BWD] = base0_idx;
-            av1Rps->ref_dpb_index[ALT] = av1Rps->ref_dpb_index[BWD];
-            av1Rps->ref_dpb_index[ALT2] = av1Rps->ref_dpb_index[BWD];
-#endif
             av1Rps->refresh_frame_mask = 1 << context_ptr->lay0_toggle;
 
             break;
