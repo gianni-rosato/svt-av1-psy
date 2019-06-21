@@ -191,9 +191,7 @@ extern "C" {
      * Declarations
      ************************************************/
     extern EbErrorType prediction_structure_group_ctor(
-#if MRP_M1
         uint8_t          enc_mode,
-#endif
         PredictionStructureGroup   **predictionStructureGroupDblPtr,
         uint32_t                        base_layer_switch_mode);
 

@@ -1645,9 +1645,7 @@ static EbErrorType PredictionStructureCtor(
  *************************************************/
 
 EbErrorType prediction_structure_group_ctor(
-#if MRP_M1
     uint8_t          enc_mode,
-#endif
     PredictionStructureGroup   **predictionStructureGroupDblPtr,
     uint32_t                         baseLayerSwitchMode)
 {
@@ -1662,7 +1660,6 @@ EbErrorType prediction_structure_group_ctor(
     EB_MALLOC(PredictionStructureGroup*, predictionStructureGroupPtr, sizeof(PredictionStructureGroup), EB_N_PTR);
     *predictionStructureGroupDblPtr = predictionStructureGroupPtr;
 
-#if MRP_M1
     if (enc_mode > ENC_M0) {
         for (int gop_i = 1; gop_i < 8; ++gop_i) {
             for (int i = 1; i < 4; ++i) {
@@ -1678,7 +1675,6 @@ EbErrorType prediction_structure_group_ctor(
             }
         }
     }
-#endif
 
     // Count the number of Prediction Structures
     while ((PredictionStructureConfigArray[predStructIndex].entry_array != 0) && (PredictionStructureConfigArray[predStructIndex].entry_count != 0)) {

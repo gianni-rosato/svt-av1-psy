@@ -2867,9 +2867,7 @@ EB_API EbErrorType eb_svt_enc_set_parameter(
 
     // Initialize the Prediction Structure Group
     return_error = (EbErrorType)prediction_structure_group_ctor(
-#if MRP_M1
         pEncCompData->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.enc_mode,
-#endif
         &pEncCompData->sequence_control_set_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         pEncCompData->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.base_layer_switch_mode);
 
