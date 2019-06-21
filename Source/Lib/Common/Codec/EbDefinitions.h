@@ -209,7 +209,7 @@ extern "C" {
 //ADD_DELTA_QP_SUPPORT
 
 
-#define EC_UPDATE                 1
+
 #define MRP_ME                    1
 #define MRP_CONNECTION            1
 #define MD_INJECTION              1
@@ -1748,11 +1748,9 @@ static INLINE int32_t get_ext_tx_set(TxSize tx_size, int32_t is_inter,
 static INLINE int32_t is_inter_compound_mode(PredictionMode mode) {
     return mode >= NEAREST_NEARESTMV && mode <= NEW_NEWMV;
 }
-#if EC_UPDATE
 static INLINE int is_inter_singleref_mode(PredictionMode mode) {
     return mode >= SINGLE_INTER_MODE_START && mode < SINGLE_INTER_MODE_END;
 }
-#endif
 
 //**********************************************************************************************************************//
 // encoder.h

@@ -2245,7 +2245,6 @@ int32_t av1_get_reference_mode_context(
     assert(ctx >= 0 && ctx < COMP_INTER_CONTEXTS);
     return ctx;
 }
-#if EC_UPDATE
 int av1_get_intra_inter_context(const MacroBlockD *xd);
 
 int av1_get_reference_mode_context_new(const MacroBlockD *xd);
@@ -2538,7 +2537,6 @@ INLINE void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd) {
             ref_counts[left_mbmi->ref_frame[1]]++;
     }
 }
-#endif
 
 int32_t av1_get_comp_reference_type_context(
     uint32_t                  cu_origin_x,
@@ -2713,13 +2711,8 @@ void av1_collect_neighbors_ref_counts(
     }
 }
 
-#if EC_UPDATE
 #define WRITE_REF_BIT(bname, pname) \
   aom_write_symbol(w, bname, av1_get_pred_cdf_##pname(xd), 2)
-#else
-#define WRITE_REF_BIT(bname, pname) \
-  aom_write_symbol(ec_writer, bname, av1_get_pred_cdf_##pname(), 2)
-#endif
 /***************************************************************************************/
 
 // == Common context functions for both comp and single ref ==
@@ -2863,7 +2856,6 @@ int32_t av1_get_pred_context_single_ref_p1(const MacroBlockD *xd) {
     assert(pred_context >= 0 && pred_context < REF_CONTEXTS);
     return pred_context;
 }
-#if EC_UPDATE
 static INLINE AomCdfProb *av1_get_pred_cdf_single_ref_p1(
     const MacroBlockD *xd) {
     return xd->tile_ctx
@@ -2895,7 +2887,6 @@ static INLINE AomCdfProb *av1_get_pred_cdf_single_ref_p6(
         ->single_ref_cdf[av1_get_pred_context_single_ref_p6(xd)][5];
 }
 
-#endif
 // For the bit to signal whether the single reference is ALTREF_FRAME or
 // non-ALTREF backward reference frame, knowing that it shall be either of
 // these 2 choices.
@@ -2928,7 +2919,6 @@ int32_t av1_get_pred_context_single_ref_p6(const MacroBlockD *xd) {
 }
 /***************************************************************************************/
 
-#if EC_UPDATE
 static void write_ref_frames(
     FRAME_CONTEXT               *frame_context,
     PictureParentControlSet   *pcs_ptr,
@@ -3023,182 +3013,6 @@ static void write_ref_frames(
         }
     }
 }
-#endif
-#if !EC_UPDATE
-
-// This function encodes the reference frame
-static void WriteRefFrames(
-    FRAME_CONTEXT               *frameContext,
-    AomWriter                  *ec_writer,
-    PictureParentControlSet   *pcs_ptr,
-    CodingUnit                *cu_ptr,
-    BlockSize                   bsize,
-    uint32_t                       cu_origin_x,
-    uint32_t                       cu_origin_y,
-    NeighborArrayUnit         *mode_type_neighbor_array,
-    NeighborArrayUnit         *inter_pred_dir_neighbor_array)
-{
-    //const MbModeInfo *const mbmi = &xd->mi[0]->mbmi;
-    const int32_t is_compound = (cu_ptr->prediction_unit_array[0].inter_pred_direction_index == BI_PRED); //is_compound;// has_second_ref(mbmi);
-    //const int32_t segment_id = mbmi->segment_id;
-
-    // If segment level coding of this signal is disabled...
-    // or the segment allows multiple reference frame options
-    /*if (segfeature_active(&cm->seg, segment_id, SEG_LVL_REF_FRAME)) {
-    assert(!is_compound);
-    assert(mbmi->ref_frame[0] ==
-    get_segdata(&cm->seg, segment_id, SEG_LVL_REF_FRAME));
-    }
-    else if (segfeature_active(&cm->seg, segment_id, SEG_LVL_SKIP) ||
-    segfeature_active(&cm->seg, segment_id, SEG_LVL_GLOBALMV)) {
-    assert(!is_compound);
-    assert(mbmi->ref_frame[0] == LAST_FRAME);
-    }
-    else*/ {
-    // does the feature use compound prediction or not
-    // (if not specified at the frame/segment level)
-        if (pcs_ptr->reference_mode == REFERENCE_MODE_SELECT) {
-            if (is_comp_ref_allowed(bsize)) {
-                int32_t context = 0;
-                context = av1_get_reference_mode_context(
-                    cu_origin_x,
-                    cu_origin_y,
-                    mode_type_neighbor_array,
-                    inter_pred_dir_neighbor_array);
-                aom_write_symbol(ec_writer, is_compound, frameContext->comp_inter_cdf[context], 2);
-            }
-        }
-        else
-            assert((!is_compound) == (pcs_ptr->reference_mode == SINGLE_REFERENCE));
-        int32_t context = 0;
-        if (is_compound) {
-            const CompReferenceType comp_ref_type = /*has_uni_comp_refs(mbmi)
-                                                      ? UNIDIR_COMP_REFERENCE
-                                                      : */BIDIR_COMP_REFERENCE;
-            MvReferenceFrame refType[2];
-            av1_set_ref_frame(refType, cu_ptr->prediction_unit_array[0].ref_frame_type);
-
-            context = av1_get_comp_reference_type_context(
-                cu_origin_x,
-                cu_origin_y,
-                mode_type_neighbor_array,
-                inter_pred_dir_neighbor_array);
-
-            aom_write_symbol(ec_writer, comp_ref_type, frameContext->comp_ref_type_cdf[context],
-                2);
-
-            if (comp_ref_type == UNIDIR_COMP_REFERENCE) {
-                printf("ERROR[AN]: UNIDIR_COMP_REFERENCE not supported\n");
-                //const int32_t bit = mbmi->ref_frame[0] == BWDREF_FRAME;
-                //WRITE_REF_BIT(bit, uni_comp_ref_p);
-
-                //if (!bit) {
-                //    assert(mbmi->ref_frame[0] == LAST_FRAME);
-                //    const int32_t bit1 = mbmi->ref_frame[1] == LAST3_FRAME ||
-                //        mbmi->ref_frame[1] == GOLDEN_FRAME;
-                //    WRITE_REF_BIT(bit1, uni_comp_ref_p1);
-                //    if (bit1) {
-                //        const int32_t bit2 = mbmi->ref_frame[1] == GOLDEN_FRAME;
-                //        WRITE_REF_BIT(bit2, uni_comp_ref_p2);
-                //    }
-                //}
-                //else {
-                //    assert(mbmi->ref_frame[1] == ALTREF_FRAME);
-                //}
-
-                //return;
-            }
-
-            assert(comp_ref_type == BIDIR_COMP_REFERENCE);
-
-            const int32_t bit = (refType[0] == GOLDEN_FRAME ||
-                refType[0] == LAST3_FRAME);
-
-            context = av1_get_pred_context_comp_ref_p(cu_ptr->av1xd);
-            aom_write_symbol(ec_writer, bit, frameContext->comp_ref_cdf[context][0],
-                2);
-            //            WRITE_REF_BIT(bit, comp_ref_p);
-
-            if (!bit) {
-                const int32_t bit1 = (refType[0] == LAST2_FRAME);
-                context = av1_get_pred_context_comp_ref_p1(cu_ptr->av1xd);
-                aom_write_symbol(ec_writer, bit1, frameContext->comp_ref_cdf[context][1],
-                    2);
-                //WRITE_REF_BIT(bit1, comp_ref_p1);
-            }
-            else {
-                const int32_t bit2 = (refType[0] == GOLDEN_FRAME);
-                context = av1_get_pred_context_comp_ref_p2(cu_ptr->av1xd);
-                aom_write_symbol(ec_writer, bit2, frameContext->comp_ref_cdf[context][2],
-                    2);
-
-                //WRITE_REF_BIT(bit2, comp_ref_p2);
-            }
-
-            const int32_t bit_bwd = (refType[1] == ALTREF_FRAME);
-            context = av1_get_pred_context_comp_bwdref_p(cu_ptr->av1xd);
-            aom_write_symbol(ec_writer, bit_bwd, frameContext->comp_bwdref_cdf[context][0],
-                2);
-            //WRITE_REF_BIT(bit_bwd, comp_bwdref_p);
-
-            if (!bit_bwd) {
-                context = av1_get_pred_context_comp_bwdref_p1(cu_ptr->av1xd);
-                aom_write_symbol(ec_writer, refType[1] == ALTREF2_FRAME, frameContext->comp_bwdref_cdf[context][1],
-                    2);
-                //WRITE_REF_BIT(mbmi->ref_frame[1] == ALTREF2_FRAME, comp_bwdref_p1);
-            }
-        }
-        else {
-            const int32_t bit0 = (cu_ptr->prediction_unit_array[0].ref_frame_type <= ALTREF_FRAME &&
-                cu_ptr->prediction_unit_array[0].ref_frame_type >= BWDREF_FRAME);//0
-
-            context = av1_get_pred_context_single_ref_p1(cu_ptr->av1xd);
-            aom_write_symbol(ec_writer, bit0, frameContext->single_ref_cdf[context][0],
-                2);
-            //WRITE_REF_BIT(bit0, single_ref_p1);
-
-            if (bit0) {
-                const int32_t bit1 = (cu_ptr->prediction_unit_array[0].ref_frame_type == ALTREF_FRAME);
-                context = av1_get_pred_context_single_ref_p2(cu_ptr->av1xd);
-                aom_write_symbol(ec_writer, bit1, frameContext->single_ref_cdf[context][1],
-                    2);
-                //WRITE_REF_BIT(bit1, single_ref_p2);
-
-                if (!bit1) {
-                    context = av1_get_pred_context_single_ref_p6(cu_ptr->av1xd);
-                    aom_write_symbol(ec_writer, cu_ptr->prediction_unit_array[0].ref_frame_type == ALTREF2_FRAME, frameContext->single_ref_cdf[context][5],
-                        2);
-                    //WRITE_REF_BIT(mbmi->ref_frame[0] == ALTREF2_FRAME, single_ref_p6);
-                }
-            }
-            else {
-                const int32_t bit2 = (cu_ptr->prediction_unit_array[0].ref_frame_type == LAST3_FRAME ||
-                    cu_ptr->prediction_unit_array[0].ref_frame_type == GOLDEN_FRAME); //0
-                context = av1_get_pred_context_single_ref_p3(cu_ptr->av1xd);
-                aom_write_symbol(ec_writer, bit2, frameContext->single_ref_cdf[context][2],
-                    2);
-                //WRITE_REF_BIT(bit2, single_ref_p3);
-                if (!bit2) {
-                    const int32_t bit3 = (cu_ptr->prediction_unit_array[0].ref_frame_type != LAST_FRAME); //0;
-                    context = av1_get_pred_context_single_ref_p4(cu_ptr->av1xd);
-
-                    aom_write_symbol(ec_writer, bit3, frameContext->single_ref_cdf[context][3],
-                        2);
-                    //WRITE_REF_BIT(bit3, single_ref_p4);
-                }
-                else {
-                    const int32_t bit4 = (cu_ptr->prediction_unit_array[0].ref_frame_type != LAST3_FRAME);
-                    context = av1_get_pred_context_single_ref_p5(cu_ptr->av1xd);
-                    aom_write_symbol(ec_writer, bit4, frameContext->single_ref_cdf[context][4],
-                        2);
-                    //WRITE_REF_BIT(bit4, single_ref_p5);
-                }
-            }
-        }
-    }
-}
-
-#endif
 static void encode_restoration_mode(PictureParentControlSet *pcs_ptr,
     struct AomWriteBitBuffer *wb) {
     Av1Common* cm = pcs_ptr->av1_cm;
@@ -6073,7 +5887,6 @@ EbErrorType write_modes_b(
     skipCoeff = cu_ptr->block_has_coeff ? 0 : 1;
 
 assert(bsize < BlockSizeS_ALL);
-#if EC_UPDATE
     int32_t mi_row = blkOriginY >> MI_SIZE_LOG2;
     int32_t mi_col = blkOriginX >> MI_SIZE_LOG2;
     int mi_stride = picture_control_set_ptr->parent_pcs_ptr->av1_cm->mi_stride;
@@ -6092,7 +5905,6 @@ assert(bsize < BlockSizeS_ALL);
     else
         cu_ptr->av1xd->left_mbmi = NULL;
     cu_ptr->av1xd->tile_ctx = frameContext;
-#endif
     if (picture_control_set_ptr->slice_type == I_SLICE) {
         //const int32_t skip = write_skip(cm, xd, mbmi->segment_id, mi, w);
         if (picture_control_set_ptr->parent_pcs_ptr->segmentation_params.seg_id_pre_skip)
@@ -6350,7 +6162,6 @@ assert(bsize < BlockSizeS_ALL);
                         blk_geom->bwidth <= 32 && blk_geom->bheight <= 32);
             }
             else {
-#if EC_UPDATE
                 av1_collect_neighbors_ref_counts_new(cu_ptr->av1xd);
 
                 write_ref_frames(
@@ -6358,26 +6169,6 @@ assert(bsize < BlockSizeS_ALL);
                     picture_control_set_ptr->parent_pcs_ptr,
                     cu_ptr->av1xd,
                     ec_writer);
-#else
-                av1_collect_neighbors_ref_counts(
-                    cu_ptr,
-                    blkOriginX,
-                    blkOriginY,
-                    mode_type_neighbor_array,
-                    inter_pred_dir_neighbor_array,
-                    ref_frame_type_neighbor_array);
-
-                WriteRefFrames(
-                    frameContext,
-                    ec_writer,
-                    picture_control_set_ptr->parent_pcs_ptr,
-                    cu_ptr,
-                    bsize,
-                    blkOriginX,
-                    blkOriginY,
-                    mode_type_neighbor_array,
-                    inter_pred_dir_neighbor_array);
-#endif
 
                 MvReferenceFrame rf[2];
                 av1_set_ref_frame(rf, cu_ptr->prediction_unit_array[0].ref_frame_type);
@@ -6387,22 +6178,14 @@ assert(bsize < BlockSizeS_ALL);
 
                 // If segment skip is not enabled code the mode.
                 if (1) {
-#if EC_UPDATE
                     if (is_inter_compound_mode(inter_mode)) {
-#else
-                    if (cu_ptr->prediction_unit_array[0].is_compound) {
-#endif
                         WriteInterCompoundMode(
                             frameContext,
                             ec_writer,
                             inter_mode,
                             mode_ctx);
                     }
-#if EC_UPDATE
                     else if (is_inter_singleref_mode(inter_mode))
-#else
-                    else /*if (is_inter_singleref_mode(mode))*/
-#endif
                         WriteInterMode(
                             frameContext,
                             ec_writer,
