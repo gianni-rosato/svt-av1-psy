@@ -101,7 +101,7 @@ extern "C" {
 
 #define CDEF_AVX_OPT                      1
 
-#define HARD_CODE_SC_SETTING              0
+
 #define MR_MODE                           0
 #define SHUT_FILTERING                    0 // CDEF RESTORATION DLF
 #define M8_SKIP_BLK                       1
