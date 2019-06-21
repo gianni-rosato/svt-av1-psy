@@ -157,13 +157,9 @@ extern "C" {
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
-#define BLK_SKIP_DECISION                 1 // For now enabled for all mode. to be evaluated. Lossless optimization can be performed.
+
 #define CDEF_OFF_NON_REF                  1
-#if BLK_SKIP_DECISION
 #define REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY  0
-#else
-#define REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY  1
-#endif
 #define PF_N2_SUPPORT                     1
 
 

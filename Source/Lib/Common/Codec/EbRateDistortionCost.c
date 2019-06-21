@@ -1737,7 +1737,6 @@ EbErrorType Av1FullCost(
     }
 
     // Coeff rate
-#if  BLK_SKIP_DECISION
 
     if (context_ptr->blk_skip_decision && candidate_buffer_ptr->candidate_ptr->type != INTRA_MODE) {
         uint64_t non_skip_cost = RDCOST(lambda, (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits + (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->skip_fac_bits[cu_ptr->skip_coeff_context][0]), (y_distortion[0] + cb_distortion[0] + cr_distortion[0]));
@@ -1756,9 +1755,6 @@ EbErrorType Av1FullCost(
     }
     else
         coeffRate = (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits + (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->skip_fac_bits[cu_ptr->skip_coeff_context][0]);
-#else
-    coeffRate = (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits);
-#endif
     luma_sse = y_distortion[0];
     chromaSse = cb_distortion[0] + cr_distortion[0];
     totalDistortion = luma_sse + chromaSse;

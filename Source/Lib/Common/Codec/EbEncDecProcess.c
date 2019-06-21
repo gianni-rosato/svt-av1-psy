@@ -1335,12 +1335,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->spatial_sse_full_loop = EB_FALSE;
 
-#if BLK_SKIP_DECISION
     if (context_ptr->chroma_level <= CHROMA_MODE_1)
         context_ptr->blk_skip_decision = EB_TRUE;
     else
         context_ptr->blk_skip_decision = EB_FALSE;
-#endif
     // Derive Trellis Quant Coeff Optimization Flag
     if (picture_control_set_ptr->enc_mode == ENC_M0)
         context_ptr->trellis_quant_coeff_optimization = EB_TRUE;

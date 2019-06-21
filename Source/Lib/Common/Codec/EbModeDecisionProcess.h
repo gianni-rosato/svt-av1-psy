@@ -243,9 +243,7 @@ extern "C" {
         uint8_t                         redundant_blk;
         uint8_t                          cfl_temp_luma_recon[128 * 128];
         EbBool                          spatial_sse_full_loop;
-#if  BLK_SKIP_DECISION
         EbBool                          blk_skip_decision;
-#endif
         EbBool                          trellis_quant_coeff_optimization;
 
     } ModeDecisionContext;
