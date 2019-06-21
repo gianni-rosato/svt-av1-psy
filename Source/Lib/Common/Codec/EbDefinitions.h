@@ -44,7 +44,7 @@ extern "C" {
 
 
 
-#define ADAPTIVE_QP_SCALING               1 // Adaptive QP scaling. Change the QP based on the content.
+
 
 #define MRP_SUPPORT                       1// MRP Main Flag
 
