@@ -13802,7 +13802,6 @@ EbErrorType motion_estimate_lcu(
             }
 
             refPicPtr = (EbPictureBufferDesc*)referenceObject->input_padded_picture_ptr;
-#if DOWN_SAMPLING_FILTERING
             // Set 1/4 and 1/16 ME reference buffer(s); filtered or decimated
             quarterRefPicPtr = (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ?
                 (EbPictureBufferDesc*)referenceObject->quarter_filtered_picture_ptr :
@@ -13811,10 +13810,6 @@ EbErrorType motion_estimate_lcu(
             sixteenthRefPicPtr = (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ?
                 (EbPictureBufferDesc*)referenceObject->sixteenth_filtered_picture_ptr:
                 (EbPictureBufferDesc*)referenceObject->sixteenth_decimated_picture_ptr;
-#else
-            quarterRefPicPtr = (EbPictureBufferDesc*)referenceObject->quarter_decimated_picture_ptr;
-            sixteenthRefPicPtr = (EbPictureBufferDesc*)referenceObject->sixteenth_decimated_picture_ptr;
-#endif
 #if BASE_LAYER_REF
             if (picture_control_set_ptr->temporal_layer_index > 0 ||
                 listIndex == 0 || ((ref0Poc != ref1Poc) && (listIndex == 1))) {

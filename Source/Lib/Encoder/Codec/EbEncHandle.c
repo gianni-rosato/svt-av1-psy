@@ -1117,13 +1117,8 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         EbReferenceObjectDescInitData     EbReferenceObjectDescInitDataStructure;
         EbPaReferenceObjectDescInitData   EbPaReferenceObjectDescInitDataStructure;
         EbPictureBufferDescInitData       referencePictureBufferDescInitData;
-#if DOWN_SAMPLING_FILTERING
         EbPictureBufferDescInitData       quarterPictureBufferDescInitData;
         EbPictureBufferDescInitData       sixteenthPictureBufferDescInitData;
-#else
-        EbPictureBufferDescInitData       quarterDecimPictureBufferDescInitData;
-        EbPictureBufferDescInitData       sixteenthDecimPictureBufferDescInitData;
-#endif
         // Initialize the various Picture types
         referencePictureBufferDescInitData.max_width = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width;
         referencePictureBufferDescInitData.max_height = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height;
@@ -1172,7 +1167,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         referencePictureBufferDescInitData.top_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz + ME_FILTER_TAP;
         referencePictureBufferDescInitData.bot_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz + ME_FILTER_TAP;
         referencePictureBufferDescInitData.split_mode = EB_FALSE;
-#if DOWN_SAMPLING_FILTERING
         quarterPictureBufferDescInitData.max_width = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width >> 1;
         quarterPictureBufferDescInitData.max_height = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height >> 1;
         quarterPictureBufferDescInitData.bit_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
@@ -1200,33 +1194,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         EbPaReferenceObjectDescInitDataStructure.reference_picture_desc_init_data = referencePictureBufferDescInitData;
         EbPaReferenceObjectDescInitDataStructure.quarter_picture_desc_init_data = quarterPictureBufferDescInitData;
         EbPaReferenceObjectDescInitDataStructure.sixteenth_picture_desc_init_data = sixteenthPictureBufferDescInitData;
-#else
-        quarterDecimPictureBufferDescInitData.max_width = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width >> 1;
-        quarterDecimPictureBufferDescInitData.max_height = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height >> 1;
-        quarterDecimPictureBufferDescInitData.bit_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
-        quarterDecimPictureBufferDescInitData.color_format = EB_YUV420;
-        quarterDecimPictureBufferDescInitData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-        quarterDecimPictureBufferDescInitData.left_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 1;
-        quarterDecimPictureBufferDescInitData.right_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 1;
-        quarterDecimPictureBufferDescInitData.top_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 1;
-        quarterDecimPictureBufferDescInitData.bot_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 1;
-        quarterDecimPictureBufferDescInitData.split_mode = EB_FALSE;
-
-        sixteenthDecimPictureBufferDescInitData.max_width = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width >> 2;
-        sixteenthDecimPictureBufferDescInitData.max_height = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height >> 2;
-        sixteenthDecimPictureBufferDescInitData.bit_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
-        sixteenthDecimPictureBufferDescInitData.color_format = EB_YUV420;
-        sixteenthDecimPictureBufferDescInitData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-        sixteenthDecimPictureBufferDescInitData.left_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 2;
-        sixteenthDecimPictureBufferDescInitData.right_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 2;
-        sixteenthDecimPictureBufferDescInitData.top_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 2;
-        sixteenthDecimPictureBufferDescInitData.bot_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz >> 2;
-        sixteenthDecimPictureBufferDescInitData.split_mode = EB_FALSE;
-
-        EbPaReferenceObjectDescInitDataStructure.reference_picture_desc_init_data = referencePictureBufferDescInitData;
-        EbPaReferenceObjectDescInitDataStructure.quarter_picture_desc_init_data = quarterDecimPictureBufferDescInitData;
-        EbPaReferenceObjectDescInitDataStructure.sixteenth_picture_desc_init_data = sixteenthDecimPictureBufferDescInitData;
-#endif
         // Reference Picture Buffers
         return_error = eb_system_resource_ctor(
             &enc_handle_ptr->pa_reference_picture_pool_ptr_array[instance_index],
@@ -2262,7 +2229,6 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
 #else
     sequence_control_set_ptr->nsq_present = 1;
 #endif
-#if DOWN_SAMPLING_FILTERING
     // Set down-sampling method     Settings
     // 0                            0: filtering
     // 1                            1: decimation
@@ -2270,7 +2236,6 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
         sequence_control_set_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
     else
         sequence_control_set_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
-#endif
 #if INCOMPLETE_SB_FIX
     // Set over_boundary_block_mode     Settings
     // 0                            0: not allowed

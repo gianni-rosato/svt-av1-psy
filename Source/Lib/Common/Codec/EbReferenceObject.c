@@ -244,7 +244,6 @@ EbErrorType eb_pa_reference_object_ctor(
         (EbPtr)(pictureBufferDescInitDataPtr + 2));
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-#if DOWN_SAMPLING_FILTERING
     // Quarter Filtered reference picture constructor
     paReferenceObject->quarter_filtered_picture_ptr = (EbPictureBufferDesc*)EB_NULL;
     if ((pictureBufferDescInitDataPtr + 1)->down_sampled_filtered) {
@@ -263,7 +262,6 @@ EbErrorType eb_pa_reference_object_ctor(
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
     }
-#endif
 
     return EB_ErrorNone;
 }
