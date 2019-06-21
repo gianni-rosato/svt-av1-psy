@@ -287,26 +287,17 @@ uint8_t derive_contouring_class(
 void RefinementPredictionLoop(
     SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet                    *picture_control_set_ptr,
-#if !MEMORY_FOOTPRINT_OPT
-    LargestCodingUnit                    *sb_ptr,
-#endif
     uint32_t                              sb_index,
     ModeDecisionConfigurationContext     *context_ptr)
 {
     MdcpLocalCodingUnit    *local_cu_array         = context_ptr->local_cu_array;
     SbParams               *sb_params            = &sequence_control_set_ptr->sb_params_array[sb_index];
     uint32_t                  cu_index             = 0;
-#if !MEMORY_FOOTPRINT_OPT
-    sb_ptr->pred64 = EB_FALSE;
-#endif
     while (cu_index < CU_MAX_COUNT)
     {
         if (sb_params->raster_scan_cu_validity[md_scan_to_raster_scan[cu_index]] && (local_cu_array[cu_index].early_split_flag == EB_FALSE))
         {
             local_cu_array[cu_index].selected_cu = EB_TRUE;
-#if !MEMORY_FOOTPRINT_OPT
-            sb_ptr->pred64 = (cu_index == 0) ? EB_TRUE : sb_ptr->pred64;
-#endif
             uint32_t depth = get_coded_unit_stats(cu_index)->depth;
             uint8_t refinementLevel;
             {
@@ -408,14 +399,6 @@ void ForwardCuToModeDecision(
 
     // CU Loop
     const CodedUnitStats *cuStatsPtr = get_coded_unit_stats(0);
-#if !MEMORY_FOOTPRINT_OPT
-    SbStat *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
-    EbBool    testAllDepthIntraSliceFlag = EB_FALSE;
-    testAllDepthIntraSliceFlag = slice_type == I_SLICE &&
-        (sb_stat_ptr->stationary_edge_over_time_flag || picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag ||
-        (picture_control_set_ptr->parent_pcs_ptr->very_low_var_pic_flag && picture_control_set_ptr->parent_pcs_ptr->low_motion_content_flag)) ?
-        EB_TRUE : testAllDepthIntraSliceFlag;
-#endif
 
     resultsPtr->leaf_count = 0;
     uint8_t   enable_blk_4x4 = 0;
@@ -436,17 +419,8 @@ void ForwardCuToModeDecision(
                 cuClass = DO_NOT_ADD_CU_CONTINUE_SPLIT;
 
                 if (slice_type == I_SLICE) {
-#if MEMORY_FOOTPRINT_OPT
                     cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
                     cuClass = local_cu_array[cu_index].stop_split == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
-#else
-                    if (testAllDepthIntraSliceFlag)
-                        cuClass = ADD_CU_CONTINUE_SPLIT;
-                    else {
-                        cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
-                        cuClass = local_cu_array[cu_index].stop_split == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
-                    }
-#endif
                 }
                 else {
                     cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
@@ -894,9 +868,6 @@ EbErrorType early_mode_decision_lcu(
     RefinementPredictionLoop(
         sequence_control_set_ptr,
         picture_control_set_ptr,
-#if !MEMORY_FOOTPRINT_OPT
-        sb_ptr,
-#endif
         sb_index,
         context_ptr);
 

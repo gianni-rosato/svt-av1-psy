@@ -1695,157 +1695,7 @@ EB_AV1_GENERATE_RECON_FUNC_PTR   Av1EncodeGenerateReconFunctionPtr[2] =
     Av1EncodeGenerateRecon,
     Av1EncodeGenerateRecon16bit
 };
-#if !MEMORY_FOOTPRINT_OPT
-/*******************************************
-* Encode Pass - Assign Delta Qp
-*******************************************/
-static void EncodePassUpdateQp(
-    PictureControlSet     *picture_control_set_ptr,
-    EncDecContext         *context_ptr,
-    EbBool                  availableCoeff,
-    EbBool                  isDeltaQpEnable,
-    EbBool                 *isDeltaQpNotCoded,
-    uint32_t                   dif_cu_delta_qp_depth,
-    uint8_t                   *prev_coded_qp,
-    uint8_t                   *prev_quant_group_coded_qp,
-    uint32_t                   sb_qp
-)
-{
-    uint32_t ref_qp;
-    uint8_t qp;
 
-    uint32_t  log2MinCuQpDeltaSize = LOG2F_MAX_LCU_SIZE - dif_cu_delta_qp_depth;
-    int32_t  qpTopNeighbor = 0;
-    int32_t  qpLeftNeighbor = 0;
-    EbBool newQuantGroup;
-    uint32_t  quantGroupX = context_ptr->cu_origin_x - (context_ptr->cu_origin_x & ((1 << log2MinCuQpDeltaSize) - 1));
-    uint32_t  quantGroupY = context_ptr->cu_origin_y - (context_ptr->cu_origin_y & ((1 << log2MinCuQpDeltaSize) - 1));
-    EbBool sameLcuCheckTop = (((quantGroupY - 1) >> LOG2F_MAX_LCU_SIZE) == ((quantGroupY) >> LOG2F_MAX_LCU_SIZE)) ? EB_TRUE : EB_FALSE;
-    EbBool sameLcuCheckLeft = (((quantGroupX - 1) >> LOG2F_MAX_LCU_SIZE) == ((quantGroupX) >> LOG2F_MAX_LCU_SIZE)) ? EB_TRUE : EB_FALSE;
-    // Neighbor Array
-    uint32_t qpLeftNeighborIndex = 0;
-    uint32_t qpTopNeighborIndex = 0;
-
-    // CU larger than the quantization group
-
-    if (Log2f(context_ptr->blk_geom->bwidth) >= log2MinCuQpDeltaSize)
-        *isDeltaQpNotCoded = EB_TRUE;
-    // At the beginning of a new quantization group
-    if (((context_ptr->cu_origin_x & ((1 << log2MinCuQpDeltaSize) - 1)) == 0) &&
-        ((context_ptr->cu_origin_y & ((1 << log2MinCuQpDeltaSize) - 1)) == 0))
-    {
-        *isDeltaQpNotCoded = EB_TRUE;
-        newQuantGroup = EB_TRUE;
-    }
-    else
-        newQuantGroup = EB_FALSE;
-    // setting the previous Quantization Group QP
-    if (newQuantGroup == EB_TRUE)
-        *prev_coded_qp = *prev_quant_group_coded_qp;
-    if (sameLcuCheckTop) {
-        qpTopNeighborIndex =
-            LUMA_SAMPLE_PIC_WISE_LOCATION_TO_QP_ARRAY_IDX(
-                quantGroupX,
-                quantGroupY - 1,
-                picture_control_set_ptr->qp_array_stride);
-        qpTopNeighbor = picture_control_set_ptr->qp_array[qpTopNeighborIndex];
-    }
-    else
-        qpTopNeighbor = *prev_coded_qp;
-    if (sameLcuCheckLeft) {
-        qpLeftNeighborIndex =
-            LUMA_SAMPLE_PIC_WISE_LOCATION_TO_QP_ARRAY_IDX(
-                quantGroupX - 1,
-                quantGroupY,
-                picture_control_set_ptr->qp_array_stride);
-
-        qpLeftNeighbor = picture_control_set_ptr->qp_array[qpLeftNeighborIndex];
-    }
-    else
-        qpLeftNeighbor = *prev_coded_qp;
-    ref_qp = (qpLeftNeighbor + qpTopNeighbor + 1) >> 1;
-
-    qp = (uint8_t)context_ptr->cu_ptr->qp;
-    // Update the State info
-    if (isDeltaQpEnable) {
-        if (*isDeltaQpNotCoded) {
-            if (availableCoeff) {
-                qp = (uint8_t)context_ptr->cu_ptr->qp;
-                *prev_coded_qp = qp;
-                *prev_quant_group_coded_qp = qp;
-                *isDeltaQpNotCoded = EB_FALSE;
-            }
-            else {
-                qp = (uint8_t)ref_qp;
-                *prev_quant_group_coded_qp = qp;
-            }
-        }
-    }
-    else
-        qp = (uint8_t)sb_qp;
-    context_ptr->cu_ptr->qp = qp;
-    return;
-}
-#endif
-
-#if !MEMORY_FOOTPRINT_OPT
-EbErrorType QpmDeriveBeaAndSkipQpmFlagLcu(
-    SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet                    *picture_control_set_ptr,
-    LargestCodingUnit                    *sb_ptr,
-    uint32_t                                 sb_index,
-    EncDecContext                        *context_ptr)
-{
-    EbErrorType                    return_error = EB_ErrorNone;
-#if ADD_DELTA_QP_SUPPORT
-    uint16_t                           picture_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
-    uint16_t                           min_qp_allowed = 0;
-    uint16_t                           max_qp_allowed = 255;
-    uint16_t                           deltaQpRes = (uint16_t)picture_control_set_ptr->parent_pcs_ptr->delta_q_res;
-#else
-    uint8_t                           picture_qp = picture_control_set_ptr->picture_qp;
-
-    uint8_t                           min_qp_allowed = (uint8_t)sequence_control_set_ptr->static_config.min_qp_allowed;
-    uint8_t                           max_qp_allowed = (uint8_t)sequence_control_set_ptr->static_config.max_qp_allowed;
-#endif
-
-    context_ptr->qpm_qp = picture_qp;
-
-    SbStat *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
-
-    context_ptr->non_moving_delta_qp = 0;
-
-    context_ptr->grass_enhancement_flag = ((picture_control_set_ptr->scene_caracteristic_id == EB_FRAME_CARAC_1) && (sb_stat_ptr->cu_stat_array[0].grass_area)
-        && (sb_ptr->picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index].edge_block_num > 0))
-
-        ? EB_TRUE : EB_FALSE;
-
-    context_ptr->backgorund_enhancement = EB_FALSE;
-
-    context_ptr->skip_qpm_flag = sequence_control_set_ptr->static_config.improve_sharpness ? EB_FALSE : EB_TRUE;
-#if !DISABLE_OIS_USE
-    if ((picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag == EB_FALSE) && ((picture_control_set_ptr->parent_pcs_ptr->pic_noise_class >= PIC_NOISE_CLASS_3_1) || (picture_control_set_ptr->parent_pcs_ptr->high_dark_low_light_area_density_flag) || (picture_control_set_ptr->parent_pcs_ptr->intra_coded_block_probability > 90)))
-        context_ptr->skip_qpm_flag = EB_TRUE;
-#endif
-    if (sequence_control_set_ptr->input_resolution < INPUT_SIZE_4K_RANGE)
-        context_ptr->skip_qpm_flag = EB_TRUE;
-#if ADD_DELTA_QP_SUPPORT
-    context_ptr->skip_qpm_flag = EB_FALSE;
-#endif
-
-    if (context_ptr->skip_qpm_flag == EB_FALSE) {
-        if (picture_control_set_ptr->parent_pcs_ptr->pic_homogenous_over_time_sb_percentage > 30 && picture_control_set_ptr->slice_type != I_SLICE) {
-#if ADD_DELTA_QP_SUPPORT
-            context_ptr->qpm_qp = CLIP3(min_qp_allowed, max_qp_allowed, picture_qp + deltaQpRes);
-#else
-            context_ptr->qpm_qp = CLIP3(min_qp_allowed, max_qp_allowed, picture_qp + 1);
-#endif
-        }
-    }
-
-    return return_error;
-}
-#endif
 #if ADD_DELTA_QP_SUPPORT
 /*****************************************************************************
 * NM - Note: Clean up
@@ -1979,158 +1829,6 @@ EbErrorType Av1QpModulationLcu(
     return return_error;
 }
 
-#endif
-#if !MEMORY_FOOTPRINT_OPT
-EbErrorType EncQpmDeriveDeltaQPForEachLeafLcu(
-    SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet                    *picture_control_set_ptr,
-    LargestCodingUnit                    *sb_ptr,
-    uint32_t                                  sb_index,
-    CodingUnit                           *cu_ptr,
-    uint32_t                                  cu_depth,
-    uint32_t                                  cu_index,
-    uint32_t                                  cu_size,
-    uint8_t                                   type,
-    uint8_t                                   parent32x32_index,
-    EncDecContext                        *context_ptr)
-{
-    EbErrorType                    return_error = EB_ErrorNone;
-
-    //SbParams                        sb_params;
-    int64_t                          complexityDistance;
-    int8_t                           delta_qp = 0;
-    uint8_t                           qpm_qp = (uint8_t)context_ptr->qpm_qp;
-    uint8_t                           min_qp_allowed = (uint8_t)sequence_control_set_ptr->static_config.min_qp_allowed;
-    uint8_t                           max_qp_allowed = (uint8_t)sequence_control_set_ptr->static_config.max_qp_allowed;
-    uint8_t                           cu_qp;
-
-    EbBool  use16x16Stat = EB_FALSE;
-
-    uint32_t usedDepth = cu_depth;
-    if (use16x16Stat)
-        usedDepth = 2;
-
-    uint32_t cuIndexInRaterScan = md_scan_to_raster_scan[cu_index];
-#if !OPT_LOSSLESS_0
-    EbBool                         acEnergyBasedAntiContouring = picture_control_set_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE;
-    uint8_t                           lowerQPClass;
-#endif
-
-    int8_t    non_moving_delta_qp = context_ptr->non_moving_delta_qp;
-    int8_t    bea64x64DeltaQp;
-
-    cu_qp = qpm_qp;
-    cu_ptr->qp = qpm_qp;
-
-    uint32_t  distortion = 0;
-
-    if (!context_ptr->skip_qpm_flag) {
-        // INTRA MODE
-        if (type == INTRA_MODE) {
-            OisSbResults        *ois_sb_results_ptr = picture_control_set_ptr->parent_pcs_ptr->ois_sb_results[sb_index];
-            OisCandidate *OisCuPtr = ois_sb_results_ptr->ois_candidate_array[ep_to_pa_block_index[cu_index]];
-            distortion = OisCuPtr[ois_sb_results_ptr->best_distortion_index[ep_to_pa_block_index[cu_index]]].distortion;
-            distortion = (uint32_t)CLIP3(picture_control_set_ptr->parent_pcs_ptr->intra_complexity_min[usedDepth], picture_control_set_ptr->parent_pcs_ptr->intra_complexity_max[usedDepth], distortion);
-            complexityDistance = ((int32_t)distortion - (int32_t)picture_control_set_ptr->parent_pcs_ptr->intra_complexity_avg[usedDepth]);
-
-            if (complexityDistance < 0)
-                delta_qp = (picture_control_set_ptr->parent_pcs_ptr->intra_min_distance[usedDepth] != 0) ? (int8_t)((context_ptr->min_delta_qp_weight * context_ptr->min_delta_qp[usedDepth] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->intra_min_distance[usedDepth])) : 0;
-            else
-                delta_qp = (picture_control_set_ptr->parent_pcs_ptr->intra_max_distance[usedDepth] != 0) ? (int8_t)((context_ptr->max_delta_qp_weight * context_ptr->max_delta_qp[usedDepth] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->intra_max_distance[usedDepth])) : 0;
-        }
-        // INTER MODE
-        else {
-#if MRP_CONNECTION
-            distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[cuIndexInRaterScan][0].distortion;
-#else
-            distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cuIndexInRaterScan].distortion_direction[0].distortion;
-#endif
-
-            if (use16x16Stat) {
-                uint32_t cuIndexRScan = md_scan_to_raster_scan[ParentBlockIndex[cu_index]];
-#if MRP_CONNECTION
-                distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[cuIndexRScan][0].distortion;
-#else
-                distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cuIndexRScan].distortion_direction[0].distortion;
-#endif
-            }
-            distortion = (uint32_t)CLIP3(picture_control_set_ptr->parent_pcs_ptr->inter_complexity_min[usedDepth], picture_control_set_ptr->parent_pcs_ptr->inter_complexity_max[usedDepth], distortion);
-            complexityDistance = ((int32_t)distortion - (int32_t)picture_control_set_ptr->parent_pcs_ptr->inter_complexity_avg[usedDepth]);
-
-            if (complexityDistance < 0)
-                delta_qp = (picture_control_set_ptr->parent_pcs_ptr->inter_min_distance[usedDepth] != 0) ? (int8_t)((context_ptr->min_delta_qp_weight * context_ptr->min_delta_qp[usedDepth] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->inter_min_distance[usedDepth])) : 0;
-            else
-                delta_qp = (picture_control_set_ptr->parent_pcs_ptr->inter_max_distance[usedDepth] != 0) ? (int8_t)((context_ptr->max_delta_qp_weight * context_ptr->max_delta_qp[usedDepth] * complexityDistance) / (100 * picture_control_set_ptr->parent_pcs_ptr->inter_max_distance[usedDepth])) : 0;
-        }
-
-        if (context_ptr->backgorund_enhancement) {
-            // Use the 8x8 background enhancement only for the Intra slice, otherwise, use the existing SB based BEA results
-            bea64x64DeltaQp = non_moving_delta_qp;
-
-            if (((cu_index > 0) && ((picture_control_set_ptr->parent_pcs_ptr->y_mean[sb_index][parent32x32_index]) > ANTI_CONTOURING_LUMA_T2 || (picture_control_set_ptr->parent_pcs_ptr->y_mean[sb_index][parent32x32_index]) < ANTI_CONTOURING_LUMA_T1)) ||
-                ((cu_index == 0) && ((picture_control_set_ptr->parent_pcs_ptr->y_mean[sb_index][0]) > ANTI_CONTOURING_LUMA_T2 || (picture_control_set_ptr->parent_pcs_ptr->y_mean[sb_index][0]) < ANTI_CONTOURING_LUMA_T1))) {
-                if (bea64x64DeltaQp < 0)
-                    bea64x64DeltaQp = 0;
-            }
-
-            delta_qp += bea64x64DeltaQp;
-        }
-
-        if ((picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag))
-            delta_qp = (delta_qp < context_ptr->min_delta_qp[0]) ? delta_qp : context_ptr->min_delta_qp[0];
-        SbStat *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
-        if (sb_stat_ptr->stationary_edge_over_time_flag && delta_qp > 0)
-            delta_qp = 0;
-#if !OPT_LOSSLESS_0
-        if (acEnergyBasedAntiContouring) {
-            lowerQPClass = derive_contouring_class(
-                sb_ptr->picture_control_set_ptr->parent_pcs_ptr,
-                sb_ptr->index,
-                (uint8_t)cu_index);
-
-            if (lowerQPClass) {
-                if (lowerQPClass == 3)
-                    delta_qp = ANTI_CONTOURING_DELTA_QP_0;
-                else if (lowerQPClass == 2)
-                    delta_qp = ANTI_CONTOURING_DELTA_QP_1;
-                else if (lowerQPClass == 1)
-                    delta_qp = ANTI_CONTOURING_DELTA_QP_2;
-            }
-        }
-#endif
-
-        delta_qp -= context_ptr->grass_enhancement_flag ? 3 : 0;
-
-        if (sequence_control_set_ptr->static_config.rate_control_mode == 1 || sequence_control_set_ptr->static_config.rate_control_mode == 2) {
-            if (qpm_qp > RC_QPMOD_MAXQP)
-                delta_qp = MIN(0, delta_qp);
-            cu_qp = (uint32_t)(qpm_qp + delta_qp);
-
-            if ((qpm_qp <= RC_QPMOD_MAXQP)) {
-                cu_qp = (uint8_t)CLIP3(
-                    min_qp_allowed,
-                    RC_QPMOD_MAXQP,
-                    cu_qp);
-            }
-        }
-        else
-            cu_qp = (uint8_t)(qpm_qp + delta_qp);
-        cu_qp = (uint8_t)CLIP3(
-            min_qp_allowed,
-            max_qp_allowed,
-            cu_qp);
-    }
-
-    cu_ptr->qp = sequence_control_set_ptr->static_config.improve_sharpness ? cu_qp : qpm_qp;
-
-    sb_ptr->qp = (cu_size == 64) ? (uint8_t)cu_ptr->qp : sb_ptr->qp;
-
-    cu_ptr->delta_qp = (int16_t)cu_ptr->qp - (int16_t)qpm_qp;
-
-    cu_ptr->org_delta_qp = cu_ptr->delta_qp;
-
-    return return_error;
-}
 #endif
 void Store16bitInputSrc(
     EncDecContext         *context_ptr,
@@ -2773,9 +2471,6 @@ EB_EXTERN void av1_encode_pass(
     uint32_t                 tbAddr,
     uint32_t                 sb_origin_x,
     uint32_t                 sb_origin_y,
-#if !MEMORY_FOOTPRINT_OPT
-    uint32_t                 sb_qp,
-#endif
     EncDecContext           *context_ptr)
 {
     EbBool                    is16bit = context_ptr->is16bit;
@@ -2787,11 +2482,6 @@ EB_EXTERN void av1_encode_pass(
     inputPicture = context_ptr->input_samples = (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 
     SbStat                *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[tbAddr]);
-#if !MEMORY_FOOTPRINT_OPT
-    EbBool                    availableCoeff;
-    // QP Neighbor Arrays
-    EbBool                    isDeltaQpNotCoded = EB_TRUE;
-#endif
     // SB Stats
     uint32_t                  sb_width = MIN(sequence_control_set_ptr->sb_size_pix, sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x);
     uint32_t                  sb_height = MIN(sequence_control_set_ptr->sb_size_pix, sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y);
@@ -2812,9 +2502,6 @@ EB_EXTERN void av1_encode_pass(
     uint64_t                  cb_tu_coeff_bits;
     uint64_t                  cr_tu_coeff_bits;
     EncodeContext          *encode_context_ptr;
-#if !MEMORY_FOOTPRINT_OPT
-    uint32_t                  lcuRowIndex = sb_origin_y / BLOCK_SIZE_64;
-#endif
     // Dereferencing early
     NeighborArrayUnit      *ep_mode_type_neighbor_array = picture_control_set_ptr->ep_mode_type_neighbor_array;
     NeighborArrayUnit      *ep_intra_luma_mode_neighbor_array = picture_control_set_ptr->ep_intra_luma_mode_neighbor_array;
@@ -2840,58 +2527,7 @@ EB_EXTERN void av1_encode_pass(
     EntropyCoder  *coeff_est_entropy_coder_ptr = picture_control_set_ptr->coeff_est_entropy_coder_ptr;
 
     uint32_t           dZoffset = 0;
-#if !MEMORY_FOOTPRINT_OPT
-    if (!sb_stat_ptr->stationary_edge_over_time_flag && sequence_control_set_ptr->static_config.improve_sharpness && picture_control_set_ptr->parent_pcs_ptr->pic_noise_class < PIC_NOISE_CLASS_3_1) {
-        int16_t cuDeltaQp = (int16_t)(sb_ptr->qp - picture_control_set_ptr->parent_pcs_ptr->average_qp);
-        uint32_t dzCondition = cuDeltaQp > 0 ? 0 : 1;
-
-        if (sequence_control_set_ptr->input_resolution == INPUT_SIZE_4K_RANGE) {
-            if (!(picture_control_set_ptr->parent_pcs_ptr->is_pan ||
-                (picture_control_set_ptr->parent_pcs_ptr->non_moving_index_average < 10 && sb_ptr->aura_status_iii) ||
-                (sb_stat_ptr->cu_stat_array[0].skin_area) ||
-#if !DISABLE_OIS_USE
-                (picture_control_set_ptr->parent_pcs_ptr->intra_coded_block_probability > 90) ||
-#endif
-                (picture_control_set_ptr->parent_pcs_ptr->high_dark_area_density_flag))) {
-                if (picture_control_set_ptr->slice_type != I_SLICE &&
-                    picture_control_set_ptr->temporal_layer_index == 0 &&
-#if !DISABLE_OIS_USE
-                    picture_control_set_ptr->parent_pcs_ptr->intra_coded_block_probability > 60 &&
-#endif
-                    !picture_control_set_ptr->parent_pcs_ptr->is_tilt &&
-                    picture_control_set_ptr->parent_pcs_ptr->pic_homogenous_over_time_sb_percentage > 40)
-                {
-                    dZoffset = 10;
-                }
-
-                if (dzCondition) {
-                    if (picture_control_set_ptr->scene_caracteristic_id == EB_FRAME_CARAC_1) {
-                        if (picture_control_set_ptr->slice_type == I_SLICE)
-                            dZoffset = sb_stat_ptr->cu_stat_array[0].grass_area ? 10 : dZoffset;
-                        else if (picture_control_set_ptr->temporal_layer_index == 0)
-                            dZoffset = sb_stat_ptr->cu_stat_array[0].grass_area ? 9 : dZoffset;
-                        else if (picture_control_set_ptr->temporal_layer_index == 1)
-                            dZoffset = sb_stat_ptr->cu_stat_array[0].grass_area ? 5 : dZoffset;
-                    }
-                }
-            }
-        }
-    }
-#endif
-#if MEMORY_FOOTPRINT_OPT
     context_ptr->skip_qpm_flag = EB_TRUE;
-#else
-    if (sequence_control_set_ptr->static_config.improve_sharpness) {
-        QpmDeriveBeaAndSkipQpmFlagLcu(
-            sequence_control_set_ptr,
-            picture_control_set_ptr,
-            sb_ptr,
-            tbAddr,
-            context_ptr);
-    }
-    else
-        context_ptr->skip_qpm_flag = EB_TRUE;
-#endif
 
     encode_context_ptr = ((SequenceControlSet*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr))->encode_context_ptr;
 
@@ -3148,26 +2784,6 @@ EB_EXTERN void av1_encode_pass(
 
 #endif
 
-#if !MEMORY_FOOTPRINT_OPT
-#if !ADD_DELTA_QP_SUPPORT
-                //CHKN remove usage of depth
-                if (!context_ptr->skip_qpm_flag && (sequence_control_set_ptr->static_config.improve_sharpness) && (0xFF <= picture_control_set_ptr->dif_cu_delta_qp_depth)) {
-                    EncQpmDeriveDeltaQPForEachLeafLcu(
-                        sequence_control_set_ptr,
-                        picture_control_set_ptr,
-                        sb_ptr,
-                        tbAddr,
-                        cu_ptr,
-                        0xFF, //This is obviously not ok
-                        d1_itr, // TOCHECK OMK
-                        context_ptr->blk_geom->bwidth, // TOCHECK
-                        cu_ptr->prediction_mode_flag,
-                        context_ptr->cu_stats->parent32x32_index, // TOCHECK not valid
-                        context_ptr);
-                }
-
-#endif
-#endif
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE) {
                     context_ptr->is_inter = cu_ptr->av1xd->use_intrabc;
                     context_ptr->tot_intra_coded_area += blk_geom->bwidth* blk_geom->bheight;
@@ -4501,28 +4117,6 @@ EB_EXTERN void av1_encode_pass(
 
                 if (dlfEnableFlag)
                 {
-#if !MEMORY_FOOTPRINT_OPT
-                    if (blk_geom->has_uv) {
-                        availableCoeff = (cu_ptr->prediction_mode_flag == INTER_MODE) ? (EbBool)cu_ptr->block_has_coeff :
-                            (cu_ptr->transform_unit_array[0].y_has_coeff ||
-                                cu_ptr->transform_unit_array[0].v_has_coeff ||
-                                cu_ptr->transform_unit_array[0].u_has_coeff) ? EB_TRUE : EB_FALSE;
-                    }
-                    else
-                        availableCoeff = (cu_ptr->transform_unit_array[0].y_has_coeff) ? EB_TRUE : EB_FALSE;
-                    // Assign the LCU-level QP
-                    //NM - To be revisited
-                    EncodePassUpdateQp(
-                        picture_control_set_ptr,
-                        context_ptr,
-                        availableCoeff,
-                        use_delta_qp,
-                        &isDeltaQpNotCoded,
-                        picture_control_set_ptr->dif_cu_delta_qp_depth,
-                        &(picture_control_set_ptr->enc_prev_coded_qp[oneSegment ? 0 : lcuRowIndex]),
-                        &(picture_control_set_ptr->enc_prev_quant_group_coded_qp[oneSegment ? 0 : lcuRowIndex]),
-                        sb_qp);
-#endif
                 }
 
                 {
@@ -4549,9 +4143,6 @@ EB_EXTERN void av1_encode_pass(
         else
             blk_it += d1_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
     } // CU Loop
-#if !MEMORY_FOOTPRINT_OPT
-    sb_ptr->tot_final_cu = final_cu_itr;
-#endif
 #if AV1_LF
     // First Pass Deblocking
     if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 1) {

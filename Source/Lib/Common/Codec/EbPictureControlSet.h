@@ -13787,27 +13787,13 @@ extern "C" {
         uint8_t                               sb_max_depth;
         uint16_t                              sb_total_count;
         LargestCodingUnit                 **sb_ptr_array;
-#if !MEMORY_FOOTPRINT_OPT
-        LargestCodingUnit                 **sb_ptr_array_copy;
-#endif
         // DLF
         uint8_t                              *qp_array;
-#if !MEMORY_FOOTPRINT_OPT
-        uint8_t                              *entropy_qp_array;
-#endif
         uint16_t                              qp_array_stride;
         uint32_t                              qp_array_size;
-#if !MEMORY_FOOTPRINT_OPT
-        uint8_t                              *cbf_map_array;
-#endif
         // QP Assignment
         uint8_t                               prev_coded_qp;
         uint8_t                               prev_quant_group_coded_qp;
-#if !MEMORY_FOOTPRINT_OPT
-        // Enc/DecQP Assignment
-        uint8_t                               enc_prev_coded_qp[50];
-        uint8_t                               enc_prev_quant_group_coded_qp[50];
-#endif
         // EncDec Entropy Coder (for rate estimation)
         EntropyCoder                       *coeff_est_entropy_coder_ptr;
 
@@ -13836,11 +13822,6 @@ extern "C" {
         NeighborArrayUnit32                *md_interpolation_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
 
         NeighborArrayUnit                  *mdleaf_partition_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-#if !MEMORY_FOOTPRINT_OPT
-        // Mode Decision Refinement Neighbor Arrays
-        NeighborArrayUnit                  *md_refinement_intra_luma_mode_neighbor_array;
-        NeighborArrayUnit                  *md_refinement_mode_type_neighbor_array;
-#endif
         // Encode Pass Neighbor Arrays
         NeighborArrayUnit                  *ep_intra_luma_mode_neighbor_array;
         NeighborArrayUnit                  *ep_intra_chroma_mode_neighbor_array;
@@ -13893,19 +13874,12 @@ extern "C" {
         int8_t                                slice_cr_qp_offset;
         int8_t                                cb_qp_offset;
         int8_t                                cr_qp_offset;
-#if !MEMORY_FOOTPRINT_OPT
-        int8_t                               *cu32x32_quant_coeff_num_map_array; //32x32 cu array for the number of quantized coeffs
-        uint16_t                              cu32x32_quant_coeff_num_map_array_stride;
-#endif
         EbBool                                adjust_min_qp_flag;
 
         EbEncMode                             enc_mode;
         EbBool                                intra_md_open_loop_flag;
 #if !DISABLE_OIS_USE
         uint8_t                               high_intra_slection;
-#endif
-#if !MEMORY_FOOTPRINT_OPT
-        EB_FRAME_CARACTERICTICS               scene_caracteristic_id;
 #endif
         EbBool                                limit_intra;
         int32_t                               cdef_preset[4];
@@ -14093,10 +14067,6 @@ extern "C" {
         EbBool                                scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
         EbBool                                intensity_transition_flag;
         uint8_t                               average_intensity[3];
-#if !MEMORY_FOOTPRINT_OPT
-        // zz cost array
-        uint8_t                              *zz_cost_array;
-#endif
         // Non moving index array
         uint8_t                              *non_moving_index_array;
         int                                   kf_zeromotion_pct; // percent of zero motion blocks
@@ -14105,17 +14075,7 @@ extern "C" {
         uint8_t                               fade_in_to_black;
         EbBool                                is_pan;
         EbBool                                is_tilt;
-#if !MEMORY_FOOTPRINT_OPT
-        EbBool                               *similar_colocated_sb_array;
-        EbBool                               *similar_colocated_sb_array_ii; // ON for all layers
-#endif
         uint8_t                              *sb_flat_noise_array;
-#if !MEMORY_FOOTPRINT_OPT
-        uint64_t                             *sb_variance_of_variance_over_time;
-        EbBool                               *is_sb_homogeneous_over_time;
-        uint8_t                               pic_homogenous_over_time_sb_percentage;
-        EbBool                               *sb_homogeneous_area_array;        // used by EncDecProcess()
-#endif
         EdgeLcuResults                     *edge_results_ptr;                // used by EncDecProcess()
         uint8_t                              *sharp_edge_sb_flag;
 #if !DISABLE_OIS_USE
@@ -14123,29 +14083,12 @@ extern "C" {
         EbBool                               *uncovered_area_sb_flag;            // used by EncDecProcess()
 #endif
         EbBool                                logo_pic_flag;                    // used by EncDecProcess()
-#if !MEMORY_FOOTPRINT_OPT
-        uint64_t                            **var_of_var32x32_based_sb_array;    // used by ModeDecisionConfigurationProcess()- the variance of 8x8 block variances for each 32x32 block
-        uint8_t                              *sb_cmplx_contrast_array;            // used by EncDecProcess()
-        uint8_t                              *sb_high_contrast_array_dialated;
-        uint64_t                            **sb_y_src_energy_cu_array;            // used by ModeDecisionConfigurationProcess()     0- 64x64, 1-4 32x32
-        uint64_t                            **sb_y_src_mean_cu_array;            // used by ModeDecisionConfigurationProcess()     0- 64x64, 1-4 32x32
-#endif
 #if !DISABLE_OIS_USE
         uint8_t                               intra_coded_block_probability;    // used by EncDecProcess()
-#endif
-#if !MEMORY_FOOTPRINT_OPT
-        EbBool                                low_motion_content_flag;            // used by EncDecProcess()
-        uint32_t                              zz_cost_average;                    // used by ModeDecisionConfigurationProcess()
 #endif
         uint16_t                              non_moving_index_average;            // used by ModeDecisionConfigurationProcess()
 
         uint16_t                              qp_scaling_average_complexity;
-#if !MEMORY_FOOTPRINT_OPT
-        EbBool                               *sb_isolated_non_homogeneous_area_array;            // used by ModeDecisionConfigurationProcess()
-        uint8_t                              *cu32x32_clean_sparse_coeff_map_array; //32x32 cu array for clean sparse coeff
-        uint16_t                              cu32x32_clean_sparse_coeff_map_array_size;
-        uint16_t                              cu32x32_clean_sparse_coeff_map_array_stride;
-#endif
         uint8_t                               grass_percentage_in_picture;
         uint8_t                               percentage_of_edgein_light_background;
         EbBool                                dark_back_groundlight_fore_ground;

@@ -4292,26 +4292,13 @@ void DetermineHomogeneousRegionInPicture(
 {
     uint16_t  *variancePtr;
     uint32_t sb_index;
-#if !MEMORY_FOOTPRINT_OPT
-    uint32_t cuNum, cu_size, cuIndexOffset, cuH, cuW;
-#endif
     uint64_t nullVarCnt = 0;
     uint64_t veryLowVarCnt = 0;
     uint64_t varLcuCnt = 0;
     uint32_t sb_total_count = picture_control_set_ptr->sb_total_count;
 
     for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
-#if !MEMORY_FOOTPRINT_OPT
-        uint64_t meanSqrVariance32x32Based[4] = { 0 }, meanVariance32x32Based[4] = { 0 };
-
-        uint64_t meanSqrVariance64x64Based = 0, meanVariance64x64Based = 0;
-        uint64_t varOfVar64x64Based = 0;
-#endif
         SbParams sb_params = sequence_control_set_ptr->sb_params_array[sb_index];
-#if !MEMORY_FOOTPRINT_OPT
-        // Initialize
-        picture_control_set_ptr->sb_homogeneous_area_array[sb_index] = EB_TRUE;
-#endif
         variancePtr = picture_control_set_ptr->variance[sb_index];
 
         if (sb_params.is_complete_sb) {
@@ -4320,74 +4307,7 @@ void DetermineHomogeneousRegionInPicture(
             varLcuCnt++;
 
             veryLowVarCnt += ((variancePtr[ME_TIER_ZERO_PU_64x64]) < LCU_LOW_VAR_TH) ? 1 : 0;
-#if !MEMORY_FOOTPRINT_OPT
-            cu_size = 8;
-            cuIndexOffset = ME_TIER_ZERO_PU_8x8_0;
-            cuNum = 64 / cu_size;
-
-            //Variance of 8x8 blocks in a 32x32
-            for (cuH = 0; cuH < (cuNum / 2); cuH++) {
-                for (cuW = 0; cuW < (cuNum / 2); cuW++) {
-                    meanSqrVariance32x32Based[0] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW])*(variancePtr[cuIndexOffset + cuH * cuNum + cuW]);
-                    meanVariance32x32Based[0] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW]);
-
-                    meanSqrVariance32x32Based[1] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW + 4])*(variancePtr[cuIndexOffset + cuH * cuNum + cuW + 4]);
-                    meanVariance32x32Based[1] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW + 4]);
-
-                    meanSqrVariance32x32Based[2] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW])*(variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW]);
-                    meanVariance32x32Based[2] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW]);
-
-                    meanSqrVariance32x32Based[3] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW + 4])*(variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW + 4]);
-                    meanVariance32x32Based[3] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW + 4]);
-                }
-            }
-
-            meanSqrVariance32x32Based[0] = meanSqrVariance32x32Based[0] >> 4;
-            meanVariance32x32Based[0] = meanVariance32x32Based[0] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][0] = meanSqrVariance32x32Based[0] - meanVariance32x32Based[0] * meanVariance32x32Based[0];
-
-            meanSqrVariance32x32Based[1] = meanSqrVariance32x32Based[1] >> 4;
-            meanVariance32x32Based[1] = meanVariance32x32Based[1] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][1] = meanSqrVariance32x32Based[1] - meanVariance32x32Based[1] * meanVariance32x32Based[1];
-
-            meanSqrVariance32x32Based[2] = meanSqrVariance32x32Based[2] >> 4;
-            meanVariance32x32Based[2] = meanVariance32x32Based[2] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][2] = meanSqrVariance32x32Based[2] - meanVariance32x32Based[2] * meanVariance32x32Based[2];
-
-            meanSqrVariance32x32Based[3] = meanSqrVariance32x32Based[3] >> 4;
-            meanVariance32x32Based[3] = meanVariance32x32Based[3] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][3] = meanSqrVariance32x32Based[3] - meanVariance32x32Based[3] * meanVariance32x32Based[3];
-
-            // Compute the 64x64 based variance of variance
-            {
-                uint32_t varIndex;
-                // Loop over all 8x8s in a 64x64
-                for (varIndex = ME_TIER_ZERO_PU_8x8_0; varIndex <= ME_TIER_ZERO_PU_8x8_63; varIndex++) {
-                    meanSqrVariance64x64Based += variancePtr[varIndex] * variancePtr[varIndex];
-                    meanVariance64x64Based += variancePtr[varIndex];
-                }
-
-                meanSqrVariance64x64Based = meanSqrVariance64x64Based >> 6;
-                meanVariance64x64Based = meanVariance64x64Based >> 6;
-
-                // Compute variance
-                varOfVar64x64Based = meanSqrVariance64x64Based - meanVariance64x64Based * meanVariance64x64Based;
-
-                // Turn off detail preservation if the varOfVar is greater than a threshold
-                if (varOfVar64x64Based > VAR_BASED_DETAIL_PRESERVATION_SELECTOR_THRSLHD)
-                    picture_control_set_ptr->sb_homogeneous_area_array[sb_index] = EB_FALSE;
-            }
-#endif
         }
-#if !MEMORY_FOOTPRINT_OPT
-        else {
-            // Should be re-calculated and scaled properly
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][0] = 0xFFFFFFFFFFFFFFFF;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][1] = 0xFFFFFFFFFFFFFFFF;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][2] = 0xFFFFFFFFFFFFFFFF;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][3] = 0xFFFFFFFFFFFFFFFF;
-        }
-#endif
     }
     picture_control_set_ptr->very_low_var_pic_flag = EB_FALSE;
     if ((varLcuCnt > 0) && (((veryLowVarCnt * 100) / varLcuCnt) > PIC_LOW_VAR_PERCENTAGE_TH))

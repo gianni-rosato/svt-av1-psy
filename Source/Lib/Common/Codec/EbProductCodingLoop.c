@@ -4141,13 +4141,7 @@ void move_cu_data(
     dst_cu->block_has_coeff = src_cu->block_has_coeff;
     dst_cu->split_flag_context = src_cu->split_flag_context;
     dst_cu->qp = src_cu->qp;
-#if !MEMORY_FOOTPRINT_OPT
-    dst_cu->ref_qp = src_cu->ref_qp;
-#endif
     dst_cu->delta_qp = src_cu->delta_qp;
-#if !MEMORY_FOOTPRINT_OPT
-    dst_cu->org_delta_qp = src_cu->org_delta_qp;
-#endif
 
     dst_cu->tx_depth = src_cu->tx_depth;
 
@@ -4244,13 +4238,7 @@ void move_cu_data_redund(
     dst_cu->block_has_coeff = src_cu->block_has_coeff;
     dst_cu->split_flag_context = src_cu->split_flag_context;
     dst_cu->qp = src_cu->qp;
-#if !MEMORY_FOOTPRINT_OPT
-    dst_cu->ref_qp = src_cu->ref_qp;
-#endif
     dst_cu->delta_qp = src_cu->delta_qp;
-#if !MEMORY_FOOTPRINT_OPT
-    dst_cu->org_delta_qp = src_cu->org_delta_qp;
-#endif
     //CHKN    // Coded Tree
     //CHKN    struct {
     //CHKN        unsigned                   leaf_index : 8;

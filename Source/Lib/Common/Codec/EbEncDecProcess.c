@@ -1136,59 +1136,6 @@ void CopyStatisticsToRefObject(
     ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->sg_frame_ep = cm->sg_frame_ep;
 }
 
-#if !MEMORY_FOOTPRINT_OPT
-EbErrorType QpmDeriveWeightsMinAndMax(
-    PictureControlSet                    *picture_control_set_ptr,
-    EncDecContext                        *context_ptr)
-{
-    EbErrorType                    return_error = EB_ErrorNone;
-    uint32_t cu_depth;
-    context_ptr->min_delta_qp_weight = encMinDeltaQpWeightTab[picture_control_set_ptr->temporal_layer_index];
-    context_ptr->max_delta_qp_weight = encMaxDeltaQpWeightTab[picture_control_set_ptr->temporal_layer_index];
-    //qpm_derive_delta_qp_map_weights
-
-    EbBool adjust_min_qp_flag = EB_FALSE;
-
-    adjust_min_qp_flag = picture_control_set_ptr->adjust_min_qp_flag;
-    context_ptr->min_delta_qp_weight = 100;
-    context_ptr->max_delta_qp_weight = 100;
-
-    {
-        if (picture_control_set_ptr->slice_type == I_SLICE) {
-            if (picture_control_set_ptr->parent_pcs_ptr->percentage_of_edgein_light_background > 0 && picture_control_set_ptr->parent_pcs_ptr->percentage_of_edgein_light_background <= 3
-                && !adjust_min_qp_flag && picture_control_set_ptr->parent_pcs_ptr->dark_back_groundlight_fore_ground) {
-                context_ptr->min_delta_qp_weight = 100;
-            }
-            else {
-                if (adjust_min_qp_flag)
-                    context_ptr->min_delta_qp_weight = 250;
-                else if (picture_control_set_ptr->parent_pcs_ptr->pic_homogenous_over_time_sb_percentage > 30) {
-                    context_ptr->min_delta_qp_weight = 150;
-                    context_ptr->max_delta_qp_weight = 50;
-                }
-            }
-        }
-        else {
-            if (adjust_min_qp_flag)
-                context_ptr->min_delta_qp_weight = 170;
-        }
-        if (picture_control_set_ptr->parent_pcs_ptr->high_dark_area_density_flag) {
-            context_ptr->min_delta_qp_weight = 25;
-            context_ptr->max_delta_qp_weight = 25;
-        }
-    }
-
-    // Refine max_delta_qp_weight; apply conservative max_degrade_weight when most of the picture is homogenous over time.
-    if (picture_control_set_ptr->parent_pcs_ptr->pic_homogenous_over_time_sb_percentage > 90)
-        context_ptr->max_delta_qp_weight = context_ptr->max_delta_qp_weight >> 1;
-    for (cu_depth = 0; cu_depth < 4; cu_depth++) {
-        context_ptr->min_delta_qp[cu_depth] = picture_control_set_ptr->slice_type == I_SLICE ? encMinDeltaQpISliceTab[cu_depth] : encMinDeltaQpTab[cu_depth][picture_control_set_ptr->temporal_layer_index];
-        context_ptr->max_delta_qp[cu_depth] = encMaxDeltaQpTab[cu_depth][picture_control_set_ptr->temporal_layer_index];
-    }
-
-    return return_error;
-}
-#endif
 /******************************************************
 * Derive EncDec Settings for OQ
 Input   : encoder mode and tune
@@ -1618,13 +1565,6 @@ void* enc_dec_kernel(void *input_ptr)
 
             if (picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL)
                 ((EbReferenceObject  *)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->average_intensity = picture_control_set_ptr->parent_pcs_ptr->average_intensity[0];
-#if !MEMORY_FOOTPRINT_OPT
-            if (sequence_control_set_ptr->static_config.improve_sharpness) {
-                QpmDeriveWeightsMinAndMax(
-                    picture_control_set_ptr,
-                    context_ptr);
-            }
-#endif
             for (y_lcu_index = yLcuStartIndex, lcuSegmentIndex = lcuStartIndex; lcuSegmentIndex < lcuStartIndex + lcuSegmentCount; ++y_lcu_index) {
                 for (x_lcu_index = xLcuStartIndex; x_lcu_index < picture_width_in_sb && (x_lcu_index + y_lcu_index < segmentBandSize) && lcuSegmentIndex < lcuStartIndex + lcuSegmentCount; ++x_lcu_index, ++lcuSegmentIndex) {
                     sb_index = (uint16_t)(y_lcu_index * picture_width_in_sb + x_lcu_index);
@@ -1804,9 +1744,6 @@ void* enc_dec_kernel(void *input_ptr)
                         sb_index,
                         sb_origin_x,
                         sb_origin_y,
-#if !MEMORY_FOOTPRINT_OPT
-                        sb_ptr->qp,
-#endif
                         context_ptr);
 #endif
 

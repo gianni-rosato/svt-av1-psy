@@ -6609,9 +6609,6 @@ EB_EXTERN EbErrorType write_sb(
 
     context_ptr->coded_area_sb = 0;
     context_ptr->coded_area_sb_uv = 0;
-#if !MEMORY_FOOTPRINT_OPT
-    tb_ptr->quantized_coeffs_bits = 0;
-#endif
     EbBool checkCuOutOfBound = EB_FALSE;
 
     SbGeom * sb_geom = &sequence_control_set_ptr->sb_geom[tb_ptr->index];// .block_is_inside_md_scan[blk_index])

@@ -1218,234 +1218,6 @@ void SetMdSettings(
     picture_control_set_ptr->limit_intra = EB_FALSE;
     picture_control_set_ptr->intra_md_open_loop_flag = EB_FALSE;
 }
-#if !MEMORY_FOOTPRINT_OPT
-/******************************************************
-* Detect complex/non-flat/moving SB in a non-complex area (used to refine MDC depth control in Gold)
-******************************************************/
-void DetectComplexNonFlatMovingLcu(
-    PictureControlSet       *picture_control_set_ptr,
-    uint32_t                    picture_width_in_sb,
-    uint32_t                    picture_height_in_sb) {
-    LargestCodingUnit *sb_ptr;
-    uint32_t               sb_index;
-    uint32_t                 sb_x;
-    uint32_t                 sb_y;
-
-    if (picture_control_set_ptr->parent_pcs_ptr->non_moving_index_average >= 10 && picture_control_set_ptr->temporal_layer_index <= 2) {
-        // Determine deltaQP and assign QP value for each leaf
-        for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-            sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
-
-            sb_x = sb_index % picture_width_in_sb;
-            sb_y = sb_index / picture_width_in_sb;
-            EbBool condition = EB_FALSE;
-
-            if (!picture_control_set_ptr->parent_pcs_ptr->similar_colocated_sb_array[sb_index] &&
-                sb_ptr->picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index].edge_block_num > 0) {
-                condition = EB_TRUE;
-            }
-
-            if (condition) {
-                uint32_t  counter = 0;
-                if (sb_x > 0 && sb_x < (uint32_t)(picture_width_in_sb - 1) && sb_y >  0 && sb_y < (uint32_t)(picture_height_in_sb - 1)) {
-                    // Top
-                    if (picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index - picture_width_in_sb].edge_block_num == 0)
-                        counter++;
-                    // Bottom
-                    if (picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index + picture_width_in_sb].edge_block_num == 0)
-                        counter++;
-                    // Left
-                    if (picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index - 1].edge_block_num == 0)
-                        counter++;
-                    // right
-                    if (picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index + 1].edge_block_num == 0)
-                        counter++;
-                }
-            }
-        }
-    }
-}
-#endif
-#if !MEMORY_FOOTPRINT_OPT
-EbAuraStatus AuraDetection64x64Gold(
-    PictureControlSet           *picture_control_set_ptr,
-    uint8_t                          picture_qp,
-    uint32_t                         x_lcu_index,
-    uint32_t                         y_lcu_index
-)
-{
-    SequenceControlSet  *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-    int32_t                 picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + BLOCK_SIZE_64 - 1) >> LOG2_64_SIZE;
-    int32_t                 picture_height_in_sb = (sequence_control_set_ptr->seq_header.max_frame_height + BLOCK_SIZE_64 - 1) >> LOG2_64_SIZE;
-    uint32_t                 sb_index = y_lcu_index * picture_width_in_sb + x_lcu_index;
-    uint32_t                 currDist;
-    uint32_t                 topDist, topLDist, topRDist;
-    uint32_t                 localAvgDist, distThresh0, distThresh1;
-    int32_t                 lcuOffset;
-
-    EbAuraStatus            auraClass = AURA_STATUS_0;
-    uint8_t                    auraClass1 = 0;
-    uint8_t                    auraClass2 = 0;
-
-    int32_t                 xMv0 = 0;
-    int32_t                 yMv0 = 0;
-    int32_t                 xMv1 = 0;
-    int32_t                 yMv1 = 0;
-
-    uint32_t                 leftDist, rightDist;
-
-    distThresh0 = picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag || sequence_control_set_ptr->input_resolution == INPUT_SIZE_4K_RANGE ? 15 : 14;
-    distThresh1 = 23;
-
-    if (picture_qp > 38) {
-        distThresh0 = distThresh0 << 2;
-        distThresh1 = distThresh1 << 2;
-    }
-
-    if (x_lcu_index > 0 && x_lcu_index < (uint32_t)(picture_width_in_sb - 1) && y_lcu_index>0 && y_lcu_index < (uint32_t)(picture_height_in_sb - 1)) {
-        uint32_t k;
-
-#if MRP_ME
-        const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index];
-        const MeCandidate *me_block_results = me_results->me_candidate[0];
-        uint8_t total_me_cnt = me_results->total_me_candidate_index[0];
-
-        for (k = 0; k < total_me_cnt; k++) {
-            if (me_block_results[k].direction == UNI_PRED_LIST_0) {
-                // Get reference list 0 / reference index 0 MV
-                xMv0 = me_block_results[k].x_mv_l0;
-                yMv0 = me_block_results[k].y_mv_l0;
-            }
-            if (me_block_results[k].direction == UNI_PRED_LIST_1) {
-                // Get reference list  1 / reference index 0 MV
-                xMv1 = me_block_results[k].x_mv_l1;
-                yMv1 = me_block_results[k].y_mv_l1;
-            }
-        }
-        currDist = me_block_results[0].distortion;
-#else
-        MeCuResults * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][0];
-
-        //Curr Block
-
-        for (k = 0; k < mePuResult->total_me_candidate_index; k++) {
-            if (mePuResult->distortion_direction[k].direction == UNI_PRED_LIST_0) {
-                // Get reference list 0 / reference index 0 MV
-                xMv0 = mePuResult->x_mv_l0;
-                yMv0 = mePuResult->y_mv_l0;
-            }
-            if (mePuResult->distortion_direction[k].direction == UNI_PRED_LIST_1) {
-                // Get reference list  1 / reference index 0 MV
-                xMv1 = mePuResult->x_mv_l1;
-                yMv1 = mePuResult->y_mv_l1;
-            }
-        }
-        currDist = mePuResult->distortion_direction[0].distortion;
-#endif
-
-        if ((currDist > 64 * 64) &&
-            // Only mark a block as aura when it is moving (MV amplitude higher than X; X is temporal layer dependent)
-            (abs(xMv0) > global_motion_threshold[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index] ||
-                abs(yMv0) > global_motion_threshold[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index] ||
-                abs(xMv1) > global_motion_threshold[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index] ||
-                abs(yMv1) > global_motion_threshold[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels][picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index]))
-        {
-            //Top Distortion
-            lcuOffset = -picture_width_in_sb;
-#if MRP_CONNECTION
-            topDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->me_candidate[0][0].distortion;
-#else
-            topDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->distortion_direction[0].distortion;
-#endif
-
-            //TopLeft Distortion
-            lcuOffset = -picture_width_in_sb - 1;
-#if MRP_CONNECTION
-            topLDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->me_candidate[0][0].distortion;
-#else
-            topLDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->distortion_direction[0].distortion;
-#endif
-
-            //TopRightDistortion
-            lcuOffset = -picture_width_in_sb + 1;
-#if MRP_CONNECTION
-            topRDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->me_candidate[0][0].distortion;
-#else
-            topRDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->distortion_direction[0].distortion;
-#endif
-
-            topRDist = (x_lcu_index < (uint32_t)(picture_width_in_sb - 2)) ? topRDist : currDist;
-
-            //left Distortion
-            lcuOffset = -1;
-#if MRP_CONNECTION
-            leftDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->me_candidate[0][0].distortion;
-#else
-            leftDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->distortion_direction[0].distortion;
-#endif
-
-            //RightDistortion
-            lcuOffset = 1;
-#if MRP_CONNECTION
-            rightDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->me_candidate[0][0].distortion;
-#else
-            rightDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->distortion_direction[0].distortion;
-#endif
-
-            rightDist = (x_lcu_index < (uint32_t)(picture_width_in_sb - 2)) ? topRDist : currDist;
-
-            localAvgDist = MIN(MIN(MIN(topLDist, MIN(topRDist, topDist)), leftDist), rightDist);
-
-            if (10 * currDist > distThresh0*localAvgDist) {
-                if (10 * currDist > distThresh1*localAvgDist)
-                    auraClass2++;
-                else
-                    auraClass1++;
-            }
-        }
-    }
-
-    auraClass = (auraClass2 > 0 || auraClass1 > 0) ? AURA_STATUS_1 : AURA_STATUS_0;
-
-    return   auraClass;
-}
-#endif
-#if !MEMORY_FOOTPRINT_OPT
-/******************************************************
-* Aura detection
-******************************************************/
-void AuraDetection(
-    SequenceControlSet         *sequence_control_set_ptr,
-    PictureControlSet            *picture_control_set_ptr,
-    uint32_t                          picture_width_in_sb,
-    uint32_t                          picture_height_in_sb)
-
-{
-    uint32_t                      sb_index;
-    uint32_t                      sb_x;
-    uint32_t                      sb_y;
-
-    for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-        SbParams    *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-        LargestCodingUnit*        sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
-        sb_x = sb_params->horizontal_index;
-        sb_y = sb_params->vertical_index;
-        // Aura status intialization
-        sb_ptr->aura_status_iii = INVALID_AURA_STATUS;
-
-        if (picture_control_set_ptr->slice_type == B_SLICE) {
-            if ((sb_x > 0) && (sb_x < picture_width_in_sb - 1) && (sb_y < picture_height_in_sb - 1)) {
-                sb_ptr->aura_status_iii = AuraDetection64x64Gold(
-                    picture_control_set_ptr,
-                    (uint8_t)picture_control_set_ptr->picture_qp,
-                    sb_x,
-                    sb_y);
-            }
-        }
-    }
-    return;
-}
-#endif
 /******************************************************
 * Load the cost of the different partitioning method into a local array and derive sensitive picture flag
     Input   : the offline derived cost per search method, detection signals
@@ -1868,9 +1640,7 @@ Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(
-#if MEMORY_FOOTPRINT_OPT
     SequenceControlSet               *sequence_control_set_ptr,
-#endif
     PictureControlSet                *picture_control_set_ptr,
     ModeDecisionConfigurationContext *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
@@ -2062,9 +1832,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
 
         // Mode Decision Configuration Kernel Signal(s) derivation
         signal_derivation_mode_decision_config_kernel_oq(
-#if MEMORY_FOOTPRINT_OPT
             sequence_control_set_ptr,
-#endif
             picture_control_set_ptr,
             context_ptr);
 
@@ -2072,35 +1840,6 @@ void* mode_decision_configuration_kernel(void *input_ptr)
 
         picture_control_set_ptr->parent_pcs_ptr->average_qp = 0;
         picture_control_set_ptr->intra_coded_area           = 0;
-#if !MEMORY_FOOTPRINT_OPT
-        picture_control_set_ptr->scene_caracteristic_id     = EB_FRAME_CARAC_0;
-
-        EbPicnoiseClass picNoiseClassTH                     = PIC_NOISE_CLASS_1;
-
-        picture_control_set_ptr->scene_caracteristic_id = (
-            (!picture_control_set_ptr->parent_pcs_ptr->is_pan) &&
-            (!picture_control_set_ptr->parent_pcs_ptr->is_tilt) &&
-            (picture_control_set_ptr->parent_pcs_ptr->grass_percentage_in_picture > 0) &&
-            (picture_control_set_ptr->parent_pcs_ptr->grass_percentage_in_picture <= 35) &&
-            (picture_control_set_ptr->parent_pcs_ptr->pic_noise_class >= picNoiseClassTH) &&
-            (picture_control_set_ptr->parent_pcs_ptr->pic_homogenous_over_time_sb_percentage < 50)) ? EB_FRAME_CARAC_1 : picture_control_set_ptr->scene_caracteristic_id;
-
-        picture_control_set_ptr->scene_caracteristic_id = (
-            (picture_control_set_ptr->parent_pcs_ptr->is_pan) &&
-            (!picture_control_set_ptr->parent_pcs_ptr->is_tilt) &&
-            (picture_control_set_ptr->parent_pcs_ptr->grass_percentage_in_picture > 35) &&
-            (picture_control_set_ptr->parent_pcs_ptr->grass_percentage_in_picture <= 70) &&
-            (picture_control_set_ptr->parent_pcs_ptr->pic_noise_class >= picNoiseClassTH) &&
-            (picture_control_set_ptr->parent_pcs_ptr->pic_homogenous_over_time_sb_percentage < 50)) ? EB_FRAME_CARAC_2 : picture_control_set_ptr->scene_caracteristic_id;
-
-        picture_control_set_ptr->adjust_min_qp_flag = (EbBool)((!picture_control_set_ptr->parent_pcs_ptr->is_pan) &&
-            (!picture_control_set_ptr->parent_pcs_ptr->is_tilt) &&
-            (picture_control_set_ptr->parent_pcs_ptr->grass_percentage_in_picture > 2) &&
-            (picture_control_set_ptr->parent_pcs_ptr->grass_percentage_in_picture <= 35) &&
-            (picture_control_set_ptr->parent_pcs_ptr->pic_homogenous_over_time_sb_percentage < 70) &&
-            (picture_control_set_ptr->parent_pcs_ptr->zz_cost_average > 15) &&
-            (picture_control_set_ptr->parent_pcs_ptr->pic_noise_class >= picNoiseClassTH));
-#endif
         // Compute picture and slice level chroma QP offsets
         SetSliceAndPictureChromaQpOffsets( // HT done
             picture_control_set_ptr);

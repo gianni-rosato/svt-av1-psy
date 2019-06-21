@@ -340,13 +340,7 @@ extern "C" {
 
 #if !ADD_DELTA_QP_SUPPORT
         unsigned                    qp                      : 6;
-#if !MEMORY_FOOTPRINT_OPT
-        unsigned                    ref_qp                  : 6;
-#endif
         signed                      delta_qp                : 8; // can be signed 8bits
-#if !MEMORY_FOOTPRINT_OPT
-        signed                      org_delta_qp            : 8;
-#endif
 #else
         uint16_t                    qp;
         uint16_t                    ref_qp;
@@ -429,23 +423,13 @@ extern "C" {
         struct PictureControlSet     *picture_control_set_ptr;
 
         CodingUnit                   *final_cu_arr;
-#if !MEMORY_FOOTPRINT_OPT
-        uint32_t                        tot_final_cu;
-#endif
         PartitionType                  *cu_partition_array;
-#if !MEMORY_FOOTPRINT_OPT
-        // Coding Units
-        EbAuraStatus                    aura_status_iii; // aura status for Gold 4K only, used in testing more depths
-#endif
 #if !ADD_DELTA_QP_SUPPORT
         unsigned                        qp                      : 8;
 #endif
         unsigned                        picture_left_edge_flag  : 1;
         unsigned                        picture_top_edge_flag   : 1;
         unsigned                        picture_right_edge_flag : 1;
-#if !MEMORY_FOOTPRINT_OPT
-        unsigned                        pred64                  : 2;
-#endif
         unsigned                        index                   : 12;
         unsigned                        origin_x                : 12;
         unsigned                        origin_y                : 12;
@@ -454,10 +438,6 @@ extern "C" {
         int16_t                         delta_qp;
         int16_t                         org_delta_qp;
 #endif
-#if !MEMORY_FOOTPRINT_OPT
-        //Bits only used for quantized coeffs
-        uint32_t                        quantized_coeffs_bits;
- #endif
         uint32_t                        total_bits;
 
         // Quantized Coefficients

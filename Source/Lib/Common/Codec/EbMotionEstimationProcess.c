@@ -402,28 +402,8 @@ EbErrorType ComputeDecimatedZzSad(
                         context_ptr->me_context_ptr->sixteenth_sb_buffer,
                         context_ptr->me_context_ptr->sixteenth_sb_buffer_stride,
                         16, 16);
-#if !MEMORY_FOOTPRINT_OPT
-                // Background Enhancement Algorithm
-                // Classification is important to:
-                // 1. Avoid improving moving objects.
-                // 2. Do not modulate when all the picture is background
-                // 3. Do give different importance to different regions
-                if (decimatedLcuCollocatedSad < BEA_CLASS_0_0_DEC_TH)
-                    previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = BEA_CLASS_0_ZZ_COST;
-                else if (decimatedLcuCollocatedSad < BEA_CLASS_0_DEC_TH)
-                    previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = BEA_CLASS_0_1_ZZ_COST;
-                else if (decimatedLcuCollocatedSad < BEA_CLASS_1_DEC_TH)
-                    previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = BEA_CLASS_1_ZZ_COST;
-                else if (decimatedLcuCollocatedSad < BEA_CLASS_2_DEC_TH)
-                    previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = BEA_CLASS_2_ZZ_COST;
-                else
-                    previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = BEA_CLASS_3_ZZ_COST;
-#endif
             }
             else {
-#if !MEMORY_FOOTPRINT_OPT
-                previous_picture_control_set_wrapper_ptr->zz_cost_array[sb_index] = INVALID_ZZ_COST;
-#endif
                 decimatedLcuCollocatedSad = (uint32_t)~0;
             }
             // Keep track of non moving LCUs for QP modulation

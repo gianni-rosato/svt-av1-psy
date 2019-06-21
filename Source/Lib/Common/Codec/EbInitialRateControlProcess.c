@@ -881,9 +881,6 @@ void UpdateBeaInfoOverTime(
     uint8_t me_dist_pic_count = 0;
     // SB Loop
     for (lcuIdx = 0; lcuIdx < picture_control_set_ptr->sb_total_count; ++lcuIdx) {
-#if !MEMORY_FOOTPRINT_OPT
-        uint32_t zzCostOverSlidingWindow = picture_control_set_ptr->zz_cost_array[lcuIdx];
-#endif
         uint16_t nonMovingIndexOverSlidingWindow = picture_control_set_ptr->non_moving_index_array[lcuIdx];
 
         // Walk the first N entries in the sliding window starting picture + 1
@@ -894,9 +891,6 @@ void UpdateBeaInfoOverTime(
 
             if (temporaryPictureControlSetPtr->slice_type == I_SLICE || temporaryPictureControlSetPtr->end_of_sequence_flag)
                 break;
-#if !MEMORY_FOOTPRINT_OPT
-            zzCostOverSlidingWindow += temporaryPictureControlSetPtr->zz_cost_array[lcuIdx];
-#endif
             if (lcuIdx == 0)
                 me_dist_pic_count++;
             me_dist += (temporaryPictureControlSetPtr->slice_type == I_SLICE) ? 0 : (uint64_t)temporaryPictureControlSetPtr->rc_me_distortion[lcuIdx];
@@ -905,9 +899,6 @@ void UpdateBeaInfoOverTime(
             // Increment the inputQueueIndex Iterator
             inputQueueIndex = (inputQueueIndex == INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1) ? 0 : inputQueueIndex + 1;
         }
-#if !MEMORY_FOOTPRINT_OPT
-        picture_control_set_ptr->zz_cost_array[lcuIdx] = (uint8_t)(zzCostOverSlidingWindow / (framesToCheckIndex + 1));
-#endif
         picture_control_set_ptr->non_moving_index_array[lcuIdx] = (uint8_t)(nonMovingIndexOverSlidingWindow / (framesToCheckIndex + 1));
 
         nonMovingIndexSum += picture_control_set_ptr->non_moving_index_array[lcuIdx];
@@ -927,11 +918,6 @@ void InitZzCostInfo(
     PictureParentControlSet         *picture_control_set_ptr)
 {
     uint16_t lcuIdx;
-#if !MEMORY_FOOTPRINT_OPT
-    // SB loop
-    for (lcuIdx = 0; lcuIdx < picture_control_set_ptr->sb_total_count; ++lcuIdx)
-        picture_control_set_ptr->zz_cost_array[lcuIdx] = INVALID_ZZ_COST;
-#endif
     picture_control_set_ptr->non_moving_index_average = INVALID_ZZ_COST;
 
     // SB Loop
@@ -992,95 +978,6 @@ void UpdateMotionFieldUniformityOverTime(
         picture_control_set_ptr->sb_total_count);
     return;
 }
-#if !MEMORY_FOOTPRINT_OPT
-/************************************************
-* Update uniform motion field
-** Update Uniformly moving LCUs using
-** collocated LCUs infor in lookahead pictures
-** LAD Window: min (2xmgpos+1 or sliding window size)
-************************************************/
-void UpdateHomogeneityOverTime(
-    EncodeContext                   *encode_context_ptr,
-    PictureParentControlSet         *picture_control_set_ptr)
-{
-    InitialRateControlReorderEntry   *temporaryQueueEntryPtr;
-    PictureParentControlSet          *temporaryPictureControlSetPtr;
-    uint32_t                              NoFramesToCheck;
-
-    uint16_t                             *variancePtr;
-
-    uint64_t                              meanSqrvariance64x64Based = 0, meanvariance64x64Based = 0;
-    uint16_t                              countOfHomogeneousOverTime = 0;
-    uint32_t                                inputQueueIndex;
-    uint32_t                                framesToCheckIndex;
-    uint32_t                              lcuIdx;
-
-    SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-
-    picture_control_set_ptr->pic_homogenous_over_time_sb_percentage = 0;
-
-    // SB Loop
-    for (lcuIdx = 0; lcuIdx < picture_control_set_ptr->sb_total_count; ++lcuIdx) {
-        meanSqrvariance64x64Based = 0;
-        meanvariance64x64Based = 0;
-
-        // Initialize
-        picture_control_set_ptr->sb_variance_of_variance_over_time[lcuIdx] = 0xFFFFFFFFFFFFFFFF;
-
-        picture_control_set_ptr->is_sb_homogeneous_over_time[lcuIdx] = EB_FALSE;
-
-        // Update motionIndexArray of the current picture by averaging the motionIndexArray of the N future pictures
-        // Determine number of frames to check N
-        NoFramesToCheck = MIN(MIN(((picture_control_set_ptr->pred_struct_ptr->pred_struct_period << 1) + 1), picture_control_set_ptr->frames_in_sw), sequence_control_set_ptr->static_config.look_ahead_distance);
-
-        // Walk the first N entries in the sliding window starting picture + 1
-        inputQueueIndex = (encode_context_ptr->initial_rate_control_reorder_queue_head_index == INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1) ? 0 : encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-        for (framesToCheckIndex = 0; framesToCheckIndex < NoFramesToCheck - 1; framesToCheckIndex++) {
-            temporaryQueueEntryPtr = encode_context_ptr->initial_rate_control_reorder_queue[inputQueueIndex];
-            temporaryPictureControlSetPtr = ((PictureParentControlSet*)(temporaryQueueEntryPtr->parent_pcs_wrapper_ptr)->object_ptr);
-            if (temporaryPictureControlSetPtr->scene_change_flag || temporaryPictureControlSetPtr->end_of_sequence_flag)
-                break;
-            variancePtr = temporaryPictureControlSetPtr->variance[lcuIdx];
-
-            meanSqrvariance64x64Based += (variancePtr[ME_TIER_ZERO_PU_64x64])*(variancePtr[ME_TIER_ZERO_PU_64x64]);
-            meanvariance64x64Based += (variancePtr[ME_TIER_ZERO_PU_64x64]);
-
-            // Increment the inputQueueIndex Iterator
-            inputQueueIndex = (inputQueueIndex == INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1) ? 0 : inputQueueIndex + 1;
-        } // PCS loop
-
-        meanSqrvariance64x64Based = meanSqrvariance64x64Based / (NoFramesToCheck - 1);
-        meanvariance64x64Based = meanvariance64x64Based / (NoFramesToCheck - 1);
-
-        // Compute variance
-        picture_control_set_ptr->sb_variance_of_variance_over_time[lcuIdx] = meanSqrvariance64x64Based - meanvariance64x64Based * meanvariance64x64Based;
-
-        if (picture_control_set_ptr->sb_variance_of_variance_over_time[lcuIdx] <= (VAR_BASED_DETAIL_PRESERVATION_SELECTOR_THRSLHD))
-            picture_control_set_ptr->is_sb_homogeneous_over_time[lcuIdx] = EB_TRUE;
-        countOfHomogeneousOverTime += picture_control_set_ptr->is_sb_homogeneous_over_time[lcuIdx];
-    } // SB loop
-
-    picture_control_set_ptr->pic_homogenous_over_time_sb_percentage = (uint8_t)(countOfHomogeneousOverTime * 100 / picture_control_set_ptr->sb_total_count);
-
-    return;
-}
-
-void ResetHomogeneityStructures(
-    PictureParentControlSet         *picture_control_set_ptr)
-{
-    uint32_t                              lcuIdx;
-
-    picture_control_set_ptr->pic_homogenous_over_time_sb_percentage = 0;
-
-    // Reset the structure
-    for (lcuIdx = 0; lcuIdx < picture_control_set_ptr->sb_total_count; ++lcuIdx) {
-        picture_control_set_ptr->sb_variance_of_variance_over_time[lcuIdx] = 0xFFFFFFFFFFFFFFFF;
-        picture_control_set_ptr->is_sb_homogeneous_over_time[lcuIdx] = EB_FALSE;
-    }
-
-    return;
-}
-#endif
 InitialRateControlReorderEntry  * DeterminePictureOffsetInQueue(
     EncodeContext                   *encode_context_ptr,
     PictureParentControlSet         *picture_control_set_ptr,
@@ -1183,54 +1080,6 @@ void UpdateHistogramQueueEntry(
 
     return;
 }
-#if !MEMORY_FOOTPRINT_OPT
-/******************************************************
-* Derive Similar Collocated Flag
-******************************************************/
-void DeriveSimilarCollocatedFlag(
-    PictureParentControlSet    *picture_control_set_ptr)
-
-{
-    uint32_t    sb_index;
-
-    for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-        // Similairty detector for collocated LCU
-        picture_control_set_ptr->similar_colocated_sb_array[sb_index] = EB_FALSE;
-
-        // Similairty detector for collocated SB -- all layers
-        picture_control_set_ptr->similar_colocated_sb_array_ii[sb_index] = EB_FALSE;
-
-        if (picture_control_set_ptr->slice_type != I_SLICE) {
-            uint8_t                   refMean, curMean;
-            uint16_t                  refVar, curVar;
-
-            EbPaReferenceObject    *refObjL0;
-#if MRP_ME
-            refObjL0 = (EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-#else
-            refObjL0 = (EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0]->object_ptr;
-#endif
-            refMean = refObjL0->y_mean[sb_index];
-
-            refVar = refObjL0->variance[sb_index];
-
-            curMean = picture_control_set_ptr->y_mean[sb_index][RASTER_SCAN_CU_INDEX_64x64];
-
-            curVar = picture_control_set_ptr->variance[sb_index][RASTER_SCAN_CU_INDEX_64x64];
-
-            refVar = MAX(refVar, 1);
-            if ((ABS((int64_t)curMean - (int64_t)refMean) < MEAN_DIFF_THRSHOLD) &&
-                ((ABS((int64_t)curVar * 100 / (int64_t)refVar - 100) < VAR_DIFF_THRSHOLD) || (ABS((int64_t)curVar - (int64_t)refVar) < VAR_DIFF_THRSHOLD))) {
-                if (picture_control_set_ptr->is_used_as_reference_flag)
-                    picture_control_set_ptr->similar_colocated_sb_array[sb_index] = EB_TRUE;
-                picture_control_set_ptr->similar_colocated_sb_array_ii[sb_index] = EB_TRUE;
-            }
-        }
-    }
-
-    return;
-}
-#endif
 EbAuraStatus AuraDetection64x64Gold(
     PictureControlSet           *picture_control_set_ptr,
     uint8_t                          picture_qp,
@@ -1538,11 +1387,6 @@ void* initial_rate_control_kernel(void *input_ptr)
             //reset intraCodedEstimationLcu
             MeBasedGlobalMotionDetection(
                 picture_control_set_ptr);
-#if !MEMORY_FOOTPRINT_OPT
-            // Derive Similar Collocated Flag
-            DeriveSimilarCollocatedFlag(
-                picture_control_set_ptr);
-#endif
             // Release Pa Ref pictures when not needed
             ReleasePaReferenceObjects(
 #if MRP_ME
@@ -1776,19 +1620,6 @@ void* initial_rate_control_kernel(void *input_ptr)
                                 sequence_control_set_ptr,
                                 picture_control_set_ptr);
                         }
-#if !MEMORY_FOOTPRINT_OPT
-                        if (!picture_control_set_ptr->end_of_sequence_flag && sequence_control_set_ptr->static_config.look_ahead_distance != 0) {
-                            // Compute and store variance of LCus over time and determine homogenuity temporally
-                            UpdateHomogeneityOverTime(
-                                encode_context_ptr,
-                                picture_control_set_ptr);
-                        }
-                        else {
-                            // Reset Homogeneity Structures to default if no lookahead is detected
-                            ResetHomogeneityStructures(
-                                picture_control_set_ptr);
-                        }
-#endif
                         // Derive blockinessPresentFlag
                         DeriveBlockinessPresentFlag(
                             sequence_control_set_ptr,
