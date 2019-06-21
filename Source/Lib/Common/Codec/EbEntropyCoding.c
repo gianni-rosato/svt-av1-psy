@@ -3974,11 +3974,7 @@ static void write_film_grain_params(PictureParentControlSet *pcs_ptr,
     aom_wb_write_literal(wb, pars->random_seed, 16);
 
     if (pcs_ptr->av1_frame_type == INTER_FRAME) {
-#if MRP_MD
         EbReferenceObject* refObj0 = (EbReferenceObject*)pcs_ptr->childPcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-#else
-        EbReferenceObject* refObj0 = (EbReferenceObject*)pcs_ptr->childPcs->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
-#endif
         int32_t ref_idx = 0;
         pars->update_parameters = 1;
         if (film_grain_params_equal(&refObj0->film_grain_params, pars)) {
@@ -3987,11 +3983,7 @@ static void write_film_grain_params(PictureParentControlSet *pcs_ptr,
         }
         else if (pcs_ptr->childPcs->slice_type == B_SLICE)
         {
-#if MRP_MD
             EbReferenceObject* refObj1 = (EbReferenceObject*)pcs_ptr->childPcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
-#else
-            EbReferenceObject* refObj1 = (EbReferenceObject*)pcs_ptr->childPcs->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
-#endif
             if (film_grain_params_equal(&refObj1->film_grain_params, pars)) {
                 pars->update_parameters = 0;
                 ref_idx = get_ref_frame_map_idx(pcs_ptr, ALTREF_FRAME);  //todo: will it always be ALF_REF in L1?

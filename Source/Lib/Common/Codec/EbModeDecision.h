@@ -110,10 +110,8 @@ extern "C" {
         uint32_t                               pred_mv_weight;
         uint8_t                                ref_frame_type;
         uint8_t                                ref_mv_index;
-#if MRP_MD
         int8_t                                 ref_frame_index_l0;
         int8_t                                 ref_frame_index_l1;
-#endif
         EbBool                                 is_new_mv;
         EbBool                                 is_zero_mv;
         TxType                                 transform_type[MAX_TXB_COUNT];

@@ -4055,10 +4055,8 @@ uint8_t product_full_mode_decision(
         pu_ptr->is_compound = candidate_ptr->is_compound;
         pu_ptr->pred_mv_weight = candidate_ptr->pred_mv_weight;
         pu_ptr->ref_frame_type = candidate_ptr->ref_frame_type;
-#if MRP_MD
         pu_ptr->ref_frame_index_l0 = candidate_ptr->ref_frame_index_l0;
         pu_ptr->ref_frame_index_l1 = candidate_ptr->ref_frame_index_l1;
-#endif
         pu_ptr->ref_mv_index = candidate_ptr->ref_mv_index;
         pu_ptr->is_new_mv = candidate_ptr->is_new_mv;
         pu_ptr->is_zero_mv = candidate_ptr->is_zero_mv;

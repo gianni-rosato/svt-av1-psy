@@ -736,7 +736,6 @@ void* picture_manager_kernel(void *input_ptr)
                         ChildPictureControlSetPtr->dif_cu_delta_qp_depth = (uint8_t)entrySequenceControlSetPtr->input_resolution == INPUT_SIZE_4K_RANGE ? 3 : 2;
 
                         // Reset the Reference Lists
-#if MRP_MD
                         EB_MEMSET(ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
                         EB_MEMSET(ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
 
@@ -746,16 +745,8 @@ void* picture_manager_kernel(void *input_ptr)
                         EB_MEMSET(ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EB_SLICE));
                         EB_MEMSET(ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EB_SLICE));
 
-#else
-                        EB_MEMSET(ChildPictureControlSetPtr->ref_pic_ptr_array, 0, 2 * sizeof(EbObjectWrapper*));
-
-                        EB_MEMSET(ChildPictureControlSetPtr->ref_pic_qp_array, 0, 2 * sizeof(uint8_t));
-
-                        EB_MEMSET(ChildPictureControlSetPtr->ref_slice_type_array, 0, 2 * sizeof(EB_SLICE));
-#endif
                         // Configure List0
                         if ((entryPictureControlSetPtr->slice_type == P_SLICE) || (entryPictureControlSetPtr->slice_type == B_SLICE)) {
-#if MRP_MD
                             uint8_t refIdx;
                             for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list0_count; ++refIdx) {
                                 if (entryPictureControlSetPtr->ref_list0_count) {
@@ -795,43 +786,10 @@ void* picture_manager_kernel(void *input_ptr)
                                         EB_ENC_PM_ERROR1);
                                 }
                             }
-#else
-                            if (entryPictureControlSetPtr->ref_list0_count) {
-                                referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
-                                    ((int32_t)inputEntryPtr->reference_entry_index) - inputEntryPtr->list0_ptr->reference_list,
-                                    REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
-
-                                referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
-
-                                // Set the Reference Object
-                                ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0] = referenceEntryPtr->reference_object_ptr;
-
-#if ADD_DELTA_QP_SUPPORT
-                                ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0] = (uint8_t)((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->qp;
-                                ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0] = (uint8_t)((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->slice_type;
-#else
-                                ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0] = ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->qp;
-                                ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0] = ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->slice_type;
-#endif
-                                // Increment the Reference's live_count by the number of tiles in the input picture
-                                eb_object_inc_live_count(
-                                    referenceEntryPtr->reference_object_ptr,
-                                    1);
-
-                                // Decrement the Reference's dependent_count Count
-                                --referenceEntryPtr->dependent_count;
-
-                                CHECK_REPORT_ERROR(
-                                    (referenceEntryPtr->dependent_count != ~0u),
-                                    encode_context_ptr->app_callback_ptr,
-                                    EB_ENC_PM_ERROR1);
-                            }
-#endif
                         }
 
                         // Configure List1
                         if (entryPictureControlSetPtr->slice_type == B_SLICE) {
-#if MRP_MD
                             uint8_t refIdx;
                             for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list1_count; ++refIdx) {
                                 if (entryPictureControlSetPtr->ref_list1_count) {
@@ -861,34 +819,6 @@ void* picture_manager_kernel(void *input_ptr)
                                         EB_ENC_PM_ERROR1);
                                 }
                             }
-#else
-                            if (entryPictureControlSetPtr->ref_list1_count) {
-                                referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
-                                    ((int32_t)inputEntryPtr->reference_entry_index) - inputEntryPtr->list1_ptr->reference_list,
-                                    REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
-
-                                referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
-
-                                // Set the Reference Object
-                                ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1] = referenceEntryPtr->reference_object_ptr;
-
-                                ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_1] = (uint8_t)((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->qp;
-                                ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1] = ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->slice_type;
-
-                                // Increment the Reference's live_count by the number of tiles in the input picture
-                                eb_object_inc_live_count(
-                                    referenceEntryPtr->reference_object_ptr,
-                                    1);
-
-                                // Decrement the Reference's dependent_count Count
-                                --referenceEntryPtr->dependent_count;
-
-                                CHECK_REPORT_ERROR(
-                                    (referenceEntryPtr->dependent_count != ~0u),
-                                    encode_context_ptr->app_callback_ptr,
-                                    EB_ENC_PM_ERROR1);
-                            }
-#endif
                         }
 
                         // Adjust the Slice-type if the Lists are Empty, but don't reset the Prediction Structure
