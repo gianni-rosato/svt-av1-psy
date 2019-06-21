@@ -152,7 +152,7 @@ extern "C" {
 
 
 
-#define SC_HME_ME                         0 // Use sc detector for hme/me setting
+
 #define RED_CU_DEBUG                      0 // Turn off some features known to not work with redudant CUs
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
