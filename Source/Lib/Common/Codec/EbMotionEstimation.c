@@ -4199,7 +4199,6 @@ static void FullPelSearch_LCU(MeContext *context_ptr, uint32_t listIndex,
     }
 }
 
-#if IMPROVED_SUBPEL_SEARCH
 /*******************************************
  * PU_HalfPelRefinement
  *   performs Half Pel refinement for one PU
@@ -5282,7 +5281,6 @@ static void open_loop_me_half_pel_search_sblock(
         }
     }
 }
-#if IMPROVED_SUBPEL_SEARCH
 /*******************************************
  * open_loop_me_quarter_pel_search_sblock
  *******************************************/
@@ -5348,8 +5346,6 @@ static void open_loop_me_quarter_pel_search_sblock(
         }
     }
 }
-#endif
-#endif
 /*******************************************
  * open_loop_me_fullpel_search_sblock
  *******************************************/
@@ -6912,7 +6908,6 @@ static void PU_QuarterPelRefinementOnTheFly(
     int16_t yMvQuarter[8];
     int32_t searchRegionIndex1 = 0;
     int32_t searchRegionIndex2 = 0;
-#if IMPROVED_SUBPEL_SEARCH
     if (context_ptr->full_quarter_pel_refinement) {
         validTL = EB_TRUE;
         validT = EB_TRUE;
@@ -6923,7 +6918,6 @@ static void PU_QuarterPelRefinementOnTheFly(
         validBL = EB_TRUE;
         validL = EB_TRUE;
     } else {
-#endif
         if ((y_mv & 2) + ((x_mv & 2) >> 1)) {
             validTL = (EbBool)(sub_pel_direction == RIGHT_POSITION ||
                                sub_pel_direction == BOTTOM_RIGHT_POSITION ||
@@ -6975,9 +6969,7 @@ static void PU_QuarterPelRefinementOnTheFly(
                               sub_pel_direction == LEFT_POSITION ||
                               sub_pel_direction == TOP_LEFT_POSITION);
         }
-#if IMPROVED_SUBPEL_SEARCH
     }
-#endif
     xMvQuarter[0] = x_mv - 1;  // L  position
     xMvQuarter[1] = x_mv + 1;  // R  position
     xMvQuarter[2] = x_mv;      // T  position
@@ -8628,7 +8620,6 @@ static void QuarterPelSearch_LCU(
 
     return;
 }
-#if IMPROVED_SUBPEL_SEARCH
 #define QP_REF_OPT 1
 /*******************************************
  * quarter_pel_refinemnet_block
@@ -10426,7 +10417,6 @@ static void quarter_pel_refinement_sb(
     }
     return;
 }
-#endif
 void HmeOneQuadrantLevel0(
     PictureParentControlSet *picture_control_set_ptr,
     MeContext *context_ptr,  // input/output parameter, ME context Ptr, used to
@@ -14270,7 +14260,6 @@ EbErrorType motion_estimate_lcu(
                                                            search_area_width,
                                                            search_area_height,
                                                            asm_type);
-#if IMPROVED_SUBPEL_SEARCH
                         context_ptr->full_quarter_pel_refinement = 0;
                         if (picture_control_set_ptr->half_pel_mode ==
                             EX_HP_MODE) {
@@ -14409,7 +14398,6 @@ EbErrorType motion_estimate_lcu(
                                 search_area_height,
                                 asm_type);
                         }
-#endif
                     } else {
                         initialize_buffer32bits_func_ptr_array[asm_type](
                             context_ptr
@@ -14507,10 +14495,8 @@ EbErrorType motion_estimate_lcu(
 
                     // Interpolate the search region for Half-Pel Refinements
                     // H - AVC Style
-#if IMPROVED_SUBPEL_SEARCH
                     if (picture_control_set_ptr->half_pel_mode ==
                         REFINMENT_HP_MODE) {
-#endif
                         InterpolateSearchRegionAVC(
                             context_ptr,
                             listIndex,
@@ -14578,11 +14564,9 @@ EbErrorType motion_estimate_lcu(
                             enableHalfPel32x32,
                             enableHalfPel16x16,
                             enableHalfPel8x8);
-#if IMPROVED_SUBPEL_SEARCH
                     }
                     if (picture_control_set_ptr->quarter_pel_mode ==
                         REFINMENT_QP_MODE) {
-#endif
                         // Quarter-Pel Refinement [8 search positions]
                         QuarterPelSearch_LCU(
                             context_ptr,
@@ -14648,9 +14632,7 @@ EbErrorType motion_estimate_lcu(
                             picture_control_set_ptr->pic_depth_mode <=
                                 PIC_ALL_C_DEPTH_MODE);
 #endif
-#if IMPROVED_SUBPEL_SEARCH
                     }
-#endif
                 }
                 if (is_nsq_table_used && ref_pic_index == 0) {
                     context_ptr->p_best_nsq64x64 =

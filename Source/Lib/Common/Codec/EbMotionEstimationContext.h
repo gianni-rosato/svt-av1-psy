@@ -367,7 +367,6 @@ extern "C" {
         uint32_t                      p_sb_best_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
         uint32_t                      p_sb_best_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
         uint32_t                      p_sb_bipred_sad[MAX_ME_PU_COUNT];//needs to be upgraded to 209 pus
-#if IMPROVED_SUBPEL_SEARCH
         uint32_t                      p_sb_best_full_pel_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
         uint32_t                      *p_best_full_pel_mv8x8;
         uint32_t                      *p_best_full_pel_mv16x16;
@@ -384,7 +383,6 @@ extern "C" {
         uint32_t                      *p_best_full_pel_mv64x16;
         uint32_t                      *p_best_full_pel_mv16x64;
         uint8_t                       full_quarter_pel_refinement;
-#endif
         uint32_t                      p_sb_best_ssd[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
         uint32_t                     *p_best_ssd8x8;
         uint32_t                     *p_best_ssd16x16;

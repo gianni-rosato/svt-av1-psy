@@ -111,9 +111,7 @@ void interpolate_search_region_AVC_chroma(
 #define F0 0
 #define F1 1
 #define F2 2
-#if IMPROVED_SUBPEL_SEARCH
 #define MAX_SSE_VALUE 128 * 128 * 255 * 255
-#endif
 #define  MAX_SAD_VALUE 128*128*255
 
 // Interpolation Filters
@@ -1559,7 +1557,6 @@ void interpolate_search_region_AVC_chroma(
         const BlockGeom *blk_geom,
         uint32_t         geom_offset_x,
         uint32_t         geom_offset_y);
-#if IMPROVED_SUBPEL_SEARCH
     void half_pel_refinement_sb(
         SequenceControlSet
             *sequence_control_set_ptr,  // input parameter, Sequence control set
@@ -1599,7 +1596,6 @@ void interpolate_search_region_AVC_chroma(
                                        //samples
         uint32_t integer_mv,           // input parameter, integer MV
         EbAsm asm_type);
-#endif
 
 #ifdef __cplusplus
 }
