@@ -1601,23 +1601,6 @@ static INLINE void update_skip(int *accu_rate, int64_t accu_dist, uint16_t *eob,
         *eob = 0;
     }
 }
-#if TRELLIS_SKIP
-static INLINE int32_t av1_cost_skip_txb(
-    uint8_t        allow_update_cdf,
-    FRAME_CONTEXT *ec_ctx,
-    struct ModeDecisionCandidateBuffer    *candidate_buffer_ptr,
-    TxSize                                  transform_size,
-    PlaneType                               plane_type,
-    int16_t                                   txb_skip_ctx){
-    const TxSize txs_ctx = (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
-    assert(txs_ctx < TX_SIZES);
-    const LvMapCoeffCost *const coeff_costs = &candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->coeff_fac_bits[txs_ctx][plane_type];
-
-    if (allow_update_cdf)
-        update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], 1, 2);
-    return coeff_costs->txb_skip_cost[txb_skip_ctx][1];
-}
-#endif
 enum {
     NO_AQ = 0,
     VARIANCE_AQ = 1,
@@ -1984,27 +1967,6 @@ int32_t av1_quantize_inv_quantize(
 
     if (perform_rdoq && *eob != 0) {
 
-#if TRELLIS_SKIP
-        uint64_t coeff_rate_skip_non_opt;
-        uint64_t coeff_rate_skip_opt;
-
-        uint64_t cost_skip_non_opt;
-        uint64_t cost_skip_opt;
-#endif
-#if TRELLIS_SKIP
-        coeff_rate_skip_non_opt = av1_cost_skip_txb(
-            0,//picture_control_set_ptr->update_cdf,
-            0,//picture_control_set_ptr->ec_ctx_array[sb_index],
-            candidateBuffer,
-            txsize,
-            (component_type == COMPONENT_LUMA) ? 0 : 1,
-            txb_skip_context);
-#endif
-#if TRELLIS_SKIP // To test
-        cost_skip_non_opt = RDCOST(md_context->full_lambda, coeff_rate_skip_non_opt, distortion_non_opt[DIST_CALC_PREDICTION]);
-        if (cost_skip_non_opt < cost_non_opt)
-            *eob = 0;
-#endif
         // Perform Trellis
         if (*eob != 0) {
             av1_optimize_b(
