@@ -169,15 +169,8 @@ EbErrorType signal_derivation_me_kernel_oq(
         else
         if (picture_control_set_ptr->enc_mode <= ENC_M6)
         context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH ;
-#if M9_FRAC_ME_SEARCH_METHOD
-        else if (picture_control_set_ptr->enc_mode <= ENC_M8)
-            context_ptr->me_context_ptr->fractionalSearchMethod = FULL_SAD_SEARCH;
-        else
-            context_ptr->me_context_ptr->fractionalSearchMethod = SUB_SAD_SEARCH;
-#else
         else
         context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
-#endif
         if (picture_control_set_ptr->sc_content_detected)
             if (picture_control_set_ptr->enc_mode <= ENC_M1)
                 context_ptr->me_context_ptr->fractional_search64x64 = EB_TRUE;

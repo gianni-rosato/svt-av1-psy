@@ -143,7 +143,7 @@ extern "C" {
 // Testing MACROS
 
 // Under testing
-#define M9_FRAC_ME_SEARCH_METHOD          0 // VP9 4K fractional search method; SUB_SAD_SEARCH vs. FULL_SAD_SEARCH
+
 #define M9_FRAC_ME_SEARCH_64x64           0 // VP9 4K 64x64 search; OFF vs. ON
 #define M9_SUBPEL                         0 // VP9 4K subpel settings; subpel ON base
 #define M9_NFL                            0 // VP9 4K NFL settings; NFL = 3
