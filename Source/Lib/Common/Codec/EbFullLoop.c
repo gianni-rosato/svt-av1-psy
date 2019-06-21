@@ -446,8 +446,6 @@ void av1_quantize_b_facade_II(
 }
 
 
-#if RDOQ_FP_QUANTIZATION
-
 static void quantize_fp_helper_c(
     const TranLow *coeff_ptr,
     intptr_t n_coeffs,
@@ -604,8 +602,6 @@ void av1_quantize_fp_facade(
         }
     }
 }
-
-#endif
 
 
 // Hsan: code clean up; from static to extern as now used @ more than 1 file
@@ -1962,7 +1958,6 @@ void av1_quantize_inv_quantize(
     qparam.iqmatrix = iqMatrix;
 
 
-#if RDOQ_FP_QUANTIZATION
     EbBool is_inter = (pred_mode >= NEARESTMV);
 
     EbBool perform_rdoq = (md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
@@ -1981,7 +1976,6 @@ void av1_quantize_inv_quantize(
             scan_order,
             &qparam);
     else
-#endif
         if (bit_increment)
             av1_highbd_quantize_b_facade(
                 (TranLow*)coeff,
@@ -2006,15 +2000,7 @@ void av1_quantize_inv_quantize(
                 scan_order,
                 &qparam);
 
-#if !RDOQ_FP_QUANTIZATION
-    EbBool is_inter = (pred_mode >= NEARESTMV);
-#endif
-
-#if RDOQ_FP_QUANTIZATION
     if (perform_rdoq && *eob != 0) {
-#else
-    if (md_context->trellis_quant_coeff_optimization && *eob != 0 && component_type == COMPONENT_LUMA && !is_intra_bc) {
-#endif
 
 #if TRELLIS_SKIP
         uint64_t coeff_rate_skip_non_opt;

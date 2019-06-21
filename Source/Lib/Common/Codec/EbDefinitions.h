@@ -57,7 +57,7 @@ extern "C" {
 
 
 
-#define RDOQ_FP_QUANTIZATION              1 // Use FP quantization method if RDOQ ON and INTRA block and 8BIT (x86 WIP)
+
 #define FIXED_128x128_CONTEXT_UPDATE      1 // Fix txb_skip_context and dc_sign_context update for 128x128, and move txb_skip_context and dc_sign_context from CU to MD context
 #define LOOP_FILTER_FIX                   1 // Use the existing loop filter multi-mode signal to control loop filter and removed the NRF checks @ Encode Pass and Loop Filter Processes
 
