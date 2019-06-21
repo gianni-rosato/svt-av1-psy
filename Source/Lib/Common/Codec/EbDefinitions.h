@@ -38,12 +38,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define ALT_REF_SUPPORT                   1// ALT_REF main flag
 
-#if ALT_REF_SUPPORT
+
 #define ALTREF_FILTERING_SUPPORT          1 //Temporal filter
 #define ALT_REF_OVERLAY                   1 // support for ALT_REF overlay frames.
-#endif
 
 #define PCS_ME_FIX                        1 // pcs flags shall not be set in seg based process
 #define ADAPTIVE_QP_SCALING               1 // Adaptive QP scaling. Change the QP based on the content.
