@@ -274,12 +274,10 @@ EbErrorType picture_control_set_ctor(
         sb_origin_x = (sb_origin_x == picture_sb_w - 1) ? 0 : sb_origin_x + 1;
     }
 
-#if CABAC_UP
     if (initDataPtr->cdf_mode == 0) {
         EB_MALLOC(FRAME_CONTEXT*, object_ptr->ec_ctx_array, sizeof(FRAME_CONTEXT) * all_sb, EB_N_PTR);
         EB_MALLOC(MdRateEstimationContext*, object_ptr->rate_est_array, sizeof(MdRateEstimationContext) * all_sb, EB_N_PTR);
     }
-#endif
     // Mode Decision Control config
     EB_MALLOC(MdcLcuData*, object_ptr->mdc_sb_array, object_ptr->sb_total_count * sizeof(MdcLcuData), EB_N_PTR);
     object_ptr->qp_array_stride = (uint16_t)((initDataPtr->picture_width + MIN_BLOCK_SIZE - 1) / MIN_BLOCK_SIZE);

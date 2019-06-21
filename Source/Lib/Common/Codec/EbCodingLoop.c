@@ -2015,7 +2015,6 @@ void perform_intra_coding_loop(
             eobs[context_ptr->txb_itr],
             cuPlane);
 
-#if  CABAC_UP
         if (picture_control_set_ptr->update_cdf)
         {
             ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
@@ -2056,7 +2055,6 @@ void perform_intra_coding_loop(
                 COMPONENT_LUMA,
                 asm_type);
         }
-#endif
 
         Av1EncodeGenerateReconFunctionPtr[is16bit](
             context_ptr,
@@ -2292,7 +2290,6 @@ void perform_intra_coding_loop(
             eobs[context_ptr->txb_itr],
             cuPlane);
 
-#if  CABAC_UP
         if (picture_control_set_ptr->update_cdf)
         {
             ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
@@ -2333,7 +2330,6 @@ void perform_intra_coding_loop(
                 COMPONENT_CHROMA,
                 asm_type);
         }
-#endif
 
         Av1EncodeGenerateReconFunctionPtr[is16bit](
             context_ptr,
@@ -2661,9 +2657,7 @@ EB_EXTERN void av1_encode_pass(
     }
 #endif
 
-#if CABAC_UP
     uint8_t allow_update_cdf = picture_control_set_ptr->update_cdf;
-#endif
 
     uint32_t final_cu_itr = 0;
 
@@ -3131,7 +3125,6 @@ EB_EXTERN void av1_encode_pass(
                                     eobs[context_ptr->txb_itr],
                                     cuPlane);
 
-#if  CABAC_UP
                                 if(allow_update_cdf)
                                 {
                                     ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
@@ -3170,7 +3163,6 @@ EB_EXTERN void av1_encode_pass(
                                         context_ptr->blk_geom->has_uv ? COMPONENT_ALL : COMPONENT_LUMA,
                                         asm_type);
                                 }
-#endif
                                 //intra mode
                                 Av1EncodeGenerateReconFunctionPtr[is16bit](
                                     context_ptr,
@@ -3620,10 +3612,8 @@ EB_EXTERN void av1_encode_pass(
 
                                     av1_tu_estimate_coeff_bits(
                                         context_ptr->md_context,
-#if CABAC_UP
                                         0,//allow_update_cdf,
                                         NULL,
-#endif
                                         picture_control_set_ptr,
                                         candidateBuffer,
                                         cu_ptr,
@@ -3684,7 +3674,6 @@ EB_EXTERN void av1_encode_pass(
                                 y_full_distortion[DIST_CALC_RESIDUAL] += yTuFullDistortion[DIST_CALC_RESIDUAL];
                                 y_full_distortion[DIST_CALC_PREDICTION] += yTuFullDistortion[DIST_CALC_PREDICTION];
 
-#if CABAC_UP
                                 if (allow_update_cdf) {
                                     ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
                                     ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
@@ -3732,7 +3721,6 @@ EB_EXTERN void av1_encode_pass(
                                         context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL : COMPONENT_LUMA,
                                         asm_type);
                                 }
-#endif
                             }
                             context_ptr->coded_area_sb += blk_geom->tx_width[cu_ptr->tx_depth][tuIt] * blk_geom->tx_height[cu_ptr->tx_depth][tuIt];
                             if (context_ptr->blk_geom->has_uv && uv_pass)
@@ -3895,7 +3883,6 @@ EB_EXTERN void av1_encode_pass(
                                 eobs[context_ptr->txb_itr],
                                 cuPlane);
 
-#if CABAC_UP
                             if (allow_update_cdf) {
                                 ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
                                 ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
@@ -3933,7 +3920,6 @@ EB_EXTERN void av1_encode_pass(
                                     context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL : COMPONENT_LUMA,
                                     asm_type);
                             }
-#endif
                         }
                         if (context_ptr->blk_geom->has_uv && uv_pass) {
                             cu_ptr->block_has_coeff = cu_ptr->block_has_coeff |

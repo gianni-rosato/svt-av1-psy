@@ -21,10 +21,8 @@
 extern "C" {
 #endif
     extern uint64_t av1_cost_coeffs_txb(
-#if CABAC_UP
         uint8_t                             allow_update_cdf,
         FRAME_CONTEXT                      *ec_ctx,
-#endif
         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
         const TranLow                      *const qcoeff,
         uint16_t                            eob,

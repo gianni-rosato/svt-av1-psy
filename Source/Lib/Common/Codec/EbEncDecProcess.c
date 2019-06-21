@@ -1380,11 +1380,9 @@ void move_cu_data(
     CodingUnit *src_cu,
     CodingUnit *dst_cu);
 
-#if CABAC_UP
 void av1_estimate_syntax_rate___partial(
     MdRateEstimationContext        *md_rate_estimation_array,
     FRAME_CONTEXT                  *fc);
-#endif
 /******************************************************
  * EncDec Kernel
  ******************************************************/
@@ -1506,7 +1504,6 @@ void* enc_dec_kernel(void *input_ptr)
                     context_ptr->sb_index = sb_index;
                     context_ptr->md_context->cu_use_ref_src_flag = (picture_control_set_ptr->parent_pcs_ptr->use_src_ref) && (picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index].edge_block_num == EB_FALSE || picture_control_set_ptr->parent_pcs_ptr->sb_flat_noise_array[sb_index]) ? EB_TRUE : EB_FALSE;
 
-#if CABAC_UP
                     if (picture_control_set_ptr->update_cdf) {
                         MdRateEstimationContext* md_rate_estimation_array = sequence_control_set_ptr->encode_context_ptr->md_rate_estimation_array;
                         md_rate_estimation_array += picture_control_set_ptr->slice_type * TOTAL_NUMBER_OF_QP_VALUES + context_ptr->md_context->qp;
@@ -1539,7 +1536,6 @@ void* enc_dec_kernel(void *input_ptr)
                         for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex)
                             context_ptr->md_context->fast_candidate_ptr_array[candidateIndex]->md_rate_estimation_ptr = &picture_control_set_ptr->rate_est_array[sb_index];
                     }
-#endif
                     // Configure the LCU
                     mode_decision_configure_lcu(
                         context_ptr->md_context,

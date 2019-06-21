@@ -24,9 +24,7 @@
 #include "noise_model.h"
 #include "EbSegmentationParams.h"
 
-#if CABAC_UP
 #include "EbMdRateEstimation.h"
-#endif
 
 #include "EbCdef.h"
 
@@ -13883,11 +13881,9 @@ extern "C" {
         CRC_CALCULATOR crc_calculator1;
         CRC_CALCULATOR crc_calculator2;
 
-#if CABAC_UP
         FRAME_CONTEXT * ec_ctx_array;
         struct MdRateEstimationContext* rate_est_array;
         uint8_t  update_cdf;
-#endif
     } PictureControlSet;
 
     // To optimize based on the max input size

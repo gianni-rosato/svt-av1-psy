@@ -1600,7 +1600,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 
     context_ptr->adp_level = picture_control_set_ptr->parent_pcs_ptr->enc_mode;
 
-#if CABAC_UP
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
         if (picture_control_set_ptr->enc_mode <= ENC_M6)
             picture_control_set_ptr->update_cdf = 1;
@@ -1611,7 +1610,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 
     if(picture_control_set_ptr->update_cdf)
         assert(sequence_control_set_ptr->cdf_mode == 0 && "use cdf_mode 0");
-#endif
     return return_error;
 }
 

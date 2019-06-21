@@ -3168,10 +3168,8 @@ void perform_intra_tx_partitioning(
                 //LUMA-ONLY
                 av1_tu_estimate_coeff_bits(
                     context_ptr,
-#if CABAC_UP
                     0,   //allow_update_cdf,
                     NULL,//FRAME_CONTEXT *ec_ctx,
-#endif
                     picture_control_set_ptr,
                     candidateBuffer,
                     context_ptr->cu_ptr,
@@ -3307,10 +3305,8 @@ void perform_intra_tx_partitioning(
             //LUMA-ONLY
             av1_tu_estimate_coeff_bits(
                 context_ptr,
-#if CABAC_UP
                 0,   //allow_update_cdf,
                 NULL,//FRAME_CONTEXT *ec_ctx,
-#endif
                 picture_control_set_ptr,
                 candidateBuffer,
                 context_ptr->cu_ptr,
@@ -3554,10 +3550,8 @@ void perform_intra_tx_partitioning(
             //LUMA-ONLY
             av1_tu_estimate_coeff_bits(
                 context_ptr,
-#if CABAC_UP
                 0,   //allow_update_cdf,
                 NULL,//FRAME_CONTEXT *ec_ctx,
-#endif
                 picture_control_set_ptr,
                 candidateBuffer,
                 context_ptr->cu_ptr,

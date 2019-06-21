@@ -134,7 +134,7 @@ extern "C" {
 
 
 
-#define CABAC_UP                          1 // Update cabac probabilities. txb CDFs.
+
 #define RC                                1 // VBR Rate control integrated from SVT-VP9
 #if RC
 #define RC_FEEDBACK                       1 // Feedback from previous base layer is received before starting the next base layer frame

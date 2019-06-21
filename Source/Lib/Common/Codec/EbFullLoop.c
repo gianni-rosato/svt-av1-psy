@@ -1603,10 +1603,8 @@ static INLINE void update_skip(int *accu_rate, int64_t accu_dist, uint16_t *eob,
 }
 #if TRELLIS_SKIP
 static INLINE int32_t av1_cost_skip_txb(
-#if CABAC_UP
     uint8_t        allow_update_cdf,
     FRAME_CONTEXT *ec_ctx,
-#endif
     struct ModeDecisionCandidateBuffer    *candidate_buffer_ptr,
     TxSize                                  transform_size,
     PlaneType                               plane_type,
@@ -1615,10 +1613,8 @@ static INLINE int32_t av1_cost_skip_txb(
     assert(txs_ctx < TX_SIZES);
     const LvMapCoeffCost *const coeff_costs = &candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->coeff_fac_bits[txs_ctx][plane_type];
 
-#if CABAC_UP
     if (allow_update_cdf)
         update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], 1, 2);
-#endif
     return coeff_costs->txb_skip_cost[txb_skip_ctx][1];
 }
 #endif
@@ -2261,10 +2257,8 @@ void product_full_loop(
         //LUMA-ONLY
         av1_tu_estimate_coeff_bits(
             context_ptr,
-#if CABAC_UP
             0,//allow_update_cdf,
             NULL,//FRAME_CONTEXT *ec_ctx,
-#endif
             picture_control_set_ptr,
             candidateBuffer,
             context_ptr->cu_ptr,
@@ -2561,10 +2555,8 @@ void product_full_loop_tx_search(
             //LUMA-ONLY
             av1_tu_estimate_coeff_bits(
                 context_ptr,
-#if CABAC_UP
                 0,//allow_update_cdf,
                 NULL,//FRAME_CONTEXT *ec_ctx,
-#endif
                 picture_control_set_ptr,
                 candidateBuffer,
                 context_ptr->cu_ptr,
@@ -2783,10 +2775,8 @@ void encode_pass_tx_search(
 
         av1_tu_estimate_coeff_bits(
             context_ptr->md_context,
-#if CABAC_UP
             0,//allow_update_cdf,
             NULL,//FRAME_CONTEXT *ec_ctx,
-#endif
             picture_control_set_ptr,
             candidateBuffer,
             context_ptr->cu_ptr,
@@ -2993,10 +2983,8 @@ void encode_pass_tx_search_hbd(
 
         av1_tu_estimate_coeff_bits(
             context_ptr->md_context,
-#if CABAC_UP
             0,//allow_update_cdf,
             NULL,//FRAME_CONTEXT *ec_ctx,
-#endif
             picture_control_set_ptr,
             candidateBuffer,
             context_ptr->cu_ptr,
@@ -3476,10 +3464,8 @@ void cu_full_distortion_fast_tu_mode_r(
             //CHROMA-ONLY
             av1_tu_estimate_coeff_bits(
                 context_ptr,
-#if CABAC_UP
                 0,//allow_update_cdf,
                 NULL,//FRAME_CONTEXT *ec_ctx,
-#endif
                 picture_control_set_ptr,
                 candidateBuffer,
                 context_ptr->cu_ptr,

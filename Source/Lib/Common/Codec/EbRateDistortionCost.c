@@ -149,10 +149,8 @@ static const PredictionMode fimode_to_intradir[FILTER_INTRA_MODES] = {
 };
 // TODO(angiebird): use this function whenever it's possible
 int32_t Av1TransformTypeRateEstimation(
-#if CABAC_UP
     uint8_t        allow_update_cdf,
     FRAME_CONTEXT *fc,
-#endif
     struct ModeDecisionCandidateBuffer    *candidate_buffer_ptr,
     EbBool                                  is_inter,
     EbBool                                  useFilterIntraFlag,
@@ -172,7 +170,6 @@ int32_t Av1TransformTypeRateEstimation(
         const int32_t ext_tx_set = get_ext_tx_set(transform_size, is_inter, reduced_tx_set_used);
         if (is_inter) {
             if (ext_tx_set > 0)
-#if CABAC_UP
             {
                 if (allow_update_cdf) {
                     const TxSetType tx_set_type =
@@ -184,9 +181,6 @@ int32_t Av1TransformTypeRateEstimation(
                 }
                 return candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->inter_tx_type_fac_bits[ext_tx_set][square_tx_size][transform_type];
             }
-#else
-                return candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->inter_tx_type_fac_bits[ext_tx_set][square_tx_size][transform_type];
-#endif
         }
         else {
             if (ext_tx_set > 0) {
@@ -196,7 +190,6 @@ int32_t Av1TransformTypeRateEstimation(
                 else
                     intra_dir = candidate_buffer_ptr->candidate_ptr->pred_mode;
                 assert(intra_dir < INTRA_MODES);
-#if CABAC_UP
                 const TxSetType tx_set_type =
                     get_ext_tx_set_type(transform_size, is_inter, reduced_tx_set_used);
 
@@ -206,7 +199,6 @@ int32_t Av1TransformTypeRateEstimation(
                         av1_ext_tx_ind[tx_set_type][transform_type],
                         av1_num_ext_tx_set[tx_set_type]);
                 }
-#endif
                 return candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->intra_tx_type_fac_bits[ext_tx_set][square_tx_size][intra_dir][transform_type];
             }
         }
@@ -248,7 +240,6 @@ static INLINE int32_t get_eob_pos_token(const int32_t eob, int32_t *const extra)
 
     return t;
 }
-#if CABAC_UP
 #define TX_SIZE TxSize
 static INLINE TX_SIZE get_txsize_entropy_ctx(TX_SIZE txsize) {
     return (TX_SIZE)((txsize_sqr_map[txsize] + txsize_sqr_up_map[txsize] + 1) >>
@@ -336,7 +327,6 @@ void av1_update_eob_context(int eob, TX_SIZE tx_size, TxClass tx_class,
             update_cdf(ec_ctx->eob_extra_cdf[txs_ctx][plane][eob_ctx], bit, 2);
     }
 }
-#endif
 static int32_t get_eob_cost(int32_t eob, const LvMapEobCost *txb_eob_costs,
     const LvMapCoeffCost *txb_costs, TxType tx_type) {
     int32_t eob_extra;
@@ -391,10 +381,8 @@ static INLINE int32_t get_br_ctx(const uint8_t *const levels,
 }
 
 static INLINE int32_t av1_cost_skip_txb(
-#if CABAC_UP
     uint8_t        allow_update_cdf,
     FRAME_CONTEXT *ec_ctx,
-#endif
     struct ModeDecisionCandidateBuffer    *candidate_buffer_ptr,
     TxSize                                  transform_size,
     PlaneType                               plane_type,
@@ -403,18 +391,14 @@ static INLINE int32_t av1_cost_skip_txb(
     const TxSize txs_ctx = (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
     assert(txs_ctx < TX_SIZES);
     const LvMapCoeffCost *const coeff_costs = &candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->coeff_fac_bits[txs_ctx][plane_type];
-#if CABAC_UP
     if (allow_update_cdf)
         update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], 1, 2);
-#endif
     return coeff_costs->txb_skip_cost[txb_skip_ctx][1];
 }
 // Note: don't call this function when eob is 0.
 uint64_t av1_cost_coeffs_txb(
-#if CABAC_UP
     uint8_t                             allow_update_cdf,
     FRAME_CONTEXT                      *ec_ctx,
-#endif
     struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
     const TranLow                      *const qcoeff,
     uint16_t                            eob,
@@ -449,19 +433,15 @@ uint64_t av1_cost_coeffs_txb(
     assert(eob > 0);
     cost = coeff_costs->txb_skip_cost[txb_skip_ctx][0];
 
-#if CABAC_UP
     if (allow_update_cdf)
         update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], eob == 0, 2);
-#endif
     av1_txb_init_levels(qcoeff, width, height, levels); // NM - Needs to be optimized - to be combined with the quantisation.
 
     // Transform type bit estimation
     cost += plane_type > PLANE_TYPE_Y ? 0 :
         Av1TransformTypeRateEstimation(
-#if CABAC_UP
             allow_update_cdf,
             ec_ctx,
-#endif
             candidate_buffer_ptr,
             candidate_buffer_ptr->candidate_ptr->type == INTER_MODE ? EB_TRUE : EB_FALSE,
             EB_FALSE, // NM - Hardcoded to false for the moment until we support the intra filtering
@@ -472,11 +452,9 @@ uint64_t av1_cost_coeffs_txb(
     // Transform ebo bit estimation
     int32_t eob_cost = get_eob_cost(eob, eobBits, coeff_costs, transform_type);
     cost += eob_cost;
-#if CABAC_UP
     if (allow_update_cdf)
         av1_update_eob_context(eob, transform_size, tx_class,
             plane_type, ec_ctx, allow_update_cdf);
-#endif
     // Transform non-zero coeff bit estimation
     av1_get_nz_map_contexts(
         levels,
@@ -486,7 +464,6 @@ uint64_t av1_cost_coeffs_txb(
         tx_class,
         coeff_contexts); // NM - Assembly version is available in AOM
 
-#if CABAC_UP
     if (allow_update_cdf)
     {
         for (int c = eob - 1; c >= 0; --c) {
@@ -560,7 +537,6 @@ uint64_t av1_cost_coeffs_txb(
         return 0;
     }
 
-#endif
     for (c = eob - 1; c >= 0; --c) {
         const int32_t pos = scan[c];
         const TranLow v = qcoeff[pos];
@@ -1558,10 +1534,8 @@ uint64_t av1_inter_fast_cost(
 
 EbErrorType av1_tu_estimate_coeff_bits(
     struct ModeDecisionContext         *md_context,
-#if CABAC_UP
     uint8_t                             allow_update_cdf,
     FRAME_CONTEXT                      *ec_ctx,
-#endif
     PictureControlSet                  *picture_control_set_ptr,
     struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
     CodingUnit                         *cu_ptr,
@@ -1603,10 +1577,8 @@ EbErrorType av1_tu_estimate_coeff_bits(
             coeff_buffer = (int32_t*)&coeff_buffer_sb->buffer_y[tu_origin_index * sizeof(int32_t)];
 
             *y_tu_coeff_bits = av1_cost_coeffs_txb(
-#if CABAC_UP
                 allow_update_cdf,
                 ec_ctx,
-#endif
                 candidate_buffer_ptr,
                 coeff_buffer,
                 (uint16_t)y_eob,
@@ -1619,10 +1591,8 @@ EbErrorType av1_tu_estimate_coeff_bits(
         }
         else {
             *y_tu_coeff_bits = av1_cost_skip_txb(
-#if CABAC_UP
                 allow_update_cdf,
                 ec_ctx,
-#endif
                 candidate_buffer_ptr,
                 txsize,
                 PLANE_TYPE_Y,
@@ -1636,10 +1606,8 @@ EbErrorType av1_tu_estimate_coeff_bits(
             coeff_buffer = (int32_t*)&coeff_buffer_sb->buffer_cb[tu_chroma_origin_index * sizeof(int32_t)];
 
             *cb_tu_coeff_bits = av1_cost_coeffs_txb(
-#if CABAC_UP
                 allow_update_cdf,
                 ec_ctx,
-#endif
                 candidate_buffer_ptr,
                 coeff_buffer,
                 (uint16_t)cb_eob,
@@ -1652,10 +1620,8 @@ EbErrorType av1_tu_estimate_coeff_bits(
         }
         else {
             *cb_tu_coeff_bits = av1_cost_skip_txb(
-#if CABAC_UP
                 allow_update_cdf,
                 ec_ctx,
-#endif
                 candidate_buffer_ptr,
                 txsize_uv,
                 PLANE_TYPE_UV,
@@ -1669,10 +1635,8 @@ EbErrorType av1_tu_estimate_coeff_bits(
             coeff_buffer = (int32_t*)&coeff_buffer_sb->buffer_cr[tu_chroma_origin_index * sizeof(int32_t)];
 
             *cr_tu_coeff_bits = av1_cost_coeffs_txb(
-#if CABAC_UP
                 allow_update_cdf,
                 ec_ctx,
-#endif
                 candidate_buffer_ptr,
                 coeff_buffer,
                 (uint16_t)cr_eob,
@@ -1685,10 +1649,8 @@ EbErrorType av1_tu_estimate_coeff_bits(
         }
         else {
             *cr_tu_coeff_bits = av1_cost_skip_txb(
-#if CABAC_UP
                 allow_update_cdf,
                 ec_ctx,
-#endif
                 candidate_buffer_ptr,
                 txsize_uv,
                 PLANE_TYPE_UV,
