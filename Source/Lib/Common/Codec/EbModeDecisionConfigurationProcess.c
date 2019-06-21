@@ -99,11 +99,7 @@ static uint8_t intrabc_max_mesh_pct[MAX_MESH_SPEED + 1] = { 100, 100, 100,
 #define LOW_SB_SCORE               6000
 #define MAX_LUMINOSITY_BOOST         10
 #if M9_ADP
-#if NEW_PRESETS
 int32_t budget_per_sb_boost[MAX_SUPPORTED_MODES] = { 55,55,55,55,55,55,5,5,0,0,0,0,0 };
-#else
-int32_t budget_per_sb_boost[MAX_SUPPORTED_MODES] = { 55,55,40,30,20,10,5,0,-10,-20,-20,-20,-20 };
-#endif
 #else
 uint32_t budget_per_sb_boost[MAX_SUPPORTED_MODES] = { 55,40,40,40,40,40,25,25,10,10,10,10,10 };
 #endif
@@ -1882,7 +1878,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     context_ptr->adp_level = picture_control_set_ptr->parent_pcs_ptr->enc_mode;
 
 #if CABAC_UP
-#if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
         if (picture_control_set_ptr->enc_mode <= ENC_M6)
@@ -1896,9 +1891,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #if MEMORY_FOOTPRINT_OPT_ME_MV
     if(picture_control_set_ptr->update_cdf)
         assert(sequence_control_set_ptr->cdf_mode == 0 && "use cdf_mode 0");
-#endif
-#else
-    picture_control_set_ptr->update_cdf = picture_control_set_ptr->parent_pcs_ptr->enc_mode == ENC_M0 ? 1 : 0;
 #endif
 #endif
     return return_error;

@@ -235,17 +235,10 @@ EbErrorType signal_derivation_me_kernel_oq(
     // 1: selective based on Full-Search SAD & MV.
     // 2: off
     if (picture_control_set_ptr->use_subpel_flag == 1) {
-#if NEW_PRESETS
         if (picture_control_set_ptr->enc_mode <= ENC_M6)
             context_ptr->me_context_ptr->fractional_search_model = 0;
         else
             context_ptr->me_context_ptr->fractional_search_model = 1;
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M8)
-            context_ptr->me_context_ptr->fractional_search_model = 0;
-        else
-            context_ptr->me_context_ptr->fractional_search_model = 1;
-#endif
     }
     else
         context_ptr->me_context_ptr->fractional_search_model = 2;
@@ -253,7 +246,6 @@ EbErrorType signal_derivation_me_kernel_oq(
 
 #if USE_SAD_HME
     // HME Search Method
-#if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
     if (picture_control_set_ptr->sc_content_detected)
         if (picture_control_set_ptr->enc_mode <= ENC_M6)
@@ -264,20 +256,10 @@ EbErrorType signal_derivation_me_kernel_oq(
 #endif
     context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
 #else
-#if MOD_M0
-    context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
-#else
-    context_ptr->me_context_ptr->hme_search_method = (picture_control_set_ptr->enc_mode == ENC_M0) ?
-        FULL_SAD_SEARCH :
-        SUB_SAD_SEARCH;
-#endif
-#endif
-#else
     context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
 #endif
 #if USE_SAD_ME
     // ME Search Method
-#if NEW_PRESETS
 #if SCREEN_CONTENT_SETTINGS
     if (picture_control_set_ptr->sc_content_detected)
         if (picture_control_set_ptr->enc_mode <= ENC_M3)
@@ -289,15 +271,6 @@ EbErrorType signal_derivation_me_kernel_oq(
     context_ptr->me_context_ptr->me_search_method = (picture_control_set_ptr->enc_mode <= ENC_M1) ?
         FULL_SAD_SEARCH :
         SUB_SAD_SEARCH;
-#else
-#if MOD_M0
-    context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
-#else
-    context_ptr->me_context_ptr->me_search_method = (picture_control_set_ptr->enc_mode == ENC_M0) ?
-        FULL_SAD_SEARCH :
-        SUB_SAD_SEARCH;
-#endif
-#endif
 #else
     context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH  ;
 #endif
