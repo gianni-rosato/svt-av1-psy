@@ -61,8 +61,7 @@ extern "C" {
 
 
 
-#define ATB                               1 // ATB Main Flag
-#if ATB
+
 
 
 #define ATB_EP                            1 // Tranform partitioning @ encode passs
@@ -73,8 +72,6 @@ extern "C" {
 
 
 #if ATB_DC_CONTEXT_SUPPORT_1 && ATB_DC_CONTEXT_SUPPORT_2
-
-#endif
 
 #endif
 
