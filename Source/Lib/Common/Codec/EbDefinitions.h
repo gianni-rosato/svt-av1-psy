@@ -196,7 +196,7 @@ extern "C" {
 
 
 
-#define M0_ME_SEARCH_BASE                           1
+
 #define SHUT_GLOBAL_MV                              1
 #define IMPROVED_BIPRED_INJECTION                   1
 #define IMPROVED_UNIPRED_INJECTION                  1
