@@ -897,7 +897,6 @@ EbErrorType picture_control_set_ctor(
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
 
-#if ATB_EC
     return_error = neighbor_array_unit_ctor(
         &object_ptr->txfm_context_array,
         MAX_PICTURE_WIDTH_SIZE,
@@ -908,7 +907,6 @@ EbErrorType picture_control_set_ctor(
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-#endif
     //Segmentation neighbor arrays
     return_error = segmentation_map_ctor(
             &object_ptr->segmentation_neighbor_map,

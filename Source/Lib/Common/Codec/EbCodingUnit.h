@@ -159,10 +159,8 @@ extern "C" {
         int32_t weight;
     } CandidateMv;
 
-#if ATB_EC
 #define INTER_TX_SIZE_BUF_LEN 16
 #define TXK_TYPE_BUF_LEN 64
-#endif
     typedef struct MbModeInfo
     {
         // Common for both INTER and INTRA blocks
@@ -192,9 +190,7 @@ extern "C" {
         int8_t skip;
         int8_t cdef_strength;
         TxSize tx_size;
-#if ATB_EC
         uint8_t inter_tx_size[INTER_TX_SIZE_BUF_LEN];
-#endif
 #if ATB_SUPPORT
         uint8_t tx_depth;
 #endif
@@ -247,7 +243,6 @@ extern "C" {
 */
     } MacroBlockPlane;
 
-#if ATB_EC
     struct buf_2d {
         uint8_t *buf;
         uint8_t *buf0;
@@ -262,7 +257,6 @@ extern "C" {
         struct buf_2d pre[2];
         uint8_t width, height;
     } MACROBLOCKD_PLANE;
-#endif
 
     typedef struct MacroBlockD
     {
@@ -293,12 +287,10 @@ extern "C" {
 #if EC_UPDATE
         FRAME_CONTEXT *tile_ctx;
 #endif
-#if ATB_EC
         TXFM_CONTEXT *above_txfm_context;
         TXFM_CONTEXT *left_txfm_context;
         TXFM_CONTEXT left_txfm_context_buffer[MAX_MIB_SIZE];
         struct macroblockd_plane plane[MAX_MB_PLANE];
-#endif
     } MacroBlockD;
 
     typedef struct Macroblock

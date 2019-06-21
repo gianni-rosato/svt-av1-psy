@@ -66,7 +66,7 @@ extern "C" {
 #define ATB_SUPPORT                       1 // Tranform block geometry, data structure(s), ..
 #define ATB_SUPPORT_1_DEPTH               1 // Undo trasnform depth 2 as ATB for INTER not yet active
 #define ATB_EP                            1 // Tranform partitioning @ encode passs
-#define ATB_EC                            1 // Tranform partitioning @ entropy coding
+
 
 
 

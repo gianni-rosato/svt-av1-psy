@@ -5563,7 +5563,6 @@ static void write_intrabc_info(
 }
 
 
-#if ATB_EC
 static INLINE int block_signals_txsize(BlockSize bsize) {
     return bsize > BLOCK_4X4;
 }
@@ -6008,7 +6007,6 @@ void code_tx_size(
         bsize,
         skip);
 }
-#endif
 
 static INLINE int get_segment_id(Av1Common *cm,
                                const uint8_t *segment_ids,
@@ -6265,9 +6263,7 @@ EbErrorType write_modes_b(
     NeighborArrayUnit     *cb_dc_sign_level_coeff_neighbor_array = picture_control_set_ptr->cb_dc_sign_level_coeff_neighbor_array;
     NeighborArrayUnit     *ref_frame_type_neighbor_array = picture_control_set_ptr->ref_frame_type_neighbor_array;
     NeighborArrayUnit32   *interpolation_type_neighbor_array = picture_control_set_ptr->interpolation_type_neighbor_array;
-#if ATB_EC
     NeighborArrayUnit     *txfm_context_array = picture_control_set_ptr->txfm_context_array;
-#endif
     const BlockGeom          *blk_geom = get_blk_geom_mds(cu_ptr->mds_idx);
     uint32_t blkOriginX = context_ptr->sb_origin_x + blk_geom->origin_x;
     uint32_t blkOriginY = context_ptr->sb_origin_y + blk_geom->origin_y;
@@ -6408,7 +6404,6 @@ assert(bsize < BlockSizeS_ALL);
                     blkOriginX >> MI_SIZE_LOG2,
                     ec_writer);
 
-#if ATB_EC
             if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT) {
                 code_tx_size(
                     picture_control_set_ptr,
@@ -6421,7 +6416,6 @@ assert(bsize < BlockSizeS_ALL);
                     ec_writer,
                     skipCoeff);
             }
-#endif
             if (!skipCoeff) {
                 Av1EncodeCoeff1D(
                     picture_control_set_ptr,
@@ -6504,7 +6498,6 @@ assert(bsize < BlockSizeS_ALL);
         }
 
 #endif
-#if ATB_EC
         if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT) {
             if (cu_ptr->skip_flag) {
                 code_tx_size(
@@ -6519,7 +6512,6 @@ assert(bsize < BlockSizeS_ALL);
                     cu_ptr->skip_flag);
             }
         }
-#endif
         if (!cu_ptr->skip_flag) {
             //write_is_inter(cm, xd, mbmi->segment_id, w, is_inter)
             EncodePredModeAv1(
@@ -6721,7 +6713,6 @@ assert(bsize < BlockSizeS_ALL);
                     blkOriginY
                 );
             }
-#if ATB_EC
             if (picture_control_set_ptr->parent_pcs_ptr->tx_mode == TX_MODE_SELECT) {
                 code_tx_size(
                     picture_control_set_ptr,
@@ -6734,7 +6725,6 @@ assert(bsize < BlockSizeS_ALL);
                     ec_writer,
                     skipCoeff);
             }
-#endif
             if (!skipCoeff) {
                 uint32_t intra_luma_mode = DC_PRED;
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE)
