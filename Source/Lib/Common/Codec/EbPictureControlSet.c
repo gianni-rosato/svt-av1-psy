@@ -96,11 +96,7 @@ EbErrorType me_sb_results_ctor(
         objectPtr->me_candidate[puIndex][1].direction = 1;
         objectPtr->me_candidate[puIndex][2].direction = 2;
 #if MEMORY_FOOTPRINT_OPT_ME_MV
-#if FROM_7_TO_4_MV
         EB_MALLOC(MvCandidate*, objectPtr->me_mv_array[puIndex], sizeof(MvCandidate) * ((mrp_mode == 0) ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1), EB_N_PTR);
-#else
-        EB_MALLOC(MvCandidate*, objectPtr->me_mv_array[puIndex], sizeof(MvCandidate) * (mrp_mode ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_0), EB_N_PTR);
-#endif
 #endif
     }
     EB_MALLOC(uint8_t*, objectPtr->total_me_candidate_index, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
