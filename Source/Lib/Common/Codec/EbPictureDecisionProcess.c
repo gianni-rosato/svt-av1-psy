@@ -3713,13 +3713,8 @@ void* picture_decision_kernel(void *input_ptr)
 
                             EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
                             EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
-#if FIX_INIT
                             EB_MEMSET(picture_control_set_ptr->ref_pic_poc_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                             EB_MEMSET(picture_control_set_ptr->ref_pic_poc_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
-#else
-                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
-                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
-#endif
                             CHECK_REPORT_ERROR(
                                 (inputEntryPtr->picture_number == picture_control_set_ptr->picture_number),
                                 encode_context_ptr->app_callback_ptr,

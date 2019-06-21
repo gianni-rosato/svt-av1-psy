@@ -228,7 +228,7 @@ extern "C" {
 
 
 
-#define FIX_INIT                  1   //fix ref_poc_array init
+
 #define NORMAL_ORDER              1   //  order(ALT/ALT2)
 #define REF_ORDER                 1  //correctly construct decoder based ref order hint array
 //
