@@ -275,9 +275,7 @@ extern "C" {
         uint8_t                         decouple_intra_inter_fast_loop;
         uint8_t                         full_loop_escape;
         uint8_t                         global_mv_injection;
-#if ENHANCED_Nx4_4xN_NEW_MV
         uint8_t                         nx4_4xn_parent_mv_injection;
-#endif
 #if NEW_NEAREST_NEW_INJECTION
         uint8_t                         new_nearest_near_comb_injection;
 #endif
