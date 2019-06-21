@@ -7899,13 +7899,8 @@ static void QuarterPelSearch_LCU(
                                         buf1Stride,
                                         buf2,
                                         buf2Stride,
-#if FRAC_64x64_BUG_FIX
                                         64,
                                         64,
-#else
-                                        32,
-                                        32,
-#endif
                                         x_search_area_origin,
                                         y_search_area_origin,
                                         asm_type,
