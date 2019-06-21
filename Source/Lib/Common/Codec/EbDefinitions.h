@@ -192,7 +192,7 @@ extern "C" {
 
 
 
-#define REMOVED_DUPLICATE_INTER_L1                  1
+
 #define REMOVED_DUPLICATE_INTER_BIPRED              1
 #define ICOPY                                       1
 #define INTRA_INTER_FAST_LOOP                       1
