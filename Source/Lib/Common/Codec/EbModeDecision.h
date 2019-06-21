@@ -301,7 +301,6 @@ extern "C" {
         uint64_t                               *cr_coeff_bits,
         uint32_t                                transform_size);
     struct CodingLoopContext_s;
-#if MRP_LIST_REF_IDX_TYPE_LT
     /*
       |-------------------------------------------------------------|
       | ref_idx          0            1           2            3       |
@@ -316,7 +315,6 @@ extern "C" {
     extern uint8_t get_ref_frame_idx(uint8_t list, uint8_t ref_type);
 #endif
     extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
-#endif
 #if INJ_MVP
     uint8_t get_list_idx(uint8_t ref_type);
 #endif
