@@ -55,7 +55,7 @@ extern "C" {
 
 
 
-#define NEW_NEAREST_NEW_INJECTION         1 // Missing inter candidates NEARETSEST/NEW, NEW/NEARETSEST, NEAR/NEW, NEW/NEAR.
+
 
 #define RDOQ_FP_QUANTIZATION              1 // Use FP quantization method if RDOQ ON and INTRA block and 8BIT (x86 WIP)
 #define FIXED_128x128_CONTEXT_UPDATE      1 // Fix txb_skip_context and dc_sign_context update for 128x128, and move txb_skip_context and dc_sign_context from CU to MD context

@@ -2133,7 +2133,6 @@ void InjectAv1MvpCandidates(
 }
 #endif
 
-#if NEW_NEAREST_NEW_INJECTION
 void inject_new_nearest_new_comb_candidates(
     const SequenceControlSet       *sequence_control_set_ptr,
     struct ModeDecisionContext     *context_ptr,
@@ -2313,7 +2312,6 @@ void inject_new_nearest_new_comb_candidates(
     //update tot Candidate count
     *candTotCnt = canIdx;
 }
-#endif
 
 void inject_warped_motion_candidates(
     PictureControlSet              *picture_control_set_ptr,
@@ -3024,11 +3022,7 @@ void  inject_inter_candidates(
 #endif
 
 #if MD_INJECTION
-#if NEW_NEAREST_NEW_INJECTION
     MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
-#else
-    MeLcuResults *me_results            = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
-#endif
 
 #if MEMORY_FOOTPRINT_OPT_ME_MV
 #else
@@ -3127,7 +3121,6 @@ void  inject_inter_candidates(
 
 #endif
 
-#if NEW_NEAREST_NEW_INJECTION
     //----------------------
     //    NEAREST_NEWMV, NEW_NEARESTMV, NEAR_NEWMV, NEW_NEARMV.
     //----------------------
@@ -3146,7 +3139,6 @@ void  inject_inter_candidates(
             }
         }
     }
-#endif
 
     if (inject_newmv_candidate) {
 
@@ -3394,11 +3386,7 @@ void  inject_inter_candidates(
                         picture_control_set_ptr,
                         context_ptr,
                         sb_ptr,
-#if NEW_NEAREST_NEW_INJECTION
                         context_ptr->me_sb_addr,
-#else
-                        me_sb_addr,
-#endif
                         ss_mecontext,
                         use_close_loop_me,
                         close_loop_me_index,
@@ -3423,11 +3411,7 @@ void  inject_inter_candidates(
                     picture_control_set_ptr,
                     context_ptr,
                     sb_ptr,
-#if NEW_NEAREST_NEW_INJECTION
                     context_ptr->me_sb_addr,
-#else
-                    me_sb_addr,
-#endif
                     ss_mecontext,
                     use_close_loop_me,
                     close_loop_me_index,
