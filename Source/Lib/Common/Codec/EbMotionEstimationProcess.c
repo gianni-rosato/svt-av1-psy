@@ -107,11 +107,6 @@ void* set_me_hme_params_oq(
     uint8_t sc_content_detected = picture_control_set_ptr->sc_content_detected;
     if (me_context_ptr->me_alt_ref == EB_TRUE)
         sc_content_detected = 0;
-#if SCREEN_CONTENT_SETTINGS && !PCS_ME_FIX
-    picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[sc_content_detected][input_resolution][hmeMeLevel];
-    picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[sc_content_detected][input_resolution][hmeMeLevel];
-    picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[sc_content_detected][input_resolution][hmeMeLevel];
-#endif
     // HME Level0
     me_context_ptr->hme_level0_total_search_area_width = hme_level0_total_search_area_width[sc_content_detected][input_resolution][hmeMeLevel];
     me_context_ptr->hme_level0_total_search_area_height = hme_level0_total_search_area_height[sc_content_detected][input_resolution][hmeMeLevel];
