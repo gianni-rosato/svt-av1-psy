@@ -49,7 +49,7 @@ extern "C" {
 
 
 
-#define DECIMATION_BUG_FIX                1 // Removed HME Level0 check @ 1/16th decimation to guarantee valid ZZ SAD and SCD data when HME Level0 is OFF
+
 
 #define RDOQ_INTRA                        1 // Enable RDOQ INTRA (RDOQ INTER already active)
 #define DC_SIGN_CONTEXT_EP                1 // Fixed DC level derivation & update @ encode pass

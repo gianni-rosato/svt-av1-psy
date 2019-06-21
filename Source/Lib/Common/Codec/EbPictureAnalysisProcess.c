@@ -4696,30 +4696,8 @@ void DownsampleDecimationInputPicture(
                 quarter_decimated_picture_ptr->origin_x,
                 quarter_decimated_picture_ptr->origin_y);
         }
-#if !DECIMATION_BUG_FIX
-        if (picture_control_set_ptr->enable_hme_level0_flag) {
-            // Sixteenth Input Picture Decimation
-            decimation_2d(
-                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
-                input_padded_picture_ptr->stride_y,
-                input_padded_picture_ptr->width,
-                input_padded_picture_ptr->height,
-                &sixteenth_decimated_picture_ptr->buffer_y[sixteenth_decimated_picture_ptr->origin_x + sixteenth_decimated_picture_ptr->origin_x*sixteenth_decimated_picture_ptr->stride_y],
-                sixteenth_decimated_picture_ptr->stride_y,
-                4);
-
-            generate_padding(
-                &sixteenth_decimated_picture_ptr->buffer_y[0],
-                sixteenth_decimated_picture_ptr->stride_y,
-                sixteenth_decimated_picture_ptr->width,
-                sixteenth_decimated_picture_ptr->height,
-                sixteenth_decimated_picture_ptr->origin_x,
-                sixteenth_decimated_picture_ptr->origin_y);
-        }
-#endif
     }
 
-#if DECIMATION_BUG_FIX
     // Always perform 1/16th decimation as
     // Sixteenth Input Picture Decimation
     decimation_2d(
@@ -4738,7 +4716,6 @@ void DownsampleDecimationInputPicture(
         sixteenth_decimated_picture_ptr->height,
         sixteenth_decimated_picture_ptr->origin_x,
         sixteenth_decimated_picture_ptr->origin_y);
-#endif
 
 }
 int av1_count_colors(const uint8_t *src, int stride, int rows, int cols,
