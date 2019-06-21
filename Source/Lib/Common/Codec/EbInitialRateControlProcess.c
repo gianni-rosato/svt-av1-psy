@@ -419,9 +419,6 @@ void ReleasePaReferenceObjects(
 #if BUG_FIX_INPUT_LIVE_COUNT
                     eb_release_object(picture_control_set_ptr->ref_input_ptr_array[listIndex][ref_pic_index]);
 #endif
-#if !BUG_FIX_PCS_LIVE_COUNT
-                    eb_release_object(((EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index]->object_ptr)->p_pcs_ptr->p_pcs_wrapper_ptr);
-#endif
                     eb_release_object(picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index]);
                 }
             }
@@ -435,9 +432,6 @@ void ReleasePaReferenceObjects(
     }
 
     if (picture_control_set_ptr->pa_reference_picture_wrapper_ptr != EB_NULL) {
-#if !BUG_FIX_PCS_LIVE_COUNT
-        eb_release_object(picture_control_set_ptr->p_pcs_wrapper_ptr);
-#endif
         eb_release_object(picture_control_set_ptr->pa_reference_picture_wrapper_ptr);
     }
 

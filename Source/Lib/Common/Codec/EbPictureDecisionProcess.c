@@ -3380,10 +3380,6 @@ void* picture_decision_kernel(void *input_ptr)
                                     eb_release_object(picture_control_set_ptr->overlay_ppcs_ptr->pa_reference_picture_wrapper_ptr);
                                     // release the parent pcs
                                     eb_release_object(picture_control_set_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
-#if !BUG_FIX_PCS_LIVE_COUNT
-                                    eb_release_object(picture_control_set_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
-                                    eb_release_object(picture_control_set_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
-#endif
                                     picture_control_set_ptr->overlay_ppcs_ptr = EB_NULL;
                                 }
                             }
@@ -3993,20 +3989,10 @@ void* picture_decision_kernel(void *input_ptr)
                                             // Set the Reference Object
                                         picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0][ref_pic_index] = paReferenceEntryPtr->input_object_ptr;
                                         picture_control_set_ptr->ref_pic_poc_array[REF_LIST_0][ref_pic_index] = ref_poc;
-#if !BUG_FIX_PCS_LIVE_COUNT
-                                        picture_control_set_ptr->ref_pa_pcs_array[REF_LIST_0][ref_pic_index] = paReferenceEntryPtr->p_pcs_ptr;
-#endif
                                         // Increment the PA Reference's liveCount by the number of tiles in the input picture
                                         eb_object_inc_live_count(
                                             paReferenceEntryPtr->input_object_ptr,
                                             1);
-#if !BUG_FIX_PCS_LIVE_COUNT
-                                        ((EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0][ref_pic_index]->object_ptr)->p_pcs_ptr = paReferenceEntryPtr->p_pcs_ptr;
-
-                                        eb_object_inc_live_count(
-                                            paReferenceEntryPtr->p_pcs_ptr->p_pcs_wrapper_ptr,
-                                            1);
-#endif
 #if BUG_FIX_INPUT_LIVE_COUNT
                                         picture_control_set_ptr->ref_input_ptr_array[REF_LIST_0][ref_pic_index] = paReferenceEntryPtr->input_picture_wrapper_ptr;
                                         eb_object_inc_live_count(
@@ -4068,9 +4054,6 @@ void* picture_decision_kernel(void *input_ptr)
                                             picture_control_set_ptr->picture_number,
                                             -inputEntryPtr->list1_ptr->reference_list[ref_pic_index]/*,
                                             sequence_control_set_ptr->bits_for_picture_order_count*/);
-#if !BUG_FIX_PCS_LIVE_COUNT
-                                        picture_control_set_ptr->ref_pa_pcs_array[REF_LIST_1][ref_pic_index] = paReferenceEntryPtr->p_pcs_ptr;
-#endif
                                         // Set the Reference Object
                                         picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1][ref_pic_index] = paReferenceEntryPtr->input_object_ptr;
                                         picture_control_set_ptr->ref_pic_poc_array[REF_LIST_1][ref_pic_index] = ref_poc;
@@ -4079,13 +4062,6 @@ void* picture_decision_kernel(void *input_ptr)
                                         eb_object_inc_live_count(
                                             paReferenceEntryPtr->input_object_ptr,
                                             1);
-#if !BUG_FIX_PCS_LIVE_COUNT
-                                        ((EbPaReferenceObject*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1][ref_pic_index]->object_ptr)->p_pcs_ptr = paReferenceEntryPtr->p_pcs_ptr;
-
-                                        eb_object_inc_live_count(
-                                            paReferenceEntryPtr->p_pcs_ptr->p_pcs_wrapper_ptr,
-                                            1);
-#endif
 #if BUG_FIX_INPUT_LIVE_COUNT
                                         picture_control_set_ptr->ref_input_ptr_array[REF_LIST_1][ref_pic_index] = paReferenceEntryPtr->input_picture_wrapper_ptr;
                                         eb_object_inc_live_count(
@@ -4221,11 +4197,6 @@ void* picture_decision_kernel(void *input_ptr)
                     // Remove the entry
                     if ((inputEntryPtr->dependent_count == 0) &&
                         (inputEntryPtr->input_object_ptr)) {
-#if !BUG_FIX_PCS_LIVE_COUNT
-                        if(inputEntryPtr->p_pcs_ptr->is_alt_ref)
-                            eb_release_object(inputEntryPtr->p_pcs_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
-                        eb_release_object(inputEntryPtr->p_pcs_ptr->p_pcs_wrapper_ptr);
-#endif
                         // Release the nominal live_count value
                         eb_release_object(inputEntryPtr->input_object_ptr);
                         inputEntryPtr->input_object_ptr = (EbObjectWrapper*)EB_NULL;

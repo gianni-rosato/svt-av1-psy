@@ -826,11 +826,6 @@ void* resource_coordination_kernel(void *input_ptr)
                     2);
             ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->input_padded_picture_ptr->buffer_y = picture_control_set_ptr->enhanced_picture_ptr->buffer_y;
 
-#if !BUG_FIX_PCS_LIVE_COUNT
-            eb_object_inc_live_count(
-                picture_control_set_wrapper_ptr,
-                2);
-#endif
             // Get Empty Output Results Object
             if (picture_control_set_ptr->picture_number > 0 && (prevPictureControlSetWrapperPtr != NULL))
             {
