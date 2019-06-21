@@ -15,13 +15,8 @@ extern "C" {
 
 // Max Search Area
 #if SCREEN_CONTENT_SETTINGS
-#if REDUCE_ME_SEARCH_AREA
 #define MAX_SEARCH_AREA_WIDTH       1280
 #define MAX_SEARCH_AREA_HEIGHT      1280
-#else
-#define MAX_SEARCH_AREA_WIDTH       MAX_PICTURE_WIDTH_SIZE  + (PAD_VALUE << 1)
-#define MAX_SEARCH_AREA_HEIGHT      MAX_PICTURE_HEIGHT_SIZE + (PAD_VALUE << 1)
-#endif
 #else
 #define MAX_SEARCH_AREA_WIDTH       1350 // This should be a function for the MAX HME L0 * the multiplications per layers and per Hierarchichal structures
 #define MAX_SEARCH_AREA_HEIGHT      675 // This should be a function for the MAX HME L0 * the multiplications per layers and per Hierarchichal structures
@@ -639,10 +634,8 @@ extern "C" {
 #if MEMORY_FOOTPRINT_OPT_ME_MV
     extern EbErrorType me_context_ctor(
         MeContext     **object_dbl_ptr,
-#if REDUCE_ME_SEARCH_AREA
         uint16_t        max_input_luma_width,
         uint16_t        max_input_luma_height,
-#endif
         uint8_t         nsq_present,
         uint8_t         mrp_mode);
 #else
