@@ -3176,7 +3176,6 @@ void  inject_inter_candidates(
                             close_loop_me_index,
                             &canTotalCnt);
 
-#if IMPROVED_UNIPRED_INJECTION
             //----------------------
             // Inject eight-pel uni-pred
             //----------------------
@@ -3191,7 +3190,6 @@ void  inject_inter_candidates(
                         use_close_loop_me,
                         close_loop_me_index,
                         &canTotalCnt);
-#endif
                 }
             }
 #endif
