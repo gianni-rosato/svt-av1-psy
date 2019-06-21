@@ -461,9 +461,6 @@ EbErrorType load_default_buffer_configuration_settings(
         sequence_control_set_ptr->static_config.logical_processors > lp_count / num_groups)
         core_count = lp_count;
 #endif
-#if CHECK_MEM_REDUCTION
-    core_count = 4;
-#endif
     int32_t return_ppcs = set_parent_pcs(&sequence_control_set_ptr->static_config,
                     core_count, sequence_control_set_ptr->input_resolution);
     if (return_ppcs == -1)

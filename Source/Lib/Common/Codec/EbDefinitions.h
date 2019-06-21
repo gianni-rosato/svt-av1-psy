@@ -97,7 +97,7 @@ extern "C" {
 
 
 
-#define CHECK_MEM_REDUCTION               0
+
 
 #define CDEF_AVX_OPT                      1
 #define MOD_M0                            0 // Sub-SAD for @ HME and ME, 12 NFL, frequency see
