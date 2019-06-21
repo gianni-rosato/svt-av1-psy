@@ -51,9 +51,7 @@ extern "C" {
         EbBool           is_used_as_reference_flag;
         uint64_t         rc_group_index;
         EbBool           is_alt_ref;
-#if RC_FEEDBACK
         EbBool           feedback_arrived;
-#endif
     } ReferenceQueueEntry;
 
     /************************************************

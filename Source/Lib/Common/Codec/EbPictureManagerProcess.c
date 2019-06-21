@@ -395,9 +395,7 @@ void* picture_manager_kernel(void *input_ptr)
                     referenceEntryPtr->reference_available = EB_FALSE;
 
                     referenceEntryPtr->is_alt_ref = picture_control_set_ptr->is_alt_ref;
-#if RC_FEEDBACK
                     referenceEntryPtr->feedback_arrived = EB_FALSE;
-#endif
                     referenceEntryPtr->is_used_as_reference_flag = picture_control_set_ptr->is_used_as_reference_flag;
                     encode_context_ptr->reference_picture_queue_tail_index =
                         (encode_context_ptr->reference_picture_queue_tail_index == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : encode_context_ptr->reference_picture_queue_tail_index + 1;
@@ -562,11 +560,9 @@ void* picture_manager_kernel(void *input_ptr)
                             availabilityFlag =
                                 (availabilityFlag == EB_FALSE) ? EB_FALSE :   // Don't update if already False
                                 (ref_poc > current_input_poc) ? EB_FALSE :   // The Reference has not been received as an Input Picture yet, then its availability is false
-#if RC_FEEDBACK
                                 (!encode_context_ptr->terminating_sequence_flag_received &&
                                 (sequence_control_set_ptr->static_config.rate_control_mode && entryPictureControlSetPtr->slice_type != I_SLICE
                                     && entryPictureControlSetPtr->temporal_layer_index == 0 && !referenceEntryPtr->feedback_arrived)) ? EB_FALSE :
-#endif
                                 (referenceEntryPtr->reference_available) ? EB_TRUE :   // The Reference has been completed
                                 EB_FALSE;     // The Reference has not been completed
                         }
@@ -605,11 +601,9 @@ void* picture_manager_kernel(void *input_ptr)
                                     availabilityFlag =
                                         (availabilityFlag == EB_FALSE) ? EB_FALSE :   // Don't update if already False
                                         (ref_poc > current_input_poc) ? EB_FALSE :   // The Reference has not been received as an Input Picture yet, then its availability is false
-#if RC_FEEDBACK
                                         (!encode_context_ptr->terminating_sequence_flag_received &&
                                         (sequence_control_set_ptr->static_config.rate_control_mode && entryPictureControlSetPtr->slice_type != I_SLICE
                                             && entryPictureControlSetPtr->temporal_layer_index == 0 && !referenceEntryPtr->feedback_arrived)) ? EB_FALSE :
-#endif
                                         (referenceEntryPtr->reference_available) ? EB_TRUE :   // The Reference has been completed
                                         EB_FALSE;     // The Reference has not been completed
                                 }

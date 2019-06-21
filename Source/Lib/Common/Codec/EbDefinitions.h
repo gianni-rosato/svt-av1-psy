@@ -44,7 +44,7 @@ extern "C" {
 #define CDEF_AVX_OPT                      1
 #define MR_MODE                           0
 #define EIGTH_PEL_MV                      0
-#define RC_FEEDBACK                       1 // Feedback from previous base layer is received before starting the next base layer frame
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
