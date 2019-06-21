@@ -189,7 +189,7 @@ extern "C" {
 
 
 //
-#define DISABLE_IN_LOOP_ME                          1
+
 #define TILES                                       1
 #define REMOVED_DUPLICATE_INTER                     1
 #define REMOVED_DUPLICATE_INTER_L1                  1
