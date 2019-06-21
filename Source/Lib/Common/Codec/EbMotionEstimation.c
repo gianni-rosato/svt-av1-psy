@@ -13437,9 +13437,7 @@ EbErrorType motion_estimate_lcu(
             ? EB_TRUE
             : EB_FALSE;
 
-#if DISABLE_NSQ_TABLE_FOR_M0
     is_nsq_table_used = picture_control_set_ptr->enc_mode == ENC_M0 ?  EB_FALSE : is_nsq_table_used;
-#endif
 
     if (context_ptr->me_alt_ref == EB_TRUE)
         numOfListToSearch = 0;
