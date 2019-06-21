@@ -11856,12 +11856,8 @@ EbErrorType BiPredictionCompensation(MeContext *context_ptr, uint32_t pu_index,
 
     // First refrence
     // Set Candidate information
-#if MRP_FLAG
     firstRefPosX = _MVXT(firstRefMv);
     firstRefPosY = _MVYT(firstRefMv);
-#else
-    firstRefPosX = _MVXT(firstRefMv), firstRefPosY = _MVYT(firstRefMv),
-#endif
     me_candidate->ref_index[0] = (uint8_t)first_list_ref_pic_idx;
     me_candidate->ref0_list = (uint8_t)firstList;
 
@@ -11899,12 +11895,8 @@ EbErrorType BiPredictionCompensation(MeContext *context_ptr, uint32_t pu_index,
     // Second refrence
 
     // Set Candidate information
-#if MRP_FLAG
     secondRefPosX = _MVXT(secondRefMv);
     secondRefPosY = _MVYT(secondRefMv);
-#else
-    secondRefPosX = _MVXT(secondRefMv), secondRefPosY = _MVYT(secondRefMv),
-#endif
     me_candidate->ref_index[1] = (uint8_t)second_list_ref_pic_idx;
     me_candidate->ref1_list = (uint8_t)secondList;
     secondRefIntegPosx = (secondRefPosX >> 2);
