@@ -3059,14 +3059,7 @@ EB_EXTERN void av1_encode_pass(
     EbBool                 constrained_intra_flag = picture_control_set_ptr->constrained_intra_flag;
 
 
-#if LOOP_FILTER_FIX
     EbBool dlfEnableFlag = (EbBool) picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode;
-#else
-    EbBool dlfEnableFlag = (EbBool)(picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode &&
-        (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
-            sequence_control_set_ptr->static_config.recon_enabled ||
-            sequence_control_set_ptr->static_config.stat_report));
-#endif
     const EbBool isIntraLCU = picture_control_set_ptr->limit_intra ? EB_FALSE : EB_TRUE;
 
     EbBool doRecon = (EbBool)(

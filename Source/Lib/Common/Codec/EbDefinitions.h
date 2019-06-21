@@ -59,7 +59,7 @@ extern "C" {
 
 
 
-#define LOOP_FILTER_FIX                   1 // Use the existing loop filter multi-mode signal to control loop filter and removed the NRF checks @ Encode Pass and Loop Filter Processes
+
 
 #define ATB                               1 // ATB Main Flag
 #if ATB
