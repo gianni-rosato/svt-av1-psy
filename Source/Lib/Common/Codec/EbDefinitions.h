@@ -194,7 +194,7 @@ extern "C" {
 
 
 
-#define ICOPY                                       1
+
 #define INTRA_INTER_FAST_LOOP                       1
 #define M0_ME_SEARCH_BASE                           1
 #define SHUT_GLOBAL_MV                              1

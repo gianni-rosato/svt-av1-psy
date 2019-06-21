@@ -34,11 +34,7 @@ extern PredictionMode get_uv_mode(UvPredictionMode mode);
 
 /*TODO: Remove replication and harmonize with encoder after data str. harmonization */
 static INLINE int32_t dec_is_inter_block(const ModeInfo_t *mbmi) {
-#if ICOPY
     return (mbmi->use_intrabc || (mbmi->ref_frame[0] > INTRA_FRAME));
-#else
-    return /*is_intrabc_block(mbmi) ||*/ mbmi->ref_frame[0] > INTRA_FRAME;
-#endif
 }
 /*TODO: Remove replication and harmonize with encoder after data str. harmonization */
 static int dec_is_smooth(const ModeInfo_t *mbmi, int32_t plane) {
