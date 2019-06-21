@@ -83,7 +83,7 @@ extern "C" {
 
 // New  presets
 
-#define NEW_BUFF_CFG                      1
+
 /************************* Omar to remove disable_ang_uv *************************/
 #define MEMORY_FOOTPRINT_OPT_ME_MV        1
 #if MEMORY_FOOTPRINT_OPT_ME_MV
