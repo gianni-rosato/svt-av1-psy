@@ -128,20 +128,16 @@ extern "C" {
 
         uint32_t                                rest_segment_column_count;
         uint32_t                                rest_segment_row_count;
-#if ALTREF_FILTERING_SUPPORT
         uint32_t                                tf_segment_column_count;
         uint32_t                                tf_segment_row_count;
         EbBool                                  enable_altrefs;
-#endif
         // Buffers
         uint32_t                                picture_control_set_pool_init_count;
         uint32_t                                picture_control_set_pool_init_count_child;
         uint32_t                                pa_reference_picture_buffer_init_count;
         uint32_t                                reference_picture_buffer_init_count;
         uint32_t                                input_buffer_fifo_init_count;
-#if ALT_REF_OVERLAY
         uint32_t                                overlay_input_picture_buffer_init_count;
-#endif
         uint32_t                                output_stream_buffer_fifo_init_count;
         uint32_t                                output_recon_buffer_fifo_init_count;
         uint32_t                                resource_coordination_fifo_init_count;
@@ -184,7 +180,6 @@ extern "C" {
         EbScdMode                               scd_mode;
         EbPmMode                                pm_mode;
 
-#if MEMORY_FOOTPRINT_OPT_ME_MV
         /* MRP (mm-signal; 0: MRP mode 0, 1: MRP mode 1)
         *
         * Default is 0. */
@@ -200,24 +195,15 @@ extern "C" {
         * Default is 1. */
         uint8_t                                 nsq_present;
 
-#if DOWN_SAMPLING_FILTERING
         /* Down-sampling method @ ME and alt-ref temporal filtering (mm-signal; 0: filtering, 1: decimation)
         *
         * Default is 0. */
         uint8_t                                 down_sampling_method_me_search;
-#endif
-#endif
         uint8_t                                 trans_coeff_shape_array[2][8][4];    // [componantTypeIndex][resolutionIndex][levelIndex][tuSizeIndex]
         EbBlockMeanPrec                         block_mean_calc_prec;
         BitstreamLevel                          level[MAX_NUM_OPERATING_POINTS];
         int32_t                                 film_grain_denoise_strength;
-#if BASE_LAYER_REF
-        int32_t                                 extra_frames_to_ref_islice;
-        int32_t                                 max_frame_window_to_ref_islice;
-#endif
-#if MRP_ME
         uint32_t                                reference_count;
-#endif
 
 #if ADP_STATS_PER_LAYER
         uint64_t                                total_count[5];
@@ -227,7 +213,13 @@ extern "C" {
         uint64_t                                pred_count[5];
         uint64_t                                pred1_nfl_count[5];
 #endif
-
+#if INCOMPLETE_SB_FIX
+        /* over_boundary_block (mm-signal; 0: No over boundary blk allowed, 1: over boundary blk allowed)
+        *
+        * Default is 0.
+        * To enable when md_skip_blk is on*/
+        uint8_t                                 over_boundary_block_mode;
+#endif
         SeqHeader                               seq_header;
     } SequenceControlSet;
 

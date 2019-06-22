@@ -420,11 +420,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->look_ahead_distance                  = (uint32_t)~0;
     config_ptr->target_bit_rate                        = 7000000;
     config_ptr->max_qp_allowed                       = 63;
-#if 1 //RC
     config_ptr->min_qp_allowed                       = 10;
-#else
-    config_ptr->min_qp_allowed                       = 0;
-#endif
 
     config_ptr->enable_adaptive_quantization         = EB_FALSE;
     config_ptr->base_layer_switch_mode               = 0;
@@ -640,11 +636,8 @@ static void lineSplit(
 /**********************************
 * Set Config value
 **********************************/
-static void SetConfigValue(
-    EbConfig *config,
-    char       *name,
-    char       *value)
-{
+static void SetConfigValue(EbConfig *config, const char *name,
+                           const char *value) {
     int32_t i=0;
 
     while(config_entry[i].name != NULL) {

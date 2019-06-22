@@ -32,9 +32,7 @@
 #include "EbIntraPrediction.h"
 #include "EbBitstreamUnit.h"
 #include "EbPacketizationProcess.h"
-#if FIXED_128x128_CONTEXT_UPDATE
 #include "EbModeDecisionProcess.h"
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -65,13 +63,9 @@ extern "C" {
         EB_SLICE               slice_type);
 
     extern EbErrorType av1_tu_estimate_coeff_bits(
-#if FIXED_128x128_CONTEXT_UPDATE
         struct ModeDecisionContext         *md_context,
-#endif
-#if CABAC_UP
         uint8_t                             allow_update_cdf,
         FRAME_CONTEXT                      *ec_ctx,
-#endif
         PictureControlSet                  *picture_control_set_ptr,
         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
         CodingUnit                         *cu_ptr,
@@ -87,10 +81,8 @@ extern "C" {
         uint64_t                            *cr_tu_coeff_bits,
         TxSize                               txsize,
         TxSize                               txsize_uv,
-#if ATB_TX_TYPE_SUPPORT_PER_TU
         TxType                               tx_type,
         TxType                               tx_type_uv,
-#endif
         COMPONENT_TYPE                       component_type,
         EbAsm                                asm_type);
 
@@ -178,6 +170,9 @@ extern "C" {
     }
 
     void get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+        SequenceControlSet *sequence_control_set_ptr,
+#endif
         const int32_t               plane,
         NeighborArrayUnit     *dc_sign_level_coeff_neighbor_array,
         uint32_t                  cu_origin_x,
@@ -206,9 +201,7 @@ extern "C" {
         NeighborArrayUnit     *mode_type_neighbor_array,
         NeighborArrayUnit     *inter_pred_dir_neighbor_array,
         NeighborArrayUnit     *ref_frame_type_neighbor_array);
-#if MRP_COST_EST
     extern void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd);
-#endif
     // Obtain contexts to signal a reference frame be either BWDREF/ALTREF2, or
     // ALTREF.
     //extern int32_t get_pred_context_brfarf2_or_arf(const MacroBlockD *xd);

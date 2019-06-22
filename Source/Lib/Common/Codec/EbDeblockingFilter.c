@@ -842,32 +842,16 @@ static TxSize get_transform_size(const MacroBlockD *const xd,
     //if (xd->lossless[mbmi->segment_id]) return TX_4X4;
 
     TxSize tx_size = (plane == COMPONENT_LUMA)
-#if ATB_SUPPORT
         ? (is_inter_block(mbmi) ? tx_depth_to_tx_size[0][mbmi->sb_type] : tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]) // use max_tx_size
-#else
-        ? mbmi->tx_size
-#endif
 
         : av1_get_max_uv_txsize(mbmi->sb_type, plane_ptr);
     assert(tx_size < TX_SIZES_ALL);
-#if ATB_SUPPORT
     if (((plane == COMPONENT_LUMA) && is_inter_block(mbmi) && !mbmi->skip)) {  // if split tx is used
 
         const TxSize mb_tx_size = tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]; // tx_size
         assert(mb_tx_size < TX_SIZES_ALL);
         tx_size = mb_tx_size;
     }
-#else
-    //if ((plane == COMPONENT_LUMA) && is_inter_block(mbmi) && !mbmi->skip) {
-    //    const BlockSize sb_type = mbmi->sb_type;
-    //    const int32_t blk_row = mi_row & (mi_size_high[sb_type] - 1);
-    //    const int32_t blk_col = mi_col & (mi_size_wide[sb_type] - 1);
-    //    const TxSize mb_tx_size =
-    //        mbmi->inter_tx_size[av1_get_txb_size_index(sb_type, blk_row, blk_col)];
-    //    assert(mb_tx_size < TX_SIZES_ALL);
-    //    tx_size = mb_tx_size;
-    //}
-#endif
     // since in case of chrominance or non-square transorm need to convert
     // transform size into transform size in particular direction.
     // for vertical edge, filter direction is horizontal, for horizontal
@@ -913,8 +897,11 @@ static TxSize set_lpf_parameters(
 
     const int32_t mi_row = scale_vert | ((y << scale_vert) >> MI_SIZE_LOG2);
     const int32_t mi_col = scale_horz | ((x << scale_horz) >> MI_SIZE_LOG2);
-
+#if INCOMPLETE_SB_FIX
+    uint32_t mi_stride = pcs_ptr->mi_stride;
+#else
     uint32_t mi_stride = pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
+#endif
     const int32_t offset = mi_row * mi_stride + mi_col;
     ModeInfo **mi = (pcs_ptr->mi_grid_base + offset);
     //MbModeInfo **mi = cm->mi_grid_visible + mi_row * cm->mi_stride + mi_col;
@@ -1143,7 +1130,11 @@ void av1_filter_block_plane_horz(
     const int32_t dst_stride = plane_ptr->dst.stride;
     const int32_t y_range = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_vert) : (SB64_MIB_SIZE >> scale_vert);
     const int32_t x_range = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz) : (SB64_MIB_SIZE >> scale_horz);
+#if INCOMPLETE_SB_FIX
+    uint32_t mi_stride = pcs_ptr->mi_stride;
+#else
     uint32_t mi_stride = pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
+#endif
     for (int32_t x = 0; x < x_range; x += col_step) {
         uint8_t *p = dst_ptr + ((x * MI_SIZE) << plane_ptr->is16Bit);
         for (int32_t y = 0; y < y_range;) {

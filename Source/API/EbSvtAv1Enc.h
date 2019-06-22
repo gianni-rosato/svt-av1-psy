@@ -374,13 +374,11 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 0. */
     uint32_t                 recon_enabled;
-#if TILES
     /* Log 2 Tile Rows and colums . 0 means no tiling,1 means that we split the dimension
         * into 2
         * Default is 0. */
     int32_t                  tile_columns;
     int32_t                  tile_rows;
-#endif
 
 /* To be deprecated.
  * Encoder configuration parameters below this line are to be deprecated. */
@@ -462,6 +460,13 @@ typedef struct EbSvtAv1EncConfiguration
     EB_API EbErrorType eb_svt_enc_stream_header(
         EbComponentType           *svt_enc_component,
         EbBufferHeaderType       **output_stream_ptr);
+
+    /* OPTIONAL: Release stream headers at init time.
+     *
+     * Parameter:
+     * @ *stream_header_ptr  stream header buffer. */
+    EB_API EbErrorType eb_svt_release_enc_stream_header(
+        EbBufferHeaderType        *stream_header_ptr);
 
     /* OPTIONAL: Get the end of sequence Network Abstraction Layer.
      *

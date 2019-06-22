@@ -36,6 +36,7 @@ ExternalProject_Add(DepLibAom
     PREFIX "${CMAKE_BINARY_DIR}/libaom"
     GIT_REPOSITORY "https://github.com/Cidana-Developers/aom.git"
     GIT_TAG av1-normative
+    GIT_SHALLOW 1
     CMAKE_ARGS
         ${CUSTOM_CONFIG}
         -DCONFIG_INSPECTION=1

@@ -42,12 +42,6 @@ extern EbErrorType derive_delta_qp_for_each_leaf_lcu(
 void qpm_derive_delta_qp_map_weights(
     ModeDecisionConfigurationContext    *context_ptr,
     PictureControlSet                  *picture_control_set_ptr);
-#if !OPT_LOSSLESS_0
-extern uint8_t derive_contouring_class(
-    PictureParentControlSet   *parent_pcs_ptr,
-    uint16_t                       sb_index,
-    uint8_t                        leaf_index);
-#endif
 /**************************************
 * Function Ptrs Definitions
 **************************************/

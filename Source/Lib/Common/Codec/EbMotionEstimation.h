@@ -19,8 +19,6 @@
 extern "C" {
 #endif
 
-#if ALTREF_FILTERING_SUPPORT
-
 void uni_pred_averaging(
         uint32_t              pu_index,
         EbBool                chroma,
@@ -52,8 +50,6 @@ void interpolate_search_region_AVC_chroma(
         uint32_t                input_bit_depth,
         EbAsm                   asm_type);
 
-#endif
-
     extern EbErrorType motion_estimate_lcu(
         PictureParentControlSet   *picture_control_set_ptr,
         uint32_t                       sb_index,
@@ -77,7 +73,6 @@ void interpolate_search_region_AVC_chroma(
         uint32_t                   decim_stride,
         uint32_t                   decim_step);
 
-#if DOWN_SAMPLING_FILTERING
     extern void downsample_2d(
         uint8_t                   *input_samples,
         uint32_t                   input_stride,
@@ -86,7 +81,6 @@ void interpolate_search_region_AVC_chroma(
         uint8_t                   *decim_samples,
         uint32_t                   decim_stride,
         uint32_t                   decim_step);
-#endif
 
     extern EbErrorType open_loop_intra_search_sb(
         PictureParentControlSet   *picture_control_set_ptr,
@@ -117,9 +111,7 @@ void interpolate_search_region_AVC_chroma(
 #define F0 0
 #define F1 1
 #define F2 2
-#if IMPROVED_SUBPEL_SEARCH
 #define MAX_SSE_VALUE 128 * 128 * 255 * 255
-#endif
 #define  MAX_SAD_VALUE 128*128*255
 
 // Interpolation Filters
@@ -1565,7 +1557,6 @@ void interpolate_search_region_AVC_chroma(
         const BlockGeom *blk_geom,
         uint32_t         geom_offset_x,
         uint32_t         geom_offset_y);
-#if IMPROVED_SUBPEL_SEARCH
     void half_pel_refinement_sb(
         SequenceControlSet
             *sequence_control_set_ptr,  // input parameter, Sequence control set
@@ -1605,7 +1596,6 @@ void interpolate_search_region_AVC_chroma(
                                        //samples
         uint32_t integer_mv,           // input parameter, integer MV
         EbAsm asm_type);
-#endif
 
 #ifdef __cplusplus
 }

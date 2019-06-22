@@ -70,9 +70,7 @@ static void EntropyCodingResetNeighborArrays(PictureControlSet *picture_control_
 
     neighbor_array_unit_reset(picture_control_set_ptr->intra_luma_mode_neighbor_array);
     neighbor_array_unit_reset32(picture_control_set_ptr->interpolation_type_neighbor_array);
-#if ATB_EC
     neighbor_array_unit_reset(picture_control_set_ptr->txfm_context_array);
-#endif
     neighbor_array_unit_reset(picture_control_set_ptr->segmentation_id_pred_array);
     return;
 }
@@ -335,63 +333,6 @@ static void EntropyCodingConfigureLcu(
 
     return;
 }
-#if !RC
-/******************************************************
- * Entropy Coding Lcu
- ******************************************************/
-static void EntropyCodingLcu(
-    EntropyCodingContext              *context_ptr,
-    LargestCodingUnit               *sb_ptr,
-    PictureControlSet               *picture_control_set_ptr,
-    SequenceControlSet              *sequence_control_set_ptr,
-    uint32_t                             sb_origin_x,
-    uint32_t                             sb_origin_y,
-    EbBool                            terminateSliceFlag,
-    uint32_t                             pictureOriginX,
-    uint32_t                             pictureOriginY)
-{
-    UNUSED(sb_origin_x);
-    UNUSED(sb_origin_y);
-    (void)terminateSliceFlag;
-    (void)sequence_control_set_ptr;
-    EbPictureBufferDesc *coeffPicturePtr = sb_ptr->quantized_coeff;
-
-    //rate Control
-    uint32_t                       writtenBitsBeforeQuantizedCoeff;
-    uint32_t                       writtenBitsAfterQuantizedCoeff;
-
-    //store the number of written bits before coding quantized coeffs (flush is not called yet):
-    // The total number of bits is
-    // number of written bits
-    // + 32  - bits remaining in interval Low value
-    // + number of buffered byte * 8
-    // This should be only for coeffs not any flag
-    writtenBitsBeforeQuantizedCoeff = ((OutputBitstreamUnit*)entropy_coder_get_bitstream_ptr(picture_control_set_ptr->entropy_coder_ptr))->written_bits_count;
-
-    (void)pictureOriginX;
-    (void)pictureOriginY;
-
-    write_sb(
-        context_ptr,
-        sb_ptr,
-        picture_control_set_ptr,
-        picture_control_set_ptr->entropy_coder_ptr,
-        coeffPicturePtr);
-
-    //store the number of written bits after coding quantized coeffs (flush is not called yet):
-    // The total number of bits is
-    // number of written bits
-    // + 32  - bits remaining in interval Low value
-    // + number of buffered byte * 8
-    writtenBitsAfterQuantizedCoeff = ((OutputBitstreamUnit*)entropy_coder_get_bitstream_ptr(picture_control_set_ptr->entropy_coder_ptr))->written_bits_count;
-
-    sb_ptr->total_bits = writtenBitsAfterQuantizedCoeff - writtenBitsBeforeQuantizedCoeff;
-
-    picture_control_set_ptr->parent_pcs_ptr->quantized_coeff_num_bits += sb_ptr->quantized_coeffs_bits;
-
-    return;
-}
-#endif
 /******************************************************
  * Update Entropy Coding Rows
  *
@@ -505,9 +446,6 @@ void* entropy_coding_kernel(void *input_ptr)
     uint32_t                                   y_lcu_index;
     uint32_t                                   sb_origin_x;
     uint32_t                                   sb_origin_y;
-#if !RC
-    EbBool                                  lastLcuFlag;
-#endif
     uint32_t                                   picture_width_in_sb;
     // Variables
     EbBool                                  initialProcessCall;
@@ -519,9 +457,6 @@ void* entropy_coding_kernel(void *input_ptr)
         encDecResultsPtr = (EncDecResults*)encDecResultsWrapperPtr->object_ptr;
         picture_control_set_ptr = (PictureControlSet*)encDecResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
         sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-#if !RC
-        lastLcuFlag = EB_FALSE;
-#endif
         // SB Constants
 
         sb_sz = (uint8_t)sequence_control_set_ptr->sb_size_pix;
@@ -557,9 +492,6 @@ void* entropy_coding_kernel(void *input_ptr)
                     sb_origin_y = y_lcu_index << lcuSizeLog2;
                     context_ptr->sb_origin_x = sb_origin_x;
                     context_ptr->sb_origin_y = sb_origin_y;
-#if !RC
-                    lastLcuFlag = (sb_index == sequence_control_set_ptr->sb_tot_cnt - 1) ? EB_TRUE : EB_FALSE;
-#endif
                     if (sb_index == 0)
                         av1_reset_loop_restoration(picture_control_set_ptr);
                     // Configure the LCU
@@ -567,7 +499,6 @@ void* entropy_coding_kernel(void *input_ptr)
                         context_ptr,
                         sb_ptr,
                         picture_control_set_ptr);
-#if RC
                     sb_ptr->total_bits = 0;
                     uint32_t prev_pos = sb_index ? picture_control_set_ptr->entropy_coder_ptr->ec_writer.ec.offs : 0;//residual_bc.pos
                     EbPictureBufferDesc *coeff_picture_ptr = sb_ptr->quantized_coeff;
@@ -579,19 +510,6 @@ void* entropy_coding_kernel(void *input_ptr)
                         coeff_picture_ptr);
                     sb_ptr->total_bits = (picture_control_set_ptr->entropy_coder_ptr->ec_writer.ec.offs - prev_pos) << 3;
                     picture_control_set_ptr->parent_pcs_ptr->quantized_coeff_num_bits += sb_ptr->total_bits;
-#else
-                    // Entropy Coding
-                    EntropyCodingLcu(
-                        context_ptr,
-                        sb_ptr,
-                        picture_control_set_ptr,
-                        sequence_control_set_ptr,
-                        sb_origin_x,
-                        sb_origin_y,
-                        lastLcuFlag,
-                        0,
-                        0);
-#endif
                     rowTotalBits += sb_ptr->total_bits;
                 }
 
@@ -630,29 +548,16 @@ void* entropy_coding_kernel(void *input_ptr)
 
                         // Release the List 0 Reference Pictures
                         for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list0_count; ++ref_idx) {
-#if MRP_MD
                             if (picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL) {
-#else
-                            if (picture_control_set_ptr->ref_pic_ptr_array[0] != EB_NULL) {
-#endif
 
-#if MRP_MD
                                 eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx]);
-#else
-                                eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0]);
-#endif
                             }
                         }
 
                         // Release the List 1 Reference Pictures
                         for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list1_count; ++ref_idx) {
-#if MRP_MD
                             if (picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL)
                                 eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx]);
-#else
-                            if (picture_control_set_ptr->ref_pic_ptr_array[1] != EB_NULL)
-                                eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1]);
-#endif
                         }
 
                         // Get Empty Entropy Coding Results
@@ -714,15 +619,11 @@ void* entropy_coding_kernel(void *input_ptr)
                              sb_origin_y = y_lcu_index << lcuSizeLog2;
                              context_ptr->sb_origin_x = sb_origin_x;
                              context_ptr->sb_origin_y = sb_origin_y;
-#if !RC
-                             lastLcuFlag = (sb_index == sequence_control_set_ptr->sb_tot_cnt - 1) ? EB_TRUE : EB_FALSE;
-#endif
                              // Configure the LCU
                              EntropyCodingConfigureLcu(
                                  context_ptr,
                                  sb_ptr,
                                  picture_control_set_ptr);
-#if RC
                              sb_ptr->total_bits = 0;
                              uint32_t prev_pos = sb_index ? picture_control_set_ptr->entropy_coder_ptr->ec_writer.ec.offs : 0;//residual_bc.pos
                              EbPictureBufferDesc *coeff_picture_ptr = sb_ptr->quantized_coeff;
@@ -734,19 +635,6 @@ void* entropy_coding_kernel(void *input_ptr)
                                  coeff_picture_ptr);
                              sb_ptr->total_bits = (picture_control_set_ptr->entropy_coder_ptr->ec_writer.ec.offs - prev_pos) << 3;
                              picture_control_set_ptr->parent_pcs_ptr->quantized_coeff_num_bits += sb_ptr->total_bits;
-#else
-                             // Entropy Coding
-                             EntropyCodingLcu(
-                                 context_ptr,
-                                 sb_ptr,
-                                 picture_control_set_ptr,
-                                 sequence_control_set_ptr,
-                                 sb_origin_x,
-                                 sb_origin_y,
-                                 lastLcuFlag,
-                                 0,
-                                 0);
-#endif
                          }
                      }
 
@@ -775,24 +663,14 @@ void* entropy_coding_kernel(void *input_ptr)
 
                  // Release the List 0 Reference Pictures
                  for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list0_count; ++ref_idx) {
-#if MRP_MD
                      if (picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL)
                          eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx]);
-#else
-                     if (picture_control_set_ptr->ref_pic_ptr_array[0] != EB_NULL)
-                         eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0]);
-#endif
                  }
 
                  // Release the List 1 Reference Pictures
                  for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list1_count; ++ref_idx) {
-#if MRP_MD
                      if (picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL)
                          eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx]);
-#else
-                     if (picture_control_set_ptr->ref_pic_ptr_array[1] != EB_NULL)
-                         eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1]);
-#endif
                  }
 
                  // Get Empty Entropy Coding Results

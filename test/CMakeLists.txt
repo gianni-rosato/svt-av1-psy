@@ -64,7 +64,6 @@ if(UNIX)
   # App Source Files
     add_executable(SvtAv1UnitTests
       ${all_files})
-
     # Link the Encoder App
     target_link_libraries(SvtAv1UnitTests
         ${lib_list}

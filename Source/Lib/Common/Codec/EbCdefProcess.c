@@ -466,9 +466,7 @@ void* cdef_kernel(void *input_ptr)
                     picture_control_set_ptr,
                     selected_strength_cnt);
 
-#if CDEF_OFF_NON_REF
                 if (sequence_control_set_ptr->seq_header.enable_restoration != 0 || picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag || sequence_control_set_ptr->static_config.recon_enabled){
-#endif
                     if (is16bit)
                         av1_cdef_frame16bit(
                             0,
@@ -479,9 +477,7 @@ void* cdef_kernel(void *input_ptr)
                             0,
                             sequence_control_set_ptr,
                             picture_control_set_ptr);
-#if CDEF_OFF_NON_REF
                 }
-#endif
         }
         else {
             picture_control_set_ptr->parent_pcs_ptr->cdef_bits = 0;

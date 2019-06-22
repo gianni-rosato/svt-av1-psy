@@ -305,65 +305,6 @@ void* rest_kernel(void *input_ptr)
                 PadRefAndSetFlags(
                     picture_control_set_ptr,
                     sequence_control_set_ptr);
-#if !OPT_LOSSLESS_1
-            if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE && picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)
-            {
-                EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-                const uint32_t  SrclumaOffSet = input_picture_ptr->origin_x + input_picture_ptr->origin_y    *input_picture_ptr->stride_y;
-                const uint32_t  SrccbOffset = (input_picture_ptr->origin_x >> 1) + (input_picture_ptr->origin_y >> 1)*input_picture_ptr->stride_cb;
-                const uint32_t  SrccrOffset = (input_picture_ptr->origin_x >> 1) + (input_picture_ptr->origin_y >> 1)*input_picture_ptr->stride_cr;
-
-                EbReferenceObject   *referenceObject = (EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
-                EbPictureBufferDesc *refDenPic = referenceObject->ref_den_src_picture;
-                const uint32_t           ReflumaOffSet = refDenPic->origin_x + refDenPic->origin_y    *refDenPic->stride_y;
-                const uint32_t           RefcbOffset = (refDenPic->origin_x >> 1) + (refDenPic->origin_y >> 1)*refDenPic->stride_cb;
-                const uint32_t           RefcrOffset = (refDenPic->origin_x >> 1) + (refDenPic->origin_y >> 1)*refDenPic->stride_cr;
-
-                uint16_t  verticalIdx;
-
-                for (verticalIdx = 0; verticalIdx < refDenPic->height; ++verticalIdx)
-                {
-                    EB_MEMCPY(refDenPic->buffer_y + ReflumaOffSet + verticalIdx * refDenPic->stride_y,
-                        input_picture_ptr->buffer_y + SrclumaOffSet + verticalIdx * input_picture_ptr->stride_y,
-                        input_picture_ptr->width);
-                }
-
-                for (verticalIdx = 0; verticalIdx < input_picture_ptr->height / 2; ++verticalIdx)
-                {
-                    EB_MEMCPY(refDenPic->buffer_cb + RefcbOffset + verticalIdx * refDenPic->stride_cb,
-                        input_picture_ptr->buffer_cb + SrccbOffset + verticalIdx * input_picture_ptr->stride_cb,
-                        input_picture_ptr->width / 2);
-
-                    EB_MEMCPY(refDenPic->buffer_cr + RefcrOffset + verticalIdx * refDenPic->stride_cr,
-                        input_picture_ptr->buffer_cr + SrccrOffset + verticalIdx * input_picture_ptr->stride_cr,
-                        input_picture_ptr->width / 2);
-                }
-
-                generate_padding(
-                    refDenPic->buffer_y,
-                    refDenPic->stride_y,
-                    refDenPic->width,
-                    refDenPic->height,
-                    refDenPic->origin_x,
-                    refDenPic->origin_y);
-
-                generate_padding(
-                    refDenPic->buffer_cb,
-                    refDenPic->stride_cb,
-                    refDenPic->width >> 1,
-                    refDenPic->height >> 1,
-                    refDenPic->origin_x >> 1,
-                    refDenPic->origin_y >> 1);
-
-                generate_padding(
-                    refDenPic->buffer_cr,
-                    refDenPic->stride_cr,
-                    refDenPic->width >> 1,
-                    refDenPic->height >> 1,
-                    refDenPic->origin_x >> 1,
-                    refDenPic->origin_y >> 1);
-            }
-#endif
             if (sequence_control_set_ptr->static_config.recon_enabled) {
                 ReconOutput(
                     picture_control_set_ptr,
