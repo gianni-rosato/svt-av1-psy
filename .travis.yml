@@ -79,6 +79,7 @@ before_cache:
 matrix:
   fast_finish: true
   allow_failures:
+    - name: Binary Identical?
     - name: Valgrind
     - env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
     - name: Unit Tests Linux+gcc
@@ -145,6 +146,24 @@ matrix:
       - cmake .
       - make --quiet -j$(nproc)
       - sudo make install
+    # Tests if .ivf files are identical on binary level
+    - name: Binary Identical?
+      stage: test
+      script:
+       - *base_script
+       - mv -t $HOME akiyo_cif.y4m
+       - SvtAv1EncApp -enc-mode 8 -i $HOME/akiyo_cif.y4m -n 120 -b test-pr-m8.ivf
+       - SvtAv1EncApp -enc-mode 0 -i $HOME/akiyo_cif.y4m -n 3 -b test-pr-m0.ivf
+       - mv -t $HOME test-pr-m8.ivf test-pr-m0.ivf
+       - cd $HOME && rm -rf SVT-AV1
+       - git clone --depth 1 https://github.com/OpenVisualCloud/SVT-AV1.git && cd SVT-AV1
+       - *before_install
+       - *base_script
+       - SvtAv1EncApp -enc-mode 8 -i $HOME/akiyo_cif.y4m -n 120 -b test-master-m8.ivf
+       - SvtAv1EncApp -enc-mode 0 -i $HOME/akiyo_cif.y4m -n 3 -b test-master-m0.ivf
+       - mv -t $HOME test-master-m8.ivf test-master-m0.ivf && cd $HOME
+       - diff test-pr-m8.ivf test-master-m8.ivf
+       - diff test-pr-m0.ivf test-master-m0.ivf
     - name: Coveralls Linux+gcc
       stage: Coveralls
       os: linux
