@@ -849,8 +849,8 @@ void UpdateBeaInfoOverTime(
             if (temporaryPictureControlSetPtr->slice_type == I_SLICE || temporaryPictureControlSetPtr->end_of_sequence_flag)
                 break;
 #if QPS_TUNING
-            // Limit the distortion to Layer 0, 1 and 2 only. Higher layers have close temporal distance and lower distortion that might contaminate the data
-            if (temporaryPictureControlSetPtr->temporal_layer_index < 3) {
+            // Limit the distortion to lower layers 0, 1 and 2 only. Higher layers have close temporal distance and lower distortion that might contaminate the data
+            if (temporaryPictureControlSetPtr->temporal_layer_index < MAX((int8_t)picture_control_set_ptr->hierarchical_levels - 1, 2) ) {
 #endif
                 if (lcuIdx == 0)
                     me_dist_pic_count++;
