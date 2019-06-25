@@ -4598,8 +4598,8 @@ void DownsampleDecimationInputPicture(
     EbPictureBufferDesc           *quarter_decimated_picture_ptr,
     EbPictureBufferDesc           *sixteenth_decimated_picture_ptr) {
     // Decimate input picture for HME L0 and L1
-    if (picture_control_set_ptr->enable_hme_flag) {
-        if (picture_control_set_ptr->enable_hme_level1_flag) {
+    if (picture_control_set_ptr->enable_hme_flag || picture_control_set_ptr->tf_enable_hme_flag) {
+        if (picture_control_set_ptr->enable_hme_level1_flag || picture_control_set_ptr->tf_enable_hme_level1_flag) {
             decimation_2d(
                 &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
                 input_padded_picture_ptr->stride_y,
@@ -4689,9 +4689,9 @@ void DownsampleFilteringInputPicture(
     EbPictureBufferDesc           *sixteenth_picture_ptr) {
 
     // Downsample input picture for HME L0 and L1
-    if (picture_control_set_ptr->enable_hme_flag) {
+    if (picture_control_set_ptr->enable_hme_flag || picture_control_set_ptr->tf_enable_hme_flag) {
+        if (picture_control_set_ptr->enable_hme_level1_flag || picture_control_set_ptr->tf_enable_hme_level1_flag) {
 
-        if (picture_control_set_ptr->enable_hme_level1_flag) {
             downsample_2d(
                 &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
                 input_padded_picture_ptr->stride_y,
@@ -4710,10 +4710,9 @@ void DownsampleFilteringInputPicture(
 
         }
 
-        if (picture_control_set_ptr->enable_hme_level0_flag) {
-
+        if (picture_control_set_ptr->enable_hme_level0_flag || picture_control_set_ptr->tf_enable_hme_level0_flag) {
             // Sixteenth Input Picture Downsampling
-            if (picture_control_set_ptr->enable_hme_level1_flag)
+            if (picture_control_set_ptr->enable_hme_level1_flag || picture_control_set_ptr->tf_enable_hme_level1_flag)
                 downsample_2d(
                     &quarter_picture_ptr->buffer_y[quarter_picture_ptr->origin_x + quarter_picture_ptr->origin_y * quarter_picture_ptr->stride_y],
                     quarter_picture_ptr->stride_y,

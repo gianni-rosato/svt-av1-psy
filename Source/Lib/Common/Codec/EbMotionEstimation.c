@@ -13400,11 +13400,12 @@ EbErrorType motion_estimate_lcu(
     int16_t hmeLevel1SearchAreaInHeight;
     // Configure HME level 0, level 1 and level 2 from static config parameters
     EbBool enable_hme_level0_flag =
-        picture_control_set_ptr->enable_hme_level0_flag;
+        context_ptr->enable_hme_level0_flag;
     EbBool enable_hme_level1_flag =
-        picture_control_set_ptr->enable_hme_level1_flag;
+        context_ptr->enable_hme_level1_flag;
     EbBool enable_hme_level2_flag =
-        picture_control_set_ptr->enable_hme_level2_flag;
+        context_ptr->enable_hme_level2_flag;
+
     EbBool enableHalfPel32x32 = EB_FALSE;
     EbBool enableHalfPel16x16 = EB_FALSE;
     EbBool enableHalfPel8x8 = EB_FALSE;
@@ -13505,7 +13506,8 @@ EbErrorType motion_estimate_lcu(
                 // B - NO HME in boundaries
                 // C - Skip HME
 
-                if (picture_control_set_ptr->enable_hme_flag &&
+                if (context_ptr->enable_hme_flag &&
+
                     /*B*/ sb_height ==
                         BLOCK_SIZE_64) {  //(searchCenterSad >
                                           // sequence_control_set_ptr->static_config.skipTier0HmeTh))
@@ -14261,7 +14263,8 @@ EbErrorType motion_estimate_lcu(
                                                            search_area_height,
                                                            asm_type);
                         context_ptr->full_quarter_pel_refinement = 0;
-                        if (picture_control_set_ptr->half_pel_mode ==
+
+                        if (context_ptr->half_pel_mode ==
                             EX_HP_MODE) {
                             // Move to the top left of the search region
                             xTopLeftSearchRegion =
@@ -14377,7 +14380,8 @@ EbErrorType motion_estimate_lcu(
                                 search_area_height,
                                 asm_type);
                         }
-                        if (picture_control_set_ptr->quarter_pel_mode ==
+
+                        if (context_ptr->quarter_pel_mode ==
                             EX_QP_MODE) {
                             // Quarter-Pel search
                             memcpy(context_ptr
@@ -14495,7 +14499,8 @@ EbErrorType motion_estimate_lcu(
 
                     // Interpolate the search region for Half-Pel Refinements
                     // H - AVC Style
-                    if (picture_control_set_ptr->half_pel_mode ==
+
+                    if (context_ptr->half_pel_mode ==
                         REFINMENT_HP_MODE) {
                         InterpolateSearchRegionAVC(
                             context_ptr,
@@ -14565,7 +14570,8 @@ EbErrorType motion_estimate_lcu(
                             enableHalfPel16x16,
                             enableHalfPel8x8);
                     }
-                    if (picture_control_set_ptr->quarter_pel_mode ==
+
+                    if (context_ptr->quarter_pel_mode ==
                         REFINMENT_QP_MODE) {
                         // Quarter-Pel Refinement [8 search positions]
                         QuarterPelSearch_LCU(
