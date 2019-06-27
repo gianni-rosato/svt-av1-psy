@@ -14091,14 +14091,19 @@ extern "C" {
         uint16_t                              full_sb_count;
         EbBool                                init_pred_struct_position_flag;
         int8_t                                hierarchical_layers_diff;
-        // ME Tools
-        EbBool                                use_subpel_flag;
+
+        // HME Flags
         EbBool                                enable_hme_flag;
         EbBool                                enable_hme_level0_flag;
         EbBool                                enable_hme_level1_flag;
         EbBool                                enable_hme_level2_flag;
-        EbBool                                half_pel_mode;
-        EbBool                                quarter_pel_mode;
+
+        // HME Flags form Temporal Filtering
+        EbBool                                tf_enable_hme_flag;
+        EbBool                                tf_enable_hme_level0_flag;
+        EbBool                                tf_enable_hme_level1_flag;
+        EbBool                                tf_enable_hme_level2_flag;
+
         // MD
         EbEncMode                             enc_mode;
         EB_SB_DEPTH_MODE                     *sb_depth_mode_array;
