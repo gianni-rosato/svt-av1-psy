@@ -1471,7 +1471,7 @@ void perform_fast_loop(
             // Distortion
             // Y
             if (use_ssd) {
-                candidateBuffer->candidate_ptr->luma_fast_distortion = lumaFastDistortion = spatial_full_distortion_kernel_func_ptr_array[asm_type][Log2f(context_ptr->blk_geom->bwidth) - 2](
+                candidateBuffer->candidate_ptr->luma_fast_distortion = (uint32_t)(lumaFastDistortion) = (uint32_t)spatial_full_distortion_kernel_func_ptr_array[asm_type][Log2f(context_ptr->blk_geom->bwidth) - 2](
                     input_picture_ptr->buffer_y + inputOriginIndex,
                     input_picture_ptr->stride_y,
                     prediction_ptr->buffer_y + cuOriginIndex,
@@ -1481,7 +1481,7 @@ void perform_fast_loop(
             }
             else {
                 assert((context_ptr->blk_geom->bwidth >> 3) < 17);
-                candidateBuffer->candidate_ptr->luma_fast_distortion = lumaFastDistortion = (nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
+                candidateBuffer->candidate_ptr->luma_fast_distortion = (uint32_t)(lumaFastDistortion) = (nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
                     input_picture_ptr->buffer_y + inputOriginIndex,
                     input_picture_ptr->stride_y,
                     prediction_ptr->buffer_y + cuOriginIndex,
@@ -2170,9 +2170,9 @@ void check_best_indepedant_cfl(
     }
     else
         chromaRate = (uint64_t)candidateBuffer->candidate_ptr->md_rate_estimation_ptr->intra_uv_mode_fac_bits[CFL_ALLOWED][candidateBuffer->candidate_ptr->intra_luma_mode][UV_DC_PRED];
-    int coeff_rate = *cb_coeff_bits + *cr_coeff_bits;
-    int distortion = cbFullDistortion[DIST_CALC_RESIDUAL] + crFullDistortion[DIST_CALC_RESIDUAL];
-    int rate = coeff_rate + chromaRate + candidateBuffer->candidate_ptr->fast_luma_rate;
+    int coeff_rate = (int)(*cb_coeff_bits + *cr_coeff_bits);
+    int distortion = (int)(cbFullDistortion[DIST_CALC_RESIDUAL] + crFullDistortion[DIST_CALC_RESIDUAL]);
+    int rate = (int)(coeff_rate + chromaRate + candidateBuffer->candidate_ptr->fast_luma_rate);
     uint64_t cfl_uv_cost = RDCOST(context_ptr->full_lambda, rate, distortion);
 
     // cfl vs. best independant
@@ -4735,8 +4735,8 @@ void search_best_independent_uv_mode(
                 1,
                 asm_type);
 
-            coeff_rate[uv_mode][MAX_ANGLE_DELTA + uv_angle_delta] = cb_coeff_bits + cr_coeff_bits;
-            distortion[uv_mode][MAX_ANGLE_DELTA + uv_angle_delta] = cbFullDistortion[DIST_CALC_RESIDUAL] + crFullDistortion[DIST_CALC_RESIDUAL];
+            coeff_rate[uv_mode][MAX_ANGLE_DELTA + uv_angle_delta] = (int)(cb_coeff_bits + cr_coeff_bits);
+            distortion[uv_mode][MAX_ANGLE_DELTA + uv_angle_delta] = (int)(cbFullDistortion[DIST_CALC_RESIDUAL] + crFullDistortion[DIST_CALC_RESIDUAL]);
         }
     }
 

@@ -199,14 +199,15 @@ void find_segment_qps(
     //get variance bin edges & QPs
     uint16_t min_var_log = Log2f(MAX(1, min_var));
     uint16_t max_var_log = Log2f(MAX(1, max_var));
-    uint16_t step_size = (max_var_log - min_var_log) <= MAX_SEGMENTS ? 1 : ROUND(
-            ((float) (max_var_log - min_var_log)) / MAX_SEGMENTS);
+    uint16_t step_size = (uint16_t)(max_var_log - min_var_log) <= MAX_SEGMENTS ? 1 : ROUND(
+            ((max_var_log - min_var_log)) / MAX_SEGMENTS);
     uint16_t bin_edge = min_var_log + step_size;
     uint16_t bin_center = bin_edge >> 1;
 
     for (int i = 0; i < MAX_SEGMENTS; i++) {
         segmentation_params->variance_bin_edge[i] = POW2(bin_edge);
-        segmentation_params->feature_data[i][SEG_LVL_ALT_Q] = ROUND(strength * (MAX(1, bin_center) - avg_var));
+        segmentation_params->feature_data[i][SEG_LVL_ALT_Q] =
+            ROUND((uint16_t)strength * (MAX(1, bin_center) - avg_var));
         bin_edge += step_size;
         bin_center += step_size;
     }

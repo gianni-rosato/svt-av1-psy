@@ -1938,7 +1938,7 @@ void rest_finish_search(Macroblock *x, Av1Common *const cm)
         rsc.x = x;
         rsc.plane = plane;
         rsc.rusi = rusi;
-        rsc.pic_num = cm->p_pcs_ptr->picture_number;
+        rsc.pic_num = (uint32_t)cm->p_pcs_ptr->picture_number;
         rsc.rusi_pic = cm->p_pcs_ptr->rusi_picture[plane];
 
         const int32_t plane_ntiles = ntiles[plane > 0];

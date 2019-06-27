@@ -2193,7 +2193,7 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         tile_col = tile_num % tiles_info->tile_cols;
 
         if (tile_num == tg_end)
-            tile_size = obu_header->payload_size;
+            tile_size = (int)obu_header->payload_size;
         else {
             tile_size = dec_get_bits_le(bs, tiles_info->tile_size_bytes) + 1;
             obu_header->payload_size -= (tiles_info->tile_size_bytes + tile_size);
@@ -2217,7 +2217,7 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         /* TO DO decode_tile() */
         status = parse_tile(bs, dec_handle_ptr, tiles_info, tile_row, tile_col);
 
-        dec_bits_init(bs, (uint8_t *)parse_ctxt->r.ec.bptr, obu_header->payload_size);
+        dec_bits_init(bs, (uint8_t *)parse_ctxt->r.ec.bptr, (uint32_t)obu_header->payload_size);
 
         if (status != EB_ErrorNone)
             return status;
@@ -2259,12 +2259,12 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, const uint8_t *data
         payload_size = obu_header.payload_size;
 
         data += (obu_header.size + length_size);
-        data_size -= (obu_header.size + length_size);
+        data_size -= (uint32_t)(obu_header.size + length_size);
 
         if (data_size < payload_size)
             return EB_Corrupt_Frame;
 
-        dec_bits_init(&bs, data, payload_size);
+        dec_bits_init(&bs, data, (uint32_t)payload_size);
 
         switch (obu_header.obu_type) {
         case OBU_TEMPORAL_DELIMITER:
@@ -2324,7 +2324,7 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, const uint8_t *data
         }
 
         data += payload_size;
-        data_size -= payload_size;
+        data_size -= (uint32_t)payload_size;
         if (!data_size)
             frame_decoding_finished = 1;
     }

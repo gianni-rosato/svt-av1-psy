@@ -74,7 +74,7 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
         ref_frame_arr_single[i].used = 1;
 
     for (uint8_t i = 0; i < 7; ++i) {
-        ref_frame_arr_single[i].poc = parent_pcs_ptr->av1_ref_signal.ref_poc_array[i] % (1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
+        ref_frame_arr_single[i].poc = parent_pcs_ptr->av1_ref_signal.ref_poc_array[i] % (uint64_t)(1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
     }
 
     OrderHintInfo order_hint_info_st;
@@ -92,7 +92,7 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
         parent_pcs_ptr->reference_mode == SINGLE_REFERENCE)
         return;
 
-    const int cur_order_hint = parent_pcs_ptr->picture_number % (1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
+    const int cur_order_hint = parent_pcs_ptr->picture_number % (uint64_t)(1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
     int ref_order_hints[2] = { -1, INT_MAX };
     int ref_idx[2] = { INVALID_IDX, INVALID_IDX };
 
@@ -104,7 +104,7 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
 
         if (ref_frame_arr_single[i].used == 0) continue;
 
-        const int ref_order_hint = ref_frame_arr_single[i].poc;// buf->order_hint;
+        const int ref_order_hint = (const int)ref_frame_arr_single[i].poc;// buf->order_hint;
         if (get_relative_dist(order_hint_info, ref_order_hint, cur_order_hint) <
             0) {
             // Forward reference
@@ -142,7 +142,7 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
             //if (buf == NULL) continue;
             if (ref_frame_arr_single[i].used == 0) continue;
 
-            const int ref_order_hint = ref_frame_arr_single[i].poc;// buf->order_hint;
+            const int ref_order_hint = (const int)ref_frame_arr_single[i].poc;// buf->order_hint;
             if ((ref_order_hints[0] != -1 &&
                 get_relative_dist(order_hint_info, ref_order_hint,
                     ref_order_hints[0]) < 0) &&

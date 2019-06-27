@@ -33,6 +33,7 @@
 #include "av1me.h"
 #include "EbTemporalFiltering_sse4.h"
 
+#undef _MM_HINT_T2     
 #define _MM_HINT_T2  1
 
 static unsigned int index_mult[14] = {
@@ -107,7 +108,7 @@ static TempFilteringType FUNC_TABLE apply_temp_filtering_32x32_func_ptr_array[AS
         // SSE4
         av1_apply_temporal_filter_sse4_1
 };
-
+#if DEBUG_TF
 // save YUV to file - auxiliary function for debug
 void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v,
                       uint16_t width, uint16_t height,
@@ -118,7 +119,9 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
     int h;
 
     // save current source picture to a YUV file
-    if ((fid = fopen(filename, "wb")) == NULL) {
+    FOPEN(fid, filename, "wb");
+
+    if (!fid){
         printf("Unable to open file %s to write.\n", "temp_picture.yuv");
     }else{
         // the source picture saved in the enchanced_picture_ptr contains a border in x and y dimensions
@@ -140,7 +143,7 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
         fclose(fid);
     }
 }
-
+#endif
 // Copy block/picture of size width x height from src to dst
 void copy_pixels(EbByte dst, int stride_dst, EbByte src, int stride_src, int width, int height){
     int h;

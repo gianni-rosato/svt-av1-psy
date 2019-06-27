@@ -4622,7 +4622,7 @@ EbErrorType write_frame_header_av1(
 
     if (!showExisting) {
         // Add data from EC stream to Picture Stream.
-        int32_t frameSize = parent_pcs_ptr->av1_cm->tile_cols*parent_pcs_ptr->av1_cm->tile_rows==1 ? pcs_ptr->entropy_coder_ptr->ec_writer.pos : pcs_ptr->entropy_coder_ptr->ec_frame_size;
+        int32_t frameSize = (int32_t)(parent_pcs_ptr->av1_cm->tile_cols*parent_pcs_ptr->av1_cm->tile_rows==1 ? pcs_ptr->entropy_coder_ptr->ec_writer.pos : pcs_ptr->entropy_coder_ptr->ec_frame_size);
 
         OutputBitstreamUnit *ec_output_bitstream_ptr = (OutputBitstreamUnit*)pcs_ptr->entropy_coder_ptr->ec_output_bitstream_ptr;
         //****************************************************************//
