@@ -812,9 +812,9 @@ void tf_inter_prediction(
 
                 const int32_t bw = mi_size_wide[BLOCK_16X16];
                 const int32_t bh = mi_size_high[BLOCK_16X16];
-                cu_ptr.av1xd->mb_to_top_edge = -((mirow * MI_SIZE) * 8);
+                cu_ptr.av1xd->mb_to_top_edge = -(int32_t)((mirow * MI_SIZE) * 8);
                 cu_ptr.av1xd->mb_to_bottom_edge = ((picture_control_set_ptr->av1_cm->mi_rows - bw - mirow) * MI_SIZE) * 8;
-                cu_ptr.av1xd->mb_to_left_edge = -((micol * MI_SIZE) * 8);
+                cu_ptr.av1xd->mb_to_left_edge = -(int32_t)((micol * MI_SIZE) * 8);
                 cu_ptr.av1xd->mb_to_right_edge = ((picture_control_set_ptr->av1_cm->mi_cols - bh - micol) * MI_SIZE) * 8;
 
                 uint32_t mv_index = tab16x16[pu_index];

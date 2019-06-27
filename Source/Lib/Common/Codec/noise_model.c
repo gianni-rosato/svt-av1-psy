@@ -1545,7 +1545,7 @@ EbErrorType denoise_and_model_ctor(EbPtr *object_dbl_ptr,
     return_error = aom_denoise_and_model_alloc(&object_ptr,
         init_data_ptr->encoder_bit_depth > EB_8BIT ? 10 : 8,
         DENOISING_BlockSize,
-        (float)init_data_ptr->noise_level / 10.0);
+        (float)(init_data_ptr->noise_level / 10.0));
 
     *object_dbl_ptr = (EbPtr*)object_ptr;
 

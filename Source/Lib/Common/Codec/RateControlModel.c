@@ -72,7 +72,7 @@ EbErrorType    rate_control_model_ctor(EbRateControlModel **object_doubble_ptr) 
 }
 
 EbErrorType rate_control_model_init(EbRateControlModel *model_ptr, SequenceControlSet *sequenceControlSetPtr) {
-    uint32_t                number_of_frame = sequenceControlSetPtr->static_config.frames_to_be_encoded;
+    uint32_t                number_of_frame = (uint32_t)sequenceControlSetPtr->static_config.frames_to_be_encoded;
     EbRateControlGopInfo    *gop_infos;
 
     EB_MALLOC(EbRateControlGopInfo*, gop_infos, sizeof(EbRateControlModel) * number_of_frame, EB_N_PTR);
@@ -103,9 +103,9 @@ EbErrorType    rate_control_update_model(EbRateControlModel *model_ptr, PictureP
 
       model_ptr->model_variation_reported++;
       if (gop->actual_size > gop->desired_size) {
-        variation = -((int64_t)gop->actual_size / (int64_t)gop->desired_size);
+        variation = (float)(-((int64_t)gop->actual_size / (int64_t)gop->desired_size));
       } else if (gop->desired_size > gop->actual_size)
-        variation = ((int64_t)(gop->desired_size / (int64_t)gop->actual_size));
+        variation = (float)(((int64_t)(gop->desired_size / (int64_t)gop->actual_size)));
       variation = CLIP3(-100, 100, variation);
       variation -= gop->model_variation;
 
@@ -129,7 +129,7 @@ uint32_t get_inter_qp_for_size(EbRateControlModel *model_ptr, uint32_t desired_s
     uint8_t     qp;
 
     for (qp = 0; qp < MAX_QP_VALUE; qp++) {
-        float    size = model_ptr->inter_size_predictions[qp];
+        float    size = (float)model_ptr->inter_size_predictions[qp];
 
         size = (size / (1920 * 1080)) * model_ptr->pixels;
         // Scale size for current resolution
@@ -147,9 +147,9 @@ static void record_new_gop(EbRateControlModel *model_ptr, PictureParentControlSe
     gop->index = pictureNumber;
     gop->exists = EB_TRUE;
     gop->desired_size = get_gop_size_in_bytes(model_ptr);
-    gop->model_variation = model_ptr->model_variation;
+    gop->model_variation = (int32_t)model_ptr->model_variation;
 
-    uint32_t                size = gop->desired_size / model_ptr->intra_period;
+    uint32_t                size = (int32_t)(gop->desired_size / model_ptr->intra_period);
 
     gop->qp = get_inter_qp_for_size(model_ptr, size);
 
@@ -164,23 +164,23 @@ static void record_new_gop(EbRateControlModel *model_ptr, PictureParentControlSe
 uint32_t get_gop_size_in_bytes(EbRateControlModel *model_ptr) {
     uint32_t    gop_per_second = (model_ptr->frame_rate << 8)  / model_ptr->intra_period;
     uint32_t    gop_size = ((model_ptr->desired_bitrate << 8) / gop_per_second);
-    uint32_t    desired_total_bytes = (model_ptr->desired_bitrate / model_ptr->frame_rate) * model_ptr->reported_frames;
+    uint32_t    desired_total_bytes = (uint32_t)((model_ptr->desired_bitrate / model_ptr->frame_rate) * model_ptr->reported_frames);
     int64_t     delta_bytes = desired_total_bytes - model_ptr->total_bytes;
     float       extra = 1;
 
     if (delta_bytes < 0) {
-      extra = (uint64_t)((float)delta_bytes / (float)gop_size) + 1;
+      extra = (float)((float)delta_bytes / gop_size) + 1;
     } else if (delta_bytes > 0)
-      extra = (uint64_t)((float)delta_bytes / (float)gop_size) + 1;
+      extra = (float)((float)delta_bytes / gop_size) + 1;
     if (model_ptr->model_variation < 0) {
-      gop_size = gop_size / -(model_ptr->model_variation);
+      gop_size = (uint32_t)(gop_size / -(model_ptr->model_variation));
     } else if (model_ptr->model_variation > 0)
-      gop_size = gop_size * model_ptr->model_variation;
+      gop_size = (uint32_t)(gop_size * model_ptr->model_variation);
     if (model_ptr->model_variation_reported > 5) {
       if (extra < 0) {
-        gop_size = gop_size / -extra;
+        gop_size = (uint32_t)(gop_size / -extra);
       } else if (extra > 0)
-        gop_size = gop_size * extra;
+        gop_size = (uint32_t)(gop_size * extra);
     }
 
     return gop_size + 1;
