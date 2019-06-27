@@ -34,8 +34,6 @@
 #define MVBOUNDHIGH   348   //  (80+7)<<2
 #define REFPADD_QPEL  320   //  (16+64)<<2
 
-#define UNUSED_VARIABLE(x) (void)(x)
-
 #define AOM_INTERP_EXTEND 4
 
 #define SCALE_SUBPEL_BITS 10
@@ -1038,8 +1036,8 @@ EbErrorType av1_inter_prediction(
 
         int32_t bw = blk_geom->bwidth_uv;
         int32_t bh = blk_geom->bheight_uv;
-        UNUSED_VARIABLE(bw);
-        UNUSED_VARIABLE(bh);
+        UNUSED(bw);
+        UNUSED(bh);
 
         uint32_t mi_x = pu_origin_x;       //these are luma picture wise
         uint32_t mi_y = pu_origin_y;
@@ -1105,8 +1103,8 @@ EbErrorType av1_inter_prediction(
 
         const int32_t pre_x = (mi_x + MI_SIZE * col_start) >> ss_x;
         const int32_t pre_y = (mi_y + MI_SIZE * row_start) >> ss_y;
-        UNUSED_VARIABLE(pre_x);
-        UNUSED_VARIABLE(pre_y);
+        UNUSED(pre_x);
+        UNUSED(pre_y);
 
         sub8x8_inter = sub8x8_inter && !build_for_obmc;
         if (sub8x8_inter) {
@@ -1148,7 +1146,7 @@ EbErrorType av1_inter_prediction(
                     // MbModeInfo *this_mbmi = xd->mi[row * xd->mi_stride + col];
                      //is_compound = has_second_ref(this_mbmi);
                     int32_t tmp_dst_stride = 8;
-                    UNUSED_VARIABLE(tmp_dst_stride);
+                    UNUSED(tmp_dst_stride);
                     assert(bw < 8 || bh < 8);
 
                     // ConvolveParams conv_params = get_conv_params_no_round(
@@ -1469,8 +1467,8 @@ EbErrorType av1_inter_prediction_hbd(
 
         int32_t bw = blk_geom->bwidth_uv;
         int32_t bh = blk_geom->bheight_uv;
-        UNUSED_VARIABLE(bw);
-        UNUSED_VARIABLE(bh);
+        UNUSED(bw);
+        UNUSED(bh);
 
         uint32_t mi_x = pu_origin_x;       //these are luma picture wise
         uint32_t mi_y = pu_origin_y;
@@ -1535,8 +1533,8 @@ EbErrorType av1_inter_prediction_hbd(
 
         const int32_t pre_x = (mi_x + MI_SIZE * col_start) >> ss_x;
         const int32_t pre_y = (mi_y + MI_SIZE * row_start) >> ss_y;
-        UNUSED_VARIABLE(pre_x);
-        UNUSED_VARIABLE(pre_y);
+        UNUSED(pre_x);
+        UNUSED(pre_y);
 
         sub8x8_inter = sub8x8_inter && !build_for_obmc;
         if (sub8x8_inter) {
@@ -1578,7 +1576,7 @@ EbErrorType av1_inter_prediction_hbd(
                     // MbModeInfo *this_mbmi = xd->mi[row * xd->mi_stride + col];
                      //is_compound = has_second_ref(this_mbmi);
                     int32_t tmp_dst_stride = 8;
-                    UNUSED_VARIABLE(tmp_dst_stride);
+                    UNUSED(tmp_dst_stride);
                     assert(bw < 8 || bh < 8);
 
                     // ConvolveParams conv_params = get_conv_params_no_round(
