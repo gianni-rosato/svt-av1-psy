@@ -12,7 +12,7 @@
 Assumes data is aligned to 4 bytes. If not aligned  then all bitstream
 accesses will be unaligned and hence  costlier. Since this is codec memory that
 holds emulation prevented data, assumption of aligned to 4 bytes is valid */
-void dec_bits_init(bitstrm_t *bs, const uint8_t *data, uint32_t u4_numbytes) {
+void dec_bits_init(bitstrm_t *bs, const uint8_t *data, size_t numbytes) {
     uint32_t cur_word;
     uint32_t nxt_word;
     uint32_t temp;
@@ -27,7 +27,7 @@ void dec_bits_init(bitstrm_t *bs, const uint8_t *data, uint32_t u4_numbytes) {
     bs->buf = buf;
     bs->cur_word = cur_word;
     bs->nxt_word = nxt_word;
-    bs->buf_max = (uint8_t *)data + u4_numbytes + 8;
+    bs->buf_max = (uint8_t *)data + numbytes + 8;
     return;
 }
 

@@ -13,10 +13,10 @@
 #include "EbCodingUnit.h"
 #include "EbEntropyCoding.h"
 
-#define PRINT_NL NULL; // printf("\n");
-#define PRINT(name, val) NULL; // printf("\n%s :\t%X", name, val);
-#define PRINT_NAME(name) NULL; // printf("\n%s :\t", name);
-#define PRINT_FRAME(name, val) NULL; // printf("\n%s :\t%X", name, val);
+#define PRINT_NL // printf("\n");
+#define PRINT(name, val) // printf("\n%s :\t%X", name, val);
+#define PRINT_NAME(name) // printf("\n%s :\t", name);
+#define PRINT_FRAME(name, val) // printf("\n%s :\t%X", name, val);
 
 #define ZERO_ARRAY(dest, n) memset(dest, 0, n * sizeof(*(dest)))
 
@@ -152,6 +152,6 @@ void parse_super_block(EbDecHandle *dec_handle,
     uint32_t blk_row, uint32_t blk_col, SBInfo *sbInfo);
 
 EbErrorType decode_obu(EbDecHandle *dec_handle_ptr, uint8_t *data, uint32_t data_size);
-EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, const uint8_t *data, uint32_t data_size);
+EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, const uint8_t *data, size_t data_size);
 
 #endif  // EbDecObuParser_h

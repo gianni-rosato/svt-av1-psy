@@ -193,8 +193,7 @@ int32_t main(int32_t argc, char* argv[])
             // Input Loop Thread
             while (read_input_frame(&cli, &buf, &bytes_in_buffer, &buffer_size, NULL)) {
                 if (!stop_after || in_frame < stop_after) {
-                    return_error |= eb_svt_decode_frame(p_handle, buf,
-                        (uint32_t)bytes_in_buffer);
+                    return_error |= eb_svt_decode_frame(p_handle, buf, bytes_in_buffer);
 
                     in_frame++;
 

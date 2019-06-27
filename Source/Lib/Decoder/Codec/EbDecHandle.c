@@ -50,7 +50,7 @@ uint32_t                         lib_mutex_count = 0;
 void init_intra_dc_predictors_c_internal(void);
 void init_intra_predictors_internal(void);
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr,
-            const uint8_t *data, uint32_t data_size);
+            const uint8_t *data, size_t data_size);
 
 void SwitchToRealTime(){
 #if defined(__linux__) || defined(__APPLE__)
@@ -370,7 +370,7 @@ __attribute__((visibility("default")))
 EB_API EbErrorType eb_svt_decode_frame(
     EbComponentType     *svt_dec_component,
     const uint8_t       *data,
-    const uint32_t       data_size)
+    const size_t         data_size)
 {
     EbErrorType return_error = EB_ErrorNone;
     if (svt_dec_component == NULL)

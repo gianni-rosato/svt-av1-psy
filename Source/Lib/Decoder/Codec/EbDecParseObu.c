@@ -525,7 +525,7 @@ EbErrorType read_obu_size(bitstrm_t *bs, size_t bytes_available,
 }
 
 /** Reads OBU header and size */
-EbErrorType open_bistream_unit(bitstrm_t *bs, ObuHeader *header, uint32_t size,
+EbErrorType open_bistream_unit(bitstrm_t *bs, ObuHeader *header, size_t size,
     size_t *const length_size)
 {
     EbErrorType status;
@@ -1564,7 +1564,7 @@ void read_uncompressed_header(bitstrm_t *bs, SeqHeader *seq_header,
             frame_info->ref_order_hint[i] = 0;
         }
         for (i = 0; i < TOTAL_REFS_PER_FRAME; i++)
-            frame_info->order_hints[LAST_FRAME - 1 + i] = 0;
+            frame_info->order_hints[i] = 0;
     }
     frame_info->disable_cdf_update = dec_get_bits(bs, 1);
     PRINT_FRAME("disable_cdf_update", frame_info->disable_cdf_update);
@@ -1964,7 +1964,7 @@ void clear_loop_restoration(int num_planes, PartitionInfo_t *part_info)
     }
 }
 
-EbErrorType reset_parse_ctx(FRAME_CONTEXT *frm_ctx, int32_t base_qp) {
+EbErrorType reset_parse_ctx(FRAME_CONTEXT *frm_ctx, uint8_t base_qp) {
     EbErrorType return_error = EB_ErrorNone;
 
     av1_default_coef_probs(frm_ctx, base_qp);
@@ -2157,7 +2157,8 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     ParseCtxt   *parse_ctxt = (ParseCtxt *)dec_handle_ptr->pv_parse_ctxt;
 
     int num_tiles, tg_start, tg_end, tile_bits, tile_start_and_end_present_flag = 0;
-    int tile_row, tile_col, tile_size;
+    int tile_row, tile_col;
+    size_t tile_size;
     uint32_t start_position, end_position, header_bytes;
     num_tiles = tiles_info->tile_cols * tiles_info->tile_rows;
 
@@ -2234,7 +2235,7 @@ EbErrorType decode_obu(EbDecHandle *dec_handle_ptr, unsigned char *data, unsigne
 }
 
 // Decode all OBUs in a Frame
-EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, const uint8_t *data, uint32_t data_size)
+EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, const uint8_t *data, size_t data_size)
 {
     bitstrm_t bs;
     EbErrorType status = EB_ErrorNone;
