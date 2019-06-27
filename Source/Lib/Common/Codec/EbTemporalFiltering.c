@@ -504,6 +504,7 @@ void apply_filtering_c(const uint8_t *y_src,
     memset(v_diff_sse, 0, BLK_PELS * sizeof(uint16_t));
 
     assert(use_whole_blk == 0);
+    UNUSED(use_whole_blk);
 
     // Calculate squared differences for each pixel of the block (pred-orig)
     calculate_squared_errors(y_src, y_src_stride, y_pre, y_pre_stride, y_diff_sse,
@@ -667,6 +668,7 @@ void apply_filtering_block(int block_row,
     count_ptr[C_Y] = count[C_Y] + offset_block_buffer_Y;
     count_ptr[C_U] = count[C_U] + offset_block_buffer_U;
     count_ptr[C_V] = count[C_V] + offset_block_buffer_V;
+    asm_type = 0;
 
     TempFilteringType apply_32x32_temp_filter_fn = apply_temp_filtering_32x32_func_ptr_array[asm_type];
 

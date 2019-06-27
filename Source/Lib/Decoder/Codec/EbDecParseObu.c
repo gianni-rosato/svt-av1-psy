@@ -1165,7 +1165,7 @@ void read_global_param(bitstrm_t *bs, TransformationType type, int ref_idx,
     int idx, FrameHeader *frame_info)
 {
     int PrevGmParams[ALTREF_FRAME][6]; // Need to initialize in setup_past_independence() section: 6.8.2
-    for (int ref = LAST_FRAME; ref <= ALTREF_FRAME; ref++)
+    for (int ref = LAST_FRAME - 1; ref < ALTREF_FRAME; ref++)
         for (int i = 0; i <= 5; i++)
             PrevGmParams[ref][i] = ((i % 3 == 2) ? 1 << WARPEDMODEL_PREC_BITS : 0);
 
@@ -1198,7 +1198,7 @@ void read_global_motion_params(bitstrm_t *bs, FrameHeader *frame_info, int Frame
 {
     int ref, i;
     TransformationType type;
-    for (ref = LAST_FRAME; ref <= ALTREF_FRAME; ref++) {
+    for (ref = LAST_FRAME - 1; ref < ALTREF_FRAME; ref++) {
         frame_info->global_motion_params.gm_type[ref] = IDENTITY;
         for (i = 0; i < 6; i++) {
             frame_info->global_motion_params.gm_params[ref][i] = ((i % 3 == 2) ?
@@ -1206,7 +1206,7 @@ void read_global_motion_params(bitstrm_t *bs, FrameHeader *frame_info, int Frame
         }
     }
     if (FrameIsIntra) return;
-    for (ref = LAST_FRAME; ref <= ALTREF_FRAME; ref++) {
+    for (ref = LAST_FRAME - 1; ref < ALTREF_FRAME; ref++) {
         PRINT_NAME("Some read");
         if (dec_get_bits(bs, 1)) {
             PRINT_NAME("Some read");
@@ -1564,7 +1564,7 @@ void read_uncompressed_header(bitstrm_t *bs, SeqHeader *seq_header,
             frame_info->ref_order_hint[i] = 0;
         }
         for (i = 0; i < TOTAL_REFS_PER_FRAME; i++)
-            frame_info->order_hints[LAST_FRAME + i] = 0;
+            frame_info->order_hints[LAST_FRAME - 1 + i] = 0;
     }
     frame_info->disable_cdf_update = dec_get_bits(bs, 1);
     PRINT_FRAME("disable_cdf_update", frame_info->disable_cdf_update);

@@ -14289,7 +14289,7 @@ extern "C" {
         struct PictureParentControlSet      *alt_ref_ppcs_ptr;
         uint8_t                               altref_strength;
         int32_t                               pic_decision_reorder_queue_idx;
-        struct PictureParentControlSet       *temp_filt_pcs_list[15];
+        struct PictureParentControlSet       *temp_filt_pcs_list[ALTREF_MAX_NFRAMES];
         EbHandle temp_filt_done_semaphore;
         EbHandle temp_filt_mutex;
         EbHandle debug_mutex;

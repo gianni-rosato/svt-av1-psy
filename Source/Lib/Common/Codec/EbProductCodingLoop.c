@@ -2519,21 +2519,6 @@ static INLINE int txfm_partition_context(TXFM_CONTEXT *above_ctx,
     return category * 3 + above + left;
 }
 
-static INLINE int av1_get_txb_size_index(BlockSize bsize, int blk_row,
-    int blk_col) {
-    TxSize txs = max_txsize_rect_lookup[bsize];
-    for (int level = 0; level < MAX_VARTX_DEPTH - 1; ++level)
-        txs = sub_tx_size_map[txs];
-    const int tx_w_log2 = tx_size_wide_log2[txs] - MI_SIZE_LOG2;
-    const int tx_h_log2 = tx_size_high_log2[txs] - MI_SIZE_LOG2;
-    const int bw_log2 = mi_size_wide_log2[bsize];
-    const int stride_log2 = bw_log2 - tx_w_log2;
-    const int index =
-        ((blk_row >> tx_h_log2) << stride_log2) + (blk_col >> tx_w_log2);
-    assert(index < INTER_TX_SIZE_BUF_LEN);
-    return index;
-}
-
 static uint64_t cost_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
     TxSize tx_size, int depth, int blk_row,
     int blk_col, MdRateEstimationContext  *md_rate_estimation_ptr) {
@@ -2722,6 +2707,7 @@ static uint64_t cost_selected_tx_size(
         assert(depth >= 0 && depth <= max_depths);
         assert(!is_inter_block(mbmi));
         assert(IMPLIES(is_rect_tx(tx_size), is_rect_tx_allowed(/*xd,*/ mbmi)));
+        UNUSED(max_depths);
 
         /*aom_write_symbol(w, depth, ec_ctx->tx_size_cdf[tx_size_cat][tx_size_ctx],
             max_depths + 1);*/
@@ -3106,7 +3092,6 @@ void perform_intra_tx_partitioning(
                     NULL,//FRAME_CONTEXT *ec_ctx,
                     picture_control_set_ptr,
                     candidateBuffer,
-                    context_ptr->cu_ptr,
                     txb_1d_offset,
                     0,
                     context_ptr->coeff_est_entropy_coder_ptr,
@@ -3243,7 +3228,6 @@ void perform_intra_tx_partitioning(
                 NULL,//FRAME_CONTEXT *ec_ctx,
                 picture_control_set_ptr,
                 candidateBuffer,
-                context_ptr->cu_ptr,
                 txb_1d_offset,
                 0,
                 context_ptr->coeff_est_entropy_coder_ptr,
@@ -3488,7 +3472,6 @@ void perform_intra_tx_partitioning(
                 NULL,//FRAME_CONTEXT *ec_ctx,
                 picture_control_set_ptr,
                 candidateBuffer,
-                context_ptr->cu_ptr,
                 txb_1d_offset,
                 0,
                 context_ptr->coeff_est_entropy_coder_ptr,

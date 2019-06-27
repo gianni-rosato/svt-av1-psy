@@ -919,9 +919,10 @@ static void update_a_sep_sym(int32_t wiener_win, int64_t **Mc, int64_t **Hc,
         }
     }
     // Normalization enforcement in the system of equations itself
+    assert(wiener_halfwin1 <= WIENER_HALFWIN1);
+    int64_t A_halfwin1 = A[wiener_halfwin1 - 1];
     for (i = 0; i < wiener_halfwin1 - 1; ++i) {
-        A[i] -=
-            A[wiener_halfwin1 - 1] * 2 +
+        A[i] -= A_halfwin1 * 2 +
             B[i * wiener_halfwin1 + wiener_halfwin1 - 1] -
             2 * B[(wiener_halfwin1 - 1) * wiener_halfwin1 + (wiener_halfwin1 - 1)];
     }
@@ -975,9 +976,9 @@ static void update_b_sep_sym(int32_t wiener_win, int64_t **Mc, int64_t **Hc,
         }
     }
     // Normalization enforcement in the system of equations itself
+    int64_t A_halfwin1 = A[wiener_halfwin1 - 1];
     for (i = 0; i < wiener_halfwin1 - 1; ++i) {
-        A[i] -=
-            A[wiener_halfwin1 - 1] * 2 +
+        A[i] -= A_halfwin1 * 2 +
             B[i * wiener_halfwin1 + wiener_halfwin1 - 1] -
             2 * B[(wiener_halfwin1 - 1) * wiener_halfwin1 + (wiener_halfwin1 - 1)];
     }

@@ -140,9 +140,8 @@ void apply_segmentation_based_quantization(
 void setup_segmentation(
         PictureControlSet *picture_control_set_ptr,
         SequenceControlSet *sequence_control_set_ptr,
-        RateControlContext *context_ptr,
-        RateControlLayerContext *rateControlLayerPtr,
-        RateControlIntervalParamContext *rateControlParamPtr) {
+        RateControlLayerContext *rateControlLayerPtr)
+{
     SegmentationParams *segmentation_params = &picture_control_set_ptr->parent_pcs_ptr->segmentation_params;
     segmentation_params->segmentation_enabled = (EbBool) sequence_control_set_ptr->static_config.enable_adaptive_quantization;
     if (segmentation_params->segmentation_enabled) {

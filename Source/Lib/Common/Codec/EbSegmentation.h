@@ -34,9 +34,7 @@ void apply_segmentation_based_quantization(
 void setup_segmentation(
         PictureControlSet *picture_control_set_ptr,
         SequenceControlSet *sequence_control_set_ptr,
-        RateControlContext *context_ptr,
-        RateControlLayerContext *rateControlLayerPtr,
-        RateControlIntervalParamContext *rateControlParamPtr
+        RateControlLayerContext *rateControlLayerPtr
 );
 
 void find_segment_qps(

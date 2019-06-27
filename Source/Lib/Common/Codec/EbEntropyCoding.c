@@ -5743,8 +5743,8 @@ static INLINE void update_segmentation_map(PictureControlSet *picture_control_se
     const int mi_offset = mi_row * cm->mi_cols + mi_col;
     const int bw = mi_size_wide[bsize];
     const int bh = mi_size_high[bsize];
-    const int xmis = AOMMIN(cm->mi_cols - mi_col, bw);
-    const int ymis = AOMMIN(cm->mi_rows - mi_row, bh);
+    const int xmis = AOMMIN((int)(cm->mi_cols - mi_col), bw);
+    const int ymis = AOMMIN((int)(cm->mi_rows - mi_row), bh);
     int x, y;
 
     for (y = 0; y < ymis; ++y)
