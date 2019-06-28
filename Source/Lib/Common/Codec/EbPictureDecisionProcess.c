@@ -2610,7 +2610,7 @@ void* picture_decision_kernel(void *input_ptr)
 
     int32_t                           previousEntryIndex;
 
-    PaReferenceQueueEntry         *inputEntryPtr;
+    PaReferenceQueueEntry         *inputEntryPtr = (PaReferenceQueueEntry*)EB_NULL;;
     uint32_t                           inputQueueIndex;
 
     PaReferenceQueueEntry         *paReferenceEntryPtr;

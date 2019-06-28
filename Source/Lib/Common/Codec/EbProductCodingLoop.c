@@ -6166,8 +6166,8 @@ static void in_loop_me_get_search_point_results_block(
     uint32_t  *best_mv_128x128 = context_ptr->p_best_mv128x128;
     uint32_t  dist_128x128 = context_ptr->p_sad128x128;
     const uint32_t  src_stride = context_ptr->sb_buffer_stride;
-    uint32_t block_64x64_index;
-    uint32_t block_32x32_index;
+    uint32_t block_64x64_index = 0;
+    uint32_t block_32x32_index = 0;
     uint32_t block_16x16_index;
     uint32_t block_8x8_index;
     uint32_t block_4x4_index;
