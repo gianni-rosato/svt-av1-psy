@@ -3274,7 +3274,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 int pic_i;
                                 //search reord-queue to get the future pictures
-                                for (pic_i = num_past_pics + 1; pic_i < altref_nframes; pic_i++) {
+                                for (pic_i = num_past_pics + 1; pic_i < ALTREF_MAX_NFRAMES; pic_i++) {
                                     int32_t q_index = QUEUE_GET_NEXT_SPOT(picture_control_set_ptr->pic_decision_reorder_queue_idx, pic_i - num_past_pics);
                                     if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL) {
                                         PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
