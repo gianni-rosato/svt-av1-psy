@@ -33,7 +33,7 @@
 #include "av1me.h"
 #include "EbTemporalFiltering_sse4.h"
 
-#undef _MM_HINT_T2     
+#undef _MM_HINT_T2
 #define _MM_HINT_T2  1
 
 static unsigned int index_mult[14] = {
