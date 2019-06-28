@@ -1497,7 +1497,7 @@ static INLINE void compute_stats_win3_avx2(
         j = i + 1;
         do {
             const int16_t *const dJ = d + j;
-            __m256i deltas[WIENER_WIN_3TAP - 1][WIENER_WIN_3TAP - 1] = {0};
+            __m256i deltas[WIENER_WIN_3TAP - 1][WIENER_WIN_3TAP - 1] = {{0}};
             __m256i dIs[WIENER_WIN_3TAP - 1], dIe[WIENER_WIN_3TAP - 1];
             __m256i dJs[WIENER_WIN_3TAP - 1], dJe[WIENER_WIN_3TAP - 1];
 
@@ -2233,7 +2233,7 @@ static INLINE void compute_stats_win5_avx2(
         j = i + 1;
         do {
             const int16_t *const dJ = d + j;
-            __m256i deltas[WIENER_WIN_CHROMA - 1][WIENER_WIN_CHROMA - 1] = {0};
+            __m256i deltas[WIENER_WIN_CHROMA - 1][WIENER_WIN_CHROMA - 1] = {{0}};
             __m256i dIs[WIENER_WIN_CHROMA - 1], dIe[WIENER_WIN_CHROMA - 1];
             __m256i dJs[WIENER_WIN_CHROMA - 1], dJe[WIENER_WIN_CHROMA - 1];
 
@@ -3110,7 +3110,7 @@ static INLINE void compute_stats_win7_avx2(
         j = i + 1;
         do {
             const int16_t *const dJ = d + j;
-            __m256i deltas[WIENER_WIN - 1][WIENER_WIN - 1] = {0};
+            __m256i deltas[WIENER_WIN - 1][WIENER_WIN - 1] = {{0}};
             __m256i dIs[WIENER_WIN - 1], dIe[WIENER_WIN - 1];
             __m256i dJs[WIENER_WIN - 1], dJe[WIENER_WIN - 1];
 

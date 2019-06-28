@@ -1533,7 +1533,9 @@ Output  : EncDec Kernel signal(s)
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     SequenceControlSet               *sequence_control_set_ptr,
     PictureControlSet                *picture_control_set_ptr,
-    ModeDecisionConfigurationContext *context_ptr) {
+    ModeDecisionConfigurationContext *context_ptr)
+{
+    UNUSED(sequence_control_set_ptr);
     EbErrorType return_error = EB_ErrorNone;
 
     context_ptr->adp_level = picture_control_set_ptr->parent_pcs_ptr->enc_mode;
