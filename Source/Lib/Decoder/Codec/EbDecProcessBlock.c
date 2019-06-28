@@ -349,6 +349,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
                                     cur_loc = (mi_col + blk_col) & 0xFF;
                                     assert(cur_coeff[1] == cur_loc);
                                     UNUSED(cur_coeff);
+                                    UNUSED(cur_loc);
                                 }
 #endif
                                 tx_type = trans_info->txk_type;
