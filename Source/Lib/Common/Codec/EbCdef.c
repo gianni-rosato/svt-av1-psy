@@ -1600,10 +1600,10 @@ void av1_cdef_search(
 
     for (pli = 0; pli < num_planes; pli++) {
         uint8_t *in_buffer = 0;
-        int32_t in_stride;
+        int32_t in_stride = 0;
 
         uint8_t *ref_buffer = 0;
-        int32_t ref_stride;
+        int32_t ref_stride = 0;
         switch (pli) {
         case 0:
             ref_buffer = inputBufferY;
@@ -1936,10 +1936,10 @@ void av1_cdef_search16bit(
 
     for (pli = 0; pli < num_planes; pli++) {
         uint16_t *in_buffer = 0;
-        int32_t in_stride;
+        int32_t in_stride = 0;
 
         uint16_t *ref_buffer = 0;
-        int32_t ref_stride;
+        int32_t ref_stride = 0;
         switch (pli) {
         case 0:
             ref_buffer = inputBufferY;

@@ -2272,7 +2272,7 @@ void  inject_inter_candidates(
                 uint32_t y_to_search = context_ptr->blk_geom->origin_y - (geom_offset_y + ((context_ptr->blk_geom->origin_y & 0x7) ? 4 : 0));
 
                 // Search the me_info_index of the parent block
-                uint32_t me_info_index;
+                uint32_t me_info_index = 0;
                 for (uint32_t block_index = 0; block_index < max_number_of_pus_per_sb; block_index++) {
 
                     if (

@@ -74,7 +74,7 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
         ref_frame_arr_single[i].used = 1;
 
     for (uint8_t i = 0; i < 7; ++i) {
-        ref_frame_arr_single[i].poc = parent_pcs_ptr->av1_ref_signal.ref_poc_array[i] % (1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
+        ref_frame_arr_single[i].poc = parent_pcs_ptr->av1_ref_signal.ref_poc_array[i] % (uint64_t)(1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
     }
 
     OrderHintInfo order_hint_info_st;
@@ -92,7 +92,7 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
         parent_pcs_ptr->reference_mode == SINGLE_REFERENCE)
         return;
 
-    const int cur_order_hint = parent_pcs_ptr->picture_number % (1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
+    const int cur_order_hint = parent_pcs_ptr->picture_number % (uint64_t)(1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
     int ref_order_hints[2] = { -1, INT_MAX };
     int ref_idx[2] = { INVALID_IDX, INVALID_IDX };
 
@@ -104,7 +104,7 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
 
         if (ref_frame_arr_single[i].used == 0) continue;
 
-        const int ref_order_hint = ref_frame_arr_single[i].poc;// buf->order_hint;
+        const int ref_order_hint = (const int)ref_frame_arr_single[i].poc;// buf->order_hint;
         if (get_relative_dist(order_hint_info, ref_order_hint, cur_order_hint) <
             0) {
             // Forward reference
@@ -142,7 +142,7 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
             //if (buf == NULL) continue;
             if (ref_frame_arr_single[i].used == 0) continue;
 
-            const int ref_order_hint = ref_frame_arr_single[i].poc;// buf->order_hint;
+            const int ref_order_hint = (const int)ref_frame_arr_single[i].poc;// buf->order_hint;
             if ((ref_order_hints[0] != -1 &&
                 get_relative_dist(order_hint_info, ref_order_hint,
                     ref_order_hints[0]) < 0) &&
@@ -776,6 +776,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
     picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
     picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
+
+    picture_control_set_ptr->tf_enable_hme_level0_flag = tf_enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
+    picture_control_set_ptr->tf_enable_hme_level1_flag = tf_enable_hme_level1_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
+    picture_control_set_ptr->tf_enable_hme_level2_flag = tf_enable_hme_level2_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
 
         if (sc_content_detected)
             if (picture_control_set_ptr->enc_mode <= ENC_M1)
@@ -2606,7 +2610,7 @@ void* picture_decision_kernel(void *input_ptr)
 
     int32_t                           previousEntryIndex;
 
-    PaReferenceQueueEntry         *inputEntryPtr;
+    PaReferenceQueueEntry         *inputEntryPtr = (PaReferenceQueueEntry*)EB_NULL;;
     uint32_t                           inputQueueIndex;
 
     PaReferenceQueueEntry         *paReferenceEntryPtr;
@@ -2622,9 +2626,6 @@ void* picture_decision_kernel(void *input_ptr)
     // Dynamic GOP
     uint32_t                           mini_gop_index;
     uint32_t                           pictureIndex;
-
-    // Initialization
-    uint32_t                           picture_width_in_sb;
 
     EbBool                          windowAvail, framePasseThru;
     uint32_t                           windowIndex;
@@ -3116,31 +3117,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 TX_MODE_SELECT :
                                 TX_MODE_LARGEST;
 
-                            // Set the default settings of  subpel
-                                if (picture_control_set_ptr->sc_content_detected)
-                                    if (picture_control_set_ptr->enc_mode <= ENC_M1)
-                                        picture_control_set_ptr->use_subpel_flag = 1;
-                                    else
-                                        picture_control_set_ptr->use_subpel_flag = 0;
-                                else
-                                    picture_control_set_ptr->use_subpel_flag = 1;
-                                if (MR_MODE) {
-                                    picture_control_set_ptr->half_pel_mode =
-                                        EX_HP_MODE;
-                                    picture_control_set_ptr->quarter_pel_mode =
-                                        EX_QP_MODE;
-                                } else if (picture_control_set_ptr->enc_mode ==
-                                           ENC_M0) {
-                                    picture_control_set_ptr->half_pel_mode =
-                                        EX_HP_MODE;
-                                    picture_control_set_ptr->quarter_pel_mode =
-                                        REFINMENT_QP_MODE;
-                                } else {
-                                    picture_control_set_ptr->half_pel_mode =
-                                        REFINMENT_HP_MODE;
-                                    picture_control_set_ptr->quarter_pel_mode =
-                                        REFINMENT_QP_MODE;
-                                }
                                 picture_control_set_ptr->use_src_ref = EB_FALSE;
                                 picture_control_set_ptr->enable_in_loop_motion_estimation_flag = EB_FALSE;
                                 picture_control_set_ptr->limit_ois_to_dc_mode_flag = EB_FALSE;
@@ -3281,7 +3257,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 int altref_nframes = picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes;
                                 int num_past_pics = altref_nframes / 2;
                                 int num_future_pics = altref_nframes - num_past_pics - 1;
-                                ASSERT(num_future_pics >= 0);
+                                assert(altref_nframes <= ALTREF_MAX_NFRAMES);
 
                                 //initilize list
                                 for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
@@ -3297,12 +3273,12 @@ void* picture_decision_kernel(void *input_ptr)
                                 int actual_past_pics = 0;
 
                                 int pic_i;
-                                //search reord-queue to get the future pictures
-                                for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
-                                    int32_t q_index = QUEUE_GET_NEXT_SPOT(picture_control_set_ptr->pic_decision_reorder_queue_idx, pic_i + 1);
-                                    if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL) {
+                                //search reorder-queue to get the future pictures
+                                for (pic_i = num_past_pics + 1; pic_i < ALTREF_MAX_NFRAMES; pic_i++) {
+                                    int32_t q_index = QUEUE_GET_NEXT_SPOT(picture_control_set_ptr->pic_decision_reorder_queue_idx, pic_i - num_past_pics);
+                                    if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL && pic_i < altref_nframes) {
                                         PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
-                                        picture_control_set_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
+                                        picture_control_set_ptr->temp_filt_pcs_list[pic_i] = pcs_itr;
                                     }
                                     else
                                         break;
@@ -3322,11 +3298,9 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
 
                                 //get actual number of future pictures stored
-                                for(pic_i=0; pic_i<num_future_pics; pic_i++){
-
-                                    if(picture_control_set_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] != NULL)
+                                for(pic_i = num_past_pics + 1; pic_i < ALTREF_MAX_NFRAMES; pic_i++) {
+                                    if(picture_control_set_ptr->temp_filt_pcs_list[pic_i] != NULL)
                                         actual_future_pics++;
-
                                 }
 
                                 actual_past_pics = actual_future_pics;

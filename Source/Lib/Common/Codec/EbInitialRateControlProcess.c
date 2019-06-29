@@ -848,9 +848,21 @@ void UpdateBeaInfoOverTime(
 
             if (temporaryPictureControlSetPtr->slice_type == I_SLICE || temporaryPictureControlSetPtr->end_of_sequence_flag)
                 break;
-            if (lcuIdx == 0)
-                me_dist_pic_count++;
-            me_dist += (temporaryPictureControlSetPtr->slice_type == I_SLICE) ? 0 : (uint64_t)temporaryPictureControlSetPtr->rc_me_distortion[lcuIdx];
+#if QPS_TUNING
+            // Limit the distortion to lower layers 0, 1 and 2 only. Higher layers have close temporal distance and lower distortion that might contaminate the data
+            if (temporaryPictureControlSetPtr->temporal_layer_index < MAX((int8_t)picture_control_set_ptr->hierarchical_levels - 1, 2) ) {
+#endif
+                if (lcuIdx == 0)
+                    me_dist_pic_count++;
+                me_dist += (temporaryPictureControlSetPtr->slice_type == I_SLICE) ? 0 : (uint64_t)temporaryPictureControlSetPtr->rc_me_distortion[lcuIdx];
+#if QPS_TUNING
+            }
+            // Store the filtered_sse of next ALT_REF picture in the I slice to be used in QP Scaling
+            if (picture_control_set_ptr->slice_type == I_SLICE && picture_control_set_ptr->filtered_sse == 0 && lcuIdx == 0 && temporaryPictureControlSetPtr->temporal_layer_index == 0) {
+                picture_control_set_ptr->filtered_sse = temporaryPictureControlSetPtr->filtered_sse;
+                picture_control_set_ptr->filtered_sse_uv = temporaryPictureControlSetPtr->filtered_sse_uv;
+            }
+#endif
             nonMovingIndexOverSlidingWindow += temporaryPictureControlSetPtr->non_moving_index_array[lcuIdx];
 
             // Increment the inputQueueIndex Iterator

@@ -88,14 +88,15 @@ EbErrorType signal_derivation_pre_analysis_oq(
     EbErrorType return_error = EB_ErrorNone;
     uint8_t input_resolution = sequence_control_set_ptr->input_resolution;
 
+    // HME Flags updated @ signal_derivation_multi_processes_oq
+    uint8_t  hme_me_level = picture_control_set_ptr->enc_mode;
+
     // Derive HME Flag
     if (sequence_control_set_ptr->static_config.use_default_me_hme) {
-        uint8_t  hme_me_level = picture_control_set_ptr->enc_mode;
-
         picture_control_set_ptr->enable_hme_flag = EB_TRUE;
-        picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[0][input_resolution][hme_me_level];
-        picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[0][input_resolution][hme_me_level];
-        picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[0][input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[0][input_resolution][hme_me_level] || enable_hme_level0_flag[1][input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[0][input_resolution][hme_me_level] || enable_hme_level1_flag[1][input_resolution][hme_me_level];
+        picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[0][input_resolution][hme_me_level] || enable_hme_level2_flag[1][input_resolution][hme_me_level];
     }
     else {
         picture_control_set_ptr->enable_hme_flag = sequence_control_set_ptr->static_config.enable_hme_flag;
@@ -103,6 +104,12 @@ EbErrorType signal_derivation_pre_analysis_oq(
         picture_control_set_ptr->enable_hme_level1_flag = sequence_control_set_ptr->static_config.enable_hme_level1_flag;
         picture_control_set_ptr->enable_hme_level2_flag = sequence_control_set_ptr->static_config.enable_hme_level2_flag;
     }
+
+    picture_control_set_ptr->tf_enable_hme_flag = EB_TRUE;
+    picture_control_set_ptr->tf_enable_hme_level0_flag = tf_enable_hme_level0_flag[0][input_resolution][hme_me_level] || tf_enable_hme_level0_flag[1][input_resolution][hme_me_level];
+    picture_control_set_ptr->tf_enable_hme_level1_flag = tf_enable_hme_level1_flag[0][input_resolution][hme_me_level] || tf_enable_hme_level1_flag[1][input_resolution][hme_me_level];
+    picture_control_set_ptr->tf_enable_hme_level2_flag = tf_enable_hme_level2_flag[0][input_resolution][hme_me_level] || tf_enable_hme_level2_flag[1][input_resolution][hme_me_level];
+
     if (picture_control_set_ptr->enc_mode >= ENC_M8)
         sequence_control_set_ptr->seq_header.enable_restoration = 0;
 
@@ -756,7 +763,10 @@ void* resource_coordination_kernel(void *input_ptr)
             signal_derivation_pre_analysis_oq(
                 sequence_control_set_ptr,
                 picture_control_set_ptr);
-
+#if QPS_TUNING
+            picture_control_set_ptr->filtered_sse = 0;
+            picture_control_set_ptr->filtered_sse_uv = 0;
+#endif
             // Rate Control
             // Set the ME Distortion and OIS Historgrams to zero
             if (sequence_control_set_ptr->static_config.rate_control_mode) {

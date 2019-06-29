@@ -4622,7 +4622,7 @@ EbErrorType write_frame_header_av1(
 
     if (!showExisting) {
         // Add data from EC stream to Picture Stream.
-        int32_t frameSize = parent_pcs_ptr->av1_cm->tile_cols*parent_pcs_ptr->av1_cm->tile_rows==1 ? pcs_ptr->entropy_coder_ptr->ec_writer.pos : pcs_ptr->entropy_coder_ptr->ec_frame_size;
+        int32_t frameSize = (int32_t)(parent_pcs_ptr->av1_cm->tile_cols*parent_pcs_ptr->av1_cm->tile_rows==1 ? pcs_ptr->entropy_coder_ptr->ec_writer.pos : pcs_ptr->entropy_coder_ptr->ec_frame_size);
 
         OutputBitstreamUnit *ec_output_bitstream_ptr = (OutputBitstreamUnit*)pcs_ptr->entropy_coder_ptr->ec_output_bitstream_ptr;
         //****************************************************************//
@@ -5181,7 +5181,7 @@ static void write_intrabc_info(
 static INLINE int block_signals_txsize(BlockSize bsize) {
     return bsize > BLOCK_4X4;
 }
-static INLINE int is_rect_tx(TxSize tx_size) { return tx_size >= TX_SIZES; }
+
 static INLINE int is_intrabc_block(const MbModeInfo *mbmi) {
     return mbmi->use_intrabc;
 }
@@ -5259,21 +5259,6 @@ static INLINE int txfm_partition_context(TXFM_CONTEXT *above_ctx,
     }
     assert(category != TXFM_PARTITION_CONTEXTS);
     return category * 3 + above + left;
-}
-
-static INLINE int av1_get_txb_size_index(BlockSize bsize, int blk_row,
-    int blk_col) {
-    TxSize txs = max_txsize_rect_lookup[bsize];
-    for (int level = 0; level < MAX_VARTX_DEPTH - 1; ++level)
-        txs = sub_tx_size_map[txs];
-    const int tx_w_log2 = tx_size_wide_log2[txs] - MI_SIZE_LOG2;
-    const int tx_h_log2 = tx_size_high_log2[txs] - MI_SIZE_LOG2;
-    const int bw_log2 = mi_size_wide_log2[bsize];
-    const int stride_log2 = bw_log2 - tx_w_log2;
-    const int index =
-        ((blk_row >> tx_h_log2) << stride_log2) + (blk_col >> tx_w_log2);
-    assert(index < INTER_TX_SIZE_BUF_LEN);
-    return index;
 }
 
 static void write_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
@@ -5374,41 +5359,6 @@ static INLINE int bsize_to_tx_size_cat(BlockSize bsize) {
     }
     assert(depth <= MAX_TX_CATS);
     return depth - 1;
-}
-#define BLOCK_SIZES_ALL 22
-static INLINE int is_rect_tx_allowed_bsize(BlockSize bsize) {
-    static const char LUT[BLOCK_SIZES_ALL] = {
-      0,  // BLOCK_4X4
-      1,  // BLOCK_4X8
-      1,  // BLOCK_8X4
-      0,  // BLOCK_8X8
-      1,  // BLOCK_8X16
-      1,  // BLOCK_16X8
-      0,  // BLOCK_16X16
-      1,  // BLOCK_16X32
-      1,  // BLOCK_32X16
-      0,  // BLOCK_32X32
-      1,  // BLOCK_32X64
-      1,  // BLOCK_64X32
-      0,  // BLOCK_64X64
-      0,  // BLOCK_64X128
-      0,  // BLOCK_128X64
-      0,  // BLOCK_128X128
-      1,  // BLOCK_4X16
-      1,  // BLOCK_16X4
-      1,  // BLOCK_8X32
-      1,  // BLOCK_32X8
-      1,  // BLOCK_16X64
-      1,  // BLOCK_64X16
-    };
-
-    return LUT[bsize];
-}
-
-static INLINE int is_rect_tx_allowed(/*const MacroBlockD *xd,*/
-    const MbModeInfo *mbmi) {
-    return is_rect_tx_allowed_bsize(mbmi->sb_type) /*&&
-        !xd->lossless[mbmi->segment_id]*/;
 }
 
 // Returns a context number for the given MB prediction signal
@@ -5743,8 +5693,8 @@ static INLINE void update_segmentation_map(PictureControlSet *picture_control_se
     const int mi_offset = mi_row * cm->mi_cols + mi_col;
     const int bw = mi_size_wide[bsize];
     const int bh = mi_size_high[bsize];
-    const int xmis = AOMMIN(cm->mi_cols - mi_col, bw);
-    const int ymis = AOMMIN(cm->mi_rows - mi_row, bh);
+    const int xmis = AOMMIN((int)(cm->mi_cols - mi_col), bw);
+    const int ymis = AOMMIN((int)(cm->mi_rows - mi_row), bh);
     int x, y;
 
     for (y = 0; y < ymis; ++y)

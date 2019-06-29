@@ -727,11 +727,11 @@ uint64_t av1_intra_fast_cost(
     }
 
     uint32_t isInterRate = picture_control_set_ptr->slice_type != I_SLICE ? candidate_ptr->md_rate_estimation_ptr->intra_inter_fac_bits[cu_ptr->is_inter_ctx][0] : 0;
-    lumaRate = intraModeBitsNum + skipModeRate + intraLumaModeBitsNum + intraLumaAngModeBitsNum + isInterRate;
+    lumaRate = (uint32_t)(intraModeBitsNum + skipModeRate + intraLumaModeBitsNum + intraLumaAngModeBitsNum + isInterRate);
     if (av1_allow_intrabc(picture_control_set_ptr->parent_pcs_ptr->av1_cm))
         lumaRate += candidate_ptr->md_rate_estimation_ptr->intrabc_fac_bits[candidate_ptr->use_intrabc];
 
-    chromaRate = intraChromaModeBitsNum + intraChromaAngModeBitsNum;
+    chromaRate = (uint32_t)(intraChromaModeBitsNum + intraChromaAngModeBitsNum);
 
     // Keep the Fast Luma and Chroma rate for future use
     candidate_ptr->fast_luma_rate = lumaRate;
@@ -1447,7 +1447,7 @@ uint64_t av1_inter_fast_cost(
     //            interp_filter[dir] = interpolation_filter
     //    }
     uint32_t isInterRate = candidate_ptr->md_rate_estimation_ptr->intra_inter_fac_bits[cu_ptr->is_inter_ctx][1];
-    lumaRate = referencePictureBitsNum + skipModeRate + interModeBitsNum + mvRate + isInterRate;
+    lumaRate = (uint32_t)(referencePictureBitsNum + skipModeRate + interModeBitsNum + mvRate + isInterRate);
 
     //chromaRate = intraChromaModeBitsNum + intraChromaAngModeBitsNum;
 
@@ -1513,7 +1513,6 @@ EbErrorType av1_tu_estimate_coeff_bits(
     FRAME_CONTEXT                      *ec_ctx,
     PictureControlSet                  *picture_control_set_ptr,
     struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-    CodingUnit                         *cu_ptr,
     uint32_t                            tu_origin_index,
     uint32_t                            tu_chroma_origin_index,
     EntropyCoder                       *entropy_coder_ptr,

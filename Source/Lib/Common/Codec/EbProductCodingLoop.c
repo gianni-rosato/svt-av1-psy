@@ -1471,17 +1471,17 @@ void perform_fast_loop(
             // Distortion
             // Y
             if (use_ssd) {
-                candidateBuffer->candidate_ptr->luma_fast_distortion = lumaFastDistortion = spatial_full_distortion_kernel_func_ptr_array[asm_type][Log2f(context_ptr->blk_geom->bwidth) - 2](
+                candidateBuffer->candidate_ptr->luma_fast_distortion = (uint32_t)(lumaFastDistortion = spatial_full_distortion_kernel_func_ptr_array[asm_type][Log2f(context_ptr->blk_geom->bwidth) - 2](
                     input_picture_ptr->buffer_y + inputOriginIndex,
                     input_picture_ptr->stride_y,
                     prediction_ptr->buffer_y + cuOriginIndex,
                     prediction_ptr->stride_y,
                     context_ptr->blk_geom->bwidth,
-                    context_ptr->blk_geom->bheight);
+                    context_ptr->blk_geom->bheight));
             }
             else {
                 assert((context_ptr->blk_geom->bwidth >> 3) < 17);
-                candidateBuffer->candidate_ptr->luma_fast_distortion = lumaFastDistortion = (nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
+                candidateBuffer->candidate_ptr->luma_fast_distortion = (uint32_t)(lumaFastDistortion = nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
                     input_picture_ptr->buffer_y + inputOriginIndex,
                     input_picture_ptr->stride_y,
                     prediction_ptr->buffer_y + cuOriginIndex,
@@ -2170,9 +2170,9 @@ void check_best_indepedant_cfl(
     }
     else
         chromaRate = (uint64_t)candidateBuffer->candidate_ptr->md_rate_estimation_ptr->intra_uv_mode_fac_bits[CFL_ALLOWED][candidateBuffer->candidate_ptr->intra_luma_mode][UV_DC_PRED];
-    int coeff_rate = *cb_coeff_bits + *cr_coeff_bits;
-    int distortion = cbFullDistortion[DIST_CALC_RESIDUAL] + crFullDistortion[DIST_CALC_RESIDUAL];
-    int rate = coeff_rate + chromaRate + candidateBuffer->candidate_ptr->fast_luma_rate;
+    int coeff_rate = (int)(*cb_coeff_bits + *cr_coeff_bits);
+    int distortion = (int)(cbFullDistortion[DIST_CALC_RESIDUAL] + crFullDistortion[DIST_CALC_RESIDUAL]);
+    int rate = (int)(coeff_rate + chromaRate + candidateBuffer->candidate_ptr->fast_luma_rate);
     uint64_t cfl_uv_cost = RDCOST(context_ptr->full_lambda, rate, distortion);
 
     // cfl vs. best independant
@@ -2436,7 +2436,7 @@ uint8_t get_end_tx_depth(ModeDecisionContext *context_ptr, uint8_t atb_mode, Mod
 static INLINE int block_signals_txsize(BlockSize bsize) {
     return bsize > BLOCK_4X4;
 }
-static INLINE int is_rect_tx(TxSize tx_size) { return tx_size >= TX_SIZES; }
+
 static INLINE int is_intrabc_block(const MbModeInfo *mbmi) {
     return mbmi->use_intrabc;
 }
@@ -2517,21 +2517,6 @@ static INLINE int txfm_partition_context(TXFM_CONTEXT *above_ctx,
     }
     assert(category != TXFM_PARTITION_CONTEXTS);
     return category * 3 + above + left;
-}
-
-static INLINE int av1_get_txb_size_index(BlockSize bsize, int blk_row,
-    int blk_col) {
-    TxSize txs = max_txsize_rect_lookup[bsize];
-    for (int level = 0; level < MAX_VARTX_DEPTH - 1; ++level)
-        txs = sub_tx_size_map[txs];
-    const int tx_w_log2 = tx_size_wide_log2[txs] - MI_SIZE_LOG2;
-    const int tx_h_log2 = tx_size_high_log2[txs] - MI_SIZE_LOG2;
-    const int bw_log2 = mi_size_wide_log2[bsize];
-    const int stride_log2 = bw_log2 - tx_w_log2;
-    const int index =
-        ((blk_row >> tx_h_log2) << stride_log2) + (blk_col >> tx_w_log2);
-    assert(index < INTER_TX_SIZE_BUF_LEN);
-    return index;
 }
 
 static uint64_t cost_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
@@ -2634,41 +2619,6 @@ static INLINE int bsize_to_tx_size_cat(BlockSize bsize) {
     assert(depth <= MAX_TX_CATS);
     return depth - 1;
 }
-#define BLOCK_SIZES_ALL 22
-static INLINE int is_rect_tx_allowed_bsize(BlockSize bsize) {
-    static const char LUT[BLOCK_SIZES_ALL] = {
-      0,  // BLOCK_4X4
-      1,  // BLOCK_4X8
-      1,  // BLOCK_8X4
-      0,  // BLOCK_8X8
-      1,  // BLOCK_8X16
-      1,  // BLOCK_16X8
-      0,  // BLOCK_16X16
-      1,  // BLOCK_16X32
-      1,  // BLOCK_32X16
-      0,  // BLOCK_32X32
-      1,  // BLOCK_32X64
-      1,  // BLOCK_64X32
-      0,  // BLOCK_64X64
-      0,  // BLOCK_64X128
-      0,  // BLOCK_128X64
-      0,  // BLOCK_128X128
-      1,  // BLOCK_4X16
-      1,  // BLOCK_16X4
-      1,  // BLOCK_8X32
-      1,  // BLOCK_32X8
-      1,  // BLOCK_16X64
-      1,  // BLOCK_64X16
-    };
-
-    return LUT[bsize];
-}
-
-static INLINE int is_rect_tx_allowed(/*const MacroBlockD *xd,*/
-    const MbModeInfo *mbmi) {
-    return is_rect_tx_allowed_bsize(mbmi->sb_type) /*&&
-        !xd->lossless[mbmi->segment_id]*/;
-}
 
 // Returns a context number for the given MB prediction signal
 // The mode info data structure has a one element border above and to the
@@ -2722,6 +2672,7 @@ static uint64_t cost_selected_tx_size(
         assert(depth >= 0 && depth <= max_depths);
         assert(!is_inter_block(mbmi));
         assert(IMPLIES(is_rect_tx(tx_size), is_rect_tx_allowed(/*xd,*/ mbmi)));
+        UNUSED(max_depths);
 
         /*aom_write_symbol(w, depth, ec_ctx->tx_size_cdf[tx_size_cat][tx_size_ctx],
             max_depths + 1);*/
@@ -3106,7 +3057,6 @@ void perform_intra_tx_partitioning(
                     NULL,//FRAME_CONTEXT *ec_ctx,
                     picture_control_set_ptr,
                     candidateBuffer,
-                    context_ptr->cu_ptr,
                     txb_1d_offset,
                     0,
                     context_ptr->coeff_est_entropy_coder_ptr,
@@ -3243,7 +3193,6 @@ void perform_intra_tx_partitioning(
                 NULL,//FRAME_CONTEXT *ec_ctx,
                 picture_control_set_ptr,
                 candidateBuffer,
-                context_ptr->cu_ptr,
                 txb_1d_offset,
                 0,
                 context_ptr->coeff_est_entropy_coder_ptr,
@@ -3488,7 +3437,6 @@ void perform_intra_tx_partitioning(
                 NULL,//FRAME_CONTEXT *ec_ctx,
                 picture_control_set_ptr,
                 candidateBuffer,
-                context_ptr->cu_ptr,
                 txb_1d_offset,
                 0,
                 context_ptr->coeff_est_entropy_coder_ptr,
@@ -4752,8 +4700,8 @@ void search_best_independent_uv_mode(
                 1,
                 asm_type);
 
-            coeff_rate[uv_mode][MAX_ANGLE_DELTA + uv_angle_delta] = cb_coeff_bits + cr_coeff_bits;
-            distortion[uv_mode][MAX_ANGLE_DELTA + uv_angle_delta] = cbFullDistortion[DIST_CALC_RESIDUAL] + crFullDistortion[DIST_CALC_RESIDUAL];
+            coeff_rate[uv_mode][MAX_ANGLE_DELTA + uv_angle_delta] = (int)(cb_coeff_bits + cr_coeff_bits);
+            distortion[uv_mode][MAX_ANGLE_DELTA + uv_angle_delta] = (int)(cbFullDistortion[DIST_CALC_RESIDUAL] + crFullDistortion[DIST_CALC_RESIDUAL]);
         }
     }
 
@@ -6218,8 +6166,8 @@ static void in_loop_me_get_search_point_results_block(
     uint32_t  *best_mv_128x128 = context_ptr->p_best_mv128x128;
     uint32_t  dist_128x128 = context_ptr->p_sad128x128;
     const uint32_t  src_stride = context_ptr->sb_buffer_stride;
-    uint32_t block_64x64_index;
-    uint32_t block_32x32_index;
+    uint32_t block_64x64_index = 0;
+    uint32_t block_32x32_index = 0;
     uint32_t block_16x16_index;
     uint32_t block_8x8_index;
     uint32_t block_4x4_index;
@@ -8837,7 +8785,7 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
             number_of_sb_quad,
             asm_type);
 
-        if (picture_control_set_ptr->parent_pcs_ptr->use_subpel_flag == 1) {
+        if (context_ptr->use_subpel_flag == 1) {
             // Move to the top left of the search region
             xTopLeftSearchRegion = (int16_t)(refPicPtr->origin_x + sb_origin_x) + x_search_area_origin;
             yTopLeftSearchRegion = (int16_t)(refPicPtr->origin_y + sb_origin_y) + y_search_area_origin;

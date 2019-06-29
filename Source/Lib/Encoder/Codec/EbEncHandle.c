@@ -271,9 +271,10 @@ uint64_t GetAffinityMask(uint32_t lpnum) {
 }
 #endif
 
-void EbSetThreadManagementParameters(EbSvtAv1EncConfiguration   *config_ptr) {
-    uint32_t num_logical_processors = GetNumProcessors();
+void EbSetThreadManagementParameters(EbSvtAv1EncConfiguration *config_ptr)
+{
 #ifdef _WIN32
+    uint32_t num_logical_processors = GetNumProcessors();
     // For system with a single processor group(no more than 64 logic processors all together)
     // Affinity of the thread can be set to one or more logical processors
     if (num_groups == 1) {
@@ -305,6 +306,7 @@ void EbSetThreadManagementParameters(EbSvtAv1EncConfiguration   *config_ptr) {
         }
     }
 #elif defined(__linux__)
+    uint32_t num_logical_processors = GetNumProcessors();
     CPU_ZERO(&group_affinity);
 
     if (num_groups == 1) {
@@ -344,8 +346,11 @@ void EbSetThreadManagementParameters(EbSvtAv1EncConfiguration   *config_ptr) {
             }
         }
     }
+#else
+    UNUSED(config_ptr);
 #endif
 }
+
 void asmSetConvolveAsmTable(void);
 void asmSetConvolveHbdAsmTable(void);
 void init_intra_dc_predictors_c_internal(void);

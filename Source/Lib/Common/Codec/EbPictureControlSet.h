@@ -14091,14 +14091,19 @@ extern "C" {
         uint16_t                              full_sb_count;
         EbBool                                init_pred_struct_position_flag;
         int8_t                                hierarchical_layers_diff;
-        // ME Tools
-        EbBool                                use_subpel_flag;
+
+        // HME Flags
         EbBool                                enable_hme_flag;
         EbBool                                enable_hme_level0_flag;
         EbBool                                enable_hme_level1_flag;
         EbBool                                enable_hme_level2_flag;
-        EbBool                                half_pel_mode;
-        EbBool                                quarter_pel_mode;
+
+        // HME Flags form Temporal Filtering
+        EbBool                                tf_enable_hme_flag;
+        EbBool                                tf_enable_hme_level0_flag;
+        EbBool                                tf_enable_hme_level1_flag;
+        EbBool                                tf_enable_hme_level2_flag;
+
         // MD
         EbEncMode                             enc_mode;
         EB_SB_DEPTH_MODE                     *sb_depth_mode_array;
@@ -14284,7 +14289,7 @@ extern "C" {
         struct PictureParentControlSet      *alt_ref_ppcs_ptr;
         uint8_t                               altref_strength;
         int32_t                               pic_decision_reorder_queue_idx;
-        struct PictureParentControlSet       *temp_filt_pcs_list[15];
+        struct PictureParentControlSet       *temp_filt_pcs_list[ALTREF_MAX_NFRAMES];
         EbHandle temp_filt_done_semaphore;
         EbHandle temp_filt_mutex;
         EbHandle debug_mutex;
@@ -14296,6 +14301,11 @@ extern "C" {
         uint8_t                               tf_segments_column_count;
         uint8_t                               tf_segments_row_count;
         uint8_t                               altref_nframes;
+#if QPS_TUNING
+        uint64_t                              filtered_sse; // the normalized SSE between filtered and original alt_ref with 8 bit precision.
+                                                            // I Slice has the value of the next ALT_REF picture
+        uint64_t                              filtered_sse_uv;
+#endif
     } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData

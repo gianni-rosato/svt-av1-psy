@@ -4228,13 +4228,9 @@ static void half_pel_refinement_block(
     uint32_t ineteger_mv) {
     int32_t search_region_index;
     uint64_t distortion_left_position = 0;
-    uint64_t distortion_right_position = 0;
     uint64_t distortion_top_position = 0;
-    uint64_t distortion_bottom_position = 0;
     uint64_t distortion_topleft_position = 0;
     uint64_t distortion_topright_position = 0;
-    uint64_t distortion_bottomleft_position = 0;
-    uint64_t distortion_bottomright_position = 0;
     int16_t half_mv_x[8];
     int16_t half_mv_y[8];
     // copute distance between best mv and the integer mv candidate
@@ -4703,8 +4699,6 @@ static void half_pel_refinement_block(
  *   performs Half Pel refinement for the 85 PUs
  *******************************************/
 void half_pel_refinement_sb(
-    SequenceControlSet
-        *sequence_control_set_ptr,  // input parameter, Sequence control set Ptr
     PictureParentControlSet *picture_control_set_ptr,
     MeContext *context_ptr,  // input/output parameter, ME context Ptr, used to
                              // get/update ME results
@@ -5230,7 +5224,6 @@ void half_pel_refinement_sb(
  * open_loop_me_half_pel_search_sblock
  *******************************************/
 static void open_loop_me_half_pel_search_sblock(
-    SequenceControlSet *sequence_control_set_ptr,
     PictureParentControlSet *picture_control_set_ptr, MeContext *context_ptr,
     uint32_t list_index, uint32_t ref_pic_index, int16_t x_search_area_origin,
     int16_t y_search_area_origin, uint32_t search_area_width,
@@ -5246,7 +5239,6 @@ static void open_loop_me_half_pel_search_sblock(
             uint16_t inetger_mv2 = (((uint16_t)mvx << 2));
             uint32_t inetger_mv = inetger_mv1 | inetger_mv2;
             half_pel_refinement_sb(
-                sequence_control_set_ptr,
                 picture_control_set_ptr,
                 context_ptr,
 #if M0_HIGH_PRECISION_INTERPOLATION
@@ -5285,8 +5277,7 @@ static void open_loop_me_half_pel_search_sblock(
  * open_loop_me_quarter_pel_search_sblock
  *******************************************/
 static void open_loop_me_quarter_pel_search_sblock(
-    SequenceControlSet *sequence_control_set_ptr,
-    PictureParentControlSet *picture_control_set_ptr, MeContext *context_ptr,
+    MeContext *context_ptr,
     uint32_t list_index, uint32_t ref_pic_index, int16_t x_search_area_origin,
     int16_t y_search_area_origin, uint32_t search_area_width,
     uint32_t search_area_height, EbAsm asm_type) {
@@ -8643,7 +8634,7 @@ static void quarter_pel_refinemnet_block(
         y_search_area_origin,  // [IN] search area origin in the vertical
                                // direction, used to point to reference samples
     EbAsm asm_type, uint32_t candidate_mv, uint32_t *p_best_sad,
-    uint32_t *p_best_mv, uint8_t is_frac_candidate) {
+    uint32_t *p_best_mv, uint16_t is_frac_candidate) {
     int16_t x_mv = _MVXT(candidate_mv);
     int16_t y_mv = _MVYT(candidate_mv);
     int16_t search_Index_x = ((x_mv + 2) >> 2) - x_search_area_origin;
@@ -9173,7 +9164,7 @@ static void quarter_pel_refinemnet_block(
  * quarter_pel_refinement_sb
  *   performs Quarter Pel refinement
  *******************************************/
-static void quarter_pel_refinement_sb(
+void quarter_pel_refinement_sb(
     MeContext
         *context_ptr,  //[IN/OUT]  ME context Ptr, used to get/update ME results
     uint8_t *pos_full,     //[IN]
@@ -13400,11 +13391,12 @@ EbErrorType motion_estimate_lcu(
     int16_t hmeLevel1SearchAreaInHeight;
     // Configure HME level 0, level 1 and level 2 from static config parameters
     EbBool enable_hme_level0_flag =
-        picture_control_set_ptr->enable_hme_level0_flag;
+        context_ptr->enable_hme_level0_flag;
     EbBool enable_hme_level1_flag =
-        picture_control_set_ptr->enable_hme_level1_flag;
+        context_ptr->enable_hme_level1_flag;
     EbBool enable_hme_level2_flag =
-        picture_control_set_ptr->enable_hme_level2_flag;
+        context_ptr->enable_hme_level2_flag;
+
     EbBool enableHalfPel32x32 = EB_FALSE;
     EbBool enableHalfPel16x16 = EB_FALSE;
     EbBool enableHalfPel8x8 = EB_FALSE;
@@ -13505,7 +13497,8 @@ EbErrorType motion_estimate_lcu(
                 // B - NO HME in boundaries
                 // C - Skip HME
 
-                if (picture_control_set_ptr->enable_hme_flag &&
+                if (context_ptr->enable_hme_flag &&
+
                     /*B*/ sb_height ==
                         BLOCK_SIZE_64) {  //(searchCenterSad >
                                           // sequence_control_set_ptr->static_config.skipTier0HmeTh))
@@ -14261,7 +14254,8 @@ EbErrorType motion_estimate_lcu(
                                                            search_area_height,
                                                            asm_type);
                         context_ptr->full_quarter_pel_refinement = 0;
-                        if (picture_control_set_ptr->half_pel_mode ==
+
+                        if (context_ptr->half_pel_mode ==
                             EX_HP_MODE) {
                             // Move to the top left of the search region
                             xTopLeftSearchRegion =
@@ -14366,7 +14360,6 @@ EbErrorType motion_estimate_lcu(
                                       [ME_TIER_ZERO_PU_16x64_0]);
                             // half-Pel search
                             open_loop_me_half_pel_search_sblock(
-                                sequence_control_set_ptr,
                                 picture_control_set_ptr,
                                 context_ptr,
                                 listIndex,
@@ -14377,7 +14370,8 @@ EbErrorType motion_estimate_lcu(
                                 search_area_height,
                                 asm_type);
                         }
-                        if (picture_control_set_ptr->quarter_pel_mode ==
+
+                        if (context_ptr->quarter_pel_mode ==
                             EX_QP_MODE) {
                             // Quarter-Pel search
                             memcpy(context_ptr
@@ -14387,8 +14381,6 @@ EbErrorType motion_estimate_lcu(
                                        ->p_sb_best_mv[listIndex][ref_pic_index],
                                    MAX_ME_PU_COUNT * sizeof(uint32_t));
                             open_loop_me_quarter_pel_search_sblock(
-                                sequence_control_set_ptr,
-                                picture_control_set_ptr,
                                 context_ptr,
                                 listIndex,
                                 ref_pic_index,
@@ -14495,7 +14487,8 @@ EbErrorType motion_estimate_lcu(
 
                     // Interpolate the search region for Half-Pel Refinements
                     // H - AVC Style
-                    if (picture_control_set_ptr->half_pel_mode ==
+
+                    if (context_ptr->half_pel_mode ==
                         REFINMENT_HP_MODE) {
                         InterpolateSearchRegionAVC(
                             context_ptr,
@@ -14565,7 +14558,8 @@ EbErrorType motion_estimate_lcu(
                             enableHalfPel16x16,
                             enableHalfPel8x8);
                     }
-                    if (picture_control_set_ptr->quarter_pel_mode ==
+
+                    if (context_ptr->quarter_pel_mode ==
                         REFINMENT_QP_MODE) {
                         // Quarter-Pel Refinement [8 search positions]
                         QuarterPelSearch_LCU(

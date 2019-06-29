@@ -33,6 +33,7 @@
 #include "av1me.h"
 #include "EbTemporalFiltering_sse4.h"
 
+#undef _MM_HINT_T2
 #define _MM_HINT_T2  1
 
 static unsigned int index_mult[14] = {
@@ -107,7 +108,7 @@ static TempFilteringType FUNC_TABLE apply_temp_filtering_32x32_func_ptr_array[AS
         // SSE4
         av1_apply_temporal_filter_sse4_1
 };
-
+#if DEBUG_TF
 // save YUV to file - auxiliary function for debug
 void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v,
                       uint16_t width, uint16_t height,
@@ -118,7 +119,9 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
     int h;
 
     // save current source picture to a YUV file
-    if ((fid = fopen(filename, "wb")) == NULL) {
+    FOPEN(fid, filename, "wb");
+
+    if (!fid){
         printf("Unable to open file %s to write.\n", "temp_picture.yuv");
     }else{
         // the source picture saved in the enchanced_picture_ptr contains a border in x and y dimensions
@@ -140,7 +143,7 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
         fclose(fid);
     }
 }
-
+#endif
 // Copy block/picture of size width x height from src to dst
 void copy_pixels(EbByte dst, int stride_dst, EbByte src, int stride_src, int width, int height){
     int h;
@@ -504,6 +507,7 @@ void apply_filtering_c(const uint8_t *y_src,
     memset(v_diff_sse, 0, BLK_PELS * sizeof(uint16_t));
 
     assert(use_whole_blk == 0);
+    UNUSED(use_whole_blk);
 
     // Calculate squared differences for each pixel of the block (pred-orig)
     calculate_squared_errors(y_src, y_src_stride, y_pre, y_pre_stride, y_diff_sse,
@@ -667,6 +671,7 @@ void apply_filtering_block(int block_row,
     count_ptr[C_Y] = count[C_Y] + offset_block_buffer_Y;
     count_ptr[C_U] = count[C_U] + offset_block_buffer_U;
     count_ptr[C_V] = count[C_V] + offset_block_buffer_V;
+    asm_type = 0;
 
     TempFilteringType apply_32x32_temp_filter_fn = apply_temp_filtering_32x32_func_ptr_array[asm_type];
 
@@ -810,9 +815,9 @@ void tf_inter_prediction(
 
                 const int32_t bw = mi_size_wide[BLOCK_16X16];
                 const int32_t bh = mi_size_high[BLOCK_16X16];
-                cu_ptr.av1xd->mb_to_top_edge = -((mirow * MI_SIZE) * 8);
+                cu_ptr.av1xd->mb_to_top_edge = -(int32_t)((mirow * MI_SIZE) * 8);
                 cu_ptr.av1xd->mb_to_bottom_edge = ((picture_control_set_ptr->av1_cm->mi_rows - bw - mirow) * MI_SIZE) * 8;
-                cu_ptr.av1xd->mb_to_left_edge = -((micol * MI_SIZE) * 8);
+                cu_ptr.av1xd->mb_to_left_edge = -(int32_t)((micol * MI_SIZE) * 8);
                 cu_ptr.av1xd->mb_to_right_edge = ((picture_control_set_ptr->av1_cm->mi_cols - bh - micol) * MI_SIZE) * 8;
 
                 uint32_t mv_index = tab16x16[pu_index];
@@ -1118,6 +1123,10 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                                             uint8_t altref_strength,
                                             uint8_t altref_nframes,
                                             uint8_t **alt_ref_buffer,
+#if QPS_TUNING
+                                            uint64_t *filtered_sse,
+                                            uint64_t *filtered_sse_uv,
+#endif
                                             MotionEstimationContext_t *me_context_ptr,
                                             int32_t segment_index) {
     int frame_index;
@@ -1190,7 +1199,10 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
     uint32_t x_b64_end_idx   = SEGMENT_END_IDX  (x_seg_idx, picture_width_in_b64,  picture_control_set_ptr_central->tf_segments_column_count);
     uint32_t y_b64_start_idx = SEGMENT_START_IDX(y_seg_idx, picture_height_in_b64, picture_control_set_ptr_central->tf_segments_row_count);
     uint32_t y_b64_end_idx   = SEGMENT_END_IDX  (y_seg_idx, picture_height_in_b64, picture_control_set_ptr_central->tf_segments_row_count);
-
+#if QPS_TUNING
+    *filtered_sse       = 0;
+    *filtered_sse_uv    = 0;
+#endif
     for (blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
             blk_y_offset      = (blk_col * BW) + (blk_row * BH) * stride[C_Y];
@@ -1381,6 +1393,9 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
             int byte = blk_y_offset;
             for (i = 0, k = 0; i < BH; i++) {
                 for (j = 0; j < BW; j++, k++) {
+#if QPS_TUNING
+                    (*filtered_sse) += (uint64_t)((int32_t)alt_ref_buffer[C_Y][byte] - (int32_t)OD_DIVU(accum[C_Y][k] + (count[C_Y][k] >> 1), count[C_Y][k]))* ((int32_t)alt_ref_buffer[C_Y][byte] - (int32_t)OD_DIVU(accum[C_Y][k] + (count[C_Y][k] >> 1), count[C_Y][k]));
+#endif
                     alt_ref_buffer[C_Y][byte] = (uint8_t)OD_DIVU(accum[C_Y][k] + (count[C_Y][k] >> 1), count[C_Y][k]);
                     byte++;
                 }
@@ -1390,6 +1405,10 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
             byte = blk_ch_offset;
             for (i = 0, k = 0; i < blk_height_ch; i++) {
                 for (j = 0; j < blk_width_ch; j++, k++) {
+#if QPS_TUNING
+                    (*filtered_sse_uv) += (uint64_t)((int32_t)alt_ref_buffer[C_U][byte] - (int32_t)OD_DIVU(accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]))* ((int32_t)alt_ref_buffer[C_U][byte] - (int32_t)OD_DIVU(accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]));
+                    (*filtered_sse_uv) += (uint64_t)((int32_t)alt_ref_buffer[C_V][byte] - (int32_t)OD_DIVU(accum[C_V][k] + (count[C_V][k] >> 1), count[C_V][k]))* ((int32_t)alt_ref_buffer[C_V][byte] - (int32_t)OD_DIVU(accum[C_V][k] + (count[C_V][k] >> 1), count[C_V][k]));
+#endif
                     alt_ref_buffer[C_U][byte] = (uint8_t)OD_DIVU(accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]);
                     alt_ref_buffer[C_V][byte] = (uint8_t)OD_DIVU(accum[C_V][k] + (count[C_V][k] >> 1), count[C_V][k]);
                     byte++;
@@ -1638,15 +1657,25 @@ void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_
     alt_ref_buffer[C_V] = picture_control_set_ptr_central->enhanced_picture_ptr->buffer_cr +
                           picture_control_set_ptr_central->enhanced_picture_ptr->origin_x / 2 +
                           (picture_control_set_ptr_central->enhanced_picture_ptr->origin_y / 2)*picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr;
-
+#if QPS_TUNING
+    uint64_t filtered_sse, filtered_sse_uv;
+    produce_temporally_filtered_pic(list_picture_control_set_ptr, list_input_picture_ptr, *altref_strength_ptr, *altref_nframes_ptr, alt_ref_buffer, &filtered_sse, &filtered_sse_uv, (MotionEstimationContext_t *)me_context_ptr, segment_index);
+#else
     produce_temporally_filtered_pic(list_picture_control_set_ptr, list_input_picture_ptr, *altref_strength_ptr, *altref_nframes_ptr, alt_ref_buffer, (MotionEstimationContext_t *) me_context_ptr,segment_index);
-
+#endif
     eb_block_on_mutex(picture_control_set_ptr_central->temp_filt_mutex);
     picture_control_set_ptr_central->temp_filt_seg_acc++;
-
+#if QPS_TUNING
+    picture_control_set_ptr_central->filtered_sse += filtered_sse;
+    picture_control_set_ptr_central->filtered_sse_uv += filtered_sse_uv;
+#endif
     if (picture_control_set_ptr_central->temp_filt_seg_acc == picture_control_set_ptr_central->tf_segments_total_count){
         pad_and_decimate_filtered_pic(picture_control_set_ptr_central);
-
+#if QPS_TUNING
+        // Normalize the filtered SSE. Add 8 bit precision.
+        picture_control_set_ptr_central->filtered_sse = (picture_control_set_ptr_central->filtered_sse << 8) / input_picture_ptr->width / input_picture_ptr->height;
+        picture_control_set_ptr_central->filtered_sse_uv = ((picture_control_set_ptr_central->filtered_sse_uv << 8) / (input_picture_ptr->width / 2) / (input_picture_ptr->height / 2)) / 2;
+#endif
 #if DEBUG_TF
     {
         char filename[50] = "filtered_frame_svtav1_";
