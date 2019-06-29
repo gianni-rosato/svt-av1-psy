@@ -235,7 +235,9 @@ void cfl_predict_block(PartitionInfo_t *xd, CflCtx *cfl_ctx, uint8_t *dst,
                        EbColorConfig *cc, FrameHeader *fh)
 {
     ModeInfo_t *mbmi = xd->mi;
-    assert(is_cfl_allowed(xd,cc,fh));
+    CflAllowedType is_cfl_allowed_flag = is_cfl_allowed(xd, cc, fh);
+    assert(is_cfl_allowed_flag == CFL_ALLOWED);
+    (void)is_cfl_allowed_flag;
 
     if (!cfl_ctx->are_parameters_computed) cfl_compute_parameters(cfl_ctx, tx_size);
 

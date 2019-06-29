@@ -3675,9 +3675,7 @@ void* rate_control_kernel(void *input_ptr)
                 setup_segmentation(
                         picture_control_set_ptr,
                         sequence_control_set_ptr,
-                        context_ptr,
-                        rate_control_layer_ptr,
-                        rate_control_param_ptr
+                        rate_control_layer_ptr
                 );
             }
             else {

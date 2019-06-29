@@ -289,6 +289,43 @@ extern "C" {
         return tx_size_wide_log2[tx_size] - tx_size_wide_log2[0];
     }
 
+
+    #define BLOCK_SIZES_ALL 22
+    static INLINE int is_rect_tx(TxSize tx_size) { return tx_size >= TX_SIZES; }
+    static INLINE int is_rect_tx_allowed_bsize(BlockSize bsize) {
+        static const char LUT[BLOCK_SIZES_ALL] = {
+          0,  // BLOCK_4X4
+          1,  // BLOCK_4X8
+          1,  // BLOCK_8X4
+          0,  // BLOCK_8X8
+          1,  // BLOCK_8X16
+          1,  // BLOCK_16X8
+          0,  // BLOCK_16X16
+          1,  // BLOCK_16X32
+          1,  // BLOCK_32X16
+          0,  // BLOCK_32X32
+          1,  // BLOCK_32X64
+          1,  // BLOCK_64X32
+          0,  // BLOCK_64X64
+          0,  // BLOCK_64X128
+          0,  // BLOCK_128X64
+          0,  // BLOCK_128X128
+          1,  // BLOCK_4X16
+          1,  // BLOCK_16X4
+          1,  // BLOCK_8X32
+          1,  // BLOCK_32X8
+          1,  // BLOCK_16X64
+          1,  // BLOCK_64X16
+        };
+
+        return LUT[bsize];
+    }
+    static INLINE int is_rect_tx_allowed(/*const MacroBlockD *xd,*/
+        const MbModeInfo *mbmi) {
+        return is_rect_tx_allowed_bsize(mbmi->sb_type) /*&&
+            !xd->lossless[mbmi->segment_id]*/;
+    }
+
     static const int8_t iadst4_range[7] = { 0, 1, 0, 0, 0, 0, 0 };
 
     // sum of fwd_shift_##

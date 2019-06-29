@@ -1352,7 +1352,7 @@ EbErrorType derive_default_segments(
     ModeDecisionConfigurationContext *context_ptr){
     EbErrorType return_error = EB_ErrorNone;
 
-    if (context_ptr->budget > sequence_control_set_ptr->sb_tot_cnt * U_140) {
+    if (context_ptr->budget > (uint16_t)(sequence_control_set_ptr->sb_tot_cnt * U_140)) {
         context_ptr->number_of_segments = 2;
         context_ptr->score_th[0] = (int8_t)((1 * 100) / context_ptr->number_of_segments);
         context_ptr->score_th[1] = (int8_t)((2 * 100) / context_ptr->number_of_segments);
@@ -1361,7 +1361,7 @@ EbErrorType derive_default_segments(
         context_ptr->interval_cost[0] = context_ptr->cost_depth_mode[SB_OPEN_LOOP_DEPTH_MODE      - 1];
         context_ptr->interval_cost[1] = context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1];
     }
-    else if (context_ptr->budget > sequence_control_set_ptr->sb_tot_cnt * U_115) {
+    else if (context_ptr->budget > (uint16_t)(sequence_control_set_ptr->sb_tot_cnt * U_115)) {
         context_ptr->number_of_segments = 3;
 
         context_ptr->score_th[0] = (int8_t)((1 * 100) / context_ptr->number_of_segments);
@@ -1439,7 +1439,7 @@ void derive_sb_score(
         context_ptr->sb_max_score = MAX(sb_score, context_ptr->sb_max_score);
         sb_tot_score += sb_score;
     }
-    context_ptr->sb_average_score = sb_tot_score / sequence_control_set_ptr->sb_tot_cnt;
+    context_ptr->sb_average_score = (uint32_t)(sb_tot_score / sequence_control_set_ptr->sb_tot_cnt);
 }
 
 /******************************************************
@@ -1533,7 +1533,9 @@ Output  : EncDec Kernel signal(s)
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     SequenceControlSet               *sequence_control_set_ptr,
     PictureControlSet                *picture_control_set_ptr,
-    ModeDecisionConfigurationContext *context_ptr) {
+    ModeDecisionConfigurationContext *context_ptr)
+{
+    UNUSED(sequence_control_set_ptr);
     EbErrorType return_error = EB_ErrorNone;
 
     context_ptr->adp_level = picture_control_set_ptr->parent_pcs_ptr->enc_mode;

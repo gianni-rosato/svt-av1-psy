@@ -33,6 +33,7 @@
 #include "av1me.h"
 #include "EbTemporalFiltering_sse4.h"
 
+#undef _MM_HINT_T2
 #define _MM_HINT_T2  1
 
 static unsigned int index_mult[14] = {
@@ -107,7 +108,7 @@ static TempFilteringType FUNC_TABLE apply_temp_filtering_32x32_func_ptr_array[AS
         // SSE4
         av1_apply_temporal_filter_sse4_1
 };
-
+#if DEBUG_TF
 // save YUV to file - auxiliary function for debug
 void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v,
                       uint16_t width, uint16_t height,
@@ -118,7 +119,9 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
     int h;
 
     // save current source picture to a YUV file
-    if ((fid = fopen(filename, "wb")) == NULL) {
+    FOPEN(fid, filename, "wb");
+
+    if (!fid){
         printf("Unable to open file %s to write.\n", "temp_picture.yuv");
     }else{
         // the source picture saved in the enchanced_picture_ptr contains a border in x and y dimensions
@@ -140,7 +143,7 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
         fclose(fid);
     }
 }
-
+#endif
 // Copy block/picture of size width x height from src to dst
 void copy_pixels(EbByte dst, int stride_dst, EbByte src, int stride_src, int width, int height){
     int h;
@@ -504,6 +507,7 @@ void apply_filtering_c(const uint8_t *y_src,
     memset(v_diff_sse, 0, BLK_PELS * sizeof(uint16_t));
 
     assert(use_whole_blk == 0);
+    UNUSED(use_whole_blk);
 
     // Calculate squared differences for each pixel of the block (pred-orig)
     calculate_squared_errors(y_src, y_src_stride, y_pre, y_pre_stride, y_diff_sse,
@@ -667,6 +671,7 @@ void apply_filtering_block(int block_row,
     count_ptr[C_Y] = count[C_Y] + offset_block_buffer_Y;
     count_ptr[C_U] = count[C_U] + offset_block_buffer_U;
     count_ptr[C_V] = count[C_V] + offset_block_buffer_V;
+    asm_type = 0;
 
     TempFilteringType apply_32x32_temp_filter_fn = apply_temp_filtering_32x32_func_ptr_array[asm_type];
 
@@ -810,9 +815,9 @@ void tf_inter_prediction(
 
                 const int32_t bw = mi_size_wide[BLOCK_16X16];
                 const int32_t bh = mi_size_high[BLOCK_16X16];
-                cu_ptr.av1xd->mb_to_top_edge = -((mirow * MI_SIZE) * 8);
+                cu_ptr.av1xd->mb_to_top_edge = -(int32_t)((mirow * MI_SIZE) * 8);
                 cu_ptr.av1xd->mb_to_bottom_edge = ((picture_control_set_ptr->av1_cm->mi_rows - bw - mirow) * MI_SIZE) * 8;
-                cu_ptr.av1xd->mb_to_left_edge = -((micol * MI_SIZE) * 8);
+                cu_ptr.av1xd->mb_to_left_edge = -(int32_t)((micol * MI_SIZE) * 8);
                 cu_ptr.av1xd->mb_to_right_edge = ((picture_control_set_ptr->av1_cm->mi_cols - bh - micol) * MI_SIZE) * 8;
 
                 uint32_t mv_index = tab16x16[pu_index];

@@ -164,7 +164,7 @@ static void SetCfgStatFile(const char *value, EbConfig *cfg)
     if (cfg->stat_file) { fclose(cfg->stat_file); }
     FOPEN(cfg->stat_file, value, "wb");
 };
-static void SetStatReport                       (const char *value, EbConfig *cfg) {cfg->stat_report = strtoul(value, NULL, 0);};
+static void SetStatReport                       (const char *value, EbConfig *cfg) {cfg->stat_report = (uint8_t) strtoul(value, NULL, 0);};
 static void SetCfgSourceWidth                   (const char *value, EbConfig *cfg) {cfg->source_width = strtoul(value, NULL, 0);};
 static void SetInterlacedVideo                  (const char *value, EbConfig *cfg) {cfg->interlaced_video  = (EbBool) strtoul(value, NULL, 0);};
 static void SetSeperateFields                   (const char *value, EbConfig *cfg) {cfg->separate_fields = (EbBool) strtoul(value, NULL, 0);};
@@ -227,8 +227,8 @@ static void SetHmeLevel2SearchAreaInHeightArray (const char *value, EbConfig *cf
 static void SetScreenContentMode                (const char *value, EbConfig *cfg) {cfg->screen_content_mode                                                 = strtoul(value, NULL, 0);};
 // --- start: ALTREF_FILTERING_SUPPORT
 static void SetEnableAltRefs                    (const char *value, EbConfig *cfg) {cfg->enable_altrefs = (EbBool)strtoul(value, NULL, 0);};
-static void SetAltRefStrength                   (const char *value, EbConfig *cfg) {cfg->altref_strength = strtoul(value, NULL, 0);};
-static void SetAltRefNFrames                    (const char *value, EbConfig *cfg) {cfg->altref_nframes = strtoul(value, NULL, 0);};
+static void SetAltRefStrength                   (const char *value, EbConfig *cfg) {cfg->altref_strength = (uint8_t)strtoul(value, NULL, 0);};
+static void SetAltRefNFrames                    (const char *value, EbConfig *cfg) {cfg->altref_nframes = (uint8_t)strtoul(value, NULL, 0);};
 static void SetEnableOverlays                   (const char *value, EbConfig *cfg) { cfg->enable_overlays = (EbBool)strtoul(value, NULL, 0); };
 // --- end: ALTREF_FILTERING_SUPPORT
 static void SetEnableConstrainedIntra           (const char *value, EbConfig *cfg) {cfg->constrained_intra                                             = (EbBool)strtoul(value, NULL, 0);};

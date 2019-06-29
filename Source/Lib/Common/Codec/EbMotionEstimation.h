@@ -1558,9 +1558,6 @@ void interpolate_search_region_AVC_chroma(
         uint32_t         geom_offset_x,
         uint32_t         geom_offset_y);
     void half_pel_refinement_sb(
-        SequenceControlSet
-            *sequence_control_set_ptr,  // input parameter, Sequence control set
-                                        // Ptr
         PictureParentControlSet *picture_control_set_ptr,
         MeContext *context_ptr,  // input/output parameter, ME context Ptr, used
                                  // to get/update ME results
@@ -1580,7 +1577,7 @@ void interpolate_search_region_AVC_chroma(
         uint32_t integer_mv,           // input parameter, integer MV
         EbAsm asm_type);
 
-    static void quarter_pel_refinement_sb(
+    void quarter_pel_refinement_sb(
         MeContext *context_ptr,  //[IN/OUT]  ME context Ptr, used to get/update
                                  //ME results
         uint8_t *pos_full,       //[IN]

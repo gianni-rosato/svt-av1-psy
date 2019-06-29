@@ -2207,7 +2207,6 @@ void product_full_loop(
             NULL,//FRAME_CONTEXT *ec_ctx,
             picture_control_set_ptr,
             candidateBuffer,
-            context_ptr->cu_ptr,
             txb_1d_offset,
             0,
             context_ptr->coeff_est_entropy_coder_ptr,
@@ -2351,8 +2350,8 @@ void product_full_loop_tx_search(
         uint16_t txb_count = context_ptr->blk_geom->txb_count[tx_depth];
         for (txb_itr = 0; txb_itr < txb_count; txb_itr++)
         {
-            uint8_t txb_origin_x = context_ptr->blk_geom->tx_org_x[tx_depth][txb_itr];
-            uint8_t txb_origin_y = context_ptr->blk_geom->tx_org_y[tx_depth][txb_itr];
+            uint8_t txb_origin_x = (uint8_t)context_ptr->blk_geom->tx_org_x[tx_depth][txb_itr];
+            uint8_t txb_origin_y = (uint8_t)context_ptr->blk_geom->tx_org_y[tx_depth][txb_itr];
             tu_origin_index = txb_origin_x + (txb_origin_y * candidateBuffer->residual_ptr->stride_y);
             y_tu_coeff_bits = 0;
 
@@ -2502,7 +2501,6 @@ void product_full_loop_tx_search(
                 NULL,//FRAME_CONTEXT *ec_ctx,
                 picture_control_set_ptr,
                 candidateBuffer,
-                context_ptr->cu_ptr,
                 tu_origin_index,
                 0,
                 context_ptr->coeff_est_entropy_coder_ptr,
@@ -2715,7 +2713,6 @@ void encode_pass_tx_search(
             NULL,//FRAME_CONTEXT *ec_ctx,
             picture_control_set_ptr,
             candidateBuffer,
-            context_ptr->cu_ptr,
             coeff1dOffset,
             0,
             coeff_est_entropy_coder_ptr,
@@ -2916,7 +2913,6 @@ void encode_pass_tx_search_hbd(
             NULL,//FRAME_CONTEXT *ec_ctx,
             picture_control_set_ptr,
             candidateBuffer,
-            context_ptr->cu_ptr,
             coeff1dOffset,
             0,
             coeff_est_entropy_coder_ptr,
@@ -3380,7 +3376,6 @@ void cu_full_distortion_fast_tu_mode_r(
                 NULL,//FRAME_CONTEXT *ec_ctx,
                 picture_control_set_ptr,
                 candidateBuffer,
-                context_ptr->cu_ptr,
                 tu_origin_index,
                 tu_chroma_origin_index,
                 context_ptr->coeff_est_entropy_coder_ptr,

@@ -2341,7 +2341,6 @@ void(*ErrorHandler)(
 
 // Common Macros
 #define UNUSED(x) (void)(x)
-#define UNUSED_VARIABLE(x) (void)(x)
 
 //***Profile, tier, level***
 #define TOTAL_LEVEL_COUNT                           13
