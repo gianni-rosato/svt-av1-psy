@@ -20,53 +20,6 @@
 #else
 #define ChromaMinusOffset1 MinusOffset1
 #endif
-#if !UNPACK_REF_POST_EP
-EbErrorType motion_compensation_prediction_context_ctor(
-    MotionCompensationPredictionContext **context_dbl_ptr,
-    EbColorFormat                             color_format,
-    uint16_t                                  max_cu_width,
-    uint16_t                                  max_cu_height)
-
-{
-    EbErrorType return_error = EB_ErrorNone;
-    MotionCompensationPredictionContext *context_ptr;
-    EB_MALLOC(MotionCompensationPredictionContext *, context_ptr, sizeof(MotionCompensationPredictionContext), EB_N_PTR);
-    *(context_dbl_ptr) = context_ptr;
-    UNUSED(color_format);
-
-    // context_ptr->localReferenceBlock = (uint16_t*)malloc(sizeof(uint16_t)*( (max_cu_width+8)*(max_cu_height+8)));
-
-    //if(is16bit)
-    {
-        EbPictureBufferDescInitData initData;
-
-        initData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-
-        initData.max_width = max_cu_width + 16;//4 pixel on each side used for interpolation
-        initData.max_height = max_cu_height + 16;
-
-        initData.bit_depth = EB_16BIT;
-        initData.left_padding = 0;
-        initData.right_padding = 0;
-        initData.top_padding = 0;
-        initData.bot_padding = 0;
-
-        initData.split_mode = EB_FALSE;
-
-        initData.bit_depth = EB_8BIT;
-        initData.max_width = max_cu_width + 32;
-        initData.max_height = max_cu_height + 32;
-
-        return_error = eb_picture_buffer_desc_ctor((EbPtr*)&context_ptr->local_reference_block8_bitl0, (EbPtr)&initData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = eb_picture_buffer_desc_ctor((EbPtr*)&context_ptr->local_reference_block8_bitl1, (EbPtr)&initData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-    }
-    return EB_ErrorNone;
-}
-#endif
 void encode_uni_pred_interpolation(
     EbPictureBufferDesc *ref_pic,                  //input parameter, please refer to the detailed explanation above.
     uint32_t                 pos_x,                    //input parameter, please refer to the detailed explanation above.

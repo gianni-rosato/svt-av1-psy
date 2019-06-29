@@ -3903,10 +3903,8 @@ extern void av1_predict_intra_block(
     int32_t row_off,
     int32_t plane,
     BlockSize bsize,
-#if ATB_EP
     uint32_t tu_org_x_pict,
     uint32_t tu_org_y_pict,
-#endif
     uint32_t bl_org_x_pict,
     uint32_t bl_org_y_pict,
     uint32_t bl_org_x_mb,
@@ -3920,13 +3918,8 @@ extern void av1_predict_intra_block(
     uint32_t  pred_buf_y_offest;
 
     if (stage == ED_STAGE) { // EncDec
-#if ATB_EP
         pred_buf_x_offest = plane ? ((bl_org_x_pict >> 3) << 3) >> 1 : tu_org_x_pict;
         pred_buf_y_offest = plane ? ((bl_org_y_pict >> 3) << 3) >> 1 : tu_org_y_pict;
-#else
-        pred_buf_x_offest = plane ? ((bl_org_x_pict >> 3) << 3) >> 1 : bl_org_x_pict;
-        pred_buf_y_offest = plane ? ((bl_org_y_pict >> 3) << 3) >> 1 : bl_org_y_pict;
-#endif
     }
     else { // MD
         pred_buf_x_offest = bl_org_x_mb;
@@ -4104,11 +4097,7 @@ extern void av1_predict_intra_block(
         mi_row, mi_col, bottom_available, have_left, partition,
         tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
 
-#if DIS_EDGE_FIL
-    const int32_t disable_edge_filter = 1;
-#else
     const int32_t disable_edge_filter = 0;//CHKN !cm->seq_params.enable_intra_edge_filter;
-#endif
 
     //if (xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH) {
     //  build_intra_predictors_high(
@@ -4339,11 +4328,7 @@ void av1_predict_intra_block_16bit(
         mi_row, mi_col, bottom_available, have_left, partition,
         tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
 
-#if DIS_EDGE_FIL
-    const int32_t disable_edge_filter = 1;
-#else
     const int32_t disable_edge_filter = 0;//CHKN !cm->seq_params.enable_intra_edge_filter;
-#endif
 
     build_intra_predictors_high(
         xd,
@@ -4409,26 +4394,16 @@ EbErrorType av1_intra_prediction_cl(
     md_context_ptr->intra_chroma_top_mode = (uint32_t)(
         (md_context_ptr->mode_type_neighbor_array->top_array[modeTypeTopNeighborIndex] != INTRA_MODE) ? UV_DC_PRED :
         (uint32_t)md_context_ptr->intra_chroma_mode_neighbor_array->top_array[intraChromaModeTopNeighborIndex]);       //   use DC. This seems like we could use a LCU-width
-#if ATB_SUPPORT
     TxSize  tx_size = md_context_ptr->blk_geom->txsize[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; // Nader - Intra 128x128 not supported
     TxSize  tx_size_Chroma = md_context_ptr->blk_geom->txsize_uv[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; //Nader - Intra 128x128 not supported
-#else
-    TxSize  tx_size = md_context_ptr->blk_geom->txsize[0]; // Nader - Intra 128x128 not supported
-    TxSize  tx_size_Chroma = md_context_ptr->blk_geom->txsize_uv[0]; //Nader - Intra 128x128 not supported
-#endif
     uint8_t    topNeighArray[64 * 2 + 1];
     uint8_t    leftNeighArray[64 * 2 + 1];
     PredictionMode mode;
-#if SEARCH_UV_MODE
     // Hsan: plane should be derived @ an earlier stage (e.g. @ the call of perform_fast_loop())
     int32_t start_plane = (md_context_ptr->uv_search_path) ? 1 : 0;
     int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int)MAX_MB_PLANE : 1;
 
     for (int32_t plane = start_plane; plane < end_plane; ++plane) {
-#else
-    uint8_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int) MAX_MB_PLANE : 1;
-    for (int32_t plane = 0; plane < end_plane; ++plane) {
-#endif
         if (plane == 0) {
             if (md_context_ptr->cu_origin_y != 0)
                 memcpy(topNeighArray + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->cu_origin_x, md_context_ptr->blk_geom->bwidth * 2);
@@ -4476,11 +4451,7 @@ EbErrorType av1_intra_prediction_cl(
             plane ? md_context_ptr->blk_geom->bheight_uv : md_context_ptr->blk_geom->bheight,          //int32_t hpx,
             plane ? tx_size_Chroma : tx_size,                                               //TxSize tx_size,
             mode,                                                                           //PredictionMode mode,
-#if SEARCH_UV_MODE // conformance
             plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
-#else
-            plane ? 0 : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],         //int32_t angle_delta,
-#endif
             0,                                                                              //int32_t use_palette,
             FILTER_INTRA_MODES,                                                             //CHKN FilterIntraMode filter_intra_mode,
             topNeighArray + 1,
@@ -4491,10 +4462,8 @@ EbErrorType av1_intra_prediction_cl(
             0,                                                                              //int32_t row_off,
             plane,                                                                          //int32_t plane,
             md_context_ptr->blk_geom->bsize,       //uint32_t puSize,
-#if ATB_EP
             md_context_ptr->cu_origin_x,
             md_context_ptr->cu_origin_y,
-#endif
             md_context_ptr->cu_origin_x,                  //uint32_t cuOrgX,
             md_context_ptr->cu_origin_y,                  //uint32_t cuOrgY
             plane ? ((md_context_ptr->blk_geom->origin_x >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_x,  //uint32_t cuOrgX used only for prediction Ptr

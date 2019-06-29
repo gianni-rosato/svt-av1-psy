@@ -27,15 +27,7 @@ typedef struct PaReferenceQueueEntry
     uint32_t                      dep_list1_count;
     DependentList                 list0;
     DependentList                 list1;
-#if !BUG_FIX_PCS_LIVE_COUNT
-    PictureParentControlSet      *p_pcs_ptr;
-#endif
-#if BUG_FIX_INPUT_LIVE_COUNT
-    EbObjectWrapper              *input_picture_wrapper_ptr;
-#endif
-#if ALT_REF_OVERLAY
     uint8_t                       is_alt_ref;
-#endif
 } PaReferenceQueueEntry;
 
 extern EbErrorType pa_reference_queue_entry_ctor(

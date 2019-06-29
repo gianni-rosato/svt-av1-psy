@@ -208,10 +208,6 @@ EbErrorType eb_sequence_control_set_ctor(
     sequence_control_set_ptr->seq_header.color_config.mono_chrome = 0;
     sequence_control_set_ptr->seq_header.film_grain_params_present = 0;
     sequence_control_set_ptr->film_grain_random_seed = 7391;
-#if BASE_LAYER_REF
-    sequence_control_set_ptr->extra_frames_to_ref_islice = 0;
-    sequence_control_set_ptr->max_frame_window_to_ref_islice = 0;
-#endif
 #if ADP_STATS_PER_LAYER
     uint8_t temporal_layer_index;
     for (temporal_layer_index = 0; temporal_layer_index < 5; temporal_layer_index++) {
@@ -223,9 +219,7 @@ EbErrorType eb_sequence_control_set_ctor(
         sequence_control_set_ptr->pred1_nfl_count[temporal_layer_index] = 0;
     }
 #endif
-#if MRP_ME
     sequence_control_set_ptr->reference_count = 4;
-#endif
 
     return EB_ErrorNone;
 }
@@ -300,9 +294,7 @@ EbErrorType copy_sequence_control_set(
     dst->pa_reference_picture_buffer_init_count = src->pa_reference_picture_buffer_init_count; writeCount += sizeof(int32_t);
     dst->reference_picture_buffer_init_count = src->reference_picture_buffer_init_count; writeCount += sizeof(int32_t);
     dst->input_buffer_fifo_init_count = src->input_buffer_fifo_init_count; writeCount += sizeof(int32_t);
-#if ALT_REF_OVERLAY
     dst->overlay_input_picture_buffer_init_count = src->overlay_input_picture_buffer_init_count; writeCount += sizeof(int32_t);
-#endif
 
     dst->output_stream_buffer_fifo_init_count = src->output_stream_buffer_fifo_init_count; writeCount += sizeof(int32_t);
     dst->output_recon_buffer_fifo_init_count = src->output_recon_buffer_fifo_init_count; writeCount += sizeof(int32_t);
@@ -328,9 +320,7 @@ EbErrorType copy_sequence_control_set(
     dst->right_padding = src->right_padding; writeCount += sizeof(int16_t);
     dst->top_padding = src->top_padding; writeCount += sizeof(int16_t);
     dst->bot_padding = src->bot_padding; writeCount += sizeof(int16_t);
-#if MRP_ME
     dst->reference_count = src->reference_count; writeCount += sizeof(uint32_t);
-#endif
     for (uint8_t i = 0; i< MAX_HIERARCHICAL_LEVEL; i++) {
         dst->me_segment_column_count_array[i] = src->me_segment_column_count_array[i];
         dst->me_segment_row_count_array[i] = src->me_segment_row_count_array[i];
@@ -343,22 +333,12 @@ EbErrorType copy_sequence_control_set(
 
     dst->rest_segment_column_count = src->rest_segment_column_count;
     dst->rest_segment_row_count = src->rest_segment_row_count;
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     dst->mrp_mode       = src->mrp_mode;
     dst->nsq_present    = src->nsq_present;
     dst->cdf_mode       = src->cdf_mode;
-#endif
-#if DOWN_SAMPLING_FILTERING
     dst->down_sampling_method_me_search = src->down_sampling_method_me_search;
-#endif
-#if ALTREF_FILTERING_SUPPORT
     dst->tf_segment_column_count = src->tf_segment_column_count;
     dst->tf_segment_row_count = src->tf_segment_row_count;
-#endif
-#if BASE_LAYER_REF
-    dst->extra_frames_to_ref_islice = src->extra_frames_to_ref_islice;
-    dst->max_frame_window_to_ref_islice = src->max_frame_window_to_ref_islice;
-#endif
 #if INCOMPLETE_SB_FIX
     dst->over_boundary_block_mode = src->over_boundary_block_mode;
 #endif
