@@ -50,7 +50,7 @@ uint32_t                         lib_mutex_count = 0;
 void init_intra_dc_predictors_c_internal(void);
 void init_intra_predictors_internal(void);
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr,
-            const uint8_t *data, uint32_t data_size);
+            const uint8_t *data, size_t data_size);
 
 void SwitchToRealTime(){
 #if defined(__linux__) || defined(__APPLE__)
@@ -80,16 +80,10 @@ static EbErrorType eb_dec_handle_ctor(
     *decHandleDblPtr = dec_handle_ptr;
     if (dec_handle_ptr == (EbDecHandle  *)EB_NULL)
         return EB_ErrorInsufficientResources;
-#if MEM_MAP_OPT
     dec_handle_ptr->memory_map = (EbMemoryMapEntry*)malloc(sizeof(EbMemoryMapEntry));
     dec_handle_ptr->memory_map_index = 0;
     dec_handle_ptr->total_lib_memory = sizeof(EbComponentType) + sizeof(EbDecHandle) + sizeof(EbMemoryMapEntry);
     dec_handle_ptr->memory_map_init_address = dec_handle_ptr->memory_map;
-#else
-    dec_handle_ptr->memory_map = (EbMemoryMapEntry*)malloc(sizeof(EbMemoryMapEntry) * MAX_NUM_PTR);
-    dec_handle_ptr->memory_map_index = 0;
-    dec_handle_ptr->total_lib_memory = sizeof(EbDecHandle) + sizeof(EbMemoryMapEntry) * MAX_NUM_PTR;
-#endif
     // Save Memory Map Pointers
     svt_dec_total_lib_memory = &dec_handle_ptr->total_lib_memory;
     svt_dec_memory_map = dec_handle_ptr->memory_map;
@@ -376,7 +370,7 @@ __attribute__((visibility("default")))
 EB_API EbErrorType eb_svt_decode_frame(
     EbComponentType     *svt_dec_component,
     const uint8_t       *data,
-    const uint32_t       data_size)
+    const size_t         data_size)
 {
     EbErrorType return_error = EB_ErrorNone;
     if (svt_dec_component == NULL)
@@ -423,7 +417,6 @@ EB_API EbErrorType eb_deinit_decoder(
 {
     if (svt_dec_component == NULL)
         return EB_ErrorBadParameter;
-#if MEM_MAP_OPT
     EbDecHandle *dec_handle_ptr = (EbDecHandle*)svt_dec_component->p_component_private;
     EbErrorType return_error    = EB_ErrorNone;
 
@@ -465,47 +458,6 @@ EB_API EbErrorType eb_deinit_decoder(
             }
         }
     }
-#else
-    EbDecHandle *dec_handle_ptr = (EbDecHandle*)svt_dec_component->p_component_private;
-    EbErrorType return_error = EB_ErrorNone;
-    int32_t              ptrIndex = 0;
-    EbMemoryMapEntry*   memoryEntry = (EbMemoryMapEntry*)EB_NULL;
-
-    if (dec_handle_ptr) {
-        if (dec_handle_ptr->memory_map_index) {
-            // Loop through the ptr table and free all malloc'd pointers per channel
-            for (ptrIndex = (dec_handle_ptr->memory_map_index) - 1; ptrIndex >= 0; --ptrIndex) {
-                memoryEntry = &dec_handle_ptr->memory_map[ptrIndex];
-                switch (memoryEntry->ptr_type) {
-                case EB_N_PTR:
-                    free(memoryEntry->ptr);
-                    break;
-                case EB_A_PTR:
-#ifdef _WIN32
-                    _aligned_free(memoryEntry->ptr);
-#else
-                    free(memoryEntry->ptr);
-#endif
-                    break;
-                case EB_SEMAPHORE:
-                    eb_destroy_semaphore(memoryEntry->ptr);
-                    break;
-                case EB_THREAD:
-                    eb_destroy_thread(memoryEntry->ptr);
-                    break;
-                case EB_MUTEX:
-                    eb_destroy_mutex(memoryEntry->ptr);
-                    break;
-                default:
-                    return_error = EB_ErrorMax;
-                    break;
-                }
-            }
-            if (dec_handle_ptr->memory_map != (EbMemoryMapEntry*)NULL)
-                free(dec_handle_ptr->memory_map);
-        }
-    }
-#endif
     return return_error;
 }
 

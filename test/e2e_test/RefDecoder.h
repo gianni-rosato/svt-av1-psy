@@ -16,12 +16,14 @@
 
 #include <memory.h>
 #include <stdio.h>
+#include <string>
+#include <vector>
 #include "VideoFrame.h"
 
 /** RefDecoder is a class designed for a refenece tool of conformance
  * test. It provides decoding AV1 compressed data with OBU frames, its output is
  * the YUV frame in display order. User should call get_frame right after
- * process_data to avoid missing any video frame
+ * decode to avoid missing any video frame
  */
 class RefDecoder {
   public:
@@ -87,32 +89,65 @@ class RefDecoder {
 
     } RefDecoderErr;
 
+    typedef struct StreamInfo {
+        std::vector<int> frame_type_list;
+        uint32_t profile;
+        int monochrome;  // Monochorme video
+        int bit_depth;
+        uint32_t sb_size;
+        /* coding options */
+        int force_integer_mv;
+        int enable_filter_intra;
+        int enable_intra_edge_filter;
+        int enable_masked_compound;
+        int enable_dual_filter;
+        int enable_jnt_comp;
+        int enable_ref_frame_mvs;
+        int enable_warped_motion;
+        int enable_cdef;
+        int enable_restoration;
+        int film_grain_params_present;
+
+        uint32_t tile_rows;
+        uint32_t tile_cols;
+        uint32_t min_block_size;
+        uint32_t
+            ext_block_flag; /**< if contains extended block, 0--no, 1--yes */
+        std::vector<uint32_t> qindex_list;
+        uint32_t max_qindex;
+        uint32_t min_qindex;
+        uint32_t max_intra_period;
+        StreamInfo() {
+            tile_rows = 0;
+            tile_cols = 0;
+            min_block_size = 128;
+            ext_block_flag = 0;
+            max_qindex = 0;
+            min_qindex = 255;
+            frame_type_list.clear();
+            qindex_list.clear();
+        }
+    } StreamInfo;
+
   public:
     /** Constructor of RefDecoder
      * @param ret the error code found in construction
+     * @param enable_analyzer the flag to create analyzer with decoder
      */
-    RefDecoder(RefDecoderErr &ret);
+    RefDecoder(RefDecoderErr &ret, bool enable_analyzer);
     /** Destructor of RefDecoder      */
     virtual ~RefDecoder();
 
   public:
-    /** Setup decoder
-     * @param init_ts  initial timestamp of input stream
-     * @param interval  the time interval in two frames
-     * @return
-     * REF_CODEC_OK -- no error found in processing
-     * others -- errors found in setup
-     */
-    RefDecoderErr setup(const uint64_t init_ts, const uint32_t interval);
-
-    /** Process compressed data
+    /** Decode raw data
      * @param data  the memory buffer of a frame of compressed data
      * @param size  the size of data
      * @return
      * REF_CODEC_OK -- no error found in processing
      * others -- errors found in process, refer to RefDecoderErr
      */
-    RefDecoderErr process_data(const uint8_t *data, const uint32_t size);
+    RefDecoderErr decode(const uint8_t *data, const uint32_t size);
+
     /** Get a video frame after data proceed
      * @param frame  the video frame with its attributes
      * @return
@@ -121,6 +156,23 @@ class RefDecoder {
      */
     RefDecoderErr get_frame(VideoFrame &frame);
 
+    /** Get a video frame after data proceed
+     * @param frame  the video frame with its attributes
+     * @return
+     * REF_CODEC_OK -- no error found in processing
+     * others -- errors found in process, refer to RefDecoderErr
+     */
+    StreamInfo *get_stream_info() {
+        return &stream_info_;
+    }
+
+    /** Setup resolution, for initialization for inspection frame before first
+     * frame
+     * @param width  width of source video frame
+     * @param height  height of source video frame
+     */
+    void set_resolution(const uint32_t width, const uint32_t height);
+
   private:
     /** Tool of translation from AOM image info to a video frame
      * @param image  the video image from AOM decoder
@@ -128,18 +180,30 @@ class RefDecoder {
      */
     void trans_video_frame(const void *image, VideoFrame &frame);
 
+    /** Callback fuction of inspection frame output */
+    static void inspect_cb(void *pbi, void *data);
+    /** Tool of pasring inspection frame for its paramters */
+    void parse_frame_info();
+
   protected:
     void *codec_handle_;      /**< AOM codec context */
     uint32_t dec_frame_cnt_;  /**< count of decoded frame in processing */
     uint64_t init_timestamp_; /**< initial timestamp of stream */
     uint32_t frame_interval_; /**< time interval of two frame in miliseconds */
+    void *insp_frame_data_;   /**< inspect frame data structure */
+    VideoFrameParam video_param_; /**< parameter of decoded video frame */
+    void *parser_;           /**< sequence parser for parameter verification */
+    StreamInfo stream_info_; /** stream info of the encoded stream  */
+    uint32_t enc_bytes_;     /**< total bytes of input, for bit-rate counting */
+    uint32_t burst_bytes_; /**< the largest size of input for burst bit-rate */
 };
 
 /** Interface of reference decoder creation
+ * @param enable_parser  the flag of using inspection frame for parameter check
  * @return
  * RefDecoder -- decoder handle created
  * nullptr -- creation failed
  */
-RefDecoder *create_reference_decoder();
+RefDecoder *create_reference_decoder(bool enable_analyzer = false);
 
 #endif  // !_REF_DECODER_H_

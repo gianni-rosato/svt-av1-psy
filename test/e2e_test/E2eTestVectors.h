@@ -15,6 +15,7 @@
 #ifndef _E2E_TEST_VECTOR_
 #define _E2E_TEST_VECTOR_
 
+#include <map>
 #include "VideoSource.h"
 
 /** @defgroup svt_av1_e2e_test_vector Test vectors for E2E test
@@ -45,6 +46,57 @@ typedef std::tuple<std::string,      /**< file name */
                    uint32_t> /**< frames to test, (0) means full-frames*/
     TestVideoVector;
 
+const std::vector<TestVideoVector> default_test_vectors = {
+    std::make_tuple("park_joy_90p_8_420.y4m", Y4M_VIDEO_FILE, IMG_FMT_420, 160,
+                    90, 8, 0, 0, 0),
+    std::make_tuple("park_joy_90p_10_420.y4m", Y4M_VIDEO_FILE,
+                    IMG_FMT_420P10_PACKED, 160, 90, 10, 0, 0, 0),
+    std::make_tuple("kirland_640_480_30.yuv", YUV_VIDEO_FILE, IMG_FMT_420, 640,
+                    480, 8, 0, 0, 60),
+    std::make_tuple("niklas_640_480_30.yuv", YUV_VIDEO_FILE, IMG_FMT_420, 640,
+                    480, 8, 0, 0, 60),
+};
+
+using EncSetting = std::map<std::string, std::string>;
+typedef struct EncTestSetting {
+    std::string name;    // description of the test cases
+    EncSetting setting;  // pairs of encoder setting, {name, value};
+    std::vector<TestVideoVector> test_vectors;
+    std::string to_string(std::string& fn) const {
+        std::string str = get_setting_str();
+        str += "test vector: ";
+        str += fn;
+        return str;
+    }
+
+    std::string get_setting_str() const {
+        std::string str(name);
+        str += ": ";
+        for (auto x : setting) {
+            str += x.first;
+            str += "=";
+            str += x.second;
+            str += ", ";
+        }
+        return str;
+    }
+
+    std::string get_setting_name() const {
+        return name;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os,
+                                    const EncTestSetting& setting) {
+        return os << setting.get_setting_str();
+    }
+} EncTestSetting;
+
+// used in INSTANTIATE_TEST_CASE_P to append the param info into the test name
+static std::string GetSettingName(
+    const ::testing::TestParamInfo<EncTestSetting> setting) {
+    return setting.param.get_setting_name();
+}
+
 /**
  * @brief      Generate test vectors from config file.
  *
@@ -53,9 +105,10 @@ typedef std::tuple<std::string,      /**< file name */
  *
  * @return     A std::vector of test vectors.
  */
-static inline const std::vector<TestVideoVector> generate_vector_from_config(
+static inline const std::vector<EncTestSetting> generate_vector_from_config(
     const char* config_file) {
     std::vector<TestVideoVector> values;
+    std::vector<EncTestSetting> enc_test_cases;
     std::string cfg_fn =
         svt_av1_video_source::VideoFileSource::get_vector_dir();
     cfg_fn = cfg_fn + '/' + config_file;
@@ -108,8 +161,13 @@ static inline const std::vector<TestVideoVector> generate_vector_from_config(
                                              frame_count));
         }
         fclose(file_handle);
+    } else {
+        printf("test configuration file can not be opended: %s!\n",
+               cfg_fn.c_str());
     }
-    return values;
+    enc_test_cases.push_back(EncTestSetting{
+        "default_setting", std::map<std::string, std::string>(), values});
+    return enc_test_cases;
 }
 
 }  // namespace svt_av1_e2e_test_vector

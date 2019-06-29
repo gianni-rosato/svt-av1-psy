@@ -3723,7 +3723,6 @@ static INLINE void Av1TranformTwoDCore_c(
         }
     }
 }
-#if PF_N2_SUPPORT
 
 void av1_round_shift_array_pf_c(int32_t *arr_in, int32_t *arr_out, int32_t size, int32_t bit) {
     int32_t i;
@@ -4200,7 +4199,6 @@ static INLINE void Av1TranformTwoDCore_pf_c(
         }
     }
 }
-#endif
 
 static INLINE void set_flip_cfg(TxType tx_type, Txfm2DFlipCfg *cfg) {
     get_flip_cfg(tx_type, &cfg->ud_flip, &cfg->lr_flip);
@@ -4344,7 +4342,6 @@ void Av1TransformTwoD_32x32_c(
         intermediateTransformBuffer,
         bit_depth);
 }
-#if PF_N2_SUPPORT
 void av1_fwd_txfm2d_pf_32x32_c(
     int16_t         *input,
     int32_t         *output,
@@ -4370,7 +4367,6 @@ void av1_fwd_txfm2d_pf_32x32_c(
         intermediateTransformBuffer,
         bit_depth);
 }
-#endif
 void Av1TransformTwoD_16x16_c(
     int16_t         *input,
     int32_t         *output,

@@ -23,10 +23,6 @@ extern "C" {
         unsigned                u_has_coeff                 : 1;
         unsigned                v_has_coeff                 : 1;
         unsigned                y_has_coeff                 : 1;
-#if !PF_N2_SUPPORT
-        unsigned                trans_coeff_shape_luma      : 2;
-        unsigned                trans_coeff_shape_chroma    : 2;
-#endif
         uint16_t                nz_coef_count[3];
         EbBool                  is_only_dc[3];
         TxType                  transform_type[PLANE_TYPES];

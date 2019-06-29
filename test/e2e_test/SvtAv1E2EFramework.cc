@@ -8,7 +8,7 @@
  *
  * @brief Impelmentation of End to End test framework
  *
- * @author Cidana-Edmond Cidana-Ryan
+ * @author Cidana-Edmond Cidana-Ryan Cidana-Wenyao
  *
  ******************************************************************************/
 
@@ -56,7 +56,7 @@ VideoSource *SvtAv1E2ETestFramework::prepare_video_src(
     return video_src;
 }
 
-void SvtAv1E2ETestFramework::trans_src_param(const VideoSource *source,
+void SvtAv1E2ETestFramework::setup_src_param(const VideoSource *source,
                                              EbSvtAv1EncConfiguration &config) {
     VideoColorFormat fmt = source->get_image_format();
     switch (fmt) {
@@ -75,54 +75,50 @@ void SvtAv1E2ETestFramework::trans_src_param(const VideoSource *source,
     config.frames_to_be_encoded = source->get_frame_count();
 }
 
-SvtAv1E2ETestFramework::SvtAv1E2ETestFramework()
-    : video_src_(SvtAv1E2ETestFramework::prepare_video_src(GetParam())),
-      psnr_src_(SvtAv1E2ETestFramework::prepare_video_src(GetParam())) {
+SvtAv1E2ETestFramework::SvtAv1E2ETestFramework() : enc_setting(GetParam()) {
     memset(&av1enc_ctx_, 0, sizeof(av1enc_ctx_));
+    video_src_ = nullptr;
+    psnr_src_ = nullptr;
     recon_queue_ = nullptr;
     refer_dec_ = nullptr;
     output_file_ = nullptr;
     obu_frame_header_size_ = 0;
     collect_ = nullptr;
     ref_compare_ = nullptr;
-    start_pos_ = std::get<7>(GetParam());
-    frames_to_test_ = std::get<8>(GetParam());
-    printf("start: %d, count: %d\n", start_pos_, frames_to_test_);
+    collect_ = new PerformanceCollect(typeid(this).name());
+    use_ext_qp_ = false;
+    enable_recon = false;
+    enable_decoder = false;
+    enable_stat = false;
+    enable_save_bitstream = false;
+    enable_analyzer = false;
 }
 
 SvtAv1E2ETestFramework::~SvtAv1E2ETestFramework() {
-    if (video_src_) {
-        delete video_src_;
-        video_src_ = nullptr;
-    }
-    if (recon_queue_) {
-        delete recon_queue_;
-        recon_queue_ = nullptr;
-    }
-    if (refer_dec_) {
-        delete refer_dec_;
-        refer_dec_ = nullptr;
-    }
-    if (output_file_) {
-        delete output_file_;
-        output_file_ = nullptr;
-    }
     if (collect_) {
         delete collect_;
         collect_ = nullptr;
     }
-    if (psnr_src_) {
-        psnr_src_->close_source();
-        delete psnr_src_;
-        psnr_src_ = nullptr;
-    }
-    if (ref_compare_) {
-        delete ref_compare_;
-        ref_compare_ = nullptr;
-    }
 }
 
-void SvtAv1E2ETestFramework::SetUp() {
+void SvtAv1E2ETestFramework::config_test() {
+    enable_stat = true;
+}
+
+void SvtAv1E2ETestFramework::update_enc_setting() {
+}
+
+void SvtAv1E2ETestFramework::post_process() {
+    if (enable_stat)
+        output_stat();
+}
+
+void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
+    start_pos_ = std::get<7>(test_vector);
+    frames_to_test_ = std::get<8>(test_vector);
+    video_src_ = prepare_video_src(test_vector);
+    psnr_src_ = prepare_video_src(test_vector);
+
     EbErrorType return_error = EB_ErrorNone;
 
     // check for video source
@@ -148,7 +144,7 @@ void SvtAv1E2ETestFramework::SetUp() {
         << "eb_init_handle return error:" << return_error;
     ASSERT_NE(av1enc_ctx_.enc_handle, nullptr)
         << "eb_init_handle return null handle.";
-    trans_src_param(video_src_, av1enc_ctx_.enc_params);
+    setup_src_param(video_src_, av1enc_ctx_.enc_params);
     av1enc_ctx_.enc_params.recon_enabled = 0;
 
     //
@@ -177,45 +173,29 @@ void SvtAv1E2ETestFramework::SetUp() {
     av1enc_ctx_.output_stream_buffer->p_app_private = nullptr;
     av1enc_ctx_.output_stream_buffer->pic_type = EB_AV1_INVALID_PICTURE;
 
-    // initialize test
-    init_test();
-}
+    // update encoder settings
+    update_enc_setting();
 
-void SvtAv1E2ETestFramework::TearDown() {
-    // close test before teardown
-    close_test();
-
-    EbErrorType return_error = EB_ErrorNone;
-    // Destruct the component
-    return_error = eb_deinit_handle(av1enc_ctx_.enc_handle);
-    ASSERT_EQ(return_error, EB_ErrorNone)
-        << "eb_deinit_handle return error:" << return_error;
-    av1enc_ctx_.enc_handle = nullptr;
-
-    // Clear
-    if (av1enc_ctx_.output_stream_buffer != nullptr) {
-        if (av1enc_ctx_.output_stream_buffer->p_buffer != nullptr) {
-            delete[] av1enc_ctx_.output_stream_buffer->p_buffer;
-        }
-        delete av1enc_ctx_.output_stream_buffer;
-        av1enc_ctx_.output_stream_buffer = nullptr;
-    }
-    if (av1enc_ctx_.input_picture_buffer != nullptr) {
-        delete av1enc_ctx_.input_picture_buffer;
-        av1enc_ctx_.input_picture_buffer = nullptr;
+    if (enable_recon) {
+        // create recon queue to store the recon yuvs
+        VideoFrameParam param;
+        memset(&param, 0, sizeof(param));
+        param.format = video_src_->get_image_format();
+        param.width = video_src_->get_width_with_padding();
+        param.height = video_src_->get_height_with_padding();
+        recon_queue_ = create_frame_queue(param);
+        ASSERT_NE(recon_queue_, nullptr) << "can not create recon sink!!";
+        if (recon_queue_)
+            av1enc_ctx_.enc_params.recon_enabled = 1;
     }
 
-    ASSERT_NE(video_src_, nullptr);
-    video_src_->close_source();
-}
-
-/** initialization for test */
-void SvtAv1E2ETestFramework::init_test() {
-    EbErrorType return_error = eb_svt_enc_set_parameter(
-        av1enc_ctx_.enc_handle, &av1enc_ctx_.enc_params);
+    // set the parameter to encoder
+    return_error = eb_svt_enc_set_parameter(av1enc_ctx_.enc_handle,
+                                            &av1enc_ctx_.enc_params);
     ASSERT_EQ(return_error, EB_ErrorNone)
         << "eb_svt_enc_set_parameter return error:" << return_error;
 
+    // initial encoder
     return_error = eb_init_encoder(av1enc_ctx_.enc_handle);
     ASSERT_EQ(return_error, EB_ErrorNone)
         << "eb_init_encoder return error:" << return_error;
@@ -238,144 +218,81 @@ void SvtAv1E2ETestFramework::init_test() {
     obu_frame_header_size_ =
         has_tiles ? OBU_FRAME_HEADER_SIZE + 1 : OBU_FRAME_HEADER_SIZE;
 
+    // create reference decoder if required.
+    if (enable_decoder) {
+        refer_dec_ = create_reference_decoder(enable_analyzer);
+        ASSERT_NE(refer_dec_, nullptr) << "can not create reference decoder!!";
+    }
+
+    // create IvfFile if required.
+    if (enable_save_bitstream) {
+        std::string fn = std::get<0>(test_vector) + ".ivf";
+        output_file_ = new IvfFile(fn.c_str());
+    }
+
     ASSERT_NE(psnr_src_, nullptr) << "PSNR source create failed!";
     EbErrorType err = psnr_src_->open_source(start_pos_, frames_to_test_);
     ASSERT_EQ(err, EB_ErrorNone) << "open_source return error:" << err;
-    total_enc_out_ = 0;
 }
 
-void SvtAv1E2ETestFramework::close_test() {
-    EbErrorType return_error = EB_ErrorNone;
-    // Deinit
-    return_error = eb_deinit_encoder(av1enc_ctx_.enc_handle);
+void SvtAv1E2ETestFramework::deinit_test() {
+    EbErrorType return_error = eb_deinit_encoder(av1enc_ctx_.enc_handle);
     ASSERT_EQ(return_error, EB_ErrorNone)
         << "eb_deinit_encoder return error:" << return_error;
-}
 
-void SvtAv1E2ETestFramework::run_encode_process() {
-    static const char READ_SRC[] = "read_src";
-    static const char ENCODING[] = "encoding";
-    static const char RECON[] = "recon";
-    static const char CONFORMANCE[] = "conformance";
+    // Destruct the component
+    return_error = eb_deinit_handle(av1enc_ctx_.enc_handle);
+    ASSERT_EQ(return_error, EB_ErrorNone)
+        << "eb_deinit_handle return error:" << return_error;
+    av1enc_ctx_.enc_handle = nullptr;
 
-    EbErrorType return_error = EB_ErrorNone;
+    // Clear the intput and output buffer
+    if (av1enc_ctx_.output_stream_buffer != nullptr) {
+        if (av1enc_ctx_.output_stream_buffer->p_buffer != nullptr) {
+            delete[] av1enc_ctx_.output_stream_buffer->p_buffer;
+        }
+        delete av1enc_ctx_.output_stream_buffer;
+        av1enc_ctx_.output_stream_buffer = nullptr;
+    }
+    if (av1enc_ctx_.input_picture_buffer != nullptr) {
+        delete av1enc_ctx_.input_picture_buffer;
+        av1enc_ctx_.input_picture_buffer = nullptr;
+    }
 
-    uint32_t frame_count = video_src_->get_frame_count();
-    ASSERT_GT(frame_count, 0) << "video srouce file does not contain frame!!";
+    // release recon queue
     if (recon_queue_) {
-        recon_queue_->set_frame_count(frame_count);
+        delete recon_queue_;
+        recon_queue_ = nullptr;
+    }
+    // release decoder;
+    if (refer_dec_) {
+        delete refer_dec_;
+        refer_dec_ = nullptr;
     }
 
+    // close and release the video src
+    ASSERT_NE(video_src_, nullptr);
+    ASSERT_NE(psnr_src_, nullptr);
+    video_src_->close_source();
+    psnr_src_->close_source();
+    delete video_src_;
+    video_src_ = nullptr;
+    delete psnr_src_;
+    psnr_src_ = nullptr;
+
+    // close the bitstream file
     if (output_file_) {
-        write_output_header();
+        delete output_file_;
+        output_file_ = nullptr;
     }
 
-    uint8_t *frame = nullptr;
-    bool src_file_eos = false;
-    bool enc_file_eos = false;
-    bool rec_file_eos = recon_queue_ ? false : true;
-    do {
-        if (!src_file_eos) {
-            {
-                TimeAutoCount counter(READ_SRC, collect_);
-                frame = (uint8_t *)video_src_->get_next_frame();
-            }
-            {
-                TimeAutoCount counter(ENCODING, collect_);
-                if (frame != nullptr && frame_count) {
-                    frame_count--;
-                    // Fill in Buffers Header control data
-                    av1enc_ctx_.input_picture_buffer->p_buffer = frame;
-                    av1enc_ctx_.input_picture_buffer->n_filled_len =
-                        video_src_->get_frame_size();
-                    av1enc_ctx_.input_picture_buffer->flags = 0;
-                    av1enc_ctx_.input_picture_buffer->p_app_private = nullptr;
-                    av1enc_ctx_.input_picture_buffer->pts =
-                        video_src_->get_frame_index();
-                    av1enc_ctx_.input_picture_buffer->pic_type =
-                        EB_AV1_INVALID_PICTURE;
-                    // Send the picture
-                    EXPECT_EQ(EB_ErrorNone,
-                              return_error = eb_svt_enc_send_picture(
-                                  av1enc_ctx_.enc_handle,
-                                  av1enc_ctx_.input_picture_buffer))
-                        << "eb_svt_enc_send_picture error at: "
-                        << av1enc_ctx_.input_picture_buffer->pts;
-                }
-                if (frame_count == 0 || frame == nullptr) {
-                    src_file_eos = true;
-                    EbBufferHeaderType headerPtrLast;
-                    headerPtrLast.n_alloc_len = 0;
-                    headerPtrLast.n_filled_len = 0;
-                    headerPtrLast.n_tick_count = 0;
-                    headerPtrLast.p_app_private = nullptr;
-                    headerPtrLast.flags = EB_BUFFERFLAG_EOS;
-                    headerPtrLast.p_buffer = nullptr;
-                    headerPtrLast.pic_type = EB_AV1_INVALID_PICTURE;
-                    av1enc_ctx_.input_picture_buffer->flags = EB_BUFFERFLAG_EOS;
-                    EXPECT_EQ(EB_ErrorNone,
-                              return_error = eb_svt_enc_send_picture(
-                                  av1enc_ctx_.enc_handle, &headerPtrLast))
-                        << "eb_svt_enc_send_picture EOS error";
-                }
-            }
-        }
-
-        // recon
-        if (recon_queue_ && !rec_file_eos) {
-            TimeAutoCount counter(RECON, collect_);
-            if (!rec_file_eos)
-                get_recon_frame(av1enc_ctx_, recon_queue_, rec_file_eos);
-        }
-
-        if (!enc_file_eos) {
-            do {
-                // non-blocking call
-                EbBufferHeaderType *enc_out = nullptr;
-                {
-                    TimeAutoCount counter(ENCODING, collect_);
-                    int pic_send_done = (src_file_eos && rec_file_eos) ? 1 : 0;
-                    return_error = eb_svt_get_packet(
-                        av1enc_ctx_.enc_handle, &enc_out, pic_send_done);
-                    ASSERT_NE(return_error, EB_ErrorMax)
-                        << "Error while encoding, code:" << enc_out->flags;
-                }
-
-                // process the output buffer
-                if (return_error != EB_NoErrorEmptyQueue && enc_out) {
-                    TimeAutoCount counter(CONFORMANCE, collect_);
-                    process_compress_data(enc_out);
-                    if (enc_out->flags & EB_BUFFERFLAG_EOS) {
-                        enc_file_eos = true;
-                        printf("Encoder EOS\n");
-                        break;
-                    }
-                } else {
-                    if (return_error != EB_NoErrorEmptyQueue) {
-                        enc_file_eos = true;
-                        GTEST_FAIL() << "decoder return: " << return_error;
-                    }
-                    break;
-                }
-
-                // Release the output buffer
-                if (enc_out != nullptr) {
-                    eb_svt_release_out_buffer(&enc_out);
-                    // EXPECT_EQ(enc_out, nullptr)
-                    //    << "enc_out buffer is not well released";
-                }
-            } while (src_file_eos);
-        }
-    } while (!rec_file_eos || !src_file_eos || !enc_file_eos);
-
-    /** complete the reference buffers in list comparison with recon */
     if (ref_compare_) {
-        TimeAutoCount counter(CONFORMANCE, collect_);
-        ASSERT_TRUE(ref_compare_->flush_video());
         delete ref_compare_;
         ref_compare_ = nullptr;
     }
+}
 
+void SvtAv1E2ETestFramework::output_stat() {
     /** PSNR report */
     int count = 0;
     double psnr[4];
@@ -394,13 +311,189 @@ void SvtAv1E2ETestFramework::run_encode_process() {
 
     /** performance report */
     if (collect_) {
-        frame_count = video_src_->get_frame_count();
+        const char ENCODING[] = "encoding";
+        uint32_t frame_count = video_src_->get_frame_count();
         uint64_t total_enc_time = collect_->read_count(ENCODING);
         if (total_enc_time) {
             printf("Enc Performance: %.2fsec/frame (%.4fFPS)\n",
                    (double)total_enc_time / frame_count / 1000,
                    (double)frame_count * 1000 / total_enc_time);
         }
+    }
+}
+
+void SvtAv1E2ETestFramework::run_encode_process() {
+    static const char READ_SRC[] = "read_src";
+    static const char ENCODING[] = "encoding";
+    static const char RECON[] = "recon";
+    static const char CONFORMANCE[] = "conformance";
+
+    EbErrorType return_error = EB_ErrorNone;
+
+    uint32_t frame_count = video_src_->get_frame_count();
+    ASSERT_GT(frame_count, 0) << "video srouce file does not contain frame!!";
+    if (recon_queue_)
+        recon_queue_->set_frame_count(frame_count);
+
+    if (output_file_)
+        write_output_header();
+
+    uint8_t *frame = nullptr;
+    bool src_file_eos = false;
+    bool enc_file_eos = false;
+    bool rec_file_eos = recon_queue_ ? false : true;
+    bool early_termination = false;
+    do {
+        if (!src_file_eos) {
+            // read yuv frame
+            if (!early_termination) {
+                TimeAutoCount counter(READ_SRC, collect_);
+                frame = (uint8_t *)video_src_->get_next_frame();
+            } else
+                frame = nullptr;
+
+            // send yuv frame to encoder
+            {
+                TimeAutoCount counter(ENCODING, collect_);
+                if (frame != nullptr && frame_count) {
+                    frame_count--;
+                    // Fill in Buffers Header control data
+                    av1enc_ctx_.input_picture_buffer->p_buffer = frame;
+                    av1enc_ctx_.input_picture_buffer->n_filled_len =
+                        video_src_->get_frame_size();
+                    av1enc_ctx_.input_picture_buffer->flags = 0;
+                    av1enc_ctx_.input_picture_buffer->p_app_private = nullptr;
+                    av1enc_ctx_.input_picture_buffer->pts =
+                        video_src_->get_frame_index();
+                    av1enc_ctx_.input_picture_buffer->pic_type =
+                        EB_AV1_INVALID_PICTURE;
+                    av1enc_ctx_.input_picture_buffer->qp =
+                        video_src_->get_frame_qp(video_src_->get_frame_index());
+                    // Send the picture
+                    EXPECT_EQ(EB_ErrorNone,
+                              return_error = eb_svt_enc_send_picture(
+                                  av1enc_ctx_.enc_handle,
+                                  av1enc_ctx_.input_picture_buffer))
+                        << "eb_svt_enc_send_picture error at: "
+                        << av1enc_ctx_.input_picture_buffer->pts;
+                }
+
+                // send eos to encoder if this is last frame
+                if (frame_count == 0 || frame == nullptr) {
+                    src_file_eos = true;  // send eos only once
+                    EbBufferHeaderType headerPtrLast;
+                    headerPtrLast.n_alloc_len = 0;
+                    headerPtrLast.n_filled_len = 0;
+                    headerPtrLast.n_tick_count = 0;
+                    headerPtrLast.p_app_private = nullptr;
+                    headerPtrLast.flags = EB_BUFFERFLAG_EOS;
+                    headerPtrLast.p_buffer = nullptr;
+                    headerPtrLast.pic_type = EB_AV1_INVALID_PICTURE;
+                    av1enc_ctx_.input_picture_buffer->flags = EB_BUFFERFLAG_EOS;
+                    EXPECT_EQ(EB_ErrorNone,
+                              return_error = eb_svt_enc_send_picture(
+                                  av1enc_ctx_.enc_handle, &headerPtrLast))
+                        << "eb_svt_enc_send_picture EOS error";
+                }
+            }
+        }
+
+        // get reconstructed frame
+        if (recon_queue_ && !rec_file_eos) {
+            TimeAutoCount counter(RECON, collect_);
+            if (!rec_file_eos)
+                get_recon_frame(av1enc_ctx_, recon_queue_, rec_file_eos);
+        }
+
+        if (!enc_file_eos) {
+            // try to get one encoded frame, flush the encoder
+            // if src_file_eos is true
+            do {
+                // non-blocking call
+                EbBufferHeaderType *enc_out = nullptr;
+                {
+                    TimeAutoCount counter(ENCODING, collect_);
+                    int pic_send_done = (src_file_eos && rec_file_eos) ? 1 : 0;
+                    return_error = eb_svt_get_packet(
+                        av1enc_ctx_.enc_handle, &enc_out, pic_send_done);
+                    ASSERT_NE(return_error, EB_ErrorMax)
+                        << "Error while encoding, code:" << enc_out->flags;
+                }
+
+                // process the output buffer
+                if (return_error != EB_NoErrorEmptyQueue && enc_out) {
+                    // send to reference decoder
+                    TimeAutoCount counter(CONFORMANCE, collect_);
+                    process_compress_data(enc_out);
+                    if (enc_out->flags & EB_BUFFERFLAG_EOS) {
+                        enc_file_eos = true;
+                        printf("Encoder EOS\n");
+                        break;
+                    }
+                    // check if the process has encounter error, break out if
+                    // true, like the recon frame does not match with decoded
+                    // frame.
+                    if (HasFatalFailure())
+                        early_termination = true;
+                } else {
+                    if (return_error != EB_NoErrorEmptyQueue) {
+                        enc_file_eos = true;
+                        GTEST_FAIL() << "encoder return: " << return_error;
+                    }
+                    break;
+                }
+
+                // Release the output buffer
+                if (enc_out != nullptr)
+                    eb_svt_release_out_buffer(&enc_out);
+            } while (src_file_eos);
+        }  // if (!enc_file_eos)
+    } while (!rec_file_eos || !src_file_eos || !enc_file_eos);
+
+    /** complete the reference buffers in list comparison with recon */
+    if (ref_compare_) {
+        TimeAutoCount counter(CONFORMANCE, collect_);
+        ASSERT_TRUE(ref_compare_->flush_video());
+        delete ref_compare_;
+        ref_compare_ = nullptr;
+    }
+}
+
+void SvtAv1E2ETestFramework::run_test() {
+    config_test();
+    for (auto test_vector : enc_setting.test_vectors) {
+        std::string fn = std::get<0>(test_vector);
+        std::cout << "Start test case " << enc_setting.to_string(fn)
+                  << std::endl;
+        init_test(test_vector);
+        EXPECT_NO_FATAL_FAILURE(run_encode_process())
+            << "Fatal Error on running test case " << enc_setting.to_string(fn);
+        post_process();
+        deinit_test();
+    }
+}
+
+void SvtAv1E2ETestFramework::run_death_test() {
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+    config_test();
+    for (auto test_vector : enc_setting.test_vectors) {
+        std::string fn = std::get<0>(test_vector);
+        std::cout << "Start test case " << enc_setting.to_string(fn)
+                  << std::endl;
+        EXPECT_EXIT(
+            {
+                init_test(test_vector);
+                run_encode_process();
+                post_process();
+                deinit_test();
+                if (HasFatalFailure())
+                    exit(-1);
+                else
+                    exit(0);
+            },
+            ::testing::ExitedWithCode(0),
+            ".*")
+            << "Fatal Error on running test case " << enc_setting.to_string(fn);
     }
 }
 
@@ -551,9 +644,8 @@ void SvtAv1E2ETestFramework::process_compress_data(
     const EbBufferHeaderType *data) {
     ASSERT_NE(data, nullptr);
     if (refer_dec_ == nullptr) {
-        if (output_file_) {
+        if (output_file_)
             write_compress_data(data);
-        }
         return;
     }
 
@@ -574,7 +666,7 @@ void SvtAv1E2ETestFramework::decode_compress_data(const uint8_t *data,
     ASSERT_GT(size, 0);
 
     // input the compressed data into decoder
-    ASSERT_EQ(refer_dec_->process_data(data, size), RefDecoder::REF_CODEC_OK);
+    ASSERT_EQ(refer_dec_->decode(data, size), RefDecoder::REF_CODEC_OK);
 
     VideoFrame ref_frame;
     memset(&ref_frame, 0, sizeof(ref_frame));

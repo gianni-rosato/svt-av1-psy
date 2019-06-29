@@ -243,70 +243,21 @@ EbErrorType MdcRefinement(
 
     return return_error;
 }
-#if !OPT_LOSSLESS_0
-/*******************************************
-Derive the contouring class
-If (AC energy < 32 * 32) then apply aggressive action (Class 1),
-else if (AC energy < 32 * 32 * 1.6) OR (32 * 32 * 3.5 < AC energy < 32 * 32 * 4.5 AND non-8x8) then moderate action (Class 2),
-else no action
-*******************************************/
-uint8_t derive_contouring_class(
-    PictureParentControlSet   *parent_pcs_ptr,
-    uint16_t                       sb_index,
-    uint8_t                        leaf_index)
-{
-    uint8_t contouringClass = 0;
-
-    SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-
-    if (parent_pcs_ptr->is_sb_homogeneous_over_time[sb_index]) {
-        if (leaf_index > 0) {
-            SbParams            *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-            if (sb_params->is_edge_sb) {
-                if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1)
-                    contouringClass = 2;
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2)
-                    contouringClass = 3;
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < (ANTI_CONTOURING_TH_1 + ANTI_CONTOURING_TH_2))
-                    contouringClass = 3;
-            }
-            else {
-                if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_0)
-                    contouringClass = 1;
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_1)
-                    contouringClass = 2;
-                else if (parent_pcs_ptr->sb_y_src_energy_cu_array[sb_index][(leaf_index - 1) / 21 + 1] < ANTI_CONTOURING_TH_2)
-                    contouringClass = 3;
-            }
-        }
-    }
-    return(contouringClass);
-}
-#endif
 
 void RefinementPredictionLoop(
     SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet                    *picture_control_set_ptr,
-#if !MEMORY_FOOTPRINT_OPT
-    LargestCodingUnit                    *sb_ptr,
-#endif
     uint32_t                              sb_index,
     ModeDecisionConfigurationContext     *context_ptr)
 {
     MdcpLocalCodingUnit    *local_cu_array         = context_ptr->local_cu_array;
     SbParams               *sb_params            = &sequence_control_set_ptr->sb_params_array[sb_index];
     uint32_t                  cu_index             = 0;
-#if !MEMORY_FOOTPRINT_OPT
-    sb_ptr->pred64 = EB_FALSE;
-#endif
     while (cu_index < CU_MAX_COUNT)
     {
         if (sb_params->raster_scan_cu_validity[md_scan_to_raster_scan[cu_index]] && (local_cu_array[cu_index].early_split_flag == EB_FALSE))
         {
             local_cu_array[cu_index].selected_cu = EB_TRUE;
-#if !MEMORY_FOOTPRINT_OPT
-            sb_ptr->pred64 = (cu_index == 0) ? EB_TRUE : sb_ptr->pred64;
-#endif
             uint32_t depth = get_coded_unit_stats(cu_index)->depth;
             uint8_t refinementLevel;
             {
@@ -347,50 +298,6 @@ void RefinementPredictionLoop(
     } // End while 1 CU Loop
 }
 
-#if !DISABLE_OIS_USE
-void PrePredictionRefinement(
-    SequenceControlSet                   *sequence_control_set_ptr,
-    PictureControlSet                    *picture_control_set_ptr,
-    LargestCodingUnit                    *sb_ptr,
-    uint32_t                                  sb_index,
-    uint32_t                                 *startDepth,
-    uint32_t                                 *endDepth
-)
-{
-    SbParams    *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
-
-    EB_SLICE        slice_type = picture_control_set_ptr->slice_type;
-
-    uint8_t           edge_block_num = picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index].edge_block_num;
-
-    SbStat      *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
-    uint8_t           stationary_edge_over_time_flag = sb_stat_ptr->stationary_edge_over_time_flag;
-
-    uint8_t           aura_status_iii = sb_ptr->aura_status_iii;
-
-    if (picture_control_set_ptr->parent_pcs_ptr->high_dark_low_light_area_density_flag && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 && picture_control_set_ptr->parent_pcs_ptr->sharp_edge_sb_flag[sb_index] && !picture_control_set_ptr->parent_pcs_ptr->similar_colocated_sb_array_ii[sb_index])
-        *startDepth = DEPTH_16;
-    if ((slice_type != I_SLICE && picture_control_set_ptr->high_intra_slection == 0) && (sb_params->is_complete_sb)) {
-        if (picture_control_set_ptr->scene_caracteristic_id == EB_FRAME_CARAC_0) {
-            if (picture_control_set_ptr->parent_pcs_ptr->grass_percentage_in_picture > 60 && aura_status_iii)
-                *startDepth = DEPTH_16;
-        }
-    }
-
-    if (picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag && edge_block_num)
-        *startDepth = DEPTH_16;
-    // S-LOGO
-
-    if (stationary_edge_over_time_flag > 0) {
-        *startDepth = DEPTH_16;
-        *endDepth = DEPTH_16;
-    }
-
-    if (picture_control_set_ptr->parent_pcs_ptr->complex_sb_array[sb_ptr->index] == SB_COMPLEXITY_STATUS_2)
-        *startDepth = DEPTH_16;
-}
-#endif
-
 void ForwardCuToModeDecision(
     SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet                    *picture_control_set_ptr,
@@ -408,14 +315,6 @@ void ForwardCuToModeDecision(
 
     // CU Loop
     const CodedUnitStats *cuStatsPtr = get_coded_unit_stats(0);
-#if !MEMORY_FOOTPRINT_OPT
-    SbStat *sb_stat_ptr = &(picture_control_set_ptr->parent_pcs_ptr->sb_stat_array[sb_index]);
-    EbBool    testAllDepthIntraSliceFlag = EB_FALSE;
-    testAllDepthIntraSliceFlag = slice_type == I_SLICE &&
-        (sb_stat_ptr->stationary_edge_over_time_flag || picture_control_set_ptr->parent_pcs_ptr->logo_pic_flag ||
-        (picture_control_set_ptr->parent_pcs_ptr->very_low_var_pic_flag && picture_control_set_ptr->parent_pcs_ptr->low_motion_content_flag)) ?
-        EB_TRUE : testAllDepthIntraSliceFlag;
-#endif
 
     resultsPtr->leaf_count = 0;
     uint8_t   enable_blk_4x4 = 0;
@@ -436,17 +335,8 @@ void ForwardCuToModeDecision(
                 cuClass = DO_NOT_ADD_CU_CONTINUE_SPLIT;
 
                 if (slice_type == I_SLICE) {
-#if MEMORY_FOOTPRINT_OPT
                     cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
                     cuClass = local_cu_array[cu_index].stop_split == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
-#else
-                    if (testAllDepthIntraSliceFlag)
-                        cuClass = ADD_CU_CONTINUE_SPLIT;
-                    else {
-                        cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
-                        cuClass = local_cu_array[cu_index].stop_split == EB_TRUE ? ADD_CU_STOP_SPLIT : cuClass;
-                    }
-#endif
                 }
                 else {
                     cuClass = local_cu_array[cu_index].selected_cu == EB_TRUE ? ADD_CU_CONTINUE_SPLIT : cuClass;
@@ -726,7 +616,6 @@ void PredictionPartitionLoop(
                 //reset the flags here:   all CU splitFalg=TRUE. default: we always split. interDepthDecision will select where  to stop splitting(ie setting the flag to False)
 
                 if (picture_control_set_ptr->slice_type != I_SLICE) {
-#if MD_INJECTION
                     const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index];
                     const MeCandidate *me_block_results = me_results->me_candidate[cuIndexInRaterScan];
                     uint8_t total_me_cnt = me_results->total_me_candidate_index[cuIndexInRaterScan];
@@ -749,9 +638,6 @@ void PredictionPartitionLoop(
 
                     //const MeCandidate_t *me_results = &me_block_results[me_index];
 
-#else
-                    MeCuResults * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cuIndexInRaterScan];
-#endif
                     // Initialize the mdc candidate (only av1 rate estimation inputs)
                     // Hsan: mode, direction, .. could be modified toward better early inter depth decision (e.g. NEARESTMV instead of NEWMV)
                     context_ptr->mdc_candidate_ptr->md_rate_estimation_ptr = context_ptr->md_rate_estimation_ptr;
@@ -759,11 +645,7 @@ void PredictionPartitionLoop(
                     context_ptr->mdc_candidate_ptr->merge_flag = EB_FALSE;
                     context_ptr->mdc_candidate_ptr->prediction_direction[0] = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ?
                         UNI_PRED_LIST_0 :
-#if MD_INJECTION
                         me_block_results[me_index].direction;
-#else
-                        mePuResult->distortion_direction[0].direction;
-#endif
                     // Hsan: what's the best mode for rate simulation
                     context_ptr->mdc_candidate_ptr->inter_mode = NEARESTMV;
                     context_ptr->mdc_candidate_ptr->pred_mode = NEARESTMV;
@@ -771,30 +653,10 @@ void PredictionPartitionLoop(
                     context_ptr->mdc_candidate_ptr->is_new_mv = 1;
                     context_ptr->mdc_candidate_ptr->is_zero_mv = 0;
                     context_ptr->mdc_candidate_ptr->drl_index = 0;
-#if MD_INJECTION
-#if MEMORY_FOOTPRINT_OPT_ME_MV
                     context_ptr->mdc_candidate_ptr->motion_vector_xl0 = me_results->me_mv_array[cuIndexInRaterScan][0].x_mv << 1;
                     context_ptr->mdc_candidate_ptr->motion_vector_yl0 = me_results->me_mv_array[cuIndexInRaterScan][0].y_mv << 1;
-#else
-                    context_ptr->mdc_candidate_ptr->motion_vector_xl0 = me_block_results[me_index].x_mv_l0 << 1;
-                    context_ptr->mdc_candidate_ptr->motion_vector_yl0 = me_block_results[me_index].y_mv_l0 << 1;
-#endif
-#else
-                    context_ptr->mdc_candidate_ptr->motion_vector_xl0 = mePuResult->x_mv_l0 << 1;
-                    context_ptr->mdc_candidate_ptr->motion_vector_yl0 = mePuResult->y_mv_l0 << 1;
-#endif
-#if MD_INJECTION
-#if MEMORY_FOOTPRINT_OPT_ME_MV
                     context_ptr->mdc_candidate_ptr->motion_vector_xl1 = me_results->me_mv_array[cuIndexInRaterScan][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2)].x_mv << 1;
                     context_ptr->mdc_candidate_ptr->motion_vector_yl1 = me_results->me_mv_array[cuIndexInRaterScan][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2)].y_mv << 1;
-#else
-                    context_ptr->mdc_candidate_ptr->motion_vector_xl1 = me_block_results[me_index].x_mv_l1 << 1;
-                    context_ptr->mdc_candidate_ptr->motion_vector_yl1 = me_block_results[me_index].y_mv_l1 << 1;
-#endif
-#else
-                    context_ptr->mdc_candidate_ptr->motion_vector_xl1 = mePuResult->x_mv_l1 << 1;
-                    context_ptr->mdc_candidate_ptr->motion_vector_yl1 = mePuResult->y_mv_l1 << 1;
-#endif
                     context_ptr->mdc_candidate_ptr->ref_mv_index = 0;
                     context_ptr->mdc_candidate_ptr->pred_mv_weight = 0;
                     if (context_ptr->mdc_candidate_ptr->prediction_direction[0] == BI_PRED) {
@@ -827,11 +689,7 @@ void PredictionPartitionLoop(
                         context_ptr->mdc_cu_ptr,
                         context_ptr->mdc_candidate_ptr,
                         context_ptr->qp,
-#if MD_INJECTION
                         me_block_results[me_index].distortion,
-#else
-                        mePuResult->distortion_direction[0].distortion,
-#endif
                         (uint64_t) 0,
                         context_ptr->lambda,
                         0,
@@ -840,9 +698,7 @@ void PredictionPartitionLoop(
                         context_ptr->blk_geom,
                         (tbOriginY + context_ptr->blk_geom->origin_y) >> MI_SIZE_LOG2,
                         (tbOriginX + context_ptr->blk_geom->origin_x) >> MI_SIZE_LOG2,
-#if MRP_COST_EST
                         0,
-#endif
                         DC_PRED,        // Hsan: neighbor not generated @ open loop partitioning
                         DC_PRED);       // Hsan: neighbor not generated @ open loop partitioning
                 }
@@ -894,9 +750,6 @@ EbErrorType early_mode_decision_lcu(
     RefinementPredictionLoop(
         sequence_control_set_ptr,
         picture_control_set_ptr,
-#if !MEMORY_FOOTPRINT_OPT
-        sb_ptr,
-#endif
         sb_index,
         context_ptr);
 

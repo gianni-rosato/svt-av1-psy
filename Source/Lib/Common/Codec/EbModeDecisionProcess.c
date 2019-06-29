@@ -75,22 +75,7 @@ EbErrorType mode_decision_context_ctor(
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
     }
-#if !UNPACK_REF_POST_EP
-    // Inter Prediction Context
-    return_error = inter_prediction_context_ctor(
-        &context_ptr->inter_prediction_context,
-        color_format,
-        SB_STRIDE_Y,
-        SB_STRIDE_Y);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-#endif
-    // Intra Reference Samples
-    return_error = intra_reference_samples_ctor(&context_ptr->intra_ref_ptr);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     uint32_t codedLeafIndex, tu_index;
-
     for (codedLeafIndex = 0; codedLeafIndex < BLOCK_MAX_COUNT_SB_128; ++codedLeafIndex) {
         for (tu_index = 0; tu_index < TRANSFORM_UNIT_MAX_COUNT; ++tu_index)
             context_ptr->md_cu_arr_nsq[codedLeafIndex].transform_unit_array[tu_index].tu_index = tu_index;
@@ -165,23 +150,15 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *picture_control_set_
         neighbor_array_unit_reset(picture_control_set_ptr->mdleaf_partition_neighbor_array[depth]);
 
         neighbor_array_unit_reset(picture_control_set_ptr->md_luma_recon_neighbor_array[depth]);
-#if ATB_MD
         neighbor_array_unit_reset(picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[depth]);
-#endif
         neighbor_array_unit_reset(picture_control_set_ptr->md_cb_recon_neighbor_array[depth]);
         neighbor_array_unit_reset(picture_control_set_ptr->md_cr_recon_neighbor_array[depth]);
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
         neighbor_array_unit_reset(picture_control_set_ptr->md_skip_coeff_neighbor_array[depth]);
-#endif
         neighbor_array_unit_reset(picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth]);
-#if ATB_DC_CONTEXT_SUPPORT_2
         neighbor_array_unit_reset(picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth]);
-#endif
         neighbor_array_unit_reset(picture_control_set_ptr->md_cb_dc_sign_level_coeff_neighbor_array[depth]);
         neighbor_array_unit_reset(picture_control_set_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth]);
-#if ATB_RATE
         neighbor_array_unit_reset(picture_control_set_ptr->md_txfm_context_array[depth]);
-#endif
         neighbor_array_unit_reset(picture_control_set_ptr->md_inter_pred_dir_neighbor_array[depth]);
         neighbor_array_unit_reset(picture_control_set_ptr->md_ref_frame_type_neighbor_array[depth]);
 
@@ -190,15 +167,6 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *picture_control_set_
 
     return;
 }
-
-#if !MEMORY_FOOTPRINT_OPT
-void ResetMdRefinmentNeighborArrays(PictureControlSet *picture_control_set_ptr)
-{
-    neighbor_array_unit_reset(picture_control_set_ptr->md_refinement_mode_type_neighbor_array);
-    neighbor_array_unit_reset(picture_control_set_ptr->md_refinement_luma_recon_neighbor_array);
-    return;
-}
-#endif
 
 extern void lambda_assign_low_delay(
     uint32_t                    *fast_lambda,
@@ -335,9 +303,6 @@ void reset_mode_decision(
     uint32_t                   segment_index)
 {
     EB_SLICE                     slice_type;
-#if !MEMORY_FOOTPRINT_OPT
-    uint32_t                       lcuRowIndex;
-#endif
     MdRateEstimationContext   *md_rate_estimation_array;
 
     // QP
@@ -380,26 +345,12 @@ void reset_mode_decision(
     uint32_t  candidateIndex;
     for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex)
         context_ptr->fast_candidate_ptr_array[candidateIndex]->md_rate_estimation_ptr = md_rate_estimation_array;
-#if !OPT_LOSSLESS_0
-    // TMVP Map Writer pointer
-    if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-        context_ptr->reference_object_write_ptr = (EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
-    else
-        context_ptr->reference_object_write_ptr = (EbReferenceObject*)EB_NULL;
-#endif
     // Reset CABAC Contexts
     context_ptr->coeff_est_entropy_coder_ptr = picture_control_set_ptr->coeff_est_entropy_coder_ptr;
 
     // Reset Neighbor Arrays at start of new Segment / Picture
     if (segment_index == 0) {
         reset_mode_decision_neighbor_arrays(picture_control_set_ptr);
-#if !MEMORY_FOOTPRINT_OPT
-        ResetMdRefinmentNeighborArrays(picture_control_set_ptr);
-        for (lcuRowIndex = 0; lcuRowIndex < ((sequence_control_set_ptr->seq_header.max_frame_height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64); lcuRowIndex++) {
-            picture_control_set_ptr->enc_prev_coded_qp[lcuRowIndex] = (uint8_t)picture_control_set_ptr->picture_qp;
-            picture_control_set_ptr->enc_prev_quant_group_coded_qp[lcuRowIndex] = (uint8_t)picture_control_set_ptr->picture_qp;
-        }
-#endif
     }
 
 #if EIGTH_PEL_MV
@@ -407,17 +358,9 @@ void reset_mode_decision(
         (picture_control_set_ptr->parent_pcs_ptr->is_pan || picture_control_set_ptr->parent_pcs_ptr->is_tilt) ? 1 : 0;
 #endif
 
-#if ENABLE_WARPED_MV
-#if NEW_PRESETS
     EbBool enable_wm = (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) || MR_MODE ? EB_TRUE : EB_FALSE;
-#else
-    EbBool enable_wm = (picture_control_set_ptr->parent_pcs_ptr->enc_mode == ENC_M0) || MR_MODE ? EB_TRUE : EB_FALSE;
-#endif
     enable_wm = picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 ? EB_FALSE : enable_wm;
     picture_control_set_ptr->parent_pcs_ptr->allow_warped_motion = enable_wm
-#else
-    picture_control_set_ptr->parent_pcs_ptr->allow_warped_motion = sequence_control_set_ptr->static_config.enable_warped_motion
-#endif
         && !(picture_control_set_ptr->parent_pcs_ptr->av1_frame_type == KEY_FRAME || picture_control_set_ptr->parent_pcs_ptr->av1_frame_type == INTRA_ONLY_FRAME)
         && !picture_control_set_ptr->parent_pcs_ptr->error_resilient_mode;
     picture_control_set_ptr->parent_pcs_ptr->switchable_motion_mode = picture_control_set_ptr->parent_pcs_ptr->allow_warped_motion;

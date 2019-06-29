@@ -14,6 +14,10 @@
 #include <tmmintrin.h>
 #include "EbTransforms.h"
 
+// Sqrt2, Sqrt2^2, Sqrt2^3, Sqrt2^4, Sqrt2^5
+static int32_t NewSqrt2list[TX_SIZES] = { 5793, 2 * 4096, 2 * 5793, 4 * 4096,
+                                          4 * 5793 };
+
 #include "av1_inv_txfm_ssse3.h"
 #include "txfm_common_sse2.h"
 #include "av1_txfm_sse2.h"

@@ -40,7 +40,8 @@ int32_t read_y4m_header(EbConfig *cfg){
 
     /* get first line after YUV4MPEG2 */
     fresult = fgets(buffer, sizeof(buffer), ptr_in);
-    assert(fresult != NULL);
+    if(fresult==NULL)
+        return EB_ErrorBadParameter;
 
     /* print header */
     if(PRINT_HEADER) {
@@ -262,7 +263,8 @@ EbBool check_if_y4m(EbConfig *cfg){
 
     /* Parse the header for the "YUV4MPEG2" string */
     headerReadLength = fread(buffer, YUV4MPEG2_IND_SIZE, 1, cfg->input_file);
-    assert(headerReadLength == 1);
+    if(headerReadLength != 1)
+        return EB_FALSE;
     buffer[YUV4MPEG2_IND_SIZE] = 0;
 
     if (EB_STRCMP(buffer, "YUV4MPEG2") == 0) {

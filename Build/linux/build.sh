@@ -11,13 +11,17 @@ function build {
     mkdir -p ../../Bin/$build_type
     cd $lowercase_build_type
 
-    cmake_env="-DBUILD_SHARED_LIBS=${enable_shared}"
-    cmake_env+=" -DCMAKE_BUILD_TYPE=${build_type}"
+    cmake_env=" -DCMAKE_BUILD_TYPE=${build_type}"
     cmake_env+=" -DCMAKE_C_COMPILER=${compiler}"
     cmake_env+=" -DCMAKE_CXX_COMPILER=${compilerxx}"
     cmake_env+=" -DCMAKE_INSTALL_PREFIX=${install_prefix}"
     cmake_env+=" -DCMAKE_ASM_NASM_COMPILER=${assembler}"
-    cmake_env+=" -DBUILD_TESTING=ON"
+    if [ "$2" = "test" ]; then
+        cmake_env+=" -DBUILD_SHARED_LIBS=ON"
+        cmake_env+=" -DBUILD_TESTING=ON"
+    else
+        cmake_env+=" -DBUILD_SHARED_LIBS=${enable_shared}"
+    fi
 
     if [ "x${target_system}" != "x" ] ; then
         cmake_env+=" -DCMAKE_SYSTEM_NAME=${target_system}"
@@ -29,7 +33,7 @@ function build {
     cmake ${verbose:+"-v"} ../../.. ${cmake_env}
 
     # Compile the Library
-    make VERBOSE=${verbose} -j ${make_threads} SvtAv1EncApp SvtAv1DecApp SvtAv1EncStatic SvtAv1DecStatic
+    make VERBOSE=${verbose} -j ${make_threads} SvtAv1EncApp SvtAv1DecApp
     if [ "$2" = "test" ]; then
         make VERBOSE=${verbose} -j ${make_threads} SvtAv1UnitTests SvtAv1ApiTests SvtAv1E2ETests TestVectors
     fi
@@ -148,7 +152,8 @@ Options:
     -c cross_prefix   - cross-tools prefix (default "${cross_prefix}")
     -s system         - Target system (default "${target_system}")
     -j threads        - Parallel make threads
-    -x                - Disable building shared library (default enabled)
+    -x                - Build static library. (default shared. Test target need shared library,
+                        this parameter has no effect with test target on. )
     -v                - Verbose output
     -h                - Show this message
     command           - clean, all, all [test], release [test],

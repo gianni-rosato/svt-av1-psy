@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#define INVALID_QP (0xFF)
+
 /** VideoColorFormat defines the format of YUV video */
 typedef enum VideoColorFormat {
     IMG_FMT_YV12,
@@ -68,6 +70,7 @@ typedef struct VideoFrame : public VideoFrameParam {
     uint64_t timestamp;       /**< timestamp(index) of this frame */
     uint8_t *buffer;          /**< self own buffer */
     uint32_t buf_size;        /**< buffer size in bytes */
+    uint32_t qp;              /**< qp of this frame */
     VideoFrame() {
         disp_width = 0;
         disp_height = 0;
@@ -78,6 +81,7 @@ typedef struct VideoFrame : public VideoFrameParam {
         timestamp = 0;
         buffer = nullptr;
         buf_size = 0;
+        qp = INVALID_QP;
     }
     VideoFrame(const VideoFrameParam &param) {
         // copy basic info from param
@@ -91,6 +95,7 @@ typedef struct VideoFrame : public VideoFrameParam {
         timestamp = 0;
         buffer = nullptr;
         buf_size = 0;
+        qp = INVALID_QP;
 
         // allocate memory for new frame
         uint32_t max_size = calculate_max_frame_size(param);
@@ -134,6 +139,15 @@ typedef struct VideoFrame : public VideoFrameParam {
             buffer = nullptr;
             memset(&planes, 0, sizeof(planes));
             buf_size = 0;
+        }
+    }
+    /** Trim video frame buffer size for memory useage */
+    void trim_buffer() {
+        if (buf_size) {
+            delete[] buffer;
+            buffer = nullptr;
+            buf_size = 0;
+            memset(planes, 0, sizeof(planes));
         }
     }
     static uint32_t calculate_max_frame_size(const VideoFrameParam &param) {

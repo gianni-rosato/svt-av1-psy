@@ -151,7 +151,6 @@ extern "C" {
         int16_t   search_area_width,
         int16_t   search_area_height);
 
-#if NSQ_ME_OPT
     void ext_all_sad_calculation_8x8_16x16_avx2(
         uint8_t   *src,
         uint32_t   src_stride,
@@ -199,7 +198,6 @@ extern "C" {
         uint32_t *p_best_mv64x64,
         uint32_t  mv,
         uint32_t  p_sad32x32[4][8]);
-#endif /* NSQ_ME_OPT */
 
 #ifdef __cplusplus
 }

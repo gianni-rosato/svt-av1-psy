@@ -80,6 +80,7 @@ ModeInfo_t* get_cur_mode_info(void *pv_dec_handle,
     assert(cur_blk_mi_row >= 1 && cur_blk_mi_row <= num_mis_in_sb_wd);
     assert(cur_blk_mi_col >= 1 && cur_blk_mi_col <= num_mis_in_sb_wd);
 
+    (void)num_mis_in_sb_wd;
     int32_t offset = frame_mi_map->cur_sb_mi_map[cur_blk_mi_row][cur_blk_mi_col];
     cur_mi = &sb_info->sb_mode_info[offset];
 
@@ -102,6 +103,7 @@ ModeInfo_t * get_left_mode_info(EbDecHandle *dec_handle,
     /* Can be removed later */
     assert(left_blk_mi_row >= 1 && left_blk_mi_row <= num_mis_in_sb_wd);
     assert(left_blk_mi_col >= 0 && left_blk_mi_col <= num_mis_in_sb_wd);
+    (void)num_mis_in_sb_wd;
 
     int32_t offset = frame_mi_map->cur_sb_mi_map[left_blk_mi_row][left_blk_mi_col];
     /* From Left SB */
@@ -129,6 +131,7 @@ ModeInfo_t* get_top_mode_info(EbDecHandle *dec_handle,
     /* Can be removed later */
     assert(top_blk_mi_row >= 0 && top_blk_mi_row <= num_mis_in_sb_wd);
     assert(top_blk_mi_col >= 1 && top_blk_mi_col <= num_mis_in_sb_wd);
+    (void)num_mis_in_sb_wd;
 
     int32_t offset = frame_mi_map->cur_sb_mi_map[top_blk_mi_row][top_blk_mi_col];
     /* From Top SB */

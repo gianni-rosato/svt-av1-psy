@@ -71,7 +71,7 @@ typedef struct
     }                                                         \
 }
 
-void dec_bits_init(bitstrm_t *bs, const uint8_t *data, uint32_t u4_numbytes);
+void dec_bits_init(bitstrm_t *bs, const uint8_t *data, size_t u4_numbytes);
 
 uint32_t dec_get_bits_uvlc(bitstrm_t *bs);
 uint32_t dec_get_bits(bitstrm_t *bs, uint32_t numbits);

@@ -56,10 +56,6 @@ extern "C" {
         MotionCompensationPredictionContext *mcp_context;
         SsMeContext                         *ss_mecontext;
 
-        // Intra Reference Samples
-        IntraReferenceSamples               *intra_ref_ptr;
-        IntraReference16bitSamples          *intra_ref_ptr16;  //We need a different buffer for ENC pass then the MD one.
-
         // Coding Unit Workspace---------------------------
         EbPictureBufferDesc                 *residual_buffer;
         EbPictureBufferDesc                 *transform_buffer;
@@ -109,10 +105,6 @@ extern "C" {
 #else
         uint8_t                                qpm_qp;
 #endif
-#if !PF_N2_SUPPORT
-        EB_TRANS_COEFF_SHAPE                   trans_coeff_shape_luma;
-        EB_TRANS_COEFF_SHAPE                   trans_coeff_shape_chroma;
-#endif
         EbPmCand                             pm_cand_buffer[5];
         uint16_t                               qp_index;
         uint64_t                               three_quad_energy;
@@ -131,9 +123,7 @@ extern "C" {
         uint8_t                                is_inter;
         uint8_t                                reduced_tx_set_used;
         EbBool                                 evaluate_cfl_ep; // 0: CFL is evaluated @ mode decision, 1: CFL is evaluated @ encode pass
-#if  BLK_SKIP_DECISION
         uint8_t                                md_skip_blk;
-#endif
     } EncDecContext;
 
     /**************************************

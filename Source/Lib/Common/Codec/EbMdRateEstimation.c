@@ -64,7 +64,6 @@ void av1_get_syntax_rate_from_cdf(
     }
 }
 
-#if CABAC_UP
 ///tmp function to be removed once we have updated all syntax CDFs
 void av1_estimate_syntax_rate___partial(
     MdRateEstimationContext  *md_rate_estimation_array,
@@ -99,7 +98,6 @@ void av1_estimate_syntax_rate___partial(
         }
     }
 }
-#endif
 /*************************************************************
 * av1_estimate_syntax_rate()
 * Estimate the rate for each syntax elements and for

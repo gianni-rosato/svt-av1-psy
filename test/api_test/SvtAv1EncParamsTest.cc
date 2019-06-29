@@ -75,11 +75,11 @@ class EncParamTestBase : public ::testing::Test {
         ASSERT_NE(nullptr, ctxt_.enc_handle) << "enc_handle is invalid";
         // setup source width/height with default if not in test source_width or
         // source_height
-        if (strcmp(param_name_str_.c_str(), "source_width")) {
+        if (param_name_str_.compare("source_width")) {
             const int width = 1280;
             ctxt_.enc_params.source_width = width;
         }
-        if (strcmp(param_name_str_.c_str(), "source_height")) {
+        if (param_name_str_.compare("source_height")) {
             const int height = 720;
             ctxt_.enc_params.source_height = height;
         }
@@ -96,6 +96,39 @@ class EncParamTestBase : public ::testing::Test {
         // destory encoder
         ASSERT_EQ(EB_ErrorNone, eb_deinit_handle(ctxt_.enc_handle))
             << "eb_deinit_handle failed";
+    }
+
+    /** setup some of the params with related params modified before set
+     * to encoder */
+    void config_enc_param() {
+        // special cases for parameter
+        if (!param_name_str_.compare("max_qp_allowed")) {
+            ctxt_.enc_params.rate_control_mode = 1;
+            ctxt_.enc_params.min_qp_allowed = MIN_QP_VALUE;
+        } else if (!param_name_str_.compare("min_qp_allowed")) {
+            ctxt_.enc_params.rate_control_mode = 1;
+            ctxt_.enc_params.max_qp_allowed = MAX_QP_VALUE;
+        } else if (!param_name_str_.compare("profile")) {
+            if (ctxt_.enc_params.profile == 0) {
+                /** profile(0) requires YUV420 */
+                ctxt_.enc_params.encoder_color_format = EB_YUV420;
+            } else if (ctxt_.enc_params.profile == 1) {
+                /** profile(1) requires 8-bit YUV444 */
+                ctxt_.enc_params.encoder_bit_depth = 8;
+                ctxt_.enc_params.encoder_color_format = EB_YUV444;
+            } else if (ctxt_.enc_params.profile == 2) {
+                /** profile(2) requires 8-bit/10-bit YUV422 */
+                ctxt_.enc_params.encoder_bit_depth = 8;
+                ctxt_.enc_params.encoder_color_format = EB_YUV422;
+            }
+        } else if (!param_name_str_.compare("target_bit_rate")) {
+            ctxt_.enc_params.rate_control_mode = 1;
+        } else if (!param_name_str_.compare("injector_frame_rate")) {
+            ctxt_.enc_params.speed_control_flag = 1;
+        } else if (!param_name_str_.compare("altref_strength") ||
+                   !param_name_str_.compare("altref_nframes")) {
+            ctxt_.enc_params.enable_altrefs = EB_TRUE;
+        }
     }
 
   protected:
@@ -140,6 +173,7 @@ class EncParamTestBase : public ::testing::Test {
             for (size_t i = 0; i < SIZE_VALID_PARAM(param_name); ++i) {       \
                 EncParamTestBase::SetUp();                                    \
                 ctxt_.enc_params.param_name = GET_VALID_PARAM(param_name, i); \
+                config_enc_param();                                           \
                 EXPECT_EQ(EB_ErrorNone,                                       \
                           eb_svt_enc_set_parameter(ctxt_.enc_handle,          \
                                                    &ctxt_.enc_params))        \
@@ -152,6 +186,7 @@ class EncParamTestBase : public ::testing::Test {
                 EncParamTestBase::SetUp();                                    \
                 ctxt_.enc_params.param_name =                                 \
                     GET_INVALID_PARAM(param_name, i);                         \
+                config_enc_param();                                           \
                 EXPECT_EQ(EB_ErrorBadParameter,                               \
                           eb_svt_enc_set_parameter(ctxt_.enc_handle,          \
                                                    &ctxt_.enc_params))        \
@@ -191,6 +226,11 @@ PARAM_TEST(EncParamHierarchicalLvlTest);
 /** Test case for pred_structure*/
 DEFINE_PARAM_TEST_CLASS(EncParamPredStructTest, pred_structure);
 PARAM_TEST(EncParamPredStructTest);
+
+/** Test case for base_layer_switch_mode*/
+DEFINE_PARAM_TEST_CLASS(EncParamBaseLayerSwitchModeTest,
+                        base_layer_switch_mode);
+PARAM_TEST(EncParamBaseLayerSwitchModeTest);
 
 /** Test case for source_width*/
 DEFINE_PARAM_TEST_CLASS(EncParamSrcWidthTest, source_width);
@@ -371,4 +411,25 @@ PARAM_TEST(EncParamTileColsTest);
 DEFINE_PARAM_TEST_CLASS(EncParamTileRowsTest, tile_rows);
 PARAM_TEST(EncParamTileRowsTest);
 #endif
+
+/** Test case for screen_content_mode*/
+DEFINE_PARAM_TEST_CLASS(EncParamScreenContentModeTest, screen_content_mode);
+PARAM_TEST(EncParamScreenContentModeTest);
+
+/** Test case for enable_altrefs*/
+DEFINE_PARAM_TEST_CLASS(EncParamEnableAltRefsTest, enable_altrefs);
+PARAM_TEST(EncParamEnableAltRefsTest);
+
+/** Test case for altref_strength*/
+DEFINE_PARAM_TEST_CLASS(EncParamAltRefsStrengthTest, altref_strength);
+PARAM_TEST(EncParamAltRefsStrengthTest);
+
+/** Test case for altref_nframes*/
+DEFINE_PARAM_TEST_CLASS(EncParamAltRefsFramesNumTest, altref_nframes);
+PARAM_TEST(EncParamAltRefsFramesNumTest);
+
+/** Test case for enable_overlays*/
+DEFINE_PARAM_TEST_CLASS(EncParamEnableOverlaysTest, enable_overlays);
+PARAM_TEST(EncParamEnableOverlaysTest);
+
 }  // namespace

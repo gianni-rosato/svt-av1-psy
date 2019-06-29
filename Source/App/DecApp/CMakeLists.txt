@@ -4,13 +4,12 @@
 #
 
 # APP Directory CMakeLists.txt
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 
 # Include Subdirectories
-include_directories (${PROJECT_SOURCE_DIR}/Source/API/)
-include_directories (${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+include_directories(${PROJECT_SOURCE_DIR}/Source/API/
+    ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 
 file(GLOB all_files
     "*.h"
@@ -18,31 +17,18 @@ file(GLOB all_files
     "*.c")
 
 # App Source Files
-add_executable (SvtAv1DecApp
-    ${all_files}
-)
+add_executable(SvtAv1DecApp
+    ${all_files})
 
 #********** SET COMPILE FLAGS************
+# Link the Decoder App
+target_link_libraries(SvtAv1DecApp
+    SvtAv1Dec)
 
-if(BUILD_SHARED_LIBS)
-    set (SvtAv1DecLib SvtAv1DecShared)
-else()
-    set (SvtAv1DecLib SvtAv1DecStatic)
-endif()
-
-if (UNIX)
-    # Link the Decoder App
-     target_link_libraries (SvtAv1DecApp
-        ${SvtAv1DecLib}
+if(UNIX)
+    target_link_libraries(SvtAv1DecApp
         pthread
         m)
 endif()
 
-if (MSVC OR MSYS OR MINGW OR WIN32)
-
-    # Link the Decoder App
-    target_link_libraries (SvtAv1DecApp
-                           ${SvtAv1DecLib})
-endif()
-
-install(TARGETS SvtAv1DecApp RUNTIME DESTINATION bin)
+install(TARGETS SvtAv1DecApp RUNTIME DESTINATION ${CMAKE_INSTALL_FULL_BINDIR})

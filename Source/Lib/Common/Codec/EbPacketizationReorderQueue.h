@@ -30,21 +30,15 @@ extern "C" {
         uint8_t                                 slice_type;
         uint64_t                                ref_poc_list0;
         uint64_t                                ref_poc_list1;
-#if REF_ORDER
         uint64_t                                ref_poc_array[7];
-#endif
         uint64_t                                 poc;
-#if RC
         uint64_t                                total_num_bits;
-#endif
         FrameType                            av1_frame_type;
         Av1RpsNode                          av1_ref_signal;
         EbBool                               show_frame;
         EbBool                               has_show_existing;
         uint8_t                              show_existing_loc;
-#if ALT_REF_OVERLAY
         uint8_t                              is_alt_ref;
-#endif
     } PacketizationReorderEntry;
 
     extern EbErrorType packetization_reorder_entry_ctor(

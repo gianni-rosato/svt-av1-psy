@@ -208,10 +208,6 @@ EbErrorType eb_sequence_control_set_ctor(
     sequence_control_set_ptr->seq_header.color_config.mono_chrome = 0;
     sequence_control_set_ptr->seq_header.film_grain_params_present = 0;
     sequence_control_set_ptr->film_grain_random_seed = 7391;
-#if BASE_LAYER_REF
-    sequence_control_set_ptr->extra_frames_to_ref_islice = 0;
-    sequence_control_set_ptr->max_frame_window_to_ref_islice = 0;
-#endif
 #if ADP_STATS_PER_LAYER
     uint8_t temporal_layer_index;
     for (temporal_layer_index = 0; temporal_layer_index < 5; temporal_layer_index++) {
@@ -223,9 +219,7 @@ EbErrorType eb_sequence_control_set_ctor(
         sequence_control_set_ptr->pred1_nfl_count[temporal_layer_index] = 0;
     }
 #endif
-#if MRP_ME
     sequence_control_set_ptr->reference_count = 4;
-#endif
 
     return EB_ErrorNone;
 }
@@ -300,9 +294,7 @@ EbErrorType copy_sequence_control_set(
     dst->pa_reference_picture_buffer_init_count = src->pa_reference_picture_buffer_init_count; writeCount += sizeof(int32_t);
     dst->reference_picture_buffer_init_count = src->reference_picture_buffer_init_count; writeCount += sizeof(int32_t);
     dst->input_buffer_fifo_init_count = src->input_buffer_fifo_init_count; writeCount += sizeof(int32_t);
-#if ALT_REF_OVERLAY
     dst->overlay_input_picture_buffer_init_count = src->overlay_input_picture_buffer_init_count; writeCount += sizeof(int32_t);
-#endif
 
     dst->output_stream_buffer_fifo_init_count = src->output_stream_buffer_fifo_init_count; writeCount += sizeof(int32_t);
     dst->output_recon_buffer_fifo_init_count = src->output_recon_buffer_fifo_init_count; writeCount += sizeof(int32_t);
@@ -328,9 +320,7 @@ EbErrorType copy_sequence_control_set(
     dst->right_padding = src->right_padding; writeCount += sizeof(int16_t);
     dst->top_padding = src->top_padding; writeCount += sizeof(int16_t);
     dst->bot_padding = src->bot_padding; writeCount += sizeof(int16_t);
-#if MRP_ME
     dst->reference_count = src->reference_count; writeCount += sizeof(uint32_t);
-#endif
     for (uint8_t i = 0; i< MAX_HIERARCHICAL_LEVEL; i++) {
         dst->me_segment_column_count_array[i] = src->me_segment_column_count_array[i];
         dst->me_segment_row_count_array[i] = src->me_segment_row_count_array[i];
@@ -343,21 +333,14 @@ EbErrorType copy_sequence_control_set(
 
     dst->rest_segment_column_count = src->rest_segment_column_count;
     dst->rest_segment_row_count = src->rest_segment_row_count;
-#if MEMORY_FOOTPRINT_OPT_ME_MV
     dst->mrp_mode       = src->mrp_mode;
     dst->nsq_present    = src->nsq_present;
     dst->cdf_mode       = src->cdf_mode;
-#endif
-#if DOWN_SAMPLING_FILTERING
     dst->down_sampling_method_me_search = src->down_sampling_method_me_search;
-#endif
-#if ALTREF_FILTERING_SUPPORT
     dst->tf_segment_column_count = src->tf_segment_column_count;
     dst->tf_segment_row_count = src->tf_segment_row_count;
-#endif
-#if BASE_LAYER_REF
-    dst->extra_frames_to_ref_islice = src->extra_frames_to_ref_islice;
-    dst->max_frame_window_to_ref_islice = src->max_frame_window_to_ref_islice;
+#if INCOMPLETE_SB_FIX
+    dst->over_boundary_block_mode = src->over_boundary_block_mode;
 #endif
     return EB_ErrorNone;
 }
@@ -419,7 +402,9 @@ extern EbErrorType sb_params_init(
     EbErrorType return_error = EB_ErrorNone;
     uint16_t    sb_index;
     uint16_t    rasterScanCuIndex;
+#if  !INCOMPLETE_SB_FIX
     uint16_t    md_scan_block_index;
+#endif
     uint8_t   pictureLcuWidth = (uint8_t)((sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz);
     uint8_t    pictureLcuHeight = (uint8_t)((sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz);
     EB_MALLOC(SbParams*, sequence_control_set_ptr->sb_params_array, sizeof(SbParams) * pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
@@ -507,7 +492,7 @@ extern EbErrorType sb_params_init(
                 EB_FALSE :
                 EB_TRUE;
         }
-
+#if  !INCOMPLETE_SB_FIX
          uint16_t max_block_count = sequence_control_set_ptr->max_block_cnt;
 
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count; md_scan_block_index++) {
@@ -522,6 +507,7 @@ extern EbErrorType sb_params_init(
                 EB_FALSE :
                 EB_TRUE;
         }
+#endif
     }
 
     sequence_control_set_ptr->picture_width_in_sb = pictureLcuWidth;
@@ -563,7 +549,45 @@ EbErrorType sb_geom_init(SequenceControlSet * sequence_control_set_ptr)
 
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count ; md_scan_block_index++) {
             const BlockGeom * blk_geom = get_blk_geom_mds(md_scan_block_index);
+#if INCOMPLETE_SB_FIX
+            if (sequence_control_set_ptr->over_boundary_block_mode == 1) {
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth / 2 < sequence_control_set_ptr->seq_header.max_frame_width) &&
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight / 2 < sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_TRUE :
+                    EB_FALSE;
 
+                // Temporary if the cropped width is not 4, 8, 16, 32, 64 and 128, the block is not allowed. To be removed after intrinsic functions for NxM spatial_full_distortion_kernel_func_ptr_array are added
+                int32_t cropped_width = MIN(blk_geom->bwidth, sequence_control_set_ptr->seq_header.max_frame_width - (sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x));
+                if (cropped_width != 4 && cropped_width != 8 && cropped_width != 16 && cropped_width != 32 && cropped_width != 64 && cropped_width != 128)
+                    sequence_control_set_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = EB_FALSE;
+
+                if (blk_geom->shape != PART_N)
+                    blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x >= sequence_control_set_ptr->seq_header.max_frame_width) ||
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y >= sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_FALSE :
+                    EB_TRUE;
+            }
+            else {
+                if (blk_geom->shape != PART_N)
+                    blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
+
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->seq_header.max_frame_width) ||
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_FALSE :
+                    EB_TRUE;
+
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->seq_header.max_frame_width) ||
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_FALSE :
+                    EB_TRUE;
+
+            }
+#else
             if (blk_geom->shape != PART_N)
                 blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
 
@@ -572,6 +596,7 @@ EbErrorType sb_geom_init(SequenceControlSet * sequence_control_set_ptr)
                 (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->seq_header.max_frame_height)) ?
                 EB_FALSE :
                 EB_TRUE;
+#endif
         }
     }
 
