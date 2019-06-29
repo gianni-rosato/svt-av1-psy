@@ -3011,7 +3011,7 @@ uint64_t spatial_full_distortion_kernel_avx2(
         const uint8_t *rec = recon;
         h = area_height;
         do {
-            int x = 0;
+            uint32_t x = 0;
             do {
                 SpatialFullDistortionKernel32_AVX2_INTRIN(inp + x, rec + x, &sum);
                 x += 32;

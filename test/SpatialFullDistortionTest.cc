@@ -82,7 +82,6 @@ void SpatialFullDistortionTest::RunCheckOutput() {
 }
 
 void SpatialFullDistortionTest::RunSpeedTest() {
-    __m128i in[16], out_c[16], out_o[16];
     uint64_t dist_org, dist_opt;
     double time_c, time_o;
     uint64_t start_time_seconds, start_time_useconds;
