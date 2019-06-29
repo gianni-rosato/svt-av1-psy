@@ -38,10 +38,6 @@ typedef struct SourceBasedOperationsContext
 
     // Skin
     uint8_t     grass_percentage_in_picture;
-#if !MEMORY_FOOTPRINT_OPT
-    // Variance
-    uint8_t    *sb_high_contrast_array;
-#endif
     // local zz cost array
     uint32_t    picture_num_grass_sb;
     uint32_t    sb_high_contrast_count;
@@ -49,17 +45,6 @@ typedef struct SourceBasedOperationsContext
     uint32_t    sb_cmplx_contrast_count;
     uint32_t    high_contrast_num;
     uint32_t    high_contrast_num_ii;
-#if !MEMORY_FOOTPRINT_OPT
-    EbBool      high_dist;
-#endif
-#if !DISABLE_OIS_USE
-    uint32_t    count_of_moving_sbs;
-    uint32_t    countOfNonMovingLcus;
-    uint64_t    y_non_moving_mean;
-    uint64_t    y_moving_mean;
-    uint32_t    to_be_intra_coded_probability;
-    uint32_t    depth1_block_num;
-#endif
     uint8_t    *y_mean_ptr;
     uint8_t    *cr_mean_ptr;
     uint8_t    *cb_mean_ptr;

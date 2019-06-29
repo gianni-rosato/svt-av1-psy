@@ -57,74 +57,6 @@ PARTITION_SPLIT
 #define MIDRANGE_VALUE_8BIT    128
 #define MIDRANGE_VALUE_10BIT   512
 
-/**********************************************
- * Intra Reference Samples Ctor
- **********************************************/
-EbErrorType intra_reference_samples_ctor(
-    IntraReferenceSamples **context_dbl_ptr)
-{
-    IntraReferenceSamples *context_ptr;
-    EB_MALLOC(IntraReferenceSamples*, context_ptr, sizeof(IntraReferenceSamples), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
-
-    EB_MALLOC(uint8_t*, context_ptr->y_intra_reference_array, sizeof(uint8_t) * (4 * BLOCK_SIZE_64 + 1), EB_N_PTR);
-
-    EB_MALLOC(uint8_t*, context_ptr->cb_intra_reference_array, sizeof(uint8_t) * (4 * BLOCK_SIZE_64 + 1), EB_N_PTR);
-
-    EB_MALLOC(uint8_t*, context_ptr->cr_intra_reference_array, sizeof(uint8_t) * (4 * BLOCK_SIZE_64 + 1), EB_N_PTR);
-
-    EB_MALLOC(uint8_t*, context_ptr->y_intra_filtered_reference_array, sizeof(uint8_t) * (4 * BLOCK_SIZE_64 + 1), EB_N_PTR);
-
-    EB_MALLOC(uint8_t*, context_ptr->y_intra_reference_array_reverse, sizeof(uint8_t) * (4 * BLOCK_SIZE_64 + 2), EB_N_PTR);
-
-    EB_MALLOC(uint8_t*, context_ptr->y_intra_filtered_reference_array_reverse, sizeof(uint8_t) * (4 * BLOCK_SIZE_64 + 2), EB_N_PTR);
-
-    EB_MALLOC(uint8_t*, context_ptr->cb_intra_reference_array_reverse, sizeof(uint8_t) * (4 * BLOCK_SIZE_64 + 2), EB_N_PTR);
-
-    EB_MALLOC(uint8_t*, context_ptr->cr_intra_reference_array_reverse, sizeof(uint8_t) * (4 * BLOCK_SIZE_64 + 2), EB_N_PTR);
-
-    context_ptr->y_intra_reference_array_reverse++;
-    context_ptr->y_intra_filtered_reference_array_reverse++;
-    context_ptr->cb_intra_reference_array_reverse++;
-    context_ptr->cr_intra_reference_array_reverse++;
-
-    return EB_ErrorNone;
-}
-
-/**********************************************
- * Intra Reference Samples Ctor
- **********************************************/
-EbErrorType intra_reference16bit_samples_ctor(
-    IntraReference16bitSamples **context_dbl_ptr)
-{
-    IntraReference16bitSamples *context_ptr;
-    EB_MALLOC(IntraReference16bitSamples*, context_ptr, sizeof(IntraReference16bitSamples), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
-
-    EB_MALLOC(uint16_t*, context_ptr->y_intra_reference_array, sizeof(uint16_t) * (4 * BLOCK_SIZE_64 + 1), EB_N_PTR);
-
-    EB_MALLOC(uint16_t*, context_ptr->cb_intra_reference_array, sizeof(uint16_t) * (4 * BLOCK_SIZE_64 + 1), EB_N_PTR);
-
-    EB_MALLOC(uint16_t*, context_ptr->cr_intra_reference_array, sizeof(uint16_t) * (4 * BLOCK_SIZE_64 + 1), EB_N_PTR);
-
-    EB_MALLOC(uint16_t*, context_ptr->y_intra_filtered_reference_array, sizeof(uint16_t) * (4 * BLOCK_SIZE_64 + 1), EB_N_PTR);
-
-    EB_MALLOC(uint16_t*, context_ptr->y_intra_reference_array_reverse, sizeof(uint16_t) * (4 * BLOCK_SIZE_64 + 2), EB_N_PTR);
-
-    EB_MALLOC(uint16_t*, context_ptr->y_intra_filtered_reference_array_reverse, sizeof(uint16_t) * (4 * BLOCK_SIZE_64 + 2), EB_N_PTR);
-
-    EB_MALLOC(uint16_t*, context_ptr->cb_intra_reference_array_reverse, sizeof(uint16_t) * (4 * BLOCK_SIZE_64 + 2), EB_N_PTR);
-
-    EB_MALLOC(uint16_t*, context_ptr->cr_intra_reference_array_reverse, sizeof(uint16_t) * (4 * BLOCK_SIZE_64 + 2), EB_N_PTR);
-
-    context_ptr->y_intra_reference_array_reverse++;
-    context_ptr->y_intra_filtered_reference_array_reverse++;
-    context_ptr->cb_intra_reference_array_reverse++;
-    context_ptr->cr_intra_reference_array_reverse++;
-
-    return EB_ErrorNone;
-}
-
 static int is_smooth(const MbModeInfo *mbmi, int plane) {
     if (plane == 0) {
         const PredictionMode mode = mbmi->mode;
@@ -1118,108 +1050,6 @@ EbErrorType intra_open_loop_reference_samples_ctor(
     context_ptr->y_intra_reference_array_reverse++;
 
     return EB_ErrorNone;
-}
-
-/** UpdateNeighborSamplesArrayOpenLoop()
-        updates neighbor sample array
- */
-EbErrorType UpdateNeighborSamplesArrayOpenLoop(
-    IntraReferenceSamplesOpenLoop *intra_ref_ptr,
-    EbPictureBufferDesc           *inputPtr,
-    uint32_t                           stride,
-    uint32_t                           src_origin_x,
-    uint32_t                           src_origin_y,
-    uint32_t                           block_size)
-{
-    EbErrorType    return_error = EB_ErrorNone;
-
-    uint32_t idx;
-    uint8_t  *src_ptr;
-    uint8_t  *dst_ptr;
-    uint8_t  *readPtr;
-
-    uint32_t count;
-
-    uint8_t *yBorderReverse = intra_ref_ptr->y_intra_reference_array_reverse;
-    uint8_t *yBorder = intra_ref_ptr->y_intra_reference_array;
-    uint8_t *yBorderLoc;
-
-    uint32_t width = inputPtr->width;
-    uint32_t height = inputPtr->height;
-    uint32_t blockSizeHalf = block_size << 1;
-
-    // Adjust the Source ptr to start at the origin of the block being updated
-    src_ptr = inputPtr->buffer_y + (((src_origin_y + inputPtr->origin_y) * stride) + (src_origin_x + inputPtr->origin_x));
-
-    // Adjust the Destination ptr to start at the origin of the Intra reference array
-    dst_ptr = yBorderReverse;
-
-    //Initialise the Luma Intra Reference Array to the mid range value 128 (for CUs at the picture boundaries)
-    EB_MEMSET(dst_ptr, MIDRANGE_VALUE_8BIT, (block_size << 2) + 1);
-
-    // Get the left-column
-    count = blockSizeHalf;
-
-    if (src_origin_x != 0) {
-        readPtr = src_ptr - 1;
-        count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
-
-        for (idx = 0; idx < count; ++idx) {
-            *dst_ptr = *readPtr;
-            readPtr += stride;
-            dst_ptr++;
-        }
-
-        dst_ptr += (blockSizeHalf - count);
-    }
-    else
-        dst_ptr += count;
-    // Get the upper left sample
-    if (src_origin_x != 0 && src_origin_y != 0) {
-        readPtr = src_ptr - stride - 1;
-        *dst_ptr = *readPtr;
-        dst_ptr++;
-    }
-    else
-        dst_ptr++;
-    // Get the top-row
-    count = blockSizeHalf;
-    if (src_origin_y != 0) {
-        readPtr = src_ptr - stride;
-
-        count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
-        EB_MEMCPY(dst_ptr, readPtr, count);
-        dst_ptr += (blockSizeHalf - count);
-    }
-    else
-        dst_ptr += count;
-    //at the begining of a CU Loop, the Above/Left scratch buffers are not ready to be used.
-    intra_ref_ptr->above_ready_flag_y = EB_FALSE;
-    intra_ref_ptr->left_ready_flag_y = EB_FALSE;
-
-    //For SIMD purposes, provide a copy of the reference buffer with reverse order of Left samples
-    /*
-        TL   T0   T1   T2   T3  T4  T5  T6  T7                 TL   T0   T1   T2   T3  T4  T5  T6  T7
-        L0  |----------------|                                 L7  |----------------|
-        L1  |                |                    <=======     L6  |                |
-        L2  |                |                                 L5  |                |
-        L3  |----------------|                                 L4  |----------------|
-        L4                                                     L3
-        L5                                                     L2
-        L6                                                     L1
-        L7 <-- pointer (Regular Order)                         L0<-- pointer     Reverse Order
-                                                               junk
-    */
-
-    EB_MEMCPY(yBorder + blockSizeHalf, yBorderReverse + blockSizeHalf, blockSizeHalf + 1);
-    yBorderLoc = yBorder + blockSizeHalf - 1;
-
-    for (count = 0; count < blockSizeHalf; count++) {
-        *yBorderLoc = yBorderReverse[count];
-        yBorderLoc--;
-    }
-
-    return return_error;
 }
 
 void cfl_luma_subsampling_420_lbd_c(
@@ -4073,10 +3903,8 @@ extern void av1_predict_intra_block(
     int32_t row_off,
     int32_t plane,
     BlockSize bsize,
-#if ATB_EP
     uint32_t tu_org_x_pict,
     uint32_t tu_org_y_pict,
-#endif
     uint32_t bl_org_x_pict,
     uint32_t bl_org_y_pict,
     uint32_t bl_org_x_mb,
@@ -4090,13 +3918,8 @@ extern void av1_predict_intra_block(
     uint32_t  pred_buf_y_offest;
 
     if (stage == ED_STAGE) { // EncDec
-#if ATB_EP
         pred_buf_x_offest = plane ? ((bl_org_x_pict >> 3) << 3) >> 1 : tu_org_x_pict;
         pred_buf_y_offest = plane ? ((bl_org_y_pict >> 3) << 3) >> 1 : tu_org_y_pict;
-#else
-        pred_buf_x_offest = plane ? ((bl_org_x_pict >> 3) << 3) >> 1 : bl_org_x_pict;
-        pred_buf_y_offest = plane ? ((bl_org_y_pict >> 3) << 3) >> 1 : bl_org_y_pict;
-#endif
     }
     else { // MD
         pred_buf_x_offest = bl_org_x_mb;
@@ -4274,11 +4097,7 @@ extern void av1_predict_intra_block(
         mi_row, mi_col, bottom_available, have_left, partition,
         tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
 
-#if DIS_EDGE_FIL
-    const int32_t disable_edge_filter = 1;
-#else
     const int32_t disable_edge_filter = 0;//CHKN !cm->seq_params.enable_intra_edge_filter;
-#endif
 
     //if (xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH) {
     //  build_intra_predictors_high(
@@ -4509,11 +4328,7 @@ void av1_predict_intra_block_16bit(
         mi_row, mi_col, bottom_available, have_left, partition,
         tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
 
-#if DIS_EDGE_FIL
-    const int32_t disable_edge_filter = 1;
-#else
     const int32_t disable_edge_filter = 0;//CHKN !cm->seq_params.enable_intra_edge_filter;
-#endif
 
     build_intra_predictors_high(
         xd,
@@ -4579,26 +4394,16 @@ EbErrorType av1_intra_prediction_cl(
     md_context_ptr->intra_chroma_top_mode = (uint32_t)(
         (md_context_ptr->mode_type_neighbor_array->top_array[modeTypeTopNeighborIndex] != INTRA_MODE) ? UV_DC_PRED :
         (uint32_t)md_context_ptr->intra_chroma_mode_neighbor_array->top_array[intraChromaModeTopNeighborIndex]);       //   use DC. This seems like we could use a LCU-width
-#if ATB_SUPPORT
     TxSize  tx_size = md_context_ptr->blk_geom->txsize[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; // Nader - Intra 128x128 not supported
     TxSize  tx_size_Chroma = md_context_ptr->blk_geom->txsize_uv[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; //Nader - Intra 128x128 not supported
-#else
-    TxSize  tx_size = md_context_ptr->blk_geom->txsize[0]; // Nader - Intra 128x128 not supported
-    TxSize  tx_size_Chroma = md_context_ptr->blk_geom->txsize_uv[0]; //Nader - Intra 128x128 not supported
-#endif
     uint8_t    topNeighArray[64 * 2 + 1];
     uint8_t    leftNeighArray[64 * 2 + 1];
     PredictionMode mode;
-#if SEARCH_UV_MODE
     // Hsan: plane should be derived @ an earlier stage (e.g. @ the call of perform_fast_loop())
     int32_t start_plane = (md_context_ptr->uv_search_path) ? 1 : 0;
     int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int)MAX_MB_PLANE : 1;
 
     for (int32_t plane = start_plane; plane < end_plane; ++plane) {
-#else
-    uint8_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int) MAX_MB_PLANE : 1;
-    for (int32_t plane = 0; plane < end_plane; ++plane) {
-#endif
         if (plane == 0) {
             if (md_context_ptr->cu_origin_y != 0)
                 memcpy(topNeighArray + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->cu_origin_x, md_context_ptr->blk_geom->bwidth * 2);
@@ -4646,11 +4451,7 @@ EbErrorType av1_intra_prediction_cl(
             plane ? md_context_ptr->blk_geom->bheight_uv : md_context_ptr->blk_geom->bheight,          //int32_t hpx,
             plane ? tx_size_Chroma : tx_size,                                               //TxSize tx_size,
             mode,                                                                           //PredictionMode mode,
-#if SEARCH_UV_MODE // conformance
             plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
-#else
-            plane ? 0 : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],         //int32_t angle_delta,
-#endif
             0,                                                                              //int32_t use_palette,
             FILTER_INTRA_MODES,                                                             //CHKN FilterIntraMode filter_intra_mode,
             topNeighArray + 1,
@@ -4661,10 +4462,8 @@ EbErrorType av1_intra_prediction_cl(
             0,                                                                              //int32_t row_off,
             plane,                                                                          //int32_t plane,
             md_context_ptr->blk_geom->bsize,       //uint32_t puSize,
-#if ATB_EP
             md_context_ptr->cu_origin_x,
             md_context_ptr->cu_origin_y,
-#endif
             md_context_ptr->cu_origin_x,                  //uint32_t cuOrgX,
             md_context_ptr->cu_origin_y,                  //uint32_t cuOrgY
             plane ? ((md_context_ptr->blk_geom->origin_x >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_x,  //uint32_t cuOrgX used only for prediction Ptr

@@ -1545,7 +1545,7 @@ EbErrorType denoise_and_model_ctor(EbPtr *object_dbl_ptr,
     return_error = aom_denoise_and_model_alloc(&object_ptr,
         init_data_ptr->encoder_bit_depth > EB_8BIT ? 10 : 8,
         DENOISING_BlockSize,
-        (float)init_data_ptr->noise_level / 10.0);
+        (float)(init_data_ptr->noise_level / 10.0));
 
     *object_dbl_ptr = (EbPtr*)object_ptr;
 
@@ -1557,14 +1557,14 @@ EbErrorType denoise_and_model_ctor(EbPtr *object_dbl_ptr,
 
     //todo: consider replacing with EbPictureBuffersDesc
 
-    EB_MALLOC(uint8_t*, object_ptr->denoised[0], sizeof(uint8_t) * (object_ptr->y_stride * object_ptr->height) << use_highbd, EB_N_PTR);
-    EB_MALLOC(uint8_t*, object_ptr->denoised[1], sizeof(uint8_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])) << use_highbd, EB_N_PTR);
-    EB_MALLOC(uint8_t*, object_ptr->denoised[2], sizeof(uint8_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])) << use_highbd, EB_N_PTR);
+    EB_MALLOC(uint8_t*, object_ptr->denoised[0], (sizeof(uint8_t) * (object_ptr->y_stride * object_ptr->height) << use_highbd), EB_N_PTR);
+    EB_MALLOC(uint8_t*, object_ptr->denoised[1], (sizeof(uint8_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])) << use_highbd), EB_N_PTR);
+    EB_MALLOC(uint8_t*, object_ptr->denoised[2], (sizeof(uint8_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])) << use_highbd), EB_N_PTR);
 
     if (use_highbd) {
-        EB_MALLOC(uint16_t*, object_ptr->packed[0], sizeof(uint16_t) * (object_ptr->y_stride * object_ptr->height), EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->packed[1], sizeof(uint16_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])), EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->packed[2], sizeof(uint16_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])), EB_N_PTR);
+        EB_MALLOC(uint16_t*, object_ptr->packed[0], (sizeof(uint16_t) * (object_ptr->y_stride * object_ptr->height)), EB_N_PTR);
+        EB_MALLOC(uint16_t*, object_ptr->packed[1], (sizeof(uint16_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0]))), EB_N_PTR);
+        EB_MALLOC(uint16_t*, object_ptr->packed[2], (sizeof(uint16_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0]))), EB_N_PTR);
     }
 
     return return_error;

@@ -93,7 +93,6 @@ extern "C" {
         uint32_t        count32,
         uint32_t        value);
 
-#if NSQ_ME_OPT
     typedef void(*EB_EXT_ALL_SAD_CALCULATION_8x8_16x16_TYPE)(
         uint8_t   *src,
         uint32_t   src_stride,
@@ -141,7 +140,6 @@ extern "C" {
         uint32_t *p_best_mv64x64,
         uint32_t  mv,
         uint32_t p_sad32x32[4][8]);
-#endif
     static EbInializeBuffer32Bits initialize_buffer32bits_func_ptr_array[ASM_TYPE_TOTAL] = {
         // NON_AVX2
         initialize_buffer_32bits_sse2_intrin,

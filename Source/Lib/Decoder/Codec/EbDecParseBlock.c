@@ -40,12 +40,6 @@ FILE* temp_fp;
 typedef AomCdfProb(*base_cdf_arr)[CDF_SIZE(4)];
 typedef AomCdfProb(*br_cdf_arr)[CDF_SIZE(BR_CDF_SIZE)];
 
-static const TxSize tx_mode_to_biggest_tx_size[TX_MODES] = {
-  TX_4X4,    // ONLY_4X4
-  TX_64X64,  // TX_MODE_LARGEST
-  TX_64X64,  // TX_MODE_SELECT
-};
-
 typedef struct txb_ctx {
     int txb_skip_ctx;
     int dc_sign_ctx;
@@ -1057,18 +1051,6 @@ TxSize read_tx_size(EbDecHandle *dec_handle, PartitionInfo_t *xd,
     return tx_size;
 }
 
-static INLINE void txfm_nbr_update(uint8_t *above_ctx,
-    uint8_t *left_ctx,
-    TxSize tx_size, TxSize txb_size) {
-    BlockSize bsize = txsize_to_bsize[txb_size];
-    int bh = mi_size_high[bsize];
-    int bw = mi_size_wide[bsize];
-    uint8_t txw = tx_size_wide[tx_size];
-    uint8_t txh = tx_size_high[tx_size];
-    memset(above_ctx, txw, bw);
-    memset(left_ctx, txh, bh);
-}
-
 void read_var_tx_size(EbDecHandle *dec_handle, PartitionInfo_t *pi,
                                TxSize tx_size,
                                int blk_row, int blk_col) {
@@ -1079,6 +1061,7 @@ void read_var_tx_size(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     const int max_blocks_wide = max_block_wide(pi, bsize, 0);
     if (blk_row >= max_blocks_high || blk_col >= max_blocks_wide) return;
     assert(tx_size > TX_4X4);
+    (void)tx_size;
     TxSize txs = max_txsize_rect_lookup[bsize];
     for (int level = 0; level < MAX_VARTX_DEPTH - 1; ++level)
         txs = sub_tx_size_map[txs];
@@ -1337,7 +1320,7 @@ TxType compute_tx_type(PlaneType plane_type,
     const TxSetType tx_set_type =
         get_ext_tx_set_type(tx_size, dec_is_inter_block(mbmi), reduced_tx_set);
 
-    TxType tx_type;
+    TxType tx_type = DCT_DCT;
     if (lossless_array[mbmi->segment_id] || txsize_sqr_up_map[tx_size] > TX_32X32)
         tx_type = DCT_DCT;
     else {
@@ -2102,7 +2085,7 @@ uint16_t parse_coeffs(EbDecHandle *dec_handle, PartitionInfo_t *xd, SvtReader *r
 
 void palette_tokens(int plane) {
     assert(plane == 0 || plane == 1);
-
+    (void)plane;
     // TO-DO
 }
 

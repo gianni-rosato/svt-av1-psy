@@ -1159,8 +1159,12 @@ void generate_av1_mvp_table(
     xd->tile.mi_row_start = tile->mi_row_start;
     xd->tile.mi_row_end = tile->mi_row_end;
 
+#if INCOMPLETE_SB_FIX
+    xd->mi_stride = picture_control_set_ptr->mi_stride;
+#else
     //these could be done at init time
     xd->mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 / 4);
+#endif
     const int32_t offset = mi_row * xd->mi_stride + mi_col;
     xd->mi = picture_control_set_ptr->mi_grid_base + offset;
 
@@ -1307,7 +1311,11 @@ void update_av1_mi_map(
     const BlockGeom                *blk_geom,
     PictureControlSet            *picture_control_set_ptr)
 {
+#if INCOMPLETE_SB_FIX
+    uint32_t mi_stride = picture_control_set_ptr->mi_stride;
+#else
     uint32_t mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
+#endif
     int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
     int32_t mi_col = cu_origin_x >> MI_SIZE_LOG2;
 
@@ -1322,28 +1330,16 @@ void update_av1_mi_map(
             //these needed for mvPred
             {
                 miPtr[miX + miY * mi_stride].mbmi.mode = cu_ptr->pred_mode;
-#if FIX_INTRA_UV
                 miPtr[miX + miY * mi_stride].mbmi.uv_mode = cu_ptr->prediction_unit_array->intra_chroma_mode;
-#endif
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4) {
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = 0;
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = BLOCK_4X4;
-#if ATB_SUPPORT
                     miPtr[miX + miY * mi_stride].mbmi.tx_depth = cu_ptr->tx_depth;
-#endif
                 }
                 else {
-#if ATB_SUPPORT
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[cu_ptr->tx_depth][0]; // inherit tx_size from 1st transform block
-#else
-                    int32_t txb_itr;
-                    for (txb_itr = 0; txb_itr < blk_geom->txb_count; txb_itr++)
-                        miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[txb_itr]; // Nader - TO_DO
-#endif
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = blk_geom->bsize;
-#if ATB_SUPPORT
                     miPtr[miX + miY * mi_stride].mbmi.tx_depth = cu_ptr->tx_depth;
-#endif
                 }
                 miPtr[miX + miY * mi_stride].mbmi.use_intrabc = cu_ptr->av1xd->use_intrabc;
 
@@ -1383,7 +1379,11 @@ void update_mi_map(
     PictureControlSet            *picture_control_set_ptr)
 {
     UNUSED(cu_stats);
+#if INCOMPLETE_SB_FIX
+    uint32_t mi_stride = picture_control_set_ptr->mi_stride;
+#else
     uint32_t mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
+#endif
     int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
     int32_t mi_col = cu_origin_x >> MI_SIZE_LOG2;
 
@@ -1398,29 +1398,17 @@ void update_mi_map(
             //these needed for mvPred
             {
                 miPtr[miX + miY * mi_stride].mbmi.mode = cu_ptr->pred_mode;
-#if FIX_INTRA_UV
                 miPtr[miX + miY * mi_stride].mbmi.uv_mode = cu_ptr->prediction_unit_array->intra_chroma_mode;
-#endif
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4) {
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = 0;
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = BLOCK_4X4;
-#if ATB_SUPPORT
                     miPtr[miX + miY * mi_stride].mbmi.tx_depth = cu_ptr->tx_depth;
-#endif
                 }
                 else {
-#if ATB_SUPPORT
                     miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[cu_ptr->tx_depth][0]; // inherit tx_size from 1st transform block
-#else
-                    int32_t txb_itr;
-                    for (txb_itr = 0; txb_itr < blk_geom->txb_count; txb_itr++)
-                        miPtr[miX + miY * mi_stride].mbmi.tx_size = blk_geom->txsize[txb_itr]; // Nader - TO_DO
-#endif
 
                     miPtr[miX + miY * mi_stride].mbmi.sb_type = blk_geom->bsize;
-#if ATB_SUPPORT
                     miPtr[miX + miY * mi_stride].mbmi.tx_depth = cu_ptr->tx_depth;
-#endif
                 }
                 miPtr[miX + miY * mi_stride].mbmi.use_intrabc = cu_ptr->av1xd->use_intrabc;
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[0] = rf[0];
@@ -1982,13 +1970,6 @@ void av1_count_overlappable_neighbors(
 {
     Av1Common  *cm  = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *xd = cu_ptr->av1xd;
-#if ! FIX_WARP_TILE
-    xd->mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 / 4);
-    const int32_t offset = mi_row * xd->mi_stride + mi_col;
-    xd->mi = picture_control_set_ptr->mi_grid_base + offset;
-    xd->up_available = (mi_row > 0);
-    xd->left_available = (mi_col > 0);
-#endif
     cu_ptr->prediction_unit_array[0].overlappable_neighbors[0] = 0;
     cu_ptr->prediction_unit_array[0].overlappable_neighbors[1] = 0;
 
