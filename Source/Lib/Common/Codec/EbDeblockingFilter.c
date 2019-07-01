@@ -751,7 +751,7 @@ void eb_av1_loop_filter_frame_init(PictureControlSet *pcs_ptr, int32_t plane_sta
     }
 }
 //***************************************************************************************************//
-static INLINE int32_t is_inter_block(const MbModeInfo *mbmi) {
+static INLINE int32_t is_inter_block_no_intrabc(const MbModeInfo *mbmi) {
     return /*is_intrabc_block(mbmi) ||*/ mbmi->ref_frame[0] > INTRA_FRAME;
 }
 
@@ -843,11 +843,11 @@ static TxSize get_transform_size(const MacroBlockD *const xd,
     //if (xd->lossless[mbmi->segment_id]) return TX_4X4;
 
     TxSize tx_size = (plane == COMPONENT_LUMA)
-        ? (is_inter_block(mbmi) ? tx_depth_to_tx_size[0][mbmi->sb_type] : tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]) // use max_tx_size
+        ? (is_inter_block_no_intrabc(mbmi) ? tx_depth_to_tx_size[0][mbmi->sb_type] : tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]) // use max_tx_size
 
         : av1_get_max_uv_txsize(mbmi->sb_type, plane_ptr);
     assert(tx_size < TX_SIZES_ALL);
-    if (((plane == COMPONENT_LUMA) && is_inter_block(mbmi) && !mbmi->skip)) {  // if split tx is used
+    if (((plane == COMPONENT_LUMA) && is_inter_block_no_intrabc(mbmi) && !mbmi->skip)) {  // if split tx is used
 
         const TxSize mb_tx_size = tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]; // tx_size
         assert(mb_tx_size < TX_SIZES_ALL);
@@ -929,7 +929,7 @@ static TxSize set_lpf_parameters(
         {
             const uint32_t curr_level =
                 get_filter_level(pcs_ptr, &pcs_ptr->parent_pcs_ptr->lf_info, edge_dir, plane, mbmi);
-            const int32_t curr_skipped = mbmi->skip && is_inter_block(mbmi);
+            const int32_t curr_skipped = mbmi->skip && is_inter_block_no_intrabc(mbmi);
             uint32_t level = curr_level;
             if (coord) {
                 {
@@ -948,7 +948,7 @@ static TxSize set_lpf_parameters(
                     const uint32_t pv_lvl =
                         get_filter_level(pcs_ptr, &pcs_ptr->parent_pcs_ptr->lf_info, edge_dir, plane, mi_prev);
 
-                    const int32_t pv_skip = mi_prev->skip && is_inter_block(mi_prev);
+                    const int32_t pv_skip = mi_prev->skip && is_inter_block_no_intrabc(mi_prev);
 
                     const BlockSize bsize =
                         get_plane_block_size(mbmi->sb_type, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
