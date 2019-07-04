@@ -5,11 +5,11 @@
 
 #ifndef EbDecNbr_h
 #define EbDecNbr_h
-
+#if !FRAME_MI_MAP
 void update_nbrs_before_sb(FrameMiMap *frame_mi_map, int32_t sb_col);
 
 void update_nbrs_after_sb(FrameMiMap *frame_mi_map, int32_t sb_col);
-
+#endif
 ModeInfo_t* get_cur_mode_info(void *pv_dec_handle,
     int mi_row, int mi_col, SBInfo *sb_info);
 

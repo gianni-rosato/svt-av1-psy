@@ -1,5 +1,9 @@
 # Changelog
 
+## [upcoming]
+
+- Decoder Inter support
+
 ## [0.6.0] - 2019-06-28
 
 - Inital decoder implementation

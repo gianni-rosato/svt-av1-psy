@@ -123,7 +123,8 @@ int32_t main(int32_t argc, char* argv[])
 
     // Print Decoder Info
     printf("\n**WARNING** decoder is not feature complete\n");
-    printf("Current support: intra tools (no SCC, no loop filters)\n\n");
+    printf("Current support: intra & inter(no OBMC, no Compund, no Wedge, ");
+    printf("no Temporal Scan) tools (no SCC, no loop filters)\n\n");
 
     printf("-------------------------------------\n");
     printf("SVT-AV1 Decoder Sample Application v1.2.0\n");

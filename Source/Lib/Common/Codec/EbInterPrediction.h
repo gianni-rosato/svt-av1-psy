@@ -18,11 +18,29 @@
 extern "C" {
 #endif
 
+    typedef struct SubpelParams {
+        int32_t xs;
+        int32_t ys;
+        int32_t subpel_x;
+        int32_t subpel_y;
+    } SubpelParams;
+
     struct ModeDecisionContext;
 
     typedef struct InterPredictionContext {
         MotionCompensationPredictionContext  *mcp_context;
     } InterPredictionContext;
+
+    void svt_inter_predictor(const uint8_t *src, int32_t src_stride,
+        uint8_t *dst, int32_t dst_stride, const SubpelParams *subpel_params,
+        const ScaleFactors *sf, int32_t w, int32_t h, ConvolveParams *conv_params,
+        InterpFilters interp_filters, int32_t is_intrabc);
+
+    void svt_highbd_inter_predictor(const uint16_t *src, int32_t src_stride,
+        uint16_t *dst, int32_t dst_stride, const SubpelParams *subpel_params,
+        const ScaleFactors *sf, int32_t w, int32_t h, ConvolveParams *conv_params,
+        InterpFilters interp_filters, int32_t is_intrabc, int32_t bd);
+
     EbErrorType av1_inter_prediction(
         PictureControlSet                    *picture_control_set_ptr,
         uint32_t                                interp_filters,
