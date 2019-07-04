@@ -262,7 +262,7 @@ void* packetization_kernel(void *input_ptr)
     RateControlTasks             *rateControlTasksPtr;
 #if ENABLE_CDF_UPDATE
     EbObjectWrapper               *picture_manager_results_wrapper_ptr;
-    PictureDemuxResults       	  *picture_manager_results_ptr;
+    PictureDemuxResults           *picture_manager_results_ptr;
 #endif
     // Queue variables
     int32_t                         queueEntryIndex;
