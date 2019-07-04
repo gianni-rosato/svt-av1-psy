@@ -1187,7 +1187,10 @@ EbErrorType signal_derivation_multi_processes_oq(
         // Set frame end cdf update mode      Settings
         // 0                                     OFF
         // 1                                     ON
-        picture_control_set_ptr->frame_end_cdf_update_mode = 1;
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            picture_control_set_ptr->frame_end_cdf_update_mode = 1;
+        else
+            picture_control_set_ptr->frame_end_cdf_update_mode = 0;
 #endif
     return return_error;
 }
