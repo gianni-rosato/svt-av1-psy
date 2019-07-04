@@ -1809,7 +1809,9 @@ void* mode_decision_configuration_kernel(void *input_ptr)
             context_ptr->qp_index,
             picture_control_set_ptr->hbd_mode_decision);
         context_ptr->lambda = (uint64_t)lambdaSad;
-
+#if ENABLE_CDF_UPDATE
+        md_rate_estimation_array = picture_control_set_ptr->md_rate_estimation_array;
+#else
         // Slice Type
         EB_SLICE slice_type =
             (picture_control_set_ptr->parent_pcs_ptr->idr_flag == EB_TRUE) ? I_SLICE :
@@ -1827,18 +1829,33 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         if (context_ptr->is_md_rate_estimation_ptr_owner) {
             EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
             context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
-        }
+#endif
         context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
 
         entropyCodingQp = frm_hdr->quantization_params.base_q_idx;
+#if ENABLE_CDF_UPDATE
+        if (picture_control_set_ptr->parent_pcs_ptr->primary_ref_frame != PRIMARY_REF_NONE)
+            memcpy(picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc, &picture_control_set_ptr->ref_frame_context[picture_control_set_ptr->parent_pcs_ptr->primary_ref_frame], sizeof(FRAME_CONTEXT));
+        else
+            reset_entropy_coder(
+                sequence_control_set_ptr->encode_context_ptr,
+                picture_control_set_ptr->coeff_est_entropy_coder_ptr,
+                entropyCodingQp,
+                picture_control_set_ptr->slice_type);
 
+        // Initial Rate Estimatimation of the syntax elements
+        av1_estimate_syntax_rate(
+            md_rate_estimation_array,
+            picture_control_set_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
+            picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc);
+#else
         // Reset CABAC Contexts
         reset_entropy_coder(
             sequence_control_set_ptr->encode_context_ptr,
             picture_control_set_ptr->coeff_est_entropy_coder_ptr,
             entropyCodingQp,
             picture_control_set_ptr->slice_type);
-
+#endif
         // Initial Rate Estimatimation of the syntax elements
         if (!md_rate_estimation_array->initialized)
             av1_estimate_syntax_rate(

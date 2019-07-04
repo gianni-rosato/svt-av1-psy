@@ -44,6 +44,7 @@ extern "C" {
 #define QPS_TUNING                        1 // Tune the QPS algorithm to consider ALR_REF filtering and movement of the pictures
                                             // Update to a more accurate QPS complexity metric
 #define CDEF_AVX_OPT                      1
+#define ENABLE_CDF_UPDATE                 1 // Add the support for end of frame CDF update
 #define MR_MODE                           0
 #define EIGTH_PEL_MV                      0
 #define ALTREF_TF_EIGHTH_PEL_SEARCH       1 // Add 1/8 sub-pel search/compensation @ Temporal Filtering

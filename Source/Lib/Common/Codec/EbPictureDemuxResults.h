@@ -17,6 +17,9 @@ typedef enum EbPicType
     EB_PIC_INVALID = 0,
     EB_PIC_INPUT = 1,
     EB_PIC_REFERENCE = 2
+#if ENABLE_CDF_UPDATE
+    , EB_PIC_FEEDBACK = 3
+#endif
 } EbPicType;
 
 /**************************************

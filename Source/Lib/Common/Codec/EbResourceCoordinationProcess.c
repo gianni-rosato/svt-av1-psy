@@ -625,13 +625,19 @@ void* resource_coordination_kernel(void *input_ptr)
             }
         }
         eb_release_mutex(context_ptr->sequence_control_set_instance_array[instance_index]->config_mutex);
-
+#if ENABLE_CDF_UPDATE
+        // Seque Control Set is released by Rate Control after passing through MDC->MD->ENCDEC->Packetization->RateControl,
+        // in the PictureManager after receiving the reference and in PictureManager after receiving the feedback
+        eb_object_inc_live_count(
+            context_ptr->sequenceControlSetActiveArray[instance_index],
+            3);
+#else
         // Sequence Control Set is released by Rate Control after passing through MDC->MD->ENCDEC->Packetization->RateControl
         //   and in the PictureManager
         eb_object_inc_live_count(
             context_ptr->sequenceControlSetActiveArray[instance_index],
             2);
-
+#endif
         // Set the current SequenceControlSet
         sequence_control_set_ptr = (SequenceControlSet*)context_ptr->sequenceControlSetActiveArray[instance_index]->object_ptr;
 

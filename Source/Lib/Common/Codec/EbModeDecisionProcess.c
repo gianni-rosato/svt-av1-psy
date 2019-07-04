@@ -382,9 +382,10 @@ void reset_mode_decision(
     SequenceControlSet    *sequence_control_set_ptr,
     uint32_t                   segment_index)
 {
+#if !ENABLE_CDF_UPDATE
     EB_SLICE                     slice_type;
     MdRateEstimationContext   *md_rate_estimation_array;
-
+#endif
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
 
     // QP
@@ -406,6 +407,12 @@ void reset_mode_decision(
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
         context_ptr->qp_index,
         picture_control_set_ptr->hbd_mode_decision);
+#if ENABLE_CDF_UPDATE		
+    context_ptr->md_rate_estimation_ptr = picture_control_set_ptr->md_rate_estimation_array;
+    uint32_t  candidateIndex;
+    for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex)
+        context_ptr->fast_candidate_ptr_array[candidateIndex]->md_rate_estimation_ptr = context_ptr->md_rate_estimation_ptr;
+#else
     // Slice Type
     slice_type =
         (picture_control_set_ptr->parent_pcs_ptr->idr_flag == EB_TRUE) ? I_SLICE :
@@ -432,6 +439,7 @@ void reset_mode_decision(
     uint32_t  candidateIndex;
     for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex)
         context_ptr->fast_candidate_ptr_array[candidateIndex]->md_rate_estimation_ptr = md_rate_estimation_array;
+#endif
     // Reset CABAC Contexts
     context_ptr->coeff_est_entropy_coder_ptr = picture_control_set_ptr->coeff_est_entropy_coder_ptr;
 
