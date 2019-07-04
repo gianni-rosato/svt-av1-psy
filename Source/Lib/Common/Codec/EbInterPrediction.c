@@ -303,7 +303,6 @@ void av1_jnt_convolve_2d_c(const uint8_t *src, int32_t src_stride, uint8_t *dst8
                 if (conv_params->use_jnt_comp_avg) {
                     tmp = tmp * conv_params->fwd_offset + res * conv_params->bck_offset;
                     tmp = tmp >> DIST_PRECISION_BITS;
-                    printf("here");
                 }
                 else {
                     tmp += res;
