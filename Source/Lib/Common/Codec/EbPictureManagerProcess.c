@@ -497,7 +497,7 @@ void* picture_manager_kernel(void *input_ptr)
             } while ((referenceQueueIndex != encode_context_ptr->reference_picture_queue_tail_index) && (referenceEntryPtr->picture_number != inputPictureDemuxPtr->picture_number));
 
             //keep the release of SCS here because we still need the encodeContext structure here
-            // Release the Reference's SequenceControlSet    
+            // Release the Reference's SequenceControlSet
             eb_release_object(inputPictureDemuxPtr->sequence_control_set_wrapper_ptr);
 
             break;

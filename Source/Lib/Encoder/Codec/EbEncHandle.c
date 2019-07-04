@@ -1322,7 +1322,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count + enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count + 1, // 1 for packetization
 #else
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count + enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count,
-#endif     
+#endif
             EB_PictureManagerProcessInitCount,
             &enc_handle_ptr->picture_demux_results_producer_fifo_ptr_array,
             &enc_handle_ptr->picture_demux_results_consumer_fifo_ptr_array,
@@ -1708,7 +1708,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 #if ENABLE_CDF_UPDATE
         , enc_handle_ptr->picture_demux_results_producer_fifo_ptr_array[enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count +
         enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count]
-#endif 
+#endif
     );
 
     /************************************
