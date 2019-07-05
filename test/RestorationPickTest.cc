@@ -380,7 +380,6 @@ TEST(EbRestorationPick, DISABLED_compute_stats_speed) {
     int32_t dgd_stride, src_stride;
     int64_t M_org[WIENER_WIN2], M_opt[WIENER_WIN2];
     int64_t H_org[WIENER_WIN2 * WIENER_WIN2], H_opt[WIENER_WIN2 * WIENER_WIN2];
-    bool result = EB_TRUE;
     double time_c, time_o;
     uint64_t start_time_seconds, start_time_useconds;
     uint64_t middle_time_seconds, middle_time_useconds;
@@ -468,7 +467,6 @@ TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
     int32_t dgd_stride, src_stride;
     int64_t M_org[WIENER_WIN2], M_opt[WIENER_WIN2];
     int64_t H_org[WIENER_WIN2 * WIENER_WIN2], H_opt[WIENER_WIN2 * WIENER_WIN2];
-    bool result = EB_TRUE;
     double time_c, time_o;
     uint64_t start_time_seconds, start_time_useconds;
     uint64_t middle_time_seconds, middle_time_useconds;

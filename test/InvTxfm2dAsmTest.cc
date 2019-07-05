@@ -380,11 +380,6 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
     }
 
     void run_HandleTransform_match_test() {
-        using FwdTxfm2dFunc = void (*)(int16_t * input,
-                                       int32_t * output,
-                                       uint32_t stride,
-                                       TxType tx_type,
-                                       uint8_t bd);
         using HandleTxfmFunc = uint64_t (*)(int32_t * output);
         const int num_htf_sizes = 5;
         const TxSize htf_tx_size[num_htf_sizes] = {
@@ -417,20 +412,14 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
             for (int i = 0; i < MAX_TX_SIZE; i++) {
                 for (int j = 0; j < MAX_TX_SIZE; j++) {
                     ASSERT_EQ(input_[i * MAX_TX_SIZE + j],
-                                input[i * MAX_TX_SIZE + j])
-                        << " tx_size: " << tx_size << " " << j << " x "
-                        << i;
+                              input[i * MAX_TX_SIZE + j])
+                        << " tx_size: " << tx_size << " " << j << " x " << i;
                 }
             }
         }
     }
 
     void run_HandleTransform_speed_test() {
-        using FwdTxfm2dFunc = void (*)(int16_t * input,
-                                       int32_t * output,
-                                       uint32_t stride,
-                                       TxType tx_type,
-                                       uint8_t bd);
         using HandleTxfmFunc = uint64_t (*)(int32_t * output);
         const int num_htf_sizes = 5;
         const TxSize htf_tx_size[num_htf_sizes] = {
@@ -562,16 +551,15 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
             }
         }
 
-        fwd_txfm_func[tx_size](pixel_input_, input_, stride_, tx_type,
-            static_cast<uint8_t>(bd_));
+        fwd_txfm_func[tx_size](
+            pixel_input_, input_, stride_, tx_type, static_cast<uint8_t>(bd_));
         // post-process, re-pack the coeffcients
-        uint64_t energy = 0;
         switch (tx_size) {
-        case TX_64X64: energy = HandleTransform64x64_c(input_); break;
-        case TX_64X32: energy = HandleTransform64x32_c(input_); break;
-        case TX_32X64: energy = HandleTransform32x64_c(input_); break;
-        case TX_64X16: energy = HandleTransform64x16_c(input_); break;
-        case TX_16X64: energy = HandleTransform16x64_c(input_); break;
+        case TX_64X64: HandleTransform64x64_c(input_); break;
+        case TX_64X32: HandleTransform64x32_c(input_); break;
+        case TX_32X64: HandleTransform32x64_c(input_); break;
+        case TX_64X16: HandleTransform64x16_c(input_); break;
+        case TX_16X64: HandleTransform16x64_c(input_); break;
         default: break;
         }
         return;

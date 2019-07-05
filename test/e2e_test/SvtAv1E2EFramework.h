@@ -128,6 +128,7 @@ class SvtAv1E2ETestFramework : public ::testing::TestWithParam<EncTestSetting> {
 
   public:
     static VideoSource *prepare_video_src(const TestVideoVector &vector);
+    static EbColorFormat setup_video_format(VideoColorFormat fmt);
     static void setup_src_param(const VideoSource *source,
                                 EbSvtAv1EncConfiguration &config);
     /** get reconstructed frame from encoder, it should call after send data

@@ -66,7 +66,7 @@ using InvTxfm1dParam = std::tuple<TxfmType, int>;
 class AV1InvTxfm1dTest : public ::testing::TestWithParam<InvTxfm1dParam> {
   public:
     AV1InvTxfm1dTest()
-        : txfm_type_(TEST_GET_PARAM(0)), max_error_(TEST_GET_PARAM(1)) {
+        : max_error_(TEST_GET_PARAM(1)), txfm_type_(TEST_GET_PARAM(0)) {
         txfm_size_ = get_txfm1d_size(txfm_type_);
     }
 

@@ -67,7 +67,7 @@ using FwdTxfm1dParam = std::tuple<TxfmType, int>;
 class AV1FwdTxfm1dTest : public ::testing::TestWithParam<FwdTxfm1dParam> {
   public:
     AV1FwdTxfm1dTest()
-        : txfm_type_(TEST_GET_PARAM(0)), max_error_(TEST_GET_PARAM(1)) {
+        : max_error_(TEST_GET_PARAM(1)), txfm_type_(TEST_GET_PARAM(0)) {
         txfm_size_ = get_txfm1d_size(txfm_type_);
     }
 

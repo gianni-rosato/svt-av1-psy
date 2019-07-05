@@ -195,13 +195,16 @@ TEST(Entropy_BitstreamWriter, write_literal_extreme_int) {
 }
 
 TEST(Entropy_BitstreamWriter, write_symbol_no_update) {
-    AomWriter bw = {0};
+    AomWriter bw;
+    memset(&bw, 0, sizeof(bw));
+
     const int buffer_size = 1024;
     uint8_t stream_buffer[buffer_size];
 
     // get default cdf
     const int base_qindex = 20;
-    FRAME_CONTEXT fc = {0};
+    FRAME_CONTEXT fc;
+    memset(&fc, 0, sizeof(fc));
     av1_default_coef_probs(&fc, base_qindex);
 
     // write random bit sequences and expect read out
@@ -231,14 +234,18 @@ TEST(Entropy_BitstreamWriter, write_symbol_no_update) {
 }
 
 TEST(Entropy_BitstreamWriter, write_symbol_with_update) {
-    AomWriter bw = {0};
+    AomWriter bw;
+    memset(&bw, 0, sizeof(bw));
+
     const int buffer_size = 1024;
     uint8_t stream_buffer[buffer_size];
     bw.allow_update_cdf = 1;
 
     // get default cdf
     const int base_qindex = 20;
-    FRAME_CONTEXT fc = {0};
+    FRAME_CONTEXT fc;
+    memset(&fc, 0, sizeof(fc));
+
     av1_default_coef_probs(&fc, base_qindex);
 
     // write random bit sequences and expect read out

@@ -206,10 +206,6 @@ typedef struct {
 #define OBU_MAX_LENGTH_FIELD_SIZE 8
 
 // bit reader
-static size_t aom_rb_bytes_read(struct aom_read_bit_buffer *rb) {
-    return (rb->bit_offset + 7) >> 3;
-}
-
 static int aom_rb_read_bit(struct aom_read_bit_buffer *rb) {
     const uint32_t off = rb->bit_offset;
     const uint32_t p = off >> 3;
@@ -239,13 +235,6 @@ static uint32_t aom_rb_read_unsigned_literal(struct aom_read_bit_buffer *rb,
     for (bit = bits - 1; bit >= 0; bit--)
         value |= (uint32_t)aom_rb_read_bit(rb) << bit;
     return value;
-}
-
-static int aom_rb_read_inv_signed_literal(struct aom_read_bit_buffer *rb,
-                                          int bits) {
-    const int nbits = sizeof(unsigned) * 8 - bits - 1;
-    const unsigned value = (unsigned)aom_rb_read_literal(rb, bits + 1) << nbits;
-    return ((int)value) >> nbits;
 }
 
 static uint32_t aom_rb_read_uvlc(struct aom_read_bit_buffer *rb) {
@@ -980,7 +969,9 @@ int parse_sequence_header_from_file(const char *ivf_file) {
         AomCodecErr err = AOM_CODEC_OK;
         do {
             // one ivf frame may contain multiple obus
-            ObuHeader ou = {0};
+            ObuHeader ou;
+            memset(&ou, 0, sizeof(ou));
+
             struct aom_read_bit_buffer rb = {
                 frame_buf, frame_buf + frame_sz, 0, NULL, NULL};
 
@@ -1014,7 +1005,8 @@ int parse_sequence_header_from_file(const char *ivf_file) {
                 if (ou.type == OBU_SEQUENCE_HEADER) {
                     struct aom_read_bit_buffer rb = {
                         frame_buf, frame_buf + frame_sz, 0, NULL, NULL};
-                    SequenceHeader sqs_headers = {0};
+                    SequenceHeader sqs_headers;
+                    memset(&sqs_headers, 0, sizeof(sqs_headers));
                     if (read_sequence_header_obu(&sqs_headers, &rb) == 0) {
                         printf("read seqence header fail\n");
                     }
@@ -1041,7 +1033,8 @@ void SequenceHeaderParser::input_obu_data(const uint8_t *obu_data,
         struct aom_read_bit_buffer rb = {
             frame_buf, frame_buf + frame_sz, 0, NULL, NULL};
         ObuHeader ou;
-        AomCodecErr err = read_obu_header(&rb, 0, &ou);
+        memset(&ou, 0, sizeof(ou));
+        read_obu_header(&rb, 0, &ou);
         if (ou.has_size_field) {
             uint64_t u64_payload_length = 0;
             int header_size = ou.has_extension ? 2 : 1;
@@ -1064,8 +1057,9 @@ void SequenceHeaderParser::input_obu_data(const uint8_t *obu_data,
                 // check the ou type and parse sequence header
                 struct aom_read_bit_buffer rb = {
                     frame_buf, frame_buf + frame_sz, 0, NULL, NULL};
-                SequenceHeader sqs_headers = {0};
-                ASSERT_NE(read_sequence_header_obu(&sqs_headers, &rb), 0)
+                SequenceHeader sqs_headers;
+                memset(&sqs_headers, 0, sizeof(sqs_headers));
+                ASSERT_NE(read_sequence_header_obu(&sqs_headers, &rb), 0u)
                     << "read seqence header fail";
                 profile_ = sqs_headers.profile;
                 switch (sqs_headers.sb_size) {

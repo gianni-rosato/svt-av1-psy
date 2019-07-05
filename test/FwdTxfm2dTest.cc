@@ -66,9 +66,9 @@ using FwdTxfm2dParam = std::tuple<TxSize, TxType, int>;
 class AV1FwdTxfm2dTest : public ::testing::TestWithParam<FwdTxfm2dParam> {
   public:
     AV1FwdTxfm2dTest()
-        : txfm_size_(TEST_GET_PARAM(0)),
-          txfm_type_(TEST_GET_PARAM(1)),
-          max_error_(TEST_GET_PARAM(2)) {
+        : max_error_(TEST_GET_PARAM(2)),
+          txfm_size_(TEST_GET_PARAM(0)),
+          txfm_type_(TEST_GET_PARAM(1)) {
         Av1TransformConfig(txfm_type_, txfm_size_, &cfg_);
     }
 

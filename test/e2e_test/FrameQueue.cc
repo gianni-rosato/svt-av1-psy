@@ -328,6 +328,9 @@ class RefQueue : public ICompareQueue, FrameQueueBuffer {
                                        friend_frame->planes[1],
                                        friend_frame->planes[2]);
         }
+#else
+        (void)frame;
+        (void)friend_frame;
 #endif
     }
 
