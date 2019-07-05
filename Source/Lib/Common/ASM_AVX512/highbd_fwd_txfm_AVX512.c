@@ -4,6 +4,7 @@
 #include "EbTransforms.h"
 #include <immintrin.h>
 
+#ifndef NON_AVX512_SUPPORT
 const int32_t *cospi_arr(int32_t n);
 const int32_t *sinpi_arr(int32_t n);
 
@@ -2768,3 +2769,4 @@ void av1_fwd_txfm2d_32x16_avx512(int16_t *input, int32_t *output, uint32_t strid
         5793);
     (void)bd;
 }
+#endif
