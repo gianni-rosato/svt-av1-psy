@@ -69,15 +69,27 @@ class SADTestBase : public ::testing::Test {
         height_ = height;
         src_stride_ = ref1_stride_ = ref2_stride_ = width_ * 2;
         test_pattern_ = test_pattern;
+        src_aligned_ = nullptr;
+        ref1_aligned_ = nullptr;
+        ref2_aligned_ = nullptr;
     }
 
     void SetUp() override {
-        src_aligned_ =
-            reinterpret_cast<uint8_t *>(((intptr_t)src_data_ + 31) & ~31);
-        ref1_aligned_ =
-            reinterpret_cast<uint8_t *>(((intptr_t)ref1_data_ + 31) & ~31);
-        ref2_aligned_ =
-            reinterpret_cast<uint8_t *>(((intptr_t)ref2_data_ + 31) & ~31);
+        src_aligned_ = (uint8_t *)aom_memalign(32, MAX_BLOCK_SIZE);
+        ref1_aligned_ = (uint8_t *)aom_memalign(32, MAX_BLOCK_SIZE);
+        ref2_aligned_ = (uint8_t *)aom_memalign(32, MAX_BLOCK_SIZE);
+        ASSERT_NE(src_aligned_, nullptr);
+        ASSERT_NE(ref1_aligned_, nullptr);
+        ASSERT_NE(ref2_aligned_, nullptr);
+    }
+
+    void TearDown() override {
+        if (src_aligned_)
+            aom_free(src_aligned_);
+        if (ref1_aligned_)
+            aom_free(ref1_aligned_);
+        if (ref2_aligned_)
+            aom_free(ref2_aligned_);
     }
 
     void prepare_data() {
@@ -153,9 +165,6 @@ class SADTestBase : public ::testing::Test {
     uint8_t *src_aligned_;
     uint8_t *ref1_aligned_;
     uint8_t *ref2_aligned_;
-    DECLARE_ALIGNED(32, uint8_t, src_data_[MAX_BLOCK_SIZE + 31]);
-    DECLARE_ALIGNED(32, uint8_t, ref1_data_[MAX_BLOCK_SIZE + 31]);
-    DECLARE_ALIGNED(32, uint8_t, ref2_data_[MAX_BLOCK_SIZE + 31]);
 };
 
 /**

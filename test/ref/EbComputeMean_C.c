@@ -13,114 +13,102 @@ typedef uint64_t (*EbComputeMeanFunc)(uint8_t* input_samples,
                                       uint32_t input_area_height);
 
 /*******************************************
- * ComputeMean
+ * compute_mean
  *   returns the mean of a block
  *******************************************/
-uint64_t ComputeMean(
-    uint8_t* inputSamples,     // input parameter, input samples Ptr
-    uint32_t inputStride,      // input parameter, input stride
-    uint32_t inputAreaWidth,   // input parameter, input area width
-    uint32_t inputAreaHeight)  // input parameter, input area height
+uint64_t compute_mean(
+    uint8_t* input_samples,     /**< input parameter, input samples Ptr */
+    uint32_t input_stride,      /**< input parameter, input stride */
+    uint32_t input_area_width,  /**< input parameter, input area width */
+    uint32_t input_area_height) /**< input parameter, input area height */
 {
-    uint32_t horizontalIndex;
-    uint32_t verticalIndex;
-    uint64_t blockMean = 0;
+    uint32_t hi, vi;
+    uint64_t block_mean = 0;
 
-    for (verticalIndex = 0; verticalIndex < inputAreaHeight; verticalIndex++) {
-        for (horizontalIndex = 0; horizontalIndex < inputAreaWidth;
-             horizontalIndex++) {
-            blockMean += inputSamples[horizontalIndex];
+    for (vi = 0; vi < input_area_height; vi++) {
+        for (hi = 0; hi < input_area_width; hi++) {
+            block_mean += input_samples[hi];
         }
-        inputSamples += inputStride;
+        input_samples += input_stride;
     }
 
-    blockMean = (blockMean << (VARIANCE_PRECISION >> 1)) /
-                (inputAreaWidth * inputAreaHeight);
+    block_mean = (block_mean << (VARIANCE_PRECISION >> 1)) /
+                 (input_area_width * input_area_height);
 
-    return blockMean;
+    return block_mean;
 }
 
 /*******************************************
- * ComputeMeanOfSquaredValues
+ * compute_mean_squared_values
  *   returns the Mean of Squared Values
  *******************************************/
-uint64_t ComputeMeanOfSquaredValues(
-    uint8_t* inputSamples,     // input parameter, input samples Ptr
-    uint32_t inputStride,      // input parameter, input stride
-    uint32_t inputAreaWidth,   // input parameter, input area width
-    uint32_t inputAreaHeight)  // input parameter, input area height
+uint64_t compute_mean_squared_values(
+    uint8_t* input_samples,     /**< input parameter, input samples Ptr */
+    uint32_t input_stride,      /**< input parameter, input stride */
+    uint32_t input_area_width,  /**< input parameter, input area width */
+    uint32_t input_area_height) /**< input parameter, input area height */
 {
-    uint32_t horizontalIndex;
-    uint32_t verticalIndex;
-    uint64_t blockMean = 0;
+    uint32_t hi, vi;
+    uint64_t block_mean = 0;
 
-    for (verticalIndex = 0; verticalIndex < inputAreaHeight; verticalIndex++) {
-        for (horizontalIndex = 0; horizontalIndex < inputAreaWidth;
-             horizontalIndex++) {
-            blockMean +=
-                inputSamples[horizontalIndex] * inputSamples[horizontalIndex];
+    for (vi = 0; vi < input_area_height; vi++) {
+        for (hi = 0; hi < input_area_width; hi++) {
+            block_mean += input_samples[hi] * input_samples[hi];
         }
-        inputSamples += inputStride;
+        input_samples += input_stride;
     }
 
-    blockMean =
-        (blockMean << VARIANCE_PRECISION) / (inputAreaWidth * inputAreaHeight);
+    block_mean = (block_mean << VARIANCE_PRECISION) /
+                 (input_area_width * input_area_height);
 
-    return blockMean;
+    return block_mean;
 }
 
-uint64_t ComputeSubMeanOfSquaredValues(
-    uint8_t* inputSamples,     // input parameter, input samples Ptr
-    uint32_t inputStride,      // input parameter, input stride
-    uint32_t inputAreaWidth,   // input parameter, input area width
-    uint32_t inputAreaHeight)  // input parameter, input area height
+uint64_t compute_sub_mean_squared_values(
+    uint8_t* input_samples,     /**< input parameter, input samples Ptr */
+    uint32_t input_stride,      /**< input parameter, input stride */
+    uint32_t input_area_width,  /**< input parameter, input area width */
+    uint32_t input_area_height) /**< input parameter, input area height */
 {
-    uint32_t horizontalIndex;
-    uint32_t verticalIndex = 0;
-    uint64_t blockMean = 0;
+    uint32_t hi, vi;
+    uint64_t block_mean = 0;
     uint16_t skip = 0;
 
-    for (verticalIndex = 0; skip < inputAreaHeight;
-         skip = verticalIndex + verticalIndex) {
-        for (horizontalIndex = 0; horizontalIndex < inputAreaWidth;
-             horizontalIndex++) {
-            blockMean +=
-                inputSamples[horizontalIndex] * inputSamples[horizontalIndex];
+    for (vi = 0; skip < input_area_height; skip = vi + vi) {
+        for (hi = 0; hi < input_area_width; hi++) {
+            block_mean += input_samples[hi] * input_samples[hi];
         }
-        inputSamples += 2 * inputStride;
-        verticalIndex++;
+        input_samples += 2 * input_stride;
+        vi++;
     }
 
-    blockMean =
-        blockMean
-        << 11;  // VARIANCE_PRECISION) / (inputAreaWidth * inputAreaHeight);
+    block_mean =
+        block_mean
+        << 11;  // VARIANCE_PRECISION) / (input_area_width * input_area_height);
 
-    return blockMean;
+    return block_mean;
 }
 
-uint64_t ComputeSubMean8x8(
-    uint8_t* inputSamples,     // input parameter, input samples Ptr
-    uint32_t inputStride,      // input parameter, input stride
-    uint32_t inputAreaWidth,   // input parameter, input area width
-    uint32_t inputAreaHeight)  // input parameter, input area height
+uint64_t compute_sub_mean(
+    uint8_t* input_samples,     /**< input parameter, input samples Ptr */
+    uint32_t input_stride,      /**< input parameter, input stride */
+    uint32_t input_area_width,  /**< input parameter, input area width */
+    uint32_t input_area_height) /**< input parameter, input area height */
 {
-    uint32_t horizontalIndex;
-    uint32_t verticalIndex = 0;
-    uint64_t blockMean = 0;
+    uint32_t hi, vi;
+    uint64_t block_mean = 0;
     uint16_t skip = 0;
 
-    for (verticalIndex = 0; skip < inputAreaHeight;
-         skip = verticalIndex + verticalIndex) {
-        for (horizontalIndex = 0; horizontalIndex < inputAreaWidth;
-             horizontalIndex++) {
-            blockMean += inputSamples[horizontalIndex];
+    for (vi = 0; skip < input_area_height; skip = vi + vi) {
+        for (hi = 0; hi < input_area_width; hi++) {
+            block_mean += input_samples[hi];
         }
-        inputSamples += 2 * inputStride;
-        verticalIndex++;
+        input_samples += 2 * input_stride;
+        vi++;
     }
 
-    blockMean = blockMean << 3;  // (VARIANCE_PRECISION >> 1)) /
-                                 // (inputAreaWidth * inputAreaHeight/2)
+    block_mean = block_mean << 3;  // (VARIANCE_PRECISION >> 1)) /
+                                   // (input_area_width * input_area_height/2)
 
-    return blockMean;
+    return block_mean;
 }

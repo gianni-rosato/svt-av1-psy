@@ -95,7 +95,7 @@ TEST(ComputeMeanTest, run_compute_mean_test) {
                 compute_mean8x8_sse2_intrin(input_data, 8, 8, 8);
             uint64_t output_avx2_tst =
                 compute_mean8x8_avx2_intrin(input_data, 8, 8, 8);
-            uint64_t output_c_ref = ComputeMean(input_data, 8, 8, 8);
+            uint64_t output_c_ref = compute_mean(input_data, 8, 8, 8);
 
             // compare results
             ASSERT_EQ(output_sse2_tst, output_c_ref)
@@ -127,7 +127,7 @@ TEST(ComputeMeanTest, run_compute_mean_squared_values_test) {
                 compute_mean_of_squared_values8x8_sse2_intrin(
                     input_data, 8, 8, 8);
             uint64_t output_c_ref =
-                ComputeMeanOfSquaredValues(input_data, 8, 8, 8);
+                compute_mean_squared_values(input_data, 8, 8, 8);
 
             // compare results
             ASSERT_EQ(output_sse2_tst, output_c_ref)
@@ -153,7 +153,7 @@ TEST(ComputeMeanTest, run_compute_sub_mean_test) {
             // compute mean
             uint64_t output_sse2_tst =
                 compute_sub_mean8x8_sse2_intrin(input_data, 8);
-            uint64_t output_c_ref = ComputeSubMean8x8(input_data, 8, 8, 8);
+            uint64_t output_c_ref = compute_sub_mean(input_data, 8, 8, 8);
 
             // compare results
             ASSERT_EQ(output_sse2_tst, output_c_ref)
@@ -181,7 +181,7 @@ TEST(ComputeMeanTest, run_compute_sub_mean_squared_values_test) {
                 compute_subd_mean_of_squared_values8x8_sse2_intrin(input_data,
                                                                    8);
             uint64_t output_c_ref =
-                ComputeSubMeanOfSquaredValues(input_data, 8, 8, 8);
+                compute_sub_mean_squared_values(input_data, 8, 8, 8);
 
             // compare results
             ASSERT_EQ(output_sse2_tst, output_c_ref)
