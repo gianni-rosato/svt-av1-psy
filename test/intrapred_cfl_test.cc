@@ -79,9 +79,11 @@ class CflPredTest {
                 // prepare data
                 for (int y = 0; y < c_h; ++y) {
                     for (int x = 0; x < c_w; ++x) {
-                        pred_buf_q3[y * c_stride + x] = pred_rnd.random();
+                        pred_buf_q3[y * c_stride + x] =
+                            (Sample)pred_rnd.random();
                         dst_buf_ref_[y * c_stride + x] =
-                            dst_buf_tst_[y * c_stride + x] = dst_rnd.random();
+                            dst_buf_tst_[y * c_stride + x] =
+                                (Sample)dst_rnd.random();
                     }
                 }
 

@@ -19,6 +19,12 @@
 #include "gtest/gtest.h"
 #include "RefDecoder.h"
 #include "ParseUtil.h"
+#ifdef _MSC_VER
+// The given function is local and not referenced in the body of the module;
+// therefore, the function is dead code.
+// Disable it since the aom_codec_control_xxx is not used.
+#pragma warning(disable : 4505)
+#endif
 
 /** from aom/common/blockd.h */
 typedef enum {

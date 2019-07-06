@@ -181,8 +181,8 @@ class DrPredTest {
                 above_data_[i] = left_data_[i] = (1 << bd_) - 1;
         } else {
             for (int i = 0; i < neighbor_buf_size; ++i) {
-                above_data_[i] = rnd.random();
-                left_data_[i] = rnd.random();
+                above_data_[i] = (Sample)rnd.random();
+                left_data_[i] = (Sample)rnd.random();
             }
         }
     }

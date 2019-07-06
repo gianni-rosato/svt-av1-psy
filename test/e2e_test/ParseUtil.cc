@@ -462,7 +462,7 @@ AomCodecErr read_obu_header(struct aom_read_bit_buffer *rb, int is_annexb,
 // sequence header parser
 static int read_bitstream_level(BitstreamLevel *bl,
                                 struct aom_read_bit_buffer *rb) {
-    const uint8_t seq_level_idx = aom_rb_read_literal(rb, LEVEL_BITS);
+    const uint8_t seq_level_idx = (uint8_t)aom_rb_read_literal(rb, LEVEL_BITS);
     if (!is_valid_seq_level_idx(seq_level_idx))
         return 0;
     bl->major = (seq_level_idx >> LEVEL_MINOR_BITS) + LEVEL_MAJOR_MIN;
@@ -854,7 +854,7 @@ uint32_t read_sequence_header_obu(SequenceHeader *seq_params,
             // This is the seq_level_idx[i] > 7 check in the spec. seq_level_idx
             // 7 is equivalent to level 3.3.
             if (seq_params->level[i].major > 3)
-                seq_params->tier[i] = aom_rb_read_bit(rb);
+                seq_params->tier[i] = (uint8_t)aom_rb_read_bit(rb);
             else
                 seq_params->tier[i] = 0;
             if (seq_params->decoder_model_info_present_flag) {
@@ -950,7 +950,9 @@ uint32_t read_sequence_header_obu(SequenceHeader *seq_params,
 }
 
 int parse_sequence_header_from_file(const char *ivf_file) {
-    FILE *f = fopen(ivf_file, "rb");
+    FILE *f;
+    FOPEN(f, ivf_file, "rb");
+
     struct AvxInputContext input_ctx = {ivf_file, f, 0, 0, 0, {0, 0}};
     if (!file_is_ivf(&input_ctx)) {
         printf("File is NOT valid ivf\n");
@@ -1003,11 +1005,11 @@ int parse_sequence_header_from_file(const char *ivf_file) {
 
                 // check the ou type and parse sequence header
                 if (ou.type == OBU_SEQUENCE_HEADER) {
-                    struct aom_read_bit_buffer rb = {
+                    struct aom_read_bit_buffer rb1 = {
                         frame_buf, frame_buf + frame_sz, 0, NULL, NULL};
                     SequenceHeader sqs_headers;
                     memset(&sqs_headers, 0, sizeof(sqs_headers));
-                    if (read_sequence_header_obu(&sqs_headers, &rb) == 0) {
+                    if (read_sequence_header_obu(&sqs_headers, &rb1) == 0) {
                         printf("read seqence header fail\n");
                     }
                 }
@@ -1055,11 +1057,11 @@ void SequenceHeaderParser::input_obu_data(const uint8_t *obu_data,
             frame_sz -= value_len;
             if (ou.type == OBU_SEQUENCE_HEADER) {
                 // check the ou type and parse sequence header
-                struct aom_read_bit_buffer rb = {
+                struct aom_read_bit_buffer rb1 = {
                     frame_buf, frame_buf + frame_sz, 0, NULL, NULL};
                 SequenceHeader sqs_headers;
                 memset(&sqs_headers, 0, sizeof(sqs_headers));
-                ASSERT_NE(read_sequence_header_obu(&sqs_headers, &rb), 0u)
+                ASSERT_NE(read_sequence_header_obu(&sqs_headers, &rb1), 0u)
                     << "read seqence header fail";
                 profile_ = sqs_headers.profile;
                 switch (sqs_headers.sb_size) {
@@ -1098,7 +1100,7 @@ void SequenceHeaderParser::input_obu_data(const uint8_t *obu_data,
                     sqs_headers.enable_restoration;
             }
             frame_buf += u64_payload_length;
-            frame_sz -= u64_payload_length;
+            frame_sz -= (uint32_t)u64_payload_length;
         }
     } while (err == 0 && frame_sz > 0);
 }

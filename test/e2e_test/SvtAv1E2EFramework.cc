@@ -41,14 +41,14 @@ VideoSource *SvtAv1E2ETestFramework::prepare_video_src(
                                        std::get<2>(vector),
                                        std::get<3>(vector),
                                        std::get<4>(vector),
-                                       std::get<5>(vector));
+                                       (uint8_t)std::get<5>(vector));
         break;
     case Y4M_VIDEO_FILE:
         video_src = new Y4MVideoSource(std::get<0>(vector),
                                        std::get<2>(vector),
                                        std::get<3>(vector),
                                        std::get<4>(vector),
-                                       std::get<5>(vector),
+                                       (uint8_t)std::get<5>(vector),
                                        std::get<6>(vector));
         break;
     default: assert(0); break;
@@ -418,7 +418,8 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                 EbBufferHeaderType *enc_out = nullptr;
                 {
                     TimeAutoCount counter(ENCODING, collect_);
-                    int pic_send_done = (src_file_eos && rec_file_eos) ? 1 : 0;
+                    uint8_t pic_send_done =
+                        (src_file_eos && rec_file_eos) ? 1 : 0;
                     return_error = eb_svt_get_packet(
                         av1enc_ctx_.enc_handle, &enc_out, pic_send_done);
                     ASSERT_NE(return_error, EB_ErrorMax)

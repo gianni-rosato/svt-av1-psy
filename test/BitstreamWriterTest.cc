@@ -15,6 +15,9 @@
 #include <stdlib.h>
 #include <random>
 #include "EbCabacContextModel.h"
+#if defined(CHAR_BIT)
+#undef CHAR_BIT  // defined in clang/9.1.0/include/limits.h
+#endif
 #include "EbDecBitReader.h"
 #include "gtest/gtest.h"
 #include "random.h"
@@ -120,25 +123,25 @@ class BitstreamWriterTest : public ::testing::Test {
         case 3:
             // uniform distribution between 0 ~ 255
             for (int i = 0; i < total_probas; ++i)
-                probas[i] = normal_probs_->random();
+                probas[i] = (uint8_t)normal_probs_->random();
             break;
         case 4:
             // low probability
             for (int i = 0; i < total_probas; ++i)
-                probas[i] = low_probs_->random();
+                probas[i] = (uint8_t)low_probs_->random();
             break;
         case 5:
             // high probability
             for (int i = 0; i < total_probas; ++i)
-                probas[i] = 255 - low_probs_->random();
+                probas[i] = 255 - (uint8_t)low_probs_->random();
             break;
         case 6:
         default:
             // mix high and low probability
             for (int i = 0; i < total_probas; ++i) {
                 bool flip = flip_dist(gen_);
-                probas[i] =
-                    flip ? low_probs_->random() : 255 - low_probs_->random();
+                probas[i] = flip ? (uint8_t)low_probs_->random()
+                                 : 255 - (uint8_t)low_probs_->random();
             }
             break;
         }

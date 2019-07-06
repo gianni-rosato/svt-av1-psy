@@ -70,6 +70,22 @@ class AV1InvTxfm1dTest : public ::testing::TestWithParam<InvTxfm1dParam> {
         txfm_size_ = get_txfm1d_size(txfm_type_);
     }
 
+    void SetUp() override {
+        input_ = reinterpret_cast<int32_t *>(
+            aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
+        output_ = reinterpret_cast<int32_t *>(
+            aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
+        inv_output_ = reinterpret_cast<int32_t *>(
+            aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
+    }
+
+    void TearDown() override {
+        aom_free(input_);
+        aom_free(output_);
+        aom_free(inv_output_);
+        aom_clear_system_state();
+    }
+
     void run_inv_accuracy_check() {
         SVTRandom rnd(10, true);
         const int count_test_block = 5000;
@@ -105,9 +121,9 @@ class AV1InvTxfm1dTest : public ::testing::TestWithParam<InvTxfm1dParam> {
     const int max_error_;      /**< max error allowed */
     int txfm_size_;            /**< transform size, max transform is DCT64 */
     const TxfmType txfm_type_; /**< tx type, including dct, iadst, idtx */
-    DECLARE_ALIGNED(32, int32_t, input_[MAX_TX_SIZE]);
-    DECLARE_ALIGNED(32, int32_t, output_[MAX_TX_SIZE]);
-    DECLARE_ALIGNED(32, int32_t, inv_output_[MAX_TX_SIZE]);
+    int32_t *input_;
+    int32_t *output_;
+    int32_t *inv_output_;
 };
 
 TEST_P(AV1InvTxfm1dTest, run_inv_accuracy_check) {

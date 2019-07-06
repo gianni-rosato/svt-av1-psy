@@ -438,10 +438,10 @@ void eb_unit_test_log_ptrdiff(const char *const nameBuf,
     printf("%16s = ", nameBuf);
 
     if (sizeBuf == 1)
-        printf("%" PRIu64 "\n", buf[0]);
+        printf("%td\n", buf[0]);
     else {
         for (uint32_t i = 0; i < sizeBuf; i++) {
-            printf("%10" PRIu64 ",", buf[i]);
+            printf("%10td,", buf[i]);
             if (!((i + 1) % 32))
                 printf("\n  ");
         }

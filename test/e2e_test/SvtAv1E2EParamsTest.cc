@@ -220,10 +220,12 @@ class CodingOptionTest : public SvtAv1E2ETestFramework {
         }
 
         // verify tile row and tile column
-        uint32_t expect_cols = (video_src_->get_width_with_padding() / 4) /
-                               std::pow(2, config->tile_columns);
-        uint32_t expect_rows = (video_src_->get_height_with_padding() / 4) /
-                               std::pow(2, config->tile_rows);
+        uint32_t expect_cols =
+            (uint32_t)((video_src_->get_width_with_padding() / 4) /
+                       std::pow(2, config->tile_columns));
+        uint32_t expect_rows =
+            (uint32_t)((video_src_->get_height_with_padding() / 4) /
+                       std::pow(2, config->tile_rows));
         printf("expect_cols %d, expect_rows %d\n", expect_cols, expect_rows);
         printf("tile_cols %d, tile_rows %d\n",
                stream_info->tile_cols,

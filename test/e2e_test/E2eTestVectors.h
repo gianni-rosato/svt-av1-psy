@@ -17,6 +17,7 @@
 
 #include <map>
 #include "VideoSource.h"
+#include "EbDefinitions.h"
 
 /** @defgroup svt_av1_e2e_test_vector Test vectors for E2E test
  *  Defines the test vectors of E2E test, with file-type, width, height and
@@ -40,12 +41,11 @@ typedef std::tuple<std::string,      /**< file name */
                    VideoColorFormat, /**< color format */
                    uint32_t,         /**< width */
                    uint32_t,         /**< height */
-                   uint8_t,          /**< bit depth */
+                   uint32_t,         /**< bit depth */
                    bool,             /**< compressed 2-bit in 10-bit frame */
                    uint32_t,         /**< start read position in frame */
                    uint32_t> /**< frames to test, (0) means full-frames*/
     TestVideoVector;
-
 const std::vector<TestVideoVector> default_test_vectors = {
     std::make_tuple("park_joy_90p_8_420.y4m", Y4M_VIDEO_FILE, IMG_FMT_420, 160,
                     90, 8, 0, 0, 0),
@@ -126,7 +126,8 @@ static inline const std::vector<EncTestSetting> generate_vector_from_config(
         svt_av1_video_source::VideoFileSource::get_vector_dir();
     cfg_fn = cfg_fn + '/' + config_file;
 
-    FILE* file_handle = fopen(cfg_fn.c_str(), "rt");
+    FILE* file_handle;
+    FOPEN(file_handle, cfg_fn.c_str(), "rt");
     if (file_handle != nullptr) {
         char line[1024] = {0};
         while (fgets(line, 1024, file_handle) != nullptr) {
@@ -168,7 +169,7 @@ static inline const std::vector<EncTestSetting> generate_vector_from_config(
                                              color_fmt_type,
                                              w,
                                              h,
-                                             bit_depth,
+                                             (uint8_t)bit_depth,
                                              compressed_10bit,
                                              start_frame,
                                              frame_count));

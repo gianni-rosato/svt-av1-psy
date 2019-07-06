@@ -178,6 +178,28 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
         aom_clear_system_state();
     }
 
+    void SetUp() override {
+        pixel_input_ = reinterpret_cast<int16_t *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(int16_t)));
+        input_ = reinterpret_cast<int32_t *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(int32_t)));
+        output_test_ = reinterpret_cast<uint16_t *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(uint16_t)));
+        output_ref_ = reinterpret_cast<uint16_t *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(uint16_t)));
+        lowbd_output_test_ = reinterpret_cast<uint8_t *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(uint8_t)));
+    }
+
+    void TearDown() override {
+        aom_free(pixel_input_);
+        aom_free(input_);
+        aom_free(output_test_);
+        aom_free(output_ref_);
+        aom_free(lowbd_output_test_);
+        aom_clear_system_state();
+    }
+
     void run_sqr_txfm_match_test(const TxSize tx_size, int asm_type) {
         const int width = tx_size_wide[tx_size];
         const int height = tx_size_high[tx_size];
@@ -401,8 +423,8 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
         for (int idx = 0; idx < num_htf_sizes; ++idx) {
             const TxSize tx_size = htf_tx_size[idx];
 
-            eb_buf_random_s32(input_, sizeof(input_) / sizeof(*input_));
-            memcpy(input, input_, sizeof(input_));
+            eb_buf_random_s32(input_, MAX_TX_SQUARE);
+            memcpy(input, input_, MAX_TX_SQUARE * sizeof(int32_t));
 
             const uint64_t energy_ref = htf_ref_funcs[idx](input_);
             const uint64_t energy_asm = htf_asm_funcs[idx](input);
@@ -449,8 +471,8 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
             const uint64_t num_loop = 10000000;
             uint64_t energy_ref, energy_asm;
 
-            eb_buf_random_s32(input_, sizeof(input_) / sizeof(*input_));
-            memcpy(input, input_, sizeof(input_));
+            eb_buf_random_s32(input_, MAX_TX_SQUARE);
+            memcpy(input, input_, MAX_TX_SQUARE * sizeof(int32_t));
 
             EbStartTime(&start_time_seconds, &start_time_useconds);
 
@@ -537,11 +559,11 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
             av1_fwd_txfm2d_64x16_c,
         };
 
-        memset(output_ref_, 0, sizeof(output_ref_));
-        memset(output_test_, 0, sizeof(output_test_));
-        memset(input_, 0, sizeof(input_));
-        memset(pixel_input_, 0, sizeof(pixel_input_));
-        memset(lowbd_output_test_, 0, sizeof(lowbd_output_test_));
+        memset(output_ref_, 0, MAX_TX_SQUARE * sizeof(uint16_t));
+        memset(output_test_, 0, MAX_TX_SQUARE * sizeof(uint16_t));
+        memset(input_, 0, MAX_TX_SQUARE * sizeof(int32_t));
+        memset(pixel_input_, 0, MAX_TX_SQUARE * sizeof(int16_t));
+        memset(lowbd_output_test_, 0, MAX_TX_SQUARE * sizeof(uint8_t));
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 pixel_input_[i * stride_ + j] =
@@ -571,11 +593,11 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<int> {
 
     const int bd_; /**< input param 8bit or 10bit */
     static const int stride_ = MAX_TX_SIZE;
-    DECLARE_ALIGNED(32, int16_t, pixel_input_[MAX_TX_SQUARE]);
-    DECLARE_ALIGNED(32, int32_t, input_[MAX_TX_SQUARE]);
-    DECLARE_ALIGNED(32, uint16_t, output_test_[MAX_TX_SQUARE]);
-    DECLARE_ALIGNED(32, uint16_t, output_ref_[MAX_TX_SQUARE]);
-    DECLARE_ALIGNED(32, uint8_t, lowbd_output_test_[MAX_TX_SQUARE]);
+    int16_t *pixel_input_;
+    int32_t *input_;
+    uint16_t *output_test_;
+    uint16_t *output_ref_;
+    uint8_t *lowbd_output_test_;
 };
 
 TEST_P(InvTxfm2dAsmTest, sqr_txfm_match_test) {

@@ -28,8 +28,8 @@ include_directories(${PROJECT_SOURCE_DIR}/test/
 include(../third_party/googletest/cmake/internal_utils.cmake)
 
 if(MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4 -D_ALLOW_KEYWORD_MACROS")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 -D_ALLOW_KEYWORD_MACROS")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_ALLOW_KEYWORD_MACROS")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_ALLOW_KEYWORD_MACROS")
 endif()
 
 # When other libraries are using a shared version of runtime libraries,
