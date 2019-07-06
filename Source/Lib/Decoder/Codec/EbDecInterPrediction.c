@@ -238,8 +238,7 @@ void svtav1_predict_inter_block(
     sub_y = part_info->subsampling_y;
     bool sub8_w = (block_size_wide[bsize] == 4) && sub_x;
     bool sub8_h = (block_size_high[bsize] == 4) && sub_y;
-    if (sub8_h || sub8_w)
-    {
+    if (sub8_h || sub8_w) {
         int32_t i, j;
         /* Floor and Ceil to nearest 8x8 blks */
         const int row_start = sub8_h ? (mi_row & (~1)) : mi_row;
