@@ -2689,15 +2689,6 @@ void ResidualKernel_avx2(
     }
 }
 
-static INLINE void Distortion_AVX2_INTRIN(const __m256i input,
-    const __m256i recon, __m256i *const sum) {
-    const __m256i in = _mm256_unpacklo_epi8(input, _mm256_setzero_si256());
-    const __m256i re = _mm256_unpacklo_epi8(recon, _mm256_setzero_si256());
-    const __m256i diff = _mm256_sub_epi16(in, re);
-    const __m256i dist = _mm256_madd_epi16(diff, diff);
-    *sum = _mm256_add_epi32(*sum, dist);
-}
-
 uint64_t spatial_full_distortion_kernel4x_n_avx2_intrin(
     uint8_t   *input,
     uint32_t   input_stride,
@@ -2762,18 +2753,6 @@ uint64_t spatial_full_distortion_kernel8x_n_avx2_intrin(
     return Hadd32_AVX2_INTRIN(sum);
 }
 
-static INLINE void SpatialFullDistortionKernel16_AVX2_INTRIN(
-    const uint8_t *const input, const uint8_t *const recon, __m256i *const sum)
-{
-    const __m128i in8 = _mm_loadu_si128((__m128i *)input);
-    const __m128i re8 = _mm_loadu_si128((__m128i *)recon);
-    const __m256i in16 = _mm256_cvtepu8_epi16(in8);
-    const __m256i re16 = _mm256_cvtepu8_epi16(re8);
-    const __m256i diff = _mm256_sub_epi16(in16, re16);
-    const __m256i dist = _mm256_madd_epi16(diff, diff);
-    *sum = _mm256_add_epi32(*sum, dist);
-}
-
 uint64_t spatial_full_distortion_kernel16x_n_avx2_intrin(
     uint8_t   *input,
     uint32_t   input_stride,
@@ -2794,39 +2773,6 @@ uint64_t spatial_full_distortion_kernel16x_n_avx2_intrin(
     } while (--row_count);
 
     return Hadd32_AVX2_INTRIN(sum);
-}
-
-static INLINE void SpatialFullDistortionKernel32_AVX2_INTRIN(
-    const uint8_t *const input, const uint8_t *const recon, __m256i *const sum)
-{
-    const __m256i in = _mm256_loadu_si256((__m256i *)input);
-    const __m256i re = _mm256_loadu_si256((__m256i *)recon);
-    const __m256i max = _mm256_max_epu8(in, re);
-    const __m256i min = _mm256_min_epu8(in, re);
-    const __m256i diff = _mm256_sub_epi8(max, min);
-    const __m256i diff_L = _mm256_unpacklo_epi8(diff, _mm256_setzero_si256());
-    const __m256i diff_H = _mm256_unpackhi_epi8(diff, _mm256_setzero_si256());
-    const __m256i dist_L = _mm256_madd_epi16(diff_L, diff_L);
-    const __m256i dist_H = _mm256_madd_epi16(diff_H, diff_H);
-    const __m256i dist = _mm256_add_epi32(dist_L, dist_H);
-    *sum = _mm256_add_epi32(*sum, dist);
-}
-
-static INLINE void SpatialFullDistortionKernel32Leftover_AVX2_INTRIN(
-    const uint8_t *const input, const uint8_t *const recon, __m256i *const sum0,
-    __m256i *const sum1)
-{
-    const __m256i in = _mm256_loadu_si256((__m256i *)input);
-    const __m256i re = _mm256_loadu_si256((__m256i *)recon);
-    const __m256i max = _mm256_max_epu8(in, re);
-    const __m256i min = _mm256_min_epu8(in, re);
-    const __m256i diff = _mm256_sub_epi8(max, min);
-    const __m256i diff_L = _mm256_unpacklo_epi8(diff, _mm256_setzero_si256());
-    const __m256i diff_H = _mm256_unpackhi_epi8(diff, _mm256_setzero_si256());
-    const __m256i dist_L = _mm256_madd_epi16(diff_L, diff_L);
-    const __m256i dist_H = _mm256_madd_epi16(diff_H, diff_H);
-    *sum0 = _mm256_add_epi32(*sum0, dist_L);
-    *sum1 = _mm256_add_epi32(*sum1, dist_H);
 }
 
 static INLINE void SpatialFullDistortionKernel64_AVX2_INTRIN(

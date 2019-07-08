@@ -19,6 +19,7 @@ include_directories(${PROJECT_SOURCE_DIR}/test/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX512/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec
     ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec
     ${PROJECT_SOURCE_DIR}/Source/App/EncApp
@@ -59,6 +60,7 @@ set(lib_list
     $<TARGET_OBJECTS:COMMON_ASM_SSSE3>
     $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
     $<TARGET_OBJECTS:COMMON_ASM_AVX2>
+    $<TARGET_OBJECTS:COMMON_ASM_AVX512>
     gtest_all)
 if(UNIX)
   # App Source Files

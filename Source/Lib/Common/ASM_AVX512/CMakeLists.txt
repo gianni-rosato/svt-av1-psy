@@ -3,7 +3,7 @@
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
 #
 
-# Common/ASM_AVX2 Directory CMakeLists.txt
+# Common/ASM_AVX512 Directory CMakeLists.txt
 
 # Include Encoder Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/
@@ -41,7 +41,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
         # Intel Windows (*Note - The Warning level /W0 should be made to /W4 at some point)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W0")
     else()
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -static-intel -w")
     endif()
 endif()
 
@@ -50,4 +50,4 @@ file(GLOB all_files
     "*.asm"
     "*.c")
 
-add_library(COMMON_ASM_AVX2 OBJECT ${all_files})
+add_library(COMMON_ASM_AVX512 OBJECT ${all_files})
