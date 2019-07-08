@@ -41,6 +41,10 @@ set(lib_list
     #SDL2.lib
     aom)
 
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
+endif()
+
 if(UNIX)
   # App Source Files
     add_executable(SvtAv1E2ETests

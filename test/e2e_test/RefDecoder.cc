@@ -19,6 +19,12 @@
 #include "gtest/gtest.h"
 #include "RefDecoder.h"
 #include "ParseUtil.h"
+#ifdef _MSC_VER
+// The given function is local and not referenced in the body of the module;
+// therefore, the function is dead code.
+// Disable it since the aom_codec_control_xxx is not used.
+#pragma warning(disable : 4505)
+#endif
 
 /** from aom/common/blockd.h */
 typedef enum {
@@ -125,15 +131,6 @@ static bool is_ext_block(const uint32_t sb_type) {
     return true;
 }
 
-/** partition depth equres to log2(minimum block size)*/
-static std::string get_partition_depth(const uint32_t block_size) {
-    if (block_size != 0) {
-        uint32_t patition_depth = std::log2(128 / block_size);
-        return std::to_string(patition_depth);
-    }
-    return "";
-}
-
 /** from aom/common/enums.h */
 // Note: All directional predictors must be between V_PRED and D67_PRED (both
 // inclusive).
@@ -206,36 +203,6 @@ typedef enum ATTRIBUTE_PACKED {
     MOTION_MODES
 } MOTION_MODE;
 
-/** copied from EbRateControlProcess.c */
-static const uint8_t quantizer_to_qindex[] = {
-    0,   4,   8,   12,  16,  20,  24,  28,  32,  36,  40,  44,  48,
-    52,  56,  60,  64,  68,  72,  76,  80,  84,  88,  92,  96,  100,
-    104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 148, 152,
-    156, 160, 164, 168, 172, 176, 180, 184, 188, 192, 196, 200, 204,
-    208, 212, 216, 220, 224, 228, 232, 236, 240, 244, 249, 255,
-};
-
-/** get qp value with the given qindex */
-static uint32_t get_qp(const uint8_t qindex) {
-    if (qindex > 255) {
-        printf("qindex is larger than 255!\n");
-        return 63;
-    }
-
-    uint32_t qp = 0;
-    for (const uint8_t index : quantizer_to_qindex) {
-        if (index == qindex)
-            return qp;
-        else if (index > qindex) {
-            if ((index - qindex) > (qindex - quantizer_to_qindex[qp - 1]))
-                return qp - 1;
-            break;
-        }
-        qp++;
-    }
-    return qp;
-}
-
 using namespace svt_av1_e2e_tools;
 
 RefDecoder* create_reference_decoder(bool enable_analyzer /* = false*/) {
@@ -281,10 +248,10 @@ void RefDecoder::parse_frame_info() {
     ASSERT_NE(inspect_data, nullptr) << "inspection frame data is not ready";
 
     // get frame info
-    const int tile_cols = inspect_data->tile_mi_cols;
-    const int tile_rows = inspect_data->tile_mi_rows;
-    uint32_t min_qindex = 255;
-    uint32_t max_qindex = 0;
+    stream_info_.tile_cols = inspect_data->tile_mi_cols;
+    stream_info_.tile_rows = inspect_data->tile_mi_rows;
+    int16_t min_qindex = 255;
+    int16_t max_qindex = 0;
     uint32_t min_block_size = 128;
     size_t mi_count = inspect_data->mi_cols * inspect_data->mi_rows;
     for (size_t i = 0; i < mi_count; i++) {
@@ -307,8 +274,10 @@ void RefDecoder::parse_frame_info() {
     // update overall stream info
     stream_info_.min_block_size =
         std::min(min_block_size, stream_info_.min_block_size);
-    stream_info_.min_qindex = std::min(min_qindex, stream_info_.min_qindex);
-    stream_info_.max_qindex = std::max(max_qindex, stream_info_.max_qindex);
+    if (min_qindex < stream_info_.min_qindex)
+        stream_info_.min_qindex = min_qindex;
+    if (max_qindex > stream_info_.max_qindex)
+        stream_info_.max_qindex = max_qindex;
     stream_info_.max_intra_period =
         get_max_intra_period_length(stream_info_.frame_type_list);
 }
@@ -419,6 +388,8 @@ RefDecoder::RefDecoderErr RefDecoder::get_frame(VideoFrame& frame) {
     trans_video_frame(img, frame);
     video_param_ = (VideoFrameParam)frame;
     dec_frame_cnt_++;
+    stream_info_.frame_bit_rate = enc_bytes_ / dec_frame_cnt_ * 8;
+    stream_info_.format = frame.format;
     return REF_CODEC_OK;
 }
 

@@ -39,7 +39,6 @@
 #include "random.h"
 
 namespace QuantizeAsmTest {
-const int deterministic_seed = 0xa42b;
 extern "C" void av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q,
                                     int32_t u_dc_delta_q, int32_t u_ac_delta_q,
                                     int32_t v_dc_delta_q, int32_t v_ac_delta_q,
@@ -99,6 +98,28 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
         aom_clear_system_state();
     }
 
+    void SetUp() override {
+        coeff_in_ = reinterpret_cast<TranLow *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
+        qcoeff_ref_ = reinterpret_cast<TranLow *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
+        dqcoeff_ref_ = reinterpret_cast<TranLow *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
+        qcoeff_test_ = reinterpret_cast<TranLow *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
+        dqcoeff_test_ = reinterpret_cast<TranLow *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
+    }
+
+    void TearDown() override {
+        aom_free(coeff_in_);
+        aom_free(qcoeff_ref_);
+        aom_free(dqcoeff_ref_);
+        aom_free(qcoeff_test_);
+        aom_free(dqcoeff_test_);
+        aom_clear_system_state();
+    }
+
     /*
      * @brief setup reference and target function ptrs
      * @see setup_rtcd_internal() in aom_dsp_rtcd.h
@@ -142,10 +163,10 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
         const int16_t *quant_shift = qtab_quants_.y_quant_shift[q];
         const int16_t *dequant = qtab_deq_.y_dequant_QTX[q];
 
-        memset(qcoeff_ref_, 0, sizeof(qcoeff_ref_));
-        memset(dqcoeff_ref_, 0, sizeof(dqcoeff_ref_));
-        memset(qcoeff_test_, 0, sizeof(qcoeff_test_));
-        memset(dqcoeff_test_, 0, sizeof(dqcoeff_test_));
+        memset(qcoeff_ref_, 0, MAX_TX_SQUARE * sizeof(TranLow));
+        memset(dqcoeff_ref_, 0, MAX_TX_SQUARE * sizeof(TranLow));
+        memset(qcoeff_test_, 0, MAX_TX_SQUARE * sizeof(TranLow));
+        memset(dqcoeff_test_, 0, MAX_TX_SQUARE * sizeof(TranLow));
 
         quant_ref_(coeff_in_,
                    n_coeffs_,
@@ -215,11 +236,11 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
     uint16_t eob_ref_;        /**< output ref eob */
     uint16_t eob_test_;       /**< output test eob */
 
-    DECLARE_ALIGNED(32, TranLow, coeff_in_[MAX_TX_SQUARE]);
-    DECLARE_ALIGNED(32, TranLow, qcoeff_ref_[MAX_TX_SQUARE]);
-    DECLARE_ALIGNED(32, TranLow, dqcoeff_ref_[MAX_TX_SQUARE]);
-    DECLARE_ALIGNED(32, TranLow, qcoeff_test_[MAX_TX_SQUARE]);
-    DECLARE_ALIGNED(32, TranLow, dqcoeff_test_[MAX_TX_SQUARE]);
+    TranLow *coeff_in_;
+    TranLow *qcoeff_ref_;
+    TranLow *dqcoeff_ref_;
+    TranLow *qcoeff_test_;
+    TranLow *dqcoeff_test_;
 };
 
 /**

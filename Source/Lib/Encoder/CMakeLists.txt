@@ -4,6 +4,12 @@
 #
 # Encoder Library directory CMakeLists.txt
 
+# Shared Encoder Version
+set(ENC_VERSION_MAJOR 0)
+set(ENC_VERSION_MINOR 6)
+set(ENC_VERSION_PATCH 0)
+set(ENC_VERSION ${ENC_VERSION_MAJOR}.${ENC_VERSION_MINOR}.${ENC_VERSION_PATCH})
+
 # Include Encoder Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/
@@ -55,6 +61,8 @@ add_library(SvtAv1Enc
     $<TARGET_OBJECTS:COMMON_ASM_SSSE3>
     $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
     $<TARGET_OBJECTS:COMMON_ASM_AVX2>)
+set_target_properties(SvtAv1Enc PROPERTIES VERSION ${ENC_VERSION})
+set_target_properties(SvtAv1Enc PROPERTIES SOVERSION ${ENC_VERSION_MAJOR})
 target_link_libraries(SvtAv1Enc ${PLATFORM_LIBS})
 install(TARGETS SvtAv1Enc DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 

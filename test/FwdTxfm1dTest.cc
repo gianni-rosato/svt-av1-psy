@@ -67,8 +67,27 @@ using FwdTxfm1dParam = std::tuple<TxfmType, int>;
 class AV1FwdTxfm1dTest : public ::testing::TestWithParam<FwdTxfm1dParam> {
   public:
     AV1FwdTxfm1dTest()
-        : txfm_type_(TEST_GET_PARAM(0)), max_error_(TEST_GET_PARAM(1)) {
+        : max_error_(TEST_GET_PARAM(1)), txfm_type_(TEST_GET_PARAM(0)) {
         txfm_size_ = get_txfm1d_size(txfm_type_);
+    }
+
+    void SetUp() override {
+        input_test_ = reinterpret_cast<int32_t *>(
+            aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
+        output_test_ = reinterpret_cast<int32_t *>(
+            aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
+        input_ref_ = reinterpret_cast<double *>(
+            aom_memalign(32, MAX_TX_SIZE * sizeof(double)));
+        output_ref_ = reinterpret_cast<double *>(
+            aom_memalign(32, MAX_TX_SIZE * sizeof(double)));
+    }
+
+    void TearDown() override {
+        aom_free(input_test_);
+        aom_free(output_test_);
+        aom_free(input_ref_);
+        aom_free(output_ref_);
+        aom_clear_system_state();
     }
 
     void run_fwd_accuracy_check() {
@@ -109,10 +128,10 @@ class AV1FwdTxfm1dTest : public ::testing::TestWithParam<FwdTxfm1dParam> {
     const int max_error_;      /**< max error allowed */
     int txfm_size_;            /**< transform size, max transform is DCT64 */
     const TxfmType txfm_type_; /**< tx type, including dct, iadst, idtx */
-    DECLARE_ALIGNED(32, int32_t, input_test_[MAX_TX_SIZE]);
-    DECLARE_ALIGNED(32, int32_t, output_test_[MAX_TX_SIZE]);
-    DECLARE_ALIGNED(32, double, input_ref_[MAX_TX_SIZE]);
-    DECLARE_ALIGNED(32, double, output_ref_[MAX_TX_SIZE]);
+    int32_t *input_test_;
+    int32_t *output_test_;
+    double *input_ref_;
+    double *output_ref_;
 };
 
 TEST_P(AV1FwdTxfm1dTest, run_fwd_accuracy_check) {

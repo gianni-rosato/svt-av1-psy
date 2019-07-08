@@ -38,12 +38,11 @@ bool FrameQueue::compare(FrameQueue *other) {
                other->get_frame_count());
         return false;
     }
-
     bool is_same = true;
-    for (size_t i = 0; i < frame_count_; i++) {
+    for (uint32_t i = 0; i < frame_count_; i++) {
         VideoFrame *frame = take_frame_inorder(i);
         VideoFrame *other_frame = other->take_frame_inorder(i);
-        bool is_same = compare_image(frame, other_frame);
+        is_same = compare_image(frame, other_frame);
         if (!is_same) {
             printf("ref_frame(%u) compare failed!!\n",
                    (uint32_t)frame->timestamp);
@@ -160,7 +159,7 @@ class FrameQueueBufferSort_ASC {
   public:
     bool operator()(VideoFrame *a, VideoFrame *b) const {
         return a->timestamp < b->timestamp;
-    };
+    }
 };
 
 class FrameQueueBuffer : public FrameQueue {
@@ -328,6 +327,9 @@ class RefQueue : public ICompareQueue, FrameQueueBuffer {
                                        friend_frame->planes[1],
                                        friend_frame->planes[2]);
         }
+#else
+        (void)frame;
+        (void)friend_frame;
 #endif
     }
 

@@ -175,8 +175,8 @@ enum {
 // Maximum size of a loop restoration tile
 #define RESTORATION_TILESIZE_MAX 256
 // Maximum number of tile rows and tile columns
-#define MAX_TILE_ROWS 1024
-#define MAX_TILE_COLS 1024
+#define MAX_TILE_ROWS 64
+#define MAX_TILE_COLS 64
 #define MAX_VARTX_DEPTH 1
 #define MI_SIZE_64X64 (64 >> MI_SIZE_LOG2)
 #define MI_SIZE_128X128 (128 >> MI_SIZE_LOG2)

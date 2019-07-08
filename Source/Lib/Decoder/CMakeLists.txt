@@ -4,6 +4,12 @@
 #
 # Decoder Library directory CMakeLists.txt
 
+# Shared Decoder Version
+set(DEC_VERSION_MAJOR 0)
+set(DEC_VERSION_MINOR 6)
+set(DEC_VERSION_PATCH 0)
+set(DEC_VERSION ${DEC_VERSION_MAJOR}.${DEC_VERSION_MINOR}.${DEC_VERSION_PATCH})
+
 # Include Decoder Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/
@@ -55,6 +61,8 @@ add_library(SvtAv1Dec
     $<TARGET_OBJECTS:COMMON_ASM_SSSE3>
     $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
     $<TARGET_OBJECTS:COMMON_ASM_AVX2>)
+set_target_properties(SvtAv1Dec PROPERTIES VERSION ${DEC_VERSION})
+set_target_properties(SvtAv1Dec PROPERTIES SOVERSION ${DEC_VERSION_MAJOR})
 target_link_libraries(SvtAv1Dec ${PLATFORM_LIBS})
 install(TARGETS SvtAv1Dec DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 

@@ -2510,7 +2510,7 @@ EB_EXTERN void av1_encode_pass(
                     // Partition Loop
                     context_ptr->txb_itr = 0;
                     // Transform partitioning path (INTRA Luma/Chroma)
-                    if (picture_control_set_ptr->parent_pcs_ptr->atb_mode && cu_ptr->av1xd->use_intrabc == 0) {
+                    if (sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT && cu_ptr->av1xd->use_intrabc == 0) {
                         // Set the PU Loop Variables
                         pu_ptr = cu_ptr->prediction_unit_array;
                         // Generate Intra Luma Neighbor Modes

@@ -34,7 +34,6 @@
 #include "random.h"
 #include "TxfmRef.h"
 #include "util.h"
-
 #include "TxfmCommon.h"
 
 using svt_av1_test_reference::get_scale_factor;
@@ -66,10 +65,29 @@ using FwdTxfm2dParam = std::tuple<TxSize, TxType, int>;
 class AV1FwdTxfm2dTest : public ::testing::TestWithParam<FwdTxfm2dParam> {
   public:
     AV1FwdTxfm2dTest()
-        : txfm_size_(TEST_GET_PARAM(0)),
-          txfm_type_(TEST_GET_PARAM(1)),
-          max_error_(TEST_GET_PARAM(2)) {
+        : max_error_(TEST_GET_PARAM(2)),
+          txfm_size_(TEST_GET_PARAM(0)),
+          txfm_type_(TEST_GET_PARAM(1)) {
         Av1TransformConfig(txfm_type_, txfm_size_, &cfg_);
+    }
+
+    void SetUp() override {
+        input_test_ = reinterpret_cast<int16_t *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(int16_t)));
+        output_test_ = reinterpret_cast<int32_t *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(int32_t)));
+        input_ref_ = reinterpret_cast<double *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(double)));
+        output_ref_ = reinterpret_cast<double *>(
+            aom_memalign(32, MAX_TX_SQUARE * sizeof(double)));
+    }
+
+    void TearDown() override {
+        aom_free(input_test_);
+        aom_free(output_test_);
+        aom_free(input_ref_);
+        aom_free(output_ref_);
+        aom_clear_system_state();
     }
 
   protected:
@@ -85,7 +103,7 @@ class AV1FwdTxfm2dTest : public ::testing::TestWithParam<FwdTxfm2dParam> {
         for (int ti = 0; ti < count_test_block; ++ti) {
             // prepare random test data
             for (int ni = 0; ni < block_size; ++ni) {
-                input_test_[ni] = rnd.random();
+                input_test_[ni] = (int16_t)rnd.random();
                 input_ref_[ni] = static_cast<double>(input_test_[ni]);
                 output_ref_[ni] = 0;
                 output_test_[ni] = 255;
@@ -213,10 +231,10 @@ class AV1FwdTxfm2dTest : public ::testing::TestWithParam<FwdTxfm2dParam> {
     const TxType txfm_type_;
     double scale_factor_;
     Txfm2DFlipCfg cfg_;
-    DECLARE_ALIGNED(32, int16_t, input_test_[MAX_TX_SQUARE]);
-    DECLARE_ALIGNED(32, int32_t, output_test_[MAX_TX_SQUARE]);
-    DECLARE_ALIGNED(32, double, input_ref_[MAX_TX_SQUARE]);
-    DECLARE_ALIGNED(32, double, output_ref_[MAX_TX_SQUARE]);
+    int16_t *input_test_;
+    int32_t *output_test_;
+    double *input_ref_;
+    double *output_ref_;
 };
 
 TEST_P(AV1FwdTxfm2dTest, run_fwd_accuracy_check) {
@@ -254,7 +272,7 @@ static std::vector<FwdTxfm2dParam> gen_txfm_2d_params() {
             const TxSize txfm_size = static_cast<TxSize>(s);
             if (is_txfm_allowed(txfm_type, txfm_size)) {
                 param_vec.push_back(
-                    FwdTxfm2dParam(txfm_size, txfm_type, max_error));
+                    FwdTxfm2dParam(txfm_size, txfm_type, (int)max_error));
             }
         }
     }
