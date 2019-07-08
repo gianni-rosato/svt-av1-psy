@@ -1916,8 +1916,11 @@ void high_level_rc_input_picture_cvbr(
 
                         hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp] = 0;
 
-                        if (ref_qp_table_index == previous_selected_ref_qp)
+                        if (ref_qp_table_index == previous_selected_ref_qp) {
+                            eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
                             hl_rate_control_histogram_ptr_temp->life_count--;
+                            eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
+                        }
                         hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp] = predict_bits(
                             encode_context_ptr,
                             hl_rate_control_histogram_ptr_temp,
@@ -2355,8 +2358,12 @@ void frame_level_rc_input_picture_cvbr(
 
                 hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp] = 0;
 
-                if (ref_qp_table_index == previous_selected_ref_qp)
+                if (ref_qp_table_index == previous_selected_ref_qp) {
+                    eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
                     hl_rate_control_histogram_ptr_temp->life_count--;
+                    eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
+                }
+
                 hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp] = predict_bits(
                     encode_context_ptr,
                     hl_rate_control_histogram_ptr_temp,
