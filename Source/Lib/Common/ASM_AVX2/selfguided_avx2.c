@@ -18,7 +18,7 @@
 #include "transpose_avx2.h"
 #include "transpose_sse2.h"
 
-static INLINE cvt_16to32bit_8x8(const __m128i s[8], __m256i r[8]) {
+static INLINE void cvt_16to32bit_8x8(const __m128i s[8], __m256i r[8]) {
     r[0] = _mm256_cvtepu16_epi32(s[0]);
     r[1] = _mm256_cvtepu16_epi32(s[1]);
     r[2] = _mm256_cvtepu16_epi32(s[2]);
@@ -29,7 +29,7 @@ static INLINE cvt_16to32bit_8x8(const __m128i s[8], __m256i r[8]) {
     r[7] = _mm256_cvtepu16_epi32(s[7]);
 }
 
-static INLINE add_32bit_8x8(const __m256i neighbor, __m256i r[8]) {
+static INLINE void add_32bit_8x8(const __m256i neighbor, __m256i r[8]) {
     r[0] = _mm256_add_epi32(neighbor, r[0]);
     r[1] = _mm256_add_epi32(r[0], r[1]);
     r[2] = _mm256_add_epi32(r[1], r[2]);
@@ -40,7 +40,7 @@ static INLINE add_32bit_8x8(const __m256i neighbor, __m256i r[8]) {
     r[7] = _mm256_add_epi32(r[6], r[7]);
 }
 
-static INLINE store_32bit_8x8(const __m256i r[8], int32_t *const buf,
+static INLINE void store_32bit_8x8(const __m256i r[8], int32_t *const buf,
     const int32_t buf_stride) {
     _mm256_store_si256((__m256i *)(buf + 0 * buf_stride), r[0]);
     _mm256_store_si256((__m256i *)(buf + 1 * buf_stride), r[1]);
