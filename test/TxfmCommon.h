@@ -197,6 +197,7 @@ static INLINE int32_t get_txb_bwl(TxSize tx_size) {
 
 using IsTxTypeImpFunc = bool (*)(const TxType tx_type);
 static INLINE bool all_txtype_imp(const TxType tx_type) {
+    (void)tx_type;
     return true;
 }
 

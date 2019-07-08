@@ -14,9 +14,7 @@
 #include "EbEntropyCoding.h"
 #include "EbRateControlTasks.h"
 #include "EbTime.h"
-#if RC
 #include "EbModeDecisionProcess.h"
-#endif
 
 #define DETAILED_FRAME_OUTPUT 0
 
@@ -83,7 +81,6 @@ static void write_td (
                   TD_SIZE);
     }
 }
-#if  RC
 
 void update_rc_rate_tables(
     PictureControlSet            *picture_control_set_ptr,
@@ -227,7 +224,6 @@ void update_rc_rate_tables(
         }
     }
 }
-#endif
 void* packetization_kernel(void *input_ptr)
 {
     // Context
@@ -276,9 +272,7 @@ void* packetization_kernel(void *input_ptr)
         queueEntryPtr = encode_context_ptr->packetization_reorder_queue[queueEntryIndex];
         queueEntryPtr->start_time_seconds = picture_control_set_ptr->parent_pcs_ptr->start_time_seconds;
         queueEntryPtr->start_time_u_seconds = picture_control_set_ptr->parent_pcs_ptr->start_time_u_seconds;
-#if ALT_REF_OVERLAY
         queueEntryPtr->is_alt_ref = picture_control_set_ptr->parent_pcs_ptr->is_alt_ref;
-#endif
 
         //TODO: The output buffer should be big enough to avoid a deadlock here. Add an assert that make the warning
         // Get  Output Bitstream buffer
@@ -361,29 +355,20 @@ void* packetization_kernel(void *input_ptr)
 
         // Send the number of bytes per frame to RC
         picture_control_set_ptr->parent_pcs_ptr->total_num_bits = output_stream_ptr->n_filled_len << 3;
-#if  RC
         queueEntryPtr->total_num_bits = picture_control_set_ptr->parent_pcs_ptr->total_num_bits;
         // update the rate tables used in RC based on the encoded bits of each sb
         update_rc_rate_tables(
             picture_control_set_ptr,
             sequence_control_set_ptr);
-#endif
         queueEntryPtr->av1_frame_type = picture_control_set_ptr->parent_pcs_ptr->av1_frame_type;
         queueEntryPtr->poc = picture_control_set_ptr->picture_number;
         memcpy(&queueEntryPtr->av1_ref_signal, &picture_control_set_ptr->parent_pcs_ptr->av1_ref_signal, sizeof(Av1RpsNode));
 
         queueEntryPtr->slice_type = picture_control_set_ptr->slice_type;
 #if DETAILED_FRAME_OUTPUT
-#if NEW_RPS
         queueEntryPtr->ref_poc_list0 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0][0];
         queueEntryPtr->ref_poc_list1 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1][0];
-#else
-        queueEntryPtr->ref_poc_list0 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0];
-        queueEntryPtr->ref_poc_list1 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1];
-#endif
-#if REF_ORDER
         memcpy(queueEntryPtr->ref_poc_array, picture_control_set_ptr->parent_pcs_ptr->av1RefSignal.ref_poc_array, 7 * sizeof(uint64_t));
-#endif
 #endif
         queueEntryPtr->show_frame = picture_control_set_ptr->parent_pcs_ptr->show_frame;
         queueEntryPtr->has_show_existing = picture_control_set_ptr->parent_pcs_ptr->has_show_existing;
@@ -521,7 +506,6 @@ void* packetization_kernel(void *input_ptr)
                             exit(0);
                         }
 
-#if REF_ORDER
                         for (int rr = 0; rr < 7; rr++)
                         {
                             uint8_t dpb_spot = queueEntryPtr->av1RefSignal.refDpbIndex[rr];
@@ -529,7 +513,6 @@ void* packetization_kernel(void *input_ptr)
                             if (queueEntryPtr->ref_poc_array[rr] != context_ptr->dpbDispOrder[dpb_spot])
                                 printf("REF_POC MISMATCH POC:%i  ref:%i\n", (int32_t)queueEntryPtr->poc, rr);
                         }
-#endif
                     }
                     else
                     {
@@ -585,10 +568,8 @@ void* packetization_kernel(void *input_ptr)
 
             output_stream_ptr->n_tick_count = (uint32_t)latency;
             output_stream_ptr->p_app_private = queueEntryPtr->out_meta_data;
-#if ALT_REF_OVERLAY
             if (queueEntryPtr->is_alt_ref)
                 output_stream_ptr->flags |= (uint32_t)EB_BUFFERFLAG_IS_ALT_REF;
-#endif
 
             eb_post_full_object(output_stream_wrapper_ptr);
             queueEntryPtr->out_meta_data = (EbLinkedListNode *)EB_NULL;

@@ -114,8 +114,8 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
             for (int k = 0; k < loops; k++) {
                 populate_with_random();
 
-                ref_func(input_, output_ref_, stride_, type, bd_);
-                test_func(input_, output_test_, stride_, type, bd_);
+                ref_func(input_, output_ref_, stride_, type, (uint8_t)bd_);
+                test_func(input_, output_test_, stride_, type, (uint8_t)bd_);
 
                 for (int i = 0; i < height_; i++)
                     for (int j = 0; j < width_; j++)
@@ -132,7 +132,7 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
     void populate_with_random() {
         for (int i = 0; i < height_; i++) {
             for (int j = 0; j < width_; j++) {
-                input_[i * stride_ + j] = rnd_->random();
+                input_[i * stride_ + j] = (int16_t)rnd_->random();
             }
         }
 

@@ -33,7 +33,6 @@ namespace svt_av1_test_reference {
 
 double get_scale_factor(Txfm2DFlipCfg &cfg, const int tx_width,
                         const int tx_height) {
-    const double Sqrt2 = 1.4142135623730950488016887242097f;
     const int8_t *shift = cfg.shift;
     const int amplify_bit = shift[0] + shift[1] + shift[2];
     double scale_factor =
@@ -189,8 +188,7 @@ void reference_adst_1d(const double *in, double *out, int size) {
     }
 }
 
-void reference_txfm_1d(TxType1D type, const double *in, double *out,
-                       int size) {
+void reference_txfm_1d(TxType1D type, const double *in, double *out, int size) {
     switch (type) {
     case DCT_1D: reference_dct_1d(in, out, size); break;
     case ADST_1D:

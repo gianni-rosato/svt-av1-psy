@@ -21,18 +21,14 @@
 extern "C" {
 #endif
     extern uint64_t av1_cost_coeffs_txb(
-#if CABAC_UP
         uint8_t                             allow_update_cdf,
         FRAME_CONTEXT                      *ec_ctx,
-#endif
         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
         const TranLow                      *const qcoeff,
         uint16_t                            eob,
         PlaneType                           plane_type,
         TxSize                              transform_size,
-#if ATB_TX_TYPE_SUPPORT_PER_TU
         TxType                              transform_type,
-#endif
         int16_t                             txb_skip_ctx,
         int16_t                             dc_sign_ctx,
         EbBool                              reducedTransformSetFlag);
@@ -42,15 +38,8 @@ extern "C" {
         CodingUnit            *cu_ptr,
         uint32_t               cu_origin_x,
         uint32_t               cu_origin_y,
-#if !REMOVE_SKIP_COEFF_NEIGHBOR_ARRAY
         uint32_t               sb_sz,
         NeighborArrayUnit     *skip_coeff_neighbor_array,
-#endif
-#if !FIXED_128x128_CONTEXT_UPDATE
-        NeighborArrayUnit     *luma_dc_sign_level_coeff_neighbor_array,
-        NeighborArrayUnit     *cb_dc_sign_level_coeff_neighbor_array,
-        NeighborArrayUnit     *cr_dc_sign_level_coeff_neighbor_array,
-#endif
         NeighborArrayUnit     *inter_pred_dir_neighbor_array,
         NeighborArrayUnit     *ref_frame_type_neighbor_array,
         NeighborArrayUnit     *intra_luma_mode_neighbor_array,
@@ -182,9 +171,7 @@ extern "C" {
         const BlockGeom         *blk_geom,
         uint32_t                 miRow,
         uint32_t                 miCol,
-#if MRP_COST_EST
         uint8_t                 md_pass,
-#endif
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
 
@@ -201,9 +188,7 @@ extern "C" {
         const BlockGeom         *blk_geom,
         uint32_t                 miRow,
         uint32_t                 miCol,
-#if MRP_COST_EST
         uint8_t                 md_pass,
-#endif
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
 

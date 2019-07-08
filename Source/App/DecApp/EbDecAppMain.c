@@ -122,6 +122,9 @@ int32_t main(int32_t argc, char* argv[])
     size_t bytes_in_buffer = 0, buffer_size = 0;
 
     // Print Decoder Info
+    printf("\n**WARNING** decoder is not feature complete\n");
+    printf("Current support: intra tools (no SCC, no loop filters)\n\n");
+
     printf("-------------------------------------\n");
     printf("SVT-AV1 Decoder Sample Application v1.2.0\n");
     printf("Platform:   %u bit\n", (unsigned) sizeof(void*) * 8);
@@ -190,8 +193,7 @@ int32_t main(int32_t argc, char* argv[])
             // Input Loop Thread
             while (read_input_frame(&cli, &buf, &bytes_in_buffer, &buffer_size, NULL)) {
                 if (!stop_after || in_frame < stop_after) {
-                    return_error |= eb_svt_decode_frame(p_handle, buf,
-                        (uint32_t)bytes_in_buffer);
+                    return_error |= eb_svt_decode_frame(p_handle, buf, bytes_in_buffer);
 
                     in_frame++;
 

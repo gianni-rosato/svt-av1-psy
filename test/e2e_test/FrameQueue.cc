@@ -30,6 +30,29 @@
 #endif
 
 using svt_av1_e2e_tools::compare_image;
+
+bool FrameQueue::compare(FrameQueue *other) {
+    if (frame_count_ != other->get_frame_count()) {
+        printf("frame count(%u<-->%u) are different",
+               frame_count_,
+               other->get_frame_count());
+        return false;
+    }
+    bool is_same = true;
+    for (uint32_t i = 0; i < frame_count_; i++) {
+        VideoFrame *frame = take_frame_inorder(i);
+        VideoFrame *other_frame = other->take_frame_inorder(i);
+        is_same = compare_image(frame, other_frame);
+        if (!is_same) {
+            printf("ref_frame(%u) compare failed!!\n",
+                   (uint32_t)frame->timestamp);
+            break;
+        }
+    }
+
+    return is_same;
+}
+
 class FrameQueueFile : public FrameQueue {
   public:
     FrameQueueFile(const VideoFrameParam &param, const char *file_path)
@@ -74,7 +97,7 @@ class FrameQueueFile : public FrameQueue {
         }
         delete frame;
     }
-    const VideoFrame *take_frame(const uint64_t time_stamp) override {
+    VideoFrame *take_frame(const uint64_t time_stamp) override {
         if (recon_file_ == nullptr)
             return nullptr;
 
@@ -104,8 +127,11 @@ class FrameQueueFile : public FrameQueue {
 
         return new_frame;
     }
-    const VideoFrame *take_frame_inorder(const uint32_t index) override {
+    VideoFrame *take_frame_inorder(const uint32_t index) override {
         return take_frame(index);
+    }
+    void recycle_frame(VideoFrame *frame) override {
+        delete_frame(frame);
     }
     void delete_frame(VideoFrame *frame) override {
         delete frame;
@@ -133,7 +159,7 @@ class FrameQueueBufferSort_ASC {
   public:
     bool operator()(VideoFrame *a, VideoFrame *b) const {
         return a->timestamp < b->timestamp;
-    };
+    }
 };
 
 class FrameQueueBuffer : public FrameQueue {
@@ -157,17 +183,20 @@ class FrameQueueBuffer : public FrameQueue {
         } else  // drop the frames out of limitation
             delete frame;
     }
-    const VideoFrame *take_frame(const uint64_t time_stamp) override {
+    VideoFrame *take_frame(const uint64_t time_stamp) override {
         for (VideoFrame *frame : frame_list_) {
             if (frame->timestamp == time_stamp)
                 return frame;
         }
         return nullptr;
     }
-    const VideoFrame *take_frame_inorder(const uint32_t index) override {
+    VideoFrame *take_frame_inorder(const uint32_t index) override {
         if (index < frame_list_.size())
             return frame_list_.at(index);
         return nullptr;
+    }
+    void recycle_frame(VideoFrame *frame) override {
+        frame->trim_buffer();
     }
     void delete_frame(VideoFrame *frame) override {
         std::vector<VideoFrame *>::iterator it =
@@ -228,8 +257,8 @@ class RefQueue : public ICompareQueue, FrameQueueBuffer {
     }
 
   public:
-    bool compare_video(const VideoFrame &frame) override {
-        const VideoFrame *friend_frame = friend_->take_frame(frame.timestamp);
+    bool compare_video(VideoFrame &frame) override {
+        VideoFrame *friend_frame = friend_->take_frame(frame.timestamp);
         if (friend_frame) {
             draw_frames(&frame, friend_frame);
             bool is_same = compare_image(friend_frame, &frame);
@@ -237,6 +266,7 @@ class RefQueue : public ICompareQueue, FrameQueueBuffer {
                 printf("ref_frame(%u) compare failed!!\n",
                        (uint32_t)frame.timestamp);
             }
+            friend_->recycle_frame(friend_frame);
             return is_same;
         } else {
             clone_frame(frame);
@@ -245,9 +275,8 @@ class RefQueue : public ICompareQueue, FrameQueueBuffer {
     }
     bool flush_video() override {
         bool is_all_same = true;
-        for (const VideoFrame *frame : frame_vec_) {
-            const VideoFrame *friend_frame =
-                friend_->take_frame(frame->timestamp);
+        for (VideoFrame *frame : frame_vec_) {
+            VideoFrame *friend_frame = friend_->take_frame(frame->timestamp);
             if (friend_frame) {
                 draw_frames(frame, friend_frame);
                 if (!compare_image(friend_frame, frame)) {
@@ -255,6 +284,7 @@ class RefQueue : public ICompareQueue, FrameQueueBuffer {
                            (uint32_t)frame->timestamp);
                     is_all_same = false;
                 }
+                friend_->recycle_frame(friend_frame);
             }
         }
         return is_all_same;
@@ -297,12 +327,15 @@ class RefQueue : public ICompareQueue, FrameQueueBuffer {
                                        friend_frame->planes[1],
                                        friend_frame->planes[2]);
         }
+#else
+        (void)frame;
+        (void)friend_frame;
 #endif
     }
 
   private:
     FrameQueue *friend_;
-    std::vector<const VideoFrame *> frame_vec_;
+    std::vector<VideoFrame *> frame_vec_;
 #ifdef ENABLE_DEBUG_MONITOR
     VideoMonitor *recon_monitor_;
     VideoMonitor *ref_monitor_;

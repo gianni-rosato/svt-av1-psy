@@ -1,9 +1,9 @@
 prefix=@CMAKE_INSTALL_PREFIX@
-includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
-libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@/svt-av1
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
 
 Name: SvtAv1Enc
 Description: SVT (Scalable Video Technology) for AV1 encoder library
-Version: 1.3.0
-Libs: -L${libdir} -lSvtAv1Enc -lpthread -lm
+Version: @ENC_VERSION_MAJOR@.@ENC_VERSION_MINOR@.@ENC_VERSION_PATCH@
+Libs: -L${libdir} -lSvtAv1Enc @LIBS_PRIVATE@
 Cflags: -I${includedir}

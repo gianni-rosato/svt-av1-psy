@@ -89,11 +89,7 @@ EbErrorType picture_analysis_context_ctor(
     }
     return EB_ErrorNone;
 }
-#if ALT_REF_OVERLAY
 void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBufferDesc* outputPicturePtr)
-#else
-static void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBufferDesc* outputPicturePtr)
-#endif
 {
     uint32_t input_color_format = input_picture_ptr->color_format;
     const uint16_t input_subsampling_x = (input_color_format == EB_YUV444 ? 1 : 2) - 1;
@@ -155,7 +151,6 @@ static void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBu
 /************************************************
  * Picture Analysis Context Destructor
  ************************************************/
-#if DOWN_SAMPLING_FILTERING
   /********************************************
     * decimation_2d
     *      decimates the input
@@ -219,33 +214,6 @@ void downsample_2d(
     return;
 }
 
-#else
- /********************************************
-  * decimation_2d
-  *      decimates the input
-  ********************************************/
-void decimation_2d(
-    uint8_t *  input_samples,      // input parameter, input samples Ptr
-    uint32_t   input_stride,       // input parameter, input stride
-    uint32_t   input_area_width,    // input parameter, input area width
-    uint32_t   input_area_height,   // input parameter, input area height
-    uint8_t *  decim_samples,      // output parameter, decimated samples Ptr
-    uint32_t   decim_stride,       // input parameter, output stride
-    uint32_t   decim_step)        // input parameter, area height
-{
-    uint32_t horizontal_index;
-    uint32_t vertical_index;
-
-    for (vertical_index = 0; vertical_index < input_area_height; vertical_index += decim_step) {
-        for (horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step)
-            decim_samples[(horizontal_index >> (decim_step >> 1))] = input_samples[horizontal_index];
-        input_samples += (input_stride << (decim_step >> 1));
-        decim_samples += decim_stride;
-    }
-
-    return;
-}
-#endif
 /********************************************
 * CalculateHistogram
 *      creates n-bins histogram for the input
@@ -3959,26 +3927,11 @@ void SetPictureParametersForStatisticsGathering(
  ***** Borders preprocessing
  ***** Denoising
  ************************************************/
-#if DOWN_SAMPLING_FILTERING
 void PicturePreProcessingOperations(
     PictureParentControlSet       *picture_control_set_ptr,
     SequenceControlSet            *sequence_control_set_ptr,
     uint32_t                       sb_total_count,
     EbAsm                          asm_type) {
-#else
-void PicturePreProcessingOperations(
-    PictureParentControlSet       *picture_control_set_ptr,
-    EbPictureBufferDesc           *input_picture_ptr,
-    SequenceControlSet            *sequence_control_set_ptr,
-    EbPictureBufferDesc           *quarter_decimated_picture_ptr,
-    EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
-    uint32_t                       sb_total_count,
-    EbAsm                          asm_type) {
-
-    UNUSED(quarter_decimated_picture_ptr);
-    UNUSED(sixteenth_decimated_picture_ptr);
-    UNUSED(input_picture_ptr);
-#endif
     if (sequence_control_set_ptr->film_grain_denoise_strength) {
         denoise_estimate_film_grain(
             sequence_control_set_ptr,
@@ -4339,26 +4292,13 @@ void DetermineHomogeneousRegionInPicture(
 {
     uint16_t  *variancePtr;
     uint32_t sb_index;
-#if !MEMORY_FOOTPRINT_OPT
-    uint32_t cuNum, cu_size, cuIndexOffset, cuH, cuW;
-#endif
     uint64_t nullVarCnt = 0;
     uint64_t veryLowVarCnt = 0;
     uint64_t varLcuCnt = 0;
     uint32_t sb_total_count = picture_control_set_ptr->sb_total_count;
 
     for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
-#if !MEMORY_FOOTPRINT_OPT
-        uint64_t meanSqrVariance32x32Based[4] = { 0 }, meanVariance32x32Based[4] = { 0 };
-
-        uint64_t meanSqrVariance64x64Based = 0, meanVariance64x64Based = 0;
-        uint64_t varOfVar64x64Based = 0;
-#endif
         SbParams sb_params = sequence_control_set_ptr->sb_params_array[sb_index];
-#if !MEMORY_FOOTPRINT_OPT
-        // Initialize
-        picture_control_set_ptr->sb_homogeneous_area_array[sb_index] = EB_TRUE;
-#endif
         variancePtr = picture_control_set_ptr->variance[sb_index];
 
         if (sb_params.is_complete_sb) {
@@ -4367,74 +4307,7 @@ void DetermineHomogeneousRegionInPicture(
             varLcuCnt++;
 
             veryLowVarCnt += ((variancePtr[ME_TIER_ZERO_PU_64x64]) < LCU_LOW_VAR_TH) ? 1 : 0;
-#if !MEMORY_FOOTPRINT_OPT
-            cu_size = 8;
-            cuIndexOffset = ME_TIER_ZERO_PU_8x8_0;
-            cuNum = 64 / cu_size;
-
-            //Variance of 8x8 blocks in a 32x32
-            for (cuH = 0; cuH < (cuNum / 2); cuH++) {
-                for (cuW = 0; cuW < (cuNum / 2); cuW++) {
-                    meanSqrVariance32x32Based[0] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW])*(variancePtr[cuIndexOffset + cuH * cuNum + cuW]);
-                    meanVariance32x32Based[0] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW]);
-
-                    meanSqrVariance32x32Based[1] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW + 4])*(variancePtr[cuIndexOffset + cuH * cuNum + cuW + 4]);
-                    meanVariance32x32Based[1] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW + 4]);
-
-                    meanSqrVariance32x32Based[2] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW])*(variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW]);
-                    meanVariance32x32Based[2] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW]);
-
-                    meanSqrVariance32x32Based[3] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW + 4])*(variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW + 4]);
-                    meanVariance32x32Based[3] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW + 4]);
-                }
-            }
-
-            meanSqrVariance32x32Based[0] = meanSqrVariance32x32Based[0] >> 4;
-            meanVariance32x32Based[0] = meanVariance32x32Based[0] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][0] = meanSqrVariance32x32Based[0] - meanVariance32x32Based[0] * meanVariance32x32Based[0];
-
-            meanSqrVariance32x32Based[1] = meanSqrVariance32x32Based[1] >> 4;
-            meanVariance32x32Based[1] = meanVariance32x32Based[1] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][1] = meanSqrVariance32x32Based[1] - meanVariance32x32Based[1] * meanVariance32x32Based[1];
-
-            meanSqrVariance32x32Based[2] = meanSqrVariance32x32Based[2] >> 4;
-            meanVariance32x32Based[2] = meanVariance32x32Based[2] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][2] = meanSqrVariance32x32Based[2] - meanVariance32x32Based[2] * meanVariance32x32Based[2];
-
-            meanSqrVariance32x32Based[3] = meanSqrVariance32x32Based[3] >> 4;
-            meanVariance32x32Based[3] = meanVariance32x32Based[3] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][3] = meanSqrVariance32x32Based[3] - meanVariance32x32Based[3] * meanVariance32x32Based[3];
-
-            // Compute the 64x64 based variance of variance
-            {
-                uint32_t varIndex;
-                // Loop over all 8x8s in a 64x64
-                for (varIndex = ME_TIER_ZERO_PU_8x8_0; varIndex <= ME_TIER_ZERO_PU_8x8_63; varIndex++) {
-                    meanSqrVariance64x64Based += variancePtr[varIndex] * variancePtr[varIndex];
-                    meanVariance64x64Based += variancePtr[varIndex];
-                }
-
-                meanSqrVariance64x64Based = meanSqrVariance64x64Based >> 6;
-                meanVariance64x64Based = meanVariance64x64Based >> 6;
-
-                // Compute variance
-                varOfVar64x64Based = meanSqrVariance64x64Based - meanVariance64x64Based * meanVariance64x64Based;
-
-                // Turn off detail preservation if the varOfVar is greater than a threshold
-                if (varOfVar64x64Based > VAR_BASED_DETAIL_PRESERVATION_SELECTOR_THRSLHD)
-                    picture_control_set_ptr->sb_homogeneous_area_array[sb_index] = EB_FALSE;
-            }
-#endif
         }
-#if !MEMORY_FOOTPRINT_OPT
-        else {
-            // Should be re-calculated and scaled properly
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][0] = 0xFFFFFFFFFFFFFFFF;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][1] = 0xFFFFFFFFFFFFFFFF;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][2] = 0xFFFFFFFFFFFFFFFF;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][3] = 0xFFFFFFFFFFFFFFFF;
-        }
-#endif
     }
     picture_control_set_ptr->very_low_var_pic_flag = EB_FALSE;
     if ((varLcuCnt > 0) && (((veryLowVarCnt * 100) / varLcuCnt) > PIC_LOW_VAR_PERCENTAGE_TH))
@@ -4719,22 +4592,14 @@ void PadPictureToMultipleOfLcuDimensions(
 /************************************************
 * 1/4 & 1/16 input picture decimation
 ************************************************/
-#if DOWN_SAMPLING_FILTERING
 void DownsampleDecimationInputPicture(
     PictureParentControlSet       *picture_control_set_ptr,
     EbPictureBufferDesc           *input_padded_picture_ptr,
     EbPictureBufferDesc           *quarter_decimated_picture_ptr,
     EbPictureBufferDesc           *sixteenth_decimated_picture_ptr) {
-#else
-void DecimateInputPicture(
-    PictureParentControlSet       *picture_control_set_ptr,
-    EbPictureBufferDesc           *input_padded_picture_ptr,
-    EbPictureBufferDesc           *quarter_decimated_picture_ptr,
-    EbPictureBufferDesc           *sixteenth_decimated_picture_ptr) {
-#endif
     // Decimate input picture for HME L0 and L1
-    if (picture_control_set_ptr->enable_hme_flag) {
-        if (picture_control_set_ptr->enable_hme_level1_flag) {
+    if (picture_control_set_ptr->enable_hme_flag || picture_control_set_ptr->tf_enable_hme_flag) {
+        if (picture_control_set_ptr->enable_hme_level1_flag || picture_control_set_ptr->tf_enable_hme_level1_flag) {
             decimation_2d(
                 &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
                 input_padded_picture_ptr->stride_y,
@@ -4751,30 +4616,8 @@ void DecimateInputPicture(
                 quarter_decimated_picture_ptr->origin_x,
                 quarter_decimated_picture_ptr->origin_y);
         }
-#if !DECIMATION_BUG_FIX
-        if (picture_control_set_ptr->enable_hme_level0_flag) {
-            // Sixteenth Input Picture Decimation
-            decimation_2d(
-                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
-                input_padded_picture_ptr->stride_y,
-                input_padded_picture_ptr->width,
-                input_padded_picture_ptr->height,
-                &sixteenth_decimated_picture_ptr->buffer_y[sixteenth_decimated_picture_ptr->origin_x + sixteenth_decimated_picture_ptr->origin_x*sixteenth_decimated_picture_ptr->stride_y],
-                sixteenth_decimated_picture_ptr->stride_y,
-                4);
-
-            generate_padding(
-                &sixteenth_decimated_picture_ptr->buffer_y[0],
-                sixteenth_decimated_picture_ptr->stride_y,
-                sixteenth_decimated_picture_ptr->width,
-                sixteenth_decimated_picture_ptr->height,
-                sixteenth_decimated_picture_ptr->origin_x,
-                sixteenth_decimated_picture_ptr->origin_y);
-        }
-#endif
     }
 
-#if DECIMATION_BUG_FIX
     // Always perform 1/16th decimation as
     // Sixteenth Input Picture Decimation
     decimation_2d(
@@ -4793,7 +4636,6 @@ void DecimateInputPicture(
         sixteenth_decimated_picture_ptr->height,
         sixteenth_decimated_picture_ptr->origin_x,
         sixteenth_decimated_picture_ptr->origin_y);
-#endif
 
 }
 int av1_count_colors(const uint8_t *src, int stride, int rows, int cols,
@@ -4812,15 +4654,55 @@ int av1_count_colors(const uint8_t *src, int stride, int rows, int cols,
         if (val_count[i]) ++n;
     return n;
 }
+extern aom_variance_fn_ptr_t mefn_ptr[BlockSizeS_ALL];
+
+// This is used as a reference when computing the source variance for the
+//  purposes of activity masking.
+// Eventually this should be replaced by custom no-reference routines,
+//  which will be faster.
+const uint8_t AV1_VAR_OFFS[MAX_SB_SIZE] = {
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128
+};
+
+unsigned int av1_get_sby_perpixel_variance(const aom_variance_fn_ptr_t *fn_ptr, //const AV1_COMP *cpi,
+                                           const uint8_t *src,int stride,//const struct buf_2d *ref,
+                                           BlockSize bs) {
+  unsigned int sse;
+  const unsigned int var =
+      //cpi->fn_ptr[bs].vf(ref->buf, ref->stride, AV1_VAR_OFFS, 0, &sse);
+     fn_ptr->vf(src,  stride, AV1_VAR_OFFS, 0, &sse);
+  return ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bs]);
+}
+
 // Estimate if the source frame is screen content, based on the portion of
 // blocks that have no more than 4 (experimentally selected) luma colors.
-static int is_screen_content(const uint8_t *src, int use_hbd,
-    int stride, int width, int height) {
+static void is_screen_content(
+    PictureParentControlSet     *picture_control_set_ptr,
+    const uint8_t               *src,
+    int                          use_hbd,
+    int                          stride,
+    int                         width,
+    int                         height) {
     assert(src != NULL);
-    int counts = 0;
     const int blk_w = 16;
     const int blk_h = 16;
-    const int limit = 4;
+    // These threshold values are selected experimentally.
+    const int color_thresh = 4;
+    const unsigned int var_thresh = 0;
+    // Counts of blocks with no more than color_thresh colors.
+    int counts_1 = 0;
+    // Counts of blocks with no more than color_thresh colors and variance larger
+    // than var_thresh.
+    int counts_2 = 0;
+
     for (int r = 0; r + blk_h <= height; r += blk_h) {
         for (int c = 0; c + blk_w <= width; c += blk_w) {
             int count_buf[1 << 12];  // Maximum (1 << 12) color levels.
@@ -4829,15 +4711,28 @@ static int is_screen_content(const uint8_t *src, int use_hbd,
                     blk_h, bd, count_buf)*/
                 : av1_count_colors(src + r * stride + c, stride, blk_w, blk_h,
                     count_buf);
-            if (n_colors > 1 && n_colors <= limit) counts++;
+            if (n_colors > 1 && n_colors <= color_thresh) {
+                ++counts_1;
+                //struct buf_2d buf;
+                //buf.stride = stride;
+                //buf.buf = (uint8_t *)src;
+                const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[BLOCK_16X16];
+
+                const unsigned int var = av1_get_sby_perpixel_variance(fn_ptr, src + r * stride + c,stride, BLOCK_16X16);
+                               /* use_hbd
+                ? av1_high_get_sby_perpixel_variance(cpi, &buf, BLOCK_16X16, bd)
+                : */
+                if (var > var_thresh) ++counts_2;
+            }
         }
     }
-    // The threshold is 10%.
-    return counts * blk_h * blk_w * 10 > width * height;
+
+    picture_control_set_ptr->sc_content_detected =
+        (counts_1 * blk_h * blk_w * 10 > width * height) &&
+        ( counts_2 * blk_h * blk_w * 15 > width * height) ;
 }
 
 
-#if DOWN_SAMPLING_FILTERING
 /************************************************
  * 1/4 & 1/16 input picture downsampling (filtering)
  ************************************************/
@@ -4848,9 +4743,9 @@ void DownsampleFilteringInputPicture(
     EbPictureBufferDesc           *sixteenth_picture_ptr) {
 
     // Downsample input picture for HME L0 and L1
-    if (picture_control_set_ptr->enable_hme_flag) {
+    if (picture_control_set_ptr->enable_hme_flag || picture_control_set_ptr->tf_enable_hme_flag) {
+        if (picture_control_set_ptr->enable_hme_level1_flag || picture_control_set_ptr->tf_enable_hme_level1_flag) {
 
-        if (picture_control_set_ptr->enable_hme_level1_flag) {
             downsample_2d(
                 &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
                 input_padded_picture_ptr->stride_y,
@@ -4869,10 +4764,9 @@ void DownsampleFilteringInputPicture(
 
         }
 
-        if (picture_control_set_ptr->enable_hme_level0_flag) {
-
+        if (picture_control_set_ptr->enable_hme_level0_flag || picture_control_set_ptr->tf_enable_hme_level0_flag) {
             // Sixteenth Input Picture Downsampling
-            if (picture_control_set_ptr->enable_hme_level1_flag)
+            if (picture_control_set_ptr->enable_hme_level1_flag || picture_control_set_ptr->tf_enable_hme_level1_flag)
                 downsample_2d(
                     &quarter_picture_ptr->buffer_y[quarter_picture_ptr->origin_x + quarter_picture_ptr->origin_y * quarter_picture_ptr->stride_y],
                     quarter_picture_ptr->stride_y,
@@ -4902,7 +4796,6 @@ void DownsampleFilteringInputPicture(
         }
     }
 }
-#endif
 
 /************************************************
  * Picture Analysis Kernel
@@ -4926,10 +4819,6 @@ void* picture_analysis_kernel(void *input_ptr)
     EbPaReferenceObject           *paReferenceObject;
 
     EbPictureBufferDesc           *input_padded_picture_ptr;
-#if !DOWN_SAMPLING_FILTERING
-    EbPictureBufferDesc           *quarter_decimated_picture_ptr;
-    EbPictureBufferDesc           *sixteenth_decimated_picture_ptr;
-#endif
     EbPictureBufferDesc           *input_picture_ptr;
 
     // Variance
@@ -4947,20 +4836,14 @@ void* picture_analysis_kernel(void *input_ptr)
         inputResultsPtr = (ResourceCoordinationResults*)inputResultsWrapperPtr->object_ptr;
         picture_control_set_ptr = (PictureParentControlSet*)inputResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
 
-#if ALT_REF_OVERLAY
         // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
         if (!picture_control_set_ptr->is_overlay)
         {
-#endif
             sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
             input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
 
             paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
             input_padded_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
-#if !DOWN_SAMPLING_FILTERING
-            quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
-            sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
-#endif
             // Variance
             picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
             pictureHeighInLcu = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
@@ -4978,22 +4861,11 @@ void* picture_analysis_kernel(void *input_ptr)
                 input_picture_ptr);
 
             // Pre processing operations performed on the input picture
-#if DOWN_SAMPLING_FILTERING
             PicturePreProcessingOperations(
                 picture_control_set_ptr,
                 sequence_control_set_ptr,
                 sb_total_count,
                 asm_type);
-#else
-            PicturePreProcessingOperations(
-                picture_control_set_ptr,
-                input_picture_ptr,
-                sequence_control_set_ptr,
-                quarter_decimated_picture_ptr,
-                sixteenth_decimated_picture_ptr,
-                sb_total_count,
-                asm_type);
-#endif
             if (input_picture_ptr->color_format >= EB_YUV422) {
                 // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
                 //       Reuse the Y, only add cb/cr in the newly created buffer desc
@@ -5006,7 +4878,6 @@ void* picture_analysis_kernel(void *input_ptr)
             // Pad input picture to complete border LCUs
             PadPictureToMultipleOfLcuDimensions(
                 input_padded_picture_ptr);
-#if DOWN_SAMPLING_FILTERING
             // 1/4 & 1/16 input picture decimation
             DownsampleDecimationInputPicture(
                 picture_control_set_ptr,
@@ -5022,56 +4893,34 @@ void* picture_analysis_kernel(void *input_ptr)
                     (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr,
                     (EbPictureBufferDesc*)paReferenceObject->sixteenth_filtered_picture_ptr);
             }
-#else
-            // 1/4 & 1/16 input picture decimation
-            DecimateInputPicture(
-                picture_control_set_ptr,
-                input_padded_picture_ptr,
-                quarter_decimated_picture_ptr,
-                sixteenth_decimated_picture_ptr);
-#endif
            // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
             GatheringPictureStatistics(
                 sequence_control_set_ptr,
                 picture_control_set_ptr,
                 picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
                 input_padded_picture_ptr,
-#if DOWN_SAMPLING_FILTERING
                 (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
-#else
-                sixteenth_decimated_picture_ptr,
-#endif
                 sb_total_count,
                 asm_type);
 
             if (sequence_control_set_ptr->static_config.screen_content_mode == 2){ // auto detect
-                picture_control_set_ptr->sc_content_detected = is_screen_content(
+                is_screen_content(
+                    picture_control_set_ptr,
                     input_picture_ptr->buffer_y + input_picture_ptr->origin_x + input_picture_ptr->origin_y*input_picture_ptr->stride_y,
                     0,
                     input_picture_ptr->stride_y,
                     sequence_control_set_ptr->seq_header.max_frame_width, sequence_control_set_ptr->seq_header.max_frame_height);
-                if (picture_control_set_ptr->sc_content_detected) {
-                    if (picture_control_set_ptr->pic_avg_variance > 1000)
-                        picture_control_set_ptr->sc_content_detected = 1;
-                    else
-                        picture_control_set_ptr->sc_content_detected = 0;
-                }
             }
             else // off / on
                 picture_control_set_ptr->sc_content_detected = sequence_control_set_ptr->static_config.screen_content_mode;
 
-#if HARD_CODE_SC_SETTING
-            picture_control_set_ptr->sc_content_detected = EB_TRUE;
-#endif
             // Hold the 64x64 variance and mean in the reference frame
             uint32_t sb_index;
             for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
                 paReferenceObject->variance[sb_index] = picture_control_set_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64];
                 paReferenceObject->y_mean[sb_index] = picture_control_set_ptr->y_mean[sb_index][ME_TIER_ZERO_PU_64x64];
             }
-#if ALT_REF_OVERLAY
         }
-#endif
         // Get Empty Results Object
         eb_get_empty_object(
             context_ptr->picture_analysis_results_output_fifo_ptr,

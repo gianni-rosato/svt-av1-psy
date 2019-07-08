@@ -60,13 +60,18 @@ static const vector<uint8_t> default_enc_mode = {
     MAX_ENC_PRESET,
 };
 static const vector<uint8_t> valid_enc_mode = {
-    0,  // highest quality mode
-    3,  // highest density mode
+    ENC_M0, /**< highest quality mode */
+    ENC_M1,
+    ENC_M2,
+    ENC_M3,
+    ENC_M4,
+    ENC_M5,
+    ENC_M6,
+    ENC_M7,
     MAX_ENC_PRESET,
 };
 static const vector<uint8_t> invalid_enc_mode = {
     MAX_ENC_PRESET + 1,
-    0xFF,
 };
 
 /* The intra period defines the interval of frames after which you insert an
@@ -148,13 +153,12 @@ static const vector<uint32_t> invalid_hierarchical_levels = {
  *
  * Default is 2. */
 static const vector<uint8_t> default_pred_structure = {
-    2,
+    EB_PRED_RANDOM_ACCESS,
 };
 static const vector<uint8_t> valid_pred_structure = {
     EB_PRED_LOW_DELAY_P, EB_PRED_LOW_DELAY_B, EB_PRED_RANDOM_ACCESS};
 static const vector<uint8_t> invalid_pred_structure = {
-    // TODO: check for the invalid param ...
-};
+    EB_PRED_TOTAL_COUNT, EB_PRED_TOTAL_COUNT + 1, EB_PRED_INVALID};
 
 /* Decides whether to use B picture or P picture in the base layer.
  *
@@ -208,26 +212,26 @@ static const vector<uint32_t> invalid_source_height = {
  *
  * Default is 25. */
 static const vector<uint32_t> default_frame_rate = {
-    25,
+    25 << 16,
 };
 static const vector<uint32_t> valid_frame_rate = {
+    1,
     24,
     25,
     30,
     50,
     60,
-    120,
-    240,
+    1 << 16,
     24 << 16,
     25 << 16,
     30 << 16,
     50 << 16,
     60 << 16,
     120 << 16,
-    240 << 16,  // ...
+    240 << 16,
 };
 static const vector<uint32_t> invalid_frame_rate = {
-    // 0, 1, 2, 10, 15, 29, 241,  // ...
+    0, 61, 241 << 16, 0xFFFFFFFF  // ...
 };
 
 // TODO: follwoing two parameters should be a combination test
@@ -372,7 +376,7 @@ static const vector<uint32_t> invalid_sb_sz = {
 };
 
 /* Super block size
- *
+ * Only support 64 and 128
  * Default is 128. */
 static const vector<uint32_t> default_super_block_size = {
     128,
@@ -625,16 +629,9 @@ static const vector<EbBool> invalid_constrained_intra = {
  * 1 = Average BitRate.
  *
  * Default is 0. */
-static const vector<uint32_t> default_rate_control_mode = {
-    0,
-};
-static const vector<uint32_t> valid_rate_control_mode = {
-    0,
-    1,
-};
-static const vector<uint32_t> invalid_rate_control_mode = {
-    2,
-};
+static const vector<uint32_t> default_rate_control_mode = {0};
+static const vector<uint32_t> valid_rate_control_mode = {0, 1, 2, 3};
+static const vector<uint32_t> invalid_rate_control_mode = {4};
 
 /* Flag to enable the scene change detection algorithm.
  *
@@ -722,6 +719,15 @@ static const vector<uint32_t> invalid_max_qp_allowed = {
  * control mode is set to 1. It has to be smaller or equal to maxQpAllowed.
  *
  * Default is 0. */
+/*
+ * There is a value check for min_qp_allowed in EbEncHandle.c :
+ * else if (config->min_qp_allowed >= MAX_QP_VALUE) {
+ *     SVT_LOG("Error instance %u: MinQpAllowed must be [0 - %d]\n",
+ *         channelNumber + 1, MAX_QP_VALUE-1); return_error =
+ *         EB_ErrorBadParameter;
+ * }
+ * The maximum valid value should be MAX_QP_VALUE - 1.
+ */
 static const vector<uint32_t> default_min_qp_allowed = {
     MIN_QP_VALUE,
 };
@@ -734,11 +740,10 @@ static const vector<uint32_t> valid_min_qp_allowed = {
     32,
     50,
     56,
-    62,
-    MAX_QP_VALUE,
+    MAX_QP_VALUE - 1,
 };
 static const vector<uint32_t> invalid_min_qp_allowed = {
-    (MAX_QP_VALUE + 1),
+    MAX_QP_VALUE,
 };
 
 // Tresholds
@@ -876,10 +881,10 @@ static const vector<uint32_t> invalid_speed_control_flag = {
 /* Frame Rate used for the injector. Recommended to match the encoder speed.
  *
  * Default is 60. */
-static const vector<uint32_t> default_injector_frame_rate = {
+static const vector<int32_t> default_injector_frame_rate = {
     60,
 };
-static const vector<uint32_t> valid_injector_frame_rate = {
+static const vector<int32_t> valid_injector_frame_rate = {
     24,
     25,
     30,
@@ -895,7 +900,7 @@ static const vector<uint32_t> valid_injector_frame_rate = {
     120 << 16,
     240 << 16,  // ...
 };
-static const vector<uint32_t> invalid_injector_frame_rate = {
+static const vector<int32_t> invalid_injector_frame_rate = {
     0, 1, 2, 10, 15, 29, 241,  // ...
 };
 
@@ -954,16 +959,9 @@ static const vector<int32_t> invalid_target_socket = {
  * ReconFile token (-o) and using the feature will affect the speed of encoder.
  *
  * Default is 0. */
-static const vector<uint32_t> default_recon_enabled = {
-    0,
-};
-static const vector<uint32_t> valid_recon_enabled = {
-    0,
-    1,
-};
-static const vector<uint32_t> invalid_recon_enabled = {
-    2,
-};
+static const vector<uint32_t> default_recon_enabled = {EB_FALSE};
+static const vector<uint32_t> valid_recon_enabled = {EB_FALSE, EB_TRUE};
+static const vector<uint32_t> invalid_recon_enabled = {/** none */};
 
 #if TILES
 /* Log 2 Tile Rows and colums . 0 means no tiling,1 means that we split the
@@ -1002,6 +1000,31 @@ static const vector<int32_t> invalid_tile_rows = {
     7,
 };
 #endif
+
+/* Flag to signal the content being a screen sharing content type
+ *
+ * Default is 2. */
+static const vector<uint32_t> default_screen_content_mode = {2};
+static const vector<uint32_t> valid_screen_content_mode = {0, 1, 2};
+static const vector<uint32_t> invalid_screen_content_mode = {3};
+
+/* Variables to control the use of ALT-REF (temporally filtered frames)
+ */
+static const vector<EbBool> default_enable_altrefs = {EB_TRUE};
+static const vector<EbBool> valid_enable_altrefs = {EB_FALSE, EB_TRUE};
+static const vector<EbBool> invalid_enable_altrefs = {/*none*/};
+
+static const vector<uint8_t> default_altref_strength = {5};
+static const vector<uint8_t> valid_altref_strength = {0, 1, 2, 3, 4, 5, 6};
+static const vector<uint8_t> invalid_altref_strength = {7};
+
+static const vector<uint8_t> default_altref_nframes = {7};
+static const vector<uint8_t> valid_altref_nframes = {0, 1, 2, 3, 4, 5, 6, 7};
+static const vector<uint8_t> invalid_altref_nframes = {8};
+
+static const vector<EbBool> default_enable_overlays = {EB_FALSE};
+static const vector<EbBool> valid_enable_overlays = {EB_FALSE, EB_TRUE};
+static const vector<EbBool> invalid_enable_overlays = {/*none*/};
 
 }  // namespace svt_av1_test_params
 

@@ -73,8 +73,8 @@ class UpsampleTest {
                 // When the process completes, entries -2 to 2*numPx-2
                 // are valid in buf;
                 const int max_idx = (numPx_ - 1) * 2;
-                for (int i = -2; i <= max_idx; ++i)
-                    ASSERT_EQ(edge_ref_[i], edge_tst_[i]);
+                for (int j = -2; j <= max_idx; ++j)
+                    ASSERT_EQ(edge_ref_[j], edge_tst_[j]);
             }
         }
     }
@@ -93,7 +93,7 @@ class UpsampleTest {
         // When the process starts, entries -1 to numPx-1 are valid in buf
         int i = 0;
         for (; i < start_offset + numPx_; ++i)
-            edge_ref_data_[i] = edge_tst_data_[i] = pix_rnd.random();
+            edge_ref_data_[i] = edge_tst_data_[i] = (Sample)pix_rnd.random();
 
         Sample last = edge_ref_data_[start_offset + numPx_ - 1];
         for (; i < edge_buf_size; ++i)
@@ -165,7 +165,7 @@ static void av1_filter_intra_edge_c(uint8_t *p, int sz, int strength) {
             s += edge[k] * kernel[filt][j];
         }
         s = (s + 8) >> 4;
-        p[i] = s;
+        p[i] = (uint8_t)s;
     }
 }
 
@@ -236,7 +236,7 @@ class FilterEdgeTest {
     void prepare_data(SVTRandom &pix_rnd) {
         int i = 0;
         for (; i < start_offset + numPx_; ++i)
-            edge_ref_data_[i] = edge_tst_data_[i] = pix_rnd.random();
+            edge_ref_data_[i] = edge_tst_data_[i] = (Sample)pix_rnd.random();
     }
 
     void run_filter_edge() {

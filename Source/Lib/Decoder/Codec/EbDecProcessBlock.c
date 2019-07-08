@@ -343,14 +343,13 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 #if SVT_DEC_COEFF_DEBUG
                                 {
                                     /* For debug purpose */
-                                    uint8_t    *cur_coeff = (uint8_t*)coeffs;
-                                    uint8_t mi_row_der = cur_coeff[0];
-                                    uint8_t mi_col_der = cur_coeff[1];
-
-                                    uint8_t  cur_loc = (mi_row + blk_row) & 0xFF;
-                                    assert(mi_row_der == cur_loc);
+                                    uint8_t *cur_coeff = (uint8_t*)coeffs;
+                                    uint8_t cur_loc = (mi_row + blk_row) & 0xFF;
+                                    assert(cur_coeff[0] == cur_loc);
                                     cur_loc = (mi_col + blk_col) & 0xFF;
-                                    assert(mi_col_der == cur_loc);
+                                    assert(cur_coeff[1] == cur_loc);
+                                    UNUSED(cur_coeff);
+                                    UNUSED(cur_loc);
                                 }
 #endif
                                 tx_type = trans_info->txk_type;

@@ -5,16 +5,20 @@ install:
     - git submodule update --init
     - appveyor DownloadFile http://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win64.exe -FileName yasm.exe
     - set PATH=%PATH%;%APPVEYOR_BUILD_FOLDER%
-    - cmake . -G "Visual Studio 16 2019" -A x64 -DCMAKE_ASM_NASM_COMPILER="yasm.exe"
+    - cmake . -G "Visual Studio 16 2019" -A x64 -DCMAKE_ASM_NASM_COMPILER="yasm.exe" -DBUILD_TESTING=ON
 
 build:
   project: svt-av1.sln
 
 artifacts:
-    - path: bin\Release\SvtAv1*.exe
-      name: $(APPVEYOR_PROJECT_NAME)
-    - path: bin\Release\SvtAv1*.dll
-      name: $(APPVEYOR_PROJECT_NAME)
+  - path: bin\**\SvtAv1EncApp.exe
+    name: $(APPVEYOR_PROJECT_NAME)
+  - path: bin\**\SvtAv1DecApp.exe
+    name: $(APPVEYOR_PROJECT_NAME)
+  - path: bin\**\SvtAv1Enc.dll
+    name: $(APPVEYOR_PROJECT_NAME)
+  - path: bin\**\SvtAv1Dec.dll
+    name: $(APPVEYOR_PROJECT_NAME)
 
 deploy:
   - provider: GitHub
