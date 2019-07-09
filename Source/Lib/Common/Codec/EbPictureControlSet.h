@@ -14300,7 +14300,12 @@ extern "C" {
         int16_t                               tf_segments_total_count;
         uint8_t                               tf_segments_column_count;
         uint8_t                               tf_segments_row_count;
+#if ALTREF_TF_ADAPTIVE_WINDOW_SIZE
+        uint8_t                               past_altref_nframes;
+        uint8_t                               future_altref_nframes;
+#else
         uint8_t                               altref_nframes;
+#endif
 #if QPS_TUNING
         uint64_t                              filtered_sse; // the normalized SSE between filtered and original alt_ref with 8 bit precision.
                                                             // I Slice has the value of the next ALT_REF picture

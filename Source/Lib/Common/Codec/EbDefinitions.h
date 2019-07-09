@@ -48,7 +48,8 @@ extern "C" {
 #define EIGTH_PEL_MV                      0
 #define IMPROVE_ALTREF_TF                 1 // Improve Temporal Filtering for the BASE AltRef 
 #if IMPROVE_ALTREF_TF
-#define ALTREF_EIGHTH_PEL_SEARCH          1 // Add 1/8 sub-pel search/compensation @ Temporal Filtering
+#define ALTREF_TF_EIGHTH_PEL_SEARCH       1 // Add 1/8 sub-pel search/compensation @ Temporal Filtering
+#define ALTREF_TF_ADAPTIVE_WINDOW_SIZE    1 // Add the ability to use dynamic/asymmetric window for AltRef temporal filtering, add the ability to derive the activity within past and future frames @ picture decision, and add a logic to derive window size from activity
 #endif
 
 //FOR DEBUGGING - Do not remove
