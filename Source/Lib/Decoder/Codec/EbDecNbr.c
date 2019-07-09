@@ -13,8 +13,7 @@
 #include "EbDecProcessFrame.h"
 
 #include "EbDecNbr.h"
-
-/* TODO : Should be moved to nbr file */
+#if !FRAME_MI_MAP
 void update_nbrs_before_sb(FrameMiMap *frame_mi_map, int32_t sb_col) {
     int32_t num_mis_in_sb_wd = frame_mi_map->num_mis_in_sb_wd;
 
@@ -23,7 +22,6 @@ void update_nbrs_before_sb(FrameMiMap *frame_mi_map, int32_t sb_col) {
         num_mis_in_sb_wd * sizeof(int16_t));
 }
 
-/* TODO : Should be moved to nbr file */
 void update_nbrs_after_sb(FrameMiMap *frame_mi_map, int32_t sb_col) {
     int32_t num_mis_in_sb_wd = frame_mi_map->num_mis_in_sb_wd;
 
@@ -34,8 +32,8 @@ void update_nbrs_after_sb(FrameMiMap *frame_mi_map, int32_t sb_col) {
     memcpy(&frame_mi_map->top_sbrow_mi_map[sb_col*num_mis_in_sb_wd], &frame_mi_map->cur_sb_mi_map[num_mis_in_sb_wd][1],
         num_mis_in_sb_wd * sizeof(int16_t));
 }
+#endif
 
-/* TODO : Should be moved to nbr file */
 void update_block_nbrs(EbDecHandle *dec_handle,
     int mi_row, int mi_col,
     BlockSize subsize)
@@ -47,7 +45,18 @@ void update_block_nbrs(EbDecHandle *dec_handle,
     // int32_t num_mis_in_sb_wd = frame_mi_map->num_mis_in_sb_wd;
     int bw4 = mi_size_wide[subsize];
     int bh4 = mi_size_high[subsize];
-
+#if FRAME_MI_MAP
+    /*TODO : Can remove later*/
+    assert(mi_row >= 0); assert(mi_row+ bh4 <= frame_mi_map->mi_rows_algnsb);
+    assert(mi_col >= 0); assert(mi_col + bw4 <= frame_mi_map->mi_cols_algnsb);
+    /* Update 4x4 nbr offset map */
+    for (int i = mi_row; i < mi_row + bh4; i++) {
+        uint16_t *p_mi_offset = frame_mi_map->p_mi_offset + i *
+                                    frame_mi_map->mi_cols_algnsb;
+        for (int j = mi_col; j < mi_col + bw4; j++)
+            p_mi_offset[j] = offset;
+    }
+#else
     int32_t blk_mi_row_start = (mi_row - parse_ctx->sb_row_mi) + 1;
     int32_t blk_mi_col_start = (mi_col - parse_ctx->sb_col_mi) + 1;
 
@@ -59,17 +68,31 @@ void update_block_nbrs(EbDecHandle *dec_handle,
     for (int i = blk_mi_row_start; i < blk_mi_row_start + bh4; i++)
         for (int j = blk_mi_col_start; j < blk_mi_col_start + bw4; j++)
             frame_mi_map->cur_sb_mi_map[i][j] = offset;
+#endif
 }
 
-/* TODO : Should be moved to nbr file */
+#if !FRAME_MI_MAP
+/* Should be called within same SB */
+#endif
+/* TODO : Should remove dec_mod_ctxt dependency */
 ModeInfo_t* get_cur_mode_info(void *pv_dec_handle,
                               int mi_row, int mi_col, SBInfo *sb_info)
 {
     EbDecHandle *dec_handle     = (EbDecHandle *)pv_dec_handle;
     FrameMiMap  *frame_mi_map   = &dec_handle->master_frame_buf.frame_mi_map;
-    DecModCtxt *dec_mod_ctxt    = (DecModCtxt *)dec_handle->pv_dec_mod_ctxt;
 
     ModeInfo_t *cur_mi = NULL;
+    (void)sb_info;
+#if FRAME_MI_MAP
+    int32_t cur_sb_row = mi_row >> (frame_mi_map->sb_size_log2 - MI_SIZE_LOG2);
+    int32_t cur_sb_col = mi_col >> (frame_mi_map->sb_size_log2 - MI_SIZE_LOG2);
+    SBInfo *cur_sb_info = frame_mi_map->pps_sb_info[cur_sb_row *
+                                            frame_mi_map->sb_cols + cur_sb_col];
+    int32_t offset = *(frame_mi_map->p_mi_offset +
+                        mi_row * frame_mi_map->mi_cols_algnsb + mi_col);
+    cur_mi = &cur_sb_info->sb_mode_info[offset];
+#else
+    DecModCtxt  *dec_mod_ctxt = (DecModCtxt *)dec_handle->pv_dec_mod_ctxt;
 
     int32_t num_mis_in_sb_wd = frame_mi_map->num_mis_in_sb_wd;
 
@@ -83,7 +106,7 @@ ModeInfo_t* get_cur_mode_info(void *pv_dec_handle,
     (void)num_mis_in_sb_wd;
     int32_t offset = frame_mi_map->cur_sb_mi_map[cur_blk_mi_row][cur_blk_mi_col];
     cur_mi = &sb_info->sb_mode_info[offset];
-
+#endif
     return cur_mi;
 }
 
@@ -91,6 +114,10 @@ ModeInfo_t* get_cur_mode_info(void *pv_dec_handle,
 ModeInfo_t * get_left_mode_info(EbDecHandle *dec_handle,
     int mi_row, int mi_col, SBInfo *sb_info)
 {
+    (void)sb_info;
+#if FRAME_MI_MAP
+    return get_cur_mode_info(dec_handle, mi_row, mi_col - 1, NULL);
+#else
     ParseCtxt   *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
     FrameMiMap  *frame_mi_map = &dec_handle->master_frame_buf.frame_mi_map;
     ModeInfo_t  *left_mi = NULL;
@@ -113,12 +140,17 @@ ModeInfo_t * get_left_mode_info(EbDecHandle *dec_handle,
         left_mi = &sb_info->sb_mode_info[offset];
 
     return left_mi;
+#endif
 }
 
 /* TODO : Should remove parse_ctx dependency */
 ModeInfo_t* get_top_mode_info(EbDecHandle *dec_handle,
     int mi_row, int mi_col, SBInfo *sb_info)
 {
+    (void)sb_info;
+#if FRAME_MI_MAP
+    return get_cur_mode_info(dec_handle, mi_row - 1, mi_col, NULL);
+#else
     ParseCtxt   *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
     FrameMiMap  *frame_mi_map = &dec_handle->master_frame_buf.frame_mi_map;
     ModeInfo_t  *top_mi = NULL;
@@ -141,4 +173,5 @@ ModeInfo_t* get_top_mode_info(EbDecHandle *dec_handle,
         top_mi = &sb_info->sb_mode_info[offset];
 
     return top_mi;
+#endif
 }

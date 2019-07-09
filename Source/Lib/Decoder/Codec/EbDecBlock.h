@@ -101,19 +101,23 @@ enum {
     COMPOUND_MASK_TYPES,
 } UENUM1BYTE(COMPOUND_MASK_TYPE);
 
-typedef struct MV_decs {
-    int16_t row;
-    int16_t col;
-} MV_dec;
+/*TODO: Harmonize with encoder structure */
 typedef union  IntMv_dec {
     uint32_t as_int;
-    MV_dec as_mv;
+    MV as_mv;
 } IntMv_dec; /* facilitates faster equality tests and copies */
 typedef struct CandidateMv_dec {
     IntMv_dec this_mv;
     IntMv_dec comp_mv;
     int32_t weight;
 } CandidateMv_dec;
+
+#define MFMV_STACK_SIZE 3
+typedef struct TemporalMvRef {
+    /* Motion Filed MV */
+    IntMv_dec   mf_mv0;
+    uint8_t     ref_frame_offset;
+} TemporalMvRef;
 
 typedef struct FilterIntraModeInfo {
     /*!< Specifies the type of intra filtering, and can represent any of the following:
@@ -167,7 +171,15 @@ typedef struct TransformInfo {
     /*!< Specifies the transform type for the TU. */
     TxType txk_type;
 
+    /*!< Code Block Flag, 0: No residual for the block
+                          1: Residual exists for the block */
     int8_t  cbf;
+
+    /*!< x offset for a block in mi unit*/
+    uint8_t tu_x_offset;
+    /*!< y offset for a block in mi unit */
+    uint8_t tu_y_offset;
+
 } TransformInfo_t;
 
 typedef struct ModeInfo_t {
@@ -188,13 +200,17 @@ typedef struct ModeInfo_t {
     /*!< Equal to 1 specifies that the segment_id is taken from the segmentation map. */
     int8_t seg_id_predicted;
 
-    /*!< Number of Luma TUs in block */
+    /*!< For Lossy mode   : Specifies number of Luma TUs in a block
+         For Lossless mode: Specifies number of Luma TUs for a block of size other than
+                            128x128, 128x64, 64x128 and 64x64 - computed based on blocksize */
     uint8_t         num_luma_tus;
 
     /*!< Offset of first Luma transform info from strat of SB pointer */
     uint16_t        first_luma_tu_offset;
 
-    /*!< Number of Chroma TUs in block */
+    /*!< For Lossy mode   : Specifies number of Chroma TUs in a block
+         For Lossless mode: Specifies number of Chroma TUs for a block of size other than
+                            128x128, 128x64, 64x128 and 64x64 - computed based on blocksize */
     uint8_t         num_chroma_tus;
 
     /*!< Offset of first Chroma transform info from strat of SB pointer */
@@ -209,6 +225,8 @@ typedef struct ModeInfo_t {
 
     MvReferenceFrame    ref_frame[2];
     IntMv_dec           mv[2];
+
+    uint16_t            ref_mv_idx;
 
     // interinter members
 
@@ -251,17 +269,12 @@ typedef struct SBInfo {
     int32_t     *sb_delta_q; /*!< At SB level */
     int32_t     *sb_delta_lf; /*!< At SB level */
 
-    TransformInfo_t *sb_luma_trans_info;
-    TransformInfo_t *sb_chroma_trans_info;
+    TransformInfo_t *sb_trans_info[MAX_MB_PLANE - 1];
 
-    int32_t         *sb_luma_coeff;
-    int32_t         *sb_chroma_coeff;
+    int32_t         *sb_coeff[MAX_MB_PLANE];
 
     ModeInfo_t      *sb_mode_info;
 
-    //Add buffer for coeff storage
-
-    //Add buffer for coeff storage
 } SBInfo;
 
 typedef struct PartitionInfo {
@@ -288,6 +301,9 @@ typedef struct PartitionInfo {
 
     /*!< Indicates if the information from the block to the left can be used on the luma plane. */
     uint8_t left_available;
+
+    // TO-DO bhavna Verify if this is necessary. Can this info be accessed from elsewhere
+    uint8_t neighbors_ref_counts[REF_FRAMES];
 
     /*!< Indicates if the information from the block above cab be used on the chroma plane. */
     uint8_t chroma_up_available;
@@ -318,7 +334,11 @@ typedef struct PartitionInfo {
 
     //BlockPlane plane[MAX_MB_PLANE];
 
-    const EbWarpedMotionParams *global_motion;
+    /*!< Pointer to global warp params of current frame */
+    const EbWarpedMotionParams *ps_global_motion;
+
+    /*!< Pointer to local warp params based on nieghbour mv sample projection */
+    EbWarpedMotionParams local_warp_params;
 
     WienerInfo wiener_info[MAX_MB_PLANE];
 
@@ -335,6 +355,14 @@ typedef struct PartitionInfo {
 
     /* CFL ctxt */
     void    *pv_cfl_ctxt;
+
+    int     is_sec_rect;
+
+    int     num_samples;
+
+    /*!< chroma sub-sampling format */
+    uint8_t subsampling_x;
+    uint8_t subsampling_y;
 } PartitionInfo_t;
 
 #endif //EbDecBlock_h

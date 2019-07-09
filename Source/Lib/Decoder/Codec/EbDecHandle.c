@@ -17,6 +17,7 @@
 #include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
 #include "EbDecMemInit.h"
+#include "EbDecPicMgr.h"
 
 #if defined(__linux__) || defined(__APPLE__)
 #include <pthread.h>
@@ -47,10 +48,11 @@ uint32_t                         lib_malloc_count = 0;
 uint32_t                         lib_semaphore_count = 0;
 uint32_t                         lib_mutex_count = 0;
 
+void asmSetConvolveAsmTable(void);
 void init_intra_dc_predictors_c_internal(void);
 void init_intra_predictors_internal(void);
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr,
-            const uint8_t *data, size_t data_size);
+                                uint8_t **data, size_t data_size);
 
 void SwitchToRealTime(){
 #if defined(__linux__) || defined(__APPLE__)
@@ -98,8 +100,14 @@ int svt_dec_out_buf(
     EbDecHandle         *dec_handle_ptr,
     EbBufferHeaderType  *p_buffer)
 {
-    EbPictureBufferDesc *recon_picture_buf = dec_handle_ptr->recon_picture_buf[0];
+    EbPictureBufferDesc *recon_picture_buf = dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf;
     EbSvtIOFormat       *out_img = (EbSvtIOFormat*)p_buffer->p_buffer;
+
+    /* TODO: Should add logic for show_existing_frame */
+    if (0 == dec_handle_ptr->show_frame) {
+        assert(0 == dec_handle_ptr->show_existing_frame);
+        return 0;
+    }
 
     int wd = dec_handle_ptr->frame_header.frame_size.frame_width;
     int ht = dec_handle_ptr->frame_header.frame_size.frame_height;
@@ -344,11 +352,14 @@ EB_API EbErrorType eb_init_decoder(
     dec_handle_ptr->seq_header_done = 0;
     dec_handle_ptr->mem_init_done   = 0;
 
-    dec_handle_ptr->seen_frame_header = 0;
+    dec_handle_ptr->seen_frame_header   = 0;
     dec_handle_ptr->show_existing_frame = 0;
+    dec_handle_ptr->show_frame          = 0;
+    dec_handle_ptr->showable_frame      = 0;
 
     assert(0 == dec_handle_ptr->dec_config.asm_type);
     setup_rtcd_internal(dec_handle_ptr->dec_config.asm_type);
+    asmSetConvolveAsmTable();
 
     init_intra_dc_predictors_c_internal();
 
@@ -376,12 +387,33 @@ EB_API EbErrorType eb_svt_decode_frame(
     if (svt_dec_component == NULL)
         return EB_ErrorBadParameter;
 
-    EbDecHandle     *dec_handle_ptr = (EbDecHandle   *)svt_dec_component->p_component_private;
-    /*TODO : Remove or move. For Test purpose only */
-    dec_handle_ptr->dec_cnt++;
-    printf("\n SVT-AV1 Dec : Decoding Pic #%d", dec_handle_ptr->dec_cnt);
+    EbDecHandle *dec_handle_ptr = (EbDecHandle *)svt_dec_component->p_component_private;
+    uint8_t *data_start = (uint8_t *)data;
+    uint8_t *data_end = (uint8_t *)data + data_size;
 
-    return_error = decode_multiple_obu(dec_handle_ptr, data, data_size);
+    while (data_start < (data + data_size))
+    {
+        /*TODO : Remove or move. For Test purpose only */
+        dec_handle_ptr->dec_cnt++;
+        printf("\n SVT-AV1 Dec : Decoding Pic #%d", dec_handle_ptr->dec_cnt);
+
+        uint64_t frame_size = 0;
+        /*if (ctx->is_annexb) {
+        }
+        else*/
+        frame_size = data_end - data_start;
+        return_error = decode_multiple_obu(dec_handle_ptr, &data_start, frame_size);
+
+        dec_pic_mgr_update_ref_pic(dec_handle_ptr, (EB_ErrorNone == return_error)
+                    ? 1 : 0, dec_handle_ptr->frame_header.refresh_frame_flags);
+
+        // Allow extra zero bytes after the frame end
+        while (data < data_end) {
+            const uint8_t marker = data[0];
+            if (marker) break;
+            ++data;
+        }
+    }
 
     return return_error;
 }

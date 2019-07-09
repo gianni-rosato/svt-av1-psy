@@ -984,8 +984,7 @@ typedef enum
     COMPOUND_DISTWTD,
     COMPOUND_WEDGE,
     COMPOUND_DIFFWTD,
-    COMPOUND_INTRA,
-    COMPOUND_TYPES = 3,
+    COMPOUND_TYPES,
     MASKED_COMPOUND_TYPES = 2,
 } CompoundType;
 
@@ -1731,6 +1730,17 @@ typedef struct EbWarpedMotionParams
     int16_t alpha, beta, gamma, delta;
     int8_t invalid;
 } EbWarpedMotionParams;
+
+/*! Scale factors and scaling function pointers  when reference and current frame dimensions are not equal */
+typedef struct ScaleFactors {
+    int32_t x_scale_fp;  // horizontal fixed point scale factor
+    int32_t y_scale_fp;  // vertical fixed point scale factor
+    int32_t x_step_q4;
+    int32_t y_step_q4;
+
+    int32_t(*scale_value_x)(int32_t val, const struct ScaleFactors *sf);
+    int32_t(*scale_value_y)(int32_t val, const struct ScaleFactors *sf);
+} ScaleFactors;
 
 /* clang-format off */
 static const EbWarpedMotionParams default_warp_params = {

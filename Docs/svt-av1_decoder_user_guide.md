@@ -16,7 +16,9 @@ This document describes how to use the Scalable Video Technology for AV1 Decoder
 
 Initial version:
 
-- Supports only I-frames without loopfilter (deblocking, cdef and self guided restoration filters not supported)
+- Supports all frames without loopfilter (deblocking, cdef and self guided restoration filters not supported)
+- Screen content tools are not supported
+- Following Inter tools are not supported : (OBMC, COMPOUND_INTRA, COMPOUND_DISTANCE, COMPOUND_WEDGE, COMPOUND_DIFFWTD, Temporal Scan)
 - Supports only 8-bit and 10-bit 4:2:0 content
 - Tested only on Windows
 
