@@ -18,7 +18,8 @@ include_directories(${PROJECT_SOURCE_DIR}/test/
     ${PROJECT_SOURCE_DIR}/third_party/googletest/include
     ${PROJECT_SOURCE_DIR}/third_party/googletest/src
     ${PROJECT_SOURCE_DIR}/third_party/aom/inc
-    ${PROJECT_SOURCE_DIR}/Source/API)
+    ${PROJECT_SOURCE_DIR}/Source/API
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec)
 
 # Link Subdirectories
 if(APPLE)
@@ -37,6 +38,7 @@ file(GLOB all_files
 
 set(lib_list
     SvtAv1Enc
+    SvtAv1Dec
     gtest_all
     #SDL2.lib
     aom)

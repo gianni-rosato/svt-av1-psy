@@ -96,6 +96,7 @@ class RefDecoder {
         VideoColorFormat format;
         uint32_t bit_depth;
         uint32_t sb_size;
+        bool still_pic;
         /* coding options */
         int force_integer_mv;
         int enable_filter_intra;
@@ -108,6 +109,7 @@ class RefDecoder {
         int enable_cdef;
         int enable_restoration;
         int film_grain_params_present;
+        int enable_superres;
 
         uint32_t tile_rows;
         uint32_t tile_cols;
