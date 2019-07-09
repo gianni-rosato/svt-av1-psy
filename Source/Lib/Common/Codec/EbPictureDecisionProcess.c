@@ -3354,7 +3354,7 @@ void* picture_decision_kernel(void *input_ptr)
                                         break;
                                 }
                                 picture_control_set_ptr->future_altref_nframes = pic_itr - index_center;
-                                printf("\nPOC %d\t PAST %d\t FUTURE %d\n", picture_control_set_ptr->picture_number, picture_control_set_ptr->past_altref_nframes, picture_control_set_ptr->future_altref_nframes);
+                                //printf("\nPOC %d\t PAST %d\t FUTURE %d\n", picture_control_set_ptr->picture_number, picture_control_set_ptr->past_altref_nframes, picture_control_set_ptr->future_altref_nframes);
 #else
                                 //get the final number of pictures to use for the temporal filtering
                                 altref_nframes = (uint8_t)(actual_past_pics + 1 + actual_future_pics);
