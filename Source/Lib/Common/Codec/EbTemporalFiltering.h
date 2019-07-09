@@ -62,7 +62,7 @@
 
 #define OD_DIVU_DMAX (1024)
 #if ALTREF_TF_ADAPTIVE_WINDOW_SIZE
-#define AHD_TH_WEIGHT 50 
+#define AHD_TH_WEIGHT 50
 #endif
 void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_ptr,
     PictureParentControlSet *picture_control_set_ptr_central,
