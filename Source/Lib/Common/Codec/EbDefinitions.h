@@ -46,6 +46,10 @@ extern "C" {
 #define CDEF_AVX_OPT                      1
 #define MR_MODE                           0
 #define EIGTH_PEL_MV                      0
+#define IMPROVE_ALTREF_TF                 1 // Improve Temporal Filtering for the BASE AltRef 
+#if IMPROVE_ALTREF_TF
+#define ALTREF_EIGHTH_PEL_SEARCH          1 // Add 1/8 sub-pel search/compensation @ Temporal Filtering
+#endif
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

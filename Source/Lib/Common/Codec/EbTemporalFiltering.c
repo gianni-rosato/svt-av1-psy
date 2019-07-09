@@ -772,6 +772,11 @@ void tf_inter_prediction(
     MeContext* context_ptr,
     EbPictureBufferDesc *pic_ptr_ref,
     EbByte *pred,
+#if ALTREF_EIGHTH_PEL_SEARCH
+    int* stride_pred,
+    EbByte* src,
+    int* stride_src,
+#endif
     uint32_t sb_origin_x,
     uint32_t sb_origin_y,
     int* use_16x16_subblocks,
@@ -826,6 +831,57 @@ void tf_inter_prediction(
                 //AV1 MVs are always in 1/8th pel precision.
                 mv_unit.mv->x = mv_unit.mv->x << 1;
                 mv_unit.mv->y = mv_unit.mv->y << 1;
+#if ALTREF_EIGHTH_PEL_SEARCH
+                uint64_t best_distortion = (uint64_t)~0;
+                signed short best_mv_x;
+                signed short best_mv_y;
+                signed short mv_x = (_MVXT(context_ptr->p_best_mv16x16[mv_index])) << 1;
+                signed short mv_y = (_MVYT(context_ptr->p_best_mv16x16[mv_index])) << 1;
+
+                for (signed short i = -1; i <= 1; i++) {
+                    for (signed short j = -1; j <= 1; j++) {
+
+                        mv_unit.mv->x = mv_x + i;
+                        mv_unit.mv->y = mv_y + j;
+
+                        av1_inter_prediction(
+                            NULL,  //picture_control_set_ptr,
+                            (uint32_t)interp_filters,
+                            &cu_ptr,
+                            0,//ref_frame_type,
+                            &mv_unit,
+                            0,//use_intrabc,
+                            pu_origin_x,
+                            pu_origin_y,
+                            bsize,
+                            bsize,
+                            pic_ptr_ref,
+                            NULL,//ref_pic_list1,
+                            &prediction_ptr,
+                            local_origin_x,
+                            local_origin_y,
+                            1,//perform_chroma,
+                            asm_type);
+
+
+                        uint8_t *pred_Y_ptr = pred[C_Y] + 16 * idx_y*stride_pred[C_Y] + 16 * idx_x;
+                        uint8_t *src_Y_ptr = src[C_Y] + 16 * idx_y*stride_src[C_Y] + 16 * idx_x;
+
+                        const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[BLOCK_16X16];
+                        unsigned int sse;
+                        uint64_t distortion = fn_ptr->vf(pred_Y_ptr, stride_pred[C_Y], src_Y_ptr, stride_src[C_Y], &sse);
+                        if (distortion < best_distortion) {
+                            best_distortion = distortion;
+                            best_mv_x = mv_unit.mv->x;
+                            best_mv_y = mv_unit.mv->y;
+                        }
+                    }
+                }
+
+                // Perform final pass using the 1/16 MV
+                //AV1 MVs are always in 1/8th pel precision.
+                mv_unit.mv->x = best_mv_x;
+                mv_unit.mv->y = best_mv_y;
 
                 av1_inter_prediction(
                     NULL,  //picture_control_set_ptr,
@@ -845,6 +901,27 @@ void tf_inter_prediction(
                     local_origin_y,
                     1,//perform_chroma,
                     asm_type);
+
+#else
+                av1_inter_prediction(
+                    NULL,  //picture_control_set_ptr,
+                    (uint32_t)interp_filters,
+                    &cu_ptr,
+                    0,//ref_frame_type,
+                    &mv_unit,
+                    0,//use_intrabc,
+                    pu_origin_x,
+                    pu_origin_y,
+                    bsize,
+                    bsize,
+                    pic_ptr_ref,
+                    NULL,//ref_pic_list1,
+                    &prediction_ptr,
+                    local_origin_x,
+                    local_origin_y,
+                    1,//perform_chroma,
+                    asm_type);
+#endif
             }
         }
     }
@@ -1298,6 +1375,11 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                         context_ptr,
                         list_input_picture_ptr[frame_index],
                         pred,
+#if ALTREF_EIGHTH_PEL_SEARCH
+                        stride_pred,
+                        src_altref_index,
+                        stride,
+#endif
                         (uint32_t)blk_col*BW,
                         (uint32_t)blk_row*BH,
                         use_16x16_subblocks,
