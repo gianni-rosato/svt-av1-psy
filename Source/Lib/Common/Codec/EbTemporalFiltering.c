@@ -864,8 +864,8 @@ void tf_inter_prediction(
                             asm_type);
 
 
-                        uint8_t *pred_Y_ptr = pred[C_Y] + 16 * idx_y*stride_pred[C_Y] + 16 * idx_x;
-                        uint8_t *src_Y_ptr = src[C_Y] + 16 * idx_y*stride_src[C_Y] + 16 * idx_x;
+                        uint8_t *pred_Y_ptr = pred[C_Y] + bsize * idx_y*stride_pred[C_Y] + bsize * idx_x;
+                        uint8_t *src_Y_ptr = src[C_Y] + bsize * idx_y*stride_src[C_Y] + bsize * idx_x;
 
                         const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[BLOCK_16X16];
                         unsigned int sse;
@@ -878,7 +878,7 @@ void tf_inter_prediction(
                     }
                 }
 
-                // Perform final pass using the 1/16 MV
+                // Perform final pass using the 1/8 MV
                 //AV1 MVs are always in 1/8th pel precision.
                 mv_unit.mv->x = best_mv_x;
                 mv_unit.mv->y = best_mv_y;
