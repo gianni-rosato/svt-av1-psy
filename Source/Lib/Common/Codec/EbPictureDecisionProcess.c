@@ -3308,14 +3308,7 @@ void* picture_decision_kernel(void *input_ptr)
 
 #if ALTREF_TF_ADAPTIVE_WINDOW_SIZE
                                 int index_center = (uint8_t)(picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes / 2);
-
                                 int pic_itr;
-
-                                // adjust the starting point of buffer_y of the starting pixel values of the source picture
-                                EbByte src = picture_control_set_ptr->temp_filt_pcs_list[index_center]->enhanced_picture_ptr->buffer_y +
-                                    picture_control_set_ptr->temp_filt_pcs_list[index_center]->enhanced_picture_ptr->origin_y*picture_control_set_ptr->temp_filt_pcs_list[index_center]->enhanced_picture_ptr->stride_y +
-                                    picture_control_set_ptr->temp_filt_pcs_list[index_center]->enhanced_picture_ptr->origin_x;
-
                                 int ahd;
                                 uint32_t regionInPictureWidthIndex;
                                 uint32_t regionInPictureHeightIndex;
