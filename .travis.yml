@@ -43,15 +43,19 @@ before_install:
   - cd $TRAVIS_BUILD_DIR
   - wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
   - tar xf video.tar.gz
-  - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/$build_type
+  - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
 install:
   - pip install --user cpp-coveralls
   - export PATH=/Users/travis/Library/Python/2.7/bin:${PATH}
+  - |
+    if [ "$TRAVIS_OS_NAME" != "osx" ]; then
+      export CFLAGS="-Werror"
+      if [ "$CC" = "clang" ]; then export CFLAGS+=" -Wno-error=array-bounds"; fi
+    fi
   #- if [ $TRAVIS_OS_NAME = osx ]; then brew install --HEAD valgrind; fi
 base_script: &base_script |
-  cd $TRAVIS_BUILD_DIR/Build/linux/$build_type
-  if [ "$CC" = "gcc" ] || { [[ "$TRAVIS_OS_NAME" = "osx" ]] && [[ "$CC" = "clang" ]]; }; then CFLAGS+=" -Werror"; fi
-  cmake $TRAVIS_BUILD_DIR -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=$build_type ${CMAKE_EFLAGS[@]}
+  cd $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
+  cmake $TRAVIS_BUILD_DIR -G"${generator:-Unix Makefiles}" -DCMAKE_BUILD_TYPE=${build_type:-Release} ${CMAKE_EFLAGS[@]}
   cmake -j $(if [ $TRAVIS_OS_NAME = osx ]; then sysctl -n hw.ncpu; else nproc; fi) --build . &&
   sudo cmake --build . --target install && cd $TRAVIS_BUILD_DIR
 coveralls_script: &coveralls_script |
@@ -60,6 +64,7 @@ coveralls_script: &coveralls_script |
   git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch &&
   ffmpegconfig=(--disable-everything --enable-{libsvtav1,encoder={libaom_av1,libsvt_av1,rawvideo},decoder={h264,rawvideo,yuv4,libaom_av1},muxer={fifo,matroska,ivf,mp4,rawvideo,webm,yuv4mpegpipe},demuxer={h264,ivf,matroska,mpegts,rawvideo,yuv4mpegpipe},parser={av1,h264,mpeg4video},bsf={av1_metadata,h264_metadata},protocol={data,file,pipe,unix},filter={fifo,fps,libvmaf,psnr,ssim,vmafmotion}})
   sudo chown -R travis: $HOME/.ccache
+  CFLAGS=""
   if ! ./configure ${ffmpegconfig[@]}; then cat ffbuild/config.log; fi &&
   make -s -j$(if [ $TRAVIS_OS_NAME = osx ]; then sysctl -n hw.ncpu; else nproc; fi) >/dev/null &&
   sudo make install && cd $TRAVIS_BUILD_DIR &&
@@ -132,6 +137,7 @@ matrix:
         - git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
         - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig
         - "sudo chown -R travis: $HOME/.ccache"
+        - export CFLAGS=""
         - ./configure --enable-libsvtav1 || less ffbuild/config.log
         - make --quiet -j$(nproc) && sudo make install
     # GStreamer interation build
@@ -145,12 +151,15 @@ matrix:
       # Build GST-SVT-AV1 plugin
       - cd $TRAVIS_BUILD_DIR/gstreamer-plugin
       - "sudo chown -R travis: $HOME/.ccache"
+      - CFLAGS=""
       - cmake .
       - make --quiet -j$(nproc)
       - sudo make install
     # Tests if .ivf files are identical on binary level
     - name: Binary Identical?
       stage: test
+      os: linux
+      compiler: gcc
       script:
         - mv -t $HOME akiyo_cif.y4m
         - *base_script
@@ -160,7 +169,7 @@ matrix:
         - rm -rf $TRAVIS_BUILD_DIR
         - git clone --depth 1 https://github.com/OpenVisualCloud/SVT-AV1.git $TRAVIS_BUILD_DIR
         - cd $TRAVIS_BUILD_DIR
-        - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/$build_type
+        - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
         - *base_script
         - cd $HOME
         - SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 120 -b test-master-m8.ivf
@@ -200,7 +209,7 @@ matrix:
       env: build_type=debug CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
       script:
         - *base_script
-        - cd $TRAVIS_BUILD_DIR/Build/linux/$build_type
+        - cd $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
         - make TestVectors
         - cd $TRAVIS_BUILD_DIR
         - SvtAv1UnitTests
@@ -213,7 +222,7 @@ matrix:
       env: build_type=debug CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
       script:
         - *base_script
-        - cd $TRAVIS_BUILD_DIR/Build/linux/$build_type
+        - cd $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
         - make TestVectors
         - cd $TRAVIS_BUILD_DIR
         - SvtAv1UnitTests
