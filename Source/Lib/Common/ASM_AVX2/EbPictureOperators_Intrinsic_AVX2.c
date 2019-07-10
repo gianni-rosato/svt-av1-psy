@@ -3010,16 +3010,41 @@ uint64_t spatial_full_distortion_kernel_avx2(
         const uint8_t *inp = input;
         const uint8_t *rec = recon;
         h = area_height;
-        do {
-            uint32_t x = 0;
-            do {
-                SpatialFullDistortionKernel32_AVX2_INTRIN(inp + x, rec + x, &sum);
-                x += 32;
-            } while (x < area_width);
 
-            inp += input_stride;
-            rec += recon_stride;
-        } while (--h);
+        if (area_width == 32) {
+            do {
+                SpatialFullDistortionKernel32_AVX2_INTRIN(inp, rec, &sum);
+                inp += input_stride;
+                rec += recon_stride;
+            } while (--h);
+        }
+        else if (area_width == 64) {
+            do {
+                SpatialFullDistortionKernel32_AVX2_INTRIN(inp + 0 * 32, rec + 0 * 32, &sum);
+                SpatialFullDistortionKernel32_AVX2_INTRIN(inp + 1 * 32, rec + 1 * 32, &sum);
+                inp += input_stride;
+                rec += recon_stride;
+            } while (--h);
+        }
+        else if (area_width == 96) {
+            do {
+                SpatialFullDistortionKernel32_AVX2_INTRIN(inp + 0 * 32, rec + 0 * 32, &sum);
+                SpatialFullDistortionKernel32_AVX2_INTRIN(inp + 1 * 32, rec + 1 * 32, &sum);
+                SpatialFullDistortionKernel32_AVX2_INTRIN(inp + 2 * 32, rec + 2 * 32, &sum);
+                inp += input_stride;
+                rec += recon_stride;
+            } while (--h);
+        }
+        else { // 128
+            do {
+                SpatialFullDistortionKernel32_AVX2_INTRIN(inp + 0 * 32, rec + 0 * 32, &sum);
+                SpatialFullDistortionKernel32_AVX2_INTRIN(inp + 1 * 32, rec + 1 * 32, &sum);
+                SpatialFullDistortionKernel32_AVX2_INTRIN(inp + 2 * 32, rec + 2 * 32, &sum);
+                SpatialFullDistortionKernel32_AVX2_INTRIN(inp + 3 * 32, rec + 3 * 32, &sum);
+                inp += input_stride;
+                rec += recon_stride;
+            } while (--h);
+        }
     }
 
     return Hadd32_AVX2_INTRIN(sum);
