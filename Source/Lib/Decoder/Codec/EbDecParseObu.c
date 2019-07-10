@@ -1948,8 +1948,6 @@ EbErrorType read_frame_header_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                                   ObuHeader *obu_header, int trailing_bit)
 {
     EbErrorType status = EB_ErrorNone;
-    SeqHeader *seq_header = &dec_handle_ptr->seq_header;
-    FrameHeader *frame_info = &dec_handle_ptr->frame_header;
 
     int num_planes = av1_num_planes(&dec_handle_ptr->seq_header.color_config);
     uint32_t start_position, end_position, header_bytes;

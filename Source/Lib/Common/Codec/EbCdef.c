@@ -1376,7 +1376,7 @@ void finish_cdef_search(
 
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
     int32_t pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
-    int32_t sec_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
+    //int32_t sec_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
     int32_t i;
     int32_t nb_strengths;
     int32_t nb_strength_bits;
