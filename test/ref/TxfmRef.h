@@ -48,7 +48,6 @@
 #include "util.h"
 
 /* Defined in EbTransforms.c */
-extern "C" int32_t get_rect_tx_log_ratio(int32_t col, int32_t row);
 namespace svt_av1_test_reference {
 // forward transform 1d reference
 using Txfm1dFuncRef = void (*)(const double *in, double *out, int size);

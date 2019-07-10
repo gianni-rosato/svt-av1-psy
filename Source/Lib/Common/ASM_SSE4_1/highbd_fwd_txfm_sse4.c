@@ -24,9 +24,6 @@
 #include "highbd_txfm_utility_sse4.h"
 #include "txfm_common_sse2.h"
 
-const int32_t *cospi_arr(int32_t n);
-const int32_t *sinpi_arr(int32_t n);
-
 #include "av1_txfm_sse4.h"
 
 static const int8_t *fwd_txfm_shift_ls[TX_SIZES_ALL] = {
