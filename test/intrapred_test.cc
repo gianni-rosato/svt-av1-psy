@@ -16,6 +16,7 @@
 
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
+#include "EbUtility.h"
 #include "EbDefinitions.h"
 #include "random.h"
 
@@ -69,13 +70,13 @@ class AV1IntraPredTest : public ::testing::TestWithParam<TupleType> {
                 left_col_[y] = (1 << bd_) - 1;
         } else {
             for (int x = -1; x <= bw_ * 2; x++)
-                above_row_[x] = rnd.random();
+                above_row_[x] = (Sample)rnd.random();
 
             for (int y = 0; y < bh_; y++)
-                left_col_[y] = rnd.random();
+                left_col_[y] = (Sample)rnd.random();
         }
-        memset(dst_tst_data_, 0, sizeof(dst_tst_data_));
-        memset(dst_ref_data_, 0, sizeof(dst_ref_data_));
+        memset(dst_tst_, 0, 3 * 64 * 64 * sizeof(Sample));
+        memset(dst_ref_, 0, 3 * 64 * 64 * sizeof(Sample));
     }
 
   public:
@@ -108,10 +109,21 @@ class AV1IntraPredTest : public ::testing::TestWithParam<TupleType> {
         bd_ = get<4>(params_);
         stride_ = bw_ * 3;
         mask_ = (1 << bd_) - 1;
+        above_row_data_ = reinterpret_cast<Sample *>(
+            aom_memalign(16, 3 * 64 * sizeof(Sample)));
         above_row_ = above_row_data_ + 16;
-        left_col_ = left_col_data_;
-        dst_tst_ = dst_tst_data_;
-        dst_ref_ = dst_ref_data_;
+        left_col_ = reinterpret_cast<Sample *>(
+            aom_memalign(16, 2 * 64 * sizeof(Sample)));
+        dst_tst_ = reinterpret_cast<Sample *>(
+            aom_memalign(16, 3 * 64 * 64 * sizeof(Sample)));
+        dst_ref_ = reinterpret_cast<Sample *>(
+            aom_memalign(16, 3 * 64 * 64 * sizeof(Sample)));
+    }
+    void TearDown() override {
+        aom_free(above_row_data_);
+        aom_free(left_col_);
+        aom_free(dst_tst_);
+        aom_free(dst_ref_);
     }
 
     virtual void Predict() = 0;
@@ -120,10 +132,7 @@ class AV1IntraPredTest : public ::testing::TestWithParam<TupleType> {
     Sample *left_col_;
     Sample *dst_tst_;
     Sample *dst_ref_;
-    DECLARE_ALIGNED(16, Sample, left_col_data_[2 * 64]);
-    DECLARE_ALIGNED(16, Sample, above_row_data_[2 * 64 + 64]);
-    DECLARE_ALIGNED(16, Sample, dst_tst_data_[3 * 64 * 64]);
-    DECLARE_ALIGNED(16, Sample, dst_ref_data_[3 * 64 * 64]);
+    Sample *above_row_data_;
 
     ptrdiff_t stride_;
     int bw_;  // block width

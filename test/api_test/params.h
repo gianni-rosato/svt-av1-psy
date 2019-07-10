@@ -881,10 +881,10 @@ static const vector<uint32_t> invalid_speed_control_flag = {
 /* Frame Rate used for the injector. Recommended to match the encoder speed.
  *
  * Default is 60. */
-static const vector<uint32_t> default_injector_frame_rate = {
+static const vector<int32_t> default_injector_frame_rate = {
     60,
 };
-static const vector<uint32_t> valid_injector_frame_rate = {
+static const vector<int32_t> valid_injector_frame_rate = {
     24,
     25,
     30,
@@ -900,7 +900,7 @@ static const vector<uint32_t> valid_injector_frame_rate = {
     120 << 16,
     240 << 16,  // ...
 };
-static const vector<uint32_t> invalid_injector_frame_rate = {
+static const vector<int32_t> invalid_injector_frame_rate = {
     0, 1, 2, 10, 15, 29, 241,  // ...
 };
 
@@ -1004,9 +1004,9 @@ static const vector<int32_t> invalid_tile_rows = {
 /* Flag to signal the content being a screen sharing content type
  *
  * Default is 2. */
-static const vector<int32_t> default_screen_content_mode = {2};
-static const vector<int32_t> valid_screen_content_mode = {0, 1, 2};
-static const vector<int32_t> invalid_screen_content_mode = {3};
+static const vector<uint32_t> default_screen_content_mode = {2};
+static const vector<uint32_t> valid_screen_content_mode = {0, 1, 2};
+static const vector<uint32_t> invalid_screen_content_mode = {3};
 
 /* Variables to control the use of ALT-REF (temporally filtered frames)
  */

@@ -3915,6 +3915,81 @@ extern "C" {
     }
     static const uint32_t q_func[] = { 26214,23302,20560,18396,16384,14564 };
 
+    extern const int32_t av1_cospi_arr_data[7][64];
+    extern const int32_t av1_sinpi_arr_data[7][5];
+    extern const int8_t *inv_txfm_shift_ls[TX_SIZES_ALL];
+
+    static const int32_t cos_bit_min = 10;
+
+    static const int32_t NewSqrt2Bits = 12;
+    // 2^12 * sqrt(2)
+    static const int32_t NewSqrt2 = 5793;
+    // 2^12 / sqrt(2)
+    static const int32_t NewInvSqrt2 = 2896;
+
+    static INLINE const int32_t *cospi_arr(int32_t n) {
+        return av1_cospi_arr_data[n - cos_bit_min];
+    }
+
+    static INLINE const int32_t *sinpi_arr(int32_t n) {
+        return av1_sinpi_arr_data[n - cos_bit_min];
+    }
+
+    static INLINE void get_flip_cfg(TxType tx_type, int32_t *ud_flip, int32_t *lr_flip) {
+        switch (tx_type) {
+        case DCT_DCT:
+        case ADST_DCT:
+        case DCT_ADST:
+        case ADST_ADST:
+            *ud_flip = 0;
+            *lr_flip = 0;
+            break;
+        case IDTX:
+        case V_DCT:
+        case H_DCT:
+        case V_ADST:
+        case H_ADST:
+            *ud_flip = 0;
+            *lr_flip = 0;
+            break;
+        case FLIPADST_DCT:
+        case FLIPADST_ADST:
+        case V_FLIPADST:
+            *ud_flip = 1;
+            *lr_flip = 0;
+            break;
+        case DCT_FLIPADST:
+        case ADST_FLIPADST:
+        case H_FLIPADST:
+            *ud_flip = 0;
+            *lr_flip = 1;
+            break;
+        case FLIPADST_FLIPADST:
+            *ud_flip = 1;
+            *lr_flip = 1;
+            break;
+        default:
+            *ud_flip = 0;
+            *lr_flip = 0;
+            assert(0);
+        }
+    }
+
+    static INLINE int32_t get_rect_tx_log_ratio(int32_t col, int32_t row) {
+        if (col == row) return 0;
+        if (col > row) {
+            if (col == row * 2) return 1;
+            if (col == row * 4) return 2;
+            assert(0 && "Unsupported transform size");
+        }
+        else {
+            if (row == col * 2) return -1;
+            if (row == col * 4) return -2;
+            assert(0 && "Unsupported transform size");
+        }
+        return 0;  // Invalid
+    }
+
     extern EbErrorType encode_transform(
         int16_t             *residual_buffer,
         uint32_t             residual_stride,

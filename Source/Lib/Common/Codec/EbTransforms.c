@@ -40,7 +40,7 @@ uint32_t CheckNZero4x4(
     return 0;
 }
 
-/*static*/ const int8_t *inv_txfm_shift_ls[TX_SIZES_ALL] = {
+const int8_t *inv_txfm_shift_ls[TX_SIZES_ALL] = {
     inv_shift_4x4, inv_shift_8x8, inv_shift_16x16, inv_shift_32x32,
     inv_shift_64x64, inv_shift_4x8, inv_shift_8x4, inv_shift_8x16,
     inv_shift_16x8, inv_shift_16x32, inv_shift_32x16, inv_shift_32x64,
@@ -1174,21 +1174,6 @@ void mat_mult(
     }
 }
 
-/*static INLINE */int32_t get_rect_tx_log_ratio(int32_t col, int32_t row) {
-    if (col == row) return 0;
-    if (col > row) {
-        if (col == row * 2) return 1;
-        if (col == row * 4) return 2;
-        assert(0 && "Unsupported transform size");
-    }
-    else {
-        if (row == col * 2) return -1;
-        if (row == col * 4) return -2;
-        assert(0 && "Unsupported transform size");
-    }
-    return 0;  // Invalid
-}
-
 void av1_gen_fwd_stage_range(int8_t *stage_range_col, int8_t *stage_range_row,
     const Txfm2DFlipCfg *cfg, int32_t bd) {
     // Take the shift from the larger dimension in the rectangular case.
@@ -1212,14 +1197,6 @@ typedef void(*TxfmFunc)(const int32_t *input, int32_t *output, int8_t cos_bit,
     (void)size;                                   \
     (void)bit;                                    \
   }
-
-static const int32_t cos_bit_min = 10;
-
-static const int32_t NewSqrt2Bits = 12;
-// 2^12 * sqrt(2)
-static const int32_t NewSqrt2 = 5793;
-// 2^12 / sqrt(2)
-static const int32_t NewInvSqrt2 = 2896;
 
 // av1_cospi_arr[i][j] = (int32_t)round(cos(M_PI*j/128) * (1<<(cos_bit_min+i)));
 const int32_t av1_cospi_arr_data[7][64] = {
@@ -1265,9 +1242,6 @@ const int32_t av1_cospi_arr_data[7][64] = {
     30893, 29466, 28020, 26558, 25080, 23586, 22078, 20557, 19024, 17479, 15924,
     14359, 12785, 11204, 9616, 8022, 6424, 4821, 3216, 1608 }
 };
-/*static*/ /*INLINE*/ const int32_t *cospi_arr(int32_t n) {
-    return av1_cospi_arr_data[n - cos_bit_min];
-}
 static INLINE int32_t round_shift(int64_t value, int32_t bit) {
     assert(bit >= 1);
     return (int32_t)((value + (1ll << (bit - 1))) >> bit);
@@ -1289,10 +1263,6 @@ const int32_t av1_sinpi_arr_data[7][5] = {
     { 0, 5283, 9929, 13377, 15212 }, { 0, 10566, 19858, 26755, 30424 },
     { 0, 21133, 39716, 53510, 60849 }
 };
-
-/*static INLINE*/ const int32_t *sinpi_arr(int32_t n) {
-    return av1_sinpi_arr_data[n - cos_bit_min];
-}
 
 void av1_fdct4_new(const int32_t *input, int32_t *output, int8_t cos_bit,
     const int8_t *stage_range) {
@@ -4229,45 +4199,7 @@ static INLINE void Av1TranformTwoDCore_pf_c(
         }
     }
 }
-/*static INLINE */void get_flip_cfg(TxType tx_type, int32_t *ud_flip, int32_t *lr_flip) {
-    switch (tx_type) {
-    case DCT_DCT:
-    case ADST_DCT:
-    case DCT_ADST:
-    case ADST_ADST:
-        *ud_flip = 0;
-        *lr_flip = 0;
-        break;
-    case IDTX:
-    case V_DCT:
-    case H_DCT:
-    case V_ADST:
-    case H_ADST:
-        *ud_flip = 0;
-        *lr_flip = 0;
-        break;
-    case FLIPADST_DCT:
-    case FLIPADST_ADST:
-    case V_FLIPADST:
-        *ud_flip = 1;
-        *lr_flip = 0;
-        break;
-    case DCT_FLIPADST:
-    case ADST_FLIPADST:
-    case H_FLIPADST:
-        *ud_flip = 0;
-        *lr_flip = 1;
-        break;
-    case FLIPADST_FLIPADST:
-        *ud_flip = 1;
-        *lr_flip = 1;
-        break;
-    default:
-        *ud_flip = 0;
-        *lr_flip = 0;
-        assert(0);
-    }
-}
+
 static INLINE void set_flip_cfg(TxType tx_type, Txfm2DFlipCfg *cfg) {
     get_flip_cfg(tx_type, &cfg->ud_flip, &cfg->lr_flip);
 }

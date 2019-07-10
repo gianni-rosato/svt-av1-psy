@@ -17,7 +17,7 @@ typedef struct DecModCtxt {
     void *dec_handle_ptr;
 
     int32_t *sb_iquant_ptr;
-
+#if !FRAME_MI_MAP
     /* TODO: cur SB row idx. Should be moved out */
     int32_t         sb_row_mi;
     /* TODO: cur SB col idx. Should be moved out */
@@ -26,11 +26,9 @@ typedef struct DecModCtxt {
     /* Left and above SBInfo pointers */
     SBInfo  *left_sb_info;
     SBInfo  *above_sb_info;
-
-    /* TODO: Points to the cur luma_coeff_buf in SB */
-    int32_t *cur_luma_coeff;
-    /* TODO: Points to the cur chroma_coeff_buf in SB  */
-    int32_t *cur_chroma_coeff;
+#endif
+    /* TODO: Points to the cur coeff_buf in SB */
+    int32_t *cur_coeff[MAX_MB_PLANE];
 
     /* Current tile info */
     TileInfo    *cur_tile_info;

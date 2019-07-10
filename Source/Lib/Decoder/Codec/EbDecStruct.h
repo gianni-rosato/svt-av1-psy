@@ -233,10 +233,13 @@ typedef struct SkipModeParams {
 
 typedef struct GlobalMotionParams {
     /*!< Specifies the transform type */
-    TransformationType  gm_type[ALTREF_FRAME - LAST_FRAME + 1];
+    TransformationType  gm_type;
 
     /*!< Global motion parameter */
-    int32_t             gm_params[ALTREF_FRAME - LAST_FRAME + 1][6];
+    int32_t             gm_params[6];
+
+    /*!< Previous global motion parameter */
+    //int32_t             prev_gm_params[6];
 } GlobalMotionParams;
 
 typedef struct FilmGrainParams_s{
@@ -458,6 +461,8 @@ typedef struct FrameHeader {
 
     /* Number of 4x4 block rows in the frame */
     uint32_t mi_rows;
+    /* Number of 4x4 block rows in the frame aligned to SB */
+    uint32_t mi_stride;
 
     /*!< Tile information */
     TilesInfo    tiles_info;
@@ -511,7 +516,7 @@ typedef struct FrameHeader {
     uint8_t                 reduced_tx_set;
 
     /*!< Global Motion Paramters */
-    GlobalMotionParams      global_motion_params;
+    //GlobalMotionParams      global_motion_params[ALTREF_FRAME + 1];
 
     /*!< Film Grain Parameters */
     FilmGrainParams         film_grain_params;

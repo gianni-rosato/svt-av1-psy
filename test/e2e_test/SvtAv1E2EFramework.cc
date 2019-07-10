@@ -41,14 +41,14 @@ VideoSource *SvtAv1E2ETestFramework::prepare_video_src(
                                        std::get<2>(vector),
                                        std::get<3>(vector),
                                        std::get<4>(vector),
-                                       std::get<5>(vector));
+                                       (uint8_t)std::get<5>(vector));
         break;
     case Y4M_VIDEO_FILE:
         video_src = new Y4MVideoSource(std::get<0>(vector),
                                        std::get<2>(vector),
                                        std::get<3>(vector),
                                        std::get<4>(vector),
-                                       std::get<5>(vector),
+                                       (uint8_t)std::get<5>(vector),
                                        std::get<6>(vector));
         break;
     default: assert(0); break;
@@ -56,18 +56,23 @@ VideoSource *SvtAv1E2ETestFramework::prepare_video_src(
     return video_src;
 }
 
-void SvtAv1E2ETestFramework::setup_src_param(const VideoSource *source,
-                                             EbSvtAv1EncConfiguration &config) {
-    VideoColorFormat fmt = source->get_image_format();
+EbColorFormat SvtAv1E2ETestFramework::setup_video_format(VideoColorFormat fmt) {
     switch (fmt) {
     case IMG_FMT_420:
-    case IMG_FMT_420P10_PACKED: config.encoder_color_format = EB_YUV420; break;
+    case IMG_FMT_420P10_PACKED: return EB_YUV420;
     case IMG_FMT_422:
-    case IMG_FMT_422P10_PACKED: config.encoder_color_format = EB_YUV422; break;
+    case IMG_FMT_422P10_PACKED: return EB_YUV422;
     case IMG_FMT_444:
-    case IMG_FMT_444P10_PACKED: config.encoder_color_format = EB_YUV444; break;
+    case IMG_FMT_444P10_PACKED: return EB_YUV444;
     default: assert(0); break;
     }
+    return EB_YUV400;
+}
+
+void SvtAv1E2ETestFramework::setup_src_param(const VideoSource *source,
+                                             EbSvtAv1EncConfiguration &config) {
+    config.encoder_color_format =
+        setup_video_format(source->get_image_format());
     config.source_width = source->get_width_with_padding();
     config.source_height = source->get_height_with_padding();
     config.encoder_bit_depth = source->get_bit_depth();
@@ -130,8 +135,8 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
     uint32_t width = video_src_->get_width_with_padding();
     uint32_t height = video_src_->get_height_with_padding();
     uint32_t bit_depth = video_src_->get_bit_depth();
-    ASSERT_GT(width, 0) << "Video vector width error.";
-    ASSERT_GT(height, 0) << "Video vector height error.";
+    ASSERT_GT(width, 0u) << "Video vector width error.";
+    ASSERT_GT(height, 0u) << "Video vector height error.";
     ASSERT_TRUE(bit_depth == 10 || bit_depth == 8)
         << "Video vector bitDepth error.";
 
@@ -331,7 +336,7 @@ void SvtAv1E2ETestFramework::run_encode_process() {
     EbErrorType return_error = EB_ErrorNone;
 
     uint32_t frame_count = video_src_->get_frame_count();
-    ASSERT_GT(frame_count, 0) << "video srouce file does not contain frame!!";
+    ASSERT_GT(frame_count, 0u) << "video srouce file does not contain frame!!";
     if (recon_queue_)
         recon_queue_->set_frame_count(frame_count);
 
@@ -413,7 +418,8 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                 EbBufferHeaderType *enc_out = nullptr;
                 {
                     TimeAutoCount counter(ENCODING, collect_);
-                    int pic_send_done = (src_file_eos && rec_file_eos) ? 1 : 0;
+                    uint8_t pic_send_done =
+                        (src_file_eos && rec_file_eos) ? 1 : 0;
                     return_error = eb_svt_get_packet(
                         av1enc_ctx_.enc_handle, &enc_out, pic_send_done);
                     ASSERT_NE(return_error, EB_ErrorMax)
@@ -663,7 +669,7 @@ void SvtAv1E2ETestFramework::process_compress_data(
 void SvtAv1E2ETestFramework::decode_compress_data(const uint8_t *data,
                                                   const uint32_t size) {
     ASSERT_NE(data, nullptr);
-    ASSERT_GT(size, 0);
+    ASSERT_GT(size, 0u);
 
     // input the compressed data into decoder
     ASSERT_EQ(refer_dec_->decode(data, size), RefDecoder::REF_CODEC_OK);
@@ -752,7 +758,8 @@ void SvtAv1E2ETestFramework::get_recon_frame(const SvtAv1Context &ctxt,
         ASSERT_NE(new_frame->buffer, nullptr)
             << "can not get new buffer of recon frame!!";
 
-        EbBufferHeaderType recon_frame = {0};
+        EbBufferHeaderType recon_frame;
+        memset(&recon_frame, 0, sizeof(recon_frame));
         recon_frame.size = sizeof(EbBufferHeaderType);
         recon_frame.p_buffer = new_frame->buffer;
         recon_frame.n_alloc_len = new_frame->buf_size;

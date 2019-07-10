@@ -175,8 +175,8 @@ enum {
 // Maximum size of a loop restoration tile
 #define RESTORATION_TILESIZE_MAX 256
 // Maximum number of tile rows and tile columns
-#define MAX_TILE_ROWS 1024
-#define MAX_TILE_COLS 1024
+#define MAX_TILE_ROWS 64
+#define MAX_TILE_COLS 64
 #define MAX_VARTX_DEPTH 1
 #define MI_SIZE_64X64 (64 >> MI_SIZE_LOG2)
 #define MI_SIZE_128X128 (128 >> MI_SIZE_LOG2)
@@ -984,8 +984,7 @@ typedef enum
     COMPOUND_DISTWTD,
     COMPOUND_WEDGE,
     COMPOUND_DIFFWTD,
-    COMPOUND_INTRA,
-    COMPOUND_TYPES = 3,
+    COMPOUND_TYPES,
     MASKED_COMPOUND_TYPES = 2,
 } CompoundType;
 
@@ -1731,6 +1730,17 @@ typedef struct EbWarpedMotionParams
     int16_t alpha, beta, gamma, delta;
     int8_t invalid;
 } EbWarpedMotionParams;
+
+/*! Scale factors and scaling function pointers  when reference and current frame dimensions are not equal */
+typedef struct ScaleFactors {
+    int32_t x_scale_fp;  // horizontal fixed point scale factor
+    int32_t y_scale_fp;  // vertical fixed point scale factor
+    int32_t x_step_q4;
+    int32_t y_step_q4;
+
+    int32_t(*scale_value_x)(int32_t val, const struct ScaleFactors *sf);
+    int32_t(*scale_value_y)(int32_t val, const struct ScaleFactors *sf);
+} ScaleFactors;
 
 /* clang-format off */
 static const EbWarpedMotionParams default_warp_params = {

@@ -53,10 +53,12 @@ extern "C" {
 // prob.h from AOM
 //typedef uint16_t aom_cdf_prob;
 #define ENABLE_ENTROPY_TRACE 0
+#define EXTRA_DUMP 0
 #if ENABLE_ENTROPY_TRACE
 #define ENTROPY_TRACE_FILE_BASED 1
 #include <stdio.h>
 extern FILE *temp_fp;
+extern int enable_dump;
 #endif
 
 #define CDF_PROB_BITS 15
@@ -189,13 +191,18 @@ static INLINE int aom_daala_read(DaalaReader_t *r, int prob) {
 #endif
 #if ENABLE_ENTROPY_TRACE
 #if ENTROPY_TRACE_FILE_BASED
-  assert(temp_fp);
-  fprintf(temp_fp, "\n *** p %d \t", p);
-  fprintf(temp_fp, "symb : %d \t", bit);
-  fflush(temp_fp);
+  if (enable_dump) {
+      assert(temp_fp);
+      fprintf(temp_fp, "\n *** p %d \t", p);
+      fprintf(temp_fp, "symb : %d \t", bit);
+      fflush(temp_fp);
+  }
 #else
-  printf("\n *** p %d \t", p);
-  printf("symb : %d \t", bit);
+  if (enable_dump) {
+      printf("\n *** p %d \t", p);
+      printf("symb : %d \t", bit);
+      fflush(stdout);
+  }
 #endif
 #endif
   return bit;
@@ -247,16 +254,21 @@ static INLINE int daala_read_symbol(DaalaReader_t *r, const AomCdfProb *cdf,
 #endif
 #if ENABLE_ENTROPY_TRACE
 #if ENTROPY_TRACE_FILE_BASED
-  if (temp_fp == NULL) temp_fp = fopen("SVT.txt", "w");
-  fprintf(temp_fp, "\n *** nsymbs %d \t", nsymbs);
-  for (int i = 0; i < nsymbs; ++i)
-      fprintf(temp_fp, "cdf[%d] : %d \t", i, cdf[i]);
-  fprintf(temp_fp, "symb : %d \t", symb);
-  fflush(temp_fp);
+  if (enable_dump) {
+      if (temp_fp == NULL) temp_fp = fopen("SVT.txt", "w");
+      fprintf(temp_fp, "\n *** nsymbs %d \t", nsymbs);
+      for (int i = 0; i < nsymbs; ++i)
+          fprintf(temp_fp, "cdf[%d] : %d \t", i, cdf[i]);
+      fprintf(temp_fp, "symb : %d \t", symb);
+      fflush(temp_fp);
+  }
 #else
-  printf("\n *** nsymbs %d \t", nsymbs);
-  for (int i = 0; i < nsymbs; ++i) printf("cdf[%d] : %d \t", i, cdf[i]);
-  printf("symb : %d \t", symb);
+  if (enable_dump) {
+      printf("\n *** nsymbs %d \t", nsymbs);
+      for (int i = 0; i < nsymbs; ++i) printf("cdf[%d] : %d \t", i, cdf[i]);
+      printf("symb : %d \t", symb);
+      fflush(stdout);
+  }
 #endif
 #endif
   return symb;

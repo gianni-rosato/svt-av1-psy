@@ -79,6 +79,14 @@ class SVTRandom {
         return dist_nbit_(gen_);
     }
 
+    uint8_t Rand8(void) {
+        return (uint8_t)(random());
+    }
+
+    uint16_t Rand16(void) {
+        return (uint16_t)(random());
+    }
+
   private:
     /** setup bounds of generator */
     void setup(const int min_bound, const int max_bound) {

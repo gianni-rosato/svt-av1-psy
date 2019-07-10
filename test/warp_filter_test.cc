@@ -1,0 +1,43 @@
+/*
+ * Copyright (c) 2016, Alliance for Open Media. All rights reserved
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at www.aomedia.org/license/software. If the Alliance for Open
+ * Media Patent License 1.0 was not distributed with this source code in the
+ * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
+ */
+#include "gtest/gtest.h"
+#include "warp_filter_test_util.h"
+using libaom_test::AV1HighbdWarpFilter::AV1HighbdWarpFilterTest;
+using libaom_test::AV1WarpFilter::AV1WarpFilterTest;
+using std::make_tuple;
+using std::tuple;
+using svt_av1_test_tool::SVTRandom;
+
+namespace {
+
+TEST_P(AV1WarpFilterTest, CheckOutput) {
+    RunCheckOutput(std::get<3>(TEST_GET_PARAM(0)));
+}
+TEST_P(AV1WarpFilterTest, DISABLED_Speed) {
+    RunSpeedTest(std::get<3>(TEST_GET_PARAM(0)));
+}
+
+INSTANTIATE_TEST_CASE_P(
+    C, AV1WarpFilterTest,
+    libaom_test::AV1WarpFilter::BuildParams(av1_warp_affine_c));
+
+TEST_P(AV1HighbdWarpFilterTest, CheckOutput) {
+    RunCheckOutput(std::get<4>(TEST_GET_PARAM(0)));
+}
+TEST_P(AV1HighbdWarpFilterTest, DISABLED_Speed) {
+    RunSpeedTest(std::get<4>(TEST_GET_PARAM(0)));
+}
+
+INSTANTIATE_TEST_CASE_P(
+    AVX2, AV1WarpFilterTest,
+    libaom_test::AV1WarpFilter::BuildParams(av1_warp_affine_avx2));
+
+}  // namespace

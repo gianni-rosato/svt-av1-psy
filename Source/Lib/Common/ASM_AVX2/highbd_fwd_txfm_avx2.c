@@ -19,15 +19,9 @@
 #include "aom_dsp_rtcd.h"
 #include "EbTransforms.h"
 #include <immintrin.h>
+#include "txfm_common_avx2.h"
 #include "txfm_common_sse2.h"
 
-const int32_t *cospi_arr(int32_t n);
-const int32_t *sinpi_arr(int32_t n);
-static const int32_t NewSqrt2Bits = 12;
-// 2^12 * sqrt(2)
-static const int32_t NewSqrt2 = 5793;
-
-void get_flip_cfg(TxType tx_type, int32_t *ud_flip, int32_t *lr_flip);
 void Av1TransformConfig(
     TxType tx_type,
     TxSize tx_size,
@@ -3870,25 +3864,6 @@ static void av1_fdct64_new_avx2(const __m256i *input, __m256i *output,
     }
 }
 
-static INLINE void av1_round_shift_array_32_avx2(__m256i *input,
-    __m256i *output,
-    const int32_t size,
-    const int32_t bit) {
-    if (bit > 0) {
-        __m256i round = _mm256_set1_epi32(1 << (bit - 1));
-        int32_t i;
-        for (i = 0; i < size; i++) {
-            output[i] = _mm256_srai_epi32(
-                _mm256_add_epi32(input[i], round), bit);
-        }
-    }
-    else {
-        int32_t i;
-        for (i = 0; i < size; i++)
-            output[i] = _mm256_slli_epi32(input[i], -bit);
-    }
-}
-
 typedef void(*TxfmFuncAVX2)(const __m256i *input, __m256i *output,
     const int8_t cos_bit, const int8_t *stage_range);
 
@@ -4293,35 +4268,6 @@ static INLINE void write_buffer_16x8_avx2(const __m256i *res, int32_t *output,
     _mm256_storeu_si256((__m256i *)(output + (stride * 5)), res[5]);
     _mm256_storeu_si256((__m256i *)(output + (stride * 6)), res[6]);
     _mm256_storeu_si256((__m256i *)(output + (stride * 7)), res[7]);
-}
-
-static INLINE void av1_round_shift_rect_array_32_avx2(__m256i *input,
-    __m256i *output,
-    const int32_t size,
-    const int32_t bit,
-    const int32_t val) {
-    const __m256i sqrt2 = _mm256_set1_epi32(val);
-    const __m256i round2 = _mm256_set1_epi32(1 << (NewSqrt2Bits - 1));
-    int32_t i;
-    if (bit > 0) {
-        const __m256i round1 = _mm256_set1_epi32(1 << (bit - 1));
-        __m256i r0, r1, r2, r3;
-        for (i = 0; i < size; i++) {
-            r0 = _mm256_add_epi32(input[i], round1);
-            r1 = _mm256_srai_epi32(r0, bit);
-            r2 = _mm256_mullo_epi32(sqrt2, r1);
-            r3 = _mm256_add_epi32(r2, round2);
-            output[i]  = _mm256_srai_epi32(r3, NewSqrt2Bits);
-        }
-    } else {
-        __m256i r0, r1, r2;
-        for (i = 0; i < size; i++) {
-            r0 = _mm256_slli_epi32(input[i], -bit);
-            r1 = _mm256_mullo_epi32(sqrt2, r0);
-            r2 = _mm256_add_epi32(r1, round2);
-            output[i] = _mm256_srai_epi32(r2, NewSqrt2Bits);
-        }
-    }
 }
 
 void av1_fwd_txfm2d_32x64_avx2(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t  bd)

@@ -1577,23 +1577,6 @@ void interpolate_search_region_AVC_chroma(
         uint32_t integer_mv,           // input parameter, integer MV
         EbAsm asm_type);
 
-    void quarter_pel_refinement_sb(
-        MeContext *context_ptr,  //[IN/OUT]  ME context Ptr, used to get/update
-                                 //ME results
-        uint8_t *pos_full,       //[IN]
-        uint32_t fullStride,     //[IN]
-        uint8_t *pos_b,          //[IN]
-        uint8_t *pos_h,          //[IN]
-        uint8_t *pos_j,          //[IN]
-        int16_t x_search_area_origin,  //[IN] search area origin in the
-                                       //horizontal direction, used to point to
-                                       //reference samples
-        int16_t y_search_area_origin,  //[IN] search area origin in the vertical
-                                       //direction, used to point to reference
-                                       //samples
-        uint32_t integer_mv,           // input parameter, integer MV
-        EbAsm asm_type);
-
 #ifdef __cplusplus
 }
 #endif

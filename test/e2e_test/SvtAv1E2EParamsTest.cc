@@ -52,7 +52,7 @@ static const uint8_t quantizer_to_qindex[] = {
 };
 
 /** get qp value with the given qindex */
-static uint32_t get_qp(const uint8_t qindex) {
+static uint32_t get_qp(const int16_t qindex) {
     if (qindex > 255) {
         printf("qindex is larger than 255!\n");
         return 63;
@@ -72,12 +72,61 @@ static uint32_t get_qp(const uint8_t qindex) {
     return qp;
 }
 
+/* clang-format off */
 static const std::vector<EncTestSetting> default_enc_settings = {
-    {"IntraPeriodTest1",
-     {{"EncoderMode", "7"}, {"IntraPeriod", "3"}},
+    // test intra period length
+    {"IntraPeriodTest1", {{"IntraPeriod", "3"}}, default_test_vectors},
+
+    // test different qp
+    {"QpTest1",
+     {{"RateControlMode", "0"}, {"QP", "20"}}, default_test_vectors},
+    {"QpTest2",
+     {{"RateControlMode", "0"}, {"QP", "32"}}, default_test_vectors},
+    {"QpTest3",
+     {{"RateControlMode", "0"}, {"QP", "44"}}, default_test_vectors},
+
+    // test rc mode {2, 3}, with {1Mbps, 0.75Mbps, 0.5Mbps} setting with
+    // 480p
+    {"RcTest1",
+     {{"RateControlMode", "2"}, {"TargetBitRate", "1000000"}},
      default_test_vectors},
-    {"EncModeTest1", {{"EncoderMode", "8"}}, default_test_vectors},
-    {"SpeedControlTest1", {{"SpeedControlFlag", "1"}}, default_test_vectors}};
+    {"RcTest2",
+     {{"RateControlMode", "2"}, {"TargetBitRate", "750000"}},
+     res_480p_test_vectors},
+    {"RcTest3",
+     {{"RateControlMode", "2"}, {"TargetBitRate", "500000"}},
+     res_480p_test_vectors},
+    {"RcTest4",
+     {{"RateControlMode", "3"}, {"TargetBitRate", "1000000"}},
+     res_480p_test_vectors},
+    {"RcTest5",
+     {{"RateControlMode", "3"}, {"TargetBitRate", "750000"}},
+     res_480p_test_vectors},
+    {"RcTest6",
+     {{"RateControlMode", "3"}, {"TargetBitRate", "500000"}},
+     res_480p_test_vectors},
+
+    // test high bitrate with big min_qp, or low bitrate with small max_qp
+    {"RcQpTest1",
+     {{"RateControlMode", "2"}, {"TargetBitRate", "1000000"}, {"MinQpAllowed", "20"}},
+     res_480p_test_vectors},
+    {"RcQpTest2",
+     {{"RateControlMode", "2"}, {"TargetBitRate", "500000"}, {"MaxQpAllowed", "50"}},
+     res_480p_test_vectors},
+    {"RcQpTest3",
+     {{"RateControlMode", "2"}, {"TargetBitRate", "750000"}, {"MaxQpAllowed", "50"}, {"MinQpAllowed", "20"}},
+     res_480p_test_vectors},
+    {"RcQpTest4",
+     {{"RateControlMode", "3"}, {"TargetBitRate", "1000000"}, {"MinQpAllowed", "20"}},
+     res_480p_test_vectors},
+    {"RcQpTest5",
+     {{"RateControlMode", "3"}, {"TargetBitRate", "500000"}, {"MaxQpAllowed", "50"}},
+     res_480p_test_vectors},
+    {"RcQpTest6",
+     {{"RateControlMode", "3"}, {"TargetBitRate", "750000"}, {"MaxQpAllowed", "50"}, {"MinQpAllowed", "20"}},
+     res_480p_test_vectors},
+};
+/* clang-format on */
 
 class CodingOptionTest : public SvtAv1E2ETestFramework {
   public:
@@ -117,57 +166,82 @@ class CodingOptionTest : public SvtAv1E2ETestFramework {
   protected:
     void validate_enc_setting(RefDecoder::StreamInfo *stream_info) {
         EbSvtAv1EncConfiguration *config = &av1enc_ctx_.enc_params;
+
         // check profile, level and tier
-        ASSERT_EQ(config->profile, stream_info->profile)
+        EXPECT_EQ(config->profile, stream_info->profile)
             << "config profile: " << config->profile << "got "
             << stream_info->profile;
 
         // verify the superblock size
-        ASSERT_EQ(config->super_block_size, stream_info->sb_size)
+        EXPECT_EQ(config->super_block_size, stream_info->sb_size)
             << "config sb size: " << config->super_block_size << " got "
             << stream_info->sb_size;
 
         // Verify bit depth
-        ASSERT_EQ(config->encoder_bit_depth, stream_info->bit_depth)
+        EXPECT_EQ(config->encoder_bit_depth, stream_info->bit_depth)
             << "config bitdepth: " << config->encoder_bit_depth << " got "
             << stream_info->bit_depth;
-        // TODO: verify the color format
+
+        // verify the color format
+        EXPECT_EQ(config->encoder_color_format,
+                  setup_video_format(stream_info->format))
+            << "color format is mismatch";
 
         if (config->intra_period_length > 0) {
-            ASSERT_EQ(config->intra_period_length,
+            EXPECT_EQ(config->intra_period_length,
                       stream_info->max_intra_period)
                 << "config intra period " << config->intra_period_length
                 << " got " << stream_info->max_intra_period;
         }
 
         // verify QP Setting
-        int actual_min_qp = get_qp(stream_info->min_qindex);
-        int actual_max_qp = get_qp(stream_info->max_qindex);
-        ASSERT_LE(config->min_qp_allowed, actual_min_qp)
+        uint32_t actual_min_qp = get_qp(stream_info->min_qindex);
+        uint32_t actual_max_qp = get_qp(stream_info->max_qindex);
+        EXPECT_LE(config->min_qp_allowed, actual_min_qp)
             << "Min qp allowd " << config->min_qp_allowed << " actual "
             << actual_min_qp;
-        ASSERT_GE(config->max_qp_allowed, actual_max_qp)
+        EXPECT_GE(config->max_qp_allowed, actual_max_qp)
             << "Max qp allowd " << config->max_qp_allowed << " actual "
             << actual_max_qp;
         if (config->rate_control_mode == 0)
-            ASSERT_EQ(actual_min_qp, actual_max_qp)
+            EXPECT_EQ(actual_min_qp, actual_max_qp)
                 << "QP fluctuate in const qp mode";
 
-        // TODO: verify the bitrate
+        // verify the bitrate
+        if (config->rate_control_mode == 3) {
+            uint32_t avg_bit_rate =
+                (config->frame_rate > 1000 ? config->frame_rate >> 16
+                                           : config->frame_rate) *
+                stream_info->frame_bit_rate;
+            printf("%d--%d\n", config->target_bit_rate, avg_bit_rate);
+            EXPECT_GE(config->target_bit_rate, avg_bit_rate)
+                << "target bit-rate is less than actual: "
+                << config->target_bit_rate << "--" << avg_bit_rate;
+        }
 
-        // TODO: verify tileRow and TileCol
+        // verify tile row and tile column
+        uint32_t expect_cols =
+            (uint32_t)((video_src_->get_width_with_padding() / 4) /
+                       std::pow(2, config->tile_columns));
+        uint32_t expect_rows =
+            (uint32_t)((video_src_->get_height_with_padding() / 4) /
+                       std::pow(2, config->tile_rows));
+        printf("expect_cols %d, expect_rows %d\n", expect_cols, expect_rows);
+        printf("tile_cols %d, tile_rows %d\n",
+               stream_info->tile_cols,
+               stream_info->tile_rows);
+        EXPECT_EQ(expect_cols, stream_info->tile_cols)
+            << "Tile columns " << stream_info->tile_cols << " actual"
+            << expect_cols;
+        EXPECT_EQ(expect_rows, stream_info->tile_rows)
+            << "Tile rows " << stream_info->tile_rows << " actual"
+            << expect_rows;
 
         //
-        // Verify the coding tools.
+        // Verify the coding tools by checking the sps header
         //
-        // Verify ext_block_flag
-        // It fails if non-square partitions is not enabled in
-        // encoder but found in bitstream. However if non-square partitions is
-        // enabled, it can not gurantee that the bitstream must have non-square
-        // partitions.
-        ASSERT_GE(config->ext_block_flag, stream_info->ext_block_flag);
-
-        // TODO: Verify enable_warped_motion, LoopFilterDisable
+        EXPECT_EQ(stream_info->enable_warped_motion,
+                  config->enable_warped_motion);
     }
 
     bool is_valid_profile_setting() {
@@ -208,4 +282,4 @@ TEST_P(CodingOptionTest, CheckEncOptionsUsingBitstream) {
 
 INSTANTIATE_TEST_CASE_P(SvtAv1, CodingOptionTest,
                         ::testing::ValuesIn(default_enc_settings),
-                        GetSettingName);
+                        EncTestSetting::GetSettingName);

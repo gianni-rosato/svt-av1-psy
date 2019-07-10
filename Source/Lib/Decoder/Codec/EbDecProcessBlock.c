@@ -22,9 +22,19 @@
 #include "EbDecProcessFrame.h"
 
 #include "EbDecIntraPrediction.h"
+#include "EbDecInterPrediction.h"
+
 #include "EbDecNbr.h"
+#include "EbDecUtils.h"
 
 #include "EbTransforms.h"
+
+extern int select_samples(
+    MV *mv,
+    int *pts,
+    int *pts_inref,
+    int len,
+    BlockSize bsize);
 
 CflAllowedType store_cfl_required(const EbColorConfig *cc,
                                   const PartitionInfo_t  *xd)
@@ -131,67 +141,19 @@ PartitionType get_partition(DecModCtxt *dec_mod_ctxt, FrameHeader *frame_header,
     return base_partitions[split_idx];
 }
 
-static void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
-    int32_t blk_col, int32_t blk_row,void **pp_blk_recon_buf, int32_t *recon_strd,
-                                int32_t sub_x, int32_t sub_y)
-{
-    int32_t block_offset;
-
-    if (plane == 0) {
-        block_offset = (recon_picture_buf->origin_y + blk_row * MI_SIZE) *
-            recon_picture_buf->stride_y + (recon_picture_buf->origin_x +
-            blk_col * MI_SIZE);
-        *recon_strd = recon_picture_buf->stride_y;
-    }
-    else if (plane == 1) {
-        block_offset = ((recon_picture_buf->origin_y >> sub_y) +
-            blk_row * MI_SIZE) * recon_picture_buf->stride_cb +
-            ((recon_picture_buf->origin_x >> sub_x) + blk_col * MI_SIZE);
-        *recon_strd = recon_picture_buf->stride_cb;
-    }
-    else {
-        block_offset = ((recon_picture_buf->origin_y >> sub_y) +
-                blk_row * MI_SIZE) * recon_picture_buf->stride_cr +
-            ((recon_picture_buf->origin_x >> sub_x) + blk_col * MI_SIZE);
-        *recon_strd = recon_picture_buf->stride_cr;
-    }
-
-    if (recon_picture_buf->bit_depth != EB_8BIT) {//16bit
-        if (plane == 0)
-            *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_y
-                                        + block_offset);
-        else if (plane == 1)
-            *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_cb
-                                        + block_offset);
-        else
-            *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_cr
-                                        + block_offset);
-    }
-    else {
-        if (plane == 0)
-            *pp_blk_recon_buf = (void *)((uint8_t*)recon_picture_buf->buffer_y
-                                        + block_offset);
-        else if (plane == 1)
-            *pp_blk_recon_buf = (void *)((uint8_t*)recon_picture_buf->buffer_cb
-                                        + block_offset);
-        else
-            *pp_blk_recon_buf = (void *)((uint8_t*)recon_picture_buf->buffer_cr
-                                        + block_offset);
-    }
-}
-
 void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     BlockSize bsize, TileInfo *tile, SBInfo *sb_info)
 {
     EbDecHandle *dec_handle   = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
     EbColorConfig *color_config = &dec_handle->seq_header.color_config;
-    EbPictureBufferDesc *recon_picture_buf = dec_handle->recon_picture_buf[0];
+    EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
     uint32_t mi_cols = (&dec_handle->frame_header)->mi_cols;
     uint32_t mi_rows = (&dec_handle->frame_header)->mi_rows;
 
     int num_planes = av1_num_planes(color_config);
 
     ModeInfo_t *mode_info = get_cur_mode_info(dec_mod_ctxt->dec_handle_ptr, mi_row, mi_col, sb_info);
+    bool inter_block = dec_is_inter_block(mode_info);
 #if MODE_INFO_DBG
     assert(mode_info->mi_row == mi_row);
     assert(mode_info->mi_col == mi_col);
@@ -199,7 +161,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     int32_t bw4 = mi_size_wide[bsize];
     int32_t bh4 = mi_size_high[bsize];
 
-    int sub_x, sub_y, row, col, n_coeffs;
+    int sub_x, sub_y, n_coeffs;
     sub_x = color_config->subsampling_x;
     sub_y = color_config->subsampling_y;
     int is_chroma_reference = dec_is_chroma_reference(mi_row, mi_col, bsize,
@@ -249,6 +211,14 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
         part_info.chroma_left_available = 0;
     }
 
+    part_info.is_sec_rect = 0;
+    if (bw4 < bh4) {
+        if (!((mi_col + bw4) & (bh4 - 1))) part_info.is_sec_rect = 1;
+    }
+
+    if (bw4 > bh4)
+        if (mi_row & (bw4 - 1)) part_info.is_sec_rect = 1;
+
     if (part_info.up_available)
         part_info.above_mbmi = get_top_mode_info(dec_handle, mi_row, mi_col, sb_info);
     else
@@ -259,146 +229,168 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
         part_info.left_mbmi = NULL;
     if (part_info.chroma_up_available) {
         part_info.chroma_above_mbmi = get_top_mode_info
-            (dec_handle, (mi_row & (~sub_x)), (mi_col & (~sub_y)), sb_info); // floored to nearest 4x4 based on sub subsampling x & y
+            (dec_handle, (mi_row & (~sub_x)), (mi_col | sub_y), sb_info); // floored to nearest 4x4 based on sub subsampling x & y
     }
     else
         part_info.chroma_above_mbmi = NULL;
     if (part_info.chroma_left_available) {
         part_info.chroma_left_mbmi = get_left_mode_info
-            (dec_handle, (mi_row & (~sub_x)), (mi_col & (~sub_y)), sb_info); // floored to nearest 4x4 based on sub subsampling x & y
+            (dec_handle, (mi_row | sub_x), (mi_col & (~sub_y)), sb_info); // floored to nearest 4x4 based on sub subsampling x & y
     }
     else
         part_info.chroma_left_mbmi = NULL;
+
+    part_info.subsampling_x = color_config->subsampling_x;
+    part_info.subsampling_y = color_config->subsampling_y;
+    part_info.ps_global_motion = dec_handle->master_frame_buf.cur_frame_bufs[0].global_motion_warp;
+
+    /* Derive warped params for local warp mode*/
+    if (WARPED_CAUSAL == mode_info->motion_mode && inter_block) {
+
+        int32_t pts[SAMPLES_ARRAY_SIZE], pts_inref[SAMPLES_ARRAY_SIZE];
+        int32_t nsamples = 0;
+        int32_t apply_wm = 0;
+
+        nsamples = find_warp_samples(dec_handle, &part_info, mi_row, mi_col, pts, pts_inref);
+        assert(nsamples > 0);
+
+        MV mv = mode_info->mv[REF_LIST_0].as_mv;
+        part_info.local_warp_params.wmtype = DEFAULT_WMTYPE;
+        part_info.local_warp_params.invalid = 0;
+
+        if (nsamples > 1)
+            nsamples = select_samples(&mv, pts, pts_inref, nsamples, bsize);
+
+        part_info.num_samples = nsamples;
+
+        apply_wm = !find_projection(
+            nsamples,
+            pts,
+            pts_inref,
+            bsize,
+            mv.row,
+            mv.col,
+            &part_info.local_warp_params,
+            mi_row,
+            mi_col);
+
+        /* local warp mode should find valid projection */
+        assert(apply_wm);
+        part_info.local_warp_params.invalid = !apply_wm;
+    }
+
+    if (inter_block)
+        svtav1_predict_inter_block(dec_handle, &part_info, mi_row, mi_col,
+            num_planes);
+
     int32_t *qcoeffs = dec_mod_ctxt->sb_iquant_ptr;
     TxType tx_type;
     int32_t *coeffs;
+    TransformInfo_t *trans_info = NULL;
+    TxSize tx_size;
+    int num_tu;
 
-    if (!dec_is_inter_block(mode_info))
-    {
-        // Decode Intra block
-        int blk_row, blk_col;
+    const int max_blocks_wide = max_block_wide(&part_info, bsize, 0);
+    const int max_blocks_high = max_block_high(&part_info, bsize, 0);
 
-        //Get luma block's width and height
-        const int max_blocks_wide = max_block_wide(&part_info, bsize, 0);
-        const int max_blocks_high = max_block_high(&part_info, bsize, 0);
-        const BlockSize max_unit_bsize = BLOCK_64X64;
-        int mu_blocks_wide =
-            block_size_wide[max_unit_bsize] >> tx_size_wide_log2[0];
-        int mu_blocks_high =
-            block_size_high[max_unit_bsize] >> tx_size_high_log2[0];
-        mu_blocks_wide = AOMMIN(max_blocks_wide, mu_blocks_wide);
-        mu_blocks_high = AOMMIN(max_blocks_high, mu_blocks_high);
-        TransformInfo_t *trans_info = NULL, *next_trans_chroma = NULL, *next_trans_luma = NULL;
-        TxSize tx_size;
+    int num_chroma_tus = (dec_handle->frame_header.lossless_array[part_info.mi->segment_id] &&
+        ((bsize >= BLOCK_64X64) && (bsize <= BLOCK_128X128)) ) ?
+        (max_blocks_wide * max_blocks_high) >>
+        (color_config->subsampling_x + color_config->subsampling_y) : mode_info->num_chroma_tus;
 
-        for (row = 0; row < max_blocks_high; row += mu_blocks_high) {
-            for (col = 0; col < max_blocks_wide; col += mu_blocks_wide) {
-                for (int plane = 0; plane < num_planes; ++plane) {
-                    sub_x = (plane > 0) ? color_config->subsampling_x : 0;
-                    sub_y = (plane > 0) ? color_config->subsampling_y : 0;
+    for (int plane = 0; plane < num_planes; ++plane) {
+        sub_x = (plane > 0) ? color_config->subsampling_x : 0;
+        sub_y = (plane > 0) ? color_config->subsampling_y : 0;
 
-                    if (!dec_is_chroma_reference(mi_row, mi_col, bsize,
-                        sub_x, sub_y))
-                        continue;
+        if (!dec_is_chroma_reference(mi_row, mi_col, bsize, sub_x, sub_y))
+            continue;
 
-                    /* TODO : Clean the logic! */
-                    if (row == 0 && col == 0)
-                        trans_info = (plane == 0) ?
-                        (sb_info->sb_luma_trans_info + mode_info->first_luma_tu_offset) :
-                        (sb_info->sb_chroma_trans_info + mode_info->first_chroma_tu_offset
-                         + (plane - 1));
-                    else
-                        trans_info = plane ? next_trans_chroma : next_trans_luma;
+        trans_info = (plane == 0) ?
+            (sb_info->sb_trans_info[plane] + mode_info->first_luma_tu_offset) :
+            (plane == 1) ?
+            (sb_info->sb_trans_info[plane] + mode_info->first_chroma_tu_offset) :
+            (sb_info->sb_trans_info[plane - 1] + mode_info->first_chroma_tu_offset + num_chroma_tus);
 
-                    tx_size = trans_info->tx_size;
+        if (dec_handle->frame_header.lossless_array[part_info.mi->segment_id] &&
+            (bsize >= BLOCK_64X64) && (bsize <= BLOCK_128X128) )
+        {
+            assert(trans_info->tx_size == TX_4X4);
+            num_tu = (max_blocks_wide * max_blocks_high) >> (sub_x + sub_y);
 
-                    const int stepr = tx_size_high_unit[tx_size];
-                    const int stepc = tx_size_wide_unit[tx_size];
+        }
+        else
+            num_tu = plane ? mode_info->num_chroma_tus : mode_info->num_luma_tus;
 
-                    const int unit_height = ROUND_POWER_OF_TWO(AOMMIN(mu_blocks_high
-                        + row, max_blocks_high), sub_y);
-                    const int unit_width = ROUND_POWER_OF_TWO(AOMMIN(mu_blocks_wide
-                        + col, max_blocks_wide), sub_x);
+        assert(num_tu != 0);
 
-                    for (blk_row = row >> sub_y; blk_row < unit_height; blk_row += stepr)
-                    {
-                        for (blk_col = col >> sub_x; blk_col < unit_width; blk_col += stepc)
-                        {
-                            void *blk_recon_buf;
-                            int32_t recon_strd;
+        for (int tu = 0; tu < num_tu; tu++)
+        {
+            void *blk_recon_buf;
+            int32_t recon_strd;
 
-                            coeffs = plane ? dec_mod_ctxt->cur_chroma_coeff :
-                                             dec_mod_ctxt->cur_luma_coeff;
+            tx_size = trans_info->tx_size;
+            coeffs = dec_mod_ctxt->cur_coeff[plane];
 
-                            derive_blk_pointers(recon_picture_buf, plane,
-                                (mi_col >> sub_x) + blk_col, (mi_row >> sub_y) + blk_row,
-                                &blk_recon_buf, &recon_strd, sub_x, sub_y);
+            derive_blk_pointers(recon_picture_buf, plane,
+                ((mi_col >> sub_x) + trans_info->tu_x_offset)*MI_SIZE,
+                ((mi_row >> sub_y) + trans_info->tu_y_offset)*MI_SIZE,
+                &blk_recon_buf, &recon_strd, sub_x, sub_y);
 
-                            svt_av1_predict_intra(dec_mod_ctxt, &part_info, plane,
-                                tx_size, dec_mod_ctxt->cur_tile_info, blk_recon_buf,
-                                recon_strd, recon_picture_buf->bit_depth, blk_col, blk_row);
+            if (!inter_block)
+                svt_av1_predict_intra(dec_mod_ctxt, &part_info, plane,
+                    tx_size, dec_mod_ctxt->cur_tile_info, blk_recon_buf,
+                    recon_strd, recon_picture_buf->bit_depth,
+                    trans_info->tu_x_offset, trans_info->tu_y_offset);
 
-                            if (!mode_info->skip && trans_info->cbf)
-                            {
+            n_coeffs = 0;
+
+            if (!mode_info->skip && trans_info->cbf)
+            {
 #if SVT_DEC_COEFF_DEBUG
-                                {
-                                    /* For debug purpose */
-                                    uint8_t *cur_coeff = (uint8_t*)coeffs;
-                                    uint8_t cur_loc = (mi_row + blk_row) & 0xFF;
-                                    assert(cur_coeff[0] == cur_loc);
-                                    cur_loc = (mi_col + blk_col) & 0xFF;
-                                    assert(cur_coeff[1] == cur_loc);
-                                    UNUSED(cur_coeff);
-                                    UNUSED(cur_loc);
-                                }
+                {
+                    /* For debug purpose */
+                    uint8_t    *cur_coeff = (uint8_t*)coeffs;
+                    uint8_t mi_row_der = cur_coeff[0];
+                    uint8_t mi_col_der = cur_coeff[1];
+
+                    uint8_t  cur_loc = (mi_row + trans_info->tu_y_offset) & 0xFF;
+                    assert(mi_row_der == cur_loc);
+                    cur_loc = (mi_col + trans_info->tu_x_offset) & 0xFF;
+                    assert(mi_col_der == cur_loc);
+                    (void)mi_row_der; (void)mi_col_der; (void)cur_loc;
+                }
 #endif
-                                tx_type = trans_info->txk_type;
+                tx_type = trans_info->txk_type;
 
-                                n_coeffs = inverse_quantize(dec_handle, &part_info,
-                                    mode_info, coeffs, qcoeffs, tx_type, tx_size, plane);
-                                if(n_coeffs != 0)
-                                {
-                                    plane ? (dec_mod_ctxt->cur_chroma_coeff += (n_coeffs + 1)) :
-                                            (dec_mod_ctxt->cur_luma_coeff += (n_coeffs + 1));
+                n_coeffs = inverse_quantize(dec_handle, &part_info,
+                    mode_info, coeffs, qcoeffs, tx_type, tx_size, plane);
+                if (n_coeffs != 0) {
+                    dec_mod_ctxt->cur_coeff[plane] += (n_coeffs + 1);
 
-                                    if (recon_picture_buf->bit_depth == EB_8BIT)
-                                        av1_inv_transform_recon8bit(qcoeffs,
-                                            (uint8_t *)blk_recon_buf,
-                                            recon_strd, tx_size, tx_type, plane, n_coeffs);
-                                    else
-                                        av1_inv_transform_recon(qcoeffs,
-                                        CONVERT_TO_BYTEPTR(blk_recon_buf), recon_strd,
-                                        tx_size, recon_picture_buf->bit_depth,
-                                        tx_type, plane, n_coeffs);
-                                }
-                            }
-
-                            /* Store Luma for CFL if required! */
-                            if (plane == AOM_PLANE_Y && store_cfl_required(
-                                color_config, &part_info))
-                            {
-                                cfl_store_tx(&part_info, &dec_mod_ctxt->cfl_ctx,
-                                    blk_row, blk_col, tx_size, bsize, color_config,
-                                    blk_recon_buf, recon_strd);
-                            }
-
-                            // increment transform pointer
-                            trans_info++;
-                        }
-                    }
-                    // Remembers trans_info for next transform block within a block of 128xH / Wx128
-                    if (plane == 0)
-                        next_trans_luma = trans_info;
+                    if (recon_picture_buf->bit_depth == EB_8BIT)
+                        av1_inv_transform_recon8bit(qcoeffs,
+                        (uint8_t *)blk_recon_buf,
+                            recon_strd, tx_size, tx_type, plane, n_coeffs);
                     else
-                        next_trans_chroma = trans_info;
+                        av1_inv_transform_recon(qcoeffs,
+                            CONVERT_TO_BYTEPTR(blk_recon_buf), recon_strd,
+                            tx_size, recon_picture_buf->bit_depth,
+                            tx_type, plane, n_coeffs);
                 }
             }
+
+            /* Store Luma for CFL if required! */
+            if (plane == AOM_PLANE_Y && store_cfl_required(
+                color_config, &part_info))
+            {
+                cfl_store_tx(&part_info, &dec_mod_ctxt->cfl_ctx,
+                    trans_info->tu_y_offset, trans_info->tu_x_offset, tx_size,
+                    bsize, color_config, blk_recon_buf, recon_strd);
+            }
+
+            // increment transform pointer
+            trans_info++;
         }
-    }
-    else
-    {
-        // Decode inter block
-        assert(0);
     }
     return;
 }
