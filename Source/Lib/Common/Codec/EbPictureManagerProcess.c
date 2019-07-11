@@ -862,7 +862,7 @@ void* picture_manager_kernel(void *input_ptr)
                             (entryPictureControlSetPtr->ref_list0_count > 0) ? P_SLICE :
                             I_SLICE;
 #if ENABLE_CDF_UPDATE
-                        if (picture_control_set_ptr->frame_end_cdf_update_mode) {
+                        if (entryPictureControlSetPtr->frame_end_cdf_update_mode) {
                             if (entryPictureControlSetPtr->slice_type != I_SLICE)
                                 ChildPictureControlSetPtr->parent_pcs_ptr->primary_ref_frame = ref_index;
                             else
