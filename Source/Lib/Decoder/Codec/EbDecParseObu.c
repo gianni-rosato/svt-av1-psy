@@ -758,8 +758,8 @@ void read_tile_info(bitstrm_t *bs, TilesInfo *tile_info, SeqHeader *seq_header,
     }
 
     // Bitstream conformance
-    assert(tile_info->tile_cols <= MAX_TILE_ROWS_AV1);
-    assert(tile_info->tile_rows <= MAX_TILE_COLS_AV1);
+    assert(tile_info->tile_cols <= MAX_TILE_ROWS);
+    assert(tile_info->tile_rows <= MAX_TILE_COLS);
 
     if (tile_info->tile_cols_log2 > 0 || tile_info->tile_rows_log2 > 0) {
         tile_info->context_update_tile_id = dec_get_bits(bs,

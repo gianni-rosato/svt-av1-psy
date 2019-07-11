@@ -13,12 +13,6 @@
 extern "C" {
 #endif
 
-/* Maximum number of tile rows and tile columns
-  Conflicting with wrong values entered in EbDefinitions */
-
-#define MAX_TILE_ROWS_AV1 64
-#define MAX_TILE_COLS_AV1 64
-
 /*!\brief OBU types. */
 typedef enum ATTRIBUTE_PACKED {
     OBU_SEQUENCE_HEADER = 1,
@@ -300,10 +294,10 @@ typedef struct TilesInfo_s {
 
     /*!< Specifying the start column (in units of 4x4 luma samples) for each tile
      * across the image */
-    uint16_t    tile_col_start_sb[MAX_TILE_COLS_AV1 + 1];
+    uint16_t    tile_col_start_sb[MAX_TILE_ROWS + 1];
 
     /*!< Specifying the start row (in units of 4x4 luma samples) for each tile down the image */
-    uint16_t    tile_row_start_sb[MAX_TILE_ROWS_AV1 + 1];
+    uint16_t    tile_row_start_sb[MAX_TILE_COLS + 1];
 
     /*!< Specifies which tile to use for the CDF update */
     uint16_t    context_update_tile_id;
