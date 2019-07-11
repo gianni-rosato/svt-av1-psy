@@ -2828,8 +2828,7 @@ extern /*static*/ void model_rd_for_sb(
 
         total_sse += sse;
 
-        int32_t current_q_index = MAX(0, MIN(QINDEX_RANGE - 1, picture_control_set_ptr->
-            parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx));
+        int32_t current_q_index = MAX(0, MIN(QINDEX_RANGE - 1, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx));
         Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq;
 
         int16_t quantizer = dequants->y_dequant_Q3[current_q_index][1];
