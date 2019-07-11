@@ -738,7 +738,7 @@ uint64_t av1_intra_fast_cost(
     candidate_ptr->fast_luma_rate = lumaRate;
     candidate_ptr->fast_chroma_rate = chromaRate;
     if (use_ssd) {
-        int32_t current_q_index = MAX(0, MIN(QINDEX_RANGE - 1, frm_hdr->quantization_params.base_q_idx));
+        int32_t current_q_index = frm_hdr->quantization_params.base_q_idx;
         Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq;
 
         int16_t quantizer = dequants->y_dequant_Q3[current_q_index][1];
@@ -1461,7 +1461,7 @@ uint64_t av1_inter_fast_cost(
     candidate_ptr->fast_chroma_rate = chromaRate;
 
     if (use_ssd) {
-        int32_t current_q_index = MAX(0, MIN(QINDEX_RANGE - 1, frm_hdr->quantization_params.base_q_idx));
+        int32_t current_q_index = frm_hdr->quantization_params.base_q_idx;
         Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq;
 
         int16_t quantizer = dequants->y_dequant_Q3[current_q_index][1];

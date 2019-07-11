@@ -399,7 +399,7 @@ void av1_set_quantizer(
     picture_control_set_ptr->min_qmlevel = 5;
     picture_control_set_ptr->max_qmlevel = 9;
 
-    frm_hdr->quantization_params.base_q_idx = (uint16_t)AOMMAX(frm_hdr->delta_q_params.delta_q_present, q);
+    frm_hdr->quantization_params.base_q_idx = AOMMAX(frm_hdr->delta_q_params.delta_q_present, q);
     frm_hdr->quantization_params.delta_q_y_dc = 0;
     frm_hdr->quantization_params.delta_q_u_dc = 0;
     frm_hdr->quantization_params.delta_q_u_ac = 0;
