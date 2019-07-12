@@ -18,6 +18,23 @@
 
 #include "EbPictureBufferDesc.h"
 
+static void eb_picture_buffer_desc_dctor(EbPtr p)
+{
+    EbPictureBufferDesc *obj = (EbPictureBufferDesc*)p;
+    if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
+        EB_FREE_ALIGNED_ARRAY(obj->buffer_y);
+        EB_FREE_ALIGNED_ARRAY(obj->buffer_bit_inc_y);
+    }
+    if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
+        EB_FREE_ALIGNED_ARRAY(obj->buffer_cb);
+        EB_FREE_ALIGNED_ARRAY(obj->buffer_bit_inc_cb);
+    }
+    if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
+        EB_FREE_ALIGNED_ARRAY(obj->buffer_cr);
+        EB_FREE_ALIGNED_ARRAY(obj->buffer_bit_inc_cr);
+    }
+}
+
 /*****************************************
  * eb_picture_buffer_desc_ctor
  *  Initializes the Buffer Descriptor's
@@ -25,22 +42,18 @@
  *  the descriptor.
  *****************************************/
 EbErrorType eb_picture_buffer_desc_ctor(
-    EbPtr  *object_dbl_ptr,
+    EbPictureBufferDesc* pictureBufferDescPtr,
     EbPtr   object_init_data_ptr)
 {
-    EbPictureBufferDesc          *pictureBufferDescPtr;
     EbPictureBufferDescInitData  *pictureBufferDescInitDataPtr = (EbPictureBufferDescInitData*)object_init_data_ptr;
 
     uint32_t bytesPerPixel = (pictureBufferDescInitDataPtr->bit_depth == EB_8BIT) ? 1 : (pictureBufferDescInitDataPtr->bit_depth <= EB_16BIT) ? 2 : 4;
     const uint16_t subsampling_x = (pictureBufferDescInitDataPtr->color_format == EB_YUV444 ? 1 : 2) - 1;
 
+    pictureBufferDescPtr->dctor = eb_picture_buffer_desc_dctor;
+
     if (pictureBufferDescInitDataPtr->bit_depth > EB_8BIT && pictureBufferDescInitDataPtr->bit_depth <= EB_16BIT && pictureBufferDescInitDataPtr->split_mode == EB_TRUE)
         bytesPerPixel = 1;
-
-    EB_MALLOC(EbPictureBufferDesc*, pictureBufferDescPtr, sizeof(EbPictureBufferDesc), EB_N_PTR);
-
-    // Allocate the PictureBufferDesc Object
-    *object_dbl_ptr = (EbPtr)pictureBufferDescPtr;
 
     // Set the Picture Buffer Static variables
     pictureBufferDescPtr->max_width = pictureBufferDescInitDataPtr->max_width;
@@ -64,64 +77,46 @@ EbErrorType eb_picture_buffer_desc_ctor(
         pictureBufferDescPtr->stride_bit_inc_cb = pictureBufferDescPtr->stride_cb;
         pictureBufferDescPtr->stride_bit_inc_cr = pictureBufferDescPtr->stride_cr;
     }
-    else {
-        pictureBufferDescPtr->stride_bit_inc_y = 0;
-        pictureBufferDescPtr->stride_bit_inc_cb = 0;
-        pictureBufferDescPtr->stride_bit_inc_cr = 0;
-    }
+    pictureBufferDescPtr->buffer_enable_mask = pictureBufferDescInitDataPtr->buffer_enable_mask;
 
     // Allocate the Picture Buffers (luma & chroma)
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_y, pictureBufferDescPtr->luma_size      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-        //pictureBufferDescPtr->buffer_y = (EbByte) EB_aligned_malloc( pictureBufferDescPtr->luma_size      * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+        EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_y, pictureBufferDescPtr->luma_size * bytesPerPixel);
         pictureBufferDescPtr->buffer_bit_inc_y = 0;
         if (pictureBufferDescInitDataPtr->split_mode == EB_TRUE) {
-            EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_bit_inc_y, pictureBufferDescPtr->luma_size      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-            //pictureBufferDescPtr->buffer_bit_inc_y = (EbByte) EB_aligned_malloc( pictureBufferDescPtr->luma_size      * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+            EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_y, pictureBufferDescPtr->luma_size * bytesPerPixel);
         }
-
-        memset(pictureBufferDescPtr->buffer_y, 0, pictureBufferDescPtr->luma_size * bytesPerPixel * sizeof(uint8_t));
-    }
-    else {
-        pictureBufferDescPtr->buffer_y = 0;
-        pictureBufferDescPtr->buffer_bit_inc_y = 0;
     }
 
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cb, pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-        //pictureBufferDescPtr->buffer_cb = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+        EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cb, pictureBufferDescPtr->chroma_size * bytesPerPixel);
         pictureBufferDescPtr->buffer_bit_inc_cb = 0;
         if (pictureBufferDescInitDataPtr->split_mode == EB_TRUE) {
-            EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_bit_inc_cb, pictureBufferDescPtr->chroma_size      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-            //pictureBufferDescPtr->buffer_bit_inc_cb = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+            EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cb, pictureBufferDescPtr->chroma_size * bytesPerPixel);
         }
-
-        memset(pictureBufferDescPtr->buffer_cb, 0, pictureBufferDescPtr->chroma_size * bytesPerPixel * sizeof(uint8_t));
-    }
-    else {
-        pictureBufferDescPtr->buffer_cb = 0;
-        pictureBufferDescPtr->buffer_bit_inc_cb = 0;
     }
 
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cr, pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-        //pictureBufferDescPtr->buffer_cr = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+        EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cr, pictureBufferDescPtr->chroma_size * bytesPerPixel);
         pictureBufferDescPtr->buffer_bit_inc_cr = 0;
         if (pictureBufferDescInitDataPtr->split_mode == EB_TRUE) {
-            EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_bit_inc_cr, pictureBufferDescPtr->chroma_size      * bytesPerPixel * sizeof(uint8_t), EB_A_PTR);
-            //pictureBufferDescPtr->buffer_bit_inc_cr = (EbByte) EB_aligned_malloc(pictureBufferDescPtr->chroma_size    * bytesPerPixel * sizeof(uint8_t),ALVALUE);
+            EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cr, pictureBufferDescPtr->chroma_size * bytesPerPixel);
         }
-
-        memset(pictureBufferDescPtr->buffer_cr, 0, pictureBufferDescPtr->chroma_size * bytesPerPixel * sizeof(uint8_t));
-    }
-    else {
-        pictureBufferDescPtr->buffer_cr = 0;
-        pictureBufferDescPtr->buffer_bit_inc_cr = 0;
     }
 
     return EB_ErrorNone;
 }
 
+void eb_recon_picture_buffer_desc_dctor(EbPtr p)
+{
+    EbPictureBufferDesc *obj = (EbPictureBufferDesc*)p;
+    if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG)
+        EB_FREE_ALIGNED_ARRAY(obj->buffer_y);
+    if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG)
+        EB_FREE_ALIGNED_ARRAY(obj->buffer_cb);
+    if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG)
+        EB_FREE_ALIGNED_ARRAY(obj->buffer_cr);
+}
 /*****************************************
  * eb_recon_picture_buffer_desc_ctor
  *  Initializes the Buffer Descriptor's
@@ -129,20 +124,15 @@ EbErrorType eb_picture_buffer_desc_ctor(
  *  the descriptor.
  *****************************************/
 EbErrorType eb_recon_picture_buffer_desc_ctor(
-    EbPtr  *object_dbl_ptr,
+    EbPictureBufferDesc  *pictureBufferDescPtr,
     EbPtr   object_init_data_ptr)
 {
-    EbPictureBufferDesc          *pictureBufferDescPtr;
     EbPictureBufferDescInitData  *pictureBufferDescInitDataPtr = (EbPictureBufferDescInitData*)object_init_data_ptr;
     const uint16_t subsampling_x = (pictureBufferDescInitDataPtr->color_format == EB_YUV444 ? 1 : 2) - 1;
 
     uint32_t bytesPerPixel = (pictureBufferDescInitDataPtr->bit_depth == EB_8BIT) ? 1 : 2;
 
-    EB_MALLOC(EbPictureBufferDesc*, pictureBufferDescPtr, sizeof(EbPictureBufferDesc), EB_N_PTR);
-
-    // Allocate the PictureBufferDesc Object
-    *object_dbl_ptr = (EbPtr)pictureBufferDescPtr;
-
+    pictureBufferDescPtr->dctor = eb_recon_picture_buffer_desc_dctor;
     // Set the Picture Buffer Static variables
     pictureBufferDescPtr->max_width = pictureBufferDescInitDataPtr->max_width;
     pictureBufferDescPtr->max_height = pictureBufferDescInitDataPtr->max_height;
@@ -158,31 +148,19 @@ EbErrorType eb_recon_picture_buffer_desc_ctor(
     pictureBufferDescPtr->luma_size = (pictureBufferDescInitDataPtr->max_width + pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding) *
         (pictureBufferDescInitDataPtr->max_height + pictureBufferDescInitDataPtr->top_padding + pictureBufferDescInitDataPtr->bot_padding);
     pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->luma_size >> (3 - pictureBufferDescInitDataPtr->color_format);
-    pictureBufferDescPtr->packedFlag = EB_FALSE;
 
-    pictureBufferDescPtr->stride_bit_inc_y = 0;
-    pictureBufferDescPtr->stride_bit_inc_cb = 0;
-    pictureBufferDescPtr->stride_bit_inc_cr = 0;
+    pictureBufferDescPtr->buffer_enable_mask = pictureBufferDescInitDataPtr->buffer_enable_mask;
 
     // Allocate the Picture Buffers (luma & chroma)
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_y, pictureBufferDescPtr->luma_size * bytesPerPixel, EB_A_PTR);
-        memset(pictureBufferDescPtr->buffer_y, 0, pictureBufferDescPtr->luma_size      * bytesPerPixel);
+        EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_y, pictureBufferDescPtr->luma_size * bytesPerPixel);
     }
-    else
-        pictureBufferDescPtr->buffer_y = 0;
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cb, pictureBufferDescPtr->chroma_size * bytesPerPixel, EB_A_PTR);
-        memset(pictureBufferDescPtr->buffer_cb, 0, pictureBufferDescPtr->chroma_size      * bytesPerPixel);
-    }
-    else
-        pictureBufferDescPtr->buffer_cb = 0;
+        EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cb, pictureBufferDescPtr->chroma_size * bytesPerPixel);
+   }
     if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
-        EB_ALLIGN_MALLOC(EbByte, pictureBufferDescPtr->buffer_cr, pictureBufferDescPtr->chroma_size * bytesPerPixel, EB_A_PTR);
-        memset(pictureBufferDescPtr->buffer_cr, 0, pictureBufferDescPtr->chroma_size      * bytesPerPixel);
+        EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cr, pictureBufferDescPtr->chroma_size * bytesPerPixel);
     }
-    else
-        pictureBufferDescPtr->buffer_cr = 0;
     return EB_ErrorNone;
 }
 void link_Eb_to_aom_buffer_desc_8bit(
@@ -368,12 +346,10 @@ int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t h
         }
         else if (frame_size > (size_t)ybf->buffer_alloc_sz) {
             // Allocation to hold larger frame, or first allocation.
-            aom_free(ybf->buffer_alloc);
-            ybf->buffer_alloc = NULL;
-
+            if (ybf->buffer_alloc_sz > 0)
+                EB_FREE_ARRAY(ybf->buffer_alloc);
             if (frame_size != (size_t)frame_size) return -1;
-
-            EB_MALLOC(uint8_t *, ybf->buffer_alloc, frame_size, EB_N_PTR);
+            EB_MALLOC_ARRAY(ybf->buffer_alloc, frame_size);
 
             if (!ybf->buffer_alloc) return -1;
 

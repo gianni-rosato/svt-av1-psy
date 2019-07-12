@@ -7,7 +7,7 @@
 #define EbMotionEstimationLcuResults_h
 
 #include "EbDefinitions.h"
-#include "EbDefinitions.h"
+#include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,6 +41,7 @@ extern "C" {
     // move this to a new file with ctor & dtor
     typedef struct MeLcuResults
     {
+        EbDctor           dctor;
         uint32_t          lcu_distortion;
         uint8_t          *total_me_candidate_index;
         MeCandidate     **me_candidate;
@@ -51,6 +52,8 @@ extern "C" {
         MvCandidate    **me_mv_array;
         // [PU][LAST, LAST2, LAST3, GOLD, BWD, ALT2, ALT] if MRP Mode 0,
         // [PU][LAST, LAST2, BWD, ALT2] if MRP Mode 1,
+        uint32_t max_number_of_pus_per_lcu;
+
     } MeLcuResults;
 #ifdef __cplusplus
 }

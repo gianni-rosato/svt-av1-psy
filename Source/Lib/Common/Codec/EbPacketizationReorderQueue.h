@@ -9,7 +9,7 @@
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
 #include "EbPredictionStructure.h"
-
+#include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -18,6 +18,7 @@ extern "C" {
      ************************************************/
     typedef struct PacketizationReorderEntry
     {
+        EbDctor                           dctor;
         uint64_t                          picture_number;
         EbObjectWrapper              *output_stream_wrapper_ptr;
         EbObjectWrapper              *outputStatisticsWrapperPtr;
@@ -42,7 +43,7 @@ extern "C" {
     } PacketizationReorderEntry;
 
     extern EbErrorType packetization_reorder_entry_ctor(
-        PacketizationReorderEntry **entry_dbl_ptr,
+        PacketizationReorderEntry *entry_dbl_ptr,
         uint32_t                      picture_number);
 
 #ifdef __cplusplus

@@ -2119,19 +2119,13 @@ semaphores, mutexs, etc.
 */
 typedef void * EbHandle;
 
-/** The EbCtor type is used to define the eBrisk object constructors.
+/**
 object_ptr is a EbPtr to the object being constructed.
 object_init_data_ptr is a EbPtr to a data structure used to initialize the object.
 */
-typedef EbErrorType(*EbCtor)(
+typedef EbErrorType(*EbCreator)(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr);
-
-/** The EbDtor type is used to define the eBrisk object destructors.
-object_ptr is a EbPtr to the object being constructed.
-*/
-typedef void(*EbDtor)(
-    EbPtr object_ptr);
 
 #define INVALID_MV            0xFFFFFFFF    //ICOPY They changed this to 0x80008000
 #define BLKSIZE 64
@@ -2179,10 +2173,12 @@ typedef enum DistCalcType
 typedef enum EbPtrType
 {
     EB_N_PTR        = 0,     // malloc'd pointer
-    EB_A_PTR        = 1,     // malloc'd pointer aligned
-    EB_MUTEX        = 2,     // mutex
-    EB_SEMAPHORE    = 3,     // semaphore
-    EB_THREAD       = 4      // thread handle
+    EB_C_PTR        = 1,     // calloc'd pointer
+    EB_A_PTR        = 2,     // malloc'd pointer aligned
+    EB_MUTEX        = 3,     // mutex
+    EB_SEMAPHORE    = 4,     // semaphore
+    EB_THREAD       = 5,      // thread handle
+    EB_PTR_TYPE_TOTAL,
 } EbPtrType;
 
 typedef struct EbMemoryMapEntry
@@ -2245,52 +2241,33 @@ extern    uint32_t                   app_malloc_count;
     EB_ADD_APP_MEM(pointer, n_elements, pointer_class, app_malloc_count, return_type);
 
 #define ALVALUE 32
-#define EB_ADD_MEM(pointer, size, pointer_class, count, release) \
+
+#define EB_CREATE_SEMAPHORE(pointer, initial_count, max_count) \
     do { \
-        EbMemoryMapEntry *node; \
-        if (!pointer) return EB_ErrorInsufficientResources; \
-        node = malloc(sizeof(EbMemoryMapEntry)); \
-        if (!node) { \
-            release(pointer); \
-            return EB_ErrorInsufficientResources; \
-        } \
-        node->ptr_type         = pointer_class; \
-        node->ptr              = (EbPtr)pointer;\
-        node->prev_entry       = (EbPtr)memory_map;   \
-        memory_map             = node;          \
-        (*memory_map_index)++; \
-        *total_lib_memory += (size + 7) / 8 + sizeof(EbMemoryMapEntry); \
-        count++; \
+        pointer = eb_create_semaphore(initial_count, max_count); \
+        EB_ADD_MEM(pointer, 1, EB_SEMAPHORE); \
+    }while (0)
+
+#define EB_DESTROY_SEMAPHORE(pointer) \
+    do { \
+        eb_destroy_semaphore(pointer); \
+        EB_REMOVE_MEM_ENTRY(pointer, EB_SEMAPHORE); \
+    }while (0)
+
+#define EB_CREATE_MUTEX(pointer) \
+    do { \
+        pointer = eb_create_mutex(); \
+        EB_ADD_MEM(pointer, 1, EB_MUTEX); \
     } while (0)
 
-#ifdef _MSC_VER
-#define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \
-pointer = (type) _aligned_malloc(n_elements,ALVALUE); \
-EB_ADD_MEM(pointer, n_elements, pointer_class, lib_malloc_count, _aligned_free);
+#define EB_DESTROY_MUTEX(pointer) \
+    do { \
+        if (pointer) { \
+            eb_destroy_mutex(pointer); \
+            EB_REMOVE_MEM_ENTRY(pointer, EB_MUTEX); \
+        } \
+    } while (0)
 
-#else
-#define EB_ALLIGN_MALLOC(type, pointer, n_elements, pointer_class) \
-if (posix_memalign((void**)(&(pointer)), ALVALUE, n_elements) != 0) { \
-    return EB_ErrorInsufficientResources; \
-} \
-EB_ADD_MEM(pointer, n_elements, pointer_class, lib_malloc_count, free);
-#endif
-
-#define EB_MALLOC(type, pointer, n_elements, pointer_class) \
-pointer = (type) malloc(n_elements); \
-EB_ADD_MEM(pointer, n_elements, pointer_class, lib_malloc_count, free);
-
-#define EB_CALLOC(type, pointer, count, size, pointer_class) \
-pointer = (type) calloc(count, size); \
-EB_ADD_MEM(pointer, (count)*(size), pointer_class, lib_malloc_count, free);
-
-#define EB_CREATESEMAPHORE(type, pointer, n_elements, pointer_class, initial_count, max_count) \
-pointer = eb_create_semaphore(initial_count, max_count); \
-EB_ADD_MEM(pointer, n_elements, pointer_class, lib_semaphore_count, eb_destroy_semaphore);
-
-#define EB_CREATEMUTEX(type, pointer, n_elements, pointer_class) \
-pointer = eb_create_mutex(); \
-EB_ADD_MEM(pointer, n_elements, pointer_class, lib_mutex_count, eb_destroy_mutex);
 
 #define EB_MEMORY() \
 printf("Total Number of Mallocs in Library: %d\n", lib_malloc_count); \

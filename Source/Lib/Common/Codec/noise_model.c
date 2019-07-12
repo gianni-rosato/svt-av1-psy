@@ -1476,64 +1476,37 @@ int32_t aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoised[3]
     return init_success;
 }
 
-struct aom_denoise_and_model_t {
-    int32_t block_size;
-    int32_t bit_depth;
-    float noise_level;
-
-    // Size of current denoised buffer and flat_block buffer
-    int32_t width;
-    int32_t height;
-    int32_t y_stride;
-    int32_t uv_stride;
-    int32_t num_blocks_w;
-    int32_t num_blocks_h;
-
-    // Buffers for image and noise_psd allocated on the fly
-    float *noise_psd[3];
-    uint8_t *denoised[3];
-    uint8_t *flat_blocks;
-    uint16_t *packed[3];
-    EbPictureBufferDesc *denoised_pic;
-    EbPictureBufferDesc *packed_pic;
-
-    aom_flat_block_finder_t flat_block_finder;
-    aom_noise_model_t noise_model;
-};
-
-EbErrorType aom_denoise_and_model_alloc(struct aom_denoise_and_model_t **ctx,
+EbErrorType aom_denoise_and_model_alloc(aom_denoise_and_model_t *ctx,
     int32_t bit_depth,
     int32_t block_size,
     float noise_level) {
-    ASSERT(ctx != NULL);
-    EB_MALLOC(struct aom_denoise_and_model_t*, (*ctx), sizeof(struct aom_denoise_and_model_t), EB_N_PTR);
 
-    if (!ctx) {
-        fprintf(stderr, "Unable to allocate denoise_and_model struct\n");
-        return EB_ErrorInsufficientResources;
-    }
-    memset(*ctx, 0, sizeof(**ctx));
+    ctx->block_size = block_size;
+    ctx->noise_level = noise_level;
+    ctx->bit_depth = bit_depth;
 
-    (*ctx)->block_size = block_size;
-    (*ctx)->noise_level = noise_level;
-    (*ctx)->bit_depth = bit_depth;
-
-    EB_MALLOC(float*, (*ctx)->noise_psd[0], (sizeof((*ctx)->noise_psd[0]) * block_size * block_size), EB_N_PTR);
-
-    EB_MALLOC(float*, (*ctx)->noise_psd[1], sizeof((*ctx)->noise_psd[1]) * block_size * block_size, EB_N_PTR);
-
-    EB_MALLOC(float*, (*ctx)->noise_psd[2], sizeof((*ctx)->noise_psd[2]) * block_size * block_size, EB_N_PTR);
-
-    if (!(*ctx)->noise_psd[0] || !(*ctx)->noise_psd[1] || !(*ctx)->noise_psd[2]) {
-        fprintf(stderr, "Unable to allocate noise PSD buffers\n");
-        return EB_ErrorInsufficientResources;
-    }
+    EB_MALLOC_ARRAY(ctx->noise_psd[0], block_size * block_size);
+    EB_MALLOC_ARRAY(ctx->noise_psd[1], block_size * block_size);
+    EB_MALLOC_ARRAY(ctx->noise_psd[2], block_size * block_size);
     return EB_ErrorNone;
 }
 
-EbErrorType denoise_and_model_ctor(EbPtr *object_dbl_ptr,
+void denoise_and_model_dctor(EbPtr p) {
+    aom_denoise_and_model_t *obj = (aom_denoise_and_model_t*)p;
+
+    free(obj->flat_blocks);
+    for (int32_t i = 0; i < 3; ++i) {
+        EB_FREE_ARRAY(obj->denoised[i]);
+        EB_FREE_ARRAY(obj->noise_psd[i]);
+        EB_FREE_ARRAY(obj->packed[i]);
+    }
+    aom_noise_model_free(&obj->noise_model);
+    aom_flat_block_finder_free(&obj->flat_block_finder);
+}
+
+
+EbErrorType denoise_and_model_ctor(aom_denoise_and_model_t *object_ptr,
     EbPtr object_init_data_ptr) {
-    struct aom_denoise_and_model_t *object_ptr = 0;
     denoise_and_model_init_data_t *init_data_ptr = (denoise_and_model_init_data_t*)object_init_data_ptr;
     EbErrorType return_error = EB_ErrorNone;
     uint32_t use_highbd = init_data_ptr->encoder_bit_depth > EB_8BIT ? 10 : 8;
@@ -1542,14 +1515,14 @@ EbErrorType denoise_and_model_ctor(EbPtr *object_dbl_ptr,
     chroma_sub_log2[0] = (init_data_ptr->encoder_color_format == EB_YUV444 ? 1 : 2) - 1;
     chroma_sub_log2[1] = (init_data_ptr->encoder_color_format >= EB_YUV422 ? 1 : 2) - 1;
 
-    return_error = aom_denoise_and_model_alloc(&object_ptr,
+    object_ptr->dctor = denoise_and_model_dctor;
+
+    return_error = aom_denoise_and_model_alloc(object_ptr,
         init_data_ptr->encoder_bit_depth > EB_8BIT ? 10 : 8,
         DENOISING_BlockSize,
         (float)(init_data_ptr->noise_level / 10.0));
-
-    *object_dbl_ptr = (EbPtr*)object_ptr;
-
-    ASSERT(object_ptr != NULL);
+    if (return_error != EB_ErrorNone)
+        return return_error;
     object_ptr->width = init_data_ptr->width;
     object_ptr->height = init_data_ptr->height;
     object_ptr->y_stride = init_data_ptr->stride_y;
@@ -1557,30 +1530,17 @@ EbErrorType denoise_and_model_ctor(EbPtr *object_dbl_ptr,
 
     //todo: consider replacing with EbPictureBuffersDesc
 
-    EB_MALLOC(uint8_t*, object_ptr->denoised[0], (sizeof(uint8_t) * (object_ptr->y_stride * object_ptr->height) << use_highbd), EB_N_PTR);
-    EB_MALLOC(uint8_t*, object_ptr->denoised[1], (sizeof(uint8_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])) << use_highbd), EB_N_PTR);
-    EB_MALLOC(uint8_t*, object_ptr->denoised[2], (sizeof(uint8_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])) << use_highbd), EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->denoised[0], (object_ptr->y_stride * object_ptr->height) << use_highbd);
+    EB_MALLOC_ARRAY(object_ptr->denoised[1], (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])) << use_highbd);
+    EB_MALLOC_ARRAY(object_ptr->denoised[2], (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])) << use_highbd);
 
     if (use_highbd) {
-        EB_MALLOC(uint16_t*, object_ptr->packed[0], (sizeof(uint16_t) * (object_ptr->y_stride * object_ptr->height)), EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->packed[1], (sizeof(uint16_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0]))), EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->packed[2], (sizeof(uint16_t) * (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0]))), EB_N_PTR);
+        EB_MALLOC_ARRAY(object_ptr->packed[0], (object_ptr->y_stride * object_ptr->height));
+        EB_MALLOC_ARRAY(object_ptr->packed[1], (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])));
+        EB_MALLOC_ARRAY(object_ptr->packed[2], (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])));
     }
 
     return return_error;
-}
-
-void aom_denoise_and_model_free(struct aom_denoise_and_model_t *ctx, int32_t use_highbd) {
-    free(ctx->flat_blocks);
-    for (int32_t i = 0; i < 3; ++i) {
-        free(ctx->denoised[i]);
-        free(ctx->noise_psd[i]);
-        if (use_highbd)
-            free(ctx->packed[i]);
-    }
-    aom_noise_model_free(&ctx->noise_model);
-    aom_flat_block_finder_free(&ctx->flat_block_finder);
-    free(ctx);
 }
 
 static int32_t denoise_and_model_realloc_if_necessary(struct aom_denoise_and_model_t *ctx,

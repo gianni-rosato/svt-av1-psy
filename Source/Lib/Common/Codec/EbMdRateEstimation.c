@@ -475,7 +475,7 @@ void av1_estimate_coefficients_rate(
     }
 }
 
-EbErrorType md_rate_estimation_context_ctor(MdRateEstimationContext *md_rate_estimation_array)
+EbErrorType md_rate_estimation_context_init(MdRateEstimationContext *md_rate_estimation_array)
 {
     uint32_t                      caseIndex1;
     uint32_t                      caseIndex2;

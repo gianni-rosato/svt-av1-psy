@@ -11,11 +11,19 @@
 #include "EbPictureOperators.h"
 
 #define UNUSED(x) (void)(x)
+
+static void neighbor_array_unit_dctor32(EbPtr p)
+{
+    NeighborArrayUnit32 *obj = (NeighborArrayUnit32*)p;
+    EB_FREE(obj->left_array);
+    EB_FREE(obj->top_array);
+    EB_FREE(obj->top_left_array);
+}
 /*************************************************
  * Neighbor Array Unit Ctor
  *************************************************/
 EbErrorType neighbor_array_unit_ctor32(
-    NeighborArrayUnit32 **na_unit_dbl_ptr,
+    NeighborArrayUnit32 *na_unit_ptr,
     uint32_t   max_picture_width,
     uint32_t   max_picture_height,
     uint32_t   unit_size,
@@ -23,10 +31,7 @@ EbErrorType neighbor_array_unit_ctor32(
     uint32_t   granularity_top_left,
     uint32_t   type_mask)
 {
-    NeighborArrayUnit32 *na_unit_ptr;
-    EB_MALLOC(NeighborArrayUnit32*, na_unit_ptr, sizeof(NeighborArrayUnit32), EB_N_PTR);
-
-    *na_unit_dbl_ptr = na_unit_ptr;
+    na_unit_ptr->dctor = neighbor_array_unit_dctor32;
     na_unit_ptr->unit_size = (uint8_t)(unit_size);
     na_unit_ptr->granularity_normal = (uint8_t)(granularity_normal);
     na_unit_ptr->granularity_normal_log2 = (uint8_t)(Log2f(na_unit_ptr->granularity_normal));
@@ -37,25 +42,29 @@ EbErrorType neighbor_array_unit_ctor32(
     na_unit_ptr->top_left_array_size = (uint16_t)((type_mask & NEIGHBOR_ARRAY_UNIT_TOPLEFT_MASK) ? (max_picture_width + max_picture_height) >> na_unit_ptr->granularity_top_left_log2 : 0);
 
     if (na_unit_ptr->left_array_size) {
-        EB_MALLOC(uint32_t*, na_unit_ptr->left_array, na_unit_ptr->unit_size * na_unit_ptr->left_array_size, EB_N_PTR);
+        EB_MALLOC(na_unit_ptr->left_array, na_unit_ptr->unit_size * na_unit_ptr->left_array_size);
     }
-    else
-        na_unit_ptr->left_array = (uint32_t*)EB_NULL;
+
     if (na_unit_ptr->top_array_size) {
-        EB_MALLOC(uint32_t*, na_unit_ptr->top_array, na_unit_ptr->unit_size * na_unit_ptr->top_array_size, EB_N_PTR);
+        EB_MALLOC(na_unit_ptr->top_array, na_unit_ptr->unit_size * na_unit_ptr->top_array_size);
     }
-    else
-        na_unit_ptr->top_array = (uint32_t*)EB_NULL;
+
     if (na_unit_ptr->top_left_array_size) {
-        EB_MALLOC(uint32_t*, na_unit_ptr->top_left_array, na_unit_ptr->unit_size * na_unit_ptr->top_left_array_size, EB_N_PTR);
+        EB_MALLOC(na_unit_ptr->top_left_array, na_unit_ptr->unit_size * na_unit_ptr->top_left_array_size);
     }
-    else
-        na_unit_ptr->top_left_array = (uint32_t*)EB_NULL;
     return EB_ErrorNone;
 }
 
+static void neighbor_array_unit_dctor(EbPtr p)
+{
+    NeighborArrayUnit *obj = (NeighborArrayUnit*)p;
+    EB_FREE(obj->left_array);
+    EB_FREE(obj->top_array);
+    EB_FREE(obj->top_left_array);
+}
+
 EbErrorType neighbor_array_unit_ctor(
-    NeighborArrayUnit **na_unit_dbl_ptr,
+    NeighborArrayUnit *na_unit_ptr,
     uint32_t   max_picture_width,
     uint32_t   max_picture_height,
     uint32_t   unit_size,
@@ -63,10 +72,7 @@ EbErrorType neighbor_array_unit_ctor(
     uint32_t   granularity_top_left,
     uint32_t   type_mask)
 {
-    NeighborArrayUnit *na_unit_ptr;
-    EB_MALLOC(NeighborArrayUnit*, na_unit_ptr, sizeof(NeighborArrayUnit), EB_N_PTR);
-
-    *na_unit_dbl_ptr = na_unit_ptr;
+    na_unit_ptr->dctor = neighbor_array_unit_dctor;
     na_unit_ptr->unit_size = (uint8_t)(unit_size);
     na_unit_ptr->granularity_normal = (uint8_t)(granularity_normal);
     na_unit_ptr->granularity_normal_log2 = (uint8_t)(Log2f(na_unit_ptr->granularity_normal));
@@ -77,20 +83,14 @@ EbErrorType neighbor_array_unit_ctor(
     na_unit_ptr->top_left_array_size = (uint16_t)((type_mask & NEIGHBOR_ARRAY_UNIT_TOPLEFT_MASK) ? (max_picture_width + max_picture_height) >> na_unit_ptr->granularity_top_left_log2 : 0);
 
     if (na_unit_ptr->left_array_size) {
-        EB_MALLOC(uint8_t*, na_unit_ptr->left_array, na_unit_ptr->unit_size * na_unit_ptr->left_array_size, EB_N_PTR);
+        EB_MALLOC(na_unit_ptr->left_array, na_unit_ptr->unit_size * na_unit_ptr->left_array_size);
     }
-    else
-        na_unit_ptr->left_array = (uint8_t*)EB_NULL;
     if (na_unit_ptr->top_array_size) {
-        EB_MALLOC(uint8_t*, na_unit_ptr->top_array, na_unit_ptr->unit_size * na_unit_ptr->top_array_size, EB_N_PTR);
+        EB_MALLOC(na_unit_ptr->top_array, na_unit_ptr->unit_size * na_unit_ptr->top_array_size);
     }
-    else
-        na_unit_ptr->top_array = (uint8_t*)EB_NULL;
     if (na_unit_ptr->top_left_array_size) {
-        EB_MALLOC(uint8_t*, na_unit_ptr->top_left_array, na_unit_ptr->unit_size * na_unit_ptr->top_left_array_size, EB_N_PTR);
+        EB_MALLOC(na_unit_ptr->top_left_array, na_unit_ptr->unit_size * na_unit_ptr->top_left_array_size);
     }
-    else
-        na_unit_ptr->top_left_array = (uint8_t*)EB_NULL;
     return EB_ErrorNone;
 }
 

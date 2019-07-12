@@ -219,7 +219,7 @@ EbErrorType av1_alloc_restoration_struct(struct Av1Common *cm, RestorationInfo *
     const int32_t ntiles = 1;
     const int32_t nunits = ntiles * rsi->units_per_tile;
 
-    EB_MALLOC(RestorationUnitInfo *, rsi->unit_info, sizeof(*rsi->unit_info) * nunits, EB_N_PTR)
+    EB_MALLOC_ARRAY(rsi->unit_info, nunits);
 
         return EB_ErrorNone;
 }
@@ -1724,7 +1724,7 @@ void av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
 // Assumes cm->rst_info[p].restoration_unit_size is already initialized
 
 EbErrorType av1_alloc_restoration_buffers(Av1Common *cm) {
-    EbErrorType return_error;
+    EbErrorType return_error = EB_ErrorNone;
     const int32_t num_planes = 3;// av1_num_planes(cm);
     for (int32_t p = 0; p < num_planes; ++p)
         return_error = av1_alloc_restoration_struct(cm, &cm->rst_info[p], p > 0);
@@ -1734,7 +1734,7 @@ EbErrorType av1_alloc_restoration_buffers(Av1Common *cm) {
         //CHKN CHECK_MEM_ERROR(cm, cm->rst_tmpbuf,
        //cm->rst_tmpbuf = (int32_t *)aom_memalign(16, RESTORATION_TMPBUF_SIZE);
 
-        EB_MALLOC(int32_t *, cm->rst_tmpbuf, RESTORATION_TMPBUF_SIZE, EB_N_PTR);
+        EB_MALLOC(cm->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
     }
 
     // For striped loop restoration, we divide each row of tiles into "stripes",
@@ -1770,8 +1770,8 @@ EbErrorType av1_alloc_restoration_buffers(Av1Common *cm) {
         RestorationStripeBoundaries *boundaries = &cm->rst_info[p].boundaries;
 
         {
-            EB_MALLOC(uint8_t *, boundaries->stripe_boundary_above, buf_size, EB_N_PTR);
-            EB_MALLOC(uint8_t *, boundaries->stripe_boundary_below, buf_size, EB_N_PTR);
+            EB_MALLOC(boundaries->stripe_boundary_above, buf_size);
+            EB_MALLOC(boundaries->stripe_boundary_below, buf_size);
 
             boundaries->stripe_boundary_size = buf_size;
         }

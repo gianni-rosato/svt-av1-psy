@@ -16,6 +16,7 @@
 #include "EbAdaptiveMotionVectorPrediction.h"
 #include "EbPictureOperators.h"
 #include "EbNeighborArrays.h"
+#include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -212,6 +213,7 @@ extern "C" {
     **************************************/
     typedef struct ModeDecisionCandidateBuffer
     {
+        EbDctor                              dctor;
         // Candidate Ptr
         ModeDecisionCandidate                *candidate_ptr;
 
@@ -249,7 +251,7 @@ extern "C" {
     * Extern Function Declarations
     **************************************/
     extern EbErrorType mode_decision_candidate_buffer_ctor(
-        ModeDecisionCandidateBuffer **buffer_dbl_ptr,
+        ModeDecisionCandidateBuffer    *buffer_ptr,
         uint64_t                       *fast_cost_ptr,
         uint64_t                       *full_cost_ptr,
         uint64_t                       *full_cost_skip_ptr,

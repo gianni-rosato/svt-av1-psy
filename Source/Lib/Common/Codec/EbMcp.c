@@ -20,6 +20,7 @@
 #else
 #define ChromaMinusOffset1 MinusOffset1
 #endif
+
 void encode_uni_pred_interpolation(
     EbPictureBufferDesc *ref_pic,                  //input parameter, please refer to the detailed explanation above.
     uint32_t                 pos_x,                    //input parameter, please refer to the detailed explanation above.

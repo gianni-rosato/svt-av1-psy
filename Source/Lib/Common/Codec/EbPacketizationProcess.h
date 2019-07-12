@@ -8,6 +8,7 @@
 
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
+#include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,6 +27,7 @@ extern "C" {
      **************************************/
     typedef struct PacketizationContext
     {
+        EbDctor      dctor;
         EbFifo      *entropy_coding_input_fifo_ptr;
         EbFifo      *rate_control_tasks_output_fifo_ptr;
         EbPPSConfig *pps_config;
@@ -39,7 +41,7 @@ extern "C" {
      * Extern Function Declarations
      **************************************/
     extern EbErrorType packetization_context_ctor(
-        PacketizationContext **context_dbl_ptr,
+        PacketizationContext  *context_ptr,
         EbFifo                *entropy_coding_input_fifo_ptr,
         EbFifo                *rate_control_tasks_output_fifo_ptr);
 

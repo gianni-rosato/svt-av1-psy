@@ -15,6 +15,7 @@
 #include "EbTransformUnit.h"
 #include "EbCabacContextModel.h"
 #include "hash.h"
+#include "EbObject.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -418,9 +419,13 @@ extern "C" {
 
     typedef struct LargestCodingUnit
     {
+        EbDctor                       dctor;
         struct PictureControlSet     *picture_control_set_ptr;
 
         CodingUnit                   *final_cu_arr;
+        uint32_t                      final_cu_count;
+        //for memory free only
+        MacroBlockD                  *av1xd;
         PartitionType                  *cu_partition_array;
 #if !ADD_DELTA_QP_SUPPORT
         unsigned                        qp                      : 8;
@@ -444,7 +449,7 @@ extern "C" {
     } LargestCodingUnit;
 
     extern EbErrorType largest_coding_unit_ctor(
-        LargestCodingUnit          **larget_coding_unit_dbl_ptr,
+        LargestCodingUnit             *larget_coding_unit_ptr,
         uint8_t                        sb_sz,
         uint16_t                       sb_origin_x,
         uint16_t                       sb_origin_y,

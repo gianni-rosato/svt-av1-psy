@@ -9,6 +9,7 @@
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
 #include "EbPictureControlSet.h"
+#include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -16,6 +17,7 @@ extern "C" {
  * Process Results
  **************************************/
 typedef struct RateControlResults {
+    EbDctor         dctor;
     EbObjectWrapper *picture_control_set_wrapper_ptr;
 } RateControlResults;
 
@@ -26,7 +28,7 @@ typedef struct RateControlResultsInitData {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType rate_control_results_ctor(
+extern EbErrorType rate_control_results_creator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr);
 

@@ -108,7 +108,7 @@ static int hash_block_size_to_index(int block_size) {
 
 void av1_hash_table_destroy(HashTable *p_hash_table) {
   hash_table_clear_all(p_hash_table);
-  aom_free(p_hash_table->p_lookup_table);
+  EB_FREE_ARRAY(p_hash_table->p_lookup_table);
   p_hash_table->p_lookup_table = NULL;
 }
 
@@ -121,9 +121,7 @@ EbErrorType  av1_hash_table_create(HashTable *p_hash_table) {
   }
   const int max_addr = 1 << (crc_bits + block_size_bits);
   //p_hash_table->p_lookup_table = (Vector **)malloc(sizeof(p_hash_table->p_lookup_table[0]) * max_addr);
-     EB_MALLOC(Vector **, p_hash_table->p_lookup_table,sizeof(p_hash_table->p_lookup_table[0]) * max_addr, EB_N_PTR);
-  memset(p_hash_table->p_lookup_table, 0,
-         sizeof(p_hash_table->p_lookup_table[0]) * max_addr);
+  EB_CALLOC_ARRAY(p_hash_table->p_lookup_table, max_addr);
 
   return err_code;
 }

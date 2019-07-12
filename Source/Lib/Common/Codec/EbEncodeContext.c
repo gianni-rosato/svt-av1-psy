@@ -11,16 +11,37 @@
 #include "EbCabacContextModel.h"
 #include "EbSvtAv1ErrorCodes.h"
 
+static void encode_context_dctor(EbPtr p)
+{
+    EncodeContext* obj = (EncodeContext*)p;
+    EB_DESTROY_MUTEX(obj->total_number_of_recon_frame_mutex);
+    EB_DESTROY_MUTEX(obj->hl_rate_control_historgram_queue_mutex);
+    EB_DESTROY_MUTEX(obj->rate_table_update_mutex);
+    EB_DESTROY_MUTEX(obj->sc_buffer_mutex);
+    EB_DESTROY_MUTEX(obj->shared_reference_mutex);
+
+    EB_DELETE(obj->prediction_structure_group_ptr);
+    EB_DELETE_PTR_ARRAY(obj->picture_decision_reorder_queue, PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
+    EB_DELETE_PTR_ARRAY(obj->picture_manager_reorder_queue, PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH);
+    EB_FREE(obj->pre_assignment_buffer);
+    EB_DELETE_PTR_ARRAY(obj->input_picture_queue, INPUT_QUEUE_MAX_DEPTH);
+    EB_DELETE_PTR_ARRAY(obj->reference_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
+    EB_DELETE_PTR_ARRAY(obj->picture_decision_pa_reference_queue, PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);
+    EB_DELETE_PTR_ARRAY(obj->initial_rate_control_reorder_queue, INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH);
+    EB_DELETE_PTR_ARRAY(obj->hl_rate_control_historgram_queue, HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH);
+    EB_DELETE_PTR_ARRAY(obj->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
+    EB_FREE(obj->md_rate_estimation_array);
+    EB_FREE_ARRAY(obj->rate_control_tables_array);
+}
+
 EbErrorType encode_context_ctor(
-    EbPtr *object_dbl_ptr,
+    EncodeContext *encode_context_ptr,
     EbPtr object_init_data_ptr)
 {
     uint32_t pictureIndex;
     EbErrorType return_error = EB_ErrorNone;
 
-    EncodeContext *encode_context_ptr;
-    EB_MALLOC(EncodeContext*, encode_context_ptr, sizeof(EncodeContext), EB_N_PTR);
-    *object_dbl_ptr = (EbPtr)encode_context_ptr;
+    encode_context_ptr->dctor = encode_context_dctor;
 
     object_init_data_ptr = 0;
     CHECK_REPORT_ERROR(
@@ -28,184 +49,98 @@ EbErrorType encode_context_ctor(
         encode_context_ptr->app_callback_ptr,
         EB_ENC_EC_ERROR29);
 
-    // Callback Functions
-    encode_context_ptr->app_callback_ptr = (EbCallback*)EB_NULL;
-
-    EB_CREATEMUTEX(EbHandle, encode_context_ptr->total_number_of_recon_frame_mutex, sizeof(EbHandle), EB_MUTEX);
-    encode_context_ptr->total_number_of_recon_frames = 0;
-    encode_context_ptr->statistics_port_active = EB_FALSE;
-
-    // Output Buffer Fifos
-    encode_context_ptr->stream_output_fifo_ptr = (EbFifo*)EB_NULL;
-    encode_context_ptr->recon_output_fifo_ptr = (EbFifo*)EB_NULL;
-
-    // Picture Buffer Fifos
-    encode_context_ptr->reference_picture_pool_fifo_ptr = (EbFifo*)EB_NULL;
-    encode_context_ptr->pa_reference_picture_pool_fifo_ptr = (EbFifo*)EB_NULL;
-    encode_context_ptr->overlay_input_picture_pool_fifo_ptr = (EbFifo*)EB_NULL;
-    // Picture Decision Reordering Queue
-    encode_context_ptr->picture_decision_reorder_queue_head_index = 0;
-    EB_MALLOC(PictureDecisionReorderEntry**, encode_context_ptr->picture_decision_reorder_queue, sizeof(PictureDecisionReorderEntry*) * PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_CREATE_MUTEX(encode_context_ptr->total_number_of_recon_frame_mutex);
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_reorder_queue, PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
 
     for (pictureIndex = 0; pictureIndex < PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = picture_decision_reorder_entry_ctor(
-            &(encode_context_ptr->picture_decision_reorder_queue[pictureIndex]),
+        EB_NEW(encode_context_ptr->picture_decision_reorder_queue[pictureIndex],
+            picture_decision_reorder_entry_ctor,
             pictureIndex);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
-    // Picture Manager Reordering Queue
-    encode_context_ptr->picture_manager_reorder_queue_head_index = 0;
-    EB_MALLOC(PictureManagerReorderEntry**, encode_context_ptr->picture_manager_reorder_queue, sizeof(PictureManagerReorderEntry*) * PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_manager_reorder_queue,  PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH);
 
     for (pictureIndex = 0; pictureIndex < PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = picture_manager_reorder_entry_ctor(
-            &(encode_context_ptr->picture_manager_reorder_queue[pictureIndex]),
-            pictureIndex);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+        EB_NEW(encode_context_ptr->picture_manager_reorder_queue[pictureIndex], picture_manager_reorder_entry_ctor, pictureIndex);
     }
 
-    // Picture Manager Pre-Assignment Buffer
-    encode_context_ptr->pre_assignment_buffer_intra_count = 0;
-    encode_context_ptr->pre_assignment_buffer_idr_count = 0;
-    encode_context_ptr->pre_assignment_buffer_scene_change_count = 0;
-    encode_context_ptr->pre_assignment_buffer_scene_change_index = 0;
-    encode_context_ptr->pre_assignment_buffer_eos_flag = EB_FALSE;
-    encode_context_ptr->decode_base_number = 0;
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->pre_assignment_buffer, PRE_ASSIGNMENT_MAX_DEPTH);
 
-    encode_context_ptr->pre_assignment_buffer_count = 0;
-
-    EB_MALLOC(EbObjectWrapper**, encode_context_ptr->pre_assignment_buffer, sizeof(EbObjectWrapper*) * PRE_ASSIGNMENT_MAX_DEPTH, EB_N_PTR);
-
-    for (pictureIndex = 0; pictureIndex < PRE_ASSIGNMENT_MAX_DEPTH; ++pictureIndex)
-        encode_context_ptr->pre_assignment_buffer[pictureIndex] = (EbObjectWrapper*)EB_NULL;
-    // Picture Manager Input Queue
-    encode_context_ptr->input_picture_queue_head_index = 0;
-    encode_context_ptr->input_picture_queue_tail_index = 0;
-    EB_MALLOC(InputQueueEntry**, encode_context_ptr->input_picture_queue, sizeof(InputQueueEntry*) * INPUT_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->input_picture_queue, INPUT_QUEUE_MAX_DEPTH);
 
     for (pictureIndex = 0; pictureIndex < INPUT_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = input_queue_entry_ctor(
-            &(encode_context_ptr->input_picture_queue[pictureIndex]));
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+         EB_NEW(encode_context_ptr->input_picture_queue[pictureIndex], input_queue_entry_ctor);
     }
 
-    // Picture Manager Reference Queue
-    encode_context_ptr->reference_picture_queue_head_index = 0;
-    encode_context_ptr->reference_picture_queue_tail_index = 0;
-    EB_MALLOC(ReferenceQueueEntry**, encode_context_ptr->reference_picture_queue, sizeof(ReferenceQueueEntry*) * REFERENCE_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->reference_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
 
     for (pictureIndex = 0; pictureIndex < REFERENCE_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = reference_queue_entry_ctor(
-            &(encode_context_ptr->reference_picture_queue[pictureIndex]));
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+        EB_NEW(encode_context_ptr->reference_picture_queue[pictureIndex], reference_queue_entry_ctor);
     }
 
-    // Picture Decision PA Reference Queue
-    encode_context_ptr->picture_decision_pa_reference_queue_head_index = 0;
-    encode_context_ptr->picture_decision_pa_reference_queue_tail_index = 0;
-    EB_MALLOC(PaReferenceQueueEntry**, encode_context_ptr->picture_decision_pa_reference_queue, sizeof(PaReferenceQueueEntry*) * PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_pa_reference_queue, PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);
 
     for (pictureIndex = 0; pictureIndex < PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = pa_reference_queue_entry_ctor(
-            &(encode_context_ptr->picture_decision_pa_reference_queue[pictureIndex]));
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+        EB_NEW(encode_context_ptr->picture_decision_pa_reference_queue[pictureIndex], pa_reference_queue_entry_ctor);
     }
 
-    // Initial Rate Control Reordering Queue
-    encode_context_ptr->initial_rate_control_reorder_queue_head_index = 0;
-    EB_MALLOC(InitialRateControlReorderEntry**, encode_context_ptr->initial_rate_control_reorder_queue, sizeof(InitialRateControlReorderEntry*) * INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->initial_rate_control_reorder_queue, INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH);
 
     for (pictureIndex = 0; pictureIndex < INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = initial_rate_control_reorder_entry_ctor(
-            &(encode_context_ptr->initial_rate_control_reorder_queue[pictureIndex]),
+        EB_NEW(encode_context_ptr->initial_rate_control_reorder_queue[pictureIndex],
+            initial_rate_control_reorder_entry_ctor,
             pictureIndex);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
-    // High level Rate Control histogram Queue
-    encode_context_ptr->hl_rate_control_historgram_queue_head_index = 0;
-
-    EB_MALLOC(HlRateControlHistogramEntry**, encode_context_ptr->hl_rate_control_historgram_queue, sizeof(HlRateControlHistogramEntry*) * HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->hl_rate_control_historgram_queue, HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH);
 
     for (pictureIndex = 0; pictureIndex < HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = hl_rate_control_histogram_entry_ctor(
-            &(encode_context_ptr->hl_rate_control_historgram_queue[pictureIndex]),
+        EB_NEW(encode_context_ptr->hl_rate_control_historgram_queue[pictureIndex],
+            hl_rate_control_histogram_entry_ctor,
             pictureIndex);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
     // HLRateControl Historgram Queue Mutex
-    EB_CREATEMUTEX(EbHandle, encode_context_ptr->hl_rate_control_historgram_queue_mutex, sizeof(EbHandle), EB_MUTEX);
+    EB_CREATE_MUTEX(encode_context_ptr->hl_rate_control_historgram_queue_mutex);
 
-    // Packetization Reordering Queue
-    encode_context_ptr->packetization_reorder_queue_head_index = 0;
-    EB_MALLOC(PacketizationReorderEntry**, encode_context_ptr->packetization_reorder_queue, sizeof(PacketizationReorderEntry*) * PACKETIZATION_REORDER_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
 
     for (pictureIndex = 0; pictureIndex < PACKETIZATION_REORDER_QUEUE_MAX_DEPTH; ++pictureIndex) {
-        return_error = packetization_reorder_entry_ctor(
-            &(encode_context_ptr->packetization_reorder_queue[pictureIndex]),
+        EB_NEW(encode_context_ptr->packetization_reorder_queue[pictureIndex],
+            packetization_reorder_entry_ctor,
             pictureIndex);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
-    encode_context_ptr->intra_period_position = 0;
-    encode_context_ptr->pred_struct_position = 0;
     encode_context_ptr->current_input_poc = -1;
-    encode_context_ptr->elapsed_non_idr_count = 0;
-    encode_context_ptr->elapsed_non_cra_count = 0;
     encode_context_ptr->initial_picture = EB_TRUE;
-
-    encode_context_ptr->last_idr_picture = 0;
 
     // Sequence Termination Flags
     encode_context_ptr->terminating_picture_number = ~0u;
-    encode_context_ptr->terminating_sequence_flag_received = EB_FALSE;
 
     // Signalling the need for a td structure to be written in the bitstream - on when the sequence starts
     encode_context_ptr->td_needed = EB_TRUE;
 
-    // Prediction Structure Group
-    encode_context_ptr->prediction_structure_group_ptr = (PredictionStructureGroup*)EB_NULL;
-
     // MD Rate Estimation Array
-    EB_MALLOC(MdRateEstimationContext*, encode_context_ptr->md_rate_estimation_array, sizeof(MdRateEstimationContext) * TOTAL_NUMBER_OF_MD_RATE_ESTIMATION_CASE_BUFFERS, EB_N_PTR);
+    EB_CALLOC(encode_context_ptr->md_rate_estimation_array, TOTAL_NUMBER_OF_MD_RATE_ESTIMATION_CASE_BUFFERS, sizeof(MdRateEstimationContext));
 
-    memset(encode_context_ptr->md_rate_estimation_array, 0, sizeof(MdRateEstimationContext) * TOTAL_NUMBER_OF_MD_RATE_ESTIMATION_CASE_BUFFERS);
-
-    return_error = md_rate_estimation_context_ctor(encode_context_ptr->md_rate_estimation_array);
+    return_error = md_rate_estimation_context_init(encode_context_ptr->md_rate_estimation_array);
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
     // Temporal Filter
 
     // Rate Control Bit Tables
-    EB_MALLOC(RateControlTables*, encode_context_ptr->rate_control_tables_array, sizeof(RateControlTables) * TOTAL_NUMBER_OF_INITIAL_RC_TABLES_ENTRY, EB_N_PTR);
+    EB_MALLOC_ARRAY(encode_context_ptr->rate_control_tables_array, TOTAL_NUMBER_OF_INITIAL_RC_TABLES_ENTRY);
 
-    return_error = rate_control_tables_ctor(encode_context_ptr->rate_control_tables_array);
+    return_error = rate_control_tables_init(encode_context_ptr->rate_control_tables_array);
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
     // RC Rate Table Update Mutex
-    EB_CREATEMUTEX(EbHandle, encode_context_ptr->rate_table_update_mutex, sizeof(EbHandle), EB_MUTEX);
+    EB_CREATE_MUTEX(encode_context_ptr->rate_table_update_mutex);
 
-    encode_context_ptr->rate_control_tables_array_updated = EB_FALSE;
-
-    EB_CREATEMUTEX(EbHandle, encode_context_ptr->sc_buffer_mutex, sizeof(EbHandle), EB_MUTEX);
-    encode_context_ptr->sc_buffer                     = 0;
-    encode_context_ptr->sc_frame_in                   = 0;
-    encode_context_ptr->sc_frame_out                  = 0;
+    EB_CREATE_MUTEX(encode_context_ptr->sc_buffer_mutex);
     encode_context_ptr->enc_mode                      = SPEED_CONTROL_INIT_MOD;
     encode_context_ptr->previous_selected_ref_qp      = 32;
-    encode_context_ptr->max_coded_poc                 = 0;
     encode_context_ptr->max_coded_poc_selected_ref_qp = 32;
 
-    EB_CREATEMUTEX(EbHandle, encode_context_ptr->shared_reference_mutex, sizeof(EbHandle), EB_MUTEX);
-    encode_context_ptr->picture_number_alt = 0;
+    EB_CREATE_MUTEX(encode_context_ptr->shared_reference_mutex);
     return EB_ErrorNone;
 }

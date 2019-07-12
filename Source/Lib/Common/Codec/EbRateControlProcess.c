@@ -183,74 +183,49 @@ void rate_control_layer_reset_part2(
 }
 
 EbErrorType high_level_rate_control_context_ctor(
-    HighLevelRateControlContext **entry_dbl_ptr) {
-    HighLevelRateControlContext *entry_ptr;
-    EB_MALLOC(HighLevelRateControlContext*, entry_ptr, sizeof(HighLevelRateControlContext), EB_N_PTR);
-    *entry_dbl_ptr = entry_ptr;
+    HighLevelRateControlContext *entry_ptr) {
+    (void)entry_ptr;
 
     return EB_ErrorNone;
 }
 
 EbErrorType rate_control_layer_context_ctor(
-    RateControlLayerContext **entry_dbl_ptr) {
-    RateControlLayerContext *entry_ptr;
-    EB_MALLOC(RateControlLayerContext*, entry_ptr, sizeof(RateControlLayerContext), EB_N_PTR);
-
-    *entry_dbl_ptr = entry_ptr;
+    RateControlLayerContext *entry_ptr) {
 
     entry_ptr->first_frame = 1;
     entry_ptr->first_non_intra_frame = 1;
-    entry_ptr->feedback_arrived = EB_FALSE;
 
     return EB_ErrorNone;
 }
 
+void rate_control_interval_param_context_dctor(EbPtr p)
+{
+    RateControlIntervalParamContext* obj = (RateControlIntervalParamContext*)p;
+    EB_DELETE_PTR_ARRAY(obj->rate_control_layer_array, EB_MAX_TEMPORAL_LAYERS);
+}
+
 EbErrorType rate_control_interval_param_context_ctor(
-    RateControlIntervalParamContext **entry_dbl_ptr) {
+    RateControlIntervalParamContext *entry_ptr) {
     uint32_t temporal_index;
-    EbErrorType return_error = EB_ErrorNone;
-    RateControlIntervalParamContext *entry_ptr;
-    EB_MALLOC(RateControlIntervalParamContext*, entry_ptr, sizeof(RateControlIntervalParamContext), EB_N_PTR);
 
-    *entry_dbl_ptr = entry_ptr;
+    entry_ptr->dctor = rate_control_interval_param_context_dctor;
 
-    entry_ptr->in_use = EB_FALSE;
-    entry_ptr->was_used = EB_FALSE;
-    entry_ptr->last_gop = EB_FALSE;
-    entry_ptr->processed_frames_number = 0;
-    EB_MALLOC(RateControlLayerContext**, entry_ptr->rate_control_layer_array, sizeof(RateControlLayerContext*)*EB_MAX_TEMPORAL_LAYERS, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(entry_ptr->rate_control_layer_array, EB_MAX_TEMPORAL_LAYERS);
 
     for (temporal_index = 0; temporal_index < EB_MAX_TEMPORAL_LAYERS; temporal_index++) {
-        return_error = rate_control_layer_context_ctor(&entry_ptr->rate_control_layer_array[temporal_index]);
+        EB_NEW(
+            entry_ptr->rate_control_layer_array[temporal_index],
+            rate_control_layer_context_ctor);
         entry_ptr->rate_control_layer_array[temporal_index]->temporal_index = temporal_index;
         entry_ptr->rate_control_layer_array[temporal_index]->frame_rate = 1 << RC_PRECISION;
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
-
-    entry_ptr->min_target_rate_assigned = EB_FALSE;
-
-    entry_ptr->intra_frames_qp = 0;
-    entry_ptr->intra_frames_qp_bef_scal = 0;
-    entry_ptr->next_gop_intra_frame_qp = 0;
-    entry_ptr->first_pic_pred_bits = 0;
-    entry_ptr->first_pic_actual_bits = 0;
-    entry_ptr->first_pic_pred_qp = 0;
-    entry_ptr->first_pic_actual_qp = 0;
-    entry_ptr->first_pic_actual_qp_assigned = EB_FALSE;
-    entry_ptr->scene_change_in_gop = EB_FALSE;
-    entry_ptr->extra_ap_bit_ratio_i = 0;
 
     return EB_ErrorNone;
 }
 
 EbErrorType rate_control_coded_frames_stats_context_ctor(
-    CodedFramesStatsEntry **entry_dbl_ptr,
+    CodedFramesStatsEntry  *entry_ptr,
     uint64_t                picture_number) {
-    CodedFramesStatsEntry *entry_ptr;
-    EB_MALLOC(CodedFramesStatsEntry*, entry_ptr, sizeof(CodedFramesStatsEntry), EB_N_PTR);
-
-    *entry_dbl_ptr = entry_ptr;
 
     entry_ptr->picture_number = picture_number;
     entry_ptr->frame_total_bit_actual = -1;
@@ -258,78 +233,62 @@ EbErrorType rate_control_coded_frames_stats_context_ctor(
     return EB_ErrorNone;
 }
 
+void rate_control_context_dctor(EbPtr p)
+{
+    RateControlContext* obj = (RateControlContext*)p;
+#if OVERSHOOT_STAT_PRINT
+    EB_DELETE_PTR_ARRAY(obj->coded_frames_stat_queue, CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
+#endif
+    EB_DELETE_PTR_ARRAY(obj->rate_control_param_queue, PARALLEL_GOP_MAX_NUMBER);
+    EB_DELETE(obj->high_level_rate_control_ptr);
+    EB_DELETE(obj->rc_model_ptr);
+
+}
+
 EbErrorType rate_control_context_ctor(
-    RateControlContext **context_dbl_ptr,
+    RateControlContext *context_ptr,
     EbFifo             *rate_control_input_tasks_fifo_ptr,
     EbFifo             *rate_control_output_results_fifo_ptr,
     int32_t             intra_period)
 {
-    uint32_t temporal_index;
     uint32_t interval_index;
 
 #if OVERSHOOT_STAT_PRINT
     uint32_t picture_index;
 #endif
 
-    EbErrorType return_error = EB_ErrorNone;
-    RateControlContext *context_ptr;
-    EB_MALLOC(RateControlContext  *, context_ptr, sizeof(RateControlContext), EB_N_PTR);
-
-    *context_dbl_ptr = context_ptr;
-
+    context_ptr->dctor = rate_control_context_dctor;
     context_ptr->rate_control_input_tasks_fifo_ptr = rate_control_input_tasks_fifo_ptr;
     context_ptr->rate_control_output_results_fifo_ptr = rate_control_output_results_fifo_ptr;
 
     // High level RC
-    return_error = high_level_rate_control_context_ctor(
-        &context_ptr->high_level_rate_control_ptr);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    for (temporal_index = 0; temporal_index < EB_MAX_TEMPORAL_LAYERS; temporal_index++)
-        context_ptr->frames_in_interval[temporal_index] = 0;
-    for (temporal_index = 0; temporal_index < EB_MAX_TEMPORAL_LAYERS; temporal_index++) {
-        for (uint32_t base_qp = 0; base_qp < MAX_REF_QP_NUM; base_qp++)
-            context_ptr->qp_scaling_map[temporal_index][base_qp] = 0;
-    }
-    for (uint32_t base_qp = 0; base_qp < MAX_REF_QP_NUM; base_qp++)
-        context_ptr->qp_scaling_map_I_SLICE[base_qp] = 0;
-    EB_MALLOC(RateControlIntervalParamContext  **, context_ptr->rate_control_param_queue, sizeof(RateControlIntervalParamContext  *)*PARALLEL_GOP_MAX_NUMBER, EB_N_PTR);
+    EB_NEW(
+        context_ptr->high_level_rate_control_ptr,
+        high_level_rate_control_context_ctor);
 
-    context_ptr->rate_control_param_queue_head_index = 0;
+    EB_NEW(context_ptr->rc_model_ptr, rate_control_model_ctor);
+
+    EB_ALLOC_PTR_ARRAY(context_ptr->rate_control_param_queue, PARALLEL_GOP_MAX_NUMBER);
+
     for (interval_index = 0; interval_index < PARALLEL_GOP_MAX_NUMBER; interval_index++) {
-        return_error = rate_control_interval_param_context_ctor(
-            &context_ptr->rate_control_param_queue[interval_index]);
+        EB_NEW(
+            context_ptr->rate_control_param_queue[interval_index],
+            rate_control_interval_param_context_ctor);
         context_ptr->rate_control_param_queue[interval_index]->first_poc = (interval_index*(uint32_t)(intra_period + 1));
         context_ptr->rate_control_param_queue[interval_index]->last_poc = ((interval_index + 1)*(uint32_t)(intra_period + 1)) - 1;
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
 #if OVERSHOOT_STAT_PRINT
-    context_ptr->coded_frames_stat_queue_head_index = 0;
-    context_ptr->coded_frames_stat_queue_tail_index = 0;
-    EB_MALLOC(CodedFramesStatsEntry  **, context_ptr->coded_frames_stat_queue, sizeof(CodedFramesStatsEntry  *)*CODED_FRAMES_STAT_QUEUE_MAX_DEPTH, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(context_ptr->coded_frames_stat_queue, CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
 
     for (picture_index = 0; picture_index < CODED_FRAMES_STAT_QUEUE_MAX_DEPTH; ++picture_index) {
-        return_error = rate_control_coded_frames_stats_context_ctor(
-            &context_ptr->coded_frames_stat_queue[picture_index],
+        EB_NEW(context_ptr->coded_frames_stat_queue[picture_index],
+            rate_control_coded_frames_stats_context_ctor,
             picture_index);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
-    context_ptr->max_bit_actual_per_sw = 0;
-    context_ptr->max_bit_actual_per_gop = 0;
     context_ptr->min_bit_actual_per_gop = 0xfffffffffffff;
-    context_ptr->avg_bit_actual_per_gop = 0;
 #endif
-
-    context_ptr->base_layer_frames_avg_qp = 0;
-    context_ptr->base_layer_intra_frames_avg_qp = 0;
-
     context_ptr->intra_coef_rate = 4;
-    context_ptr->extra_bits = 0;
-    context_ptr->extra_bits_gen = 0;
-    context_ptr->max_rate_adjust_delta_qp = 0;
 
     return EB_ErrorNone;
 }
@@ -3543,7 +3502,7 @@ void* rate_control_kernel(void *input_ptr)
     EbRateControlModel          *rc_model_ptr;
     RATE_CONTROL                 rc;
 
-    rate_control_model_ctor(&rc_model_ptr);
+    rc_model_ptr = context_ptr->rc_model_ptr;
 
     for (;;) {
         // Get RateControl Task
@@ -4012,5 +3971,6 @@ void* rate_control_kernel(void *input_ptr)
             break;
         }
     }
+    EB_DELETE(rc_model_ptr);
     return EB_NULL;
 }

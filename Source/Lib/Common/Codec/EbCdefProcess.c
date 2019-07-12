@@ -56,7 +56,7 @@ void av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1
  * Cdef Context Constructor
  ******************************************************/
 EbErrorType cdef_context_ctor(
-    CdefContext_t          **context_dbl_ptr,
+    CdefContext_t           *context_ptr,
     EbFifo                *cdef_input_fifo_ptr,
     EbFifo                *cdef_output_fifo_ptr ,
     EbBool                  is16bit,
@@ -65,10 +65,6 @@ EbErrorType cdef_context_ctor(
     (void)is16bit;
     (void)max_input_luma_width;
     (void)max_input_luma_height;
-
-    CdefContext_t *context_ptr;
-    EB_MALLOC(CdefContext_t*, context_ptr, sizeof(CdefContext_t), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
 
     // Input/Output System Resource Manager FIFOs
     context_ptr->cdef_input_fifo_ptr = cdef_input_fifo_ptr;

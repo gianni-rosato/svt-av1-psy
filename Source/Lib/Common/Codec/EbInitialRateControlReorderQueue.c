@@ -7,31 +7,33 @@
 #include "EbInitialRateControlReorderQueue.h"
 
 EbErrorType initial_rate_control_reorder_entry_ctor(
-    InitialRateControlReorderEntry   **entry_dbl_ptr,
+    InitialRateControlReorderEntry   *entry_ptr,
     uint32_t                          picture_number)
 {
-    EB_MALLOC(InitialRateControlReorderEntry*, *entry_dbl_ptr, sizeof(InitialRateControlReorderEntry), EB_N_PTR);
-
-    (*entry_dbl_ptr)->picture_number = picture_number;
-    (*entry_dbl_ptr)->parent_pcs_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
+    entry_ptr->picture_number = picture_number;
+    entry_ptr->parent_pcs_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
 
     return EB_ErrorNone;
 }
 
+static void hl_rate_control_histogram_entry_dctor(EbPtr p)
+{
+    HlRateControlHistogramEntry* obj = (HlRateControlHistogramEntry*)p;
+    EB_FREE_ARRAY(obj->me_distortion_histogram);
+    EB_FREE_ARRAY(obj->ois_distortion_histogram);
+}
+
 EbErrorType hl_rate_control_histogram_entry_ctor(
-    HlRateControlHistogramEntry   **entry_dbl_ptr,
+    HlRateControlHistogramEntry      *entry_ptr,
     uint32_t                          picture_number)
 {
-    EB_MALLOC(HlRateControlHistogramEntry*, *entry_dbl_ptr, sizeof(HlRateControlHistogramEntry), EB_N_PTR);
-
-    (*entry_dbl_ptr)->picture_number = picture_number;
-    (*entry_dbl_ptr)->life_count = 0;
-    (*entry_dbl_ptr)->parent_pcs_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
+    entry_ptr->dctor = hl_rate_control_histogram_entry_dctor;
+    entry_ptr->picture_number = picture_number;
 
     // ME and OIS Distortion Histograms
-    EB_MALLOC(uint16_t*, (*entry_dbl_ptr)->me_distortion_histogram, sizeof(uint16_t) * NUMBER_OF_SAD_INTERVALS, EB_N_PTR);
+    EB_MALLOC_ARRAY(entry_ptr->me_distortion_histogram, NUMBER_OF_SAD_INTERVALS);
 
-    EB_MALLOC(uint16_t*, (*entry_dbl_ptr)->ois_distortion_histogram, sizeof(uint16_t) * NUMBER_OF_INTRA_SAD_INTERVALS, EB_N_PTR);
+    EB_MALLOC_ARRAY(entry_ptr->ois_distortion_histogram, NUMBER_OF_INTRA_SAD_INTERVALS);
 
     return EB_ErrorNone;
 }

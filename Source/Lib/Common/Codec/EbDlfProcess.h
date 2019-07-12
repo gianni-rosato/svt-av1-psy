@@ -14,12 +14,13 @@
 #include "EbUtility.h"
 #include "EbPsnr.h"
 #include "EbPictureControlSet.h"
-
+#include "EbObject.h"
 /**************************************
  * Dlf Context
  **************************************/
 typedef struct DlfContext
 {
+    EbDctor              dctor;
     EbFifo              *dlf_input_fifo_ptr;
     EbFifo              *dlf_output_fifo_ptr;
     EbPictureBufferDesc *temp_lf_recon_picture_ptr;
@@ -30,7 +31,7 @@ typedef struct DlfContext
  * Extern Function Declarations
  **************************************/
 extern EbErrorType dlf_context_ctor(
-    DlfContext **context_dbl_ptr,
+    DlfContext                   *context_ptr,
     EbFifo                       *dlf_input_fifo_ptr,
     EbFifo                       *dlf_output_fifo_ptr,
     EbBool                  is16bit,

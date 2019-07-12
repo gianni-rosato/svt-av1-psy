@@ -1700,46 +1700,71 @@ EbErrorType copy_rbsp_bitstream_to_payload(
     return return_error;
 }
 
+static void bitstream_dctor(EbPtr p)
+{
+    Bitstream *obj = (Bitstream*)p;
+    OutputBitstreamUnit *output_bitstream_ptr = (OutputBitstreamUnit *)obj->output_bitstream_ptr;
+    EB_DELETE(output_bitstream_ptr);
+}
+
 EbErrorType bitstream_ctor(
-    Bitstream **bitstream_dbl_ptr,
+    Bitstream *bitstream_ptr,
     uint32_t buffer_size)
 {
     EbErrorType return_error = EB_ErrorNone;
-    EB_MALLOC(Bitstream*, *bitstream_dbl_ptr, sizeof(Bitstream), EB_N_PTR);
+    OutputBitstreamUnit* output_bitstream_ptr;
 
-    EB_MALLOC(EbPtr, (*bitstream_dbl_ptr)->output_bitstream_ptr, sizeof(OutputBitstreamUnit), EB_N_PTR);
+    bitstream_ptr->dctor = bitstream_dctor;
 
-    return_error = output_bitstream_unit_ctor(
-        (OutputBitstreamUnit *)(*bitstream_dbl_ptr)->output_bitstream_ptr,
+    EB_NEW(
+        output_bitstream_ptr,
+        output_bitstream_unit_ctor,
         buffer_size);
+    bitstream_ptr->output_bitstream_ptr = output_bitstream_ptr;
 
     return return_error;
 }
 
+static void entropy_coder_dctor(EbPtr p)
+{
+    EntropyCoder *obj = (EntropyCoder *)p;
+    CabacEncodeContext *cabacEncCtxPtr = (CabacEncodeContext*)obj->cabac_encode_context_ptr;
+    OutputBitstreamUnit *output_bitstream_ptr = (OutputBitstreamUnit *)cabacEncCtxPtr->bac_enc_context.m_pc_t_com_bit_if;
+
+    EB_DELETE(output_bitstream_ptr);
+
+    output_bitstream_ptr = (OutputBitstreamUnit*)obj->ec_output_bitstream_ptr;
+    EB_DELETE(output_bitstream_ptr);
+
+    EB_FREE(obj->fc);
+    EB_FREE(obj->cabac_encode_context_ptr);
+}
 EbErrorType entropy_coder_ctor(
-    EntropyCoder **entropy_coder_dbl_ptr,
+    EntropyCoder *entropy_coder_ptr,
     uint32_t buffer_size)
 {
     EbErrorType return_error = EB_ErrorNone;
-    EB_MALLOC(EntropyCoder*, *entropy_coder_dbl_ptr, sizeof(EntropyCoder), EB_N_PTR);
+    OutputBitstreamUnit *output_bitstream_ptr;
 
-    EB_MALLOC(EbPtr, (*entropy_coder_dbl_ptr)->cabac_encode_context_ptr, sizeof(CabacEncodeContext), EB_N_PTR);
+    entropy_coder_ptr->dctor = entropy_coder_dctor;
 
-    EB_MALLOC(FRAME_CONTEXT*, (*entropy_coder_dbl_ptr)->fc, sizeof(FRAME_CONTEXT), EB_N_PTR);
+    EB_CALLOC(entropy_coder_ptr->cabac_encode_context_ptr, 1, sizeof(CabacEncodeContext));
 
-    EB_MALLOC(EbPtr, (*entropy_coder_dbl_ptr)->ec_output_bitstream_ptr, sizeof(OutputBitstreamUnit), EB_N_PTR);
+    EB_MALLOC(entropy_coder_ptr->fc, sizeof(FRAME_CONTEXT));
 
-    return_error = output_bitstream_unit_ctor(
-        (OutputBitstreamUnit *)(*entropy_coder_dbl_ptr)->ec_output_bitstream_ptr,
+
+    EB_NEW(
+        output_bitstream_ptr,
+        output_bitstream_unit_ctor,
         buffer_size);
 
-    CabacCtor(
-        (CabacEncodeContext *)(*entropy_coder_dbl_ptr)->cabac_encode_context_ptr);
+    entropy_coder_ptr->ec_output_bitstream_ptr = output_bitstream_ptr;
 
-    return_error = output_bitstream_unit_ctor(
-        &((((CabacEncodeContext*)(*entropy_coder_dbl_ptr)->cabac_encode_context_ptr)->bac_enc_context).m_pc_t_com_bit_if),
+    EB_NEW(
+        output_bitstream_ptr,
+        output_bitstream_unit_ctor,
         buffer_size);
-
+    ((CabacEncodeContext*)entropy_coder_ptr->cabac_encode_context_ptr)->bac_enc_context.m_pc_t_com_bit_if = output_bitstream_ptr;
     return return_error;
 }
 
@@ -1747,7 +1772,7 @@ EbPtr entropy_coder_get_bitstream_ptr(
     EntropyCoder *entropy_coder_ptr)
 {
     CabacEncodeContext *cabacEncCtxPtr = (CabacEncodeContext*)entropy_coder_ptr->cabac_encode_context_ptr;
-    EbPtr bitstream_ptr = (EbPtr)&(cabacEncCtxPtr->bac_enc_context.m_pc_t_com_bit_if);
+    EbPtr bitstream_ptr = cabacEncCtxPtr->bac_enc_context.m_pc_t_com_bit_if;
 
     return bitstream_ptr;
 }

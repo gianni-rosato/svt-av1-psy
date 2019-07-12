@@ -25,11 +25,17 @@
 
 void av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm, int32_t after_cdef);
 
+static void dlf_context_dctor(EbPtr p)
+{
+    DlfContext *obj = (DlfContext*)p;
+    EB_DELETE(obj->temp_lf_recon_picture_ptr);
+    EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
+}
 /******************************************************
  * Dlf Context Constructor
  ******************************************************/
 EbErrorType dlf_context_ctor(
-    DlfContext **context_dbl_ptr,
+    DlfContext            *context_ptr,
     EbFifo                *dlf_input_fifo_ptr,
     EbFifo                *dlf_output_fifo_ptr ,
     EbBool                  is16bit,
@@ -39,9 +45,7 @@ EbErrorType dlf_context_ctor(
    )
 {
     EbErrorType return_error = EB_ErrorNone;
-    DlfContext *context_ptr;
-    EB_MALLOC(DlfContext*, context_ptr, sizeof(DlfContext), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
+    context_ptr->dctor = dlf_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
     context_ptr->dlf_input_fifo_ptr = dlf_input_fifo_ptr;
@@ -64,14 +68,16 @@ EbErrorType dlf_context_ctor(
 
     if (is16bit) {
         temp_lf_recon_desc_init_data.bit_depth = EB_16BIT;
-        return_error = eb_recon_picture_buffer_desc_ctor(
-            (EbPtr*)&(context_ptr->temp_lf_recon_picture16bit_ptr),
+        EB_NEW(
+            context_ptr->temp_lf_recon_picture16bit_ptr,
+            eb_recon_picture_buffer_desc_ctor,
             (EbPtr)&temp_lf_recon_desc_init_data);
     }
     else {
         temp_lf_recon_desc_init_data.bit_depth = EB_8BIT;
-        return_error = eb_recon_picture_buffer_desc_ctor(
-            (EbPtr*)&(context_ptr->temp_lf_recon_picture_ptr),
+        EB_NEW(
+            context_ptr->temp_lf_recon_picture_ptr,
+            eb_recon_picture_buffer_desc_ctor,
             (EbPtr)&temp_lf_recon_desc_init_data);
     }
 

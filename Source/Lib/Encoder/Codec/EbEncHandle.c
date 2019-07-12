@@ -25,8 +25,6 @@
 #include "EbSequenceControlSet.h"
 #include "EbPictureBufferDesc.h"
 #include "EbReferenceObject.h"
-#include "EbResourceCoordinationProcess.h"
-#include "EbPictureAnalysisProcess.h"
 #include "EbPictureDecisionProcess.h"
 #include "EbMotionEstimationProcess.h"
 #include "EbInitialRateControlProcess.h"
@@ -52,6 +50,7 @@
 #include "EbDlfProcess.h"
 #include "EbCdefProcess.h"
 #include "EbRestProcess.h"
+#include "EbObject.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -100,15 +99,6 @@
 /**************************************
  * Globals
  **************************************/
-
-EbMemoryMapEntry                 *memory_map;
-uint32_t                         *memory_map_index;
-uint64_t                         *total_lib_memory;
-
-uint32_t                         lib_malloc_count = 0;
-uint32_t                         lib_thread_count = 0;
-uint32_t                         lib_semaphore_count = 0;
-uint32_t                         lib_mutex_count = 0;
 
 uint8_t                          num_groups = 0;
 #ifdef _WIN32
@@ -652,202 +642,229 @@ void lib_svt_encoder_send_error_exit(
     EbPtr                    hComponent,
     uint32_t                 error_code);
 
+static void eb_enc_handle_stop_threads(EbEncHandle *enc_handle_ptr)
+{
+    SequenceControlSet*  control_set_ptr = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr;
+    // Resource Coordination
+    EB_DESTROY_THREAD(enc_handle_ptr->resource_coordination_thread_handle);
+    EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->picture_analysis_thread_handle_array,control_set_ptr->picture_analysis_process_init_count);
+
+    // Picture Decision
+    EB_DESTROY_THREAD(enc_handle_ptr->picture_decision_thread_handle);
+
+    // Motion Estimation
+    EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->motion_estimation_thread_handle_array, control_set_ptr->motion_estimation_process_init_count);
+
+    // Initial Rate Control
+    EB_DESTROY_THREAD(enc_handle_ptr->initial_rate_control_thread_handle);
+
+    // Source Based Oprations
+    EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->source_based_operations_thread_handle_array, control_set_ptr->source_based_operations_process_init_count);
+
+    // Picture Manager
+    EB_DESTROY_THREAD(enc_handle_ptr->picture_manager_thread_handle);
+
+    // Rate Control
+    EB_DESTROY_THREAD(enc_handle_ptr->rate_control_thread_handle);
+
+    // Mode Decision Configuration Process
+    EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->mode_decision_configuration_thread_handle_array, control_set_ptr->mode_decision_configuration_process_init_count);
+
+    // EncDec Process
+    EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->enc_dec_thread_handle_array, control_set_ptr->enc_dec_process_init_count);
+
+    // Dlf Process
+    EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->dlf_thread_handle_array, control_set_ptr->dlf_process_init_count);
+
+    // Cdef Process
+    EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->cdef_thread_handle_array, control_set_ptr->cdef_process_init_count);
+
+    // Rest Process
+    EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->rest_thread_handle_array, control_set_ptr->rest_process_init_count);
+
+    // Entropy Coding Process
+    EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->entropy_coding_thread_handle_array, control_set_ptr->entropy_coding_process_init_count);
+
+    // Packetization
+    EB_DESTROY_THREAD(enc_handle_ptr->packetization_thread_handle);
+}
+/**********************************
+* Encoder Library Handle Deonstructor
+**********************************/
+static void eb_enc_handle_dctor(EbPtr p)
+{
+    EbEncHandle *enc_handle_ptr = (EbEncHandle *)p;
+
+    eb_enc_handle_stop_threads(enc_handle_ptr);
+    EB_FREE_PTR_ARRAY(enc_handle_ptr->app_callback_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_DELETE(enc_handle_ptr->sequence_control_set_pool_ptr);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->overlay_input_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_DELETE(enc_handle_ptr->input_buffer_resource_ptr);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->output_stream_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->output_recon_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_DELETE(enc_handle_ptr->resource_coordination_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->picture_analysis_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->picture_decision_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->motion_estimation_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->initial_rate_control_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->picture_demux_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->rate_control_tasks_resource_ptr);
+    EB_DELETE(enc_handle_ptr->rate_control_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->enc_dec_tasks_resource_ptr);
+    EB_DELETE(enc_handle_ptr->enc_dec_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->dlf_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->cdef_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->rest_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->entropy_coding_results_resource_ptr);
+
+    EB_DELETE(enc_handle_ptr->resource_coordination_context_ptr);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_analysis_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_analysis_process_init_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->motion_estimation_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->motion_estimation_process_init_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->source_based_operations_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->mode_decision_configuration_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->mode_decision_configuration_process_init_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->enc_dec_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->dlf_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->dlf_process_init_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->cdef_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->cdef_process_init_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->rest_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->entropy_coding_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->entropy_coding_process_init_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->sequence_control_set_instance_array, enc_handle_ptr->encode_instance_total_count);
+    EB_DELETE(enc_handle_ptr->picture_decision_context_ptr);
+    EB_DELETE(enc_handle_ptr->initial_rate_control_context_ptr);
+    EB_DELETE(enc_handle_ptr->picture_manager_context_ptr);
+    EB_DELETE(enc_handle_ptr->rate_control_context_ptr);
+    EB_DELETE(enc_handle_ptr->packetization_context_ptr);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+
+    EB_FREE_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_producer_fifo_ptr_dbl_array);
+    EB_FREE_ARRAY(enc_handle_ptr->picture_control_set_pool_producer_fifo_ptr_dbl_array);
+    EB_FREE_ARRAY(enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array);
+    EB_FREE_ARRAY(enc_handle_ptr->reference_picture_pool_producer_fifo_ptr_dbl_array);
+    EB_FREE_ARRAY(enc_handle_ptr->pa_reference_picture_pool_producer_fifo_ptr_dbl_array);
+    EB_FREE_ARRAY(enc_handle_ptr->output_stream_buffer_producer_fifo_ptr_dbl_array);
+    EB_FREE_ARRAY(enc_handle_ptr->output_stream_buffer_consumer_fifo_ptr_dbl_array);
+    EB_FREE_ARRAY(enc_handle_ptr->output_recon_buffer_producer_fifo_ptr_dbl_array);
+    EB_FREE_ARRAY(enc_handle_ptr->output_recon_buffer_consumer_fifo_ptr_dbl_array);
+
+}
+
 /**********************************
 * Encoder Library Handle Constructor
 **********************************/
 static EbErrorType eb_enc_handle_ctor(
-    EbEncHandle **encHandleDblPtr,
+    EbEncHandle *enc_handle_ptr,
     EbComponentType * ebHandlePtr)
 {
     EbErrorType return_error = EB_ErrorNone;
-    // Allocate Memory
-    EbEncHandle *enc_handle_ptr = (EbEncHandle*)malloc(sizeof(EbEncHandle));
 
-    *encHandleDblPtr          = enc_handle_ptr;
-    if (enc_handle_ptr == (EbEncHandle*)EB_NULL)
-        return EB_ErrorInsufficientResources;
-    enc_handle_ptr->memory_map                = (EbMemoryMapEntry*)malloc(sizeof(EbMemoryMapEntry));
-    enc_handle_ptr->memory_map_index          = 0;
-    enc_handle_ptr->total_lib_memory          = sizeof(EbComponentType) + sizeof(EbEncHandle) + sizeof(EbMemoryMapEntry);
-    enc_handle_ptr->memory_map_init_address   = enc_handle_ptr->memory_map;
-    // Save Memory Map Pointers
-    total_lib_memory                        = &enc_handle_ptr->total_lib_memory;
-    memory_map                              = enc_handle_ptr->memory_map;
-    memory_map_index                        = &enc_handle_ptr->memory_map_index;
-    lib_malloc_count                        = 0;
-    lib_thread_count                        = 0;
-    lib_mutex_count                         = 0;
-    lib_semaphore_count                     = 0;
-
-    if (memory_map == (EbMemoryMapEntry*)EB_NULL)
-        return EB_ErrorInsufficientResources;
+    enc_handle_ptr->dctor = eb_enc_handle_dctor;
 
     return_error = InitThreadManagmentParams();
 
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
-    enc_handle_ptr->memory_map->prev_entry                                = EB_NULL;
     enc_handle_ptr->encode_instance_total_count                           = EB_EncodeInstancesTotalCount;
     enc_handle_ptr->compute_segments_total_count_array                    = EB_ComputeSegmentInitCount;
     // Config Set Count
     enc_handle_ptr->sequence_control_set_pool_total_count                 = EB_SequenceControlSetPoolInitCount;
 
-    // Sequence Control Set Buffers
-    enc_handle_ptr->sequence_control_set_pool_ptr                         = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->sequence_control_set_pool_producer_fifo_ptr_array     = (EbFifo**)EB_NULL;
-
-    // Picture Buffers
-    enc_handle_ptr->reference_picture_pool_ptr_array                      = (EbSystemResource**)EB_NULL;
-    enc_handle_ptr->pa_reference_picture_pool_ptr_array                   = (EbSystemResource**)EB_NULL;
-
-    // Overlay input picture
-    enc_handle_ptr->overlay_input_picture_pool_ptr_array = (EbSystemResource**)EB_NULL;
-    enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array = (EbFifo***)EB_NULL;
-    // Picture Buffer Producer Fifos
-    enc_handle_ptr->reference_picture_pool_producer_fifo_ptr_dbl_array    = (EbFifo***)EB_NULL;
-    enc_handle_ptr->pa_reference_picture_pool_producer_fifo_ptr_dbl_array = (EbFifo***)EB_NULL;
-
-    // Threads
-    enc_handle_ptr->resource_coordination_thread_handle             = (EbHandle)EB_NULL;
-    enc_handle_ptr->picture_analysis_thread_handle_array            = (EbHandle*)EB_NULL;
-    enc_handle_ptr->picture_decision_thread_handle                  = (EbHandle)EB_NULL;
-    enc_handle_ptr->motion_estimation_thread_handle_array           = (EbHandle*)EB_NULL;
-    enc_handle_ptr->initial_rate_control_thread_handle              = (EbHandle)EB_NULL;
-    enc_handle_ptr->source_based_operations_thread_handle_array     = (EbHandle*)EB_NULL;
-    enc_handle_ptr->picture_manager_thread_handle                   = (EbHandle)EB_NULL;
-    enc_handle_ptr->rate_control_thread_handle                      = (EbHandle)EB_NULL;
-    enc_handle_ptr->mode_decision_configuration_thread_handle_array = (EbHandle*)EB_NULL;
-    enc_handle_ptr->enc_dec_thread_handle_array                     = (EbHandle*)EB_NULL;
-    enc_handle_ptr->entropy_coding_thread_handle_array              = (EbHandle*)EB_NULL;
-    enc_handle_ptr->packetization_thread_handle                     = (EbHandle)EB_NULL;
-    enc_handle_ptr->dlf_thread_handle_array                         = (EbHandle*)EB_NULL;
-    enc_handle_ptr->cdef_thread_handle_array                        = (EbHandle*)EB_NULL;
-    enc_handle_ptr->rest_thread_handle_array                        = (EbHandle*)EB_NULL;
-
-    // Contexts
-    enc_handle_ptr->resource_coordination_context_ptr             = (EbPtr)EB_NULL;
-    enc_handle_ptr->picture_analysis_context_ptr_array            = (EbPtr*)EB_NULL;
-    enc_handle_ptr->picture_decision_context_ptr                  = (EbPtr)EB_NULL;
-    enc_handle_ptr->motion_estimation_context_ptr_array           = (EbPtr*)EB_NULL;
-    enc_handle_ptr->initial_rate_control_context_ptr              = (EbPtr)EB_NULL;
-    enc_handle_ptr->source_based_operations_context_ptr_array     = (EbPtr*)EB_NULL;
-    enc_handle_ptr->picture_manager_context_ptr                   = (EbPtr)EB_NULL;
-    enc_handle_ptr->rate_control_context_ptr                      = (EbPtr)EB_NULL;
-    enc_handle_ptr->mode_decision_configuration_context_ptr_array = (EbPtr*)EB_NULL;
-    enc_handle_ptr->enc_dec_context_ptr_array                     = (EbPtr*)EB_NULL;
-    enc_handle_ptr->entropy_coding_context_ptr_array              = (EbPtr*)EB_NULL;
-    enc_handle_ptr->dlf_context_ptr_array                         = (EbPtr*)EB_NULL;
-    enc_handle_ptr->cdef_context_ptr_array                        = (EbPtr*)EB_NULL;
-    enc_handle_ptr->rest_context_ptr_array                        = (EbPtr*)EB_NULL;
-    enc_handle_ptr->packetization_context_ptr                     = (EbPtr)EB_NULL;
-
-    // System Resource Managers
-    enc_handle_ptr->input_buffer_resource_ptr                  = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->output_stream_buffer_resource_ptr_array    = (EbSystemResource**)EB_NULL;
-    enc_handle_ptr->resource_coordination_results_resource_ptr = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->picture_analysis_results_resource_ptr      = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->picture_decision_results_resource_ptr      = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->motion_estimation_results_resource_ptr     = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->initial_rate_control_results_resource_ptr  = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->picture_demux_results_resource_ptr         = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->rate_control_tasks_resource_ptr            = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->rate_control_results_resource_ptr          = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->enc_dec_tasks_resource_ptr                 = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->enc_dec_results_resource_ptr               = (EbSystemResource*)EB_NULL;
-    enc_handle_ptr->entropy_coding_results_resource_ptr        = (EbSystemResource*)EB_NULL;
-
-    // Inter-Process Producer Fifos
-    enc_handle_ptr->input_buffer_producer_fifo_ptr_array                  = (EbFifo**)EB_NULL;
-    enc_handle_ptr->output_stream_buffer_producer_fifo_ptr_dbl_array      = (EbFifo***)EB_NULL;
-    enc_handle_ptr->resource_coordination_results_producer_fifo_ptr_array = (EbFifo**)EB_NULL;
-    enc_handle_ptr->picture_demux_results_producer_fifo_ptr_array         = (EbFifo**)EB_NULL;
-    enc_handle_ptr->picture_manager_results_producer_fifo_ptr_array       = (EbFifo**)EB_NULL;
-    enc_handle_ptr->rate_control_tasks_producer_fifo_ptr_array            = (EbFifo**)EB_NULL;
-    enc_handle_ptr->rate_control_results_producer_fifo_ptr_array          = (EbFifo**)EB_NULL;
-    enc_handle_ptr->enc_dec_tasks_producer_fifo_ptr_array                 = (EbFifo**)EB_NULL;
-    enc_handle_ptr->enc_dec_results_producer_fifo_ptr_array               = (EbFifo**)EB_NULL;
-    enc_handle_ptr->entropy_coding_results_producer_fifo_ptr_array        = (EbFifo**)EB_NULL;
-    enc_handle_ptr->dlf_results_producer_fifo_ptr_array                   = (EbFifo**)EB_NULL;
-    enc_handle_ptr->cdef_results_producer_fifo_ptr_array                  = (EbFifo**)EB_NULL;
-    enc_handle_ptr->rest_results_producer_fifo_ptr_array                  = (EbFifo**)EB_NULL;
-    enc_handle_ptr->dlf_results_consumer_fifo_ptr_array                   = (EbFifo**)EB_NULL;
-    enc_handle_ptr->cdef_results_consumer_fifo_ptr_array                  = (EbFifo**)EB_NULL;
-    enc_handle_ptr->rest_results_consumer_fifo_ptr_array                  = (EbFifo**)EB_NULL;
-
-    // Inter-Process Consumer Fifos
-    enc_handle_ptr->input_buffer_consumer_fifo_ptr_array                  = (EbFifo**)EB_NULL;
-    enc_handle_ptr->output_stream_buffer_consumer_fifo_ptr_dbl_array      = (EbFifo***)EB_NULL;
-    enc_handle_ptr->resource_coordination_results_consumer_fifo_ptr_array = (EbFifo**)EB_NULL;
-    enc_handle_ptr->picture_demux_results_consumer_fifo_ptr_array         = (EbFifo**)EB_NULL;
-    enc_handle_ptr->rate_control_tasks_consumer_fifo_ptr_array            = (EbFifo**)EB_NULL;
-    enc_handle_ptr->rate_control_results_consumer_fifo_ptr_array          = (EbFifo**)EB_NULL;
-    enc_handle_ptr->enc_dec_tasks_consumer_fifo_ptr_array                 = (EbFifo**)EB_NULL;
-    enc_handle_ptr->enc_dec_results_consumer_fifo_ptr_array               = (EbFifo**)EB_NULL;
-    enc_handle_ptr->entropy_coding_results_consumer_fifo_ptr_array        = (EbFifo**)EB_NULL;
-
     // Initialize Callbacks
-    EB_MALLOC(EbCallback**, enc_handle_ptr->app_callback_ptr_array, sizeof(EbCallback*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-    EB_MALLOC(EbCallback*, enc_handle_ptr->app_callback_ptr_array[0], sizeof(EbCallback), EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->app_callback_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_MALLOC(enc_handle_ptr->app_callback_ptr_array[0], sizeof(EbCallback));
     enc_handle_ptr->app_callback_ptr_array[0]->ErrorHandler = lib_svt_encoder_send_error_exit;
     enc_handle_ptr->app_callback_ptr_array[0]->handle = ebHandlePtr;
 
     // Initialize Sequence Control Set Instance Array
-    EB_MALLOC(EbSequenceControlSetInstance**, enc_handle_ptr->sequence_control_set_instance_array, sizeof(EbSequenceControlSetInstance*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-    return_error = eb_sequence_control_set_instance_ctor(&enc_handle_ptr->sequence_control_set_instance_array[0]);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->sequence_control_set_instance_array, enc_handle_ptr->encode_instance_total_count);
+    EB_NEW(enc_handle_ptr->sequence_control_set_instance_array[0], eb_sequence_control_set_instance_ctor);
     return EB_ErrorNone;
 }
 
-EbErrorType EbInputBufferHeaderCtor(
+EbErrorType EbInputBufferHeaderCreator(
     EbPtr *objectDblPtr,
     EbPtr  objectInitDataPtr);
 
-EbErrorType EbOutputReconBufferHeaderCtor(
+EbErrorType EbOutputReconBufferHeaderCreator(
     EbPtr *objectDblPtr,
     EbPtr  objectInitDataPtr);
 
-EbErrorType EbOutputBufferHeaderCtor(
+EbErrorType EbOutputBufferHeaderCreator(
     EbPtr *objectDblPtr,
     EbPtr objectInitDataPtr);
 
+void EbInputBufferHeaderDestoryer(    EbPtr p);
+void EbOutputReconBufferHeaderDestoryer(    EbPtr p);
+void EbOutputBufferHeaderDestoryer(    EbPtr p);
+
+
 EbErrorType DlfResultsCtor(
-    EbPtr *object_dbl_ptr,
+    DlfResults *context_ptr,
     EbPtr object_init_data_ptr)
 {
-    DlfResults *context_ptr;
-    EB_MALLOC(DlfResults*, context_ptr, sizeof(DlfResults), EB_N_PTR);
-
-    *object_dbl_ptr = (EbPtr)context_ptr;
-
+    (void)context_ptr;
     (void)object_init_data_ptr;
 
     return EB_ErrorNone;
 }
-EbErrorType CdefResultsCtor(
+
+EbErrorType DlfResultsCreator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    CdefResults *context_ptr;
-    EB_MALLOC(CdefResults*, context_ptr, sizeof(CdefResults), EB_N_PTR);
+    DlfResults* obj;
 
-    *object_dbl_ptr = (EbPtr)context_ptr;
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, DlfResultsCtor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
 
+    return EB_ErrorNone;
+}
+
+EbErrorType CdefResultsCtor(
+    CdefResults *context_ptr,
+    EbPtr object_init_data_ptr)
+{
+    (void)context_ptr;
     (void)object_init_data_ptr;
+
+    return EB_ErrorNone;
+}
+
+EbErrorType CdefResultsCreator(
+    EbPtr *object_dbl_ptr,
+    EbPtr object_init_data_ptr)
+{
+    CdefResults* obj;
+
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, CdefResultsCtor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
 
     return EB_ErrorNone;
 }
 
 EbErrorType RestResultsCtor(
+    RestResults *context_ptr,
+    EbPtr object_init_data_ptr)
+{
+    (void)context_ptr;
+    (void)object_init_data_ptr;
+
+    return EB_ErrorNone;
+}
+
+EbErrorType RestResultsCreator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    RestResults *context_ptr;
-    EB_MALLOC(RestResults*, context_ptr, sizeof(RestResults), EB_N_PTR);
+    RestResults* obj;
 
-    *object_dbl_ptr = (EbPtr)context_ptr;
-
-    (void)object_init_data_ptr;
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, RestResultsCtor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
 
     return EB_ErrorNone;
 }
@@ -871,6 +888,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     uint32_t max_picture_width;
     EbBool is16bit = (EbBool)(enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
     EbColorFormat color_format = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.encoder_color_format;
+    SequenceControlSet* control_set_ptr;
 
     /************************************
     * Plateform detection
@@ -898,25 +916,24 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     /************************************
     * Sequence Control Set
     ************************************/
-    return_error = eb_system_resource_ctor(
-        &enc_handle_ptr->sequence_control_set_pool_ptr,
+    EB_NEW(enc_handle_ptr->sequence_control_set_pool_ptr,
+        eb_system_resource_ctor,
         enc_handle_ptr->sequence_control_set_pool_total_count,
         1,
         0,
         &enc_handle_ptr->sequence_control_set_pool_producer_fifo_ptr_array,
         (EbFifo ***)EB_NULL,
         EB_FALSE,
-        eb_sequence_control_set_ctor,
-        &scs_init);
+        eb_sequence_control_set_creator,
+        &scs_init,
+        NULL);
 
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     /************************************
     * Picture Control Set: Parent
     ************************************/
-    EB_MALLOC(EbSystemResource**, enc_handle_ptr->picture_parent_control_set_pool_ptr_array, sizeof(EbSystemResource*)  * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
 
-    EB_MALLOC(EbFifo***, enc_handle_ptr->picture_parent_control_set_pool_producer_fifo_ptr_dbl_array, sizeof(EbSystemResource**) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
+    EB_MALLOC_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_producer_fifo_ptr_dbl_array, enc_handle_ptr->encode_instance_total_count);
 
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
         // The segment Width & Height Arrays are in units of LCUs, not samples
@@ -944,26 +961,26 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.in_loop_me_flag = (uint8_t)enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.in_loop_me_flag;
         inputData.mrp_mode = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->mrp_mode;
         inputData.nsq_present = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->nsq_present;
-        return_error = eb_system_resource_ctor(
-            &(enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index]),
+        EB_NEW(
+            enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->picture_control_set_pool_init_count,//enc_handle_ptr->picture_control_set_pool_total_count,
             1,
             0,
             &enc_handle_ptr->picture_parent_control_set_pool_producer_fifo_ptr_dbl_array[instance_index],
             (EbFifo ***)EB_NULL,
             EB_FALSE,
-            picture_parent_control_set_ctor,
-            &inputData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            picture_parent_control_set_creator,
+            &inputData,
+            NULL);
     }
 
     /************************************
     * Picture Control Set: Child
     ************************************/
-    EB_MALLOC(EbSystemResource**, enc_handle_ptr->picture_control_set_pool_ptr_array, sizeof(EbSystemResource*)  * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->picture_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
 
-    EB_MALLOC(EbFifo***, enc_handle_ptr->picture_control_set_pool_producer_fifo_ptr_dbl_array, sizeof(EbSystemResource**) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
+    EB_MALLOC_ARRAY(enc_handle_ptr->picture_control_set_pool_producer_fifo_ptr_dbl_array, enc_handle_ptr->encode_instance_total_count);
 
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
         // The segment Width & Height Arrays are in units of LCUs, not samples
@@ -993,18 +1010,18 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.sb_size_pix = scs_init.sb_size;
         inputData.max_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_sb_depth;
         inputData.cdf_mode = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->cdf_mode;
-        return_error = eb_system_resource_ctor(
-            &(enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index]),
+        EB_NEW(
+            enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->picture_control_set_pool_init_count_child, //EB_PictureControlSetPoolInitCountChild,
             1,
             0,
             &enc_handle_ptr->picture_control_set_pool_producer_fifo_ptr_dbl_array[instance_index],
             (EbFifo ***)EB_NULL,
             EB_FALSE,
-            picture_control_set_ctor,
-            &inputData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            picture_control_set_creator,
+            &inputData,
+            NULL);
     }
 
     /************************************
@@ -1012,14 +1029,14 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     ************************************/
 
     // Allocate Resource Arrays
-    EB_MALLOC(EbSystemResource**, enc_handle_ptr->reference_picture_pool_ptr_array, sizeof(EbSystemResource*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-    EB_MALLOC(EbSystemResource**, enc_handle_ptr->pa_reference_picture_pool_ptr_array, sizeof(EbSystemResource*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
 
-    EB_MALLOC(EbSystemResource**, enc_handle_ptr->overlay_input_picture_pool_ptr_array, sizeof(EbSystemResource*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-    EB_MALLOC(EbFifo***, enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array, sizeof(EbFifo**) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->overlay_input_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_MALLOC_ARRAY(enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array, enc_handle_ptr->encode_instance_total_count);
     // Allocate Producer Fifo Arrays
-    EB_MALLOC(EbFifo***, enc_handle_ptr->reference_picture_pool_producer_fifo_ptr_dbl_array, sizeof(EbFifo**) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-    EB_MALLOC(EbFifo***, enc_handle_ptr->pa_reference_picture_pool_producer_fifo_ptr_dbl_array, sizeof(EbFifo**) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
+    EB_MALLOC_ARRAY(enc_handle_ptr->reference_picture_pool_producer_fifo_ptr_dbl_array, enc_handle_ptr->encode_instance_total_count);
+    EB_MALLOC_ARRAY(enc_handle_ptr->pa_reference_picture_pool_producer_fifo_ptr_dbl_array, enc_handle_ptr->encode_instance_total_count);
 
     // Rate Control
     rateControlPorts[0].count = EB_PictureManagerProcessInitCount;
@@ -1055,19 +1072,19 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         EbReferenceObjectDescInitDataStructure.reference_picture_desc_init_data = referencePictureBufferDescInitData;
 
         // Reference Picture Buffers
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->reference_picture_pool_ptr_array[instance_index],
+        EB_NEW(
+            enc_handle_ptr->reference_picture_pool_ptr_array[instance_index],
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->reference_picture_buffer_init_count,//enc_handle_ptr->reference_picture_pool_total_count,
             EB_PictureManagerProcessInitCount,
             0,
             &enc_handle_ptr->reference_picture_pool_producer_fifo_ptr_dbl_array[instance_index],
             (EbFifo ***)EB_NULL,
             EB_FALSE,
-            eb_reference_object_ctor,
-            &(EbReferenceObjectDescInitDataStructure));
+            eb_reference_object_creator,
+            &(EbReferenceObjectDescInitDataStructure),
+            NULL);
 
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
         // PA Reference Picture Buffers
         // Currently, only Luma samples are needed in the PA
         referencePictureBufferDescInitData.max_width = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_width;
@@ -1108,38 +1125,36 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         EbPaReferenceObjectDescInitDataStructure.quarter_picture_desc_init_data = quarterPictureBufferDescInitData;
         EbPaReferenceObjectDescInitDataStructure.sixteenth_picture_desc_init_data = sixteenthPictureBufferDescInitData;
         // Reference Picture Buffers
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->pa_reference_picture_pool_ptr_array[instance_index],
+        EB_NEW(enc_handle_ptr->pa_reference_picture_pool_ptr_array[instance_index],
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pa_reference_picture_buffer_init_count,
             EB_PictureDecisionProcessInitCount,
             0,
             &enc_handle_ptr->pa_reference_picture_pool_producer_fifo_ptr_dbl_array[instance_index],
             (EbFifo ***)EB_NULL,
             EB_FALSE,
-            eb_pa_reference_object_ctor,
-            &(EbPaReferenceObjectDescInitDataStructure));
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            eb_pa_reference_object_creator,
+            &(EbPaReferenceObjectDescInitDataStructure),
+            NULL);
         // Set the SequenceControlSet Picture Pool Fifo Ptrs
         enc_handle_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->reference_picture_pool_fifo_ptr = (enc_handle_ptr->reference_picture_pool_producer_fifo_ptr_dbl_array[instance_index])[0];
         enc_handle_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->pa_reference_picture_pool_fifo_ptr = (enc_handle_ptr->pa_reference_picture_pool_producer_fifo_ptr_dbl_array[instance_index])[0];
 
         if (enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.enable_overlays) {
             // Overlay Input Picture Buffers
-            return_error = eb_system_resource_ctor(
-                &enc_handle_ptr->overlay_input_picture_pool_ptr_array[instance_index],
+            EB_NEW(
+                enc_handle_ptr->overlay_input_picture_pool_ptr_array[instance_index],
+                eb_system_resource_ctor,
                 enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->overlay_input_picture_buffer_init_count,
                 1,
                 0,
                 &enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array[instance_index],
                 (EbFifo ***)EB_NULL,
                 EB_FALSE,
-                EbInputBufferHeaderCtor,
-                enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr);
-
-            if (return_error == EB_ErrorInsufficientResources)
-                return EB_ErrorInsufficientResources;
-            // Set the SequenceControlSet Overlay input Picture Pool Fifo Ptrs
+                EbInputBufferHeaderCreator,
+                enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr,
+                EbInputBufferHeaderDestoryer);
+           // Set the SequenceControlSet Overlay input Picture Pool Fifo Ptrs
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->encode_context_ptr->overlay_input_picture_pool_fifo_ptr = (enc_handle_ptr->overlay_input_picture_pool_producer_fifo_ptr_dbl_array[instance_index])[0];
         }
     }
@@ -1149,57 +1164,57 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     ************************************/
 
     // EbBufferHeaderType Input
-    return_error = eb_system_resource_ctor(
-        &enc_handle_ptr->input_buffer_resource_ptr,
+    EB_NEW(
+        enc_handle_ptr->input_buffer_resource_ptr,
+        eb_system_resource_ctor,
         enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->input_buffer_fifo_init_count,
         1,
         EB_ResourceCoordinationProcessInitCount,
         &enc_handle_ptr->input_buffer_producer_fifo_ptr_array,
         &enc_handle_ptr->input_buffer_consumer_fifo_ptr_array,
         EB_TRUE,
-        EbInputBufferHeaderCtor,
-        enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr);
+        EbInputBufferHeaderCreator,
+        enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr,
+        EbInputBufferHeaderDestoryer);
 
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     // EbBufferHeaderType Output Stream
-    EB_MALLOC(EbSystemResource**, enc_handle_ptr->output_stream_buffer_resource_ptr_array, sizeof(EbSystemResource*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-    EB_MALLOC(EbFifo***, enc_handle_ptr->output_stream_buffer_producer_fifo_ptr_dbl_array, sizeof(EbFifo**)          * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-    EB_MALLOC(EbFifo***, enc_handle_ptr->output_stream_buffer_consumer_fifo_ptr_dbl_array, sizeof(EbFifo**)          * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->output_stream_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_MALLOC_ARRAY(enc_handle_ptr->output_stream_buffer_producer_fifo_ptr_dbl_array, enc_handle_ptr->encode_instance_total_count);
+    EB_MALLOC_ARRAY(enc_handle_ptr->output_stream_buffer_consumer_fifo_ptr_dbl_array, enc_handle_ptr->encode_instance_total_count);
 
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->output_stream_buffer_resource_ptr_array[instance_index],
+        EB_NEW(
+            enc_handle_ptr->output_stream_buffer_resource_ptr_array[instance_index],
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->output_stream_buffer_fifo_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->total_process_init_count,//EB_PacketizationProcessInitCount,
             1,
             &enc_handle_ptr->output_stream_buffer_producer_fifo_ptr_dbl_array[instance_index],
             &enc_handle_ptr->output_stream_buffer_consumer_fifo_ptr_dbl_array[instance_index],
             EB_TRUE,
-            EbOutputBufferHeaderCtor,
-            &enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            EbOutputBufferHeaderCreator,
+            &enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config,
+            EbOutputBufferHeaderDestoryer);
     }
     if (enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.recon_enabled) {
         // EbBufferHeaderType Output Recon
-        EB_MALLOC(EbSystemResource**, enc_handle_ptr->output_recon_buffer_resource_ptr_array, sizeof(EbSystemResource*) * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-        EB_MALLOC(EbFifo***, enc_handle_ptr->output_recon_buffer_producer_fifo_ptr_dbl_array, sizeof(EbFifo**)          * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
-        EB_MALLOC(EbFifo***, enc_handle_ptr->output_recon_buffer_consumer_fifo_ptr_dbl_array, sizeof(EbFifo**)          * enc_handle_ptr->encode_instance_total_count, EB_N_PTR);
+        EB_ALLOC_PTR_ARRAY(enc_handle_ptr->output_recon_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
+        EB_MALLOC_ARRAY(enc_handle_ptr->output_recon_buffer_producer_fifo_ptr_dbl_array, enc_handle_ptr->encode_instance_total_count);
+        EB_MALLOC_ARRAY(enc_handle_ptr->output_recon_buffer_consumer_fifo_ptr_dbl_array, enc_handle_ptr->encode_instance_total_count);
 
         for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
-            return_error = eb_system_resource_ctor(
-                &enc_handle_ptr->output_recon_buffer_resource_ptr_array[instance_index],
+            EB_NEW(
+                enc_handle_ptr->output_recon_buffer_resource_ptr_array[instance_index],
+                eb_system_resource_ctor,
                 enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->output_recon_buffer_fifo_init_count,
                 enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->enc_dec_process_init_count,
                 1,
                 &enc_handle_ptr->output_recon_buffer_producer_fifo_ptr_dbl_array[instance_index],
                 &enc_handle_ptr->output_recon_buffer_consumer_fifo_ptr_dbl_array[instance_index],
                 EB_TRUE,
-                EbOutputReconBufferHeaderCtor,
-                enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr);
-            if (return_error == EB_ErrorInsufficientResources)
-                return EB_ErrorInsufficientResources;
+                EbOutputReconBufferHeaderCreator,
+                enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr,
+                EbOutputReconBufferHeaderDestoryer);
         }
     }
 
@@ -1207,146 +1222,144 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     {
         ResourceCoordinationResultInitData resourceCoordinationResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->resource_coordination_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->resource_coordination_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->resource_coordination_fifo_init_count,
             EB_ResourceCoordinationProcessInitCount,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_analysis_process_init_count,
             &enc_handle_ptr->resource_coordination_results_producer_fifo_ptr_array,
             &enc_handle_ptr->resource_coordination_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            resource_coordination_result_ctor,
-            &resourceCoordinationResultInitData);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            resource_coordination_result_creator,
+            &resourceCoordinationResultInitData,
+            NULL);
     }
 
     // Picture Analysis Results
     {
         PictureAnalysisResultInitData pictureAnalysisResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->picture_analysis_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->picture_analysis_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_analysis_fifo_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_analysis_process_init_count,
             EB_PictureDecisionProcessInitCount,
             &enc_handle_ptr->picture_analysis_results_producer_fifo_ptr_array,
             &enc_handle_ptr->picture_analysis_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            picture_analysis_result_ctor,
-            &pictureAnalysisResultInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            picture_analysis_result_creator,
+            &pictureAnalysisResultInitData,
+            NULL);
     }
 
     // Picture Decision Results
     {
         PictureDecisionResultInitData pictureDecisionResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->picture_decision_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->picture_decision_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_decision_fifo_init_count,
             EB_PictureDecisionProcessInitCount,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->motion_estimation_process_init_count,
             &enc_handle_ptr->picture_decision_results_producer_fifo_ptr_array,
             &enc_handle_ptr->picture_decision_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            picture_decision_result_ctor,
-            &pictureDecisionResultInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            picture_decision_result_creator,
+            &pictureDecisionResultInitData,
+            NULL);
     }
 
     // Motion Estimation Results
     {
         MotionEstimationResultsInitData motionEstimationResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->motion_estimation_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->motion_estimation_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->motion_estimation_fifo_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->motion_estimation_process_init_count,
             EB_InitialRateControlProcessInitCount,
             &enc_handle_ptr->motion_estimation_results_producer_fifo_ptr_array,
             &enc_handle_ptr->motion_estimation_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            motion_estimation_results_ctor,
-            &motionEstimationResultInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            motion_estimation_results_creator,
+            &motionEstimationResultInitData,
+            NULL);
     }
 
     // Initial Rate Control Results
     {
         InitialRateControlResultInitData initialRateControlResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->initial_rate_control_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->initial_rate_control_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->initial_rate_control_fifo_init_count,
             EB_InitialRateControlProcessInitCount,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count,
             &enc_handle_ptr->initial_rate_control_results_producer_fifo_ptr_array,
             &enc_handle_ptr->initial_rate_control_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            initial_rate_control_results_ctor,
-            &initialRateControlResultInitData);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            initial_rate_control_results_creator,
+            &initialRateControlResultInitData,
+            NULL);
     }
 
     // Picture Demux Results
     {
         PictureResultInitData pictureResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->picture_demux_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->picture_demux_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_demux_fifo_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count + enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count,
             EB_PictureManagerProcessInitCount,
             &enc_handle_ptr->picture_demux_results_producer_fifo_ptr_array,
             &enc_handle_ptr->picture_demux_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            picture_results_ctor,
-            &pictureResultInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            picture_results_creator,
+            &pictureResultInitData,
+            NULL);
     }
 
     // Rate Control Tasks
     {
         RateControlTasksInitData rateControlTasksInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->rate_control_tasks_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->rate_control_tasks_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rate_control_tasks_fifo_init_count,
             RateControlPortTotalCount(),
             EB_RateControlProcessInitCount,
             &enc_handle_ptr->rate_control_tasks_producer_fifo_ptr_array,
             &enc_handle_ptr->rate_control_tasks_consumer_fifo_ptr_array,
             EB_TRUE,
-            rate_control_tasks_ctor,
-            &rateControlTasksInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            rate_control_tasks_creator,
+            &rateControlTasksInitData,
+            NULL);
     }
 
     // Rate Control Results
     {
         RateControlResultsInitData rateControlResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->rate_control_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->rate_control_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rate_control_fifo_init_count,
             EB_RateControlProcessInitCount,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->mode_decision_configuration_process_init_count,
             &enc_handle_ptr->rate_control_results_producer_fifo_ptr_array,
             &enc_handle_ptr->rate_control_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            rate_control_results_ctor,
-            &rateControlResultInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            rate_control_results_creator,
+            &rateControlResultInitData,
+            NULL);
     }
     // EncDec Tasks
     {
@@ -1361,106 +1374,106 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
                 enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_segment_row_count_array[i]);
         }
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->enc_dec_tasks_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->enc_dec_tasks_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->mode_decision_configuration_fifo_init_count,
             EncDecPortTotalCount(),
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count,
             &enc_handle_ptr->enc_dec_tasks_producer_fifo_ptr_array,
             &enc_handle_ptr->enc_dec_tasks_consumer_fifo_ptr_array,
             EB_TRUE,
-            enc_dec_tasks_ctor,
-            &ModeDecisionResultInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            enc_dec_tasks_creator,
+            &ModeDecisionResultInitData,
+            NULL);
     }
 
     // EncDec Results
     {
         EncDecResultsInitData encDecResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->enc_dec_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->enc_dec_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_fifo_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->dlf_process_init_count,
             &enc_handle_ptr->enc_dec_results_producer_fifo_ptr_array,
             &enc_handle_ptr->enc_dec_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            enc_dec_results_ctor,
-            &encDecResultInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-    }
+            enc_dec_results_creator,
+            &encDecResultInitData,
+            NULL);
+   }
 
     //DLF results
     {
         EntropyCodingResultsInitData dlfResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->dlf_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->dlf_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->dlf_fifo_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->dlf_process_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->cdef_process_init_count,
             &enc_handle_ptr->dlf_results_producer_fifo_ptr_array,
             &enc_handle_ptr->dlf_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            DlfResultsCtor,
-            &dlfResultInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            DlfResultsCreator,
+            &dlfResultInitData,
+            NULL);
     }
     //CDEF results
     {
         EntropyCodingResultsInitData cdefResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->cdef_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->cdef_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->cdef_fifo_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->cdef_process_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count,
             &enc_handle_ptr->cdef_results_producer_fifo_ptr_array,
             &enc_handle_ptr->cdef_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            CdefResultsCtor,
-            &cdefResultInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            CdefResultsCreator,
+            &cdefResultInitData,
+            NULL);
     }
     //REST results
     {
         EntropyCodingResultsInitData restResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->rest_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->rest_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_fifo_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->entropy_coding_process_init_count,
             &enc_handle_ptr->rest_results_producer_fifo_ptr_array,
             &enc_handle_ptr->rest_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            RestResultsCtor,
-            &restResultInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            RestResultsCreator,
+            &restResultInitData,
+            NULL);
     }
 
     // Entropy Coding Results
     {
         EntropyCodingResultsInitData entropyCodingResultInitData;
 
-        return_error = eb_system_resource_ctor(
-            &enc_handle_ptr->entropy_coding_results_resource_ptr,
+        EB_NEW(
+            enc_handle_ptr->entropy_coding_results_resource_ptr,
+            eb_system_resource_ctor,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->entropy_coding_fifo_init_count,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->entropy_coding_process_init_count,
             EB_PacketizationProcessInitCount,
             &enc_handle_ptr->entropy_coding_results_producer_fifo_ptr_array,
             &enc_handle_ptr->entropy_coding_results_consumer_fifo_ptr_array,
             EB_TRUE,
-            entropy_coding_results_ctor,
-            &entropyCodingResultInitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            entropy_coding_results_creator,
+            &entropyCodingResultInitData,
+            NULL);
     }
 
     /************************************
@@ -1480,8 +1493,9 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     ************************************/
 
     // Resource Coordination Context
-    return_error = resource_coordination_context_ctor(
-        (ResourceCoordinationContext**)&enc_handle_ptr->resource_coordination_context_ptr,
+    EB_NEW(
+        enc_handle_ptr->resource_coordination_context_ptr,
+        resource_coordination_context_ctor,
         enc_handle_ptr->input_buffer_consumer_fifo_ptr_array[0],
         enc_handle_ptr->resource_coordination_results_producer_fifo_ptr_array[0],
         enc_handle_ptr->picture_parent_control_set_pool_producer_fifo_ptr_dbl_array[0],//ResourceCoordination works with ParentPCS
@@ -1491,10 +1505,8 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         enc_handle_ptr->compute_segments_total_count_array,
         enc_handle_ptr->encode_instance_total_count);
 
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     // Picture Analysis Context
-    EB_MALLOC(EbPtr*, enc_handle_ptr->picture_analysis_context_ptr_array, sizeof(EbPtr) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_analysis_process_init_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->picture_analysis_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_analysis_process_init_count);
 
     for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_analysis_process_init_count; ++processIndex) {
         EbPictureBufferDescInitData  pictureBufferDescConf;
@@ -1508,99 +1520,87 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         pictureBufferDescConf.bot_padding = 0;
         pictureBufferDescConf.split_mode = EB_FALSE;
 
-        return_error = picture_analysis_context_ctor(
+        EB_NEW(
+            enc_handle_ptr->picture_analysis_context_ptr_array[processIndex],
+            picture_analysis_context_ctor,
             &pictureBufferDescConf,
             EB_TRUE,
-            (PictureAnalysisContext**)&enc_handle_ptr->picture_analysis_context_ptr_array[processIndex],
             enc_handle_ptr->resource_coordination_results_consumer_fifo_ptr_array[processIndex],
             enc_handle_ptr->picture_analysis_results_producer_fifo_ptr_array[processIndex]);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-    }
+   }
 
     // Picture Decision Context
     {
         // Initialize the various Picture types
-
         instance_index = 0;
 
-        return_error = picture_decision_context_ctor(
-            (PictureDecisionContext**)&enc_handle_ptr->picture_decision_context_ptr,
+        EB_NEW(
+            enc_handle_ptr->picture_decision_context_ptr,
+            picture_decision_context_ctor,
             enc_handle_ptr->picture_analysis_results_consumer_fifo_ptr_array[0],
             enc_handle_ptr->picture_decision_results_producer_fifo_ptr_array[0]);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
     // Motion Analysis Context
-    EB_MALLOC(EbPtr*, enc_handle_ptr->motion_estimation_context_ptr_array, sizeof(EbPtr) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->motion_estimation_process_init_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->motion_estimation_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->motion_estimation_process_init_count);
 
     for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->motion_estimation_process_init_count; ++processIndex) {
-        return_error = motion_estimation_context_ctor(
-            (MotionEstimationContext_t**)&enc_handle_ptr->motion_estimation_context_ptr_array[processIndex],
+        EB_NEW(
+            enc_handle_ptr->motion_estimation_context_ptr_array[processIndex],
+            motion_estimation_context_ctor,
             enc_handle_ptr->picture_decision_results_consumer_fifo_ptr_array[processIndex],
             enc_handle_ptr->motion_estimation_results_producer_fifo_ptr_array[processIndex],
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_width,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_height,
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->nsq_present,
             enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->mrp_mode);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
     // Initial Rate Control Context
-    return_error = initial_rate_control_context_ctor(
-        (InitialRateControlContext**)&enc_handle_ptr->initial_rate_control_context_ptr,
+    EB_NEW(
+        enc_handle_ptr->initial_rate_control_context_ptr,
+        initial_rate_control_context_ctor,
         enc_handle_ptr->motion_estimation_results_consumer_fifo_ptr_array[0],
         enc_handle_ptr->initial_rate_control_results_producer_fifo_ptr_array[0]);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     // Source Based Operations Context
-    EB_MALLOC(EbPtr*, enc_handle_ptr->source_based_operations_context_ptr_array, sizeof(EbPtr) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->source_based_operations_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count);
 
     for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count; ++processIndex) {
-        return_error = source_based_operations_context_ctor(
-            (SourceBasedOperationsContext**)&enc_handle_ptr->source_based_operations_context_ptr_array[processIndex],
+        EB_NEW(
+            enc_handle_ptr->source_based_operations_context_ptr_array[processIndex],
+            source_based_operations_context_ctor,
             enc_handle_ptr->initial_rate_control_results_consumer_fifo_ptr_array[processIndex],
             enc_handle_ptr->picture_demux_results_producer_fifo_ptr_array[processIndex],
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
     // Picture Manager Context
-    return_error = picture_manager_context_ctor(
-        (PictureManagerContext**)&enc_handle_ptr->picture_manager_context_ptr,
+    EB_NEW(
+        enc_handle_ptr->picture_manager_context_ptr,
+        picture_manager_context_ctor,
         enc_handle_ptr->picture_demux_results_consumer_fifo_ptr_array[0],
         enc_handle_ptr->rate_control_tasks_producer_fifo_ptr_array[RateControlPortLookup(RATE_CONTROL_INPUT_PORT_PICTURE_MANAGER, 0)],
         enc_handle_ptr->picture_control_set_pool_producer_fifo_ptr_dbl_array[0]);//The Child PCS Pool here
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     // Rate Control Context
-    return_error = rate_control_context_ctor(
-        (RateControlContext**)&enc_handle_ptr->rate_control_context_ptr,
+    EB_NEW(
+        enc_handle_ptr->rate_control_context_ptr,
+        rate_control_context_ctor,
         enc_handle_ptr->rate_control_tasks_consumer_fifo_ptr_array[0],
         enc_handle_ptr->rate_control_results_producer_fifo_ptr_array[0],
         enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->intra_period_length);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     // Mode Decision Configuration Contexts
     {
         // Mode Decision Configuration Contexts
-        EB_MALLOC(EbPtr*, enc_handle_ptr->mode_decision_configuration_context_ptr_array, sizeof(EbPtr) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->mode_decision_configuration_process_init_count, EB_N_PTR);
+        EB_ALLOC_PTR_ARRAY(enc_handle_ptr->mode_decision_configuration_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->mode_decision_configuration_process_init_count);
 
         for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->mode_decision_configuration_process_init_count; ++processIndex) {
-            return_error = mode_decision_configuration_context_ctor(
-                (ModeDecisionConfigurationContext**)&enc_handle_ptr->mode_decision_configuration_context_ptr_array[processIndex],
+            EB_NEW(
+                enc_handle_ptr->mode_decision_configuration_context_ptr_array[processIndex],
+                mode_decision_configuration_context_ctor,
                 enc_handle_ptr->rate_control_results_consumer_fifo_ptr_array[processIndex],
                 enc_handle_ptr->enc_dec_tasks_producer_fifo_ptr_array[EncDecPortLookup(ENCDEC_INPUT_PORT_MDC, processIndex)],
                 ((enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64) *
                 ((enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64));
-
-            if (return_error == EB_ErrorInsufficientResources)
-                return EB_ErrorInsufficientResources;
         }
     }
 
@@ -1611,11 +1611,12 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     }
 
     // EncDec Contexts
-    EB_MALLOC(EbPtr*, enc_handle_ptr->enc_dec_context_ptr_array, sizeof(EbPtr) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->enc_dec_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count);
 
     for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count; ++processIndex) {
-        return_error = enc_dec_context_ctor(
-            (EncDecContext**)&enc_handle_ptr->enc_dec_context_ptr_array[processIndex],
+        EB_NEW(
+            enc_handle_ptr->enc_dec_context_ptr_array[processIndex],
+            enc_dec_context_ctor,
             enc_handle_ptr->enc_dec_tasks_consumer_fifo_ptr_array[processIndex],
             enc_handle_ptr->enc_dec_results_producer_fifo_ptr_array[processIndex],
             enc_handle_ptr->enc_dec_tasks_producer_fifo_ptr_array[EncDecPortLookup(ENCDEC_INPUT_PORT_ENCDEC, processIndex)],
@@ -1628,17 +1629,15 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_width,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_height
         );
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
     // Dlf Contexts
-    EB_MALLOC(EbPtr*, enc_handle_ptr->dlf_context_ptr_array, sizeof(EbPtr) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->dlf_process_init_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->dlf_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->dlf_process_init_count);
 
     for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->dlf_process_init_count; ++processIndex) {
-        return_error = dlf_context_ctor(
-            (DlfContext**)&enc_handle_ptr->dlf_context_ptr_array[processIndex],
+        EB_NEW(
+            enc_handle_ptr->dlf_context_ptr_array[processIndex],
+            dlf_context_ctor,
             enc_handle_ptr->enc_dec_results_consumer_fifo_ptr_array[processIndex],
             enc_handle_ptr->dlf_results_producer_fifo_ptr_array[processIndex],             //output to EC
             is16bit,
@@ -1646,33 +1645,29 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_width,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_height
         );
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
     //CDEF Contexts
-    EB_MALLOC(EbPtr*, enc_handle_ptr->cdef_context_ptr_array, sizeof(EbPtr) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->cdef_process_init_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->cdef_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->cdef_process_init_count);
 
     for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->cdef_process_init_count; ++processIndex) {
-        return_error = cdef_context_ctor(
-            (CdefContext_t**)&enc_handle_ptr->cdef_context_ptr_array[processIndex],
+        EB_NEW(
+            enc_handle_ptr->cdef_context_ptr_array[processIndex],
+            cdef_context_ctor,
             enc_handle_ptr->dlf_results_consumer_fifo_ptr_array[processIndex],
             enc_handle_ptr->cdef_results_producer_fifo_ptr_array[processIndex],
             is16bit,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_width,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_height
         );
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
     //Rest Contexts
-    EB_MALLOC(EbPtr*, enc_handle_ptr->rest_context_ptr_array, sizeof(EbPtr) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->rest_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count);
 
     for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count; ++processIndex) {
-        return_error = rest_context_ctor(
-            (RestContext**)&enc_handle_ptr->rest_context_ptr_array[processIndex],
+        EB_NEW(
+            enc_handle_ptr->rest_context_ptr_array[processIndex],
+            rest_context_ctor,
             enc_handle_ptr->cdef_results_consumer_fifo_ptr_array[processIndex],
             enc_handle_ptr->rest_results_producer_fifo_ptr_array[processIndex],
             enc_handle_ptr->picture_demux_results_producer_fifo_ptr_array[
@@ -1682,33 +1677,28 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_width,
             enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_height
         );
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
     // Entropy Coding Contexts
-    EB_MALLOC(EbPtr*, enc_handle_ptr->entropy_coding_context_ptr_array, sizeof(EbPtr) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->entropy_coding_process_init_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->entropy_coding_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->entropy_coding_process_init_count);
 
     for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->entropy_coding_process_init_count; ++processIndex) {
-        return_error = entropy_coding_context_ctor(
-            (EntropyCodingContext**)&enc_handle_ptr->entropy_coding_context_ptr_array[processIndex],
+        EB_NEW(
+            enc_handle_ptr->entropy_coding_context_ptr_array[processIndex],
+            entropy_coding_context_ctor,
             enc_handle_ptr->rest_results_consumer_fifo_ptr_array[processIndex],
             enc_handle_ptr->entropy_coding_results_producer_fifo_ptr_array[processIndex],
             enc_handle_ptr->rate_control_tasks_producer_fifo_ptr_array[RateControlPortLookup(RATE_CONTROL_INPUT_PORT_ENTROPY_CODING, processIndex)],
             is16bit);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
     // Packetization Context
-    return_error = packetization_context_ctor(
-        (PacketizationContext**)&enc_handle_ptr->packetization_context_ptr,
+    EB_NEW(
+        enc_handle_ptr->packetization_context_ptr,
+        packetization_context_ctor,
         enc_handle_ptr->entropy_coding_results_consumer_fifo_ptr_array[0],
         enc_handle_ptr->rate_control_tasks_producer_fifo_ptr_array[RateControlPortLookup(RATE_CONTROL_INPUT_PORT_PACKETIZATION, 0)]);
 
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     /************************************
     * Thread Handles
     ************************************/
@@ -1716,90 +1706,75 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 
     EbSetThreadManagementParameters(config_ptr);
 
+    control_set_ptr = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr;
+
     // Resource Coordination
-    EB_CREATETHREAD(EbHandle, enc_handle_ptr->resource_coordination_thread_handle, sizeof(EbHandle), EB_THREAD, resource_coordination_kernel, enc_handle_ptr->resource_coordination_context_ptr);
-
-    // Picture Analysis
-    EB_MALLOC(EbHandle*, enc_handle_ptr->picture_analysis_thread_handle_array, sizeof(EbHandle) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_analysis_process_init_count, EB_N_PTR);
-
-    for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_analysis_process_init_count; ++processIndex) {
-        EB_CREATETHREAD(EbHandle, enc_handle_ptr->picture_analysis_thread_handle_array[processIndex], sizeof(EbHandle), EB_THREAD, picture_analysis_kernel, enc_handle_ptr->picture_analysis_context_ptr_array[processIndex]);
-    }
+    EB_CREATE_THREAD(enc_handle_ptr->resource_coordination_thread_handle, resource_coordination_kernel, enc_handle_ptr->resource_coordination_context_ptr);
+    EB_CREATE_THREAD_ARRAY(enc_handle_ptr->picture_analysis_thread_handle_array,control_set_ptr->picture_analysis_process_init_count,
+        picture_analysis_kernel,
+        enc_handle_ptr->picture_analysis_context_ptr_array);
 
     // Picture Decision
-    EB_CREATETHREAD(EbHandle, enc_handle_ptr->picture_decision_thread_handle, sizeof(EbHandle), EB_THREAD, picture_decision_kernel, enc_handle_ptr->picture_decision_context_ptr);
+    EB_CREATE_THREAD(enc_handle_ptr->picture_decision_thread_handle, picture_decision_kernel, enc_handle_ptr->picture_decision_context_ptr);
 
     // Motion Estimation
-    EB_MALLOC(EbHandle*, enc_handle_ptr->motion_estimation_thread_handle_array, sizeof(EbHandle) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->motion_estimation_process_init_count, EB_N_PTR);
-
-    for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->motion_estimation_process_init_count; ++processIndex) {
-        EB_CREATETHREAD(EbHandle, enc_handle_ptr->motion_estimation_thread_handle_array[processIndex], sizeof(EbHandle), EB_THREAD, motion_estimation_kernel, enc_handle_ptr->motion_estimation_context_ptr_array[processIndex]);
-    }
+    EB_CREATE_THREAD_ARRAY(enc_handle_ptr->motion_estimation_thread_handle_array, control_set_ptr->motion_estimation_process_init_count,
+        motion_estimation_kernel,
+        enc_handle_ptr->motion_estimation_context_ptr_array);
 
     // Initial Rate Control
-    EB_CREATETHREAD(EbHandle, enc_handle_ptr->initial_rate_control_thread_handle, sizeof(EbHandle), EB_THREAD, initial_rate_control_kernel, enc_handle_ptr->initial_rate_control_context_ptr);
+    EB_CREATE_THREAD(enc_handle_ptr->initial_rate_control_thread_handle, initial_rate_control_kernel, enc_handle_ptr->initial_rate_control_context_ptr);
 
     // Source Based Oprations
-    EB_MALLOC(EbHandle*, enc_handle_ptr->source_based_operations_thread_handle_array, sizeof(EbHandle) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count, EB_N_PTR);
-
-    for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count; ++processIndex) {
-        EB_CREATETHREAD(EbHandle, enc_handle_ptr->source_based_operations_thread_handle_array[processIndex], sizeof(EbHandle), EB_THREAD, source_based_operations_kernel, enc_handle_ptr->source_based_operations_context_ptr_array[processIndex]);
-    }
+    EB_CREATE_THREAD_ARRAY(enc_handle_ptr->source_based_operations_thread_handle_array, control_set_ptr->source_based_operations_process_init_count,
+        source_based_operations_kernel,
+        enc_handle_ptr->source_based_operations_context_ptr_array);
 
     // Picture Manager
-    EB_CREATETHREAD(EbHandle, enc_handle_ptr->picture_manager_thread_handle, sizeof(EbHandle), EB_THREAD, picture_manager_kernel, enc_handle_ptr->picture_manager_context_ptr);
+    EB_CREATE_THREAD(enc_handle_ptr->picture_manager_thread_handle, picture_manager_kernel, enc_handle_ptr->picture_manager_context_ptr);
 
     // Rate Control
-    EB_CREATETHREAD(EbHandle, enc_handle_ptr->rate_control_thread_handle, sizeof(EbHandle), EB_THREAD, rate_control_kernel, enc_handle_ptr->rate_control_context_ptr);
+    EB_CREATE_THREAD(enc_handle_ptr->rate_control_thread_handle, rate_control_kernel, enc_handle_ptr->rate_control_context_ptr);
 
     // Mode Decision Configuration Process
-    EB_MALLOC(EbHandle*, enc_handle_ptr->mode_decision_configuration_thread_handle_array, sizeof(EbHandle) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->mode_decision_configuration_process_init_count, EB_N_PTR);
+    EB_CREATE_THREAD_ARRAY(enc_handle_ptr->mode_decision_configuration_thread_handle_array, control_set_ptr->mode_decision_configuration_process_init_count,
+        mode_decision_configuration_kernel,
+        enc_handle_ptr->mode_decision_configuration_context_ptr_array);
 
-    for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->mode_decision_configuration_process_init_count; ++processIndex) {
-        EB_CREATETHREAD(EbHandle, enc_handle_ptr->mode_decision_configuration_thread_handle_array[processIndex], sizeof(EbHandle), EB_THREAD, mode_decision_configuration_kernel, enc_handle_ptr->mode_decision_configuration_context_ptr_array[processIndex]);
-    }
 
     // EncDec Process
-    EB_MALLOC(EbHandle*, enc_handle_ptr->enc_dec_thread_handle_array, sizeof(EbHandle) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count, EB_N_PTR);
-
-    for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count; ++processIndex) {
-        EB_CREATETHREAD(EbHandle, enc_handle_ptr->enc_dec_thread_handle_array[processIndex], sizeof(EbHandle), EB_THREAD, enc_dec_kernel, enc_handle_ptr->enc_dec_context_ptr_array[processIndex]);
-    }
+    EB_CREATE_THREAD_ARRAY(enc_handle_ptr->enc_dec_thread_handle_array, control_set_ptr->enc_dec_process_init_count,
+        enc_dec_kernel,
+        enc_handle_ptr->enc_dec_context_ptr_array);
 
     // Dlf Process
-    EB_MALLOC(EbHandle*, enc_handle_ptr->dlf_thread_handle_array, sizeof(EbHandle) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->dlf_process_init_count, EB_N_PTR);
-
-    for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->dlf_process_init_count; ++processIndex) {
-        EB_CREATETHREAD(EbHandle, enc_handle_ptr->dlf_thread_handle_array[processIndex], sizeof(EbHandle), EB_THREAD, dlf_kernel, enc_handle_ptr->dlf_context_ptr_array[processIndex]);
-    }
+    EB_CREATE_THREAD_ARRAY(enc_handle_ptr->dlf_thread_handle_array, control_set_ptr->dlf_process_init_count,
+        dlf_kernel,
+        enc_handle_ptr->dlf_context_ptr_array);
 
     // Cdef Process
-    EB_MALLOC(EbHandle*, enc_handle_ptr->cdef_thread_handle_array, sizeof(EbHandle) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->cdef_process_init_count, EB_N_PTR);
-
-    for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->cdef_process_init_count; ++processIndex) {
-        EB_CREATETHREAD(EbHandle, enc_handle_ptr->cdef_thread_handle_array[processIndex], sizeof(EbHandle), EB_THREAD, cdef_kernel, enc_handle_ptr->cdef_context_ptr_array[processIndex]);
-    }
+    EB_CREATE_THREAD_ARRAY(enc_handle_ptr->cdef_thread_handle_array, control_set_ptr->cdef_process_init_count,
+        cdef_kernel,
+        enc_handle_ptr->cdef_context_ptr_array);
 
     // Rest Process
-    EB_MALLOC(EbHandle*, enc_handle_ptr->rest_thread_handle_array, sizeof(EbHandle) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count, EB_N_PTR);
-
-    for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count; ++processIndex) {
-        EB_CREATETHREAD(EbHandle, enc_handle_ptr->rest_thread_handle_array[processIndex], sizeof(EbHandle), EB_THREAD, rest_kernel, enc_handle_ptr->rest_context_ptr_array[processIndex]);
-    }
+    EB_CREATE_THREAD_ARRAY(enc_handle_ptr->rest_thread_handle_array, control_set_ptr->rest_process_init_count,
+        rest_kernel,
+        enc_handle_ptr->rest_context_ptr_array);
 
     // Entropy Coding Process
-    EB_MALLOC(EbHandle*, enc_handle_ptr->entropy_coding_thread_handle_array, sizeof(EbHandle) * enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->entropy_coding_process_init_count, EB_N_PTR);
-
-    for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->entropy_coding_process_init_count; ++processIndex) {
-        EB_CREATETHREAD(EbHandle, enc_handle_ptr->entropy_coding_thread_handle_array[processIndex], sizeof(EbHandle), EB_THREAD, entropy_coding_kernel, enc_handle_ptr->entropy_coding_context_ptr_array[processIndex]);
-    }
+    EB_CREATE_THREAD_ARRAY(enc_handle_ptr->entropy_coding_thread_handle_array, control_set_ptr->entropy_coding_process_init_count,
+        entropy_coding_kernel,
+        enc_handle_ptr->entropy_coding_context_ptr_array);
 
     // Packetization
-    EB_CREATETHREAD(EbHandle, enc_handle_ptr->packetization_thread_handle, sizeof(EbHandle), EB_THREAD, packetization_kernel, enc_handle_ptr->packetization_context_ptr);
+    EB_CREATE_THREAD(enc_handle_ptr->packetization_thread_handle, packetization_kernel, enc_handle_ptr->packetization_context_ptr);
 
 #if DISPLAY_MEMORY
     EB_MEMORY();
 #endif
+    eb_print_memory_usage();
+
     return return_error;
 }
 
@@ -1812,48 +1787,7 @@ __attribute__((visibility("default")))
 EB_API EbErrorType eb_deinit_encoder(EbComponentType *svt_enc_component){
     if(svt_enc_component == NULL)
         return EB_ErrorBadParameter;
-    EbEncHandle         *enc_handle_ptr = (EbEncHandle*)svt_enc_component->p_component_private;
-    EbErrorType          return_error = EB_ErrorNone;
-
-    if (enc_handle_ptr) {
-        if (memory_map) {
-            // Loop through the ptr table and free all malloc'd pointers per channel
-            EbMemoryMapEntry*    memory_entry = memory_map;
-            if (memory_entry){
-                do {
-                    switch (memory_entry->ptr_type) {
-                        case EB_N_PTR:
-                            free(memory_entry->ptr);
-                            break;
-                        case EB_A_PTR:
-#ifdef _WIN32
-                            _aligned_free(memory_entry->ptr);
-#else
-                            free(memory_entry->ptr);
-#endif
-                            break;
-                        case EB_SEMAPHORE:
-                            eb_destroy_semaphore(memory_entry->ptr);
-                            break;
-                        case EB_THREAD:
-                            eb_destroy_thread(memory_entry->ptr);
-                            break;
-                        case EB_MUTEX:
-                            eb_destroy_mutex(memory_entry->ptr);
-                            break;
-                        default:
-                            return_error = EB_ErrorMax;
-                            break;
-                    }
-                    EbMemoryMapEntry*    tmp_memory_entry = memory_entry;
-                    memory_entry = (EbMemoryMapEntry*)tmp_memory_entry->prev_entry;
-                    if (tmp_memory_entry) free(tmp_memory_entry);
-                } while(memory_entry != enc_handle_ptr->memory_map_init_address && memory_entry);
-                if (enc_handle_ptr->memory_map_init_address) free(enc_handle_ptr->memory_map_init_address);
-            }
-        }
-    }
-    return return_error;
+    return EB_ErrorNone;
 }
 
 EbErrorType eb_svt_enc_init_parameter(
@@ -1878,26 +1812,25 @@ EB_API EbErrorType eb_init_handle(
          return EB_ErrorBadParameter;
 
     *p_handle = (EbComponentType*)malloc(sizeof(EbComponentType));
-    if (*p_handle != (EbComponentType*)NULL) {
-        // Init Component OS objects (threads, semaphores, etc.)
-        // also links the various Component control functions
-        return_error = init_svt_av1_encoder_handle(*p_handle);
-
-        if (return_error == EB_ErrorNone)
-            ((EbComponentType*)(*p_handle))->p_application_private = p_app_data;
-        else if (return_error == EB_ErrorInsufficientResources) {
-            eb_deinit_encoder((EbComponentType*)NULL);
-            *p_handle = (EbComponentType*)NULL;
-        }
-        else
-            return_error = EB_ErrorInvalidComponent;
-    }
-    else {
+    if (*p_handle == (EbComponentType*)NULL) {
         SVT_LOG("Error: Component Struct Malloc Failed\n");
         return_error = EB_ErrorInsufficientResources;
     }
-    return_error = eb_svt_enc_init_parameter(config_ptr);
+    // Init Component OS objects (threads, semaphores, etc.)
+    // also links the various Component control functions
+    return_error = init_svt_av1_encoder_handle(*p_handle);
 
+    if (return_error == EB_ErrorNone) {
+        ((EbComponentType*)(*p_handle))->p_application_private = p_app_data;
+        return_error = eb_svt_enc_init_parameter(config_ptr);
+    }
+    if (return_error != EB_ErrorNone) {
+        eb_deinit_encoder(*p_handle);
+        free(*p_handle);
+        *p_handle = NULL;
+        return return_error;
+    }
+    eb_increase_component_count();
     return return_error;
 }
 
@@ -1908,8 +1841,11 @@ EbErrorType eb_h265_enc_component_de_init(EbComponentType  *svt_enc_component)
 {
     EbErrorType       return_error = EB_ErrorNone;
 
-    if (svt_enc_component->p_component_private)
-        free((EbEncHandle *)svt_enc_component->p_component_private);
+    if (svt_enc_component->p_component_private) {
+        EbEncHandle* handle = (EbEncHandle*)svt_enc_component->p_component_private;
+        EB_DELETE(handle);
+        svt_enc_component->p_component_private = NULL;
+    }
     else
         return_error = EB_ErrorUndefined;
     return return_error;
@@ -1930,6 +1866,7 @@ EB_API EbErrorType eb_deinit_handle(
         return_error = eb_h265_enc_component_de_init(svt_enc_component);
 
         free(svt_enc_component);
+        eb_decrease_component_count();
     }
     else
         return_error = EB_ErrorInvalidComponent;
@@ -2871,13 +2808,15 @@ EB_API EbErrorType eb_svt_enc_set_parameter(
         pEncCompData->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr);
 
     // Initialize the Prediction Structure Group
-    return_error = (EbErrorType)prediction_structure_group_ctor(
+    EB_NO_THROW_NEW(
+        pEncCompData->sequence_control_set_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
+        prediction_structure_group_ctor,
         pEncCompData->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.enc_mode,
-        &pEncCompData->sequence_control_set_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         pEncCompData->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.base_layer_switch_mode);
-
-    if (return_error == EB_ErrorInsufficientResources)
+    if (!pEncCompData->sequence_control_set_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr) {
+        eb_release_mutex(pEncCompData->sequence_control_set_instance_array[instance_index]->config_mutex);
         return EB_ErrorInsufficientResources;
+    }
     // Set the Prediction Structure
     pEncCompData->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->pred_struct_ptr = get_prediction_structure(
         pEncCompData->sequence_control_set_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
@@ -3329,6 +3268,7 @@ EbErrorType init_svt_av1_encoder_handle(
 {
     EbErrorType       return_error = EB_ErrorNone;
     EbComponentType  *svt_enc_component = (EbComponentType*)hComponent;
+    EbEncHandle      *handle;
 
     printf("SVT [version]:\tSVT-AV1 Encoder Lib v%d.%d.%d\n", SVT_VERSION_MAJOR, SVT_VERSION_MINOR, SVT_VERSION_PATCHLEVEL);
 #if ( defined( _MSC_VER ) && (_MSC_VER < 1910) )
@@ -3349,10 +3289,8 @@ EbErrorType init_svt_av1_encoder_handle(
     // Set Component Size & Version
     svt_enc_component->size = sizeof(EbComponentType);
 
-    // Encoder Private Handle Ctor
-    return_error = (EbErrorType)eb_enc_handle_ctor(
-        (EbEncHandle**) &(svt_enc_component->p_component_private),
-        svt_enc_component);
+    EB_NEW(handle, eb_enc_handle_ctor, svt_enc_component);
+    svt_enc_component->p_component_private = handle;
 
     return return_error;
 }
@@ -3386,17 +3324,19 @@ static EbErrorType allocate_frame_buffer(
     if (is16bit && config->compressed_ten_bit_format == 1)
         input_picture_buffer_desc_init_data.split_mode = EB_FALSE;  //do special allocation for 2bit data down below.
     // Enhanced Picture Buffer
-    return_error = eb_picture_buffer_desc_ctor(
-        (EbPtr*) &(inputBuffer->p_buffer),
-        (EbPtr)&input_picture_buffer_desc_init_data);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    if (is16bit && config->compressed_ten_bit_format == 1) {
-        //pack 4 2bit pixels into 1Byte
-        EB_ALLIGN_MALLOC(uint8_t*, ((EbPictureBufferDesc*)(inputBuffer->p_buffer))->buffer_bit_inc_y, sizeof(uint8_t) * (input_picture_buffer_desc_init_data.max_width / 4)*(input_picture_buffer_desc_init_data.max_height), EB_A_PTR);
-        EB_ALLIGN_MALLOC(uint8_t*, ((EbPictureBufferDesc*)(inputBuffer->p_buffer))->buffer_bit_inc_cb, sizeof(uint8_t) * (input_picture_buffer_desc_init_data.max_width / 8)*(input_picture_buffer_desc_init_data.max_height / 2), EB_A_PTR);
-        EB_ALLIGN_MALLOC(uint8_t*, ((EbPictureBufferDesc*)(inputBuffer->p_buffer))->buffer_bit_inc_cr, sizeof(uint8_t) * (input_picture_buffer_desc_init_data.max_width / 8)*(input_picture_buffer_desc_init_data.max_height / 2), EB_A_PTR);
+    {
+        EbPictureBufferDesc* buf;
+        EB_NEW(
+            buf,
+            eb_picture_buffer_desc_ctor,
+            (EbPtr)&input_picture_buffer_desc_init_data);
+        inputBuffer->p_buffer = (uint8_t*)buf;
+        if (is16bit && config->compressed_ten_bit_format == 1) {
+            //pack 4 2bit pixels into 1Byte
+            EB_MALLOC_ALIGNED_ARRAY(buf->buffer_bit_inc_y, (input_picture_buffer_desc_init_data.max_width / 4)*(input_picture_buffer_desc_init_data.max_height));
+            EB_MALLOC_ALIGNED_ARRAY(buf->buffer_bit_inc_cb, (input_picture_buffer_desc_init_data.max_width / 8)*(input_picture_buffer_desc_init_data.max_height / 2));
+            EB_MALLOC_ALIGNED_ARRAY(buf->buffer_bit_inc_cr, (input_picture_buffer_desc_init_data.max_width / 8)*(input_picture_buffer_desc_init_data.max_height / 2));
+        }
     }
 
     return return_error;
@@ -3404,13 +3344,15 @@ static EbErrorType allocate_frame_buffer(
 /**************************************
 * EbBufferHeaderType Constructor
 **************************************/
-EbErrorType EbInputBufferHeaderCtor(
+EbErrorType EbInputBufferHeaderCreator(
     EbPtr *objectDblPtr,
     EbPtr  objectInitDataPtr)
 {
     EbBufferHeaderType* inputBuffer;
     SequenceControlSet        *sequence_control_set_ptr = (SequenceControlSet*)objectInitDataPtr;
-    EB_MALLOC(EbBufferHeaderType*, inputBuffer, sizeof(EbBufferHeaderType), EB_N_PTR);
+
+    *objectDblPtr = NULL;
+    EB_CALLOC(inputBuffer, 1, sizeof(EbBufferHeaderType));
     *objectDblPtr = (EbPtr)inputBuffer;
     // Initialize Header
     inputBuffer->size = sizeof(EbBufferHeaderType);
@@ -3424,10 +3366,22 @@ EbErrorType EbInputBufferHeaderCtor(
     return EB_ErrorNone;
 }
 
+void EbInputBufferHeaderDestoryer(    EbPtr p)
+{
+    EbBufferHeaderType *obj = (EbBufferHeaderType*)p;
+    EbPictureBufferDesc* buf = (EbPictureBufferDesc*)obj->p_buffer;
+    EB_FREE_ALIGNED_ARRAY(buf->buffer_bit_inc_y);
+    EB_FREE_ALIGNED_ARRAY(buf->buffer_bit_inc_cb);
+    EB_FREE_ALIGNED_ARRAY(buf->buffer_bit_inc_cr);
+
+    EB_DELETE(buf);
+    EB_FREE(obj);
+}
+
 /**************************************
 * EbBufferHeaderType Constructor
 **************************************/
-EbErrorType EbOutputBufferHeaderCtor(
+EbErrorType EbOutputBufferHeaderCreator(
     EbPtr *objectDblPtr,
     EbPtr objectInitDataPtr)
 {
@@ -3435,13 +3389,14 @@ EbErrorType EbOutputBufferHeaderCtor(
     uint32_t n_stride = (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(config->source_width * config->source_height));  //TBC
     EbBufferHeaderType* outBufPtr;
 
-    EB_MALLOC(EbBufferHeaderType*, outBufPtr, sizeof(EbBufferHeaderType), EB_N_PTR);
+    *objectDblPtr = NULL;
+    EB_CALLOC(outBufPtr, 1, sizeof(EbBufferHeaderType));
     *objectDblPtr = (EbPtr)outBufPtr;
 
     // Initialize Header
     outBufPtr->size = sizeof(EbBufferHeaderType);
 
-    EB_MALLOC(uint8_t*, outBufPtr->p_buffer, n_stride, EB_N_PTR);
+    EB_MALLOC(outBufPtr->p_buffer, n_stride);
 
     outBufPtr->n_alloc_len = n_stride;
     outBufPtr->p_app_private = NULL;
@@ -3451,10 +3406,17 @@ EbErrorType EbOutputBufferHeaderCtor(
     return EB_ErrorNone;
 }
 
+void EbOutputBufferHeaderDestoryer(    EbPtr p)
+{
+    EbBufferHeaderType* obj = (EbBufferHeaderType*)p;
+    EB_FREE(obj->p_buffer);
+    EB_FREE(obj);
+}
+
 /**************************************
 * EbBufferHeaderType Constructor
 **************************************/
-EbErrorType EbOutputReconBufferHeaderCtor(
+EbErrorType EbOutputReconBufferHeaderCreator(
     EbPtr *objectDblPtr,
     EbPtr  objectInitDataPtr)
 {
@@ -3468,17 +3430,25 @@ EbErrorType EbOutputReconBufferHeaderCtor(
     const uint32_t tenBit = (sequence_control_set_ptr->static_config.encoder_bit_depth > 8);
     const uint32_t frameSize = (luma_size + chroma_size) << tenBit;
 
-    EB_MALLOC(EbBufferHeaderType*, recon_buffer, sizeof(EbBufferHeaderType), EB_N_PTR);
+    *objectDblPtr = NULL;
+    EB_CALLOC(recon_buffer, 1, sizeof(EbBufferHeaderType));
     *objectDblPtr = (EbPtr)recon_buffer;
 
     // Initialize Header
     recon_buffer->size = sizeof(EbBufferHeaderType);
 
     // Assign the variables
-    EB_MALLOC(uint8_t*, recon_buffer->p_buffer, frameSize, EB_N_PTR);
+    EB_MALLOC(recon_buffer->p_buffer, frameSize);
 
     recon_buffer->n_alloc_len = frameSize;
     recon_buffer->p_app_private = NULL;
 
     return EB_ErrorNone;
+}
+
+void EbOutputReconBufferHeaderDestoryer(    EbPtr p)
+{
+    EbBufferHeaderType *obj = (EbBufferHeaderType*)p;
+    EB_FREE(obj->p_buffer);
+    EB_FREE(obj);
 }

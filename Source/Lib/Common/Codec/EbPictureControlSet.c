@@ -45,38 +45,60 @@ static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx,
     rst[2].restoration_unit_size = rst[1].restoration_unit_size;
 }
 
-EbErrorType segmentation_map_ctor(SegmentationNeighborMap **seg_map_dbl_ptr,
+void segmentation_map_dctor(EbPtr p)
+{
+    SegmentationNeighborMap *obj = (SegmentationNeighborMap*)p;
+    EB_FREE_ARRAY(obj->data);
+}
+
+EbErrorType segmentation_map_ctor(SegmentationNeighborMap *seg_neighbor_map,
                                 uint16_t pic_width, uint16_t pic_height){
 
-    SegmentationNeighborMap *seg_neighbor_map;
-    EB_CALLOC(SegmentationNeighborMap*, seg_neighbor_map, 1, sizeof(SegmentationNeighborMap), EB_N_PTR);
-    *seg_map_dbl_ptr = seg_neighbor_map;
     uint32_t num_elements = (pic_width >> MI_SIZE_LOG2) * (pic_height >> MI_SIZE_LOG2);
-    seg_neighbor_map->map_size = num_elements;
-    EB_CALLOC(uint8_t*, seg_neighbor_map->data, num_elements, sizeof(uint8_t), EB_N_PTR);
-    return  EB_ErrorNone;
 
+    seg_neighbor_map->dctor = segmentation_map_dctor;
+
+    seg_neighbor_map->map_size = num_elements;
+    EB_CALLOC_ARRAY(seg_neighbor_map->data, num_elements);
+    return  EB_ErrorNone;
+}
+
+static void me_sb_results_dctor(EbPtr p)
+{
+    MeLcuResults* obj = (MeLcuResults*)p;
+
+    EB_FREE_ARRAY(obj->me_candidate);
+    if (obj->me_mv_array) {
+        EB_FREE_ARRAY(obj->me_mv_array[0]);
+    }
+    EB_FREE_ARRAY(obj->me_mv_array);
+    EB_FREE_ARRAY(obj->me_candidate_array);
+    EB_FREE_ARRAY(obj->total_me_candidate_index);
+
+    EB_FREE_ARRAY(obj->me_nsq_0);
+    EB_FREE_ARRAY(obj->me_nsq_1);
 }
 
 EbErrorType me_sb_results_ctor(
-    MeLcuResults     **objectDblPtr,
+    MeLcuResults      *objectPtr,
     uint32_t           maxNumberOfPusPerLcu,
     uint8_t            mrp_mode,
     uint32_t           maxNumberOfMeCandidatesPerPU){
     uint32_t  puIndex;
-    MeLcuResults *objectPtr;
 
-    EB_MALLOC(MeLcuResults*, objectPtr, sizeof(MeLcuResults), EB_N_PTR);
+    size_t count = ((mrp_mode == 0) ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1);
+    objectPtr->dctor = me_sb_results_dctor;
+    objectPtr->max_number_of_pus_per_lcu = maxNumberOfPusPerLcu;
 
-    *objectDblPtr = objectPtr;
-
-    EB_MALLOC(MeCandidate**, objectPtr->me_candidate, sizeof(MeCandidate*) * maxNumberOfPusPerLcu, EB_N_PTR);
-    EB_MALLOC(MvCandidate**, objectPtr->me_mv_array, sizeof(MvCandidate*) * maxNumberOfPusPerLcu, EB_N_PTR);
+    EB_MALLOC_ARRAY(objectPtr->me_candidate, maxNumberOfPusPerLcu);
+    EB_MALLOC_ARRAY(objectPtr->me_mv_array, maxNumberOfPusPerLcu);
 #if ALIGN_MEM
     objectPtr->meCandidateArray = (MeCandidate_t*)EB_aligned_malloc(sizeof(MeCandidate_t) * maxNumberOfPusPerLcu * maxNumberOfMeCandidatesPerPU, 64);
 #else
-    EB_MALLOC(MeCandidate*, objectPtr->me_candidate_array, sizeof(MeCandidate) * maxNumberOfPusPerLcu * maxNumberOfMeCandidatesPerPU, EB_N_PTR);
+    EB_MALLOC_ARRAY(objectPtr->me_candidate_array, maxNumberOfPusPerLcu * maxNumberOfMeCandidatesPerPU);
 #endif
+    EB_MALLOC_ARRAY(objectPtr->me_mv_array[0], maxNumberOfPusPerLcu * count);
+
     for (puIndex = 0; puIndex < maxNumberOfPusPerLcu; ++puIndex) {
         objectPtr->me_candidate[puIndex] = &objectPtr->me_candidate_array[puIndex * maxNumberOfMeCandidatesPerPU];
 
@@ -90,21 +112,143 @@ EbErrorType me_sb_results_ctor(
         objectPtr->me_candidate[puIndex][0].direction = 0;
         objectPtr->me_candidate[puIndex][1].direction = 1;
         objectPtr->me_candidate[puIndex][2].direction = 2;
-        EB_MALLOC(MvCandidate*, objectPtr->me_mv_array[puIndex], sizeof(MvCandidate) * ((mrp_mode == 0) ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1), EB_N_PTR);
+        objectPtr->me_mv_array[puIndex] = objectPtr->me_mv_array[0] + puIndex * count;
     }
-    EB_MALLOC(uint8_t*, objectPtr->total_me_candidate_index, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
+    EB_MALLOC_ARRAY(objectPtr->total_me_candidate_index, maxNumberOfPusPerLcu);
 
-    EB_MALLOC(uint8_t*, objectPtr->me_nsq_0, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
-    EB_MALLOC(uint8_t*, objectPtr->me_nsq_1, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
+    EB_MALLOC_ARRAY(objectPtr->me_nsq_0, maxNumberOfPusPerLcu);
+    EB_MALLOC_ARRAY(objectPtr->me_nsq_1, maxNumberOfPusPerLcu);
 
     //objectPtr->lcuDistortion = 0;
     return EB_ErrorNone;
 }
+
+void picture_control_set_dctor(EbPtr p)
+{
+    PictureControlSet* obj = (PictureControlSet*)p;
+    uint8_t depth;
+    av1_hash_table_destroy(&obj->hash_table);
+    EB_DELETE(obj->enc_dec_segment_ctrl);
+    EB_DELETE(obj->ep_intra_luma_mode_neighbor_array);
+    EB_DELETE(obj->ep_intra_chroma_mode_neighbor_array);
+    EB_DELETE(obj->ep_mv_neighbor_array);
+    EB_DELETE(obj->ep_skip_flag_neighbor_array);
+    EB_DELETE(obj->ep_mode_type_neighbor_array);
+    EB_DELETE(obj->ep_leaf_depth_neighbor_array);
+    EB_DELETE(obj->ep_luma_recon_neighbor_array);
+    EB_DELETE(obj->ep_cb_recon_neighbor_array);
+    EB_DELETE(obj->ep_cr_recon_neighbor_array);
+    EB_DELETE(obj->ep_luma_dc_sign_level_coeff_neighbor_array);
+    EB_DELETE(obj->ep_cb_dc_sign_level_coeff_neighbor_array);
+    EB_DELETE(obj->ep_cr_dc_sign_level_coeff_neighbor_array);
+    EB_DELETE(obj->mode_type_neighbor_array);
+    EB_DELETE(obj->partition_context_neighbor_array);
+    EB_DELETE(obj->skip_flag_neighbor_array);
+    EB_DELETE(obj->skip_coeff_neighbor_array);
+    EB_DELETE(obj->luma_dc_sign_level_coeff_neighbor_array);
+    EB_DELETE(obj->cr_dc_sign_level_coeff_neighbor_array);
+    EB_DELETE(obj->cb_dc_sign_level_coeff_neighbor_array);
+    EB_DELETE(obj->inter_pred_dir_neighbor_array);
+    EB_DELETE(obj->ref_frame_type_neighbor_array);
+    EB_DELETE(obj->intra_luma_mode_neighbor_array);
+    EB_DELETE(obj->txfm_context_array);
+    EB_DELETE(obj->segmentation_id_pred_array);
+    EB_DELETE(obj->segmentation_neighbor_map);
+    EB_DELETE(obj->ep_luma_recon_neighbor_array16bit);
+    EB_DELETE(obj->ep_cb_recon_neighbor_array16bit);
+    EB_DELETE(obj->ep_cr_recon_neighbor_array16bit);
+    EB_DELETE(obj->interpolation_type_neighbor_array);
+
+    for (depth = 0; depth < NEIGHBOR_ARRAY_TOTAL_COUNT; depth++) {
+        EB_DELETE(obj->md_intra_luma_mode_neighbor_array[depth]);
+        EB_DELETE(obj->md_intra_chroma_mode_neighbor_array[depth]);
+        EB_DELETE(obj->md_mv_neighbor_array[depth]);
+        EB_DELETE(obj->md_skip_flag_neighbor_array[depth]);
+        EB_DELETE(obj->md_mode_type_neighbor_array[depth]);
+        EB_DELETE(obj->md_leaf_depth_neighbor_array[depth]);
+        EB_DELETE(obj->mdleaf_partition_neighbor_array[depth]);
+        EB_DELETE(obj->md_luma_recon_neighbor_array[depth]);
+        EB_DELETE(obj->md_tx_depth_1_luma_recon_neighbor_array[depth]);
+        EB_DELETE(obj->md_cb_recon_neighbor_array[depth]);
+        EB_DELETE(obj->md_cr_recon_neighbor_array[depth]);
+        EB_DELETE(obj->md_skip_coeff_neighbor_array[depth]);
+        EB_DELETE(obj->md_luma_dc_sign_level_coeff_neighbor_array[depth]);
+        EB_DELETE(obj->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth]);
+        EB_DELETE(obj->md_cr_dc_sign_level_coeff_neighbor_array[depth]);
+        EB_DELETE(obj->md_cb_dc_sign_level_coeff_neighbor_array[depth]);
+        EB_DELETE(obj->md_txfm_context_array[depth]);
+        EB_DELETE(obj->md_inter_pred_dir_neighbor_array[depth]);
+        EB_DELETE(obj->md_ref_frame_type_neighbor_array[depth]);
+        EB_DELETE(obj->md_interpolation_type_neighbor_array[depth]);
+    }
+    EB_DELETE_PTR_ARRAY(obj->sb_ptr_array, obj->sb_total_count);
+    EB_DELETE(obj->coeff_est_entropy_coder_ptr);
+    EB_DELETE(obj->bitstream_ptr);
+    EB_DELETE(obj->entropy_coder_ptr);
+    EB_DELETE(obj->recon_picture32bit_ptr);
+    EB_DELETE(obj->recon_picture16bit_ptr);
+    EB_DELETE(obj->recon_picture_ptr);
+    EB_DELETE(obj->film_grain_picture16bit_ptr);
+    EB_DELETE(obj->film_grain_picture_ptr);
+    EB_DELETE(obj->input_frame16bit);
+
+
+    EB_FREE_ARRAY(obj->mse_seg[0]);
+    EB_FREE_ARRAY(obj->mse_seg[1]);
+
+    EB_FREE_ARRAY(obj->src[0]);
+    EB_FREE_ARRAY(obj->ref_coeff[0]);
+    EB_FREE_ARRAY(obj->src[1]);
+    EB_FREE_ARRAY(obj->ref_coeff[1]);
+    EB_FREE_ARRAY(obj->src[2]);
+    EB_FREE_ARRAY(obj->ref_coeff[2]);
+
+    EB_FREE_ARRAY(obj->mi_grid_base);
+    EB_FREE_ARRAY(obj->mip);
+
+    EB_FREE_ARRAY(obj->ec_ctx_array);
+    EB_FREE_ARRAY(obj->rate_est_array);
+
+    EB_FREE_ARRAY(obj->mdc_sb_array);
+    EB_FREE_ARRAY(obj->qp_array);
+    EB_DESTROY_MUTEX(obj->entropy_coding_mutex);
+    EB_DESTROY_MUTEX(obj->intra_mutex);
+    EB_DESTROY_MUTEX(obj->cdef_search_mutex);
+    EB_DESTROY_MUTEX(obj->rest_search_mutex);
+
+}
+
+typedef struct InitData {
+    NeighborArrayUnit **na_unit_dbl_ptr;
+    uint32_t   max_picture_width;
+    uint32_t   max_picture_height;
+    uint32_t   unit_size;
+    uint32_t   granularity_normal;
+    uint32_t   granularity_top_left;
+    uint32_t   type_mask;
+} InitData;
+
+#define DIM(array) (sizeof(array) / sizeof(array[0]))
+EbErrorType create_neighbor_array_units(InitData* data, size_t count)
+{
+    for (size_t i = 0; i < count; i++) {
+        EB_NEW(
+            *data[i].na_unit_dbl_ptr,
+            neighbor_array_unit_ctor,
+            data[i].max_picture_width,
+            data[i].max_picture_height,
+            data[i].unit_size,
+            data[i].granularity_normal,
+            data[i].granularity_top_left,
+            data[i].type_mask);
+    }
+    return EB_ErrorNone;
+}
+
 EbErrorType picture_control_set_ctor(
-    EbPtr *object_dbl_ptr,
+    PictureControlSet *object_ptr,
     EbPtr object_init_data_ptr)
 {
-    PictureControlSet *object_ptr;
     PictureControlSetInitData *initDataPtr = (PictureControlSetInitData*)object_init_data_ptr;
 
     EbPictureBufferDescInitData input_picture_buffer_desc_init_data;
@@ -125,7 +269,7 @@ EbErrorType picture_control_set_ctor(
     const uint16_t subsampling_x = (initDataPtr->color_format == EB_YUV444 ? 1 : 2) - 1;
     const uint16_t subsampling_y = (initDataPtr->color_format >= EB_YUV422 ? 1 : 2) - 1;
 
-    EB_MALLOC(PictureControlSet*, object_ptr, sizeof(PictureControlSet), EB_N_PTR);
+    object_ptr->dctor = picture_control_set_dctor;
 
     // Init Picture Init data
     input_picture_buffer_desc_init_data.max_width = initDataPtr->picture_width;
@@ -154,8 +298,6 @@ EbErrorType picture_control_set_ctor(
 
     coeffBufferDescInitData.split_mode = EB_FALSE;
 
-    *object_dbl_ptr = (EbPtr)object_ptr;
-
     object_ptr->sequence_control_set_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
 
     object_ptr->recon_picture16bit_ptr = (EbPictureBufferDesc *)EB_NULL;
@@ -175,70 +317,67 @@ EbErrorType picture_control_set_ctor(
     coeffBufferDes32bitInitData.split_mode = EB_FALSE;
 
     object_ptr->recon_picture32bit_ptr = (EbPictureBufferDesc *)EB_NULL;
-    return_error = eb_recon_picture_buffer_desc_ctor(
-        (EbPtr*)&(object_ptr->recon_picture32bit_ptr),
+    EB_NEW(
+        object_ptr->recon_picture32bit_ptr,
+        eb_recon_picture_buffer_desc_ctor,
         (EbPtr)&coeffBufferDes32bitInitData);
 
     // Reconstructed Picture Buffer
     if (is16bit) {
-        return_error = eb_recon_picture_buffer_desc_ctor(
-            (EbPtr*) &(object_ptr->recon_picture16bit_ptr),
+        EB_NEW(
+            object_ptr->recon_picture16bit_ptr,
+            eb_recon_picture_buffer_desc_ctor,
             (EbPtr)&coeffBufferDescInitData);
     }
     else
     {
-        return_error = eb_recon_picture_buffer_desc_ctor(
-            (EbPtr*) &(object_ptr->recon_picture_ptr),
+        EB_NEW(
+            object_ptr->recon_picture_ptr,
+            eb_recon_picture_buffer_desc_ctor,
             (EbPtr)&input_picture_buffer_desc_init_data);
     }
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     // Film Grain Picture Buffer
     if (initDataPtr->film_grain_noise_level) {
         if (is16bit) {
-            return_error = eb_recon_picture_buffer_desc_ctor(
-                (EbPtr*) &(object_ptr->film_grain_picture16bit_ptr),
+            EB_NEW(
+                object_ptr->film_grain_picture16bit_ptr,
+                eb_recon_picture_buffer_desc_ctor,
                 (EbPtr)&coeffBufferDescInitData);
         }
         else
         {
-            return_error = eb_recon_picture_buffer_desc_ctor(
-                (EbPtr*) &(object_ptr->film_grain_picture_ptr),
+            EB_NEW(
+                object_ptr->film_grain_picture_ptr,
+                eb_recon_picture_buffer_desc_ctor,
                 (EbPtr)&input_picture_buffer_desc_init_data);
         }
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
     if (is16bit) {
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&(object_ptr->input_frame16bit),
+        EB_NEW(
+            object_ptr->input_frame16bit,
+            eb_picture_buffer_desc_ctor,
             (EbPtr)&coeffBufferDescInitData);
     }
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     // Entropy Coder
-    return_error = entropy_coder_ctor(
-        &object_ptr->entropy_coder_ptr,
+    EB_NEW(
+        object_ptr->entropy_coder_ptr,
+        entropy_coder_ctor,
         SEGMENT_ENTROPY_BUFFER_SIZE);
 
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     // Packetization process Bitstream
-    return_error = bitstream_ctor(
-        &object_ptr->bitstream_ptr,
+    EB_NEW(
+        object_ptr->bitstream_ptr,
+        bitstream_ctor,
         PACKETIZATION_PROCESS_BUFFER_SIZE);
 
     if (return_error == EB_ErrorInsufficientResources)
         return EB_ErrorInsufficientResources;
     // Rate estimation entropy coder
-    return_error = entropy_coder_ctor(
-        &object_ptr->coeff_est_entropy_coder_ptr,
+    EB_NEW(
+        object_ptr->coeff_est_entropy_coder_ptr,
+        entropy_coder_ctor,
         SEGMENT_ENTROPY_BUFFER_SIZE);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     // GOP
     object_ptr->picture_number = 0;
     object_ptr->temporal_layer_index = 0;
@@ -246,7 +385,7 @@ EbErrorType picture_control_set_ctor(
     // SB Array
     object_ptr->sb_max_depth = (uint8_t)initDataPtr->max_depth;
     object_ptr->sb_total_count = pictureLcuWidth * pictureLcuHeight;
-    EB_MALLOC(LargestCodingUnit**, object_ptr->sb_ptr_array, sizeof(LargestCodingUnit*) * object_ptr->sb_total_count, EB_N_PTR);
+    EB_ALLOC_PTR_ARRAY(object_ptr->sb_ptr_array, object_ptr->sb_total_count);
 
     sb_origin_x = 0;
     sb_origin_y = 0;
@@ -256,385 +395,487 @@ EbErrorType picture_control_set_ctor(
     const uint16_t all_sb = picture_sb_w * picture_sb_h;
 
     for (sb_index = 0; sb_index < all_sb; ++sb_index) {
-        return_error = largest_coding_unit_ctor(
-            &(object_ptr->sb_ptr_array[sb_index]),
+        EB_NEW(
+            object_ptr->sb_ptr_array[sb_index],
+            largest_coding_unit_ctor,
             (uint8_t)initDataPtr->sb_size_pix,
             (uint16_t)(sb_origin_x * maxCuSize),
             (uint16_t)(sb_origin_y * maxCuSize),
             (uint16_t)sb_index,
             object_ptr);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
         // Increment the Order in coding order (Raster Scan Order)
         sb_origin_y = (sb_origin_x == picture_sb_w - 1) ? sb_origin_y + 1 : sb_origin_y;
         sb_origin_x = (sb_origin_x == picture_sb_w - 1) ? 0 : sb_origin_x + 1;
     }
 
     if (initDataPtr->cdf_mode == 0) {
-        EB_MALLOC(FRAME_CONTEXT*, object_ptr->ec_ctx_array, sizeof(FRAME_CONTEXT) * all_sb, EB_N_PTR);
-        EB_MALLOC(MdRateEstimationContext*, object_ptr->rate_est_array, sizeof(MdRateEstimationContext) * all_sb, EB_N_PTR);
+        EB_MALLOC_ARRAY(object_ptr->ec_ctx_array, all_sb);
+        EB_MALLOC_ARRAY(object_ptr->rate_est_array, all_sb);
     }
     // Mode Decision Control config
-    EB_MALLOC(MdcLcuData*, object_ptr->mdc_sb_array, object_ptr->sb_total_count * sizeof(MdcLcuData), EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->mdc_sb_array, object_ptr->sb_total_count);
     object_ptr->qp_array_stride = (uint16_t)((initDataPtr->picture_width + MIN_BLOCK_SIZE - 1) / MIN_BLOCK_SIZE);
     object_ptr->qp_array_size = ((initDataPtr->picture_width + MIN_BLOCK_SIZE - 1) / MIN_BLOCK_SIZE) *
         ((initDataPtr->picture_height + MIN_BLOCK_SIZE - 1) / MIN_BLOCK_SIZE);
 
     // Allocate memory for qp array (used by DLF)
-    EB_MALLOC(uint8_t*, object_ptr->qp_array, sizeof(uint8_t) * object_ptr->qp_array_size, EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->qp_array, object_ptr->qp_array_size);
     // Mode Decision Neighbor Arrays
     uint8_t depth;
     for (depth = 0; depth < NEIGHBOR_ARRAY_TOTAL_COUNT; depth++) {
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_intra_luma_mode_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_intra_chroma_mode_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
-            MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
+        InitData data[] = {
+            {
+                &object_ptr->md_intra_luma_mode_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK
+            },
+            {
+                &object_ptr->md_intra_chroma_mode_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
+                MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->md_mv_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(MvUnit),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->md_skip_flag_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->md_mode_type_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->md_leaf_depth_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->mdleaf_partition_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(struct PartitionContext),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->md_luma_recon_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->md_tx_depth_1_luma_recon_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->md_cb_recon_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
+                MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+                sizeof(uint8_t),
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->md_cr_recon_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
+                MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+                sizeof(uint8_t),
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->md_skip_coeff_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // for each 4x4
+            {
+                &object_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // for each 4x4
+            {
+                &object_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // for each 4x4
+            {
+                &object_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // for each 4x4
+            {
+                &object_ptr->md_cb_dc_sign_level_coeff_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->md_txfm_context_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(TXFM_CONTEXT),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->md_inter_pred_dir_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->md_ref_frame_type_neighbor_array[depth],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+        };
+        return_error = create_neighbor_array_units(data, DIM(data));
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_mv_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(MvUnit),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_skip_flag_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_mode_type_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_leaf_depth_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->mdleaf_partition_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(struct PartitionContext),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_luma_recon_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_tx_depth_1_luma_recon_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_cb_recon_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
-            MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
-            sizeof(uint8_t),
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_cr_recon_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
-            MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
-            sizeof(uint8_t),
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_skip_coeff_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        // for each 4x4
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        // for each 4x4
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        // for each 4x4
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        // for each 4x4
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_cb_dc_sign_level_coeff_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_txfm_context_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(TXFM_CONTEXT),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_inter_pred_dir_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->md_ref_frame_type_neighbor_array[depth],
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-        return_error = neighbor_array_unit_ctor32(
-            &object_ptr->md_interpolation_type_neighbor_array[depth],
+        EB_NEW(
+            object_ptr->md_interpolation_type_neighbor_array[depth],
+            neighbor_array_unit_ctor32,
             MAX_PICTURE_WIDTH_SIZE,
             MAX_PICTURE_HEIGHT_SIZE,
             sizeof(uint32_t),
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             PU_NEIGHBOR_ARRAY_GRANULARITY,
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+    }
+    {
+        InitData data[] = {
+            {
+                &object_ptr->ep_intra_luma_mode_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // Encode Pass Neighbor Arrays
+            {
+                &object_ptr->ep_intra_chroma_mode_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
+                MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->ep_mv_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(MvUnit),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->ep_skip_flag_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                CU_NEIGHBOR_ARRAY_GRANULARITY,
+                CU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->ep_mode_type_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->ep_leaf_depth_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->ep_luma_recon_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->ep_cb_recon_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
+                MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+                sizeof(uint8_t),
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->ep_cr_recon_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
+                MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+                sizeof(uint8_t),
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+           // for each 4x4
+            {
+                &object_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // for each 4x4
+            {
+                &object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // for each 4x4
+            {
+                &object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
 
+            // Entropy Coding Neighbor Arrays
+            {
+                &object_ptr->mode_type_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->partition_context_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(struct PartitionContext),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->skip_flag_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->skip_coeff_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // for each 4x4
+            {
+                &object_ptr->luma_dc_sign_level_coeff_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // for each 4x4
+            {
+                &object_ptr->cr_dc_sign_level_coeff_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // for each 4x4
+            {
+                &object_ptr->cb_dc_sign_level_coeff_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->inter_pred_dir_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->ref_frame_type_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->intra_luma_mode_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->txfm_context_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(TXFM_CONTEXT),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            {
+                &object_ptr->segmentation_id_pred_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+        };
+        return_error = create_neighbor_array_units(data, DIM(data));
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
     }
-    // Encode Pass Neighbor Arrays
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_intra_luma_mode_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    // Encode Pass Neighbor Arrays
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_intra_chroma_mode_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
-        MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_mv_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(MvUnit),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_skip_flag_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        CU_NEIGHBOR_ARRAY_GRANULARITY,
-        CU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_mode_type_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_leaf_depth_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_luma_recon_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-        SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_cb_recon_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
-        MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
-        sizeof(uint8_t),
-        SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-        SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_cr_recon_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
-        MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
-        sizeof(uint8_t),
-        SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-        SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     if (is16bit) {
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->ep_luma_recon_neighbor_array16bit,
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint16_t),
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->ep_cb_recon_neighbor_array16bit,
-            MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
-            MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
-            sizeof(uint16_t),
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = neighbor_array_unit_ctor(
-            &object_ptr->ep_cr_recon_neighbor_array16bit,
-            MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
-            MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
-            sizeof(uint16_t),
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
+        InitData data[] = {
+            {
+                &object_ptr->ep_luma_recon_neighbor_array16bit,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint16_t),
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->ep_cb_recon_neighbor_array16bit,
+                MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
+                MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+                sizeof(uint16_t),
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+            {
+                &object_ptr->ep_cr_recon_neighbor_array16bit,
+                MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
+                MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+                sizeof(uint16_t),
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_FULL_MASK,
+            },
+        };
+        return_error = create_neighbor_array_units(data, DIM(data));
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
     }
@@ -643,147 +884,9 @@ EbErrorType picture_control_set_ctor(
         object_ptr->ep_cb_recon_neighbor_array16bit = 0;
         object_ptr->ep_cr_recon_neighbor_array16bit = 0;
     }
-
-    // for each 4x4
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    // for each 4x4
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    // for each 4x4
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-
-    // Entropy Coding Neighbor Arrays
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->mode_type_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->partition_context_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(struct PartitionContext),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->skip_flag_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->skip_coeff_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    // for each 4x4
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->luma_dc_sign_level_coeff_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    // for each 4x4
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->cr_dc_sign_level_coeff_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    // for each 4x4
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->cb_dc_sign_level_coeff_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->inter_pred_dir_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->ref_frame_type_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-    return_error = neighbor_array_unit_ctor32(
-        &object_ptr->interpolation_type_neighbor_array,
+    EB_NEW(
+        object_ptr->interpolation_type_neighbor_array,
+        neighbor_array_unit_ctor32,
         MAX_PICTURE_WIDTH_SIZE,
         MAX_PICTURE_HEIGHT_SIZE,
         sizeof(uint32_t),
@@ -791,49 +894,11 @@ EbErrorType picture_control_set_ctor(
         PU_NEIGHBOR_ARRAY_GRANULARITY,
         NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->intra_luma_mode_neighbor_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(uint8_t),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-
-    return_error = neighbor_array_unit_ctor(
-        &object_ptr->txfm_context_array,
-        MAX_PICTURE_WIDTH_SIZE,
-        MAX_PICTURE_HEIGHT_SIZE,
-        sizeof(TXFM_CONTEXT),
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        PU_NEIGHBOR_ARRAY_GRANULARITY,
-        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     //Segmentation neighbor arrays
-    return_error = segmentation_map_ctor(
-            &object_ptr->segmentation_neighbor_map,
-            initDataPtr->picture_width, initDataPtr->picture_height);
-
-    if (return_error == EB_ErrorInsufficientResources) {
-        return EB_ErrorInsufficientResources;
-    }
-
-    return_error = neighbor_array_unit_ctor(
-            &object_ptr->segmentation_id_pred_array,
-            MAX_PICTURE_WIDTH_SIZE,
-            MAX_PICTURE_HEIGHT_SIZE,
-            sizeof(uint8_t),
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            PU_NEIGHBOR_ARRAY_GRANULARITY,
-            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-    if (return_error == EB_ErrorInsufficientResources) {
-        return EB_ErrorInsufficientResources;
-    }
+    EB_NEW(
+        object_ptr->segmentation_neighbor_map,
+        segmentation_map_ctor,
+        initDataPtr->picture_width, initDataPtr->picture_height);
 
     // Note - non-zero offsets are not supported (to be fixed later in DLF chroma filtering)
     object_ptr->cb_qp_offset = 0;
@@ -850,42 +915,41 @@ EbErrorType picture_control_set_ctor(
     object_ptr->constrained_intra_flag = EB_FALSE;
 
     // Segments
-    return_error = enc_dec_segments_ctor(
-        &object_ptr->enc_dec_segment_ctrl,
+    EB_NEW(
+        object_ptr->enc_dec_segment_ctrl,
+        enc_dec_segments_ctor,
         initDataPtr->enc_dec_segment_col,
         initDataPtr->enc_dec_segment_row);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     // Entropy Rows
-    EB_CREATEMUTEX(EbHandle, object_ptr->entropy_coding_mutex, sizeof(EbHandle), EB_MUTEX);
+    EB_CREATE_MUTEX(object_ptr->entropy_coding_mutex);
 
-    EB_CREATEMUTEX(EbHandle, object_ptr->intra_mutex, sizeof(EbHandle), EB_MUTEX);
+    EB_CREATE_MUTEX(object_ptr->intra_mutex);
 
-    EB_CREATEMUTEX(EbHandle, object_ptr->cdef_search_mutex, sizeof(EbHandle), EB_MUTEX);
+    EB_CREATE_MUTEX(object_ptr->cdef_search_mutex);
 
     //object_ptr->mse_seg[0] = (uint64_t(*)[64])aom_malloc(sizeof(**object_ptr->mse_seg) *  pictureLcuWidth * pictureLcuHeight);
    // object_ptr->mse_seg[1] = (uint64_t(*)[64])aom_malloc(sizeof(**object_ptr->mse_seg) *  pictureLcuWidth * pictureLcuHeight);
 
-    EB_MALLOC(uint64_t(*)[64], object_ptr->mse_seg[0], sizeof(**object_ptr->mse_seg) *  pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
-    EB_MALLOC(uint64_t(*)[64], object_ptr->mse_seg[1], sizeof(**object_ptr->mse_seg) *  pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->mse_seg[0], pictureLcuWidth * pictureLcuHeight);
+    EB_MALLOC_ARRAY(object_ptr->mse_seg[1], pictureLcuWidth * pictureLcuHeight);
 
     if (!is16bit)
     {
-        EB_MALLOC(uint16_t*, object_ptr->src[0],sizeof(object_ptr->src)       * initDataPtr->picture_width * initDataPtr->picture_height,EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->ref_coeff[0],sizeof(object_ptr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height, EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->src[1],sizeof(object_ptr->src)       * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->ref_coeff[1],sizeof(object_ptr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
-        EB_MALLOC(uint16_t*, object_ptr->src[2],sizeof(object_ptr->src)       * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
-        EB_MALLOC(uint16_t*,object_ptr->ref_coeff[2],sizeof(object_ptr->ref_coeff) * initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2, EB_N_PTR);
+        EB_MALLOC_ARRAY(object_ptr->src[0], initDataPtr->picture_width * initDataPtr->picture_height);
+        EB_MALLOC_ARRAY(object_ptr->ref_coeff[0], initDataPtr->picture_width * initDataPtr->picture_height);
+        EB_MALLOC_ARRAY(object_ptr->src[1], initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2);
+        EB_MALLOC_ARRAY(object_ptr->ref_coeff[1],initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2);
+        EB_MALLOC_ARRAY(object_ptr->src[2], initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2);
+        EB_MALLOC_ARRAY(object_ptr->ref_coeff[2], initDataPtr->picture_width * initDataPtr->picture_height * 3 / 2);
     }
 
-    EB_CREATEMUTEX(EbHandle, object_ptr->rest_search_mutex, sizeof(EbHandle), EB_MUTEX);
+    EB_CREATE_MUTEX(object_ptr->rest_search_mutex);
 
     //the granularity is 4x4
 #if INCOMPLETE_SB_FIX
-    EB_MALLOC(ModeInfo**, object_ptr->mi_grid_base, sizeof(ModeInfo*) * all_sb*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2)*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2), EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->mi_grid_base, all_sb*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2)*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2));
 
-    EB_MALLOC(ModeInfo*, object_ptr->mip, sizeof(ModeInfo) *all_sb*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2)*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2), EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->mip, all_sb*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2)*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2));
 
     memset(object_ptr->mip, 0, sizeof(ModeInfo) * all_sb*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2)*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2));
 
@@ -894,9 +958,9 @@ EbErrorType picture_control_set_ctor(
         object_ptr->mi_grid_base[miIdx] = object_ptr->mip + miIdx;
     object_ptr->mi_stride = picture_sb_w * (initDataPtr->sb_size_pix >> MI_SIZE_LOG2);
 #else
-    EB_MALLOC(ModeInfo**, object_ptr->mi_grid_base, sizeof(ModeInfo*) * object_ptr->sb_total_count*(BLOCK_SIZE_64 / 4)*(BLOCK_SIZE_64 / 4), EB_N_PTR);
-
-    EB_MALLOC(ModeInfo*, object_ptr->mip, sizeof(ModeInfo) * object_ptr->sb_total_count*(BLOCK_SIZE_64 / 4)*(BLOCK_SIZE_64 / 4), EB_N_PTR);
+    //the granularity is 4x4
+    EB_MALLOC_ARRAY(object_ptr->mi_grid_base, object_ptr->sb_total_count*(BLOCK_SIZE_64 / 4)*(BLOCK_SIZE_64 / 4));
+    EB_MALLOC_ARRAY(object_ptr->mip, object_ptr->sb_total_count*(BLOCK_SIZE_64 / 4)*(BLOCK_SIZE_64 / 4));
 
     memset(object_ptr->mip, 0, sizeof(ModeInfo) * object_ptr->sb_total_count*(BLOCK_SIZE_64 / 4)*(BLOCK_SIZE_64 / 4));
     // pictureLcuWidth * pictureLcuHeight
@@ -911,11 +975,98 @@ EbErrorType picture_control_set_ctor(
     return EB_ErrorNone;
 }
 
-EbErrorType picture_parent_control_set_ctor(
+EbErrorType picture_control_set_creator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    PictureParentControlSet   *object_ptr;
+    PictureControlSet* obj;
+
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, picture_control_set_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
+
+    return EB_ErrorNone;
+}
+
+static void picture_parent_control_set_dctor(EbPtr p)
+{
+    PictureParentControlSet *obj = (PictureParentControlSet*)p;
+    uint32_t regionInPictureWidthIndex;
+    uint32_t regionInPictureHeightIndex;
+
+    EB_DELETE(obj->denoise_and_model);
+
+    EB_DELETE_PTR_ARRAY(obj->me_results, obj->sb_total_count);
+    if (obj->is_chroma_downsampled_picture_ptr_owner)
+        EB_DELETE(obj->chroma_downsampled_picture_ptr);
+
+    EB_FREE_2D(obj->variance);
+    EB_FREE_2D(obj->y_mean);
+    EB_FREE_2D(obj->cbMean);
+    EB_FREE_2D(obj->crMean);
+
+    if (obj->picture_histogram) {
+        for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < MAX_NUMBER_OF_REGIONS_IN_WIDTH; regionInPictureWidthIndex++) {
+            if (obj->picture_histogram[regionInPictureWidthIndex]) {
+                for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < MAX_NUMBER_OF_REGIONS_IN_HEIGHT; regionInPictureHeightIndex++) {
+                    EB_FREE_2D(obj->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex]);
+                }
+            }
+            EB_FREE_PTR_ARRAY(obj->picture_histogram[regionInPictureWidthIndex], MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
+        }
+        EB_FREE_PTR_ARRAY(obj->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
+    }
+
+    EB_FREE_2D(obj->ois_sb_results);
+    EB_FREE_2D(obj->ois_candicate);
+    EB_FREE_ARRAY(obj->rc_me_distortion);
+    // ME and OIS Distortion Histograms
+    EB_FREE_ARRAY(obj->me_distortion_histogram);
+    EB_FREE_ARRAY(obj->ois_distortion_histogram);
+    EB_FREE_ARRAY(obj->intra_sad_interval_index);
+    EB_FREE_ARRAY(obj->inter_sad_interval_index);
+    // Non moving index array
+    EB_FREE_ARRAY(obj->non_moving_index_array);
+    // SB noise variance array
+    EB_FREE_ARRAY(obj->sb_flat_noise_array);
+    EB_FREE_ARRAY(obj->edge_results_ptr);
+
+    EB_FREE_ARRAY(obj->sharp_edge_sb_flag);
+    EB_FREE_ARRAY(obj->sb_stat_array);
+
+    EB_FREE_ARRAY(obj->complex_sb_array);
+
+    EB_FREE_ARRAY(obj->sb_depth_mode_array);
+
+    {
+        const int32_t num_planes = 3;// av1_num_planes(cm);
+        for (int32_t p = 0; p < num_planes; ++p) {
+            RestorationInfo* ri =obj->av1_cm->rst_info + p;
+            RestorationStripeBoundaries *boundaries = &ri->boundaries;
+            EB_FREE_ARRAY(ri->unit_info);
+            EB_FREE(boundaries->stripe_boundary_above);
+            EB_FREE(boundaries->stripe_boundary_below);
+        }
+    }
+
+    EB_FREE_ARRAY(obj->av1_cm->frame_to_show);
+    EB_FREE_ARRAY(obj->av1_cm->rst_tmpbuf);
+    EB_FREE_ARRAY(obj->av1_cm);
+    EB_FREE_ARRAY(obj->rusi_picture[0]);
+    EB_FREE_ARRAY(obj->rusi_picture[1]);
+    EB_FREE_ARRAY(obj->rusi_picture[2]);
+
+    EB_FREE_ARRAY(obj->av1x);
+
+    EB_DESTROY_MUTEX(obj->rc_distortion_histogram_mutex);
+    EB_DESTROY_SEMAPHORE(obj->temp_filt_done_semaphore);
+    EB_DESTROY_MUTEX(obj->temp_filt_mutex);
+    EB_DESTROY_MUTEX(obj->debug_mutex);
+}
+EbErrorType picture_parent_control_set_ctor(
+    PictureParentControlSet *object_ptr,
+    EbPtr object_init_data_ptr)
+{
     PictureControlSetInitData *initDataPtr = (PictureControlSetInitData*)object_init_data_ptr;
     EbErrorType return_error = EB_ErrorNone;
     const uint16_t pictureLcuWidth = (uint16_t)((initDataPtr->picture_width + initDataPtr->sb_sz - 1) / initDataPtr->sb_sz);
@@ -926,9 +1077,8 @@ EbErrorType picture_parent_control_set_ctor(
     uint32_t regionInPictureWidthIndex;
     uint32_t regionInPictureHeightIndex;
 
-    EB_MALLOC(PictureParentControlSet*, object_ptr, sizeof(PictureParentControlSet), EB_N_PTR);
+    object_ptr->dctor = picture_parent_control_set_dctor;
 
-    *object_dbl_ptr = (EbPtr)object_ptr;
     object_ptr->sequence_control_set_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
     object_ptr->input_picture_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
     object_ptr->reference_picture_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
@@ -946,11 +1096,11 @@ EbErrorType picture_parent_control_set_ctor(
         input_picture_buffer_desc_init_data.bot_padding = initDataPtr->bot_padding;
         input_picture_buffer_desc_init_data.color_format = EB_YUV420; //set to 420 for MD
         input_picture_buffer_desc_init_data.split_mode    = EB_FALSE;
-        return_error = eb_picture_buffer_desc_ctor(
-                (EbPtr*) &(object_ptr->chroma_downsampled_picture_ptr),
-                (EbPtr) &input_picture_buffer_desc_init_data);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+        EB_NEW(
+            object_ptr->chroma_downsampled_picture_ptr,
+            eb_picture_buffer_desc_ctor,
+            (EbPtr) &input_picture_buffer_desc_init_data);
+        object_ptr->is_chroma_downsampled_picture_ptr_owner = EB_TRUE;
     } else if(initDataPtr->color_format == EB_YUV420) {
         object_ptr->chroma_downsampled_picture_ptr = NULL;
     } else
@@ -966,90 +1116,71 @@ EbErrorType picture_parent_control_set_ctor(
 
     object_ptr->data_ll_head_ptr = (EbLinkedListNode *)EB_NULL;
     object_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)EB_NULL;
-    EB_MALLOC(uint16_t**, object_ptr->variance, sizeof(uint16_t*) * object_ptr->sb_total_count, EB_N_PTR);
-    EB_MALLOC(uint8_t**, object_ptr->y_mean, sizeof(uint8_t*) * object_ptr->sb_total_count, EB_N_PTR);
-    EB_MALLOC(uint8_t**, object_ptr->cbMean, sizeof(uint8_t*) * object_ptr->sb_total_count, EB_N_PTR);
-    EB_MALLOC(uint8_t**, object_ptr->crMean, sizeof(uint8_t*) * object_ptr->sb_total_count, EB_N_PTR);
-    for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
-        EB_MALLOC(uint16_t*, object_ptr->variance[sb_index], sizeof(uint16_t) * MAX_ME_PU_COUNT, EB_N_PTR);
-        EB_MALLOC(uint8_t*, object_ptr->y_mean[sb_index], sizeof(uint8_t) * MAX_ME_PU_COUNT, EB_N_PTR);
-        EB_MALLOC(uint8_t*, object_ptr->cbMean[sb_index], sizeof(uint8_t) * 21, EB_N_PTR);
-        EB_MALLOC(uint8_t*, object_ptr->crMean[sb_index], sizeof(uint8_t) * 21, EB_N_PTR);
-    }
-    // Histograms
-    uint32_t videoComponent;
+    EB_MALLOC_2D(object_ptr->variance, object_ptr->sb_total_count, MAX_ME_PU_COUNT);
+    EB_MALLOC_2D(object_ptr->y_mean, object_ptr->sb_total_count, MAX_ME_PU_COUNT);
+    EB_MALLOC_2D(object_ptr->cbMean, object_ptr->sb_total_count, 21);
+    EB_MALLOC_2D(object_ptr->crMean, object_ptr->sb_total_count, 21);
 
-    EB_MALLOC(uint32_t****, object_ptr->picture_histogram, sizeof(uint32_t***) * MAX_NUMBER_OF_REGIONS_IN_WIDTH, EB_N_PTR);
+
+    EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
 
     for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < MAX_NUMBER_OF_REGIONS_IN_WIDTH; regionInPictureWidthIndex++) {  // loop over horizontal regions
-        EB_MALLOC(uint32_t***, object_ptr->picture_histogram[regionInPictureWidthIndex], sizeof(uint32_t**) * MAX_NUMBER_OF_REGIONS_IN_HEIGHT, EB_N_PTR);
-    }
-
-    for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < MAX_NUMBER_OF_REGIONS_IN_WIDTH; regionInPictureWidthIndex++) {  // loop over horizontal regions
-        for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < MAX_NUMBER_OF_REGIONS_IN_HEIGHT; regionInPictureHeightIndex++) { // loop over vertical regions
-            EB_MALLOC(uint32_t**, object_ptr->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex], sizeof(uint32_t*) * 3, EB_N_PTR);
+        EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram[regionInPictureWidthIndex], MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
+        for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < MAX_NUMBER_OF_REGIONS_IN_HEIGHT; regionInPictureHeightIndex++) {
+            EB_MALLOC_2D(object_ptr->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex], 3, HISTOGRAM_NUMBER_OF_BINS);
         }
     }
 
-    for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < MAX_NUMBER_OF_REGIONS_IN_WIDTH; regionInPictureWidthIndex++) {  // loop over horizontal regions
-        for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < MAX_NUMBER_OF_REGIONS_IN_HEIGHT; regionInPictureHeightIndex++) { // loop over vertical regions
-            for (videoComponent = 0; videoComponent < 3; ++videoComponent) {
-                EB_MALLOC(uint32_t*, object_ptr->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][videoComponent], sizeof(uint32_t) * HISTOGRAM_NUMBER_OF_BINS, EB_N_PTR);
-            }
-        }
-    }
-        EB_MALLOC(OisSbResults**, object_ptr->ois_sb_results, sizeof(OisSbResults*) * object_ptr->sb_total_count, EB_N_PTR);
+    EB_MALLOC_2D(object_ptr->ois_sb_results, object_ptr->sb_total_count, 1);
+    EB_MALLOC_2D(object_ptr->ois_candicate, object_ptr->sb_total_count,  MAX_OIS_CANDIDATES * CU_MAX_COUNT);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
-        EB_MALLOC(OisSbResults*, object_ptr->ois_sb_results[sb_index], sizeof(OisSbResults), EB_N_PTR);
-
-        OisCandidate* contigousCand;
-        EB_MALLOC(OisCandidate*, contigousCand, sizeof(OisCandidate) * MAX_OIS_CANDIDATES * CU_MAX_COUNT, EB_N_PTR);
-
         uint32_t cuIdx;
         for (cuIdx = 0; cuIdx < CU_MAX_COUNT; ++cuIdx)
-            object_ptr->ois_sb_results[sb_index]->ois_candidate_array[cuIdx] = &contigousCand[cuIdx*MAX_OIS_CANDIDATES];
+            object_ptr->ois_sb_results[sb_index]->ois_candidate_array[cuIdx] = &object_ptr->ois_candicate[sb_index][cuIdx*MAX_OIS_CANDIDATES];
     }
 
     object_ptr->max_number_of_candidates_per_block = (initDataPtr->mrp_mode == 0) ?
         ME_RES_CAND_MRP_MODE_0 : // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [UniDir = 4 = 3+1]
         ME_RES_CAND_MRP_MODE_1 ; // [BiDir = 1] + [UniDir = 2 = 1 + 1]
-    EB_MALLOC(MeLcuResults**, object_ptr->me_results, sizeof(MeLcuResults*) * object_ptr->sb_total_count, EB_N_PTR);
+
+    EB_ALLOC_PTR_ARRAY(object_ptr->me_results, object_ptr->sb_total_count);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
-        return_error = me_sb_results_ctor(
-            &(object_ptr->me_results[sb_index]),
+        EB_NEW(
+            object_ptr->me_results[sb_index],
+            me_sb_results_ctor,
             (initDataPtr->nsq_present) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT,
             initDataPtr->mrp_mode,
             object_ptr->max_number_of_candidates_per_block);
     }
 
-    EB_MALLOC(uint32_t*, object_ptr->rc_me_distortion, sizeof(uint32_t) * object_ptr->sb_total_count, EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->rc_me_distortion, object_ptr->sb_total_count);
     // ME and OIS Distortion Histograms
-    EB_MALLOC(uint16_t*, object_ptr->me_distortion_histogram, sizeof(uint16_t) * NUMBER_OF_SAD_INTERVALS, EB_N_PTR);
-    EB_MALLOC(uint16_t*, object_ptr->ois_distortion_histogram, sizeof(uint16_t) * NUMBER_OF_INTRA_SAD_INTERVALS, EB_N_PTR);
-    EB_MALLOC(uint32_t*, object_ptr->intra_sad_interval_index, sizeof(uint32_t) * object_ptr->sb_total_count, EB_N_PTR);
-    EB_MALLOC(uint32_t*, object_ptr->inter_sad_interval_index, sizeof(uint32_t) * object_ptr->sb_total_count, EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->me_distortion_histogram, NUMBER_OF_SAD_INTERVALS);
+    EB_MALLOC_ARRAY(object_ptr->ois_distortion_histogram, NUMBER_OF_INTRA_SAD_INTERVALS);
+    EB_MALLOC_ARRAY(object_ptr->intra_sad_interval_index, object_ptr->sb_total_count);
+    EB_MALLOC_ARRAY(object_ptr->inter_sad_interval_index, object_ptr->sb_total_count);
     // Non moving index array
-    EB_MALLOC(uint8_t*, object_ptr->non_moving_index_array, sizeof(uint8_t) * object_ptr->sb_total_count, EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->non_moving_index_array, object_ptr->sb_total_count);
     // SB noise variance array
-    EB_MALLOC(uint8_t*, object_ptr->sb_flat_noise_array, sizeof(uint8_t) * object_ptr->sb_total_count, EB_N_PTR);
-    EB_MALLOC(EdgeLcuResults*, object_ptr->edge_results_ptr, sizeof(EdgeLcuResults) * object_ptr->sb_total_count, EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->sb_flat_noise_array, object_ptr->sb_total_count);
+    EB_MALLOC_ARRAY(object_ptr->edge_results_ptr, object_ptr->sb_total_count);
 
-    EB_MALLOC(uint8_t*, object_ptr->sharp_edge_sb_flag, sizeof(EbBool) * object_ptr->sb_total_count, EB_N_PTR);
-    EB_MALLOC(SbStat*, object_ptr->sb_stat_array, sizeof(SbStat) * object_ptr->sb_total_count, EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->sharp_edge_sb_flag, object_ptr->sb_total_count);
+    EB_MALLOC_ARRAY(object_ptr->sb_stat_array, object_ptr->sb_total_count);
 
-    EB_MALLOC(EbSbComplexityStatus*, object_ptr->complex_sb_array, sizeof(EbSbComplexityStatus) * object_ptr->sb_total_count, EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->complex_sb_array, object_ptr->sb_total_count);
 
-    EB_CREATEMUTEX(EbHandle, object_ptr->rc_distortion_histogram_mutex, sizeof(EbHandle), EB_MUTEX);
+    EB_CREATE_MUTEX(object_ptr->rc_distortion_histogram_mutex);
 
-    EB_MALLOC(EB_SB_DEPTH_MODE*, object_ptr->sb_depth_mode_array, sizeof(EB_SB_DEPTH_MODE) * object_ptr->sb_total_count, EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->sb_depth_mode_array, object_ptr->sb_total_count);
 
-    EB_CREATESEMAPHORE(EbHandle, object_ptr->temp_filt_done_semaphore, sizeof(EbHandle), EB_SEMAPHORE, 0, 1);
-    EB_CREATEMUTEX(EbHandle, object_ptr->temp_filt_mutex, sizeof(EbHandle), EB_MUTEX);
-    EB_CREATEMUTEX(EbHandle, object_ptr->debug_mutex, sizeof(EbHandle), EB_MUTEX);
+    EB_CREATE_SEMAPHORE(object_ptr->temp_filt_done_semaphore, 0, 1);
+    EB_CREATE_MUTEX(object_ptr->temp_filt_mutex);
+    EB_CREATE_MUTEX(object_ptr->debug_mutex);
 
-    EB_MALLOC(Av1Common*, object_ptr->av1_cm, sizeof(Av1Common), EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->av1_cm, 1);
 
     object_ptr->av1_cm->interp_filter = SWITCHABLE;
 
@@ -1057,7 +1188,7 @@ EbErrorType picture_parent_control_set_ctor(
 
     object_ptr->av1_cm->p_pcs_ptr = object_ptr;
 
-    EB_MALLOC(Yv12BufferConfig*, object_ptr->av1_cm->frame_to_show, sizeof(Yv12BufferConfig), EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->av1_cm->frame_to_show, 1);
 
     object_ptr->av1_cm->use_highbitdepth = (initDataPtr->bit_depth > 8 ? 1 : 0);
     object_ptr->av1_cm->bit_depth = initDataPtr->bit_depth;
@@ -1086,19 +1217,11 @@ EbErrorType picture_parent_control_set_ctor(
 
     assert(ntiles[1] <= ntiles[0]);
 
-    EB_MALLOC(RestUnitSearchInfo*, object_ptr->rusi_picture[0], sizeof(RestUnitSearchInfo) * ntiles[0], EB_N_PTR);
-    EB_MALLOC(RestUnitSearchInfo*, object_ptr->rusi_picture[1], sizeof(RestUnitSearchInfo) * ntiles[1], EB_N_PTR);
-    EB_MALLOC(RestUnitSearchInfo*, object_ptr->rusi_picture[2], sizeof(RestUnitSearchInfo) * ntiles[1], EB_N_PTR);
+    EB_CALLOC_ARRAY(object_ptr->rusi_picture[0], ntiles[0]);
+    EB_CALLOC_ARRAY(object_ptr->rusi_picture[1], ntiles[1]);
+    EB_CALLOC_ARRAY(object_ptr->rusi_picture[2], ntiles[1]);
 
-    //object_ptr->rusi_picture[0] = (RestUnitSearchInfo *)malloc(sizeof(RestUnitSearchInfo) * ntiles[0]);
-    //object_ptr->rusi_picture[1] = (RestUnitSearchInfo *)malloc(sizeof(RestUnitSearchInfo) * ntiles[1]);
-    //object_ptr->rusi_picture[2] = (RestUnitSearchInfo *)malloc(sizeof(RestUnitSearchInfo) * ntiles[1]);
-
-    memset(object_ptr->rusi_picture[0], 0, sizeof(RestUnitSearchInfo) * ntiles[0]);
-    memset(object_ptr->rusi_picture[1], 0, sizeof(RestUnitSearchInfo) * ntiles[1]);
-    memset(object_ptr->rusi_picture[2], 0, sizeof(RestUnitSearchInfo) * ntiles[1]);
-
-    EB_MALLOC(Macroblock*, object_ptr->av1x, sizeof(Macroblock), EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->av1x, 1);
 
     // Film grain noise model if film grain is applied
     if (initDataPtr->film_grain_noise_level) {
@@ -1111,12 +1234,22 @@ EbErrorType picture_parent_control_set_ctor(
         fg_init_data.stride_y = initDataPtr->picture_width + initDataPtr->left_padding + initDataPtr->right_padding;
         fg_init_data.stride_cb = fg_init_data.stride_cr = fg_init_data.stride_y >> subsampling_x;
 
-        return_error = denoise_and_model_ctor((EbPtr*)&(object_ptr->denoise_and_model),
+        EB_NEW(object_ptr->denoise_and_model, denoise_and_model_ctor,
             (EbPtr)&fg_init_data);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
     return return_error;
+}
+
+EbErrorType picture_parent_control_set_creator(
+    EbPtr *object_dbl_ptr,
+    EbPtr object_init_data_ptr)
+{
+    PictureParentControlSet* obj;
+
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, picture_parent_control_set_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
+
+    return EB_ErrorNone;
 }

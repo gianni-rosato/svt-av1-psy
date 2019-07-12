@@ -38,24 +38,26 @@
 #define SAMPLE_THRESHOLD_PRECENT_BORDER_LINE      15
 #define SAMPLE_THRESHOLD_PRECENT_TWO_BORDER_LINES 10
 
+static void picture_analysis_context_dctor(EbPtr p)
+{
+    PictureAnalysisContext *obj = (PictureAnalysisContext*)p;
+    EB_DELETE(obj->noise_picture_ptr);
+    EB_DELETE(obj->denoised_picture_ptr);
+}
 /************************************************
 * Picture Analysis Context Constructor
 ************************************************/
 EbErrorType picture_analysis_context_ctor(
+    PictureAnalysisContext *context_ptr,
     EbPictureBufferDescInitData * input_picture_buffer_desc_init_data,
     EbBool                         denoise_flag,
-    PictureAnalysisContext **context_dbl_ptr,
     EbFifo *resource_coordination_results_input_fifo_ptr,
     EbFifo *picture_analysis_results_output_fifo_ptr)
 {
-    PictureAnalysisContext *context_ptr;
-    EB_MALLOC(PictureAnalysisContext*, context_ptr, sizeof(PictureAnalysisContext), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
-
     context_ptr->resource_coordination_results_input_fifo_ptr = resource_coordination_results_input_fifo_ptr;
     context_ptr->picture_analysis_results_output_fifo_ptr = picture_analysis_results_output_fifo_ptr;
 
-    EbErrorType return_error = EB_ErrorNone;
+    context_ptr->dctor = picture_analysis_context_dctor;
 
     if (denoise_flag == EB_TRUE) {
         //denoised
@@ -65,12 +67,11 @@ EbErrorType picture_analysis_context_ctor(
             input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
         } else
             input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG | PICTURE_BUFFER_DESC_Cb_FLAG;
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&(context_ptr->denoised_picture_ptr),
+        EB_NEW(
+            context_ptr->denoised_picture_ptr,
+            eb_picture_buffer_desc_ctor,
             (EbPtr)input_picture_buffer_desc_init_data);
 
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
         if (input_picture_buffer_desc_init_data->color_format != EB_YUV444) {
             context_ptr->denoised_picture_ptr->buffer_cb = context_ptr->denoised_picture_ptr->buffer_y;
             context_ptr->denoised_picture_ptr->buffer_cr = context_ptr->denoised_picture_ptr->buffer_y + context_ptr->denoised_picture_ptr->chroma_size;
@@ -80,12 +81,10 @@ EbErrorType picture_analysis_context_ctor(
         input_picture_buffer_desc_init_data->max_height = BLOCK_SIZE_64;
         input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
 
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&(context_ptr->noise_picture_ptr),
+        EB_NEW(
+            context_ptr->noise_picture_ptr,
+            eb_picture_buffer_desc_ctor,
             (EbPtr)input_picture_buffer_desc_init_data);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
     return EB_ErrorNone;
 }

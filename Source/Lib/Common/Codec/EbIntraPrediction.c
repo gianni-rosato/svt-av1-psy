@@ -1032,20 +1032,23 @@ void intra_mode_angular_av1_z3_16bit(
     return;
 }
 
+void intra_open_loop_reference_samples_dctor(EbPtr p)
+{
+    IntraReferenceSamplesOpenLoop *obj = (IntraReferenceSamplesOpenLoop*)p;
+    obj->y_intra_reference_array_reverse--;
+    EB_FREE(obj->y_intra_reference_array_reverse);
+    EB_FREE(obj->y_intra_reference_array);
+}
 /**********************************************
  * Intra Reference Samples Ctor
  **********************************************/
 EbErrorType intra_open_loop_reference_samples_ctor(
-    IntraReferenceSamplesOpenLoop **context_dbl_ptr)
+    IntraReferenceSamplesOpenLoop *context_ptr)
 {
-    IntraReferenceSamplesOpenLoop *context_ptr;
-    EB_MALLOC(IntraReferenceSamplesOpenLoop*, context_ptr, sizeof(IntraReferenceSamplesOpenLoop), EB_N_PTR);
+    context_ptr->dctor = intra_open_loop_reference_samples_dctor;
+    EB_MALLOC(context_ptr->y_intra_reference_array, (4 * BLOCK_SIZE_64 + 1));
 
-    *context_dbl_ptr = context_ptr;
-
-    EB_MALLOC(uint8_t*, context_ptr->y_intra_reference_array, sizeof(uint8_t) * (4 * BLOCK_SIZE_64 + 1), EB_N_PTR);
-
-    EB_MALLOC(uint8_t*, context_ptr->y_intra_reference_array_reverse, sizeof(uint8_t) * (4 * BLOCK_SIZE_64 + 2), EB_N_PTR);
+    EB_MALLOC(context_ptr->y_intra_reference_array_reverse, (4 * BLOCK_SIZE_64 + 2));
 
     context_ptr->y_intra_reference_array_reverse++;
 

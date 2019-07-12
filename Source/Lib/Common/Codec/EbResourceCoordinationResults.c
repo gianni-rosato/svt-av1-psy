@@ -8,16 +8,24 @@
 #include "EbResourceCoordinationResults.h"
 
 EbErrorType resource_coordination_result_ctor(
+    ResourceCoordinationResults *object_ptr,
+    EbPtr object_init_data_ptr)
+{
+    (void)object_ptr;
+    (void)object_init_data_ptr;
+
+    return EB_ErrorNone;
+}
+
+EbErrorType resource_coordination_result_creator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    ResourceCoordinationResults *object_ptr;
-    EB_MALLOC(ResourceCoordinationResults*, object_ptr, sizeof(ResourceCoordinationResults), EB_N_PTR);
+    ResourceCoordinationResults* obj;
 
-    *object_dbl_ptr = object_ptr;
-
-    object_init_data_ptr = 0;
-    (void)object_init_data_ptr;
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, resource_coordination_result_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
 
     return EB_ErrorNone;
 }

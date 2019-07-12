@@ -78,22 +78,10 @@ extern "C" {
     extern    uint8_t           num_groups;
     extern    EbBool            alternate_groups;
 
-#define EB_CREATETHREAD(type, pointer, n_elements, pointer_class, thread_function, thread_context) \
-    pointer = eb_create_thread(thread_function, thread_context); \
-    if (pointer == (type)EB_NULL) \
-        return EB_ErrorInsufficientResources; \
-    else { \
-        EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry)); \
-        if (node == (EbMemoryMapEntry*)EB_NULL) return EB_ErrorInsufficientResources; \
-        node->ptr_type         = pointer_class; \
-        node->ptr              = (EbPtr)pointer;\
-        node->prev_entry       = (EbPtr)memory_map;   \
-        memory_map             = node;          \
-        (*memory_map_index)++;                  \
-        if (n_elements % 8 == 0) \
-            *total_lib_memory += ((n_elements) + sizeof(EbMemoryMapEntry)); \
-        else \
-            *total_lib_memory += (((n_elements)+(8 - ((n_elements) % 8))) + sizeof(EbMemoryMapEntry)); \
+#define EB_CREATE_THREAD(pointer, thread_function, thread_context) \
+    do { \
+        pointer = eb_create_thread(thread_function, thread_context); \
+        EB_ADD_MEM(pointer, 1, EB_THREAD); \
         if(num_groups == 1) \
             SetThreadAffinityMask(pointer, group_affinity.Mask);\
         else if (num_groups == 2 && alternate_groups){ \
@@ -102,8 +90,7 @@ extern "C" {
         } \
         else if (num_groups == 2 && !alternate_groups) \
             SetThreadGroupAffinity(pointer,&group_affinity,NULL); \
-        lib_thread_count++; \
-    }
+    } while (0)
 
 #elif defined(__linux__)
 #define __USE_GNU
@@ -111,48 +98,43 @@ extern "C" {
 #include <sched.h>
 #include <pthread.h>
 extern    cpu_set_t                   group_affinity;
-#define EB_CREATETHREAD(type, pointer, n_elements, pointer_class, thread_function, thread_context) \
-    pointer = eb_create_thread(thread_function, thread_context); \
-    if (pointer == (type)EB_NULL) { \
-        return EB_ErrorInsufficientResources; \
-    } \
-   else { \
+#define EB_CREATE_THREAD(pointer, thread_function, thread_context) \
+    do { \
+        pointer = eb_create_thread(thread_function, thread_context); \
+        EB_ADD_MEM(pointer, 1, EB_THREAD); \
         pthread_setaffinity_np(*((pthread_t*)pointer),sizeof(cpu_set_t),&group_affinity); \
-        EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry)); \
-        if (node == (EbMemoryMapEntry*)EB_NULL) return EB_ErrorInsufficientResources; \
-        node->ptr_type         = pointer_class; \
-        node->ptr              = (EbPtr)pointer;\
-        node->prev_entry       = (EbPtr)memory_map;   \
-        memory_map             = node;          \
-        (*memory_map_index)++; \
-        if (n_elements % 8 == 0) \
-            *total_lib_memory += ((n_elements) + sizeof(EbMemoryMapEntry)); \
-        else \
-            *total_lib_memory += (((n_elements)+(8 - ((n_elements) % 8))) + sizeof(EbMemoryMapEntry)); \
-        lib_thread_count++; \
-    }
-
+    } while (0)
 #else
-#define EB_CREATETHREAD(type, pointer, n_elements, pointer_class, thread_function, thread_context) \
-    pointer = eb_create_thread(thread_function, thread_context); \
-    if (pointer == (type)EB_NULL) { \
-        return EB_ErrorInsufficientResources; \
-    } \
-   else { \
-        EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry)); \
-        if (node == (EbMemoryMapEntry*)EB_NULL) return EB_ErrorInsufficientResources; \
-        node->ptr_type         = pointer_class; \
-        node->ptr              = (EbPtr)pointer;\
-        node->prev_entry       = (EbPtr)memory_map;   \
-        memory_map             = node;          \
-        (*memory_map_index)++; \
-        if (n_elements % 8 == 0) \
-            *total_lib_memory += ((n_elements) + sizeof(EbMemoryMapEntry)); \
-        else \
-            *total_lib_memory += (((n_elements)+(8 - ((n_elements) % 8))) + sizeof(EbMemoryMapEntry)); \
-        lib_thread_count++; \
-    }
+#define EB_CREATE_THREAD(pointer, thread_function, thread_context) \
+    do { \
+        pointer = eb_create_thread(thread_function, thread_context); \
+        EB_ADD_MEM(pointer, 1, EB_THREAD); \
+    } while (0)
 #endif
+
+#define EB_DESTROY_THREAD(pointer) \
+    do { \
+        eb_destroy_thread(pointer); \
+        EB_REMOVE_MEM_ENTRY(pointer, EB_THREAD); \
+        pointer = NULL; \
+    } while (0);
+
+#define EB_CREATE_THREAD_ARRAY(pa, count, thread_function, thread_contexts) \
+    do { \
+        EB_ALLOC_PTR_ARRAY(pa, count); \
+        for (uint32_t i = 0; i < count; i++) \
+            EB_CREATE_THREAD(pa[i], thread_function, thread_contexts[i]); \
+    } while (0)
+
+#define EB_DESTROY_THREAD_ARRAY(pa, count) \
+    do { \
+        if (pa) { \
+            for (uint32_t i = 0; i < count; i++) \
+                EB_DESTROY_THREAD(pa[i]); \
+            EB_FREE_PTR_ARRAY(pa, count); \
+        } \
+    } while (0)
+
 #ifdef __cplusplus
 }
 #endif

@@ -9,6 +9,8 @@
 #include "EbDefinitions.h"
 #include "EbSyntaxElements.h"
 #include "EbMotionVectorUnit.h"
+#include "EbObject.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,6 +38,7 @@ extern "C" {
 
     typedef struct NeighborArrayUnit
     {
+        EbDctor    dctor;
         uint8_t   *left_array;
         uint8_t   *top_array;
         uint8_t   *top_left_array;
@@ -51,6 +54,7 @@ extern "C" {
 
     typedef struct NeighborArrayUnit32
     {
+        EbDctor    dctor;
         uint32_t   *left_array;
         uint32_t   *top_array;
         uint32_t   *top_left_array;
@@ -65,7 +69,7 @@ extern "C" {
     } NeighborArrayUnit32;
 
     extern EbErrorType neighbor_array_unit_ctor32(
-        NeighborArrayUnit32 **na_unit_dbl_ptr,
+        NeighborArrayUnit32 *na_unit_ptr,
         uint32_t   max_picture_width,
         uint32_t   max_picture_height,
         uint32_t   unit_size,
@@ -74,7 +78,7 @@ extern "C" {
         uint32_t   type_mask);
 
     extern EbErrorType neighbor_array_unit_ctor(
-        NeighborArrayUnit **na_unit_dbl_ptr,
+        NeighborArrayUnit *na_unit_ptr,
         uint32_t   max_picture_width,
         uint32_t   max_picture_height,
         uint32_t   unit_size,

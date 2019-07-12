@@ -17,7 +17,7 @@
 
 #ifndef SVT_AV1_EBSEGMENTATIONPARAMS_H
 #define SVT_AV1_EBSEGMENTATIONPARAMS_H
-
+#include "EbObject.h"
 
 enum {
     SEG_LVL_ALT_Q,       // Use alternate Quantizer
@@ -32,6 +32,7 @@ enum {
 } UENUM1BYTE(SEG_LVL_FEATURES);
 
 typedef struct{
+    EbDctor dctor;
     uint8_t *data;
     uint32_t map_size;
 } SegmentationNeighborMap;
