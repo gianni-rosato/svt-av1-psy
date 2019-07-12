@@ -19,7 +19,7 @@ extern "C" {
         uint32_t area_height,
         uint32_t bytes_per_sample);
 
-    uint64_t spatial_full_distortion_kernel(
+    uint64_t spatial_full_distortion_kernel_c(
         uint8_t *input,
         uint32_t input_stride,
         uint8_t *recon,

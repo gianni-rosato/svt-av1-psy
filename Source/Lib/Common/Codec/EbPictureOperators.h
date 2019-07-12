@@ -414,37 +414,12 @@ extern "C" {
         uint32_t  recon_stride,
         uint32_t  area_width,
         uint32_t  area_height);
-    static EbSpatialFullDistType FUNC_TABLE spatial_full_distortion_kernel_func_ptr_array[ASM_TYPE_TOTAL][6] = {
+
+    static EbSpatialFullDistType FUNC_TABLE spatial_full_distortion_kernel_func_ptr_array[ASM_TYPE_TOTAL] = {
         // NON_AVX2
-        {
-            // 4x4
-            spatial_full_distortion_kernel4x_n_sse2_intrin,
-            // 8xN
-            spatial_full_distortion_kernel8x_n_sse2_intrin,
-            // 16xN
-            spatial_full_distortion_kernel16x_n_sse2_intrin,
-            // 32xN
-            spatial_full_distortion_kernel32x_n_sse2_intrin,
-            // 64xN
-            spatial_full_distortion_kernel64x_n_sse2_intrin,
-            // 128xN
-            spatial_full_distortion_kernel128x_n_sse2_intrin
-        },
+        spatial_full_distortion_kernel_c,
         // ASM_AVX2
-        {
-            // 4x4
-            spatial_full_distortion_kernel4x_n_avx2_intrin,
-            // 8xN
-            spatial_full_distortion_kernel8x_n_avx2_intrin,
-            // 16xN
-            spatial_full_distortion_kernel16x_n_avx2_intrin,
-            // 32xN
-            spatial_full_distortion_kernel32x_n_avx2_intrin,
-            // 64xN
-            spatial_full_distortion_kernel64x_n_avx2_intrin,
-            // 128xN
-            spatial_full_distortion_kernel128x_n_avx2_intrin
-        },
+        spatial_full_distortion_kernel_avx2
     };
 
     void picture_addition_kernel16_bit(
