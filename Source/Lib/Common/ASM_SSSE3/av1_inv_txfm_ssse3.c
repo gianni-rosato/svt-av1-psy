@@ -20,6 +20,10 @@
 
 // TODO(binpengsmail@gmail.com): replace some for loop with do {} while
 
+    // Sqrt2, Sqrt2^2, Sqrt2^3, Sqrt2^4, Sqrt2^5
+static int32_t NewSqrt2list[TX_SIZES] = { 5793, 2 * 4096, 2 * 5793, 4 * 4096,
+                                          4 * 5793 };
+
 static void idct4_new_sse2(const __m128i *input, __m128i *output,
     int8_t cos_bit) {
     (void)cos_bit;

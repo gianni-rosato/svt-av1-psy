@@ -88,8 +88,7 @@ set(release_flags_to_test
     -O3)
 set(debug_flags_to_test
     -g
-    -O0
-    -Og)
+    -O0)
 
 foreach(flag ${flags_to_test};${release_flags_to_test};${debug_flags_to_test})
     string(REGEX REPLACE "[^A-Za-z0-9]" "_" flag_var "${flag}")
