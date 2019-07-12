@@ -547,7 +547,9 @@ void get_proj_subspace_c(const uint8_t *src8, int32_t width, int32_t height,
     }
 }
 
-void encode_xq(int32_t *xq, int32_t *xqd, const SgrParamsType *params) {
+static INLINE void encode_xq(int32_t *xq, int32_t *xqd,
+    const SgrParamsType *params)
+{
     if (params->r[0] == 0) {
         xqd[0] = 0;
         xqd[1] = clamp((1 << SGRPROJ_PRJ_BITS) - xq[1], SGRPROJ_PRJ_MIN1,
@@ -566,10 +568,10 @@ void encode_xq(int32_t *xq, int32_t *xqd, const SgrParamsType *params) {
 }
 
 // Apply the self-guided filter across an entire restoration unit.
-static void apply_sgr(int32_t sgr_params_idx, const uint8_t *dat8, int32_t width,
-    int32_t height, int32_t dat_stride, int32_t use_highbd, int32_t bit_depth,
-    int32_t pu_width, int32_t pu_height, int32_t *flt0, int32_t *flt1,
-    int32_t flt_stride)
+static INLINE void apply_sgr(int32_t sgr_params_idx, const uint8_t *dat8,
+    int32_t width, int32_t height, int32_t dat_stride, int32_t use_highbd,
+    int32_t bit_depth, int32_t pu_width, int32_t pu_height, int32_t *flt0,
+    int32_t *flt1, int32_t flt_stride)
 {
     for (int32_t i = 0; i < height; i += pu_height)
     {
