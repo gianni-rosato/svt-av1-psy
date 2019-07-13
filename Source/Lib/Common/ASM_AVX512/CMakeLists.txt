@@ -17,7 +17,9 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
 link_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/)
 
 set(flags_to_test
-    -mavx2
+    -mavx512bw
+    -mavx512dq
+    -mavx512vl
     -static-intel
     /Qwd10148
     /Qwd10010
@@ -41,7 +43,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
         # Intel Windows (*Note - The Warning level /W0 should be made to /W4 at some point)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W0")
     else()
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -static-intel -w")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
     endif()
 endif()
 
