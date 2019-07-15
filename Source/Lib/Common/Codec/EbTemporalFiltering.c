@@ -671,7 +671,6 @@ void apply_filtering_block(int block_row,
     count_ptr[C_Y] = count[C_Y] + offset_block_buffer_Y;
     count_ptr[C_U] = count[C_U] + offset_block_buffer_U;
     count_ptr[C_V] = count[C_V] + offset_block_buffer_V;
-    asm_type = 0;
 
     TempFilteringType apply_32x32_temp_filter_fn = apply_temp_filtering_32x32_func_ptr_array[asm_type];
 
