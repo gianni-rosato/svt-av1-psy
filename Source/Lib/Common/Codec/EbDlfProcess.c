@@ -23,7 +23,7 @@
 
 #include "EbDeblockingFilter.h"
 
-void av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm, int32_t after_cdef);
+void eb_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm, int32_t after_cdef);
 
 static void dlf_context_dctor(EbPtr p)
 {
@@ -128,17 +128,17 @@ void* dlf_kernel(void *input_ptr)
             else  // non ref pictures
                 recon_buffer = is16bit ? picture_control_set_ptr->recon_picture16bit_ptr : picture_control_set_ptr->recon_picture_ptr;
 
-            av1_loop_filter_init(picture_control_set_ptr);
+            eb_av1_loop_filter_init(picture_control_set_ptr);
 
             if (picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
-                av1_pick_filter_level(
+                eb_av1_pick_filter_level(
                     context_ptr,
                     (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                     picture_control_set_ptr,
                     LPF_PICK_FROM_Q);
             }
 
-            av1_pick_filter_level(
+            eb_av1_pick_filter_level(
                 context_ptr,
                 (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                 picture_control_set_ptr,
@@ -151,7 +151,7 @@ void* dlf_kernel(void *input_ptr)
             picture_control_set_ptr->parent_pcs_ptr->lf.filter_level_u = 0;
             picture_control_set_ptr->parent_pcs_ptr->lf.filter_level_v = 0;
 #endif
-                av1_loop_filter_frame(
+                eb_av1_loop_filter_frame(
                     recon_buffer,
                     picture_control_set_ptr,
                     0,
@@ -180,7 +180,7 @@ void* dlf_kernel(void *input_ptr)
                 cm->frame_to_show);
 
             if (sequence_control_set_ptr->seq_header.enable_restoration)
-                av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
+                eb_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
             if (sequence_control_set_ptr->seq_header.enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode)
             {
                 if (is16bit)

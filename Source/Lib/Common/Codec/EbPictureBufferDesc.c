@@ -289,13 +289,13 @@ void link_eb_to_aom_buffer_desc(
     }
 }
 
-void *aom_memalign(size_t align, size_t size);
-void aom_free(void *memblk);
+void *eb_aom_memalign(size_t align, size_t size);
+void eb_aom_free(void *memblk);
 
 #define yv12_align_addr(addr, align) \
   (void *)(((size_t)(addr) + ((align)-1)) & (size_t) - (align))
 
-int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t height,
+int32_t eb_aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t height,
     int32_t ss_x, int32_t ss_y, int32_t use_highbitdepth,
     int32_t border, int32_t byte_alignment,
     AomCodecFrameBuffer *fb,
@@ -406,8 +406,8 @@ int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t h
         ybf->use_external_refernce_buffers = 0;
 
         //if (use_highbitdepth) {
-        //    if (ybf->y_buffer_8bit) aom_free(ybf->y_buffer_8bit);
-        //    ybf->y_buffer_8bit = (uint8_t *)aom_memalign(32, (size_t)yplane_size);
+        //    if (ybf->y_buffer_8bit) eb_aom_free(ybf->y_buffer_8bit);
+        //    ybf->y_buffer_8bit = (uint8_t *)eb_aom_memalign(32, (size_t)yplane_size);
         //    if (!ybf->y_buffer_8bit) return -1;
         //}
         //else {

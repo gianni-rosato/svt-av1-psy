@@ -201,20 +201,20 @@ static INLINE uint32_t sad_inline_c(const uint8_t *a, int a_stride,
 }
 
 #define sadMxN(m, n)                                                          \
-  uint32_t aom_sad##m##x##n##_c(const uint8_t *src, int src_stride,       \
+  uint32_t eb_aom_sad##m##x##n##_c(const uint8_t *src, int src_stride,       \
                                     const uint8_t *ref, int ref_stride) {     \
     return sad_inline_c(src, src_stride, ref, ref_stride, m, n);              \
   }
 
 // Calculate sad against 4 reference locations and store each in sad_array
 #define sadMxNx4D(m, n)                                                    \
-  void aom_sad##m##x##n##x4d_c(const uint8_t *src, int src_stride,         \
+  void eb_aom_sad##m##x##n##x4d_c(const uint8_t *src, int src_stride,         \
                                const uint8_t *const ref_array[],           \
                                int ref_stride, uint32_t *sad_array) {      \
     int i;                                                                 \
     for (i = 0; i < 4; ++i) {                                              \
       sad_array[i] =                                                       \
-          aom_sad##m##x##n##_c(src, src_stride, ref_array[i], ref_stride); \
+          eb_aom_sad##m##x##n##_c(src, src_stride, ref_array[i], ref_stride); \
     }                                                                      \
   }
 

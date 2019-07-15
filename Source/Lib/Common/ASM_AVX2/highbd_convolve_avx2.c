@@ -20,7 +20,7 @@
  // -----------------------------------------------------------------------------
  // Copy and average
 
-void av1_highbd_convolve_y_sr_avx2(const uint16_t *src, int32_t src_stride,
+void eb_av1_highbd_convolve_y_sr_avx2(const uint16_t *src, int32_t src_stride,
     uint16_t *dst, int32_t dst_stride, int32_t w, int32_t h,
     const InterpFilterParams *filter_params_x,
     const InterpFilterParams *filter_params_y,
@@ -171,7 +171,7 @@ void av1_highbd_convolve_y_sr_avx2(const uint16_t *src, int32_t src_stride,
     }
 }
 
-void av1_highbd_convolve_x_sr_avx2(const uint16_t *src, int32_t src_stride,
+void eb_av1_highbd_convolve_x_sr_avx2(const uint16_t *src, int32_t src_stride,
     uint16_t *dst, int32_t dst_stride, int32_t w, int32_t h,
     const InterpFilterParams *filter_params_x,
     const InterpFilterParams *filter_params_y,

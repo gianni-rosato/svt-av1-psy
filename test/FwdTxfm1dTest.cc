@@ -73,20 +73,20 @@ class AV1FwdTxfm1dTest : public ::testing::TestWithParam<FwdTxfm1dParam> {
 
     void SetUp() override {
         input_test_ = reinterpret_cast<int32_t *>(
-            aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
+            eb_aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
         output_test_ = reinterpret_cast<int32_t *>(
-            aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
+            eb_aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
         input_ref_ = reinterpret_cast<double *>(
-            aom_memalign(32, MAX_TX_SIZE * sizeof(double)));
+            eb_aom_memalign(32, MAX_TX_SIZE * sizeof(double)));
         output_ref_ = reinterpret_cast<double *>(
-            aom_memalign(32, MAX_TX_SIZE * sizeof(double)));
+            eb_aom_memalign(32, MAX_TX_SIZE * sizeof(double)));
     }
 
     void TearDown() override {
-        aom_free(input_test_);
-        aom_free(output_test_);
-        aom_free(input_ref_);
-        aom_free(output_ref_);
+        eb_aom_free(input_test_);
+        eb_aom_free(output_test_);
+        eb_aom_free(input_ref_);
+        eb_aom_free(output_ref_);
         aom_clear_system_state();
     }
 

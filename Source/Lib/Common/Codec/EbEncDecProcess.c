@@ -24,13 +24,13 @@
 #include "EbUtility.h"
 #include "grainSynthesis.h"
 
-void av1_cdef_search(
+void eb_av1_cdef_search(
     EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet            *picture_control_set_ptr
 );
 
-void av1_cdef_frame(
+void eb_av1_cdef_frame(
     EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet            *pCs
@@ -47,13 +47,13 @@ void av1_cdef_frame16bit(
     PictureControlSet            *pCs
 );
 
-void av1_add_film_grain(EbPictureBufferDesc *src,
+void eb_av1_add_film_grain(EbPictureBufferDesc *src,
     EbPictureBufferDesc *dst,
     aom_film_grain_t *film_grain_ptr);
 
-void av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm, int32_t after_cdef);
-void av1_pick_filter_restoration(const Yv12BufferConfig *src, Yv12BufferConfig * trial_frame_rst /*Av1Comp *cpi*/, Macroblock *x, Av1Common *const cm);
-void av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm, int32_t optimized_lr);
+void eb_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm, int32_t after_cdef);
+void eb_av1_pick_filter_restoration(const Yv12BufferConfig *src, Yv12BufferConfig * trial_frame_rst /*Av1Comp *cpi*/, Macroblock *x, Av1Common *const cm);
+void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm, int32_t optimized_lr);
 
 const int16_t encMinDeltaQpWeightTab[MAX_TEMPORAL_LAYERS] = { 100, 100, 100, 100, 100, 100 };
 const int16_t encMaxDeltaQpWeightTab[MAX_TEMPORAL_LAYERS] = { 100, 100, 100, 100, 100, 100 };
@@ -589,7 +589,7 @@ void ReconOutput(
                 else
                     film_grain_ptr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr.film_grain_params;
 
-                av1_add_film_grain(recon_ptr, intermediateBufferPtr, film_grain_ptr);
+                eb_av1_add_film_grain(recon_ptr, intermediateBufferPtr, film_grain_ptr);
                 recon_ptr = intermediateBufferPtr;
             }
 
@@ -1703,7 +1703,7 @@ void* enc_dec_kernel(void *input_ptr)
     return EB_NULL;
 }
 
-void av1_add_film_grain(EbPictureBufferDesc *src,
+void eb_av1_add_film_grain(EbPictureBufferDesc *src,
     EbPictureBufferDesc *dst,
     aom_film_grain_t *film_grain_ptr) {
     uint8_t *luma, *cb, *cr;
@@ -1767,7 +1767,7 @@ void av1_add_film_grain(EbPictureBufferDesc *src,
     width = dst->width;
     height = dst->height;
 
-    av1_add_film_grain_run(&params, luma, cb, cr, height, width, luma_stride,
+    eb_av1_add_film_grain_run(&params, luma, cb, cr, height, width, luma_stride,
         chroma_stride, use_high_bit_depth, chroma_subsamp_y,
         chroma_subsamp_x);
     return;

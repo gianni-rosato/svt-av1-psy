@@ -20,7 +20,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    extern uint64_t av1_cost_coeffs_txb(
+    extern uint64_t eb_av1_cost_coeffs_txb(
         uint8_t                             allow_update_cdf,
         FRAME_CONTEXT                      *ec_ctx,
         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,

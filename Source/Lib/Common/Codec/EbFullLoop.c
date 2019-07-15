@@ -104,7 +104,7 @@ void quantize_b_helper_c_II(const TranLow *coeff_ptr, intptr_t n_coeffs,
     }
     *eob_ptr = (uint16_t)(eob + 1);
 }
-void aom_quantize_b_c_II(const TranLow *coeff_ptr, intptr_t n_coeffs,
+void eb_aom_quantize_b_c_II(const TranLow *coeff_ptr, intptr_t n_coeffs,
     int32_t skip_block, const int16_t *zbin_ptr,
     const int16_t *round_ptr, const int16_t *quant_ptr,
     const int16_t *quant_shift_ptr, TranLow *qcoeff_ptr,
@@ -116,7 +116,7 @@ void aom_quantize_b_c_II(const TranLow *coeff_ptr, intptr_t n_coeffs,
         dequant_ptr, eob_ptr, scan, iscan, NULL, NULL, 0);
 }
 
-void aom_quantize_b_32x32_c_II(const TranLow *coeff_ptr, intptr_t n_coeffs,
+void eb_aom_quantize_b_32x32_c_II(const TranLow *coeff_ptr, intptr_t n_coeffs,
     int32_t skip_block, const int16_t *zbin_ptr,
     const int16_t *round_ptr, const int16_t *quant_ptr,
     const int16_t *quant_shift_ptr,
@@ -128,7 +128,7 @@ void aom_quantize_b_32x32_c_II(const TranLow *coeff_ptr, intptr_t n_coeffs,
         dequant_ptr, eob_ptr, scan, iscan, NULL, NULL, 1);
 }
 
-void aom_quantize_b_64x64_c_II(const TranLow *coeff_ptr, intptr_t n_coeffs,
+void eb_aom_quantize_b_64x64_c_II(const TranLow *coeff_ptr, intptr_t n_coeffs,
     int32_t skip_block, const int16_t *zbin_ptr,
     const int16_t *round_ptr, const int16_t *quant_ptr,
     const int16_t *quant_shift_ptr,
@@ -140,7 +140,7 @@ void aom_quantize_b_64x64_c_II(const TranLow *coeff_ptr, intptr_t n_coeffs,
         dequant_ptr, eob_ptr, scan, iscan, NULL, NULL, 2);
 }
 
-void quantize_b_helper_c(
+void eb_quantize_b_helper_c(
     const TranLow *coeff_ptr,
     int32_t stride,
 #
@@ -230,7 +230,7 @@ void quantize_b_helper_c(
 
     *eob_ptr = (uint16_t)(eob + 1);
 }
-void highbd_quantize_b_helper_c(
+void eb_highbd_quantize_b_helper_c(
     const TranLow *coeff_ptr, intptr_t n_coeffs, int32_t skip_block,
     const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr,
     const int16_t *quant_shift_ptr, TranLow *qcoeff_ptr,
@@ -289,44 +289,44 @@ void highbd_quantize_b_helper_c(
     *eob_ptr = (uint16_t)(eob + 1);
 }
 
-void aom_highbd_quantize_b_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
+void eb_aom_highbd_quantize_b_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
     int32_t skip_block, const int16_t *zbin_ptr,
     const int16_t *round_ptr, const int16_t *quant_ptr,
     const int16_t *quant_shift_ptr,
     TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
     const int16_t *dequant_ptr, uint16_t *eob_ptr,
     const int16_t *scan, const int16_t *iscan) {
-    highbd_quantize_b_helper_c(coeff_ptr, n_coeffs, skip_block, zbin_ptr,
+    eb_highbd_quantize_b_helper_c(coeff_ptr, n_coeffs, skip_block, zbin_ptr,
         round_ptr, quant_ptr, quant_shift_ptr, qcoeff_ptr,
         dqcoeff_ptr, dequant_ptr, eob_ptr, scan, iscan,
         NULL, NULL, 0);
 }
 
-void aom_highbd_quantize_b_32x32_c(
+void eb_aom_highbd_quantize_b_32x32_c(
     const TranLow *coeff_ptr, intptr_t n_coeffs, int32_t skip_block,
     const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr,
     const int16_t *quant_shift_ptr, TranLow *qcoeff_ptr,
     TranLow *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr,
     const int16_t *scan, const int16_t *iscan) {
-    highbd_quantize_b_helper_c(coeff_ptr, n_coeffs, skip_block, zbin_ptr,
+    eb_highbd_quantize_b_helper_c(coeff_ptr, n_coeffs, skip_block, zbin_ptr,
         round_ptr, quant_ptr, quant_shift_ptr, qcoeff_ptr,
         dqcoeff_ptr, dequant_ptr, eob_ptr, scan, iscan,
         NULL, NULL, 1);
 }
 
-void aom_highbd_quantize_b_64x64_c(
+void eb_aom_highbd_quantize_b_64x64_c(
     const TranLow *coeff_ptr, intptr_t n_coeffs, int32_t skip_block,
     const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr,
     const int16_t *quant_shift_ptr, TranLow *qcoeff_ptr,
     TranLow *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr,
     const int16_t *scan, const int16_t *iscan) {
-    highbd_quantize_b_helper_c(coeff_ptr, n_coeffs, skip_block, zbin_ptr,
+    eb_highbd_quantize_b_helper_c(coeff_ptr, n_coeffs, skip_block, zbin_ptr,
         round_ptr, quant_ptr, quant_shift_ptr, qcoeff_ptr,
         dqcoeff_ptr, dequant_ptr, eob_ptr, scan, iscan,
         NULL, NULL, 2);
 }
 
-void av1_highbd_quantize_b_facade(const TranLow *coeff_ptr,
+void eb_av1_highbd_quantize_b_facade(const TranLow *coeff_ptr,
     intptr_t n_coeffs, const MacroblockPlane *p,
     TranLow *qcoeff_ptr,
     TranLow *dqcoeff_ptr, uint16_t *eob_ptr,
@@ -337,7 +337,7 @@ void av1_highbd_quantize_b_facade(const TranLow *coeff_ptr,
     const QmVal *qm_ptr = qparam->qmatrix;
     const QmVal *iqm_ptr = qparam->iqmatrix;
     if (qm_ptr != NULL && iqm_ptr != NULL) {
-        highbd_quantize_b_helper_c(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
+        eb_highbd_quantize_b_helper_c(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
             p->round_QTX, p->quant_QTX, p->quant_shift_QTX,
             qcoeff_ptr, dqcoeff_ptr, p->dequant_QTX, eob_ptr,
             sc->scan, sc->iscan, qm_ptr, iqm_ptr,
@@ -347,26 +347,26 @@ void av1_highbd_quantize_b_facade(const TranLow *coeff_ptr,
         switch (qparam->log_scale) {
         case 0:
             if (LIKELY(n_coeffs >= 8)) {
-                aom_highbd_quantize_b(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
+                eb_aom_highbd_quantize_b(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
                     p->round_QTX, p->quant_QTX, p->quant_shift_QTX,
                     qcoeff_ptr, dqcoeff_ptr, p->dequant_QTX,
                     eob_ptr, sc->scan, sc->iscan);
             }
             else {
-                aom_highbd_quantize_b_c(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
+                eb_aom_highbd_quantize_b_c(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
                     p->round_QTX, p->quant_QTX,
                     p->quant_shift_QTX, qcoeff_ptr, dqcoeff_ptr,
                     p->dequant_QTX, eob_ptr, sc->scan, sc->iscan);
             }
             break;
         case 1:
-            aom_highbd_quantize_b_32x32(
+            eb_aom_highbd_quantize_b_32x32(
                 coeff_ptr, n_coeffs, skip_block, p->zbin_QTX, p->round_QTX,
                 p->quant_QTX, p->quant_shift_QTX, qcoeff_ptr, dqcoeff_ptr,
                 p->dequant_QTX, eob_ptr, sc->scan, sc->iscan);
             break;
         case 2:
-            aom_highbd_quantize_b_64x64(
+            eb_aom_highbd_quantize_b_64x64(
                 coeff_ptr, n_coeffs, skip_block, p->zbin_QTX, p->round_QTX,
                 p->quant_QTX, p->quant_shift_QTX, qcoeff_ptr, dqcoeff_ptr,
                 p->dequant_QTX, eob_ptr, sc->scan, sc->iscan);
@@ -394,7 +394,7 @@ void av1_quantize_b_facade_II(
     const QmVal *qm_ptr = qparam->qmatrix;
     const QmVal *iqm_ptr = qparam->iqmatrix;
     if (qm_ptr != NULL && iqm_ptr != NULL) {
-        quantize_b_helper_c(
+        eb_quantize_b_helper_c(
             coeff_ptr,
             stride,
             width,
@@ -418,7 +418,7 @@ void av1_quantize_b_facade_II(
     else {
         switch (qparam->log_scale) {
         case 0:
-            aom_quantize_b(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
+            eb_aom_quantize_b(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
                 p->round_QTX, p->quant_QTX, p->quant_shift_QTX,
                 qcoeff_ptr, dqcoeff_ptr, p->dequant_QTX, eob_ptr,
                 sc->scan, sc->iscan);
@@ -426,7 +426,7 @@ void av1_quantize_b_facade_II(
             break;
         case 1:
 
-            aom_quantize_b_32x32(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
+            eb_aom_quantize_b_32x32(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
                 p->round_QTX, p->quant_QTX, p->quant_shift_QTX,
                 qcoeff_ptr, dqcoeff_ptr, p->dequant_QTX, eob_ptr,
                 sc->scan, sc->iscan);
@@ -434,7 +434,7 @@ void av1_quantize_b_facade_II(
             break;
         case 2:
 
-            aom_quantize_b_64x64(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
+            eb_aom_quantize_b_64x64(coeff_ptr, n_coeffs, skip_block, p->zbin_QTX,
                 p->round_QTX, p->quant_QTX, p->quant_shift_QTX,
                 qcoeff_ptr, dqcoeff_ptr, p->dequant_QTX, eob_ptr,
                 sc->scan, sc->iscan);
@@ -527,7 +527,7 @@ static void quantize_fp_helper_c(
     *eob_ptr = eob + 1;
 }
 
-void av1_quantize_fp_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
+void eb_av1_quantize_fp_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
     const int16_t *zbin_ptr, const int16_t *round_ptr,
     const int16_t *quant_ptr, const int16_t *quant_shift_ptr,
     TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
@@ -538,7 +538,7 @@ void av1_quantize_fp_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
         eob_ptr, scan, iscan, NULL, NULL, 0);
 }
 
-void av1_quantize_fp_32x32_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
+void eb_av1_quantize_fp_32x32_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
     const int16_t *zbin_ptr, const int16_t *round_ptr,
     const int16_t *quant_ptr, const int16_t *quant_shift_ptr,
     TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
@@ -549,7 +549,7 @@ void av1_quantize_fp_32x32_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
         eob_ptr, scan, iscan, NULL, NULL, 1);
 }
 
-void av1_quantize_fp_64x64_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
+void eb_av1_quantize_fp_64x64_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
     const int16_t *zbin_ptr, const int16_t *round_ptr,
     const int16_t *quant_ptr, const int16_t *quant_shift_ptr,
     TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
@@ -560,7 +560,7 @@ void av1_quantize_fp_64x64_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
         eob_ptr, scan, iscan, NULL, NULL, 2);
 }
 
-void av1_quantize_fp_facade(
+void eb_av1_quantize_fp_facade(
     const TranLow *coeff_ptr,
     intptr_t n_coeffs,
     const MacroblockPlane *p,
@@ -581,19 +581,19 @@ void av1_quantize_fp_facade(
     else {
         switch (qparam->log_scale) {
         case 0:
-            av1_quantize_fp(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+            eb_av1_quantize_fp(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
                 p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
                 dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
                 sc->iscan);
             break;
         case 1:
-            av1_quantize_fp_32x32(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+            eb_av1_quantize_fp_32x32(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
                 p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
                 dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
                 sc->iscan);
             break;
         case 2:
-            av1_quantize_fp_64x64(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
+            eb_av1_quantize_fp_64x64(coeff_ptr, n_coeffs, p->zbin_QTX, p->round_fp_QTX,
                 p->quant_fp_QTX, p->quant_shift_QTX, qcoeff_ptr,
                 dqcoeff_ptr, p->dequant_QTX, eob_ptr, sc->scan,
                 sc->iscan);
@@ -605,7 +605,7 @@ void av1_quantize_fp_facade(
 
 
 // Hsan: code clean up; from static to extern as now used @ more than 1 file
-static const int16_t k_eob_group_start[12] = { 0, 1, 2, 3, 5, 9, 17, 33, 65, 129, 257, 513 };
+static const int16_t eb_k_eob_group_start[12] = { 0, 1, 2, 3, 5, 9, 17, 33, 65, 129, 257, 513 };
 
 static const int8_t eob_to_pos_small[33] = {
     0, 1, 2,                                        // 0-2
@@ -634,7 +634,7 @@ static INLINE int32_t get_eob_pos_token(const int32_t eob, int32_t *const extra)
         t = eob_to_pos_large[e];
     }
 
-    *extra = eob - k_eob_group_start[t];
+    *extra = eob - eb_k_eob_group_start[t];
 
     return t;
 }
@@ -663,7 +663,7 @@ static INLINE TxSize get_txsize_entropy_ctx(TxSize txsize) {
 static INLINE PlaneType get_plane_type(int plane) {
     return (plane == 0) ? PLANE_TYPE_Y : PLANE_TYPE_UV;
 }
-static const int16_t k_eob_offset_bits[12] = { 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+static const int16_t eb_k_eob_offset_bits[12] = { 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 static int32_t get_eob_cost(int32_t eob, const LvMapEobCost *txb_eob_costs,
     const LvMapCoeffCost *txb_costs, TxType tx_type) {
     int32_t eob_extra;
@@ -672,11 +672,11 @@ static int32_t get_eob_cost(int32_t eob, const LvMapEobCost *txb_eob_costs,
     const int32_t eob_multi_ctx = (tx_type_to_class[tx_type] == TX_CLASS_2D) ? 0 : 1;
     eob_cost = txb_eob_costs->eob_cost[eob_multi_ctx][eob_pt - 1];
 
-    if (k_eob_offset_bits[eob_pt] > 0) {
-        const int32_t eob_shift = k_eob_offset_bits[eob_pt] - 1;
+    if (eb_k_eob_offset_bits[eob_pt] > 0) {
+        const int32_t eob_shift = eb_k_eob_offset_bits[eob_pt] - 1;
         const int32_t bit = (eob_extra & (1 << eob_shift)) ? 1 : 0;
         eob_cost += txb_costs->eob_extra_cost[eob_pt][bit];
-        const int32_t offset_bits = k_eob_offset_bits[eob_pt];
+        const int32_t offset_bits = eb_k_eob_offset_bits[eob_pt];
         if (offset_bits > 1) eob_cost += av1_cost_literal(offset_bits - 1);
     }
     return eob_cost;
@@ -725,18 +725,18 @@ static AOM_FORCE_INLINE int get_nz_mag(const uint8_t *const levels,
 // The ctx offset table when TX is TX_CLASS_2D.
 // TX col and row indices are clamped to 4
 
-const int8_t av1_nz_map_ctx_offset_4x4[16] = {
+const int8_t eb_av1_nz_map_ctx_offset_4x4[16] = {
   0, 1, 6, 6, 1, 6, 6, 21, 6, 6, 21, 21, 6, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_8x8[64] = {
+const int8_t eb_av1_nz_map_ctx_offset_8x8[64] = {
   0,  1,  6,  6,  21, 21, 21, 21, 1,  6,  6,  21, 21, 21, 21, 21,
   6,  6,  21, 21, 21, 21, 21, 21, 6,  21, 21, 21, 21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_16x16[256] = {
+const int8_t eb_av1_nz_map_ctx_offset_16x16[256] = {
   0,  1,  6,  6,  21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 1,  6,  6,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 6,  6,  21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 6,  21, 21, 21, 21, 21, 21, 21, 21,
@@ -753,7 +753,7 @@ const int8_t av1_nz_map_ctx_offset_16x16[256] = {
   21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_32x32[1024] = {
+const int8_t eb_av1_nz_map_ctx_offset_32x32[1024] = {
   0,  1,  6,  6,  21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 1,  6,  6,  21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
@@ -810,12 +810,12 @@ const int8_t av1_nz_map_ctx_offset_32x32[1024] = {
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_8x4[32] = {
+const int8_t eb_av1_nz_map_ctx_offset_8x4[32] = {
   0,  16, 6,  6,  21, 21, 21, 21, 16, 16, 6,  21, 21, 21, 21, 21,
   16, 16, 21, 21, 21, 21, 21, 21, 16, 16, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_8x16[128] = {
+const int8_t eb_av1_nz_map_ctx_offset_8x16[128] = {
   0,  11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 6,  6,  21,
   21, 21, 21, 21, 21, 6,  21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
@@ -825,7 +825,7 @@ const int8_t av1_nz_map_ctx_offset_8x16[128] = {
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_16x8[128] = {
+const int8_t eb_av1_nz_map_ctx_offset_16x8[128] = {
   0,  16, 6,  6,  21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 16, 16, 6,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 16, 16, 21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 16, 16, 21, 21, 21, 21, 21, 21, 21,
@@ -835,7 +835,7 @@ const int8_t av1_nz_map_ctx_offset_16x8[128] = {
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_16x32[512] = {
+const int8_t eb_av1_nz_map_ctx_offset_16x32[512] = {
   0,  11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
   11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 6,  6,  21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 6,  21, 21, 21, 21, 21, 21, 21, 21,
@@ -865,7 +865,7 @@ const int8_t av1_nz_map_ctx_offset_16x32[512] = {
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_32x16[512] = {
+const int8_t eb_av1_nz_map_ctx_offset_32x16[512] = {
   0,  16, 6,  6,  21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 16, 16, 6,  21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
@@ -895,7 +895,7 @@ const int8_t av1_nz_map_ctx_offset_32x16[512] = {
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_32x64[1024] = {
+const int8_t eb_av1_nz_map_ctx_offset_32x64[1024] = {
   0,  11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
   11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
   11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
@@ -952,7 +952,7 @@ const int8_t av1_nz_map_ctx_offset_32x64[1024] = {
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_64x32[1024] = {
+const int8_t eb_av1_nz_map_ctx_offset_64x32[1024] = {
   0,  16, 6,  6,  21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 16, 16, 6,  21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
@@ -1009,21 +1009,21 @@ const int8_t av1_nz_map_ctx_offset_64x32[1024] = {
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_4x16[64] = {
+const int8_t eb_av1_nz_map_ctx_offset_4x16[64] = {
   0,  11, 11, 11, 11, 11, 11, 11, 6,  6,  21, 21, 6,  21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_16x4[64] = {
+const int8_t eb_av1_nz_map_ctx_offset_16x4[64] = {
   0,  16, 6,  6,  21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   16, 16, 6,  21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   16, 16, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   16, 16, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_8x32[256] = {
+const int8_t eb_av1_nz_map_ctx_offset_8x32[256] = {
   0,  11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 6,  6,  21,
   21, 21, 21, 21, 21, 6,  21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
@@ -1040,7 +1040,7 @@ const int8_t av1_nz_map_ctx_offset_8x32[256] = {
   21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t av1_nz_map_ctx_offset_32x8[256] = {
+const int8_t eb_av1_nz_map_ctx_offset_32x8[256] = {
   0,  16, 6,  6,  21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 16, 16, 6,  21, 21, 21,
   21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
@@ -1057,26 +1057,26 @@ const int8_t av1_nz_map_ctx_offset_32x8[256] = {
   21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t *av1_nz_map_ctx_offset[19] = {
-  av1_nz_map_ctx_offset_4x4,    // TX_4x4
-  av1_nz_map_ctx_offset_8x8,    // TX_8x8
-  av1_nz_map_ctx_offset_16x16,  // TX_16x16
-  av1_nz_map_ctx_offset_32x32,  // TX_32x32
-  av1_nz_map_ctx_offset_32x32,  // TX_32x32
-  av1_nz_map_ctx_offset_4x16,   // TX_4x8
-  av1_nz_map_ctx_offset_8x4,    // TX_8x4
-  av1_nz_map_ctx_offset_8x32,   // TX_8x16
-  av1_nz_map_ctx_offset_16x8,   // TX_16x8
-  av1_nz_map_ctx_offset_16x32,  // TX_16x32
-  av1_nz_map_ctx_offset_32x16,  // TX_32x16
-  av1_nz_map_ctx_offset_32x64,  // TX_32x64
-  av1_nz_map_ctx_offset_64x32,  // TX_64x32
-  av1_nz_map_ctx_offset_4x16,   // TX_4x16
-  av1_nz_map_ctx_offset_16x4,   // TX_16x4
-  av1_nz_map_ctx_offset_8x32,   // TX_8x32
-  av1_nz_map_ctx_offset_32x8,   // TX_32x8
-  av1_nz_map_ctx_offset_16x32,  // TX_16x64
-  av1_nz_map_ctx_offset_64x32,  // TX_64x16
+const int8_t *eb_av1_nz_map_ctx_offset[19] = {
+  eb_av1_nz_map_ctx_offset_4x4,    // TX_4x4
+  eb_av1_nz_map_ctx_offset_8x8,    // TX_8x8
+  eb_av1_nz_map_ctx_offset_16x16,  // TX_16x16
+  eb_av1_nz_map_ctx_offset_32x32,  // TX_32x32
+  eb_av1_nz_map_ctx_offset_32x32,  // TX_32x32
+  eb_av1_nz_map_ctx_offset_4x16,   // TX_4x8
+  eb_av1_nz_map_ctx_offset_8x4,    // TX_8x4
+  eb_av1_nz_map_ctx_offset_8x32,   // TX_8x16
+  eb_av1_nz_map_ctx_offset_16x8,   // TX_16x8
+  eb_av1_nz_map_ctx_offset_16x32,  // TX_16x32
+  eb_av1_nz_map_ctx_offset_32x16,  // TX_32x16
+  eb_av1_nz_map_ctx_offset_32x64,  // TX_32x64
+  eb_av1_nz_map_ctx_offset_64x32,  // TX_64x32
+  eb_av1_nz_map_ctx_offset_4x16,   // TX_4x16
+  eb_av1_nz_map_ctx_offset_16x4,   // TX_16x4
+  eb_av1_nz_map_ctx_offset_8x32,   // TX_8x32
+  eb_av1_nz_map_ctx_offset_32x8,   // TX_32x8
+  eb_av1_nz_map_ctx_offset_16x32,  // TX_16x64
+  eb_av1_nz_map_ctx_offset_64x32,  // TX_64x16
 };
 
 #define NZ_MAP_CTX_0 SIG_COEF_CONTEXTS_2D
@@ -1102,7 +1102,7 @@ static AOM_FORCE_INLINE int get_nz_map_ctx_from_stats(
     ctx = AOMMIN(ctx, 4);
     switch (tx_class) {
     case TX_CLASS_2D: {
-        // This is the algorithm to generate av1_nz_map_ctx_offset[][]
+        // This is the algorithm to generate eb_av1_nz_map_ctx_offset[][]
         //   const int width = tx_size_wide[tx_size];
         //   const int height = tx_size_high[tx_size];
         //   if (width < height) {
@@ -1113,7 +1113,7 @@ static AOM_FORCE_INLINE int get_nz_map_ctx_from_stats(
         //   if (row + col < 2) return ctx + 1;
         //   if (row + col < 4) return 5 + ctx + 1;
         //   return 21 + ctx;
-        return ctx + av1_nz_map_ctx_offset[tx_size][coeff_idx];
+        return ctx + eb_av1_nz_map_ctx_offset[tx_size][coeff_idx];
     }
     case TX_CLASS_HORIZ: {
         const int row = coeff_idx >> bwl;
@@ -1621,7 +1621,7 @@ static const int plane_rd_mult[REF_TYPES][PLANE_TYPES] = {
   { 16, 10 },
 };
 
-void av1_optimize_b(
+void eb_av1_optimize_b(
     ModeDecisionContext  *md_context,
     int16_t                 txb_skip_context,
     int16_t                 dc_sign_context,
@@ -1684,7 +1684,7 @@ void av1_optimize_b(
     uint8_t levels_buf[TX_PAD_2D];
     uint8_t *const levels = set_levels(levels_buf, width);
 
-    if (*eob > 1) av1_txb_init_levels(qcoeff_ptr, width, height, levels);
+    if (*eob > 1) eb_av1_txb_init_levels(qcoeff_ptr, width, height, levels);
     // TODO(angirbird): check iqmatrix
     const int non_skip_cost = txb_costs->txb_skip_cost[txb_skip_context][0];
     const int skip_cost = txb_costs->txb_skip_cost[txb_skip_context][1];
@@ -1932,7 +1932,7 @@ int32_t av1_quantize_inv_quantize(
     EbBool perform_quantize_fp = picture_control_set_ptr->enc_mode == ENC_M0 ? EB_TRUE: EB_FALSE;
 
     if (perform_rdoq && perform_quantize_fp && !is_inter)
-        av1_quantize_fp_facade(
+        eb_av1_quantize_fp_facade(
             (TranLow*)coeff,
             n_coeffs,
             &candidate_plane,
@@ -1943,7 +1943,7 @@ int32_t av1_quantize_inv_quantize(
             &qparam);
     else
         if (bit_increment)
-            av1_highbd_quantize_b_facade(
+            eb_av1_highbd_quantize_b_facade(
                 (TranLow*)coeff,
                 n_coeffs,
                 &candidate_plane,
@@ -1970,7 +1970,7 @@ int32_t av1_quantize_inv_quantize(
 
         // Perform Trellis
         if (*eob != 0) {
-            av1_optimize_b(
+            eb_av1_optimize_b(
                 md_context,
                 txb_skip_context,
                 dc_sign_context,

@@ -345,7 +345,7 @@ void asmSetConvolveAsmTable(void);
 void asmSetConvolveHbdAsmTable(void);
 void init_intra_dc_predictors_c_internal(void);
 void init_intra_predictors_internal(void);
-void av1_init_me_luts(void);
+void eb_av1_init_me_luts(void);
 
 void SwitchToRealTime(){
 #if defined(__linux__) || defined(__APPLE__)
@@ -910,7 +910,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 
     build_blk_geom(scs_init.sb_size == 128);
 
-    av1_init_me_luts();
+    eb_av1_init_me_luts();
     init_fn_ptr();
 
     /************************************

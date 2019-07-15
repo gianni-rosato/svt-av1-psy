@@ -57,11 +57,11 @@ class AV1SelfguidedFilterTest
         const int NUM_ITERS = 2000;
         int i, j, k;
 
-        uint8_t *input_ = (uint8_t *)aom_memalign(
+        uint8_t *input_ = (uint8_t *)eb_aom_memalign(
             32, stride * (height + 32) * sizeof(uint8_t));
-        uint8_t *output_ = (uint8_t *)aom_memalign(
+        uint8_t *output_ = (uint8_t *)eb_aom_memalign(
             32, out_stride * (height + 32) * sizeof(uint8_t));
-        int32_t *tmpbuf = (int32_t *)aom_memalign(32, RESTORATION_TMPBUF_SIZE);
+        int32_t *tmpbuf = (int32_t *)eb_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
         uint8_t *input = input_ + stride * 16 + 16;
         uint8_t *output = output_ + out_stride * 16 + 16;
 
@@ -92,7 +92,7 @@ class AV1SelfguidedFilterTest
                     int32_t h = AOMMIN(pu_height, height - k);
                     uint8_t *input_p = input + k * stride + j;
                     uint8_t *output_p = output + k * out_stride + j;
-                    apply_selfguided_restoration_c(input_p,
+                    eb_apply_selfguided_restoration_c(input_p,
                                                    w,
                                                    h,
                                                    stride,
@@ -148,9 +148,9 @@ class AV1SelfguidedFilterTest
             << "C time: " << ref_time << " us\n"
             << "SIMD time: " << tst_time << " us\n";
 
-        aom_free(input_);
-        aom_free(output_);
-        aom_free(tmpbuf);
+        eb_aom_free(input_);
+        eb_aom_free(output_);
+        eb_aom_free(tmpbuf);
     }
 
     void RunCorrectnessTest() {
@@ -164,13 +164,13 @@ class AV1SelfguidedFilterTest
         const int NUM_ITERS = 81;
         int i, j, k;
 
-        uint8_t *input_ = (uint8_t *)aom_memalign(
+        uint8_t *input_ = (uint8_t *)eb_aom_memalign(
             32, stride * (max_h + 32) * sizeof(uint8_t));
-        uint8_t *output_ = (uint8_t *)aom_memalign(
+        uint8_t *output_ = (uint8_t *)eb_aom_memalign(
             32, out_stride * (max_h + 32) * sizeof(uint8_t));
-        uint8_t *output2_ = (uint8_t *)aom_memalign(
+        uint8_t *output2_ = (uint8_t *)eb_aom_memalign(
             32, out_stride * (max_h + 32) * sizeof(uint8_t));
-        int32_t *tmpbuf = (int32_t *)aom_memalign(32, RESTORATION_TMPBUF_SIZE);
+        int32_t *tmpbuf = (int32_t *)eb_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
 
         uint8_t *input = input_ + stride * 16 + 16;
         uint8_t *output = output_ + out_stride * 16 + 16;
@@ -212,7 +212,7 @@ class AV1SelfguidedFilterTest
                              tmpbuf,
                              8,
                              0);
-                    apply_selfguided_restoration_c(input_p,
+                    eb_apply_selfguided_restoration_c(input_p,
                                                    w,
                                                    h,
                                                    stride,
@@ -232,10 +232,10 @@ class AV1SelfguidedFilterTest
                 }
         }
 
-        aom_free(input_);
-        aom_free(output_);
-        aom_free(output2_);
-        aom_free(tmpbuf);
+        eb_aom_free(input_);
+        eb_aom_free(output_);
+        eb_aom_free(output2_);
+        eb_aom_free(tmpbuf);
     }
 
   private:
@@ -251,7 +251,7 @@ TEST_P(AV1SelfguidedFilterTest, CorrectnessTest) {
 
 INSTANTIATE_TEST_CASE_P(
     AVX2, AV1SelfguidedFilterTest,
-    ::testing::Values(make_tuple(apply_selfguided_restoration_avx2)));
+    ::testing::Values(make_tuple(eb_apply_selfguided_restoration_avx2)));
 
 // Test parameter list:
 //  <tst_fun_, bit_depth>
@@ -280,11 +280,11 @@ class AV1HighbdSelfguidedFilterTest
         int32_t bit_depth = TEST_GET_PARAM(1);
         int mask = (1 << bit_depth) - 1;
 
-        uint16_t *input_ = (uint16_t *)aom_memalign(
+        uint16_t *input_ = (uint16_t *)eb_aom_memalign(
             32, stride * (height + 32) * sizeof(uint16_t));
-        uint16_t *output_ = (uint16_t *)aom_memalign(
+        uint16_t *output_ = (uint16_t *)eb_aom_memalign(
             32, out_stride * (height + 32) * sizeof(uint16_t));
-        int32_t *tmpbuf = (int32_t *)aom_memalign(32, RESTORATION_TMPBUF_SIZE);
+        int32_t *tmpbuf = (int32_t *)eb_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
         uint16_t *input = input_ + stride * 16 + 16;
         uint16_t *output = output_ + out_stride * 16 + 16;
 
@@ -315,7 +315,7 @@ class AV1HighbdSelfguidedFilterTest
                     int32_t h = AOMMIN(pu_height, height - k);
                     uint16_t *input_p = input + k * stride + j;
                     uint16_t *output_p = output + k * out_stride + j;
-                    apply_selfguided_restoration_c(CONVERT_TO_BYTEPTR(input_p),
+                    eb_apply_selfguided_restoration_c(CONVERT_TO_BYTEPTR(input_p),
                                                    w,
                                                    h,
                                                    stride,
@@ -373,9 +373,9 @@ class AV1HighbdSelfguidedFilterTest
             << "C time: " << ref_time << " us\n"
             << "SIMD time: " << tst_time << " us\n";
 
-        aom_free(input_);
-        aom_free(output_);
-        aom_free(tmpbuf);
+        eb_aom_free(input_);
+        eb_aom_free(output_);
+        eb_aom_free(tmpbuf);
     }
 
     void RunCorrectnessTest() {
@@ -391,13 +391,13 @@ class AV1HighbdSelfguidedFilterTest
         int32_t bit_depth = TEST_GET_PARAM(1);
         int mask = (1 << bit_depth) - 1;
 
-        uint16_t *input_ = (uint16_t *)aom_memalign(
+        uint16_t *input_ = (uint16_t *)eb_aom_memalign(
             32, stride * (max_h + 32) * sizeof(uint16_t));
-        uint16_t *output_ = (uint16_t *)aom_memalign(
+        uint16_t *output_ = (uint16_t *)eb_aom_memalign(
             32, out_stride * (max_h + 32) * sizeof(uint16_t));
-        uint16_t *output2_ = (uint16_t *)aom_memalign(
+        uint16_t *output2_ = (uint16_t *)eb_aom_memalign(
             32, out_stride * (max_h + 32) * sizeof(uint16_t));
-        int32_t *tmpbuf = (int32_t *)aom_memalign(32, RESTORATION_TMPBUF_SIZE);
+        int32_t *tmpbuf = (int32_t *)eb_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
 
         uint16_t *input = input_ + stride * 16 + 16;
         uint16_t *output = output_ + out_stride * 16 + 16;
@@ -439,7 +439,7 @@ class AV1HighbdSelfguidedFilterTest
                              tmpbuf,
                              bit_depth,
                              1);
-                    apply_selfguided_restoration_c(
+                    eb_apply_selfguided_restoration_c(
                         CONVERT_TO_BYTEPTR(input_p),
                         w,
                         h,
@@ -459,10 +459,10 @@ class AV1HighbdSelfguidedFilterTest
                               output2[j * out_stride + k]);
         }
 
-        aom_free(input_);
-        aom_free(output_);
-        aom_free(output2_);
-        aom_free(tmpbuf);
+        eb_aom_free(input_);
+        eb_aom_free(output_);
+        eb_aom_free(output2_);
+        eb_aom_free(tmpbuf);
     }
 
   private:
@@ -479,7 +479,7 @@ TEST_P(AV1HighbdSelfguidedFilterTest, CorrectnessTest) {
 const int32_t highbd_params_avx2[] = {8, 10, 12};
 INSTANTIATE_TEST_CASE_P(
     AVX2, AV1HighbdSelfguidedFilterTest,
-    ::testing::Combine(::testing::Values(apply_selfguided_restoration_avx2),
+    ::testing::Combine(::testing::Values(eb_apply_selfguided_restoration_avx2),
                        ::testing::ValuesIn(highbd_params_avx2)));
 
 #if 0
@@ -569,8 +569,8 @@ TEST(IntegralImagesTest, integral_images) {
     const int32_t buf_elts = ALIGN_POWER_OF_TWO(RESTORATION_PROC_UNIT_PELS, 3);
     int32_t *buf_c, *buf_o;
 
-    buf_c = (int32_t *)aom_memalign(32, sizeof(*buf_c) * 4 * buf_elts);
-    buf_o = (int32_t *)aom_memalign(32, sizeof(*buf_o) * 4 * buf_elts);
+    buf_c = (int32_t *)eb_aom_memalign(32, sizeof(*buf_c) * 4 * buf_elts);
+    buf_o = (int32_t *)eb_aom_memalign(32, sizeof(*buf_o) * 4 * buf_elts);
 
     for (int i = 0; i < 10; i++) {
         init_data_integral_images(&src8, &src16, &src_stride);
@@ -690,8 +690,8 @@ TEST(IntegralImagesTest, integral_images) {
         uninit_data_integral_images(src8, src16);
     }
 
-    aom_free(buf_c);
-    aom_free(buf_o);
+    eb_aom_free(buf_c);
+    eb_aom_free(buf_o);
 }
 
 TEST(IntegralImagesTest, DISABLED_integral_images_speed) {
@@ -708,8 +708,8 @@ TEST(IntegralImagesTest, DISABLED_integral_images_speed) {
     const int32_t buf_elts = ALIGN_POWER_OF_TWO(RESTORATION_PROC_UNIT_PELS, 3);
     int32_t *buf_c, *buf_o;
 
-    buf_c = (int32_t *)aom_memalign(32, sizeof(*buf_c) * 4 * buf_elts);
-    buf_o = (int32_t *)aom_memalign(32, sizeof(*buf_o) * 4 * buf_elts);
+    buf_c = (int32_t *)eb_aom_memalign(32, sizeof(*buf_c) * 4 * buf_elts);
+    buf_o = (int32_t *)eb_aom_memalign(32, sizeof(*buf_o) * 4 * buf_elts);
 
     init_data_integral_images(&src8, &src16, &src_stride);
     const int32_t width = 32;
@@ -859,8 +859,8 @@ TEST(IntegralImagesTest, DISABLED_integral_images_speed) {
            time_c / time_o);
 
     uninit_data_integral_images(src8, src16);
-    aom_free(buf_c);
-    aom_free(buf_o);
+    eb_aom_free(buf_c);
+    eb_aom_free(buf_o);
 }
 #endif
 

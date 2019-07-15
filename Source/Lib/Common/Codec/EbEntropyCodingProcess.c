@@ -24,9 +24,9 @@
 #include "EbCabacContextModel.h"
 #endif
 #define  AV1_MIN_TILE_SIZE_BYTES 1
-void av1_reset_loop_restoration(PictureControlSet     *piCSetPtr);
-void av1_tile_set_col(TileInfo *tile, PictureParentControlSet * pcs_ptr, int col);
-void av1_tile_set_row(TileInfo *tile, PictureParentControlSet * pcs_ptr, int row);
+void eb_av1_reset_loop_restoration(PictureControlSet     *piCSetPtr);
+void eb_av1_tile_set_col(TileInfo *tile, PictureParentControlSet * pcs_ptr, int col);
+void eb_av1_tile_set_row(TileInfo *tile, PictureParentControlSet * pcs_ptr, int row);
 
 /******************************************************
  * Enc Dec Context Constructor
@@ -78,7 +78,7 @@ void av1_get_syntax_rate_from_cdf(
     const AomCdfProb       *cdf,
     const int32_t                *inv_map);
 
-void av1_cost_tokens_from_cdf(int32_t *costs, const AomCdfProb *cdf,
+void eb_av1_cost_tokens_from_cdf(int32_t *costs, const AomCdfProb *cdf,
     const int32_t *inv_map) {
     // int32_t i;
     // AomCdfProb prev_cdf = 0;
@@ -108,18 +108,18 @@ static void build_nmv_component_cost_table(int32_t *mvcost,
     int32_t class0_fp_cost[CLASS0_SIZE][MV_FP_SIZE], fp_cost[MV_FP_SIZE];
     int32_t class0_hp_cost[2], hp_cost[2];
 
-    av1_cost_tokens_from_cdf(sign_cost, mvcomp->sign_cdf, NULL);
-    av1_cost_tokens_from_cdf(class_cost, mvcomp->classes_cdf, NULL);
-    av1_cost_tokens_from_cdf(class0_cost, mvcomp->class0_cdf, NULL);
+    eb_av1_cost_tokens_from_cdf(sign_cost, mvcomp->sign_cdf, NULL);
+    eb_av1_cost_tokens_from_cdf(class_cost, mvcomp->classes_cdf, NULL);
+    eb_av1_cost_tokens_from_cdf(class0_cost, mvcomp->class0_cdf, NULL);
     for (i = 0; i < MV_OFFSET_BITS; ++i)
-        av1_cost_tokens_from_cdf(bits_cost[i], mvcomp->bits_cdf[i], NULL);
+        eb_av1_cost_tokens_from_cdf(bits_cost[i], mvcomp->bits_cdf[i], NULL);
     for (i = 0; i < CLASS0_SIZE; ++i)
-        av1_cost_tokens_from_cdf(class0_fp_cost[i], mvcomp->class0_fp_cdf[i], NULL);
-    av1_cost_tokens_from_cdf(fp_cost, mvcomp->fp_cdf, NULL);
+        eb_av1_cost_tokens_from_cdf(class0_fp_cost[i], mvcomp->class0_fp_cdf[i], NULL);
+    eb_av1_cost_tokens_from_cdf(fp_cost, mvcomp->fp_cdf, NULL);
 
     if (precision > MV_SUBPEL_LOW_PRECISION) {
-        av1_cost_tokens_from_cdf(class0_hp_cost, mvcomp->class0_hp_cdf, NULL);
-        av1_cost_tokens_from_cdf(hp_cost, mvcomp->hp_cdf, NULL);
+        eb_av1_cost_tokens_from_cdf(class0_hp_cost, mvcomp->class0_hp_cdf, NULL);
+        eb_av1_cost_tokens_from_cdf(hp_cost, mvcomp->hp_cdf, NULL);
     }
     mvcost[0] = 0;
     for (v = 1; v <= MV_MAX; ++v) {
@@ -152,10 +152,10 @@ static void build_nmv_component_cost_table(int32_t *mvcost,
         mvcost[-v] = cost + sign_cost[1];
     }
 }
-void av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2],
+void eb_av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2],
     const NmvContext *ctx,
     MvSubpelPrecision precision) {
-    av1_cost_tokens_from_cdf(mvjoint, ctx->joints_cdf, NULL);
+    eb_av1_cost_tokens_from_cdf(mvjoint, ctx->joints_cdf, NULL);
     build_nmv_component_cost_table(mvcost[0], &ctx->comps[0], precision);
     build_nmv_component_cost_table(mvcost[1], &ctx->comps[1], precision);
 }
@@ -198,7 +198,7 @@ static void ResetEntropyCodingPicture(
     if (picture_control_set_ptr->parent_pcs_ptr->allow_intrabc)
         assert(picture_control_set_ptr->parent_pcs_ptr->delta_lf_params.delta_lf_present == 0);
     /*else
-        aom_wb_write_bit(wb, pcs_ptr->delta_lf_params.delta_lf_present);*/
+        eb_aom_wb_write_bit(wb, pcs_ptr->delta_lf_params.delta_lf_present);*/
     if (picture_control_set_ptr->parent_pcs_ptr->delta_lf_params.delta_lf_present) {
         //aom_wb_write_literal(wb, OD_ILOG_NZ(pcs_ptr->delta_lf_params.delta_lf_res) - 1, 2);
         picture_control_set_ptr->parent_pcs_ptr->prev_delta_lf_from_base = 0;
@@ -279,11 +279,11 @@ static void reset_ec_tile(
     if (picture_control_set_ptr->parent_pcs_ptr->allow_intrabc)
         assert(picture_control_set_ptr->parent_pcs_ptr->delta_lf_params.delta_lf_present == 0);
     /*else
-        aom_wb_write_bit(wb, pcs_ptr->delta_lf_params.delta_lf_present);*/
+        eb_aom_wb_write_bit(wb, pcs_ptr->delta_lf_params.delta_lf_present);*/
     if (picture_control_set_ptr->parent_pcs_ptr->delta_lf_params.delta_lf_present) {
         //aom_wb_write_literal(wb, OD_ILOG_NZ(pcs_ptr->delta_lf_params.delta_lf_res) - 1, 2);
         picture_control_set_ptr->parent_pcs_ptr->prev_delta_lf_from_base = 0;
-        //aom_wb_write_bit(wb, pcs_ptr->delta_lf_params.delta_lf_multi);
+        //eb_aom_wb_write_bit(wb, pcs_ptr->delta_lf_params.delta_lf_multi);
         const int32_t frame_lf_count =
             picture_control_set_ptr->parent_pcs_ptr->monochrome == 0 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
         for (int32_t lf_id = 0; lf_id < frame_lf_count; ++lf_id)
@@ -510,7 +510,7 @@ void* entropy_coding_kernel(void *input_ptr)
                     context_ptr->sb_origin_x = sb_origin_x;
                     context_ptr->sb_origin_y = sb_origin_y;
                     if (sb_index == 0)
-                        av1_reset_loop_restoration(picture_control_set_ptr);
+                        eb_av1_reset_loop_restoration(picture_control_set_ptr);
                     // Configure the LCU
                     EntropyCodingConfigureLcu(
                         context_ptr,
@@ -604,7 +604,7 @@ void* entropy_coding_kernel(void *input_ptr)
              for (tile_row = 0; tile_row < tile_rows; tile_row++)
              {
                  TileInfo tile_info;
-                 av1_tile_set_row(&tile_info, ppcs_ptr, tile_row);
+                 eb_av1_tile_set_row(&tile_info, ppcs_ptr, tile_row);
 
                  for (tile_col = 0; tile_col < tile_cols; tile_col++)
                  {
@@ -622,9 +622,9 @@ void* entropy_coding_kernel(void *input_ptr)
                          picture_control_set_ptr,
                          sequence_control_set_ptr);
 
-                     av1_tile_set_col(&tile_info, ppcs_ptr, tile_col);
+                     eb_av1_tile_set_col(&tile_info, ppcs_ptr, tile_col);
 
-                     av1_reset_loop_restoration(picture_control_set_ptr);
+                     eb_av1_reset_loop_restoration(picture_control_set_ptr);
 
                      for (y_lcu_index = cm->tiles_info.tile_row_start_sb[tile_row]; y_lcu_index < (uint32_t)cm->tiles_info.tile_row_start_sb[tile_row + 1]; ++y_lcu_index)
                      {

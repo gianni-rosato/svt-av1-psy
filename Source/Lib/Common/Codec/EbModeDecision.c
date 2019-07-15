@@ -88,7 +88,7 @@ MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) {
 extern uint32_t stage1ModesArray[];
 
 uint8_t GetMaxDrlIndex(uint8_t  refmvCnt, PredictionMode   mode);
-int32_t av1_mv_bit_cost(const MV *mv, const MV *ref, const int32_t *mvjcost,
+int32_t eb_av1_mv_bit_cost(const MV *mv, const MV *ref, const int32_t *mvjcost,
     int32_t *mvcost[2], int32_t weight);
 #define MV_COST_WEIGHT 108
 
@@ -133,7 +133,7 @@ void ChooseBestAv1MvPred(
         mv.row = mv0y;
         mv.col = mv0x;
 
-        uint32_t mvRate = (uint32_t)av1_mv_bit_cost(
+        uint32_t mvRate = (uint32_t)eb_av1_mv_bit_cost(
             &mv,
             &(ref_mv[0].as_mv),
             md_rate_estimation_ptr->nmv_vec_cost,
@@ -144,7 +144,7 @@ void ChooseBestAv1MvPred(
             mv.row = mv1y;
             mv.col = mv1x;
 
-            mvRate += (uint32_t)av1_mv_bit_cost(
+            mvRate += (uint32_t)eb_av1_mv_bit_cost(
                 &mv,
                 &(ref_mv[1].as_mv),
                 md_rate_estimation_ptr->nmv_vec_cost,
@@ -2202,7 +2202,7 @@ void  inject_inter_candidates(
 
     uint32_t mi_row = context_ptr->cu_origin_y >> MI_SIZE_LOG2;
     uint32_t mi_col = context_ptr->cu_origin_x >> MI_SIZE_LOG2;
-    av1_count_overlappable_neighbors(
+    eb_av1_count_overlappable_neighbors(
         picture_control_set_ptr,
         context_ptr->cu_ptr,
         context_ptr->blk_geom->bsize,
@@ -2720,7 +2720,7 @@ void  inject_intra_candidates_ois(
     return;
 }
 
-double av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
+double eb_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
 
 static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize,
     uint8_t *src, int width, int height,
@@ -2740,7 +2740,7 @@ static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize,
     dst->height = height;
     dst->stride = stride;
 }
-void av1_setup_pred_block(BlockSize sb_type,
+void eb_av1_setup_pred_block(BlockSize sb_type,
     struct Buf2D dst[MAX_MB_PLANE],
     const Yv12BufferConfig *src, int mi_row, int mi_col) {
     int i;
@@ -2769,13 +2769,13 @@ static void init_me_luts_bd(int *bit16lut, int *bit4lut, int range,
     // This is to make it easier to resolve the impact of experimental changes
     // to the quantizer tables.
     for (i = 0; i < range; i++) {
-        const double q = av1_convert_qindex_to_q(i, bit_depth);
+        const double q = eb_av1_convert_qindex_to_q(i, bit_depth);
         bit16lut[i] = (int)(0.0418 * q + 2.4107);
         bit4lut[i] = (int)(0.063 * q + 2.742);
     }
 }
 
-void av1_init_me_luts(void) {
+void eb_av1_init_me_luts(void) {
     init_me_luts_bd(sad_per_bit16lut_8, sad_per_bit4lut_8, QINDEX_RANGE,
         AOM_BITS_8);
 }
@@ -2857,7 +2857,7 @@ void  intra_bc_search(
             x->hash_value_buffer[xi][yj] = (uint32_t*)malloc(AOM_BUFFER_SIZE_FOR_BLOCK_HASH * sizeof(uint32_t));
 
     IntMv nearestmv, nearmv;
-    av1_find_best_ref_mvs_from_stack(0, context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack /*mbmi_ext*/, xd, ref_frame, &nearestmv, &nearmv,
+    eb_av1_find_best_ref_mvs_from_stack(0, context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack /*mbmi_ext*/, xd, ref_frame, &nearestmv, &nearmv,
         0);
     if (nearestmv.as_int == INVALID_MV)
         nearestmv.as_int = 0;
@@ -2877,7 +2877,7 @@ void  intra_bc_search(
         pcs->parent_pcs_ptr->enhanced_picture_ptr,
         &cur_buf);
     struct Buf2D yv12_mb[MAX_MB_PLANE];
-    av1_setup_pred_block(bsize, yv12_mb, &cur_buf, mi_row, mi_col);
+    eb_av1_setup_pred_block(bsize, yv12_mb, &cur_buf, mi_row, mi_col);
     for (int i = 0; i < num_planes; ++i)
         x->xdplane[i].pre[0] = yv12_mb[i];  //ref in ME
     //setup src for DV search same as ref
@@ -2922,7 +2922,7 @@ void  intra_bc_search(
         assert_release(x->mv_limits.row_min >= tmp_mv_limits.row_min);
         assert_release(x->mv_limits.row_max <= tmp_mv_limits.row_max);
 
-        av1_set_mv_search_range(&x->mv_limits, &dv_ref.as_mv);
+        eb_av1_set_mv_search_range(&x->mv_limits, &dv_ref.as_mv);
 
         if (x->mv_limits.col_max < x->mv_limits.col_min ||
             x->mv_limits.row_max < x->mv_limits.row_min) {
@@ -2939,7 +2939,7 @@ void  intra_bc_search(
 
 #define INT_VAR_MAX  2147483647    // maximum (signed) int value
 
-        const int bestsme = av1_full_pixel_search(
+        const int bestsme = eb_av1_full_pixel_search(
             pcs, x, bsize, &mvp_full, step_param, 1, 0,
             sadpb, NULL, &dv_ref.as_mv, INT_VAR_MAX, 1,
             (MI_SIZE * mi_col), (MI_SIZE * mi_row), 1);

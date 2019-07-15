@@ -74,9 +74,9 @@ extern "C" {
     struct macroblockd;
     struct AV1LfSyncData;
 
-    void av1_loop_filter_init(PictureControlSet *pcs_ptr);
+    void eb_av1_loop_filter_init(PictureControlSet *pcs_ptr);
 
-    void av1_loop_filter_frame_init(PictureControlSet *pcs_ptr, int32_t plane_start,
+    void eb_av1_loop_filter_frame_init(PictureControlSet *pcs_ptr, int32_t plane_start,
         int32_t plane_end);
 
     void loop_filter_sb(
@@ -87,27 +87,27 @@ extern "C" {
         int32_t plane_start, int32_t plane_end,
         uint8_t LastCol);
 
-    void av1_loop_filter_frame(
+    void eb_av1_loop_filter_frame(
         EbPictureBufferDesc *frame_buffer,//reconpicture,
         //Yv12BufferConfig *frame_buffer,
         PictureControlSet *pcs_ptr,
         /*MacroBlockD *xd,*/ int32_t plane_start, int32_t plane_end/*,
         int32_t partial_frame*/);
 
-    void av1_pick_filter_level(
+    void eb_av1_pick_filter_level(
         DlfContext            *context_ptr,
         EbPictureBufferDesc   *srcBuffer, // source input
         PictureControlSet     *pcs_ptr,
         LpfPickMethod          method);
 
-    void av1_filter_block_plane_vert(
+    void eb_av1_filter_block_plane_vert(
         const PictureControlSet *const  pcs_ptr,
         const MacroBlockD *const xd,
         const int32_t plane,
         const MacroblockdPlane *const plane_ptr,
         const uint32_t mi_row, const uint32_t mi_col);
 
-    void av1_filter_block_plane_horz(
+    void eb_av1_filter_block_plane_horz(
         const PictureControlSet *const  pcs_ptr,
         const MacroBlockD *const xd, const int32_t plane,
         const MacroblockdPlane *const plane_ptr,

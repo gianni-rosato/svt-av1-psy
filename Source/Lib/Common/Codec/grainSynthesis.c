@@ -275,7 +275,7 @@ static void *GetActualMallocAddress(void *const mem) {
     return (void *)(*malloc_addr_location);
 }
 
-void *aom_memalign(size_t align, size_t size) {
+void *eb_aom_memalign(size_t align, size_t size) {
     void *x = NULL;
     const size_t aligned_size = GetAlignedMallocSize(size, align);
 #if defined(AOM_MAX_ALLOCABLE_MEMORY)
@@ -289,9 +289,9 @@ void *aom_memalign(size_t align, size_t size) {
     return x;
 }
 
-void *aom_malloc(size_t size) { return aom_memalign(DEFAULT_ALIGNMENT, size); }
+void *eb_aom_malloc(size_t size) { return eb_aom_memalign(DEFAULT_ALIGNMENT, size); }
 
-void aom_free(void *memblk) {
+void eb_aom_free(void *memblk) {
     if (memblk) {
         void *addr = GetActualMallocAddress(memblk);
         free(addr);
@@ -980,7 +980,7 @@ static void hor_boundary_overlap(int32_t *top_block, int32_t top_stride,
     }
 }
 
-void av1_add_film_grain_run(aom_film_grain_t *params, uint8_t *luma,
+void eb_av1_add_film_grain_run(aom_film_grain_t *params, uint8_t *luma,
     uint8_t *cb, uint8_t *cr, int32_t height, int32_t width,
     int32_t luma_stride, int32_t chroma_stride,
     int32_t use_high_bit_depth, int32_t chroma_subsamp_y,
@@ -1373,35 +1373,35 @@ void av1_add_film_grain_run(aom_film_grain_t *params, uint8_t *luma,
 void av1_film_grain_write_updated(const aom_film_grain_t *pars,
                                   int32_t monochrome,
                                   struct AomWriteBitBuffer *wb) {
-  aom_wb_write_literal(wb, pars->num_y_points, 4);  // max 14
+  eb_aom_wb_write_literal(wb, pars->num_y_points, 4);  // max 14
   for (int32_t i = 0; i < pars->num_y_points; i++) {
-    aom_wb_write_literal(wb, pars->scaling_points_y[i][0], 8);
-    aom_wb_write_literal(wb, pars->scaling_points_y[i][1], 8);
+    eb_aom_wb_write_literal(wb, pars->scaling_points_y[i][0], 8);
+    eb_aom_wb_write_literal(wb, pars->scaling_points_y[i][1], 8);
   }
 
   if (!monochrome)
-    aom_wb_write_bit(wb, pars->chroma_scaling_from_luma);
+    eb_aom_wb_write_bit(wb, pars->chroma_scaling_from_luma);
 
   if (!(monochrome || pars->chroma_scaling_from_luma)) {
-    aom_wb_write_literal(wb, pars->num_cb_points, 4);  // max 10
+    eb_aom_wb_write_literal(wb, pars->num_cb_points, 4);  // max 10
     for (int32_t i = 0; i < pars->num_cb_points; i++) {
-      aom_wb_write_literal(wb, pars->scaling_points_cb[i][0], 8);
-      aom_wb_write_literal(wb, pars->scaling_points_cb[i][1], 8);
+      eb_aom_wb_write_literal(wb, pars->scaling_points_cb[i][0], 8);
+      eb_aom_wb_write_literal(wb, pars->scaling_points_cb[i][1], 8);
     }
 
-    aom_wb_write_literal(wb, pars->num_cr_points, 4);  // max 10
+    eb_aom_wb_write_literal(wb, pars->num_cr_points, 4);  // max 10
     for (int32_t i = 0; i < pars->num_cr_points; i++) {
-      aom_wb_write_literal(wb, pars->scaling_points_cr[i][0], 8);
-      aom_wb_write_literal(wb, pars->scaling_points_cr[i][1], 8);
+      eb_aom_wb_write_literal(wb, pars->scaling_points_cr[i][0], 8);
+      eb_aom_wb_write_literal(wb, pars->scaling_points_cr[i][1], 8);
     }
   }
 
-  aom_wb_write_literal(wb, pars->scaling_shift - 8, 2);  // 8 + value
+  eb_aom_wb_write_literal(wb, pars->scaling_shift - 8, 2);  // 8 + value
 
   // AR coefficients
   // Only sent if the corresponsing scaling function has
   // more than 0 points
-  aom_wb_write_literal(wb, pars->ar_coeff_lag, 2);
+  eb_aom_wb_write_literal(wb, pars->ar_coeff_lag, 2);
 
   int32_t num_pos_luma = 2 * pars->ar_coeff_lag * (pars->ar_coeff_lag + 1);
   int32_t num_pos_chroma = num_pos_luma;
@@ -1409,35 +1409,35 @@ void av1_film_grain_write_updated(const aom_film_grain_t *pars,
 
   if (pars->num_y_points)
     for (int32_t i = 0; i < num_pos_luma; i++)
-      aom_wb_write_literal(wb, pars->ar_coeffs_y[i] + 128, 8);
+      eb_aom_wb_write_literal(wb, pars->ar_coeffs_y[i] + 128, 8);
 
   if (pars->num_cb_points || pars->chroma_scaling_from_luma)
     for (int32_t i = 0; i < num_pos_chroma; i++)
-      aom_wb_write_literal(wb, pars->ar_coeffs_cb[i] + 128, 8);
+      eb_aom_wb_write_literal(wb, pars->ar_coeffs_cb[i] + 128, 8);
 
   if (pars->num_cr_points || pars->chroma_scaling_from_luma)
     for (int32_t i = 0; i < num_pos_chroma; i++)
-      aom_wb_write_literal(wb, pars->ar_coeffs_cr[i] + 128, 8);
+      eb_aom_wb_write_literal(wb, pars->ar_coeffs_cr[i] + 128, 8);
 
-  aom_wb_write_literal(wb, pars->ar_coeff_shift - 6, 2);  // 8 + value
+  eb_aom_wb_write_literal(wb, pars->ar_coeff_shift - 6, 2);  // 8 + value
 
-  aom_wb_write_literal(wb, pars->grain_scale_shift, 2);
+  eb_aom_wb_write_literal(wb, pars->grain_scale_shift, 2);
 
   if (pars->num_cb_points) {
-    aom_wb_write_literal(wb, pars->cb_mult, 8);
-    aom_wb_write_literal(wb, pars->cb_luma_mult, 8);
-    aom_wb_write_literal(wb, pars->cb_offset, 9);
+    eb_aom_wb_write_literal(wb, pars->cb_mult, 8);
+    eb_aom_wb_write_literal(wb, pars->cb_luma_mult, 8);
+    eb_aom_wb_write_literal(wb, pars->cb_offset, 9);
   }
 
   if (pars->num_cr_points) {
-    aom_wb_write_literal(wb, pars->cr_mult, 8);
-    aom_wb_write_literal(wb, pars->cr_luma_mult, 8);
-    aom_wb_write_literal(wb, pars->cr_offset, 9);
+    eb_aom_wb_write_literal(wb, pars->cr_mult, 8);
+    eb_aom_wb_write_literal(wb, pars->cr_luma_mult, 8);
+    eb_aom_wb_write_literal(wb, pars->cr_offset, 9);
   }
 
-  aom_wb_write_bit(wb, pars->overlap_flag);
+  eb_aom_wb_write_bit(wb, pars->overlap_flag);
 
-  aom_wb_write_bit(wb, pars->clip_to_restricted_range);
+  eb_aom_wb_write_bit(wb, pars->clip_to_restricted_range);
 }
 */
 /*

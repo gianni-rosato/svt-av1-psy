@@ -32,8 +32,8 @@
 
 /**
  * @brief Unit test of weiner convolbe add source:
- * - av1_wiener_convolve_add_src_avx2
- * - av1_highbd_wiener_convolve_add_src_avx2
+ * - eb_av1_wiener_convolve_add_src_avx2
+ * - eb_av1_highbd_wiener_convolve_add_src_avx2
  *
  * Test strategy:
  * Verify this assembly code by comparing with reference c implementation.
@@ -234,7 +234,7 @@ class AV1WienerConvolveLbdTest
         // Choose random locations within the source block
         int offset_r = 3 + pseudo_uniform(h - out_h_ - 7);
         int offset_c = 3 + pseudo_uniform(w - out_w_ - 7);
-        av1_wiener_convolve_add_src_c(input + offset_r * w + offset_c,
+        eb_av1_wiener_convolve_add_src_c(input + offset_r * w + offset_c,
                                       w,
                                       output_ref_,
                                       out_w_,
@@ -304,7 +304,7 @@ class AV1WienerConvolveHbdTest
         // Choose random locations within the source block
         int offset_r = 3 + pseudo_uniform(h - out_h_ - 7);
         int offset_c = 3 + pseudo_uniform(w - out_w_ - 7);
-        av1_highbd_wiener_convolve_add_src_c(input + offset_r * w + offset_c,
+        eb_av1_highbd_wiener_convolve_add_src_c(input + offset_r * w + offset_c,
                                              w,
                                              out_ref,
                                              out_w_,
@@ -357,7 +357,7 @@ TEST_P(AV1WienerConvolveLbdTest, run_random_test) {
 
 INSTANTIATE_TEST_CASE_P(
     AV1, AV1WienerConvolveLbdTest,
-    AV1WienerConvolveLbdTest::BuildParams(av1_wiener_convolve_add_src_avx2));
+    AV1WienerConvolveLbdTest::BuildParams(eb_av1_wiener_convolve_add_src_avx2));
 
 TEST_P(AV1WienerConvolveHbdTest, run_random_test) {
     run_random_test(1000);
@@ -365,6 +365,6 @@ TEST_P(AV1WienerConvolveHbdTest, run_random_test) {
 
 INSTANTIATE_TEST_CASE_P(AV1, AV1WienerConvolveHbdTest,
                         AV1WienerConvolveHbdTest::BuildParams(
-                            av1_highbd_wiener_convolve_add_src_avx2));
+                            eb_av1_highbd_wiener_convolve_add_src_avx2));
 
 }  // namespace

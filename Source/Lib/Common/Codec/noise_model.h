@@ -42,17 +42,17 @@ extern "C" {
     } aom_noise_strength_lut_t;
 
     /*!\brief Init the noise strength lut with the given number of points*/
-    int32_t aom_noise_strength_lut_init(aom_noise_strength_lut_t *lut, int32_t num_points);
+    int32_t eb_aom_noise_strength_lut_init(aom_noise_strength_lut_t *lut, int32_t num_points);
 
     /*!\brief Frees the noise strength lut. */
-    void aom_noise_strength_lut_free(aom_noise_strength_lut_t *lut);
+    void eb_aom_noise_strength_lut_free(aom_noise_strength_lut_t *lut);
 
     /*!\brief Evaluate the lut at the point x.
      *
      * \param[in] lut  The lut data.
      * \param[in] x    The coordinate to evaluate the lut.
      */
-    double aom_noise_strength_lut_eval(const aom_noise_strength_lut_t *lut,
+    double eb_aom_noise_strength_lut_eval(const aom_noise_strength_lut_t *lut,
         double x);
 
     /*!\brief Helper struct to model noise strength as a function of intensity.
@@ -89,13 +89,13 @@ extern "C" {
      * \param[in]  num_bins  Number of bins to use in the internal representation.
      * \param[in]  bit_depth The bit depth used to derive {min,max}_intensity.
      */
-    int32_t aom_noise_strength_solver_init(aom_noise_strength_solver_t *solver,
+    int32_t eb_aom_noise_strength_solver_init(aom_noise_strength_solver_t *solver,
         int32_t num_bins, int32_t bit_depth);
     /*!\brief Gets the x coordinate of bin i.
      *
      * \param[in]  i  The bin whose coordinate to query.
      */
-    double aom_noise_strength_solver_get_center(
+    double eb_aom_noise_strength_solver_get_center(
         const aom_noise_strength_solver_t *solver, int32_t i);
 
     /*!\brief Add an observation of the block mean intensity to its noise strength.
@@ -103,18 +103,18 @@ extern "C" {
      * \param[in]  block_mean  The average block intensity,
      * \param[in]  noise_std   The observed noise strength.
      */
-    void aom_noise_strength_solver_add_measurement(
+    void eb_aom_noise_strength_solver_add_measurement(
         aom_noise_strength_solver_t *solver, double block_mean, double noise_std);
 
     /*!\brief Solves the current set of equations for the noise strength. */
-    int32_t aom_noise_strength_solver_solve(aom_noise_strength_solver_t *solver);
+    int32_t eb_aom_noise_strength_solver_solve(aom_noise_strength_solver_t *solver);
 
     /*!\brief Fits a reduced piecewise linear lut to the internal solution
      *
      * \param[in] max_num_points  The maximum number of output points
      * \param[out] lut  The output piecewise linear lut.
      */
-    int32_t aom_noise_strength_solver_fit_piecewise(
+    int32_t eb_aom_noise_strength_solver_fit_piecewise(
         const aom_noise_strength_solver_t *solver, int32_t max_num_points,
         aom_noise_strength_lut_t *lut);
 
@@ -137,12 +137,12 @@ extern "C" {
     } aom_flat_block_finder_t;
 
     /*!\brief Init the block_finder with the given block size, bit_depth */
-    int32_t aom_flat_block_finder_init(aom_flat_block_finder_t *block_finder,
+    int32_t eb_aom_flat_block_finder_init(aom_flat_block_finder_t *block_finder,
         int32_t block_size, int32_t bit_depth, int32_t use_highbd);
-    void aom_flat_block_finder_free(aom_flat_block_finder_t *block_finder);
+    void eb_aom_flat_block_finder_free(aom_flat_block_finder_t *block_finder);
 
     /*!\brief Helper to extract a block and low order "planar" model. */
-    void aom_flat_block_finder_extract_block(
+    void eb_aom_flat_block_finder_extract_block(
         const aom_flat_block_finder_t *block_finder, const uint8_t *const data,
         int32_t w, int32_t h, int32_t stride, int32_t offsx, int32_t offsy, double *plane,
         double *block);
@@ -154,7 +154,7 @@ extern "C" {
      * when a block is determined to be flat. A higher value indicates a bigger
      * confidence in the decision.
      */
-    int32_t aom_flat_block_finder_run(const aom_flat_block_finder_t *block_finder,
+    int32_t eb_aom_flat_block_finder_run(const aom_flat_block_finder_t *block_finder,
         const uint8_t *const data, int32_t w, int32_t h,
         int32_t stride, uint8_t *flat_blocks);
 
@@ -264,9 +264,9 @@ extern "C" {
      *
      * Returns 0 on failure.
      */
-    int32_t aom_noise_model_init(aom_noise_model_t *model,
+    int32_t eb_aom_noise_model_init(aom_noise_model_t *model,
         const aom_noise_model_params_t params);
-    void aom_noise_model_free(aom_noise_model_t *model);
+    void eb_aom_noise_model_free(aom_noise_model_t *model);
 
     /*!\brief Updates the noise model with a new frame observation.
      *
@@ -289,7 +289,7 @@ extern "C" {
      * \param[in]     flat_blocks     A map to blocks that have been determined flat
      * \param[in]     block_size      The size of blocks.
      */
-    aom_noise_status_t aom_noise_model_update(
+    aom_noise_status_t eb_aom_noise_model_update(
         aom_noise_model_t *const noise_model, const uint8_t *const data[3],
         const uint8_t *const denoised[3], int32_t w, int32_t h, int32_t strides[3],
         int32_t chroma_sub_log2[2], const uint8_t *const flat_blocks, int32_t block_size);
@@ -300,7 +300,7 @@ extern "C" {
      * in parameters (or for example, if a user wanted to reset estimation at
      * a shot boundary).
      */
-    void aom_noise_model_save_latest(aom_noise_model_t *noise_model);
+    void eb_aom_noise_model_save_latest(aom_noise_model_t *noise_model);
 
     /*!\brief Converts the noise_model parameters to the corresponding
      *    grain_parameters.
@@ -309,7 +309,7 @@ extern "C" {
      * floats), but the grain parameters in the bitstream are quantized. This
      * function does the conversion by selecting the correct quantization levels.
      */
-    int32_t aom_noise_model_get_grain_parameters(aom_noise_model_t *const noise_model,
+    int32_t eb_aom_noise_model_get_grain_parameters(aom_noise_model_t *const noise_model,
         aom_film_grain_t *film_grain);
 
     /*!\brief Perform a Wiener filter denoising in 2D using the provided noise psd.
@@ -327,7 +327,7 @@ extern "C" {
      *                                uint16 and stride is measured in uint16.
      *                                This must be true when bit_depth >= 10.
      */
-    int32_t aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoised[3],
+    int32_t eb_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoised[3],
         int32_t w, int32_t h, int32_t stride[3], int32_t chroma_sub_log2[2],
         float *noise_psd[3], int32_t block_size, int32_t bit_depth,
         int32_t use_highbd);
@@ -342,13 +342,13 @@ extern "C" {
      * parameter will be true when the input buffer was successfully denoised and
      * grain was modelled. Returns false on error.
      *
-     * \param[in]      ctx   Struct allocated with aom_denoise_and_model_alloc
+     * \param[in]      ctx   Struct allocated with eb_aom_denoise_and_model_alloc
      *                       that holds some buffers for denoising and the current
      *                       noise estimate.
      * \param[in/out]   buf  The raw input buffer to be denoised.
      * \param[out]    grain  Output film grain parameters
      */
-    int32_t aom_denoise_and_model_run(struct aom_denoise_and_model_t *ctx,
+    int32_t eb_aom_denoise_and_model_run(struct aom_denoise_and_model_t *ctx,
         EbPictureBufferDesc *sd,
         aom_film_grain_t *film_grain,
         int32_t use_highbd,
@@ -363,7 +363,7 @@ extern "C" {
      *                         higher levels of noise)
      */
 
-     /*!\brief Frees the denoise context allocated with aom_denoise_and_model_alloc
+     /*!\brief Frees the denoise context allocated with eb_aom_denoise_and_model_alloc
       */
     void aom_denoise_and_model_free(struct aom_denoise_and_model_t *denoise_model, int32_t use_highbd);
 

@@ -3005,23 +3005,23 @@ void init_rc(
 #define MAX_Q_INDEX 255
 #define MIN_Q_INDEX 0
 
-extern int16_t av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+extern int16_t eb_av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 // These functions use formulaic calculations to make playing with the
 // quantizer tables easier. If necessary they can be replaced by lookup
 // tables if and when things settle down in the experimental bitstream
 
-double av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth) {
+double eb_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth) {
     // Convert the index to a real Q value (scaled down to match old Q values)
     switch (bit_depth) {
-    case AOM_BITS_8: return av1_ac_quant_Q3(qindex, 0, bit_depth) / 4.0;
-    case AOM_BITS_10: return av1_ac_quant_Q3(qindex, 0, bit_depth) / 16.0;
-    case AOM_BITS_12: return av1_ac_quant_Q3(qindex, 0, bit_depth) / 64.0;
+    case AOM_BITS_8: return eb_av1_ac_quant_Q3(qindex, 0, bit_depth) / 4.0;
+    case AOM_BITS_10: return eb_av1_ac_quant_Q3(qindex, 0, bit_depth) / 16.0;
+    case AOM_BITS_12: return eb_av1_ac_quant_Q3(qindex, 0, bit_depth) / 64.0;
     default:
         assert(0 && "bit_depth should be AOM_BITS_8, AOM_BITS_10 or AOM_BITS_12");
         return -1.0;
     }
 }
-int32_t av1_compute_qdelta(double qstart, double qtarget,
+int32_t eb_av1_compute_qdelta(double qstart, double qtarget,
     AomBitDepth bit_depth) {
     int32_t start_index = MAX_Q_INDEX;
     int32_t target_index = MAX_Q_INDEX;
@@ -3030,13 +3030,13 @@ int32_t av1_compute_qdelta(double qstart, double qtarget,
     // Convert the average q value to an index.
     for (i = MIN_Q_INDEX; i < MAX_Q_INDEX; ++i) {
         start_index = i;
-        if (av1_convert_qindex_to_q(i, bit_depth) >= qstart) break;
+        if (eb_av1_convert_qindex_to_q(i, bit_depth) >= qstart) break;
     }
 
     // Convert the q target to an index
     for (i = MIN_Q_INDEX; i < MAX_Q_INDEX; ++i) {
         target_index = i;
-        if (av1_convert_qindex_to_q(i, bit_depth) >= qtarget) break;
+        if (eb_av1_convert_qindex_to_q(i, bit_depth) >= qtarget) break;
     }
 
     return target_index - start_index;
@@ -3057,17 +3057,17 @@ uint32_t qp_scaling_calc(
     { 0.35, 0.6, 0.8,  0.9, 1.0, 1.0 } };
 
     int qindex = quantizer_to_qindex[base_qp];
-    const double q = av1_convert_qindex_to_q(qindex, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
+    const double q = eb_av1_convert_qindex_to_q(qindex, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
     int delta_qindex;
 
     if (slice_type == I_SLICE) {
-        delta_qindex = av1_compute_qdelta(
+        delta_qindex = eb_av1_compute_qdelta(
             q,
             q* 0.25,
             (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
     }
     else {
-        delta_qindex = av1_compute_qdelta(
+        delta_qindex = eb_av1_compute_qdelta(
             q,
             q* delta_rate_new[sequence_control_set_ptr->static_config.hierarchical_levels == 4][temporal_layer_index], // RC does not support 5L
             //q* delta_rate_new[0][temporal_layer_index], // RC does not support 5L
@@ -3272,7 +3272,7 @@ static int get_minq_index(double maxq, double x3, double x2, double x1,
     if (minqtarget <= 2.0) return 0;
 
     for (i = 0; i < QINDEX_RANGE; i++)
-        if (minqtarget <= av1_convert_qindex_to_q(i, bit_depth)) return i;
+        if (minqtarget <= eb_av1_convert_qindex_to_q(i, bit_depth)) return i;
     return QINDEX_RANGE - 1;
 }
 
@@ -3281,7 +3281,7 @@ static void init_minq_luts(int *kf_low_m, int *kf_high_m, int *arfgf_low,
     AomBitDepth bit_depth) {
     int i;
     for (i = 0; i < QINDEX_RANGE; i++) {
-        const double maxq = av1_convert_qindex_to_q(i, bit_depth);
+        const double maxq = eb_av1_convert_qindex_to_q(i, bit_depth);
         kf_low_m[i] = get_minq_index(maxq, 0.000001, -0.0004, 0.150, bit_depth);
         kf_high_m[i] = get_minq_index(maxq, 0.0000021, -0.00125, 0.45, bit_depth);
         arfgf_low[i] = get_minq_index(maxq, 0.0000015, -0.0009, 0.30, bit_depth);
@@ -3291,7 +3291,7 @@ static void init_minq_luts(int *kf_low_m, int *kf_high_m, int *arfgf_low,
     }
 }
 
-void av1_rc_init_minq_luts(void) {
+void eb_av1_rc_init_minq_luts(void) {
     init_minq_luts(kf_low_motion_minq_8, kf_high_motion_minq_8,
         arfgf_low_motion_minq_8, arfgf_high_motion_minq_8,
         inter_minq_8, rtc_minq_8, AOM_BITS_8);
@@ -3418,9 +3418,9 @@ static int adaptive_qindex_calc(
 
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
-        q_val = av1_convert_qindex_to_q(active_best_quality, bit_depth);
+        q_val = eb_av1_convert_qindex_to_q(active_best_quality, bit_depth);
         active_best_quality +=
-            av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
+            eb_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
     }
     else if (!is_src_frame_alt_ref &&
         (refresh_golden_frame || is_intrl_arf_boost ||
@@ -3524,7 +3524,7 @@ void* rate_control_kernel(void *input_ptr)
             if (picture_control_set_ptr->picture_number == 0) {
                 rate_control_model_init(rc_model_ptr, sequence_control_set_ptr);
 
-                av1_rc_init_minq_luts();
+                eb_av1_rc_init_minq_luts();
                 //init rate control parameters
                 init_rc(
                     context_ptr,
@@ -3592,7 +3592,7 @@ void* rate_control_kernel(void *input_ptr)
 
                 if (sequence_control_set_ptr->static_config.enable_qp_scaling_flag && picture_control_set_ptr->parent_pcs_ptr->qp_on_the_fly == EB_FALSE) {
                     const int32_t qindex = quantizer_to_qindex[(uint8_t)sequence_control_set_ptr->qp];
-                    const double q_val = av1_convert_qindex_to_q(qindex, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
+                    const double q_val = eb_av1_convert_qindex_to_q(qindex, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
                     // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
                     if (picture_control_set_ptr->parent_pcs_ptr->frames_in_sw >= QPS_SW_THRESH) {
                         int32_t new_qindex = adaptive_qindex_calc(
@@ -3607,7 +3607,7 @@ void* rate_control_kernel(void *input_ptr)
                                 (int32_t)(new_qindex));
                     }
                     else if (picture_control_set_ptr->slice_type == I_SLICE) {
-                        const int32_t delta_qindex = av1_compute_qdelta(
+                        const int32_t delta_qindex = eb_av1_compute_qdelta(
                             q_val,
                             q_val * 0.25,
                             (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
@@ -3622,7 +3622,7 @@ void* rate_control_kernel(void *input_ptr)
                         { { 0.40, 0.7, 0.85, 1.0, 1.0, 1.0 },
                         { 0.35, 0.6, 0.8,  0.9, 1.0, 1.0 } };
 
-                        const int32_t delta_qindex = av1_compute_qdelta(
+                        const int32_t delta_qindex = eb_av1_compute_qdelta(
                             q_val,
                             q_val * delta_rate_new[picture_control_set_ptr->parent_pcs_ptr->hierarchical_levels == 4][picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index],
                             (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);

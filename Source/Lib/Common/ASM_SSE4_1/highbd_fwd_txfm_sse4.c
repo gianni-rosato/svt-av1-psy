@@ -230,7 +230,7 @@ static void fadst4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit,
     out[3] = _mm_unpackhi_epi64(v1, v3);
 }
 
-void av1_fwd_txfm2d_4x4_sse4_1(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type, uint8_t  bd)
+void eb_av1_fwd_txfm2d_4x4_sse4_1(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type, uint8_t  bd)
 {
     __m128i in[4];
     const int8_t *shift = fwd_txfm_shift_ls[TX_4X4];

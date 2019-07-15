@@ -7,8 +7,8 @@
  * @file intrapred_edge_filter_test.cc
  *
  * @brief Unit test for chroma from luma prediction:
- * - cfl_predict_hbd_avx2
- * - cfl_predict_lbd_avx2
+ * - eb_cfl_predict_hbd_avx2
+ * - eb_cfl_predict_lbd_avx2
  *
  * @author Cidana-Wenyao
  *
@@ -31,8 +31,8 @@ using CFL_PRED_LBD = void (*)(const int16_t *pred_buf_q3, uint8_t *pred,
                               int32_t bit_depth, int32_t width, int32_t height);
 /**
  * @brief Unit test for chroma from luma prediction:
- * - cfl_predict_hbd_avx2
- * - cfl_predict_lbd_avx2
+ * - eb_cfl_predict_hbd_avx2
+ * - eb_cfl_predict_lbd_avx2
  *
  * Test strategy:
  * Verify this assembly code by comparing with reference c implementation.
@@ -143,8 +143,8 @@ class LbdCflPredTest : public CflPredTest<uint8_t, CFL_PRED_LBD> {
   public:
     LbdCflPredTest() {
         bd_ = 8;
-        ref_func_ = cfl_predict_lbd_c;
-        tst_func_ = cfl_predict_lbd_avx2;
+        ref_func_ = eb_cfl_predict_lbd_c;
+        tst_func_ = eb_cfl_predict_lbd_avx2;
         common_init();
     }
 };
@@ -153,8 +153,8 @@ class HbdCflPredTest : public CflPredTest<uint16_t, CFL_PRED_HBD> {
   public:
     HbdCflPredTest() {
         bd_ = 10;
-        ref_func_ = cfl_predict_hbd_c;
-        tst_func_ = cfl_predict_hbd_avx2;
+        ref_func_ = eb_cfl_predict_hbd_c;
+        tst_func_ = eb_cfl_predict_hbd_avx2;
         common_init();
     }
 };

@@ -94,7 +94,7 @@ const int error_measure_lut[512] = {
 // [-1, 2) * WARPEDPIXEL_PREC_SHIFTS.
 // We need an extra 2 taps to fit this in, for a total of 8 taps.
 /* clang-format off */
-EB_ALIGN(16) const int16_t warped_filter[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8] = {
+EB_ALIGN(16) const int16_t eb_warped_filter[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8] = {
 #if WARPEDPIXEL_PREC_BITS == 6
   // [-1, 0)
   { 0,   0, 127,   1,   0, 0, 0, 0 }, { 0, - 1, 127,   2,   0, 0, 0, 0 },
@@ -337,7 +337,7 @@ static int is_affine_shear_allowed(int16_t alpha, int16_t beta, int16_t gamma,
 }
 
 // Returns 1 on success or 0 on an invalid affine set
-int get_shear_params(EbWarpedMotionParams *wm) {
+int eb_get_shear_params(EbWarpedMotionParams *wm) {
   const int32_t *mat = wm->wmmat;
   if (!is_affine_valid(wm)) return 0;
   wm->alpha =
@@ -380,9 +380,9 @@ static INLINE int highbd_error_measure(int err, int bd) {
 }
 
 /* Note: For an explanation of the warp algorithm, and some notes on bit widths
-    for hardware implementations, see the comments above av1_warp_affine_c
+    for hardware implementations, see the comments above eb_av1_warp_affine_c
 */
-void av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref,
+void eb_av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref,
                               int width, int height, int stride, uint16_t *pred,
                               int p_col, int p_row, int p_width, int p_height,
                               int p_stride, int subsampling_x,
@@ -439,7 +439,7 @@ void av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref,
           const int offs = ROUND_POWER_OF_TWO(sx, WARPEDDIFF_PREC_BITS) +
                            WARPEDPIXEL_PREC_SHIFTS;
           assert(offs >= 0 && offs <= WARPEDPIXEL_PREC_SHIFTS * 3);
-          const int16_t *coeffs = warped_filter[offs];
+          const int16_t *coeffs = eb_warped_filter[offs];
 
           int32_t sum = 1 << offset_bits_horiz;
           for (int m = 0; m < 8; ++m) {
@@ -460,7 +460,7 @@ void av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref,
           const int offs = ROUND_POWER_OF_TWO(sy, WARPEDDIFF_PREC_BITS) +
                            WARPEDPIXEL_PREC_SHIFTS;
           assert(offs >= 0 && offs <= WARPEDPIXEL_PREC_SHIFTS * 3);
-          const int16_t *coeffs = warped_filter[offs];
+          const int16_t *coeffs = eb_warped_filter[offs];
 
           int32_t sum = 1 << offset_bits_vert;
           for (int m = 0; m < 8; ++m)
@@ -522,7 +522,7 @@ static void highbd_warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref
 
   const uint16_t *const ref = CONVERT_TO_SHORTPTR(ref8);
   uint16_t *pred = CONVERT_TO_SHORTPTR(pred8);
-  av1_highbd_warp_affine_c(mat, ref, width, height, stride, pred, p_col, p_row,
+  eb_av1_highbd_warp_affine_c(mat, ref, width, height, stride, pred, p_col, p_row,
                          p_width, p_height, p_stride, subsampling_x,
                          subsampling_y, bd, conv_params, alpha, beta, gamma,
                          delta);
@@ -658,7 +658,7 @@ static int64_t highbd_warp_error(
     leads to a maximum value of about 282 * 2^k after applying the offset.
     So in that case we still need to clamp.
 */
-void av1_warp_affine_c(const int32_t *mat, const uint8_t *ref, int width,
+void eb_av1_warp_affine_c(const int32_t *mat, const uint8_t *ref, int width,
                        int height, int stride, uint8_t *pred, int p_col,
                        int p_row, int p_width, int p_height, int p_stride,
                        int subsampling_x, int subsampling_y,
@@ -717,7 +717,7 @@ void av1_warp_affine_c(const int32_t *mat, const uint8_t *ref, int width,
           const int offs = ROUND_POWER_OF_TWO(sx, WARPEDDIFF_PREC_BITS) +
                            WARPEDPIXEL_PREC_SHIFTS;
           assert(offs >= 0 && offs <= WARPEDPIXEL_PREC_SHIFTS * 3);
-          const int16_t *coeffs = warped_filter[offs];
+          const int16_t *coeffs = eb_warped_filter[offs];
 
           int32_t sum = 1 << offset_bits_horiz;
           for (int m = 0; m < 8; ++m) {
@@ -741,7 +741,7 @@ void av1_warp_affine_c(const int32_t *mat, const uint8_t *ref, int width,
           const int offs = ROUND_POWER_OF_TWO(sy, WARPEDDIFF_PREC_BITS) +
                            WARPEDPIXEL_PREC_SHIFTS;
           assert(offs >= 0 && offs <= WARPEDPIXEL_PREC_SHIFTS * 3);
-          const int16_t *coeffs = warped_filter[offs];
+          const int16_t *coeffs = eb_warped_filter[offs];
 
           int32_t sum = 1 << offset_bits_vert;
           for (int m = 0; m < 8; ++m)
@@ -798,12 +798,12 @@ static void warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref,
   const int16_t beta = wm->beta;
   const int16_t gamma = wm->gamma;
   const int16_t delta = wm->delta;
-  av1_warp_affine(mat, ref, width, height, stride, pred, p_col, p_row, p_width,
+  eb_av1_warp_affine(mat, ref, width, height, stride, pred, p_col, p_row, p_width,
                   p_height, p_stride, subsampling_x, subsampling_y, conv_params,
                   alpha, beta, gamma, delta);
 }
 
-int64_t av1_calc_frame_error_c(const uint8_t *const ref, int stride,
+int64_t eb_av1_calc_frame_error_c(const uint8_t *const ref, int stride,
     const uint8_t *const dst, int p_width, int p_height, int p_stride) {
   int64_t sum_error = 0;
   for (int i = 0; i < p_height; ++i) {
@@ -838,7 +838,7 @@ static int64_t warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref,
       warp_plane(wm, ref, width, height, stride, tmp, j, i, warp_w, warp_h,
                  WARP_ERROR_BLOCK, subsampling_x, subsampling_y, &conv_params);
 
-      gm_sumerr += av1_calc_frame_error(tmp, WARP_ERROR_BLOCK, dst + j + i * p_stride,
+      gm_sumerr += eb_av1_calc_frame_error(tmp, WARP_ERROR_BLOCK, dst + j + i * p_stride,
                                warp_w, warp_h, p_stride);
       if (gm_sumerr > best_error) return gm_sumerr;
     }
@@ -846,23 +846,23 @@ static int64_t warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref,
   return gm_sumerr;
 }
 
-int64_t av1_frame_error(int use_hbd, int bd, const uint8_t *ref, int stride,
+int64_t eb_av1_frame_error(int use_hbd, int bd, const uint8_t *ref, int stride,
                         uint8_t *dst, int p_width, int p_height, int p_stride) {
   if (use_hbd) {
     return highbd_frame_error(CONVERT_TO_SHORTPTR(ref), stride,
                               CONVERT_TO_SHORTPTR(dst), p_width, p_height,
                               p_stride, bd);
   }
-  return av1_calc_frame_error(ref, stride, dst, p_width, p_height, p_stride);
+  return eb_av1_calc_frame_error(ref, stride, dst, p_width, p_height, p_stride);
 }
 
-int64_t av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd,
+int64_t eb_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd,
                        const uint8_t *ref, int width, int height, int stride,
                        uint8_t *dst, int p_col, int p_row, int p_width,
                        int p_height, int p_stride, int subsampling_x,
                        int subsampling_y, int64_t best_error) {
   if (wm->wmtype <= AFFINE)
-    if (!get_shear_params(wm)) return 1;
+    if (!eb_get_shear_params(wm)) return 1;
   if (use_hbd)
     return highbd_warp_error(wm, ref, width, height, stride, dst, p_col, p_row,
                              p_width, p_height, p_stride, subsampling_x,
@@ -872,7 +872,7 @@ int64_t av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd,
                     best_error);
 }
 
-void av1_warp_plane(EbWarpedMotionParams *wm, int use_hbd, int bd,
+void eb_av1_warp_plane(EbWarpedMotionParams *wm, int use_hbd, int bd,
                     const uint8_t *ref, int width, int height, int stride,
                     uint8_t *pred, int p_col, int p_row, int p_width,
                     int p_height, int p_stride, int subsampling_x,
@@ -914,7 +914,7 @@ void av1_warp_plane_hbd(
   const int16_t gamma = wm->gamma;
   const int16_t delta = wm->delta;
 
-  av1_highbd_warp_affine_c(
+  eb_av1_highbd_warp_affine_c(
       mat,
       ref,
       width,
@@ -1163,7 +1163,7 @@ static int find_affine_int(int np, const int *pts1, const int *pts2,
   return 0;
 }
 
-EbBool find_projection(
+EbBool eb_find_projection(
     int np,
     int *pts1,
     int *pts2,
@@ -1181,7 +1181,7 @@ EbBool find_projection(
     }
 
     // check compatibility with the fast warp filter
-    if (!get_shear_params(wm_params))
+    if (!eb_get_shear_params(wm_params))
         return 1;
 
     return 0;

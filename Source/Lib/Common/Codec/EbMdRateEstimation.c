@@ -334,11 +334,11 @@ MvClassType av1_get_mv_class(int32_t z, int32_t *offset) {
     return c;
 }
 
-//void av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2],
+//void eb_av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2],
 //    const NmvContext *ctx,
 //    MvSubpelPrecision precision)
 
-void av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2],
+void eb_av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2],
     const NmvContext *ctx,
     MvSubpelPrecision precision);
 
@@ -361,7 +361,7 @@ void av1_estimate_mv_rate(
     nmvcost_hp[0] = &md_rate_estimation_array->nmv_costs_hp[0][MV_MAX];
     nmvcost_hp[1] = &md_rate_estimation_array->nmv_costs_hp[1][MV_MAX];
 
-    av1_build_nmv_cost_table(
+    eb_av1_build_nmv_cost_table(
         md_rate_estimation_array->nmv_vec_cost,//out
         frm_hdr->allow_high_precision_mv ? nmvcost_hp : nmvcost, //out
         nmv_ctx,
@@ -372,7 +372,7 @@ void av1_estimate_mv_rate(
 
     if (frm_hdr->allow_intrabc) {
         int32_t *dvcost[2] = { &md_rate_estimation_array->dv_cost[0][MV_MAX], &md_rate_estimation_array->dv_cost[1][MV_MAX] };
-        av1_build_nmv_cost_table(md_rate_estimation_array->dv_joint_cost, dvcost, &picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc->ndvc,
+        eb_av1_build_nmv_cost_table(md_rate_estimation_array->dv_joint_cost, dvcost, &picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc->ndvc,
             MV_SUBPEL_NONE);
     }
 }

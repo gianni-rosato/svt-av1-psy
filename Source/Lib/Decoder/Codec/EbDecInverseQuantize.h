@@ -10,8 +10,8 @@ static INLINE int av1_num_planes(EbColorConfig   *color_info) {
     return color_info->mono_chrome ? 1 : MAX_MB_PLANE;
 }
 
-int16_t av1_dc_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
-int16_t av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t eb_av1_dc_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t eb_av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 int16_t get_dc_quant(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 int16_t get_ac_quant(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 void setup_segmentation_dequant(EbDecHandle *dec_handle_ptr, EbColorConfig *color_config);

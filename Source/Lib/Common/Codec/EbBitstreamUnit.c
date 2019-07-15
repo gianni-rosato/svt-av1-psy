@@ -114,21 +114,21 @@ EbErrorType output_bitstream_rbsp_to_payload(
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/
 // daalaboolwriter.c
-void aom_daala_start_encode(DaalaWriter *br, uint8_t *source) {
+void eb_aom_daala_start_encode(DaalaWriter *br, uint8_t *source) {
     br->buffer = source;
     br->pos = 0;
-    od_ec_enc_init(&br->ec, 62025);
+    eb_od_ec_enc_init(&br->ec, 62025);
 }
 
-int32_t aom_daala_stop_encode(DaalaWriter *br) {
+int32_t eb_aom_daala_stop_encode(DaalaWriter *br) {
     int32_t nb_bits;
     uint32_t daala_bytes;
     uint8_t *daala_data;
-    daala_data = od_ec_enc_done(&br->ec, &daala_bytes);
-    nb_bits = od_ec_enc_tell(&br->ec);
+    daala_data = eb_od_ec_enc_done(&br->ec, &daala_bytes);
+    nb_bits = eb_od_ec_enc_tell(&br->ec);
     memcpy(br->buffer, daala_data, daala_bytes);
     br->pos = daala_bytes;
-    od_ec_enc_clear(&br->ec);
+    eb_od_ec_enc_clear(&br->ec);
     return nb_bits;
 }
 
@@ -138,12 +138,12 @@ int32_t aom_daala_stop_encode(DaalaWriter *br) {
 rng, computes the fraction number of bits used to OD_BITRES precision.
 This is used by od_ec_enc_tell_frac() and od_ec_dec_tell_frac().
 nbits_total: The number of whole bits currently used, i.e., the value
-returned by od_ec_enc_tell() or od_ec_dec_tell().
+returned by eb_od_ec_enc_tell() or od_ec_dec_tell().
 rng: The current value of rng from either the encoder or decoder state.
 Return: The number of bits scaled by 2**OD_BITRES.
 This will always be slightly larger than the exact value (e.g., all
 rounding error is in the positive direction).*/
-uint32_t od_ec_tell_frac(uint32_t nbits_total, uint32_t rng) {
+uint32_t eb_od_ec_tell_frac(uint32_t nbits_total, uint32_t rng) {
     uint32_t nbits;
     int32_t l;
     int32_t i;
@@ -153,7 +153,7 @@ uint32_t od_ec_tell_frac(uint32_t nbits_total, uint32_t rng) {
     subsequent bits.
     The computation here is independent of val itself (the decoder does not
     even track that value), even though the real number of bits used after
-    od_ec_enc_done() may be 1 smaller if rng is a power of two and the
+    eb_od_ec_enc_done() may be 1 smaller if rng is a power of two and the
     corresponding trailing bits of val are all zeros.
     If we did try to track that special case, then coding a value with a
     probability of 1/(1 << n) might sometimes appear to use more than n bits.
@@ -258,8 +258,8 @@ static void od_ec_enc_normalize(OdEcEnc *enc, od_ec_window low,
 
 /*Initializes the encoder.
 size: The initial size of the buffer, in bytes.*/
-void od_ec_enc_init(OdEcEnc *enc, uint32_t size) {
-    od_ec_enc_reset(enc);
+void eb_od_ec_enc_init(OdEcEnc *enc, uint32_t size) {
+    eb_od_ec_enc_reset(enc);
     enc->buf = (uint8_t *)malloc(sizeof(*enc->buf) * size);
     enc->storage = size;
     if (size > 0 && enc->buf == NULL) {
@@ -275,7 +275,7 @@ void od_ec_enc_init(OdEcEnc *enc, uint32_t size) {
 }
 
 /*Reinitializes the encoder.*/
-void od_ec_enc_reset(OdEcEnc *enc) {
+void eb_od_ec_enc_reset(OdEcEnc *enc) {
     enc->offs = 0;
     enc->low = 0;
     enc->rng = 0x8000;
@@ -290,7 +290,7 @@ void od_ec_enc_reset(OdEcEnc *enc) {
 }
 
 /*Frees the buffers used by the encoder.*/
-void od_ec_enc_clear(OdEcEnc *enc) {
+void eb_od_ec_enc_clear(OdEcEnc *enc) {
     free(enc->precarry_buf);
     free(enc->buf);
 }
@@ -340,7 +340,7 @@ static void od_ec_encode_q15(OdEcEnc *enc, unsigned fl, unsigned fh, int32_t s,
 /*Encode a single binary value.
 val: The value to encode (0 or 1).
 f: The probability that the val is one, scaled by 32768.*/
-void od_ec_encode_bool_q15(OdEcEnc *enc, int32_t val, unsigned f) {
+void eb_od_ec_encode_bool_q15(OdEcEnc *enc, int32_t val, unsigned f) {
     od_ec_window l;
     unsigned r;
     unsigned v;
@@ -368,7 +368,7 @@ The values must be monotonically decreasing, and icdf[nsyms - 1] must
 be 0.
 nsyms: The number of symbols in the alphabet.
 This should be at most 16.*/
-void od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *icdf,
+void eb_od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *icdf,
     int32_t nsyms) {
     (void)nsyms;
     assert(s >= 0);
@@ -377,7 +377,7 @@ void od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *icdf,
     od_ec_encode_q15(enc, s > 0 ? icdf[s - 1] : OD_ICDF(0), icdf[s], s, nsyms);
 }
 
-uint8_t *od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
+uint8_t *eb_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
     uint8_t *out;
     uint32_t storage;
     uint16_t *buf;
@@ -392,7 +392,7 @@ uint8_t *od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
     {
         uint32_t tell;
         /* Don't count the 1 bit we lose to raw bits as overhead. */
-        tell = od_ec_enc_tell(enc) - 1;
+        tell = eb_od_ec_enc_tell(enc) - 1;
         fprintf(stderr, "overhead: %f%%\n",
             100 * (tell - enc->entropy) / enc->entropy);
         fprintf(stderr, "efficiency: %f bits/symbol\n",
@@ -475,7 +475,7 @@ earlier call, even after encoding more data, if there is an encoding error
 Return: The number of bits.
 This will always be slightly larger than the exact value (e.g., all
 rounding error is in the positive direction).*/
-int32_t od_ec_enc_tell(const OdEcEnc *enc) {
+int32_t eb_od_ec_enc_tell(const OdEcEnc *enc) {
     /*The 10 here counteracts the offset of -9 baked into cnt, and adds 1 extra
     bit, which we reserve for terminating the stream.*/
     return (enc->cnt + 10) + enc->offs * 8;
@@ -485,17 +485,17 @@ int32_t od_ec_enc_tell(const OdEcEnc *enc) {
 This allows an encoder to reverse a series of entropy coder
 decisions if it decides that the information would have been
 better coded some other way.*/
-void od_ec_enc_checkpoint(OdEcEnc *dst, const OdEcEnc *src) {
+void eb_od_ec_enc_checkpoint(OdEcEnc *dst, const OdEcEnc *src) {
     OD_COPY(dst, src, 1);
 }
 
-/*Restores an entropy coder checkpoint saved by od_ec_enc_checkpoint.
+/*Restores an entropy coder checkpoint saved by eb_od_ec_enc_checkpoint.
 This can only be used to restore from checkpoints earlier in the target
 state's history: you can not switch backwards and forwards or otherwise
 switch to a state which isn't a casual ancestor of the current state.
 Restore is also incompatible with patching the initial bits, as the
 changes will remain in the restored version.*/
-void od_ec_enc_rollback(OdEcEnc *dst, const OdEcEnc *src) {
+void eb_od_ec_enc_rollback(OdEcEnc *dst, const OdEcEnc *src) {
     uint8_t *buf;
     uint32_t storage;
     uint16_t *precarry_buf;

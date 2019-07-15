@@ -75,12 +75,12 @@ typedef struct aom_variance_vtable {
 } aom_variance_fn_ptr_t;
 
 void av1_init_dsmotion_compensation(SearchSiteConfig *cfg, int stride);
-void av1_init3smotion_compensation(SearchSiteConfig *cfg, int stride);
-void av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv);
+void eb_av1_init3smotion_compensation(SearchSiteConfig *cfg, int stride);
+void eb_av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv);
 struct Av1Comp;
 struct SpeedFeatures;
 
-int av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MACROBLOCK*/ *x,
+int eb_av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MACROBLOCK*/ *x,
                           BlockSize bsize, MV *mvp_full, int step_param,
                           int method, int run_mesh_search, int error_per_bit,
                           int *cost_list, const MV *ref_mv, int var_max, int rd,

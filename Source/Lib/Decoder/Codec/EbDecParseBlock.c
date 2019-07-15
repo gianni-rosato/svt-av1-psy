@@ -49,46 +49,46 @@ typedef struct txb_ctx {
     int dc_sign_ctx;
 } TXB_CTX;
 
-static const int16_t k_eob_group_start[12] = { 0,  1,  2,  3,   5,   9,
+static const int16_t eb_k_eob_group_start[12] = { 0,  1,  2,  3,   5,   9,
                                         17, 33, 65, 129, 257, 513 };
-static const int16_t k_eob_offset_bits[12] = { 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+static const int16_t eb_k_eob_offset_bits[12] = { 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-extern const int8_t av1_nz_map_ctx_offset_4x4[16];
-extern const int8_t av1_nz_map_ctx_offset_8x8[64];
-extern const int8_t av1_nz_map_ctx_offset_16x16[256];
-extern const int8_t av1_nz_map_ctx_offset_32x32[1024];
-extern const int8_t av1_nz_map_ctx_offset_8x4[32];
-extern const int8_t av1_nz_map_ctx_offset_8x16[128];
-extern const int8_t av1_nz_map_ctx_offset_16x8[128];
-extern const int8_t av1_nz_map_ctx_offset_16x32[512];
-extern const int8_t av1_nz_map_ctx_offset_32x16[512];
-extern const int8_t av1_nz_map_ctx_offset_32x64[1024];
-extern const int8_t av1_nz_map_ctx_offset_64x32[1024];
-extern const int8_t av1_nz_map_ctx_offset_4x16[64];
-extern const int8_t av1_nz_map_ctx_offset_16x4[64];
-extern const int8_t av1_nz_map_ctx_offset_8x32[256];
-extern const int8_t av1_nz_map_ctx_offset_32x8[256];
+extern const int8_t eb_av1_nz_map_ctx_offset_4x4[16];
+extern const int8_t eb_av1_nz_map_ctx_offset_8x8[64];
+extern const int8_t eb_av1_nz_map_ctx_offset_16x16[256];
+extern const int8_t eb_av1_nz_map_ctx_offset_32x32[1024];
+extern const int8_t eb_av1_nz_map_ctx_offset_8x4[32];
+extern const int8_t eb_av1_nz_map_ctx_offset_8x16[128];
+extern const int8_t eb_av1_nz_map_ctx_offset_16x8[128];
+extern const int8_t eb_av1_nz_map_ctx_offset_16x32[512];
+extern const int8_t eb_av1_nz_map_ctx_offset_32x16[512];
+extern const int8_t eb_av1_nz_map_ctx_offset_32x64[1024];
+extern const int8_t eb_av1_nz_map_ctx_offset_64x32[1024];
+extern const int8_t eb_av1_nz_map_ctx_offset_4x16[64];
+extern const int8_t eb_av1_nz_map_ctx_offset_16x4[64];
+extern const int8_t eb_av1_nz_map_ctx_offset_8x32[256];
+extern const int8_t eb_av1_nz_map_ctx_offset_32x8[256];
 
-static const int8_t *av1_nz_map_ctx_offset[19] = {
-  av1_nz_map_ctx_offset_4x4,    // TX_4x4
-  av1_nz_map_ctx_offset_8x8,    // TX_8x8
-  av1_nz_map_ctx_offset_16x16,  // TX_16x16
-  av1_nz_map_ctx_offset_32x32,  // TX_32x32
-  av1_nz_map_ctx_offset_32x32,  // TX_32x32
-  av1_nz_map_ctx_offset_4x16,   // TX_4x8
-  av1_nz_map_ctx_offset_8x4,    // TX_8x4
-  av1_nz_map_ctx_offset_8x32,   // TX_8x16
-  av1_nz_map_ctx_offset_16x8,   // TX_16x8
-  av1_nz_map_ctx_offset_16x32,  // TX_16x32
-  av1_nz_map_ctx_offset_32x16,  // TX_32x16
-  av1_nz_map_ctx_offset_32x64,  // TX_32x64
-  av1_nz_map_ctx_offset_64x32,  // TX_64x32
-  av1_nz_map_ctx_offset_4x16,   // TX_4x16
-  av1_nz_map_ctx_offset_16x4,   // TX_16x4
-  av1_nz_map_ctx_offset_8x32,   // TX_8x32
-  av1_nz_map_ctx_offset_32x8,   // TX_32x8
-  av1_nz_map_ctx_offset_16x32,  // TX_16x64
-  av1_nz_map_ctx_offset_64x32,  // TX_64x16
+static const int8_t *eb_av1_nz_map_ctx_offset[19] = {
+  eb_av1_nz_map_ctx_offset_4x4,    // TX_4x4
+  eb_av1_nz_map_ctx_offset_8x8,    // TX_8x8
+  eb_av1_nz_map_ctx_offset_16x16,  // TX_16x16
+  eb_av1_nz_map_ctx_offset_32x32,  // TX_32x32
+  eb_av1_nz_map_ctx_offset_32x32,  // TX_32x32
+  eb_av1_nz_map_ctx_offset_4x16,   // TX_4x8
+  eb_av1_nz_map_ctx_offset_8x4,    // TX_8x4
+  eb_av1_nz_map_ctx_offset_8x32,   // TX_8x16
+  eb_av1_nz_map_ctx_offset_16x8,   // TX_16x8
+  eb_av1_nz_map_ctx_offset_16x32,  // TX_16x32
+  eb_av1_nz_map_ctx_offset_32x16,  // TX_32x16
+  eb_av1_nz_map_ctx_offset_32x64,  // TX_32x64
+  eb_av1_nz_map_ctx_offset_64x32,  // TX_64x32
+  eb_av1_nz_map_ctx_offset_4x16,   // TX_4x16
+  eb_av1_nz_map_ctx_offset_16x4,   // TX_16x4
+  eb_av1_nz_map_ctx_offset_8x32,   // TX_8x32
+  eb_av1_nz_map_ctx_offset_32x8,   // TX_32x8
+  eb_av1_nz_map_ctx_offset_16x32,  // TX_16x64
+  eb_av1_nz_map_ctx_offset_64x32,  // TX_64x16
 };
 
 #define NZ_MAP_CTX_0 SIG_COEF_CONTEXTS_2D
@@ -150,7 +150,7 @@ static INLINE int get_nz_map_ctx_from_stats(
     switch (tx_class)
     {
     case TX_CLASS_2D:
-        return ctx + av1_nz_map_ctx_offset[tx_size][coeff_idx];
+        return ctx + eb_av1_nz_map_ctx_offset[tx_size][coeff_idx];
     case TX_CLASS_HORIZ: {
         const int row = coeff_idx >> bwl;
         const int col = coeff_idx - (row << bwl);
@@ -1469,7 +1469,7 @@ void update_coeff_ctx(EbDecHandle *dec_handle, int plane, PartitionInfo_t *pi,
 }
 
 static INLINE int rec_eob_pos(const int eob_token, const int extra) {
-    int eob = k_eob_group_start[eob_token];
+    int eob = eb_k_eob_group_start[eob_token];
     if (eob > 2)
         eob += extra;
     return eob;
@@ -1488,7 +1488,7 @@ static INLINE int get_lower_levels_ctx_2d(const uint8_t *levels,
     mag += AOMMIN(levels[(2 << bwl) + (2 << TX_PAD_HOR_LOG2)], 3);  // { 2, 0 }
 
     const int ctx = AOMMIN((mag + 1) >> 1, 4);
-    return ctx + av1_nz_map_ctx_offset[tx_size][coeff_idx];
+    return ctx + eb_av1_nz_map_ctx_offset[tx_size][coeff_idx];
 }
 static INLINE int get_lower_levels_ctx(const uint8_t *levels,
     int coeff_idx, int bwl, TxSize tx_size, TxClass tx_class)
@@ -1712,7 +1712,7 @@ uint16_t parse_coeffs(EbDecHandle *dec_handle, PartitionInfo_t *xd, SvtReader *r
         break;
     }
 
-    int eob_shift = k_eob_offset_bits[eob_pt];
+    int eob_shift = eb_k_eob_offset_bits[eob_pt];
     if (eob_shift > 0) {
         const int eob_ctx = eob_pt;
         int bit = svt_read_symbol(

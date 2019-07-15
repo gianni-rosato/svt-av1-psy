@@ -110,20 +110,20 @@ class AV1IntraPredTest : public ::testing::TestWithParam<TupleType> {
         stride_ = 64 * 3;
         mask_ = (1 << bd_) - 1;
         above_row_data_ = reinterpret_cast<Sample *>(
-            aom_memalign(32, 3 * 64 * sizeof(Sample)));
+            eb_aom_memalign(32, 3 * 64 * sizeof(Sample)));
         above_row_ = above_row_data_ + 16;
         left_col_ = reinterpret_cast<Sample *>(
-            aom_memalign(32, 2 * 64 * sizeof(Sample)));
+            eb_aom_memalign(32, 2 * 64 * sizeof(Sample)));
         dst_tst_ = reinterpret_cast<Sample *>(
-            aom_memalign(32, 3 * 64 * 64 * sizeof(Sample)));
+            eb_aom_memalign(32, 3 * 64 * 64 * sizeof(Sample)));
         dst_ref_ = reinterpret_cast<Sample *>(
-            aom_memalign(32, 3 * 64 * 64 * sizeof(Sample)));
+            eb_aom_memalign(32, 3 * 64 * 64 * sizeof(Sample)));
     }
     void TearDown() override {
-        aom_free(above_row_data_);
-        aom_free(left_col_);
-        aom_free(dst_tst_);
-        aom_free(dst_ref_);
+        eb_aom_free(above_row_data_);
+        eb_aom_free(left_col_);
+        eb_aom_free(dst_tst_);
+        eb_aom_free(dst_ref_);
     }
 
     virtual void Predict() = 0;
@@ -175,8 +175,8 @@ TEST_P(LowbdIntraPredTest, match_test) {
 // -----------------------------------------------------------------------------
 // High Bit Depth Tests
 #define hbd_entry(type, width, height, opt)                               \
-    make_tuple(&aom_highbd_##type##_predictor_##width##x##height##_##opt, \
-               &aom_highbd_##type##_predictor_##width##x##height##_c,     \
+    make_tuple(&eb_aom_highbd_##type##_predictor_##width##x##height##_##opt, \
+               &eb_aom_highbd_##type##_predictor_##width##x##height##_c,     \
                width,                                                     \
                height,                                                    \
                10)
@@ -275,8 +275,8 @@ INSTANTIATE_TEST_CASE_P(intrapred, HighbdIntraPredTest,
 // ---------------------------------------------------------------------------
 // Low Bit Depth Tests
 #define lbd_entry(type, width, height, opt)                        \
-    LBD_PARAMS(&aom_##type##_predictor_##width##x##height##_##opt, \
-               &aom_##type##_predictor_##width##x##height##_c,     \
+    LBD_PARAMS(&eb_aom_##type##_predictor_##width##x##height##_##opt, \
+               &eb_aom_##type##_predictor_##width##x##height##_c,     \
                width,                                              \
                height,                                             \
                8)

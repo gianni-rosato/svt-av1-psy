@@ -27,14 +27,14 @@ static INLINE void transpose4x4(const float *A, float *B, const int32_t lda,
     _mm_store_ps(&B[3 * ldb], row4);
 }
 
-void aom_transpose_float_sse2(const float *A, float *B, int32_t n) {
+void eb_aom_transpose_float_sse2(const float *A, float *B, int32_t n) {
     for (int32_t y = 0; y < n; y += 4) {
         for (int32_t x = 0; x < n; x += 4)
             transpose4x4(A + y * n + x, B + x * n + y, n, n);
     }
 }
 
-void aom_fft_unpack_2d_output_sse2(const float *packed, float *output, int32_t n) {
+void eb_aom_fft_unpack_2d_output_sse2(const float *packed, float *output, int32_t n) {
     const int32_t n2 = n / 2;
     output[0] = packed[0];
     output[1] = 0;
@@ -106,16 +106,16 @@ void aom_fft_unpack_2d_output_sse2(const float *packed, float *output, int32_t n
 GEN_FFT_4(static INLINE void, sse2, float, __m128, _mm_load_ps, _mm_store_ps,
     _mm_set1_ps, _mm_add_ps, _mm_sub_ps);
 
-void aom_fft4x4_float_sse2(const float *input, float *temp, float *output) {
-    aom_fft_2d_gen(input, temp, output, 4, aom_fft1d_4_sse2,
-        aom_transpose_float_sse2, aom_fft_unpack_2d_output_sse2, 4);
+void eb_aom_fft4x4_float_sse2(const float *input, float *temp, float *output) {
+    eb_aom_fft_2d_gen(input, temp, output, 4, eb_aom_fft1d_4_sse2,
+        eb_aom_transpose_float_sse2, eb_aom_fft_unpack_2d_output_sse2, 4);
 }
 
 // Generate definitions for 1d inverse transforms using float and mm128
 GEN_IFFT_4(static INLINE void, sse2, float, __m128, _mm_load_ps, _mm_store_ps,
     _mm_set1_ps, _mm_add_ps, _mm_sub_ps);
 
-void aom_ifft4x4_float_sse2(const float *input, float *temp, float *output) {
-    aom_ifft_2d_gen(input, temp, output, 4, aom_fft1d_4_float, aom_fft1d_4_sse2,
-        aom_ifft1d_4_sse2, aom_transpose_float_sse2, 4);
+void eb_aom_ifft4x4_float_sse2(const float *input, float *temp, float *output) {
+    eb_aom_ifft_2d_gen(input, temp, output, 4, eb_aom_fft1d_4_float, eb_aom_fft1d_4_sse2,
+        eb_aom_ifft1d_4_sse2, eb_aom_transpose_float_sse2, 4);
 }

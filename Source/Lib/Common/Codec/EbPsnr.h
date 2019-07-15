@@ -37,12 +37,12 @@ extern "C" {
      * \param[in]    peak          Max sample value
      * \param[in]    sse           Sum of squared errors
      */
-    double aom_sse_to_psnr(
+    double eb_aom_sse_to_psnr(
         double samples,
         double peak,
         double sse);
 
-    int64_t aom_get_y_sse_part(
+    int64_t eb_aom_get_y_sse_part(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b,
         int32_t hstart,
@@ -50,11 +50,11 @@ extern "C" {
         int32_t vstart,
         int32_t height);
 
-    int64_t aom_get_y_sse(
+    int64_t eb_aom_get_y_sse(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b);
 
-    int64_t aom_get_u_sse_part(
+    int64_t eb_aom_get_u_sse_part(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b,
         int32_t hstart,
@@ -62,11 +62,11 @@ extern "C" {
         int32_t vstart,
         int32_t height);
 
-    int64_t aom_get_u_sse(
+    int64_t eb_aom_get_u_sse(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b);
 
-    int64_t aom_get_v_sse_part(
+    int64_t eb_aom_get_v_sse_part(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b,
         int32_t hstart,
@@ -74,11 +74,11 @@ extern "C" {
         int32_t vstart,
         int32_t height);
 
-    int64_t aom_get_v_sse(
+    int64_t eb_aom_get_v_sse(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b);
 
-    int64_t aom_highbd_get_y_sse_part(
+    int64_t eb_aom_highbd_get_y_sse_part(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b,
         int32_t hstart,
@@ -86,11 +86,11 @@ extern "C" {
         int32_t vstart,
         int32_t height);
 
-    int64_t aom_highbd_get_y_sse(
+    int64_t eb_aom_highbd_get_y_sse(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b);
 
-    int64_t aom_highbd_get_u_sse_part(
+    int64_t eb_aom_highbd_get_u_sse_part(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b,
         int32_t hstart,
@@ -98,11 +98,11 @@ extern "C" {
         int32_t vstart,
         int32_t height);
 
-    int64_t aom_highbd_get_u_sse(
+    int64_t eb_aom_highbd_get_u_sse(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b);
 
-    int64_t aom_highbd_get_v_sse_part(
+    int64_t eb_aom_highbd_get_v_sse_part(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b,
         int32_t hstart,
@@ -110,7 +110,7 @@ extern "C" {
         int32_t vstart,
         int32_t height);
 
-    int64_t aom_highbd_get_v_sse(
+    int64_t eb_aom_highbd_get_v_sse(
         const Yv12BufferConfig *a,
         const Yv12BufferConfig *b);
 

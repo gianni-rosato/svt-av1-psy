@@ -29,12 +29,12 @@
 // Same wrapper(av1_ac/dc_quant_QTX) available in .c file of encoder
 int16_t get_dc_quant(int32_t qindex, int32_t delta, AomBitDepth bit_depth)
 {
-    return av1_dc_quant_Q3(qindex, delta, bit_depth);
+    return eb_av1_dc_quant_Q3(qindex, delta, bit_depth);
 }
 
 int16_t get_ac_quant(int32_t qindex, int32_t delta, AomBitDepth bit_depth)
 {
-    return av1_ac_quant_Q3(qindex, delta, bit_depth);
+    return eb_av1_ac_quant_Q3(qindex, delta, bit_depth);
 }
 
 // Called in read_frame_header_obu() -> av1_decode_frame_headers_and_setup() -> read_uncompressed_header()

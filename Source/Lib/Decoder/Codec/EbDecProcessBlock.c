@@ -263,7 +263,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
         part_info.num_samples = nsamples;
 
-        apply_wm = !find_projection(
+        apply_wm = !eb_find_projection(
             nsamples,
             pts,
             pts_inref,

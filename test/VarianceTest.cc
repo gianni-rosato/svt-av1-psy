@@ -7,8 +7,8 @@
  * @file VarianceTest.cc
  *
  * @brief Unit test for variance, mse, sum square functions:
- * - aom_variance{4-128}x{4-128}_{c,sse2,avx2}
- * - aom_get_mb_ss_sse2
+ * - eb_aom_variance{4-128}x{4-128}_{c,sse2,avx2}
+ * - eb_aom_get_mb_ss_sse2
  * - aom_mse16x16_{c,avx2}
  *
  * @author Cidana-Ryan
@@ -84,15 +84,15 @@ class MseTest : public ::testing::TestWithParam<TestMseParam> {
           height_(TEST_GET_PARAM(1)),
           mse_tst_(TEST_GET_PARAM(2)) {
         src_data_ =
-            reinterpret_cast<uint8_t *>(aom_memalign(32, MAX_BLOCK_SIZE));
+            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, MAX_BLOCK_SIZE));
         ref_data_ =
-            reinterpret_cast<uint8_t *>(aom_memalign(32, MAX_BLOCK_SIZE));
+            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, MAX_BLOCK_SIZE));
     }
 
     ~MseTest() {
-        aom_free(src_data_);
+        eb_aom_free(src_data_);
         src_data_ = nullptr;
-        aom_free(ref_data_);
+        eb_aom_free(ref_data_);
         ref_data_ = nullptr;
     }
 
@@ -145,7 +145,7 @@ TEST_P(MseTest, MaxTest) {
 
 INSTANTIATE_TEST_CASE_P(Variance, MseTest,
                         ::testing::Values(TestMseParam(16, 16,
-                                                       &aom_mse16x16_avx2)));
+                                                       &eb_aom_mse16x16_avx2)));
 
 // sum of squares test
 static uint32_t mb_ss_ref(const int16_t *src) {
@@ -214,9 +214,9 @@ TEST_P(SumSquareTest, MatchTest) {
     run_match_test();
 };
 
-extern "C" uint32_t aom_get_mb_ss_sse2(const int16_t *src);
+extern "C" uint32_t eb_aom_get_mb_ss_sse2(const int16_t *src);
 INSTANTIATE_TEST_CASE_P(Variance, SumSquareTest,
-                        ::testing::Values(aom_get_mb_ss_sse2));
+                        ::testing::Values(eb_aom_get_mb_ss_sse2));
 
 // Variance test
 using VARIANCE_NXM_FUNC = uint32_t (*)(const uint8_t *src_ptr,
@@ -229,7 +229,7 @@ using VarianceParam =
 
 /**
  * @brief Unit test for variance functions, target functions include:
- *  - - aom_variance{4-128}x{4-128}_{c,avx2}
+ *  - - eb_aom_variance{4-128}x{4-128}_{c,avx2}
  *
  * Test strategy:
  *  This test case contains zero test, random value test, one quarter test as
@@ -253,15 +253,15 @@ class VarianceTest : public ::testing::TestWithParam<VarianceParam> {
           func_c_(TEST_GET_PARAM(2)),
           func_asm_(TEST_GET_PARAM(3)) {
         src_data_ =
-            reinterpret_cast<uint8_t *>(aom_memalign(32, MAX_BLOCK_SIZE));
+            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, MAX_BLOCK_SIZE));
         ref_data_ =
-            reinterpret_cast<uint8_t *>(aom_memalign(32, MAX_BLOCK_SIZE));
+            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, MAX_BLOCK_SIZE));
     }
 
     ~VarianceTest() {
-        aom_free(src_data_);
+        eb_aom_free(src_data_);
         src_data_ = nullptr;
-        aom_free(ref_data_);
+        eb_aom_free(ref_data_);
         ref_data_ = nullptr;
     }
 
@@ -332,28 +332,28 @@ TEST_P(VarianceTest, OneQuarterTest) {
 INSTANTIATE_TEST_CASE_P(
     Variance, VarianceTest,
     ::testing::Values(
-        VarianceParam(4, 4, &aom_variance4x4_c, &aom_variance4x4_sse2),
-        VarianceParam(4, 8, &aom_variance4x8_c, &aom_variance4x8_sse2),
-        VarianceParam(4, 16, &aom_variance4x16_c, &aom_variance4x16_sse2),
-        VarianceParam(8, 4, &aom_variance8x4_c, &aom_variance8x4_sse2),
-        VarianceParam(8, 8, &aom_variance8x8_c, &aom_variance8x8_sse2),
-        VarianceParam(8, 16, &aom_variance8x16_c, &aom_variance8x16_sse2),
-        VarianceParam(8, 32, &aom_variance8x32_c, &aom_variance8x32_sse2),
-        VarianceParam(16, 4, &aom_variance16x4_c, &aom_variance16x4_avx2),
-        VarianceParam(16, 8, &aom_variance16x8_c, &aom_variance16x8_avx2),
-        VarianceParam(16, 16, &aom_variance16x16_c, &aom_variance16x16_avx2),
-        VarianceParam(16, 32, &aom_variance16x32_c, &aom_variance16x32_avx2),
-        VarianceParam(16, 64, &aom_variance16x64_c, &aom_variance16x64_avx2),
-        VarianceParam(32, 8, &aom_variance32x8_c, &aom_variance32x8_avx2),
-        VarianceParam(32, 16, &aom_variance32x16_c, &aom_variance32x16_avx2),
-        VarianceParam(32, 32, &aom_variance32x32_c, &aom_variance32x32_avx2),
-        VarianceParam(32, 64, &aom_variance32x64_c, &aom_variance32x64_avx2),
-        VarianceParam(64, 16, &aom_variance64x16_c, &aom_variance64x16_avx2),
-        VarianceParam(64, 32, &aom_variance64x32_c, &aom_variance64x32_avx2),
-        VarianceParam(64, 64, &aom_variance64x64_c, &aom_variance64x64_avx2),
-        VarianceParam(64, 128, &aom_variance64x128_c, &aom_variance64x128_avx2),
-        VarianceParam(128, 64, &aom_variance128x64_c, &aom_variance128x64_avx2),
-        VarianceParam(128, 128, &aom_variance128x128_c,
-                      &aom_variance128x128_avx2)));
+        VarianceParam(4, 4, &eb_aom_variance4x4_c, &eb_aom_variance4x4_sse2),
+        VarianceParam(4, 8, &eb_aom_variance4x8_c, &eb_aom_variance4x8_sse2),
+        VarianceParam(4, 16, &eb_aom_variance4x16_c, &eb_aom_variance4x16_sse2),
+        VarianceParam(8, 4, &eb_aom_variance8x4_c, &eb_aom_variance8x4_sse2),
+        VarianceParam(8, 8, &eb_aom_variance8x8_c, &eb_aom_variance8x8_sse2),
+        VarianceParam(8, 16, &eb_aom_variance8x16_c, &eb_aom_variance8x16_sse2),
+        VarianceParam(8, 32, &eb_aom_variance8x32_c, &eb_aom_variance8x32_sse2),
+        VarianceParam(16, 4, &eb_aom_variance16x4_c, &eb_aom_variance16x4_avx2),
+        VarianceParam(16, 8, &eb_aom_variance16x8_c, &eb_aom_variance16x8_avx2),
+        VarianceParam(16, 16, &eb_aom_variance16x16_c, &eb_aom_variance16x16_avx2),
+        VarianceParam(16, 32, &eb_aom_variance16x32_c, &eb_aom_variance16x32_avx2),
+        VarianceParam(16, 64, &eb_aom_variance16x64_c, &eb_aom_variance16x64_avx2),
+        VarianceParam(32, 8, &eb_aom_variance32x8_c, &eb_aom_variance32x8_avx2),
+        VarianceParam(32, 16, &eb_aom_variance32x16_c, &eb_aom_variance32x16_avx2),
+        VarianceParam(32, 32, &eb_aom_variance32x32_c, &eb_aom_variance32x32_avx2),
+        VarianceParam(32, 64, &eb_aom_variance32x64_c, &eb_aom_variance32x64_avx2),
+        VarianceParam(64, 16, &eb_aom_variance64x16_c, &eb_aom_variance64x16_avx2),
+        VarianceParam(64, 32, &eb_aom_variance64x32_c, &eb_aom_variance64x32_avx2),
+        VarianceParam(64, 64, &eb_aom_variance64x64_c, &eb_aom_variance64x64_avx2),
+        VarianceParam(64, 128, &eb_aom_variance64x128_c, &eb_aom_variance64x128_avx2),
+        VarianceParam(128, 64, &eb_aom_variance128x64_c, &eb_aom_variance128x64_avx2),
+        VarianceParam(128, 128, &eb_aom_variance128x128_c,
+                      &eb_aom_variance128x128_avx2)));
 
 }  // namespace

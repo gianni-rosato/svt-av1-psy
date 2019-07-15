@@ -192,7 +192,7 @@ TEST(EbRestorationPick, compute_stats) {
                             const int32_t v_end =
                                 RESTORATION_UNITSIZE_MAX * 3 / 2 + end;
 
-                            av1_compute_stats_c(wiener_win,
+                            eb_av1_compute_stats_c(wiener_win,
                                                 d,
                                                 s,
                                                 h_start,
@@ -203,7 +203,7 @@ TEST(EbRestorationPick, compute_stats) {
                                                 src_stride,
                                                 M_org,
                                                 H_org);
-                            av1_compute_stats_avx2(wiener_win,
+                            eb_av1_compute_stats_avx2(wiener_win,
                                                    d,
                                                    s,
                                                    h_start,
@@ -301,7 +301,7 @@ TEST(EbRestorationPick, compute_stats_highbd) {
                                     const int32_t v_end =
                                         sizes[size_mode] + end;
 
-                                    av1_compute_stats_highbd_c(wiener_win,
+                                    eb_av1_compute_stats_highbd_c(wiener_win,
                                                                dgd8,
                                                                src8,
                                                                h_start,
@@ -313,7 +313,7 @@ TEST(EbRestorationPick, compute_stats_highbd) {
                                                                M_org,
                                                                H_org,
                                                                bit_depth);
-                                    av1_compute_stats_highbd_avx2(wiener_win,
+                                    eb_av1_compute_stats_highbd_avx2(wiener_win,
                                                                   dgd8,
                                                                   src8,
                                                                   h_start,
@@ -401,7 +401,7 @@ TEST(EbRestorationPick, DISABLED_compute_stats_speed) {
         EbStartTime(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
-            av1_compute_stats_c(wiener_win,
+            eb_av1_compute_stats_c(wiener_win,
                                 d,
                                 s,
                                 h_start,
@@ -417,7 +417,7 @@ TEST(EbRestorationPick, DISABLED_compute_stats_speed) {
         EbStartTime(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
-            av1_compute_stats_avx2(wiener_win,
+            eb_av1_compute_stats_avx2(wiener_win,
                                    d,
                                    s,
                                    h_start,
@@ -450,11 +450,11 @@ TEST(EbRestorationPick, DISABLED_compute_stats_speed) {
         }
 
         printf("Average Nanoseconds per Function Call\n");
-        printf("    av1_compute_stats_avx2(%d)   : %6.2f\n",
+        printf("    eb_av1_compute_stats_avx2(%d)   : %6.2f\n",
                wiener_win,
                1000000 * time_c / num_loop);
         printf(
-            "    av1_compute_stats_avx512(%d) : %6.2f   (Comparison: "
+            "    eb_av1_compute_stats_avx512(%d) : %6.2f   (Comparison: "
             "%5.2fx)\n",
             wiener_win,
             1000000 * time_o / num_loop,
@@ -493,7 +493,7 @@ TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
             EbStartTime(&start_time_seconds, &start_time_useconds);
 
             for (uint64_t i = 0; i < num_loop; i++) {
-                av1_compute_stats_highbd_c(wiener_win,
+                eb_av1_compute_stats_highbd_c(wiener_win,
                                            dgd8,
                                            src8,
                                            h_start,
@@ -510,7 +510,7 @@ TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
             EbStartTime(&middle_time_seconds, &middle_time_useconds);
 
             for (uint64_t i = 0; i < num_loop; i++) {
-                av1_compute_stats_highbd_avx2(wiener_win,
+                eb_av1_compute_stats_highbd_avx2(wiener_win,
                                               dgd8,
                                               src8,
                                               h_start,
@@ -544,7 +544,7 @@ TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
             }
 
             printf("Average Nanoseconds per Function Call\n");
-            printf("    av1_compute_stats_highbd_avx2(%d)   : %6.2f\n",
+            printf("    eb_av1_compute_stats_highbd_avx2(%d)   : %6.2f\n",
                    wiener_win,
                    1000000 * time_c / num_loop);
             printf(

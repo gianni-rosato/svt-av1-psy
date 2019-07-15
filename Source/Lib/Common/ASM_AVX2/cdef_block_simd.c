@@ -21,7 +21,7 @@
 
 #include "aom_dsp_rtcd.h"
 
-#define SIMD_FUNC(name) name##_avx2
+#define SIMD_FUNC(name) eb_##name##_avx2
 
 #if defined(__SSE4_1__)
 #undef CDEF_AVX_OPT
@@ -393,15 +393,15 @@ void SIMD_FUNC(cdef_filter_block_4x4_8)(uint8_t *dst, int32_t dstride,
     v128 p0, p1, p2, p3;
     v256 sum, row, tap, res;
     v256 max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    int32_t po1 = cdef_directions[dir][0];
-    int32_t po2 = cdef_directions[dir][1];
-    int32_t s1o1 = cdef_directions[(dir + 2) & 7][0];
-    int32_t s1o2 = cdef_directions[(dir + 2) & 7][1];
-    int32_t s2o1 = cdef_directions[(dir + 6) & 7][0];
-    int32_t s2o2 = cdef_directions[(dir + 6) & 7][1];
+    int32_t po1 = eb_cdef_directions[dir][0];
+    int32_t po2 = eb_cdef_directions[dir][1];
+    int32_t s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
+    int32_t s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
+    int32_t s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
+    int32_t s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
 
-    const int32_t *pri_taps = cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
-    const int32_t *sec_taps = cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
 
     if (pri_strength)
         pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
@@ -656,15 +656,15 @@ void SIMD_FUNC(cdef_filter_block_8x8_8)(uint8_t *dst, int32_t dstride,
     v128 p0, p1, p2, p3;
     v256 sum, row, res, tap;
     v256 max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    int32_t po1 = cdef_directions[dir][0];
-    int32_t po2 = cdef_directions[dir][1];
-    int32_t s1o1 = cdef_directions[(dir + 2) & 7][0];
-    int32_t s1o2 = cdef_directions[(dir + 2) & 7][1];
-    int32_t s2o1 = cdef_directions[(dir + 6) & 7][0];
-    int32_t s2o2 = cdef_directions[(dir + 6) & 7][1];
+    int32_t po1 = eb_cdef_directions[dir][0];
+    int32_t po2 = eb_cdef_directions[dir][1];
+    int32_t s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
+    int32_t s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
+    int32_t s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
+    int32_t s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
 
-    const int32_t *pri_taps = cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
-    const int32_t *sec_taps = cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
 #if CDEF_AVX_OPT
     v256 pri_taps_0 = v256_dup_8(pri_taps[0]);
     v256 pri_taps_1 = v256_dup_8(pri_taps[1]);
@@ -931,15 +931,15 @@ void SIMD_FUNC(cdef_filter_block_4x4_16)(uint16_t *dst, int32_t dstride,
 #endif
     v256 p0, p1, p2, p3, sum, row, res;
     v256 max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    int32_t po1 = cdef_directions[dir][0];
-    int32_t po2 = cdef_directions[dir][1];
-    int32_t s1o1 = cdef_directions[(dir + 2) & 7][0];
-    int32_t s1o2 = cdef_directions[(dir + 2) & 7][1];
-    int32_t s2o1 = cdef_directions[(dir + 6) & 7][0];
-    int32_t s2o2 = cdef_directions[(dir + 6) & 7][1];
+    int32_t po1 = eb_cdef_directions[dir][0];
+    int32_t po2 = eb_cdef_directions[dir][1];
+    int32_t s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
+    int32_t s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
+    int32_t s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
+    int32_t s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
 
-    const int32_t *pri_taps = cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
-    const int32_t *sec_taps = cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
 #if  CDEF_AVX_OPT
     v256 pri_strength_256 = v256_dup_16(pri_strength);
     v256 sec_strength_256 = v256_dup_16(sec_strength);
@@ -1228,15 +1228,15 @@ void SIMD_FUNC(cdef_filter_block_8x8_16)(uint16_t *dst, int32_t dstride,
     int32_t i;
     v256 sum, p0, p1, p2, p3, row, res;
     v256 max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    int32_t po1 = cdef_directions[dir][0];
-    int32_t po2 = cdef_directions[dir][1];
-    int32_t s1o1 = cdef_directions[(dir + 2) & 7][0];
-    int32_t s1o2 = cdef_directions[(dir + 2) & 7][1];
-    int32_t s2o1 = cdef_directions[(dir + 6) & 7][0];
-    int32_t s2o2 = cdef_directions[(dir + 6) & 7][1];
+    int32_t po1 = eb_cdef_directions[dir][0];
+    int32_t po2 = eb_cdef_directions[dir][1];
+    int32_t s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
+    int32_t s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
+    int32_t s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
+    int32_t s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
     //SSE CHKN
-    const int32_t *pri_taps = cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
-    const int32_t *sec_taps = cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
 #if CDEF_AVX_OPT
     v256 pri_taps_0 = v256_dup_16(pri_taps[0]);
     v256 pri_taps_1 = v256_dup_16(pri_taps[1]);

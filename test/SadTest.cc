@@ -85,9 +85,9 @@ class SADTestBase : public ::testing::Test {
     }
 
     void SetUp() override {
-        src_aligned_ = (uint8_t *)aom_memalign(32, MAX_BLOCK_SIZE);
-        ref1_aligned_ = (uint8_t *)aom_memalign(32, MAX_BLOCK_SIZE);
-        ref2_aligned_ = (uint8_t *)aom_memalign(32, MAX_BLOCK_SIZE);
+        src_aligned_ = (uint8_t * )eb_aom_memalign(32, MAX_BLOCK_SIZE);
+        ref1_aligned_ = (uint8_t * )eb_aom_memalign(32, MAX_BLOCK_SIZE);
+        ref2_aligned_ = (uint8_t * )eb_aom_memalign(32, MAX_BLOCK_SIZE);
         ASSERT_NE(src_aligned_, nullptr);
         ASSERT_NE(ref1_aligned_, nullptr);
         ASSERT_NE(ref2_aligned_, nullptr);
@@ -95,11 +95,11 @@ class SADTestBase : public ::testing::Test {
 
     void TearDown() override {
         if (src_aligned_)
-            aom_free(src_aligned_);
+            eb_aom_free(src_aligned_);
         if (ref1_aligned_)
-            aom_free(ref1_aligned_);
+            eb_aom_free(ref1_aligned_);
         if (ref2_aligned_)
-            aom_free(ref2_aligned_);
+            eb_aom_free(ref2_aligned_);
     }
 
     void prepare_data() {

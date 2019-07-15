@@ -95,7 +95,7 @@ extern "C" {
      * \param[in]    luma_stride      luma plane stride
      * \param[in]    chroma_stride    chroma plane stride
      */
-    void av1_add_film_grain_run(aom_film_grain_t *grain_params, uint8_t *luma,
+    void eb_av1_add_film_grain_run(aom_film_grain_t *grain_params, uint8_t *luma,
         uint8_t *cb, uint8_t *cr, int32_t height, int32_t width,
         int32_t luma_stride, int32_t chroma_stride,
         int32_t use_high_bit_depth, int32_t chroma_subsamp_y,
@@ -110,7 +110,7 @@ extern "C" {
      * \param[in]    dst              Resulting image with grain
      */
 
-     //void av1_add_film_grain(aom_film_grain_t *grain_params, EbPictureBufferDesc *src,
+     //void eb_av1_add_film_grain(aom_film_grain_t *grain_params, EbPictureBufferDesc *src,
      //        EbPictureBufferDesc *dst);
 
      //void av1_film_grain_write_updated(const aom_film_grain_t *pars,

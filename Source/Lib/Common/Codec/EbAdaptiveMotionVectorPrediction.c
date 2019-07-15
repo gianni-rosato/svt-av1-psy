@@ -1874,7 +1874,7 @@ EbBool warped_motion_parameters(
         nsamples = select_samples(&mv, pts, pts_inref, nsamples, bsize);
     *num_samples = nsamples;
 
-    apply_wm = !find_projection(
+    apply_wm = !eb_find_projection(
         (int) nsamples,
         pts,
         pts_inref,
@@ -1962,7 +1962,7 @@ int count_overlappable_nb_left(
     return nb_count;
 }
 
-void av1_count_overlappable_neighbors(
+void eb_av1_count_overlappable_neighbors(
     const PictureControlSet        *picture_control_set_ptr,
     CodingUnit                     *cu_ptr,
     const BlockSize                   bsize,
@@ -2085,7 +2085,7 @@ int av1_is_dv_valid(const MV dv,
     return 1;
 }
 
-IntMv av1_get_ref_mv_from_stack(int ref_idx,
+IntMv eb_av1_get_ref_mv_from_stack(int ref_idx,
     const MvReferenceFrame *ref_frame,
     int ref_mv_idx,
     CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
@@ -2127,7 +2127,7 @@ static INLINE void lower_mv_precision(MV *mv, int allow_hp, int is_integer) {
         }
     }
 }
-void av1_find_best_ref_mvs_from_stack(int allow_hp,
+void eb_av1_find_best_ref_mvs_from_stack(int allow_hp,
     //const MB_MODE_INFO_EXT *mbmi_ext,
     CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
     MacroBlockD * xd,
@@ -2137,8 +2137,8 @@ void av1_find_best_ref_mvs_from_stack(int allow_hp,
 {
     const int ref_idx = 0;
     MvReferenceFrame ref_frames[2] = { ref_frame, NONE_FRAME };
-    *nearest_mv = av1_get_ref_mv_from_stack(ref_idx, ref_frames, 0, ref_mv_stack/*mbmi_ext*/, xd);
+    *nearest_mv = eb_av1_get_ref_mv_from_stack(ref_idx, ref_frames, 0, ref_mv_stack/*mbmi_ext*/, xd);
     lower_mv_precision(&nearest_mv->as_mv, allow_hp, is_integer);
-    *near_mv = av1_get_ref_mv_from_stack(ref_idx, ref_frames, 1, ref_mv_stack/*mbmi_ext*/, xd);
+    *near_mv = eb_av1_get_ref_mv_from_stack(ref_idx, ref_frames, 1, ref_mv_stack/*mbmi_ext*/, xd);
     lower_mv_precision(&near_mv->as_mv, allow_hp, is_integer);
 }

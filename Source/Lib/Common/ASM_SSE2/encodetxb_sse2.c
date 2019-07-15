@@ -466,7 +466,7 @@ static INLINE int32_t get_txb_bwl(TxSize tx_size) {
     return tx_size_wide_log2[tx_size];
 }
 
-void av1_get_nz_map_contexts_sse2(
+void eb_av1_get_nz_map_contexts_sse2(
     const uint8_t *const levels,
     const int16_t *const scan,
     const uint16_t eob,

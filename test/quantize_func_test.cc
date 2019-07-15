@@ -31,7 +31,7 @@
 namespace {
 using svt_av1_test_tool::SVTRandom;
 
-extern "C" void av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q,
+extern "C" void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q,
                                     int32_t u_dc_delta_q, int32_t u_ac_delta_q,
                                     int32_t v_dc_delta_q, int32_t v_ac_delta_q,
                                     Quants *const quants, Dequants *const deq);
@@ -73,22 +73,22 @@ class QuantizeTest : public ::testing::TestWithParam<QuantizeParam> {
     }
 
     virtual void SetUp() {
-        qtab_ = reinterpret_cast<QuanTable *>(aom_memalign(32, sizeof(*qtab_)));
+        qtab_ = reinterpret_cast<QuanTable *>(eb_aom_memalign(32, sizeof(*qtab_)));
         const int n_coeffs = coeff_num();
         coeff_ = reinterpret_cast<TranLow *>(
-            aom_memalign(32, 6 * n_coeffs * sizeof(TranLow)));
+            eb_aom_memalign(32, 6 * n_coeffs * sizeof(TranLow)));
         InitQuantizer();
     }
 
     virtual void TearDown() {
-        aom_free(qtab_);
+        eb_aom_free(qtab_);
         qtab_ = NULL;
-        aom_free(coeff_);
+        eb_aom_free(coeff_);
         coeff_ = NULL;
     }
 
     void InitQuantizer() {
-        av1_build_quantizer(bd_, 0, 0, 0, 0, 0, &qtab_->quant, &qtab_->dequant);
+        eb_av1_build_quantizer(bd_, 0, 0, 0, 0, 0, &qtab_->quant, &qtab_->dequant);
     }
 
     void QuantizeRun(bool is_loop, int q = 0, int test_num = 1) {
@@ -372,23 +372,23 @@ using std::make_tuple;
 
 #if HAS_AVX2
 const QuantizeParam kQParamArrayAvx2[] = {
-    make_tuple(&av1_quantize_fp_c, &av1_quantize_fp_avx2,
+    make_tuple(&eb_av1_quantize_fp_c, &eb_av1_quantize_fp_avx2,
                static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_8),
-    make_tuple(&av1_quantize_fp_c, &av1_quantize_fp_avx2,
+    make_tuple(&eb_av1_quantize_fp_c, &eb_av1_quantize_fp_avx2,
                static_cast<TxSize>(TX_4X16), TYPE_FP, AOM_BITS_8),
-    make_tuple(&av1_quantize_fp_c, &av1_quantize_fp_avx2,
+    make_tuple(&eb_av1_quantize_fp_c, &eb_av1_quantize_fp_avx2,
                static_cast<TxSize>(TX_16X4), TYPE_FP, AOM_BITS_8),
-    make_tuple(&av1_quantize_fp_c, &av1_quantize_fp_avx2,
+    make_tuple(&eb_av1_quantize_fp_c, &eb_av1_quantize_fp_avx2,
                static_cast<TxSize>(TX_32X8), TYPE_FP, AOM_BITS_8),
-    make_tuple(&av1_quantize_fp_c, &av1_quantize_fp_avx2,
+    make_tuple(&eb_av1_quantize_fp_c, &eb_av1_quantize_fp_avx2,
                static_cast<TxSize>(TX_8X32), TYPE_FP, AOM_BITS_8),
-    make_tuple(&av1_quantize_fp_32x32_c, &av1_quantize_fp_32x32_avx2,
+    make_tuple(&eb_av1_quantize_fp_32x32_c, &eb_av1_quantize_fp_32x32_avx2,
                static_cast<TxSize>(TX_32X32), TYPE_FP, AOM_BITS_8),
-    make_tuple(&av1_quantize_fp_32x32_c, &av1_quantize_fp_32x32_avx2,
+    make_tuple(&eb_av1_quantize_fp_32x32_c, &eb_av1_quantize_fp_32x32_avx2,
                static_cast<TxSize>(TX_16X64), TYPE_FP, AOM_BITS_8),
-    make_tuple(&av1_quantize_fp_32x32_c, &av1_quantize_fp_32x32_avx2,
+    make_tuple(&eb_av1_quantize_fp_32x32_c, &eb_av1_quantize_fp_32x32_avx2,
                static_cast<TxSize>(TX_64X16), TYPE_FP, AOM_BITS_8),
-    make_tuple(&av1_quantize_fp_64x64_c, &av1_quantize_fp_64x64_avx2,
+    make_tuple(&eb_av1_quantize_fp_64x64_c, &eb_av1_quantize_fp_64x64_avx2,
                static_cast<TxSize>(TX_64X64), TYPE_FP, AOM_BITS_8)};
 
 INSTANTIATE_TEST_CASE_P(AVX2, QuantizeTest,

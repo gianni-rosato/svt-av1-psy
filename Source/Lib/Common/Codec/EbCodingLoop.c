@@ -609,7 +609,7 @@ static void Av1EncodeLoop(
                 context_ptr->blk_geom->bheight_uv == context_ptr->blk_geom->bheight ? (context_ptr->blk_geom->bheight_uv << 1) : context_ptr->blk_geom->bheight);
             int32_t round_offset = ((context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr])*(context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr])) / 2;
 
-            subtract_average(
+            eb_subtract_average(
                 context_ptr->md_context->pred_buf_q3,
                 context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -676,7 +676,7 @@ static void Av1EncodeLoop(
                 //TOCHANGE
                 //assert(chroma_size * CFL_BUF_LINE + chroma_size <= CFL_BUF_SQUARE);
 
-                cfl_predict_lbd(
+                eb_cfl_predict_lbd(
                     context_ptr->md_context->pred_buf_q3,
                     predSamples->buffer_cb + pred_cb_offset,
                     predSamples->stride_cb,
@@ -692,7 +692,7 @@ static void Av1EncodeLoop(
                 //TOCHANGE
                 //assert(chroma_size * CFL_BUF_LINE + chroma_size <= CFL_BUF_SQUARE);
 
-                cfl_predict_lbd(
+                eb_cfl_predict_lbd(
                     context_ptr->md_context->pred_buf_q3,
                     predSamples->buffer_cr + pred_cr_offset,
                     predSamples->stride_cr,
@@ -1043,7 +1043,7 @@ static void Av1EncodeLoop16bit(
                 context_ptr->blk_geom->bheight_uv == context_ptr->blk_geom->bheight ? (context_ptr->blk_geom->bheight_uv << 1) : context_ptr->blk_geom->bheight);
             int32_t round_offset = ((context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr])*(context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr])) / 2;
 
-            subtract_average(
+            eb_subtract_average(
                 context_ptr->md_context->pred_buf_q3,
                 context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -1055,7 +1055,7 @@ static void Av1EncodeLoop16bit(
             // TOCHANGE
             // assert(chroma_size * CFL_BUF_LINE + chroma_size <=                CFL_BUF_SQUARE);
 
-            cfl_predict_hbd(
+            eb_cfl_predict_hbd(
                 context_ptr->md_context->pred_buf_q3,
                 ((uint16_t*)predSamples16bit->buffer_cb) + pred_cb_offset,
                 predSamples16bit->stride_cb,
@@ -1071,7 +1071,7 @@ static void Av1EncodeLoop16bit(
             // TOCHANGE
             //assert(chroma_size * CFL_BUF_LINE + chroma_size <=                CFL_BUF_SQUARE);
 
-            cfl_predict_hbd(
+            eb_cfl_predict_hbd(
                 context_ptr->md_context->pred_buf_q3,
                 ((uint16_t*)predSamples16bit->buffer_cr) + pred_cr_offset,
                 predSamples16bit->stride_cr,
@@ -1702,7 +1702,7 @@ void perform_intra_coding_loop(
 
             mode = cu_ptr->pred_mode;
 
-            av1_predict_intra_block_16bit(
+            eb_av1_predict_intra_block_16bit(
                 &sb_ptr->tile_info,
                 ED_STAGE,
                 context_ptr->blk_geom,
@@ -1748,7 +1748,7 @@ void perform_intra_coding_loop(
 
             // Hsan: if CHROMA_MODE_2, then CFL will be evaluated @ EP as no CHROMA @ MD
             // If that's the case then you should ensure than the 1st chroma prediction uses UV_DC_PRED (that's the default configuration for CHROMA_MODE_2 if CFL applicable (set @ fast loop candidates injection) then MD assumes chroma mode always UV_DC_PRED)
-            av1_predict_intra_block(
+            eb_av1_predict_intra_block(
                 &sb_ptr->tile_info,
                 ED_STAGE,
                 context_ptr->blk_geom,
@@ -1953,7 +1953,7 @@ void perform_intra_coding_loop(
 
                 mode = (pu_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED : (PredictionMode)pu_ptr->intra_chroma_mode;
 
-                av1_predict_intra_block_16bit(
+                eb_av1_predict_intra_block_16bit(
                     &sb_ptr->tile_info,
                     ED_STAGE,
                     context_ptr->blk_geom,
@@ -2017,7 +2017,7 @@ void perform_intra_coding_loop(
 
                 // Hsan: if CHROMA_MODE_2, then CFL will be evaluated @ EP as no CHROMA @ MD
                 // If that's the case then you should ensure than the 1st chroma prediction uses UV_DC_PRED (that's the default configuration for CHROMA_MODE_2 if CFL applicable (set @ fast loop candidates injection) then MD assumes chroma mode always UV_DC_PRED)
-                av1_predict_intra_block(
+                eb_av1_predict_intra_block(
                     &sb_ptr->tile_info,
                     ED_STAGE,
                     context_ptr->blk_geom,
@@ -2402,15 +2402,15 @@ EB_EXTERN void av1_encode_pass(
 #if AV1_LF
     if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 1){
         if (tbAddr == 0) {
-            av1_loop_filter_init(picture_control_set_ptr);
+            eb_av1_loop_filter_init(picture_control_set_ptr);
 
-            av1_pick_filter_level(
+            eb_av1_pick_filter_level(
                 0,
                 (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                 picture_control_set_ptr,
                 LPF_PICK_FROM_Q);
 
-            av1_loop_filter_frame_init(picture_control_set_ptr, 0, 3);
+            eb_av1_loop_filter_frame_init(picture_control_set_ptr, 0, 3);
         }
     }
 #endif
@@ -2644,7 +2644,7 @@ EB_EXTERN void av1_encode_pass(
                                     picture_control_set_ptr);
 
                                 IntMv nearestmv, nearmv;
-                                av1_find_best_ref_mvs_from_stack(0, context_ptr->md_context->md_local_cu_unit[blk_geom->blkidx_mds].ed_ref_mv_stack, cu_ptr->av1xd, ref_frame, &nearestmv, &nearmv,
+                                eb_av1_find_best_ref_mvs_from_stack(0, context_ptr->md_context->md_local_cu_unit[blk_geom->blkidx_mds].ed_ref_mv_stack, cu_ptr->av1xd, ref_frame, &nearestmv, &nearmv,
                                     0);
 
                                 if (nearestmv.as_int == INVALID_MV)
@@ -2755,7 +2755,7 @@ EB_EXTERN void av1_encode_pass(
                                         mode = (pu_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED : (PredictionMode)pu_ptr->intra_chroma_mode;
                                     else
                                         mode = cu_ptr->pred_mode; //PredictionMode mode,
-                                    av1_predict_intra_block_16bit(
+                                    eb_av1_predict_intra_block_16bit(
                                         &sb_ptr->tile_info,
                                         ED_STAGE,
                                         context_ptr->blk_geom,
@@ -2830,7 +2830,7 @@ EB_EXTERN void av1_encode_pass(
                                         mode = cu_ptr->pred_mode; //PredictionMode mode,
                                     // Hsan: if CHROMA_MODE_2, then CFL will be evaluated @ EP as no CHROMA @ MD
                                     // If that's the case then you should ensure than the 1st chroma prediction uses UV_DC_PRED (that's the default configuration for CHROMA_MODE_2 if CFL applicable (set @ fast loop candidates injection) then MD assumes chroma mode always UV_DC_PRED)
-                                    av1_predict_intra_block(
+                                    eb_av1_predict_intra_block(
                                         &sb_ptr->tile_info,
                                         ED_STAGE,
                                         context_ptr->blk_geom,

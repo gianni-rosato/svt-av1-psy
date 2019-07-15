@@ -20,11 +20,11 @@
 #include "EbPictureControlSet.h"
 #include "EbPictureBufferDesc.h"
 
-void *aom_memalign(size_t align, size_t size);
-void aom_free(void *memblk);
-void *aom_malloc(size_t size);
+void *eb_aom_memalign(size_t align, size_t size);
+void eb_aom_free(void *memblk);
+void *eb_aom_malloc(size_t size);
 
-EbErrorType av1_alloc_restoration_buffers(Av1Common *cm);
+EbErrorType eb_av1_alloc_restoration_buffers(Av1Common *cm);
 
 EbErrorType av1_hash_table_create(HashTable *p_hash_table);
 
@@ -993,8 +993,8 @@ EbErrorType picture_control_set_ctor(
 
     EB_CREATE_MUTEX(object_ptr->cdef_search_mutex);
 
-    //object_ptr->mse_seg[0] = (uint64_t(*)[64])aom_malloc(sizeof(**object_ptr->mse_seg) *  pictureLcuWidth * pictureLcuHeight);
-   // object_ptr->mse_seg[1] = (uint64_t(*)[64])aom_malloc(sizeof(**object_ptr->mse_seg) *  pictureLcuWidth * pictureLcuHeight);
+    //object_ptr->mse_seg[0] = (uint64_t(*)[64])eb_aom_malloc(sizeof(**object_ptr->mse_seg) *  pictureLcuWidth * pictureLcuHeight);
+   // object_ptr->mse_seg[1] = (uint64_t(*)[64])eb_aom_malloc(sizeof(**object_ptr->mse_seg) *  pictureLcuWidth * pictureLcuHeight);
 
     EB_MALLOC_ARRAY(object_ptr->mse_seg[0], pictureLcuWidth * pictureLcuHeight);
     EB_MALLOC_ARRAY(object_ptr->mse_seg[1], pictureLcuWidth * pictureLcuHeight);
@@ -1273,7 +1273,7 @@ EbErrorType picture_parent_control_set_ctor(
 
     set_restoration_unit_size(initDataPtr->picture_width, initDataPtr->picture_height, 1, 1, object_ptr->av1_cm->rst_info);
 
-    return_error = av1_alloc_restoration_buffers(object_ptr->av1_cm);
+    return_error = eb_av1_alloc_restoration_buffers(object_ptr->av1_cm);
 
     memset(&object_ptr->av1_cm->rst_frame, 0, sizeof(Yv12BufferConfig));
 

@@ -329,7 +329,7 @@ void* packetization_kernel(void *input_ptr)
             picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
             picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr) {
 
-            av1_reset_cdf_symbol_counters(picture_control_set_ptr->entropy_coder_ptr->fc);
+            eb_av1_reset_cdf_symbol_counters(picture_control_set_ptr->entropy_coder_ptr->fc);
             ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->frame_context
                 = (*picture_control_set_ptr->entropy_coder_ptr->fc);
 

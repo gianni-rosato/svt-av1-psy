@@ -23,7 +23,7 @@ extern "C" {
 }
 #endif
 
-uint32_t aom_get_mb_ss_sse2(const int16_t *src) {
+uint32_t eb_aom_get_mb_ss_sse2(const int16_t *src) {
     __m128i vsum = _mm_setzero_si128();
     int32_t i;
 
@@ -106,7 +106,7 @@ static INLINE void variance8_sse2(const uint8_t *src, const int src_stride,
 }
 
 #define AOM_VAR_NO_LOOP_SSE2(bw, bh, bits, max_pixels)                        \
-  unsigned int aom_variance##bw##x##bh##_sse2(                                \
+  unsigned int eb_aom_variance##bw##x##bh##_sse2(                                \
       const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, \
       unsigned int *sse) {                                                    \
     __m128i vsse = _mm_setzero_si128();                                       \

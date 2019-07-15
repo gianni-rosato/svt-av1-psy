@@ -26,7 +26,7 @@
 void ReconOutput(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr);
-void av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
+void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
     Av1Common *cm, int32_t optimized_lr);
 void CopyStatisticsToRefObject(
     PictureControlSet    *picture_control_set_ptr,
@@ -275,7 +275,7 @@ void* rest_kernel(void *input_ptr)
                     cm->rst_info[1].frame_restoration_type != RESTORE_NONE ||
                     cm->rst_info[2].frame_restoration_type != RESTORE_NONE)
                 {
-                    av1_loop_restoration_filter_frame(
+                    eb_av1_loop_restoration_filter_frame(
                         cm->frame_to_show,
                         cm,
                         0);
