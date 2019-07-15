@@ -241,6 +241,60 @@ void update_recon_neighbor_array(
     return;
 }
 
+void update_recon_neighbor_array16bit(
+    NeighborArrayUnit     *na_unit_ptr,
+    uint16_t              *src_ptr_top,
+    uint16_t              *src_ptr_left,
+    uint32_t               pic_origin_x,
+    uint32_t               pic_origin_y,
+    uint32_t               block_width,
+    uint32_t               block_height)
+{
+    uint16_t *dst_ptr;
+    dst_ptr = (uint16_t *) (na_unit_ptr->top_array +
+        get_neighbor_array_unit_top_index(na_unit_ptr, pic_origin_x) *
+        na_unit_ptr->unit_size);
+    EB_MEMCPY(dst_ptr, src_ptr_top, block_width * sizeof(uint16_t));
+
+    dst_ptr = (uint16_t *) (na_unit_ptr->left_array +
+        get_neighbor_array_unit_left_index(na_unit_ptr, pic_origin_y) *
+        na_unit_ptr->unit_size);
+    EB_MEMCPY(dst_ptr, src_ptr_left, block_height * sizeof(uint16_t));
+
+    //   Top-left Neighbor Array
+    uint32_t idx;
+    uint16_t *readPtr = src_ptr_top;
+    int32_t dstStep;
+    int32_t readStep;
+    uint32_t count;
+
+    // Copy bottom row
+    dst_ptr = (uint16_t *) (na_unit_ptr->top_left_array +
+        get_neighbor_array_unit_top_left_index(na_unit_ptr, pic_origin_x,
+            pic_origin_y + (block_height - 1)) * na_unit_ptr->unit_size);
+    EB_MEMCPY(dst_ptr, readPtr, block_width * sizeof(uint16_t));
+
+    // Reset readPtr to the right-column
+    readPtr = src_ptr_left;
+
+    // Copy right column
+    dst_ptr = (uint16_t *) (na_unit_ptr->top_left_array +
+        get_neighbor_array_unit_top_left_index(
+        na_unit_ptr, pic_origin_x + (block_width - 1), pic_origin_y) *
+        na_unit_ptr->unit_size);
+
+    dstStep = -1;
+    readStep = 1;
+    count = block_height;
+    for (idx = 0; idx < count; ++idx) {
+        *dst_ptr = *readPtr;
+        dst_ptr += dstStep;
+        readPtr += readStep;
+    }
+
+    return;
+}
+
 /*************************************************
  * Neighbor Array Sample Update
  *************************************************/

@@ -98,8 +98,10 @@ EbErrorType enc_dec_context_ctor(
     EbFifo                *picture_demux_fifo_ptr,
     EbBool                  is16bit,
     EbColorFormat           color_format,
+    EbBool                  enable_hbd_mode_decision,
     uint32_t                max_input_luma_width,
-    uint32_t                max_input_luma_height){
+    uint32_t                max_input_luma_height)
+{
     (void)max_input_luma_width;
     (void)max_input_luma_height;
 
@@ -190,7 +192,10 @@ EbErrorType enc_dec_context_ctor(
     EB_NEW(
         context_ptr->md_context,
         mode_decision_context_ctor,
-        color_format, 0, 0);
+        color_format, 0, 0, enable_hbd_mode_decision);
+
+    if (enable_hbd_mode_decision)
+        context_ptr->md_context->input_sample16bit_buffer = context_ptr->input_sample16bit_buffer;
 
     context_ptr->md_context->enc_dec_context_ptr = context_ptr;
 
@@ -222,6 +227,13 @@ static void ResetEncodePassNeighborArrays(PictureControlSet *picture_control_set
     neighbor_array_unit_reset(picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array);
     neighbor_array_unit_reset(picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array);
     neighbor_array_unit_reset(picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array);
+    // TODO(Joel): 8-bit ep_luma_recon_neighbor_array (Cb,Cr) when is16bit==0?
+    EbBool is16bit = (EbBool)(picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    if (is16bit) {
+        neighbor_array_unit_reset(picture_control_set_ptr->ep_luma_recon_neighbor_array16bit);
+        neighbor_array_unit_reset(picture_control_set_ptr->ep_cb_recon_neighbor_array16bit);
+        neighbor_array_unit_reset(picture_control_set_ptr->ep_cr_recon_neighbor_array16bit);
+    }
     return;
 }
 
@@ -259,7 +271,8 @@ static void ResetEncDec(
         &context_ptr->fast_chroma_lambda,
         &context_ptr->full_chroma_lambda,
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
-        context_ptr->qp_index);
+        context_ptr->qp_index,
+        picture_control_set_ptr->hbd_mode_decision);
 
     // Slice Type
     slice_type =
@@ -317,7 +330,8 @@ static void EncDecConfigureLcu(
         &context_ptr->fast_chroma_lambda,
         &context_ptr->full_chroma_lambda,
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
-        context_ptr->qp_index);
+        context_ptr->qp_index,
+        picture_control_set_ptr->hbd_mode_decision);
 
     return;
 }

@@ -23,7 +23,10 @@ static void mode_decision_context_dctor(EbPtr p)
 
     EB_DELETE_PTR_ARRAY(obj->candidate_buffer_ptr_array, (MAX_NFL + 1 + 1));
     EB_DELETE(obj->trans_quant_buffers_ptr);
-
+    if (obj->hbd_mode_decision)
+        EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon16bit);
+    else
+        EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon);
     EB_FREE(obj->transform_inner_array_ptr);
     if (obj->is_md_rate_estimation_ptr_owner)
         EB_FREE_ARRAY(obj->md_rate_estimation_ptr);
@@ -35,8 +38,13 @@ static void mode_decision_context_dctor(EbPtr p)
     EB_FREE_ARRAY(obj->full_cost_merge_ptr);
     if (obj->md_cu_arr_nsq) {
         EB_FREE_ARRAY(obj->md_cu_arr_nsq[0].av1xd);
-        EB_FREE_ARRAY(obj->md_cu_arr_nsq[0].neigh_left_recon[0]);
-        EB_FREE_ARRAY(obj->md_cu_arr_nsq[0].neigh_top_recon[0]);
+        if (obj->hbd_mode_decision) {
+            EB_FREE_ARRAY(obj->md_cu_arr_nsq[0].neigh_left_recon_16bit[0]);
+            EB_FREE_ARRAY(obj->md_cu_arr_nsq[0].neigh_top_recon_16bit[0]);
+        } else {
+            EB_FREE_ARRAY(obj->md_cu_arr_nsq[0].neigh_left_recon[0]);
+            EB_FREE_ARRAY(obj->md_cu_arr_nsq[0].neigh_top_recon[0]);
+        }
     }
 
     EB_FREE_ARRAY(obj->md_local_cu_unit);
@@ -51,19 +59,30 @@ EbErrorType mode_decision_context_ctor(
     ModeDecisionContext  *context_ptr,
     EbColorFormat         color_format,
     EbFifo                *mode_decision_configuration_input_fifo_ptr,
-    EbFifo                *mode_decision_output_fifo_ptr){
+    EbFifo                *mode_decision_output_fifo_ptr,
+    EbBool                 enable_hbd_mode_decision )
+{
     uint32_t bufferIndex;
     uint32_t candidateIndex;
 
     (void)color_format;
 
     context_ptr->dctor = mode_decision_context_dctor;
+    context_ptr->hbd_mode_decision = enable_hbd_mode_decision;
+
     // Input/Output System Resource Manager FIFOs
     context_ptr->mode_decision_configuration_input_fifo_ptr = mode_decision_configuration_input_fifo_ptr;
     context_ptr->mode_decision_output_fifo_ptr = mode_decision_output_fifo_ptr;
 
     // Trasform Scratch Memory
     EB_MALLOC(context_ptr->transform_inner_array_ptr, 3120); //refer to EbInvTransform_SSE2.as. case 32x32
+
+    // Cfl scratch memory
+    if (context_ptr->hbd_mode_decision) {
+        EB_MALLOC_ALIGNED(context_ptr->cfl_temp_luma_recon16bit, sizeof(uint16_t) * 128 * 128);
+    } else {
+        EB_MALLOC_ALIGNED(context_ptr->cfl_temp_luma_recon, sizeof(uint8_t) * 128 * 128);
+    }
 
     // MD rate Estimation tables
     EB_MALLOC_ARRAY(context_ptr->md_rate_estimation_ptr, 1);
@@ -101,6 +120,7 @@ EbErrorType mode_decision_context_ctor(
         EB_NEW(
             context_ptr->candidate_buffer_ptr_array[bufferIndex],
             mode_decision_candidate_buffer_ctor,
+            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
             &(context_ptr->fast_cost_array[bufferIndex]),
             &(context_ptr->full_cost_array[bufferIndex]),
             &(context_ptr->full_cost_skip_ptr[bufferIndex]),
@@ -110,10 +130,17 @@ EbErrorType mode_decision_context_ctor(
     context_ptr->md_cu_arr_nsq[0].av1xd = NULL;
     context_ptr->md_cu_arr_nsq[0].neigh_left_recon[0] = NULL;
     context_ptr->md_cu_arr_nsq[0].neigh_top_recon[0] = NULL;
+    context_ptr->md_cu_arr_nsq[0].neigh_left_recon_16bit[0] = NULL;
+    context_ptr->md_cu_arr_nsq[0].neigh_top_recon_16bit[0] = NULL;
     EB_MALLOC_ARRAY(context_ptr->md_cu_arr_nsq[0].av1xd, BLOCK_MAX_COUNT_SB_128);
-    EB_MALLOC_ARRAY(context_ptr->md_cu_arr_nsq[0].neigh_left_recon[0], BLOCK_MAX_COUNT_SB_128 * 128 * 3);
-    EB_MALLOC_ARRAY(context_ptr->md_cu_arr_nsq[0].neigh_top_recon[0], BLOCK_MAX_COUNT_SB_128 * 128 * 3);
-
+    uint16_t sz = sizeof(uint16_t);
+    if (context_ptr->hbd_mode_decision) {
+        EB_MALLOC_ARRAY(context_ptr->md_cu_arr_nsq[0].neigh_left_recon_16bit[0], BLOCK_MAX_COUNT_SB_128 * 128 * 3 * sz);
+        EB_MALLOC_ARRAY(context_ptr->md_cu_arr_nsq[0].neigh_top_recon_16bit[0], BLOCK_MAX_COUNT_SB_128 * 128 * 3 * sz);
+    } else {
+        EB_MALLOC_ARRAY(context_ptr->md_cu_arr_nsq[0].neigh_left_recon[0], BLOCK_MAX_COUNT_SB_128 * 128 * 3);
+        EB_MALLOC_ARRAY(context_ptr->md_cu_arr_nsq[0].neigh_top_recon[0], BLOCK_MAX_COUNT_SB_128 * 128 * 3);
+    }
     uint32_t codedLeafIndex, tu_index;
     for (codedLeafIndex = 0; codedLeafIndex < BLOCK_MAX_COUNT_SB_128; ++codedLeafIndex) {
         for (tu_index = 0; tu_index < TRANSFORM_UNIT_MAX_COUNT; ++tu_index)
@@ -121,10 +148,18 @@ EbErrorType mode_decision_context_ctor(
         const BlockGeom * blk_geom = get_blk_geom_mds(codedLeafIndex);
         UNUSED(blk_geom);
         context_ptr->md_cu_arr_nsq[codedLeafIndex].av1xd = context_ptr->md_cu_arr_nsq[0].av1xd + codedLeafIndex;
-        for (int i = 0; i < 3; i++) {
-            size_t offset = codedLeafIndex * 128 * 3 + i * 128;
-            context_ptr->md_cu_arr_nsq[codedLeafIndex].neigh_left_recon[i] = context_ptr->md_cu_arr_nsq[0].neigh_left_recon[0] + offset;
-            context_ptr->md_cu_arr_nsq[codedLeafIndex].neigh_top_recon[i] = context_ptr->md_cu_arr_nsq[0].neigh_top_recon[0] + offset;
+        if (context_ptr->hbd_mode_decision) {
+             for (int i = 0; i < 3; i++) {
+                size_t offset = (codedLeafIndex * 128 * 3 + i * 128) * sz;
+                context_ptr->md_cu_arr_nsq[codedLeafIndex].neigh_left_recon_16bit[i] = context_ptr->md_cu_arr_nsq[0].neigh_left_recon_16bit[0] + offset;
+                context_ptr->md_cu_arr_nsq[codedLeafIndex].neigh_top_recon_16bit[i] = context_ptr->md_cu_arr_nsq[0].neigh_top_recon_16bit[0] + offset;
+            }
+        } else {
+             for (int i = 0; i < 3; i++) {
+                size_t offset = codedLeafIndex * 128 * 3 + i * 128;
+                context_ptr->md_cu_arr_nsq[codedLeafIndex].neigh_left_recon[i] = context_ptr->md_cu_arr_nsq[0].neigh_left_recon[0] + offset;
+                context_ptr->md_cu_arr_nsq[codedLeafIndex].neigh_top_recon[i] = context_ptr->md_cu_arr_nsq[0].neigh_top_recon[0] + offset;
+            }
         }
 
 #if NO_ENCDEC //SB128_TODO to upgrade
@@ -183,10 +218,17 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *picture_control_set_
         neighbor_array_unit_reset(picture_control_set_ptr->md_leaf_depth_neighbor_array[depth]);
         neighbor_array_unit_reset(picture_control_set_ptr->mdleaf_partition_neighbor_array[depth]);
 
-        neighbor_array_unit_reset(picture_control_set_ptr->md_luma_recon_neighbor_array[depth]);
-        neighbor_array_unit_reset(picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[depth]);
-        neighbor_array_unit_reset(picture_control_set_ptr->md_cb_recon_neighbor_array[depth]);
-        neighbor_array_unit_reset(picture_control_set_ptr->md_cr_recon_neighbor_array[depth]);
+        if (!picture_control_set_ptr->hbd_mode_decision) {
+            neighbor_array_unit_reset(picture_control_set_ptr->md_luma_recon_neighbor_array[depth]);
+            neighbor_array_unit_reset(picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array[depth]);
+            neighbor_array_unit_reset(picture_control_set_ptr->md_cb_recon_neighbor_array[depth]);
+            neighbor_array_unit_reset(picture_control_set_ptr->md_cr_recon_neighbor_array[depth]);
+        } else {
+            neighbor_array_unit_reset(picture_control_set_ptr->md_luma_recon_neighbor_array16bit[depth]);
+            neighbor_array_unit_reset(picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array16bit[depth]);
+            neighbor_array_unit_reset(picture_control_set_ptr->md_cb_recon_neighbor_array16bit[depth]);
+            neighbor_array_unit_reset(picture_control_set_ptr->md_cr_recon_neighbor_array16bit[depth]);
+        }
         neighbor_array_unit_reset(picture_control_set_ptr->md_skip_coeff_neighbor_array[depth]);
         neighbor_array_unit_reset(picture_control_set_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth]);
         neighbor_array_unit_reset(picture_control_set_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth]);
@@ -296,8 +338,8 @@ void Av1lambdaAssign(
     uint32_t                    *fast_chroma_lambda,
     uint32_t                    *full_chroma_lambda,
     uint8_t                      bit_depth,
-    uint16_t                     qp_index)
-
+    uint16_t                     qp_index,
+    EbBool                       hbd_mode_decision)
 {
     if (bit_depth == 8) {
         *full_lambda = av1_lambda_mode_decision8_bit_sse[qp_index];
@@ -306,6 +348,10 @@ void Av1lambdaAssign(
     else if (bit_depth == 10) {
         *full_lambda = av1lambda_mode_decision10_bit_sse[qp_index];
         *fast_lambda = av1lambda_mode_decision10_bit_sad[qp_index];
+        if (hbd_mode_decision) {
+            *full_lambda *= 16;
+            *fast_lambda *= 4;
+        }
     }
     else if (bit_depth == 12) {
         *full_lambda = av1lambda_mode_decision12_bit_sse[qp_index];
@@ -356,7 +402,8 @@ void reset_mode_decision(
         &context_ptr->fast_chroma_lambda,
         &context_ptr->full_chroma_lambda,
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
-        context_ptr->qp_index);
+        context_ptr->qp_index,
+        picture_control_set_ptr->hbd_mode_decision);
     // Slice Type
     slice_type =
         (picture_control_set_ptr->parent_pcs_ptr->idr_flag == EB_TRUE) ? I_SLICE :
@@ -442,7 +489,8 @@ void mode_decision_configure_lcu(
         &context_ptr->fast_chroma_lambda,
         &context_ptr->full_chroma_lambda,
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
-        context_ptr->qp_index);
+        context_ptr->qp_index,
+        picture_control_set_ptr->hbd_mode_decision);
 
     return;
 }

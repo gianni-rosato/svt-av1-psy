@@ -150,6 +150,15 @@ extern "C" {
         uint32_t             block_width,
         uint32_t             block_height);
 
+    void update_recon_neighbor_array16bit(
+        NeighborArrayUnit   *na_unit_ptr,
+        uint16_t            *src_ptr_top,
+        uint16_t            *src_ptr_left,
+        uint32_t             pic_origin_x,
+        uint32_t             pic_origin_y,
+        uint32_t             block_width,
+        uint32_t             block_height);
+
     void copy_neigh_arr(
         NeighborArrayUnit *na_src,
         NeighborArrayUnit *na_dst,

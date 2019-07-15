@@ -754,6 +754,58 @@ cfl_subtract_average_fn get_subtract_average_fn_c(TxSize tx_size);
         return sub_avg[tx_size % TX_SIZES_ALL];                                 \
       }
 
+void av1_predict_intra_block(
+    TileInfo *tile,
+    STAGE stage,
+    const BlockGeom *blk_geom,
+    const Av1Common *cm,
+    int32_t wpx,
+    int32_t hpx,
+    TxSize tx_size,
+    PredictionMode mode,
+    int32_t angle_delta,
+    int32_t use_palette,
+    FilterIntraMode filter_intra_mode,
+    uint8_t* topNeighArray,
+    uint8_t* leftNeighArray,
+    EbPictureBufferDesc *recon_buffer,
+    int32_t col_off,
+    int32_t row_off,
+    int32_t plane,
+    BlockSize bsize,
+    uint32_t tu_org_x_pict,
+    uint32_t tu_org_y_pict,
+    uint32_t bl_org_x_pict,
+    uint32_t bl_org_y_pict,
+    uint32_t bl_org_x_mb,
+    uint32_t bl_org_y_mb);
+
+void av1_predict_intra_block_16bit(
+    TileInfo * tile,
+    STAGE stage,
+    const BlockGeom * blk_geom,
+    const Av1Common *cm,
+    int32_t wpx,
+    int32_t hpx,
+    TxSize tx_size,
+    PredictionMode mode,
+    int32_t angle_delta,
+    int32_t use_palette,
+    FilterIntraMode filter_intra_mode,
+    uint16_t* topNeighArray,
+    uint16_t* leftNeighArray,
+    EbPictureBufferDesc  *recon_buffer,
+    int32_t col_off,
+    int32_t row_off,
+    int32_t plane,
+    BlockSize bsize,
+    uint32_t tu_org_x_pict,
+    uint32_t tu_org_y_pict,
+    uint32_t bl_org_x_pict,
+    uint32_t bl_org_y_pict,
+    uint32_t bl_org_x_mb,
+    uint32_t bl_org_y_mb);
+
 #ifdef __cplusplus
 }
 #endif

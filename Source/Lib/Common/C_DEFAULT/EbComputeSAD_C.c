@@ -67,6 +67,28 @@ uint32_t fast_loop_nx_m_sad_kernel(
     return sad;
 }
 
+uint32_t sad_16b_kernel(
+    uint16_t  *src,                            // input parameter, source samples Ptr
+    uint32_t  src_stride,                      // input parameter, source stride
+    uint16_t  *ref,                            // input parameter, reference samples Ptr
+    uint32_t  ref_stride,                      // input parameter, reference stride
+    uint32_t  height,                         // input parameter, block height (M)
+    uint32_t  width)                          // input parameter, block width (N)
+{
+    uint32_t x, y;
+    uint32_t sad = 0;
+
+    for (y = 0; y < height; y++) {
+        for (x = 0; x < width; x++)
+            sad += EB_ABS_DIFF(src[x], ref[x]);
+        src += src_stride;
+        ref += ref_stride;
+    }
+
+    return sad;
+}
+
+
 void sad_loop_kernel(
     uint8_t  *src,                            // input parameter, source samples Ptr
     uint32_t  src_stride,                      // input parameter, source stride
