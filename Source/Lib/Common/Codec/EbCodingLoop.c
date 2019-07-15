@@ -31,54 +31,9 @@
 #include "EbIntraPrediction.h"
 #include "aom_dsp_rtcd.h"
 #include "EbCodingLoop.h"
+
 void av1_set_ref_frame(MvReferenceFrame *rf,
     int8_t ref_frame_type);
-extern void av1_predict_intra_block(
-    TileInfo                    *tile,
-    STAGE                       stage,
-    const BlockGeom            *blk_geom,
-    const Av1Common *cm,
-    int32_t wpx,
-    int32_t hpx,
-    TxSize tx_size,
-    PredictionMode mode,
-    int32_t angle_delta,
-    int32_t use_palette,
-    FilterIntraMode filter_intra_mode,
-    uint8_t* topNeighArray,
-    uint8_t* leftNeighArray,
-    EbPictureBufferDesc  *recon_buffer,
-    int32_t col_off,
-    int32_t row_off,
-    int32_t plane,
-    BlockSize bsize,
-    uint32_t tu_org_x_pict,
-    uint32_t tu_org_y_pict,
-    uint32_t bl_org_x_pict,
-    uint32_t bl_org_y_pict,
-    uint32_t bl_org_x_mb,
-    uint32_t bl_org_y_mb);
-
-void av1_predict_intra_block_16bit(
-    TileInfo               *tile,
-    EncDecContext         *context_ptr,
-    const Av1Common *cm,
-    int32_t wpx,
-    int32_t hpx,
-    TxSize tx_size,
-    PredictionMode mode,
-    int32_t angle_delta,
-    int32_t use_palette,
-    FilterIntraMode filter_intra_mode,
-    uint16_t* topNeighArray,
-    uint16_t* leftNeighArray,
-    EbPictureBufferDesc  *recon_buffer,
-    int32_t col_off,
-    int32_t row_off,
-    int32_t plane,
-    BlockSize bsize,
-    uint32_t bl_org_x_pict,
-    uint32_t bl_org_y_pict);
 
 /*******************************************
 * set Penalize Skip Flag
@@ -126,6 +81,49 @@ typedef void(*EB_AV1_GENERATE_RECON_FUNC_PTR)(
     uint32_t                 component_mask,
     uint16_t                *eob,
     EbAsm                 asm_type);
+
+
+/*******************************************
+* Residual Kernel 8-16bit
+    Computes the residual data
+*******************************************/
+void residual_kernel(
+    uint8_t   *input,
+    uint32_t   input_offset,
+    uint32_t   input_stride,
+    uint8_t   *pred,
+    uint32_t   pred_offset,
+    uint32_t   pred_stride,
+    int16_t   *residual,
+    uint32_t   residual_offset,
+    uint32_t   residual_stride,
+    EbBool     hbd,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+
+    if (hbd) {
+        residual_kernel16bit(
+            ((uint16_t*)input) + input_offset,
+            input_stride,
+            ((uint16_t*)pred) + pred_offset,
+            pred_stride,
+            residual + residual_offset,
+            residual_stride,
+            area_width,
+            area_height);
+    } else {
+        ResidualKernel(
+            &(input[input_offset]),
+            input_stride,
+            &(pred[pred_offset]),
+            pred_stride,
+            residual + residual_offset,
+            residual_stride,
+            area_width,
+            area_height);
+    }
+}
 
 /***************************************************
 * Update Intra Mode Neighbor Arrays
@@ -1576,37 +1574,41 @@ EbErrorType Av1QpModulationLcu(
 }
 
 #endif
+
 void Store16bitInputSrc(
-    EncDecContext         *context_ptr,
-    PictureControlSet     *picture_control_set_ptr,
+    EbPictureBufferDesc     *input_sample16bit_buffer,
+    PictureControlSet       *picture_control_set_ptr,
     uint32_t                 lcuX,
     uint32_t                 lcuY,
     uint32_t                 lcuW,
-    uint32_t                 lcuH ){
+    uint32_t                 lcuH )
+{
     uint32_t rowIt;
     uint16_t* fromPtr;
     uint16_t* toPtr;
 
-    fromPtr = (uint16_t*)context_ptr->input_sample16bit_buffer->buffer_y;
+    fromPtr = (uint16_t*)input_sample16bit_buffer->buffer_y;
     toPtr = (uint16_t*)picture_control_set_ptr->input_frame16bit->buffer_y + (lcuX + picture_control_set_ptr->input_frame16bit->origin_x) + (lcuY + picture_control_set_ptr->input_frame16bit->origin_y)*picture_control_set_ptr->input_frame16bit->stride_y;
 
     for (rowIt = 0; rowIt < lcuH; rowIt++)
-        memcpy(toPtr + rowIt * picture_control_set_ptr->input_frame16bit->stride_y, fromPtr + rowIt * context_ptr->input_sample16bit_buffer->stride_y, lcuW * 2);
+        memcpy(toPtr + rowIt * picture_control_set_ptr->input_frame16bit->stride_y, fromPtr + rowIt * input_sample16bit_buffer->stride_y, lcuW * 2);
+
     lcuX = lcuX / 2;
     lcuY = lcuY / 2;
     lcuW = lcuW / 2;
     lcuH = lcuH / 2;
 
-    fromPtr = (uint16_t*)context_ptr->input_sample16bit_buffer->buffer_cb;
+    fromPtr = (uint16_t*)input_sample16bit_buffer->buffer_cb;
     toPtr = (uint16_t*)picture_control_set_ptr->input_frame16bit->buffer_cb + (lcuX + picture_control_set_ptr->input_frame16bit->origin_x / 2) + (lcuY + picture_control_set_ptr->input_frame16bit->origin_y / 2)*picture_control_set_ptr->input_frame16bit->stride_cb;
 
     for (rowIt = 0; rowIt < lcuH; rowIt++)
-        memcpy(toPtr + rowIt * picture_control_set_ptr->input_frame16bit->stride_cb, fromPtr + rowIt * context_ptr->input_sample16bit_buffer->stride_cb, lcuW * 2);
-    fromPtr = (uint16_t*)context_ptr->input_sample16bit_buffer->buffer_cr;
+        memcpy(toPtr + rowIt * picture_control_set_ptr->input_frame16bit->stride_cb, fromPtr + rowIt * input_sample16bit_buffer->stride_cb, lcuW * 2);
+
+    fromPtr = (uint16_t*)input_sample16bit_buffer->buffer_cr;
     toPtr = (uint16_t*)picture_control_set_ptr->input_frame16bit->buffer_cr + (lcuX + picture_control_set_ptr->input_frame16bit->origin_x / 2) + (lcuY + picture_control_set_ptr->input_frame16bit->origin_y / 2)*picture_control_set_ptr->input_frame16bit->stride_cb;
 
     for (rowIt = 0; rowIt < lcuH; rowIt++)
-        memcpy(toPtr + rowIt * picture_control_set_ptr->input_frame16bit->stride_cr, fromPtr + rowIt * context_ptr->input_sample16bit_buffer->stride_cr, lcuW * 2);
+        memcpy(toPtr + rowIt * picture_control_set_ptr->input_frame16bit->stride_cr, fromPtr + rowIt * input_sample16bit_buffer->stride_cr, lcuW * 2);
 }
 
 
@@ -1702,7 +1704,8 @@ void perform_intra_coding_loop(
 
             av1_predict_intra_block_16bit(
                 &sb_ptr->tile_info,
-                context_ptr,
+                ED_STAGE,
+                context_ptr->blk_geom,
                 picture_control_set_ptr->parent_pcs_ptr->av1_cm,
                 context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -1718,8 +1721,12 @@ void perform_intra_coding_loop(
                 0,
                 0,
                 context_ptr->blk_geom->bsize,
+                txb_origin_x,
+                txb_origin_y,
                 context_ptr->cu_origin_x,
-                context_ptr->cu_origin_y);
+                context_ptr->cu_origin_y,
+                0,
+                0);
         }
         else {
             uint8_t    topNeighArray[64 * 2 + 1];
@@ -1948,7 +1955,8 @@ void perform_intra_coding_loop(
 
                 av1_predict_intra_block_16bit(
                     &sb_ptr->tile_info,
-                    context_ptr,
+                    ED_STAGE,
+                    context_ptr->blk_geom,
                     picture_control_set_ptr->parent_pcs_ptr->av1_cm,
                     plane ? context_ptr->blk_geom->bwidth_uv : context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
                     plane ? context_ptr->blk_geom->bheight_uv : context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
@@ -1965,8 +1973,12 @@ void perform_intra_coding_loop(
                     0,
                     plane,
                     context_ptr->blk_geom->bsize,
+                    txb_origin_x,
+                    txb_origin_y,
                     plane ? context_ptr->cu_origin_x : context_ptr->cu_origin_x,
-                    plane ? context_ptr->cu_origin_y : context_ptr->cu_origin_y);
+                    plane ? context_ptr->cu_origin_y : context_ptr->cu_origin_y,
+                    0,
+                    0);
             }
         }
         else {
@@ -2364,7 +2376,8 @@ EB_EXTERN void av1_encode_pass(
                 asm_type);
         }
 
-        Store16bitInputSrc(context_ptr, picture_control_set_ptr, sb_origin_x, sb_origin_y, sb_width, sb_height);
+        if (picture_control_set_ptr->hbd_mode_decision == 0)
+            Store16bitInputSrc(context_ptr->input_sample16bit_buffer, picture_control_set_ptr, sb_origin_x, sb_origin_y, sb_width, sb_height);
     }
 
     if ((sequence_control_set_ptr->input_resolution == INPUT_SIZE_4K_RANGE) && !picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
@@ -2744,7 +2757,8 @@ EB_EXTERN void av1_encode_pass(
                                         mode = cu_ptr->pred_mode; //PredictionMode mode,
                                     av1_predict_intra_block_16bit(
                                         &sb_ptr->tile_info,
-                                        context_ptr,
+                                        ED_STAGE,
+                                        context_ptr->blk_geom,
                                         picture_control_set_ptr->parent_pcs_ptr->av1_cm,                  //const Av1Common *cm,
                                         plane ? blk_geom->bwidth_uv : blk_geom->bwidth,                  //int32_t wpx,
                                         plane ? blk_geom->bheight_uv : blk_geom->bheight,                  //int32_t hpx,
@@ -2761,8 +2775,12 @@ EB_EXTERN void av1_encode_pass(
                                         0,                                                          //int32_t row_off,
                                         plane,                                                      //int32_t plane,
                                         blk_geom->bsize,                  //uint32_t puSize,
+                                        context_ptr->cu_origin_x,
+                                        context_ptr->cu_origin_y,
                                         context_ptr->cu_origin_x,  //uint32_t cuOrgX,
-                                        context_ptr->cu_origin_y);   //uint32_t cuOrgY
+                                        context_ptr->cu_origin_y,
+                                        0,                          // MD ONLY - NOT USED BY ENCDEC
+                                        0);                         //uint32_t cuOrgY
                                 }
                             }
                             else {

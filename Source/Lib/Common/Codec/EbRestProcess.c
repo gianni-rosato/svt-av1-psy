@@ -53,11 +53,21 @@ void restoration_seg_search(
     uint32_t                segment_index);
 void rest_finish_search(Macroblock *x, Av1Common *const cm);
 
+static void rest_context_dctor(EbPtr p)
+{
+    RestContext *obj = (RestContext*)p;
+    EB_DELETE(obj->temp_lf_recon_picture_ptr);
+    EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
+    EB_DELETE(obj->trial_frame_rst);
+    EB_DELETE(obj->org_rec_frame);
+    EB_FREE(obj->rst_tmpbuf);
+}
+
 /******************************************************
  * Rest Context Constructor
  ******************************************************/
 EbErrorType rest_context_ctor(
-    RestContext **context_dbl_ptr,
+    RestContext           *context_ptr,
     EbFifo                *rest_input_fifo_ptr,
     EbFifo                *rest_output_fifo_ptr ,
     EbFifo                *picture_demux_fifo_ptr,
@@ -67,10 +77,8 @@ EbErrorType rest_context_ctor(
     uint32_t                max_input_luma_height
    )
 {
-    EbErrorType return_error = EB_ErrorNone;
-    RestContext *context_ptr;
-    EB_MALLOC(RestContext*, context_ptr, sizeof(RestContext), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
+
+    context_ptr->dctor = rest_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
     context_ptr->rest_input_fifo_ptr = rest_input_fifo_ptr;
@@ -91,21 +99,19 @@ EbErrorType rest_context_ctor(
         initData.bot_padding = AOM_BORDER_IN_PIXELS;
         initData.split_mode = EB_FALSE;
 
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&context_ptr->trial_frame_rst,
+        EB_NEW(
+            context_ptr->trial_frame_rst,
+            eb_picture_buffer_desc_ctor,
             (EbPtr)&initData);
 
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-         return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&context_ptr->org_rec_frame,
-                (EbPtr)&initData);
+        EB_NEW(
+            context_ptr->org_rec_frame,
+            eb_picture_buffer_desc_ctor,
+            (EbPtr)&initData);
 
-         EB_MALLOC(int32_t *, context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE, EB_N_PTR);
+         EB_MALLOC(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
     }
 
-    context_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)EB_NULL;
-    context_ptr->temp_lf_recon_picture_ptr = (EbPictureBufferDesc *)EB_NULL;
     EbPictureBufferDescInitData tempLfReconDescInitData;
     tempLfReconDescInitData.max_width = (uint16_t)max_input_luma_width;
     tempLfReconDescInitData.max_height = (uint16_t)max_input_luma_height;
@@ -120,14 +126,16 @@ EbErrorType rest_context_ctor(
 
     if (is16bit) {
         tempLfReconDescInitData.bit_depth = EB_16BIT;
-        return_error = eb_recon_picture_buffer_desc_ctor(
-            (EbPtr*)&(context_ptr->temp_lf_recon_picture16bit_ptr),
+        EB_NEW(
+            context_ptr->temp_lf_recon_picture16bit_ptr,
+            eb_recon_picture_buffer_desc_ctor,
             (EbPtr)&tempLfReconDescInitData);
     }
     else {
         tempLfReconDescInitData.bit_depth = EB_8BIT;
-        return_error = eb_recon_picture_buffer_desc_ctor(
-            (EbPtr*)&(context_ptr->temp_lf_recon_picture_ptr),
+        EB_NEW(
+            context_ptr->temp_lf_recon_picture_ptr,
+            eb_recon_picture_buffer_desc_ctor,
             (EbPtr)&tempLfReconDescInitData);
     }
 

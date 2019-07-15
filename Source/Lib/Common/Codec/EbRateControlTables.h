@@ -42,7 +42,7 @@ typedef struct InitialRateControlTables
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType rate_control_tables_ctor(
+extern EbErrorType rate_control_tables_init(
     RateControlTables *rate_control_tables_array
 );
 

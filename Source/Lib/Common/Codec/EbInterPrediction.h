@@ -13,6 +13,7 @@
 #include "EbModeDecision.h"
 #include "EbMcp.h"
 #include "EbMvMerge.h"
+#include "EbObject.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,6 +29,7 @@ extern "C" {
     struct ModeDecisionContext;
 
     typedef struct InterPredictionContext {
+        EbDctor                               dctor;
         MotionCompensationPredictionContext  *mcp_context;
     } InterPredictionContext;
 

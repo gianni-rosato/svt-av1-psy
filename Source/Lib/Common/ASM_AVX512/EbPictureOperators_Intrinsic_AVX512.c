@@ -159,8 +159,10 @@ uint64_t spatial_full_distortion_kernel128x_n_avx512_intrin(
 
 uint64_t spatial_full_distortion_kernel_avx512(
     uint8_t   *input,
+    uint32_t   input_offset,
     uint32_t   input_stride,
     uint8_t   *recon,
+    uint32_t   recon_offset,
     uint32_t   recon_stride,
     uint32_t   area_width,
     uint32_t   area_height)
@@ -170,6 +172,8 @@ uint64_t spatial_full_distortion_kernel_avx512(
     __m256i sum = _mm256_setzero_si256();
     __m128i sum_L, sum_H, s;
     uint64_t spatialDistortion = 0;
+    input += input_offset;
+    recon += recon_offset;
 
     if (leftover) {
         const uint8_t *inp = input + area_width - leftover;

@@ -21,6 +21,7 @@
 #include "EbEncDecSegments.h"
 #include "EbRateControlTables.h"
 #include "EbRestoration.h"
+#include "EbObject.h"
 #include "noise_model.h"
 #include "EbSegmentationParams.h"
 
@@ -13697,6 +13698,7 @@ extern "C" {
 
     typedef struct PictureControlSet
     {
+        EbDctor                            dctor;
         EbObjectWrapper                    *sequence_control_set_wrapper_ptr;
 
         EbPictureBufferDesc                *recon_picture_ptr;
@@ -13794,6 +13796,11 @@ extern "C" {
         NeighborArrayUnit                  *md_tx_depth_1_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_cb_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_cr_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+        EbBool                             hbd_mode_decision;
+        NeighborArrayUnit                  *md_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
+        NeighborArrayUnit                  *md_tx_depth_1_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
+        NeighborArrayUnit                  *md_cb_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
+        NeighborArrayUnit                  *md_cr_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_skip_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_luma_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -13934,12 +13941,14 @@ extern "C" {
     // Parent is created before the Child, and continue to live more. Child PCS only lives the exact time needed to encode the picture: from ME to EC/ALF.
     typedef struct PictureParentControlSet
     {
+        EbDctor                            dctor;
         EbObjectWrapper                    *sequence_control_set_wrapper_ptr;
         EbObjectWrapper                    *input_picture_wrapper_ptr;
         EbObjectWrapper                    *reference_picture_wrapper_ptr;
         EbObjectWrapper                    *pa_reference_picture_wrapper_ptr;
         EbPictureBufferDesc                *enhanced_picture_ptr;
         EbPictureBufferDesc                *chroma_downsampled_picture_ptr; //if 422/444 input, down sample to 420 for MD
+        EbBool                              is_chroma_downsampled_picture_ptr_owner;
         PredictionStructure                *pred_struct_ptr;          // need to check
         struct SequenceControlSet          *sequence_control_set_ptr;
         EbObjectWrapper                    *p_pcs_wrapper_ptr;
@@ -14085,6 +14094,7 @@ extern "C" {
 
         // Open loop Intra candidate Search Results
         OisSbResults                    **ois_sb_results;
+        OisCandidate                    **ois_candicate;
         // Dynamic GOP
         EbPred                                pred_structure;
         uint8_t                               hierarchical_levels;
@@ -14265,7 +14275,7 @@ extern "C" {
         Macroblock                           *av1x;
         int32_t                               film_grain_params_present; //todo (AN): Do we need this flag at picture level?
         aom_film_grain_t                      film_grain_params;
-        struct aom_denoise_and_model_t       *denoise_and_model;
+        aom_denoise_and_model_t              *denoise_and_model;
         EbBool                                enable_in_loop_motion_estimation_flag;
         RestUnitSearchInfo                   *rusi_picture[3];//for 3 planes
         int8_t                                cdef_filter_mode;
@@ -14334,6 +14344,7 @@ extern "C" {
         uint16_t                           enc_dec_segment_row;
         EbEncMode                          enc_mode;
         uint8_t                            speed_control;
+        EbBool                             hbd_mode_decision;
         uint16_t                           film_grain_noise_level;
         EbBool                             ext_block_flag;
         EbBool                             in_loop_me_flag;
@@ -14575,16 +14586,16 @@ extern "C" {
     /**************************************
      * Extern Function Declarations
      **************************************/
-    extern EbErrorType picture_control_set_ctor(
+    extern EbErrorType picture_control_set_creator(
         EbPtr *object_dbl_ptr,
         EbPtr  object_init_data_ptr);
 
-    extern EbErrorType picture_parent_control_set_ctor(
+    extern EbErrorType picture_parent_control_set_creator(
         EbPtr *object_dbl_ptr,
         EbPtr  object_init_data_ptr);
 
     extern EbErrorType me_sb_results_ctor(
-        MeLcuResults     **objectDblPtr,
+        MeLcuResults      *objectPtr,
         uint32_t           maxNumberOfPusPerLcu,
         uint8_t            mrp_mode,
         uint32_t           maxNumberOfMeCandidatesPerPU);

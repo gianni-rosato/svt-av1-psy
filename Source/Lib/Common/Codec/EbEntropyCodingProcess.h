@@ -18,12 +18,14 @@
 #include "EbReferenceObject.h"
 #include "EbNeighborArrays.h"
 #include "EbCodingUnit.h"
+#include "EbObject.h"
 
 /**************************************
  * Enc Dec Context
  **************************************/
 typedef struct EntropyCodingContext
 {
+    EbDctor                      dctor;
     EbFifo                       *enc_dec_input_fifo_ptr;
     EbFifo                       *entropy_coding_output_fifo_ptr;  // to packetization
     EbFifo                       *rate_control_output_fifo_ptr; // feedback to rate control
@@ -77,7 +79,7 @@ typedef struct EntropyCodingContext
  * Extern Function Declarations
  **************************************/
 extern EbErrorType entropy_coding_context_ctor(
-    EntropyCodingContext **context_dbl_ptr,
+    EntropyCodingContext  *context_ptr,
     EbFifo                *enc_dec_input_fifo_ptr,
     EbFifo                *packetization_output_fifo_ptr,
     EbFifo                *rate_control_output_fifo_ptr,

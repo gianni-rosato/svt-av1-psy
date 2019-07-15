@@ -11,7 +11,7 @@
 #include "EbDefinitions.h"
 #include "grainSynthesis.h"
 #include "EbSvtAv1Formats.h"
-
+#include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,6 +27,7 @@ extern "C" {
      ************************************/
     typedef struct EbPictureBufferDesc
     {
+        EbDctor        dctor;
         // Buffer Ptrs
         EbByte         buffer_y;             // pointer to the Y luma buffer
         EbByte         buffer_cb;            // pointer to the U chroma buffer
@@ -60,6 +61,7 @@ extern "C" {
         EbBool            packedFlag;       // Indicates if sample buffers are packed or not
 
         EbBool            film_grain_flag;  // Indicates if film grain parameters are present for the frame
+        uint32_t          buffer_enable_mask;
     } EbPictureBufferDesc;
 
 #define YV12_FLAG_HIGHBITDEPTH 8
@@ -303,11 +305,11 @@ extern "C" {
      * Extern Function Declarations
      **************************************/
     extern EbErrorType eb_picture_buffer_desc_ctor(
-        EbPtr *object_dbl_ptr,
+        EbPictureBufferDesc *object_ptr,
         EbPtr  object_init_data_ptr);
 
     extern EbErrorType eb_recon_picture_buffer_desc_ctor(
-        EbPtr *object_dbl_ptr,
+        EbPictureBufferDesc *object_ptr,
         EbPtr  object_init_data_ptr);
 
 #ifdef __cplusplus

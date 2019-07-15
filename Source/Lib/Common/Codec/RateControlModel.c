@@ -58,13 +58,14 @@ static const size_t DEFAULT_REF_INTER_PICTURE_COMPRESSION_RATIO[64] = {
      20385, 17752, 15465, 13178, 10891
 };
 
-EbErrorType    rate_control_model_ctor(EbRateControlModel **object_doubble_ptr) {
-    EbRateControlModel  *model_ptr;
+static void rate_control_model_dctor(EbPtr p) {
+    EbRateControlModel *obj = (EbRateControlModel*)p;
+    EB_FREE(obj->gop_infos);
+}
 
-    EB_MALLOC(EbRateControlModel*, model_ptr, sizeof(EbRateControlModel), EB_N_PTR);
-    *object_doubble_ptr = (void*)model_ptr;
+EbErrorType    rate_control_model_ctor(EbRateControlModel *model_ptr) {
 
-    EB_MEMSET(model_ptr, 0, sizeof(EbRateControlModel));
+    model_ptr->dctor = rate_control_model_dctor;
     EB_MEMCPY(model_ptr->intra_size_predictions, (void*)DEFAULT_REF_INTRA_PICTURE_COMPRESSION_RATIO, sizeof(DEFAULT_REF_INTRA_PICTURE_COMPRESSION_RATIO));
     EB_MEMCPY(model_ptr->inter_size_predictions, (void*)DEFAULT_REF_INTER_PICTURE_COMPRESSION_RATIO, sizeof(DEFAULT_REF_INTER_PICTURE_COMPRESSION_RATIO));
 
@@ -72,18 +73,17 @@ EbErrorType    rate_control_model_ctor(EbRateControlModel **object_doubble_ptr) 
 }
 
 EbErrorType rate_control_model_init(EbRateControlModel *model_ptr, SequenceControlSet *sequenceControlSetPtr) {
-    uint32_t                number_of_frame = (uint32_t)sequenceControlSetPtr->static_config.frames_to_be_encoded;
-    EbRateControlGopInfo    *gop_infos;
-
-    EB_MALLOC(EbRateControlGopInfo*, gop_infos, sizeof(EbRateControlModel) * number_of_frame, EB_N_PTR);
-    memset(gop_infos, 0, sizeof(EbRateControlModel) * number_of_frame);
+    uint32_t number_of_frame = (uint32_t)sequenceControlSetPtr->static_config.frames_to_be_encoded;
 
     model_ptr->desired_bitrate = sequenceControlSetPtr->static_config.target_bit_rate;
     model_ptr->frame_rate = sequenceControlSetPtr->static_config.frame_rate >> 16;
     model_ptr->width = sequenceControlSetPtr->seq_header.max_frame_width;
     model_ptr->height = sequenceControlSetPtr->seq_header.max_frame_height;
     model_ptr->pixels = model_ptr->width * model_ptr->height;
-    model_ptr->gop_infos = gop_infos;
+    //free old
+    EB_FREE(model_ptr->gop_infos);
+
+    EB_CALLOC(model_ptr->gop_infos, number_of_frame, sizeof(EbRateControlGopInfo));
     model_ptr->intra_period = sequenceControlSetPtr->static_config.intra_period_length;
 
     return EB_ErrorNone;

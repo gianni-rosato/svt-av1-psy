@@ -8,6 +8,7 @@
 
 #include "EbDefinitions.h"
 #include "EbThreads.h"
+#include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -24,6 +25,9 @@ extern "C" {
       *********************************************************************/
     typedef struct EbObjectWrapper
     {
+        EbDctor                   dctor;
+
+        EbDctor                   object_destroyer;
         // object_ptr - pointer to the object being managed.
         void                     *object_ptr;
 
@@ -56,6 +60,7 @@ extern "C" {
      *********************************************************************/
     typedef struct EbFifo
     {
+        EbDctor  dctor;
         // counting_semaphore - used for OS thread-blocking & dynamically
         //   counting the number of EbObjectWrappers currently in the
         //   EbFifo.
@@ -81,6 +86,7 @@ extern "C" {
      *********************************************************************/
     typedef struct EbCircularBuffer
     {
+        EbDctor dctor;
         EbPtr *array_ptr;
         uint32_t  head_index;
         uint32_t  tail_index;
@@ -93,6 +99,7 @@ extern "C" {
      *********************************************************************/
     typedef struct EbMuxingQueue
     {
+        EbDctor            dctor;
         EbHandle           lockout_mutex;
         EbCircularBuffer *object_queue;
         EbCircularBuffer *process_queue;
@@ -111,6 +118,7 @@ extern "C" {
      *********************************************************************/
     typedef struct EbSystemResource
     {
+        EbDctor               dctor;
         // object_total_count - A count of the number of objects contained in the
         //   System Resoruce.
         uint32_t              object_total_count;
@@ -209,33 +217,16 @@ extern "C" {
      *     object_ctor is called.
      *********************************************************************/
     extern EbErrorType eb_system_resource_ctor(
-        EbSystemResource **resource_dbl_ptr,
+        EbSystemResource  *resource_ptr,
         uint32_t            object_total_count,
         uint32_t            producer_process_total_count,
         uint32_t            consumer_process_total_count,
         EbFifo         ***producer_fifo_ptr_array_ptr,
         EbFifo         ***consumer_fifo_ptr_array_ptr,
         EbBool              full_fifo_enabled,
-        EbCtor             object_ctor,
-        EbPtr               object_init_data_ptr);
-
-    /*********************************************************************
-     * eb_system_resource_dtor
-     *   Destructor for EbSystemResource.  Fully destructs all members
-     *   of EbSystemResource including the object with the passed
-     *   object_dtor function.
-     *
-     *   resource_ptr
-     *     pointer to the SystemResource to be destructed.
-     *
-     *   object_dtor
-     *     Function pointer to the destructor of the object managed by
-     *     SystemResource referenced by resource_ptr. No object level
-     *     destruction is performed if object_dtor is NULL.
-     *********************************************************************/
-    extern void eb_system_resource_dtor(
-        EbSystemResource  *resource_ptr,
-        EbDtor              object_dtor);
+        EbCreator             object_ctor,
+        EbPtr               object_init_data_ptr,
+        EbDctor             object_destroyer);
 
     /*********************************************************************
      * EbSystemResourceGetEmptyObject

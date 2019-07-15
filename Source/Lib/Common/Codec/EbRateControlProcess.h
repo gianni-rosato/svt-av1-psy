@@ -10,6 +10,8 @@
 #include "EbSystemResourceManager.h"
 #include "EbSvtAv1Enc.h"
 #include "EbPictureControlSet.h"
+#include "RateControlModel.h"
+#include "EbObject.h"
 
 #define CCOEFF_INIT_FACT              2
 #define SAD_CLIP_COEFF                5
@@ -85,6 +87,7 @@ typedef struct RateControlPorts
  **************************************/
 typedef struct CodedFramesStatsEntry
 {
+    EbDctor                dctor;
     uint64_t               picture_number;
     int64_t               frame_total_bit_actual;
     EbBool              end_of_sequence_flag;
@@ -95,6 +98,7 @@ typedef struct CodedFramesStatsEntry
 
 typedef struct RateControlLayerContext
 {
+    EbDctor    dctor;
     uint64_t   previous_frame_distortion_me;
     uint64_t   previous_frame_bit_actual;
     uint64_t   previous_framequantized_coeff_bit_actual;
@@ -148,6 +152,7 @@ typedef struct RateControlLayerContext
 
 typedef struct RateControlIntervalParamContext
 {
+    EbDctor                      dctor;
     uint64_t                     first_poc;
     uint64_t                     last_poc;
     EbBool                       in_use;
@@ -174,6 +179,7 @@ typedef struct RateControlIntervalParamContext
 
 typedef struct HighLevelRateControlContext
 {
+    EbDctor  dctor;
     uint64_t target_bit_rate;
     uint64_t frame_rate;
     uint64_t channel_bit_rate_per_frame;
@@ -187,12 +193,15 @@ typedef struct HighLevelRateControlContext
 #endif
 } HighLevelRateControlContext;
 
+
 typedef struct RateControlContext
 {
+    EbDctor                            dctor;
     EbFifo                            *rate_control_input_tasks_fifo_ptr;
     EbFifo                            *rate_control_output_results_fifo_ptr;
 
     HighLevelRateControlContext       *high_level_rate_control_ptr;
+    EbRateControlModel                *rc_model_ptr;
 
     RateControlIntervalParamContext  **rate_control_param_queue;
     uint64_t                           rate_control_param_queue_head_index;
@@ -244,17 +253,17 @@ typedef struct RateControlContext
  * Extern Function Declarations
  **************************************/
 extern EbErrorType rate_control_layer_context_ctor(
-    RateControlLayerContext **entry_dbl_ptr);
+    RateControlLayerContext *entry_ptr);
 
 extern EbErrorType rate_control_interval_param_context_ctor(
-    RateControlIntervalParamContext **entry_dbl_ptr);
+    RateControlIntervalParamContext *entry_ptr);
 
 extern EbErrorType rate_control_coded_frames_stats_context_ctor(
-    CodedFramesStatsEntry **entry_dbl_ptr,
+    CodedFramesStatsEntry  *entry_ptr,
     uint64_t                  picture_number);
 
 extern EbErrorType rate_control_context_ctor(
-    RateControlContext **context_dbl_ptr,
+    RateControlContext  *context_ptr,
     EbFifo              *rate_control_input_tasks_fifo_ptr,
     EbFifo              *rate_control_output_results_fifo_ptr,
     int32_t                intra_period_length);

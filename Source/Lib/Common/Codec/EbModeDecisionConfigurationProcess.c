@@ -651,37 +651,47 @@ void set_reference_cdef_strength(
 * Compute Tc, and Beta offsets for a given picture
 ******************************************************/
 
+static void mode_decision_configuration_context_dctor(EbPtr p)
+{
+    ModeDecisionConfigurationContext *obj = (ModeDecisionConfigurationContext*)p;
+
+    if (obj->is_md_rate_estimation_ptr_owner)
+        EB_FREE_ARRAY(obj->md_rate_estimation_ptr);
+    EB_FREE_ARRAY(obj->sb_score_array);
+    EB_FREE_ARRAY(obj->sb_cost_array);
+    EB_FREE_ARRAY(obj->mdc_candidate_ptr);
+    EB_FREE_ARRAY(obj->mdc_ref_mv_stack);
+    EB_FREE_ARRAY(obj->mdc_cu_ptr->av1xd);
+    EB_FREE_ARRAY(obj->mdc_cu_ptr);
+}
 /******************************************************
  * Mode Decision Configuration Context Constructor
  ******************************************************/
 EbErrorType mode_decision_configuration_context_ctor(
-    ModeDecisionConfigurationContext **context_dbl_ptr,
+    ModeDecisionConfigurationContext  *context_ptr,
     EbFifo                            *rate_control_input_fifo_ptr,
     EbFifo                            *mode_decision_configuration_output_fifo_ptr,
     uint16_t                                 sb_total_count)
 
 {
-    ModeDecisionConfigurationContext *context_ptr;
-
-    EB_MALLOC(ModeDecisionConfigurationContext*, context_ptr, sizeof(ModeDecisionConfigurationContext), EB_N_PTR);
-
-    *context_dbl_ptr = context_ptr;
-
+    context_ptr->dctor = mode_decision_configuration_context_dctor;
     // Input/Output System Resource Manager FIFOs
     context_ptr->rate_control_input_fifo_ptr = rate_control_input_fifo_ptr;
     context_ptr->mode_decision_configuration_output_fifo_ptr = mode_decision_configuration_output_fifo_ptr;
     // Rate estimation
-    EB_MALLOC(MdRateEstimationContext*, context_ptr->md_rate_estimation_ptr, sizeof(MdRateEstimationContext), EB_N_PTR);
+    EB_MALLOC_ARRAY(context_ptr->md_rate_estimation_ptr, 1);
+    context_ptr->is_md_rate_estimation_ptr_owner = EB_TRUE;
 
     // Adaptive Depth Partitioning
-    EB_MALLOC(uint32_t*, context_ptr->sb_score_array, sizeof(uint32_t) * sb_total_count, EB_N_PTR);
-    EB_MALLOC(uint8_t *, context_ptr->sb_cost_array, sizeof(uint8_t) * sb_total_count, EB_N_PTR);
+    EB_MALLOC_ARRAY(context_ptr->sb_score_array, sb_total_count);
+    EB_MALLOC_ARRAY(context_ptr->sb_cost_array, sb_total_count);
 
     // Open Loop Partitioning
-    EB_MALLOC(ModeDecisionCandidate*, context_ptr->mdc_candidate_ptr, sizeof(ModeDecisionCandidate), EB_N_PTR);
-    EB_MALLOC(CandidateMv*, context_ptr->mdc_ref_mv_stack, sizeof(CandidateMv), EB_N_PTR);
-    EB_MALLOC(CodingUnit*, context_ptr->mdc_cu_ptr, sizeof(CodingUnit), EB_N_PTR);
-    EB_MALLOC(MacroBlockD*, context_ptr->mdc_cu_ptr->av1xd, sizeof(MacroBlockD), EB_N_PTR);
+    EB_MALLOC_ARRAY(context_ptr->mdc_candidate_ptr, 1);
+    EB_MALLOC_ARRAY(context_ptr->mdc_ref_mv_stack, 1);
+    EB_MALLOC_ARRAY(context_ptr->mdc_cu_ptr, 1);
+    context_ptr->mdc_cu_ptr->av1xd = NULL;
+    EB_MALLOC_ARRAY(context_ptr->mdc_cu_ptr->av1xd, 1);
     return EB_ErrorNone;
 }
 
@@ -1764,7 +1774,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         Quants *const quantsMd = &picture_control_set_ptr->parent_pcs_ptr->quantsMd;
         Dequants *const dequantsMd = &picture_control_set_ptr->parent_pcs_ptr->deqMd;
         av1_build_quantizer(
-            (AomBitDepth)8,
+            picture_control_set_ptr->hbd_mode_decision ? AOM_BITS_10 : AOM_BITS_8,
             picture_control_set_ptr->parent_pcs_ptr->y_dc_delta_q,
             picture_control_set_ptr->parent_pcs_ptr->u_dc_delta_q,
             picture_control_set_ptr->parent_pcs_ptr->u_ac_delta_q,
@@ -1792,7 +1802,8 @@ void* mode_decision_configuration_kernel(void *input_ptr)
             &lambdaSad,
             &lambdaSse,
             (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
-            context_ptr->qp_index);
+            context_ptr->qp_index,
+            picture_control_set_ptr->hbd_mode_decision);
         context_ptr->lambda = (uint64_t)lambdaSad;
 
         // Slice Type
@@ -1809,6 +1820,10 @@ void* mode_decision_configuration_kernel(void *input_ptr)
 #endif
 
         // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
+        if (context_ptr->is_md_rate_estimation_ptr_owner) {
+            EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
+            context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
+        }
         context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
 
         entropyCodingQp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;

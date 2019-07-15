@@ -10,12 +10,14 @@
 #include "EbSystemResourceManager.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
+#include "EbObject.h"
 
 /**************************************
  * Context
  **************************************/
 typedef struct PictureDecisionContext
 {
+    EbDctor      dctor;
     EbFifo       *picture_analysis_results_input_fifo_ptr;
     EbFifo       *picture_decision_results_output_fifo_ptr;
 
@@ -56,7 +58,7 @@ typedef struct PictureDecisionContext
  * Extern Function Declaration
  ***************************************/
 extern EbErrorType picture_decision_context_ctor(
-    PictureDecisionContext **context_dbl_ptr,
+    PictureDecisionContext  *context_ptr,
     EbFifo                  *picture_analysis_results_input_fifo_ptr,
     EbFifo                  *picture_decision_results_output_fifo_ptr);
 

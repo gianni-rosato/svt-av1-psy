@@ -24,6 +24,7 @@
 #include "EbEncodeContext.h"
 #include "EbPredictionStructure.h"
 #include "noise_model.h"
+#include "EbObject.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +34,7 @@ extern "C" {
      ************************************/
     typedef struct SequenceControlSet
     {
+        EbDctor                                 dctor;
         EbSvtAv1EncConfiguration                static_config;
 
         // Encoding Context
@@ -231,6 +233,7 @@ extern "C" {
 
     typedef struct EbSequenceControlSetInstance
     {
+        EbDctor                  dctor;
         EncodeContext            *encode_context_ptr;
         SequenceControlSet       *sequence_control_set_ptr;
         EbHandle                    config_mutex;
@@ -239,8 +242,12 @@ extern "C" {
     /**************************************
      * Extern Function Declarations
      **************************************/
-    extern EbErrorType eb_sequence_control_set_ctor(
+    extern EbErrorType eb_sequence_control_set_creator(
         EbPtr *object_dbl_ptr,
+        EbPtr object_init_data_ptr);
+
+    extern EbErrorType eb_sequence_control_set_ctor(
+        SequenceControlSet* object,
         EbPtr  object_init_data_ptr);
 
     extern EbErrorType copy_sequence_control_set(
@@ -248,10 +255,7 @@ extern "C" {
         SequenceControlSet *src);
 
     extern EbErrorType eb_sequence_control_set_instance_ctor(
-        EbSequenceControlSetInstance **object_dbl_ptr);
-
-    extern EbErrorType sb_params_ctor(
-        SequenceControlSet *sequence_control_set_ptr);
+        EbSequenceControlSetInstance *object_dbl_ptr);
 
     extern EbErrorType sb_params_init(
         SequenceControlSet *sequence_control_set_ptr);

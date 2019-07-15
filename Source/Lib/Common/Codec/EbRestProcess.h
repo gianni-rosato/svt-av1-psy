@@ -14,12 +14,14 @@
 #include "EbUtility.h"
 #include "EbPsnr.h"
 #include "EbPictureControlSet.h"
+#include "EbObject.h"
 
 /**************************************
  * Rest Context
  **************************************/
 typedef struct RestContext
 {
+    EbDctor                       dctor;
     EbFifo                       *rest_input_fifo_ptr;
     EbFifo                       *rest_output_fifo_ptr;
     EbFifo                       *picture_demux_fifo_ptr;
@@ -40,7 +42,7 @@ typedef struct RestContext
  * Extern Function Declarations
  **************************************/
 extern EbErrorType rest_context_ctor(
-    RestContext **context_dbl_ptr,
+    RestContext                  *context_ptr,
     EbFifo                       *rest_input_fifo_ptr,
     EbFifo                       *rest_output_fifo_ptr,
     EbFifo                      *picture_demux_fifo_ptr,

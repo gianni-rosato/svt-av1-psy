@@ -348,13 +348,10 @@ void DetectGlobalMotion(
 * Initial Rate Control Context Constructor
 ************************************************/
 EbErrorType initial_rate_control_context_ctor(
-    InitialRateControlContext **context_dbl_ptr,
+    InitialRateControlContext  *context_ptr,
     EbFifo                     *motion_estimation_results_input_fifo_ptr,
     EbFifo                     *initialrate_control_results_output_fifo_ptr)
 {
-    InitialRateControlContext *context_ptr;
-    EB_MALLOC(InitialRateControlContext*, context_ptr, sizeof(InitialRateControlContext), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
     context_ptr->motion_estimation_results_input_fifo_ptr = motion_estimation_results_input_fifo_ptr;
     context_ptr->initialrate_control_results_output_fifo_ptr = initialrate_control_results_output_fifo_ptr;
 

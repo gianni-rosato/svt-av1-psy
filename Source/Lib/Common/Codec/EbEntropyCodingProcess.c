@@ -30,16 +30,12 @@ void av1_tile_set_row(TileInfo *tile, PictureParentControlSet * pcs_ptr, int row
  * Enc Dec Context Constructor
  ******************************************************/
 EbErrorType entropy_coding_context_ctor(
-    EntropyCodingContext **context_dbl_ptr,
+    EntropyCodingContext  *context_ptr,
     EbFifo                *enc_dec_input_fifo_ptr,
     EbFifo                *packetization_output_fifo_ptr,
     EbFifo                *rate_control_output_fifo_ptr,
     EbBool                  is16bit)
 {
-    EntropyCodingContext *context_ptr;
-    EB_MALLOC(EntropyCodingContext*, context_ptr, sizeof(EntropyCodingContext), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
-
     context_ptr->is16bit = is16bit;
 
     // Input/Output System Resource Manager FIFOs

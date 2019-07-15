@@ -8,15 +8,24 @@
 #include "EbEncDecResults.h"
 
 EbErrorType enc_dec_results_ctor(
+    EncDecResults *context_ptr,
+    EbPtr object_init_data_ptr)
+{
+    (void)context_ptr;
+    (void)object_init_data_ptr;
+
+    return EB_ErrorNone;
+}
+
+EbErrorType enc_dec_results_creator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    EncDecResults *context_ptr;
-    EB_MALLOC(EncDecResults*, context_ptr, sizeof(EncDecResults), EB_N_PTR);
+    EncDecResults* obj;
 
-    *object_dbl_ptr = (EbPtr)context_ptr;
-
-    (void)object_init_data_ptr;
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, enc_dec_results_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
 
     return EB_ErrorNone;
 }

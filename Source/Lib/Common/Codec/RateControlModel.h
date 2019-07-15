@@ -8,11 +8,13 @@
 
 #include "EbSequenceControlSet.h"
 #include "RateControlGopInfo.h"
+#include "EbObject.h"
 
 /*
  * @struct Holds a prediction model for a sequence
  */
 typedef struct    RateControlModel {
+    EbDctor     dctor;
     /*
      * @variable uint32_t[64]. Predicted intra frame size for a given QP.
      * Indexed by QP. intraSizePrediction[15] references the estimated size of an
@@ -88,10 +90,10 @@ typedef struct    RateControlModel {
 /*
  * @function rate_control_model_ctor. Allocate and initialize a new EbRateControlModel
  * with default values.
- * @param {EbRateControlModel*} object_double_ptr. Address of the pointer to EbRateControlModel
+ * @param {EbRateControlModel*} model_ptr. Address of the pointer to EbRateControlModel
  * @return {EbErrorType}.
  */
-EbErrorType rate_control_model_ctor(EbRateControlModel **object_double_ptr);
+EbErrorType rate_control_model_ctor(EbRateControlModel *model_ptr);
 
 /*
  * @function rate_control_model_init. Initialize a model with data specific to a sequence.

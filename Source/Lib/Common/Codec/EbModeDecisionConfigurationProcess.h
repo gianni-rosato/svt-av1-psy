@@ -12,6 +12,7 @@
 #include "EbRateControlProcess.h"
 #include "EbSequenceControlSet.h"
 #include "EbModeDecision.h"
+#include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,10 +35,12 @@ extern "C" {
 
     typedef struct ModeDecisionConfigurationContext
     {
+        EbDctor                              dctor;
         EbFifo                              *rate_control_input_fifo_ptr;
         EbFifo                              *mode_decision_configuration_output_fifo_ptr;
 
         MdRateEstimationContext           *md_rate_estimation_ptr;
+        EbBool                             is_md_rate_estimation_ptr_owner;
 
         uint8_t                              qp;
         uint64_t                             lambda;
@@ -84,7 +87,7 @@ extern "C" {
      * Extern Function Declarations
      **************************************/
     extern EbErrorType mode_decision_configuration_context_ctor(
-        ModeDecisionConfigurationContext **context_dbl_ptr,
+        ModeDecisionConfigurationContext  *context_ptr,
         EbFifo                            *rate_control_input_fifo_ptr,
         EbFifo                            *mode_decision_configuration_output_fifo_ptr,
         uint16_t                           sb_total_count);

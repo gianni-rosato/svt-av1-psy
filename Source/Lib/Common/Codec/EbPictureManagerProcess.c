@@ -59,16 +59,11 @@ static void ConfigurePictureEdges(
  * Picture Manager Context Constructor
  ************************************************/
 EbErrorType picture_manager_context_ctor(
-    PictureManagerContext **context_dbl_ptr,
+    PictureManagerContext  *context_ptr,
     EbFifo                 *picture_input_fifo_ptr,
     EbFifo                 *picture_manager_output_fifo_ptr,
     EbFifo                **picture_control_set_fifo_ptr_array)
 {
-    PictureManagerContext *context_ptr;
-    EB_MALLOC(PictureManagerContext*, context_ptr, sizeof(PictureManagerContext), EB_N_PTR);
-
-    *context_dbl_ptr = context_ptr;
-
     context_ptr->picture_input_fifo_ptr = picture_input_fifo_ptr;
     context_ptr->picture_manager_output_fifo_ptr = picture_manager_output_fifo_ptr;
     context_ptr->picture_control_set_fifo_ptr_array = picture_control_set_fifo_ptr_array;

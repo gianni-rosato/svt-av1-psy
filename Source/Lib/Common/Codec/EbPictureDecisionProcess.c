@@ -221,37 +221,33 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 #define FC_SKIP_TX_SR_TH025                     125 // Fast cost skip tx search threshold.
 #define FC_SKIP_TX_SR_TH010                     110 // Fast cost skip tx search threshold.
 
+void picture_decision_context_dctor(EbPtr p)
+{
+    PictureDecisionContext* obj = (PictureDecisionContext*)p;
+
+    EB_FREE_2D(obj->ahd_running_avg);
+    EB_FREE_2D(obj->ahd_running_avg_cr);
+    EB_FREE_2D(obj->ahd_running_avg_cb);
+}
+
  /************************************************
   * Picture Analysis Context Constructor
   ************************************************/
 EbErrorType picture_decision_context_ctor(
-    PictureDecisionContext **context_dbl_ptr,
+    PictureDecisionContext *context_ptr,
     EbFifo *picture_analysis_results_input_fifo_ptr,
     EbFifo *picture_decision_results_output_fifo_ptr)
 {
-    PictureDecisionContext *context_ptr;
-    uint32_t arrayIndex;
     uint32_t arrayRow, arrowColumn;
-    EB_MALLOC(PictureDecisionContext*, context_ptr, sizeof(PictureDecisionContext), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
+
+    context_ptr->dctor = picture_decision_context_dctor;
 
     context_ptr->picture_analysis_results_input_fifo_ptr = picture_analysis_results_input_fifo_ptr;
     context_ptr->picture_decision_results_output_fifo_ptr = picture_decision_results_output_fifo_ptr;
 
-    EB_MALLOC(uint32_t**, context_ptr->ahd_running_avg_cb, sizeof(uint32_t*) * MAX_NUMBER_OF_REGIONS_IN_WIDTH, EB_N_PTR);
-
-    EB_MALLOC(uint32_t**, context_ptr->ahd_running_avg_cr, sizeof(uint32_t*) * MAX_NUMBER_OF_REGIONS_IN_WIDTH, EB_N_PTR);
-
-    EB_MALLOC(uint32_t**, context_ptr->ahd_running_avg, sizeof(uint32_t*) * MAX_NUMBER_OF_REGIONS_IN_WIDTH, EB_N_PTR);
-
-    for (arrayIndex = 0; arrayIndex < MAX_NUMBER_OF_REGIONS_IN_WIDTH; arrayIndex++)
-    {
-        EB_MALLOC(uint32_t*, context_ptr->ahd_running_avg_cb[arrayIndex], sizeof(uint32_t) * MAX_NUMBER_OF_REGIONS_IN_HEIGHT, EB_N_PTR);
-
-        EB_MALLOC(uint32_t*, context_ptr->ahd_running_avg_cr[arrayIndex], sizeof(uint32_t) * MAX_NUMBER_OF_REGIONS_IN_HEIGHT, EB_N_PTR);
-
-        EB_MALLOC(uint32_t*, context_ptr->ahd_running_avg[arrayIndex], sizeof(uint32_t) * MAX_NUMBER_OF_REGIONS_IN_HEIGHT, EB_N_PTR);
-    }
+    EB_MALLOC_2D(context_ptr->ahd_running_avg_cb,  MAX_NUMBER_OF_REGIONS_IN_WIDTH, MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
+    EB_MALLOC_2D(context_ptr->ahd_running_avg_cr, MAX_NUMBER_OF_REGIONS_IN_WIDTH, MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
+    EB_MALLOC_2D(context_ptr->ahd_running_avg, MAX_NUMBER_OF_REGIONS_IN_WIDTH, MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
 
     for (arrayRow = 0; arrayRow < MAX_NUMBER_OF_REGIONS_IN_HEIGHT; arrayRow++)
     {
@@ -263,10 +259,6 @@ EbErrorType picture_decision_context_ctor(
     }
 
     context_ptr->reset_running_avg = EB_TRUE;
-
-    context_ptr->is_scene_change_detected = EB_FALSE;
-
-    context_ptr->key_poc = 0;
 
     return EB_ErrorNone;
 }

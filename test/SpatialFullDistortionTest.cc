@@ -18,8 +18,9 @@
 namespace {
 
 typedef uint64_t (*spatial_full_distortion_kernel_func)(
-    uint8_t *input, uint32_t input_stride, uint8_t *recon,
-    uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    uint8_t *input, uint32_t input_offset, uint32_t input_stride,
+    uint8_t *recon, uint32_t recon_offset, uint32_t recon_stride,
+    uint32_t area_width, uint32_t area_height);
 
 class SpatialFullDistortionTest
     : public ::testing::TestWithParam<spatial_full_distortion_kernel_func> {
@@ -70,14 +71,18 @@ void SpatialFullDistortionTest::RunCheckOutput() {
                  area_height += 4) {
                 const uint64_t dist_org =
                     spatial_full_distortion_kernel_c(input_,
+                                                     0,
                                                      input_stride_,
                                                      recon_,
+                                                     0,
                                                      recon_stride_,
                                                      area_width,
                                                      area_height);
                 const uint64_t dist_opt = func_(input_,
+                                                0,
                                                 input_stride_,
                                                 recon_,
+                                                0,
                                                 recon_stride_,
                                                 area_width,
                                                 area_height);
@@ -105,8 +110,10 @@ void SpatialFullDistortionTest::RunSpeedTest() {
 
         for (int i = 0; i < num_loops; ++i) {
             dist_org = spatial_full_distortion_kernel_c(input_,
+                                                        0,
                                                         input_stride_,
                                                         recon_,
+                                                        0,
                                                         recon_stride_,
                                                         area_width,
                                                         area_height);
@@ -116,8 +123,10 @@ void SpatialFullDistortionTest::RunSpeedTest() {
 
         for (int i = 0; i < num_loops; ++i) {
             dist_opt = func_(input_,
+                             0,
                              input_stride_,
                              recon_,
+                             0,
                              recon_stride_,
                              area_width,
                              area_height);

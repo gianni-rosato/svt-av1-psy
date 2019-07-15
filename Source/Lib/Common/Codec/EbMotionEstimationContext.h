@@ -9,6 +9,7 @@
 #include "EbDefinitions.h"
 #include "EbMdRateEstimation.h"
 #include "EbCodingUnit.h"
+#include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -269,6 +270,7 @@ extern "C" {
 
     typedef struct IntraReferenceSamplesOpenLoop
     {
+        EbDctor                  dctor;
         uint8_t                  *y_intra_reference_array;
         uint8_t                  *y_intra_reference_array_reverse;
 
@@ -294,6 +296,7 @@ extern "C" {
 
     typedef struct MeContext
     {
+        EbDctor                       dctor;
         // Search region stride
         uint32_t                      interpolated_stride;
         uint32_t                      interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
@@ -454,6 +457,7 @@ extern "C" {
 
     typedef struct SsMeContext
     {
+        EbDctor                       dctor;
         // Search region stride
         uint32_t                      interpolated_stride;
         uint32_t                      interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
@@ -615,7 +619,7 @@ extern "C" {
         uint32_t                     height);
 
     extern EbErrorType me_context_ctor(
-        MeContext     **object_dbl_ptr,
+        MeContext     *object_ptr,
         uint16_t        max_input_luma_width,
         uint16_t        max_input_luma_height,
         uint8_t         nsq_present,

@@ -17,8 +17,33 @@ void MotionEstimetionPredUnitCtor(
     return;
 }
 
+static void me_context_dctor(EbPtr p)
+{
+    MeContext *obj = (MeContext*)p;
+    uint32_t                   listIndex;
+    uint32_t                   refPicIndex;
+    EB_FREE_ARRAY(obj->quarter_sb_buffer);
+
+    EB_FREE_ARRAY(obj->mvd_bits_array);
+
+    for (listIndex = 0; listIndex < MAX_NUM_OF_REF_PIC_LIST; listIndex++) {
+        for (refPicIndex = 0; refPicIndex < MAX_REF_IDX; refPicIndex++) {
+            EB_FREE_ARRAY(obj->pos_b_buffer[listIndex][refPicIndex]);
+            EB_FREE_ARRAY(obj->pos_h_buffer[listIndex][refPicIndex]);
+            EB_FREE_ARRAY(obj->pos_j_buffer[listIndex][refPicIndex]);
+        }
+    }
+
+    EB_FREE_ARRAY(obj->one_d_intermediate_results_buf0);
+    EB_FREE_ARRAY(obj->one_d_intermediate_results_buf1);
+    EB_FREE_ARRAY(obj->me_candidate);
+    EB_FREE_ARRAY(obj->avctemp_buffer);
+    EB_FREE_ARRAY(obj->p_eight_pos_sad16x16);
+    EB_FREE_ALIGNED_ARRAY(obj->sixteenth_sb_buffer);
+    EB_FREE_ALIGNED_ARRAY(obj->sb_buffer);
+}
 EbErrorType me_context_ctor(
-    MeContext     **object_dbl_ptr,
+    MeContext     *object_ptr,
     uint16_t        max_input_luma_width,
     uint16_t        max_input_luma_height,
     uint8_t         nsq_present,
@@ -29,22 +54,22 @@ EbErrorType me_context_ctor(
     uint32_t                   pu_index;
     uint32_t                   meCandidateIndex;
 
-    EB_MALLOC(MeContext*, *object_dbl_ptr, sizeof(MeContext), EB_N_PTR);
+    object_ptr->dctor = me_context_dctor;
 
     // Intermediate LCU-sized buffer to retain the input samples
-    (*object_dbl_ptr)->sb_buffer_stride = BLOCK_SIZE_64;
-    EB_ALLIGN_MALLOC(uint8_t *, (*object_dbl_ptr)->sb_buffer, sizeof(uint8_t) * BLOCK_SIZE_64 * (*object_dbl_ptr)->sb_buffer_stride, EB_A_PTR);
+    object_ptr->sb_buffer_stride = BLOCK_SIZE_64;
+    EB_MALLOC_ALIGNED_ARRAY(object_ptr->sb_buffer, BLOCK_SIZE_64 * object_ptr->sb_buffer_stride);
 
-    (*object_dbl_ptr)->quarter_sb_buffer_stride = (BLOCK_SIZE_64 >> 1);
-    EB_MALLOC(uint8_t *, (*object_dbl_ptr)->quarter_sb_buffer, sizeof(uint8_t) * (BLOCK_SIZE_64 >> 1) * (*object_dbl_ptr)->quarter_sb_buffer_stride, EB_N_PTR);
+    object_ptr->quarter_sb_buffer_stride = (BLOCK_SIZE_64 >> 1);
+    EB_MALLOC_ARRAY(object_ptr->quarter_sb_buffer, (BLOCK_SIZE_64 >> 1) * object_ptr->quarter_sb_buffer_stride);
 
-    (*object_dbl_ptr)->sixteenth_sb_buffer_stride = (BLOCK_SIZE_64 >> 2);
-    EB_ALLIGN_MALLOC(uint8_t *, (*object_dbl_ptr)->sixteenth_sb_buffer, sizeof(uint8_t) * (BLOCK_SIZE_64 >> 2) * (*object_dbl_ptr)->sixteenth_sb_buffer_stride, EB_A_PTR);
-    (*object_dbl_ptr)->interpolated_stride = MIN((uint16_t)MAX_SEARCH_AREA_WIDTH, (uint16_t)(max_input_luma_width + (PAD_VALUE << 1)));
+    object_ptr->sixteenth_sb_buffer_stride = (BLOCK_SIZE_64 >> 2);
+    EB_MALLOC_ALIGNED_ARRAY(object_ptr->sixteenth_sb_buffer, (BLOCK_SIZE_64 >> 2) * object_ptr->sixteenth_sb_buffer_stride);
+    object_ptr->interpolated_stride = MIN((uint16_t)MAX_SEARCH_AREA_WIDTH, (uint16_t)(max_input_luma_width + (PAD_VALUE << 1)));
 
     uint16_t max_search_area_height = MIN((uint16_t)MAX_PICTURE_HEIGHT_SIZE, (uint16_t)(max_input_luma_height + (PAD_VALUE << 1)));
-    EB_MEMSET((*object_dbl_ptr)->sb_buffer, 0, sizeof(uint8_t) * BLOCK_SIZE_64 * (*object_dbl_ptr)->sb_buffer_stride);
-    EB_MALLOC(EbBitFraction *, (*object_dbl_ptr)->mvd_bits_array, sizeof(EbBitFraction) * NUMBER_OF_MVD_CASES, EB_N_PTR);
+    EB_MEMSET(object_ptr->sb_buffer, 0, sizeof(uint8_t) * BLOCK_SIZE_64 * object_ptr->sb_buffer_stride);
+    EB_MALLOC_ARRAY(object_ptr->mvd_bits_array, NUMBER_OF_MVD_CASES);
     // 15 intermediate buffers to retain the interpolated reference samples
 
     //      0    1    2    3
@@ -88,30 +113,28 @@ EbErrorType me_context_ctor(
 
     for (listIndex = 0; listIndex < MAX_NUM_OF_REF_PIC_LIST; listIndex++) {
         for (refPicIndex = 0; refPicIndex < MAX_REF_IDX; refPicIndex++) {
-            EB_MALLOC(uint8_t *, (*object_dbl_ptr)->pos_b_buffer[listIndex][refPicIndex], sizeof(uint8_t) * (*object_dbl_ptr)->interpolated_stride * max_search_area_height, EB_N_PTR);
-
-            EB_MALLOC(uint8_t *, (*object_dbl_ptr)->pos_h_buffer[listIndex][refPicIndex], sizeof(uint8_t) * (*object_dbl_ptr)->interpolated_stride * max_search_area_height, EB_N_PTR);
-
-            EB_MALLOC(uint8_t *, (*object_dbl_ptr)->pos_j_buffer[listIndex][refPicIndex], sizeof(uint8_t) * (*object_dbl_ptr)->interpolated_stride * max_search_area_height, EB_N_PTR);
+            EB_MALLOC_ARRAY(object_ptr->pos_b_buffer[listIndex][refPicIndex], object_ptr->interpolated_stride * max_search_area_height);
+            EB_MALLOC_ARRAY(object_ptr->pos_h_buffer[listIndex][refPicIndex], object_ptr->interpolated_stride * max_search_area_height);
+            EB_MALLOC_ARRAY(object_ptr->pos_j_buffer[listIndex][refPicIndex], object_ptr->interpolated_stride * max_search_area_height);
         }
     }
 
-    EB_MALLOC(EbByte, (*object_dbl_ptr)->one_d_intermediate_results_buf0, sizeof(uint8_t)*BLOCK_SIZE_64*BLOCK_SIZE_64, EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->one_d_intermediate_results_buf0, BLOCK_SIZE_64*BLOCK_SIZE_64);
 
-    EB_MALLOC(EbByte, (*object_dbl_ptr)->one_d_intermediate_results_buf1, sizeof(uint8_t)*BLOCK_SIZE_64*BLOCK_SIZE_64, EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->one_d_intermediate_results_buf1, BLOCK_SIZE_64*BLOCK_SIZE_64);
 
-    EB_MALLOC(MotionEstimationTierZero *, (*object_dbl_ptr)->me_candidate, sizeof(MotionEstimationTierZero) * ((mrp_mode == 0) ? ME_RES_CAND_MRP_MODE_0 : ME_RES_CAND_MRP_MODE_1), EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->me_candidate, ((mrp_mode == 0) ? ME_RES_CAND_MRP_MODE_0 : ME_RES_CAND_MRP_MODE_1));
     for (pu_index = 0; pu_index < (uint32_t)(nsq_present ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT); pu_index++) {
         for (meCandidateIndex = 0; meCandidateIndex < (uint32_t)((mrp_mode == 0) ? ME_RES_CAND_MRP_MODE_0 : ME_RES_CAND_MRP_MODE_1); meCandidateIndex++) {
-            MotionEstimetionPredUnitCtor(&((*object_dbl_ptr)->me_candidate[meCandidateIndex]).pu[pu_index]);
+            MotionEstimetionPredUnitCtor(&(object_ptr->me_candidate[meCandidateIndex]).pu[pu_index]);
         }
     }
 
-    EB_MALLOC(uint8_t *, (*object_dbl_ptr)->avctemp_buffer, sizeof(uint8_t) * (*object_dbl_ptr)->interpolated_stride * max_search_area_height, EB_N_PTR);
-    EB_MALLOC(uint16_t *, (*object_dbl_ptr)->p_eight_pos_sad16x16, sizeof(uint16_t) * 8 * 16, EB_N_PTR);//16= 16 16x16 blocks in a LCU.       8=8search points
+    EB_MALLOC_ARRAY(object_ptr->avctemp_buffer, object_ptr->interpolated_stride * max_search_area_height);
+    EB_MALLOC_ARRAY(object_ptr->p_eight_pos_sad16x16, 8 * 16);//16= 16 16x16 blocks in a LCU.       8=8search points
 
     // Initialize Alt-Ref parameters
-    (*object_dbl_ptr)->me_alt_ref = EB_FALSE;
+    object_ptr->me_alt_ref = EB_FALSE;
 
     return EB_ErrorNone;
 }

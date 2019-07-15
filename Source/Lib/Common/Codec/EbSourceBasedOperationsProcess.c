@@ -56,15 +56,13 @@ const uint8_t MaxDeltaQPdefault[3] = {
 * Initial Rate Control Context Constructor
 ************************************************/
 EbErrorType source_based_operations_context_ctor(
-    SourceBasedOperationsContext **context_dbl_ptr,
+    SourceBasedOperationsContext  *context_ptr,
     EbFifo                        *initialRateControlResultsInputFifoPtr,
     EbFifo                        *picture_demux_results_output_fifo_ptr,
     SequenceControlSet            *sequence_control_set_ptr)
 {
-    SourceBasedOperationsContext *context_ptr;
     UNUSED(sequence_control_set_ptr);
-    EB_MALLOC(SourceBasedOperationsContext*, context_ptr, sizeof(SourceBasedOperationsContext), EB_N_PTR);
-    *context_dbl_ptr                                         = context_ptr;
+
     context_ptr->initial_rate_control_results_input_fifo_ptr = initialRateControlResultsInputFifoPtr;
     context_ptr->picture_demux_results_output_fifo_ptr       = picture_demux_results_output_fifo_ptr;
     return EB_ErrorNone;

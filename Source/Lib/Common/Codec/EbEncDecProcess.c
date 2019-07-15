@@ -74,26 +74,38 @@ const int8_t  encMaxDeltaQpTab[4][MAX_TEMPORAL_LAYERS] = {
     { 4, 5, 5, 5, 5, 5 }
 };
 
+static void enc_dec_context_dctor(EbPtr p)
+{
+    EncDecContext* obj = (EncDecContext*)p;
+    EB_DELETE(obj->md_context);
+    EB_DELETE(obj->residual_buffer);
+    EB_DELETE(obj->transform_buffer);
+    EB_DELETE(obj->inverse_quant_buffer);
+    EB_DELETE(obj->input_sample16bit_buffer);
+    if (obj->is_md_rate_estimation_ptr_owner)
+        EB_FREE(obj->md_rate_estimation_ptr);
+    EB_FREE_ARRAY(obj->transform_inner_array_ptr);
+}
+
 /******************************************************
  * Enc Dec Context Constructor
  ******************************************************/
 EbErrorType enc_dec_context_ctor(
-    EncDecContext        **context_dbl_ptr,
+    EncDecContext         *context_ptr,
     EbFifo                *mode_decision_configuration_input_fifo_ptr,
     EbFifo                *packetization_output_fifo_ptr,
     EbFifo                *feedback_fifo_ptr,
     EbFifo                *picture_demux_fifo_ptr,
     EbBool                  is16bit,
     EbColorFormat           color_format,
+    EbBool                  enable_hbd_mode_decision,
     uint32_t                max_input_luma_width,
-    uint32_t                max_input_luma_height){
+    uint32_t                max_input_luma_height)
+{
     (void)max_input_luma_width;
     (void)max_input_luma_height;
-    EbErrorType return_error = EB_ErrorNone;
-    EncDecContext *context_ptr;
-    EB_MALLOC(EncDecContext*, context_ptr, sizeof(EncDecContext), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
 
+    context_ptr->dctor = enc_dec_context_dctor;
     context_ptr->is16bit = is16bit;
     context_ptr->color_format = color_format;
 
@@ -104,9 +116,10 @@ EbErrorType enc_dec_context_ctor(
     context_ptr->picture_demux_output_fifo_ptr = picture_demux_fifo_ptr;
 
     // Trasform Scratch Memory
-    EB_MALLOC(int16_t*, context_ptr->transform_inner_array_ptr, 3152, EB_N_PTR); //refer to EbInvTransform_SSE2.as. case 32x32
+    EB_MALLOC_ARRAY(context_ptr->transform_inner_array_ptr, 3152); //refer to EbInvTransform_SSE2.as. case 32x32
     // MD rate Estimation tables
-    EB_MALLOC(MdRateEstimationContext*, context_ptr->md_rate_estimation_ptr, sizeof(MdRateEstimationContext), EB_N_PTR);
+    EB_MALLOC(context_ptr->md_rate_estimation_ptr, sizeof(MdRateEstimationContext));
+    context_ptr->is_md_rate_estimation_ptr_owner = EB_TRUE;
 
     // Prediction Buffer
     {
@@ -127,11 +140,10 @@ EbErrorType enc_dec_context_ctor(
         if (is16bit) {
             initData.bit_depth = EB_16BIT;
 
-            return_error = eb_picture_buffer_desc_ctor(
-                (EbPtr*)&context_ptr->input_sample16bit_buffer,
+            EB_NEW(
+                context_ptr->input_sample16bit_buffer,
+                eb_picture_buffer_desc_ctor,
                 (EbPtr)&initData);
-            if (return_error == EB_ErrorInsufficientResources)
-                return EB_ErrorInsufficientResources;
         }
     }
 
@@ -162,32 +174,29 @@ EbErrorType enc_dec_context_ctor(
         init32BitData.top_padding = 0;
         init32BitData.bot_padding = 0;
         init32BitData.split_mode = EB_FALSE;
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&context_ptr->inverse_quant_buffer,
+        EB_NEW(
+            context_ptr->inverse_quant_buffer,
+            eb_picture_buffer_desc_ctor,
             (EbPtr)&init32BitData);
-
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&context_ptr->transform_buffer,
+        EB_NEW(
+            context_ptr->transform_buffer,
+            eb_picture_buffer_desc_ctor,
             (EbPtr)&init32BitData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&context_ptr->residual_buffer,
+        EB_NEW(
+            context_ptr->residual_buffer,
+            eb_picture_buffer_desc_ctor,
             (EbPtr)&initData);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
     }
 
     // Mode Decision Context
-    return_error = mode_decision_context_ctor(&context_ptr->md_context, color_format, 0, 0);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
+    EB_NEW(
+        context_ptr->md_context,
+        mode_decision_context_ctor,
+        color_format, 0, 0, enable_hbd_mode_decision);
 
-    // Second Stage ME Context
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
+    if (enable_hbd_mode_decision)
+        context_ptr->md_context->input_sample16bit_buffer = context_ptr->input_sample16bit_buffer;
+
     context_ptr->md_context->enc_dec_context_ptr = context_ptr;
 
     return EB_ErrorNone;
@@ -218,6 +227,13 @@ static void ResetEncodePassNeighborArrays(PictureControlSet *picture_control_set
     neighbor_array_unit_reset(picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array);
     neighbor_array_unit_reset(picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array);
     neighbor_array_unit_reset(picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array);
+    // TODO(Joel): 8-bit ep_luma_recon_neighbor_array (Cb,Cr) when is16bit==0?
+    EbBool is16bit = (EbBool)(picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    if (is16bit) {
+        neighbor_array_unit_reset(picture_control_set_ptr->ep_luma_recon_neighbor_array16bit);
+        neighbor_array_unit_reset(picture_control_set_ptr->ep_cb_recon_neighbor_array16bit);
+        neighbor_array_unit_reset(picture_control_set_ptr->ep_cr_recon_neighbor_array16bit);
+    }
     return;
 }
 
@@ -255,7 +271,8 @@ static void ResetEncDec(
         &context_ptr->fast_chroma_lambda,
         &context_ptr->full_chroma_lambda,
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
-        context_ptr->qp_index);
+        context_ptr->qp_index,
+        picture_control_set_ptr->hbd_mode_decision);
 
     // Slice Type
     slice_type =
@@ -271,6 +288,10 @@ static void ResetEncDec(
 #endif
 
     // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
+    if (context_ptr->is_md_rate_estimation_ptr_owner) {
+        EB_FREE(context_ptr->md_rate_estimation_ptr);
+        context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
+    }
 
     context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
     if (segment_index == 0){
@@ -309,7 +330,8 @@ static void EncDecConfigureLcu(
         &context_ptr->fast_chroma_lambda,
         &context_ptr->full_chroma_lambda,
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
-        context_ptr->qp_index);
+        context_ptr->qp_index,
+        picture_control_set_ptr->hbd_mode_decision);
 
     return;
 }

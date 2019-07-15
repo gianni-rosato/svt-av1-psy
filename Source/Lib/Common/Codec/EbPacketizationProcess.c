@@ -33,19 +33,22 @@ static EbLinkedListNode* ExtractPassthroughData(EbLinkedListNode** llPtrPtr)
     return llPassPtr;
 }
 
+static void packetization_context_dctor(EbPtr p)
+{
+    PacketizationContext *obj = (PacketizationContext*)p;
+    EB_FREE_ARRAY(obj->pps_config);
+}
+
 EbErrorType packetization_context_ctor(
-    PacketizationContext **context_dbl_ptr,
+    PacketizationContext  *context_ptr,
     EbFifo                *entropy_coding_input_fifo_ptr,
     EbFifo                *rate_control_tasks_output_fifo_ptr)
 {
-    PacketizationContext *context_ptr;
-    EB_MALLOC(PacketizationContext*, context_ptr, sizeof(PacketizationContext), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
-
+    context_ptr->dctor = packetization_context_dctor;
     context_ptr->entropy_coding_input_fifo_ptr = entropy_coding_input_fifo_ptr;
     context_ptr->rate_control_tasks_output_fifo_ptr = rate_control_tasks_output_fifo_ptr;
 
-    EB_MALLOC(EbPPSConfig*, context_ptr->pps_config, sizeof(EbPPSConfig), EB_N_PTR);
+    EB_MALLOC_ARRAY(context_ptr->pps_config, 1);
 
     return EB_ErrorNone;
 }

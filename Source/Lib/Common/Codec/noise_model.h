@@ -19,6 +19,7 @@ extern "C" {
 #include <stdint.h>
 #include "grainSynthesis.h"
 #include "EbPictureBufferDesc.h"
+#include "EbObject.h"
 
 #define DENOISING_BlockSize 32
 
@@ -226,10 +227,37 @@ extern "C" {
         uint16_t          stride_cr;
     } denoise_and_model_init_data_t;
 
+    typedef struct aom_denoise_and_model_t {
+        EbDctor dctor;
+        int32_t block_size;
+        int32_t bit_depth;
+        float noise_level;
+
+        // Size of current denoised buffer and flat_block buffer
+        int32_t width;
+        int32_t height;
+        int32_t y_stride;
+        int32_t uv_stride;
+        int32_t num_blocks_w;
+        int32_t num_blocks_h;
+
+        // Buffers for image and noise_psd allocated on the fly
+        float *noise_psd[3];
+        uint8_t *denoised[3];
+        uint8_t *flat_blocks;
+        uint16_t *packed[3];
+        EbPictureBufferDesc *denoised_pic;
+        EbPictureBufferDesc *packed_pic;
+
+        aom_flat_block_finder_t flat_block_finder;
+        aom_noise_model_t noise_model;
+    } aom_denoise_and_model_t;
+
+
     /************************************
      * denoise and model constructor
      ************************************/
-    EbErrorType denoise_and_model_ctor(EbPtr *object_dbl_ptr,
+    EbErrorType denoise_and_model_ctor(aom_denoise_and_model_t *object_ptr,
         EbPtr object_init_data_ptr);
 
     /*!\brief Initializes a noise model with the given parameters.

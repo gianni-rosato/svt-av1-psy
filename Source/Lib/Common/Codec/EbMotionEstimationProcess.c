@@ -404,12 +404,17 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
     return return_error;
 };
 
+void motion_estimation_context_dctor(EbPtr p)
+{
+    MotionEstimationContext_t* obj = (MotionEstimationContext_t*)p;
+    EB_DELETE(obj->me_context_ptr);
+}
 
 /************************************************
  * Motion Analysis Context Constructor
  ************************************************/
 EbErrorType motion_estimation_context_ctor(
-    MotionEstimationContext_t   **context_dbl_ptr,
+    MotionEstimationContext_t    *context_ptr,
     EbFifo                       *picture_decision_results_input_fifo_ptr,
     EbFifo                       *motion_estimation_results_output_fifo_ptr,
     uint16_t                      max_input_luma_width,
@@ -417,22 +422,17 @@ EbErrorType motion_estimation_context_ctor(
     uint8_t                       nsq_present,
     uint8_t                       mrp_mode) {
 
-    EbErrorType return_error = EB_ErrorNone;
-    MotionEstimationContext_t *context_ptr;
-    EB_MALLOC(MotionEstimationContext_t*, context_ptr, sizeof(MotionEstimationContext_t), EB_N_PTR);
-
-    *context_dbl_ptr = context_ptr;
+    context_ptr->dctor = motion_estimation_context_dctor;
 
     context_ptr->picture_decision_results_input_fifo_ptr = picture_decision_results_input_fifo_ptr;
     context_ptr->motion_estimation_results_output_fifo_ptr = motion_estimation_results_output_fifo_ptr;
-    return_error = me_context_ctor(
-        &(context_ptr->me_context_ptr),
+    EB_NEW(
+        context_ptr->me_context_ptr,
+        me_context_ctor,
         max_input_luma_width,
         max_input_luma_height,
         nsq_present,
         mrp_mode);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     return EB_ErrorNone;
 }
 
