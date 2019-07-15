@@ -4274,9 +4274,11 @@ static void half_pel_refinement_block(
     if (context_ptr->fractional_search_method == SSD_SEARCH) {
         uint32_t integer_sse =
             (uint32_t)spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                    &(context_ptr->sb_src_ptr[src_block_index]),
+                    context_ptr->sb_src_ptr,
+                    src_block_index,
                     context_ptr->sb_src_stride,
-                    &(ref_buffer[search_index_y * ref_stride + search_index_x]),
+                    ref_buffer,
+                    search_index_y * ref_stride + search_index_x,
                     ref_stride,
                     pu_width,
                     pu_height);
@@ -4292,9 +4294,11 @@ static void half_pel_refinement_block(
     distortion_left_position =
         (context_ptr->fractional_search_method == SSD_SEARCH)
             ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                      &(context_ptr->sb_src_ptr[src_block_index]),
+                      context_ptr->sb_src_ptr,
+                      src_block_index,
                       context_ptr->sb_src_stride,
-                      &(pos_b_buffer[search_region_index]),
+                      pos_b_buffer,
+                      search_region_index,
                       context_ptr->interpolated_stride,
                       pu_width,
                       pu_height)
@@ -4392,9 +4396,11 @@ static void half_pel_refinement_block(
     distortion_top_position =
         (context_ptr->fractional_search_method == SSD_SEARCH)
             ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                      &(context_ptr->sb_src_ptr[src_block_index]),
+                      context_ptr->sb_src_ptr,
+                      src_block_index,
                       context_ptr->sb_src_stride,
-                      &(pos_h_buffer[search_region_index]),
+                      pos_h_buffer,
+                      search_region_index,
                       context_ptr->interpolated_stride,
                       pu_width,
                       pu_height)
@@ -4492,9 +4498,11 @@ static void half_pel_refinement_block(
     distortion_topleft_position =
         (context_ptr->fractional_search_method == SSD_SEARCH)
             ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                      &(context_ptr->sb_src_ptr[src_block_index]),
+                      context_ptr->sb_src_ptr,
+                      src_block_index,
                       context_ptr->sb_src_stride,
-                      &(pos_j_buffer[search_region_index]),
+                      pos_j_buffer,
+                      search_region_index,
                       context_ptr->interpolated_stride,
                       pu_width,
                       pu_height)
@@ -4540,9 +4548,11 @@ static void half_pel_refinement_block(
     distortion_topright_position =
         (context_ptr->fractional_search_method == SSD_SEARCH)
             ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                      &(context_ptr->sb_src_ptr[src_block_index]),
+                      context_ptr->sb_src_ptr,
+                      src_block_index,
                       context_ptr->sb_src_stride,
-                      &(pos_j_buffer[search_region_index]),
+                      pos_j_buffer,
+                      search_region_index,
                       context_ptr->interpolated_stride,
                       pu_width,
                       pu_height)
@@ -4590,9 +4600,11 @@ static void half_pel_refinement_block(
     distortion_bottomright_position =
         (context_ptr->fractional_search_method == SSD_SEARCH)
             ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                      &(context_ptr->sb_src_ptr[src_block_index]),
+                      context_ptr->sb_src_ptr,
+                      src_block_index,
                       context_ptr->sb_src_stride,
-                      &(pos_j_buffer[search_region_index]),
+                      pos_j_buffer,
+                      search_region_index,
                       context_ptr->interpolated_stride,
                       pu_width,
                       pu_height)
@@ -5868,9 +5880,11 @@ static void PU_HalfPelRefinement(
     if (context_ptr->fractional_search_method == SSD_SEARCH) {
         *pBestSsd = (uint32_t)spatial_full_distortion_kernel_func_ptr_array
             [asm_type](
-                &(context_ptr->sb_src_ptr[puLcuBufferIndex]),
+                context_ptr->sb_src_ptr,
+                puLcuBufferIndex,
                 context_ptr->sb_src_stride,
-                &(refBuffer[ySearchIndex * ref_stride + xSearchIndex]),
+                refBuffer,
+                ySearchIndex * ref_stride + xSearchIndex,
                 ref_stride,
                 pu_width,
                 pu_height);
@@ -5887,9 +5901,11 @@ static void PU_HalfPelRefinement(
         distortionLeftPosition =
             (context_ptr->fractional_search_method == SSD_SEARCH)
                 ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                          &(context_ptr->sb_src_ptr[puLcuBufferIndex]),
+                          context_ptr->sb_src_ptr,
+                          puLcuBufferIndex,
                           context_ptr->sb_src_stride,
-                          &(pos_b_buffer[searchRegionIndex]),
+                          pos_b_buffer,
+                          searchRegionIndex,
                           context_ptr->interpolated_stride,
                           pu_width,
                           pu_height)
@@ -5935,9 +5951,11 @@ static void PU_HalfPelRefinement(
         distortionRightPosition =
             (context_ptr->fractional_search_method == SSD_SEARCH)
                 ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                          &(context_ptr->sb_src_ptr[puLcuBufferIndex]),
+                          context_ptr->sb_src_ptr,
+                          puLcuBufferIndex,
                           context_ptr->sb_src_stride,
-                          &(pos_b_buffer[searchRegionIndex]),
+                          pos_b_buffer,
+                          searchRegionIndex,
                           context_ptr->interpolated_stride,
                           pu_width,
                           pu_height)
@@ -5985,9 +6003,11 @@ static void PU_HalfPelRefinement(
         distortionTopPosition =
             (context_ptr->fractional_search_method == SSD_SEARCH)
                 ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                          &(context_ptr->sb_src_ptr[puLcuBufferIndex]),
+                          context_ptr->sb_src_ptr,
+                          puLcuBufferIndex,
                           context_ptr->sb_src_stride,
-                          &(pos_h_buffer[searchRegionIndex]),
+                          pos_h_buffer,
+                          searchRegionIndex,
                           context_ptr->interpolated_stride,
                           pu_width,
                           pu_height)
@@ -6034,9 +6054,11 @@ static void PU_HalfPelRefinement(
         distortionBottomPosition =
             (context_ptr->fractional_search_method == SSD_SEARCH)
                 ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                          &(context_ptr->sb_src_ptr[puLcuBufferIndex]),
+                          context_ptr->sb_src_ptr,
+                          puLcuBufferIndex,
                           context_ptr->sb_src_stride,
-                          &(pos_h_buffer[searchRegionIndex]),
+                          pos_h_buffer,
+                          searchRegionIndex,
                           context_ptr->interpolated_stride,
                           pu_width,
                           pu_height)
@@ -6085,9 +6107,11 @@ static void PU_HalfPelRefinement(
         distortionTopLeftPosition =
             (context_ptr->fractional_search_method == SSD_SEARCH)
                 ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                          &(context_ptr->sb_src_ptr[puLcuBufferIndex]),
+                          context_ptr->sb_src_ptr,
+                          puLcuBufferIndex,
                           context_ptr->sb_src_stride,
-                          &(pos_j_buffer[searchRegionIndex]),
+                          pos_j_buffer,
+                          searchRegionIndex,
                           context_ptr->interpolated_stride,
                           pu_width,
                           pu_height)
@@ -6134,9 +6158,11 @@ static void PU_HalfPelRefinement(
         distortionTopRightPosition =
             (context_ptr->fractional_search_method == SSD_SEARCH)
                 ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                          &(context_ptr->sb_src_ptr[puLcuBufferIndex]),
+                          context_ptr->sb_src_ptr,
+                          puLcuBufferIndex,
                           context_ptr->sb_src_stride,
-                          &(pos_j_buffer[searchRegionIndex]),
+                          pos_j_buffer,
+                          searchRegionIndex,
                           context_ptr->interpolated_stride,
                           pu_width,
                           pu_height)
@@ -6184,9 +6210,11 @@ static void PU_HalfPelRefinement(
         distortionBottomRightPosition =
             (context_ptr->fractional_search_method == SSD_SEARCH)
                 ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                          &(context_ptr->sb_src_ptr[puLcuBufferIndex]),
+                          context_ptr->sb_src_ptr,
+                          puLcuBufferIndex,
                           context_ptr->sb_src_stride,
-                          &(pos_j_buffer[searchRegionIndex]),
+                          pos_j_buffer,
+                          searchRegionIndex,
                           context_ptr->interpolated_stride,
                           pu_width,
                           pu_height)
@@ -6233,9 +6261,11 @@ static void PU_HalfPelRefinement(
         distortionBottomLeftPosition =
             (context_ptr->fractional_search_method == SSD_SEARCH)
                 ? spatial_full_distortion_kernel_func_ptr_array[asm_type](
-                          &(context_ptr->sb_src_ptr[puLcuBufferIndex]),
+                          context_ptr->sb_src_ptr,
+                          puLcuBufferIndex,
                           context_ptr->sb_src_stride,
-                          &(pos_j_buffer[searchRegionIndex]),
+                          pos_j_buffer,
+                          searchRegionIndex,
                           context_ptr->interpolated_stride,
                           pu_width,
                           pu_height)

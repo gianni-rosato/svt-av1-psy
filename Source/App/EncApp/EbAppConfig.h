@@ -279,6 +279,7 @@ typedef struct EbConfig
      * MD Parameters
      ****************************************/
     EbBool                  constrained_intra;
+    EbBool                  enable_hbd_mode_decision;
 
     int32_t                  tile_columns;
     int32_t                  tile_rows;

@@ -252,6 +252,7 @@ extern "C" {
     **************************************/
     extern EbErrorType mode_decision_candidate_buffer_ctor(
         ModeDecisionCandidateBuffer    *buffer_ptr,
+        EbBitDepthEnum                  max_bitdepth,
         uint64_t                       *fast_cost_ptr,
         uint64_t                       *full_cost_ptr,
         uint64_t                       *full_cost_skip_ptr,

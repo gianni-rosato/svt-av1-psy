@@ -61,15 +61,19 @@ void SpatialFullDistortionTest::RunCheckOutput() {
                  area_height += 4) {
                 const uint64_t dist_org =
                     spatial_full_distortion_kernel_c(input_,
+                                                     0,
                                                      input_stride_,
                                                      recon_,
+                                                     0,
                                                      recon_stride_,
                                                      area_width,
                                                      area_height);
                 const uint64_t dist_opt =
                     spatial_full_distortion_kernel_avx2(input_,
+                                                        0,
                                                         input_stride_,
                                                         recon_,
+                                                        0,
                                                         recon_stride_,
                                                         area_width,
                                                         area_height);
@@ -97,8 +101,10 @@ void SpatialFullDistortionTest::RunSpeedTest() {
 
         for (int i = 0; i < num_loops; ++i) {
             dist_org = spatial_full_distortion_kernel_c(input_,
+                                                        0,
                                                         input_stride_,
                                                         recon_,
+                                                        0,
                                                         recon_stride_,
                                                         area_width,
                                                         area_height);
@@ -108,8 +114,10 @@ void SpatialFullDistortionTest::RunSpeedTest() {
 
         for (int i = 0; i < num_loops; ++i) {
             dist_opt = spatial_full_distortion_kernel_avx2(input_,
+                                                           0,
                                                            input_stride_,
                                                            recon_,
+                                                           0,
                                                            recon_stride_,
                                                            area_width,
                                                            area_height);

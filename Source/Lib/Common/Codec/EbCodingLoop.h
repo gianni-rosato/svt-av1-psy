@@ -95,6 +95,39 @@ extern "C" {
         EncDecContext         *context_ptr);
 #endif
 
+void pack2d_src(
+    uint8_t     *in8_bit_buffer,
+    uint32_t     in8_stride,
+    uint8_t     *inn_bit_buffer,
+    uint32_t     inn_stride,
+    uint16_t    *out16_bit_buffer,
+    uint32_t     out_stride,
+    uint32_t     width,
+    uint32_t     height,
+    EbAsm     asm_type);
+
+void Store16bitInputSrc(
+    EbPictureBufferDesc     *input_sample16bit_buffer,
+    PictureControlSet       *picture_control_set_ptr,
+    uint32_t                 lcuX,
+    uint32_t                 lcuY,
+    uint32_t                 lcuW,
+    uint32_t                 lcuH);
+
+void residual_kernel(
+    uint8_t   *input,
+    uint32_t   input_offset,
+    uint32_t   input_stride,
+    uint8_t   *pred,
+    uint32_t   pred_offset,
+    uint32_t   pred_stride,
+    int16_t   *residual,
+    uint32_t   residual_offset,
+    uint32_t   residual_stride,
+    EbBool     hbd,
+    uint32_t   area_width,
+    uint32_t   area_height);
+
 #ifdef __cplusplus
 }
 #endif

@@ -177,6 +177,7 @@ static void mode_decision_candidate_buffer_dctor(EbPtr p)
 ***************************************/
 EbErrorType mode_decision_candidate_buffer_ctor(
     ModeDecisionCandidateBuffer    *buffer_ptr,
+    EbBitDepthEnum                  max_bitdepth,
     uint64_t                       *fast_cost_ptr,
     uint64_t                       *full_cost_ptr,
     uint64_t                       *full_cost_skip_ptr,
@@ -193,7 +194,7 @@ EbErrorType mode_decision_candidate_buffer_ctor(
     // Init Picture Data
     pictureBufferDescInitData.max_width = MAX_SB_SIZE;
     pictureBufferDescInitData.max_height = MAX_SB_SIZE;
-    pictureBufferDescInitData.bit_depth = EB_8BIT;
+    pictureBufferDescInitData.bit_depth = max_bitdepth;
     pictureBufferDescInitData.color_format = EB_YUV420;
     pictureBufferDescInitData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     pictureBufferDescInitData.left_padding = 0;
@@ -232,7 +233,6 @@ EbErrorType mode_decision_candidate_buffer_ctor(
         eb_picture_buffer_desc_ctor,
         (EbPtr)&pictureBufferDescInitData);
 
-    // Video Buffers
     EB_NEW(
         buffer_ptr->prediction_ptr_temp,
         eb_picture_buffer_desc_ctor,

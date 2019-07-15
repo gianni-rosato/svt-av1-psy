@@ -1774,7 +1774,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         Quants *const quantsMd = &picture_control_set_ptr->parent_pcs_ptr->quantsMd;
         Dequants *const dequantsMd = &picture_control_set_ptr->parent_pcs_ptr->deqMd;
         av1_build_quantizer(
-            (AomBitDepth)8,
+            picture_control_set_ptr->hbd_mode_decision ? AOM_BITS_10 : AOM_BITS_8,
             picture_control_set_ptr->parent_pcs_ptr->y_dc_delta_q,
             picture_control_set_ptr->parent_pcs_ptr->u_dc_delta_q,
             picture_control_set_ptr->parent_pcs_ptr->u_ac_delta_q,
@@ -1802,7 +1802,8 @@ void* mode_decision_configuration_kernel(void *input_ptr)
             &lambdaSad,
             &lambdaSse,
             (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
-            context_ptr->qp_index);
+            context_ptr->qp_index,
+            picture_control_set_ptr->hbd_mode_decision);
         context_ptr->lambda = (uint64_t)lambdaSad;
 
         // Slice Type

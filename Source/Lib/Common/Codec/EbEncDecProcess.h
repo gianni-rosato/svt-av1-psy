@@ -140,6 +140,7 @@ extern "C" {
         EbFifo                *picture_demux_fifo_ptr,
         EbBool                   is16bit,
         EbColorFormat            color_format,
+        EbBool                   enable_hbd_mode_decision,
         uint32_t                 max_input_luma_width,
         uint32_t                 max_input_luma_height);
 

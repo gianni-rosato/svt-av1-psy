@@ -103,6 +103,10 @@ extern "C" {
         NeighborArrayUnit            *cb_recon_neighbor_array;
         NeighborArrayUnit            *cr_recon_neighbor_array;
         NeighborArrayUnit            *tx_search_luma_recon_neighbor_array;
+        NeighborArrayUnit            *luma_recon_neighbor_array16bit;
+        NeighborArrayUnit            *cb_recon_neighbor_array16bit;
+        NeighborArrayUnit            *cr_recon_neighbor_array16bit;
+        NeighborArrayUnit            *tx_search_luma_recon_neighbor_array16bit;
         NeighborArrayUnit            *skip_coeff_neighbor_array;
         NeighborArrayUnit            *luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
         NeighborArrayUnit            *tx_search_luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
@@ -165,6 +169,7 @@ extern "C" {
         EbPfMode                        pf_md_mode;
         uint32_t                        full_recon_search_count;
         EbBool                          cu_use_ref_src_flag;
+        EbBool                          hbd_mode_decision;
         uint16_t                        qp_index;
         uint64_t                        three_quad_energy;
         EbBool                          uv_search_path;
@@ -230,11 +235,12 @@ extern "C" {
         uint8_t                         bipred3x3_injection;
         uint8_t                         interpolation_filter_search_blk_size;
         uint8_t                         redundant_blk;
-        EB_ALIGN(64) uint8_t            cfl_temp_luma_recon[128 * 128];
+        uint8_t                         *cfl_temp_luma_recon;
+        uint16_t                        *cfl_temp_luma_recon16bit;
         EbBool                          spatial_sse_full_loop;
         EbBool                          blk_skip_decision;
         EbBool                          trellis_quant_coeff_optimization;
-
+        EbPictureBufferDesc                 *input_sample16bit_buffer;
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(
@@ -243,7 +249,8 @@ extern "C" {
         uint32_t                    *fast_chroma_lambda,
         uint32_t                    *full_chroma_lambda,
         uint8_t                      bit_depth,
-        uint16_t                     qp_index);
+        uint16_t                     qp_index,
+        EbBool                       hbd_mode_decision);
 
     typedef void(*EbLambdaAssignFunc)(
         uint32_t                    *fast_lambda,
@@ -262,7 +269,8 @@ extern "C" {
         ModeDecisionContext       *context_ptr,
         EbColorFormat              color_format,
         EbFifo                    *mode_decision_configuration_input_fifo_ptr,
-        EbFifo                    *mode_decision_output_fifo_ptr);
+        EbFifo                    *mode_decision_output_fifo_ptr,
+        EbBool                     enable_hbd_mode_decision);
 
     extern void reset_mode_decision_neighbor_arrays(
         PictureControlSet *picture_control_set_ptr);
