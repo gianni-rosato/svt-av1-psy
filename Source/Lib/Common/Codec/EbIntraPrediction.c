@@ -3529,10 +3529,10 @@ static void build_intra_predictors(
     int32_t ref_stride = 1;
     const uint8_t *above_ref = topNeighArray;//CHKN ref - ref_stride;
     const uint8_t *left_ref = leftNeighArray;//CHKN ref - 1;
-    DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
-    DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
-    uint8_t *const above_row = above_data + 16;
-    uint8_t *const left_col = left_data + 16;
+    DECLARE_ALIGNED(32, uint8_t, left_data[MAX_TX_SIZE * 2 + 48]);
+    DECLARE_ALIGNED(32, uint8_t, above_data[MAX_TX_SIZE * 2 + 48]);
+    uint8_t *const above_row = above_data + 32;
+    uint8_t *const left_col = left_data + 32;
 
     const int32_t txwpx = tx_size_wide[tx_size];
     const int32_t txhpx = tx_size_high[tx_size];

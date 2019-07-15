@@ -2224,7 +2224,7 @@ EB_EXTERN void av1_encode_pass(
     uint64_t                  cb_coeff_bits;
     uint64_t                  cr_coeff_bits;
     uint64_t                  y_full_distortion[DIST_CALC_TOTAL];
-    uint64_t                  yTuFullDistortion[DIST_CALC_TOTAL];
+    EB_ALIGN(16) uint64_t     yTuFullDistortion[DIST_CALC_TOTAL];
     uint32_t                  count_non_zero_coeffs[3];
     MacroblockPlane           cuPlane[3];
     uint16_t                  eobs[MAX_TXB_COUNT][3];

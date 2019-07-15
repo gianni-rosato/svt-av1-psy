@@ -1717,8 +1717,8 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
     int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP : cm->wn_filter_mode == 2 ? WIENER_WIN_CHROMA : WIENER_WIN;
     const int32_t wiener_win = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP :
         (rsc->plane == AOM_PLANE_Y) ? wn_luma : WIENER_WIN_CHROMA;
-    int64_t M[WIENER_WIN2];
-    int64_t H[WIENER_WIN2 * WIENER_WIN2];
+    EB_ALIGN(32) int64_t M[WIENER_WIN2];
+    EB_ALIGN(32) int64_t H[WIENER_WIN2 * WIENER_WIN2];
     int32_t vfilterd[WIENER_WIN], hfilterd[WIENER_WIN];
 
     if (cm->use_highbitdepth)
