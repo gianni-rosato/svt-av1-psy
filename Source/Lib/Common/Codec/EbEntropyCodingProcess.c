@@ -222,8 +222,8 @@ static void ResetEntropyCodingPicture(
 
     // ADD Reset here
 #if ENABLE_CDF_UPDATE
-    if (picture_control_set_ptr->parent_pcs_ptr->primary_ref_frame != PRIMARY_REF_NONE)
-        memcpy(picture_control_set_ptr->entropy_coder_ptr->fc, &picture_control_set_ptr->ref_frame_context[picture_control_set_ptr->parent_pcs_ptr->primary_ref_frame], sizeof(FRAME_CONTEXT));
+    if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
+        memcpy(picture_control_set_ptr->entropy_coder_ptr->fc, &picture_control_set_ptr->ref_frame_context[picture_control_set_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame], sizeof(FRAME_CONTEXT));
     else
         reset_entropy_coder(
             sequence_control_set_ptr->encode_context_ptr,
@@ -306,8 +306,8 @@ static void reset_ec_tile(
 
     aom_start_encode(&picture_control_set_ptr->entropy_coder_ptr->ec_writer, data);
 #if ENABLE_CDF_UPDATE
-    if (picture_control_set_ptr->parent_pcs_ptr->primary_ref_frame != PRIMARY_REF_NONE)
-        memcpy(picture_control_set_ptr->entropy_coder_ptr->fc, &picture_control_set_ptr->ref_frame_context[picture_control_set_ptr->parent_pcs_ptr->primary_ref_frame], sizeof(FRAME_CONTEXT));
+    if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
+        memcpy(picture_control_set_ptr->entropy_coder_ptr->fc, &picture_control_set_ptr->ref_frame_context[picture_control_set_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame], sizeof(FRAME_CONTEXT));
     else
         //reset probabilities
         reset_entropy_coder(

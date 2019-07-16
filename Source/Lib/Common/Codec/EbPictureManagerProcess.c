@@ -864,14 +864,14 @@ void* picture_manager_kernel(void *input_ptr)
 #if ENABLE_CDF_UPDATE
                         if (entryPictureControlSetPtr->frame_end_cdf_update_mode) {
                             if (entryPictureControlSetPtr->slice_type != I_SLICE)
-                                ChildPictureControlSetPtr->parent_pcs_ptr->primary_ref_frame = ref_index;
+                                ChildPictureControlSetPtr->parent_pcs_ptr->frm_hdr.primary_ref_frame = ref_index;
                             else
-                                ChildPictureControlSetPtr->parent_pcs_ptr->primary_ref_frame = PRIMARY_REF_NONE;
+                                ChildPictureControlSetPtr->parent_pcs_ptr->frm_hdr.primary_ref_frame = PRIMARY_REF_NONE;
                             ChildPictureControlSetPtr->parent_pcs_ptr->refresh_frame_context = REFRESH_FRAME_CONTEXT_BACKWARD;
 
                         }
                         else {
-                            ChildPictureControlSetPtr->parent_pcs_ptr->primary_ref_frame = PRIMARY_REF_NONE;
+                            ChildPictureControlSetPtr->parent_pcs_ptr->frm_hdr.primary_ref_frame = PRIMARY_REF_NONE;
                             ChildPictureControlSetPtr->parent_pcs_ptr->refresh_frame_context = REFRESH_FRAME_CONTEXT_DISABLED;
                         }
 #endif

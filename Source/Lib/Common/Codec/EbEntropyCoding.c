@@ -3526,7 +3526,7 @@ static void write_tile_info(const PictureParentControlSet *const pcs_ptr,
 #if ENABLE_CDF_UPDATE
         aom_wb_write_literal(
             wb,
-            pcs_ptr->frame_end_cdf_update_mode ? pcs_ptr->av1_cm->tile_rows * pcs_ptr->av1_cm->tile_cols - 1 : 0,
+            pcs_ptr->frame_end_cdf_update_mode ? pcs_ptr->av1_cm->tiles_info.tile_rows * pcs_ptr->av1_cm->tiles_info.tile_cols - 1 : 0,
             pcs_ptr->av1_cm->log2_tile_cols + pcs_ptr->av1_cm->log2_tile_rows);
 #else
         aom_wb_write_literal(wb, 0, pcs_ptr->av1_cm->log2_tile_cols + pcs_ptr->av1_cm->log2_tile_rows);
@@ -3977,7 +3977,7 @@ static void WriteGlobalMotion(
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
     for (frame = LAST_FRAME; frame <= ALTREF_FRAME; ++frame) {
 #if ENABLE_CDF_UPDATE
-        const EbWarpedMotionParams *ref_params = (pcs_ptr->primary_ref_frame != PRIMARY_REF_NONE) ?
+        const EbWarpedMotionParams *ref_params = (frm_hdr->primary_ref_frame != PRIMARY_REF_NONE) ?
             &pcs_ptr->childPcs->ref_global_motion[frame] : &default_warp_params;
 #else
         const EbWarpedMotionParams *ref_params = &default_warp_params;

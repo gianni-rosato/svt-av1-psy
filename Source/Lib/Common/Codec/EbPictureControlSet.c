@@ -212,7 +212,9 @@ void picture_control_set_dctor(EbPtr p)
 
     EB_FREE_ARRAY(obj->mi_grid_base);
     EB_FREE_ARRAY(obj->mip);
-
+#if ENABLE_CDF_UPDATE
+    EB_FREE_ARRAY(obj->md_rate_estimation_array);
+#endif
     EB_FREE_ARRAY(obj->ec_ctx_array);
     EB_FREE_ARRAY(obj->rate_est_array);
 
@@ -416,7 +418,7 @@ EbErrorType picture_control_set_ctor(
     }
 #if ENABLE_CDF_UPDATE
     // MD Rate Estimation Array
-    EB_MALLOC(MdRateEstimationContext*, object_ptr->md_rate_estimation_array, sizeof(MdRateEstimationContext), EB_N_PTR);
+    EB_MALLOC_ARRAY(object_ptr->md_rate_estimation_array, 1);
     memset(object_ptr->md_rate_estimation_array, 0, sizeof(MdRateEstimationContext));
 #endif
     if (initDataPtr->cdf_mode == 0) {

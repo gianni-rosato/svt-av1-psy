@@ -1834,8 +1834,8 @@ void* mode_decision_configuration_kernel(void *input_ptr)
 
         entropyCodingQp = frm_hdr->quantization_params.base_q_idx;
 #if ENABLE_CDF_UPDATE
-        if (picture_control_set_ptr->parent_pcs_ptr->primary_ref_frame != PRIMARY_REF_NONE)
-            memcpy(picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc, &picture_control_set_ptr->ref_frame_context[picture_control_set_ptr->parent_pcs_ptr->primary_ref_frame], sizeof(FRAME_CONTEXT));
+        if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
+            memcpy(picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc, &picture_control_set_ptr->ref_frame_context[picture_control_set_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame], sizeof(FRAME_CONTEXT));
         else
             reset_entropy_coder(
                 sequence_control_set_ptr->encode_context_ptr,
