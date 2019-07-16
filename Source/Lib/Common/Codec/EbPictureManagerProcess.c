@@ -586,7 +586,7 @@ void* picture_manager_kernel(void *input_ptr)
                                 (sequence_control_set_ptr->static_config.rate_control_mode && entryPictureControlSetPtr->slice_type != I_SLICE
                                     && entryPictureControlSetPtr->temporal_layer_index == 0 && !referenceEntryPtr->feedback_arrived)) ? EB_FALSE :
 #if ENABLE_CDF_UPDATE
-                                    (picture_control_set_ptr->frame_end_cdf_update_mode && !referenceEntryPtr->frame_context_updated) ? EB_FALSE :
+                                    (entryPictureControlSetPtr->frame_end_cdf_update_mode && !referenceEntryPtr->frame_context_updated) ? EB_FALSE :
 #endif
                                 (referenceEntryPtr->reference_available) ? EB_TRUE :   // The Reference has been completed
                                 EB_FALSE;     // The Reference has not been completed
@@ -630,7 +630,7 @@ void* picture_manager_kernel(void *input_ptr)
                                         (sequence_control_set_ptr->static_config.rate_control_mode && entryPictureControlSetPtr->slice_type != I_SLICE
                                             && entryPictureControlSetPtr->temporal_layer_index == 0 && !referenceEntryPtr->feedback_arrived)) ? EB_FALSE :
 #if ENABLE_CDF_UPDATE
-                                            (picture_control_set_ptr->frame_end_cdf_update_mode && !referenceEntryPtr->frame_context_updated) ? EB_FALSE :
+                                            (entryPictureControlSetPtr->frame_end_cdf_update_mode && !referenceEntryPtr->frame_context_updated) ? EB_FALSE :
 #endif
                                         (referenceEntryPtr->reference_available) ? EB_TRUE :   // The Reference has been completed
                                         EB_FALSE;     // The Reference has not been completed
