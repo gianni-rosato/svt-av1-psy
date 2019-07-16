@@ -276,7 +276,7 @@ static void ResetEncDec(
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
         context_ptr->qp_index,
         picture_control_set_ptr->hbd_mode_decision);
-#if ENABLE_CDF_UPDATE		
+#if ENABLE_CDF_UPDATE
     context_ptr->md_rate_estimation_ptr = picture_control_set_ptr->md_rate_estimation_array;
 #else
     // Slice Type
