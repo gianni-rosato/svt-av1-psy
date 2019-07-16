@@ -205,6 +205,7 @@ void* rest_kernel(void *input_ptr)
     RestContext                            *context_ptr = (RestContext*)input_ptr;
     PictureControlSet                     *picture_control_set_ptr;
     SequenceControlSet                    *sequence_control_set_ptr;
+    FrameHeader                           *frm_hdr;
 
     //// Input
     EbObjectWrapper                       *cdef_results_wrapper_ptr;
@@ -226,11 +227,12 @@ void* rest_kernel(void *input_ptr)
         cdef_results_ptr = (CdefResults*)cdef_results_wrapper_ptr->object_ptr;
         picture_control_set_ptr = (PictureControlSet*)cdef_results_ptr->picture_control_set_wrapper_ptr->object_ptr;
         sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+        frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
         uint8_t lcuSizeLog2 = (uint8_t)Log2f(sequence_control_set_ptr->sb_size_pix);
         EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
         Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
 
-        if (sequence_control_set_ptr->seq_header.enable_restoration && picture_control_set_ptr->parent_pcs_ptr->allow_intrabc == 0)
+        if (sequence_control_set_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0)
         {
             get_own_recon(sequence_control_set_ptr, picture_control_set_ptr, context_ptr, is16bit);
 
@@ -264,7 +266,7 @@ void* rest_kernel(void *input_ptr)
         picture_control_set_ptr->tot_seg_searched_rest++;
         if (picture_control_set_ptr->tot_seg_searched_rest == picture_control_set_ptr->rest_segments_total_count)
         {
-            if (sequence_control_set_ptr->seq_header.enable_restoration && picture_control_set_ptr->parent_pcs_ptr->allow_intrabc == 0) {
+            if (sequence_control_set_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
                 rest_finish_search(
                     picture_control_set_ptr->parent_pcs_ptr->av1x,
                     picture_control_set_ptr->parent_pcs_ptr->av1_cm);

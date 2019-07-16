@@ -39,6 +39,16 @@ typedef struct DecModCtxt {
     /* TODO: IntraRef Scratch buf! Should be moved to thrd ctxt */
     uint16_t    topNeighArray[64 * 2 + 1];
     uint16_t    leftNeighArray[64 * 2 + 1];
+
+    /* Dequantization context */
+    Dequant                dequants;
+
+    /* This need to be moved to thread context */
+    Dequant                *dequants_delta_q;
+
+    /* Inverse Quantization Matrix */
+    const QmVal          *giqmatrix[NUM_QM_LEVELS][3][TX_SIZES_ALL];
+
 } DecModCtxt;
 
 void decode_super_block(DecModCtxt *dec_mod_ctxt,

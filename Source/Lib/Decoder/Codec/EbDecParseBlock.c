@@ -311,7 +311,7 @@ int read_skip_mode(EbDecHandle *dec_handle, PartitionInfo_t *xd, int segment_id,
     if (seg_feature_active(seg, segment_id, SEG_LVL_SKIP) ||
         seg_feature_active(seg, segment_id, SEG_LVL_REF_FRAME) ||
         seg_feature_active(seg, segment_id, SEG_LVL_GLOBALMV) ||
-        !dec_handle->frame_header.skip_mode_params.skip_mode_present ||
+        !dec_handle->frame_header.skip_mode_params.skip_mode_flag ||
         block_size_wide[xd->mi->sb_type] < 8 ||
         block_size_high[xd->mi->sb_type] < 8)
     {
@@ -351,7 +351,6 @@ static void read_delta_params(EbDecHandle *dec_handle, SvtReader *r,
         FRAME_CONTEXT *const ec_ctx = &parse_ctxt->cur_tile_ctx;
 
         if (delta_lf_params->delta_lf_present) {
-            LoopFilterParams lf_params = dec_handle->frame_header.loop_filter_params;
             if (delta_lf_params->delta_lf_multi) {
                 EbColorConfig *color_info = &dec_handle->seq_header.color_config;
                 int num_planes = color_info->mono_chrome ? 1 : MAX_MB_PLANE;
@@ -359,7 +358,14 @@ static void read_delta_params(EbDecHandle *dec_handle, SvtReader *r,
                     num_planes > 1 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
                 for (int lf_id = 0; lf_id < frame_lf_count; ++lf_id) {
                     int tmp_lvl;
-                    int base_lvl = lf_params.loop_filter_level[lf_id];
+                    int base_lvl;
+                    if (lf_id < 2)
+                        base_lvl = dec_handle->frame_header.loop_filter_params.filter_level[lf_id];
+                    else if (lf_id == 2)
+                        base_lvl = dec_handle->frame_header.loop_filter_params.filter_level_u;
+                    else
+                        base_lvl = dec_handle->frame_header.loop_filter_params.filter_level_v;
+
                     assert(0);
                     //delta_lf_res should be left shifted instead of being multiplied - check logic
                     sb_info->sb_delta_lf[lf_id] =
@@ -372,7 +378,7 @@ static void read_delta_params(EbDecHandle *dec_handle, SvtReader *r,
                 }
             } else {
                 int tmp_lvl;
-                int base_lvl = lf_params.loop_filter_level[0];
+                int base_lvl = dec_handle->frame_header.loop_filter_params.filter_level[0];
                 sb_info->sb_delta_lf[0] =
                                 read_delta_lflevel(dec_handle, r, ec_ctx->delta_lf_cdf,
                                                     mbmi, mi_col, mi_row) *

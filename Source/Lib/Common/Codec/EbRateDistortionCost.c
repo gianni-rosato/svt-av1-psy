@@ -610,6 +610,7 @@ uint64_t av1_intra_fast_cost(
     UNUSED(top_neighbor_mode);
     UNUSED(md_pass);
 
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     if (av1_allow_intrabc(picture_control_set_ptr->parent_pcs_ptr->av1_cm) && candidate_ptr->use_intrabc) {
         uint64_t lumaSad = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
         uint64_t chromaSad = chroma_distortion << AV1_COST_PRECISION;
@@ -737,7 +738,7 @@ uint64_t av1_intra_fast_cost(
     candidate_ptr->fast_luma_rate = lumaRate;
     candidate_ptr->fast_chroma_rate = chromaRate;
     if (use_ssd) {
-        int32_t current_q_index = MAX(0, MIN(QINDEX_RANGE - 1, picture_control_set_ptr->parent_pcs_ptr->base_qindex));
+        int32_t current_q_index = frm_hdr->quantization_params.base_q_idx;
         Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq;
 
         int16_t quantizer = dequants->y_dequant_Q3[current_q_index][1];
@@ -807,6 +808,8 @@ uint64_t EstimateRefFramesNumBits(
     uint8_t                                   md_pass,
     EbBool                                is_compound)
 {
+
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     uint64_t refRateBits = 0;
 
     if (md_pass == 1) {
@@ -836,7 +839,7 @@ uint64_t EstimateRefFramesNumBits(
         {
             // does the feature use compound prediction or not
             // (if not specified at the frame/segment level)
-            if (picture_control_set_ptr->parent_pcs_ptr->reference_mode == REFERENCE_MODE_SELECT) {
+            if (frm_hdr->reference_mode == REFERENCE_MODE_SELECT) {
                 if (MIN(bwidth, bheight) >= 8) {
                     //aom_write_symbol(w, is_compound, av1_get_reference_mode_cdf(cu_ptr->av1xd), 2);
                     int32_t context = av1_get_reference_mode_context_new(cu_ptr->av1xd);
@@ -845,7 +848,7 @@ uint64_t EstimateRefFramesNumBits(
             }
             else {
                 assert((!is_compound) ==
-                    (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE));
+                    (frm_hdr->reference_mode == SINGLE_REFERENCE));
             }
 
             if (is_compound) {
@@ -1001,7 +1004,7 @@ uint64_t EstimateRefFramesNumBits(
     else*/ {
     // does the feature use compound prediction or not
     // (if not specified at the frame/segment level)
-        if (picture_control_set_ptr->parent_pcs_ptr->reference_mode == REFERENCE_MODE_SELECT) {
+        if (frm_hdr->reference_mode == REFERENCE_MODE_SELECT) {
             if (MIN(bwidth, bheight) >= 8) {
                 int32_t context = 0;
                 context = cu_ptr->reference_mode_context;
@@ -1010,7 +1013,7 @@ uint64_t EstimateRefFramesNumBits(
             }
         }
         else
-            assert((!is_compound) == (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE));
+            assert((!is_compound) == (frm_hdr->reference_mode == SINGLE_REFERENCE));
         int32_t context = 0;
         if (is_compound) {
             const CompReferenceType comp_ref_type = /*has_uni_comp_refs(mbmi)
@@ -1204,6 +1207,8 @@ uint64_t av1_inter_fast_cost(
     UNUSED(left_neighbor_mode);
     UNUSED(miCol);
     UNUSED(miRow);
+
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
 
     // Luma rate
     uint32_t           lumaRate = 0;
@@ -1402,7 +1407,7 @@ uint64_t av1_inter_fast_cost(
 
     EbBool is_inter = inter_mode >= SINGLE_INTER_MODE_START && inter_mode < SINGLE_INTER_MODE_END;
     if (is_inter
-        && picture_control_set_ptr->parent_pcs_ptr->switchable_motion_mode
+        && frm_hdr->is_motion_mode_switchable
         && rf[1] != INTRA_FRAME)
     {
         MotionMode motion_mode_rd = candidate_ptr->motion_mode;
@@ -1456,7 +1461,7 @@ uint64_t av1_inter_fast_cost(
     candidate_ptr->fast_chroma_rate = chromaRate;
 
     if (use_ssd) {
-        int32_t current_q_index = MAX(0, MIN(QINDEX_RANGE - 1, picture_control_set_ptr->parent_pcs_ptr->base_qindex));
+        int32_t current_q_index = frm_hdr->quantization_params.base_q_idx;
         Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq;
 
         int16_t quantizer = dequants->y_dequant_Q3[current_q_index][1];
@@ -1534,6 +1539,8 @@ EbErrorType av1_tu_estimate_coeff_bits(
     (void)entropy_coder_ptr;
     EbErrorType return_error = EB_ErrorNone;
 
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
+
     int32_t *coeff_buffer;
     int16_t  luma_txb_skip_context = md_context->luma_txb_skip_context;
     int16_t  luma_dc_sign_context = md_context->luma_dc_sign_context;
@@ -1542,7 +1549,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
     int16_t  cr_txb_skip_context = md_context->cr_txb_skip_context;
     int16_t  cr_dc_sign_context = md_context->cr_dc_sign_context;
 
-    EbBool reducedTransformSetFlag = picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used ? EB_TRUE : EB_FALSE;
+    EbBool reducedTransformSetFlag = frm_hdr->reduced_tx_set ? EB_TRUE : EB_FALSE;
 
     //Estimate the rate of the transform type and coefficient for Luma
 

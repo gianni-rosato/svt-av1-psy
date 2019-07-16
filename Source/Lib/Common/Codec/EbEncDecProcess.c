@@ -264,7 +264,8 @@ static void ResetEncDec(
     context_ptr->chroma_qp = context_ptr->qp;
 
     // Lambda Assignement
-    context_ptr->qp_index = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->base_qindex;
+    context_ptr->qp_index = (uint8_t)picture_control_set_ptr->
+        parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
     (*av1_lambda_assignment_function_table[picture_control_set_ptr->parent_pcs_ptr->pred_structure])(
         &context_ptr->fast_lambda,
         &context_ptr->full_lambda,
@@ -323,7 +324,8 @@ static void EncDecConfigureLcu(
     context_ptr->chroma_qp = context_ptr->qp;
     /* Note(CHKN) : when Qp modulation varies QP on a sub-LCU(CU) basis,  Lamda has to change based on Cu->QP , and then this code has to move inside the CU loop in MD */
     (void)sb_ptr;
-    context_ptr->qp_index = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->base_qindex;
+    context_ptr->qp_index = (uint8_t)picture_control_set_ptr->
+        parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
     (*av1_lambda_assignment_function_table[picture_control_set_ptr->parent_pcs_ptr->pred_structure])(
         &context_ptr->fast_lambda,
         &context_ptr->full_lambda,
@@ -575,7 +577,7 @@ void ReconOutput(
                 if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                     film_grain_ptr = &((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->film_grain_params;
                 else
-                    film_grain_ptr = &picture_control_set_ptr->parent_pcs_ptr->film_grain_params;
+                    film_grain_ptr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr.film_grain_params;
 
                 av1_add_film_grain(recon_ptr, intermediateBufferPtr, film_grain_ptr);
                 recon_ptr = intermediateBufferPtr;
@@ -1650,7 +1652,7 @@ void* enc_dec_kernel(void *input_ptr)
             {
                 if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE && picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr) {
                     ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->film_grain_params
-                        = picture_control_set_ptr->parent_pcs_ptr->film_grain_params;
+                        = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.film_grain_params;
                 }
             }
 

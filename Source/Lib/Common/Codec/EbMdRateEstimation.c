@@ -354,6 +354,7 @@ void av1_estimate_mv_rate(
 {
     int32_t *nmvcost[2];
     int32_t *nmvcost_hp[2];
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
 
     nmvcost[0] = &md_rate_estimation_array->nmv_costs[0][MV_MAX];
     nmvcost[1] = &md_rate_estimation_array->nmv_costs[1][MV_MAX];
@@ -362,14 +363,14 @@ void av1_estimate_mv_rate(
 
     av1_build_nmv_cost_table(
         md_rate_estimation_array->nmv_vec_cost,//out
-        picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv ? nmvcost_hp : nmvcost, //out
+        frm_hdr->allow_high_precision_mv ? nmvcost_hp : nmvcost, //out
         nmv_ctx,
-        picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv);
+        frm_hdr->allow_high_precision_mv);
 
     md_rate_estimation_array->nmvcoststack[0] = &md_rate_estimation_array->nmv_costs[0][MV_MAX];
     md_rate_estimation_array->nmvcoststack[1] = &md_rate_estimation_array->nmv_costs[1][MV_MAX];
 
-    if (picture_control_set_ptr->parent_pcs_ptr->allow_intrabc) {
+    if (frm_hdr->allow_intrabc) {
         int32_t *dvcost[2] = { &md_rate_estimation_array->dv_cost[0][MV_MAX], &md_rate_estimation_array->dv_cost[1][MV_MAX] };
         av1_build_nmv_cost_table(md_rate_estimation_array->dv_joint_cost, dvcost, &picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc->ndvc,
             MV_SUBPEL_NONE);

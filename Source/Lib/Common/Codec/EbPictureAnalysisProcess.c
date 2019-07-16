@@ -3289,7 +3289,7 @@ static int32_t apply_denoise_2d(SequenceControlSet        *scs_ptr,
     EbPictureBufferDesc *inputPicturePointer,
     EbAsm asm_type) {
     if (aom_denoise_and_model_run(pcs_ptr->denoise_and_model, inputPicturePointer,
-        &pcs_ptr->film_grain_params,
+        &pcs_ptr->frm_hdr.film_grain_params,
         scs_ptr->static_config.encoder_bit_depth > EB_8BIT, asm_type)) {
     }
     return 0;
@@ -3302,15 +3302,17 @@ EbErrorType denoise_estimate_film_grain(
 {
     EbErrorType return_error = EB_ErrorNone;
 
+    FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
+
     EbPictureBufferDesc    *input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
-    picture_control_set_ptr->film_grain_params.apply_grain = 0;
+    frm_hdr->film_grain_params.apply_grain = 0;
 
     if (sequence_control_set_ptr->film_grain_denoise_strength) {
         if (apply_denoise_2d(sequence_control_set_ptr, picture_control_set_ptr, input_picture_ptr, asm_type) < 0)
             return 1;
     }
 
-    sequence_control_set_ptr->seq_header.film_grain_params_present |= picture_control_set_ptr->film_grain_params.apply_grain;
+    sequence_control_set_ptr->seq_header.film_grain_params_present |= frm_hdr->film_grain_params.apply_grain;
 
     return return_error;  //todo: add proper error handling
 }

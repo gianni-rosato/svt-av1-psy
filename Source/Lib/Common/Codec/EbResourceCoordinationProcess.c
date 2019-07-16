@@ -271,103 +271,110 @@ void SpeedBufferControl(
 
 void ResetPcsAv1(
     PictureParentControlSet       *picture_control_set_ptr) {
+    FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
+    Av1Common *cm = picture_control_set_ptr->av1_cm;
+
     picture_control_set_ptr->is_skip_mode_allowed = 0;
     picture_control_set_ptr->skip_mode_flag = 0;
-    picture_control_set_ptr->av1_frame_type = KEY_FRAME;
-    picture_control_set_ptr->show_frame = 1;
-    picture_control_set_ptr->showable_frame = 1;  // frame can be used as show existing frame in future
+    frm_hdr->frame_type                 = KEY_FRAME;
+    frm_hdr->show_frame = 1;
+    frm_hdr->showable_frame = 1;  // frame can be used as show existing frame in future
     // Flag for a frame used as a reference - not written to the bitstream
     picture_control_set_ptr->is_reference_frame = 0;
     // Flag signaling that the frame is encoded using only INTRA modes.
     picture_control_set_ptr->intra_only = 0;
     // uint8_t last_intra_only;
 
-    picture_control_set_ptr->disable_cdf_update = 0;
-    picture_control_set_ptr->allow_high_precision_mv = 0;
-    picture_control_set_ptr->cur_frame_force_integer_mv = 0;  // 0 the default in AOM, 1 only integer
-    picture_control_set_ptr->allow_warped_motion = 0;
+    frm_hdr->disable_cdf_update = 0;
+    frm_hdr->allow_high_precision_mv = 0;
+    frm_hdr->force_integer_mv = 0;  // 0 the default in AOM, 1 only integer
+    frm_hdr->allow_warped_motion = 0;
 
     /* profile settings */
 #if CONFIG_ENTROPY_STATS
     int32_t coef_cdf_category;
 #endif
 
-    picture_control_set_ptr->base_qindex = 31;
-    picture_control_set_ptr->y_dc_delta_q = 0;
-    picture_control_set_ptr->u_dc_delta_q = 0;
-    picture_control_set_ptr->v_dc_delta_q = 0;
-    picture_control_set_ptr->u_ac_delta_q = 0;
-    picture_control_set_ptr->v_ac_delta_q = 0;
+    frm_hdr->quantization_params.base_q_idx = 31;
+    frm_hdr->quantization_params.delta_q_y_dc = 0;
+    frm_hdr->quantization_params.delta_q_u_dc = 0;
+    frm_hdr->quantization_params.delta_q_v_dc = 0;
+    frm_hdr->quantization_params.delta_q_u_ac = 0;
+    frm_hdr->quantization_params.delta_q_v_ac = 0;
 
     picture_control_set_ptr->separate_uv_delta_q = 0;
     // Encoder
-    picture_control_set_ptr->using_qmatrix = 0;
-    picture_control_set_ptr->qm_y = 5;
-    picture_control_set_ptr->qm_u = 5;
-    picture_control_set_ptr->qm_v = 5;
+    frm_hdr->quantization_params.using_qmatrix = 0;
+    frm_hdr->quantization_params.qm_y = 5;
+    frm_hdr->quantization_params.qm_u = 5;
+    frm_hdr->quantization_params.qm_v = 5;
     // Whether to use previous frame's motion vectors for prediction.
-    picture_control_set_ptr->allow_ref_frame_mvs = 0;
-    picture_control_set_ptr->switchable_motion_mode = 0;
+    frm_hdr->use_ref_frame_mvs = 0;
+    frm_hdr->is_motion_mode_switchable = 0;
     // Flag signaling how frame contexts should be updated at the end of
     // a frame decode
     picture_control_set_ptr->refresh_frame_context = REFRESH_FRAME_CONTEXT_DISABLED;
 
-    picture_control_set_ptr->lf.filter_level[0] = 0;
-    picture_control_set_ptr->lf.filter_level[1] = 0;
-    picture_control_set_ptr->lf.filter_level_u = 0;
-    picture_control_set_ptr->lf.filter_level_v = 0;
-    picture_control_set_ptr->lf.sharpness_level = 0;
+    frm_hdr->loop_filter_params.filter_level[0] = 0;
+    frm_hdr->loop_filter_params.filter_level[1] = 0;
+    frm_hdr->loop_filter_params.filter_level_u = 0;
+    frm_hdr->loop_filter_params.filter_level_v = 0;
+    frm_hdr->loop_filter_params.sharpness_level = 0;
 
-    picture_control_set_ptr->lf.mode_ref_delta_enabled = 0;
-    picture_control_set_ptr->lf.mode_ref_delta_update = 0;
-    picture_control_set_ptr->lf.mode_deltas[0] = 0;
-    picture_control_set_ptr->lf.mode_deltas[1] = 0;
+    frm_hdr->loop_filter_params.mode_ref_delta_enabled = 0;
+    frm_hdr->loop_filter_params.mode_ref_delta_update = 0;
+    frm_hdr->loop_filter_params.mode_deltas[0] = 0;
+    frm_hdr->loop_filter_params.mode_deltas[1] = 0;
 
-    picture_control_set_ptr->lf.ref_deltas[0] = 1;
-    picture_control_set_ptr->lf.ref_deltas[1] = 0;
-    picture_control_set_ptr->lf.ref_deltas[2] = 0;
-    picture_control_set_ptr->lf.ref_deltas[3] = 0;
-    picture_control_set_ptr->lf.ref_deltas[4] = -1;
-    picture_control_set_ptr->lf.ref_deltas[5] = 0;
-    picture_control_set_ptr->lf.ref_deltas[6] = -1;
-    picture_control_set_ptr->lf.ref_deltas[7] = -1;
+    frm_hdr->loop_filter_params.ref_deltas[0] = 1;
+    frm_hdr->loop_filter_params.ref_deltas[1] = 0;
+    frm_hdr->loop_filter_params.ref_deltas[2] = 0;
+    frm_hdr->loop_filter_params.ref_deltas[3] = 0;
+    frm_hdr->loop_filter_params.ref_deltas[4] = -1;
+    frm_hdr->loop_filter_params.ref_deltas[5] = 0;
+    frm_hdr->loop_filter_params.ref_deltas[6] = -1;
+    frm_hdr->loop_filter_params.ref_deltas[7] = -1;
 
-    picture_control_set_ptr->all_lossless = 0;
-    picture_control_set_ptr->coded_lossless = 0;
-    picture_control_set_ptr->reduced_tx_set_used = 0;
-    picture_control_set_ptr->reference_mode = SINGLE_REFERENCE;
+    frm_hdr->all_lossless = 0;
+    frm_hdr->coded_lossless = 0;
+    frm_hdr->reduced_tx_set= 0;
+    frm_hdr->reference_mode = SINGLE_REFERENCE;
     picture_control_set_ptr->frame_context_idx = 0; /* Context to use/update */
     for (int32_t i = 0; i < REF_FRAMES; i++)
         picture_control_set_ptr->fb_of_context_type[i] = 0;
-    picture_control_set_ptr->primary_ref_frame = PRIMARY_REF_NONE;
+    frm_hdr->primary_ref_frame = PRIMARY_REF_NONE;
     picture_control_set_ptr->frame_offset = picture_control_set_ptr->picture_number;
-    picture_control_set_ptr->error_resilient_mode = 0;
-    picture_control_set_ptr->uniform_tile_spacing_flag = 1;
+    frm_hdr->error_resilient_mode = 0;
+    cm->tiles_info.uniform_tile_spacing_flag = 1;
     picture_control_set_ptr->large_scale_tile = 0;
     picture_control_set_ptr->film_grain_params_present = 0;
-    picture_control_set_ptr->cdef_pri_damping = 0;
-    picture_control_set_ptr->cdef_sec_damping = 0;
+
+    //cdef_pri_damping & cdef_sec_damping are consolidated to cdef_damping
+    frm_hdr->CDEF_params.cdef_damping = 0;
+    //picture_control_set_ptr->cdef_pri_damping = 0;
+    //picture_control_set_ptr->cdef_sec_damping = 0;
+
     picture_control_set_ptr->nb_cdef_strengths = 1;
     for (int32_t i = 0; i < CDEF_MAX_STRENGTHS; i++) {
-        picture_control_set_ptr->cdef_strengths[i] = 0;
-        picture_control_set_ptr->cdef_uv_strengths[i] = 0;
+        frm_hdr->CDEF_params.cdef_y_strength[i] = 0;
+        frm_hdr->CDEF_params.cdef_uv_strength[i] = 0;
     }
-    picture_control_set_ptr->cdef_bits = 0;
+    frm_hdr->CDEF_params.cdef_bits = 0;
 
 #if ADD_DELTA_QP_SUPPORT
-    picture_control_set_ptr->delta_q_present_flag = 1;
-    picture_control_set_ptr->delta_lf_present_flag = 0;
-    picture_control_set_ptr->delta_q_res = DEFAULT_DELTA_Q_RES;
+    frm_hdr->delta_q_params.delta_q_present = 1;
+    frm_hdr->delta_lf_params.delta_lf_present = 0;
+    frm_hdr->delta_q_params.delta_q_res = DEFAULT_DELTA_Q_RES;
 #else
-    picture_control_set_ptr->delta_q_present_flag = 0;
+    frm_hdr->delta_q_params.delta_q_present = 0;
 #endif
 
-    picture_control_set_ptr->delta_lf_present_flag = 0;
-    picture_control_set_ptr->delta_lf_res = 0;
-    picture_control_set_ptr->delta_lf_multi = 0;
+    frm_hdr->delta_lf_params.delta_lf_present = 0;
+    frm_hdr->delta_lf_params.delta_lf_res = 0;
+    frm_hdr->delta_lf_params.delta_lf_multi = 0;
 
-    picture_control_set_ptr->current_frame_id = 0;
-    picture_control_set_ptr->frame_refs_short_signaling = 0;
+    frm_hdr->current_frame_id = 0;
+    frm_hdr->frame_refs_short_signaling = 0;
     picture_control_set_ptr->allow_comp_inter_inter = 0;
     //  int32_t all_one_sided_refs;
 }

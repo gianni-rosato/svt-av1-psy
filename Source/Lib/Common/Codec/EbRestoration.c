@@ -146,7 +146,7 @@ static INLINE int32_t av1_superres_unscaled(const Av1Common *cm) {
     // Note: for some corner cases (e.g. cm->width of 1), there may be no scaling
     // required even though cm->superres_scale_denominator != SCALE_NUMERATOR.
     // So, the following check is more accurate.
-    return (cm->width == cm->superres_upscaled_width);
+    return (cm->frm_size.frame_width == cm->frm_size.superres_upscaled_width);
 }
 
 void *aom_memalign(size_t align, size_t size);
@@ -173,9 +173,9 @@ static AV1PixelRect whole_frame_rect(const Av1Common *cm, int32_t is_uv) {
     int32_t ss_y = is_uv && cm->subsampling_y;
 
     rect.top = 0;
-    rect.bottom = ROUND_POWER_OF_TWO(cm->height, ss_y);
+    rect.bottom = ROUND_POWER_OF_TWO(cm->frm_size.frame_height, ss_y);
     rect.left = 0;
-    rect.right = ROUND_POWER_OF_TWO(cm->superres_upscaled_width, ss_x);
+    rect.right = ROUND_POWER_OF_TWO(cm->frm_size.superres_upscaled_width, ss_x);
     return rect;
 }
 
@@ -1632,7 +1632,7 @@ static void save_cdef_boundary_lines(const Yv12BufferConfig *frame,
     const int32_t ss_x = is_uv && cm->subsampling_x;
     const int32_t upscaled_width = av1_superres_unscaled(cm)
         ? src_width
-        : (cm->superres_upscaled_width + ss_x) >> ss_x;
+        : (cm->frm_size.superres_upscaled_width + ss_x) >> ss_x;
     const int32_t line_bytes = upscaled_width << use_highbd;
     for (int32_t i = 0; i < RESTORATION_CTX_VERT; i++) {
         // Copy the line at 'row' into both context lines. This is because
@@ -1660,7 +1660,7 @@ static void save_tile_row_boundary_lines(const Yv12BufferConfig *frame,
 
     RestorationStripeBoundaries *boundaries = &cm->rst_info[plane].boundaries;
 
-    int32_t plane_height = ROUND_POWER_OF_TWO(cm->height, ss_y);
+    int32_t plane_height = ROUND_POWER_OF_TWO(cm->frm_size.frame_height, ss_y);
 
     int32_t tile_stripe;
     for (tile_stripe = 0;; ++tile_stripe) {
@@ -1757,7 +1757,7 @@ EbErrorType av1_alloc_restoration_buffers(Av1Common *cm) {
 
     // Now we need to allocate enough space to store the line buffers for the
     // stripes
-    const int32_t frame_w = cm->superres_upscaled_width;
+    const int32_t frame_w = cm->frm_size.superres_upscaled_width;
     const int32_t use_highbd = cm->use_highbitdepth ? 1 : 0;
 
     for (int32_t p = 0; p < num_planes; ++p) {
