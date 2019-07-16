@@ -380,6 +380,8 @@ extern "C" {
         uint16_t                    mds_idx;     //equivalent of leaf_index in the nscu context. we will keep both for now and use the right one on a case by case basis.
         uint8_t                    *neigh_left_recon[3];  //only for MD
         uint8_t                    *neigh_top_recon[3];
+        uint16_t                   *neigh_left_recon_16bit[3];
+        uint16_t                   *neigh_top_recon_16bit[3];
         uint32_t                    best_d1_blk;
         uint8_t                     tx_depth;
     } CodingUnit;

@@ -425,7 +425,7 @@ static INLINE uint16_t clip_pixel_highbd(int32_t val, int32_t bd) {
 #endif
 #endif /* ATTRIBUTE_PACKED */
 
-typedef enum ATTRIBUTE_PACKED
+typedef enum
 {
     EIGHTTAP_REGULAR,
     EIGHTTAP_SMOOTH,

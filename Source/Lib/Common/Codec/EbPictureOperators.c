@@ -54,26 +54,39 @@ void picture_addition(
     return;
 }
 
-void pic_copy_kernel(
-    EbByte                  src,
+/*********************************
+ * Picture Copy
+ *********************************/
+
+void pic_copy_kernel_8bit(
+    EbByte                     src,
     uint32_t                   src_stride,
-    EbByte                  dst,
+    EbByte                     dst,
     uint32_t                   dst_stride,
     uint32_t                   area_width,
-    uint32_t                   area_height){
-    uint32_t   j;
-
-    for (j = 0; j < area_height; j++)
+    uint32_t                   area_height)
+{
+    for (uint32_t j = 0; j < area_height; j++)
         memcpy(dst + j * dst_stride, src + j * src_stride, area_width);
 }
-/*********************************
- * Picture Copy 8bit Elements
- *********************************/
-EbErrorType picture_copy8_bit(
-    EbPictureBufferDesc   *src,
+
+void pic_copy_kernel_16bit(
+    uint16_t                  *src,
+    uint32_t                   src_stride,
+    uint16_t                  *dst,
+    uint32_t                   dst_stride,
+    uint32_t                   width,
+    uint32_t                   height)
+{
+    for (uint32_t j = 0; j < height; j++)
+        memcpy(dst + j * dst_stride, src + j * src_stride, sizeof(uint16_t) * width);
+}
+
+EbErrorType picture_copy(
+    EbPictureBufferDesc       *src,
     uint32_t                   src_luma_origin_index,
     uint32_t                   src_chroma_origin_index,
-    EbPictureBufferDesc   *dst,
+    EbPictureBufferDesc       *dst,
     uint32_t                   dst_luma_origin_index,
     uint32_t                   dst_chroma_origin_index,
     uint32_t                   area_width,
@@ -81,40 +94,66 @@ EbErrorType picture_copy8_bit(
     uint32_t                   chroma_area_width,
     uint32_t                   chroma_area_height,
     uint32_t                   component_mask,
-    EbAsm                   asm_type)
+    EbBool                     hbd,
+    EbAsm                      asm_type)
 {
     UNUSED(asm_type);
     EbErrorType return_error = EB_ErrorNone;
 
-    // Execute the Kernels
-    if (component_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
-        pic_copy_kernel(
-            &(src->buffer_y[src_luma_origin_index]),
-            src->stride_y,
-            &(dst->buffer_y[dst_luma_origin_index]),
-            dst->stride_y,
-            area_width,
-            area_height);
-    }
+    if (hbd) {
+        if (component_mask & PICTURE_BUFFER_DESC_Y_FLAG)
+            pic_copy_kernel_16bit(
+                ((uint16_t*) src->buffer_y) + src_luma_origin_index,
+                src->stride_y,
+                ((uint16_t*) dst->buffer_y) + dst_luma_origin_index,
+                dst->stride_y,
+                area_width,
+                area_height);
 
-    if (component_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
-        pic_copy_kernel(
-            &(src->buffer_cb[src_chroma_origin_index]),
-            src->stride_cb,
-            &(dst->buffer_cb[dst_chroma_origin_index]),
-            dst->stride_cb,
-            chroma_area_width,
-            chroma_area_height);
-    }
+        if (component_mask & PICTURE_BUFFER_DESC_Cb_FLAG)
+            pic_copy_kernel_16bit(
+                ((uint16_t *) src->buffer_cb) + src_chroma_origin_index,
+                src->stride_cb,
+                ((uint16_t *) dst->buffer_cb) + dst_chroma_origin_index,
+                dst->stride_cb,
+                chroma_area_width,
+                chroma_area_height);
 
-    if (component_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
-        pic_copy_kernel(
-            &(src->buffer_cr[src_chroma_origin_index]),
-            src->stride_cr,
-            &(dst->buffer_cr[dst_chroma_origin_index]),
-            dst->stride_cr,
-            chroma_area_width,
-            chroma_area_height);
+        if (component_mask & PICTURE_BUFFER_DESC_Cr_FLAG)
+            pic_copy_kernel_16bit(
+                ((uint16_t *) src->buffer_cr) + src_chroma_origin_index,
+                src->stride_cr,
+                ((uint16_t *) dst->buffer_cr) + dst_chroma_origin_index,
+                dst->stride_cr,
+                chroma_area_width,
+                chroma_area_height);
+    } else {
+        if (component_mask & PICTURE_BUFFER_DESC_Y_FLAG)
+            pic_copy_kernel_8bit(
+                &(src->buffer_y[src_luma_origin_index]),
+                src->stride_y,
+                &(dst->buffer_y[dst_luma_origin_index]),
+                dst->stride_y,
+                area_width,
+                area_height);
+
+        if (component_mask & PICTURE_BUFFER_DESC_Cb_FLAG)
+            pic_copy_kernel_8bit(
+                &(src->buffer_cb[src_chroma_origin_index]),
+                src->stride_cb,
+                &(dst->buffer_cb[dst_chroma_origin_index]),
+                dst->stride_cb,
+                chroma_area_width,
+                chroma_area_height);
+
+        if (component_mask & PICTURE_BUFFER_DESC_Cr_FLAG)
+            pic_copy_kernel_8bit(
+                &(src->buffer_cr[src_chroma_origin_index]),
+                src->stride_cr,
+                &(dst->buffer_cr[dst_chroma_origin_index]),
+                dst->stride_cr,
+                chroma_area_width,
+                chroma_area_height);
     }
 
     return return_error;
@@ -296,6 +335,39 @@ void full_distortion_kernel32_bits(
 
     distortion_result[DIST_CALC_RESIDUAL] = residualDistortion;
     distortion_result[DIST_CALC_PREDICTION] = predictionDistortion;
+}
+
+uint64_t full_distortion_kernel16_bits(
+    uint8_t  *input,
+    uint32_t  input_offset,
+    uint32_t  input_stride,
+    uint8_t  *pred,
+    uint32_t  pred_offset,
+    uint32_t  pred_stride,
+    uint32_t  area_width,
+    uint32_t  area_height)
+{
+    uint32_t  column_index;
+    uint32_t  row_index = 0;
+    uint64_t  sse_distortion = 0;
+
+    uint16_t *input_16bit = (uint16_t *) input;
+    uint16_t *pred_16bit  = (uint16_t *) pred;
+    input_16bit += input_offset;
+    pred_16bit  += pred_offset;
+
+    while (row_index < area_height) {
+        column_index = 0;
+        while (column_index < area_width) {
+            sse_distortion += (int64_t)SQR((int64_t)(input_16bit[column_index]) - (pred_16bit[column_index]));
+            ++column_index;
+        }
+        input_16bit += input_stride;
+        pred_16bit  += pred_stride;
+        ++row_index;
+    }
+
+    return sse_distortion;
 }
 
 /*******************************************

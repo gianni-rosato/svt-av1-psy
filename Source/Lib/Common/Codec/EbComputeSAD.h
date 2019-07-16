@@ -236,6 +236,14 @@ extern "C" {
         combined_averaging_ssd_avx2,
     };
 
+uint32_t sad_16b_kernel(
+    uint16_t  *src,                           // input parameter, source samples Ptr
+    uint32_t  src_stride,                     // input parameter, source stride
+    uint16_t  *ref,                           // input parameter, reference samples Ptr
+    uint32_t  ref_stride,                     // input parameter, reference stride
+    uint32_t  height,                         // input parameter, block height (M)
+    uint32_t  width);                         // input parameter, block width (N)
+
 #ifdef __cplusplus
 }
 #endif
