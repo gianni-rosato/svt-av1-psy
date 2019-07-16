@@ -410,6 +410,11 @@ void reset_mode_decision(
         context_ptr->qp_index,
         picture_control_set_ptr->hbd_mode_decision);
 #if ENABLE_CDF_UPDATE
+    // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
+    if (context_ptr->is_md_rate_estimation_ptr_owner) {
+        context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
+        EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
+    }
     context_ptr->md_rate_estimation_ptr = picture_control_set_ptr->md_rate_estimation_array;
     uint32_t  candidateIndex;
     for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex)

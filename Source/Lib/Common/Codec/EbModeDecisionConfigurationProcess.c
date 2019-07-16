@@ -1740,7 +1740,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         context_ptr->qp = picture_control_set_ptr->picture_qp;
 
         picture_control_set_ptr->parent_pcs_ptr->average_qp = 0;
-        picture_control_set_ptr->intra_coded_area           = 0;
+        picture_control_set_ptr->intra_coded_area = 0;
         // Compute picture and slice level chroma QP offsets
         SetSliceAndPictureChromaQpOffsets( // HT done
             picture_control_set_ptr);
@@ -1811,6 +1811,11 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         context_ptr->lambda = (uint64_t)lambdaSad;
 #if ENABLE_CDF_UPDATE
         md_rate_estimation_array = picture_control_set_ptr->md_rate_estimation_array;
+        // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
+        if (context_ptr->is_md_rate_estimation_ptr_owner) {
+            EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
+            context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
+        }
 #else
         // Slice Type
         EB_SLICE slice_type =
@@ -1829,6 +1834,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         if (context_ptr->is_md_rate_estimation_ptr_owner) {
             EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
             context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
+        }
 #endif
         context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
 

@@ -277,6 +277,11 @@ static void ResetEncDec(
         context_ptr->qp_index,
         picture_control_set_ptr->hbd_mode_decision);
 #if ENABLE_CDF_UPDATE
+    // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
+    if (context_ptr->is_md_rate_estimation_ptr_owner) {
+        EB_FREE(context_ptr->md_rate_estimation_ptr);
+        context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
+    }
     context_ptr->md_rate_estimation_ptr = picture_control_set_ptr->md_rate_estimation_array;
 #else
     // Slice Type
