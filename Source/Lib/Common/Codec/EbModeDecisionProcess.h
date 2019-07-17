@@ -310,7 +310,9 @@ extern "C" {
     extern void reset_mode_decision(
         ModeDecisionContext   *context_ptr,
         PictureControlSet     *picture_control_set_ptr,
+#if !ENABLE_CDF_UPDATE
         SequenceControlSet    *sequence_control_set_ptr,
+#endif
         uint32_t                 segment_index);
 
     extern void mode_decision_configure_lcu(

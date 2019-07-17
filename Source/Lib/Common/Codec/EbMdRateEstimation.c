@@ -475,7 +475,7 @@ void av1_estimate_coefficients_rate(
         }
     }
 }
-
+#if !ENABLE_CDF_UPDATE
 EbErrorType md_rate_estimation_context_init(MdRateEstimationContext *md_rate_estimation_array)
 {
     uint32_t                      caseIndex1;
@@ -513,3 +513,4 @@ EbErrorType md_rate_estimation_context_init(MdRateEstimationContext *md_rate_est
     }
     return EB_ErrorNone;
 }
+#endif

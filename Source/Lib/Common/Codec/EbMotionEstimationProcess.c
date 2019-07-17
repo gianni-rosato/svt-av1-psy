@@ -588,8 +588,9 @@ void* motion_estimation_kernel(void *input_ptr)
     uint32_t                      intra_sad_interval_index;
 
     EbAsm                      asm_type;
+#if !ENABLE_CDF_UPDATE
     MdRateEstimationContext   *md_rate_estimation_array;
-
+#endif
     for (;;) {
         // Get Input Full Object
         eb_get_full_object(
@@ -614,12 +615,14 @@ void* motion_estimation_kernel(void *input_ptr)
         input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
 
         asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
+#if !ENABLE_CDF_UPDATE
         // Increment the MD Rate Estimation array pointer to point to the right address based on the QP and slice type
         md_rate_estimation_array = (MdRateEstimationContext*)sequence_control_set_ptr->encode_context_ptr->md_rate_estimation_array;
         md_rate_estimation_array += picture_control_set_ptr->slice_type * TOTAL_NUMBER_OF_QP_VALUES + picture_control_set_ptr->picture_qp;
         // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
         EB_MEMCPY(&(context_ptr->me_context_ptr->mvd_bits_array[0]), &(md_rate_estimation_array->mvd_bits[0]), sizeof(EbBitFraction)*NUMBER_OF_MVD_CASES);
         ///context_ptr->me_context_ptr->lambda = lambda_mode_decision_ld_sad_qp_scaling[picture_control_set_ptr->picture_qp];
+#endif
         context_ptr->me_context_ptr->me_alt_ref = inputResultsPtr->task_type == 1 ? EB_TRUE : EB_FALSE;
 
         // Lambda Assignement

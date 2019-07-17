@@ -123,11 +123,12 @@ extern "C" {
         int32_t switchable_interp_fac_bitss[SWITCHABLE_FILTER_CONTEXTS][SWITCHABLE_FILTERS];
         int32_t initialized;
     } MdRateEstimationContext;
-
+#if !ENABLE_CDF_UPDATE
     /**************************************
     * Extern Function Declarations
     **************************************/
     extern EbErrorType md_rate_estimation_context_init(MdRateEstimationContext *md_rate_estimation_array);
+#endif
     /***************************************************************************
     * AV1 Probability table
     * // round(-log2(i/256.) * (1 << AV1_PROB_COST_SHIFT)); i = 128~255.

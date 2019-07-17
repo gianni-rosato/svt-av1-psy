@@ -1183,7 +1183,15 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->atb_mode = 1;
         else
             picture_control_set_ptr->atb_mode = 0;
-
+#if ENABLE_CDF_UPDATE
+        // Set frame end cdf update mode      Settings
+        // 0                                     OFF
+        // 1                                     ON
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            picture_control_set_ptr->frame_end_cdf_update_mode = 1;
+        else
+            picture_control_set_ptr->frame_end_cdf_update_mode = 0;
+#endif
     return return_error;
 }
 
