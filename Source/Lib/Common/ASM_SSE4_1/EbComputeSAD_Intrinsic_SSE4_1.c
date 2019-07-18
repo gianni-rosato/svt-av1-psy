@@ -1764,7 +1764,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
     switch (width) {
     case 4:
         for (i = 0; i < search_area_height; i++) {
-            for (j = 0; j <= search_area_width - 8; j += 8) {
+            uint32_t startW = (i & 1) << 3;
+            for (j = startW; j <= search_area_width - 8; j += 16) {
                 pSrc = src;
                 pRef = ref + j;
                 s3 = _mm_setzero_si128();
@@ -1816,7 +1817,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
 
     case 8:
         for (i = 0; i < search_area_height; i++) {
-            for (j = 0; j <= search_area_width - 8; j += 8) {
+            uint32_t startW = (i & 1) << 3;
+            for (j = startW; j <= search_area_width - 8; j += 16) {
                 pSrc = src;
                 pRef = ref + j;
                 s3 = s4 = _mm_setzero_si128();
@@ -1931,7 +1933,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
         }
         else if (height <= 32) {
             for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
+                uint32_t startW = (i & 1) << 3;
+                for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2015,7 +2018,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
         }
         else {
             for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
+                uint32_t startW = (i & 1) << 3;
+                for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2122,7 +2126,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
     case 24:
         if (height <= 16) {
             for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
+                uint32_t startW = (i & 1) << 3;
+                for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2214,7 +2219,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
         }
         else {
             for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
+                uint32_t startW = (i & 1) << 3;
+                for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2329,7 +2335,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
     case 32:
         if (height <= 32) {
             for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
+                uint32_t startW = (i & 1) << 3;
+                for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2450,7 +2457,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
         else {
             __m128i s9, s10, s11, s12;
             for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
+                uint32_t startW = (i & 1) << 3;
+                for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2634,7 +2642,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
         if (height <= 32) {
             __m128i s9, s10, s11, s12;
             for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
+                uint32_t startW = (i & 1) << 3;
+                for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2843,7 +2852,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
         else {
             __m128i s9, s10;
             for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
+                uint32_t startW = (i & 1) << 3;
+                for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     s9 = s10 = _mm_setzero_si128();
@@ -2989,7 +2999,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
         if (height <= 32) {
             __m128i s9, s10, s11, s12;
             for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
+                uint32_t startW = (i & 1) << 3;
+                for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -3226,7 +3237,8 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
         else {
             __m128i s9, s10;
             for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
+                uint32_t startW = (i & 1) << 3;
+                for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     s9 = s10 = _mm_setzero_si128();
