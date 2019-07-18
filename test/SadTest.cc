@@ -74,6 +74,16 @@ class SADTestBase : public ::testing::Test {
         ref2_aligned_ = nullptr;
     }
 
+    SADTestBase(const int width, const int height, TestPattern test_pattern,
+                const int search_area_width, const int search_area_height) {
+        width_ = width;
+        height_ = height;
+        src_stride_ = ref1_stride_ = ref2_stride_ = width_ * 2;
+        test_pattern_ = test_pattern;
+        search_area_width_ = search_area_width;
+        search_area_height_ = search_area_height;
+    }
+
     void SetUp() override {
         src_aligned_ = (uint8_t *)aom_memalign(32, MAX_BLOCK_SIZE);
         ref1_aligned_ = (uint8_t *)aom_memalign(32, MAX_BLOCK_SIZE);
@@ -161,6 +171,7 @@ class SADTestBase : public ::testing::Test {
     int src_stride_;
     int ref1_stride_;
     int ref2_stride_;
+    int16_t search_area_height_, search_area_width_;
     TestPattern test_pattern_;
     uint8_t *src_aligned_;
     uint8_t *ref1_aligned_;
@@ -418,7 +429,7 @@ INSTANTIATE_TEST_CASE_P(
 /**
  * @brief Unit test for GetEightSadTest functions include:
  *  -
- * sget_eight_horizontal_search_point_results_8x8_16x16_pu_{sse41,avx2}_intrin
+ *  get_eight_horizontal_search_point_results_8x8_16x16_pu_{sse41,avx2}_intrin
  *
  * Test strategy:
  *  This test use different test pattern {REF_MAX, SRC_MAX, RANDOM, UNALIGN}
@@ -495,5 +506,300 @@ TEST_P(GetEightSadTest, GetEightSadTest) {
 
 INSTANTIATE_TEST_CASE_P(SAD, GetEightSadTest,
                         ::testing::ValuesIn(TEST_PATTERNS));
+
+typedef std::tuple<int16_t, int16_t> SearchArea;
+SadSize TEST_LOOP_SIZES[] = {
+    SadSize(64, 64), SadSize(64, 32), SadSize(32, 64), SadSize(32, 32),
+    SadSize(32, 16), SadSize(16, 32), SadSize(16, 16), SadSize(16, 8),
+    SadSize(8, 16),  SadSize(8, 8),   SadSize(8, 4),   SadSize(4, 4),
+    SadSize(4, 8),   SadSize(4, 16),  SadSize(16, 4),  SadSize(8, 32),
+    SadSize(32, 8),  SadSize(16, 64), SadSize(64, 16), SadSize(24, 24),
+    SadSize(24, 16), SadSize(16, 24), SadSize(24, 8),  SadSize(8, 24),
+    SadSize(64, 24), SadSize(48, 24), SadSize(32, 24), SadSize(24, 32),
+    SadSize(48, 48), SadSize(48, 16), SadSize(48, 32), SadSize(16, 48),
+    SadSize(32, 48), SadSize(48, 64), SadSize(64, 48)};
+
+SearchArea TEST_AREAS[] = {
+    SearchArea(64, 125),  SearchArea(192, 75),  SearchArea(128, 50),
+    SearchArea(64, 25),   SearchArea(240, 200), SearchArea(144, 120),
+    SearchArea(96, 80),   SearchArea(48, 40),   SearchArea(240, 120),
+    SearchArea(144, 72),  SearchArea(96, 48),   SearchArea(48, 24),
+    SearchArea(560, 320), SearchArea(336, 192), SearchArea(224, 128),
+    SearchArea(112, 64),  SearchArea(640, 400), SearchArea(384, 240),
+    SearchArea(256, 160), SearchArea(128, 80),  SearchArea(480, 120),
+    SearchArea(288, 72),  SearchArea(192, 48),  SearchArea(96, 24),
+    SearchArea(160, 60),  SearchArea(96, 36),   SearchArea(64, 24),
+    SearchArea(32, 12)};
+
+typedef std::tuple<TestPattern, SadSize, SearchArea> SadLoopTestParam;
+
+/**
+ * @brief Unit test for SAD loop (sparse) functions include:
+ *  - sad_loop_kernel_sparse_{sse4_1,avx2}_intrin
+ *  - sad_loop_kernel_{sse4_1,avx2}_intrin
+ *  - sad_loop_kernel_sse4_1_hme_l0_intrin
+ *
+ * Test strategy:
+ *  This test case combine different wight(4-64) x height(4-64), different test
+ * vecotr pattern(MaxRef, MaxSrc, Random, Unalign) to generate test vector.
+ * Run func with test vector, compare result between  non_avx2 function and avx2
+ * function.
+ *
+ *
+ * Expect result:
+ *  Results come from  non_avx2 function and avx2 funtion are
+ * equal.
+ *
+ * Test coverage:
+ *
+ * Test cases:
+ *
+ */
+class SadLoopTest : public ::testing::WithParamInterface<SadLoopTestParam>,
+                    public SADTestBase {
+  public:
+    SadLoopTest()
+        : SADTestBase(std::get<0>(TEST_GET_PARAM(1)),
+                      std::get<1>(TEST_GET_PARAM(1)), TEST_GET_PARAM(0),
+                      std::get<0>(TEST_GET_PARAM(2)),
+                      std::get<1>(TEST_GET_PARAM(2))) {
+        src_stride_ = width_ * 2;
+        ref1_stride_ = ref2_stride_ = 128;
+    };
+
+  protected:
+    void check_sad_loop_sparse() {
+        uint64_t best_sad1 = UINT64_MAX;
+        int16_t x_search_center1 = 0;
+        int16_t y_search_center1 = 0;
+
+        prepare_data();
+
+        sad_loop_kernel_sparse_sse4_1_intrin(src_aligned_,
+                                             src_stride_,
+                                             ref1_aligned_,
+                                             ref1_stride_,
+                                             height_,
+                                             width_,
+                                             &best_sad1,
+                                             &x_search_center1,
+                                             &y_search_center1,
+                                             ref1_stride_,
+                                             search_area_width_,
+                                             search_area_height_);
+        uint64_t best_sad2 = UINT64_MAX;
+        int16_t x_search_center2 = 0;
+        int16_t y_search_center2 = 0;
+        sad_loop_kernel_sparse_avx2_intrin(src_aligned_,
+                                           src_stride_,
+                                           ref1_aligned_,
+                                           ref1_stride_,
+                                           height_,
+                                           width_,
+                                           &best_sad2,
+                                           &x_search_center2,
+                                           &y_search_center2,
+                                           ref1_stride_,
+                                           search_area_width_,
+                                           search_area_height_);
+        uint64_t best_sad3 = UINT64_MAX;
+        int16_t x_search_center3 = 0;
+        int16_t y_search_center3 = 0;
+        sad_loop_kernel_sparse(src_aligned_,
+                               src_stride_,
+                               ref1_aligned_,
+                               ref1_stride_,
+                               height_,
+                               width_,
+                               &best_sad3,
+                               &x_search_center3,
+                               &y_search_center3,
+                               ref1_stride_,
+                               search_area_width_,
+                               search_area_height_);
+
+        EXPECT_EQ(best_sad1, best_sad3)
+            << "compare best_sad error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(x_search_center1, x_search_center3)
+            << "compare x_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(y_search_center1, y_search_center3)
+            << "compare y_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(best_sad2, best_sad3)
+            << "compare best_sad error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(x_search_center2, x_search_center3)
+            << "compare x_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(y_search_center2, y_search_center3)
+            << "compare y_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+    }
+
+    void check_sad_loop() {
+        uint64_t best_sad1 = UINT64_MAX;
+        int16_t x_search_center1 = 0;
+        int16_t y_search_center1 = 0;
+
+        prepare_data();
+
+        sad_loop_kernel_sse4_1_intrin(src_aligned_,
+                                      src_stride_,
+                                      ref1_aligned_,
+                                      ref1_stride_,
+                                      height_,
+                                      width_,
+                                      &best_sad1,
+                                      &x_search_center1,
+                                      &y_search_center1,
+                                      ref1_stride_,
+                                      search_area_width_,
+                                      search_area_height_);
+        uint64_t best_sad2 = UINT64_MAX;
+        int16_t x_search_center2 = 0;
+        int16_t y_search_center2 = 0;
+        sad_loop_kernel_avx2_intrin(src_aligned_,
+                                    src_stride_,
+                                    ref1_aligned_,
+                                    ref1_stride_,
+                                    height_,
+                                    width_,
+                                    &best_sad2,
+                                    &x_search_center2,
+                                    &y_search_center2,
+                                    ref1_stride_,
+                                    search_area_width_,
+                                    search_area_height_);
+
+        uint64_t best_sad3 = UINT64_MAX;
+        int16_t x_search_center3 = 0;
+        int16_t y_search_center3 = 0;
+        sad_loop_kernel(src_aligned_,
+                        src_stride_,
+                        ref1_aligned_,
+                        ref1_stride_,
+                        height_,
+                        width_,
+                        &best_sad3,
+                        &x_search_center3,
+                        &y_search_center3,
+                        ref1_stride_,
+                        search_area_width_,
+                        search_area_height_);
+
+        EXPECT_EQ(best_sad1, best_sad3)
+            << "compare bast_sad error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(best_sad2, best_sad3)
+            << "compare bast_sad error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(x_search_center1, x_search_center3)
+            << "compare x_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(x_search_center2, x_search_center3)
+            << "compare x_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(y_search_center1, y_search_center3)
+            << "compare y_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(y_search_center2, y_search_center3)
+            << "compare y_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+    }
+
+    void check_hme_loop() {
+        uint64_t best_sad1 = UINT64_MAX;
+        int16_t x_search_center1 = 0;
+        int16_t y_search_center1 = 0;
+
+        prepare_data();
+
+        sad_loop_kernel(src_aligned_,
+                        src_stride_,
+                        ref1_aligned_,
+                        ref1_stride_,
+                        height_,
+                        width_,
+                        &best_sad1,
+                        &x_search_center1,
+                        &y_search_center1,
+                        ref1_stride_,
+                        search_area_width_,
+                        search_area_height_);
+        uint64_t best_sad2 = UINT64_MAX;
+        int16_t x_search_center2 = 0;
+        int16_t y_search_center2 = 0;
+        sad_loop_kernel_sse4_1_hme_l0_intrin(src_aligned_,
+                                             src_stride_,
+                                             ref1_aligned_,
+                                             ref1_stride_,
+                                             height_,
+                                             width_,
+                                             &best_sad2,
+                                             &x_search_center2,
+                                             &y_search_center2,
+                                             ref1_stride_,
+                                             search_area_width_,
+                                             search_area_height_);
+        EXPECT_EQ(best_sad1, best_sad2)
+            << "compare hme best_sad error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(x_search_center1, x_search_center2)
+            << "compare hme x_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(y_search_center1, y_search_center2)
+            << "compare hme y_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+    }
+};
+
+TEST_P(SadLoopTest, SadLoopSparseTest) {
+    check_sad_loop_sparse();
+}
+
+TEST_P(SadLoopTest, SadLoopTest) {
+    check_sad_loop();
+}
+
+TEST_P(SadLoopTest, HmeTest) {
+    check_hme_loop();
+}
+
+INSTANTIATE_TEST_CASE_P(LOOPSAD, SadLoopTest,
+                        ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                                           ::testing::ValuesIn(TEST_LOOP_SIZES),
+                                           ::testing::ValuesIn(TEST_AREAS)));
 
 }  // namespace
