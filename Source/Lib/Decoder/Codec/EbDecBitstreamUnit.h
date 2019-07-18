@@ -55,7 +55,7 @@ extern "C" {
 #define ENABLE_ENTROPY_TRACE 0
 #define EXTRA_DUMP 0
 #if ENABLE_ENTROPY_TRACE
-#define ENTROPY_TRACE_FILE_BASED 1
+#define ENTROPY_TRACE_FILE_BASED 0
 #include <stdio.h>
 extern FILE *temp_fp;
 extern int enable_dump;
