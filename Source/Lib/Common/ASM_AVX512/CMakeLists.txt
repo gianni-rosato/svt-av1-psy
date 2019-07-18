@@ -3,7 +3,7 @@
 # SPDX - License - Identifier: BSD - 2 - Clause - Patent
 #
 
-# Common/ASM_AVX2 Directory CMakeLists.txt
+# Common/ASM_AVX512 Directory CMakeLists.txt
 
 # Include Encoder Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/
@@ -17,7 +17,10 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
 link_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/)
 
 set(flags_to_test
-    -mavx2
+    -mavx512f
+    -mavx512bw
+    -mavx512dq
+    -mavx512vl
     -static-intel
     /Qwd10148
     /Qwd10010
@@ -50,4 +53,4 @@ file(GLOB all_files
     "*.asm"
     "*.c")
 
-add_library(COMMON_ASM_AVX2 OBJECT ${all_files})
+add_library(COMMON_ASM_AVX512 OBJECT ${all_files})

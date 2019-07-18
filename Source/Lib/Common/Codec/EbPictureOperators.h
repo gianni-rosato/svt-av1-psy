@@ -10,6 +10,7 @@
 #include "EbPictureOperators_SSE2.h"
 #include "EbPictureOperators_SSE4_1.h"
 #include "EbPictureOperators_AVX2.h"
+#include "EbPictureOperators_AVX512.h"
 #include "EbHmCode.h"
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
@@ -416,8 +417,13 @@ extern "C" {
     static EbSpatialFullDistType FUNC_TABLE spatial_full_distortion_kernel_func_ptr_array[ASM_TYPE_TOTAL] = {
         // NON_AVX2
         spatial_full_distortion_kernel_c,
+#ifndef NON_AVX512_SUPPORT
+        // ASM_AVX512
+        spatial_full_distortion_kernel_avx512
+#else
         // ASM_AVX2
         spatial_full_distortion_kernel_avx2
+#endif
     };
 
     void picture_addition_kernel16_bit(

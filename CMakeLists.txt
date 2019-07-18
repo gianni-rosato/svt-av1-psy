@@ -157,6 +157,12 @@ if(COVERAGE AND NOT MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 endif()
 
+include(CheckSymbolExists)
+check_symbol_exists("_mm512_extracti64x4_epi64" "immintrin.h" HAS_AVX512)
+if(NOT HAS_AVX512)
+    add_definitions(-DNON_AVX512_SUPPORT)
+endif()
+
 # Add Subdirectories
 add_subdirectory(Source/Lib/Common)
 add_subdirectory(Source/Lib/Encoder)
