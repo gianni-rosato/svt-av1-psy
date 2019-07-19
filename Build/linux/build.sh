@@ -31,10 +31,10 @@ function build {
     fi
     PATH=$PATH:/usr/local/bin/
     cmake ${verbose:+"-v"} ../../.. ${cmake_env}
-    
+
     if [ "${verbose}" = "1" ]; then
         VERBOSE_MAKE="VERBOSE=1"
-    else 
+    else
         VERBOSE_MAKE=""
     fi
 
