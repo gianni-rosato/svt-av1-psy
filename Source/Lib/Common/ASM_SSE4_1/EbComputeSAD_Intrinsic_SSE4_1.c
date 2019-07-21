@@ -3742,7 +3742,7 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
         break;
 
     case 32:
-        if (height <= 16) {
+        if (height < 16) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
