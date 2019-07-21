@@ -71,6 +71,12 @@ class SVTRandom {
         gen_.seed(seed);
     }
 
+    /** reset generator with default seed
+     */
+    void reset() {
+        gen_.seed(deterministic_seed_);
+    }
+
     /** generate a new random integer with minimum and maximum bounds
      * @return:
      * value of random integer
