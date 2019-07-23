@@ -201,6 +201,97 @@ static INLINE void transpose_8bit_16x8(const __m128i *const in,
     out[7] = _mm_unpackhi_epi32(b5, b7);
 }
 
+static INLINE void transpose_8bit_16x16_sse2(const __m128i *const in,
+    __m128i *const out) {
+    __m128i w0, w1, w2, w3, w4, w5, w6, w7, w8, w9;
+    __m128i w10, w11, w12, w13, w14, w15;
+
+    w0 = _mm_unpacklo_epi8(in[0], in[1]);
+    w1 = _mm_unpacklo_epi8(in[2], in[3]);
+    w2 = _mm_unpacklo_epi8(in[4], in[5]);
+    w3 = _mm_unpacklo_epi8(in[6], in[7]);
+
+    w8 = _mm_unpacklo_epi8(in[8], in[9]);
+    w9 = _mm_unpacklo_epi8(in[10], in[11]);
+    w10 = _mm_unpacklo_epi8(in[12], in[13]);
+    w11 = _mm_unpacklo_epi8(in[14], in[15]);
+
+    w4 = _mm_unpacklo_epi16(w0, w1);
+    w5 = _mm_unpacklo_epi16(w2, w3);
+    w12 = _mm_unpacklo_epi16(w8, w9);
+    w13 = _mm_unpacklo_epi16(w10, w11);
+
+    w6 = _mm_unpacklo_epi32(w4, w5);
+    w7 = _mm_unpackhi_epi32(w4, w5);
+    w14 = _mm_unpacklo_epi32(w12, w13);
+    w15 = _mm_unpackhi_epi32(w12, w13);
+
+    // Store first 4-line result
+    out[0] = _mm_unpacklo_epi64(w6, w14);
+    out[1] = _mm_unpackhi_epi64(w6, w14);
+    out[2] = _mm_unpacklo_epi64(w7, w15);
+    out[3] = _mm_unpackhi_epi64(w7, w15);
+
+    w4 = _mm_unpackhi_epi16(w0, w1);
+    w5 = _mm_unpackhi_epi16(w2, w3);
+    w12 = _mm_unpackhi_epi16(w8, w9);
+    w13 = _mm_unpackhi_epi16(w10, w11);
+
+    w6 = _mm_unpacklo_epi32(w4, w5);
+    w7 = _mm_unpackhi_epi32(w4, w5);
+    w14 = _mm_unpacklo_epi32(w12, w13);
+    w15 = _mm_unpackhi_epi32(w12, w13);
+
+    // Store second 4-line result
+    out[4] = _mm_unpacklo_epi64(w6, w14);
+    out[5] = _mm_unpackhi_epi64(w6, w14);
+    out[6] = _mm_unpacklo_epi64(w7, w15);
+    out[7] = _mm_unpackhi_epi64(w7, w15);
+
+    // upper half
+    w0 = _mm_unpackhi_epi8(in[0], in[1]);
+    w1 = _mm_unpackhi_epi8(in[2], in[3]);
+    w2 = _mm_unpackhi_epi8(in[4], in[5]);
+    w3 = _mm_unpackhi_epi8(in[6], in[7]);
+
+    w8 = _mm_unpackhi_epi8(in[8], in[9]);
+    w9 = _mm_unpackhi_epi8(in[10], in[11]);
+    w10 = _mm_unpackhi_epi8(in[12], in[13]);
+    w11 = _mm_unpackhi_epi8(in[14], in[15]);
+
+    w4 = _mm_unpacklo_epi16(w0, w1);
+    w5 = _mm_unpacklo_epi16(w2, w3);
+    w12 = _mm_unpacklo_epi16(w8, w9);
+    w13 = _mm_unpacklo_epi16(w10, w11);
+
+    w6 = _mm_unpacklo_epi32(w4, w5);
+    w7 = _mm_unpackhi_epi32(w4, w5);
+    w14 = _mm_unpacklo_epi32(w12, w13);
+    w15 = _mm_unpackhi_epi32(w12, w13);
+
+    // Store first 4-line result
+    out[8] = _mm_unpacklo_epi64(w6, w14);
+    out[9] = _mm_unpackhi_epi64(w6, w14);
+    out[10] = _mm_unpacklo_epi64(w7, w15);
+    out[11] = _mm_unpackhi_epi64(w7, w15);
+
+    w4 = _mm_unpackhi_epi16(w0, w1);
+    w5 = _mm_unpackhi_epi16(w2, w3);
+    w12 = _mm_unpackhi_epi16(w8, w9);
+    w13 = _mm_unpackhi_epi16(w10, w11);
+
+    w6 = _mm_unpacklo_epi32(w4, w5);
+    w7 = _mm_unpackhi_epi32(w4, w5);
+    w14 = _mm_unpacklo_epi32(w12, w13);
+    w15 = _mm_unpackhi_epi32(w12, w13);
+
+    // Store second 4-line result
+    out[12] = _mm_unpacklo_epi64(w6, w14);
+    out[13] = _mm_unpackhi_epi64(w6, w14);
+    out[14] = _mm_unpacklo_epi64(w7, w15);
+    out[15] = _mm_unpackhi_epi64(w7, w15);
+}
+
 static INLINE void transpose_16bit_4x4(const __m128i *const in,
     __m128i *const out) {
     // Unpack 16 bit elements. Goes from:
