@@ -2029,7 +2029,7 @@ void product_full_loop(
     EbAsm                         asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
     //    uint32_t   currentTuIndex,tuIt;
     uint64_t   y_tu_coeff_bits;
-    uint64_t   tuFullDistortion[3][DIST_CALC_TOTAL];
+    EB_ALIGN(16) uint64_t tuFullDistortion[3][DIST_CALC_TOTAL];
     context_ptr->three_quad_energy = 0;
     uint32_t  txb_1d_offset = 0;
     uint32_t txb_itr = 0;
@@ -2306,7 +2306,7 @@ void product_full_loop_tx_search(
     SequenceControlSet          *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     EbAsm                          asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
     uint64_t                       y_tu_coeff_bits;
-    uint64_t                       tuFullDistortion[3][DIST_CALC_TOTAL];
+    EB_ALIGN(16) uint64_t          tuFullDistortion[3][DIST_CALC_TOTAL];
     int32_t                        plane = 0;
     const int32_t                  is_inter = (candidateBuffer->candidate_ptr->type == INTER_MODE || candidateBuffer->candidate_ptr->use_intrabc) ? EB_TRUE : EB_FALSE;
     uint64_t                       bestFullCost = UINT64_MAX;
@@ -2597,7 +2597,7 @@ void encode_pass_tx_search(
     const uint32_t         coeff1dOffset = context_ptr->coded_area_sb;
 
     uint64_t               y_tu_coeff_bits;
-    uint64_t               tuFullDistortion[3][DIST_CALC_TOTAL];
+    EB_ALIGN(16) uint64_t  tuFullDistortion[3][DIST_CALC_TOTAL];
     const int32_t          is_inter = context_ptr->is_inter;
     uint64_t               bestFullCost = UINT64_MAX;
     uint64_t               y_full_cost;
@@ -3312,7 +3312,7 @@ void cu_full_distortion_fast_tu_mode_r(
     uint32_t                          currentTuIndex;
     int32_t                           chromaShift;
     uint32_t                          tu_chroma_origin_index;
-    uint64_t                          tuFullDistortion[3][DIST_CALC_TOTAL];
+    EB_ALIGN(16) uint64_t             tuFullDistortion[3][DIST_CALC_TOTAL];
     EbPictureBufferDesc              *transform_buffer;
     uint32_t                          tuTotalCount;
     uint32_t                          txb_itr = 0;

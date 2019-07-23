@@ -523,7 +523,7 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
 typedef struct CflCtx {
         // Q3 reconstructed luma pixels (only Q2 is required, but Q3 is used to avoid
         // shifts)
-        int16_t recon_buf_q3[CFL_BUF_SQUARE];
+        EB_ALIGN(64) int16_t recon_buf_q3[CFL_BUF_SQUARE];
 
         // Height and width currently used in the CfL prediction buffer.
         int32_t buf_height, buf_width;

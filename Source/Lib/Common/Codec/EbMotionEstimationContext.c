@@ -61,7 +61,7 @@ EbErrorType me_context_ctor(
     EB_MALLOC_ALIGNED_ARRAY(object_ptr->sb_buffer, BLOCK_SIZE_64 * object_ptr->sb_buffer_stride);
 
     object_ptr->quarter_sb_buffer_stride = (BLOCK_SIZE_64 >> 1);
-    EB_MALLOC_ARRAY(object_ptr->quarter_sb_buffer, (BLOCK_SIZE_64 >> 1) * object_ptr->quarter_sb_buffer_stride);
+    EB_MALLOC_ALIGNED_ARRAY(object_ptr->quarter_sb_buffer, (BLOCK_SIZE_64 >> 1) * object_ptr->quarter_sb_buffer_stride);
 
     object_ptr->sixteenth_sb_buffer_stride = (BLOCK_SIZE_64 >> 2);
     EB_MALLOC_ALIGNED_ARRAY(object_ptr->sixteenth_sb_buffer, (BLOCK_SIZE_64 >> 2) * object_ptr->sixteenth_sb_buffer_stride);

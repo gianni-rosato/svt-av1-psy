@@ -109,7 +109,7 @@ EbErrorType rest_context_ctor(
             eb_picture_buffer_desc_ctor,
             (EbPtr)&initData);
 
-         EB_MALLOC(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
+         EB_MALLOC_ALIGNED(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
     }
 
     EbPictureBufferDescInitData tempLfReconDescInitData;
