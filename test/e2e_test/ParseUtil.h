@@ -31,10 +31,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string>
-#include "aom/aom_image.h"
 #include "RefDecoder.h"
-
-#define MAX_NUM_OP_POINTS 32
 
 namespace svt_av1_e2e_tools {
 
