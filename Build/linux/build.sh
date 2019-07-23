@@ -32,10 +32,17 @@ function build {
     PATH=$PATH:/usr/local/bin/
     cmake ${verbose:+"-v"} ../../.. ${cmake_env}
 
+    if [ "${verbose}" = "1" ]; then
+        VERBOSE_MAKE="VERBOSE=1"
+    else
+        VERBOSE_MAKE=""
+    fi
+
     # Compile the Library
-    make VERBOSE=${verbose} -j ${make_threads} SvtAv1EncApp SvtAv1DecApp
+    make ${VERBOSE_MAKE} -j ${make_threads} SvtAv1EncApp SvtAv1DecApp
+
     if [ "$2" = "test" ]; then
-        make VERBOSE=${verbose} -j ${make_threads} SvtAv1UnitTests SvtAv1ApiTests SvtAv1E2ETests TestVectors
+        make ${VERBOSE_MAKE} -j ${make_threads} SvtAv1UnitTests SvtAv1ApiTests SvtAv1E2ETests TestVectors
     fi
     cd ..
 }
