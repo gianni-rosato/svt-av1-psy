@@ -107,17 +107,17 @@ class AV1IntraPredTest : public ::testing::TestWithParam<TupleType> {
         bw_ = get<2>(params_);
         bh_ = get<3>(params_);
         bd_ = get<4>(params_);
-        stride_ = bw_ * 3;
+        stride_ = 64 * 3;
         mask_ = (1 << bd_) - 1;
         above_row_data_ = reinterpret_cast<Sample *>(
-            aom_memalign(16, 3 * 64 * sizeof(Sample)));
+            aom_memalign(32, 3 * 64 * sizeof(Sample)));
         above_row_ = above_row_data_ + 16;
         left_col_ = reinterpret_cast<Sample *>(
-            aom_memalign(16, 2 * 64 * sizeof(Sample)));
+            aom_memalign(32, 2 * 64 * sizeof(Sample)));
         dst_tst_ = reinterpret_cast<Sample *>(
-            aom_memalign(16, 3 * 64 * 64 * sizeof(Sample)));
+            aom_memalign(32, 3 * 64 * 64 * sizeof(Sample)));
         dst_ref_ = reinterpret_cast<Sample *>(
-            aom_memalign(16, 3 * 64 * 64 * sizeof(Sample)));
+            aom_memalign(32, 3 * 64 * 64 * sizeof(Sample)));
     }
     void TearDown() override {
         aom_free(above_row_data_);
