@@ -149,6 +149,12 @@ EbErrorType Y4MVideoSource::seek_to_frame(const uint32_t index) {
         printf("Error file handle\r\n");
         return EB_ErrorInsufficientResources;
     }
-    fseek(file_handle_, index * frame_length_ + header_length_, SEEK_SET);
+    uint32_t real_index = init_pos_ + index;
+    if (real_index >= file_frames_)
+        real_index = real_index % file_frames_;
+    if (fseek(file_handle_,
+              real_index * frame_length_ + header_length_,
+              SEEK_SET) != 0)
+        return EB_ErrorInsufficientResources;
     return EB_ErrorNone;
 }

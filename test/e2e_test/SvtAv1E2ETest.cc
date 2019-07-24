@@ -164,3 +164,14 @@ static const std::vector<EncTestSetting> default_enc_settings = {
 INSTANTIATE_TEST_CASE_P(SvtAv1, ConformanceDeathTest,
                         ::testing::ValuesIn(default_enc_settings),
                         EncTestSetting::GetSettingName);
+
+class LongtimeConformanceTest : public ConformanceDeathTest {};
+
+TEST_P(LongtimeConformanceTest, DISABLED_LongtimeTest) {
+    run_death_test();
+}
+
+INSTANTIATE_TEST_CASE_P(SvtAv1, LongtimeConformanceTest,
+                        ::testing::ValuesIn(generate_vector_from_config(
+                            "longtime_comformance_test.cfg")),
+                        EncTestSetting::GetSettingName);
