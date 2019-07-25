@@ -23,7 +23,7 @@ extern const char eb_unit_test_result_str[2][25];
 }
 #endif
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define TEST_ALLIGN_MALLOC(type, pointer, n_elements) \
 pointer = (type) _aligned_malloc(n_elements, ALVALUE); \
 
