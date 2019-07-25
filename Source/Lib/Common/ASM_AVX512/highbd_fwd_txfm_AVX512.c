@@ -1,3 +1,8 @@
+/*
+ * Copyright(c) 2019 Intel Corporation
+ * SPDX - License - Identifier: BSD - 2 - Clause - Patent
+ */
+
 #include <assert.h>
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
