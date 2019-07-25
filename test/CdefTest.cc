@@ -7,8 +7,8 @@
  * @file CdefTest.cc
  *
  * @brief Unit test for cdef tools:
- * * cdef_find_dir_avx2
- * * cdef_filter_block_avx2
+ * * eb_cdef_find_dir_avx2
+ * * eb_cdef_filter_block_avx2
  * * compute_cdef_dist_avx2
  * * copy_rect8_8bit_to_16bit_avx2
  * * search_one_dual_avx2
@@ -43,7 +43,7 @@ using cdef_dir_param_t =
                      int, int>;
 
 /**
- * @brief Unit test for cdef_filter_block_avx2
+ * @brief Unit test for eb_cdef_filter_block_avx2
  *
  * Test strategy:
  * Feed src data generated randomly and all possible input,
@@ -232,8 +232,8 @@ TEST_P(CDEFBlockTest, MatchTest) {
 
 INSTANTIATE_TEST_CASE_P(
     Cdef, CDEFBlockTest,
-    ::testing::Combine(::testing::Values(&cdef_filter_block_avx2),
-                       ::testing::Values(&cdef_filter_block_c),
+    ::testing::Combine(::testing::Values(&eb_cdef_filter_block_avx2),
+                       ::testing::Values(&eb_cdef_filter_block_c),
                        ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4,
                                          BLOCK_8X8),
                        ::testing::Range(0, 16), ::testing::Range(8, 13, 2)));
@@ -245,7 +245,7 @@ using FindDirFunc = int (*)(const uint16_t *img, int stride, int32_t *var,
 using TestFindDirParam = ::testing::tuple<FindDirFunc, FindDirFunc>;
 
 /**
- * @brief Unit test for cdef_find_dir_avx2
+ * @brief Unit test for eb_cdef_find_dir_avx2
  *
  * Test strategy:
  * Feed src data generated randomly, and check the best mse and
@@ -331,8 +331,8 @@ TEST_P(CDEFFindDirTest, MatchTest) {
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
 
 INSTANTIATE_TEST_CASE_P(Cdef, CDEFFindDirTest,
-                        ::testing::Values(make_tuple(&cdef_find_dir_avx2,
-                                                     &cdef_find_dir_c)));
+                        ::testing::Values(make_tuple(&eb_cdef_find_dir_avx2,
+                                                     &eb_cdef_find_dir_c)));
 
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
 }  // namespace
@@ -376,9 +376,9 @@ TEST(CdefToolTest, CopyRectMatchTest) {
             uint16_t *dst_ref_ =
                 dst_data_ref_ + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
 
-            copy_rect8_8bit_to_16bit_c(
+            eb_copy_rect8_8bit_to_16bit_c(
                 dst_ref_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
-            copy_rect8_8bit_to_16bit_avx2(
+            eb_copy_rect8_8bit_to_16bit_avx2(
                 dst_tst_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
 
             for (int i = 0; i < vsize; ++i) {
@@ -499,8 +499,8 @@ TEST(CdefToolTest, SearchOneDualMatchTest) {
     int lvl_luma_ref[CDEF_MAX_STRENGTHS], lvl_chroma_ref[CDEF_MAX_STRENGTHS];
     int lvl_luma_tst[CDEF_MAX_STRENGTHS], lvl_chroma_tst[CDEF_MAX_STRENGTHS];
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
-    mse[0] = (uint64_t(*)[64])aom_memalign(32, sizeof(**mse) * sb_count);
-    mse[1] = (uint64_t(*)[64])aom_memalign(32, sizeof(**mse) * sb_count);
+    mse[0] = (uint64_t(*)[64])eb_aom_memalign(32, sizeof(**mse) * sb_count);
+    mse[1] = (uint64_t(*)[64])eb_aom_memalign(32, sizeof(**mse) * sb_count);
 
     SVTRandom rnd_(10, false);
     for (int k = 0; k < 100; ++k) {
@@ -553,6 +553,6 @@ TEST(CdefToolTest, SearchOneDualMatchTest) {
         }
     }
 
-    aom_free(mse[0]);
-    aom_free(mse[1]);
+    eb_aom_free(mse[0]);
+    eb_aom_free(mse[1]);
 }

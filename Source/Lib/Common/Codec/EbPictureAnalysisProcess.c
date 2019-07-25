@@ -3288,7 +3288,7 @@ static int32_t apply_denoise_2d(SequenceControlSet        *scs_ptr,
     PictureParentControlSet   *pcs_ptr,
     EbPictureBufferDesc *inputPicturePointer,
     EbAsm asm_type) {
-    if (aom_denoise_and_model_run(pcs_ptr->denoise_and_model, inputPicturePointer,
+    if (eb_aom_denoise_and_model_run(pcs_ptr->denoise_and_model, inputPicturePointer,
         &pcs_ptr->frm_hdr.film_grain_params,
         scs_ptr->static_config.encoder_bit_depth > EB_8BIT, asm_type)) {
     }
@@ -4639,7 +4639,7 @@ void DownsampleDecimationInputPicture(
         sixteenth_decimated_picture_ptr->origin_y);
 
 }
-int av1_count_colors(const uint8_t *src, int stride, int rows, int cols,
+int eb_av1_count_colors(const uint8_t *src, int stride, int rows, int cols,
     int *val_count) {
     const int max_pix_val = 1 << 8;
     memset(val_count, 0, max_pix_val * sizeof(val_count[0]));
@@ -4661,7 +4661,7 @@ extern aom_variance_fn_ptr_t mefn_ptr[BlockSizeS_ALL];
 //  purposes of activity masking.
 // Eventually this should be replaced by custom no-reference routines,
 //  which will be faster.
-const uint8_t AV1_VAR_OFFS[MAX_SB_SIZE] = {
+const uint8_t eb_AV1_VAR_OFFS[MAX_SB_SIZE] = {
   128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
   128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
   128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
@@ -4673,13 +4673,13 @@ const uint8_t AV1_VAR_OFFS[MAX_SB_SIZE] = {
   128, 128, 128, 128, 128, 128, 128, 128
 };
 
-unsigned int av1_get_sby_perpixel_variance(const aom_variance_fn_ptr_t *fn_ptr, //const AV1_COMP *cpi,
+unsigned int eb_av1_get_sby_perpixel_variance(const aom_variance_fn_ptr_t *fn_ptr, //const AV1_COMP *cpi,
                                            const uint8_t *src,int stride,//const struct buf_2d *ref,
                                            BlockSize bs) {
   unsigned int sse;
   const unsigned int var =
-      //cpi->fn_ptr[bs].vf(ref->buf, ref->stride, AV1_VAR_OFFS, 0, &sse);
-     fn_ptr->vf(src,  stride, AV1_VAR_OFFS, 0, &sse);
+      //cpi->fn_ptr[bs].vf(ref->buf, ref->stride, eb_AV1_VAR_OFFS, 0, &sse);
+     fn_ptr->vf(src,  stride, eb_AV1_VAR_OFFS, 0, &sse);
   return ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bs]);
 }
 
@@ -4710,7 +4710,7 @@ static void is_screen_content(
             const int n_colors =
                 use_hbd ? 0 /*av1_count_colors_highbd(src + r * stride + c, stride, blk_w,
                     blk_h, bd, count_buf)*/
-                : av1_count_colors(src + r * stride + c, stride, blk_w, blk_h,
+                : eb_av1_count_colors(src + r * stride + c, stride, blk_w, blk_h,
                     count_buf);
             if (n_colors > 1 && n_colors <= color_thresh) {
                 ++counts_1;
@@ -4719,7 +4719,7 @@ static void is_screen_content(
                 //buf.buf = (uint8_t *)src;
                 const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[BLOCK_16X16];
 
-                const unsigned int var = av1_get_sby_perpixel_variance(fn_ptr, src + r * stride + c,stride, BLOCK_16X16);
+                const unsigned int var = eb_av1_get_sby_perpixel_variance(fn_ptr, src + r * stride + c,stride, BLOCK_16X16);
                                /* use_hbd
                 ? av1_high_get_sby_perpixel_variance(cpi, &buf, BLOCK_16X16, bd)
                 : */

@@ -57,60 +57,60 @@ typedef struct Iterator {
 /***** METHODS *****/
 
 /* Constructor */
-int aom_vector_setup(Vector *vector, size_t capacity, size_t element_size);
+int eb_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size);
 
 /* Copy Constructor */
-int aom_vector_copy(Vector *destination, Vector *source);
+int eb_aom_vector_copy(Vector *destination, Vector *source);
 
 /* Copy Assignment */
-int aom_vector_copy_assign(Vector *destination, Vector *source);
+int eb_aom_vector_copy_assign(Vector *destination, Vector *source);
 
 /* Move Constructor */
-int aom_vector_move(Vector *destination, Vector *source);
+int eb_aom_vector_move(Vector *destination, Vector *source);
 
 /* Move Assignment */
-int aom_vector_move_assign(Vector *destination, Vector *source);
+int eb_aom_vector_move_assign(Vector *destination, Vector *source);
 
-int aom_vector_swap(Vector *destination, Vector *source);
+int eb_aom_vector_swap(Vector *destination, Vector *source);
 
 /* Destructor */
-int aom_vector_destroy(Vector *vector);
+int eb_aom_vector_destroy(Vector *vector);
 
 /* Insertion */
-int aom_vector_push_back(Vector *vector, void *element);
-int aom_vector_push_front(Vector *vector, void *element);
-int aom_vector_insert(Vector *vector, size_t index, void *element);
-int aom_vector_assign(Vector *vector, size_t index, void *element);
+int eb_aom_vector_push_back(Vector *vector, void *element);
+int eb_aom_vector_push_front(Vector *vector, void *element);
+int eb_aom_vector_insert(Vector *vector, size_t index, void *element);
+int eb_aom_vector_assign(Vector *vector, size_t index, void *element);
 
 /* Deletion */
-int aom_vector_pop_back(Vector *vector);
-int aom_vector_pop_front(Vector *vector);
-int aom_vector_erase(Vector *vector, size_t index);
-int aom_vector_clear(Vector *vector);
+int eb_aom_vector_pop_back(Vector *vector);
+int eb_aom_vector_pop_front(Vector *vector);
+int eb_aom_vector_erase(Vector *vector, size_t index);
+int eb_aom_vector_clear(Vector *vector);
 
 /* Lookup */
-void *aom_vector_get(Vector *vector, size_t index);
-const void *aom_vector_const_get(const Vector *vector, size_t index);
-void *aom_vector_front(Vector *vector);
-void *aom_vector_back(Vector *vector);
+void *eb_aom_vector_get(Vector *vector, size_t index);
+const void *eb_aom_vector_const_get(const Vector *vector, size_t index);
+void *eb_aom_vector_front(Vector *vector);
+void *eb_aom_vector_back(Vector *vector);
 #define VECTOR_GET_AS(type, aom_vector_pointer, index) \
-  *((type *)aom_vector_get((aom_vector_pointer), (index)))
+  *((type *)eb_aom_vector_get((aom_vector_pointer), (index)))
 
 /* Information */
-bool aom_vector_is_initialized(const Vector *vector);
-size_t aom_vector_byte_size(const Vector *vector);
-size_t aom_vector_free_space(const Vector *vector);
-bool aom_vector_is_empty(const Vector *vector);
+bool eb_aom_vector_is_initialized(const Vector *vector);
+size_t eb_aom_vector_byte_size(const Vector *vector);
+size_t eb_aom_vector_free_space(const Vector *vector);
+bool eb_aom_vector_is_empty(const Vector *vector);
 
 /* Memory management */
-int aom_vector_resize(Vector *vector, size_t new_size);
-int aom_vector_reserve(Vector *vector, size_t minimum_capacity);
-int aom_vector_shrink_to_fit(Vector *vector);
+int eb_aom_vector_resize(Vector *vector, size_t new_size);
+int eb_aom_vector_reserve(Vector *vector, size_t minimum_capacity);
+int eb_aom_vector_shrink_to_fit(Vector *vector);
 
 /* Iterators */
-Iterator aom_vector_begin(Vector *vector);
-Iterator aom_vector_end(Vector *vector);
-Iterator aom_vector_iterator(Vector *vector, size_t index);
+Iterator eb_aom_vector_begin(Vector *vector);
+Iterator eb_aom_vector_end(Vector *vector);
+Iterator eb_aom_vector_iterator(Vector *vector, size_t index);
 
 void *iterator_get(Iterator *iterator);
 #define ITERATOR_GET_AS(type, iterator) *((type *)iterator_get((iterator)))
@@ -130,8 +130,8 @@ bool iterator_is_after(Iterator *first, Iterator *second);
 size_t iterator_index(Vector *vector, Iterator *iterator);
 
 #define VECTOR_FOR_EACH(aom_vector_pointer, iterator_name)           \
-  for (Iterator(iterator_name) = aom_vector_begin((aom_vector_pointer)), \
-      end = aom_vector_end((aom_vector_pointer));                        \
+  for (Iterator(iterator_name) = eb_aom_vector_begin((aom_vector_pointer)), \
+      end = eb_aom_vector_end((aom_vector_pointer));                        \
        !iterator_equals(&(iterator_name), &end);                 \
        iterator_increment(&(iterator_name)))
 

@@ -23,7 +23,7 @@
     int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
     int32_t vsize, int32_t hsize);
 
-extern int16_t av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+extern int16_t eb_av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 //-------memory stuff
 
@@ -62,7 +62,7 @@ static void *GetActualMallocAddress(void *const mem) {
     return (void *)(*malloc_addr_location);
 }
 
-void *aom_memalign(size_t align, size_t size) {
+void *eb_aom_memalign(size_t align, size_t size) {
     void *x = NULL;
     const size_t aligned_size = GetAlignedMallocSize(size, align);
 #if defined(AOM_MAX_ALLOCABLE_MEMORY)
@@ -76,16 +76,16 @@ void *aom_memalign(size_t align, size_t size) {
     return x;
 }
 
-void *aom_malloc(size_t size) { return aom_memalign(DEFAULT_ALIGNMENT, size); }
+void *eb_aom_malloc(size_t size) { return eb_aom_memalign(DEFAULT_ALIGNMENT, size); }
 
-void aom_free(void *memblk) {
+void eb_aom_free(void *memblk) {
     if (memblk) {
         void *addr = GetActualMallocAddress(memblk);
         free(addr);
     }
 }
 
-void *aom_memset16(void *dest, int32_t val, size_t length) {
+void *eb_aom_memset16(void *dest, int32_t val, size_t length) {
     size_t i;
     uint16_t *dest16 = (uint16_t *)dest;
     for (i = 0; i < length; i++) *dest16++ = (uint16_t)val;
@@ -105,7 +105,7 @@ static INLINE int32_t constrain(int32_t diff, int32_t threshold, int32_t damping
 }
 
 /* Generated from gen_filter_tables.c. */
-DECLARE_ALIGNED(16, const int32_t, cdef_directions[8][2]) = {
+DECLARE_ALIGNED(16, const int32_t, eb_cdef_directions[8][2]) = {
     { -1 * CDEF_BSTRIDE + 1, -2 * CDEF_BSTRIDE + 2 },
     { 0 * CDEF_BSTRIDE + 1, -1 * CDEF_BSTRIDE + 2 },
     { 0 * CDEF_BSTRIDE + 1, 0 * CDEF_BSTRIDE + 2 },
@@ -123,7 +123,7 @@ particular direction, i.e. the squared error between the input and a
 in a particular direction. Since each direction have the same sum(x^2) term,
 that term is never computed. See Section 2, step 2, of:
 http://jmvalin.ca/notes/intra_paint.pdf */
-int32_t cdef_find_dir_c(const uint16_t *img, int32_t stride, int32_t *var,
+int32_t eb_cdef_find_dir_c(const uint16_t *img, int32_t stride, int32_t *var,
     int32_t coeff_shift) {
     int32_t i;
     int32_t cost[8] = { 0 };
@@ -193,19 +193,19 @@ int32_t cdef_find_dir_c(const uint16_t *img, int32_t stride, int32_t *var,
     return best_dir;
 }
 
-const int32_t cdef_pri_taps[2][2] = { { 4, 2 }, { 3, 3 } };
-const int32_t cdef_sec_taps[2][2] = { { 2, 1 }, { 2, 1 } };
+const int32_t eb_cdef_pri_taps[2][2] = { { 4, 2 }, { 3, 3 } };
+const int32_t eb_cdef_sec_taps[2][2] = { { 2, 1 }, { 2, 1 } };
 
 /* Smooth in the direction detected. */
-void cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int32_t dstride,
+void eb_cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int32_t dstride,
     const uint16_t *in, int32_t pri_strength, int32_t sec_strength,
     int32_t dir, int32_t pri_damping, int32_t sec_damping, int32_t bsize,
     /*AOM_UNUSED*/ int32_t max_unused, int32_t coeff_shift) {
     (void)max_unused;
     int32_t i, j, k;
     const int32_t s = CDEF_BSTRIDE;
-    const int32_t *pri_taps = cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
-    const int32_t *sec_taps = cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
 
     for (i = 0; i < (4 << (int32_t)(bsize == BLOCK_8X8 || bsize == BLOCK_4X8)); i++) {
         for (j = 0; j < (4 << (int32_t)(bsize == BLOCK_8X8 || bsize == BLOCK_8X4)); j++) {
@@ -215,18 +215,18 @@ void cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int32_t dstride,
             int32_t max = x;
             int32_t min = x;
             for (k = 0; k < 2; k++) {
-                int16_t p0 = in[i * s + j + cdef_directions[dir][k]];
-                int16_t p1 = in[i * s + j - cdef_directions[dir][k]];
+                int16_t p0 = in[i * s + j + eb_cdef_directions[dir][k]];
+                int16_t p1 = in[i * s + j - eb_cdef_directions[dir][k]];
                 sum += (int16_t)(pri_taps[k] * constrain(p0 - x, pri_strength, pri_damping));
                 sum += (int16_t)(pri_taps[k] * constrain(p1 - x, pri_strength, pri_damping));
                 if (p0 != CDEF_VERY_LARGE) max = AOMMAX(p0, max);
                 if (p1 != CDEF_VERY_LARGE) max = AOMMAX(p1, max);
                 min = AOMMIN(p0, min);
                 min = AOMMIN(p1, min);
-                int16_t s0 = in[i * s + j + cdef_directions[(dir + 2) & 7][k]];
-                int16_t s1 = in[i * s + j - cdef_directions[(dir + 2) & 7][k]];
-                int16_t s2 = in[i * s + j + cdef_directions[(dir + 6) & 7][k]];
-                int16_t s3 = in[i * s + j - cdef_directions[(dir + 6) & 7][k]];
+                int16_t s0 = in[i * s + j + eb_cdef_directions[(dir + 2) & 7][k]];
+                int16_t s1 = in[i * s + j - eb_cdef_directions[(dir + 2) & 7][k]];
+                int16_t s2 = in[i * s + j + eb_cdef_directions[(dir + 6) & 7][k]];
+                int16_t s3 = in[i * s + j - eb_cdef_directions[(dir + 6) & 7][k]];
                 if (s0 != CDEF_VERY_LARGE) max = AOMMAX(s0, max);
                 if (s1 != CDEF_VERY_LARGE) max = AOMMAX(s1, max);
                 if (s2 != CDEF_VERY_LARGE) max = AOMMAX(s2, max);
@@ -265,7 +265,7 @@ static INLINE int32_t adjust_strength(int32_t strength, int32_t var) {
     return var ? (strength * (4 + i) + 8) >> 4 : 0;
 }
 
-void cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *in,
+void eb_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *in,
     int32_t xdec, int32_t ydec, int32_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS],
     int32_t *dirinit, int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t pli,
     cdef_list *dlist, int32_t cdef_count, int32_t level,
@@ -287,8 +287,8 @@ void cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *i
     if (dirinit && pri_strength == 0 && sec_strength == 0) {
         // If we're here, both primary and secondary strengths are 0, and
         // we still haven't written anything to y[] yet, so we just copy
-        // the input to y[]. This is necessary only for av1_cdef_search()
-        // and only av1_cdef_search() sets dirinit.
+        // the input to y[]. This is necessary only for eb_av1_cdef_search()
+        // and only eb_av1_cdef_search() sets dirinit.
         for (bi = 0; bi < cdef_count; bi++) {
             by = dlist[bi].by;
             bx = dlist[bi].bx;
@@ -308,7 +308,7 @@ void cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *i
                 by = dlist[bi].by;
                 bx = dlist[bi].bx;
 
-                dir[by][bx] = cdef_find_dir(&in[8 * by * CDEF_BSTRIDE + 8 * bx],
+                dir[by][bx] = eb_cdef_find_dir(&in[8 * by * CDEF_BSTRIDE + 8 * bx],
                     CDEF_BSTRIDE, &var[by][bx], coeff_shift);
             }
             if (dirinit) *dirinit = 1;
@@ -330,14 +330,14 @@ void cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *i
         by = dlist[bi].by;
         bx = dlist[bi].bx;
         if (dst8)
-            cdef_filter_block(&dst8[(by << bsizey) * dstride + (bx << bsizex)], NULL,
+            eb_cdef_filter_block(&dst8[(by << bsizey) * dstride + (bx << bsizex)], NULL,
                 dstride,
                 &in[(by * CDEF_BSTRIDE << bsizey) + (bx << bsizex)],
                 (pli ? t : adjust_strength(t, var[by][bx])), s,
                 t ? dir[by][bx] : 0, pri_damping, sec_damping, bsize,
                 (256 << coeff_shift) - 1, coeff_shift);
         else
-            cdef_filter_block(
+            eb_cdef_filter_block(
                 NULL,
                 &dst16[dirinit ? bi << (bsizex + bsizey)
                 : (by << bsizey) * dstride + (bx << bsizex)],
@@ -349,7 +349,7 @@ void cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *i
     }
 }
 
-int32_t sb_all_skip(PictureControlSet   *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col) {
+int32_t eb_sb_all_skip(PictureControlSet   *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col) {
     int32_t maxc, maxr;
     int32_t skip = 1;
     maxc = cm->mi_cols - mi_col;
@@ -379,7 +379,7 @@ static int32_t is_8x8_block_skip(ModeInfo **grid, int32_t mi_row, int32_t mi_col
     return is_skip;
 }
 
-int32_t sb_compute_cdef_list(PictureControlSet            *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col,
+int32_t eb_sb_compute_cdef_list(PictureControlSet            *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col,
     cdef_list *dlist, BlockSize bs)
 {
     //MbModeInfo **grid = cm->mi_grid_visible;
@@ -419,7 +419,7 @@ int32_t sb_compute_cdef_list(PictureControlSet            *picture_control_set_p
     }
     return count;
 }
-void copy_rect8_8bit_to_16bit_c(uint16_t *dst, int32_t dstride, const uint8_t *src,
+void eb_copy_rect8_8bit_to_16bit_c(uint16_t *dst, int32_t dstride, const uint8_t *src,
     int32_t sstride, int32_t v, int32_t h) {
     for (int32_t i = 0; i < v; i++) {
         for (int32_t j = 0; j < h; j++)
@@ -433,7 +433,7 @@ static void copy_sb8_16(uint16_t *dst, int32_t dstride,
         {
             const uint8_t *base = &src[src_voffset * sstride + src_hoffset];
 
-            copy_rect8_8bit_to_16bit(dst, dstride, base, sstride, vsize, hsize);
+            eb_copy_rect8_8bit_to_16bit(dst, dstride, base, sstride, vsize, hsize);
         }
 }
 
@@ -453,7 +453,7 @@ static INLINE void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src
     }
 }
 
-void av1_cdef_frame(
+void eb_av1_cdef_frame(
     EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet            *pCs){
@@ -490,8 +490,8 @@ void av1_cdef_frame(
     int32_t coeff_shift = AOMMAX(sequence_control_set_ptr->static_config.encoder_bit_depth/*cm->bit_depth*/ - 8, 0);
     const int32_t nvfb = (cm->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     const int32_t nhfb = (cm->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
-    //av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0, num_planes);
-    row_cdef = (uint8_t *)aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
+    //eb_av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0, num_planes);
+    row_cdef = (uint8_t *)eb_aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
     assert(row_cdef != NULL);
     memset(row_cdef, 1, sizeof(*row_cdef) * (nhfb + 2) * 2);
     prev_row_cdef = row_cdef + 1;
@@ -508,8 +508,8 @@ void av1_cdef_frame(
 
     const int32_t stride = (cm->mi_cols << MI_SIZE_LOG2) + 2 * CDEF_HBORDER;
     for (int32_t pli = 0; pli < num_planes; pli++) {
-        linebuf[pli] = (uint16_t *)aom_malloc(sizeof(*linebuf) * CDEF_VBORDER * stride);
-        colbuf[pli] = (uint16_t *)aom_malloc(sizeof(*colbuf)  * ((CDEF_BLOCKSIZE << mi_high_l2[pli]) + 2 * CDEF_VBORDER) * CDEF_HBORDER);
+        linebuf[pli] = (uint16_t *)eb_aom_malloc(sizeof(*linebuf) * CDEF_VBORDER * stride);
+        colbuf[pli] = (uint16_t *)eb_aom_malloc(sizeof(*colbuf)  * ((CDEF_BLOCKSIZE << mi_high_l2[pli]) + 2 * CDEF_VBORDER) * CDEF_HBORDER);
     }
 
     for (int32_t fbr = 0; fbr < nvfb; fbr++) {
@@ -574,7 +574,7 @@ void av1_cdef_frame(
             uv_sec_strength = frm_hdr->CDEF_params.cdef_uv_strength[mbmi_cdef_strength] % CDEF_SEC_STRENGTHS;
             uv_sec_strength += uv_sec_strength == 3;
             if ((level == 0 && sec_strength == 0 && uv_level == 0 && uv_sec_strength == 0) ||
-                (cdef_count = sb_compute_cdef_list(pCs, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, BLOCK_64X64)) == 0) {
+                (cdef_count = eb_sb_compute_cdef_list(pCs, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, BLOCK_64X64)) == 0) {
                 cdef_left = 0;
                 continue;
             }
@@ -732,7 +732,7 @@ void av1_cdef_frame(
                 }
 
                 //if (cm->use_highbitdepth) {
-                //  cdef_filter_fb(
+                //  eb_cdef_filter_fb(
                 //      NULL,
                 //      &CONVERT_TO_SHORTPTR(
                 //          xd->plane[pli]
@@ -745,7 +745,7 @@ void av1_cdef_frame(
                 //      sec_strength, pri_damping, sec_damping, coeff_shift);
                 //} else
                 {
-                    cdef_filter_fb(
+                    eb_cdef_filter_fb(
                         &recBuff[recStride *(MI_SIZE_64X64 * fbr << mi_high_l2[pli]) + (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
                         //&xd->plane[pli].dst.buf[xd->plane[pli].dst.stride *(MI_SIZE_64X64 * fbr << mi_high_l2[pli]) +(fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
                         NULL, recStride/*xd->plane[pli].dst.stride*/,
@@ -762,10 +762,10 @@ void av1_cdef_frame(
             curr_row_cdef = tmp;
         }
     }
-    aom_free(row_cdef);
+    eb_aom_free(row_cdef);
     for (int32_t pli = 0; pli < num_planes; pli++) {
-        aom_free(linebuf[pli]);
-        aom_free(colbuf[pli]);
+        eb_aom_free(linebuf[pli]);
+        eb_aom_free(colbuf[pli]);
     }
 }
 
@@ -806,8 +806,8 @@ void av1_cdef_frame16bit(
     int32_t coeff_shift = AOMMAX(sequence_control_set_ptr->static_config.encoder_bit_depth/*cm->bit_depth*/ - 8, 0);
     const int32_t nvfb = (cm->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     const int32_t nhfb = (cm->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
-    //av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0, num_planes);
-    row_cdef = (uint8_t *)aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
+    //eb_av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0, num_planes);
+    row_cdef = (uint8_t *)eb_aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
     assert(row_cdef);
     memset(row_cdef, 1, sizeof(*row_cdef) * (nhfb + 2) * 2);
     prev_row_cdef = row_cdef + 1;
@@ -824,8 +824,8 @@ void av1_cdef_frame16bit(
 
     const int32_t stride = (cm->mi_cols << MI_SIZE_LOG2) + 2 * CDEF_HBORDER;
     for (int32_t pli = 0; pli < num_planes; pli++) {
-        linebuf[pli] = (uint16_t *)aom_malloc(sizeof(*linebuf) * CDEF_VBORDER * stride);
-        colbuf[pli] = (uint16_t *)aom_malloc(sizeof(*colbuf)  * ((CDEF_BLOCKSIZE << mi_high_l2[pli]) + 2 * CDEF_VBORDER) * CDEF_HBORDER);
+        linebuf[pli] = (uint16_t *)eb_aom_malloc(sizeof(*linebuf) * CDEF_VBORDER * stride);
+        colbuf[pli] = (uint16_t *)eb_aom_malloc(sizeof(*colbuf)  * ((CDEF_BLOCKSIZE << mi_high_l2[pli]) + 2 * CDEF_VBORDER) * CDEF_HBORDER);
     }
 
     for (int32_t fbr = 0; fbr < nvfb; fbr++) {
@@ -890,7 +890,7 @@ void av1_cdef_frame16bit(
             uv_sec_strength = frm_hdr->CDEF_params.cdef_uv_strength[mbmi_cdef_strength] % CDEF_SEC_STRENGTHS;
             uv_sec_strength += uv_sec_strength == 3;
             if ((level == 0 && sec_strength == 0 && uv_level == 0 && uv_sec_strength == 0) ||
-                (cdef_count = sb_compute_cdef_list(pCs, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, BLOCK_64X64)) == 0) {
+                (cdef_count = eb_sb_compute_cdef_list(pCs, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, BLOCK_64X64)) == 0) {
                 cdef_left = 0;
                 continue;
             }
@@ -1049,7 +1049,7 @@ void av1_cdef_frame16bit(
                 }
 
                 //if (cm->use_highbitdepth) {
-                //  cdef_filter_fb(
+                //  eb_cdef_filter_fb(
                 //      NULL,
                 //      &CONVERT_TO_SHORTPTR(
                 //          xd->plane[pli]
@@ -1062,7 +1062,7 @@ void av1_cdef_frame16bit(
                 //      sec_strength, pri_damping, sec_damping, coeff_shift);
                 //} else
                 {
-                    cdef_filter_fb(
+                    eb_cdef_filter_fb(
                         NULL,
                         &recBuff[recStride *(MI_SIZE_64X64 * fbr << mi_high_l2[pli]) + (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
                         //&xd->plane[pli].dst.buf[xd->plane[pli].dst.stride *(MI_SIZE_64X64 * fbr << mi_high_l2[pli]) +(fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
@@ -1080,10 +1080,10 @@ void av1_cdef_frame16bit(
             curr_row_cdef = tmp;
         }
     }
-    aom_free(row_cdef);
+    eb_aom_free(row_cdef);
     for (int32_t pli = 0; pli < num_planes; pli++) {
-        aom_free(linebuf[pli]);
-        aom_free(colbuf[pli]);
+        eb_aom_free(linebuf[pli]);
+        eb_aom_free(colbuf[pli]);
     }
 }
 
@@ -1385,7 +1385,7 @@ void finish_cdef_search(
     const int32_t num_planes = 3;
 
     quantizer =
-        av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
+        eb_av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
     lambda = .12 * quantizer * quantizer / 256.;
 
     mse[0] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);
@@ -1406,7 +1406,7 @@ void finish_cdef_search(
             }
 
             // No filtering if the entire filter block is skipped
-            if (sb_all_skip(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
+            if (eb_sb_all_skip(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
                 continue;
 
             for (pli = 0; pli < num_planes; pli++) {
@@ -1507,7 +1507,7 @@ void finish_cdef_search(
     free(selected_strength);
 }
 
-void av1_cdef_search(
+void eb_av1_cdef_search(
     EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet            *picture_control_set_ptr
@@ -1567,8 +1567,8 @@ void av1_cdef_search(
     int32_t nvfb = (mi_rows /*cm->mi_rows*/ + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t nhfb = (mi_cols/*cm->mi_cols*/ + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
 
-    int32_t *sb_index = (int32_t *)aom_malloc(nvfb * nhfb * sizeof(*sb_index));       //CHKN add cast
-    int32_t *selected_strength = (int32_t *)aom_malloc(nvfb * nhfb * sizeof(*sb_index));
+    int32_t *sb_index = (int32_t *)eb_aom_malloc(nvfb * nhfb * sizeof(*sb_index));       //CHKN add cast
+    int32_t *selected_strength = (int32_t *)eb_aom_malloc(nvfb * nhfb * sizeof(*sb_index));
 
     assert(sb_index != NULL);
     assert(selected_strength != NULL);
@@ -1596,13 +1596,13 @@ void av1_cdef_search(
 
     quantizer =
         //CHKN av1_ac_quant_Q3(cm->quant_param.base_q_idx, 0, cm->bit_depth) >> (cm->bit_depth - 8);
-        av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
+        eb_av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
     lambda = .12 * quantizer * quantizer / 256.;
 
-    //av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0,    num_planes);
+    //eb_av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0,    num_planes);
 
-    mse[0] = (uint64_t(*)[64])aom_malloc(sizeof(**mse) * nvfb * nhfb);
-    mse[1] = (uint64_t(*)[64])aom_malloc(sizeof(**mse) * nvfb * nhfb);
+    mse[0] = (uint64_t(*)[64])eb_aom_malloc(sizeof(**mse) * nvfb * nhfb);
+    mse[1] = (uint64_t(*)[64])eb_aom_malloc(sizeof(**mse) * nvfb * nhfb);
 
     for (pli = 0; pli < num_planes; pli++) {
         uint8_t *in_buffer = 0;
@@ -1632,8 +1632,8 @@ void av1_cdef_search(
         }
 
         ///CHKN: allocate one frame 16bit for src and recon!!
-        src[pli] = (uint16_t*)aom_memalign(32, sizeof(*src)       * mi_rows * mi_cols * MI_SIZE * MI_SIZE);
-        ref_coeff[pli] = (uint16_t*)aom_memalign(32, sizeof(*ref_coeff) * mi_rows * mi_cols * MI_SIZE * MI_SIZE);
+        src[pli] = (uint16_t*)eb_aom_memalign(32, sizeof(*src)       * mi_rows * mi_cols * MI_SIZE * MI_SIZE);
+        ref_coeff[pli] = (uint16_t*)eb_aom_memalign(32, sizeof(*ref_coeff) * mi_rows * mi_cols * MI_SIZE * MI_SIZE);
 
         int32_t subsampling_x = (pli == 0) ? 0 : 1;
         int32_t subsampling_y = (pli == 0) ? 0 : 1;
@@ -1704,10 +1704,10 @@ void av1_cdef_search(
             }
 
             // No filtering if the entire filter block is skipped
-            if (sb_all_skip(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
+            if (eb_sb_all_skip(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
                 continue;
 
-            cdef_count = sb_compute_cdef_list(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
+            cdef_count = eb_sb_compute_cdef_list(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
 
             for (pli = 0; pli < num_planes; pli++) {
                 for (i = 0; i < CDEF_INBUF_SIZE; i++)
@@ -1733,12 +1733,12 @@ void av1_cdef_search(
                     /* We avoid filtering the pixels for which some of the pixels to
                     average are outside the frame. We could change the filter instead, but it would add special cases for any future vectorization. */
                     sec_strength = gi % CDEF_SEC_STRENGTHS;
-                    cdef_filter_fb(NULL, tmp_dst, CDEF_BSTRIDE, in, xdec[pli], ydec[pli],
+                    eb_cdef_filter_fb(NULL, tmp_dst, CDEF_BSTRIDE, in, xdec[pli], ydec[pli],
                         dir, &dirinit, var, pli, dlist, cdef_count, threshold,
                         sec_strength + (sec_strength == 3), pri_damping,
                         sec_damping, coeff_shift);
 
-                    curr_mse = compute_cdef_dist(
+                    curr_mse = eb_compute_cdef_dist(
                         ref_coeff[pli] +
                         (fbr * MI_SIZE_64X64 << mi_high_l2[pli]) * stride[pli] +
                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]),
@@ -1834,14 +1834,14 @@ void av1_cdef_search(
     //pPcs->cdef_pri_damping = pri_damping;
     //pPcs->cdef_sec_damping = sec_damping;
 
-    aom_free(mse[0]);
-    aom_free(mse[1]);
+    eb_aom_free(mse[0]);
+    eb_aom_free(mse[1]);
     for (pli = 0; pli < num_planes; pli++) {
-        aom_free(src[pli]);
-        aom_free(ref_coeff[pli]);
+        eb_aom_free(src[pli]);
+        eb_aom_free(ref_coeff[pli]);
     }
-    aom_free(sb_index);
-    aom_free(selected_strength);
+    eb_aom_free(sb_index);
+    eb_aom_free(selected_strength);
 }
 
 void av1_cdef_search16bit(
@@ -1904,8 +1904,8 @@ void av1_cdef_search16bit(
     int32_t nvfb = (mi_rows /*cm->mi_rows*/ + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t nhfb = (mi_cols/*cm->mi_cols*/ + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
 
-    int32_t *sb_index = (int32_t *)aom_malloc(nvfb * nhfb * sizeof(*sb_index));       //CHKN add cast
-    int32_t *selected_strength = (int32_t *)aom_malloc(nvfb * nhfb * sizeof(*sb_index));
+    int32_t *sb_index = (int32_t *)eb_aom_malloc(nvfb * nhfb * sizeof(*sb_index));       //CHKN add cast
+    int32_t *selected_strength = (int32_t *)eb_aom_malloc(nvfb * nhfb * sizeof(*sb_index));
 
     assert(sb_index);
     assert(selected_strength);
@@ -1934,13 +1934,13 @@ void av1_cdef_search16bit(
 
     quantizer =
         //CHKN av1_ac_quant_Q3(cm->quant_param.base_q_idx, 0, cm->bit_depth) >> (cm->bit_depth - 8);
-        av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
+        eb_av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
     lambda = .12 * quantizer * quantizer / 256.;
 
-    //av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0,    num_planes);
+    //eb_av1_setup_dst_planes(xd->plane, cm->seq_params.sb_size, frame, 0, 0, 0,    num_planes);
 
-    mse[0] = (uint64_t(*)[64])aom_malloc(sizeof(**mse) * nvfb * nhfb);
-    mse[1] = (uint64_t(*)[64])aom_malloc(sizeof(**mse) * nvfb * nhfb);
+    mse[0] = (uint64_t(*)[64])eb_aom_malloc(sizeof(**mse) * nvfb * nhfb);
+    mse[1] = (uint64_t(*)[64])eb_aom_malloc(sizeof(**mse) * nvfb * nhfb);
 
     for (pli = 0; pli < num_planes; pli++) {
         uint16_t *in_buffer = 0;
@@ -1970,8 +1970,8 @@ void av1_cdef_search16bit(
         }
 
         ///CHKN: allocate one frame 16bit for src and recon!!
-        src[pli] = (uint16_t*)aom_memalign(32, sizeof(*src)       * mi_rows * mi_cols * MI_SIZE * MI_SIZE);
-        ref_coeff[pli] = (uint16_t*)aom_memalign(32, sizeof(*ref_coeff) * mi_rows * mi_cols * MI_SIZE * MI_SIZE);
+        src[pli] = (uint16_t*)eb_aom_memalign(32, sizeof(*src)       * mi_rows * mi_cols * MI_SIZE * MI_SIZE);
+        ref_coeff[pli] = (uint16_t*)eb_aom_memalign(32, sizeof(*ref_coeff) * mi_rows * mi_cols * MI_SIZE * MI_SIZE);
 
         int32_t subsampling_x = (pli == 0) ? 0 : 1;
         int32_t subsampling_y = (pli == 0) ? 0 : 1;
@@ -2042,10 +2042,10 @@ void av1_cdef_search16bit(
             }
 
             // No filtering if the entire filter block is skipped
-            if (sb_all_skip(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
+            if (eb_sb_all_skip(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
                 continue;
 
-            cdef_count = sb_compute_cdef_list(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
+            cdef_count = eb_sb_compute_cdef_list(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
 
             for (pli = 0; pli < num_planes; pli++) {
                 for (i = 0; i < CDEF_INBUF_SIZE; i++)
@@ -2071,12 +2071,12 @@ void av1_cdef_search16bit(
                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]) - xoff,
                         stride[pli], ysize, xsize);
 
-                    cdef_filter_fb(NULL, tmp_dst, CDEF_BSTRIDE, in, xdec[pli], ydec[pli],
+                    eb_cdef_filter_fb(NULL, tmp_dst, CDEF_BSTRIDE, in, xdec[pli], ydec[pli],
                         dir, &dirinit, var, pli, dlist, cdef_count, threshold,
                         sec_strength + (sec_strength == 3), pri_damping,
                         sec_damping, coeff_shift);
 
-                    curr_mse = compute_cdef_dist(
+                    curr_mse = eb_compute_cdef_dist(
                         ref_coeff[pli] +
                         (fbr * MI_SIZE_64X64 << mi_high_l2[pli]) * stride[pli] +
                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]),
@@ -2177,12 +2177,12 @@ void av1_cdef_search16bit(
         best_frame_gi_cnt += selected_strength_cnt[i] > best_frame_gi_cnt ? 1 : 0;
     pPcs->cdef_frame_strength = ((best_frame_gi_cnt + 4) / 4) * 4;
 
-    aom_free(mse[0]);
-    aom_free(mse[1]);
+    eb_aom_free(mse[0]);
+    eb_aom_free(mse[1]);
     for (pli = 0; pli < num_planes; pli++) {
-        aom_free(src[pli]);
-        aom_free(ref_coeff[pli]);
+        eb_aom_free(src[pli]);
+        eb_aom_free(ref_coeff[pli]);
     }
-    aom_free(sb_index);
-    aom_free(selected_strength);
+    eb_aom_free(sb_index);
+    eb_aom_free(selected_strength);
 }

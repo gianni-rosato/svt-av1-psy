@@ -16,7 +16,7 @@
 #include "convolve_avx2.h"
 #include "synonyms.h"
 
-void av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
+void eb_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
     int32_t dst_stride, int32_t w, int32_t h,
     InterpFilterParams *filter_params_x,
     InterpFilterParams *filter_params_y,
@@ -176,7 +176,7 @@ void av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst
     }
 }
 
-void av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
+void eb_av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
     int32_t dst_stride, int32_t w, int32_t h,
     InterpFilterParams *filter_params_x,
     InterpFilterParams *filter_params_y,

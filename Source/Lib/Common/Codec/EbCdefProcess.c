@@ -30,11 +30,11 @@ void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
     int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
     int32_t vsize, int32_t hsize);
 
-void *aom_memalign(size_t align, size_t size);
-void aom_free(void *memblk);
-void *aom_malloc(size_t size);
-int32_t sb_all_skip(PictureControlSet   *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col);
-int32_t sb_compute_cdef_list(PictureControlSet   *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col,
+void *eb_aom_memalign(size_t align, size_t size);
+void eb_aom_free(void *memblk);
+void *eb_aom_malloc(size_t size);
+int32_t eb_sb_all_skip(PictureControlSet   *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col);
+int32_t eb_sb_compute_cdef_list(PictureControlSet   *picture_control_set_ptr, const Av1Common *const cm, int32_t mi_row, int32_t mi_col,
     cdef_list *dlist, BlockSize bs);
 void finish_cdef_search(
     EncDecContext                *context_ptr,
@@ -46,11 +46,11 @@ void av1_cdef_frame16bit(
     EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet            *pCs);
-void av1_cdef_frame(
+void eb_av1_cdef_frame(
     EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet            *pCs);
-void av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm, int32_t after_cdef);
+void eb_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm, int32_t after_cdef);
 
 /******************************************************
  * Cdef Context Constructor
@@ -176,10 +176,10 @@ void cdef_seg_search(
             }
 
             // No filtering if the entire filter block is skipped
-            if (sb_all_skip(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
+            if (eb_sb_all_skip(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
                 continue;
 
-            cdef_count = sb_compute_cdef_list(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
+            cdef_count = eb_sb_compute_cdef_list(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
 
             for (pli = 0; pli < num_planes; pli++) {
                 for (int i = 0; i < CDEF_INBUF_SIZE; i++)
@@ -211,12 +211,12 @@ void cdef_seg_search(
                     average are outside the frame. We could change the filter instead, but it would add special cases for any future vectorization. */
                     sec_strength = gi % CDEF_SEC_STRENGTHS;
 
-                    cdef_filter_fb(NULL, tmp_dst, CDEF_BSTRIDE, in, xdec[pli], ydec[pli],
+                    eb_cdef_filter_fb(NULL, tmp_dst, CDEF_BSTRIDE, in, xdec[pli], ydec[pli],
                         dir, &dirinit, var, pli, dlist, cdef_count, threshold,
                         sec_strength + (sec_strength == 3), pri_damping,
                         sec_damping, coeff_shift);
 
-                    curr_mse = compute_cdef_dist(
+                    curr_mse = eb_compute_cdef_dist(
                         ref_coeff[pli] +
                         (fbr * MI_SIZE_64X64 << mi_high_l2[pli]) * stride[pli] +
                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]),
@@ -344,10 +344,10 @@ void cdef_seg_search16bit(
             }
 
             // No filtering if the entire filter block is skipped
-            if (sb_all_skip(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
+            if (eb_sb_all_skip(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
                 continue;
 
-            cdef_count = sb_compute_cdef_list(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
+            cdef_count = eb_sb_compute_cdef_list(picture_control_set_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
 
             for (pli = 0; pli < num_planes; pli++) {
                 for (int i = 0; i < CDEF_INBUF_SIZE; i++)
@@ -379,12 +379,12 @@ void cdef_seg_search16bit(
                     average are outside the frame. We could change the filter instead, but it would add special cases for any future vectorization. */
                     sec_strength = gi % CDEF_SEC_STRENGTHS;
 
-                    cdef_filter_fb(NULL, tmp_dst, CDEF_BSTRIDE, in, xdec[pli], ydec[pli],
+                    eb_cdef_filter_fb(NULL, tmp_dst, CDEF_BSTRIDE, in, xdec[pli], ydec[pli],
                         dir, &dirinit, var, pli, dlist, cdef_count, threshold,
                         sec_strength + (sec_strength == 3), pri_damping,
                         sec_damping, coeff_shift);
 
-                    curr_mse = compute_cdef_dist(
+                    curr_mse = eb_compute_cdef_dist(
                         ref_coeff[pli] +
                         (fbr * MI_SIZE_64X64 << mi_high_l2[pli]) * stride_ref[pli] +
                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]),
@@ -473,7 +473,7 @@ void* cdef_kernel(void *input_ptr)
                             sequence_control_set_ptr,
                             picture_control_set_ptr);
                     else
-                        av1_cdef_frame(
+                        eb_av1_cdef_frame(
                             0,
                             sequence_control_set_ptr,
                             picture_control_set_ptr);
@@ -490,17 +490,17 @@ void* cdef_kernel(void *input_ptr)
 
         if (sequence_control_set_ptr->seq_header.enable_restoration)
         {
-            av1_loop_restoration_save_boundary_lines(
+            eb_av1_loop_restoration_save_boundary_lines(
                 cm->frame_to_show,
                 cm,
                 1);
 
             //are these still needed here?/!!!
-            extend_frame(cm->frame_to_show->buffers[0], cm->frame_to_show->crop_widths[0], cm->frame_to_show->crop_heights[0],
+            eb_extend_frame(cm->frame_to_show->buffers[0], cm->frame_to_show->crop_widths[0], cm->frame_to_show->crop_heights[0],
                 cm->frame_to_show->strides[0], RESTORATION_BORDER, RESTORATION_BORDER, is16bit);
-            extend_frame(cm->frame_to_show->buffers[1], cm->frame_to_show->crop_widths[1], cm->frame_to_show->crop_heights[1],
+            eb_extend_frame(cm->frame_to_show->buffers[1], cm->frame_to_show->crop_widths[1], cm->frame_to_show->crop_heights[1],
                 cm->frame_to_show->strides[1], RESTORATION_BORDER, RESTORATION_BORDER, is16bit);
-            extend_frame(cm->frame_to_show->buffers[2], cm->frame_to_show->crop_widths[1], cm->frame_to_show->crop_heights[1],
+            eb_extend_frame(cm->frame_to_show->buffers[2], cm->frame_to_show->crop_widths[1], cm->frame_to_show->crop_heights[1],
                 cm->frame_to_show->strides[1], RESTORATION_BORDER, RESTORATION_BORDER, is16bit);
         }
 

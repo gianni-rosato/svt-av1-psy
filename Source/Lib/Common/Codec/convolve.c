@@ -110,7 +110,7 @@ static void convolve_add_src_vert_hip(const uint16_t *src, ptrdiff_t src_stride,
     }
 }
 
-void av1_wiener_convolve_add_src_c(const uint8_t *src, ptrdiff_t src_stride,
+void eb_av1_wiener_convolve_add_src_c(const uint8_t *src, ptrdiff_t src_stride,
     uint8_t *dst, ptrdiff_t dst_stride,
     const int16_t *filter_x, int32_t x_step_q4,
     const int16_t *filter_y, int32_t y_step_q4,
@@ -189,7 +189,7 @@ static void highbd_convolve_add_src_vert_hip(
     }
 }
 
-void av1_highbd_wiener_convolve_add_src_c(
+void eb_av1_highbd_wiener_convolve_add_src_c(
     const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst,
     ptrdiff_t dst_stride, const int16_t *filter_x, int32_t x_step_q4,
     const int16_t *filter_y, int32_t y_step_q4, int32_t w, int32_t h,

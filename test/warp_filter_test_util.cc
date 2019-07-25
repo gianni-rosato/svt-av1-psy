@@ -312,7 +312,7 @@ void AV1WarpFilterTest::RunCheckOutput(warp_affine_func test_impl) {
                                 conv_params.bck_offset =
                                     quant_dist_lookup_table[ii][jj][1];
                             }
-                            av1_warp_affine_c(mat,
+                            eb_av1_warp_affine_c(mat,
                                               input,
                                               w,
                                               h,
@@ -609,7 +609,7 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
                                     quant_dist_lookup_table[ii][jj][1];
                             }
 
-                            av1_highbd_warp_affine_c(mat,
+                            eb_av1_highbd_warp_affine_c(mat,
                                                      input,
                                                      w,
                                                      h,

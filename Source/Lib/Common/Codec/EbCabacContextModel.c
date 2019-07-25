@@ -4443,7 +4443,7 @@ static int32_t get_q_ctx(int32_t q) {
     return 3;
 }
 
-void av1_default_coef_probs(FRAME_CONTEXT *fc, int32_t base_qindex) {
+void eb_av1_default_coef_probs(FRAME_CONTEXT *fc, int32_t base_qindex) {
     const int32_t index = get_q_ctx(base_qindex);
 
 #if CONFIG_ENTROPY_STATS
@@ -4497,7 +4497,7 @@ static void reset_nmv_counter(NmvContext *nmv) {
     }
 }
 
-void av1_reset_cdf_symbol_counters(FRAME_CONTEXT *fc) {
+void eb_av1_reset_cdf_symbol_counters(FRAME_CONTEXT *fc) {
     RESET_CDF_COUNTER(fc->txb_skip_cdf, 2);
     RESET_CDF_COUNTER(fc->eob_extra_cdf, 2);
     RESET_CDF_COUNTER(fc->dc_sign_cdf, 2);

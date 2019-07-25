@@ -663,7 +663,7 @@ static uint8_t get_filter_level(
     }
 }
 
-void av1_loop_filter_init(PictureControlSet *pcs_ptr) {
+void eb_av1_loop_filter_init(PictureControlSet *pcs_ptr) {
     //assert(MB_MODE_COUNT == n_elements(mode_lf_lut));
     LoopFilterInfoN *lfi = &pcs_ptr->parent_pcs_ptr->lf_info;
     struct LoopFilter *lf = &pcs_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params;
@@ -681,8 +681,8 @@ void av1_loop_filter_init(PictureControlSet *pcs_ptr) {
 
 // Update the loop filter for the current frame.
 // This should be called before loop_filter_rows(),
-// av1_loop_filter_frame() calls this function directly.
-void av1_loop_filter_frame_init(PictureControlSet *pcs_ptr, int32_t plane_start,
+// eb_av1_loop_filter_frame() calls this function directly.
+void eb_av1_loop_filter_frame_init(PictureControlSet *pcs_ptr, int32_t plane_start,
     int32_t plane_end) {
     int32_t filt_lvl[MAX_MB_PLANE], filt_lvl_r[MAX_MB_PLANE];
     int32_t plane;
@@ -783,7 +783,7 @@ static INLINE void setup_pred_plane(struct Buf2d *dst, BlockSize bsize,
     dst->height = height;
     dst->stride = stride;
 }
-void av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
+void eb_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
     //const Yv12BufferConfig *src,
     const EbPictureBufferDesc *src,
     int32_t mi_row, int32_t mi_col,
@@ -996,7 +996,7 @@ static TxSize set_lpf_parameters(
     return ts;
 }
 
-void av1_filter_block_plane_vert(
+void eb_av1_filter_block_plane_vert(
     const PictureControlSet *const  pcs_ptr,
     const MacroBlockD *const xd, const int32_t plane,
     const MacroblockdPlane *const plane_ptr,
@@ -1117,7 +1117,7 @@ void av1_filter_block_plane_vert(
     }
 }
 
-void av1_filter_block_plane_horz(
+void eb_av1_filter_block_plane_horz(
     const PictureControlSet *const  pcs_ptr,
     const MacroBlockD *const xd, const int32_t plane,
     const MacroblockdPlane *const plane_ptr,
@@ -1290,47 +1290,47 @@ void loop_filter_sb(
         if (frm_hdr->loop_filter_params.combine_vert_horz_lf) {
             // filter all vertical and horizontal edges in every 64x64 super block
             // filter vertical edges
-            av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer, mi_row,
+            eb_av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer, mi_row,
                 mi_col, plane, plane + 1);
-            av1_filter_block_plane_vert(pcs_ptr, xd, plane, &pd[plane], mi_row,
+            eb_av1_filter_block_plane_vert(pcs_ptr, xd, plane, &pd[plane], mi_row,
                 mi_col);
             // filter horizontal edges
             int32_t max_mib_size = pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? MAX_MIB_SIZE : SB64_MIB_SIZE;
 
             if (mi_col - max_mib_size >= 0) {
-                av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer,
+                eb_av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer,
                     mi_row, mi_col - max_mib_size, plane,
                     plane + 1);
-                av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row,
+                eb_av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row,
                     mi_col - max_mib_size);
             }
             // Filter the horizontal edges of the last lcu in each row
             if (LastCol) {
-                av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer,
+                eb_av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer,
                     mi_row, mi_col, plane,
                     plane + 1);
-                av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row,
+                eb_av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row,
                     mi_col);
             }
         }
         else {
             // filter all vertical edges in every 64x64 super block
-            av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer, mi_row,
+            eb_av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer, mi_row,
                 mi_col, plane, plane + 1);
 
-            av1_filter_block_plane_vert(pcs_ptr, xd, plane, &pd[plane], mi_row,
+            eb_av1_filter_block_plane_vert(pcs_ptr, xd, plane, &pd[plane], mi_row,
                 mi_col);
 
             // filter all horizontal edges in every 64x64 super block
-            av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer, mi_row,
+            eb_av1_setup_dst_planes(pd, pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size, frame_buffer, mi_row,
                 mi_col, plane, plane + 1);
-            av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row,
+            eb_av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row,
                 mi_col);
         }
     }
 }
 
-void av1_loop_filter_frame(
+void eb_av1_loop_filter_frame(
     EbPictureBufferDesc *frame_buffer,
     PictureControlSet *picture_control_set_ptr,
     int32_t plane_start, int32_t plane_end) {
@@ -1346,7 +1346,7 @@ void av1_loop_filter_frame(
 
     uint32_t picture_width_in_sb = (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
     uint32_t picture_height_in_sb = (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
-    av1_loop_filter_frame_init(picture_control_set_ptr, plane_start, plane_end);
+    eb_av1_loop_filter_frame_init(picture_control_set_ptr, plane_start, plane_end);
 
     for (y_lcu_index = 0; y_lcu_index < picture_height_in_sb; ++y_lcu_index) {
         for (x_lcu_index = 0; x_lcu_index < picture_width_in_sb; ++x_lcu_index) {
@@ -1368,7 +1368,7 @@ void av1_loop_filter_frame(
         }
     }
 }
-extern int16_t av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+extern int16_t eb_av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 void EbCopyBuffer(
     EbPictureBufferDesc  *srcBuffer,
@@ -1636,7 +1636,7 @@ static int64_t try_filter_frame(
     case 2: frm_hdr->loop_filter_params.filter_level_v = filter_level[0]; break;
     }
 
-    av1_loop_filter_frame(recon_buffer, pcs_ptr, plane, plane + 1);
+    eb_av1_loop_filter_frame(recon_buffer, pcs_ptr, plane, plane + 1);
 
     filt_err = PictureSseCalculations(pcs_ptr, recon_buffer, plane);
 
@@ -1804,7 +1804,7 @@ static int32_t search_filter_level(
     return filt_best;
 }
 
-void av1_pick_filter_level(
+void eb_av1_pick_filter_level(
     DlfContext            *context_ptr,
     EbPictureBufferDesc   *srcBuffer, // source input
     PictureControlSet     *pcs_ptr,
@@ -1824,7 +1824,7 @@ void av1_pick_filter_level(
     else if (method >= LPF_PICK_FROM_Q) {
         const int32_t min_filter_level = 0;
         const int32_t max_filter_level = MAX_LOOP_FILTER;// av1_get_max_filter_level(cpi);
-        const int32_t q = av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
+        const int32_t q = eb_av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
         // These values were determined by linear fitting the result of the
         // searched level for 8 bit depth:
         // Keyframes: filt_guess = q * 0.06699 - 1.60817

@@ -54,7 +54,7 @@ static INLINE void unpack_2d_output(const float *col_fft, float *output,
     }
 }
 
-void aom_fft_2d_gen(const float *input, float *temp, float *output, int32_t n,
+void eb_aom_fft_2d_gen(const float *input, float *temp, float *output, int32_t n,
     aom_fft_1d_func_t tform, aom_fft_transpose_func_t transpose,
     aom_fft_unpack_func_t unpack, int32_t vec_size) {
     for (int32_t x = 0; x < n; x += vec_size)
@@ -83,32 +83,32 @@ GEN_FFT_16(void, float, float, float, *, store_float, (float), add_float,
 GEN_FFT_32(void, float, float, float, *, store_float, (float), add_float,
     sub_float, mul_float);
 
-void aom_fft2x2_float_c(const float *input, float *temp, float *output) {
-    aom_fft_2d_gen(input, temp, output, 2, aom_fft1d_2_float, simple_transpose,
+void eb_aom_fft2x2_float_c(const float *input, float *temp, float *output) {
+    eb_aom_fft_2d_gen(input, temp, output, 2, eb_aom_fft1d_2_float, simple_transpose,
         unpack_2d_output, 1);
 }
 
-void aom_fft4x4_float_c(const float *input, float *temp, float *output) {
-    aom_fft_2d_gen(input, temp, output, 4, aom_fft1d_4_float, simple_transpose,
+void eb_aom_fft4x4_float_c(const float *input, float *temp, float *output) {
+    eb_aom_fft_2d_gen(input, temp, output, 4, eb_aom_fft1d_4_float, simple_transpose,
         unpack_2d_output, 1);
 }
 
-void aom_fft8x8_float_c(const float *input, float *temp, float *output) {
-    aom_fft_2d_gen(input, temp, output, 8, aom_fft1d_8_float, simple_transpose,
+void eb_aom_fft8x8_float_c(const float *input, float *temp, float *output) {
+    eb_aom_fft_2d_gen(input, temp, output, 8, eb_aom_fft1d_8_float, simple_transpose,
         unpack_2d_output, 1);
 }
 
-void aom_fft16x16_float_c(const float *input, float *temp, float *output) {
-    aom_fft_2d_gen(input, temp, output, 16, aom_fft1d_16_float, simple_transpose,
+void eb_aom_fft16x16_float_c(const float *input, float *temp, float *output) {
+    eb_aom_fft_2d_gen(input, temp, output, 16, eb_aom_fft1d_16_float, simple_transpose,
         unpack_2d_output, 1);
 }
 
-void aom_fft32x32_float_c(const float *input, float *temp, float *output) {
-    aom_fft_2d_gen(input, temp, output, 32, aom_fft1d_32_float, simple_transpose,
+void eb_aom_fft32x32_float_c(const float *input, float *temp, float *output) {
+    eb_aom_fft_2d_gen(input, temp, output, 32, eb_aom_fft1d_32_float, simple_transpose,
         unpack_2d_output, 1);
 }
 
-void aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t n,
+void eb_aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t n,
     aom_fft_1d_func_t fft_single, aom_fft_1d_func_t fft_multi,
     aom_fft_1d_func_t ifft_multi,
     aom_fft_transpose_func_t transpose, int32_t vec_size) {
@@ -182,7 +182,7 @@ GEN_IFFT_16(void, float, float, float, *, store_float, (float), add_float,
 GEN_IFFT_32(void, float, float, float, *, store_float, (float), add_float,
     sub_float, mul_float);
 
-void aom_ifft2x2_float_c(const float *input, float *temp, float *output) {
-    aom_ifft_2d_gen(input, temp, output, 2, aom_fft1d_2_float, aom_fft1d_2_float,
-        aom_ifft1d_2_float, simple_transpose, 1);
+void eb_aom_ifft2x2_float_c(const float *input, float *temp, float *output) {
+    eb_aom_ifft_2d_gen(input, temp, output, 2, eb_aom_fft1d_2_float, eb_aom_fft1d_2_float,
+        eb_aom_ifft1d_2_float, simple_transpose, 1);
 }

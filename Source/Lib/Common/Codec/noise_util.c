@@ -19,10 +19,10 @@
 #include "noise_util.h"
 #include "aom_dsp_rtcd.h"
 
-void *aom_memalign(size_t align, size_t size);
-void aom_free(void *memblk);
+void *eb_aom_memalign(size_t align, size_t size);
+void eb_aom_free(void *memblk);
 
-float aom_noise_psd_get_default_value(int32_t block_size, float factor) {
+float eb_aom_noise_psd_get_default_value(int32_t block_size, float factor) {
     return (factor * factor / 10000) * block_size * block_size / 8;
 }
 
@@ -37,31 +37,31 @@ struct aom_noise_tx_t {
     void(*ifft)(const float *, float *, float *);
 };
 
-struct aom_noise_tx_t *aom_noise_tx_malloc(int32_t block_size) {
+struct aom_noise_tx_t *eb_aom_noise_tx_malloc(int32_t block_size) {
     struct aom_noise_tx_t *noise_tx =
         (struct aom_noise_tx_t *)malloc(sizeof(struct aom_noise_tx_t));
     if (!noise_tx) return NULL;
     memset(noise_tx, 0, sizeof(*noise_tx));
     switch (block_size) {
     case 2:
-        noise_tx->fft = aom_fft2x2_float;
-        noise_tx->ifft = aom_ifft2x2_float;
+        noise_tx->fft = eb_aom_fft2x2_float;
+        noise_tx->ifft = eb_aom_ifft2x2_float;
         break;
     case 4:
-        noise_tx->fft = aom_fft4x4_float;
-        noise_tx->ifft = aom_ifft4x4_float;
+        noise_tx->fft = eb_aom_fft4x4_float;
+        noise_tx->ifft = eb_aom_ifft4x4_float;
         break;
     case 8:
-        noise_tx->fft = aom_fft8x8_float;
-        noise_tx->ifft = aom_ifft8x8_float;
+        noise_tx->fft = eb_aom_fft8x8_float;
+        noise_tx->ifft = eb_aom_ifft8x8_float;
         break;
     case 16:
-        noise_tx->fft = aom_fft16x16_float;
-        noise_tx->ifft = aom_ifft16x16_float;
+        noise_tx->fft = eb_aom_fft16x16_float;
+        noise_tx->ifft = eb_aom_ifft16x16_float;
         break;
     case 32:
-        noise_tx->fft = aom_fft32x32_float;
-        noise_tx->ifft = aom_ifft32x32_float;
+        noise_tx->fft = eb_aom_fft32x32_float;
+        noise_tx->ifft = eb_aom_ifft32x32_float;
         break;
     default:
         free(noise_tx);
@@ -69,12 +69,12 @@ struct aom_noise_tx_t *aom_noise_tx_malloc(int32_t block_size) {
         return NULL;
     }
     noise_tx->block_size = block_size;
-    noise_tx->tx_block = (float *)aom_memalign(
+    noise_tx->tx_block = (float *)eb_aom_memalign(
         32, 2 * sizeof(*noise_tx->tx_block) * block_size * block_size);
-    noise_tx->temp = (float *)aom_memalign(
+    noise_tx->temp = (float *)eb_aom_memalign(
         32, 2 * sizeof(*noise_tx->temp) * block_size * block_size);
     if (!noise_tx->tx_block || !noise_tx->temp) {
-        aom_noise_tx_free(noise_tx);
+        eb_aom_noise_tx_free(noise_tx);
         return NULL;
     }
     // Clear the buffers up front. Some outputs of the forward transform are
@@ -86,11 +86,11 @@ struct aom_noise_tx_t *aom_noise_tx_malloc(int32_t block_size) {
     return noise_tx;
 }
 
-void aom_noise_tx_forward(struct aom_noise_tx_t *noise_tx, const float *data) {
+void eb_aom_noise_tx_forward(struct aom_noise_tx_t *noise_tx, const float *data) {
     noise_tx->fft(data, noise_tx->temp, noise_tx->tx_block);
 }
 
-void aom_noise_tx_filter(struct aom_noise_tx_t *noise_tx, const float *psd) {
+void eb_aom_noise_tx_filter(struct aom_noise_tx_t *noise_tx, const float *psd) {
     const int32_t block_size = noise_tx->block_size;
     const float kBeta = 1.1f;
     const float kEps = 1e-6f;
@@ -111,21 +111,21 @@ void aom_noise_tx_filter(struct aom_noise_tx_t *noise_tx, const float *psd) {
     }
 }
 
-void aom_noise_tx_inverse(struct aom_noise_tx_t *noise_tx, float *data) {
+void eb_aom_noise_tx_inverse(struct aom_noise_tx_t *noise_tx, float *data) {
     const int32_t n = noise_tx->block_size * noise_tx->block_size;
     noise_tx->ifft(noise_tx->tx_block, noise_tx->temp, data);
     for (int32_t i = 0; i < n; ++i)
         data[i] /= n;
 }
 
-void aom_noise_tx_free(struct aom_noise_tx_t *noise_tx) {
+void eb_aom_noise_tx_free(struct aom_noise_tx_t *noise_tx) {
     if (!noise_tx) return;
-    aom_free(noise_tx->tx_block);
-    aom_free(noise_tx->temp);
+    eb_aom_free(noise_tx->tx_block);
+    eb_aom_free(noise_tx->temp);
     free(noise_tx);
 }
 
-double aom_normalized_cross_correlation(const double *a, const double *b,
+double eb_aom_normalized_cross_correlation(const double *a, const double *b,
     int32_t n) {
     double c = 0;
     double a_len = 0;

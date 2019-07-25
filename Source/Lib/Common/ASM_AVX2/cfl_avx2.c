@@ -37,7 +37,7 @@ static INLINE void _mm_storeh_epi32(__m128i const *mem_addr, __m128i a) {
     *((int32_t *)mem_addr) = _mm_cvtsi128_si32(a);
 }
 
-void cfl_predict_lbd_avx2(const int16_t *pred_buf_q3,
+void eb_cfl_predict_lbd_avx2(const int16_t *pred_buf_q3,
         uint8_t *pred,
         int32_t pred_stride,
         uint8_t *dst,
@@ -111,7 +111,7 @@ static INLINE __m128i highbd_clamp_epi16_ssse3(__m128i u, __m128i zero, __m128i 
     return _mm_max_epi16(_mm_min_epi16(u, max), zero);
 }
 
-void cfl_predict_hbd_avx2(
+void eb_cfl_predict_hbd_avx2(
     const int16_t *pred_buf_q3,
     uint16_t *pred,// AMIR ADDED
     int32_t pred_stride,
@@ -193,7 +193,7 @@ static INLINE __m256i _mm256_addl_epi16(__m256i a) {
                           _mm256_unpackhi_epi16(a, _mm256_setzero_si256()));
 }
 
-/*staticINLINE*/  void subtract_average_avx2(int16_t *pred_buf_q3, int32_t width,
+/*staticINLINE*/  void eb_subtract_average_avx2(int16_t *pred_buf_q3, int32_t width,
     int32_t height, int32_t round_offset,
     int32_t num_pel_log2) {
     // Use SSE2 version for smaller widths

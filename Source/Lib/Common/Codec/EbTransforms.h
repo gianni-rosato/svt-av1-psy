@@ -3915,9 +3915,9 @@ extern "C" {
     }
     static const uint32_t q_func[] = { 26214,23302,20560,18396,16384,14564 };
 
-    extern const int32_t av1_cospi_arr_data[7][64];
-    extern const int32_t av1_sinpi_arr_data[7][5];
-    extern const int8_t *inv_txfm_shift_ls[TX_SIZES_ALL];
+    extern const int32_t eb_av1_cospi_arr_data[7][64];
+    extern const int32_t eb_av1_sinpi_arr_data[7][5];
+    extern const int8_t *eb_inv_txfm_shift_ls[TX_SIZES_ALL];
 
     static const int32_t cos_bit_min = 10;
 
@@ -3928,11 +3928,11 @@ extern "C" {
     static const int32_t NewInvSqrt2 = 2896;
 
     static INLINE const int32_t *cospi_arr(int32_t n) {
-        return av1_cospi_arr_data[n - cos_bit_min];
+        return eb_av1_cospi_arr_data[n - cos_bit_min];
     }
 
     static INLINE const int32_t *sinpi_arr(int32_t n) {
-        return av1_sinpi_arr_data[n - cos_bit_min];
+        return eb_av1_sinpi_arr_data[n - cos_bit_min];
     }
 
     static INLINE void get_flip_cfg(TxType tx_type, int32_t *ud_flip, int32_t *lr_flip) {

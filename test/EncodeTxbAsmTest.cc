@@ -6,7 +6,7 @@
 /******************************************************************************
  * @file EncodeTxbAsmTest.cc
  *
- * @brief Unit test for av1_txb_init_levels_avx2:
+ * @brief Unit test for eb_av1_txb_init_levels_avx2:
  *
  * @author Cidana-Wenyao
  *
@@ -42,12 +42,12 @@ static INLINE uint8_t *set_levels(uint8_t *const levels_buf,
     return levels_buf + TX_PAD_TOP * (width + TX_PAD_HOR);
 }
 
-// test assembly code of av1_txb_init_levels
+// test assembly code of eb_av1_txb_init_levels
 using TxbInitLevelsFunc = void (*)(const TranLow *const coeff, const int width,
                                    const int height, uint8_t *const levels);
 using TxbInitLevelParam = std::tuple<TxbInitLevelsFunc, int>;
 /**
- * @brief Unit test for av1_txb_init_levels_avx2:
+ * @brief Unit test for eb_av1_txb_init_levels_avx2:
  *
  * Test strategy:
  * Verify this assembly code by comparing with reference c implementation.
@@ -66,7 +66,7 @@ using TxbInitLevelParam = std::tuple<TxbInitLevelsFunc, int>;
 class EncodeTxbInitLevelTest
     : public ::testing::TestWithParam<TxbInitLevelParam> {
   public:
-    EncodeTxbInitLevelTest() : ref_func_(&av1_txb_init_levels_c) {
+    EncodeTxbInitLevelTest() : ref_func_(&eb_av1_txb_init_levels_c) {
         // fill input_coeff_ with 16bit signed random
         // The random is only used in prepare_data function, however
         // we should not declare in that function, otherwise
@@ -141,6 +141,6 @@ TEST_P(EncodeTxbInitLevelTest, txb_init_levels_assmbly) {
 
 INSTANTIATE_TEST_CASE_P(
     Entropy, EncodeTxbInitLevelTest,
-    ::testing::Combine(::testing::Values(&av1_txb_init_levels_avx2),
+    ::testing::Combine(::testing::Values(&eb_av1_txb_init_levels_avx2),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 }  // namespace

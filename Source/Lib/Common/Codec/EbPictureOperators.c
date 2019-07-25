@@ -24,7 +24,7 @@
 #define VARIANCE_PRECISION      16
 #define MEAN_PRECISION      (VARIANCE_PRECISION >> 1)
 
-void *aom_memset16(void *dest, int32_t val, size_t length);
+void *eb_aom_memset16(void *dest, int32_t val, size_t length);
 
 /*********************************
  * x86 implememtation of Picture Addition
@@ -792,8 +792,8 @@ static void extend_plane_high(uint8_t *const src8, int32_t src_stride, int32_t w
     uint16_t *dst_ptr2 = src + width;
 
     for (i = 0; i < height; ++i) {
-        aom_memset16(dst_ptr1, src_ptr1[0], extend_left);
-        aom_memset16(dst_ptr2, src_ptr2[0], extend_right);
+        eb_aom_memset16(dst_ptr1, src_ptr1[0], extend_left);
+        eb_aom_memset16(dst_ptr2, src_ptr2[0], extend_right);
         src_ptr1 += src_stride;
         src_ptr2 += src_stride;
         dst_ptr1 += src_stride;
@@ -819,7 +819,7 @@ static void extend_plane_high(uint8_t *const src8, int32_t src_stride, int32_t w
     }
 }
 
-void aom_yv12_extend_frame_borders_c(Yv12BufferConfig *ybf,
+void eb_aom_yv12_extend_frame_borders_c(Yv12BufferConfig *ybf,
     const int32_t num_planes) {
     assert(ybf->border % 2 == 0);
     assert(ybf->y_height - ybf->y_crop_height < 16);
@@ -859,7 +859,7 @@ static void memcpy_short_addr(uint8_t *dst8, const uint8_t *src8, int32_t num) {
 // Copies the source image into the destination image and updates the
 // destination's UMV borders.
 // Note: The frames are assumed to be identical in size.
-void aom_yv12_copy_frame_c(const Yv12BufferConfig *src_bc,
+void eb_aom_yv12_copy_frame_c(const Yv12BufferConfig *src_bc,
     Yv12BufferConfig *dst_bc, const int32_t num_planes) {
     assert((src_bc->flags & YV12_FLAG_HIGHBITDEPTH) ==
         (dst_bc->flags & YV12_FLAG_HIGHBITDEPTH));
@@ -876,7 +876,7 @@ void aom_yv12_copy_frame_c(const Yv12BufferConfig *src_bc,
                 plane_dst += dst_bc->strides[is_uv];
             }
         }
-        aom_yv12_extend_frame_borders_c(dst_bc, num_planes);
+        eb_aom_yv12_extend_frame_borders_c(dst_bc, num_planes);
         return;
     }
     for (int32_t plane = 0; plane < num_planes; ++plane) {
@@ -890,10 +890,10 @@ void aom_yv12_copy_frame_c(const Yv12BufferConfig *src_bc,
             plane_dst += dst_bc->strides[is_uv];
         }
     }
-    aom_yv12_extend_frame_borders_c(dst_bc, num_planes);
+    eb_aom_yv12_extend_frame_borders_c(dst_bc, num_planes);
 }
 
-void aom_yv12_copy_y_c(const Yv12BufferConfig *src_ybc,
+void eb_aom_yv12_copy_y_c(const Yv12BufferConfig *src_ybc,
     Yv12BufferConfig *dst_ybc) {
     int32_t row;
     const uint8_t *src = src_ybc->y_buffer;
@@ -917,7 +917,7 @@ void aom_yv12_copy_y_c(const Yv12BufferConfig *src_ybc,
     }
 }
 
-void aom_yv12_copy_u_c(const Yv12BufferConfig *src_bc,
+void eb_aom_yv12_copy_u_c(const Yv12BufferConfig *src_bc,
     Yv12BufferConfig *dst_bc) {
     int32_t row;
     const uint8_t *src = src_bc->u_buffer;
@@ -941,7 +941,7 @@ void aom_yv12_copy_u_c(const Yv12BufferConfig *src_bc,
     }
 }
 
-void aom_yv12_copy_v_c(const Yv12BufferConfig *src_bc,
+void eb_aom_yv12_copy_v_c(const Yv12BufferConfig *src_bc,
     Yv12BufferConfig *dst_bc) {
     int32_t row;
     const uint8_t *src = src_bc->v_buffer;

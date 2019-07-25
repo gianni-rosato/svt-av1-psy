@@ -715,8 +715,8 @@ extern "C" {
 
     struct AV1Common;
     struct FrameContexts;
-    void av1_reset_cdf_symbol_counters(struct FrameContexts *fc);
-    void av1_default_coef_probs(struct FrameContexts *fc, int32_t base_qindex);
+    void eb_av1_reset_cdf_symbol_counters(struct FrameContexts *fc);
+    void eb_av1_default_coef_probs(struct FrameContexts *fc, int32_t base_qindex);
     void init_mode_probs(struct FrameContexts *fc);
 
     struct FrameContexts;

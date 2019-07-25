@@ -129,7 +129,7 @@ static INLINE void quantize(const __m256i *thr, const __m256i *qp, __m256i *c,
     }
 }
 
-void av1_quantize_fp_avx2(const TranLow *coeff_ptr, intptr_t n_coeffs,
+void eb_av1_quantize_fp_avx2(const TranLow *coeff_ptr, intptr_t n_coeffs,
     const int16_t *zbin_ptr, const int16_t *round_ptr,
     const int16_t *quant_ptr,
     const int16_t *quant_shift_ptr,
@@ -206,7 +206,7 @@ static INLINE void quantize_32x32(const __m256i *thr, const __m256i *qp,
     }
 }
 
-void av1_quantize_fp_32x32_avx2(
+void eb_av1_quantize_fp_32x32_avx2(
     const TranLow *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr,
     const int16_t *round_ptr, const int16_t *quant_ptr,
     const int16_t *quant_shift_ptr, TranLow *qcoeff_ptr,
@@ -287,7 +287,7 @@ static INLINE void quantize_64x64(const __m256i *thr, const __m256i *qp,
     }
 }
 
-void av1_quantize_fp_64x64_avx2(
+void eb_av1_quantize_fp_64x64_avx2(
     const TranLow *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr,
     const int16_t *round_ptr, const int16_t *quant_ptr,
     const int16_t *quant_shift_ptr, TranLow *qcoeff_ptr,

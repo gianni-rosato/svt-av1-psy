@@ -22,7 +22,7 @@
 #include "convolve_avx2.h"
 #include "convolve.h"
 
-void av1_highbd_jnt_convolve_2d_copy_avx2(
+void eb_av1_highbd_jnt_convolve_2d_copy_avx2(
     const uint16_t *src, int32_t src_stride, uint16_t *dst0, int32_t dst_stride0, int32_t w,
     int32_t h, const InterpFilterParams *filter_params_x,
     const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
@@ -228,7 +228,7 @@ void av1_highbd_jnt_convolve_2d_copy_avx2(
     }
 }
 
-void av1_highbd_jnt_convolve_2d_avx2(
+void eb_av1_highbd_jnt_convolve_2d_avx2(
     const uint16_t *src, int32_t src_stride, uint16_t *dst0, int32_t dst_stride0, int32_t w,
     int32_t h, const InterpFilterParams *filter_params_x,
     const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
@@ -464,7 +464,7 @@ void av1_highbd_jnt_convolve_2d_avx2(
     }
 }
 
-void av1_highbd_jnt_convolve_x_avx2(
+void eb_av1_highbd_jnt_convolve_x_avx2(
     const uint16_t *src, int32_t src_stride, uint16_t *dst0, int32_t dst_stride0, int32_t w,
     int32_t h, const InterpFilterParams *filter_params_x,
     const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
@@ -634,7 +634,7 @@ void av1_highbd_jnt_convolve_x_avx2(
     }
 }
 
-void av1_highbd_jnt_convolve_y_avx2(
+void eb_av1_highbd_jnt_convolve_y_avx2(
     const uint16_t *src, int32_t src_stride, uint16_t *dst0, int32_t dst_stride0, int32_t w,
     int32_t h, const InterpFilterParams *filter_params_x,
     const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,

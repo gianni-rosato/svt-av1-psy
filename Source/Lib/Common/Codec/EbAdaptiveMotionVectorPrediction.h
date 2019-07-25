@@ -137,14 +137,14 @@ extern "C" {
              || cu_ptr->prediction_unit_array[0].overlappable_neighbors[1] != 0);
     }
 
-    void av1_count_overlappable_neighbors(
+    void eb_av1_count_overlappable_neighbors(
         const PictureControlSet        *picture_control_set_ptr,
         CodingUnit                     *cu_ptr,
         const BlockSize                   bsize,
         int32_t                           mi_row,
         int32_t                           mi_col);
 
-    void av1_find_best_ref_mvs_from_stack(int allow_hp,
+    void eb_av1_find_best_ref_mvs_from_stack(int allow_hp,
         CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
         MacroBlockD * xd,
         MvReferenceFrame ref_frame,

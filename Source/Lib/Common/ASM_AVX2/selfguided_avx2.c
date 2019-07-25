@@ -270,12 +270,12 @@ static INLINE __m256i compute_p_highbd(__m256i sum1, __m256i sum2,
 static AOM_FORCE_INLINE void calc_ab(int32_t *A, int32_t *B, const int32_t *C,
     const int32_t *D, int32_t width, int32_t height, int32_t buf_stride,
     int32_t bit_depth, int32_t sgr_params_idx, int32_t radius_idx) {
-    const SgrParamsType *const params = &sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &eb_sgr_params[sgr_params_idx];
     const int32_t r = params->r[radius_idx];
     const int32_t n = (2 * r + 1) * (2 * r + 1);
     const __m256i s = _mm256_set1_epi32(params->s[radius_idx]);
     // one_over_n[n-1] is 2^12/n, so easily fits in an int16
-    const __m256i one_over_n = _mm256_set1_epi32(one_by_x[n - 1]);
+    const __m256i one_over_n = _mm256_set1_epi32(eb_one_by_x[n - 1]);
     const __m256i rnd_z = round_for_shift(SGRPROJ_MTABLE_BITS);
     const __m256i rnd_res = round_for_shift(SGRPROJ_RECIP_BITS);
 
@@ -297,7 +297,7 @@ static AOM_FORCE_INLINE void calc_ab(int32_t *A, int32_t *B, const int32_t *C,
                     _mm256_srli_epi32(_mm256_add_epi32(_mm256_mullo_epi32(p, s), rnd_z),
                         SGRPROJ_MTABLE_BITS),
                     _mm256_set1_epi32(255));
-                const __m256i a_res = _mm256_i32gather_epi32(x_by_xplus1, z, 4);
+                const __m256i a_res = _mm256_i32gather_epi32(eb_x_by_xplus1, z, 4);
                 yy_storeu_256(A + j, a_res);
 
                 const __m256i a_complement =
@@ -331,7 +331,7 @@ static AOM_FORCE_INLINE void calc_ab(int32_t *A, int32_t *B, const int32_t *C,
                     _mm256_srli_epi32(_mm256_add_epi32(_mm256_mullo_epi32(p, s), rnd_z),
                         SGRPROJ_MTABLE_BITS),
                     _mm256_set1_epi32(255));
-                const __m256i a_res = _mm256_i32gather_epi32(x_by_xplus1, z, 4);
+                const __m256i a_res = _mm256_i32gather_epi32(eb_x_by_xplus1, z, 4);
                 yy_storeu_256(A + j, a_res);
 
                 const __m256i a_complement =
@@ -455,12 +455,12 @@ static AOM_FORCE_INLINE void calc_ab_fast(int32_t *A, int32_t *B,
     const int32_t *C, const int32_t *D, int32_t width, int32_t height,
     int32_t buf_stride, int32_t bit_depth, int32_t sgr_params_idx,
     int32_t radius_idx) {
-    const SgrParamsType *const params = &sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &eb_sgr_params[sgr_params_idx];
     const int32_t r = params->r[radius_idx];
     const int32_t n = (2 * r + 1) * (2 * r + 1);
     const __m256i s = _mm256_set1_epi32(params->s[radius_idx]);
     // one_over_n[n-1] is 2^12/n, so easily fits in an int16
-    const __m256i one_over_n = _mm256_set1_epi32(one_by_x[n - 1]);
+    const __m256i one_over_n = _mm256_set1_epi32(eb_one_by_x[n - 1]);
     const __m256i rnd_z = round_for_shift(SGRPROJ_MTABLE_BITS);
     const __m256i rnd_res = round_for_shift(SGRPROJ_RECIP_BITS);
 
@@ -481,7 +481,7 @@ static AOM_FORCE_INLINE void calc_ab_fast(int32_t *A, int32_t *B,
                     _mm256_srli_epi32(_mm256_add_epi32(_mm256_mullo_epi32(p, s), rnd_z),
                         SGRPROJ_MTABLE_BITS),
                     _mm256_set1_epi32(255));
-                const __m256i a_res = _mm256_i32gather_epi32(x_by_xplus1, z, 4);
+                const __m256i a_res = _mm256_i32gather_epi32(eb_x_by_xplus1, z, 4);
                 yy_storeu_256(A + j, a_res);
 
                 const __m256i a_complement =
@@ -516,7 +516,7 @@ static AOM_FORCE_INLINE void calc_ab_fast(int32_t *A, int32_t *B,
                     _mm256_srli_epi32(_mm256_add_epi32(_mm256_mullo_epi32(p, s), rnd_z),
                         SGRPROJ_MTABLE_BITS),
                     _mm256_set1_epi32(255));
-                const __m256i a_res = _mm256_i32gather_epi32(x_by_xplus1, z, 4);
+                const __m256i a_res = _mm256_i32gather_epi32(eb_x_by_xplus1, z, 4);
                 yy_storeu_256(A + j, a_res);
 
                 const __m256i a_complement =
@@ -710,7 +710,7 @@ static AOM_FORCE_INLINE void final_filter_fast(int32_t *dst, int32_t dst_stride,
     }
 }
 
-void av1_selfguided_restoration_avx2(const uint8_t *dgd8, int32_t width,
+void eb_av1_selfguided_restoration_avx2(const uint8_t *dgd8, int32_t width,
     int32_t height, int32_t dgd_stride, int32_t *flt0, int32_t *flt1,
     int32_t flt_stride, int32_t sgr_params_idx, int32_t bit_depth,
     int32_t highbd) {
@@ -766,7 +766,7 @@ void av1_selfguided_restoration_avx2(const uint8_t *dgd8, int32_t width,
         integral_images(dgd0, dgd_stride, width_ext, height_ext, Ctl, Dtl,
             buf_stride);
 
-    const SgrParamsType *const params = &sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &eb_sgr_params[sgr_params_idx];
     // Write to flt0 and flt1
     // If params->r == 0 we skip the corresponding filter. We only allow one of
     // the radii to be 0, as having both equal to 0 would be equivalent to
@@ -790,18 +790,18 @@ void av1_selfguided_restoration_avx2(const uint8_t *dgd8, int32_t width,
     }
 }
 
-void apply_selfguided_restoration_avx2(const uint8_t *dat8, int32_t width,
+void eb_apply_selfguided_restoration_avx2(const uint8_t *dat8, int32_t width,
     int32_t height, int32_t stride, int32_t eps, const int32_t *xqd,
     uint8_t *dst8, int32_t dst_stride, int32_t *tmpbuf, int32_t bit_depth,
     int32_t highbd) {
     int32_t *flt0 = tmpbuf;
     int32_t *flt1 = flt0 + RESTORATION_UNITPELS_MAX;
     assert(width * height <= RESTORATION_UNITPELS_MAX);
-    av1_selfguided_restoration_avx2(dat8, width, height, stride, flt0, flt1,
+    eb_av1_selfguided_restoration_avx2(dat8, width, height, stride, flt0, flt1,
         width, eps, bit_depth, highbd);
-    const SgrParamsType *const params = &sgr_params[eps];
+    const SgrParamsType *const params = &eb_sgr_params[eps];
     int32_t xq[2];
-    decode_xq(xqd, xq, params);
+    eb_decode_xq(xqd, xq, params);
 
     const __m256i xq0 = _mm256_set1_epi32(xq[0]);
     const __m256i xq1 = _mm256_set1_epi32(xq[1]);

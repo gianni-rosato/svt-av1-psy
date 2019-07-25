@@ -53,7 +53,7 @@ EbErrorType ProductGenerateMdCandidatesCu(
 *
 *******************************************/
 
-const EbPredictionFunc  ProductPredictionFunTable[3] = { NULL, inter_pu_prediction_av1, av1_intra_prediction_cl};
+const EbPredictionFunc  ProductPredictionFunTable[3] = { NULL, inter_pu_prediction_av1, eb_av1_intra_prediction_cl};
 
 const EbFastCostFunc   Av1ProductFastCostFuncTable[3] =
 {
@@ -1755,7 +1755,7 @@ void AV1CostCalcCfl(
             CFL_BUF_SQUARE);
 
         if (!context_ptr->hbd_mode_decision) {
-            cfl_predict_lbd(
+            eb_cfl_predict_lbd(
                 context_ptr->pred_buf_q3,
                 &(candidateBuffer->prediction_ptr->buffer_cb[cuChromaOriginIndex]),
                 candidateBuffer->prediction_ptr->stride_cb,
@@ -1766,7 +1766,7 @@ void AV1CostCalcCfl(
                 chroma_width,
                 chroma_height);
         } else {
-            cfl_predict_hbd(
+            eb_cfl_predict_hbd(
                 context_ptr->pred_buf_q3,
                 ((uint16_t*)candidateBuffer->prediction_ptr->buffer_cb) + cuChromaOriginIndex,
                 candidateBuffer->prediction_ptr->stride_cb,
@@ -1840,7 +1840,7 @@ void AV1CostCalcCfl(
             CFL_BUF_SQUARE);
 
         if (!context_ptr->hbd_mode_decision) {
-            cfl_predict_lbd(
+            eb_cfl_predict_lbd(
                 context_ptr->pred_buf_q3,
                 &(candidateBuffer->prediction_ptr->buffer_cr[cuChromaOriginIndex]),
                 candidateBuffer->prediction_ptr->stride_cr,
@@ -1851,7 +1851,7 @@ void AV1CostCalcCfl(
                 chroma_width,
                 chroma_height);
         } else {
-            cfl_predict_hbd(
+            eb_cfl_predict_hbd(
                 context_ptr->pred_buf_q3,
                 ((uint16_t*)candidateBuffer->prediction_ptr->buffer_cr) + cuChromaOriginIndex,
                 candidateBuffer->prediction_ptr->stride_cr,
@@ -2125,7 +2125,7 @@ static void CflPrediction(
     }
     int32_t round_offset = chroma_width * chroma_height / 2;
 
-    subtract_average(
+    eb_subtract_average(
         context_ptr->pred_buf_q3,
         chroma_width,
         chroma_height,
@@ -2154,7 +2154,7 @@ static void CflPrediction(
             CFL_BUF_SQUARE);
 
         if (!context_ptr->hbd_mode_decision) {
-            cfl_predict_lbd(
+            eb_cfl_predict_lbd(
                 context_ptr->pred_buf_q3,
                 &(candidateBuffer->prediction_ptr->buffer_cb[cuChromaOriginIndex]),
                 candidateBuffer->prediction_ptr->stride_cb,
@@ -2165,7 +2165,7 @@ static void CflPrediction(
                 chroma_width,
                 chroma_height);
 
-            cfl_predict_lbd(
+            eb_cfl_predict_lbd(
                 context_ptr->pred_buf_q3,
                 &(candidateBuffer->prediction_ptr->buffer_cr[cuChromaOriginIndex]),
                 candidateBuffer->prediction_ptr->stride_cr,
@@ -2176,7 +2176,7 @@ static void CflPrediction(
                 chroma_width,
                 chroma_height);
         } else {
-            cfl_predict_hbd(
+            eb_cfl_predict_hbd(
                 context_ptr->pred_buf_q3,
                 ((uint16_t*)candidateBuffer->prediction_ptr->buffer_cb) + cuChromaOriginIndex,
                 candidateBuffer->prediction_ptr->stride_cb,
@@ -2187,7 +2187,7 @@ static void CflPrediction(
                 chroma_width,
                 chroma_height);
 
-            cfl_predict_hbd(
+            eb_cfl_predict_hbd(
                 context_ptr->pred_buf_q3,
                 ((uint16_t*)candidateBuffer->prediction_ptr->buffer_cr) + cuChromaOriginIndex,
                 candidateBuffer->prediction_ptr->stride_cr,
@@ -2539,7 +2539,7 @@ EbErrorType av1_intra_luma_prediction(
             topNeighArray[0] = leftNeighArray[0] = md_context_ptr->tx_search_luma_recon_neighbor_array->top_left_array[MAX_PICTURE_HEIGHT_SIZE + txb_origin_x - txb_origin_y];
 
         mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
-        av1_predict_intra_block(
+        eb_av1_predict_intra_block(
             &md_context_ptr->sb_ptr->tile_info,
             MD_STAGE,
             md_context_ptr->blk_geom,
@@ -2577,7 +2577,7 @@ EbErrorType av1_intra_luma_prediction(
             topNeighArray[0] = leftNeighArray[0] = ((uint16_t*)(md_context_ptr->tx_search_luma_recon_neighbor_array16bit->top_left_array) + MAX_PICTURE_HEIGHT_SIZE + txb_origin_x - txb_origin_y)[0];
 
         mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
-        av1_predict_intra_block_16bit(
+        eb_av1_predict_intra_block_16bit(
             &md_context_ptr->sb_ptr->tile_info,
             MD_STAGE,
             md_context_ptr->blk_geom,

@@ -119,7 +119,7 @@ static INLINE void quantize(const __m256i *qp, __m256i *c,
     }
 }
 
-void aom_highbd_quantize_b_avx2(const TranLow *coeff_ptr, intptr_t n_coeffs,
+void eb_aom_highbd_quantize_b_avx2(const TranLow *coeff_ptr, intptr_t n_coeffs,
     int32_t skip_block, const int16_t *zbin_ptr,
     const int16_t *round_ptr,
     const int16_t *quant_ptr,
@@ -266,7 +266,7 @@ static INLINE void quantize_64X64(const __m256i *qp, __m256i *c,
     }
 }
 
-void aom_highbd_quantize_b_64x64_avx2(const TranLow *coeff_ptr, intptr_t n_coeffs,
+void eb_aom_highbd_quantize_b_64x64_avx2(const TranLow *coeff_ptr, intptr_t n_coeffs,
     int32_t skip_block, const int16_t *zbin_ptr,
     const int16_t *round_ptr,
     const int16_t *quant_ptr,
@@ -412,7 +412,7 @@ static INLINE void quantize_32x32(const __m256i *qp, __m256i *c,
     }
 }
 
-void aom_highbd_quantize_b_32x32_avx2(const TranLow *coeff_ptr, intptr_t n_coeffs,
+void eb_aom_highbd_quantize_b_32x32_avx2(const TranLow *coeff_ptr, intptr_t n_coeffs,
     int skip_block, const int16_t *zbin_ptr,
     const int16_t *round_ptr,
     const int16_t *quant_ptr,

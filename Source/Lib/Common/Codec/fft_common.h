@@ -47,10 +47,10 @@ extern "C" {
 
     // Declare some of the forward non-vectorized transforms which are used in some
     // of the vectorized implementations
-    void aom_fft1d_4_float(const float *input, float *output, int32_t stride);
-    void aom_fft1d_8_float(const float *input, float *output, int32_t stride);
-    void aom_fft1d_16_float(const float *input, float *output, int32_t stride);
-    void aom_fft1d_32_float(const float *input, float *output, int32_t stride);
+    void eb_aom_fft1d_4_float(const float *input, float *output, int32_t stride);
+    void eb_aom_fft1d_8_float(const float *input, float *output, int32_t stride);
+    void eb_aom_fft1d_16_float(const float *input, float *output, int32_t stride);
+    void eb_aom_fft1d_32_float(const float *input, float *output, int32_t stride);
 
     /**\!brief Function pointer for transposing a matrix of floats.
      *
@@ -87,7 +87,7 @@ extern "C" {
      * \param[in]  vec_size  Vector size (the transform is done vec_size units at
      *                       a time)
      */
-    void aom_fft_2d_gen(const float *input, float *temp, float *output, int32_t n,
+    void eb_aom_fft_2d_gen(const float *input, float *temp, float *output, int32_t n,
         aom_fft_1d_func_t tform, aom_fft_transpose_func_t transpose,
         aom_fft_unpack_func_t unpack, int32_t vec_size);
 
@@ -103,7 +103,7 @@ extern "C" {
      * \param[in]  vec_size   Vector size (the transform is done vec_size
      *                        units at a time)
      */
-    void aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t n,
+    void eb_aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t n,
         aom_fft_1d_func_t fft_single, aom_fft_1d_func_t fft_multi,
         aom_fft_1d_func_t ifft_multi,
         aom_fft_transpose_func_t transpose, int32_t vec_size);
@@ -115,7 +115,7 @@ extern "C" {
 // different simd vector intrinsic types.
 
 #define GEN_FFT_2(ret, suffix, T, T_VEC, load, store)               \
-  ret aom_fft1d_2_##suffix(const T *input, T *output, int32_t stride) { \
+  ret eb_aom_fft1d_2_##suffix(const T *input, T *output, int32_t stride) { \
     const T_VEC i0 = load(input + 0 * stride);                      \
     const T_VEC i1 = load(input + 1 * stride);                      \
     store(output + 0 * stride, i0 + i1);                            \
@@ -123,7 +123,7 @@ extern "C" {
   }
 
 #define GEN_FFT_4(ret, suffix, T, T_VEC, load, store, constant, add, sub) \
-  ret aom_fft1d_4_##suffix(const T *input, T *output, int32_t stride) {       \
+  ret eb_aom_fft1d_4_##suffix(const T *input, T *output, int32_t stride) {       \
     const T_VEC kWeight0 = constant(0.0f);                                \
     const T_VEC i0 = load(input + 0 * stride);                            \
     const T_VEC i1 = load(input + 1 * stride);                            \
@@ -140,7 +140,7 @@ extern "C" {
   }
 
 #define GEN_FFT_8(ret, suffix, T, T_VEC, load, store, constant, add, sub, mul) \
-  ret aom_fft1d_8_##suffix(const T *input, T *output, int32_t stride) {            \
+  ret eb_aom_fft1d_8_##suffix(const T *input, T *output, int32_t stride) {            \
     const T_VEC kWeight0 = constant(0.0f);                                     \
     const T_VEC kWeight2 = constant(0.707107f);                                \
     const T_VEC i0 = load(input + 0 * stride);                                 \
@@ -176,7 +176,7 @@ extern "C" {
 
 #define GEN_FFT_16(ret, suffix, T, T_VEC, load, store, constant, add, sub, \
                    mul)                                                    \
-  ret aom_fft1d_16_##suffix(const T *input, T *output, int32_t stride) {       \
+  ret eb_aom_fft1d_16_##suffix(const T *input, T *output, int32_t stride) {       \
     const T_VEC kWeight0 = constant(0.0f);                                 \
     const T_VEC kWeight2 = constant(0.707107f);                            \
     const T_VEC kWeight3 = constant(0.92388f);                             \
@@ -268,7 +268,7 @@ extern "C" {
 
 #define GEN_FFT_32(ret, suffix, T, T_VEC, load, store, constant, add, sub,   \
                    mul)                                                      \
-  ret aom_fft1d_32_##suffix(const T *input, T *output, int32_t stride) {         \
+  ret eb_aom_fft1d_32_##suffix(const T *input, T *output, int32_t stride) {         \
     const T_VEC kWeight0 = constant(0.0f);                                   \
     const T_VEC kWeight2 = constant(0.707107f);                              \
     const T_VEC kWeight3 = constant(0.92388f);                               \
@@ -511,7 +511,7 @@ extern "C" {
   }
 
 #define GEN_IFFT_2(ret, suffix, T, T_VEC, load, store)               \
-  ret aom_ifft1d_2_##suffix(const T *input, T *output, int32_t stride) { \
+  ret eb_aom_ifft1d_2_##suffix(const T *input, T *output, int32_t stride) { \
     const T_VEC i0 = load(input + 0 * stride);                       \
     const T_VEC i1 = load(input + 1 * stride);                       \
     store(output + 0 * stride, i0 + i1);                             \
@@ -519,7 +519,7 @@ extern "C" {
   }
 
 #define GEN_IFFT_4(ret, suffix, T, T_VEC, load, store, constant, add, sub) \
-  ret aom_ifft1d_4_##suffix(const T *input, T *output, int32_t stride) {       \
+  ret eb_aom_ifft1d_4_##suffix(const T *input, T *output, int32_t stride) {       \
     const T_VEC kWeight0 = constant(0.0f);                                 \
     const T_VEC i0 = load(input + 0 * stride);                             \
     const T_VEC i1 = load(input + 1 * stride);                             \
@@ -537,7 +537,7 @@ extern "C" {
 
 #define GEN_IFFT_8(ret, suffix, T, T_VEC, load, store, constant, add, sub, \
                    mul)                                                    \
-  ret aom_ifft1d_8_##suffix(const T *input, T *output, int32_t stride) {       \
+  ret eb_aom_ifft1d_8_##suffix(const T *input, T *output, int32_t stride) {       \
     const T_VEC kWeight0 = constant(0.0f);                                 \
     const T_VEC kWeight2 = constant(0.707107f);                            \
     const T_VEC i0 = load(input + 0 * stride);                             \
@@ -581,7 +581,7 @@ extern "C" {
 
 #define GEN_IFFT_16(ret, suffix, T, T_VEC, load, store, constant, add, sub,   \
                     mul)                                                      \
-  ret aom_ifft1d_16_##suffix(const T *input, T *output, int32_t stride) {         \
+  ret eb_aom_ifft1d_16_##suffix(const T *input, T *output, int32_t stride) {         \
     const T_VEC kWeight0 = constant(0.0f);                                    \
     const T_VEC kWeight2 = constant(0.707107f);                               \
     const T_VEC kWeight3 = constant(0.92388f);                                \
@@ -696,7 +696,7 @@ extern "C" {
   }
 #define GEN_IFFT_32(ret, suffix, T, T_VEC, load, store, constant, add, sub,    \
                     mul)                                                       \
-  ret aom_ifft1d_32_##suffix(const T *input, T *output, int32_t stride) {          \
+  ret eb_aom_ifft1d_32_##suffix(const T *input, T *output, int32_t stride) {          \
     const T_VEC kWeight0 = constant(0.0f);                                     \
     const T_VEC kWeight2 = constant(0.707107f);                                \
     const T_VEC kWeight3 = constant(0.92388f);                                 \
