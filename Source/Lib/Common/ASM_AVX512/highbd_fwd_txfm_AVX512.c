@@ -2628,6 +2628,7 @@ void av1_fwd_txfm2d_16x64_avx512(int16_t *input, int32_t *output, uint32_t strid
     fdct16x16_avx512(in, in, bitrow, num_row);
     transpose_16nx16m_avx512(in, outcoeff512, txfm_size_row, txfm_size_col);
     (void)bd;
+    (void)tx_type;
 }
 
 void av1_fwd_txfm2d_64x16_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t  bd) {
@@ -2664,6 +2665,7 @@ void av1_fwd_txfm2d_64x16_avx512(int16_t *input, int32_t *output, uint32_t strid
     av1_fdct64_new_avx512(in, in, bitrow, txfm_size_row, num_row);
     transpose_16nx16m_avx512(in, outcoeff512, txfm_size_row, txfm_size_col);
     (void)bd;
+    (void)tx_type;
 }
 
 static void av1_fdct32_new_line_wraper_avx512(const __m512i *input,
