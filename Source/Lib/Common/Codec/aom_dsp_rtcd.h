@@ -3264,7 +3264,7 @@ extern "C" {
         if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x16 = eb_av1_fwd_txfm2d_64x16_avx2;
         if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_32x16 = eb_av1_fwd_txfm2d_32x16_avx2;
         if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x32 = eb_av1_fwd_txfm2d_16x32_avx2;
-#endif       
+#endif
         eb_av1_fwd_txfm2d_8x8 = Av1TransformTwoD_8x8_c;
         if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_8x8 = eb_av1_fwd_txfm2d_8x8_avx2;
         eb_av1_fwd_txfm2d_4x4 = Av1TransformTwoD_4x4_c;
