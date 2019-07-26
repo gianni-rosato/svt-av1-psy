@@ -1330,7 +1330,6 @@ static INLINE void fdct32x32_avx512(const __m512i *input, __m512i *output,
     const int32_t txfm_size = 32;
     const int32_t num_per_512 = 16;
     int32_t col_num = txfm_size / num_per_512;
-    int32_t col;
     (void)stage_range;
     av1_fdct32_new_avx512(input, output, cos_bit, txfm_size, col_num);
 }
@@ -1392,7 +1391,7 @@ static INLINE void av1_round_shift_array_avx512(__m512i *input,
         for (i = 0; i < size; i++) {
             output[i] = _mm512_srai_epi32(
                 _mm512_add_epi32(input[i], round), (uint8_t)bit);
-
+        }
     }
     else {
         int32_t i;

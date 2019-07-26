@@ -5,12 +5,9 @@
 
 #include "gtest/gtest.h"
 #include "EbDefinitions.h"
-#include "EbEncHandle.h"
 #include "aom_dsp_rtcd.h"
-#include "EbTransforms.h"
 #include "EbUnitTestUtility.h"
 #include "EbUnitTest.h"
-#include <immintrin.h>
 
 #ifndef NON_AVX512_SUPPORT
 
