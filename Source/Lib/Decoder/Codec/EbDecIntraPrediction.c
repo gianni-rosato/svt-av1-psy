@@ -735,11 +735,10 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
 
     const PredictionMode mode = (plane == AOM_PLANE_Y) ? mbmi->mode : get_uv_mode(mbmi->uv_mode);
 
-    //->Since we are not supporting currently, we can keep it as zero.
-    const int use_palette = 0; //mbmi->palette_mode_info.palette_size[plane != 0] > 0;
+    const int use_palette = mbmi->palette_size[plane != 0] > 0;
 
     if (use_palette)
-        assert(0);
+        return;
     const FilterIntraMode filter_intra_mode =
         (plane == AOM_PLANE_Y && mbmi->filter_intra_mode_info.use_filter_intra)
             ? mbmi->filter_intra_mode_info.filter_intra_mode

@@ -142,7 +142,8 @@ void svtav1_predict_inter_block_plane(
                 &part_info->ps_global_motion[mi->ref_frame[ref]];
             const EbWarpedMotionParams *const wm_local =
                 &part_info->local_warp_params;
-            EbDecPicBuf *ref_buf  = get_ref_frame_buf(dec_hdl, mi->ref_frame[ref]);
+            EbDecPicBuf *ref_buf  = is_intrabc ? dec_hdl->cur_pic_buf[0] :
+                                    get_ref_frame_buf(dec_hdl, mi->ref_frame[ref]);
             EbPictureBufferDesc *ps_ref_pic_buf = ref_buf->ps_pic_buf;
             SubpelParams subpel_params;
 
