@@ -74,7 +74,7 @@ set(flags_to_test
     -D_FORTIFY_SOURCE=2)
 if(NOT MSVC)
     list(INSERT flags_to_test 0 -Wall)
-        option(NATIVE "Build for native performance (march=native)" ON)
+        option(NATIVE "Build for native performance (march=native)")
         if(NATIVE)
         list(APPEND flags_to_test -march=native)
     endif()
