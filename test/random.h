@@ -31,6 +31,7 @@ namespace svt_av1_test_tool {
 
 using std::mt19937;
 using std::uniform_int_distribution;
+using std::uniform_real_distribution;
 
 /** SVTRandom defines a tool class for generating random integer as uint test
  * samples*/
@@ -46,7 +47,12 @@ class SVTRandom {
     SVTRandom(const int nbits, const bool is_signed)
         : gen_(deterministic_seed_) {
         calculate_bounds(nbits, is_signed);
-        return;
+    }
+
+    /** contructor with given minimum and maximum bound of random real*/
+    SVTRandom(const float min_bound, const float max_bound)
+        : gen_(deterministic_seed_) {
+        setup(min_bound, max_bound);
     }
 
     /** contructor with given minimum, maximum bound of random integer and seed
@@ -85,6 +91,10 @@ class SVTRandom {
         return dist_nbit_(gen_);
     }
 
+    float random_float() {
+        return (float)dist_real_(gen_);
+    }
+
     uint8_t Rand8(void) {
         return (uint8_t)(random());
     }
@@ -101,6 +111,12 @@ class SVTRandom {
         dist_nbit_.param(param);
     }
 
+    void setup(const float min_bound, const float max_bound) {
+        assert(min_bound <= max_bound);
+        decltype(dist_real_)::param_type param{min_bound, max_bound};
+        dist_real_.param(param);
+    }
+
     /** calculate and setup bounds of generator */
     void calculate_bounds(const int nbits, const bool is_signed) {
         assert(is_signed ? nbits < 31 : nbits <= 31);
@@ -114,9 +130,10 @@ class SVTRandom {
     }
 
   private:
-    const int deterministic_seed_{13596};  /**< seed of random generator */
-    std::mt19937 gen_;                     /**< random integer generator */
-    uniform_int_distribution<> dist_nbit_; /**< rule of generator */
+    const int deterministic_seed_{13596};   /**< seed of random generator */
+    std::mt19937 gen_;                      /**< random integer generator */
+    uniform_int_distribution<> dist_nbit_;  /**< rule of integer generator */
+    uniform_real_distribution<> dist_real_; /**< rule of real generator */
 };
 
 }  // namespace svt_av1_test_tool
