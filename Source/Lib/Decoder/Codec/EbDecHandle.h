@@ -49,6 +49,7 @@ typedef struct EbDecPicBuf {
     GlobalMotionParams  global_motion[REF_FRAMES];
 
     /* MV at 8x8 lvl */
+    TemporalMvRef       *mvs;
     /* seg map */
     /* order hint */
     /* film grain */

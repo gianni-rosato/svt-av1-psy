@@ -411,10 +411,10 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
         return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
 }
 
-IntMv_dec gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp,
+IntMvDec gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp,
     BlockSize bsize, int mi_col, int mi_row, int is_integer)
 {
-    IntMv_dec res;
+    IntMvDec res;
 
     if (gm->gm_type == IDENTITY) {
         res.as_int = 0;

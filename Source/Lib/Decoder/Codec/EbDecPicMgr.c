@@ -67,11 +67,24 @@ EbErrorType dec_pic_mgr_init(EbDecPicMgr **pps_pic_mgr) {
         ps_pic_mgr->as_dec_pic[i].is_free    = 1;
         ps_pic_mgr->as_dec_pic[i].size       = 0;
         ps_pic_mgr->as_dec_pic[i].ref_count  = 0;
+        ps_pic_mgr->as_dec_pic[i].mvs = NULL;
     }
 
     ps_pic_mgr->num_pic_bufs = 0;
 
     return return_error;
+}
+
+static INLINE EbErrorType mvs_8x8_memory_alloc(TemporalMvRef **mvs,
+    FrameHeader *frame_info)
+{
+    const int frame_mvs_stride = ROUND_POWER_OF_TWO(frame_info->mi_cols, 1);
+    const int frame_mvs_rows = ROUND_POWER_OF_TWO(frame_info->mi_rows, 1);
+    const int mvs_buff_size = frame_mvs_stride * frame_mvs_rows;
+
+    EB_MALLOC_DEC(TemporalMvRef *, *mvs, mvs_buff_size * sizeof(*mvs), EB_N_PTR);
+
+    return EB_ErrorNone;
 }
 
 /**
@@ -144,12 +157,20 @@ EbDecPicBuf * dec_pic_mgr_get_cur_pic(EbDecPicMgr *ps_pic_mgr,
         if (return_error != EB_ErrorNone) return NULL;
 
         ps_pic_mgr->as_dec_pic[i].size = frame_size;
+
+        /* Memory for storing MV's at 8x8 lvl*/
+        EbErrorType ret_err = mvs_8x8_memory_alloc(
+            &ps_pic_mgr->as_dec_pic[i].mvs, frame_info);
+        if (ret_err != EB_ErrorNone) return NULL;
+
         ps_pic_mgr->num_pic_bufs++;
     }
     else
         assert(ps_pic_mgr->as_dec_pic[i].ps_pic_buf != NULL);
 
     ps_pic_mgr->as_dec_pic[i].is_free = 0;
+    ps_pic_mgr->as_dec_pic[i].ref_count = 1;
+
     pic_buf = &ps_pic_mgr->as_dec_pic[i];
 
     return pic_buf;
@@ -208,8 +229,7 @@ void dec_pic_mgr_update_ref_pic(EbDecHandle *dec_handle_ptr, int32_t frame_decod
             dec_handle_ptr->next_ref_frame_map[ref_index] = NULL;
         }
 
-        if (dec_handle_ptr->frame_header.show_existing_frame ||
-            dec_handle_ptr->frame_header.show_frame)
+        if (dec_handle_ptr->frame_header.show_existing_frame)
         {
             //TODO: Add output Q logic
             //assert(0);
@@ -460,4 +480,17 @@ void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx,
 
     for (int32_t i = 0; i < INTER_REFS_PER_FRAME; i++)
         assert(ref_flag_list[i] == 1);
+}
+
+void svt_setup_frame_buf_refs(EbDecHandle *dec_handle_ptr)
+{
+    dec_handle_ptr->cur_pic_buf[0]->order_hint = dec_handle_ptr->frame_header.order_hint;
+
+    MvReferenceFrame ref_frame;
+    for (ref_frame = LAST_FRAME; ref_frame <= ALTREF_FRAME; ++ref_frame) {
+        const EbDecPicBuf *const buf = get_ref_frame_buf(dec_handle_ptr, ref_frame);
+        if (buf != NULL)
+            dec_handle_ptr->cur_pic_buf[0]->ref_order_hints[ref_frame - LAST_FRAME]
+                = buf->order_hint;
+    }
 }

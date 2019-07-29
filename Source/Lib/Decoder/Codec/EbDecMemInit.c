@@ -179,6 +179,9 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
         EB_MALLOC_DEC(int8_t*, cur_frame_buf->cdef_strength,
             (num_sb * (seq_header->use_128x128_superblock ? 4 : 1) *
             sizeof(int8_t)), EB_N_PTR);
+        memset(cur_frame_buf->cdef_strength, -1, (num_sb *
+            (seq_header->use_128x128_superblock ? 4 : 1) *
+            sizeof(int8_t)));
 
         /* delta_lf allocation at SB level */
         EB_MALLOC_DEC(int32_t*, cur_frame_buf->delta_lf,

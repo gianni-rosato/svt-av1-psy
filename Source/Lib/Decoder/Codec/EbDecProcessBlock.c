@@ -288,7 +288,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     int32_t *coeffs;
     TransformInfo_t *trans_info = NULL;
     TxSize tx_size;
-    int num_tu;
+    uint32_t num_tu;
 
     const int max_blocks_wide = max_block_wide(&part_info, bsize, 0);
     const int max_blocks_high = max_block_high(&part_info, bsize, 0);
@@ -323,7 +323,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
         assert(num_tu != 0);
 
-        for (int tu = 0; tu < num_tu; tu++)
+        for (uint32_t tu = 0; tu < num_tu; tu++)
         {
             void *blk_recon_buf;
             int32_t recon_strd;

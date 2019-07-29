@@ -52,7 +52,7 @@ int allow_intrabc(const EbDecHandle *dec_handle);
 PredictionMode dec_get_uv_mode(UvPredictionMode mode);
 TxType intra_mode_to_tx_type(const ModeInfo_t *mbmi, PlaneType plane_type);
 int has_second_ref(const ModeInfo_t *mbmi);
-IntMv_dec gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp,
+IntMvDec gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp,
     BlockSize bsize, int mi_col, int mi_row, int is_integer);
 int get_txb_wide(TxSize tx_size);
 int get_txb_high(TxSize tx_size);

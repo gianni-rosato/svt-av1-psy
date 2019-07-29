@@ -2130,7 +2130,7 @@ typedef EbErrorType(*EbCreator)(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr);
 
-#define INVALID_MV            0xFFFFFFFF    //ICOPY They changed this to 0x80008000
+#define INVALID_MV            0x80008000 //0xFFFFFFFF    //ICOPY They changed this to 0x80008000
 #define BLKSIZE 64
 
 /***************************************

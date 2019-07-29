@@ -10,6 +10,8 @@
 extern "C" {
 #endif
 
+#define WIENER_COEFFS 3
+
 static INLINE int get_relative_dist(OrderHintInfo *ps_order_hint_info,
                                     int ref_hint, int order_hint)
 {
@@ -30,6 +32,8 @@ void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
                          int32_t sub_x, int32_t sub_y);
 
 void pad_pic(EbPictureBufferDesc *recon_picture_buf);
+
+int inverse_recenter(int r, int v);
 
 #ifdef __cplusplus
 }

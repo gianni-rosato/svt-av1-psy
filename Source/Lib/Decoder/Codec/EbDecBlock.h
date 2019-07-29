@@ -102,20 +102,20 @@ enum {
 } UENUM1BYTE(COMPOUND_MASK_TYPE);
 
 /*TODO: Harmonize with encoder structure */
-typedef union  IntMv_dec {
+typedef union  IntMvDec {
     uint32_t as_int;
     MV as_mv;
-} IntMv_dec; /* facilitates faster equality tests and copies */
-typedef struct CandidateMv_dec {
-    IntMv_dec this_mv;
-    IntMv_dec comp_mv;
+} IntMvDec; /* facilitates faster equality tests and copies */
+typedef struct CandidateMvDec {
+    IntMvDec this_mv;
+    IntMvDec comp_mv;
     int32_t weight;
-} CandidateMv_dec;
+} CandidateMvDec;
 
 #define MFMV_STACK_SIZE 3
 typedef struct TemporalMvRef {
     /* Motion Filed MV */
-    IntMv_dec   mf_mv0;
+    IntMvDec   mf_mv0;
     uint8_t     ref_frame_offset;
 } TemporalMvRef;
 
@@ -224,7 +224,7 @@ typedef struct ModeInfo_t {
     // Only for INTER blocks
 
     MvReferenceFrame    ref_frame[2];
-    IntMv_dec           mv[2];
+    IntMvDec           mv[2];
 
     uint16_t            ref_mv_idx;
 
@@ -345,7 +345,7 @@ typedef struct PartitionInfo {
     SgrprojInfo sgrproj_info[MAX_MB_PLANE];
 
     /*!< Motion vectors available in the stack */
-    CandidateMv_dec ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
+    CandidateMvDec ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
 
     /*!< Represents an offset used in derivation of the input index to the cb component scaling function */
     uint16_t cb_offset[MAX_MB_PLANE];
