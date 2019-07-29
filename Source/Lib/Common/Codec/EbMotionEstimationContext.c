@@ -22,7 +22,7 @@ static void me_context_dctor(EbPtr p)
     MeContext *obj = (MeContext*)p;
     uint32_t                   listIndex;
     uint32_t                   refPicIndex;
-    EB_FREE_ARRAY(obj->quarter_sb_buffer);
+    EB_FREE_ALIGNED_ARRAY(obj->quarter_sb_buffer);
 
     EB_FREE_ARRAY(obj->mvd_bits_array);
 
