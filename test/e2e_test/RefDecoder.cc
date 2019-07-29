@@ -418,3 +418,16 @@ void RefDecoder::trans_video_frame(const void* image_handle,
     frame.timestamp =
         init_timestamp_ + ((uint64_t)dec_frame_cnt_ * frame_interval_);
 }
+
+void RefDecoder::control(int ctrl_id, int arg) {
+    const aom_codec_err_t res =
+        aom_codec_control_((aom_codec_ctx_t*)codec_handle_, ctrl_id, arg);
+    ASSERT_EQ(AOM_CODEC_OK, res) << RefDecoderErr();
+}
+
+void RefDecoder::set_invert_tile_decoding_order() {
+    this->control(AV1_INVERT_TILE_DECODE_ORDER, 1);
+    this->control(AV1_SET_DECODE_TILE_ROW, -1);
+    this->control(AV1_SET_DECODE_TILE_COL, -1);
+    this->control(AV1_SET_TILE_MODE, 0);
+}

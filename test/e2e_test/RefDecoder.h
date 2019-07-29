@@ -179,6 +179,9 @@ class RefDecoder {
      */
     void set_resolution(const uint32_t width, const uint32_t height);
 
+    void set_invert_tile_decoding_order();
+    void control(int ctrl_id, int arg);
+
   private:
     /** Tool of translation from AOM image info to a video frame
      * @param image  the video image from AOM decoder
