@@ -1722,23 +1722,21 @@ void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_
 #else
         for (int i = 0; i < *altref_nframes_ptr; i++) {
 #endif
-            if (i != index_center) {
-                EbPictureBufferDesc *pic_ptr_ref = list_picture_control_set_ptr[i]->enhanced_picture_ptr;
+            EbPictureBufferDesc *pic_ptr_ref = list_picture_control_set_ptr[i]->enhanced_picture_ptr;
 
-                generate_padding(pic_ptr_ref->buffer_cb,
-                    pic_ptr_ref->stride_cb,
-                    pic_ptr_ref->width >> 1,
-                    pic_ptr_ref->height >> 1,
-                    pic_ptr_ref->origin_x >> 1,
-                    pic_ptr_ref->origin_y >> 1);
+            generate_padding(pic_ptr_ref->buffer_cb,
+                pic_ptr_ref->stride_cb,
+                pic_ptr_ref->width >> 1,
+                pic_ptr_ref->height >> 1,
+                pic_ptr_ref->origin_x >> 1,
+                pic_ptr_ref->origin_y >> 1);
 
-                generate_padding(pic_ptr_ref->buffer_cr,
-                    pic_ptr_ref->stride_cr,
-                    pic_ptr_ref->width >> 1,
-                    pic_ptr_ref->height >> 1,
-                    pic_ptr_ref->origin_x >> 1,
-                    pic_ptr_ref->origin_y >> 1);
-            }
+            generate_padding(pic_ptr_ref->buffer_cr,
+                pic_ptr_ref->stride_cr,
+                pic_ptr_ref->width >> 1,
+                pic_ptr_ref->height >> 1,
+                pic_ptr_ref->origin_x >> 1,
+                pic_ptr_ref->origin_y >> 1);
         }
     }
     eb_release_mutex(picture_control_set_ptr_central->temp_filt_mutex);
