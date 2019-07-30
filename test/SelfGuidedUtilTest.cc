@@ -80,25 +80,25 @@ class PixelProjErrorTest
     }
 
     virtual void SetUp() {
-        src_ = (Sample *)(aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
-                                     sizeof(*src_)));
+        src_ = (Sample *)(eb_aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
+                                        sizeof(*src_)));
         ASSERT_NE(src_, nullptr);
-        dgd_ = (Sample *)(aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
-                                     sizeof(*dgd_)));
+        dgd_ = (Sample *)(eb_aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
+                                        sizeof(*dgd_)));
         ASSERT_NE(dgd_, nullptr);
-        flt0_ = (int32_t *)(aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
-                                       sizeof(*flt0_)));
+        flt0_ = (int32_t *)(eb_aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
+                                          sizeof(*flt0_)));
         ASSERT_NE(flt0_, nullptr);
-        flt1_ = (int32_t *)(aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
-                                       sizeof(*flt1_)));
+        flt1_ = (int32_t *)(eb_aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
+                                          sizeof(*flt1_)));
         ASSERT_NE(flt1_, nullptr);
     }
 
     virtual void TearDown() {
-        aom_free(src_);
-        aom_free(dgd_);
-        aom_free(flt0_);
-        aom_free(flt1_);
+        eb_aom_free(src_);
+        eb_aom_free(dgd_);
+        eb_aom_free(flt0_);
+        eb_aom_free(flt1_);
     }
 
     virtual void prepare_random_data() = 0;
@@ -222,8 +222,8 @@ TEST_P(PixelProjErrorLbdTest, MatchTestWithExtremeValue) {
     run_extreme_test();
 }
 
-static const PixelProjErrorTestParam lbd_test_vector[] = {
-    make_tuple(av1_lowbd_pixel_proj_error_avx2, av1_lowbd_pixel_proj_error_c)};
+static const PixelProjErrorTestParam lbd_test_vector[] = {make_tuple(
+    eb_av1_lowbd_pixel_proj_error_avx2, eb_av1_lowbd_pixel_proj_error_c)};
 
 INSTANTIATE_TEST_CASE_P(RST, PixelProjErrorLbdTest,
                         ::testing::ValuesIn(lbd_test_vector));
@@ -266,7 +266,7 @@ TEST_P(PixelProjErrorHbdTest, MatchTestWithExtremeValue) {
 }
 
 static const PixelProjErrorTestParam hbd_test_vector[] = {make_tuple(
-    av1_highbd_pixel_proj_error_avx2, av1_highbd_pixel_proj_error_c)};
+    eb_av1_highbd_pixel_proj_error_avx2, eb_av1_highbd_pixel_proj_error_c)};
 
 INSTANTIATE_TEST_CASE_P(RST, PixelProjErrorHbdTest,
                         ::testing::ValuesIn(hbd_test_vector));
@@ -279,11 +279,11 @@ TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {
     const int NUM_ITERS = 2000;
     int i, j, k;
 
-    uint8_t *input_ =
-        (uint8_t *)aom_memalign(32, stride * (height + 32) * sizeof(uint8_t));
-    uint8_t *output_ = (uint8_t *)aom_memalign(
+    uint8_t *input_ = (uint8_t *)eb_aom_memalign(
+        32, stride * (height + 32) * sizeof(uint8_t));
+    uint8_t *output_ = (uint8_t *)eb_aom_memalign(
         32, out_stride * (height + 32) * sizeof(uint8_t));
-    int32_t *tmpbuf = (int32_t *)aom_memalign(32, RESTORATION_TMPBUF_SIZE);
+    int32_t *tmpbuf = (int32_t *)eb_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
     uint8_t *input = input_ + stride * 16 + 16;
     uint8_t *output = output_ + out_stride * 16 + 16;
     int32_t *flt0 = tmpbuf;
@@ -315,23 +315,23 @@ TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {
                     int32_t *flt1_p = flt1 + k * flt_stride + j;
                     assert(w * h <= RESTORATION_UNITPELS_MAX);
 
-                    av1_selfguided_restoration_avx2(output_p,
-                                                    w,
-                                                    h,
-                                                    out_stride,
-                                                    flt0_p,
-                                                    flt1_p,
-                                                    flt_stride,
-                                                    ep,
-                                                    8,
-                                                    0);
+                    eb_av1_selfguided_restoration_avx2(output_p,
+                                                       w,
+                                                       h,
+                                                       out_stride,
+                                                       flt0_p,
+                                                       flt1_p,
+                                                       flt_stride,
+                                                       ep,
+                                                       8,
+                                                       0);
                 }
             }
 
             aom_clear_system_state();
             int32_t xqd_c[2] = {0};
             int32_t xqd_asm[2] = {0};
-            const SgrParamsType *const params = &sgr_params[ep];
+            const SgrParamsType *const params = &eb_sgr_params[ep];
             get_proj_subspace_c(input,
                                 width,
                                 height,
@@ -367,8 +367,8 @@ TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {
         }
     }
 
-    aom_free(input_);
-    aom_free(output_);
-    aom_free(tmpbuf);
+    eb_aom_free(input_);
+    eb_aom_free(output_);
+    eb_aom_free(tmpbuf);
 }
 }  // namespace
