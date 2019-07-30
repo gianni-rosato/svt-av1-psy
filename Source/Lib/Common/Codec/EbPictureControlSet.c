@@ -1116,7 +1116,7 @@ static void picture_parent_control_set_dctor(EbPtr p)
     }
 
     EB_FREE_ARRAY(obj->av1_cm->frame_to_show);
-    EB_FREE_ARRAY(obj->av1_cm->rst_tmpbuf);
+    EB_FREE_ALIGNED(obj->av1_cm->rst_tmpbuf);
     EB_FREE_ARRAY(obj->av1_cm);
     EB_FREE_ARRAY(obj->rusi_picture[0]);
     EB_FREE_ARRAY(obj->rusi_picture[1]);
