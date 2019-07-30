@@ -4,6 +4,8 @@
 #include "aom_dsp_rtcd.h"
 #include "EbTransforms.h"
 
+#ifndef NON_AVX512_SUPPORT
+
 extern const int8_t *eb_inv_txfm_shift_ls[];
 const int32_t *cospi_arr(int32_t n);
 const int32_t *sinpi_arr(int32_t n);
@@ -3220,3 +3222,4 @@ void av1_inv_txfm2d_add_32x16_avx512(const int32_t *coeff, uint16_t *output,
     av1_round_shift_array_avx512(in, out, 32, -shift[1]);
     write_buffer_32x16n_avx512(out, output, stride, 0, 0, bd, 32);
 }
+#endif
