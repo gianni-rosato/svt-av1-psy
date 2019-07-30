@@ -39,6 +39,8 @@
 #include "EbDecNbr.h"
 #include "EbDecUtils.h"
 
+#include "EbDecCdef.h"
+
 
 #define CONFIG_MAX_DECODE_PROFILE 2
 #define INT_MAX       2147483647    // maximum (signed) int value
@@ -1096,7 +1098,7 @@ void read_frame_cdef_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *s
         frame_info->CDEF_params.cdef_damping = 3;
         return;
     }
-    frame_info->CDEF_params.cdef_damping = dec_get_bits(bs, 2);
+    frame_info->CDEF_params.cdef_damping = dec_get_bits(bs, 2) + 3;
     frame_info->CDEF_params.cdef_bits = dec_get_bits(bs, 2);
     PRINT_FRAME("cdef_damping", frame_info->CDEF_params.cdef_damping + 3);
     PRINT_FRAME("cdef_bits", frame_info->CDEF_params.cdef_bits);
@@ -2046,15 +2048,9 @@ void clear_left_context(EbDecHandle *dec_handle_ptr)
         blk_cnt*sizeof(parse_ctxt->parse_nbr4x4_ctxt.left_tx_ht[0]));
 }
 
-void clear_cdef(int32_t tile_row, int32_t tile_col, CDEFParams *cdefParams)
+void clear_cdef(int8_t *sb_cdef_strength, int32_t cdef_factor)
 {
-    (void)tile_row;
-    (void)tile_col;
-    for (int i = 0; i < CDEF_MAX_STRENGTHS; i++)
-    {
-        cdefParams->cdef_uv_strength[i] = 0;
-        cdefParams->cdef_y_strength[i] = 0;
-    }
+    memset(sb_cdef_strength, -1, cdef_factor * sizeof(*sb_cdef_strength));
 }
 
 void clear_loop_filter_delta(EbDecHandle *dec_handle)
@@ -2120,7 +2116,6 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             uint8_t     sx = color_config->subsampling_x;
             uint8_t     sy = color_config->subsampling_y;
 
-            clear_cdef(tile_row, tile_col, &dec_handle_ptr->frame_header.CDEF_params);
             //clear_block_decoded_flags(r, c, sbSize4)
             MasterFrameBuf *master_frame_buf = &dec_handle_ptr->master_frame_buf;
             CurFrameBuf    *frame_buf        = &master_frame_buf->cur_frame_bufs[0];
@@ -2172,15 +2167,13 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             sb_info->sb_cdef_strength = frame_buf->cdef_strength +
                 (((sb_row * master_frame_buf->sb_cols) + sb_col) * cdef_factor);
 
-            memset(sb_info->sb_cdef_strength, -1, cdef_factor * sizeof(int8_t));
-
             sb_info->sb_delta_lf = frame_buf->delta_lf +
                 (sb_row * master_frame_buf->sb_cols) + sb_col;
 
             sb_info->sb_delta_q = frame_buf->delta_q +
                 (sb_row * master_frame_buf->sb_cols) + sb_col;
 
-            /* TO DO : Populate other structures as well */
+            clear_cdef(sb_info->sb_cdef_strength, cdef_factor);
 
             /* Init ParseCtxt */
             ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle_ptr->pv_parse_ctxt;
@@ -2291,6 +2284,8 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
     ParseCtxt   *parse_ctxt = (ParseCtxt *)dec_handle_ptr->pv_parse_ctxt;
 
+    FrameHeader *frame_header = &dec_handle_ptr->frame_header;
+
     int num_tiles, tg_start, tg_end, tile_bits, tile_start_and_end_present_flag = 0;
     int tile_row, tile_col;
     size_t tile_size;
@@ -2334,22 +2329,22 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             obu_header->payload_size -= (tiles_info->tile_size_bytes + tile_size);
         }
         PRINT_FRAME("tile_size", (tile_size));
-        svt_tile_init(&parse_ctxt->cur_tile_info, &dec_handle_ptr->frame_header,
+        svt_tile_init(&parse_ctxt->cur_tile_info, frame_header,
                         tile_row, tile_col);
 
         parse_ctxt->parse_nbr4x4_ctxt.cur_q_ind =
-            dec_handle_ptr->frame_header.quantization_params.base_q_idx;
+            frame_header->quantization_params.base_q_idx;
 
         //init_symbol(tileSize)
 
         status = init_svt_reader(&parse_ctxt->r,
             (const uint8_t *)get_bitsteam_buf(bs), bs->buf_max, tile_size,
-            !(dec_handle_ptr->frame_header.disable_cdf_update));
+            !(frame_header->disable_cdf_update));
         if (status != EB_ErrorNone)
             return status;
 #if 0
         reset_parse_ctx(&parse_ctxt->frm_ctx[0],
-            dec_handle_ptr->frame_header.quantization_params.base_q_idx);
+            frame_header->quantization_params.base_q_idx);
 #else
         parse_ctxt->cur_tile_ctx = parse_ctxt->init_frm_ctx;
 #endif
@@ -2357,7 +2352,7 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         status = parse_tile(bs, dec_handle_ptr, tiles_info, tile_row, tile_col);
 
         /* Save CDF */
-        if (!dec_handle_ptr->frame_header.disable_frame_end_update_cdf &&
+        if (!frame_header->disable_frame_end_update_cdf &&
             (tile_num == tiles_info->context_update_tile_id))
         {
             dec_handle_ptr->cur_pic_buf[0]->final_frm_ctx =
@@ -2371,8 +2366,17 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             return status;
     }
 
+    const int32_t do_cdef =
+        !frame_header->coded_lossless &&
+        (frame_header->CDEF_params.cdef_bits ||
+         frame_header->CDEF_params.cdef_y_strength[0] ||
+         frame_header->CDEF_params.cdef_uv_strength[0]);
+
+    /*Calling cdef frame level function*/
+    if (do_cdef) svt_cdef_frame(dec_handle_ptr);
+
     /* Save CDF */
-    if (dec_handle_ptr->frame_header.disable_frame_end_update_cdf)
+    if (frame_header->disable_frame_end_update_cdf)
         dec_handle_ptr->cur_pic_buf[0]->final_frm_ctx = parse_ctxt->init_frm_ctx;
 
     pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf);

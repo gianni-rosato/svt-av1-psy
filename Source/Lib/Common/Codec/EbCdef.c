@@ -427,7 +427,7 @@ void eb_copy_rect8_8bit_to_16bit_c(uint16_t *dst, int32_t dstride, const uint8_t
     }
 }
 
-static void copy_sb8_16(uint16_t *dst, int32_t dstride,
+void copy_sb8_16(uint16_t *dst, int32_t dstride,
     const uint8_t *src, int32_t src_voffset, int32_t src_hoffset,
     int32_t sstride, int32_t vsize, int32_t hsize) {
         {
@@ -437,7 +437,7 @@ static void copy_sb8_16(uint16_t *dst, int32_t dstride,
         }
 }
 
-static INLINE void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h,
+void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h,
     uint16_t x) {
     for (int32_t i = 0; i < v; i++) {
         for (int32_t j = 0; j < h; j++)
@@ -445,7 +445,7 @@ static INLINE void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t 
     }
 }
 
-static INLINE void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src,
+void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src,
     int32_t sstride, int32_t v, int32_t h) {
     for (int32_t i = 0; i < v; i++) {
         for (int32_t j = 0; j < h; j++)

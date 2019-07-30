@@ -468,21 +468,20 @@ void read_cdef(EbDecHandle *dec_handle, SvtReader *r, PartitionInfo_t *xd,
     {
         return;
     }
-
-    int cdf_size = block_size_wide[BLOCK_64X64];
-    const int mask = (1 << (6 - MI_SIZE_LOG2));
-    int row = mi_row & mask;
-    int col = mi_col & mask;
+    int cdf_size = mi_size_wide[BLOCK_64X64];
+    int row = mi_row & cdf_size;
+    int col = mi_col & cdf_size;
     const int index = dec_handle->seq_header.sb_size == BLOCK_128X128
         ? !!(col) + 2 * !!(row) : 0;
     if (cdef_strength[index] == -1) {
         cdef_strength[index] = svt_read_literal(r, dec_handle->
             frame_header.CDEF_params.cdef_bits, ACCT_STR);
-        int w4 = block_size_wide[mbmi->sb_type];
-        int h4 = block_size_high[mbmi->sb_type];
+        int w4 = mi_size_wide[mbmi->sb_type];
+        int h4 = mi_size_high[mbmi->sb_type];
         for (int i = row; i < row + h4; i += cdf_size) {
             for (int j = col; j < col + w4; j += cdf_size) {
-                cdef_strength[!!(j & mask) + 2 * !!(i & mask)] = cdef_strength[index];
+                cdef_strength[!!(j & cdf_size) + 2 * !!(i & cdf_size)] =
+                    cdef_strength[index];
             }
         }
     }
