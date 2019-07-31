@@ -271,7 +271,7 @@ static void merge_colors(uint16_t *colors, uint16_t *cached_colors,
 }
 
 static void read_palette_colors_y(ParseCtxt *parse_ctx, PartitionInfo_t *pi,
-    int bit_depth, int mi_row, int mi_col, SvtReader *r) 
+    int bit_depth, int mi_row, int mi_col, SvtReader *r)
 {
     ParseNbr4x4Ctxt  *nbr_ctx = &parse_ctx->parse_nbr4x4_ctxt;
     uint16_t color_cache[2 * PALETTE_MAX_SIZE];
@@ -308,7 +308,7 @@ static void read_palette_colors_y(ParseCtxt *parse_ctx, PartitionInfo_t *pi,
 }
 
 static void read_palette_colors_uv(ParseCtxt *parse_ctx, PartitionInfo_t *pi,
-    int bit_depth, int mi_row, int mi_col, SvtReader *r) 
+    int bit_depth, int mi_row, int mi_col, SvtReader *r)
 {
     ParseNbr4x4Ctxt  *nbr_ctx = &parse_ctx->parse_nbr4x4_ctxt;
     const int n = pi->mi->palette_size[1];
@@ -331,7 +331,7 @@ static void read_palette_colors_uv(ParseCtxt *parse_ctx, PartitionInfo_t *pi,
             for (; idx < PALETTE_MAX_SIZE + n; ++idx) {
                 assert(range >= 0);
                 const int delta = svt_read_literal(r, bits, ACCT_STR);
-                nbr_ctx->palette_colors[idx] = 
+                nbr_ctx->palette_colors[idx] =
                     clamp(nbr_ctx->palette_colors[idx - 1] + delta,
                           0, (1 << bit_depth) - 1);
                 range -= (nbr_ctx->palette_colors[idx] -
@@ -2615,7 +2615,7 @@ void parse_block(EbDecHandle *dec_handle, uint32_t mi_row, uint32_t mi_col,
     ZERO_ARRAY(parse_ctx->num_tus[AOM_PLANE_U], 4);
     ZERO_ARRAY(parse_ctx->num_tus[AOM_PLANE_V], 4);
 
-    if (!dec_is_inter_block(mode)) 
+    if (!dec_is_inter_block(mode))
         palette_tokens(dec_handle, &part_info, mi_row, mi_col, r);
 
     read_block_tx_size(dec_handle, r, &part_info, subsize);

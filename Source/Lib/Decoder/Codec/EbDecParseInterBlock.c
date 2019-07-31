@@ -1583,7 +1583,7 @@ static INLINE int assign_mv(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     return ret;
 }
 
-void dec_av1_find_ref_dv(IntMv_dec *ref_dv, TileInfo *tile,
+void dec_av1_find_ref_dv(IntMvDec *ref_dv, TileInfo *tile,
     int mib_size, int mi_row, int mi_col) {
     (void)mi_col;
     if (mi_row - mib_size < tile->mi_row_start) {
@@ -1660,8 +1660,8 @@ static INLINE int is_dv_valid(MV dv, EbDecHandle *dec_handle,
     return 1;
 }
 
-int dec_assign_dv(EbDecHandle *dec_handle, PartitionInfo_t *pi, IntMv_dec *mv,
-    IntMv_dec *ref_mv, int mi_row, int mi_col, SvtReader *r)
+int dec_assign_dv(EbDecHandle *dec_handle, PartitionInfo_t *pi, IntMvDec *mv,
+    IntMvDec *ref_mv, int mi_row, int mi_col, SvtReader *r)
 {
     ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
     FRAME_CONTEXT *frm_ctx = &parse_ctxt->cur_tile_ctx;
@@ -1678,14 +1678,14 @@ int dec_assign_dv(EbDecHandle *dec_handle, PartitionInfo_t *pi, IntMv_dec *mv,
 }
 
 void assign_intrabc_mv(EbDecHandle *dec_handle,
-    IntMv_dec ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES],
+    IntMvDec ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES],
     PartitionInfo_t *pi, int mi_row, int mi_col, SvtReader *r)
 {
     ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
     ModeInfo_t *mbmi = pi->mi;
-    IntMv_dec nearestmv, nearmv;
+    IntMvDec nearestmv, nearmv;
     svt_find_best_ref_mvs(0, ref_mvs[INTRA_FRAME], &nearestmv, &nearmv, 0);
-    IntMv_dec dv_ref = nearestmv.as_int == 0 ? nearmv : nearestmv;
+    IntMvDec dv_ref = nearestmv.as_int == 0 ? nearmv : nearestmv;
     if (dv_ref.as_int == 0)
         dec_av1_find_ref_dv(&dv_ref, &parse_ctxt->cur_tile_info,
             dec_handle->seq_header.sb_mi_size, mi_row, mi_col);
@@ -2428,7 +2428,7 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
 
 int get_palette_color_context(uint8_t color_map[128][128],
     int r, int c, int palette_size,
-    uint8_t *color_order) 
+    uint8_t *color_order)
 {
     // Get color indices of neighbors.
     int color_neighbors[NUM_PALETTE_NEIGHBORS];
@@ -2529,7 +2529,7 @@ void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
 
             if (dec_is_chroma_reference(mi_row, mi_col, bsize, sub_x, sub_y)) {
                 if (palette_size) {
-                    int color_index_map = svt_read_NS(r, palette_size, ACCT_STR);
+                    int color_index_map = svt_read_ns_ae(r, palette_size, ACCT_STR);
                     color_map[0][0] = color_index_map;
                     for (int i = 1; i < on_screen_height + on_screen_width - 1; i++) {
                         for (int j = MIN(i, on_screen_width - 1);

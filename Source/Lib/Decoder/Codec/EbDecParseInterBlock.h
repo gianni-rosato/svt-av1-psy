@@ -66,7 +66,7 @@ void av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     int mi_row, int mi_col, int16_t *mode_context, MvCount *mv_cnt);
 void get_mv_projection(MV *output, MV ref, int num, int den);
 void assign_intrabc_mv(EbDecHandle *dec_handle,
-    IntMv_dec ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES],
+    IntMvDec ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES],
     PartitionInfo_t *pi, int mi_row, int mi_col, SvtReader *r);
 void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     int mi_row, int mi_col, SvtReader *r);
