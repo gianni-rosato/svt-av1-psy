@@ -38,6 +38,7 @@
 
 #include "EbDecNbr.h"
 #include "EbDecUtils.h"
+#include "EbDecLF.h"
 
 #include "EbDecCdef.h"
 
@@ -791,6 +792,7 @@ void read_frame_delta_q_params(bitstrm_t *bs, FrameHeader *frame_info)
         frame_info->delta_q_params.delta_q_res = dec_get_bits(bs, 2);
     }
     PRINT_FRAME("delta_q_present", frame_info->delta_q_params.delta_q_present);
+    PRINT_FRAME("delta_q_res", 1 << frame_info->delta_q_params.delta_q_res);
 }
 
 void read_frame_delta_lf_params(bitstrm_t *bs, FrameHeader *frame_info)
@@ -801,7 +803,7 @@ void read_frame_delta_lf_params(bitstrm_t *bs, FrameHeader *frame_info)
     if (frame_info->delta_q_params.delta_q_present) {
         if (!frame_info->allow_intrabc) {
             frame_info->delta_lf_params.delta_lf_present = dec_get_bits(bs, 1);
-            PRINT_FRAME("delta_lf_present", frame_info->delta_lf_params.delta_lf_present);
+            PRINT_FRAME("delta_lf_present_flag", frame_info->delta_lf_params.delta_lf_present);
         }
         if (frame_info->delta_lf_params.delta_lf_present) {
             frame_info->delta_lf_params.delta_lf_res = dec_get_bits(bs, 2);
@@ -1535,6 +1537,36 @@ void setup_frame_sign_bias(EbDecHandle *dec_handle) {
     }
 }
 
+void setup_past_independence(EbDecHandle *dec_handle_ptr,
+                             FrameHeader *frame_info)
+{
+    int ref, i, j;
+    EbDecPicBuf *cur_buf = dec_handle_ptr->cur_pic_buf[0];
+    SegmentationParams seg = dec_handle_ptr->frame_header.segmentation_params;
+
+    for (i = 0; i < MAX_SEGMENTS; i++)
+        for (j = 0; j < SEG_LVL_MAX; j++)
+        {
+            seg.feature_data[i][j] = 0;
+            seg.feature_enabled[i][j] = 0;
+        }
+
+    for (ref = LAST_FRAME; ref <= ALTREF_FRAME; ref++)
+        cur_buf->global_motion[ref].gm_type = IDENTITY;
+
+    frame_info->loop_filter_params.mode_ref_delta_enabled = 1;
+    frame_info->loop_filter_params.ref_deltas[INTRA_FRAME] = 1;
+    frame_info->loop_filter_params.ref_deltas[LAST_FRAME] = 0;
+    frame_info->loop_filter_params.ref_deltas[LAST2_FRAME] = 0;
+    frame_info->loop_filter_params.ref_deltas[LAST3_FRAME] = 0;
+    frame_info->loop_filter_params.ref_deltas[BWDREF_FRAME] = 0;
+    frame_info->loop_filter_params.ref_deltas[GOLDEN_FRAME] = -1;
+    frame_info->loop_filter_params.ref_deltas[ALTREF_FRAME] = -1;
+    frame_info->loop_filter_params.ref_deltas[ALTREF2_FRAME] = -1;
+
+    frame_info->loop_filter_params.mode_deltas[0] = 0;
+    frame_info->loop_filter_params.mode_deltas[1] = 0;
+}
 
 void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                               ObuHeader *obu_header, int num_planes)
@@ -1860,6 +1892,9 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             frame_info->disable_frame_end_update_cdf
             ? REFRESH_FRAME_CONTEXT_DISABLED : REFRESH_FRAME_CONTEXT_BACKWARD);
     }
+
+    if (frame_info->primary_ref_frame == PRIMARY_REF_NONE)
+        setup_past_independence(dec_handle_ptr, frame_info);
 
     generate_next_ref_frame_map(dec_handle_ptr);
 
@@ -2378,6 +2413,20 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     /* Save CDF */
     if (frame_header->disable_frame_end_update_cdf)
         dec_handle_ptr->cur_pic_buf[0]->final_frm_ctx = parse_ctxt->init_frm_ctx;
+
+    if (!dec_handle_ptr->frame_header.allow_intrabc) {
+        if(dec_handle_ptr->frame_header.loop_filter_params.filter_level[0] ||
+           dec_handle_ptr->frame_header.loop_filter_params.filter_level[1])
+        {
+            /*LF Trigger function for each frame*/
+            dec_av1_loop_filter_frame(&dec_handle_ptr->frame_header,
+                &dec_handle_ptr->seq_header,
+                dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
+                dec_handle_ptr->pv_lf_ctxt,
+                AOM_PLANE_Y, MAX_MB_PLANE
+            );
+        }
+    }
 
     pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf);
 

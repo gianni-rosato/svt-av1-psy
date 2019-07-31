@@ -124,11 +124,10 @@ void update_dequant(EbDecHandle *dec_handle, SBInfo *sb_info)
     if (!frame->delta_q_params.delta_q_present)
         dec_mod_ctxt->dequants_delta_q = &dec_mod_ctxt->dequants;
     else {
+        dec_mod_ctxt->dequants_delta_q = &dec_mod_ctxt->dequants;
         for (int i = 0; i < MAX_SEGMENTS; i++) {
-            current_qindex =
-                get_qindex(&frame->segmentation_params, i,
-                    clamp(frame->quantization_params.base_q_idx +
-                    sb_info->sb_delta_q[0], 1, MAXQ));
+            current_qindex = get_qindex(&frame->segmentation_params, i,
+                                        sb_info->sb_delta_q[0]);
 
             // Y Plane: AC and DC
             dc_delta_q = frame->quantization_params.delta_q_y_dc;

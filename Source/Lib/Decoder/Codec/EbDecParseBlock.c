@@ -487,8 +487,9 @@ void read_cdef(EbDecHandle *dec_handle, SvtReader *r, PartitionInfo_t *xd,
     }
 }
 
-int read_delta_qindex(EbDecHandle *dec_handle, SvtReader *r,
-    ModeInfo_t *const mbmi, int mi_col, int mi_row, int32_t cur_qind)
+void read_delta_qindex(EbDecHandle *dec_handle, SvtReader *r,
+    ModeInfo_t *const mbmi, int mi_col, int mi_row,
+    int32_t *cur_qind, int32_t *sb_delta_q)
 {
     int sign, abs, reduced_delta_qindex = 0;
     BlockSize bsize = mbmi->sb_type;
@@ -515,10 +516,10 @@ int read_delta_qindex(EbDecHandle *dec_handle, SvtReader *r,
         else
             sign = 1;
         reduced_delta_qindex = sign ? -abs : abs;
-        reduced_delta_qindex = clamp(cur_qind +
+        reduced_delta_qindex = clamp(*cur_qind +
              (reduced_delta_qindex << delta_q_params->delta_q_res), 1, MAXQ);
+        *sb_delta_q = *cur_qind = reduced_delta_qindex;
     }
-    return reduced_delta_qindex;
 }
 
 int read_delta_lflevel(EbDecHandle *dec_handle, SvtReader *r,
@@ -600,10 +601,8 @@ static void read_delta_params(EbDecHandle *dec_handle, SvtReader *r,
     ModeInfo_t *const mbmi = &xd->mi[0];
 
     if (delta_q_params->delta_q_present) {
-        parse_ctxt->parse_nbr4x4_ctxt.cur_q_ind =
-            sb_info->sb_delta_q[0] =
-            read_delta_qindex(dec_handle, r, mbmi, mi_col, mi_row,
-                parse_ctxt->parse_nbr4x4_ctxt.cur_q_ind);
+        read_delta_qindex(dec_handle, r, mbmi, mi_col, mi_row,
+            &parse_ctxt->parse_nbr4x4_ctxt.cur_q_ind, &sb_info->sb_delta_q[0]);
     }
 
 
@@ -618,9 +617,10 @@ static void read_delta_params(EbDecHandle *dec_handle, SvtReader *r,
                 num_planes > 1 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
         }
         for (int lf_id = 0; lf_id < frame_lf_count; ++lf_id) {
-            parse_ctxt->parse_nbr4x4_ctxt.delta_lf[lf_id] = sb_info->sb_delta_lf[lf_id] =
-                read_delta_lflevel(dec_handle, r, ec_ctx->delta_lf_multi_cdf[lf_id],
-                    mbmi, mi_col, mi_row, parse_ctxt->parse_nbr4x4_ctxt.delta_lf[lf_id]);
+            parse_ctxt->parse_nbr4x4_ctxt.delta_lf[lf_id] =
+                sb_info->sb_delta_lf[lf_id] = read_delta_lflevel(dec_handle, r,
+                    ec_ctx->delta_lf_multi_cdf[lf_id], mbmi, mi_col, mi_row,
+                    parse_ctxt->parse_nbr4x4_ctxt.delta_lf[lf_id]);
         }
     }
 }

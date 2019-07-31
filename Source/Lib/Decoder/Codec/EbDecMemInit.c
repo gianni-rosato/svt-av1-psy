@@ -24,6 +24,7 @@
 #include "EbDecInverseQuantize.h"
 
 #include "EbDecPicMgr.h"
+#include "EbDecLF.h"
 
 /*TODO: Remove and harmonize with encoder. Globals prevent harmonization now! */
 /*****************************************
@@ -317,6 +318,36 @@ static EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr)
     return return_error;
 }
 
+/*mem init function for LF params*/
+static EbErrorType init_lf_ctxt(EbDecHandle  *dec_handle_ptr) {
+
+    EbErrorType return_error = EB_ErrorNone;
+
+    SeqHeader *seq_header = &dec_handle_ptr->seq_header;
+    /*Boundary checking of mi_row & mi_col are not done while populating,
+    so more memory is allocated by alligning to sb_size */
+    int32_t aligned_width   = ALIGN_POWER_OF_TWO(seq_header->max_frame_width,
+        seq_header->sb_size_log2);
+    int32_t aligned_height  = ALIGN_POWER_OF_TWO(seq_header->max_frame_height,
+        seq_header->sb_size_log2);
+    int32_t mi_cols = aligned_width >> MI_SIZE_LOG2;
+    int32_t mi_rows = aligned_height >> MI_SIZE_LOG2;
+
+    EB_MALLOC_DEC(void *, dec_handle_ptr->pv_lf_ctxt, sizeof(LFCtxt), EB_N_PTR);
+
+    LFCtxt *lf_ctxt = (LFCtxt *)dec_handle_ptr->pv_lf_ctxt;
+
+    /*Mem allocation for luma parmas 4x4 unit*/
+    EB_MALLOC_DEC(LFBlockParamL *, lf_ctxt->lf_block_luma,
+        mi_rows * mi_cols * sizeof(LFBlockParamL), EB_N_PTR);
+
+    /*Allocation of chroma params at 4x4 luma unit, can be optimized */
+    EB_MALLOC_DEC(LFBlockParamUV *, lf_ctxt->lf_block_uv,
+        mi_rows * mi_cols * sizeof(LFBlockParamUV), EB_N_PTR);
+
+    return return_error;
+}
+
 EbErrorType dec_mem_init(EbDecHandle  *dec_handle_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -330,6 +361,7 @@ EbErrorType dec_mem_init(EbDecHandle  *dec_handle_ptr) {
 
     return_error |= init_dec_mod_ctxt(dec_handle_ptr);
 
+    return_error |= init_lf_ctxt(dec_handle_ptr);
     /* init frame buffers */
     return_error |= init_master_frame_ctxt(dec_handle_ptr);
 

@@ -160,6 +160,8 @@ typedef struct EbDecHandle {
 
     void   *pv_dec_mod_ctxt;
 
+    void   *pv_lf_ctxt;
+
     /** Pointer to Picture manager structure **/
     void   *pv_pic_mgr;
 
