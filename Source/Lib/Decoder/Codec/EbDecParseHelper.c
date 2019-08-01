@@ -370,7 +370,7 @@ int has_second_ref(const ModeInfo_t *mbmi) {
     return mbmi->ref_frame[1] > INTRA_FRAME;
 }
 
-static INLINE void integer_mv_precision(MV *mv) {
+void integer_mv_precision(MV *mv) {
     int mod = (mv->row % 8);
     if (mod != 0) {
         mv->row -= mod;

@@ -6,6 +6,7 @@
 #ifndef EbDecBlock_h
 #define EbDecBlock_h
 
+#include "EbCodingUnit.h"
 #include "EbDefinitions.h"
 #include "EbRestoration.h"
 

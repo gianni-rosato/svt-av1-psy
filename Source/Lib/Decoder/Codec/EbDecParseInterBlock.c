@@ -15,6 +15,7 @@
 */
 
 #include "EbDecParseInterBlock.h"
+#include "EbDecParseHelper.h"
 
 static uint16_t compound_mode_ctx_map[3][COMP_NEWMV_CTXS] = {
     { 0, 1, 1, 1, 1 },
@@ -646,34 +647,6 @@ static int has_top_right(EbDecHandle *dec_handle, PartitionInfo_t *pi,
             if (mask_row & bs) has_tr = 0;
     }
     return has_tr;
-}
-
-static INLINE void integer_mv_precision(MV *mv) {
-    int mod = (mv->row % 8);
-    if (mod != 0) {
-        mv->row -= mod;
-        if (abs(mod) > 4) {
-            if (mod > 0) {
-                mv->row += 8;
-            }
-            else {
-                mv->row -= 8;
-            }
-        }
-    }
-
-    mod = (mv->col % 8);
-    if (mod != 0) {
-        mv->col -= mod;
-        if (abs(mod) > 4) {
-            if (mod > 0) {
-                mv->col += 8;
-            }
-            else {
-                mv->col -= 8;
-            }
-        }
-    }
 }
 
 static INLINE void lower_mv_precision(MV *mv, int allow_hp, int is_integer) {

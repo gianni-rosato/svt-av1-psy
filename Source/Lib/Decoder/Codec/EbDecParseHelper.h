@@ -6,6 +6,8 @@
 #ifndef EbDecParseHelper_h
 #define EbDecParseHelper_h
 
+#include "EbObuParse.h"
+
 #define ACCT_STR __func__
 
 static const PredictionMode fimode_to_intradir[FILTER_INTRA_MODES] = {
@@ -52,6 +54,7 @@ int allow_intrabc(const EbDecHandle *dec_handle);
 PredictionMode dec_get_uv_mode(UvPredictionMode mode);
 TxType intra_mode_to_tx_type(const ModeInfo_t *mbmi, PlaneType plane_type);
 int has_second_ref(const ModeInfo_t *mbmi);
+void integer_mv_precision(MV *mv);
 IntMvDec gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp,
     BlockSize bsize, int mi_col, int mi_row, int is_integer);
 int get_txb_wide(TxSize tx_size);
