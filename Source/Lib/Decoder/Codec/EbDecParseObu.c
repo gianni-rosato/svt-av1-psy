@@ -2401,6 +2401,20 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             return status;
     }
 
+    if (!dec_handle_ptr->frame_header.allow_intrabc) {
+        if (dec_handle_ptr->frame_header.loop_filter_params.filter_level[0] ||
+            dec_handle_ptr->frame_header.loop_filter_params.filter_level[1])
+        {
+            /*LF Trigger function for each frame*/
+            dec_av1_loop_filter_frame(&dec_handle_ptr->frame_header,
+                &dec_handle_ptr->seq_header,
+                dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
+                dec_handle_ptr->pv_lf_ctxt,
+                AOM_PLANE_Y, MAX_MB_PLANE
+            );
+        }
+    }
+
     const int32_t do_cdef =
         !frame_header->coded_lossless &&
         (frame_header->CDEF_params.cdef_bits ||
@@ -2413,20 +2427,6 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     /* Save CDF */
     if (frame_header->disable_frame_end_update_cdf)
         dec_handle_ptr->cur_pic_buf[0]->final_frm_ctx = parse_ctxt->init_frm_ctx;
-
-    if (!dec_handle_ptr->frame_header.allow_intrabc) {
-        if(dec_handle_ptr->frame_header.loop_filter_params.filter_level[0] ||
-           dec_handle_ptr->frame_header.loop_filter_params.filter_level[1])
-        {
-            /*LF Trigger function for each frame*/
-            dec_av1_loop_filter_frame(&dec_handle_ptr->frame_header,
-                &dec_handle_ptr->seq_header,
-                dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
-                dec_handle_ptr->pv_lf_ctxt,
-                AOM_PLANE_Y, MAX_MB_PLANE
-            );
-        }
-    }
 
     pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf);
 
