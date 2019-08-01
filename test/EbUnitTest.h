@@ -23,4 +23,18 @@ extern const char eb_unit_test_result_str[2][25];
 }
 #endif
 
-#endif  // EbUnitTest_h
+#ifdef _WIN32
+#define TEST_ALLIGN_MALLOC(type, pointer, n_elements) \
+pointer = (type) _aligned_malloc(n_elements, ALVALUE); \
+
+#define TEST_ALLIGN_FREE(pointer) _aligned_free(pointer);
+
+#else
+#define TEST_ALLIGN_MALLOC(type, pointer, n_elements) \
+posix_memalign((void**)(&(pointer)), ALVALUE, n_elements); \
+
+#define TEST_ALLIGN_FREE(pointer) free(pointer);
+
+#endif
+
+#endif // EbUnitTest_h
