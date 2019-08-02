@@ -257,8 +257,9 @@ static INLINE void build_obmc_inter_pred_above(EbDecHandle *dec_handle,
         const uint8_t *const mask = av1_get_obmc_mask(bh);
 
         if (is_hbd)
-            aom_highbd_blend_a64_vmask_c(tmp_recon_buf, tmp_recon_strd,
-                tmp_recon_buf, tmp_recon_strd, above_buf, above_strd,
+            aom_highbd_blend_a64_vmask_c(CONVERT_TO_BYTEPTR(tmp_recon_buf),
+                tmp_recon_strd, CONVERT_TO_BYTEPTR(tmp_recon_buf),
+                tmp_recon_strd, CONVERT_TO_BYTEPTR(above_buf), above_strd,
                 mask, bw, bh, recon_picture_buf->bit_depth);
 
         else
@@ -322,9 +323,10 @@ static INLINE void build_obmc_inter_pred_left(EbDecHandle *dec_handle,
         const uint8_t *const mask = av1_get_obmc_mask(bw);
 
         if (is_hbd)
-            aom_highbd_blend_a64_hmask_c(tmp_recon_buf, tmp_recon_strd,
-                tmp_recon_buf, tmp_recon_strd, left_buf, left_strd, mask, bw,
-                bh, recon_picture_buf->bit_depth);
+            aom_highbd_blend_a64_hmask_c(CONVERT_TO_BYTEPTR(tmp_recon_buf),
+                tmp_recon_strd, CONVERT_TO_BYTEPTR(tmp_recon_buf),
+                tmp_recon_strd,CONVERT_TO_BYTEPTR(left_buf), left_strd, mask,
+                bw, bh, recon_picture_buf->bit_depth);
 
         else
             aom_blend_a64_hmask_c(tmp_recon_buf, tmp_recon_strd, tmp_recon_buf,
