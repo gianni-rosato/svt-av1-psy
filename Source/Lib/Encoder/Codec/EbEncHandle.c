@@ -2725,10 +2725,14 @@ static void print_lib_params(
     EbSvtAv1EncConfiguration*   config = &scs->static_config;
 
     SVT_LOG("------------------------------------------- ");
-    if (config->profile == 0)
+    if (config->profile == MAIN_PROFILE)
         SVT_LOG("\nSVT [config]: Main Profile\t");
+    else if (config->profile == HIGH_PROFILE)
+        SVT_LOG("\nSVT [config]: High Profile\t");
+    else if (config->profile == PROFESSIONAL_PROFILE)
+        SVT_LOG("\nSVT [config]: Professional Profile\t");
     else
-        SVT_LOG("\nSVT [config]: Main10 Profile\t");
+        SVT_LOG("\nSVT [config]: Unknown Profile\t");
 
     if (config->tier != 0 && config->level != 0)
         SVT_LOG("Tier %d\tLevel %.1f\t", config->tier, (float)(config->level / 10));
