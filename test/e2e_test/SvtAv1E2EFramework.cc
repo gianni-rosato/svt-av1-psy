@@ -15,6 +15,7 @@
 #include "EbSvtAv1Enc.h"
 #include "Y4mVideoSource.h"
 #include "YuvVideoSource.h"
+#include "DummyVideoSource.h"
 #include "gtest/gtest.h"
 #include "EbDefinitions.h"
 #include "RefDecoder.h"
@@ -51,6 +52,13 @@ VideoSource *SvtAv1E2ETestFramework::prepare_video_src(
                                        std::get<4>(vector),
                                        (uint8_t)std::get<5>(vector),
                                        std::get<6>(vector));
+        break;
+    case DUMMY_SOURCE:
+        video_src = new DummyVideoSource(std::get<2>(vector),
+                                         std::get<3>(vector),
+                                         std::get<4>(vector),
+                                         (uint8_t)std::get<5>(vector),
+                                         std::get<6>(vector));
         break;
     default: assert(0); break;
     }

@@ -32,7 +32,8 @@ namespace svt_av1_e2e_test_vector {
 /** TestVectorFormat is enumerate type of input video file format */
 typedef enum TestVectorFormat {
     YUV_VIDEO_FILE,
-    Y4M_VIDEO_FILE
+    Y4M_VIDEO_FILE,
+    DUMMY_SOURCE
 } TestVectorFormat;
 
 /** TestVideoVector is tuple of test params in a test case */
@@ -70,6 +71,15 @@ const std::vector<TestVideoVector> res_480p_test_vectors = {
 const std::vector<TestVideoVector> screen_test_vectors = {
     std::make_tuple("screendata.y4m", Y4M_VIDEO_FILE, IMG_FMT_420, 640, 480, 8,
                     0, 0, 0),
+};
+
+const std::vector<TestVideoVector> dummy_test_vectors = {
+    std::make_tuple("colorbar_480p_8_420", DUMMY_SOURCE, IMG_FMT_420, 640, 480,
+                    8, 0, 0, 100),
+    std::make_tuple("colorbar_4k_8_420", DUMMY_SOURCE, IMG_FMT_420, 4096, 2160,
+                    8, 0, 0, 60),
+    std::make_tuple("colorbar_64x64_8_420", DUMMY_SOURCE, IMG_FMT_420, 64, 64,
+                    8, 0, 0, 60),
 };
 
 using EncSetting = std::map<std::string, std::string>;

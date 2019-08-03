@@ -30,7 +30,10 @@ VideoSource::VideoSource(const VideoColorFormat format, const uint32_t width,
       current_frame_index_(-1),
       frame_size_(0),
       frame_buffer_(nullptr),
-      image_format_(format) {
+      image_format_(format),
+      width_downsize_(0),
+      height_downsize_(0),
+      pixel_byte_size_(1) {
     if (bit_depth_ > 8 && use_compressed_2bit_plane_output)
         svt_compressed_2bit_plane_ = true;
     else
@@ -87,21 +90,26 @@ EbErrorType VideoSource::init_frame_buffer() {
     uint32_t luma_size = width_with_padding_ * height_with_padding_;
     uint32_t chroma_size = 0;
 
+    pixel_byte_size_ = 1;
     switch (image_format_) {
-    case IMG_FMT_420P10_PACKED:
+    case IMG_FMT_420P10_PACKED: pixel_byte_size_ = 2;
     case IMG_FMT_420: {
-        chroma_size = luma_size >> 2;
+        width_downsize_ = 1;
+        height_downsize_ = 1;
     } break;
-    case IMG_FMT_422P10_PACKED:
+    case IMG_FMT_422P10_PACKED: pixel_byte_size_ = 2;
     case IMG_FMT_422: {
-        chroma_size = luma_size >> 1;
+        width_downsize_ = 1;
+        height_downsize_ = 0;
     } break;
-    case IMG_FMT_444P10_PACKED:
+    case IMG_FMT_444P10_PACKED: pixel_byte_size_ = 2;
     case IMG_FMT_444: {
-        chroma_size = luma_size;
+        width_downsize_ = 0;
+        height_downsize_ = 0;
     } break;
-    default: { chroma_size = luma_size >> 2; } break;
+    default: assert(0); break;
     }
+    chroma_size = luma_size >> (width_downsize_ + height_downsize_);
 
     // Determine
     if (frame_buffer_ == nullptr)
@@ -119,9 +127,9 @@ EbErrorType VideoSource::init_frame_buffer() {
     frame_buffer_->origin_y = 0;
 
     // SVT-AV1 use pixel size as stride?
-    frame_buffer_->y_stride = luma_size;
-    frame_buffer_->cb_stride = chroma_size;
-    frame_buffer_->cr_stride = chroma_size;
+    frame_buffer_->y_stride = width_with_padding_;
+    frame_buffer_->cb_stride = (width_with_padding_ >> width_downsize_);
+    frame_buffer_->cr_stride = (width_with_padding_ >> width_downsize_);
 
     if (is_10bit_mode() && !svt_compressed_2bit_plane_) {
         luma_size *= 2;
@@ -221,54 +229,6 @@ uint32_t VideoFileSource::read_input_frame() {
         printf("Reach file end\r\n");
         return 0;
     }
-    int width_downsize = 1;
-    int height_downsize = 1;
-    int pixel_byte_size = 1;
-
-    switch (image_format_) {
-    case IMG_FMT_420: {
-        width_downsize = 1;
-        height_downsize = 1;
-        pixel_byte_size = 1;
-        break;
-    }
-    case IMG_FMT_422: {
-        width_downsize = 1;
-        height_downsize = 0;
-        pixel_byte_size = 1;
-        break;
-    }
-    case IMG_FMT_444: {
-        width_downsize = 0;
-        height_downsize = 0;
-        pixel_byte_size = 1;
-        break;
-    }
-    case IMG_FMT_420P10_PACKED: {
-        width_downsize = 1;
-        height_downsize = 1;
-        pixel_byte_size = 2;
-        break;
-    }
-    case IMG_FMT_422P10_PACKED: {
-        width_downsize = 1;
-        height_downsize = 0;
-        pixel_byte_size = 2;
-        break;
-    }
-    case IMG_FMT_444P10_PACKED: {
-        width_downsize = 0;
-        height_downsize = 0;
-        pixel_byte_size = 2;
-        break;
-    }
-    default: break;
-    }
-
-    // SVT-AV1 use pixel size as stride?
-    frame_buffer_->y_stride = width_with_padding_;
-    frame_buffer_->cb_stride = (width_with_padding_ >> width_downsize);
-    frame_buffer_->cr_stride = (width_with_padding_ >> width_downsize);
 
     // Read raw data from file
     const uint32_t bottom_padding = height_with_padding_ - height_;
@@ -281,68 +241,70 @@ uint32_t VideoFileSource::read_input_frame() {
         eb_input_ptr = frame_buffer_->luma;
         for (i = 0; i < height_; ++i) {
             read_len =
-                fread(eb_input_ptr, 1, width_ * pixel_byte_size, file_handle_);
-            if (read_len != width_ * pixel_byte_size)
+                fread(eb_input_ptr, 1, width_ * pixel_byte_size_, file_handle_);
+            if (read_len != width_ * pixel_byte_size_)
                 return 0;  // read file error.
 
-            memset(eb_input_ptr + width_ * pixel_byte_size,
+            memset(eb_input_ptr + width_ * pixel_byte_size_,
                    0,
-                   righ_padding * pixel_byte_size);
-            eb_input_ptr += frame_buffer_->y_stride * pixel_byte_size;
-            filled_len += frame_buffer_->y_stride * pixel_byte_size;
+                   righ_padding * pixel_byte_size_);
+            eb_input_ptr += frame_buffer_->y_stride * pixel_byte_size_;
+            filled_len += frame_buffer_->y_stride * pixel_byte_size_;
         }
         for (i = 0; i < bottom_padding; ++i) {
-            memset(eb_input_ptr, 0, width_with_padding_ * pixel_byte_size);
-            eb_input_ptr += frame_buffer_->y_stride * pixel_byte_size;
-            filled_len += frame_buffer_->y_stride * pixel_byte_size;
+            memset(eb_input_ptr, 0, width_with_padding_ * pixel_byte_size_);
+            eb_input_ptr += frame_buffer_->y_stride * pixel_byte_size_;
+            filled_len += frame_buffer_->y_stride * pixel_byte_size_;
         }
         // Cb
         eb_input_ptr = frame_buffer_->cb;
-        for (i = 0; i < (height_ >> height_downsize); ++i) {
+        for (i = 0; i < (height_ >> height_downsize_); ++i) {
             read_len = fread(eb_input_ptr,
                              1,
-                             (width_ >> width_downsize) * pixel_byte_size,
+                             (width_ >> width_downsize_) * pixel_byte_size_,
                              file_handle_);
-            if (read_len != (width_ >> width_downsize) * pixel_byte_size)
+            if (read_len != (width_ >> width_downsize_) * pixel_byte_size_)
                 return 0;  // read file error.
 
-            memset(eb_input_ptr + (width_ >> width_downsize) * pixel_byte_size,
-                   0,
-                   (righ_padding >> width_downsize) * pixel_byte_size);
-            eb_input_ptr += frame_buffer_->cb_stride * pixel_byte_size;
-            filled_len += frame_buffer_->cb_stride * pixel_byte_size;
+            memset(
+                eb_input_ptr + (width_ >> width_downsize_) * pixel_byte_size_,
+                0,
+                (righ_padding >> width_downsize_) * pixel_byte_size_);
+            eb_input_ptr += frame_buffer_->cb_stride * pixel_byte_size_;
+            filled_len += frame_buffer_->cb_stride * pixel_byte_size_;
         }
-        for (i = 0; i < (bottom_padding >> height_downsize); ++i) {
+        for (i = 0; i < (bottom_padding >> height_downsize_); ++i) {
             memset(eb_input_ptr,
                    0,
-                   (width_with_padding_ >> width_downsize) * pixel_byte_size);
-            eb_input_ptr += frame_buffer_->cb_stride * pixel_byte_size;
-            filled_len += frame_buffer_->cb_stride * pixel_byte_size;
+                   (width_with_padding_ >> width_downsize_) * pixel_byte_size_);
+            eb_input_ptr += frame_buffer_->cb_stride * pixel_byte_size_;
+            filled_len += frame_buffer_->cb_stride * pixel_byte_size_;
         }
 
         // Cr
         eb_input_ptr = frame_buffer_->cr;
 
-        for (i = 0; i < (height_ >> height_downsize); ++i) {
+        for (i = 0; i < (height_ >> height_downsize_); ++i) {
             read_len = fread(eb_input_ptr,
                              1,
-                             (width_ >> width_downsize) * pixel_byte_size,
+                             (width_ >> width_downsize_) * pixel_byte_size_,
                              file_handle_);
-            if (read_len != (width_ >> width_downsize) * pixel_byte_size)
+            if (read_len != (width_ >> width_downsize_) * pixel_byte_size_)
                 return 0;  // read file error.
 
-            memset(eb_input_ptr + (width_ >> width_downsize) * pixel_byte_size,
-                   0,
-                   (righ_padding >> width_downsize) * pixel_byte_size);
-            eb_input_ptr += frame_buffer_->cr_stride * pixel_byte_size;
-            filled_len += frame_buffer_->cr_stride * pixel_byte_size;
+            memset(
+                eb_input_ptr + (width_ >> width_downsize_) * pixel_byte_size_,
+                0,
+                (righ_padding >> width_downsize_) * pixel_byte_size_);
+            eb_input_ptr += frame_buffer_->cr_stride * pixel_byte_size_;
+            filled_len += frame_buffer_->cr_stride * pixel_byte_size_;
         }
-        for (i = 0; i < (bottom_padding >> height_downsize); ++i) {
+        for (i = 0; i < (bottom_padding >> height_downsize_); ++i) {
             memset(eb_input_ptr,
                    0,
-                   (width_with_padding_ >> width_downsize) * pixel_byte_size);
-            eb_input_ptr += frame_buffer_->cr_stride * pixel_byte_size;
-            filled_len += frame_buffer_->cr_stride * pixel_byte_size;
+                   (width_with_padding_ >> width_downsize_) * pixel_byte_size_);
+            eb_input_ptr += frame_buffer_->cr_stride * pixel_byte_size_;
+            filled_len += frame_buffer_->cr_stride * pixel_byte_size_;
         }
     } else if (bit_depth_ > 8 && svt_compressed_2bit_plane_) {
         uint8_t *eb_input_ptr = nullptr;
@@ -380,9 +342,9 @@ uint32_t VideoFileSource::read_input_frame() {
         // Cb
         eb_input_ptr = frame_buffer_->cb;
         eb_ext_input_ptr = frame_buffer_->cb_ext;
-        for (i = 0; i < (height_ >> height_downsize); ++i) {
+        for (i = 0; i < (height_ >> height_downsize_); ++i) {
             uint32_t j = 0;
-            for (j = 0; j < (width_ >> width_downsize); ++j) {
+            for (j = 0; j < (width_ >> width_downsize_); ++j) {
                 // Get one pixel
                 if (2 != fread(&pix, 1, 2, file_handle_)) {
                     return 0;
@@ -391,7 +353,7 @@ uint32_t VideoFileSource::read_input_frame() {
                 eb_ext_input_ptr[j / 4] &= (pix & 0x3) << (j % 4);
             }
 
-            for (; j < ((width_ + righ_padding) >> width_downsize); ++j) {
+            for (; j < ((width_ + righ_padding) >> width_downsize_); ++j) {
                 eb_input_ptr[j] = 0;
                 eb_ext_input_ptr[j / 4] = 0;
             }
@@ -399,11 +361,11 @@ uint32_t VideoFileSource::read_input_frame() {
             eb_ext_input_ptr += frame_buffer_->cb_stride / 4;
             filled_len += frame_buffer_->cb_stride * 5 / 4;
         }
-        for (i = 0; i<bottom_padding>> height_downsize; ++i) {
-            memset(eb_input_ptr, 0, (width_with_padding_ >> width_downsize));
+        for (i = 0; i<bottom_padding>> height_downsize_; ++i) {
+            memset(eb_input_ptr, 0, (width_with_padding_ >> width_downsize_));
             memset(eb_ext_input_ptr,
                    0,
-                   (width_with_padding_ >> width_downsize) / 4);
+                   (width_with_padding_ >> width_downsize_) / 4);
             eb_input_ptr += frame_buffer_->cb_stride;
             eb_ext_input_ptr += frame_buffer_->cb_stride / 4;
             filled_len += frame_buffer_->cb_stride * 5 / 4;
@@ -412,9 +374,9 @@ uint32_t VideoFileSource::read_input_frame() {
         // Cr
         eb_input_ptr = frame_buffer_->cr;
         eb_ext_input_ptr = frame_buffer_->cr_ext;
-        for (i = 0; i < (height_ >> height_downsize); ++i) {
+        for (i = 0; i < (height_ >> height_downsize_); ++i) {
             uint32_t j = 0;
-            for (j = 0; j < (width_ >> width_downsize); ++j) {
+            for (j = 0; j < (width_ >> width_downsize_); ++j) {
                 // Get one pixel
                 if (2 != fread(&pix, 1, 2, file_handle_)) {
                     return 0;
@@ -423,7 +385,7 @@ uint32_t VideoFileSource::read_input_frame() {
                 eb_ext_input_ptr[j / 4] &= (pix & 0x3) << (j % 4);
             }
 
-            for (; j < ((width_ + righ_padding) >> width_downsize); ++j) {
+            for (; j < ((width_ + righ_padding) >> width_downsize_); ++j) {
                 eb_input_ptr[j] = 0;
                 eb_ext_input_ptr[j / 4] = 0;
             }
@@ -431,11 +393,11 @@ uint32_t VideoFileSource::read_input_frame() {
             eb_ext_input_ptr += frame_buffer_->cr_stride / 4;
             filled_len += frame_buffer_->cr_stride * 5 / 4;
         }
-        for (i = 0; i<bottom_padding>> height_downsize; ++i) {
-            memset(eb_input_ptr, 0, (width_with_padding_ >> width_downsize));
+        for (i = 0; i<bottom_padding>> height_downsize_; ++i) {
+            memset(eb_input_ptr, 0, (width_with_padding_ >> width_downsize_));
             memset(eb_ext_input_ptr,
                    0,
-                   (width_with_padding_ >> width_downsize) / 4);
+                   (width_with_padding_ >> width_downsize_) / 4);
             eb_input_ptr += frame_buffer_->cr_stride;
             eb_ext_input_ptr += frame_buffer_->cr_stride / 4;
             filled_len += frame_buffer_->cr_stride * 5 / 4;

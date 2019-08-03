@@ -101,6 +101,9 @@ class VideoSource {
     VideoColorFormat image_format_;
     bool svt_compressed_2bit_plane_;
     std::vector<uint32_t> frame_qp_list_;
+    int width_downsize_;
+    int height_downsize_;
+    int pixel_byte_size_;
 };
 
 /**
