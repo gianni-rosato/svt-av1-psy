@@ -163,7 +163,7 @@ class PixelProjErrorTest
 
     virtual void run_random_test(const int run_times,
                                  const bool is_fixed_size) {
-        const int iters = max(run_times, min_test_times);
+        const int iters = AOMMAX(run_times, min_test_times);
         for (int iter = 0; iter < iters && !HasFatalFailure(); ++iter) {
             prepare_random_data();
             run_and_check_data(iter, is_fixed_size ? 128 : 0);

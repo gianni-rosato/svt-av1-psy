@@ -33,8 +33,10 @@ using std::mt19937;
 using std::uniform_int_distribution;
 using std::uniform_real_distribution;
 
-/** SVTRandom defines a tool class for generating random integer as uint test
- * samples*/
+/** SVTRandom defines a tool class for generating random integer as unit test
+ * samples and params, the tool can support a random 32-bit integer from
+ * [-2^31,2^31).
+ */
 class SVTRandom {
   public:
     /** contructor with given minimum and maximum bound of random integer*/
@@ -119,8 +121,9 @@ class SVTRandom {
 
     /** calculate and setup bounds of generator */
     void calculate_bounds(const int nbits, const bool is_signed) {
-        assert(is_signed ? nbits < 31 : nbits <= 31);
-        int set_bits = is_signed ? nbits - 1 : nbits;
+        assert(nbits <= 32);
+        int set_bits =
+            is_signed ? nbits - 1 : (nbits == 32 ? nbits - 1 : nbits);
         int min_bound = 0, max_bound = 0;
         for (int i = 0; i < set_bits; i++)
             max_bound |= (1 << i);

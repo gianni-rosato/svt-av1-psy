@@ -126,8 +126,8 @@ class AV1FwdTxfm2dTest : public ::testing::TestWithParam<FwdTxfm2dParam> {
             double test_max_error = 0;
             for (int ni = 0; ni < block_size; ++ni) {
                 test_max_error =
-                    max(test_max_error,
-                        fabs(output_test_[ni] - round(output_ref_[ni])));
+                    AOMMAX(test_max_error,
+                           fabs(output_test_[ni] - round(output_ref_[ni])));
             }
             test_max_error /= scale_factor_;
             ASSERT_GE(max_error_, test_max_error)

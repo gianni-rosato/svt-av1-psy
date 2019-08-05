@@ -28,13 +28,6 @@
 #define TEST_GET_PARAM(k) std::get<k>(GetParam())
 #endif
 
-#ifndef min
-#define min(a, b) ((((a) < (b)) ? (a) : (b)))
-#endif
-#ifndef max
-#define max(a, b) ((((a) > (b)) ? (a) : (b)))
-#endif
-
 #define ALIGNED_ADDR(T, alignment, buffer) \
     (T*)(((uintptr_t)buffer + (alignment - 1)) & ~(alignment - 1))
 
