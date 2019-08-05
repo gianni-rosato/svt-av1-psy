@@ -2218,7 +2218,7 @@ extern    uint32_t                   lib_mutex_count;
 
 extern    uint32_t                   app_malloc_count;
 
-#define ALVALUE 32
+#define ALVALUE 64
 
 #define EB_ADD_APP_MEM(pointer, size, pointer_class, count, release, return_type) \
     do { \
@@ -2243,7 +2243,7 @@ extern    uint32_t                   app_malloc_count;
     pointer = (type)malloc(n_elements); \
     EB_ADD_APP_MEM(pointer, n_elements, pointer_class, app_malloc_count, return_type);
 
-#define ALVALUE 32
+#define ALVALUE 64
 
 #define EB_CREATE_SEMAPHORE(pointer, initial_count, max_count) \
     do { \
