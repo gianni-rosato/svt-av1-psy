@@ -199,7 +199,7 @@ matrix:
       env: build_type=debug
       script:
         - *base_script
-        - valgrind -- SvtAv1EncApp -enc-mode 8 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 150 -b test1.ivf
+        - valgrind -- SvtAv1EncApp -enc-mode 2 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 20 -b test1.ivf
     - name: Unit Tests Linux+gcc
       stage: unittest
       os: linux

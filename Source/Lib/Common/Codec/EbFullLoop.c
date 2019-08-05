@@ -2365,8 +2365,24 @@ void product_full_loop_tx_search(
             tu_origin_index = txb_origin_x + (txb_origin_y * candidateBuffer->residual_ptr->stride_y);
             y_tu_coeff_bits = 0;
 
-
             candidateBuffer->candidate_ptr->transform_type[txb_itr] = tx_type;
+
+            context_ptr->luma_txb_skip_context = 0;
+            context_ptr->luma_dc_sign_context = 0;
+            get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+                sequence_control_set_ptr,
+#endif
+                COMPONENT_LUMA,
+                picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+                context_ptr->sb_origin_x + txb_origin_x,
+                context_ptr->sb_origin_y + txb_origin_y,
+                //txb_origin_x,// context_ptr->cu_origin_x,
+                //txb_origin_y,// context_ptr->cu_origin_y,
+                context_ptr->blk_geom->bsize,
+                context_ptr->blk_geom->txsize[tx_depth][txb_itr], //[0][0],
+                &context_ptr->luma_txb_skip_context,
+                &context_ptr->luma_dc_sign_context);
 
             // Y: T Q iQ
             av1_estimate_transform(
