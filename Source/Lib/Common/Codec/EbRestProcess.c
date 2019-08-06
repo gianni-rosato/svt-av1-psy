@@ -60,7 +60,7 @@ static void rest_context_dctor(EbPtr p)
     EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
     EB_DELETE(obj->trial_frame_rst);
     EB_DELETE(obj->org_rec_frame);
-    EB_FREE(obj->rst_tmpbuf);
+    EB_FREE_ALIGNED(obj->rst_tmpbuf);
 }
 
 /******************************************************

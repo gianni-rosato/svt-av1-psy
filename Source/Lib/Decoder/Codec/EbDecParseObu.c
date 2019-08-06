@@ -46,6 +46,9 @@
 int Remap_Lr_Type[4] = {
     RESTORE_NONE, RESTORE_SWITCHABLE, RESTORE_WIENER, RESTORE_SGRPROJ };
 
+int wiener_taps_mid[3] = { 3, -7, 15 };
+int sgrproj_xqd_mid[2] = { -32, 31 };
+
 /* Checks that the remaining bits start with a 1 and ends with 0s.
  * It consumes an additional byte, if already byte aligned before the check. */
 int av1_check_trailing_bits(bitstrm_t *bs)
@@ -81,16 +84,6 @@ static int32_t dec_tile_log2(int32_t blk_size, int32_t target) {
     for (k = 0; (blk_size << k) < target; k++) {
     }
     return k;
-}
-
-int inverse_recenter(int r, int v)
-{
-    if (v > 2 * r)
-        return v;
-    else if (v & 1)
-        return r - ((v + 1) >> 1);
-    else
-        return r + (v >> 1);
 }
 
 // Returns 1 when OBU type is valid, and 0 otherwise.
@@ -1041,9 +1034,9 @@ void read_lr_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *seq_heade
 
     if (frame_info->coded_lossless || frame_info->allow_intrabc ||
         !seq_header->enable_restoration) {
-        frame_info->LR_params[0].frame_restoration_type = RESTORE_NONE;
-        frame_info->LR_params[1].frame_restoration_type = RESTORE_NONE;
-        frame_info->LR_params[2].frame_restoration_type = RESTORE_NONE;
+        frame_info->lr_params[0].frame_restoration_type = RESTORE_NONE;
+        frame_info->lr_params[1].frame_restoration_type = RESTORE_NONE;
+        frame_info->lr_params[2].frame_restoration_type = RESTORE_NONE;
         uses_lr = 0;
         return;
     }
@@ -1051,9 +1044,9 @@ void read_lr_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *seq_heade
     uses_chroma_lr = 0;
     for (i = 0; i < num_planes; i++) {
         lr_type = dec_get_bits(bs, 2);
-        frame_info->LR_params[i].frame_restoration_type = Remap_Lr_Type[lr_type];
-        PRINT_FRAME("frame_restoration_type", frame_info->LR_params[i].frame_restoration_type);
-        if (frame_info->LR_params[i].frame_restoration_type != RESTORE_NONE) {
+        frame_info->lr_params[i].frame_restoration_type = Remap_Lr_Type[lr_type];
+        PRINT_FRAME("frame_restoration_type", frame_info->lr_params[i].frame_restoration_type);
+        if (frame_info->lr_params[i].frame_restoration_type != RESTORE_NONE) {
             uses_lr = 1;
             if (i > 0)
                 uses_chroma_lr = 1;
@@ -1072,20 +1065,20 @@ void read_lr_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *seq_heade
                 lr_unit_shift += lr_unit_extra_shift;
             }
         }
-        frame_info->LR_params[0].loop_restoration_size
-            = RESTORATION_TILESIZE_MAX >> (2 - lr_unit_shift);
-        PRINT_FRAME("restoration_unit_size", frame_info->LR_params[0].loop_restoration_size);
+        frame_info->lr_params[0].loop_restoration_size
+            = (RESTORATION_TILESIZE_MAX >> (2 - lr_unit_shift));
+        PRINT_FRAME("restoration_unit_size", frame_info->lr_params[0].loop_restoration_size);
         if (seq_header->color_config.subsampling_x &&
             seq_header->color_config.subsampling_y && uses_chroma_lr) {
             lr_uv_shift = dec_get_bits(bs, 1);
         }
         else
             lr_uv_shift = 0;
-        frame_info->LR_params[1].loop_restoration_size
-            = frame_info->LR_params[0].loop_restoration_size >> lr_uv_shift;
-        frame_info->LR_params[2].loop_restoration_size
-            = frame_info->LR_params[0].loop_restoration_size >> lr_uv_shift;
-        PRINT_FRAME("cm->rst_info[1].restoration_unit_size", frame_info->LR_params[1].loop_restoration_size);
+        frame_info->lr_params[1].loop_restoration_size
+            = frame_info->lr_params[0].loop_restoration_size >> lr_uv_shift;
+        frame_info->lr_params[2].loop_restoration_size
+            = frame_info->lr_params[0].loop_restoration_size >> lr_uv_shift;
+        PRINT_FRAME("cm->rst_info[1].restoration_unit_size", frame_info->lr_params[1].loop_restoration_size);
     }
 }
 
@@ -1594,6 +1587,10 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                 // TODO: Handle while implementing Inter
                 // load_grain_params(frame_to_show_map_idx);
                 assert(0);
+
+            dec_handle_ptr->cur_pic_buf[0] = dec_handle_ptr->
+                ref_frame_map[frame_to_show_map_idx];
+            generate_next_ref_frame_map(dec_handle_ptr);
             return;
         }
 
@@ -1757,7 +1754,7 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             for (i = 0; i < NUM_REF_FRAMES; i++) {
                 ref_order_hint = dec_get_bits(bs,
                     seq_header->order_hint_info.order_hint_bits);
-                PRINT_FRAME("ref_order_hint[i]", frame_info->ref_order_hint);
+                PRINT_FRAME("ref_order_hint[i]", ref_order_hint);
 
                 if (ref_order_hint != (int)frame_info->ref_order_hint[i])
                     frame_info->ref_valid[i] = 0;
@@ -1847,7 +1844,7 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     dec_handle_ptr->cur_pic_buf[0] = dec_pic_mgr_get_cur_pic(dec_handle_ptr->pv_pic_mgr,
         &dec_handle_ptr->seq_header, &dec_handle_ptr->frame_header,
         dec_handle_ptr->dec_config.max_color_format);
-    dec_handle_ptr->cur_pic_buf[0]->order_hint = dec_handle_ptr->frame_header.order_hint;
+    svt_setup_frame_buf_refs(dec_handle_ptr);
     /*Temporal MVs allocation */
     check_add_tplmv_buf(dec_handle_ptr);
 
@@ -2077,6 +2074,16 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     clear_above_context(dec_handle_ptr, tile_info->tile_col_start_sb[tile_col],
                         tile_info->tile_col_start_sb[tile_col + 1], 0 /*TODO: For MultiThread*/);
     clear_loop_filter_delta(&dec_handle_ptr->frame_header, num_planes);
+    int32_t ref_sgr_xqd[MAX_MB_PLANE][2];
+    int32_t ref_lr_wiener[MAX_MB_PLANE][2][WIENER_COEFFS];
+    for (int plane = 0; plane < num_planes; plane++) {
+        for (int pass = 0; pass < 2; pass++) {
+            ref_sgr_xqd[plane][pass] = sgrproj_xqd_mid[pass];
+                for (int i = 0; i < WIENER_COEFFS; i++) {
+                    ref_lr_wiener[plane][pass][i] = wiener_taps_mid[i];
+                }
+        }
+    }
 
     // to-do access to wiener info that is currently part of PartitionInfo_t
     //clear_loop_restoration(num_planes, part_info);
@@ -2105,7 +2112,6 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
             clear_cdef(tile_row, tile_col, &dec_handle_ptr->frame_header.CDEF_params);
             //clear_block_decoded_flags(r, c, sbSize4)
-            //read_lr(r, c, sbSize)
             MasterFrameBuf *master_frame_buf = &dec_handle_ptr->master_frame_buf;
             CurFrameBuf    *frame_buf        = &master_frame_buf->cur_frame_bufs[0];
             int32_t num_mis_in_sb = master_frame_buf->num_mis_in_sb;
@@ -2201,7 +2207,8 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             update_nbrs_before_sb(&master_frame_buf->frame_mi_map, sb_col);
 #endif
             // Bit-stream parsing of the superblock
-            parse_super_block(dec_handle_ptr, mi_row, mi_col, sb_info);
+            parse_super_block(dec_handle_ptr, mi_row, mi_col, sb_info,
+                              ref_sgr_xqd, ref_lr_wiener);
 
             /* TO DO : Will move later */
             // decoding of the superblock

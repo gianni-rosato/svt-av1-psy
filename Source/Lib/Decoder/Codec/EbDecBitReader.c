@@ -84,3 +84,12 @@ int aom_read_symbol_(SvtReader   *r,
   if (r->allow_update_cdf) dec_update_cdf(cdf, ret, nsymbs);
   return ret;
 }
+
+int aom_read_ns_ae_(SvtReader   *r, int nsymbs ACCT_STR_PARAM) {
+    int w = get_msb(nsymbs) + 1; //w = FloorLog2(n) + 1
+    int m = (1 << w) - nsymbs;
+    int v = svt_read_literal(r, w - 1, ACCT_STR_NAME);
+    if (v < m) return v;
+    int extra_bit = svt_read_literal(r, 1, ACCT_STR_NAME);
+    return (v << 1) - m + extra_bit;
+}

@@ -32,7 +32,8 @@ namespace svt_av1_e2e_test_vector {
 /** TestVectorFormat is enumerate type of input video file format */
 typedef enum TestVectorFormat {
     YUV_VIDEO_FILE,
-    Y4M_VIDEO_FILE
+    Y4M_VIDEO_FILE,
+    DUMMY_SOURCE
 } TestVectorFormat;
 
 /** TestVideoVector is tuple of test params in a test case */
@@ -47,14 +48,17 @@ typedef std::tuple<std::string,      /**< file name */
                    uint32_t> /**< frames to test, (0) means full-frames*/
     TestVideoVector;
 const std::vector<TestVideoVector> default_test_vectors = {
-    std::make_tuple("park_joy_90p_8_420.y4m", Y4M_VIDEO_FILE, IMG_FMT_420, 160,
-                    90, 8, 0, 0, 0),
-    std::make_tuple("park_joy_90p_10_420.y4m", Y4M_VIDEO_FILE,
-                    IMG_FMT_420P10_PACKED, 160, 90, 10, 0, 0, 0),
     std::make_tuple("kirland_640_480_30.yuv", YUV_VIDEO_FILE, IMG_FMT_420, 640,
                     480, 8, 0, 0, 60),
     std::make_tuple("niklas_640_480_30.yuv", YUV_VIDEO_FILE, IMG_FMT_420, 640,
                     480, 8, 0, 0, 60),
+};
+
+const std::vector<TestVideoVector> incomplete_sb_test_vectors = {
+    std::make_tuple("park_joy_90p_8_420.y4m", Y4M_VIDEO_FILE, IMG_FMT_420, 160,
+                    90, 8, 0, 0, 0),
+    std::make_tuple("park_joy_90p_10_420.y4m", Y4M_VIDEO_FILE,
+                    IMG_FMT_420P10_PACKED, 160, 90, 10, 0, 0, 0),
 };
 
 const std::vector<TestVideoVector> res_480p_test_vectors = {
@@ -67,6 +71,15 @@ const std::vector<TestVideoVector> res_480p_test_vectors = {
 const std::vector<TestVideoVector> screen_test_vectors = {
     std::make_tuple("screendata.y4m", Y4M_VIDEO_FILE, IMG_FMT_420, 640, 480, 8,
                     0, 0, 0),
+};
+
+const std::vector<TestVideoVector> dummy_test_vectors = {
+    std::make_tuple("colorbar_480p_8_420", DUMMY_SOURCE, IMG_FMT_420, 640, 480,
+                    8, 0, 0, 100),
+    std::make_tuple("colorbar_4k_8_420", DUMMY_SOURCE, IMG_FMT_420, 4096, 2160,
+                    8, 0, 0, 60),
+    std::make_tuple("colorbar_64x64_8_420", DUMMY_SOURCE, IMG_FMT_420, 64, 64,
+                    8, 0, 0, 60),
 };
 
 using EncSetting = std::map<std::string, std::string>;

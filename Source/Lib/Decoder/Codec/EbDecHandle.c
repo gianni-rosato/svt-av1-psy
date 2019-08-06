@@ -391,7 +391,7 @@ EB_API EbErrorType eb_svt_decode_frame(
     uint8_t *data_start = (uint8_t *)data;
     uint8_t *data_end = (uint8_t *)data + data_size;
 
-    while (data_start < (data + data_size))
+    while (data_start < data_end)
     {
         /*TODO : Remove or move. For Test purpose only */
         dec_handle_ptr->dec_cnt++;

@@ -80,6 +80,6 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
 EbErrorType dec_mem_init(EbDecHandle  *dec_handle_ptr);
 
 #ifdef __cplusplus
-    }
+}
 #endif
 #endif // EbDecMemInit_h

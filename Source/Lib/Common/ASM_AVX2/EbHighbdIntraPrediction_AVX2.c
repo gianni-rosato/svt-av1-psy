@@ -93,7 +93,7 @@ static INLINE __m128i dc_sum_8_16(const uint16_t *const src_8,
 
 static INLINE __m128i dc_sum_8_32(const uint16_t *const src_8,
     const uint16_t *const src_32) {
-    const __m128i s_8 = _mm_load_si128((const __m128i *)src_8);
+    const __m128i s_8 = _mm_loadu_si128((const __m128i *)src_8);
     const __m256i s_32_0 = _mm256_loadu_si256((const __m256i *)(src_32 + 0x00));
     const __m256i s_32_1 = _mm256_loadu_si256((const __m256i *)(src_32 + 0x10));
     const __m256i s_32 = _mm256_add_epi16(s_32_0, s_32_1);

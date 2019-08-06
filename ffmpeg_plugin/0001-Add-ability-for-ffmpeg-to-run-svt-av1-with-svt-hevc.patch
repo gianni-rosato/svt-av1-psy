@@ -1,17 +1,18 @@
 From 64932c76e3dd36f010b1643a70abcceae7fdfca8 Mon Sep 17 00:00:00 2001
 From: Daryl Seah <daryl.seah@intel.com>
 Date: Fri, 18 Jan 2019 02:11:38 +0000
-Subject: [PATCH] Add ability for ffmpeg to run svt-av1 with svt-hevc
+Subject: [PATCH 1/1] Add ability for ffmpeg to run svt-av1 with svt-hevc
 
 Change-Id: I37ee5414fdd99e0b3f112a6e5ede166f3e48d819
 Signed-off-by: Daryl Seah <daryl.seah@intel.com>
 Signed-off-by: Jing SUN <jing.a.sun@intel.com>
+Signed-off-by: ZhiZhen Tang <zhizhen.tang@intel.com>
 ---
  configure               |   4 +
  libavcodec/Makefile     |   1 +
  libavcodec/allcodecs.c  |   1 +
- libavcodec/libsvt_av1.c | 484 ++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 490 insertions(+)
+ libavcodec/libsvt_av1.c | 483 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 489 insertions(+)
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
@@ -76,10 +77,10 @@ index 5739d53329..98f0c99883 100644
  extern AVCodec ff_libvo_amrwbenc_encoder;
 diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
 new file mode 100644
-index 0000000000..a044c1eac5
+index 0000000..8f0e5a6
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
-@@ -0,0 +1,484 @@
+@@ -0,0 +1,483 @@
 +/*
 +* Scalable Video Technology for AV1 encoder library plugin
 +*
@@ -113,6 +114,12 @@ index 0000000000..a044c1eac5
 +#include "internal.h"
 +#include "avcodec.h"
 +
++typedef enum eos_status {
++    EOS_NOT_REACHED = 0,
++    EOS_SENT,
++    EOS_RECEIVED
++}EOS_STATUS;
++
 +typedef struct SvtContext {
 +    AVClass     *class;
 +
@@ -122,7 +129,7 @@ index 0000000000..a044c1eac5
 +    EbBufferHeaderType         *in_buf;
 +    int                         raw_size;
 +
-+    int         eos_flag;
++    EOS_STATUS eos_flag;
 +
 +    // User options.
 +    int hierarchical_level;
@@ -226,24 +233,20 @@ index 0000000000..a044c1eac5
 +                             AVCodecContext *avctx)
 +{
 +    SvtContext *svt_enc = avctx->priv_data;
-+    int             ret;
-+    int        ten_bits = 0;
++    int ret;
 +
 +    param->source_width     = avctx->width;
 +    param->source_height    = avctx->height;
 +
-+    if (avctx->pix_fmt == AV_PIX_FMT_YUV420P10LE) {
-+        av_log(avctx, AV_LOG_DEBUG , "Encoder 10 bits depth input\n");
-+        // Disable Compressed 10-bit format default
-+        //
-+        // SVT-AV1 support a compressed 10-bit format allowing the
-+        // software to achieve a higher speed and channel density levels.
-+        // The conversion between the 10-bit yuv420p10le and the compressed
-+        // 10-bit format is a lossless operation. But in FFmpeg, we usually
-+        // didn't use this format
-+        param->compressed_ten_bit_format = 0;
-+        ten_bits = 1;
++    if (avctx->pix_fmt == AV_PIX_FMT_YUV420P10) {
++        av_log(avctx, AV_LOG_DEBUG, "Set 10 bits depth input\n");
++        param->encoder_bit_depth = 10;
++    } else {
++        av_log(avctx, AV_LOG_DEBUG, "Set 8 bits depth input\n");
++        param->encoder_bit_depth = 8;
 +    }
++
++    param->encoder_color_format = EB_YUV420;
 +
 +    // Update param from options
 +    param->hierarchical_levels     = svt_enc->hierarchical_level;
@@ -273,15 +276,10 @@ index 0000000000..a044c1eac5
 +        param->min_qp_allowed       = avctx->qmin;
 +    }
 +
-+    param->intra_refresh_type       =
-+        !!(avctx->flags & AV_CODEC_FLAG_CLOSED_GOP) + 1;
++    param->intra_refresh_type       = svt_enc->forced_idr + 1;
 +
 +    if (svt_enc->la_depth != -1)
 +        param->look_ahead_distance  = svt_enc->la_depth;
-+
-+    if (ten_bits) {
-+        param->encoder_bit_depth        = 10;
-+    }
 +
 +    ret = alloc_buffer(param, svt_enc);
 +
@@ -315,7 +313,7 @@ index 0000000000..a044c1eac5
 +    SvtContext   *svt_enc = avctx->priv_data;
 +    EbErrorType svt_ret;
 +
-+    svt_enc->eos_flag = 0;
++    svt_enc->eos_flag = EOS_NOT_REACHED;
 +
 +    svt_ret = eb_init_handle(&svt_enc->svt_handle, svt_enc, &svt_enc->enc_params);
 +    if (svt_ret != EB_ErrorNone) {
@@ -394,7 +392,7 @@ index 0000000000..a044c1eac5
 +        headerPtrLast.flags      = EB_BUFFERFLAG_EOS;
 +
 +        eb_svt_enc_send_picture(svt_enc->svt_handle, &headerPtrLast);
-+        svt_enc->eos_flag = 1;
++        svt_enc->eos_flag = EOS_SENT;
 +        av_log(avctx, AV_LOG_DEBUG, "Finish sending frames!!!\n");
 +        return 0;
 +    }
@@ -404,20 +402,7 @@ index 0000000000..a044c1eac5
 +    headerPtr->flags       = 0;
 +    headerPtr->p_app_private  = NULL;
 +    headerPtr->pts          = frame->pts;
-+    switch (frame->pict_type) {
-+    case AV_PICTURE_TYPE_I:
-+        headerPtr->pic_type = svt_enc->forced_idr > 0 ? EB_AV1_KEY_PICTURE : EB_AV1_INTRA_ONLY_PICTURE;
-+        break;
-+    case AV_PICTURE_TYPE_P:
-+        headerPtr->pic_type = EB_AV1_ALT_REF_PICTURE;
-+        break;
-+    case AV_PICTURE_TYPE_B:
-+        headerPtr->pic_type = EB_AV1_INTER_PICTURE;
-+        break;
-+    default:
-+        headerPtr->pic_type = EB_AV1_INVALID_PICTURE;
-+        break;
-+    }
++
 +    eb_svt_enc_send_picture(svt_enc->svt_handle, headerPtr);
 +
 +    return 0;
@@ -426,9 +411,12 @@ index 0000000000..a044c1eac5
 +static int eb_receive_packet(AVCodecContext *avctx, AVPacket *pkt)
 +{
 +    SvtContext  *svt_enc = avctx->priv_data;
-+    EbBufferHeaderType   *headerPtr;
-+    EbErrorType          svt_ret;
-+    int ret;
++    EbBufferHeaderType *headerPtr;
++    EbErrorType svt_ret;
++    int ret = 0;
++
++    if (svt_enc->eos_flag == EOS_RECEIVED)
++        return AVERROR_EOF;
 +
 +    if ((ret = ff_alloc_packet2(avctx, pkt, svt_enc->raw_size, 0)) < 0) {
 +        av_log(avctx, AV_LOG_ERROR, "Failed to allocate output packet.\n");
@@ -447,7 +435,8 @@ index 0000000000..a044c1eac5
 +    if (headerPtr->pic_type == EB_AV1_NON_REF_PICTURE)
 +        pkt->flags |= AV_PKT_FLAG_DISPOSABLE;
 +
-+    ret = (headerPtr->flags & EB_BUFFERFLAG_EOS) ? AVERROR_EOF : 0;
++    if (headerPtr->flags & EB_BUFFERFLAG_EOS)
++        svt_enc->eos_flag = EOS_RECEIVED;
 +
 +    eb_svt_release_out_buffer(&headerPtr);
 +
@@ -491,23 +480,34 @@ index 0000000000..a044c1eac5
 +        { "high", NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 1 }, 0, 0, VE, "tier" },
 +
 +    { "level", "Set level (level_idc)", OFFSET(level),
-+      AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 0xff, VE, "level" },
++      AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 0x1f, VE, "level" },
 +
 +#define LEVEL(name, value) name, NULL, 0, AV_OPT_TYPE_CONST, \
 +      { .i64 = value }, 0, 0, VE, "level"
-+        { LEVEL("1",   10) },
-+        { LEVEL("2",   20) },
++        { LEVEL("2.0", 20) },
 +        { LEVEL("2.1", 21) },
-+        { LEVEL("3",   30) },
++        { LEVEL("2.2", 22) },
++        { LEVEL("2.3", 23) },
++        { LEVEL("3.0", 30) },
 +        { LEVEL("3.1", 31) },
-+        { LEVEL("4",   40) },
++        { LEVEL("3.2", 32) },
++        { LEVEL("3.3", 33) },
++        { LEVEL("4.0", 40) },
 +        { LEVEL("4.1", 41) },
-+        { LEVEL("5",   50) },
++        { LEVEL("4.2", 42) },
++        { LEVEL("4.3", 43) },
++        { LEVEL("5.0", 50) },
 +        { LEVEL("5.1", 51) },
 +        { LEVEL("5.2", 52) },
-+        { LEVEL("6",   60) },
++        { LEVEL("5.3", 53) },
++        { LEVEL("6.0", 60) },
 +        { LEVEL("6.1", 61) },
 +        { LEVEL("6.2", 62) },
++        { LEVEL("6.3", 63) },
++        { LEVEL("7.0", 70) },
++        { LEVEL("7.1", 71) },
++        { LEVEL("7.2", 72) },
++        { LEVEL("7.3", 73) },
 +#undef LEVEL
 +
 +    { "rc", "Bit rate control mode", OFFSET(rc_mode),
@@ -525,7 +525,7 @@ index 0000000000..a044c1eac5
 +      AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, VE },
 +
 +    { "forced-idr", "If forcing keyframes, force them as IDR frames.", OFFSET(forced_idr),
-+      AV_OPT_TYPE_BOOL,   { .i64 = 0 }, -1, 1, VE },
++      AV_OPT_TYPE_BOOL,   { .i64 = 0 }, 0, 1, VE },
 +
 +    {NULL},
 +};
@@ -540,8 +540,7 @@ index 0000000000..a044c1eac5
 +static const AVCodecDefault eb_enc_defaults[] = {
 +    { "b",         "7M"    },
 +    { "g",         "-2"    },
-+    { "flags",     "-cgop" },
-+    { "qmin",      "0"    },
++    { "qmin",      "0"     },
 +    { "qmax",      "63"    },
 +    { NULL },
 +};
@@ -558,6 +557,7 @@ index 0000000000..a044c1eac5
 +    .close          = eb_enc_close,
 +    .capabilities   = AV_CODEC_CAP_DELAY | AV_CODEC_CAP_AUTO_THREADS,
 +    .pix_fmts       = (const enum AVPixelFormat[]){ AV_PIX_FMT_YUV420P,
++                                                    AV_PIX_FMT_YUV420P10,
 +                                                    AV_PIX_FMT_NONE },
 +    .priv_class     = &class,
 +    .defaults       = eb_enc_defaults,
@@ -565,5 +565,5 @@ index 0000000000..a044c1eac5
 +    .wrapper_name   = "libsvt_av1",
 +};
 --
-2.20.1
+1.8.3.1
 

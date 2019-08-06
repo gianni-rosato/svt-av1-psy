@@ -161,3 +161,13 @@ void pad_pic(EbPictureBufferDesc *recon_picture_buf) {
             recon_picture_buf->origin_y >> sy);
     }
 }
+
+int inverse_recenter(int r, int v)
+{
+    if (v > 2 * r)
+        return v;
+    else if (v & 1)
+        return r - ((v + 1) >> 1);
+    else
+        return r + (v >> 1);
+}

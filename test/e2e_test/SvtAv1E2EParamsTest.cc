@@ -17,7 +17,8 @@
 #include "gtest/gtest.h"
 #include "SvtAv1E2EFramework.h"
 #include "../api_test/params.h"
-#include "ConfigEncoder.h"
+#include "RefDecoder.h"
+
 /**
  * @brief SVT-AV1 encoder parameter coverage E2E test
  *
@@ -130,30 +131,12 @@ static const std::vector<EncTestSetting> default_enc_settings = {
 
 class CodingOptionTest : public SvtAv1E2ETestFramework {
   public:
-    CodingOptionTest() {
-        enc_config_ = create_enc_config();
-    }
-
-    virtual ~CodingOptionTest() {
-        release_enc_config(enc_config_);
-    }
-
     void config_test() override {
         enable_recon = true;
         enable_decoder = true;
         enable_analyzer = true;
-        // iterate the mappings and update config
-        for (auto &x : enc_setting.setting) {
-            set_enc_config(enc_config_, x.first.c_str(), x.second.c_str());
-            printf("EncSetting: %s = %s\n", x.first.c_str(), x.second.c_str());
-        }
-    }
-
-    void update_enc_setting() override {
-        copy_enc_param(&av1enc_ctx_.enc_params, enc_config_);
-        setup_src_param(video_src_, av1enc_ctx_.enc_params);
-        if (recon_queue_)
-            av1enc_ctx_.enc_params.recon_enabled = 1;
+        enable_config = true;
+        SvtAv1E2ETestFramework::config_test();
     }
 
     void post_process() override {
@@ -271,9 +254,6 @@ class CodingOptionTest : public SvtAv1E2ETestFramework {
         }
         return true;
     }
-
-  protected:
-    void *enc_config_;
 };
 
 TEST_P(CodingOptionTest, CheckEncOptionsUsingBitstream) {

@@ -127,9 +127,9 @@ class SADTestBase : public ::testing::Test {
     }
 
     void SetUp() override {
-        src_aligned_ = (uint8_t * )eb_aom_memalign(32, MAX_BLOCK_SIZE);
-        ref1_aligned_ = (uint8_t * )eb_aom_memalign(32, MAX_BLOCK_SIZE);
-        ref2_aligned_ = (uint8_t * )eb_aom_memalign(32, MAX_BLOCK_SIZE);
+        src_aligned_ = (uint8_t *)eb_aom_memalign(32, MAX_BLOCK_SIZE);
+        ref1_aligned_ = (uint8_t *)eb_aom_memalign(32, MAX_BLOCK_SIZE);
+        ref2_aligned_ = (uint8_t *)eb_aom_memalign(32, MAX_BLOCK_SIZE);
         ASSERT_NE(src_aligned_, nullptr);
         ASSERT_NE(ref1_aligned_, nullptr);
         ASSERT_NE(ref2_aligned_, nullptr);
@@ -871,7 +871,8 @@ class GetEightSadTest : public ::testing::WithParamInterface<SadCalTestParam>,
 
   protected:
     void check_get_eight() {
-        uint32_t best_sad8x8_1[4] = {UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX};
+        uint32_t best_sad8x8_1[4] = {
+            BEST_SAD_MAX, BEST_SAD_MAX, BEST_SAD_MAX, BEST_SAD_MAX};
         uint32_t best_mv8x8_1[4] = {0};
         uint32_t best_sad16x16_1 = UINT_MAX, best_mv16x16_1 = 0;
         uint16_t sad16x16_1[8] = {0};
@@ -891,7 +892,8 @@ class GetEightSadTest : public ::testing::WithParamInterface<SadCalTestParam>,
             sad16x16_1,
             false);
 
-        uint32_t best_sad8x8_2[4] = {UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX};
+        uint32_t best_sad8x8_2[4] = {
+            BEST_SAD_MAX, BEST_SAD_MAX, BEST_SAD_MAX, BEST_SAD_MAX};
         uint32_t best_mv8x8_2[4] = {0};
         uint32_t best_sad16x16_2 = UINT_MAX, best_mv16x16_2 = 0;
         uint16_t sad16x16_2[8] = {0};

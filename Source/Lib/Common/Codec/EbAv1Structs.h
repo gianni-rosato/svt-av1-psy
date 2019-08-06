@@ -373,7 +373,7 @@ typedef struct LRParams {
 
     /*!< Specifies the size of loop restoration units in units of samples in
      * the current plane */
-    uint8_t             loop_restoration_size;
+    uint16_t            loop_restoration_size;
 
 } LRParams;
 
@@ -570,7 +570,7 @@ typedef struct FrameHeader {
     CDEFParams              CDEF_params;
 
     /*!< Loop Restoration Parameters */
-    LRParams                LR_params[MAX_MB_PLANE];
+    LRParams                lr_params[MAX_MB_PLANE];
 
     /*!< Specifies how the transform size is determined */
     TxMode                 tx_mode;

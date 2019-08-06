@@ -36,9 +36,17 @@ extern "C" {
 #include "EbDecUtils.h"
 
 #define MVREF_ROW_COLS 3
+// Set the upper limit of the motion vector component magnitude.
+// This would make a motion vector fit in 26 bits. Plus 3 bits for the
+// reference frame index. A tuple of motion vector can hence be stored within
+// 32 bit range for efficient load/store operations.
+#define REFMVS_LIMIT ((1 << 12) - 1)
+
 #define MV_BORDER (16 << 3)  // Allow 16 pels in 1/8th pel units
 #define MAX_DIFFWTD_MASK_BITS 1
 #define NELEMENTS(x) (int)(sizeof(x) / sizeof(x[0]))
+#define MAX_OFFSET_WIDTH 64
+#define MAX_OFFSET_HEIGHT 0
 
 static const MV kZeroMv = { 0, 0 };
 
@@ -49,9 +57,10 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
     int mi_row, int mi_col, SvtReader *r);
 
 void av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo_t *pi,
-    MvReferenceFrame ref_frame, CandidateMv_dec ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
-    IntMv_dec mv_ref_list[][MAX_MV_REF_CANDIDATES], IntMv_dec global_mvs[2],
+    MvReferenceFrame ref_frame, CandidateMvDec ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
+    IntMvDec mv_ref_list[][MAX_MV_REF_CANDIDATES], IntMvDec global_mvs[2],
     int mi_row, int mi_col, int16_t *mode_context, MvCount *mv_cnt);
+void get_mv_projection(MV *output, MV ref, int num, int den);
 
 #ifdef __cplusplus
 }
