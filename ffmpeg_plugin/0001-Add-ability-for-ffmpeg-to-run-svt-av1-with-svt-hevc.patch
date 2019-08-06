@@ -1,4 +1,4 @@
-From bd562755450c284d480fcf987f94f12f17113be8 Mon Sep 17 00:00:00 2001
+From a7907975f7d1a23d6b3cc4b82a5a3fba718a0e89 Mon Sep 17 00:00:00 2001
 From: Daryl Seah <daryl.seah@intel.com>
 Date: Fri, 18 Jan 2019 02:11:38 +0000
 Subject: [PATCH] Add ability for ffmpeg to run svt-av1 with svt-hevc
@@ -13,8 +13,8 @@ Signed-off-by: Zhong Li <zhong.li@intel.com>
  configure               |   4 +
  libavcodec/Makefile     |   1 +
  libavcodec/allcodecs.c  |   1 +
- libavcodec/libsvt_av1.c | 512 ++++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 518 insertions(+)
+ libavcodec/libsvt_av1.c | 507 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 513 insertions(+)
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
@@ -79,10 +79,10 @@ index 5739d53..98f0c99 100644
  extern AVCodec ff_libvo_amrwbenc_encoder;
 diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
 new file mode 100644
-index 0000000..60b7df5
+index 0000000..7ecbfdd
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
-@@ -0,0 +1,512 @@
+@@ -0,0 +1,507 @@
 +/*
 +* Scalable Video Technology for AV1 encoder library plugin
 +*
@@ -143,8 +143,6 @@ index 0000000..60b7df5
 +    int qp;
 +
 +    int forced_idr;
-+
-+    int aud;
 +
 +    int tier;
 +    int level;
@@ -484,9 +482,6 @@ index 0000000..60b7df5
 +#define OFFSET(x) offsetof(SvtContext, x)
 +#define VE AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM
 +static const AVOption options[] = {
-+    { "aud", "Include AUD", OFFSET(aud),
-+      AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, VE },
-+
 +    { "hielevel", "Hierarchical prediction levels setting", OFFSET(hierarchical_level),
 +      AV_OPT_TYPE_INT, { .i64 = 4 }, 3, 4, VE , "hielevel"},
 +        { "flat",   NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 1 },  INT_MIN, INT_MAX, VE, "hielevel" },
