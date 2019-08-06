@@ -1,4 +1,4 @@
-From a4984801582cdd13ad6345e3200054b7a07a7ed3 Mon Sep 17 00:00:00 2001
+From 0af42e74b50ac64e38f5450d48c1b9538461f259 Mon Sep 17 00:00:00 2001
 From: Daryl Seah <daryl.seah@intel.com>
 Date: Fri, 18 Jan 2019 02:11:38 +0000
 Subject: [PATCH] Add ability for ffmpeg to run svt-av1
@@ -13,8 +13,8 @@ Signed-off-by: Zhong Li <zhong.li@intel.com>
  configure               |   4 +
  libavcodec/Makefile     |   1 +
  libavcodec/allcodecs.c  |   1 +
- libavcodec/libsvt_av1.c | 509 ++++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 515 insertions(+)
+ libavcodec/libsvt_av1.c | 507 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 513 insertions(+)
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
@@ -79,10 +79,10 @@ index 1b8144a..f7df66c 100644
  extern AVCodec ff_libvo_amrwbenc_encoder;
 diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
 new file mode 100644
-index 0000000..a63b7e6
+index 0000000..68da59b
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
-@@ -0,0 +1,509 @@
+@@ -0,0 +1,507 @@
 +/*
 +* Scalable Video Technology for AV1 encoder library plugin
 +*
@@ -486,8 +486,6 @@ index 0000000..a63b7e6
 +static const AVOption options[] = {
 +    { "hielevel", "Hierarchical prediction levels setting", OFFSET(hierarchical_level),
 +      AV_OPT_TYPE_INT, { .i64 = 4 }, 3, 4, VE , "hielevel"},
-+        { "flat",   NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 1 },  INT_MIN, INT_MAX, VE, "hielevel" },
-+        { "2level", NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 2 },  INT_MIN, INT_MAX, VE, "hielevel" },
 +        { "3level", NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 3 },  INT_MIN, INT_MAX, VE, "hielevel" },
 +        { "4level", NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 4 },  INT_MIN, INT_MAX, VE, "hielevel" },
 +
