@@ -2567,14 +2567,14 @@ void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
             if (palette_size){
                 /* Palette prediction process */
                 void *blk_recon_buf;
-                int32_t recon_strd;
+                int32_t recon_stride;
                 EbPictureBufferDesc *recon_picture_buf =
                     dec_handle->cur_pic_buf[0]->ps_pic_buf;
 
                 derive_blk_pointers(recon_picture_buf, plane_itr,
                     (mi_col >> sub_x) * MI_SIZE,
                     (mi_row >> sub_y) * MI_SIZE,
-                    &blk_recon_buf, &recon_strd, sub_x, sub_y);
+                    &blk_recon_buf, &recon_stride, sub_x, sub_y);
 
                 uint16_t *palette = &nbr_ctx->
                     palette_colors[plane_itr * PALETTE_MAX_SIZE];
@@ -2582,7 +2582,7 @@ void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
                     uint8_t *temp_buf = (uint8_t*)blk_recon_buf;
                     for (int i = 0; i < block_height; i++) {
                         for (int j = 0; j < block_width; j++) {
-                            temp_buf[i * recon_strd + j] =
+                            temp_buf[i * recon_stride + j] =
                                 (uint8_t)palette[color_map[i][j]];
                         }
                     }
@@ -2591,7 +2591,7 @@ void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
                     uint16_t *temp_buf = (uint16_t*)blk_recon_buf;
                     for (int i = 0; i < block_height; i++) {
                         for (int j = 0; j < block_width; j++) {
-                            temp_buf[i * recon_strd + j] =
+                            temp_buf[i * recon_stride + j] =
                                 palette[color_map[i][j]];
                         }
                     }

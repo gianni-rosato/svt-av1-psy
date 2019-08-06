@@ -236,7 +236,7 @@ void svtav1_predict_inter_block(
     int32_t mi_row, int32_t mi_col, int32_t num_planes)
 {
     void *blk_recon_buf;
-    int32_t recon_strd;
+    int32_t recon_stride;
     int32_t sub_x, sub_y;
     int32_t some_use_intra;
 
@@ -273,10 +273,10 @@ void svtav1_predict_inter_block(
 
         derive_blk_pointers(recon_picture_buf, plane,
             mi_col*MI_SIZE >> sub_x, mi_row*MI_SIZE >> sub_y,
-            &blk_recon_buf, &recon_strd, sub_x, sub_y);
+            &blk_recon_buf, &recon_stride, sub_x, sub_y);
 
         svtav1_predict_inter_block_plane(dec_hdl, part_info, plane,
-            0, mi_col*MI_SIZE, mi_row*MI_SIZE, blk_recon_buf, recon_strd,
+            0, mi_col*MI_SIZE, mi_row*MI_SIZE, blk_recon_buf, recon_stride,
             some_use_intra, recon_picture_buf->bit_depth);
 
     }

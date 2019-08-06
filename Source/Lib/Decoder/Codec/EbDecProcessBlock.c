@@ -326,7 +326,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
         for (uint32_t tu = 0; tu < num_tu; tu++)
         {
             void *blk_recon_buf;
-            int32_t recon_strd;
+            int32_t recon_stride;
 
             tx_size = trans_info->tx_size;
             coeffs = dec_mod_ctxt->cur_coeff[plane];
@@ -334,12 +334,12 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
             derive_blk_pointers(recon_picture_buf, plane,
                 ((mi_col >> sub_x) + trans_info->tu_x_offset)*MI_SIZE,
                 ((mi_row >> sub_y) + trans_info->tu_y_offset)*MI_SIZE,
-                &blk_recon_buf, &recon_strd, sub_x, sub_y);
+                &blk_recon_buf, &recon_stride, sub_x, sub_y);
 
             if (!inter_block)
                 svt_av1_predict_intra(dec_mod_ctxt, &part_info, plane,
                     tx_size, dec_mod_ctxt->cur_tile_info, blk_recon_buf,
-                    recon_strd, recon_picture_buf->bit_depth,
+                    recon_stride, recon_picture_buf->bit_depth,
                     trans_info->tu_x_offset, trans_info->tu_y_offset);
 
             n_coeffs = 0;
@@ -370,10 +370,10 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
                     if (recon_picture_buf->bit_depth == EB_8BIT)
                         av1_inv_transform_recon8bit(qcoeffs,
                         (uint8_t *)blk_recon_buf,
-                            recon_strd, tx_size, tx_type, plane, n_coeffs);
+                            recon_stride, tx_size, tx_type, plane, n_coeffs);
                     else
                         av1_inv_transform_recon(qcoeffs,
-                            CONVERT_TO_BYTEPTR(blk_recon_buf), recon_strd,
+                            CONVERT_TO_BYTEPTR(blk_recon_buf), recon_stride,
                             tx_size, recon_picture_buf->bit_depth,
                             tx_type, plane, n_coeffs);
                 }
@@ -385,7 +385,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
             {
                 cfl_store_tx(&part_info, &dec_mod_ctxt->cfl_ctx,
                     trans_info->tu_y_offset, trans_info->tu_x_offset, tx_size,
-                    bsize, color_config, blk_recon_buf, recon_strd);
+                    bsize, color_config, blk_recon_buf, recon_stride);
             }
 
             // increment transform pointer
