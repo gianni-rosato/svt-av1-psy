@@ -49,9 +49,11 @@ using InvRectTxfm2dType1Func = void (*)(const int32_t *input, uint16_t *output,
 using InvRectTxfm2dType2Func = void (*)(const int32_t *input, uint16_t *output,
                                         int32_t stride, TxType tx_type,
                                         TxSize tx_size, int32_t bd);
-using LowbdInvTxfm2dFunc = void (*)(const int32_t *input, uint8_t *output,
-                                    int32_t stride, TxType tx_type,
-                                    TxSize tx_size, int32_t eob);
+using LowbdInvTxfm2dFunc = void (*)(const int32_t *input,
+                                    uint8_t *output_r, int32_t stride_r,
+                                    uint8_t *output_w, int32_t stride_w,
+                                    TxType tx_type, TxSize tx_size,
+                                    int32_t eob);
 typedef struct {
     const char *name;
     InvSqrTxfm2dFun ref_func;
@@ -384,8 +386,14 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
                             static_cast<uint8_t>(output_test_[i * stride_ + j]);
                 }
 
-                target_func_(
-                    input_, lowbd_output_test_, stride_, type, tx_size, eob);
+                target_func_(input_,
+                             lowbd_output_test_,
+                             stride_,
+                             lowbd_output_test_,
+                             stride_,
+                             type,
+                             tx_size,
+                             eob);
                 if (tx_size >= TX_SIZES)
                     lowbd_rect_ref_funcs[tx_size](
                         input_, output_ref_, stride_, type, tx_size, eob, bd_);
@@ -652,8 +660,9 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(static_cast<int>(AOM_BITS_8),
                                          static_cast<int>(AOM_BITS_10))));
 
-extern "C" void eb_av1_lowbd_inv_txfm2d_add_avx2(const int32_t *input,
-    uint8_t *output, int32_t stride, TxType tx_type, TxSize tx_size,
+extern "C" void eb_av1_lowbd_inv_txfm2d_add_avx2(
+    const int32_t *input, uint8_t *output_r, int32_t stride_r,
+    uint8_t *output_w, int32_t stride_w, TxType tx_type, TxSize tx_size,
     int32_t eob);
 
 INSTANTIATE_TEST_CASE_P(

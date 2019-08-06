@@ -3023,17 +3023,13 @@ void inv_transform_recon_copy(
             transform_type,
             component_type,
             eob);
-    } else {
-        uint8_t *pred_buffer_off = pred_buffer + pred_offset;
-        uint8_t *rec_buffer_off = rec_buffer + rec_offset;
 
-        for (uint32_t j = 0; j < height; j++)
-            memcpy(rec_buffer_off + j * rec_stride, pred_buffer_off + j * pred_stride, width);
+    } else {
 
         av1_inv_transform_recon8bit(
             rec_coeff_buffer + coeff_offset,
-            rec_buffer_off,
-            rec_stride,
+            pred_buffer + pred_offset, pred_stride,
+            rec_buffer + rec_offset, rec_stride,
             txsize,
             transform_type,
             component_type,
