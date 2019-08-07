@@ -1024,8 +1024,8 @@ static void Av1EncodeLoop16bit(
                 uint16_t     *predBuffer = ((uint16_t*)predSamples16bit->buffer_y) + pred_luma_offset;
                 av1_inv_transform_recon(
                     ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
-                    CONVERT_TO_BYTEPTR(predBuffer),
-                    predSamples->stride_y,
+                    CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_y,
+                    CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_y,
                     context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                     BIT_INCREMENT_10BIT,
                     txb_ptr->transform_type[PLANE_TYPE_Y],
@@ -1369,8 +1369,8 @@ static void Av1EncodeGenerateRecon16bit(
                 uint16_t     *predBuffer = ((uint16_t*)predSamples->buffer_y) + pred_luma_offset;
                 av1_inv_transform_recon(
                     ((int32_t*)residual16bit->buffer_y) + context_ptr->coded_area_sb,
-                    CONVERT_TO_BYTEPTR(predBuffer),
-                    predSamples->stride_y,
+                    CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_y,
+                    CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_y,
                     context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                     BIT_INCREMENT_10BIT,
                     txb_ptr->transform_type[PLANE_TYPE_Y],
@@ -1399,8 +1399,8 @@ static void Av1EncodeGenerateRecon16bit(
             uint16_t     *predBuffer = ((uint16_t*)predSamples->buffer_cb) + predChromaOffset;
             av1_inv_transform_recon(
                 ((int32_t*)residual16bit->buffer_cb) + context_ptr->coded_area_sb_uv,
-                CONVERT_TO_BYTEPTR(predBuffer),
-                predSamples->stride_cb,
+                CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_cb,
+                CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_cb,
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
@@ -1416,8 +1416,8 @@ static void Av1EncodeGenerateRecon16bit(
             uint16_t     *predBuffer = ((uint16_t*)predSamples->buffer_cr) + predChromaOffset;
             av1_inv_transform_recon(
                 ((int32_t*)residual16bit->buffer_cr) + context_ptr->coded_area_sb_uv,
-                CONVERT_TO_BYTEPTR(predBuffer),
-                predSamples->stride_cr,
+                CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_cr,
+                CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_cr,
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],

@@ -3007,17 +3007,15 @@ void inv_transform_recon_copy(
     PlaneType   component_type,
     uint32_t    eob)
 {
-    if (hbd) {
-        uint16_t *pred_buffer_off = ((uint16_t*) pred_buffer) + pred_offset;
-        uint16_t *rec_buffer_off = ((uint16_t*) rec_buffer) + rec_offset;
+    (void)width;
+    (void)height;
 
-        for (uint32_t j = 0; j < height; j++)
-            memcpy(rec_buffer_off + j * rec_stride, pred_buffer_off + j * pred_stride, sizeof(uint16_t) * width);
+    if (hbd) {
 
         av1_inv_transform_recon(
             rec_coeff_buffer + coeff_offset,
-            CONVERT_TO_BYTEPTR(rec_buffer_off),
-            rec_stride,
+            CONVERT_TO_BYTEPTR(((uint16_t*)pred_buffer) + pred_offset), pred_stride,
+            CONVERT_TO_BYTEPTR(((uint16_t*)rec_buffer) + rec_offset), rec_stride,
             txsize,
             BIT_INCREMENT_10BIT,
             transform_type,
