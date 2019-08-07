@@ -15,7 +15,7 @@ extern const int8_t *eb_inv_txfm_shift_ls[];
 const int32_t *cospi_arr(int32_t n);
 const int32_t *sinpi_arr(int32_t n);
 
-#define ZERO (uint8_t)0U 
+#define ZERO (uint8_t)0U
 #define ONE  (uint8_t)1U
 #define TWO  (uint8_t)2U
 #define THREE (uint8_t)3U
@@ -45,7 +45,7 @@ static INLINE void transpose_16x16_avx512(int32_t stride, const __m512i *in, __m
     TRANSPOSE_4X4_AVX512(in[12 * stride], in[13 * stride], in[14 * stride], in[15 * stride], out1[12], out1[13], out1[14], out1[15]);
 
     __m128i * outptr = (__m128i *)(out + 0 * stride);
-    
+
     //will get first row of transpose matrix from corresponding 4 vectors in out1
     outptr[0] = _mm512_extracti32x4_epi32(out1[0], ZERO);
     outptr[1] = _mm512_extracti32x4_epi32(out1[4], ZERO);
@@ -160,7 +160,7 @@ static INLINE void transpose_16x16_avx512(int32_t stride, const __m512i *in, __m
 
 static void load_buffer_64x64_lower_32x32_avx512(const int32_t *coeff, __m512i *in) {
     int32_t i, j;
-   
+
     __m512i zeroes = _mm512_setzero_si512();
 
     for (i = 0; i < 32; ++i) {
@@ -2713,9 +2713,9 @@ static INLINE void transpose_16nx16m_inv_avx512(const __m512i *in,
 
     const int32_t numcol = height >> 4;
     const int32_t numrow = width >> 4;
-    
+
     __m512i out1[16];
-    
+
     for (int32_t j = 0; j < numrow; j++) {
         for (int32_t i = 0; i < numcol; i++) {
             TRANSPOSE_4X4_AVX512(in[i * width + j + (numrow * 0)], in[i * width + j + (numrow * 1)],
