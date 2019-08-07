@@ -1309,8 +1309,7 @@ uint32_t get_compound_mode_rate(
         else {
 
             assert(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reference_mode != SINGLE_REFERENCE &&
-                is_inter_compound_mode(candidate_ptr->pred_mode ) &&
-                candidate_ptr->motion_mode == SIMPLE_TRANSLATION);
+                is_inter_compound_mode(candidate_ptr->pred_mode ));
             assert(masked_compound_used);
             // compound_diffwtd, wedge
             assert(candidate_ptr->interinter_comp.type == COMPOUND_WEDGE ||

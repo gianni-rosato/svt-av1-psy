@@ -387,6 +387,10 @@ extern "C" {
         int32_t mi_cols, int col);
     void eb_av1_tile_set_row(TileInfo *tile, TilesInfo *tiles_info,
         int32_t mi_rows, int row);
+
+    int32_t eb_aom_count_primitive_subexpfin(uint16_t n, uint16_t k, uint16_t v);
+    int32_t eb_aom_count_primitive_refsubexpfin(uint16_t n, uint16_t k, uint16_t ref, uint16_t v);
+
 #ifdef __cplusplus
 }
 #endif

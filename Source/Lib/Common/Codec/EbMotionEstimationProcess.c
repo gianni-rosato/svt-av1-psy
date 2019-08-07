@@ -20,6 +20,7 @@
 #include "emmintrin.h"
 
 #include "EbTemporalFiltering.h"
+#include "EbGlobalMotionEstimation.h"
 
 /* --32x32-
 |00||01|
@@ -241,6 +242,18 @@ EbErrorType signal_derivation_me_kernel_oq(
         context_ptr->me_context_ptr->me_search_method = (enc_mode <= ENC_M1) ?
         FULL_SAD_SEARCH :
         SUB_SAD_SEARCH;
+
+    if (sequence_control_set_ptr->static_config.enable_global_motion == EB_TRUE)
+    {
+        if (enc_mode == ENC_M0
+            && sequence_control_set_ptr->encoder_bit_depth == EB_8BIT)
+            context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
+        else
+            context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+    }
+    else
+        context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+
     return return_error;
 };
 #else
@@ -341,6 +354,18 @@ EbErrorType signal_derivation_me_kernel_oq(
     context_ptr->me_context_ptr->me_search_method = (picture_control_set_ptr->enc_mode <= ENC_M1) ?
         FULL_SAD_SEARCH :
         SUB_SAD_SEARCH;
+
+    if (sequence_control_set_ptr->static_config.enable_global_warped_motion == EB_TRUE)
+    {
+        if (enc_mode == ENC_M0
+            && sequence_control_set_ptr->encoder_bit_depth == EB_8BIT)
+            context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
+        else
+            context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+    }
+    else
+        context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+
     return return_error;
 };
 #endif
@@ -826,12 +851,22 @@ void* motion_estimation_kernel(void *input_ptr)
         }
         if (inputResultsPtr->task_type == 0)
         {
-
             // ME Kernel Signal(s) derivation
             signal_derivation_me_kernel_oq(
                 sequence_control_set_ptr,
                 picture_control_set_ptr,
                 context_ptr);
+
+#if GLOBAL_WARPED_MOTION
+            // Global motion estimation
+            // Compute only for the first fragment.
+            // TODO: create an other kernel ?
+            if (context_ptr->me_context_ptr->compute_global_motion
+                && inputResultsPtr->segment_index == 0)
+                global_motion_estimation(picture_control_set_ptr,
+                                         context_ptr->me_context_ptr,
+                                         input_picture_ptr);
+#endif
 
             // Segments
             segment_index = inputResultsPtr->segment_index;

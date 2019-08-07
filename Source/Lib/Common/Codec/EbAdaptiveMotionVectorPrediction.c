@@ -22,6 +22,7 @@
 #include "EbSvtAv1.h"
 #include "EbModeDecisionProcess.h"
 #include "EbCommonUtils.h"
+#include "EbEntropyCoding.h"
 
 #define UNUSED_FUNC
 
@@ -259,7 +260,9 @@ static void add_ref_mv_candidate(
             if (candidate->block_mi.ref_frame[ref] == rf[0]) {
                 IntMv this_refmv;
 #if USE_CUR_GM_REFMV    //CHKN this should not be used for TRANSLATION ME model
-                if (is_global_mv_block(candidate_mi, gm_params[rf[0]].wmtype))
+                if (is_global_mv_block(candidate->block_mi.mode,
+                                       candidate->block_mi.sb_type,
+                                       gm_params[rf[0]].wmtype))
                     this_refmv = gm_mv_candidates[0];
                 else
 #endif  // USE_CUR_GM_REFMV
@@ -295,7 +298,9 @@ static void add_ref_mv_candidate(
 
             for (ref = 0; ref < 2; ++ref) {
 #if USE_CUR_GM_REFMV
-                if (is_global_mv_block(candidate_mi, gm_params[rf[ref]].wmtype))
+                if (is_global_mv_block(candidate->block_mi.mode,
+                                       candidate->block_mi.sb_type,
+                                       gm_params[rf[ref]].wmtype))
                     this_refmv[ref] = gm_mv_candidates[ref];
                 else
 #endif  // USE_CUR_GM_REFMV
@@ -321,6 +326,7 @@ static void add_ref_mv_candidate(
     }
 }
 }
+
 static void scan_row_mbmi(const Av1Common *cm, const MacroBlockD *xd,
     int32_t mi_row, int32_t mi_col,
     const MvReferenceFrame rf[2], int32_t row_offset,
@@ -329,7 +335,7 @@ static void scan_row_mbmi(const Av1Common *cm, const MacroBlockD *xd,
     uint8_t ref_match_count[MODE_CTX_REF_FRAMES],
     uint8_t newmv_count[MODE_CTX_REF_FRAMES],
 #if USE_CUR_GM_REFMV
-    IntMv *gm_mv_candidates,
+    IntMv *gm_mv_candidates, const EbWarpedMotionParams *gm_params,
 #endif  // USE_CUR_GM_REFMV
     int32_t max_row_offset, int32_t *processed_rows) {
     int32_t end_mi = AOMMIN(xd->n8_w, cm->mi_cols - mi_col);
@@ -373,7 +379,7 @@ static void scan_row_mbmi(const Av1Common *cm, const MacroBlockD *xd,
         add_ref_mv_candidate(candidate_mi, candidate, rf, refmv_count,
             ref_match_count, newmv_count, ref_mv_stack, len,
 #if USE_CUR_GM_REFMV
-            gm_mv_candidates, cm->global_motion,
+            gm_mv_candidates, gm_params,
 #endif  // USE_CUR_GM_REFMV
             col_offset + i, weight);
 
@@ -389,7 +395,7 @@ static void scan_col_mbmi(const Av1Common *cm, const MacroBlockD *xd,
     uint8_t ref_match_count[MODE_CTX_REF_FRAMES],
     uint8_t newmv_count[MODE_CTX_REF_FRAMES],
 #if USE_CUR_GM_REFMV
-    IntMv *gm_mv_candidates,
+    IntMv *gm_mv_candidates, const EbWarpedMotionParams *gm_params,
 #endif  // USE_CUR_GM_REFMV
     int32_t max_col_offset, int32_t *processed_cols) {
     int32_t end_mi = AOMMIN(xd->n8_h, cm->mi_rows - mi_row);
@@ -432,7 +438,7 @@ static void scan_col_mbmi(const Av1Common *cm, const MacroBlockD *xd,
         add_ref_mv_candidate(candidate_mi, candidate, rf, refmv_count,
             ref_match_count, newmv_count, ref_mv_stack, len,
 #if USE_CUR_GM_REFMV
-            gm_mv_candidates, cm->global_motion,
+            gm_mv_candidates, gm_params,
 #endif  // USE_CUR_GM_REFMV
             col_offset, weight);
 
@@ -448,7 +454,7 @@ static void scan_blk_mbmi(const Av1Common *cm, const MacroBlockD *xd,
     uint8_t ref_match_count[MODE_CTX_REF_FRAMES],
     uint8_t newmv_count[MODE_CTX_REF_FRAMES],
 #if USE_CUR_GM_REFMV
-    IntMv *gm_mv_candidates,
+    IntMv *gm_mv_candidates, const EbWarpedMotionParams *gm_params,
 #endif  // USE_CUR_GM_REFMV
     uint8_t refmv_count[MODE_CTX_REF_FRAMES]) {
     const TileInfo *const tile = &xd->tile;
@@ -466,7 +472,7 @@ static void scan_blk_mbmi(const Av1Common *cm, const MacroBlockD *xd,
         add_ref_mv_candidate(candidate_mi, candidate, rf, refmv_count,
             ref_match_count, newmv_count, ref_mv_stack, len,
 #if USE_CUR_GM_REFMV
-            gm_mv_candidates, cm->global_motion,
+            gm_mv_candidates, gm_params,
 #endif  // USE_CUR_GM_REFMV
             mi_pos.col, 2);
     }  // Analyze a single 8x8 block motion information.
@@ -660,7 +666,7 @@ void setup_ref_mv_list(
     uint8_t refmv_count[MODE_CTX_REF_FRAMES],
     CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
     IntMv mv_ref_list[][MAX_MV_REF_CANDIDATES],
-    IntMv *gm_mv_candidates,
+    IntMv *gm_mv_candidates, const EbWarpedMotionParams *gm_params,
     int32_t mi_row, int32_t mi_col, int16_t *mode_context)
 {
     const int32_t bs = AOMMAX(xd->n8_w, xd->n8_h);
@@ -710,7 +716,7 @@ void setup_ref_mv_list(
         scan_row_mbmi(cm, xd, mi_row, mi_col, rf, -1, ref_mv_stack, refmv_count,
             row_match_count, newmv_count,
 #if USE_CUR_GM_REFMV
-            gm_mv_candidates,
+            gm_mv_candidates, gm_params,
 #endif  // USE_CUR_GM_REFMV
             max_row_offset, &processed_rows);
 
@@ -720,7 +726,7 @@ void setup_ref_mv_list(
         scan_col_mbmi(cm, xd, mi_row, mi_col, rf, -1, ref_mv_stack, refmv_count,
             col_match_count, newmv_count,
 #if USE_CUR_GM_REFMV
-            gm_mv_candidates,
+            gm_mv_candidates, gm_params,
 #endif  // USE_CUR_GM_REFMV
             max_col_offset, &processed_cols);
 
@@ -731,7 +737,7 @@ void setup_ref_mv_list(
         scan_blk_mbmi(cm, xd, mi_row, mi_col, rf, -1, xd->n8_w, ref_mv_stack,
             row_match_count, newmv_count,
 #if USE_CUR_GM_REFMV
-            gm_mv_candidates,
+            gm_mv_candidates, gm_params,
 #endif  // USE_CUR_GM_REFMV
             refmv_count);
 
@@ -801,7 +807,7 @@ void setup_ref_mv_list(
     scan_blk_mbmi(cm, xd, mi_row, mi_col, rf, -1, -1, ref_mv_stack,
         row_match_count, dummy_newmv_count,
 #if USE_CUR_GM_REFMV
-        gm_mv_candidates,
+        gm_mv_candidates, gm_params,
 #endif  // USE_CUR_GM_REFMV
         refmv_count);
 
@@ -815,7 +821,7 @@ void setup_ref_mv_list(
             scan_row_mbmi(cm, xd, mi_row, mi_col, rf, row_offset, ref_mv_stack,
                 refmv_count, row_match_count, dummy_newmv_count,
 #if USE_CUR_GM_REFMV
-                gm_mv_candidates,
+                gm_mv_candidates, gm_params,
 #endif  // USE_CUR_GM_REFMV
                 max_row_offset, &processed_rows);
 
@@ -824,7 +830,7 @@ void setup_ref_mv_list(
             scan_col_mbmi(cm, xd, mi_row, mi_col, rf, col_offset, ref_mv_stack,
                 refmv_count, col_match_count, dummy_newmv_count,
 #if USE_CUR_GM_REFMV
-                gm_mv_candidates,
+                gm_mv_candidates, gm_params,
 #endif  // USE_CUR_GM_REFMV
                 max_col_offset, &processed_cols);
     }
@@ -1122,43 +1128,79 @@ void setup_ref_mv_list(
     (void)nearest_match;
 }
 
-static INLINE IntMv gm_get_motion_vector(
+static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
+  if (allow_hp)
+    return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 3);
+  else
+    return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
+}
+
+static INLINE int block_center_x(int mi_col, BlockSize bs) {
+  const int bw = block_size_wide[bs];
+  return mi_col * MI_SIZE + bw / 2 - 1;
+}
+
+static INLINE int block_center_y(int mi_row, BlockSize bs) {
+  const int bh = block_size_high[bs];
+  return mi_row * MI_SIZE + bh / 2 - 1;
+}
+
+IntMv gm_get_motion_vector_enc(
     const EbWarpedMotionParams *gm,
     int32_t allow_hp,
     BlockSize bsize,
     int32_t mi_col, int32_t mi_row,
     int32_t is_integer)
-
 {
     IntMv res;
 
-    res.as_int = 0;
-
-    (void)bsize;
-    (void)mi_col;
-    (void)mi_row;
-    (void)allow_hp;
-
-    if (gm->wmtype <= TRANSLATION) {
-        // All global motion vectors are stored with WARPEDMODEL_PREC_BITS (16)
-        // bits of fractional precision. The offset for a translation is stored in
-        // entries 0 and 1. For translations, all but the top three (two if
-        // cm->allow_high_precision_mv is false) fractional bits are always zero.
-        //
-        // After the right shifts, there are 3 fractional bits of precision. If
-        // allow_hp is false, the bottom bit is always zero (so we don't need a
-        // call to convert_to_trans_prec here)
-        res.as_mv.row = (int16_t)(gm->wmmat[0] >> GM_TRANS_ONLY_PREC_DIFF);
-        res.as_mv.col = (int16_t)(gm->wmmat[1] >> GM_TRANS_ONLY_PREC_DIFF);
-        assert(IMPLIES(1 & (res.as_mv.row | res.as_mv.col), allow_hp));
-
-        if (is_integer)
-            integer_mv_precision(&res.as_mv);
-        return res;
+    if (gm->wmtype == IDENTITY) {
+      res.as_int = 0;
+      return res;
     }
-    /*else
-        printf("ERROR - INVALID GLOBAL MV - GLOBAL ROTATION AND AFFINE ARE NOT SUPPORTED FOR NOW!!");*/
 
+    const int32_t *mat = gm->wmmat;
+    int x, y, tx, ty;
+
+    if (gm->wmtype == TRANSLATION) {
+      // All global motion vectors are stored with WARPEDMODEL_PREC_BITS (16)
+      // bits of fractional precision. The offset for a translation is stored in
+      // entries 0 and 1. For translations, all but the top three (two if
+      // cm->allow_high_precision_mv is false) fractional bits are always zero.
+      //
+      // After the right shifts, there are 3 fractional bits of precision. If
+      // allow_hp is false, the bottom bit is always zero (so we don't need a
+      // call to convert_to_trans_prec here)
+      res.as_mv.row = gm->wmmat[0] >> GM_TRANS_ONLY_PREC_DIFF;
+      res.as_mv.col = gm->wmmat[1] >> GM_TRANS_ONLY_PREC_DIFF;
+      assert(IMPLIES(1 & (res.as_mv.row | res.as_mv.col), allow_hp));
+      if (is_integer) {
+        integer_mv_precision(&res.as_mv);
+      }
+      return res;
+    }
+
+    x = block_center_x(mi_col, bsize);
+    y = block_center_y(mi_row, bsize);
+
+    if (gm->wmtype == ROTZOOM) {
+      assert(gm->wmmat[5] == gm->wmmat[2]);
+      assert(gm->wmmat[4] == -gm->wmmat[3]);
+    }
+
+    const int xc =
+        (mat[2] - (1 << WARPEDMODEL_PREC_BITS)) * x + mat[3] * y + mat[0];
+    const int yc =
+        mat[4] * x + (mat[5] - (1 << WARPEDMODEL_PREC_BITS)) * y + mat[1];
+    tx = convert_to_trans_prec(allow_hp, xc);
+    ty = convert_to_trans_prec(allow_hp, yc);
+
+    res.as_mv.row = ty;
+    res.as_mv.col = tx;
+
+    if (is_integer) {
+      integer_mv_precision(&res.as_mv);
+    }
     return res;
 }
 
@@ -1231,12 +1273,12 @@ void generate_av1_mvp_table(
 
         if (ref_frame != INTRA_FRAME) {
             zeromv[0].as_int =
-                gm_get_motion_vector(&picture_control_set_ptr->parent_pcs_ptr->global_motion[rf[0]],
+                gm_get_motion_vector_enc(&picture_control_set_ptr->parent_pcs_ptr->global_motion[rf[0]],
                     frm_hdr->allow_high_precision_mv, bsize, mi_col, mi_row,
                     frm_hdr->force_integer_mv)
                 .as_int;
             zeromv[1].as_int = (rf[1] != NONE_FRAME)
-                ? gm_get_motion_vector(&picture_control_set_ptr->parent_pcs_ptr->global_motion[rf[1]],
+                ? gm_get_motion_vector_enc(&picture_control_set_ptr->parent_pcs_ptr->global_motion[rf[1]],
                     frm_hdr->allow_high_precision_mv,
                     bsize, mi_col, mi_row,
                     frm_hdr->force_integer_mv)
@@ -1245,6 +1287,29 @@ void generate_av1_mvp_table(
         }
         else
             zeromv[0].as_int = zeromv[1].as_int = 0;
+
+        IntMv gm_mv[2];
+
+        if (ref_frame == INTRA_FRAME) {
+          gm_mv[0].as_int = gm_mv[1].as_int = 0;
+        } else {
+          if (ref_frame < REF_FRAMES) {
+            gm_mv[0] = gm_get_motion_vector_enc(
+                &picture_control_set_ptr->parent_pcs_ptr->global_motion[ref_frame], frm_hdr->allow_high_precision_mv, bsize,
+                mi_col, mi_row, frm_hdr->force_integer_mv);
+            gm_mv[1].as_int = 0;
+          } else {
+            MvReferenceFrame rf[2];
+            av1_set_ref_frame(rf, ref_frame);
+            gm_mv[0] = gm_get_motion_vector_enc(
+                &picture_control_set_ptr->parent_pcs_ptr->global_motion[rf[0]], frm_hdr->allow_high_precision_mv, bsize, mi_col,
+                mi_row, frm_hdr->force_integer_mv);
+            gm_mv[1] = gm_get_motion_vector_enc(
+                &picture_control_set_ptr->parent_pcs_ptr->global_motion[rf[1]], frm_hdr->allow_high_precision_mv, bsize, mi_col,
+                mi_row, frm_hdr->force_integer_mv);
+          }
+        }
+
         setup_ref_mv_list(
             picture_control_set_ptr,
             cm,
@@ -1253,7 +1318,7 @@ void generate_av1_mvp_table(
             xd->ref_mv_count,
             context_ptr->md_local_cu_unit[blk_geom->blkidx_mds].ed_ref_mv_stack,
             cu_ptr->ref_mvs,
-            zeromv,
+            gm_mv, picture_control_set_ptr->parent_pcs_ptr->global_motion,
             mi_row,
             mi_col,
             cu_ptr->inter_mode_ctx);

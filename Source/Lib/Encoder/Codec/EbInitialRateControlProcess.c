@@ -215,9 +215,36 @@ void CheckForNonUniformMotionVectorField(
     }
 }
 
+
 void DetectGlobalMotion(
     PictureParentControlSet    *picture_control_set_ptr)
 {
+#if GLOBAL_WARPED_MOTION
+    uint32_t numOfListToSearch = (picture_control_set_ptr->slice_type == P_SLICE)
+        ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
+
+    for (uint32_t listIndex = REF_LIST_0; listIndex <= numOfListToSearch; ++listIndex) {
+
+        uint32_t num_of_ref_pic_to_search;
+        if (picture_control_set_ptr->is_alt_ref == EB_TRUE)
+            num_of_ref_pic_to_search = 1;
+        else
+            num_of_ref_pic_to_search = picture_control_set_ptr->slice_type == P_SLICE
+                ? picture_control_set_ptr->ref_list0_count
+                : listIndex == REF_LIST_0
+                    ? picture_control_set_ptr->ref_list0_count
+                    : picture_control_set_ptr->ref_list1_count;
+
+        // Ref Picture Loop
+        for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
+             ++ref_pic_index)
+        {
+            picture_control_set_ptr->is_global_motion[listIndex][ref_pic_index] = EB_FALSE;
+            if (picture_control_set_ptr->global_motion_estimation[listIndex][ref_pic_index].wmtype > TRANSLATION)
+                picture_control_set_ptr->is_global_motion[listIndex][ref_pic_index] = EB_TRUE;
+        }
+    }
+#else
     uint32_t    sb_count;
     uint32_t    picture_width_in_sb = (picture_control_set_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
     uint32_t    sb_origin_x;
@@ -342,6 +369,7 @@ void DetectGlobalMotion(
             picture_control_set_ptr->tiltMvy = (int16_t)(yTiltMvSum / totalTiltLcus);
         }
     }
+#endif
 }
 
 /************************************************

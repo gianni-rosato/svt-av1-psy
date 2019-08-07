@@ -3035,16 +3035,22 @@ EB_EXTERN void av1_encode_pass(
                             pu_ptr->motion_mode == WARPED_CAUSAL)
                         {
                             warped_motion_prediction(
+                                picture_control_set_ptr,
                                 &context_ptr->mv_unit,
+                                cu_ptr->prediction_unit_array[0].ref_frame_type,
+                                cu_ptr->prediction_unit_array[0].compound_idx,
+                                &cu_ptr->prediction_unit_array[0].interinter_comp,
                                 context_ptr->cu_origin_x,
                                 context_ptr->cu_origin_y,
                                 cu_ptr,
                                 blk_geom,
                                 is16bit ? refObj0->reference_picture16bit : refObj0->reference_picture,
+                                ref_idx_l1 >= 0 ? is16bit ? refObj1->reference_picture16bit : refObj1->reference_picture : NULL,
                                 recon_buffer,
                                 context_ptr->cu_origin_x,
                                 context_ptr->cu_origin_y,
-                                &cu_ptr->prediction_unit_array[0].wm_params,
+                                &cu_ptr->prediction_unit_array[0].wm_params_l0,
+                                &cu_ptr->prediction_unit_array[0].wm_params_l1,
                                 (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
                                 EB_TRUE);
                         }

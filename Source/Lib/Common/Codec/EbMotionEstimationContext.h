@@ -431,6 +431,8 @@ extern "C" {
         EbBool                        half_pel_mode;
         EbBool                        quarter_pel_mode;
 
+        EbBool                        compute_global_motion;
+
         // ME
         uint16_t                      search_area_width;
         uint16_t                      search_area_height;

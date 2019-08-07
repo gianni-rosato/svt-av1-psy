@@ -247,6 +247,11 @@ typedef struct EbConfig
     EbBool                  enable_warped_motion;
 
     /****************************************
+     * Global Motion
+     ****************************************/
+    EbBool                  enable_global_motion;
+
+    /****************************************
      * OBMC
      ****************************************/
     EbBool                  enable_obmc;
