@@ -327,7 +327,6 @@ static INLINE void build_obmc_inter_pred_left(EbDecHandle *dec_handle,
                 tmp_recon_stride, CONVERT_TO_BYTEPTR(tmp_recon_buf),
                 tmp_recon_stride,CONVERT_TO_BYTEPTR(left_buf), left_stride,
                 mask, bw, bh, recon_picture_buf->bit_depth);
-
         else
             aom_blend_a64_hmask_c(tmp_recon_buf, tmp_recon_stride, tmp_recon_buf,
                 tmp_recon_stride, left_buf, left_stride, mask, bw, bh);

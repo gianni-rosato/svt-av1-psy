@@ -2422,7 +2422,12 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
          frame_header->CDEF_params.cdef_uv_strength[0]);
 
     /*Calling cdef frame level function*/
-    if (do_cdef) svt_cdef_frame(dec_handle_ptr);
+    if (do_cdef) {
+        if(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf->bit_depth == EB_8BIT)
+            svt_cdef_frame(dec_handle_ptr);
+        else
+            svt_cdef_frame_hbd(dec_handle_ptr);
+    }
 
     /* Save CDF */
     if (frame_header->disable_frame_end_update_cdf)
