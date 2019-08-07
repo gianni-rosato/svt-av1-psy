@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
 // Internal Marcos
-//#define NON_AVX512_SUPPORT
+#define NON_AVX512_SUPPORT
 
 #define INCOMPLETE_SB_FIX                 1 // Handle the incomplete SBs properly based on the standard and consider all allowed blocks
 #define QPS_TUNING                        1 // Tune the QPS algorithm to consider ALR_REF filtering and movement of the pictures
