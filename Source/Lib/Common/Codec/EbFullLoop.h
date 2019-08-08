@@ -54,7 +54,7 @@ extern "C" {
         ModeDecisionContext          *context_ptr,
         PictureControlSet            *picture_control_set_ptr);
 
-    void inv_transform_recon_copy(
+    void inv_transform_recon_wrapper(
         uint8_t    *pred_buffer,
         uint32_t    pred_offset,
         uint32_t    pred_stride,
@@ -63,8 +63,6 @@ extern "C" {
         uint32_t    rec_stride,
         int32_t    *rec_coeff_buffer,
         uint32_t    coeff_offset,
-        uint32_t    width,
-        uint32_t    height,
         EbBool      hbd,
         TxSize      txsize,
         TxType      transform_type,

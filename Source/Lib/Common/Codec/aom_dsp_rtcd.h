@@ -2866,7 +2866,7 @@ extern "C" {
         eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_c;
         if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_avx2;
         //av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_c;
-        if (flags & HAS_SSE2) eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
+        /*if (flags & HAS_SSE2)*/ eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
 
         ResidualKernel = residual_kernel_c;
         if (flags & HAS_AVX2) ResidualKernel = ResidualKernel_avx2;
@@ -3157,7 +3157,7 @@ extern "C" {
         if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_8x8 = eb_aom_smooth_h_predictor_8x8_ssse3;
         eb_aom_smooth_h_predictor_4x4 = eb_aom_smooth_h_predictor_4x4_c;
         if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_4x4 = eb_aom_smooth_h_predictor_4x4_ssse3;
-
+        eb_aom_smooth_v_predictor_16x32 = eb_aom_smooth_v_predictor_16x32_c;
         if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x32 = eb_aom_smooth_v_predictor_16x32_ssse3;
         eb_aom_smooth_v_predictor_16x4 = eb_aom_smooth_v_predictor_16x4_c;
         if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x4 = eb_aom_smooth_v_predictor_16x4_ssse3;
@@ -3833,7 +3833,7 @@ extern "C" {
         eb_aom_highbd_dc_top_predictor_64x64 = eb_aom_highbd_dc_top_predictor_64x64_c;
         eb_aom_highbd_dc_top_predictor_8x16 = eb_aom_highbd_dc_top_predictor_8x16_c;
         if (flags & HAS_SSE2) eb_aom_highbd_dc_top_predictor_8x16 = eb_aom_highbd_dc_top_predictor_8x16_sse2;
-        if (flags & HAS_SSE2) eb_aom_highbd_dc_top_predictor_8x32 = eb_aom_highbd_dc_top_predictor_8x32_c;
+        /*if (flags & HAS_SSE2) */eb_aom_highbd_dc_top_predictor_8x32 = eb_aom_highbd_dc_top_predictor_8x32_c;
         eb_aom_highbd_dc_top_predictor_8x4 = eb_aom_highbd_dc_top_predictor_8x4_c;
         if (flags & HAS_SSE2) eb_aom_highbd_dc_top_predictor_8x4 = eb_aom_highbd_dc_top_predictor_8x4_sse2;
         eb_aom_highbd_dc_top_predictor_8x8 = eb_aom_highbd_dc_top_predictor_8x8_c;
