@@ -1926,7 +1926,7 @@ int32_t av1_quantize_inv_quantize(
     EbBool is_inter = (pred_mode >= NEARESTMV);
 
     EbBool perform_rdoq = (md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
-    perform_rdoq = perform_rdoq && !picture_control_set_ptr->hbd_mode_decision;
+    perform_rdoq = perform_rdoq && !picture_control_set_ptr->hbd_mode_decision && !bit_increment;
 
     // Hsan: set to FALSE until adding x86 quantize_fp
     EbBool perform_quantize_fp = picture_control_set_ptr->enc_mode == ENC_M0 ? EB_TRUE: EB_FALSE;
