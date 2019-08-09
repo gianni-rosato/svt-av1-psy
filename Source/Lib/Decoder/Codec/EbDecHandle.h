@@ -70,6 +70,9 @@ typedef struct CurFrameBuf {
     int32_t         *delta_q;
     int32_t         *delta_lf;
 
+    // Loop Restoration Unit
+    RestorationUnitInfo    *lr_unit[MAX_MB_PLANE];
+
     /* Tile Map at SB level : TODO. Can be removed? */
     uint8_t         *tile_map_sb;
 
@@ -161,6 +164,8 @@ typedef struct EbDecHandle {
     void   *pv_dec_mod_ctxt;
 
     void   *pv_lf_ctxt;
+
+    void   *pv_lr_ctxt;
 
     /** Pointer to Picture manager structure **/
     void   *pv_pic_mgr;

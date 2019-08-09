@@ -19,10 +19,6 @@
 #include "EbEncDecProcess.h"
 #include "aom_dsp_rtcd.h"
 
- void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
-    int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
-    int32_t vsize, int32_t hsize);
-
 extern int16_t eb_av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 //-------memory stuff

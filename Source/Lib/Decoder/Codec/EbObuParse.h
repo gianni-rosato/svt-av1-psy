@@ -171,13 +171,13 @@ typedef struct ParseCtxt {
     /*!< Number of TUs in block or force split block */
     uint8_t         num_tus[MAX_MB_PLANE][4 /*Max force TU split*/];
 
+    /*!< Reference Loop Restoration Unit  */
+    RestorationUnitInfo ref_lr_unit[MAX_MB_PLANE];
 } ParseCtxt;
 
 int get_qindex(SegmentationParams *seg_params, int segment_id, int base_q_idx);
-void parse_super_block(EbDecHandle *dec_handle,
-    uint32_t blk_row, uint32_t blk_col, SBInfo *sbInfo,
-    int32_t ref_sgr_xqd[MAX_MB_PLANE][2],
-    int32_t ref_lr_wiener[MAX_MB_PLANE][2][3]);
+void parse_super_block(EbDecHandle *dec_handle, uint32_t blk_row,
+                       uint32_t blk_col, SBInfo *sbInfo);
 
 void svt_setup_motion_field(EbDecHandle *dec_handle);
 

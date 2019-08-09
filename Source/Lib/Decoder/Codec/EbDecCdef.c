@@ -109,7 +109,7 @@ void svt_cdef_frame(EbDecHandle *dec_handle) {
         MI_SIZE_64X64;
     const int32_t nhfb = (frame_info->mi_cols + MI_SIZE_64X64 - 1) /
         MI_SIZE_64X64;
-    row_cdef = (uint8_t *)aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
+    row_cdef = (uint8_t *)eb_aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
     assert(row_cdef != NULL);
     memset(row_cdef, 1, sizeof(*row_cdef) * (nhfb + 2) * 2);
     prev_row_cdef = row_cdef + 1;
@@ -135,10 +135,10 @@ void svt_cdef_frame(EbDecHandle *dec_handle) {
             0, 0, (void *)&curr_blk_recon_buf[pli], &curr_recon_strd[pli],
             sub_x, sub_y);
         /*Allocating memory for line buffes->to fill from src if needed*/
-        linebuf[pli] = (uint16_t *)aom_malloc(sizeof(*linebuf) *
+        linebuf[pli] = (uint16_t *)eb_aom_malloc(sizeof(*linebuf) *
             CDEF_VBORDER * stride);
         /*Allocating memory for col buffes->to fill from src if needed*/
-        colbuf[pli] = (uint16_t *)aom_malloc(sizeof(*colbuf)  *
+        colbuf[pli] = (uint16_t *)eb_aom_malloc(sizeof(*colbuf)  *
             ((CDEF_BLOCKSIZE << mi_high_l2[pli]) + 2 * CDEF_VBORDER) *
             CDEF_HBORDER);
     }
@@ -389,7 +389,7 @@ void svt_cdef_frame(EbDecHandle *dec_handle) {
                         CDEF_VERY_LARGE);
                 }
                 /*Cdef filter calling function for 8 bit depth */
-                cdef_filter_fb(&rec_buff[rec_stride *
+                eb_cdef_filter_fb(&rec_buff[rec_stride *
                     (MI_SIZE_64X64 * fbr << mi_high_l2[pli])
                     + (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])], NULL,
                     rec_stride,&src[CDEF_VBORDER*CDEF_BSTRIDE+CDEF_HBORDER],
@@ -404,10 +404,10 @@ void svt_cdef_frame(EbDecHandle *dec_handle) {
         prev_row_cdef = curr_row_cdef;
         curr_row_cdef = tmp;
     }
-    aom_free(row_cdef);
+    eb_aom_free(row_cdef);
     for (int32_t pli = 0; pli < num_planes; pli++) {
-        aom_free(linebuf[pli]);
-        aom_free(colbuf[pli]);
+        eb_aom_free(linebuf[pli]);
+        eb_aom_free(colbuf[pli]);
     }
 }
 
@@ -438,7 +438,7 @@ void svt_cdef_frame_hbd(EbDecHandle *dec_handle) {
         MI_SIZE_64X64;
     const int32_t nhfb = (frame_info->mi_cols + MI_SIZE_64X64 - 1) /
         MI_SIZE_64X64;
-    row_cdef = (uint8_t *)aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
+    row_cdef = (uint8_t *)eb_aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
     assert(row_cdef != NULL);
     memset(row_cdef, 1, sizeof(*row_cdef) * (nhfb + 2) * 2);
     prev_row_cdef = row_cdef + 1;
@@ -464,10 +464,10 @@ void svt_cdef_frame_hbd(EbDecHandle *dec_handle) {
             0, 0, (void *)&curr_blk_recon_buf[pli], &curr_recon_strd[pli],
             sub_x, sub_y);
         /*Allocating memory for line buffes->to fill from src if needed*/
-        linebuf[pli] = (uint16_t *)aom_malloc(sizeof(*linebuf) *
+        linebuf[pli] = (uint16_t *)eb_aom_malloc(sizeof(*linebuf) *
             CDEF_VBORDER * stride);
         /*Allocating memory for col buffes->to fill from src if needed*/
-        colbuf[pli] = (uint16_t *)aom_malloc(sizeof(*colbuf)  *
+        colbuf[pli] = (uint16_t *)eb_aom_malloc(sizeof(*colbuf)  *
             ((CDEF_BLOCKSIZE << mi_high_l2[pli]) + 2 * CDEF_VBORDER) *
             CDEF_HBORDER);
     }
@@ -718,7 +718,7 @@ void svt_cdef_frame_hbd(EbDecHandle *dec_handle) {
                         CDEF_VERY_LARGE);
                 }
                 /*Cdef filter calling function for HBD*/
-                cdef_filter_fb(NULL, &rec_buff[rec_stride *
+                eb_cdef_filter_fb(NULL, &rec_buff[rec_stride *
                     (MI_SIZE_64X64 * fbr << mi_high_l2[pli])
                     + (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
                     rec_stride, &src[CDEF_VBORDER*CDEF_BSTRIDE + CDEF_HBORDER],
@@ -734,9 +734,9 @@ void svt_cdef_frame_hbd(EbDecHandle *dec_handle) {
         prev_row_cdef = curr_row_cdef;
         curr_row_cdef = tmp;
     }
-    aom_free(row_cdef);
+    eb_aom_free(row_cdef);
     for (int32_t pli = 0; pli < num_planes; pli++) {
-        aom_free(linebuf[pli]);
-        aom_free(colbuf[pli]);
+        eb_aom_free(linebuf[pli]);
+        eb_aom_free(colbuf[pli]);
     }
 }

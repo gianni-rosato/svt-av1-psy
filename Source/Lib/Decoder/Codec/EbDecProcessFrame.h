@@ -55,6 +55,28 @@ typedef struct DecModCtxt {
 
 } DecModCtxt;
 
+typedef struct LRCtxt {
+    /** Decoder Handle */
+    void *dec_handle_ptr;
+
+    /* Wiener and SGR Filter holder */
+    RestorationUnitInfo    *lr_unit[MAX_MB_PLANE];
+
+    /* Buffer to store deblocked line buffer around stripe boundary */
+    RestorationStripeBoundaries boundaries[MAX_MB_PLANE];
+
+    /* Used to store CDEF line buffer around stripe boundary */
+    RestorationLineBuffers *rlbs;
+
+    /* Scratch buffer to hold LR output */
+    uint8_t *dst;
+    uint16_t dst_stride;
+
+    /* Pointer to a scratch buffer used by self-guided restoration */
+    int32_t *rst_tmpbuf;
+}LRCtxt;
+
+
 void decode_super_block(DecModCtxt *dec_mod_ctxt,
                         uint32_t mi_row, uint32_t mi_col,
                         SBInfo *sbInfo);

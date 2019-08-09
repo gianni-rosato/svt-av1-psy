@@ -109,23 +109,6 @@ static int div_mult[32] = { 0,    16384, 8192, 5461, 4096, 3276, 2730, 2340,
                             1024, 963,   910,  862,  819,  780,  744,  712,
                             682,  655,   630,  606,  585,  564,  546,  528 };
 
-
-int wiener_taps_min[3] = { -5, -23, -17 };
-int wiener_taps_max[3] = { 10, 8, 46 };
-int wiener_taps_k[3] = { 1, 2, 3 };
-int sgrproj_xqd_min[2] = { -96, -32 };
-int sgrproj_xqd_max[2] = { 31, 95 };
-
-/* Harmonize with encoder*/
-int sgr_params_dec[(1 << SGRPROJ_PARAMS_BITS)][4] = {
-    { 2, 12, 1, 4 }, { 2, 15, 1, 6 }, { 2, 18, 1, 8 }, { 2, 21, 1, 9 },
-    { 2, 24, 1, 10 }, { 2, 29, 1, 11 }, { 2, 36, 1, 12 }, { 2, 45, 1, 13 },
-    { 2, 56, 1, 14 }, { 2, 68, 1, 15 }, { 0, 0, 1, 5 }, { 0, 0, 1, 8 },
-    { 0, 0, 1, 11 }, { 0, 0, 1, 14 }, { 2, 30, 0, 0 }, { 2, 75, 0, 0 }
-};
-
-
-
 static INLINE int get_nz_mag(const uint8_t *const levels,
     const int bwl, const TxClass tx_class)
 {
@@ -2803,10 +2786,96 @@ int decode_signed_subexp_with_ref_bool(int low, int high, int k, int r, SvtReade
     int x = decode_unsigned_subexp_with_ref_bool(high - low, k, r - low, reader);
     return x + low;
 }
+void read_wiener_filter(int wiener_win, WienerInfo *wiener_info,
+                        WienerInfo *ref_wiener_info, SvtReader *reader)
+{
+    memset(wiener_info->vfilter, 0, sizeof(wiener_info->vfilter));
+    memset(wiener_info->hfilter, 0, sizeof(wiener_info->hfilter));
 
-void read_lr_unit(EbDecHandle *dec_handle, int32_t row, int32_t col,
-    int32_t plane, SvtReader *reader, int32_t ref_sgr_xqd[MAX_MB_PLANE][2],
-    int32_t ref_lr_wiener[MAX_MB_PLANE][2][3])
+    // vfilter[0] and vfilter[6]
+    if (wiener_win == WIENER_WIN) {
+        wiener_info->vfilter[0] = wiener_info->vfilter[WIENER_WIN - 1] =
+            decode_signed_subexp_with_ref_bool(WIENER_FILT_TAP0_MINV,
+            WIENER_FILT_TAP0_MAXV + 1, WIENER_FILT_TAP0_SUBEXP_K,
+            ref_wiener_info->vfilter[0], reader);
+    }
+    else
+        wiener_info->vfilter[0] = wiener_info->vfilter[WIENER_WIN - 1] = 0;
+
+    // vfilter[1] and vfilter[5]
+    wiener_info->vfilter[1] = wiener_info->vfilter[WIENER_WIN - 2] =
+        decode_signed_subexp_with_ref_bool(WIENER_FILT_TAP1_MINV,
+        WIENER_FILT_TAP1_MAXV + 1, WIENER_FILT_TAP1_SUBEXP_K,
+        ref_wiener_info->vfilter[1], reader);
+
+    // vfilter[2] and vfilter[4]
+    wiener_info->vfilter[2] = wiener_info->vfilter[WIENER_WIN - 3] =
+        decode_signed_subexp_with_ref_bool(WIENER_FILT_TAP2_MINV,
+        WIENER_FILT_TAP2_MAXV + 1, WIENER_FILT_TAP2_SUBEXP_K,
+        ref_wiener_info->vfilter[2], reader);
+
+    // vfilter[3] - The central element has an implicit +WIENER_FILT_STEP
+    wiener_info->vfilter[WIENER_HALFWIN] = -2 * (wiener_info->vfilter[0] +
+        wiener_info->vfilter[1] + wiener_info->vfilter[2]);
+
+    // hfilter[0] and hfilter[6]
+    if (wiener_win == WIENER_WIN) {
+        wiener_info->hfilter[0] = wiener_info->hfilter[WIENER_WIN - 1] =
+            decode_signed_subexp_with_ref_bool(WIENER_FILT_TAP0_MINV,
+            WIENER_FILT_TAP0_MAXV + 1, WIENER_FILT_TAP0_SUBEXP_K,
+            ref_wiener_info->hfilter[0], reader);
+    }
+    else
+        wiener_info->hfilter[0] = wiener_info->hfilter[WIENER_WIN - 1] = 0;
+
+    // hfilter[1] and hfilter[5]
+    wiener_info->hfilter[1] = wiener_info->hfilter[WIENER_WIN - 2] =
+        decode_signed_subexp_with_ref_bool(WIENER_FILT_TAP1_MINV,
+        WIENER_FILT_TAP1_MAXV + 1, WIENER_FILT_TAP1_SUBEXP_K,
+        ref_wiener_info->hfilter[1], reader);
+
+    // hfilter[2] and hfilter[4]
+    wiener_info->hfilter[2] = wiener_info->hfilter[WIENER_WIN - 3] =
+        decode_signed_subexp_with_ref_bool(WIENER_FILT_TAP2_MINV,
+        WIENER_FILT_TAP2_MAXV + 1, WIENER_FILT_TAP2_SUBEXP_K,
+        ref_wiener_info->hfilter[2], reader);
+
+    // hfilter[3] - The central element has an implicit +WIENER_FILT_STEP
+    wiener_info->hfilter[WIENER_HALFWIN] = -2 * (wiener_info->hfilter[0] +
+        wiener_info->hfilter[1] + wiener_info->hfilter[2]);
+
+    memcpy(ref_wiener_info, wiener_info, sizeof(*wiener_info));
+}
+
+void read_sgrproj_filter(SgrprojInfo *sgrproj_info,
+    SgrprojInfo *ref_sgrproj_info, SvtReader *reader)
+{
+    sgrproj_info->ep = svt_read_literal(reader, SGRPROJ_PARAMS_BITS, ACCT_STR);
+    int *r = (int *)&eb_sgr_params[sgrproj_info->ep];
+
+    if (r[0] == 0) {
+        sgrproj_info->xqd[0] = 0;
+        sgrproj_info->xqd[1] = decode_signed_subexp_with_ref_bool(SGRPROJ_PRJ_MIN1,
+            SGRPROJ_PRJ_MAX1 + 1, SGRPROJ_PRJ_SUBEXP_K, ref_sgrproj_info->xqd[1], reader);
+    }
+    else if (r[1] == 0) {
+        sgrproj_info->xqd[0] = decode_signed_subexp_with_ref_bool(SGRPROJ_PRJ_MIN0,
+            SGRPROJ_PRJ_MAX0 + 1, SGRPROJ_PRJ_SUBEXP_K, ref_sgrproj_info->xqd[0], reader);
+        sgrproj_info->xqd[1] = clamp((1 << SGRPROJ_PRJ_BITS) - sgrproj_info->xqd[0],
+            SGRPROJ_PRJ_MIN1, SGRPROJ_PRJ_MAX1);
+    }
+    else {
+        sgrproj_info->xqd[0] = decode_signed_subexp_with_ref_bool(SGRPROJ_PRJ_MIN0,
+            SGRPROJ_PRJ_MAX0 + 1, SGRPROJ_PRJ_SUBEXP_K, ref_sgrproj_info->xqd[0], reader);
+        sgrproj_info->xqd[1] = decode_signed_subexp_with_ref_bool(SGRPROJ_PRJ_MIN1,
+            SGRPROJ_PRJ_MAX1 + 1, SGRPROJ_PRJ_SUBEXP_K, ref_sgrproj_info->xqd[1], reader);
+    }
+
+    memcpy(ref_sgrproj_info, sgrproj_info, sizeof(*sgrproj_info));
+}
+
+void read_lr_unit(EbDecHandle *dec_handle, SBInfo *sb_info, int32_t row,
+                  int32_t col, int32_t plane, SvtReader *reader)
 {
     UNUSED(row);
     UNUSED(col);
@@ -2816,74 +2885,45 @@ void read_lr_unit(EbDecHandle *dec_handle, int32_t row, int32_t col,
     ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
     if (lrp->frame_restoration_type == RESTORE_NONE) return;
 
-    int restoration_type = RESTORE_NONE;
+    sb_info->sb_lr_unit[plane]->restoration_type = RESTORE_NONE;
     if (lrp->frame_restoration_type == RESTORE_SWITCHABLE) {
-        restoration_type =
+        sb_info->sb_lr_unit[plane]->restoration_type =
             svt_read_symbol(reader, parse_ctxt->cur_tile_ctx.switchable_restore_cdf,
-                            RESTORE_SWITCHABLE_TYPES, ACCT_STR);
+                RESTORE_SWITCHABLE_TYPES, ACCT_STR);
     }
     else if (lrp->frame_restoration_type == RESTORE_WIENER) {
         if (svt_read_symbol(reader, parse_ctxt->cur_tile_ctx.wiener_restore_cdf,
             2, ACCT_STR)) {
-            restoration_type = RESTORE_WIENER;
+            sb_info->sb_lr_unit[plane]->restoration_type = RESTORE_WIENER;
         }
     }
     else if (lrp->frame_restoration_type == RESTORE_SGRPROJ) {
         if (svt_read_symbol(reader, parse_ctxt->cur_tile_ctx.sgrproj_restore_cdf,
             2, ACCT_STR)) {
-            restoration_type = RESTORE_SGRPROJ;
+            sb_info->sb_lr_unit[plane]->restoration_type = RESTORE_SGRPROJ;
         }
     }
 
-    int firstCoeff = 0;
-    int lr_sgr_set;
-    switch (restoration_type) {
+    RestorationUnitInfo *ref_lr_plane = &parse_ctxt->ref_lr_unit[plane];
+    WienerInfo *wiener_info = &sb_info->sb_lr_unit[plane]->wiener_info;
+    SgrprojInfo *sgrproj_info = &sb_info->sb_lr_unit[plane]->sgrproj_info;
+    const int wiener_win = (plane > 0) ? WIENER_WIN_CHROMA : WIENER_WIN;
+
+    switch (sb_info->sb_lr_unit[plane]->restoration_type) {
     case RESTORE_WIENER:
-        for (int pass = 0; pass < 2; pass++) {
-            if (plane) {
-                firstCoeff = 1;
-                //LrWiener[plane][row][col][pass][0] = 0;
-            }
-            for (int j = firstCoeff; j < 3; j++) {
-                int min = wiener_taps_min[j];
-                int max = wiener_taps_max[j];
-                int k = wiener_taps_k[j];
-                int v = decode_signed_subexp_with_ref_bool(min, max + 1,
-                    k, ref_lr_wiener[plane][pass][j], reader);
-                //LrWiener[plane][row][col][pass][j] = v;
-                ref_lr_wiener[plane][pass][j] = v;
-            }
-        }
+        read_wiener_filter(wiener_win, wiener_info, &ref_lr_plane->wiener_info, reader);
         break;
     case RESTORE_SGRPROJ:
-        lr_sgr_set = svt_read_literal(reader, SGRPROJ_PARAMS_BITS, ACCT_STR);
-        //LrSgrSet[plane][row][col] = lr_sgr_set;
-        for (int i = 0; i < 2; i++) {
-            int radius = sgr_params_dec[lr_sgr_set][i * 2];
-            int minimum = sgrproj_xqd_min[i];
-            int maximum = sgrproj_xqd_max[i];
-            int v = 0;
-            if (radius) {
-                v = decode_signed_subexp_with_ref_bool(minimum, maximum + 1,
-                    SGRPROJ_PRJ_SUBEXP_K, ref_sgr_xqd[plane][i], reader);
-            }
-            else {
-                if (i == 1) {
-                    int val = (1 << SGRPROJ_PRJ_BITS) - ref_sgr_xqd[plane][0];
-                    v = CLIP(val, minimum, maximum);
-                }
-            }
-            //LrSgrXqd[plane][row][col][i] = v;
-            ref_sgr_xqd[plane][i] = v;
-        }
+        read_sgrproj_filter(sgrproj_info, &ref_lr_plane->sgrproj_info, reader);
         break;
-    default: assert(restoration_type == RESTORE_NONE); break;
+    default:
+        assert(sb_info->sb_lr_unit[plane]->restoration_type == RESTORE_NONE);
+        break;
     }
 }
 
-void read_lr(EbDecHandle *dec_handle, int32_t row, int32_t col, SvtReader *reader,
-    int32_t ref_sgr_xqd[MAX_MB_PLANE][2],
-    int32_t ref_lr_wiener[MAX_MB_PLANE][2][3])
+void read_lr(EbDecHandle *dec_handle, SBInfo *sb_info, int32_t row, int32_t col,
+             SvtReader *reader)
 {
     FrameHeader *frame_info = &dec_handle->frame_header;
     SeqHeader *seq_header = &dec_handle->seq_header;
@@ -2923,24 +2963,21 @@ void read_lr(EbDecHandle *dec_handle, int32_t row, int32_t col, SvtReader *reade
                                    denominator - 1) / denominator);
             for (int unit_row = unit_row_start; unit_row < unit_row_end; unit_row++) {
                 for (int unit_col = unit_col_start; unit_col < unit_col_end; unit_col++) {
-                    read_lr_unit(dec_handle, unit_row, unit_col, plane, reader,
-                                 ref_sgr_xqd, ref_lr_wiener);
+                    read_lr_unit(dec_handle, sb_info, unit_row, unit_col, plane, reader);
                 }
             }
         }
     }
 }
 
-void parse_super_block(EbDecHandle *dec_handle,
-    uint32_t blk_row, uint32_t blk_col, SBInfo *sbInfo,
-    int32_t ref_sgr_xqd[MAX_MB_PLANE][2],
-    int32_t ref_lr_wiener[MAX_MB_PLANE][2][3])
+void parse_super_block(EbDecHandle *dec_handle, uint32_t blk_row,
+                       uint32_t blk_col, SBInfo *sbInfo)
 {
     ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
     SvtReader *reader = &parse_ctx->r;
 
-    read_lr(dec_handle, blk_row, blk_col, reader, ref_sgr_xqd, ref_lr_wiener);
+    read_lr(dec_handle, sbInfo, blk_row, blk_col, reader);
 
     parse_partition(dec_handle, blk_row, blk_col, reader,
-        dec_handle->seq_header.sb_size, sbInfo);
+                    dec_handle->seq_header.sb_size, sbInfo);
 }

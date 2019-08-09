@@ -83,6 +83,9 @@ extern "C" {
         int32_t sstride, int32_t vsize, int32_t hsize);
     void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src,
         int32_t sstride, int32_t v, int32_t h);
+    void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
+        int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
+        int32_t vsize, int32_t hsize);
 
 #ifdef __cplusplus
 }

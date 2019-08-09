@@ -273,6 +273,9 @@ typedef struct SBInfo {
     int32_t     *sb_delta_q; /*!< At SB level */
     int32_t     *sb_delta_lf; /*!< At SB level */
 
+    // Loop Restoration Unit
+    RestorationUnitInfo    *sb_lr_unit[MAX_MB_PLANE];
+
     TransformInfo_t *sb_trans_info[MAX_MB_PLANE - 1];
 
     int32_t         *sb_coeff[MAX_MB_PLANE];

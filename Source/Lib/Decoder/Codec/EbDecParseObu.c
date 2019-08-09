@@ -29,6 +29,7 @@
 #include "EbObuParse.h"
 #include "EbDecMemInit.h"
 #include "EbDecPicMgr.h"
+#include "EbDecRestoration.h"
 
 #include "EbDecParseObuUtil.h"
 
@@ -46,11 +47,8 @@
 #define CONFIG_MAX_DECODE_PROFILE 2
 #define INT_MAX       2147483647    // maximum (signed) int value
 
-int Remap_Lr_Type[4] = {
+int remap_lr_type[4] = {
     RESTORE_NONE, RESTORE_SWITCHABLE, RESTORE_WIENER, RESTORE_SGRPROJ };
-
-int wiener_taps_mid[3] = { 3, -7, 15 };
-int sgrproj_xqd_mid[2] = { -32, 31 };
 
 /* Checks that the remaining bits start with a 1 and ends with 0s.
  * It consumes an additional byte, if already byte aligned before the check. */
@@ -1048,7 +1046,7 @@ void read_lr_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *seq_heade
     uses_chroma_lr = 0;
     for (i = 0; i < num_planes; i++) {
         lr_type = dec_get_bits(bs, 2);
-        frame_info->lr_params[i].frame_restoration_type = Remap_Lr_Type[lr_type];
+        frame_info->lr_params[i].frame_restoration_type = remap_lr_type[lr_type];
         PRINT_FRAME("frame_restoration_type", frame_info->lr_params[i].frame_restoration_type);
         if (frame_info->lr_params[i].frame_restoration_type != RESTORE_NONE) {
             uses_lr = 1;
@@ -2115,15 +2113,17 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     clear_above_context(dec_handle_ptr, tile_info->tile_col_start_sb[tile_col],
                         tile_info->tile_col_start_sb[tile_col + 1], 0 /*TODO: For MultiThread*/);
     clear_loop_filter_delta(dec_handle_ptr);
-    int32_t ref_sgr_xqd[MAX_MB_PLANE][2];
-    int32_t ref_lr_wiener[MAX_MB_PLANE][2][WIENER_COEFFS];
-    for (int plane = 0; plane < num_planes; plane++) {
-        for (int pass = 0; pass < 2; pass++) {
-            ref_sgr_xqd[plane][pass] = sgrproj_xqd_mid[pass];
-                for (int i = 0; i < WIENER_COEFFS; i++) {
-                    ref_lr_wiener[plane][pass][i] = wiener_taps_mid[i];
-                }
-        }
+
+    /* Init ParseCtxt */
+    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle_ptr->pv_parse_ctxt;
+    RestorationUnitInfo *lr_unit[MAX_MB_PLANE];
+
+    // Default initialization of Wiener and SGR Filter
+    for (int p = 0; p < num_planes; ++p) {
+        lr_unit[p] = &parse_ctx->ref_lr_unit[p];
+
+        set_default_wiener(&lr_unit[p]->wiener_info);
+        set_default_sgrproj(&lr_unit[p]->sgrproj_info);
     }
 
     // to-do access to wiener info that is currently part of PartitionInfo_t
@@ -2210,8 +2210,13 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
             clear_cdef(sb_info->sb_cdef_strength, cdef_factor);
 
-            /* Init ParseCtxt */
-            ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle_ptr->pv_parse_ctxt;
+            // Loop restoration SB level buffer alignment
+            sb_info->sb_lr_unit[AOM_PLANE_Y] = frame_buf->lr_unit[AOM_PLANE_Y] +
+                (sb_row * master_frame_buf->sb_cols) + sb_col;
+            sb_info->sb_lr_unit[AOM_PLANE_U] = frame_buf->lr_unit[AOM_PLANE_U] +
+                (sb_row * master_frame_buf->sb_cols >> sy) + (sb_col >> sx);
+            sb_info->sb_lr_unit[AOM_PLANE_V] = frame_buf->lr_unit[AOM_PLANE_V] +
+                (sb_row * master_frame_buf->sb_cols >> sy) + (sb_col >> sx);
 
             parse_ctx->first_luma_tu_offset = 0;
             parse_ctx->first_chroma_tu_offset = 0;
@@ -2247,8 +2252,7 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             update_nbrs_before_sb(&master_frame_buf->frame_mi_map, sb_col);
 #endif
             // Bit-stream parsing of the superblock
-            parse_super_block(dec_handle_ptr, mi_row, mi_col, sb_info,
-                              ref_sgr_xqd, ref_lr_wiener);
+            parse_super_block(dec_handle_ptr, mi_row, mi_col, sb_info);
 
             /* TO DO : Will move later */
             // decoding of the superblock
@@ -2413,20 +2417,49 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                 AOM_PLANE_Y, MAX_MB_PLANE
             );
         }
-    }
 
-    const int32_t do_cdef =
-        !frame_header->coded_lossless &&
-        (frame_header->CDEF_params.cdef_bits ||
-         frame_header->CDEF_params.cdef_y_strength[0] ||
-         frame_header->CDEF_params.cdef_uv_strength[0]);
+        const int32_t do_cdef =
+            !frame_header->coded_lossless &&
+            (frame_header->CDEF_params.cdef_bits ||
+             frame_header->CDEF_params.cdef_y_strength[0] ||
+             frame_header->CDEF_params.cdef_uv_strength[0]);
 
-    /*Calling cdef frame level function*/
-    if (do_cdef) {
-        if(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf->bit_depth == EB_8BIT)
-            svt_cdef_frame(dec_handle_ptr);
-        else
-            svt_cdef_frame_hbd(dec_handle_ptr);
+        const int opt_lr = !do_cdef &&
+            !av1_superres_scaled(&dec_handle_ptr->frame_header.frame_size);
+
+        LRParams *lr_param = dec_handle_ptr->frame_header.lr_params;
+        int do_loop_restoration =
+            lr_param[AOM_PLANE_Y].frame_restoration_type != RESTORE_NONE ||
+            lr_param[AOM_PLANE_U].frame_restoration_type != RESTORE_NONE ||
+            lr_param[AOM_PLANE_V].frame_restoration_type != RESTORE_NONE;
+
+        if (!opt_lr) {
+            if (do_loop_restoration)
+                dec_av1_loop_restoration_save_boundary_lines(dec_handle_ptr, 0);
+
+            /*Calling cdef frame level function*/
+            if (do_cdef) {
+                if (dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf->bit_depth == EB_8BIT)
+                    svt_cdef_frame(dec_handle_ptr);
+                else
+                    svt_cdef_frame_hbd(dec_handle_ptr);
+            }
+
+            if (do_loop_restoration) {
+                dec_av1_loop_restoration_save_boundary_lines(dec_handle_ptr, 1);
+
+                /* Padded bits are required for filtering pixel around frame boundary */
+                pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf);
+                dec_av1_loop_restoration_filter_frame(dec_handle_ptr, opt_lr);
+            }
+        }
+        else {
+            if (do_loop_restoration) {
+                /* Padded bits are required for filtering pixel around frame boundary */
+                pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf);
+                dec_av1_loop_restoration_filter_frame(dec_handle_ptr, opt_lr);
+            }
+        }
     }
 
     /* Save CDF */
