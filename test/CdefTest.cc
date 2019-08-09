@@ -472,6 +472,69 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
     }
 }
 
+TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
+    const int stride = 1 << MAX_SB_SIZE_LOG2;
+    const int buf_size = 1 << (MAX_SB_SIZE_LOG2 * 2);
+    DECLARE_ALIGNED(32, uint8_t, src_data_[buf_size]);
+    DECLARE_ALIGNED(32, uint8_t, dst_data_[buf_size]);
+
+    // compute cdef list
+    for (int bd = 8; bd <= 12; ++bd) {
+        // prepare src data
+        SVTRandom rnd_(bd, false);
+        for (int i = 0; i < buf_size; ++i) {
+            src_data_[i] = rnd_.random()%255;
+            dst_data_[i] = rnd_.random()%255;
+        }
+
+        const int coeff_shift = bd - 8;
+        SVTRandom skip_rnd_(0, 1);
+        for (int k = 0; k < 100; ++k) {
+            cdef_list dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
+            int cdef_count = 0;
+
+            // generate the cdef list randomly
+            for (int r = 0; r < MI_SIZE_128X128; r += 2) {
+                for (int c = 0; c < MI_SIZE_128X128; c += 2) {
+                    // append non-skip block into dlist
+                    if (!skip_rnd_.random()) {
+                        dlist[cdef_count].by = (uint8_t)(r >> 1);
+                        dlist[cdef_count].bx = (uint8_t)(c >> 1);
+                        ++cdef_count;
+                    }
+                }
+            }
+
+            const BlockSize test_bs[] = {
+                BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8};
+            for (int i = 0; i < 4; ++i) {
+                for (int plane = 0; plane < 3; ++plane) {
+                    const uint64_t c_mse = compute_cdef_dist_8bit_c(dst_data_,
+                                                               stride,
+                                                               src_data_,
+                                                               dlist,
+                                                               cdef_count,
+                                                               test_bs[i],
+                                                               coeff_shift,
+                                                               plane);
+                    const uint64_t avx_mse = compute_cdef_dist_8bit_avx2(dst_data_,
+                                                                    stride,
+                                                                    src_data_,
+                                                                    dlist,
+                                                                    cdef_count,
+                                                                    test_bs[i],
+                                                                    coeff_shift,
+                                                                    plane);
+                    ASSERT_EQ(c_mse, avx_mse)
+                        << "compute_cdef_dist_8bit_avx2 failed "
+                        << "bitdepth: " << bd << " plane: " << plane
+                        << " BlockSize " << test_bs[i] << " loop: " << k;
+                }
+            }
+        }
+    }
+}
+
 /**
  * @brief Unit test for search_one_dual_avx2
  *
