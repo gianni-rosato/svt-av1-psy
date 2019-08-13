@@ -2342,7 +2342,11 @@ static void model_rd_with_curvfit(
 {
     (void)plane_bsize;
     const int dequant_shift = 3;
+#if 0
     int32_t current_q_index = MAX(0, MIN(QINDEX_RANGE - 1, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx));
+#else
+    int32_t current_q_index = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#endif
     Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq;
     int16_t quantizer = dequants->y_dequant_Q3[current_q_index][1];
 
