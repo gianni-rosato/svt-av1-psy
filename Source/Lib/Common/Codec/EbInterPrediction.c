@@ -2549,9 +2549,7 @@ static int8_t estimate_wedge_sign(
         // 32X8,       16X64,         64X16
         BLOCK_16X4, BLOCK_8X32, BLOCK_32X8
     };
-    // const struct macroblock_plane *const p = &x->plane[0];
-    //const uint8_t *src = p->src.buf;
-    //int src_stride = p->src.stride;
+   
     const int bw = block_size_wide[bsize];
     const int bh = block_size_high[bsize];
     uint32_t esq[2][4];
@@ -2559,7 +2557,7 @@ static int8_t estimate_wedge_sign(
 
     const BlockSize f_index = split_qtr[bsize];
     assert(f_index != BLOCK_INVALID);
-
+    (void)f_index;
 
     const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[bsize];
     EbPictureBufferDesc   *src_pic = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;

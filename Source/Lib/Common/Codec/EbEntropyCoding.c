@@ -6380,7 +6380,7 @@ assert(bsize < BlockSizeS_ALL);
                         }
                     }
                     else {
-                        assert(picture_control_set_ptr->parent_pcs_ptr->reference_mode != SINGLE_REFERENCE &&
+                        assert(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reference_mode != SINGLE_REFERENCE &&
                             is_inter_compound_mode(mbmi->mode) &&
                             cu_ptr->prediction_unit_array[0].motion_mode == SIMPLE_TRANSLATION);
                         assert(masked_compound_used);
