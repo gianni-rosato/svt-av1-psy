@@ -13960,6 +13960,11 @@ extern "C" {
         EbBool                                eos_coming;
         uint8_t                               picture_qp;
         uint64_t                              picture_number;
+#if COMP_MODE
+        uint8_t                               wedge_mode;
+        uint32_t                             cur_order_hint;
+        uint32_t                             ref_order_hint[7];
+#endif
         EbPicnoiseClass                       pic_noise_class;
         EB_SLICE                              slice_type;
         uint8_t                               pred_struct_index;
@@ -14246,8 +14251,11 @@ extern "C" {
                                                             // I Slice has the value of the next ALT_REF picture
         uint64_t                              filtered_sse_uv;
 #endif
-
         FrameHeader                           frm_hdr;
+#if COMP_MODE
+        MD_COMP_TYPE                            compound_types_to_try;
+        uint8_t                                 compound_mode;
+#endif
     } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData

@@ -4105,6 +4105,15 @@ void move_cu_data(
     CodingUnit *src_cu,
     CodingUnit *dst_cu)
 {
+#if COMP_MODE
+    dst_cu->interinter_comp.type = src_cu->interinter_comp.type;
+    dst_cu->interinter_comp.mask_type = src_cu->interinter_comp.mask_type;
+    dst_cu->interinter_comp.wedge_index = src_cu->interinter_comp.wedge_index;
+    dst_cu->interinter_comp.wedge_sign = src_cu->interinter_comp.wedge_sign;
+    dst_cu->compound_idx = src_cu->compound_idx;
+    dst_cu->comp_group_idx = src_cu->comp_group_idx;
+#endif
+
     //CHKN TransformUnit             transform_unit_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
     memcpy(dst_cu->transform_unit_array, src_cu->transform_unit_array, TRANSFORM_UNIT_MAX_COUNT * sizeof(TransformUnit));
 
@@ -4201,6 +4210,16 @@ void move_cu_data(
 void move_cu_data_redund(
     CodingUnit *src_cu,
     CodingUnit *dst_cu){
+
+#if COMP_MODE
+    dst_cu->interinter_comp.type = src_cu->interinter_comp.type;
+    dst_cu->interinter_comp.mask_type = src_cu->interinter_comp.mask_type;
+    dst_cu->interinter_comp.wedge_index = src_cu->interinter_comp.wedge_index;
+    dst_cu->interinter_comp.wedge_sign = src_cu->interinter_comp.wedge_sign;
+    dst_cu->compound_idx = src_cu->compound_idx;
+    dst_cu->comp_group_idx = src_cu->comp_group_idx;
+#endif
+
     //CHKN TransformUnit_t             transform_unit_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
     memcpy(dst_cu->transform_unit_array, src_cu->transform_unit_array, TRANSFORM_UNIT_MAX_COUNT * sizeof(TransformUnit));
 
