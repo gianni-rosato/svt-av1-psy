@@ -2549,7 +2549,7 @@ static int8_t estimate_wedge_sign(
         // 32X8,       16X64,         64X16
         BLOCK_16X4, BLOCK_8X32, BLOCK_32X8
     };
-   
+
     const int bw = block_size_wide[bsize];
     const int bh = block_size_high[bsize];
     uint32_t esq[2][4];
