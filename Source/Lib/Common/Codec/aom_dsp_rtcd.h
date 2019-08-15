@@ -2476,7 +2476,7 @@ extern "C" {
         av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_c;
         if (flags & HAS_AVX2) av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_avx2;
         aom_subtract_block = aom_subtract_block_c;
-        //if (flags & HAS_AVX2) aom_subtract_block = aom_subtract_block_avx2;
+        if (flags & HAS_AVX2) aom_subtract_block = aom_subtract_block_avx2;
         aom_sse = aom_sse_c;
         if (flags & HAS_AVX2) aom_sse = aom_sse_avx2;
         av1_build_compound_diffwtd_mask_d16 = av1_build_compound_diffwtd_mask_d16_c;
