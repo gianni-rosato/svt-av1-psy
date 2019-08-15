@@ -21,7 +21,7 @@ SECTION .text
 ;                         const uint8_t *pred, ptrdiff_t pred_stride)
 
 INIT_XMM sse2
-cglobal subtract_block , 7, 7, 8, \
+cglobal subtract_block, 7, 7, 8, \
                         rows, cols, diff, diff_stride, src, src_stride, \
                         pred, pred_stride
 %define pred_str colsq
