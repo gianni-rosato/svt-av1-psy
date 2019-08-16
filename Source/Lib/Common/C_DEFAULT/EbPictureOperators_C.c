@@ -7,6 +7,31 @@
 #include "EbUtility.h"
 
 /*********************************
+* Picture Average
+*********************************/
+void PictureAverageKernel(
+    EbByte   src0,
+    uint32_t   src0Stride,
+    EbByte   src1,
+    uint32_t   src1Stride,
+    EbByte   dst,
+    uint32_t   dstStride,
+    uint32_t   areaWidth,
+    uint32_t   areaHeight)
+{
+    uint32_t x, y;
+
+    for (y = 0; y < areaHeight; y++) {
+        for (x = 0; x < areaWidth; x++) {
+            dst[x] = (src0[x] + src1[x] + 1) >> 1;
+        }
+        src0 += src0Stride;
+        src1 += src1Stride;
+        dst += dstStride;
+    }
+}
+
+/*********************************
 * Picture Copy Kernel
 *********************************/
 void picture_copy_kernel(
