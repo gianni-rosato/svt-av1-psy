@@ -107,6 +107,8 @@ int get_comp_index_context_enc(
     }
     return above_ctx + left_ctx + 3 * offset;
 }
+
+
 int get_comp_group_idx_context_enc(const MacroBlockD *xd) {
     const MbModeInfo *const above_mi = xd->above_mbmi;
     const MbModeInfo *const left_mi = xd->left_mbmi;

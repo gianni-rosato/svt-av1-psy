@@ -165,11 +165,9 @@ void determine_compound_mode(
     else {
         printf("ERROR: not used comp type\n");
     }
-
-
-
 }
 #endif
+
 void ChooseBestAv1MvPred(
     ModeDecisionContext            *context_ptr,
     struct MdRateEstimationContext      *md_rate_estimation_ptr,

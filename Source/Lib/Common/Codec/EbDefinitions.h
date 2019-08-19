@@ -387,7 +387,7 @@ typedef struct ConvolveParams
     int32_t fwd_offset;
     int32_t bck_offset;
 #if COMP_MODE
-    int use_dist_wtd_comp_avg;
+    int32_t use_dist_wtd_comp_avg;
 #endif
 } ConvolveParams;
 

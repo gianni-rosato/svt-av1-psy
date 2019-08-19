@@ -1395,9 +1395,11 @@ static void init_wedge_signs() {
     }
 }
 #endif  // !USE_PRECOMPUTED_WEDGE_SIGN
+
 static INLINE int get_wedge_bits_lookup(BlockSize sb_type) {
     return wedge_params_lookup[sb_type].bits;
 }
+
 static const uint8_t *get_wedge_mask_inplace(int wedge_index, int neg,
     BlockSize sb_type) {
     const uint8_t *master;
@@ -1417,6 +1419,7 @@ static const uint8_t *get_wedge_mask_inplace(int wedge_index, int neg,
         MASK_MASTER_SIZE / 2 - woff;
     return master;
 }
+
 static void init_wedge_masks() {
     uint8_t *dst = wedge_mask_buf;
     BlockSize bsize;
@@ -1455,6 +1458,7 @@ void av1_init_wedge_masks() {
 #endif  // !USE_PRECOMPUTED_WEDGE_SIGN
     init_wedge_masks();
 }
+
 static void diffwtd_mask_d16(uint8_t *mask, int which_inverse, int mask_base,
     const CONV_BUF_TYPE *src0, int src0_stride,
     const CONV_BUF_TYPE *src1, int src1_stride, int h,
@@ -1597,6 +1601,7 @@ static INLINE const uint8_t *av1_get_contiguous_soft_mask(int wedge_index,
     BlockSize sb_type) {
     return wedge_params_lookup[sb_type].masks[wedge_sign][wedge_index];
 }
+
 const uint8_t *av1_get_compound_type_mask(
     const INTERINTER_COMPOUND_DATA *const comp_data, BlockSize sb_type) {
     assert(is_masked_compound_type(comp_data->type));
@@ -1609,6 +1614,7 @@ const uint8_t *av1_get_compound_type_mask(
     default: assert(0); return NULL;
     }
 }
+
 static void build_masked_compound_no_round(
     uint8_t *dst, int dst_stride, const CONV_BUF_TYPE *src0, int src0_stride,
     const CONV_BUF_TYPE *src1, int src1_stride,
@@ -1625,6 +1631,7 @@ static void build_masked_compound_no_round(
         h, subw, subh, conv_params);
 
 }
+
 void av1_make_masked_inter_predictor(
     uint8_t                   *src_ptr,
     uint32_t                   src_stride,
@@ -1706,6 +1713,7 @@ void aom_subtract_block_c(int rows, int cols, int16_t *diff,
         src += src_stride;
     }
 }
+
 static void diffwtd_mask(uint8_t *mask, int which_inverse, int mask_base,
     const uint8_t *src0, int src0_stride,
     const uint8_t *src1, int src1_stride, int h, int w) {
@@ -1719,6 +1727,7 @@ static void diffwtd_mask(uint8_t *mask, int which_inverse, int mask_base,
         }
     }
 }
+
 void av1_build_compound_diffwtd_mask_c(uint8_t *mask,
     DIFFWTD_MASK_TYPE mask_type,
     const uint8_t *src0, int src0_stride,
@@ -2330,6 +2339,7 @@ void av1_model_rd_curvfit(BlockSize bsize, double sse_norm, double xqr,
 #endif
 
 }
+
 // Fits a curve for rate and distortion using as feature:
 // log2(sse_norm/qstep^2)
 static void model_rd_with_curvfit(
@@ -2458,6 +2468,7 @@ int8_t av1_wedge_sign_from_residuals_c(const int16_t *ds, const uint8_t *m,
 
     return acc > limit;
 }
+
 static void pick_wedge(
     PictureControlSet                    *picture_control_set_ptr,
     ModeDecisionContext                  *context_ptr,
@@ -2660,6 +2671,7 @@ static void  pick_interinter_seg(
     interinter_comp->mask_type = best_mask_type;
 
 }
+
 void pick_interinter_mask(
     ModeDecisionCandidate                *candidate_ptr,
     PictureControlSet                    *picture_control_set_ptr,
@@ -2680,6 +2692,7 @@ void pick_interinter_mask(
         assert(0);
 
 }
+
 void search_compound_diff_wedge(
     PictureControlSet                    *picture_control_set_ptr,
     ModeDecisionContext                  *context_ptr,
@@ -2875,6 +2888,7 @@ static void model_rd_for_sb_with_curvfit(
     *out_rate_sum = (int)rate_sum;
     *out_dist_sum = dist_sum;
 }
+
 int get_comp_index_context_enc(
     PictureParentControlSet   *pcs_ptr,
     int cur_frame_index,
@@ -3006,6 +3020,7 @@ void search_compound_avg_dist(
 
 }
 #endif
+
 EbErrorType av1_inter_prediction(
     PictureControlSet                    *picture_control_set_ptr,
     uint32_t                                interp_filters,
