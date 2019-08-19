@@ -155,27 +155,6 @@ else()
     endif()
 endif()
 
-# BUILD_SHARED_LIBS is a standard CMake variable, but we declare it here to
-# make it prominent in the GUI.
-if(WIN32 OR MSYS OR BUILD_TESTING)
-    option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
-else()
-    option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." OFF)
-endif()
-
-message(STATUS "BUILD_SHARED_LIBS : " ${BUILD_SHARED_LIBS})
-
-option(BUILD_TESTING "Build SvtAv1UnitTests, SvtAv1ApiTests, and SvtAv1E2ETests unit tests")
-option(COVERAGE "Generate coverage report")
-option(BUILD_APPS "Build Enc and Dec Apps" ON)
-
-# Prepare for Coveralls
-if(COVERAGE AND NOT MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
-endif()
-
 include(CheckSymbolExists)
 check_symbol_exists("_mm512_extracti64x4_epi64" "immintrin.h" HAS_AVX512)
 if(NOT HAS_AVX512)
