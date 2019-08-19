@@ -26,6 +26,10 @@ endif()
 
 project(${project_name} C CXX ASM_NASM)
 
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(WARNING "32-bit is not supported")
+endif()
+
 include(GNUInstallDirs)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
