@@ -376,6 +376,7 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
 
     int frame_width = dec_handle_ptr->seq_header.max_frame_width;
     int frame_height = dec_handle_ptr->seq_header.max_frame_height;
+    int sub_x = dec_handle_ptr->seq_header.color_config.subsampling_x;
 
     // Allocate memory for Deblocked line buffer around stripe(64) boundary for a frame
     const int ext_h = RESTORATION_UNIT_OFFSET + frame_height;
@@ -386,7 +387,7 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
     for (int plane = 0; plane < num_planes; plane++)
     {
         const int is_uv = plane > 0;
-        const int ss_x = is_uv && dec_handle_ptr->seq_header.color_config.subsampling_x;
+        const int ss_x = is_uv && sub_x;
         const int plane_w = ((frame_width + ss_x) >> ss_x) + 2 * RESTORATION_EXTRA_HORZ;
         const int stride = ALIGN_POWER_OF_TWO(plane_w, 5);
         const int buf_size = num_stripes * stride * RESTORATION_CTX_VERT << use_highbd;
@@ -405,7 +406,7 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
     lr_ctxt->dst_stride = ALIGN_POWER_OF_TWO(frame_width, 4);
 
     EB_MALLOC_DEC(uint8_t *, lr_ctxt->dst, lr_ctxt->dst_stride *
-        (frame_height) * sizeof(uint8_t), EB_N_PTR);
+        (frame_height) * sizeof(uint8_t) << use_highbd, EB_N_PTR);
 
     return return_error;
 }

@@ -57,7 +57,7 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
     lr_ctxt->lr_unit[AOM_PLANE_V] = frame_buf->lr_unit[AOM_PLANE_V];
 
     int num_plane = av1_num_planes(&dec_handle->seq_header.color_config);
-    int use_highbd = dec_handle->seq_header.seq_profile;
+    int use_highbd = (dec_handle->seq_header.color_config.bit_depth > 8);
     int bit_depth = dec_handle->seq_header.color_config.bit_depth;
     int sb_log2 = dec_handle->seq_header.sb_size_log2;
     int h = 0, w = 0, x, y, src_stride, dst_stride, tile_stripe0 = 0;
@@ -77,7 +77,8 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
         }
 
         // src points to frame start
-        derive_blk_pointers(cur_pic_buf, plane, 0, 0, (void *)&src, &src_stride, sx, sy);
+        derive_blk_pointers(cur_pic_buf, plane, 0, 0, (void *)&src,
+                            &src_stride, sx, sy);
 
         dst = lr_ctxt->dst;
         dst_stride = lr_ctxt->dst_stride;
@@ -114,16 +115,23 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
                 lr_unit = lr_ctxt->lr_unit[plane] +
                     ((y >> sb_log2) * master_col) + ((x >> sb_log2));
 
-                eb_av1_loop_restoration_filter_unit(1, &tile_limit, lr_unit,
-                    &lr_ctxt->boundaries[plane], lr_ctxt->rlbs, &tile_rect,
-                    tile_stripe0, sx, sy, use_highbd, bit_depth, src,
-                    src_stride, dst, dst_stride, lr_ctxt->rst_tmpbuf, optimized_lr);
+                if (!use_highbd)
+                    eb_av1_loop_restoration_filter_unit(1, &tile_limit, lr_unit,
+                        &lr_ctxt->boundaries[plane], lr_ctxt->rlbs, &tile_rect,
+                        tile_stripe0, sx, sy, use_highbd, bit_depth, src,
+                        src_stride, dst, dst_stride, lr_ctxt->rst_tmpbuf, optimized_lr);
+                else
+                    eb_av1_loop_restoration_filter_unit(1, &tile_limit, lr_unit,
+                        &lr_ctxt->boundaries[plane], lr_ctxt->rlbs, &tile_rect,
+                        tile_stripe0, sx, sy, use_highbd, bit_depth,
+                        CONVERT_TO_BYTEPTR(src), src_stride, CONVERT_TO_BYTEPTR(dst),
+                        dst_stride, lr_ctxt->rst_tmpbuf, optimized_lr);
             }
         }
         for (y = 0; y < tile_h; y++) {
-            memcpy(src, dst, dst_stride * sizeof(*dst));
-            src += src_stride;
-            dst += dst_stride;
+            memcpy(src, dst, dst_stride * sizeof(*dst) << use_highbd);
+            src += src_stride << use_highbd;
+            dst += dst_stride << use_highbd;
         }
     }
 }
@@ -147,7 +155,9 @@ static void dec_save_deblock_boundary_lines(EbDecHandle *dec_handle,
     // src points to frame start
     derive_blk_pointers(cur_pic_buf, plane, 0, 0, (void *)&src, &stride, sx, sy);
 
-    const uint8_t *src_buf = REAL_PTR(use_highbd, src);
+    const uint8_t *src_buf = REAL_PTR(use_highbd, use_highbd ?
+                                      CONVERT_TO_BYTEPTR(src) : src);
+
     const int src_stride = stride << use_highbd;
     const uint8_t *src_rows = src_buf + row * src_stride;
 
@@ -206,10 +216,10 @@ void dec_save_cdef_boundary_lines(EbDecHandle *dec_handle,
     derive_blk_pointers(cur_pic_buf, plane, 0, 0, (void *)&src, &stride, sx, sy);
 
     const int is_uv = plane > 0;
-    const uint8_t *src_buf = REAL_PTR(use_highbd, src);
-    const int src_stride = stride << use_highbd; // check with Nijil
+    const uint8_t *src_buf = REAL_PTR(use_highbd, use_highbd ?
+                                      CONVERT_TO_BYTEPTR(src) : src);
+    const int src_stride = stride << use_highbd;
     const uint8_t *src_rows = src_buf + row * src_stride;
-
 
     uint8_t *bdry_buf = is_above ? boundaries->stripe_boundary_above
         : boundaries->stripe_boundary_below;
@@ -310,7 +320,7 @@ void dec_av1_loop_restoration_save_boundary_lines(EbDecHandle *dec_handle,
                                                   int after_cdef)
 {
     const int num_planes = av1_num_planes(&dec_handle->seq_header.color_config);
-    const int use_highbd = dec_handle->seq_header.seq_profile;
+    const int use_highbd = (dec_handle->seq_header.color_config.bit_depth > 8);
     for (int p = 0; p < num_planes; ++p)
         dec_save_tile_row_boundary_lines(dec_handle, use_highbd, p, after_cdef);
 }
