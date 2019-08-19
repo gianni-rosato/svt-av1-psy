@@ -52,6 +52,14 @@ set(CMAKE_CXX_STANDARD 11)
 set(CAN_USE_ASSEMBLER TRUE)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+# BUILD_SHARED_LIBS is a standard CMake variable, but we declare it here to
+# make it prominent in the GUI.
+option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
+message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
+
+option(BUILD_TESTING "Build SvtAv1UnitTests, SvtAv1ApiTests, and SvtAv1E2ETests unit tests")
+option(COVERAGE "Generate coverage report")
+option(BUILD_APPS "Build Enc and Dec Apps" ON)
 
 if(WIN32)
     set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -DWIN64")
