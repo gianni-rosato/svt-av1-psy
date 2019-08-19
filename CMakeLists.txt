@@ -86,28 +86,28 @@ set(flags_to_test
     -fPIE
     -fPIC
     -D_FORTIFY_SOURCE=2)
-if(NOT MSVC)
+if(MSVC)
+    list(APPEND flags_to_test /MP)
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Od")
+else()
     list(INSERT flags_to_test 0 -Wall)
-        option(NATIVE "Build for native performance (march=native)")
-        if(NATIVE)
+    option(NATIVE "Build for native performance (march=native)")
+    if(NATIVE)
         list(APPEND flags_to_test -march=native)
+    endif()
+    if(COVERAGE)
+        list(APPEND flags_to_test --coverage)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
     endif()
     if(MINGW)
         list(APPEND flags_to_test -mxsave)
     else()
         list(APPEND flags_to_test -fstack-protector-strong)
     endif()
-else()
-    list(APPEND flags_to_test /MP)
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2")
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Od")
 endif()
-set(release_flags_to_test
-    -O2
-    -O3)
-set(debug_flags_to_test
-    -g
-    -O0)
+set(release_flags_to_test)
+set(debug_flags_to_test)
 
 foreach(flag ${flags_to_test};${release_flags_to_test};${debug_flags_to_test})
     string(REGEX REPLACE "[^A-Za-z0-9]" "_" flag_var "${flag}")
