@@ -14,7 +14,7 @@
 /* get ptrdiff_t, size_t, wchar_t, NULL */
 #include <stddef.h>
 
-#if defined(_MSC_VER)
+#ifdef _WIN32
 #define AOM_FORCE_INLINE __forceinline
 #define AOM_INLINE __inline
 #else

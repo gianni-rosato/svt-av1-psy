@@ -126,7 +126,7 @@ extern    uint32_t                   app_malloc_count;
 #define MAX_CHANNEL_NUMBER      6
 #define MAX_NUM_TOKENS          200
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define FOPEN(f,s,m) fopen_s(&f,s,m)
 #else
 #define FOPEN(f,s,m) f=fopen(s,m)

@@ -18,7 +18,7 @@
 #include "EbSvtAv1Dec.h"
 #include "EbFileUtils.h"
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define FOPEN(f,s,m) fopen_s(&f,s,m)
 #else
 #define FOPEN(f,s,m) f=fopen(s,m)
