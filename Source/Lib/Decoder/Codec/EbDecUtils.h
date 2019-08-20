@@ -28,7 +28,7 @@ EbErrorType check_add_tplmv_buf(EbDecHandle *dec_handle_ptr);
 
 void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
                          int32_t blk_col_px, int32_t blk_row_px,
-                         void **pp_blk_recon_buf, int32_t *recon_strd,
+                         void **pp_blk_recon_buf, int32_t *recon_stride,
                          int32_t sub_x, int32_t sub_y);
 
 void pad_pic(EbPictureBufferDesc *recon_picture_buf);

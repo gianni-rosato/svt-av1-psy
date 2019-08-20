@@ -39,7 +39,6 @@ int enable_dump;
 #define READ_REF_BIT(pname) \
   svt_read_symbol(r, get_pred_cdf_##pname(pi), 2, ACCT_STR)
 #define SQR_BLOCK_SIZES 6
-#define INTRABC_DELAY_PIXELS 256
 
 typedef AomCdfProb(*base_cdf_arr)[CDF_SIZE(4)];
 typedef AomCdfProb(*br_cdf_arr)[CDF_SIZE(BR_CDF_SIZE)];
@@ -182,11 +181,240 @@ static INLINE int get_nz_map_ctx_from_stats(
     return 0;
 }
 
-void palette_mode_info(/*EbDecHandle *dec_handle,
-    int mi_row, int mi_col, SvtReader *r*/)
+static INLINE int get_palette_bsize_ctx(BlockSize bsize) {
+    return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
+}
+
+static INLINE int get_palette_mode_ctx(PartitionInfo_t *pi) {
+    ModeInfo_t *above_mi = pi->above_mbmi;
+    ModeInfo_t *left_mi = pi->left_mbmi;
+    int ctx = 0;
+    if (above_mi) ctx += (above_mi->palette_size[0] > 0);
+    if (left_mi) ctx += (left_mi->palette_size[0] > 0);
+    return ctx;
+}
+
+static void palette_add_to_cache(uint16_t *cache, int *n, uint16_t val) {
+    // Do not add an already existing value
+    if (*n > 0 && val == cache[*n - 1]) return;
+
+    cache[(*n)++] = val;
+}
+
+int av1_get_palette_cache(ParseCtxt *parse_ctx, PartitionInfo_t *pi,
+    int mi_row, int mi_col, int plane, uint16_t *cache) {
+    const int row = -pi->mb_to_top_edge >> 3;
+    // Do not refer to above SB row when on SB boundary.
+    ModeInfo_t *above_mi =
+        (row % (1 << MIN_SB_SIZE_LOG2)) ? pi->above_mbmi : NULL;
+    ParseNbr4x4Ctxt *ngr_ctx = &parse_ctx->parse_nbr4x4_ctxt;
+    ModeInfo_t *left_mi = pi->left_mbmi;
+    uint8_t above_n = 0, left_n = 0;
+    if (above_mi) above_n = above_mi->palette_size[plane != 0];
+    if (left_mi) left_n = left_mi->palette_size[plane != 0];
+    if (above_n == 0 && left_n == 0) return 0;
+    int above_idx = 0;
+    int left_idx = 0;
+    int n = 0;
+
+    const uint16_t *above_colors = above_mi ?
+        ngr_ctx->above_palette_colors[plane] +
+        (PALETTE_MAX_SIZE * ((mi_col - parse_ctx->sb_col_mi) % 16)) : NULL;
+    const uint16_t *left_colors = left_mi ?
+        ngr_ctx->left_palette_colors[plane] +
+        (PALETTE_MAX_SIZE * (mi_row - parse_ctx->sb_row_mi)) : NULL;
+    // Merge the sorted lists of base colors from above and left to get
+    // combined sorted color cache.
+    while (above_n > 0 && left_n > 0) {
+        uint16_t v_above = above_colors[above_idx];
+        uint16_t v_left = left_colors[left_idx];
+        if (v_left < v_above) {
+            palette_add_to_cache(cache, &n, v_left);
+            ++left_idx, --left_n;
+        }
+        else {
+            palette_add_to_cache(cache, &n, v_above);
+            ++above_idx, --above_n;
+            if (v_left == v_above) ++left_idx, --left_n;
+        }
+    }
+    while (above_n-- > 0) {
+        uint16_t val = above_colors[above_idx++];
+        palette_add_to_cache(cache, &n, val);
+    }
+    while (left_n-- > 0) {
+        uint16_t val = left_colors[left_idx++];
+        palette_add_to_cache(cache, &n, val);
+    }
+    assert(n <= 2 * PALETTE_MAX_SIZE);
+    return n;
+}
+
+// Merge the sorted list of cached colors(cached_colors[0...n_cached_colors-1])
+// and the sorted list of transmitted colors(colors[n_cached_colors...n-1]) into
+// one single sorted list(colors[...]).
+static void merge_colors(uint16_t *colors, uint16_t *cached_colors,
+    int n_colors, int n_cached_colors) {
+    if (n_cached_colors == 0) return;
+    int cache_idx = 0, trans_idx = n_cached_colors;
+    for (int i = 0; i < n_colors; ++i) {
+        if (cache_idx < n_cached_colors &&
+            (trans_idx >= n_colors ||
+                cached_colors[cache_idx] <= colors[trans_idx])) {
+            colors[i] = cached_colors[cache_idx++];
+        }
+        else {
+            assert(trans_idx < n_colors);
+            colors[i] = colors[trans_idx++];
+        }
+    }
+}
+
+static void read_palette_colors_y(ParseCtxt *parse_ctx, PartitionInfo_t *pi,
+    int bit_depth, int mi_row, int mi_col, SvtReader *r)
 {
-    //TO-DO
-    assert(0);
+    ParseNbr4x4Ctxt  *nbr_ctx = &parse_ctx->parse_nbr4x4_ctxt;
+    uint16_t color_cache[2 * PALETTE_MAX_SIZE];
+    uint16_t cached_colors[PALETTE_MAX_SIZE];
+    const int n_cache = av1_get_palette_cache(parse_ctx, pi,
+        mi_row, mi_col, 0, color_cache);
+    const int n = pi->mi->palette_size[0];
+    int idx = 0;
+    for (int i = 0; i < n_cache && idx < n; ++i)
+        if (svt_read_bit(r, ACCT_STR)) cached_colors[idx++] = color_cache[i];
+    if (idx < n) {
+        const int n_cached_colors = idx;
+        nbr_ctx->palette_colors[idx++] = svt_read_literal(r, bit_depth, ACCT_STR);
+        if (idx < n) {
+            const int min_bits = bit_depth - 3;
+            int bits = min_bits + svt_read_literal(r, 2, ACCT_STR);
+            int range = (1 << bit_depth) - nbr_ctx->palette_colors[idx - 1] - 1;
+            for (; idx < n; ++idx) {
+                assert(range >= 0);
+                const int delta = svt_read_literal(r, bits, ACCT_STR) + 1;
+                nbr_ctx->palette_colors[idx] =
+                    clamp(nbr_ctx->palette_colors[idx - 1] + delta,
+                          0, (1 << bit_depth) - 1);
+                range -= (nbr_ctx->palette_colors[idx] -
+                          nbr_ctx->palette_colors[idx - 1]);
+                bits = AOMMIN(bits, av1_ceil_log2(range));
+            }
+        }
+        merge_colors(nbr_ctx->palette_colors, cached_colors, n, n_cached_colors);
+    }
+    else {
+        memcpy(nbr_ctx->palette_colors, cached_colors, n * sizeof(cached_colors[0]));
+    }
+}
+
+static void read_palette_colors_uv(ParseCtxt *parse_ctx, PartitionInfo_t *pi,
+    int bit_depth, int mi_row, int mi_col, SvtReader *r)
+{
+    ParseNbr4x4Ctxt  *nbr_ctx = &parse_ctx->parse_nbr4x4_ctxt;
+    const int n = pi->mi->palette_size[1];
+    // U channel colors.
+    uint16_t color_cache[2 * PALETTE_MAX_SIZE];
+    uint16_t cached_colors[PALETTE_MAX_SIZE];
+    const int n_cache = av1_get_palette_cache(parse_ctx, pi,
+                        mi_row, mi_col, 1, color_cache);
+    int idx = 0;
+    for (int i = 0; i < n_cache && idx < n; ++i)
+        if (svt_read_bit(r, ACCT_STR)) cached_colors[idx++] = color_cache[i];
+    if (idx < n) {
+        const int n_cached_colors = idx;
+        idx += PALETTE_MAX_SIZE;
+        nbr_ctx->palette_colors[idx++] = svt_read_literal(r, bit_depth, ACCT_STR);
+        if (idx < PALETTE_MAX_SIZE + n) {
+            const int min_bits = bit_depth - 3;
+            int bits = min_bits + svt_read_literal(r, 2, ACCT_STR);
+            int range = (1 << bit_depth) - nbr_ctx->palette_colors[idx - 1];
+            for (; idx < PALETTE_MAX_SIZE + n; ++idx) {
+                assert(range >= 0);
+                const int delta = svt_read_literal(r, bits, ACCT_STR);
+                nbr_ctx->palette_colors[idx] =
+                    clamp(nbr_ctx->palette_colors[idx - 1] + delta,
+                          0, (1 << bit_depth) - 1);
+                range -= (nbr_ctx->palette_colors[idx] -
+                          nbr_ctx->palette_colors[idx - 1]);
+                bits = AOMMIN(bits, av1_ceil_log2(range));
+            }
+        }
+        merge_colors(nbr_ctx->palette_colors + PALETTE_MAX_SIZE,
+                     cached_colors, n, n_cached_colors);
+    }
+    else {
+        memcpy(nbr_ctx->palette_colors + PALETTE_MAX_SIZE, cached_colors,
+               n * sizeof(cached_colors[0]));
+    }
+
+    // V channel colors.
+    if (svt_read_bit(r, ACCT_STR)) {  // Delta encoding.
+        const int min_bits_v = bit_depth - 4;
+        const int max_val = 1 << bit_depth;
+        int bits = min_bits_v + svt_read_literal(r, 2, ACCT_STR);
+        nbr_ctx->palette_colors[2 * PALETTE_MAX_SIZE] =
+            svt_read_literal(r, bit_depth, ACCT_STR);
+        for (int i = 1; i < n; ++i) {
+            int delta = svt_read_literal(r, bits, ACCT_STR);
+            if (delta && svt_read_bit(r, ACCT_STR)) delta = -delta;
+            int val = (int)nbr_ctx->
+                palette_colors[2 * PALETTE_MAX_SIZE + i - 1] + delta;
+            if (val < 0) val += max_val;
+            if (val >= max_val) val -= max_val;
+            nbr_ctx->palette_colors[2 * PALETTE_MAX_SIZE + i] = val;
+        }
+    }
+    else {
+        for (int i = 0; i < n; ++i) {
+            nbr_ctx->palette_colors[2 * PALETTE_MAX_SIZE + i] =
+                svt_read_literal(r, bit_depth, ACCT_STR);
+        }
+    }
+}
+
+void palette_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *pi,
+    int mi_row, int mi_col, SvtReader *r)
+{
+    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
+    FRAME_CONTEXT *frm_ctx = &parse_ctxt->cur_tile_ctx;
+    EbColorConfig *color_info = &dec_handle->seq_header.color_config;
+    const int num_planes = color_info->mono_chrome ? 1 : MAX_MB_PLANE;
+    ModeInfo_t *const mbmi = pi->mi;
+    const BlockSize bsize = mbmi->sb_type;
+    assert(allow_palette(dec_handle->frame_header.allow_screen_content_tools,
+                         bsize));
+    const int bsize_ctx = get_palette_bsize_ctx(bsize);
+
+    if (mbmi->mode == DC_PRED) {
+        const int palette_mode_ctx = get_palette_mode_ctx(pi);
+        const int modev = svt_read_symbol(
+            r, frm_ctx->palette_y_mode_cdf[bsize_ctx][palette_mode_ctx], 2,
+            ACCT_STR);
+        if (modev) {
+            mbmi->palette_size[0] =
+                svt_read_symbol(r, frm_ctx->palette_y_size_cdf[bsize_ctx],
+                    PALETTE_SIZES, ACCT_STR) +
+                2;
+            read_palette_colors_y(parse_ctxt, pi, dec_handle->seq_header.
+                color_config.bit_depth, mi_row, mi_col, r);
+        }
+    }
+    if (num_planes > 1 && mbmi->uv_mode == UV_DC_PRED &&
+        dec_is_chroma_reference(mi_row, mi_col, bsize,
+            color_info->subsampling_x, color_info->subsampling_y))
+    {
+        const int palette_uv_mode_ctx = (mbmi->palette_size[0] > 0);
+        const int modev = svt_read_symbol(
+            r, frm_ctx->palette_uv_mode_cdf[palette_uv_mode_ctx], 2, ACCT_STR);
+        if (modev) {
+            mbmi->palette_size[1] =
+                svt_read_symbol(r, frm_ctx->palette_uv_size_cdf[bsize_ctx],
+                    PALETTE_SIZES, ACCT_STR) +
+                2;
+            read_palette_colors_uv(parse_ctxt, pi, dec_handle->
+                seq_header.color_config.bit_depth, mi_row, mi_col, r);
+        }
+    }
 }
 
 void filter_intra_mode_info(EbDecHandle *dec_handle,
@@ -234,37 +462,38 @@ void read_cdef(EbDecHandle *dec_handle, SvtReader *r, PartitionInfo_t *xd,
     int mi_col, int mi_row, int8_t *cdef_strength)
 {
     ModeInfo_t *const mbmi = xd->mi;
-    if (dec_handle->frame_header.coded_lossless) return;
-    if (dec_handle->frame_header.allow_intrabc) {
-        assert(dec_handle->frame_header.CDEF_params.cdef_bits == 0);
+    if (mbmi->skip || dec_handle->frame_header.coded_lossless ||
+        !dec_handle->seq_header.enable_cdef ||
+        dec_handle->frame_header.allow_intrabc)
+    {
         return;
     }
 
-    int cdef_preset[4];
-    if (!(mi_col & (dec_handle->seq_header.sb_mi_size - 1)) &&
-        !(mi_row & (dec_handle->seq_header.sb_mi_size - 1))) {  // Top left?
-        cdef_preset[0] = cdef_preset[1] = cdef_preset[2] =
-            cdef_preset[3] = -1;
-    }
-    else {
-        for (int i = 0; i < 4; i++)
-            cdef_preset[i] = cdef_strength[i];
-    }
-
-    int cdf_size = block_size_wide[BLOCK_64X64] >> 2;
-    const int mask = ~(cdf_size - 1);
+    int cdf_size = block_size_wide[BLOCK_64X64];
+    const int mask = (1 << (6 - MI_SIZE_LOG2));
+    int row = mi_row & mask;
+    int col = mi_col & mask;
     const int index = dec_handle->seq_header.sb_size == BLOCK_128X128
-        ? !!(mi_col & mask) + 2 * !!(mi_row & mask) : 0;
-    cdef_strength[index] = (cdef_preset[index] == -1  && !mbmi->skip)
-        ? svt_read_literal(r, dec_handle->frame_header.CDEF_params.cdef_bits,
-            ACCT_STR) : cdef_preset[index];
+        ? !!(col) + 2 * !!(row) : 0;
+    if (cdef_strength[index] == -1) {
+        cdef_strength[index] = svt_read_literal(r, dec_handle->
+            frame_header.CDEF_params.cdef_bits, ACCT_STR);
+        int w4 = block_size_wide[mbmi->sb_type];
+        int h4 = block_size_high[mbmi->sb_type];
+        for (int i = row; i < row + h4; i += cdf_size) {
+            for (int j = col; j < col + w4; j += cdf_size) {
+                cdef_strength[!!(j & mask) + 2 * !!(i & mask)] = cdef_strength[index];
+            }
+        }
+    }
 }
 
 int read_delta_qindex(EbDecHandle *dec_handle, SvtReader *r,
-    ModeInfo_t *const mbmi, int mi_col, int mi_row)
+    ModeInfo_t *const mbmi, int mi_col, int mi_row, int32_t cur_qind)
 {
     int sign, abs, reduced_delta_qindex = 0;
     BlockSize bsize = mbmi->sb_type;
+    DeltaQParams    *delta_q_params = &dec_handle->frame_header.delta_q_params;
     const int b_col = mi_col & (dec_handle->seq_header.sb_mi_size - 1);
     const int b_row = mi_row & (dec_handle->seq_header.sb_mi_size - 1);
     const int read_delta_q_flag = (b_col == 0 && b_row == 0);
@@ -287,18 +516,22 @@ int read_delta_qindex(EbDecHandle *dec_handle, SvtReader *r,
         else
             sign = 1;
         reduced_delta_qindex = sign ? -abs : abs;
+        reduced_delta_qindex = clamp(cur_qind +
+             (reduced_delta_qindex << delta_q_params->delta_q_res), 1, MAXQ);
     }
     return reduced_delta_qindex;
 }
 
 int read_delta_lflevel(EbDecHandle *dec_handle, SvtReader *r,
-    AomCdfProb *cdf, ModeInfo_t *mbmi, int mi_col, int mi_row)
+    AomCdfProb *cdf, ModeInfo_t *mbmi, int mi_col, int mi_row,
+    int32_t delta_lf)
 {
     int reduced_delta_lflevel = 0;
     const BlockSize bsize = mbmi->sb_type;
     const int b_col = mi_col & (dec_handle->seq_header.sb_mi_size - 1);
     const int b_row = mi_row & (dec_handle->seq_header.sb_mi_size - 1);
     const int read_delta_lf_flag = (b_col == 0 && b_row == 0);
+    DeltaLFParams *delta_lf_params = &dec_handle->frame_header.delta_lf_params;
 
     if ((bsize != dec_handle->seq_header.sb_size || mbmi->skip == 0) &&
         read_delta_lf_flag)
@@ -311,6 +544,9 @@ int read_delta_lflevel(EbDecHandle *dec_handle, SvtReader *r,
         }
         const int sign = abs ? svt_read_bit(r, ACCT_STR) : 1;
         reduced_delta_lflevel = sign ? -abs : abs;
+        reduced_delta_lflevel = clamp(delta_lf +
+            (reduced_delta_lflevel << delta_lf_params->delta_lf_res),
+            -MAX_LOOP_FILTER, MAX_LOOP_FILTER);
     }
     return reduced_delta_lflevel;
 }
@@ -362,60 +598,30 @@ static void read_delta_params(EbDecHandle *dec_handle, SvtReader *r,
     DeltaQParams    *delta_q_params = &dec_handle->frame_header.delta_q_params;
     DeltaLFParams   *delta_lf_params = &dec_handle->frame_header.delta_lf_params;
     SBInfo          *sb_info = xd->sb_info;
+    ModeInfo_t *const mbmi = &xd->mi[0];
 
     if (delta_q_params->delta_q_present) {
-        ModeInfo_t *const mbmi = &xd->mi[0];
-        int current_qindex;
-        int base_qindex = dec_handle->frame_header.quantization_params.base_q_idx;
+        parse_ctxt->parse_nbr4x4_ctxt.cur_q_ind =
+            sb_info->sb_delta_q[0] =
+            read_delta_qindex(dec_handle, r, mbmi, mi_col, mi_row,
+                parse_ctxt->parse_nbr4x4_ctxt.cur_q_ind);
+    }
 
-        assert(0);
-        //delta_q_res should be left shifted instead of being multiplied - check logic
-        int delta_q = read_delta_qindex(dec_handle, r, mbmi, mi_col, mi_row);
-        sb_info->sb_delta_q[0] = delta_q * delta_q_params->delta_q_res;
-        current_qindex = base_qindex + sb_info->sb_delta_q[0];
-        /* Normative: Clamp to [1,MAXQ] to not interfere with lossless mode */
-        /* TODO: Should add cur q idx and remove this repetitive? */
-        sb_info->sb_delta_q[0] = clamp(current_qindex, 1, MAXQ) - base_qindex;
 
-        FRAME_CONTEXT *const ec_ctx = &parse_ctxt->cur_tile_ctx;
+    FRAME_CONTEXT *const ec_ctx = &parse_ctxt->cur_tile_ctx;
 
-        if (delta_lf_params->delta_lf_present) {
-            if (delta_lf_params->delta_lf_multi) {
-                EbColorConfig *color_info = &dec_handle->seq_header.color_config;
-                int num_planes = color_info->mono_chrome ? 1 : MAX_MB_PLANE;
-                const int frame_lf_count =
-                    num_planes > 1 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
-                for (int lf_id = 0; lf_id < frame_lf_count; ++lf_id) {
-                    int tmp_lvl;
-                    int base_lvl;
-                    if (lf_id < 2)
-                        base_lvl = dec_handle->frame_header.loop_filter_params.filter_level[lf_id];
-                    else if (lf_id == 2)
-                        base_lvl = dec_handle->frame_header.loop_filter_params.filter_level_u;
-                    else
-                        base_lvl = dec_handle->frame_header.loop_filter_params.filter_level_v;
-
-                    assert(0);
-                    //delta_lf_res should be left shifted instead of being multiplied - check logic
-                    sb_info->sb_delta_lf[lf_id] =
-                        read_delta_lflevel(dec_handle, r, ec_ctx->delta_lf_multi_cdf[lf_id],
-                                           mbmi, mi_col, mi_row) *
-                                           delta_lf_params->delta_lf_res;
-                    tmp_lvl = base_lvl + sb_info->sb_delta_lf[lf_id];
-                    tmp_lvl = clamp(tmp_lvl, -MAX_LOOP_FILTER, MAX_LOOP_FILTER);
-                    sb_info->sb_delta_lf[lf_id] = tmp_lvl - base_lvl;
-                }
-            } else {
-                int tmp_lvl;
-                int base_lvl = dec_handle->frame_header.loop_filter_params.filter_level[0];
-                sb_info->sb_delta_lf[0] =
-                                read_delta_lflevel(dec_handle, r, ec_ctx->delta_lf_cdf,
-                                                    mbmi, mi_col, mi_row) *
-                                delta_lf_params->delta_lf_res;
-                tmp_lvl = base_lvl + sb_info->sb_delta_lf[0];
-                tmp_lvl = clamp(tmp_lvl, -MAX_LOOP_FILTER, MAX_LOOP_FILTER);
-                sb_info->sb_delta_lf[0] = tmp_lvl - base_lvl;
-            }
+    int frame_lf_count = 1;
+    if (delta_lf_params->delta_lf_present) {
+        if (delta_lf_params->delta_lf_multi) {
+            EbColorConfig *color_info = &dec_handle->seq_header.color_config;
+            int num_planes = color_info->mono_chrome ? 1 : MAX_MB_PLANE;
+            frame_lf_count =
+                num_planes > 1 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
+        }
+        for (int lf_id = 0; lf_id < frame_lf_count; ++lf_id) {
+            parse_ctxt->parse_nbr4x4_ctxt.delta_lf[lf_id] = sb_info->sb_delta_lf[lf_id] =
+                read_delta_lflevel(dec_handle, r, ec_ctx->delta_lf_multi_cdf[lf_id],
+                    mbmi, mi_col, mi_row, parse_ctxt->parse_nbr4x4_ctxt.delta_lf[lf_id]);
         }
     }
 }
@@ -544,8 +750,36 @@ PredictionMode getMode(PredictionMode yMode, int refList) {
     return compMode;
 }
 
-void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd, int mi_row,
-    int mi_col, SvtReader *r, int8_t *cdef_strength)
+static INLINE void update_palette_context(EbDecHandle *dec_handle,
+    int mi_row, int mi_col, ModeInfo_t *mi)
+{
+    BlockSize bsize = mi->sb_type;
+    ParseCtxt *parse_ctx = (ParseCtxt *)dec_handle->pv_parse_ctxt;
+    ParseNbr4x4Ctxt *ngr_ctx = &parse_ctx->parse_nbr4x4_ctxt;
+    const int bw = mi_size_wide[bsize];
+    const int bh = mi_size_high[bsize];
+    for (int plane = 0; plane < MAX_MB_PLANE; plane++) {
+        uint16_t *above_pal_col = ngr_ctx->above_palette_colors[plane] +
+            (PALETTE_MAX_SIZE *((mi_col - parse_ctx->sb_col_mi) % 16));
+        uint16_t *left_pal_col = ngr_ctx->left_palette_colors[plane] +
+            (PALETTE_MAX_SIZE * (mi_row - parse_ctx->sb_row_mi));
+        for (int i = 0; i < bw; i++) {
+            memcpy(above_pal_col, &ngr_ctx->
+                palette_colors[plane * PALETTE_MAX_SIZE],
+                mi->palette_size[plane != 0] * sizeof(uint16_t));
+            above_pal_col += PALETTE_MAX_SIZE;
+        }
+        for (int i = 0; i < bh; i++) {
+            memcpy(left_pal_col, &ngr_ctx->
+                palette_colors[plane * PALETTE_MAX_SIZE],
+                mi->palette_size[plane != 0] * sizeof(uint16_t));
+            left_pal_col += PALETTE_MAX_SIZE;
+        }
+    }
+}
+
+void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd,
+    int mi_row, int mi_col, SvtReader *r, int8_t *cdef_strength)
 {
     ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
     ModeInfo_t *const mbmi = xd->mi;
@@ -555,9 +789,8 @@ void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd, int mi_
     SegmentationParams *const seg = &dec_handle->frame_header.segmentation_params;
     EbColorConfig color_config = dec_handle->seq_header.color_config;
     uint8_t     *lossless_array = &dec_handle->frame_header.lossless_array[0];
-    IntMvDec ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES] = { { { 0 } } };
+    IntMvDec ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES] = { { { 0 } } };
     int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
-    MvReferenceFrame ref_frame = av1_ref_frame_type(mbmi->ref_frame);
     MvCount *mv_cnt = (MvCount*)malloc(sizeof(MvCount));
 
     if (seg->seg_id_pre_skip) {
@@ -579,6 +812,9 @@ void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd, int mi_
     mbmi->ref_frame[0] = INTRA_FRAME;
     mbmi->ref_frame[1] = NONE_FRAME;
 
+    mbmi->palette_size[0] = 0;
+    mbmi->palette_size[1] = 0;
+
     mbmi->use_intrabc = 0;
     if (allow_intrabc(dec_handle))
         mbmi->use_intrabc = svt_read_symbol(r, parse_ctxt->cur_tile_ctx.intrabc_cdf,
@@ -589,12 +825,13 @@ void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd, int mi_
         mbmi->uv_mode = UV_DC_PRED;
         mbmi->motion_mode = SIMPLE_TRANSLATION;
         mbmi->compound_mode = COMPOUND_AVERAGE;
-        dec_handle->frame_header.interpolation_filter = BILINEAR;
+        mbmi->interp_filters = av1_broadcast_interp_filter(BILINEAR);
         IntMvDec global_mvs[2];
-        av1_find_mv_refs(dec_handle, xd, ref_frame, xd->ref_mv_stack,
+        av1_find_mv_refs(dec_handle, xd, INTRA_FRAME, xd->ref_mv_stack,
             ref_mvs, global_mvs, mi_row, mi_col,
             inter_mode_ctx, mv_cnt);
-        assert(0);
+
+        assign_intrabc_mv(dec_handle, ref_mvs, xd, mi_row, mi_col, r);
     }
     else {
         AomCdfProb *y_mode_cdf = get_y_mode_cdf(&parse_ctxt->cur_tile_ctx,
@@ -618,8 +855,10 @@ void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd, int mi_
                 dec_get_uv_mode(mbmi->uv_mode), bsize);
         }
 
-        if (allow_palette(dec_handle->frame_header.allow_screen_content_tools, bsize))
-            palette_mode_info(/*dec_handle, mi_row, mi_col, r*/);
+        if (allow_palette(dec_handle->frame_header.allow_screen_content_tools, bsize)) {
+            palette_mode_info(dec_handle, xd, mi_row, mi_col, r);
+            update_palette_context(dec_handle, mi_row, mi_col, mbmi);
+        }
         filter_intra_mode_info(dec_handle, xd, r);
     }
     free(mv_cnt);
@@ -902,9 +1141,10 @@ void svt_setup_motion_field(EbDecHandle *dec_handle) {
 }
 
 void intra_block_mode_info(EbDecHandle *dec_handle, int mi_row,
-    int mi_col, PartitionInfo_t* xd, ModeInfo_t *mbmi, SvtReader *r)
+    int mi_col, PartitionInfo_t* xd, SvtReader *r)
 {
     ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
+    ModeInfo_t *mbmi = xd->mi;
     const BlockSize bsize = mbmi->sb_type;
     mbmi->ref_frame[0] = INTRA_FRAME;
     mbmi->ref_frame[1] = NONE_FRAME;
@@ -934,8 +1174,13 @@ void intra_block_mode_info(EbDecHandle *dec_handle, int mi_row,
             dec_get_uv_mode(mbmi->uv_mode), bsize);
     }
 
-    if (allow_palette(dec_handle->frame_header.allow_screen_content_tools, bsize))
-        palette_mode_info(/*dec_handle, mi_row, mi_col, r*/);
+    mbmi->palette_size[0] = 0;
+    mbmi->palette_size[1] = 0;
+
+    if (allow_palette(dec_handle->frame_header.allow_screen_content_tools, bsize)) {
+        palette_mode_info(dec_handle, xd, mi_row, mi_col, r);
+        update_palette_context(dec_handle, mi_row, mi_col, mbmi);
+    }
 
     filter_intra_mode_info(dec_handle, xd, r);
 }
@@ -992,7 +1237,7 @@ void inter_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t * pi,
     if (inter_block)
         inter_block_mode_info(dec_handle, pi, mi_row, mi_col, r);
     else
-        intra_block_mode_info(dec_handle, mi_row, mi_col, pi, mbmi, r);
+        intra_block_mode_info(dec_handle, mi_row, mi_col, pi, r);
 }
 
 static void intra_copy_frame_mvs(EbDecHandle *dec_handle, int mi_row, int mi_col,
@@ -1051,7 +1296,6 @@ void inter_copy_frame_mvs(EbDecHandle *dec_handle, ModeInfo_t *mi,
     }
 }
 
-
 void mode_info(EbDecHandle *dec_handle, PartitionInfo_t *part_info, uint32_t mi_row,
     uint32_t mi_col, SvtReader *r, int8_t *cdef_strength)
 {
@@ -1064,12 +1308,16 @@ void mode_info(EbDecHandle *dec_handle, PartitionInfo_t *part_info, uint32_t mi_
     const int x_mis = AOMMIN(bw, frame_info->mi_cols - mi_col);
     const int y_mis = AOMMIN(bh, frame_info->mi_rows - mi_row);
 
-    if (frame_info->frame_type == KEY_FRAME || frame_info->frame_type == INTRA_ONLY_FRAME) {
-        intra_frame_mode_info(dec_handle, part_info, mi_row, mi_col, r, cdef_strength);
+    if (frame_info->frame_type == KEY_FRAME ||
+        frame_info->frame_type == INTRA_ONLY_FRAME)
+    {
+        intra_frame_mode_info(dec_handle, part_info, mi_row, mi_col, r,
+            cdef_strength);
         intra_copy_frame_mvs(dec_handle, mi_row, mi_col, x_mis, y_mis);
     }
     else {
-        inter_frame_mode_info(dec_handle, part_info, mi_row, mi_col, r, cdef_strength);
+        inter_frame_mode_info(dec_handle, part_info, mi_row, mi_col, r,
+            cdef_strength);
         inter_copy_frame_mvs(dec_handle, mi, mi_row, mi_col, x_mis, y_mis);
     }
 }
@@ -1923,17 +2171,6 @@ uint16_t parse_coeffs(EbDecHandle *dec_handle, PartitionInfo_t *xd, SvtReader *r
     return eob;
 }
 
-void palette_tokens(int plane) {
-    assert(plane == 0 || plane == 1);
-    (void)plane;
-    // TO-DO
-}
-
-void get_palette_color_context()
-{
-    //TO-DO
-}
-
 int partition_plane_context(int mi_row,
     int mi_col, BlockSize bsize, ParseCtxt *parse_ctxt)
 {
@@ -2265,9 +2502,9 @@ void parse_block(EbDecHandle *dec_handle, uint32_t mi_row, uint32_t mi_col,
 {
     ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
 
-    ModeInfo_t *mode = parse_ctx->cur_mode_info;
-
     int8_t      *cdef_strength = sb_info->sb_cdef_strength;
+
+    ModeInfo_t *mode = parse_ctx->cur_mode_info;
 
     int bw4 = mi_size_wide[subsize];
     int bh4 = mi_size_high[subsize];
@@ -2281,6 +2518,9 @@ void parse_block(EbDecHandle *dec_handle, uint32_t mi_row, uint32_t mi_col,
     part_info.sb_info   = sb_info;
     part_info.mi_row = mi_row;
     part_info.mi_col = mi_col;
+
+    for (int i = 0; i < MAX_MB_PLANE * PALETTE_MAX_SIZE; i++)
+        parse_ctx->parse_nbr4x4_ctxt.palette_colors[i] = 0;
 
     mode->partition = partition;
     /* TU offset update from parse ctxt info of previous block */
@@ -2375,14 +2615,8 @@ void parse_block(EbDecHandle *dec_handle, uint32_t mi_row, uint32_t mi_col,
     ZERO_ARRAY(parse_ctx->num_tus[AOM_PLANE_U], 4);
     ZERO_ARRAY(parse_ctx->num_tus[AOM_PLANE_V], 4);
 
-    if (!dec_is_inter_block(mode)) {
-        for (int plane = 0;
-            plane < AOMMIN(2, dec_handle->seq_header.
-                            color_config.mono_chrome ? 1 : MAX_MB_PLANE);
-            ++plane) {
-            palette_tokens(plane);
-        }
-    }
+    if (!dec_is_inter_block(mode))
+        palette_tokens(dec_handle, &part_info, mi_row, mi_col, r);
 
     read_block_tx_size(dec_handle, r, &part_info, subsize);
 
@@ -2445,8 +2679,8 @@ static INLINE void update_ext_partition_context(ParseCtxt *parse_ctx, int mi_row
     }
 }
 
-void parse_partition(EbDecHandle *dec_handle, uint32_t blk_row,
-    uint32_t blk_col, SvtReader *reader, BlockSize bsize, SBInfo *sb_info)
+void parse_partition(EbDecHandle *dec_handle, uint32_t blk_row, uint32_t blk_col,
+    SvtReader *reader, BlockSize bsize, SBInfo *sb_info)
 {
     ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
 
@@ -2705,10 +2939,6 @@ void parse_super_block(EbDecHandle *dec_handle,
 {
     ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
     SvtReader *reader = &parse_ctx->r;
-#if ENABLE_ENTROPY_TRACE
-    enable_dump = 1;
-    // enable_dump =  dec_handle->dec_cnt ==35 || dec_handle->dec_cnt == 36;
-#endif
 
     read_lr(dec_handle, blk_row, blk_col, reader, ref_sgr_xqd, ref_lr_wiener);
 

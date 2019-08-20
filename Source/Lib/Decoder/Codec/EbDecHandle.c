@@ -50,6 +50,7 @@ uint32_t                         lib_mutex_count = 0;
 
 void asmSetConvolveAsmTable(void);
 void init_intra_dc_predictors_c_internal(void);
+void asmSetConvolveHbdAsmTable(void);
 void init_intra_predictors_internal(void);
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr,
                                 uint8_t **data, size_t data_size);
@@ -362,6 +363,8 @@ EB_API EbErrorType eb_init_decoder(
     asmSetConvolveAsmTable();
 
     init_intra_dc_predictors_c_internal();
+
+    asmSetConvolveHbdAsmTable();
 
     init_intra_predictors_internal();
 
