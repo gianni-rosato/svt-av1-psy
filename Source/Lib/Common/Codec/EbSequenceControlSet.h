@@ -223,6 +223,9 @@ extern "C" {
         uint8_t                                 over_boundary_block_mode;
 #endif
         SeqHeader                               seq_header;
+#if COMP_MODE
+        uint8_t                                 compound_mode;
+#endif
     } SequenceControlSet;
 
     typedef struct EbSequenceControlSetInitData

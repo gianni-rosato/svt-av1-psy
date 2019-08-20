@@ -76,7 +76,85 @@ enum COEFF_SCAN_TYPE
 
 extern void av1_set_ref_frame(MvReferenceFrame *rf,
     int8_t ref_frame_type);
+#if COMP_MODE
+int get_relative_dist_enc(SeqHeader *seq_header, int ref_hint, int order_hint);
+int get_comp_index_context_enc(
+    PictureParentControlSet   *pcs_ptr,
+    int cur_frame_index,
+    int bck_frame_index,
+    int fwd_frame_index,
+    const MacroBlockD *xd) {
 
+    int fwd = abs(get_relative_dist_enc(&pcs_ptr->sequence_control_set_ptr->seq_header,
+        fwd_frame_index, cur_frame_index));
+    int bck = abs(get_relative_dist_enc(&pcs_ptr->sequence_control_set_ptr->seq_header,
+        cur_frame_index, bck_frame_index));
+    const MbModeInfo *const above_mi = xd->above_mbmi;
+    const MbModeInfo *const left_mi = xd->left_mbmi;
+    int above_ctx = 0, left_ctx = 0;
+    const int offset = (fwd == bck);
+    if (above_mi != NULL) {
+        if (has_second_ref(above_mi))
+            above_ctx = above_mi->compound_idx;
+        else if (above_mi->ref_frame[0] == ALTREF_FRAME)
+            above_ctx = 1;
+    }
+    if (left_mi != NULL) {
+        if (has_second_ref(left_mi))
+            left_ctx = left_mi->compound_idx;
+        else if (left_mi->ref_frame[0] == ALTREF_FRAME)
+            left_ctx = 1;
+    }
+    return above_ctx + left_ctx + 3 * offset;
+}
+
+
+int get_comp_group_idx_context_enc(const MacroBlockD *xd) {
+    const MbModeInfo *const above_mi = xd->above_mbmi;
+    const MbModeInfo *const left_mi = xd->left_mbmi;
+    int above_ctx = 0, left_ctx = 0;
+    if (above_mi) {
+        if (has_second_ref(above_mi))
+            above_ctx = above_mi->comp_group_idx;
+        else if (above_mi->ref_frame[0] == ALTREF_FRAME)
+            above_ctx = 3;
+    }
+    if (left_mi) {
+        if (has_second_ref(left_mi))
+            left_ctx = left_mi->comp_group_idx;
+        else if (left_mi->ref_frame[0] == ALTREF_FRAME)
+            left_ctx = 3;
+    }
+    return AOMMIN(5, above_ctx + left_ctx);
+}
+int is_masked_compound_type(COMPOUND_TYPE type) {
+    return (type == COMPOUND_WEDGE || type == COMPOUND_DIFFWTD);
+}
+int is_interinter_compound_used(COMPOUND_TYPE type,
+    BlockSize sb_type) {
+    const int comp_allowed = is_comp_ref_allowed(sb_type);
+    switch (type) {
+    case COMPOUND_AVERAGE:
+    case COMPOUND_DISTWTD:
+    case COMPOUND_DIFFWTD: return comp_allowed;
+    case COMPOUND_WEDGE:
+        return comp_allowed && wedge_params_lookup[sb_type].bits > 0;
+    default: assert(0); return 0;
+    }
+}
+int is_any_masked_compound_used(BlockSize sb_type) {
+    COMPOUND_TYPE comp_type;
+    int i;
+    if (!is_comp_ref_allowed(sb_type)) return 0;
+    for (i = 0; i < COMPOUND_TYPES; i++) {
+        comp_type = (COMPOUND_TYPE)i;
+        if (is_masked_compound_type(comp_type) &&
+            is_interinter_compound_used(comp_type, sb_type))
+            return 1;
+    }
+    return 0;
+}
+#endif
 /************************************************
 * CABAC Encoder Constructor
 ************************************************/
@@ -6266,10 +6344,74 @@ assert(bsize < BlockSizeS_ALL);
                         cu_ptr,
                         picture_control_set_ptr);
                 }
+#if COMP_MODE
+                // First write idx to indicate current compound inter prediction mode group
+                // Group A (0): dist_wtd_comp, compound_average
+                // Group B (1): interintra, compound_diffwtd, wedge
+                MbModeInfo *mbmi = &mi_ptr->mbmi;
+                if (has_second_ref(mbmi)) {
 
+                    const int masked_compound_used = is_any_masked_compound_used(bsize) &&
+                        sequence_control_set_ptr->seq_header.enable_masked_compound;
+
+                    if (masked_compound_used) {
+                        const int ctx_comp_group_idx = get_comp_group_idx_context_enc(cu_ptr->av1xd);
+                        aom_write_symbol(ec_writer, cu_ptr->comp_group_idx,
+                            frameContext->comp_group_idx_cdf[ctx_comp_group_idx], 2);
+                    }
+                    else {
+                        assert(cu_ptr->comp_group_idx == 0);
+                    }
+
+                    if (cu_ptr->comp_group_idx == 0) {
+                        if (cu_ptr->compound_idx)
+                            assert(cu_ptr->interinter_comp.type == COMPOUND_AVERAGE);
+
+                        if (sequence_control_set_ptr->seq_header.order_hint_info.enable_jnt_comp) {
+                            const int comp_index_ctx = get_comp_index_context_enc(
+                                picture_control_set_ptr->parent_pcs_ptr,
+                                picture_control_set_ptr->parent_pcs_ptr->cur_order_hint,// cur_frame_index,
+                                picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[0] - 1],// bck_frame_index,
+                                picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[1] - 1],// fwd_frame_index,
+                                cu_ptr->av1xd);
+                            aom_write_symbol(ec_writer, cu_ptr->compound_idx,
+                                frameContext->compound_index_cdf[comp_index_ctx], 2);
+                        }
+                        else {
+                            assert(cu_ptr->compound_idx == 1);
+                        }
+                    }
+                    else {
+                        assert(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reference_mode != SINGLE_REFERENCE &&
+                            is_inter_compound_mode(mbmi->mode) &&
+                            cu_ptr->prediction_unit_array[0].motion_mode == SIMPLE_TRANSLATION);
+                        assert(masked_compound_used);
+                        // compound_diffwtd, wedge
+                        assert(cu_ptr->interinter_comp.type == COMPOUND_WEDGE ||
+                            cu_ptr->interinter_comp.type == COMPOUND_DIFFWTD);
+
+                        if (is_interinter_compound_used(COMPOUND_WEDGE, bsize))
+                            aom_write_symbol(ec_writer, cu_ptr->interinter_comp.type - COMPOUND_WEDGE,
+                                frameContext->compound_type_cdf[bsize],
+                                MASKED_COMPOUND_TYPES);
+
+                        if (cu_ptr->interinter_comp.type == COMPOUND_WEDGE) {
+                            assert(is_interinter_compound_used(COMPOUND_WEDGE, bsize));
+                            aom_write_symbol(ec_writer, cu_ptr->interinter_comp.wedge_index,
+                                frameContext->wedge_idx_cdf[bsize], 16);
+                            aom_write_bit(ec_writer, cu_ptr->interinter_comp.wedge_sign);
+                        }
+                        else {
+                            assert(cu_ptr->interinter_comp.type == COMPOUND_DIFFWTD);
+                            aom_write_literal(ec_writer, cu_ptr->interinter_comp.mask_type,
+                                MAX_DIFFWTD_MASK_BITS);
+                        }
+                    }
+                }
+#else
                 if (sequence_control_set_ptr->seq_header.enable_masked_compound || sequence_control_set_ptr->seq_header.order_hint_info.enable_jnt_comp)
                     printf("ERROR[AN]: masked_compound_used and enable_jnt_comp not supported\n");
-
+#endif
                 // No filter for Global MV
                 write_mb_interp_filter(
                     ref_frame_type_neighbor_array,

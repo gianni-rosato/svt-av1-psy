@@ -24,11 +24,15 @@ extern "C" {
     /**************************************
      * Defines
      **************************************/
+#if COMP_MODE
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               1800
+#else
 #define IBC_CAND 2 //two intra bc candidates
 #if EIGTH_PEL_MV
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (470+IBC_CAND )
 #else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (486 +IBC_CAND)
+#endif
 #endif
 #define DEPTH_ONE_STEP   21
 #define DEPTH_TWO_STEP    5
@@ -241,6 +245,14 @@ extern "C" {
         EbBool                          blk_skip_decision;
         EbBool                          trellis_quant_coeff_optimization;
         EbPictureBufferDesc                 *input_sample16bit_buffer;
+#if COMP_MODE
+        DECLARE_ALIGNED(16, uint8_t, pred0[2 * MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint8_t, pred1[2 * MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]);
+    unsigned int prediction_mse ;
+    EbBool      variance_ready;
+#endif
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(
