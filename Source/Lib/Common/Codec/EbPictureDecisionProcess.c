@@ -1208,8 +1208,6 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             picture_control_set_ptr->compound_mode = 0;
 
-//--------------------//TESTING  TMP
-        picture_control_set_ptr->compound_mode = 2;
 
         // set compound_types_to_try
         if (picture_control_set_ptr->compound_mode)
