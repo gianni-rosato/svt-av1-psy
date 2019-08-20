@@ -22,7 +22,6 @@
 #include "emmintrin.h"
 #include "EbTransforms.h"
 #include "highbd_txfm_utility_sse4.h"
-#include "txfm_common_sse2.h"
 
 #include "av1_txfm_sse4.h"
 

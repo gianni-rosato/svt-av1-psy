@@ -22,10 +22,6 @@
 extern "C" {
 #endif
 
-#include "EbTransforms_C.h"
-#include "EbTransforms_SSE2.h"
-#include "EbTransforms_SSSE3.h"
-#include "EbTransforms_SSE4_1.h"
 #include "EbTransforms_AVX2.h"
 #include "EbSequenceControlSet.h"
 #include "EbPictureControlSet.h"
@@ -3990,18 +3986,6 @@ extern "C" {
         return 0;  // Invalid
     }
 
-    extern EbErrorType encode_transform(
-        int16_t             *residual_buffer,
-        uint32_t             residual_stride,
-        int16_t             *coeff_buffer,
-        uint32_t             coeff_stride,
-        uint32_t             transform_size,
-        int16_t             *transform_inner_array_ptr,
-        uint32_t             bit_increment,
-        EbBool               dst_transform_flag,
-        EB_TRANS_COEFF_SHAPE trans_coeff_shape,
-        EbAsm                asm_type);
-
     extern EbErrorType av1_estimate_transform(
         int16_t             *residual_buffer,
         uint32_t             residual_stride,
@@ -4072,18 +4056,6 @@ extern "C" {
         PlaneType  component_type,
         uint32_t    eob);
 
-    extern EbErrorType encode_inv_transform(
-        EbBool    is_only_dc,
-        int16_t  *coeff_buffer,
-        uint32_t  coeff_stride,
-        int16_t  *recon_buffer,
-        uint32_t  recon_stride,
-        uint32_t  transform_size,
-        int16_t  *transform_inner_array_ptr,
-        uint32_t  bit_increment,
-        EbBool    dst_transform_flag,
-        EbAsm     asm_type);
-
     extern uint8_t map_chroma_qp(
         uint8_t qp
     );
@@ -4149,97 +4121,6 @@ extern "C" {
         const int32_t   shift_num,
         uint32_t       *nonzerocoeff);
 
-    typedef void(*EbTransformFunc)(
-        int16_t        *residual,
-        const uint32_t  src_stride,
-        int16_t        *transform_coefficients,
-        const uint32_t  dst_stride,
-        int16_t        *transform_inner_array_ptr,
-        uint32_t        bit_increment);
-
-    typedef void(*EbInvTransformFunc)(
-        int16_t        *transform_coefficients,
-        const uint32_t  src_stride,
-        int16_t        *residual,
-        const uint32_t  dst_stride,
-        int16_t        *transform_inner_array_ptr,
-        uint32_t        bit_increment);
-
-    /*****************************
-    * Function Tables
-    *****************************/
-    static const EbTransformFunc pfreq_n2_transform_table[ASM_TYPE_TOTAL][5] = {
-        // NON_AVX2
-        {
-            pfreq_transform32x32_sse2,
-            pfreq_transform16x16_sse2,
-            pfreq_transform8x8_sse2_intrin,
-            transform4x4_sse2_intrin,
-            dst_transform4x4_sse2_intrin
-        },
-        // AVX2
-        {
-            pfreq_transform32x32_avx2_intrin,
-            pfreq_transform16x16_sse2,
-            pfreq_transform8x8_sse4_1_intrin,
-            transform4x4_sse2_intrin,
-            dst_transform4x4_sse2_intrin
-        }
-    };
-    static const EbTransformFunc pfreq_n4_transform_table[ASM_TYPE_TOTAL][5] = {
-        // NON_AVX2
-        {
-            pfreq_n4_transform32x32_sse2,
-            pfreq_n4_transform16x16_sse2,
-            pfreq_n4_transform8x8_sse2_intrin,
-            transform4x4_sse2_intrin,
-            dst_transform4x4_sse2_intrin
-        },
-        // AVX2
-        {
-            pfreq_n4_transform32x32_avx2_intrin,
-            pfreq_n4_transform16x16_sse2,
-            pfreq_n4_transform8x8_sse4_1_intrin,
-            transform4x4_sse2_intrin,
-            dst_transform4x4_sse2_intrin
-        }
-    };
-    static const EbTransformFunc transform_function_table_encode[ASM_TYPE_TOTAL][5] = {
-        // NON_AVX2
-        {
-            transform32x32_sse2,
-            transform16x16_sse2,
-            transform8x8_sse2_intrin,
-            transform4x4_sse2_intrin,
-            dst_transform4x4_sse2_intrin
-        },
-        // AVX2
-        {
-            transform32x32_sse2,
-            transform16x16_sse2,
-            transform8x8_sse4_1_intrin,
-            transform4x4_sse2_intrin,
-            dst_transform4x4_sse2_intrin
-        },
-    };
-    static const EbInvTransformFunc inv_transform_function_table_encode[ASM_TYPE_TOTAL][5] = {
-        // NON_AVX2
-        {
-            p_finv_transform32x32_ssse3,
-            p_finv_transform16x16_ssse3,
-            inv_transform8x8_sse2_intrin,
-            inv_transform4x4_sse2_intrin,
-            inv_dst_transform4x4_sse2_intrin
-        },
-        // AVX2
-        {
-            p_finv_transform32x32_ssse3,
-            p_finv_transform16x16_ssse3,
-            inv_transform8x8_sse2_intrin,
-            inv_transform4x4_sse2_intrin,
-            inv_dst_transform4x4_sse2_intrin
-        },
-    };
     void construct_pm_trans_coeff_shaping(SequenceControlSet  *sequence_control_set_ptr);
 
 #ifdef __cplusplus
