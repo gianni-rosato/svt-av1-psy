@@ -13,14 +13,11 @@
 /***************************************
  * Includes
  ***************************************/
+#include <time.h>
 #ifdef _WIN32
-#include <time.h>
 #include <windows.h>
-#elif defined(__linux__) || defined(__APPLE__)
-#include <sys/time.h>
-#include <time.h>
 #else
-#error OS/Platform not supported.
+#include <sys/time.h>
 #endif
 
 #include <assert.h>

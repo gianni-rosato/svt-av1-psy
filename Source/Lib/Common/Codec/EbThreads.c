@@ -20,20 +20,17 @@
   ****************************************/
 #ifdef _WIN32
 #include <windows.h>
-#elif defined(__linux__) || defined(__APPLE__)
+#else
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <time.h>
 #include <unistd.h>
-#else
-#error OS/Platform not supported.
 #endif // _WIN32
 #if PRINTF_TIME
-#ifdef _WIN32
 #include <time.h>
+#ifdef _WIN32
 void printfTime(const char *fmt, ...)
 {
     va_list args;

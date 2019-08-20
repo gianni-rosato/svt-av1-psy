@@ -26,7 +26,7 @@
 #elif __GNUC__
 #define inline __inline__
 #else
-#error OS not supported
+#define inline
 #endif
 
 #ifdef __cplusplus
