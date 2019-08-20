@@ -10,19 +10,13 @@
 
 #include "EbSvtAv1Enc.h"
 
-#ifdef __GNUC__
-#define fseeko64 fseek
-#define ftello64 ftell
+#ifdef _WIN32
+typedef __int64 off64_t;
+#define fseeko _fseeki64
+#define ftello _ftelli64
 #endif
 // Define Cross-Platform 64-bit fseek() and ftell()
-#ifdef _MSC_VER
-typedef __int64 off64_t;
-#define fseeko64 _fseeki64
-#define ftello64 _ftelli64
 
-#elif _WIN32 // MinGW
-
-#endif
 
 /** The AppExitConditionType type is used to define the App main loop exit
 conditions.

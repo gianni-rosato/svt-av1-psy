@@ -622,12 +622,12 @@ void ProcessInputFieldStandardMode(
     ebInputPtr = lumaInputPtr;
     // Skip 1 luma row if bottom field (point to the bottom field)
     if (config->processed_frame_count % 2 != 0)
-        fseeko64(input_file, (long)source_luma_row_size, SEEK_CUR);
+        fseeko(input_file, (long)source_luma_row_size, SEEK_CUR);
 
     for (inputRowIndex = 0; inputRowIndex < input_padded_height; inputRowIndex++) {
         headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, source_luma_row_size, input_file);
         // Skip 1 luma row (only fields)
-        fseeko64(input_file, (long)source_luma_row_size, SEEK_CUR);
+        fseeko(input_file, (long)source_luma_row_size, SEEK_CUR);
         ebInputPtr += source_luma_row_size;
     }
 
@@ -635,14 +635,14 @@ void ProcessInputFieldStandardMode(
     ebInputPtr = cbInputPtr;
     // Step back 1 luma row if bottom field (undo the previous jump), and skip 1 chroma row if bottom field (point to the bottom field)
     if (config->processed_frame_count % 2 != 0) {
-        fseeko64(input_file, -(long)source_luma_row_size, SEEK_CUR);
-        fseeko64(input_file, (long)source_chroma_row_size, SEEK_CUR);
+        fseeko(input_file, -(long)source_luma_row_size, SEEK_CUR);
+        fseeko(input_file, (long)source_chroma_row_size, SEEK_CUR);
     }
 
     for (inputRowIndex = 0; inputRowIndex < input_padded_height >> subsampling_y; inputRowIndex++) {
         headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, source_chroma_row_size, input_file);
         // Skip 1 chroma row (only fields)
-        fseeko64(input_file, (long)source_chroma_row_size, SEEK_CUR);
+        fseeko(input_file, (long)source_chroma_row_size, SEEK_CUR);
         ebInputPtr += source_chroma_row_size;
     }
 
@@ -654,13 +654,13 @@ void ProcessInputFieldStandardMode(
     for (inputRowIndex = 0; inputRowIndex < input_padded_height >> subsampling_y; inputRowIndex++) {
         headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, source_chroma_row_size, input_file);
         // Skip 1 chroma row (only fields)
-        fseeko64(input_file, (long)source_chroma_row_size, SEEK_CUR);
+        fseeko(input_file, (long)source_chroma_row_size, SEEK_CUR);
         ebInputPtr += source_chroma_row_size;
     }
 
     // Step back 1 chroma row if bottom field (undo the previous jump)
     if (config->processed_frame_count % 2 != 0)
-        fseeko64(input_file, -(long)source_chroma_row_size, SEEK_CUR);
+        fseeko(input_file, -(long)source_chroma_row_size, SEEK_CUR);
 }
 
 //************************************/
@@ -1077,10 +1077,10 @@ static void write_ivf_stream_header(EbConfig *config)
 static void update_prev_ivf_header(EbConfig *config){
     char header[4]; // only for the number of bytes
     if (config && config->bitstream_file && config->byte_count_since_ivf != 0){
-        fseeko64(config->bitstream_file, (-(int32_t)(config->byte_count_since_ivf + IVF_FRAME_HEADER_SIZE)),SEEK_CUR);
+        fseeko(config->bitstream_file, (-(int32_t)(config->byte_count_since_ivf + IVF_FRAME_HEADER_SIZE)),SEEK_CUR);
         mem_put_le32(&header[0], (int32_t)(config->byte_count_since_ivf));
         fwrite(header, 1, 4, config->bitstream_file);
-        fseeko64(config->bitstream_file, (config->byte_count_since_ivf + IVF_FRAME_HEADER_SIZE - 4), SEEK_CUR);
+        fseeko(config->bitstream_file, (config->byte_count_since_ivf + IVF_FRAME_HEADER_SIZE - 4), SEEK_CUR);
         config->byte_count_since_ivf = 0;
     }
 }
@@ -1354,10 +1354,10 @@ AppExitConditionType ProcessOutputReconBuffer(
         rewind(config->recon_file);
         uint64_t frameNum = headerPtr->pts;
         while (frameNum>0) {
-            fseekReturnVal = fseeko64(config->recon_file, headerPtr->n_filled_len, SEEK_CUR);
+            fseekReturnVal = fseeko(config->recon_file, headerPtr->n_filled_len, SEEK_CUR);
 
             if (fseekReturnVal != 0) {
-                printf("Error in fseeko64  returnVal %i\n", fseekReturnVal);
+                printf("Error in fseeko  returnVal %i\n", fseekReturnVal);
                 return APP_ExitConditionError;
             }
             frameNum = frameNum - 1;

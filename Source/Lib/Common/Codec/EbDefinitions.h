@@ -25,12 +25,6 @@
 #define inline __inline
 #elif __GNUC__
 #define inline __inline__
-#ifndef fseeko64
-#define fseeko64 fseek
-#endif
-#ifndef ftello64
-#define ftello64 ftell
-#endif
 #else
 #error OS not supported
 #endif

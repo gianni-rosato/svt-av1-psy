@@ -91,12 +91,12 @@ void ProcessInputFieldBufferingMode(
     ebInputPtr = lumaInputPtr;
     // Skip 1 luma row if bottom field (point to the bottom field)
     if (processed_frame_count % 2 != 0)
-        fseeko64(input_file, (long)sourceLumaRowSize, SEEK_CUR);
+        fseeko(input_file, (long)sourceLumaRowSize, SEEK_CUR);
 
     for (inputRowIndex = 0; inputRowIndex < input_padded_height; inputRowIndex++) {
         *filledLen += (uint32_t)fread(ebInputPtr, 1, sourceLumaRowSize, input_file);
         // Skip 1 luma row (only fields)
-        fseeko64(input_file, (long)sourceLumaRowSize, SEEK_CUR);
+        fseeko(input_file, (long)sourceLumaRowSize, SEEK_CUR);
         ebInputPtr += sourceLumaRowSize;
     }
 
@@ -104,14 +104,14 @@ void ProcessInputFieldBufferingMode(
     ebInputPtr = cbInputPtr;
     // Step back 1 luma row if bottom field (undo the previous jump), and skip 1 chroma row if bottom field (point to the bottom field)
     if (processed_frame_count % 2 != 0) {
-        fseeko64(input_file, -(long)sourceLumaRowSize, SEEK_CUR);
-        fseeko64(input_file, (long)sourceChromaRowSize, SEEK_CUR);
+        fseeko(input_file, -(long)sourceLumaRowSize, SEEK_CUR);
+        fseeko(input_file, (long)sourceChromaRowSize, SEEK_CUR);
     }
 
     for (inputRowIndex = 0; inputRowIndex < input_padded_height >> 1; inputRowIndex++) {
         *filledLen += (uint32_t)fread(ebInputPtr, 1, sourceChromaRowSize, input_file);
         // Skip 1 chroma row (only fields)
-        fseeko64(input_file, (long)sourceChromaRowSize, SEEK_CUR);
+        fseeko(input_file, (long)sourceChromaRowSize, SEEK_CUR);
         ebInputPtr += sourceChromaRowSize;
     }
 
@@ -123,13 +123,13 @@ void ProcessInputFieldBufferingMode(
     for (inputRowIndex = 0; inputRowIndex < input_padded_height >> 1; inputRowIndex++) {
         *filledLen += (uint32_t)fread(ebInputPtr, 1, sourceChromaRowSize, input_file);
         // Skip 1 chroma row (only fields)
-        fseeko64(input_file, (long)sourceChromaRowSize, SEEK_CUR);
+        fseeko(input_file, (long)sourceChromaRowSize, SEEK_CUR);
         ebInputPtr += sourceChromaRowSize;
     }
 
     // Step back 1 chroma row if bottom field (undo the previous jump)
     if (processed_frame_count % 2 != 0)
-        fseeko64(input_file, -(long)sourceChromaRowSize, SEEK_CUR);
+        fseeko(input_file, -(long)sourceChromaRowSize, SEEK_CUR);
 }
 
 /***********************************************
