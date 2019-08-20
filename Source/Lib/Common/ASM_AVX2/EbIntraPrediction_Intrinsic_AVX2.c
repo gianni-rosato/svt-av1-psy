@@ -876,8 +876,7 @@ void eb_aom_dc_predictor_32x32_avx2(uint8_t *dst, ptrdiff_t stride,
 }
 
 // only define these intrinsics if immintrin.h doesn't have them
-#ifdef _WIN32
-#if _MSC_VER < 1910
+#if defined(_MSC_VER) && _MSC_VER < 1910
 static inline int32_t _mm256_extract_epi32(__m256i a, const int32_t i)
 {
     return a.m256i_i32[i & 7];
@@ -889,7 +888,6 @@ static inline __m256i _mm256_insert_epi32(__m256i a, int32_t b, const int32_t i)
     c.m256i_i32[i & 7] = b;
     return c;
 }
-#endif
 #endif
 
 #define PERM4x64(c0, c1, c2, c3) c0+(c1<<2)+(c2<<4)+(c3<<6)

@@ -149,8 +149,7 @@ static INLINE __m128i xx_roundn_epi16(__m128i v_val_d, int32_t bits) {
 // d: int16_t,
 // indx: imm8 (0 - 15)
 //#if _MSC_VER <= 1900
-#ifdef _WIN32
-#if _MSC_VER < 1910
+#if defined(_MSC_VER) && _MSC_VER < 1910
 #define _mm256_insert_epi16(a, d, indx)                                      \
   _mm256_insertf128_si256(                                                   \
       a,                                                                     \
@@ -170,7 +169,6 @@ static INLINE __m256i _mm256_insert_epi32(__m256i a, int32_t b, const int32_t i)
     c.m256i_i32[i & 7] = b;
     return c;
 }
-#endif
 #endif
 
 #endif  // AOM_DSP_X86_SYNONYMS_H_

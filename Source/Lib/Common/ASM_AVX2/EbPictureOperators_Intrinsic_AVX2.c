@@ -144,9 +144,6 @@ void compressed_packmsb_avx2_intrin(
         }
     }
 }
-#if defined(_MSC_VER)
-//nclude <intrin.h>
-#endif
 
 void c_pack_avx2_intrin(
     const uint8_t     *inn_bit_buffer,
