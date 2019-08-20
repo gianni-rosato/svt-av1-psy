@@ -25,6 +25,8 @@
 #include "EbTime.h"
 #ifdef _WIN32
 #include <Windows.h>
+#include <io.h>     /* _setmode() */
+#include <fcntl.h>  /* _O_BINARY */
 #else
 #include <pthread.h>
 #include <semaphore.h>
@@ -32,10 +34,6 @@
 #include <errno.h>
 #endif
 
-#ifdef _MSC_VER
-#include <io.h>     /* _setmode() */
-#include <fcntl.h>  /* _O_BINARY */
-#endif
 /***************************************
  * External Functions
  ***************************************/
