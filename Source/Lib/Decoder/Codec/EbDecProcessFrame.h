@@ -18,6 +18,9 @@ typedef struct DecModCtxt {
     void *dec_handle_ptr;
 
     int32_t *sb_iquant_ptr;
+
+    int32_t *iquant_cur_ptr;
+
 #if !FRAME_MI_MAP
     /* TODO: cur SB row idx. Should be moved out */
     int32_t         sb_row_mi;

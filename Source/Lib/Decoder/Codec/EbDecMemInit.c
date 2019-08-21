@@ -315,6 +315,8 @@ static EbErrorType init_parse_context (EbDecHandle  *dec_handle_ptr) {
 static EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr)
 {
     EbErrorType return_error = EB_ErrorNone;
+    SeqHeader   *seq_header = &dec_handle_ptr->seq_header;
+    EbColorConfig *color_config = &seq_header->color_config;
 
     EB_MALLOC_DEC(void *, dec_handle_ptr->pv_dec_mod_ctxt, sizeof(DecModCtxt), EB_N_PTR);
 
@@ -323,9 +325,14 @@ static EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr)
     dec_mod_ctxt->dec_handle_ptr = (void *)dec_handle_ptr;
 
     int32_t sb_size_log2 = dec_handle_ptr->seq_header.sb_size_log2;
-    EB_MALLOC_DEC(int32_t*, dec_mod_ctxt->sb_iquant_ptr, (1 << sb_size_log2) *
-                  (1 << sb_size_log2) * sizeof(int32_t), EB_N_PTR);
 
+    int32_t y_size = (1 << sb_size_log2) * (1 << sb_size_log2);
+    int32_t iq_size = y_size +
+        (color_config->subsampling_x ? y_size >> 2 : y_size) +
+        (color_config->subsampling_y ? y_size >> 2 : y_size);
+
+    EB_MALLOC_DEC(int32_t*, dec_mod_ctxt->sb_iquant_ptr,
+        iq_size * sizeof(int32_t), EB_N_PTR);
     av1_inverse_qm_init(dec_handle_ptr);
 
     return return_error;

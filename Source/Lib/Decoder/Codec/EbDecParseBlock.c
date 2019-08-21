@@ -400,6 +400,19 @@ void palette_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     }
 }
 
+static INLINE int filter_intra_allowed_bsize(EbDecHandle *dec_handle, BlockSize bs) {
+    if (!dec_handle->seq_header.enable_filter_intra || bs == BLOCK_INVALID)
+        return 0;
+
+    return block_size_wide[bs] <= 32 && block_size_high[bs] <= 32;
+}
+
+static INLINE int filter_intra_allowed(EbDecHandle *dec_handle, const ModeInfo_t *mbmi) {
+    return mbmi->mode == DC_PRED &&
+        mbmi->palette_size[0] == 0 &&
+        filter_intra_allowed_bsize(dec_handle, mbmi->sb_type);
+}
+
 void filter_intra_mode_info(EbDecHandle *dec_handle,
     PartitionInfo_t *xd, SvtReader *r)
 {
@@ -608,8 +621,12 @@ static void read_delta_params(EbDecHandle *dec_handle, SvtReader *r,
     }
 }
 
-int is_directional_mode(PredictionMode mode) {
+static INLINE int is_directional_mode(PredictionMode mode) {
     return mode >= V_PRED && mode <= D67_PRED;
+}
+
+static INLINE int use_angle_delta(BlockSize bsize) {
+    return bsize >= BLOCK_8X8;
 }
 
 int intra_angle_info(SvtReader *r, AomCdfProb *cdf, PredictionMode mode, BlockSize bsize) {
@@ -758,6 +775,70 @@ static INLINE void update_palette_context(EbDecHandle *dec_handle,
             left_pal_col += PALETTE_MAX_SIZE;
         }
     }
+}
+
+static INLINE AomCdfProb *get_y_mode_cdf(FRAME_CONTEXT *tile_ctx,
+    const ModeInfo_t *above_mi, const ModeInfo_t *left_mi)
+{
+    const PredictionMode above = above_mi ? above_mi->mode : DC_PRED;
+    const PredictionMode left = left_mi ? left_mi->mode : DC_PRED;
+    const int above_ctx = intra_mode_context[above];
+    const int left_ctx = intra_mode_context[left];
+    return tile_ctx->kf_y_cdf[above_ctx][left_ctx];
+}
+
+
+/*TODO: Move to common after segregating from encoder */
+static INLINE PredictionMode dec_get_uv_mode(UvPredictionMode mode) {
+    assert(mode < UV_INTRA_MODES);
+    static const PredictionMode uv2y[] = {
+      DC_PRED,        // UV_DC_PRED
+      V_PRED,         // UV_V_PRED
+      H_PRED,         // UV_H_PRED
+      D45_PRED,       // UV_D45_PRED
+      D135_PRED,      // UV_D135_PRED
+      D113_PRED,      // UV_D113_PRED
+      D157_PRED,      // UV_D157_PRED
+      D203_PRED,      // UV_D203_PRED
+      D67_PRED,       // UV_D67_PRED
+      SMOOTH_PRED,    // UV_SMOOTH_PRED
+      SMOOTH_V_PRED,  // UV_SMOOTH_V_PRED
+      SMOOTH_H_PRED,  // UV_SMOOTH_H_PRED
+      PAETH_PRED,     // UV_PAETH_PRED
+      DC_PRED,        // UV_CFL_PRED
+      INTRA_INVALID,  // UV_INTRA_MODES
+      INTRA_INVALID,  // UV_MODE_INVALID
+    };
+    return uv2y[mode];
+}
+
+static INLINE TxType intra_mode_to_tx_type(const ModeInfo_t *mbmi, PlaneType plane_type) {
+    static const TxType _intra_mode_to_tx_type[INTRA_MODES] = {
+        DCT_DCT,    // DC
+        ADST_DCT,   // V
+        DCT_ADST,   // H
+        DCT_DCT,    // D45
+        ADST_ADST,  // D135
+        ADST_DCT,   // D117
+        DCT_ADST,   // D153
+        DCT_ADST,   // D207
+        ADST_DCT,   // D63
+        ADST_ADST,  // SMOOTH
+        ADST_DCT,   // SMOOTH_V
+        DCT_ADST,   // SMOOTH_H
+        ADST_ADST,  // PAETH
+    };
+    const PredictionMode mode =
+        (plane_type == PLANE_TYPE_Y) ? mbmi->mode : dec_get_uv_mode(mbmi->uv_mode);
+    assert(mode < INTRA_MODES);
+    return _intra_mode_to_tx_type[mode];
+}
+
+static INLINE int allow_intrabc(const EbDecHandle *dec_handle) {
+    return  (dec_handle->frame_header.frame_type == KEY_FRAME
+        || dec_handle->frame_header.frame_type == INTRA_ONLY_FRAME)
+        && dec_handle->seq_header.seq_force_screen_content_tools
+        && dec_handle->frame_header.allow_intrabc;
 }
 
 void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd,
@@ -1715,7 +1796,7 @@ void parse_transform_type(EbDecHandle *dec_handle, PartitionInfo_t *xd,
     }
 }
 
-const ScanOrder* get_scan(TxSize tx_size, TxType tx_type) {
+static INLINE const ScanOrder* get_scan(TxSize tx_size, TxType tx_type) {
     return &av1_scan_orders[tx_size][tx_type];
 }
 
@@ -1960,6 +2041,13 @@ static INLINE void read_coeffs_reverse(SvtReader *r, TxSize tx_size,
         }
         levels[get_padded_idx(pos, bwl)] = level;
     }
+}
+
+static INLINE int get_lower_levels_ctx_eob(int bwl, int height, int scan_idx) {
+    if (scan_idx == 0) return 0;
+    if (scan_idx <= (height << bwl) / 8) return 1;
+    if (scan_idx <= (height << bwl) / 4) return 2;
+    return 3;
 }
 
 uint16_t parse_coeffs(EbDecHandle *dec_handle, PartitionInfo_t *xd, SvtReader *r,

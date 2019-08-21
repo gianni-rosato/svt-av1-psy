@@ -2158,6 +2158,7 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
             SBInfo  *sb_info = frame_buf->sb_info +
                     (sb_row * master_frame_buf->sb_cols) + sb_col;
+#if !FRAME_MI_MAP
             SBInfo  *left_sb_info = NULL;
             if(mi_col != tile_info->tile_col_start_sb[tile_col])
                 left_sb_info  = frame_buf->sb_info +
@@ -2166,9 +2167,7 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             if (mi_row != tile_info->tile_row_start_sb[tile_row])
                 above_sb_info = frame_buf->sb_info +
                     ((sb_row-1) * master_frame_buf->sb_cols) + sb_col;
-            (void)above_sb_info;
-            (void)left_sb_info;
-#if FRAME_MI_MAP
+#else
             *(master_frame_buf->frame_mi_map.pps_sb_info + sb_row *
                 master_frame_buf->frame_mi_map.sb_cols + sb_col) = sb_info;
 #endif

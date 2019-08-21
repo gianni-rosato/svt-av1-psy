@@ -26,6 +26,10 @@
 #include <fcntl.h>
 #endif
 
+#if defined(_MSC_VER)
+# include <intrin.h>
+#endif
+
 #define RTCD_C
 #include "aom_dsp_rtcd.h"
 
@@ -65,6 +69,84 @@ void SwitchToRealTime(){
     int32_t retValue = pthread_setschedparam(pthread_self(), SCHED_FIFO, &schedParam);
     UNUSED(retValue);
 #endif
+}
+
+static void run_cpu_id(uint32_t eax, uint32_t ecx, int32_t* abcd)
+{
+#if defined(_MSC_VER)
+    __cpuidex(abcd, eax, ecx);
+#else
+    uint32_t ebx = 0, edx = 0;
+# if defined( __i386__ ) && defined ( __PIC__ )
+    /* in case of PIC under 32-bit EBX cannot be clobbered */
+    __asm__("movl %%ebx, %%edi \n\t cpuid \n\t xchgl %%ebx, %%edi" : "=D" (ebx),
+# else
+    __asm__("cpuid" : "+b" (ebx),
+# endif
+        "+a" (eax), "+c" (ecx), "=d" (edx));
+    abcd[0] = eax; abcd[1] = ebx; abcd[2] = ecx; abcd[3] = edx;
+#endif
+}
+
+static int32_t check_xcr_0_ymm()
+{
+    uint32_t xcr0;
+#if defined(_MSC_VER)
+    xcr0 = (uint32_t)_xgetbv(0);  /* min VS2010 SP1 compiler is required */
+#else
+    __asm__("xgetbv" : "=a" (xcr0) : "c" (0) : "%edx");
+#endif
+    return ((xcr0 & 6) == 6); /* checking if xmm and ymm state are enabled in XCR0 */
+}
+
+static int32_t check_4th_gen_intel_core_features()
+{
+    int32_t abcd[4];
+    int32_t fma_movbe_osxsave_mask = ((1 << 12) | (1 << 22) | (1 << 27));
+    int32_t avx2_bmi12_mask = (1 << 5) | (1 << 3) | (1 << 8);
+
+    /* CPUID.(EAX=01H, ECX=0H):ECX.FMA[bit 12]==1   &&
+       CPUID.(EAX=01H, ECX=0H):ECX.MOVBE[bit 22]==1 &&
+       CPUID.(EAX=01H, ECX=0H):ECX.OSXSAVE[bit 27]==1 */
+    run_cpu_id(1, 0, abcd);
+    if ((abcd[2] & fma_movbe_osxsave_mask) != fma_movbe_osxsave_mask)
+        return 0;
+
+    if (!check_xcr_0_ymm())
+        return 0;
+
+    /*  CPUID.(EAX=07H, ECX=0H):EBX.AVX2[bit 5]==1  &&
+        CPUID.(EAX=07H, ECX=0H):EBX.BMI1[bit 3]==1  &&
+        CPUID.(EAX=07H, ECX=0H):EBX.BMI2[bit 8]==1  */
+    run_cpu_id(7, 0, abcd);
+    if ((abcd[1] & avx2_bmi12_mask) != avx2_bmi12_mask)
+        return 0;
+    /* CPUID.(EAX=80000001H):ECX.LZCNT[bit 5]==1 */
+    run_cpu_id(0x80000001, 0, abcd);
+    if ((abcd[2] & (1 << 5)) == 0)
+        return 0;
+    return 1;
+}
+
+static int32_t can_use_intel_core_4th_gen_features()
+{
+    static int32_t the_4th_gen_features_available = -1;
+    /* test is performed once */
+    if (the_4th_gen_features_available < 0)
+        the_4th_gen_features_available = check_4th_gen_intel_core_features();
+    return the_4th_gen_features_available;
+}
+
+static EbAsm get_cpu_asm_type()
+{
+    EbAsm asm_type = ASM_NON_AVX2;
+
+    if (can_use_intel_core_4th_gen_features() == 1)
+        asm_type = ASM_AVX2;
+    else
+        // Need to change to support lower CPU Technologies
+        asm_type = ASM_NON_AVX2;
+    return asm_type;
 }
 
 /***********************************
@@ -358,7 +440,7 @@ EB_API EbErrorType eb_init_decoder(
     dec_handle_ptr->show_frame          = 0;
     dec_handle_ptr->showable_frame      = 0;
 
-    assert(0 == dec_handle_ptr->dec_config.asm_type);
+    dec_handle_ptr->dec_config.asm_type = get_cpu_asm_type();
     setup_rtcd_internal(dec_handle_ptr->dec_config.asm_type);
     asmSetConvolveAsmTable();
 
@@ -398,7 +480,7 @@ EB_API EbErrorType eb_svt_decode_frame(
     {
         /*TODO : Remove or move. For Test purpose only */
         dec_handle_ptr->dec_cnt++;
-        printf("\n SVT-AV1 Dec : Decoding Pic #%d", dec_handle_ptr->dec_cnt);
+        //printf("\n SVT-AV1 Dec : Decoding Pic #%d", dec_handle_ptr->dec_cnt);
 
         uint64_t frame_size = 0;
         /*if (ctx->is_annexb) {

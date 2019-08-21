@@ -227,7 +227,7 @@ int32_t main(int32_t argc, char* argv[])
 
                         if (enable_md5)
                             write_md5(recon_buffer, &cli, &md5_ctx);
-                        else
+                        if(cli.outFile != NULL)
                             write_frame(recon_buffer, &cli);
                     }
                 }

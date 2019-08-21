@@ -219,8 +219,6 @@ int32_t inverse_quantize(EbDecHandle * dec_handle, PartitionInfo_t *part, ModeIn
 #endif
     level++;
 
-    memset(qcoeffs, 0, (1 << seq->sb_size_log2) * (1 << seq->sb_size_log2) * sizeof(*qcoeffs));
-
     for (i = 0; i < n_coeffs; i++) {
         pos = scan[i];
         qcoeffs[pos] = (TranLow)((int64_t)abs(level[i]) *

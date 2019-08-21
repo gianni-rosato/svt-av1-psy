@@ -284,7 +284,6 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
         svtav1_predict_inter_block(dec_handle, &part_info, mi_row, mi_col,
             num_planes);
 
-    int32_t *qcoeffs = dec_mod_ctxt->sb_iquant_ptr;
     TxType tx_type;
     int32_t *coeffs;
     TransformInfo_t *trans_info = NULL;
@@ -331,6 +330,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
         for (uint32_t tu = 0; tu < num_tu; tu++)
         {
+            int32_t *qcoeffs = dec_mod_ctxt->iquant_cur_ptr;
             void *blk_recon_buf;
             int32_t recon_stride;
 
@@ -409,6 +409,8 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
             // increment transform pointer
             trans_info++;
+            dec_mod_ctxt->iquant_cur_ptr = dec_mod_ctxt->iquant_cur_ptr +
+                (tx_size_wide[tx_size] * tx_size_high[tx_size]);
         }
     }
     return;

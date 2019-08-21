@@ -158,8 +158,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
         token_index++;
     }
 
-    if (!cli->inFile || !cli->outFile) {
-        printf("Input/output file not specified. \n");
+    if (!cli->inFile) {
+        printf("Input file not specified. \n");
         showHelp();
         return EB_ErrorBadParameter;
     }
