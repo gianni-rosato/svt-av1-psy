@@ -68,7 +68,6 @@ set(flags_to_test
     -Wextra
     -Wformat
     -Wformat-security
-    -fstack-protector-strong
     -fPIE
     -fPIC
     -D_FORTIFY_SOURCE=2)
@@ -80,6 +79,8 @@ if(NOT MSVC)
     endif()
     if(MINGW)
         list(APPEND flags_to_test -mxsave)
+    else()
+        list(APPEND flags_to_test -fstack-protector-strong)
     endif()
 else()
     list(APPEND flags_to_test /MP)
