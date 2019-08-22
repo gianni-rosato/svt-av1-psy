@@ -1910,11 +1910,7 @@ void predictive_me_search(
     EbBool use_ssd = EB_TRUE;
 
     // Reset valid_refined_mv
-    for (uint8_t listIndex = REF_LIST_0; listIndex < 2; ++listIndex) {
-        for (uint8_t ref_pic_index = 0; ref_pic_index < 4; ++ref_pic_index) {
-            context_ptr->valid_refined_mv[listIndex][ref_pic_index] = 0;
-        }
-    }
+    memset(context_ptr->valid_refined_mv, 0, 8); // [2][4]
 
     for (uint32_t refIt = 0; refIt < picture_control_set_ptr->parent_pcs_ptr->tot_ref_frame_types; ++refIt) {
         MvReferenceFrame ref_pair = picture_control_set_ptr->parent_pcs_ptr->ref_frame_type_arr[refIt];
@@ -1940,17 +1936,13 @@ void predictive_me_search(
         int8_t mvp_count = 0;
         if (rf[1] == NONE_FRAME)
         {
-
-
             MvReferenceFrame frame_type = rf[0];
             uint8_t list_idx = get_list_idx(rf[0]);
             uint8_t ref_idx = get_ref_frame_idx(rf[0]);
-
             // Get the ME MV
             const MeLcuResults *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
             int16_t me_mv_x;
             int16_t me_mv_y;
-
             if (list_idx == 0) {
                 me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset][ref_idx].x_mv) << 1;
                 me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset][ref_idx].y_mv) << 1;
@@ -1959,7 +1951,6 @@ void predictive_me_search(
                 me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2) + ref_idx].x_mv) << 1;
                 me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2) + ref_idx].y_mv) << 1;
             }
-
             // Round-up to the closest integer the ME MV
             me_mv_x = (me_mv_x + 4)&~0x07;
             me_mv_y = (me_mv_y + 4)&~0x07;
