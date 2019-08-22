@@ -133,6 +133,9 @@ extern "C" {
         uint8_t                                compound_idx;
         uint8_t                                comp_group_idx;
 #endif
+#if MD_STAGING // classes
+        CAND_CLASS                             cand_class;
+#endif
     } ModeDecisionCandidate;
 
     /**************************************

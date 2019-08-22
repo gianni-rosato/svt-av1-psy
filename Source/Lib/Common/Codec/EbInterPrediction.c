@@ -4358,6 +4358,9 @@ EbErrorType warped_motion_prediction_md(
     uint16_t                                dst_origin_x,
     uint16_t                                dst_origin_y,
     EbWarpedMotionParams                   *wm_params,
+#if MD_STAGING // re-factor
+    EbBool                                  perform_chroma,
+#endif
     EbAsm                                   asm_type)
 {
     EbErrorType  return_error = EB_ErrorNone;
@@ -4406,7 +4409,11 @@ EbErrorType warped_motion_prediction_md(
 
     if (!blk_geom->has_uv)
         return return_error;
+#if MD_STAGING // re-factor
+    if (perform_chroma) {
+#else
     if (md_context_ptr->chroma_level <= CHROMA_MODE_1) {
+#endif
      if (blk_geom->bwidth >= 16  && blk_geom->bheight >= 16 ) {
         // Cb
          src_ptr = ref_pic_list0->buffer_cb + ref_pic_list0->origin_x / 2 + (ref_pic_list0->origin_y / 2) * ref_pic_list0->stride_cb;
@@ -5274,7 +5281,11 @@ EbErrorType inter_pu_prediction_av1(
             candidate_buffer_ptr->prediction_ptr,
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
+#if MD_STAGING // re-factor
+            md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->skip_md_inter_chroma_comp == EB_FALSE,
+#else
             md_context_ptr->chroma_level <= CHROMA_MODE_1,
+#endif
             asm_type);
         return return_error;
     }
@@ -5326,6 +5337,9 @@ EbErrorType inter_pu_prediction_av1(
                 md_context_ptr->blk_geom->origin_x,
                 md_context_ptr->blk_geom->origin_y,
                 &candidate_ptr->wm_params,
+#if MD_STAGING // re-factor
+                md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->skip_md_inter_chroma_comp == EB_FALSE,
+#endif
                 asm_type);
         } else {
             assert(ref_pic_list0 != NULL);
@@ -5341,7 +5355,11 @@ EbErrorType inter_pu_prediction_av1(
                 md_context_ptr->blk_geom->origin_y,
                 &candidate_ptr->wm_params,
                 (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
+#if MD_STAGING // re-factor
+                md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->skip_md_inter_chroma_comp == EB_FALSE,
+#else
                 md_context_ptr->chroma_level <= CHROMA_MODE_1,
+#endif
                 asm_type);
         }
         return return_error;
@@ -5388,7 +5406,11 @@ EbErrorType inter_pu_prediction_av1(
             candidate_buffer_ptr->prediction_ptr,
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
+#if MD_STAGING // re-factor
+            md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->skip_md_inter_chroma_comp == EB_FALSE,
+#else
         md_context_ptr->chroma_level <= CHROMA_MODE_1,
+#endif
         asm_type);
     return return_error;
 }

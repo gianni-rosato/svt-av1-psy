@@ -54,6 +54,8 @@ extern "C" {
 
 #define COMP_MODE                         1 // Add inter-inter compound modes
 #define PREDICTIVE_ME                     1 // Perform ME search around MVP @ MD
+#define MD_STAGING                        1
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
@@ -433,6 +435,16 @@ static INLINE uint16_t clip_pixel_highbd(int32_t val, int32_t bd) {
 #define ATTRIBUTE_PACKED
 #endif
 #endif /* ATTRIBUTE_PACKED */
+
+#if MD_STAGING // classes
+typedef enum CAND_CLASS {
+    CAND_CLASS_0,
+    CAND_CLASS_1,
+    CAND_CLASS_2,
+    CAND_CLASS_3,
+    CAND_CLASS_TOTAL
+} CAND_CLASS;
+#endif
 
 typedef enum
 {
@@ -2772,9 +2784,9 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define ONLY_DC_SHAPE 3
 
 #define EB_CHROMA_LEVEL uint8_t
-#define CHROMA_MODE_0  0 // Chroma @ MD
-#define CHROMA_MODE_1  1 // Chroma blind @ MD + CFL @ EP
-#define CHROMA_MODE_2  2 // Chroma blind @ MD + no CFL @ EP
+#define CHROMA_MODE_0  0 // Full chroma search @ MD
+#define CHROMA_MODE_1  1 // Fast chroma search @ MD
+#define CHROMA_MODE_2  2 // Chroma blind @ MD + CFL @ EP
 #define CHROMA_MODE_3  3 // Chroma blind @ MD + no CFL @ EP
 
 typedef enum EbSbComplexityStatus

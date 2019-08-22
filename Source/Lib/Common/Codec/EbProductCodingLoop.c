@@ -1444,7 +1444,160 @@ void ProductCodingLoopInitFastLoop(
         context_ptr->fast_cost_array[index] = MAX_CU_COST;
     return;
 }
+#if MD_STAGING // re-factor
+void fast_loop_core(
+    ModeDecisionCandidateBuffer *candidateBuffer,
+    PictureControlSet           *picture_control_set_ptr,
+    ModeDecisionContext         *context_ptr,
+    EbPictureBufferDesc         *input_picture_ptr,
+    uint32_t                     inputOriginIndex,
+    uint32_t                     inputCbOriginIndex,
+    uint32_t                     inputCrOriginIndex,
+    CodingUnit                  *cu_ptr,
+    uint32_t                     cuOriginIndex,
+    uint32_t                     cuChromaOriginIndex,
+    EbBool                       use_ssd,
+    EbAsm                        asm_type)
+{
+    uint64_t lumaFastDistortion;
+    uint64_t chromaFastDistortion;
 
+    ModeDecisionCandidate       *candidate_ptr = candidateBuffer->candidate_ptr;
+    EbPictureBufferDesc         *prediction_ptr = candidateBuffer->prediction_ptr;
+    context_ptr->pu_itr = 0;
+    // Prediction
+    context_ptr->skip_interpolation_search = picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? 0 : 1;
+    candidateBuffer->candidate_ptr->interp_filters = 0;
+    context_ptr->skip_md_inter_chroma_comp = EB_FALSE;
+    ProductPredictionFunTable[candidateBuffer->candidate_ptr->use_intrabc ? INTER_MODE : candidate_ptr->type](
+        context_ptr,
+        picture_control_set_ptr,
+        candidateBuffer,
+        asm_type);
+
+    // Distortion
+    // Y
+    if (use_ssd) {
+        EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
+            full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+
+        candidateBuffer->candidate_ptr->luma_fast_distortion = (uint32_t)(lumaFastDistortion = spatial_full_dist_type_fun(
+            input_picture_ptr->buffer_y,
+            inputOriginIndex,
+            input_picture_ptr->stride_y,
+            prediction_ptr->buffer_y,
+            cuOriginIndex,
+            prediction_ptr->stride_y,
+            context_ptr->blk_geom->bwidth,
+            context_ptr->blk_geom->bheight));
+    }
+    else {
+        assert((context_ptr->blk_geom->bwidth >> 3) < 17);
+        if (!context_ptr->hbd_mode_decision) {
+            candidateBuffer->candidate_ptr->luma_fast_distortion = (uint32_t)(lumaFastDistortion = nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
+                input_picture_ptr->buffer_y + inputOriginIndex,
+                input_picture_ptr->stride_y,
+                prediction_ptr->buffer_y + cuOriginIndex,
+                prediction_ptr->stride_y,
+                context_ptr->blk_geom->bheight,
+                context_ptr->blk_geom->bwidth));
+        }
+        else {
+            candidateBuffer->candidate_ptr->luma_fast_distortion = (uint32_t)(lumaFastDistortion = sad_16b_kernel(
+                ((uint16_t *)input_picture_ptr->buffer_y) + inputOriginIndex,
+                input_picture_ptr->stride_y,
+                ((uint16_t *)prediction_ptr->buffer_y) + cuOriginIndex,
+                prediction_ptr->stride_y,
+                context_ptr->blk_geom->bheight,
+                context_ptr->blk_geom->bwidth));
+        }
+    }
+
+    if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
+        if (use_ssd) {
+            EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
+                full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+
+            chromaFastDistortion = spatial_full_dist_type_fun(
+                input_picture_ptr->buffer_cb,
+                inputCbOriginIndex,
+                input_picture_ptr->stride_cb,
+                candidateBuffer->prediction_ptr->buffer_cb,
+                cuChromaOriginIndex,
+                prediction_ptr->stride_cb,
+                context_ptr->blk_geom->bwidth_uv,
+                context_ptr->blk_geom->bheight_uv);
+
+            chromaFastDistortion += spatial_full_dist_type_fun(
+                input_picture_ptr->buffer_cr,
+                inputCrOriginIndex,
+                input_picture_ptr->stride_cb,
+                candidateBuffer->prediction_ptr->buffer_cr,
+                cuChromaOriginIndex,
+                prediction_ptr->stride_cr,
+                context_ptr->blk_geom->bwidth_uv,
+                context_ptr->blk_geom->bheight_uv);
+        }
+        else {
+            assert((context_ptr->blk_geom->bwidth_uv >> 3) < 17);
+
+            if (!context_ptr->hbd_mode_decision) {
+                chromaFastDistortion = nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth_uv >> 3](
+                    input_picture_ptr->buffer_cb + inputCbOriginIndex,
+                    input_picture_ptr->stride_cb,
+                    candidateBuffer->prediction_ptr->buffer_cb + cuChromaOriginIndex,
+                    prediction_ptr->stride_cb,
+                    context_ptr->blk_geom->bheight_uv,
+                    context_ptr->blk_geom->bwidth_uv);
+
+                chromaFastDistortion += nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth_uv >> 3](
+                    input_picture_ptr->buffer_cr + inputCrOriginIndex,
+                    input_picture_ptr->stride_cr,
+                    candidateBuffer->prediction_ptr->buffer_cr + cuChromaOriginIndex,
+                    prediction_ptr->stride_cr,
+                    context_ptr->blk_geom->bheight_uv,
+                    context_ptr->blk_geom->bwidth_uv);
+            }
+            else {
+                chromaFastDistortion = sad_16b_kernel(
+                    ((uint16_t *)input_picture_ptr->buffer_cb) + inputCbOriginIndex,
+                    input_picture_ptr->stride_cb,
+                    ((uint16_t *)candidateBuffer->prediction_ptr->buffer_cb) + cuChromaOriginIndex,
+                    prediction_ptr->stride_cb,
+                    context_ptr->blk_geom->bheight_uv,
+                    context_ptr->blk_geom->bwidth_uv);
+
+                chromaFastDistortion += sad_16b_kernel(
+                    ((uint16_t *)input_picture_ptr->buffer_cr) + inputCrOriginIndex,
+                    input_picture_ptr->stride_cr,
+                    ((uint16_t *)candidateBuffer->prediction_ptr->buffer_cr) + cuChromaOriginIndex,
+                    prediction_ptr->stride_cr,
+                    context_ptr->blk_geom->bheight_uv,
+                    context_ptr->blk_geom->bwidth_uv);
+            }
+        }
+    }
+    else
+        chromaFastDistortion = 0;
+    // Fast Cost
+    *(candidateBuffer->fast_cost_ptr) = Av1ProductFastCostFuncTable[candidate_ptr->type](
+        cu_ptr,
+        candidateBuffer->candidate_ptr,
+        cu_ptr->qp,
+        lumaFastDistortion,
+        chromaFastDistortion,
+        use_ssd ? context_ptr->full_lambda : context_ptr->fast_lambda,
+        use_ssd,
+        picture_control_set_ptr,
+        &(context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+        context_ptr->blk_geom,
+        context_ptr->cu_origin_y >> MI_SIZE_LOG2,
+        context_ptr->cu_origin_x >> MI_SIZE_LOG2,
+        1,
+        context_ptr->intra_luma_left_mode,
+        context_ptr->intra_luma_top_mode);
+}
+#else
 void ProductMdFastPuPrediction(
     PictureControlSet                 *picture_control_set_ptr,
     ModeDecisionCandidateBuffer       *candidateBuffer,
@@ -1469,9 +1622,11 @@ void ProductMdFastPuPrediction(
         candidateBuffer,
         asm_type);
 }
+
 void generate_intra_reference_samples(
     const Av1Common         *cm,
     ModeDecisionContext   *md_context_ptr);
+#endif
 
 void perform_fast_loop(
     PictureControlSet                 *picture_control_set_ptr,
@@ -1494,7 +1649,9 @@ void perform_fast_loop(
     EbAsm                                asm_type) {
     int32_t  fastLoopCandidateIndex;
     uint64_t lumaFastDistortion;
+#if !MD_STAGING // re-factor
     uint64_t chromaFastDistortion;
+#endif
     uint32_t highestCostIndex;
     uint64_t highestCost;
     uint64_t bestFirstFastCostSearchCandidateCost = MAX_CU_COST;
@@ -1554,7 +1711,23 @@ void perform_fast_loop(
         // Initialize tx_depth
         candidateBuffer->candidate_ptr->tx_depth = 0;
         if (!candidate_ptr->distortion_ready || fastLoopCandidateIndex == bestFirstFastCostSearchCandidateIndex) {
+
             // Prediction
+#if MD_STAGING // re-factor
+            fast_loop_core(
+                candidateBuffer,
+                picture_control_set_ptr,
+                context_ptr,
+                input_picture_ptr,
+                inputOriginIndex,
+                inputCbOriginIndex,
+                inputCrOriginIndex,
+                cu_ptr,
+                cuOriginIndex,
+                cuChromaOriginIndex,
+                use_ssd,
+                asm_type);
+#else
             ProductMdFastPuPrediction(
                 picture_control_set_ptr,
                 candidateBuffer,
@@ -1564,7 +1737,6 @@ void perform_fast_loop(
                 fastLoopCandidateIndex,
                 bestFirstFastCostSearchCandidateIndex,
                 asm_type);
-
             // Distortion
             // Y
             if (use_ssd) {
@@ -1684,6 +1856,7 @@ void perform_fast_loop(
                 1,
                 context_ptr->intra_luma_left_mode,
                 context_ptr->intra_luma_top_mode);
+#endif
         }
 
         // Find the buffer with the highest cost
@@ -1854,7 +2027,9 @@ void predictive_me_sub_pel_search(
             // Prediction
             uint8_t default_skip_interpolation_search = context_ptr->skip_interpolation_search;
             context_ptr->skip_interpolation_search = 1;
-
+#if MD_STAGING // re-factor
+            context_ptr->skip_md_inter_chroma_comp = EB_TRUE;
+#endif
             ProductPredictionFunTable[INTER_MODE](
                 context_ptr,
                 picture_control_set_ptr,
@@ -2925,7 +3100,9 @@ void check_best_indepedant_cfl(
         *cr_coeff_bits = 0;
 
         uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
-
+#if MD_STAGING // re-factor
+        context_ptr->skip_md_inter_chroma_comp = EB_FALSE;
+#endif
         ProductPredictionFunTable[candidateBuffer->candidate_ptr->type](
             context_ptr,
             picture_control_set_ptr,
@@ -4424,6 +4601,9 @@ void AV1PerformFullLoop(
                 context_ptr->skip_interpolation_search = 0;
                 context_ptr->skip_interpolation_search = (best_fastLoop_candidate_index > NFL_IT_TH) ? 1 : context_ptr->skip_interpolation_search;
                 if (candidate_ptr->type != INTRA_MODE) {
+#if MD_STAGING // re-factor
+                    context_ptr->skip_md_inter_chroma_comp = EB_FALSE;
+#endif
                     ProductPredictionFunTable[candidate_ptr->type](
                         context_ptr,
                         picture_control_set_ptr,
@@ -5493,7 +5673,9 @@ void search_best_independent_uv_mode(
             uint64_t crFullDistortion[DIST_CALC_TOTAL] = { 0, 0 };
 
             uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
-
+#if MD_STAGING // re-factor
+            context_ptr->skip_md_inter_chroma_comp = EB_FALSE;
+#endif
             ProductPredictionFunTable[candidateBuffer->candidate_ptr->type](
                 context_ptr,
                 picture_control_set_ptr,
@@ -5939,6 +6121,9 @@ void md_encode_block(
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_INTER_DEPTH) {
             if (candidateBuffer->candidate_ptr->type != INTRA_MODE && candidateBuffer->candidate_ptr->motion_mode == SIMPLE_TRANSLATION) {
                 context_ptr->skip_interpolation_search = 0;
+#if MD_STAGING // re-factor
+                context_ptr->skip_md_inter_chroma_comp = EB_FALSE;
+#endif
                 ProductPredictionFunTable[candidateBuffer->candidate_ptr->type](
                     context_ptr,
                     picture_control_set_ptr,

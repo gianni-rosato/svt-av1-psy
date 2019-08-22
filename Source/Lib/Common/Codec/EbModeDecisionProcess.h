@@ -258,7 +258,7 @@ extern "C" {
         int16_t                         best_spatial_pred_mv[2][4][2];
         int8_t                          valid_refined_mv[2][4];
 #endif
-        EbPictureBufferDesc                 *input_sample16bit_buffer;
+        EbPictureBufferDesc            *input_sample16bit_buffer;
 #if COMP_MODE
         DECLARE_ALIGNED(16, uint8_t, pred0[2 * MAX_SB_SQUARE]);
         DECLARE_ALIGNED(16, uint8_t, pred1[2 * MAX_SB_SQUARE]);
@@ -266,6 +266,26 @@ extern "C" {
         DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]);
     unsigned int prediction_mse ;
     EbBool      variance_ready;
+#endif
+#if MD_STAGING // classes
+    EbBool                              skip_md_inter_chroma_comp;
+
+    uint8_t                             md_staging_mode;
+
+    uint32_t                            bypass_stage1[CAND_CLASS_TOTAL];
+    uint8_t                             bypass_stage2[CAND_CLASS_TOTAL];
+
+    uint32_t                            fast_cand_count[CAND_CLASS_TOTAL]; // how many fast candiates per class
+    uint32_t                            md_stage_2_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_2
+    uint32_t                            md_stage_3_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_3
+
+    uint8_t                             nic_level;
+    uint8_t                             combine_class12; //1:class1 and 2 are combined.
+
+    uint64_t                            full_cost_per_class[MAX_NFL];
+    uint32_t                            full_index_per_class[CAND_CLASS_TOTAL][MAX_NFL];
+
+    CAND_CLASS                          target_class;
 #endif
     } ModeDecisionContext;
 

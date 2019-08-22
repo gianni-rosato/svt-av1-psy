@@ -3858,6 +3858,58 @@ EbErrorType ProductGenerateMdCandidatesCu(
                 &canTotalCnt);
     }
     *candidateTotalCountPtr = canTotalCnt;
+
+#if MD_STAGING // classes
+    CAND_CLASS  cand_class_it;
+    memset(context_ptr->fast_cand_count, 0, CAND_CLASS_TOTAL * sizeof(uint32_t));
+
+    uint32_t cand_i;
+    for (cand_i = 0; cand_i < canTotalCnt; cand_i++)
+    {
+        ModeDecisionCandidate * cand_ptr = &context_ptr->fast_candidate_array[cand_i];
+
+        if (cand_ptr->type == INTRA_MODE) {
+            cand_ptr->cand_class = CAND_CLASS_0;
+            context_ptr->fast_cand_count[CAND_CLASS_0]++;
+        }
+        else if ((cand_ptr->type == INTER_MODE && cand_ptr->is_compound == 0) ||
+            (cand_ptr->type == INTER_MODE && cand_ptr->is_compound == 1 && cand_ptr->interinter_comp.type == COMPOUND_AVERAGE)) {
+
+            if (context_ptr->combine_class12) {
+                cand_ptr->cand_class = CAND_CLASS_1;
+                context_ptr->fast_cand_count[CAND_CLASS_1]++;
+            }
+            else {
+                if (cand_ptr->is_new_mv) {
+                    cand_ptr->cand_class = CAND_CLASS_1;
+                    context_ptr->fast_cand_count[CAND_CLASS_1]++;
+                }
+                else {
+                    cand_ptr->cand_class = CAND_CLASS_2;
+                    context_ptr->fast_cand_count[CAND_CLASS_2]++;
+                }
+            }
+        }
+        else {
+            if (context_ptr->combine_class12) {
+                cand_ptr->cand_class = CAND_CLASS_2;
+                context_ptr->fast_cand_count[CAND_CLASS_2]++;
+            }
+            else {
+                cand_ptr->cand_class = CAND_CLASS_3;
+                context_ptr->fast_cand_count[CAND_CLASS_3]++;
+            }
+        }
+
+    }
+
+    uint32_t fast_accum = 0;
+    for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
+        fast_accum += context_ptr->fast_cand_count[cand_class_it];
+    }
+    assert(fast_accum == canTotalCnt);
+#endif
+
     return EB_ErrorNone;
 }
 

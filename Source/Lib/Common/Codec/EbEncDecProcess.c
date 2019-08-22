@@ -1355,6 +1355,24 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->predictive_me_level = 0;
 #endif
 
+#if MD_STAGING // classes
+    // Derive md_staging_mode
+    if (picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->md_staging_mode = 1;
+    else if (picture_control_set_ptr->enc_mode <= ENC_M4)
+        context_ptr->md_staging_mode = 3;
+    else
+        context_ptr->md_staging_mode = 0; //use fast-loop0->full-loop
+
+    // Derive nic level
+    context_ptr->nic_level = (picture_control_set_ptr->enc_mode == ENC_M0) ? 0 : 1;
+
+    // Combine MD Class1&2
+    // 0                    OFF
+    // 1                    ON
+    context_ptr->combine_class12 = (picture_control_set_ptr->enc_mode == ENC_M0) ? 0 : 1;
+#endif
+
     // Set interpolation filter search blk size
     // Level                Settings
     // 0                    ON for 8x8 and above
