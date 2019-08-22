@@ -68,9 +68,9 @@ typedef struct VideoFrame : public VideoFrameParam {
     VideoFrame() {
         disp_width = 0;
         disp_height = 0;
-        memset(&stride, 0, sizeof(stride));
-        memset(&planes, 0, sizeof(planes));
-        memset(&ext_planes, 0, sizeof(ext_planes));
+        memset(stride, 0, sizeof(stride));
+        memset(planes, 0, sizeof(planes));
+        memset(ext_planes, 0, sizeof(ext_planes));
         context = nullptr;
         timestamp = 0;
         buffer = nullptr;
@@ -83,9 +83,9 @@ typedef struct VideoFrame : public VideoFrameParam {
         *(VideoFrameParam *)this = param;
         disp_width = param.width;
         disp_height = param.height;
-        memset(&stride, 0, sizeof(stride));
-        memset(&planes, 0, sizeof(planes));
-        memset(&ext_planes, 0, sizeof(ext_planes));
+        memset(stride, 0, sizeof(stride));
+        memset(planes, 0, sizeof(planes));
+        memset(ext_planes, 0, sizeof(ext_planes));
         bits_per_sample = param.bits_per_sample;
         context = nullptr;
         timestamp = 0;

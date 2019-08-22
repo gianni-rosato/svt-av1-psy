@@ -621,11 +621,6 @@ static void PredictionStructureDctor(EbPtr p)
     if (pe) {
         for (uint32_t i = 0; i < count; i++) {
             EB_FREE_ARRAY(pe[i]->ref_list0.reference_list);
-            EB_FREE_ARRAY(pe[i]->ref_list0.reference_list);
-            EB_FREE_ARRAY(pe[i]->ref_list1.reference_list);
-            EB_FREE_ARRAY(pe[i]->ref_list1.reference_list);
-            EB_FREE_ARRAY(pe[i]->ref_list0.reference_list);
-            EB_FREE_ARRAY(pe[i]->ref_list1.reference_list);
             EB_FREE_ARRAY(pe[i]->ref_list1.reference_list);
             EB_FREE_ARRAY(pe[i]->dep_list0.list);
             EB_FREE_ARRAY(pe[i]->dep_list1.list);
