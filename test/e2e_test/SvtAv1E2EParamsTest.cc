@@ -186,9 +186,10 @@ class CodingOptionTest : public SvtAv1E2ETestFramework {
         EXPECT_GE(config->max_qp_allowed, actual_max_qp)
             << "Max qp allowd " << config->max_qp_allowed << " actual "
             << actual_max_qp;
-        if (config->rate_control_mode == 0)
+        if (config->rate_control_mode == 0) {
             EXPECT_EQ(actual_min_qp, actual_max_qp)
                 << "QP fluctuate in const qp mode";
+        }
 
         // verify the bitrate
         if (config->rate_control_mode == 3) {
