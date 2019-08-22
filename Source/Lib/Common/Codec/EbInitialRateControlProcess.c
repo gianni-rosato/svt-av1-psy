@@ -976,6 +976,8 @@ void GetHistogramQueueData(
     histogramQueueEntryIndex += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
     histogramQueueEntryIndex = (histogramQueueEntryIndex > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
         histogramQueueEntryIndex - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
+        (histogramQueueEntryIndex < 0) ?
+        histogramQueueEntryIndex + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
         histogramQueueEntryIndex;
     histogramQueueEntryPtr = encode_context_ptr->hl_rate_control_historgram_queue[histogramQueueEntryIndex];
 
@@ -1021,6 +1023,8 @@ void UpdateHistogramQueueEntry(
     histogramQueueEntryIndex += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
     histogramQueueEntryIndex = (histogramQueueEntryIndex > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
         histogramQueueEntryIndex - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
+        (histogramQueueEntryIndex < 0) ?
+        histogramQueueEntryIndex + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
         histogramQueueEntryIndex;
     histogramQueueEntryPtr = encode_context_ptr->hl_rate_control_historgram_queue[histogramQueueEntryIndex];
     histogramQueueEntryPtr->passed_to_hlrc = EB_TRUE;

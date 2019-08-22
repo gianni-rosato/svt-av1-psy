@@ -355,7 +355,7 @@ void high_level_rc_input_picture_vbr(
     // Queue variables
     uint32_t                     queue_entry_index_temp;
     uint32_t                     queue_entry_index_temp2;
-    uint32_t                     queue_entry_index_head_temp;
+    int64_t                      queue_entry_index_head_temp;
 
     uint64_t                     min_la_bit_distance;
     uint32_t                     selected_ref_qp_table_index;
@@ -442,9 +442,11 @@ void high_level_rc_input_picture_vbr(
             queue_entry_index_head_temp += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
             queue_entry_index_head_temp = (queue_entry_index_head_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
                 queue_entry_index_head_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
+                (queue_entry_index_head_temp < 0) ?
+                queue_entry_index_head_temp + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
                 queue_entry_index_head_temp;
 
-            queue_entry_index_temp = queue_entry_index_head_temp;
+            queue_entry_index_temp = (uint32_t) queue_entry_index_head_temp;
             {
                 hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_temp]);
 
@@ -547,9 +549,11 @@ void high_level_rc_input_picture_vbr(
                 queue_entry_index_head_temp += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
                 queue_entry_index_head_temp = (queue_entry_index_head_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
                     queue_entry_index_head_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
+                    (queue_entry_index_head_temp < 0) ?
+                    queue_entry_index_head_temp + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
                     queue_entry_index_head_temp;
 
-                queue_entry_index_temp = queue_entry_index_head_temp;
+                queue_entry_index_temp = (uint32_t) queue_entry_index_head_temp;
                 // This is set to false, so the last frame would go inside the loop
                 end_of_sequence_flag = EB_FALSE;
 
@@ -624,9 +628,11 @@ void high_level_rc_input_picture_vbr(
                 queue_entry_index_head_temp += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
                 queue_entry_index_head_temp = (queue_entry_index_head_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
                     queue_entry_index_head_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
+                    (queue_entry_index_head_temp < 0) ?
+                    queue_entry_index_head_temp + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
                     queue_entry_index_head_temp;
 
-                queue_entry_index_temp = queue_entry_index_head_temp;
+                queue_entry_index_temp = (uint32_t) queue_entry_index_head_temp;
 
                 // This is set to false, so the last frame would go inside the loop
                 end_of_sequence_flag = EB_FALSE;
@@ -678,9 +684,11 @@ void high_level_rc_input_picture_vbr(
                 queue_entry_index_head_temp += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
                 queue_entry_index_head_temp = (queue_entry_index_head_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
                     queue_entry_index_head_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
+                    (queue_entry_index_head_temp < 0) ?
+                    queue_entry_index_head_temp + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
                     queue_entry_index_head_temp;
 
-                queue_entry_index_temp = queue_entry_index_head_temp;
+                queue_entry_index_temp = (uint32_t) queue_entry_index_head_temp;
 
                 // This is set to false, so the last frame would go inside the loop
                 end_of_sequence_flag = EB_FALSE;
@@ -1655,7 +1663,7 @@ void high_level_rc_input_picture_cvbr(
     // Queue variables
     uint32_t                     queue_entry_index_temp;
     uint32_t                     queue_entry_index_temp2;
-    uint32_t                     queue_entry_index_head_temp;
+    int64_t                      queue_entry_index_head_temp;
 
     uint64_t                     min_la_bit_distance;
     uint32_t                     selected_ref_qp_table_index;
@@ -1744,9 +1752,11 @@ void high_level_rc_input_picture_cvbr(
             queue_entry_index_head_temp += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
             queue_entry_index_head_temp = (queue_entry_index_head_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
                 queue_entry_index_head_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
+                (queue_entry_index_head_temp < 0) ?
+                queue_entry_index_head_temp + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
                 queue_entry_index_head_temp;
 
-            queue_entry_index_temp = queue_entry_index_head_temp;
+            queue_entry_index_temp = (uint32_t) queue_entry_index_head_temp;
             {
                 hl_rate_control_histogram_ptr_temp = (encode_context_ptr->hl_rate_control_historgram_queue[queue_entry_index_temp]);
 
@@ -1852,9 +1862,11 @@ void high_level_rc_input_picture_cvbr(
                     queue_entry_index_head_temp += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
                     queue_entry_index_head_temp = (queue_entry_index_head_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
                         queue_entry_index_head_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
+                        (queue_entry_index_head_temp < 0) ?
+                        queue_entry_index_head_temp + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
                         queue_entry_index_head_temp;
 
-                    queue_entry_index_temp = queue_entry_index_head_temp;
+                    queue_entry_index_temp = (uint32_t) queue_entry_index_head_temp;
                     // This is set to false, so the last frame would go inside the loop
                     end_of_sequence_flag = EB_FALSE;
 
@@ -1933,9 +1945,11 @@ void high_level_rc_input_picture_cvbr(
                 queue_entry_index_head_temp += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
                 queue_entry_index_head_temp = (queue_entry_index_head_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
                     queue_entry_index_head_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
+                    (queue_entry_index_head_temp < 0) ?
+                    queue_entry_index_head_temp + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
                     queue_entry_index_head_temp;
 
-                queue_entry_index_temp = queue_entry_index_head_temp;
+                queue_entry_index_temp = (uint32_t) queue_entry_index_head_temp;
 
                 // This is set to false, so the last frame would go inside the loop
                 end_of_sequence_flag = EB_FALSE;
@@ -1985,9 +1999,11 @@ void high_level_rc_input_picture_cvbr(
                 queue_entry_index_head_temp += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
                 queue_entry_index_head_temp = (queue_entry_index_head_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
                     queue_entry_index_head_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
+                    (queue_entry_index_head_temp < 0) ?
+                    queue_entry_index_head_temp + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
                     queue_entry_index_head_temp;
 
-                queue_entry_index_temp = queue_entry_index_head_temp;
+                queue_entry_index_temp = (uint32_t) queue_entry_index_head_temp;
 
                 // This is set to false, so the last frame would go inside the loop
                 end_of_sequence_flag = EB_FALSE;
@@ -2232,7 +2248,7 @@ void frame_level_rc_input_picture_cvbr(
         // Queue variables
         uint32_t                     queue_entry_index_temp;
         uint32_t                     queue_entry_index_temp2;
-        uint32_t                     queue_entry_index_head_temp;
+        int64_t                     queue_entry_index_head_temp;
 
         uint64_t                     min_la_bit_distance;
         uint32_t                     selected_ref_qp_table_index;
@@ -2271,6 +2287,8 @@ void frame_level_rc_input_picture_cvbr(
         queue_entry_index_head_temp += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
         queue_entry_index_head_temp = (queue_entry_index_head_temp > HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1) ?
             queue_entry_index_head_temp - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
+            (queue_entry_index_head_temp < 0) ?
+            queue_entry_index_head_temp + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH :
             queue_entry_index_head_temp;
 
         if (picture_control_set_ptr->parent_pcs_ptr->picture_number + picture_control_set_ptr->parent_pcs_ptr->frames_in_sw > rate_control_param_ptr->first_poc + sequence_control_set_ptr->static_config.intra_period_length + 1)
@@ -2295,7 +2313,7 @@ void frame_level_rc_input_picture_cvbr(
                 ref_qp_table_index);
             high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_index] = 0;
 
-            queue_entry_index_temp = queue_entry_index_head_temp;
+            queue_entry_index_temp = (uint32_t) queue_entry_index_head_temp;
             // This is set to false, so the last frame would go inside the loop
             end_of_sequence_flag = EB_FALSE;
 
