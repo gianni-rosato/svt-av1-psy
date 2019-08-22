@@ -5,6 +5,9 @@
 
 // Command line argument parsing
 
+#ifndef EbDecParamParser_h
+#define EbDecParamParser_h
+
 /***************************************
  * Includes
  ***************************************/
@@ -53,3 +56,5 @@ typedef struct ConfigEntry {
 } ConfigEntry;
 
 EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfiguration *configs, CLInput *cli);
+
+#endif
