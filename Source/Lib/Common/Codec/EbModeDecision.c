@@ -2400,10 +2400,6 @@ void inject_new_candidates(
             MD_COMP_TYPE tot_comp_types = (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
                 (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
                 picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;//MD_COMP_DIST;// MD_COMP_AVG;//
-#if 0//N0_COMP
-            tot_comp_types = picture_control_set_ptr->enc_mode == ENC_M0 ? MD_COMP_AVG : tot_comp_types;
-#endif
-
 #endif
 
             uint8_t listIndex;
