@@ -2584,8 +2584,10 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, siz
             }*/
 
             if (obu_header.obu_type != OBU_FRAME) break; // For OBU_TILE_GROUP comes under OBU_FRAME
+            goto TITLE_GROUP;
 
         case OBU_TILE_GROUP:
+        TITLE_GROUP:
             PRINT_NAME("**************OBU_TILE_GROUP*******************");
             if (!dec_handle_ptr->seen_frame_header)
                 return EB_Corrupt_Frame;

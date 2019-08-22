@@ -2306,8 +2306,8 @@ void product_full_loop_tx_search(
         txk_end = 2;
 
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
-    if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set == 2)
-        tx_type_index = (tx_type_index  == 1) ? IDTX : tx_type_index;
+        if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set == 2)
+            tx_type_index = (tx_type_index  == 1) ? IDTX : tx_type_index;
         tx_type = (TxType)tx_type_index;
         allowed_tx_mask[tx_type] = 1;
         if (plane == 0) {
@@ -2325,8 +2325,8 @@ void product_full_loop_tx_search(
         allowed_tx_mask[plane ? uv_tx_type : DCT_DCT] = 1;
     TxType best_tx_type = DCT_DCT;
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
-    if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set == 2)
-        tx_type_index = (tx_type_index  == 1) ? IDTX : tx_type_index;
+        if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set == 2)
+            tx_type_index = (tx_type_index  == 1) ? IDTX : tx_type_index;
         tx_type = (TxType)tx_type_index;
         if (!allowed_tx_mask[tx_type]) continue;
         if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set)

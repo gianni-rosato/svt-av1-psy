@@ -1500,6 +1500,9 @@ void* enc_dec_kernel(void *input_ptr)
     uint32_t                                 segmentBandIndex;
     uint32_t                                 segmentBandSize;
     EncDecSegments                          *segments_ptr;
+
+    segment_index = 0;
+
     for (;;) {
         // Get Mode Decision Results
         eb_get_full_object(

@@ -2327,6 +2327,7 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
 
     IntMvDec ref_mv[2];
     IntMvDec nearestmv[2], nearmv[2];
+    memset(nearestmv, 0, sizeof(nearestmv));
     if (!is_compound && mbmi->mode != GLOBALMV) {
         svt_find_best_ref_mvs(allow_hp, ref_mvs[mbmi->ref_frame[0]], &nearestmv[0],
             &nearmv[0], dec_handle->frame_header.force_integer_mv);
