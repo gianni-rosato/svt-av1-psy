@@ -145,7 +145,7 @@ void setup_segmentation(
     SegmentationParams *segmentation_params = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
     segmentation_params->segmentation_enabled = (EbBool)(sequence_control_set_ptr->static_config.enable_adaptive_quantization == 1);
     if (segmentation_params->segmentation_enabled) {
-        int32_t segment_qps[MAX_SEGMENTS];
+        int32_t segment_qps[MAX_SEGMENTS] = {0};
         segmentation_params->segmentation_update_data = 1; //always updating for now. Need to set this based on actual deltas
         segmentation_params->segmentation_update_map = 1;
         segmentation_params->segmentation_temporal_update = EB_FALSE; //!(picture_control_set_ptr->parent_pcs_ptr->av1FrameType == KEY_FRAME || picture_control_set_ptr->parent_pcs_ptr->av1FrameType == INTRA_ONLY_FRAME);
@@ -224,4 +224,3 @@ void temporally_update_qps(
         segment_qp_ptr[i] = temporal_update ? diff : segment_qp_ptr[i];
     }
 }
-

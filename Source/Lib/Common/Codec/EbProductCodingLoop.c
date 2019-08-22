@@ -323,16 +323,16 @@ void mode_decision_update_neighbor_arrays(
                 context_ptr->blk_geom->bwidth,
                 context_ptr->blk_geom->bheight);
 
-            if (picture_control_set_ptr->parent_pcs_ptr->atb_mode) {
-                update_recon_neighbor_array16bit(
-                    picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array16bit[MD_NEIGHBOR_ARRAY_INDEX],
-                    context_ptr->cu_ptr->neigh_top_recon_16bit[0],
-                    context_ptr->cu_ptr->neigh_left_recon_16bit[0],
-                    origin_x,
-                    origin_y,
-                    context_ptr->blk_geom->bwidth,
-                    context_ptr->blk_geom->bheight);
-            }
+        if (picture_control_set_ptr->parent_pcs_ptr->atb_mode) {
+            update_recon_neighbor_array16bit(
+                picture_control_set_ptr->md_tx_depth_1_luma_recon_neighbor_array16bit[MD_NEIGHBOR_ARRAY_INDEX],
+                context_ptr->cu_ptr->neigh_top_recon_16bit[0],
+                context_ptr->cu_ptr->neigh_left_recon_16bit[0],
+                origin_x,
+                origin_y,
+                context_ptr->blk_geom->bwidth,
+                context_ptr->blk_geom->bheight);
+        }
 
         if (intraMdOpenLoop == EB_FALSE &&
             context_ptr->blk_geom->has_uv &&
