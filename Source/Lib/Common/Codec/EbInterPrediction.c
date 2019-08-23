@@ -5367,8 +5367,14 @@ EbErrorType inter_pu_prediction_av1(
 
     uint16_t capped_size = md_context_ptr->interpolation_filter_search_blk_size == 0 ? 4 :
                            md_context_ptr->interpolation_filter_search_blk_size == 1 ? 8 : 16 ;
-
+#if !MD_STAGING  
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
+#endif
+#if IT_SEARCH_FIX
+        if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_OFF)
+            candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
+        else
+#endif
         if (!md_context_ptr->skip_interpolation_search) {
             if (md_context_ptr->blk_geom->bwidth > capped_size && md_context_ptr->blk_geom->bheight > capped_size)
                 interpolation_filter_search(

@@ -1482,7 +1482,7 @@ void fast_loop_core(
     context_ptr->pu_itr = 0;
     // Prediction
     // Set skip_interpolation_search
-    if ((context_ptr->md_staging_mode  && context_ptr->md_stage == MD_STAGE_0) || (context_ptr->md_staging_mode >= 3 && (context_ptr->md_stage == MD_STAGE_0 || context_ptr->md_stage == MD_STAGE_1 || context_ptr->md_stage == MD_STAGE_2)))
+    if ((context_ptr->md_staging_mode && context_ptr->md_stage == MD_STAGE_0) || (context_ptr->md_staging_mode >= 3 && (context_ptr->md_stage == MD_STAGE_0 || context_ptr->md_stage == MD_STAGE_1 || context_ptr->md_stage == MD_STAGE_2)))
         context_ptr->skip_interpolation_search = 1;
     else
         context_ptr->skip_interpolation_search = picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? 0 : 1;
@@ -4301,7 +4301,7 @@ void perform_intra_tx_partitioning(
 
     TxType best_tx_type_depth_0 = DCT_DCT; // Track the best tx type @ depth 0 to be used @ the final stage (i.e. avoid redoing the tx type search).
 #if ABILITY_TO_SKIP_TX_SEARCH_ATB
-#if 1
+#if 1 // To do: use ref cost to derive tx_search_skip_fag
     uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? 0 : 1;
 #else
     uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
@@ -4310,7 +4310,6 @@ void perform_intra_tx_partitioning(
         *candidateBuffer->fast_cost_ptr,
         picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
 #endif
-    tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
 #endif
 
 #if MD_STAGING // -->
@@ -4764,12 +4763,13 @@ void perform_intra_tx_partitioning(
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr],
                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
             }
-} // Transform Loop
+        } // Transform Loop
 
-        uint64_t tx_size_bits = 0;
 #if SHUT_TX_SIZE_RATE
         // To do: estimate the cost of tx size = tx_size_bits
+        uint64_t cost = RDCOST(context_ptr->full_lambda, (*y_coeff_bits), y_full_distortion[DIST_CALC_RESIDUAL]);
 #else
+        uint64_t tx_size_bits = 0;
         if (candidateBuffer->candidate_ptr->y_has_coeff)
             tx_size_bits = estimate_tx_size_bits(
                 picture_control_set_ptr,
@@ -4780,8 +4780,8 @@ void perform_intra_tx_partitioning(
                 context_ptr->txfm_context_array,
                 context_ptr->tx_depth,
                 context_ptr->md_rate_estimation_ptr);
-#endif
         uint64_t cost = RDCOST(context_ptr->full_lambda, ((*y_coeff_bits) + tx_size_bits), y_full_distortion[DIST_CALC_RESIDUAL]);
+#endif
 
         if (cost < best_cost_search) {
             best_cost_search = cost;
@@ -5226,9 +5226,9 @@ void md_stage_2(
                 *candidateBuffer->fast_cost_ptr,
                 picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
 
-
+#if !ABILITY_TO_SKIP_TX_SEARCH_ATB
             tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
-
+#endif
             if (!tx_search_skip_fag) {
                 product_full_loop_tx_search(
                     candidateBuffer,
@@ -5599,9 +5599,9 @@ void AV1PerformFullLoop(
                 *candidateBuffer->fast_cost_ptr,
                 picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
 
-
+#if !ABILITY_TO_SKIP_TX_SEARCH_ATB
             tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
-
+#endif
             if (!tx_search_skip_fag) {
                 product_full_loop_tx_search(
                     candidateBuffer,

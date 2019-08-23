@@ -235,7 +235,9 @@ extern "C" {
         int16_t                         cr_txb_skip_context;
         int16_t                         cr_dc_sign_context;
         // Multi-modes signal(s)
+#if !MD_STAGING
         uint8_t                         nfl_level;
+#endif
         uint8_t                         skip_interpolation_search;
         uint8_t                         parent_sq_type[MAX_PARENT_SQ];
         uint8_t                         parent_sq_has_coeff[MAX_PARENT_SQ];

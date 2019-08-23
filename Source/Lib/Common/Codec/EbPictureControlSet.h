@@ -14215,7 +14215,9 @@ extern "C" {
         uint8_t                               tx_search_level;
         uint64_t                              tx_weight;
         uint8_t                               tx_search_reduced_set;
+#if !ABILITY_TO_SKIP_TX_SEARCH_ATB
         uint8_t                               skip_tx_search;
+#endif
         uint8_t                               interpolation_search_level;
         uint8_t                               nsq_search_level;
         uint8_t                               nsq_max_shapes_md; // max number of shapes to be tested in MD
