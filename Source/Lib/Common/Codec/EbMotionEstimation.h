@@ -1575,6 +1575,10 @@ void interpolate_search_region_AVC_chroma(
                                        // the vertical direction, used to point
                                        // to reference samples
         uint32_t integer_mv,           // input parameter, integer MV
+#if OPTIMISED_EX_SUBPEL
+        uint32_t search_area_height,  // input parameter, search area height
+        uint32_t search_area_width,  // input parameter, search area width
+#endif
         EbAsm asm_type);
 
 #ifdef __cplusplus

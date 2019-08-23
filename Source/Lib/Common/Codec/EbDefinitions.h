@@ -51,9 +51,12 @@ extern "C" {
 #define EIGTH_PEL_MV                      0
 #define ALTREF_TF_EIGHTH_PEL_SEARCH       1 // Add 1/8 sub-pel search/compensation @ Temporal Filtering
 #define ALTREF_TF_ADAPTIVE_WINDOW_SIZE    1 // Add the ability to use dynamic/asymmetric window for AltRef temporal filtering, add the ability to derive the activity within past and future frames @ picture decision, and add a logic to derive window size from activity
-
+#define TF_KEY                            1 // Temporal Filtering  for Key frames. OFF for Screen Content.
+#define TFK_ALTREF_DYNAMIC_WINDOW         1 // Applying Dynamic window to key frame temporal filtering
+#define TFK_QPS_TUNING                    1 // QP scaling tuning of temporally filtered key frames.
 #define COMP_MODE                         1 // Add inter-inter compound modes
 #define PREDICTIVE_ME                     1 // Perform ME search around MVP @ MD
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
@@ -62,12 +65,13 @@ extern "C" {
 #define NFL_IT_TH                                       2 // To be tuned
 #define NSQ_TAB_SIZE                                    6
 #define AOM_INTERP_EXTEND                               4
+#define OPTIMISED_EX_SUBPEL                             1
 
-
-
-
-
+#if OPTIMISED_EX_SUBPEL
+#define H_PEL_SEARCH_WIND 3  // 1/2-pel serach window
+#else
 #define H_PEL_SEARCH_WIND 4  // 1/2-pel serach window
+#endif
 #define Q_PEL_SEARCH_WIND 2  // 1/4-pel serach window
 #define HP_REF_OPT        1  // Remove redundant positions.
 typedef enum ME_HP_MODE {
