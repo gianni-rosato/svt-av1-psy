@@ -161,8 +161,13 @@ extern "C" {
         MdEncPassCuData               *md_ep_pipe_sb;
         uint8_t                         pu_itr;
         uint8_t                         cu_size_log2;
+#if MD_STAGING
+        uint32_t                         best_candidate_index_array[MAX_NFL_BUFF];
+        uint32_t                         sorted_candidate_index_array[MAX_NFL];
+#else
         uint8_t                         best_candidate_index_array[MAX_NFL + 2];
         uint8_t                         sorted_candidate_index_array[MAX_NFL];
+#endif
         uint16_t                        cu_origin_x;
         uint16_t                        cu_origin_y;
         uint8_t                         sb_sz;
@@ -175,7 +180,9 @@ extern "C" {
         uint16_t                        pu_width;
         uint16_t                        pu_height;
         EbPfMode                        pf_md_mode;
+#if !MD_STAGING // renaming
         uint32_t                        full_recon_search_count;
+#endif
         EbBool                          cu_use_ref_src_flag;
         EbBool                          hbd_mode_decision;
         uint16_t                        qp_index;
@@ -268,6 +275,10 @@ extern "C" {
     EbBool      variance_ready;
 #endif
 #if MD_STAGING // classes
+    MD_STAGE                             md_stage;
+
+    uint32_t                            cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
+
     EbBool                              skip_md_inter_chroma_comp;
 
     uint8_t                             md_staging_mode;
@@ -276,8 +287,12 @@ extern "C" {
     uint8_t                             bypass_stage2[CAND_CLASS_TOTAL];
 
     uint32_t                            fast_cand_count[CAND_CLASS_TOTAL]; // how many fast candiates per class
+    uint32_t                            fast1_cand_count[CAND_CLASS_TOTAL]; //how many candiates will be tested per md level and  per class
     uint32_t                            md_stage_2_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_2
     uint32_t                            md_stage_3_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_3
+
+    uint32_t                            md_stage_2_total_count;
+    uint32_t                            md_stage_3_total_count;
 
     uint8_t                             nic_level;
     uint8_t                             combine_class12; //1:class1 and 2 are combined.

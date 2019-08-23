@@ -521,7 +521,7 @@ void LimitMvOverBound(
     if ((int32_t)ctxtPtr->cu_origin_y + mvyF < 0)
         *mvy = -(int16_t)ctxtPtr->cu_origin_y;
 }
-
+#if !MD_STAGING
 void sort_fast_loop_candidates(
     struct ModeDecisionContext   *context_ptr,
     uint32_t                        buffer_total_count,
@@ -569,7 +569,7 @@ void sort_fast_loop_candidates(
     // tx search
     *ref_fast_cost = *(buffer_ptr_array[sorted_candidate_index_array[0]]->fast_cost_ptr);
 }
-
+#endif
 #define BIPRED_3x3_REFINMENT_POSITIONS 8
 
 int8_t ALLOW_REFINEMENT_FLAG[BIPRED_3x3_REFINMENT_POSITIONS] = {  1, 0, 1, 0, 1,  0,  1, 0 };
@@ -3778,22 +3778,33 @@ void  inject_intra_candidates(
 
     return;
 }
+#if MD_STAGING // classes
+EbErrorType generate_md_stage_0_cand(
+    LargestCodingUnit   *sb_ptr,
+    ModeDecisionContext *context_ptr,
+    SsMeContext         *ss_mecontext,
+    uint32_t            *candidateTotalCountPtr,
+    PictureControlSet   *picture_control_set_ptr)
+{
+#else
 /***************************************
 * ProductGenerateMdCandidatesCu
 *   Creates list of initial modes to
 *   perform fast cost search on.
 ***************************************/
 EbErrorType ProductGenerateMdCandidatesCu(
-    LargestCodingUnit                 *sb_ptr,
-    ModeDecisionContext             *context_ptr,
-    SsMeContext                    *ss_mecontext,
-    const uint32_t                      lcuAddr,
-    uint32_t                           *candidateTotalCountPtr,
-    EbPtr                              interPredContextPtr,
-    PictureControlSet              *picture_control_set_ptr)
+
+    LargestCodingUnit   *sb_ptr,
+    ModeDecisionContext *context_ptr,
+    SsMeContext         *ss_mecontext,
+    const uint32_t       lcuAddr,
+    uint32_t            *candidateTotalCountPtr,
+    EbPtr                interPredContextPtr,
+    PictureControlSet   *picture_control_set_ptr)
 {
     (void)lcuAddr;
     (void)interPredContextPtr;
+#endif
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     const SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     const EB_SLICE slice_type = picture_control_set_ptr->slice_type;
@@ -3916,6 +3927,20 @@ EbErrorType ProductGenerateMdCandidatesCu(
 /***************************************
 * Full Mode Decision
 ***************************************/
+#if MD_STAGING     
+uint32_t product_full_mode_decision(
+    struct ModeDecisionContext   *context_ptr,
+    CodingUnit                   *cu_ptr,
+    ModeDecisionCandidateBuffer **buffer_ptr_array,
+    uint32_t                      candidate_total_count,
+    uint32_t                     *best_candidate_index_array,
+    uint32_t                     *best_intra_mode)
+{
+    uint32_t                  candidateIndex;
+    uint64_t                  lowestCost = 0xFFFFFFFFFFFFFFFFull;
+    uint64_t                  lowestIntraCost = 0xFFFFFFFFFFFFFFFFull;
+    uint32_t                  lowestCostIndex = 0;
+#else
 uint8_t product_full_mode_decision(
     struct ModeDecisionContext   *context_ptr,
     CodingUnit                   *cu_ptr,
@@ -3928,11 +3953,12 @@ uint8_t product_full_mode_decision(
 {
     UNUSED(bwidth);
     UNUSED(bheight);
-
     uint8_t                   candidateIndex;
     uint64_t                  lowestCost = 0xFFFFFFFFFFFFFFFFull;
     uint64_t                  lowestIntraCost = 0xFFFFFFFFFFFFFFFFull;
     uint8_t                   lowestCostIndex = 0;
+#endif
+
     PredictionUnit       *pu_ptr;
     uint32_t                   i;
     ModeDecisionCandidate       *candidate_ptr;

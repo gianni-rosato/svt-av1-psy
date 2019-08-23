@@ -266,15 +266,26 @@ extern "C" {
         uint64_t                       *full_cost_skip_ptr,
         uint64_t                       *full_cost_merge_ptr
     );
+
+#if MD_STAGING     
+    uint32_t product_full_mode_decision(
+         struct ModeDecisionContext  *context_ptr,
+        CodingUnit                   *cu_ptr,
+        ModeDecisionCandidateBuffer **buffer_ptr_array,
+        uint32_t                      candidate_total_count,
+        uint32_t                     *best_candidate_index_array,
+        uint32_t                     *best_intra_mode);
+#else
     uint8_t product_full_mode_decision(
         struct ModeDecisionContext   *context_ptr,
         CodingUnit                   *cu_ptr,
-        uint8_t                         bwidth,
-        uint8_t                         bheight,
+        uint8_t                       bwidth,
+        uint8_t                       bheight,
         ModeDecisionCandidateBuffer **buffer_ptr_array,
-        uint32_t                        candidate_total_count,
-        uint8_t                        *best_candidate_index_array,
-        uint32_t                       *best_intra_mode);
+        uint32_t                      candidate_total_count,
+        uint8_t                      *best_candidate_index_array,
+        uint32_t                     *best_intra_mode);
+#endif
     void sort_fast_loop_candidates(
         struct ModeDecisionContext   *context_ptr,
         uint32_t                        buffer_total_count,
