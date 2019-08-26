@@ -301,10 +301,12 @@ class RefQueue : public ICompareQueue, FrameQueueBuffer {
     void draw_frames(const VideoFrame *frame, const VideoFrame *friend_frame) {
 #ifdef ENABLE_DEBUG_MONITOR
         if (ref_monitor_ == nullptr) {
+            /** walk-around for bit-depth is fixed set 10-bit from ref-decoder,
+             * here to use bit-depth of friend frame*/
             ref_monitor_ = new VideoMonitor(frame->width,
                                             frame->height,
                                             frame->stride[0],
-                                            frame->bits_per_sample,
+                                            friend_frame->bits_per_sample,
                                             false,
                                             "Ref decode");
         }
@@ -314,13 +316,12 @@ class RefQueue : public ICompareQueue, FrameQueueBuffer {
         }
         // Output to monitor for debug
         if (recon_monitor_ == nullptr) {
-            recon_monitor_ = new VideoMonitor(
-                frame->width,
-                frame->height,
-                frame->width * (frame->bits_per_sample > 8 ? 2 : 1),
-                frame->bits_per_sample,
-                false,
-                "Recon");
+            recon_monitor_ = new VideoMonitor(friend_frame->width,
+                                              friend_frame->height,
+                                              friend_frame->stride[0],
+                                              friend_frame->bits_per_sample,
+                                              false,
+                                              "Recon");
         }
         if (recon_monitor_) {
             recon_monitor_->draw_frame(friend_frame->planes[0],

@@ -74,15 +74,18 @@ EbErrorType Y4MVideoSource::parse_file_info() {
     width_ = cfg.source_width;
     height_ = cfg.source_height;
     bit_depth_ = cfg.encoder_bit_depth;
+    svt_compressed_2bit_plane_ = cfg.compressed_ten_bit_format;
 
     // Workaround, check_if_y4m can not output color format
     // and svt-av1 encoder support yuv420 color format only in current version,
     // so use bit_depth to get iamge format.
     if (bit_depth_ > 8) {
-        image_format_ = IMG_FMT_420P10_PACKED;
-    } else {
+        if (svt_compressed_2bit_plane_)
+            image_format_ = IMG_FMT_420P10_PACKED;
+        else
+            image_format_ = IMG_FMT_420;
+    } else
         image_format_ = IMG_FMT_420;
-    }
 
     // Get header lenght
     header_length_ = ftell(file_handle_);
