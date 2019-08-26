@@ -2163,7 +2163,9 @@ void perform_fast_loop(
     {
         ModeDecisionCandidateBuffer *candidateBuffer = candidateBufferPtrArrayBase[highestCostIndex];
         ModeDecisionCandidate       *candidate_ptr = candidateBuffer->candidate_ptr = &fast_candidate_array[fastLoopCandidateIndex];
+#if !MD_STAGING // re-factor
         EbPictureBufferDesc         *prediction_ptr = candidateBuffer->prediction_ptr;
+#endif
         // Initialize tx_depth
         candidateBuffer->candidate_ptr->tx_depth = 0;
         if (!candidate_ptr->distortion_ready || fastLoopCandidateIndex == bestFirstFastCostSearchCandidateIndex) {
@@ -4274,7 +4276,6 @@ void perform_intra_tx_partitioning(
     ModeDecisionContext          *context_ptr,
     PictureControlSet            *picture_control_set_ptr,
 #if ABILITY_TO_SKIP_TX_SEARCH_ATB
-    uint32_t                      best_fastLoop_candidate_index,
 #if 0
     uint64_t                      ref_fast_cost,
 #endif
@@ -5178,7 +5179,6 @@ void md_stage_2(
                 context_ptr,
                 picture_control_set_ptr,
 #if ABILITY_TO_SKIP_TX_SEARCH_ATB
-                best_fastLoop_candidate_index,
 #if 0
                 ref_fast_cost,
 #endif
@@ -5551,7 +5551,6 @@ void AV1PerformFullLoop(
                 context_ptr,
                 picture_control_set_ptr,
 #if ABILITY_TO_SKIP_TX_SEARCH_ATB
-                best_fastLoop_candidate_index,
 #if 0
                 ref_fast_cost,
 #endif
