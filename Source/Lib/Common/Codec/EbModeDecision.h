@@ -267,7 +267,7 @@ extern "C" {
         uint64_t                       *full_cost_merge_ptr
     );
 
-#if MD_STAGING     
+#if MD_STAGING
     uint32_t product_full_mode_decision(
          struct ModeDecisionContext  *context_ptr,
         CodingUnit                   *cu_ptr,

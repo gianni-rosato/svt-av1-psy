@@ -5367,7 +5367,7 @@ EbErrorType inter_pu_prediction_av1(
 
     uint16_t capped_size = md_context_ptr->interpolation_filter_search_blk_size == 0 ? 4 :
                            md_context_ptr->interpolation_filter_search_blk_size == 1 ? 8 : 16 ;
-#if !MD_STAGING  
+#if !MD_STAGING
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
 #endif
 #if IT_SEARCH_FIX

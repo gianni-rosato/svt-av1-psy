@@ -20,7 +20,7 @@ static void mode_decision_context_dctor(EbPtr p)
 
    }
 #endif
-#if MD_STAGING   
+#if MD_STAGING
     EB_DELETE_PTR_ARRAY(obj->candidate_buffer_ptr_array, MAX_NFL_BUFF);
 #else
     EB_DELETE_PTR_ARRAY(obj->candidate_buffer_ptr_array, (MAX_NFL + 1 + 1));
@@ -111,7 +111,7 @@ EbErrorType mode_decision_context_ctor(
         eb_trans_quant_buffers_ctor);
 
     // Cost Arrays
-#if MD_STAGING   
+#if MD_STAGING
     // Hsan: MAX_NFL + 1 scratch buffer for intra + 1 scratch buffer for inter
     EB_MALLOC_ARRAY(context_ptr->fast_cost_array, MAX_NFL_BUFF);
     EB_MALLOC_ARRAY(context_ptr->full_cost_array, MAX_NFL_BUFF);

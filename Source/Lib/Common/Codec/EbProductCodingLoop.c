@@ -6818,11 +6818,11 @@ void md_encode_block(
     const BlockGeom               *blk_geom = context_ptr->blk_geom;
     ModeDecisionCandidateBuffer   *candidateBuffer;
     ModeDecisionCandidate         *fast_candidate_array = context_ptr->fast_candidate_array;
-#if MD_STAGING                  
+#if MD_STAGING
     uint32_t                       candidateIndex;
-#else                           
+#else
     uint8_t                        candidateIndex;
-#endif                          
+#endif
     uint32_t                       fastCandidateTotalCount;
     EbAsm                          asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
     uint32_t                       best_intra_mode = EB_INTRA_MODE_INVALID;
@@ -7260,7 +7260,7 @@ void md_encode_block(
             asm_type); // fullCandidateTotalCount to number of buffers to process
 #endif
         // Full Mode Decision (choose the best mode)
-#if MD_STAGING     
+#if MD_STAGING
         candidateIndex = product_full_mode_decision(
             context_ptr,
             cu_ptr,

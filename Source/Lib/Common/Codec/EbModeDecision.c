@@ -3927,7 +3927,7 @@ EbErrorType ProductGenerateMdCandidatesCu(
 /***************************************
 * Full Mode Decision
 ***************************************/
-#if MD_STAGING     
+#if MD_STAGING
 uint32_t product_full_mode_decision(
     struct ModeDecisionContext   *context_ptr,
     CodingUnit                   *cu_ptr,
