@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 
+#include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
 
 #include "EbPictureControlSet.h"
