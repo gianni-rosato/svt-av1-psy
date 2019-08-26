@@ -4347,21 +4347,23 @@ EbErrorType warped_motion_prediction(
 }
 
 EbErrorType warped_motion_prediction_md(
-    MvUnit                               *mv_unit,
-    ModeDecisionContext                  *md_context_ptr,
-    uint16_t                                pu_origin_x,
-    uint16_t                                pu_origin_y,
-    CodingUnit                           *cu_ptr,
-    const BlockGeom                        *blk_geom,
-    EbPictureBufferDesc                  *ref_pic_list0,
-    EbPictureBufferDesc                  *prediction_ptr,
-    uint16_t                                dst_origin_x,
-    uint16_t                                dst_origin_y,
-    EbWarpedMotionParams                   *wm_params,
-#if MD_STAGING // re-factor
-    EbBool                                  perform_chroma,
+    MvUnit               *mv_unit,
+#if !MD_STAGING
+    ModeDecisionContext  *md_context_ptr,
 #endif
-    EbAsm                                   asm_type)
+    uint16_t              pu_origin_x,
+    uint16_t              pu_origin_y,
+    CodingUnit           *cu_ptr,
+    const BlockGeom      *blk_geom,
+    EbPictureBufferDesc  *ref_pic_list0,
+    EbPictureBufferDesc  *prediction_ptr,
+    uint16_t              dst_origin_x,
+    uint16_t              dst_origin_y,
+    EbWarpedMotionParams *wm_params,
+#if MD_STAGING
+    EbBool                perform_chroma,
+#endif
+    EbAsm                 asm_type)
 {
     EbErrorType  return_error = EB_ErrorNone;
     uint8_t is_compound = (mv_unit->pred_direction == BI_PRED) ? 1 : 0;
@@ -5327,7 +5329,9 @@ EbErrorType inter_pu_prediction_av1(
         if (is16bit) {
             warped_motion_prediction_md(
                 &mv_unit,
+#if !MD_STAGING
                 md_context_ptr,
+#endif
                 md_context_ptr->cu_origin_x,
                 md_context_ptr->cu_origin_y,
                 md_context_ptr->cu_ptr,
