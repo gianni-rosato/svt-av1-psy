@@ -13,10 +13,19 @@
 #include "EbCodingUnit.h"
 #include "EbEntropyCoding.h"
 
-#define PRINT_NL // printf("\n");
-#define PRINT(name, val) // printf("\n%s :\t%X", name, val);
-#define PRINT_NAME(name) // printf("\n%s :\t", name);
-#define PRINT_FRAME(name, val) // printf("\n%s :\t%X", name, val);
+#define HEADER_DUMP 0
+
+#if HEADER_DUMP
+#define PRINT_NL printf("\n");
+#define PRINT(name, val) printf("\n%s :\t%X", name, val);
+#define PRINT_NAME(name) printf("\n%s :\t", name);
+#define PRINT_FRAME(name, val) printf("\n%s :\t%X", name, val);
+#else
+#define PRINT_NL
+#define PRINT(name, val)
+#define PRINT_NAME(name)
+#define PRINT_FRAME(name, val)
+#endif
 
 #define ZERO_ARRAY(dest, n) memset(dest, 0, n * sizeof(*(dest)))
 

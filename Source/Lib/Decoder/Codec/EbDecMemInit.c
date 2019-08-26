@@ -149,8 +149,14 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
             dynammically allocate if needed */
             /*TODO : Change to macro */
             /* (16+1) : 1 for Length and 16 for all coeffs in 4x4 */
+#if SINGLE_THRD_COEFF_BUF_OPT
+        /*Size of coeff buf reduced to sb_sizesss*/
+        EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_Y],
+            (num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
+#else
         EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_Y],
             (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
+#endif
 
         if(seq_header->color_config.subsampling_x == 1 &&
            seq_header->color_config.subsampling_y == 1)
@@ -164,10 +170,17 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
             dynammically allocate if needed */
             /*TODO : Change to macro */
             /* (16+1) : 1 for Length and 16 for all coeffs in 4x4 */
+#if SINGLE_THRD_COEFF_BUF_OPT
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
+                (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
+                (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
+#else
             EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
             (num_sb * num_mis_in_sb * sizeof(int32_t) * (16+1) >> 2), EB_N_PTR);
             EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
             (num_sb * num_mis_in_sb * sizeof(int32_t) * (16+1) >> 2), EB_N_PTR);
+#endif
         }
         else
             assert(0);

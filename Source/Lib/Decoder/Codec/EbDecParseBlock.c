@@ -1068,8 +1068,8 @@ static int motion_field_projection(EbDecHandle *dec_handle,
 
     if (start_frame_buf == NULL) return 0;
 
-    if (frame_info->frame_type == KEY_FRAME ||
-        frame_info->frame_type == INTRA_ONLY_FRAME)
+    if (start_frame_buf->frame_type == KEY_FRAME ||
+        start_frame_buf->frame_type == INTRA_ONLY_FRAME)
         return 0;
 
     const int start_frame_order_hint = start_frame_buf->order_hint;
@@ -2325,22 +2325,20 @@ PartitionType parse_partition_type(uint32_t blk_row, uint32_t blk_col, SvtReader
         assert(cdf[1] == AOM_ICDF(CDF_PROB_TOP));
         return svt_read_cdf(reader, cdf, 2, ACCT_STR) ? PARTITION_SPLIT : PARTITION_VERT;
     }
-    return PARTITION_INVALID;
+    return  PARTITION_SPLIT;
 }
 
-static INLINE void dec_get_txb_ctx(int plane_bsize, const TxSize tx_size,
-    const int plane, int blk_row, int blk_col, EbDecHandle *dec_handle,
-    TXB_CTX *const txb_ctx)
+static INLINE void dec_get_txb_ctx(EbDecHandle *dec_handle,
+    const TxSize tx_size, const int plane, int plane_bsize, int txb_h_unit,
+    int txb_w_unit, int blk_row, int blk_col, TXB_CTX *const txb_ctx)
 {
 #define MAX_TX_SIZE_UNIT 16
 
     ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
     ParseNbr4x4Ctxt *nbr_ctx = &parse_ctx->parse_nbr4x4_ctxt;
     EbColorConfig *clr_cfg = &dec_handle->seq_header.color_config;
-    int txb_w_unit = tx_size_wide_unit[tx_size];
-    int txb_h_unit = tx_size_high_unit[tx_size];
-    uint8_t suby   = plane ? clr_cfg->subsampling_y : 0;
 
+    int suby = plane ? clr_cfg->subsampling_y : 0;
     int dc_sign = 0;
     int k = 0;
     uint8_t *above_dc_ctx = nbr_ctx->above_dc_ctx[plane] + blk_col;
@@ -2433,7 +2431,6 @@ uint16_t parse_transform_block(EbDecHandle *dec_handle,
     TxSize tx_size, int skip)
 {
     uint16_t eob = 0 , sub_x, sub_y;
-    BlockSize bsize = pi->mi->sb_type;
 
     sub_x = (plane > 0) ? dec_handle->seq_header.color_config.subsampling_x : 0;
     sub_y = (plane > 0) ? dec_handle->seq_header.color_config.subsampling_y : 0;
@@ -2446,12 +2443,32 @@ uint16_t parse_transform_block(EbDecHandle *dec_handle,
         return eob;
 
     if (!skip) {
+        TXB_CTX txb_ctx;
+
+        BlockSize bsize = pi->mi->sb_type;
         int plane_bsize = (bsize == BLOCK_INVALID) ? BLOCK_INVALID :
             ss_size_lookup[bsize][sub_x][sub_y];
-        TXB_CTX txb_ctx;
-        dec_get_txb_ctx(plane_bsize, tx_size, plane,
-                    start_y, start_x,
-                    dec_handle, &txb_ctx);
+
+        int txb_w_unit = tx_size_wide_unit[tx_size];
+        int txb_h_unit = tx_size_high_unit[tx_size];
+
+        if (pi->mb_to_right_edge < 0) {
+            int plane_bsize = (pi->mi->sb_type == BLOCK_INVALID) ? BLOCK_INVALID :
+                ss_size_lookup[pi->mi->sb_type][sub_x][sub_y];
+            const int blocks_wide = max_block_wide(pi, plane_bsize, sub_x);
+            txb_w_unit = AOMMIN(txb_w_unit, (blocks_wide - blk_col));
+        }
+
+        if (pi->mb_to_bottom_edge < 0) {
+            int plane_bsize = (pi->mi->sb_type == BLOCK_INVALID) ? BLOCK_INVALID :
+                ss_size_lookup[pi->mi->sb_type][sub_x][sub_y];
+            const int blocks_high = max_block_high(pi, plane_bsize, sub_y);
+            txb_h_unit = AOMMIN(txb_h_unit, (blocks_high - blk_row));
+        }
+
+
+        dec_get_txb_ctx(dec_handle, tx_size, plane, plane_bsize, txb_h_unit,
+            txb_w_unit, start_y, start_x, &txb_ctx);
 
         eob = parse_coeffs(dec_handle, pi, r, start_y, start_x, blk_col,
             blk_row, plane, txb_ctx.txb_skip_ctx, txb_ctx.dc_sign_ctx,

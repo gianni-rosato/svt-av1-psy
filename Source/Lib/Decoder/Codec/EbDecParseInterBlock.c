@@ -1991,10 +1991,6 @@ static INLINE int is_comp_ref_allowed(BlockSize bsize) {
     return AOMMIN(block_size_wide[bsize], block_size_high[bsize]) >= 8;
 }
 
-static INLINE int is_masked_compound_type(CompoundType type) {
-    return (type == COMPOUND_WEDGE || type == COMPOUND_DIFFWTD);
-}
-
 static INLINE int is_interinter_compound_used(CompoundType type, BlockSize sb_type) {
     const int comp_allowed = is_comp_ref_allowed(sb_type);
     switch (type) {

@@ -485,6 +485,7 @@ void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx,
 void svt_setup_frame_buf_refs(EbDecHandle *dec_handle_ptr)
 {
     dec_handle_ptr->cur_pic_buf[0]->order_hint = dec_handle_ptr->frame_header.order_hint;
+    dec_handle_ptr->cur_pic_buf[0]->frame_type = dec_handle_ptr->frame_header.frame_type;
 
     MvReferenceFrame ref_frame;
     for (ref_frame = LAST_FRAME; ref_frame <= ALTREF_FRAME; ++ref_frame) {

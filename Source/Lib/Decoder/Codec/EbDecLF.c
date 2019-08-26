@@ -175,7 +175,7 @@ static TxSize dec_set_lpf_parameters(AV1_DEBLOCKING_PARAMETERS *const params,
     const int32_t lf_stride = frm_hdr->mi_stride;
 
     /*Alligned at 8x8 boundary :
-    case 1 : if 8x8 block, last 4x4 block property is populated for all 
+    case 1 : if 8x8 block, last 4x4 block property is populated for all
             the TL, Left and Top 4x4 block
     case 2 : if 8xH & Wx8 block , then 2nd 4xH or Wx4 block property is
             populated for the left or rigth block */
@@ -664,7 +664,7 @@ static void dec_av1_loop_filter_frame_init(FrameHeader *frm_hdr,
         for (seg_id = 0; seg_id < MAX_SEGMENTS; seg_id++) {
             for (int32_t dir = 0; dir < 2; ++dir) {
 
-                int32_t lvl_seg = (dir == 0) ? filt_lvl[plane] 
+                int32_t lvl_seg = (dir == 0) ? filt_lvl[plane]
                                   : filt_lvl_r[plane];
                 assert(plane >= 0 && plane <= 2);
 
@@ -676,7 +676,7 @@ static void dec_av1_loop_filter_frame_init(FrameHeader *frm_hdr,
                 }*/
 
                 if (!lf->mode_ref_delta_enabled) {
-                    /*we could get rid of this if we assume that deltas are 
+                    /*we could get rid of this if we assume that deltas are
                     set to zero when not in use; decoder always uses deltas*/
                     memset(lf_info->lvl[plane][seg_id][dir], lvl_seg,
                         sizeof(lf_info->lvl[plane][seg_id][dir]));

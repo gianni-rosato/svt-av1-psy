@@ -177,7 +177,7 @@ static void dec_save_deblock_boundary_lines(EbDecHandle *dec_handle,
     assert(lines_to_save == 1 || lines_to_save == 2);
 
     int upscaled_width = frame_width >> sx;;
-    int line_bytes;
+    int line_bytes = 0;
 
     if (av1_superres_scaled(&dec_handle->frame_header.frame_size))
         assert(0);

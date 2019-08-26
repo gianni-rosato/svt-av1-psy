@@ -278,6 +278,8 @@ extern "C" {
         MvReferenceFrame                rf1,
         PredictionMode                  mode);
 
+    int is_masked_compound_type(COMPOUND_TYPE type);
+
 #ifdef __cplusplus
 }
 #endif

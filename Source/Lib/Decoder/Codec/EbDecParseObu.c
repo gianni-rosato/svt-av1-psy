@@ -788,9 +788,9 @@ void read_frame_delta_q_params(bitstrm_t *bs, FrameHeader *frame_info)
     }
     if (frame_info->delta_q_params.delta_q_present) {
         frame_info->delta_q_params.delta_q_res = dec_get_bits(bs, 2);
+        PRINT_FRAME("delta_q_res", 1 << frame_info->delta_q_params.delta_q_res);
     }
     PRINT_FRAME("delta_q_present", frame_info->delta_q_params.delta_q_present);
-    PRINT_FRAME("delta_q_res", 1 << frame_info->delta_q_params.delta_q_res);
 }
 
 void read_frame_delta_lf_params(bitstrm_t *bs, FrameHeader *frame_info)
@@ -1046,6 +1046,7 @@ void read_lr_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *seq_heade
     uses_chroma_lr = 0;
     for (i = 0; i < num_planes; i++) {
         lr_type = dec_get_bits(bs, 2);
+        PRINT_NAME("lr_type")
         frame_info->lr_params[i].frame_restoration_type = remap_lr_type[lr_type];
         PRINT_FRAME("frame_restoration_type", frame_info->lr_params[i].frame_restoration_type);
         if (frame_info->lr_params[i].frame_restoration_type != RESTORE_NONE) {
@@ -1080,8 +1081,13 @@ void read_lr_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *seq_heade
             = frame_info->lr_params[0].loop_restoration_size >> lr_uv_shift;
         frame_info->lr_params[2].loop_restoration_size
             = frame_info->lr_params[0].loop_restoration_size >> lr_uv_shift;
-        PRINT_FRAME("cm->rst_info[1].restoration_unit_size", frame_info->lr_params[1].loop_restoration_size);
     }
+    else {
+        frame_info->lr_params[0].loop_restoration_size = RESTORATION_TILESIZE_MAX;
+        frame_info->lr_params[1].loop_restoration_size = RESTORATION_TILESIZE_MAX;
+        frame_info->lr_params[2].loop_restoration_size = RESTORATION_TILESIZE_MAX;
+    }
+    PRINT_FRAME("cm->rst_info[1].restoration_unit_size", frame_info->lr_params[1].loop_restoration_size);
 }
 
 void read_frame_cdef_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *seq_header,
@@ -1100,7 +1106,7 @@ void read_frame_cdef_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *s
     }
     frame_info->CDEF_params.cdef_damping = dec_get_bits(bs, 2) + 3;
     frame_info->CDEF_params.cdef_bits = dec_get_bits(bs, 2);
-    PRINT_FRAME("cdef_damping", frame_info->CDEF_params.cdef_damping + 3);
+    PRINT_FRAME("cdef_damping", frame_info->CDEF_params.cdef_damping);
     PRINT_FRAME("cdef_bits", frame_info->CDEF_params.cdef_bits);
     for (i = 0; i < (1 << frame_info->CDEF_params.cdef_bits); i++) {
         frame_info->CDEF_params.cdef_y_strength[i] = dec_get_bits(bs, 6);
@@ -1363,9 +1369,11 @@ void read_film_grain_params(bitstrm_t *bs, aom_film_grain_t *grain_params,
     }
     grain_params->apply_grain = dec_get_bits(bs, 1);
     PRINT_FRAME("apply_grain", grain_params->apply_grain);
+
     if (grain_params->apply_grain) {
+        printf("Film grain is not supported!\n");
+        assert(0);
         // TODO: reset_grain_params(grain_params);
-        return;
     }
     grain_params->random_seed = dec_get_bits(bs, 16);
     PRINT_FRAME("grain_seed", grain_params->random_seed);
@@ -1373,7 +1381,7 @@ void read_film_grain_params(bitstrm_t *bs, aom_film_grain_t *grain_params,
         grain_params->update_parameters = dec_get_bits(bs, 1);
     else
         grain_params->update_parameters = 1;
-    PRINT_FRAME("grain_seed", grain_params->update_parameters);
+    PRINT_FRAME("update_parameters", grain_params->update_parameters);
     if (!grain_params->update_parameters) {
         /*film_grain_params_ref_idx = */dec_get_bits(bs, 3);
         /*PRINT_FRAME("film_grain_params_ref_idx", film_grain_params_ref_idx);*/
@@ -1391,46 +1399,48 @@ void read_film_grain_params(bitstrm_t *bs, aom_film_grain_t *grain_params,
         grain_params->scaling_points_y[i][1] = dec_get_bits(bs, 8);
         if (i > 0)
             assert(grain_params->scaling_points_y[i][0] > grain_params->scaling_points_y[i - 1][0]);
-        PRINT_FRAME("point_y_value[i]", grain_params->scaling_points_y[i][0]);
-        PRINT_FRAME("point_y_scaling[i]", grain_params->scaling_points_y[i][1]);
+        PRINT_FRAME("scaling_points_y[i][0]", grain_params->scaling_points_y[i][0]);
+        PRINT_FRAME("scaling_points_y[i][1]", grain_params->scaling_points_y[i][1]);
     }
     if (seq_header->color_config.mono_chrome)
         grain_params->chroma_scaling_from_luma = 0;
     else
         grain_params->chroma_scaling_from_luma = dec_get_bits(bs, 1);
+    PRINT_FRAME("chroma_scaling_from_luma", grain_params->chroma_scaling_from_luma);
+
     if (seq_header->color_config.mono_chrome || grain_params->chroma_scaling_from_luma
         || ( (seq_header->color_config.subsampling_y == 1) &&
-        (seq_header->color_config.subsampling_x == 1) && grain_params->num_y_points)) {
+        (seq_header->color_config.subsampling_x == 1) && grain_params->num_y_points == 0)) {
         grain_params->num_cb_points = 0;
         grain_params->num_cr_points = 0;
     }
     else {
         grain_params->num_cb_points = dec_get_bits(bs, 4);
+        PRINT_FRAME("num_cb_points", grain_params->num_cb_points);
         assert(grain_params->num_cb_points <= 10);
         for (i = 0; i < grain_params->num_cb_points; i++) {
             grain_params->scaling_points_cb[i][0] = dec_get_bits(bs, 8);
             grain_params->scaling_points_cb[i][1] = dec_get_bits(bs, 8);
+            PRINT_FRAME("scaling_points_cb[i][0]", grain_params->scaling_points_cb[i][0]);
+            PRINT_FRAME("scaling_points_cb[i][1]", grain_params->scaling_points_cb[i][1]);
             if (i > 0)
                 assert(grain_params->scaling_points_cb[i][0] >
                     grain_params->scaling_points_cb[i - 1][0]);
         }
         grain_params->num_cr_points = dec_get_bits(bs, 4);
+        PRINT_FRAME("num_cr_points", grain_params->num_cr_points);
         assert(grain_params->num_cr_points <= 14);
         for (i = 0; i < grain_params->num_cr_points; i++) {
             grain_params->scaling_points_cr[i][0] = dec_get_bits(bs, 8);
             grain_params->scaling_points_cr[i][1] = dec_get_bits(bs, 8);
+            PRINT_FRAME("scaling_points_cr[i][0]", grain_params->scaling_points_cr[i][0]);
+            PRINT_FRAME("scaling_points_cr[i][1]", grain_params->scaling_points_cr[i][1]);
             if (i > 0)
                 assert(grain_params->scaling_points_cr[i][0] >
                     grain_params->scaling_points_cr[i - 1][0]);
         }
     }
-    PRINT_FRAME("num_cb_points", grain_params->num_cb_points);
-    PRINT_FRAME("point_cb_value[i]", grain_params->scaling_points_cb[i][0]);
-    PRINT_FRAME("point_cb_scaling[i]", grain_params->scaling_points_cb[i][1]);
-    PRINT_FRAME("num_cr_points", grain_params->num_cr_points);
-    PRINT_FRAME("point_cr_value[i]", grain_params->scaling_points_cr[i][0]);
-    PRINT_FRAME("point_cr_scaling[i]", grain_params->scaling_points_cr[i][1]);
-    PRINT_FRAME("chroma_scaling_from_luma", grain_params->chroma_scaling_from_luma);
+
     if ((seq_header->color_config.subsampling_x == 1) &&
         (seq_header->color_config.subsampling_y == 1) &&
         (((grain_params->num_cb_points == 0) && (grain_params->num_cr_points != 0)) ||
@@ -1454,17 +1464,17 @@ void read_film_grain_params(bitstrm_t *bs, aom_film_grain_t *grain_params,
         numPosChroma = numPosLuma;
     if (grain_params->chroma_scaling_from_luma || grain_params->num_cb_points) {
         for (i = 0; i < numPosChroma; i++) {
-            grain_params->ar_coeffs_cb[i] = dec_get_bits(bs, 8);
+            grain_params->ar_coeffs_cb[i] = dec_get_bits(bs, 8) - 128;
             PRINT_FRAME("ar_coeffs_cb[i]", grain_params->ar_coeffs_cb[i]);
         }
     }
     if (grain_params->chroma_scaling_from_luma || grain_params->num_cr_points) {
         for (i = 0; i < numPosChroma; i++) {
-            grain_params->ar_coeffs_cr[i] = dec_get_bits(bs, 8);
+            grain_params->ar_coeffs_cr[i] = dec_get_bits(bs, 8) - 128;
             PRINT_FRAME("ar_coeffs_cr[i]", grain_params->ar_coeffs_cr[i]);
         }
     }
-    grain_params->ar_coeff_shift = dec_get_bits(bs, 2) - 6;
+    grain_params->ar_coeff_shift = dec_get_bits(bs, 2) + 6;
     grain_params->grain_scale_shift = dec_get_bits(bs, 2);
     PRINT_FRAME("ar_coeff_shift", grain_params->ar_coeff_shift);
     PRINT_FRAME("grain_scale_shift", grain_params->grain_scale_shift);
@@ -1548,6 +1558,7 @@ void setup_past_independence(EbDecHandle *dec_handle_ptr,
             seg.feature_data[i][j] = 0;
             seg.feature_enabled[i][j] = 0;
         }
+    UNUSED(seg);
 
     for (ref = LAST_FRAME; ref <= ALTREF_FRAME; ref++)
         cur_buf->global_motion[ref].gm_type = IDENTITY;
@@ -2182,7 +2193,12 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             sb_info->sb_trans_info[AOM_PLANE_U] = frame_buf->trans_info[AOM_PLANE_U] +
                 (sb_row * num_mis_in_sb * master_frame_buf->sb_cols >> sy) +
                 (sb_col * num_mis_in_sb >> sx);
-
+#if SINGLE_THRD_COEFF_BUF_OPT
+            /*TODO : Change to macro */
+            sb_info->sb_coeff[AOM_PLANE_Y] = frame_buf->coeff[AOM_PLANE_Y];
+            sb_info->sb_coeff[AOM_PLANE_U] = frame_buf->coeff[AOM_PLANE_U];
+            sb_info->sb_coeff[AOM_PLANE_V] = frame_buf->coeff[AOM_PLANE_V];
+#else
             /*TODO : Change to macro */
             sb_info->sb_coeff[AOM_PLANE_Y] = frame_buf->coeff[AOM_PLANE_Y] +
                 (sb_row * num_mis_in_sb * master_frame_buf->sb_cols * (16 + 1))
@@ -2196,6 +2212,7 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                 (sb_row * num_mis_in_sb * master_frame_buf->sb_cols * (16 + 1)
                     >> (sy + sx))
                 + (sb_col * num_mis_in_sb * (16 + 1) >> (sy + sx));
+#endif
 
             int cdef_factor = dec_handle_ptr->seq_header.use_128x128_superblock ? 4 : 1;
             sb_info->sb_cdef_strength = frame_buf->cdef_strength +

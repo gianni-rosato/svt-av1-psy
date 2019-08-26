@@ -29,6 +29,8 @@ extern "C" {
 /** Maximum picture buffers needed **/
 #define MAX_PIC_BUFS (REF_FRAMES + 1 + DEC_MAX_NUM_FRM_PRLL)
 
+/*Optimisation of Coeff Buffer in Single Thread*/
+#define SINGLE_THRD_COEFF_BUF_OPT   1
 /** Picture Structure **/
 typedef struct EbDecPicBuf {
 
@@ -41,6 +43,7 @@ typedef struct EbDecPicBuf {
 
     uint32_t            order_hint;
     uint32_t            ref_order_hints[INTER_REFS_PER_FRAME];
+    FrameType           frame_type;
 
     EbPictureBufferDesc *ps_pic_buf;
 
