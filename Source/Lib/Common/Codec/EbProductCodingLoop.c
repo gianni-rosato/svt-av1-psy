@@ -1488,7 +1488,7 @@ void fast_loop_core(
         context_ptr->skip_interpolation_search = picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? 0 : 1;
 
     // Set interp_filters
-    if (context_ptr->md_stage == MD_STAGE_0 && context_ptr->md_staging_mode)
+    if (context_ptr->md_staging_mode && context_ptr->md_stage == MD_STAGE_0)
         candidateBuffer->candidate_ptr->interp_filters = av1_make_interp_filters(BILINEAR, BILINEAR);
     else
         candidateBuffer->candidate_ptr->interp_filters = 0;
@@ -1675,7 +1675,7 @@ void set_md_stage_counts(
         context_ptr->bypass_stage1[CAND_CLASS_3] = context_ptr->combine_class12 ? EB_TRUE : EB_FALSE;
     }
     else
-        memset(context_ptr->bypass_stage1, EB_TRUE, CAND_CLASS_TOTAL * sizeof(uint32_t));
+        memset(context_ptr->bypass_stage1, EB_TRUE, CAND_CLASS_TOTAL);
 
     // Derive bypass_stage2
     if (context_ptr->md_staging_mode)
@@ -1694,7 +1694,7 @@ void set_md_stage_counts(
         }
     }
     else
-        memset(context_ptr->bypass_stage2, EB_TRUE, CAND_CLASS_TOTAL * sizeof(uint32_t));
+        memset(context_ptr->bypass_stage2, EB_TRUE, CAND_CLASS_TOTAL);
 
     // Set # of md_stage_1 candidates
     context_ptr->fast1_cand_count[CAND_CLASS_0] = (picture_control_set_ptr->slice_type == I_SLICE) ? fastCandidateTotalCount : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? INTRA_NFL : (INTRA_NFL >> 1);
@@ -3847,6 +3847,31 @@ static void tx_search_update_recon_sample_neighbor_array(
     return;
 }
 
+#if MD_STAGING // clean up atb
+uint8_t get_end_tx_depth(BlockSize bsize, uint8_t btype) {
+    uint8_t tx_depth = 0;
+    if (bsize == BLOCK_64X64 ||
+        bsize == BLOCK_32X32 ||
+        bsize == BLOCK_16X16 ||
+        bsize == BLOCK_64X32 ||
+        bsize == BLOCK_32X64 ||
+        bsize == BLOCK_16X32 ||
+        bsize == BLOCK_32X16 ||
+        bsize == BLOCK_16X8 ||
+        bsize == BLOCK_8X16)
+        tx_depth = (btype == INTRA_MODE) ? 1 : 2;
+    else if (bsize == BLOCK_8X8 ||
+        bsize == BLOCK_64X16 ||
+        bsize == BLOCK_16X64 ||
+        bsize == BLOCK_32X8 ||
+        bsize == BLOCK_8X32 ||
+        bsize == BLOCK_16X4 ||
+        bsize == BLOCK_4X16)
+        tx_depth = 1;
+
+    return tx_depth;
+}
+#else
 uint8_t get_end_tx_depth(ModeDecisionContext *context_ptr, uint8_t atb_mode, ModeDecisionCandidate *candidate_ptr, BlockSize bsize, uint8_t btype) {
     uint8_t tx_depth = 0;
 
@@ -3877,6 +3902,7 @@ uint8_t get_end_tx_depth(ModeDecisionContext *context_ptr, uint8_t atb_mode, Mod
 
     return tx_depth;
 }
+#endif
 #if !SHUT_TX_SIZE_RATE
 static INLINE int block_signals_txsize(BlockSize bsize) {
     return bsize > BLOCK_4X4;
@@ -4313,7 +4339,7 @@ void perform_intra_tx_partitioning(
 #endif
 #endif
 
-#if MD_STAGING // -->
+#if MD_STAGING // shut Tx search for INTRA 
     if (context_ptr->md_stage == MD_STAGE_2)
         tx_search_skip_fag = EB_TRUE;
 #endif
@@ -5165,7 +5191,11 @@ void md_stage_2(
         // end_tx_depth set to zero for blocks which go beyond the picture boundaries
         if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x + context_ptr->blk_geom->bwidth < picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_width &&
             context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y + context_ptr->blk_geom->bheight < picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_height))
+#if MD_STAGING // clean up atb
+            end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+#else
             end_tx_depth = get_end_tx_depth(context_ptr, picture_control_set_ptr->parent_pcs_ptr->atb_mode, candidate_ptr, context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+#endif
         else
             end_tx_depth = 0;
 #else
@@ -5538,7 +5568,11 @@ void AV1PerformFullLoop(
         // end_tx_depth set to zero for blocks which go beyond the picture boundaries
         if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x + context_ptr->blk_geom->bwidth < picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_width &&
             context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y + context_ptr->blk_geom->bheight < picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_height))
+#if MD_STAGING // clean up atb
+            end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+#else
             end_tx_depth = get_end_tx_depth(context_ptr, picture_control_set_ptr->parent_pcs_ptr->atb_mode, candidate_ptr, context_ptr->blk_geom->bsize, candidateBuffer->candidate_ptr->type);
+#endif
         else
             end_tx_depth = 0;
 #else
@@ -5592,12 +5626,25 @@ void AV1PerformFullLoop(
             context_ptr->blk_geom->bheight);
 
             // Transform partitioning free path
+#if MD_STAGING 
+        // strengthen md_stage_3 for CAND_CLASS_0 if md_stage_2 performed 
+        // MD_STAGING_CLEAN_UP: is it better to use md_staging_mode 
+        uint8_t  tx_search_skip_fag;
+        if (context_ptr->bypass_stage2[candidate_ptr->cand_class] == EB_FALSE && candidate_ptr->cand_class == CAND_CLASS_0)
+            tx_search_skip_fag = 0;
+        else
+            tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
+                context_ptr->blk_geom->sq_size,
+                ref_fast_cost,
+                *candidateBuffer->fast_cost_ptr,
+                picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
+#else
             uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
                 context_ptr->blk_geom->sq_size,
                 ref_fast_cost,
                 *candidateBuffer->fast_cost_ptr,
                 picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
-
+#endif
 #if !ABILITY_TO_SKIP_TX_SEARCH_ATB
             tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
 #endif
@@ -6955,6 +7002,7 @@ void md_encode_block(
             &fastCandidateTotalCount,
             picture_control_set_ptr);
 
+        // HG: MD_STAGING_CLEAN_UP the reset should not be needed !!
         if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode >= 5 && picture_control_set_ptr->slice_type == I_SLICE)
             context_ptr->md_stage_3_total_count = 1;
 
@@ -7024,7 +7072,6 @@ void md_encode_block(
         }
 
         context_ptr->md_stage = MD_STAGE_1;
-
         for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
 
             //number of next level candidates could not exceed number of curr level candidates
@@ -7071,7 +7118,6 @@ void md_encode_block(
 
         // 1st Full-Loop
         context_ptr->md_stage = MD_STAGE_2;
-
         for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
 
             //number of next level candidates could not exceed number of curr level candidates
@@ -7282,6 +7328,7 @@ void md_encode_block(
         candidateBuffer = candidate_buffer_ptr_array[candidateIndex];
 
         bestCandidateBuffers[0] = candidateBuffer;
+
 
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_INTER_DEPTH) {
             if (candidateBuffer->candidate_ptr->type != INTRA_MODE && candidateBuffer->candidate_ptr->motion_mode == SIMPLE_TRANSLATION) {

@@ -277,7 +277,7 @@ extern "C" {
     EbBool      variance_ready;
 #endif
 #if MD_STAGING // classes
-    MD_STAGE                             md_stage;
+    MD_STAGE                            md_stage;
 
     uint32_t                            cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
 
@@ -285,7 +285,7 @@ extern "C" {
 
     uint8_t                             md_staging_mode;
 
-    uint32_t                            bypass_stage1[CAND_CLASS_TOTAL];
+    uint8_t                             bypass_stage1[CAND_CLASS_TOTAL];
     uint8_t                             bypass_stage2[CAND_CLASS_TOTAL];
 
     uint32_t                            fast_cand_count[CAND_CLASS_TOTAL]; // how many fast candiates per class

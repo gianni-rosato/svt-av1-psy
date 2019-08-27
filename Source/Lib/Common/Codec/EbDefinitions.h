@@ -62,6 +62,8 @@ extern "C" {
 #define BYPASSED_RED_CU_IF_SQ_ONLY        1 // As red cu info not initialized if 85 sq only
 #define RED_CU_BUG_FIX                    1
 #define IT_SEARCH_FIX                     1
+#define NO_MEMSET                         1
+#define NO_LOG2_DOUBLE                    1
 #endif
 
 #define MD_STAGING                        1

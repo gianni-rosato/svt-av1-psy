@@ -1180,6 +1180,15 @@ EbErrorType signal_derivation_multi_processes_oq(
             CU_8x8_MODE_1 :
             CU_8x8_MODE_0;
 
+#if MD_STAGING // clean up atb
+        // Set atb mode      Settings
+        // 0                 OFF: no transform partitioning
+        // 1                 ON for INTRA blocks
+        if (picture_control_set_ptr->enc_mode <= ENC_M1 && sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT)
+            picture_control_set_ptr->atb_mode = 1;
+        else
+            picture_control_set_ptr->atb_mode = 0;
+#else
         // Set atb mode      Settings
         // 0                 OFF: no transform partitioning
         // 1                 Fast: perform transform partitioning for sensitive block sizes
@@ -1189,6 +1198,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->atb_mode = 1;
         else
             picture_control_set_ptr->atb_mode = 0;
+#endif
 #if COMP_MODE
         // Set Wedge mode      Settings
         // 0                 FULL: Full search
