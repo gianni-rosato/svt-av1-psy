@@ -472,9 +472,14 @@ typedef enum MD_STAGE {
     MD_STAGE_TOTAL
 } MD_STAGE;
 
-#define     INTRA_NFL       16
-#define     INTER_NEW_NFL   16
-#define     INTER_PRED_NFL  16
+#define MD_STAGING_MODE_0    0
+#define MD_STAGING_MODE_1    1
+#define MD_STAGING_MODE_2    2
+#define MD_STAGING_MODE_3    3
+
+#define INTRA_NFL           16
+#define INTER_NEW_NFL       16
+#define INTER_PRED_NFL      16
 
 #endif
 

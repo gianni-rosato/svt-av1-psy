@@ -288,15 +288,14 @@ extern "C" {
     uint8_t                             bypass_stage1[CAND_CLASS_TOTAL];
     uint8_t                             bypass_stage2[CAND_CLASS_TOTAL];
 
-    uint32_t                            fast_cand_count[CAND_CLASS_TOTAL]; // how many fast candiates per class
-    uint32_t                            fast1_cand_count[CAND_CLASS_TOTAL]; //how many candiates will be tested per md level and  per class
+    uint32_t                            md_stage_0_count[CAND_CLASS_TOTAL]; // how many fast candiates per class
+    uint32_t                            md_stage_1_count[CAND_CLASS_TOTAL]; //how many candiates will be tested per md level and  per class
     uint32_t                            md_stage_2_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_2
     uint32_t                            md_stage_3_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_3
 
     uint32_t                            md_stage_2_total_count;
     uint32_t                            md_stage_3_total_count;
 
-    uint8_t                             nic_level;
     uint8_t                             combine_class12; //1:class1 and 2 are combined.
 
     CAND_CLASS                          target_class;
@@ -385,7 +384,7 @@ extern "C" {
 
     extern void cfl_rd_pick_alpha(
         PictureControlSet             *picture_control_set_ptr,
-        ModeDecisionCandidateBuffer   *candidateBuffer,
+        ModeDecisionCandidateBuffer   *candidate_buffer,
         LargestCodingUnit             *sb_ptr,
         ModeDecisionContext           *context_ptr,
         EbPictureBufferDesc           *input_picture_ptr,

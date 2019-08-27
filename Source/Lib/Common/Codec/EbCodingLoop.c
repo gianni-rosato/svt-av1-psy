@@ -620,13 +620,13 @@ static void Av1EncodeLoop(
             {
                 // 3: Loop over alphas and find the best or choose DC
                 // Use the 1st spot of the candidate buffer to hold cfl settings: (1) to use same kernel as MD for CFL evaluation: cfl_rd_pick_alpha() (toward unification), (2) to avoid dedicated buffers for CFL evaluation @ EP (toward less memory)
-                ModeDecisionCandidateBuffer  *candidateBuffer = &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]);
+                ModeDecisionCandidateBuffer  *candidate_buffer = &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]);
 
                 // Input(s)
-                candidateBuffer->candidate_ptr->type = INTRA_MODE;
-                candidateBuffer->candidate_ptr->intra_luma_mode = cu_ptr->pred_mode;
-                candidateBuffer->candidate_ptr->cfl_alpha_signs = 0;
-                candidateBuffer->candidate_ptr->cfl_alpha_idx = 0;
+                candidate_buffer->candidate_ptr->type = INTRA_MODE;
+                candidate_buffer->candidate_ptr->intra_luma_mode = cu_ptr->pred_mode;
+                candidate_buffer->candidate_ptr->cfl_alpha_signs = 0;
+                candidate_buffer->candidate_ptr->cfl_alpha_idx = 0;
                 context_ptr->md_context->blk_geom = context_ptr->blk_geom;
 
                 EbByte src_pred_ptr;
@@ -634,25 +634,25 @@ static void Av1EncodeLoop(
 
                 // Copy Cb pred samples from ep buffer to md buffer
                 src_pred_ptr = predSamples->buffer_cb + pred_cb_offset;
-                dst_pred_ptr = &(candidateBuffer->prediction_ptr->buffer_cb[scratch_cb_offset]);
+                dst_pred_ptr = &(candidate_buffer->prediction_ptr->buffer_cb[scratch_cb_offset]);
                 for (int i = 0; i < context_ptr->blk_geom->bheight_uv; i++) {
                     memcpy(dst_pred_ptr, src_pred_ptr, context_ptr->blk_geom->bwidth_uv);
                     src_pred_ptr += predSamples->stride_cb;
-                    dst_pred_ptr += candidateBuffer->prediction_ptr->stride_cb;
+                    dst_pred_ptr += candidate_buffer->prediction_ptr->stride_cb;
                 }
 
                 // Copy Cr pred samples from ep buffer to md buffer
                 src_pred_ptr = predSamples->buffer_cr + pred_cr_offset;
-                dst_pred_ptr = &(candidateBuffer->prediction_ptr->buffer_cr[scratch_cr_offset]);
+                dst_pred_ptr = &(candidate_buffer->prediction_ptr->buffer_cr[scratch_cr_offset]);
                 for (int i = 0; i < context_ptr->blk_geom->bheight_uv; i++) {
                     memcpy(dst_pred_ptr, src_pred_ptr, context_ptr->blk_geom->bwidth_uv);
                     src_pred_ptr += predSamples->stride_cr;
-                    dst_pred_ptr += candidateBuffer->prediction_ptr->stride_cr;
+                    dst_pred_ptr += candidate_buffer->prediction_ptr->stride_cr;
                 }
 
                 cfl_rd_pick_alpha(
                     picture_control_set_ptr,
-                    candidateBuffer,
+                    candidate_buffer,
                     sb_ptr,
                     context_ptr->md_context,
                     input_samples,
@@ -661,10 +661,10 @@ static void Av1EncodeLoop(
                     asm_type);
 
                 // Output(s)
-                if (candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
+                if (candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
                     cu_ptr->prediction_unit_array->intra_chroma_mode = UV_CFL_PRED;
-                    cu_ptr->prediction_unit_array->cfl_alpha_idx = candidateBuffer->candidate_ptr->cfl_alpha_idx;
-                    cu_ptr->prediction_unit_array->cfl_alpha_signs = candidateBuffer->candidate_ptr->cfl_alpha_signs;
+                    cu_ptr->prediction_unit_array->cfl_alpha_idx = candidate_buffer->candidate_ptr->cfl_alpha_idx;
+                    cu_ptr->prediction_unit_array->cfl_alpha_signs = candidate_buffer->candidate_ptr->cfl_alpha_signs;
                     cu_ptr->prediction_unit_array->is_directional_chroma_mode_flag = EB_FALSE;
                 }
             }
@@ -1800,17 +1800,17 @@ void perform_intra_coding_loop(
 
         if (picture_control_set_ptr->update_cdf)
         {
-            ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-            ModeDecisionCandidateBuffer          *candidateBuffer;
+            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+            ModeDecisionCandidateBuffer          *candidate_buffer;
 
             // Set the Candidate Buffer
-            candidateBuffer = candidate_buffer_ptr_array[0];
+            candidate_buffer = candidate_buffer_ptr_array[0];
             // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-            candidateBuffer->candidate_ptr->transform_type[context_ptr->txb_itr] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
-            candidateBuffer->candidate_ptr->transform_type_uv = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
-            candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
-            candidateBuffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
+            candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
+            candidate_buffer->candidate_ptr->transform_type_uv = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
+            candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+            candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
 
             const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -1819,7 +1819,7 @@ void perform_intra_coding_loop(
                 1,//allow_update_cdf,
                 &picture_control_set_ptr->ec_ctx_array[tbAddr],
                 picture_control_set_ptr,
-                candidateBuffer,
+                candidate_buffer,
                 coeff1dOffset,
                 context_ptr->coded_area_sb_uv,
                 coeff_est_entropy_coder_ptr,
@@ -1832,8 +1832,8 @@ void perform_intra_coding_loop(
                 &cr_tu_coeff_bits,
                 context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[context_ptr->txb_itr],
-                candidateBuffer->candidate_ptr->transform_type_uv,
+                candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr],
+                candidate_buffer->candidate_ptr->transform_type_uv,
                 COMPONENT_LUMA,
                 asm_type);
         }
@@ -2071,17 +2071,17 @@ void perform_intra_coding_loop(
 
         if (picture_control_set_ptr->update_cdf)
         {
-            ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-            ModeDecisionCandidateBuffer          *candidateBuffer;
+            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+            ModeDecisionCandidateBuffer          *candidate_buffer;
 
             // Set the Candidate Buffer
-            candidateBuffer = candidate_buffer_ptr_array[0];
+            candidate_buffer = candidate_buffer_ptr_array[0];
             // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-            candidateBuffer->candidate_ptr->transform_type[context_ptr->txb_itr] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
-            candidateBuffer->candidate_ptr->transform_type_uv = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
-            candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
-            candidateBuffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
+            candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
+            candidate_buffer->candidate_ptr->transform_type_uv = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
+            candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+            candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
 
             const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -2090,7 +2090,7 @@ void perform_intra_coding_loop(
                 1,//allow_update_cdf,
                 &picture_control_set_ptr->ec_ctx_array[tbAddr],
                 picture_control_set_ptr,
-                candidateBuffer,
+                candidate_buffer,
                 coeff1dOffset,
                 context_ptr->coded_area_sb_uv,
                 coeff_est_entropy_coder_ptr,
@@ -2103,8 +2103,8 @@ void perform_intra_coding_loop(
                 &cr_tu_coeff_bits,
                 context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[context_ptr->txb_itr],
-                candidateBuffer->candidate_ptr->transform_type_uv,
+                candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr],
+                candidate_buffer->candidate_ptr->transform_type_uv,
                 COMPONENT_CHROMA,
                 asm_type);
         }
@@ -2891,15 +2891,15 @@ EB_EXTERN void av1_encode_pass(
 
                                 if(allow_update_cdf)
                                 {
-                                    ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-                                    ModeDecisionCandidateBuffer          *candidateBuffer;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+                                    ModeDecisionCandidateBuffer          *candidate_buffer;
 
                                     // Set the Candidate Buffer
-                                    candidateBuffer = candidate_buffer_ptr_array[0];
+                                    candidate_buffer = candidate_buffer_ptr_array[0];
                                     // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-                                    candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
-                                    candidateBuffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
+                                    candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+                                    candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
 
                                     const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -2908,7 +2908,7 @@ EB_EXTERN void av1_encode_pass(
                                         1,//allow_update_cdf,
                                         &picture_control_set_ptr->ec_ctx_array[tbAddr],
                                         picture_control_set_ptr,
-                                        candidateBuffer,
+                                        candidate_buffer,
                                         coeff1dOffset,
                                         context_ptr->coded_area_sb_uv,
                                         coeff_est_entropy_coder_ptr,
@@ -3336,14 +3336,14 @@ EB_EXTERN void av1_encode_pass(
                                 cr_tu_coeff_bits = 0;
 
                                 if (!zeroLumaCbfMD) {
-                                    ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-                                    ModeDecisionCandidateBuffer          *candidateBuffer;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+                                    ModeDecisionCandidateBuffer          *candidate_buffer;
 
                                     // Set the Candidate Buffer
-                                    candidateBuffer = candidate_buffer_ptr_array[0];
+                                    candidate_buffer = candidate_buffer_ptr_array[0];
                                     // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-                                    candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+                                    candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
 
                                     const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -3352,7 +3352,7 @@ EB_EXTERN void av1_encode_pass(
                                         0,//allow_update_cdf,
                                         NULL,
                                         picture_control_set_ptr,
-                                        candidateBuffer,
+                                        candidate_buffer,
                                         coeff1dOffset,
                                         context_ptr->coded_area_sb_uv,
                                         coeff_est_entropy_coder_ptr,
@@ -3411,15 +3411,15 @@ EB_EXTERN void av1_encode_pass(
                                 y_full_distortion[DIST_CALC_PREDICTION] += yTuFullDistortion[DIST_CALC_PREDICTION];
 
                                 if (allow_update_cdf) {
-                                    ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-                                    ModeDecisionCandidateBuffer          *candidateBuffer;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+                                    ModeDecisionCandidateBuffer          *candidate_buffer;
 
                                     // Set the Candidate Buffer
-                                    candidateBuffer = candidate_buffer_ptr_array[0];
+                                    candidate_buffer = candidate_buffer_ptr_array[0];
                                     // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-                                    candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
-                                    candidateBuffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
+                                    candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+                                    candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
 
                                     const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -3438,7 +3438,7 @@ EB_EXTERN void av1_encode_pass(
                                         1,//allow_update_cdf,
                                         &picture_control_set_ptr->ec_ctx_array[tbAddr],
                                         picture_control_set_ptr,
-                                        candidateBuffer,
+                                        candidate_buffer,
                                         coeff1dOffset,
                                         context_ptr->coded_area_sb_uv,
                                         coeff_est_entropy_coder_ptr,
@@ -3619,15 +3619,15 @@ EB_EXTERN void av1_encode_pass(
                                 cuPlane);
 
                             if (allow_update_cdf) {
-                                ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-                                ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-                                ModeDecisionCandidateBuffer          *candidateBuffer;
+                                ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+                                ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+                                ModeDecisionCandidateBuffer          *candidate_buffer;
 
                                 // Set the Candidate Buffer
-                                candidateBuffer = candidate_buffer_ptr_array[0];
+                                candidate_buffer = candidate_buffer_ptr_array[0];
                                 // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-                                candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
-                                candidateBuffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
+                                candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+                                candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
 
                                 const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -3636,7 +3636,7 @@ EB_EXTERN void av1_encode_pass(
                                     1,//allow_update_cdf,
                                     &picture_control_set_ptr->ec_ctx_array[tbAddr],
                                     picture_control_set_ptr,
-                                    candidateBuffer,
+                                    candidate_buffer,
                                     coeff1dOffset,
                                     context_ptr->coded_area_sb_uv,
                                     coeff_est_entropy_coder_ptr,

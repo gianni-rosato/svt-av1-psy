@@ -148,7 +148,7 @@ extern "C" {
         EbAsm                                   asm_type);
     typedef uint64_t(*EbFastCostFunc)(
         CodingUnit                           *cu_ptr,
-        struct ModeDecisionCandidate         *candidateBuffer,
+        struct ModeDecisionCandidate         *candidate_buffer,
         uint32_t                                qp,
         uint64_t                                luma_distortion,
         uint64_t                                chroma_distortion,
@@ -207,14 +207,14 @@ extern "C" {
     /**************************************
     * Mode Decision Candidate Buffer
     **************************************/
-    typedef struct IntraChromaCandidateBuffer
+    typedef struct IntraChromacandidate_buffer
     {
         uint32_t                              mode;
         uint64_t                              cost;
         uint64_t                              distortion;
         EbPictureBufferDesc                  *prediction_ptr;
         EbPictureBufferDesc                  *residual_ptr;
-    } IntraChromaCandidateBuffer;
+    } IntraChromacandidate_buffer;
 
     /**************************************
     * Mode Decision Candidate Buffer

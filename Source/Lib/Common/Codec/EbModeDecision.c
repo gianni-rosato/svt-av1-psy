@@ -3783,7 +3783,7 @@ EbErrorType generate_md_stage_0_cand(
     LargestCodingUnit   *sb_ptr,
     ModeDecisionContext *context_ptr,
     SsMeContext         *ss_mecontext,
-    uint32_t            *candidateTotalCountPtr,
+    uint32_t            *candidate_total_count_ptr,
     PictureControlSet   *picture_control_set_ptr)
 {
 #else
@@ -3868,11 +3868,12 @@ EbErrorType ProductGenerateMdCandidatesCu(
                 sb_ptr,
                 &canTotalCnt);
     }
-    *candidateTotalCountPtr = canTotalCnt;
+
 
 #if MD_STAGING // classes
+    *candidate_total_count_ptr = canTotalCnt;
     CAND_CLASS  cand_class_it;
-    memset(context_ptr->fast_cand_count, 0, CAND_CLASS_TOTAL * sizeof(uint32_t));
+    memset(context_ptr->md_stage_0_count, 0, CAND_CLASS_TOTAL * sizeof(uint32_t));
 
     uint32_t cand_i;
     for (cand_i = 0; cand_i < canTotalCnt; cand_i++)
@@ -3881,34 +3882,34 @@ EbErrorType ProductGenerateMdCandidatesCu(
 
         if (cand_ptr->type == INTRA_MODE) {
             cand_ptr->cand_class = CAND_CLASS_0;
-            context_ptr->fast_cand_count[CAND_CLASS_0]++;
+            context_ptr->md_stage_0_count[CAND_CLASS_0]++;
         }
         else if ((cand_ptr->type == INTER_MODE && cand_ptr->is_compound == 0) ||
             (cand_ptr->type == INTER_MODE && cand_ptr->is_compound == 1 && cand_ptr->interinter_comp.type == COMPOUND_AVERAGE)) {
 
             if (context_ptr->combine_class12) {
                 cand_ptr->cand_class = CAND_CLASS_1;
-                context_ptr->fast_cand_count[CAND_CLASS_1]++;
+                context_ptr->md_stage_0_count[CAND_CLASS_1]++;
             }
             else {
                 if (cand_ptr->is_new_mv) {
                     cand_ptr->cand_class = CAND_CLASS_1;
-                    context_ptr->fast_cand_count[CAND_CLASS_1]++;
+                    context_ptr->md_stage_0_count[CAND_CLASS_1]++;
                 }
                 else {
                     cand_ptr->cand_class = CAND_CLASS_2;
-                    context_ptr->fast_cand_count[CAND_CLASS_2]++;
+                    context_ptr->md_stage_0_count[CAND_CLASS_2]++;
                 }
             }
         }
         else {
             if (context_ptr->combine_class12) {
                 cand_ptr->cand_class = CAND_CLASS_2;
-                context_ptr->fast_cand_count[CAND_CLASS_2]++;
+                context_ptr->md_stage_0_count[CAND_CLASS_2]++;
             }
             else {
                 cand_ptr->cand_class = CAND_CLASS_3;
-                context_ptr->fast_cand_count[CAND_CLASS_3]++;
+                context_ptr->md_stage_0_count[CAND_CLASS_3]++;
             }
         }
 
@@ -3916,9 +3917,11 @@ EbErrorType ProductGenerateMdCandidatesCu(
 
     uint32_t fast_accum = 0;
     for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
-        fast_accum += context_ptr->fast_cand_count[cand_class_it];
+        fast_accum += context_ptr->md_stage_0_count[cand_class_it];
     }
     assert(fast_accum == canTotalCnt);
+#else
+    *candidateTotalCountPtr = canTotalCnt;
 #endif
 
     return EB_ErrorNone;
