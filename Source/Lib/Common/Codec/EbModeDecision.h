@@ -285,7 +285,6 @@ extern "C" {
         uint32_t                      candidate_total_count,
         uint8_t                      *best_candidate_index_array,
         uint32_t                     *best_intra_mode);
-#endif
     void sort_fast_loop_candidates(
         struct ModeDecisionContext   *context_ptr,
         uint32_t                        buffer_total_count,
@@ -293,6 +292,8 @@ extern "C" {
         uint8_t                        *best_candidate_index_array,
         uint8_t                        *sorted_candidate_index_array,
         uint64_t                       *ref_fast_cost);
+#endif
+
     typedef EbErrorType(*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(
         struct ModeDecisionContext           *context_ptr,
         uint32_t                                pu_index,

@@ -112,7 +112,6 @@ EbErrorType mode_decision_context_ctor(
 
     // Cost Arrays
 #if MD_STAGING
-    // Hsan: MAX_NFL + 1 scratch buffer for intra + 1 scratch buffer for inter
     EB_MALLOC_ARRAY(context_ptr->fast_cost_array, MAX_NFL_BUFF);
     EB_MALLOC_ARRAY(context_ptr->full_cost_array, MAX_NFL_BUFF);
     EB_MALLOC_ARRAY(context_ptr->full_cost_skip_ptr, MAX_NFL_BUFF);

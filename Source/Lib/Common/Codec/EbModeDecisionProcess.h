@@ -299,9 +299,6 @@ extern "C" {
     uint8_t                             nic_level;
     uint8_t                             combine_class12; //1:class1 and 2 are combined.
 
-    uint64_t                            full_cost_per_class[MAX_NFL];
-    uint32_t                            full_index_per_class[CAND_CLASS_TOTAL][MAX_NFL];
-
     CAND_CLASS                          target_class;
 #endif
     } ModeDecisionContext;
