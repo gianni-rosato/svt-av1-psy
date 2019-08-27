@@ -3,12 +3,12 @@
  * SPDX - License - Identifier: BSD - 2 - Clause - Patent
  */
 
-#ifndef NON_AVX512_SUPPORT
 #include <immintrin.h>
 #include "EbHighbdIntraPrediction_SSE2.h"
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
 
+#ifndef NON_AVX512_SUPPORT
 // =============================================================================
 
 // DC RELATED PRED
@@ -443,5 +443,378 @@ void aom_highbd_dc_predictor_64x64_avx512(uint16_t *dst, ptrdiff_t stride,
     sum = _mm_add_epi32(sum, _mm_set1_epi32(64));
     sum = _mm_srli_epi32(sum, 7);
     dc_common_predictor_64xh(dst, stride, 64, sum);
+}
+
+// =============================================================================
+
+// H_PRED
+
+// -----------------------------------------------------------------------------
+
+// 32xN
+
+static INLINE void h_pred_32(uint16_t **const dst, const ptrdiff_t stride,
+    const __m128i left)
+{
+    // Broadcast the 16-bit left pixel to 256-bit register.
+    const __m512i row = _mm512_broadcastw_epi16(left);
+
+    _mm512_storeu_si512((__m512i *)(*dst + 0x00), row);
+    *dst += stride;
+}
+
+// Process 8 rows.
+static INLINE void h_pred_32x8(uint16_t **dst, const ptrdiff_t stride,
+    const uint16_t *const left)
+{
+    // dst and it's stride must be 32-byte aligned.
+    assert(!((intptr_t)*dst % 32));
+    assert(!(stride % 32));
+
+    const __m128i left_u16 = _mm_load_si128((const __m128i *)left);
+
+    h_pred_32(dst, stride, _mm_srli_si128(left_u16, 0));
+    h_pred_32(dst, stride, _mm_srli_si128(left_u16, 2));
+    h_pred_32(dst, stride, _mm_srli_si128(left_u16, 4));
+    h_pred_32(dst, stride, _mm_srli_si128(left_u16, 6));
+    h_pred_32(dst, stride, _mm_srli_si128(left_u16, 8));
+    h_pred_32(dst, stride, _mm_srli_si128(left_u16, 10));
+    h_pred_32(dst, stride, _mm_srli_si128(left_u16, 12));
+    h_pred_32(dst, stride, _mm_srli_si128(left_u16, 14));
+}
+
+// 32x8
+
+void aom_highbd_h_predictor_32x8_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)above;
+    (void)bd;
+
+    h_pred_32x8(&dst, stride, left);
+}
+
+// 32x64
+
+void aom_highbd_h_predictor_32x64_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)above;
+    (void)bd;
+
+    for (int32_t i = 0; i < 8; i++, left += 8) {
+        h_pred_32x8(&dst, stride, left);
+    }
+}
+
+//32x16 32x32
+static INLINE void h_store_32_unpacklo(uint16_t **dst, const ptrdiff_t stride,
+    const __m128i *row) {
+    const __m128i val = _mm_unpacklo_epi64(*row, *row);
+    const __m512i val2 = _mm512_broadcast_i32x4(val);
+    _mm512_storeu_si512((__m512i *)(*dst), val2);
+    *dst += stride;
+}
+
+static INLINE void h_store_32_unpackhi(uint16_t **dst, const ptrdiff_t stride,
+    const __m128i *row) {
+    const __m128i val = _mm_unpackhi_epi64(*row, *row);
+    const __m512i val2 = _mm512_broadcast_i32x4(val);
+    _mm512_storeu_si512((__m512i *)(*dst), val2);
+    *dst += stride;
+}
+
+static INLINE void h_predictor_32x8(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *left) {
+    const __m128i left_u16 = _mm_load_si128((const __m128i *)left);
+    const __m128i row0 = _mm_shufflelo_epi16(left_u16, 0x0);
+    const __m128i row1 = _mm_shufflelo_epi16(left_u16, 0x55);
+    const __m128i row2 = _mm_shufflelo_epi16(left_u16, 0xaa);
+    const __m128i row3 = _mm_shufflelo_epi16(left_u16, 0xff);
+    const __m128i row4 = _mm_shufflehi_epi16(left_u16, 0x0);
+    const __m128i row5 = _mm_shufflehi_epi16(left_u16, 0x55);
+    const __m128i row6 = _mm_shufflehi_epi16(left_u16, 0xaa);
+    const __m128i row7 = _mm_shufflehi_epi16(left_u16, 0xff);
+    h_store_32_unpacklo(&dst, stride, &row0);
+    h_store_32_unpacklo(&dst, stride, &row1);
+    h_store_32_unpacklo(&dst, stride, &row2);
+    h_store_32_unpacklo(&dst, stride, &row3);
+    h_store_32_unpackhi(&dst, stride, &row4);
+    h_store_32_unpackhi(&dst, stride, &row5);
+    h_store_32_unpackhi(&dst, stride, &row6);
+    h_store_32_unpackhi(&dst, stride, &row7);
+}
+
+void aom_highbd_h_predictor_32x16_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above,
+    const uint16_t *left, int32_t bd) {
+    int32_t i;
+    (void)above;
+    (void)bd;
+
+    for (i = 0; i < 2; i++, left += 8) {
+        h_predictor_32x8(dst, stride, left);
+        dst += stride << 3;
+    }
+}
+
+void aom_highbd_h_predictor_32x32_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above,
+    const uint16_t *left, int32_t bd) {
+    int32_t i;
+    (void)above;
+    (void)bd;
+
+    for (i = 0; i < 4; i++, left += 8) {
+        h_predictor_32x8(dst, stride, left);
+        dst += stride << 3;
+    }
+}
+
+// ---------------------------------------------------------------------------- -
+
+// 64xN
+
+static INLINE void h_pred_64(uint16_t **const dst, const ptrdiff_t stride,
+    const __m128i left)
+{
+    // Broadcast the 16-bit left pixel to 256-bit register.
+    const __m512i row = _mm512_broadcastw_epi16(left);
+
+    _mm512_store_si512((__m256i *)(*dst + 0x00), row);
+    _mm512_store_si512((__m256i *)(*dst + 0x20), row);
+
+    *dst += stride;
+}
+
+// Process 8 rows.
+static INLINE void h_pred_64x8(uint16_t **dst, const ptrdiff_t stride,
+    const uint16_t *const left)
+{
+    // dst and it's stride must be 32-byte aligned.
+    assert(!((intptr_t)*dst % 32));
+    assert(!(stride % 32));
+
+    __m128i left_u16 = _mm_load_si128((const __m128i *)left);
+
+    for (int16_t j = 0; j < 8; j++) {
+        h_pred_64(dst, stride, left_u16);
+        left_u16 = _mm_srli_si128(left_u16, 2);
+    }
+}
+
+// 64x16
+
+void aom_highbd_h_predictor_64x16_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)above;
+    (void)bd;
+
+    for (int32_t i = 0; i < 2; i++, left += 8) {
+        h_pred_64x8(&dst, stride, left);
+    }
+}
+
+// 64x32
+
+void aom_highbd_h_predictor_64x32_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)above;
+    (void)bd;
+
+    for (int32_t i = 0; i < 4; i++, left += 8) {
+        h_pred_64x8(&dst, stride, left);
+    }
+}
+
+// 64x64
+
+void aom_highbd_h_predictor_64x64_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)above;
+    (void)bd;
+
+    for (int32_t i = 0; i < 8; i++, left += 8) {
+        h_pred_64x8(&dst, stride, left);
+    }
+}
+
+// =============================================================================
+
+// V_PRED
+
+// -----------------------------------------------------------------------------
+
+// 32xN
+
+static INLINE void v_pred_32(uint16_t **const dst, const ptrdiff_t stride,
+    const __m512i above01)
+{
+    _mm512_storeu_si512((__m512i *)(*dst + 0x00), above01);
+    *dst += stride;
+}
+
+// Process 8 rows.
+static INLINE void v_pred_32x8(uint16_t **const dst, const ptrdiff_t stride,
+    const __m512i above01)
+{
+    // dst and it's stride must be 32-byte aligned.
+    assert(!((intptr_t)*dst % 32));
+    assert(!(stride % 32));
+
+    v_pred_32(dst, stride, above01);
+    v_pred_32(dst, stride, above01);
+    v_pred_32(dst, stride, above01);
+    v_pred_32(dst, stride, above01);
+    v_pred_32(dst, stride, above01);
+    v_pred_32(dst, stride, above01);
+    v_pred_32(dst, stride, above01);
+    v_pred_32(dst, stride, above01);
+}
+
+// 32x8
+
+void aom_highbd_v_predictor_32x8_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    // Load all 32 pixels in a row into 256-bit registers.
+    const __m512i above01 = _mm512_loadu_si512((const __m512i *)(above + 0x00));
+
+    (void)left;
+    (void)bd;
+
+    v_pred_32x8(&dst, stride, above01);
+}
+
+// 32x16
+
+void aom_highbd_v_predictor_32x16_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    // Load all 32 pixels in a row into 512-bit registers.
+    const __m512i above01 = _mm512_loadu_si512((const __m512i *)(above + 0x00));
+
+    (void)left;
+    (void)bd;
+
+    for (int32_t i = 0; i < 2; i++) {
+        v_pred_32x8(&dst, stride, above01);
+    }
+}
+
+// 32x32
+
+void aom_highbd_v_predictor_32x32_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    // Load all 32 pixels in a row into 512-bit registers.
+    const __m512i above01 = _mm512_loadu_si512((const __m512i *)(above + 0x00));
+
+    (void)left;
+    (void)bd;
+
+    for (int32_t i = 0; i < 4; i++) {
+        v_pred_32x8(&dst, stride, above01);
+    }
+}
+
+// 32x64
+
+void aom_highbd_v_predictor_32x64_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    // Load all 32 pixels in a row into 512-bit registers.
+    const __m512i above01 = _mm512_loadu_si512((const __m512i *)(above + 0x00));
+
+    (void)left;
+    (void)bd;
+
+    for (int32_t i = 0; i < 8; i++) {
+        v_pred_32x8(&dst, stride, above01);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+// 64xN
+
+static INLINE void v_pred_64(uint16_t **const dst, const ptrdiff_t stride,
+    const __m512i above0, const __m512i above1)
+{
+    _mm512_storeu_si512((__m512i *)(*dst + 0x00), above0);
+    _mm512_storeu_si512((__m512i *)(*dst + 0x20), above1);
+    *dst += stride;
+}
+
+// Process 8 rows.
+static INLINE void v_pred_64x8(uint16_t **const dst, const ptrdiff_t stride,
+    const __m512i above0, const __m512i above1)
+{
+    // dst and it's stride must be 32-byte aligned.
+    assert(!((intptr_t)*dst % 32));
+    assert(!(stride % 32));
+
+    v_pred_64(dst, stride, above0, above1);
+    v_pred_64(dst, stride, above0, above1);
+    v_pred_64(dst, stride, above0, above1);
+    v_pred_64(dst, stride, above0, above1);
+    v_pred_64(dst, stride, above0, above1);
+    v_pred_64(dst, stride, above0, above1);
+    v_pred_64(dst, stride, above0, above1);
+    v_pred_64(dst, stride, above0, above1);
+}
+
+// 64x16
+
+void aom_highbd_v_predictor_64x16_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    // Load all 64 pixels in a row into 512-bit registers.
+    const __m512i above0 = _mm512_loadu_si512((const __m512i *)(above + 0x00));
+    const __m512i above1 = _mm512_loadu_si512((const __m512i *)(above + 0x20));
+
+    (void)left;
+    (void)bd;
+
+    for (int32_t i = 0; i < 2; i++) {
+        v_pred_64x8(&dst, stride, above0, above1);
+    }
+}
+
+// 64x32
+
+void aom_highbd_v_predictor_64x32_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    // Load all 64 pixels in a row into 512-bit registers.
+    const __m512i above0 = _mm512_loadu_si512((const __m512i *)(above + 0x00));
+    const __m512i above1 = _mm512_loadu_si512((const __m512i *)(above + 0x20));
+
+    (void)left;
+    (void)bd;
+
+    for (int32_t i = 0; i < 4; i++) {
+        v_pred_64x8(&dst, stride, above0, above1);
+    }
+}
+
+// 64x64
+
+void aom_highbd_v_predictor_64x64_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    // Load all 64 pixels in a row into 512-bit registers.
+    const __m512i above0 = _mm512_loadu_si512((const __m512i *)(above + 0x00));
+    const __m512i above1 = _mm512_loadu_si512((const __m512i *)(above + 0x20));
+
+    (void)left;
+    (void)bd;
+
+    for (int32_t i = 0; i < 8; i++) {
+        v_pred_64x8(&dst, stride, above0, above1);
+    }
 }
 #endif
