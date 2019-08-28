@@ -1618,9 +1618,7 @@ void set_md_stage_counts(
     uint32_t                 fastCandidateTotalCount)
 {
     SequenceControlSet* scs = (SequenceControlSet*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr);
-
-    // Step 1: set the bypass flags for stage1 and stage2
-    // Derive bypass_stage1
+    // Step 0: derive bypass_stage1 flags
     if (context_ptr->md_staging_mode) {
         context_ptr->bypass_stage1[CAND_CLASS_0] = EB_TRUE;
         context_ptr->bypass_stage1[CAND_CLASS_1] = EB_FALSE;
@@ -1629,8 +1627,7 @@ void set_md_stage_counts(
     }
     else
         memset(context_ptr->bypass_stage1, EB_TRUE, CAND_CLASS_TOTAL);
-
-    // Derive bypass_stage2
+    // Step 1: derive bypass_stage1 flags
     if (context_ptr->md_staging_mode)
     {
         context_ptr->bypass_stage2[CAND_CLASS_0] = EB_FALSE;
@@ -1648,8 +1645,7 @@ void set_md_stage_counts(
     }
     else
         memset(context_ptr->bypass_stage2, EB_TRUE, CAND_CLASS_TOTAL);
-
-    // Set # of md_stage_1 candidates
+    // Step 2: set md_stage count
     context_ptr->md_stage_1_count[CAND_CLASS_0] = (picture_control_set_ptr->slice_type == I_SLICE) ? fastCandidateTotalCount : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? INTRA_NFL : (INTRA_NFL >> 1);
     context_ptr->md_stage_1_count[CAND_CLASS_1] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? INTER_NEW_NFL : (INTER_NEW_NFL >> 1);
     context_ptr->md_stage_1_count[CAND_CLASS_2] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? INTER_PRED_NFL : (INTER_PRED_NFL >> 1);
@@ -1669,7 +1665,6 @@ void set_md_stage_counts(
             context_ptr->md_stage_1_count[CAND_CLASS_3] = context_ptr->md_stage_1_count[CAND_CLASS_3] / 2;
     }
 
-    // Set # of md_stage_2 candidates
     context_ptr->md_stage_2_count[CAND_CLASS_0] = (picture_control_set_ptr->slice_type == I_SLICE) ? fastCandidateTotalCount : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? INTRA_NFL : (INTRA_NFL >> 1);
     context_ptr->md_stage_2_count[CAND_CLASS_1] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 14 : 4;
     context_ptr->md_stage_2_count[CAND_CLASS_2] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 14 : 4;
@@ -1690,7 +1685,7 @@ void set_md_stage_counts(
             context_ptr->md_stage_2_count[CAND_CLASS_3] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 2;
         }
     }
-    // Set # of md_stage_3 candidates
+
     if (picture_control_set_ptr->enc_mode >= ENC_M1)
         context_ptr->md_stage_3_count[CAND_CLASS_0] = (picture_control_set_ptr->slice_type == I_SLICE) ? 10 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 1;
     else
@@ -1703,7 +1698,7 @@ void set_md_stage_counts(
         context_ptr->md_stage_3_count[CAND_CLASS_1] = context_ptr->md_stage_3_count[CAND_CLASS_1] * 2;
     }
     else {
-        context_ptr->md_stage_3_count[CAND_CLASS_3] =(picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 3 : 1;
+        context_ptr->md_stage_3_count[CAND_CLASS_3] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 3 : 1;
     }
 
     if (picture_control_set_ptr->enc_mode >= ENC_M2 && picture_control_set_ptr->enc_mode <= ENC_M4) {
@@ -1774,7 +1769,7 @@ void set_md_stage_counts(
         }
     }
 
-    // Step 5: update count for md_stage_1 and d_stage_2 if  bypassed (no NIC setting should be done beyond this point)
+    // Step 3: update count for md_stage_1 and d_stage_2 if  bypassed (no NIC setting should be done beyond this point)
     context_ptr->md_stage_2_count[CAND_CLASS_0] = context_ptr->bypass_stage1[CAND_CLASS_0] ? context_ptr->md_stage_1_count[CAND_CLASS_0] : context_ptr->md_stage_2_count[CAND_CLASS_0];
     context_ptr->md_stage_2_count[CAND_CLASS_1] = context_ptr->bypass_stage1[CAND_CLASS_1] ? context_ptr->md_stage_1_count[CAND_CLASS_1] : context_ptr->md_stage_2_count[CAND_CLASS_1];
     context_ptr->md_stage_2_count[CAND_CLASS_2] = context_ptr->bypass_stage1[CAND_CLASS_2] ? context_ptr->md_stage_1_count[CAND_CLASS_2] : context_ptr->md_stage_2_count[CAND_CLASS_2];
@@ -1785,7 +1780,7 @@ void set_md_stage_counts(
     context_ptr->md_stage_3_count[CAND_CLASS_2] = context_ptr->bypass_stage2[CAND_CLASS_2] ? context_ptr->md_stage_2_count[CAND_CLASS_2] : context_ptr->md_stage_3_count[CAND_CLASS_2];
     context_ptr->md_stage_3_count[CAND_CLASS_3] = context_ptr->bypass_stage2[CAND_CLASS_3] ? context_ptr->md_stage_2_count[CAND_CLASS_3] : context_ptr->md_stage_3_count[CAND_CLASS_3];
 
-    // Step 6: zero-out count for CAND_CLASS_3 if CAND_CLASS_1 and CAND_CLASS_2 are merged (i.e. shift to the left)
+    // Step 4: zero-out count for CAND_CLASS_3 if CAND_CLASS_1 and CAND_CLASS_2 are merged (i.e. shift to the left)
     if (context_ptr->combine_class12)
         context_ptr->md_stage_1_count[CAND_CLASS_3] = context_ptr->md_stage_2_count[CAND_CLASS_3] = context_ptr->md_stage_3_count[CAND_CLASS_3] = 0;
 }
@@ -4967,9 +4962,6 @@ void AV1PerformFullLoop(
     uint32_t                     fullCandidateTotalCount,
 #endif
     uint64_t                     ref_fast_cost,
-#if MD_STAGING
-    uint32_t                     fullLoopCandidateIndex,
-#endif
     EbAsm                        asm_type)
 {
 #if !MD_STAGING
@@ -5433,7 +5425,6 @@ void md_stage_2(
             cuOriginIndex,
             cuChromaOriginIndex,
             ref_fast_cost,
-            fullLoopCandidateIndex,
             asm_type);
     }
 }
@@ -5495,7 +5486,6 @@ void md_stage_3(
             cuOriginIndex,
             cuChromaOriginIndex,
             ref_fast_cost,
-            fullLoopCandidateIndex,
             asm_type);
 
         if (context_ptr->full_loop_escape)
