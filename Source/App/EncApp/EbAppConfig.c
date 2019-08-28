@@ -508,6 +508,9 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->performance_context.sum_luma_psnr       = 0;
     config_ptr->performance_context.sum_cr_psnr         = 0;
     config_ptr->performance_context.sum_cb_psnr         = 0;
+    config_ptr->performance_context.sum_luma_sse        = 0;
+    config_ptr->performance_context.sum_cr_sse          = 0;
+    config_ptr->performance_context.sum_cb_sse          = 0;
     config_ptr->performance_context.sum_qp              = 0;
 
     // ASM Type

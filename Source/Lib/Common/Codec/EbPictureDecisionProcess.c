@@ -3529,7 +3529,9 @@ void* picture_decision_kernel(void *input_ptr)
                                     eb_block_on_semaphore(picture_control_set_ptr->temp_filt_done_semaphore);
                                 }
 
-                            }
+                            }else
+                                picture_control_set_ptr->temporal_filtering_on = EB_FALSE; // set temporal filtering flag OFF for current picture
+
                         }
 
                         // Add 1 to the loop for the overlay picture. If the last picture is alt ref, increase the loop by 1 to add the overlay picture
