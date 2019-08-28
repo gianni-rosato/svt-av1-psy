@@ -1358,7 +1358,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
 #if MD_STAGING
     // Derive md_staging_mode
-    // 
+    //
     // MD_STAGING_MODE_1
     //  _______________________________________________________________________________________________________________________________________________
     // |        | md_stage_0                  | md_stage_1                  | md_stage_2                     | md_stage_3                              |
@@ -1436,7 +1436,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
     // |        |                             |                             |                                |                                         |
     // |________|_____________________________|_____________________________|________________________________|_________________________________________|
-    
+
     if (picture_control_set_ptr->enc_mode == ENC_M0)
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
     else if (picture_control_set_ptr->enc_mode <= ENC_M4)
