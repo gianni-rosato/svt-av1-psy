@@ -291,9 +291,9 @@ static VideoColorFormat trans_video_format(aom_img_fmt_t fmt) {
     case AOM_IMG_FMT_I422: return IMG_FMT_422;
     case AOM_IMG_FMT_I444: return IMG_FMT_444;
     case AOM_IMG_FMT_444A: return IMG_FMT_444A;
-    case AOM_IMG_FMT_I42016: return IMG_FMT_420P10_PACKED;
-    case AOM_IMG_FMT_I42216: return IMG_FMT_422P10_PACKED;
-    case AOM_IMG_FMT_I44416: return IMG_FMT_444P10_PACKED;
+    case AOM_IMG_FMT_I42016: return IMG_FMT_420;
+    case AOM_IMG_FMT_I42216: return IMG_FMT_422;
+    case AOM_IMG_FMT_I44416: return IMG_FMT_444;
     default: break;
     }
     return IMG_FMT_422;

@@ -823,7 +823,8 @@ void ReadInputFrames(
                     headerPtr->n_filled_len += (uint32_t)fread(inputPtr->cr, 1, lumaReadSize >> (3 - color_format), input_file);
                 }
             }
-        } else if (is16bit == 1 && config->compressed_ten_bit_format == 1) {
+        } else  {
+            assert(is16bit == 1 && config->compressed_ten_bit_format == 1);
             // 10-bit Compressed Unpacked Mode
             const uint32_t lumaReadSize = input_padded_width * input_padded_height;
             const uint32_t chromaReadSize = lumaReadSize >> (3 - color_format);
@@ -852,6 +853,20 @@ void ReadInputFrames(
                 headerPtr->n_filled_len += (uint32_t)fread(inputPtr->cb_ext, 1, nbitChromaReadSize, input_file);
                 headerPtr->n_filled_len += (uint32_t)fread(inputPtr->cr_ext, 1, nbitChromaReadSize, input_file);
             }
+        }
+        if (feof(input_file) != 0) {
+            if (input_file == stdin) {
+                //for stdin, we only know this when we reach eof
+                config->frames_to_be_encoded = config->frames_encoded;
+                if (headerPtr->n_filled_len != readSize) {
+                    // not a completed frame
+                    headerPtr->n_filled_len = 0;
+                }
+            } else {
+                // If we reached the end of file, loop over again
+                fseek(input_file, 0, SEEK_SET);
+            }
+
         }
     } else {
         if (is16bit && config->compressed_ten_bit_format == 1) {
@@ -894,9 +909,6 @@ void ReadInputFrames(
         }
     }
 
-    // If we reached the end of file, loop over again
-    if (feof(input_file) != 0)
-        fseek(input_file, 0, SEEK_SET);
     return;
 }
 
@@ -975,28 +987,29 @@ AppExitConditionType ProcessInputBuffer(
             config,
             is16bit,
             headerPtr);
+        if (headerPtr->n_filled_len) {
+            // Update the context parameters
+            config->processed_byte_count += headerPtr->n_filled_len;
+            headerPtr->p_app_private          = (EbPtr)EB_NULL;
+            config->frames_encoded           = (int32_t)(++config->processed_frame_count);
 
-        // Update the context parameters
-        config->processed_byte_count += headerPtr->n_filled_len;
-        headerPtr->p_app_private          = (EbPtr)EB_NULL;
-        config->frames_encoded           = (int32_t)(++config->processed_frame_count);
+            // Configuration parameters changed on the fly
+            if (config->use_qp_file && config->qp_file)
+                SendQpOnTheFly(
+                    config,
+                    headerPtr);
 
-        // Configuration parameters changed on the fly
-        if (config->use_qp_file && config->qp_file)
-            SendQpOnTheFly(
-                config,
-                headerPtr);
+            if (keepRunning == 0 && !config->stop_encoder)
+                config->stop_encoder = EB_TRUE;
+            // Fill in Buffers Header control data
+            headerPtr->pts          = config->processed_frame_count-1;
+            headerPtr->pic_type    = EB_AV1_INVALID_PICTURE;
 
-        if (keepRunning == 0 && !config->stop_encoder)
-            config->stop_encoder = EB_TRUE;
-        // Fill in Buffers Header control data
-        headerPtr->pts          = config->processed_frame_count-1;
-        headerPtr->pic_type    = EB_AV1_INVALID_PICTURE;
+            headerPtr->flags = 0;
 
-        headerPtr->flags = 0;
-
-        // Send the picture
-        eb_svt_enc_send_picture(componentHandle, headerPtr);
+            // Send the picture
+            eb_svt_enc_send_picture(componentHandle, headerPtr);
+        }
 
         if ((config->processed_frame_count == (uint64_t)config->frames_to_be_encoded) || config->stop_encoder) {
             headerPtr->n_alloc_len    = 0;

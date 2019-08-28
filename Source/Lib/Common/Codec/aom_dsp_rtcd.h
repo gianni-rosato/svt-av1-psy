@@ -40,6 +40,114 @@
 #define HAS_AVX2 0x80
 #define HAS_SSE4_2 0x100
 
+ /**************************************
+ * Instruction Set Support
+ **************************************/
+
+#if defined(_MSC_VER)
+# include <intrin.h>
+#endif
+ // Helper Functions
+static INLINE void RunCpuid(uint32_t eax, uint32_t ecx, int32_t* abcd)
+{
+#if defined(_MSC_VER)
+    __cpuidex(abcd, eax, ecx);
+#else
+    uint32_t ebx = 0, edx = 0;
+# if defined( __i386__ ) && defined ( __PIC__ )
+    /* in case of PIC under 32-bit EBX cannot be clobbered */
+    __asm__("movl %%ebx, %%edi \n\t cpuid \n\t xchgl %%ebx, %%edi" : "=D" (ebx),
+# else
+    __asm__("cpuid" : "+b" (ebx),
+# endif
+        "+a" (eax), "+c" (ecx), "=d" (edx));
+    abcd[0] = eax; abcd[1] = ebx; abcd[2] = ecx; abcd[3] = edx;
+#endif
+}
+
+static INLINE int32_t CheckXcr0Ymm()
+{
+    uint32_t xcr0;
+#if defined(_MSC_VER)
+    xcr0 = (uint32_t)_xgetbv(0);  /* min VS2010 SP1 compiler is required */
+#else
+    __asm__("xgetbv" : "=a" (xcr0) : "c" (0) : "%edx");
+#endif
+    return ((xcr0 & 6) == 6); /* checking if xmm and ymm state are enabled in XCR0 */
+}
+
+static INLINE int32_t Check4thGenIntelCoreFeatures()
+{
+    int32_t abcd[4];
+    int32_t fma_movbe_osxsave_mask = ((1 << 12) | (1 << 22) | (1 << 27));
+    int32_t avx2_bmi12_mask = (1 << 5) | (1 << 3) | (1 << 8);
+
+    /* CPUID.(EAX=01H, ECX=0H):ECX.FMA[bit 12]==1   &&
+    CPUID.(EAX=01H, ECX=0H):ECX.MOVBE[bit 22]==1 &&
+    CPUID.(EAX=01H, ECX=0H):ECX.OSXSAVE[bit 27]==1 */
+    RunCpuid(1, 0, abcd);
+    if ((abcd[2] & fma_movbe_osxsave_mask) != fma_movbe_osxsave_mask)
+        return 0;
+
+    if (!CheckXcr0Ymm())
+        return 0;
+
+    /*  CPUID.(EAX=07H, ECX=0H):EBX.AVX2[bit 5]==1  &&
+    CPUID.(EAX=07H, ECX=0H):EBX.BMI1[bit 3]==1  &&
+    CPUID.(EAX=07H, ECX=0H):EBX.BMI2[bit 8]==1  */
+    RunCpuid(7, 0, abcd);
+    if ((abcd[1] & avx2_bmi12_mask) != avx2_bmi12_mask)
+        return 0;
+    /* CPUID.(EAX=80000001H):ECX.LZCNT[bit 5]==1 */
+    RunCpuid(0x80000001, 0, abcd);
+    if ((abcd[2] & (1 << 5)) == 0)
+        return 0;
+    return 1;
+}
+
+static INLINE int CheckXcr0Zmm()
+{
+    uint32_t xcr0;
+    uint32_t zmm_ymm_xmm = (7 << 5) | (1 << 2) | (1 << 1);
+#if defined(_MSC_VER)
+    xcr0 = (uint32_t)_xgetbv(0);  /* min VS2010 SP1 compiler is required */
+#else
+    __asm__("xgetbv" : "=a" (xcr0) : "c" (0) : "%edx");
+#endif
+    return ((xcr0 & zmm_ymm_xmm) == zmm_ymm_xmm); /* check if xmm, ymm and zmm state are enabled in XCR0 */
+}
+
+static INLINE int32_t CanUseIntelAVX512()
+{
+    int abcd[4];
+
+    /*  CPUID.(EAX=07H, ECX=0):EBX[bit 16]==1 AVX512F
+    CPUID.(EAX=07H, ECX=0):EBX[bit 17] AVX512DQ
+    CPUID.(EAX=07H, ECX=0):EBX[bit 28] AVX512CD
+    CPUID.(EAX=07H, ECX=0):EBX[bit 30] AVX512BW
+    CPUID.(EAX=07H, ECX=0):EBX[bit 31] AVX512VL */
+
+    int avx512_ebx_mask =
+        (1 << 16)  // AVX-512F
+        | (1 << 17)  // AVX-512DQ
+        | (1 << 28)  // AVX-512CD
+        | (1 << 30)  // AVX-512BW
+        | (1 << 31); // AVX-512VL
+
+    if (!Check4thGenIntelCoreFeatures())
+        return 0;
+
+    // ensure OS supports ZMM registers (and YMM, and XMM)
+    if (!CheckXcr0Zmm())
+        return 0;
+
+    RunCpuid(7, 0, abcd);
+    if ((abcd[1] & avx512_ebx_mask) != avx512_ebx_mask)
+        return 0;
+
+    return 1;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -125,17 +233,43 @@ extern "C" {
     uint64_t compute_cdef_dist_c(const uint16_t *dst, int32_t dstride, const uint16_t *src, const cdef_list *dlist, int32_t cdef_count, BlockSize bsize, int32_t coeff_shift, int32_t pli);
     uint64_t compute_cdef_dist_avx2(const uint16_t *dst, int32_t dstride, const uint16_t *src, const cdef_list *dlist, int32_t cdef_count, BlockSize bsize, int32_t coeff_shift, int32_t pli);
     RTCD_EXTERN uint64_t(*eb_compute_cdef_dist)(const uint16_t *dst, int32_t dstride, const uint16_t *src, const cdef_list *dlist, int32_t cdef_count, BlockSize bsize, int32_t coeff_shift, int32_t pli);
+    uint64_t compute_cdef_dist_8bit_c(const uint8_t *dst8, int32_t dstride, const uint8_t *src8, const cdef_list *dlist, int32_t cdef_count, BlockSize bsize, int32_t coeff_shift, int32_t pli);
+    uint64_t compute_cdef_dist_8bit_avx2(const uint8_t *dst8, int32_t dstride, const uint8_t *src8, const cdef_list *dlist, int32_t cdef_count, BlockSize bsize, int32_t coeff_shift, int32_t pli);
+    RTCD_EXTERN uint64_t(*eb_compute_cdef_dist_8bit)(const uint8_t *dst8, int32_t dstride, const uint8_t *src8, const cdef_list *dlist, int32_t cdef_count, BlockSize bsize, int32_t coeff_shift, int32_t pli);
     void eb_copy_rect8_8bit_to_16bit_c(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t sstride, int32_t v, int32_t h);
     void eb_copy_rect8_8bit_to_16bit_avx2(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t sstride, int32_t v, int32_t h);
     RTCD_EXTERN void(*eb_copy_rect8_8bit_to_16bit)(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t sstride, int32_t v, int32_t h);
 
     void eb_av1_compute_stats_c(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8, int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end, int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H);
     void eb_av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8, int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end, int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H);
+    void eb_av1_compute_stats_avx512(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8, int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end, int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H);
     RTCD_EXTERN void(*eb_av1_compute_stats)(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8, int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end, int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H);
 
     void eb_av1_compute_stats_highbd_c(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8, int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end, int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H, AomBitDepth bit_depth);
     void eb_av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8, int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end, int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H, AomBitDepth bit_depth);
+    void eb_av1_compute_stats_highbd_avx512(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8, int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end, int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H, AomBitDepth bit_depth);
     RTCD_EXTERN void(*eb_av1_compute_stats_highbd)(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8, int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end, int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H, AomBitDepth bit_depth);
+
+    uint64_t spatial_full_distortion_kernel_c(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    uint64_t spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+
+    typedef uint64_t(*EbSpatialFullDistType)(
+        uint8_t   *input,
+        uint32_t   input_offset,
+        uint32_t   input_stride,
+        uint8_t   *recon,
+        uint32_t   recon_offset,
+        uint32_t   recon_stride,
+        uint32_t   area_width,
+        uint32_t   area_height);
+
+    static EbSpatialFullDistType FUNC_TABLE spatial_full_distortion_kernel_func_ptr_array[ASM_TYPE_TOTAL] = {
+        // NON_AVX2
+        spatial_full_distortion_kernel_c,
+        // ASM_AVX2
+        spatial_full_distortion_kernel_avx2
+    };
 
     int64_t eb_av1_lowbd_pixel_proj_error_c(const uint8_t *src8, int32_t width, int32_t height, int32_t src_stride, const uint8_t *dat8, int32_t dat_stride, int32_t *flt0, int32_t flt0_stride, int32_t *flt1, int32_t flt1_stride, int32_t xq[2], const SgrParamsType *params);
     int64_t eb_av1_lowbd_pixel_proj_error_avx2(const uint8_t *src8, int32_t width, int32_t height, int32_t src_stride, const uint8_t *dat8, int32_t dat_stride, int32_t *flt0, int32_t flt0_stride, int32_t *flt1, int32_t flt1_stride, int32_t xq[2], const SgrParamsType *params);
@@ -2031,18 +2165,22 @@ extern "C" {
 
     void eb_aom_highbd_h_predictor_32x16_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_h_predictor_32x16_sse2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_h_predictor_32x16_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_h_predictor_32x16)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_h_predictor_32x32_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_h_predictor_32x32_sse2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_h_predictor_32x32_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_h_predictor_32x32)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_h_predictor_32x64_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_h_predictor_32x64_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_h_predictor_32x64_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_h_predictor_32x64)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_h_predictor_32x8_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_h_predictor_32x8_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_h_predictor_32x8_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_h_predictor_32x8)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_h_predictor_4x16_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
@@ -2059,14 +2197,17 @@ extern "C" {
 
     void eb_aom_highbd_h_predictor_64x16_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_h_predictor_64x16_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_h_predictor_64x16_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_h_predictor_64x16)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_h_predictor_64x32_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_h_predictor_64x32_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_h_predictor_64x32_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_h_predictor_64x32)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_h_predictor_64x64_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_h_predictor_64x64_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_h_predictor_64x64_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_h_predictor_64x64)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_h_predictor_8x16_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
@@ -2347,18 +2488,22 @@ extern "C" {
 
     void eb_aom_highbd_v_predictor_32x16_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_v_predictor_32x16_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_v_predictor_32x16_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_v_predictor_32x16)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_v_predictor_32x32_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_v_predictor_32x32_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_v_predictor_32x32_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_v_predictor_32x32)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_v_predictor_32x64_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_v_predictor_32x64_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_v_predictor_32x64_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_v_predictor_32x64)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_v_predictor_32x8_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_v_predictor_32x8_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_v_predictor_32x8_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_v_predictor_32x8)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_v_predictor_4x16_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
@@ -2375,14 +2520,17 @@ extern "C" {
 
     void eb_aom_highbd_v_predictor_64x16_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_v_predictor_64x16_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_v_predictor_64x16_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_v_predictor_64x16)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_v_predictor_64x32_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_v_predictor_64x32_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_v_predictor_64x32_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_v_predictor_64x32)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_v_predictor_64x64_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     void eb_aom_highbd_v_predictor_64x64_avx2(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+    void aom_highbd_v_predictor_64x64_avx512(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
     RTCD_EXTERN void(*eb_aom_highbd_v_predictor_64x64)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
     void eb_aom_highbd_v_predictor_8x16_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int32_t bd);
@@ -2495,6 +2643,8 @@ extern "C" {
         if (flags & HAS_AVX2) eb_cdef_filter_block = eb_cdef_filter_block_avx2;
         eb_compute_cdef_dist = compute_cdef_dist_c;
         if (flags & HAS_AVX2) eb_compute_cdef_dist = compute_cdef_dist_avx2;
+        eb_compute_cdef_dist_8bit = compute_cdef_dist_8bit_c;
+        if (flags & HAS_AVX2) eb_compute_cdef_dist_8bit = compute_cdef_dist_8bit_avx2;
 
         eb_copy_rect8_8bit_to_16bit = eb_copy_rect8_8bit_to_16bit_c;
         if (flags & HAS_AVX2) eb_copy_rect8_8bit_to_16bit = eb_copy_rect8_8bit_to_16bit_avx2;
@@ -2503,6 +2653,14 @@ extern "C" {
         if (flags & HAS_AVX2) eb_av1_compute_stats = eb_av1_compute_stats_avx2;
         eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_c;
         if (flags & HAS_AVX2) eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx2;
+#ifndef NON_AVX512_SUPPORT
+        if (CanUseIntelAVX512()) {
+            eb_av1_compute_stats = eb_av1_compute_stats_avx512;
+            eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx512;
+            spatial_full_distortion_kernel_func_ptr_array[ASM_AVX2] = spatial_full_distortion_kernel_avx512;
+        }
+#endif
+
         eb_av1_lowbd_pixel_proj_error = eb_av1_lowbd_pixel_proj_error_c;
         if (flags & HAS_AVX2) eb_av1_lowbd_pixel_proj_error = eb_av1_lowbd_pixel_proj_error_avx2;
         eb_av1_highbd_pixel_proj_error = eb_av1_highbd_pixel_proj_error_c;
@@ -3327,15 +3485,17 @@ extern "C" {
         eb_av1_fwd_txfm2d_32x32 = Av1TransformTwoD_32x32_c;
         eb_av1_fwd_txfm2d_16x16 = Av1TransformTwoD_16x16_c;
 #ifndef NON_AVX512_SUPPORT
-        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x64 = av1_fwd_txfm2d_64x64_avx512;
-        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_32x32 = av1_fwd_txfm2d_32x32_avx512;
-        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x16 = av1_fwd_txfm2d_16x16_avx512;
-        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_32x64 = av1_fwd_txfm2d_32x64_avx512;
-        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x32 = av1_fwd_txfm2d_64x32_avx512;
-        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x64 = av1_fwd_txfm2d_16x64_avx512;
-        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x16 = av1_fwd_txfm2d_64x16_avx512;
-        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_32x16 = av1_fwd_txfm2d_32x16_avx512;
-        if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x32 = av1_fwd_txfm2d_16x32_avx512;
+        if (CanUseIntelAVX512()) {
+            eb_av1_fwd_txfm2d_64x64 = av1_fwd_txfm2d_64x64_avx512;
+            eb_av1_fwd_txfm2d_32x32 = av1_fwd_txfm2d_32x32_avx512;
+            eb_av1_fwd_txfm2d_16x16 = av1_fwd_txfm2d_16x16_avx512;
+            eb_av1_fwd_txfm2d_32x64 = av1_fwd_txfm2d_32x64_avx512;
+            eb_av1_fwd_txfm2d_64x32 = av1_fwd_txfm2d_64x32_avx512;
+            eb_av1_fwd_txfm2d_16x64 = av1_fwd_txfm2d_16x64_avx512;
+            eb_av1_fwd_txfm2d_64x16 = av1_fwd_txfm2d_64x16_avx512;
+            eb_av1_fwd_txfm2d_32x16 = av1_fwd_txfm2d_32x16_avx512;
+            eb_av1_fwd_txfm2d_16x32 = av1_fwd_txfm2d_16x32_avx512;
+        }
 #else
         if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x64 = eb_av1_fwd_txfm2d_64x64_avx2;
         if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_32x32 = eb_av1_fwd_txfm2d_32x32_avx2;
@@ -3376,13 +3536,9 @@ extern "C" {
         if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x8 = eb_aom_highbd_v_predictor_16x8_avx2;
         eb_aom_highbd_v_predictor_2x2 = eb_aom_highbd_v_predictor_2x2_c;
         eb_aom_highbd_v_predictor_32x16 = eb_aom_highbd_v_predictor_32x16_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x16 = eb_aom_highbd_v_predictor_32x16_avx2;
         eb_aom_highbd_v_predictor_32x32 = eb_aom_highbd_v_predictor_32x32_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x32 = eb_aom_highbd_v_predictor_32x32_avx2;
         eb_aom_highbd_v_predictor_32x64 = eb_aom_highbd_v_predictor_32x64_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x64 = eb_aom_highbd_v_predictor_32x64_avx2;
         eb_aom_highbd_v_predictor_32x8 = eb_aom_highbd_v_predictor_32x8_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x8 = eb_aom_highbd_v_predictor_32x8_avx2;
         eb_aom_highbd_v_predictor_4x16 = eb_aom_highbd_v_predictor_4x16_c;
         if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_4x16 = eb_aom_highbd_v_predictor_4x16_sse2;
         eb_aom_highbd_v_predictor_4x4 = eb_aom_highbd_v_predictor_4x4_c;
@@ -3390,19 +3546,36 @@ extern "C" {
         eb_aom_highbd_v_predictor_4x8 = eb_aom_highbd_v_predictor_4x8_c;
         if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_4x8 = eb_aom_highbd_v_predictor_4x8_sse2;
         eb_aom_highbd_v_predictor_64x16 = eb_aom_highbd_v_predictor_64x16_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x16 = eb_aom_highbd_v_predictor_64x16_avx2;
         eb_aom_highbd_v_predictor_64x32 = eb_aom_highbd_v_predictor_64x32_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x32 = eb_aom_highbd_v_predictor_64x32_avx2;
         eb_aom_highbd_v_predictor_8x32 = eb_aom_highbd_v_predictor_8x32_c;
         if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x32 = eb_aom_highbd_v_predictor_8x32_sse2;
         eb_aom_highbd_v_predictor_64x64 = eb_aom_highbd_v_predictor_64x64_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x64 = eb_aom_highbd_v_predictor_64x64_avx2;
         eb_aom_highbd_v_predictor_8x16 = eb_aom_highbd_v_predictor_8x16_c;
         if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x16 = eb_aom_highbd_v_predictor_8x16_sse2;
         eb_aom_highbd_v_predictor_8x4 = eb_aom_highbd_v_predictor_8x4_c;
         if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x4 = eb_aom_highbd_v_predictor_8x4_sse2;
         eb_aom_highbd_v_predictor_8x8 = eb_aom_highbd_v_predictor_8x8_c;
         if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x8 = eb_aom_highbd_v_predictor_8x8_sse2;
+
+#ifndef NON_AVX512_SUPPORT
+        if (CanUseIntelAVX512()) {
+            eb_aom_highbd_v_predictor_32x8 = aom_highbd_v_predictor_32x8_avx512;
+            eb_aom_highbd_v_predictor_32x16 = aom_highbd_v_predictor_32x16_avx512;
+            eb_aom_highbd_v_predictor_32x32 = aom_highbd_v_predictor_32x32_avx512;
+            eb_aom_highbd_v_predictor_32x64 = aom_highbd_v_predictor_32x64_avx512;
+            eb_aom_highbd_v_predictor_64x16 = aom_highbd_v_predictor_64x16_avx512;
+            eb_aom_highbd_v_predictor_64x32 = aom_highbd_v_predictor_64x32_avx512;
+            eb_aom_highbd_v_predictor_64x64 = aom_highbd_v_predictor_64x64_avx512;
+        }
+#else
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x8 = eb_aom_highbd_v_predictor_32x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x16 = eb_aom_highbd_v_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x32 = eb_aom_highbd_v_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x64 = eb_aom_highbd_v_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x16 = eb_aom_highbd_v_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x32 = eb_aom_highbd_v_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x64 = eb_aom_highbd_v_predictor_64x64_avx2;
+#endif // !NON_AVX512_SUPPORT
 
         //aom_highbd_smooth_predictor
         eb_aom_highbd_smooth_predictor_16x16 = eb_aom_highbd_smooth_predictor_16x16_c;
@@ -3562,13 +3735,15 @@ extern "C" {
         if (flags & HAS_SSE2) eb_aom_highbd_dc_left_predictor_8x8 = eb_aom_highbd_dc_left_predictor_8x8_sse2;
 
 #ifndef NON_AVX512_SUPPORT
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_32x8 = aom_highbd_dc_left_predictor_32x8_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_32x16 = aom_highbd_dc_left_predictor_32x16_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_32x32 = aom_highbd_dc_left_predictor_32x32_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_32x64 = aom_highbd_dc_left_predictor_32x64_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_64x16 = aom_highbd_dc_left_predictor_64x16_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_64x32 = aom_highbd_dc_left_predictor_64x32_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_64x64 = aom_highbd_dc_left_predictor_64x64_avx512;
+        if (CanUseIntelAVX512()) {
+            eb_aom_highbd_dc_left_predictor_32x8 = aom_highbd_dc_left_predictor_32x8_avx512;
+            eb_aom_highbd_dc_left_predictor_32x16 = aom_highbd_dc_left_predictor_32x16_avx512;
+            eb_aom_highbd_dc_left_predictor_32x32 = aom_highbd_dc_left_predictor_32x32_avx512;
+            eb_aom_highbd_dc_left_predictor_32x64 = aom_highbd_dc_left_predictor_32x64_avx512;
+            eb_aom_highbd_dc_left_predictor_64x16 = aom_highbd_dc_left_predictor_64x16_avx512;
+            eb_aom_highbd_dc_left_predictor_64x32 = aom_highbd_dc_left_predictor_64x32_avx512;
+            eb_aom_highbd_dc_left_predictor_64x64 = aom_highbd_dc_left_predictor_64x64_avx512;
+        }
 #else
         if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_32x8 = eb_aom_highbd_dc_left_predictor_32x8_avx2;
         if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_32x16 = eb_aom_highbd_dc_left_predictor_32x16_avx2;
@@ -3613,13 +3788,15 @@ extern "C" {
         if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_8x32 = eb_aom_highbd_dc_predictor_8x32_sse2;
 
 #ifndef NON_AVX512_SUPPORT
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x8 = aom_highbd_dc_predictor_32x8_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x16 = aom_highbd_dc_predictor_32x16_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x32 = aom_highbd_dc_predictor_32x32_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x64 = aom_highbd_dc_predictor_32x64_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_64x16 = aom_highbd_dc_predictor_64x16_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_64x32 = aom_highbd_dc_predictor_64x32_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_64x64 = aom_highbd_dc_predictor_64x64_avx512;
+        if (CanUseIntelAVX512()) {
+            eb_aom_highbd_dc_predictor_32x8 = aom_highbd_dc_predictor_32x8_avx512;
+            eb_aom_highbd_dc_predictor_32x16 = aom_highbd_dc_predictor_32x16_avx512;
+            eb_aom_highbd_dc_predictor_32x32 = aom_highbd_dc_predictor_32x32_avx512;
+            eb_aom_highbd_dc_predictor_32x64 = aom_highbd_dc_predictor_32x64_avx512;
+            eb_aom_highbd_dc_predictor_64x16 = aom_highbd_dc_predictor_64x16_avx512;
+            eb_aom_highbd_dc_predictor_64x32 = aom_highbd_dc_predictor_64x32_avx512;
+            eb_aom_highbd_dc_predictor_64x64 = aom_highbd_dc_predictor_64x64_avx512;
+        }
 #else
         if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x8 = eb_aom_highbd_dc_predictor_32x8_avx2;
         if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x16 = eb_aom_highbd_dc_predictor_32x16_avx2;
@@ -3663,13 +3840,15 @@ extern "C" {
         if (flags & HAS_SSE2) eb_aom_highbd_dc_top_predictor_8x8 = eb_aom_highbd_dc_top_predictor_8x8_sse2;
 
 #ifndef NON_AVX512_SUPPORT
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_32x8 = aom_highbd_dc_top_predictor_32x8_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_32x16 = aom_highbd_dc_top_predictor_32x16_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_32x32 = aom_highbd_dc_top_predictor_32x32_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_32x64 = aom_highbd_dc_top_predictor_32x64_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_64x16 = aom_highbd_dc_top_predictor_64x16_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_64x32 = aom_highbd_dc_top_predictor_64x32_avx512;
-        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_64x64 = aom_highbd_dc_top_predictor_64x64_avx512;
+        if (CanUseIntelAVX512()) {
+            eb_aom_highbd_dc_top_predictor_32x8 = aom_highbd_dc_top_predictor_32x8_avx512;
+            eb_aom_highbd_dc_top_predictor_32x16 = aom_highbd_dc_top_predictor_32x16_avx512;
+            eb_aom_highbd_dc_top_predictor_32x32 = aom_highbd_dc_top_predictor_32x32_avx512;
+            eb_aom_highbd_dc_top_predictor_32x64 = aom_highbd_dc_top_predictor_32x64_avx512;
+            eb_aom_highbd_dc_top_predictor_64x16 = aom_highbd_dc_top_predictor_64x16_avx512;
+            eb_aom_highbd_dc_top_predictor_64x32 = aom_highbd_dc_top_predictor_64x32_avx512;
+            eb_aom_highbd_dc_top_predictor_64x64 = aom_highbd_dc_top_predictor_64x64_avx512;
+        }
 #else
         if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_32x8 = eb_aom_highbd_dc_top_predictor_32x8_avx2;
         if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_32x16 = eb_aom_highbd_dc_top_predictor_32x16_avx2;
@@ -3688,13 +3867,9 @@ extern "C" {
         if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_16x8 = eb_aom_highbd_h_predictor_16x8_sse2;
         eb_aom_highbd_h_predictor_2x2 = eb_aom_highbd_h_predictor_2x2_c;
         eb_aom_highbd_h_predictor_32x16 = eb_aom_highbd_h_predictor_32x16_c;
-        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_32x16 = eb_aom_highbd_h_predictor_32x16_sse2;
         eb_aom_highbd_h_predictor_32x32 = eb_aom_highbd_h_predictor_32x32_c;
-        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_32x32 = eb_aom_highbd_h_predictor_32x32_sse2;
         eb_aom_highbd_h_predictor_32x64 = eb_aom_highbd_h_predictor_32x64_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_32x64 = eb_aom_highbd_h_predictor_32x64_avx2;
         eb_aom_highbd_h_predictor_32x8 = eb_aom_highbd_h_predictor_32x8_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_32x8 = eb_aom_highbd_h_predictor_32x8_avx2;
         eb_aom_highbd_h_predictor_4x16 = eb_aom_highbd_h_predictor_4x16_c;
         if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_4x16 = eb_aom_highbd_h_predictor_4x16_sse2;
         eb_aom_highbd_h_predictor_4x4 = eb_aom_highbd_h_predictor_4x4_c;
@@ -3702,13 +3877,10 @@ extern "C" {
         eb_aom_highbd_h_predictor_4x8 = eb_aom_highbd_h_predictor_4x8_c;
         if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_4x8 = eb_aom_highbd_h_predictor_4x8_sse2;
         eb_aom_highbd_h_predictor_64x16 = eb_aom_highbd_h_predictor_64x16_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x16 = eb_aom_highbd_h_predictor_64x16_avx2;
         eb_aom_highbd_h_predictor_64x32 = eb_aom_highbd_h_predictor_64x32_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x32 = eb_aom_highbd_h_predictor_64x32_avx2;
         eb_aom_highbd_h_predictor_8x32 = eb_aom_highbd_h_predictor_8x32_c;
         if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_8x32 = eb_aom_highbd_h_predictor_8x32_sse2;
         eb_aom_highbd_h_predictor_64x64 = eb_aom_highbd_h_predictor_64x64_c;
-        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x64 = eb_aom_highbd_h_predictor_64x64_avx2;
         eb_aom_highbd_h_predictor_8x16 = eb_aom_highbd_h_predictor_8x16_c;
         if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_8x16 = eb_aom_highbd_h_predictor_8x16_sse2;
         eb_aom_highbd_h_predictor_8x4 = eb_aom_highbd_h_predictor_8x4_c;
@@ -3719,6 +3891,26 @@ extern "C" {
         if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_16x16 = eb_aom_highbd_h_predictor_16x16_sse2;
         eb_aom_highbd_h_predictor_16x32 = eb_aom_highbd_h_predictor_16x32_c;
         if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_16x32 = eb_aom_highbd_h_predictor_16x32_sse2;
+
+#ifndef NON_AVX512_SUPPORT
+        if (CanUseIntelAVX512()) {
+            eb_aom_highbd_h_predictor_32x16 = aom_highbd_h_predictor_32x16_avx512;
+            eb_aom_highbd_h_predictor_32x32 = aom_highbd_h_predictor_32x32_avx512;
+            eb_aom_highbd_h_predictor_32x64 = aom_highbd_h_predictor_32x64_avx512;
+            eb_aom_highbd_h_predictor_32x8 = aom_highbd_h_predictor_32x8_avx512;
+            eb_aom_highbd_h_predictor_64x16 = aom_highbd_h_predictor_64x16_avx512;
+            eb_aom_highbd_h_predictor_64x32 = aom_highbd_h_predictor_64x32_avx512;
+            eb_aom_highbd_h_predictor_64x64 = aom_highbd_h_predictor_64x64_avx512;
+        }
+#else
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_32x16 = eb_aom_highbd_h_predictor_32x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_32x32 = eb_aom_highbd_h_predictor_32x32_sse2;
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_32x64 = eb_aom_highbd_h_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_32x8 = eb_aom_highbd_h_predictor_32x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x16 = eb_aom_highbd_h_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x32 = eb_aom_highbd_h_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x64 = eb_aom_highbd_h_predictor_64x64_avx2;
+#endif
 
         eb_aom_fft2x2_float = eb_aom_fft2x2_float_c;
         eb_aom_fft4x4_float = eb_aom_fft4x4_float_c;
