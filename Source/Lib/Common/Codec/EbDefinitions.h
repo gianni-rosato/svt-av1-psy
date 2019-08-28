@@ -58,7 +58,6 @@ extern "C" {
 #if 1
 #define STDLIB_SORT                       0 // Use sort from std::lib Possible different output linux/windows for array with the same elements
 #define SHUT_TX_SIZE_RATE                 1 // To fix a bug @ tx size rate estimation
-#define ABILITY_TO_SKIP_TX_SEARCH_ATB     1
 #define BYPASSED_RED_CU_IF_SQ_ONLY        1 // As red cu info not initialized if 85 sq only
 #define RED_CU_BUG_FIX                    1
 #define IT_SEARCH_FIX                     1
@@ -72,7 +71,7 @@ extern "C" {
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
 #define ADP_STATS_PER_LAYER                             0
-#if !ABILITY_TO_SKIP_TX_SEARCH_ATB
+#if !MD_STAGING
 #define NFL_TX_TH                                       12 // To be tuned
 #endif
 #define NFL_IT_TH                                       2 // To be tuned

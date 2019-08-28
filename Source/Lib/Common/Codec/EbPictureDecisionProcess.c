@@ -1100,7 +1100,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->tx_search_reduced_set = 1;
     else
         picture_control_set_ptr->tx_search_reduced_set = 1;
-#if !ABILITY_TO_SKIP_TX_SEARCH_ATB
+#if !MD_STAGING
     // Set skip tx search based on NFL falg (0: Skip OFF ; 1: skip ON)
     picture_control_set_ptr->skip_tx_search = 0;
 #endif

@@ -4274,10 +4274,8 @@ void perform_intra_tx_partitioning(
     ModeDecisionCandidateBuffer  *candidate_buffer,
     ModeDecisionContext          *context_ptr,
     PictureControlSet            *picture_control_set_ptr,
-#if ABILITY_TO_SKIP_TX_SEARCH_ATB
-#if 0
+#if MD_STAGING
     uint64_t                      ref_fast_cost,
-#endif
 #endif
     uint8_t                       end_tx_depth,
     uint32_t                      qp,
@@ -4300,21 +4298,18 @@ void perform_intra_tx_partitioning(
     uint64_t best_cost_search = (uint64_t)~0;
 
     TxType best_tx_type_depth_0 = DCT_DCT; // Track the best tx type @ depth 0 to be used @ the final stage (i.e. avoid redoing the tx type search).
-#if ABILITY_TO_SKIP_TX_SEARCH_ATB
-#if 1 // To do: use ref cost to derive tx_search_skip_fag
-    uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? 0 : 1;
-#else
-    uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
-        context_ptr->blk_geom->sq_size,
-        ref_fast_cost,
-        *candidate_buffer->fast_cost_ptr,
-        picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
-#endif
-#endif
-
-#if MD_STAGING // shut Tx search for INTRA
-    if (context_ptr->md_stage == MD_STAGE_2)
+#if MD_STAGING
+    uint8_t  tx_search_skip_fag;
+    if (context_ptr->md_staging_tx_search == 0)
         tx_search_skip_fag = EB_TRUE;
+    else if (context_ptr->md_staging_tx_search == 1)
+        tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
+            context_ptr->blk_geom->sq_size,
+            ref_fast_cost,
+            *candidate_buffer->fast_cost_ptr,
+            picture_control_set_ptr->parent_pcs_ptr->tx_weight) : EB_TRUE;
+    else
+        tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? EB_FALSE : EB_TRUE;
 #endif
 
     // Reset depth_1 neighbor arrays
@@ -4423,7 +4418,7 @@ void perform_intra_tx_partitioning(
                 context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);
 
             TxType best_tx_type = DCT_DCT;
-#if ABILITY_TO_SKIP_TX_SEARCH_ATB
+#if MD_STAGING
             if (!tx_search_skip_fag) {
 #endif
             TxType txk_start = DCT_DCT;
@@ -4583,7 +4578,7 @@ void perform_intra_tx_partitioning(
 
             // Record the best tx type @ depth 0
             best_tx_type_depth_0 = (context_ptr->tx_depth == 0) ? best_tx_type : best_tx_type_depth_0;
-#if ABILITY_TO_SKIP_TX_SEARCH_ATB
+#if MD_STAGING
             }
 #endif
             //  Best Tx Type Pass
@@ -5032,8 +5027,8 @@ void AV1PerformFullLoop(
 #endif
     EbAsm                        asm_type)
 {
-    uint32_t      best_inter_luma_zero_coeff;
 #if !MD_STAGING
+    uint32_t      best_inter_luma_zero_coeff;
     uint64_t      best_full_cost;
     uint32_t      fullLoopCandidateIndex;
     uint8_t       candidateIndex;
@@ -5047,8 +5042,8 @@ void AV1PerformFullLoop(
     uint64_t      y_coeff_bits;
     uint64_t      cb_coeff_bits = 0;
     uint64_t      cr_coeff_bits = 0;
-    best_inter_luma_zero_coeff = 1;
 #if !MD_STAGING
+    best_inter_luma_zero_coeff = 1;
     best_full_cost = 0xFFFFFFFFull;
 
     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base = context_ptr->candidate_buffer_ptr_array;
@@ -5114,9 +5109,7 @@ void AV1PerformFullLoop(
 #endif
 
 
-#if MD_STAGING
-        if (context_ptr->md_stage == MD_STAGE_3 || (context_ptr->md_stage == MD_STAGE_2 && context_ptr->target_class != CAND_CLASS_0 && (context_ptr->md_staging_mode == MD_STAGING_MODE_1 || context_ptr->md_staging_mode == MD_STAGING_MODE_2)))
-#endif
+#if !MD_STAGING
         if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
             //Cb Residual
             residual_kernel(
@@ -5148,7 +5141,7 @@ void AV1PerformFullLoop(
                 context_ptr->blk_geom->bwidth_uv,
                 context_ptr->blk_geom->bheight_uv);
         }
-
+#endif
         // Initialize luma CBF
         candidate_ptr->y_has_coeff = 0;
         candidate_ptr->u_has_coeff = 0;
@@ -5161,14 +5154,7 @@ void AV1PerformFullLoop(
         candidate_ptr->transform_type[3] = DCT_DCT;
 
 #if INCOMPLETE_SB_FIX
-#if MD_STAGING
-        uint8_t end_tx_depth;
-        if (context_ptr->md_stage == MD_STAGE_2)
-            end_tx_depth = 0;
-        else
-#else
         uint8_t end_tx_depth = 0;
-#endif
         // end_tx_depth set to zero for blocks which go beyond the picture boundaries
         if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x + context_ptr->blk_geom->bwidth < picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_width &&
             context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y + context_ptr->blk_geom->bheight < picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_height))
@@ -5183,15 +5169,17 @@ void AV1PerformFullLoop(
         uint8_t end_tx_depth = get_end_tx_depth(context_ptr, picture_control_set_ptr->parent_pcs_ptr->atb_mode, candidate_ptr, context_ptr->blk_geom->bsize, candidate_buffer->candidate_ptr->type);
 #endif
         // Transform partitioning path (INTRA Luma)
+#if MD_STAGING
+        if (picture_control_set_ptr->parent_pcs_ptr->atb_mode && context_ptr->md_staging_skip_atb == EB_FALSE && end_tx_depth && candidate_buffer->candidate_ptr->type == INTRA_MODE && candidate_buffer->candidate_ptr->use_intrabc == 0) {
+#else
         if (picture_control_set_ptr->parent_pcs_ptr->atb_mode && end_tx_depth && candidate_buffer->candidate_ptr->type == INTRA_MODE && candidate_buffer->candidate_ptr->use_intrabc == 0) {
+#endif
             perform_intra_tx_partitioning(
                 candidate_buffer,
                 context_ptr,
                 picture_control_set_ptr,
-#if ABILITY_TO_SKIP_TX_SEARCH_ATB
-#if 0
+#if MD_STAGING
                 ref_fast_cost,
-#endif
 #endif
                 end_tx_depth,
                 context_ptr->cu_ptr->qp,
@@ -5231,25 +5219,23 @@ void AV1PerformFullLoop(
 
             // Transform partitioning free path
 #if MD_STAGING
-        // strengthen md_stage_3 for CAND_CLASS_0 if md_stage_2 performed
-        // MD_STAGING_CLEAN_UP: is it better to use md_staging_mode
             uint8_t  tx_search_skip_fag;
-            if (context_ptr->md_stage == MD_STAGE_3 && context_ptr->bypass_stage2[candidate_ptr->cand_class] == EB_FALSE && candidate_ptr->cand_class == CAND_CLASS_0)
-                tx_search_skip_fag = 0;
-            else
+            if (context_ptr->md_staging_tx_search == 0)
+                tx_search_skip_fag = EB_TRUE;
+            else if (context_ptr->md_staging_tx_search == 1)
                 tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
                     context_ptr->blk_geom->sq_size,
                     ref_fast_cost,
                     *candidate_buffer->fast_cost_ptr,
-                    picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
+                    picture_control_set_ptr->parent_pcs_ptr->tx_weight) : EB_TRUE;
+            else
+                tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? EB_FALSE : EB_TRUE;
 #else
             uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
                 context_ptr->blk_geom->sq_size,
                 ref_fast_cost,
                 *candidate_buffer->fast_cost_ptr,
                 picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
-#endif
-#if !ABILITY_TO_SKIP_TX_SEARCH_ATB
             tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->skip_tx_search && best_fastLoop_candidate_index > NFL_TX_TH) ? 1 : tx_search_skip_fag;
 #endif
             if (!tx_search_skip_fag) {
@@ -5276,9 +5262,7 @@ void AV1PerformFullLoop(
                 &y_full_distortion[0]);
         }
 
-#if MD_STAGING
-        if (context_ptr->md_stage == MD_STAGE_3 || (context_ptr->md_stage == MD_STAGE_2 && context_ptr->target_class != CAND_CLASS_0 && (context_ptr->md_staging_mode == MD_STAGING_MODE_1 || context_ptr->md_staging_mode == MD_STAGING_MODE_2)))
-#endif
+#if !MD_STAGING
         if (candidate_ptr->type == INTRA_MODE && candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
             // If mode is CFL:
             // 1: recon the Luma
@@ -5295,7 +5279,7 @@ void AV1PerformFullLoop(
                 cuChromaOriginIndex,
                 asm_type);
         }
-
+#endif
         candidate_ptr->chroma_distortion_inter_depth = 0;
         candidate_ptr->chroma_distortion = 0;
 
@@ -5313,60 +5297,109 @@ void AV1PerformFullLoop(
         uint8_t cb_qp = context_ptr->qp;
         uint8_t cr_qp = context_ptr->qp;
 #if MD_STAGING
-        if (context_ptr->md_stage == MD_STAGE_3 || (context_ptr->md_stage == MD_STAGE_2 && context_ptr->target_class != CAND_CLASS_0 && (context_ptr->md_staging_mode == MD_STAGING_MODE_1 || context_ptr->md_staging_mode == MD_STAGING_MODE_2)))
-#endif
-        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
-            full_loop_r(
-                sb_ptr,
-                candidate_buffer,
-                context_ptr,
-                input_picture_ptr,
-                picture_control_set_ptr,
-                PICTURE_BUFFER_DESC_CHROMA_MASK,
-                cb_qp,
-                cr_qp,
-                &(*count_non_zero_coeffs[1]),
-                &(*count_non_zero_coeffs[2]));
+        if (context_ptr->md_staging_skip_full_chroma == EB_FALSE) {
 
-            cu_full_distortion_fast_tu_mode_r(
-                sb_ptr,
-                candidate_buffer,
-                context_ptr,
-                candidate_ptr,
-                picture_control_set_ptr,
-                input_picture_ptr,
-                cbFullDistortion,
-                crFullDistortion,
-                count_non_zero_coeffs,
-                COMPONENT_CHROMA,
-                &cb_coeff_bits,
-                &cr_coeff_bits,
-                1,
-                asm_type);
-        }
+            if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
+                //Cb Residual
+                residual_kernel(
+                    input_picture_ptr->buffer_cb,
+                    inputCbOriginIndex,
+                    input_picture_ptr->stride_cb,
+                    candidate_buffer->prediction_ptr->buffer_cb,
+                    cuChromaOriginIndex,
+                    candidate_buffer->prediction_ptr->stride_cb,
+                    (int16_t*)candidate_buffer->residual_ptr->buffer_cb,
+                    cuChromaOriginIndex,
+                    candidate_buffer->residual_ptr->stride_cb,
+                    picture_control_set_ptr->hbd_mode_decision,
+                    context_ptr->blk_geom->bwidth_uv,
+                    context_ptr->blk_geom->bheight_uv);
 
-        // Check independant chroma vs. cfl
-#if MD_STAGING
-        if (context_ptr->md_stage == MD_STAGE_3 || (context_ptr->md_stage == MD_STAGE_2 && context_ptr->target_class != CAND_CLASS_0 && (context_ptr->md_staging_mode == MD_STAGING_MODE_1 || context_ptr->md_staging_mode == MD_STAGING_MODE_2)))
-#endif
-        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level == CHROMA_MODE_0) {
-            if (candidate_buffer->candidate_ptr->type == INTRA_MODE && (candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED || candidate_buffer->candidate_ptr->intra_chroma_mode == UV_DC_PRED)) {
-                check_best_indepedant_cfl(
+                //Cr Residual
+                residual_kernel(
+                    input_picture_ptr->buffer_cr,
+                    inputCbOriginIndex,
+                    input_picture_ptr->stride_cr,
+                    candidate_buffer->prediction_ptr->buffer_cr,
+                    cuChromaOriginIndex,
+                    candidate_buffer->prediction_ptr->stride_cr,
+                    (int16_t*)candidate_buffer->residual_ptr->buffer_cr,
+                    cuChromaOriginIndex,
+                    candidate_buffer->residual_ptr->stride_cr,
+                    picture_control_set_ptr->hbd_mode_decision,
+                    context_ptr->blk_geom->bwidth_uv,
+                    context_ptr->blk_geom->bheight_uv);
+            }
+
+            if (candidate_ptr->type == INTRA_MODE && candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
+                // If mode is CFL:
+                // 1: recon the Luma
+                // 2: Form the pred_buf_q3
+                // 3: Loop over alphas and find the best or choose DC
+                // 4: Recalculate the residual for chroma
+                CflPrediction(
                     picture_control_set_ptr,
-                    input_picture_ptr,
+                    candidate_buffer,
+                    sb_ptr,
                     context_ptr,
+                    input_picture_ptr,
                     inputCbOriginIndex,
                     cuChromaOriginIndex,
-                    candidate_buffer,
-                    cb_qp,
-                    cr_qp,
-                    cbFullDistortion,
-                    crFullDistortion,
-                    &cb_coeff_bits,
-                    &cr_coeff_bits,
                     asm_type);
             }
+#endif
+            if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
+                full_loop_r(
+                    sb_ptr,
+                    candidate_buffer,
+                    context_ptr,
+                    input_picture_ptr,
+                    picture_control_set_ptr,
+                    PICTURE_BUFFER_DESC_CHROMA_MASK,
+                    cb_qp,
+                    cr_qp,
+                    &(*count_non_zero_coeffs[1]),
+                    &(*count_non_zero_coeffs[2]));
+
+                cu_full_distortion_fast_tu_mode_r(
+                    sb_ptr,
+                    candidate_buffer,
+                    context_ptr,
+                    candidate_ptr,
+                    picture_control_set_ptr,
+                    input_picture_ptr,
+                    cbFullDistortion,
+                    crFullDistortion,
+                    count_non_zero_coeffs,
+                    COMPONENT_CHROMA,
+                    &cb_coeff_bits,
+                    &cr_coeff_bits,
+                    1,
+                    asm_type);
+            }
+
+            // Check independant chroma vs. cfl
+            if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level == CHROMA_MODE_0) {
+                if (candidate_buffer->candidate_ptr->type == INTRA_MODE && (candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED || candidate_buffer->candidate_ptr->intra_chroma_mode == UV_DC_PRED)) {
+                    check_best_indepedant_cfl(
+                        picture_control_set_ptr,
+                        input_picture_ptr,
+                        context_ptr,
+                        inputCbOriginIndex,
+                        cuChromaOriginIndex,
+                        candidate_buffer,
+                        cb_qp,
+                        cr_qp,
+                        cbFullDistortion,
+                        crFullDistortion,
+                        &cb_coeff_bits,
+                        &cr_coeff_bits,
+                        asm_type);
+                }
+            }
+#if MD_STAGING
         }
+#endif
         candidate_ptr->block_has_coeff = (candidate_ptr->y_has_coeff | candidate_ptr->u_has_coeff | candidate_ptr->v_has_coeff) ? EB_TRUE : EB_FALSE;
 
         //ALL PLANE
@@ -5440,6 +5473,11 @@ void md_stage_2(
         candidate_buffer = candidate_buffer_ptr_array[candidateIndex];
         candidate_ptr = candidate_buffer->candidate_ptr;
 
+        // Set MD Staging settings
+        context_ptr->md_staging_skip_atb = EB_TRUE;
+        context_ptr->md_staging_tx_search = 0;
+        context_ptr->md_staging_skip_full_chroma = candidate_ptr->cand_class == CAND_CLASS_0 || context_ptr->md_staging_mode == MD_STAGING_MODE_3;
+
         full_loop_core(
             picture_control_set_ptr,
             sb_ptr,
@@ -5487,6 +5525,11 @@ void md_stage_3(
         candidateIndex = (context_ptr->full_loop_escape == 2) ? context_ptr->sorted_candidate_index_array[fullLoopCandidateIndex] : context_ptr->best_candidate_index_array[fullLoopCandidateIndex];
         candidate_buffer = candidate_buffer_ptr_array[candidateIndex];
         candidate_ptr = candidate_buffer->candidate_ptr;
+
+        // Set MD Staging settings
+        context_ptr->md_staging_skip_atb = EB_FALSE;
+        context_ptr->md_staging_tx_search = candidate_ptr->cand_class == CAND_CLASS_0 ? 2 : 1;
+        context_ptr->md_staging_skip_full_chroma = EB_FALSE;
 
         if (picture_control_set_ptr->slice_type != I_SLICE) {
             if ((candidate_ptr->type == INTRA_MODE || context_ptr->full_loop_escape == 2) && best_inter_luma_zero_coeff == 0) {

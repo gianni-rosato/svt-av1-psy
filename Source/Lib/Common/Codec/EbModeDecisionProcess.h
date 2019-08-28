@@ -299,6 +299,11 @@ extern "C" {
     uint8_t                             combine_class12; //1:class1 and 2 are combined.
 
     CAND_CLASS                          target_class;
+
+
+    EbBool                              md_staging_skip_atb;
+    EbBool                              md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
+    EbBool                              md_staging_skip_full_chroma;
 #endif
     } ModeDecisionContext;
 
