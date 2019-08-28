@@ -290,14 +290,22 @@ void eb_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t
         // the input to y[]. This is necessary only for eb_av1_cdef_search()
         // and only eb_av1_cdef_search() sets dirinit.
         for (bi = 0; bi < cdef_count; bi++) {
-            by = dlist[bi].by;
-            bx = dlist[bi].bx;
+            by = dlist[bi].by << bsizey;
+            bx = dlist[bi].bx << bsizex;
             int32_t iy, ix;
             // TODO(stemidts/jmvalin): SIMD optimisations
-            for (iy = 0; iy < 1 << bsizey; iy++)
-                for (ix = 0; ix < 1 << bsizex; ix++)
-                    dst16[(bi << (bsizex + bsizey)) + (iy << bsizex) + ix] =
-                    in[((by << bsizey) + iy) * CDEF_BSTRIDE + (bx << bsizex) + ix];
+            if (dst8) {
+                for (iy = 0; iy < 1 << bsizey; iy++)
+                    for (ix = 0; ix < 1 << bsizex; ix++)
+                        dst8[(bi << (bsizex + bsizey)) + (iy << bsizex) + ix] =
+                        (uint8_t)in[(by + iy) * CDEF_BSTRIDE + bx + ix];
+            }
+            else {
+                for (iy = 0; iy < 1 << bsizey; iy++)
+                    for (ix = 0; ix < 1 << bsizex; ix++)
+                        dst16[(bi << (bsizex + bsizey)) + (iy << bsizex) + ix] =
+                        in[(by + iy) * CDEF_BSTRIDE + bx + ix];
+            }
         }
         return;
     }
@@ -330,8 +338,10 @@ void eb_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t
         by = dlist[bi].by;
         bx = dlist[bi].bx;
         if (dst8)
-            eb_cdef_filter_block(&dst8[(by << bsizey) * dstride + (bx << bsizex)], NULL,
-                dstride,
+            eb_cdef_filter_block(
+                &dst8[dirinit ? bi << (bsizex + bsizey) : (by << bsizey) * dstride + (bx << bsizex)],
+                NULL,
+                dirinit ? 1 << bsizex : dstride,
                 &in[(by * CDEF_BSTRIDE << bsizey) + (bx << bsizex)],
                 (pli ? t : adjust_strength(t, var[by][bx])), s,
                 t ? dir[by][bx] : 0, pri_damping, sec_damping, bsize,
@@ -427,7 +437,7 @@ void eb_copy_rect8_8bit_to_16bit_c(uint16_t *dst, int32_t dstride, const uint8_t
     }
 }
 
-static void copy_sb8_16(uint16_t *dst, int32_t dstride,
+void copy_sb8_16(uint16_t *dst, int32_t dstride,
     const uint8_t *src, int32_t src_voffset, int32_t src_hoffset,
     int32_t sstride, int32_t vsize, int32_t hsize) {
         {
@@ -1292,6 +1302,57 @@ static INLINE uint64_t mse_4_16bit_c(const uint16_t *src, const uint16_t *dst, c
     return sum;
 }
 
+static INLINE uint64_t dist_8x8_8bit_c(const uint8_t *src, const uint8_t *dst, const int32_t dstride, const int32_t coeff_shift) {
+    uint64_t svar = 0;
+    uint64_t dvar = 0;
+    uint64_t sum_s = 0;
+    uint64_t sum_d = 0;
+    uint64_t sum_s2 = 0;
+    uint64_t sum_d2 = 0;
+    uint64_t sum_sd = 0;
+    int32_t i, j;
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 8; j++) {
+            sum_s += src[8 * i + j];
+            sum_d += dst[i * dstride + j];
+            sum_s2 += src[8 * i + j] * src[8 * i + j];
+            sum_d2 += dst[i * dstride + j] * dst[i * dstride + j];
+            sum_sd += src[8 * i + j] * dst[i * dstride + j];
+        }
+    }
+    /* Compute the variance -- the calculation cannot go negative. */
+    svar = sum_s2 - ((sum_s * sum_s + 32) >> 6);
+    dvar = sum_d2 - ((sum_d * sum_d + 32) >> 6);
+    return (uint64_t)floor(
+        .5 + (sum_d2 + sum_s2 - 2 * sum_sd) * .5 *
+        (svar + dvar + (400 << 2 * coeff_shift)) /
+        (sqrt((20000 << 4 * coeff_shift) + svar * (double)dvar)));
+}
+
+static INLINE uint64_t mse_8_8bit(const uint8_t *src, const uint8_t *dst, const int32_t dstride, const int32_t height) {
+    uint64_t sum = 0;
+    int32_t i, j;
+    for (i = 0; i < height; i++) {
+        for (j = 0; j < 8; j++) {
+            int32_t e = dst[i * dstride + j] - src[8 * i + j];
+            sum += e * e;
+        }
+    }
+    return sum;
+}
+
+static INLINE uint64_t mse_4_8bit_c(const uint8_t *src, const uint8_t *dst, const int32_t dstride, const int32_t height) {
+    uint64_t sum = 0;
+    int32_t i, j;
+    for (i = 0; i < height; i++) {
+        for (j = 0; j < 4; j++) {
+            int32_t e = dst[i * dstride + j] - src[4 * i + j];
+            sum += e * e;
+        }
+    }
+    return sum;
+}
+
 /* Compute MSE only on the blocks we filtered. */
 uint64_t compute_cdef_dist_c(const uint16_t *dst, int32_t dstride, const uint16_t *src, const cdef_list *dlist, int32_t cdef_count, BlockSize bsize, int32_t coeff_shift, int32_t pli) {
     uint64_t sum = 0;
@@ -1332,6 +1393,47 @@ uint64_t compute_cdef_dist_c(const uint16_t *dst, int32_t dstride, const uint16_
     }
     return sum >> 2 * coeff_shift;
 }
+
+uint64_t compute_cdef_dist_8bit_c(const uint8_t *dst8, int32_t dstride, const uint8_t *src8, const cdef_list *dlist, int32_t cdef_count, BlockSize bsize, int32_t coeff_shift, int32_t pli) {
+    uint64_t sum = 0;
+    int32_t bi, bx, by;
+    if (bsize == BLOCK_8X8) {
+        for (bi = 0; bi < cdef_count; bi++) {
+            by = dlist[bi].by;
+            bx = dlist[bi].bx;
+            if (pli == 0) {
+                sum += dist_8x8_8bit_c(&src8[bi << (3 + 3)], &dst8[(by << 3) * dstride + (bx << 3)], dstride,
+                    coeff_shift);
+            }
+            else
+                sum += mse_8_8bit(&src8[bi << (3 + 3)], &dst8[(by << 3) * dstride + (bx << 3)], dstride, 8);
+        }
+    }
+    else if (bsize == BLOCK_4X8) {
+        for (bi = 0; bi < cdef_count; bi++) {
+            by = dlist[bi].by;
+            bx = dlist[bi].bx;
+            sum += mse_4_8bit_c(&src8[bi << (3 + 2)], &dst8[(by << 3) * dstride + (bx << 2)], dstride, 8);
+        }
+    }
+    else if (bsize == BLOCK_8X4) {
+        for (bi = 0; bi < cdef_count; bi++) {
+            by = dlist[bi].by;
+            bx = dlist[bi].bx;
+            sum += mse_8_8bit(&src8[bi << (2 + 3)], &dst8[(by << 2) * dstride + (bx << 3)], dstride, 4);
+        }
+    }
+    else {
+        assert(bsize == BLOCK_4X4);
+        for (bi = 0; bi < cdef_count; bi++) {
+            by = dlist[bi].by;
+            bx = dlist[bi].bx;
+            sum += mse_4_8bit_c(&src8[bi << (2 + 2)], &dst8[(by << 2) * dstride + (bx << 2)], dstride, 4);
+        }
+    }
+    return sum >> 2 * coeff_shift;
+}
+
 void finish_cdef_search(
     EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,

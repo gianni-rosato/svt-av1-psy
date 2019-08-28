@@ -46,12 +46,7 @@ VideoSource::~VideoSource() {
 }
 
 bool VideoSource::is_10bit_mode() {
-    if (image_format_ == IMG_FMT_420P10_PACKED ||
-        image_format_ == IMG_FMT_422P10_PACKED ||
-        image_format_ == IMG_FMT_444P10_PACKED) {
-        return true;
-    }
-    return false;
+    return bit_depth_ == 10;
 }
 
 void VideoSource::deinit_frame_buffer() {
@@ -87,29 +82,29 @@ void VideoSource::deinit_frame_buffer() {
 }
 EbErrorType VideoSource::init_frame_buffer() {
     // Determine size of each plane
-    uint32_t luma_size = width_with_padding_ * height_with_padding_;
-    uint32_t chroma_size = 0;
-
-    pixel_byte_size_ = 1;
     switch (image_format_) {
-    case IMG_FMT_420P10_PACKED: pixel_byte_size_ = 2;
+    case IMG_FMT_420P10_PACKED:
     case IMG_FMT_420: {
         width_downsize_ = 1;
         height_downsize_ = 1;
     } break;
-    case IMG_FMT_422P10_PACKED: pixel_byte_size_ = 2;
+    case IMG_FMT_422P10_PACKED:
     case IMG_FMT_422: {
         width_downsize_ = 1;
         height_downsize_ = 0;
     } break;
-    case IMG_FMT_444P10_PACKED: pixel_byte_size_ = 2;
+    case IMG_FMT_444P10_PACKED:
     case IMG_FMT_444: {
         width_downsize_ = 0;
         height_downsize_ = 0;
     } break;
     default: assert(0); break;
     }
-    chroma_size = luma_size >> (width_downsize_ + height_downsize_);
+    pixel_byte_size_ = is_10bit_mode() ? 2 : 1;
+
+    uint32_t luma_size =
+        width_with_padding_ * height_with_padding_ * pixel_byte_size_;
+    uint32_t chroma_size = luma_size >> (width_downsize_ + height_downsize_);
 
     // Determine
     if (frame_buffer_ == nullptr)

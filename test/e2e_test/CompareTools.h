@@ -34,15 +34,26 @@ static inline bool compare_image(const VideoFrame *recon,
         return false;
     }
 
-    // TODO(Ryan): Support 420 only, need add more code for 422 & 444.
-    if ((recon->format != IMG_FMT_420 &&
-         recon->format != IMG_FMT_420P10_PACKED) ||
-        (ref_frame->format != IMG_FMT_420 &&
-         ref_frame->format != IMG_FMT_420P10_PACKED)) {
-        printf("format not support: recon(%d) or ref(%d)\n",
+    if (recon->format != ref_frame->format) {
+        printf("compare failed for format(%u--%u) different\n",
                recon->format,
                ref_frame->format);
         return false;
+    }
+
+    uint32_t width_scale = 1;
+    uint32_t height_scale = 1;
+    switch (recon->format) {
+    case IMG_FMT_420P10_PACKED:
+    case IMG_FMT_420:
+        width_scale = 2;
+        height_scale = 2;
+        break;
+    case IMG_FMT_422P10_PACKED:
+    case IMG_FMT_422: width_scale = 2; break;
+    case IMG_FMT_444P10_PACKED:
+    case IMG_FMT_444: break;
+    default: assert(0); break;
     }
 
     uint32_t width = recon->width;
@@ -70,10 +81,10 @@ static inline bool compare_image(const VideoFrame *recon,
 
     // cb
     index = 0;
-    for (uint32_t l = 0; l < height / 2; l++) {
+    for (uint32_t l = 0; l < height / height_scale; l++) {
         const uint8_t *s = recon->planes[1] + l * recon->stride[1];
         const uint8_t *d = ref_frame->planes[1] + l * ref_frame->stride[1];
-        for (uint32_t r = 0; r < width / 2; r++) {
+        for (uint32_t r = 0; r < width / width_scale; r++) {
             const uint16_t s_pixel = recon->bits_per_sample == 8
                                          ? s[r]
                                          : (((uint16_t *)s)[r] & 0x3FF);
@@ -90,10 +101,10 @@ static inline bool compare_image(const VideoFrame *recon,
 
     // cr
     index = 0;
-    for (uint32_t l = 0; l < height / 2; l++) {
+    for (uint32_t l = 0; l < height / height_scale; l++) {
         const uint8_t *s = recon->planes[2] + l * recon->stride[2];
         const uint8_t *d = ref_frame->planes[2] + l * ref_frame->stride[2];
-        for (uint32_t r = 0; r < width / 2; r++) {
+        for (uint32_t r = 0; r < width / width_scale; r++) {
             const uint16_t s_pixel = recon->bits_per_sample == 8
                                          ? s[r]
                                          : (((uint16_t *)s)[r] & 0x3FF);
@@ -205,7 +216,7 @@ static inline double psnr_10bit(const uint16_t *p1, const uint32_t stride1,
             mse += (double)diff * diff;
         }
     }
-    mse /= (double)width * height * 2;
+    mse /= (double)width * height;
 
     double psnr = INFINITY;
     if (DBL_EPSILON < mse) {
