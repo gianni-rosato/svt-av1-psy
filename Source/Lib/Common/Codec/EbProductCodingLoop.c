@@ -1057,7 +1057,7 @@ int sq_block_index[TOTAL_SQ_BLOCK_COUNT] = {
     1099,
     1100
 };
-#if BYPASSED_RED_CU_IF_SQ_ONLY
+#if MD_STAGING
 void init_sq_nsq_block(
 #else
 void init_nsq_block(
@@ -1481,21 +1481,8 @@ void fast_loop_core(
     EbPictureBufferDesc         *prediction_ptr = candidate_buffer->prediction_ptr;
     context_ptr->pu_itr = 0;
     // Prediction
-    // Set skip_interpolation_search
-    if ((context_ptr->md_staging_mode && context_ptr->md_stage == MD_STAGE_0) || (context_ptr->md_staging_mode == MD_STAGING_MODE_3 && (context_ptr->md_stage == MD_STAGE_0 || context_ptr->md_stage == MD_STAGE_1 || context_ptr->md_stage == MD_STAGE_2)))
-        context_ptr->skip_interpolation_search = 1;
-    else
-        context_ptr->skip_interpolation_search = picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? 0 : 1;
-
-    // Set interp_filters
-    if (context_ptr->md_staging_mode && context_ptr->md_stage == MD_STAGE_0)
-        candidate_buffer->candidate_ptr->interp_filters = av1_make_interp_filters(BILINEAR, BILINEAR);
-    else
-        candidate_buffer->candidate_ptr->interp_filters = 0;
-
-    // Set skip_md_inter_chroma_comp
-    context_ptr->skip_md_inter_chroma_comp = context_ptr->md_staging_mode && context_ptr->md_stage == MD_STAGE_0 && candidate_ptr->type == INTER_MODE && context_ptr->target_class != CAND_CLASS_0;
-
+    // Set default interp_filters
+    candidate_buffer->candidate_ptr->interp_filters = (context_ptr->md_staging_use_bilinear) ? av1_make_interp_filters(BILINEAR, BILINEAR) : 0;
     ProductPredictionFunTable[candidate_buffer->candidate_ptr->use_intrabc ? INTER_MODE : candidate_ptr->type](
         context_ptr,
         picture_control_set_ptr,
@@ -1540,7 +1527,7 @@ void fast_loop_core(
         }
     }
 
-    if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1 && context_ptr->skip_md_inter_chroma_comp == EB_FALSE) {
+    if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1 && context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE) {
         if (use_ssd) {
             EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
                 full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
@@ -1825,24 +1812,6 @@ void sort_stage0_fast_candidates(
     }
 }
 
-#if STDLIB_SORT
-#if defined(__linux__) || defined(__APPLE__)
-static int compare_sorted_fast_cost_ptr_abc(const void *a, const void *b, void *context)
-#else
-static int compare_sorted_fast_cost_ptr_cab(void *context, const void *a, const void *b)
-#endif
-{
-    const ModeDecisionCandidateBuffer **best_candidate_index_array = context;
-    int64_t res = (*(best_candidate_index_array[*(uint32_t*)a]->fast_cost_ptr)
-        - *(best_candidate_index_array[*(uint32_t*)b]->fast_cost_ptr));
-
-    /* Safe cast result (positive, negative, 0) from int64_t to int */
-    if (res < 0)
-        return -1;
-    return !!res;
-}
-#endif
-
 void sort_stage1_fast_candidates(
     struct ModeDecisionContext   *context_ptr,
     uint32_t                      num_of_cand_to_sort,
@@ -1913,24 +1882,6 @@ void construct_best_sorted_arrays_md_stage_2(
         }
     }
 
-#if STDLIB_SORT
-    //sorted: *fast_cost_ptr
-#if defined(__linux__) || defined(__APPLE__)
-    qsort_r(sorted_candidate_index_array,
-        fullReconCandidateCount,
-        sizeof(sorted_candidate_index_array[0]),
-        compare_sorted_fast_cost_ptr_abc,
-        (void *)buffer_ptr_array
-    );
-#else
-    qsort_s(sorted_candidate_index_array,
-        fullReconCandidateCount,
-        sizeof(sorted_candidate_index_array[0]),
-        compare_sorted_fast_cost_ptr_cab,
-        (void *)buffer_ptr_array
-    );
-#endif
-#else
     uint32_t j, index;
     for (i = 0; i < fullReconCandidateCount - 1; ++i) {
         for (j = i + 1; j < fullReconCandidateCount; ++j) {
@@ -1941,7 +1892,7 @@ void construct_best_sorted_arrays_md_stage_2(
             }
         }
     }
-#endif
+
 
     // tx search
     *ref_fast_cost = *(buffer_ptr_array[sorted_candidate_index_array[0]]->fast_cost_ptr);
@@ -1980,24 +1931,6 @@ void construct_best_sorted_arrays_md_stage_3(
         }
     }
 
-#if STDLIB_SORT
-    //sorted: *fast_cost_ptr
-#if defined(__linux__) || defined(__APPLE__)
-    qsort_r(sorted_candidate_index_array,
-        fullReconCandidateCount,
-        sizeof(sorted_candidate_index_array[0]),
-        compare_sorted_fast_cost_ptr_abc,
-        (void *)buffer_ptr_array
-    );
-#else
-    qsort_s(sorted_candidate_index_array,
-        fullReconCandidateCount,
-        sizeof(sorted_candidate_index_array[0]),
-        compare_sorted_fast_cost_ptr_cab,
-        (void *)buffer_ptr_array
-    );
-#endif
-#else
     uint32_t j, index;
     for (i = 0; i < fullReconCandidateCount - 1; ++i) {
         for (j = i + 1; j < fullReconCandidateCount; ++j) {
@@ -2009,7 +1942,6 @@ void construct_best_sorted_arrays_md_stage_3(
             }
         }
     }
-#endif
 }
 void md_stage_0(
 #else
@@ -2071,6 +2003,14 @@ void perform_fast_loop(
     uint64_t highestCost;
     uint64_t bestFirstFastCostSearchCandidateCost = MAX_CU_COST;
     int32_t  bestFirstFastCostSearchCandidateIndex = INVALID_FAST_CANDIDATE_INDEX;
+
+
+    // Set MD Staging fast_loop_core settings
+
+    context_ptr->md_staging_interpolation_search = (context_ptr->md_staging_mode) ? EB_TRUE : picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? EB_FALSE : EB_TRUE;
+    context_ptr->md_staging_skip_inter_chroma_pred = (context_ptr->md_staging_mode && context_ptr->md_stage == MD_STAGE_0 && context_ptr->target_class != CAND_CLASS_0) ? EB_TRUE : EB_FALSE;
+    context_ptr->md_staging_use_bilinear = (context_ptr->md_staging_mode) ? EB_TRUE : EB_FALSE;
+
     // 1st fast loop: src-to-src
     fastLoopCandidateIndex = fast_candidate_end_index;
     while (fastLoopCandidateIndex >= fast_candidate_start_index)
@@ -2326,8 +2266,6 @@ void perform_fast_loop(
 }
 
 
-
-
 #if MD_STAGING
 void md_stage_1(
     PictureControlSet            *picture_control_set_ptr,
@@ -2343,6 +2281,11 @@ void md_stage_1(
     uint32_t                      cuChromaOriginIndex,
     EbBool                        use_ssd,
     EbAsm                         asm_type) {
+
+    // Set MD Staging fast_loop_core settings
+    context_ptr->md_staging_interpolation_search = (context_ptr->md_staging_mode == MD_STAGING_MODE_3) ? EB_TRUE : picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? EB_FALSE : EB_TRUE;
+    context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
+    context_ptr->md_staging_use_bilinear = EB_FALSE;
 
     for (uint32_t cand_idx = 0; cand_idx < num_of_candidates; ++cand_idx)
     {
@@ -2506,19 +2449,21 @@ void predictive_me_sub_pel_search(
             candidate_ptr->interp_filters = 0;
 
             // Prediction
+#if MD_STAGING // re-factor
+            context_ptr->md_staging_interpolation_search = EB_TRUE;
+            context_ptr->md_staging_skip_inter_chroma_pred = EB_TRUE;
+#else
             uint8_t default_skip_interpolation_search = context_ptr->skip_interpolation_search;
             context_ptr->skip_interpolation_search = 1;
-#if MD_STAGING // re-factor
-            context_ptr->skip_md_inter_chroma_comp = EB_TRUE;
 #endif
             ProductPredictionFunTable[INTER_MODE](
                 context_ptr,
                 picture_control_set_ptr,
                 candidate_buffer,
                 asm_type);
-
+#if !MD_STAGING // re-factor
             context_ptr->skip_interpolation_search = default_skip_interpolation_search;
-
+#endif
             // Distortion
             if (use_ssd) {
                 distortion = (uint32_t)spatial_full_distortion_kernel_func_ptr_array[asm_type](
@@ -3582,7 +3527,7 @@ void check_best_indepedant_cfl(
 
         uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
 #if MD_STAGING // re-factor
-        context_ptr->skip_md_inter_chroma_comp = EB_FALSE;
+        context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
 #endif
         ProductPredictionFunTable[candidate_buffer->candidate_ptr->type](
             context_ptr,
@@ -3876,7 +3821,7 @@ uint8_t get_end_tx_depth(ModeDecisionContext *context_ptr, uint8_t atb_mode, Mod
     return tx_depth;
 }
 #endif
-#if !SHUT_TX_SIZE_RATE
+#if !MD_STAGING
 static INLINE int block_signals_txsize(BlockSize bsize) {
     return bsize > BLOCK_4X4;
 }
@@ -4760,7 +4705,7 @@ void perform_intra_tx_partitioning(
             }
         } // Transform Loop
 
-#if SHUT_TX_SIZE_RATE
+#if MD_STAGING
         // To do: estimate the cost of tx size = tx_size_bits
         uint64_t cost = RDCOST(context_ptr->full_lambda, (*y_coeff_bits), y_full_distortion[DIST_CALC_RESIDUAL]);
 #else
@@ -5054,9 +4999,7 @@ void AV1PerformFullLoop(
     for (fullLoopCandidateIndex = 0; fullLoopCandidateIndex < fullCandidateTotalCount; ++fullLoopCandidateIndex) {
 #endif
 
-#if MD_STAGING
-        uint32_t best_fastLoop_candidate_index = context_ptr->sorted_candidate_index_array[fullLoopCandidateIndex];
-#else
+#if !MD_STAGING
         candidateIndex = (context_ptr->full_loop_escape == 2) ? context_ptr->sorted_candidate_index_array[fullLoopCandidateIndex] : context_ptr->best_candidate_index_array[fullLoopCandidateIndex];
         uint8_t best_fastLoop_candidate_index = context_ptr->sorted_candidate_index_array[fullLoopCandidateIndex];
 #endif
@@ -5091,14 +5034,10 @@ void AV1PerformFullLoop(
 
 #if MD_STAGING
         if (candidate_ptr->type != INTRA_MODE) {
-#if IT_SEARCH_FIX
             if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level > IT_SEARCH_OFF)
-#endif
-                if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FULL_LOOP || (context_ptr->md_stage == MD_STAGE_3 && context_ptr->md_staging_mode == MD_STAGING_MODE_3)) {
-                    context_ptr->skip_interpolation_search = (best_fastLoop_candidate_index > NFL_IT_TH && context_ptr->md_staging_mode == MD_STAGING_MODE_0) ? 1 : 0;
-
-                    context_ptr->skip_md_inter_chroma_comp = EB_FALSE;
-
+                if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FULL_LOOP || context_ptr->md_staging_skip_full_pred == EB_FALSE) {
+                    context_ptr->md_staging_interpolation_search = EB_FALSE;
+                    context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
                     ProductPredictionFunTable[candidate_ptr->type](
                         context_ptr,
                         picture_control_set_ptr,
@@ -5467,16 +5406,19 @@ void md_stage_2(
     uint32_t fullLoopCandidateIndex;
     uint32_t candidateIndex;
 
+    // Set MD Staging full_loop_core settings
+    context_ptr->md_staging_skip_full_pred = EB_TRUE;
+    context_ptr->md_staging_skip_atb = EB_TRUE;
+    context_ptr->md_staging_tx_search = 0;
+    context_ptr->md_staging_skip_full_chroma = context_ptr->target_class == CAND_CLASS_0 || context_ptr->md_staging_mode == MD_STAGING_MODE_3;
+    context_ptr->md_staging_skip_rdoq = (context_ptr->md_staging_mode == MD_STAGING_MODE_2 || context_ptr->md_staging_mode == MD_STAGING_MODE_3);
+
     for (fullLoopCandidateIndex = 0; fullLoopCandidateIndex < context_ptr->md_stage_2_count[context_ptr->target_class]; ++fullLoopCandidateIndex) {
 
         candidateIndex = context_ptr->cand_buff_indices[context_ptr->target_class][fullLoopCandidateIndex];
         candidate_buffer = candidate_buffer_ptr_array[candidateIndex];
         candidate_ptr = candidate_buffer->candidate_ptr;
 
-        // Set MD Staging settings
-        context_ptr->md_staging_skip_atb = EB_TRUE;
-        context_ptr->md_staging_tx_search = 0;
-        context_ptr->md_staging_skip_full_chroma = candidate_ptr->cand_class == CAND_CLASS_0 || context_ptr->md_staging_mode == MD_STAGING_MODE_3;
 
         full_loop_core(
             picture_control_set_ptr,
@@ -5526,10 +5468,12 @@ void md_stage_3(
         candidate_buffer = candidate_buffer_ptr_array[candidateIndex];
         candidate_ptr = candidate_buffer->candidate_ptr;
 
-        // Set MD Staging settings
+        // Set MD Staging full_loop_core settings
+        context_ptr->md_staging_skip_full_pred = (context_ptr->md_staging_mode == MD_STAGING_MODE_3) ? EB_FALSE: EB_TRUE;
         context_ptr->md_staging_skip_atb = EB_FALSE;
         context_ptr->md_staging_tx_search = candidate_ptr->cand_class == CAND_CLASS_0 ? 2 : 1;
         context_ptr->md_staging_skip_full_chroma = EB_FALSE;
+        context_ptr->md_staging_skip_rdoq = EB_FALSE;
 
         if (picture_control_set_ptr->slice_type != I_SLICE) {
             if ((candidate_ptr->type == INTRA_MODE || context_ptr->full_loop_escape == 2) && best_inter_luma_zero_coeff == 0) {
@@ -5729,11 +5673,11 @@ void move_cu_data_redund(
     //CHKN    };
 
     dst_cu->leaf_index = src_cu->leaf_index;
-#if !RED_CU_BUG_FIX
+#if !MD_STAGING
     dst_cu->split_flag = src_cu->split_flag;
 #endif
     dst_cu->skip_flag = src_cu->skip_flag;
-#if !RED_CU_BUG_FIX
+#if !MD_STAGING
     dst_cu->mdc_split_flag = src_cu->mdc_split_flag;
 #endif
     dst_cu->tx_depth = src_cu->tx_depth;
@@ -6459,7 +6403,7 @@ void search_best_independent_uv_mode(
 
             uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
 #if MD_STAGING // re-factor
-            context_ptr->skip_md_inter_chroma_comp = EB_FALSE;
+            context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
 #endif
             ProductPredictionFunTable[candidate_buffer->candidate_ptr->type](
                 context_ptr,
@@ -7099,9 +7043,12 @@ void md_encode_block(
 
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_INTER_DEPTH) {
             if (candidate_buffer->candidate_ptr->type != INTRA_MODE && candidate_buffer->candidate_ptr->motion_mode == SIMPLE_TRANSLATION) {
-                context_ptr->skip_interpolation_search = 0;
+
 #if MD_STAGING // re-factor
-                context_ptr->skip_md_inter_chroma_comp = EB_FALSE;
+                context_ptr->md_staging_interpolation_search = EB_FALSE;
+                context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
+#else
+                context_ptr->skip_interpolation_search = 0;
 #endif
                 ProductPredictionFunTable[candidate_buffer->candidate_ptr->type](
                     context_ptr,
@@ -7284,7 +7231,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
     uint32_t                               leaf_count = mdcResultTbPtr->leaf_count;
     const EbMdcLeafData *const           leaf_data_array = mdcResultTbPtr->leaf_data_array;
     context_ptr->sb_ptr = sb_ptr;
-#if BYPASSED_RED_CU_IF_SQ_ONLY
+#if MD_STAGING
     EbBool all_cu_init = (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode <= PIC_SQ_DEPTH_MODE);
     if (all_cu_init) {
         init_sq_nsq_block(
@@ -7443,7 +7390,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
 
         uint8_t redundant_blk_avail = 0;
         uint16_t redundant_blk_mds;
-#if BYPASSED_RED_CU_IF_SQ_ONLY
+#if MD_STAGING
         if (all_cu_init)
 #endif
             check_redundant_block(blk_geom, context_ptr, &redundant_blk_avail, &redundant_blk_mds);

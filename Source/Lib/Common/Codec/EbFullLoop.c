@@ -1833,7 +1833,7 @@ int32_t av1_quantize_inv_quantize(
 #if !ADD_DELTA_QP_SUPPORT
     (void) qp;
 #endif
-#if !NO_MEMSET
+#if !MD_STAGING
     uint32_t i;
     for (i = 0; i < height; i++)
     {
@@ -1927,7 +1927,7 @@ int32_t av1_quantize_inv_quantize(
 
     EbBool is_inter = (pred_mode >= NEARESTMV);
 #if MD_STAGING // RDOQ
-    EbBool perform_rdoq = ((is_encode_pass || md_context->md_stage == MD_STAGE_3 || md_context->md_staging_mode == MD_STAGING_MODE_0 || md_context->md_staging_mode == MD_STAGING_MODE_1) && md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
+    EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) && md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
 #else
     EbBool perform_rdoq = (md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
 #endif

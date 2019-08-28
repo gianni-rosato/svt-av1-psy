@@ -54,17 +54,6 @@ extern "C" {
 
 #define COMP_MODE                         1 // Add inter-inter compound modes
 #define PREDICTIVE_ME                     1 // Perform ME search around MVP @ MD
-
-#if 1
-#define STDLIB_SORT                       0 // Use sort from std::lib Possible different output linux/windows for array with the same elements
-#define SHUT_TX_SIZE_RATE                 1 // To fix a bug @ tx size rate estimation
-#define BYPASSED_RED_CU_IF_SQ_ONLY        1 // As red cu info not initialized if 85 sq only
-#define RED_CU_BUG_FIX                    1
-#define IT_SEARCH_FIX                     1
-#define NO_MEMSET                         1
-#define NO_LOG2_DOUBLE                    1
-#endif
-
 #define MD_STAGING                        1
 
 //FOR DEBUGGING - Do not remove
@@ -73,8 +62,8 @@ extern "C" {
 #define ADP_STATS_PER_LAYER                             0
 #if !MD_STAGING
 #define NFL_TX_TH                                       12 // To be tuned
-#endif
 #define NFL_IT_TH                                       2 // To be tuned
+#endif
 #define NSQ_TAB_SIZE                                    6
 #define AOM_INTERP_EXTEND                               4
 

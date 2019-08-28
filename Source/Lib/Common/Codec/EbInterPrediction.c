@@ -1791,7 +1791,7 @@ static const uint8_t bsize_curvfit_model_cat_lookup[BlockSizeS_ALL] = {
 static int sse_norm_curvfit_model_cat_lookup(double sse_norm) {
     return (sse_norm > 16.0);
 }
-#if NO_LOG2_DOUBLE
+#if MD_STAGING
 static const double interp_rgrid_curv[4][65] = {
   {
       0.000000,    0.000000,    0.000000,    0.000000,    0.000000,
@@ -1908,7 +1908,7 @@ static const double interp_dgrid_curv[2][65] = {
     PRECALC[A][B][3] = ARRAY[A][B+1]
 */
 
-#if !NO_LOG2_DOUBLE
+#if !MD_STAGING
 static const double interp_rgrid_curv_precalc[4][62][4] = {
   {
     {0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000},
@@ -2301,7 +2301,7 @@ static const double interp_dgrid_curv_precalc[2][62][4] = {
 
 #endif
 
-#if !NO_LOG2_DOUBLE
+#if !MD_STAGING
 static /*INLINE*/ double interp_cubic_precalc(const double *p, double x) {
     return p[3] + x * (p[2] + x * (p[1] + x * p[0]));
 }
@@ -2321,12 +2321,12 @@ void av1_model_rd_curvfit(BlockSize bsize, double sse_norm, double xqr,
     xqr = AOMMIN(xqr, x_end - x_step - epsilon);
     const double x = (xqr - x_start) / x_step;
     const int xi = (int)floor(x);
-#if !NO_LOG2_DOUBLE
+#if !MD_STAGING
     const double xo = x - xi;
 #endif
     assert(xi > 0);
 
-#if NO_LOG2_DOUBLE
+#if MD_STAGING
     const double *prate = &interp_rgrid_curv[rcat][(xi - 1)];
     *rate_f = prate[1];
     const double *pdist = &interp_dgrid_curv[dcat][(xi - 1)];
@@ -2369,7 +2369,7 @@ static void model_rd_with_curvfit(
     }
     aom_clear_system_state();
     const double sse_norm = (double)sse / num_samples;
-#if NO_LOG2_DOUBLE
+#if MD_STAGING
     const double xqr = (double)LOG2F((uint32_t)sse_norm / (qstep * qstep));
 #else
     const double qstepsqr = (double)qstep * qstep;
@@ -5284,7 +5284,7 @@ EbErrorType inter_pu_prediction_av1(
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
 #if MD_STAGING // re-factor
-            md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->skip_md_inter_chroma_comp == EB_FALSE,
+            md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
 #else
             md_context_ptr->chroma_level <= CHROMA_MODE_1,
 #endif
@@ -5342,7 +5342,7 @@ EbErrorType inter_pu_prediction_av1(
                 md_context_ptr->blk_geom->origin_y,
                 &candidate_ptr->wm_params,
 #if MD_STAGING // re-factor
-                md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->skip_md_inter_chroma_comp == EB_FALSE,
+                md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
 #endif
                 asm_type);
         } else {
@@ -5360,7 +5360,7 @@ EbErrorType inter_pu_prediction_av1(
                 &candidate_ptr->wm_params,
                 (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
 #if MD_STAGING // re-factor
-                md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->skip_md_inter_chroma_comp == EB_FALSE,
+                md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
 #else
                 md_context_ptr->chroma_level <= CHROMA_MODE_1,
 #endif
@@ -5371,29 +5371,30 @@ EbErrorType inter_pu_prediction_av1(
 
     uint16_t capped_size = md_context_ptr->interpolation_filter_search_blk_size == 0 ? 4 :
                            md_context_ptr->interpolation_filter_search_blk_size == 1 ? 8 : 16 ;
-#if !MD_STAGING
+
+#if MD_STAGING
+    if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_OFF)
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
+    else
+        if (md_context_ptr->md_staging_interpolation_search == EB_FALSE) {
+#else
+    candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
+    if (md_context_ptr->skip_interpolation_search == EB_FALSE) {
 #endif
-#if IT_SEARCH_FIX
-        if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_OFF)
-            candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
-        else
-#endif
-        if (!md_context_ptr->skip_interpolation_search) {
-            if (md_context_ptr->blk_geom->bwidth > capped_size && md_context_ptr->blk_geom->bheight > capped_size)
-                interpolation_filter_search(
-                    picture_control_set_ptr,
-                    candidate_buffer_ptr->prediction_ptr_temp,
-                    md_context_ptr,
-                    candidate_buffer_ptr,
-                    mv_unit,
-                    ref_pic_list0,
-                    ref_pic_list1,
-                    asm_type,
-                    &rd,
-                    &rs,
-                    &skip_txfm_sb,
-                    &skip_sse_sb);
+        if (md_context_ptr->blk_geom->bwidth > capped_size && md_context_ptr->blk_geom->bheight > capped_size)
+            interpolation_filter_search(
+                picture_control_set_ptr,
+                candidate_buffer_ptr->prediction_ptr_temp,
+                md_context_ptr,
+                candidate_buffer_ptr,
+                mv_unit,
+                ref_pic_list0,
+                ref_pic_list1,
+                asm_type,
+                &rd,
+                &rs,
+                &skip_txfm_sb,
+                &skip_sse_sb);
         }
 
         av1_inter_prediction(
@@ -5417,7 +5418,7 @@ EbErrorType inter_pu_prediction_av1(
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
 #if MD_STAGING // re-factor
-            md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->skip_md_inter_chroma_comp == EB_FALSE,
+            md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
 #else
         md_context_ptr->chroma_level <= CHROMA_MODE_1,
 #endif

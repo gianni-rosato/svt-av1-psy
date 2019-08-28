@@ -237,8 +237,9 @@ extern "C" {
         // Multi-modes signal(s)
 #if !MD_STAGING
         uint8_t                         nfl_level;
-#endif
         uint8_t                         skip_interpolation_search;
+#endif
+
         uint8_t                         parent_sq_type[MAX_PARENT_SQ];
         uint8_t                         parent_sq_has_coeff[MAX_PARENT_SQ];
         uint8_t                         parent_sq_pred_mode[MAX_PARENT_SQ];
@@ -281,7 +282,6 @@ extern "C" {
 
     uint32_t                            cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
 
-    EbBool                              skip_md_inter_chroma_comp;
 
     uint8_t                             md_staging_mode;
 
@@ -300,10 +300,17 @@ extern "C" {
 
     CAND_CLASS                          target_class;
 
+    // fast_loop_core signals
+    EbBool                              md_staging_use_bilinear;
+    EbBool                              md_staging_interpolation_search;
+    EbBool                              md_staging_skip_inter_chroma_pred;
 
+    // full_loop_core signals
+    EbBool                              md_staging_skip_full_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
     EbBool                              md_staging_skip_atb;
     EbBool                              md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
     EbBool                              md_staging_skip_full_chroma;
+    EbBool                              md_staging_skip_rdoq;
 #endif
     } ModeDecisionContext;
 

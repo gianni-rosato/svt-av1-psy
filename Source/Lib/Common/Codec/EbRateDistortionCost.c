@@ -1742,7 +1742,7 @@ EbErrorType av1_tu_estimate_coeff_bits(
 
     return return_error;
 }
-#if !SHUT_TX_SIZE_RATE
+#if !MD_STAGING
 uint64_t estimate_tx_size_bits(
     PictureControlSet       *pcsPtr,
     uint32_t                 cu_origin_x,
@@ -1842,7 +1842,7 @@ EbErrorType Av1FullCost(
     totalDistortion = luma_sse + chromaSse;
 
     rate = lumaRate + chromaRate + coeffRate;
-#if SHUT_TX_SIZE_RATE
+#if MD_STAGING
     // To do: estimate the cost of tx size = tx_size_bits
 #else
     if (candidate_buffer_ptr->candidate_ptr->block_has_coeff) {
@@ -1967,7 +1967,7 @@ EbErrorType  Av1MergeSkipFullCost(
     mergeRate += candidate_buffer_ptr->candidate_ptr->fast_chroma_rate;
 
     mergeRate += coeffRate;
-#if SHUT_TX_SIZE_RATE
+#if MD_STAGING
     // To do: estimate the cost of tx size = tx_size_bits
 #else
     if (candidate_buffer_ptr->candidate_ptr->block_has_coeff) {
