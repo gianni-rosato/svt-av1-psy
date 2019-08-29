@@ -1983,19 +1983,28 @@ void clear_above_context(EbDecHandle *dec_handle_ptr, int mi_col_start,
     const int offset_uv = offset_y >> seq_params->color_config.subsampling_y;
     const int width_uv  = width_y >> seq_params->color_config.subsampling_x;
 
+    int8_t num4_64x64 = mi_size_wide[BLOCK_64X64];
+
     ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_level_ctx[0][tile_row]) +
         offset_y, width_y);
     ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_dc_ctx[0][tile_row]) +
         offset_y, width_y);
+    ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_palette_colors[0][tile_row]),
+        num4_64x64 * PALETTE_MAX_SIZE);
+
     if (num_planes > 1) {
         ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_level_ctx[1][tile_row]) +
             offset_uv, width_uv);
         ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_dc_ctx[1][tile_row]) +
             offset_uv, width_uv);
+        ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_palette_colors[1][tile_row]),
+            num4_64x64 * PALETTE_MAX_SIZE);
         ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_level_ctx[2][tile_row]) +
             offset_uv, width_uv);
         ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_dc_ctx[2][tile_row]) +
             offset_uv, width_uv);
+        ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_palette_colors[2][tile_row]),
+            num4_64x64 * PALETTE_MAX_SIZE);
     }
 
     ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_seg_pred_ctx[tile_row]) +
@@ -2016,6 +2025,7 @@ void clear_left_context(EbDecHandle *dec_handle_ptr)
     /* Maintained only for 1 left SB! */
     int blk_cnt = seq_params->sb_mi_size;
     int num_planes = av1_num_planes(&seq_params->color_config);
+    int32_t num_4x4_neigh_sb = seq_params->sb_mi_size;
 
     /* TODO :  after Optimizing the allocation for Chroma fix here also */
     for (int i = 0; i < num_planes; i++) {
@@ -2026,6 +2036,11 @@ void clear_left_context(EbDecHandle *dec_handle_ptr)
     ZERO_ARRAY(parse_ctxt->parse_nbr4x4_ctxt.left_seg_pred_ctx, blk_cnt);
 
     ZERO_ARRAY(parse_ctxt->parse_nbr4x4_ctxt.left_part_ht, blk_cnt);
+
+    for (int i = 0; i < MAX_MB_PLANE; i++) {
+        ZERO_ARRAY((parse_ctxt->parse_nbr4x4_ctxt.left_palette_colors[i]),
+            num_4x4_neigh_sb * PALETTE_MAX_SIZE);
+    }
 
     memset(parse_ctxt->parse_nbr4x4_ctxt.left_tx_ht, tx_size_high[TX_SIZES_LARGEST],
         blk_cnt*sizeof(parse_ctxt->parse_nbr4x4_ctxt.left_tx_ht[0]));
@@ -2042,16 +2057,11 @@ void clear_cdef(int32_t tile_row, int32_t tile_col, CDEFParams *cdefParams)
     }
 }
 
-void clear_loop_filter_delta(FrameHeader *fr_header, int num_planes)
+void clear_loop_filter_delta(EbDecHandle *dec_handle)
 {
-    fr_header->delta_lf_params.delta_lf_res = 0;
-
-    const int frame_lf_count =
-        num_planes > 1 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
-    for (int lf_id = 0; lf_id < frame_lf_count; ++lf_id)
-        fr_header->loop_filter_params.ref_deltas[lf_id] = 0;
-    for (int lf_id = 0; lf_id < MAX_MODE_LF_DELTAS; ++lf_id)
-        fr_header->loop_filter_params.mode_deltas[lf_id] = 0;
+    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
+    for (int lf_id = 0; lf_id < FRAME_LF_COUNT; ++lf_id)
+        parse_ctx->parse_nbr4x4_ctxt.delta_lf[lf_id] = 0;
 }
 
 void clear_loop_restoration(int num_planes, PartitionInfo_t *part_info)
@@ -2073,7 +2083,7 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
     clear_above_context(dec_handle_ptr, tile_info->tile_col_start_sb[tile_col],
                         tile_info->tile_col_start_sb[tile_col + 1], 0 /*TODO: For MultiThread*/);
-    clear_loop_filter_delta(&dec_handle_ptr->frame_header, num_planes);
+    clear_loop_filter_delta(dec_handle_ptr);
     int32_t ref_sgr_xqd[MAX_MB_PLANE][2];
     int32_t ref_lr_wiener[MAX_MB_PLANE][2][WIENER_COEFFS];
     for (int plane = 0; plane < num_planes; plane++) {
@@ -2161,6 +2171,8 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             int cdef_factor = dec_handle_ptr->seq_header.use_128x128_superblock ? 4 : 1;
             sb_info->sb_cdef_strength = frame_buf->cdef_strength +
                 (((sb_row * master_frame_buf->sb_cols) + sb_col) * cdef_factor);
+
+            memset(sb_info->sb_cdef_strength, -1, cdef_factor * sizeof(int8_t));
 
             sb_info->sb_delta_lf = frame_buf->delta_lf +
                 (sb_row * master_frame_buf->sb_cols) + sb_col;
@@ -2325,6 +2337,9 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         svt_tile_init(&parse_ctxt->cur_tile_info, &dec_handle_ptr->frame_header,
                         tile_row, tile_col);
 
+        parse_ctxt->parse_nbr4x4_ctxt.cur_q_ind =
+            dec_handle_ptr->frame_header.quantization_params.base_q_idx;
+
         //init_symbol(tileSize)
 
         status = init_svt_reader(&parse_ctxt->r,
@@ -2380,6 +2395,20 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, siz
     EbErrorType status = EB_ErrorNone;
     ObuHeader obu_header;
     int frame_decoding_finished = 0;
+
+
+#if ENABLE_ENTROPY_TRACE
+    enable_dump = 1;
+#if FRAME_LEVEL_TRACE
+    if (enable_dump) {
+        char str[1000];
+        sprintf(str, "SVT_fr_%d.txt", dec_handle_ptr->dec_cnt);
+        if (temp_fp == NULL) temp_fp = fopen(str, "w");
+    }
+#else
+    if (temp_fp == NULL) temp_fp = fopen("SVT.txt", "w");
+#endif
+#endif
 
     while (!frame_decoding_finished)
     {
@@ -2470,6 +2499,16 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, siz
         if (!data_size)
             frame_decoding_finished = 1;
     }
+
+#if ENABLE_ENTROPY_TRACE
+#if FRAME_LEVEL_TRACE
+    if (enable_dump) {
+        fclose(temp_fp);
+        temp_fp = NULL;
+    }
+#endif
+#endif
+
     return status;
 }
 

@@ -51,6 +51,12 @@ extern "C" {
 #define EIGTH_PEL_MV                      0
 #define ALTREF_TF_EIGHTH_PEL_SEARCH       1 // Add 1/8 sub-pel search/compensation @ Temporal Filtering
 #define ALTREF_TF_ADAPTIVE_WINDOW_SIZE    1 // Add the ability to use dynamic/asymmetric window for AltRef temporal filtering, add the ability to derive the activity within past and future frames @ picture decision, and add a logic to derive window size from activity
+#define TF_KEY                            1 // Temporal Filtering  for Key frames. OFF for Screen Content.
+#define TFK_ALTREF_DYNAMIC_WINDOW         1 // Applying Dynamic window to key frame temporal filtering
+#define TFK_QPS_TUNING                    1 // QP scaling tuning of temporally filtered key frames.
+#define COMP_MODE                         1 // Add inter-inter compound modes
+#define PREDICTIVE_ME                     1 // Perform ME search around MVP @ MD
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
@@ -382,6 +388,9 @@ typedef struct ConvolveParams
     int32_t use_jnt_comp_avg;
     int32_t fwd_offset;
     int32_t bck_offset;
+#if COMP_MODE
+    int32_t use_dist_wtd_comp_avg;
+#endif
 } ConvolveParams;
 
 // texture component type
@@ -984,13 +993,68 @@ typedef enum ATTRIBUTE_PACKED
 
 typedef enum
 {
+#if COMP_MODE
     COMPOUND_AVERAGE,
     COMPOUND_DISTWTD,
     COMPOUND_WEDGE,
     COMPOUND_DIFFWTD,
     COMPOUND_TYPES,
     MASKED_COMPOUND_TYPES = 2,
+#else
+    COMPOUND_AVERAGE,
+    COMPOUND_DISTWTD,
+    COMPOUND_WEDGE,
+    COMPOUND_DIFFWTD,
+    COMPOUND_INTRA,
+    COMPOUND_TYPES = 3,
+    MASKED_COMPOUND_TYPES = 2,
+#endif
 } CompoundType;
+
+#if COMP_MODE
+#define   COMPOUND_INTRA  4//just for the decoder
+#define AOM_BLEND_A64_ROUND_BITS 6
+#define AOM_BLEND_A64_MAX_ALPHA (1 << AOM_BLEND_A64_ROUND_BITS)  // 64
+#define DIFF_FACTOR_LOG2 4
+#define DIFF_FACTOR (1 << DIFF_FACTOR_LOG2)
+#define AOM_BLEND_AVG(v0, v1) ROUND_POWER_OF_TWO((v0) + (v1), 1)
+typedef uint16_t CONV_BUF_TYPE;
+#define MAX_WEDGE_TYPES (1 << 4)
+#define MAX_WEDGE_SIZE_LOG2 5  // 32x32
+#define MAX_WEDGE_SIZE (1 << MAX_WEDGE_SIZE_LOG2)
+#define MAX_WEDGE_SQUARE (MAX_WEDGE_SIZE * MAX_WEDGE_SIZE)
+#define WEDGE_WEIGHT_BITS 6
+#define WEDGE_NONE -1
+#define MASK_MASTER_SIZE ((MAX_WEDGE_SIZE) << 1)
+#define MASK_MASTER_STRIDE (MASK_MASTER_SIZE)
+typedef struct {
+    int enable_order_hint;           // 0 - disable order hint, and related tools
+    int order_hint_bits_minus_1;     // dist_wtd_comp, ref_frame_mvs,
+    int enable_dist_wtd_comp;        // 0 - disable dist-wtd compound modes
+    int enable_ref_frame_mvs;        // 0 - disable ref frame mvs
+} OrderHintInfoEnc;
+enum {
+    MD_COMP_AVG,
+    MD_COMP_DIST,
+    MD_COMP_DIFF0,
+    MD_COMP_WEDGE,
+    MD_COMP_TYPES,
+} UENUM1BYTE(MD_COMP_TYPE);
+#define COMPOUND_TYPE  CompoundType
+#define MAX_DIFFWTD_MASK_BITS 1
+enum {
+    DIFFWTD_38 = 0,
+    DIFFWTD_38_INV,
+    DIFFWTD_MASK_TYPES,
+} UENUM1BYTE(DIFFWTD_MASK_TYPE);
+typedef struct {
+    uint8_t *seg_mask;
+    int wedge_index;
+    int wedge_sign;
+    DIFFWTD_MASK_TYPE mask_type;
+    COMPOUND_TYPE type;
+} INTERINTER_COMPOUND_DATA;
+#endif
 
 typedef enum ATTRIBUTE_PACKED
 {

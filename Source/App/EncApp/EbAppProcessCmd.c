@@ -823,7 +823,8 @@ void ReadInputFrames(
                     headerPtr->n_filled_len += (uint32_t)fread(inputPtr->cr, 1, lumaReadSize >> (3 - color_format), input_file);
                 }
             }
-        } else if (is16bit == 1 && config->compressed_ten_bit_format == 1) {
+        } else  {
+            assert(is16bit == 1 && config->compressed_ten_bit_format == 1);
             // 10-bit Compressed Unpacked Mode
             const uint32_t lumaReadSize = input_padded_width * input_padded_height;
             const uint32_t chromaReadSize = lumaReadSize >> (3 - color_format);
@@ -852,6 +853,20 @@ void ReadInputFrames(
                 headerPtr->n_filled_len += (uint32_t)fread(inputPtr->cb_ext, 1, nbitChromaReadSize, input_file);
                 headerPtr->n_filled_len += (uint32_t)fread(inputPtr->cr_ext, 1, nbitChromaReadSize, input_file);
             }
+        }
+        if (feof(input_file) != 0) {
+            if (input_file == stdin) {
+                //for stdin, we only know this when we reach eof
+                config->frames_to_be_encoded = config->frames_encoded;
+                if (headerPtr->n_filled_len != readSize) {
+                    // not a completed frame
+                    headerPtr->n_filled_len = 0;
+                }
+            } else {
+                // If we reached the end of file, loop over again
+                fseek(input_file, 0, SEEK_SET);
+            }
+
         }
     } else {
         if (is16bit && config->compressed_ten_bit_format == 1) {
@@ -894,9 +909,6 @@ void ReadInputFrames(
         }
     }
 
-    // If we reached the end of file, loop over again
-    if (feof(input_file) != 0)
-        fseek(input_file, 0, SEEK_SET);
     return;
 }
 
@@ -975,28 +987,29 @@ AppExitConditionType ProcessInputBuffer(
             config,
             is16bit,
             headerPtr);
+        if (headerPtr->n_filled_len) {
+            // Update the context parameters
+            config->processed_byte_count += headerPtr->n_filled_len;
+            headerPtr->p_app_private          = (EbPtr)EB_NULL;
+            config->frames_encoded           = (int32_t)(++config->processed_frame_count);
 
-        // Update the context parameters
-        config->processed_byte_count += headerPtr->n_filled_len;
-        headerPtr->p_app_private          = (EbPtr)EB_NULL;
-        config->frames_encoded           = (int32_t)(++config->processed_frame_count);
+            // Configuration parameters changed on the fly
+            if (config->use_qp_file && config->qp_file)
+                SendQpOnTheFly(
+                    config,
+                    headerPtr);
 
-        // Configuration parameters changed on the fly
-        if (config->use_qp_file && config->qp_file)
-            SendQpOnTheFly(
-                config,
-                headerPtr);
+            if (keepRunning == 0 && !config->stop_encoder)
+                config->stop_encoder = EB_TRUE;
+            // Fill in Buffers Header control data
+            headerPtr->pts          = config->processed_frame_count-1;
+            headerPtr->pic_type    = EB_AV1_INVALID_PICTURE;
 
-        if (keepRunning == 0 && !config->stop_encoder)
-            config->stop_encoder = EB_TRUE;
-        // Fill in Buffers Header control data
-        headerPtr->pts          = config->processed_frame_count-1;
-        headerPtr->pic_type    = EB_AV1_INVALID_PICTURE;
+            headerPtr->flags = 0;
 
-        headerPtr->flags = 0;
-
-        // Send the picture
-        eb_svt_enc_send_picture(componentHandle, headerPtr);
+            // Send the picture
+            eb_svt_enc_send_picture(componentHandle, headerPtr);
+        }
 
         if ((config->processed_frame_count == (uint64_t)config->frames_to_be_encoded) || config->stop_encoder) {
             headerPtr->n_alloc_len    = 0;
@@ -1103,6 +1116,15 @@ static void write_ivf_frame_header(EbConfig *config, uint32_t byte_count){
     if (config->bitstream_file)
         fwrite(header, 1, IVF_FRAME_HEADER_SIZE, config->bitstream_file);
 }
+double get_psnr(double sse, double max){
+    double psnr;
+    if (sse == 0)
+        psnr = 10 * log10(max / (double)0.1);
+    else
+        psnr = 10 * log10(max / sse);
+
+    return psnr;
+}
 
 /***************************************
 * Process Output STATISTICS Buffer
@@ -1125,37 +1147,36 @@ void process_output_statistics_buffer(
     temp_var = (double)max_luma_value*max_luma_value *
              (config->source_width*config->source_height);
 
-    if (luma_sse == 0)
-        luma_psnr = 100;
-    else
-        luma_psnr = 10 * log10((double)temp_var / (double)luma_sse);
+    luma_psnr = get_psnr((double)luma_sse, temp_var);
 
     temp_var = (double) max_luma_value * max_luma_value *
             (config->source_width / 2 * config->source_height / 2);
 
-    if (cb_sse == 0)
-        cb_psnr = 100;
-    else
-        cb_psnr = 10 * log10((double)temp_var / (double)cb_sse);
+    cb_psnr = get_psnr((double)cb_sse, temp_var);
 
-    if (cr_sse == 0)
-        cr_psnr = 100;
-    else
-        cr_psnr = 10 * log10((double)temp_var / (double)cr_sse);
+    cr_psnr = get_psnr((double)cr_sse, temp_var);
 
-    config->performance_context.sum_luma_psnr += luma_psnr;
-    config->performance_context.sum_cr_psnr   += cr_psnr;
-    config->performance_context.sum_cb_psnr   += cb_psnr;
-    config->performance_context.sum_qp        += picture_qp;
+    config->performance_context.sum_luma_psnr   += luma_psnr;
+    config->performance_context.sum_cr_psnr     += cr_psnr;
+    config->performance_context.sum_cb_psnr     += cb_psnr;
+
+    config->performance_context.sum_luma_sse    += luma_sse;
+    config->performance_context.sum_cr_sse      += cr_sse;
+    config->performance_context.sum_cb_sse      += cb_sse;
+
+    config->performance_context.sum_qp          += picture_qp;
 
     // Write statistic Data to file
     if (config->stat_file)
-        fprintf(config->stat_file, "Picture Number: %4d\t QP: %4d [Y: %.2f dB, U: %.2f dB, V: %.2f dB]\t %6d bits\n",
+        fprintf(config->stat_file, "Picture Number: %4d\t QP: %4d  [ PSNR-Y: %.2f dB,\tPSNR-U: %.2f dB,\tPSNR-V: %.2f dB,\tMSE-Y: %.2f,\tMSE-U: %.2f,\tMSE-V: %.2f ]\t %6d bits\n",
         (int)picture_number,
         (int)picture_qp,
         luma_psnr,
-        cr_psnr,
         cb_psnr,
+        cr_psnr,
+        (double)luma_sse/(config->source_width * config->source_height),
+        (double)cb_sse/(config->source_width / 2 * config->source_height / 2),
+        (double)cr_sse/(config->source_width / 2 * config->source_height / 2),
         (int)picture_stream_size);
 
     return;

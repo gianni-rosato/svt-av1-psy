@@ -3,6 +3,7 @@
 ## [upcoming]
 
 - Decoder Inter support
+- Decoder Screen Content Tools support
 
 ## [0.6.0] - 2019-06-28
 

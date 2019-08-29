@@ -28,6 +28,7 @@
 #include "EbDecPicMgr.h"
 #include "EbDecNbr.h"
 #include "EbDecUtils.h"
+#include "EbDecObmc.h"
 
 static INLINE void dec_clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row,
     int32_t max_row) {
@@ -141,7 +142,8 @@ void svtav1_predict_inter_block_plane(
                 &part_info->ps_global_motion[mi->ref_frame[ref]];
             const EbWarpedMotionParams *const wm_local =
                 &part_info->local_warp_params;
-            EbDecPicBuf *ref_buf  = get_ref_frame_buf(dec_hdl, mi->ref_frame[ref]);
+            EbDecPicBuf *ref_buf  = is_intrabc ? dec_hdl->cur_pic_buf[0] :
+                                    get_ref_frame_buf(dec_hdl, mi->ref_frame[ref]);
             EbPictureBufferDesc *ps_ref_pic_buf = ref_buf->ps_pic_buf;
             SubpelParams subpel_params;
 
@@ -191,12 +193,21 @@ void svtav1_predict_inter_block_plane(
 
                 wm_params = (mi->motion_mode == WARPED_CAUSAL) ? wm_local : wm_global;
 
-                eb_av1_warp_plane((EbWarpedMotionParams *)wm_params,
-                    highbd, bit_depth,
-                    src, ref_buf->ps_pic_buf->width >> ss_x,
-                    ref_buf->ps_pic_buf->height >> ss_y,
-                    src_stride, dst_mod, pre_x, pre_y, bw, bh, dst_stride,
-                    ss_x, ss_y, &conv_params);
+                if (highbd)
+                    eb_av1_warp_plane((EbWarpedMotionParams *)wm_params,
+                        highbd, bit_depth, CONVERT_TO_BYTEPTR(src),
+                        ref_buf->ps_pic_buf->width >> ss_x,
+                        ref_buf->ps_pic_buf->height >> ss_y,
+                        src_stride, CONVERT_TO_BYTEPTR(dst_mod),
+                        pre_x, pre_y, bw, bh, dst_stride,
+                        ss_x, ss_y, &conv_params);
+                else
+                    eb_av1_warp_plane((EbWarpedMotionParams *)wm_params,
+                        highbd, bit_depth,
+                        src, ref_buf->ps_pic_buf->width >> ss_x,
+                        ref_buf->ps_pic_buf->height >> ss_y,
+                        src_stride, dst_mod, pre_x, pre_y, bw, bh, dst_stride,
+                        ss_x, ss_y, &conv_params);
             }
             else if (highbd) {
                 uint16_t *src16 = (uint16_t *)src +
@@ -225,7 +236,7 @@ void svtav1_predict_inter_block(
     int32_t mi_row, int32_t mi_col, int32_t num_planes)
 {
     void *blk_recon_buf;
-    int32_t recon_strd;
+    int32_t recon_stride;
     int32_t sub_x, sub_y;
     int32_t some_use_intra;
 
@@ -262,11 +273,15 @@ void svtav1_predict_inter_block(
 
         derive_blk_pointers(recon_picture_buf, plane,
             mi_col*MI_SIZE >> sub_x, mi_row*MI_SIZE >> sub_y,
-            &blk_recon_buf, &recon_strd, sub_x, sub_y);
+            &blk_recon_buf, &recon_stride, sub_x, sub_y);
 
         svtav1_predict_inter_block_plane(dec_hdl, part_info, plane,
-            0, mi_col*MI_SIZE, mi_row*MI_SIZE, blk_recon_buf, recon_strd,
+            0, mi_col*MI_SIZE, mi_row*MI_SIZE, blk_recon_buf, recon_stride,
             some_use_intra, recon_picture_buf->bit_depth);
+
+    }
+    if (part_info->mi->motion_mode == OBMC_CAUSAL) {
+        dec_build_obmc_inter_predictors_sb(dec_hdl, part_info, mi_row, mi_col);
     }
 
     return;

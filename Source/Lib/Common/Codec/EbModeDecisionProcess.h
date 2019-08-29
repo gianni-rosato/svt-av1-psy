@@ -24,11 +24,19 @@ extern "C" {
     /**************************************
      * Defines
      **************************************/
+#if COMP_MODE
+#if PREDICTIVE_ME
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               1855
+#else
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               1800
+#endif
+#else
 #define IBC_CAND 2 //two intra bc candidates
 #if EIGTH_PEL_MV
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (470+IBC_CAND )
 #else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (486 +IBC_CAND)
+#endif
 #endif
 #define DEPTH_ONE_STEP   21
 #define DEPTH_TWO_STEP    5
@@ -209,7 +217,10 @@ extern "C" {
         uint8_t                         tx_depth;
         uint8_t                         txb_itr;
         uint32_t                        me_sb_addr;
-
+#if PREDICTIVE_ME
+        uint32_t                        geom_offset_x;
+        uint32_t                        geom_offset_y;
+#endif
         int16_t                         luma_txb_skip_context;
         int16_t                         luma_dc_sign_context;
         int16_t                         cb_txb_skip_context;
@@ -233,6 +244,9 @@ extern "C" {
         uint8_t                         warped_motion_injection;
         uint8_t                         unipred3x3_injection;
         uint8_t                         bipred3x3_injection;
+#if PREDICTIVE_ME
+        uint8_t                         predictive_me_level;
+#endif
         uint8_t                         interpolation_filter_search_blk_size;
         uint8_t                         redundant_blk;
         uint8_t                         *cfl_temp_luma_recon;
@@ -240,7 +254,19 @@ extern "C" {
         EbBool                          spatial_sse_full_loop;
         EbBool                          blk_skip_decision;
         EbBool                          trellis_quant_coeff_optimization;
+#if PREDICTIVE_ME
+        int16_t                         best_spatial_pred_mv[2][4][2];
+        int8_t                          valid_refined_mv[2][4];
+#endif
         EbPictureBufferDesc                 *input_sample16bit_buffer;
+#if COMP_MODE
+        DECLARE_ALIGNED(16, uint8_t, pred0[2 * MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint8_t, pred1[2 * MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]);
+    unsigned int prediction_mse ;
+    EbBool      variance_ready;
+#endif
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(

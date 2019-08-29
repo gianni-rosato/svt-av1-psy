@@ -188,6 +188,10 @@ extern "C" {
         // int32_t cfl_alpha_signs;
         //int32_t compound_idx;
         //int32_t comp_group_idx;
+#if COMP_MODE
+        int32_t compound_idx;
+        int32_t comp_group_idx;
+#endif
         int8_t skip;
         int8_t cdef_strength;
         TxSize tx_size;
@@ -331,7 +335,11 @@ extern "C" {
     {
         TransformUnit             transform_unit_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
         PredictionUnit            prediction_unit_array[MAX_NUM_OF_PU_PER_CU];    // 35-bytes * 4 = 140 bytes
-
+#if COMP_MODE
+        INTERINTER_COMPOUND_DATA               interinter_comp;
+        uint8_t                                compound_idx;
+        uint8_t                                comp_group_idx;
+#endif
         unsigned                    skip_flag_context       : 2;
         unsigned                    prediction_mode_flag    : 2;
         unsigned                    block_has_coeff         : 1;

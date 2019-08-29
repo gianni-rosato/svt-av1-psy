@@ -13960,6 +13960,11 @@ extern "C" {
         EbBool                                eos_coming;
         uint8_t                               picture_qp;
         uint64_t                              picture_number;
+#if COMP_MODE
+        uint8_t                               wedge_mode;
+        uint32_t                             cur_order_hint;
+        uint32_t                             ref_order_hint[7];
+#endif
         EbPicnoiseClass                       pic_noise_class;
         EB_SLICE                              slice_type;
         uint8_t                               pred_struct_index;
@@ -14225,6 +14230,7 @@ extern "C" {
         uint8_t                               altref_strength;
         int32_t                               pic_decision_reorder_queue_idx;
         struct PictureParentControlSet       *temp_filt_pcs_list[ALTREF_MAX_NFRAMES];
+        EbByte                               save_enhanced_picture_ptr[3];
         EbHandle temp_filt_done_semaphore;
         EbHandle temp_filt_mutex;
         EbHandle debug_mutex;
@@ -14241,13 +14247,17 @@ extern "C" {
 #else
         uint8_t                               altref_nframes;
 #endif
+        EbBool                                temporal_filtering_on;
 #if QPS_TUNING
         uint64_t                              filtered_sse; // the normalized SSE between filtered and original alt_ref with 8 bit precision.
                                                             // I Slice has the value of the next ALT_REF picture
         uint64_t                              filtered_sse_uv;
 #endif
-
         FrameHeader                           frm_hdr;
+#if COMP_MODE
+        MD_COMP_TYPE                            compound_types_to_try;
+        uint8_t                                 compound_mode;
+#endif
     } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData

@@ -653,7 +653,22 @@ void* resource_coordination_kernel(void *input_ptr)
             sequence_control_set_ptr->enable_altrefs =  sequence_control_set_ptr->static_config.enable_altrefs &&
                 sequence_control_set_ptr->static_config.altref_nframes > 1 &&
                 sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT ? EB_TRUE : EB_FALSE;
-
+#if COMP_MODE
+            // Set compound mode      Settings
+            // 0                 OFF: No compond mode search : AVG only
+            // 1                 ON: full
+            sequence_control_set_ptr->compound_mode = sequence_control_set_ptr->static_config.encoder_bit_depth == EB_10BIT ? 0 :
+                (sequence_control_set_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
+            if (sequence_control_set_ptr->compound_mode)
+            {
+                sequence_control_set_ptr->seq_header.order_hint_info.enable_jnt_comp = 1; //DISTANCE
+                sequence_control_set_ptr->seq_header.enable_masked_compound = 1; //DIFF+WEDGE
+            }
+            else {
+                sequence_control_set_ptr->seq_header.order_hint_info.enable_jnt_comp = 0;
+                sequence_control_set_ptr->seq_header.enable_masked_compound = 0;
+            }
+#endif
             // Sep PM mode
             sequence_control_set_ptr->pm_mode = sequence_control_set_ptr->input_resolution < INPUT_SIZE_4K_RANGE ?
                 PM_MODE_2 :

@@ -19,7 +19,7 @@ extern "C" {
 void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
         int32_t plane,
         TxSize tx_size, TileInfo *td,
-        uint8_t *blk_recon_buf, int32_t recon_strd,
+        uint8_t *blk_recon_buf, int32_t recon_stride,
         EbBitDepthEnum bit_depth, int32_t blk_mi_col_off, int32_t blk_mi_row_off);
 
 void cfl_store_tx(PartitionInfo_t *xd, CflCtx *cfl_ctx, int row, int col, TxSize tx_size,

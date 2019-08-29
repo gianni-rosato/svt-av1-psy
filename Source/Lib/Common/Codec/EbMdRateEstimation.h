@@ -72,7 +72,11 @@ extern "C" {
 
         // Compouned Mode
         int32_t inter_compound_mode_fac_bits[INTER_MODE_CONTEXTS][CDF_SIZE(INTER_COMPOUND_MODES)];
+#if COMP_MODE
+        int32_t compound_type_fac_bits[BlockSizeS_ALL][CDF_SIZE(MASKED_COMPOUND_TYPES)];
+#else
         int32_t compound_type_fac_bits[BlockSizeS_ALL][CDF_SIZE(COMPOUND_TYPES - 1)];
+#endif
         int32_t single_ref_fac_bits[REF_CONTEXTS][SINGLE_REFS - 1][CDF_SIZE(2)];
         int32_t comp_ref_type_fac_bits[COMP_REF_TYPE_CONTEXTS][CDF_SIZE(2)];
         int32_t uni_comp_ref_fac_bits[UNI_COMP_REF_CONTEXTS][UNIDIR_COMP_REFS - 1][CDF_SIZE(2)];

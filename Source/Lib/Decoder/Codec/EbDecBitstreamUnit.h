@@ -56,6 +56,7 @@ extern "C" {
 #define EXTRA_DUMP 0
 #if ENABLE_ENTROPY_TRACE
 #define ENTROPY_TRACE_FILE_BASED 1
+#define FRAME_LEVEL_TRACE 1
 #include <stdio.h>
 extern FILE *temp_fp;
 extern int enable_dump;
@@ -255,7 +256,6 @@ static INLINE int daala_read_symbol(DaalaReader_t *r, const AomCdfProb *cdf,
 #if ENABLE_ENTROPY_TRACE
 #if ENTROPY_TRACE_FILE_BASED
   if (enable_dump) {
-      if (temp_fp == NULL) temp_fp = fopen("SVT.txt", "w");
       fprintf(temp_fp, "\n *** nsymbs %d \t", nsymbs);
       for (int i = 0; i < nsymbs; ++i)
           fprintf(temp_fp, "cdf[%d] : %d \t", i, cdf[i]);

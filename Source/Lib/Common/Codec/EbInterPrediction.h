@@ -50,6 +50,10 @@ extern "C" {
         uint8_t                                 ref_frame_type,
         MvUnit                               *mv_unit,
         uint8_t                                  use_intrabc,
+#if COMP_MODE
+        uint8_t                                compound_idx,
+        INTERINTER_COMPOUND_DATA               *interinter_comp,
+#endif
         uint16_t                                pu_origin_x,
         uint16_t                                pu_origin_y,
         uint8_t                                 bwidth,
@@ -61,7 +65,16 @@ extern "C" {
         uint16_t                                dst_origin_y,
         EbBool                                  perform_chroma,
         EbAsm                                   asm_type);
-
+#if COMP_MODE
+    void search_compound_diff_wedge(
+        PictureControlSet                    *picture_control_set_ptr,
+        struct ModeDecisionContext                  *context_ptr,
+        ModeDecisionCandidate                *candidate_ptr);
+    void search_compound_avg_dist(
+        PictureControlSet                    *picture_control_set_ptr,
+        struct ModeDecisionContext                    *context_ptr,
+        ModeDecisionCandidate                *candidate_ptr);
+#endif
     EbErrorType inter_pu_prediction_av1(
         struct ModeDecisionContext           *md_context_ptr,
         PictureControlSet                    *picture_control_set_ptr,

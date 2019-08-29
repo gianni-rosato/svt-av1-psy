@@ -100,6 +100,20 @@ typedef struct ParseNbr4x4Ctxt {
     /* Buffer holding the seg_id_predicted of the left 4x4 blocks corresponding
      to the current super block row. */
     uint8_t *above_seg_pred_ctx;
+
+    /* Value of base colors for Y, U, and V */
+    uint16_t *above_palette_colors[MAX_MB_PLANE];
+    uint16_t *left_palette_colors[MAX_MB_PLANE];
+
+    /* Buffer holding the delta LF values*/
+    int32_t delta_lf[FRAME_LF_COUNT];
+
+    /* Place holder for the current q index*/
+    int32_t cur_q_ind;
+
+    /* Place holder for palette color information */
+    uint16_t palette_colors[MAX_MB_PLANE * PALETTE_MAX_SIZE];
+
 } ParseNbr4x4Ctxt;
 
 typedef struct ParseCtxt {

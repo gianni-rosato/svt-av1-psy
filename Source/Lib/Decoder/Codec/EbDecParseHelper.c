@@ -308,8 +308,7 @@ int filter_intra_allowed_bsize(EbDecHandle *dec_handle, BlockSize bs) {
 
 int filter_intra_allowed(EbDecHandle *dec_handle, const ModeInfo_t *mbmi) {
     return mbmi->mode == DC_PRED &&
-        /* TO DO : Add when palette support comes */
-        /*mbmi->palette_mode_info.palette_size[0] == 0 &&*/
+        mbmi->palette_size[0] == 0 &&
         filter_intra_allowed_bsize(dec_handle, mbmi->sb_type);
 }
 

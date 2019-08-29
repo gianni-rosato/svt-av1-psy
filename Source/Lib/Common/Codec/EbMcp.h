@@ -7,7 +7,6 @@
 #define EBMCP_H
 
 #include "EbMcp_SSE2.h"
-#include "EbMcp_SSSE3.h"
 
 #include "EbDefinitions.h"
 #include "EbUtility.h"
@@ -59,43 +58,6 @@ extern "C" {
             is_last indicates if there is any further filtering (interpolation filtering)
             afterwards.
      */
-    typedef void(*InterpolationFilterNew)(
-        EbByte               ref_pic,               //8-bits input parameter, please refer to the detailed explanation above.
-        uint32_t             src_stride,            //input parameter
-        EbByte               dst,                  //output parameter, please refer to the detailed explanation above.
-        uint32_t             dst_stride,            //input parameter
-        uint32_t             pu_width,              //input parameter
-        uint32_t             pu_height,             //input parameter
-        int16_t             *first_pass_if_dst);      //input parameter, please refer to the detailed explanation above.
-
-    typedef void(*InterpolationFilterOutRaw)(
-        EbByte              ref_pic,               //8-bits input parameter, please refer to the detailed explanation above.
-        uint32_t            src_stride,            //input parameter
-        int16_t            *dst,                  //output parameter, please refer to the detailed explanation above.
-        uint32_t            pu_width,              //input parameter
-        uint32_t            pu_height,             //input parameter
-        int16_t            *first_pass_if_dst);      //input parameter, please refer to the detailed explanation above.
-
-    typedef void(*ChromaFilterNew)(
-        EbByte             ref_pic,
-        uint32_t           src_stride,
-        EbByte             dst,
-        uint32_t           dst_stride,
-        uint32_t           pu_width,
-        uint32_t           pu_height,
-        int16_t           *first_pass_if_dst,
-        uint32_t           frac_pos_x,
-        uint32_t           frac_pos_y);
-
-    typedef void(*ChromaFilterOutRaw)(
-        EbByte             ref_pic,
-        uint32_t           src_stride,
-        int16_t           *dst,
-        uint32_t           pu_width,
-        uint32_t           pu_height,
-        int16_t           *first_pass_if_dst,
-        uint32_t           frac_pos_x,
-        uint32_t           frac_pos_y);
     extern EbErrorType in_loop_me_context_ctor(
         SsMeContext                         *ss_mecontext);
 
@@ -122,12 +84,6 @@ extern "C" {
         uint32_t            original_src_height,
         uint32_t            pad_right,
         uint32_t            pad_bottom);
-
-    // Function Tables (Super-long, declared in EbMcpTables.c)
-    extern const InterpolationFilterNew     uni_pred_luma_if_function_ptr_array_new[ASM_TYPE_TOTAL][16];
-    extern const InterpolationFilterOutRaw  bi_pred_luma_if_function_ptr_array_new[ASM_TYPE_TOTAL][16];
-    extern const ChromaFilterNew            uni_pred_chroma_if_function_ptr_array_new[ASM_TYPE_TOTAL][64];
-    extern const ChromaFilterOutRaw         bi_pred_chroma_if_function_ptr_array_new[ASM_TYPE_TOTAL][64];
 
 #ifdef __cplusplus
 }

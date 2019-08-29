@@ -694,8 +694,25 @@ void psnr_calculations(
         EbByte  inputBuffer;
         EbByte  reconCoeffBuffer;
 
+        EbByte buffer_y;
+        EbByte buffer_cb;
+        EbByte buffer_cr;
+
+        // if current source picture was temporally filtered, use an alternative buffer which stores
+        // the original source picture
+        if(picture_control_set_ptr->parent_pcs_ptr->temporal_filtering_on == EB_TRUE){
+            buffer_y = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[0];
+            buffer_cb = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[1];
+            buffer_cr = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[2];
+        }
+        else {
+            buffer_y = input_picture_ptr->buffer_y;
+            buffer_cb = input_picture_ptr->buffer_cb;
+            buffer_cr = input_picture_ptr->buffer_cr;
+        }
+
         reconCoeffBuffer = &((recon_ptr->buffer_y)[recon_ptr->origin_x + recon_ptr->origin_y * recon_ptr->stride_y]);
-        inputBuffer = &((input_picture_ptr->buffer_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
+        inputBuffer = &(buffer_y[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
 
         residualDistortion = 0;
 
@@ -714,7 +731,7 @@ void psnr_calculations(
         sseTotal[0] = residualDistortion;
 
         reconCoeffBuffer = &((recon_ptr->buffer_cb)[recon_ptr->origin_x / 2 + recon_ptr->origin_y / 2 * recon_ptr->stride_cb]);
-        inputBuffer = &((input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
+        inputBuffer = &(buffer_cb[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
 
         residualDistortion = 0;
         row_index = 0;
@@ -733,7 +750,7 @@ void psnr_calculations(
         sseTotal[1] = residualDistortion;
 
         reconCoeffBuffer = &((recon_ptr->buffer_cr)[recon_ptr->origin_x / 2 + recon_ptr->origin_y / 2 * recon_ptr->stride_cr]);
-        inputBuffer = &((input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
+        inputBuffer = &(buffer_cr[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
         residualDistortion = 0;
         row_index = 0;
 
@@ -751,8 +768,14 @@ void psnr_calculations(
 
         sseTotal[2] = residualDistortion;
         picture_control_set_ptr->parent_pcs_ptr->luma_sse = (uint32_t)sseTotal[0];
-        picture_control_set_ptr->parent_pcs_ptr->cr_sse = (uint32_t)sseTotal[1];
-        picture_control_set_ptr->parent_pcs_ptr->cb_sse = (uint32_t)sseTotal[2];
+        picture_control_set_ptr->parent_pcs_ptr->cb_sse = (uint32_t)sseTotal[1];
+        picture_control_set_ptr->parent_pcs_ptr->cr_sse = (uint32_t)sseTotal[2];
+
+        if(picture_control_set_ptr->parent_pcs_ptr->temporal_filtering_on == EB_TRUE) {
+            EB_FREE_ARRAY(buffer_y);
+            EB_FREE_ARRAY(buffer_cb);
+            EB_FREE_ARRAY(buffer_cr);
+        }
     }
     else {
         EbPictureBufferDesc *recon_ptr;
@@ -991,8 +1014,8 @@ void psnr_calculations(
         }
 
         picture_control_set_ptr->parent_pcs_ptr->luma_sse = (uint32_t)sseTotal[0];
-        picture_control_set_ptr->parent_pcs_ptr->cr_sse = (uint32_t)sseTotal[1];
-        picture_control_set_ptr->parent_pcs_ptr->cb_sse = (uint32_t)sseTotal[2];
+        picture_control_set_ptr->parent_pcs_ptr->cb_sse = (uint32_t)sseTotal[1];
+        picture_control_set_ptr->parent_pcs_ptr->cr_sse = (uint32_t)sseTotal[2];
     }
 }
 
@@ -1335,6 +1358,25 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->bipred3x3_injection = 2;
     else
         context_ptr->bipred3x3_injection = 0;
+
+#if PREDICTIVE_ME
+    // Level                Settings
+    // 0                    Level 0: OFF
+    // 1                    Level 1: 7x5 full-pel search + sub-pel refinement off
+    // 2                    Level 2: 7x5 full-pel search +  (H + V) sub-pel refinement only = 4 half-pel + 4 quarter-pel = 8 positions + pred_me_distortion to pa_me_distortion deviation on
+    // 3                    Level 3: 7x5 full-pel search +  (H + V + D only ~ the best) sub-pel refinement = up to 6 half-pel + up to 6  quarter-pel = up to 12 positions + pred_me_distortion to pa_me_distortion deviation on
+    // 4                    Level 4: 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation on
+    // 5                    Level 5: 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation off
+    if (picture_control_set_ptr->slice_type != I_SLICE)
+        if (picture_control_set_ptr->enc_mode <= ENC_M1)
+            context_ptr->predictive_me_level = 4;
+        else if (picture_control_set_ptr->enc_mode <= ENC_M4)
+            context_ptr->predictive_me_level = 2;
+        else
+            context_ptr->predictive_me_level = 0;
+    else
+        context_ptr->predictive_me_level = 0;
+#endif
 
     // Set interpolation filter search blk size
     // Level                Settings
