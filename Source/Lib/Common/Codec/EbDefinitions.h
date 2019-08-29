@@ -65,12 +65,13 @@ extern "C" {
 #define NFL_IT_TH                                       2 // To be tuned
 #define NSQ_TAB_SIZE                                    6
 #define AOM_INTERP_EXTEND                               4
+#define OPTIMISED_EX_SUBPEL                             1
 
-
-
-
-
+#if OPTIMISED_EX_SUBPEL
+#define H_PEL_SEARCH_WIND 3  // 1/2-pel serach window
+#else
 #define H_PEL_SEARCH_WIND 4  // 1/2-pel serach window
+#endif
 #define Q_PEL_SEARCH_WIND 2  // 1/4-pel serach window
 #define HP_REF_OPT        1  // Remove redundant positions.
 typedef enum ME_HP_MODE {
