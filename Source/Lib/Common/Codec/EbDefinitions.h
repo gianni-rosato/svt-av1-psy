@@ -57,6 +57,9 @@ extern "C" {
 #define COMP_MODE                         1 // Add inter-inter compound modes
 #define PREDICTIVE_ME                     1 // Perform ME search around MVP @ MD
 
+
+#define HME_ME_TUNING                     1 // HME/ME tuning
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
@@ -3184,6 +3187,22 @@ static const uint32_t MD_SCAN_TO_OIS_32x32_SCAN[CU_MAX_COUNT] =
 /******************************************************************************
                             ME/HME settings
 *******************************************************************************/
+#if HME_ME_TUNING
+//     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
+static const uint8_t enable_hme_flag[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+    {
+        {   0,    0,    0,    0,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_1080p_RANGE
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_4K_RANGE
+    },{
+        {   0,    0,    0,    0,    0,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_1080p_RANGE
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_4K_RANGE
+    }
+};
+#endif
 //     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
 static const uint8_t enable_hme_level0_flag[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {
@@ -3202,8 +3221,13 @@ static const uint8_t enable_hme_level0_flag[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_
 static const uint16_t hme_level0_total_search_area_width[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {
         {  48,   48,   48,   48,   48,   48,   48,   48,   48,   48,   48,   48,   48 },
+#if HME_ME_TUNING // --
+        {  96,  96,    96,   96,  112,   48,   48,   48,   48,   48,   48,   48,   48 },
+        { 112,  128,  128,  128,  128,   48,   48,   48,   48,   48,   48,   48,   48 },
+#else
         { 112,  112,  112,  112,  112,   48,   48,   48,   48,   48,   48,   48,   48 },
         { 128,  128,  128,  128,  128,   48,   48,   48,   48,   48,   48,   48,   48 },
+#endif
         { 128,  128,  128,  128,  128,   96,   96,   96,   96,   96,   96,   96,   96 },
      } , {
         { 128,  128,  128,  128,  128,  128,  128,  128,  128,  128,  128,  128,  128 },
@@ -3216,8 +3240,13 @@ static const uint16_t hme_level0_total_search_area_width[SC_MAX_LEVEL][INPUT_SIZ
 static const uint16_t hme_level0_search_area_in_width_array_left[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {
         {  24,   24,   24,   24,   24,   24,   24,   24,   24,   24,   24,   24,   24 },
+#if HME_ME_TUNING // --
+        {  48,   48,   56,   56,   56,   24,   24,   24,   24,   24,   24,   24,   24 },
+        {  64,   64,   64,   64,   64,   24,   24,   24,   24,   24,   24,   24,   24 },
+#else
         {  56,   56,   56,   56,   56,   24,   24,   24,   24,   24,   24,   24,   24 },
         {  64,   64,   64,   64,   64,   24,   24,   24,   24,   24,   24,   24,   24 },
+#endif
         {  64,   64,   64,   64,   64,   48,   48,   48,   48,   48,   48,   48,   48 }
     } , {
         {  64,   64,   64,   64,   64,   64,   64,   64,   64,   64,   64,   64,   64 },
@@ -3416,10 +3445,17 @@ static const uint16_t hme_level2_search_area_in_height_array_bottom[SC_MAX_LEVEL
 
 static const uint16_t search_area_width[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {
+#if HME_ME_TUNING // -->
+        { 128,  128,  128,  128,   64,   64,   64,   64,   48,   16,   16,    16,   16 },
+        { 160,  160,  160,  160,   64,   64,   64,   64,   48,   16,   16,    16,   16 },
+        { 192,  192,  192,  192,   64,   64,   64,   64,   48,   16,   16,    16,   16 },
+        { 192,  192,  192,  192,   64,   64,   64,   64,   48,   16,   16,    16,   16 },
+#else
         {  64,   64,   64,   64,   64,   64,   64,   64,   48,   16,   16,    16,   16 },
         { 112,  112,   64,   64,   64,   64,   64,   64,   48,   16,   16,    16,   16 },
         { 128,  128,   64,   64,   64,   64,   64,   64,   48,   16,   16,    16,   16 },
         { 128,  128,   64,   64,   64,   64,   64,   64,   48,   16,   16,    16,   16 }
+#endif
     } , {
         {1280,  640,  640,  288,  208,  168,  128,  128,   64,   80,   80,    80,   80 },
         {1280,  640,  640,  288,  208,  168,  128,  128,   64,   80,   80,    80,   80 },
@@ -3429,10 +3465,17 @@ static const uint16_t search_area_width[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPP
 };
 static const uint16_t search_area_height[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {
+#if HME_ME_TUNING  // -->
+        { 128,  128,  128,  128,   32,   32,   32,   32,   16,    9,    9,     9,    9 },
+        { 160,  160,  160,  160,   32,   32,   32,   32,   16,    9,    9,     9,    9 },
+        { 192,  192,  192,  192,   32,   32,   32,   32,   16,    9,    9,     9,    9 },
+        { 192,  192,  192,  192,   32,   32,   32,   32,   16,    9,    9,     9,    9 }
+#else
         {  64,   64,   64,   64,   32,   32,   32,   32,   16,    9,    9,     9,    9 },
         { 112,  112,   64,   64,   32,   32,   32,   32,   16,    9,    9,     9,    9 },
         { 128,  128,   64,   64,   32,   32,   32,   32,   16,    9,    9,     9,    9 },
         { 128,  128,   64,   64,   32,   32,   32,   32,   16,    9,    9,     9,    9 }
+#endif
     } , {
         {1280,  640,  640,  248,  168,  128,   80,   80,   48,   80,   80,    80,   80 },
         {1280,  640,  640,  248,  168,  128,   80,   80,   48,   80,   80,    80,   80 },
@@ -3446,6 +3489,22 @@ static const uint16_t search_area_height[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUP
 /******************************************************************************
                             ME/HME settings for Altref Temporal Filtering
 *******************************************************************************/
+#if HME_ME_TUNING
+//     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
+static const uint8_t tf_enable_hme_flag[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
+    {
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_1080p_RANGE
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_4K_RANGE
+    },{
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_576p_RANGE_OR_LOWER
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_720P_RANGE/INPUT_SIZE_1080i_RANGE
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_1080p_RANGE
+        {   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1 },      // INPUT_SIZE_4K_RANGE
+    }
+};
+#endif
 //     M0    M1    M2    M3    M4    M5    M6    M7    M8    M9    M10    M11    M12
 static const uint8_t tf_enable_hme_level0_flag[SC_MAX_LEVEL][INPUT_SIZE_COUNT][MAX_SUPPORTED_MODES] = {
     {
