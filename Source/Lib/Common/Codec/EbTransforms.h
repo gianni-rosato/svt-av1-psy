@@ -4017,7 +4017,7 @@ extern "C" {
         uint32_t                       component_type,
         uint32_t                       bit_increment,
         TxType                         tx_type,
-        ModeDecisionCandidateBuffer   *candidateBuffer,
+        ModeDecisionCandidateBuffer   *candidate_buffer,
         int16_t                        txb_skip_context,
         int16_t                        dc_sign_context,
         PredictionMode                 pred_mode,

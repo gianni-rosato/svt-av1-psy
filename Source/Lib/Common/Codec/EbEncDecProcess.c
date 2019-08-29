@@ -1169,7 +1169,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     PictureControlSet     *picture_control_set_ptr,
     ModeDecisionContext   *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
-
+#if !MD_STAGING
     // NFL Level MD       Settings
     // 0                  MAX_NFL 40
     // 1                  30
@@ -1215,6 +1215,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->nfl_level = 6;
         else
             context_ptr->nfl_level = 7;
+#endif
     // Set Chroma Mode
     // Level                Settings
     // CHROMA_MODE_0  0     Full chroma search @ MD
@@ -1376,6 +1377,100 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->predictive_me_level = 0;
     else
         context_ptr->predictive_me_level = 0;
+#endif
+
+#if MD_STAGING
+    // Derive md_staging_mode
+    //
+    // MD_STAGING_MODE_1
+    //  _______________________________________________________________________________________________________________________________________________
+    // |        | md_stage_0                  | md_stage_1                  | md_stage_2                     | md_stage_3                              |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_0 |Prediction for Luma & Chroma |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 or Luma & Chroma          |
+    // |        |No Interpolation Search      |                             |RDOQ                            |RDOQ                                     |
+    // |        |Regular Interpolation        |                             |No Tx Search                    |Tx Search                                |
+    // |        |                             |                             |No ATB                          |ATB                                      |
+    // |        |                             |                             |                                |CFL vs. Independent                      |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_1 |Prediction for Chroma        |Prediction for Luma & Chroma |Bypassed                        |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |                                |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |                                |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_2 |Prediction for Chroma        |Prediction for Luma & Chroma |Bypassed                        |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |                                |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |                                |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_3 |Prediction for Chroma        |Prediction for Luma & Chroma |Bypassed                        |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |                                |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |                                |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    //
+    // MD_STAGING_MODE_2
+    //  _______________________________________________________________________________________________________________________________________________
+    // |        | md_stage_0                  | md_stage_1                  | md_stage_2                     | md_stage_3                              |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_0 |Prediction for Luma & Chroma |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 or Luma & Chroma          |
+    // |        |No Interpolation Search      |                             |No RDOQ                         |RDOQ                                     |
+    // |        |Regular Interpolation        |                             |No Tx Search                    |Tx Search                                |
+    // |        |                             |                             |No ATB                          |ATB                                      |
+    // |        |                             |                             |                                |CFL vs. Independent                      |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_1 |Prediction for Chroma        |Prediction for Luma & Chroma |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_2 |Prediction for Chroma        |Prediction for Luma & Chroma |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_3 |Prediction for Chroma        |Prediction for Luma & Chroma |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    //
+    // MD_STAGING_MODE_3
+    //  _______________________________________________________________________________________________________________________________________________
+    // |        | md_stage_0                  | md_stage_1                  | md_stage_2                     | md_stage_3                              |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_0 |Prediction for Luma & Chroma |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 or Luma & Chroma          |
+    // |        |No Interpolation Search      |                             |No RDOQ                         |RDOQ                                     |
+    // |        |Regular Interpolation        |                             |No Tx Search                    |Tx Search                                |
+    // |        |                             |                             |No ATB                          |ATB                                      |
+    // |        |                             |                             |                                |CFL vs. Independent                      |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_1 |Prediction for Chroma        |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |                             |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_2 |Prediction for Chroma        |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |                             |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_3 |Prediction for Chroma        |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |                             |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+
+    if (picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->md_staging_mode = MD_STAGING_MODE_1;
+    else if (picture_control_set_ptr->enc_mode <= ENC_M4)
+        context_ptr->md_staging_mode = MD_STAGING_MODE_3;
+    else
+        context_ptr->md_staging_mode = MD_STAGING_MODE_0; // Default structure = fast loop + full loop = md_stage_0 + md_stage_3
+
+    // Combine MD Class1&2
+    // 0                    OFF
+    // 1                    ON
+    context_ptr->combine_class12 = (picture_control_set_ptr->enc_mode == ENC_M0) ? 0 : 1;
 #endif
 
     // Set interpolation filter search blk size

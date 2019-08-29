@@ -161,8 +161,13 @@ extern "C" {
         MdEncPassCuData               *md_ep_pipe_sb;
         uint8_t                         pu_itr;
         uint8_t                         cu_size_log2;
+#if MD_STAGING
+        uint32_t                         best_candidate_index_array[MAX_NFL_BUFF];
+        uint32_t                         sorted_candidate_index_array[MAX_NFL];
+#else
         uint8_t                         best_candidate_index_array[MAX_NFL + 2];
         uint8_t                         sorted_candidate_index_array[MAX_NFL];
+#endif
         uint16_t                        cu_origin_x;
         uint16_t                        cu_origin_y;
         uint8_t                         sb_sz;
@@ -175,7 +180,9 @@ extern "C" {
         uint16_t                        pu_width;
         uint16_t                        pu_height;
         EbPfMode                        pf_md_mode;
+#if !MD_STAGING // renaming
         uint32_t                        full_recon_search_count;
+#endif
         EbBool                          cu_use_ref_src_flag;
         EbBool                          hbd_mode_decision;
         uint16_t                        qp_index;
@@ -228,8 +235,11 @@ extern "C" {
         int16_t                         cr_txb_skip_context;
         int16_t                         cr_dc_sign_context;
         // Multi-modes signal(s)
+#if !MD_STAGING
         uint8_t                         nfl_level;
         uint8_t                         skip_interpolation_search;
+#endif
+
         uint8_t                         parent_sq_type[MAX_PARENT_SQ];
         uint8_t                         parent_sq_has_coeff[MAX_PARENT_SQ];
         uint8_t                         parent_sq_pred_mode[MAX_PARENT_SQ];
@@ -258,7 +268,7 @@ extern "C" {
         int16_t                         best_spatial_pred_mv[2][4][2];
         int8_t                          valid_refined_mv[2][4];
 #endif
-        EbPictureBufferDesc                 *input_sample16bit_buffer;
+        EbPictureBufferDesc            *input_sample16bit_buffer;
 #if COMP_MODE
         DECLARE_ALIGNED(16, uint8_t, pred0[2 * MAX_SB_SQUARE]);
         DECLARE_ALIGNED(16, uint8_t, pred1[2 * MAX_SB_SQUARE]);
@@ -266,6 +276,41 @@ extern "C" {
         DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]);
     unsigned int prediction_mse ;
     EbBool      variance_ready;
+#endif
+#if MD_STAGING // classes
+    MD_STAGE                            md_stage;
+
+    uint32_t                            cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
+
+
+    uint8_t                             md_staging_mode;
+
+    uint8_t                             bypass_stage1[CAND_CLASS_TOTAL];
+    uint8_t                             bypass_stage2[CAND_CLASS_TOTAL];
+
+    uint32_t                            md_stage_0_count[CAND_CLASS_TOTAL]; // how many fast candiates per class
+    uint32_t                            md_stage_1_count[CAND_CLASS_TOTAL]; //how many candiates will be tested per md level and  per class
+    uint32_t                            md_stage_2_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_2
+    uint32_t                            md_stage_3_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_3
+
+    uint32_t                            md_stage_2_total_count;
+    uint32_t                            md_stage_3_total_count;
+
+    uint8_t                             combine_class12; //1:class1 and 2 are combined.
+
+    CAND_CLASS                          target_class;
+
+    // fast_loop_core signals
+    EbBool                              md_staging_use_bilinear;
+    EbBool                              md_staging_interpolation_search;
+    EbBool                              md_staging_skip_inter_chroma_pred;
+
+    // full_loop_core signals
+    EbBool                              md_staging_skip_full_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
+    EbBool                              md_staging_skip_atb;
+    EbBool                              md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
+    EbBool                              md_staging_skip_full_chroma;
+    EbBool                              md_staging_skip_rdoq;
 #endif
     } ModeDecisionContext;
 
@@ -351,7 +396,7 @@ extern "C" {
 
     extern void cfl_rd_pick_alpha(
         PictureControlSet             *picture_control_set_ptr,
-        ModeDecisionCandidateBuffer   *candidateBuffer,
+        ModeDecisionCandidateBuffer   *candidate_buffer,
         LargestCodingUnit             *sb_ptr,
         ModeDecisionContext           *context_ptr,
         EbPictureBufferDesc           *input_picture_ptr,

@@ -1109,10 +1109,10 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->tx_search_reduced_set = 1;
     else
         picture_control_set_ptr->tx_search_reduced_set = 1;
-
+#if !MD_STAGING
     // Set skip tx search based on NFL falg (0: Skip OFF ; 1: skip ON)
     picture_control_set_ptr->skip_tx_search = 0;
-
+#endif
     // Intra prediction modes                       Settings
     // 0                                            FULL
     // 1                                            LIGHT per block : disable_z2_prediction && disable_angle_refinement  for 64/32/4
@@ -1189,6 +1189,15 @@ EbErrorType signal_derivation_multi_processes_oq(
             CU_8x8_MODE_1 :
             CU_8x8_MODE_0;
 
+#if MD_STAGING // clean up atb
+        // Set atb mode      Settings
+        // 0                 OFF: no transform partitioning
+        // 1                 ON for INTRA blocks
+        if (picture_control_set_ptr->enc_mode <= ENC_M1 && sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT)
+            picture_control_set_ptr->atb_mode = 1;
+        else
+            picture_control_set_ptr->atb_mode = 0;
+#else
         // Set atb mode      Settings
         // 0                 OFF: no transform partitioning
         // 1                 Fast: perform transform partitioning for sensitive block sizes
@@ -1198,6 +1207,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->atb_mode = 1;
         else
             picture_control_set_ptr->atb_mode = 0;
+#endif
 #if COMP_MODE
         // Set Wedge mode      Settings
         // 0                 FULL: Full search

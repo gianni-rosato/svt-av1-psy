@@ -56,13 +56,16 @@ extern "C" {
 #define TFK_QPS_TUNING                    1 // QP scaling tuning of temporally filtered key frames.
 #define COMP_MODE                         1 // Add inter-inter compound modes
 #define PREDICTIVE_ME                     1 // Perform ME search around MVP @ MD
+#define MD_STAGING                        1
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
 #define ADP_STATS_PER_LAYER                             0
+#if !MD_STAGING
 #define NFL_TX_TH                                       12 // To be tuned
 #define NFL_IT_TH                                       2 // To be tuned
+#endif
 #define NSQ_TAB_SIZE                                    6
 #define AOM_INTERP_EXTEND                               4
 #define OPTIMISED_EX_SUBPEL                             1
@@ -134,7 +137,12 @@ enum {
 #define BLOCK_MAX_COUNT_SB_128                    4421  // TODO: reduce alloction for 64x64
 #define BLOCK_MAX_COUNT_SB_64                     1101  // TODO: reduce alloction for 64x64
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
+#if MD_STAGING // classes
+#define MAX_NFL                                   65
+#define MAX_NFL_BUFF                              (MAX_NFL + CAND_CLASS_TOTAL)  //need one extra temp buffer for each fast loop call
+#else
 #define MAX_NFL                                   40
+#endif
 #define MAX_LAD                                   120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x)>>3)<<3)
 #define AV1_PROB_COST_SHIFT 9
@@ -437,6 +445,34 @@ static INLINE uint16_t clip_pixel_highbd(int32_t val, int32_t bd) {
 #define ATTRIBUTE_PACKED
 #endif
 #endif /* ATTRIBUTE_PACKED */
+
+#if MD_STAGING // classes
+typedef enum CAND_CLASS {
+    CAND_CLASS_0,
+    CAND_CLASS_1,
+    CAND_CLASS_2,
+    CAND_CLASS_3,
+    CAND_CLASS_TOTAL
+} CAND_CLASS;
+
+typedef enum MD_STAGE {
+    MD_STAGE_0,
+    MD_STAGE_1,
+    MD_STAGE_2,
+    MD_STAGE_3,
+    MD_STAGE_TOTAL
+} MD_STAGE;
+
+#define MD_STAGING_MODE_0    0
+#define MD_STAGING_MODE_1    1
+#define MD_STAGING_MODE_2    2
+#define MD_STAGING_MODE_3    3
+
+#define INTRA_NFL           16
+#define INTER_NEW_NFL       16
+#define INTER_PRED_NFL      16
+
+#endif
 
 typedef enum
 {
@@ -2764,9 +2800,10 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define PF_OFF  0
 #define PF_N2   1
 #define PF_N4   2
-
 #define STAGE uint8_t
+#if !MD_STAGING // renaming
 #define MD_STAGE  0      // MD stage
+#endif
 #define ED_STAGE  1      // ENCDEC stage
 
 #define EB_TRANS_COEFF_SHAPE uint8_t
@@ -2776,9 +2813,9 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define ONLY_DC_SHAPE 3
 
 #define EB_CHROMA_LEVEL uint8_t
-#define CHROMA_MODE_0  0 // Chroma @ MD
-#define CHROMA_MODE_1  1 // Chroma blind @ MD + CFL @ EP
-#define CHROMA_MODE_2  2 // Chroma blind @ MD + no CFL @ EP
+#define CHROMA_MODE_0  0 // Full chroma search @ MD
+#define CHROMA_MODE_1  1 // Fast chroma search @ MD
+#define CHROMA_MODE_2  2 // Chroma blind @ MD + CFL @ EP
 #define CHROMA_MODE_3  3 // Chroma blind @ MD + no CFL @ EP
 
 typedef enum EbSbComplexityStatus

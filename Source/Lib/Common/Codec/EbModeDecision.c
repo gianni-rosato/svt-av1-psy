@@ -521,7 +521,7 @@ void LimitMvOverBound(
     if ((int32_t)ctxtPtr->cu_origin_y + mvyF < 0)
         *mvy = -(int16_t)ctxtPtr->cu_origin_y;
 }
-
+#if !MD_STAGING
 void sort_fast_loop_candidates(
     struct ModeDecisionContext   *context_ptr,
     uint32_t                        buffer_total_count,
@@ -569,7 +569,7 @@ void sort_fast_loop_candidates(
     // tx search
     *ref_fast_cost = *(buffer_ptr_array[sorted_candidate_index_array[0]]->fast_cost_ptr);
 }
-
+#endif
 #define BIPRED_3x3_REFINMENT_POSITIONS 8
 
 int8_t ALLOW_REFINEMENT_FLAG[BIPRED_3x3_REFINMENT_POSITIONS] = {  1, 0, 1, 0, 1,  0,  1, 0 };
@@ -3778,22 +3778,33 @@ void  inject_intra_candidates(
 
     return;
 }
+#if MD_STAGING // classes
+EbErrorType generate_md_stage_0_cand(
+    LargestCodingUnit   *sb_ptr,
+    ModeDecisionContext *context_ptr,
+    SsMeContext         *ss_mecontext,
+    uint32_t            *candidate_total_count_ptr,
+    PictureControlSet   *picture_control_set_ptr)
+{
+#else
 /***************************************
 * ProductGenerateMdCandidatesCu
 *   Creates list of initial modes to
 *   perform fast cost search on.
 ***************************************/
 EbErrorType ProductGenerateMdCandidatesCu(
-    LargestCodingUnit                 *sb_ptr,
-    ModeDecisionContext             *context_ptr,
-    SsMeContext                    *ss_mecontext,
-    const uint32_t                      lcuAddr,
-    uint32_t                           *candidateTotalCountPtr,
-    EbPtr                              interPredContextPtr,
-    PictureControlSet              *picture_control_set_ptr)
+
+    LargestCodingUnit   *sb_ptr,
+    ModeDecisionContext *context_ptr,
+    SsMeContext         *ss_mecontext,
+    const uint32_t       lcuAddr,
+    uint32_t            *candidateTotalCountPtr,
+    EbPtr                interPredContextPtr,
+    PictureControlSet   *picture_control_set_ptr)
 {
     (void)lcuAddr;
     (void)interPredContextPtr;
+#endif
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     const SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     const EB_SLICE slice_type = picture_control_set_ptr->slice_type;
@@ -3857,13 +3868,82 @@ EbErrorType ProductGenerateMdCandidatesCu(
                 sb_ptr,
                 &canTotalCnt);
     }
+
+
+#if MD_STAGING // classes
+    *candidate_total_count_ptr = canTotalCnt;
+    CAND_CLASS  cand_class_it;
+    memset(context_ptr->md_stage_0_count, 0, CAND_CLASS_TOTAL * sizeof(uint32_t));
+
+    uint32_t cand_i;
+    for (cand_i = 0; cand_i < canTotalCnt; cand_i++)
+    {
+        ModeDecisionCandidate * cand_ptr = &context_ptr->fast_candidate_array[cand_i];
+
+        if (cand_ptr->type == INTRA_MODE) {
+            cand_ptr->cand_class = CAND_CLASS_0;
+            context_ptr->md_stage_0_count[CAND_CLASS_0]++;
+        }
+        else if ((cand_ptr->type == INTER_MODE && cand_ptr->is_compound == 0) ||
+            (cand_ptr->type == INTER_MODE && cand_ptr->is_compound == 1 && cand_ptr->interinter_comp.type == COMPOUND_AVERAGE)) {
+
+            if (context_ptr->combine_class12) {
+                cand_ptr->cand_class = CAND_CLASS_1;
+                context_ptr->md_stage_0_count[CAND_CLASS_1]++;
+            }
+            else {
+                if (cand_ptr->is_new_mv) {
+                    cand_ptr->cand_class = CAND_CLASS_1;
+                    context_ptr->md_stage_0_count[CAND_CLASS_1]++;
+                }
+                else {
+                    cand_ptr->cand_class = CAND_CLASS_2;
+                    context_ptr->md_stage_0_count[CAND_CLASS_2]++;
+                }
+            }
+        }
+        else {
+            if (context_ptr->combine_class12) {
+                cand_ptr->cand_class = CAND_CLASS_2;
+                context_ptr->md_stage_0_count[CAND_CLASS_2]++;
+            }
+            else {
+                cand_ptr->cand_class = CAND_CLASS_3;
+                context_ptr->md_stage_0_count[CAND_CLASS_3]++;
+            }
+        }
+
+    }
+
+    uint32_t fast_accum = 0;
+    for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
+        fast_accum += context_ptr->md_stage_0_count[cand_class_it];
+    }
+    assert(fast_accum == canTotalCnt);
+#else
     *candidateTotalCountPtr = canTotalCnt;
+#endif
+
     return EB_ErrorNone;
 }
 
 /***************************************
 * Full Mode Decision
 ***************************************/
+#if MD_STAGING
+uint32_t product_full_mode_decision(
+    struct ModeDecisionContext   *context_ptr,
+    CodingUnit                   *cu_ptr,
+    ModeDecisionCandidateBuffer **buffer_ptr_array,
+    uint32_t                      candidate_total_count,
+    uint32_t                     *best_candidate_index_array,
+    uint32_t                     *best_intra_mode)
+{
+    uint32_t                  candidateIndex;
+    uint64_t                  lowestCost = 0xFFFFFFFFFFFFFFFFull;
+    uint64_t                  lowestIntraCost = 0xFFFFFFFFFFFFFFFFull;
+    uint32_t                  lowestCostIndex = 0;
+#else
 uint8_t product_full_mode_decision(
     struct ModeDecisionContext   *context_ptr,
     CodingUnit                   *cu_ptr,
@@ -3876,11 +3956,12 @@ uint8_t product_full_mode_decision(
 {
     UNUSED(bwidth);
     UNUSED(bheight);
-
     uint8_t                   candidateIndex;
     uint64_t                  lowestCost = 0xFFFFFFFFFFFFFFFFull;
     uint64_t                  lowestIntraCost = 0xFFFFFFFFFFFFFFFFull;
     uint8_t                   lowestCostIndex = 0;
+#endif
+
     PredictionUnit       *pu_ptr;
     uint32_t                   i;
     ModeDecisionCandidate       *candidate_ptr;
