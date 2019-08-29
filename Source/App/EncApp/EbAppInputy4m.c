@@ -257,24 +257,20 @@ int32_t read_y4m_frame_delimiter(EbConfig *cfg){
 }
 
 /* check if the input file is in YUV4MPEG2 (y4m) format */
-EbBool check_if_y4m(EbConfig *cfg){
-    char buffer[YUV4MPEG2_IND_SIZE+1];
-    size_t headerReadLength;
-
-    /* Parse the header for the "YUV4MPEG2" string */
-    headerReadLength = fread(buffer, YUV4MPEG2_IND_SIZE, 1, cfg->input_file);
-    if(headerReadLength != 1)
+EbBool check_if_y4m(EbConfig *cfg)
+{
+    size_t len;
+    char buf[YUV4MPEG2_IND_SIZE+1];
+    len = fread(buf, YUV4MPEG2_IND_SIZE, 1, cfg->input_file);
+    if (len != 1)
         return EB_FALSE;
-    buffer[YUV4MPEG2_IND_SIZE] = 0;
 
-    if (EB_STRCMP(buffer, "YUV4MPEG2") == 0) {
-        return EB_TRUE; /* YUV4MPEG2 file */
-    }else{
-        if(cfg->input_file != stdin) {
-            fseek(cfg->input_file, 0, SEEK_SET);
-        }else{
-            memcpy(cfg->y4m_buf, buffer, YUV4MPEG2_IND_SIZE); /* TODO copy 9 bytes read to cfg->y4m_buf*/
-        }
-        return EB_FALSE; /* Not a YUV4MPEG2 file */
+    if (!cfg->input_file_is_fifo) {
+        fseek(cfg->input_file, 0, SEEK_SET);
+    } else {
+        memcpy(cfg->y4m_buf, buf, YUV4MPEG2_IND_SIZE);
     }
+
+    buf[YUV4MPEG2_IND_SIZE] = 0;
+    return (EB_STRCMP(buf, "YUV4MPEG2") == 0);
 }

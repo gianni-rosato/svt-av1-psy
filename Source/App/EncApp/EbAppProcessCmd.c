@@ -791,14 +791,13 @@ void ReadInputFrames(
                     read_y4m_frame_delimiter(config);
                 uint64_t lumaReadSize = (uint64_t)input_padded_width*input_padded_height << is16bit;
                 ebInputPtr = inputPtr->luma;
-                if(config->y4m_input==EB_FALSE && config->processed_frame_count == 0 && config->input_file == stdin) {
-                    /* if not a y4m file and input is read from stdin, 9 bytes were already read when checking
-                        or the YUV4MPEG2 string in the stream, so copy those bytes over */
-                    memcpy(ebInputPtr,config->y4m_buf,YUV4MPEG2_IND_SIZE);
+                if (!config->y4m_input && config->processed_frame_count == 0 && config->input_file_is_fifo) {
+                    /* 9 bytes were already buffered during the the YUV4MPEG2 header probe */
+                    memcpy(ebInputPtr, config->y4m_buf, YUV4MPEG2_IND_SIZE);
                     headerPtr->n_filled_len += YUV4MPEG2_IND_SIZE;
                     ebInputPtr += YUV4MPEG2_IND_SIZE;
                     headerPtr->n_filled_len += (uint32_t)fread(ebInputPtr, 1, lumaReadSize-YUV4MPEG2_IND_SIZE, input_file);
-                }else {
+                } else {
                     headerPtr->n_filled_len += (uint32_t)fread(inputPtr->luma, 1, lumaReadSize, input_file);
                 }
                 headerPtr->n_filled_len += (uint32_t)fread(inputPtr->cb, 1, lumaReadSize >> (3 - color_format), input_file);
@@ -842,9 +841,10 @@ void ReadInputFrames(
                 headerPtr->n_filled_len += (uint32_t)fread(inputPtr->cr_ext, 1, nbitChromaReadSize, input_file);
             }
         }
+
         if (feof(input_file) != 0) {
-            if (input_file == stdin) {
-                //for stdin, we only know this when we reach eof
+            if (config->input_file_is_fifo) {
+                //for a fifo, we only know this when we reach eof
                 config->frames_to_be_encoded = config->frames_encoded;
                 if (headerPtr->n_filled_len != readSize) {
                     // not a completed frame
@@ -854,8 +854,8 @@ void ReadInputFrames(
                 // If we reached the end of file, loop over again
                 fseek(input_file, 0, SEEK_SET);
             }
-
         }
+
     } else {
         if (is16bit && config->compressed_ten_bit_format == 1) {
             // Determine size of each plane

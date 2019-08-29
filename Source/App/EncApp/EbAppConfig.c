@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "EbAppString.h"
 #include "EbAppConfig.h"
@@ -122,24 +123,25 @@
 /**********************************
  * Set Cfg Functions
  **********************************/
-static void SetCfgInputFile                     (const char *value, EbConfig *cfg)
+static void SetCfgInputFile(const char *filename, EbConfig *cfg)
 {
-    if (cfg->input_file && cfg->input_file != stdin)
-        fclose(cfg->input_file);
-    if (!strcmp(value, "stdin"))
+    if (!filename) {
+        cfg->input_file = NULL;
+        return;
+    }
+
+    if (!strcmp(filename, "stdin"))
         cfg->input_file = stdin;
     else
-        FOPEN(cfg->input_file, value, "rb");
-    /* if input is a YUV4MPEG2 (y4m) file, read header and parse parameters */
-    if(cfg->input_file!=NULL){
-        if(check_if_y4m(cfg) == EB_TRUE)
-            cfg->y4m_input = EB_TRUE;
-        else
-            cfg->y4m_input = EB_FALSE;
-    }else{
-        cfg->y4m_input = EB_FALSE;
-    }
+        FOPEN(cfg->input_file, filename, "rb");
+
+    int fd = fileno(cfg->input_file);
+    struct stat statbuf;
+    fstat(fd, &statbuf);
+    cfg->input_file_is_fifo = S_ISFIFO(statbuf.st_mode);
+    cfg->y4m_input = check_if_y4m(cfg);
 };
+
 static void SetCfgStreamFile                    (const char *value, EbConfig *cfg)
 {
     if (cfg->bitstream_file) { fclose(cfg->bitstream_file); }
@@ -548,7 +550,8 @@ void eb_config_dtor(EbConfig *config_ptr)
     }
 
     if (config_ptr->input_file) {
-        if (config_ptr->input_file != stdin) fclose(config_ptr->input_file);
+        if (!config_ptr->input_file_is_fifo)
+            fclose(config_ptr->input_file);
         config_ptr->input_file = (FILE *) NULL;
     }
 

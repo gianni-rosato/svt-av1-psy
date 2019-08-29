@@ -166,6 +166,7 @@ typedef struct EbConfig
      ****************************************/
     FILE                    *config_file;
     FILE                    *input_file;
+    EbBool                  input_file_is_fifo;
     FILE                    *bitstream_file;
     FILE                    *recon_file;
     FILE                    *error_log_file;
