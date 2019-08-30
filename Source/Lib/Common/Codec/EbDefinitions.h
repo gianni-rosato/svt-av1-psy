@@ -58,6 +58,10 @@ extern "C" {
 #define PREDICTIVE_ME                     1 // Perform ME search around MVP @ MD
 #define MD_STAGING                        1
 
+
+
+#define TURN_OFF_DUAL_MODE                1
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
