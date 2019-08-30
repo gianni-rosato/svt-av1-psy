@@ -57,9 +57,6 @@ extern "C" {
 #define COMP_MODE                         1 // Add inter-inter compound modes
 #define PREDICTIVE_ME                     1 // Perform ME search around MVP @ MD
 #define MD_STAGING                        1
-
-
-
 #define MD_EXIT                           1
 
 
