@@ -1078,10 +1078,14 @@ void init_nsq_block(
     } while (blk_idx < sequence_control_set_ptr->max_block_cnt);
 }
 void init_sq_non4_block(
+    SequenceControlSet    *sequence_control_set_ptr,
     ModeDecisionContext   *context_ptr){
     for (uint32_t blk_idx = 0; blk_idx < TOTAL_SQ_BLOCK_COUNT; blk_idx++){
         context_ptr->md_cu_arr_nsq[sq_block_index[blk_idx]].part = PARTITION_SPLIT;
         context_ptr->md_local_cu_unit[sq_block_index[blk_idx]].tested_cu_flag = EB_FALSE;
+    }
+    for(uint32_t blk_idx = 0; blk_idx < sequence_control_set_ptr->max_block_cnt; ++blk_idx){
+        context_ptr->md_local_cu_unit[blk_idx].avail_blk_flag = EB_FALSE;
     }
 }
 static INLINE TranHigh check_range(TranHigh input, int32_t bd) {
@@ -7234,6 +7238,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
     }
     else {
         init_sq_non4_block(
+            sequence_control_set_ptr,
             context_ptr);
     }
     // Mode Decision Neighbor Arrays
