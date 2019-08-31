@@ -414,10 +414,10 @@ EbErrorType picture_control_set_ctor(
     EB_MALLOC_ARRAY(object_ptr->md_rate_estimation_array, 1);
     memset(object_ptr->md_rate_estimation_array, 0, sizeof(MdRateEstimationContext));
 #endif
-    if (initDataPtr->cdf_mode == 0) {
-        EB_MALLOC_ARRAY(object_ptr->ec_ctx_array, all_sb);
-        EB_MALLOC_ARRAY(object_ptr->rate_est_array, all_sb);
-    }
+
+    EB_MALLOC_ARRAY(object_ptr->ec_ctx_array, all_sb);
+    EB_MALLOC_ARRAY(object_ptr->rate_est_array, all_sb);
+
     // Mode Decision Control config
     EB_MALLOC_ARRAY(object_ptr->mdc_sb_array, object_ptr->sb_total_count);
     object_ptr->qp_array_stride = (uint16_t)((initDataPtr->picture_width + MIN_BLOCK_SIZE - 1) / MIN_BLOCK_SIZE);

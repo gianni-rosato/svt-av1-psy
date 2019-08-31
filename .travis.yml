@@ -204,7 +204,7 @@ matrix:
       stage: unittest
       os: linux
       compiler: gcc
-      env: build_type=debug CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
+      env: build_type=release CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
       script:
         - *base_script
         - cd $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
@@ -217,7 +217,7 @@ matrix:
       stage: unittest
       os: osx
       compiler: clang
-      env: build_type=debug CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
+      env: build_type=release CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
       script:
         - *base_script
         - cd $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
