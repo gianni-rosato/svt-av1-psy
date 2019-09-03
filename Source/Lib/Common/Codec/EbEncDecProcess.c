@@ -1531,10 +1531,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->redundant_blk = EB_FALSE;
 #if EDGE_BASED_SKIP_ANGULAR_INTRA
-    if (MR_MODE || picture_control_set_ptr->enc_mode == ENC_M0)
-        context_ptr->edge_based_skip_angle_intra = 0;
+    if (sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT)
+        if (MR_MODE || picture_control_set_ptr->enc_mode == ENC_M0)
+            context_ptr->edge_based_skip_angle_intra = 0;
+        else
+            context_ptr->edge_based_skip_angle_intra = 1;
     else
-        context_ptr->edge_based_skip_angle_intra = 1;
+        context_ptr->edge_based_skip_angle_intra = 0;
 #endif
     return return_error;
 }

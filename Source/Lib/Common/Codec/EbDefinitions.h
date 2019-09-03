@@ -67,13 +67,13 @@ extern "C" {
 // Opt 0
 #define APPLY_3X3_FOR_BEST_ME             1 // Use the top 4 ME candidates @ 3x3 Unipred and 3x3 Bipred
 // Opt 1
-#define PRUNE_REF_FRAME_AT_ME             1 // Bipred candidates reduction @ ME
-// Opt 2
-#define PRUNE_REF_FRAME_FRO_REC_PARTITION 1 // MD candidates reduction @ MD
-// Opt 3
 #define COEFF_BASED_SKIP_ATB              1 // Skip ATB if parent block does not have coeff
-// Opt 4
+// Opt 2
 #define EDGE_BASED_SKIP_ANGULAR_INTRA     1 // Use edge detection to bypass some angular modes
+// Opt 3
+#define PRUNE_REF_FRAME_AT_ME             1 // Bipred candidates reduction @ ME
+// Opt 4
+#define PRUNE_REF_FRAME_FRO_REC_PARTITION 1 // MD candidates reduction @ MD
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
