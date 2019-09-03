@@ -1230,6 +1230,16 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             picture_control_set_ptr->atb_mode = 0;
 #endif
+#if COEFF_BASED_SKIP_ATB
+        // Set skip atb                          Settings
+        // 0                                     OFF
+        // 1                                     ON
+        if (MR_MODE || picture_control_set_ptr->enc_mode == ENC_M0 || picture_control_set_ptr->sc_content_detected)
+            picture_control_set_ptr->coeff_based_skip_atb = 0;
+        else
+            picture_control_set_ptr->coeff_based_skip_atb = 1;
+
+#endif
 #if COMP_MODE
         // Set Wedge mode      Settings
         // 0                 FULL: Full search
@@ -1265,6 +1275,18 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->frame_end_cdf_update_mode = 1;
         else
             picture_control_set_ptr->frame_end_cdf_update_mode = 0;
+#endif
+#if PRUNE_REF_FRAME_AT_ME
+        if (picture_control_set_ptr->sc_content_detected || picture_control_set_ptr->enc_mode == ENC_M0 || picture_control_set_ptr->enc_mode >= ENC_M4)
+            picture_control_set_ptr->prune_unipred_at_me = 0;
+        else
+            picture_control_set_ptr->prune_unipred_at_me = 1;
+#endif
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+        if (picture_control_set_ptr->sc_content_detected || picture_control_set_ptr->enc_mode == ENC_M0)
+            picture_control_set_ptr->prune_ref_frame_for_rec_partitions = 0;
+        else
+            picture_control_set_ptr->prune_ref_frame_for_rec_partitions = 1;
 #endif
 #if MFMV_SUPPORT
         //CHKN: Temporal MVP should be disabled for pictures beloning to 4L MiniGop preceeded by 5L miniGOP. in this case the RPS is wrong(known issue). check RPS construction for more info.

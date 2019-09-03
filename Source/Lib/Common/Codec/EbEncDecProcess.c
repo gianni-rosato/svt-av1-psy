@@ -1530,7 +1530,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->redundant_blk = EB_TRUE;
     else
         context_ptr->redundant_blk = EB_FALSE;
-
+#if EDGE_BASED_SKIP_ANGULAR_INTRA
+    if (MR_MODE || picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->edge_based_skip_angle_intra = 0;
+    else
+        context_ptr->edge_based_skip_angle_intra = 1;
+#endif
     return return_error;
 }
 

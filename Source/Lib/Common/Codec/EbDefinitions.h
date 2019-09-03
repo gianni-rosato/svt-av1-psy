@@ -63,6 +63,17 @@ extern "C" {
 #define HME_ME_TUNING                     1 // HME/ME tuning
 #define MFMV_SUPPORT                      1// Temporal mvp support. aka. MFMV
 
+// Lossy optimizations -
+// Opt 0
+#define APPLY_3X3_FOR_BEST_ME             1 // Use the top 4 ME candidates @ 3x3 Unipred and 3x3 Bipred
+// Opt 1
+#define PRUNE_REF_FRAME_AT_ME             1 // Bipred candidates reduction @ ME
+// Opt 2
+#define PRUNE_REF_FRAME_FRO_REC_PARTITION 1 // MD candidates reduction @ MD
+// Opt 3
+#define COEFF_BASED_SKIP_ATB              1 // Skip ATB if parent block does not have coeff
+// Opt 4
+#define EDGE_BASED_SKIP_ANGULAR_INTRA     1 // Use edge detection to bypass some angular modes
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
@@ -478,6 +489,17 @@ typedef enum MD_STAGE {
 #define INTER_NEW_NFL       16
 #define INTER_PRED_NFL      16
 
+#endif
+
+#if APPLY_3X3_FOR_BEST_ME
+#define BEST_CANDIDATE_COUNT 4
+#endif
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+#define MAX_REF_TYPE_CAND   30
+#define PRUNE_REC_TH         5
+#endif
+#if PRUNE_REF_FRAME_AT_ME
+#define PRUNE_REF_ME_TH      2
 #endif
 
 #define MD_EXIT_THSL         0 // MD_EXIT_THSL -->0 is lossless 100 is maximum. Increase with a step of 10-20.
