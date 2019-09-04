@@ -711,10 +711,11 @@ void PerformEarlyLcuPartitionning(
     // SB Loop : Partitionnig Decision
     for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
         sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
+#if !QPM
         {
             sb_ptr->qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
         }
-
+#endif
         early_mode_decision_lcu(
             sequence_control_set_ptr,
             picture_control_set_ptr,
@@ -732,10 +733,11 @@ void PerformEarlyLcuPartitionningLcu(
 
     // SB Loop : Partitionnig Decision
     sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
+#if !QPM
     {
         sb_ptr->qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
     }
-
+#endif
     early_mode_decision_lcu(
         sequence_control_set_ptr,
         picture_control_set_ptr,

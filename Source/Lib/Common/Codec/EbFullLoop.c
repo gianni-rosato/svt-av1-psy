@@ -1846,7 +1846,11 @@ int32_t av1_quantize_inv_quantize(
     const QmVal *qMatrix = picture_control_set_ptr->parent_pcs_ptr->gqmatrix[NUM_QM_LEVELS - 1][0][txsize];
     const QmVal *iqMatrix = picture_control_set_ptr->parent_pcs_ptr->giqmatrix[NUM_QM_LEVELS - 1][0][txsize];
 #if ADD_DELTA_QP_SUPPORT
+#if QPM
+    uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present ? quantizer_to_qindex[qp] : picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#else
     uint32_t qIndex = qp;
+#endif
 #else
     uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx + segmentation_qp_offset ;
 #endif
