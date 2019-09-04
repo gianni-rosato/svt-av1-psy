@@ -141,9 +141,15 @@ EbErrorType eb_sequence_control_set_ctor(
         sequence_control_set_ptr->seq_header.sb_mi_size = 16;        // Size of the superblock in units of MI blocks
         sequence_control_set_ptr->seq_header.sb_size_log2 = 4;
     }
+#if TURN_OFF_DUAL_MODE
+    // 0 - disable dual interpolation filter
+    // 1 - enable vertical and horiz filter selection
+    sequence_control_set_ptr->seq_header.enable_dual_filter = 0;
+#else
     sequence_control_set_ptr->seq_header.enable_dual_filter = 1;
     // 0 - disable dual interpolation filter
     // 1 - enable vertical and horiz filter selection
+#endif
     sequence_control_set_ptr->seq_header.order_hint_info.enable_order_hint = 1;
     // 0 - disable order hint, and related tools:
     // jnt_comp, ref_frame_mvs, frame_sign_bias
