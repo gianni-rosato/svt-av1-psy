@@ -112,7 +112,6 @@ typedef struct CandidateMvDec {
     IntMvDec comp_mv;
     int32_t weight;
 } CandidateMvDec;
-
 #define MFMV_STACK_SIZE 3
 typedef struct TemporalMvRef {
     /* Motion Filed MV */

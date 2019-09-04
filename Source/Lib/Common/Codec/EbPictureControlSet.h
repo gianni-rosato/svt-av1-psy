@@ -13865,6 +13865,10 @@ extern "C" {
         EbWarpedMotionParams    ref_global_motion[TOTAL_REFS_PER_FRAME];
         struct MdRateEstimationContext *md_rate_estimation_array;
 #endif
+#if MFMV_SUPPORT
+        int8_t ref_frame_side[REF_FRAMES];
+        TPL_MV_REF  *tpl_mvs;
+#endif
     } PictureControlSet;
 
     // To optimize based on the max input size
@@ -14292,6 +14296,9 @@ extern "C" {
         uint8_t                            nsq_present;
 #if INCOMPLETE_SB_FIX
         uint8_t                            over_boundary_block_mode;
+#endif
+#if MFMV_SUPPORT
+        uint8_t                            mfmv;
 #endif
     } PictureControlSetInitData;
 

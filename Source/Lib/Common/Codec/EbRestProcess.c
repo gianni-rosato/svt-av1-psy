@@ -310,7 +310,7 @@ void* rest_kernel(void *input_ptr)
                     picture_control_set_ptr,
                     sequence_control_set_ptr);
 
-            // Pad the reference picture and set up TMVP flag and ref POC
+            // Pad the reference picture and set ref POC
             if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                 PadRefAndSetFlags(
                     picture_control_set_ptr,

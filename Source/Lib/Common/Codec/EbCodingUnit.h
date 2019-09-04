@@ -204,6 +204,17 @@ extern "C" {
         uint8_t tx_depth;
     } MbModeInfo;
 
+#if MFMV_SUPPORT
+    typedef struct {
+        IntMv mfmv0;
+        uint8_t ref_frame_offset;
+    } TPL_MV_REF;
+    typedef struct {
+        IntMv mv;
+        MvReferenceFrame ref_frame;
+    } MV_REF;
+#endif
+
     typedef struct ModeInfo {
         MbModeInfo mbmi;
     } ModeInfo;

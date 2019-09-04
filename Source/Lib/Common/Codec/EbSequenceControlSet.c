@@ -96,10 +96,10 @@ EbErrorType eb_sequence_control_set_ctor(
     sequence_control_set_ptr->general_progressive_source_flag = 1;
     sequence_control_set_ptr->general_interlaced_source_flag = 0;
     sequence_control_set_ptr->general_frame_only_constraint_flag = 0;
-
+#if !MFMV_SUPPORT // SVT-HEVC TMVP code
     // temporal mvp enable flag
     sequence_control_set_ptr->enable_tmvp_sps = 1;
-
+#endif
     // Rate Control
     sequence_control_set_ptr->rate_control_mode = 0;
     sequence_control_set_ptr->target_bitrate = 0x1000;
@@ -107,10 +107,10 @@ EbErrorType eb_sequence_control_set_ctor(
 
     // Quantization
     sequence_control_set_ptr->qp = 20;
-
+#if !MFMV_SUPPORT // SVT-HEVC TMVP code
     // mv merge
     sequence_control_set_ptr->mv_merge_total_count = 5;
-
+#endif
     // Initialize SB params
     EB_MALLOC_ARRAY(sequence_control_set_ptr->sb_params_array,
         ((MAX_PICTURE_WIDTH_SIZE + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz) *
@@ -254,8 +254,10 @@ EbErrorType copy_sequence_control_set(
     dst->target_bitrate = src->target_bitrate;                           writeCount += sizeof(uint32_t);
     dst->available_bandwidth = src->available_bandwidth;                      writeCount += sizeof(uint32_t);
     dst->qp = src->qp;                                      writeCount += sizeof(uint32_t);
+#if !MFMV_SUPPORT // SVT-HEVC TMVP code
     dst->enable_tmvp_sps = src->enable_tmvp_sps;                           writeCount += sizeof(uint32_t);
     dst->mv_merge_total_count = src->mv_merge_total_count;                       writeCount += sizeof(uint32_t);
+#endif
     dst->film_grain_denoise_strength = src->film_grain_denoise_strength;          writeCount += sizeof(int32_t);
     dst->seq_header.film_grain_params_present = src->seq_header.film_grain_params_present;              writeCount += sizeof(int32_t);
     dst->seq_header.film_grain_params_present = src->seq_header.film_grain_params_present;              writeCount += sizeof(int32_t);
@@ -311,6 +313,9 @@ EbErrorType copy_sequence_control_set(
     dst->tf_segment_row_count = src->tf_segment_row_count;
 #if INCOMPLETE_SB_FIX
     dst->over_boundary_block_mode = src->over_boundary_block_mode;
+#endif
+#if MFMV_SUPPORT
+    dst->mfmv_enabled = src->mfmv_enabled;
 #endif
     return EB_ErrorNone;
 }

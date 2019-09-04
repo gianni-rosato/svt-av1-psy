@@ -810,6 +810,16 @@ void* picture_manager_kernel(void *input_ptr)
                                         EB_ENC_PM_ERROR1);
                                 }
                             }
+#if MFMV_SUPPORT
+                            //fill the non used spots to be used in MFMV.
+                            for (refIdx = entryPictureControlSetPtr->ref_list0_count; refIdx < 4; ++refIdx)
+                                ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0][refIdx] = ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0][0];
+
+                            if (entryPictureControlSetPtr->ref_list1_count == 0) {
+                                for (refIdx = entryPictureControlSetPtr->ref_list1_count; refIdx < 3; ++refIdx)
+                                    ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1][refIdx] = ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0][0];
+                            }
+#endif
                         }
 
                         // Configure List1
@@ -854,6 +864,13 @@ void* picture_manager_kernel(void *input_ptr)
                                         EB_ENC_PM_ERROR1);
                                 }
                             }
+#if MFMV_SUPPORT
+                            //fill the non used spots to be used in MFMV.
+                            if (entryPictureControlSetPtr->ref_list1_count) {
+                                for (refIdx = entryPictureControlSetPtr->ref_list1_count; refIdx < 3; ++refIdx)
+                                    ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1][refIdx] = ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1][0];
+                            }
+#endif
                         }
 
                         // Adjust the Slice-type if the Lists are Empty, but don't reset the Prediction Structure

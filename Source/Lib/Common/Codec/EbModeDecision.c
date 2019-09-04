@@ -419,7 +419,7 @@ EbBool mrp_is_already_injected_mv_bipred(
     }
     return(EB_FALSE);
 }
-
+#if !MFMV_SUPPORT // SVT-HEVC TMVP code
 EbErrorType SetMvpClipMVs(
     ModeDecisionCandidate  *candidate_ptr,
     uint32_t                    cu_origin_x,
@@ -521,6 +521,8 @@ void LimitMvOverBound(
     if ((int32_t)ctxtPtr->cu_origin_y + mvyF < 0)
         *mvy = -(int16_t)ctxtPtr->cu_origin_y;
 }
+#endif
+
 #if !MD_STAGING
 void sort_fast_loop_candidates(
     struct ModeDecisionContext   *context_ptr,
