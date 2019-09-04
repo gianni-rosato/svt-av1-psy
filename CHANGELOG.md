@@ -4,6 +4,7 @@
 
 - Decoder Inter support
 - Decoder Screen Content Tools support
+- Decoder Post Processing Filters support
 
 ## [0.6.0] - 2019-06-28
 

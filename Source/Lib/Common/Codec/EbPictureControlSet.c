@@ -1019,6 +1019,17 @@ EbErrorType picture_control_set_ctor(
         object_ptr->mi_grid_base[miIdx] = object_ptr->mip + miIdx;
     object_ptr->mi_stride = pictureLcuWidth * (BLOCK_SIZE_64 / 4);
 #endif
+#if MFMV_SUPPORT
+    if (initDataPtr->mfmv)
+    {
+        //MFMV: map is 8x8 based.
+        uint32_t mi_rows = initDataPtr->picture_height >> MI_SIZE_LOG2;
+        const int mem_size = ((mi_rows + MAX_MIB_SIZE) >> 1) * (object_ptr->mi_stride >> 1);
+
+        EB_MALLOC_ALIGNED_ARRAY(object_ptr->tpl_mvs, mem_size);
+        memset(object_ptr->tpl_mvs, 0, sizeof(TPL_MV_REF)*mem_size);
+    }
+#endif
     object_ptr->hash_table.p_lookup_table = NULL;
     av1_hash_table_create(&object_ptr->hash_table);
     return EB_ErrorNone;

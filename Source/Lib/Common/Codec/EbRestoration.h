@@ -29,6 +29,8 @@ extern "C" {
 #define CLIP(x, lo, hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
 #define RINT(x) ((x) < 0 ? (int32_t)((x)-0.5) : (int32_t)((x) + 0.5))
 
+#define REAL_PTR(hbd, d) ((hbd) ? (uint8_t *)CONVERT_TO_SHORTPTR(d) : (d))
+
 #define RESTORATION_PROC_UNIT_SIZE 64
 
     // Filter tile grid offset upwards compared to the superblock grid
@@ -305,6 +307,9 @@ extern "C" {
         const AV1PixelRect *tile_rect, int32_t tile_stripe0, int32_t ss_x, int32_t ss_y,
         int32_t highbd, int32_t bit_depth, uint8_t *data8, int32_t stride, uint8_t *dst8,
         int32_t dst_stride, int32_t *tmpbuf, int32_t optimized_lr);
+
+    void extend_lines(uint8_t *buf, int32_t width, int32_t height, int32_t stride,
+        int32_t extend, int32_t use_highbitdepth);
 
     //void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
     //                                       Av1Common *cm, int32_t optimized_lr);

@@ -17,7 +17,7 @@ extern "C" {
 #endif
 
 /* TO enable some debug checks for coeff producer and consumer */
-#define SVT_DEC_COEFF_DEBUG    1
+#define SVT_DEC_COEFF_DEBUG    0
 
 #ifdef __cplusplus
     }

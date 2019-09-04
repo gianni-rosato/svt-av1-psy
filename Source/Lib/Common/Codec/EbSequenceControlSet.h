@@ -109,13 +109,13 @@ extern "C" {
 
         // Quantization
         uint32_t                                qp;
-
+#if !MFMV_SUPPORT // SVT-HEVC TMVP code
         // tmvp enable
         uint32_t                                enable_tmvp_sps;
 
         // MV merge
         uint32_t                                mv_merge_total_count;
-
+#endif
         // Picture Analysis
         uint32_t                                picture_analysis_number_of_regions_per_width;
         uint32_t                                picture_analysis_number_of_regions_per_height;
@@ -201,6 +201,9 @@ extern "C" {
         *
         * Default is 0. */
         uint8_t                                 down_sampling_method_me_search;
+#if MFMV_SUPPORT
+        uint8_t                                 mfmv_enabled; // 1:Enabled  0:Disabled
+#endif
         uint8_t                                 trans_coeff_shape_array[2][8][4];    // [componantTypeIndex][resolutionIndex][levelIndex][tuSizeIndex]
         EbBlockMeanPrec                         block_mean_calc_prec;
         BitstreamLevel                          level[MAX_NUM_OPERATING_POINTS];

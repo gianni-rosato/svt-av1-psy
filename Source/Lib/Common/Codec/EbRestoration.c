@@ -292,8 +292,6 @@ static void copy_tile(int32_t width, int32_t height, const uint8_t *src, int32_t
         copy_tile_lowbd(width, height, src, src_stride, dst, dst_stride);
 }
 
-#define REAL_PTR(hbd, d) ((hbd) ? (uint8_t *)CONVERT_TO_SHORTPTR(d) : (d))
-
 // With striped loop restoration, the filtering for each 64-pixel stripe gets
 // most of its input from the output of CDEF (stored in data8), but we need to
 // fill out a border of 3 pixels above/below the stripe according to the
@@ -1550,7 +1548,7 @@ int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
 }
 
 // Extend to left and right
-static void extend_lines(uint8_t *buf, int32_t width, int32_t height, int32_t stride,
+void extend_lines(uint8_t *buf, int32_t width, int32_t height, int32_t stride,
     int32_t extend, int32_t use_highbitdepth) {
     for (int32_t i = 0; i < height; ++i) {
         if (use_highbitdepth) {

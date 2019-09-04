@@ -20,7 +20,7 @@ extern "C" {
 
     struct ModeDecisionContext;
     struct InterPredictionContext;
-
+#if !MFMV_SUPPORT // SVT-HEVC TMVP code
     typedef enum TmvpPos
     {
         TmvpColocatedBottomRight = 0,
@@ -37,7 +37,7 @@ extern "C" {
 
         //*Note- list 1 motion info will be added when B-slices are ready
     } TmvpUnit;
-
+#endif
     extern EbErrorType clip_mv(
         uint32_t  cu_origin_x,
         uint32_t  cu_origin_y,

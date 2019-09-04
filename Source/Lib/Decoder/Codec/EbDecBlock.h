@@ -112,7 +112,6 @@ typedef struct CandidateMvDec {
     IntMvDec comp_mv;
     int32_t weight;
 } CandidateMvDec;
-
 #define MFMV_STACK_SIZE 3
 typedef struct TemporalMvRef {
     /* Motion Filed MV */
@@ -272,6 +271,9 @@ typedef struct SBInfo {
     int8_t      *sb_cdef_strength; /*!< At 64x64 blk level */
     int32_t     *sb_delta_q; /*!< At SB level */
     int32_t     *sb_delta_lf; /*!< At SB level */
+
+    // Loop Restoration Unit
+    RestorationUnitInfo    *sb_lr_unit[MAX_MB_PLANE];
 
     TransformInfo_t *sb_trans_info[MAX_MB_PLANE - 1];
 

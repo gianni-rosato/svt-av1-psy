@@ -19,6 +19,7 @@
 #include "EbDecInverseQuantize.h"
 #include "EbDecProcessFrame.h"
 #include "EbDecProcessBlock.h"
+#include "EbDecNbr.h"
 
 /* decode partition */
 static void decode_partition(DecModCtxt *dec_mod_ctxt,
@@ -118,8 +119,32 @@ void decode_super_block(DecModCtxt *dec_mod_ctxt,
                         SBInfo *sb_info)
 {
     EbDecHandle *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
+    SeqHeader *seq = &dec_handle->seq_header;
 
     /* Pointer updates */
+    bool do_memset = true;
+    int left_available = (mi_col > (uint32_t)dec_mod_ctxt->cur_tile_info->mi_col_start);
+    if (left_available) {
+        ModeInfo_t *left_mode = get_left_mode_info(dec_handle, mi_row, mi_col, sb_info);
+        if (left_mode->skip && left_mode->sb_type == seq->sb_size) {
+            do_memset = false;
+        }
+    }
+
+    if (do_memset) {
+        EbColorConfig *color_config = &seq->color_config;
+        int32_t sb_size_log2 = seq->sb_size_log2;
+
+        int32_t y_size = (1 << sb_size_log2) * (1 << sb_size_log2);
+        int32_t iq_size = y_size +
+            (color_config->subsampling_x ? y_size >> 2 : y_size) +
+            (color_config->subsampling_y ? y_size >> 2 : y_size);
+
+        memset(dec_mod_ctxt->sb_iquant_ptr, 0, iq_size *
+            sizeof(*dec_mod_ctxt->sb_iquant_ptr));
+    }
+
+    dec_mod_ctxt->iquant_cur_ptr = dec_mod_ctxt->sb_iquant_ptr;
 
     /* SB level dequant update */
     update_dequant(dec_handle, sb_info);
