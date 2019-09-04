@@ -14,6 +14,7 @@
 #include "EbSvtAv1Dec.h"
 #include "EbDecParamParser.h"
 #include "EbMD5Utility.h"
+#include "EbDecTime.h"
 
 #ifdef _MSC_VER
 #include <io.h>     /* _setmode() */
@@ -94,6 +95,12 @@ void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
     fflush(cli->outFile);
 }
 
+static void show_progress(int in_frame, uint64_t dx_time) {
+    printf("\n%d frames decoded in %" PRId64 " us (%.2f fps)\r",
+        in_frame, dx_time,
+        (double)in_frame * 1000000.0 / (double)dx_time);
+}
+
 /***************************************
  * Decoder App Main
  ***************************************/
@@ -111,6 +118,8 @@ int32_t main(int32_t argc, char* argv[])
     cli.inFile = NULL;
     cli.outFile = NULL;
     cli.enable_md5 = 0;
+    cli.fps_frm = 0;
+    cli.fps_summary = 0;
 
     uint64_t stop_after = 0;
     uint32_t in_frame = 0;
@@ -118,13 +127,18 @@ int32_t main(int32_t argc, char* argv[])
     MD5Context md5_ctx;
     unsigned char md5_digest[16];
 
+    struct EbDecTimer timer;
+    uint64_t dx_time = 0;
+    int fps_frm = 0;
+    int fps_summary = 0;
+
     uint8_t *buf = NULL;
     size_t bytes_in_buffer = 0, buffer_size = 0;
 
     // Print Decoder Info
     printf("\n**WARNING** decoder is not feature complete\n");
     printf("Current support: intra & inter(no Compund, no Wedge tools), ");
-    printf("(no post-proc-filters)\n\n");
+    printf("no super-resolution, no Film Grain\n\n");
 
     printf("-------------------------------------\n");
     printf("SVT-AV1 Decoder Sample Application v1.2.0\n");
@@ -165,6 +179,9 @@ int32_t main(int32_t argc, char* argv[])
 
         int enable_md5 = cli.enable_md5;
 
+        fps_frm = cli.fps_frm;
+        fps_summary = cli.fps_summary;
+
         EbBufferHeaderType *recon_buffer = NULL;
         recon_buffer = (EbBufferHeaderType*)malloc(sizeof(EbBufferHeaderType));
         recon_buffer->p_buffer = (uint8_t *)malloc(sizeof(EbSvtIOFormat));
@@ -194,18 +211,31 @@ int32_t main(int32_t argc, char* argv[])
             // Input Loop Thread
             while (read_input_frame(&cli, &buf, &bytes_in_buffer, &buffer_size, NULL)) {
                 if (!stop_after || in_frame < stop_after) {
+
+                    dec_timer_start(&timer);
+
                     return_error |= eb_svt_decode_frame(p_handle, buf, bytes_in_buffer);
+
+                    dec_timer_mark(&timer);
+                    dx_time += dec_timer_elapsed(&timer);
 
                     in_frame++;
 
                     if (eb_svt_dec_get_picture(p_handle, recon_buffer, stream_info, frame_info) != EB_DecNoOutputPicture) {
+                        if (fps_frm)
+                            show_progress(in_frame , dx_time);
+
                         if (enable_md5)
                             write_md5(recon_buffer, &cli, &md5_ctx);
-                        else
+                        if(cli.outFile != NULL)
                             write_frame(recon_buffer, &cli);
                     }
                 }
                 else break;
+            }
+            if (fps_summary || fps_frm) {
+                show_progress(in_frame, dx_time);
+                printf("\n");
             }
 
             if (enable_md5) {

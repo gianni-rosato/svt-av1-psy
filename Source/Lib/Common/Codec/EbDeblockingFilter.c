@@ -585,9 +585,7 @@ void aom_highbd_lpf_vertical_8_c(uint16_t *s, int32_t pitch, const uint8_t *blim
 //    { SEG_LVL_ALT_LF_V, SEG_LVL_ALT_LF_V }
 //};
 
-typedef enum EDGE_DIR { VERT_EDGE = 0, HORZ_EDGE = 1, NUM_EDGE_DIRS } EDGE_DIR;
-
-static const int32_t mode_lf_lut[] = {
+const int32_t mode_lf_lut[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // INTRA_MODES
     1, 1, 0, 1,                             // INTER_MODES (GLOBALMV == 0)
     1, 1, 1, 1, 1, 1, 0, 1  // INTER_COMPOUND_MODES (GLOBAL_GLOBALMV == 0)
@@ -861,15 +859,6 @@ static TxSize get_transform_size(const MacroBlockD *const xd,
         : txsize_vert_map[tx_size];
     return tx_size;
 }
-
-typedef struct AV1_DEBLOCKING_PARAMETERS {
-    // length of the filter applied to the outer edge
-    uint32_t filter_length;
-    // deblocking limits
-    const uint8_t *lim;
-    const uint8_t *mblim;
-    const uint8_t *hev_thr;
-} AV1_DEBLOCKING_PARAMETERS;
 
 // Return TxSize from get_transform_size(), so it is plane and direction
 // awared

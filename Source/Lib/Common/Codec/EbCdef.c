@@ -19,10 +19,6 @@
 #include "EbEncDecProcess.h"
 #include "aom_dsp_rtcd.h"
 
- void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
-    int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
-    int32_t vsize, int32_t hsize);
-
 extern int16_t eb_av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 //-------memory stuff
@@ -447,7 +443,7 @@ void copy_sb8_16(uint16_t *dst, int32_t dstride,
         }
 }
 
-static INLINE void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h,
+void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h,
     uint16_t x) {
     for (int32_t i = 0; i < v; i++) {
         for (int32_t j = 0; j < h; j++)
@@ -455,7 +451,7 @@ static INLINE void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t 
     }
 }
 
-static INLINE void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src,
+void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src,
     int32_t sstride, int32_t v, int32_t h) {
     for (int32_t i = 0; i < v; i++) {
         for (int32_t j = 0; j < h; j++)

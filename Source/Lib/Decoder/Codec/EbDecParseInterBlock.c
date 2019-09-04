@@ -35,6 +35,7 @@ typedef struct {
 
 #define MAX_COLOR_CONTEXT_HASH 8
 #define NUM_PALETTE_NEIGHBORS 3  // left, top-left and top.
+#define COLOR_MAP_STRIDE 128 // worst case
 
 // Negative values are invalid
 static const int palette_color_index_context_lookup[MAX_COLOR_CONTEXT_HASH +
@@ -671,6 +672,34 @@ static int has_top_right(EbDecHandle *dec_handle, PartitionInfo_t *pi,
             if (mask_row & bs) has_tr = 0;
     }
     return has_tr;
+}
+
+static INLINE void integer_mv_precision(MV *mv) {
+    int mod = (mv->row % 8);
+    if (mod != 0) {
+        mv->row -= mod;
+        if (abs(mod) > 4) {
+            if (mod > 0) {
+                mv->row += 8;
+            }
+            else {
+                mv->row -= 8;
+            }
+        }
+    }
+
+    mod = (mv->col % 8);
+    if (mod != 0) {
+        mv->col -= mod;
+        if (abs(mod) > 4) {
+            if (mod > 0) {
+                mv->col += 8;
+            }
+            else {
+                mv->col -= 8;
+            }
+        }
+    }
 }
 
 static INLINE void lower_mv_precision(MV *mv, int allow_hp, int is_integer) {
@@ -1440,7 +1469,7 @@ int read_mv_component(SvtReader *r, NmvComponent *mvcomp, int use_subpel, int us
     return sign ? -mag : mag;
 }
 
-void read_mv(SvtReader *r, MV *mv, MV *ref,
+static INLINE void read_mv(SvtReader *r, MV *mv, MV *ref,
     NmvContext *ctx, MvSubpelPrecision precision) {
     MV diff = kZeroMv;
 
@@ -1957,15 +1986,6 @@ MotionMode read_motion_mode(EbDecHandle *dec_handle,
     }
 }
 
-
-static INLINE int is_comp_ref_allowed(BlockSize bsize) {
-    return AOMMIN(block_size_wide[bsize], block_size_high[bsize]) >= 8;
-}
-
-static INLINE int is_masked_compound_type(CompoundType type) {
-    return (type == COMPOUND_WEDGE || type == COMPOUND_DIFFWTD);
-}
-
 static INLINE int is_interinter_compound_used(CompoundType type, BlockSize sb_type) {
     const int comp_allowed = is_comp_ref_allowed(sb_type);
     switch (type) {
@@ -2399,16 +2419,17 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
     }
 }
 
-int get_palette_color_context(uint8_t color_map[128][128],
-    int r, int c, int palette_size,
-    uint8_t *color_order)
+int get_palette_color_context(
+    uint8_t (*color_map)[COLOR_MAP_STRIDE][COLOR_MAP_STRIDE],
+    int r, int c, int palette_size, uint8_t *color_order)
 {
     // Get color indices of neighbors.
     int color_neighbors[NUM_PALETTE_NEIGHBORS];
-    color_neighbors[0] = (c - 1 >= 0) ? color_map[r][c - 1] : -1;
+    color_neighbors[0] = (c - 1 >= 0) ? (*color_map)[r][c - 1] : -1;
     color_neighbors[1] =
-        (c - 1 >= 0 && r - 1 >= 0) ? color_map[(r - 1)][ c - 1] : -1;
-    color_neighbors[2] = (r - 1 >= 0) ? color_map[(r - 1)][c] : -1;
+        (c - 1 >= 0 && r - 1 >= 0) ? (*color_map)[(r - 1)][c - 1] : -1;
+    color_neighbors[2] = (r - 1 >= 0) ? (*color_map)[(r - 1)][c] : -1;
+
 
     int scores[PALETTE_MAX_SIZE + 10] = { 0 };
     int i;
@@ -2475,15 +2496,15 @@ void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     int on_screen_width = MIN(block_width, (mi_cols - mi_col) * MI_SIZE);
 
     uint8_t color_order[PALETTE_MAX_SIZE];
-    uint8_t color_map[128][128] = { {0} };
+    uint8_t color_map[COLOR_MAP_STRIDE][COLOR_MAP_STRIDE];
     int sub_x, sub_y;
     for (int plane_itr = 0; plane_itr < MAX_MB_PLANE; plane_itr++) {
         uint8_t palette_size = mbmi->palette_size[plane_itr != 0];
-        if (plane_itr < PLANE_TYPES) {
-            sub_x = plane_itr ? dec_handle->seq_header.
-                color_config.subsampling_x : 0;
-            sub_y = plane_itr ? dec_handle->seq_header.
-                color_config.subsampling_y : 0;
+        sub_x = plane_itr ? dec_handle->seq_header.
+            color_config.subsampling_x : 0;
+        sub_y = plane_itr ? dec_handle->seq_header.
+            color_config.subsampling_y : 0;
+        if (plane_itr < PLANE_TYPES && palette_size) {
             block_height = block_height >> sub_y;
             block_width = block_width >> sub_x;
             on_screen_height = on_screen_height >> sub_y;
@@ -2501,37 +2522,35 @@ void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
             }
 
             if (dec_is_chroma_reference(mi_row, mi_col, bsize, sub_x, sub_y)) {
-                if (palette_size) {
-                    int color_index_map = svt_read_ns_ae(r, palette_size, ACCT_STR);
-                    color_map[0][0] = color_index_map;
-                    for (int i = 1; i < on_screen_height + on_screen_width - 1; i++) {
-                        for (int j = MIN(i, on_screen_width - 1);
-                            j >= MAX(0, i - on_screen_height + 1); j--)
-                        {
-                            int color_ctx = get_palette_color_context(
-                                color_map, (i - j), j, palette_size, color_order);
-                            int palette_color_idx = svt_read_symbol(r, plane_itr ?
-                                frm_ctx->palette_uv_color_index_cdf
-                                [palette_size - PALETTE_MIN_SIZE][color_ctx] :
-                                frm_ctx->palette_y_color_index_cdf
-                                [palette_size - PALETTE_MIN_SIZE][color_ctx],
-                                palette_size, ACCT_STR);
-                            color_map[i - j][j] = color_order[palette_color_idx];
-                        }
-                    }
-                    for (int i = 0; i < on_screen_height; i++) {
-                        for (int j = on_screen_width; j < block_width; j++) {
-                            color_map[i][j] = color_map[i][on_screen_width - 1];
-                        }
-                    }
-                    for (int i = on_screen_height; i < block_height; i++) {
-                        for (int j = 0; j < block_width; j++) {
-                            color_map[i][j] = color_map[on_screen_height - 1][j];
-                        }
+                int color_index_map = svt_read_ns_ae(r, palette_size, ACCT_STR);
+                color_map[0][0] = color_index_map;
+                for (int i = 1; i < on_screen_height + on_screen_width - 1; i++) {
+                    for (int j = MIN(i, on_screen_width - 1);
+                        j >= MAX(0, i - on_screen_height + 1); j--)
+                    {
+                        int color_ctx = get_palette_color_context(
+                            &color_map, (i - j), j, palette_size, color_order);
+                        int palette_color_idx = svt_read_symbol(r, plane_itr ?
+                            frm_ctx->palette_uv_color_index_cdf
+                            [palette_size - PALETTE_MIN_SIZE][color_ctx] :
+                            frm_ctx->palette_y_color_index_cdf
+                            [palette_size - PALETTE_MIN_SIZE][color_ctx],
+                            palette_size, ACCT_STR);
+                        color_map[(i - j)][j] =
+                            color_order[palette_color_idx];
                     }
                 }
-                else {
-                    assert(mbmi->palette_size[plane_itr] == 0);
+                for (int i = 0; i < on_screen_height; i++) {
+                    for (int j = on_screen_width; j < block_width; j++) {
+                        color_map[i][j] =
+                            color_map[i][on_screen_width - 1];
+                    }
+                }
+                for (int i = on_screen_height; i < block_height; i++) {
+                    for (int j = 0; j < block_width; j++) {
+                        color_map[i][j] =
+                            color_map[on_screen_height - 1][j];
+                    }
                 }
             }
         }

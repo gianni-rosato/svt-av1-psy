@@ -13,10 +13,19 @@
 #include "EbCodingUnit.h"
 #include "EbEntropyCoding.h"
 
-#define PRINT_NL // printf("\n");
-#define PRINT(name, val) // printf("\n%s :\t%X", name, val);
-#define PRINT_NAME(name) // printf("\n%s :\t", name);
-#define PRINT_FRAME(name, val) // printf("\n%s :\t%X", name, val);
+#define HEADER_DUMP 0
+
+#if HEADER_DUMP
+#define PRINT_NL printf("\n");
+#define PRINT(name, val) printf("\n%s :\t%X", name, val);
+#define PRINT_NAME(name) printf("\n%s :\t", name);
+#define PRINT_FRAME(name, val) printf("\n%s :\t%X", name, val);
+#else
+#define PRINT_NL
+#define PRINT(name, val)
+#define PRINT_NAME(name)
+#define PRINT_FRAME(name, val)
+#endif
 
 #define ZERO_ARRAY(dest, n) memset(dest, 0, n * sizeof(*(dest)))
 
@@ -171,13 +180,13 @@ typedef struct ParseCtxt {
     /*!< Number of TUs in block or force split block */
     uint8_t         num_tus[MAX_MB_PLANE][4 /*Max force TU split*/];
 
+    /*!< Reference Loop Restoration Unit  */
+    RestorationUnitInfo ref_lr_unit[MAX_MB_PLANE];
 } ParseCtxt;
 
 int get_qindex(SegmentationParams *seg_params, int segment_id, int base_q_idx);
-void parse_super_block(EbDecHandle *dec_handle,
-    uint32_t blk_row, uint32_t blk_col, SBInfo *sbInfo,
-    int32_t ref_sgr_xqd[MAX_MB_PLANE][2],
-    int32_t ref_lr_wiener[MAX_MB_PLANE][2][3]);
+void parse_super_block(EbDecHandle *dec_handle, uint32_t blk_row,
+                       uint32_t blk_col, SBInfo *sbInfo);
 
 void svt_setup_motion_field(EbDecHandle *dec_handle);
 

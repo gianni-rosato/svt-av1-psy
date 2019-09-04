@@ -121,14 +121,11 @@ void update_dequant(EbDecHandle *dec_handle, SBInfo *sb_info)
     FrameHeader *frame = &dec_handle->frame_header;
     DecModCtxt *dec_mod_ctxt = (DecModCtxt*)dec_handle->pv_dec_mod_ctxt;
 
-    if (!frame->delta_q_params.delta_q_present)
-        dec_mod_ctxt->dequants_delta_q = &dec_mod_ctxt->dequants;
-    else {
+    dec_mod_ctxt->dequants_delta_q = &dec_mod_ctxt->dequants;
+    if (frame->delta_q_params.delta_q_present) {
         for (int i = 0; i < MAX_SEGMENTS; i++) {
-            current_qindex =
-                get_qindex(&frame->segmentation_params, i,
-                    clamp(frame->quantization_params.base_q_idx +
-                    sb_info->sb_delta_q[0], 1, MAXQ));
+            current_qindex = get_qindex(&frame->segmentation_params, i,
+                                        sb_info->sb_delta_q[0]);
 
             // Y Plane: AC and DC
             dc_delta_q = frame->quantization_params.delta_q_y_dc;
@@ -219,8 +216,6 @@ int32_t inverse_quantize(EbDecHandle * dec_handle, PartitionInfo_t *part, ModeIn
     n_coeffs = level[0]; // coeffs length
 #endif
     level++;
-
-    memset(qcoeffs, 0, (1 << seq->sb_size_log2) * (1 << seq->sb_size_log2) * sizeof(*qcoeffs));
 
     for (i = 0; i < n_coeffs; i++) {
         pos = scan[i];

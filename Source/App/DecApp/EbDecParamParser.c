@@ -58,6 +58,9 @@ static void showHelp()
     H0( " -h <arg>                  Input picture height \n");
     H0( " -colour-space <arg>       Input picture colour space. [400, 420, 422, 444]\n");
     H0( " -md5                      MD5 support flag \n");
+    H0( " -fps-frm                  Show fps after each frame decoded");
+    H0( " -fps-summary              Show fps summary");
+
 
     exit(1);
 }
@@ -119,6 +122,10 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
             }
             else if (EB_STRCMP(cmd_copy[token_index], MD5_SUPPORT_TOKEN) == 0)
                 cli->enable_md5 = 1;
+            else if (EB_STRCMP(cmd_copy[token_index], FPS_FRM_TOKEN) == 0)
+                cli->fps_frm = 1;
+            else if (EB_STRCMP(cmd_copy[token_index], FPS_SUMMARY_TOKEN) == 0)
+                cli->fps_summary = 1;
             else if (EB_STRCMP(cmd_copy[token_index], HELP_TOKEN) == 0)
                 showHelp();
             else {
@@ -151,8 +158,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
         token_index++;
     }
 
-    if (!cli->inFile || !cli->outFile) {
-        printf("Input/output file not specified. \n");
+    if (!cli->inFile) {
+        printf("Input file not specified. \n");
         showHelp();
         return EB_ErrorBadParameter;
     }

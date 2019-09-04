@@ -62,6 +62,17 @@ extern "C" {
     } LpfPickMethod;
 #endif
 
+    typedef enum EDGE_DIR { VERT_EDGE = 0, HORZ_EDGE = 1, NUM_EDGE_DIRS } EDGE_DIR;
+
+    typedef struct AV1_DEBLOCKING_PARAMETERS {
+        // length of the filter applied to the outer edge
+        uint32_t filter_length;
+        // deblocking limits
+        const uint8_t *lim;
+        const uint8_t *mblim;
+        const uint8_t *hev_thr;
+    } AV1_DEBLOCKING_PARAMETERS;
+
     void set_qp_array_based_on_cu(
         PictureControlSet *picture_control_set_ptr,          //input parameter
         uint32_t               cuPos_x,                       //input parameter, sample-based horizontal picture-wise locatin of the CU
