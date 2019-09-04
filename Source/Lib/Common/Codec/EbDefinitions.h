@@ -57,12 +57,12 @@ extern "C" {
 #define COMP_MODE                         1 // Add inter-inter compound modes
 #define PREDICTIVE_ME                     1 // Perform ME search around MVP @ MD
 #define MD_STAGING                        1
+#define MD_EXIT                           1
 #define TURN_OFF_DUAL_MODE                1
 #define SC_SETTINGS_TUNING                1 // SC Settings Tuning
 #define HME_ME_TUNING                     1 // HME/ME tuning
-
-
 #define MFMV_SUPPORT                      1// Temporal mvp support. aka. MFMV
+
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
@@ -479,6 +479,8 @@ typedef enum MD_STAGE {
 #define INTER_PRED_NFL      16
 
 #endif
+
+#define MD_EXIT_THSL         0 // MD_EXIT_THSL -->0 is lossless 100 is maximum. Increase with a step of 10-20.
 
 typedef enum
 {
