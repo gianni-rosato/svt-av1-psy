@@ -7470,9 +7470,9 @@ EB_EXTERN EbErrorType mode_decision_sb(
             if (!sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[parent_depth_idx_mds])
                 parent_depth_cost = MAX_MODE_COST;
 
-            // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth 
-            // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth 
-            // when MD_EXIT_THSL=0 the estimated cost for the remaining child is not taken into account and the action will be lossless compared to no exit 
+            // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth
+            // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth
+            // when MD_EXIT_THSL=0 the estimated cost for the remaining child is not taken into account and the action will be lossless compared to no exit
             // MD_EXIT_THSL could be tuned toward a faster encoder but lossy
             if (parent_depth_cost <= current_depth_cost + (current_depth_cost* (4 - context_ptr->blk_geom->quadi)* MD_EXIT_THSL / context_ptr->blk_geom->quadi / 100)) {
                 skip_next_sq = 1;
