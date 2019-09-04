@@ -2482,8 +2482,20 @@ EB_EXTERN void av1_encode_pass(
                 // Evaluate cfl @ EP if applicable, and not done @ MD
                 context_ptr->evaluate_cfl_ep = (disable_cfl_flag == EB_FALSE && context_ptr->md_context->chroma_level == CHROMA_MODE_2);
 #if QPM // AMIR to check
-                cu_ptr->qp = sb_ptr->qp;
-                cu_ptr->delta_qp = sb_ptr->delta_qp;
+                // for now, segmentation independent of sharpness/delta QP.
+                if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled) {
+                    apply_segmentation_based_quantization(
+                        blk_geom,
+                        picture_control_set_ptr,
+                        sb_ptr,
+                        cu_ptr);
+
+                    sb_ptr->qp = cu_ptr->qp;
+                }
+                else {
+                    cu_ptr->qp = sb_ptr->qp;
+                    cu_ptr->delta_qp = sb_ptr->delta_qp;
+                }
 #else
 #if ADD_DELTA_QP_SUPPORT
                 if (context_ptr->skip_qpm_flag == EB_FALSE && sequence_control_set_ptr->static_config.improve_sharpness) {

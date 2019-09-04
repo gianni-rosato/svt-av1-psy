@@ -1368,7 +1368,9 @@ void* initial_rate_control_kernel(void *input_ptr)
                 picture_control_set_ptr);
 
             if (sequence_control_set_ptr->static_config.improve_sharpness) {
+#if !QPM
                 uint32_t sb_index;
+#endif
                 uint8_t cu_depth;
 
                 // QPM statistics init
