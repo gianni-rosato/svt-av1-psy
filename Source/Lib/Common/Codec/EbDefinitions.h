@@ -60,7 +60,7 @@ extern "C" {
 #define TURN_OFF_DUAL_MODE                1
 #define SC_SETTINGS_TUNING                1 // SC Settings Tuning
 #define HME_ME_TUNING                     1 // HME/ME tuning
-#define QPM                               1 // Use SB QP Mod
+#define QPM                               1 // Change the QP of each SB using deltaq to improve efficiency (Only active in Intra frames)
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 

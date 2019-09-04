@@ -425,7 +425,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->max_qp_allowed                       = 63;
     config_ptr->min_qp_allowed                       = 10;
 
-    config_ptr->enable_adaptive_quantization         = EB_FALSE;
+    config_ptr->enable_adaptive_quantization         = 2;
     config_ptr->base_layer_switch_mode               = 0;
     config_ptr->enc_mode                              = MAX_ENC_PRESET;
     config_ptr->intra_period                          = -2;
