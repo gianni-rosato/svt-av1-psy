@@ -26,9 +26,7 @@
 #include "EbEncDecProcess.h"
 
 static int32_t priconv[REDUCED_PRI_STRENGTHS] = { 0, 1, 2, 3, 5, 7, 10, 13 };
-void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
-    int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
-    int32_t vsize, int32_t hsize);
+
 void copy_sb8_16(uint16_t *dst, int32_t dstride,
     const uint8_t *src, int32_t src_voffset, int32_t src_hoffset,
     int32_t sstride, int32_t vsize, int32_t hsize);

@@ -3794,3 +3794,77 @@ uint32_t d2_inter_depth_block_decision(
 
     return lastCuIndex;
 }
+#if MD_EXIT
+void   compute_depth_costs_md_skip(
+    ModeDecisionContext *context_ptr,
+    SequenceControlSet  *sequence_control_set_ptr,
+    uint32_t             above_depth_mds,
+    uint32_t             step,
+    uint64_t            *above_depth_cost,
+    uint64_t            *curr_depth_cost)
+{
+    uint64_t       above_non_split_rate = 0;
+    uint64_t       above_split_rate = 0;
+    *curr_depth_cost = 0;
+    // sum the previous ones
+    for (int i = 1; i < context_ptr->blk_geom->quadi + 1; i++) {
+        uint32_t curr_depth_cur_blk_mds = context_ptr->blk_geom->sqi_mds - i * step;
+        uint64_t       curr_non_split_rate_blk = 0;
+        if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
+            if (context_ptr->md_cu_arr_nsq[curr_depth_cur_blk_mds].mdc_split_flag == 0)
+                av1_split_flag_rate(
+                    sequence_control_set_ptr,
+                    context_ptr,
+                    &context_ptr->md_cu_arr_nsq[curr_depth_cur_blk_mds],
+                    0,
+                    PARTITION_NONE,
+                    &curr_non_split_rate_blk,
+                    context_ptr->full_lambda,
+                    context_ptr->md_rate_estimation_ptr,
+                    sequence_control_set_ptr->max_sb_depth);
+        }
+        *curr_depth_cost +=
+            context_ptr->md_local_cu_unit[curr_depth_cur_blk_mds].cost + curr_non_split_rate_blk;
+    }
+    /*
+    ___________
+    |     |     |
+    |blk0 |blk1 |
+    |-----|-----|
+    |blk2 |blk3 |
+    |_____|_____|
+    */
+    // current depth blocks
+    uint32_t       curr_depth_blk0_mds = context_ptr->blk_geom->sqi_mds - context_ptr->blk_geom->quadi * step;
+
+    context_ptr->md_local_cu_unit[above_depth_mds].left_neighbor_mode = context_ptr->md_local_cu_unit[curr_depth_blk0_mds].left_neighbor_mode;
+    context_ptr->md_local_cu_unit[above_depth_mds].left_neighbor_depth = context_ptr->md_local_cu_unit[curr_depth_blk0_mds].left_neighbor_depth;
+    context_ptr->md_local_cu_unit[above_depth_mds].top_neighbor_mode = context_ptr->md_local_cu_unit[curr_depth_blk0_mds].top_neighbor_mode;
+    context_ptr->md_local_cu_unit[above_depth_mds].top_neighbor_depth = context_ptr->md_local_cu_unit[curr_depth_blk0_mds].top_neighbor_depth;
+    context_ptr->md_local_cu_unit[above_depth_mds].left_neighbor_partition = context_ptr->md_local_cu_unit[curr_depth_blk0_mds].left_neighbor_partition;
+    context_ptr->md_local_cu_unit[above_depth_mds].above_neighbor_partition = context_ptr->md_local_cu_unit[curr_depth_blk0_mds].above_neighbor_partition;
+
+    // Compute above depth  cost
+    if (context_ptr->md_local_cu_unit[above_depth_mds].tested_cu_flag == EB_TRUE)
+    {
+        *above_depth_cost = context_ptr->md_local_cu_unit[above_depth_mds].cost + above_non_split_rate;
+        // Compute curr depth  cost
+        av1_split_flag_rate(
+            sequence_control_set_ptr,
+            context_ptr,
+            &context_ptr->md_cu_arr_nsq[above_depth_mds],
+            0,
+            PARTITION_SPLIT,
+            &above_split_rate,
+            context_ptr->full_lambda,
+            context_ptr->md_rate_estimation_ptr,
+            sequence_control_set_ptr->max_sb_depth);
+    }
+    else
+        *above_depth_cost = MAX_MODE_COST;
+
+
+    *curr_depth_cost +=
+        above_split_rate;
+}
+#endif

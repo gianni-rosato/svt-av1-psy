@@ -6359,7 +6359,7 @@ void search_best_independent_uv_mode(
     EbAsm   asm_type  = sequence_control_set_ptr->encode_context_ptr->asm_type;
     uint8_t is_16_bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
-    EbBool use_angle_delta = (context_ptr->blk_geom->bsize >= BLOCK_8X8);
+    EbBool use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize);
 
     UvPredictionMode uv_mode;
 
@@ -7338,7 +7338,11 @@ EB_EXTERN EbErrorType mode_decision_sb(
 
     uint32_t blk_idx_mds = 0;
     uint32_t  d1_blocks_accumlated = 0;
-
+#if MD_EXIT
+    int skip_next_nsq = 0;
+    int skip_next_sq = 0;
+    uint32_t next_non_skip_blk_idx_mds = 0;
+#endif
     uint8_t skip_sub_blocks;
     do {
         skip_sub_blocks = 0;
@@ -7442,7 +7446,50 @@ EB_EXTERN EbErrorType mode_decision_sb(
         // Initialize tx_depth
         cu_ptr->tx_depth = 0;
 #if  INCOMPLETE_SB_FIX
+#if MD_EXIT
+        if (blk_geom->quadi > 0 && blk_geom->shape == PART_N) {
+
+            uint32_t blk_mds = context_ptr->blk_geom->sqi_mds;
+            uint64_t parent_depth_cost = 0, current_depth_cost = 0;
+            SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+            uint32_t parent_depth_idx_mds = blk_mds;
+
+            // from a given child index, derive the index of the parent
+            parent_depth_idx_mds = (context_ptr->blk_geom->sqi_mds - (context_ptr->blk_geom->quadi - 3) * ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth]) -
+                                    parent_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+
+            if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0 && sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128)
+                parent_depth_cost = MAX_MODE_COST;
+            else
+                compute_depth_costs_md_skip(
+                    context_ptr,
+                    sequence_control_set_ptr,
+                    parent_depth_idx_mds,
+                    ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth], &parent_depth_cost, &current_depth_cost);
+
+            if (!sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[parent_depth_idx_mds])
+                parent_depth_cost = MAX_MODE_COST;
+
+            // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth
+            // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth
+            // when MD_EXIT_THSL=0 the estimated cost for the remaining child is not taken into account and the action will be lossless compared to no exit
+            // MD_EXIT_THSL could be tuned toward a faster encoder but lossy
+            if (parent_depth_cost <= current_depth_cost + (current_depth_cost* (4 - context_ptr->blk_geom->quadi)* MD_EXIT_THSL / context_ptr->blk_geom->quadi / 100)) {
+                skip_next_sq = 1;
+                next_non_skip_blk_idx_mds = parent_depth_idx_mds + ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth - 1];
+            }
+            else {
+                skip_next_sq = 0;
+            }
+        }
+        // skip until we reach the next block @ the parent block depth
+        if (cu_ptr->mds_idx >= next_non_skip_blk_idx_mds && skip_next_sq == 1)
+            skip_next_sq = 0;
+
+        if (picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[cu_ptr->mds_idx] && !skip_next_nsq && !skip_next_sq) {
+#else
         if (picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[cu_ptr->mds_idx]) {
+#endif
             md_encode_block(
                 sequence_control_set_ptr,
                 picture_control_set_ptr,
@@ -7454,6 +7501,11 @@ EB_EXTERN EbErrorType mode_decision_sb(
                 bestcandidate_buffers);
 
         }
+#if MD_EXIT
+        else if (skip_next_sq) {
+            context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost = (MAX_MODE_COST >> 10);
+        }
+#endif
         else {
             // If the block is out of the boundaries, md is not performed.
             // - For square blocks, since the blocks can be further splitted, they are considered in d2_inter_depth_block_decision with cost of zero.
@@ -7475,9 +7527,21 @@ EB_EXTERN EbErrorType mode_decision_sb(
             lcuAddr,
             bestcandidate_buffers);
 #endif
+#if MD_EXIT
+        skip_next_nsq = 0;
+#endif
         if (blk_geom->nsi + 1 == blk_geom->totns)
             d1_non_square_block_decision(context_ptr);
-
+#if MD_EXIT
+        else {
+            uint64_t tot_cost = 0;
+            uint32_t first_blk_idx = context_ptr->cu_ptr->mds_idx - (blk_geom->nsi);//index of first block in this partition
+            for (int blk_it = 0; blk_it < blk_geom->nsi + 1; blk_it++)
+                tot_cost += context_ptr->md_local_cu_unit[first_blk_idx + blk_it].cost;
+            if ((tot_cost + tot_cost * (blk_geom->totns - (blk_geom->nsi + 1))* MD_EXIT_THSL / (blk_geom->nsi + 1) / 100) > context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].cost)
+                skip_next_nsq = 1;
+        }
+#endif
         if (blk_geom->shape != PART_N) {
             if (blk_geom->nsi + 1 < blk_geom->totns)
                 md_update_all_neighbour_arrays(

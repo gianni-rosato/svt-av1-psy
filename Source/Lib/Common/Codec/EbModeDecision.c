@@ -419,7 +419,7 @@ EbBool mrp_is_already_injected_mv_bipred(
     }
     return(EB_FALSE);
 }
-
+#if !MFMV_SUPPORT // SVT-HEVC TMVP code
 EbErrorType SetMvpClipMVs(
     ModeDecisionCandidate  *candidate_ptr,
     uint32_t                    cu_origin_x,
@@ -521,6 +521,8 @@ void LimitMvOverBound(
     if ((int32_t)ctxtPtr->cu_origin_y + mvyF < 0)
         *mvy = -(int16_t)ctxtPtr->cu_origin_y;
 }
+#endif
+
 #if !MD_STAGING
 void sort_fast_loop_candidates(
     struct ModeDecisionContext   *context_ptr,
@@ -3594,7 +3596,7 @@ void  inject_intra_candidates(
     uint8_t                     openLoopIntraCandidate;
     uint32_t                    canTotalCnt = 0;
     uint8_t                     angleDeltaCounter = 0;
-    EbBool                      use_angle_delta = (context_ptr->blk_geom->bsize >= BLOCK_8X8);
+    EbBool                      use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize);
     uint8_t                     angleDeltaCandidateCount = use_angle_delta ? 7 : 1;
     ModeDecisionCandidate    *candidateArray = context_ptr->fast_candidate_array;
     EbBool                      disable_cfl_flag = (MAX(context_ptr->blk_geom->bheight, context_ptr->blk_geom->bwidth) > 32) ? EB_TRUE : EB_FALSE;

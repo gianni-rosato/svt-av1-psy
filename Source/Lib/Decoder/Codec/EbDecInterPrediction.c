@@ -171,13 +171,14 @@ void svtav1_predict_inter_block_plane(
             subpel_params.subpel_y = mv_q4.row & SUBPEL_MASK;
 
             conv_params.do_average = ref;
-            /* TODO: support masked inter prediction based on WEDGE / DIFFWTD compound type later
+            /* TODO: support masked inter prediction based on WEDGE / DIFFWTD compound type later */
             if (is_masked_compound_type(mi->inter_compound.type)) {
+                printf("Compound mode detected. Result in non-compliant output!\n");
+                assert(0);
                 // masked compound type has its own average mechanism
-                conv_params.do_average = 0;
+                // conv_params.do_average = 0;
             }
-
-            if (ref && is_masked_compound_type(mi->inter_compound.type))
+            /*if (ref && is_masked_compound_type(mi->inter_compound.type))
                 av1_make_masked_inter_predictor(
                     pre[ref], src_stride[ref], dst_mod, dst_buf->stride,
                     &subpel_params[ref], sf, bw, bh, &conv_params, mi->interp_filters,

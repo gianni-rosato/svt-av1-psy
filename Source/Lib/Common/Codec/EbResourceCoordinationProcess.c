@@ -315,8 +315,10 @@ void ResetPcsAv1(
     frm_hdr->quantization_params.qm_y = 5;
     frm_hdr->quantization_params.qm_u = 5;
     frm_hdr->quantization_params.qm_v = 5;
+#if ! MFMV_SUPPORT
     // Whether to use previous frame's motion vectors for prediction.
     frm_hdr->use_ref_frame_mvs = 0;
+#endif
     frm_hdr->is_motion_mode_switchable = 0;
     // Flag signaling how frame contexts should be updated at the end of
     // a frame decode

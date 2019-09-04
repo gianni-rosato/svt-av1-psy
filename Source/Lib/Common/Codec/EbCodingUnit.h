@@ -139,6 +139,11 @@ extern "C" {
     static INLINE int32_t av1_is_directional_mode(PredictionMode mode) {
         return mode >= V_PRED && mode <= D67_PRED;
     }
+
+    static INLINE EbBool av1_use_angle_delta(BlockSize bsize) {
+        return bsize >= BLOCK_8X8;
+    }
+
     struct PictureControlSet;
 
     typedef struct MV
@@ -198,6 +203,17 @@ extern "C" {
         uint8_t inter_tx_size[INTER_TX_SIZE_BUF_LEN];
         uint8_t tx_depth;
     } MbModeInfo;
+
+#if MFMV_SUPPORT
+    typedef struct {
+        IntMv mfmv0;
+        uint8_t ref_frame_offset;
+    } TPL_MV_REF;
+    typedef struct {
+        IntMv mv;
+        MvReferenceFrame ref_frame;
+    } MV_REF;
+#endif
 
     typedef struct ModeInfo {
         MbModeInfo mbmi;

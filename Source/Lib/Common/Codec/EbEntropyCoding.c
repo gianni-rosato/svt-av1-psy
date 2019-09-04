@@ -54,9 +54,6 @@ int32_t is_inter_block(const MbModeInfo *mbmi);
 #define OD_ILOG_NZ(x) (OD_CLZ0 - OD_CLZ(x))
 #endif
 
-static INLINE int32_t is_comp_ref_allowed(BlockSize bsize) {
-    return AOMMIN(block_size_wide[bsize], block_size_high[bsize]) >= 8;
-}
 int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
     int32_t mi_row, int32_t mi_col, BlockSize bsize,
     int32_t *rcol0, int32_t *rcol1, int32_t *rrow0,
