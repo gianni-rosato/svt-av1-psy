@@ -7430,12 +7430,12 @@ EB_EXTERN EbErrorType mode_decision_sb(
 #if MD_EXIT
         if (blk_geom->quadi > 0 && blk_geom->shape == PART_N) {
 
-            uint32_t  blk_mds = context_ptr->blk_geom->sqi_mds;
-            uint64_t                    parent_depth_cost = 0, current_depth_cost = 0;
-            SequenceControlSet     *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-            uint32_t    parent_depth_idx_mds = blk_mds;
+            uint32_t blk_mds = context_ptr->blk_geom->sqi_mds;
+            uint64_t parent_depth_cost = 0, current_depth_cost = 0;
+            SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+            uint32_t parent_depth_idx_mds = blk_mds;
 
-            //get parent idx
+            // from a given child index, derive the index of the parent
             parent_depth_idx_mds = (context_ptr->blk_geom->sqi_mds - (context_ptr->blk_geom->quadi - 3) * ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth]) -
                                     parent_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
 
@@ -7451,6 +7451,10 @@ EB_EXTERN EbErrorType mode_decision_sb(
             if (!sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[parent_depth_idx_mds])
                 parent_depth_cost = MAX_MODE_COST;
 
+            // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth 
+            // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth 
+            // when MD_EXIT_THSL=0 the estimated cost for the remaining child is not taken into account and the action will be lossless compared to no exit 
+            // MD_EXIT_THSL could be tuned toward a faster encoder but lossy
             if (parent_depth_cost <= current_depth_cost + (current_depth_cost* (4 - context_ptr->blk_geom->quadi)* MD_EXIT_THSL / context_ptr->blk_geom->quadi / 100)) {
                 skip_next_sq = 1;
                 next_non_skip_blk_idx_mds = parent_depth_idx_mds + ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth - 1];
@@ -7459,6 +7463,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
                 skip_next_sq = 0;
             }
         }
+        // skip until we reach the next block @ the parent block depth
         if (cu_ptr->mds_idx >= next_non_skip_blk_idx_mds && skip_next_sq == 1)
             skip_next_sq = 0;
 

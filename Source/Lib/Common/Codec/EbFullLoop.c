@@ -3804,7 +3804,6 @@ void   compute_depth_costs_md_skip(
     *curr_depth_cost = 0;
     // sum the previous ones
     for (int i = 1; i < context_ptr->blk_geom->quadi + 1; i++) {
-        //for (int i = 0; i < context_ptr->blk_geom->quadi+1; i++) {
         uint32_t curr_depth_cur_blk_mds = context_ptr->blk_geom->sqi_mds - i * step;
         uint64_t       curr_non_split_rate_blk = 0;
         if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
