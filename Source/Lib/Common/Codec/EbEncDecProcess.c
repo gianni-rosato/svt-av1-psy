@@ -256,7 +256,7 @@ static void ResetEncDec(
 #if QPM
     uint16_t picture_qp = picture_control_set_ptr->picture_qp;
     context_ptr->qp = picture_qp;
-    context_ptr->qp_index = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present ? (uint8_t)quantizer_to_qindex[context_ptr->qp] : (uint8_t)picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx; 
+    context_ptr->qp_index = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present ? (uint8_t)quantizer_to_qindex[context_ptr->qp] : (uint8_t)picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
 #else
     uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
     context_ptr->qp = picture_qp;
