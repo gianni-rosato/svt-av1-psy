@@ -63,7 +63,7 @@ extern "C" {
 #define HME_ME_TUNING                     1 // HME/ME tuning
 #define MFMV_SUPPORT                      1// Temporal mvp support. aka. MFMV
 
-  
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
