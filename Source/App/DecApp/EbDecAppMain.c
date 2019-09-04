@@ -138,7 +138,7 @@ int32_t main(int32_t argc, char* argv[])
     // Print Decoder Info
     printf("\n**WARNING** decoder is not feature complete\n");
     printf("Current support: intra & inter(no Compund, no Wedge tools), ");
-    printf("no Film Grain\n\n");
+    printf("no super-resolution, no Film Grain\n\n");
 
     printf("-------------------------------------\n");
     printf("SVT-AV1 Decoder Sample Application v1.2.0\n");

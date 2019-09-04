@@ -207,62 +207,60 @@ static TxSize dec_set_lpf_parameters(AV1_DEBLOCKING_PARAMETERS *const params,
                 && dec_is_inter_block(lf_block_l_cur);
             uint32_t level = curr_level;
             if (coord) {
-                {
-                    /* Since block are alligned at 8x8 boundary , so prev block
-                        will be cur - 1<<sub_x */
-                    LFBlockParamL* lf_block_l_prev = (VERT_EDGE == edge_dir) ?
-                        lf_block_l_cur - (uint64_t)(1 << sub_x) :
-                        lf_block_l_cur - (lf_stride << sub_y);
-                    LFBlockParamUV* lf_block_uv_prev = (VERT_EDGE == edge_dir) ?
-                        lf_block_uv_cur - (uint64_t)(1 << sub_x) :
-                        lf_block_uv_cur - (lf_stride << sub_y);
+                /* Since block are alligned at 8x8 boundary , so prev block
+                    will be cur - 1<<sub_x */
+                LFBlockParamL* lf_block_l_prev = (VERT_EDGE == edge_dir) ?
+                    lf_block_l_cur - (uint64_t)(1 << sub_x) :
+                    lf_block_l_cur - (lf_stride << sub_y);
+                LFBlockParamUV* lf_block_uv_prev = (VERT_EDGE == edge_dir) ?
+                    lf_block_uv_cur - (uint64_t)(1 << sub_x) :
+                    lf_block_uv_cur - (lf_stride << sub_y);
 
-                    if (lf_block_l_prev == NULL) return TX_INVALID;
-                    if (lf_block_uv_prev == NULL) return TX_INVALID;
+                if (lf_block_l_prev == NULL) return TX_INVALID;
+                if (lf_block_uv_prev == NULL) return TX_INVALID;
 
-                    const TxSize pv_ts = plane == 0 ?
-                        dec_get_transform_size(edge_dir,
-                            lf_block_l_prev->tx_size_l) :
-                        dec_get_transform_size(edge_dir,
-                            lf_block_uv_prev->tx_size_uv);
+                const TxSize pv_ts = plane == 0 ?
+                    dec_get_transform_size(edge_dir,
+                        lf_block_l_prev->tx_size_l) :
+                    dec_get_transform_size(edge_dir,
+                        lf_block_uv_prev->tx_size_uv);
 
-                    const uint32_t pv_lvl =
-                        dec_get_filter_level(frm_hdr, lf_info,
-                            edge_dir, plane, lf_block_l_prev);
-                    const int32_t pv_skip = lf_block_l_prev->skip &&
-                        dec_is_inter_block(lf_block_l_prev);
-                    const BlockSize bsize =
-                        get_plane_block_size(lf_block_l_prev->bsize,
-                            sub_x, sub_y);
-                    assert(bsize < BlockSizeS_ALL);
-                    const int32_t prediction_masks = edge_dir == VERT_EDGE
-                        ? block_size_wide[bsize] - 1
-                        : block_size_high[bsize] - 1;
-                    const int32_t pu_edge = !(coord & prediction_masks);
-                    /*if the current and the previous blocks are skipped,
-                    deblock the edge if the edge belongs to a PU's edge only.*/
-                    if ((curr_level || pv_lvl) &&
-                        (!pv_skip || !curr_skipped || pu_edge)) {
-                        const TxSize min_ts = AOMMIN(ts, pv_ts);
-                        if (TX_4X4 >= min_ts)
-                            params->filter_length = 4;
-                        else if (TX_8X8 == min_ts) {
-                            if (plane != 0)
-                                params->filter_length = 6;
-                            else
-                                params->filter_length = 8;
-                        }
-                        else {
-                            params->filter_length = 14;
-                            /* No wide filtering for chroma plane*/
-                            if (plane != 0)
-                                params->filter_length = 6;
-                        }
-
-                        /* update the level if the current block is skipped,
-                        but the previous one is not*/
-                        level = (curr_level) ? (curr_level) : (pv_lvl);
+                const uint32_t pv_lvl =
+                    dec_get_filter_level(frm_hdr, lf_info,
+                        edge_dir, plane, lf_block_l_prev);
+                const int32_t pv_skip = lf_block_l_prev->skip &&
+                    dec_is_inter_block(lf_block_l_prev);
+                const BlockSize bsize =
+                    get_plane_block_size(lf_block_l_prev->bsize,
+                        sub_x, sub_y);
+                assert(bsize < BlockSizeS_ALL);
+                const int32_t prediction_masks = edge_dir == VERT_EDGE
+                    ? block_size_wide[bsize] - 1
+                    : block_size_high[bsize] - 1;
+                const int32_t pu_edge = !(coord & prediction_masks);
+                /*if the current and the previous blocks are skipped,
+                deblock the edge if the edge belongs to a PU's edge only.*/
+                if ((curr_level || pv_lvl) &&
+                    (!pv_skip || !curr_skipped || pu_edge)) {
+                    const TxSize min_ts = AOMMIN(ts, pv_ts);
+                    if (TX_4X4 >= min_ts)
+                        params->filter_length = 4;
+                    else if (TX_8X8 == min_ts) {
+                        if (plane != 0)
+                            params->filter_length = 6;
+                        else
+                            params->filter_length = 8;
                     }
+                    else {
+                        params->filter_length = 14;
+                        /* No wide filtering for chroma plane*/
+                        if (plane != 0)
+                            params->filter_length = 6;
+                    }
+
+                    /* update the level if the current block is skipped,
+                    but the previous one is not*/
+                    level = (curr_level) ? (curr_level) : (pv_lvl);
                 }
             }
             /* prepare common parameters*/
@@ -293,15 +291,15 @@ void dec_av1_filter_block_plane_vert(
     const int32_t x_range = sb_size == BLOCK_128X128
         ? (MAX_MIB_SIZE >> sub_x) : (SB64_MIB_SIZE >> sub_x);
     void *blk_recon_buf;
-    int32_t recon_strd;
+    int32_t recon_stride;
 
     derive_blk_pointers(recon_picture_buf, plane,
         (mi_col*MI_SIZE >> sub_x), (mi_row*MI_SIZE >> sub_x),
-        &blk_recon_buf, &recon_strd, sub_x, sub_y);
+        &blk_recon_buf, &recon_stride, sub_x, sub_y);
 
     for (int32_t y = 0; y < y_range; y += row_step) {
         uint8_t *p = (uint8_t*)blk_recon_buf +
-                     ((y * MI_SIZE * recon_strd) << is16bit);
+                     ((y * MI_SIZE * recon_stride) << is16bit);
 
         for (int32_t x = 0; x < x_range;) {
             /*inner loop always filter vertical edges in a MI block. If MI size
@@ -332,7 +330,7 @@ void dec_av1_filter_block_plane_vert(
                 if (is16bit)
                     aom_highbd_lpf_vertical_4(
                     (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr,
@@ -340,7 +338,7 @@ void dec_av1_filter_block_plane_vert(
                 else
                     aom_lpf_vertical_4(
                         p,
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr);
@@ -350,7 +348,7 @@ void dec_av1_filter_block_plane_vert(
                 if (is16bit)
                     aom_highbd_lpf_vertical_6(
                     (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr,
@@ -358,7 +356,7 @@ void dec_av1_filter_block_plane_vert(
                 else
                     aom_lpf_vertical_6(
                         p,
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr);
@@ -368,7 +366,7 @@ void dec_av1_filter_block_plane_vert(
                 if (is16bit)
                     aom_highbd_lpf_vertical_8(
                     (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr,
@@ -376,7 +374,7 @@ void dec_av1_filter_block_plane_vert(
                 else
                     aom_lpf_vertical_8(
                         p,
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr);
@@ -386,7 +384,7 @@ void dec_av1_filter_block_plane_vert(
                 if (is16bit)
                     aom_highbd_lpf_vertical_14(
                     (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr,
@@ -394,7 +392,7 @@ void dec_av1_filter_block_plane_vert(
                 else
                     aom_lpf_vertical_14(
                         p,
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr);
@@ -427,11 +425,11 @@ void dec_av1_filter_block_plane_horz(
     const int32_t x_range = sb_size == BLOCK_128X128
         ? (MAX_MIB_SIZE >> sub_x) : (SB64_MIB_SIZE >> sub_x);
     void *blk_recon_buf;
-    int32_t recon_strd;
+    int32_t recon_stride;
 
     derive_blk_pointers(recon_picture_buf, plane,
         (mi_col*MI_SIZE >> sub_x), (mi_row*MI_SIZE >> sub_y),
-        &blk_recon_buf, &recon_strd, sub_x, sub_y);
+        &blk_recon_buf, &recon_stride, sub_x, sub_y);
 
     for (int32_t x = 0; x < x_range; x += col_step) {
         uint8_t *p = (uint8_t*)blk_recon_buf + ((x * MI_SIZE) << is16bit);
@@ -464,7 +462,7 @@ void dec_av1_filter_block_plane_horz(
                 if (is16bit)
                     aom_highbd_lpf_horizontal_4(
                     (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr,
@@ -472,7 +470,7 @@ void dec_av1_filter_block_plane_horz(
                 else
                     aom_lpf_horizontal_4(
                         p,
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr);
@@ -483,7 +481,7 @@ void dec_av1_filter_block_plane_horz(
                 if (is16bit)
                     aom_highbd_lpf_horizontal_6(
                     (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr,
@@ -491,7 +489,7 @@ void dec_av1_filter_block_plane_horz(
                 else
                     aom_lpf_horizontal_6(
                         p,
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr);
@@ -501,7 +499,7 @@ void dec_av1_filter_block_plane_horz(
                 if (is16bit)
                     aom_highbd_lpf_horizontal_8(
                     (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr,
@@ -509,7 +507,7 @@ void dec_av1_filter_block_plane_horz(
                 else
                     aom_lpf_horizontal_8(
                         p,
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr);
@@ -519,7 +517,7 @@ void dec_av1_filter_block_plane_horz(
                 if (is16bit)
                     aom_highbd_lpf_horizontal_14(
                     (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr,
@@ -527,7 +525,7 @@ void dec_av1_filter_block_plane_horz(
                 else
                     aom_lpf_horizontal_14(
                         p,
-                        recon_strd,
+                        recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr);
@@ -539,7 +537,7 @@ void dec_av1_filter_block_plane_horz(
             assert(tx_size < TX_SIZES_ALL);
             advance_units = tx_size_high_unit[tx_size];
             y += advance_units;
-            p += ((advance_units * recon_strd * MI_SIZE) << is16bit);
+            p += ((advance_units * recon_stride * MI_SIZE) << is16bit);
         }
     }
 }

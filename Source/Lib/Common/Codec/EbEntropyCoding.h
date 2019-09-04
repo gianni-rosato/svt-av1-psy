@@ -280,6 +280,9 @@ extern "C" {
 
     int is_masked_compound_type(COMPOUND_TYPE type);
 
+    static INLINE int32_t is_comp_ref_allowed(BlockSize bsize) {
+        return AOMMIN(block_size_wide[bsize], block_size_high[bsize]) >= 8;
+    }
 #ifdef __cplusplus
 }
 #endif

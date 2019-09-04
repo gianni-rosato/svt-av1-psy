@@ -87,7 +87,7 @@ void svt_cdef_frame(EbDecHandle *dec_handle) {
     EbPictureBufferDesc *recon_picture_ptr =
         dec_handle->cur_pic_buf[0]->ps_pic_buf;
     uint8_t *curr_blk_recon_buf[MAX_MB_PLANE];
-    int32_t curr_recon_strd[MAX_MB_PLANE];
+    int32_t curr_recon_stride[MAX_MB_PLANE];
     FrameHeader *frame_info = &dec_handle->frame_header;
     const int32_t num_planes = av1_num_planes(&dec_handle->seq_header.
         color_config);
@@ -132,7 +132,7 @@ void svt_cdef_frame(EbDecHandle *dec_handle) {
 
         /*Deriveing  recon pict buffer ptr's*/
         derive_blk_pointers(recon_picture_ptr, pli,
-            0, 0, (void *)&curr_blk_recon_buf[pli], &curr_recon_strd[pli],
+            0, 0, (void *)&curr_blk_recon_buf[pli], &curr_recon_stride[pli],
             sub_x, sub_y);
         /*Allocating memory for line buffes->to fill from src if needed*/
         linebuf[pli] = (uint16_t *)eb_aom_malloc(sizeof(*linebuf) *
@@ -278,15 +278,15 @@ void svt_cdef_frame(EbDecHandle *dec_handle) {
                 switch (pli) {
                 case 0:
                     rec_buff = curr_blk_recon_buf[0];
-                    rec_stride = curr_recon_strd[0];
+                    rec_stride = curr_recon_stride[0];
                     break;
                 case 1:
                     rec_buff = curr_blk_recon_buf[1];
-                    rec_stride = curr_recon_strd[1];
+                    rec_stride = curr_recon_stride[1];
                     break;
                 case 2:
                     rec_buff = curr_blk_recon_buf[2];
-                    rec_stride = curr_recon_strd[2];
+                    rec_stride = curr_recon_stride[2];
                     break;
                 }
                 /* Copy in the pixels we need from the current superblock for
@@ -416,7 +416,7 @@ void svt_cdef_frame_hbd(EbDecHandle *dec_handle) {
     EbPictureBufferDesc *recon_picture_ptr =
         dec_handle->cur_pic_buf[0]->ps_pic_buf;
     uint16_t *curr_blk_recon_buf[MAX_MB_PLANE];
-    int32_t curr_recon_strd[MAX_MB_PLANE];
+    int32_t curr_recon_stride[MAX_MB_PLANE];
     FrameHeader *frame_info = &dec_handle->frame_header;
     const int32_t num_planes = av1_num_planes(&dec_handle->seq_header.
         color_config);
@@ -461,7 +461,7 @@ void svt_cdef_frame_hbd(EbDecHandle *dec_handle) {
 
         /*Deriveing  recon pict buffer ptr's*/
         derive_blk_pointers(recon_picture_ptr, pli,
-            0, 0, (void *)&curr_blk_recon_buf[pli], &curr_recon_strd[pli],
+            0, 0, (void *)&curr_blk_recon_buf[pli], &curr_recon_stride[pli],
             sub_x, sub_y);
         /*Allocating memory for line buffes->to fill from src if needed*/
         linebuf[pli] = (uint16_t *)eb_aom_malloc(sizeof(*linebuf) *
@@ -607,15 +607,15 @@ void svt_cdef_frame_hbd(EbDecHandle *dec_handle) {
                 switch (pli) {
                 case 0:
                     rec_buff = curr_blk_recon_buf[0];
-                    rec_stride = curr_recon_strd[0];
+                    rec_stride = curr_recon_stride[0];
                     break;
                 case 1:
                     rec_buff = curr_blk_recon_buf[1];
-                    rec_stride = curr_recon_strd[1];
+                    rec_stride = curr_recon_stride[1];
                     break;
                 case 2:
                     rec_buff = curr_blk_recon_buf[2];
-                    rec_stride = curr_recon_strd[2];
+                    rec_stride = curr_recon_stride[2];
                     break;
                 }
                 /* Copy in the pixels we need from the current superblock for

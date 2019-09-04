@@ -17,21 +17,7 @@
 /*SUMMARY
 Contains the Decoder Loop Filtering related functions*/
 
-typedef enum EDGE_DIR { VERT_EDGE = 0, HORZ_EDGE = 1, NUM_EDGE_DIRS } EDGE_DIR;
-static const int32_t mode_lf_lut[] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // INTRA_MODES
-    1, 1, 0, 1,                             // INTER_MODES (GLOBALMV == 0)
-    1, 1, 1, 1, 1, 1, 0, 1  // INTER_COMPOUND_MODES (GLOBAL_GLOBALMV == 0)
-};
-
-typedef struct AV1_DEBLOCKING_PARAMETERS {
-    /*length of the filter applied to the outer edge*/
-    uint32_t filter_length;
-    /* deblocking limits*/
-    const uint8_t *lim;
-    const uint8_t *mblim;
-    const uint8_t *hev_thr;
-} AV1_DEBLOCKING_PARAMETERS;
+extern const int32_t mode_lf_lut[];
 
 static const SEG_LVL_FEATURES seg_lvl_lf_lut[MAX_MB_PLANE][2] = {
   { SEG_LVL_ALT_LF_Y_V, SEG_LVL_ALT_LF_Y_H },

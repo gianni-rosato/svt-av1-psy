@@ -5442,7 +5442,7 @@ void search_best_independent_uv_mode(
     EbAsm   asm_type  = sequence_control_set_ptr->encode_context_ptr->asm_type;
     uint8_t is_16_bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
-    EbBool use_angle_delta = (context_ptr->blk_geom->bsize >= BLOCK_8X8);
+    EbBool use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize);
 
     UvPredictionMode uv_mode;
 

@@ -621,17 +621,9 @@ static void read_delta_params(EbDecHandle *dec_handle, SvtReader *r,
     }
 }
 
-static INLINE int is_directional_mode(PredictionMode mode) {
-    return mode >= V_PRED && mode <= D67_PRED;
-}
-
-static INLINE int use_angle_delta(BlockSize bsize) {
-    return bsize >= BLOCK_8X8;
-}
-
 int intra_angle_info(SvtReader *r, AomCdfProb *cdf, PredictionMode mode, BlockSize bsize) {
     int angleDeltaY = 0;
-    if (use_angle_delta(bsize) && is_directional_mode(mode)) {
+    if (av1_use_angle_delta(bsize) && av1_is_directional_mode(mode)) {
         const int sym = svt_read_symbol(r, cdf, 2 * MAX_ANGLE_DELTA + 1, ACCT_STR);
         angleDeltaY = sym - MAX_ANGLE_DELTA;
     }
