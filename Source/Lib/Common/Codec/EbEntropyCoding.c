@@ -6007,7 +6007,7 @@ assert(bsize < BlockSizeS_ALL);
         if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
 #if QPM
             int32_t current_q_index = quantizer_to_qindex[cu_ptr->qp];
-            int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0) && 
+            int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0) &&
                 (((blkOriginX >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0);
             if ((bsize != sequence_control_set_ptr->seq_header.sb_size || skipCoeff == 0) && super_block_upper_left) {
 #else
