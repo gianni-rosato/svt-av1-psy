@@ -4039,8 +4039,10 @@ extern "C" {
 
     EbErrorType av1_inv_transform_recon(
         int32_t    *coeff_buffer,//1D buffer
-        uint8_t    *recon_buffer,
-        uint32_t    recon_stride,
+        uint8_t    *recon_buffer_r,
+        uint32_t    recon_stride_r,
+        uint8_t    *recon_buffer_w,
+        uint32_t    recon_stride_w,
         TxSize      txsize,
         uint32_t    bit_increment,
         TxType      transform_type,
@@ -4049,8 +4051,10 @@ extern "C" {
 
     EbErrorType av1_inv_transform_recon8bit(
         int32_t    *coeff_buffer,//1D buffer
-        uint8_t    *recon_buffer,
-        uint32_t    recon_stride,
+        uint8_t    *recon_buffer_r,
+        uint32_t    recon_stride_r,
+        uint8_t    *recon_buffer_w,
+        uint32_t    recon_stride_w,
         TxSize      txsize,
         TxType      transform_type,
         PlaneType  component_type,

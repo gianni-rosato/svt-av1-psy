@@ -2114,7 +2114,7 @@ void product_full_loop(
             uint32_t y_has_coeff           = y_count_non_zero_coeffs[txb_itr] > 0;
 
             if (y_has_coeff) {
-                inv_transform_recon_copy(
+                inv_transform_recon_wrapper(
                     candidate_buffer->prediction_ptr->buffer_y,
                     tu_origin_index,
                     candidate_buffer->prediction_ptr->stride_y,
@@ -2123,8 +2123,6 @@ void product_full_loop(
                     candidate_buffer->recon_ptr->stride_y,
                     (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_y,
                     txb_1d_offset,
-                    context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
-                    context_ptr->blk_geom->tx_height[tx_depth][txb_itr],
                     picture_control_set_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->txsize[tx_depth][txb_itr],
                     candidate_buffer->candidate_ptr->transform_type[txb_itr],
@@ -2439,7 +2437,7 @@ void product_full_loop_tx_search(
 
             if (context_ptr->spatial_sse_full_loop) {
                 if (yCountNonZeroCoeffsTemp)
-                    inv_transform_recon_copy(
+                    inv_transform_recon_wrapper(
                         candidate_buffer->prediction_ptr->buffer_y,
                         tu_origin_index,
                         candidate_buffer->prediction_ptr->stride_y,
@@ -2448,8 +2446,6 @@ void product_full_loop_tx_search(
                         candidate_buffer->recon_ptr->stride_y,
                         (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_y,
                         tu_origin_index,
-                        context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
-                        context_ptr->blk_geom->tx_height[tx_depth][txb_itr],
                         picture_control_set_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->txsize[tx_depth][txb_itr],
                         tx_type,
@@ -2990,7 +2986,7 @@ void encode_pass_tx_search_hbd(
         txb_ptr->transform_type[PLANE_TYPE_UV] = txb_ptr->transform_type[PLANE_TYPE_Y];
 }
 
-void inv_transform_recon_copy(
+void inv_transform_recon_wrapper(
     uint8_t    *pred_buffer,
     uint32_t    pred_offset,
     uint32_t    pred_stride,
@@ -2999,8 +2995,6 @@ void inv_transform_recon_copy(
     uint32_t    rec_stride,
     int32_t    *rec_coeff_buffer,
     uint32_t    coeff_offset,
-    uint32_t    width,
-    uint32_t    height,
     EbBool      hbd,
     TxSize      txsize,
     TxType      transform_type,
@@ -3008,32 +3002,20 @@ void inv_transform_recon_copy(
     uint32_t    eob)
 {
     if (hbd) {
-        uint16_t *pred_buffer_off = ((uint16_t*) pred_buffer) + pred_offset;
-        uint16_t *rec_buffer_off = ((uint16_t*) rec_buffer) + rec_offset;
-
-        for (uint32_t j = 0; j < height; j++)
-            memcpy(rec_buffer_off + j * rec_stride, pred_buffer_off + j * pred_stride, sizeof(uint16_t) * width);
-
         av1_inv_transform_recon(
             rec_coeff_buffer + coeff_offset,
-            CONVERT_TO_BYTEPTR(rec_buffer_off),
-            rec_stride,
+            CONVERT_TO_BYTEPTR(((uint16_t*)pred_buffer) + pred_offset), pred_stride,
+            CONVERT_TO_BYTEPTR(((uint16_t*)rec_buffer) + rec_offset), rec_stride,
             txsize,
             BIT_INCREMENT_10BIT,
             transform_type,
             component_type,
             eob);
     } else {
-        uint8_t *pred_buffer_off = pred_buffer + pred_offset;
-        uint8_t *rec_buffer_off = rec_buffer + rec_offset;
-
-        for (uint32_t j = 0; j < height; j++)
-            memcpy(rec_buffer_off + j * rec_stride, pred_buffer_off + j * pred_stride, width);
-
         av1_inv_transform_recon8bit(
             rec_coeff_buffer + coeff_offset,
-            rec_buffer_off,
-            rec_stride,
+            pred_buffer + pred_offset, pred_stride,
+            rec_buffer + rec_offset, rec_stride,
             txsize,
             transform_type,
             component_type,
@@ -3176,7 +3158,7 @@ void full_loop_r(
                 uint32_t cb_has_coeff = cb_count_non_zero_coeffs[txb_itr] > 0;
 
                 if (cb_has_coeff)
-                    inv_transform_recon_copy(
+                    inv_transform_recon_wrapper(
                         candidate_buffer->prediction_ptr->buffer_cb,
                         tuCbOriginIndex,
                         candidate_buffer->prediction_ptr->stride_cb,
@@ -3185,8 +3167,6 @@ void full_loop_r(
                         candidate_buffer->recon_ptr->stride_cb,
                         (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_cb,
                         txb_1d_offset,
-                        context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
-                        context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
                         picture_control_set_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                         candidate_buffer->candidate_ptr->transform_type_uv,
@@ -3263,7 +3243,7 @@ void full_loop_r(
                 uint32_t cr_has_coeff = cr_count_non_zero_coeffs[txb_itr] > 0;
 
                 if (cr_has_coeff)
-                    inv_transform_recon_copy(
+                    inv_transform_recon_wrapper(
                         candidate_buffer->prediction_ptr->buffer_cr,
                         tuCrOriginIndex,
                         candidate_buffer->prediction_ptr->stride_cr,
@@ -3272,8 +3252,6 @@ void full_loop_r(
                         candidate_buffer->recon_ptr->stride_cr,
                         (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_cr,
                         txb_1d_offset,
-                        context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
-                        context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
                         picture_control_set_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                         candidate_buffer->candidate_ptr->transform_type_uv,

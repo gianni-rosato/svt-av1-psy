@@ -1225,7 +1225,7 @@ void AV1PerformInverseTransformReconLuma(
             uint32_t y_has_coeff = (candidate_buffer->candidate_ptr->y_has_coeff & (1 << txb_itr)) > 0;
 
             if (y_has_coeff)
-               inv_transform_recon_copy(
+                inv_transform_recon_wrapper(
                     candidate_buffer->prediction_ptr->buffer_y,
                     tu_origin_index,
                     candidate_buffer->prediction_ptr->stride_y,
@@ -1234,8 +1234,6 @@ void AV1PerformInverseTransformReconLuma(
                     candidate_buffer->recon_ptr->stride_y,
                     (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_y,
                     txb_1d_offset,
-                    tu_width,
-                    tu_height,
                     picture_control_set_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->txsize[tx_depth][txb_itr],
                     candidate_buffer->candidate_ptr->transform_type[txb_itr],
@@ -1304,7 +1302,7 @@ void AV1PerformInverseTransformRecon(
             recCrOffset = ((((context_ptr->blk_geom->tx_org_x[tx_depth][txb_itr] >> 3) << 3) + ((context_ptr->blk_geom->tx_org_y[tx_depth][txb_itr] >> 3) << 3) * candidate_buffer->recon_ptr->stride_cr) >> 1);
             tu_origin_index = txb_origin_x + txb_origin_y * candidate_buffer->prediction_ptr->stride_y;
             if (txb_ptr->y_has_coeff)
-                inv_transform_recon_copy(
+                inv_transform_recon_wrapper(
                     candidate_buffer->prediction_ptr->buffer_y,
                     tu_origin_index,
                     candidate_buffer->prediction_ptr->stride_y,
@@ -1313,8 +1311,6 @@ void AV1PerformInverseTransformRecon(
                     candidate_buffer->recon_ptr->stride_y,
                     (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_y,
                     txb_1d_offset,
-                    tu_width,
-                    tu_height,
                     picture_control_set_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->txsize[tx_depth][txb_itr],
                     candidate_buffer->candidate_ptr->transform_type[txb_itr],
@@ -1347,7 +1343,7 @@ void AV1PerformInverseTransformRecon(
             uint32_t crTuChromaOriginIndex = ((((txb_origin_x >> 3) << 3) + ((txb_origin_y >> 3) << 3) * candidate_buffer->recon_coeff_ptr->stride_cr) >> 1);
 
             if (context_ptr->blk_geom->has_uv && txb_ptr->u_has_coeff)
-                    inv_transform_recon_copy(
+                    inv_transform_recon_wrapper(
                         candidate_buffer->prediction_ptr->buffer_cb,
                         cbTuChromaOriginIndex,
                         candidate_buffer->prediction_ptr->stride_cb,
@@ -1356,8 +1352,6 @@ void AV1PerformInverseTransformRecon(
                         candidate_buffer->recon_ptr->stride_cb,
                         (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_cb,
                         txb_1d_offset_uv,
-                        chroma_tu_width,
-                        chroma_tu_height,
                         picture_control_set_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                         candidate_buffer->candidate_ptr->transform_type_uv,
@@ -1381,7 +1375,7 @@ void AV1PerformInverseTransformRecon(
 
 
             if (context_ptr->blk_geom->has_uv && txb_ptr->v_has_coeff)
-                    inv_transform_recon_copy(
+                    inv_transform_recon_wrapper(
                         candidate_buffer->prediction_ptr->buffer_cr,
                         crTuChromaOriginIndex,
                         candidate_buffer->prediction_ptr->stride_cr,
@@ -1390,8 +1384,6 @@ void AV1PerformInverseTransformRecon(
                         candidate_buffer->recon_ptr->stride_cr,
                         (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_cr,
                         txb_1d_offset_uv,
-                        chroma_tu_width,
-                        chroma_tu_height,
                         picture_control_set_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                         candidate_buffer->candidate_ptr->transform_type_uv,
@@ -4445,7 +4437,7 @@ void perform_intra_tx_partitioning(
                 if (y_has_coeff == 0 && tx_type != DCT_DCT)
                     continue;
                 if (y_has_coeff)
-                    inv_transform_recon_copy(
+                    inv_transform_recon_wrapper(
                         candidate_buffer->prediction_ptr->buffer_y,
                         tu_origin_index,
                         candidate_buffer->prediction_ptr->stride_y,
@@ -4454,8 +4446,6 @@ void perform_intra_tx_partitioning(
                         candidate_buffer->recon_ptr->stride_y,
                         (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_y,
                         txb_1d_offset,
-                        context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
-                        context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr],
                         picture_control_set_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
                         tx_type,
@@ -4590,7 +4580,7 @@ void perform_intra_tx_partitioning(
             uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
             if (y_has_coeff)
-                inv_transform_recon_copy(
+                inv_transform_recon_wrapper(
                     candidate_buffer->prediction_ptr->buffer_y,
                     tu_origin_index,
                     candidate_buffer->prediction_ptr->stride_y,
@@ -4599,8 +4589,6 @@ void perform_intra_tx_partitioning(
                     candidate_buffer->recon_ptr->stride_y,
                     (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_y,
                     txb_1d_offset,
-                    context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
-                    context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr],
                     picture_control_set_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
                     candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr],
@@ -4855,7 +4843,7 @@ void perform_intra_tx_partitioning(
             uint32_t y_has_coeff = y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
             if (y_has_coeff)
-                inv_transform_recon_copy(
+                inv_transform_recon_wrapper(
                     candidate_buffer->prediction_ptr->buffer_y,
                     tu_origin_index,
                     candidate_buffer->prediction_ptr->stride_y,
@@ -4864,8 +4852,6 @@ void perform_intra_tx_partitioning(
                     candidate_buffer->recon_ptr->stride_y,
                     (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_y,
                     txb_1d_offset,
-                    context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
-                    context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr],
                     picture_control_set_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
                     candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr],

@@ -39,20 +39,22 @@ extern "C" {
 
     }
 
-    static INLINE void write_recon_w16_avx2(__m256i res, uint8_t *output) {
-        __m128i pred = _mm_loadu_si128((__m128i const *)(output));
+    static INLINE void write_recon_w16_avx2(__m256i res, uint8_t *output_r, uint8_t *output_w) {
+        __m128i pred = _mm_loadu_si128((__m128i const *)(output_r));
         __m256i u = _mm256_adds_epi16(_mm256_cvtepu8_epi16(pred), res);
         __m128i y = _mm256_castsi256_si128(
             _mm256_permute4x64_epi64(_mm256_packus_epi16(u, u), 168));
-        _mm_storeu_si128((__m128i *)(output), y);
+        _mm_storeu_si128((__m128i *)(output_w), y);
     }
 
     static INLINE void lowbd_write_buffer_16xn_avx2(__m256i *in,
-        uint8_t *output, int32_t stride, int32_t flipud, int32_t height) {
+        uint8_t *output_r, int32_t stride_r,
+        uint8_t *output_w, int32_t stride_w,
+        int32_t flipud, int32_t height) {
         int32_t j = flipud ? (height - 1) : 0;
         const int32_t step = flipud ? -1 : 1;
         for (int32_t i = 0; i < height; ++i, j += step)
-            write_recon_w16_avx2(in[j], output + i * stride);
+            write_recon_w16_avx2(in[j], output_r + i * stride_r, output_w + i * stride_w);
     }
 
 #ifdef __cplusplus
