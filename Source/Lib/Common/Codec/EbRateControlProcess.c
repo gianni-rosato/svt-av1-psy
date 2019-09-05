@@ -3520,7 +3520,8 @@ static void sb_qp_derivation(
     uint32_t                  sb_addr;
     RATE_CONTROL               rc;
     picture_control_set_ptr->parent_pcs_ptr->average_qp = 0;
-    if (sequence_control_set_ptr->static_config.enable_adaptive_quantization == 2 && picture_control_set_ptr->slice_type == 2 && picture_control_set_ptr->parent_pcs_ptr->frames_in_sw >= QPS_SW_THRESH && !picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
+    if (sequence_control_set_ptr->static_config.enable_adaptive_quantization == 2 && picture_control_set_ptr->slice_type == 2 && 
+        picture_control_set_ptr->parent_pcs_ptr->frames_in_sw >= QPS_SW_THRESH && !picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
         picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 1;
     else
         picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
@@ -3537,9 +3538,11 @@ static void sb_qp_derivation(
         uint32_t me_sb_size = sequence_control_set_ptr->sb_sz;
         uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / me_sb_size;
         uint32_t me_pic_height_in_sb = (sequence_control_set_ptr->seq_header.max_frame_height + me_sb_size - 1) / me_sb_size;
-        int max_qp_scaling_avg_comp = MAX(1, picture_control_set_ptr->parent_pcs_ptr->non_moving_index_min_distance + picture_control_set_ptr->parent_pcs_ptr->non_moving_index_max_distance);
+        int max_qp_scaling_avg_comp = 
+            MAX(1, picture_control_set_ptr->parent_pcs_ptr->non_moving_index_min_distance + picture_control_set_ptr->parent_pcs_ptr->non_moving_index_max_distance);
         // Calculate the QP per frames
-        rc.kf_boost = (((max_qp_scaling_avg_comp - picture_control_set_ptr->parent_pcs_ptr->non_moving_index_average)  * (kf_high - kf_low)) / max_qp_scaling_avg_comp) + kf_low;
+        rc.kf_boost = (((max_qp_scaling_avg_comp - picture_control_set_ptr->parent_pcs_ptr->non_moving_index_average)  * (kf_high - kf_low)) 
+                       / max_qp_scaling_avg_comp) + kf_low;
         active_best_quality =
             get_kf_active_quality(&rc, active_worst_quality, bit_depth);
         // Convert the adjustment factor to a qindex delta
@@ -3557,7 +3560,8 @@ static void sb_qp_derivation(
                 uint32_t me_sb_addr_0 = me_sb_x + me_sb_y * me_pic_width_in_sb;
                 uint32_t me_sb_addr_1 = (me_sb_x + 1) < me_pic_width_in_sb ? (me_sb_x + 1) + ((me_sb_y + 0) * me_pic_width_in_sb) : me_sb_addr_0;
                 uint32_t me_sb_addr_2 = (me_sb_y + 1) < me_pic_height_in_sb ? (me_sb_x + 0) + ((me_sb_y + 1) * me_pic_width_in_sb) : me_sb_addr_0;
-                uint32_t me_sb_addr_3 = ((me_sb_x + 1) < me_pic_width_in_sb) && ((me_sb_y + 1) < me_pic_height_in_sb) ? (me_sb_x + 1) + ((me_sb_y + 1) * me_pic_width_in_sb) : me_sb_addr_0;
+                uint32_t me_sb_addr_3 = ((me_sb_x + 1) < me_pic_width_in_sb) && ((me_sb_y + 1) < me_pic_height_in_sb) ? 
+                    (me_sb_x + 1) + ((me_sb_y + 1) * me_pic_width_in_sb) : me_sb_addr_0;
                 non_moving_index_sb =
                     (picture_control_set_ptr->parent_pcs_ptr->non_moving_index_array[me_sb_addr_0] +
                         picture_control_set_ptr->parent_pcs_ptr->non_moving_index_array[me_sb_addr_1] +
@@ -3775,7 +3779,10 @@ void* rate_control_kernel(void *input_ptr)
                                 (int32_t)(qindex + delta_qindex));
                     }
 #if QPM
-                    picture_control_set_ptr->picture_qp = (uint8_t)CLIP3((int32_t)sequence_control_set_ptr->static_config.min_qp_allowed, (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed, (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
+                    picture_control_set_ptr->picture_qp = 
+                        (uint8_t)CLIP3((int32_t)sequence_control_set_ptr->static_config.min_qp_allowed, 
+                                       (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed, 
+                                       (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
 #else
                     picture_control_set_ptr->picture_qp = (uint8_t)CLIP3((int32_t)sequence_control_set_ptr->static_config.min_qp_allowed, (int32_t)sequence_control_set_ptr->static_config.max_qp_allowed, frm_hdr->quantization_params.base_q_idx >> 2);
 #endif
