@@ -2532,7 +2532,7 @@ void parse_residual(EbDecHandle *dec_handle, PartitionInfo_t *pi, SvtReader *r,
 
                     assert(total_num_tu != 0);
                     assert(total_num_tu ==
-                        (parse_ctx->num_tus[plane][0] + parse_ctx->num_tus[plane][1] +
+                        (uint32_t)(parse_ctx->num_tus[plane][0] + parse_ctx->num_tus[plane][1] +
                             parse_ctx->num_tus[plane][2] + parse_ctx->num_tus[plane][3]));
                 }
                 assert(num_tu != 0);
