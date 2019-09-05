@@ -3538,7 +3538,7 @@ static void sb_qp_derivation(
         uint32_t me_sb_size = sequence_control_set_ptr->sb_sz;
         uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / me_sb_size;
         uint32_t me_pic_height_in_sb = (sequence_control_set_ptr->seq_header.max_frame_height + me_sb_size - 1) / me_sb_size;
-        int max_qp_scaling_avg_comp = 
+        int max_qp_scaling_avg_comp =
             MAX(1, picture_control_set_ptr->parent_pcs_ptr->non_moving_index_min_distance + picture_control_set_ptr->parent_pcs_ptr->non_moving_index_max_distance);
         // Calculate the QP per frames
         rc.kf_boost = (((max_qp_scaling_avg_comp - picture_control_set_ptr->parent_pcs_ptr->non_moving_index_average)  * (kf_high - kf_low))
