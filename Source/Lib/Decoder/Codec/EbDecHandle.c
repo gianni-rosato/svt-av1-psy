@@ -18,6 +18,7 @@
 #include "EbDecHandle.h"
 #include "EbDecMemInit.h"
 #include "EbDecPicMgr.h"
+#include "grainSynthesis.h"
 
 #if defined(__linux__) || defined(__APPLE__)
 #include <pthread.h>
@@ -129,6 +130,8 @@ int svt_dec_out_buf(
     EbPictureBufferDesc *recon_picture_buf = dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf;
     EbSvtIOFormat       *out_img = (EbSvtIOFormat*)p_buffer->p_buffer;
 
+    uint8_t *luma, *cb, *cr;
+
     /* TODO: Should add logic for show_existing_frame */
     if (0 == dec_handle_ptr->show_frame) {
         assert(0 == dec_handle_ptr->show_existing_frame);
@@ -148,85 +151,112 @@ int svt_dec_out_buf(
             assert(0);
     }
 
-    if (recon_picture_buf->bit_depth == EB_8BIT) {
-    uint8_t *dst;
-    uint8_t *src;
+    int32_t use_high_bit_depth = recon_picture_buf->bit_depth==EB_8BIT ? 0 : 1;
 
-    /* Luma */
-    dst = out_img->luma + out_img->origin_x +
-            (out_img->origin_y * out_img->y_stride);
-    src = recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
-        (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
+    luma = out_img->luma + ((out_img->origin_y * out_img->y_stride
+        + out_img->origin_x) << use_high_bit_depth);
+    cb = out_img->cb + ((out_img->cb_stride * (out_img->origin_y >> sy)
+        + (out_img->origin_x >> sx)) << use_high_bit_depth);
+    cr = out_img->cr + ((out_img->cr_stride * (out_img->origin_y >> sy)
+        + (out_img->origin_x >> sx)) << use_high_bit_depth);
 
-    for (i = 0; i < ht; i++) {
-        memcpy(dst, src, wd);
-        dst += out_img->y_stride;
-        src += recon_picture_buf->stride_y;
-    }
+    /* Memcpy to dst buffer */
+    {
+        if (recon_picture_buf->bit_depth == EB_8BIT) {
+            uint8_t *src, *dst;
+            dst = luma;
+            src = recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
+                (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
 
-    /* Cb */
-        dst = out_img->cb + (out_img->origin_x >> sx) +
-            ((out_img->origin_y >> sy) * out_img->cb_stride);
-        src = recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
-            ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
+            for (i = 0; i < ht; i++) {
+                memcpy(dst, src, wd);
+                dst += out_img->y_stride;
+                src += recon_picture_buf->stride_y;
+            }
 
-        for (i = 0; i < ht >> sy; i++) {
-            memcpy(dst, src, wd >> sx);
-        dst += out_img->cb_stride;
-        src += recon_picture_buf->stride_cb;
-    }
+            /* Cb */
+            dst = cb;
+            src = recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
+                ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
-    /* Cr */
-        dst = out_img->cr + (out_img->origin_x >> sx) +
-            ((out_img->origin_y >> sy) * out_img->cr_stride);
-        src = recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
-            ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
+            for (i = 0; i < ht >> sy; i++) {
+                memcpy(dst, src, wd >> sx);
+                dst += out_img->cb_stride;
+                src += recon_picture_buf->stride_cb;
+            }
 
-        for (i = 0; i < ht >> sy; i++) {
-            memcpy(dst, src, wd >> sx);
-        dst += out_img->cr_stride;
-        src += recon_picture_buf->stride_cr;
-    }
-    } else {
-        uint16_t *pu2_dst;
-        uint16_t *pu2_src;
+            /* Cr */
+            dst = cr;
+            src = recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
+                ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
 
-        /* Luma */
-        pu2_dst = (uint16_t *)out_img->luma + out_img->origin_x +
-                (out_img->origin_y * out_img->y_stride);
-        pu2_src = (uint16_t *)recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
-            (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
-
-        for (i = 0; i < ht; i++) {
-            memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd);
-            pu2_dst += out_img->y_stride;
-            pu2_src += recon_picture_buf->stride_y;
+            for (i = 0; i < ht >> sy; i++) {
+                memcpy(dst, src, wd >> sx);
+                dst += out_img->cr_stride;
+                src += recon_picture_buf->stride_cr;
+            }
         }
+        else {
+            uint16_t *pu2_dst;
+            uint16_t *pu2_src;
 
-        /* Cb */
-        pu2_dst = (uint16_t *)out_img->cb + (out_img->origin_x >> sx) +
-            ((out_img->origin_y >> sy) * out_img->cb_stride);
-        pu2_src = (uint16_t *)recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
-            ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
+            /* Luma */
+            pu2_dst = (uint16_t *)luma;
+            pu2_src = (uint16_t *)recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
+                (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
 
-        for (i = 0; i < ht >> sy; i++) {
-            memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
-            pu2_dst += out_img->cb_stride;
-            pu2_src += recon_picture_buf->stride_cb;
-        }
+            for (i = 0; i < ht; i++) {
+                memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd);
+                pu2_dst += out_img->y_stride;
+                pu2_src += recon_picture_buf->stride_y;
+            }
 
-        /* Cr */
-        pu2_dst = (uint16_t *)out_img->cr + (out_img->origin_x >> sx) +
-            ((out_img->origin_y >> sy) * out_img->cr_stride);
-        pu2_src = (uint16_t *)recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
-            ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
+            /* Cb */
+            pu2_dst = (uint16_t *)cb;
+            pu2_src = (uint16_t *)recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
+                ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
-        for (i = 0; i < ht >> sy; i++) {
-            memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
-            pu2_dst += out_img->cr_stride;
-            pu2_src += recon_picture_buf->stride_cr;
+            for (i = 0; i < ht >> sy; i++) {
+                memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
+                pu2_dst += out_img->cb_stride;
+                pu2_src += recon_picture_buf->stride_cb;
+            }
+
+            /* Cr */
+            pu2_dst = (uint16_t *)cr;
+            pu2_src = (uint16_t *)recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
+                ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
+
+            for (i = 0; i < ht >> sy; i++) {
+                memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
+                pu2_dst += out_img->cr_stride;
+                pu2_src += recon_picture_buf->stride_cr;
+            }
         }
     }
+    
+    if (!dec_handle_ptr->dec_config.skip_film_grain) {
+        /* Need to fill the dst buf with recon data before calling film_grain */
+        aom_film_grain_t *film_grain_ptr = &dec_handle_ptr->cur_pic_buf[0]->
+            film_grain_params;
+        if (film_grain_ptr->apply_grain) {
+
+            switch (recon_picture_buf->bit_depth) {
+            case EB_8BIT:
+                film_grain_ptr->bit_depth = 8;
+                break;
+            case EB_10BIT:
+                film_grain_ptr->bit_depth = 10;
+                break;
+            default:
+                assert(0);
+            }
+
+            eb_av1_add_film_grain_run(film_grain_ptr, luma, cb, cr, ht, wd, out_img->y_stride,
+                out_img->cb_stride, use_high_bit_depth, sy, sx);
+        }
+    }
+
     return 1;
 }
 

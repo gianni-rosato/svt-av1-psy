@@ -37,6 +37,7 @@
 #define MD5_SUPPORT_TOKEN               "-md5"
 #define FPS_FRM_TOKEN                   "-fps-frm"
 #define FPS_SUMMARY_TOKEN               "-fps-summary"
+#define FILM_GRAIN_TOKEN                "-skip-film-grain"
 #define MAX_NUM_TOKENS 200
 
 #define EB_STRCMP(target,token) \

@@ -51,6 +51,7 @@ typedef struct CLInput{
     uint32_t   enable_md5;
     uint32_t  fps_frm;
     uint32_t  fps_summary;
+    uint32_t  skip_film_grain;
 }CLInput;
 
 int file_is_ivf(CLInput *cli);

@@ -1364,17 +1364,17 @@ void read_film_grain_params(bitstrm_t *bs, aom_film_grain_t *grain_params,
 
     if (!seq_header->film_grain_params_present || (!frame_info->show_frame &&
         !frame_info->showable_frame)) {
-        // TODO: reset_grain_params(grain_params);
+        memset(grain_params, 0, sizeof(*grain_params));
         return;
     }
     grain_params->apply_grain = dec_get_bits(bs, 1);
     PRINT_FRAME("apply_grain", grain_params->apply_grain);
 
-    if (grain_params->apply_grain) {
-        printf("Film grain is not supported!\n");
-        assert(0);
-        // TODO: reset_grain_params(grain_params);
+    if (!grain_params->apply_grain) {
+        memset(grain_params, 0, sizeof(*grain_params));
+        return;
     }
+
     grain_params->random_seed = dec_get_bits(bs, 16);
     PRINT_FRAME("grain_seed", grain_params->random_seed);
     if (frame_info->frame_type == INTER_FRAME)
@@ -1447,7 +1447,7 @@ void read_film_grain_params(bitstrm_t *bs, aom_film_grain_t *grain_params,
         ((grain_params->num_cb_points != 0) && (grain_params->num_cr_points == 0))))
         return;// EB_DecUnsupportedBitstream;
 
-    grain_params->grain_scale_shift = dec_get_bits(bs, 2) + 8;
+    grain_params->scaling_shift = dec_get_bits(bs, 2) + 8;
     grain_params->ar_coeff_lag = dec_get_bits(bs, 2);
     PRINT_FRAME("scaling_shift", grain_params->grain_scale_shift);
     PRINT_FRAME("ar_coeff_lag", grain_params->ar_coeff_lag);
@@ -1979,6 +1979,8 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     PRINT_FRAME("reduced_tx_set", frame_info->reduced_tx_set);
     read_global_motion_params(bs, dec_handle_ptr, frame_info, FrameIsIntra);
     read_film_grain_params(bs, &frame_info->film_grain_params, seq_header, frame_info);
+
+    dec_handle_ptr->cur_pic_buf[0]->film_grain_params = dec_handle_ptr->frame_header.film_grain_params;
 
     dec_handle_ptr->show_existing_frame = frame_info->show_existing_frame;
     dec_handle_ptr->show_frame          = frame_info->show_frame;

@@ -56,6 +56,7 @@ typedef struct EbDecPicBuf {
     /* seg map */
     /* order hint */
     /* film grain */
+    aom_film_grain_t    film_grain_params;
 
 } EbDecPicBuf;
 
