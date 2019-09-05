@@ -2362,8 +2362,11 @@ extern    uint32_t                   app_malloc_count;
 
 #define EB_DESTROY_SEMAPHORE(pointer) \
     do { \
-        eb_destroy_semaphore(pointer); \
-        EB_REMOVE_MEM_ENTRY(pointer, EB_SEMAPHORE); \
+        if (pointer) { \
+            eb_destroy_semaphore(pointer); \
+            EB_REMOVE_MEM_ENTRY(pointer, EB_SEMAPHORE); \
+            pointer = NULL; \
+        } \
     }while (0)
 
 #define EB_CREATE_MUTEX(pointer) \
@@ -2377,6 +2380,7 @@ extern    uint32_t                   app_malloc_count;
         if (pointer) { \
             eb_destroy_mutex(pointer); \
             EB_REMOVE_MEM_ENTRY(pointer, EB_MUTEX); \
+            pointer = NULL; \
         } \
     } while (0)
 
