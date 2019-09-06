@@ -14267,9 +14267,6 @@ extern "C" {
 #if PRUNE_REF_FRAME_AT_ME
         uint8_t                               prune_unipred_at_me;
 #endif
-#if PRUNE_REF_FRAME_FRO_REC_PARTITION
-        uint8_t                               prune_ref_frame_for_rec_partitions;
-#endif
 #if COEFF_BASED_SKIP_ATB
         uint8_t                              coeff_based_skip_atb;
 #endif

@@ -364,7 +364,7 @@ uint8_t check_ref_beackout(
     uint8_t skip_candidate = 0;
     uint8_t ref_cnt = 0;
     uint8_t allowed_nsq_ref_th = (uint8_t)PRUNE_REC_TH;
-    if (picture_control_set_ptr->parent_pcs_ptr->prune_ref_frame_for_rec_partitions) {
+    if (context_ptr->prune_ref_frame_for_rec_partitions) {
         if (shape != PART_N) {
             uint8_t ref_idx;
             assert(ref_frame_type < 30);

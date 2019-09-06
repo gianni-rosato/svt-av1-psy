@@ -1282,12 +1282,6 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             picture_control_set_ptr->prune_unipred_at_me = 1;
 #endif
-#if PRUNE_REF_FRAME_FRO_REC_PARTITION
-        if (picture_control_set_ptr->sc_content_detected || picture_control_set_ptr->enc_mode == ENC_M0)
-            picture_control_set_ptr->prune_ref_frame_for_rec_partitions = 0;
-        else
-            picture_control_set_ptr->prune_ref_frame_for_rec_partitions = 1;
-#endif
 #if MFMV_SUPPORT
         //CHKN: Temporal MVP should be disabled for pictures beloning to 4L MiniGop preceeded by 5L miniGOP. in this case the RPS is wrong(known issue). check RPS construction for more info.
         if ((sequence_control_set_ptr->static_config.hierarchical_levels == 4 && picture_control_set_ptr->hierarchical_levels == 3) ||

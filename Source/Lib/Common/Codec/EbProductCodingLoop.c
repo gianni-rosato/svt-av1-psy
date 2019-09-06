@@ -7026,7 +7026,7 @@ void md_encode_block(
             context_ptr->md_stage_3_total_count,
             (context_ptr->full_loop_escape == 2) ? context_ptr->sorted_candidate_index_array : context_ptr->best_candidate_index_array,
 #if PRUNE_REF_FRAME_FRO_REC_PARTITION
-            picture_control_set_ptr->parent_pcs_ptr->prune_ref_frame_for_rec_partitions,
+            context_ptr->prune_ref_frame_for_rec_partitions,
 #endif
             &best_intra_mode);
         candidate_buffer = candidate_buffer_ptr_array[candidate_index];

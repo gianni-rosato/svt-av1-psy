@@ -322,6 +322,9 @@ extern "C" {
 #if COEFF_BASED_SKIP_ATB
     EbBool                              coeff_based_skip_atb;
 #endif
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+    uint8_t                             prune_ref_frame_for_rec_partitions;
+#endif
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(
