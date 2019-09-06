@@ -4456,7 +4456,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
 #if ADD_DELTA_QP_SUPPORT //PART 0
             eb_aom_wb_write_literal(wb, OD_ILOG_NZ(frm_hdr->delta_q_params.delta_q_res) - 1, 2);
             pcs_ptr->prev_qindex = frm_hdr->quantization_params.base_q_idx;
-            if (pcs_ptr->allow_intrabc)
+            if (frm_hdr->allow_intrabc)
                 assert(frm_hdr->delta_lf_params.delta_lf_present == 0);
             else
                 eb_aom_wb_write_bit(wb, frm_hdr->delta_lf_params.delta_lf_present);
@@ -6004,7 +6004,13 @@ assert(bsize < BlockSizeS_ALL);
             blkOriginY >> MI_SIZE_LOG2);
 
 #if ADD_DELTA_QP_SUPPORT //PART 1
-        if (picture_control_set_ptr->parent_pcs_ptr->delta_q_present_flag) {
+        if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
+#if QPM
+            int32_t current_q_index = quantizer_to_qindex[cu_ptr->qp];
+            int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0) &&
+                (((blkOriginX >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0);
+            if ((bsize != sequence_control_set_ptr->seq_header.sb_size || skipCoeff == 0) && super_block_upper_left) {
+#else
             int32_t current_q_index = cu_ptr->qp;
 
             int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->mib_size - 1)) == 0) && (((blkOriginX >> 2) & (sequence_control_set_ptr->mib_size - 1)) == 0);
@@ -6014,6 +6020,7 @@ assert(bsize < BlockSizeS_ALL);
             if (cu_size == 8 && cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4)
                 bsize = BLOCK_4X4;
             if ((bsize != sequence_control_set_ptr->sb_size || skipCoeff == 0) && super_block_upper_left) {
+#endif
                 assert(current_q_index > 0);
                 int32_t reduced_delta_qindex = (current_q_index - picture_control_set_ptr->parent_pcs_ptr->prev_qindex) / frm_hdr->delta_q_params.delta_q_res;
 
@@ -6150,7 +6157,12 @@ assert(bsize < BlockSizeS_ALL);
             blkOriginX >> MI_SIZE_LOG2,
             blkOriginY >> MI_SIZE_LOG2);
 #if ADD_DELTA_QP_SUPPORT//PART 2
-        if (picture_control_set_ptr->parent_pcs_ptr->delta_q_present_flag) {
+        if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
+#if QPM
+            int32_t current_q_index = quantizer_to_qindex[cu_ptr->qp];
+            int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0) && (((blkOriginX >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0);
+            if ((bsize != sequence_control_set_ptr->seq_header.sb_size || skipCoeff == 0) && super_block_upper_left) {
+#else
             int32_t current_q_index = cu_ptr->qp;
 
             int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->mib_size - 1)) == 0) && (((blkOriginX >> 2) & (sequence_control_set_ptr->mib_size - 1)) == 0);
@@ -6160,17 +6172,13 @@ assert(bsize < BlockSizeS_ALL);
             if (cu_size == 8 && cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4)
                 bsize = BLOCK_4X4;
             if ((bsize != sequence_control_set_ptr->sb_size || skipCoeff == 0) && super_block_upper_left) {
+#endif
                 assert(current_q_index > 0);
-
-                int32_t reduced_delta_qindex = (current_q_index - picture_control_set_ptr->parent_pcs_ptr->prev_qindex) / picture_control_set_ptr->parent_pcs_ptr->delta_q_res;
-
-                //write_delta_qindex(xd, reduced_delta_qindex, w);
-
+                int32_t reduced_delta_qindex = (current_q_index - picture_control_set_ptr->parent_pcs_ptr->prev_qindex) / frm_hdr->delta_q_params.delta_q_res;
                 Av1writeDeltaQindex(
                     frameContext,
                     reduced_delta_qindex,
                     ec_writer);
-
                 picture_control_set_ptr->parent_pcs_ptr->prev_qindex = current_q_index;
             }
         }

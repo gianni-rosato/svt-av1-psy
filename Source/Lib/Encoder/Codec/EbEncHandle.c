@@ -1887,8 +1887,12 @@ void SetDefaultConfigurationParameters(
     sequence_control_set_ptr->cropping_top_offset = 0;
     sequence_control_set_ptr->cropping_bottom_offset = 0;
 
+#if QPM
+    sequence_control_set_ptr->static_config.enable_adaptive_quantization = 2;
+#else
     //Segmentation
     sequence_control_set_ptr->static_config.enable_adaptive_quantization = 0;
+#endif
 
     return;
 }
@@ -2497,9 +2501,13 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error instance %u : Invalid screen_content_mode. screen_content_mode must be [0 - 2]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#if QPM
+    if (sequence_control_set_ptr->static_config.enable_adaptive_quantization > 2) {
+        SVT_LOG("Error instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must be [0-2]\n", channelNumber + 1);
+#else
     if(sequence_control_set_ptr->static_config.enable_adaptive_quantization>1){
         SVT_LOG("Error instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must be [0/1]\n", channelNumber + 1);
+#endif
         return_error = EB_ErrorBadParameter;
     }
 

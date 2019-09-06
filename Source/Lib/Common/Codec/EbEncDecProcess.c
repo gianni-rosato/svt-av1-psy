@@ -252,12 +252,16 @@ static void ResetEncDec(
 #endif
     context_ptr->is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
-    // QP
-    //context_ptr->qp          = picture_control_set_ptr->parent_pcs_ptr->tilePtrArray[tileIndex]->tileQp;
 #if ADD_DELTA_QP_SUPPORT
+#if QPM
+    uint16_t picture_qp = picture_control_set_ptr->picture_qp;
+    context_ptr->qp = picture_qp;
+    context_ptr->qp_index = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present ? (uint8_t)quantizer_to_qindex[context_ptr->qp] : (uint8_t)picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#else
     uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
     context_ptr->qp = picture_qp;
     context_ptr->qp_index = context_ptr->qp;
+#endif
 #else
     context_ptr->qp = picture_control_set_ptr->picture_qp;
 #endif
@@ -320,16 +324,22 @@ static void EncDecConfigureLcu(
     EncDecContext         *context_ptr,
     LargestCodingUnit     *sb_ptr,
     PictureControlSet     *picture_control_set_ptr,
+#if !QPM
     SequenceControlSet    *sequence_control_set_ptr,
     uint8_t                    picture_qp,
+#endif
     uint8_t                    sb_qp)
 {
+#if QPM
+    context_ptr->qp = sb_qp;
+#else
     //RC is off
     if (sequence_control_set_ptr->static_config.rate_control_mode == 0 && sequence_control_set_ptr->static_config.improve_sharpness == 0)
         context_ptr->qp = picture_qp;
     //RC is on
     else
         context_ptr->qp = sb_qp;
+#endif
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
     context_ptr->chroma_qp = context_ptr->qp;
     /* Note(CHKN) : when Qp modulation varies QP on a sub-LCU(CU) basis,  Lamda has to change based on Cu->QP , and then this code has to move inside the CU loop in MD */
@@ -1125,7 +1135,7 @@ void PadRefAndSetFlags(
     referenceObject->ref_poc = picture_control_set_ptr->parent_pcs_ptr->picture_number;
 
     // set up the QP
-#if ADD_DELTA_QP_SUPPORT
+#if ADD_DELTA_QP_SUPPORT && !QPM
     uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
     referenceObject->qp = (uint16_t)picture_qp;
 #else
@@ -1717,10 +1727,14 @@ void* enc_dec_kernel(void *input_ptr)
                     // Configure the LCU
                     mode_decision_configure_lcu(
                         context_ptr->md_context,
+#if !QPM
                         sb_ptr,
+#endif
                         picture_control_set_ptr,
+#if !QPM
                         sequence_control_set_ptr,
                         (uint8_t)context_ptr->qp,
+#endif
                         (uint8_t)sb_ptr->qp);
 
                     uint32_t lcuRow;
@@ -1787,8 +1801,10 @@ void* enc_dec_kernel(void *input_ptr)
                         context_ptr,
                         sb_ptr,
                         picture_control_set_ptr,
+#if !QPM
                         sequence_control_set_ptr,
                         (uint8_t)context_ptr->qp,
+#endif
                         (uint8_t)sb_ptr->qp);
 
 #if NO_ENCDEC

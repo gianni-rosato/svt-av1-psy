@@ -1043,7 +1043,7 @@ EbAuraStatus AuraDetection64x64Gold(
     uint32_t                         x_lcu_index,
     uint32_t                         y_lcu_index
 );
-
+#if !QPM
 void QpmGatherStatisticsSW(
     SequenceControlSet        *sequence_control_set_ptr,
     PictureParentControlSet   *picture_control_set_ptr,
@@ -1151,7 +1151,7 @@ void QpmGatherStatisticsSW(
         picture_control_set_ptr->processed_leaf_count[cu_depth]++;
     }
 }
-
+#endif
 /******************************************************
 Input   : variance
 Output  : true if current & neighbors are spatially complex
@@ -1368,7 +1368,9 @@ void* initial_rate_control_kernel(void *input_ptr)
                 picture_control_set_ptr);
 
             if (sequence_control_set_ptr->static_config.improve_sharpness) {
+#if !QPM
                 uint32_t sb_index;
+#endif
                 uint8_t cu_depth;
 
                 // QPM statistics init
@@ -1385,14 +1387,14 @@ void* initial_rate_control_kernel(void *input_ptr)
 
                     picture_control_set_ptr->processed_leaf_count[cu_depth] = 0;
                 }
-
+#if !QPM
                 for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; sb_index++) {
                     QpmGatherStatisticsSW(
                         sequence_control_set_ptr,
                         picture_control_set_ptr,
                         sb_index);
                 }
-
+#endif
                 picture_control_set_ptr->intra_complexity_min_pre = picture_control_set_ptr->intra_complexity_min[0];
                 picture_control_set_ptr->intra_complexity_max_pre = picture_control_set_ptr->intra_complexity_max[0];
                 picture_control_set_ptr->inter_complexity_min_pre = picture_control_set_ptr->inter_complexity_min[0];

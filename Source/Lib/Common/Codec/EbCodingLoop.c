@@ -1440,7 +1440,7 @@ EB_AV1_GENERATE_RECON_FUNC_PTR   Av1EncodeGenerateReconFunctionPtr[2] =
     Av1EncodeGenerateRecon16bit
 };
 
-#if ADD_DELTA_QP_SUPPORT
+#if ADD_DELTA_QP_SUPPORT && !QPM
 /*****************************************************************************
 * NM - Note: Clean up
 * AV1 QPM is SB based and all sub-Lcu buffers needs to be removed
@@ -2449,7 +2449,7 @@ EB_EXTERN void av1_encode_pass(
         }
     }
 #endif
-#if ADD_DELTA_QP_SUPPORT
+#if ADD_DELTA_QP_SUPPORT && !QPM
     if (context_ptr->skip_qpm_flag == EB_FALSE && sequence_control_set_ptr->static_config.improve_sharpness) {
         Av1QpModulationLcu(
             sequence_control_set_ptr,
@@ -2516,7 +2516,22 @@ EB_EXTERN void av1_encode_pass(
                     context_ptr->blk_geom->bheight == 4) ? EB_TRUE : EB_FALSE;
                 // Evaluate cfl @ EP if applicable, and not done @ MD
                 context_ptr->evaluate_cfl_ep = (disable_cfl_flag == EB_FALSE && context_ptr->md_context->chroma_level == CHROMA_MODE_2);
+#if QPM
+                // for now, segmentation independent of sharpness/delta QP.
+                if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled) {
+                    apply_segmentation_based_quantization(
+                        blk_geom,
+                        picture_control_set_ptr,
+                        sb_ptr,
+                        cu_ptr);
 
+                    sb_ptr->qp = cu_ptr->qp;
+                }
+                else {
+                    cu_ptr->qp = sb_ptr->qp;
+                    cu_ptr->delta_qp = sb_ptr->delta_qp;
+                }
+#else
 #if ADD_DELTA_QP_SUPPORT
                 if (context_ptr->skip_qpm_flag == EB_FALSE && sequence_control_set_ptr->static_config.improve_sharpness) {
                     cu_ptr->qp = sb_ptr->qp;
@@ -2546,7 +2561,7 @@ EB_EXTERN void av1_encode_pass(
                     cu_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
                     sb_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
                 }
-
+#endif
 #endif
 
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE) {

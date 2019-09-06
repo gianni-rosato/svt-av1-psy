@@ -257,8 +257,11 @@ EbErrorType picture_control_set_ctor(
     EbPictureBufferDescInitData coeffBufferDescInitData;
 
     // Max/Min CU Sizes
+#if QPM
+    const uint32_t maxCuSize = initDataPtr->sb_size_pix;
+#else
     const uint32_t maxCuSize = initDataPtr->sb_sz;
-
+#endif
     // LCUs
     const uint16_t pictureLcuWidth = (uint16_t)((initDataPtr->picture_width + initDataPtr->sb_sz - 1) / initDataPtr->sb_sz);
     const uint16_t pictureLcuHeight = (uint16_t)((initDataPtr->picture_height + initDataPtr->sb_sz - 1) / initDataPtr->sb_sz);
