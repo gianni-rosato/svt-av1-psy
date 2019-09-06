@@ -176,13 +176,17 @@ static void ResetEntropyCodingPicture(
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     // QP
 #if ADD_DELTA_QP_SUPPORT
+#if !QPM
     uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->quant_param.base_q_idx;
     context_ptr->qp = picture_qp;
+#endif
 #else
     context_ptr->qp = picture_control_set_ptr->picture_qp;
 #endif
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
-
+#if QPM
+    entropyCodingQp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#else
     context_ptr->chroma_qp = context_ptr->qp;
     if (picture_control_set_ptr->use_delta_qp)
         entropyCodingQp = frm_hdr->quantization_params.base_q_idx;
@@ -192,17 +196,14 @@ static void ResetEntropyCodingPicture(
     // Reset QP Assignement
     picture_control_set_ptr->prev_coded_qp = picture_control_set_ptr->picture_qp;
     picture_control_set_ptr->prev_quant_group_coded_qp = picture_control_set_ptr->picture_qp;
+#endif
 
-#if ADD_DELTA_QP_SUPPORT //PART 0
-    picture_control_set_ptr->parent_pcs_ptr->prev_qindex = picture_control_set_ptr->parent_pcs_ptr->quant_param.base_q_idx;
-    if (picture_control_set_ptr->parent_pcs_ptr->allow_intrabc)
-        assert(picture_control_set_ptr->parent_pcs_ptr->delta_lf_params.delta_lf_present == 0);
-    /*else
-        eb_aom_wb_write_bit(wb, pcs_ptr->delta_lf_params.delta_lf_present);*/
-    if (picture_control_set_ptr->parent_pcs_ptr->delta_lf_params.delta_lf_present) {
-        //aom_wb_write_literal(wb, OD_ILOG_NZ(pcs_ptr->delta_lf_params.delta_lf_res) - 1, 2);
+#if ADD_DELTA_QP_SUPPORT
+    picture_control_set_ptr->parent_pcs_ptr->prev_qindex = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+    if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc)
+        assert(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_lf_params.delta_lf_present == 0);
+    if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_lf_params.delta_lf_present) {
         picture_control_set_ptr->parent_pcs_ptr->prev_delta_lf_from_base = 0;
-        //aom_wb_write_bit(wb, pcs_ptr->delta_lf_params.delta_lf_multi);
         const int32_t frame_lf_count =
             picture_control_set_ptr->parent_pcs_ptr->monochrome == 0 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
         for (int32_t lf_id = 0; lf_id < frame_lf_count; ++lf_id)
@@ -257,13 +258,17 @@ static void reset_ec_tile(
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     // QP
 #if ADD_DELTA_QP_SUPPORT
+#if !QPM
     uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->quant_param.base_q_idx;
     context_ptr->qp = picture_qp;
+#endif
 #else
     context_ptr->qp = picture_control_set_ptr->picture_qp;
 #endif
+#if QPM
+    entropy_coding_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#else
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
-
     context_ptr->chroma_qp = context_ptr->qp;
     if (picture_control_set_ptr->use_delta_qp)
         entropy_coding_qp = frm_hdr->quantization_params.base_q_idx;
@@ -273,17 +278,14 @@ static void reset_ec_tile(
     // Reset QP Assignement
     picture_control_set_ptr->prev_coded_qp = picture_control_set_ptr->picture_qp;
     picture_control_set_ptr->prev_quant_group_coded_qp = picture_control_set_ptr->picture_qp;
+#endif
 
-#if ADD_DELTA_QP_SUPPORT //PART 0
-    picture_control_set_ptr->parent_pcs_ptr->prev_qindex = picture_control_set_ptr->parent_pcs_ptr->quant_param.base_q_idx;
-    if (picture_control_set_ptr->parent_pcs_ptr->allow_intrabc)
-        assert(picture_control_set_ptr->parent_pcs_ptr->delta_lf_params.delta_lf_present == 0);
-    /*else
-        eb_aom_wb_write_bit(wb, pcs_ptr->delta_lf_params.delta_lf_present);*/
-    if (picture_control_set_ptr->parent_pcs_ptr->delta_lf_params.delta_lf_present) {
-        //aom_wb_write_literal(wb, OD_ILOG_NZ(pcs_ptr->delta_lf_params.delta_lf_res) - 1, 2);
+#if ADD_DELTA_QP_SUPPORT
+    picture_control_set_ptr->parent_pcs_ptr->prev_qindex = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+    if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc)
+        assert(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_lf_params.delta_lf_present == 0);
+    if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_lf_params.delta_lf_present) {
         picture_control_set_ptr->parent_pcs_ptr->prev_delta_lf_from_base = 0;
-        //eb_aom_wb_write_bit(wb, pcs_ptr->delta_lf_params.delta_lf_multi);
         const int32_t frame_lf_count =
             picture_control_set_ptr->parent_pcs_ptr->monochrome == 0 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
         for (int32_t lf_id = 0; lf_id < frame_lf_count; ++lf_id)
@@ -327,7 +329,7 @@ static void reset_ec_tile(
 
     return;
 }
-
+#if !QPM
 /******************************************************
  * EncDec Configure LCU
  ******************************************************/
@@ -350,6 +352,7 @@ static void EntropyCodingConfigureLcu(
 
     return;
 }
+#endif
 /******************************************************
  * Update Entropy Coding Rows
  *
@@ -511,11 +514,13 @@ void* entropy_coding_kernel(void *input_ptr)
                     context_ptr->sb_origin_y = sb_origin_y;
                     if (sb_index == 0)
                         eb_av1_reset_loop_restoration(picture_control_set_ptr);
+#if !QPM
                     // Configure the LCU
                     EntropyCodingConfigureLcu(
                         context_ptr,
                         sb_ptr,
                         picture_control_set_ptr);
+#endif
                     sb_ptr->total_bits = 0;
                     uint32_t prev_pos = sb_index ? picture_control_set_ptr->entropy_coder_ptr->ec_writer.ec.offs : 0;//residual_bc.pos
                     EbPictureBufferDesc *coeff_picture_ptr = sb_ptr->quantized_coeff;
@@ -636,11 +641,13 @@ void* entropy_coding_kernel(void *input_ptr)
                              sb_origin_y = y_lcu_index << lcuSizeLog2;
                              context_ptr->sb_origin_x = sb_origin_x;
                              context_ptr->sb_origin_y = sb_origin_y;
+#if !QPM
                              // Configure the LCU
                              EntropyCodingConfigureLcu(
                                  context_ptr,
                                  sb_ptr,
                                  picture_control_set_ptr);
+#endif
                              sb_ptr->total_bits = 0;
                              uint32_t prev_pos = sb_index ? picture_control_set_ptr->entropy_coder_ptr->ec_writer.ec.offs : 0;//residual_bc.pos
                              EbPictureBufferDesc *coeff_picture_ptr = sb_ptr->quantized_coeff;

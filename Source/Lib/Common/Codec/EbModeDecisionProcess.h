@@ -401,10 +401,14 @@ extern "C" {
 
     extern void mode_decision_configure_lcu(
         ModeDecisionContext   *context_ptr,
+#if !QPM
         LargestCodingUnit     *sb_ptr,
+#endif
         PictureControlSet     *picture_control_set_ptr,
+#if !QPM
         SequenceControlSet    *sequence_control_set_ptr,
         uint8_t                  picture_qp,
+#endif
         uint8_t                  sb_qp);
 
     extern void cfl_rd_pick_alpha(
