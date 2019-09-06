@@ -14,6 +14,7 @@
 
 #ifdef _WIN32
 #else
+#include <Fileapi.h>
 #include <unistd.h>
 #endif
 
@@ -125,6 +126,9 @@
  **********************************/
 static void SetCfgInputFile(const char *filename, EbConfig *cfg)
 {
+    if (cfg->input_file && cfg->input_file_is_fifo)
+        fclose(cfg->input_file);
+
     if (!filename) {
         cfg->input_file = NULL;
         return;
@@ -135,10 +139,16 @@ static void SetCfgInputFile(const char *filename, EbConfig *cfg)
     else
         FOPEN(cfg->input_file, filename, "rb");
 
+#if defined(_MSC_VER)
+    cfg->input_file_is_fifo =
+    GetFileType(cfg->input_file) == FILE_TYPE_PIPE;
+#elif
     int fd = fileno(cfg->input_file);
     struct stat statbuf;
     fstat(fd, &statbuf);
     cfg->input_file_is_fifo = S_ISFIFO(statbuf.st_mode);
+#endif
+
     cfg->y4m_input = check_if_y4m(cfg);
 };
 
