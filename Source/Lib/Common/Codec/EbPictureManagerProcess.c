@@ -789,7 +789,7 @@ void* picture_manager_kernel(void *input_ptr)
                                     // Set the Reference Object
                                     ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0][refIdx] = referenceEntryPtr->reference_object_ptr;
 
-#if ADD_DELTA_QP_SUPPORT
+#if ADD_DELTA_QP_SUPPORT && !QPM
                                     ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0][refIdx] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->reference_object_ptr->object_ptr)->qp;
                                     ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0][refIdx] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->reference_object_ptr->object_ptr)->slice_type;
 #else

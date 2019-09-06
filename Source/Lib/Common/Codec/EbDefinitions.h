@@ -61,8 +61,8 @@ extern "C" {
 #define TURN_OFF_DUAL_MODE                1
 #define SC_SETTINGS_TUNING                1 // SC Settings Tuning
 #define HME_ME_TUNING                     1 // HME/ME tuning
+#define QPM                               1 // Change the QP of each SB using deltaq to improve efficiency (Only active in Intra frames)
 #define MFMV_SUPPORT                      1// Temporal mvp support. aka. MFMV
-
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
@@ -139,7 +139,11 @@ enum {
 #define PAD_VALUE                                (128+32)
 
 //  Delta QP support
+#if QPM
+#define ADD_DELTA_QP_SUPPORT                      1  // Add delta QP support
+#else
 #define ADD_DELTA_QP_SUPPORT                      0  // Add delta QP support - Please enable this flag and iproveSharpness (config) to test the QPM
+#endif
 #define BLOCK_MAX_COUNT_SB_128                    4421  // TODO: reduce alloction for 64x64
 #define BLOCK_MAX_COUNT_SB_64                     1101  // TODO: reduce alloction for 64x64
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
