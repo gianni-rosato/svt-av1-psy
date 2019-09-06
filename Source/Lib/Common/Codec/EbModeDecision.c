@@ -356,7 +356,6 @@ EbErrorType mode_decision_candidate_buffer_ctor(
 }
 #if PRUNE_REF_FRAME_FRO_REC_PARTITION
 uint8_t check_ref_beackout(
-    PictureControlSet          *picture_control_set_ptr,
     struct ModeDecisionContext *context_ptr,
     uint8_t                     ref_frame_type,
     PART                        shape)
@@ -639,7 +638,6 @@ void Unipred3x3CandidatesInjection(
         uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
 #if PRUNE_REF_FRAME_FRO_REC_PARTITION
         uint8_t skip_cand = check_ref_beackout(
-            picture_control_set_ptr,
             context_ptr,
             to_inject_ref_type,
             context_ptr->blk_geom->shape);
@@ -728,7 +726,6 @@ void Unipred3x3CandidatesInjection(
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
 #if PRUNE_REF_FRAME_FRO_REC_PARTITION
             uint8_t skip_cand = check_ref_beackout(
-                picture_control_set_ptr,
                 context_ptr,
                 to_inject_ref_type,
                 context_ptr->blk_geom->shape);
@@ -854,7 +851,6 @@ void Bipred3x3CandidatesInjection(
         uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
 #if PRUNE_REF_FRAME_FRO_REC_PARTITION
         uint8_t skip_cand = check_ref_beackout(
-            picture_control_set_ptr,
             context_ptr,
             to_inject_ref_type,
             context_ptr->blk_geom->shape);
@@ -962,7 +958,6 @@ void Bipred3x3CandidatesInjection(
             uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
 #if PRUNE_REF_FRAME_FRO_REC_PARTITION
             uint8_t skip_cand = check_ref_beackout(
-                picture_control_set_ptr,
                 context_ptr,
                 to_inject_ref_type,
                 context_ptr->blk_geom->shape);
@@ -2212,7 +2207,6 @@ void inject_new_candidates(
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
 #if PRUNE_REF_FRAME_FRO_REC_PARTITION
             uint8_t skip_cand = check_ref_beackout(
-                picture_control_set_ptr,
                 context_ptr,
                 to_inject_ref_type,
                 context_ptr->blk_geom->shape);
@@ -2288,7 +2282,6 @@ void inject_new_candidates(
                 uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
 #if PRUNE_REF_FRAME_FRO_REC_PARTITION
                 uint8_t skip_cand = check_ref_beackout(
-                    picture_control_set_ptr,
                     context_ptr,
                     to_inject_ref_type,
                     context_ptr->blk_geom->shape);
@@ -2367,7 +2360,6 @@ void inject_new_candidates(
                     uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
 #if PRUNE_REF_FRAME_FRO_REC_PARTITION
                     uint8_t skip_cand = check_ref_beackout(
-                        picture_control_set_ptr,
                         context_ptr,
                         to_inject_ref_type,
                         context_ptr->blk_geom->shape);
