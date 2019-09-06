@@ -222,72 +222,55 @@ extern "C" {
         uint32_t                   area_width,
         uint32_t                   area_height);
 
-    void WpAvcStyleCopy(EbByte refPic, uint32_t srcStride, EbByte dst,
+    void avc_style_copy(EbByte refPic, uint32_t srcStride, EbByte dst,
                     uint32_t dstStride, uint32_t puWidth, uint32_t puHeight,
-                    EbByte tempBuf, uint32_t fracPos, int16_t wpWeight,
-                    int16_t wpOffset, uint8_t wpDenominator);
-    void WpAvcStyleLumaInterpolationFilterHorizontal(
-                                                 EbByte refPic, uint32_t srcStride, EbByte dst, uint32_t dstStride,
-                                                 uint32_t puWidth, uint32_t puHeight, EbByte tempBuf, uint32_t fracPos,
-                                                 int16_t wpWeight, int16_t wpOffset, uint8_t wpDenominator);
-    void WpAvcStyleLumaInterpolationFilterVertical(
-                                               EbByte refPic, uint32_t srcStride, EbByte dst, uint32_t dstStride,
-                                               uint32_t puWidth, uint32_t puHeight, EbByte tempBuf, uint32_t fracPos,
-                                               int16_t wpWeight, int16_t wpOffset, uint8_t wpDenominator);
-    void WpAvcStyleLumaInterpolationFilterPose(EbByte refPic, uint32_t srcStride,
-                                           EbByte dst, uint32_t dstStride,
-                                           uint32_t puWidth, uint32_t puHeight,
-                                           EbByte tempBuf, uint32_t fracPos,
-                                           int16_t wpWeight, int16_t wpOffset,
-                                           uint8_t wpDenominator);
-    void WpAvcStyleLumaInterpolationFilterPosf(EbByte refPic, uint32_t srcStride,
-                                           EbByte dst, uint32_t dstStride,
-                                           uint32_t puWidth, uint32_t puHeight,
-                                           EbByte tempBuf, uint32_t fracPos,
-                                           int16_t wpWeight, int16_t wpOffset,
-                                           uint8_t wpDenominator);
-    void WpAvcStyleLumaInterpolationFilterPosg(EbByte refPic, uint32_t srcStride,
-                                           EbByte dst, uint32_t dstStride,
-                                           uint32_t puWidth, uint32_t puHeight,
-                                           EbByte tempBuf, uint32_t fracPos,
-                                           int16_t wpWeight, int16_t wpOffset,
-                                           uint8_t wpDenominator);
-    void WpAvcStyleLumaInterpolationFilterPosi(EbByte refPic, uint32_t srcStride,
-                                           EbByte dst, uint32_t dstStride,
-                                           uint32_t puWidth, uint32_t puHeight,
-                                           EbByte tempBuf, uint32_t fracPos,
-                                           int16_t wpWeight, int16_t wpOffset,
-                                           uint8_t wpDenominator);
-    void WpAvcStyleLumaInterpolationFilterPosj(EbByte refPic, uint32_t srcStride,
-                                           EbByte dst, uint32_t dstStride,
-                                           uint32_t puWidth, uint32_t puHeight,
-                                           EbByte tempBuf, uint32_t fracPos,
-                                           int16_t wpWeight, int16_t wpOffset,
-                                           uint8_t wpDenominator);
-    void WpAvcStyleLumaInterpolationFilterPosk(EbByte refPic, uint32_t srcStride,
-                                           EbByte dst, uint32_t dstStride,
-                                           uint32_t puWidth, uint32_t puHeight,
-                                           EbByte tempBuf, uint32_t fracPos,
-                                           int16_t wpWeight, int16_t wpOffset,
-                                           uint8_t wpDenominator);
-    void WpAvcStyleLumaInterpolationFilterPosp(EbByte refPic, uint32_t srcStride,
-                                           EbByte dst, uint32_t dstStride,
-                                           uint32_t puWidth, uint32_t puHeight,
-                                           EbByte tempBuf, uint32_t fracPos,
-                                           int16_t wpWeight, int16_t wpOffset,
-                                           uint8_t wpDenominator);
-    void WpAvcStyleLumaInterpolationFilterPosq(EbByte refPic, uint32_t srcStride,
-                                           EbByte dst, uint32_t dstStride,
-                                           uint32_t puWidth, uint32_t puHeight,
-                                           EbByte tempBuf, uint32_t fracPos,
-                                           int16_t wpWeight, int16_t wpOffset,
-                                           uint8_t wpDenominator);
-    void WpAvcStyleLumaInterpolationFilterPosr(EbByte refPic, uint32_t srcStride,
-                                           EbByte dst, uint32_t dstStride,
-                                           uint32_t puWidth, uint32_t puHeight,
-                                           EbByte tempBuf, uint32_t fracPos,
-                                           int16_t wpWeight, int16_t wpOffset,
-                                           uint8_t wpDenominator);
+                    EbByte tempBuf, uint32_t fracPos);
+    void avc_style_luma_interpolation_filter_horizontal(
+        EbByte ref_pic, uint32_t src_stride,
+        EbByte dst, uint32_t dst_stride,
+        uint32_t pu_width, uint32_t pu_height,
+        EbByte temp_buf, uint32_t frac_pos);
+    void avc_style_luma_interpolation_filter_vertical(
+        EbByte ref_pic, uint32_t src_stride,
+        EbByte dst, uint32_t dst_stride,
+        uint32_t pu_width, uint32_t pu_height,
+        EbByte temp_buf, uint32_t frac_pos);
+    void avc_style_luma_interpolation_filter_pose(EbByte ref_pic, uint32_t src_stride,
+        EbByte dst, uint32_t dst_stride,
+        uint32_t pu_width, uint32_t pu_height,
+        EbByte temp_buf, uint32_t frac_pos);
+    void avc_style_luma_interpolation_filter_posf(EbByte ref_pic, uint32_t src_stride,
+        EbByte dst, uint32_t dst_stride,
+        uint32_t pu_width, uint32_t pu_height,
+        EbByte temp_buf, uint32_t frac_pos);
+    void avc_style_luma_interpolation_filter_posg(EbByte ref_pic, uint32_t src_stride,
+        EbByte dst, uint32_t dst_stride,
+        uint32_t pu_width, uint32_t pu_height,
+        EbByte temp_buf, uint32_t frac_pos);
+    void avc_style_luma_interpolation_filter_posi(EbByte ref_pic, uint32_t src_stride,
+        EbByte dst, uint32_t dst_stride,
+        uint32_t pu_width, uint32_t pu_height,
+        EbByte temp_buf, uint32_t frac_pos);
+    void avc_style_luma_interpolation_filter_posj(EbByte ref_pic, uint32_t src_stride,
+        EbByte dst, uint32_t dst_stride,
+        uint32_t pu_width, uint32_t pu_height,
+        EbByte temp_buf, uint32_t frac_pos);
+    void avc_style_luma_interpolation_filter_posk(EbByte ref_pic, uint32_t src_stride,
+        EbByte dst, uint32_t dst_stride,
+        uint32_t pu_width, uint32_t pu_height,
+        EbByte temp_buf, uint32_t frac_pos);
+    void avc_style_luma_interpolation_filter_posp(EbByte ref_pic, uint32_t src_stride,
+        EbByte dst, uint32_t dst_stride,
+        uint32_t pu_width, uint32_t pu_height,
+        EbByte temp_buf, uint32_t frac_pos);
+    void avc_style_luma_interpolation_filter_posq(EbByte ref_pic, uint32_t src_stride,
+        EbByte dst, uint32_t dst_stride,
+        uint32_t pu_width, uint32_t pu_height,
+        EbByte temp_buf, uint32_t frac_pos);
+    void avc_style_luma_interpolation_filter_posr(EbByte ref_pic, uint32_t src_stride,
+        EbByte dst, uint32_t dst_stride,
+        uint32_t pu_width, uint32_t pu_height,
+        EbByte temp_buf, uint32_t frac_pos);
     /***************************************
     * Function Tables
     ***************************************/

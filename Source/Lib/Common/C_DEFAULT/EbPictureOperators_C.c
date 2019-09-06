@@ -9,25 +9,25 @@
 /*********************************
 * Picture Average
 *********************************/
-void PictureAverageKernel(
+void picture_average_kernel(
     EbByte   src0,
-    uint32_t   src0Stride,
+    uint32_t   src0_stride,
     EbByte   src1,
-    uint32_t   src1Stride,
+    uint32_t   src1_stride,
     EbByte   dst,
-    uint32_t   dstStride,
-    uint32_t   areaWidth,
-    uint32_t   areaHeight)
+    uint32_t   dst_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
 {
     uint32_t x, y;
 
-    for (y = 0; y < areaHeight; y++) {
-        for (x = 0; x < areaWidth; x++) {
+    for (y = 0; y < area_height; y++) {
+        for (x = 0; x < area_width; x++) {
             dst[x] = (src0[x] + src1[x] + 1) >> 1;
         }
-        src0 += src0Stride;
-        src1 += src1Stride;
-        dst += dstStride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        dst += dst_stride;
     }
 }
 

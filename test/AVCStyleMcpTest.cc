@@ -87,8 +87,7 @@ SearchArea TEST_AREAS[] = {SearchArea(64, 64),
 typedef void (*MCP_REF_FUNC)(EbByte refPic, uint32_t srcStride, EbByte dst,
                              uint32_t dstStride, uint32_t puWidth,
                              uint32_t puHeight, EbByte tempBuf,
-                             uint32_t fracPos, int16_t wpWeight,
-                             int16_t wpOffset, uint8_t wpDenominator);
+                             uint32_t fracPos);
 typedef void (*MCP_TEST_FUNC)(EbByte ref_pic, uint32_t src_stride, EbByte dst,
                               uint32_t dst_stride, uint32_t pu_width,
                               uint32_t pu_height, EbByte temp_buf, EbBool skip,
@@ -100,39 +99,39 @@ typedef struct {
     MCP_TEST_FUNC test_func;
 } AVCStyleMcpFuncPair;
 static const AVCStyleMcpFuncPair AVC_style_c_sse3_func_pairs[NUM_FUNCS] = {
-    {"posA", WpAvcStyleCopy, avc_style_copy_sse2},
+    {"posA", avc_style_copy, avc_style_copy_sse2},
     {"pose",
-     WpAvcStyleLumaInterpolationFilterPose,
+     avc_style_luma_interpolation_filter_pose,
      avc_style_luma_interpolation_filter_pose_ssse3},
     {"posf",
-     WpAvcStyleLumaInterpolationFilterPosf,
+     avc_style_luma_interpolation_filter_posf,
      avc_style_luma_interpolation_filter_posf_ssse3},
     {"posg",
-     WpAvcStyleLumaInterpolationFilterPosg,
+     avc_style_luma_interpolation_filter_posg,
      avc_style_luma_interpolation_filter_posg_ssse3},
     {"posi",
-     WpAvcStyleLumaInterpolationFilterPosi,
+     avc_style_luma_interpolation_filter_posi,
      avc_style_luma_interpolation_filter_posi_ssse3},
     {"posj",
-     WpAvcStyleLumaInterpolationFilterPosj,
+     avc_style_luma_interpolation_filter_posj,
      avc_style_luma_interpolation_filter_posj_ssse3},
     {"posk",
-     WpAvcStyleLumaInterpolationFilterPosk,
+     avc_style_luma_interpolation_filter_posk,
      avc_style_luma_interpolation_filter_posk_ssse3},
     {"posp",
-     WpAvcStyleLumaInterpolationFilterPosp,
+     avc_style_luma_interpolation_filter_posp,
      avc_style_luma_interpolation_filter_posp_ssse3},
     {"posq",
-     WpAvcStyleLumaInterpolationFilterPosq,
+     avc_style_luma_interpolation_filter_posq,
      avc_style_luma_interpolation_filter_posq_ssse3},
     {"posr",
-     WpAvcStyleLumaInterpolationFilterPosr,
+     avc_style_luma_interpolation_filter_posr,
      avc_style_luma_interpolation_filter_posr_ssse3},
     {"vertical",
-     WpAvcStyleLumaInterpolationFilterVertical,
+     avc_style_luma_interpolation_filter_vertical,
      avc_style_luma_interpolation_filter_vertical_ssse3_intrin},
     {"horizontal",
-     WpAvcStyleLumaInterpolationFilterHorizontal,
+     avc_style_luma_interpolation_filter_horizontal,
      avc_style_luma_interpolation_filter_horizontal_ssse3_intrin}};
 
 typedef std::tuple<PUSize, TestPattern> TestPUParam;
@@ -167,6 +166,7 @@ class AVCStyleMcpTestBase : public ::testing::Test {
                         TestPattern test_pattern, EbBool is_PU_block) {
         test_pattern_ = test_pattern;
         src_stride_ = MAX_PICTURE_WIDTH_SIZE + 64 + 4 + 64 + 4;
+        is_PU_block_ = is_PU_block;
         if (is_PU_block) {
             // interpolate PU blocks
             block_width_ = block_width;
@@ -226,10 +226,7 @@ class AVCStyleMcpTestBase : public ::testing::Test {
                                                     block_width_,
                                                     block_height_,
                                                     tmp_buf_,
-                                                    2,
-                                                    1,
-                                                    0,
-                                                    0);
+                                                    2);
 
             AVC_style_c_sse3_func_pairs[i].test_func(src_ + src_offset_,
                                                      src_stride_,
