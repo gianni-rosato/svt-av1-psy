@@ -5465,7 +5465,11 @@ void md_stage_3(
 
         // Set MD Staging full_loop_core settings
         context_ptr->md_staging_skip_full_pred = (context_ptr->md_staging_mode == MD_STAGING_MODE_3) ? EB_FALSE: EB_TRUE;
+#if COEFF_BASED_SKIP_ATB
+        context_ptr->md_staging_skip_atb = context_ptr->coeff_based_skip_atb;
+#else
         context_ptr->md_staging_skip_atb = EB_FALSE;
+#endif
         context_ptr->md_staging_tx_search = candidate_ptr->cand_class == CAND_CLASS_0 ? 2 : 1;
         context_ptr->md_staging_skip_full_chroma = EB_FALSE;
         context_ptr->md_staging_skip_rdoq = EB_FALSE;
@@ -6589,6 +6593,10 @@ void md_encode_block(
     const uint32_t cuChromaOriginIndex = ROUND_UV(blk_geom->origin_x) / 2 + ROUND_UV(blk_geom->origin_y) / 2 * SB_STRIDE_UV;
     CodingUnit *  cu_ptr = context_ptr->cu_ptr;
     candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+    for (uint8_t ref_idx = 0; ref_idx < MAX_REF_TYPE_CAND; ref_idx++)
+        context_ptr->ref_best_cost_sq_table[ref_idx] = MAX_CU_COST;
+#endif
     EbBool is_nsq_table_used = (picture_control_set_ptr->slice_type == !I_SLICE &&
         picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE &&
         picture_control_set_ptr->parent_pcs_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
@@ -7017,6 +7025,9 @@ void md_encode_block(
             candidate_buffer_ptr_array,
             context_ptr->md_stage_3_total_count,
             (context_ptr->full_loop_escape == 2) ? context_ptr->sorted_candidate_index_array : context_ptr->best_candidate_index_array,
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+            context_ptr->prune_ref_frame_for_rec_partitions,
+#endif
             &best_intra_mode);
         candidate_buffer = candidate_buffer_ptr_array[candidate_index];
 #else
@@ -7560,7 +7571,9 @@ EB_EXTERN EbErrorType mode_decision_sb(
                 context_ptr->full_lambda,
                 context_ptr->md_rate_estimation_ptr,
                 picture_control_set_ptr);
-
+#if COEFF_BASED_SKIP_ATB
+            context_ptr->coeff_based_skip_atb = picture_control_set_ptr->parent_pcs_ptr->coeff_based_skip_atb && context_ptr->md_cu_arr_nsq[lastCuIndex_mds].block_has_coeff == 0 ? 1 : 0;
+#endif
             if (context_ptr->md_cu_arr_nsq[lastCuIndex_mds].split_flag == EB_FALSE)
             {
                 md_update_all_neighbour_arrays_multiple(

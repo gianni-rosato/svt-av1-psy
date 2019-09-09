@@ -1540,7 +1540,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->redundant_blk = EB_TRUE;
     else
         context_ptr->redundant_blk = EB_FALSE;
-
+#if EDGE_BASED_SKIP_ANGULAR_INTRA
+    if (sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT)
+        if (MR_MODE || picture_control_set_ptr->enc_mode == ENC_M0)
+            context_ptr->edge_based_skip_angle_intra = 0;
+        else
+            context_ptr->edge_based_skip_angle_intra = 1;
+    else
+        context_ptr->edge_based_skip_angle_intra = 0;
+#endif
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected || picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->prune_ref_frame_for_rec_partitions = 0;
+    else
+        context_ptr->prune_ref_frame_for_rec_partitions = 1;
+#endif
     return return_error;
 }
 

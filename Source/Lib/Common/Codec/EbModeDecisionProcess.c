@@ -213,6 +213,10 @@ EbErrorType mode_decision_context_ctor(
         }
 #endif
     }
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+    EB_MALLOC_ARRAY(context_ptr->ref_best_cost_sq_table, MAX_REF_TYPE_CAND);
+    EB_MALLOC_ARRAY(context_ptr->ref_best_ref_sq_table, MAX_REF_TYPE_CAND);
+#endif
     return EB_ErrorNone;
 }
 

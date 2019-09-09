@@ -312,6 +312,19 @@ extern "C" {
     EbBool                              md_staging_skip_full_chroma;
     EbBool                              md_staging_skip_rdoq;
 #endif
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+    uint64_t                           *ref_best_cost_sq_table;
+    uint32_t                           *ref_best_ref_sq_table;
+#endif
+#if EDGE_BASED_SKIP_ANGULAR_INTRA
+    uint8_t                             edge_based_skip_angle_intra;
+#endif
+#if COEFF_BASED_SKIP_ATB
+    EbBool                              coeff_based_skip_atb;
+#endif
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+    uint8_t                             prune_ref_frame_for_rec_partitions;
+#endif
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(

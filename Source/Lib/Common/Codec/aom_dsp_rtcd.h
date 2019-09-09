@@ -2592,6 +2592,12 @@ extern "C" {
     void eb_av1_txb_init_levels_avx2(const TranLow *const coeff, const int32_t width, const int32_t height, uint8_t *const levels);
     RTCD_EXTERN void(*eb_av1_txb_init_levels)(const TranLow *const coeff, const int32_t width, const int32_t height, uint8_t *const levels);
 
+
+#if EDGE_BASED_SKIP_ANGULAR_INTRA
+    void av1_get_gradient_hist_c(const uint8_t *src, int src_stride, int rows, int cols, uint64_t *hist);
+    void av1_get_gradient_hist_avx2(const uint8_t *src, int src_stride, int rows, int cols, uint64_t *hist);
+    RTCD_EXTERN void(*av1_get_gradient_hist)(const uint8_t *src, int src_stride, int rows, int cols, uint64_t *hist);
+#endif
     void eb_aom_dsp_rtcd(void);
 
 #ifdef RTCD_C
@@ -3927,6 +3933,10 @@ extern "C" {
         /*if (flags & HAS_AVX2)*/ eb_aom_ifft8x8_float = eb_aom_ifft8x8_float_avx2;
         eb_aom_ifft2x2_float = eb_aom_ifft2x2_float_c;
         /*if (flags & HAS_SSE2)*/ eb_aom_ifft4x4_float = eb_aom_ifft4x4_float_sse2;
+#if EDGE_BASED_SKIP_ANGULAR_INTRA
+        av1_get_gradient_hist = av1_get_gradient_hist_c;
+        if (flags & HAS_AVX2) av1_get_gradient_hist = av1_get_gradient_hist_avx2;
+#endif
     }
 #endif
 
