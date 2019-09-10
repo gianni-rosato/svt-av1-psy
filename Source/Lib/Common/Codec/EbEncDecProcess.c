@@ -913,8 +913,31 @@ void psnr_calculations(
         }
         else {
             reconCoeffBuffer = (uint16_t*)(&((recon_ptr->buffer_y)[(recon_ptr->origin_x << is16bit) + (recon_ptr->origin_y << is16bit) * recon_ptr->stride_y]));
-            inputBuffer = &((input_picture_ptr->buffer_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
-            inputBufferBitInc = &((input_picture_ptr->buffer_bit_inc_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_bit_inc_y]);
+
+            // if current source picture was temporally filtered, use an alternative buffer which stores
+            // the original source picture
+            EbByte buffer_y, buffer_bit_inc_y;
+            EbByte buffer_cb, buffer_bit_inc_cb;
+            EbByte buffer_cr, buffer_bit_inc_cr;
+
+            if(picture_control_set_ptr->parent_pcs_ptr->temporal_filtering_on == EB_TRUE){
+                buffer_y = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[0];
+                buffer_bit_inc_y = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_bit_inc_ptr[0];
+                buffer_cb = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[1];
+                buffer_bit_inc_cb = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_bit_inc_ptr[1];
+                buffer_cr = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[2];
+                buffer_bit_inc_cr = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_bit_inc_ptr[2];
+            }else{
+                buffer_y = input_picture_ptr->buffer_y;
+                buffer_bit_inc_y = input_picture_ptr->buffer_bit_inc_y;
+                buffer_cb = input_picture_ptr->buffer_cb;
+                buffer_bit_inc_cb = input_picture_ptr->buffer_bit_inc_cb;
+                buffer_cr = input_picture_ptr->buffer_cr;
+                buffer_bit_inc_cr = input_picture_ptr->buffer_bit_inc_cr;
+            }
+
+            inputBuffer = &((buffer_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
+            inputBufferBitInc = &((buffer_bit_inc_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_bit_inc_y]);
 
             residualDistortion = 0;
 
@@ -935,8 +958,8 @@ void psnr_calculations(
             sseTotal[0] = residualDistortion;
 
             reconCoeffBuffer = (uint16_t*)(&((recon_ptr->buffer_cb)[(recon_ptr->origin_x << is16bit) / 2 + (recon_ptr->origin_y << is16bit) / 2 * recon_ptr->stride_cb]));
-            inputBuffer = &((input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
-            inputBufferBitInc = &((input_picture_ptr->buffer_bit_inc_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_bit_inc_cb]);
+            inputBuffer = &((buffer_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
+            inputBufferBitInc = &((buffer_bit_inc_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_bit_inc_cb]);
 
             residualDistortion = 0;
             row_index = 0;
@@ -956,8 +979,8 @@ void psnr_calculations(
             sseTotal[1] = residualDistortion;
 
             reconCoeffBuffer = (uint16_t*)(&((recon_ptr->buffer_cr)[(recon_ptr->origin_x << is16bit) / 2 + (recon_ptr->origin_y << is16bit) / 2 * recon_ptr->stride_cr]));
-            inputBuffer = &((input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
-            inputBufferBitInc = &((input_picture_ptr->buffer_bit_inc_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_bit_inc_cr]);
+            inputBuffer = &((buffer_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
+            inputBufferBitInc = &((buffer_bit_inc_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_bit_inc_cr]);
 
             residualDistortion = 0;
             row_index = 0;
@@ -976,6 +999,15 @@ void psnr_calculations(
             }
 
             sseTotal[2] = residualDistortion;
+
+            if(picture_control_set_ptr->parent_pcs_ptr->temporal_filtering_on == EB_TRUE) {
+                EB_FREE_ARRAY(buffer_y);
+                EB_FREE_ARRAY(buffer_cb);
+                EB_FREE_ARRAY(buffer_cr);
+                EB_FREE_ARRAY(buffer_bit_inc_y);
+                EB_FREE_ARRAY(buffer_bit_inc_cb);
+                EB_FREE_ARRAY(buffer_bit_inc_cr);
+            }
         }
 
         picture_control_set_ptr->parent_pcs_ptr->luma_sse = (uint32_t)sseTotal[0];

@@ -14222,6 +14222,7 @@ extern "C" {
         int32_t                               pic_decision_reorder_queue_idx;
         struct PictureParentControlSet       *temp_filt_pcs_list[ALTREF_MAX_NFRAMES];
         EbByte                               save_enhanced_picture_ptr[3];
+        EbByte                               save_enhanced_picture_bit_inc_ptr[3];
         EbHandle temp_filt_done_semaphore;
         EbHandle temp_filt_mutex;
         EbHandle debug_mutex;
@@ -14242,7 +14243,8 @@ extern "C" {
         MD_COMP_TYPE                          compound_types_to_try;
         uint8_t                               compound_mode;
         uint8_t                               prune_unipred_at_me;
-        uint8_t                              coeff_based_skip_atb;
+        uint8_t                               coeff_based_skip_atb;
+        uint16_t*                             altref_buffer_highbd[3];
 #if II_COMP_FLAG
         uint8_t                              enable_inter_intra;
 #endif
