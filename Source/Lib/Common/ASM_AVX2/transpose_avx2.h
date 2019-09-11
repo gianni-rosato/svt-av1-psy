@@ -7,6 +7,18 @@
 #define AOM_DSP_X86_TRANSPOSE_AVX2_H_
 
 #include <immintrin.h>  // AVX2
+#include "EbDefinitions.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void transpose_8bit_16x16_reg128bit_instance_avx2(const __m128i *const in,
+    __m128i *const out);
+
+#ifdef __cplusplus
+}
+#endif
 
 static INLINE __m256i _mm256_unpacklo_epi128(const __m256i in0,
                                              const __m256i in1) {

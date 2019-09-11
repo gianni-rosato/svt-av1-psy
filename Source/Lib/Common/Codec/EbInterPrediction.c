@@ -187,7 +187,7 @@ static INLINE MV clamp_mv_to_umv_border_sb(const MacroBlockD *xd,
     return clamped_mv;
 }
 
-DECLARE_ALIGNED(256, static const InterpKernel,
+DECLARE_ALIGNED(256, const InterpKernel,
 sub_pel_filters_8[SUBPEL_SHIFTS]) = {
     { 0, 0, 0, 128, 0, 0, 0, 0 },{ 0, 2, -6, 126, 8, -2, 0, 0 },
     { 0, 2, -10, 122, 18, -4, 0, 0 },{ 0, 2, -12, 116, 28, -8, 2, 0 },
@@ -198,7 +198,7 @@ sub_pel_filters_8[SUBPEL_SHIFTS]) = {
     { 0, 2, -10, 38, 110, -14, 2, 0 },{ 0, 2, -8, 28, 116, -12, 2, 0 },
     { 0, 0, -4, 18, 122, -10, 2, 0 },{ 0, 0, -2, 8, 126, -6, 2, 0 }
 };
-DECLARE_ALIGNED(256, static const InterpKernel,
+DECLARE_ALIGNED(256, const InterpKernel,
 sub_pel_filters_4[SUBPEL_SHIFTS]) = {
     { 0, 0, 0, 128, 0, 0, 0, 0 },{ 0, 0, -4, 126, 8, -2, 0, 0 },
     { 0, 0, -8, 122, 18, -4, 0, 0 },{ 0, 0, -10, 116, 28, -6, 0, 0 },
@@ -996,7 +996,7 @@ void asmSetConvolveAsmTable(void)
 InterpFilterParams av1RegularFilter = { (const int16_t *)sub_pel_filters_8, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR };
 InterpFilterParams av1RegularFilterW4 = { (const int16_t *)sub_pel_filters_4, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR };
 
-DECLARE_ALIGNED(256, static const InterpKernel,
+DECLARE_ALIGNED(256, const InterpKernel,
 sub_pel_filters_8sharp[SUBPEL_SHIFTS]) = {
 { 0, 0, 0, 128, 0, 0, 0, 0 },         { -2, 2, -6, 126, 8, -2, 2, 0 },
 { -2, 6, -12, 124, 16, -6, 4, -2 },   { -2, 8, -18, 120, 26, -10, 6, -2 },
@@ -1008,7 +1008,7 @@ sub_pel_filters_8sharp[SUBPEL_SHIFTS]) = {
 { -2, 4, -6, 16, 124, -12, 6, -2 },   { 0, 2, -2, 8, 126, -6, 2, -2 }
 };
 
-DECLARE_ALIGNED(256, static const InterpKernel,
+DECLARE_ALIGNED(256, const InterpKernel,
 sub_pel_filters_8smooth[SUBPEL_SHIFTS]) = {
 { 0, 0, 0, 128, 0, 0, 0, 0 },     { 0, 2, 28, 62, 34, 2, 0, 0 },
 { 0, 0, 26, 62, 36, 4, 0, 0 },    { 0, 0, 22, 62, 40, 4, 0, 0 },
@@ -1019,7 +1019,7 @@ sub_pel_filters_8smooth[SUBPEL_SHIFTS]) = {
 { 0, 0, 6, 42, 60, 20, 0, 0 },    { 0, 0, 4, 40, 62, 22, 0, 0 },
 { 0, 0, 4, 36, 62, 26, 0, 0 },    { 0, 0, 2, 34, 62, 28, 2, 0 }
 };
-DECLARE_ALIGNED(256, static const InterpKernel,
+DECLARE_ALIGNED(256, const InterpKernel,
 bilinear_filters[SUBPEL_SHIFTS]) = {
 { 0, 0, 0, 128, 0, 0, 0, 0 },  { 0, 0, 0, 120, 8, 0, 0, 0 },
 { 0, 0, 0, 112, 16, 0, 0, 0 }, { 0, 0, 0, 104, 24, 0, 0, 0 },
@@ -1030,7 +1030,7 @@ bilinear_filters[SUBPEL_SHIFTS]) = {
 { 0, 0, 0, 32, 96, 0, 0, 0 },  { 0, 0, 0, 24, 104, 0, 0, 0 },
 { 0, 0, 0, 16, 112, 0, 0, 0 }, { 0, 0, 0, 8, 120, 0, 0, 0 }
 };
-DECLARE_ALIGNED(256, static const InterpKernel,
+DECLARE_ALIGNED(256, const InterpKernel,
 sub_pel_filters_4smooth[SUBPEL_SHIFTS]) = {
 { 0, 0, 0, 128, 0, 0, 0, 0 },   { 0, 0, 30, 62, 34, 2, 0, 0 },
 { 0, 0, 26, 62, 36, 4, 0, 0 },  { 0, 0, 22, 62, 40, 4, 0, 0 },

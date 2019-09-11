@@ -26,9 +26,9 @@ uint32_t combined_averaging8x_msad_avx2_intrin(
     (void)width;
 
     for (y = 0; y < height; y += 4) {
-        const __m256i s = load8bit_8x4_avx2(src, src_stride);
-        const __m256i r1 = load8bit_8x4_avx2(ref1, ref1_stride);
-        const __m256i r2 = load8bit_8x4_avx2(ref2, ref2_stride);
+        const __m256i s = load_u8_8x4_avx2(src, src_stride);
+        const __m256i r1 = load_u8_8x4_avx2(ref1, ref1_stride);
+        const __m256i r2 = load_u8_8x4_avx2(ref2, ref2_stride);
         const __m256i avg = _mm256_avg_epu8(r1, r2);
         const __m256i sad = _mm256_sad_epu8(s, avg);
         sum = _mm256_add_epi32(sum, sad);
@@ -48,9 +48,9 @@ static INLINE __m256i CombinedAveragingSad16x2_AVX2(const uint8_t *const src,
     const uint32_t src_stride, const uint8_t *const ref1, const uint32_t ref1_stride,
     const uint8_t *const ref2, const uint32_t ref2_stride, const __m256i sum)
 {
-    const __m256i s = load8bit_16x2_unaligned_avx2(src, src_stride);
-    const __m256i r1 = load8bit_16x2_unaligned_avx2(ref1, ref1_stride);
-    const __m256i r2 = load8bit_16x2_unaligned_avx2(ref2, ref2_stride);
+    const __m256i s = loadu_u8_16x2_avx2(src, src_stride);
+    const __m256i r1 = loadu_u8_16x2_avx2(ref1, ref1_stride);
+    const __m256i r2 = loadu_u8_16x2_avx2(ref2, ref2_stride);
     const __m256i avg = _mm256_avg_epu8(r1, r2);
     const __m256i sad = _mm256_sad_epu8(s, avg);
     return _mm256_add_epi32(sum, sad);

@@ -17,71 +17,12 @@
 #include "convolve.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"
+#include "convolve_avx2.h"
 
 DECLARE_ALIGNED(32, static const uint8_t, filt_center_global_avx2[32]) = {
   3, 255, 4, 255, 5, 255, 6, 255, 7, 255, 8, 255, 9, 255, 10, 255,
   3, 255, 4, 255, 5, 255, 6, 255, 7, 255, 8, 255, 9, 255, 10, 255
 };
-
-DECLARE_ALIGNED(32, static const uint8_t, filt1_global_avx2[32]) = {
-  0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8,
-  0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
-};
-
-DECLARE_ALIGNED(32, static const uint8_t, filt2_global_avx2[32]) = {
-  2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10,
-  2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10
-};
-
-DECLARE_ALIGNED(32, static const uint8_t, filt3_global_avx2[32]) = {
-  4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12,
-  4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12
-};
-
-DECLARE_ALIGNED(32, static const uint8_t, filt4_global_avx2[32]) = {
-  6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14,
-  6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14
-};
-
-static INLINE __m256i convolve_lowbd(const __m256i *const s,
-    const __m256i *const coeffs) {
-    const __m256i res_01 = _mm256_maddubs_epi16(s[0], coeffs[0]);
-    const __m256i res_23 = _mm256_maddubs_epi16(s[1], coeffs[1]);
-    const __m256i res_45 = _mm256_maddubs_epi16(s[2], coeffs[2]);
-    const __m256i res_67 = _mm256_maddubs_epi16(s[3], coeffs[3]);
-
-    // order: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
-    const __m256i res = _mm256_add_epi16(_mm256_add_epi16(res_01, res_45),
-        _mm256_add_epi16(res_23, res_67));
-
-    return res;
-}
-
-static INLINE __m256i convolve_lowbd_x(const __m256i data,
-    const __m256i *const coeffs,
-    const __m256i *const filt) {
-    __m256i s[4];
-
-    s[0] = _mm256_shuffle_epi8(data, filt[0]);
-    s[1] = _mm256_shuffle_epi8(data, filt[1]);
-    s[2] = _mm256_shuffle_epi8(data, filt[2]);
-    s[3] = _mm256_shuffle_epi8(data, filt[3]);
-
-    return convolve_lowbd(s, coeffs);
-}
-
-static INLINE __m256i convolve(const __m256i *const s,
-    const __m256i *const coeffs) {
-    const __m256i res_0 = _mm256_madd_epi16(s[0], coeffs[0]);
-    const __m256i res_1 = _mm256_madd_epi16(s[1], coeffs[1]);
-    const __m256i res_2 = _mm256_madd_epi16(s[2], coeffs[2]);
-    const __m256i res_3 = _mm256_madd_epi16(s[3], coeffs[3]);
-
-    const __m256i res = _mm256_add_epi32(_mm256_add_epi32(res_0, res_1),
-        _mm256_add_epi32(res_2, res_3));
-
-    return res;
-}
 
  // 128-bit xmmwords are written as [ ... ] with the MSB on the left.
  // 256-bit ymmwords are written as two xmmwords, [ ... ][ ... ] with the MSB
@@ -184,7 +125,7 @@ void eb_av1_wiener_convolve_add_src_avx2(const uint8_t *src, ptrdiff_t src_strid
                     (__m128i *)&src_ptr[(i * src_stride) + j + src_stride]),
                     1);
 
-            __m256i res = convolve_lowbd_x(data, coeffs_h, filt);
+            __m256i res = convolve_x_8tap_avx2(data, coeffs_h, filt);
 
             res =
                 _mm256_sra_epi16(_mm256_add_epi16(res, round_const_h), round_shift_h);
@@ -228,8 +169,8 @@ void eb_av1_wiener_convolve_add_src_avx2(const uint8_t *src, ptrdiff_t src_strid
                 s[3] = _mm256_unpacklo_epi16(s6, s7);
                 s[7] = _mm256_unpackhi_epi16(s6, s7);
 
-                __m256i res_a = convolve(s, coeffs_v);
-                __m256i res_b = convolve(s + 4, coeffs_v);
+                __m256i res_a = convolve16_8tap_avx2(s, coeffs_v);
+                __m256i res_b = convolve16_8tap_avx2(s + 4, coeffs_v);
 
                 const __m256i res_a_round = _mm256_sra_epi32(
                     _mm256_add_epi32(res_a, round_const_v), round_shift_v);
@@ -273,7 +214,7 @@ void eb_av1_wiener_convolve_add_src_avx2(const uint8_t *src, ptrdiff_t src_strid
                 __m128i s7 = _mm_unpackhi_epi16(s6_, s7_);
 
                 s[3] = _mm256_inserti128_si256(_mm256_castsi128_si256(s3), s7, 1);
-                __m256i convolveres = convolve(s, coeffs_v);
+                __m256i convolveres = convolve16_8tap_avx2(s, coeffs_v);
 
                 const __m256i res_round = _mm256_sra_epi32(
                     _mm256_add_epi32(convolveres, round_const_v), round_shift_v);

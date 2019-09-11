@@ -21,7 +21,6 @@
 #endif
 
 typedef __m128i v64;
-#define SIMD_INLINE static AOM_FORCE_INLINE
 
 SIMD_INLINE uint32_t v64_low_u32(v64 a) {
     return (uint32_t)_mm_cvtsi128_si32(a);

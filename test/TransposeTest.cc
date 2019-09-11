@@ -70,7 +70,7 @@ void TransposeTest::RunCheckOutput() {
 
     for (int i = 0; i < 16; i++)
         in[i] = _mm_loadu_si128((__m128i *)(in_ + 16 * i));
-    transpose_8bit_16x16_reg128bit_avx2(in, out);
+    transpose_8bit_16x16_reg128bit_instance_avx2(in, out);
     for (int i = 0; i < 16; i++)
         _mm_storeu_si128((__m128i *)(out_o_ + 16 * i), out[i]);
     for (int i = 0; i < 256; ++i)
@@ -101,7 +101,7 @@ void TransposeTest::RunSpeedTest() {
     EbStartTime(&middle_time_seconds, &middle_time_useconds);
 
     for (int i = 0; i < num_loops; ++i) {
-        transpose_8bit_16x16_reg128bit_avx2(in, out_o);
+        transpose_8bit_16x16_reg128bit_instance_avx2(in, out_o);
     }
     EbStartTime(&finish_time_seconds, &finish_time_useconds);
 

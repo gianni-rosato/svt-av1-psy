@@ -3329,8 +3329,8 @@ uint32_t compute4x_m_sad_avx2_intrin(
     (void)width;
 
     for (y = 0; y < height; y += 4) {
-        const __m256i src0123 = load8bit_4x4_avx2(src, src_stride);
-        const __m256i ref0123 = load8bit_4x4_avx2(ref, ref_stride);
+        const __m256i src0123 = load_u8_4x4_avx2(src, src_stride);
+        const __m256i ref0123 = load_u8_4x4_avx2(ref, ref_stride);
         ymm = _mm256_add_epi32(ymm, _mm256_sad_epu8(src0123, ref0123));
         src += src_stride << 2;
         ref += ref_stride << 2;
@@ -3359,8 +3359,8 @@ uint32_t compute8x_m_sad_avx2_intrin(
     (void)width;
 
     for (y = 0; y < height; y += 4) {
-        const __m256i src0123 = load8bit_8x4_avx2(src, src_stride);
-        const __m256i ref0123 = load8bit_8x4_avx2(ref, ref_stride);
+        const __m256i src0123 = load_u8_8x4_avx2(src, src_stride);
+        const __m256i ref0123 = load_u8_8x4_avx2(ref, ref_stride);
         ymm = _mm256_add_epi32(ymm, _mm256_sad_epu8(src0123, ref0123));
         src += src_stride << 2;
         ref += ref_stride << 2;
@@ -3416,8 +3416,8 @@ static __m256i Compute16x2Sad_Kernel(const uint8_t *const src,
     const uint32_t src_stride, const uint8_t *const ref,
     const uint32_t ref_stride, const __m256i ymm)
 {
-    const __m256i src01 = load8bit_16x2_unaligned_avx2(src, src_stride);
-    const __m256i ref01 = load8bit_16x2_unaligned_avx2(ref, ref_stride);
+    const __m256i src01 = loadu_u8_16x2_avx2(src, src_stride);
+    const __m256i ref01 = loadu_u8_16x2_avx2(ref, ref_stride);
     return _mm256_add_epi32(ymm, _mm256_sad_epu8(src01, ref01));
 }
 

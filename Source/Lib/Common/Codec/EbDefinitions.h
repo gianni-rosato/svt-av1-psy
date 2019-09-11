@@ -361,6 +361,9 @@ extern void RunEmms();
     // TODO(jbb): Allow a way to force inline off for older compilers.
 #define AOM_INLINE inline
 #endif
+
+#define SIMD_INLINE static AOM_FORCE_INLINE
+
     //*********************************************************************************************************************//
     // mem.h
     /* shift right or left depending on sign of n */

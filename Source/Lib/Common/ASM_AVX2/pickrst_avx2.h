@@ -460,10 +460,6 @@ static INLINE void msub_avx2(const __m256i src, const __m256i dgd,
     *sum = _mm256_sub_epi32(*sum, sd);
 }
 
-static INLINE void _mm_storeh_epi64(__m128i *p, __m128i x) {
-    _mm_storeh_pd((double *)p, _mm_castsi128_pd(x));
-}
-
 static INLINE void update_2_stats_sse2(const int64_t *const src,
                                        const __m128i delta,
                                        int64_t *const dst) {
