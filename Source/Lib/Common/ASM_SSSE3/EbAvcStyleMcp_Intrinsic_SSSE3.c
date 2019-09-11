@@ -20,15 +20,6 @@ EB_EXTERN EB_ALIGN(16) const int8_t AvcStyleLumaIFCoeff8_SSSE3[] = {
     25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1
 };
 
-void PictureCopyKernel_SSSE3(
-    EbByte                  src,
-    uint32_t                   src_stride,
-    EbByte                  dst,
-    uint32_t                   dst_stride,
-    uint32_t                   area_width,
-    uint32_t                   area_height,
-    uint32_t                   bytes_per_sample);
-
 void avc_style_luma_interpolation_filter_pose_ssse3(
     EbByte               ref_pic,
     uint32_t                src_stride,

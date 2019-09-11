@@ -36,52 +36,47 @@ typedef enum VideoColorFormat {
     IMG_FMT_444A,
 } VideoColorFormat;
 
-static inline bool is_ten_bits(VideoColorFormat fmt) {
-    switch (fmt) {
-    case IMG_FMT_420P10_PACKED:
-    case IMG_FMT_422P10_PACKED:
-    case IMG_FMT_444P10_PACKED: return true;
-    default: break;
-    }
-    return false;
-}
-
 /** VideoFrameParam defines the basic parameters of video frame */
 typedef struct VideoFrameParam {
-    VideoColorFormat format; /**< video format type */
-    uint32_t width;          /**< width of video frame in pixel */
-    uint32_t height;         /**< height of video frame in pixel */
+    VideoColorFormat format;  /**< video format type */
+    uint32_t width;           /**< width of video frame in pixel */
+    uint32_t height;          /**< height of video frame in pixel */
+    uint32_t bits_per_sample; /**< bit for each sample, default is 8, more for
+                                 packed formats */
     VideoFrameParam() {
         format = IMG_FMT_YV12;
         width = 0;
         height = 0;
+        bits_per_sample = 8;
     }
 } VideoFrameParam;
 
 /** VideoFrame defines the full parameters of video frame */
 typedef struct VideoFrame : public VideoFrameParam {
-    uint32_t disp_width;      /**< width to display*/
-    uint32_t disp_height;     /**< height to display*/
-    uint32_t stride[4];       /**< stride in array */
-    uint8_t *planes[4];       /**< plane pointer to buffer address*/
-    uint32_t bits_per_sample; /**< bit for each sample, default is 8, more for
-                                 packed formats */
-    void *context;            /**< private data context from creator */
-    uint64_t timestamp;       /**< timestamp(index) of this frame */
-    uint8_t *buffer;          /**< self own buffer */
-    uint32_t buf_size;        /**< buffer size in bytes */
-    uint32_t qp;              /**< qp of this frame */
+    uint32_t disp_width;    /**< width to display*/
+    uint32_t disp_height;   /**< height to display*/
+    uint32_t stride[4];     /**< stride of bytes in array */
+    uint8_t *planes[4];     /**< plane pointer to buffer address*/
+    void *context;          /**< private data context from creator */
+    uint64_t timestamp;     /**< timestamp(index) of this frame */
+    uint8_t *buffer;        /**< self own buffer */
+    uint32_t buf_size;      /**< buffer size in bytes */
+    uint32_t qp;            /**< qp of this frame */
+    bool compress_10bit;    /**< compressed 10-bit mode, not supported */
+    uint8_t *ext_planes[4]; /**< extended plane pointer of packed 10-bit, not
+                               supported */
     VideoFrame() {
         disp_width = 0;
         disp_height = 0;
         memset(&stride, 0, sizeof(stride));
         memset(&planes, 0, sizeof(planes));
-        bits_per_sample = 8;
+        memset(&ext_planes, 0, sizeof(ext_planes));
         context = nullptr;
         timestamp = 0;
         buffer = nullptr;
         buf_size = 0;
         qp = INVALID_QP;
+        compress_10bit = false;
     }
     VideoFrame(const VideoFrameParam &param) {
         // copy basic info from param
@@ -90,12 +85,19 @@ typedef struct VideoFrame : public VideoFrameParam {
         disp_height = param.height;
         memset(&stride, 0, sizeof(stride));
         memset(&planes, 0, sizeof(planes));
-        bits_per_sample = is_ten_bits(param.format) ? 10 : 8;
+        memset(&ext_planes, 0, sizeof(ext_planes));
+        bits_per_sample = param.bits_per_sample;
         context = nullptr;
         timestamp = 0;
         buffer = nullptr;
         buf_size = 0;
         qp = INVALID_QP;
+        switch (format) {
+        case IMG_FMT_420P10_PACKED:
+        case IMG_FMT_422P10_PACKED:
+        case IMG_FMT_444P10_PACKED: compress_10bit = true; break;
+        default: compress_10bit = false; break;
+        }
 
         // allocate memory for new frame
         uint32_t max_size = calculate_max_frame_size(param);
@@ -150,9 +152,11 @@ typedef struct VideoFrame : public VideoFrameParam {
             memset(planes, 0, sizeof(planes));
         }
     }
+    static uint32_t calculate_luma_size(const VideoFrameParam &param) {
+        return param.width * param.height * (param.bits_per_sample > 8 ? 2 : 1);
+    }
     static uint32_t calculate_max_frame_size(const VideoFrameParam &param) {
-        uint32_t luma_size = param.width * param.height;
-        return 4 * luma_size;
+        return 4 * calculate_luma_size(param);
     }
     static uint32_t calculate_max_frame_size(const VideoFrame &frame) {
         uint32_t luma_size = frame.stride[0] * frame.height;
@@ -178,6 +182,13 @@ typedef struct VideoFrame : public VideoFrameParam {
             strides[1] = strides[2] = param.width;
             break;
         default: assert(0); break;
+        }
+        if (param.bits_per_sample > 8) {
+            // this strides are the strides in bytes
+            strides[0] *= 2;
+            strides[1] *= 2;
+            strides[2] *= 2;
+            strides[3] *= 2;
         }
     }
 

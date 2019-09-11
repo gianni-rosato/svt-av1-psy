@@ -113,69 +113,6 @@ typedef struct logicalProcessorGroup {
 #define MAX_PROCESSOR_GROUP 16
 processorGroup                   lp_group[MAX_PROCESSOR_GROUP];
 #endif
-
-/**************************************
-* Instruction Set Support
-**************************************/
-
-#if defined(_MSC_VER)
-# include <intrin.h>
-#endif
-// Helper Functions
-void RunCpuid(uint32_t eax, uint32_t ecx, int32_t* abcd)
-{
-#if defined(_MSC_VER)
-    __cpuidex(abcd, eax, ecx);
-#else
-    uint32_t ebx = 0, edx = 0;
-# if defined( __i386__ ) && defined ( __PIC__ )
-    /* in case of PIC under 32-bit EBX cannot be clobbered */
-    __asm__("movl %%ebx, %%edi \n\t cpuid \n\t xchgl %%ebx, %%edi" : "=D" (ebx),
-# else
-    __asm__("cpuid" : "+b" (ebx),
-# endif
-        "+a" (eax), "+c" (ecx), "=d" (edx));
-    abcd[0] = eax; abcd[1] = ebx; abcd[2] = ecx; abcd[3] = edx;
-#endif
-}
-int32_t CheckXcr0Ymm()
-{
-    uint32_t xcr0;
-#if defined(_MSC_VER)
-    xcr0 = (uint32_t)_xgetbv(0);  /* min VS2010 SP1 compiler is required */
-#else
-    __asm__("xgetbv" : "=a" (xcr0) : "c" (0) : "%edx");
-#endif
-    return ((xcr0 & 6) == 6); /* checking if xmm and ymm state are enabled in XCR0 */
-}
-int32_t Check4thGenIntelCoreFeatures()
-{
-    int32_t abcd[4];
-    int32_t fma_movbe_osxsave_mask = ((1 << 12) | (1 << 22) | (1 << 27));
-    int32_t avx2_bmi12_mask = (1 << 5) | (1 << 3) | (1 << 8);
-
-    /* CPUID.(EAX=01H, ECX=0H):ECX.FMA[bit 12]==1   &&
-       CPUID.(EAX=01H, ECX=0H):ECX.MOVBE[bit 22]==1 &&
-       CPUID.(EAX=01H, ECX=0H):ECX.OSXSAVE[bit 27]==1 */
-    RunCpuid(1, 0, abcd);
-    if ((abcd[2] & fma_movbe_osxsave_mask) != fma_movbe_osxsave_mask)
-        return 0;
-
-    if (!CheckXcr0Ymm())
-        return 0;
-
-    /*  CPUID.(EAX=07H, ECX=0H):EBX.AVX2[bit 5]==1  &&
-        CPUID.(EAX=07H, ECX=0H):EBX.BMI1[bit 3]==1  &&
-        CPUID.(EAX=07H, ECX=0H):EBX.BMI2[bit 8]==1  */
-    RunCpuid(7, 0, abcd);
-    if ((abcd[1] & avx2_bmi12_mask) != avx2_bmi12_mask)
-        return 0;
-    /* CPUID.(EAX=80000001H):ECX.LZCNT[bit 5]==1 */
-    RunCpuid(0x80000001, 0, abcd);
-    if ((abcd[2] & (1 << 5)) == 0)
-        return 0;
-    return 1;
-}
 static int32_t CanUseIntelCore4thGenFeatures()
 {
     static int32_t the_4th_gen_features_available = -1;
@@ -870,7 +807,9 @@ EbErrorType RestResultsCreator(
 }
 
 void init_fn_ptr(void);
-
+#if COMP_MODE
+extern void av1_init_wedge_masks(void);
+#endif
 /**********************************
 * Initialize Encoder Library
 **********************************/
@@ -912,7 +851,9 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 
     eb_av1_init_me_luts();
     init_fn_ptr();
-
+#if COMP_MODE
+    av1_init_wedge_masks();
+#endif
     /************************************
     * Sequence Control Set
     ************************************/
@@ -1006,12 +947,16 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.top_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->top_padding;
         inputData.bot_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->bot_padding;
         inputData.bit_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
+        inputData.film_grain_noise_level = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->film_grain_denoise_strength;
         inputData.color_format = color_format;
         inputData.sb_sz = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz;
         inputData.sb_size_pix = scs_init.sb_size;
         inputData.max_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_sb_depth;
         inputData.hbd_mode_decision = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.enable_hbd_mode_decision;
         inputData.cdf_mode = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->cdf_mode;
+#if MFMV_SUPPORT
+        inputData.mfmv = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->mfmv_enabled;
+#endif
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -1066,6 +1011,9 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         referencePictureBufferDescInitData.right_padding = PAD_VALUE;
         referencePictureBufferDescInitData.top_padding = PAD_VALUE;
         referencePictureBufferDescInitData.bot_padding = PAD_VALUE;
+#if MFMV_SUPPORT
+        referencePictureBufferDescInitData.mfmv = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->mfmv_enabled;
+#endif
         // Hsan: split_mode is set @ eb_reference_object_ctor() as both unpacked reference and packed reference are needed for a 10BIT input; unpacked reference @ MD, and packed reference @ EP
 
         if (is16bit)
@@ -1527,6 +1475,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 
     for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_analysis_process_init_count; ++processIndex) {
         EbPictureBufferDescInitData  pictureBufferDescConf;
+        pictureBufferDescConf.color_format = color_format;
         pictureBufferDescConf.max_width = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_width;
         pictureBufferDescConf.max_height = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->max_input_luma_height;
         pictureBufferDescConf.bit_depth = EB_8BIT;
@@ -1938,8 +1887,12 @@ void SetDefaultConfigurationParameters(
     sequence_control_set_ptr->cropping_top_offset = 0;
     sequence_control_set_ptr->cropping_bottom_offset = 0;
 
+#if QPM
+    sequence_control_set_ptr->static_config.enable_adaptive_quantization = 2;
+#else
     //Segmentation
     sequence_control_set_ptr->static_config.enable_adaptive_quantization = 0;
+#endif
 
     return;
 }
@@ -2020,7 +1973,15 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     derive_input_resolution(
         sequence_control_set_ptr,
         sequence_control_set_ptr->seq_header.max_frame_width*sequence_control_set_ptr->seq_header.max_frame_height);
+#if SC_SETTINGS_TUNING
+    if (sequence_control_set_ptr->static_config.screen_content_mode == 1)
+        sequence_control_set_ptr->static_config.super_block_size = 64;
+    else
+        sequence_control_set_ptr->static_config.super_block_size = (sequence_control_set_ptr->static_config.enc_mode <= ENC_M3 && sequence_control_set_ptr->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 128 : 64;
+
+#else
     sequence_control_set_ptr->static_config.super_block_size       = (sequence_control_set_ptr->static_config.enc_mode == ENC_M0 && sequence_control_set_ptr->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 128 : 64;
+#endif
     sequence_control_set_ptr->static_config.super_block_size = (sequence_control_set_ptr->static_config.rate_control_mode > 1) ? 64 : sequence_control_set_ptr->static_config.super_block_size;
    // sequence_control_set_ptr->static_config.hierarchical_levels = (sequence_control_set_ptr->static_config.rate_control_mode > 1) ? 3 : sequence_control_set_ptr->static_config.hierarchical_levels;
 #if INCOMPLETE_SB_FIX
@@ -2062,6 +2023,9 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
         sequence_control_set_ptr->over_boundary_block_mode = 1;
     else
         sequence_control_set_ptr->over_boundary_block_mode = 0;
+#endif
+#if MFMV_SUPPORT
+    sequence_control_set_ptr->mfmv_enabled = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 1 : 0;
 #endif
 }
 
@@ -2537,9 +2501,13 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error instance %u : Invalid screen_content_mode. screen_content_mode must be [0 - 2]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#if QPM
+    if (sequence_control_set_ptr->static_config.enable_adaptive_quantization > 2) {
+        SVT_LOG("Error instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must be [0-2]\n", channelNumber + 1);
+#else
     if(sequence_control_set_ptr->static_config.enable_adaptive_quantization>1){
         SVT_LOG("Error instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must be [0/1]\n", channelNumber + 1);
+#endif
         return_error = EB_ErrorBadParameter;
     }
 

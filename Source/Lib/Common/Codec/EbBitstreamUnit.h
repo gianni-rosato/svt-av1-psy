@@ -13,6 +13,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifdef _MSC_VER
+#if defined(_M_X64) || defined(_M_IX86)
+#include <intrin.h>
+#define USE_MSC_INTRINSICS
+#endif
+#endif
+
     // Bistream Slice Buffer Size
 #define EB_BITSTREAM_SLICE_BUFFER_SIZE          0x300000
 #define SLICE_HEADER_COUNT                         256

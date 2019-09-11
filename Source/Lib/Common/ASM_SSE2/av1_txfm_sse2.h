@@ -17,6 +17,9 @@
 extern "C" {
 #endif
 
+    #define pair_set_epi16(a, b) \
+      _mm_set1_epi32((int32_t)(((uint16_t)(a)) | (((uint32_t)(b)) << 16)))
+
     static INLINE void btf_16_w4_sse2(
         const __m128i *const w0, const __m128i *const w1, const __m128i __rounding,
         const int8_t cos_bit, const __m128i *const in0, const __m128i *const in1,

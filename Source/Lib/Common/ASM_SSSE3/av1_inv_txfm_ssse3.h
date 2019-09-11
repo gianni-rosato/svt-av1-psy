@@ -214,8 +214,10 @@ av1_eob_to_eobxy_32x16_default,
     typedef void(*transform_1d_ssse3)(const __m128i *input, __m128i *output,
         int8_t cos_bit);
 
-    void eb_av1_lowbd_inv_txfm2d_add_ssse3(const int32_t *input, uint8_t *output,
-        int32_t stride, TxType tx_type,
+    void eb_av1_lowbd_inv_txfm2d_add_ssse3(const int32_t *input,
+        uint8_t *output_r, int32_t stride_r,
+        uint8_t *output_w, int32_t stride_w,
+        TxType tx_type,
         TxSize tx_size, int32_t eob);
 #ifdef __cplusplus
 }  // extern "C"

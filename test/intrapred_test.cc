@@ -174,11 +174,11 @@ TEST_P(LowbdIntraPredTest, match_test) {
 
 // -----------------------------------------------------------------------------
 // High Bit Depth Tests
-#define hbd_entry(type, width, height, opt)                               \
+#define hbd_entry(type, width, height, opt)                                  \
     make_tuple(&eb_aom_highbd_##type##_predictor_##width##x##height##_##opt, \
                &eb_aom_highbd_##type##_predictor_##width##x##height##_c,     \
-               width,                                                     \
-               height,                                                    \
+               width,                                                        \
+               height,                                                       \
                10)
 
 const HBD_PARAMS HighbdIntraPredTestVectorAsm[] = {
@@ -267,6 +267,16 @@ const HBD_PARAMS HighbdIntraPredTestVectorAsm[] = {
     hbd_entry(v, 64, 32, avx2),        hbd_entry(v, 64, 64, avx2),
     hbd_entry(v, 8, 16, sse2),         hbd_entry(v, 8, 32, sse2),
     hbd_entry(v, 8, 4, sse2),          hbd_entry(v, 8, 8, sse2),
+    hbd_entry(paeth, 16, 4, avx2),     hbd_entry(paeth, 16, 8, avx2),
+    hbd_entry(paeth, 16, 16, avx2),    hbd_entry(paeth, 16, 32, avx2),
+    hbd_entry(paeth, 16, 64, avx2),    hbd_entry(paeth, 32, 8, avx2),
+    hbd_entry(paeth, 32, 16, avx2),    hbd_entry(paeth, 32, 32, avx2),
+    hbd_entry(paeth, 32, 64, avx2),    hbd_entry(paeth, 64, 16, avx2),
+    hbd_entry(paeth, 64, 32, avx2),    hbd_entry(paeth, 64, 64, avx2),
+    hbd_entry(paeth, 8, 4, avx2),      hbd_entry(paeth, 8, 8, avx2),
+    hbd_entry(paeth, 8, 16, avx2),     hbd_entry(paeth, 8, 32, avx2),
+    hbd_entry(paeth, 4, 4, avx2),      hbd_entry(paeth, 4, 8, avx2),
+    hbd_entry(paeth, 4, 16, avx2),     hbd_entry(paeth, 2, 2, avx2),
 };
 
 INSTANTIATE_TEST_CASE_P(intrapred, HighbdIntraPredTest,
@@ -274,11 +284,11 @@ INSTANTIATE_TEST_CASE_P(intrapred, HighbdIntraPredTest,
 
 // ---------------------------------------------------------------------------
 // Low Bit Depth Tests
-#define lbd_entry(type, width, height, opt)                        \
+#define lbd_entry(type, width, height, opt)                           \
     LBD_PARAMS(&eb_aom_##type##_predictor_##width##x##height##_##opt, \
                &eb_aom_##type##_predictor_##width##x##height##_c,     \
-               width,                                              \
-               height,                                             \
+               width,                                                 \
+               height,                                                \
                8)
 
 const LBD_PARAMS LowbdIntraPredTestVectorAsm[] = {

@@ -620,13 +620,13 @@ static void Av1EncodeLoop(
             {
                 // 3: Loop over alphas and find the best or choose DC
                 // Use the 1st spot of the candidate buffer to hold cfl settings: (1) to use same kernel as MD for CFL evaluation: cfl_rd_pick_alpha() (toward unification), (2) to avoid dedicated buffers for CFL evaluation @ EP (toward less memory)
-                ModeDecisionCandidateBuffer  *candidateBuffer = &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]);
+                ModeDecisionCandidateBuffer  *candidate_buffer = &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]);
 
                 // Input(s)
-                candidateBuffer->candidate_ptr->type = INTRA_MODE;
-                candidateBuffer->candidate_ptr->intra_luma_mode = cu_ptr->pred_mode;
-                candidateBuffer->candidate_ptr->cfl_alpha_signs = 0;
-                candidateBuffer->candidate_ptr->cfl_alpha_idx = 0;
+                candidate_buffer->candidate_ptr->type = INTRA_MODE;
+                candidate_buffer->candidate_ptr->intra_luma_mode = cu_ptr->pred_mode;
+                candidate_buffer->candidate_ptr->cfl_alpha_signs = 0;
+                candidate_buffer->candidate_ptr->cfl_alpha_idx = 0;
                 context_ptr->md_context->blk_geom = context_ptr->blk_geom;
 
                 EbByte src_pred_ptr;
@@ -634,25 +634,25 @@ static void Av1EncodeLoop(
 
                 // Copy Cb pred samples from ep buffer to md buffer
                 src_pred_ptr = predSamples->buffer_cb + pred_cb_offset;
-                dst_pred_ptr = &(candidateBuffer->prediction_ptr->buffer_cb[scratch_cb_offset]);
+                dst_pred_ptr = &(candidate_buffer->prediction_ptr->buffer_cb[scratch_cb_offset]);
                 for (int i = 0; i < context_ptr->blk_geom->bheight_uv; i++) {
                     memcpy(dst_pred_ptr, src_pred_ptr, context_ptr->blk_geom->bwidth_uv);
                     src_pred_ptr += predSamples->stride_cb;
-                    dst_pred_ptr += candidateBuffer->prediction_ptr->stride_cb;
+                    dst_pred_ptr += candidate_buffer->prediction_ptr->stride_cb;
                 }
 
                 // Copy Cr pred samples from ep buffer to md buffer
                 src_pred_ptr = predSamples->buffer_cr + pred_cr_offset;
-                dst_pred_ptr = &(candidateBuffer->prediction_ptr->buffer_cr[scratch_cr_offset]);
+                dst_pred_ptr = &(candidate_buffer->prediction_ptr->buffer_cr[scratch_cr_offset]);
                 for (int i = 0; i < context_ptr->blk_geom->bheight_uv; i++) {
                     memcpy(dst_pred_ptr, src_pred_ptr, context_ptr->blk_geom->bwidth_uv);
                     src_pred_ptr += predSamples->stride_cr;
-                    dst_pred_ptr += candidateBuffer->prediction_ptr->stride_cr;
+                    dst_pred_ptr += candidate_buffer->prediction_ptr->stride_cr;
                 }
 
                 cfl_rd_pick_alpha(
                     picture_control_set_ptr,
-                    candidateBuffer,
+                    candidate_buffer,
                     sb_ptr,
                     context_ptr->md_context,
                     input_samples,
@@ -661,10 +661,10 @@ static void Av1EncodeLoop(
                     asm_type);
 
                 // Output(s)
-                if (candidateBuffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
+                if (candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
                     cu_ptr->prediction_unit_array->intra_chroma_mode = UV_CFL_PRED;
-                    cu_ptr->prediction_unit_array->cfl_alpha_idx = candidateBuffer->candidate_ptr->cfl_alpha_idx;
-                    cu_ptr->prediction_unit_array->cfl_alpha_signs = candidateBuffer->candidate_ptr->cfl_alpha_signs;
+                    cu_ptr->prediction_unit_array->cfl_alpha_idx = candidate_buffer->candidate_ptr->cfl_alpha_idx;
+                    cu_ptr->prediction_unit_array->cfl_alpha_signs = candidate_buffer->candidate_ptr->cfl_alpha_signs;
                     cu_ptr->prediction_unit_array->is_directional_chroma_mode_flag = EB_FALSE;
                 }
             }
@@ -1024,8 +1024,8 @@ static void Av1EncodeLoop16bit(
                 uint16_t     *predBuffer = ((uint16_t*)predSamples16bit->buffer_y) + pred_luma_offset;
                 av1_inv_transform_recon(
                     ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1dOffset,
-                    CONVERT_TO_BYTEPTR(predBuffer),
-                    predSamples->stride_y,
+                    CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_y,
+                    CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_y,
                     context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                     BIT_INCREMENT_10BIT,
                     txb_ptr->transform_type[PLANE_TYPE_Y],
@@ -1261,8 +1261,8 @@ static void Av1EncodeGenerateRecon(
                 uint8_t     *predBuffer = predSamples->buffer_y + pred_luma_offset;
                 av1_inv_transform_recon8bit(
                     ((int32_t*)residual16bit->buffer_y) + context_ptr->coded_area_sb,
-                    predBuffer,
-                    predSamples->stride_y,
+                    predBuffer, predSamples->stride_y,
+                    predBuffer, predSamples->stride_y,
                     context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                     txb_ptr->transform_type[PLANE_TYPE_Y],
                     PLANE_TYPE_Y,
@@ -1289,8 +1289,8 @@ static void Av1EncodeGenerateRecon(
 
             av1_inv_transform_recon8bit(
                 ((int32_t*)residual16bit->buffer_cb) + context_ptr->coded_area_sb_uv,
-                predBuffer,
-                predSamples->stride_cb,
+                predBuffer, predSamples->stride_cb,
+                predBuffer, predSamples->stride_cb,
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
@@ -1307,8 +1307,8 @@ static void Av1EncodeGenerateRecon(
 
             av1_inv_transform_recon8bit(
                 ((int32_t*)residual16bit->buffer_cr) + context_ptr->coded_area_sb_uv,
-                predBuffer,
-                predSamples->stride_cr,
+                predBuffer, predSamples->stride_cr,
+                predBuffer, predSamples->stride_cr,
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
@@ -1369,8 +1369,8 @@ static void Av1EncodeGenerateRecon16bit(
                 uint16_t     *predBuffer = ((uint16_t*)predSamples->buffer_y) + pred_luma_offset;
                 av1_inv_transform_recon(
                     ((int32_t*)residual16bit->buffer_y) + context_ptr->coded_area_sb,
-                    CONVERT_TO_BYTEPTR(predBuffer),
-                    predSamples->stride_y,
+                    CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_y,
+                    CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_y,
                     context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                     BIT_INCREMENT_10BIT,
                     txb_ptr->transform_type[PLANE_TYPE_Y],
@@ -1399,8 +1399,8 @@ static void Av1EncodeGenerateRecon16bit(
             uint16_t     *predBuffer = ((uint16_t*)predSamples->buffer_cb) + predChromaOffset;
             av1_inv_transform_recon(
                 ((int32_t*)residual16bit->buffer_cb) + context_ptr->coded_area_sb_uv,
-                CONVERT_TO_BYTEPTR(predBuffer),
-                predSamples->stride_cb,
+                CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_cb,
+                CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_cb,
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
@@ -1416,8 +1416,8 @@ static void Av1EncodeGenerateRecon16bit(
             uint16_t     *predBuffer = ((uint16_t*)predSamples->buffer_cr) + predChromaOffset;
             av1_inv_transform_recon(
                 ((int32_t*)residual16bit->buffer_cr) + context_ptr->coded_area_sb_uv,
-                CONVERT_TO_BYTEPTR(predBuffer),
-                predSamples->stride_cr,
+                CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_cr,
+                CONVERT_TO_BYTEPTR(predBuffer), predSamples->stride_cr,
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
@@ -1440,7 +1440,7 @@ EB_AV1_GENERATE_RECON_FUNC_PTR   Av1EncodeGenerateReconFunctionPtr[2] =
     Av1EncodeGenerateRecon16bit
 };
 
-#if ADD_DELTA_QP_SUPPORT
+#if ADD_DELTA_QP_SUPPORT && !QPM
 /*****************************************************************************
 * NM - Note: Clean up
 * AV1 QPM is SB based and all sub-Lcu buffers needs to be removed
@@ -1800,17 +1800,17 @@ void perform_intra_coding_loop(
 
         if (picture_control_set_ptr->update_cdf)
         {
-            ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-            ModeDecisionCandidateBuffer          *candidateBuffer;
+            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+            ModeDecisionCandidateBuffer          *candidate_buffer;
 
             // Set the Candidate Buffer
-            candidateBuffer = candidate_buffer_ptr_array[0];
+            candidate_buffer = candidate_buffer_ptr_array[0];
             // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-            candidateBuffer->candidate_ptr->transform_type[context_ptr->txb_itr] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
-            candidateBuffer->candidate_ptr->transform_type_uv = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
-            candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
-            candidateBuffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
+            candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
+            candidate_buffer->candidate_ptr->transform_type_uv = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
+            candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+            candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
 
             const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -1819,7 +1819,7 @@ void perform_intra_coding_loop(
                 1,//allow_update_cdf,
                 &picture_control_set_ptr->ec_ctx_array[tbAddr],
                 picture_control_set_ptr,
-                candidateBuffer,
+                candidate_buffer,
                 coeff1dOffset,
                 context_ptr->coded_area_sb_uv,
                 coeff_est_entropy_coder_ptr,
@@ -1832,8 +1832,8 @@ void perform_intra_coding_loop(
                 &cr_tu_coeff_bits,
                 context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[context_ptr->txb_itr],
-                candidateBuffer->candidate_ptr->transform_type_uv,
+                candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr],
+                candidate_buffer->candidate_ptr->transform_type_uv,
                 COMPONENT_LUMA,
                 asm_type);
         }
@@ -2071,17 +2071,17 @@ void perform_intra_coding_loop(
 
         if (picture_control_set_ptr->update_cdf)
         {
-            ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-            ModeDecisionCandidateBuffer          *candidateBuffer;
+            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+            ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+            ModeDecisionCandidateBuffer          *candidate_buffer;
 
             // Set the Candidate Buffer
-            candidateBuffer = candidate_buffer_ptr_array[0];
+            candidate_buffer = candidate_buffer_ptr_array[0];
             // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-            candidateBuffer->candidate_ptr->transform_type[context_ptr->txb_itr] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
-            candidateBuffer->candidate_ptr->transform_type_uv = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
-            candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
-            candidateBuffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
+            candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr] = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y];
+            candidate_buffer->candidate_ptr->transform_type_uv = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
+            candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+            candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
 
             const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -2090,7 +2090,7 @@ void perform_intra_coding_loop(
                 1,//allow_update_cdf,
                 &picture_control_set_ptr->ec_ctx_array[tbAddr],
                 picture_control_set_ptr,
-                candidateBuffer,
+                candidate_buffer,
                 coeff1dOffset,
                 context_ptr->coded_area_sb_uv,
                 coeff_est_entropy_coder_ptr,
@@ -2103,8 +2103,8 @@ void perform_intra_coding_loop(
                 &cr_tu_coeff_bits,
                 context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
-                candidateBuffer->candidate_ptr->transform_type[context_ptr->txb_itr],
-                candidateBuffer->candidate_ptr->transform_type_uv,
+                candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr],
+                candidate_buffer->candidate_ptr->transform_type_uv,
                 COMPONENT_CHROMA,
                 asm_type);
         }
@@ -2186,7 +2186,42 @@ void perform_intra_coding_loop(
         }
     } // Transform Loop
 }
+#if MFMV_SUPPORT
+#define REFMVS_LIMIT ((1 << 12) - 1)
 
+void av1_copy_frame_mvs(PictureControlSet *picture_control_set_ptr, const Av1Common *const cm,
+    MbModeInfo  mi, int mi_row, int mi_col,
+    int x_mis, int y_mis, EbReferenceObject *object_ptr) {
+    const int frame_mvs_stride = ROUND_POWER_OF_TWO(cm->mi_cols, 1);
+    MV_REF *frame_mvs = object_ptr->mvs + (mi_row >> 1) * frame_mvs_stride + (mi_col >> 1);
+    x_mis = ROUND_POWER_OF_TWO(x_mis, 1);
+    y_mis = ROUND_POWER_OF_TWO(y_mis, 1);
+    int w, h;
+
+    for (h = 0; h < y_mis; h++) {
+        MV_REF *mv = frame_mvs;
+        for (w = 0; w < x_mis; w++) {
+            mv->ref_frame = NONE_FRAME;
+            mv->mv.as_int = 0;
+
+            for (int idx = 0; idx < 2; ++idx) {
+                MvReferenceFrame ref_frame = mi.ref_frame[idx];
+                if (ref_frame > INTRA_FRAME) {
+                    int8_t ref_idx = picture_control_set_ptr->ref_frame_side[ref_frame];
+                    if (ref_idx) continue;
+                    if ((abs(mi.mv[idx].as_mv.row) > REFMVS_LIMIT) ||
+                        (abs(mi.mv[idx].as_mv.col) > REFMVS_LIMIT))
+                        continue;
+                    mv->ref_frame = ref_frame;
+                    mv->mv.as_int = mi.mv[idx].as_int;
+                }
+            }
+            mv++;
+        }
+        frame_mvs += frame_mvs_stride;
+    }
+}
+#endif
 /*******************************************
 * Encode Pass
 *
@@ -2414,7 +2449,7 @@ EB_EXTERN void av1_encode_pass(
         }
     }
 #endif
-#if ADD_DELTA_QP_SUPPORT
+#if ADD_DELTA_QP_SUPPORT && !QPM
     if (context_ptr->skip_qpm_flag == EB_FALSE && sequence_control_set_ptr->static_config.improve_sharpness) {
         Av1QpModulationLcu(
             sequence_control_set_ptr,
@@ -2481,7 +2516,22 @@ EB_EXTERN void av1_encode_pass(
                     context_ptr->blk_geom->bheight == 4) ? EB_TRUE : EB_FALSE;
                 // Evaluate cfl @ EP if applicable, and not done @ MD
                 context_ptr->evaluate_cfl_ep = (disable_cfl_flag == EB_FALSE && context_ptr->md_context->chroma_level == CHROMA_MODE_2);
+#if QPM
+                // for now, segmentation independent of sharpness/delta QP.
+                if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled) {
+                    apply_segmentation_based_quantization(
+                        blk_geom,
+                        picture_control_set_ptr,
+                        sb_ptr,
+                        cu_ptr);
 
+                    sb_ptr->qp = cu_ptr->qp;
+                }
+                else {
+                    cu_ptr->qp = sb_ptr->qp;
+                    cu_ptr->delta_qp = sb_ptr->delta_qp;
+                }
+#else
 #if ADD_DELTA_QP_SUPPORT
                 if (context_ptr->skip_qpm_flag == EB_FALSE && sequence_control_set_ptr->static_config.improve_sharpness) {
                     cu_ptr->qp = sb_ptr->qp;
@@ -2511,7 +2561,7 @@ EB_EXTERN void av1_encode_pass(
                     cu_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
                     sb_ptr->qp = (sequence_control_set_ptr->static_config.improve_sharpness) ? context_ptr->qpm_qp : picture_control_set_ptr->picture_qp;
                 }
-
+#endif
 #endif
 
                 if (cu_ptr->prediction_mode_flag == INTRA_MODE) {
@@ -2702,6 +2752,10 @@ EB_EXTERN void av1_encode_pass(
                                     cu_ptr->prediction_unit_array->ref_frame_type,
                                     &context_ptr->mv_unit,
                                     1,// use_intrabc,
+#if COMP_MODE
+                                    1,
+                                    &cu_ptr->interinter_comp,
+#endif
                                     context_ptr->cu_origin_x,
                                     context_ptr->cu_origin_y,
                                     blk_geom->bwidth,
@@ -2887,15 +2941,15 @@ EB_EXTERN void av1_encode_pass(
 
                                 if(allow_update_cdf)
                                 {
-                                    ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-                                    ModeDecisionCandidateBuffer          *candidateBuffer;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+                                    ModeDecisionCandidateBuffer          *candidate_buffer;
 
                                     // Set the Candidate Buffer
-                                    candidateBuffer = candidate_buffer_ptr_array[0];
+                                    candidate_buffer = candidate_buffer_ptr_array[0];
                                     // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-                                    candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
-                                    candidateBuffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
+                                    candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+                                    candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
 
                                     const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -2904,7 +2958,7 @@ EB_EXTERN void av1_encode_pass(
                                         1,//allow_update_cdf,
                                         &picture_control_set_ptr->ec_ctx_array[tbAddr],
                                         picture_control_set_ptr,
-                                        candidateBuffer,
+                                        candidate_buffer,
                                         coeff1dOffset,
                                         context_ptr->coded_area_sb_uv,
                                         coeff_est_entropy_coder_ptr,
@@ -3183,6 +3237,10 @@ EB_EXTERN void av1_encode_pass(
                                     cu_ptr->prediction_unit_array->ref_frame_type,
                                     &context_ptr->mv_unit,
                                     0,//use_intrabc,
+#if COMP_MODE
+                                    cu_ptr->compound_idx,
+                                    &cu_ptr->interinter_comp,
+#endif
                                     context_ptr->cu_origin_x,
                                     context_ptr->cu_origin_y,
                                     blk_geom->bwidth,
@@ -3328,14 +3386,14 @@ EB_EXTERN void av1_encode_pass(
                                 cr_tu_coeff_bits = 0;
 
                                 if (!zeroLumaCbfMD) {
-                                    ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-                                    ModeDecisionCandidateBuffer          *candidateBuffer;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+                                    ModeDecisionCandidateBuffer          *candidate_buffer;
 
                                     // Set the Candidate Buffer
-                                    candidateBuffer = candidate_buffer_ptr_array[0];
+                                    candidate_buffer = candidate_buffer_ptr_array[0];
                                     // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-                                    candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+                                    candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
 
                                     const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -3344,7 +3402,7 @@ EB_EXTERN void av1_encode_pass(
                                         0,//allow_update_cdf,
                                         NULL,
                                         picture_control_set_ptr,
-                                        candidateBuffer,
+                                        candidate_buffer,
                                         coeff1dOffset,
                                         context_ptr->coded_area_sb_uv,
                                         coeff_est_entropy_coder_ptr,
@@ -3403,15 +3461,15 @@ EB_EXTERN void av1_encode_pass(
                                 y_full_distortion[DIST_CALC_PREDICTION] += yTuFullDistortion[DIST_CALC_PREDICTION];
 
                                 if (allow_update_cdf) {
-                                    ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-                                    ModeDecisionCandidateBuffer          *candidateBuffer;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+                                    ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+                                    ModeDecisionCandidateBuffer          *candidate_buffer;
 
                                     // Set the Candidate Buffer
-                                    candidateBuffer = candidate_buffer_ptr_array[0];
+                                    candidate_buffer = candidate_buffer_ptr_array[0];
                                     // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-                                    candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
-                                    candidateBuffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
+                                    candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+                                    candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
 
                                     const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -3430,7 +3488,7 @@ EB_EXTERN void av1_encode_pass(
                                         1,//allow_update_cdf,
                                         &picture_control_set_ptr->ec_ctx_array[tbAddr],
                                         picture_control_set_ptr,
-                                        candidateBuffer,
+                                        candidate_buffer,
                                         coeff1dOffset,
                                         context_ptr->coded_area_sb_uv,
                                         coeff_est_entropy_coder_ptr,
@@ -3611,15 +3669,15 @@ EB_EXTERN void av1_encode_pass(
                                 cuPlane);
 
                             if (allow_update_cdf) {
-                                ModeDecisionCandidateBuffer         **candidateBufferPtrArrayBase = context_ptr->md_context->candidate_buffer_ptr_array;
-                                ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[0]);
-                                ModeDecisionCandidateBuffer          *candidateBuffer;
+                                ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array_base = context_ptr->md_context->candidate_buffer_ptr_array;
+                                ModeDecisionCandidateBuffer         **candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+                                ModeDecisionCandidateBuffer          *candidate_buffer;
 
                                 // Set the Candidate Buffer
-                                candidateBuffer = candidate_buffer_ptr_array[0];
+                                candidate_buffer = candidate_buffer_ptr_array[0];
                                 // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
-                                candidateBuffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
-                                candidateBuffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
+                                candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
+                                candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
 
                                 const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
@@ -3628,7 +3686,7 @@ EB_EXTERN void av1_encode_pass(
                                     1,//allow_update_cdf,
                                     &picture_control_set_ptr->ec_ctx_array[tbAddr],
                                     picture_control_set_ptr,
-                                    candidateBuffer,
+                                    candidate_buffer,
                                     coeff1dOffset,
                                     context_ptr->coded_area_sb_uv,
                                     coeff_est_entropy_coder_ptr,
@@ -3818,6 +3876,21 @@ EB_EXTERN void av1_encode_pass(
 
                     move_cu_data(src_cu, dst_cu);
                 }
+#if MFMV_SUPPORT
+                if (sequence_control_set_ptr->mfmv_enabled && picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+                    uint32_t mi_stride = picture_control_set_ptr->mi_stride;
+                    int32_t mi_row = context_ptr->cu_origin_y >> MI_SIZE_LOG2;
+                    int32_t mi_col = context_ptr->cu_origin_x >> MI_SIZE_LOG2;
+                    const int32_t offset = mi_row * mi_stride + mi_col;
+                    ModeInfo *miPtr = *(picture_control_set_ptr->mi_grid_base + offset);
+                    const int x_mis = AOMMIN(context_ptr->blk_geom->bwidth, picture_control_set_ptr->parent_pcs_ptr->av1_cm->mi_cols - mi_col);
+                    const int y_mis = AOMMIN(context_ptr->blk_geom->bheight, picture_control_set_ptr->parent_pcs_ptr->av1_cm->mi_rows - mi_row);
+                    EbReferenceObject *obj_l0 = (EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
+
+                    av1_copy_frame_mvs(picture_control_set_ptr, picture_control_set_ptr->parent_pcs_ptr->av1_cm, miPtr->mbmi,
+                        mi_row, mi_col, x_mis, y_mis, obj_l0);
+                }
+#endif
             }
             blk_it += ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
         }

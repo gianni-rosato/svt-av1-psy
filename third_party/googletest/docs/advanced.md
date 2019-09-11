@@ -944,7 +944,7 @@ handlers registered with `pthread_atfork(3)`.
 
 If a test sub-routine is called from several places, when an assertion inside it
 fails, it can be hard to tell which invocation of the sub-routine the failure is
-from. 
+from.
 You can alleviate this problem using extra logging or custom failure messages,
 but that usually clutters up your tests. A better solution is to use the
 `SCOPED_TRACE` macro or the `ScopedTrace` utility:
@@ -2048,7 +2048,7 @@ For example:
 *   `./foo_test --gtest_filter=FooTest.*:BarTest.*-FooTest.Bar:BarTest.Foo` Runs
     everything in test case `FooTest` except `FooTest.Bar` and everything in
     test case `BarTest` except `BarTest.Foo`.
-    
+
 #### Temporarily Disabling Tests
 
 If you have a broken test that you cannot fix right away, you can add the

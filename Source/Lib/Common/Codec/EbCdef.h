@@ -76,6 +76,17 @@ extern "C" {
     //void eb_av1_cdef_search(Yv12BufferConfig *frame, const Yv12BufferConfig *ref,
     //                     Av1Common *cm, MacroBlockD *xd, int32_t fast);
 
+    void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h,
+        uint16_t x);
+    void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src,
+        int32_t src_voffset, int32_t src_hoffset,
+        int32_t sstride, int32_t vsize, int32_t hsize);
+    void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src,
+        int32_t sstride, int32_t v, int32_t h);
+    void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
+        int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
+        int32_t vsize, int32_t hsize);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,4 +1,9 @@
 /*
+* Copyright(c) 2019 Netflix, Inc.
+* SPDX - License - Identifier: BSD - 2 - Clause - Patent
+*/
+
+/*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
  * This source code is subject to the terms of the BSD 2 Clause License and
@@ -9,19 +14,19 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_DSP_X86_TXFM_COMMON_SSE2_H_
-#define AOM_DSP_X86_TXFM_COMMON_SSE2_H_
+#ifndef EbDecCdef_h
+#define EbDecCdef_h
 
-#include <emmintrin.h>
+#include "EbDecHandle.h"
 
-#define pair_set_epi16(a, b) \
-  _mm_set1_epi32((int32_t)(((uint16_t)(a)) | (((uint32_t)(b)) << 16)))
+#ifdef __cplusplus
+extern "C" {
+#endif
 
- // Reverse the 8 16 bit words in __m128i
-static INLINE __m128i mm_reverse_epi16(const __m128i x) {
-    const __m128i a = _mm_shufflelo_epi16(x, 0x1b);
-    const __m128i b = _mm_shufflehi_epi16(a, 0x1b);
-    return _mm_shuffle_epi32(b, 0x4e);
+void svt_cdef_frame(EbDecHandle *dec_handle);
+void svt_cdef_frame_hbd(EbDecHandle *dec_handle);
+
+#ifdef __cplusplus
 }
-
-#endif  // AOM_DSP_X86_TXFM_COMMON_SSE2_H_
+#endif
+#endif  // EbDecCdef_h_

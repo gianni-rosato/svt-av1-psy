@@ -26,6 +26,10 @@
 #include <fcntl.h>
 #endif
 
+#if defined(_MSC_VER)
+# include <intrin.h>
+#endif
+
 #define RTCD_C
 #include "aom_dsp_rtcd.h"
 
@@ -50,6 +54,7 @@ uint32_t                         lib_mutex_count = 0;
 
 void asmSetConvolveAsmTable(void);
 void init_intra_dc_predictors_c_internal(void);
+void asmSetConvolveHbdAsmTable(void);
 void init_intra_predictors_internal(void);
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr,
                                 uint8_t **data, size_t data_size);
@@ -64,6 +69,27 @@ void SwitchToRealTime(){
     int32_t retValue = pthread_setschedparam(pthread_self(), SCHED_FIFO, &schedParam);
     UNUSED(retValue);
 #endif
+}
+
+static int32_t can_use_intel_core_4th_gen_features()
+{
+    static int32_t the_4th_gen_features_available = -1;
+    /* test is performed once */
+    if (the_4th_gen_features_available < 0)
+        the_4th_gen_features_available = Check4thGenIntelCoreFeatures();
+    return the_4th_gen_features_available;
+}
+
+static EbAsm get_cpu_asm_type()
+{
+    EbAsm asm_type = ASM_NON_AVX2;
+
+    if (can_use_intel_core_4th_gen_features() == 1)
+        asm_type = ASM_AVX2;
+    else
+        // Need to change to support lower CPU Technologies
+        asm_type = ASM_NON_AVX2;
+    return asm_type;
 }
 
 /***********************************
@@ -357,11 +383,13 @@ EB_API EbErrorType eb_init_decoder(
     dec_handle_ptr->show_frame          = 0;
     dec_handle_ptr->showable_frame      = 0;
 
-    assert(0 == dec_handle_ptr->dec_config.asm_type);
+    dec_handle_ptr->dec_config.asm_type = get_cpu_asm_type();
     setup_rtcd_internal(dec_handle_ptr->dec_config.asm_type);
     asmSetConvolveAsmTable();
 
     init_intra_dc_predictors_c_internal();
+
+    asmSetConvolveHbdAsmTable();
 
     init_intra_predictors_internal();
 
@@ -395,7 +423,7 @@ EB_API EbErrorType eb_svt_decode_frame(
     {
         /*TODO : Remove or move. For Test purpose only */
         dec_handle_ptr->dec_cnt++;
-        printf("\n SVT-AV1 Dec : Decoding Pic #%d", dec_handle_ptr->dec_cnt);
+        //printf("\n SVT-AV1 Dec : Decoding Pic #%d", dec_handle_ptr->dec_cnt);
 
         uint64_t frame_size = 0;
         /*if (ctx->is_annexb) {

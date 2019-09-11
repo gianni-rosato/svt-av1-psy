@@ -19,6 +19,16 @@
 extern "C" {
 #endif
 
+#define pair_set_epi16(a, b) \
+  _mm_set1_epi32((int32_t)(((uint16_t)(a)) | (((uint32_t)(b)) << 16)))
+
+ // Reverse the 8 16 bit words in __m128i
+static INLINE __m128i mm_reverse_epi16(const __m128i x) {
+    const __m128i a = _mm_shufflelo_epi16(x, 0x1b);
+    const __m128i b = _mm_shufflehi_epi16(a, 0x1b);
+    return _mm_shuffle_epi32(b, 0x4e);
+}
+
 static INLINE __m256i pair_set_w16_epi16(int16_t a, int16_t b) {
   return _mm256_set1_epi32(
       (int32_t)(((uint16_t)(a)) | (((uint32_t)(b)) << 16)));

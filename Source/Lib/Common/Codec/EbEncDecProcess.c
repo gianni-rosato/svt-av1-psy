@@ -252,12 +252,16 @@ static void ResetEncDec(
 #endif
     context_ptr->is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
-    // QP
-    //context_ptr->qp          = picture_control_set_ptr->parent_pcs_ptr->tilePtrArray[tileIndex]->tileQp;
 #if ADD_DELTA_QP_SUPPORT
+#if QPM
+    uint16_t picture_qp = picture_control_set_ptr->picture_qp;
+    context_ptr->qp = picture_qp;
+    context_ptr->qp_index = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present ? (uint8_t)quantizer_to_qindex[context_ptr->qp] : (uint8_t)picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#else
     uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
     context_ptr->qp = picture_qp;
     context_ptr->qp_index = context_ptr->qp;
+#endif
 #else
     context_ptr->qp = picture_control_set_ptr->picture_qp;
 #endif
@@ -320,16 +324,22 @@ static void EncDecConfigureLcu(
     EncDecContext         *context_ptr,
     LargestCodingUnit     *sb_ptr,
     PictureControlSet     *picture_control_set_ptr,
+#if !QPM
     SequenceControlSet    *sequence_control_set_ptr,
     uint8_t                    picture_qp,
+#endif
     uint8_t                    sb_qp)
 {
+#if QPM
+    context_ptr->qp = sb_qp;
+#else
     //RC is off
     if (sequence_control_set_ptr->static_config.rate_control_mode == 0 && sequence_control_set_ptr->static_config.improve_sharpness == 0)
         context_ptr->qp = picture_qp;
     //RC is on
     else
         context_ptr->qp = sb_qp;
+#endif
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
     context_ptr->chroma_qp = context_ptr->qp;
     /* Note(CHKN) : when Qp modulation varies QP on a sub-LCU(CU) basis,  Lamda has to change based on Cu->QP , and then this code has to move inside the CU loop in MD */
@@ -694,8 +704,25 @@ void psnr_calculations(
         EbByte  inputBuffer;
         EbByte  reconCoeffBuffer;
 
+        EbByte buffer_y;
+        EbByte buffer_cb;
+        EbByte buffer_cr;
+
+        // if current source picture was temporally filtered, use an alternative buffer which stores
+        // the original source picture
+        if(picture_control_set_ptr->parent_pcs_ptr->temporal_filtering_on == EB_TRUE){
+            buffer_y = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[0];
+            buffer_cb = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[1];
+            buffer_cr = picture_control_set_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[2];
+        }
+        else {
+            buffer_y = input_picture_ptr->buffer_y;
+            buffer_cb = input_picture_ptr->buffer_cb;
+            buffer_cr = input_picture_ptr->buffer_cr;
+        }
+
         reconCoeffBuffer = &((recon_ptr->buffer_y)[recon_ptr->origin_x + recon_ptr->origin_y * recon_ptr->stride_y]);
-        inputBuffer = &((input_picture_ptr->buffer_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
+        inputBuffer = &(buffer_y[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
 
         residualDistortion = 0;
 
@@ -714,7 +741,7 @@ void psnr_calculations(
         sseTotal[0] = residualDistortion;
 
         reconCoeffBuffer = &((recon_ptr->buffer_cb)[recon_ptr->origin_x / 2 + recon_ptr->origin_y / 2 * recon_ptr->stride_cb]);
-        inputBuffer = &((input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
+        inputBuffer = &(buffer_cb[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
 
         residualDistortion = 0;
         row_index = 0;
@@ -733,7 +760,7 @@ void psnr_calculations(
         sseTotal[1] = residualDistortion;
 
         reconCoeffBuffer = &((recon_ptr->buffer_cr)[recon_ptr->origin_x / 2 + recon_ptr->origin_y / 2 * recon_ptr->stride_cr]);
-        inputBuffer = &((input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
+        inputBuffer = &(buffer_cr[input_picture_ptr->origin_x / 2 + input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
         residualDistortion = 0;
         row_index = 0;
 
@@ -751,8 +778,14 @@ void psnr_calculations(
 
         sseTotal[2] = residualDistortion;
         picture_control_set_ptr->parent_pcs_ptr->luma_sse = (uint32_t)sseTotal[0];
-        picture_control_set_ptr->parent_pcs_ptr->cr_sse = (uint32_t)sseTotal[1];
-        picture_control_set_ptr->parent_pcs_ptr->cb_sse = (uint32_t)sseTotal[2];
+        picture_control_set_ptr->parent_pcs_ptr->cb_sse = (uint32_t)sseTotal[1];
+        picture_control_set_ptr->parent_pcs_ptr->cr_sse = (uint32_t)sseTotal[2];
+
+        if(picture_control_set_ptr->parent_pcs_ptr->temporal_filtering_on == EB_TRUE) {
+            EB_FREE_ARRAY(buffer_y);
+            EB_FREE_ARRAY(buffer_cb);
+            EB_FREE_ARRAY(buffer_cr);
+        }
     }
     else {
         EbPictureBufferDesc *recon_ptr;
@@ -991,8 +1024,8 @@ void psnr_calculations(
         }
 
         picture_control_set_ptr->parent_pcs_ptr->luma_sse = (uint32_t)sseTotal[0];
-        picture_control_set_ptr->parent_pcs_ptr->cr_sse = (uint32_t)sseTotal[1];
-        picture_control_set_ptr->parent_pcs_ptr->cb_sse = (uint32_t)sseTotal[2];
+        picture_control_set_ptr->parent_pcs_ptr->cb_sse = (uint32_t)sseTotal[1];
+        picture_control_set_ptr->parent_pcs_ptr->cr_sse = (uint32_t)sseTotal[2];
     }
 }
 
@@ -1102,7 +1135,7 @@ void PadRefAndSetFlags(
     referenceObject->ref_poc = picture_control_set_ptr->parent_pcs_ptr->picture_number;
 
     // set up the QP
-#if ADD_DELTA_QP_SUPPORT
+#if ADD_DELTA_QP_SUPPORT && !QPM
     uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
     referenceObject->qp = (uint16_t)picture_qp;
 #else
@@ -1134,6 +1167,13 @@ void CopyStatisticsToRefObject(
 
     Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
     ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->sg_frame_ep = cm->sg_frame_ep;
+#if MFMV_SUPPORT
+    if (sequence_control_set_ptr->mfmv_enabled) {
+        ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->frame_type = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.frame_type;
+        ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->order_hint = picture_control_set_ptr->parent_pcs_ptr->cur_order_hint;
+        memcpy(((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->ref_order_hint, picture_control_set_ptr->parent_pcs_ptr->ref_order_hint, 7 * sizeof(uint32_t));
+    }
+#endif
 }
 
 /******************************************************
@@ -1146,7 +1186,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     PictureControlSet     *picture_control_set_ptr,
     ModeDecisionContext   *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
-
+#if !MD_STAGING
     // NFL Level MD       Settings
     // 0                  MAX_NFL 40
     // 1                  30
@@ -1192,6 +1232,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->nfl_level = 6;
         else
             context_ptr->nfl_level = 7;
+#endif
     // Set Chroma Mode
     // Level                Settings
     // CHROMA_MODE_0  0     Full chroma search @ MD
@@ -1293,10 +1334,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 0                    OFF
     // 1                    On
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
+#if SC_SETTINGS_TUNING
+        context_ptr->warped_motion_injection = 0;
+#else
         if (picture_control_set_ptr->enc_mode <= ENC_M1)
             context_ptr->warped_motion_injection = 1;
         else
             context_ptr->warped_motion_injection = 0;
+#endif
     else
     context_ptr->warped_motion_injection = 1;
 
@@ -1335,6 +1380,119 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->bipred3x3_injection = 2;
     else
         context_ptr->bipred3x3_injection = 0;
+
+#if PREDICTIVE_ME
+    // Level                Settings
+    // 0                    Level 0: OFF
+    // 1                    Level 1: 7x5 full-pel search + sub-pel refinement off
+    // 2                    Level 2: 7x5 full-pel search +  (H + V) sub-pel refinement only = 4 half-pel + 4 quarter-pel = 8 positions + pred_me_distortion to pa_me_distortion deviation on
+    // 3                    Level 3: 7x5 full-pel search +  (H + V + D only ~ the best) sub-pel refinement = up to 6 half-pel + up to 6  quarter-pel = up to 12 positions + pred_me_distortion to pa_me_distortion deviation on
+    // 4                    Level 4: 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation on
+    // 5                    Level 5: 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation off
+    if (picture_control_set_ptr->slice_type != I_SLICE)
+        if (picture_control_set_ptr->enc_mode <= ENC_M1)
+            context_ptr->predictive_me_level = 4;
+        else if (picture_control_set_ptr->enc_mode <= ENC_M4)
+            context_ptr->predictive_me_level = 2;
+        else
+            context_ptr->predictive_me_level = 0;
+    else
+        context_ptr->predictive_me_level = 0;
+#endif
+
+#if MD_STAGING
+    // Derive md_staging_mode
+    //
+    // MD_STAGING_MODE_1
+    //  _______________________________________________________________________________________________________________________________________________
+    // |        | md_stage_0                  | md_stage_1                  | md_stage_2                     | md_stage_3                              |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_0 |Prediction for Luma & Chroma |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 or Luma & Chroma          |
+    // |        |No Interpolation Search      |                             |RDOQ                            |RDOQ                                     |
+    // |        |Regular Interpolation        |                             |No Tx Search                    |Tx Search                                |
+    // |        |                             |                             |No ATB                          |ATB                                      |
+    // |        |                             |                             |                                |CFL vs. Independent                      |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_1 |Prediction for Chroma        |Prediction for Luma & Chroma |Bypassed                        |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |                                |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |                                |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_2 |Prediction for Chroma        |Prediction for Luma & Chroma |Bypassed                        |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |                                |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |                                |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_3 |Prediction for Chroma        |Prediction for Luma & Chroma |Bypassed                        |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |                                |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |                                |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    //
+    // MD_STAGING_MODE_2
+    //  _______________________________________________________________________________________________________________________________________________
+    // |        | md_stage_0                  | md_stage_1                  | md_stage_2                     | md_stage_3                              |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_0 |Prediction for Luma & Chroma |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 or Luma & Chroma          |
+    // |        |No Interpolation Search      |                             |No RDOQ                         |RDOQ                                     |
+    // |        |Regular Interpolation        |                             |No Tx Search                    |Tx Search                                |
+    // |        |                             |                             |No ATB                          |ATB                                      |
+    // |        |                             |                             |                                |CFL vs. Independent                      |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_1 |Prediction for Chroma        |Prediction for Luma & Chroma |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_2 |Prediction for Chroma        |Prediction for Luma & Chroma |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_3 |Prediction for Chroma        |Prediction for Luma & Chroma |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |Interpolation Search         |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    //
+    // MD_STAGING_MODE_3
+    //  _______________________________________________________________________________________________________________________________________________
+    // |        | md_stage_0                  | md_stage_1                  | md_stage_2                     | md_stage_3                              |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_0 |Prediction for Luma & Chroma |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 or Luma & Chroma          |
+    // |        |No Interpolation Search      |                             |No RDOQ                         |RDOQ                                     |
+    // |        |Regular Interpolation        |                             |No Tx Search                    |Tx Search                                |
+    // |        |                             |                             |No ATB                          |ATB                                      |
+    // |        |                             |                             |                                |CFL vs. Independent                      |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_1 |Prediction for Chroma        |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |                             |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_2 |Prediction for Chroma        |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |                             |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+    // |CLASS_3 |Prediction for Chroma        |Bypassed                     |T, Q, Q-1, T-1 for Luma         |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |        |No Interpolation Search      |                             |No RDOQ                         |Tx Search                                |
+    // |        |Bilinear Interpolation       |                             |No Tx Search                    |                                         |
+    // |        |                             |                             |                                |                                         |
+    // |________|_____________________________|_____________________________|________________________________|_________________________________________|
+
+    if (picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->md_staging_mode = MD_STAGING_MODE_1;
+    else if (picture_control_set_ptr->enc_mode <= ENC_M4)
+        context_ptr->md_staging_mode = MD_STAGING_MODE_3;
+    else
+        context_ptr->md_staging_mode = MD_STAGING_MODE_0; // Default structure = fast loop + full loop = md_stage_0 + md_stage_3
+
+    // Combine MD Class1&2
+    // 0                    OFF
+    // 1                    ON
+    context_ptr->combine_class12 = (picture_control_set_ptr->enc_mode == ENC_M0) ? 0 : 1;
+#endif
 
     // Set interpolation filter search blk size
     // Level                Settings
@@ -1382,7 +1540,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->redundant_blk = EB_TRUE;
     else
         context_ptr->redundant_blk = EB_FALSE;
-
+#if EDGE_BASED_SKIP_ANGULAR_INTRA
+    if (sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT)
+        if (MR_MODE || picture_control_set_ptr->enc_mode == ENC_M0)
+            context_ptr->edge_based_skip_angle_intra = 0;
+        else
+            context_ptr->edge_based_skip_angle_intra = 1;
+    else
+        context_ptr->edge_based_skip_angle_intra = 0;
+#endif
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected || picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->prune_ref_frame_for_rec_partitions = 0;
+    else
+        context_ptr->prune_ref_frame_for_rec_partitions = 1;
+#endif
     return return_error;
 }
 
@@ -1555,10 +1727,14 @@ void* enc_dec_kernel(void *input_ptr)
                     // Configure the LCU
                     mode_decision_configure_lcu(
                         context_ptr->md_context,
+#if !QPM
                         sb_ptr,
+#endif
                         picture_control_set_ptr,
+#if !QPM
                         sequence_control_set_ptr,
                         (uint8_t)context_ptr->qp,
+#endif
                         (uint8_t)sb_ptr->qp);
 
                     uint32_t lcuRow;
@@ -1625,8 +1801,10 @@ void* enc_dec_kernel(void *input_ptr)
                         context_ptr,
                         sb_ptr,
                         picture_control_set_ptr,
+#if !QPM
                         sequence_control_set_ptr,
                         (uint8_t)context_ptr->qp,
+#endif
                         (uint8_t)sb_ptr->qp);
 
 #if NO_ENCDEC

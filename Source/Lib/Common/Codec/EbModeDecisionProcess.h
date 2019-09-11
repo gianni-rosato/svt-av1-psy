@@ -24,11 +24,19 @@ extern "C" {
     /**************************************
      * Defines
      **************************************/
+#if COMP_MODE
+#if PREDICTIVE_ME
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               1855
+#else
+#define MODE_DECISION_CANDIDATE_MAX_COUNT               1800
+#endif
+#else
 #define IBC_CAND 2 //two intra bc candidates
 #if EIGTH_PEL_MV
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (470+IBC_CAND )
 #else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT               (486 +IBC_CAND)
+#endif
 #endif
 #define DEPTH_ONE_STEP   21
 #define DEPTH_TWO_STEP    5
@@ -153,8 +161,13 @@ extern "C" {
         MdEncPassCuData               *md_ep_pipe_sb;
         uint8_t                         pu_itr;
         uint8_t                         cu_size_log2;
+#if MD_STAGING
+        uint32_t                         best_candidate_index_array[MAX_NFL_BUFF];
+        uint32_t                         sorted_candidate_index_array[MAX_NFL];
+#else
         uint8_t                         best_candidate_index_array[MAX_NFL + 2];
         uint8_t                         sorted_candidate_index_array[MAX_NFL];
+#endif
         uint16_t                        cu_origin_x;
         uint16_t                        cu_origin_y;
         uint8_t                         sb_sz;
@@ -167,7 +180,9 @@ extern "C" {
         uint16_t                        pu_width;
         uint16_t                        pu_height;
         EbPfMode                        pf_md_mode;
+#if !MD_STAGING // renaming
         uint32_t                        full_recon_search_count;
+#endif
         EbBool                          cu_use_ref_src_flag;
         EbBool                          hbd_mode_decision;
         uint16_t                        qp_index;
@@ -209,7 +224,10 @@ extern "C" {
         uint8_t                         tx_depth;
         uint8_t                         txb_itr;
         uint32_t                        me_sb_addr;
-
+#if PREDICTIVE_ME
+        uint32_t                        geom_offset_x;
+        uint32_t                        geom_offset_y;
+#endif
         int16_t                         luma_txb_skip_context;
         int16_t                         luma_dc_sign_context;
         int16_t                         cb_txb_skip_context;
@@ -217,8 +235,11 @@ extern "C" {
         int16_t                         cr_txb_skip_context;
         int16_t                         cr_dc_sign_context;
         // Multi-modes signal(s)
+#if !MD_STAGING
         uint8_t                         nfl_level;
         uint8_t                         skip_interpolation_search;
+#endif
+
         uint8_t                         parent_sq_type[MAX_PARENT_SQ];
         uint8_t                         parent_sq_has_coeff[MAX_PARENT_SQ];
         uint8_t                         parent_sq_pred_mode[MAX_PARENT_SQ];
@@ -233,6 +254,9 @@ extern "C" {
         uint8_t                         warped_motion_injection;
         uint8_t                         unipred3x3_injection;
         uint8_t                         bipred3x3_injection;
+#if PREDICTIVE_ME
+        uint8_t                         predictive_me_level;
+#endif
         uint8_t                         interpolation_filter_search_blk_size;
         uint8_t                         redundant_blk;
         uint8_t                         *cfl_temp_luma_recon;
@@ -240,7 +264,67 @@ extern "C" {
         EbBool                          spatial_sse_full_loop;
         EbBool                          blk_skip_decision;
         EbBool                          trellis_quant_coeff_optimization;
-        EbPictureBufferDesc                 *input_sample16bit_buffer;
+#if PREDICTIVE_ME
+        int16_t                         best_spatial_pred_mv[2][4][2];
+        int8_t                          valid_refined_mv[2][4];
+#endif
+        EbPictureBufferDesc            *input_sample16bit_buffer;
+#if COMP_MODE
+        DECLARE_ALIGNED(16, uint8_t, pred0[2 * MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint8_t, pred1[2 * MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]);
+    unsigned int prediction_mse ;
+    EbBool      variance_ready;
+#endif
+#if MD_STAGING // classes
+    MD_STAGE                            md_stage;
+
+    uint32_t                            cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
+
+
+    uint8_t                             md_staging_mode;
+
+    uint8_t                             bypass_stage1[CAND_CLASS_TOTAL];
+    uint8_t                             bypass_stage2[CAND_CLASS_TOTAL];
+
+    uint32_t                            md_stage_0_count[CAND_CLASS_TOTAL]; // how many fast candiates per class
+    uint32_t                            md_stage_1_count[CAND_CLASS_TOTAL]; //how many candiates will be tested per md level and  per class
+    uint32_t                            md_stage_2_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_2
+    uint32_t                            md_stage_3_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_3
+
+    uint32_t                            md_stage_2_total_count;
+    uint32_t                            md_stage_3_total_count;
+
+    uint8_t                             combine_class12; //1:class1 and 2 are combined.
+
+    CAND_CLASS                          target_class;
+
+    // fast_loop_core signals
+    EbBool                              md_staging_use_bilinear;
+    EbBool                              md_staging_interpolation_search;
+    EbBool                              md_staging_skip_inter_chroma_pred;
+
+    // full_loop_core signals
+    EbBool                              md_staging_skip_full_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
+    EbBool                              md_staging_skip_atb;
+    EbBool                              md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
+    EbBool                              md_staging_skip_full_chroma;
+    EbBool                              md_staging_skip_rdoq;
+#endif
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+    uint64_t                           *ref_best_cost_sq_table;
+    uint32_t                           *ref_best_ref_sq_table;
+#endif
+#if EDGE_BASED_SKIP_ANGULAR_INTRA
+    uint8_t                             edge_based_skip_angle_intra;
+#endif
+#if COEFF_BASED_SKIP_ATB
+    EbBool                              coeff_based_skip_atb;
+#endif
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+    uint8_t                             prune_ref_frame_for_rec_partitions;
+#endif
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(
@@ -317,15 +401,19 @@ extern "C" {
 
     extern void mode_decision_configure_lcu(
         ModeDecisionContext   *context_ptr,
+#if !QPM
         LargestCodingUnit     *sb_ptr,
+#endif
         PictureControlSet     *picture_control_set_ptr,
+#if !QPM
         SequenceControlSet    *sequence_control_set_ptr,
         uint8_t                  picture_qp,
+#endif
         uint8_t                  sb_qp);
 
     extern void cfl_rd_pick_alpha(
         PictureControlSet             *picture_control_set_ptr,
-        ModeDecisionCandidateBuffer   *candidateBuffer,
+        ModeDecisionCandidateBuffer   *candidate_buffer,
         LargestCodingUnit             *sb_ptr,
         ModeDecisionContext           *context_ptr,
         EbPictureBufferDesc           *input_picture_ptr,

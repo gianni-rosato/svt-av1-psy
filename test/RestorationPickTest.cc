@@ -15,6 +15,19 @@
 #include "EbPictureOperators_AVX2.h"
 #include "EbRestorationPick.h"
 
+typedef void (*av1_compute_stats_func)(int32_t wiener_win, const uint8_t *dgd8,
+                                       const uint8_t *src8, int32_t h_start,
+                                       int32_t h_end, int32_t v_start,
+                                       int32_t v_end, int32_t dgd_stride,
+                                       int32_t src_stride, int64_t *M,
+                                       int64_t *H);
+
+typedef void (*av1_compute_stats_highbd_func)(
+    int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8,
+    int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end,
+    int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H,
+    AomBitDepth bit_depth);
+
 static const int32_t sizes[2] = {RESTORATION_UNITSIZE_MAX,
                                  RESTORATION_UNITSIZE_MAX * 3 / 2};
 
@@ -154,7 +167,7 @@ static void init_output(int64_t M_org[WIENER_WIN2], int64_t M_opt[WIENER_WIN2],
     memcpy(H_opt, H_org, sizeof(*H_org) * WIENER_WIN2 * WIENER_WIN2);
 }
 
-TEST(EbRestorationPick, compute_stats) {
+void match_test(av1_compute_stats_func func) {
     uint8_t *dgd, *src;
     int32_t dgd_stride, src_stride;
     int64_t M_org[WIENER_WIN2], M_opt[WIENER_WIN2];
@@ -193,17 +206,6 @@ TEST(EbRestorationPick, compute_stats) {
                                 RESTORATION_UNITSIZE_MAX * 3 / 2 + end;
 
                             eb_av1_compute_stats_c(wiener_win,
-                                                d,
-                                                s,
-                                                h_start,
-                                                h_end,
-                                                v_start,
-                                                v_end,
-                                                dgd_stride,
-                                                src_stride,
-                                                M_org,
-                                                H_org);
-                            eb_av1_compute_stats_avx2(wiener_win,
                                                    d,
                                                    s,
                                                    h_start,
@@ -212,8 +214,20 @@ TEST(EbRestorationPick, compute_stats) {
                                                    v_end,
                                                    dgd_stride,
                                                    src_stride,
-                                                   M_opt,
-                                                   H_opt);
+                                                   M_org,
+                                                   H_org);
+
+                            func(wiener_win,
+                                 d,
+                                 s,
+                                 h_start,
+                                 h_end,
+                                 v_start,
+                                 v_end,
+                                 dgd_stride,
+                                 src_stride,
+                                 M_opt,
+                                 H_opt);
 
                             for (int idx = 0; idx < WIENER_WIN2; idx++) {
                                 if (M_org[idx] != M_opt[idx]) {
@@ -254,7 +268,7 @@ TEST(EbRestorationPick, compute_stats) {
     }
 }
 
-TEST(EbRestorationPick, compute_stats_highbd) {
+void highbd_match_test(av1_compute_stats_highbd_func func) {
     uint16_t *dgd, *src;
     int32_t dgd_stride, src_stride;
     int64_t M_org[WIENER_WIN2], M_opt[WIENER_WIN2];
@@ -302,18 +316,6 @@ TEST(EbRestorationPick, compute_stats_highbd) {
                                         sizes[size_mode] + end;
 
                                     eb_av1_compute_stats_highbd_c(wiener_win,
-                                                               dgd8,
-                                                               src8,
-                                                               h_start,
-                                                               h_end,
-                                                               v_start,
-                                                               v_end,
-                                                               dgd_stride,
-                                                               src_stride,
-                                                               M_org,
-                                                               H_org,
-                                                               bit_depth);
-                                    eb_av1_compute_stats_highbd_avx2(wiener_win,
                                                                   dgd8,
                                                                   src8,
                                                                   h_start,
@@ -322,9 +324,22 @@ TEST(EbRestorationPick, compute_stats_highbd) {
                                                                   v_end,
                                                                   dgd_stride,
                                                                   src_stride,
-                                                                  M_opt,
-                                                                  H_opt,
+                                                                  M_org,
+                                                                  H_org,
                                                                   bit_depth);
+
+                                    func(wiener_win,
+                                         dgd8,
+                                         src8,
+                                         h_start,
+                                         h_end,
+                                         v_start,
+                                         v_end,
+                                         dgd_stride,
+                                         src_stride,
+                                         M_opt,
+                                         H_opt,
+                                         bit_depth);
 
                                     for (int idx = 0; idx < WIENER_WIN2;
                                          idx++) {
@@ -375,7 +390,7 @@ TEST(EbRestorationPick, compute_stats_highbd) {
     }
 }
 
-TEST(EbRestorationPick, DISABLED_compute_stats_speed) {
+void speed_test(av1_compute_stats_func func) {
     uint8_t *dgd, *src;
     int32_t dgd_stride, src_stride;
     int64_t M_org[WIENER_WIN2], M_opt[WIENER_WIN2];
@@ -402,22 +417,6 @@ TEST(EbRestorationPick, DISABLED_compute_stats_speed) {
 
         for (uint64_t i = 0; i < num_loop; i++) {
             eb_av1_compute_stats_c(wiener_win,
-                                d,
-                                s,
-                                h_start,
-                                h_end,
-                                v_start,
-                                v_end,
-                                dgd_stride,
-                                src_stride,
-                                M_org,
-                                H_org);
-        }
-
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
-
-        for (uint64_t i = 0; i < num_loop; i++) {
-            eb_av1_compute_stats_avx2(wiener_win,
                                    d,
                                    s,
                                    h_start,
@@ -426,8 +425,24 @@ TEST(EbRestorationPick, DISABLED_compute_stats_speed) {
                                    v_end,
                                    dgd_stride,
                                    src_stride,
-                                   M_opt,
-                                   H_opt);
+                                   M_org,
+                                   H_org);
+        }
+
+        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+        for (uint64_t i = 0; i < num_loop; i++) {
+            func(wiener_win,
+                 d,
+                 s,
+                 h_start,
+                 h_end,
+                 v_start,
+                 v_end,
+                 dgd_stride,
+                 src_stride,
+                 M_opt,
+                 H_opt);
         }
 
         EbStartTime(&finish_time_seconds, &finish_time_useconds);
@@ -450,19 +465,18 @@ TEST(EbRestorationPick, DISABLED_compute_stats_speed) {
         }
 
         printf("Average Nanoseconds per Function Call\n");
-        printf("    eb_av1_compute_stats_avx2(%d)   : %6.2f\n",
+        printf("    eb_av1_compute_stats_c(%d)   : %6.2f\n",
                wiener_win,
                1000000 * time_c / num_loop);
         printf(
-            "    eb_av1_compute_stats_avx512(%d) : %6.2f   (Comparison: "
-            "%5.2fx)\n",
+            "    eb_av1_compute_stats_opt(%d) : %6.2f   (Comparison: %5.2fx)\n",
             wiener_win,
             1000000 * time_o / num_loop,
             time_c / time_o);
     }
 }
 
-TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
+void highbd_speed_test(av1_compute_stats_highbd_func func) {
     uint16_t *dgd, *src;
     int32_t dgd_stride, src_stride;
     int64_t M_org[WIENER_WIN2], M_opt[WIENER_WIN2];
@@ -494,23 +508,6 @@ TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
 
             for (uint64_t i = 0; i < num_loop; i++) {
                 eb_av1_compute_stats_highbd_c(wiener_win,
-                                           dgd8,
-                                           src8,
-                                           h_start,
-                                           h_end,
-                                           v_start,
-                                           v_end,
-                                           dgd_stride,
-                                           src_stride,
-                                           M_org,
-                                           H_org,
-                                           bit_depth);
-            }
-
-            EbStartTime(&middle_time_seconds, &middle_time_useconds);
-
-            for (uint64_t i = 0; i < num_loop; i++) {
-                eb_av1_compute_stats_highbd_avx2(wiener_win,
                                               dgd8,
                                               src8,
                                               h_start,
@@ -519,9 +516,26 @@ TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
                                               v_end,
                                               dgd_stride,
                                               src_stride,
-                                              M_opt,
-                                              H_opt,
+                                              M_org,
+                                              H_org,
                                               bit_depth);
+            }
+
+            EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+            for (uint64_t i = 0; i < num_loop; i++) {
+                func(wiener_win,
+                     dgd8,
+                     src8,
+                     h_start,
+                     h_end,
+                     v_start,
+                     v_end,
+                     dgd_stride,
+                     src_stride,
+                     M_opt,
+                     H_opt,
+                     bit_depth);
             }
 
             EbStartTime(&finish_time_seconds, &finish_time_useconds);
@@ -544,11 +558,11 @@ TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
             }
 
             printf("Average Nanoseconds per Function Call\n");
-            printf("    eb_av1_compute_stats_highbd_avx2(%d)   : %6.2f\n",
+            printf("    eb_av1_compute_stats_highbd_c(%d)   : %6.2f\n",
                    wiener_win,
                    1000000 * time_c / num_loop);
             printf(
-                "    av1_compute_stats_highbd_avx512(%d) : %6.2f   "
+                "    av1_compute_stats_highbd_opt(%d) : %6.2f   "
                 "(Comparison: "
                 "%5.2fx)\n",
                 wiener_win,
@@ -557,3 +571,47 @@ TEST(EbRestorationPick, DISABLED_compute_stats_highbd_speed) {
         }
     }
 }
+
+TEST(EbRestorationPick_avx2, match) {
+    match_test(eb_av1_compute_stats_avx2);
+}
+
+TEST(EbRestorationPick_avx2, match_highbd) {
+    highbd_match_test(eb_av1_compute_stats_highbd_avx2);
+}
+
+TEST(EbRestorationPick_avx2, DISABLED_speed) {
+    speed_test(eb_av1_compute_stats_avx2);
+}
+
+TEST(EbRestorationPick_avx2, DISABLED_speed_highbd) {
+    highbd_speed_test(eb_av1_compute_stats_highbd_avx2);
+}
+
+#ifndef NON_AVX512_SUPPORT
+
+TEST(EbRestorationPick_avx512, match) {
+    if (CanUseIntelAVX512()) {
+        match_test(eb_av1_compute_stats_avx512);
+    }
+}
+
+TEST(EbRestorationPick_avx512, match_highbd) {
+    if (CanUseIntelAVX512()) {
+        highbd_match_test(eb_av1_compute_stats_highbd_avx512);
+    }
+}
+
+TEST(EbRestorationPick_avx512, DISABLED_speed) {
+    if (CanUseIntelAVX512()) {
+        speed_test(eb_av1_compute_stats_avx512);
+    }
+}
+
+TEST(EbRestorationPick_avx512, DISABLED_speed_highbd) {
+    if (CanUseIntelAVX512()) {
+        highbd_speed_test(eb_av1_compute_stats_highbd_avx512);
+    }
+}
+
+#endif

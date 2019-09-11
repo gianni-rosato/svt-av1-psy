@@ -57,8 +57,8 @@ const std::vector<TestVideoVector> default_test_vectors = {
 const std::vector<TestVideoVector> incomplete_sb_test_vectors = {
     std::make_tuple("park_joy_90p_8_420.y4m", Y4M_VIDEO_FILE, IMG_FMT_420, 160,
                     90, 8, 0, 0, 0),
-    std::make_tuple("park_joy_90p_10_420.y4m", Y4M_VIDEO_FILE,
-                    IMG_FMT_420P10_PACKED, 160, 90, 10, 0, 0, 0),
+    std::make_tuple("park_joy_90p_10_420.y4m", Y4M_VIDEO_FILE, IMG_FMT_420, 160,
+                    90, 10, 0, 0, 0),
 };
 
 const std::vector<TestVideoVector> res_480p_test_vectors = {
@@ -80,6 +80,12 @@ const std::vector<TestVideoVector> dummy_test_vectors = {
                     8, 0, 0, 60),
     std::make_tuple("colorbar_64x64_8_420", DUMMY_SOURCE, IMG_FMT_420, 64, 64,
                     8, 0, 0, 60),
+    std::make_tuple("colorbar_480p_10_420", DUMMY_SOURCE, IMG_FMT_420, 640, 480,
+                    10, 0, 0, 100),
+    std::make_tuple("colorbar_4k_10_420", DUMMY_SOURCE, IMG_FMT_420, 4096, 2160,
+                    10, 0, 0, 60),
+    std::make_tuple("colorbar_64x64_10_420", DUMMY_SOURCE, IMG_FMT_420, 64, 64,
+                    10, 0, 0, 60),
 };
 
 using EncSetting = std::map<std::string, std::string>;

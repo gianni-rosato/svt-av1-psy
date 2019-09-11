@@ -35,6 +35,8 @@
 #define PIC_HEIGHT_TOKEN                "-h"
 #define COLOUR_SPACE_TOKEN              "-colour-space"
 #define MD5_SUPPORT_TOKEN               "-md5"
+#define FPS_FRM_TOKEN                   "-fps-frm"
+#define FPS_SUMMARY_TOKEN               "-fps-summary"
 #define MAX_NUM_TOKENS 200
 
 #define EB_STRCMP(target,token) \

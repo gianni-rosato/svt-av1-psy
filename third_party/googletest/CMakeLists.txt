@@ -148,7 +148,7 @@ endif()
 target_link_libraries(gtest_main PUBLIC gtest)
 
 cxx_shared_library(gtest_all "${cxx_default}"
-	    src/gtest-all.cc src/gtest_main.cc)
+        src/gtest-all.cc src/gtest_main.cc)
 target_link_libraries(gtest_all)
 
 ########################################################################

@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 
+#include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
 
 #include "EbPictureControlSet.h"
@@ -4198,7 +4199,316 @@ static void FullPelSearch_LCU(MeContext *context_ptr, uint32_t listIndex,
         }
     }
 }
-
+#if OPTIMISED_EX_SUBPEL
+/*******************************************
+ * PU_HalfPelRefinement
+ *   performs Half Pel refinement for one PU
+ *******************************************/
+static void half_pel_refinement_block(
+    MeContext
+    *context_ptr,  // input parameter, ME context Ptr, used to get SB Ptr
+    uint8_t *ref_buffer, uint32_t ref_stride, uint32_t *p_best_ssd,
+    uint32_t src_block_index,  // input parameter, PU origin, used to point to
+                               // source samples
+    uint8_t *pos_b_buffer,  // input parameter, position "b" interpolated search
+                            // area Ptr
+    uint8_t *pos_h_buffer,  // input parameter, position "h" interpolated search
+                            // area Ptr
+    uint8_t *pos_j_buffer,  // input parameter, position "j" interpolated search
+                            // area Ptr
+    uint32_t pu_width,      // input parameter, PU width
+    uint32_t pu_height,     // input parameter, PU height
+    int16_t x_search_area_origin,  // input parameter, search area origin in the
+                                   // horizontal direction, used to point to
+                                   // reference samples
+    int16_t y_search_area_origin,  // input parameter, search area origin in the
+                                   // vertical direction, used to point to
+                                   // reference samples
+#if OPTIMISED_EX_SUBPEL
+    uint32_t search_area_height,  // input parameter, search area height
+    uint32_t search_area_width,  // input parameter, search area width
+#endif
+    EbAsm asm_type, uint32_t *p_best_sad, uint32_t *p_best_mv,
+    uint8_t *p_sub_pel_direction, uint32_t *best_pervious_stage_mv,
+    uint32_t ineteger_mv) {
+    int32_t search_region_index;
+    uint64_t distortion_left_position = 0;
+    uint64_t distortion_top_position = 0;
+    uint64_t distortion_topleft_position = 0;
+    uint64_t distortion_topright_position = 0;
+    int16_t half_mv_x[8];
+    int16_t half_mv_y[8];
+    int16_t x_best_mv;
+    int16_t y_best_mv;
+    int16_t x_mv;
+    int16_t y_mv;
+    int16_t search_index_x;
+    int16_t search_index_y;
+    (void)p_sub_pel_direction;
+    (void)ineteger_mv;
+    // copute distance between best mv and the integer mv candidate
+    int16_t offset_x, offset_y;
+    for (offset_x = -H_PEL_SEARCH_WIND; offset_x <= H_PEL_SEARCH_WIND; offset_x++) {
+        for (offset_y = -H_PEL_SEARCH_WIND; offset_y <= H_PEL_SEARCH_WIND; offset_y++) {
+            x_best_mv = _MVXT(*best_pervious_stage_mv);
+            y_best_mv = _MVYT(*best_pervious_stage_mv);
+            x_mv = x_best_mv + (offset_x * 4);
+            y_mv = y_best_mv + (offset_y * 4);
+            search_index_x = (x_mv >> 2) - x_search_area_origin;
+            search_index_y = (y_mv >> 2) - y_search_area_origin;
+            uint32_t integer_mv1 = (((uint16_t)(y_mv >> 2)) << 18);
+            uint16_t integer_mv2 = (((uint16_t)(x_mv >> 2) << 2));
+            uint32_t integer_mv = integer_mv1 | integer_mv2;
+            if (search_index_x < 0 || search_index_x >(int16_t)(search_area_width - 1)) {
+                continue;
+            }
+            if (search_index_y < 0 || search_index_y >(int16_t)(search_area_height - 1)) {
+                continue;
+            }
+            half_mv_x[0] = x_mv - 2;  // L  position
+            half_mv_x[1] = x_mv + 2;  // R  position
+            half_mv_x[2] = x_mv;      // T  position
+            half_mv_x[3] = x_mv;      // B  position
+            half_mv_x[4] = x_mv - 2;  // TL position
+            half_mv_x[5] = x_mv + 2;  // TR position
+            half_mv_x[6] = x_mv + 2;  // BR position
+            half_mv_x[7] = x_mv - 2;  // BL position
+            half_mv_y[0] = y_mv;      // L  position
+            half_mv_y[1] = y_mv;      // R  position
+            half_mv_y[2] = y_mv - 2;  // T  position
+            half_mv_y[3] = y_mv + 2;  // B  position
+            half_mv_y[4] = y_mv - 2;  // TL position
+            half_mv_y[5] = y_mv - 2;  // TR position
+            half_mv_y[6] = y_mv + 2;  // BR position
+            half_mv_y[7] = y_mv + 2;  // BL position
+            // Compute SSD for the best full search candidate
+            if (context_ptr->fractional_search_method == SSD_SEARCH) {
+                uint32_t integer_sse =
+                    (uint32_t)spatial_full_distortion_kernel_func_ptr_array[asm_type](
+                        context_ptr->sb_src_ptr,
+                        src_block_index,
+                        context_ptr->sb_src_stride,
+                        ref_buffer,
+                        search_index_y * ref_stride + search_index_x,
+                        ref_stride,
+                        pu_width,
+                        pu_height);
+                if (integer_sse < *p_best_ssd) {
+                    *p_best_ssd = integer_sse;
+                    *p_best_mv = integer_mv;
+                }
+            }
+            // L position
+            search_region_index =
+                search_index_x +
+                (int16_t)context_ptr->interpolated_stride * search_index_y;
+            if (context_ptr->fractional_search_method == SSD_SEARCH)
+                distortion_left_position = spatial_full_distortion_kernel_func_ptr_array[asm_type](
+                    context_ptr->sb_src_ptr,
+                    src_block_index,
+                    context_ptr->sb_src_stride,
+                    pos_b_buffer,
+                    search_region_index,
+                    context_ptr->interpolated_stride,
+                    pu_width,
+                    pu_height);
+            else if (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
+                distortion_left_position = (nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                    &(context_ptr->sb_src_ptr[src_block_index]),
+                    context_ptr->sb_src_stride << 1,
+                    &(pos_b_buffer[search_region_index]),
+                    context_ptr->interpolated_stride << 1,
+                    pu_height >> 1,
+                    pu_width)) << 1;
+            else
+                distortion_left_position = nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                    &(context_ptr->sb_src_ptr[src_block_index]),
+                    context_ptr->sb_src_stride,
+                    &(pos_b_buffer[search_region_index]),
+                    context_ptr->interpolated_stride,
+                    pu_height,
+                    pu_width);
+            if (context_ptr->fractional_search_method == SSD_SEARCH) {
+                if (distortion_left_position < *p_best_ssd) {
+                    *p_best_sad = (uint32_t)
+                        nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                            &(context_ptr->sb_src_ptr[src_block_index]),
+                            context_ptr->sb_src_stride,
+                            &(pos_b_buffer[search_region_index]),
+                            context_ptr->interpolated_stride,
+                            pu_height,
+                            pu_width);
+                    *p_best_mv =
+                        ((uint16_t)half_mv_y[0] << 16) | ((uint16_t)half_mv_x[0]);
+                    *p_best_ssd = (uint32_t)distortion_left_position;
+                }
+            }
+            else {
+                if (distortion_left_position < *p_best_sad) {
+                    *p_best_sad = (uint32_t)distortion_left_position;
+                    *p_best_mv =
+                        ((uint16_t)half_mv_y[0] << 16) | ((uint16_t)half_mv_x[0]);
+                }
+            }
+            // T position
+            search_region_index =
+                search_index_x +
+                (int16_t)context_ptr->interpolated_stride * search_index_y;
+            if (context_ptr->fractional_search_method == SSD_SEARCH)
+                distortion_top_position = spatial_full_distortion_kernel_func_ptr_array[asm_type](
+                    context_ptr->sb_src_ptr,
+                    src_block_index,
+                    context_ptr->sb_src_stride,
+                    pos_h_buffer,
+                    search_region_index,
+                    context_ptr->interpolated_stride,
+                    pu_width,
+                    pu_height);
+            else if (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
+                distortion_top_position = (nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                    &(context_ptr->sb_src_ptr[src_block_index]),
+                    context_ptr->sb_src_stride << 1,
+                    &(pos_h_buffer[search_region_index]),
+                    context_ptr->interpolated_stride << 1,
+                    pu_height >> 1,
+                    pu_width)) << 1;
+            else
+                distortion_top_position = nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                    &(context_ptr->sb_src_ptr[src_block_index]),
+                    context_ptr->sb_src_stride,
+                    &(pos_h_buffer[search_region_index]),
+                    context_ptr->interpolated_stride,
+                    pu_height,
+                    pu_width);
+            if (context_ptr->fractional_search_method == SSD_SEARCH) {
+                if (distortion_top_position < *p_best_ssd) {
+                    *p_best_sad = (uint32_t)
+                        nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                            &(context_ptr->sb_src_ptr[src_block_index]),
+                            context_ptr->sb_src_stride,
+                            &(pos_h_buffer[search_region_index]),
+                            context_ptr->interpolated_stride,
+                            pu_height,
+                            pu_width);
+                    *p_best_mv =
+                        ((uint16_t)half_mv_y[2] << 16) | ((uint16_t)half_mv_x[2]);
+                    *p_best_ssd = (uint32_t)distortion_top_position;
+                }
+            }
+            else {
+                if (distortion_top_position < *p_best_sad) {
+                    *p_best_sad = (uint32_t)distortion_top_position;
+                    *p_best_mv =
+                        ((uint16_t)half_mv_y[2] << 16) | ((uint16_t)half_mv_x[2]);
+                }
+            }
+            // TL position
+            search_region_index =
+                search_index_x +
+                (int16_t)context_ptr->interpolated_stride * search_index_y;
+            if (context_ptr->fractional_search_method == SSD_SEARCH)
+                distortion_topleft_position = spatial_full_distortion_kernel_func_ptr_array[asm_type](
+                    context_ptr->sb_src_ptr,
+                    src_block_index,
+                    context_ptr->sb_src_stride,
+                    pos_j_buffer,
+                    search_region_index,
+                    context_ptr->interpolated_stride,
+                    pu_width,
+                    pu_height);
+            else if (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
+                distortion_topleft_position = (nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                    &(context_ptr->sb_src_ptr[src_block_index]),
+                    context_ptr->sb_src_stride << 1,
+                    &(pos_j_buffer[search_region_index]),
+                    context_ptr->interpolated_stride << 1,
+                    pu_height >> 1,
+                    pu_width)) << 1;
+            else
+                distortion_topleft_position = nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                    &(context_ptr->sb_src_ptr[src_block_index]),
+                    context_ptr->sb_src_stride,
+                    &(pos_j_buffer[search_region_index]),
+                    context_ptr->interpolated_stride,
+                    pu_height,
+                    pu_width);
+            if (context_ptr->fractional_search_method == SSD_SEARCH) {
+                if (distortion_topleft_position < *p_best_ssd) {
+                    *p_best_sad = (uint32_t)
+                        nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                            &(context_ptr->sb_src_ptr[src_block_index]),
+                            context_ptr->sb_src_stride,
+                            &(pos_j_buffer[search_region_index]),
+                            context_ptr->interpolated_stride,
+                            pu_height,
+                            pu_width);
+                    *p_best_mv =
+                        ((uint16_t)half_mv_y[4] << 16) | ((uint16_t)half_mv_x[4]);
+                    *p_best_ssd = (uint32_t)distortion_topleft_position;
+                }
+            }
+            else {
+                if (distortion_topleft_position < *p_best_sad) {
+                    *p_best_sad = (uint32_t)distortion_topleft_position;
+                    *p_best_mv =
+                        ((uint16_t)half_mv_y[4] << 16) | ((uint16_t)half_mv_x[4]);
+                }
+            }
+            // TR position
+            search_region_index++;
+            if (context_ptr->fractional_search_method == SSD_SEARCH)
+                distortion_topright_position = spatial_full_distortion_kernel_func_ptr_array[asm_type](
+                    context_ptr->sb_src_ptr,
+                    src_block_index,
+                    context_ptr->sb_src_stride,
+                    pos_j_buffer,
+                    search_region_index,
+                    context_ptr->interpolated_stride,
+                    pu_width,
+                    pu_height);
+            else if (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
+                distortion_topright_position = (nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                    &(context_ptr->sb_src_ptr[src_block_index]),
+                    context_ptr->sb_src_stride << 1,
+                    &(pos_j_buffer[search_region_index]),
+                    context_ptr->interpolated_stride << 1,
+                    pu_height >> 1,
+                    pu_width)) << 1;
+            else
+                distortion_topright_position = nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                    &(context_ptr->sb_src_ptr[src_block_index]),
+                    context_ptr->sb_src_stride,
+                    &(pos_j_buffer[search_region_index]),
+                    context_ptr->interpolated_stride,
+                    pu_height,
+                    pu_width);
+            if (context_ptr->fractional_search_method == SSD_SEARCH) {
+                if (distortion_topright_position < *p_best_ssd) {
+                    *p_best_sad = (uint32_t)
+                        nxm_sad_kernel_func_ptr_array[asm_type][pu_width >> 3](
+                            &(context_ptr->sb_src_ptr[src_block_index]),
+                            context_ptr->sb_src_stride,
+                            &(pos_j_buffer[search_region_index]),
+                            context_ptr->interpolated_stride,
+                            pu_height,
+                            pu_width);
+                    *p_best_mv =
+                        ((uint16_t)half_mv_y[5] << 16) | ((uint16_t)half_mv_x[5]);
+                    *p_best_ssd = (uint32_t)distortion_topright_position;
+                }
+            }
+            else {
+                if (distortion_topright_position < *p_best_sad) {
+                    *p_best_sad = (uint32_t)distortion_topright_position;
+                    *p_best_mv =
+                        ((uint16_t)half_mv_y[5] << 16) | ((uint16_t)half_mv_x[5]);
+                }
+            }
+        }
+    }
+    return;
+}
+#else
 /*******************************************
  * PU_HalfPelRefinement
  *   performs Half Pel refinement for one PU
@@ -4697,6 +5007,7 @@ static void half_pel_refinement_block(
 #endif
     return;
 }
+#endif
 /*******************************************
  * HalfPelSearch_LCU
  *   performs Half Pel refinement for the 85 PUs
@@ -4718,6 +5029,10 @@ void half_pel_refinement_sb(
     int16_t y_search_area_origin,  // input parameter, search area origin in the
                                    // vertical direction, used to point to
                                    // reference samples
+#if OPTIMISED_EX_SUBPEL
+    uint32_t search_area_height,  // input parameter, search area height
+    uint32_t search_area_width,  // input parameter, search area width
+#endif
     uint32_t inetger_mv, EbAsm asm_type) {
     uint32_t idx;
     uint32_t pu_index;
@@ -4740,6 +5055,10 @@ void half_pel_refinement_sb(
                                   64,
                                   x_search_area_origin,
                                   y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                                  search_area_height,
+                                  search_area_width,
+#endif
                                   asm_type,
                                   context_ptr->p_best_sad64x64,
                                   context_ptr->p_best_mv64x64,
@@ -4775,6 +5094,10 @@ void half_pel_refinement_sb(
             32,
             x_search_area_origin,
             y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+            search_area_height,
+            search_area_width,
+#endif
             asm_type,
             &context_ptr->p_best_sad32x32[pu_index],
             &context_ptr->p_best_mv32x32[pu_index],
@@ -4811,6 +5134,10 @@ void half_pel_refinement_sb(
                                   16,
                                   x_search_area_origin,
                                   y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                                  search_area_height,
+                                  search_area_width,
+#endif
                                   asm_type,
                                   &context_ptr->p_best_sad16x16[idx],
                                   &context_ptr->p_best_mv16x16[idx],
@@ -4847,6 +5174,10 @@ void half_pel_refinement_sb(
                                   8,
                                   x_search_area_origin,
                                   y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                                  search_area_height,
+                                  search_area_width,
+#endif
                                   asm_type,
                                   &context_ptr->p_best_sad8x8[idx],
                                   &context_ptr->p_best_mv8x8[idx],
@@ -4884,6 +5215,10 @@ void half_pel_refinement_sb(
                 32,
                 x_search_area_origin,
                 y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                search_area_height,
+                search_area_width,
+#endif
                 asm_type,
                 &context_ptr->p_best_sad64x32[pu_index],
                 &context_ptr->p_best_mv64x32[pu_index],
@@ -4921,6 +5256,10 @@ void half_pel_refinement_sb(
                 16,
                 x_search_area_origin,
                 y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                search_area_height,
+                search_area_width,
+#endif
                 asm_type,
                 &context_ptr->p_best_sad32x16[idx],
                 &context_ptr->p_best_mv32x16[idx],
@@ -4958,6 +5297,10 @@ void half_pel_refinement_sb(
                 8,
                 x_search_area_origin,
                 y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                search_area_height,
+                search_area_width,
+#endif
                 asm_type,
                 &context_ptr->p_best_sad16x8[idx],
                 &context_ptr->p_best_mv16x8[idx],
@@ -4994,6 +5337,10 @@ void half_pel_refinement_sb(
                 64,
                 x_search_area_origin,
                 y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                search_area_height,
+                search_area_width,
+#endif
                 asm_type,
                 &context_ptr->p_best_sad32x64[pu_index],
                 &context_ptr->p_best_mv32x64[pu_index],
@@ -5031,6 +5378,10 @@ void half_pel_refinement_sb(
                 32,
                 x_search_area_origin,
                 y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                search_area_height,
+                search_area_width,
+#endif
                 asm_type,
                 &context_ptr->p_best_sad16x32[idx],
                 &context_ptr->p_best_mv16x32[idx],
@@ -5068,6 +5419,10 @@ void half_pel_refinement_sb(
                 16,
                 x_search_area_origin,
                 y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                search_area_height,
+                search_area_width,
+#endif
                 asm_type,
                 &context_ptr->p_best_sad8x16[idx],
                 &context_ptr->p_best_mv8x16[idx],
@@ -5105,6 +5460,10 @@ void half_pel_refinement_sb(
                 8,
                 x_search_area_origin,
                 y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                search_area_height,
+                search_area_width,
+#endif
                 asm_type,
                 &context_ptr->p_best_sad32x8[idx],
                 &context_ptr->p_best_mv32x8[idx],
@@ -5141,6 +5500,10 @@ void half_pel_refinement_sb(
                 32,
                 x_search_area_origin,
                 y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                search_area_height,
+                search_area_width,
+#endif
                 asm_type,
                 &context_ptr->p_best_sad8x32[idx],
                 &context_ptr->p_best_mv8x32[idx],
@@ -5177,6 +5540,10 @@ void half_pel_refinement_sb(
                 16,
                 x_search_area_origin,
                 y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                search_area_height,
+                search_area_width,
+#endif
                 asm_type,
                 &context_ptr->p_best_sad64x16[idx],
                 &context_ptr->p_best_mv64x16[idx],
@@ -5213,6 +5580,10 @@ void half_pel_refinement_sb(
                 64,
                 x_search_area_origin,
                 y_search_area_origin,
+#if OPTIMISED_EX_SUBPEL
+                search_area_height,
+                search_area_width,
+#endif
                 asm_type,
                 &context_ptr->p_best_sad16x64[idx],
                 &context_ptr->p_best_mv16x64[idx],
@@ -5226,6 +5597,49 @@ void half_pel_refinement_sb(
 /*******************************************
  * open_loop_me_half_pel_search_sblock
  *******************************************/
+#if OPTIMISED_EX_SUBPEL
+static void open_loop_me_half_pel_search_sblock(
+    PictureParentControlSet *picture_control_set_ptr, MeContext *context_ptr,
+    uint32_t list_index, uint32_t ref_pic_index, int16_t x_search_area_origin,
+    int16_t y_search_area_origin, uint32_t search_area_width,
+    uint32_t search_area_height, EbAsm asm_type) {
+
+    half_pel_refinement_sb(
+        picture_control_set_ptr,
+        context_ptr,
+#if M0_HIGH_PRECISION_INTERPOLATION
+        context_ptr->integer_buffer_ptr[list_index][ref_pic_index] +
+        (ME_FILTER_PAD_DISTANCE >> 1) +
+        ((ME_FILTER_PAD_DISTANCE >> 1) *
+            context_ptr
+            ->interpolated_full_stride[listIndex][ref_pic_index]),
+        context_ptr
+        ->interpolated_full_stride[list_index][ref_pic_index],
+        &(context_ptr->pos_b_buffer[list_index][ref_pic_index]
+            [(ME_FILTER_PAD_DISTANCE >> 1) *
+            context_ptr->interpolated_stride]),
+#else
+        context_ptr->integer_buffer_ptr[list_index][ref_pic_index] +
+        (ME_FILTER_TAP >> 1) +
+        ((ME_FILTER_TAP >> 1) *
+            context_ptr
+            ->interpolated_full_stride[list_index][ref_pic_index]),
+        context_ptr
+        ->interpolated_full_stride[list_index][ref_pic_index],
+        &(context_ptr->pos_b_buffer[list_index][ref_pic_index]
+            [(ME_FILTER_TAP >> 1) *
+            context_ptr->interpolated_stride]),
+#endif
+        &(context_ptr->pos_h_buffer[list_index][ref_pic_index][1]),
+        &(context_ptr->pos_j_buffer[list_index][ref_pic_index][0]),
+        x_search_area_origin,
+        y_search_area_origin,
+        search_area_height,
+        search_area_width,
+        0,
+        asm_type);
+}
+#else
 static void open_loop_me_half_pel_search_sblock(
     PictureParentControlSet *picture_control_set_ptr, MeContext *context_ptr,
     uint32_t list_index, uint32_t ref_pic_index, int16_t x_search_area_origin,
@@ -5276,7 +5690,7 @@ static void open_loop_me_half_pel_search_sblock(
         }
     }
 }
-
+#endif
 static void quarter_pel_refinement_sb(
     MeContext
         *context_ptr,  //[IN/OUT]  ME context Ptr, used to get/update ME results
@@ -12008,6 +12422,25 @@ EbErrorType BiPredictionCompensation(MeContext *context_ptr, uint32_t pu_index,
     return return_error;
 }
 
+#if PRUNE_REF_FRAME_AT_ME
+uint8_t skip_bi_pred(
+    PictureParentControlSet *picture_control_set_ptr,
+    uint8_t ref_type,
+    uint8_t ref_type_table[7]) {
+
+    if (!picture_control_set_ptr->prune_unipred_at_me)
+        return 1;
+
+    uint8_t allow_cand = 0;
+    uint8_t ref_idx;
+    for (ref_idx = 0; ref_idx < PRUNE_REF_ME_TH; ref_idx++) {
+        if (ref_type == ref_type_table[ref_idx])
+            allow_cand = 1;
+    }
+    return allow_cand;
+}
+#endif
+
 /*******************************************
  * BiPredictionSearch
  *   performs Bi-Prediction Search (LCU)
@@ -12018,6 +12451,9 @@ EbErrorType BiPredictionSearch(
     MeContext *context_ptr, uint32_t pu_index, uint8_t candidateIndex,
     uint32_t activeRefPicFirstLisNum, uint32_t activeRefPicSecondLisNum,
     uint8_t *total_me_candidate_index, EbAsm asm_type,
+#if PRUNE_REF_FRAME_AT_ME
+    uint8_t ref_type_table[7],
+#endif
     PictureParentControlSet *picture_control_set_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -12063,6 +12499,20 @@ EbErrorType BiPredictionSearch(
              secondListRefPictdx < activeRefPicSecondLisNum;
              secondListRefPictdx++) {
             {
+#if PRUNE_REF_FRAME_AT_ME
+                     uint8_t to_inject_ref_type_0 = svt_get_ref_frame_type(REF_LIST_0, firstListRefPictdx);
+                     uint8_t to_inject_ref_type_1 = svt_get_ref_frame_type(REF_LIST_1, secondListRefPictdx);
+                     uint8_t add_bi = skip_bi_pred(
+                         picture_control_set_ptr,
+                         to_inject_ref_type_0,
+                         ref_type_table);
+                     add_bi += skip_bi_pred(
+                         picture_control_set_ptr,
+                         to_inject_ref_type_1,
+                         ref_type_table);
+
+                     if (add_bi) {
+#endif
                 BiPredictionCompensation(
                     context_ptr,
                     pu_index,
@@ -12078,6 +12528,9 @@ EbErrorType BiPredictionSearch(
                     asm_type);
 
                 candidateIndex++;
+#if PRUNE_REF_FRAME_AT_ME
+                     }
+#endif
             }
         }
     }
@@ -12088,6 +12541,14 @@ EbErrorType BiPredictionSearch(
         for (firstListRefPictdx = 1;
              firstListRefPictdx < activeRefPicFirstLisNum;
              firstListRefPictdx++) {
+#if PRUNE_REF_FRAME_AT_ME
+            uint8_t to_inject_ref_type_0 = svt_get_ref_frame_type(REF_LIST_0, firstListRefPictdx);
+            uint8_t add_bi = skip_bi_pred(
+                picture_control_set_ptr,
+                to_inject_ref_type_0,
+                ref_type_table);
+            if (add_bi) {
+#endif
             BiPredictionCompensation(
                 context_ptr,
                 pu_index,
@@ -12102,11 +12563,22 @@ EbErrorType BiPredictionSearch(
                 asm_type);
 
             candidateIndex++;
+#if PRUNE_REF_FRAME_AT_ME
+            }
+#endif
         }
         // NM: Within list 1    bipred: (BWD, ALT)
         for (secondListRefPictdx = 1;
              secondListRefPictdx < MIN(activeRefPicSecondLisNum, 1);
              secondListRefPictdx++) {
+#if PRUNE_REF_FRAME_AT_ME
+            uint8_t to_inject_ref_type_0 = svt_get_ref_frame_type(REF_LIST_0, firstListRefPictdx);
+            uint8_t add_bi = skip_bi_pred(
+                picture_control_set_ptr,
+                to_inject_ref_type_0,
+                ref_type_table);
+            if (add_bi) {
+#endif
             BiPredictionCompensation(
                 context_ptr,
                 pu_index,
@@ -12121,6 +12593,9 @@ EbErrorType BiPredictionSearch(
                 asm_type);
 
             candidateIndex++;
+#if PRUNE_REF_FRAME_AT_ME
+            }
+#endif
         }
     }
     *total_me_candidate_index = candidateIndex;
@@ -14728,6 +15203,10 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
                     &(context_ptr->me_candidate[candidateIndex].pu[pu_index]);
                 me_candidate->prediction_direction = listIndex;
                 me_candidate->ref_index[listIndex] = ref_pic_index;
+#if PRUNE_REF_FRAME_AT_ME
+                me_candidate->ref0_list = me_candidate->prediction_direction == 0 ? listIndex : 24;
+                me_candidate->ref1_list = me_candidate->prediction_direction == 1 ? listIndex : 24;
+#endif
                 me_candidate->distortion =
                     context_ptr->p_sb_best_sad[listIndex][ref_pic_index][nIdx];
                 candidateIndex++;
@@ -14735,7 +15214,45 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
         }
 
         total_me_candidate_index = candidateIndex;
+#if PRUNE_REF_FRAME_AT_ME
+        uint8_t ref_type_table[7];
+        if (picture_control_set_ptr->prune_unipred_at_me) {
+            // Sorting of the ME candidates
+            for (candidate_index = 0;
+                candidate_index < total_me_candidate_index - 1;
+                ++candidate_index) {
+                for (next_candidate_index = candidate_index + 1;
+                    next_candidate_index < total_me_candidate_index;
+                    ++next_candidate_index) {
+                    if (context_ptr->me_candidate[candidate_index]
+                        .pu[pu_index]
+                        .distortion >
+                        context_ptr->me_candidate[next_candidate_index]
+                        .pu[pu_index]
+                        .distortion) {
+                        SwapMeCandidate(
+                            &(context_ptr->me_candidate[candidate_index]
+                                .pu[pu_index]),
+                            &(context_ptr->me_candidate[next_candidate_index]
+                                .pu[pu_index]));
+                    }
+                }
+            }
+            for (candidate_index = 0;
+                candidate_index < total_me_candidate_index;
+                ++candidate_index) {
 
+                me_candidate =
+                    &(context_ptr->me_candidate[candidate_index].pu[pu_index]);
+
+                if (me_candidate->prediction_direction == 0)
+                    ref_type_table[candidate_index] = svt_get_ref_frame_type(me_candidate->ref0_list, me_candidate->ref_index[0]);
+                else
+                    ref_type_table[candidate_index] = svt_get_ref_frame_type(me_candidate->ref1_list, me_candidate->ref_index[1]);
+
+            }
+        }
+#endif
         if (numOfListToSearch) {
             if (picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_0 ||
                 pu_index < 21 ||
@@ -14750,6 +15267,9 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
                     picture_control_set_ptr->ref_list1_count,
                     &total_me_candidate_index,
                     asm_type,
+#if PRUNE_REF_FRAME_AT_ME
+                    ref_type_table,
+#endif
                     picture_control_set_ptr);
             }
         }

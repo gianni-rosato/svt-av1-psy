@@ -112,7 +112,6 @@ typedef struct CandidateMvDec {
     IntMvDec comp_mv;
     int32_t weight;
 } CandidateMvDec;
-
 #define MFMV_STACK_SIZE 3
 typedef struct TemporalMvRef {
     /* Motion Filed MV */
@@ -259,6 +258,9 @@ typedef struct ModeInfo_t {
     /*!< The actual prediction angle is the base angle + (angle_delta * step). */
     int8_t angle_delta[PLANE_TYPES];
 
+    // Number of base colors for Y (0) and UV (1)
+    uint8_t palette_size[2];
+
 #if MODE_INFO_DBG
     int32_t mi_row;
     int32_t mi_col;
@@ -269,6 +271,9 @@ typedef struct SBInfo {
     int8_t      *sb_cdef_strength; /*!< At 64x64 blk level */
     int32_t     *sb_delta_q; /*!< At SB level */
     int32_t     *sb_delta_lf; /*!< At SB level */
+
+    // Loop Restoration Unit
+    RestorationUnitInfo    *sb_lr_unit[MAX_MB_PLANE];
 
     TransformInfo_t *sb_trans_info[MAX_MB_PLANE - 1];
 

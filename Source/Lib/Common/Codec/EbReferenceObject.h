@@ -38,6 +38,12 @@ typedef struct EbReferenceObject
     FRAME_CONTEXT                   frame_context;
     EbWarpedMotionParams            global_motion[TOTAL_REFS_PER_FRAME];
 #endif
+#if MFMV_SUPPORT
+    MV_REF                         *mvs;
+    FrameType                       frame_type;
+    uint32_t                        order_hint;
+    uint32_t                        ref_order_hint[7];
+#endif
 } EbReferenceObject;
 
 typedef struct EbReferenceObjectDescInitData {

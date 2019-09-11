@@ -43,7 +43,7 @@ EbErrorType check_add_tplmv_buf(EbDecHandle *dec_handle_ptr) {
 
 void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
                          int32_t blk_col_px, int32_t blk_row_px,
-                         void **pp_blk_recon_buf, int32_t *recon_strd,
+                         void **pp_blk_recon_buf, int32_t *recon_stride,
                          int32_t sub_x, int32_t sub_y)
 {
     int32_t block_offset;
@@ -52,19 +52,19 @@ void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
         block_offset = (recon_picture_buf->origin_y + blk_row_px) *
             recon_picture_buf->stride_y + (recon_picture_buf->origin_x +
                 blk_col_px);
-        *recon_strd = recon_picture_buf->stride_y;
+        *recon_stride = recon_picture_buf->stride_y;
     }
     else if (plane == 1) {
         block_offset = ((recon_picture_buf->origin_y >> sub_y) +
             blk_row_px) * recon_picture_buf->stride_cb +
             ((recon_picture_buf->origin_x >> sub_x) + blk_col_px);
-        *recon_strd = recon_picture_buf->stride_cb;
+        *recon_stride = recon_picture_buf->stride_cb;
     }
     else {
         block_offset = ((recon_picture_buf->origin_y >> sub_y) +
             blk_row_px) * recon_picture_buf->stride_cr +
             ((recon_picture_buf->origin_x >> sub_x) + blk_col_px);
-        *recon_strd = recon_picture_buf->stride_cr;
+        *recon_stride = recon_picture_buf->stride_cr;
     }
 
     if (recon_picture_buf->bit_depth != EB_8BIT) {//16bit

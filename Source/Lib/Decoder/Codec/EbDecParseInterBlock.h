@@ -48,6 +48,10 @@ extern "C" {
 #define MAX_OFFSET_WIDTH 64
 #define MAX_OFFSET_HEIGHT 0
 
+/* Harmonize with encoder */
+#define INTRABC_DELAY_PIXELS 256
+#define INTRABC_DELAY_SB64 (INTRABC_DELAY_PIXELS / 64)
+
 static const MV kZeroMv = { 0, 0 };
 
 extern  int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
@@ -61,7 +65,11 @@ void av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     IntMvDec mv_ref_list[][MAX_MV_REF_CANDIDATES], IntMvDec global_mvs[2],
     int mi_row, int mi_col, int16_t *mode_context, MvCount *mv_cnt);
 void get_mv_projection(MV *output, MV ref, int num, int den);
-
+void assign_intrabc_mv(EbDecHandle *dec_handle,
+    IntMvDec ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES],
+    PartitionInfo_t *pi, int mi_row, int mi_col, SvtReader *r);
+void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
+    int mi_row, int mi_col, SvtReader *r);
 #ifdef __cplusplus
 }
 #endif

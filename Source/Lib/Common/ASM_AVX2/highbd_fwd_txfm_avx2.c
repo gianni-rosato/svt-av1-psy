@@ -20,7 +20,6 @@
 #include "EbTransforms.h"
 #include <immintrin.h>
 #include "txfm_common_avx2.h"
-#include "txfm_common_sse2.h"
 
 void Av1TransformConfig(
     TxType tx_type,

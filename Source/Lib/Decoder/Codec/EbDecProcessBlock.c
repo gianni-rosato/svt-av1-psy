@@ -28,6 +28,7 @@
 #include "EbDecUtils.h"
 
 #include "EbTransforms.h"
+#include "EbDecLF.h"
 
 extern int select_samples(
     MV *mv,
@@ -283,7 +284,6 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
         svtav1_predict_inter_block(dec_handle, &part_info, mi_row, mi_col,
             num_planes);
 
-    int32_t *qcoeffs = dec_mod_ctxt->sb_iquant_ptr;
     TxType tx_type;
     int32_t *coeffs;
     TransformInfo_t *trans_info = NULL;
@@ -297,6 +297,11 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
         ((bsize >= BLOCK_64X64) && (bsize <= BLOCK_128X128)) ) ?
         (max_blocks_wide * max_blocks_high) >>
         (color_config->subsampling_x + color_config->subsampling_y) : mode_info->num_chroma_tus;
+
+    LFCtxt *lf_ctxt = (LFCtxt *)dec_handle->pv_lf_ctxt;
+    int32_t lf_stride = dec_handle->frame_header.mi_stride;
+    struct LFBlockParamL* lf_block_l = lf_ctxt->lf_block_luma;
+    struct LFBlockParamUV* lf_block_uv = lf_ctxt->lf_block_uv;
 
     for (int plane = 0; plane < num_planes; ++plane) {
         sub_x = (plane > 0) ? color_config->subsampling_x : 0;
@@ -325,8 +330,9 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
         for (uint32_t tu = 0; tu < num_tu; tu++)
         {
+            int32_t *qcoeffs = dec_mod_ctxt->iquant_cur_ptr;
             void *blk_recon_buf;
-            int32_t recon_strd;
+            int32_t recon_stride;
 
             tx_size = trans_info->tx_size;
             coeffs = dec_mod_ctxt->cur_coeff[plane];
@@ -334,12 +340,25 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
             derive_blk_pointers(recon_picture_buf, plane,
                 ((mi_col >> sub_x) + trans_info->tu_x_offset)*MI_SIZE,
                 ((mi_row >> sub_y) + trans_info->tu_y_offset)*MI_SIZE,
-                &blk_recon_buf, &recon_strd, sub_x, sub_y);
+                &blk_recon_buf, &recon_stride, sub_x, sub_y);
+
+            if (plane == 0)
+                /*Populate the LF luma params for current block*/
+                fill_4x4_param_luma(lf_block_l,
+                    mi_col + trans_info->tu_x_offset,
+                    mi_row + trans_info->tu_y_offset,
+                    lf_stride, tx_size, mode_info);
+            else if(plane == 1)
+                /*Chroma population is done at luma unit, not the chroma unit*/
+                fill_4x4_param_uv(lf_block_uv,
+                    (mi_col & (~sub_x)) + (trans_info->tu_x_offset << sub_x),
+                    (mi_row & (~sub_y)) + (trans_info->tu_y_offset << sub_y),
+                    lf_stride, tx_size, sub_x, sub_y);
 
             if (!inter_block)
                 svt_av1_predict_intra(dec_mod_ctxt, &part_info, plane,
                     tx_size, dec_mod_ctxt->cur_tile_info, blk_recon_buf,
-                    recon_strd, recon_picture_buf->bit_depth,
+                    recon_stride, recon_picture_buf->bit_depth,
                     trans_info->tu_x_offset, trans_info->tu_y_offset);
 
             n_coeffs = 0;
@@ -369,11 +388,13 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
                     if (recon_picture_buf->bit_depth == EB_8BIT)
                         av1_inv_transform_recon8bit(qcoeffs,
-                        (uint8_t *)blk_recon_buf,
-                            recon_strd, tx_size, tx_type, plane, n_coeffs);
+                            (uint8_t *)blk_recon_buf, recon_stride,
+                            (uint8_t *)blk_recon_buf, recon_stride,
+                            tx_size, tx_type, plane, n_coeffs);
                     else
                         av1_inv_transform_recon(qcoeffs,
-                            CONVERT_TO_BYTEPTR(blk_recon_buf), recon_strd,
+                            CONVERT_TO_BYTEPTR(blk_recon_buf), recon_stride,
+                            CONVERT_TO_BYTEPTR(blk_recon_buf), recon_stride,
                             tx_size, recon_picture_buf->bit_depth,
                             tx_type, plane, n_coeffs);
                 }
@@ -385,11 +406,13 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
             {
                 cfl_store_tx(&part_info, &dec_mod_ctxt->cfl_ctx,
                     trans_info->tu_y_offset, trans_info->tu_x_offset, tx_size,
-                    bsize, color_config, blk_recon_buf, recon_strd);
+                    bsize, color_config, blk_recon_buf, recon_stride);
             }
 
             // increment transform pointer
             trans_info++;
+            dec_mod_ctxt->iquant_cur_ptr = dec_mod_ctxt->iquant_cur_ptr +
+                (tx_size_wide[tx_size] * tx_size_high[tx_size]);
         }
     }
     return;

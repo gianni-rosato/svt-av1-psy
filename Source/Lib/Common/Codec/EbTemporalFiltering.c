@@ -32,6 +32,7 @@
 #include "EbMcp.h"
 #include "av1me.h"
 #include "EbTemporalFiltering_sse4.h"
+#include "EbObject.h"
 
 #undef _MM_HINT_T2
 #define _MM_HINT_T2  1
@@ -752,6 +753,10 @@ EbErrorType av1_inter_prediction(
     uint8_t                              ref_frame_type,
     MvUnit                               *mv_unit,
     uint8_t                              use_intrabc,
+#if COMP_MODE
+    uint8_t                              compound_idx,
+    INTERINTER_COMPOUND_DATA             *interinter_comp,
+#endif
     uint16_t                             pu_origin_x,
     uint16_t                             pu_origin_y,
     uint8_t                              bwidth,
@@ -850,6 +855,10 @@ void tf_inter_prediction(
                             0,//ref_frame_type,
                             &mv_unit,
                             0,//use_intrabc,
+#if COMP_MODE
+                            1,//compound_idx not used
+                            NULL,// interinter_comp not used
+#endif
                             pu_origin_x,
                             pu_origin_y,
                             bsize,
@@ -889,6 +898,10 @@ void tf_inter_prediction(
                     0,//ref_frame_type,
                     &mv_unit,
                     0,//use_intrabc,
+#if COMP_MODE
+                    1,//compound_idx not used
+                    NULL,// interinter_comp not used
+#endif
                     pu_origin_x,
                     pu_origin_y,
                     bsize,
@@ -909,6 +922,10 @@ void tf_inter_prediction(
                     0,//ref_frame_type,
                     &mv_unit,
                     0,//use_intrabc,
+#if COMP_MODE
+                    1,//compound_idx not used
+                    NULL,// interinter_comp not used
+#endif
                     pu_origin_x,
                     pu_origin_y,
                     bsize,
@@ -1682,6 +1699,77 @@ int pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_p
     return 0;
 }
 
+// Copy block/picture of size width x height from src to dst with origin_src and origin_dst
+void copy_pixels_with_origin(EbByte dst, int stride_dst,
+                             int origin_dst_y, int origin_dst_x,
+                             EbByte src, int stride_src,
+                             int origin_src_y, int origin_src_x,
+                             int width, int height){
+
+    int h;
+    EbByte src_cpy = src + origin_src_y*stride_src + origin_src_x;
+    EbByte dst_cpy = dst + origin_dst_y*stride_dst + origin_dst_x;
+
+    for (h=0; h<height; h++){
+        EB_MEMCPY(dst_cpy, src_cpy, width * sizeof(uint8_t));
+        dst_cpy += stride_dst;
+        src_cpy += stride_src;
+    }
+
+}
+
+// save original enchanced_picture_ptr buffer in a separate buffer (to be replaced by the temporally filtered pic)
+EbErrorType save_src_pic_buffers(PictureParentControlSet *picture_control_set_ptr_central){
+
+    // allocate memory for the copy of the original enhanced buffer
+    EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_Y],
+              picture_control_set_ptr_central->enhanced_picture_ptr->luma_size);
+    EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_U],
+              picture_control_set_ptr_central->enhanced_picture_ptr->chroma_size);
+    EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_V],
+              picture_control_set_ptr_central->enhanced_picture_ptr->chroma_size);
+
+    // copy buffers
+    // Y
+    copy_pixels_with_origin(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_Y],
+                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_y,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_y,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_y,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->width,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->height);
+
+    // U
+    copy_pixels_with_origin(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_U],
+                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> 1,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> 1,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_cb,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> 1,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> 1,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->width >> 1,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->height >> 1);
+
+    // V
+    copy_pixels_with_origin(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_V],
+                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> 1,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> 1,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_cr,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> 1,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> 1,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->width >> 1,
+                            picture_control_set_ptr_central->enhanced_picture_ptr->height >> 1);
+
+    return EB_ErrorNone;
+
+}
+
 void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_ptr,
                                     PictureParentControlSet *picture_control_set_ptr_central,
                                     MotionEstimationContext_t *me_context_ptr,
@@ -1738,6 +1826,15 @@ void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_
                 pic_ptr_ref->origin_x >> 1,
                 pic_ptr_ref->origin_y >> 1);
         }
+
+        picture_control_set_ptr_central->temporal_filtering_on = EB_TRUE; // set temporal filtering flag ON for current picture
+
+        // save original source picture (to be replaced by the temporally filtered pic)
+        // if stat_report is enabled for PSNR computation
+        if(picture_control_set_ptr_central->sequence_control_set_ptr->static_config.stat_report){
+            save_src_pic_buffers(picture_control_set_ptr_central);
+        }
+
     }
     eb_release_mutex(picture_control_set_ptr_central->temp_filt_mutex);
 

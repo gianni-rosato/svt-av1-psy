@@ -212,10 +212,10 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
     if (enable_recon) {
         // create recon queue to store the recon yuvs
         VideoFrameParam param;
-        memset(&param, 0, sizeof(param));
         param.format = video_src_->get_image_format();
         param.width = video_src_->get_width_with_padding();
         param.height = video_src_->get_height_with_padding();
+        param.bits_per_sample = video_src_->get_bit_depth();
         recon_queue_ = create_frame_queue(param);
         ASSERT_NE(recon_queue_, nullptr) << "can not create recon sink!!";
         if (recon_queue_)
@@ -744,32 +744,26 @@ void SvtAv1E2ETestFramework::check_psnr(const VideoFrame &frame) {
 }
 
 static bool transfer_frame_planes(VideoFrame *frame) {
-    uint32_t luma_size = frame->stride[0] * frame->height;
-    if (frame->buf_size != 4 * luma_size) {
+    if (frame->buf_size != VideoFrame::calculate_max_frame_size(*frame)) {
         printf("buffer size doesn't match!\n");
         return false;
     }
-    bool half_height = false;
-    if (frame->format == IMG_FMT_420P10_PACKED ||
-        frame->format == IMG_FMT_422P10_PACKED ||
-        frame->format == IMG_FMT_444P10_PACKED) {
-        luma_size *= 2;
-    }
+
+    uint32_t height_scale = 1;
     if (frame->format == IMG_FMT_420 ||
         frame->format == IMG_FMT_420P10_PACKED ||
         frame->format == IMG_FMT_NV12) {
-        half_height = true;
+        height_scale = 2;
     }
     if (frame->stride[3]) {
         uint32_t offset = frame->stride[0] * frame->height +
                           ((frame->stride[1] + frame->stride[2]) *
-                           (half_height ? frame->height / 2 : frame->height));
+                           frame->height / height_scale);
         memcpy(frame->planes[3], frame->buffer + offset, frame->buf_size >> 2);
     }
     if (frame->stride[2]) {
         uint32_t offset = frame->stride[0] * frame->height +
-                          (frame->stride[1] *
-                           (half_height ? frame->height / 2 : frame->height));
+                          (frame->stride[1] * frame->height / height_scale);
         memcpy(frame->planes[2], frame->buffer + offset, frame->buf_size >> 2);
     }
     if (frame->stride[1]) {

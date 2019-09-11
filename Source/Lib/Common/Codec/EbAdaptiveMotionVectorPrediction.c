@@ -613,8 +613,201 @@ static INLINE int32_t find_valid_col_offset(const TileInfo *const tile, int32_t 
     return clamp(col_offset, tile->mi_col_start - mi_col,
         tile->mi_col_end - mi_col - 1);
 }
+#if MFMV_SUPPORT
+static INLINE void integer_mv_precision(MV *mv) {
+    int32_t mod = (mv->row % 8);
+    if (mod != 0) {
+        mv->row -= (int16_t)mod;
+        if (abs(mod) > 4) {
+            if (mod > 0)
+                mv->row += 8;
+            else
+                mv->row -= 8;
+        }
+    }
 
+    mod = (mv->col % 8);
+    if (mod != 0) {
+        mv->col -= (int16_t)mod;
+        if (abs(mod) > 4) {
+            if (mod > 0)
+                mv->col += 8;
+            else
+                mv->col -= 8;
+        }
+    }
+}
+static INLINE void lower_mv_precision(MV *mv, int allow_hp, int is_integer) {
+    if (is_integer)
+        integer_mv_precision(mv);
+    else {
+        if (!allow_hp) {
+            if (mv->row & 1) mv->row += (mv->row > 0 ? -1 : 1);
+            if (mv->col & 1) mv->col += (mv->col > 0 ? -1 : 1);
+        }
+    }
+}
+// Although we assign 32 bit integers, all the values are strictly under 14
+// bits.
+static int div_mult_[32] = { 0,    16384, 8192, 5461, 4096, 3276, 2730, 2340,
+                            2048, 1820,  1638, 1489, 1365, 1260, 1170, 1092,
+                            1024, 963,   910,  862,  819,  780,  744,  712,
+                            682,  655,   630,  606,  585,  564,  546,  528 };
+// TODO(jingning): Consider the use of lookup table for (num / den)
+// altogether.
+static void get_mv_projection(MV *output, MV ref, int num, int den) {
+    den = AOMMIN(den, MAX_FRAME_DISTANCE);
+    num = num > 0 ? AOMMIN(num, MAX_FRAME_DISTANCE)
+        : AOMMAX(num, -MAX_FRAME_DISTANCE);
+    const int mv_row =
+        ROUND_POWER_OF_TWO_SIGNED(ref.row * num * div_mult_[den], 14);
+    const int mv_col =
+        ROUND_POWER_OF_TWO_SIGNED(ref.col * num * div_mult_[den], 14);
+    const int clamp_max = MV_UPP - 1;
+    const int clamp_min = MV_LOW + 1;
+    output->row = (int16_t)clamp(mv_row, clamp_min, clamp_max);
+    output->col = (int16_t)clamp(mv_col, clamp_min, clamp_max);
+}
+static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
+    if (!oh->enable_order_hint) return 0;
+
+    const int bits = oh->order_hint_bits;
+
+    assert(bits >= 1);
+    assert(a >= 0 && a < (1 << bits));
+    assert(b >= 0 && b < (1 << bits));
+
+    int diff = a - b;
+    const int m = 1 << (bits - 1);
+    diff = (diff & (m - 1)) - (diff & m);
+    return diff;
+}
+static int add_tpl_ref_mv(const Av1Common *cm, PictureControlSet *picture_control_set_ptr, const MacroBlockD *xd,
+    int mi_row, int mi_col, MvReferenceFrame ref_frame,
+    int blk_row, int blk_col, IntMv *gm_mv_candidates,
+    uint8_t *const refmv_count,
+    CandidateMv ref_mv_stack[MAX_REF_MV_STACK_SIZE],
+    int16_t *mode_context) {
+    Position mi_pos;
+    mi_pos.row = (mi_row & 0x01) ? blk_row : blk_row + 1;
+    mi_pos.col = (mi_col & 0x01) ? blk_col : blk_col + 1;
+
+    if (!is_inside(&xd->tile, mi_col, mi_row, xd->tile.mi_row_end, &mi_pos)) return 0;
+
+    const TPL_MV_REF *prev_frame_mvs =
+        picture_control_set_ptr->tpl_mvs + ((mi_row + mi_pos.row) >> 1) * (cm->mi_stride >> 1) +
+        ((mi_col + mi_pos.col) >> 1);
+    if (prev_frame_mvs->mfmv0.as_int == INVALID_MV) return 0;
+
+    MvReferenceFrame rf[2];
+    av1_set_ref_frame(rf, ref_frame);
+
+    uint8_t list_idx0, list_idx1, ref_idx_l0, ref_idx_l1;
+    list_idx0 = get_list_idx(rf[0]);
+    ref_idx_l0 = get_ref_frame_idx(rf[0]);
+    if (rf[1] == NONE_FRAME) {
+        list_idx1 = get_list_idx(rf[0]);
+        ref_idx_l1 = get_ref_frame_idx(rf[0]);
+    }
+    else {
+        list_idx1 = get_list_idx(rf[1]);
+        ref_idx_l1 = get_ref_frame_idx(rf[1]);
+    }
+
+    const uint16_t weight_unit = 1;
+    const int cur_frame_index = picture_control_set_ptr->parent_pcs_ptr->cur_order_hint;
+    EbReferenceObject *buf_0 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr;
+
+    const int frame0_index = buf_0->order_hint;
+    const int cur_offset_0 = get_relative_dist(&picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info,
+        cur_frame_index, frame0_index);
+    int idx;
+
+    IntMv this_refmv;
+    get_mv_projection(&this_refmv.as_mv, prev_frame_mvs->mfmv0.as_mv,
+        cur_offset_0, prev_frame_mvs->ref_frame_offset);
+#if MFMV_SUPPORT
+    lower_mv_precision(&this_refmv.as_mv, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv, 0);
+#else
+    lower_mv_precision(&this_refmv.as_mv, 0, 0);
+#endif
+    if (rf[1] == NONE_FRAME) {
+        if (blk_row == 0 && blk_col == 0) {
+            if (abs(this_refmv.as_mv.row - gm_mv_candidates[0].as_mv.row) >= 16 ||
+                abs(this_refmv.as_mv.col - gm_mv_candidates[0].as_mv.col) >= 16)
+                mode_context[ref_frame] |= (1 << GLOBALMV_OFFSET);
+        }
+
+        for (idx = 0; idx < *refmv_count; ++idx)
+            if (this_refmv.as_int == ref_mv_stack[idx].this_mv.as_int) break;
+
+        if (idx < *refmv_count)  ref_mv_stack[idx].weight += 2 * weight_unit;
+
+        if (idx == *refmv_count && *refmv_count < MAX_REF_MV_STACK_SIZE) {
+            ref_mv_stack[idx].this_mv.as_int = this_refmv.as_int;
+            ref_mv_stack[idx].weight = 2 * weight_unit;
+            ++(*refmv_count);
+        }
+    }
+    else {
+        // Process compound inter mode
+        EbReferenceObject *buf_1 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr;
+
+        const int frame1_index = buf_1->order_hint;
+        const int cur_offset_1 = get_relative_dist(&picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info,
+            cur_frame_index, frame1_index);
+        IntMv comp_refmv;
+        get_mv_projection(&comp_refmv.as_mv, prev_frame_mvs->mfmv0.as_mv,
+            cur_offset_1, prev_frame_mvs->ref_frame_offset);
+#if MFMV_SUPPORT
+        lower_mv_precision(&comp_refmv.as_mv, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv, 0);
+#else
+        lower_mv_precision(&comp_refmv.as_mv, 0, 0);
+#endif
+        if (blk_row == 0 && blk_col == 0) {
+            if (abs(this_refmv.as_mv.row - gm_mv_candidates[0].as_mv.row) >= 16 ||
+                abs(this_refmv.as_mv.col - gm_mv_candidates[0].as_mv.col) >= 16 ||
+                abs(comp_refmv.as_mv.row - gm_mv_candidates[1].as_mv.row) >= 16 ||
+                abs(comp_refmv.as_mv.col - gm_mv_candidates[1].as_mv.col) >= 16)
+                mode_context[ref_frame] |= (1 << GLOBALMV_OFFSET);
+        }
+
+        for (idx = 0; idx < *refmv_count; ++idx) {
+            if (this_refmv.as_int == ref_mv_stack[idx].this_mv.as_int &&
+                comp_refmv.as_int == ref_mv_stack[idx].comp_mv.as_int)
+                break;
+        }
+
+        if (idx < *refmv_count)  ref_mv_stack[idx].weight += 2 * weight_unit;
+
+        if (idx == *refmv_count && *refmv_count < MAX_REF_MV_STACK_SIZE) {
+            ref_mv_stack[idx].this_mv.as_int = this_refmv.as_int;
+            ref_mv_stack[idx].comp_mv.as_int = comp_refmv.as_int;
+            ref_mv_stack[idx].weight = 2 * weight_unit;
+            ++(*refmv_count);
+        }
+    }
+
+    return 1;
+}
+
+static int check_sb_border(const int mi_row, const int mi_col,
+    const int row_offset, const int col_offset) {
+    const int sb_mi_size = mi_size_wide[BLOCK_64X64];
+    const int row = mi_row & (sb_mi_size - 1);
+    const int col = mi_col & (sb_mi_size - 1);
+
+    if (row + row_offset < 0 || row + row_offset >= sb_mi_size ||
+        col + col_offset < 0 || col + col_offset >= sb_mi_size)
+        return 0;
+
+    return 1;
+}
+#endif
 void setup_ref_mv_list(
+#if MFMV_SUPPORT
+    PictureControlSet *picture_control_set_ptr,
+#endif
     const Av1Common *cm, const MacroBlockD *xd, MvReferenceFrame ref_frame,
     uint8_t refmv_count[MODE_CTX_REF_FRAMES],
     CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
@@ -705,6 +898,55 @@ void setup_ref_mv_list(
     for (int32_t idx = 0; idx < nearest_refmv_count[ref_frame]; ++idx)
         ref_mv_stack[ref_frame][idx].weight += REF_CAT_LEVEL;
 
+#if MFMV_SUPPORT
+    //CHKN  MFMV - get canididates from reference frames- orderHint has to be on, in order to scale the vectors.
+    if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs)
+    {
+
+        int is_available = 0;
+        const int voffset = AOMMAX(mi_size_high[BLOCK_8X8], xd->n4_h);
+        const int hoffset = AOMMAX(mi_size_wide[BLOCK_8X8], xd->n4_w);
+        const int blk_row_end = AOMMIN(xd->n4_h, mi_size_high[BLOCK_64X64]);
+        const int blk_col_end = AOMMIN(xd->n4_w, mi_size_wide[BLOCK_64X64]);
+
+        const int tpl_sample_pos[3][2] = {
+          { voffset, -2 },
+          { voffset, hoffset },
+          { voffset - 2, hoffset },
+        };
+        const int allow_extension = (xd->n4_h >= mi_size_high[BLOCK_8X8]) &&
+            (xd->n4_h < mi_size_high[BLOCK_64X64]) &&
+            (xd->n4_w >= mi_size_wide[BLOCK_8X8]) &&
+            (xd->n4_w < mi_size_wide[BLOCK_64X64]);
+
+        const int step_h = (xd->n4_h >= mi_size_high[BLOCK_64X64])
+            ? mi_size_high[BLOCK_16X16]
+            : mi_size_high[BLOCK_8X8];
+        const int step_w = (xd->n4_w >= mi_size_wide[BLOCK_64X64])
+            ? mi_size_wide[BLOCK_16X16]
+            : mi_size_wide[BLOCK_8X8];
+
+        for (int blk_row = 0; blk_row < blk_row_end; blk_row += step_h) {
+            for (int blk_col = 0; blk_col < blk_col_end; blk_col += step_w) {
+                int ret = add_tpl_ref_mv(cm, picture_control_set_ptr, xd, mi_row, mi_col, ref_frame, blk_row,
+                    blk_col, gm_mv_candidates, &refmv_count[ref_frame],
+                    ref_mv_stack[ref_frame], mode_context);
+                if (blk_row == 0 && blk_col == 0) is_available = ret;
+            }
+        }
+
+        if (is_available == 0) mode_context[ref_frame] |= (1 << GLOBALMV_OFFSET);
+
+        for (int i = 0; i < 3 && allow_extension; ++i) {
+            const int blk_row = tpl_sample_pos[i][0];
+            const int blk_col = tpl_sample_pos[i][1];
+
+            if (!check_sb_border(mi_row, mi_col, blk_row, blk_col)) continue;
+            add_tpl_ref_mv(cm, picture_control_set_ptr, xd, mi_row, mi_col, ref_frame, blk_row, blk_col,
+                gm_mv_candidates, &refmv_count[ref_frame], ref_mv_stack[ref_frame], mode_context);
+        }
+    }
+#else
     //-------------------------- TMVP --------------------------
     //CHKN  TMVP - get canididates from reference frames- orderHint has to be on,
     // in order to scale the vectors.
@@ -712,7 +954,7 @@ void setup_ref_mv_list(
     // the mode context too.
 
     //-------------------------- TMVP --------------------------
-
+#endif
     //CHKN------------- TOP-LEFT
     uint8_t dummy_newmv_count[MODE_CTX_REF_FRAMES] = { 0 };
 
@@ -1042,7 +1284,7 @@ void setup_ref_mv_list(
     }
     (void)nearest_match;
 }
-
+#if !MFMV_SUPPORT
 static INLINE void integer_mv_precision(MV *mv) {
     int32_t mod = (mv->row % 8);
     if (mod != 0) {
@@ -1066,7 +1308,7 @@ static INLINE void integer_mv_precision(MV *mv) {
         }
     }
 }
-
+#endif
 static INLINE IntMv gm_get_motion_vector(
     const EbWarpedMotionParams *gm,
     int32_t allow_hp,
@@ -1195,7 +1437,11 @@ void generate_av1_mvp_table(
         }
         else
             zeromv[0].as_int = zeromv[1].as_int = 0;
-        setup_ref_mv_list(cm,
+        setup_ref_mv_list(
+#if MFMV_SUPPORT
+            picture_control_set_ptr,
+#endif
+            cm,
             xd,
             ref_frame,
             xd->ref_mv_count,
@@ -1363,7 +1609,10 @@ void update_av1_mi_map(
 
                 miPtr[miX + miY * mi_stride].mbmi.partition = from_shape_to_part[blk_geom->shape];// cu_ptr->part;
             }
-
+#if COMP_MODE
+            miPtr[miX + miY * mi_stride].mbmi.comp_group_idx = cu_ptr->comp_group_idx;
+            miPtr[miX + miY * mi_stride].mbmi.compound_idx = cu_ptr->compound_idx;
+#endif
             //needed for CDEF
             miPtr[miX + miY * mi_stride].mbmi.skip = cu_ptr->block_has_coeff ? EB_FALSE : EB_TRUE;
         }
@@ -1435,6 +1684,11 @@ void update_mi_map(
                 miPtr[miX + miY * mi_stride].mbmi.skip = (cu_ptr->transform_unit_array[0].y_has_coeff == 0 && cu_ptr->transform_unit_array[0].v_has_coeff == 0 && cu_ptr->transform_unit_array[0].u_has_coeff == 0) ? EB_TRUE : EB_FALSE;
             else
                 miPtr[miX + miY * mi_stride].mbmi.skip = (cu_ptr->transform_unit_array[0].y_has_coeff == 0) ? EB_TRUE : EB_FALSE;
+
+#if COMP_MODE
+            miPtr[miX + miY * mi_stride].mbmi.comp_group_idx = cu_ptr->comp_group_idx;
+            miPtr[miX + miY * mi_stride].mbmi.compound_idx = cu_ptr->compound_idx;
+#endif
         }
     }
 }
@@ -2116,7 +2370,7 @@ IntMv eb_av1_get_ref_mv_from_stack(int ref_idx,
     }
     return ref_mv;
 }
-
+#if !MFMV_SUPPORT
 static INLINE void lower_mv_precision(MV *mv, int allow_hp, int is_integer) {
     if (is_integer)
         integer_mv_precision(mv);
@@ -2127,6 +2381,7 @@ static INLINE void lower_mv_precision(MV *mv, int allow_hp, int is_integer) {
         }
     }
 }
+#endif
 void eb_av1_find_best_ref_mvs_from_stack(int allow_hp,
     //const MB_MODE_INFO_EXT *mbmi_ext,
     CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],

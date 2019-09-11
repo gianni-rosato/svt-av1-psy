@@ -20,8 +20,11 @@ static void mode_decision_context_dctor(EbPtr p)
 
    }
 #endif
-
+#if MD_STAGING
+    EB_DELETE_PTR_ARRAY(obj->candidate_buffer_ptr_array, MAX_NFL_BUFF);
+#else
     EB_DELETE_PTR_ARRAY(obj->candidate_buffer_ptr_array, (MAX_NFL + 1 + 1));
+#endif
     EB_DELETE(obj->trans_quant_buffers_ptr);
     if (obj->hbd_mode_decision)
         EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon16bit);
@@ -108,6 +111,15 @@ EbErrorType mode_decision_context_ctor(
         eb_trans_quant_buffers_ctor);
 
     // Cost Arrays
+#if MD_STAGING
+    EB_MALLOC_ARRAY(context_ptr->fast_cost_array, MAX_NFL_BUFF);
+    EB_MALLOC_ARRAY(context_ptr->full_cost_array, MAX_NFL_BUFF);
+    EB_MALLOC_ARRAY(context_ptr->full_cost_skip_ptr, MAX_NFL_BUFF);
+    EB_MALLOC_ARRAY(context_ptr->full_cost_merge_ptr, MAX_NFL_BUFF);
+    // Candidate Buffers
+    EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_ptr_array, MAX_NFL_BUFF);
+    for (bufferIndex = 0; bufferIndex < MAX_NFL_BUFF; ++bufferIndex) {
+#else
     // Hsan: MAX_NFL + 1 scratch buffer for intra + 1 scratch buffer for inter
     EB_MALLOC_ARRAY(context_ptr->fast_cost_array, MAX_NFL + 1 + 1);
     EB_MALLOC_ARRAY(context_ptr->full_cost_array, MAX_NFL + 1 + 1);
@@ -117,6 +129,7 @@ EbErrorType mode_decision_context_ctor(
     EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_ptr_array, (MAX_NFL + 1 + 1));
 
     for (bufferIndex = 0; bufferIndex < (MAX_NFL + 1 + 1); ++bufferIndex) {
+#endif
         EB_NEW(
             context_ptr->candidate_buffer_ptr_array[bufferIndex],
             mode_decision_candidate_buffer_ctor,
@@ -200,6 +213,10 @@ EbErrorType mode_decision_context_ctor(
         }
 #endif
     }
+#if PRUNE_REF_FRAME_FRO_REC_PARTITION
+    EB_MALLOC_ARRAY(context_ptr->ref_best_cost_sq_table, MAX_REF_TYPE_CAND);
+    EB_MALLOC_ARRAY(context_ptr->ref_best_ref_sq_table, MAX_REF_TYPE_CAND);
+#endif
     return EB_ErrorNone;
 }
 
@@ -392,7 +409,7 @@ void reset_mode_decision(
 
     // QP
 #if ADD_DELTA_QP_SUPPORT
-    uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->quant_param.base_q_idx;
+    uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
     context_ptr->qp = picture_qp;
     context_ptr->qp_index = context_ptr->qp;
 #else
@@ -459,8 +476,15 @@ void reset_mode_decision(
     picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv = picture_control_set_ptr->enc_mode == ENC_M0 &&
         (picture_control_set_ptr->parent_pcs_ptr->is_pan || picture_control_set_ptr->parent_pcs_ptr->is_tilt) ? 1 : 0;
 #endif
-
+#if SC_SETTINGS_TUNING
+    EbBool enable_wm;
+    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
+        enable_wm = EB_FALSE;
+    else
+        enable_wm = (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) || MR_MODE ? EB_TRUE : EB_FALSE;
+#else
     EbBool enable_wm = (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) || MR_MODE ? EB_TRUE : EB_FALSE;
+#endif
     enable_wm = picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 ? EB_FALSE : enable_wm;
     frm_hdr->allow_warped_motion = enable_wm
         && !(frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME)
@@ -475,14 +499,20 @@ void reset_mode_decision(
  ******************************************************/
 void mode_decision_configure_lcu(
     ModeDecisionContext   *context_ptr,
+#if !QPM
     LargestCodingUnit     *sb_ptr,
+#endif
     PictureControlSet     *picture_control_set_ptr,
+#if !QPM
     SequenceControlSet    *sequence_control_set_ptr,
-    uint8_t                    picture_qp,
+    uint8_t                picture_qp,
+#endif
     uint8_t                    sb_qp){
     (void)picture_control_set_ptr;
     //Disable Lambda update per LCU
-
+#if QPM
+    context_ptr->qp = sb_qp;
+#else
     //RC is off
     if (sequence_control_set_ptr->static_config.rate_control_mode == 0 && sequence_control_set_ptr->static_config.improve_sharpness == 0) {
         context_ptr->qp = (uint8_t)picture_qp;
@@ -491,6 +521,7 @@ void mode_decision_configure_lcu(
     //RC is on
     else
         context_ptr->qp = (uint8_t)sb_qp;
+#endif
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
 
     context_ptr->chroma_qp = context_ptr->qp;
@@ -498,8 +529,12 @@ void mode_decision_configure_lcu(
     /* Note(CHKN) : when Qp modulation varies QP on a sub-LCU(CU) basis,  Lamda has to change based on Cu->QP , and then this code has to move inside the CU loop in MD */
 
     // Lambda Assignement
+#if QPM
+    context_ptr->qp_index = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present ? (uint8_t)quantizer_to_qindex[sb_qp] : (uint8_t)picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#else
     context_ptr->qp_index = (uint8_t)picture_control_set_ptr->
         parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#endif
 
     (*av1_lambda_assignment_function_table[picture_control_set_ptr->parent_pcs_ptr->pred_structure])(
         &context_ptr->fast_lambda,

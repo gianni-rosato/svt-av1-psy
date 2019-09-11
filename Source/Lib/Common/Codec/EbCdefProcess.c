@@ -26,9 +26,10 @@
 #include "EbEncDecProcess.h"
 
 static int32_t priconv[REDUCED_PRI_STRENGTHS] = { 0, 1, 2, 3, 5, 7, 10, 13 };
-void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
-    int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
-    int32_t vsize, int32_t hsize);
+
+void copy_sb8_16(uint16_t *dst, int32_t dstride,
+    const uint8_t *src, int32_t src_voffset, int32_t src_hoffset,
+    int32_t sstride, int32_t vsize, int32_t hsize);
 
 void *eb_aom_memalign(size_t align, size_t size);
 void eb_aom_free(void *memblk);
@@ -96,12 +97,13 @@ void cdef_seg_search(
     int32_t mi_cols = pPcs->av1_cm->mi_cols;
 
     uint32_t fbr, fbc;
-    uint16_t *src[3];
-    uint16_t *ref_coeff[3];
+    uint8_t *src[3];
+    uint8_t *ref_coeff[3];
     cdef_list dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
     int32_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS] = { { 0 } };
     int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS] = { { 0 } };
-    int32_t stride[3];
+    int32_t stride_src[3];
+    int32_t stride_ref[3];
     int32_t bsize[3];
     int32_t mi_wide_l2[3];
     int32_t mi_high_l2[3];
@@ -119,12 +121,19 @@ void cdef_seg_search(
     const int32_t total_strengths = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;
     DECLARE_ALIGNED(32, uint16_t, inbuf[CDEF_INBUF_SIZE]);
     uint16_t *in;
-    DECLARE_ALIGNED(32, uint16_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
+    DECLARE_ALIGNED(32, uint8_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
 
     int32_t gi_step;
     int32_t mid_gi;
     int32_t start_gi;
     int32_t end_gi;
+
+    EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc  * recon_picture_ptr;
+    if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+        recon_picture_ptr = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
+    else
+        recon_picture_ptr = picture_control_set_ptr->recon_picture_ptr;
 
     for (pli = 0; pli < num_planes; pli++) {
         int32_t subsampling_x = (pli == 0) ? 0 : 1;
@@ -133,13 +142,13 @@ void cdef_seg_search(
         ydec[pli] = subsampling_y;
         bsize[pli] = ydec[pli] ? (xdec[pli] ? BLOCK_4X4 : BLOCK_8X4)
             : (xdec[pli] ? BLOCK_4X8 : BLOCK_8X8);
-        stride[pli] = cm->mi_cols << MI_SIZE_LOG2;
         mi_wide_l2[pli] = MI_SIZE_LOG2 - subsampling_x;
         mi_high_l2[pli] = MI_SIZE_LOG2 - subsampling_y;
 
-        src[pli] = picture_control_set_ptr->src[pli];
-        ref_coeff[pli] = picture_control_set_ptr->ref_coeff[pli];
-        stride[pli] = pli > 0 ? stride[pli] >> 1 : stride[pli];
+        src[pli] = (uint8_t *)picture_control_set_ptr->src[pli];
+        ref_coeff[pli] = (uint8_t *)picture_control_set_ptr->ref_coeff[pli];
+        stride_src[pli]= pli == 0 ? recon_picture_ptr->stride_y : (pli == 1 ? recon_picture_ptr->stride_cb : recon_picture_ptr->stride_cr);
+        stride_ref[pli]= pli == 0 ? input_picture_ptr->stride_y : (pli == 1 ? input_picture_ptr->stride_cb : input_picture_ptr->stride_cr);
     }
 
     in = inbuf + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
@@ -190,12 +199,12 @@ void cdef_seg_search(
                 int32_t ysize = (nvb << mi_high_l2[pli]) + CDEF_VBORDER * ((int32_t)fbr + vb_step < nvfb) + yoff;
                 int32_t xsize = (nhb << mi_wide_l2[pli]) + CDEF_HBORDER * ((int32_t)fbc + hb_step < nhfb) + xoff;
 
-                copy_sb16_16(
+                copy_sb8_16(
                     &in[(-yoff * CDEF_BSTRIDE - xoff)], CDEF_BSTRIDE,
                     src[pli],
                     (fbr * MI_SIZE_64X64 << mi_high_l2[pli]) - yoff,
                     (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]) - xoff,
-                    stride[pli], ysize, xsize);
+                    stride_src[pli], ysize, xsize);
                 gi_step = get_cdef_gi_step(pPcs->cdef_filter_mode);
                 mid_gi = pPcs->cdf_ref_frame_strenght;
                 start_gi = pPcs->use_ref_frame_cdef_strength && pPcs->cdef_filter_mode == 1 ? (AOMMAX(0, mid_gi - gi_step)) : 0;
@@ -211,16 +220,17 @@ void cdef_seg_search(
                     average are outside the frame. We could change the filter instead, but it would add special cases for any future vectorization. */
                     sec_strength = gi % CDEF_SEC_STRENGTHS;
 
-                    eb_cdef_filter_fb(NULL, tmp_dst, CDEF_BSTRIDE, in, xdec[pli], ydec[pli],
+                    eb_cdef_filter_fb(tmp_dst, NULL, CDEF_BSTRIDE, in, xdec[pli], ydec[pli],
                         dir, &dirinit, var, pli, dlist, cdef_count, threshold,
                         sec_strength + (sec_strength == 3), pri_damping,
                         sec_damping, coeff_shift);
 
-                    curr_mse = eb_compute_cdef_dist(
+
+                    curr_mse = eb_compute_cdef_dist_8bit(
                         ref_coeff[pli] +
-                        (fbr * MI_SIZE_64X64 << mi_high_l2[pli]) * stride[pli] +
+                        (fbr * MI_SIZE_64X64 << mi_high_l2[pli]) * stride_ref[pli] +
                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]),
-                        stride[pli], tmp_dst, dlist, cdef_count, (BlockSize)bsize[pli], coeff_shift,
+                        stride_ref[pli], tmp_dst, dlist, cdef_count, (BlockSize)bsize[pli], coeff_shift,
                         pli);
 
                     if (pli < 2)

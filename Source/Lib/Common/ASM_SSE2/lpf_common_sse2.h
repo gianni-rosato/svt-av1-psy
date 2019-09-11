@@ -387,6 +387,96 @@ static INLINE void transpose8x8_sse2(__m128i *x0, __m128i *x1, __m128i *x2,
       w6, w7);  // 06 16 26 36 46 56 66 76 07 17 27 37 47 57 67 77
 }
 
+static INLINE void transpose16x16_sse2(__m128i *x, __m128i *d) {
+    __m128i w0, w1, w2, w3, w4, w5, w6, w7, w8, w9;
+    __m128i w10, w11, w12, w13, w14, w15;
+
+    w0 = _mm_unpacklo_epi8(x[0], x[1]);
+    w1 = _mm_unpacklo_epi8(x[2], x[3]);
+    w2 = _mm_unpacklo_epi8(x[4], x[5]);
+    w3 = _mm_unpacklo_epi8(x[6], x[7]);
+
+    w8 = _mm_unpacklo_epi8(x[8], x[9]);
+    w9 = _mm_unpacklo_epi8(x[10], x[11]);
+    w10 = _mm_unpacklo_epi8(x[12], x[13]);
+    w11 = _mm_unpacklo_epi8(x[14], x[15]);
+
+    w4 = _mm_unpacklo_epi16(w0, w1);
+    w5 = _mm_unpacklo_epi16(w2, w3);
+    w12 = _mm_unpacklo_epi16(w8, w9);
+    w13 = _mm_unpacklo_epi16(w10, w11);
+
+    w6 = _mm_unpacklo_epi32(w4, w5);
+    w7 = _mm_unpackhi_epi32(w4, w5);
+    w14 = _mm_unpacklo_epi32(w12, w13);
+    w15 = _mm_unpackhi_epi32(w12, w13);
+
+    // Store first 4-line result
+    d[0] = _mm_unpacklo_epi64(w6, w14);
+    d[1] = _mm_unpackhi_epi64(w6, w14);
+    d[2] = _mm_unpacklo_epi64(w7, w15);
+    d[3] = _mm_unpackhi_epi64(w7, w15);
+
+    w4 = _mm_unpackhi_epi16(w0, w1);
+    w5 = _mm_unpackhi_epi16(w2, w3);
+    w12 = _mm_unpackhi_epi16(w8, w9);
+    w13 = _mm_unpackhi_epi16(w10, w11);
+
+    w6 = _mm_unpacklo_epi32(w4, w5);
+    w7 = _mm_unpackhi_epi32(w4, w5);
+    w14 = _mm_unpacklo_epi32(w12, w13);
+    w15 = _mm_unpackhi_epi32(w12, w13);
+
+    // Store second 4-line result
+    d[4] = _mm_unpacklo_epi64(w6, w14);
+    d[5] = _mm_unpackhi_epi64(w6, w14);
+    d[6] = _mm_unpacklo_epi64(w7, w15);
+    d[7] = _mm_unpackhi_epi64(w7, w15);
+
+    // upper half
+    w0 = _mm_unpackhi_epi8(x[0], x[1]);
+    w1 = _mm_unpackhi_epi8(x[2], x[3]);
+    w2 = _mm_unpackhi_epi8(x[4], x[5]);
+    w3 = _mm_unpackhi_epi8(x[6], x[7]);
+
+    w8 = _mm_unpackhi_epi8(x[8], x[9]);
+    w9 = _mm_unpackhi_epi8(x[10], x[11]);
+    w10 = _mm_unpackhi_epi8(x[12], x[13]);
+    w11 = _mm_unpackhi_epi8(x[14], x[15]);
+
+    w4 = _mm_unpacklo_epi16(w0, w1);
+    w5 = _mm_unpacklo_epi16(w2, w3);
+    w12 = _mm_unpacklo_epi16(w8, w9);
+    w13 = _mm_unpacklo_epi16(w10, w11);
+
+    w6 = _mm_unpacklo_epi32(w4, w5);
+    w7 = _mm_unpackhi_epi32(w4, w5);
+    w14 = _mm_unpacklo_epi32(w12, w13);
+    w15 = _mm_unpackhi_epi32(w12, w13);
+
+    // Store first 4-line result
+    d[8] = _mm_unpacklo_epi64(w6, w14);
+    d[9] = _mm_unpackhi_epi64(w6, w14);
+    d[10] = _mm_unpacklo_epi64(w7, w15);
+    d[11] = _mm_unpackhi_epi64(w7, w15);
+
+    w4 = _mm_unpackhi_epi16(w0, w1);
+    w5 = _mm_unpackhi_epi16(w2, w3);
+    w12 = _mm_unpackhi_epi16(w8, w9);
+    w13 = _mm_unpackhi_epi16(w10, w11);
+
+    w6 = _mm_unpacklo_epi32(w4, w5);
+    w7 = _mm_unpackhi_epi32(w4, w5);
+    w14 = _mm_unpacklo_epi32(w12, w13);
+    w15 = _mm_unpackhi_epi32(w12, w13);
+
+    // Store second 4-line result
+    d[12] = _mm_unpacklo_epi64(w6, w14);
+    d[13] = _mm_unpackhi_epi64(w6, w14);
+    d[14] = _mm_unpacklo_epi64(w7, w15);
+    d[15] = _mm_unpackhi_epi64(w7, w15);
+}
+
 static INLINE void transpose16x8_8x16_sse2(
     __m128i *x0, __m128i *x1, __m128i *x2, __m128i *x3, __m128i *x4,
     __m128i *x5, __m128i *x6, __m128i *x7, __m128i *x8, __m128i *x9,

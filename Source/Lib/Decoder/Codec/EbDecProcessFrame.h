@@ -11,12 +11,16 @@ extern "C" {
 #endif
 
 #include "EbIntraPrediction.h"
+#include "EbDecObmc.h"
 
 typedef struct DecModCtxt {
     /** Decoder Handle */
     void *dec_handle_ptr;
 
     int32_t *sb_iquant_ptr;
+
+    int32_t *iquant_cur_ptr;
+
 #if !FRAME_MI_MAP
     /* TODO: cur SB row idx. Should be moved out */
     int32_t         sb_row_mi;
@@ -36,6 +40,9 @@ typedef struct DecModCtxt {
     /* CFL context */
     CflCtx  cfl_ctx;
 
+    /*OBMC context*/
+    ObmcCtx obmc_ctx;
+
     /* TODO: IntraRef Scratch buf! Should be moved to thrd ctxt */
     uint16_t    topNeighArray[64 * 2 + 1];
     uint16_t    leftNeighArray[64 * 2 + 1];
@@ -50,6 +57,28 @@ typedef struct DecModCtxt {
     const QmVal          *giqmatrix[NUM_QM_LEVELS][3][TX_SIZES_ALL];
 
 } DecModCtxt;
+
+typedef struct LRCtxt {
+    /** Decoder Handle */
+    void *dec_handle_ptr;
+
+    /* Wiener and SGR Filter holder */
+    RestorationUnitInfo    *lr_unit[MAX_MB_PLANE];
+
+    /* Buffer to store deblocked line buffer around stripe boundary */
+    RestorationStripeBoundaries boundaries[MAX_MB_PLANE];
+
+    /* Used to store CDEF line buffer around stripe boundary */
+    RestorationLineBuffers *rlbs;
+
+    /* Scratch buffer to hold LR output */
+    uint8_t *dst;
+    uint16_t dst_stride;
+
+    /* Pointer to a scratch buffer used by self-guided restoration */
+    int32_t *rst_tmpbuf;
+}LRCtxt;
+
 
 void decode_super_block(DecModCtxt *dec_mod_ctxt,
                         uint32_t mi_row, uint32_t mi_col,

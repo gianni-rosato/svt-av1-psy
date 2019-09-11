@@ -13763,8 +13763,10 @@ extern "C" {
         uint16_t                              qp_array_stride;
         uint32_t                              qp_array_size;
         // QP Assignment
+#if !QPM
         uint8_t                               prev_coded_qp;
         uint8_t                               prev_quant_group_coded_qp;
+#endif
         // EncDec Entropy Coder (for rate estimation)
         EntropyCoder                       *coeff_est_entropy_coder_ptr;
 
@@ -13865,6 +13867,10 @@ extern "C" {
         EbWarpedMotionParams    ref_global_motion[TOTAL_REFS_PER_FRAME];
         struct MdRateEstimationContext *md_rate_estimation_array;
 #endif
+#if MFMV_SUPPORT
+        int8_t ref_frame_side[REF_FRAMES];
+        TPL_MV_REF  *tpl_mvs;
+#endif
     } PictureControlSet;
 
     // To optimize based on the max input size
@@ -13960,6 +13966,11 @@ extern "C" {
         EbBool                                eos_coming;
         uint8_t                               picture_qp;
         uint64_t                              picture_number;
+#if COMP_MODE
+        uint8_t                               wedge_mode;
+        uint32_t                             cur_order_hint;
+        uint32_t                             ref_order_hint[7];
+#endif
         EbPicnoiseClass                       pic_noise_class;
         EB_SLICE                              slice_type;
         uint8_t                               pred_struct_index;
@@ -14031,7 +14042,10 @@ extern "C" {
         uint8_t                              *sharp_edge_sb_flag;
         EbBool                                logo_pic_flag;                    // used by EncDecProcess()
         uint16_t                              non_moving_index_average;            // used by ModeDecisionConfigurationProcess()
-
+#if QPM
+        int16_t                               non_moving_index_min_distance;
+        int16_t                               non_moving_index_max_distance;
+#endif
         uint16_t                              qp_scaling_average_complexity;
         uint8_t                               grass_percentage_in_picture;
         uint8_t                               percentage_of_edgein_light_background;
@@ -14161,7 +14175,7 @@ extern "C" {
 #if ADD_DELTA_QP_SUPPORT
         // Resolution of delta quant
         int32_t                               num_tg;
-        int32_t                               monochrome = 0; //NM - hadcoded to zero. to be set to one to support the coding of monochrome contents.
+        int32_t                               monochrome;
         int32_t                               prev_qindex;
         // Since actual frame level loop filtering level value is not available
         // at the beginning of the tile (only available during actual filtering)
@@ -14210,7 +14224,9 @@ extern "C" {
         uint8_t                               tx_search_level;
         uint64_t                              tx_weight;
         uint8_t                               tx_search_reduced_set;
+#if !MD_STAGING
         uint8_t                               skip_tx_search;
+#endif
         uint8_t                               interpolation_search_level;
         uint8_t                               nsq_search_level;
         uint8_t                               nsq_max_shapes_md; // max number of shapes to be tested in MD
@@ -14225,6 +14241,7 @@ extern "C" {
         uint8_t                               altref_strength;
         int32_t                               pic_decision_reorder_queue_idx;
         struct PictureParentControlSet       *temp_filt_pcs_list[ALTREF_MAX_NFRAMES];
+        EbByte                               save_enhanced_picture_ptr[3];
         EbHandle temp_filt_done_semaphore;
         EbHandle temp_filt_mutex;
         EbHandle debug_mutex;
@@ -14241,13 +14258,23 @@ extern "C" {
 #else
         uint8_t                               altref_nframes;
 #endif
+        EbBool                                temporal_filtering_on;
 #if QPS_TUNING
         uint64_t                              filtered_sse; // the normalized SSE between filtered and original alt_ref with 8 bit precision.
                                                             // I Slice has the value of the next ALT_REF picture
         uint64_t                              filtered_sse_uv;
 #endif
-
         FrameHeader                           frm_hdr;
+#if COMP_MODE
+        MD_COMP_TYPE                          compound_types_to_try;
+        uint8_t                               compound_mode;
+#endif
+#if PRUNE_REF_FRAME_AT_ME
+        uint8_t                               prune_unipred_at_me;
+#endif
+#if COEFF_BASED_SKIP_ATB
+        uint8_t                              coeff_based_skip_atb;
+#endif
     } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData
@@ -14280,6 +14307,9 @@ extern "C" {
         uint8_t                            nsq_present;
 #if INCOMPLETE_SB_FIX
         uint8_t                            over_boundary_block_mode;
+#endif
+#if MFMV_SUPPORT
+        uint8_t                            mfmv;
 #endif
     } PictureControlSetInitData;
 

@@ -712,7 +712,7 @@ static void decode_build_intra_predictors_high(
 
 void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
                                 TxSize tx_size, TileInfo *td,
-                                void *pv_pred_buf, int32_t pred_strd,
+                                void *pv_pred_buf, int32_t pred_stride,
                                 void *topNeighArray,
                                 void *leftNeighArray,
                                 SeqHeader *seq_header,
@@ -732,11 +732,10 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
 
     const PredictionMode mode = (plane == AOM_PLANE_Y) ? mbmi->mode : get_uv_mode(mbmi->uv_mode);
 
-    //->Since we are not supporting currently, we can keep it as zero.
-    const int use_palette = 0; //mbmi->palette_mode_info.palette_size[plane != 0] > 0;
+    const int use_palette = mbmi->palette_size[plane != 0] > 0;
 
     if (use_palette)
-        assert(0);
+        return;
     const FilterIntraMode filter_intra_mode =
         (plane == AOM_PLANE_Y && mbmi->filter_intra_mode_info.use_filter_intra)
             ? mbmi->filter_intra_mode_info.filter_intra_mode
@@ -791,7 +790,7 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
             xd,
             (uint8_t*)topNeighArray + 1,/*As per SVT Enc*/
             (uint8_t*)leftNeighArray + 1,/*As per SVT Enc*/
-            (uint8_t*)pv_pred_buf, pred_strd, mode,
+            (uint8_t*)pv_pred_buf, pred_stride, mode,
             angle_delta, filter_intra_mode, tx_size,
             disable_edge_filter,
             have_top ? AOMMIN(txwpx, xr + txwpx) : 0,
@@ -804,7 +803,7 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
             xd,
             (uint16_t*)topNeighArray + 1,/*As per SVT Enc*/
             (uint16_t*)leftNeighArray + 1,/*As per SVT Enc*/
-            (uint16_t*)pv_pred_buf, pred_strd, mode,
+            (uint16_t*)pv_pred_buf, pred_stride, mode,
             angle_delta, filter_intra_mode, tx_size,
             disable_edge_filter,
             have_top ? AOMMIN(txwpx, xr + txwpx) : 0,
@@ -818,7 +817,7 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
 void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
     int32_t plane,
     TxSize tx_size, TileInfo *td,
-    void *pv_blk_recon_buf, int32_t recon_strd,
+    void *pv_blk_recon_buf, int32_t recon_stride,
     EbBitDepthEnum bit_depth, int32_t blk_mi_col_off, int32_t blk_mi_row_off )
 {
     int32_t i, wpx, hpx;
@@ -839,38 +838,38 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
         uint8_t *pu1_topNeighArray = (uint8_t *)dec_mod_ctxt->topNeighArray;
         uint8_t *pu1_leftNeighArray = (uint8_t *)dec_mod_ctxt->leftNeighArray;
 
-        memcpy(pu1_topNeighArray + 1, (buf - recon_strd),
+        memcpy(pu1_topNeighArray + 1, (buf - recon_stride),
             wpx * 2 * sizeof(uint8_t));
 
         for (i = 0; i < hpx * 2; i++)
-            pu1_leftNeighArray[i + 1] = buf[-1 + i * recon_strd];
+            pu1_leftNeighArray[i + 1] = buf[-1 + i * recon_stride];
 
-        pu1_topNeighArray[0] = pu1_leftNeighArray[0] = buf[-1 - recon_strd];
+        pu1_topNeighArray[0] = pu1_leftNeighArray[0] = buf[-1 - recon_stride];
     }
     else {//16bit
         uint16_t *buf = (uint16_t *)pv_blk_recon_buf;
         uint16_t *pu2_topNeighArray = (uint16_t *)dec_mod_ctxt->topNeighArray;
         uint16_t *pu2_leftNeighArray = (uint16_t *)dec_mod_ctxt->leftNeighArray;
 
-        memcpy(pu2_topNeighArray + 1, (buf - recon_strd),
+        memcpy(pu2_topNeighArray + 1, (buf - recon_stride),
             wpx * 2 * sizeof(uint16_t));
 
         for (i = 0; i < hpx * 2; i++)
-            pu2_leftNeighArray[i + 1] = buf[-1 + i * recon_strd];
+            pu2_leftNeighArray[i + 1] = buf[-1 + i * recon_stride];
 
-        pu2_topNeighArray[0] = pu2_leftNeighArray[0] = buf[-1 - recon_strd];
+        pu2_topNeighArray[0] = pu2_leftNeighArray[0] = buf[-1 - recon_stride];
     }
 
     if (plane != AOM_PLANE_Y && part_info->mi->uv_mode == UV_CFL_PRED) {
         svtav1_predict_intra_block(part_info, plane,
             tx_size, td,
-            pv_blk_recon_buf, recon_strd,
+            pv_blk_recon_buf, recon_stride,
             pv_topNeighArray, pv_leftNeighArray,
             &dec_handle->seq_header,
             blk_mi_col_off, blk_mi_row_off, bit_depth);
 
         cfl_predict_block(part_info, part_info->pv_cfl_ctxt,
-            pv_blk_recon_buf, recon_strd, tx_size, plane,
+            pv_blk_recon_buf, recon_stride, tx_size, plane,
             &dec_handle->seq_header.color_config,
             &dec_handle->frame_header);
 
@@ -879,7 +878,7 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
 
     svtav1_predict_intra_block(part_info, plane,
         tx_size, td,
-        pv_blk_recon_buf, recon_strd,
+        pv_blk_recon_buf, recon_stride,
         pv_topNeighArray, pv_leftNeighArray,
         &dec_handle->seq_header,
         blk_mi_col_off, blk_mi_row_off, bit_depth);

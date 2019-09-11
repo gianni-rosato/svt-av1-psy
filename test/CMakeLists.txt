@@ -43,6 +43,23 @@ add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
 
 enable_testing()
 
+# support avx2 compiling
+if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+    if(WIN32)
+        # Intel Windows (*Note - The Warning level /W0 should be made to /W4 at some point)
+        list(APPEND flags_to_test /Qdiag-disable:10010,10148,10157 /W0)
+    else()
+        list(APPEND flags_to_test -static-intel -w)
+    endif()
+endif()
+
+if(MSVC)
+    list(APPEND flags_to_test /arch:AVX2)
+else()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx2")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
+endif()
+
 file(GLOB all_files
     "*.h"
     "*.c"

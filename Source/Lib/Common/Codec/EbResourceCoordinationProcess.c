@@ -92,7 +92,11 @@ EbErrorType signal_derivation_pre_analysis_oq(
 
     // Derive HME Flag
     if (sequence_control_set_ptr->static_config.use_default_me_hme) {
+#if HME_ME_TUNING
+        picture_control_set_ptr->enable_hme_flag = enable_hme_flag[0][input_resolution][hme_me_level] || enable_hme_flag[1][input_resolution][hme_me_level];
+#else
         picture_control_set_ptr->enable_hme_flag = EB_TRUE;
+#endif
         picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[0][input_resolution][hme_me_level] || enable_hme_level0_flag[1][input_resolution][hme_me_level];
         picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[0][input_resolution][hme_me_level] || enable_hme_level1_flag[1][input_resolution][hme_me_level];
         picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[0][input_resolution][hme_me_level] || enable_hme_level2_flag[1][input_resolution][hme_me_level];
@@ -103,15 +107,18 @@ EbErrorType signal_derivation_pre_analysis_oq(
         picture_control_set_ptr->enable_hme_level1_flag = sequence_control_set_ptr->static_config.enable_hme_level1_flag;
         picture_control_set_ptr->enable_hme_level2_flag = sequence_control_set_ptr->static_config.enable_hme_level2_flag;
     }
-
+#if HME_ME_TUNING
+    picture_control_set_ptr->tf_enable_hme_flag = tf_enable_hme_flag[0][input_resolution][hme_me_level] || tf_enable_hme_flag[1][input_resolution][hme_me_level];
+#else
     picture_control_set_ptr->tf_enable_hme_flag = EB_TRUE;
+#endif
     picture_control_set_ptr->tf_enable_hme_level0_flag = tf_enable_hme_level0_flag[0][input_resolution][hme_me_level] || tf_enable_hme_level0_flag[1][input_resolution][hme_me_level];
     picture_control_set_ptr->tf_enable_hme_level1_flag = tf_enable_hme_level1_flag[0][input_resolution][hme_me_level] || tf_enable_hme_level1_flag[1][input_resolution][hme_me_level];
     picture_control_set_ptr->tf_enable_hme_level2_flag = tf_enable_hme_level2_flag[0][input_resolution][hme_me_level] || tf_enable_hme_level2_flag[1][input_resolution][hme_me_level];
 
     if (picture_control_set_ptr->enc_mode >= ENC_M8)
         sequence_control_set_ptr->seq_header.enable_restoration = 0;
-
+    sequence_control_set_ptr->cdf_mode = (picture_control_set_ptr->enc_mode <= ENC_M6) ? 0 : 1;
     return return_error;
 }
 
@@ -308,8 +315,10 @@ void ResetPcsAv1(
     frm_hdr->quantization_params.qm_y = 5;
     frm_hdr->quantization_params.qm_u = 5;
     frm_hdr->quantization_params.qm_v = 5;
+#if ! MFMV_SUPPORT
     // Whether to use previous frame's motion vectors for prediction.
     frm_hdr->use_ref_frame_mvs = 0;
+#endif
     frm_hdr->is_motion_mode_switchable = 0;
     // Flag signaling how frame contexts should be updated at the end of
     // a frame decode
@@ -653,7 +662,22 @@ void* resource_coordination_kernel(void *input_ptr)
             sequence_control_set_ptr->enable_altrefs =  sequence_control_set_ptr->static_config.enable_altrefs &&
                 sequence_control_set_ptr->static_config.altref_nframes > 1 &&
                 sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT ? EB_TRUE : EB_FALSE;
-
+#if COMP_MODE
+            // Set compound mode      Settings
+            // 0                 OFF: No compond mode search : AVG only
+            // 1                 ON: full
+            sequence_control_set_ptr->compound_mode = sequence_control_set_ptr->static_config.encoder_bit_depth == EB_10BIT ? 0 :
+                (sequence_control_set_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
+            if (sequence_control_set_ptr->compound_mode)
+            {
+                sequence_control_set_ptr->seq_header.order_hint_info.enable_jnt_comp = 1; //DISTANCE
+                sequence_control_set_ptr->seq_header.enable_masked_compound = 1; //DIFF+WEDGE
+            }
+            else {
+                sequence_control_set_ptr->seq_header.order_hint_info.enable_jnt_comp = 0;
+                sequence_control_set_ptr->seq_header.enable_masked_compound = 0;
+            }
+#endif
             // Sep PM mode
             sequence_control_set_ptr->pm_mode = sequence_control_set_ptr->input_resolution < INPUT_SIZE_4K_RANGE ?
                 PM_MODE_2 :
