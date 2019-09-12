@@ -27,7 +27,7 @@ static void hash_table_clear_all(HashTable *p_hash_table) {
   for (int i = 0; i < max_addr; i++) {
     if (p_hash_table->p_lookup_table[i] != NULL) {
       eb_aom_vector_destroy(p_hash_table->p_lookup_table[i]);
-      eb_aom_free(p_hash_table->p_lookup_table[i]);
+      free(p_hash_table->p_lookup_table[i]);
       p_hash_table->p_lookup_table[i] = NULL;
     }
   }
