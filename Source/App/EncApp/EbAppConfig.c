@@ -142,7 +142,7 @@ static void SetCfgInputFile(const char *filename, EbConfig *cfg)
 #if defined(_MSC_VER)
     cfg->input_file_is_fifo =
     GetFileType(cfg->input_file) == FILE_TYPE_PIPE;
-#elif
+#else
     int fd = fileno(cfg->input_file);
     struct stat statbuf;
     fstat(fd, &statbuf);
