@@ -33,7 +33,7 @@ VideoSource::VideoSource(const VideoColorFormat format, const uint32_t width,
       image_format_(format),
       width_downsize_(0),
       height_downsize_(0),
-      pixel_byte_size_(1) {
+      bytes_per_sample_(1) {
     if (bit_depth_ > 8 && use_compressed_2bit_plane_output)
         svt_compressed_2bit_plane_ = true;
     else
@@ -42,11 +42,39 @@ VideoSource::VideoSource(const VideoColorFormat format, const uint32_t width,
 }
 
 VideoSource::~VideoSource() {
-    deinit_frame_buffer();
 }
 
 bool VideoSource::is_10bit_mode() {
     return bit_depth_ == 10;
+}
+
+void VideoSource::cal_yuv_plane_param() {
+    // Determine size of each plane
+    switch (image_format_) {
+    case IMG_FMT_420P10_PACKED:
+    case IMG_FMT_420:
+        width_downsize_ = 1;
+        height_downsize_ = 1;
+        break;
+    case IMG_FMT_422P10_PACKED:
+    case IMG_FMT_422:
+        width_downsize_ = 1;
+        height_downsize_ = 0;
+        break;
+    case IMG_FMT_444P10_PACKED:
+    case IMG_FMT_444:
+        width_downsize_ = 0;
+        height_downsize_ = 0;
+        break;
+    default: assert(0); break;
+    }
+    bytes_per_sample_ = is_10bit_mode() ? 2 : 1;
+
+    // encoder required 8 pixel alighed in width and height
+    if (width_ % 16 != 0)
+        width_with_padding_ = ((width_ >> 4) + 1) << 4;
+    if (height_ % 16 != 0)
+        height_with_padding_ = ((height_ >> 4) + 1) << 4;
 }
 
 void VideoSource::deinit_frame_buffer() {
@@ -80,39 +108,17 @@ void VideoSource::deinit_frame_buffer() {
     free(frame_buffer_);
     frame_buffer_ = nullptr;
 }
-EbErrorType VideoSource::init_frame_buffer() {
-    // Determine size of each plane
-    switch (image_format_) {
-    case IMG_FMT_420P10_PACKED:
-    case IMG_FMT_420: {
-        width_downsize_ = 1;
-        height_downsize_ = 1;
-    } break;
-    case IMG_FMT_422P10_PACKED:
-    case IMG_FMT_422: {
-        width_downsize_ = 1;
-        height_downsize_ = 0;
-    } break;
-    case IMG_FMT_444P10_PACKED:
-    case IMG_FMT_444: {
-        width_downsize_ = 0;
-        height_downsize_ = 0;
-    } break;
-    default: assert(0); break;
-    }
-    pixel_byte_size_ = is_10bit_mode() ? 2 : 1;
 
+EbErrorType VideoSource::init_frame_buffer() {
     uint32_t luma_size =
-        width_with_padding_ * height_with_padding_ * pixel_byte_size_;
+        width_with_padding_ * height_with_padding_ * bytes_per_sample_;
     uint32_t chroma_size = luma_size >> (width_downsize_ + height_downsize_);
 
     // Determine
-    if (frame_buffer_ == nullptr)
-        frame_buffer_ = (EbSvtIOFormat *)malloc(sizeof(EbSvtIOFormat));
-
     if (frame_buffer_ == nullptr) {
-        deinit_frame_buffer();
-        return EB_ErrorInsufficientResources;
+        frame_buffer_ = (EbSvtIOFormat *)malloc(sizeof(EbSvtIOFormat));
+        if (frame_buffer_ == nullptr)
+            return EB_ErrorInsufficientResources;
     }
 
     memset(frame_buffer_, 0, sizeof(EbSvtIOFormat));
@@ -131,42 +137,59 @@ EbErrorType VideoSource::init_frame_buffer() {
         chroma_size *= 2;
     }
 
+    // Y
     frame_buffer_->luma = (uint8_t *)malloc(luma_size);
     if (frame_buffer_->luma == nullptr) {
         deinit_frame_buffer();
         return EB_ErrorInsufficientResources;
     }
+    memset(frame_buffer_->luma, 0, luma_size);
 
+    // Cb
     frame_buffer_->cb = (uint8_t *)malloc(chroma_size);
     if (frame_buffer_->cb == nullptr) {
         deinit_frame_buffer();
         return EB_ErrorInsufficientResources;
     }
+    memset(frame_buffer_->cb, 0, chroma_size);
 
+    // Cr
     frame_buffer_->cr = (uint8_t *)malloc(chroma_size);
     if (frame_buffer_->cr == nullptr) {
         deinit_frame_buffer();
         return EB_ErrorInsufficientResources;
     }
+    memset(frame_buffer_->cr, 0, chroma_size);
 
     if (is_10bit_mode() && svt_compressed_2bit_plane_) {
-        frame_buffer_->luma_ext = (uint8_t *)malloc(luma_size / 4);
+        // packed 10-bit YUV put extended 2-bits in group of 4 samples
+        luma_size /= 4;
+        chroma_size /= 4;
+
+        // Y Ext
+        frame_buffer_->luma_ext = (uint8_t *)malloc(luma_size);
         if (frame_buffer_->luma_ext == nullptr) {
             deinit_frame_buffer();
             return EB_ErrorInsufficientResources;
         }
+        memset(frame_buffer_->luma_ext, 0, luma_size);
 
-        frame_buffer_->cb_ext = (uint8_t *)malloc(chroma_size / 4);
+        // Cb Ext
+        frame_buffer_->cb_ext = (uint8_t *)malloc(chroma_size);
         if (frame_buffer_->cb_ext == nullptr) {
             deinit_frame_buffer();
             return EB_ErrorInsufficientResources;
         }
+        memset(frame_buffer_->cb_ext, 0, chroma_size);
 
-        frame_buffer_->cr_ext = (uint8_t *)malloc(chroma_size / 4);
+        // Cr Ext
+        frame_buffer_->cr_ext = (uint8_t *)malloc(chroma_size);
         if (frame_buffer_->cr_ext == nullptr) {
             deinit_frame_buffer();
             return EB_ErrorInsufficientResources;
         }
+        memset(frame_buffer_->cr_ext, 0, chroma_size);
+
     } else {
         frame_buffer_->luma_ext = nullptr;
         frame_buffer_->cb_ext = nullptr;
@@ -186,15 +209,20 @@ VideoFileSource::VideoFileSource(const std::string &file_name,
       file_name_(file_name),
       file_handle_(nullptr),
       file_length_(0),
+      frame_length_(0),
       file_frames_(0) {
-    if (width_ % 8 != 0)
-        width_with_padding_ += (8 - width_ % 8);
-    if (height_ % 8 != 0)
-        height_with_padding_ += (8 - height_ % 8);
+#ifdef ENABLE_DEBUG_MONITOR
+    monitor = nullptr;
+#endif
 }
 
 VideoFileSource::~VideoFileSource() {
+#ifdef ENABLE_DEBUG_MONITOR
+    if (monitor != nullptr)
+        delete monitor;
+#endif
 }
+
 /**
  * @brief      Use this function to get vector path defined by envrionment
  * variable SVT_AV1_TEST_VECTOR_PATH, or it will return a default path.
@@ -226,8 +254,6 @@ uint32_t VideoFileSource::read_input_frame() {
     }
 
     // Read raw data from file
-    const uint32_t bottom_padding = height_with_padding_ - height_;
-    const uint32_t righ_padding = width_with_padding_ - width_;
     size_t read_len = 0;
     uint32_t i;
     if (bit_depth_ <= 8 || (bit_depth_ > 8 && !svt_compressed_2bit_plane_)) {
@@ -235,45 +261,27 @@ uint32_t VideoFileSource::read_input_frame() {
         // Y
         eb_input_ptr = frame_buffer_->luma;
         for (i = 0; i < height_; ++i) {
-            read_len =
-                fread(eb_input_ptr, 1, width_ * pixel_byte_size_, file_handle_);
-            if (read_len != width_ * pixel_byte_size_)
+            read_len = fread(
+                eb_input_ptr, 1, width_ * bytes_per_sample_, file_handle_);
+            if (read_len != width_ * bytes_per_sample_)
                 return 0;  // read file error.
 
-            memset(eb_input_ptr + width_ * pixel_byte_size_,
-                   0,
-                   righ_padding * pixel_byte_size_);
-            eb_input_ptr += frame_buffer_->y_stride * pixel_byte_size_;
-            filled_len += frame_buffer_->y_stride * pixel_byte_size_;
+            eb_input_ptr += frame_buffer_->y_stride * bytes_per_sample_;
+            filled_len += frame_buffer_->y_stride * bytes_per_sample_;
         }
-        for (i = 0; i < bottom_padding; ++i) {
-            memset(eb_input_ptr, 0, width_with_padding_ * pixel_byte_size_);
-            eb_input_ptr += frame_buffer_->y_stride * pixel_byte_size_;
-            filled_len += frame_buffer_->y_stride * pixel_byte_size_;
-        }
+
         // Cb
         eb_input_ptr = frame_buffer_->cb;
         for (i = 0; i < (height_ >> height_downsize_); ++i) {
             read_len = fread(eb_input_ptr,
                              1,
-                             (width_ >> width_downsize_) * pixel_byte_size_,
+                             (width_ >> width_downsize_) * bytes_per_sample_,
                              file_handle_);
-            if (read_len != (width_ >> width_downsize_) * pixel_byte_size_)
+            if (read_len != (width_ >> width_downsize_) * bytes_per_sample_)
                 return 0;  // read file error.
 
-            memset(
-                eb_input_ptr + (width_ >> width_downsize_) * pixel_byte_size_,
-                0,
-                (righ_padding >> width_downsize_) * pixel_byte_size_);
-            eb_input_ptr += frame_buffer_->cb_stride * pixel_byte_size_;
-            filled_len += frame_buffer_->cb_stride * pixel_byte_size_;
-        }
-        for (i = 0; i < (bottom_padding >> height_downsize_); ++i) {
-            memset(eb_input_ptr,
-                   0,
-                   (width_with_padding_ >> width_downsize_) * pixel_byte_size_);
-            eb_input_ptr += frame_buffer_->cb_stride * pixel_byte_size_;
-            filled_len += frame_buffer_->cb_stride * pixel_byte_size_;
+            eb_input_ptr += frame_buffer_->cb_stride * bytes_per_sample_;
+            filled_len += frame_buffer_->cb_stride * bytes_per_sample_;
         }
 
         // Cr
@@ -282,24 +290,13 @@ uint32_t VideoFileSource::read_input_frame() {
         for (i = 0; i < (height_ >> height_downsize_); ++i) {
             read_len = fread(eb_input_ptr,
                              1,
-                             (width_ >> width_downsize_) * pixel_byte_size_,
+                             (width_ >> width_downsize_) * bytes_per_sample_,
                              file_handle_);
-            if (read_len != (width_ >> width_downsize_) * pixel_byte_size_)
+            if (read_len != (width_ >> width_downsize_) * bytes_per_sample_)
                 return 0;  // read file error.
 
-            memset(
-                eb_input_ptr + (width_ >> width_downsize_) * pixel_byte_size_,
-                0,
-                (righ_padding >> width_downsize_) * pixel_byte_size_);
-            eb_input_ptr += frame_buffer_->cr_stride * pixel_byte_size_;
-            filled_len += frame_buffer_->cr_stride * pixel_byte_size_;
-        }
-        for (i = 0; i < (bottom_padding >> height_downsize_); ++i) {
-            memset(eb_input_ptr,
-                   0,
-                   (width_with_padding_ >> width_downsize_) * pixel_byte_size_);
-            eb_input_ptr += frame_buffer_->cr_stride * pixel_byte_size_;
-            filled_len += frame_buffer_->cr_stride * pixel_byte_size_;
+            eb_input_ptr += frame_buffer_->cr_stride * bytes_per_sample_;
+            filled_len += frame_buffer_->cr_stride * bytes_per_sample_;
         }
     } else if (bit_depth_ > 8 && svt_compressed_2bit_plane_) {
         uint8_t *eb_input_ptr = nullptr;
@@ -312,24 +309,12 @@ uint32_t VideoFileSource::read_input_frame() {
             uint32_t j = 0;
             for (j = 0; j < width_; ++j) {
                 // Get one pixel
-                if (2 != fread(&pix, 1, 2, file_handle_)) {
+                if (2 != fread(&pix, 1, 2, file_handle_))
                     return 0;
-                }
                 eb_input_ptr[j] = (uint8_t)(pix >> 2);
                 eb_ext_input_ptr[j / 4] &= (pix & 0x3) << (j % 4);
             }
 
-            for (; j < width_ + righ_padding; ++j) {
-                eb_input_ptr[j] = 0;
-                eb_ext_input_ptr[j / 4] = 0;
-            }
-            eb_input_ptr += frame_buffer_->y_stride;
-            eb_ext_input_ptr += frame_buffer_->y_stride / 4;
-            filled_len += frame_buffer_->y_stride * 5 / 4;
-        }
-        for (i = 0; i < bottom_padding; ++i) {
-            memset(eb_input_ptr, 0, width_with_padding_);
-            memset(eb_ext_input_ptr, 0, width_with_padding_ / 4);
             eb_input_ptr += frame_buffer_->y_stride;
             eb_ext_input_ptr += frame_buffer_->y_stride / 4;
             filled_len += frame_buffer_->y_stride * 5 / 4;
@@ -341,26 +326,12 @@ uint32_t VideoFileSource::read_input_frame() {
             uint32_t j = 0;
             for (j = 0; j < (width_ >> width_downsize_); ++j) {
                 // Get one pixel
-                if (2 != fread(&pix, 1, 2, file_handle_)) {
+                if (2 != fread(&pix, 1, 2, file_handle_))
                     return 0;
-                }
                 eb_input_ptr[j] = (uint8_t)(pix >> 2);
                 eb_ext_input_ptr[j / 4] &= (pix & 0x3) << (j % 4);
             }
 
-            for (; j < ((width_ + righ_padding) >> width_downsize_); ++j) {
-                eb_input_ptr[j] = 0;
-                eb_ext_input_ptr[j / 4] = 0;
-            }
-            eb_input_ptr += frame_buffer_->cb_stride;
-            eb_ext_input_ptr += frame_buffer_->cb_stride / 4;
-            filled_len += frame_buffer_->cb_stride * 5 / 4;
-        }
-        for (i = 0; i<bottom_padding>> height_downsize_; ++i) {
-            memset(eb_input_ptr, 0, (width_with_padding_ >> width_downsize_));
-            memset(eb_ext_input_ptr,
-                   0,
-                   (width_with_padding_ >> width_downsize_) / 4);
             eb_input_ptr += frame_buffer_->cb_stride;
             eb_ext_input_ptr += frame_buffer_->cb_stride / 4;
             filled_len += frame_buffer_->cb_stride * 5 / 4;
@@ -373,26 +344,12 @@ uint32_t VideoFileSource::read_input_frame() {
             uint32_t j = 0;
             for (j = 0; j < (width_ >> width_downsize_); ++j) {
                 // Get one pixel
-                if (2 != fread(&pix, 1, 2, file_handle_)) {
+                if (2 != fread(&pix, 1, 2, file_handle_))
                     return 0;
-                }
                 eb_input_ptr[j] = (uint8_t)(pix >> 2);
                 eb_ext_input_ptr[j / 4] &= (pix & 0x3) << (j % 4);
             }
 
-            for (; j < ((width_ + righ_padding) >> width_downsize_); ++j) {
-                eb_input_ptr[j] = 0;
-                eb_ext_input_ptr[j / 4] = 0;
-            }
-            eb_input_ptr += frame_buffer_->cr_stride;
-            eb_ext_input_ptr += frame_buffer_->cr_stride / 4;
-            filled_len += frame_buffer_->cr_stride * 5 / 4;
-        }
-        for (i = 0; i<bottom_padding>> height_downsize_; ++i) {
-            memset(eb_input_ptr, 0, (width_with_padding_ >> width_downsize_));
-            memset(eb_ext_input_ptr,
-                   0,
-                   (width_with_padding_ >> width_downsize_) / 4);
             eb_input_ptr += frame_buffer_->cr_stride;
             eb_ext_input_ptr += frame_buffer_->cr_stride / 4;
             filled_len += frame_buffer_->cr_stride * 5 / 4;
@@ -497,9 +454,9 @@ void VideoFileSource::close_source() {
 }
 
 EbSvtIOFormat *VideoFileSource::get_frame_by_index(const uint32_t index) {
-    if (index >= frame_count_) {
+    if (index >= frame_count_)
         return nullptr;
-    }
+
     // Seek to frame by index
     if (seek_to_frame(index) != EB_ErrorNone)
         return nullptr;
@@ -520,9 +477,9 @@ EbSvtIOFormat *VideoFileSource::get_frame_by_index(const uint32_t index) {
 
 EbSvtIOFormat *VideoFileSource::get_next_frame() {
     // printf("Get Next Frame:%d\r\n", current_frame_index_ + 1);
-    if ((uint32_t)(current_frame_index_ + 1) >= frame_count_) {
+    if ((uint32_t)(current_frame_index_ + 1) >= frame_count_)
         return nullptr;
-    }
+
     if (init_pos_ + (current_frame_index_ + 1) >= file_frames_ &&
         current_frame_index_ != -1) {
         // Seek to frame by index

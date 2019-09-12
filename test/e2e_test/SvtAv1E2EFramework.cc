@@ -705,7 +705,6 @@ void SvtAv1E2ETestFramework::decode_compress_data(const uint8_t *data,
     ASSERT_EQ(refer_dec_->decode(data, size), RefDecoder::REF_CODEC_OK);
 
     VideoFrame ref_frame;
-    memset(&ref_frame, 0, sizeof(ref_frame));
     while (refer_dec_->get_frame(ref_frame) == RefDecoder::REF_CODEC_OK) {
         if (recon_queue_) {
             // compare tools

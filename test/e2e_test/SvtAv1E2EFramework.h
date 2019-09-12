@@ -27,11 +27,7 @@
 #define INPUT_SIZE_1080p_TH 0x1AB3F0  // 1.75 Million
 #define INPUT_SIZE_4K_TH 0x29F630     // 2.75 Million
 #define EB_OUTPUTSTREAMBUFFERSIZE_MACRO(resolution_size) \
-    ((resolution_size) < (INPUT_SIZE_1080i_TH)           \
-         ? 0x1E8480                                      \
-         : (resolution_size) < (INPUT_SIZE_1080p_TH)     \
-               ? 0x2DC6C0                                \
-               : (resolution_size) < (INPUT_SIZE_4K_TH) ? 0x2DC6C0 : 0x2DC6C0)
+    ((resolution_size) < (INPUT_SIZE_1080i_TH) ? 0x1E8480 : 0x2DC6C0)
 
 // Copied from EbAppProcessCmd.c
 #define LONG_ENCODE_FRAME_ENCODE 4000

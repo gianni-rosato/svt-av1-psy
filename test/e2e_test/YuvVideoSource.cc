@@ -20,19 +20,9 @@ YuvVideoSource::YuvVideoSource(const std::string &file_name,
                                const uint32_t width, const uint32_t height,
                                const uint8_t bit_depth)
     : VideoFileSource(file_name, format, width, height, bit_depth, false) {
-#ifdef ENABLE_DEBUG_MONITOR
-    monitor = nullptr;
-#endif
 }
+
 YuvVideoSource::~YuvVideoSource() {
-    if (file_handle_ != nullptr) {
-        fclose(file_handle_);
-        file_handle_ = nullptr;
-    }
-#ifdef ENABLE_DEBUG_MONITOR
-    if (monitor != nullptr)
-        delete monitor;
-#endif
 }
 
 EbErrorType YuvVideoSource::parse_file_info() {
@@ -46,6 +36,8 @@ EbErrorType YuvVideoSource::parse_file_info() {
         return EB_ErrorInsufficientResources;
     }
 
+    cal_yuv_plane_param();
+
     // Get file length
     fseek(file_handle_, 0, SEEK_END);
     file_length_ = ftell(file_handle_);
@@ -53,24 +45,9 @@ EbErrorType YuvVideoSource::parse_file_info() {
     // Seek to begin
     fseek(file_handle_, 0, SEEK_SET);
 
-    frame_length_ = width_ * height_;
-
-    // Calculate frame length
-    switch (image_format_) {
-    case IMG_FMT_420P10_PACKED:
-    case IMG_FMT_420: {
-        frame_length_ = frame_length_ * 3 / 2 * (bit_depth_ > 8 ? 2 : 1);
-    } break;
-    case IMG_FMT_422P10_PACKED:
-    case IMG_FMT_422: {
-        frame_length_ = frame_length_ * 2 * (bit_depth_ > 8 ? 2 : 1);
-    } break;
-    case IMG_FMT_444P10_PACKED:
-    case IMG_FMT_444: {
-        frame_length_ = frame_length_ * 3 * (bit_depth_ > 8 ? 2 : 1);
-    } break;
-    default: break;
-    }
+    uint32_t luma_size = width_ * height_ * bytes_per_sample_;
+    frame_length_ =
+        luma_size + ((luma_size >> (width_downsize_ + height_downsize_)) * 2);
 
     // Calculate frame count
     file_frames_ = file_length_ / frame_length_;

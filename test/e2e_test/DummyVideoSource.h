@@ -35,20 +35,7 @@ class DummyVideoSource : public VideoSource {
                      const bool use_compressed_2bit_plan_output)
         : VideoSource(format, width, height, bit_depth,
                       use_compressed_2bit_plan_output) {
-        if (width_ % 16 != 0)
-            width_with_padding_ = ((width_ >> 4) + 1) << 4;
-        if (height_ % 16 != 0)
-            height_with_padding_ = ((height_ >> 4) + 1) << 4;
-        init_frame_buffer();
-        // create color bar parttern of single line
-        const uint32_t pixel_size = width_with_padding_ * height_with_padding_;
-        for (int i = 0; i < 3; i++) {
-            single_line_pattern[i] = new uint8_t[pixel_size * pixel_byte_size_];
-            if (pixel_byte_size_ > 1)
-                create_pattern((uint16_t *)single_line_pattern[i], i);
-            else
-                create_pattern(single_line_pattern[i], i);
-        }
+        memset(single_line_pattern, 0, sizeof(single_line_pattern));
     }
 
     virtual ~DummyVideoSource() {
@@ -56,7 +43,6 @@ class DummyVideoSource : public VideoSource {
             if (single_line_pattern[i])
                 delete[] single_line_pattern[i];
         }
-        deinit_frame_buffer();
     }
 
     EbErrorType open_source(const uint32_t init_pos,
@@ -65,6 +51,20 @@ class DummyVideoSource : public VideoSource {
             printf("Open dummy source error, support YUV420 only\r\n");
             return EB_ErrorBadParameter;
         }
+
+        cal_yuv_plane_param();
+
+        // create color bar parttern of single line
+        const uint32_t luma_size = width_with_padding_ * height_with_padding_;
+        for (int i = 0; i < 3; i++) {
+            single_line_pattern[i] = new uint8_t[luma_size * bytes_per_sample_];
+            if (bytes_per_sample_ > 1)
+                create_pattern((uint16_t *)single_line_pattern[i], i);
+            else
+                create_pattern(single_line_pattern[i], i);
+        }
+
+        init_frame_buffer();
 
         init_pos_ = init_pos;
         if (frame_count == 0)
@@ -79,14 +79,23 @@ class DummyVideoSource : public VideoSource {
 
     /*!\brief Close stream. */
     void close_source() override {
+        for (size_t i = 0; i < 3; i++) {
+            if (single_line_pattern[i])
+                delete[] single_line_pattern[i];
+        }
+        memset(single_line_pattern, 0, sizeof(single_line_pattern));
+
+        deinit_frame_buffer();
     }
 
     /*!\brief Get next frame. */
     EbSvtIOFormat *get_next_frame() override {
         if ((uint32_t)(current_frame_index_ + 1) >= frame_count_)
             return nullptr;
+
+        // current_frame_index_ is start from -1, here plus 1 before generate
+        generate_frame(current_frame_index_ + 1 + init_pos_);
         current_frame_index_++;
-        generate_frame(current_frame_index_ + init_pos_);
         return frame_buffer_;
     }
 
@@ -94,8 +103,8 @@ class DummyVideoSource : public VideoSource {
     EbSvtIOFormat *get_frame_by_index(const uint32_t index) override {
         if (index >= frame_count_)
             return nullptr;
+        generate_frame(index + init_pos_);
         current_frame_index_ = index;
-        generate_frame(current_frame_index_ + init_pos_);
         return frame_buffer_;
     }
 
@@ -123,8 +132,8 @@ class DummyVideoSource : public VideoSource {
         uint32_t offset =
             (index % FRAME_PER_LOOP) * width_with_padding_ / FRAME_PER_LOOP;
         offset -= offset % 2;
-        offset *= pixel_byte_size_;
-        uint32_t width_in_byte = width_with_padding_ * pixel_byte_size_;
+        offset *= bytes_per_sample_;
+        uint32_t width_in_byte = width_with_padding_ * bytes_per_sample_;
 
         // luma
         src_p = frame_buffer_->luma;
