@@ -378,6 +378,17 @@ extern "C" {
         uint32_t  area_width,
         uint32_t  area_height);
 
+    void residual_kernel_subsampled(
+        uint8_t   *input,
+        uint32_t   input_stride,
+        uint8_t   *pred,
+        uint32_t   pred_stride,
+        int16_t  *residual,
+        uint32_t   residual_stride,
+        uint32_t   area_width,
+        uint32_t   area_height,
+        uint8_t    last_line);
+
     static EbZeroCoeffType FUNC_TABLE pic_zero_out_coef_func_ptr_array[ASM_TYPE_TOTAL][5] = {
         // NON_AVX2
         {

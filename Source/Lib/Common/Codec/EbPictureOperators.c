@@ -224,6 +224,60 @@ void residual_kernel_c(
     return;
 }
 
+void residual_kernel_subsampled(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *pred,
+    uint32_t   pred_stride,
+    int16_t  *residual,
+    uint32_t   residual_stride,
+    uint32_t   area_width,
+    uint32_t   area_height,
+    uint8_t    last_line)
+{
+    uint32_t  column_index;
+    uint32_t  row_index = 0;
+
+    uint8_t   *input_O = input;
+    uint8_t   *pred_O = pred;
+    int16_t  *residual_O = residual;
+
+
+    //hard code subampling dimensions, keep residual_stride
+    area_height >>= 1;
+    input_stride <<= 1;
+    pred_stride <<= 1;
+
+
+    while (row_index < area_height) {
+        column_index = 0;
+        while (column_index < area_width) {
+            residual[column_index] = ((int16_t)input[column_index]) - ((int16_t)pred[column_index]);
+            residual[column_index + residual_stride] = ((int16_t)input[column_index]) - ((int16_t)pred[column_index]);
+            ++column_index;
+        }
+
+        input += input_stride;
+        pred += pred_stride;
+        residual += (residual_stride << 1);
+        ++row_index;
+    }
+
+    //do the last line:
+    if (last_line) {
+        input_stride = input_stride / 2;
+        pred_stride = pred_stride / 2;
+        area_height = area_height * 2;
+        column_index = 0;
+        while (column_index < area_width) {
+            residual_O[(area_height - 1)*residual_stride + column_index] = ((int16_t)input_O[(area_height - 1)*input_stride + column_index]) - ((int16_t)pred_O[(area_height - 1)*pred_stride + column_index]);
+            ++column_index;
+        }
+
+    }
+    return;
+}
+
 uint64_t ComputeNxMSatd8x8Units_U8(
     uint8_t  *src,      //int16_t *diff,       // input parameter, diff samples Ptr
     uint32_t  src_stride, //uint32_t  diffStride, // input parameter, source stride
