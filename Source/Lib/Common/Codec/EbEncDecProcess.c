@@ -246,22 +246,12 @@ static void ResetEncDec(
     SequenceControlSet    *sequence_control_set_ptr,
     uint32_t                   segment_index)
 {
-#if !ENABLE_CDF_UPDATE
-    EB_SLICE                     slice_type;
-    MdRateEstimationContext   *md_rate_estimation_array;
-#endif
     context_ptr->is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
 #if ADD_DELTA_QP_SUPPORT
-#if QPM
     uint16_t picture_qp = picture_control_set_ptr->picture_qp;
     context_ptr->qp = picture_qp;
     context_ptr->qp_index = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present ? (uint8_t)quantizer_to_qindex[context_ptr->qp] : (uint8_t)picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
-#else
-    uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
-    context_ptr->qp = picture_qp;
-    context_ptr->qp_index = context_ptr->qp;
-#endif
 #else
     context_ptr->qp = picture_control_set_ptr->picture_qp;
 #endif
@@ -280,35 +270,12 @@ static void ResetEncDec(
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
         context_ptr->qp_index,
         picture_control_set_ptr->hbd_mode_decision);
-#if ENABLE_CDF_UPDATE
     // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
     if (context_ptr->is_md_rate_estimation_ptr_owner) {
         EB_FREE(context_ptr->md_rate_estimation_ptr);
         context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
     }
     context_ptr->md_rate_estimation_ptr = picture_control_set_ptr->md_rate_estimation_array;
-#else
-    // Slice Type
-    slice_type =
-        (picture_control_set_ptr->parent_pcs_ptr->idr_flag == EB_TRUE) ? I_SLICE :
-        picture_control_set_ptr->slice_type;
-
-    // Increment the MD Rate Estimation array pointer to point to the right address based on the QP and slice type
-    md_rate_estimation_array = (MdRateEstimationContext*)sequence_control_set_ptr->encode_context_ptr->md_rate_estimation_array;
-#if ADD_DELTA_QP_SUPPORT
-    md_rate_estimation_array += slice_type * TOTAL_NUMBER_OF_QP_VALUES + picture_control_set_ptr->parent_pcs_ptr->picture_qp;
-#else
-    md_rate_estimation_array += slice_type * TOTAL_NUMBER_OF_QP_VALUES + context_ptr->qp;
-#endif
-
-    // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
-    if (context_ptr->is_md_rate_estimation_ptr_owner) {
-        EB_FREE(context_ptr->md_rate_estimation_ptr);
-        context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
-    }
-
-    context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
-#endif
     if (segment_index == 0){
         ResetEncodePassNeighborArrays(picture_control_set_ptr);
         reset_segmentation_map(picture_control_set_ptr->segmentation_neighbor_map);
@@ -324,22 +291,10 @@ static void EncDecConfigureLcu(
     EncDecContext         *context_ptr,
     LargestCodingUnit     *sb_ptr,
     PictureControlSet     *picture_control_set_ptr,
-#if !QPM
-    SequenceControlSet    *sequence_control_set_ptr,
-    uint8_t                    picture_qp,
-#endif
     uint8_t                    sb_qp)
 {
-#if QPM
     context_ptr->qp = sb_qp;
-#else
-    //RC is off
-    if (sequence_control_set_ptr->static_config.rate_control_mode == 0 && sequence_control_set_ptr->static_config.improve_sharpness == 0)
-        context_ptr->qp = picture_qp;
-    //RC is on
-    else
-        context_ptr->qp = sb_qp;
-#endif
+
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
     context_ptr->chroma_qp = context_ptr->qp;
     /* Note(CHKN) : when Qp modulation varies QP on a sub-LCU(CU) basis,  Lamda has to change based on Cu->QP , and then this code has to move inside the CU loop in MD */
@@ -1135,12 +1090,7 @@ void PadRefAndSetFlags(
     referenceObject->ref_poc = picture_control_set_ptr->parent_pcs_ptr->picture_number;
 
     // set up the QP
-#if ADD_DELTA_QP_SUPPORT && !QPM
-    uint16_t picture_qp = picture_control_set_ptr->parent_pcs_ptr->base_qindex;
-    referenceObject->qp = (uint16_t)picture_qp;
-#else
     referenceObject->qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
-#endif
 
     // set up the Slice Type
     referenceObject->slice_type = picture_control_set_ptr->parent_pcs_ptr->slice_type;
@@ -1167,13 +1117,11 @@ void CopyStatisticsToRefObject(
 
     Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
     ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->sg_frame_ep = cm->sg_frame_ep;
-#if MFMV_SUPPORT
     if (sequence_control_set_ptr->mfmv_enabled) {
         ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->frame_type = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.frame_type;
         ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->order_hint = picture_control_set_ptr->parent_pcs_ptr->cur_order_hint;
         memcpy(((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->ref_order_hint, picture_control_set_ptr->parent_pcs_ptr->ref_order_hint, 7 * sizeof(uint32_t));
     }
-#endif
 }
 
 /******************************************************
@@ -1186,53 +1134,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     PictureControlSet     *picture_control_set_ptr,
     ModeDecisionContext   *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
-#if !MD_STAGING
-    // NFL Level MD       Settings
-    // 0                  MAX_NFL 40
-    // 1                  30
-    // 2                  12
-    // 3                  10
-    // 4                  8
-    // 5                  6
-    // 6                  4
-    // 7                  3
-    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-            if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-                context_ptr->nfl_level = (sequence_control_set_ptr->input_resolution <= INPUT_SIZE_576p_RANGE_OR_LOWER) ? 0 : 1;
-            else
-                context_ptr->nfl_level = 2;
-        else
-            if (picture_control_set_ptr->parent_pcs_ptr->slice_type == I_SLICE)
-                context_ptr->nfl_level = 5;
-            else if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-                context_ptr->nfl_level = 6;
-            else
-                context_ptr->nfl_level = 7;
-    else
-    if (picture_control_set_ptr->enc_mode <= ENC_M1)
-        if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-            context_ptr->nfl_level = (sequence_control_set_ptr->input_resolution <= INPUT_SIZE_576p_RANGE_OR_LOWER) ? 0 : 1;
-        else
-            context_ptr->nfl_level = 2;
-    else if(picture_control_set_ptr->enc_mode <= ENC_M3)
-        if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-            context_ptr->nfl_level = 2;
-        else
-            context_ptr->nfl_level = 4;
-    else if (picture_control_set_ptr->enc_mode <= ENC_M6)
-        if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-            context_ptr->nfl_level = 4;
-        else
-            context_ptr->nfl_level = 5;
-    else
-        if (picture_control_set_ptr->parent_pcs_ptr->slice_type == I_SLICE)
-            context_ptr->nfl_level = 5;
-        else if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-            context_ptr->nfl_level = 6;
-        else
-            context_ptr->nfl_level = 7;
-#endif
+
     // Set Chroma Mode
     // Level                Settings
     // CHROMA_MODE_0  0     Full chroma search @ MD
@@ -1334,14 +1236,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 0                    OFF
     // 1                    On
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
-#if SC_SETTINGS_TUNING
         context_ptr->warped_motion_injection = 0;
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-            context_ptr->warped_motion_injection = 1;
-        else
-            context_ptr->warped_motion_injection = 0;
-#endif
     else
     context_ptr->warped_motion_injection = 1;
 
@@ -1381,7 +1276,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->bipred3x3_injection = 0;
 
-#if PREDICTIVE_ME
     // Level                Settings
     // 0                    Level 0: OFF
     // 1                    Level 1: 7x5 full-pel search + sub-pel refinement off
@@ -1398,9 +1292,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->predictive_me_level = 0;
     else
         context_ptr->predictive_me_level = 0;
-#endif
 
-#if MD_STAGING
     // Derive md_staging_mode
     //
     // MD_STAGING_MODE_1
@@ -1492,7 +1384,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 0                    OFF
     // 1                    ON
     context_ptr->combine_class12 = (picture_control_set_ptr->enc_mode == ENC_M0) ? 0 : 1;
-#endif
 
     // Set interpolation filter search blk size
     // Level                Settings
@@ -1540,7 +1431,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->redundant_blk = EB_TRUE;
     else
         context_ptr->redundant_blk = EB_FALSE;
-#if EDGE_BASED_SKIP_ANGULAR_INTRA
     if (sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT)
         if (MR_MODE || picture_control_set_ptr->enc_mode == ENC_M0)
             context_ptr->edge_based_skip_angle_intra = 0;
@@ -1548,13 +1438,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->edge_based_skip_angle_intra = 1;
     else
         context_ptr->edge_based_skip_angle_intra = 0;
-#endif
-#if PRUNE_REF_FRAME_FRO_REC_PARTITION
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected || picture_control_set_ptr->enc_mode == ENC_M0)
         context_ptr->prune_ref_frame_for_rec_partitions = 0;
     else
         context_ptr->prune_ref_frame_for_rec_partitions = 1;
-#endif
     return return_error;
 }
 
@@ -1660,9 +1547,6 @@ void* enc_dec_kernel(void *input_ptr)
             reset_mode_decision( // HT done
                 context_ptr->md_context,
                 picture_control_set_ptr,
-#if !ENABLE_CDF_UPDATE
-                sequence_control_set_ptr,
-#endif
                 segment_index);
 
             // Reset EncDec Coding State
@@ -1689,15 +1573,7 @@ void* enc_dec_kernel(void *input_ptr)
                     context_ptr->md_context->cu_use_ref_src_flag = (picture_control_set_ptr->parent_pcs_ptr->use_src_ref) && (picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index].edge_block_num == EB_FALSE || picture_control_set_ptr->parent_pcs_ptr->sb_flat_noise_array[sb_index]) ? EB_TRUE : EB_FALSE;
 
                     if (picture_control_set_ptr->update_cdf) {
-#if ENABLE_CDF_UPDATE
                         picture_control_set_ptr->rate_est_array[sb_index] = *picture_control_set_ptr->md_rate_estimation_array;
-#else
-                        MdRateEstimationContext* md_rate_estimation_array = sequence_control_set_ptr->encode_context_ptr->md_rate_estimation_array;
-                        md_rate_estimation_array += picture_control_set_ptr->slice_type * TOTAL_NUMBER_OF_QP_VALUES + context_ptr->md_context->qp;
-
-                        //this is temp, copy all default tables
-                        picture_control_set_ptr->rate_est_array[sb_index] = *md_rate_estimation_array;
-#endif
 #if CABAC_SERIAL
                         if (sb_index == 0)
                             picture_control_set_ptr->ec_ctx_array[sb_index] = *picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc;
@@ -1727,14 +1603,7 @@ void* enc_dec_kernel(void *input_ptr)
                     // Configure the LCU
                     mode_decision_configure_lcu(
                         context_ptr->md_context,
-#if !QPM
-                        sb_ptr,
-#endif
                         picture_control_set_ptr,
-#if !QPM
-                        sequence_control_set_ptr,
-                        (uint8_t)context_ptr->qp,
-#endif
                         (uint8_t)sb_ptr->qp);
 
                     uint32_t lcuRow;
@@ -1801,10 +1670,6 @@ void* enc_dec_kernel(void *input_ptr)
                         context_ptr,
                         sb_ptr,
                         picture_control_set_ptr,
-#if !QPM
-                        sequence_control_set_ptr,
-                        (uint8_t)context_ptr->qp,
-#endif
                         (uint8_t)sb_ptr->qp);
 
 #if NO_ENCDEC
@@ -1849,12 +1714,10 @@ void* enc_dec_kernel(void *input_ptr)
                         = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.film_grain_params;
                 }
             }
-#if ENABLE_CDF_UPDATE
             if (picture_control_set_ptr->parent_pcs_ptr->frame_end_cdf_update_mode && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE && picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)
                 for (int frame = LAST_FRAME; frame <= ALTREF_FRAME; ++frame)
                     ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->global_motion[frame]
                     = picture_control_set_ptr->parent_pcs_ptr->global_motion[frame];
-#endif
             EB_MEMCPY(picture_control_set_ptr->parent_pcs_ptr->av1x->sgrproj_restore_cost, context_ptr->md_rate_estimation_ptr->sgrproj_restore_fac_bits, 2 * sizeof(int32_t));
             EB_MEMCPY(picture_control_set_ptr->parent_pcs_ptr->av1x->switchable_restore_cost, context_ptr->md_rate_estimation_ptr->switchable_restore_fac_bits, 3 * sizeof(int32_t));
             EB_MEMCPY(picture_control_set_ptr->parent_pcs_ptr->av1x->wiener_restore_cost, context_ptr->md_rate_estimation_ptr->wiener_restore_fac_bits, 2 * sizeof(int32_t));

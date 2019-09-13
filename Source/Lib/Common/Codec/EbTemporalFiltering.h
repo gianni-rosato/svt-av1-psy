@@ -61,9 +61,7 @@
 #define THRES_DIFF_HIGH 12000
 
 #define OD_DIVU_DMAX (1024)
-#if ALTREF_TF_ADAPTIVE_WINDOW_SIZE
 #define AHD_TH_WEIGHT 50
-#endif
 void init_temporal_filtering(PictureParentControlSet **list_picture_control_set_ptr,
     PictureParentControlSet *picture_control_set_ptr_central,
     MotionEstimationContext_t *me_context_ptr,

@@ -111,10 +111,8 @@ void DerivePictureActivityStatistics(
         picture_control_set_ptr->non_moving_index_average = (uint16_t)(nonMovingIndexSum / complete_sb_count);
         picture_control_set_ptr->kf_zeromotion_pct = (non_moving_sb_count * 100) / complete_sb_count;
     }
-#if QPM
     picture_control_set_ptr->non_moving_index_min_distance = (uint16_t)(ABS((int32_t)(picture_control_set_ptr->non_moving_index_average) - (int32_t)nonMovingIndexMin));
     picture_control_set_ptr->non_moving_index_max_distance = (uint16_t)(ABS((int32_t)(picture_control_set_ptr->non_moving_index_average) - (int32_t)nonMovingIndexMax));
-#endif
     return;
 }
 

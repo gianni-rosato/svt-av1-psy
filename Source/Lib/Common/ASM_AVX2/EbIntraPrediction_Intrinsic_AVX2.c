@@ -13,7 +13,6 @@
 #include "txfm_common_avx2.h"
 #include "aom_dsp_rtcd.h"
 
-#if EDGE_BASED_SKIP_ANGULAR_INTRA
 // Indices are sign, integer, and fractional part of the gradient value
 static const uint8_t gradient_to_angle_bin[2][7][16] = {
   {
@@ -317,7 +316,6 @@ void av1_get_gradient_hist_avx2(const uint8_t *src, int src_stride, int rows,
     }
 }
 
-#endif
 #ifndef _mm256_setr_m128i
 #define _mm256_setr_m128i(/* __m128i */ lo, /* __m128i */ hi) \
     _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)

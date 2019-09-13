@@ -613,7 +613,6 @@ static INLINE int32_t find_valid_col_offset(const TileInfo *const tile, int32_t 
     return clamp(col_offset, tile->mi_col_start - mi_col,
         tile->mi_col_end - mi_col - 1);
 }
-#if MFMV_SUPPORT
 static INLINE void integer_mv_precision(MV *mv) {
     int32_t mod = (mv->row % 8);
     if (mod != 0) {
@@ -726,11 +725,7 @@ static int add_tpl_ref_mv(const Av1Common *cm, PictureControlSet *picture_contro
     IntMv this_refmv;
     get_mv_projection(&this_refmv.as_mv, prev_frame_mvs->mfmv0.as_mv,
         cur_offset_0, prev_frame_mvs->ref_frame_offset);
-#if MFMV_SUPPORT
     lower_mv_precision(&this_refmv.as_mv, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv, 0);
-#else
-    lower_mv_precision(&this_refmv.as_mv, 0, 0);
-#endif
     if (rf[1] == NONE_FRAME) {
         if (blk_row == 0 && blk_col == 0) {
             if (abs(this_refmv.as_mv.row - gm_mv_candidates[0].as_mv.row) >= 16 ||
@@ -759,11 +754,7 @@ static int add_tpl_ref_mv(const Av1Common *cm, PictureControlSet *picture_contro
         IntMv comp_refmv;
         get_mv_projection(&comp_refmv.as_mv, prev_frame_mvs->mfmv0.as_mv,
             cur_offset_1, prev_frame_mvs->ref_frame_offset);
-#if MFMV_SUPPORT
         lower_mv_precision(&comp_refmv.as_mv, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv, 0);
-#else
-        lower_mv_precision(&comp_refmv.as_mv, 0, 0);
-#endif
         if (blk_row == 0 && blk_col == 0) {
             if (abs(this_refmv.as_mv.row - gm_mv_candidates[0].as_mv.row) >= 16 ||
                 abs(this_refmv.as_mv.col - gm_mv_candidates[0].as_mv.col) >= 16 ||
@@ -803,11 +794,8 @@ static int check_sb_border(const int mi_row, const int mi_col,
 
     return 1;
 }
-#endif
 void setup_ref_mv_list(
-#if MFMV_SUPPORT
     PictureControlSet *picture_control_set_ptr,
-#endif
     const Av1Common *cm, const MacroBlockD *xd, MvReferenceFrame ref_frame,
     uint8_t refmv_count[MODE_CTX_REF_FRAMES],
     CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
@@ -898,7 +886,6 @@ void setup_ref_mv_list(
     for (int32_t idx = 0; idx < nearest_refmv_count[ref_frame]; ++idx)
         ref_mv_stack[ref_frame][idx].weight += REF_CAT_LEVEL;
 
-#if MFMV_SUPPORT
     //CHKN  MFMV - get canididates from reference frames- orderHint has to be on, in order to scale the vectors.
     if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs)
     {
@@ -946,15 +933,7 @@ void setup_ref_mv_list(
                 gm_mv_candidates, &refmv_count[ref_frame], ref_mv_stack[ref_frame], mode_context);
         }
     }
-#else
-    //-------------------------- TMVP --------------------------
-    //CHKN  TMVP - get canididates from reference frames- orderHint has to be on,
-    // in order to scale the vectors.
-    //CHKN this checks all colocated block(s) + extra 3 positions. this changes
-    // the mode context too.
 
-    //-------------------------- TMVP --------------------------
-#endif
     //CHKN------------- TOP-LEFT
     uint8_t dummy_newmv_count[MODE_CTX_REF_FRAMES] = { 0 };
 
@@ -1284,31 +1263,7 @@ void setup_ref_mv_list(
     }
     (void)nearest_match;
 }
-#if !MFMV_SUPPORT
-static INLINE void integer_mv_precision(MV *mv) {
-    int32_t mod = (mv->row % 8);
-    if (mod != 0) {
-        mv->row -= (int16_t)mod;
-        if (abs(mod) > 4) {
-            if (mod > 0)
-                mv->row += 8;
-            else
-                mv->row -= 8;
-        }
-    }
 
-    mod = (mv->col % 8);
-    if (mod != 0) {
-        mv->col -= (int16_t)mod;
-        if (abs(mod) > 4) {
-            if (mod > 0)
-                mv->col += 8;
-            else
-                mv->col -= 8;
-        }
-    }
-}
-#endif
 static INLINE IntMv gm_get_motion_vector(
     const EbWarpedMotionParams *gm,
     int32_t allow_hp,
@@ -1402,12 +1357,7 @@ void generate_av1_mvp_table(
     xd->tile.mi_row_start = tile->mi_row_start;
     xd->tile.mi_row_end = tile->mi_row_end;
 
-#if INCOMPLETE_SB_FIX
     xd->mi_stride = picture_control_set_ptr->mi_stride;
-#else
-    //these could be done at init time
-    xd->mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 / 4);
-#endif
     const int32_t offset = mi_row * xd->mi_stride + mi_col;
     xd->mi = picture_control_set_ptr->mi_grid_base + offset;
 
@@ -1438,9 +1388,7 @@ void generate_av1_mvp_table(
         else
             zeromv[0].as_int = zeromv[1].as_int = 0;
         setup_ref_mv_list(
-#if MFMV_SUPPORT
             picture_control_set_ptr,
-#endif
             cm,
             xd,
             ref_frame,
@@ -1558,11 +1506,7 @@ void update_av1_mi_map(
     const BlockGeom                *blk_geom,
     PictureControlSet            *picture_control_set_ptr)
 {
-#if INCOMPLETE_SB_FIX
     uint32_t mi_stride = picture_control_set_ptr->mi_stride;
-#else
-    uint32_t mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
-#endif
     int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
     int32_t mi_col = cu_origin_x >> MI_SIZE_LOG2;
 
@@ -1613,10 +1557,8 @@ void update_av1_mi_map(
 
                 miPtr[miX + miY * mi_stride].mbmi.partition = from_shape_to_part[blk_geom->shape];// cu_ptr->part;
             }
-#if COMP_MODE
             miPtr[miX + miY * mi_stride].mbmi.comp_group_idx = cu_ptr->comp_group_idx;
             miPtr[miX + miY * mi_stride].mbmi.compound_idx = cu_ptr->compound_idx;
-#endif
 #if II_COMP_FLAG
             miPtr[miX + miY * mi_stride].mbmi.interintra_mode           = cu_ptr->interintra_mode;
             miPtr[miX + miY * mi_stride].mbmi.use_wedge_interintra      = cu_ptr->use_wedge_interintra;
@@ -1638,11 +1580,7 @@ void update_mi_map(
     PictureControlSet            *picture_control_set_ptr)
 {
     UNUSED(cu_stats);
-#if INCOMPLETE_SB_FIX
     uint32_t mi_stride = picture_control_set_ptr->mi_stride;
-#else
-    uint32_t mi_stride = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
-#endif
     int32_t mi_row = cu_origin_y >> MI_SIZE_LOG2;
     int32_t mi_col = cu_origin_x >> MI_SIZE_LOG2;
 
@@ -1698,10 +1636,8 @@ void update_mi_map(
             else
                 miPtr[miX + miY * mi_stride].mbmi.skip = (cu_ptr->transform_unit_array[0].y_has_coeff == 0) ? EB_TRUE : EB_FALSE;
 
-#if COMP_MODE
             miPtr[miX + miY * mi_stride].mbmi.comp_group_idx = cu_ptr->comp_group_idx;
             miPtr[miX + miY * mi_stride].mbmi.compound_idx = cu_ptr->compound_idx;
-#endif
 #if II_COMP_FLAG
             miPtr[miX + miY * mi_stride].mbmi.interintra_mode           = cu_ptr->interintra_mode;
             miPtr[miX + miY * mi_stride].mbmi.use_wedge_interintra      = cu_ptr->use_wedge_interintra;
@@ -2388,18 +2324,7 @@ IntMv eb_av1_get_ref_mv_from_stack(int ref_idx,
     }
     return ref_mv;
 }
-#if !MFMV_SUPPORT
-static INLINE void lower_mv_precision(MV *mv, int allow_hp, int is_integer) {
-    if (is_integer)
-        integer_mv_precision(mv);
-    else {
-        if (!allow_hp) {
-            if (mv->row & 1) mv->row += (mv->row > 0 ? -1 : 1);
-            if (mv->col & 1) mv->col += (mv->col > 0 ? -1 : 1);
-        }
-    }
-}
-#endif
+
 void eb_av1_find_best_ref_mvs_from_stack(int allow_hp,
     //const MB_MODE_INFO_EXT *mbmi_ext,
     CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],

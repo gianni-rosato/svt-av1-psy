@@ -73,7 +73,6 @@ enum COEFF_SCAN_TYPE
 
 extern void av1_set_ref_frame(MvReferenceFrame *rf,
     int8_t ref_frame_type);
-#if COMP_MODE
 int get_relative_dist_enc(SeqHeader *seq_header, int ref_hint, int order_hint);
 int get_comp_index_context_enc(
     PictureParentControlSet   *pcs_ptr,
@@ -151,7 +150,6 @@ int is_any_masked_compound_used(BlockSize sb_type) {
     }
     return 0;
 }
-#endif
 /************************************************
 * CABAC Encoder Constructor
 ************************************************/
@@ -402,9 +400,7 @@ static INLINE int16_t GetBrCtx(
 }
 
 void get_txb_ctx(
-#if INCOMPLETE_SB_FIX
     SequenceControlSet *sequence_control_set_ptr,
-#endif
     const int32_t        plane,
     NeighborArrayUnit   *dc_sign_level_coeff_neighbor_array,
     uint32_t             cu_origin_x,
@@ -422,7 +418,6 @@ void get_txb_ctx(
 
 #define MAX_TX_SIZE_UNIT 16
     static const int8_t signs[3] = { 0, -1, 1 };
-#if INCOMPLETE_SB_FIX
     int32_t txb_w_unit;
     int32_t txb_h_unit;
     if (plane) {
@@ -433,10 +428,6 @@ void get_txb_ctx(
         txb_w_unit = MIN(tx_size_wide_unit[tx_size], (int32_t)(sequence_control_set_ptr->seq_header.max_frame_width - cu_origin_x) >> 2);
         txb_h_unit = MIN(tx_size_high_unit[tx_size], (int32_t)(sequence_control_set_ptr->seq_header.max_frame_height - cu_origin_y) >> 2);
     }
-#else
-    const int32_t txb_w_unit = tx_size_wide_unit[tx_size];
-    const int32_t txb_h_unit = tx_size_high_unit[tx_size];
-#endif
     int16_t dc_sign = 0;
     uint16_t k = 0;
 
@@ -798,9 +789,7 @@ static EbErrorType av1_encode_tx_coef_y(
             int16_t dcSignCtx = 0;
 
             get_txb_ctx(
-#if INCOMPLETE_SB_FIX
                 pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr,
-#endif
                 COMPONENT_LUMA,
                 luma_dc_sign_level_coeff_neighbor_array,
                 cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x,
@@ -893,9 +882,7 @@ static EbErrorType av1_encode_tx_coef_uv(
                 int16_t dcSignCtx = 0;
 
                 get_txb_ctx(
-#if INCOMPLETE_SB_FIX
                     pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr,
-#endif
                     COMPONENT_CHROMA,
                     cb_dc_sign_level_coeff_neighbor_array,
                     ROUND_UV(cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
@@ -930,9 +917,7 @@ static EbErrorType av1_encode_tx_coef_uv(
                 int16_t dcSignCtx = 0;
 
                 get_txb_ctx(
-#if INCOMPLETE_SB_FIX
                     pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr,
-#endif
                     COMPONENT_CHROMA,
                     cr_dc_sign_level_coeff_neighbor_array,
                     ROUND_UV(cu_origin_x + blk_geom->tx_org_x[tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
@@ -1063,9 +1048,7 @@ static EbErrorType Av1EncodeCoeff1D(
                 int16_t dcSignCtx = 0;
 
                 get_txb_ctx(
-#if INCOMPLETE_SB_FIX
                     pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr,
-#endif
                     COMPONENT_LUMA,
                     luma_dc_sign_level_coeff_neighbor_array,
                     cu_origin_x + blk_geom->tx_org_x[cu_ptr->tx_depth][txb_itr] - blk_geom->origin_x,
@@ -1101,9 +1084,7 @@ static EbErrorType Av1EncodeCoeff1D(
                     int16_t dcSignCtx = 0;
 
                     get_txb_ctx(
-#if INCOMPLETE_SB_FIX
                         pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr,
-#endif
                         COMPONENT_CHROMA,
                         cb_dc_sign_level_coeff_neighbor_array,
                         ROUND_UV(cu_origin_x + blk_geom->tx_org_x[cu_ptr->tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
@@ -1138,9 +1119,7 @@ static EbErrorType Av1EncodeCoeff1D(
                     int16_t dcSignCtx = 0;
 
                     get_txb_ctx(
-#if INCOMPLETE_SB_FIX
                         pcs_ptr->parent_pcs_ptr->sequence_control_set_ptr,
-#endif
                         COMPONENT_CHROMA,
                         cr_dc_sign_level_coeff_neighbor_array,
                         ROUND_UV(cu_origin_x + blk_geom->tx_org_x[cu_ptr->tx_depth][txb_itr] - blk_geom->origin_x) >> 1,
@@ -3598,14 +3577,10 @@ static void write_tile_info(const PictureParentControlSet *const pcs_ptr,
 
     if (pcs_ptr->av1_cm->tiles_info.tile_rows * pcs_ptr->av1_cm->tiles_info.tile_cols > 1) {
         // tile id used for cdf update
-#if ENABLE_CDF_UPDATE
         eb_aom_wb_write_literal(
             wb,
             pcs_ptr->frame_end_cdf_update_mode ? pcs_ptr->av1_cm->tiles_info.tile_rows * pcs_ptr->av1_cm->tiles_info.tile_cols - 1 : 0,
             pcs_ptr->av1_cm->log2_tile_cols + pcs_ptr->av1_cm->log2_tile_rows);
-#else
-        eb_aom_wb_write_literal(wb, 0, pcs_ptr->av1_cm->log2_tile_cols + pcs_ptr->av1_cm->log2_tile_rows);
-#endif
         // Number of bytes in tile size - 1
         eb_aom_wb_write_literal(wb, 3, 2);
     }
@@ -4051,13 +4026,8 @@ static void WriteGlobalMotion(
     int32_t frame;
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
     for (frame = LAST_FRAME; frame <= ALTREF_FRAME; ++frame) {
-#if ENABLE_CDF_UPDATE
         const EbWarpedMotionParams *ref_params = (frm_hdr->primary_ref_frame != PRIMARY_REF_NONE) ?
             &pcs_ptr->childPcs->ref_global_motion[frame] : &default_warp_params;
-#else
-        const EbWarpedMotionParams *ref_params = &default_warp_params;
-        //pcs_ptr->prev_frame ? &pcs_ptr->prev_frame->global_motion[frame] : &default_warp_params;
-#endif
         write_global_motion_params(&pcs_ptr->global_motion[frame], ref_params, wb,
             frm_hdr->allow_high_precision_mv);
         // TODO(sarahparker, debargha): The logic in the commented out code below
@@ -5657,11 +5627,7 @@ void code_tx_size(
     BlockSize bsize = blk_geom->bsize;
     const int32_t bw = mi_size_wide[bsize];
     const int32_t bh = mi_size_high[bsize];
-#if INCOMPLETE_SB_FIX
     uint32_t mi_stride = pcsPtr->mi_stride;
-#else
-    uint32_t mi_stride = pcsPtr->parent_pcs_ptr->sequence_control_set_ptr->picture_width_in_sb*(BLOCK_SIZE_64 >> MI_SIZE_LOG2);
-#endif
     set_mi_row_col(
         pcsPtr,
         xd,
@@ -6026,22 +5992,10 @@ assert(bsize < BlockSizeS_ALL);
 
 #if ADD_DELTA_QP_SUPPORT //PART 1
         if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
-#if QPM
             int32_t current_q_index = quantizer_to_qindex[cu_ptr->qp];
             int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0) &&
                 (((blkOriginX >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0);
             if ((bsize != sequence_control_set_ptr->seq_header.sb_size || skipCoeff == 0) && super_block_upper_left) {
-#else
-            int32_t current_q_index = cu_ptr->qp;
-
-            int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->mib_size - 1)) == 0) && (((blkOriginX >> 2) & (sequence_control_set_ptr->mib_size - 1)) == 0);
-            /*((mi_row & (cm->seq_params.mib_size - 1)) == 0) && ((mi_col & (cm->seq_params.mib_size - 1)) == 0);*/
-
-            BlockSize bsize = cu_size == 64 ? BLOCK_64X64 : cu_size == 32 ? BLOCK_32X32 : cu_size == 16 ? BLOCK_16X16 : cu_size == 8 ? BLOCK_8X8 : BLOCK_4X4;
-            if (cu_size == 8 && cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4)
-                bsize = BLOCK_4X4;
-            if ((bsize != sequence_control_set_ptr->sb_size || skipCoeff == 0) && super_block_upper_left) {
-#endif
                 assert(current_q_index > 0);
                 int32_t reduced_delta_qindex = (current_q_index - picture_control_set_ptr->parent_pcs_ptr->prev_qindex) / frm_hdr->delta_q_params.delta_q_res;
 
@@ -6179,21 +6133,9 @@ assert(bsize < BlockSizeS_ALL);
             blkOriginY >> MI_SIZE_LOG2);
 #if ADD_DELTA_QP_SUPPORT//PART 2
         if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
-#if QPM
             int32_t current_q_index = quantizer_to_qindex[cu_ptr->qp];
             int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0) && (((blkOriginX >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0);
             if ((bsize != sequence_control_set_ptr->seq_header.sb_size || skipCoeff == 0) && super_block_upper_left) {
-#else
-            int32_t current_q_index = cu_ptr->qp;
-
-            int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->mib_size - 1)) == 0) && (((blkOriginX >> 2) & (sequence_control_set_ptr->mib_size - 1)) == 0);
-            /*((mi_row & (cm->seq_params.mib_size - 1)) == 0) && ((mi_col & (cm->seq_params.mib_size - 1)) == 0);*/
-
-            BlockSize bsize = cu_size == 64 ? BLOCK_64X64 : cu_size == 32 ? BLOCK_32X32 : cu_size == 16 ? BLOCK_16X16 : cu_size == 8 ? BLOCK_8X8 : BLOCK_4X4;
-            if (cu_size == 8 && cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->pred_mode == INTRA_MODE_4x4)
-                bsize = BLOCK_4X4;
-            if ((bsize != sequence_control_set_ptr->sb_size || skipCoeff == 0) && super_block_upper_left) {
-#endif
                 assert(current_q_index > 0);
                 int32_t reduced_delta_qindex = (current_q_index - picture_control_set_ptr->parent_pcs_ptr->prev_qindex) / frm_hdr->delta_q_params.delta_q_res;
                 Av1writeDeltaQindex(
@@ -6403,7 +6345,6 @@ assert(bsize < BlockSizeS_ALL);
                         cu_ptr,
                         picture_control_set_ptr);
                 }
-#if COMP_MODE
                 // First write idx to indicate current compound inter prediction mode group
                 // Group A (0): dist_wtd_comp, compound_average
                 // Group B (1): interintra, compound_diffwtd, wedge
@@ -6469,10 +6410,6 @@ assert(bsize < BlockSizeS_ALL);
                         }
                     }
                 }
-#else
-                if (sequence_control_set_ptr->seq_header.enable_masked_compound || sequence_control_set_ptr->seq_header.order_hint_info.enable_jnt_comp)
-                    printf("ERROR[AN]: masked_compound_used and enable_jnt_comp not supported\n");
-#endif
                 // No filter for Global MV
                 write_mb_interp_filter(
                     ref_frame_type_neighbor_array,
@@ -6581,17 +6518,11 @@ EB_EXTERN EbErrorType write_sb(
         cu_origin_x = context_ptr->sb_origin_x + blk_geom->origin_x;
         cu_origin_y = context_ptr->sb_origin_y + blk_geom->origin_y;
         if (checkCuOutOfBound) {
-#if  INCOMPLETE_SB_FIX
             if (blk_geom->shape != PART_N)
                 blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
             codeCuCond = EB_FALSE;
             if (((cu_origin_x + blk_geom->bwidth / 2 < sequence_control_set_ptr->seq_header.max_frame_width) || (cu_origin_y + blk_geom->bheight / 2 < sequence_control_set_ptr->seq_header.max_frame_height)) &&
                 cu_origin_x < sequence_control_set_ptr->seq_header.max_frame_width && cu_origin_y < sequence_control_set_ptr->seq_header.max_frame_height)
-#else
-            codeCuCond = (EbBool)sb_geom->block_is_inside_md_scan[cu_index]; // check if cu is inside the picture
-
-            if ((cu_origin_x < sequence_control_set_ptr->seq_header.max_frame_width) && (cu_origin_y < sequence_control_set_ptr->seq_header.max_frame_height))
-#endif
                 codeCuCond = EB_TRUE;
         }
 

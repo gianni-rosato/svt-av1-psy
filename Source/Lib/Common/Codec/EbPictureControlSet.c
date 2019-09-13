@@ -205,9 +205,7 @@ void picture_control_set_dctor(EbPtr p)
 
     EB_FREE_ARRAY(obj->mi_grid_base);
     EB_FREE_ARRAY(obj->mip);
-#if ENABLE_CDF_UPDATE
     EB_FREE_ARRAY(obj->md_rate_estimation_array);
-#endif
     EB_FREE_ARRAY(obj->ec_ctx_array);
     EB_FREE_ARRAY(obj->rate_est_array);
 
@@ -257,11 +255,7 @@ EbErrorType picture_control_set_ctor(
     EbPictureBufferDescInitData coeffBufferDescInitData;
 
     // Max/Min CU Sizes
-#if QPM
     const uint32_t maxCuSize = initDataPtr->sb_size_pix;
-#else
-    const uint32_t maxCuSize = initDataPtr->sb_sz;
-#endif
     // LCUs
     const uint16_t pictureLcuWidth = (uint16_t)((initDataPtr->picture_width + initDataPtr->sb_sz - 1) / initDataPtr->sb_sz);
     const uint16_t pictureLcuHeight = (uint16_t)((initDataPtr->picture_height + initDataPtr->sb_sz - 1) / initDataPtr->sb_sz);
@@ -412,11 +406,9 @@ EbErrorType picture_control_set_ctor(
         sb_origin_y = (sb_origin_x == picture_sb_w - 1) ? sb_origin_y + 1 : sb_origin_y;
         sb_origin_x = (sb_origin_x == picture_sb_w - 1) ? 0 : sb_origin_x + 1;
     }
-#if ENABLE_CDF_UPDATE
     // MD Rate Estimation Array
     EB_MALLOC_ARRAY(object_ptr->md_rate_estimation_array, 1);
     memset(object_ptr->md_rate_estimation_array, 0, sizeof(MdRateEstimationContext));
-#endif
 
     EB_MALLOC_ARRAY(object_ptr->ec_ctx_array, all_sb);
     EB_MALLOC_ARRAY(object_ptr->rate_est_array, all_sb);
@@ -998,7 +990,6 @@ EbErrorType picture_control_set_ctor(
     EB_CREATE_MUTEX(object_ptr->rest_search_mutex);
 
     //the granularity is 4x4
-#if INCOMPLETE_SB_FIX
     EB_MALLOC_ARRAY(object_ptr->mi_grid_base, all_sb*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2)*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2));
 
     EB_MALLOC_ARRAY(object_ptr->mip, all_sb*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2)*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2));
@@ -1009,20 +1000,6 @@ EbErrorType picture_control_set_ctor(
     for (miIdx = 0; miIdx < all_sb*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2)*(initDataPtr->sb_size_pix >> MI_SIZE_LOG2); ++miIdx)
         object_ptr->mi_grid_base[miIdx] = object_ptr->mip + miIdx;
     object_ptr->mi_stride = picture_sb_w * (initDataPtr->sb_size_pix >> MI_SIZE_LOG2);
-#else
-    //the granularity is 4x4
-    EB_MALLOC_ARRAY(object_ptr->mi_grid_base, object_ptr->sb_total_count*(BLOCK_SIZE_64 / 4)*(BLOCK_SIZE_64 / 4));
-    EB_MALLOC_ARRAY(object_ptr->mip, object_ptr->sb_total_count*(BLOCK_SIZE_64 / 4)*(BLOCK_SIZE_64 / 4));
-
-    memset(object_ptr->mip, 0, sizeof(ModeInfo) * object_ptr->sb_total_count*(BLOCK_SIZE_64 / 4)*(BLOCK_SIZE_64 / 4));
-    // pictureLcuWidth * pictureLcuHeight
-
-    uint32_t miIdx;
-    for (miIdx = 0; miIdx < object_ptr->sb_total_count*(BLOCK_SIZE_64 >> MI_SIZE_LOG2)*(BLOCK_SIZE_64 >> MI_SIZE_LOG2); ++miIdx)
-        object_ptr->mi_grid_base[miIdx] = object_ptr->mip + miIdx;
-    object_ptr->mi_stride = pictureLcuWidth * (BLOCK_SIZE_64 / 4);
-#endif
-#if MFMV_SUPPORT
     if (initDataPtr->mfmv)
     {
         //MFMV: map is 8x8 based.
@@ -1032,7 +1009,6 @@ EbErrorType picture_control_set_ctor(
         EB_MALLOC_ALIGNED_ARRAY(object_ptr->tpl_mvs, mem_size);
         memset(object_ptr->tpl_mvs, 0, sizeof(TPL_MV_REF)*mem_size);
     }
-#endif
     object_ptr->hash_table.p_lookup_table = NULL;
     av1_hash_table_create(&object_ptr->hash_table);
     return EB_ErrorNone;

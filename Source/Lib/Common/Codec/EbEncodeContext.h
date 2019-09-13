@@ -124,10 +124,6 @@ typedef struct EncodeContext
 
     // Prediction Structure
     PredictionStructureGroup                       *prediction_structure_group_ptr;
-#if !ENABLE_CDF_UPDATE
-    // MD Rate Estimation Table
-    MdRateEstimationContext                        *md_rate_estimation_array;
-#endif
     // Rate Control Bit Tables
     RateControlTables                              *rate_control_tables_array;
     EbBool                                            rate_control_tables_array_updated;

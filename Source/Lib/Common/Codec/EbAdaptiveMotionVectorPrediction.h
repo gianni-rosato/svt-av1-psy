@@ -20,24 +20,7 @@ extern "C" {
 
     struct ModeDecisionContext;
     struct InterPredictionContext;
-#if !MFMV_SUPPORT // SVT-HEVC TMVP code
-    typedef enum TmvpPos
-    {
-        TmvpColocatedBottomRight = 0,
-        TmvpColocatedCenter = 1
-    } TmvpPos;
 
-    // TMVP items corresponding to one LCU
-    typedef struct TmvpUnit
-    {
-        Mv              mv[MAX_NUM_OF_REF_PIC_LIST][MAX_TMVP_CAND_PER_LCU];
-        uint64_t            ref_pic_poc[MAX_NUM_OF_REF_PIC_LIST][MAX_TMVP_CAND_PER_LCU];
-        EbPredDirection  prediction_direction[MAX_TMVP_CAND_PER_LCU];
-        EbBool              availability_flag[MAX_TMVP_CAND_PER_LCU];
-
-        //*Note- list 1 motion info will be added when B-slices are ready
-    } TmvpUnit;
-#endif
     extern EbErrorType clip_mv(
         uint32_t  cu_origin_x,
         uint32_t  cu_origin_y,

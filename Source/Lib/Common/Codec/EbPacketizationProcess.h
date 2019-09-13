@@ -31,9 +31,7 @@ extern "C" {
         EbFifo      *entropy_coding_input_fifo_ptr;
         EbFifo      *rate_control_tasks_output_fifo_ptr;
         EbPPSConfig *pps_config;
-#if ENABLE_CDF_UPDATE
         EbFifo      *picture_manager_input_fifo_ptr;   // to picture-manager
-#endif
         uint64_t   dpb_disp_order[8], dpb_dec_order[8];
         uint64_t   tot_shown_frames;
         uint64_t   disp_order_continuity_count;
@@ -45,10 +43,8 @@ extern "C" {
     extern EbErrorType packetization_context_ctor(
         PacketizationContext  *context_ptr,
         EbFifo                *entropy_coding_input_fifo_ptr,
-        EbFifo                *rate_control_tasks_output_fifo_ptr
-#if ENABLE_CDF_UPDATE
-        , EbFifo              *picture_manager_input_fifo_ptr
-#endif
+        EbFifo                *rate_control_tasks_output_fifo_ptr,
+        EbFifo              *picture_manager_input_fifo_ptr
     );
 
     extern void* packetization_kernel(void *input_ptr);

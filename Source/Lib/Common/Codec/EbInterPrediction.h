@@ -57,10 +57,8 @@ extern "C" {
         uint8_t                                 ref_frame_type,
         MvUnit                               *mv_unit,
         uint8_t                                  use_intrabc,
-#if COMP_MODE
         uint8_t                                compound_idx,
         INTERINTER_COMPOUND_DATA               *interinter_comp,
-#endif
 #if II_COMP_FLAG
         TileInfo                                * tile,
         NeighborArrayUnit                       *luma_recon_neighbor_array,
@@ -82,7 +80,6 @@ extern "C" {
         uint16_t                                dst_origin_y,
         EbBool                                  perform_chroma,
         EbAsm                                   asm_type);
-#if COMP_MODE
     void search_compound_diff_wedge(
         PictureControlSet                    *picture_control_set_ptr,
         struct ModeDecisionContext                  *context_ptr,
@@ -91,7 +88,6 @@ extern "C" {
         PictureControlSet                    *picture_control_set_ptr,
         struct ModeDecisionContext                    *context_ptr,
         ModeDecisionCandidate                *candidate_ptr);
-#endif
     EbErrorType inter_pu_prediction_av1(
         struct ModeDecisionContext           *md_context_ptr,
         PictureControlSet                    *picture_control_set_ptr,

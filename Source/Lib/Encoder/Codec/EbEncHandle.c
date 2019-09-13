@@ -807,9 +807,7 @@ EbErrorType RestResultsCreator(
 }
 
 void init_fn_ptr(void);
-#if COMP_MODE
 extern void av1_init_wedge_masks(void);
-#endif
 /**********************************
 * Initialize Encoder Library
 **********************************/
@@ -851,9 +849,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 
     eb_av1_init_me_luts();
     init_fn_ptr();
-#if COMP_MODE
     av1_init_wedge_masks();
-#endif
     /************************************
     * Sequence Control Set
     ************************************/
@@ -954,9 +950,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.max_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_sb_depth;
         inputData.hbd_mode_decision = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.enable_hbd_mode_decision;
         inputData.cdf_mode = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->cdf_mode;
-#if MFMV_SUPPORT
         inputData.mfmv = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->mfmv_enabled;
-#endif
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -1011,9 +1005,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         referencePictureBufferDescInitData.right_padding = PAD_VALUE;
         referencePictureBufferDescInitData.top_padding = PAD_VALUE;
         referencePictureBufferDescInitData.bot_padding = PAD_VALUE;
-#if MFMV_SUPPORT
         referencePictureBufferDescInitData.mfmv = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->mfmv_enabled;
-#endif
         // Hsan: split_mode is set @ eb_reference_object_ctor() as both unpacked reference and packed reference are needed for a 10BIT input; unpacked reference @ MD, and packed reference @ EP
 
         if (is16bit)
@@ -1261,7 +1253,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     // Picture Demux Results
     {
         PictureResultInitData pictureResultInitData;
-#if ENABLE_CDF_UPDATE
         EB_NEW(
             enc_handle_ptr->picture_demux_results_resource_ptr,
             eb_system_resource_ctor,
@@ -1275,20 +1266,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             &pictureResultInitData,
             NULL);
 
-#else
-        EB_NEW(
-            enc_handle_ptr->picture_demux_results_resource_ptr,
-            eb_system_resource_ctor,
-            enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->picture_demux_fifo_init_count,
-            enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count + enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->rest_process_init_count,
-            EB_PictureManagerProcessInitCount,
-            &enc_handle_ptr->picture_demux_results_producer_fifo_ptr_array,
-            &enc_handle_ptr->picture_demux_results_consumer_fifo_ptr_array,
-            EB_TRUE,
-            picture_results_creator,
-            &pictureResultInitData,
-            NULL);
-#endif
     }
 
     // Rate Control Tasks
@@ -1660,7 +1637,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     }
 
     // Packetization Context
-#if ENABLE_CDF_UPDATE
     EB_NEW(
         enc_handle_ptr->packetization_context_ptr,
         packetization_context_ctor,
@@ -1669,14 +1645,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         , enc_handle_ptr->picture_demux_results_producer_fifo_ptr_array[enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->source_based_operations_process_init_count +
         enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count]
     );
-#else
-    EB_NEW(
-        enc_handle_ptr->packetization_context_ptr,
-        packetization_context_ctor,
-        enc_handle_ptr->entropy_coding_results_consumer_fifo_ptr_array[0],
-        enc_handle_ptr->rate_control_tasks_producer_fifo_ptr_array[RateControlPortLookup(RATE_CONTROL_INPUT_PORT_PACKETIZATION, 0)]
-    );
-#endif
 
     /************************************
     * Thread Handles
@@ -1887,12 +1855,7 @@ void SetDefaultConfigurationParameters(
     sequence_control_set_ptr->cropping_top_offset = 0;
     sequence_control_set_ptr->cropping_bottom_offset = 0;
 
-#if QPM
     sequence_control_set_ptr->static_config.enable_adaptive_quantization = 2;
-#else
-    //Segmentation
-    sequence_control_set_ptr->static_config.enable_adaptive_quantization = 0;
-#endif
 
     return;
 }
@@ -1955,14 +1918,6 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     sequence_control_set_ptr->max_input_chroma_width = sequence_control_set_ptr->max_input_luma_width >> subsampling_x;
     sequence_control_set_ptr->max_input_chroma_height = sequence_control_set_ptr->max_input_luma_height >> subsampling_y;
 
-    // Configure the padding
-#if !INCOMPLETE_SB_FIX
-    sequence_control_set_ptr->left_padding  = BLOCK_SIZE_64 + 4;
-    sequence_control_set_ptr->top_padding = BLOCK_SIZE_64 + 4;
-    sequence_control_set_ptr->right_padding = BLOCK_SIZE_64 + 4;
-    sequence_control_set_ptr->bot_padding = BLOCK_SIZE_64 + 4;
-#endif
-
     sequence_control_set_ptr->chroma_width = sequence_control_set_ptr->max_input_luma_width >> subsampling_x;
     sequence_control_set_ptr->chroma_height = sequence_control_set_ptr->max_input_luma_height >> subsampling_y;
     sequence_control_set_ptr->seq_header.max_frame_width = sequence_control_set_ptr->max_input_luma_width;
@@ -1973,24 +1928,18 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     derive_input_resolution(
         sequence_control_set_ptr,
         sequence_control_set_ptr->seq_header.max_frame_width*sequence_control_set_ptr->seq_header.max_frame_height);
-#if SC_SETTINGS_TUNING
     if (sequence_control_set_ptr->static_config.screen_content_mode == 1)
         sequence_control_set_ptr->static_config.super_block_size = 64;
     else
         sequence_control_set_ptr->static_config.super_block_size = (sequence_control_set_ptr->static_config.enc_mode <= ENC_M3 && sequence_control_set_ptr->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 128 : 64;
 
-#else
-    sequence_control_set_ptr->static_config.super_block_size       = (sequence_control_set_ptr->static_config.enc_mode == ENC_M0 && sequence_control_set_ptr->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 128 : 64;
-#endif
     sequence_control_set_ptr->static_config.super_block_size = (sequence_control_set_ptr->static_config.rate_control_mode > 1) ? 64 : sequence_control_set_ptr->static_config.super_block_size;
    // sequence_control_set_ptr->static_config.hierarchical_levels = (sequence_control_set_ptr->static_config.rate_control_mode > 1) ? 3 : sequence_control_set_ptr->static_config.hierarchical_levels;
-#if INCOMPLETE_SB_FIX
     // Configure the padding
     sequence_control_set_ptr->left_padding = BLOCK_SIZE_64 + 4;
     sequence_control_set_ptr->top_padding = BLOCK_SIZE_64 + 4;
     sequence_control_set_ptr->right_padding = BLOCK_SIZE_64 + 4;
     sequence_control_set_ptr->bot_padding = sequence_control_set_ptr->static_config.super_block_size + 4;
-#endif
     sequence_control_set_ptr->static_config.enable_overlays = sequence_control_set_ptr->static_config.enable_altrefs == EB_FALSE ||
         (sequence_control_set_ptr->static_config.altref_nframes <= 1) ||
         (sequence_control_set_ptr->static_config.rate_control_mode > 0) ||
@@ -2015,7 +1964,6 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
         sequence_control_set_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
     else
         sequence_control_set_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
-#if INCOMPLETE_SB_FIX
     // Set over_boundary_block_mode     Settings
     // 0                            0: not allowed
     // 1                            1: allowed
@@ -2023,10 +1971,7 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
         sequence_control_set_ptr->over_boundary_block_mode = 1;
     else
         sequence_control_set_ptr->over_boundary_block_mode = 0;
-#endif
-#if MFMV_SUPPORT
     sequence_control_set_ptr->mfmv_enabled = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 1 : 0;
-#endif
 }
 
 void CopyApiFromApp(
@@ -2501,13 +2446,8 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error instance %u : Invalid screen_content_mode. screen_content_mode must be [0 - 2]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if QPM
     if (sequence_control_set_ptr->static_config.enable_adaptive_quantization > 2) {
         SVT_LOG("Error instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must be [0-2]\n", channelNumber + 1);
-#else
-    if(sequence_control_set_ptr->static_config.enable_adaptive_quantization>1){
-        SVT_LOG("Error instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must be [0/1]\n", channelNumber + 1);
-#endif
         return_error = EB_ErrorBadParameter;
     }
 

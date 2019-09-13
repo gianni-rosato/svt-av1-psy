@@ -13,10 +13,8 @@ static void mode_decision_context_dctor(EbPtr p)
 {
     ModeDecisionContext* obj = (ModeDecisionContext*)p;
 
-#if PRUNE_REF_FRAME_FRO_REC_PARTITION
     EB_FREE_ARRAY(obj->ref_best_ref_sq_table);
     EB_FREE_ARRAY(obj->ref_best_cost_sq_table);
-#endif
 
 #if NO_ENCDEC //SB128_TODO to upgrade
     int codedLeafIndex;
@@ -26,11 +24,7 @@ static void mode_decision_context_dctor(EbPtr p)
 
    }
 #endif
-#if MD_STAGING
     EB_DELETE_PTR_ARRAY(obj->candidate_buffer_ptr_array, MAX_NFL_BUFF);
-#else
-    EB_DELETE_PTR_ARRAY(obj->candidate_buffer_ptr_array, (MAX_NFL + 1 + 1));
-#endif
     EB_DELETE(obj->trans_quant_buffers_ptr);
     if (obj->hbd_mode_decision)
         EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon16bit);
@@ -117,7 +111,6 @@ EbErrorType mode_decision_context_ctor(
         eb_trans_quant_buffers_ctor);
 
     // Cost Arrays
-#if MD_STAGING
     EB_MALLOC_ARRAY(context_ptr->fast_cost_array, MAX_NFL_BUFF);
     EB_MALLOC_ARRAY(context_ptr->full_cost_array, MAX_NFL_BUFF);
     EB_MALLOC_ARRAY(context_ptr->full_cost_skip_ptr, MAX_NFL_BUFF);
@@ -125,17 +118,7 @@ EbErrorType mode_decision_context_ctor(
     // Candidate Buffers
     EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_ptr_array, MAX_NFL_BUFF);
     for (bufferIndex = 0; bufferIndex < MAX_NFL_BUFF; ++bufferIndex) {
-#else
-    // Hsan: MAX_NFL + 1 scratch buffer for intra + 1 scratch buffer for inter
-    EB_MALLOC_ARRAY(context_ptr->fast_cost_array, MAX_NFL + 1 + 1);
-    EB_MALLOC_ARRAY(context_ptr->full_cost_array, MAX_NFL + 1 + 1);
-    EB_MALLOC_ARRAY(context_ptr->full_cost_skip_ptr, MAX_NFL + 1 + 1);
-    EB_MALLOC_ARRAY(context_ptr->full_cost_merge_ptr, MAX_NFL + 1 + 1);
-    // Candidate Buffers
-    EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_ptr_array, (MAX_NFL + 1 + 1));
 
-    for (bufferIndex = 0; bufferIndex < (MAX_NFL + 1 + 1); ++bufferIndex) {
-#endif
         EB_NEW(
             context_ptr->candidate_buffer_ptr_array[bufferIndex],
             mode_decision_candidate_buffer_ctor,
@@ -219,10 +202,8 @@ EbErrorType mode_decision_context_ctor(
         }
 #endif
     }
-#if PRUNE_REF_FRAME_FRO_REC_PARTITION
     EB_MALLOC_ARRAY(context_ptr->ref_best_cost_sq_table, MAX_REF_TYPE_CAND);
     EB_MALLOC_ARRAY(context_ptr->ref_best_ref_sq_table, MAX_REF_TYPE_CAND);
-#endif
     return EB_ErrorNone;
 }
 
@@ -402,15 +383,8 @@ const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4] = {
 void reset_mode_decision(
     ModeDecisionContext   *context_ptr,
     PictureControlSet     *picture_control_set_ptr,
-#if !ENABLE_CDF_UPDATE
-    SequenceControlSet    *sequence_control_set_ptr,
-#endif
     uint32_t                   segment_index)
 {
-#if !ENABLE_CDF_UPDATE
-    EB_SLICE                     slice_type;
-    MdRateEstimationContext   *md_rate_estimation_array;
-#endif
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
 
     // QP
@@ -432,7 +406,6 @@ void reset_mode_decision(
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
         context_ptr->qp_index,
         picture_control_set_ptr->hbd_mode_decision);
-#if ENABLE_CDF_UPDATE
     // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
     if (context_ptr->is_md_rate_estimation_ptr_owner) {
         context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
@@ -442,34 +415,7 @@ void reset_mode_decision(
     uint32_t  candidateIndex;
     for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex)
         context_ptr->fast_candidate_ptr_array[candidateIndex]->md_rate_estimation_ptr = context_ptr->md_rate_estimation_ptr;
-#else
-    // Slice Type
-    slice_type =
-        (picture_control_set_ptr->parent_pcs_ptr->idr_flag == EB_TRUE) ? I_SLICE :
-        picture_control_set_ptr->slice_type;
 
-    // Increment the MD Rate Estimation array pointer to point to the right address based on the QP and slice type
-
-    /* Note(CHKN) : Rate estimation will use FrameQP even when Qp modulation is ON */
-
-    md_rate_estimation_array = (MdRateEstimationContext*)sequence_control_set_ptr->encode_context_ptr->md_rate_estimation_array;
-#if ADD_DELTA_QP_SUPPORT
-    md_rate_estimation_array += slice_type * TOTAL_NUMBER_OF_QP_VALUES + picture_control_set_ptr->picture_qp;
-#else
-    md_rate_estimation_array += slice_type * TOTAL_NUMBER_OF_QP_VALUES + context_ptr->qp;
-#endif
-
-    // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
-    if (context_ptr->is_md_rate_estimation_ptr_owner) {
-        context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
-        EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
-    }
-
-    context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
-    uint32_t  candidateIndex;
-    for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex)
-        context_ptr->fast_candidate_ptr_array[candidateIndex]->md_rate_estimation_ptr = md_rate_estimation_array;
-#endif
     // Reset CABAC Contexts
     context_ptr->coeff_est_entropy_coder_ptr = picture_control_set_ptr->coeff_est_entropy_coder_ptr;
 
@@ -482,15 +428,11 @@ void reset_mode_decision(
     picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv = picture_control_set_ptr->enc_mode == ENC_M0 &&
         (picture_control_set_ptr->parent_pcs_ptr->is_pan || picture_control_set_ptr->parent_pcs_ptr->is_tilt) ? 1 : 0;
 #endif
-#if SC_SETTINGS_TUNING
     EbBool enable_wm;
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
         enable_wm = EB_FALSE;
     else
         enable_wm = (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) || MR_MODE ? EB_TRUE : EB_FALSE;
-#else
-    EbBool enable_wm = (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) || MR_MODE ? EB_TRUE : EB_FALSE;
-#endif
     enable_wm = picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 ? EB_FALSE : enable_wm;
     frm_hdr->allow_warped_motion = enable_wm
         && !(frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME)
@@ -505,29 +447,11 @@ void reset_mode_decision(
  ******************************************************/
 void mode_decision_configure_lcu(
     ModeDecisionContext   *context_ptr,
-#if !QPM
-    LargestCodingUnit     *sb_ptr,
-#endif
     PictureControlSet     *picture_control_set_ptr,
-#if !QPM
-    SequenceControlSet    *sequence_control_set_ptr,
-    uint8_t                picture_qp,
-#endif
     uint8_t                    sb_qp){
     (void)picture_control_set_ptr;
     //Disable Lambda update per LCU
-#if QPM
     context_ptr->qp = sb_qp;
-#else
-    //RC is off
-    if (sequence_control_set_ptr->static_config.rate_control_mode == 0 && sequence_control_set_ptr->static_config.improve_sharpness == 0) {
-        context_ptr->qp = (uint8_t)picture_qp;
-        sb_ptr->qp = (uint8_t)context_ptr->qp;
-    }
-    //RC is on
-    else
-        context_ptr->qp = (uint8_t)sb_qp;
-#endif
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
 
     context_ptr->chroma_qp = context_ptr->qp;
@@ -535,12 +459,7 @@ void mode_decision_configure_lcu(
     /* Note(CHKN) : when Qp modulation varies QP on a sub-LCU(CU) basis,  Lamda has to change based on Cu->QP , and then this code has to move inside the CU loop in MD */
 
     // Lambda Assignement
-#if QPM
     context_ptr->qp_index = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present ? (uint8_t)quantizer_to_qindex[sb_qp] : (uint8_t)picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
-#else
-    context_ptr->qp_index = (uint8_t)picture_control_set_ptr->
-        parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
-#endif
 
     (*av1_lambda_assignment_function_table[picture_control_set_ptr->parent_pcs_ptr->pred_structure])(
         &context_ptr->fast_lambda,

@@ -1833,24 +1833,12 @@ int32_t av1_quantize_inv_quantize(
 #if !ADD_DELTA_QP_SUPPORT
     (void) qp;
 #endif
-#if !MD_STAGING
-    uint32_t i;
-    for (i = 0; i < height; i++)
-    {
-        memset(quant_coeff + i * width, 0, width * sizeof(int32_t));
-        memset(recon_coeff + i * width, 0, width * sizeof(int32_t));
-    }
-#endif
     MacroblockPlane      candidate_plane ;
 
     const QmVal *qMatrix = picture_control_set_ptr->parent_pcs_ptr->gqmatrix[NUM_QM_LEVELS - 1][0][txsize];
     const QmVal *iqMatrix = picture_control_set_ptr->parent_pcs_ptr->giqmatrix[NUM_QM_LEVELS - 1][0][txsize];
 #if ADD_DELTA_QP_SUPPORT
-#if QPM
     uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present ? quantizer_to_qindex[qp] : picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx + segmentation_qp_offset;
-#else
-    uint32_t qIndex = qp;
-#endif
 #else
     uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx + segmentation_qp_offset ;
 #endif
@@ -1930,11 +1918,7 @@ int32_t av1_quantize_inv_quantize(
 
 
     EbBool is_inter = (pred_mode >= NEARESTMV);
-#if MD_STAGING // RDOQ
     EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) && md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
-#else
-    EbBool perform_rdoq = (md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
-#endif
     perform_rdoq = perform_rdoq && !picture_control_set_ptr->hbd_mode_decision && !bit_increment;
 
     // Hsan: set to FALSE until adding x86 quantize_fp
@@ -2049,16 +2033,12 @@ void product_full_loop(
     {
         uint16_t tx_org_x = context_ptr->blk_geom->tx_org_x[tx_depth][txb_itr];
         uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[tx_depth][txb_itr];
-#if INCOMPLETE_SB_FIX
         int32_t cropped_tx_width = MIN(context_ptr->blk_geom->tx_width[tx_depth][txb_itr], sequence_control_set_ptr->seq_header.max_frame_width - (context_ptr->sb_origin_x + tx_org_x));
         int32_t cropped_tx_height = MIN(context_ptr->blk_geom->tx_height[tx_depth][txb_itr], sequence_control_set_ptr->seq_header.max_frame_height - (context_ptr->sb_origin_y + tx_org_y));
-#endif
         context_ptr->luma_txb_skip_context = 0;
         context_ptr->luma_dc_sign_context = 0;
         get_txb_ctx(
-#if INCOMPLETE_SB_FIX
             sequence_control_set_ptr,
-#endif
             COMPONENT_LUMA,
             context_ptr->luma_dc_sign_level_coeff_neighbor_array,
             context_ptr->sb_origin_x + tx_org_x,
@@ -2160,13 +2140,8 @@ void product_full_loop(
                 candidate_buffer->prediction_ptr->buffer_y,
                 tu_origin_index,
                 candidate_buffer->prediction_ptr->stride_y,
-#if INCOMPLETE_SB_FIX
                 cropped_tx_width,
                 cropped_tx_height);
-#else
-                context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
-                context_ptr->blk_geom->tx_height[tx_depth][txb_itr]);
-#endif
 
             tuFullDistortion[0][DIST_CALC_RESIDUAL] = spatial_full_dist_type_fun(
                 input_picture_ptr->buffer_y,
@@ -2175,13 +2150,8 @@ void product_full_loop(
                 candidate_buffer->recon_ptr->buffer_y,
                 tu_origin_index,
                 candidate_buffer->recon_ptr->stride_y,
-#if INCOMPLETE_SB_FIX
                 cropped_tx_width,
                 cropped_tx_height);
-#else
-                context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
-                context_ptr->blk_geom->tx_height[tx_depth][txb_itr]);
-#endif
 
             tuFullDistortion[0][DIST_CALC_PREDICTION] <<= 4;
             tuFullDistortion[0][DIST_CALC_RESIDUAL] <<= 4;
@@ -2377,9 +2347,7 @@ void product_full_loop_tx_search(
             context_ptr->luma_txb_skip_context = 0;
             context_ptr->luma_dc_sign_context = 0;
             get_txb_ctx(
-#if INCOMPLETE_SB_FIX
                 sequence_control_set_ptr,
-#endif
                 COMPONENT_LUMA,
                 picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
                 context_ptr->sb_origin_x + txb_origin_x,
@@ -3071,9 +3039,7 @@ void full_loop_r(
         context_ptr->cb_txb_skip_context = 0;
         context_ptr->cb_dc_sign_context = 0;
         get_txb_ctx(
-#if INCOMPLETE_SB_FIX
             sequence_control_set_ptr,
-#endif
             COMPONENT_CHROMA,
             context_ptr->cb_dc_sign_level_coeff_neighbor_array,
             ROUND_UV(context_ptr->sb_origin_x + txb_origin_x) >> 1,
@@ -3087,9 +3053,7 @@ void full_loop_r(
         context_ptr->cr_txb_skip_context = 0;
         context_ptr->cr_dc_sign_context = 0;
         get_txb_ctx(
-#if INCOMPLETE_SB_FIX
             sequence_control_set_ptr,
-#endif
             COMPONENT_CHROMA,
             context_ptr->cr_dc_sign_level_coeff_neighbor_array,
             ROUND_UV(context_ptr->sb_origin_x + txb_origin_x) >> 1,
@@ -3329,10 +3293,8 @@ void cu_full_distortion_fast_tu_mode_r(
     do {
         txb_origin_x = context_ptr->blk_geom->tx_org_x[tx_depth][txb_itr];
         txb_origin_y = context_ptr->blk_geom->tx_org_y[tx_depth][txb_itr];
-#if INCOMPLETE_SB_FIX
         int32_t cropped_tx_width_uv = MIN(context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr], picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_width / 2 - ((context_ptr->sb_origin_x + ((txb_origin_x >> 3) << 3)) >> 1));
         int32_t cropped_tx_height_uv = MIN(context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr], picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.max_frame_height / 2 - ((context_ptr->sb_origin_y + ((txb_origin_y >> 3) << 3)) >> 1));
-#endif
         tu_origin_index = txb_origin_x + txb_origin_y * candidate_buffer->residual_quant_coeff_ptr->stride_y;
         tu_chroma_origin_index = txb_1d_offset;
         // Reset the Bit Costs
@@ -3360,13 +3322,8 @@ void cu_full_distortion_fast_tu_mode_r(
                     candidate_buffer->prediction_ptr->buffer_cb,
                     tu_uv_origin_index,
                     candidate_buffer->prediction_ptr->stride_cb,
-#if INCOMPLETE_SB_FIX
                     cropped_tx_width_uv,
                     cropped_tx_height_uv);
-#else
-                    context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
-                    context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr]);
-#endif
 
                 tuFullDistortion[1][DIST_CALC_RESIDUAL] = spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_cb,
@@ -3375,13 +3332,8 @@ void cu_full_distortion_fast_tu_mode_r(
                     candidate_buffer->recon_ptr->buffer_cb,
                     tu_uv_origin_index,
                     candidate_buffer->recon_ptr->stride_cb,
-#if INCOMPLETE_SB_FIX
                     cropped_tx_width_uv,
                     cropped_tx_height_uv);
-#else
-                    context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
-                    context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr]);
-#endif
 
                 tuFullDistortion[2][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_cr,
@@ -3390,13 +3342,8 @@ void cu_full_distortion_fast_tu_mode_r(
                     candidate_buffer->prediction_ptr->buffer_cr,
                     tu_uv_origin_index,
                     candidate_buffer->prediction_ptr->stride_cr,
-#if INCOMPLETE_SB_FIX
                     cropped_tx_width_uv,
                     cropped_tx_height_uv);
-#else
-                    context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
-                    context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr]);
-#endif
 
                 tuFullDistortion[2][DIST_CALC_RESIDUAL] = spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_cr,
@@ -3405,13 +3352,8 @@ void cu_full_distortion_fast_tu_mode_r(
                     candidate_buffer->recon_ptr->buffer_cr,
                     tu_uv_origin_index,
                     candidate_buffer->recon_ptr->stride_cr,
-#if INCOMPLETE_SB_FIX
                     cropped_tx_width_uv,
                     cropped_tx_height_uv);
-#else
-                    context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
-                    context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr]);
-#endif
                 tuFullDistortion[1][DIST_CALC_PREDICTION]   <<= 4;
                 tuFullDistortion[1][DIST_CALC_RESIDUAL]     <<= 4;
                 tuFullDistortion[2][DIST_CALC_PREDICTION]   <<= 4;
@@ -3748,10 +3690,8 @@ uint32_t d2_inter_depth_block_decision(
                 parent_depth_cost = MAX_MODE_COST;
             else
                 compute_depth_costs(context_ptr, sequence_control_set_ptr, current_depth_idx_mds, parent_depth_idx_mds, ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth], &parent_depth_cost, &current_depth_cost);
-#if INCOMPLETE_SB_FIX
             if (!sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[parent_depth_idx_mds])
                 parent_depth_cost = MAX_MODE_COST;
-#endif
             if (parent_depth_cost <= current_depth_cost) {
                 context_ptr->md_cu_arr_nsq[parent_depth_idx_mds].split_flag = EB_FALSE;
                 context_ptr->md_local_cu_unit[parent_depth_idx_mds].cost = parent_depth_cost;
@@ -3770,7 +3710,6 @@ uint32_t d2_inter_depth_block_decision(
 
     return lastCuIndex;
 }
-#if MD_EXIT
 void   compute_depth_costs_md_skip(
     ModeDecisionContext *context_ptr,
     SequenceControlSet  *sequence_control_set_ptr,
@@ -3843,4 +3782,3 @@ void   compute_depth_costs_md_skip(
     *curr_depth_cost +=
         above_split_rate;
 }
-#endif

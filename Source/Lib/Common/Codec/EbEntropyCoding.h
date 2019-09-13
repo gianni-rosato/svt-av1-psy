@@ -169,9 +169,7 @@ extern "C" {
     }
 
     void get_txb_ctx(
-#if INCOMPLETE_SB_FIX
         SequenceControlSet *sequence_control_set_ptr,
-#endif
         const int32_t               plane,
         NeighborArrayUnit     *dc_sign_level_coeff_neighbor_array,
         uint32_t                  cu_origin_x,

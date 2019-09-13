@@ -15,9 +15,7 @@
 #include "EbRateControlTasks.h"
 #include "EbTime.h"
 #include "EbModeDecisionProcess.h"
-#if ENABLE_CDF_UPDATE
 #include "EbPictureDemuxResults.h"
-#endif
 #define DETAILED_FRAME_OUTPUT 0
 
 static EbBool IsPassthroughData(EbLinkedListNode* dataNode)
@@ -44,18 +42,14 @@ static void packetization_context_dctor(EbPtr p)
 EbErrorType packetization_context_ctor(
     PacketizationContext  *context_ptr,
     EbFifo                *entropy_coding_input_fifo_ptr,
-    EbFifo                *rate_control_tasks_output_fifo_ptr
-#if ENABLE_CDF_UPDATE
-    , EbFifo              *picture_manager_input_fifo_ptr
-#endif
+    EbFifo                *rate_control_tasks_output_fifo_ptr,
+    EbFifo              *picture_manager_input_fifo_ptr
 )
 {
     context_ptr->dctor = packetization_context_dctor;
     context_ptr->entropy_coding_input_fifo_ptr = entropy_coding_input_fifo_ptr;
     context_ptr->rate_control_tasks_output_fifo_ptr = rate_control_tasks_output_fifo_ptr;
-#if ENABLE_CDF_UPDATE
     context_ptr->picture_manager_input_fifo_ptr = picture_manager_input_fifo_ptr;
-#endif
     EB_MALLOC_ARRAY(context_ptr->pps_config, 1);
 
     return EB_ErrorNone;
@@ -260,10 +254,8 @@ void* packetization_kernel(void *input_ptr)
     EbBufferHeaderType             *output_stream_ptr;
     EbObjectWrapper              *rateControlTasksWrapperPtr;
     RateControlTasks             *rateControlTasksPtr;
-#if ENABLE_CDF_UPDATE
     EbObjectWrapper               *picture_manager_results_wrapper_ptr;
     PictureDemuxResults           *picture_manager_results_ptr;
-#endif
     // Queue variables
     int32_t                         queueEntryIndex;
     PacketizationReorderEntry    *queueEntryPtr;
@@ -324,7 +316,6 @@ void* packetization_kernel(void *input_ptr)
         rateControlTasksPtr = (RateControlTasks*)rateControlTasksWrapperPtr->object_ptr;
         rateControlTasksPtr->picture_control_set_wrapper_ptr = picture_control_set_ptr->picture_parent_control_set_wrapper_ptr;
         rateControlTasksPtr->task_type = RC_PACKETIZATION_FEEDBACK_RESULT;
-#if ENABLE_CDF_UPDATE
         if (picture_control_set_ptr->parent_pcs_ptr->frame_end_cdf_update_mode &&
             picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
             picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr) {
@@ -348,7 +339,6 @@ void* packetization_kernel(void *input_ptr)
             (void)picture_manager_results_ptr;
             (void)picture_manager_results_wrapper_ptr;
         }
-#endif
         // Reset the bitstream before writing to it
         reset_bitstream(
             picture_control_set_ptr->bitstream_ptr->output_bitstream_ptr);
@@ -442,7 +432,6 @@ void* packetization_kernel(void *input_ptr)
 
         // Post Rate Control Taks
         eb_post_full_object(rateControlTasksWrapperPtr);
-#if ENABLE_CDF_UPDATE
         if (picture_control_set_ptr->parent_pcs_ptr->frame_end_cdf_update_mode &&
             picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
             picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)
@@ -451,7 +440,6 @@ void* packetization_kernel(void *input_ptr)
         else
             // Since feedback is not set to PM, life count of is reduced here instead of PM
             eb_release_object(picture_control_set_ptr->sequence_control_set_wrapper_ptr);
-#endif
         //Release the Parent PCS then the Child PCS
         eb_release_object(entropyCodingResultsPtr->picture_control_set_wrapper_ptr);//Child
 

@@ -711,11 +711,6 @@ void PerformEarlyLcuPartitionning(
     // SB Loop : Partitionnig Decision
     for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
         sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
-#if !QPM
-        {
-            sb_ptr->qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
-        }
-#endif
         early_mode_decision_lcu(
             sequence_control_set_ptr,
             picture_control_set_ptr,
@@ -733,11 +728,6 @@ void PerformEarlyLcuPartitionningLcu(
 
     // SB Loop : Partitionnig Decision
     sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
-#if !QPM
-    {
-        sb_ptr->qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
-    }
-#endif
     early_mode_decision_lcu(
         sequence_control_set_ptr,
         picture_control_set_ptr,
@@ -1703,7 +1693,6 @@ void forward_all_c_blocks_to_md(
 
     picture_control_set_ptr->parent_pcs_ptr->average_qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
 }
-#if MFMV_SUPPORT
 void av1_set_ref_frame(MvReferenceFrame *rf,
     int8_t ref_frame_type);
 
@@ -1918,7 +1907,6 @@ void av1_setup_motion_field(
 
     if (ref_stamp >= 0) motion_field_projection(cm, picture_control_set_ptr, LAST2_FRAME, 2);
 }
-#endif
 /******************************************************
  * Mode Decision Configuration Kernel
  ******************************************************/
@@ -1946,10 +1934,8 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         rateControlResultsPtr = (RateControlResults*)rateControlResultsWrapperPtr->object_ptr;
         picture_control_set_ptr = (PictureControlSet*)rateControlResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
         sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-#if MFMV_SUPPORT
         if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs)
             av1_setup_motion_field(picture_control_set_ptr->parent_pcs_ptr->av1_cm, picture_control_set_ptr);
-#endif
 
         frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
 
@@ -2031,37 +2017,15 @@ void* mode_decision_configuration_kernel(void *input_ptr)
             context_ptr->qp_index,
             picture_control_set_ptr->hbd_mode_decision);
         context_ptr->lambda = (uint64_t)lambdaSad;
-#if ENABLE_CDF_UPDATE
         md_rate_estimation_array = picture_control_set_ptr->md_rate_estimation_array;
         // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
         if (context_ptr->is_md_rate_estimation_ptr_owner) {
             EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
             context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
         }
-#else
-        // Slice Type
-        EB_SLICE slice_type =
-            (picture_control_set_ptr->parent_pcs_ptr->idr_flag == EB_TRUE) ? I_SLICE :
-            picture_control_set_ptr->slice_type;
-
-        // Increment the MD Rate Estimation array pointer to point to the right address based on the QP and slice type
-        md_rate_estimation_array = (MdRateEstimationContext*)sequence_control_set_ptr->encode_context_ptr->md_rate_estimation_array;
-#if ADD_DELTA_QP_SUPPORT
-        md_rate_estimation_array += slice_type * TOTAL_NUMBER_OF_QP_VALUES + picture_control_set_ptr->parent_pcs_ptr->picture_qp;
-#else
-        md_rate_estimation_array += slice_type * TOTAL_NUMBER_OF_QP_VALUES + context_ptr->qp;
-#endif
-
-        // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
-        if (context_ptr->is_md_rate_estimation_ptr_owner) {
-            EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
-            context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
-        }
-#endif
         context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
 
         entropyCodingQp = frm_hdr->quantization_params.base_q_idx;
-#if ENABLE_CDF_UPDATE
         if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
             memcpy(picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc, &picture_control_set_ptr->ref_frame_context[picture_control_set_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame], sizeof(FRAME_CONTEXT));
         else
@@ -2076,14 +2040,6 @@ void* mode_decision_configuration_kernel(void *input_ptr)
             md_rate_estimation_array,
             picture_control_set_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
             picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc);
-#else
-        // Reset CABAC Contexts
-        reset_entropy_coder(
-            sequence_control_set_ptr->encode_context_ptr,
-            picture_control_set_ptr->coeff_est_entropy_coder_ptr,
-            entropyCodingQp,
-            picture_control_set_ptr->slice_type);
-#endif
         // Initial Rate Estimatimation of the syntax elements
         if (!md_rate_estimation_array->initialized)
             av1_estimate_syntax_rate(

@@ -26,9 +26,7 @@
 /************************************************
  * Defines
  ************************************************/
-#if TFK_ALTREF_DYNAMIC_WINDOW
 #define DYNAMIC_WINDOW_TH   50
-#endif
 
 #define  LAY0_OFF  0
 #define  LAY1_OFF  3
@@ -95,11 +93,9 @@ void eb_av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
     skip_mode_info->skip_mode_allowed = 0;
     skip_mode_info->ref_frame_idx_0 = INVALID_IDX;
     skip_mode_info->ref_frame_idx_1 = INVALID_IDX;
-#if MFMV_SUPPORT
     parent_pcs_ptr->cur_order_hint = parent_pcs_ptr->picture_number % (uint64_t)(1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
     for (uint8_t i = 0; i < 7; ++i)
         parent_pcs_ptr->ref_order_hint[i] = (uint32_t)ref_frame_arr_single[i].poc;
-#endif
     if (/*!order_hint_info->enable_order_hint ||*/ parent_pcs_ptr->slice_type == I_SLICE /*frame_is_intra_only(cm)*/ ||
         frm_hdr->reference_mode == SINGLE_REFERENCE)
         return;
@@ -181,11 +177,6 @@ void eb_av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
     //4 :BWD
     //5 :ALT2
     //6 :ALT
-#if COMP_MODE && !MFMV_SUPPORT
-    parent_pcs_ptr->cur_order_hint = parent_pcs_ptr->picture_number % (uint64_t)(1 << (parent_pcs_ptr->sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits));
-    for (uint8_t i = 0; i < 7; ++i)
-        parent_pcs_ptr->ref_order_hint[i] = (uint32_t)ref_frame_arr_single[i].poc;
-#endif
 }
 
 uint8_t  circ_dec(uint8_t max, uint8_t off, uint8_t input)
@@ -224,11 +215,7 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
                                                              (((int32_t) (base)) + ((int32_t) (offset)) < 0)                           ? ((base) + (offset) + (1 << (bits))) : \
                                                                                                                                        */((base) + (offset)))
 
-#if TF_KEY
 #define FUTURE_WINDOW_WIDTH                 6
-#else
-#define FUTURE_WINDOW_WIDTH                 4
-#endif
 #define FLASH_TH                            5
 #define FADE_TH                             3
 #define SCENE_TH                            3000
@@ -788,17 +775,13 @@ EbErrorType signal_derivation_multi_processes_oq(
     uint8_t sc_content_detected = picture_control_set_ptr->sc_content_detected;
 
 
-#if HME_ME_TUNING
     picture_control_set_ptr->enable_hme_flag = enable_hme_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
-#endif
 
     picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
     picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
     picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
 
-#if HME_ME_TUNING
     picture_control_set_ptr->tf_enable_hme_flag = tf_enable_hme_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
-#endif
     picture_control_set_ptr->tf_enable_hme_level0_flag = tf_enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
     picture_control_set_ptr->tf_enable_hme_level1_flag = tf_enable_hme_level1_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
     picture_control_set_ptr->tf_enable_hme_level2_flag = tf_enable_hme_level2_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
@@ -931,14 +914,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (MR_MODE)
             picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP;
         else if (sc_content_detected)
-#if SC_SETTINGS_TUNING
             picture_control_set_ptr->interpolation_search_level = IT_SEARCH_OFF;
-#else
-            if (picture_control_set_ptr->enc_mode <= ENC_M1)
-                picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP_UV_BLIND;
-            else
-                picture_control_set_ptr->interpolation_search_level = IT_SEARCH_OFF;
-#endif
         else if (picture_control_set_ptr->enc_mode <= ENC_M1)
             picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP_UV_BLIND;
         else if (picture_control_set_ptr->enc_mode <= ENC_M3)
@@ -1125,10 +1101,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->tx_search_reduced_set = 1;
     else
         picture_control_set_ptr->tx_search_reduced_set = 1;
-#if !MD_STAGING
-    // Set skip tx search based on NFL falg (0: Skip OFF ; 1: skip ON)
-    picture_control_set_ptr->skip_tx_search = 0;
-#endif
+
     // Intra prediction modes                       Settings
     // 0                                            FULL
     // 1                                            LIGHT per block : disable_z2_prediction && disable_angle_refinement  for 64/32/4
@@ -1191,18 +1164,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     picture_control_set_ptr->skip_sub_blks =   0;
 
         if (picture_control_set_ptr->sc_content_detected)
-#if SC_SETTINGS_TUNING
             picture_control_set_ptr->cu8x8_mode = (picture_control_set_ptr->temporal_layer_index > 0) ?
             CU_8x8_MODE_1 :
             CU_8x8_MODE_0;
-#else
-            if (picture_control_set_ptr->enc_mode <= ENC_M1)
-                picture_control_set_ptr->cu8x8_mode = CU_8x8_MODE_0;
-            else
-                picture_control_set_ptr->cu8x8_mode = (picture_control_set_ptr->temporal_layer_index > 0) ?
-                CU_8x8_MODE_1 :
-                CU_8x8_MODE_0;
-#endif
         else
         if (picture_control_set_ptr->enc_mode <= ENC_M8)
             picture_control_set_ptr->cu8x8_mode = CU_8x8_MODE_0;
@@ -1211,7 +1175,6 @@ EbErrorType signal_derivation_multi_processes_oq(
             CU_8x8_MODE_1 :
             CU_8x8_MODE_0;
 
-#if MD_STAGING // clean up atb
         // Set atb mode      Settings
         // 0                 OFF: no transform partitioning
         // 1                 ON for INTRA blocks
@@ -1219,18 +1182,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->atb_mode = 1;
         else
             picture_control_set_ptr->atb_mode = 0;
-#else
-        // Set atb mode      Settings
-        // 0                 OFF: no transform partitioning
-        // 1                 Fast: perform transform partitioning for sensitive block sizes
-        // 2                 Full: perform transform partitioning for all block sizes
 
-        if (picture_control_set_ptr->enc_mode == ENC_M0 && sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT)
-            picture_control_set_ptr->atb_mode = 1;
-        else
-            picture_control_set_ptr->atb_mode = 0;
-#endif
-#if COEFF_BASED_SKIP_ATB
         // Set skip atb                          Settings
         // 0                                     OFF
         // 1                                     ON
@@ -1239,8 +1191,6 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             picture_control_set_ptr->coeff_based_skip_atb = 1;
 
-#endif
-#if COMP_MODE
         // Set Wedge mode      Settings
         // 0                 FULL: Full search
         // 1                 Fast: If two predictors are very similar, skip wedge compound mode search
@@ -1272,9 +1222,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->compound_types_to_try = picture_control_set_ptr->compound_mode == 1 ? MD_COMP_DIFF0 : MD_COMP_WEDGE;
         else
             picture_control_set_ptr->compound_types_to_try = MD_COMP_AVG;
-#endif
 
-#if ENABLE_CDF_UPDATE
         // Set frame end cdf update mode      Settings
         // 0                                     OFF
         // 1                                     ON
@@ -1282,21 +1230,16 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->frame_end_cdf_update_mode = 1;
         else
             picture_control_set_ptr->frame_end_cdf_update_mode = 0;
-#endif
-#if PRUNE_REF_FRAME_AT_ME
         if (picture_control_set_ptr->sc_content_detected || picture_control_set_ptr->enc_mode == ENC_M0 || picture_control_set_ptr->enc_mode >= ENC_M4)
             picture_control_set_ptr->prune_unipred_at_me = 0;
         else
             picture_control_set_ptr->prune_unipred_at_me = 1;
-#endif
-#if MFMV_SUPPORT
         //CHKN: Temporal MVP should be disabled for pictures beloning to 4L MiniGop preceeded by 5L miniGOP. in this case the RPS is wrong(known issue). check RPS construction for more info.
         if ((sequence_control_set_ptr->static_config.hierarchical_levels == 4 && picture_control_set_ptr->hierarchical_levels == 3) ||
             picture_control_set_ptr->slice_type == I_SLICE)
             picture_control_set_ptr->frm_hdr.use_ref_frame_mvs = 0;
         else
             picture_control_set_ptr->frm_hdr.use_ref_frame_mvs = sequence_control_set_ptr->mfmv_enabled;
-#endif
     return return_error;
 }
 
@@ -2784,38 +2727,21 @@ void* picture_decision_kernel(void *input_ptr)
         queueEntryPtr = encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index];
 
         while (queueEntryPtr->parent_pcs_wrapper_ptr != EB_NULL) {
-#if TF_KEY
             if (((PictureParentControlSet *)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->end_of_sequence_flag == EB_TRUE) {
                 framePasseThru = EB_TRUE;
             }
             else
                 framePasseThru = EB_FALSE;
-#else
-            if (queueEntryPtr->picture_number == 0 ||
-                ((PictureParentControlSet *)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->end_of_sequence_flag == EB_TRUE){
-                framePasseThru = EB_TRUE;
-            }
-            else
-                framePasseThru = EB_FALSE;
-#endif
             windowAvail = EB_TRUE;
             previousEntryIndex = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
 
             ParentPcsWindow[0] = ParentPcsWindow[1] = ParentPcsWindow[2] = ParentPcsWindow[3] = ParentPcsWindow[4] = ParentPcsWindow[5] = NULL;
-#if TF_KEY
             //for poc 0, ignore previous frame check
             if (queueEntryPtr->picture_number > 0 && encode_context_ptr->picture_decision_reorder_queue[previousEntryIndex]->parent_pcs_wrapper_ptr == NULL)
-#else
-            if (encode_context_ptr->picture_decision_reorder_queue[previousEntryIndex]->parent_pcs_wrapper_ptr == NULL)
-#endif
                 windowAvail = EB_FALSE;
             else {
 
-#if TF_KEY
                 ParentPcsWindow[0] = queueEntryPtr->picture_number > 0 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[previousEntryIndex]->parent_pcs_wrapper_ptr->object_ptr : NULL;
-#else
-                ParentPcsWindow[0] = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[previousEntryIndex]->parent_pcs_wrapper_ptr->object_ptr;
-#endif
                 ParentPcsWindow[1] = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index]->parent_pcs_wrapper_ptr->object_ptr;
                 for (windowIndex = 0; windowIndex < FUTURE_WINDOW_WIDTH; windowIndex++) {
                     entryIndex = QUEUE_GET_NEXT_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index, windowIndex + 1);
@@ -2840,11 +2766,7 @@ void* picture_decision_kernel(void *input_ptr)
             picture_control_set_ptr->fade_in_to_black = 0;
             if (picture_control_set_ptr->idr_flag == EB_TRUE)
                 context_ptr->last_solid_color_frame_poc = 0xFFFFFFFF;
-#if TF_KEY
             if (windowAvail == EB_TRUE && queueEntryPtr->picture_number > 0) {
-#else
-            if (windowAvail == EB_TRUE) {
-#endif
                 if (sequence_control_set_ptr->static_config.scene_change_detection) {
                     picture_control_set_ptr->scene_change_flag = SceneTransitionDetector(
                         context_ptr,
@@ -3385,17 +3307,10 @@ void* picture_decision_kernel(void *input_ptr)
                             }
                             picture_control_set_ptr = cur_picture_control_set_ptr;
 
-
-#if TF_KEY
                             if( sequence_control_set_ptr->enable_altrefs == EB_TRUE &&
                                 ( (picture_control_set_ptr->idr_flag && picture_control_set_ptr->sc_content_detected == 0) ||
                                   (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) ) ) {
-#else
-                            if ( sequence_control_set_ptr->enable_altrefs == EB_TRUE &&
-                                 picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) {
-#endif
                                 int altref_nframes = picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes;
-#if TF_KEY
                                 if (picture_control_set_ptr->idr_flag) {
 
                                     //initilize list
@@ -3421,7 +3336,6 @@ void* picture_decision_kernel(void *input_ptr)
 
                                     picture_control_set_ptr->past_altref_nframes = 0;
                                     picture_control_set_ptr->future_altref_nframes = pic_i;
-#if TFK_ALTREF_DYNAMIC_WINDOW
                                     int index_center = 0;
                                     uint32_t actual_future_pics = picture_control_set_ptr->future_altref_nframes;
                                     int pic_itr, ahd;
@@ -3446,11 +3360,9 @@ void* picture_decision_kernel(void *input_ptr)
                                     }
                                     picture_control_set_ptr->future_altref_nframes = pic_itr - index_center;
                                     //printf("\nPOC %d\t PAST %d\t FUTURE %d\n", picture_control_set_ptr->picture_number, picture_control_set_ptr->past_altref_nframes, picture_control_set_ptr->future_altref_nframes);
-#endif
                                 }
                                 else
                                 {
-#endif
                                 int num_past_pics = altref_nframes / 2;
                                 int num_future_pics = altref_nframes - num_past_pics - 1;
                                 assert(altref_nframes <= ALTREF_MAX_NFRAMES);
@@ -3502,7 +3414,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 actual_past_pics = actual_future_pics;
                                 actual_past_pics += (altref_nframes + 1) & 0x1;
 
-#if ALTREF_TF_ADAPTIVE_WINDOW_SIZE
                                 int index_center = (uint8_t)(picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes / 2);
                                 int pic_itr;
                                 int ahd;
@@ -3544,12 +3455,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                                 picture_control_set_ptr->future_altref_nframes = pic_itr - index_center;
                                 //printf("\nPOC %d\t PAST %d\t FUTURE %d\n", picture_control_set_ptr->picture_number, picture_control_set_ptr->past_altref_nframes, picture_control_set_ptr->future_altref_nframes);
-#else
-                                //get the final number of pictures to use for the temporal filtering
-                                altref_nframes = (uint8_t)(actual_past_pics + 1 + actual_future_pics);
 
-                                picture_control_set_ptr->altref_nframes = (uint8_t)altref_nframes;
-#endif
                                 // adjust the temporal filtering pcs buffer to remove unused past pictures
                                 if(actual_past_pics != num_past_pics) {
 
@@ -3560,9 +3466,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     }
 
                                 }
-#if TF_KEY
                                 }
-#endif
 
                                 picture_control_set_ptr->temp_filt_prep_done = 0;
 

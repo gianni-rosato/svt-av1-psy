@@ -57,19 +57,7 @@ void LogErrorOutput(
     case EB_ENC_AMVP_ERROR5:
         fprintf(error_log_file, "Error: The availability parameter in GetSpatialMVPPosBx() function can not be > 7 !\n");
         break;
-#if !MFMV_SUPPORT // SVT-HEVC TMVP code
-    case EB_ENC_AMVP_ERROR6:
-        fprintf(error_log_file, "Error: GetTemporalMVP: tmvpMapLcuIndex must be either 0 or 1!\n");
-        break;
 
-    case EB_ENC_AMVP_ERROR7:
-        fprintf(error_log_file, "Error: the input PU to GetNonScalingSpatialAMVP() must be available!");
-        break;
-
-    case EB_ENC_AMVP_ERROR8:
-        fprintf(error_log_file, "Error: GetTemporalMVP: tmvpMapLcuIndex must be either 0 or 1");
-        break;
-#endif
     case EB_ENC_AMVP_NULL_REF_ERROR:
         fprintf(error_log_file, "Error: The referenceObject can not be NULL!\n");
         break;

@@ -177,7 +177,6 @@ extern "C" {
     RTCD_EXTERN void(*eb_av1_selfguided_restoration)(const uint8_t *dgd8, int32_t width, int32_t height,
         int32_t dgd_stride, int32_t *flt0, int32_t *flt1, int32_t flt_stride,
         int32_t sgr_params_idx, int32_t bit_depth, int32_t highbd);
-#if COMP_MODE
     void av1_build_compound_diffwtd_mask_c(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type, const uint8_t *src0, int src0_stride, const uint8_t *src1, int src1_stride, int h, int w);
     void av1_build_compound_diffwtd_mask_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type, const uint8_t *src0, int src0_stride, const uint8_t *src1, int src1_stride, int h, int w);
     RTCD_EXTERN void (*av1_build_compound_diffwtd_mask)(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type, const uint8_t *src0, int src0_stride, const uint8_t *src1, int src1_stride, int h, int w);
@@ -221,7 +220,6 @@ extern "C" {
     RTCD_EXTERN int8_t (*av1_wedge_sign_from_residuals)(const int16_t *ds, const uint8_t *m, int N, int64_t limit);
 
 
-#endif
 #if II_COMP_FLAG
     void aom_blend_a64_mask_c(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0, uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride, const uint8_t *mask, uint32_t mask_stride, int w, int h, int subw, int subh);
     void aom_blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0, uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride, const uint8_t *mask, uint32_t mask_stride, int w, int h, int subw, int subh);
@@ -2614,12 +2612,10 @@ extern "C" {
     void eb_av1_txb_init_levels_avx2(const TranLow *const coeff, const int32_t width, const int32_t height, uint8_t *const levels);
     RTCD_EXTERN void(*eb_av1_txb_init_levels)(const TranLow *const coeff, const int32_t width, const int32_t height, uint8_t *const levels);
 
-
-#if EDGE_BASED_SKIP_ANGULAR_INTRA
     void av1_get_gradient_hist_c(const uint8_t *src, int src_stride, int rows, int cols, uint64_t *hist);
     void av1_get_gradient_hist_avx2(const uint8_t *src, int src_stride, int rows, int cols, uint64_t *hist);
     RTCD_EXTERN void(*av1_get_gradient_hist)(const uint8_t *src, int src_stride, int rows, int cols, uint64_t *hist);
-#endif
+
     void eb_aom_dsp_rtcd(void);
 
 #ifdef RTCD_C
@@ -2646,7 +2642,6 @@ extern "C" {
 
         eb_av1_selfguided_restoration = eb_av1_selfguided_restoration_c;
         if (flags & HAS_AVX2) eb_av1_selfguided_restoration = eb_av1_selfguided_restoration_avx2;
-#if COMP_MODE
         av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_c;
         if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_avx2;
         av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_c;
@@ -2663,7 +2658,7 @@ extern "C" {
         if (flags & HAS_AVX2) av1_wedge_compute_delta_squares = av1_wedge_compute_delta_squares_avx2;
         av1_wedge_sign_from_residuals = av1_wedge_sign_from_residuals_c;
         if (flags & HAS_AVX2) av1_wedge_sign_from_residuals = av1_wedge_sign_from_residuals_avx2;
-#endif
+
 #if II_COMP_FLAG
         aom_blend_a64_mask = aom_blend_a64_mask_c;
         if (flags & HAS_AVX2) aom_blend_a64_mask = aom_blend_a64_mask_avx2;
@@ -3986,10 +3981,8 @@ extern "C" {
         /*if (flags & HAS_AVX2)*/ eb_aom_ifft8x8_float = eb_aom_ifft8x8_float_avx2;
         eb_aom_ifft2x2_float = eb_aom_ifft2x2_float_c;
         /*if (flags & HAS_SSE2)*/ eb_aom_ifft4x4_float = eb_aom_ifft4x4_float_sse2;
-#if EDGE_BASED_SKIP_ANGULAR_INTRA
         av1_get_gradient_hist = av1_get_gradient_hist_c;
         if (flags & HAS_AVX2) av1_get_gradient_hist = av1_get_gradient_hist_avx2;
-#endif
     }
 #endif
 

@@ -1589,7 +1589,6 @@ void eb_av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride,
     }
 }
 
-#if COMP_MODE
 // Loads and stores to do away with the tedium of casting the address
 // to the right type.
 static INLINE __m128i xx_loadl_32(const void *a) {
@@ -3292,7 +3291,6 @@ void av1_wedge_compute_delta_squares_avx2(int16_t *d, const int16_t *a,
         N -= 64;
     } while (N);
 }
-#endif
 
 #if II_COMP_FLAG
 static const uint8_t g_blend_a64_mask_shuffle[32] = {

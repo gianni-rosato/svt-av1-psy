@@ -30,9 +30,6 @@ static void encode_context_dctor(EbPtr p)
     EB_DELETE_PTR_ARRAY(obj->initial_rate_control_reorder_queue, INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->hl_rate_control_historgram_queue, HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
-#if !ENABLE_CDF_UPDATE
-    EB_FREE_ARRAY(obj->md_rate_estimation_array);
-#endif
     EB_FREE_ARRAY(obj->rate_control_tables_array);
 }
 
@@ -121,15 +118,6 @@ EbErrorType encode_context_ctor(
     // Signalling the need for a td structure to be written in the bitstream - on when the sequence starts
     encode_context_ptr->td_needed = EB_TRUE;
 
-#if !ENABLE_CDF_UPDATE
-    // MD Rate Estimation Array
-    EB_CALLOC(encode_context_ptr->md_rate_estimation_array, TOTAL_NUMBER_OF_MD_RATE_ESTIMATION_CASE_BUFFERS, sizeof(MdRateEstimationContext));
-
-    return_error = md_rate_estimation_context_init(encode_context_ptr->md_rate_estimation_array);
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
-    // Temporal Filter
-#endif
     // Rate Control Bit Tables
     EB_MALLOC_ARRAY(encode_context_ptr->rate_control_tables_array, TOTAL_NUMBER_OF_INITIAL_RC_TABLES_ENTRY);
 

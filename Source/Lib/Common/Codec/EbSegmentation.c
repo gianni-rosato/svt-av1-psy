@@ -143,11 +143,7 @@ void setup_segmentation(
         RateControlLayerContext *rateControlLayerPtr)
 {
     SegmentationParams *segmentation_params = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
-#if QPM
     segmentation_params->segmentation_enabled = (EbBool)(sequence_control_set_ptr->static_config.enable_adaptive_quantization == 1);
-#else
-    segmentation_params->segmentation_enabled = (EbBool) sequence_control_set_ptr->static_config.enable_adaptive_quantization;
-#endif
     if (segmentation_params->segmentation_enabled) {
         int32_t segment_qps[MAX_SEGMENTS];
         segmentation_params->segmentation_update_data = 1; //always updating for now. Need to set this based on actual deltas

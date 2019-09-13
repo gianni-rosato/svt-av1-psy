@@ -12422,7 +12422,6 @@ EbErrorType BiPredictionCompensation(MeContext *context_ptr, uint32_t pu_index,
     return return_error;
 }
 
-#if PRUNE_REF_FRAME_AT_ME
 uint8_t skip_bi_pred(
     PictureParentControlSet *picture_control_set_ptr,
     uint8_t ref_type,
@@ -12439,7 +12438,6 @@ uint8_t skip_bi_pred(
     }
     return allow_cand;
 }
-#endif
 
 /*******************************************
  * BiPredictionSearch
@@ -12451,9 +12449,7 @@ EbErrorType BiPredictionSearch(
     MeContext *context_ptr, uint32_t pu_index, uint8_t candidateIndex,
     uint32_t activeRefPicFirstLisNum, uint32_t activeRefPicSecondLisNum,
     uint8_t *total_me_candidate_index, EbAsm asm_type,
-#if PRUNE_REF_FRAME_AT_ME
     uint8_t ref_type_table[7],
-#endif
     PictureParentControlSet *picture_control_set_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -12499,7 +12495,6 @@ EbErrorType BiPredictionSearch(
              secondListRefPictdx < activeRefPicSecondLisNum;
              secondListRefPictdx++) {
             {
-#if PRUNE_REF_FRAME_AT_ME
                      uint8_t to_inject_ref_type_0 = svt_get_ref_frame_type(REF_LIST_0, firstListRefPictdx);
                      uint8_t to_inject_ref_type_1 = svt_get_ref_frame_type(REF_LIST_1, secondListRefPictdx);
                      uint8_t add_bi = skip_bi_pred(
@@ -12512,7 +12507,6 @@ EbErrorType BiPredictionSearch(
                          ref_type_table);
 
                      if (add_bi) {
-#endif
                 BiPredictionCompensation(
                     context_ptr,
                     pu_index,
@@ -12528,9 +12522,7 @@ EbErrorType BiPredictionSearch(
                     asm_type);
 
                 candidateIndex++;
-#if PRUNE_REF_FRAME_AT_ME
                      }
-#endif
             }
         }
     }
@@ -12541,14 +12533,12 @@ EbErrorType BiPredictionSearch(
         for (firstListRefPictdx = 1;
              firstListRefPictdx < activeRefPicFirstLisNum;
              firstListRefPictdx++) {
-#if PRUNE_REF_FRAME_AT_ME
             uint8_t to_inject_ref_type_0 = svt_get_ref_frame_type(REF_LIST_0, firstListRefPictdx);
             uint8_t add_bi = skip_bi_pred(
                 picture_control_set_ptr,
                 to_inject_ref_type_0,
                 ref_type_table);
             if (add_bi) {
-#endif
             BiPredictionCompensation(
                 context_ptr,
                 pu_index,
@@ -12563,22 +12553,18 @@ EbErrorType BiPredictionSearch(
                 asm_type);
 
             candidateIndex++;
-#if PRUNE_REF_FRAME_AT_ME
             }
-#endif
         }
         // NM: Within list 1    bipred: (BWD, ALT)
         for (secondListRefPictdx = 1;
              secondListRefPictdx < MIN(activeRefPicSecondLisNum, 1);
              secondListRefPictdx++) {
-#if PRUNE_REF_FRAME_AT_ME
             uint8_t to_inject_ref_type_0 = svt_get_ref_frame_type(REF_LIST_0, firstListRefPictdx);
             uint8_t add_bi = skip_bi_pred(
                 picture_control_set_ptr,
                 to_inject_ref_type_0,
                 ref_type_table);
             if (add_bi) {
-#endif
             BiPredictionCompensation(
                 context_ptr,
                 pu_index,
@@ -12593,9 +12579,7 @@ EbErrorType BiPredictionSearch(
                 asm_type);
 
             candidateIndex++;
-#if PRUNE_REF_FRAME_AT_ME
             }
-#endif
         }
     }
     *total_me_candidate_index = candidateIndex;
@@ -15203,10 +15187,8 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
                     &(context_ptr->me_candidate[candidateIndex].pu[pu_index]);
                 me_candidate->prediction_direction = listIndex;
                 me_candidate->ref_index[listIndex] = ref_pic_index;
-#if PRUNE_REF_FRAME_AT_ME
                 me_candidate->ref0_list = me_candidate->prediction_direction == 0 ? listIndex : 24;
                 me_candidate->ref1_list = me_candidate->prediction_direction == 1 ? listIndex : 24;
-#endif
                 me_candidate->distortion =
                     context_ptr->p_sb_best_sad[listIndex][ref_pic_index][nIdx];
                 candidateIndex++;
@@ -15214,7 +15196,6 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
         }
 
         total_me_candidate_index = candidateIndex;
-#if PRUNE_REF_FRAME_AT_ME
         uint8_t ref_type_table[7];
         if (picture_control_set_ptr->prune_unipred_at_me) {
             // Sorting of the ME candidates
@@ -15252,7 +15233,6 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
 
             }
         }
-#endif
         if (numOfListToSearch) {
             if (picture_control_set_ptr->cu8x8_mode == CU_8x8_MODE_0 ||
                 pu_index < 21 ||
@@ -15267,9 +15247,7 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
                     picture_control_set_ptr->ref_list1_count,
                     &total_me_candidate_index,
                     asm_type,
-#if PRUNE_REF_FRAME_AT_ME
                     ref_type_table,
-#endif
                     picture_control_set_ptr);
             }
         }

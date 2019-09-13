@@ -51,10 +51,6 @@ extern "C" {
         EbBool                               is_md_rate_estimation_ptr_owner;
         ModeDecisionContext                 *md_context;
         const BlockGeom                     *blk_geom;
-#if !MFMV_SUPPORT // SVT-HEVC TMVP code
-        // TMVP
-        EbReferenceObject                   *reference_object_write_ptr;
-#endif
         // MCP Context
         MotionCompensationPredictionContext *mcp_context;
         SsMeContext                         *ss_mecontext;
@@ -88,9 +84,6 @@ extern "C" {
         uint8_t                                sb_sz;
         uint32_t                               sb_index;
         MvUnit                               mv_unit;
-#if !MFMV_SUPPORT // SVT-HEVC TMVP code
-        int16_t                                x_mv_amvp_candidate_array_list0[MAX_NUM_OF_AMVP_CANDIDATES];
-#endif
         uint8_t                                txb_itr;
         EbBool                                 is16bit; //enable 10 bit encode in CL
         EbColorFormat                          color_format;

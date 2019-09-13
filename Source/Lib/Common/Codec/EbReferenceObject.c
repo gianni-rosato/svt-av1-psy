@@ -178,7 +178,6 @@ EbErrorType eb_reference_object_ctor(
             pictureBufferDescInitDataPtr,
             pictureBufferDescInitData16BitPtr.bit_depth);
     }
-#if MFMV_SUPPORT
     if (pictureBufferDescInitDataPtr->mfmv)
     {
         //MFMV map is 8x8 based.
@@ -188,7 +187,6 @@ EbErrorType eb_reference_object_ctor(
         EB_MALLOC_ALIGNED_ARRAY(referenceObject->mvs, mem_size);
         memset(referenceObject->mvs, 0, sizeof(MV_REF)*mem_size);
     }
-#endif
     memset(&referenceObject->film_grain_params, 0, sizeof(referenceObject->film_grain_params));
 
     return EB_ErrorNone;

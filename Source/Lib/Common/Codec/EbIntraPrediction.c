@@ -4456,11 +4456,7 @@ EbErrorType eb_av1_intra_prediction_cl(
 
             eb_av1_predict_intra_block(
                 &md_context_ptr->sb_ptr->tile_info,
-#if MD_STAGING // classes
                 !ED_STAGE,
-#else
-                MD_STAGE,
-#endif
                 md_context_ptr->blk_geom,
                 picture_control_set_ptr->parent_pcs_ptr->av1_cm,                                      //const Av1Common *cm,
                 plane ? md_context_ptr->blk_geom->bwidth_uv : md_context_ptr->blk_geom->bwidth,          //int32_t wpx,
@@ -4532,11 +4528,7 @@ EbErrorType eb_av1_intra_prediction_cl(
 
             eb_av1_predict_intra_block_16bit(
                 &md_context_ptr->sb_ptr->tile_info,
-#if MD_STAGING // classes
                 !ED_STAGE,
-#else
-                MD_STAGE,
-#endif
                 md_context_ptr->blk_geom,
                 picture_control_set_ptr->parent_pcs_ptr->av1_cm,                                      //const Av1Common *cm,
                 plane ? md_context_ptr->blk_geom->bwidth_uv : md_context_ptr->blk_geom->bwidth,          //int32_t wpx,
