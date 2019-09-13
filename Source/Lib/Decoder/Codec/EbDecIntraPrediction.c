@@ -28,8 +28,8 @@
 #include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
 #include "EbDecParseHelper.h"
-
 #include "EbDecProcessFrame.h"
+
 
 extern PredictionMode get_uv_mode(UvPredictionMode mode);
 
@@ -715,7 +715,7 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
                                 void *pv_pred_buf, int32_t pred_stride,
                                 void *topNeighArray,
                                 void *leftNeighArray,
-                                SeqHeader *seq_header,
+                                SeqHeader *seq_header, const PredictionMode mode,
                                 int32_t blk_mi_col_off, int32_t blk_mi_row_off,
                                 EbBitDepthEnum bit_depth)
 {
@@ -729,8 +729,6 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
 
     const int txwpx = tx_size_wide[tx_size];
     const int txhpx = tx_size_high[tx_size];
-
-    const PredictionMode mode = (plane == AOM_PLANE_Y) ? mbmi->mode : get_uv_mode(mbmi->uv_mode);
 
     const int use_palette = mbmi->palette_size[plane != 0] > 0;
 
@@ -833,6 +831,9 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
     void *pv_topNeighArray  = (void *)dec_mod_ctxt->topNeighArray;;
     void *pv_leftNeighArray = (void *)dec_mod_ctxt->leftNeighArray;
 
+    const PredictionMode mode = (plane == AOM_PLANE_Y) ?
+        part_info->mi->mode : get_uv_mode(part_info->mi->uv_mode);
+
     if (bit_depth == EB_8BIT) {
         EbByte  buf = (EbByte)pv_blk_recon_buf;
         uint8_t *pu1_topNeighArray = (uint8_t *)dec_mod_ctxt->topNeighArray;
@@ -865,7 +866,7 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
             tx_size, td,
             pv_blk_recon_buf, recon_stride,
             pv_topNeighArray, pv_leftNeighArray,
-            &dec_handle->seq_header,
+            &dec_handle->seq_header, mode,
             blk_mi_col_off, blk_mi_row_off, bit_depth);
 
         cfl_predict_block(part_info, part_info->pv_cfl_ctxt,
@@ -880,6 +881,6 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
         tx_size, td,
         pv_blk_recon_buf, recon_stride,
         pv_topNeighArray, pv_leftNeighArray,
-        &dec_handle->seq_header,
+        &dec_handle->seq_header, mode,
         blk_mi_col_off, blk_mi_row_off, bit_depth);
 }

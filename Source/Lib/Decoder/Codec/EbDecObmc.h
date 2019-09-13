@@ -13,17 +13,6 @@
 #define EbDecObmc_h
 
 #define MAX_OBMC_LEN 32
-#define IS_POWER_OF_TWO(x) (((x) & ((x)-1)) == 0)
-
- // Alpha blending with alpha values from the range [0, 64], where 64
- // means use the first input and 0 means use the second input.
-
-#define AOM_BLEND_A64_ROUND_BITS 6
-#define AOM_BLEND_A64_MAX_ALPHA (1 << AOM_BLEND_A64_ROUND_BITS)  // 64
-
-#define AOM_BLEND_A64(a, v0, v1)                                          \
-  ROUND_POWER_OF_TWO((a) * (v0) + (AOM_BLEND_A64_MAX_ALPHA - (a)) * (v1), \
-                     AOM_BLEND_A64_ROUND_BITS)
 
 typedef struct ObmcCtx {
     /*we can reduce memory size by fixing one side to 32, because

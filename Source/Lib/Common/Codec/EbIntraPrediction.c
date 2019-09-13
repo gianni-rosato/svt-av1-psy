@@ -4559,10 +4559,6 @@ EbErrorType eb_av1_intra_prediction_cl(
 }
 
 #if II_COMP_FLAG
-// Mapping of interintra to intra mode for use in the intra component
-static const PredictionMode interintra_to_intra_mode[INTERINTRA_MODES] = {
-  DC_PRED, V_PRED, H_PRED, SMOOTH_PRED
-};
 EbErrorType  intra_luma_prediction_for_interintra(
     ModeDecisionContext         *md_context_ptr,
     PictureControlSet           *picture_control_set_ptr,

@@ -229,7 +229,7 @@ static const int quant_dist_lookup_table[2][4][2] = {
 };
 
 void av1_dist_wtd_comp_weight_assign(
-    PictureControlSet  *picture_control_set_ptr,
+    SeqHeader *seq_header,
     int cur_frame_index,
     int bck_frame_index,
     int fwd_frame_index,
@@ -247,10 +247,10 @@ void av1_dist_wtd_comp_weight_assign(
 
     *use_dist_wtd_comp_avg = 1;
 
-    int d0 = clamp(abs(get_relative_dist_enc(&picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header,
+    int d0 = clamp(abs(get_relative_dist_enc(seq_header,
         fwd_frame_index, cur_frame_index)),
         0, MAX_FRAME_DISTANCE);
-    int d1 = clamp(abs(get_relative_dist_enc(&picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header,
+    int d1 = clamp(abs(get_relative_dist_enc(seq_header,
         cur_frame_index, bck_frame_index)),
         0, MAX_FRAME_DISTANCE);
 
@@ -274,6 +274,7 @@ void av1_dist_wtd_comp_weight_assign(
     *fwd_offset = quant_dist_lookup_table[order_idx][i][order];
     *bck_offset = quant_dist_lookup_table[order_idx][i][1 - order];
 }
+
 void eb_av1_convolve_2d_sr_c(const uint8_t *src, int32_t src_stride, uint8_t *dst,
     int32_t dst_stride, int32_t w, int32_t h,
     InterpFilterParams *filter_params_x,
@@ -1065,7 +1066,7 @@ InterpFilterParams av1_get_interp_filter_params_with_block_size(
     return av1_interp_filter_params_list[interp_filter];
 }
 
-static void av1_get_convolve_filter_params( uint32_t interp_filters,
+void av1_get_convolve_filter_params( uint32_t interp_filters,
     InterpFilterParams *params_x, InterpFilterParams *params_y,
     int32_t w, int32_t h)
 {
@@ -1141,8 +1142,8 @@ static void highbd_convolve_2d_for_intrabc(const uint16_t *src, int src_stride,
 void svt_inter_predictor(const uint8_t *src, int32_t src_stride,
     uint8_t *dst, int32_t dst_stride, const SubpelParams *subpel_params,
     const ScaleFactors *sf, int32_t w, int32_t h, ConvolveParams *conv_params,
-    InterpFilters interp_filters, int32_t is_intrabc) {
-
+    InterpFilters interp_filters, int32_t is_intrabc)
+{
     InterpFilterParams filter_params_x, filter_params_y;
 #if SCALE_REF_FRAME
     const int32_t is_scaled = has_scale(subpel_params->xs, subpel_params->ys);
@@ -1156,6 +1157,7 @@ void svt_inter_predictor(const uint8_t *src, int32_t src_stride,
     assert(conv_params->do_average == 0 || conv_params->do_average == 1);
     //assert(sf);
     //assert(IMPLIES(is_intrabc, !is_scaled));
+
     if (is_scaled) {
 #if SCALE_REF_FRAME
         /* TODO: Add suppport for scaling later */
@@ -1171,8 +1173,8 @@ void svt_inter_predictor(const uint8_t *src, int32_t src_stride,
         revert_scale_extra_bits(&sp);
 #endif
         if (is_intrabc && (sp.subpel_x != 0 || sp.subpel_y != 0)) {
-            convolve_2d_for_intrabc(src, src_stride, dst, dst_stride, w, h, sp.subpel_x,
-                sp.subpel_y, conv_params);
+            convolve_2d_for_intrabc(src, src_stride, dst, dst_stride, w, h,
+                sp.subpel_x, sp.subpel_y, conv_params);
             return;
         }
 
@@ -1487,109 +1489,9 @@ void av1_build_compound_diffwtd_mask_d16_c(
     default: assert(0);
     }
 }
-// Blending with alpha mask. Mask values come from the range [0, 64],
-// as described for AOM_BLEND_A64 in aom_dsp/blend.h. src0 or src1 can
-// be the same as dst, or dst can be different from both sources.
 
-// NOTE(david.barker): The input and output of aom_blend_a64_d16_mask_c() are
-// in a higher intermediate precision, and will later be rounded down to pixel
-// precision.
-// Thus, in order to avoid double-rounding, we want to use normal right shifts
-// within this function, not ROUND_POWER_OF_TWO.
-// This works because of the identity:
-// ROUND_POWER_OF_TWO(x >> y, z) == ROUND_POWER_OF_TWO(x, y+z)
-//
-// In contrast, the output of the non-d16 functions will not be further rounded,
-// so we *should* use ROUND_POWER_OF_TWO there.
-
-void aom_lowbd_blend_a64_d16_mask_c(
-    uint8_t *dst, uint32_t dst_stride, const CONV_BUF_TYPE *src0,
-    uint32_t src0_stride, const CONV_BUF_TYPE *src1, uint32_t src1_stride,
-    const uint8_t *mask, uint32_t mask_stride, int w, int h, int subw, int subh,
-    ConvolveParams *conv_params) {
-    int i, j;
-    const int bd = 8;
-    const int offset_bits = bd + 2 * FILTER_BITS - conv_params->round_0;
-    const int round_offset = (1 << (offset_bits - conv_params->round_1)) +
-        (1 << (offset_bits - conv_params->round_1 - 1));
-    const int round_bits =
-        2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
-
-    assert(IMPLIES((void *)src0 == dst, src0_stride == dst_stride));
-    assert(IMPLIES((void *)src1 == dst, src1_stride == dst_stride));
-
-    assert(h >= 4);
-    assert(w >= 4);
-
-    if (subw == 0 && subh == 0) {
-        for (i = 0; i < h; ++i) {
-            for (j = 0; j < w; ++j) {
-                int32_t res;
-                const int m = mask[i * mask_stride + j];
-                res = ((m * (int32_t)src0[i * src0_stride + j] +
-                    (AOM_BLEND_A64_MAX_ALPHA - m) *
-                    (int32_t)src1[i * src1_stride + j]) >>
-                    AOM_BLEND_A64_ROUND_BITS);
-                res -= round_offset;
-                dst[i * dst_stride + j] =
-                    clip_pixel(ROUND_POWER_OF_TWO(res, round_bits));
-            }
-        }
-    }
-    else if (subw == 1 && subh == 1) {
-        for (i = 0; i < h; ++i) {
-            for (j = 0; j < w; ++j) {
-                int32_t res;
-                const int m = ROUND_POWER_OF_TWO(
-                    mask[(2 * i) * mask_stride + (2 * j)] +
-                    mask[(2 * i + 1) * mask_stride + (2 * j)] +
-                    mask[(2 * i) * mask_stride + (2 * j + 1)] +
-                    mask[(2 * i + 1) * mask_stride + (2 * j + 1)],
-                    2);
-                res = ((m * (int32_t)src0[i * src0_stride + j] +
-                    (AOM_BLEND_A64_MAX_ALPHA - m) *
-                    (int32_t)src1[i * src1_stride + j]) >>
-                    AOM_BLEND_A64_ROUND_BITS);
-                res -= round_offset;
-                dst[i * dst_stride + j] =
-                    clip_pixel(ROUND_POWER_OF_TWO(res, round_bits));
-            }
-        }
-    }
-    else if (subw == 1 && subh == 0) {
-        for (i = 0; i < h; ++i) {
-            for (j = 0; j < w; ++j) {
-                int32_t res;
-                const int m = AOM_BLEND_AVG(mask[i * mask_stride + (2 * j)],
-                    mask[i * mask_stride + (2 * j + 1)]);
-                res = ((m * (int32_t)src0[i * src0_stride + j] +
-                    (AOM_BLEND_A64_MAX_ALPHA - m) *
-                    (int32_t)src1[i * src1_stride + j]) >>
-                    AOM_BLEND_A64_ROUND_BITS);
-                res -= round_offset;
-                dst[i * dst_stride + j] =
-                    clip_pixel(ROUND_POWER_OF_TWO(res, round_bits));
-            }
-        }
-    }
-    else {
-        for (i = 0; i < h; ++i) {
-            for (j = 0; j < w; ++j) {
-                int32_t res;
-                const int m = AOM_BLEND_AVG(mask[(2 * i) * mask_stride + j],
-                    mask[(2 * i + 1) * mask_stride + j]);
-                res = ((int32_t)(m * (int32_t)src0[i * src0_stride + j] +
-                    (AOM_BLEND_A64_MAX_ALPHA - m) *
-                    (int32_t)src1[i * src1_stride + j]) >>
-                    AOM_BLEND_A64_ROUND_BITS);
-                res -= round_offset;
-                dst[i * dst_stride + j] =
-                    clip_pixel(ROUND_POWER_OF_TWO(res, round_bits));
-            }
-        }
-    }
-}
 int is_masked_compound_type(COMPOUND_TYPE type);
+
 #if II_COMP_FLAG
 /* clang-format off */
 static const uint8_t ii_weights1d[MAX_SB_SIZE] = {
@@ -1655,34 +1557,77 @@ static INLINE const uint8_t *av1_get_contiguous_soft_mask(int wedge_index,
     return wedge_params_lookup[sb_type].masks[wedge_sign][wedge_index];
 }
 
+#if COMP_INTERINTRA
+void combine_interintra_highbd(
+    InterIntraMode mode, uint8_t use_wedge_interintra, uint8_t wedge_index,
+    uint8_t wedge_sign, BlockSize bsize, BlockSize plane_bsize,
+    uint8_t *comppred8, int compstride, const uint8_t *interpred8,
+    int interstride, const uint8_t *intrapred8, int intrastride, int bd)
+{
+    const int bw = block_size_wide[plane_bsize];
+    const int bh = block_size_high[plane_bsize];
+
+    if (use_wedge_interintra) {
+        if (is_interintra_wedge_used(bsize)) {
+            const uint8_t *mask =
+                av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
+            const int subh = 2 * mi_size_high[bsize] == bh;
+            const int subw = 2 * mi_size_wide[bsize] == bw;
+            aom_highbd_blend_a64_mask(comppred8, compstride, intrapred8,
+                intrastride, interpred8, interstride, mask,
+                block_size_wide[bsize], bw, bh, subw, subh, bd);
+        }
+        return;
+    }
+
+    uint8_t mask[MAX_SB_SQUARE];
+    build_smooth_interintra_mask(mask, bw, plane_bsize, mode);
+    aom_highbd_blend_a64_mask(comppred8, compstride, intrapred8, intrastride,
+        interpred8, interstride, mask, bw, bw, bh, 0, 0,
+        bd);
+}
+
+#endif //comp_interintra
+
 const uint8_t *av1_get_compound_type_mask(
-    const INTERINTER_COMPOUND_DATA *const comp_data, BlockSize sb_type) {
+    const InterInterCompoundData *const comp_data,
+    uint8_t *seg_mask, BlockSize sb_type)
+{
     assert(is_masked_compound_type(comp_data->type));
     (void)sb_type;
     switch (comp_data->type) {
     case COMPOUND_WEDGE:
         return av1_get_contiguous_soft_mask(comp_data->wedge_index,
             comp_data->wedge_sign, sb_type);
-    case COMPOUND_DIFFWTD: return comp_data->seg_mask;
+    case COMPOUND_DIFFWTD: return seg_mask;
     default: assert(0); return NULL;
     }
 }
 
-static void build_masked_compound_no_round(
+void build_masked_compound_no_round(
     uint8_t *dst, int dst_stride, const CONV_BUF_TYPE *src0, int src0_stride,
     const CONV_BUF_TYPE *src1, int src1_stride,
-    const INTERINTER_COMPOUND_DATA *const comp_data, BlockSize sb_type, int h,
-    int w, ConvolveParams *conv_params) {
+    const InterInterCompoundData *const comp_data,
+    uint8_t *seg_mask,
+    BlockSize sb_type, int h,
+    int w, ConvolveParams *conv_params, uint8_t bit_depth)
+{
     // Derive subsampling from h and w passed in. May be refactored to
     // pass in subsampling factors directly.
     const int subh = (2 << mi_size_high_log2[sb_type]) == h;
     const int subw = (2 << mi_size_wide_log2[sb_type]) == w;
-    const uint8_t *mask = av1_get_compound_type_mask(comp_data, sb_type);
+    const uint8_t *mask = av1_get_compound_type_mask(comp_data, seg_mask, sb_type);
 
-    aom_lowbd_blend_a64_d16_mask(dst, dst_stride, src0, src0_stride, src1,
-        src1_stride, mask, block_size_wide[sb_type], w,
-        h, subw, subh, conv_params);
-
+    if (bit_depth > EB_8BIT) {
+        aom_highbd_blend_a64_d16_mask(dst, dst_stride, src0, src0_stride, src1,
+            src1_stride, mask, block_size_wide[sb_type], w,
+            h, subw, subh, conv_params, bit_depth);
+    }
+    else {
+        aom_lowbd_blend_a64_d16_mask(dst, dst_stride, src0, src0_stride, src1,
+            src1_stride, mask, block_size_wide[sb_type], w,
+            h, subw, subh, conv_params);
+    }
 }
 
 void av1_make_masked_inter_predictor(
@@ -1698,7 +1643,7 @@ void av1_make_masked_inter_predictor(
     int32_t                    subpel_x,
     int32_t                    subpel_y,
     ConvolveParams            *conv_params,
-    INTERINTER_COMPOUND_DATA  *comp_data,
+    InterInterCompoundData    *comp_data,
     uint8_t                    bitdepth,
     uint8_t                    plane
 )
@@ -1708,8 +1653,6 @@ void av1_make_masked_inter_predictor(
     //then  blend that temporary buffer with that from  the first reference.
 
     DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
-    comp_data->seg_mask = seg_mask;
-
 
 #define INTER_PRED_BYTES_PER_PIXEL 2
     DECLARE_ALIGNED(32, uint8_t,
@@ -1742,13 +1685,13 @@ void av1_make_masked_inter_predictor(
         //CHKN  for DIFF: need to compute the mask  comp_data->seg_mask is the output computed from the two preds org_dst and tmp_buf16
         //for WEDGE the mask is fixed from the table based on wedge_sign/index
         av1_build_compound_diffwtd_mask_d16(
-            comp_data->seg_mask, comp_data->mask_type, org_dst, org_dst_stride,
+            seg_mask, comp_data->mask_type, org_dst, org_dst_stride,
             tmp_buf16, tmp_buf_stride, bheight, bwidth, conv_params, bitdepth);
     }
 
     build_masked_compound_no_round(dst_ptr, dst_stride, org_dst, org_dst_stride,
-        tmp_buf16, tmp_buf_stride, comp_data,
-        blk_geom->bsize, bheight, bwidth, conv_params);
+        tmp_buf16, tmp_buf_stride, comp_data, seg_mask,
+        blk_geom->bsize, bheight, bwidth, conv_params, bitdepth);
 
 }
 
@@ -2282,10 +2225,10 @@ static int64_t pick_wedge_fixed_sign(
 int is_interinter_compound_used(COMPOUND_TYPE type,
     BlockSize sb_type);
 static void  pick_interinter_wedge(
-    ModeDecisionCandidate               *candidate_ptr,
+    ModeDecisionCandidate                *candidate_ptr,
     PictureControlSet                    *picture_control_set_ptr,
     ModeDecisionContext                  *context_ptr,
-    INTERINTER_COMPOUND_DATA             *interinter_comp,
+    InterInterCompoundData               *interinter_comp,
     const BlockSize bsize,
     const uint8_t *const p0,
     const uint8_t *const p1,
@@ -2320,7 +2263,7 @@ static void  pick_interinter_wedge(
 static void  pick_interinter_seg(
     PictureControlSet                    *picture_control_set_ptr,
     ModeDecisionContext                  *context_ptr,
-    INTERINTER_COMPOUND_DATA             *interinter_comp,
+    InterInterCompoundData               *interinter_comp,
     const BlockSize bsize,
     const uint8_t *const p0,
     const uint8_t *const p1,
@@ -2368,7 +2311,7 @@ void pick_interinter_mask(
     ModeDecisionCandidate                *candidate_ptr,
     PictureControlSet                    *picture_control_set_ptr,
     ModeDecisionContext                  *context_ptr,
-    INTERINTER_COMPOUND_DATA             *interinter_comp,
+    InterInterCompoundData               *interinter_comp,
     const BlockSize                      bsize,
     const uint8_t                        *const p0,
     const uint8_t                        *const p1,
@@ -2741,72 +2684,6 @@ void search_compound_avg_dist(
 }
 
 #if II_COMP_FLAG
-// Blending with alpha mask. Mask values come from the range [0, 64],
-// as described for AOM_BLEND_A64 in aom_dsp/blend.h. src0 or src1 can
-// be the same as dst, or dst can be different from both sources.
-
-void aom_blend_a64_mask_c(uint8_t *dst, uint32_t dst_stride,
-    const uint8_t *src0, uint32_t src0_stride,
-    const uint8_t *src1, uint32_t src1_stride,
-    const uint8_t *mask, uint32_t mask_stride, int w,
-    int h, int subw, int subh) {
-    int i, j;
-
-    assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
-    assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
-
-    assert(h >= 1);
-    assert(w >= 1);
-    assert(IS_POWER_OF_TWO(h));
-    assert(IS_POWER_OF_TWO(w));
-
-    if (subw == 0 && subh == 0) {
-        for (i = 0; i < h; ++i) {
-            for (j = 0; j < w; ++j) {
-                const int m = mask[i * mask_stride + j];
-                dst[i * dst_stride + j] = AOM_BLEND_A64(m, src0[i * src0_stride + j],
-                    src1[i * src1_stride + j]);
-            }
-        }
-    }
-    else if (subw == 1 && subh == 1) {
-        for (i = 0; i < h; ++i) {
-            for (j = 0; j < w; ++j) {
-                const int m = ROUND_POWER_OF_TWO(
-                    mask[(2 * i) * mask_stride + (2 * j)] +
-                    mask[(2 * i + 1) * mask_stride + (2 * j)] +
-                    mask[(2 * i) * mask_stride + (2 * j + 1)] +
-                    mask[(2 * i + 1) * mask_stride + (2 * j + 1)],
-                    2);
-                dst[i * dst_stride + j] = AOM_BLEND_A64(m, src0[i * src0_stride + j],
-                    src1[i * src1_stride + j]);
-            }
-        }
-    }
-    else if (subw == 1 && subh == 0) {
-        for (i = 0; i < h; ++i) {
-            for (j = 0; j < w; ++j) {
-                const int m = AOM_BLEND_AVG(mask[i * mask_stride + (2 * j)],
-                    mask[i * mask_stride + (2 * j + 1)]);
-                dst[i * dst_stride + j] = AOM_BLEND_A64(m, src0[i * src0_stride + j],
-                    src1[i * src1_stride + j]);
-            }
-        }
-    }
-    else {
-        for (i = 0; i < h; ++i) {
-            for (j = 0; j < w; ++j) {
-                const int m = AOM_BLEND_AVG(mask[(2 * i) * mask_stride + j],
-                    mask[(2 * i + 1) * mask_stride + j]);
-                dst[i * dst_stride + j] = AOM_BLEND_A64(m, src0[i * src0_stride + j],
-                    src1[i * src1_stride + j]);
-            }
-        }
-    }
-}
-
-int is_interintra_wedge_used(BlockSize sb_type);
-
  void combine_interintra(INTERINTRA_MODE mode,
     int8_t use_wedge_interintra, int wedge_index,
     int wedge_sign, BlockSize bsize,
@@ -2814,7 +2691,7 @@ int is_interintra_wedge_used(BlockSize sb_type);
     int compstride, const uint8_t *interpred,
     int interstride, const uint8_t *intrapred,
     int intrastride)
- {
+{
     const int bw = block_size_wide[plane_bsize];
     const int bh = block_size_high[plane_bsize];
 
@@ -2865,10 +2742,6 @@ int is_interintra_wedge_used(BlockSize sb_type);
     uint32_t bl_org_x_mb,
     uint32_t bl_org_y_mb);
  #define INTERINTRA_WEDGE_SIGN 0
- // Mapping of interintra to intra mode for use in the intra component
-static const PredictionMode interintra_to_intra_mode[INTERINTRA_MODES] = {
-  DC_PRED, V_PRED, H_PRED, SMOOTH_PRED
-};
 #endif
 EbErrorType av1_inter_prediction(
     PictureControlSet                    *picture_control_set_ptr,
@@ -2878,7 +2751,7 @@ EbErrorType av1_inter_prediction(
     MvUnit                               *mv_unit,
     uint8_t                                  use_intrabc,
     uint8_t                                compound_idx,
-    INTERINTER_COMPOUND_DATA               *interinter_comp,
+    InterInterCompoundData                 *interinter_comp,
 #if II_COMP_FLAG
     TileInfo                                * tile,
     NeighborArrayUnit                       *luma_recon_neighbor_array,
@@ -2888,7 +2761,6 @@ EbErrorType av1_inter_prediction(
     INTERINTRA_MODE                        interintra_mode,
     uint8_t                                use_wedge_interintra,
     int32_t                                interintra_wedge_index,
-
 #endif
     uint16_t                                pu_origin_x,
     uint16_t                                pu_origin_y,
@@ -3245,7 +3117,7 @@ EbErrorType av1_inter_prediction(
 
         //the luma data is applied to chroma below
         av1_dist_wtd_comp_weight_assign(
-            picture_control_set_ptr,
+            &picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header,
             picture_control_set_ptr->parent_pcs_ptr->cur_order_hint,// cur_frame_index,
             picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[0] - 1],// bck_frame_index,
             picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[1] - 1],// fwd_frame_index,
@@ -3301,7 +3173,7 @@ EbErrorType av1_inter_prediction(
             src_ptr = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
             conv_params = get_conv_params_no_round(0, (mv_unit->pred_direction == BI_PRED) ? 1 : 0, 0, tmp_dstCb, 64, is_compound, EB_8BIT);
             av1_dist_wtd_comp_weight_assign(
-                picture_control_set_ptr,
+                &picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header,
                 picture_control_set_ptr->parent_pcs_ptr->cur_order_hint,// cur_frame_index,
                 picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[0] - 1],// bck_frame_index,
                 picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[1] - 1],// fwd_frame_index,
@@ -3359,7 +3231,7 @@ EbErrorType av1_inter_prediction(
             src_ptr = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
             conv_params = get_conv_params_no_round(0, (mv_unit->pred_direction == BI_PRED) ? 1 : 0, 0, tmp_dstCr, 64, is_compound, EB_8BIT);
             av1_dist_wtd_comp_weight_assign(
-                picture_control_set_ptr,
+                &picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header,
                 picture_control_set_ptr->parent_pcs_ptr->cur_order_hint,// cur_frame_index,
                 picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[0] - 1],// bck_frame_index,
                 picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[1] - 1],// fwd_frame_index,

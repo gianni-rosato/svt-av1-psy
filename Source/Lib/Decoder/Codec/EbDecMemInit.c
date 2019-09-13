@@ -318,6 +318,9 @@ static EbErrorType init_parse_context (EbDecHandle  *dec_handle_ptr) {
             num_4x4_neigh_sb * PALETTE_MAX_SIZE *sizeof(uint16_t), EB_N_PTR);
     }
 
+    EB_MALLOC_DEC(int8_t*, neigh_ctx->above_comp_grp_idx, num_mi_col * sizeof(int8_t), EB_N_PTR);
+    EB_MALLOC_DEC(int8_t*, neigh_ctx->left_comp_grp_idx, num_mi_row * sizeof(int8_t), EB_N_PTR);
+
     EB_MALLOC_DEC(uint8_t*, neigh_ctx->above_seg_pred_ctx, num_mi_col * sizeof(uint8_t), EB_N_PTR);
     EB_MALLOC_DEC(uint8_t*, neigh_ctx->left_seg_pred_ctx, num_mi_row * sizeof(uint8_t), EB_N_PTR);
 

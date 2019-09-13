@@ -2061,6 +2061,9 @@ void clear_above_context(EbDecHandle *dec_handle_ptr, int mi_col_start,
     ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_part_wd[tile_row]) +
         mi_col_start, width_y);
 
+    ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_comp_grp_idx[tile_row]) +
+        mi_col_start, width_y);
+
     memset((&parse_ctxt->parse_nbr4x4_ctxt.above_tx_wd[tile_row]) + mi_col_start,
         tx_size_wide[TX_SIZES_LARGEST], width_y * sizeof(uint8_t));
 }
@@ -2084,6 +2087,8 @@ void clear_left_context(EbDecHandle *dec_handle_ptr)
     ZERO_ARRAY(parse_ctxt->parse_nbr4x4_ctxt.left_seg_pred_ctx, blk_cnt);
 
     ZERO_ARRAY(parse_ctxt->parse_nbr4x4_ctxt.left_part_ht, blk_cnt);
+
+    ZERO_ARRAY(parse_ctxt->parse_nbr4x4_ctxt.left_comp_grp_idx, blk_cnt);
 
     for (int i = 0; i < MAX_MB_PLANE; i++) {
         ZERO_ARRAY((parse_ctxt->parse_nbr4x4_ctxt.left_palette_colors[i]),

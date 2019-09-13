@@ -128,7 +128,7 @@ extern "C" {
         EbBool                                 local_warp_valid;
         EbWarpedMotionParams                   wm_params;
         uint8_t                                tx_depth;
-        INTERINTER_COMPOUND_DATA               interinter_comp;
+        InterInterCompoundData                 interinter_comp;
         uint8_t                                compound_idx;
         uint8_t                                comp_group_idx;
         CAND_CLASS                             cand_class;

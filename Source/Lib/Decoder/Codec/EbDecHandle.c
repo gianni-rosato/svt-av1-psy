@@ -57,6 +57,8 @@ void asmSetConvolveAsmTable(void);
 void init_intra_dc_predictors_c_internal(void);
 void asmSetConvolveHbdAsmTable(void);
 void init_intra_predictors_internal(void);
+extern void av1_init_wedge_masks(void);
+
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr,
                                 uint8_t **data, size_t data_size);
 
@@ -140,7 +142,7 @@ int svt_dec_out_buf(
 
     int wd = dec_handle_ptr->frame_header.frame_size.frame_width;
     int ht = dec_handle_ptr->frame_header.frame_size.frame_height;
-    int i, sx, sy;
+    int i, sx = 0, sy = 0;
 
     switch (recon_picture_buf->color_format) {
         case EB_YUV420 :
@@ -422,6 +424,7 @@ EB_API EbErrorType eb_init_decoder(
     asmSetConvolveHbdAsmTable();
 
     init_intra_predictors_internal();
+    av1_init_wedge_masks();
 
     /************************************
     * Decoder Memory Init

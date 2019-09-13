@@ -14,18 +14,6 @@
 #include "aom_dsp_rtcd.h"
 #include "EbVariance_SSE2.h"
 
- // Various blending functions and macros.
- // See also the aom_blend_* functions in aom_dsp_rtcd.h
-
- // Alpha blending with alpha values from the range [0, 64], where 64
- // means use the first input and 0 means use the second input.
-
-#define AOM_BLEND_A64_ROUND_BITS 6
-#define AOM_BLEND_A64_MAX_ALPHA (1 << AOM_BLEND_A64_ROUND_BITS)  // 64
-
-#define AOM_BLEND_A64(a, v0, v1)                                          \
-  ROUND_POWER_OF_TWO((a) * (v0) + (AOM_BLEND_A64_MAX_ALPHA - (a)) * (v1), \
-                     AOM_BLEND_A64_ROUND_BITS)
 
 // Alpha blending with alpha values from the range [0, 256], where 256
 // means use the first input and 0 means use the second input.

@@ -58,7 +58,7 @@ extern "C" {
         MvUnit                               *mv_unit,
         uint8_t                                  use_intrabc,
         uint8_t                                compound_idx,
-        INTERINTER_COMPOUND_DATA               *interinter_comp,
+    InterInterCompoundData                     *interinter_comp,
 #if II_COMP_FLAG
         TileInfo                                * tile,
         NeighborArrayUnit                       *luma_recon_neighbor_array,
@@ -88,6 +88,54 @@ extern "C" {
         PictureControlSet                    *picture_control_set_ptr,
         struct ModeDecisionContext                    *context_ptr,
         ModeDecisionCandidate                *candidate_ptr);
+
+    void av1_dist_wtd_comp_weight_assign(
+        SeqHeader *seq_header,
+        int cur_frame_index,
+        int bck_frame_index,
+        int fwd_frame_index,
+        int compound_idx,
+        int order_idx,
+        int *fwd_offset, int *bck_offset,
+        int *use_dist_wtd_comp_avg,
+        int is_compound);
+
+    void build_masked_compound_no_round(uint8_t *dst, int dst_stride,
+        const CONV_BUF_TYPE *src0, int src0_stride,
+        const CONV_BUF_TYPE *src1, int src1_stride,
+        const InterInterCompoundData *const comp_data, uint8_t *seg_mask,
+        BlockSize sb_type, int h, int w, ConvolveParams *conv_params,
+        uint8_t bd);
+
+    void av1_get_convolve_filter_params(uint32_t interp_filters,
+        InterpFilterParams *params_x, InterpFilterParams *params_y,
+        int32_t w, int32_t h);
+
+#if COMP_INTERINTRA
+    /* Mapping of interintra to intra mode for use in the intra component */
+    static const PredictionMode interintra_to_intra_mode[INTERINTRA_MODES] = {
+      DC_PRED, V_PRED, H_PRED, SMOOTH_PRED
+    };
+    static INLINE int is_interintra_wedge_used(BlockSize sb_type) {
+        return wedge_params_lookup[sb_type].bits > 0;
+    }
+
+    void combine_interintra(INTERINTRA_MODE mode,
+        int8_t use_wedge_interintra, int wedge_index,
+        int wedge_sign, BlockSize bsize,
+        BlockSize plane_bsize, uint8_t *comppred,
+        int compstride, const uint8_t *interpred,
+        int interstride, const uint8_t *intrapred,
+        int intrastride);
+
+    void combine_interintra_highbd(
+        InterIntraMode mode, uint8_t use_wedge_interintra, uint8_t wedge_index,
+        uint8_t wedge_sign, BlockSize bsize, BlockSize plane_bsize,
+        uint8_t *comppred8, int compstride, const uint8_t *interpred8,
+        int interstride, const uint8_t *intrapred8, int intrastride, int bd);
+
+#endif //comp_interintra
+
     EbErrorType inter_pu_prediction_av1(
         struct ModeDecisionContext           *md_context_ptr,
         PictureControlSet                    *picture_control_set_ptr,
@@ -140,6 +188,9 @@ extern "C" {
         uint8_t                                 bit_depth,
         EbBool                                  perform_chroma,
         EbAsm                                   asm_type);
+
+    extern aom_highbd_convolve_fn_t convolveHbd[/*subX*/2][/*subY*/2][/*bi*/2];
+    extern aom_convolve_fn_t convolve[/*subX*/2][/*subY*/2][/*bi*/2];
 
 #ifdef __cplusplus
 }

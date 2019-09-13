@@ -35,6 +35,31 @@ void pad_pic(EbPictureBufferDesc *recon_picture_buf);
 
 int inverse_recenter(int r, int v);
 
+static INLINE int is_interintra_allowed_bsize(const BlockSize bsize) {
+    return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
+}
+
+static INLINE int is_interintra_allowed_mode(const PredictionMode mode) {
+    return (mode >= SINGLE_INTER_MODE_START) && (mode < SINGLE_INTER_MODE_END);
+}
+
+static INLINE int is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
+    return (rf[0] > INTRA_FRAME) && (rf[1] <= INTRA_FRAME);
+}
+
+static INLINE int is_interintra_allowed(const ModeInfo_t *mbmi) {
+    return is_interintra_allowed_bsize(mbmi->sb_type) &&
+        is_interintra_allowed_mode(mbmi->mode) &&
+        is_interintra_allowed_ref(mbmi->ref_frame);
+}
+
+#if COMP_INTERINTRA
+static INLINE int is_interintra_pred(const ModeInfo_t *mbmi) {
+    return mbmi->ref_frame[0] > INTRA_FRAME &&
+        mbmi->ref_frame[1] == INTRA_FRAME && is_interintra_allowed(mbmi);
+}
+#endif //comp_interintra
+
 #ifdef __cplusplus
 }
 #endif

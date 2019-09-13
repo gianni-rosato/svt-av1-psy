@@ -754,7 +754,7 @@ EbErrorType av1_inter_prediction(
     MvUnit                               *mv_unit,
     uint8_t                              use_intrabc,
     uint8_t                              compound_idx,
-    INTERINTER_COMPOUND_DATA             *interinter_comp,
+    InterInterCompoundData               *interinter_comp,
 #if II_COMP_FLAG
     TileInfo                                * tile,
     NeighborArrayUnit                       *luma_recon_neighbor_array,
@@ -764,7 +764,6 @@ EbErrorType av1_inter_prediction(
     INTERINTRA_MODE                        interintra_mode,
     uint8_t                                use_wedge_interintra,
     int32_t                                interintra_wedge_index,
-
 #endif
     uint16_t                             pu_origin_x,
     uint16_t                             pu_origin_y,

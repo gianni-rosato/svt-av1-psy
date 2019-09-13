@@ -28,24 +28,6 @@ static INLINE int get_segdata(SegmentationParams *seg, int segment_id,
     return seg->feature_data[segment_id][feature_id];
 }
 
-static INLINE int is_interintra_allowed_bsize(const BlockSize bsize) {
-    return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
-}
-
-static INLINE int is_interintra_allowed_mode(const PredictionMode mode) {
-    return (mode >= SINGLE_INTER_MODE_START) && (mode < SINGLE_INTER_MODE_END);
-}
-
-static INLINE int is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
-    return (rf[0] > INTRA_FRAME) && (rf[1] <= INTRA_FRAME);
-}
-
-static INLINE int is_interintra_allowed(const ModeInfo_t *mbmi) {
-    return is_interintra_allowed_bsize(mbmi->sb_type) &&
-        is_interintra_allowed_mode(mbmi->mode) &&
-        is_interintra_allowed_ref(mbmi->ref_frame);
-}
-
 static INLINE int has_second_ref(const ModeInfo_t *mbmi) {
     return mbmi->ref_frame[1] > INTRA_FRAME;
 }
