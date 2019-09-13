@@ -2161,7 +2161,6 @@ void read_compound_type(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     }
 
     update_compound_ctx(dec_handle, pi, mi_row, mi_col, comp_group_idx);
-   
 }
 
 static INLINE int is_nontrans_global_motion(PartitionInfo_t *pi,

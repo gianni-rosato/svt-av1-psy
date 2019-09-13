@@ -153,7 +153,7 @@ void svt_make_inter_predictor(PartitionInfo_t *part_info, int32_t ref,
 void svt_make_masked_inter_predictor(PartitionInfo_t *part_info, int32_t ref,
         void *src, int32_t src_stride, void *dst_ptr, int32_t dst_stride,
         EbDecPicBuf *ref_buf, int32_t pre_x, int32_t pre_y, int32_t bw,
-        int32_t bh, ConvolveParams *conv_params, int32_t plane, 
+        int32_t bh, ConvolveParams *conv_params, int32_t plane,
         uint8_t *seg_mask, int32_t do_warp)
 {
     InterInterCompoundData *comp_data = &part_info->mi->inter_inter_compound;
@@ -183,7 +183,7 @@ void svt_make_masked_inter_predictor(PartitionInfo_t *part_info, int32_t ref,
         conv_params, plane, do_warp);
 
     if (!plane && comp_data->type == COMPOUND_DIFFWTD) {
-        //CHKN  for DIFF: need to compute the mask  comp_data->seg_mask is 
+        //CHKN  for DIFF: need to compute the mask  comp_data->seg_mask is
         //the output computed from the two preds org_dst and tmp_buf16
         //for WEDGE the mask is fixed from the table based on wedge_sign/index
         av1_build_compound_diffwtd_mask_d16(
@@ -237,7 +237,7 @@ void av1_build_intra_predictors_for_interintra(EbDecHandle *dec_hdl,
     int32_t sub_x = (plane > 0) ? part_info->subsampling_x : 0;
     int32_t sub_y = (plane > 0) ? part_info->subsampling_y : 0;
     BlockSize plane_bsize = get_plane_block_size(bsize, sub_x, sub_y);
-    PredictionMode mode = 
+    PredictionMode mode =
         interintra_to_intra_mode[mi->interintra_mode.interintra_mode];
     assert(mi->angle_delta[PLANE_TYPE_Y] == 0);
     assert(mi->angle_delta[PLANE_TYPE_UV] == 0);
@@ -282,7 +282,6 @@ void av1_build_intra_predictors_for_interintra(EbDecHandle *dec_hdl,
         max_txsize_rect_lookup[plane_bsize], dec_mod_ctxt->cur_tile_info,
         (void *)dst, dst_stride, pv_topNeighArray, pv_leftNeighArray,
         &dec_hdl->seq_header, mode, 0, 0, bit_depth);
-       
 }
 
 /* Build interintra_predictors */
@@ -391,7 +390,6 @@ void svtav1_predict_inter_block_plane(
             &conv_params.bck_offset, &conv_params.use_dist_wtd_comp_avg,
             is_compound);
         conv_params.use_jnt_comp_avg = conv_params.use_dist_wtd_comp_avg;
-
 
         for (ref = 0; ref < 1 + is_compound; ++ref) {
             const int32_t mode = mi->mode;

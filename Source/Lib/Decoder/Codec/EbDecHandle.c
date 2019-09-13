@@ -236,7 +236,7 @@ int svt_dec_out_buf(
             }
         }
     }
-    
+
     if (!dec_handle_ptr->dec_config.skip_film_grain) {
         /* Need to fill the dst buf with recon data before calling film_grain */
         aom_film_grain_t *film_grain_ptr = &dec_handle_ptr->cur_pic_buf[0]->
