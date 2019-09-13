@@ -2610,7 +2610,6 @@ typedef enum DownSamplingMethod
 #define TRANSFORM_MAX_SIZE          64
 #define TRANSFORM_MIN_SIZE          4
 
-#define QP_BD_OFFSET           12 //2x(bit_depth-8) 12 for 10 bit case
 #define BIT_INCREMENT_10BIT    2
 #define BIT_INCREMENT_8BIT     0
 
