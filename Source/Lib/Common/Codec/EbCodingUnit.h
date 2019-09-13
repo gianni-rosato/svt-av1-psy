@@ -202,6 +202,11 @@ extern "C" {
         TxSize tx_size;
         uint8_t inter_tx_size[INTER_TX_SIZE_BUF_LEN];
         uint8_t tx_depth;
+ #if II_COMP_FLAG
+        INTERINTRA_MODE     interintra_mode;
+        uint8_t             use_wedge_interintra;
+        int32_t             interintra_wedge_index;//inter_intra wedge index
+#endif
     } MbModeInfo;
 
 #if MFMV_SUPPORT
@@ -408,6 +413,13 @@ extern "C" {
         uint16_t                   *neigh_top_recon_16bit[3];
         uint32_t                    best_d1_blk;
         uint8_t                     tx_depth;
+#if II_COMP_FLAG
+        INTERINTRA_MODE             interintra_mode;
+        uint8_t                     is_interintra_used;
+        uint8_t                     use_wedge_interintra;
+        int32_t                     interintra_wedge_index;
+        int32_t                     ii_wedge_sign;
+#endif
     } CodingUnit;
 
         typedef struct OisCandidate

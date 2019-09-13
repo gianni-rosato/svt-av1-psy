@@ -1275,6 +1275,14 @@ uint32_t get_compound_mode_rate(
     return comp_rate;
 }
 #endif
+    #if II_COMP_FLAG
+int is_interintra_wedge_used(BlockSize sb_type);
+int svt_is_interintra_allowed(
+    uint8_t enable_inter_intra,
+    BlockSize sb_type,
+    PredictionMode mode,
+    MvReferenceFrame ref_frame[2]);
+#endif
 uint64_t av1_inter_fast_cost(
     CodingUnit            *cu_ptr,
     ModeDecisionCandidate *candidate_ptr,
@@ -1492,9 +1500,32 @@ uint64_t av1_inter_fast_cost(
         }
     }
 
-    // NM - To be added when the intrainter mode is adopted
-    //  read_interintra_mode(is_compound)
+#if II_COMP_FLAG
+    if (md_pass > 0) {
 
+        // inter intra mode rate
+        if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reference_mode != COMPOUND_REFERENCE &&
+            picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.enable_interintra_compound &&
+            svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra,blk_geom->bsize, candidate_ptr->inter_mode, rf)) {
+            const int interintra = candidate_ptr->is_interintra_used;
+            const int bsize_group = size_group_lookup[blk_geom->bsize];
+
+            interModeBitsNum += candidate_ptr->md_rate_estimation_ptr->inter_intra_fac_bits[bsize_group][candidate_ptr->is_interintra_used];
+
+            if (interintra) {
+                interModeBitsNum += candidate_ptr->md_rate_estimation_ptr->inter_intra_mode_fac_bits[bsize_group][candidate_ptr->interintra_mode];
+
+                if (is_interintra_wedge_used(blk_geom->bsize)) {
+                    interModeBitsNum += candidate_ptr->md_rate_estimation_ptr->wedge_inter_intra_fac_bits[blk_geom->bsize][candidate_ptr->use_wedge_interintra];
+
+                    if (candidate_ptr->use_wedge_interintra) {
+                        interModeBitsNum += candidate_ptr->md_rate_estimation_ptr->wedge_idx_fac_bits[blk_geom->bsize][candidate_ptr->interintra_wedge_index];
+                    }
+                }
+            }
+        }
+    }
+#endif
     EbBool is_inter = inter_mode >= SINGLE_INTER_MODE_START && inter_mode < SINGLE_INTER_MODE_END;
     if (is_inter
         && frm_hdr->is_motion_mode_switchable

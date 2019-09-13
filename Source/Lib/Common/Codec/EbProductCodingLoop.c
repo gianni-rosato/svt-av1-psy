@@ -59,6 +59,14 @@ EbErrorType ProductGenerateMdCandidatesCu(
     EbPtr                interPredContextPtr,
     PictureControlSet   *picture_control_set_ptr);
 #endif
+#if II_COMP_FLAG
+static INLINE int is_interintra_allowed_bsize(const BlockSize bsize) {
+    return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
+}
+void precompute_intra_pred_for_inter_intra(
+    PictureControlSet            *picture_control_set_ptr,
+    ModeDecisionContext          *context_ptr);
+#endif
 /*******************************************
 * set Penalize Skip Flag
 *
@@ -1620,6 +1628,9 @@ void set_md_stage_counts(
         context_ptr->bypass_stage1[CAND_CLASS_1] = EB_FALSE;
         context_ptr->bypass_stage1[CAND_CLASS_2] = EB_FALSE;
         context_ptr->bypass_stage1[CAND_CLASS_3] = context_ptr->combine_class12 ? EB_TRUE : EB_FALSE;
+#if II_COMP_FLAG
+        context_ptr->bypass_stage1[CAND_CLASS_4] = EB_FALSE;
+#endif
     }
     else
         memset(context_ptr->bypass_stage1, EB_TRUE, CAND_CLASS_TOTAL);
@@ -1638,6 +1649,9 @@ void set_md_stage_counts(
             context_ptr->bypass_stage2[CAND_CLASS_2] = EB_TRUE;
             context_ptr->bypass_stage2[CAND_CLASS_3] = EB_TRUE;
         }
+#if II_COMP_FLAG
+            context_ptr->bypass_stage2[CAND_CLASS_4] = EB_TRUE;
+#endif
     }
     else
         memset(context_ptr->bypass_stage2, EB_TRUE, CAND_CLASS_TOTAL);
@@ -1653,6 +1667,9 @@ void set_md_stage_counts(
         context_ptr->md_stage_1_count[CAND_CLASS_3] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? INTER_PRED_NFL : (INTER_PRED_NFL >> 1);
     }
 
+#if II_COMP_FLAG
+        context_ptr->md_stage_1_count[CAND_CLASS_4] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 14 :6;// INTER_PRED_NFL: (INTER_PRED_NFL >> 1);
+#endif
     if (picture_control_set_ptr->enc_mode >= ENC_M2) {
         context_ptr->md_stage_1_count[CAND_CLASS_1] = context_ptr->md_stage_1_count[CAND_CLASS_1] / 2;
         context_ptr->md_stage_1_count[CAND_CLASS_2] = context_ptr->md_stage_1_count[CAND_CLASS_2] / 2;
@@ -1672,6 +1689,9 @@ void set_md_stage_counts(
         context_ptr->md_stage_2_count[CAND_CLASS_3] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 14 : 4;
     }
 
+#if II_COMP_FLAG
+    context_ptr->md_stage_2_count[CAND_CLASS_4] = context_ptr->bypass_stage1[CAND_CLASS_4] ? context_ptr->md_stage_1_count[CAND_CLASS_4] : (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12: 4;// 14 : 4;
+#endif
     if (picture_control_set_ptr->enc_mode >= ENC_M2) {
         context_ptr->md_stage_2_count[CAND_CLASS_1] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12 : 3;
         context_ptr->md_stage_2_count[CAND_CLASS_2] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 2;
@@ -1697,6 +1717,9 @@ void set_md_stage_counts(
         context_ptr->md_stage_3_count[CAND_CLASS_3] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 3 : 1;
     }
 
+#if II_COMP_FLAG
+    context_ptr->md_stage_3_count[CAND_CLASS_4] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12 : 4;// 14 : 4;
+#endif
 #if SC_SETTINGS_TUNING
     if (!context_ptr->combine_class12 && picture_control_set_ptr->parent_pcs_ptr->sc_content_detected && picture_control_set_ptr->enc_mode == ENC_M0) {
 
@@ -2436,6 +2459,9 @@ void predictive_me_sub_pel_search(
             candidate_ptr->inter_mode = NEWMV;
             candidate_ptr->pred_mode = NEWMV;
             candidate_ptr->motion_mode = SIMPLE_TRANSLATION;
+#if II_COMP_FLAG
+            candidate_ptr->is_interintra_used = 0;
+#endif
             candidate_ptr->is_compound = 0;
             candidate_ptr->is_new_mv = 1;
             candidate_ptr->is_zero_mv = 0;
@@ -5524,6 +5550,13 @@ void move_cu_data(
     dst_cu->comp_group_idx = src_cu->comp_group_idx;
 #endif
 
+#if II_COMP_FLAG
+       dst_cu->is_interintra_used      = src_cu->is_interintra_used          ;
+       dst_cu->interintra_mode         = src_cu->interintra_mode             ;
+       dst_cu->use_wedge_interintra    = src_cu->use_wedge_interintra        ;
+       dst_cu->interintra_wedge_index  = src_cu->interintra_wedge_index      ;//inter_intra wedge index
+       dst_cu->ii_wedge_sign           = src_cu->ii_wedge_sign               ;//inter_intra wedge sign=-1
+#endif
     //CHKN TransformUnit             transform_unit_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
     memcpy(dst_cu->transform_unit_array, src_cu->transform_unit_array, TRANSFORM_UNIT_MAX_COUNT * sizeof(TransformUnit));
 
@@ -5628,6 +5661,13 @@ void move_cu_data_redund(
     dst_cu->interinter_comp.wedge_sign = src_cu->interinter_comp.wedge_sign;
     dst_cu->compound_idx = src_cu->compound_idx;
     dst_cu->comp_group_idx = src_cu->comp_group_idx;
+#endif
+#if II_COMP_FLAG
+       dst_cu->is_interintra_used      = src_cu->is_interintra_used          ;
+       dst_cu->interintra_mode         = src_cu->interintra_mode             ;
+       dst_cu->use_wedge_interintra    = src_cu->use_wedge_interintra        ;
+       dst_cu->interintra_wedge_index  = src_cu->interintra_wedge_index      ;//inter_intra wedge index
+       dst_cu->ii_wedge_sign           = src_cu->ii_wedge_sign               ;//inter_intra wedge sign=-1
 #endif
 
     //CHKN TransformUnit_t             transform_unit_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
@@ -6712,6 +6752,16 @@ void md_encode_block(
                 inputOriginIndex,
                 cuOriginIndex);
 #endif
+
+#if II_COMP_FLAG
+        //for every CU, perform Luma DC/V/H/S intra prediction to be used later in inter-intra search
+        int allow_ii = is_interintra_allowed_bsize(context_ptr->blk_geom->bsize);
+        if (picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra && allow_ii)
+            precompute_intra_pred_for_inter_intra(
+                picture_control_set_ptr,
+                context_ptr);
+#endif
+
 #if MD_STAGING // renaming
         generate_md_stage_0_cand(
             context_ptr->sb_ptr,

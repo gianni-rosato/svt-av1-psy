@@ -18,6 +18,17 @@
 #include "EbMemory_AVX2.h"
 #include "synonyms.h"
 
+
+#if II_COMP_FLAG
+#ifdef __GNUC__
+#define LIKELY(v) __builtin_expect(v, 1)
+#define UNLIKELY(v) __builtin_expect(v, 0)
+#else
+#define LIKELY(v) (v)
+#define UNLIKELY(v) (v)
+#endif
+#endif
+
 SIMD_INLINE __m128i convolve_x_round_sse2(const __m128i src) {
     const __m128i round = _mm_set1_epi16(34);
     const __m128i dst = _mm_add_epi16(src, round);
@@ -3280,5 +3291,544 @@ void av1_wedge_compute_delta_squares_avx2(int16_t *d, const int16_t *a,
         d += 64;
         N -= 64;
     } while (N);
+}
+#endif
+
+#if II_COMP_FLAG
+static const uint8_t g_blend_a64_mask_shuffle[32] = {
+  0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15,
+  0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15,
+};
+static INLINE __m128i blend_4_u8(const uint8_t *src0, const uint8_t *src1,
+                                 const __m128i *v_m0_b, const __m128i *v_m1_b,
+                                 const __m128i *rounding) {
+  const __m128i v_s0_b = xx_loadl_32(src0);
+  const __m128i v_s1_b = xx_loadl_32(src1);
+
+  const __m128i v_p0_w = _mm_maddubs_epi16(_mm_unpacklo_epi8(v_s0_b, v_s1_b),
+                                           _mm_unpacklo_epi8(*v_m0_b, *v_m1_b));
+
+  const __m128i v_res_w = _mm_mulhrs_epi16(v_p0_w, *rounding);
+  const __m128i v_res = _mm_packus_epi16(v_res_w, v_res_w);
+  return v_res;
+}
+
+static INLINE __m128i blend_8_u8(const uint8_t *src0, const uint8_t *src1,
+                                 const __m128i *v_m0_b, const __m128i *v_m1_b,
+                                 const __m128i *rounding) {
+  const __m128i v_s0_b = xx_loadl_64(src0);
+  const __m128i v_s1_b = xx_loadl_64(src1);
+
+  const __m128i v_p0_w = _mm_maddubs_epi16(_mm_unpacklo_epi8(v_s0_b, v_s1_b),
+                                           _mm_unpacklo_epi8(*v_m0_b, *v_m1_b));
+
+  const __m128i v_res_w = _mm_mulhrs_epi16(v_p0_w, *rounding);
+  const __m128i v_res = _mm_packus_epi16(v_res_w, v_res_w);
+  return v_res;
+}
+static INLINE __m128i blend_16_u8(const uint8_t *src0, const uint8_t *src1,
+                                  const __m128i *v_m0_b, const __m128i *v_m1_b,
+                                  const __m128i *rounding) {
+  const __m128i v_s0_b = xx_loadu_128(src0);
+  const __m128i v_s1_b = xx_loadu_128(src1);
+
+  const __m128i v_p0_w = _mm_maddubs_epi16(_mm_unpacklo_epi8(v_s0_b, v_s1_b),
+                                           _mm_unpacklo_epi8(*v_m0_b, *v_m1_b));
+  const __m128i v_p1_w = _mm_maddubs_epi16(_mm_unpackhi_epi8(v_s0_b, v_s1_b),
+                                           _mm_unpackhi_epi8(*v_m0_b, *v_m1_b));
+
+  const __m128i v_res0_w = _mm_mulhrs_epi16(v_p0_w, *rounding);
+  const __m128i v_res1_w = _mm_mulhrs_epi16(v_p1_w, *rounding);
+  const __m128i v_res = _mm_packus_epi16(v_res0_w, v_res1_w);
+  return v_res;
+}
+static INLINE __m256i blend_32_u8_avx2(const uint8_t *src0, const uint8_t *src1,
+                                       const __m256i *v_m0_b,
+                                       const __m256i *v_m1_b,
+                                       const int32_t bits) {
+  const __m256i v_s0_b = yy_loadu_256(src0);
+  const __m256i v_s1_b = yy_loadu_256(src1);
+
+  const __m256i v_p0_w =
+      _mm256_maddubs_epi16(_mm256_unpacklo_epi8(v_s0_b, v_s1_b),
+                           _mm256_unpacklo_epi8(*v_m0_b, *v_m1_b));
+  const __m256i v_p1_w =
+      _mm256_maddubs_epi16(_mm256_unpackhi_epi8(v_s0_b, v_s1_b),
+                           _mm256_unpackhi_epi8(*v_m0_b, *v_m1_b));
+
+  const __m256i v_res0_w = /*yy_roundn_epu16(v_p0_w, bits);*/  _mm256_avg_epu16(_mm256_srli_epi16(v_p0_w, bits - 1), _mm256_setzero_si256());
+  const __m256i v_res1_w = /*yy_roundn_epu16(v_p1_w, bits);*/  _mm256_avg_epu16(_mm256_srli_epi16(v_p1_w, bits - 1), _mm256_setzero_si256());
+  const __m256i v_res = _mm256_packus_epi16(v_res0_w, v_res1_w);
+  return v_res;
+}
+static INLINE __m256i blend_16_u8_avx2(const uint8_t *src0, const uint8_t *src1,
+                                       const __m256i *v_m0_b,
+                                       const __m256i *v_m1_b,
+                                       const int32_t bits) {
+  const __m256i v_s0_b = _mm256_castsi128_si256(xx_loadu_128(src0));
+  const __m256i v_s1_b = _mm256_castsi128_si256(xx_loadu_128(src1));
+  const __m256i v_s0_s_b = _mm256_permute4x64_epi64(v_s0_b, 0xd8);
+  const __m256i v_s1_s_b = _mm256_permute4x64_epi64(v_s1_b, 0xd8);
+
+  const __m256i v_p0_w =
+      _mm256_maddubs_epi16(_mm256_unpacklo_epi8(v_s0_s_b, v_s1_s_b),
+                           _mm256_unpacklo_epi8(*v_m0_b, *v_m1_b));
+
+  const __m256i v_res0_w = /*yy_roundn_epu16(v_p0_w, bits);*/ _mm256_avg_epu16(_mm256_srli_epi16(v_p0_w, bits - 1), _mm256_setzero_si256());
+  const __m256i v_res_b = _mm256_packus_epi16(v_res0_w, v_res0_w);
+  const __m256i v_res = _mm256_permute4x64_epi64(v_res_b, 0xd8);
+  return v_res;
+}
+static INLINE void blend_a64_mask_sy_w32n_avx2(
+    uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+    uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+    const uint8_t *mask, uint32_t mask_stride, int w, int h) {
+  const __m256i v_maxval_b = _mm256_set1_epi8(AOM_BLEND_A64_MAX_ALPHA);
+  do {
+    int c;
+    for (c = 0; c < w; c += 32) {
+      const __m256i v_ra_b = yy_loadu_256(mask + c);
+      const __m256i v_rb_b = yy_loadu_256(mask + c + mask_stride);
+      const __m256i v_m0_b = _mm256_avg_epu8(v_ra_b, v_rb_b);
+      const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
+      const __m256i v_res_b = blend_32_u8_avx2(
+          src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
+
+      yy_storeu_256(dst + c, v_res_b);
+    }
+    dst += dst_stride;
+    src0 += src0_stride;
+    src1 += src1_stride;
+    mask += 2 * mask_stride;
+  } while (--h);
+}
+static INLINE void blend_a64_mask_sx_sy_w16_avx2(
+    uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+    uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+    const uint8_t *mask, uint32_t mask_stride, int h) {
+  const __m256i v_zmask_b = _mm256_set1_epi16(0xFF);
+  const __m256i v_maxval_b = _mm256_set1_epi8(AOM_BLEND_A64_MAX_ALPHA);
+  do {
+    const __m256i v_ral_b = yy_loadu_256(mask);
+    const __m256i v_rbl_b = yy_loadu_256(mask + mask_stride);
+    const __m256i v_rvsl_b = _mm256_add_epi8(v_ral_b, v_rbl_b);
+    const __m256i v_rvsal_w = _mm256_and_si256(v_rvsl_b, v_zmask_b);
+    const __m256i v_rvsbl_w =
+        _mm256_and_si256(_mm256_srli_si256(v_rvsl_b, 1), v_zmask_b);
+    const __m256i v_rsl_w = _mm256_add_epi16(v_rvsal_w, v_rvsbl_w);
+
+    const __m256i v_m0_w = /*yy_roundn_epu16(v_rsl_w, 2);*/ _mm256_avg_epu16(_mm256_srli_epi16(v_rsl_w, 2 - 1), _mm256_setzero_si256());
+    const __m256i v_m0_b = _mm256_packus_epi16(v_m0_w, v_m0_w);
+    const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
+
+    const __m256i y_res_b = blend_16_u8_avx2(src0, src1, &v_m0_b, &v_m1_b,
+                                             AOM_BLEND_A64_ROUND_BITS);
+
+    xx_storeu_128(dst, _mm256_castsi256_si128(y_res_b));
+    dst += dst_stride;
+    src0 += src0_stride;
+    src1 += src1_stride;
+    mask += 2 * mask_stride;
+  } while (--h);
+}
+
+static INLINE void blend_a64_mask_sx_sy_w32n_avx2(
+    uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+    uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+    const uint8_t *mask, uint32_t mask_stride, int w, int h) {
+  const __m256i v_maxval_b = _mm256_set1_epi8(AOM_BLEND_A64_MAX_ALPHA);
+  const __m256i v_zmask_b = _mm256_set1_epi16(0xFF);
+  do {
+    int c;
+    for (c = 0; c < w; c += 32) {
+      const __m256i v_ral_b = yy_loadu_256(mask + 2 * c);
+      const __m256i v_rah_b = yy_loadu_256(mask + 2 * c + 32);
+      const __m256i v_rbl_b = yy_loadu_256(mask + mask_stride + 2 * c);
+      const __m256i v_rbh_b = yy_loadu_256(mask + mask_stride + 2 * c + 32);
+      const __m256i v_rvsl_b = _mm256_add_epi8(v_ral_b, v_rbl_b);
+      const __m256i v_rvsh_b = _mm256_add_epi8(v_rah_b, v_rbh_b);
+      const __m256i v_rvsal_w = _mm256_and_si256(v_rvsl_b, v_zmask_b);
+      const __m256i v_rvsah_w = _mm256_and_si256(v_rvsh_b, v_zmask_b);
+      const __m256i v_rvsbl_w =
+          _mm256_and_si256(_mm256_srli_si256(v_rvsl_b, 1), v_zmask_b);
+      const __m256i v_rvsbh_w =
+          _mm256_and_si256(_mm256_srli_si256(v_rvsh_b, 1), v_zmask_b);
+      const __m256i v_rsl_w = _mm256_add_epi16(v_rvsal_w, v_rvsbl_w);
+      const __m256i v_rsh_w = _mm256_add_epi16(v_rvsah_w, v_rvsbh_w);
+
+      const __m256i v_m0l_w =/* yy_roundn_epu16(v_rsl_w, 2); */_mm256_avg_epu16(_mm256_srli_epi16(v_rsl_w, 2 - 1), _mm256_setzero_si256());
+      const __m256i v_m0h_w =/* yy_roundn_epu16(v_rsh_w, 2); */_mm256_avg_epu16(_mm256_srli_epi16(v_rsh_w, 2 - 1), _mm256_setzero_si256());
+      const __m256i v_m0_b =
+          _mm256_permute4x64_epi64(_mm256_packus_epi16(v_m0l_w, v_m0h_w), 0xd8);
+      const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
+
+      const __m256i v_res_b = blend_32_u8_avx2(
+          src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
+
+      yy_storeu_256(dst + c, v_res_b);
+    }
+    dst += dst_stride;
+    src0 += src0_stride;
+    src1 += src1_stride;
+    mask += 2 * mask_stride;
+  } while (--h);
+}
+static INLINE void blend_a64_mask_sx_w16_avx2(
+    uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+    uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+    const uint8_t *mask, uint32_t mask_stride, int h) {
+  const __m256i v_maxval_b = _mm256_set1_epi8(AOM_BLEND_A64_MAX_ALPHA);
+  const __m256i v_zmask_b = _mm256_set1_epi16(0xff);
+  do {
+    const __m256i v_rl_b = yy_loadu_256(mask);
+    const __m256i v_al_b =
+        _mm256_avg_epu8(v_rl_b, _mm256_srli_si256(v_rl_b, 1));
+
+    const __m256i v_m0_w = _mm256_and_si256(v_al_b, v_zmask_b);
+    const __m256i v_m0_b = _mm256_packus_epi16(v_m0_w, _mm256_setzero_si256());
+    const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
+
+    const __m256i v_res_b = blend_16_u8_avx2(src0, src1, &v_m0_b, &v_m1_b,
+                                             AOM_BLEND_A64_ROUND_BITS);
+
+    xx_storeu_128(dst, _mm256_castsi256_si128(v_res_b));
+    dst += dst_stride;
+    src0 += src0_stride;
+    src1 += src1_stride;
+    mask += mask_stride;
+  } while (--h);
+}
+
+static INLINE void blend_a64_mask_sx_w32n_avx2(
+    uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+    uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+    const uint8_t *mask, uint32_t mask_stride, int w, int h) {
+  const __m256i v_shuffle_b = yy_loadu_256(g_blend_a64_mask_shuffle);
+  const __m256i v_maxval_b = _mm256_set1_epi8(AOM_BLEND_A64_MAX_ALPHA);
+  do {
+    int c;
+    for (c = 0; c < w; c += 32) {
+      const __m256i v_r0_b = yy_loadu_256(mask + 2 * c);
+      const __m256i v_r1_b = yy_loadu_256(mask + 2 * c + 32);
+      const __m256i v_r0_s_b = _mm256_shuffle_epi8(v_r0_b, v_shuffle_b);
+      const __m256i v_r1_s_b = _mm256_shuffle_epi8(v_r1_b, v_shuffle_b);
+      const __m256i v_al_b =
+          _mm256_avg_epu8(v_r0_s_b, _mm256_srli_si256(v_r0_s_b, 8));
+      const __m256i v_ah_b =
+          _mm256_avg_epu8(v_r1_s_b, _mm256_srli_si256(v_r1_s_b, 8));
+
+      const __m256i v_m0_b =
+          _mm256_permute4x64_epi64(_mm256_unpacklo_epi64(v_al_b, v_ah_b), 0xd8);
+      const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
+
+      const __m256i v_res_b = blend_32_u8_avx2(
+          src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
+
+      yy_storeu_256(dst + c, v_res_b);
+    }
+    dst += dst_stride;
+    src0 += src0_stride;
+    src1 += src1_stride;
+    mask += mask_stride;
+  } while (--h);
+}
+
+static INLINE void blend_a64_mask_sy_w16_avx2(
+    uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+    uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+    const uint8_t *mask, uint32_t mask_stride, int h) {
+  const __m128i _r = _mm_set1_epi16(1 << (15 - AOM_BLEND_A64_ROUND_BITS));
+  const __m128i v_maxval_b = _mm_set1_epi8(AOM_BLEND_A64_MAX_ALPHA);
+  do {
+    const __m128i v_ra_b = xx_loadu_128(mask);
+    const __m128i v_rb_b = xx_loadu_128(mask + mask_stride);
+    const __m128i v_m0_b = _mm_avg_epu8(v_ra_b, v_rb_b);
+
+    const __m128i v_m1_b = _mm_sub_epi16(v_maxval_b, v_m0_b);
+    const __m128i v_res_b = blend_16_u8(src0, src1, &v_m0_b, &v_m1_b, &_r);
+
+    xx_storeu_128(dst, v_res_b);
+    dst += dst_stride;
+    src0 += src0_stride;
+    src1 += src1_stride;
+    mask += 2 * mask_stride;
+  } while (--h);
+}
+
+
+static INLINE void blend_a64_mask_w32n_avx2(
+    uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+    uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+    const uint8_t *mask, uint32_t mask_stride, int w, int h) {
+  const __m256i v_maxval_b = _mm256_set1_epi8(AOM_BLEND_A64_MAX_ALPHA);
+  do {
+    int c;
+    for (c = 0; c < w; c += 32) {
+      const __m256i v_m0_b = yy_loadu_256(mask + c);
+      const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
+
+      const __m256i v_res_b = blend_32_u8_avx2(
+          src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
+
+      yy_storeu_256(dst + c, v_res_b);
+    }
+    dst += dst_stride;
+    src0 += src0_stride;
+    src1 += src1_stride;
+    mask += mask_stride;
+  } while (--h);
+}
+static INLINE void blend_a64_mask_sx_sy_avx2(
+    uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+    uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+    const uint8_t *mask, uint32_t mask_stride, int w, int h) {
+  const __m128i v_shuffle_b = xx_loadu_128(g_blend_a64_mask_shuffle);
+  const __m128i v_maxval_b = _mm_set1_epi8(AOM_BLEND_A64_MAX_ALPHA);
+  const __m128i _r = _mm_set1_epi16(1 << (15 - AOM_BLEND_A64_ROUND_BITS));
+  switch (w) {
+    case 4:
+      do {
+        const __m128i v_ra_b = xx_loadl_64(mask);
+        const __m128i v_rb_b = xx_loadl_64(mask + mask_stride);
+        const __m128i v_rvs_b = _mm_add_epi8(v_ra_b, v_rb_b);
+        const __m128i v_r_s_b = _mm_shuffle_epi8(v_rvs_b, v_shuffle_b);
+        const __m128i v_r0_s_w = _mm_cvtepu8_epi16(v_r_s_b);
+        const __m128i v_r1_s_w = _mm_cvtepu8_epi16(_mm_srli_si128(v_r_s_b, 8));
+        const __m128i v_rs_w = _mm_add_epi16(v_r0_s_w, v_r1_s_w);
+        const __m128i v_m0_w = xx_roundn_epu16(v_rs_w, 2);
+        const __m128i v_m0_b = _mm_packus_epi16(v_m0_w, v_m0_w);
+        const __m128i v_m1_b = _mm_sub_epi8(v_maxval_b, v_m0_b);
+
+        const __m128i v_res_b = blend_4_u8(src0, src1, &v_m0_b, &v_m1_b, &_r);
+
+        xx_storel_32(dst, v_res_b);
+
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += 2 * mask_stride;
+      } while (--h);
+      break;
+    case 8:
+      do {
+        const __m128i v_ra_b = xx_loadu_128(mask);
+        const __m128i v_rb_b = xx_loadu_128(mask + mask_stride);
+        const __m128i v_rvs_b = _mm_add_epi8(v_ra_b, v_rb_b);
+        const __m128i v_r_s_b = _mm_shuffle_epi8(v_rvs_b, v_shuffle_b);
+        const __m128i v_r0_s_w = _mm_cvtepu8_epi16(v_r_s_b);
+        const __m128i v_r1_s_w = _mm_cvtepu8_epi16(_mm_srli_si128(v_r_s_b, 8));
+        const __m128i v_rs_w = _mm_add_epi16(v_r0_s_w, v_r1_s_w);
+        const __m128i v_m0_w = xx_roundn_epu16(v_rs_w, 2);
+        const __m128i v_m0_b = _mm_packus_epi16(v_m0_w, v_m0_w);
+        const __m128i v_m1_b = _mm_sub_epi8(v_maxval_b, v_m0_b);
+
+        const __m128i v_res_b = blend_8_u8(src0, src1, &v_m0_b, &v_m1_b, &_r);
+
+        xx_storel_64(dst, v_res_b);
+
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += 2 * mask_stride;
+      } while (--h);
+      break;
+    case 16:
+      blend_a64_mask_sx_sy_w16_avx2(dst, dst_stride, src0, src0_stride, src1,
+                                    src1_stride, mask, mask_stride, h);
+      break;
+    default:
+      blend_a64_mask_sx_sy_w32n_avx2(dst, dst_stride, src0, src0_stride, src1,
+                                     src1_stride, mask, mask_stride, w, h);
+      break;
+  }
+}
+static INLINE void blend_a64_mask_sx_avx2(
+    uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+    uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+    const uint8_t *mask, uint32_t mask_stride, int w, int h) {
+  const __m128i v_shuffle_b = xx_loadu_128(g_blend_a64_mask_shuffle);
+  const __m128i v_maxval_b = _mm_set1_epi8(AOM_BLEND_A64_MAX_ALPHA);
+  const __m128i _r = _mm_set1_epi16(1 << (15 - AOM_BLEND_A64_ROUND_BITS));
+  switch (w) {
+    case 4:
+      do {
+        const __m128i v_r_b = xx_loadl_64(mask);
+        const __m128i v_r0_s_b = _mm_shuffle_epi8(v_r_b, v_shuffle_b);
+        const __m128i v_r_lo_b = _mm_unpacklo_epi64(v_r0_s_b, v_r0_s_b);
+        const __m128i v_r_hi_b = _mm_unpackhi_epi64(v_r0_s_b, v_r0_s_b);
+        const __m128i v_m0_b = _mm_avg_epu8(v_r_lo_b, v_r_hi_b);
+        const __m128i v_m1_b = _mm_sub_epi8(v_maxval_b, v_m0_b);
+
+        const __m128i v_res_b = blend_4_u8(src0, src1, &v_m0_b, &v_m1_b, &_r);
+
+        xx_storel_32(dst, v_res_b);
+
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += mask_stride;
+      } while (--h);
+      break;
+    case 8:
+      do {
+        const __m128i v_r_b = xx_loadu_128(mask);
+        const __m128i v_r0_s_b = _mm_shuffle_epi8(v_r_b, v_shuffle_b);
+        const __m128i v_r_lo_b = _mm_unpacklo_epi64(v_r0_s_b, v_r0_s_b);
+        const __m128i v_r_hi_b = _mm_unpackhi_epi64(v_r0_s_b, v_r0_s_b);
+        const __m128i v_m0_b = _mm_avg_epu8(v_r_lo_b, v_r_hi_b);
+        const __m128i v_m1_b = _mm_sub_epi8(v_maxval_b, v_m0_b);
+
+        const __m128i v_res_b = blend_8_u8(src0, src1, &v_m0_b, &v_m1_b, &_r);
+
+        xx_storel_64(dst, v_res_b);
+
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += mask_stride;
+      } while (--h);
+      break;
+    case 16:
+      blend_a64_mask_sx_w16_avx2(dst, dst_stride, src0, src0_stride, src1,
+                                 src1_stride, mask, mask_stride, h);
+      break;
+    default:
+      blend_a64_mask_sx_w32n_avx2(dst, dst_stride, src0, src0_stride, src1,
+                                  src1_stride, mask, mask_stride, w, h);
+      break;
+  }
+}
+static INLINE void blend_a64_mask_sy_avx2(
+    uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+    uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+    const uint8_t *mask, uint32_t mask_stride, int w, int h) {
+  const __m128i _r = _mm_set1_epi16(1 << (15 - AOM_BLEND_A64_ROUND_BITS));
+  const __m128i v_maxval_b = _mm_set1_epi8(AOM_BLEND_A64_MAX_ALPHA);
+  switch (w) {
+    case 4:
+      do {
+        const __m128i v_ra_b = xx_loadl_32(mask);
+        const __m128i v_rb_b = xx_loadl_32(mask + mask_stride);
+        const __m128i v_m0_b = _mm_avg_epu8(v_ra_b, v_rb_b);
+        const __m128i v_m1_b = _mm_sub_epi8(v_maxval_b, v_m0_b);
+        const __m128i v_res_b = blend_4_u8(src0, src1, &v_m0_b, &v_m1_b, &_r);
+
+        xx_storel_32(dst, v_res_b);
+
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += 2 * mask_stride;
+      } while (--h);
+      break;
+    case 8:
+      do {
+        const __m128i v_ra_b = xx_loadl_64(mask);
+        const __m128i v_rb_b = xx_loadl_64(mask + mask_stride);
+        const __m128i v_m0_b = _mm_avg_epu8(v_ra_b, v_rb_b);
+        const __m128i v_m1_b = _mm_sub_epi8(v_maxval_b, v_m0_b);
+        const __m128i v_res_b = blend_8_u8(src0, src1, &v_m0_b, &v_m1_b, &_r);
+
+        xx_storel_64(dst, v_res_b);
+
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += 2 * mask_stride;
+      } while (--h);
+      break;
+    case 16:
+      blend_a64_mask_sy_w16_avx2(dst, dst_stride, src0, src0_stride, src1,
+                                 src1_stride, mask, mask_stride, h);
+      break;
+    default:
+      blend_a64_mask_sy_w32n_avx2(dst, dst_stride, src0, src0_stride, src1,
+                                  src1_stride, mask, mask_stride, w, h);
+  }
+}
+static INLINE void blend_a64_mask_avx2(
+    uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+    uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+    const uint8_t *mask, uint32_t mask_stride, int w, int h) {
+  const __m128i v_maxval_b = _mm_set1_epi8(AOM_BLEND_A64_MAX_ALPHA);
+  const __m128i _r = _mm_set1_epi16(1 << (15 - AOM_BLEND_A64_ROUND_BITS));
+  switch (w) {
+    case 4:
+      do {
+        const __m128i v_m0_b = xx_loadl_32(mask);
+        const __m128i v_m1_b = _mm_sub_epi8(v_maxval_b, v_m0_b);
+        const __m128i v_res_b = blend_4_u8(src0, src1, &v_m0_b, &v_m1_b, &_r);
+
+        xx_storel_32(dst, v_res_b);
+
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += mask_stride;
+      } while (--h);
+      break;
+    case 8:
+      do {
+        const __m128i v_m0_b = xx_loadl_64(mask);
+        const __m128i v_m1_b = _mm_sub_epi8(v_maxval_b, v_m0_b);
+        const __m128i v_res_b = blend_8_u8(src0, src1, &v_m0_b, &v_m1_b, &_r);
+
+        xx_storel_64(dst, v_res_b);
+
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += mask_stride;
+      } while (--h);
+      break;
+    case 16:
+      do {
+        const __m128i v_m0_b = xx_loadu_128(mask);
+        const __m128i v_m1_b = _mm_sub_epi8(v_maxval_b, v_m0_b);
+        const __m128i v_res_b = blend_16_u8(src0, src1, &v_m0_b, &v_m1_b, &_r);
+
+        xx_storeu_128(dst, v_res_b);
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += mask_stride;
+      } while (--h);
+      break;
+    default:
+      blend_a64_mask_w32n_avx2(dst, dst_stride, src0, src0_stride, src1,
+                               src1_stride, mask, mask_stride, w, h);
+  }
+}
+void aom_blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride,
+                             const uint8_t *src0, uint32_t src0_stride,
+                             const uint8_t *src1, uint32_t src1_stride,
+                             const uint8_t *mask, uint32_t mask_stride, int w,
+                             int h, int subw, int subh) {
+  assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
+  assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
+
+  assert(h >= 1);
+  assert(w >= 1);
+  assert(IS_POWER_OF_TWO(h));
+  assert(IS_POWER_OF_TWO(w));
+
+  if (UNLIKELY((h | w) & 3)) {  // if (w <= 2 || h <= 2)
+    aom_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1, src1_stride,
+                         mask, mask_stride, w, h, subw, subh);
+  } else {
+    if (subw & subh) {
+      blend_a64_mask_sx_sy_avx2(dst, dst_stride, src0, src0_stride, src1,
+                                src1_stride, mask, mask_stride, w, h);
+    } else if (subw) {
+      blend_a64_mask_sx_avx2(dst, dst_stride, src0, src0_stride, src1,
+                             src1_stride, mask, mask_stride, w, h);
+    } else if (subh) {
+      blend_a64_mask_sy_avx2(dst, dst_stride, src0, src0_stride, src1,
+                             src1_stride, mask, mask_stride, w, h);
+    } else {
+      blend_a64_mask_avx2(dst, dst_stride, src0, src0_stride, src1, src1_stride,
+                          mask, mask_stride, w, h);
+    }
+  }
 }
 #endif

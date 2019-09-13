@@ -136,6 +136,13 @@ extern "C" {
 #if MD_STAGING // classes
         CAND_CLASS                             cand_class;
 #endif
+#if II_COMP_FLAG
+        INTERINTRA_MODE                        interintra_mode;
+        uint8_t                                is_interintra_used;
+        uint8_t                                use_wedge_interintra;
+        int32_t                                interintra_wedge_index;//inter_intra wedge index
+        int32_t                                ii_wedge_sign;//inter_intra wedge sign=-1
+#endif
     } ModeDecisionCandidate;
 
     /**************************************

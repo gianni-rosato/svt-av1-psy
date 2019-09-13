@@ -757,6 +757,17 @@ EbErrorType av1_inter_prediction(
     uint8_t                              compound_idx,
     INTERINTER_COMPOUND_DATA             *interinter_comp,
 #endif
+#if II_COMP_FLAG
+    TileInfo                                * tile,
+    NeighborArrayUnit                       *luma_recon_neighbor_array,
+    NeighborArrayUnit                       *cb_recon_neighbor_array ,
+    NeighborArrayUnit                       *cr_recon_neighbor_array ,
+    uint8_t                                 is_interintra_used ,
+    INTERINTRA_MODE                        interintra_mode,
+    uint8_t                                use_wedge_interintra,
+    int32_t                                interintra_wedge_index,
+
+#endif
     uint16_t                             pu_origin_x,
     uint16_t                             pu_origin_y,
     uint8_t                              bwidth,
@@ -859,6 +870,16 @@ void tf_inter_prediction(
                             1,//compound_idx not used
                             NULL,// interinter_comp not used
 #endif
+#if II_COMP_FLAG
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            0,
+                            0,
+                            0,
+                            0,
+#endif
                             pu_origin_x,
                             pu_origin_y,
                             bsize,
@@ -902,6 +923,16 @@ void tf_inter_prediction(
                     1,//compound_idx not used
                     NULL,// interinter_comp not used
 #endif
+#if II_COMP_FLAG
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0,
+                    0,
+                    0,
+                    0,
+#endif
                     pu_origin_x,
                     pu_origin_y,
                     bsize,
@@ -925,6 +956,16 @@ void tf_inter_prediction(
 #if COMP_MODE
                     1,//compound_idx not used
                     NULL,// interinter_comp not used
+#endif
+#if II_COMP_FLAG
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0,
+                    0,
+                    0,
+                    0,
 #endif
                     pu_origin_x,
                     pu_origin_y,

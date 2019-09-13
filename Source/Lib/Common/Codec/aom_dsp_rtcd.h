@@ -222,6 +222,11 @@ extern "C" {
 
 
 #endif
+#if II_COMP_FLAG
+    void aom_blend_a64_mask_c(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0, uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride, const uint8_t *mask, uint32_t mask_stride, int w, int h, int subw, int subh);
+    void aom_blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0, uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride, const uint8_t *mask, uint32_t mask_stride, int w, int h, int subw, int subh);
+    RTCD_EXTERN void (*aom_blend_a64_mask)(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0, uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride, const uint8_t *mask, uint32_t mask_stride, int w, int h, int subw, int subh);
+#endif
     int32_t eb_cdef_find_dir_c(const uint16_t *img, int32_t stride, int32_t *var, int32_t coeff_shift);
     int32_t eb_cdef_find_dir_avx2(const uint16_t *img, int32_t stride, int32_t *var, int32_t coeff_shift);
     RTCD_EXTERN int32_t(*eb_cdef_find_dir)(const uint16_t *img, int32_t stride, int32_t *var, int32_t coeff_shift);
@@ -2658,6 +2663,10 @@ extern "C" {
         if (flags & HAS_AVX2) av1_wedge_compute_delta_squares = av1_wedge_compute_delta_squares_avx2;
         av1_wedge_sign_from_residuals = av1_wedge_sign_from_residuals_c;
         if (flags & HAS_AVX2) av1_wedge_sign_from_residuals = av1_wedge_sign_from_residuals_avx2;
+#endif
+#if II_COMP_FLAG
+        aom_blend_a64_mask = aom_blend_a64_mask_c;
+        if (flags & HAS_AVX2) aom_blend_a64_mask = aom_blend_a64_mask_avx2;
 #endif
         eb_cdef_find_dir = eb_cdef_find_dir_c;
         if (flags & HAS_AVX2) eb_cdef_find_dir = eb_cdef_find_dir_avx2;

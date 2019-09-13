@@ -1249,6 +1249,13 @@ EbErrorType signal_derivation_multi_processes_oq(
 
         picture_control_set_ptr->wedge_mode = 0;
 
+#if II_COMP_FLAG
+        // inter intra pred                      Settings
+        // 0                                     OFF
+        // 1                                     ON
+            picture_control_set_ptr->enable_inter_intra = picture_control_set_ptr->slice_type != I_SLICE ? sequence_control_set_ptr->seq_header.enable_interintra_compound : 0;
+
+#endif
         // Set compound mode      Settings
         // 0                 OFF: No compond mode search : AVG only
         // 1                 ON: compond mode search: AVG/DIST/DIFF

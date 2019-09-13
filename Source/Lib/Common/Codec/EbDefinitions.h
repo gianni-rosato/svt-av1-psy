@@ -39,6 +39,8 @@
 extern "C" {
 #endif
 
+#define II_COMP_FLAG 1
+
 // Internal Marcos
 #define NON_AVX512_SUPPORT
 
@@ -162,7 +164,11 @@ enum {
 #define BLOCK_MAX_COUNT_SB_64                     1101  // TODO: reduce alloction for 64x64
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
 #if MD_STAGING // classes
+#if II_COMP_FLAG
+#define MAX_NFL                                  80
+#else
 #define MAX_NFL                                   65
+#endif
 #define MAX_NFL_BUFF                              (MAX_NFL + CAND_CLASS_TOTAL)  //need one extra temp buffer for each fast loop call
 #else
 #define MAX_NFL                                   40
@@ -479,6 +485,9 @@ typedef enum CAND_CLASS {
     CAND_CLASS_1,
     CAND_CLASS_2,
     CAND_CLASS_3,
+#if II_COMP_FLAG
+    CAND_CLASS_4,
+#endif
     CAND_CLASS_TOTAL
 } CAND_CLASS;
 
@@ -1133,6 +1142,13 @@ typedef struct {
 } INTERINTER_COMPOUND_DATA;
 #endif
 
+#if II_COMP_FLAG
+#define AOM_BLEND_A64(a, v0, v1)                                          \
+  ROUND_POWER_OF_TWO((a) * (v0) + (AOM_BLEND_A64_MAX_ALPHA - (a)) * (v1), \
+                     AOM_BLEND_A64_ROUND_BITS)
+#define IS_POWER_OF_TWO(x) (((x) & ((x)-1)) == 0)
+#define INTERINTRA_MODE  InterIntraMode
+#endif
 typedef enum ATTRIBUTE_PACKED
 {
     FILTER_DC_PRED,

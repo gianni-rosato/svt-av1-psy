@@ -1591,7 +1591,11 @@ void update_av1_mi_map(
                 miPtr[miX + miY * mi_stride].mbmi.use_intrabc = cu_ptr->av1xd->use_intrabc;
 
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[0] = rf[0];
+#if II_COMP_FLAG
+                miPtr[miX + miY * mi_stride].mbmi.ref_frame[1] = cu_ptr->is_interintra_used ? INTRA_FRAME : rf[1];
+#else
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[1] = rf[1];
+#endif
                 if (cu_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_0) {
                     miPtr[miX + miY * mi_stride].mbmi.mv[0].as_mv.col = cu_ptr->prediction_unit_array->mv[0].x;
                     miPtr[miX + miY * mi_stride].mbmi.mv[0].as_mv.row = cu_ptr->prediction_unit_array->mv[0].y;
@@ -1612,6 +1616,11 @@ void update_av1_mi_map(
 #if COMP_MODE
             miPtr[miX + miY * mi_stride].mbmi.comp_group_idx = cu_ptr->comp_group_idx;
             miPtr[miX + miY * mi_stride].mbmi.compound_idx = cu_ptr->compound_idx;
+#endif
+#if II_COMP_FLAG
+            miPtr[miX + miY * mi_stride].mbmi.interintra_mode           = cu_ptr->interintra_mode;
+            miPtr[miX + miY * mi_stride].mbmi.use_wedge_interintra      = cu_ptr->use_wedge_interintra;
+            miPtr[miX + miY * mi_stride].mbmi.interintra_wedge_index    = cu_ptr->interintra_wedge_index;//in
 #endif
             //needed for CDEF
             miPtr[miX + miY * mi_stride].mbmi.skip = cu_ptr->block_has_coeff ? EB_FALSE : EB_TRUE;
@@ -1662,7 +1671,11 @@ void update_mi_map(
                 }
                 miPtr[miX + miY * mi_stride].mbmi.use_intrabc = cu_ptr->av1xd->use_intrabc;
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[0] = rf[0];
+#if II_COMP_FLAG
+                miPtr[miX + miY * mi_stride].mbmi.ref_frame[1] = cu_ptr->is_interintra_used ? INTRA_FRAME : rf[1];
+#else
                 miPtr[miX + miY * mi_stride].mbmi.ref_frame[1] = rf[1];
+#endif
                 if (cu_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_0) {
                     miPtr[miX + miY * mi_stride].mbmi.mv[0].as_mv.col = cu_ptr->prediction_unit_array->mv[0].x;
                     miPtr[miX + miY * mi_stride].mbmi.mv[0].as_mv.row = cu_ptr->prediction_unit_array->mv[0].y;
@@ -1688,6 +1701,11 @@ void update_mi_map(
 #if COMP_MODE
             miPtr[miX + miY * mi_stride].mbmi.comp_group_idx = cu_ptr->comp_group_idx;
             miPtr[miX + miY * mi_stride].mbmi.compound_idx = cu_ptr->compound_idx;
+#endif
+#if II_COMP_FLAG
+            miPtr[miX + miY * mi_stride].mbmi.interintra_mode           = cu_ptr->interintra_mode;
+            miPtr[miX + miY * mi_stride].mbmi.use_wedge_interintra      = cu_ptr->use_wedge_interintra;
+            miPtr[miX + miY * mi_stride].mbmi.interintra_wedge_index    = cu_ptr->interintra_wedge_index;//in
 #endif
         }
     }

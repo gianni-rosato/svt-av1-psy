@@ -14275,6 +14275,9 @@ extern "C" {
 #if COEFF_BASED_SKIP_ATB
         uint8_t                              coeff_based_skip_atb;
 #endif
+#if II_COMP_FLAG
+        uint8_t                              enable_inter_intra;
+#endif
     } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData

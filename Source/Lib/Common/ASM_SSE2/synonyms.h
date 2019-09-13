@@ -130,6 +130,15 @@ static INLINE __m128i xx_roundn_epi16(__m128i v_val_d, int32_t bits) {
     return _mm_srai_epi16(v_tmp_d, bits);
 }
 
+// This fucntion will fail gcc Linux ABI build
+// Tunraround is to replace the core of the fucntion in each call
+
+//static INLINE __m256i yy_roundn_epu16(__m256i v_val_w, int bits) {
+//  const __m256i v_s_w = _mm256_srli_epi16(v_val_w, bits - 1);
+//  return _mm256_avg_epu16(v_s_w, _mm256_setzero_si256());
+//}
+//
+
 // Note:
 // _mm256_insert_epi16 intrinsics is available from vs2017.
 // We define this macro for vs2015 and earlier. The

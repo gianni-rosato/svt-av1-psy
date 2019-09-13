@@ -312,6 +312,10 @@ extern "C" {
     EbBool                              md_staging_skip_full_chroma;
     EbBool                              md_staging_skip_rdoq;
 #endif
+
+#if II_COMP_FLAG
+   DECLARE_ALIGNED(16, uint8_t,        intrapred_buf[INTERINTRA_MODES][32 * 32]); //MAX block size for inter intra is 32x32
+#endif
 #if PRUNE_REF_FRAME_FRO_REC_PARTITION
     uint64_t                           *ref_best_cost_sq_table;
     uint32_t                           *ref_best_ref_sq_table;
