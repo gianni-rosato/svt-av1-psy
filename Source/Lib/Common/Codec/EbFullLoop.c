@@ -2820,8 +2820,6 @@ void encode_pass_tx_search_hbd(
     const uint32_t   scratch_luma_offset    = context_ptr->blk_geom->origin_x + context_ptr->blk_geom->origin_y * SB_STRIDE_Y;
     const uint32_t   coeff1dOffset        = context_ptr->coded_area_sb;
 
-    //Update QP for Quant
-    qp += QP_BD_OFFSET;
     uint64_t                    y_tu_coeff_bits;
     uint64_t                    tuFullDistortion[3][DIST_CALC_TOTAL];
     const int32_t               is_inter = context_ptr->is_inter;

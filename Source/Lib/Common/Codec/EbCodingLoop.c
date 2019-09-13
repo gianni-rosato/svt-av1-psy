@@ -915,9 +915,6 @@ static void Av1EncodeLoop16bit(
     const uint32_t coeff1dOffsetChroma = context_ptr->coded_area_sb_uv;
     UNUSED(coeff1dOffsetChroma);
 
-    //Update QP for Quant
-    qp += QP_BD_OFFSET;
-
     {
         //**********************************
         // Luma
