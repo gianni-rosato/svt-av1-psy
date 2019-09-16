@@ -1747,6 +1747,7 @@ int32_t eb_aom_denoise_and_model_run(struct aom_denoise_and_model_t *ctx,
     eb_aom_flat_block_finder_free(&ctx->flat_block_finder);
     eb_aom_noise_model_free(&ctx->noise_model);
     free(ctx->flat_blocks);
+    ctx->flat_blocks = NULL;
 
     return 1;
 }
