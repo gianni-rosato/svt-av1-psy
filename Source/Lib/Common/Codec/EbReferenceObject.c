@@ -126,6 +126,7 @@ static void eb_reference_object_dctor(EbPtr p)
     EbReferenceObject *obj = (EbReferenceObject*)p;
     EB_DELETE(obj->reference_picture16bit);
     EB_DELETE(obj->reference_picture);
+    EB_FREE_ALIGNED_ARRAY(obj->mvs);
 }
 
 
