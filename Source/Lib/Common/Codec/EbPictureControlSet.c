@@ -128,6 +128,7 @@ void picture_control_set_dctor(EbPtr p)
     PictureControlSet* obj = (PictureControlSet*)p;
     uint8_t depth;
     av1_hash_table_destroy(&obj->hash_table);
+    EB_FREE_ALIGNED_ARRAY(obj->tpl_mvs);
     EB_DELETE(obj->enc_dec_segment_ctrl);
     EB_DELETE(obj->ep_intra_luma_mode_neighbor_array);
     EB_DELETE(obj->ep_intra_chroma_mode_neighbor_array);
