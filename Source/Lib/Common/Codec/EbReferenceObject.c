@@ -211,10 +211,8 @@ static void eb_pa_reference_object_dctor(EbPtr p)
     EB_DELETE(obj->input_padded_picture_ptr);
     EB_DELETE(obj->quarter_decimated_picture_ptr);
     EB_DELETE(obj->sixteenth_decimated_picture_ptr);
-#if DOWN_SAMPLING_FILTERING
     EB_DELETE(obj->quarter_filtered_picture_ptr);
     EB_DELETE(obj->sixteenth_filtered_picture_ptr);
-#endif
 }
 
 /*****************************************
