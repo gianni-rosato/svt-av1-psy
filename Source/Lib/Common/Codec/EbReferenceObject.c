@@ -185,8 +185,7 @@ EbErrorType eb_reference_object_ctor(
         uint32_t mi_rows = referenceObject->reference_picture->height >> MI_SIZE_LOG2;
         uint32_t mi_cols = referenceObject->reference_picture->width >> MI_SIZE_LOG2;
         const int mem_size = ((mi_rows + 1) >> 1) * ((mi_cols + 1) >> 1);
-        EB_MALLOC_ALIGNED_ARRAY(referenceObject->mvs, mem_size);
-        memset(referenceObject->mvs, 0, sizeof(MV_REF)*mem_size);
+        EB_CALLOC_ALIGNED_ARRAY(referenceObject->mvs, mem_size);
     }
     memset(&referenceObject->film_grain_params, 0, sizeof(referenceObject->film_grain_params));
 
