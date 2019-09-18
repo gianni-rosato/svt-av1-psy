@@ -3,6 +3,9 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
+#ifndef EbFileUtils_h
+#define EbFileUtils_h
+
 #include <stdio.h>
 
 #include "EbSvtAv1Dec.h"
@@ -56,3 +59,5 @@ typedef struct CLInput{
 int file_is_ivf(CLInput *cli);
 int read_ivf_frame(FILE *infile, uint8_t **buffer, size_t *bytes_read,
     size_t *buffer_size, int64_t *pts);
+
+#endif

@@ -153,10 +153,8 @@ class BitstreamWriterTest : public ::testing::Test {
 
         // setup test bits
         switch (bit_gen_method) {
-        case 0: memset(test_bits, 0, total_bits * sizeof(test_bits[0])); break;
-        case 1:
-            for (int i = 0; i < total_bits; ++i)
-                test_bits[i] = 1;
+        case 0:
+        case 1: memset(test_bits, bit_gen_method, total_bits * sizeof(test_bits[0])); break;
         default:
             for (int i = 0; i < total_bits; ++i)
                 test_bits[i] = bit_dist(gen_);

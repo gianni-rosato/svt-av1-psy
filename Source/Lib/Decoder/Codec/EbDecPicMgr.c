@@ -286,7 +286,7 @@ void generate_next_ref_frame_map(EbDecHandle *dec_handle_ptr) {
 // These functions take a reference frame label between LAST_FRAME and
 // EXTREF_FRAME inclusive.  Note that this is different to the indexing
 // previously used by the frame_refs[] array.
-static INLINE int32_t get_ref_frame_map_idx(EbDecHandle *dec_handle_ptr,
+static INLINE int32_t get_ref_frame_map_with_idx(EbDecHandle *dec_handle_ptr,
                                         const MvReferenceFrame ref_frame)
 {
     return (ref_frame >= LAST_FRAME && ref_frame <= REF_FRAMES)
@@ -297,7 +297,7 @@ static INLINE int32_t get_ref_frame_map_idx(EbDecHandle *dec_handle_ptr,
 EbDecPicBuf *get_ref_frame_buf(EbDecHandle *dec_handle_ptr,
                                const MvReferenceFrame ref_frame)
 {
-    const int32_t map_idx = get_ref_frame_map_idx(dec_handle_ptr, ref_frame);
+    const int32_t map_idx = get_ref_frame_map_with_idx(dec_handle_ptr, ref_frame);
     return (map_idx != INVALID_IDX) ? dec_handle_ptr->ref_frame_map[map_idx] : NULL;
 }
 

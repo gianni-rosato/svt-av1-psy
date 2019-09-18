@@ -1475,6 +1475,7 @@ void enc_pass_av1_mv_pred(
 
     (void)mode;
     IntMv    nearestmv[2], nearmv[2];
+    memset(nearestmv, 0, sizeof(nearestmv));
 
     generate_av1_mvp_table(
         tile,

@@ -307,7 +307,7 @@ RefDecoder::RefDecoder(RefDecoder::RefDecoderErr& ret, bool enable_analyzer) {
     parser_ = nullptr;
     enc_bytes_ = 0;
     burst_bytes_ = 0;
-    memset(&video_param_, 0, sizeof(video_param_));
+    video_param_ = VideoFrameParam();
 
     codec_handle_ = new aom_codec_ctx_t();
     if (codec_handle_ == nullptr) {

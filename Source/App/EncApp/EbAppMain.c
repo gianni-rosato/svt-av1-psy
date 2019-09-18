@@ -115,8 +115,11 @@ int32_t main(int32_t argc, char* argv[])
         // Initialize config
         for (instanceCount = 0; instanceCount < num_channels; ++instanceCount) {
             configs[instanceCount] = (EbConfig*)malloc(sizeof(EbConfig));
-            if (!configs[instanceCount])
+            if (!configs[instanceCount]) {
+                while(instanceCount-- > 0)
+                    free(configs[instanceCount]);
                 return EB_ErrorInsufficientResources;
+            }
             eb_config_ctor(configs[instanceCount]);
             return_errors[instanceCount] = EB_ErrorNone;
         }
@@ -124,8 +127,11 @@ int32_t main(int32_t argc, char* argv[])
         // Initialize appCallback
         for (instanceCount = 0; instanceCount < num_channels; ++instanceCount) {
             appCallbacks[instanceCount] = (EbAppContext*)malloc(sizeof(EbAppContext));
-            if (!appCallbacks[instanceCount])
+            if (!appCallbacks[instanceCount]) {
+                while(instanceCount-- > 0)
+                    free(appCallbacks[instanceCount]);
                 return EB_ErrorInsufficientResources;
+            }
         }
 
         for (instanceCount = 0; instanceCount < MAX_CHANNEL_NUMBER; ++instanceCount) {
