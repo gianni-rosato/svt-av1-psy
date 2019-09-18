@@ -153,9 +153,9 @@ static INLINE void build_obmc_inter_pred_above(EbDecHandle *dec_handle,
         const uint8_t *const mask = av1_get_obmc_mask(bh);
 
         if (is_hbd)
-            aom_highbd_blend_a64_vmask(CONVERT_TO_BYTEPTR(tmp_recon_buf),
-                tmp_recon_stride, CONVERT_TO_BYTEPTR(tmp_recon_buf),
-                tmp_recon_stride, CONVERT_TO_BYTEPTR(above_buf), above_stride,
+            aom_highbd_blend_a64_vmask((tmp_recon_buf),
+                tmp_recon_stride, (tmp_recon_buf),
+                tmp_recon_stride, (above_buf), above_stride,
                 mask, bw, bh, recon_picture_buf->bit_depth);
 
         else

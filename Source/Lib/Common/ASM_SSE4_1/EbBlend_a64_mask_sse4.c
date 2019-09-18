@@ -1189,9 +1189,9 @@ void aom_highbd_blend_a64_vmask_sse4_1(
             src1_stride, mask, w, h, bd);
     }
     else {
-        uint16_t *const dst = CONVERT_TO_SHORTPTR(dst_8);
-        const uint16_t *const src0 = CONVERT_TO_SHORTPTR(src0_8);
-        const uint16_t *const src1 = CONVERT_TO_SHORTPTR(src1_8);
+        uint16_t *const dst = (uint16_t *)(dst_8);// CONVERT_TO_SHORTPTR(dst_8);
+        const uint16_t *const src0 = (uint16_t *)(src0_8); //CONVERT_TO_SHORTPTR(src0_8);
+        const uint16_t *const src1 = (uint16_t *)(src1_8); //CONVERT_TO_SHORTPTR(src1_8);
 
         blend[bd == 12][(w >> 2) & 1](dst, dst_stride, src0, src0_stride, src1,
             src1_stride, mask, w, h);
