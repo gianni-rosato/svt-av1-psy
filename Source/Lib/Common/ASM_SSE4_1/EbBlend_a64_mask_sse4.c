@@ -20,26 +20,8 @@
 #include "EbDefinitions.h"
 
 #include "EbBlend_sse4.h"
-#include "convolve_avx2.h"
 
 #include "aom_dsp_rtcd.h"
-
-#if 0
-#include <smmintrin.h>  // SSE4.1
-
-#include <assert.h>
-
-#include "aom/aom_integer.h"
-#include "aom_ports/mem.h"
-#include "aom_dsp/aom_dsp_common.h"
-#include "aom_dsp/blend.h"
-
-#include "aom_dsp/x86/synonyms.h"
-#include "aom_dsp/x86/blend_sse4.h"
-#include "aom_dsp/x86/blend_mask_sse4.h"
-
-#include "config/aom_dsp_rtcd.h"
-#endif
 
  //////////////////////////////////////////////////////////////////////////////
  // No sub-sampling

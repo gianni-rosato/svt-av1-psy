@@ -19,9 +19,6 @@
 
 #include "EbDefinitions.h"
 
-#include "EbBlend_sse4.h"
-#include "convolve_avx2.h"
-
 #include "aom_dsp_rtcd.h"
 
  // Blending with alpha mask. Mask values come from the range [0, 64],
