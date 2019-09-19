@@ -10,7 +10,7 @@ addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
-    packages: cmake yasm valgrind libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev gcc-8 g++8 gcc-9 g++9
+    packages: cmake yasm valgrind libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev gcc-8 g++-8 gcc-9 g++-9
   homebrew:
     packages: yasm ccache
 notifications:
