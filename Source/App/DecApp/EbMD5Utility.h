@@ -25,6 +25,9 @@
  * Still in the public domain.
 */
 
+#ifndef EbMD_Utility_h
+#define EbMD_Utility_h
+
 typedef struct MD5Context {
     unsigned int buf[4];
     unsigned int bytes[2];
@@ -38,3 +41,5 @@ void md5_transform(unsigned int buf[4], unsigned int const in[16]);
 
 void print_md5(unsigned char digest[16]);
 void write_md5(EbBufferHeaderType *recon_buffer, CLInput *cli, MD5Context *md5);
+
+#endif

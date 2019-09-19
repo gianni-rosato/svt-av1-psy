@@ -5246,36 +5246,36 @@ EbErrorType inter_pu_prediction_av1(
                 &skip_sse_sb);
         }
 
-        av1_inter_prediction(
-            picture_control_set_ptr,
-            candidate_buffer_ptr->candidate_ptr->interp_filters,
-            md_context_ptr->cu_ptr,
-            candidate_buffer_ptr->candidate_ptr->ref_frame_type,
-            &mv_unit,
-            candidate_buffer_ptr->candidate_ptr->use_intrabc,
-            candidate_buffer_ptr->candidate_ptr->compound_idx,
-            &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+    av1_inter_prediction(
+        picture_control_set_ptr,
+        candidate_buffer_ptr->candidate_ptr->interp_filters,
+        md_context_ptr->cu_ptr,
+        candidate_buffer_ptr->candidate_ptr->ref_frame_type,
+        &mv_unit,
+        candidate_buffer_ptr->candidate_ptr->use_intrabc,
+        candidate_buffer_ptr->candidate_ptr->compound_idx,
+        &candidate_buffer_ptr->candidate_ptr->interinter_comp,
 #if II_COMP_FLAG
-            &md_context_ptr->sb_ptr->tile_info,
-            md_context_ptr->luma_recon_neighbor_array,
-            md_context_ptr->cb_recon_neighbor_array,
-            md_context_ptr->cr_recon_neighbor_array,
-            candidate_ptr->is_interintra_used,
-            candidate_ptr->interintra_mode,
-            candidate_ptr->use_wedge_interintra,
-            candidate_ptr->interintra_wedge_index,
+        &md_context_ptr->sb_ptr->tile_info,
+        md_context_ptr->luma_recon_neighbor_array,
+        md_context_ptr->cb_recon_neighbor_array,
+        md_context_ptr->cr_recon_neighbor_array,
+        candidate_ptr->is_interintra_used,
+        candidate_ptr->interintra_mode,
+        candidate_ptr->use_wedge_interintra,
+        candidate_ptr->interintra_wedge_index,
 #endif
-            md_context_ptr->cu_origin_x,
-            md_context_ptr->cu_origin_y,
-            md_context_ptr->blk_geom->bwidth,
-            md_context_ptr->blk_geom->bheight,
-            ref_pic_list0,
-            ref_pic_list1,
-            candidate_buffer_ptr->prediction_ptr,
-            md_context_ptr->blk_geom->origin_x,
-            md_context_ptr->blk_geom->origin_y,
-            md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
-            asm_type);
+        md_context_ptr->cu_origin_x,
+        md_context_ptr->cu_origin_y,
+        md_context_ptr->blk_geom->bwidth,
+        md_context_ptr->blk_geom->bheight,
+        ref_pic_list0,
+        ref_pic_list1,
+        candidate_buffer_ptr->prediction_ptr,
+        md_context_ptr->blk_geom->origin_x,
+        md_context_ptr->blk_geom->origin_y,
+        md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
+        asm_type);
     return return_error;
 }
 

@@ -93,8 +93,12 @@ extern "C" {
     } while (0)
 
 #elif defined(__linux__)
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <sched.h>
 #include <pthread.h>
 extern    cpu_set_t                   group_affinity;

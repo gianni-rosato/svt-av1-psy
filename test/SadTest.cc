@@ -359,16 +359,19 @@ class SADTestSubSample : public ::testing::WithParamInterface<TestSadParam>,
                                  height_,
                                  width_);
 
-        if (non_avx2_func != nullptr)
+        if (non_avx2_func != nullptr) {
             EXPECT_EQ(ref_sad, non_avx2_sad)
                 << "compare ref and non_avx2 error";
+        }
 
-        if (avx2_func != nullptr)
+        if (avx2_func != nullptr) {
             EXPECT_EQ(ref_sad, avx2_sad) << "compare ref and avx2 error";
+        }
 
-        if (non_avx2_func != nullptr && avx2_func != nullptr)
+        if (non_avx2_func != nullptr && avx2_func != nullptr) {
             EXPECT_EQ(non_avx2_sad, avx2_sad)
                 << "compare non_avx2 and non_avx2 error";
+        }
     }
 };
 
@@ -442,14 +445,17 @@ class SADTest : public ::testing::WithParamInterface<TestSadParam>,
                                  height_,
                                  width_);
 
-        if (non_avx2_func != nullptr)
+        if (non_avx2_func != nullptr) {
             EXPECT_EQ(ref_sad, non_avx2_sad)
                 << "compare ref and non_avx2 error";
-        if (avx2_func != nullptr)
+        }
+        if (avx2_func != nullptr) {
             EXPECT_EQ(ref_sad, avx2_sad) << "compare ref and avx2 error";
-        if (non_avx2_func != nullptr && avx2_func != nullptr)
+        }
+        if (non_avx2_func != nullptr && avx2_func != nullptr) {
             EXPECT_EQ(non_avx2_sad, avx2_sad)
                 << "compare non_avx2 and non_avx2 error";
+        }
     }
 };
 
@@ -525,14 +531,17 @@ class SADAvgTest : public ::testing::WithParamInterface<TestSadParam>,
                                  height_,
                                  width_);
 
-        if (non_avx2_func != nullptr)
+        if (non_avx2_func != nullptr) {
             EXPECT_EQ(ref_sad, non_avx2_sad)
                 << "compare ref and non_avx2 error";
-        if (avx2_func != nullptr)
+        }
+        if (avx2_func != nullptr) {
             EXPECT_EQ(ref_sad, avx2_sad) << "compare ref and avx2 error";
-        if (non_avx2_func != nullptr && avx2_func != nullptr)
+        }
+        if (non_avx2_func != nullptr && avx2_func != nullptr) {
             EXPECT_EQ(non_avx2_sad, avx2_sad)
                 << "compare non_avx2 and non_avx2 error";
+        }
     }
 };
 

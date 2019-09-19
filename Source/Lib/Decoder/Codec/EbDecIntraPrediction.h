@@ -32,7 +32,7 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
 #endif //comp_interintra
 
 void cfl_store_tx(PartitionInfo_t *xd, CflCtx *cfl_ctx, int row, int col, TxSize tx_size,
-    BlockSize  bsize, EbColorConfig *cc, void *pv_dst_buff,
+    BlockSize  bsize, EbColorConfig *cc, uint8_t *dst_buff,
     uint32_t dst_stride);
 
 #ifdef __cplusplus

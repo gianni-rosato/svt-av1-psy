@@ -2730,11 +2730,13 @@ static INLINE void update_ext_partition_context(ParseCtxt *parse_ctx, int mi_row
         switch (partition) {
         case PARTITION_SPLIT:
             if (bsize != BLOCK_8X8) break;
+            goto PARTITIONS;
         case PARTITION_NONE:
         case PARTITION_HORZ:
         case PARTITION_VERT:
         case PARTITION_HORZ_4:
         case PARTITION_VERT_4:
+        PARTITIONS:
             update_partition_context(parse_ctx, mi_row, mi_col, subsize, bsize);
             break;
         case PARTITION_HORZ_A:

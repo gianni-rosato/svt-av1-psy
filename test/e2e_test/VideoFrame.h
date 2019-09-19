@@ -68,9 +68,9 @@ typedef struct VideoFrame : public VideoFrameParam {
     VideoFrame() {
         disp_width = 0;
         disp_height = 0;
-        memset(&stride, 0, sizeof(stride));
-        memset(&planes, 0, sizeof(planes));
-        memset(&ext_planes, 0, sizeof(ext_planes));
+        memset(stride, 0, sizeof(stride));
+        memset(planes, 0, sizeof(planes));
+        memset(ext_planes, 0, sizeof(ext_planes));
         context = nullptr;
         timestamp = 0;
         buffer = nullptr;
@@ -83,9 +83,9 @@ typedef struct VideoFrame : public VideoFrameParam {
         *(VideoFrameParam *)this = param;
         disp_width = param.width;
         disp_height = param.height;
-        memset(&stride, 0, sizeof(stride));
-        memset(&planes, 0, sizeof(planes));
-        memset(&ext_planes, 0, sizeof(ext_planes));
+        memset(stride, 0, sizeof(stride));
+        memset(planes, 0, sizeof(planes));
+        memset(ext_planes, 0, sizeof(ext_planes));
         bits_per_sample = param.bits_per_sample;
         context = nullptr;
         timestamp = 0;
@@ -114,8 +114,15 @@ typedef struct VideoFrame : public VideoFrameParam {
             printf("video frame buffer is out of memory!!\n");
     }
     VideoFrame(const VideoFrame &origin) {
-        // copy from origin
-        *this = origin;
+        // copy from origin except buffer, planes, buf_size
+        // which are calculated below
+        disp_width = origin.disp_width;
+        disp_height = origin.disp_height;
+        memcpy(stride, origin.stride, sizeof(stride));
+        bits_per_sample = origin.bits_per_sample;
+        context = origin.context;
+        timestamp = origin.timestamp;
+        qp = origin.qp;
         // maintain own buffer
         const uint32_t luma_len = stride[0] * height;
         /** create video frame buffer with maximun size in 4 planes */
@@ -176,9 +183,10 @@ typedef struct VideoFrame : public VideoFrameParam {
         case IMG_FMT_422P10_PACKED:
             strides[1] = strides[2] = param.width >> 1;
             break;
-        case IMG_FMT_444A: strides[3] = param.width;
+        case IMG_FMT_444A: strides[3] = param.width; goto IMG_FMT_444;
         case IMG_FMT_444:
         case IMG_FMT_444P10_PACKED:
+        IMG_FMT_444:
             strides[1] = strides[2] = param.width;
             break;
         default: assert(0); break;
