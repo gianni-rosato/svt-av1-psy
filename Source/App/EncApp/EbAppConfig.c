@@ -126,7 +126,7 @@
  **********************************/
 static void SetCfgInputFile(const char *filename, EbConfig *cfg)
 {
-    if (cfg->input_file && cfg->input_file_is_fifo)
+    if (cfg->input_file && !cfg->input_file_is_fifo)
         fclose(cfg->input_file);
 
     if (!filename) {
