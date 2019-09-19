@@ -1922,15 +1922,17 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     if (sequence_control_set_ptr->max_input_luma_width % MIN_BLOCK_SIZE) {
         sequence_control_set_ptr->max_input_pad_right = MIN_BLOCK_SIZE - (sequence_control_set_ptr->max_input_luma_width % MIN_BLOCK_SIZE);
         sequence_control_set_ptr->max_input_luma_width = sequence_control_set_ptr->max_input_luma_width + sequence_control_set_ptr->max_input_pad_right;
-    }
-    else
+    } else {
         sequence_control_set_ptr->max_input_pad_right = 0;
+    }
+
     if (sequence_control_set_ptr->max_input_luma_height % MIN_BLOCK_SIZE) {
         sequence_control_set_ptr->max_input_pad_bottom = MIN_BLOCK_SIZE - (sequence_control_set_ptr->max_input_luma_height % MIN_BLOCK_SIZE);
         sequence_control_set_ptr->max_input_luma_height = sequence_control_set_ptr->max_input_luma_height + sequence_control_set_ptr->max_input_pad_bottom;
-    }
-    else
+    } else {
         sequence_control_set_ptr->max_input_pad_bottom = 0;
+    }
+
     sequence_control_set_ptr->max_input_chroma_width = sequence_control_set_ptr->max_input_luma_width >> subsampling_x;
     sequence_control_set_ptr->max_input_chroma_height = sequence_control_set_ptr->max_input_luma_height >> subsampling_y;
 
@@ -1995,8 +1997,9 @@ void CopyApiFromApp(
     EbSvtAv1EncConfiguration   *pComponentParameterStructure){
     uint32_t                  hmeRegionIndex = 0;
 
-    sequence_control_set_ptr->max_input_luma_width = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->source_width;
-    sequence_control_set_ptr->max_input_luma_height = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->source_height;
+    sequence_control_set_ptr->max_input_luma_width = pComponentParameterStructure->source_width;
+    sequence_control_set_ptr->max_input_luma_height = pComponentParameterStructure->source_height;
+
     sequence_control_set_ptr->frame_rate = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->frame_rate;
 
     sequence_control_set_ptr->general_frame_only_constraint_flag = 0;
@@ -2269,11 +2272,6 @@ static EbErrorType VerifySettings(
 
     if (sequence_control_set_ptr->max_input_luma_height % 2) {
         SVT_LOG("Error Instance %u: Source Height must be even for YUV_420 colorspace\n", channelNumber + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if ((sequence_control_set_ptr->max_input_luma_height % 8) || (sequence_control_set_ptr->max_input_luma_width % 8)) {
-        SVT_LOG("Error Instance %u: Only multiple of 8 resolutions are supported \n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
 

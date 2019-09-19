@@ -3589,6 +3589,23 @@ static void write_tile_info(const PictureParentControlSet *const pcs_ptr,
     }
 }
 
+static void write_render_size(struct AomWriteBitBuffer *wb,
+                              SequenceControlSet *scs)
+{
+    uint16_t width = scs->max_input_luma_width;
+    uint16_t render_width = width - scs->max_input_pad_right;
+    uint16_t height = scs->max_input_luma_height;
+    uint16_t render_height = height - scs->max_input_pad_bottom;
+    int render_and_frame_size_different =
+        (width != render_width) || (height != render_height);
+    eb_aom_wb_write_bit(wb, render_and_frame_size_different);
+    if (!render_and_frame_size_different) return;
+    uint32_t render_width_minus_1 = render_width - 1;
+    uint32_t render_height_minus_1 = render_height - 1;
+    eb_aom_wb_write_literal(wb, render_width_minus_1, 16);
+    eb_aom_wb_write_literal(wb, render_height_minus_1, 16);
+}
+
 static void write_frame_size(PictureParentControlSet *pcs_ptr,
     int32_t frame_size_override,
     struct AomWriteBitBuffer *wb) {
@@ -3610,8 +3627,7 @@ static void write_frame_size(PictureParentControlSet *pcs_ptr,
         //write_superres_scale(cm, wb);
     }
 
-    eb_aom_wb_write_bit(wb, 0);
-    //write_render_size(cm, wb);
+    write_render_size(wb, scs_ptr);
 }
 
 static void WriteProfile(BitstreamProfile profile,

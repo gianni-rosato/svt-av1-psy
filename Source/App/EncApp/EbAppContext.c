@@ -150,8 +150,12 @@ EbErrorType CopyConfigurationParameters(
 
     // Initialize Port Activity Flags
     callback_data->output_stream_port_active = APP_PortActive;
+
     callback_data->eb_enc_parameters.source_width = config->source_width;
     callback_data->eb_enc_parameters.source_height = config->source_height;
+    callback_data->eb_enc_parameters.render_width = config->input_padded_width;
+    callback_data->eb_enc_parameters.render_height = config->input_padded_height;
+
     callback_data->eb_enc_parameters.intra_period_length = config->intra_period;
     callback_data->eb_enc_parameters.intra_refresh_type = config->intra_refresh_type;
     callback_data->eb_enc_parameters.base_layer_switch_mode = config->base_layer_switch_mode;
@@ -232,137 +236,156 @@ EbErrorType CopyConfigurationParameters(
     return return_error;
 }
 
-static EbErrorType AllocateFrameBuffer(
-    EbConfig          *config,
-    uint8_t               *p_buffer){
-    EbErrorType   return_error = EB_ErrorNone;
-    const int32_t tenBitPackedMode = (config->encoder_bit_depth > 8) && (config->compressed_ten_bit_format == 0) ? 1 : 0;
+static EbErrorType AllocateFrameBuffer(EbConfig *config, uint8_t *p_buffer)
+{
+    const int32_t tenBitPackedMode =
+        (config->encoder_bit_depth > 8) &&
+        (config->compressed_ten_bit_format == 0) ? 1 : 0;
+
+    // Chroma subsampling
     const EbColorFormat color_format =
-        (EbColorFormat)config->encoder_color_format;  // Chroma subsampling
+        (EbColorFormat)config->encoder_color_format;
     const uint8_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
 
     // Determine size of each plane
-    const size_t luma8bitSize =
-
-        config->input_padded_width    *
-        config->input_padded_height   *
-
-        (1 << tenBitPackedMode);
+    const size_t luma8bitSize = config->input_padded_width *
+        config->input_padded_height * (1 << tenBitPackedMode);
 
     const size_t chroma8bitSize = luma8bitSize >> (3 - color_format);
-    const size_t luma10bitSize = (config->encoder_bit_depth > 8 && tenBitPackedMode == 0) ? luma8bitSize : 0;
-    const size_t chroma10bitSize = (config->encoder_bit_depth > 8 && tenBitPackedMode == 0) ? chroma8bitSize : 0;
+
+    const size_t luma10bitSize =
+        (config->encoder_bit_depth > 8 && tenBitPackedMode == 0) ?
+            luma8bitSize : 0;
+
+    const size_t chroma10bitSize =
+        (config->encoder_bit_depth > 8 && tenBitPackedMode == 0) ?
+            chroma8bitSize : 0;
 
     // Determine
     EbSvtIOFormat* inputPtr = (EbSvtIOFormat*)p_buffer;
     inputPtr->y_stride = config->input_padded_width;
     inputPtr->cr_stride = config->input_padded_width >> subsampling_x;
     inputPtr->cb_stride = config->input_padded_width >> subsampling_x;
+
     if (luma8bitSize) {
-        EB_APP_MALLOC(uint8_t*, inputPtr->luma, luma8bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
-    }
-    else
+        EB_APP_MALLOC(uint8_t*, inputPtr->luma, luma8bitSize, EB_N_PTR,
+                      EB_ErrorInsufficientResources);
+    } else {
         inputPtr->luma = 0;
-    if (chroma8bitSize) {
-        EB_APP_MALLOC(uint8_t*, inputPtr->cb, chroma8bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
     }
-    else
+
+    if (chroma8bitSize) {
+        EB_APP_MALLOC(uint8_t*, inputPtr->cb, chroma8bitSize, EB_N_PTR,
+                      EB_ErrorInsufficientResources);
+    } else {
         inputPtr->cb = 0;
+    }
+
     if (chroma8bitSize) {
-        EB_APP_MALLOC(uint8_t*, inputPtr->cr, chroma8bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
-    }
-    else
+        EB_APP_MALLOC(uint8_t*, inputPtr->cr, chroma8bitSize, EB_N_PTR,
+                      EB_ErrorInsufficientResources);
+    } else {
         inputPtr->cr = 0;
+    }
+
     if (luma10bitSize) {
-        EB_APP_MALLOC(uint8_t*, inputPtr->luma_ext, luma10bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
-    }
-    else
+        EB_APP_MALLOC(uint8_t*, inputPtr->luma_ext, luma10bitSize, EB_N_PTR,
+                      EB_ErrorInsufficientResources);
+    } else {
         inputPtr->luma_ext = 0;
-    if (chroma10bitSize) {
-        EB_APP_MALLOC(uint8_t*, inputPtr->cb_ext, chroma10bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
     }
-    else
+
+    if (chroma10bitSize) {
+        EB_APP_MALLOC(uint8_t*, inputPtr->cb_ext, chroma10bitSize, EB_N_PTR,
+                      EB_ErrorInsufficientResources);
+    } else {
         inputPtr->cb_ext = 0;
+    }
+
     if (chroma10bitSize) {
-        EB_APP_MALLOC(uint8_t*, inputPtr->cr_ext, chroma10bitSize, EB_N_PTR, EB_ErrorInsufficientResources);
-    }
-    else
+        EB_APP_MALLOC(uint8_t*, inputPtr->cr_ext, chroma10bitSize, EB_N_PTR,
+                      EB_ErrorInsufficientResources);
+    } else {
         inputPtr->cr_ext = 0;
-    return return_error;
-}
-
-EbErrorType AllocateInputBuffers(
-    EbConfig                *config,
-    EbAppContext            *callback_data)
-{
-    EbErrorType   return_error = EB_ErrorNone;
-    {
-        EB_APP_MALLOC(EbBufferHeaderType*, callback_data->input_buffer_pool, sizeof(EbBufferHeaderType), EB_N_PTR, EB_ErrorInsufficientResources);
-
-        // Initialize Header
-        callback_data->input_buffer_pool->size                       = sizeof(EbBufferHeaderType);
-
-        EB_APP_MALLOC(uint8_t*, callback_data->input_buffer_pool->p_buffer, sizeof(EbSvtIOFormat), EB_N_PTR, EB_ErrorInsufficientResources);
-
-        if (config->buffered_input == -1) {
-            // Allocate frame buffer for the p_buffer
-            AllocateFrameBuffer(
-                    config,
-                    callback_data->input_buffer_pool->p_buffer);
-        }
-
-        // Assign the variables
-        callback_data->input_buffer_pool->p_app_private = NULL;
-        callback_data->input_buffer_pool->pic_type   = EB_AV1_INVALID_PICTURE;
     }
 
-    return return_error;
+    return EB_ErrorNone;
 }
-EbErrorType AllocateOutputReconBuffers(
-    EbConfig                *config,
-    EbAppContext            *callback_data)
+
+EbErrorType AllocateInputBuffers(EbConfig *config, EbAppContext *callback_data)
 {
-    EbErrorType   return_error = EB_ErrorNone;
+    EB_APP_MALLOC(EbBufferHeaderType*, callback_data->input_buffer_pool,
+                  sizeof(EbBufferHeaderType), EB_N_PTR,
+                  EB_ErrorInsufficientResources);
+
+    // Initialize Header
+    callback_data->input_buffer_pool->size = sizeof(EbBufferHeaderType);
+
+    EB_APP_MALLOC(uint8_t*, callback_data->input_buffer_pool->p_buffer,
+                  sizeof(EbSvtIOFormat), EB_N_PTR,
+                  EB_ErrorInsufficientResources);
+
+    // Allocate frame buffer for the p_buffer
+    if (config->buffered_input == -1)
+        AllocateFrameBuffer(config, callback_data->input_buffer_pool->p_buffer);
+
+    // Assign the variables
+    callback_data->input_buffer_pool->p_app_private = NULL;
+    callback_data->input_buffer_pool->pic_type = EB_AV1_INVALID_PICTURE;
+
+    return EB_ErrorNone;
+}
+
+EbErrorType AllocateOutputReconBuffers(EbConfig *config,
+                                       EbAppContext *callback_data)
+{
     const size_t luma_size =
-        config->input_padded_width    *
-        config->input_padded_height;
+        config->input_padded_width * config->input_padded_height;
+
     // both u and v
     const size_t chromaSize = luma_size >> (3 - config->encoder_color_format);
     const size_t tenBit = (config->encoder_bit_depth > 8);
     const size_t frameSize = (luma_size + 2 * chromaSize) << tenBit;
 
-// ... Recon Port
-    EB_APP_MALLOC(EbBufferHeaderType*, callback_data->recon_buffer, sizeof(EbBufferHeaderType), EB_N_PTR, EB_ErrorInsufficientResources);
+    // Recon Port
+    EB_APP_MALLOC(EbBufferHeaderType*, callback_data->recon_buffer,
+                  sizeof(EbBufferHeaderType), EB_N_PTR,
+                  EB_ErrorInsufficientResources);
 
     // Initialize Header
     callback_data->recon_buffer->size = sizeof(EbBufferHeaderType);
 
-    EB_APP_MALLOC(uint8_t*, callback_data->recon_buffer->p_buffer, frameSize, EB_N_PTR, EB_ErrorInsufficientResources);
+    EB_APP_MALLOC(uint8_t*, callback_data->recon_buffer->p_buffer, frameSize,
+                  EB_N_PTR, EB_ErrorInsufficientResources);
 
     callback_data->recon_buffer->n_alloc_len = (uint32_t)frameSize;
     callback_data->recon_buffer->p_app_private = NULL;
-    return return_error;
+
+    return EB_ErrorNone;
 }
 
-EbErrorType AllocateOutputBuffers(
-    EbConfig                *config,
-    EbAppContext            *callback_data)
+EbErrorType AllocateOutputBuffers(EbConfig *config, EbAppContext *callback_data)
 {
-    EbErrorType   return_error = EB_ErrorNone;
-    uint32_t           outputStreamBufferSize = (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(config->input_padded_height * config->input_padded_width));;
-    {
-        EB_APP_MALLOC(EbBufferHeaderType*, callback_data->stream_buffer_pool, sizeof(EbBufferHeaderType), EB_N_PTR, EB_ErrorInsufficientResources);
+    uint32_t outputStreamBufferSize =
+        (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(
+                    config->input_padded_height * config->input_padded_width));
 
-        // Initialize Header
-        callback_data->stream_buffer_pool->size = sizeof(EbBufferHeaderType);
+    EB_APP_MALLOC(EbBufferHeaderType*, callback_data->stream_buffer_pool,
+                  sizeof(EbBufferHeaderType), EB_N_PTR,
+                  EB_ErrorInsufficientResources);
 
-        EB_APP_MALLOC(uint8_t*, callback_data->stream_buffer_pool->p_buffer, outputStreamBufferSize, EB_N_PTR, EB_ErrorInsufficientResources);
+    // Initialize Header
+    callback_data->stream_buffer_pool->size = sizeof(EbBufferHeaderType);
 
-        callback_data->stream_buffer_pool->n_alloc_len = outputStreamBufferSize;
-        callback_data->stream_buffer_pool->p_app_private = NULL;
-        callback_data->stream_buffer_pool->pic_type = EB_AV1_INVALID_PICTURE;
-    }
-    return return_error;
+    EB_APP_MALLOC(uint8_t*, callback_data->stream_buffer_pool->p_buffer,
+                  outputStreamBufferSize, EB_N_PTR,
+                  EB_ErrorInsufficientResources);
+
+    callback_data->stream_buffer_pool->n_alloc_len = outputStreamBufferSize;
+    callback_data->stream_buffer_pool->p_app_private = NULL;
+    callback_data->stream_buffer_pool->pic_type = EB_AV1_INVALID_PICTURE;
+
+    return EB_ErrorNone;
 }
 
 EbErrorType PreloadFramesIntoRam(
@@ -572,9 +595,7 @@ EbErrorType init_encoder(
     ///********************** APPLICATION INIT [START] ******************///
 
     // STEP 6: Allocate input buffers carrying the yuv frames in
-    return_error = AllocateInputBuffers(
-        config,
-        callback_data);
+    return_error = AllocateInputBuffers(config, callback_data);
 
     if (return_error != EB_ErrorNone)
         return return_error;

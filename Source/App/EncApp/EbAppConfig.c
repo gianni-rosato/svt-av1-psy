@@ -1233,8 +1233,8 @@ EbErrorType read_command_line(
 
                 // Assuming no errors, add padding to width and height
                 if (return_errors[index] == EB_ErrorNone) {
-                    configs[index]->input_padded_width  = configs[index]->source_width;
-                    configs[index]->input_padded_height = configs[index]->source_height;
+                    configs[index]->input_padded_width = configs[index]->source_width + configs[index]->source_width % 8;
+                    configs[index]->input_padded_height = configs[index]->source_height + configs[index]->source_width % 8;
                 }
 
                 // Assuming no errors, set the frames to be encoded to the number of frames in the input yuv
