@@ -1784,7 +1784,7 @@ EB_API EbErrorType eb_init_handle(
 /**********************************
 * Encoder Componenet DeInit
 **********************************/
-EbErrorType eb_h265_enc_component_de_init(EbComponentType  *svt_enc_component)
+EbErrorType eb_av1_enc_component_de_init(EbComponentType  *svt_enc_component)
 {
     EbErrorType       return_error = EB_ErrorNone;
 
@@ -1810,7 +1810,7 @@ EB_API EbErrorType eb_deinit_handle(
     EbErrorType return_error = EB_ErrorNone;
 
     if (svt_enc_component) {
-        return_error = eb_h265_enc_component_de_init(svt_enc_component);
+        return_error = eb_av1_enc_component_de_init(svt_enc_component);
 
         free(svt_enc_component);
         eb_decrease_component_count();

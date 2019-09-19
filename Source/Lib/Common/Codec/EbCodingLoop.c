@@ -427,7 +427,7 @@ void encode_pass_tx_search(
 /**********************************************************
 * Encode Loop
 *
-* Summary: Performs a H.265 conformant
+* Summary: Performs an AV1 conformant
 *   Transform, Quantization  and Inverse Quantization of a TU.
 *
 * Inputs:
@@ -851,7 +851,7 @@ void encode_pass_tx_search_hbd(
 /**********************************************************
 * Encode Loop
 *
-* Summary: Performs a H.265 conformant
+* Summary: Performs an AV1 conformant
 *   Transform, Quantization  and Inverse Quantization of a TU.
 *
 * Inputs:
@@ -1211,7 +1211,7 @@ static void Av1EncodeLoop16bit(
 /**********************************************************
 * Encode Generate Recon
 *
-* Summary: Performs a H.265 conformant
+* Summary: Performs an AV1 conformant
 *   Inverse Transform and generate
 *   the reconstructed samples of a TU.
 *
@@ -1319,7 +1319,7 @@ static void Av1EncodeGenerateRecon(
 /**********************************************************
 * Encode Generate Recon
 *
-* Summary: Performs a H.265 conformant
+* Summary: Performs an AV1 conformant
 *   Inverse Transform and generate
 *   the reconstructed samples of a TU.
 *
@@ -2079,7 +2079,7 @@ void av1_copy_frame_mvs(PictureControlSet *picture_control_set_ptr, const Av1Com
 /*******************************************
 * Encode Pass
 *
-* Summary: Performs a H.265 conformant
+* Summary: Performs an AV1 conformant
 *   reconstruction based on the LCU
 *   mode decision.
 *
