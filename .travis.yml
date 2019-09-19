@@ -1,32 +1,22 @@
+# Enviourment variables
 language: c
 cache:
   ccache: true
   pip: true
-os:
-  - linux
-  - osx
 dist: bionic
 osx_image: xcode11
-compiler:
-  - clang
-  - gcc
+env: build_type=release
 addons:
   apt:
-    packages:
-      - cmake
-      - yasm
-      - valgrind
-      - libgstreamer-plugins-base1.0-dev
-      - libgstreamer1.0-dev
+    sources:
+      - ubuntu-toolchain-r-test
+    packages: cmake yasm valgrind libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev gcc-8 g++8 gcc-9 g++9
   homebrew:
-    packages:
-      - yasm
-      - ccache
+    packages: yasm ccache
 notifications:
-  webhooks:
-    - https://coveralls.io/webhook
-env:
-  - build_type=release
+  webhooks: https://coveralls.io/webhook
+
+# Pipeline stages
 stages:
   - name: style
   - name: test
@@ -35,6 +25,8 @@ stages:
     if: type != pull_request
   - name: valgrind
     if: type != pull_request
+
+# Default scripts
 before_install:
   - "sudo chown -R travis: $HOME/.ccache"
   - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig PATH="/usr/local/opt/ccache/libexec:$PATH"
@@ -80,6 +72,8 @@ script:
   - SvtAv1EncApp -enc-mode 8 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 150 -b test1.ivf
 before_cache:
   - "sudo chown -R travis: $HOME/.ccache"
+
+# Build matrix
 matrix:
   fast_finish: true
   allow_failures:
@@ -89,9 +83,6 @@ matrix:
     - name: Unit Tests Linux+gcc
     - name: Unit Tests osx+clang
     # Exclude these because if the encoder can run with a release build, the commit is probably fine. Also required for fast_finish.
-  exclude:
-    - os: osx
-      compiler: gcc # gcc = clang in macOS, unecessary duplicate
   include:
     # Coding style check
     - name: Style check
@@ -126,10 +117,20 @@ matrix:
               false
             fi
           done
-    # FFmpeg interation build
-    - name: FFmpeg patch
+   # GCC & Clang builds
+    - name: Linux GCC 7 build
       stage: test
-      compiler: gcc
+    - name: Linux GCC 8 build
+      env: build_type=release CC=/usr/bin/gcc-8 CXX=/usr/bin/g++-8
+    - name: Linux GCC 9 build
+      env: build_type=release CC=/usr/bin/gcc-9 CXX=/usr/bin/g++-9
+    - name: Linux Clang build
+      compiler: clang
+    - name: macOS Clang build
+      os: osx
+      compiler: clang
+   # FFmpeg interation build
+    - name: FFmpeg patch
       env: build_type=release
       script:
         # Build and install SVT-AV1
@@ -144,8 +145,6 @@ matrix:
         - make --quiet -j$(nproc) && sudo make install
     # GStreamer interation build
     - name: GStreamer patch
-      stage: test
-      compiler: gcc
       env: build_type=release
       script:
       # Build and install SVT-AV1
@@ -159,9 +158,6 @@ matrix:
       - sudo make install
     # Tests if .ivf files are identical on binary level
     - name: Binary Identical?
-      stage: test
-      os: linux
-      compiler: gcc
       script:
         - mv -t $HOME akiyo_cif.y4m
         - *base_script
@@ -178,17 +174,16 @@ matrix:
         - SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 -b test-master-m0.ivf
         - diff test-pr-m8.ivf test-master-m8.ivf
         - diff test-pr-m0.ivf test-master-m0.ivf
+
+      # Coveralls on Linux and macOS
     - name: Coveralls Linux+gcc
       stage: Coveralls
-      os: linux
-      compiler: gcc
       env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
       script:
         - *base_script
         - *coveralls_script
       after_script: *after_coveralls_script
     - name: Coveralls osx+clang
-      stage: Coveralls
       os: osx
       compiler: clang
       env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
@@ -196,18 +191,18 @@ matrix:
         - *base_script
         - *coveralls_script
       after_script: *after_coveralls_script
+
+      # Valgrind on Linux and macOS
     - name: Valgrind
       stage: valgrind
-      compiler: gcc
-      os: linux
       env: build_type=debug
       script:
         - *base_script
         - valgrind -- SvtAv1EncApp -enc-mode 2 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 20 -b test1.ivf
+
+      # Unittests on Linux and macOS
     - name: Unit Tests Linux+gcc
       stage: unittest
-      os: linux
-      compiler: gcc
       env: build_type=release CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
       script:
         - *base_script
@@ -218,7 +213,6 @@ matrix:
         - SvtAv1ApiTests
         - SvtAv1E2ETests
     - name: Unit Tests osx+clang
-      stage: unittest
       os: osx
       compiler: clang
       env: build_type=release CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
