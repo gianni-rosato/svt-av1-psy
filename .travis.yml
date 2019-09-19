@@ -5,8 +5,8 @@ cache:
 os:
   - linux
   - osx
-dist: xenial
-osx_image: xcode10.2
+dist: bionic
+osx_image: xcode11
 compiler:
   - clang
   - gcc
@@ -58,7 +58,7 @@ base_script: &base_script |
   sudo cmake --build . --target install && cd $TRAVIS_BUILD_DIR
 coveralls_script: &coveralls_script |
   SvtAv1EncApp -enc-mode 8 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 150 -b test1.ivf
-  git clone https://github.com/FFmpeg/FFmpeg ffmpeg --depth=1 --branch release/4.1 && cd ffmpeg &&
+  git clone https://github.com/FFmpeg/FFmpeg ffmpeg --depth=1 --branch release/4.2 && cd ffmpeg &&
   git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch &&
   ffmpegconfig=(--disable-everything --enable-{libsvtav1,encoder={libaom_av1,libsvt_av1,rawvideo},decoder={h264,rawvideo,yuv4,libaom_av1},muxer={fifo,matroska,ivf,mp4,rawvideo,webm,yuv4mpegpipe},demuxer={h264,ivf,matroska,mpegts,rawvideo,yuv4mpegpipe},parser={av1,h264,mpeg4video},bsf={av1_metadata,h264_metadata},protocol={data,file,pipe,unix},filter={fifo,fps,libvmaf,psnr,ssim,vmafmotion}})
   sudo chown -R travis: $HOME/.ccache
@@ -131,7 +131,7 @@ matrix:
         # Build and install SVT-AV1
         - *base_script
         # Apply SVT-AV1 plugin and enable libsvtav1 to FFmpeg
-        - git clone https://github.com/FFmpeg/FFmpeg --branch release/4.1 --depth=1 ffmpeg && cd ffmpeg
+        - git clone https://github.com/FFmpeg/FFmpeg --branch release/4.2 --depth=1 ffmpeg && cd ffmpeg
         - git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
         - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig
         - "sudo chown -R travis: $HOME/.ccache"

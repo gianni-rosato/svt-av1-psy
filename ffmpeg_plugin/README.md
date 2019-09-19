@@ -14,7 +14,7 @@ sudo make install
 2\. Apply SVT-AV1 plugin and enable libsvtav1 to FFmpeg
 
 ``` bash
-git clone -b release/4.1 https://github.com/FFmpeg/FFmpeg ffmpeg
+git clone -b release/4.2 https://github.com/FFmpeg/FFmpeg ffmpeg
 cd ffmpeg
 export LD_LIBRARY_PATH+=":/usr/local/lib"
 export PKG_CONFIG_PATH+=":/usr/local/lib/pkgconfig"
