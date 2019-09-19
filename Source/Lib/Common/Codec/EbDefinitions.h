@@ -40,6 +40,8 @@ extern "C" {
 #endif
 
 #define II_COMP_FLAG 1
+#define PRED_CHANGE                  1 // Change the MRP in 4L Pictures 3, 5 , 7 and 9 use 1 as the reference
+#define PRED_CHANGE_5L               1 // Change the MRP in 5L Pictures 3, 5 , 7 and 9 use 1 as the reference, 11, 13, 15 and 17 use 9 as the reference
 
 
 #define NON_AVX512_SUPPORT
