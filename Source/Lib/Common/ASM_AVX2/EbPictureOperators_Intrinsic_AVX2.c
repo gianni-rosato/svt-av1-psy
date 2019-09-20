@@ -243,8 +243,10 @@ void c_pack_avx2_intrin(
                 {
                     __m256i c0 = _mm256_loadu_si256((__m256i*)(localPtr));
                     __m256i c1 = _mm256_loadu_si256((__m256i*)(localPtr + 32));
-                    _mm256_stream_si256((__m256i*)&in_compn_bit_buffer[0], c0);
-                    _mm256_stream_si256((__m256i*)&in_compn_bit_buffer[32], c1);
+                    _mm_storeu_si128((__m128i*)  (in_compn_bit_buffer), _mm256_extractf128_si256(c0, 0));
+                    _mm_storeu_si128((__m128i*)  (in_compn_bit_buffer + out_stride), _mm256_extractf128_si256(c0, 1));
+                    _mm_storeu_si128((__m128i*)  (in_compn_bit_buffer + 2 * out_stride), _mm256_extractf128_si256(c1, 0));
+                    _mm_storeu_si128((__m128i*)  (in_compn_bit_buffer + 3 * out_stride), _mm256_extractf128_si256(c1, 1));
                     in_compn_bit_buffer += 4 * out_stride;
                 }
 
