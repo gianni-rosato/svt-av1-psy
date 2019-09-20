@@ -1129,7 +1129,7 @@ void avc_style_luma_interpolation_filter_vertical(
   const int32_t if_stride = src_stride;
   const int32_t if_init_pos_offset = -(int32_t)src_stride;
   const uint8_t if_shift = 5 + denominator;
-  const uint32_t if_offset = POW2(if_shift - 1);
+  const int16_t if_offset = POW2(if_shift - 1);
   uint32_t x, y;
   int32_t sum;
 
