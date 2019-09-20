@@ -187,7 +187,7 @@ void c_pack_avx2_intrin(
             extp = _mm256_packus_epi16(extp, extp);
 
             _mm_storel_epi64((__m128i*) in_compn_bit_buffer, _mm256_castsi256_si128(extp));
-            in_compn_bit_buffer += 8;
+            in_compn_bit_buffer += out_stride;
             inn_bit_buffer += inn_stride;
         }
     }
