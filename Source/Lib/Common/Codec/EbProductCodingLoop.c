@@ -2119,7 +2119,10 @@ void predictive_me_full_pel_search(
 
             uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (mvx >> 3) + refinement_pos_x) + (context_ptr->cu_origin_y + (mvy >> 3) + ref_pic->origin_y + refinement_pos_y) * ref_pic->stride_y;
             if (use_ssd) {
-                distortion = (uint32_t)spatial_full_distortion_kernel_func_ptr_array[asm_type](
+                EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
+                    full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+
+                distortion = (uint32_t) spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_y,
                     inputOriginIndex,
                     input_picture_ptr->stride_y,
@@ -2131,13 +2134,24 @@ void predictive_me_full_pel_search(
             }
             else {
                 assert((context_ptr->blk_geom->bwidth >> 3) < 17);
-                distortion = nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
-                    input_picture_ptr->buffer_y + inputOriginIndex,
-                    input_picture_ptr->stride_y,
-                    ref_pic->buffer_y + ref_origin_index,
-                    ref_pic->stride_y,
-                    context_ptr->blk_geom->bheight,
-                    context_ptr->blk_geom->bwidth);
+
+                if (context_ptr->hbd_mode_decision) {
+                    distortion = sad_16b_kernel(
+                        ((uint16_t *)input_picture_ptr->buffer_y) + inputOriginIndex,
+                        input_picture_ptr->stride_y,
+                        ((uint16_t *)ref_pic->buffer_y) + ref_origin_index,
+                        ref_pic->stride_y,
+                        context_ptr->blk_geom->bheight,
+                        context_ptr->blk_geom->bwidth);
+                } else {
+                    distortion = nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
+                        input_picture_ptr->buffer_y + inputOriginIndex,
+                        input_picture_ptr->stride_y,
+                        ref_pic->buffer_y + ref_origin_index,
+                        ref_pic->stride_y,
+                        context_ptr->blk_geom->bheight,
+                        context_ptr->blk_geom->bwidth);
+                }
             }
 
             if (distortion < *best_distortion) {
@@ -2232,7 +2246,10 @@ void predictive_me_sub_pel_search(
                 asm_type);
             // Distortion
             if (use_ssd) {
-                distortion = (uint32_t)spatial_full_distortion_kernel_func_ptr_array[asm_type](
+                EbSpatialFullDistType spatial_full_dist_type_fun = picture_control_set_ptr->hbd_mode_decision ?
+                    full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+
+                distortion = (uint32_t) spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_y,
                     inputOriginIndex,
                     input_picture_ptr->stride_y,
@@ -2244,13 +2261,24 @@ void predictive_me_sub_pel_search(
             }
             else {
                 assert((context_ptr->blk_geom->bwidth >> 3) < 17);
-                distortion = nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
-                    input_picture_ptr->buffer_y + inputOriginIndex,
-                    input_picture_ptr->stride_y,
-                    prediction_ptr->buffer_y + cuOriginIndex,
-                    prediction_ptr->stride_y,
-                    context_ptr->blk_geom->bheight,
-                    context_ptr->blk_geom->bwidth);
+
+                if (context_ptr->hbd_mode_decision) {
+                    distortion = sad_16b_kernel(
+                        ((uint16_t *)input_picture_ptr->buffer_y) + inputOriginIndex,
+                        input_picture_ptr->stride_y,
+                        ((uint16_t *)prediction_ptr->buffer_y) + cuOriginIndex,
+                        prediction_ptr->stride_y,
+                        context_ptr->blk_geom->bheight,
+                        context_ptr->blk_geom->bwidth);
+                } else {
+                    distortion = nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
+                        input_picture_ptr->buffer_y + inputOriginIndex,
+                        input_picture_ptr->stride_y,
+                        prediction_ptr->buffer_y + cuOriginIndex,
+                        prediction_ptr->stride_y,
+                        context_ptr->blk_geom->bheight,
+                        context_ptr->blk_geom->bwidth);
+                }
             }
             if (distortion < *best_distortion) {
                 *best_mvx = mvx + (refinement_pos_x * search_step);
@@ -2327,7 +2355,10 @@ void predictive_me_search(
 
             uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (me_mv_x >> 3)) + (context_ptr->cu_origin_y + (me_mv_y >> 3) + ref_pic->origin_y) * ref_pic->stride_y;
             if (use_ssd) {
-                pa_me_distortion = (uint32_t)spatial_full_distortion_kernel_func_ptr_array[asm_type](
+                EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
+                    full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+
+                pa_me_distortion = (uint32_t) spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_y,
                     inputOriginIndex,
                     input_picture_ptr->stride_y,
@@ -2339,13 +2370,24 @@ void predictive_me_search(
             }
             else {
                 assert((context_ptr->blk_geom->bwidth >> 3) < 17);
-                pa_me_distortion = nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
-                    input_picture_ptr->buffer_y + inputOriginIndex,
-                    input_picture_ptr->stride_y,
-                    ref_pic->buffer_y + ref_origin_index,
-                    ref_pic->stride_y,
-                    context_ptr->blk_geom->bheight,
-                    context_ptr->blk_geom->bwidth);
+
+               if (context_ptr->hbd_mode_decision) {
+                    pa_me_distortion = sad_16b_kernel(
+                        ((uint16_t *)input_picture_ptr->buffer_y) + inputOriginIndex,
+                        input_picture_ptr->stride_y,
+                        ((uint16_t *)ref_pic->buffer_y) + ref_origin_index,
+                        ref_pic->stride_y,
+                        context_ptr->blk_geom->bheight,
+                        context_ptr->blk_geom->bwidth);
+                } else {
+                    pa_me_distortion = nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
+                        input_picture_ptr->buffer_y + inputOriginIndex,
+                        input_picture_ptr->stride_y,
+                        ref_pic->buffer_y + ref_origin_index,
+                        ref_pic->stride_y,
+                        context_ptr->blk_geom->bheight,
+                        context_ptr->blk_geom->bwidth);
+                }
             }
 
             if (pa_me_distortion != 0 || context_ptr->predictive_me_level >= 5) {
@@ -2388,7 +2430,10 @@ void predictive_me_search(
                     EbPictureBufferDesc *ref_pic = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)->reference_picture;
                     uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (mvp_x_array[mvp_index] >> 3)) + (context_ptr->cu_origin_y + (mvp_y_array[mvp_index] >> 3) + ref_pic->origin_y) * ref_pic->stride_y;
                     if (use_ssd) {
-                        mvp_distortion = (uint32_t)spatial_full_distortion_kernel_func_ptr_array[asm_type](
+                        EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
+                            full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+
+                        mvp_distortion = (uint32_t) spatial_full_dist_type_fun(
                             input_picture_ptr->buffer_y,
                             inputOriginIndex,
                             input_picture_ptr->stride_y,
@@ -2400,13 +2445,24 @@ void predictive_me_search(
                     }
                     else {
                         assert((context_ptr->blk_geom->bwidth >> 3) < 17);
-                        mvp_distortion = nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
-                            input_picture_ptr->buffer_y + inputOriginIndex,
-                            input_picture_ptr->stride_y,
-                            ref_pic->buffer_y + ref_origin_index,
-                            ref_pic->stride_y,
-                            context_ptr->blk_geom->bheight,
-                            context_ptr->blk_geom->bwidth);
+
+                       if (context_ptr->hbd_mode_decision) {
+                            mvp_distortion = sad_16b_kernel(
+                                ((uint16_t *)input_picture_ptr->buffer_y) + inputOriginIndex,
+                                input_picture_ptr->stride_y,
+                                ((uint16_t *)ref_pic->buffer_y) + ref_origin_index,
+                                ref_pic->stride_y,
+                                context_ptr->blk_geom->bheight,
+                                context_ptr->blk_geom->bwidth);
+                        } else {
+                            mvp_distortion = nxm_sad_kernel_sub_sampled_func_ptr_array[asm_type][context_ptr->blk_geom->bwidth >> 3](
+                                input_picture_ptr->buffer_y + inputOriginIndex,
+                                input_picture_ptr->stride_y,
+                                ref_pic->buffer_y + ref_origin_index,
+                                ref_pic->stride_y,
+                                context_ptr->blk_geom->bheight,
+                                context_ptr->blk_geom->bwidth);
+                        }
                     }
 
                     if (mvp_distortion < best_mvp_distortion) {
