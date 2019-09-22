@@ -128,6 +128,7 @@ void picture_control_set_dctor(EbPtr p)
     PictureControlSet* obj = (PictureControlSet*)p;
     uint8_t depth;
     av1_hash_table_destroy(&obj->hash_table);
+    EB_FREE_ALIGNED_ARRAY(obj->tpl_mvs);
     EB_DELETE(obj->enc_dec_segment_ctrl);
     EB_DELETE(obj->ep_intra_luma_mode_neighbor_array);
     EB_DELETE(obj->ep_intra_chroma_mode_neighbor_array);
@@ -1006,8 +1007,7 @@ EbErrorType picture_control_set_ctor(
         uint32_t mi_rows = initDataPtr->picture_height >> MI_SIZE_LOG2;
         const int mem_size = ((mi_rows + MAX_MIB_SIZE) >> 1) * (object_ptr->mi_stride >> 1);
 
-        EB_MALLOC_ALIGNED_ARRAY(object_ptr->tpl_mvs, mem_size);
-        memset(object_ptr->tpl_mvs, 0, sizeof(TPL_MV_REF)*mem_size);
+        EB_CALLOC_ALIGNED_ARRAY(object_ptr->tpl_mvs, mem_size);
     }
     object_ptr->hash_table.p_lookup_table = NULL;
     av1_hash_table_create(&object_ptr->hash_table);
