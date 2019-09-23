@@ -158,8 +158,15 @@ void svt_cdef_frame(EbDecHandle *dec_handle) {
         for (int32_t fbc = 0; fbc < nhfb; fbc++) {
             /* Logic for getting SBinfo,
             SbInfo points to every super block.*/
-            SBInfo  *sb_info = frame_buf->sb_info +
-                ((fbr >> 1) * master_frame_buf->sb_cols) + (fbc >> 1);
+            SBInfo  *sb_info = NULL;
+            if (dec_handle->seq_header.sb_size == BLOCK_128X128) {
+                sb_info = frame_buf->sb_info +
+                    ((fbr >> 1) * master_frame_buf->sb_cols) + (fbc >> 1);
+            }
+            else {
+                sb_info = frame_buf->sb_info +
+                    ((fbr)* master_frame_buf->sb_cols) + (fbc);
+            }
 
             /*Logic for consuming cdef values from super block,
             Index will vary from 0 to 3 based on position of 64x64 block
@@ -487,8 +494,15 @@ void svt_cdef_frame_hbd(EbDecHandle *dec_handle) {
         for (int32_t fbc = 0; fbc < nhfb; fbc++) {
             /* Logic for getting SBinfo,
             SbInfo points to every super block.*/
-            SBInfo  *sb_info = frame_buf->sb_info +
-                ((fbr >> 1) * master_frame_buf->sb_cols) + (fbc >> 1);
+            SBInfo  *sb_info = NULL;
+            if (dec_handle->seq_header.sb_size == BLOCK_128X128) {
+                sb_info = frame_buf->sb_info +
+                    ((fbr >> 1) * master_frame_buf->sb_cols) + (fbc >> 1);
+            }
+            else {
+                sb_info = frame_buf->sb_info +
+                    ((fbr)* master_frame_buf->sb_cols) + (fbc);
+            }
 
             /*Logic for consuming cdef values from super block,
             Index will vary from 0 to 3 based on position of 64x64 block

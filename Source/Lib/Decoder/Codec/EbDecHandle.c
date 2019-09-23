@@ -140,9 +140,9 @@ int svt_dec_out_buf(
         return 0;
     }
 
-    int wd = dec_handle_ptr->frame_header.frame_size.frame_width;
-    int ht = dec_handle_ptr->frame_header.frame_size.frame_height;
-    int i, sx = 0, sy = 0;
+    uint32_t wd = dec_handle_ptr->frame_header.frame_size.frame_width;
+    uint32_t ht = dec_handle_ptr->frame_header.frame_size.frame_height;
+    uint32_t i, sx = 0, sy = 0;
     /* TO-DO Add support for other color spaces.
        Remove re-allocation of memory, move all
        memory handling to library.*/
@@ -500,6 +500,12 @@ EB_API EbErrorType eb_svt_decode_frame(
             if (marker) break;
             ++data;
         }
+
+        /*printf("\nDecoding Pic #%d  frm_w : %d    frm_h : %d
+            frm_typ : %d", dec_handle_ptr->dec_cnt,
+            dec_handle_ptr->frame_header.frame_size.frame_width,
+            dec_handle_ptr->frame_header.frame_size.frame_height,
+            dec_handle_ptr->frame_header.frame_type);*/
     }
 
     return return_error;

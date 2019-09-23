@@ -472,12 +472,15 @@ void read_cdef(EbDecHandle *dec_handle, SvtReader *r, PartitionInfo_t *xd,
     if (cdef_strength[index] == -1) {
         cdef_strength[index] = svt_read_literal(r, dec_handle->
             frame_header.CDEF_params.cdef_bits, ACCT_STR);
-        int w4 = mi_size_wide[mbmi->sb_type];
-        int h4 = mi_size_high[mbmi->sb_type];
-        for (int i = row; i < row + h4; i += cdf_size) {
-            for (int j = col; j < col + w4; j += cdf_size) {
-                cdef_strength[!!(j & cdf_size) + 2 * !!(i & cdf_size)] =
-                    cdef_strength[index];
+        /* Populate to nearby 64x64s if needed based on h4 & w4 */
+        if (dec_handle->seq_header.sb_size == BLOCK_128X128) {
+            int w4 = mi_size_wide[mbmi->sb_type];
+            int h4 = mi_size_high[mbmi->sb_type];
+            for (int i = row; i < row + h4; i += cdf_size) {
+                for (int j = col; j < col + w4; j += cdf_size) {
+                    cdef_strength[!!(j & cdf_size) + 2 * !!(i & cdf_size)] =
+                        cdef_strength[index];
+                }
             }
         }
     }
@@ -880,6 +883,8 @@ void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd,
         mbmi->use_intrabc = svt_read_symbol(r, parse_ctxt->cur_tile_ctx.intrabc_cdf,
             2, ACCT_STR);
 
+    mbmi->inter_inter_compound.type = COMPOUND_AVERAGE;
+
     if (mbmi->use_intrabc) {
         mbmi->mode = DC_PRED;
         mbmi->uv_mode = UV_DC_PRED;
@@ -914,6 +919,8 @@ void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd,
                 &parse_ctxt->cur_tile_ctx.angle_delta_cdf[mbmi->uv_mode - V_PRED][0],
                 dec_get_uv_mode(mbmi->uv_mode), bsize);
         }
+        else
+            mbmi->uv_mode = UV_DC_PRED;
 
         if (allow_palette(dec_handle->frame_header.allow_screen_content_tools, bsize)) {
             palette_mode_info(dec_handle, xd, mi_row, mi_col, r);
@@ -1296,6 +1303,8 @@ void inter_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t * pi,
 
     mbmi->mv[0].as_int = 0;
     mbmi->mv[1].as_int = 0;
+
+    mbmi->inter_inter_compound.type = COMPOUND_AVERAGE;
 
     mbmi->segment_id = read_inter_segment_id(dec_handle, pi, mi_row, mi_col, 1, r);
 
@@ -2553,8 +2562,12 @@ void parse_residual(EbDecHandle *dec_handle, PartitionInfo_t *pi, SvtReader *r,
                 if (dec_handle->frame_header.lossless_array[pi->mi->segment_id] &&
                     ((mi_size >= BLOCK_64X64) && (mi_size <= BLOCK_128X128)) )
                 {
+                    int unit_height = ROUND_POWER_OF_TWO(
+                        AOMMIN(mu_blocks_high + row, max_blocks_high), 0);
+                    int unit_width = ROUND_POWER_OF_TWO(
+                        AOMMIN(mu_blocks_wide + col, max_blocks_wide), 0);
                     assert(trans_info[plane]->tx_size == TX_4X4);
-                    num_tu = (mu_blocks_wide * mu_blocks_high) >> (sub_x + sub_y);
+                    num_tu = ((unit_width-col) * (unit_height-row)) >> (sub_x + sub_y);
                 }
                 else
                 {

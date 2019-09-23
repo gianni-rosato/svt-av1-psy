@@ -71,11 +71,11 @@ int byte_alignment(bitstrm_t *bs)
     return 0;
 }
 
-void compute_image_size(FrameHeader *frm)
-{
+void compute_image_size(SeqHeader *seq_header, FrameHeader *frm) {
     frm->mi_cols = 2 * ((frm->frame_size.frame_width + 7 - 1) >> 3);
     frm->mi_rows = 2 * ((frm->frame_size.frame_height + 7 - 1) >> 3);
-    frm->mi_stride = ALIGN_POWER_OF_TWO(frm->mi_cols, MAX_MIB_SIZE_LOG2);
+    frm->mi_stride = ALIGN_POWER_OF_TWO(
+    (2 * ((seq_header->max_frame_width + 7) >> 3)) , MAX_MIB_SIZE_LOG2);
 }
 
 /*TODO: Harmonize with encoder function */
@@ -557,6 +557,7 @@ void superres_params(bitstrm_t *bs, SeqHeader   *seq_header, FrameHeader   *fram
 
     PRINT_NAME("use_superres");
     if (use_superres) {
+        assert(!use_superres);
         coded_denom = dec_get_bits(bs, SUPERRES_SCALE_BITS);
         PRINT_FRAME("coded_denom", coded_denom);
         frame_info->frame_size.superres_denominator = coded_denom +
@@ -576,9 +577,9 @@ static void read_frame_size(bitstrm_t *bs, SeqHeader   *seq_header, FrameHeader
 {
     if (frame_size_override_flag) {
         frame_info->frame_size.frame_width =
-            dec_get_bits(bs, seq_header->frame_width_bits + 1) + 1;
+            dec_get_bits(bs, seq_header->frame_width_bits) + 1;
         frame_info->frame_size.frame_height
-            = dec_get_bits(bs, seq_header->frame_height_bits + 1) + 1;
+            = dec_get_bits(bs, seq_header->frame_height_bits) + 1;
     }
     else {
         frame_info->frame_size.frame_width = seq_header->max_frame_width;
@@ -587,7 +588,7 @@ static void read_frame_size(bitstrm_t *bs, SeqHeader   *seq_header, FrameHeader
     PRINT_FRAME("frame_width", frame_info->frame_size.frame_width);
     PRINT_FRAME("frame_height", frame_info->frame_size.frame_height);
     superres_params(bs, seq_header, frame_info);
-    compute_image_size(frame_info);
+    compute_image_size(seq_header, frame_info);
 
     assert((frame_info->frame_size.frame_width) <= seq_header->max_frame_width);
     assert((frame_info->frame_size.frame_height) <= seq_header->max_frame_height);
@@ -611,17 +612,27 @@ void read_render_size(bitstrm_t *bs, FrameHeader   *frame_info)
     PRINT_FRAME("render_height", frame_info->frame_size.render_height);
 }
 
-static void frame_size_with_refs(bitstrm_t *bs, SeqHeader   *seq_header, FrameHeader
-    *frame_info, int frame_size_override_flag)
+static void frame_size_with_refs(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
+                                 int frame_size_override_flag)
 {
+    SeqHeader *seq_header = &dec_handle_ptr->seq_header;
+    FrameHeader *frame_info = &dec_handle_ptr->frame_header;
+
     int found_ref;
     for (int i = 0; i < REFS_PER_FRAME; i++) {
         found_ref = dec_get_bits(bs, 1);
         PRINT_FRAME("found_ref", found_ref);
         if (found_ref == 1) {
-            // width = frame_info->frame_size.superres_upscaled_width;
-            // height = frame_info->frame_size.superres_upscaled_height;
-            // TODO: Assign FrameWidth/Height
+            FrameSize *frame_size = &frame_info->frame_size;
+            EbDecPicBuf *ref_buf = get_ref_frame_buf(dec_handle_ptr, (i + 1));
+            assert(ref_buf != NULL);
+
+            frame_size->superres_upscaled_width =
+                                            ref_buf->superres_upscaled_width;
+            frame_size->frame_width     = ref_buf->superres_upscaled_width;
+            frame_size->frame_height    = ref_buf->frame_height;
+            frame_size->render_width    = ref_buf->render_width;
+            frame_size->render_height   = ref_buf->render_height;
             break;
         }
     }
@@ -633,7 +644,7 @@ static void frame_size_with_refs(bitstrm_t *bs, SeqHeader   *seq_header, FrameHe
     else
     {
         superres_params(bs, seq_header, frame_info);
-        compute_image_size(frame_info);
+        compute_image_size(seq_header, frame_info);
     }
 }
 
@@ -1136,13 +1147,10 @@ void read_frame_cdef_params(bitstrm_t *bs, FrameHeader *frame_info, SeqHeader *s
     for (i = 0; i < (1 << frame_info->CDEF_params.cdef_bits); i++) {
         frame_info->CDEF_params.cdef_y_strength[i] = dec_get_bits(bs, 6);
         PRINT_FRAME("Primary Y cdef", frame_info->CDEF_params.cdef_y_strength[i]);
-        if (frame_info->CDEF_params.cdef_y_strength[i + 8] == 3)
-            frame_info->CDEF_params.cdef_y_strength[i + 8] += 1;
+
         if (num_planes > 1) {
             frame_info->CDEF_params.cdef_uv_strength[i] = dec_get_bits(bs, 6);
             PRINT_FRAME("Primary UV cdef", frame_info->CDEF_params.cdef_uv_strength[i]);
-            if (frame_info->CDEF_params.cdef_uv_strength[i + 8] == 3)
-                frame_info->CDEF_params.cdef_uv_strength[i + 8] += 1;
         }
     }
 }
@@ -1886,7 +1894,7 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             }
         }
         if (frame_size_override_flag && !frame_info->error_resilient_mode)
-            frame_size_with_refs(bs, seq_header, frame_info,
+            frame_size_with_refs(bs, dec_handle_ptr,
                 frame_size_override_flag);
         else {
             read_frame_size(bs, seq_header, frame_info, frame_size_override_flag);
@@ -2370,7 +2378,7 @@ void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header,
 
 // Read Tile group information
 EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
-                                TilesInfo *tiles_info, ObuHeader *obu_header)
+    TilesInfo *tiles_info, ObuHeader *obu_header, int *is_last_tg)
 {
     EbErrorType status = EB_ErrorNone;
 
@@ -2404,6 +2412,8 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     assert(tg_end >= tg_start);
     PRINT_FRAME("tg_start", tg_start);
     PRINT_FRAME("tg_end", tg_end);
+
+    *is_last_tg = ((tg_end + 1) == num_tiles);
 
     byte_alignment(bs);
     end_position = get_position(bs);
@@ -2457,6 +2467,9 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         if (status != EB_ErrorNone)
             return status;
     }
+
+    if ((tg_end + 1) != num_tiles)
+        return 0;
 
     if (!dec_handle_ptr->frame_header.allow_intrabc) {
         if (dec_handle_ptr->frame_header.loop_filter_params.filter_level[0] ||
@@ -2613,7 +2626,6 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, siz
                 dec_handle_ptr->seen_frame_header = 1;
                 status = read_frame_header_obu(&bs, dec_handle_ptr, &obu_header,
                                                obu_header.obu_type != OBU_FRAME);
-                frame_decoding_finished = 1;
             }
             /*else {
                  For OBU_REDUNDANT_FRAME_HEADER, previous frame_header is taken from dec_handle_ptr->frame_header
@@ -2629,7 +2641,8 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, siz
             if (!dec_handle_ptr->seen_frame_header)
                 return EB_Corrupt_Frame;
             status = read_tile_group_obu(&bs, dec_handle_ptr,
-                &dec_handle_ptr->frame_header.tiles_info, &obu_header);
+                &dec_handle_ptr->frame_header.tiles_info,
+                &obu_header, &frame_decoding_finished);
             if (status != EB_ErrorNone) return status;
             if (frame_decoding_finished)
                 dec_handle_ptr->seen_frame_header = 0;

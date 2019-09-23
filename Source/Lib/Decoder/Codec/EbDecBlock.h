@@ -110,7 +110,7 @@ typedef struct CandidateMvDec {
 typedef struct TemporalMvRef {
     /* Motion Filed MV */
     IntMvDec   mf_mv0;
-    uint8_t     ref_frame_offset;
+    int8_t     ref_frame_offset;
 } TemporalMvRef;
 
 typedef struct FilterIntraModeInfo {
