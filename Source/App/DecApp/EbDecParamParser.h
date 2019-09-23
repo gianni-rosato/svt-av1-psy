@@ -56,6 +56,7 @@ typedef struct ConfigEntry {
     void(*scf)(const char *, EbSvtAv1DecConfiguration *);
 } ConfigEntry;
 
-EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfiguration *configs, CLInput *cli);
+EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfiguration *configs,
+    CLInput *cli, ObuDecInputContext *obu_ctx);
 
 #endif

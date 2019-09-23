@@ -54,7 +54,6 @@ void set_segment_id(EbDecHandle *dec_handle, int mi_offset,
 {
     assert(segment_id >= 0 && segment_id < MAX_SEGMENTS);
     FrameHeader *frm_header = &dec_handle->frame_header;
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
 
     for (int y = 0; y < y_mis; y++)
         for (int x = 0; x < x_mis; x++)

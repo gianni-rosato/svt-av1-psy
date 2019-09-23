@@ -10,7 +10,22 @@
 
 #include "EbSvtAv1Dec.h"
 
+#define OBU_BUFFER_SIZE (500 * 1024)
+
+#define OBU_HEADER_SIZE 1
+#define OBU_EXTENSION_SIZE 1
+#define OBU_MAX_LENGTH_FIELD_SIZE 8
+
+#define OBU_MAX_HEADER_SIZE \
+  (OBU_HEADER_SIZE + OBU_EXTENSION_SIZE + 2 * OBU_MAX_LENGTH_FIELD_SIZE)
+
+#define OBU_DETECTION_SIZE \
+  (OBU_HEADER_SIZE + OBU_EXTENSION_SIZE + 4 * OBU_MAX_LENGTH_FIELD_SIZE)
+
 #define IVF_FRAME_HDR_SZ (4 + 8) /* 4 byte size + 8 byte timestamp */
+
+#define DECAPP_MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define DECAPP_MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 static const char * const csp_names[] = { "400", "420", "422", "444", 0 };
 
@@ -56,6 +71,48 @@ typedef struct CLInput{
     uint32_t  fps_summary;
     uint32_t  skip_film_grain;
 }CLInput;
+
+typedef struct ObuDecInputContext {
+    uint8_t *buffer;
+    size_t buffer_capacity;
+    size_t bytes_buffered;
+    int is_annexb;
+}ObuDecInputContext;
+
+typedef struct DecInputContext {
+    CLInput *cli_ctx;
+    ObuDecInputContext *obu_ctx;
+}DecInputContext;
+
+/*!\brief OBU types. */
+typedef enum ATTRIBUTE_PACKED {
+    OBU_SEQUENCE_HEADER = 1,
+    OBU_TEMPORAL_DELIMITER = 2,
+    OBU_FRAME_HEADER = 3,
+    OBU_TILE_GROUP = 4,
+    OBU_METADATA = 5,
+    OBU_FRAME = 6,
+    OBU_REDUNDANT_FRAME_HEADER = 7,
+    OBU_TILE_LIST = 8,
+    OBU_PADDING = 15,
+} OBU_TYPE;
+
+typedef struct {
+    size_t size;  // Size (1 or 2 bytes) of the OBU header (including the
+                  // optional OBU extension header) in the bitstream.
+    OBU_TYPE type;
+    int has_size_field;
+    int has_extension;
+    // The following fields come from the OBU extension header and therefore are
+    // only used if has_extension is true.
+    int temporal_layer_id;
+    int spatial_layer_id;
+} ObuHeader;
+
+int file_is_obu(CLInput *cli, ObuDecInputContext *obu_ctx);
+int obudec_read_temporal_unit(DecInputContext *input,
+    uint8_t **buffer, size_t *bytes_read,
+    size_t *buffer_size);
 
 int file_is_ivf(CLInput *cli);
 int read_ivf_frame(FILE *infile, uint8_t **buffer, size_t *bytes_read,

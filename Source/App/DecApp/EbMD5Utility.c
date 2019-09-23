@@ -255,8 +255,8 @@ void write_md5(EbBufferHeaderType *recon_buffer, CLInput *cli, MD5Context *md5) 
     const int bytes_per_sample = (cli->bit_depth == EB_EIGHT_BIT) ? 1 : 2;
     uint32_t y = 0;
     const uint8_t *buf = img->luma;
-    uint32_t w = cli->width;
-    uint32_t h = cli->height;
+    uint32_t w = img->width;
+    uint32_t h = img->height;
     uint32_t stride = img->y_stride;
     //uint32_t b_size = w * h;
 

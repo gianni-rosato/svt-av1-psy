@@ -67,8 +67,8 @@ static void showHelp()
 }
 
 EbErrorType read_command_line(int32_t argc, char *const argv[],
-                              EbSvtAv1DecConfiguration *configs,
-                              CLInput *cli)
+    EbSvtAv1DecConfiguration *configs,
+    CLInput *cli, ObuDecInputContext *obu_ctx)
 {
     char    *cmd_copy[MAX_NUM_TOKENS] = { NULL };
     char    *config_strings[MAX_NUM_TOKENS] = { NULL };
@@ -105,6 +105,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
                     cli->inFilename = config_strings[token_index];
                     if (file_is_ivf(cli))
                         cli->inFileType = FILE_TYPE_IVF;
+                    else if (file_is_obu(cli, obu_ctx))
+                        cli->inFileType = FILE_TYPE_OBU;
                     else {
                         printf("Unsupported input file format. \n");
                         return EB_ErrorBadParameter;

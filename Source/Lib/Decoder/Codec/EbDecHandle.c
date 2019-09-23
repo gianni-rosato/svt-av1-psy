@@ -143,6 +143,29 @@ int svt_dec_out_buf(
     int wd = dec_handle_ptr->frame_header.frame_size.frame_width;
     int ht = dec_handle_ptr->frame_header.frame_size.frame_height;
     int i, sx = 0, sy = 0;
+    /* TO-DO Add support for other color spaces.
+       Remove re-allocation of memory, move all
+       memory handling to library.*/
+    assert(recon_picture_buf->color_format == EB_YUV420);
+    if (out_img->height != ht || out_img->width != wd) {
+        out_img->cb_stride = wd / 2;
+        out_img->cr_stride = wd / 2;
+
+        out_img->y_stride = wd;
+        out_img->width = wd;
+        out_img->height = ht;
+        int size = (dec_handle_ptr->seq_header.
+            color_config.bit_depth == EB_EIGHT_BIT) ?
+            sizeof(uint8_t) : sizeof(uint16_t);
+        size = size * ht * wd;
+        free(out_img->luma);
+        free(out_img->cb);
+        free(out_img->cr);
+
+        out_img->luma = (uint8_t*)malloc(size);
+        out_img->cb = (uint8_t*)malloc(size >> 2);
+        out_img->cr = (uint8_t*)malloc(size >> 2);
+    }
 
     switch (recon_picture_buf->color_format) {
         case EB_YUV420 :
@@ -464,6 +487,9 @@ EB_API EbErrorType eb_svt_decode_frame(
         else*/
         frame_size = data_end - data_start;
         return_error = decode_multiple_obu(dec_handle_ptr, &data_start, frame_size);
+
+        if (return_error != EB_ErrorNone)
+            assert(0);
 
         dec_pic_mgr_update_ref_pic(dec_handle_ptr, (EB_ErrorNone == return_error)
                     ? 1 : 0, dec_handle_ptr->frame_header.refresh_frame_flags);
