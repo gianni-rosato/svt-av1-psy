@@ -16,7 +16,7 @@
 #include "EbMD5Utility.h"
 #include "EbDecTime.h"
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <io.h>     /* _setmode() */
 #include <fcntl.h>  /* _O_BINARY */
 #endif
@@ -106,7 +106,7 @@ static void show_progress(int in_frame, uint64_t dx_time) {
  ***************************************/
 int32_t main(int32_t argc, char* argv[])
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
 #endif

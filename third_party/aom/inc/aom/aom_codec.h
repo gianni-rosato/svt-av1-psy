@@ -50,8 +50,6 @@ extern "C" {
 #ifndef AOM_DEPRECATED
 #if defined(__GNUC__) && __GNUC__
 #define AOM_DEPRECATED __attribute__((deprecated))
-#elif defined(_MSC_VER)
-#define AOM_DEPRECATED
 #else
 #define AOM_DEPRECATED
 #endif

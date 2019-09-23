@@ -982,10 +982,10 @@ int32_t ComputeFramesToBeEncoded(
     uint64_t currLoc;
 
     if (config->input_file) {
-        currLoc = ftello64(config->input_file); // get current fp location
-        fseeko64(config->input_file, 0L, SEEK_END);
-        fileSize = ftello64(config->input_file);
-        fseeko64(config->input_file, currLoc, SEEK_SET); // seek back to that location
+        currLoc = ftello(config->input_file); // get current fp location
+        fseeko(config->input_file, 0L, SEEK_END);
+        fileSize = ftello(config->input_file);
+        fseeko(config->input_file, currLoc, SEEK_SET); // seek back to that location
     }
 
     frameSize = config->input_padded_width * config->input_padded_height; // Luma

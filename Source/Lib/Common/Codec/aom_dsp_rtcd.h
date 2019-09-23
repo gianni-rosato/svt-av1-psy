@@ -44,13 +44,13 @@
  * Instruction Set Support
  **************************************/
 
-#if defined(_MSC_VER)
+#ifdef _WIN32
 # include <intrin.h>
 #endif
  // Helper Functions
 static INLINE void RunCpuid(uint32_t eax, uint32_t ecx, int32_t* abcd)
 {
-#if defined(_MSC_VER)
+#ifdef _WIN32
     __cpuidex(abcd, eax, ecx);
 #else
     uint32_t ebx = 0, edx = 0;
@@ -68,7 +68,7 @@ static INLINE void RunCpuid(uint32_t eax, uint32_t ecx, int32_t* abcd)
 static INLINE int32_t CheckXcr0Ymm()
 {
     uint32_t xcr0;
-#if defined(_MSC_VER)
+#ifdef _WIN32
     xcr0 = (uint32_t)_xgetbv(0);  /* min VS2010 SP1 compiler is required */
 #else
     __asm__("xgetbv" : "=a" (xcr0) : "c" (0) : "%edx");
@@ -109,7 +109,7 @@ static INLINE int CheckXcr0Zmm()
 {
     uint32_t xcr0;
     uint32_t zmm_ymm_xmm = (7 << 5) | (1 << 2) | (1 << 1);
-#if defined(_MSC_VER)
+#ifdef _WIN32
     xcr0 = (uint32_t)_xgetbv(0);  /* min VS2010 SP1 compiler is required */
 #else
     __asm__("xgetbv" : "=a" (xcr0) : "c" (0) : "%edx");

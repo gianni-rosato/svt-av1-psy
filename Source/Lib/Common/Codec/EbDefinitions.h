@@ -25,14 +25,8 @@
 #define inline __inline
 #elif __GNUC__
 #define inline __inline__
-#ifndef fseeko64
-#define fseeko64 fseek
-#endif
-#ifndef ftello64
-#define ftello64 ftell
-#endif
 #else
-#error OS not supported
+#define inline
 #endif
 
 #ifdef __cplusplus
@@ -292,7 +286,7 @@ extern void RunEmms();
 
 #define INLINE __inline
 #define RESTRICT
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define FOPEN(f,s,m) fopen_s(&f,s,m)
 #else
 #define FOPEN(f,s,m) f=fopen(s,m)
@@ -301,14 +295,14 @@ extern void RunEmms();
 #define IMPLIES(a, b) (!(a) || (b))  //  Logical 'a implies b' (or 'a -> b')
 #if (defined(__GNUC__) && __GNUC__) || defined(__SUNPRO_C)
 #define DECLARE_ALIGNED(n, typ, val) typ val __attribute__((aligned(n)))
-#elif defined(_MSC_VER)
+#elif defined(_WIN32)
 #define DECLARE_ALIGNED(n, typ, val) __declspec(align(n)) typ val
 #else
 #warning No alignment directives known for this compiler.
 #define DECLARE_ALIGNED(n, typ, val) typ val
 #endif
 
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #define EB_ALIGN(n) __declspec(align(n))
 #elif defined(__GNUC__)
 #define EB_ALIGN(n) __attribute__((__aligned__(n)))
@@ -316,7 +310,7 @@ extern void RunEmms();
 #define EB_ALIGN(n)
 #endif
 
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #define AOM_FORCE_INLINE __forceinline
 #define AOM_INLINE __inline
 #else
@@ -427,8 +421,6 @@ static INLINE uint16_t clip_pixel_highbd(int32_t val, int32_t bd) {
 #ifndef ATTRIBUTE_PACKED
 #if defined(__GNUC__) && __GNUC__
 #define ATTRIBUTE_PACKED __attribute__((packed))
-#elif defined(_MSC_VER)
-#define ATTRIBUTE_PACKED
 #else
 #define ATTRIBUTE_PACKED
 #endif
@@ -610,7 +602,7 @@ typedef char PartitionContextType;
 #define PARTITION_CONTEXTS (PARTITION_BlockSizeS * PARTITION_PLOFFSET)
 
 // block transform size
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 typedef uint8_t TxSize;
 enum ATTRIBUTE_PACKED {
 #else
@@ -640,7 +632,7 @@ typedef enum ATTRIBUTE_PACKED {
     TX_SIZES_LARGEST = TX_64X64,
     TX_INVALID = 255  // Invalid transform size
 
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 };
 #else
 } TxSize;
@@ -1857,7 +1849,7 @@ static const EbWarpedMotionParams default_warp_params = {
 #define M6_YBITS_THSHLD                     80
 #define M6_YDC_THSHLD                       10
 
-#ifdef    _MSC_VER
+#ifdef _WIN32
 #define NOINLINE                __declspec ( noinline )
 #define FORCE_INLINE            __forceinline
 #else
@@ -2419,7 +2411,7 @@ void(*ErrorHandler)(
 #if LIB_PRINTF_ENABLE
 #define SVT_LOG printf
 #else
-#if _MSC_VER
+#ifdef _MSC_VER
 #define SVT_LOG(s, ...) printf("")
 #else
 #define SVT_LOG(s, ...) printf("",##__VA_ARGS__)

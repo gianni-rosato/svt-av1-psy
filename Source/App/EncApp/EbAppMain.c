@@ -25,6 +25,8 @@
 #include "EbTime.h"
 #ifdef _WIN32
 #include <Windows.h>
+#include <io.h>     /* _setmode() */
+#include <fcntl.h>  /* _O_BINARY */
 #else
 #include <pthread.h>
 #include <semaphore.h>
@@ -32,10 +34,6 @@
 #include <errno.h>
 #endif
 
-#ifdef _MSC_VER
-#include <io.h>     /* _setmode() */
-#include <fcntl.h>  /* _O_BINARY */
-#endif
 /***************************************
  * External Functions
  ***************************************/
@@ -63,7 +61,7 @@ void EventHandler(int32_t dummy) {
 }
 
 void AssignAppThreadGroup(uint8_t target_socket) {
-#ifdef _MSC_VER
+#ifdef _WIN32
     if (GetActiveProcessorGroupCount() == 2) {
         GROUP_AFFINITY           group_affinity;
         GetThreadGroupAffinity(GetCurrentThread(), &group_affinity);
@@ -83,7 +81,7 @@ double get_psnr(double sse, double max);
  ***************************************/
 int32_t main(int32_t argc, char* argv[])
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
 #endif

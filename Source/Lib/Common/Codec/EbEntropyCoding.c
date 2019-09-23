@@ -47,7 +47,10 @@ static INLINE int has_uni_comp_refs(const MbModeInfo *mbmi) {
         (mbmi->ref_frame[1] >= BWDREF_FRAME)));
 }
 int32_t is_inter_block(const MbModeInfo *mbmi);
+#if(CHAR_BIT!=8)
+#undef CHAR_BIT
 #define CHAR_BIT      8         /* number of bits in a char */
+#endif
 #if ADD_DELTA_QP_SUPPORT
 #define OD_CLZ0 (1)
 #define OD_CLZ(x) (-get_msb(x))
