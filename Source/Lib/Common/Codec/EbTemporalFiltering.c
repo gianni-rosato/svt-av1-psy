@@ -36,6 +36,7 @@
 #include "EbPictureOperators.h"
 #include "EbInterPrediction.h"
 #include "aom_dsp_rtcd.h"
+#include "EbComputeVariance_C.h"
 
 #undef _MM_HINT_T2
 #define _MM_HINT_T2  1
@@ -112,66 +113,66 @@ typedef void(*TempFilteringHighbdType)(const uint16_t *y_src,
                                        uint32_t *v_accum,
                                        uint16_t *v_count);
 
-void apply_filtering_c(const uint8_t *y_src,
-                       int y_src_stride,
-                       const uint8_t *y_pre,
-                       int y_pre_stride,
-                       const uint8_t *u_src,
-                       const uint8_t *v_src,
-                       int uv_src_stride,
-                       const uint8_t *u_pre,
-                       const uint8_t *v_pre,
-                       int uv_pre_stride,
-                       unsigned int block_width,
-                       unsigned int block_height,
-                       int ss_x,
-                       int ss_y,
-                       int strength,
-                       const int *blk_fw,
-                       int use_whole_blk,
-                       uint32_t *y_accum,
-                       uint16_t *y_count,
-                       uint32_t *u_accum,
-                       uint16_t *u_count,
-                       uint32_t *v_accum,
-                       uint16_t *v_count);
+void svt_av1_apply_filtering_c(const uint8_t *y_src,
+                               int y_src_stride,
+                               const uint8_t *y_pre,
+                               int y_pre_stride,
+                               const uint8_t *u_src,
+                               const uint8_t *v_src,
+                               int uv_src_stride,
+                               const uint8_t *u_pre,
+                               const uint8_t *v_pre,
+                               int uv_pre_stride,
+                               unsigned int block_width,
+                               unsigned int block_height,
+                               int ss_x,
+                               int ss_y,
+                               int strength,
+                               const int *blk_fw,
+                               int use_whole_blk,
+                               uint32_t *y_accum,
+                               uint16_t *y_count,
+                               uint32_t *u_accum,
+                               uint16_t *u_count,
+                               uint32_t *v_accum,
+                               uint16_t *v_count);
 
-void apply_filtering_highbd_c(const uint16_t *y_src,
-                              int y_src_stride,
-                              const uint16_t *y_pre,
-                              int y_pre_stride,
-                              const uint16_t *u_src,
-                              const uint16_t *v_src,
-                              int uv_src_stride,
-                              const uint16_t *u_pre,
-                              const uint16_t *v_pre,
-                              int uv_pre_stride,
-                              unsigned int block_width,
-                              unsigned int block_height,
-                              int ss_x,
-                              int ss_y,
-                              int strength,
-                              const int *blk_fw,
-                              int use_whole_blk,
-                              uint32_t *y_accum,
-                              uint16_t *y_count,
-                              uint32_t *u_accum,
-                              uint16_t *u_count,
-                              uint32_t *v_accum,
-                              uint16_t *v_count);
+void svt_av1_apply_filtering_highbd_c(const uint16_t *y_src,
+                                      int y_src_stride,
+                                      const uint16_t *y_pre,
+                                      int y_pre_stride,
+                                      const uint16_t *u_src,
+                                      const uint16_t *v_src,
+                                      int uv_src_stride,
+                                      const uint16_t *u_pre,
+                                      const uint16_t *v_pre,
+                                      int uv_pre_stride,
+                                      unsigned int block_width,
+                                      unsigned int block_height,
+                                      int ss_x,
+                                      int ss_y,
+                                      int strength,
+                                      const int *blk_fw,
+                                      int use_whole_blk,
+                                      uint32_t *y_accum,
+                                      uint16_t *y_count,
+                                      uint32_t *u_accum,
+                                      uint16_t *u_count,
+                                      uint32_t *v_accum,
+                                      uint16_t *v_count);
 
 static TempFilteringType FUNC_TABLE apply_temp_filtering_32x32_func_ptr_array[ASM_TYPE_TOTAL] = {
         // NON_SIMD
-        apply_filtering_c,
+        svt_av1_apply_filtering_c,
         // SSE4
-        av1_apply_temporal_filter_sse4_1
+        svt_av1_apply_temporal_filter_sse4_1
 };
 
 static TempFilteringHighbdType FUNC_TABLE apply_temp_filtering_highbd_32x32_func_ptr_array[ASM_TYPE_TOTAL] = {
         // NON_SIMD
-        apply_filtering_highbd_c,
+        svt_av1_apply_filtering_highbd_c,
         // SSE4
-        av1_highbd_apply_temporal_filter_sse4_1
+        svt_av1_highbd_apply_temporal_filter_sse4_1
 };
 
 #if DEBUG_TF
@@ -249,8 +250,8 @@ void save_YUV_to_file_highbd(char *filename, uint16_t* buffer_y, uint16_t* buffe
 }
 #endif
 
-static void pack_highbd_pic(EbPictureBufferDesc* pic_ptr,
-                            uint16_t* buffer_16bit[3],
+static void pack_highbd_pic(EbPictureBufferDesc *pic_ptr,
+                            uint16_t *buffer_16bit[3],
                             uint32_t ss_x,
                             uint32_t ss_y,
                             EbBool include_padding,
@@ -281,7 +282,7 @@ static void pack_highbd_pic(EbPictureBufferDesc* pic_ptr,
                pic_ptr->stride_y,
                pic_ptr->buffer_bit_inc_y + input_bit_inc_y_offset,
                pic_ptr->stride_bit_inc_y,
-               buffer_16bit[0],
+               buffer_16bit[C_Y],
                pic_ptr->stride_y,
                width,
                height,
@@ -291,7 +292,7 @@ static void pack_highbd_pic(EbPictureBufferDesc* pic_ptr,
                pic_ptr->stride_cb,
                pic_ptr->buffer_bit_inc_cb + input_bit_inc_cb_offset,
                pic_ptr->stride_bit_inc_cb,
-               buffer_16bit[1],
+               buffer_16bit[C_U],
                pic_ptr->stride_cb,
                width >> ss_x,
                height >> ss_y,
@@ -301,7 +302,7 @@ static void pack_highbd_pic(EbPictureBufferDesc* pic_ptr,
                pic_ptr->stride_cr,
                pic_ptr->buffer_bit_inc_cr + input_bit_inc_cr_offset,
                pic_ptr->stride_bit_inc_cr,
-               buffer_16bit[2],
+               buffer_16bit[C_V],
                pic_ptr->stride_cr,
                width >> ss_x,
                height >> ss_y,
@@ -309,8 +310,8 @@ static void pack_highbd_pic(EbPictureBufferDesc* pic_ptr,
 
 }
 
-static void unpack_highbd_pic(uint16_t* buffer_highbd[3],
-                              EbPictureBufferDesc* pic_ptr,
+static void unpack_highbd_pic(uint16_t *buffer_highbd[3],
+                              EbPictureBufferDesc *pic_ptr,
                               uint32_t ss_x,
                               uint32_t ss_y,
                               EbBool include_padding,
@@ -337,7 +338,7 @@ static void unpack_highbd_pic(uint16_t* buffer_highbd[3],
         height = pic_ptr->height;
     }
 
-    un_pack2d(buffer_highbd[0],
+    un_pack2d(buffer_highbd[C_Y],
               pic_ptr->stride_y,
               pic_ptr->buffer_y + input_y_offset,
               pic_ptr->stride_y,
@@ -347,7 +348,7 @@ static void unpack_highbd_pic(uint16_t* buffer_highbd[3],
               height,
               asm_type);
 
-    un_pack2d(buffer_highbd[1],
+    un_pack2d(buffer_highbd[C_U],
               pic_ptr->stride_cb,
               pic_ptr->buffer_cb + input_cb_offset,
               pic_ptr->stride_cb,
@@ -357,7 +358,7 @@ static void unpack_highbd_pic(uint16_t* buffer_highbd[3],
               height >> ss_y,
               asm_type);
 
-    un_pack2d(buffer_highbd[2],
+    un_pack2d(buffer_highbd[C_V],
               pic_ptr->stride_cr,
               pic_ptr->buffer_cr + input_cr_offset,
               pic_ptr->stride_cr,
@@ -368,7 +369,7 @@ static void unpack_highbd_pic(uint16_t* buffer_highbd[3],
               asm_type);
 }
 
-void generate_padding_pic(EbPictureBufferDesc* pic_ptr,
+void generate_padding_pic(EbPictureBufferDesc *pic_ptr,
                           uint32_t ss_x,
                           uint32_t ss_y,
                           EbBool is_highbd){
@@ -418,68 +419,6 @@ void generate_padding_pic(EbPictureBufferDesc* pic_ptr,
     }
 }
 
-// Copy block/picture of size width x height from src to dst
-void copy_pixels(EbByte dst,
-                 int stride_dst,
-                 EbByte src,
-                 int stride_src,
-                 int width,
-                 int height){
-    int h;
-    EbByte src_cpy = src;
-    EbByte dst_cpy = dst;
-
-    for (h=0; h<height; h++){
-        memcpy(dst_cpy, src_cpy, width * sizeof(uint8_t));
-        dst_cpy += stride_dst;
-        src_cpy += stride_src;
-    }
-}
-
-// Copy block/picture of size width x height from src to dst - highbd version
-void copy_pixels_highbd(uint16_t* dst,
-                        int stride_dst,
-                        uint16_t* src,
-                        int stride_src,
-                        int width,
-                        int height){
-    int h;
-    uint16_t* src_cpy = src;
-    uint16_t* dst_cpy = dst;
-
-    for (h=0; h<height; h++){
-        memcpy16bit(dst_cpy, src_cpy, width * sizeof(uint8_t));
-        dst_cpy += stride_dst;
-        src_cpy += stride_src;
-    }
-}
-
-void get_ss_from_color_format(EbColorFormat color_format,
-                              uint32_t *ss_x,
-                              uint32_t *ss_y) {
-    switch (color_format) {
-        case EB_YUV420 :
-            *ss_x = 1;
-            *ss_y = 1;
-            break;
-        case EB_YUV422 :
-            *ss_x = 1;
-            *ss_y = 0;
-            break;
-        case EB_YUV444 :
-            *ss_x = 0;
-            *ss_y = 0;
-            break;
-        case EB_YUV400:
-            printf("Unsupported colour format: YUV400\n");
-            assert(0);
-        default :
-            printf("Unsupported colour format\n");
-            assert(0);
-    }
-}
-
-
 // assign a single value to all elements in an array
 static void populate_list_with_value(int *list,
                                      int nelements,
@@ -489,11 +428,11 @@ static void populate_list_with_value(int *list,
 }
 
 // get block filter weights using a distance metric
-void get_blk_fw_using_dist(int const *me_32x32_subblock_vf,
-                           int const *me_16x16_subblock_vf,
-                           EbBool use_16x16_subblocks_only,
-                           int *blk_fw,
-                           EbBool is_highbd){
+static void get_blk_fw_using_dist(int const *me_32x32_subblock_vf,
+                                  int const *me_16x16_subblock_vf,
+                                  EbBool use_16x16_subblocks_only,
+                                  int *blk_fw,
+                                  EbBool is_highbd){
     uint32_t blk_idx, idx_32x32;
 
     int me_sum_16x16_subblock_vf[4] = {0};
@@ -564,12 +503,12 @@ void get_blk_fw_using_dist(int const *me_32x32_subblock_vf,
 }
 
 // compute variance for the MC block residuals
-void get_ME_distortion(int* me_32x32_subblock_vf,
-                       int* me_16x16_subblock_vf,
-                       uint8_t* pred_y,
-                       int stride_pred_y,
-                       uint8_t* src_y,
-                       int stride_src_y){
+static void get_ME_distortion(int *me_32x32_subblock_vf,
+                              int *me_16x16_subblock_vf,
+                              uint8_t *pred_y,
+                              int stride_pred_y,
+                              uint8_t *src_y,
+                              int stride_src_y){
     unsigned int sse;
 
     uint8_t * pred_y_ptr;
@@ -600,44 +539,17 @@ void get_ME_distortion(int* me_32x32_subblock_vf,
     }
 }
 
-// TODO: use or implement a simd version of this
-static uint32_t variance_highbd_c(const uint16_t *a,
-                                  int a_stride,
-                                  const uint16_t *b,
-                                  int b_stride,
-                                  int w,
-                                  int h,
-                                  uint32_t *sse) {
-    int i, j;
-
-    int sad = 0;
-    *sse = 0;
-
-    for (i = 0; i < h; ++i) {
-        for (j = 0; j < w; ++j) {
-            const int diff = a[j] - b[j];
-            sad += diff;
-            *sse += diff * diff;
-        }
-
-        a += a_stride;
-        b += b_stride;
-    }
-
-    return *sse - (sad * sad)/(w*h);
-}
-
 // compute variance for the MC block residuals - highbd
-void get_ME_distortion_highbd(int* me_32x32_subblock_vf,
-                              int* me_16x16_subblock_vf,
-                              uint16_t* pred_y,
-                              int stride_pred_y,
-                              uint16_t* src_y,
-                              int stride_src_y){
+static void get_ME_distortion_highbd(int *me_32x32_subblock_vf,
+                                     int *me_16x16_subblock_vf,
+                                     uint16_t *pred_y,
+                                     int stride_pred_y,
+                                     uint16_t *src_y,
+                                     int stride_src_y){
     unsigned int sse;
 
-    uint16_t* pred_Y_ptr;
-    uint16_t* src_Y_ptr;
+    uint16_t *pred_Y_ptr;
+    uint16_t *src_Y_ptr;
 
     for(uint32_t index_32x32 = 0; index_32x32 < 4; index_32x32++) {
         int row = subblock_xy_32x32[index_32x32][0];
@@ -661,14 +573,14 @@ void get_ME_distortion_highbd(int* me_32x32_subblock_vf,
 }
 
 // Create and initialize all necessary ME context structures
-void create_ME_context_and_picture_control(MotionEstimationContext_t *context_ptr,
-                                           PictureParentControlSet *picture_control_set_ptr_frame,
-                                           PictureParentControlSet *picture_control_set_ptr_central,
-                                           EbPictureBufferDesc *input_picture_ptr_central,
-                                           int blk_row,
-                                           int blk_col,
-                                           uint32_t ss_x,
-                                           uint32_t ss_y){
+static void create_ME_context_and_picture_control(MotionEstimationContext_t *context_ptr,
+                                                  PictureParentControlSet *picture_control_set_ptr_frame,
+                                                  PictureParentControlSet *picture_control_set_ptr_central,
+                                                  EbPictureBufferDesc *input_picture_ptr_central,
+                                                  int blk_row,
+                                                  int blk_col,
+                                                  uint32_t ss_x,
+                                                  uint32_t ss_y){
     uint32_t lcuRow;
 
     // set reference picture for alt-refs
@@ -888,7 +800,7 @@ static INLINE void calculate_squared_errors(const uint8_t *s,
     for (i = 0; i < h; i++) {
         for (j = 0; j < w; j++) {
             const int16_t diff = s[i * s_stride + j] - p[i * p_stride + j];
-            diff_sse[idx] = (uint16_t)diff * diff;
+            diff_sse[idx] = (uint16_t)(diff * diff);
             idx++;
         }
     }
@@ -914,29 +826,29 @@ static INLINE void calculate_squared_errors_highbd(const uint16_t *s,
 }
 
 // Main function that applies filtering to a block according to the weights
-void apply_filtering_c(const uint8_t *y_src,
-                        int y_src_stride,
-                        const uint8_t *y_pre,
-                        int y_pre_stride,
-                        const uint8_t *u_src,
-                        const uint8_t *v_src,
-                        int uv_src_stride,
-                        const uint8_t *u_pre,
-                        const uint8_t *v_pre,
-                        int uv_pre_stride,
-                        unsigned int block_width,
-                        unsigned int block_height,
-                        int ss_x,
-                        int ss_y,
-                        int strength,
-                        const int *blk_fw,
-                        int use_whole_blk,
-                        uint32_t *y_accum,
-                        uint16_t *y_count,
-                        uint32_t *u_accum,
-                        uint16_t *u_count,
-                        uint32_t *v_accum,
-                        uint16_t *v_count){ // sub-block filter weights
+void svt_av1_apply_filtering_c(const uint8_t *y_src,
+                               int y_src_stride,
+                               const uint8_t *y_pre,
+                               int y_pre_stride,
+                               const uint8_t *u_src,
+                               const uint8_t *v_src,
+                               int uv_src_stride,
+                               const uint8_t *u_pre,
+                               const uint8_t *v_pre,
+                               int uv_pre_stride,
+                               unsigned int block_width,
+                               unsigned int block_height,
+                               int ss_x,
+                               int ss_y,
+                               int strength,
+                               const int *blk_fw,
+                               int use_whole_blk,
+                               uint32_t *y_accum,
+                               uint16_t *y_count,
+                               uint32_t *u_accum,
+                               uint16_t *u_count,
+                               uint32_t *v_accum,
+                               uint16_t *v_count){ // sub-block filter weights
 
     unsigned int i, j, k, m;
     int idx, idy;
@@ -944,24 +856,24 @@ void apply_filtering_c(const uint8_t *y_src,
     const int rounding = (1 << strength) >> 1;
     const unsigned int uv_block_width = block_width >> ss_x;
     const unsigned int uv_block_height = block_height >> ss_y;
-    DECLARE_ALIGNED(16, uint16_t, y_diff_sse[BLK_PELS]);
-    DECLARE_ALIGNED(16, uint16_t, u_diff_sse[BLK_PELS]);
-    DECLARE_ALIGNED(16, uint16_t, v_diff_sse[BLK_PELS]);
+    DECLARE_ALIGNED(16, uint16_t, y_diff_se[BLK_PELS]);
+    DECLARE_ALIGNED(16, uint16_t, u_diff_se[BLK_PELS]);
+    DECLARE_ALIGNED(16, uint16_t, v_diff_se[BLK_PELS]);
 
-    memset(y_diff_sse, 0, BLK_PELS * sizeof(uint16_t));
-    memset(u_diff_sse, 0, BLK_PELS * sizeof(uint16_t));
-    memset(v_diff_sse, 0, BLK_PELS * sizeof(uint16_t));
+    memset(y_diff_se, 0, BLK_PELS * sizeof(uint16_t));
+    memset(u_diff_se, 0, BLK_PELS * sizeof(uint16_t));
+    memset(v_diff_se, 0, BLK_PELS * sizeof(uint16_t));
 
     assert(use_whole_blk == 0);
     UNUSED(use_whole_blk);
 
     // Calculate squared differences for each pixel of the block (pred-orig)
-    calculate_squared_errors(y_src, y_src_stride, y_pre, y_pre_stride, y_diff_sse,
+    calculate_squared_errors(y_src, y_src_stride, y_pre, y_pre_stride, y_diff_se,
                              block_width, block_height);
     calculate_squared_errors(u_src, uv_src_stride, u_pre, uv_pre_stride,
-                             u_diff_sse, uv_block_width, uv_block_height);
+                             u_diff_se, uv_block_width, uv_block_height);
     calculate_squared_errors(v_src, uv_src_stride, v_pre, uv_pre_stride,
-                             v_diff_sse, uv_block_width, uv_block_height);
+                             v_diff_se, uv_block_width, uv_block_height);
 
     for (i = 0; i < block_height; i++) {
         for (j = 0; j < block_width; j++) {
@@ -989,7 +901,7 @@ void apply_filtering_c(const uint8_t *y_src,
 
                     if (row >= 0 && row < (int)block_height && col >= 0 &&
                         col < (int)block_width) {
-                        modifier += y_diff_sse[row * (int)block_width + col];
+                        modifier += y_diff_se[row * (int)block_width + col];
                         ++y_index;
                     }
                 }
@@ -997,8 +909,8 @@ void apply_filtering_c(const uint8_t *y_src,
 
             assert(y_index > 0);
 
-            modifier += u_diff_sse[uv_r * uv_block_width + uv_c];
-            modifier += v_diff_sse[uv_r * uv_block_width + uv_c];
+            modifier += u_diff_se[uv_r * uv_block_width + uv_c];
+            modifier += v_diff_se[uv_r * uv_block_width + uv_c];
 
             y_index += 2;
 
@@ -1026,8 +938,8 @@ void apply_filtering_c(const uint8_t *y_src,
 
                         if (row >= 0 && row < (int)uv_block_height && col >= 0 &&
                             col < (int)uv_block_width) {
-                            u_mod += u_diff_sse[row * uv_block_width + col];
-                            v_mod += v_diff_sse[row * uv_block_width + col];
+                            u_mod += u_diff_se[row * uv_block_width + col];
+                            v_mod += v_diff_se[row * uv_block_width + col];
                             ++cr_index;
                         }
                     }
@@ -1039,7 +951,7 @@ void apply_filtering_c(const uint8_t *y_src,
                     for (idx = 0; idx < 1 + ss_x; ++idx) {
                         const int row = (uv_r << ss_y) + idy;
                         const int col = (uv_c << ss_x) + idx;
-                        y_diff += y_diff_sse[row * (int)block_width + col];
+                        y_diff += y_diff_se[row * (int)block_width + col];
                         ++cr_index;
                     }
                 }
@@ -1065,53 +977,53 @@ void apply_filtering_c(const uint8_t *y_src,
 }
 
 // Main function that applies filtering to a block according to the weights - highbd
-void apply_filtering_highbd_c(const uint16_t *y_src,
-                              int y_src_stride,
-                              const uint16_t *y_pre,
-                              int y_pre_stride,
-                              const uint16_t *u_src,
-                              const uint16_t *v_src,
-                              int uv_src_stride,
-                              const uint16_t *u_pre,
-                              const uint16_t *v_pre,
-                              int uv_pre_stride,
-                              unsigned int block_width,
-                              unsigned int block_height,
-                              int ss_x,
-                              int ss_y,
-                              int strength,
-                              const int *blk_fw,
-                              int use_whole_blk,
-                              uint32_t *y_accum,
-                              uint16_t *y_count,
-                              uint32_t *u_accum,
-                              uint16_t *u_count,
-                              uint32_t *v_accum,
-                              uint16_t *v_count){ // sub-block filter weights
+void svt_av1_apply_filtering_highbd_c(const uint16_t *y_src,
+                                      int y_src_stride,
+                                      const uint16_t *y_pre,
+                                      int y_pre_stride,
+                                      const uint16_t *u_src,
+                                      const uint16_t *v_src,
+                                      int uv_src_stride,
+                                      const uint16_t *u_pre,
+                                      const uint16_t *v_pre,
+                                      int uv_pre_stride,
+                                      unsigned int block_width,
+                                      unsigned int block_height,
+                                      int ss_x,
+                                      int ss_y,
+                                      int strength,
+                                      const int *blk_fw,
+                                      int use_whole_blk,
+                                      uint32_t *y_accum,
+                                      uint16_t *y_count,
+                                      uint32_t *u_accum,
+                                      uint16_t *u_count,
+                                      uint32_t *v_accum,
+                                      uint16_t *v_count){ // sub-block filter weights
 
     unsigned int i, j, k, m;
     int idx, idy;
     const int rounding = (1 << strength) >> 1;
     const unsigned int uv_block_width = block_width >> ss_x;
     const unsigned int uv_block_height = block_height >> ss_y;
-    DECLARE_ALIGNED(16, uint32_t, y_diff_sse[BLK_PELS]);
-    DECLARE_ALIGNED(16, uint32_t, u_diff_sse[BLK_PELS]);
-    DECLARE_ALIGNED(16, uint32_t, v_diff_sse[BLK_PELS]);
+    DECLARE_ALIGNED(16, uint32_t, y_diff_se[BLK_PELS]);
+    DECLARE_ALIGNED(16, uint32_t, u_diff_se[BLK_PELS]);
+    DECLARE_ALIGNED(16, uint32_t, v_diff_se[BLK_PELS]);
 
-    memset(y_diff_sse, 0, BLK_PELS * sizeof(uint32_t));
-    memset(u_diff_sse, 0, BLK_PELS * sizeof(uint32_t));
-    memset(v_diff_sse, 0, BLK_PELS * sizeof(uint32_t));
+    memset(y_diff_se, 0, BLK_PELS * sizeof(uint32_t));
+    memset(u_diff_se, 0, BLK_PELS * sizeof(uint32_t));
+    memset(v_diff_se, 0, BLK_PELS * sizeof(uint32_t));
 
     assert(use_whole_blk == 0);
     UNUSED(use_whole_blk);
 
     // Calculate squared differences for each pixel of the block (pred-orig)
-    calculate_squared_errors_highbd(y_src, y_src_stride, y_pre, y_pre_stride, y_diff_sse,
+    calculate_squared_errors_highbd(y_src, y_src_stride, y_pre, y_pre_stride, y_diff_se,
                              block_width, block_height);
     calculate_squared_errors_highbd(u_src, uv_src_stride, u_pre, uv_pre_stride,
-                             u_diff_sse, uv_block_width, uv_block_height);
+                             u_diff_se, uv_block_width, uv_block_height);
     calculate_squared_errors_highbd(v_src, uv_src_stride, v_pre, uv_pre_stride,
-                             v_diff_sse, uv_block_width, uv_block_height);
+                             v_diff_se, uv_block_width, uv_block_height);
 
     for (i = 0; i < block_height; i++) {
         for (j = 0; j < block_width; j++) {
@@ -1130,8 +1042,8 @@ void apply_filtering_highbd_c(const uint16_t *y_src,
 
             const int uv_r = i >> ss_y;
             const int uv_c = j >> ss_x;
-            int64_t modifier;
-            int64_t y_diff_sum = 0;
+            int final_y_mod;
+            int64_t y_mod = 0;
 
             for (idy = -1; idy <= 1; ++idy) {
                 for (idx = -1; idx <= 1; ++idx) {
@@ -1140,7 +1052,7 @@ void apply_filtering_highbd_c(const uint16_t *y_src,
 
                     if (row >= 0 && row < (int)block_height && col >= 0 &&
                         col < (int)block_width) {
-                        y_diff_sum += y_diff_sse[row * (int)block_width + col];
+                        y_mod += y_diff_se[row * (int)block_width + col];
                         ++y_index;
                     }
                 }
@@ -1148,17 +1060,17 @@ void apply_filtering_highbd_c(const uint16_t *y_src,
 
             assert(y_index > 0);
 
-            y_diff_sum += u_diff_sse[uv_r * uv_block_width + uv_c];
-            y_diff_sum += v_diff_sse[uv_r * uv_block_width + uv_c];
+            y_mod += u_diff_se[uv_r * uv_block_width + uv_c];
+            y_mod += v_diff_se[uv_r * uv_block_width + uv_c];
 
             y_index += 2;
 
-            modifier = adjust_modifier_highbd(y_diff_sum, y_index, rounding, strength, filter_weight);
+            final_y_mod = adjust_modifier_highbd(y_mod, y_index, rounding, strength, filter_weight);
 
             k = i * y_pre_stride + j;
 
-            y_count[k] += modifier;
-            y_accum[k] += modifier * pixel_value;
+            y_count[k] += final_y_mod;
+            y_accum[k] += final_y_mod * pixel_value;
 
             // Process chroma component
             if (!(i & ss_y) && !(j & ss_x)) {
@@ -1168,6 +1080,7 @@ void apply_filtering_highbd_c(const uint16_t *y_src,
                 // non-local mean approach
                 int cr_index = 0;
                 int64_t u_mod = 0, v_mod = 0;
+                int final_u_mod, final_v_mod;
                 int y_diff = 0;
 
                 for (idy = -1; idy <= 1; ++idy) {
@@ -1177,8 +1090,8 @@ void apply_filtering_highbd_c(const uint16_t *y_src,
 
                         if (row >= 0 && row < (int)uv_block_height && col >= 0 &&
                             col < (int)uv_block_width) {
-                            u_mod += u_diff_sse[row * uv_block_width + col];
-                            v_mod += v_diff_sse[row * uv_block_width + col];
+                            u_mod += u_diff_se[row * uv_block_width + col];
+                            v_mod += v_diff_se[row * uv_block_width + col];
                             ++cr_index;
                         }
                     }
@@ -1190,7 +1103,7 @@ void apply_filtering_highbd_c(const uint16_t *y_src,
                     for (idx = 0; idx < 1 + ss_x; ++idx) {
                         const int row = (uv_r << ss_y) + idy;
                         const int col = (uv_c << ss_x) + idx;
-                        y_diff += y_diff_sse[row * (int)block_width + col];
+                        y_diff += y_diff_se[row * (int)block_width + col];
                         ++cr_index;
                     }
                 }
@@ -1198,41 +1111,41 @@ void apply_filtering_highbd_c(const uint16_t *y_src,
                 u_mod += y_diff;
                 v_mod += y_diff;
 
-                u_mod = adjust_modifier_highbd(u_mod, cr_index, rounding, strength, filter_weight);
-                v_mod = adjust_modifier_highbd(v_mod, cr_index, rounding, strength, filter_weight);
+                final_u_mod = adjust_modifier_highbd(u_mod, cr_index, rounding, strength, filter_weight);
+                final_v_mod = adjust_modifier_highbd(v_mod, cr_index, rounding, strength, filter_weight);
 
                 m = (i>>ss_y) * uv_pre_stride + (j>>ss_x);
 
-                u_count[m] += u_mod;
-                u_accum[m] += u_mod * u_pixel_value;
+                u_count[m] += final_u_mod;
+                u_accum[m] += final_u_mod * u_pixel_value;
 
                 m = (i>>ss_y) * uv_pre_stride + (j>>ss_x);
 
-                v_count[m] += v_mod;
-                v_accum[m] += v_mod * v_pixel_value;
+                v_count[m] += final_v_mod;
+                v_accum[m] += final_v_mod * v_pixel_value;
             }
         }
     }
 }
 
-void apply_filtering_block(int block_row,
-                           int block_col,
-                           EbByte *src,
-                           uint16_t** src_16bit,
-                           EbByte *pred,
-                           uint16_t** pred_16bit,
-                           uint32_t **accum,
-                           uint16_t **count,
-                           int *stride,
-                           int *stride_pred,
-                           int block_width,
-                           int block_height,
-                           uint32_t ss_x, // chroma sub-sampling in x
-                           uint32_t ss_y, // chroma sub-sampling in y
-                           int altref_strength,
-                           const int *blk_fw,
-                           EbBool is_highbd,
-                           EbAsm asm_type) {
+static void apply_filtering_block(int block_row,
+                                  int block_col,
+                                  EbByte *src,
+                                  uint16_t **src_16bit,
+                                  EbByte *pred,
+                                  uint16_t **pred_16bit,
+                                  uint32_t **accum,
+                                  uint16_t **count,
+                                  uint32_t *stride,
+                                  uint32_t *stride_pred,
+                                  int block_width,
+                                  int block_height,
+                                  uint32_t ss_x, // chroma sub-sampling in x
+                                  uint32_t ss_y, // chroma sub-sampling in y
+                                  int altref_strength,
+                                  const int *blk_fw,
+                                  EbBool is_highbd,
+                                  EbAsm asm_type) {
 
     int blk_h = BH >> 1; int blk_w = BW >> 1; // fixed 32x32 blocks for now
 
@@ -1345,9 +1258,9 @@ void apply_filtering_block(int block_row,
 }
 
 // Apply filtering to the central picture
-static void apply_filtering_central(EbByte* pred,
-                                    uint32_t** accum,
-                                    uint16_t** count,
+static void apply_filtering_central(EbByte *pred,
+                                    uint32_t **accum,
+                                    uint16_t **count,
                                     uint16_t blk_width,
                                     uint16_t blk_height,
                                     uint32_t ss_x,
@@ -1389,11 +1302,11 @@ static void apply_filtering_central(EbByte* pred,
 }
 
 // Apply filtering to the central picture
-static void apply_filtering_central_highbd(uint16_t** pred_16bit,
-                                           uint32_t** accum,
-                                           uint16_t** count,
-                                           uint16_t blk_height,
+static void apply_filtering_central_highbd(uint16_t **pred_16bit,
+                                           uint32_t **accum,
+                                           uint16_t **count,
                                            uint16_t blk_width,
+                                           uint16_t blk_height,
                                            uint32_t ss_x,
                                            uint32_t ss_y) {
 
@@ -1434,22 +1347,22 @@ static void apply_filtering_central_highbd(uint16_t** pred_16bit,
 
 uint32_t get_mds_idx(uint32_t  orgx, uint32_t  orgy, uint32_t  size, uint32_t use_128x128);
 
-void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr,
-                         MeContext* context_ptr,
-                         EbPictureBufferDesc *pic_ptr_ref,
-                         EbByte *pred,
-                         uint16_t** pred_16bit,
-                         int* stride_pred,
-                         EbByte* src,
-                         uint16_t** src_16bit,
-                         int* stride_src,
-                         uint32_t sb_origin_x,
-                         uint32_t sb_origin_y,
-                         uint32_t ss_x,
-                         uint32_t ss_y,
-                         const int* use_16x16_subblocks,
-                         int encoder_bit_depth,
-                         EbAsm asm_type)
+static void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr,
+                                MeContext *context_ptr,
+                                EbPictureBufferDesc *pic_ptr_ref,
+                                EbByte *pred,
+                                uint16_t **pred_16bit,
+                                uint32_t *stride_pred,
+                                EbByte *src,
+                                uint16_t **src_16bit,
+                                uint32_t *stride_src,
+                                uint32_t sb_origin_x,
+                                uint32_t sb_origin_y,
+                                uint32_t ss_x,
+                                uint32_t ss_y,
+                                const int* use_16x16_subblocks,
+                                int encoder_bit_depth,
+                                EbAsm asm_type)
 {
     const InterpFilters interp_filters =
         av1_make_interp_filters(MULTITAP_SHARP, MULTITAP_SHARP);
@@ -1470,17 +1383,23 @@ void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr,
     prediction_ptr.origin_x = 0;
     prediction_ptr.origin_y = 0;
     prediction_ptr.stride_y = BW;
-    prediction_ptr.stride_cb = BW_CH;
-    prediction_ptr.stride_cr = BW_CH;
+    prediction_ptr.stride_cb = (uint16_t)BW >> ss_x;
+    prediction_ptr.stride_cr = (uint16_t)BW >> ss_x;
 
     if(!is_highbd){
-        prediction_ptr.buffer_y = pred[0];
-        prediction_ptr.buffer_cb = pred[1];
-        prediction_ptr.buffer_cr = pred[2];
+        assert(src[C_Y] != NULL);
+        assert(src[C_U] != NULL);
+        assert(src[C_V] != NULL);
+        prediction_ptr.buffer_y = pred[C_Y];
+        prediction_ptr.buffer_cb = pred[C_U];
+        prediction_ptr.buffer_cr = pred[C_V];
     }else{
-        prediction_ptr.buffer_y = (uint8_t*) pred_16bit[0];
-        prediction_ptr.buffer_cb = (uint8_t*) pred_16bit[1];
-        prediction_ptr.buffer_cr = (uint8_t*) pred_16bit[2];
+        assert(src_16bit[C_Y] != NULL);
+        assert(src_16bit[C_U] != NULL);
+        assert(src_16bit[C_V] != NULL);
+        prediction_ptr.buffer_y = (uint8_t*) pred_16bit[C_Y];
+        prediction_ptr.buffer_cb = (uint8_t*) pred_16bit[C_U];
+        prediction_ptr.buffer_cr = (uint8_t*) pred_16bit[C_V];
 
         reference_ptr.buffer_y = (uint8_t*)malloc(pic_ptr_ref->luma_size * sizeof(uint16_t));
         reference_ptr.buffer_cb = (uint8_t*)malloc(pic_ptr_ref->chroma_size * sizeof(uint16_t));
@@ -1712,16 +1631,18 @@ void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr,
 
 }
 
-void get_final_filtered_pixels(EbByte* src_center_ptr_start,
-                               uint16_t** altref_buffer_highbd_start,
-                               uint32_t** accum,
-                               uint16_t** count,
-                               const int* stride,
-                               int blk_y_src_offset,
-                               int blk_ch_src_offset,
-                               uint64_t* filtered_sse,
-                               uint64_t* filtered_sse_uv,
-                               EbBool is_highbd){
+static void get_final_filtered_pixels(EbByte *src_center_ptr_start,
+                                      uint16_t **altref_buffer_highbd_start,
+                                      uint32_t **accum,
+                                      uint16_t **count,
+                                      const uint32_t *stride,
+                                      int blk_y_src_offset,
+                                      int blk_ch_src_offset,
+                                      uint16_t blk_width_ch,
+                                      uint16_t blk_height_ch,
+                                      uint64_t *filtered_sse,
+                                      uint64_t *filtered_sse_uv,
+                                      EbBool is_highbd){
 
             int i, j, k;
 
@@ -1738,15 +1659,15 @@ void get_final_filtered_pixels(EbByte* src_center_ptr_start,
                 }
                 // Process chroma
                 pos = blk_ch_src_offset;
-                for (i = 0, k = 0; i < BH_CH; i++) {
-                    for (j = 0; j < BW_CH; j++, k++) {
+                for (i = 0, k = 0; i < blk_height_ch; i++) {
+                    for (j = 0; j < blk_width_ch; j++, k++) {
                         (*filtered_sse_uv) += (uint64_t)((int32_t)src_center_ptr_start[C_U][pos] - (int32_t)OD_DIVU(accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]))* ((int32_t)src_center_ptr_start[C_U][pos] - (int32_t)OD_DIVU(accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]));
                         (*filtered_sse_uv) += (uint64_t)((int32_t)src_center_ptr_start[C_V][pos] - (int32_t)OD_DIVU(accum[C_V][k] + (count[C_V][k] >> 1), count[C_V][k]))* ((int32_t)src_center_ptr_start[C_V][pos] - (int32_t)OD_DIVU(accum[C_V][k] + (count[C_V][k] >> 1), count[C_V][k]));
                         src_center_ptr_start[C_U][pos] = (uint8_t)OD_DIVU(accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]);
                         src_center_ptr_start[C_V][pos] = (uint8_t)OD_DIVU(accum[C_V][k] + (count[C_V][k] >> 1), count[C_V][k]);
                         pos++;
                     }
-                    pos += stride[C_U] - (BW_CH);
+                    pos += stride[C_U] - blk_width_ch;
                 }
             }else{
                 // Process luma
@@ -1761,15 +1682,15 @@ void get_final_filtered_pixels(EbByte* src_center_ptr_start,
                 }
                 // Process chroma
                 pos = blk_ch_src_offset;
-                for (i = 0, k = 0; i < BH_CH; i++) {
-                    for (j = 0; j < BW_CH; j++, k++) {
+                for (i = 0, k = 0; i < blk_height_ch; i++) {
+                    for (j = 0; j < blk_width_ch; j++, k++) {
                         (*filtered_sse_uv) += (uint64_t)((int32_t)altref_buffer_highbd_start[C_U][pos] - (int32_t)OD_DIVU(accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]))* ((int32_t)altref_buffer_highbd_start[C_U][pos] - (int32_t)OD_DIVU(accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]));
                         (*filtered_sse_uv) += (uint64_t)((int32_t)altref_buffer_highbd_start[C_V][pos] - (int32_t)OD_DIVU(accum[C_V][k] + (count[C_V][k] >> 1), count[C_V][k]))* ((int32_t)altref_buffer_highbd_start[C_V][pos] - (int32_t)OD_DIVU(accum[C_V][k] + (count[C_V][k] >> 1), count[C_V][k]));
                         altref_buffer_highbd_start[C_U][pos] = (uint16_t)OD_DIVU(accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]);
                         altref_buffer_highbd_start[C_V][pos] = (uint16_t)OD_DIVU(accum[C_V][k] + (count[C_V][k] >> 1), count[C_V][k]);
                         pos++;
                     }
-                    pos += stride[C_U] - (BW_CH);
+                    pos += stride[C_U] - blk_width_ch;
                 }
             }
 }
@@ -1783,25 +1704,28 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                                                    uint64_t *filtered_sse,
                                                    uint64_t *filtered_sse_uv,
                                                    MotionEstimationContext_t *me_context_ptr,
-                                                   int32_t segment_index) {
+                                                   int32_t segment_index,
+                                                   EbBool is_highbd) {
     int frame_index;
     DECLARE_ALIGNED(16, uint32_t, accumulator[BLK_PELS * COLOR_CHANNELS]);
     DECLARE_ALIGNED(16, uint16_t, counter[BLK_PELS * COLOR_CHANNELS]);
-    DECLARE_ALIGNED(32, uint8_t, predictor[BLK_PELS * COLOR_CHANNELS]);
-    DECLARE_ALIGNED(32, uint16_t, predictor_16bit[BLK_PELS * COLOR_CHANNELS]);
-
     uint32_t *accum[COLOR_CHANNELS] = { accumulator, accumulator + BLK_PELS, accumulator + (BLK_PELS<<1) };
     uint16_t *count[COLOR_CHANNELS] = { counter, counter + BLK_PELS, counter + (BLK_PELS<<1) };
+
+    EbByte predictor = { NULL };
+    uint16_t *predictor_16bit = { NULL };
+    if(!is_highbd){
+        EB_MALLOC_ALIGNED_ARRAY(predictor, BLK_PELS * COLOR_CHANNELS);
+    }else{
+        EB_MALLOC_ALIGNED_ARRAY(predictor_16bit, BLK_PELS * COLOR_CHANNELS);
+    }
     EbByte pred[COLOR_CHANNELS] = { predictor, predictor + BLK_PELS, predictor + (BLK_PELS<<1) };
     uint16_t* pred_16bit[COLOR_CHANNELS] = { predictor_16bit, predictor_16bit + BLK_PELS, predictor_16bit + (BLK_PELS<<1) };
 
-    EbByte src_center_ptr_start[COLOR_CHANNELS], src_center_ptr[COLOR_CHANNELS];
-    uint16_t* altref_buffer_highbd_start[COLOR_CHANNELS], *altref_buffer_highbd_ptr[COLOR_CHANNELS];
+    EbByte src_center_ptr_start[COLOR_CHANNELS], src_center_ptr[COLOR_CHANNELS] = { NULL };
+    uint16_t* altref_buffer_highbd_start[COLOR_CHANNELS], *altref_buffer_highbd_ptr[COLOR_CHANNELS] = { NULL };
 
     uint32_t blk_row, blk_col;
-    int stride_pred[COLOR_CHANNELS] = {BW, BW_CH, BW_CH};
-    uint16_t blk_width_ch = BW_CH;
-    uint16_t blk_height_ch = BH_CH;
     int blk_y_src_offset = 0, blk_ch_src_offset = 0;
 
     PictureParentControlSet *picture_control_set_ptr_central = list_picture_control_set_ptr[index_center];
@@ -1810,17 +1734,20 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
     EbAsm asm_type = picture_control_set_ptr_central->sequence_control_set_ptr->encode_context_ptr->asm_type;
 
     int encoder_bit_depth = (int)picture_control_set_ptr_central->sequence_control_set_ptr->static_config.encoder_bit_depth;
-    EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
 
     // chroma subsampling
-    EbColorFormat color_format = picture_control_set_ptr_central->sequence_control_set_ptr->static_config.encoder_color_format;
-    uint32_t ss_x = 0, ss_y = 0;
-    get_ss_from_color_format(color_format, &ss_x, &ss_y);
+    uint32_t ss_x = picture_control_set_ptr_central->sequence_control_set_ptr->subsampling_x;
+    uint32_t ss_y = picture_control_set_ptr_central->sequence_control_set_ptr->subsampling_y;
+    uint16_t blk_width_ch = (uint16_t)BW >> ss_x;
+    uint16_t blk_height_ch = (uint16_t)BH >> ss_y;
 
     uint32_t blk_cols = (uint32_t)(input_picture_ptr_central->width + BW - 1) / BW; // I think only the part of the picture
     uint32_t blk_rows = (uint32_t)(input_picture_ptr_central->height + BH - 1) / BH; // that fits to the 32x32 blocks are actually filtered
 
-    int stride[COLOR_CHANNELS] = { input_picture_ptr_central->stride_y, input_picture_ptr_central->stride_cb, input_picture_ptr_central->stride_cr };
+    uint32_t stride[COLOR_CHANNELS] = { input_picture_ptr_central->stride_y,
+                                        input_picture_ptr_central->stride_cb,
+                                        input_picture_ptr_central->stride_cr };
+    uint32_t stride_pred[COLOR_CHANNELS] = {BW, blk_width_ch, blk_width_ch};
 
     MeContext *context_ptr = me_context_ptr->me_context_ptr;
 
@@ -1835,29 +1762,29 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
     uint32_t y_b64_end_idx   = SEGMENT_END_IDX  (y_seg_idx, picture_height_in_b64, picture_control_set_ptr_central->tf_segments_row_count);
 
     // first position of the frame buffer according to the index center
-    src_center_ptr_start[C_Y] = list_input_picture_ptr[index_center]->buffer_y +
-                            list_input_picture_ptr[index_center]->origin_y*list_input_picture_ptr[index_center]->stride_y +
-                            list_input_picture_ptr[index_center]->origin_x;
+    src_center_ptr_start[C_Y] = input_picture_ptr_central->buffer_y +
+                            input_picture_ptr_central->origin_y*input_picture_ptr_central->stride_y +
+                            input_picture_ptr_central->origin_x;
 
-    src_center_ptr_start[C_U] = list_input_picture_ptr[index_center]->buffer_cb +
-                            (list_input_picture_ptr[index_center]->origin_y>>ss_y)*list_input_picture_ptr[index_center]->stride_cb +
-                            (list_input_picture_ptr[index_center]->origin_x>>ss_x);
+    src_center_ptr_start[C_U] = input_picture_ptr_central->buffer_cb +
+                            (input_picture_ptr_central->origin_y>>ss_y)*input_picture_ptr_central->stride_cb +
+                            (input_picture_ptr_central->origin_x>>ss_x);
 
-    src_center_ptr_start[C_V] = list_input_picture_ptr[index_center]->buffer_cr +
-                            (list_input_picture_ptr[index_center]->origin_y>>ss_y)*list_input_picture_ptr[index_center]->stride_cr +
-                            (list_input_picture_ptr[index_center]->origin_x>>ss_x);
+    src_center_ptr_start[C_V] = input_picture_ptr_central->buffer_cr +
+                            (input_picture_ptr_central->origin_y>>ss_y)*input_picture_ptr_central->stride_cr +
+                            (input_picture_ptr_central->origin_x>>ss_x);
 
-    altref_buffer_highbd_start[C_Y] = picture_control_set_ptr_central->altref_buffer_highbd[0] +
-                                list_input_picture_ptr[index_center]->origin_y*list_input_picture_ptr[index_center]->stride_y +
-                                list_input_picture_ptr[index_center]->origin_x;
+    altref_buffer_highbd_start[C_Y] = picture_control_set_ptr_central->altref_buffer_highbd[C_Y] +
+                                input_picture_ptr_central->origin_y*input_picture_ptr_central->stride_y +
+                                input_picture_ptr_central->origin_x;
 
-    altref_buffer_highbd_start[C_U] = picture_control_set_ptr_central->altref_buffer_highbd[1] +
-                                (list_input_picture_ptr[index_center]->origin_y>>ss_y)*list_input_picture_ptr[index_center]->stride_bit_inc_cb +
-                                (list_input_picture_ptr[index_center]->origin_x>>ss_x);
+    altref_buffer_highbd_start[C_U] = picture_control_set_ptr_central->altref_buffer_highbd[C_U] +
+                                (input_picture_ptr_central->origin_y>>ss_y)*input_picture_ptr_central->stride_bit_inc_cb +
+                                (input_picture_ptr_central->origin_x>>ss_x);
 
-    altref_buffer_highbd_start[C_V] = picture_control_set_ptr_central->altref_buffer_highbd[2] +
-                                (list_input_picture_ptr[index_center]->origin_y>>ss_y)*list_input_picture_ptr[index_center]->stride_bit_inc_cr +
-                                (list_input_picture_ptr[index_center]->origin_x>>ss_x);
+    altref_buffer_highbd_start[C_V] = picture_control_set_ptr_central->altref_buffer_highbd[C_V] +
+                                (input_picture_ptr_central->origin_y>>ss_y)*input_picture_ptr_central->stride_bit_inc_cr +
+                                (input_picture_ptr_central->origin_x>>ss_x);
 
     *filtered_sse       = 0;
     *filtered_sse_uv    = 0;
@@ -1904,13 +1831,13 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                     populate_list_with_value(use_16x16_subblocks, N_32X32_BLOCKS, 0);
 
                     if(!is_highbd){
-                        copy_pixels(pred[C_Y], BW, src_center_ptr[C_Y], stride[C_Y], BW, BH);
-                        copy_pixels(pred[C_U], BW_CH, src_center_ptr[C_U], stride[C_U], BW_CH, BH_CH);
-                        copy_pixels(pred[C_V], BW_CH, src_center_ptr[C_V], stride[C_V], BW_CH, BH_CH);
+                        pic_copy_kernel_8bit(src_center_ptr[C_Y], stride[C_Y], pred[C_Y], stride_pred[C_Y], BW, BH);
+                        pic_copy_kernel_8bit(src_center_ptr[C_U], stride[C_U], pred[C_U], stride_pred[C_U], blk_width_ch, blk_height_ch);
+                        pic_copy_kernel_8bit(src_center_ptr[C_V], stride[C_V], pred[C_V], stride_pred[C_V], blk_width_ch, blk_height_ch);
                     }else{
-                        copy_pixels_highbd(pred_16bit[C_Y], BW, altref_buffer_highbd_ptr[C_Y], stride[C_Y], BW, BH);
-                        copy_pixels_highbd(pred_16bit[C_U], BW_CH, altref_buffer_highbd_ptr[C_U], stride[C_U], BW_CH, BH_CH);
-                        copy_pixels_highbd(pred_16bit[C_V], BW_CH, altref_buffer_highbd_ptr[C_V], stride[C_V], BW_CH, BH_CH);
+                        pic_copy_kernel_16bit(altref_buffer_highbd_ptr[C_Y], stride[C_Y], pred_16bit[C_Y], stride_pred[C_Y], BW, BH);
+                        pic_copy_kernel_16bit(altref_buffer_highbd_ptr[C_U], stride[C_U], pred_16bit[C_U], stride_pred[C_U], blk_width_ch, blk_height_ch);
+                        pic_copy_kernel_16bit(altref_buffer_highbd_ptr[C_V], stride[C_V], pred_16bit[C_V], stride_pred[C_V], blk_width_ch, blk_height_ch);
                     }
 
                 }else{
@@ -1931,7 +1858,7 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                                         (uint32_t)blk_col*BW, // x block
                                         (uint32_t)blk_row*BH, // y block
                                         context_ptr,
-                                        list_input_picture_ptr[index_center]); // source picture
+                                        input_picture_ptr_central); // source picture
 
                     EbBool use_16x16_subblocks_only = EB_TRUE; // TODO: hardcoded to use 16x16 subblocks only, however,
                                                                // the support for the use of 32x32 subblocks as well is almost complete
@@ -2017,8 +1944,8 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                                                   count,
                                                   stride,
                                                   stride_pred,
-                                                  BW >> ss_x,
-                                                  BH >> ss_y,
+                                                  BW >> 1, // fixed 32x32
+                                                  BH >> 1, // fixed 32x32
                                                   ss_x, // chroma sub-sampling in x
                                                   ss_y, // chroma sub-sampling in y
                                                   altref_strength,
@@ -2038,11 +1965,18 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                                       stride,
                                       blk_y_src_offset,
                                       blk_ch_src_offset,
+                                      blk_width_ch,
+                                      blk_height_ch,
                                       filtered_sse,
                                       filtered_sse_uv,
                                       is_highbd);
         }
     }
+
+    if(!is_highbd)
+        EB_FREE_ALIGNED_ARRAY(predictor);
+    else
+        EB_FREE_ALIGNED_ARRAY(predictor_16bit);
 
     return EB_ErrorNone;
 }
@@ -2056,7 +1990,7 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
 // function from libaom
 // Standard bit depht input (=8 bits) to estimate the noise, I don't think there needs to be two methods for this
 // Operates on the Y component only
-static double estimate_noise(const uint8_t* src,
+static double estimate_noise(const uint8_t *src,
                              uint16_t width,
                              uint16_t height,
                              uint16_t stride_y) {
@@ -2096,11 +2030,11 @@ static double estimate_noise(const uint8_t* src,
 }
 
 // Noise estimation for highbd
-double estimate_noise_highbd(const uint16_t *src,
-                             int width,
-                             int height,
-                             int stride,
-                             int bd) {
+static double estimate_noise_highbd(const uint16_t *src,
+                                    int width,
+                                    int height,
+                                    int stride,
+                                    int bd) {
     int64_t sum = 0;
     int64_t num = 0;
 
@@ -2179,12 +2113,12 @@ static void adjust_filter_strength(double noise_level,
 
 }
 
-int pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_ptr_central){
+static void pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_ptr_central){
     // reference structures (padded pictures + downsampled versions)
     EbPaReferenceObject *src_object = (EbPaReferenceObject*)picture_control_set_ptr_central->pa_reference_picture_wrapper_ptr->object_ptr;
     EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_picture_ptr;
     generate_padding(
-        &(padded_pic_ptr->buffer_y[0]),
+        &(padded_pic_ptr->buffer_y[C_Y]),
         padded_pic_ptr->stride_y,
         padded_pic_ptr->width,
         padded_pic_ptr->height,
@@ -2206,33 +2140,12 @@ int pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_p
             padded_pic_ptr,
             src_object->quarter_filtered_picture_ptr,
             src_object->sixteenth_filtered_picture_ptr);
-    return 0;
-}
-
-// Copy block/picture of size width x height from src to dst with origin_src and origin_dst
-void copy_pixels_with_origin(EbByte dst, int stride_dst,
-                             int origin_dst_y, int origin_dst_x,
-                             EbByte src, int stride_src,
-                             int origin_src_y, int origin_src_x,
-                             int width, int height){
-
-    int h;
-    EbByte src_cpy = src + origin_src_y*stride_src + origin_src_x;
-    EbByte dst_cpy = dst + origin_dst_y*stride_dst + origin_dst_x;
-
-    for (h=0; h<height; h++){
-        EB_MEMCPY(dst_cpy, src_cpy, width * sizeof(uint8_t));
-        dst_cpy += stride_dst;
-        src_cpy += stride_src;
-    }
-
 }
 
 // save original enchanced_picture_ptr buffer in a separate buffer (to be replaced by the temporally filtered pic)
-EbErrorType save_src_pic_buffers(PictureParentControlSet *picture_control_set_ptr_central,
-                                 uint32_t ss_x,
-                                 uint32_t ss_y,
-                                 EbBool is_highbd){
+static EbErrorType save_src_pic_buffers(PictureParentControlSet *picture_control_set_ptr_central,
+                                        uint32_t ss_y,
+                                        EbBool is_highbd){
 
     // allocate memory for the copy of the original enhanced buffer
     EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_Y],
@@ -2254,88 +2167,69 @@ EbErrorType save_src_pic_buffers(PictureParentControlSet *picture_control_set_pt
 
     // copy buffers
     // Y
-    copy_pixels_with_origin(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_Y],
-                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_y,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_y,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_y,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->width,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->height);
+    uint32_t height_y = (uint32_t)(picture_control_set_ptr_central->enhanced_picture_ptr->height +
+                                  picture_control_set_ptr_central->enhanced_picture_ptr->origin_y * 2);
+    uint32_t height_uv = (uint32_t)((picture_control_set_ptr_central->enhanced_picture_ptr->height +
+                                   picture_control_set_ptr_central->enhanced_picture_ptr->origin_y * 2) >> ss_y);
 
-    // U
-    copy_pixels_with_origin(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_U],
-                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> ss_y,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> ss_x,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_cb,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> ss_y,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> ss_x,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->width >> ss_x,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->height >> ss_y);
+    assert(height_y * picture_control_set_ptr_central->enhanced_picture_ptr->stride_y == picture_control_set_ptr_central->enhanced_picture_ptr->luma_size);
+    assert(height_uv * picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb == picture_control_set_ptr_central->enhanced_picture_ptr->chroma_size);
+    assert(height_uv * picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr == picture_control_set_ptr_central->enhanced_picture_ptr->chroma_size);
 
-    // V
-    copy_pixels_with_origin(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_V],
-                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> ss_y,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> ss_x,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_cr,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> ss_y,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> ss_x,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->width >> ss_x,
-                            picture_control_set_ptr_central->enhanced_picture_ptr->height >> ss_y);
+    pic_copy_kernel_8bit(picture_control_set_ptr_central->enhanced_picture_ptr->buffer_y,
+                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_y,
+                         picture_control_set_ptr_central->save_enhanced_picture_ptr[C_Y],
+                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_y,
+                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_y,
+                         height_y);
+
+    pic_copy_kernel_8bit(picture_control_set_ptr_central->enhanced_picture_ptr->buffer_cb,
+                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb,
+                         picture_control_set_ptr_central->save_enhanced_picture_ptr[C_U],
+                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb,
+                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb,
+                         height_uv);
+
+    pic_copy_kernel_8bit(picture_control_set_ptr_central->enhanced_picture_ptr->buffer_cr,
+                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr,
+                         picture_control_set_ptr_central->save_enhanced_picture_ptr[C_V],
+                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr,
+                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr,
+                         height_uv);
 
     if(is_highbd){
         // if highbd, copy bit inc buffers
         // Y
-        copy_pixels_with_origin(picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_Y],
-                                picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_y,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_x,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_y,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_y,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_x,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->width,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->height);
-
+        pic_copy_kernel_8bit(picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_y,
+                             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y,
+                             picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_Y],
+                             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y,
+                             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y,
+                             height_y);
         // U
-        copy_pixels_with_origin(picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_U],
-                                picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> ss_y,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> ss_x,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_cb,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> ss_y,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> ss_x,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->width >> ss_x,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->height >> ss_y);
-
+        pic_copy_kernel_8bit(picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_cb,
+                             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb,
+                             picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_U],
+                             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb,
+                             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb,
+                             height_uv);
         // V
-        copy_pixels_with_origin(picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_V],
-                                picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> ss_y,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> ss_x,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_cr,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_y >> ss_y,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->origin_x >> ss_x,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->width >> ss_x,
-                                picture_control_set_ptr_central->enhanced_picture_ptr->height >> ss_y);
+        pic_copy_kernel_8bit(picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_cr,
+                             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr,
+                             picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_V],
+                             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr,
+                             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr,
+                             height_uv);
     }
 
     return EB_ErrorNone;
 
 }
 
-int init_temporal_filtering(PictureParentControlSet **list_picture_control_set_ptr,
-                            PictureParentControlSet *picture_control_set_ptr_central,
-                            MotionEstimationContext_t *me_context_ptr,
-                            int32_t segment_index) {
+EbErrorType svt_av1_init_temporal_filtering(PictureParentControlSet **list_picture_control_set_ptr,
+                                            PictureParentControlSet *picture_control_set_ptr_central,
+                                            MotionEstimationContext_t *me_context_ptr,
+                                            int32_t segment_index) {
     uint8_t *altref_strength_ptr, index_center;
     EbPictureBufferDesc *central_picture_ptr;
 
@@ -2355,9 +2249,9 @@ int init_temporal_filtering(PictureParentControlSet **list_picture_control_set_p
 
     EbAsm asm_type = picture_control_set_ptr_central->sequence_control_set_ptr->encode_context_ptr->asm_type;
 
-    EbColorFormat color_format = picture_control_set_ptr_central->sequence_control_set_ptr->static_config.encoder_color_format;
-    uint32_t ss_x = 0, ss_y = 0;
-    get_ss_from_color_format(color_format, &ss_x, &ss_y);
+    // chroma subsampling
+    uint32_t ss_x = picture_control_set_ptr_central->sequence_control_set_ptr->subsampling_x;
+    uint32_t ss_y = picture_control_set_ptr_central->sequence_control_set_ptr->subsampling_y;
 
     //only one performs any picture based prep
     eb_block_on_mutex(picture_control_set_ptr_central->temp_filt_mutex);
@@ -2367,9 +2261,9 @@ int init_temporal_filtering(PictureParentControlSet **list_picture_control_set_p
 
         // allocate 16 bit buffer
         if (is_highbd) {
-            EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[0], central_picture_ptr->luma_size);
-            EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[1], central_picture_ptr->chroma_size);
-            EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[2], central_picture_ptr->chroma_size);
+            EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_Y], central_picture_ptr->luma_size);
+            EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_U], central_picture_ptr->chroma_size);
+            EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_V], central_picture_ptr->chroma_size);
 
             // pack byte buffers to 16 bit buffer
             pack_highbd_pic(central_picture_ptr, picture_control_set_ptr_central->altref_buffer_highbd, ss_x, ss_y, EB_TRUE, asm_type);
@@ -2378,7 +2272,7 @@ int init_temporal_filtering(PictureParentControlSet **list_picture_control_set_p
         // Estimate source noise level
         double noise_level;
         if(is_highbd){
-            noise_level = estimate_noise_highbd(picture_control_set_ptr_central->altref_buffer_highbd[0], // Y only
+            noise_level = estimate_noise_highbd(picture_control_set_ptr_central->altref_buffer_highbd[C_Y], // Y only
                                                 central_picture_ptr->width,
                                                 central_picture_ptr->height,
                                                 central_picture_ptr->stride_y,
@@ -2411,7 +2305,6 @@ int init_temporal_filtering(PictureParentControlSet **list_picture_control_set_p
         // if stat_report is enabled for PSNR computation
         if(picture_control_set_ptr_central->sequence_control_set_ptr->static_config.stat_report){
             save_src_pic_buffers(picture_control_set_ptr_central,
-                                 ss_x,
                                  ss_y,
                                  is_highbd);
         }
@@ -2433,7 +2326,8 @@ int init_temporal_filtering(PictureParentControlSet **list_picture_control_set_p
                                     &filtered_sse,
                                     &filtered_sse_uv,
                                     me_context_ptr,
-                                    segment_index);
+                                    segment_index,
+                                    is_highbd);
 
     eb_block_on_mutex(picture_control_set_ptr_central->temp_filt_mutex);
     picture_control_set_ptr_central->temp_filt_seg_acc++;
@@ -2465,9 +2359,9 @@ int init_temporal_filtering(PictureParentControlSet **list_picture_control_set_p
                              ss_y);
         else
             save_YUV_to_file_highbd("filtered_picture.yuv",
-                                    picture_control_set_ptr_central->altref_buffer_highbd[0],
-                                    picture_control_set_ptr_central->altref_buffer_highbd[1],
-                                    picture_control_set_ptr_central->altref_buffer_highbd[2],
+                                    picture_control_set_ptr_central->altref_buffer_highbd[C_Y],
+                                    picture_control_set_ptr_central->altref_buffer_highbd[C_U],
+                                    picture_control_set_ptr_central->altref_buffer_highbd[C_V],
                                     central_picture_ptr->width,
                                     central_picture_ptr->height,
                                     central_picture_ptr->stride_y,
@@ -2487,9 +2381,9 @@ int init_temporal_filtering(PictureParentControlSet **list_picture_control_set_p
                               EB_TRUE,
                               asm_type);
 
-            EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[0]);
-            EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[1]);
-            EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[2]);
+            EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_Y]);
+            EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_U]);
+            EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_V]);
         }
 
         // padding + decimation: even if highbd src, this is only performed on the 8 bit buffer (excluding the LSBs)
@@ -2505,8 +2399,6 @@ int init_temporal_filtering(PictureParentControlSet **list_picture_control_set_p
 
     eb_release_mutex(picture_control_set_ptr_central->temp_filt_mutex);
 
-    // TODO: do a proper error return
-    int return_value = 0;
-    return return_value;
+    return EB_ErrorNone;
 
 }

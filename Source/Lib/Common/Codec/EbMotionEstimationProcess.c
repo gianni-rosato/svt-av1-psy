@@ -881,7 +881,7 @@ void* motion_estimation_kernel(void *input_ptr)
 
         // temporal filtering start
         context_ptr->me_context_ptr->me_alt_ref = EB_TRUE;
-        init_temporal_filtering(picture_control_set_ptr->temp_filt_pcs_list, picture_control_set_ptr, context_ptr, inputResultsPtr->segment_index);
+        svt_av1_init_temporal_filtering(picture_control_set_ptr->temp_filt_pcs_list, picture_control_set_ptr, context_ptr, inputResultsPtr->segment_index);
 
         // Release the Input Results
         eb_release_object(inputResultsWrapperPtr);

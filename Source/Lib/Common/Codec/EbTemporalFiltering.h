@@ -41,8 +41,6 @@
 // Block size used in temporal filtering
 #define BW 64
 #define BH 64
-#define BW_CH BW>>1
-#define BH_CH BH>>1
 #define BLK_PELS 4096  // Pixels in the block
 #define N_16X16_BLOCKS 16
 #define N_32X32_BLOCKS 4
@@ -61,7 +59,8 @@
 
 #define OD_DIVU_DMAX (1024)
 #define AHD_TH_WEIGHT 50
-int init_temporal_filtering(PictureParentControlSet **list_picture_control_set_ptr,
-    PictureParentControlSet *picture_control_set_ptr_central,
-    MotionEstimationContext_t *me_context_ptr,
-    int32_t segment_index);
+
+int svt_av1_init_temporal_filtering(PictureParentControlSet **list_picture_control_set_ptr,
+                                    PictureParentControlSet *picture_control_set_ptr_central,
+                                    MotionEstimationContext_t *me_context_ptr,
+                                    int32_t segment_index);

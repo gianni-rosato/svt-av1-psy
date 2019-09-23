@@ -855,7 +855,7 @@ static void highbd_apply_temporal_filter_chroma(
             top_weight, bottom_weight, NULL);
 }
 
-void av1_highbd_apply_temporal_filter_sse4_1(
+void svt_av1_highbd_apply_temporal_filter_sse4_1(
         const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
         int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src,
         int uv_src_stride, const uint16_t *u_pre, const uint16_t *v_pre,
