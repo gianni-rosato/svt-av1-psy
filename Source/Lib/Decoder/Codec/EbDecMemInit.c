@@ -441,7 +441,7 @@ EbErrorType dec_mem_init(EbDecHandle  *dec_handle_ptr) {
         return EB_ErrorNone;
 
     /* init module ctxts */
-    return_error |= dec_pic_mgr_init((EbDecPicMgr **)&dec_handle_ptr->pv_pic_mgr);
+    return_error |= dec_pic_mgr_init(dec_handle_ptr);
 
     return_error |= init_parse_context(dec_handle_ptr);
 

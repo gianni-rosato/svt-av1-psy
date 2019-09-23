@@ -58,8 +58,8 @@ void set_segment_id(EbDecHandle *dec_handle, int mi_offset,
 
     for (int y = 0; y < y_mis; y++)
         for (int x = 0; x < x_mis; x++)
-            parse_ctxt->parse_nbr4x4_ctxt.segment_maps[mi_offset +
-            y * frm_header->mi_cols + x] = segment_id;
+            dec_handle->cur_pic_buf[0]->segment_maps[mi_offset +
+                y * frm_header->mi_cols + x] = segment_id;
 }
 
 static INLINE int bsize_to_max_depth(BlockSize bsize) {
@@ -382,5 +382,5 @@ int get_comp_reference_type_context(const PartitionInfo_t *xd) {
 int seg_feature_active(SegmentationParams *seg, int segment_id,
     SEG_LVL_FEATURES feature_id)
 {
-    return seg->segmentation_enabled && seg->feature_data[segment_id][feature_id];
+    return seg->segmentation_enabled && seg->feature_enabled[segment_id][feature_id];
 }

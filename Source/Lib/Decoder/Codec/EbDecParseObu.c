@@ -869,70 +869,95 @@ void read_quantization_params(bitstrm_t *bs, QuantizationParams *quant_params,
     PRINT_FRAME("qm_v", quant_params->qm_v);
 }
 
-void read_segmentation_params(bitstrm_t *bs, SegmentationParams *seg_params, FrameHeader *frame_info)
+static INLINE void segfeatures_copy(SegmentationParams *dst,
+    SegmentationParams *src)
+{
+    int i, j;
+    for (i = 0; i < MAX_SEGMENTS; i++) {
+        for (j = 0; j < SEG_LVL_MAX; j++) {
+            dst->feature_data[i][j] = src->feature_data[i][j];
+            dst->feature_enabled[i][j] = src->feature_enabled[i][j];
+        }
+    }
+    dst->seg_id_pre_skip = src->seg_id_pre_skip;
+    dst->last_active_seg_id = src->last_active_seg_id;
+}
+
+void read_segmentation_params(bitstrm_t *bs, EbDecHandle *dec_handle_ptr, FrameHeader *frame_info)
 {
     int feature_value, feature_enabled, clippedValue, bitsToRead, limit, i, j;
+    SegmentationParams *seg_params = &frame_info->segmentation_params;
+    EbDecPicBuf *cur_buf = dec_handle_ptr->cur_pic_buf[0];
+    EbDecPicBuf *prev_buf = NULL;
+    if (frame_info->primary_ref_frame != PRIMARY_REF_NONE) {
+        prev_buf = get_ref_frame_buf(dec_handle_ptr, frame_info->primary_ref_frame + 1);
+        if (prev_buf == NULL)
+            assert(0);
+    }
+
     seg_params->segmentation_enabled = dec_get_bits(bs, 1);
     PRINT_FRAME("segmentation_enabled", seg_params->segmentation_enabled);
-    if (seg_params->segmentation_enabled == 1) {
-        if (frame_info->primary_ref_frame == PRIMARY_REF_NONE) {
-            seg_params->segmentation_update_map = 1;
-            seg_params->segmentation_temporal_update = 0;
-            seg_params->segmentation_update_data = 1;
-        }
-        else {
-            seg_params->segmentation_update_map = dec_get_bits(bs, 1);
-            if (seg_params->segmentation_update_map)
-                seg_params->segmentation_temporal_update = dec_get_bits(bs, 1);
-            else
-                seg_params->segmentation_temporal_update = 0;
-            seg_params->segmentation_update_data = dec_get_bits(bs, 1);
-        }
-        PRINT_FRAME("segmentation_update_map", seg_params->segmentation_update_map);
-        PRINT_FRAME("segmentation_temporal_update",
-            seg_params->segmentation_temporal_update);
-        PRINT_FRAME("segmentation_update_data", seg_params->segmentation_update_data);
-        if (seg_params->segmentation_update_data == 1) {
-            for (i = 0; i < MAX_SEGMENTS; i++) {
-                for (j = 0; j < SEG_LVL_MAX; j++) {
-                    feature_value = 0;
-                    feature_enabled = dec_get_bits(bs, 1);
-                    PRINT_FRAME("feature_enabled", feature_enabled);
-                    seg_params->feature_enabled[i][j] = feature_enabled;
-                    clippedValue = 0;
-                    if (feature_enabled == 1) {
-                        bitsToRead = segmentation_feature_bits[j];
-                        limit = segmentation_feature_max[j];
-                        if (segmentation_feature_signed[j] == 1) {
-                            feature_value = dec_get_bits_su(bs, 1 + bitsToRead);
-                            clippedValue = CLIP3(-limit, limit, feature_value);
-                        }
-                        else {
-                            feature_value = dec_get_bits(bs, bitsToRead);
-                            clippedValue = CLIP3(0, limit, feature_value);
-                        }
-                        PRINT_FRAME("feature_value", feature_value)
-                    }
-                    if (clippedValue < 0) {
-                        assert(segmentation_feature_signed[j]);
-                        assert(-clippedValue <= segmentation_feature_max[j]);
-                    }
-                    else
-                        assert(clippedValue <= segmentation_feature_max[j]);
-                    seg_params->feature_data[i][j] = clippedValue;
-                }
-            }
-        }
+    if (!seg_params->segmentation_enabled) {
+        if (cur_buf->segment_maps)
+            memset(cur_buf->segment_maps, 0, (frame_info->mi_rows * frame_info->mi_cols));
+
+        memset(seg_params, 0, sizeof(*seg_params));
+        segfeatures_copy(&cur_buf->seg_params, seg_params);
+        return;
+    }
+
+    if (frame_info->primary_ref_frame == PRIMARY_REF_NONE) {
+        seg_params->segmentation_update_map = 1;
+        seg_params->segmentation_temporal_update = 0;
+        seg_params->segmentation_update_data = 1;
     }
     else {
-        seg_params->seg_id_pre_skip = 0;
+        seg_params->segmentation_update_map = dec_get_bits(bs, 1);
+        if (seg_params->segmentation_update_map)
+            seg_params->segmentation_temporal_update = dec_get_bits(bs, 1);
+        else
+            seg_params->segmentation_temporal_update = 0;
+        seg_params->segmentation_update_data = dec_get_bits(bs, 1);
+    }
+    PRINT_FRAME("segmentation_update_map", seg_params->segmentation_update_map);
+    PRINT_FRAME("segmentation_temporal_update",
+        seg_params->segmentation_temporal_update);
+    PRINT_FRAME("segmentation_update_data", seg_params->segmentation_update_data);
+    if (seg_params->segmentation_update_data == 1) {
         for (i = 0; i < MAX_SEGMENTS; i++) {
             for (j = 0; j < SEG_LVL_MAX; j++) {
-                seg_params->feature_enabled[i][j] = 0;
-                seg_params->feature_data[i][j] = 0;
+                feature_value = 0;
+                feature_enabled = dec_get_bits(bs, 1);
+                PRINT_FRAME("feature_enabled", feature_enabled);
+                seg_params->feature_enabled[i][j] = feature_enabled;
+                clippedValue = 0;
+                if (feature_enabled == 1) {
+                    bitsToRead = segmentation_feature_bits[j];
+                    limit = segmentation_feature_max[j];
+                    if (segmentation_feature_signed[j] == 1) {
+                        feature_value = dec_get_bits_su(bs, 1 + bitsToRead);
+                        clippedValue = CLIP3(-limit, limit, feature_value);
+                    }
+                    else {
+                        feature_value = dec_get_bits(bs, bitsToRead);
+                        clippedValue = CLIP3(0, limit, feature_value);
+                    }
+                    PRINT_FRAME("feature_value", feature_value)
+                }
+                if (clippedValue < 0) {
+                    assert(segmentation_feature_signed[j]);
+                    assert(-clippedValue <= segmentation_feature_max[j]);
+                }
+                else
+                    assert(clippedValue <= segmentation_feature_max[j]);
+                seg_params->feature_data[i][j] = clippedValue;
             }
         }
     }
+    else if (prev_buf) {
+        segfeatures_copy(seg_params, &prev_buf->seg_params);
+    }
+    segfeatures_copy(&cur_buf->seg_params, seg_params);
 
     seg_params->last_active_seg_id = 0;
     seg_params->seg_id_pre_skip = 0;
@@ -1552,6 +1577,11 @@ void setup_past_independence(EbDecHandle *dec_handle_ptr,
     EbDecPicBuf *cur_buf = dec_handle_ptr->cur_pic_buf[0];
     SegmentationParams seg = dec_handle_ptr->frame_header.segmentation_params;
 
+    SeqHeader   *seq_header = &dec_handle_ptr->seq_header;
+    int size = (seq_header->max_frame_width * seq_header->max_frame_height) >> 4;
+    if (cur_buf->segment_maps)
+        memset(cur_buf->segment_maps, 0, size);
+
     for (i = 0; i < MAX_SEGMENTS; i++)
         for (j = 0; j < SEG_LVL_MAX; j++)
         {
@@ -1910,7 +1940,7 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     read_tile_info(bs, &frame_info->tiles_info, seq_header, frame_info);
     read_quantization_params(bs, &frame_info->quantization_params,
         &seq_header->color_config, num_planes);
-    read_segmentation_params(bs, &frame_info->segmentation_params, frame_info);
+    read_segmentation_params(bs, dec_handle_ptr, frame_info);
     read_frame_delta_q_params(bs, frame_info);
     read_frame_delta_lf_params(bs, frame_info);
     setup_segmentation_dequant(dec_handle_ptr, &seq_header->color_config);

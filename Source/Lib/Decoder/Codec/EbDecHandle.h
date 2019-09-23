@@ -53,7 +53,11 @@ typedef struct EbDecPicBuf {
 
     /* MV at 8x8 lvl */
     TemporalMvRef       *mvs;
+
     /* seg map */
+    uint8_t *segment_maps;
+    SegmentationParams seg_params;
+
     /* order hint */
     /* film grain */
     aom_film_grain_t    film_grain_params;

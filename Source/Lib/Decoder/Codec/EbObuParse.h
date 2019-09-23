@@ -71,8 +71,6 @@ enum {
 
 
 typedef struct ParseNbr4x4Ctxt {
-    /* Buffer holding the segment ID of all 4x4 blocks in the frame. */
-    uint8_t *segment_maps;
 
     /* Buffer holding the transform sizes of the previous 4x4 block row. */
     uint8_t *above_tx_wd;

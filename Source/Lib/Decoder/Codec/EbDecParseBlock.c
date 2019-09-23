@@ -551,8 +551,8 @@ int read_skip(EbDecHandle *dec_handle, PartitionInfo_t *xd,
     int segment_id, SvtReader *r)
 {
     ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
-    uint8_t segIdPreSkip = dec_handle->frame_header.segmentation_params.seg_id_pre_skip;
-    if (segIdPreSkip && seg_feature_active(&dec_handle->frame_header.segmentation_params,
+    //uint8_t segIdPreSkip = dec_handle->frame_header.segmentation_params.seg_id_pre_skip;
+    if (seg_feature_active(&dec_handle->frame_header.segmentation_params,
         segment_id, SEG_LVL_SKIP))
     {
         return 1;
@@ -645,7 +645,7 @@ int get_segment_id(FrameHeader *frm_info, uint8_t *segment_ids,
             segment_id =
             AOMMIN(segment_id, segment_ids[mi_offset + y * frm_info->mi_cols + x]);
 
-    assert(segment_id >= 0 && segment_id < MAX_SEGMENTS-1);
+    assert(segment_id >= 0 && segment_id < MAX_SEGMENTS);
     return segment_id;
 }
 
@@ -660,7 +660,8 @@ static int read_segment_id(EbDecHandle *dec_handle, PartitionInfo_t *xd, uint32_
     int prev_u = -1;   // top segment_id
     int pred = -1;
 
-    uint8_t *seg_maps = parse_ctxt->parse_nbr4x4_ctxt.segment_maps;
+    uint8_t *seg_maps = dec_handle->cur_pic_buf[0]->segment_maps;
+
     if ((xd->up_available) && (xd->left_available)) {
         prev_ul = get_segment_id(&dec_handle->frame_header, seg_maps, BLOCK_4X4, mi_row - 1,
             mi_col - 1);
@@ -673,7 +674,11 @@ static int read_segment_id(EbDecHandle *dec_handle, PartitionInfo_t *xd, uint32_
         prev_l = get_segment_id(&dec_handle->frame_header, seg_maps, BLOCK_4X4, mi_row,
             mi_col - 1);
     }
-    if ((prev_ul == prev_u) && (prev_ul == prev_l))
+
+    // Pick CDF index based on number of matching/out-of-bounds segment IDs.
+    if (prev_ul < 0) /* Edge cases */
+        cdf_num = 0;
+    else if ((prev_ul == prev_u) && (prev_ul == prev_l))
         cdf_num = 2;
     else if ((prev_ul == prev_u) || (prev_ul == prev_l) || (prev_u == prev_l))
         cdf_num = 1;
@@ -938,6 +943,20 @@ void update_seg_ctx(ParseNbr4x4Ctxt *ngr_ctx, int blk_col,
     memset(left_seg_ctx, seg_id_predicted, h4);
 }
 
+static void copy_segment_id(EbDecHandle *dec_handle,
+    const uint8_t *last_segment_ids,
+    uint8_t *current_segment_ids, int mi_offset,
+    int x_mis, int y_mis)
+{
+    FrameHeader *frame_header = &dec_handle->frame_header;
+    for (int y = 0; y < y_mis; y++)
+        for (int x = 0; x < x_mis; x++) {
+            current_segment_ids[mi_offset + y * frame_header->mi_cols + x] =
+                last_segment_ids ?
+                last_segment_ids[mi_offset + y * frame_header->mi_cols + x] : 0;
+        }
+}
+
 int read_inter_segment_id(EbDecHandle *dec_handle, PartitionInfo_t *xd,
                         uint32_t mi_row, uint32_t mi_col, int preskip, SvtReader *r)
 {
@@ -954,11 +973,19 @@ int read_inter_segment_id(EbDecHandle *dec_handle, PartitionInfo_t *xd,
 
     if (!seg->segmentation_enabled) return 0;  // Default for disabled segmentation
 
-    int predictedSegmentId = get_segment_id(frame_header,
-        parse_ctxt->parse_nbr4x4_ctxt.segment_maps, mbmi->sb_type, mi_row, mi_col);
-
-    if (!seg->segmentation_update_map)
-        return predictedSegmentId;
+    EbDecPicBuf *prev_buf = NULL;
+    if (frame_header->primary_ref_frame != PRIMARY_REF_NONE) {
+        prev_buf = get_ref_frame_buf(dec_handle, frame_header->primary_ref_frame + 1);
+        if (prev_buf == NULL)
+            assert(0);
+    }
+    if (!seg->segmentation_update_map) {
+        copy_segment_id(dec_handle, prev_buf->segment_maps,
+            dec_handle->cur_pic_buf[0]->segment_maps,
+            mi_offset, x_mis, y_mis);
+        return prev_buf->segment_maps ? get_segment_id(frame_header,
+            prev_buf->segment_maps, mbmi->sb_type, mi_row, mi_col) : 0;
+    }
 
     int segment_id;
     if (preskip) {
@@ -981,8 +1008,10 @@ int read_inter_segment_id(EbDecHandle *dec_handle, PartitionInfo_t *xd,
         ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
         struct segmentation_probs *const segp = &parse_ctxt->cur_tile_ctx.seg;
         mbmi->seg_id_predicted = svt_read_symbol(r, segp->pred_cdf[ctx], 2, ACCT_STR);
-        if (mbmi->seg_id_predicted)
-            segment_id = predictedSegmentId;
+        if (mbmi->seg_id_predicted) {
+            segment_id = prev_buf->segment_maps ? get_segment_id(frame_header,
+                prev_buf->segment_maps, mbmi->sb_type, mi_row, mi_col) : 0;
+        }
         else
             segment_id = read_segment_id(dec_handle, xd, mi_row, mi_col, r, 0);
         update_seg_ctx(&parse_ctxt->parse_nbr4x4_ctxt,
@@ -1358,6 +1387,8 @@ void mode_info(EbDecHandle *dec_handle, PartitionInfo_t *part_info, uint32_t mi_
     FrameHeader *frame_info = &dec_handle->frame_header;
     //BlockSize bsize = mi->sb_type
     mi->use_intrabc = 0;
+    mi->segment_id = 0;
+
     const uint32_t bw = mi_size_wide[mi->sb_type];
     const uint32_t bh = mi_size_high[mi->sb_type];
     const int x_mis = AOMMIN(bw, frame_info->mi_cols - mi_col);

@@ -28,8 +28,7 @@ typedef struct RefFrameInfo {
     int32_t     sort_idx;
 } RefFrameInfo;
 
-
-EbErrorType dec_pic_mgr_init(EbDecPicMgr **pps_pic_mgr);
+EbErrorType dec_pic_mgr_init(EbDecHandle *dec_handle_ptr);
 
 EbDecPicBuf * dec_pic_mgr_get_cur_pic(EbDecPicMgr *ps_pic_mgr,
                                       SeqHeader   *seq_header,

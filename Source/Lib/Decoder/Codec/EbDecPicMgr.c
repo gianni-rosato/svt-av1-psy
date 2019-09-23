@@ -53,7 +53,14 @@
 *******************************************************************************
 */
 
-EbErrorType dec_pic_mgr_init(EbDecPicMgr **pps_pic_mgr) {
+EbErrorType dec_pic_mgr_init(EbDecHandle  *dec_handle_ptr) {
+
+    EbDecPicMgr **pps_pic_mgr = (EbDecPicMgr **)&dec_handle_ptr->pv_pic_mgr;
+    uint32_t mi_cols = 2 * ((dec_handle_ptr->seq_header.max_frame_width + 7)
+                       >> 3);
+    uint32_t mi_rows = 2 * ((dec_handle_ptr->seq_header.max_frame_height + 7)
+                       >> 3);
+    int size = mi_cols * mi_rows;
 
     EbErrorType return_error = EB_ErrorNone;
     int32_t i;
@@ -68,6 +75,9 @@ EbErrorType dec_pic_mgr_init(EbDecPicMgr **pps_pic_mgr) {
         ps_pic_mgr->as_dec_pic[i].size       = 0;
         ps_pic_mgr->as_dec_pic[i].ref_count  = 0;
         ps_pic_mgr->as_dec_pic[i].mvs = NULL;
+        EB_MALLOC_DEC(uint8_t*, ps_pic_mgr->as_dec_pic[i].segment_maps,
+            size * sizeof(uint8_t), EB_N_PTR);
+        memset(ps_pic_mgr->as_dec_pic[i].segment_maps, 0, size);
     }
 
     ps_pic_mgr->num_pic_bufs = 0;
