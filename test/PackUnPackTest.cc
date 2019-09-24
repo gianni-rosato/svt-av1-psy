@@ -45,6 +45,8 @@
 #include "random.h"
 #include "util.h"
 
+using svt_av1_test_tool::SVTRandom;  // to generate the random
+
 namespace {
 const int RANDOM_TIME = 8;
 typedef std::tuple<uint32_t, uint32_t> AreaSize;
@@ -551,7 +553,8 @@ INSTANTIATE_TEST_CASE_P(UNPACK, UnPackTest,
 
 // test unpack_avg_avx2_intrin
 // only width of {4, 8, 16, 32, 64} are implemented in unpack_avg_avx2_intrin.
-// use TEST_AVG_SIZES to cover all the cases.
+// only width of {8, 16, 32, 64} are implemented in
+// unpack_avg_safe_sub_avx2_intrin. use TEST_AVG_SIZES to cover all the cases.
 AreaSize TEST_AVG_SIZES[] = {AreaSize(4, 4),
                              AreaSize(4, 8),
                              AreaSize(8, 4),
@@ -598,6 +601,8 @@ class UnPackAvgTest : public ::testing::Test,
             eb_aom_memalign(32, sizeof(uint16_t) * test_size_));
         in_16bit_buffer2_ = reinterpret_cast<uint16_t *>(
             eb_aom_memalign(32, sizeof(uint16_t) * test_size_));
+        memset(in_16bit_buffer1_, 0, test_size_ * sizeof(in_16bit_buffer1_[0]));
+        memset(in_16bit_buffer2_, 0, test_size_ * sizeof(in_16bit_buffer2_[0]));
         memset(out_8bit_buffer1_, 0, test_size_ * sizeof(out_8bit_buffer1_[0]));
         memset(
             out_8bit_buffer_c_, 0, test_size_ * sizeof(out_8bit_buffer_c_[0]));
@@ -618,6 +623,16 @@ class UnPackAvgTest : public ::testing::Test,
     }
 
   protected:
+    void prepare_data() {
+        // Limit the range to 10bit
+        const int16_t mask = (1 << 10) - 1;
+        SVTRandom rnd(0, mask);
+        for (uint32_t i = 0; i < test_size_; i++) {
+            in_16bit_buffer1_[i] = rnd.random();
+            in_16bit_buffer2_[i] = rnd.random();
+        }
+    }
+
     void check_output(uint32_t width, uint32_t height, uint8_t *out_1,
                       uint8_t *out_2) {
         int fail_count = 0;
@@ -634,8 +649,7 @@ class UnPackAvgTest : public ::testing::Test,
 
     void run_avg_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
-            eb_buf_random_u16(in_16bit_buffer1_, test_size_);
-            eb_buf_random_u16(in_16bit_buffer2_, test_size_);
+            prepare_data();
             unpack_avg_avx2_intrin(in_16bit_buffer1_,
                                    in_stride_,
                                    in_16bit_buffer2_,
@@ -675,33 +689,34 @@ class UnPackAvgTest : public ::testing::Test,
 
     void run_sub_avg_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
-            eb_buf_random_u16(in_16bit_buffer1_, test_size_);
-            eb_buf_random_u16(in_16bit_buffer2_, test_size_);
-            unpack_avg_safe_sub_avx2_intrin(in_16bit_buffer1_,
-                                            in_stride_,
-                                            in_16bit_buffer2_,
-                                            in_stride_,
-                                            out_8bit_buffer1_,
-                                            out_stride_,
-                                            false,
-                                            area_width_,
-                                            area_height_);
-            unpack_avg_safe_sub(in_16bit_buffer1_,
-                                in_stride_,
-                                in_16bit_buffer2_,
-                                in_stride_,
-                                out_8bit_buffer_c_,
-                                out_stride_,
-                                false,
-                                area_width_,
-                                area_height_);
+            if (area_width_ > 4) {
+                prepare_data();
+                unpack_avg_safe_sub_avx2_intrin(in_16bit_buffer1_,
+                                                in_stride_,
+                                                in_16bit_buffer2_,
+                                                in_stride_,
+                                                out_8bit_buffer1_,
+                                                out_stride_,
+                                                false,
+                                                area_width_,
+                                                area_height_);
+                unpack_avg_safe_sub(in_16bit_buffer1_,
+                                    in_stride_,
+                                    in_16bit_buffer2_,
+                                    in_stride_,
+                                    out_8bit_buffer_c_,
+                                    out_stride_,
+                                    false,
+                                    area_width_,
+                                    area_height_);
 
-            check_output(area_width_,
-                         area_height_,
-                         out_8bit_buffer1_,
-                         out_8bit_buffer_c_);
+                check_output(area_width_,
+                             area_height_,
+                             out_8bit_buffer1_,
+                             out_8bit_buffer_c_);
 
-            EXPECT_FALSE(HasFailure());
+                EXPECT_FALSE(HasFailure());
+            }
         }
     }
 
