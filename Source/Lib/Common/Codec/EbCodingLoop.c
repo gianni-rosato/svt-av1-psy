@@ -504,13 +504,13 @@ static void Av1EncodeLoop(
             residual16bit->stride_y,
             context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr]);
-        uint8_t  tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_ENC_DEC && (picture_control_set_ptr->parent_pcs_ptr->atb_mode == 0 || cu_ptr->prediction_mode_flag == INTER_MODE)) ? get_skip_tx_search_flag(
+        uint8_t  tx_search_skip_flag = (picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_ENC_DEC && (picture_control_set_ptr->parent_pcs_ptr->atb_mode == 0 || cu_ptr->prediction_mode_flag == INTER_MODE)) ? get_skip_tx_search_flag(
             context_ptr->blk_geom->sq_size,
             MAX_MODE_COST,
             0,
             1) : 1;
 
-        if (!tx_search_skip_fag) {
+        if (!tx_search_skip_flag) {
                 encode_pass_tx_search(
                     picture_control_set_ptr,
                     context_ptr,
@@ -921,13 +921,13 @@ static void Av1EncodeLoop16bit(
                 residual16bit->stride_y,
                 context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr]);
-            uint8_t  tx_search_skip_fag = (picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_ENC_DEC && (picture_control_set_ptr->parent_pcs_ptr->atb_mode == 0 || cu_ptr->prediction_mode_flag == INTER_MODE)) ? get_skip_tx_search_flag(
+            uint8_t  tx_search_skip_flag = (picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_ENC_DEC && (picture_control_set_ptr->parent_pcs_ptr->atb_mode == 0 || cu_ptr->prediction_mode_flag == INTER_MODE)) ? get_skip_tx_search_flag(
                 context_ptr->blk_geom->sq_size,
                 MAX_MODE_COST,
                 0,
                 1) : 1;
 
-            if (!tx_search_skip_fag) {
+            if (!tx_search_skip_flag) {
                     encode_pass_tx_search_hbd(
                         picture_control_set_ptr,
                         context_ptr,
@@ -1627,7 +1627,7 @@ void perform_intra_coding_loop(
         }
         // Encode Transform Unit -INTRA-
 
-        uint8_t cb_qp = cu_ptr->qp;
+        uint16_t cb_qp = cu_ptr->qp;
         Av1EncodeLoopFunctionTable[is16bit](
             picture_control_set_ptr,
             context_ptr,
@@ -1892,7 +1892,7 @@ void perform_intra_coding_loop(
         }
 
         // Encode Transform Unit -INTRA-
-        uint8_t cb_qp = cu_ptr->qp;
+        uint16_t cb_qp = cu_ptr->qp;
 
         Av1EncodeLoopFunctionTable[is16bit](
             picture_control_set_ptr,
@@ -2712,7 +2712,7 @@ EB_EXTERN void av1_encode_pass(
 
                             // Encode Transform Unit -INTRA-
                             {
-                                uint8_t             cb_qp = cu_ptr->qp;
+                                uint16_t             cb_qp = cu_ptr->qp;
 
                                 Av1EncodeLoopFunctionTable[is16bit](
                                     picture_control_set_ptr,
@@ -3074,7 +3074,7 @@ EB_EXTERN void av1_encode_pass(
 
                     uint32_t totTu = context_ptr->blk_geom->txb_count[cu_ptr->tx_depth];
                     uint8_t   tuIt;
-                    uint8_t   cb_qp = cu_ptr->qp;
+                    uint16_t   cb_qp = cu_ptr->qp;
                     uint32_t  component_mask = context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK;
 
                     if (cu_ptr->prediction_unit_array[0].merge_flag == EB_FALSE) {

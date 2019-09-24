@@ -771,7 +771,7 @@ void* picture_manager_kernel(void *input_ptr)
                                     }
                                     // Set the Reference Object
                                     ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0][refIdx] = referenceEntryPtr->reference_object_ptr;
-                                    ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0][refIdx] = ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->qp;
+                                    ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0][refIdx] = (uint8_t)((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->qp;
                                     ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0][refIdx] = ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->slice_type;
                                     // Increment the Reference's liveCount by the number of tiles in the input picture
                                     eb_object_inc_live_count(

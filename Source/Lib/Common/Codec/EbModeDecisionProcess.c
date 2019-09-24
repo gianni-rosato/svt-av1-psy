@@ -396,7 +396,7 @@ void reset_mode_decision(
     context_ptr->qp = picture_control_set_ptr->picture_qp;
 #endif
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
-    context_ptr->chroma_qp = context_ptr->qp;
+    context_ptr->chroma_qp = (uint8_t)context_ptr->qp;
     context_ptr->qp_index = (uint8_t)frm_hdr->quantization_params.base_q_idx;
     (*av1_lambda_assignment_function_table[picture_control_set_ptr->parent_pcs_ptr->pred_structure])(
         &context_ptr->fast_lambda,
@@ -454,7 +454,7 @@ void mode_decision_configure_lcu(
     context_ptr->qp = sb_qp;
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
 
-    context_ptr->chroma_qp = context_ptr->qp;
+    context_ptr->chroma_qp = (uint8_t)context_ptr->qp;
 
     /* Note(CHKN) : when Qp modulation varies QP on a sub-LCU(CU) basis,  Lamda has to change based on Cu->QP , and then this code has to move inside the CU loop in MD */
 
