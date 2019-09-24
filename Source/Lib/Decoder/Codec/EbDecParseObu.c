@@ -1922,9 +1922,22 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         //}
     }
 
-    dec_handle_ptr->cur_pic_buf[0] = dec_pic_mgr_get_cur_pic(dec_handle_ptr->pv_pic_mgr,
+    if (seq_header->color_config.subsampling_x == 1 &&
+        seq_header->color_config.subsampling_y == 1)
+        dec_handle_ptr->dec_config.max_color_format = EB_YUV420;
+    else if (seq_header->color_config.subsampling_x == 1 &&
+        seq_header->color_config.subsampling_y == 0)
+        dec_handle_ptr->dec_config.max_color_format = EB_YUV422;
+    else if (seq_header->color_config.subsampling_x == 0 &&
+        seq_header->color_config.subsampling_y == 0)
+        dec_handle_ptr->dec_config.max_color_format = EB_YUV444;
+
+    dec_handle_ptr->cur_pic_buf[0] = dec_pic_mgr_get_cur_pic(
+        dec_handle_ptr->pv_pic_mgr,
         &dec_handle_ptr->seq_header, &dec_handle_ptr->frame_header,
+        dec_handle_ptr->seq_header.color_config.mono_chrome ? EB_YUV400 :
         dec_handle_ptr->dec_config.max_color_format);
+
     svt_setup_frame_buf_refs(dec_handle_ptr);
     /*Temporal MVs allocation */
     check_add_tplmv_buf(dec_handle_ptr);
@@ -2066,7 +2079,8 @@ void clear_above_context(EbDecHandle *dec_handle_ptr, int mi_col_start,
 
     const int offset_y  = mi_col_start;
     const int width_y   = width;
-    const int offset_uv = offset_y >> seq_params->color_config.subsampling_y;
+
+    const int offset_uv = offset_y >> seq_params->color_config.subsampling_x;
     const int width_uv  = width_y >> seq_params->color_config.subsampling_x;
 
     int8_t num4_64x64 = mi_size_wide[BLOCK_64X64];
@@ -2128,7 +2142,7 @@ void clear_left_context(EbDecHandle *dec_handle_ptr)
 
     ZERO_ARRAY(parse_ctxt->parse_nbr4x4_ctxt.left_comp_grp_idx, blk_cnt);
 
-    for (int i = 0; i < MAX_MB_PLANE; i++) {
+    for (int i = 0; i < num_planes; i++) {
         ZERO_ARRAY((parse_ctxt->parse_nbr4x4_ctxt.left_palette_colors[i]),
             num_4x4_neigh_sb * PALETTE_MAX_SIZE);
     }

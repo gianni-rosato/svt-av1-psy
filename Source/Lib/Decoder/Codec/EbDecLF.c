@@ -294,7 +294,7 @@ void dec_av1_filter_block_plane_vert(
     int32_t recon_stride;
 
     derive_blk_pointers(recon_picture_buf, plane,
-        (mi_col*MI_SIZE >> sub_x), (mi_row*MI_SIZE >> sub_x),
+        (mi_col*MI_SIZE >> sub_x), (mi_row*MI_SIZE >> sub_y),
         &blk_recon_buf, &recon_stride, sub_x, sub_y);
 
     for (int32_t y = 0; y < y_range; y += row_step) {

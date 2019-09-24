@@ -93,12 +93,24 @@ void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
 
 void pad_pic(EbPictureBufferDesc *recon_picture_buf) {
 
-    int32_t sx, sy;
+    int32_t sx = 0, sy = 0;
 
     switch (recon_picture_buf->color_format) {
+        case EB_YUV400:
+            sx = -1;
+            sy = -1;
+            break;
         case EB_YUV420:
             sx = 1;
             sy = 1;
+            break;
+        case EB_YUV422:
+            sx = 1;
+            sy = 0;
+            break;
+        case EB_YUV444:
+            sx = 0;
+            sy = 0;
             break;
         default:
             assert(0);
@@ -114,23 +126,25 @@ void pad_pic(EbPictureBufferDesc *recon_picture_buf) {
             recon_picture_buf->origin_x,
             recon_picture_buf->origin_y);
 
-        // Cb samples
-        generate_padding(
-            recon_picture_buf->buffer_cb,
-            recon_picture_buf->stride_cb,
-            recon_picture_buf->width >> sx,
-            recon_picture_buf->height >> sy,
-            recon_picture_buf->origin_x >> sx,
-            recon_picture_buf->origin_y >> sy);
+        if (recon_picture_buf->color_format != EB_YUV400) {
+            // Cb samples
+            generate_padding(
+                recon_picture_buf->buffer_cb,
+                recon_picture_buf->stride_cb,
+                recon_picture_buf->width >> sx,
+                recon_picture_buf->height >> sy,
+                recon_picture_buf->origin_x >> sx,
+                recon_picture_buf->origin_y >> sy);
 
-        // Cr samples
-        generate_padding(
-            recon_picture_buf->buffer_cr,
-            recon_picture_buf->stride_cr,
-            recon_picture_buf->width >> sx,
-            recon_picture_buf->height >> sy,
-            recon_picture_buf->origin_x >> sx,
-            recon_picture_buf->origin_y >> sy);
+            // Cr samples
+            generate_padding(
+                recon_picture_buf->buffer_cr,
+                recon_picture_buf->stride_cr,
+                recon_picture_buf->width >> sx,
+                recon_picture_buf->height >> sy,
+                recon_picture_buf->origin_x >> sx,
+                recon_picture_buf->origin_y >> sy);
+        }
     }
     else {
         // Y samples
@@ -142,23 +156,25 @@ void pad_pic(EbPictureBufferDesc *recon_picture_buf) {
             recon_picture_buf->origin_x << 1,
             recon_picture_buf->origin_y);
 
-        // Cb samples
-        generate_padding16_bit(
-            recon_picture_buf->buffer_cb,
-            recon_picture_buf->stride_cb << 1,
-            recon_picture_buf->width >> sx << 1,
-            recon_picture_buf->height >> sy,
-            recon_picture_buf->origin_x >> sx << 1,
-            recon_picture_buf->origin_y >> sy);
+        if (recon_picture_buf->color_format != EB_YUV400) {
+            // Cb samples
+            generate_padding16_bit(
+                recon_picture_buf->buffer_cb,
+                recon_picture_buf->stride_cb << 1,
+                recon_picture_buf->width >> sx << 1,
+                recon_picture_buf->height >> sy,
+                recon_picture_buf->origin_x >> sx << 1,
+                recon_picture_buf->origin_y >> sy);
 
-        // Cr samples
-        generate_padding16_bit(
-            recon_picture_buf->buffer_cr,
-            recon_picture_buf->stride_cr << 1,
-            recon_picture_buf->width >> sx << 1,
-            recon_picture_buf->height >> sy,
-            recon_picture_buf->origin_x >> sx << 1,
-            recon_picture_buf->origin_y >> sy);
+            // Cr samples
+            generate_padding16_bit(
+                recon_picture_buf->buffer_cr,
+                recon_picture_buf->stride_cr << 1,
+                recon_picture_buf->width >> sx << 1,
+                recon_picture_buf->height >> sy,
+                recon_picture_buf->origin_x >> sx << 1,
+                recon_picture_buf->origin_y >> sy);
+        }
     }
 }
 

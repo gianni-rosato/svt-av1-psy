@@ -132,7 +132,9 @@ int svt_dec_out_buf(
     EbPictureBufferDesc *recon_picture_buf = dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf;
     EbSvtIOFormat       *out_img = (EbSvtIOFormat*)p_buffer->p_buffer;
 
-    uint8_t *luma, *cb, *cr;
+    uint8_t *luma = NULL;
+    uint8_t *cb   = NULL;
+    uint8_t *cr   = NULL;
 
     /* TODO: Should add logic for show_existing_frame */
     if (0 == dec_handle_ptr->show_frame) {
@@ -143,34 +145,74 @@ int svt_dec_out_buf(
     uint32_t wd = dec_handle_ptr->frame_header.frame_size.frame_width;
     uint32_t ht = dec_handle_ptr->frame_header.frame_size.frame_height;
     uint32_t i, sx = 0, sy = 0;
-    /* TO-DO Add support for other color spaces.
-       Remove re-allocation of memory, move all
-       memory handling to library.*/
-    assert(recon_picture_buf->color_format == EB_YUV420);
-    if (out_img->height != ht || out_img->width != wd) {
-        out_img->cb_stride = wd / 2;
-        out_img->cr_stride = wd / 2;
 
-        out_img->y_stride = wd;
-        out_img->width = wd;
-        out_img->height = ht;
-        int size = (dec_handle_ptr->seq_header.
-            color_config.bit_depth == EB_EIGHT_BIT) ?
-            sizeof(uint8_t) : sizeof(uint16_t);
+    if (out_img->height != ht || out_img->width != wd ||
+        out_img->color_fmt != recon_picture_buf->color_format)
+    {
+        int size = (dec_handle_ptr->seq_header.color_config.bit_depth ==
+                    EB_EIGHT_BIT) ? sizeof(uint8_t) : sizeof(uint16_t);
         size = size * ht * wd;
-        free(out_img->luma);
-        free(out_img->cb);
-        free(out_img->cr);
+        int chroma_size = -1;
 
-        out_img->luma = (uint8_t*)malloc(size);
-        out_img->cb = (uint8_t*)malloc(size >> 2);
-        out_img->cr = (uint8_t*)malloc(size >> 2);
+        out_img->color_fmt = recon_picture_buf->color_format;
+        switch (recon_picture_buf->color_format) {
+            case EB_YUV400:
+                out_img->cb_stride = INT32_MAX;
+                out_img->cr_stride = INT32_MAX;
+                break;
+            case EB_YUV420:
+                out_img->cb_stride = wd / 2;
+                out_img->cr_stride = wd / 2;
+                chroma_size = size >> 2;
+                break;
+            case EB_YUV422:
+                out_img->cb_stride = wd / 2;
+                out_img->cr_stride = wd / 2;
+                chroma_size = size >> 1;
+                break;
+            case EB_YUV444:
+                out_img->cb_stride = wd;
+                out_img->cr_stride = wd;
+                chroma_size = size;
+                break;
+            default:
+                printf("Unsupported colour format. \n");
+                return 0;
+            }
+
+            out_img->y_stride = wd;
+            out_img->width = wd;
+            out_img->height = ht;
+
+            free(out_img->luma);
+            if (recon_picture_buf->color_format != EB_YUV400) {
+                free(out_img->cb);
+                free(out_img->cr);
+            }
+
+            out_img->luma = (uint8_t*)malloc(size);
+            if (recon_picture_buf->color_format != EB_YUV400) {
+            out_img->cb = (uint8_t*)malloc(chroma_size);
+            out_img->cr = (uint8_t*)malloc(chroma_size);
+        }
     }
 
     switch (recon_picture_buf->color_format) {
-        case EB_YUV420 :
+        case EB_YUV400:
+            sx = -1;
+            sy = -1;
+            break;
+        case EB_YUV420:
             sx = 1;
             sy = 1;
+            break;
+        case EB_YUV422:
+            sx = 1;
+            sy = 0;
+            break;
+        case EB_YUV444:
+            sx = 0;
+            sy = 0;
             break;
         default :
             assert(0);
@@ -180,10 +222,12 @@ int svt_dec_out_buf(
 
     luma = out_img->luma + ((out_img->origin_y * out_img->y_stride
         + out_img->origin_x) << use_high_bit_depth);
-    cb = out_img->cb + ((out_img->cb_stride * (out_img->origin_y >> sy)
-        + (out_img->origin_x >> sx)) << use_high_bit_depth);
-    cr = out_img->cr + ((out_img->cr_stride * (out_img->origin_y >> sy)
-        + (out_img->origin_x >> sx)) << use_high_bit_depth);
+    if (recon_picture_buf->color_format != EB_YUV400) {
+        cb = out_img->cb + ((out_img->cb_stride * (out_img->origin_y >> sy)
+            + (out_img->origin_x >> sx)) << use_high_bit_depth);
+        cr = out_img->cr + ((out_img->cr_stride * (out_img->origin_y >> sy)
+            + (out_img->origin_x >> sx)) << use_high_bit_depth);
+    }
 
     /* Memcpy to dst buffer */
     {
@@ -199,26 +243,28 @@ int svt_dec_out_buf(
                 src += recon_picture_buf->stride_y;
             }
 
-            /* Cb */
-            dst = cb;
-            src = recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
-                ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
+            if (recon_picture_buf->color_format != EB_YUV400) {
+                /* Cb */
+                dst = cb;
+                src = recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
+                    ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
-            for (i = 0; i < ht >> sy; i++) {
-                memcpy(dst, src, wd >> sx);
-                dst += out_img->cb_stride;
-                src += recon_picture_buf->stride_cb;
-            }
+                for (i = 0; i < ht >> sy; i++) {
+                    memcpy(dst, src, wd >> sx);
+                    dst += out_img->cb_stride;
+                    src += recon_picture_buf->stride_cb;
+                }
 
-            /* Cr */
-            dst = cr;
-            src = recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
-                ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
+                /* Cr */
+                dst = cr;
+                src = recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
+                    ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
 
-            for (i = 0; i < ht >> sy; i++) {
-                memcpy(dst, src, wd >> sx);
-                dst += out_img->cr_stride;
-                src += recon_picture_buf->stride_cr;
+                for (i = 0; i < ht >> sy; i++) {
+                    memcpy(dst, src, wd >> sx);
+                    dst += out_img->cr_stride;
+                    src += recon_picture_buf->stride_cr;
+                }
             }
         }
         else {
@@ -236,26 +282,28 @@ int svt_dec_out_buf(
                 pu2_src += recon_picture_buf->stride_y;
             }
 
-            /* Cb */
-            pu2_dst = (uint16_t *)cb;
-            pu2_src = (uint16_t *)recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
-                ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
+            if (recon_picture_buf->color_format != EB_YUV400) {
+                /* Cb */
+                pu2_dst = (uint16_t *)cb;
+                pu2_src = (uint16_t *)recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
+                    ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
-            for (i = 0; i < ht >> sy; i++) {
-                memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
-                pu2_dst += out_img->cb_stride;
-                pu2_src += recon_picture_buf->stride_cb;
-            }
+                for (i = 0; i < ht >> sy; i++) {
+                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
+                    pu2_dst += out_img->cb_stride;
+                    pu2_src += recon_picture_buf->stride_cb;
+                }
 
-            /* Cr */
-            pu2_dst = (uint16_t *)cr;
-            pu2_src = (uint16_t *)recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
-                ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
+                /* Cr */
+                pu2_dst = (uint16_t *)cr;
+                pu2_src = (uint16_t *)recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
+                    ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
 
-            for (i = 0; i < ht >> sy; i++) {
-                memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
-                pu2_dst += out_img->cr_stride;
-                pu2_src += recon_picture_buf->stride_cr;
+                for (i = 0; i < ht >> sy; i++) {
+                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
+                    pu2_dst += out_img->cr_stride;
+                    pu2_src += recon_picture_buf->stride_cr;
+                }
             }
         }
     }

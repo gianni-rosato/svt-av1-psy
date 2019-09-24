@@ -54,14 +54,30 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
     picture_buffer_desc_ptr->height = pictureBufferDescInitDataPtr->max_height;
     picture_buffer_desc_ptr->bit_depth = pictureBufferDescInitDataPtr->bit_depth;
     picture_buffer_desc_ptr->color_format = pictureBufferDescInitDataPtr->color_format;
-    picture_buffer_desc_ptr->stride_y = pictureBufferDescInitDataPtr->max_width + pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding;
-    picture_buffer_desc_ptr->stride_cb = picture_buffer_desc_ptr->stride_cr = picture_buffer_desc_ptr->stride_y >> 1;
+    picture_buffer_desc_ptr->stride_y = pictureBufferDescInitDataPtr->max_width +
+        pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding;
+    if(picture_buffer_desc_ptr->color_format == EB_YUV420 ||
+       picture_buffer_desc_ptr->color_format == EB_YUV422)
+        picture_buffer_desc_ptr->stride_cb = picture_buffer_desc_ptr->stride_cr
+            = picture_buffer_desc_ptr->stride_y >> 1;
+    else if (picture_buffer_desc_ptr->color_format == EB_YUV444)
+        picture_buffer_desc_ptr->stride_cb = picture_buffer_desc_ptr->stride_cr
+            = picture_buffer_desc_ptr->stride_y;
     picture_buffer_desc_ptr->origin_x = pictureBufferDescInitDataPtr->left_padding;
     picture_buffer_desc_ptr->origin_y = pictureBufferDescInitDataPtr->top_padding;
 
-    picture_buffer_desc_ptr->luma_size = (pictureBufferDescInitDataPtr->max_width + pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding) *
-        (pictureBufferDescInitDataPtr->max_height + pictureBufferDescInitDataPtr->top_padding + pictureBufferDescInitDataPtr->bot_padding);
-    picture_buffer_desc_ptr->chroma_size = picture_buffer_desc_ptr->luma_size >> 2;
+    picture_buffer_desc_ptr->luma_size = (pictureBufferDescInitDataPtr->max_width +
+        pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding) *
+        (pictureBufferDescInitDataPtr->max_height + pictureBufferDescInitDataPtr->top_padding
+            + pictureBufferDescInitDataPtr->bot_padding);
+
+    if (picture_buffer_desc_ptr->color_format == EB_YUV420) // 420
+        picture_buffer_desc_ptr->chroma_size = picture_buffer_desc_ptr->luma_size >> 2;
+    else if (picture_buffer_desc_ptr->color_format == EB_YUV422) // 422
+        picture_buffer_desc_ptr->chroma_size = picture_buffer_desc_ptr->luma_size >> 1;
+    else if (picture_buffer_desc_ptr->color_format == EB_YUV444) // 444
+        picture_buffer_desc_ptr->chroma_size = picture_buffer_desc_ptr->luma_size;
+
     picture_buffer_desc_ptr->packedFlag = EB_FALSE;
 
     picture_buffer_desc_ptr->stride_bit_inc_y = 0;
@@ -157,19 +173,18 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
         EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_Y],
             (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
 #endif
+        /*TODO : Change to macro */
+        EB_MALLOC_DEC(TransformInfo_t*, cur_frame_buf->trans_info[AOM_PLANE_U],
+            (num_sb * num_mis_in_sb * sizeof(TransformInfo_t) * 2), EB_N_PTR);
 
-        if(seq_header->color_config.subsampling_x == 1 &&
-           seq_header->color_config.subsampling_y == 1)
+        /* Coeff buf (1D compact) allocation for entire frame
+        TODO: Should reduce this to save memory and
+        dynammically allocate if needed */
+        /*TODO : Change to macro */
+        /* (16+1) : 1 for Length and 16 for all coeffs in 4x4 */
+        if (seq_header->color_config.subsampling_x == 1 &&
+            seq_header->color_config.subsampling_y == 1) // 420
         {
-            /*TODO : Change to macro */
-            EB_MALLOC_DEC(TransformInfo_t*, cur_frame_buf->trans_info[AOM_PLANE_U],
-                (num_sb * num_mis_in_sb * sizeof(TransformInfo_t) * 2), EB_N_PTR);
-
-            /* Coeff buf (1D compact) allocation for entire frame
-            TODO: Should reduce this to save memory and
-            dynammically allocate if needed */
-            /*TODO : Change to macro */
-            /* (16+1) : 1 for Length and 16 for all coeffs in 4x4 */
 #if SINGLE_THRD_COEFF_BUF_OPT
             EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
                 (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
@@ -177,9 +192,39 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
                 (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
 #else
             EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
-            (num_sb * num_mis_in_sb * sizeof(int32_t) * (16+1) >> 2), EB_N_PTR);
+                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
             EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
-            (num_sb * num_mis_in_sb * sizeof(int32_t) * (16+1) >> 2), EB_N_PTR);
+                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
+#endif
+        }
+        else if (seq_header->color_config.subsampling_x == 1 &&
+                 seq_header->color_config.subsampling_y == 0) // 422
+        {
+#if SINGLE_THRD_COEFF_BUF_OPT
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
+                (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1), EB_N_PTR);
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
+                (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1), EB_N_PTR);
+#else
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
+                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1), EB_N_PTR);
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
+                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1), EB_N_PTR);
+#endif
+        }
+        else if (seq_header->color_config.subsampling_x == 0 &&
+                 seq_header->color_config.subsampling_y == 0) // 444
+        {
+#if SINGLE_THRD_COEFF_BUF_OPT
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
+                (num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
+                (num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
+#else
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
+                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
+                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
 #endif
         }
         else

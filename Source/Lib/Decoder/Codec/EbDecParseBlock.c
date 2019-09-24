@@ -908,7 +908,7 @@ void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd,
         const int has_chroma =
                 dec_is_chroma_reference(mi_row, mi_col, bsize,
                     color_config.subsampling_x, color_config.subsampling_y);
-        if (has_chroma) {
+        if (has_chroma && !color_config.mono_chrome) {
             mbmi->uv_mode = read_intra_mode_uv(&parse_ctxt->cur_tile_ctx,
                 r, is_cfl_allowed(xd, &color_config, lossless_array), mbmi->mode);
             if (mbmi->uv_mode == UV_CFL_PRED) {
@@ -1252,7 +1252,7 @@ void intra_block_mode_info(EbDecHandle *dec_handle, int mi_row,
         dec_is_chroma_reference(mi_row, mi_col, bsize, color_cfg->subsampling_x,
             color_cfg->subsampling_y);
     xd->has_chroma = has_chroma;
-    if (has_chroma) {
+    if (has_chroma && !color_cfg->mono_chrome) {
         mbmi->uv_mode =
             read_intra_mode_uv(&parse_ctxt->cur_tile_ctx, r,
                 is_cfl_allowed(xd, color_cfg, lossless_array), mbmi->mode);
@@ -2720,12 +2720,19 @@ void parse_block(EbDecHandle *dec_handle, uint32_t mi_row, uint32_t mi_col,
             assert(part_info.has_chroma != 0);
         }
         else {
-            /* wait unitl the last 4x4 block is parsed */
-            if (part_info.has_chroma) {
-                //4 partition case
-                mode[-1].uv_mode = mode->uv_mode;
-                mode[-2].uv_mode = mode->uv_mode;
-                mode[-3].uv_mode = mode->uv_mode;
+            if (part_info.has_chroma)
+            {
+                if (dec_handle->seq_header.color_config.subsampling_x == 1 &&
+                    dec_handle->seq_header.color_config.subsampling_y == 1) {
+                    //4 partition case
+                    mode[-1].uv_mode = mode->uv_mode;
+                    mode[-2].uv_mode = mode->uv_mode;
+                    mode[-3].uv_mode = mode->uv_mode;
+                }
+                else if (dec_handle->seq_header.color_config.subsampling_x == 1 &&
+                    dec_handle->seq_header.color_config.subsampling_y == 0) {
+                    mode[-1].uv_mode = mode->uv_mode;
+                }
             }
         }
     }

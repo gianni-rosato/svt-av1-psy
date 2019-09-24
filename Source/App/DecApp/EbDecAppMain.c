@@ -23,9 +23,24 @@
 
 int init_pic_buffer(EbSvtIOFormat *pic_buffer, CLInput *cli) {
     switch (cli->fmt) {
+    case EB_YUV400:
+        pic_buffer->cb_stride = INT32_MAX;
+        pic_buffer->cr_stride = INT32_MAX;
+        pic_buffer->y_stride = cli->width;
+        break;
     case EB_YUV420:
         pic_buffer->cb_stride = cli->width / 2;
         pic_buffer->cr_stride = cli->width / 2;
+        pic_buffer->y_stride = cli->width;
+        break;
+    case EB_YUV422:
+        pic_buffer->cb_stride = cli->width / 2;
+        pic_buffer->cr_stride = cli->width / 2;
+        pic_buffer->y_stride = cli->width;
+        break;
+    case EB_YUV444:
+        pic_buffer->cb_stride = cli->width;
+        pic_buffer->cr_stride = cli->width;
         pic_buffer->y_stride = cli->width;
         break;
     default:
@@ -64,9 +79,6 @@ int read_input_frame(DecInputContext *input, uint8_t **buffer, size_t *bytes_rea
 void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
     EbSvtIOFormat* img = (EbSvtIOFormat*)recon_buffer->p_buffer;
 
-    // Support only for 420 images
-    assert(cli->fmt == EB_YUV420);
-
     const int bytes_per_sample = (cli->bit_depth == EB_EIGHT_BIT) ? 1 : 2;
 
     // Write luma plane
@@ -80,22 +92,30 @@ void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
         fwrite(buf, bytes_per_sample, w, cli->outFile);
         buf += (stride* bytes_per_sample);
     }
+    if (img->color_fmt != EB_YUV400) {
+        //Write chroma planes
+        buf = img->cb;
+        stride = img->cb_stride;
+        if (img->color_fmt == EB_YUV420) {
+            w /= 2;
+            h /= 2;
+        }
+        else if (img->color_fmt == EB_YUV422) {
+            w /= 2;
+        }
+        assert(img->color_fmt <= EB_YUV444);
 
-    //Write chroma planes
-    buf = img->cb;
-    stride = img->cb_stride;
-    w /= 2;
-    h /= 2;
-    for (y = 0; y < h; ++y) {
-        fwrite(buf, bytes_per_sample, w, cli->outFile);
-        buf += (stride* bytes_per_sample);
-    }
+        for (y = 0; y < h; ++y) {
+            fwrite(buf, bytes_per_sample, w, cli->outFile);
+            buf += (stride* bytes_per_sample);
+        }
 
-    buf = img->cr;
-    stride = img->cr_stride;
-    for (y = 0; y < h; ++y) {
-        fwrite(buf, bytes_per_sample, w, cli->outFile);
-        buf += (stride* bytes_per_sample);
+        buf = img->cr;
+        stride = img->cr_stride;
+        for (y = 0; y < h; ++y) {
+            fwrite(buf, bytes_per_sample, w, cli->outFile);
+            buf += (stride* bytes_per_sample);
+        }
     }
 
     fflush(cli->outFile);
@@ -185,7 +205,7 @@ int32_t main(int32_t argc, char* argv[])
             goto fail;
         }
 
-        assert(config_ptr->max_color_format == EB_YUV420);
+        assert(config_ptr->max_color_format <= EB_YUV444);
         assert(config_ptr->max_bit_depth < EB_TWELVE_BIT);
 
         int enable_md5 = cli.enable_md5;

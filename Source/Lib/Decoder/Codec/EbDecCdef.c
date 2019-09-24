@@ -123,8 +123,10 @@ void svt_cdef_frame(EbDecHandle *dec_handle) {
     const int32_t cdef_mask = 1;
 
     for (int32_t pli = 0; pli < num_planes; pli++) {
-        int32_t sub_x = (pli == 0) ? 0 : 1;
-        int32_t sub_y = (pli == 0) ? 0 : 1;
+        int32_t sub_x = (pli == 0) ? 0 :
+            dec_handle->seq_header.color_config.subsampling_x;
+        int32_t sub_y = (pli == 0) ? 0 :
+            dec_handle->seq_header.color_config.subsampling_y;
         xdec[pli] = sub_x;
         ydec[pli] = sub_y;
         mi_wide_l2[pli] = MI_SIZE_LOG2 - sub_x;
@@ -459,8 +461,10 @@ void svt_cdef_frame_hbd(EbDecHandle *dec_handle) {
     const int32_t cdef_mask = 1;
 
     for (int32_t pli = 0; pli < num_planes; pli++) {
-        int32_t sub_x = (pli == 0) ? 0 : 1;
-        int32_t sub_y = (pli == 0) ? 0 : 1;
+        int32_t sub_x = (pli == 0) ? 0:
+            dec_handle->seq_header.color_config.subsampling_x;
+        int32_t sub_y = (pli == 0) ? 0:
+            dec_handle->seq_header.color_config.subsampling_y;
         xdec[pli] = sub_x;
         ydec[pli] = sub_y;
         mi_wide_l2[pli] = MI_SIZE_LOG2 - sub_x;

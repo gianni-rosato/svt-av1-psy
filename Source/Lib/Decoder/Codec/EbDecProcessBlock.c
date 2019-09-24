@@ -230,13 +230,15 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
         part_info.left_mbmi = NULL;
     if (part_info.chroma_up_available) {
         part_info.chroma_above_mbmi = get_top_mode_info
-            (dec_handle, (mi_row & (~sub_x)), (mi_col | sub_y), sb_info); // floored to nearest 4x4 based on sub subsampling x & y
+            (dec_handle, (mi_row & (~sub_y)), (mi_col | sub_x), sb_info);
+        // floored to nearest 4x4 based on sub subsampling x & y
     }
     else
         part_info.chroma_above_mbmi = NULL;
     if (part_info.chroma_left_available) {
         part_info.chroma_left_mbmi = get_left_mode_info
-            (dec_handle, (mi_row | sub_x), (mi_col & (~sub_y)), sb_info); // floored to nearest 4x4 based on sub subsampling x & y
+        (dec_handle, (mi_row | sub_y), (mi_col & (~sub_x)), sb_info);
+        // floored to nearest 4x4 based on sub subsampling x & y
     }
     else
         part_info.chroma_left_mbmi = NULL;
