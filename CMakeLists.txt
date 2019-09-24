@@ -15,13 +15,20 @@ if(NOT CMAKE_BUILD_TYPE AND NOT (MSVC OR CMAKE_GENERATOR STREQUAL "Xcode"))
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-find_program(YASM_EXE yasm)
-if(YASM_EXE AND NOT CMAKE_ASM_NASM_COMPILER MATCHES "yasm")
-    set(CMAKE_ASM_NASM_COMPILER ${YASM_EXE})
-    message(STATUS "Found YASM: ${YASM_EXE}")
+option(YASM "Use yasm (if present in PATH)" ON)
+if(YASM)
+    find_program(YASM_EXE yasm)
+    if(YASM_EXE AND NOT CMAKE_ASM_NASM_COMPILER MATCHES "yasm")
+        set(CMAKE_ASM_NASM_COMPILER ${YASM_EXE})
+        message(STATUS "Found YASM: ${YASM_EXE}")
+    endif()
 endif()
 
 project(${project_name} C CXX ASM_NASM)
+
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(WARNING "32-bit is not supported")
+endif()
 
 include(GNUInstallDirs)
 include(CheckCCompilerFlag)
@@ -45,6 +52,14 @@ set(CMAKE_CXX_STANDARD 11)
 set(CAN_USE_ASSEMBLER TRUE)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+# BUILD_SHARED_LIBS is a standard CMake variable, but we declare it here to
+# make it prominent in the GUI.
+option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
+message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
+
+option(BUILD_TESTING "Build SvtAv1UnitTests, SvtAv1ApiTests, and SvtAv1E2ETests unit tests")
+option(COVERAGE "Generate coverage report")
+option(BUILD_APPS "Build Enc and Dec Apps" ON)
 
 if(WIN32)
     set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -DWIN64")
@@ -71,28 +86,28 @@ set(flags_to_test
     -fPIE
     -fPIC
     -D_FORTIFY_SOURCE=2)
-if(NOT MSVC)
+if(MSVC)
+    list(APPEND flags_to_test /MP)
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Od")
+else()
     list(INSERT flags_to_test 0 -Wall)
-        option(NATIVE "Build for native performance (march=native)")
-        if(NATIVE)
+    option(NATIVE "Build for native performance (march=native)")
+    if(NATIVE)
         list(APPEND flags_to_test -march=native)
+    endif()
+    if(COVERAGE)
+        list(APPEND flags_to_test --coverage)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
     endif()
     if(MINGW)
         list(APPEND flags_to_test -mxsave)
     else()
         list(APPEND flags_to_test -fstack-protector-strong)
     endif()
-else()
-    list(APPEND flags_to_test /MP)
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2")
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Od")
 endif()
-set(release_flags_to_test
-    -O2
-    -O3)
-set(debug_flags_to_test
-    -g
-    -O0)
+set(release_flags_to_test)
+set(debug_flags_to_test)
 
 foreach(flag ${flags_to_test};${release_flags_to_test};${debug_flags_to_test})
     string(REGEX REPLACE "[^A-Za-z0-9]" "_" flag_var "${flag}")
@@ -138,27 +153,6 @@ else()
     elseif(CMAKE_ASM_NASM_COMPILER MATCHES "yasm")
         set(CMAKE_ASM_NASM_FLAGS_DEBUG "${CMAKE_ASM_NASM_FLAGS_DEBUG} -gdwarf2")
     endif()
-endif()
-
-# BUILD_SHARED_LIBS is a standard CMake variable, but we declare it here to
-# make it prominent in the GUI.
-if(WIN32 OR MSYS OR BUILD_TESTING)
-    option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
-else()
-    option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." OFF)
-endif()
-
-message(STATUS "BUILD_SHARED_LIBS : " ${BUILD_SHARED_LIBS})
-
-option(BUILD_TESTING "Build SvtAv1UnitTests, SvtAv1ApiTests, and SvtAv1E2ETests unit tests")
-option(COVERAGE "Generate coverage report")
-option(BUILD_APPS "Build Enc and Dec Apps" ON)
-
-# Prepare for Coveralls
-if(COVERAGE AND NOT MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 endif()
 
 include(CheckSymbolExists)
