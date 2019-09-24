@@ -104,7 +104,7 @@ std::vector<TestVideoVector> parkjoy = {
 };
 
 static const std::vector<EncTestSetting> default_enc_settings = {
-    {"EncModeTest1", {{"EncoderMode", "1"}}, default_test_vectors},
+    {"EncModeTest1", {{"EncoderMode", "0"}}, default_test_vectors},
     {"EncModeTest2", {{"EncoderMode", "3"}}, default_test_vectors},
     {"EncModeTest3", {{"EncoderMode", "5"}}, default_test_vectors},
     {"EncModeTest4", {{"EncoderMode", "8"}}, default_test_vectors},
@@ -151,7 +151,7 @@ static const std::vector<EncTestSetting> default_enc_settings = {
 
     // test ScreenContentMode, default 2 auto detection mode;
     {"ScreenToolTest1", {{"ScreenContentMode", "0"}}, default_test_vectors},
-    {"ScreenToolTest2", {{"ScreenContentMode", "1"}}, screen_test_vectors},
+    {"ScreenToolTest2", {{"ScreenContentMode", "1"}, {"EncoderMode", "1"}}, screen_test_vectors},
 
     // test enable_adaptive_quantization, default is 0
     {"AdapQTest1", {{"AdaptiveQuantization", "1"}}, default_test_vectors},
