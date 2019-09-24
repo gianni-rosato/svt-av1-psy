@@ -395,6 +395,94 @@ static INLINE int32_t av1_cost_skip_txb(
         update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], 1, 2);
     return coeff_costs->txb_skip_cost[txb_skip_ctx][1];
 }
+
+static INLINE int32_t av1_cost_coeffs_txb_loop_cost_eob(uint16_t eob,
+    const int16_t *const scan, const TranLow *const qcoeff,
+    int8_t *const coeff_contexts, const LvMapCoeffCost *coeff_costs,
+    int16_t dc_sign_ctx, uint8_t *const levels,
+    const int32_t bwl,
+    TxType transform_type) {
+    const uint32_t cost_literal = av1_cost_literal(1);
+    int32_t cost = 0;
+    int32_t c;
+
+    /* Loop reduced to touch only first (eob - 1) and last (0) index */
+    int32_t decr = eob - 1;
+    if (decr < 1)
+        decr = 1;
+    for (c = eob - 1; c >= 0; c -= decr) {
+        const int32_t pos = scan[c];
+        const TranLow v = qcoeff[pos];
+         const int32_t is_nz = (v != 0);
+        const int32_t level = abs(v);
+        const int32_t coeff_ctx = coeff_contexts[pos];
+
+        if (c == eob - 1) {
+            assert((AOMMIN(level, 3) - 1) >= 0);
+            cost += coeff_costs->base_eob_cost[coeff_ctx][AOMMIN(level, 3) - 1];
+        }
+        else {
+            cost += coeff_costs->base_cost[coeff_ctx][AOMMIN(level, 3)];
+        }
+
+        if (is_nz) {
+            if (c == 0) {
+                const int32_t sign = (v < 0) ? 1 : 0;
+                // sign bit cost
+
+                cost += coeff_costs->dc_sign_cost[dc_sign_ctx][sign];
+            }
+            else {
+                cost += cost_literal;
+            }
+
+            if (level > NUM_BASE_LEVELS) {
+                int32_t ctx;
+                ctx = get_br_ctx(levels, pos, bwl, transform_type);
+
+                const int32_t base_range = level - 1 - NUM_BASE_LEVELS;
+
+                if (base_range < COEFF_BASE_RANGE)
+                    cost += coeff_costs->lps_cost[ctx][base_range];
+                else
+                    cost += coeff_costs->lps_cost[ctx][COEFF_BASE_RANGE];
+
+
+                if (level >= 1 + NUM_BASE_LEVELS + COEFF_BASE_RANGE)
+                    cost += get_golomb_cost(level);
+            }
+        }
+    }
+
+    /* Optimized Loop, omitted first (eob - 1) and last (0) index */
+    for (c = eob - 2; c >= 1; --c) {
+        const int32_t pos = scan[c];
+        const int32_t level = abs(qcoeff[pos]);
+        if (level > NUM_BASE_LEVELS) {
+            const int32_t ctx = get_br_ctx(levels, pos, bwl, transform_type);
+            const int32_t base_range = level - 1 - NUM_BASE_LEVELS;
+
+            if (base_range < COEFF_BASE_RANGE) {
+                cost += cost_literal + coeff_costs->lps_cost[ctx][base_range]
+                    + coeff_costs->base_cost[coeff_contexts[pos]][3];
+            }
+            else {
+                cost += get_golomb_cost(level) + cost_literal
+                    + coeff_costs->lps_cost[ctx][COEFF_BASE_RANGE]
+                    + coeff_costs->base_cost[coeff_contexts[pos]][3];
+            }
+        }
+        else if (level) {
+            cost += cost_literal
+                + coeff_costs->base_cost[coeff_contexts[pos]][level];
+        }
+        else {
+            cost += coeff_costs->base_cost[coeff_contexts[pos]][0];
+        }
+    }
+    return cost;
+}
+
 // Note: don't call this function when eob is 0.
 uint64_t eb_av1_cost_coeffs_txb(
     uint8_t                             allow_update_cdf,
@@ -415,7 +503,7 @@ uint64_t eb_av1_cost_coeffs_txb(
 
     const TxSize txs_ctx = (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
     const TxClass tx_class = tx_type_to_class[transform_type];
-    int32_t c, cost;
+    int32_t cost;
     const int32_t bwl = get_txb_bwl(transform_size);
     const int32_t width = get_txb_wide(transform_size);
     const int32_t height = get_txb_high(transform_size);
@@ -537,40 +625,9 @@ uint64_t eb_av1_cost_coeffs_txb(
         return 0;
     }
 
-    for (c = eob - 1; c >= 0; --c) {
-        const int32_t pos = scan[c];
-        const TranLow v = qcoeff[pos];
-        const int32_t is_nz = (v != 0);
-        const int32_t level = abs(v);
-        const int32_t coeff_ctx = coeff_contexts[pos];
+    cost += av1_cost_coeffs_txb_loop_cost_eob(eob, scan, qcoeff,
+        coeff_contexts, coeff_costs, dc_sign_ctx, levels, bwl, transform_type);
 
-        if (c == eob - 1) {
-            assert((AOMMIN(level, 3) - 1) >= 0);
-            cost += coeff_costs->base_eob_cost[coeff_ctx][AOMMIN(level, 3) - 1];
-        }
-        else
-            cost += coeff_costs->base_cost[coeff_ctx][AOMMIN(level, 3)];
-        if (is_nz) {
-            const int32_t sign = (v < 0) ? 1 : 0;
-            // sign bit cost
-            if (c == 0)
-                cost += coeff_costs->dc_sign_cost[dc_sign_ctx][sign];
-            else
-                cost += av1_cost_literal(1);
-            if (level > NUM_BASE_LEVELS) {
-                int32_t ctx;
-                ctx = get_br_ctx(levels, pos, bwl, transform_type);
-
-                const int32_t base_range = level - 1 - NUM_BASE_LEVELS;
-                if (base_range < COEFF_BASE_RANGE)
-                    cost += coeff_costs->lps_cost[ctx][base_range];
-                else
-                    cost += coeff_costs->lps_cost[ctx][COEFF_BASE_RANGE];
-                if (level >= 1 + NUM_BASE_LEVELS + COEFF_BASE_RANGE)
-                    cost += get_golomb_cost(level);
-            }
-        }
-    }
     return cost;
 }
 /*static*/ void model_rd_from_sse(
