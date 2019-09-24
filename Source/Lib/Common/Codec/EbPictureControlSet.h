@@ -13752,7 +13752,6 @@ extern "C" {
         // Rate Control
         uint8_t                               picture_qp;
         uint8_t                               dif_cu_delta_qp_depth;
-        uint8_t                               use_delta_qp;
 
         // SB Array
         uint8_t                               sb_max_depth;

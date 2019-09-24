@@ -256,10 +256,6 @@ PARAM_TEST(EncParamCompr10BitFmtTest);
 DEFINE_PARAM_TEST_CLASS(EncParamFrame2EncTest, frames_to_be_encoded);
 PARAM_TEST(EncParamFrame2EncTest);
 
-/** Test case for improve_sharpness*/
-DEFINE_PARAM_TEST_CLASS(EncParamImproveSharpTest, improve_sharpness);
-PARAM_TEST(EncParamImproveSharpTest);
-
 /** Test case for sb_sz*/
 DEFINE_PARAM_TEST_CLASS(EncParamSbSizeTest, sb_sz);
 PARAM_TEST(EncParamSbSizeTest);

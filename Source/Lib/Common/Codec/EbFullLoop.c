@@ -2569,12 +2569,10 @@ void encode_pass_tx_search(
     EbAsm                        asm_type,
     uint32_t                     *count_non_zero_coeffs,
     uint32_t                     component_mask,
-    uint32_t                     use_delta_qp,
     uint32_t                     dZoffset,
     uint16_t                     *eob,
     MacroblockPlane              *candidate_plane){
     (void)dZoffset;
-    (void)use_delta_qp;
     (void)cb_qp;
     (void)candidate_plane;
     UNUSED(count_non_zero_coeffs);
@@ -2771,12 +2769,10 @@ void encode_pass_tx_search_hbd(
     EbAsm                          asm_type,
     uint32_t                       *count_non_zero_coeffs,
     uint32_t                       component_mask,
-    uint32_t                       use_delta_qp,
     uint32_t                       dZoffset,
     uint16_t                       *eob,
     MacroblockPlane                *candidate_plane){
     (void)dZoffset;
-    (void)use_delta_qp;
     (void)cb_qp;
     (void)candidate_plane;
     UNUSED(component_mask);

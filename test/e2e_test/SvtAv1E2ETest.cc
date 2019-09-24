@@ -134,9 +134,6 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     // partition_depth and ext_block_flag, since they are
     // not used in encoder;
 
-    // test improve_sharpness, defaut is 0
-    {"SharpnessTest1", {{"ImproveSharpness", "1"}}, default_test_vectors},
-
     // test constrained intra, default is 0
     {"ConstrainIntraTest1", {{"ConstrainedIntra", "1"}}, default_test_vectors},
 

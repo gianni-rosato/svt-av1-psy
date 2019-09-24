@@ -147,13 +147,6 @@ typedef struct EbSvtAv1EncConfiguration
      * Default is 0. */
     uint64_t                 frames_to_be_encoded;
 
-    /* The visual quality knob that allows the use of adaptive quantization
-     * within the picture and enables visual quality algorithms that improve the
-     * sharpness of the background. Only available for 4k resolution and
-     *
-     * Default is 0. */
-    EbBool                   improve_sharpness;
-
     /* Super block size for motion estimation
     *
     * Default is 64. */

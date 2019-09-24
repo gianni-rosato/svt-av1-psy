@@ -339,22 +339,6 @@ static const vector<uint64_t> invalid_frames_to_be_encoded = {
     // none
 };
 
-/* The visual quality knob that allows the use of adaptive quantization
- * within the picture and enables visual quality algorithms that improve the
- * sharpness of the background. Only available for 4k resolution and
- *
- * Default is 0. */
-static const vector<EbBool> default_improve_sharpness = {
-    EB_FALSE,
-};
-static const vector<EbBool> valid_improve_sharpness = {
-    EB_FALSE,
-    EB_TRUE,
-};
-static const vector<EbBool> invalid_improve_sharpness = {
-    // none
-};
-
 /* Super block size for motion estimation
  *
  * Default is 64. */

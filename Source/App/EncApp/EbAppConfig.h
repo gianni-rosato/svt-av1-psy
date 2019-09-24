@@ -299,7 +299,6 @@ typedef struct EbConfig
      * Optional Features
      ****************************************/
 
-    EbBool                   improve_sharpness;
     uint32_t                 screen_content_mode;
     uint32_t                 high_dynamic_range_input;
 
