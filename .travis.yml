@@ -100,27 +100,31 @@ matrix:
       before_install: skip
       install: skip
       script:
-        - git grep -I -n -P "\t|\r| $" -- . ':!third_party/**/*' && travis_terminate 1 || true
-        - git grep -I -l -z "" -- . ':!third_party/**/*' ':!test/e2e_test/test_vector_list.txt' ':!test/vectors/smoking_test.cfg' ':!test/vectors/video_src.cfg' | while IFS= read -r -d '' i; do
-              if [ -n "$(tail -c 1 "$i")" ]; then
-                  echo "No newline at end of $i";
-                  travis_terminate 1;
-              fi;
-          done
         - git remote rm upstream 2> /dev/null || true
         - git remote add upstream https://github.com/OpenVisualCloud/SVT-AV1.git
         - git fetch -q upstream master
-        - for i in $(git rev-list HEAD ^upstream/master); do
-              echo "Checking commit message of $i";
-              msg="$(git log --format=%B -n 1 $i)";
-              if [ -n "$(echo "$msg" | awk "NR==2")" ]; then
-                  echo "Malformed commit message in $i, second line must be empty";
-                  travis_terminate 1;
-              fi;
-              if echo "$msg" | head -1 | grep -q '\.$'; then
-                  echo "Malformed commit message in $i, trailing period in subject line";
-                  travis_terminate 1;
-              fi;
+        - git grep -InP --heading "\t" -- . ':!third_party/**/*' && false || true
+        - git grep -InP --heading "\r" -- . ':!third_party/**/*' && false || true
+        - git grep -InP --heading " $" -- . ':!third_party/**/*' && false || true
+        - |
+          for file in $(git ls-tree --name-only -r HEAD |
+            grep -vE "third_party/|test/e2e_test/test_vector_list.txt|test/vectors/smoking_test.cfg|test/vectors/video_src.cfg|.png"); do
+            if [ -n "$(tail -c1 "$file")" ]; then
+              echo "No newline at end of $file"
+              false
+            fi
+          done
+          for i in $(git rev-list HEAD ^upstream/master); do
+            echo "Checking commit message of $i"
+            msg="$(git log --format=%B -n 1 $i)"
+            if [ -n "$(sed -n 2p <<<"$msg")" ]; then
+              echo "Malformed commit message in $i, second line must be empty"
+              false
+            fi
+            if head -1 <<<"$msg" | grep -q '\.$'; then
+              echo "Malformed commit message in $i, trailing period in subject line"
+              false
+            fi
           done
     # FFmpeg interation build
     - name: FFmpeg patch
