@@ -36,7 +36,7 @@ static EbHandle get_malloc_mutex()
     InitOnceExecuteOnce(&g_malloc_once, create_malloc_mutex, NULL, NULL);
     return g_malloc_mutex;
 }
-#elif defined(__linux__) || defined(__APPLE__)
+#else
 #include <pthread.h>
 static void create_malloc_mutex()
 {

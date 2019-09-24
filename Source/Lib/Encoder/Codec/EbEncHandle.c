@@ -55,12 +55,9 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#include <unistd.h>
-#endif
-
-#if defined(__linux__) || defined(__APPLE__)
-#include <pthread.h>
 #include <errno.h>
+#include <pthread.h>
+#include <unistd.h>
 #endif
 
 #define RTCD_C
@@ -292,7 +289,7 @@ void init_intra_predictors_internal(void);
 void eb_av1_init_me_luts(void);
 
 void SwitchToRealTime(){
-#if defined(__linux__) || defined(__APPLE__)
+#ifndef _WIN32
 
     struct sched_param schedParam = {
         .sched_priority = 99
@@ -818,7 +815,7 @@ extern void av1_init_wedge_masks(void);
 /**********************************
 * Initialize Encoder Library
 **********************************/
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
@@ -1735,7 +1732,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 /**********************************
 * DeInitialize Encoder Library
 **********************************/
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_deinit_encoder(EbComponentType *svt_enc_component){
@@ -1752,7 +1749,7 @@ EbErrorType init_svt_av1_encoder_handle(
 /**********************************
 * GetHandle
 **********************************/
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_init_handle(
@@ -1814,7 +1811,7 @@ EbErrorType eb_av1_enc_component_de_init(EbComponentType  *svt_enc_component)
 /**********************************
 * eb_deinit_handle
 **********************************/
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_deinit_handle(
@@ -2737,7 +2734,7 @@ static void print_lib_params(
 
 * Set Parameter
 **********************************/
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_svt_enc_set_parameter(
@@ -2797,7 +2794,7 @@ EB_API EbErrorType eb_svt_enc_set_parameter(
 
     return return_error;
 }
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_svt_enc_stream_header(
@@ -2845,7 +2842,7 @@ EB_API EbErrorType eb_svt_enc_stream_header(
 
     return return_error;
 }
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_svt_release_enc_stream_header(
@@ -2863,7 +2860,7 @@ EB_API EbErrorType eb_svt_release_enc_stream_header(
     return return_error;
 }
 //
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_svt_enc_eos_nal(
@@ -3060,7 +3057,7 @@ static void CopyInputBuffer(
 /**********************************
 * Empty This Buffer
 **********************************/
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_svt_enc_send_picture(
@@ -3110,7 +3107,7 @@ static void CopyOutputReconBuffer(
 /**********************************
 * eb_svt_get_packet sends out packet
 **********************************/
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_svt_get_packet(
@@ -3146,7 +3143,7 @@ EB_API EbErrorType eb_svt_get_packet(
     return return_error;
 }
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API void eb_svt_release_out_buffer(
@@ -3161,7 +3158,7 @@ EB_API void eb_svt_release_out_buffer(
 /**********************************
 * Fill This Buffer
 **********************************/
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_svt_get_recon(

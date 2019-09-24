@@ -99,7 +99,7 @@
     sum = _mm_packs_epi32(sum1, sum1);\
     INSTR((__m128i *)(DST + OFST5), sum);
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 #ifndef __cplusplus
 __attribute__((visibility("hidden")))
 #endif
@@ -120,7 +120,7 @@ EB_ALIGN(16) const int16_t dst_transform_asm_const_sse2[] = {
     //55,  -29,   55,  -29,   55,  -29,   55,  -29,
 };
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 #ifndef __cplusplus
 __attribute__((visibility("hidden")))
 #endif
@@ -317,7 +317,7 @@ EB_ALIGN(16) const int16_t inv_transform_asm_const_sse2[] = {
     54, 90, 54, 90, 54, 90, 54, 90
 };
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 #ifndef __cplusplus
 __attribute__((visibility("hidden")))
 #endif
@@ -363,7 +363,7 @@ EB_EXTERN const int16_t coeff_tbl2[48 * 8] =
     54, 67, -31, -73, 4, 78, 22, -82, -46, 85, 67, -88, -82, 90, 90, -90
 };
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 #ifndef __cplusplus
 __attribute__((visibility("hidden")))
 #endif

@@ -19,7 +19,7 @@
 #include "EbDecMemInit.h"
 #include "EbDecPicMgr.h"
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifndef _WIN32
 #include <pthread.h>
 #include <errno.h>
 #include <sys/stat.h>
@@ -60,7 +60,7 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr,
                                 uint8_t **data, size_t data_size);
 
 void SwitchToRealTime(){
-#if defined(__linux__) || defined(__APPLE__)
+#ifndef _WIN32
 
     struct sched_param schedParam = {
         .sched_priority = 99
@@ -302,7 +302,7 @@ static EbErrorType init_svt_av1_decoder_handle(
     return return_error;
 }
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_dec_init_handle(
@@ -342,7 +342,7 @@ EB_API EbErrorType eb_dec_init_handle(
     return return_error;
 }
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_svt_dec_set_parameter(
@@ -359,7 +359,7 @@ EB_API EbErrorType eb_svt_dec_set_parameter(
     return EB_ErrorNone;
 }
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_init_decoder(
@@ -403,7 +403,7 @@ EB_API EbErrorType eb_init_decoder(
     return return_error;
 }
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_svt_decode_frame(
@@ -446,7 +446,7 @@ EB_API EbErrorType eb_svt_decode_frame(
     return return_error;
 }
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_svt_dec_get_picture(
@@ -469,7 +469,7 @@ EB_API EbErrorType eb_svt_dec_get_picture(
     return return_error;
 }
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_deinit_decoder(
@@ -535,7 +535,7 @@ EbErrorType eb_dec_component_de_init(EbComponentType  *svt_dec_component)
     return return_error;
 }
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_dec_deinit_handle(
@@ -553,7 +553,7 @@ EB_API EbErrorType eb_dec_deinit_handle(
     return return_error;
 }
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
 EB_API EbErrorType eb_dec_set_frame_buffer_callbacks(

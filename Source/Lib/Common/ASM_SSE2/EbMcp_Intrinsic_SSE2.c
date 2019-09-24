@@ -5,7 +5,7 @@
 
 #include "EbDefinitions.h"
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 #ifndef __cplusplus
 __attribute__((visibility("hidden")))
 #endif

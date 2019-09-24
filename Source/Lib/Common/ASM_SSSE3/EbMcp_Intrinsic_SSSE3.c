@@ -13,7 +13,7 @@
 
 #include "tmmintrin.h"
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 #ifndef __cplusplus
 __attribute__((visibility("hidden")))
 #endif
@@ -26,7 +26,7 @@ const int16_t lumaFilterCoeff[4][8] =
   { 0, 1, -5, 17, 58,-10, 4, -1}
 };
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 #ifndef __cplusplus
 __attribute__((visibility("hidden")))
 #endif
@@ -39,7 +39,7 @@ const int16_t lumaFilterCoeff7[4][8] =
   { 1, -5, 17, 58,-10, 4, -1, 0}
 };
 
-#if defined(__linux__) || defined(__APPLE__)
+#ifdef __GNUC__
 #ifndef __cplusplus
 __attribute__((visibility("hidden")))
 #endif
