@@ -615,7 +615,11 @@ int32_t  Av1WriteCoeffsTxb1D(
         // INTER. Chroma follows Luma in transform type
         if (cu_ptr->prediction_mode_flag == INTER_MODE) {
             txType = cu_ptr->transform_unit_array[tu_index].transform_type[PLANE_TYPE_Y] = DCT_DCT;
+#if ENHANCE_ATB
+            cu_ptr->transform_unit_array[tu_index].transform_type[PLANE_TYPE_UV] = DCT_DCT;
+#else
             cu_ptr->transform_unit_array[0].transform_type[PLANE_TYPE_UV] = DCT_DCT;
+#endif
         }
         else { // INTRA
             txType = cu_ptr->transform_unit_array[tu_index].transform_type[PLANE_TYPE_Y] = DCT_DCT;
@@ -1002,8 +1006,11 @@ static EbErrorType Av1EncodeCoeff1D(
     NeighborArrayUnit     *cb_dc_sign_level_coeff_neighbor_array)
 {
     EbErrorType return_error = EB_ErrorNone;
-
+#if ENHANCE_ATB
+    if (cu_ptr->tx_depth) {
+#else
     if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->tx_depth) {
+#endif
         av1_encode_tx_coef_y(
             pcs_ptr,
             context_ptr,

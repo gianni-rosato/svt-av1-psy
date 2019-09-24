@@ -662,6 +662,19 @@ static void mode_decision_candidate_buffer_dctor(EbPtr p)
     EB_DELETE(obj->recon_coeff_ptr);
     EB_DELETE(obj->recon_ptr);
 }
+#if ENHANCE_ATB
+static void mode_decision_scratch_candidate_buffer_dctor(EbPtr p)
+{
+    ModeDecisionCandidateBuffer *obj = (ModeDecisionCandidateBuffer*)p;
+    EB_DELETE(obj->prediction_ptr);
+    EB_DELETE(obj->prediction_ptr_temp);
+    EB_DELETE(obj->cfl_temp_prediction_ptr);
+    EB_DELETE(obj->residual_ptr);
+    EB_DELETE(obj->residual_quant_coeff_ptr);
+    EB_DELETE(obj->recon_coeff_ptr);
+    EB_DELETE(obj->recon_ptr);
+}
+#endif
 /***************************************
 * Mode Decision Candidate Ctor
 ***************************************/
@@ -765,6 +778,94 @@ EbErrorType mode_decision_candidate_buffer_ctor(
     buffer_ptr->full_cost_merge_ptr = full_cost_merge_ptr;
     return EB_ErrorNone;
 }
+#if ENHANCE_ATB
+EbErrorType mode_decision_scratch_candidate_buffer_ctor(
+    ModeDecisionCandidateBuffer    *buffer_ptr,
+    EbBitDepthEnum                  max_bitdepth)
+{
+
+    EbPictureBufferDescInitData pictureBufferDescInitData;
+    EbPictureBufferDescInitData doubleWidthPictureBufferDescInitData;
+    EbPictureBufferDescInitData ThirtyTwoWidthPictureBufferDescInitData;
+
+
+    buffer_ptr->dctor = mode_decision_scratch_candidate_buffer_dctor;
+
+    // Init Picture Data
+    pictureBufferDescInitData.max_width = MAX_SB_SIZE;
+    pictureBufferDescInitData.max_height = MAX_SB_SIZE;
+    pictureBufferDescInitData.bit_depth = max_bitdepth;
+    pictureBufferDescInitData.color_format = EB_YUV420;
+    pictureBufferDescInitData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+    pictureBufferDescInitData.left_padding = 0;
+    pictureBufferDescInitData.right_padding = 0;
+    pictureBufferDescInitData.top_padding = 0;
+    pictureBufferDescInitData.bot_padding = 0;
+    pictureBufferDescInitData.split_mode = EB_FALSE;
+    doubleWidthPictureBufferDescInitData.max_width = MAX_SB_SIZE;
+    doubleWidthPictureBufferDescInitData.max_height = MAX_SB_SIZE;
+    doubleWidthPictureBufferDescInitData.bit_depth = EB_16BIT;
+    doubleWidthPictureBufferDescInitData.color_format = EB_YUV420;
+    doubleWidthPictureBufferDescInitData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+    doubleWidthPictureBufferDescInitData.left_padding = 0;
+    doubleWidthPictureBufferDescInitData.right_padding = 0;
+    doubleWidthPictureBufferDescInitData.top_padding = 0;
+    doubleWidthPictureBufferDescInitData.bot_padding = 0;
+    doubleWidthPictureBufferDescInitData.split_mode = EB_FALSE;
+
+    ThirtyTwoWidthPictureBufferDescInitData.max_width = MAX_SB_SIZE;
+    ThirtyTwoWidthPictureBufferDescInitData.max_height = MAX_SB_SIZE;
+    ThirtyTwoWidthPictureBufferDescInitData.bit_depth = EB_32BIT;
+    ThirtyTwoWidthPictureBufferDescInitData.color_format = EB_YUV420;
+    ThirtyTwoWidthPictureBufferDescInitData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+    ThirtyTwoWidthPictureBufferDescInitData.left_padding = 0;
+    ThirtyTwoWidthPictureBufferDescInitData.right_padding = 0;
+    ThirtyTwoWidthPictureBufferDescInitData.top_padding = 0;
+    ThirtyTwoWidthPictureBufferDescInitData.bot_padding = 0;
+    ThirtyTwoWidthPictureBufferDescInitData.split_mode = EB_FALSE;
+
+    // Candidate Ptr
+    buffer_ptr->candidate_ptr = (ModeDecisionCandidate*)EB_NULL;
+
+    // Video Buffers
+    EB_NEW(
+        buffer_ptr->prediction_ptr,
+        eb_picture_buffer_desc_ctor,
+        (EbPtr)&pictureBufferDescInitData);
+
+    EB_NEW(
+        buffer_ptr->prediction_ptr_temp,
+        eb_picture_buffer_desc_ctor,
+        (EbPtr)&pictureBufferDescInitData);
+
+    EB_NEW(
+        buffer_ptr->cfl_temp_prediction_ptr,
+        eb_picture_buffer_desc_ctor,
+        (EbPtr)&pictureBufferDescInitData);
+
+    EB_NEW(
+        buffer_ptr->residual_ptr,
+        eb_picture_buffer_desc_ctor,
+        (EbPtr)&doubleWidthPictureBufferDescInitData);
+
+    EB_NEW(
+        buffer_ptr->residual_quant_coeff_ptr,
+        eb_picture_buffer_desc_ctor,
+        (EbPtr)&ThirtyTwoWidthPictureBufferDescInitData);
+
+    EB_NEW(
+        buffer_ptr->recon_coeff_ptr,
+        eb_picture_buffer_desc_ctor,
+        (EbPtr)&ThirtyTwoWidthPictureBufferDescInitData);
+
+    EB_NEW(
+        buffer_ptr->recon_ptr,
+        eb_picture_buffer_desc_ctor,
+        (EbPtr)&pictureBufferDescInitData);
+    return EB_ErrorNone;
+}
+#endif
+
 uint8_t check_ref_beackout(
     struct ModeDecisionContext *context_ptr,
     uint8_t                     ref_frame_type,

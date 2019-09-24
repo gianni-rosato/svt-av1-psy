@@ -2011,10 +2011,10 @@ void product_full_loop(
     ModeDecisionContext          *context_ptr,
     PictureControlSet            *picture_control_set_ptr,
     EbPictureBufferDesc          *input_picture_ptr,
-    uint32_t                          qp,
-    uint32_t                          *y_count_non_zero_coeffs,
-    uint64_t                         *y_coeff_bits,
-    uint64_t                         *y_full_distortion)
+    uint32_t                     qp,
+    uint32_t                     *y_count_non_zero_coeffs,
+    uint64_t                     *y_coeff_bits,
+    uint64_t                     *y_full_distortion)
 {
     uint32_t                       tu_origin_index;
     uint64_t                      y_full_cost;
@@ -2024,13 +2024,21 @@ void product_full_loop(
     uint64_t   y_tu_coeff_bits;
     EB_ALIGN(16) uint64_t tuFullDistortion[3][DIST_CALC_TOTAL];
     context_ptr->three_quad_energy = 0;
+#if ENHANCE_ATB
+    uint8_t  tx_depth = context_ptr->tx_depth;
+    uint32_t txb_itr = context_ptr->txb_itr;
+    uint32_t txb_1d_offset = context_ptr->txb_1d_offset;
+#else
     uint32_t  txb_1d_offset = 0;
     uint32_t txb_itr = 0;
+#endif
     assert(asm_type >= 0 && asm_type < ASM_TYPE_TOTAL);
+#if !ENHANCE_ATB
     uint8_t  tx_depth = candidate_buffer->candidate_ptr->tx_depth;
     uint16_t txb_count = context_ptr->blk_geom->txb_count[tx_depth];
     for (txb_itr = 0; txb_itr < txb_count; txb_itr++)
     {
+#endif
         uint16_t tx_org_x = context_ptr->blk_geom->tx_org_x[tx_depth][txb_itr];
         uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[tx_depth][txb_itr];
         int32_t cropped_tx_width = MIN(context_ptr->blk_geom->tx_width[tx_depth][txb_itr], sequence_control_set_ptr->seq_header.max_frame_width - (context_ptr->sb_origin_x + tx_org_x));
@@ -2040,7 +2048,11 @@ void product_full_loop(
         get_txb_ctx(
             sequence_control_set_ptr,
             COMPONENT_LUMA,
+#if ENHANCE_ATB
+            context_ptr->full_loop_luma_dc_sign_level_coeff_neighbor_array,
+#else
             context_ptr->luma_dc_sign_level_coeff_neighbor_array,
+#endif
             context_ptr->sb_origin_x + tx_org_x,
             context_ptr->sb_origin_y + tx_org_y,
             context_ptr->blk_geom->bsize,
@@ -2227,8 +2239,12 @@ void product_full_loop(
 
         y_full_distortion[DIST_CALC_RESIDUAL] += tuFullDistortion[0][DIST_CALC_RESIDUAL];
         y_full_distortion[DIST_CALC_PREDICTION] += tuFullDistortion[0][DIST_CALC_PREDICTION];
+#if ENHANCE_ATB
+        context_ptr->txb_1d_offset += context_ptr->blk_geom->tx_width[tx_depth][txb_itr] * context_ptr->blk_geom->tx_height[tx_depth][txb_itr];
+#else
         txb_1d_offset += context_ptr->blk_geom->tx_width[tx_depth][txb_itr] * context_ptr->blk_geom->tx_height[tx_depth][txb_itr];
     }
+#endif
 }
 // T1
 uint8_t allowed_tx_set_a[TX_SIZES_ALL][TX_TYPES] = {
@@ -2349,7 +2365,11 @@ void product_full_loop_tx_search(
             get_txb_ctx(
                 sequence_control_set_ptr,
                 COMPONENT_LUMA,
+#if ENHANCE_ATB
+                context_ptr->luma_dc_sign_level_coeff_neighbor_array,
+#else
                 picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+#endif
                 context_ptr->sb_origin_x + txb_origin_x,
                 context_ptr->sb_origin_y + txb_origin_y,
                 //txb_origin_x,// context_ptr->cu_origin_x,

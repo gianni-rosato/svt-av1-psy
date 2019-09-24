@@ -270,6 +270,13 @@ extern "C" {
         uint64_t                       *full_cost_merge_ptr
     );
 
+#if ENHANCE_ATB
+    extern EbErrorType mode_decision_scratch_candidate_buffer_ctor(
+        ModeDecisionCandidateBuffer    *buffer_ptr,
+        EbBitDepthEnum                  max_bitdepth
+    );
+#endif
+
     uint32_t product_full_mode_decision(
          struct ModeDecisionContext  *context_ptr,
         CodingUnit                   *cu_ptr,

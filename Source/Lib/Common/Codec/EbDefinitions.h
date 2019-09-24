@@ -47,6 +47,9 @@ extern "C" {
 #define EIGHT_PEL_PREDICTIVE_ME           1
 #define COMP_INTERINTRA                   1 // InterIntra mode support
 
+#define ENHANCE_ATB                       1
+
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
@@ -181,7 +184,11 @@ enum {
 // Maximum number of tile rows and tile columns
 #define MAX_TILE_ROWS 64
 #define MAX_TILE_COLS 64
+#if ENHANCE_ATB
+#define MAX_VARTX_DEPTH 2
+#else
 #define MAX_VARTX_DEPTH 1
+#endif
 #define MI_SIZE_64X64 (64 >> MI_SIZE_LOG2)
 #define MI_SIZE_128X128 (128 >> MI_SIZE_LOG2)
 #define MAX_PALETTE_SQUARE (64 * 64)
@@ -2453,9 +2460,11 @@ void(*ErrorHandler)(
 #define LOG2F_MAX_LCU_SIZE                          6u
 #define LOG2_64_SIZE                                6 // log2(BLOCK_SIZE_64)
 #define MAX_LEVEL_COUNT                             5 // log2(BLOCK_SIZE_64) - log2(MIN_BLOCK_SIZE)
+#if !ENHANCE_ATB
 #define MAX_TU_DEPTH                                2
-#define LOG_MIN_BLOCK_SIZE                             3
-#define MIN_BLOCK_SIZE                                 (1 << LOG_MIN_BLOCK_SIZE)
+#endif
+#define LOG_MIN_BLOCK_SIZE                          3
+#define MIN_BLOCK_SIZE                              (1 << LOG_MIN_BLOCK_SIZE)
 #define LOG_MIN_PU_SIZE                             2
 #define MIN_PU_SIZE                                 (1 << LOG_MIN_PU_SIZE)
 #define MAX_NUM_OF_PU_PER_CU                        1

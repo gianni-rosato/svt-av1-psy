@@ -15,7 +15,10 @@ static void mode_decision_context_dctor(EbPtr p)
 
     EB_FREE_ARRAY(obj->ref_best_ref_sq_table);
     EB_FREE_ARRAY(obj->ref_best_cost_sq_table);
-
+#if ENHANCE_ATB
+    EB_FREE_ARRAY(obj->above_txfm_context);
+    EB_FREE_ARRAY(obj->left_txfm_context);
+#endif
 #if NO_ENCDEC //SB128_TODO to upgrade
     int codedLeafIndex;
     for (codedLeafIndex = 0; codedLeafIndex < BLOCK_MAX_COUNT_SB_128; ++codedLeafIndex) {
@@ -25,6 +28,12 @@ static void mode_decision_context_dctor(EbPtr p)
    }
 #endif
     EB_DELETE_PTR_ARRAY(obj->candidate_buffer_ptr_array, MAX_NFL_BUFF);
+
+#if ENHANCE_ATB
+    EB_FREE_ARRAY(obj->scratch_candidate_buffer->candidate_ptr);
+    EB_FREE_ARRAY(obj->scratch_candidate_buffer);
+#endif
+
     EB_DELETE(obj->trans_quant_buffers_ptr);
     if (obj->hbd_mode_decision)
         EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon16bit);
@@ -129,6 +138,16 @@ EbErrorType mode_decision_context_ctor(
             &(context_ptr->full_cost_merge_ptr[bufferIndex])
         );
     }
+#if ENHANCE_ATB
+    EB_MALLOC_ARRAY(context_ptr->scratch_candidate_buffer, 1);
+
+    EB_NEW(
+        context_ptr->scratch_candidate_buffer,
+        mode_decision_scratch_candidate_buffer_ctor,
+        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
+
+    EB_MALLOC_ARRAY(context_ptr->scratch_candidate_buffer->candidate_ptr, 1);
+#endif
     context_ptr->md_cu_arr_nsq[0].av1xd = NULL;
     context_ptr->md_cu_arr_nsq[0].neigh_left_recon[0] = NULL;
     context_ptr->md_cu_arr_nsq[0].neigh_top_recon[0] = NULL;
@@ -204,6 +223,10 @@ EbErrorType mode_decision_context_ctor(
     }
     EB_MALLOC_ARRAY(context_ptr->ref_best_cost_sq_table, MAX_REF_TYPE_CAND);
     EB_MALLOC_ARRAY(context_ptr->ref_best_ref_sq_table, MAX_REF_TYPE_CAND);
+#if ENHANCE_ATB
+    EB_MALLOC_ARRAY(context_ptr->above_txfm_context, (MAX_SB_SIZE >> MI_SIZE_LOG2));
+    EB_MALLOC_ARRAY(context_ptr->left_txfm_context, (MAX_SB_SIZE >> MI_SIZE_LOG2));
+#endif
     return EB_ErrorNone;
 }
 
