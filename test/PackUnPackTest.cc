@@ -39,6 +39,7 @@
 #include "EbPictureOperators_AVX2.h"
 #include "EbPackUnPack_SSE2.h"
 #include "EbPackUnPack_C.h"
+#include "EbIntraPrediction.h"
 #include "EbUnitTestUtility.h"
 #include "EbUtility.h"
 #include "random.h"
@@ -174,9 +175,9 @@ class PackMsbTest : public ::testing::Test,
     PackMsbTest()
         : area_width_(std::get<0>(GetParam())),
           area_height_(std::get<1>(GetParam())) {
-        in8_stride_ = out_stride_ = MAX_SB_SIZE;
+        in8_stride_ = out_stride_ = MAX_PU_SIZE;
         inn_stride = in8_stride_ >> 2;
-        test_size_ = MAX_SB_SQUARE;
+        test_size_ = MAX_PU_SIZE * MAX_PU_SIZE;
         inn_bit_buffer_ = nullptr;
         in_8bit_buffer_ = nullptr;
         out_16bit_buffer1_ = nullptr;
@@ -185,7 +186,7 @@ class PackMsbTest : public ::testing::Test,
 
     void SetUp() override {
         inn_bit_buffer_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_ >> 2));
+            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_ >> 4));
         in_8bit_buffer_ =
             reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
         out_16bit_buffer1_ = reinterpret_cast<uint16_t *>(
@@ -226,7 +227,7 @@ class PackMsbTest : public ::testing::Test,
 
     void run_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
-            eb_buf_random_u8(inn_bit_buffer_, test_size_ >> 2);
+            eb_buf_random_u8(inn_bit_buffer_, test_size_ >> 4);
             eb_buf_random_u8(in_8bit_buffer_, test_size_);
             compressed_packmsb_avx2_intrin(in_8bit_buffer_,
                                            in8_stride_,

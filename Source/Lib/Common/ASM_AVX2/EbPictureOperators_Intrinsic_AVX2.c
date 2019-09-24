@@ -39,7 +39,8 @@ void compressed_packmsb_avx2_intrin(
         //processing 2 lines for chroma
         for (y = 0; y < height; y += 2)
         {
-            in2Bit = _mm_loadu_si128((__m128i*)inn_bit_buffer); //2 Lines Stored in 1D format-Could be replaced by 2 _mm_loadl_epi64
+            //2 Lines Stored in 1D format-Could be replaced by 2 _mm_loadl_epi64
+            in2Bit = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)inn_bit_buffer), _mm_loadl_epi64((__m128i*)(inn_bit_buffer + inn_stride)));
 
             ext0 = _mm_and_si128(in2Bit, msk0);
             ext1 = _mm_and_si128(_mm_slli_epi16(in2Bit, 2), msk0);
