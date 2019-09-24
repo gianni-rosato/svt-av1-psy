@@ -244,7 +244,7 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
 
         /* delta_lf allocation at SB level */
         EB_MALLOC_DEC(int32_t*, cur_frame_buf->delta_lf,
-            (num_sb * sizeof(int32_t)), EB_N_PTR);
+            (num_sb * FRAME_LF_COUNT * sizeof(int32_t)), EB_N_PTR);
 
         /* tile map allocation at SB level */
         EB_MALLOC_DEC(uint8_t*, cur_frame_buf->tile_map_sb,

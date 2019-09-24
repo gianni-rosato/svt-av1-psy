@@ -2277,8 +2277,8 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             sb_info->sb_cdef_strength = frame_buf->cdef_strength +
                 (((sb_row * master_frame_buf->sb_cols) + sb_col) * cdef_factor);
 
-            sb_info->sb_delta_lf = frame_buf->delta_lf +
-                (sb_row * master_frame_buf->sb_cols) + sb_col;
+            sb_info->sb_delta_lf = frame_buf->delta_lf + (FRAME_LF_COUNT *
+                ((sb_row * master_frame_buf->sb_cols) + sb_col));
 
             sb_info->sb_delta_q = frame_buf->delta_q +
                 (sb_row * master_frame_buf->sb_cols) + sb_col;
@@ -2490,12 +2490,10 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             dec_handle_ptr->frame_header.loop_filter_params.filter_level[1])
         {
             /*LF Trigger function for each frame*/
-            dec_av1_loop_filter_frame(&dec_handle_ptr->frame_header,
-                &dec_handle_ptr->seq_header,
+            dec_av1_loop_filter_frame(dec_handle_ptr,
                 dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
                 dec_handle_ptr->pv_lf_ctxt,
-                AOM_PLANE_Y, MAX_MB_PLANE
-            );
+                AOM_PLANE_Y, MAX_MB_PLANE);
         }
 
         const int32_t do_cdef =

@@ -184,6 +184,8 @@ typedef struct ParseCtxt {
 
     /*!< Reference Loop Restoration Unit  */
     RestorationUnitInfo ref_lr_unit[MAX_MB_PLANE];
+
+    EbBool  read_deltas;
 } ParseCtxt;
 
 int get_qindex(SegmentationParams *seg_params, int segment_id, int base_q_idx);

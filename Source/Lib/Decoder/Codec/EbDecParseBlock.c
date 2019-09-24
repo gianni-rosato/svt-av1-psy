@@ -487,19 +487,13 @@ void read_cdef(EbDecHandle *dec_handle, SvtReader *r, PartitionInfo_t *xd,
 }
 
 void read_delta_qindex(EbDecHandle *dec_handle, SvtReader *r,
-    ModeInfo_t *const mbmi, int mi_col, int mi_row,
-    int32_t *cur_qind, int32_t *sb_delta_q)
+    ModeInfo_t *const mbmi, int32_t *cur_qind, int32_t *sb_delta_q)
 {
     int sign, abs, reduced_delta_qindex = 0;
     BlockSize bsize = mbmi->sb_type;
     DeltaQParams    *delta_q_params = &dec_handle->frame_header.delta_q_params;
-    const int b_col = mi_col & (dec_handle->seq_header.sb_mi_size - 1);
-    const int b_row = mi_row & (dec_handle->seq_header.sb_mi_size - 1);
-    const int read_delta_q_flag = (b_col == 0 && b_row == 0);
 
-    if ((bsize != dec_handle->seq_header.sb_size || mbmi->skip == 0) &&
-        read_delta_q_flag)
-    {
+    if ((bsize != dec_handle->seq_header.sb_size || mbmi->skip == 0)) {
         ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
         abs = svt_read_symbol(r, parse_ctxt->cur_tile_ctx.delta_q_cdf,
             DELTA_Q_PROBS + 1, ACCT_STR);
@@ -522,32 +516,33 @@ void read_delta_qindex(EbDecHandle *dec_handle, SvtReader *r,
 }
 
 int read_delta_lflevel(EbDecHandle *dec_handle, SvtReader *r,
-    AomCdfProb *cdf, ModeInfo_t *mbmi, int mi_col, int mi_row,
-    int32_t delta_lf)
+    AomCdfProb *cdf, ModeInfo_t *mbmi, int32_t delta_lf)
 {
+    int tmp_lvl = 0;
     int reduced_delta_lflevel = 0;
     const BlockSize bsize = mbmi->sb_type;
-    const int b_col = mi_col & (dec_handle->seq_header.sb_mi_size - 1);
-    const int b_row = mi_row & (dec_handle->seq_header.sb_mi_size - 1);
-    const int read_delta_lf_flag = (b_col == 0 && b_row == 0);
+
+    if (bsize == dec_handle->seq_header.sb_size && mbmi->skip)
+        return delta_lf;
+
     DeltaLFParams *delta_lf_params = &dec_handle->frame_header.delta_lf_params;
 
-    if ((bsize != dec_handle->seq_header.sb_size || mbmi->skip == 0) &&
-        read_delta_lf_flag)
-    {
-        int abs = svt_read_symbol(r, cdf, DELTA_LF_PROBS + 1, ACCT_STR);
-        if (abs == DELTA_LF_SMALL) {
-            const int rem_bits = svt_read_literal(r, 3, ACCT_STR) + 1;
-            const int thr = (1 << rem_bits) + 1;
-            abs = svt_read_literal(r, rem_bits, ACCT_STR) + thr;
-        }
-        const int sign = abs ? svt_read_bit(r, ACCT_STR) : 1;
-        reduced_delta_lflevel = sign ? -abs : abs;
-        reduced_delta_lflevel = clamp(delta_lf +
-            (reduced_delta_lflevel << delta_lf_params->delta_lf_res),
-            -MAX_LOOP_FILTER, MAX_LOOP_FILTER);
+    int abs = svt_read_symbol(r, cdf, DELTA_LF_PROBS + 1, ACCT_STR);
+    if (abs == DELTA_LF_SMALL) {
+        const int rem_bits = svt_read_literal(r, 3, ACCT_STR) + 1;
+        const int thr = (1 << rem_bits) + 1;
+        abs = svt_read_literal(r, rem_bits, ACCT_STR) + thr;
     }
-    return reduced_delta_lflevel;
+    const int sign = abs ? svt_read_bit(r, ACCT_STR) : 1;
+    reduced_delta_lflevel = sign ? -abs : abs;
+    reduced_delta_lflevel = clamp(delta_lf +
+        (reduced_delta_lflevel << delta_lf_params->delta_lf_res),
+        -MAX_LOOP_FILTER, MAX_LOOP_FILTER);
+
+    tmp_lvl = (clamp(delta_lf +
+        (reduced_delta_lflevel << delta_lf_params->delta_lf_res),
+        -MAX_LOOP_FILTER, MAX_LOOP_FILTER));
+    return tmp_lvl;
 }
 
 int read_skip(EbDecHandle *dec_handle, PartitionInfo_t *xd,
@@ -591,7 +586,7 @@ int read_skip_mode(EbDecHandle *dec_handle, PartitionInfo_t *xd, int segment_id,
 // If delta q is present, reads delta_q index.
 // Also reads delta_q loop filter levels, if present.
 static void read_delta_params(EbDecHandle *dec_handle, SvtReader *r,
-    PartitionInfo_t *xd, const int mi_row, const int mi_col)
+    PartitionInfo_t *xd)
 {
     ParseCtxt       *parse_ctxt     = (ParseCtxt *)dec_handle->pv_parse_ctxt;
     DeltaQParams    *delta_q_params = &dec_handle->frame_header.delta_q_params;
@@ -599,8 +594,11 @@ static void read_delta_params(EbDecHandle *dec_handle, SvtReader *r,
     SBInfo          *sb_info = xd->sb_info;
     ModeInfo_t *const mbmi = &xd->mi[0];
 
+    if (!parse_ctxt->read_deltas)
+        return;
+
     if (delta_q_params->delta_q_present) {
-        read_delta_qindex(dec_handle, r, mbmi, mi_col, mi_row,
+        read_delta_qindex(dec_handle, r, mbmi,
             &parse_ctxt->parse_nbr4x4_ctxt.cur_q_ind, &sb_info->sb_delta_q[0]);
     }
 
@@ -614,12 +612,19 @@ static void read_delta_params(EbDecHandle *dec_handle, SvtReader *r,
             int num_planes = color_info->mono_chrome ? 1 : MAX_MB_PLANE;
             frame_lf_count =
                 num_planes > 1 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
+
+            for (int lf_id = 0; lf_id < frame_lf_count; ++lf_id) {
+                parse_ctxt->parse_nbr4x4_ctxt.delta_lf[lf_id] =
+                    sb_info->sb_delta_lf[lf_id] = read_delta_lflevel(dec_handle, r,
+                        ec_ctx->delta_lf_multi_cdf[lf_id], mbmi,
+                        parse_ctxt->parse_nbr4x4_ctxt.delta_lf[lf_id]);
+            }
         }
-        for (int lf_id = 0; lf_id < frame_lf_count; ++lf_id) {
-            parse_ctxt->parse_nbr4x4_ctxt.delta_lf[lf_id] =
-                sb_info->sb_delta_lf[lf_id] = read_delta_lflevel(dec_handle, r,
-                    ec_ctx->delta_lf_multi_cdf[lf_id], mbmi, mi_col, mi_row,
-                    parse_ctxt->parse_nbr4x4_ctxt.delta_lf[lf_id]);
+        else {
+            parse_ctxt->parse_nbr4x4_ctxt.delta_lf[0] =
+                sb_info->sb_delta_lf[0] = read_delta_lflevel(dec_handle, r,
+                    ec_ctx->delta_lf_cdf, mbmi,
+                    parse_ctxt->parse_nbr4x4_ctxt.delta_lf[0]);
         }
     }
 }
@@ -870,7 +875,8 @@ void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd,
 
     read_cdef(dec_handle, r, xd, mi_col, mi_row, cdef_strength);
 
-    read_delta_params(dec_handle, r, xd, mi_row, mi_col);
+    read_delta_params(dec_handle, r, xd);
+    parse_ctxt->read_deltas = 0;
 
     mbmi->ref_frame[0] = INTRA_FRAME;
     mbmi->ref_frame[1] = NONE_FRAME;
@@ -1322,7 +1328,9 @@ void inter_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t * pi,
         lossless_array[mbmi->segment_id];
     read_cdef(dec_handle, r, pi, mi_col, mi_row, cdef_strength);
 
-    read_delta_params(dec_handle, r, pi, mi_row, mi_col);
+    read_delta_params(dec_handle, r, pi);
+    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
+    parse_ctxt->read_deltas = 0;
 
     if (!mbmi->skip_mode)
         inter_block = read_is_inter(dec_handle, pi, mbmi->segment_id, r);
@@ -3125,6 +3133,9 @@ void parse_super_block(EbDecHandle *dec_handle, uint32_t blk_row,
 {
     ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
     SvtReader *reader = &parse_ctx->r;
+
+    parse_ctx->read_deltas = dec_handle->frame_header.
+                            delta_q_params.delta_q_present;
 
     read_lr(dec_handle, sbInfo, blk_row, blk_col, reader);
 
