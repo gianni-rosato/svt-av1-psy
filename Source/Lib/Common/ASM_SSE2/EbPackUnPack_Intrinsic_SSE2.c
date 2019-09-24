@@ -134,7 +134,7 @@ void eb_enc_msb_un_pack2d_sse2_intrin(
             outn0_U8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(inPixel0, xmm_3), 6), _mm_slli_epi16(_mm_and_si128(inPixel1, xmm_3), 6));
             outn1_U8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(inPixel2, xmm_3), 6), _mm_slli_epi16(_mm_and_si128(inPixel3, xmm_3), 6));
             outn2_U8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(inPixel4, xmm_3), 6), _mm_slli_epi16(_mm_and_si128(inPixel5, xmm_3), 6));
-            outn3_U8 = _mm_packus_epi16(_mm_and_si128(inPixel6, xmm_3), _mm_and_si128(inPixel7, xmm_3));
+            outn3_U8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(inPixel6, xmm_3), 6), _mm_slli_epi16(_mm_and_si128(inPixel7, xmm_3), 6));
 
             out8_0_U8 = _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(inPixel0, 2), xmm_00FF), _mm_and_si128(_mm_srli_epi16(inPixel1, 2), xmm_00FF));
             out8_1_U8 = _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(inPixel2, 2), xmm_00FF), _mm_and_si128(_mm_srli_epi16(inPixel3, 2), xmm_00FF));
@@ -175,7 +175,7 @@ void eb_enc_msb_un_pack2d_sse2_intrin(
             outn0_U8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(inPixel0, xmm_3), 6), _mm_slli_epi16(_mm_and_si128(inPixel1, xmm_3), 6));
             outn1_U8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(inPixel2, xmm_3), 6), _mm_slli_epi16(_mm_and_si128(inPixel3, xmm_3), 6));
             outn2_U8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(inPixel4, xmm_3), 6), _mm_slli_epi16(_mm_and_si128(inPixel5, xmm_3), 6));
-            outn3_U8 = _mm_packus_epi16(_mm_and_si128(inPixel6, xmm_3), _mm_and_si128(inPixel7, xmm_3));
+            outn3_U8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(inPixel6, xmm_3), 6), _mm_slli_epi16(_mm_and_si128(inPixel7, xmm_3), 6));
 
             out8_0_U8 = _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(inPixel0, 2), xmm_00FF), _mm_and_si128(_mm_srli_epi16(inPixel1, 2), xmm_00FF));
             out8_1_U8 = _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(inPixel2, 2), xmm_00FF), _mm_and_si128(_mm_srli_epi16(inPixel3, 2), xmm_00FF));
