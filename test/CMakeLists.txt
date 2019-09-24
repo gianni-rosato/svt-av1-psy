@@ -43,6 +43,11 @@ add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
 
 enable_testing()
 
+if(UNIX)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx2")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
+endif()
+
 file(GLOB all_files
     "*.h"
     "*.c"

@@ -14,7 +14,55 @@
 
 #include <emmintrin.h>  // SSE2
 
- //nclude "./aom_config.h"
+// nclude "./aom_config.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void transpose_8bit_4x4_reg128bit_instance_sse2(const __m128i *const in,
+                                                __m128i *const out);
+
+void transpose_8bit_8x8_reg128bit_instance_sse2(const __m128i *const in,
+                                                __m128i *const out);
+
+void transpose_8bit_16x8_reg128bit_instance_sse2(const __m128i *const in,
+                                                 __m128i *const out);
+
+void transpose_8bit_16x16_reg128bit_instance_sse2(const __m128i *const in,
+                                                  __m128i *const out);
+
+void partial_transpose_8bit_8x8_reg128bit_instance_sse2(const __m128i *const in,
+                                                        __m128i *const out);
+
+void transpose_16bit_4x4_reg128bit_instance_sse2(const __m128i *const in,
+                                                 __m128i *const out);
+
+void transpose_16bit_4x8_reg128bit_instance_sse2(const __m128i *const in,
+                                                 __m128i *const out);
+
+void transpose_16bit_8x4_reg128bit_instance_sse2(const __m128i *const in,
+                                                 __m128i *const out);
+
+void transpose_16bit_8x8_reg128bit_instance_sse2(const __m128i *const in,
+                                                 __m128i *const out);
+
+void transpose_16bit_16x16_reg128bit_instance_sse2(const __m128i *const in,
+                                                   __m128i *const out);
+
+void transpose_32bit_4x4_reg128bit_instance_sse2(const __m128i *const in,
+                                                 __m128i *const out);
+
+void transpose_32bit_4x4x2_reg128bit_instance_sse2(const __m128i *const in,
+                                                   __m128i *const out);
+
+void transpose_32bit_8x4_reg128bit_instance_sse2(const __m128i *const in,
+                                                 __m128i *const out);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 static INLINE __m128i transpose_8bit_4x4(const __m128i *const in) {
     // Unpack 16 bit elements. Goes from:

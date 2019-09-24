@@ -3,10 +3,7 @@
  * SPDX - License - Identifier: BSD - 2 - Clause - Patent
  */
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-
+#include "gtest/gtest.h"
 // workaround to eliminate the compiling warning on linux
 // The macro will conflict with definition in gtest.h
 #ifdef __USE_GNU
@@ -141,4 +138,480 @@ TEST_F(TransposeTest, DISABLED_Speed) {
     RunSpeedTest();
 }
 
+/**
+ * @brief Unit test for transpose:
+ * - transpose_8bit_4x4_reg128bit_instance_sse2
+ * - transpose_8bit_8x8_reg128bit_instance_sse2
+ * - transpose_8bit_16x8_reg128bit_instance_sse2
+ * - transpose_8bit_16x16_reg128bit_instance_sse2
+ * - transpose_8bit_16x16_reg128bit_instance_avx2
+ * - transpose_16bit_4x4_reg128bit_instance_sse2
+ * - transpose_16bit_4x8_reg128bit_instance_sse2
+ * - transpose_16bit_8x4_reg128bit_instance_sse2
+ * - transpose_16bit_8x8_reg128bit_instance_sse2
+ * - transpose_16bit_16x16_reg128bit_instance_sse2
+ * - transpose_32bit_4x4_reg128bit_instance_sse2
+ * - transpose_32bit_4x4x2_reg128bit_instance_sse2
+ * - transpose_32bit_8x4_reg128bit_instance_sse2
+ * - transpose_32bit_8x8_reg256bit_instance_avx2
+ * - transpose_64bit_4x4_reg256bit_instance_avx2
+ * - transpose_64bit_4x6_reg256bit_instance_avx2
+ * - transpose_64bit_4x8_reg256bit_instance_avx2
+ * - partial_transpose_8bit_8x8_reg128bit_instance_sse2
+ *
+ * Test strategy:
+ * Since the input parameters for assembly functions are vector type,
+ * the input data should be packed beforehand and output data should
+ * be unpacked after the assembly function is invoked. Then unpacked
+ * output should match output from c implementation.
+ *
+ * Expected result:
+ * The result from reference and test should be the same in value
+ *
+ */
+using std::make_tuple;
+using svt_av1_test_tool::SVTRandom;
+
+/** reference for transpose function in c */
+template <typename Sample>
+static void transpose_xbit_wxh_c(uint32_t width, uint32_t height,
+                                 const Sample *const in, Sample *const out) {
+    for (uint32_t h = 0; h < height; h++) {
+        for (uint32_t w = 0; w < width; w++) {
+            out[height * w + h] = in[width * h + w];
+        }
+    }
+}
+
+/* intrinsic function wrapper since purely intrinsic
+ * functions have no address, can not be passed as
+ * function pointer.
+ */
+static __m128i m128_pack(const __m128i *p) {
+    return _mm_loadu_si128(p);
+}
+
+static void m128_unpack(__m128i *p, __m128i b) {
+    _mm_storeu_si128(p, b);
+}
+
+static __m256i m256_pack(const __m256i *p) {
+    return _mm256_loadu_si256(p);
+}
+
+static void m256_unpack(__m256i *p, __m256i b) {
+    _mm256_storeu_si256(p, b);
+}
+
+/** two function types of transpose using __m128i and __m256i */
+using TransposeFunc = void (*)(const __m128i *const in, __m128i *const out);
+using TransposeM256Func = void (*)(const __m256i *const in, __m256i *const out);
+
+/** parameter types of using different function types */
+using TransposeParam = std::tuple<uint32_t, uint32_t, TransposeFunc>;
+using TransposeM256Param = std::tuple<uint32_t, uint32_t, TransposeM256Func>;
+
+// maximum transpose size supported is 16x16
+static const size_t mem_size = 16 * 16 * sizeof(__m256i);
+
+/** basic template class with following types:
+ * Sample: uint8_t, uint16_t, uint32_t, uint64_t
+ * FuncType: TransposeFunc, TransposeM256Func
+ * PackType: __m128i, __m256i
+ * ParamType: TransposeParam, TransposeM256Param
+ */
+template <typename Sample, typename FuncType, typename PackType,
+          typename ParamType>
+class TransposeTestBase : public ::testing::TestWithParam<ParamType> {
+  protected:
+    TransposeTestBase() : rnd_(32, false), bd_(8) {
+        width_ = 0;
+        height_ = 0;
+        func_tst_ = nullptr;
+        input_tst_ = reinterpret_cast<Sample *>(eb_aom_memalign(32, mem_size));
+        memset(input_tst_, 0, mem_size);
+        input_ref_ = reinterpret_cast<Sample *>(eb_aom_memalign(32, mem_size));
+        memset(input_ref_, 0, mem_size);
+        output_tst_ = reinterpret_cast<Sample *>(eb_aom_memalign(32, mem_size));
+        memset(output_tst_, 0, mem_size);
+        output_tmp_ = reinterpret_cast<Sample *>(eb_aom_memalign(32, mem_size));
+        memset(output_tmp_, 0, mem_size);
+        output_ref_ = reinterpret_cast<Sample *>(eb_aom_memalign(32, mem_size));
+        memset(output_ref_, 0, mem_size);
+        pack_tool = nullptr;
+        unpack_tool = nullptr;
+    }
+
+    virtual ~TransposeTestBase() {
+        if (input_tst_) {
+            eb_aom_free(input_tst_);
+            input_tst_ = nullptr;
+        }
+        if (input_ref_) {
+            eb_aom_free(input_ref_);
+            input_ref_ = nullptr;
+        }
+        if (output_tst_) {
+            eb_aom_free(output_tst_);
+            output_tst_ = nullptr;
+        }
+        if (output_tmp_) {
+            eb_aom_free(output_tmp_);
+            output_tmp_ = nullptr;
+        }
+        if (output_ref_) {
+            eb_aom_free(output_ref_);
+            output_ref_ = nullptr;
+        }
+        aom_clear_system_state();
+    }
+
+    void run_check_output() {
+        // prepare input data for c implementation
+        size_t size = prepare_input_data();
+
+        // prepare input data for assembly implementation
+        pack_input_data();
+
+        transpose_xbit_wxh_c(width_, height_, input_ref_, output_ref_);
+        if (func_tst_) {
+            func_tst_((PackType *)input_tst_, (PackType *)output_tmp_);
+            unpack_output_data();
+        }
+
+        for (size_t i = 0; i < size; i++) {
+            ASSERT_EQ(output_tst_[i], output_ref_[i])
+                << "output mismatches at [" << i << "]";
+        }
+    }
+
+    virtual size_t prepare_input_data() {
+        size_t size = width_ * height_;
+        for (size_t i = 0; i < size; ++i)
+            input_ref_[i] = (Sample)(rnd_.random() % (1 << bd_));
+        return size;
+    }
+
+    virtual void pack_input_data() {
+        for (size_t i = 0; i < height_; i++)
+            ((PackType *)input_tst_)[i] =
+                pack_tool((PackType *)(&input_ref_[width_ * i]));
+    }
+
+    virtual void unpack_output_data() {
+        for (size_t i = 0; i < width_; i++) {
+            unpack_tool((PackType *)(&output_tst_[height_ * i]),
+                        ((PackType *)output_tmp_)[i]);
+        }
+    }
+
+  protected:
+    SVTRandom rnd_;      /**< random tool */
+    uint32_t bd_;        /**< bit-depth of value */
+    uint32_t width_;     /**< width of test matrix */
+    uint32_t height_;    /**< height of test matrix */
+    FuncType func_tst_;  /**< function to test */
+    Sample *input_tst_;  /**< input buffer for test */
+    Sample *input_ref_;  /**< input buffer for reference */
+    Sample *output_tmp_; /**< output buffer for temp */
+    Sample *output_tst_; /**< output buffer for test */
+    Sample *output_ref_; /**< output buffer for reference */
+
+    typedef PackType (*PackTool)(PackType const *);
+    typedef void (*UnpackTool)(PackType *, PackType);
+    PackTool pack_tool;
+    UnpackTool unpack_tool;
+};
+
+/**
+ * @brief Unit test for 8-bit transpose:
+ * - transpose_8bit_4x4_reg128bit_instance_sse2
+ * - transpose_8bit_8x8_reg128bit_instance_sse2
+ * - transpose_8bit_16x8_reg128bit_instance_sse2
+ * - transpose_8bit_16x16_reg128bit_instance_sse2
+ * - transpose_8bit_16x16_reg128bit_instance_avx2
+ */
+class Transpose8BitTest : public TransposeTestBase<uint8_t, TransposeFunc,
+                                                   __m128i, TransposeParam> {
+  public:
+    Transpose8BitTest() {
+        bd_ = 8;
+        width_ = TEST_GET_PARAM(0);
+        height_ = TEST_GET_PARAM(1);
+        func_tst_ = TEST_GET_PARAM(2);
+        pack_tool = m128_pack;
+        unpack_tool = m128_unpack;
+    }
+
+    void unpack_output_data() override {
+        if (width_ == 16 && height_ == 8) {
+            for (size_t i = 0; i < height_; i++) {
+                unpack_tool((__m128i *)(&output_tst_[width_ * i]),
+                            ((__m128i *)output_tmp_)[i]);
+            }
+        } else
+            TransposeTestBase::unpack_output_data();
+    }
+
+    static ::testing::internal::ParamGenerator<TransposeParam> BuildParams() {
+        const TransposeParam params[] = {
+            make_tuple(4, 4, transpose_8bit_4x4_reg128bit_instance_sse2),
+            make_tuple(8, 8, transpose_8bit_8x8_reg128bit_instance_sse2),
+            make_tuple(16, 8, transpose_8bit_16x8_reg128bit_instance_sse2),
+            make_tuple(16, 16, transpose_8bit_16x16_reg128bit_instance_sse2),
+            make_tuple(16, 16, transpose_8bit_16x16_reg128bit_instance_avx2)};
+        return ::testing::ValuesIn(params);
+    }
+};
+
+TEST_P(Transpose8BitTest, RunCheckOutput) {
+    run_check_output();
+}
+
+INSTANTIATE_TEST_CASE_P(TRANSPOSE, Transpose8BitTest,
+                        Transpose8BitTest::BuildParams());
+
+/**
+ * @brief Unit test for partial 8-bit transpose:
+ * - partial_transpose_8bit_8x8_reg128bit_instance_sse2
+ */
+class TransposePartial8BitTest
+    : public TransposeTestBase<uint8_t, TransposeFunc, __m128i,
+                               TransposeParam> {
+  public:
+    TransposePartial8BitTest() {
+        bd_ = 8;
+        width_ = TEST_GET_PARAM(0);
+        height_ = TEST_GET_PARAM(1);
+        func_tst_ = TEST_GET_PARAM(2);
+        pack_tool = m128_pack;
+        unpack_tool = m128_unpack;
+    }
+
+    void unpack_output_data() override {
+        if (width_ == 8 && height_ == 8) {
+            for (size_t i = 0; i < 4; i++) {
+                unpack_tool((__m128i *)(&output_tst_[16 * i]),
+                            ((__m128i *)output_tmp_)[i]);
+            }
+        } else
+            TransposeTestBase::unpack_output_data();
+    }
+
+    static ::testing::internal::ParamGenerator<TransposeParam> BuildParams() {
+        const TransposeParam params[] = {make_tuple(
+            8, 8, partial_transpose_8bit_8x8_reg128bit_instance_sse2)};
+        return ::testing::ValuesIn(params);
+    }
+};
+
+TEST_P(TransposePartial8BitTest, RunCheckOutput) {
+    run_check_output();
+}
+
+INSTANTIATE_TEST_CASE_P(TRANSPOSE, TransposePartial8BitTest,
+                        TransposePartial8BitTest::BuildParams());
+
+/**
+ * @brief Unit test for 16-bit transpose:
+ * - transpose_16bit_4x4_reg128bit_instance_sse2
+ * - transpose_16bit_4x8_reg128bit_instance_sse2
+ * - transpose_16bit_8x4_reg128bit_instance_sse2
+ * - transpose_16bit_8x8_reg128bit_instance_sse2
+ * - transpose_16bit_16x16_reg128bit_instance_sse2
+ */
+class Transpose16BitTest : public TransposeTestBase<uint16_t, TransposeFunc,
+                                                    __m128i, TransposeParam> {
+  public:
+    Transpose16BitTest() {
+        bd_ = 16;
+        width_ = TEST_GET_PARAM(0);
+        height_ = TEST_GET_PARAM(1);
+        func_tst_ = TEST_GET_PARAM(2);
+        pack_tool = m128_pack;
+        unpack_tool = m128_unpack;
+    }
+
+    void pack_input_data() override {
+        TransposeTestBase::pack_input_data();
+        if (width_ == 16 && height_ == 16) {
+            // copy right part to next block of data
+            for (size_t i = 0; i < height_; i++)
+                ((__m128i *)input_tst_)[height_ + i] = pack_tool(
+                    (__m128i *)(&input_ref_[width_ * i + (width_ >> 1)]));
+        }
+    }
+
+    void unpack_output_data() override {
+        TransposeTestBase::unpack_output_data();
+        if (width_ == 16 && height_ == 16) {
+            // copy next block of output to right part
+            for (size_t i = 0; i < width_; i++)
+                unpack_tool(
+                    (__m128i *)(&((uint8_t *)(&output_tst_[height_ * i]))[16]),
+                    ((__m128i *)output_tmp_)[width_ + i]);
+        }
+    }
+
+    static ::testing::internal::ParamGenerator<TransposeParam> BuildParams() {
+        const TransposeParam params[] = {
+            make_tuple(4, 4, transpose_16bit_4x4_reg128bit_instance_sse2),
+            make_tuple(4, 8, transpose_16bit_4x8_reg128bit_instance_sse2),
+            make_tuple(8, 4, transpose_16bit_8x4_reg128bit_instance_sse2),
+            make_tuple(8, 8, transpose_16bit_8x8_reg128bit_instance_sse2),
+            make_tuple(16, 16, transpose_16bit_16x16_reg128bit_instance_sse2)};
+        return ::testing::ValuesIn(params);
+    }
+};
+
+TEST_P(Transpose16BitTest, RunCheckOutput) {
+    run_check_output();
+}
+
+INSTANTIATE_TEST_CASE_P(TRANSPOSE, Transpose16BitTest,
+                        Transpose16BitTest::BuildParams());
+
+/**
+ * @brief Unit test for 32-bit transpose with __m128i packed:
+ * - transpose_32bit_4x4_reg128bit_instance_sse2
+ * - transpose_32bit_4x4x2_reg128bit_instance_sse2
+ * - transpose_32bit_8x4_reg128bit_instance_sse2
+ */
+class Transpose32BitTest : public TransposeTestBase<uint32_t, TransposeFunc,
+                                                    __m128i, TransposeParam> {
+  public:
+    Transpose32BitTest() {
+        bd_ = 31;
+        width_ = TEST_GET_PARAM(0);
+        height_ = TEST_GET_PARAM(1);
+        func_tst_ = TEST_GET_PARAM(2);
+        pack_tool = m128_pack;
+        unpack_tool = m128_unpack;
+    }
+
+    void pack_input_data() override {
+        if (width_ == 8 && height_ == 4) {
+            size_t lines =
+                width_ * height_ * sizeof(uint32_t) / sizeof(__m128i);
+            for (size_t i = 0; i < lines; i++)
+                ((__m128i *)input_tst_)[i] =
+                    pack_tool((__m128i *)(&input_ref_[i * sizeof(__m128i) /
+                                                      sizeof(uint32_t)]));
+        } else
+            TransposeTestBase::pack_input_data();
+    }
+
+    void unpack_output_data() override {
+        TransposeTestBase::unpack_output_data();
+        if (width_ == 4 && height_ == 8) {
+            // 4x4x2
+            for (size_t i = 0; i < width_; i++)
+                unpack_tool(
+                    (__m128i *)(&((uint8_t *)(&output_tst_[height_ * i]))[16]),
+                    ((__m128i *)output_tmp_)[width_ + i]);
+        }
+    }
+
+    static ::testing::internal::ParamGenerator<TransposeParam> BuildParams() {
+        const TransposeParam params[] = {
+            make_tuple(4, 4, transpose_32bit_4x4_reg128bit_instance_sse2),
+            make_tuple(4, 8, transpose_32bit_4x4x2_reg128bit_instance_sse2),
+            make_tuple(8, 4, transpose_32bit_8x4_reg128bit_instance_sse2)};
+        return ::testing::ValuesIn(params);
+    }
+};
+
+TEST_P(Transpose32BitTest, RunCheckOutput) {
+    run_check_output();
+}
+
+INSTANTIATE_TEST_CASE_P(TRANSPOSE, Transpose32BitTest,
+                        Transpose32BitTest::BuildParams());
+
+/**
+ * @brief Unit test for 32-bit transpose with __m256i packed:
+ * - transpose_32bit_8x8_reg256bit_instance_avx2
+ */
+class Transpose32Bit8x8Test
+    : public TransposeTestBase<uint32_t, TransposeM256Func, __m256i,
+                               TransposeM256Param> {
+  public:
+    Transpose32Bit8x8Test() {
+        bd_ = 31;
+        width_ = TEST_GET_PARAM(0);
+        height_ = TEST_GET_PARAM(1);
+        func_tst_ = TEST_GET_PARAM(2);
+        pack_tool = m256_pack;
+        unpack_tool = m256_unpack;
+    }
+
+    static ::testing::internal::ParamGenerator<TransposeM256Param>
+    BuildParams() {
+        const TransposeM256Param params[] = {
+            make_tuple(8, 8, transpose_32bit_8x8_reg256bit_instance_avx2)};
+        return ::testing::ValuesIn(params);
+    }
+};
+
+TEST_P(Transpose32Bit8x8Test, RunCheckOutput) {
+    run_check_output();
+}
+
+INSTANTIATE_TEST_CASE_P(TRANSPOSE, Transpose32Bit8x8Test,
+                        Transpose32Bit8x8Test::BuildParams());
+
+/**
+ * @brief Unit test for 64-bit transpose:
+ * - transpose_64bit_4x4_reg256bit_instance_avx2
+ * - transpose_64bit_4x6_reg256bit_instance_avx2
+ * - transpose_64bit_4x8_reg256bit_instance_avx2
+ */
+class Transpose64BitTest
+    : public TransposeTestBase<uint64_t, TransposeM256Func, __m256i,
+                               TransposeM256Param> {
+  public:
+    Transpose64BitTest() {
+        bd_ = 31;
+        width_ = TEST_GET_PARAM(0);
+        height_ = TEST_GET_PARAM(1);
+        func_tst_ = TEST_GET_PARAM(2);
+        pack_tool = m256_pack;
+        unpack_tool = m256_unpack;
+    }
+
+    size_t prepare_input_data() override {
+        size_t size = width_ * height_;
+        for (size_t i = 0; i < size; ++i)
+            input_ref_[i] = (((uint64_t)rnd_.random()) << 32) + rnd_.random();
+        return size;
+    }
+
+    void unpack_output_data() override {
+        if (width_ == 4 && (height_ == 6 || height_ == 8)) {
+            for (size_t i = 0; i < width_; i++) {
+                unpack_tool((__m256i *)(&output_tst_[height_ * i]),
+                            ((__m256i *)output_tmp_)[2 * i]);
+                unpack_tool((__m256i *)(&output_tst_[height_ * i + 4]),
+                            ((__m256i *)output_tmp_)[2 * i + 1]);
+            }
+        } else
+            TransposeTestBase::unpack_output_data();
+    }
+
+    static ::testing::internal::ParamGenerator<TransposeM256Param>
+    BuildParams() {
+        const TransposeM256Param params[] = {
+            make_tuple(4, 4, transpose_64bit_4x4_reg256bit_instance_avx2),
+            make_tuple(4, 6, transpose_64bit_4x6_reg256bit_instance_avx2),
+            make_tuple(4, 8, transpose_64bit_4x8_reg256bit_instance_avx2)};
+        return ::testing::ValuesIn(params);
+    }
+};
+
+TEST_P(Transpose64BitTest, RunCheckOutput) {
+    run_check_output();
+}
+
+INSTANTIATE_TEST_CASE_P(TRANSPOSE, Transpose64BitTest,
+                        Transpose64BitTest::BuildParams());
 };  // namespace
