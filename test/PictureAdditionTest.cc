@@ -163,8 +163,9 @@ class PictureAdditionTest : public ::testing::Test,
 
   protected:
     void prepare_data() {
+        // Max bitdepth is 12, set the mask accordingly.
         const uint8_t mask_pred = (1 << 8) - 1;
-        const int16_t mask_res = (1 << 15) - 1;
+        const int16_t mask_res = (1 << 12) - 1;
         SVTRandom rnd_uint8(0, mask_pred);
         SVTRandom rnd_int16(0, mask_res);
         switch (test_pattern_) {
