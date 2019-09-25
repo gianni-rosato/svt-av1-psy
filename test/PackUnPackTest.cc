@@ -150,7 +150,9 @@ class PackTest : public ::testing::Test,
                          in_compn_bit_buffer1_,
                          in_compn_bit_buffer2_);
 
-            EXPECT_FALSE(HasFailure());
+            EXPECT_FALSE(HasFailure())
+                << "c_pack_avx2_intrin failed at " << i << "th test with size ("
+                << area_width_ << "," << area_height_ << ")";
         }
     }
 
@@ -254,7 +256,10 @@ class PackMsbTest : public ::testing::Test,
                          out_16bit_buffer1_,
                          out_16bit_buffer2_);
 
-            EXPECT_FALSE(HasFailure());
+            EXPECT_FALSE(HasFailure())
+                << "compressed_packmsb_avx2_intrin failed at " << i
+                << "th test with size (" << area_width_ << "," << area_height_
+                << ")";
         }
     }
 
@@ -276,12 +281,6 @@ INSTANTIATE_TEST_CASE_P(PACKMSB, PackMsbTest,
 // There is an implicit assumption that the width should be multiple of 4.
 // Also there are special snippet to handle width of {4, 8, 16, 32, 64}, so use
 // TEST_COMMON_SIZES to cover all the width;
-/*
- * TEST_CRASH_SIZES: include some block size which should be support
- * but actually not in test func below
- *    -
- */
-AreaSize TEST_CRASH_SIZES[] = {AreaSize(65, 64), AreaSize(5, 4)};
 AreaSize TEST_COMMON_SIZES[] = {
     AreaSize(4, 4),    AreaSize(4, 8),   AreaSize(8, 4),   AreaSize(8, 8),
     AreaSize(16, 16),  AreaSize(4, 16),  AreaSize(16, 4),  AreaSize(16, 8),
@@ -393,7 +392,10 @@ class Pack2dTest : public ::testing::Test,
                          out_16bit_buffer3_,
                          out_16bit_buffer_c_);
 
-            EXPECT_FALSE(HasFailure());
+            EXPECT_FALSE(HasFailure())
+                << "eb_enc_msb_pack2d_{sse2,avx2}_intrin failed at " << i
+                << "th test with size (" << area_width_ << "," << area_height_
+                << ")";
         }
     }
 
@@ -495,7 +497,10 @@ class UnPackTest : public ::testing::Test,
                          out_8bit_buffer1_,
                          out_8bit_buffer2_);
 
-            EXPECT_FALSE(HasFailure());
+            EXPECT_FALSE(HasFailure())
+                << "eb_enc_un_pack8_bit_data_avx2_intrin failed at " << i
+                << "th test with size (" << area_width_ << "," << area_height_
+                << ")";
         }
     }
 
@@ -528,7 +533,10 @@ class UnPackTest : public ::testing::Test,
                          out_nbit_buffer1_,
                          out_nbit_buffer2_);
 
-            EXPECT_FALSE(HasFailure());
+            EXPECT_FALSE(HasFailure())
+                << "eb_enc_msb_un_pack2d_sse2_intrin failed at " << i
+                << "th test with size (" << area_width_ << "," << area_height_
+                << ")";
         }
     }
 
@@ -683,7 +691,10 @@ class UnPackAvgTest : public ::testing::Test,
                          out_8bit_buffer3_,
                          out_8bit_buffer_c_);
 
-            EXPECT_FALSE(HasFailure());
+            EXPECT_FALSE(HasFailure())
+                << "unpack_avg_{sse2,avx2}_intrin failed at " << i
+                << "th test with size (" << area_width_ << "," << area_height_
+                << ")";
         }
     }
 
@@ -715,7 +726,10 @@ class UnPackAvgTest : public ::testing::Test,
                              out_8bit_buffer1_,
                              out_8bit_buffer_c_);
 
-                EXPECT_FALSE(HasFailure());
+                EXPECT_FALSE(HasFailure())
+                    << "unpack_avg_safe_sub_avx2_intrin failed at " << i
+                    << "th test with size (" << area_width_ << ","
+                    << area_height_ << ")";
             }
         }
     }
