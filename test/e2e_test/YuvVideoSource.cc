@@ -20,6 +20,7 @@ YuvVideoSource::YuvVideoSource(const std::string &file_name,
                                const uint32_t width, const uint32_t height,
                                const uint8_t bit_depth)
     : VideoFileSource(file_name, format, width, height, bit_depth, false) {
+    src_name_ = "YUV Source";
 }
 
 YuvVideoSource::~YuvVideoSource() {

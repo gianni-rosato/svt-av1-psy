@@ -748,7 +748,7 @@ static bool transfer_frame_planes(VideoFrame *frame) {
     uint32_t height_scale = 1;
     if (frame->format == IMG_FMT_420 ||
         frame->format == IMG_FMT_420P10_PACKED ||
-        frame->format == IMG_FMT_NV12) {
+        frame->format == IMG_FMT_I420) {
         height_scale = 2;
     }
     if (frame->stride[3]) {

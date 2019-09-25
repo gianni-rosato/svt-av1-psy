@@ -35,6 +35,7 @@ class DummyVideoSource : public VideoSource {
                      const bool use_compressed_2bit_plan_output)
         : VideoSource(format, width, height, bit_depth,
                       use_compressed_2bit_plan_output) {
+        src_name_ = "Dummy Source";
         memset(single_line_pattern, 0, sizeof(single_line_pattern));
     }
 
@@ -47,11 +48,6 @@ class DummyVideoSource : public VideoSource {
 
     EbErrorType open_source(const uint32_t init_pos,
                             const uint32_t frame_count) override {
-        if (image_format_ != IMG_FMT_420) {
-            printf("Open dummy source error, support YUV420 only\r\n");
-            return EB_ErrorBadParameter;
-        }
-
         cal_yuv_plane_param();
 
         // create color bar parttern of single line
@@ -73,7 +69,6 @@ class DummyVideoSource : public VideoSource {
             frame_count_ = frame_count;
 
         current_frame_index_ = -1;
-
         return EB_ErrorNone;
     }
 
@@ -84,7 +79,6 @@ class DummyVideoSource : public VideoSource {
                 delete[] single_line_pattern[i];
         }
         memset(single_line_pattern, 0, sizeof(single_line_pattern));
-
         deinit_frame_buffer();
     }
 
@@ -112,9 +106,8 @@ class DummyVideoSource : public VideoSource {
     template <typename Sample>
     void create_pattern(Sample *buf, int plane_index) {
         uint32_t bar_width = width_with_padding_ / 8;
-        if (plane_index > 0 &&
-            (image_format_ == IMG_FMT_420 || image_format_ == IMG_FMT_422))
-            bar_width /= 2;
+        if (plane_index > 0)
+            bar_width = bar_width >> width_downsize_;
 
         for (int i = 0; i < 8; i++) {
             Sample value =
@@ -129,37 +122,45 @@ class DummyVideoSource : public VideoSource {
         // one loop.
         uint8_t *src_p = nullptr;
 
-        uint32_t offset =
+        uint32_t luma_offset =
             (index % FRAME_PER_LOOP) * width_with_padding_ / FRAME_PER_LOOP;
-        offset -= offset % 2;
-        offset *= bytes_per_sample_;
+        if (width_downsize_ > 0)
+            luma_offset -= luma_offset % 2;
+        luma_offset *= bytes_per_sample_;
         uint32_t width_in_byte = width_with_padding_ * bytes_per_sample_;
 
         // luma
         src_p = frame_buffer_->luma;
-        memcpy(src_p + offset, single_line_pattern[0], width_in_byte);
-        memcpy(src_p, src_p + width_in_byte, offset);
+        memcpy(src_p + luma_offset, single_line_pattern[0], width_in_byte);
+        memcpy(src_p, src_p + width_in_byte, luma_offset);
         for (uint32_t l = 0; l < height_with_padding_; l++) {
             memcpy(src_p, frame_buffer_->luma, width_in_byte);
             src_p += width_in_byte;
         }
 
+        const uint32_t chroma_offset = luma_offset >> width_downsize_;
+        const uint32_t chroma_width_in_byte = width_in_byte >> width_downsize_;
+        const uint32_t chroma_height = height_with_padding_ >> height_downsize_;
         // cb
         src_p = frame_buffer_->cb;
-        memcpy(src_p + (offset / 2), single_line_pattern[1], width_in_byte / 2);
-        memcpy(src_p, src_p + (width_in_byte / 2), offset / 2);
-        for (uint32_t l = 0; l < height_with_padding_ / 2; l++) {
-            memcpy(src_p, frame_buffer_->cb, width_in_byte / 2);
-            src_p += width_in_byte / 2;
+        memcpy(src_p + chroma_offset,
+               single_line_pattern[1],
+               chroma_width_in_byte);
+        memcpy(src_p, src_p + chroma_width_in_byte, chroma_offset);
+        for (uint32_t l = 0; l < chroma_height; l++) {
+            memcpy(src_p, frame_buffer_->cb, chroma_width_in_byte);
+            src_p += chroma_width_in_byte;
         }
 
         // cr
         src_p = frame_buffer_->cr;
-        memcpy(src_p + (offset / 2), single_line_pattern[2], width_in_byte / 2);
-        memcpy(src_p, src_p + (width_in_byte / 2), offset / 2);
-        for (uint32_t l = 0; l < height_with_padding_ / 2; l++) {
-            memcpy(src_p, frame_buffer_->cr, width_in_byte / 2);
-            src_p += width_in_byte / 2;
+        memcpy(src_p + chroma_offset,
+               single_line_pattern[2],
+               chroma_width_in_byte);
+        memcpy(src_p, src_p + chroma_width_in_byte, chroma_offset);
+        for (uint32_t l = 0; l < chroma_height; l++) {
+            memcpy(src_p, frame_buffer_->cr, chroma_width_in_byte);
+            src_p += chroma_width_in_byte;
         }
     }
 

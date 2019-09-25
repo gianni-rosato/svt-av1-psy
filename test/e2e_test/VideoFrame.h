@@ -21,6 +21,14 @@
 
 #define INVALID_QP (0xFF)
 
+#ifndef PLANE_NUM
+#define PLANE_NUM (4)
+#define PLANE_Y (0)
+#define PLANE_U (1)
+#define PLANE_V (2)
+#define PLANE_A (3)
+#endif  // !PLANE_NUM
+
 /** VideoColorFormat defines the format of YUV video */
 typedef enum VideoColorFormat {
     IMG_FMT_YV12,
@@ -30,9 +38,9 @@ typedef enum VideoColorFormat {
     IMG_FMT_420P10_PACKED,
     IMG_FMT_422P10_PACKED,
     IMG_FMT_444P10_PACKED,
-    IMG_FMT_NV12,
+    IMG_FMT_I420,
     IMG_FMT_YV12_CUSTOM_COLOR_SPACE,
-    IMG_FMT_NV12_CUSTOM_COLOR_SPACE,
+    IMG_FMT_I420_CUSTOM_COLOR_SPACE,
     IMG_FMT_444A,
 } VideoColorFormat;
 
@@ -53,18 +61,19 @@ typedef struct VideoFrameParam {
 
 /** VideoFrame defines the full parameters of video frame */
 typedef struct VideoFrame : public VideoFrameParam {
-    uint32_t disp_width;    /**< width to display*/
-    uint32_t disp_height;   /**< height to display*/
-    uint32_t stride[4];     /**< stride of bytes in array */
-    uint8_t *planes[4];     /**< plane pointer to buffer address*/
-    void *context;          /**< private data context from creator */
-    uint64_t timestamp;     /**< timestamp(index) of this frame */
-    uint8_t *buffer;        /**< self own buffer */
-    uint32_t buf_size;      /**< buffer size in bytes */
-    uint32_t qp;            /**< qp of this frame */
-    bool compress_10bit;    /**< compressed 10-bit mode, not supported */
-    uint8_t *ext_planes[4]; /**< extended plane pointer of packed 10-bit, not
-                               supported */
+    uint32_t disp_width;        /**< width to display*/
+    uint32_t disp_height;       /**< height to display*/
+    uint32_t stride[PLANE_NUM]; /**< stride of bytes in array */
+    uint8_t *planes[PLANE_NUM]; /**< plane pointer to buffer address*/
+    void *context;              /**< private data context from creator */
+    uint64_t timestamp;         /**< timestamp(index) of this frame */
+    uint8_t *buffer;            /**< self own buffer */
+    uint32_t buf_size;          /**< buffer size in bytes */
+    uint32_t qp;                /**< qp of this frame */
+    bool compress_10bit;        /**< compressed 10-bit mode, not supported */
+    uint8_t *ext_planes[PLANE_NUM]; /**< extended plane pointer of packed
+                               10-bit, not supported */
+
     VideoFrame() {
         disp_width = 0;
         disp_height = 0;
@@ -104,38 +113,37 @@ typedef struct VideoFrame : public VideoFrameParam {
         buffer = new uint8_t[max_size];
         if (buffer) {
             memset(buffer, 0, max_size);
-            planes[0] = buffer;
-            planes[1] = buffer + (max_size >> 2);
-            planes[2] = buffer + (max_size >> 1);
-            planes[3] = buffer + (max_size * 3 / 4);
+            planes[PLANE_Y] = buffer;
+            planes[PLANE_U] = buffer + (max_size >> 2);
+            planes[PLANE_V] = buffer + (max_size >> 1);
+            planes[PLANE_A] = buffer + (max_size * 3 / 4);
             calculate_strides(param, stride);
             buf_size = max_size;
         } else
             printf("video frame buffer is out of memory!!\n");
     }
     VideoFrame(const VideoFrame &origin) {
-        // copy from origin except buffer, planes, buf_size
-        // which are calculated below
-        disp_width = origin.disp_width;
-        disp_height = origin.disp_height;
-        memcpy(stride, origin.stride, sizeof(stride));
-        bits_per_sample = origin.bits_per_sample;
-        context = origin.context;
-        timestamp = origin.timestamp;
-        qp = origin.qp;
-        // maintain own buffer
-        const uint32_t luma_len = stride[0] * height;
+        // copy information from origin
+        *this = origin;
+
+        // calculate height downsize form format
+        uint32_t height_downsize = 0;
+        if (format == IMG_FMT_420 || format == IMG_FMT_420P10_PACKED)
+            height_downsize = 1;
+
         /** create video frame buffer with maximun size in 4 planes */
-        uint32_t max_size = calculate_max_frame_size(origin);
+        const uint32_t max_size = calculate_max_frame_size(origin);
         buffer = new uint8_t[max_size];
         if (buffer) {
             memset(buffer, 0, max_size);
-            for (size_t i = 0; i < 4; ++i) {
-                if (i != 3 || origin.planes[i]) {
-                    const int buffer_len =
-                        (i == 1 || i == 2) ? luma_len >> 2 : luma_len;
-                    planes[i] = buffer + (i * luma_len);
-                    memcpy(planes[i], origin.planes[i], buffer_len);
+            for (size_t i = 0; i < PLANE_NUM; ++i) {
+                if (origin.planes[i]) {
+                    planes[i] = buffer + (i * max_size / PLANE_NUM);
+                    const uint32_t plane_size =
+                        stride[i] * ((i == PLANE_Y || i == PLANE_A)
+                                         ? height
+                                         : (height >> height_downsize));
+                    memcpy(planes[i], origin.planes[i], plane_size);
                 }
             }
             buf_size = max_size;
@@ -163,40 +171,39 @@ typedef struct VideoFrame : public VideoFrameParam {
         return param.width * param.height * (param.bits_per_sample > 8 ? 2 : 1);
     }
     static uint32_t calculate_max_frame_size(const VideoFrameParam &param) {
-        return 4 * calculate_luma_size(param);
+        return PLANE_NUM * calculate_luma_size(param);
     }
     static uint32_t calculate_max_frame_size(const VideoFrame &frame) {
-        uint32_t luma_size = frame.stride[0] * frame.height;
-        return 4 * luma_size;
+        uint32_t luma_size = frame.stride[PLANE_Y] * frame.height;
+        return PLANE_NUM * luma_size;
     }
     static void calculate_strides(const VideoFrameParam &param,
-                                  uint32_t strides[4]) {
-        strides[0] = param.width;
-        strides[3] = 0;
+                                  uint32_t strides[PLANE_NUM]) {
+        strides[PLANE_Y] = param.width;
+        strides[PLANE_A] = 0;
         switch (param.format) {
         case IMG_FMT_420:
         case IMG_FMT_420P10_PACKED:
-        case IMG_FMT_NV12:
+        case IMG_FMT_I420:
         case IMG_FMT_YV12_CUSTOM_COLOR_SPACE:
-        case IMG_FMT_NV12_CUSTOM_COLOR_SPACE:
+        case IMG_FMT_I420_CUSTOM_COLOR_SPACE:
         case IMG_FMT_422:
         case IMG_FMT_422P10_PACKED:
-            strides[1] = strides[2] = param.width >> 1;
+            strides[PLANE_U] = strides[PLANE_V] = param.width >> 1;
             break;
-        case IMG_FMT_444A: strides[3] = param.width; goto IMG_FMT_444;
+        case IMG_FMT_444A: strides[PLANE_A] = param.width;
         case IMG_FMT_444:
         case IMG_FMT_444P10_PACKED:
-        IMG_FMT_444:
-            strides[1] = strides[2] = param.width;
+            strides[PLANE_U] = strides[PLANE_V] = param.width;
             break;
         default: assert(0); break;
         }
         if (param.bits_per_sample > 8) {
             // this strides are the strides in bytes
-            strides[0] *= 2;
-            strides[1] *= 2;
-            strides[2] *= 2;
-            strides[3] *= 2;
+            strides[PLANE_Y] *= 2;
+            strides[PLANE_U] *= 2;
+            strides[PLANE_V] *= 2;
+            strides[PLANE_A] *= 2;
         }
     }
 

@@ -285,9 +285,9 @@ void RefDecoder::parse_frame_info() {
 static VideoColorFormat trans_video_format(aom_img_fmt_t fmt) {
     switch (fmt) {
     case AOM_IMG_FMT_YV12: return IMG_FMT_YV12;
-    case AOM_IMG_FMT_I420: return IMG_FMT_NV12;
+    case AOM_IMG_FMT_I420: return IMG_FMT_I420;
     case AOM_IMG_FMT_AOMYV12: return IMG_FMT_YV12_CUSTOM_COLOR_SPACE;
-    case AOM_IMG_FMT_AOMI420: return IMG_FMT_NV12_CUSTOM_COLOR_SPACE;
+    case AOM_IMG_FMT_AOMI420: return IMG_FMT_I420_CUSTOM_COLOR_SPACE;
     case AOM_IMG_FMT_I422: return IMG_FMT_422;
     case AOM_IMG_FMT_I444: return IMG_FMT_444;
     case AOM_IMG_FMT_444A: return IMG_FMT_444A;

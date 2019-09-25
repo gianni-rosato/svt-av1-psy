@@ -83,6 +83,9 @@ class VideoSource {
             return INVALID_QP;
         return frame_qp_list_.at(index);
     }
+    const std::string &get_src_name() {
+        return src_name_;
+    }
 
   protected:
     virtual EbErrorType init_frame_buffer();
@@ -91,6 +94,7 @@ class VideoSource {
     void cal_yuv_plane_param();
 
   protected:
+    std::string src_name_;
     uint32_t width_;
     uint32_t height_;
     uint32_t width_with_padding_;

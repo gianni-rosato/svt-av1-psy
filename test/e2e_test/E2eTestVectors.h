@@ -88,6 +88,16 @@ const std::vector<TestVideoVector> dummy_test_vectors = {
                     10, 0, 0, 60),
 };
 
+const std::vector<TestVideoVector> dummy_422_test_vectors = {
+    std::make_tuple("colorbar_480p_8_422", DUMMY_SOURCE, IMG_FMT_422, 640, 480,
+                    8, 0, 0, 100),
+};
+
+const std::vector<TestVideoVector> dummy_444_test_vectors = {
+    std::make_tuple("colorbar_480p_8_444", DUMMY_SOURCE, IMG_FMT_444, 640, 480,
+                    8, 0, 0, 100),
+};
+
 using EncSetting = std::map<std::string, std::string>;
 typedef struct EncTestSetting {
     std::string name;    // description of the test cases

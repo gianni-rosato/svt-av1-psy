@@ -20,7 +20,8 @@ using namespace svt_av1_video_source;
 VideoSource::VideoSource(const VideoColorFormat format, const uint32_t width,
                          const uint32_t height, const uint8_t bit_depth,
                          const bool use_compressed_2bit_plane_output)
-    : width_(width),
+    : src_name_("Unknown Source"),
+      width_(width),
       height_(height),
       width_with_padding_(width),
       height_with_padding_(height),
@@ -68,9 +69,9 @@ void VideoSource::cal_yuv_plane_param() {
         break;
     default: assert(0); break;
     }
-    bytes_per_sample_ = is_10bit_mode() ? 2 : 1;
+    bytes_per_sample_ = (bit_depth_ > 8 && !svt_compressed_2bit_plane_) ? 2 : 1;
 
-    // encoder required 8 pixel alighed in width and height
+    // encoder required 16 pixel alighed in width and height
     if (width_ % 16 != 0)
         width_with_padding_ = ((width_ >> 4) + 1) << 4;
     if (height_ % 16 != 0)
@@ -132,11 +133,6 @@ EbErrorType VideoSource::init_frame_buffer() {
     frame_buffer_->cb_stride = (width_with_padding_ >> width_downsize_);
     frame_buffer_->cr_stride = (width_with_padding_ >> width_downsize_);
 
-    if (is_10bit_mode() && !svt_compressed_2bit_plane_) {
-        luma_size *= 2;
-        chroma_size *= 2;
-    }
-
     // Y
     frame_buffer_->luma = (uint8_t *)malloc(luma_size);
     if (frame_buffer_->luma == nullptr) {
@@ -163,33 +159,32 @@ EbErrorType VideoSource::init_frame_buffer() {
 
     if (is_10bit_mode() && svt_compressed_2bit_plane_) {
         // packed 10-bit YUV put extended 2-bits in group of 4 samples
-        luma_size /= 4;
-        chroma_size /= 4;
+        const int ext_luma_size = luma_size / 4;
+        const int ext_chroma_size = chroma_size / 4;
 
         // Y Ext
-        frame_buffer_->luma_ext = (uint8_t *)malloc(luma_size);
+        frame_buffer_->luma_ext = (uint8_t *)malloc(ext_luma_size);
         if (frame_buffer_->luma_ext == nullptr) {
             deinit_frame_buffer();
             return EB_ErrorInsufficientResources;
         }
-        memset(frame_buffer_->luma_ext, 0, luma_size);
+        memset(frame_buffer_->luma_ext, 0, ext_luma_size);
 
         // Cb Ext
-        frame_buffer_->cb_ext = (uint8_t *)malloc(chroma_size);
+        frame_buffer_->cb_ext = (uint8_t *)malloc(ext_chroma_size);
         if (frame_buffer_->cb_ext == nullptr) {
             deinit_frame_buffer();
             return EB_ErrorInsufficientResources;
         }
-        memset(frame_buffer_->cb_ext, 0, chroma_size);
+        memset(frame_buffer_->cb_ext, 0, ext_chroma_size);
 
         // Cr Ext
-        frame_buffer_->cr_ext = (uint8_t *)malloc(chroma_size);
+        frame_buffer_->cr_ext = (uint8_t *)malloc(ext_chroma_size);
         if (frame_buffer_->cr_ext == nullptr) {
             deinit_frame_buffer();
             return EB_ErrorInsufficientResources;
         }
-        memset(frame_buffer_->cr_ext, 0, chroma_size);
-
+        memset(frame_buffer_->cr_ext, 0, ext_chroma_size);
     } else {
         frame_buffer_->luma_ext = nullptr;
         frame_buffer_->cb_ext = nullptr;
