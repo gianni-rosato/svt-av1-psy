@@ -23,9 +23,24 @@
 
 int init_pic_buffer(EbSvtIOFormat *pic_buffer, CLInput *cli) {
     switch (cli->fmt) {
+    case EB_YUV400:
+        pic_buffer->cb_stride = INT32_MAX;
+        pic_buffer->cr_stride = INT32_MAX;
+        pic_buffer->y_stride = cli->width;
+        break;
     case EB_YUV420:
         pic_buffer->cb_stride = cli->width / 2;
         pic_buffer->cr_stride = cli->width / 2;
+        pic_buffer->y_stride = cli->width;
+        break;
+    case EB_YUV422:
+        pic_buffer->cb_stride = cli->width / 2;
+        pic_buffer->cr_stride = cli->width / 2;
+        pic_buffer->y_stride = cli->width;
+        break;
+    case EB_YUV444:
+        pic_buffer->cb_stride = cli->width;
+        pic_buffer->cr_stride = cli->width;
         pic_buffer->y_stride = cli->width;
         break;
     default:
@@ -42,13 +57,18 @@ int init_pic_buffer(EbSvtIOFormat *pic_buffer, CLInput *cli) {
     return 0;
 }
 
-int read_input_frame(CLInput *cli, uint8_t **buffer, size_t *bytes_read,
-                     size_t *buffer_size, int64_t *pts)
+int read_input_frame(DecInputContext *input, uint8_t **buffer, size_t *bytes_read,
+    size_t *buffer_size, int64_t *pts)
 {
+    CLInput *cli = input->cli_ctx;
     switch (cli->inFileType)
     {
     case FILE_TYPE_IVF:
         return read_ivf_frame(cli->inFile, buffer, bytes_read, buffer_size, pts);
+        break;
+    case FILE_TYPE_OBU:
+        return obudec_read_temporal_unit(input, buffer, bytes_read,
+            buffer_size);
         break;
     default:
         printf("Unsupported bitstream type. \n");
@@ -59,37 +79,43 @@ int read_input_frame(CLInput *cli, uint8_t **buffer, size_t *bytes_read,
 void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
     EbSvtIOFormat* img = (EbSvtIOFormat*)recon_buffer->p_buffer;
 
-    // Support only for 420 images
-    assert(cli->fmt == EB_YUV420);
-
     const int bytes_per_sample = (cli->bit_depth == EB_EIGHT_BIT) ? 1 : 2;
 
     // Write luma plane
     unsigned char *buf = img->luma;
     int stride = img->y_stride;
-    int w = cli->width;
-    int h = cli->height;
+    int w = img->width;
+    int h = img->height;
+
     int y = 0;
     for (y = 0; y < h; ++y) {
         fwrite(buf, bytes_per_sample, w, cli->outFile);
         buf += (stride* bytes_per_sample);
     }
+    if (img->color_fmt != EB_YUV400) {
+        //Write chroma planes
+        buf = img->cb;
+        stride = img->cb_stride;
+        if (img->color_fmt == EB_YUV420) {
+            w /= 2;
+            h /= 2;
+        }
+        else if (img->color_fmt == EB_YUV422) {
+            w /= 2;
+        }
+        assert(img->color_fmt <= EB_YUV444);
 
-    //Write chroma planes
-    buf = img->cb;
-    stride = img->cb_stride;
-    w /= 2;
-    h /= 2;
-    for (y = 0; y < h; ++y) {
-        fwrite(buf, bytes_per_sample, w, cli->outFile);
-        buf += (stride* bytes_per_sample);
-    }
+        for (y = 0; y < h; ++y) {
+            fwrite(buf, bytes_per_sample, w, cli->outFile);
+            buf += (stride* bytes_per_sample);
+        }
 
-    buf = img->cr;
-    stride = img->cr_stride;
-    for (y = 0; y < h; ++y) {
-        fwrite(buf, bytes_per_sample, w, cli->outFile);
-        buf += (stride* bytes_per_sample);
+        buf = img->cr;
+        stride = img->cr_stride;
+        for (y = 0; y < h; ++y) {
+            fwrite(buf, bytes_per_sample, w, cli->outFile);
+            buf += (stride* bytes_per_sample);
+        }
     }
 
     fflush(cli->outFile);
@@ -121,6 +147,11 @@ int32_t main(int32_t argc, char* argv[])
     cli.fps_frm = 0;
     cli.fps_summary = 0;
 
+    DecInputContext input = { NULL, NULL };
+    ObuDecInputContext obu_ctx = { NULL, 0, 0, 0 };
+    input.cli_ctx = &cli;
+    input.obu_ctx = &obu_ctx;
+
     uint64_t stop_after = 0;
     uint32_t in_frame = 0;
 
@@ -137,8 +168,8 @@ int32_t main(int32_t argc, char* argv[])
 
     // Print Decoder Info
     printf("\n**WARNING** decoder is not feature complete\n");
-    printf("Current support: intra & inter(no Compund, no Wedge tools), ");
-    printf("no super-resolution, no Film Grain\n\n");
+    printf("Current support: intra, inter & post proc filters, ");
+    printf("no super-resolution, no ref scaling\n\n");
 
     printf("-------------------------------------\n");
     printf("SVT-AV1 Decoder Sample Application v1.2.0\n");
@@ -166,7 +197,7 @@ int32_t main(int32_t argc, char* argv[])
     return_error |= eb_dec_init_handle(&p_handle, p_app_data, config_ptr);
     if (return_error != EB_ErrorNone) goto fail;
 
-    if (read_command_line(argc, argv, config_ptr, &cli) == 0 &&
+    if (read_command_line(argc, argv, config_ptr, &cli, &obu_ctx) == 0 &&
         !eb_svt_dec_set_parameter(p_handle, config_ptr)) {
         return_error = eb_init_decoder(p_handle);
         if (return_error != EB_ErrorNone) {
@@ -174,7 +205,7 @@ int32_t main(int32_t argc, char* argv[])
             goto fail;
         }
 
-        assert(config_ptr->max_color_format == EB_YUV420);
+        assert(config_ptr->max_color_format <= EB_YUV444);
         assert(config_ptr->max_bit_depth < EB_TWELVE_BIT);
 
         int enable_md5 = cli.enable_md5;
@@ -202,14 +233,14 @@ int32_t main(int32_t argc, char* argv[])
                 fprintf(stderr, "Skipping first %" PRIu64 " frames.\n", config_ptr->skip_frames);
             uint64_t skip_frame = config_ptr->skip_frames;
             while (skip_frame) {
-                if (!read_input_frame(&cli, &buf, &bytes_in_buffer, &buffer_size, NULL)) break;
+                if (!read_input_frame(&input, &buf, &bytes_in_buffer, &buffer_size, NULL)) break;
                 skip_frame--;
             }
             stop_after = config_ptr->frames_to_be_decoded;
             if (enable_md5)
                 md5_init(&md5_ctx);
             // Input Loop Thread
-            while (read_input_frame(&cli, &buf, &bytes_in_buffer, &buffer_size, NULL)) {
+            while (read_input_frame(&input, &buf, &bytes_in_buffer, &buffer_size, NULL)) {
                 if (!stop_after || in_frame < stop_after) {
 
                     dec_timer_start(&timer);

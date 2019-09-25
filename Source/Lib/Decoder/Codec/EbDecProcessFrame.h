@@ -56,6 +56,8 @@ typedef struct DecModCtxt {
     /* Inverse Quantization Matrix */
     const QmVal          *giqmatrix[NUM_QM_LEVELS][3][TX_SIZES_ALL];
 
+    /*Mask for Comp mode blending*/
+    DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
 } DecModCtxt;
 
 typedef struct LRCtxt {

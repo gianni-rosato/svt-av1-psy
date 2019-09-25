@@ -17,6 +17,9 @@
 /*SUMMARY
 Contains the Decoder Loop Filtering related functions*/
 
+#ifndef EbDecLF_h
+#define EbDecLF_h
+
 extern const int32_t mode_lf_lut[];
 
 static const SEG_LVL_FEATURES seg_lvl_lf_lut[MAX_MB_PLANE][2] = {
@@ -48,6 +51,7 @@ typedef struct LFCtxt {
     LFBlockParamL *lf_block_luma;
     LFBlockParamUV *lf_block_uv;
     LoopFilterInfoN lf_info;
+    int32_t         delta_lf_stride;
 }LFCtxt;
 
 void fill_4x4_param_luma(LFBlockParamL* lf_block_l,
@@ -58,6 +62,8 @@ void fill_4x4_param_uv(LFBlockParamUV* lf_block_uv, int32_t tu_x, int32_t tu_y,
     int32_t stride, TxSize tx_size, int32_t sub_x, int32_t sub_y);
 
 void dec_av1_loop_filter_frame(
-    FrameHeader *frm_hdr, SeqHeader *seq_header,
+    EbDecHandle *dec_handle_ptr,
     EbPictureBufferDesc *recon_picture_buf, LFCtxt *lf_ctxt,
     int32_t plane_start, int32_t plane_end);
+
+#endif  // EbDecLF_h

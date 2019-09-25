@@ -173,7 +173,7 @@ static void dec_save_deblock_boundary_lines(EbDecHandle *dec_handle,
     // fetching 2 "below" rows we need to fetch one and duplicate it.
     // This is equivalent to clamping the sample locations against the crop border
     const int lines_to_save =
-        AOMMIN(RESTORATION_CTX_VERT, (frame_height >> sx) - row);
+        AOMMIN(RESTORATION_CTX_VERT, (frame_height >> sy) - row);
     assert(lines_to_save == 1 || lines_to_save == 2);
 
     int upscaled_width = frame_width >> sx;;

@@ -45,6 +45,18 @@ typedef struct EbDecPicBuf {
     uint32_t            ref_order_hints[INTER_REFS_PER_FRAME];
     FrameType           frame_type;
 
+    /*!< Height of the frame in luma samples */
+    uint16_t            frame_width;
+    /* Following 4 prms needed for frame_size_with_refs */
+    /*!< Height of the frame in luma samples */
+    uint16_t            frame_height;
+    /*!< Render width of the frame in luma samples */
+    uint16_t            render_width;
+    /*!< Render height of the frame in luma samples */
+    uint16_t            render_height;
+    /*!< Width of Upscaled SuperRes */
+    uint16_t            superres_upscaled_width;
+
     EbPictureBufferDesc *ps_pic_buf;
 
     FRAME_CONTEXT       final_frm_ctx;
@@ -53,9 +65,14 @@ typedef struct EbDecPicBuf {
 
     /* MV at 8x8 lvl */
     TemporalMvRef       *mvs;
+
     /* seg map */
+    uint8_t *segment_maps;
+    SegmentationParams seg_params;
+
     /* order hint */
     /* film grain */
+    aom_film_grain_t    film_grain_params;
 
 } EbDecPicBuf;
 

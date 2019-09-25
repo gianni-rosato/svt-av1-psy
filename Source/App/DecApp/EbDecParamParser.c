@@ -60,19 +60,22 @@ static void showHelp()
     H0( " -md5                      MD5 support flag \n");
     H0( " -fps-frm                  Show fps after each frame decoded");
     H0( " -fps-summary              Show fps summary");
+    H0( " -skip-film-grain          Disable Film Grain");
 
 
     exit(1);
 }
 
 EbErrorType read_command_line(int32_t argc, char *const argv[],
-                              EbSvtAv1DecConfiguration *configs,
-                              CLInput *cli)
+    EbSvtAv1DecConfiguration *configs,
+    CLInput *cli, ObuDecInputContext *obu_ctx)
 {
     char    *cmd_copy[MAX_NUM_TOKENS] = { NULL };
     char    *config_strings[MAX_NUM_TOKENS] = { NULL };
     int32_t cmd_token_cnt = 0;
     int token_index = 0;
+
+    cli->skip_film_grain = configs->skip_film_grain;
 
     for (token_index = 1; token_index < argc; token_index++, cmd_token_cnt++) {
         if (argv[token_index][0] == '-') {
@@ -102,6 +105,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
                     cli->inFilename = config_strings[token_index];
                     if (file_is_ivf(cli))
                         cli->inFileType = FILE_TYPE_IVF;
+                    else if (file_is_obu(cli, obu_ctx))
+                        cli->inFileType = FILE_TYPE_OBU;
                     else {
                         printf("Unsupported input file format. \n");
                         return EB_ErrorBadParameter;
@@ -126,6 +131,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
                 cli->fps_frm = 1;
             else if (EB_STRCMP(cmd_copy[token_index], FPS_SUMMARY_TOKEN) == 0)
                 cli->fps_summary = 1;
+            else if (EB_STRCMP(cmd_copy[token_index], FILM_GRAIN_TOKEN) == 0)
+                cli->skip_film_grain = 1;
             else if (EB_STRCMP(cmd_copy[token_index], HELP_TOKEN) == 0)
                 showHelp();
             else {
@@ -171,6 +178,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
         configs->max_picture_height = cli->height;
     if (cli->width != configs->max_picture_width)
         configs->max_picture_width = cli->width;
+
+    configs->skip_film_grain = cli->skip_film_grain;
 
     return EB_ErrorNone;
 }

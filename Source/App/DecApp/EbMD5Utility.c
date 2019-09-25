@@ -249,14 +249,11 @@ void print_md5(unsigned char digest[16]) {
 void write_md5(EbBufferHeaderType *recon_buffer, CLInput *cli, MD5Context *md5) {
     EbSvtIOFormat* img = (EbSvtIOFormat*)recon_buffer->p_buffer;
 
-    // Support only for 420 images
-    assert(cli->fmt == EB_YUV420);
-
     const int bytes_per_sample = (cli->bit_depth == EB_EIGHT_BIT) ? 1 : 2;
     uint32_t y = 0;
     const uint8_t *buf = img->luma;
-    uint32_t w = cli->width;
-    uint32_t h = cli->height;
+    uint32_t w = img->width;
+    uint32_t h = img->height;
     uint32_t stride = img->y_stride;
     //uint32_t b_size = w * h;
 
@@ -266,22 +263,31 @@ void write_md5(EbBufferHeaderType *recon_buffer, CLInput *cli, MD5Context *md5) 
         buf += (stride * bytes_per_sample);
     }
 
-    w = w / 2;
-    h = h / 2;
-    stride = img->cb_stride;
+    if (img->color_fmt != EB_YUV400) {
+        if (img->color_fmt == EB_YUV420) {
+            w /= 2;
+            h /= 2;
+        }
+        else if (img->color_fmt == EB_YUV422) {
+            w /= 2;
+        }
+        assert(img->color_fmt <= EB_YUV444);
 
-    //cb MD5 generation
-    buf = img->cb;
-    for (y = 0; y < h; ++y) {
-        md5_update(md5, buf, w * bytes_per_sample);
-        buf += (stride * bytes_per_sample);
-    }
+        stride = img->cb_stride;
 
-    //cr MD5 generation
-    buf = img->cr;
-    stride = img->cr_stride;
-    for (y = 0; y < h; ++y) {
-        md5_update(md5, buf, w * bytes_per_sample);
-        buf += (stride * bytes_per_sample);
+        //cb MD5 generation
+        buf = img->cb;
+        for (y = 0; y < h; ++y) {
+            md5_update(md5, buf, w * bytes_per_sample);
+            buf += (stride * bytes_per_sample);
+        }
+
+        //cr MD5 generation
+        buf = img->cr;
+        stride = img->cr_stride;
+        for (y = 0; y < h; ++y) {
+            md5_update(md5, buf, w * bytes_per_sample);
+            buf += (stride * bytes_per_sample);
+        }
     }
 }

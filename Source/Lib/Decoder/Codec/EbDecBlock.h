@@ -96,12 +96,6 @@ static const BlockSize Partition_Subsize[10][BlockSizeS_ALL] =
     BLOCK_INVALID, BLOCK_INVALID, BLOCK_INVALID }
 };
 
-enum {
-    UNIFORM_45 = 0,
-    UNIFORM_45_INV,
-    COMPOUND_MASK_TYPES,
-} UENUM1BYTE(COMPOUND_MASK_TYPE);
-
 /*TODO: Harmonize with encoder structure */
 typedef union  IntMvDec {
     uint32_t as_int;
@@ -116,7 +110,7 @@ typedef struct CandidateMvDec {
 typedef struct TemporalMvRef {
     /* Motion Filed MV */
     IntMvDec   mf_mv0;
-    uint8_t     ref_frame_offset;
+    int8_t     ref_frame_offset;
 } TemporalMvRef;
 
 typedef struct FilterIntraModeInfo {
@@ -128,7 +122,7 @@ typedef struct FilterIntraModeInfo {
     uint8_t use_filter_intra;
 } FilterIntraModeInfo_t;
 
-typedef struct InterIntraMode {
+typedef struct InterIntraModeParams {
     /*!< Specifies the type of intra prediction to be used */
     InterIntraMode interintra_mode;
 
@@ -141,28 +135,7 @@ typedef struct InterIntraMode {
 
     /*!< Specifies the sign of the wedge blend. */
     // int interintra_wedge_sign; Always 0
-} InterIntraMode_t;
-
-typedef struct {
-    /*!< Indicates that the compound_idx syntax element should be read or not. */
-    uint8_t comp_group_idx;
-
-    /*!< 0 indicates that a distance based weighted scheme should be used for blending.
-     *   1 indicates that the averaging scheme should be used for blending.*/
-    uint8_t compound_idx;
-
-    /*!< Specifies how the two predictions should be blended together. */
-    CompoundType type;
-
-    /*!< Used to derive the direction and offset of the wedge mask used during blending. */
-    uint8_t wedge_index;
-
-    /*!< Specifies the sign of the wedge blend. */
-    uint8_t wedge_sign;
-
-    /*!< Specifies the type of mask to be used during blending. */
-    COMPOUND_MASK_TYPE mask_type;
-} InterCompoundData_t;
+} InterIntraModeParams;
 
 typedef struct TransformInfo {
     /*!< Specifies the transform size to be used for this TU. */
@@ -230,16 +203,19 @@ typedef struct ModeInfo_t {
 
     // interinter members
 
-    InterIntraMode_t    interintra_mode;
+    InterIntraModeParams    interintra_mode;
 
     /*!< Specifies the type of motion compensation to perform. */
     MotionMode         motion_mode;
 
     InterIntraMode     is_inter_intra;
 
-    InterCompoundData_t inter_compound;
+    /*!< 0 indicates that a distance based weighted scheme should be used for blending.
+     *   1 indicates that the averaging scheme should be used for blending.*/
+    uint8_t            compound_idx;
 
-    FilterIntraModeInfo_t filter_intra_mode_info;
+    InterInterCompoundData  inter_inter_compound;
+    FilterIntraModeInfo_t  filter_intra_mode_info;
 
     /*!< Specifies how the motion vector used by inter prediction is obtained when using compound prediction. */
     uint8_t             compound_mode;

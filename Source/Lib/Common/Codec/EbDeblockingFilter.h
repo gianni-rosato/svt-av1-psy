@@ -223,6 +223,7 @@ extern "C" {
     void aom_lpf_vertical_4_dual_c(uint8_t *s, int32_t pitch, const uint8_t *blimit0, const uint8_t *limit0, const uint8_t *thresh0, const uint8_t *blimit1, const uint8_t *limit1, const uint8_t *thresh1);
 #define aom_lpf_vertical_4_dual aom_lpf_vertical_4_dual_c
 
+    void aom_lpf_vertical_6_c(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh);
     void aom_lpf_vertical_6_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh);
 #define aom_lpf_vertical_6 aom_lpf_vertical_6_sse2
 

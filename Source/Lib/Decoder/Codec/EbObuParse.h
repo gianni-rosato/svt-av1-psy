@@ -71,8 +71,6 @@ enum {
 
 
 typedef struct ParseNbr4x4Ctxt {
-    /* Buffer holding the segment ID of all 4x4 blocks in the frame. */
-    uint8_t *segment_maps;
 
     /* Buffer holding the transform sizes of the previous 4x4 block row. */
     uint8_t *above_tx_wd;
@@ -122,6 +120,10 @@ typedef struct ParseNbr4x4Ctxt {
 
     /* Place holder for palette color information */
     uint16_t palette_colors[MAX_MB_PLANE * PALETTE_MAX_SIZE];
+
+    int8_t *above_comp_grp_idx;
+
+    int8_t *left_comp_grp_idx;
 
 } ParseNbr4x4Ctxt;
 
@@ -182,6 +184,8 @@ typedef struct ParseCtxt {
 
     /*!< Reference Loop Restoration Unit  */
     RestorationUnitInfo ref_lr_unit[MAX_MB_PLANE];
+
+    EbBool  read_deltas;
 } ParseCtxt;
 
 int get_qindex(SegmentationParams *seg_params, int segment_id, int base_q_idx);

@@ -142,9 +142,6 @@ int32_t eb_av1_mv_bit_cost(const MV *mv, const MV *ref, const int32_t *mvjcost,
 
 #if II_COMP_FLAG
 #define MAX_INTERINTRA_SB_SQUARE 32 * 32
- int is_interintra_wedge_used(BlockSize sb_type) {
-    return wedge_params_lookup[sb_type].bits > 0;
-}
 
 EbErrorType  intra_luma_prediction_for_interintra(
     ModeDecisionContext         *md_context_ptr,

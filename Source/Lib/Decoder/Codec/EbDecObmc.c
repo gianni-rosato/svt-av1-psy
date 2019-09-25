@@ -25,6 +25,7 @@
 #include "EbDecUtils.h"
 #include "EbDecInverseQuantize.h"
 #include "EbDecInterPrediction.h"
+#include "aom_dsp_rtcd.h"
 
 //This function is present in encoder also, but encoder structures & decoder structures are different.
 static INLINE int dec_is_neighbor_overlappable(const ModeInfo_t *mbmi){
@@ -38,7 +39,7 @@ static INLINE int dec_is_neighbor_overlappable(const ModeInfo_t *mbmi){
 
 void av1_modify_neighbor_predictor_for_obmc(ModeInfo_t *mbmi) {
     mbmi->ref_frame[1] = NONE_FRAME;
-    mbmi->inter_compound.type = COMPOUND_AVERAGE;
+    mbmi->inter_inter_compound.type = COMPOUND_AVERAGE;
     return;
 }
 
@@ -103,111 +104,6 @@ const uint8_t *av1_get_obmc_mask(int length) {
     }
 }
 
-void aom_highbd_blend_a64_vmask_c(uint8_t *dst_8, uint32_t dst_stride,
-    const uint8_t *src0_8, uint32_t src0_stride,
-    const uint8_t *src1_8, uint32_t src1_stride,
-    const uint8_t *mask, int w, int h, int bd)
-{
-    int i, j;
-    uint16_t *dst = CONVERT_TO_SHORTPTR(dst_8);
-    const uint16_t *src0 = CONVERT_TO_SHORTPTR(src0_8);
-    const uint16_t *src1 = CONVERT_TO_SHORTPTR(src1_8);
-    (void)bd;
-
-    assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
-    assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
-
-    assert(h >= 1);
-    assert(w >= 1);
-    assert(IS_POWER_OF_TWO(h));
-    assert(IS_POWER_OF_TWO(w));
-
-    assert(bd == 8 || bd == 10 || bd == 12);
-
-    for (i = 0; i < h; ++i) {
-        const int m = mask[i];
-        for (j = 0; j < w; ++j) {
-            dst[i * dst_stride + j] = AOM_BLEND_A64(m, src0[i * src0_stride + j],
-                src1[i * src1_stride + j]);
-        }
-    }
-}
-
-void aom_blend_a64_vmask_c(uint8_t *dst, uint32_t dst_stride,
-    const uint8_t *src0, uint32_t src0_stride,
-    const uint8_t *src1, uint32_t src1_stride,
-    const uint8_t *mask, int w, int h)
-{
-    int i, j;
-
-    assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
-    assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
-
-    assert(h >= 1);
-    assert(w >= 1);
-    assert(IS_POWER_OF_TWO(h));
-    assert(IS_POWER_OF_TWO(w));
-
-    for (i = 0; i < h; ++i) {
-        const int m = mask[i];
-        for (j = 0; j < w; ++j) {
-            dst[i * dst_stride + j] = AOM_BLEND_A64(m, src0[i * src0_stride + j],
-                src1[i * src1_stride + j]);
-        }
-    }
-}
-
-void aom_highbd_blend_a64_hmask_c(uint8_t *dst_8, uint32_t dst_stride,
-    const uint8_t *src0_8, uint32_t src0_stride,
-    const uint8_t *src1_8, uint32_t src1_stride,
-    const uint8_t *mask, int w, int h, int bd)
-{
-    int i, j;
-    uint16_t *dst = CONVERT_TO_SHORTPTR(dst_8);
-    const uint16_t *src0 = CONVERT_TO_SHORTPTR(src0_8);
-    const uint16_t *src1 = CONVERT_TO_SHORTPTR(src1_8);
-    (void)bd;
-
-    assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
-    assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
-
-    assert(h >= 1);
-    assert(w >= 1);
-    assert(IS_POWER_OF_TWO(h));
-    assert(IS_POWER_OF_TWO(w));
-
-    assert(bd == 8 || bd == 10 || bd == 12);
-
-    for (i = 0; i < h; ++i) {
-        for (j = 0; j < w; ++j) {
-            dst[i * dst_stride + j] = AOM_BLEND_A64(
-                mask[j], src0[i * src0_stride + j], src1[i * src1_stride + j]);
-        }
-    }
-}
-
-void aom_blend_a64_hmask_c(uint8_t *dst, uint32_t dst_stride,
-    const uint8_t *src0, uint32_t src0_stride,
-    const uint8_t *src1, uint32_t src1_stride,
-    const uint8_t *mask, int w, int h) {
-    int i, j;
-
-    assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
-    assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
-
-    assert(h >= 1);
-    assert(w >= 1);
-    assert(IS_POWER_OF_TWO(h));
-    assert(IS_POWER_OF_TWO(w));
-
-    for (i = 0; i < h; ++i) {
-        for (j = 0; j < w; ++j) {
-            dst[i * dst_stride + j] = AOM_BLEND_A64(
-                mask[j], src0[i * src0_stride + j], src1[i * src1_stride + j]);
-        }
-    }
-}
-
 static INLINE void build_obmc_inter_pred_above(EbDecHandle *dec_handle,
     PartitionInfo_t *pi, BlockSize bsize, int rel_mi_col, uint8_t above_mi_width,
     uint8_t *above_tmp_buf[MAX_MB_PLANE], int above_tmp_stride[MAX_MB_PLANE],
@@ -257,13 +153,13 @@ static INLINE void build_obmc_inter_pred_above(EbDecHandle *dec_handle,
         const uint8_t *const mask = av1_get_obmc_mask(bh);
 
         if (is_hbd)
-            aom_highbd_blend_a64_vmask_c(CONVERT_TO_BYTEPTR(tmp_recon_buf),
-                tmp_recon_stride, CONVERT_TO_BYTEPTR(tmp_recon_buf),
-                tmp_recon_stride, CONVERT_TO_BYTEPTR(above_buf), above_stride,
+            aom_highbd_blend_a64_vmask((tmp_recon_buf),
+                tmp_recon_stride, (tmp_recon_buf),
+                tmp_recon_stride, (above_buf), above_stride,
                 mask, bw, bh, recon_picture_buf->bit_depth);
 
         else
-            aom_blend_a64_vmask_c(tmp_recon_buf, tmp_recon_stride, tmp_recon_buf,
+            aom_blend_a64_vmask(tmp_recon_buf, tmp_recon_stride, tmp_recon_buf,
                 tmp_recon_stride, above_buf, above_stride, mask, bw, bh);
     }
 
@@ -323,12 +219,12 @@ static INLINE void build_obmc_inter_pred_left(EbDecHandle *dec_handle,
         const uint8_t *const mask = av1_get_obmc_mask(bw);
 
         if (is_hbd)
-            aom_highbd_blend_a64_hmask_c(CONVERT_TO_BYTEPTR(tmp_recon_buf),
-                tmp_recon_stride, CONVERT_TO_BYTEPTR(tmp_recon_buf),
-                tmp_recon_stride,CONVERT_TO_BYTEPTR(left_buf), left_stride,
+            aom_highbd_blend_a64_hmask((uint8_t *)tmp_recon_buf,
+                tmp_recon_stride, (uint8_t *)tmp_recon_buf,
+                tmp_recon_stride, (uint8_t *)left_buf, left_stride,
                 mask, bw, bh, recon_picture_buf->bit_depth);
         else
-            aom_blend_a64_hmask_c(tmp_recon_buf, tmp_recon_stride, tmp_recon_buf,
+            aom_blend_a64_hmask(tmp_recon_buf, tmp_recon_stride, tmp_recon_buf,
                 tmp_recon_stride, left_buf, left_stride, mask, bw, bh);
     }
 
@@ -416,7 +312,7 @@ static void dec_build_prediction_by_above_preds(EbDecHandle *dec_handle,
     const int end_col = AOMMIN(mi_col + bw4, (int)frame_info->mi_cols);
 
     //Calculating buffers for current block i.e getting recon_buffer for blending
-    uint8_t *curr_blk_recon_buf[MAX_MB_PLANE];
+    void *curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t curr_recon_stride[MAX_MB_PLANE];
     int32_t sub_x, sub_y;
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->
@@ -427,7 +323,7 @@ static void dec_build_prediction_by_above_preds(EbDecHandle *dec_handle,
 
         derive_blk_pointers(recon_picture_buf, plane,
             mi_col*MI_SIZE >> sub_x, mi_row*MI_SIZE >> sub_y,
-            (void *)&curr_blk_recon_buf[plane], &curr_recon_stride[plane],
+            &curr_blk_recon_buf[plane], &curr_recon_stride[plane],
             sub_x, sub_y);
     }
 
@@ -459,7 +355,7 @@ static void dec_build_prediction_by_above_preds(EbDecHandle *dec_handle,
             /*OBMC blending for above prediction*/
             build_obmc_inter_pred_above(dec_handle, &backup_pi, bsize,
                 above_mi_col - mi_col, AOMMIN((uint8_t)bw4, mi_step),
-                above_dst_buf, above_dst_stride, curr_blk_recon_buf,
+                above_dst_buf, above_dst_stride, (uint8_t **)curr_blk_recon_buf,
                 curr_recon_stride, num_planes);
         }
     }
@@ -551,7 +447,7 @@ static void dec_build_prediction_by_left_preds(EbDecHandle *dec_handle,
     const int end_row = AOMMIN(mi_row + bh4, (int)frame_info->mi_rows);
 
     //Calculating buffers for current block i.e getting recon_buffer
-    uint8_t *curr_blk_recon_buf[MAX_MB_PLANE];
+    void *curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t curr_recon_stride[MAX_MB_PLANE];
     int32_t sub_x, sub_y;
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->
@@ -562,7 +458,7 @@ static void dec_build_prediction_by_left_preds(EbDecHandle *dec_handle,
 
         derive_blk_pointers(recon_picture_buf, plane,
             mi_col*MI_SIZE >> sub_x, mi_row*MI_SIZE >> sub_y,
-            (void *)&curr_blk_recon_buf[plane], &curr_recon_stride[plane], sub_x, sub_y);
+            &curr_blk_recon_buf[plane], &curr_recon_stride[plane], sub_x, sub_y);
     }
 
 
@@ -587,7 +483,7 @@ static void dec_build_prediction_by_left_preds(EbDecHandle *dec_handle,
             /*OBMC blending for left prediction*/
             build_obmc_inter_pred_left(dec_handle, &backup_pi, bsize,
                 left_mi_row - mi_row, AOMMIN((uint8_t)bh4, mi_step),
-                left_dst_buf, left_dst_stride, curr_blk_recon_buf,
+                left_dst_buf, left_dst_stride, (uint8_t **)curr_blk_recon_buf,
                 curr_recon_stride, num_planes);
         }
     }

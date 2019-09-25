@@ -14,14 +14,6 @@
 
 #include "aom_dsp_rtcd.h"
 
-#ifdef __GNUC__
-#define LIKELY(v) __builtin_expect(v, 1)
-#define UNLIKELY(v) __builtin_expect(v, 0)
-#else
-#define LIKELY(v) (v)
-#define UNLIKELY(v) (v)
-#endif
-
 // Note: TranHigh is the datatype used for intermediate transform stages.
 typedef int64_t TranHigh;
 

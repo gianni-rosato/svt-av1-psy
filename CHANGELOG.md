@@ -5,6 +5,8 @@
 - Decoder Inter support
 - Decoder Screen Content Tools support
 - Decoder Post Processing Filters support
+- Decoder Compound Mode (InterInter & InterIntra) Tool support
+- Decoder Film Grain support
 
 ## [0.6.0] - 2019-06-28
 

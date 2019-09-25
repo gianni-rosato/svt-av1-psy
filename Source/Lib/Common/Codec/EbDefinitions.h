@@ -42,6 +42,7 @@ extern "C" {
 
 #define MR_MODE                           0
 #define EIGTH_PEL_MV                      0
+#define COMP_INTERINTRA                   1 // InterIntra mode support
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
@@ -278,6 +279,8 @@ extern void RunEmms();
     (((value) < 0) ? -ROUND_POWER_OF_TWO_64(-(value), (n)) \
                  : ROUND_POWER_OF_TWO_64((value), (n)))
 
+#define IS_POWER_OF_TWO(x) (((x) & ((x)-1)) == 0)
+
 #ifdef __cplusplus
 #define EB_EXTERN extern "C"
 #else
@@ -414,6 +417,10 @@ static INLINE uint16_t clip_pixel_highbd(int32_t val, int32_t bd) {
     case 10: return (uint16_t)clamp(val, 0, 1023);
     case 12: return (uint16_t)clamp(val, 0, 4095);
     }
+}
+
+static INLINE unsigned int negative_to_zero(int value) {
+    return value & ~(value >> (sizeof(value) * 8 - 1));
 }
 //*********************************************************************************************************************//
 // enums.h
@@ -1029,6 +1036,10 @@ typedef enum
 #define   COMPOUND_INTRA  4//just for the decoder
 #define AOM_BLEND_A64_ROUND_BITS 6
 #define AOM_BLEND_A64_MAX_ALPHA (1 << AOM_BLEND_A64_ROUND_BITS)  // 64
+
+#define AOM_BLEND_A64(a, v0, v1)                                          \
+  ROUND_POWER_OF_TWO((a) * (v0) + (AOM_BLEND_A64_MAX_ALPHA - (a)) * (v1), \
+                     AOM_BLEND_A64_ROUND_BITS)
 #define DIFF_FACTOR_LOG2 4
 #define DIFF_FACTOR (1 << DIFF_FACTOR_LOG2)
 #define AOM_BLEND_AVG(v0, v1) ROUND_POWER_OF_TWO((v0) + (v1), 1)
@@ -1062,18 +1073,21 @@ enum {
     DIFFWTD_MASK_TYPES,
 } UENUM1BYTE(DIFFWTD_MASK_TYPE);
 typedef struct {
-    uint8_t *seg_mask;
-    int wedge_index;
-    int wedge_sign;
+
+    /*!< Specifies how the two predictions should be blended together. */
+    CompoundType type;
+
+    /*!< Used to derive the direction and offset of the wedge mask used during blending. */
+    uint8_t wedge_index;
+
+    /*!< Specifies the sign of the wedge blend. */
+    uint8_t wedge_sign;
+
+    /*!< Specifies the type of mask to be used during blending. */
     DIFFWTD_MASK_TYPE mask_type;
-    COMPOUND_TYPE type;
-} INTERINTER_COMPOUND_DATA;
+} InterInterCompoundData;
 
 #if II_COMP_FLAG
-#define AOM_BLEND_A64(a, v0, v1)                                          \
-  ROUND_POWER_OF_TWO((a) * (v0) + (AOM_BLEND_A64_MAX_ALPHA - (a)) * (v1), \
-                     AOM_BLEND_A64_ROUND_BITS)
-#define IS_POWER_OF_TWO(x) (((x) & ((x)-1)) == 0)
 #define INTERINTRA_MODE  InterIntraMode
 #endif
 typedef enum ATTRIBUTE_PACKED
