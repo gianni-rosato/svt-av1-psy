@@ -34,13 +34,130 @@
 #include "aom_dsp_rtcd.h"
 #include "TxfmCommon.h"
 #include "random.h"
-
+#include "EncodeTxbRef.h"
+using namespace EncodeTxbAsmTest;
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 namespace {
+
 static INLINE uint8_t *set_levels(uint8_t *const levels_buf,
                                   const int32_t width) {
     return levels_buf + TX_PAD_TOP * (width + TX_PAD_HOR);
 }
+
+static INLINE int get_padded_idx(const int idx, const int bwl) {
+    return idx + ((idx >> bwl) << TX_PAD_HOR_LOG2);
+}
+
+// test assembly code of av1_get_nz_map_contexts
+extern "C" void eb_av1_get_nz_map_contexts_sse2(
+    const uint8_t *const levels, const int16_t *const scan, const uint16_t eob,
+    TxSize tx_size, const TxClass tx_class, int8_t *const coeff_contexts);
+using GetNzMapContextsFunc = void (*)(const uint8_t *const levels,
+                                      const int16_t *const scan,
+                                      const uint16_t eob, const TxSize tx_size,
+                                      const TxClass tx_class,
+                                      int8_t *const coeff_contexts);
+using GetNzMapContextParam = std::tuple<GetNzMapContextsFunc, int, int>;
+
+class EncodeTxbTest : public ::testing::TestWithParam<GetNzMapContextParam> {
+  public:
+    EncodeTxbTest()
+        : level_rnd_(0, INT8_MAX),
+          coeff_rnd_(0, UINT8_MAX),
+          ref_func_(&av1_get_nz_map_contexts_c) {
+    }
+
+    virtual ~EncodeTxbTest() {
+        aom_clear_system_state();
+    }
+
+    void check_get_nz_map_context_assembly(GetNzMapContextsFunc test_func,
+                                           const int tx_type,
+                                           const int tx_size) {
+        const int num_tests = 10;
+        const TxClass tx_class = tx_type_to_class[tx_type];
+
+        const int bwl = get_txb_bwl((TxSize)tx_size);
+        const int width = get_txb_wide((TxSize)tx_size);
+        const int height = get_txb_high((TxSize)tx_size);
+        const int real_width = tx_size_wide[tx_size];
+        const int real_height = tx_size_high[tx_size];
+        const int16_t *const scan = av1_scan_orders[tx_size][tx_type].scan;
+
+        levels_ = set_levels(levels_buf_, width);
+        for (int i = 0; i < num_tests; ++i) {
+            for (int eob = 1; eob <= width * height; ++eob) {
+                init_levels(scan, bwl, eob);
+                init_coeff_contexts(scan, bwl, eob);
+
+                ref_func_(levels_,
+                          scan,
+                          eob,
+                          (TxSize)tx_size,
+                          tx_class,
+                          coeff_contexts_ref_);
+                test_func(levels_,
+                          scan,
+                          eob,
+                          (TxSize)tx_size,
+                          tx_class,
+                          coeff_contexts_test_);
+
+                for (int j = 0; j < eob; ++j) {
+                    const int pos = scan[j];
+                    ASSERT_EQ(coeff_contexts_ref_[pos],
+                              coeff_contexts_test_[pos])
+                        << " tx_class " << tx_class << " width " << real_width
+                        << " height " << real_height << " eob " << eob;
+                }
+            }
+        }
+    }
+
+  private:
+    void init_levels(const int16_t *const scan, const int bwl, const int eob) {
+        memset(levels_buf_, 0, sizeof(levels_buf_));
+        for (int c = 0; c < eob; ++c) {
+            levels_[get_padded_idx(scan[c], bwl)] =
+                static_cast<uint8_t>(level_rnd_.random());
+        }
+    }
+
+    void init_coeff_contexts(const int16_t *const scan, const int /*bwl*/,
+                             const int eob) {
+        memset(coeff_contexts_test_,
+               0,
+               sizeof(*coeff_contexts_test_) * MAX_TX_SQUARE);
+        memset(coeff_contexts_ref_,
+               0,
+               sizeof(*coeff_contexts_ref_) * MAX_TX_SQUARE);
+        // Generate oppsite value for these two buffers
+        for (int c = 0; c < eob; ++c) {
+            const int pos = scan[c];
+            coeff_contexts_test_[pos] = coeff_rnd_.random() - INT8_MAX;
+            coeff_contexts_ref_[pos] = -coeff_contexts_test_[pos];
+        }
+    }
+
+    SVTRandom level_rnd_;
+    SVTRandom coeff_rnd_;
+    uint8_t levels_buf_[TX_PAD_2D];
+    uint8_t *levels_;
+    DECLARE_ALIGNED(16, int8_t, coeff_contexts_ref_[MAX_TX_SQUARE]);
+    DECLARE_ALIGNED(16, int8_t, coeff_contexts_test_[MAX_TX_SQUARE]);
+    const GetNzMapContextsFunc ref_func_;
+};
+
+TEST_P(EncodeTxbTest, GetNzMapTest) {
+    check_get_nz_map_context_assembly(
+        TEST_GET_PARAM(0), TEST_GET_PARAM(1), TEST_GET_PARAM(2));
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SSE2, EncodeTxbTest,
+    ::testing::Combine(::testing::Values(&eb_av1_get_nz_map_contexts_sse2),
+                       ::testing::Range(0, static_cast<int>(TX_TYPES), 1),
+                       ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 
 // test assembly code of eb_av1_txb_init_levels
 using TxbInitLevelsFunc = void (*)(const TranLow *const coeff, const int width,
