@@ -16,7 +16,7 @@
 #include "EbUnitTestUtility.h"
 
 static const int num_test = 28;
-static const int num_sad = 6;
+static const int num_sad = 22;
 
 struct DistInfo {
     uint32_t width;
@@ -24,7 +24,10 @@ struct DistInfo {
 };
 
 const struct DistInfo sad_size_info[num_sad] = {
-    {64, 16}, {64, 32}, {64, 64}, {64, 128}, {128, 64}, {128, 128}};
+    {4, 4},   {4, 8},    {4, 16},   {8, 4},    {8, 8},   {8, 16},
+    {8, 32},  {16, 4},   {16, 8},   {16, 16},  {16, 32}, {16, 64},
+    {32, 8},  {32, 16},  {32, 32},  {32, 64},  {64, 16}, {64, 32},
+    {64, 64}, {64, 128}, {128, 64}, {128, 128}};
 
 typedef uint32_t (*aom_sad_fn_t)(const uint8_t *a, int a_stride,
                                  const uint8_t *b, int b_stride);
@@ -33,35 +36,48 @@ typedef void (*aom_sad_multi_d_fn_t)(const uint8_t *a, int a_stride,
                                      const uint8_t *const b_array[],
                                      int b_stride, uint32_t *sad_array);
 
-aom_sad_fn_t aom_sad_c_func_ptr_array[num_sad] = {eb_aom_sad64x16_c,
-                                                  eb_aom_sad64x32_c,
-                                                  eb_aom_sad64x64_c,
-                                                  eb_aom_sad64x128_c,
-                                                  eb_aom_sad128x64_c,
-                                                  eb_aom_sad128x128_c};
+aom_sad_fn_t aom_sad_c_func_ptr_array[num_sad] = {
+    eb_aom_sad4x4_c,    eb_aom_sad4x8_c,    eb_aom_sad4x16_c,
+    eb_aom_sad8x4_c,    eb_aom_sad8x8_c,    eb_aom_sad8x16_c,
+    eb_aom_sad8x32_c,   eb_aom_sad16x4_c,   eb_aom_sad16x8_c,
+    eb_aom_sad16x16_c,  eb_aom_sad16x32_c,  eb_aom_sad16x64_c,
+    eb_aom_sad32x8_c,   eb_aom_sad32x16_c,  eb_aom_sad32x32_c,
+    eb_aom_sad32x64_c,  eb_aom_sad64x16_c,  eb_aom_sad64x32_c,
+    eb_aom_sad64x64_c,  eb_aom_sad64x128_c, eb_aom_sad128x64_c,
+    eb_aom_sad128x128_c};
 
 aom_sad_multi_d_fn_t aom_sad_4d_c_func_ptr_array[num_sad] = {
-    eb_aom_sad64x16x4d_c,
-    eb_aom_sad64x32x4d_c,
-    eb_aom_sad64x64x4d_c,
-    eb_aom_sad64x128x4d_c,
-    eb_aom_sad128x64x4d_c,
+    eb_aom_sad4x4x4d_c,    eb_aom_sad4x8x4d_c,    eb_aom_sad4x16x4d_c,
+    eb_aom_sad8x4x4d_c,    eb_aom_sad8x8x4d_c,    eb_aom_sad8x16x4d_c,
+    eb_aom_sad8x32x4d_c,   eb_aom_sad16x4x4d_c,   eb_aom_sad16x8x4d_c,
+    eb_aom_sad16x16x4d_c,  eb_aom_sad16x32x4d_c,  eb_aom_sad16x64x4d_c,
+    eb_aom_sad32x8x4d_c,   eb_aom_sad32x16x4d_c,  eb_aom_sad32x32x4d_c,
+    eb_aom_sad32x64x4d_c,  eb_aom_sad64x16x4d_c,  eb_aom_sad64x32x4d_c,
+    eb_aom_sad64x64x4d_c,  eb_aom_sad64x128x4d_c, eb_aom_sad128x64x4d_c,
     eb_aom_sad128x128x4d_c};
 
-aom_sad_fn_t aom_sad_avx2_func_ptr_array[num_sad] = {eb_aom_sad64x16_avx2,
-                                                     eb_aom_sad64x32_avx2,
-                                                     eb_aom_sad64x64_avx2,
-                                                     eb_aom_sad64x128_avx2,
-                                                     eb_aom_sad128x64_avx2,
-                                                     eb_aom_sad128x128_avx2};
+aom_sad_fn_t aom_sad_avx2_func_ptr_array[num_sad] = {
+    eb_aom_sad4x4_avx2,    eb_aom_sad4x8_avx2,    eb_aom_sad4x16_avx2,
+    eb_aom_sad8x4_avx2,    eb_aom_sad8x8_avx2,    eb_aom_sad8x16_avx2,
+    eb_aom_sad8x32_avx2,   eb_aom_sad16x4_avx2,   eb_aom_sad16x8_avx2,
+    eb_aom_sad16x16_avx2,  eb_aom_sad16x32_avx2,  eb_aom_sad16x64_avx2,
+    eb_aom_sad32x8_avx2,   eb_aom_sad32x16_avx2,  eb_aom_sad32x32_avx2,
+    eb_aom_sad32x64_avx2,  eb_aom_sad64x16_avx2,  eb_aom_sad64x32_avx2,
+    eb_aom_sad64x64_avx2,  eb_aom_sad64x128_avx2, eb_aom_sad128x64_avx2,
+    eb_aom_sad128x128_avx2};
 
 aom_sad_multi_d_fn_t aom_sad_4d_avx2_func_ptr_array[num_sad] = {
-    eb_aom_sad64x16x4d_avx2,
-    eb_aom_sad64x32x4d_avx2,
-    eb_aom_sad64x64x4d_avx2,
-    eb_aom_sad64x128x4d_avx2,
-    eb_aom_sad128x64x4d_avx2,
-    eb_aom_sad128x128x4d_avx2};
+    eb_aom_sad4x4x4d_avx2,    eb_aom_sad4x8x4d_avx2,
+    eb_aom_sad4x16x4d_avx2,   eb_aom_sad8x4x4d_avx2,
+    eb_aom_sad8x8x4d_avx2,    eb_aom_sad8x16x4d_avx2,
+    eb_aom_sad8x32x4d_avx2,   eb_aom_sad16x4x4d_avx2,
+    eb_aom_sad16x8x4d_avx2,   eb_aom_sad16x16x4d_avx2,
+    eb_aom_sad16x32x4d_avx2,  eb_aom_sad16x64x4d_avx2,
+    eb_aom_sad32x8x4d_avx2,   eb_aom_sad32x16x4d_avx2,
+    eb_aom_sad32x32x4d_avx2,  eb_aom_sad32x64x4d_avx2,
+    eb_aom_sad64x16x4d_avx2,  eb_aom_sad64x32x4d_avx2,
+    eb_aom_sad64x64x4d_avx2,  eb_aom_sad64x128x4d_avx2,
+    eb_aom_sad128x64x4d_avx2, eb_aom_sad128x128x4d_avx2};
 
 static void init_data_sadMxN(uint8_t **src_ptr, uint32_t *src_stride,
                              uint8_t **ref_ptr, uint32_t *ref_stride) {
@@ -272,11 +288,12 @@ TEST(MotionEstimation_avx2, DISABLED_sadMxNx4d_speed) {
 
 #ifndef NON_AVX512_SUPPORT
 
-aom_sad_fn_t aom_sad_avx512_func_ptr_array[num_sad] = {eb_aom_sad64x16_avx512,
-                                                       eb_aom_sad64x32_avx512,
-                                                       eb_aom_sad64x64_avx512,
-                                                       eb_aom_sad64x128_avx512,
-                                                       eb_aom_sad128x64_avx512,
+aom_sad_fn_t aom_sad_avx512_func_ptr_array[num_sad] = {
+    eb_aom_sad64x16_avx512,
+    eb_aom_sad64x32_avx512,
+    eb_aom_sad64x64_avx512,
+    eb_aom_sad64x128_avx512,
+    eb_aom_sad128x64_avx512,
     eb_aom_sad128x128_avx512};
 
 aom_sad_multi_d_fn_t aom_sad_4d_avx512_func_ptr_array[num_sad] = {
