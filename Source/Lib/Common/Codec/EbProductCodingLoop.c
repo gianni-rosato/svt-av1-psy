@@ -1750,9 +1750,11 @@ void sort_stage0_fast_candidates(
 )
 {
     ModeDecisionCandidateBuffer **buffer_ptr_array = context_ptr->candidate_buffer_ptr_array;
+#if !SPEED_OPT
     //  fill cand_buff_indices with surviving buffer indices ; move the scratch candidates (MAX_CU_COST) to the last spots (if any)
     uint32_t ordered_start_idx = 0;
     uint32_t ordered_end_idx = input_buffer_count - 1;
+#endif
 
     uint32_t input_buffer_end_idx = input_buffer_start_idx + input_buffer_count - 1;
 #if SPEED_OPT
@@ -5939,7 +5941,6 @@ void search_best_independent_uv_mode(
 }
 #if SPEED_OPT
 void inter_class_decision_count_1(
-    PictureControlSet *picture_control_set_ptr,
     struct ModeDecisionContext   *context_ptr
 )
 {
@@ -6195,7 +6196,7 @@ void md_encode_block(
 
 #if SPEED_OPT
         //after completing stage0, we might shorten cand count for some classes.
-        inter_class_decision_count_1(picture_control_set_ptr, context_ptr);
+        inter_class_decision_count_1(context_ptr);
 #endif
         context_ptr->md_stage = MD_STAGE_1;
         for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
