@@ -9,8 +9,7 @@ env: build_type=release
 addons:
   apt:
     sources:
-      sourceline: 'ppa:ubuntu-toolchain-r/test'
-    packages: cmake yasm nasm valgrind libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev gcc-8 g++-8 gcc-9 g++-9
+    packages: cmake yasm nasm valgrind libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev
   homebrew:
     packages: yasm nasm ccache
 notifications:
@@ -34,6 +33,8 @@ before_install:
   - wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
   - tar xf video.tar.gz
   - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
+  - if [ $CC = "/usr/bin/gcc-8" ]; then sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y; sudo apt-get install -qq gcc-8 g++-8; fi
+  - if [ $CC = "/usr/bin/gcc-9" ]; then sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y; sudo apt-get install -qq gcc-9 g++-9; fi
 install:
   - pip install --user cpp-coveralls
   - export PATH=/Users/travis/Library/Python/2.7/bin:${PATH}
