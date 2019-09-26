@@ -58,7 +58,7 @@ static void showHelp()
     H0( " -h <arg>                  Input picture height \n");
     H0( " -colour-space <arg>       Input picture colour space. [400, 420, 422, 444]\n");
     H0( " -md5                      MD5 support flag \n");
-    H0( " -fps-frm                  Show fps after each frame decoded");
+    H0( " -fps-frm                  Show fps after each frame decoded\n");
     H0( " -fps-summary              Show fps summary");
     H0( " -skip-film-grain          Disable Film Grain");
 

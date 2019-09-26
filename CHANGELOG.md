@@ -1,12 +1,35 @@
 # Changelog
 
-## [upcoming]
+## [0.7.0] - 2019-09-26
 
-- Decoder Inter support
-- Decoder Screen Content Tools support
-- Decoder Post Processing Filters support
-- Decoder Compound Mode (InterInter & InterIntra) Tool support
+Encoder
+- Enhanced MRP Reference Frames
+- Intra Inter Compound
+- QP Modulation support
+- MFMV Support
+- MD Staging design [Up to 4 MD stages and 3 prediction classes: Intra / Inter / Compound]
+- Compound Motion prediction
+- 10-bit Mode Decision support for Intra
+- Thread safe resource allocation
+- Added AVX512 Optimizations
+- Added AVX2 Optimizations
+
+Decoder
+- Screen Content Tools
+- Temporal MV scan support
+- Inter support
+- Screen Content Tools support
+- Post Processing Filters support
+- Compound Mode (InterInter & InterIntra) Tool support
 - Decoder Film Grain support
+
+Build and Testing
+- Improve CI
+- Improve build scripts
+- Improve cmake lists
+- Improve Unit Test Coverage
+- API update
+- Bug fixes
 
 ## [0.6.0] - 2019-06-28
 

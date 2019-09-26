@@ -172,21 +172,7 @@ int32_t main(int32_t argc, char* argv[])
     printf("no super-resolution, no ref scaling\n\n");
 
     printf("-------------------------------------\n");
-    printf("SVT-AV1 Decoder Sample Application v1.2.0\n");
-    printf("Platform:   %u bit\n", (unsigned) sizeof(void*) * 8);
-#if ( defined( _MSC_VER ) && (_MSC_VER < 1910) )
-    printf("Compiler: VS13\n");
-#elif ( defined( _MSC_VER ) && (_MSC_VER >= 1910) )
-    printf("Compiler: VS17\n");
-#elif defined(__INTEL_COMPILER)
-    printf("Compiler: Intel\n");
-#elif defined(__GNUC__)
-    printf("Compiler: GCC\n");
-#else
-    printf("Compiler: unknown\n");
-#endif
-
-    printf("APP Build date: %s %s\n", __DATE__, __TIME__);
+    printf("SVT-AV1 Decoder\n");
 
     // Initialize config
     if (!config_ptr)
