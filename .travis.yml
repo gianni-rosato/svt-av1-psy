@@ -9,9 +9,9 @@ env: build_type=release
 addons:
   apt:
     sources:
-    packages: cmake yasm nasm valgrind libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev
+    packages: cmake yasm valgrind libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev
   homebrew:
-    packages: yasm nasm ccache
+    packages: yasm ccache
 notifications:
   webhooks: https://coveralls.io/webhook
 
