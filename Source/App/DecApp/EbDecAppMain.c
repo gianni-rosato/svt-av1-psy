@@ -192,7 +192,7 @@ int32_t main(int32_t argc, char* argv[])
         }
 
         assert(config_ptr->max_color_format <= EB_YUV444);
-        assert(config_ptr->max_bit_depth < EB_TWELVE_BIT);
+        assert(config_ptr->max_bit_depth <= EB_TWELVE_BIT);
 
         int enable_md5 = cli.enable_md5;
 
@@ -279,6 +279,8 @@ int32_t main(int32_t argc, char* argv[])
 fail:
     if (cli.inFile) fclose(cli.inFile);
     if (cli.outFile) fclose(cli.outFile);
+
+    free(config_ptr);
 
     return return_error;
 }

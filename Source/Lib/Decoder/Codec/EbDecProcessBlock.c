@@ -394,13 +394,16 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
                         av1_inv_transform_recon8bit(qcoeffs,
                             (uint8_t *)blk_recon_buf, recon_stride,
                             (uint8_t *)blk_recon_buf, recon_stride,
-                            tx_size, tx_type, plane, n_coeffs);
+                            tx_size, tx_type, plane, n_coeffs,
+                            dec_handle->frame_header.
+                            lossless_array[mode_info->segment_id]);
                     else
                         av1_inv_transform_recon(qcoeffs,
                             CONVERT_TO_BYTEPTR(blk_recon_buf), recon_stride,
                             CONVERT_TO_BYTEPTR(blk_recon_buf), recon_stride,
-                            tx_size, recon_picture_buf->bit_depth,
-                            tx_type, plane, n_coeffs);
+                            tx_size, recon_picture_buf->bit_depth - EB_8BIT,
+                            tx_type, plane, n_coeffs, dec_handle->frame_header.
+                            lossless_array[mode_info->segment_id]);
                 }
             }
 

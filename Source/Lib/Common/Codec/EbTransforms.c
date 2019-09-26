@@ -8638,7 +8638,8 @@ EbErrorType av1_inv_transform_recon(
     uint32_t      bit_increment,
     TxType        transform_type,
     PlaneType     component_type,
-    uint32_t      eob)
+    uint32_t      eob,
+    uint8_t       lossless)
 {
     UNUSED(component_type);
     EbErrorType return_error = EB_ErrorNone;
@@ -8646,8 +8647,8 @@ EbErrorType av1_inv_transform_recon(
     txfm_param.tx_type = transform_type;
     txfm_param.tx_size = txsize;
     txfm_param.eob = eob;
-    txfm_param.lossless = 0;
-    txfm_param.bd = bit_increment ? 10 : 8;
+    txfm_param.lossless = lossless;
+    txfm_param.bd = bit_increment + EB_8BIT;
     txfm_param.is_hbd = 1;
     //TxfmParam.tx_set_type = av1_get_ext_tx_set_type(   txfm_param->tx_size, is_inter_block(xd->mi[0]), reduced_tx_set);
 
@@ -8675,7 +8676,8 @@ EbErrorType av1_inv_transform_recon8bit(
     TxSize         txsize,
     TxType         transform_type,
     PlaneType     component_type,
-    uint32_t       eob
+    uint32_t       eob,
+    uint8_t        lossless
 )
 {
     UNUSED(component_type);
@@ -8684,7 +8686,7 @@ EbErrorType av1_inv_transform_recon8bit(
     txfm_param.tx_type = transform_type;
     txfm_param.tx_size = txsize;
     txfm_param.eob = eob;
-    txfm_param.lossless = 0;
+    txfm_param.lossless = lossless;
     txfm_param.bd = 8;
     txfm_param.is_hbd = 1;
     //TxfmParam.tx_set_type = av1_get_ext_tx_set_type(   txfm_param->tx_size, is_inter_block(xd->mi[0]), reduced_tx_set);

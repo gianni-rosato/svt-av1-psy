@@ -2982,11 +2982,13 @@ void eb_av1_inv_txfm_add_ssse3(const TranLow *dqcoeff,
     uint8_t *dst_w, int32_t stride_w,
     const TxfmParam *txfm_param) {
     const TxType tx_type = txfm_param->tx_type;
-    //f (!txfm_param->lossless) {
-    eb_av1_lowbd_inv_txfm2d_add_ssse3(dqcoeff,
-        dst_r, stride_r, dst_w, stride_w,
-        tx_type, txfm_param->tx_size, txfm_param->eob);
-    //else {
-   // eb_av1_inv_txfm_add_c(dqcoeff, dst, stride, txfm_param);
-   // }
+    if (!txfm_param->lossless) {
+        eb_av1_lowbd_inv_txfm2d_add_ssse3(dqcoeff,
+            dst_r, stride_r, dst_w, stride_w,
+            tx_type, txfm_param->tx_size, txfm_param->eob);
+    }
+    else {
+        eb_av1_inv_txfm_add_c(dqcoeff, dst_r, stride_r, dst_w,
+                              stride_w, txfm_param);
+    }
 }

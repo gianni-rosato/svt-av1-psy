@@ -33,6 +33,16 @@
 
 extern PredictionMode get_uv_mode(UvPredictionMode mode);
 
+/* Avoid memory corruption by intra pred intrinsic kernel */
+void dec_init_intra_predictors_internal(void) {
+    pred[V_PRED][TX_8X8] = eb_aom_v_predictor_8x8_c;
+    pred[H_PRED][TX_8X8] = eb_aom_h_predictor_8x8_c;
+    dc_pred[0][0][TX_8X8] = eb_aom_dc_128_predictor_8x8_c;
+    dc_pred[0][1][TX_8X8] = eb_aom_dc_top_predictor_8x8_c;
+    dc_pred[1][0][TX_8X8] = eb_aom_dc_left_predictor_8x8_c;
+    dc_pred[1][1][TX_8X8] = eb_aom_dc_predictor_8x8_c;
+}
+
 /*TODO: Remove replication and harmonize with encoder after data str. harmonization */
 static int dec_is_smooth(const ModeInfo_t *mbmi, int32_t plane) {
     if (plane == 0) {

@@ -2996,7 +2996,7 @@ void inv_transform_recon_wrapper(
             BIT_INCREMENT_10BIT,
             transform_type,
             component_type,
-            eob);
+            eob, 0 /*lossless*/);
     } else {
         av1_inv_transform_recon8bit(
             rec_coeff_buffer + coeff_offset,
@@ -3005,7 +3005,7 @@ void inv_transform_recon_wrapper(
             txsize,
             transform_type,
             component_type,
-            eob);
+            eob, 0 /*lossless*/);
     }
 }
 

@@ -1018,7 +1018,7 @@ static void Av1EncodeLoop16bit(
                     BIT_INCREMENT_10BIT,
                     txb_ptr->transform_type[PLANE_TYPE_Y],
                     PLANE_TYPE_Y,
-                    eob[0]);
+                    eob[0], 0 /*lossless*/);
             }
             if (context_ptr->blk_geom->has_uv) {
                 reconLumaOffset = (reconSamples->origin_y + round_origin_y)            * reconSamples->stride_y + (reconSamples->origin_x + round_origin_x);
@@ -1254,7 +1254,7 @@ static void Av1EncodeGenerateRecon(
                     context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                     txb_ptr->transform_type[PLANE_TYPE_Y],
                     PLANE_TYPE_Y,
-                    eob[0]
+                    eob[0], 0 /*lossless*/
                 );
             }
         }
@@ -1282,7 +1282,7 @@ static void Av1EncodeGenerateRecon(
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
-                eob[1]);
+                eob[1], 0 /*lossless*/);
         }
 
         //**********************************
@@ -1300,7 +1300,7 @@ static void Av1EncodeGenerateRecon(
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
-                eob[2]);
+                eob[2], 0 /*lossless*/);
         }
     }
 
@@ -1363,7 +1363,7 @@ static void Av1EncodeGenerateRecon16bit(
                     BIT_INCREMENT_10BIT,
                     txb_ptr->transform_type[PLANE_TYPE_Y],
                     PLANE_TYPE_Y,
-                    eob[0]
+                    eob[0], 0 /*lossless*/
                 );
             }
         }
@@ -1393,7 +1393,7 @@ static void Av1EncodeGenerateRecon16bit(
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
-                eob[1]);
+                eob[1], 0 /*lossless*/);
         }
 
         //**********************************
@@ -1410,7 +1410,7 @@ static void Av1EncodeGenerateRecon16bit(
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
-                eob[2]);
+                eob[2], 0 /*lossless*/);
         }
     }
 

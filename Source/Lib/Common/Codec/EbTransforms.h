@@ -4047,7 +4047,8 @@ extern "C" {
         uint32_t    bit_increment,
         TxType      transform_type,
         PlaneType  component_type,
-        uint32_t    eob);
+        uint32_t    eob,
+        uint8_t     lossless);
 
     EbErrorType av1_inv_transform_recon8bit(
         int32_t    *coeff_buffer,//1D buffer
@@ -4058,7 +4059,8 @@ extern "C" {
         TxSize      txsize,
         TxType      transform_type,
         PlaneType  component_type,
-        uint32_t    eob);
+        uint32_t    eob,
+        uint8_t     lossless);
 
     extern uint8_t map_chroma_qp(
         uint8_t qp
