@@ -36,6 +36,7 @@ extern "C" {
 #define II_COMP_FLAG 1
 #define PRED_CHANGE                  1 // Change the MRP in 4L Pictures 3, 5 , 7 and 9 use 1 as the reference
 #define PRED_CHANGE_5L               1 // Change the MRP in 5L Pictures 3, 5 , 7 and 9 use 1 as the reference, 11, 13, 15 and 17 use 9 as the reference
+#define SPEED_OPT                    1 // Speed optimizations
 
 #ifndef NON_AVX512_SUPPORT
 #define NON_AVX512_SUPPORT
@@ -467,9 +468,9 @@ typedef enum MD_STAGE {
 #define MAX_REF_TYPE_CAND   30
 #define PRUNE_REC_TH         5
 #define PRUNE_REF_ME_TH      2
-
+#if !SPEED_OPT
 #define MD_EXIT_THSL         0 // MD_EXIT_THSL -->0 is lossless 100 is maximum. Increase with a step of 10-20.
-
+#endif
 typedef enum
 {
     EIGHTTAP_REGULAR,

@@ -1755,13 +1755,30 @@ void sort_stage0_fast_candidates(
     uint32_t ordered_end_idx = input_buffer_count - 1;
 
     uint32_t input_buffer_end_idx = input_buffer_start_idx + input_buffer_count - 1;
+#if SPEED_OPT
+    uint32_t buffer_index, i, j;
+    uint32_t k = 0;
+    for (buffer_index = input_buffer_start_idx; buffer_index <= input_buffer_end_idx; buffer_index++, k++) {
+        cand_buff_indices[k] = buffer_index;
+    }
+    for (i = 0; i < input_buffer_count - 1; ++i) {
+        for (j = i + 1; j < input_buffer_count; ++j) {
+            if (*(buffer_ptr_array[cand_buff_indices[j]]->fast_cost_ptr) < *(buffer_ptr_array[cand_buff_indices[i]]->fast_cost_ptr)) {
+                buffer_index = cand_buff_indices[i];
+                cand_buff_indices[i] = (uint32_t)cand_buff_indices[j];
+                cand_buff_indices[j] = (uint32_t)buffer_index;
 
+            }
+        }
+    }
+#else
     for (uint32_t buffer_index = input_buffer_start_idx; buffer_index <= input_buffer_end_idx; buffer_index++) {
         if (*(buffer_ptr_array[buffer_index]->fast_cost_ptr) == MAX_CU_COST)
             cand_buff_indices[ordered_end_idx--] = buffer_index;
         else
             cand_buff_indices[ordered_start_idx++] = buffer_index;
     }
+#endif
 }
 
 static INLINE void heap_sort_stage_max_node_fast_cost_ptr(
@@ -5920,6 +5937,36 @@ void search_best_independent_uv_mode(
     // End uv search path
     context_ptr->uv_search_path = EB_FALSE;
 }
+#if SPEED_OPT
+void inter_class_decision_count_1(
+    PictureControlSet *picture_control_set_ptr,
+    struct ModeDecisionContext   *context_ptr
+)
+{
+    ModeDecisionCandidateBuffer **buffer_ptr_array = context_ptr->candidate_buffer_ptr_array;
+
+    // Distortion-based NIC proning not applied to INTRA clases: CLASS_0 and CLASS
+    for (CAND_CLASS cand_class_it = CAND_CLASS_1; cand_class_it <= CAND_CLASS_3; cand_class_it++) {
+
+        if (context_ptr->md_stage_0_count[cand_class_it] > 0 && context_ptr->md_stage_1_count[cand_class_it] > 0) {
+
+            uint32_t *cand_buff_indices = context_ptr->cand_buff_indices[cand_class_it];
+
+            if (*(buffer_ptr_array[cand_buff_indices[0]]->fast_cost_ptr) < *(buffer_ptr_array[context_ptr->cand_buff_indices[CAND_CLASS_0][0]]->fast_cost_ptr)) {
+
+
+                uint32_t fast1_cand_count = 1;
+                while (fast1_cand_count < context_ptr->md_stage_1_count[cand_class_it] && ((((*(buffer_ptr_array[cand_buff_indices[fast1_cand_count]]->fast_cost_ptr) - *(buffer_ptr_array[cand_buff_indices[0]]->fast_cost_ptr)) * 100) / (*(buffer_ptr_array[cand_buff_indices[0]]->fast_cost_ptr))) < context_ptr->dist_base_md_stage_0_count_th)) {
+                    fast1_cand_count++;
+                }
+                context_ptr->md_stage_1_count[cand_class_it] = fast1_cand_count;
+            }
+        }
+    }
+}
+extern aom_variance_fn_ptr_t mefn_ptr[BlockSizeS_ALL];
+unsigned int eb_av1_get_sby_perpixel_variance(const aom_variance_fn_ptr_t *fn_ptr, const uint8_t *src, int stride, BlockSize bs);
+#endif
 void md_encode_block(
     SequenceControlSet             *sequence_control_set_ptr,
     PictureControlSet              *picture_control_set_ptr,
@@ -5969,6 +6016,14 @@ void md_encode_block(
     if (allowed_ns_cu(
         is_nsq_table_used, picture_control_set_ptr->parent_pcs_ptr->nsq_max_shapes_md,context_ptr,is_complete_sb ))
     {
+
+#if SPEED_OPT
+        const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[context_ptr->blk_geom->bsize];
+        context_ptr->source_variance = // use_hbd ?
+            //eb_av1_high_get_sby_perpixel_variance(fn_ptr, (input_picture_ptr->buffer_y + inputOriginIndex), input_picture_ptr->stride_y, context_ptr->blk_geom->bsize :
+            eb_av1_get_sby_perpixel_variance(fn_ptr, (input_picture_ptr->buffer_y + inputOriginIndex), input_picture_ptr->stride_y, context_ptr->blk_geom->bsize);
+#endif
+
         ProductCodingLoopInitFastLoop(
             context_ptr,
             context_ptr->skip_coeff_neighbor_array,
@@ -6138,6 +6193,10 @@ void md_encode_block(
             }
         }
 
+#if SPEED_OPT
+        //after completing stage0, we might shorten cand count for some classes.
+        inter_class_decision_count_1(picture_control_set_ptr, context_ptr);
+#endif
         context_ptr->md_stage = MD_STAGE_1;
         for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
 
@@ -6664,9 +6723,13 @@ EB_EXTERN EbErrorType mode_decision_sb(
 
             // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth
             // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth
-            // when MD_EXIT_THSL=0 the estimated cost for the remaining child is not taken into account and the action will be lossless compared to no exit
+            // when md_exit_th=0 the estimated cost for the remaining child is not taken into account and the action will be lossless compared to no exit
             // MD_EXIT_THSL could be tuned toward a faster encoder but lossy
+#if SPEED_OPT
+            if (parent_depth_cost <= current_depth_cost + (current_depth_cost* (4 - context_ptr->blk_geom->quadi)* context_ptr->md_exit_th / context_ptr->blk_geom->quadi / 100)) {
+#else
             if (parent_depth_cost <= current_depth_cost + (current_depth_cost* (4 - context_ptr->blk_geom->quadi)* MD_EXIT_THSL / context_ptr->blk_geom->quadi / 100)) {
+#endif
                 skip_next_sq = 1;
                 next_non_skip_blk_idx_mds = parent_depth_idx_mds + ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth - 1];
             }
@@ -6712,7 +6775,11 @@ EB_EXTERN EbErrorType mode_decision_sb(
             uint32_t first_blk_idx = context_ptr->cu_ptr->mds_idx - (blk_geom->nsi);//index of first block in this partition
             for (int blk_it = 0; blk_it < blk_geom->nsi + 1; blk_it++)
                 tot_cost += context_ptr->md_local_cu_unit[first_blk_idx + blk_it].cost;
+#if SPEED_OPT
+            if ((tot_cost + tot_cost * (blk_geom->totns - (blk_geom->nsi + 1))* context_ptr->md_exit_th / (blk_geom->nsi + 1) / 100) > context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].cost)
+#else
             if ((tot_cost + tot_cost * (blk_geom->totns - (blk_geom->nsi + 1))* MD_EXIT_THSL / (blk_geom->nsi + 1) / 100) > context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].cost)
+#endif
                 skip_next_nsq = 1;
         }
         if (blk_geom->shape != PART_N) {

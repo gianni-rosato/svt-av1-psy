@@ -285,6 +285,13 @@ extern "C" {
     uint8_t                             edge_based_skip_angle_intra;
     EbBool                              coeff_based_skip_atb;
     uint8_t                             prune_ref_frame_for_rec_partitions;
+#if SPEED_OPT
+    unsigned int                        source_variance; // input block variance
+    unsigned int                        inter_inter_wedge_variance_th;
+    uint64_t                            md_exit_th;
+    uint64_t                            dist_base_md_stage_0_count_th;
+#endif
+
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(

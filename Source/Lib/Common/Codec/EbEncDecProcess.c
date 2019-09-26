@@ -1442,6 +1442,27 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->prune_ref_frame_for_rec_partitions = 0;
     else
         context_ptr->prune_ref_frame_for_rec_partitions = 1;
+
+#if SPEED_OPT
+    // Derive INTER/INTER WEDGE variance TH
+    if (MR_MODE)
+        context_ptr->inter_inter_wedge_variance_th = 0;
+    else //if (picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->inter_inter_wedge_variance_th = 100;
+
+    // Derive MD Exit TH
+    if (MR_MODE)
+        context_ptr->md_exit_th = 0;
+    else //if (picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->md_exit_th = 10;
+
+    // Derive distortion-based md_stage_0_count proning
+    if (MR_MODE)
+        context_ptr->dist_base_md_stage_0_count_th = (uint64_t)~0;
+    else //if (picture_control_set_ptr->enc_mode == ENC_M0)
+        context_ptr->dist_base_md_stage_0_count_th = 75;
+#endif
+
     return return_error;
 }
 
