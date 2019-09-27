@@ -161,12 +161,13 @@ static TxSize dec_set_lpf_parameters(AV1_DEBLOCKING_PARAMETERS *const params,
     const uint32_t y, const int32_t plane,
     int32_t *sb_delta_lf, int32_t *sb_delta_lf_prev)
 {
+    UNUSED(recon_picture_buf);
     /*reset to initial values*/
     params->filter_length = 0;
 
     /*no deblocking is required*/
-    const uint32_t width = recon_picture_buf->width;
-    const uint32_t height = recon_picture_buf->height;
+    const uint32_t width = frm_hdr->frame_size.frame_width;
+    const uint32_t height = frm_hdr->frame_size.frame_height;
     if ((width <= x) || (height <= y)) {
         /*just return the smallest transform unit size*/
         return TX_4X4;

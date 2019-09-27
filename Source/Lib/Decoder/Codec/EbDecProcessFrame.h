@@ -67,6 +67,8 @@ typedef struct LRCtxt {
     /* Wiener and SGR Filter holder */
     RestorationUnitInfo    *lr_unit[MAX_MB_PLANE];
 
+    int32_t lr_stride[MAX_MB_PLANE];
+
     /* Buffer to store deblocked line buffer around stripe boundary */
     RestorationStripeBoundaries boundaries[MAX_MB_PLANE];
 

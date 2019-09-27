@@ -21,6 +21,7 @@
 #include "EbDecInverseQuantize.h"
 #include "EbDecProcessFrame.h"
 #include "EbRestoration.h"
+#include "EbDecSuperRes.h"
 #include "EbDecRestoration.h"
 
 AV1PixelRect av1_whole_frame_rect(SeqHeader *seq_header, int is_uv) {
@@ -44,6 +45,7 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
 {
     assert(!dec_handle->frame_header.all_lossless);
 
+    FrameHeader *frame_header = &dec_handle->frame_header;
     LRCtxt *lr_ctxt = (LRCtxt *)dec_handle->pv_lr_ctxt;
     MasterFrameBuf *master_frame_buf = &dec_handle->master_frame_buf;
     CurFrameBuf    *frame_buf = &master_frame_buf->cur_frame_bufs[0];
@@ -59,17 +61,16 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
     int num_plane = av1_num_planes(&dec_handle->seq_header.color_config);
     int use_highbd = (dec_handle->seq_header.color_config.bit_depth > 8);
     int bit_depth = dec_handle->seq_header.color_config.bit_depth;
-    int sb_log2 = dec_handle->seq_header.sb_size_log2;
-    int h = 0, w = 0, x, y, src_stride, dst_stride, tile_stripe0 = 0;
+    int h = 0, w = 0, x, y, unit_row, unit_col;
+    int src_stride, dst_stride, tile_stripe0 = 0;
     uint8_t *src, *dst;
 
     for (int plane = 0; plane < num_plane; plane++)
     {
-        LRParams *lr_params = &dec_handle->frame_header.lr_params[plane];
+        LRParams *lr_params = &frame_header->lr_params[plane];
         int ext_size = lr_params->loop_restoration_size * 3 / 2;
         int is_uv = plane > 0;
         int sx = 0, sy = 0;
-        int master_col = dec_handle->master_frame_buf.sb_cols;
 
         if (plane) {
             sx = dec_handle->seq_header.color_config.subsampling_x;
@@ -90,7 +91,7 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
         if (lr_params->frame_restoration_type == RESTORE_NONE)
             continue;
 
-        for (y = 0; y < tile_h; y += h)
+        for (y = 0, unit_row = 0; y < tile_h; y += h, unit_row++)
         {
             int remaining_h = tile_h - y;
             h = (remaining_h < ext_size) ? remaining_h :
@@ -104,16 +105,17 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
             tile_limit.v_start = AOMMAX(tile_rect.top, tile_limit.v_start - voffset);
             if (tile_limit.v_end < tile_rect.bottom) tile_limit.v_end -= voffset;
 
-            for (x = 0; x < tile_w; x += w)
+            for (x = 0, unit_col = 0; x < tile_w; x += w, unit_col++)
             {
                 int remaining_w = tile_w - x;
                 w = (remaining_w < ext_size) ? remaining_w :
                                                lr_params->loop_restoration_size;
+
                 tile_limit.h_start = tile_rect.left + x;
-                tile_limit.h_end   = tile_rect.left + x + w;
+                tile_limit.h_end = tile_rect.left + x + w;
 
                 lr_unit = lr_ctxt->lr_unit[plane] +
-                    ((y >> sb_log2) * master_col) + ((x >> sb_log2));
+                    unit_row * lr_ctxt->lr_stride[plane] + unit_col;
 
                 if (!use_highbd)
                     eb_av1_loop_restoration_filter_unit(1, &tile_limit, lr_unit,
@@ -143,7 +145,6 @@ static void dec_save_deblock_boundary_lines(EbDecHandle *dec_handle,
     uint8_t *src;
     int32_t stride;
     int sx = 0, sy = 0;
-    int frame_width = dec_handle->frame_header.frame_size.frame_width;
     int frame_height = dec_handle->frame_header.frame_size.frame_height;
 
     if (plane) {
@@ -176,12 +177,22 @@ static void dec_save_deblock_boundary_lines(EbDecHandle *dec_handle,
         AOMMIN(RESTORATION_CTX_VERT, (frame_height >> sy) - row);
     assert(lines_to_save == 1 || lines_to_save == 2);
 
-    int upscaled_width = frame_width >> sx;;
-    int line_bytes = 0;
+    int upscaled_width;
+    int line_bytes;
 
-    if (av1_superres_scaled(&dec_handle->frame_header.frame_size))
-        assert(0);
+    if (av1_superres_scaled(&dec_handle->frame_header.frame_size)) {
+        upscaled_width = (dec_handle->frame_header.frame_size.
+            superres_upscaled_width + sx) >> sx;
+        line_bytes = upscaled_width << use_highbd;
+
+        av1_upscale_normative_rows(&dec_handle->frame_header, (src_rows),
+            stride, (bdry_rows), boundaries->stripe_boundary_stride,
+            lines_to_save, sx, dec_handle->seq_header.color_config.bit_depth);
+    }
     else {
+        upscaled_width = dec_handle->
+            frame_header.frame_size.frame_width >> sx;
+
         line_bytes = upscaled_width << use_highbd;
         for (int i = 0; i < lines_to_save; i++) {
             memcpy(bdry_rows + i * bdry_stride, src_rows + i * src_stride,

@@ -143,7 +143,7 @@ int svt_dec_out_buf(
         return 0;
     }
 
-    uint32_t wd = dec_handle_ptr->frame_header.frame_size.frame_width;
+    uint32_t wd = dec_handle_ptr->frame_header.frame_size.superres_upscaled_width;
     uint32_t ht = dec_handle_ptr->frame_header.frame_size.frame_height;
     uint32_t i, sx = 0, sy = 0;
 

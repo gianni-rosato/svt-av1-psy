@@ -25,6 +25,7 @@
 #include "EbDecBlock.h"
 
 #include "EbDecHandle.h"
+#include "EbDecSuperRes.h"
 
 #include "EbObuParse.h"
 #include "EbDecMemInit.h"
@@ -72,10 +73,10 @@ int byte_alignment(bitstrm_t *bs)
 }
 
 void compute_image_size(SeqHeader *seq_header, FrameHeader *frm) {
-    frm->mi_cols = 2 * ((frm->frame_size.frame_width + 7 - 1) >> 3);
-    frm->mi_rows = 2 * ((frm->frame_size.frame_height + 7 - 1) >> 3);
-    frm->mi_stride = ALIGN_POWER_OF_TWO(
-    (2 * ((seq_header->max_frame_width + 7) >> 3)) , MAX_MIB_SIZE_LOG2);
+    frm->mi_cols = 2 * ((frm->frame_size.frame_width + 7) >> 3);
+    frm->mi_rows = 2 * ((frm->frame_size.frame_height + 7) >> 3);
+    frm->mi_stride = (ALIGN_POWER_OF_TWO(seq_header->max_frame_width,
+        MAX_MIB_SIZE_LOG2)) >> MI_SIZE_LOG2;
 }
 
 /*TODO: Harmonize with encoder function */
@@ -554,14 +555,13 @@ void superres_params(bitstrm_t *bs, SeqHeader   *seq_header, FrameHeader   *fram
         use_superres = dec_get_bits(bs, 1);
     else
         use_superres = 0;
-
     PRINT_NAME("use_superres");
+
     if (use_superres) {
-        assert(!use_superres);
         coded_denom = dec_get_bits(bs, SUPERRES_SCALE_BITS);
-        PRINT_FRAME("coded_denom", coded_denom);
         frame_info->frame_size.superres_denominator = coded_denom +
             SUPERRES_SCALE_DENOMINATOR_MIN;
+        PRINT_FRAME("coded_denom", frame_info->frame_size.superres_denominator);
     }
     else
         frame_info->frame_size.superres_denominator = SCALE_NUMERATOR;
@@ -2285,14 +2285,6 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
             clear_cdef(sb_info->sb_cdef_strength, cdef_factor);
 
-            // Loop restoration SB level buffer alignment
-            sb_info->sb_lr_unit[AOM_PLANE_Y] = frame_buf->lr_unit[AOM_PLANE_Y] +
-                (sb_row * master_frame_buf->sb_cols) + sb_col;
-            sb_info->sb_lr_unit[AOM_PLANE_U] = frame_buf->lr_unit[AOM_PLANE_U] +
-                (sb_row * master_frame_buf->sb_cols >> sy) + (sb_col >> sx);
-            sb_info->sb_lr_unit[AOM_PLANE_V] = frame_buf->lr_unit[AOM_PLANE_V] +
-                (sb_row * master_frame_buf->sb_cols >> sy) + (sb_col >> sx);
-
             parse_ctx->first_luma_tu_offset = 0;
             parse_ctx->first_chroma_tu_offset = 0;
             parse_ctx->cur_mode_info = sb_info->sb_mode_info;
@@ -2502,8 +2494,10 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
              frame_header->CDEF_params.cdef_y_strength[0] ||
              frame_header->CDEF_params.cdef_uv_strength[0]);
 
-        const int opt_lr = !do_cdef &&
-            !av1_superres_scaled(&dec_handle_ptr->frame_header.frame_size);
+        int32_t do_upscale = av1_superres_scaled(&dec_handle_ptr->
+                             frame_header.frame_size);
+
+        const int opt_lr = !do_cdef && !do_upscale;
 
         LRParams *lr_param = dec_handle_ptr->frame_header.lr_params;
         int do_loop_restoration =
@@ -2523,18 +2517,26 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                     svt_cdef_frame_hbd(dec_handle_ptr);
             }
 
+            if (do_upscale) {
+                av1_superres_upscale(&dec_handle_ptr->frame_header,
+                    &dec_handle_ptr->seq_header,
+                    dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf);
+            }
+
             if (do_loop_restoration) {
                 dec_av1_loop_restoration_save_boundary_lines(dec_handle_ptr, 1);
 
                 /* Padded bits are required for filtering pixel around frame boundary */
-                pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf);
+                pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
+                        &dec_handle_ptr->frame_header);
                 dec_av1_loop_restoration_filter_frame(dec_handle_ptr, opt_lr);
             }
         }
         else {
             if (do_loop_restoration) {
                 /* Padded bits are required for filtering pixel around frame boundary */
-                pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf);
+                pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
+                        &dec_handle_ptr->frame_header);
                 dec_av1_loop_restoration_filter_frame(dec_handle_ptr, opt_lr);
             }
         }
@@ -2544,7 +2546,8 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     if (frame_header->disable_frame_end_update_cdf)
         dec_handle_ptr->cur_pic_buf[0]->final_frm_ctx = parse_ctxt->init_frm_ctx;
 
-    pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf);
+    pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
+            &dec_handle_ptr->frame_header);
 
     return status;
 }

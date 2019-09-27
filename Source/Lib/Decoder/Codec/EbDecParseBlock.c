@@ -30,6 +30,7 @@
 #include "EbDecUtils.h"
 
 #include "EbDecParseInterBlock.h"
+#include "EbDecProcessFrame.h"
 
 #if ENABLE_ENTROPY_TRACE
 FILE* temp_fp;
@@ -3032,8 +3033,8 @@ void read_sgrproj_filter(SgrprojInfo *sgrproj_info,
     memcpy(ref_sgrproj_info, sgrproj_info, sizeof(*sgrproj_info));
 }
 
-void read_lr_unit(EbDecHandle *dec_handle, SBInfo *sb_info, int32_t row,
-                  int32_t col, int32_t plane, SvtReader *reader)
+void read_lr_unit(EbDecHandle *dec_handle, int32_t row, int32_t col,
+    int32_t plane, SvtReader *reader, RestorationUnitInfo *lr_unit)
 {
     UNUSED(row);
     UNUSED(col);
@@ -3043,31 +3044,31 @@ void read_lr_unit(EbDecHandle *dec_handle, SBInfo *sb_info, int32_t row,
     ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
     if (lrp->frame_restoration_type == RESTORE_NONE) return;
 
-    sb_info->sb_lr_unit[plane]->restoration_type = RESTORE_NONE;
+    lr_unit->restoration_type = RESTORE_NONE;
     if (lrp->frame_restoration_type == RESTORE_SWITCHABLE) {
-        sb_info->sb_lr_unit[plane]->restoration_type =
+        lr_unit->restoration_type =
             svt_read_symbol(reader, parse_ctxt->cur_tile_ctx.switchable_restore_cdf,
                 RESTORE_SWITCHABLE_TYPES, ACCT_STR);
     }
     else if (lrp->frame_restoration_type == RESTORE_WIENER) {
         if (svt_read_symbol(reader, parse_ctxt->cur_tile_ctx.wiener_restore_cdf,
             2, ACCT_STR)) {
-            sb_info->sb_lr_unit[plane]->restoration_type = RESTORE_WIENER;
+            lr_unit->restoration_type = RESTORE_WIENER;
         }
     }
     else if (lrp->frame_restoration_type == RESTORE_SGRPROJ) {
         if (svt_read_symbol(reader, parse_ctxt->cur_tile_ctx.sgrproj_restore_cdf,
             2, ACCT_STR)) {
-            sb_info->sb_lr_unit[plane]->restoration_type = RESTORE_SGRPROJ;
+            lr_unit->restoration_type = RESTORE_SGRPROJ;
         }
     }
 
     RestorationUnitInfo *ref_lr_plane = &parse_ctxt->ref_lr_unit[plane];
-    WienerInfo *wiener_info = &sb_info->sb_lr_unit[plane]->wiener_info;
-    SgrprojInfo *sgrproj_info = &sb_info->sb_lr_unit[plane]->sgrproj_info;
+    WienerInfo *wiener_info = &lr_unit->wiener_info;
+    SgrprojInfo *sgrproj_info = &lr_unit->sgrproj_info;
     const int wiener_win = (plane > 0) ? WIENER_WIN_CHROMA : WIENER_WIN;
 
-    switch (sb_info->sb_lr_unit[plane]->restoration_type) {
+    switch (lr_unit->restoration_type) {
     case RESTORE_WIENER:
         read_wiener_filter(wiener_win, wiener_info, &ref_lr_plane->wiener_info, reader);
         break;
@@ -3075,12 +3076,12 @@ void read_lr_unit(EbDecHandle *dec_handle, SBInfo *sb_info, int32_t row,
         read_sgrproj_filter(sgrproj_info, &ref_lr_plane->sgrproj_info, reader);
         break;
     default:
-        assert(sb_info->sb_lr_unit[plane]->restoration_type == RESTORE_NONE);
+        assert(lr_unit->restoration_type == RESTORE_NONE);
         break;
     }
 }
 
-void read_lr(EbDecHandle *dec_handle, SBInfo *sb_info, int32_t row, int32_t col,
+void read_lr(EbDecHandle *dec_handle, int32_t row, int32_t col,
              SvtReader *reader)
 {
     FrameHeader *frame_info = &dec_handle->frame_header;
@@ -3092,6 +3093,8 @@ void read_lr(EbDecHandle *dec_handle, SBInfo *sb_info, int32_t row, int32_t col,
     int width = mi_size_wide[seq_header->sb_size];
     int height = mi_size_high[seq_header->sb_size];
     int num_planes = color_config->mono_chrome ? 1 : MAX_MB_PLANE;
+    LRCtxt *lr_ctxt = (LRCtxt *)dec_handle->pv_lr_ctxt;
+
     for (int plane = 0; plane < num_planes; plane++) {
         if (frame_info->lr_params[plane].frame_restoration_type != RESTORE_NONE) {
             int subX = (plane == 0) ? 0 : dec_handle->seq_header.
@@ -3121,7 +3124,10 @@ void read_lr(EbDecHandle *dec_handle, SBInfo *sb_info, int32_t row, int32_t col,
                                    denominator - 1) / denominator);
             for (int unit_row = unit_row_start; unit_row < unit_row_end; unit_row++) {
                 for (int unit_col = unit_col_start; unit_col < unit_col_end; unit_col++) {
-                    read_lr_unit(dec_handle, sb_info, unit_row, unit_col, plane, reader);
+                    RestorationUnitInfo *cur_lr = lr_ctxt->lr_unit[plane] +
+                        (unit_row * lr_ctxt->lr_stride[plane]) + unit_col;
+                    read_lr_unit(dec_handle, unit_row, unit_col, plane,
+                                 reader, cur_lr);
                 }
             }
         }
@@ -3137,7 +3143,7 @@ void parse_super_block(EbDecHandle *dec_handle, uint32_t blk_row,
     parse_ctx->read_deltas = dec_handle->frame_header.
                             delta_q_params.delta_q_present;
 
-    read_lr(dec_handle, sbInfo, blk_row, blk_col, reader);
+    read_lr(dec_handle, blk_row, blk_col, reader);
 
     parse_partition(dec_handle, blk_row, blk_col, reader,
                     dec_handle->seq_header.sb_size, sbInfo);
