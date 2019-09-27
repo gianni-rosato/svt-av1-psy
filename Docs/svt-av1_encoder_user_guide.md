@@ -159,6 +159,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **ReconFile** | -o | any string | null | Recon file path. Optional output of recon. |
 | **TileRow** | -tile-rows | [0-6] | 0 | log2 of tile rows |
 | **TileCol** | -tile-columns | [0-6] | 0 | log2 of tile columns |
+| **UnrestrictedMotionVector** | -umv | [0-1] | 1 | Enables or disables unrestriced motion vectors, 0 = OFF(motion vectors are constrained within tile boundary), 1 = ON. For MCTS support, set -umv 0 |
 
 ## Appendix A Encoder Parameters
 

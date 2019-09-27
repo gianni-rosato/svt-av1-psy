@@ -14478,6 +14478,41 @@ EbErrorType motion_estimate_lcu(
             x_search_area_origin = x_search_center - (search_area_width >> 1);
             y_search_area_origin = y_search_center - (search_area_height >> 1);
 
+            if(sequence_control_set_ptr->static_config.unrestricted_motion_vector == 0)
+            {
+                int tile_start_x = sequence_control_set_ptr->sb_params_array[sb_index].tile_start_x;
+                int tile_end_x   = sequence_control_set_ptr->sb_params_array[sb_index].tile_end_x;
+
+                // Correct the left edge of the Search Area if it is not on the
+                // reference Picture
+                x_search_area_origin =
+                    ((origin_x + x_search_area_origin) < tile_start_x)
+                        ? tile_start_x - origin_x
+                        : x_search_area_origin;
+
+                search_area_width =
+                    ((origin_x + x_search_area_origin) < tile_start_x)
+                        ? search_area_width - (tile_start_x - (origin_x + x_search_area_origin))
+                        : search_area_width;
+
+                // Correct the right edge of the Search Area if its not on the
+                // reference Picture
+                x_search_area_origin =
+                    ((origin_x + x_search_area_origin) > tile_end_x - 1)
+                        ? x_search_area_origin - ((origin_x + x_search_area_origin) - (tile_end_x - 1))
+                        : x_search_area_origin;
+
+                search_area_width =
+                    ((origin_x + x_search_area_origin + search_area_width) > tile_end_x)
+                        ? MAX(1, search_area_width - ((origin_x + x_search_area_origin + search_area_width) - tile_end_x))
+                        : search_area_width;
+
+                // Constrain x_ME to be a multiple of 8 (round down as cropping
+                // already performed)
+                search_area_width = (search_area_width < 8)
+                                        ? search_area_width
+                                        : search_area_width & ~0x07;
+            } else {
             // Correct the left edge of the Search Area if it is not on the
             // reference Picture
             x_search_area_origin =
@@ -14515,7 +14550,37 @@ EbErrorType motion_estimate_lcu(
             search_area_width = (search_area_width < 8)
                                     ? search_area_width
                                     : search_area_width & ~0x07;
+            }
 
+            if(sequence_control_set_ptr->static_config.unrestricted_motion_vector == 0)
+            {
+                int tile_start_y = sequence_control_set_ptr->sb_params_array[sb_index].tile_start_y;
+                int tile_end_y   = sequence_control_set_ptr->sb_params_array[sb_index].tile_end_y;
+
+                // Correct the top edge of the Search Area if it is not on the
+                // reference Picture
+                y_search_area_origin =
+                    ((origin_y + y_search_area_origin) < tile_start_y)
+                        ? tile_start_y - origin_y
+                        : y_search_area_origin;
+
+                search_area_height =
+                    ((origin_y + y_search_area_origin) < tile_start_y)
+                        ? search_area_height - (tile_start_y - (origin_y + y_search_area_origin))
+                        : search_area_height;
+
+                // Correct the bottom edge of the Search Area if its not on the
+                // reference Picture
+                y_search_area_origin =
+                    ((origin_y + y_search_area_origin) > tile_end_y - 1)
+                        ? y_search_area_origin - ((origin_y + y_search_area_origin) - (tile_end_y - 1))
+                        : y_search_area_origin;
+
+                search_area_height =
+                    (origin_y + y_search_area_origin + search_area_height > tile_end_y)
+                        ? MAX(1, search_area_height - ((origin_y + y_search_area_origin + search_area_height) - tile_end_y))
+                        : search_area_height;
+            } else {
             // Correct the top edge of the Search Area if it is not on the
             // reference Picture
             y_search_area_origin =
@@ -14547,6 +14612,7 @@ EbErrorType motion_estimate_lcu(
                                 search_area_height) -
                                picture_height))
                     : search_area_height;
+            }
             context_ptr->x_search_area_origin[listIndex][ref_pic_index] =
                 x_search_area_origin;
             context_ptr->y_search_area_origin[listIndex][ref_pic_index] =

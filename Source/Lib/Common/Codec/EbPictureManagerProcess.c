@@ -688,8 +688,6 @@ void* picture_manager_kernel(void *input_ptr)
 
                         ChildPictureControlSetPtr->parent_pcs_ptr->av1_cm->pcs_ptr = ChildPictureControlSetPtr;
 
-                        set_tile_info(ChildPictureControlSetPtr->parent_pcs_ptr);
-
                         struct PictureParentControlSet     *ppcs_ptr = ChildPictureControlSetPtr->parent_pcs_ptr;
                         Av1Common *const cm = ppcs_ptr->av1_cm;
                         int tile_row, tile_col;

@@ -138,6 +138,7 @@ extern "C" {
     int av1_is_dv_valid(const MV dv,
         const MacroBlockD *xd, int mi_row, int mi_col,
         BlockSize bsize, int mib_size_log2);
+    int is_inside_tile_boundary(TileInfo *tile, int16_t mvx, int16_t mvy, int mi_col, int mi_row, BlockSize bsize);
 
 #ifdef __cplusplus
 }

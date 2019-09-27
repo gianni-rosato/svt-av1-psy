@@ -348,6 +348,14 @@ typedef struct EbSvtAv1EncConfiguration
     * Default is 60. */
     int32_t                  injector_frame_rate;
 
+    /* Flag to constrain motion vectors.
+     *
+     * 1: Motion vectors are allowed to point outside frame boundary.
+     * 0: Motion vectors are NOT allowed to point outside frame boundary.
+     *
+     * Default is 1. */
+    uint8_t                  unrestricted_motion_vector;
+
     // Threads management
 
     /* The number of logical processor which encoder threads run on. If

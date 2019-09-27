@@ -16,6 +16,9 @@
 #include "EbTransforms.h"
 #include "EbTime.h"
 
+void eb_av1_tile_set_col(TileInfo *tile, PictureParentControlSet * pcs_ptr, int col);
+void eb_av1_tile_set_row(TileInfo *tile, PictureParentControlSet * pcs_ptr, int row);
+void set_tile_info(PictureParentControlSet * pcs_ptr);
 void resource_coordination_context_dctor(EbPtr p)
 {
     ResourceCoordinationContext *obj = (ResourceCoordinationContext*)p;
@@ -849,6 +852,41 @@ void* resource_coordination_kernel(void *input_ptr)
                 eb_post_full_object(outputWrapperPtr);
             }
             prevPictureControlSetWrapperPtr = picture_control_set_wrapper_ptr;
+
+            set_tile_info(picture_control_set_ptr);
+            if(sequence_control_set_ptr->static_config.unrestricted_motion_vector == 0)
+            {
+                struct PictureParentControlSet     *ppcs_ptr = picture_control_set_ptr;
+                Av1Common *const cm = ppcs_ptr->av1_cm;
+                uint8_t picture_width_in_sb = (uint8_t)((sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_size_pix - 1) / sequence_control_set_ptr->sb_size_pix);
+                int tile_row, tile_col;
+                uint32_t  x_lcu_index,  y_lcu_index;
+                const int tile_cols = cm->tiles_info.tile_cols;
+                const int tile_rows = cm->tiles_info.tile_rows;
+                TileInfo tile_info;
+                //Tile Loop
+                for (tile_row = 0; tile_row < tile_rows; tile_row++)
+                {
+                    eb_av1_tile_set_row(&tile_info, ppcs_ptr, tile_row);
+
+                    for (tile_col = 0; tile_col < tile_cols; tile_col++)
+                    {
+                        eb_av1_tile_set_col(&tile_info, ppcs_ptr, tile_col);
+
+                        for (y_lcu_index = cm->tiles_info.tile_row_start_sb[tile_row]; y_lcu_index < (uint32_t)cm->tiles_info.tile_row_start_sb[tile_row + 1]; ++y_lcu_index)
+                        {
+                            for (x_lcu_index = cm->tiles_info.tile_col_start_sb[tile_col]; x_lcu_index < (uint32_t)cm->tiles_info.tile_col_start_sb[tile_col + 1]; ++x_lcu_index)
+                            {
+                                int sb_index = (uint16_t)(x_lcu_index + y_lcu_index * picture_width_in_sb);
+                                sequence_control_set_ptr->sb_params_array[sb_index].tile_start_x = 4 * tile_info.mi_col_start;
+                                sequence_control_set_ptr->sb_params_array[sb_index].tile_end_x   = 4 * tile_info.mi_col_end;
+                                sequence_control_set_ptr->sb_params_array[sb_index].tile_start_y = 4 * tile_info.mi_row_start;
+                                sequence_control_set_ptr->sb_params_array[sb_index].tile_end_y   = 4 * tile_info.mi_row_end;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
