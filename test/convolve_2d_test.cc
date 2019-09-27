@@ -37,7 +37,7 @@
 #include "EbUtility.h"
 #include "convolve.h"
 #include "convolve_avx2.h"
-#include "convolve_2d_funcs.h"
+#include "filter.h"
 #if defined(_MSC_VER)
 #pragma warning(suppress : 4324)
 #endif
@@ -200,7 +200,10 @@ class AV1Convolve2DTest : public ::testing::TestWithParam<Convolve2DParam> {
                                 << get_convolve_tap(filter_params_x->filter_ptr)
                                 << "x"
                                 << get_convolve_tap(filter_params_y->filter_ptr)
-                                << ")";
+                                << ") do_average: "
+                                << conv_params_tst->do_average
+                                << " use_jnt_comp_avg: "
+                                << conv_params_tst->use_jnt_comp_avg;
                         }
                     }
                 }
@@ -218,7 +221,10 @@ class AV1Convolve2DTest : public ::testing::TestWithParam<Convolve2DParam> {
                                 << get_convolve_tap(filter_params_x->filter_ptr)
                                 << "x"
                                 << get_convolve_tap(filter_params_y->filter_ptr)
-                                << ")";
+                                << ") do_average: "
+                                << conv_params_tst->do_average
+                                << " use_jnt_comp_avg: "
+                                << conv_params_tst->use_jnt_comp_avg;
                         }
                     }
                 }
@@ -270,7 +276,11 @@ class AV1Convolve2DTest : public ::testing::TestWithParam<Convolve2DParam> {
                                    "index "
                                 << idx << " = (" << j << ", " << i
                                 << "), sub pixel offset = (" << suby << ", "
-                                << subx << ")";
+                                << subx
+                                << ") do_average: "
+                                << conv_params_tst->do_average
+                                << " use_jnt_comp_avg: "
+                                << conv_params_tst->use_jnt_comp_avg;
                         }
                     }
                 }
@@ -283,7 +293,11 @@ class AV1Convolve2DTest : public ::testing::TestWithParam<Convolve2DParam> {
                                 << output_w << "x" << output_h
                                 << " Pixel mismatch at index " << idx << " = ("
                                 << j << ", " << i << "), sub pixel offset = ("
-                                << suby << ", " << subx << ")";
+                                << suby << ", " << subx
+                                << ") do_average: "
+                                << conv_params_tst->do_average
+                                << " use_jnt_comp_avg: "
+                                << conv_params_tst->use_jnt_comp_avg;
                         }
                     }
                 }
@@ -466,8 +480,10 @@ class AV1Convolve2DTest : public ::testing::TestWithParam<Convolve2DParam> {
                     0, is_jnt_, 0, conv_buf_ref_, MAX_SB_SIZE, is_jnt_, bd);
                 conv_params_tst = get_conv_params_no_round(
                     0, is_jnt_, 0, conv_buf_tst_, MAX_SB_SIZE, is_jnt_, bd);
-                conv_params_ref.use_jnt_comp_avg = 1;
-                conv_params_tst.use_jnt_comp_avg = 1;
+                conv_params_ref.use_jnt_comp_avg = 0;
+                conv_params_tst.use_jnt_comp_avg = 0;
+                conv_params_ref.fwd_offset = conv_params_tst.fwd_offset = 9;
+                conv_params_ref.bck_offset = conv_params_tst.bck_offset = 7;
 
                 test_speed(has_subx,
                            has_suby,

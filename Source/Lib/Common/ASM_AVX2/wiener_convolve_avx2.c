@@ -125,7 +125,7 @@ void eb_av1_wiener_convolve_add_src_avx2(const uint8_t *src, ptrdiff_t src_strid
                     (__m128i *)&src_ptr[(i * src_stride) + j + src_stride]),
                     1);
 
-            __m256i res = convolve_x_8tap_avx2(data, coeffs_h, filt);
+            __m256i res = x_convolve_8tap_avx2(data, coeffs_h, filt);
 
             res =
                 _mm256_sra_epi16(_mm256_add_epi16(res, round_const_h), round_shift_h);

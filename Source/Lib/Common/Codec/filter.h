@@ -38,8 +38,6 @@ extern "C" {
 #define RS_SCALE_SUBPEL_MASK ((1 << RS_SCALE_SUBPEL_BITS) - 1)
 #define RS_SCALE_EXTRA_BITS (RS_SCALE_SUBPEL_BITS - RS_SUBPEL_BITS)
 
-    typedef int16_t InterpKernel[SUBPEL_TAPS];
-
 #define BIL_SUBPEL_BITS 3
 #define BIL_SUBPEL_SHIFTS (1 << BIL_SUBPEL_BITS)
 
@@ -50,17 +48,6 @@ extern "C" {
     };
     //----
 #define MAX_FILTER_TAP 8
-
-    typedef enum ATTRIBUTE_PACKED {
-        EIGHTTAP_REGULAR,
-        EIGHTTAP_SMOOTH,
-        MULTITAP_SHARP,
-        BILINEAR,
-        INTERP_FILTERS_ALL,
-        SWITCHABLE_FILTERS = BILINEAR,
-        SWITCHABLE = SWITCHABLE_FILTERS + 1, /* the last switchable one */
-        EXTRA_FILTERS = INTERP_FILTERS_ALL - SWITCHABLE_FILTERS,
-    } InterpFilter;
 
     // With CONFIG_DUAL_FILTER, pack two InterpFilter's into a uint32_t: since
     // there are at most 10 filters, we can use 16 bits for each and have more than
