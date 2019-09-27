@@ -167,10 +167,6 @@ int32_t main(int32_t argc, char* argv[])
     size_t bytes_in_buffer = 0, buffer_size = 0;
 
     // Print Decoder Info
-    printf("\n**WARNING** decoder is not feature complete\n");
-    printf("Current support: intra, inter & post proc filters, ");
-    printf("no super-resolution, no ref scaling\n\n");
-
     printf("-------------------------------------\n");
     printf("SVT-AV1 Decoder\n");
 

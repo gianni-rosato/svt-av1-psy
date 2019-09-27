@@ -158,6 +158,11 @@ extern "C" {
         MV as_mv;
     } IntMv; /* facilitates faster equality tests and copies */
 
+    typedef struct mv32 {
+        int32_t row;
+        int32_t col;
+    } MV32;
+
     typedef struct CandidateMv
     {
         IntMv this_mv;

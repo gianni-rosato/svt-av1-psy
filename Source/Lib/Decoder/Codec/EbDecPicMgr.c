@@ -312,6 +312,14 @@ EbDecPicBuf *get_ref_frame_buf(EbDecHandle *dec_handle_ptr,
     return (map_idx != INVALID_IDX) ? dec_handle_ptr->ref_frame_map[map_idx] : NULL;
 }
 
+ScaleFactors *get_ref_scale_factors(EbDecHandle *dec_handle_ptr,
+                                    const MvReferenceFrame ref_frame)
+{
+    const int map_idx = get_ref_frame_map_with_idx(dec_handle_ptr, ref_frame);
+    return (map_idx != INVALID_IDX) ?
+                        &dec_handle_ptr->ref_scale_factors[map_idx] : NULL;
+}
+
 /* Compares the sort_idx fields. If they are equal, then compares the map_idx
    fields to break the tie. This ensures a stable sort. */
 static int compare_ref_frame_info(const void *arg_a, const void *arg_b) {

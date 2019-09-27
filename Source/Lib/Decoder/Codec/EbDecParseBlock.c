@@ -840,13 +840,6 @@ static INLINE TxType intra_mode_to_tx_type(const ModeInfo_t *mbmi, PlaneType pla
     return _intra_mode_to_tx_type[mode];
 }
 
-static INLINE int allow_intrabc(const EbDecHandle *dec_handle) {
-    return  (dec_handle->frame_header.frame_type == KEY_FRAME
-        || dec_handle->frame_header.frame_type == INTRA_ONLY_FRAME)
-        && dec_handle->seq_header.seq_force_screen_content_tools
-        && dec_handle->frame_header.allow_intrabc;
-}
-
 void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd,
     int mi_row, int mi_col, SvtReader *r, int8_t *cdef_strength)
 {
@@ -1105,6 +1098,11 @@ static int motion_field_projection(EbDecHandle *dec_handle,
 
     if (start_frame_buf->frame_type == KEY_FRAME ||
         start_frame_buf->frame_type == INTRA_ONLY_FRAME)
+        return 0;
+
+    uint32_t mi_cols = 2 * ((start_frame_buf->frame_width + 7) >> 3);
+    uint32_t mi_rows = 2 * ((start_frame_buf->frame_height + 7) >> 3);
+    if (mi_rows != frame_info->mi_rows || mi_cols != frame_info->mi_cols)
         return 0;
 
     const int start_frame_order_hint = start_frame_buf->order_hint;

@@ -342,6 +342,12 @@ typedef struct PartitionInfo {
     /*!< chroma sub-sampling format */
     uint8_t subsampling_x;
     uint8_t subsampling_y;
+
+    /*ToDo: block_ref_sf are used both in parsing & decoding sides,
+      we need implement a logic to avoid two sides calculation of block_ref_sf*/
+    /* pointers to reference frame scale factors */
+    const struct ScaleFactors *block_ref_sf[2];
+    const struct ScaleFactors *sf_identity;
 } PartitionInfo_t;
 
 #endif //EbDecBlock_h

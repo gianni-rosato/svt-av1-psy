@@ -82,30 +82,78 @@ void svt_make_inter_predictor(PartitionInfo_t *part_info, int32_t ref,
     int32_t bit_depth = ref_buf->ps_pic_buf->bit_depth;
     int32_t highbd = bit_depth > EB_8BIT;
 
-    /*Currenly svt decoder won't support ScaleFactor*/
-    ScaleFactors *const sf = NULL; //TODO: Add reference scaling support later
-                /* is_intrabc ? &cm->sf_identity : xd->block_ref_scale_factors[ref]; */
+    /*ScaleFactor*/
+    const struct ScaleFactors *const sf = is_intrabc ?
+        part_info->sf_identity : part_info->block_ref_sf[ref];
 
     const MV mv = mi->mv[ref].as_mv;
     MV mv_q4;
     void *src_mod;
     SubpelParams subpel_params;
+    do_warp = do_warp && !av1_is_scaled(sf);
 
-    mv_q4 = dec_clamp_mv_to_umv_border_sb(
-        part_info->mb_to_left_edge,
-        part_info->mb_to_right_edge,
-        part_info->mb_to_top_edge,
-        part_info->mb_to_bottom_edge,
-        &mv, bw, bh, ss_x, ss_y);
+    const int32_t is_scaled = av1_is_scaled(sf);
+    if (is_scaled) {
+        int orig_pos_y = (pre_y + 0) << SUBPEL_BITS;
+        orig_pos_y += mv.row * (1 << (1 - ss_y));
+        int orig_pos_x = (pre_x + 0) << SUBPEL_BITS;
+        orig_pos_x += mv.col * (1 << (1 - ss_x));
+        int pos_y = sf->scale_value_y(orig_pos_y, sf);
+        int pos_x = sf->scale_value_x(orig_pos_x, sf);
+        pos_x += SCALE_EXTRA_OFF;
+        pos_y += SCALE_EXTRA_OFF;
 
-    int32_t src_offset = (((pre_y)+(mv_q4.row >> SUBPEL_BITS))
-        * src_stride) + (pre_x)+(mv_q4.col >> SUBPEL_BITS);
-    src_mod = (void *)((uint8_t *)src + (src_offset << highbd));
+        const int top = -AOM_LEFT_TOP_MARGIN_SCALED(ss_y);
+        const int left = -AOM_LEFT_TOP_MARGIN_SCALED(ss_x);
+        const int bottom = ((ref_buf->frame_height >> ss_y) + AOM_INTERP_EXTEND)
+            << SCALE_SUBPEL_BITS;
+        const int right = ((ref_buf->superres_upscaled_width >> ss_x) +
+            AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS;
 
-    subpel_params.xs = 0;
-    subpel_params.ys = 0;
-    subpel_params.subpel_x = mv_q4.col & SUBPEL_MASK;
-    subpel_params.subpel_y = mv_q4.row & SUBPEL_MASK;
+        pos_y = clamp(pos_y, top, bottom);
+        pos_x = clamp(pos_x, left, right);
+
+        subpel_params.subpel_x = pos_x & SCALE_SUBPEL_MASK;
+        subpel_params.subpel_y = pos_y & SCALE_SUBPEL_MASK;
+
+        pos_y = pos_y >> SCALE_SUBPEL_BITS;
+        pos_x = pos_x >> SCALE_SUBPEL_BITS;
+        MV temp_mv;
+        temp_mv = dec_clamp_mv_to_umv_border_sb(
+            part_info->mb_to_left_edge,
+            part_info->mb_to_right_edge,
+            part_info->mb_to_top_edge,
+            part_info->mb_to_bottom_edge,
+            &mv, bw, bh, ss_x, ss_y);
+
+        MV32 scaled_mv;
+        scaled_mv = av1_scale_mv(&temp_mv, (pre_x + 0), (pre_y + 0), sf);
+        scaled_mv.row += SCALE_EXTRA_OFF;
+        scaled_mv.col += SCALE_EXTRA_OFF;
+
+        subpel_params.xs = sf->x_step_q4;
+        subpel_params.ys = sf->y_step_q4;
+
+        int32_t src_offset = ( pos_y * src_stride ) + pos_x ;
+        src_mod = (void *)((uint8_t *)src + (src_offset << highbd));
+    }
+    else {
+        mv_q4 = dec_clamp_mv_to_umv_border_sb(
+            part_info->mb_to_left_edge,
+            part_info->mb_to_right_edge,
+            part_info->mb_to_top_edge,
+            part_info->mb_to_bottom_edge,
+            &mv, bw, bh, ss_x, ss_y);
+
+        int32_t src_offset = (((pre_y)+(mv_q4.row >> SUBPEL_BITS))
+            * src_stride) + (pre_x)+(mv_q4.col >> SUBPEL_BITS);
+        src_mod = (void *)((uint8_t *)src + (src_offset << highbd));
+
+        subpel_params.xs = SCALE_SUBPEL_SHIFTS;
+        subpel_params.ys = SCALE_SUBPEL_SHIFTS;
+        subpel_params.subpel_x = (mv_q4.col & SUBPEL_MASK) << SCALE_EXTRA_BITS;
+        subpel_params.subpel_y = (mv_q4.row & SUBPEL_MASK) << SCALE_EXTRA_BITS;
+    }
 
     assert(IMPLIES(is_intrabc, !do_warp));
 

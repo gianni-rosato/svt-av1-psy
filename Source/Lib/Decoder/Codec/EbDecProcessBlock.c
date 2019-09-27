@@ -29,6 +29,7 @@
 
 #include "EbTransforms.h"
 #include "EbDecLF.h"
+#include "EbDecPicMgr.h"
 
 extern int select_samples(
     MV *mv,
@@ -281,6 +282,12 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
             /* local warp mode should find valid projection */
             assert(apply_wm);
             part_info.local_warp_params.invalid = !apply_wm;
+        }
+
+        part_info.sf_identity = &dec_handle->sf_identity;
+        for (int ref = 0; ref < 1 + has_second_ref(mode_info); ++ref) {
+            const MvReferenceFrame frame = mode_info->ref_frame[ref];
+            part_info.block_ref_sf[ref] = get_ref_scale_factors(dec_handle, frame);
         }
     }
 

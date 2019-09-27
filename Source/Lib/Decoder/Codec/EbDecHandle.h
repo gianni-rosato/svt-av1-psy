@@ -208,6 +208,10 @@ typedef struct EbDecHandle {
     // have a remapped index for the same.
     int32_t remapped_ref_idx[REF_FRAMES];
 
+    struct ScaleFactors ref_scale_factors[REF_FRAMES];
+    /*Scale of the current frame with respect to itself.*/
+    struct ScaleFactors sf_identity;
+
     /* TODO:  Move ref_frame_map, remapped_ref_idx, cur_pic_buf and frame_header to a FrameStr! */
     EbDecPicBuf *ref_frame_map[REF_FRAMES];
     // Prepare ref_frame_map for the next frame.

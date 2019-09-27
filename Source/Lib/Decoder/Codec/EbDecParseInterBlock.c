@@ -1936,8 +1936,8 @@ static INLINE MotionMode is_motion_mode_allowed(EbDecHandle *dec_handle,
         assert(!has_second_ref(mbmi));
 
         if (pi->num_samples >= 1 &&
-            (allow_warped_motion /*&&
-                !av1_is_scaled(xd->block_ref_scale_factors[0])*/)) {
+            (allow_warped_motion && !av1_is_scaled(pi->block_ref_sf[0]) ))
+        {
             if (dec_handle->frame_header.force_integer_mv) {
                 return OBMC_CAUSAL;
             }
@@ -2404,6 +2404,11 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
     }
 #endif
     read_interintra_mode(dec_handle, mbmi, r);
+
+    for (int ref = 0; ref < 1 + has_second_ref(mbmi); ++ref) {
+        const MvReferenceFrame frame = mbmi->ref_frame[ref];
+        pi->block_ref_sf[ref] = get_ref_scale_factors(dec_handle, frame);
+    }
 
     pi->num_samples = find_warp_samples(dec_handle, pi, mi_row, mi_col, pts, pts_inref);
 

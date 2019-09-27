@@ -468,10 +468,4 @@ void av1_superres_upscale(FrameHeader *frm_hdr, SeqHeader*seq_hdr,
 
     av1_upscale_normative_and_extend_frame(frm_hdr, seq_hdr,
         ps_recon_pic_temp, recon_picture_src);
-
-#if 0 //SUPER_RES_SUPPORT
-    free(&recon_picture_temp.buffer_y);
-    free(&recon_picture_temp.buffer_cb);
-    free(&recon_picture_temp.buffer_cr);
-#endif
 }

@@ -24,16 +24,19 @@
 #include "EbDecSuperRes.h"
 #include "EbDecRestoration.h"
 
-AV1PixelRect av1_whole_frame_rect(SeqHeader *seq_header, int is_uv) {
+AV1PixelRect av1_whole_frame_rect(EbDecHandle *dec_handle, int is_uv)
+{
     AV1PixelRect rect;
-
+    SeqHeader *seq_header = &dec_handle->seq_header;
     int ss_x = is_uv && seq_header->color_config.subsampling_x;
     int ss_y = is_uv && seq_header->color_config.subsampling_y;
+    int width = dec_handle->frame_header.frame_size.superres_upscaled_width;
+    int height = dec_handle->frame_header.frame_size.frame_height;
 
     rect.top = 0;
-    rect.bottom = ROUND_POWER_OF_TWO(seq_header->max_frame_height, ss_y);
+    rect.bottom = ROUND_POWER_OF_TWO(height, ss_y);
     rect.left = 0;
-    rect.right = ROUND_POWER_OF_TWO(seq_header->max_frame_width, ss_x);
+    rect.right = ROUND_POWER_OF_TWO(width, ss_x);
     return rect;
 }
 
@@ -84,7 +87,7 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
         dst = lr_ctxt->dst;
         dst_stride = lr_ctxt->dst_stride;
 
-        tile_rect = av1_whole_frame_rect(&dec_handle->seq_header, is_uv);
+        tile_rect = av1_whole_frame_rect(dec_handle, is_uv);
         int tile_h = tile_rect.bottom - tile_rect.top;
         int tile_w = tile_rect.right - tile_rect.left;
 
@@ -271,8 +274,8 @@ void dec_save_tile_row_boundary_lines(EbDecHandle *dec_handle, int use_highbd,
 
     // Get the tile rectangle, with height rounded up to the next multiple of 8
     // luma pixels (only relevant for the bottom tile of the frame)
-    const AV1PixelRect tile_rect =
-        av1_whole_frame_rect(&dec_handle->seq_header, is_uv);
+    const AV1PixelRect tile_rect = av1_whole_frame_rect(dec_handle, is_uv);
+
     const int stripe0 = 0;
 
     RestorationStripeBoundaries *boundaries = &lr_ctxt->boundaries[plane];

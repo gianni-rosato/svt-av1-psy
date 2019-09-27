@@ -1914,12 +1914,23 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         else
             frame_info->use_ref_frame_mvs = dec_get_bits(bs, 1);
         PRINT_FRAME("use_ref_frame_mvs", frame_info->use_ref_frame_mvs);
-        //for (i = 0; i < INTER_REFS_PER_FRAME; i++) {
-            //int refFrame = LAST_FRAME + i;
-            // int hint = frame_info->ref_order_hint[frame_info->ref_frame_idx[i]];
-            //frame_info->order_hint
-            // RefOrderHint, RefFrameSignBias not available in structure
-        //}
+
+        for (int i = LAST_FRAME; i <= ALTREF_FRAME; ++i) {
+            const EbDecPicBuf *const ref_buf = get_ref_frame_buf(dec_handle_ptr, i);
+            struct ScaleFactors *const ref_scale_factors =
+                get_ref_scale_factors(dec_handle_ptr, i);
+
+            av1_setup_scale_factors_for_frame(
+                ref_scale_factors, ref_buf->superres_upscaled_width,
+                ref_buf->frame_height,
+                frame_info->frame_size.frame_width,
+                frame_info->frame_size.frame_height);
+
+            if ((!av1_is_valid_scale(ref_scale_factors))) {
+                printf("\n Reference frame has invalid dimensions \n");
+                assert(0);
+            }
+        }
     }
 
     if (seq_header->color_config.subsampling_x == 1 &&
@@ -2052,6 +2063,16 @@ EbErrorType read_frame_header_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
     start_position = get_position(bs);
     read_uncompressed_header(bs, dec_handle_ptr, obu_header, num_planes);
+
+    if (allow_intrabc(dec_handle_ptr)) {
+        av1_setup_scale_factors_for_frame(
+            &dec_handle_ptr->sf_identity,
+            dec_handle_ptr->cur_pic_buf[0]->frame_width,
+            dec_handle_ptr->cur_pic_buf[0]->frame_height,
+            dec_handle_ptr->cur_pic_buf[0]->frame_width,
+            dec_handle_ptr->cur_pic_buf[0]->frame_height);
+    }
+
     if (trailing_bit) {
         status = av1_check_trailing_bits(bs);
         if (status != EB_ErrorNone) return status;

@@ -60,6 +60,11 @@ extern "C" {
 #define AOM_INTERP_EXTEND                               4
 #define OPTIMISED_EX_SUBPEL                             1
 
+#define AOM_LEFT_TOP_MARGIN_PX(subsampling) \
+  ((AOM_BORDER_IN_PIXELS >> subsampling) - AOM_INTERP_EXTEND)
+#define AOM_LEFT_TOP_MARGIN_SCALED(subsampling) \
+  (AOM_LEFT_TOP_MARGIN_PX(subsampling) << SCALE_SUBPEL_BITS)
+
 #if OPTIMISED_EX_SUBPEL
 #define H_PEL_SEARCH_WIND 3  // 1/2-pel serach window
 #else
@@ -265,6 +270,13 @@ one more than the minimum. */
 #define SUBPEL_MASK ((1 << SUBPEL_BITS) - 1)
 #define SUBPEL_SHIFTS (1 << SUBPEL_BITS)
 #define SUBPEL_TAPS 8
+
+#define SCALE_SUBPEL_BITS 10
+#define SCALE_SUBPEL_SHIFTS (1 << SCALE_SUBPEL_BITS)
+#define SCALE_SUBPEL_MASK (SCALE_SUBPEL_SHIFTS - 1)
+#define SCALE_EXTRA_BITS (SCALE_SUBPEL_BITS - SUBPEL_BITS)
+#define SCALE_EXTRA_OFF ((1 << SCALE_EXTRA_BITS) / 2)
+
 typedef int16_t InterpKernel[SUBPEL_TAPS];
 
 /***************************************************/
