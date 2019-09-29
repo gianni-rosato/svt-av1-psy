@@ -1416,6 +1416,7 @@ void ProductCodingLoopInitFastLoop(
         context_ptr->fast_cost_array[index] = MAX_CU_COST;
     return;
 }
+
 void fast_loop_core(
     ModeDecisionCandidateBuffer *candidate_buffer,
     PictureControlSet           *picture_control_set_ptr,
@@ -2312,7 +2313,10 @@ void predictive_me_full_pel_search(
     uint32_t  distortion;
     ModeDecisionCandidateBuffer  *candidate_buffer = &(context_ptr->candidate_buffer_ptr_array[0][0]);
     candidate_buffer->candidate_ptr = &(context_ptr->fast_candidate_array[0]);
-    EbPictureBufferDesc *ref_pic = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)->reference_picture;
+
+    EbReferenceObject *refObj = picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+    EbPictureBufferDesc *ref_pic = context_ptr->hbd_mode_decision ?
+        refObj->reference_picture16bit : refObj->reference_picture;
     for (int32_t refinement_pos_x = search_position_start_x; refinement_pos_x <= search_position_end_x; ++refinement_pos_x) {
         for (int32_t refinement_pos_y = search_position_start_y; refinement_pos_y <= search_position_end_y; ++refinement_pos_y) {
 
@@ -2443,6 +2447,7 @@ void predictive_me_sub_pel_search(
                 picture_control_set_ptr,
                 candidate_buffer,
                 asm_type);
+
             // Distortion
             if (use_ssd) {
                 EbSpatialFullDistType spatial_full_dist_type_fun = picture_control_set_ptr->hbd_mode_decision ?
@@ -2550,7 +2555,9 @@ void predictive_me_search(
             me_mv_y = (me_mv_y + 4)&~0x07;
 
             uint32_t pa_me_distortion;
-            EbPictureBufferDesc *ref_pic = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)->reference_picture;
+            EbReferenceObject *refObj = picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+            EbPictureBufferDesc *ref_pic = context_ptr->hbd_mode_decision ?
+                refObj->reference_picture16bit : refObj->reference_picture;
 
             uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (me_mv_x >> 3)) + (context_ptr->cu_origin_y + (me_mv_y >> 3) + ref_pic->origin_y) * ref_pic->stride_y;
             if (use_ssd) {
@@ -2626,8 +2633,11 @@ void predictive_me_search(
                 for (int8_t mvp_index = 0; mvp_index < mvp_count; mvp_index++) {
 
                     // MVP Distortion
-                    EbPictureBufferDesc *ref_pic = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)->reference_picture;
-                    uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (mvp_x_array[mvp_index] >> 3)) + (context_ptr->cu_origin_y + (mvp_y_array[mvp_index] >> 3) + ref_pic->origin_y) * ref_pic->stride_y;
+                    EbReferenceObject *refObj = picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+                    EbPictureBufferDesc *ref_pic = context_ptr->hbd_mode_decision ?
+                        refObj->reference_picture16bit : refObj->reference_picture;
+
+                   uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (mvp_x_array[mvp_index] >> 3)) + (context_ptr->cu_origin_y + (mvp_y_array[mvp_index] >> 3) + ref_pic->origin_y) * ref_pic->stride_y;
                     if (use_ssd) {
                         EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
                             full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];

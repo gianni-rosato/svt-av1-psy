@@ -4589,49 +4589,88 @@ EbErrorType  intra_luma_prediction_for_interintra(
         (uint32_t)md_context_ptr->intra_luma_mode_neighbor_array->top_array[intra_luma_mode_top_neighbor_index]);       //   use DC. This seems like we could use a LCU-width
 
     TxSize  tx_size = md_context_ptr->blk_geom->txsize[0][0];  //CHKN  TOcheck
+    PredictionMode mode = interintra_to_intra_mode[interintra_mode];
 
+    if (!md_context_ptr->hbd_mode_decision) {
+        uint8_t    top_neigh_array[64 * 2 + 1];
+        uint8_t    left_neigh_array[64 * 2 + 1];
 
-    uint8_t    top_neigh_array[64 * 2 + 1];
-    uint8_t    left_neigh_array[64 * 2 + 1];
-    PredictionMode mode = interintra_to_intra_mode[ interintra_mode];;
+        if (md_context_ptr->cu_origin_y != 0)
+            memcpy(top_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->cu_origin_x, md_context_ptr->blk_geom->bwidth * 2);
+        if (md_context_ptr->cu_origin_x != 0)
+            memcpy(left_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->left_array + md_context_ptr->cu_origin_y, md_context_ptr->blk_geom->bheight * 2);
+        if (md_context_ptr->cu_origin_y != 0 && md_context_ptr->cu_origin_x != 0)
+            top_neigh_array[0] = left_neigh_array[0] = md_context_ptr->luma_recon_neighbor_array->top_left_array[MAX_PICTURE_HEIGHT_SIZE + md_context_ptr->cu_origin_x - md_context_ptr->cu_origin_y];
 
-    if (md_context_ptr->cu_origin_y != 0)
-        memcpy(top_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->cu_origin_x, md_context_ptr->blk_geom->bwidth * 2);
-    if (md_context_ptr->cu_origin_x != 0)
-        memcpy(left_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->left_array + md_context_ptr->cu_origin_y, md_context_ptr->blk_geom->bheight * 2);
-    if (md_context_ptr->cu_origin_y != 0 && md_context_ptr->cu_origin_x != 0)
-        top_neigh_array[0] = left_neigh_array[0] = md_context_ptr->luma_recon_neighbor_array->top_left_array[MAX_PICTURE_HEIGHT_SIZE + md_context_ptr->cu_origin_x - md_context_ptr->cu_origin_y];
+        eb_av1_predict_intra_block(
+            &md_context_ptr->sb_ptr->tile_info,
+            !ED_STAGE,
+            md_context_ptr->blk_geom,
+            picture_control_set_ptr->parent_pcs_ptr->av1_cm,        //const Av1Common *cm,
+            md_context_ptr->blk_geom->bwidth,                       //int32_t wpx,
+            md_context_ptr->blk_geom->bheight,                      //int32_t hpx,
+            tx_size,                                                //TxSize tx_size,
+            mode,                                                   //PredictionMode mode,
+            0,                                                      //candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
+            0,                                                      //int32_t use_palette,
+            FILTER_INTRA_MODES,                                     //CHKN FilterIntraMode filter_intra_mode,
+            top_neigh_array + 1,
+            left_neigh_array + 1,
+            prediction_ptr,                                         //uint8_t *dst,
+            md_context_ptr->blk_geom->tx_boff_x[0][0] >> 2,         //int32_t col_off,
+            md_context_ptr->blk_geom->tx_boff_y[0][0] >> 2,         //int32_t row_off,
+            PLANE_TYPE_Y,                                           //int32_t plane,
+            md_context_ptr->blk_geom->bsize,                        //uint32_t puSize,
+            md_context_ptr->cu_origin_x,
+            md_context_ptr->cu_origin_y,
+            md_context_ptr->cu_origin_x,                            //uint32_t cuOrgX,
+            md_context_ptr->cu_origin_y,                            //uint32_t cuOrgY
+            0,                                                      //cuOrgX used only for prediction Ptr
+            0                                                       //cuOrgY used only for prediction Ptr
+        );
+    } else {
+        uint16_t top_neigh_array[64 * 2 + 1];
+        uint16_t left_neigh_array[64 * 2 + 1];
 
-    eb_av1_predict_intra_block(
-        &md_context_ptr->sb_ptr->tile_info,
-        !ED_STAGE,
-        md_context_ptr->blk_geom,
-        picture_control_set_ptr->parent_pcs_ptr->av1_cm,        //const Av1Common *cm,
-        md_context_ptr->blk_geom->bwidth,                       //int32_t wpx,
-        md_context_ptr->blk_geom->bheight,                      //int32_t hpx,
-        tx_size,                                                //TxSize tx_size,
-        mode,                                                   //PredictionMode mode,
-        0,                                                      //candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
-        0,                                                      //int32_t use_palette,
-        FILTER_INTRA_MODES,                                     //CHKN FilterIntraMode filter_intra_mode,
-        top_neigh_array + 1,
-        left_neigh_array + 1,
-        prediction_ptr,                                         //uint8_t *dst,
-        md_context_ptr->blk_geom->tx_boff_x[0][0] >> 2,         //int32_t col_off,
-        md_context_ptr->blk_geom->tx_boff_y[0][0] >> 2,         //int32_t row_off,
-        PLANE_TYPE_Y,                                           //int32_t plane,
-        md_context_ptr->blk_geom->bsize,                        //uint32_t puSize,
-        md_context_ptr->cu_origin_x,
-        md_context_ptr->cu_origin_y,
-        md_context_ptr->cu_origin_x,                            //uint32_t cuOrgX,
-        md_context_ptr->cu_origin_y,                            //uint32_t cuOrgY
-        0,                                                      //cuOrgX used only for prediction Ptr
-        0                                                       //cuOrgY used only for prediction Ptr
-    );
+        if (md_context_ptr->cu_origin_y != 0)
+            memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_array) + md_context_ptr->cu_origin_x, md_context_ptr->blk_geom->bwidth * 2 * sizeof(uint16_t));
+        if (md_context_ptr->cu_origin_x != 0)
+            memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->left_array) + md_context_ptr->cu_origin_y, md_context_ptr->blk_geom->bheight * 2 * sizeof(uint16_t));
+        if (md_context_ptr->cu_origin_y != 0 && md_context_ptr->cu_origin_x != 0)
+            top_neigh_array[0] = left_neigh_array[0] = ((uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_left_array) + MAX_PICTURE_HEIGHT_SIZE + md_context_ptr->cu_origin_x - md_context_ptr->cu_origin_y)[0];
+
+        eb_av1_predict_intra_block_16bit(
+            &md_context_ptr->sb_ptr->tile_info,
+            !ED_STAGE,
+            md_context_ptr->blk_geom,
+            picture_control_set_ptr->parent_pcs_ptr->av1_cm,        //const Av1Common *cm,
+            md_context_ptr->blk_geom->bwidth,                       //int32_t wpx,
+            md_context_ptr->blk_geom->bheight,                      //int32_t hpx,
+            tx_size,                                                //TxSize tx_size,
+            mode,                                                   //PredictionMode mode,
+            0,                                                      //candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
+            0,                                                      //int32_t use_palette,
+            FILTER_INTRA_MODES,                                     //CHKN FilterIntraMode filter_intra_mode,
+            top_neigh_array + 1,
+            left_neigh_array + 1,
+            prediction_ptr,                                         //uint8_t *dst,
+            md_context_ptr->blk_geom->tx_boff_x[0][0] >> 2,         //int32_t col_off,
+            md_context_ptr->blk_geom->tx_boff_y[0][0] >> 2,         //int32_t row_off,
+            PLANE_TYPE_Y,                                           //int32_t plane,
+            md_context_ptr->blk_geom->bsize,                        //uint32_t puSize,
+            md_context_ptr->cu_origin_x,
+            md_context_ptr->cu_origin_y,
+            md_context_ptr->cu_origin_x,                            //uint32_t cuOrgX,
+            md_context_ptr->cu_origin_y,                            //uint32_t cuOrgY
+            0,                                                      //cuOrgX used only for prediction Ptr
+            0                                                       //cuOrgY used only for prediction Ptr
+        );
+    }
 
     return return_error;
 }
 #endif
+
 EbErrorType update_neighbor_samples_array_open_loop(
         uint8_t                           *above_ref,
         uint8_t                            *left_ref,
