@@ -276,8 +276,7 @@ class AV1Convolve2DTest : public ::testing::TestWithParam<Convolve2DParam> {
                                    "index "
                                 << idx << " = (" << j << ", " << i
                                 << "), sub pixel offset = (" << suby << ", "
-                                << subx
-                                << ") do_average: "
+                                << subx << ") do_average: "
                                 << conv_params_tst->do_average
                                 << " use_jnt_comp_avg: "
                                 << conv_params_tst->use_jnt_comp_avg;
@@ -293,8 +292,7 @@ class AV1Convolve2DTest : public ::testing::TestWithParam<Convolve2DParam> {
                                 << output_w << "x" << output_h
                                 << " Pixel mismatch at index " << idx << " = ("
                                 << j << ", " << i << "), sub pixel offset = ("
-                                << suby << ", " << subx
-                                << ") do_average: "
+                                << suby << ", " << subx << ") do_average: "
                                 << conv_params_tst->do_average
                                 << " use_jnt_comp_avg: "
                                 << conv_params_tst->use_jnt_comp_avg;
@@ -392,6 +390,28 @@ class AV1Convolve2DTest : public ::testing::TestWithParam<Convolve2DParam> {
                                       &conv_params_ref,
                                       &conv_params_tst,
                                       bd);
+
+                        // AV1 standard won't have 32x4 case.
+                        // This only favors some optimization feature which
+                        // subsamples 32x8 to 32x4 and triggers 4-tap filter.
+                        if ((is_jnt_ == 0) && !has_subx && has_suby &&
+                            ((output_w >> compIdx) == 32) &&
+                            ((output_h >> compIdx) == 8)) {
+                            filter_params_y =
+                                av1_get_interp_filter_params_with_block_size(
+                                    (InterpFilter)vfilter, 4);
+                            test_convolve(has_subx,
+                                          has_suby,
+                                          input_w,
+                                          MAX_SB_SIZE,
+                                          32,
+                                          4,
+                                          &filter_params_x,
+                                          &filter_params_y,
+                                          &conv_params_ref,
+                                          &conv_params_tst,
+                                          bd);
+                        }
 
                         if (is_jnt_ == 0)
                             continue;

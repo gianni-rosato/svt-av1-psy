@@ -74,7 +74,7 @@ static INLINE __m256i loadu_u16_8x2_avx2(const uint16_t *const src,
     return loadu_8bit_16x2_avx2(src, sizeof(*src) * stride);
 }
 
-SIMD_INLINE void storeu_8bit_16x2_avx2(const __m256i src,
+static INLINE void storeu_8bit_16x2_avx2(const __m256i src,
     void *const dst, const int32_t strideInByte) {
     const __m128i d0 = _mm256_castsi256_si128(src);
     const __m128i d1 = _mm256_extracti128_si256(src, 1);
@@ -82,13 +82,13 @@ SIMD_INLINE void storeu_8bit_16x2_avx2(const __m256i src,
     _mm_storeu_si128((__m128i *)((uint8_t *)dst + strideInByte), d1);
 }
 
-SIMD_INLINE void storeu_u8_16x2_avx2(const __m256i src,
+static INLINE void storeu_u8_16x2_avx2(const __m256i src,
     uint8_t *const dst,
     const int32_t stride) {
     storeu_8bit_16x2_avx2(src, dst, sizeof(*dst) * stride);
 }
 
-SIMD_INLINE void storeu_u16_8x2_avx2(const __m256i src,
+static INLINE void storeu_u16_8x2_avx2(const __m256i src,
     ConvBufType *const dst,
     const int32_t stride) {
     storeu_8bit_16x2_avx2(src, dst,  sizeof(*dst) * stride);
