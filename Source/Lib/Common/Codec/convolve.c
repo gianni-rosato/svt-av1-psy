@@ -83,7 +83,6 @@ static void convolve_add_src_horiz_hip(const uint8_t *src, ptrdiff_t src_stride,
     }
 }
 
-//uint8_t clip_pixel(int32_t val);
 static void convolve_add_src_vert_hip(const uint16_t *src, ptrdiff_t src_stride,
     uint8_t *dst, ptrdiff_t dst_stride,
     const InterpKernel *y_filters, int32_t y0_q4,
@@ -102,7 +101,7 @@ static void convolve_add_src_vert_hip(const uint16_t *src, ptrdiff_t src_stride,
                 (1 << (bd + round1_bits - 1));
             const int32_t sum =
                 highbd_vert_scalar_product(src_y, src_stride, y_filter) + rounding;
-            dst[y * dst_stride] = (uint8_t)clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, round1_bits), 8);
+            dst[y * dst_stride] = clip_pixel(ROUND_POWER_OF_TWO(sum, round1_bits));
             y_q4 += y_step_q4;
         }
         ++src;
