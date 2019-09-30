@@ -16,26 +16,6 @@
 #include "EbDefinitions.h"
 #include "EbMemory_SSE4_1.h"
 
-static INLINE __m256i x_convolve_2tap_avx2(const __m256i data,
-    const __m256i coeffs[1],
-    const __m256i *const filt) {
-    const __m256i s = _mm256_shuffle_epi8(data, filt[0]);
-    return convolve_2tap_avx2(&s, coeffs);
-}
-
-static INLINE __m256i x_convolve_4tap_avx2(const __m256i data,
-    const __m256i coeffs[2],
-    const __m256i *const filt) {
-    __m256i s[2];
-
-    s[0] = _mm256_shuffle_epi8(data, filt[0]);
-    s[1] = _mm256_shuffle_epi8(data, filt[1]);
-
-    return convolve_4tap_avx2(s, coeffs);
-}
-
-// =============================================================================
-
 SIMD_INLINE void jnt_y_comp_avg_2tap_32_avx2(
     const uint8_t *const src, const __m256i *const coeffs, const __m256i factor,
     const __m256i offset, const __m256i s0, __m256i *const s1,

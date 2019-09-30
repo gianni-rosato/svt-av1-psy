@@ -811,12 +811,10 @@ static void jnt_convolve_2d_ver_2tap_avx2(
     const InterpFilterParams *const filter_params_y, const int32_t subpel_y_q4,
     const ConvolveParams *const conv_params, uint8_t *dst8,
     const int32_t dst8_stride) {
-    const int32_t tap_y = get_convolve_tap(filter_params_y->filter_ptr);
     const int32_t dst_stride = conv_params->dst_stride;
     const int32_t bd = 8;
     const int32_t round_0 = 3;
     const int16_t *im = im_block;
-    ;
     const int32_t round_1 = COMPOUND_ROUND1_BITS;
     const int32_t offset_bits = bd + 2 * FILTER_BITS - round_0;      // 19
     const int32_t round_bits = 2 * FILTER_BITS - round_0 - round_1;  // 4
@@ -832,12 +830,6 @@ static void jnt_convolve_2d_ver_2tap_avx2(
     const __m128i factor_128 = _mm_set1_epi32(factor);
     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
     const __m256i factor_256 = _mm256_set1_epi32(factor);
-    int32_t y = h;
-    ConvBufType *dst = conv_params->dst;
-    __m128i coeffs_128[4];
-    __m256i coeffs_256[4];
-
-    // vert_filt as 2 tap
     const int32_t offset_avg = (1 << (round_1 - 1)) +
         (1 << (round_bits + round_1)) -
         (1 << offset_bits) - (1 << (offset_bits - 1));
@@ -847,6 +839,10 @@ static void jnt_convolve_2d_ver_2tap_avx2(
     const __m128i offset_no_avg_128 = _mm_set1_epi32(offset_no_avg);
     const __m256i offset_avg_256 = _mm256_set1_epi32(offset_avg);
     const __m256i offset_no_avg_256 = _mm256_set1_epi32(offset_no_avg);
+    ConvBufType *dst = conv_params->dst;
+    int32_t y = h;
+    __m128i coeffs_128[4];
+    __m256i coeffs_256[4];
 
     if (w <= 4) {
         prepare_coeffs_2tap_sse2(filter_params_y, subpel_y_q4, coeffs_128);
@@ -1578,12 +1574,10 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(
     const InterpFilterParams *const filter_params_y, const int32_t subpel_y_q4,
     const ConvolveParams *const conv_params, uint8_t *dst8,
     const int32_t dst8_stride) {
-    const int32_t tap_y = get_convolve_tap(filter_params_y->filter_ptr);
     const int32_t dst_stride = conv_params->dst_stride;
     const int32_t bd = 8;
     const int32_t round_0 = 3;
     const int16_t *im = im_block;
-    ;
     const int32_t round_1 = COMPOUND_ROUND1_BITS;
     const int32_t offset_bits = bd + 2 * FILTER_BITS - round_0;      // 19
     const int32_t round_bits = 2 * FILTER_BITS - round_0 - round_1;  // 4
@@ -1599,10 +1593,6 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(
     const __m128i factor_128 = _mm_set1_epi32(factor);
     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
     const __m256i factor_256 = _mm256_set1_epi32(factor);
-    int32_t y = h;
-    ConvBufType *dst = conv_params->dst;
-
-    // vert_filt as 2 tap
     const int32_t offset_avg =
         (1 << (round_1 - COMPOUND_ROUND1_BITS)) +
         (1 << (round_bits + round_1 - COMPOUND_ROUND1_BITS + 1)) -
@@ -1616,6 +1606,11 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(
     const __m128i offset_no_avg_128 = _mm_set1_epi16(offset_no_avg);
     const __m256i offset_avg_256 = _mm256_set1_epi16(offset_avg);
     const __m256i offset_no_avg_256 = _mm256_set1_epi16(offset_no_avg);
+    ConvBufType *dst = conv_params->dst;
+    int32_t y = h;
+
+    (void)filter_params_y;
+    (void)subpel_y_q4;
 
     if (w == 2) {
         __m128i s_32[2];
@@ -2223,12 +2218,10 @@ static void jnt_convolve_2d_ver_4tap_avx2(
     const InterpFilterParams *const filter_params_y, const int32_t subpel_y_q4,
     const ConvolveParams *const conv_params, uint8_t *dst8,
     const int32_t dst8_stride) {
-    const int32_t tap_y = get_convolve_tap(filter_params_y->filter_ptr);
     const int32_t dst_stride = conv_params->dst_stride;
     const int32_t bd = 8;
     const int32_t round_0 = 3;
     const int16_t *im = im_block;
-    ;
     const int32_t round_1 = COMPOUND_ROUND1_BITS;
     const int32_t offset_bits = bd + 2 * FILTER_BITS - round_0;      // 19
     const int32_t round_bits = 2 * FILTER_BITS - round_0 - round_1;  // 4
@@ -2514,12 +2507,10 @@ static void jnt_convolve_2d_ver_6tap_avx2(
     const InterpFilterParams *const filter_params_y, const int32_t subpel_y_q4,
     const ConvolveParams *const conv_params, uint8_t *dst8,
     const int32_t dst8_stride) {
-    const int32_t tap_y = get_convolve_tap(filter_params_y->filter_ptr);
     const int32_t dst_stride = conv_params->dst_stride;
     const int32_t bd = 8;
     const int32_t round_0 = 3;
     const int16_t *im = im_block;
-    ;
     const int32_t round_1 = COMPOUND_ROUND1_BITS;
     const int32_t offset_bits = bd + 2 * FILTER_BITS - round_0;      // 19
     const int32_t round_bits = 2 * FILTER_BITS - round_0 - round_1;  // 4
@@ -2945,12 +2936,10 @@ static void jnt_convolve_2d_ver_8tap_avx2(
     const InterpFilterParams *const filter_params_y, const int32_t subpel_y_q4,
     const ConvolveParams *const conv_params, uint8_t *dst8,
     const int32_t dst8_stride) {
-    const int32_t tap_y = get_convolve_tap(filter_params_y->filter_ptr);
     const int32_t dst_stride = conv_params->dst_stride;
     const int32_t bd = 8;
     const int32_t round_0 = 3;
     const int16_t *im = im_block;
-    ;
     const int32_t round_1 = COMPOUND_ROUND1_BITS;
     const int32_t offset_bits = bd + 2 * FILTER_BITS - round_0;      // 19
     const int32_t round_bits = 2 * FILTER_BITS - round_0 - round_1;  // 4
