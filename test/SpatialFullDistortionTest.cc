@@ -252,7 +252,7 @@ typedef struct TestParam {
     SpatialFullDistortionKernelFunc avx512_test_func;
 } TestParam;
 #ifndef NON_AVX512_SUPPORT
-TestParam spatial_test_param[] = {
+TestParam SPATIAL_TEST_PARAM[] = {
     {AreaSize(128, 128),
      spatial_full_distortion_kernel128x_n_sse2_intrin,
      spatial_full_distortion_kernel128x_n_avx2_intrin,

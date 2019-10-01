@@ -10,6 +10,7 @@
 #include "EbRestoration.h"
 #include "EbUtility.h"
 #include "pickrst_avx2.h"
+#include "synonyms.h"
 #include "transpose_sse2.h"
 #include "transpose_avx2.h"
 
