@@ -1,4 +1,4 @@
-# Enviourment variables
+# Environment variables
 language: c
 cache:
   ccache: true
@@ -11,7 +11,9 @@ addons:
     sources:
     packages: cmake yasm valgrind libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev
   homebrew:
-    packages: yasm ccache
+    packages:
+      - yasm
+      - ccache
 notifications:
   webhooks: https://coveralls.io/webhook
 
@@ -35,6 +37,8 @@ before_install:
   - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
   - if [ $CC = "/usr/bin/gcc-8" ]; then sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y; sudo apt-get install -qq gcc-8 g++-8; fi
   - if [ $CC = "/usr/bin/gcc-9" ]; then sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y; sudo apt-get install -qq gcc-9 g++-9; fi
+  - if [ "$CC" != "clang" -a "$CC" != "gcc" ]; then sudo ln -s /usr/bin/ccache /usr/lib/ccache/${CC##*/} || true; fi
+  - if [ "$CXX" != "clang++" -a "$CXX" != "g++" ]; then sudo ln -s /usr/bin/ccache /usr/lib/ccache/${CXX##*/} || true; fi
 install:
   - pip install --user cpp-coveralls
   - export PATH=/Users/travis/Library/Python/2.7/bin:${PATH}
@@ -118,7 +122,7 @@ matrix:
               false
             fi
           done
-   # GCC & Clang builds
+    # GCC & Clang builds
     - name: Linux GCC 7 build
       stage: test
     - name: Linux GCC 8 build
@@ -130,7 +134,7 @@ matrix:
     - name: macOS Clang build
       os: osx
       compiler: clang
-   # FFmpeg interation build
+    # FFmpeg interation build
     - name: FFmpeg patch
       env: build_type=release
       script:
@@ -176,7 +180,7 @@ matrix:
         - diff test-pr-m8.ivf test-master-m8.ivf
         - diff test-pr-m0.ivf test-master-m0.ivf
 
-      # Coveralls on Linux and macOS
+    # Coveralls on Linux and macOS
     - name: Coveralls Linux+gcc
       stage: Coveralls
       env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
@@ -193,7 +197,7 @@ matrix:
         - *coveralls_script
       after_script: *after_coveralls_script
 
-      # Valgrind on Linux and macOS
+    # Valgrind on Linux and macOS
     - name: Valgrind
       stage: valgrind
       env: build_type=debug
@@ -201,7 +205,7 @@ matrix:
         - *base_script
         - valgrind -- SvtAv1EncApp -enc-mode 2 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 20 -b test1.ivf
 
-      # Unittests on Linux and macOS
+    # Unittests on Linux and macOS
     - name: Unit Tests Linux+gcc
       stage: unittest
       env: build_type=release CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
