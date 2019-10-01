@@ -6,8 +6,8 @@
 #ifndef EbComputeSAD_h
 #define EbComputeSAD_h
 
+#include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
-
 #include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "EbComputeSAD_C.h"
 #include "EbComputeSAD_SSE2.h"
@@ -226,14 +226,6 @@ extern "C" {
         sad_loop_kernel_sparse_sse4_1_intrin,
         // AVX2
         sad_loop_kernel_sparse_avx2_intrin,
-    };
-
-    static EbSadLoopKernelNxMType FUNC_TABLE nxm_sad_loop_kernel_func_ptr_array[ASM_TYPE_TOTAL] =
-    {
-        // NON_AVX2
-        sad_loop_kernel_sse4_1_intrin,
-        // AVX2
-        sad_loop_kernel_avx2_intrin,
     };
 
     static EbGetEightSad8x8 FUNC_TABLE get_eight_horizontal_search_point_results_8x8_16x16_func_ptr_array[ASM_TYPE_TOTAL] =

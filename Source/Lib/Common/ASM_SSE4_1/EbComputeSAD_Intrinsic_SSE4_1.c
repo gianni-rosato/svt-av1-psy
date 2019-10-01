@@ -75,7 +75,7 @@ void ext_sad_calculation_32x32_64x64_sse4_intrin(
  * Requirement: height <= 64
  * Requirement: height % 2 = 0 when width = 4 or 8
 *******************************************************************************/
-void sad_loop_kernel_sse4_1_intrin(
+void sad_loop_kernel_sse4_1(
     uint8_t  *src,                            // input parameter, source samples Ptr
     uint32_t  src_stride,                      // input parameter, source stride
     uint8_t  *ref,                            // input parameter, reference samples Ptr

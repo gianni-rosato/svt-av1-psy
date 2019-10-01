@@ -2904,6 +2904,12 @@ extern "C" {
     void ResidualKernel_avx2(uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
     RTCD_EXTERN void(*ResidualKernel)(uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
 
+    void sad_loop_kernel_c(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t height, uint32_t width, uint64_t *best_sad, int16_t *x_search_center, int16_t *y_search_center, uint32_t src_stride_raw, int16_t search_area_width, int16_t search_area_height);
+    void sad_loop_kernel_sse4_1(uint8_t *src, uint32_t src_stride, uint8_t *ref,uint32_t ref_stride, uint32_t height, uint32_t width, uint64_t *best_sad, int16_t *x_search_center, int16_t *y_search_center, uint32_t src_stride_raw, int16_t search_area_width, int16_t search_area_height);
+    void sad_loop_kernel_avx2(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t height, uint32_t width, uint64_t *best_sad, int16_t *x_search_center, int16_t *y_search_center, uint32_t src_stride_raw, int16_t search_area_width, int16_t search_area_height);
+    void sad_loop_kernel_avx512(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t height, uint32_t width, uint64_t *best_sad, int16_t *x_search_center, int16_t *y_search_center, uint32_t src_stride_raw, int16_t search_area_width, int16_t search_area_height);
+    RTCD_EXTERN void (*sad_loop_kernel)(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t height, uint32_t width, uint64_t *best_sad, int16_t *x_search_center, int16_t *y_search_center, uint32_t src_stride_raw, int16_t search_area_width, int16_t search_area_height);
+
     void eb_av1_txb_init_levels_c(const TranLow *const coeff, const int32_t width, const int32_t height, uint8_t *const levels);
     void eb_av1_txb_init_levels_avx2(const TranLow *const coeff, const int32_t width, const int32_t height, uint8_t *const levels);
     RTCD_EXTERN void(*eb_av1_txb_init_levels)(const TranLow *const coeff, const int32_t width, const int32_t height, uint8_t *const levels);
@@ -3008,10 +3014,15 @@ extern "C" {
         if (flags & HAS_AVX2) eb_av1_compute_stats = eb_av1_compute_stats_avx2;
         eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_c;
         if (flags & HAS_AVX2) eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx2;
+        sad_loop_kernel = sad_loop_kernel_c;
+        if (flags & HAS_SSE4_1) sad_loop_kernel = sad_loop_kernel_sse4_1;
+        if (flags & HAS_AVX2) sad_loop_kernel = sad_loop_kernel_avx2;
+
 #ifndef NON_AVX512_SUPPORT
         if (CanUseIntelAVX512()) {
             eb_av1_compute_stats = eb_av1_compute_stats_avx512;
             eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx512;
+            sad_loop_kernel = sad_loop_kernel_avx512;
             spatial_full_distortion_kernel_func_ptr_array[ASM_AVX2] = spatial_full_distortion_kernel_avx512;
         }
 #endif
