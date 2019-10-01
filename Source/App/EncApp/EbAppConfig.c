@@ -13,7 +13,7 @@
 #include "EbAppInputy4m.h"
 
 #ifdef _WIN32
-#include <Fileapi.h>
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
