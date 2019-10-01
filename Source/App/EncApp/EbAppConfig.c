@@ -139,7 +139,7 @@ static void SetCfgInputFile(const char *filename, EbConfig *cfg)
     else
         FOPEN(cfg->input_file, filename, "rb");
 
-#if defined(_MSC_VER)
+#ifdef _WIN32
     cfg->input_file_is_fifo =
     GetFileType(cfg->input_file) == FILE_TYPE_PIPE;
 #else
