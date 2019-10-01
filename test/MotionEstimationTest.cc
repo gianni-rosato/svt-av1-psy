@@ -14,7 +14,6 @@
 #include "EbUnitTest.h"
 #include "EbUnitTestUtility.h"
 
-static const int num_test = 28;
 static const int num_sad = 22;
 
 struct DistInfo {

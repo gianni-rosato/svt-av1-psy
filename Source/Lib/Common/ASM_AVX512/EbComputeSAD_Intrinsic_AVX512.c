@@ -859,6 +859,7 @@ static INLINE void sad_loop_kernel_64_8sum_avx2(const uint8_t *const src, const 
     sums[7] = _mm256_adds_epu16(sums[7], _mm256_mpsadbw_epu8(rr3, ss1, (7 << 3) | 7)); // 111 111
 }
 
+#if 0
 // This is even slower. Don't call.
 static INLINE void overflow16(const __m256i sads256[2], const int32_t x,
     const int32_t y, uint32_t *const best_s, int32_t *const best_x,
@@ -922,6 +923,7 @@ static INLINE void overflow16(const __m256i sads256[2], const int32_t x,
         *best_y = y;
     }
 }
+#endif
 
 #define UPDATE_BEST(sum, idx, offset, best_s, best_x, best_y) \
 {                                                             \
@@ -1252,8 +1254,8 @@ static INLINE void update_leftover_512_pel(const __m256i sum256,
 }
 
 static INLINE void update_leftover8_1024_pel(const __m256i sums256[2],
-    const int16_t search_area_width, const int32_t x, const int32_t y,
-    uint32_t *const best_s, int32_t *const best_x, int32_t *const best_y)
+    const int32_t x, const int32_t y, uint32_t *const best_s,
+    int32_t *const best_x, int32_t *const best_y)
 {
     const __m256i sum256 = _mm256_adds_epu16(sums256[0], sums256[1]);
     const __m128i sum_lo = _mm256_castsi256_si128(sum256);
@@ -1317,8 +1319,8 @@ static INLINE void update_leftover_1024_pel(const __m256i sums256[2],
 }
 
 static INLINE void update_leftover8_1536_pel(const __m256i sums256[3],
-    const int16_t search_area_width, const int32_t x, const int32_t y,
-    uint32_t *const best_s, int32_t *const best_x, int32_t *const best_y)
+    const int32_t x, const int32_t y, uint32_t *const best_s,
+    int32_t *const best_x, int32_t *const best_y)
 {
     const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
     const __m256i sum256 = _mm256_adds_epu16(sum01, sums256[2]);
@@ -1384,8 +1386,8 @@ static INLINE void update_leftover_1536_pel(const __m256i sums256[3],
 }
 
 static INLINE void update_leftover8_2048_pel(const __m256i sums256[4],
-    const int16_t search_area_width, const int32_t x, const int32_t y,
-    uint32_t *const best_s, int32_t *const best_x, int32_t *const best_y)
+    const int32_t x, const int32_t y, uint32_t *const best_s,
+    int32_t *const best_x, int32_t *const best_y)
 {
     const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
     const __m256i sum23 = _mm256_adds_epu16(sums256[2], sums256[3]);
@@ -1719,7 +1721,7 @@ void sad_loop_kernel_avx512(
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_leftover8_1024_pel(sums256, search_area_width, x, y, &best_s, &best_x, &best_y);
+                    update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
                     x += 8;
                 }
 
@@ -1827,7 +1829,7 @@ void sad_loop_kernel_avx512(
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_leftover8_1024_pel(sums256, search_area_width, x, y, &best_s, &best_x, &best_y);
+                    update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
 
                     x += 8;
                 }
@@ -1969,7 +1971,7 @@ void sad_loop_kernel_avx512(
                         r += ref_stride;
                     } while (--h);
 
-                    update_leftover8_1024_pel(sums256, search_area_width, x, y, &best_s, &best_x, &best_y);
+                    update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
                     x += 8;
                 }
 
@@ -2026,7 +2028,7 @@ void sad_loop_kernel_avx512(
                         r += ref_stride;
                     } while (--h);
 
-                    update_leftover8_2048_pel(sums256, search_area_width, x, y, &best_s, &best_x, &best_y);
+                    update_leftover8_2048_pel(sums256, x, y, &best_s, &best_x, &best_y);
                     x += 8;
                 }
 
@@ -2090,7 +2092,7 @@ void sad_loop_kernel_avx512(
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_leftover8_1536_pel(sums256, search_area_width, x, y, &best_s, &best_x, &best_y);
+                    update_leftover8_1536_pel(sums256, x, y, &best_s, &best_x, &best_y);
                     x += 8;
                 }
 
@@ -2334,7 +2336,7 @@ void sad_loop_kernel_avx512(
                         r += ref_stride;
                     } while (--h);
 
-                    update_leftover8_1024_pel(sums256, search_area_width, x, y, &best_s, &best_x, &best_y);
+                    update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
                     x += 8;
                 }
 
@@ -2392,7 +2394,7 @@ void sad_loop_kernel_avx512(
                         r += ref_stride;
                     } while (--h);
 
-                    update_leftover8_2048_pel(sums256, search_area_width, x, y, &best_s, &best_x, &best_y);
+                    update_leftover8_2048_pel(sums256, x, y, &best_s, &best_x, &best_y);
                     x += 8;
                 }
 

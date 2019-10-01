@@ -11379,10 +11379,10 @@ void HmeLevel1(
     int16_t *xLevel1SearchCenter,         // output parameter, Level1 xMV at
                                           // (searchRegionNumberInWidth,
                                           // searchRegionNumberInHeight)
-    int16_t *yLevel1SearchCenter,         // output parameter, Level1 yMV at
+    int16_t *yLevel1SearchCenter          // output parameter, Level1 yMV at
                                           // (searchRegionNumberInWidth,
                                           // searchRegionNumberInHeight)
-    EbAsm asm_type) {
+    ) {
     int16_t xTopLeftSearchRegion;
     int16_t yTopLeftSearchRegion;
     uint32_t searchRegionIndex;
@@ -11559,10 +11559,10 @@ void HmeLevel2(
     int16_t *xLevel2SearchCenter,         // output parameter, Level2 xMV at
                                           // (searchRegionNumberInWidth,
                                           // searchRegionNumberInHeight)
-    int16_t *yLevel2SearchCenter,         // output parameter, Level2 yMV at
+    int16_t *yLevel2SearchCenter          // output parameter, Level2 yMV at
                                           // (searchRegionNumberInWidth,
                                           // searchRegionNumberInHeight)
-    EbAsm asm_type) {
+    ) {
     int16_t xTopLeftSearchRegion;
     int16_t yTopLeftSearchRegion;
     uint32_t searchRegionIndex;
@@ -14165,8 +14165,7 @@ EbErrorType motion_estimate_lcu(
                                               [searchRegionNumberInHeight]),
                                         &(yHmeLevel1SearchCenter
                                               [searchRegionNumberInWidth]
-                                              [searchRegionNumberInHeight]),
-                                        asm_type);
+                                              [searchRegionNumberInHeight]));
 
                                     searchRegionNumberInWidth++;
                                 }
@@ -14213,8 +14212,7 @@ EbErrorType motion_estimate_lcu(
                                               [searchRegionNumberInHeight]),
                                         &(yHmeLevel2SearchCenter
                                               [searchRegionNumberInWidth]
-                                              [searchRegionNumberInHeight]),
-                                        asm_type);
+                                              [searchRegionNumberInHeight]));
 
                                     searchRegionNumberInWidth++;
                                 }
