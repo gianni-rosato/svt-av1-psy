@@ -36,7 +36,7 @@ extern "C" {
 #define CDEF_BSTRIDE \
   ALIGN_POWER_OF_TWO((1 << MAX_SB_SIZE_LOG2) + 2 * CDEF_HBORDER, 3)
 
-#define CDEF_VERY_LARGE (30000)
+#define CDEF_VERY_LARGE (16384)
 #define CDEF_INBUF_SIZE \
   (CDEF_BSTRIDE * ((1 << MAX_SB_SIZE_LOG2) + 2 * CDEF_VBORDER))
 
@@ -52,7 +52,7 @@ extern "C" {
         int32_t dstride, const uint16_t *in,
         int32_t pri_strength, int32_t sec_strength,
         int32_t dir, int32_t pri_damping,
-        int32_t sec_damping, int32_t bsize, int32_t max,
+        int32_t sec_damping, int32_t bsize,
         int32_t coeff_shift);
     void copy_cdef_16bit_to_16bit(uint16_t *dst, int32_t dstride, uint16_t *src,
         cdef_list *dlist, int32_t cdef_count, int32_t bsize);

@@ -22,6 +22,11 @@ extern "C" {
     _mm256_set_m128i((hi), (lo))
 #endif
 
+#ifndef _mm256_cvtsi256_si32
+#define _mm256_cvtsi256_si32(a) \
+    _mm_cvtsi128_si32(_mm256_castsi256_si128(a))
+#endif
+
 static INLINE __m256i load_u8_4x4_avx2(const uint8_t *const src,
     const uint32_t stride)
 {

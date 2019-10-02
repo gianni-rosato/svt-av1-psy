@@ -196,8 +196,7 @@ const int32_t eb_cdef_sec_taps[2][2] = { { 2, 1 }, { 2, 1 } };
 void eb_cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int32_t dstride,
     const uint16_t *in, int32_t pri_strength, int32_t sec_strength,
     int32_t dir, int32_t pri_damping, int32_t sec_damping, int32_t bsize,
-    /*AOM_UNUSED*/ int32_t max_unused, int32_t coeff_shift) {
-    (void)max_unused;
+    int32_t coeff_shift) {
     int32_t i, j, k;
     const int32_t s = CDEF_BSTRIDE;
     const int32_t *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
@@ -341,7 +340,7 @@ void eb_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t
                 &in[(by * CDEF_BSTRIDE << bsizey) + (bx << bsizex)],
                 (pli ? t : adjust_strength(t, var[by][bx])), s,
                 t ? dir[by][bx] : 0, pri_damping, sec_damping, bsize,
-                (256 << coeff_shift) - 1, coeff_shift);
+                coeff_shift);
         else
             eb_cdef_filter_block(
                 NULL,
@@ -350,8 +349,7 @@ void eb_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t
                 dirinit ? 1 << bsizex : dstride,
                 &in[(by * CDEF_BSTRIDE << bsizey) + (bx << bsizex)],
                 (pli ? t : adjust_strength(t, var[by][bx])), s, t ? dir[by][bx] : 0,
-                pri_damping, sec_damping, bsize, (256 << coeff_shift) - 1,
-                coeff_shift);
+                pri_damping, sec_damping, bsize, coeff_shift);
     }
 }
 

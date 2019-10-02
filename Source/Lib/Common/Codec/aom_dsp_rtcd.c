@@ -243,8 +243,10 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_AVX2) eb_av1_compute_stats = eb_av1_compute_stats_avx2;
     eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_c;
     if (flags & HAS_AVX2) eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx2;
+    eb_cdef_filter_block_8x8_16 = eb_cdef_filter_block_8x8_16_avx2; // It has no c version, and is only called in parent avx2 function, so it's safe to initialize to avx2 version.
 #ifndef NON_AVX512_SUPPORT
     if (CanUseIntelAVX512()) {
+        eb_cdef_filter_block_8x8_16 = eb_cdef_filter_block_8x8_16_avx512;
         eb_av1_compute_stats = eb_av1_compute_stats_avx512;
         eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx512;
     }
@@ -1725,6 +1727,10 @@ void setup_rtcd_internal(EbAsm asm_type)
     av1_get_gradient_hist = av1_get_gradient_hist_c;
     if (flags & HAS_AVX2) av1_get_gradient_hist = av1_get_gradient_hist_avx2;
 
+    SET_AVX2_AVX512(search_one_dual,
+                    search_one_dual_c,
+                    search_one_dual_avx2,
+                    search_one_dual_avx512);
     SET_AVX2_AVX512(spatial_full_distortion_kernel,
                     spatial_full_distortion_kernel_c,
                     spatial_full_distortion_kernel_avx2,
