@@ -139,6 +139,12 @@ static void SetCfgInputFile(const char *filename, EbConfig *cfg)
     else
         FOPEN(cfg->input_file, filename, "rb");
 
+    if (cfg->input_file == NULL) {
+        cfg->y4m_input = EB_FALSE;
+        cfg->input_file_is_fifo = EB_FALSE;
+        return;
+    }
+
 #ifdef _WIN32
     cfg->input_file_is_fifo =
     GetFileType(cfg->input_file) == FILE_TYPE_PIPE;
