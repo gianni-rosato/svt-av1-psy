@@ -5945,17 +5945,11 @@ void inter_class_decision_count_1(
 )
 {
     ModeDecisionCandidateBuffer **buffer_ptr_array = context_ptr->candidate_buffer_ptr_array;
-
     // Distortion-based NIC proning not applied to INTRA clases: CLASS_0 and CLASS
     for (CAND_CLASS cand_class_it = CAND_CLASS_1; cand_class_it <= CAND_CLASS_3; cand_class_it++) {
-
         if (context_ptr->md_stage_0_count[cand_class_it] > 0 && context_ptr->md_stage_1_count[cand_class_it] > 0) {
-
             uint32_t *cand_buff_indices = context_ptr->cand_buff_indices[cand_class_it];
-
             if (*(buffer_ptr_array[cand_buff_indices[0]]->fast_cost_ptr) < *(buffer_ptr_array[context_ptr->cand_buff_indices[CAND_CLASS_0][0]]->fast_cost_ptr)) {
-
-
                 uint32_t fast1_cand_count = 1;
                 while (fast1_cand_count < context_ptr->md_stage_1_count[cand_class_it] && ((((*(buffer_ptr_array[cand_buff_indices[fast1_cand_count]]->fast_cost_ptr) - *(buffer_ptr_array[cand_buff_indices[0]]->fast_cost_ptr)) * 100) / (*(buffer_ptr_array[cand_buff_indices[0]]->fast_cost_ptr))) < context_ptr->dist_base_md_stage_0_count_th)) {
                     fast1_cand_count++;
@@ -6020,9 +6014,7 @@ void md_encode_block(
 
 #if SPEED_OPT
         const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[context_ptr->blk_geom->bsize];
-        context_ptr->source_variance = // use_hbd ?
-            //eb_av1_high_get_sby_perpixel_variance(fn_ptr, (input_picture_ptr->buffer_y + inputOriginIndex), input_picture_ptr->stride_y, context_ptr->blk_geom->bsize :
-            eb_av1_get_sby_perpixel_variance(fn_ptr, (input_picture_ptr->buffer_y + inputOriginIndex), input_picture_ptr->stride_y, context_ptr->blk_geom->bsize);
+        context_ptr->source_variance = eb_av1_get_sby_perpixel_variance(fn_ptr, (input_picture_ptr->buffer_y + inputOriginIndex), input_picture_ptr->stride_y, context_ptr->blk_geom->bsize);
 #endif
 
         ProductCodingLoopInitFastLoop(
