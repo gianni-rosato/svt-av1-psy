@@ -33,6 +33,7 @@ template <typename SrcSample, typename DstSample>
 class CompBlendTest : public ::testing::Test {
   public:
     void SetUp() override {
+        tst_fn_name = "";
         ref_dst_ =
             (DstSample *)eb_aom_memalign(32, MAX_SB_SQUARE * sizeof(DstSample));
         tst_dst_ =
@@ -54,7 +55,7 @@ class CompBlendTest : public ::testing::Test {
     }
 
     void run_test() {
-        const int loops = 10000;
+        const int iterations = 10000;
         SVTRandom rnd(0, (1 << bd_) - 1);
         SVTRandom mask_rnd(0, 64);
 
@@ -62,7 +63,7 @@ class CompBlendTest : public ::testing::Test {
         for (int i = 0; i < MAX_SB_SQUARE; ++i)
             mask_[i] = mask_rnd.random();
 
-        for (int k = 0; k < loops; ++k) {
+        for (int k = 0; k < iterations; ++k) {
             for (int block_size = BLOCK_4X4; block_size < BlockSizeS_ALL;
                  block_size += 1) {
                 w_ = block_size_wide[block_size];
@@ -87,7 +88,13 @@ class CompBlendTest : public ::testing::Test {
                         for (int i = 0; i < h_; ++i) {
                             for (int j = 0; j < w_; ++j) {
                                 ASSERT_EQ(tst_dst_[i * dst_stride_ + j],
-                                          ref_dst_[i * dst_stride_ + j]);
+                                          ref_dst_[i * dst_stride_ + j])
+                                    << "Mismatch at unit tests for "
+                                    << tst_fn_name << "\n"
+                                    << " Pixel mismatch at index "
+                                    << "[" << j << "x" << i
+                                    << "] block size: " << block_size
+                                    << "iterator: " << k;
                             }
                         }
                     }
@@ -109,12 +116,14 @@ class CompBlendTest : public ::testing::Test {
     uint8_t *mask_;
     int w_, h_;
     int bd_;
+    const char *tst_fn_name;  // test function name
 };
 
 class LbdCompBlendTest : public CompBlendTest<uint8_t, uint8_t> {
   public:
     LbdCompBlendTest() {
         bd_ = 8;
+        tst_fn_name = "aom_blend_a64_mask_avx2";
     }
 
     void run_blend(int subw, int subh) override {
@@ -153,6 +162,7 @@ class LbdCompBlendD16Test : public CompBlendTest<uint16_t, uint8_t> {
   public:
     LbdCompBlendD16Test() {
         bd_ = 10;
+        tst_fn_name = "aom_lowbd_blend_a64_d16_mask_avx2";
     }
 
     void run_blend(int subw, int subh) override {

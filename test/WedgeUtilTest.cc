@@ -39,66 +39,8 @@ class WedgeUtilTest : public ::testing::Test {
         aom_clear_system_state();
     }
 
-  protected:
-    uint8_t *m;       /* mask */
-    int16_t *r0, *r1; /* two predicted residual */
-};
-
-extern "C" uint64_t aom_sum_squares_i16_c(const int16_t *src, uint32_t n);
-#define MAX_MASK_VALUE (1 << WEDGE_WEIGHT_BITS)
-TEST_F(WedgeUtilTest, MaskSignTest) {
-    const int loops = 10000;
-    const int int_13bit_max = (1 << 12) - 1;
-    SVTRandom rnd(13, true);             // max residual is 13-bit
-    SVTRandom m_rnd(0, MAX_MASK_VALUE);  // [0, MAX_MASK_VALUE]
-    SVTRandom n_rnd(1, 8191 / 64);       // required by assembly implementation
-    DECLARE_ALIGNED(32, int16_t, ds[MAX_SB_SQUARE]);
-
-    for (int k = 0; k < loops; ++k) {
-        if (k < 4) {  // extreme value test
-            switch (k) {
-            case 0:
-                for (int i = 0; i < MAX_SB_SQUARE; ++i) {
-                    r0[i] = 0;
-                    r1[i] = int_13bit_max;
-                }
-                break;
-            case 1:
-                for (int i = 0; i < MAX_SB_SQUARE; ++i) {
-                    r0[i] = int_13bit_max;
-                    r1[i] = 0;
-                }
-                break;
-            case 2:
-                for (int i = 0; i < MAX_SB_SQUARE; ++i) {
-                    r0[i] = -int_13bit_max;
-                    r1[i] = 0;
-                }
-                break;
-            case 3:
-                for (int i = 0; i < MAX_SB_SQUARE; ++i) {
-                    r0[i] = 0;
-                    r1[i] = -int_13bit_max;
-                }
-                break;
-            default: assert(0); break;
-            }
-
-            for (int i = 0; i < MAX_SB_SQUARE; ++i)
-                m[i] = MAX_MASK_VALUE;
-        } else {
-            // populate the residual buffer randomly
-            for (int i = 0; i < MAX_SB_SQUARE; ++i) {
-                r0[i] = rnd.random();
-                r1[i] = rnd.random();
-                m[i] = m_rnd.random();
-            }
-        }
-
-        // N should be multiple of 64, required by
-        // av1_wedge_sign_from_residuals_avx2
-        const int N = 64 * n_rnd.random();
-
+    void wedge_sign_test(int N, int k) {
+        DECLARE_ALIGNED(32, int16_t, ds[MAX_SB_SQUARE]);
         // pre-compute limit
         // MAX_MASK_VALUE/2 * (sum(r0**2) - sum(r1**2))
         int64_t limit;
@@ -114,20 +56,95 @@ TEST_F(WedgeUtilTest, MaskSignTest) {
         const int8_t tst_sign =
             av1_wedge_sign_from_residuals_avx2(ds, m, N, limit);
         ASSERT_EQ(ref_sign, tst_sign)
-            << "av1_wedge_sign_from_residuals_avx2 fail at loop " << k;
+            << "unit test for av1_wedge_sign_from_residuals_avx2 fail at "
+               "iteration "
+            << k;
+    }
+
+  protected:
+    uint8_t *m;       /* mask */
+    int16_t *r0, *r1; /* two predicted residual */
+};
+
+extern "C" uint64_t aom_sum_squares_i16_c(const int16_t *src, uint32_t n);
+#define MAX_MASK_VALUE (1 << WEDGE_WEIGHT_BITS)
+TEST_F(WedgeUtilTest, MaskSignRandomTest) {
+    const int iterations = 10000;
+    SVTRandom rnd(13, true);             // max residual is 13-bit
+    SVTRandom m_rnd(0, MAX_MASK_VALUE);  // [0, MAX_MASK_VALUE]
+    SVTRandom n_rnd(1, 8191 / 64);       // required by assembly implementation
+
+    for (int k = 0; k < iterations; ++k) {
+        // populate the residual buffer randomly
+        for (int i = 0; i < MAX_SB_SQUARE; ++i) {
+            r0[i] = rnd.random();
+            r1[i] = rnd.random();
+            m[i] = m_rnd.random();
+        }
+
+        // N should be multiple of 64, required by
+        // av1_wedge_sign_from_residuals_avx2
+        const int N = 64 * n_rnd.random();
+        wedge_sign_test(N, k);
+    }
+}
+
+TEST_F(WedgeUtilTest, MaskSignExtremeTest) {
+    const int int_13bit_max = (1 << 12) - 1;
+    SVTRandom rnd(13, true);             // max residual is 13-bit
+    SVTRandom m_rnd(0, MAX_MASK_VALUE);  // [0, MAX_MASK_VALUE]
+    SVTRandom n_rnd(1, 8191 / 64);       // required by assembly implementation
+
+    for (int k = 0; k < 4; ++k) {
+        switch (k) {
+        case 0:
+            for (int i = 0; i < MAX_SB_SQUARE; ++i) {
+                r0[i] = 0;
+                r1[i] = int_13bit_max;
+            }
+            break;
+        case 1:
+            for (int i = 0; i < MAX_SB_SQUARE; ++i) {
+                r0[i] = int_13bit_max;
+                r1[i] = 0;
+            }
+            break;
+        case 2:
+            for (int i = 0; i < MAX_SB_SQUARE; ++i) {
+                r0[i] = -int_13bit_max;
+                r1[i] = 0;
+            }
+            break;
+        case 3:
+            for (int i = 0; i < MAX_SB_SQUARE; ++i) {
+                r0[i] = 0;
+                r1[i] = -int_13bit_max;
+            }
+            break;
+        default: assert(0); break;
+        }
+
+        for (int i = 0; i < MAX_SB_SQUARE; ++i)
+            m[i] = MAX_MASK_VALUE;
+
+        // N should be multiple of 64, required by
+        // av1_wedge_sign_from_residuals_avx2
+        const int N = 64 * n_rnd.random();
+
+        wedge_sign_test(N, k);
     }
 }
 
 // test av1_wedge_compute_delta_squares_avx2
 // element-by-element calculate the difference of square
 TEST_F(WedgeUtilTest, ComputeDeltaSquareTest) {
-    const int loops = 10000;
+    const int iterations = 10000;
     SVTRandom rnd(13, true);  // max residual is 13-bit
     SVTRandom n_rnd(1, MAX_SB_SQUARE / 64);
     DECLARE_ALIGNED(32, int16_t, ref_diff[MAX_SB_SQUARE]);
     DECLARE_ALIGNED(32, int16_t, tst_diff[MAX_SB_SQUARE]);
 
-    for (int k = 0; k < loops; ++k) {
+    for (int k = 0; k < iterations; ++k) {
         // populate the residual buffer randomly
         for (int i = 0; i < MAX_SB_SQUARE; ++i) {
             r0[i] = rnd.random();
@@ -146,59 +163,27 @@ TEST_F(WedgeUtilTest, ComputeDeltaSquareTest) {
         // check the output
         for (int i = 0; i < N; ++i) {
             ASSERT_EQ(ref_diff[i], tst_diff[i])
-                << "av1_wedge_compute_delta_squares_avx2 fail at loop " << k;
+                << "unit test for av1_wedge_compute_delta_squares_avx2 fail at "
+                   "iteration "
+                << k;
         }
     }
 }
 
 // test av1_wedge_sse_from_residuals_avx2
 // calculate the sse of two prediction combined with mask m
-TEST_F(WedgeUtilTest, SseFromResidualTest) {
-    const int loops = 10000;
-    const int int_13bit_max = (1 << 12) - 1;
+TEST_F(WedgeUtilTest, SseFromResidualRandomTest) {
+    const int iterations = 10000;
     SVTRandom rnd(13, true);             // max residual is 13-bit
     SVTRandom m_rnd(0, MAX_MASK_VALUE);  // [0, MAX_MASK_VALUE]
     SVTRandom n_rnd(1, MAX_SB_SQUARE / 64);
 
-    for (int k = 0; k < loops; ++k) {
-        if (k < 4) {
-            switch (k) {
-            case 0:
-                for (int i = 0; i < MAX_SB_SQUARE; ++i) {
-                    r0[i] = 0;
-                    r1[i] = int_13bit_max;
-                }
-                break;
-            case 1:
-                for (int i = 0; i < MAX_SB_SQUARE; ++i) {
-                    r0[i] = int_13bit_max;
-                    r1[i] = 0;
-                }
-                break;
-            case 2:
-                for (int i = 0; i < MAX_SB_SQUARE; ++i) {
-                    r0[i] = -int_13bit_max;
-                    r1[i] = 0;
-                }
-                break;
-            case 3:
-                for (int i = 0; i < MAX_SB_SQUARE; ++i) {
-                    r0[i] = 0;
-                    r1[i] = -int_13bit_max;
-                }
-                break;
-            default: assert(0); break;
-            }
-
-            for (int i = 0; i < MAX_SB_SQUARE; ++i)
-                m[i] = MAX_MASK_VALUE;
-        } else {
-            // populate the residual buffer randomly
-            for (int i = 0; i < MAX_SB_SQUARE; ++i) {
-                r0[i] = rnd.random();
-                r1[i] = rnd.random();
-                m[i] = m_rnd.random();
-            }
+    for (int k = 0; k < iterations; ++k) {
+        // populate the residual buffer randomly
+        for (int i = 0; i < MAX_SB_SQUARE; ++i) {
+            r0[i] = rnd.random();
+            r1[i] = rnd.random();
+            m[i] = m_rnd.random();
         }
 
         // N should be multiple of 64, required by
@@ -210,7 +195,62 @@ TEST_F(WedgeUtilTest, SseFromResidualTest) {
 
         // check output
         ASSERT_EQ(ref_sse, tst_sse)
-            << "av1_wedge_sse_from_residuals_avx2 fail at loop " << k;
+            << "unit test for av1_wedge_sse_from_residuals_avx2 fail at "
+               "iteration "
+            << k;
+    }
+}
+
+TEST_F(WedgeUtilTest, SseFromResidualExtremeTest) {
+    const int int_13bit_max = (1 << 12) - 1;
+    SVTRandom rnd(13, true);             // max residual is 13-bit
+    SVTRandom m_rnd(0, MAX_MASK_VALUE);  // [0, MAX_MASK_VALUE]
+    SVTRandom n_rnd(1, MAX_SB_SQUARE / 64);
+
+    for (int k = 0; k < 4; ++k) {
+        switch (k) {
+        case 0:
+            for (int i = 0; i < MAX_SB_SQUARE; ++i) {
+                r0[i] = 0;
+                r1[i] = int_13bit_max;
+            }
+            break;
+        case 1:
+            for (int i = 0; i < MAX_SB_SQUARE; ++i) {
+                r0[i] = int_13bit_max;
+                r1[i] = 0;
+            }
+            break;
+        case 2:
+            for (int i = 0; i < MAX_SB_SQUARE; ++i) {
+                r0[i] = -int_13bit_max;
+                r1[i] = 0;
+            }
+            break;
+        case 3:
+            for (int i = 0; i < MAX_SB_SQUARE; ++i) {
+                r0[i] = 0;
+                r1[i] = -int_13bit_max;
+            }
+            break;
+        default: assert(0); break;
+        }
+
+        for (int i = 0; i < MAX_SB_SQUARE; ++i)
+            m[i] = MAX_MASK_VALUE;
+
+        // N should be multiple of 64, required by
+        // av1_wedge_sse_from_residuals_avx2
+        const int N = 64 * n_rnd.random();
+
+        uint64_t ref_sse = av1_wedge_sse_from_residuals_c(r0, r1, m, N);
+        uint64_t tst_sse = av1_wedge_sse_from_residuals_avx2(r0, r1, m, N);
+
+        // check output
+        ASSERT_EQ(ref_sse, tst_sse)
+            << "unit test for av1_wedge_sse_from_residuals_avx2 fail at "
+               "iteration "
+            << k;
     }
 }
 }  // namespace
