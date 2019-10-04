@@ -3114,4 +3114,188 @@ void eb_av1_compute_stats_highbd_avx512(int32_t wiener_win, const uint8_t *dgd8,
     eb_aom_free(d);
 }
 
-#endif // !NON_AVX512_SUPPORT
+static INLINE __m512i pair_set_epi16_avx512(uint16_t a, uint16_t b) {
+    return _mm512_set1_epi32(
+        (int32_t)(((uint16_t)(a)) | (((uint32_t)(b)) << 16)));
+}
+
+int64_t eb_av1_lowbd_pixel_proj_error_avx512(const uint8_t *src8, int32_t width,
+    int32_t height, int32_t src_stride,
+    const uint8_t *dat8,
+    int32_t dat_stride, int32_t *flt0,
+    int32_t flt0_stride, int32_t *flt1,
+    int32_t flt1_stride, int32_t xq[2],
+    const SgrParamsType *params) {
+    const int32_t shift = SGRPROJ_RST_BITS + SGRPROJ_PRJ_BITS;
+    const uint8_t *src = src8;
+    const uint8_t *dat = dat8;
+    int64_t err = 0;
+    int32_t y = height;
+    int32_t j;
+    const __m512i rounding = _mm512_set1_epi32(1 << (shift - 1));
+    const __m512i idx =
+        _mm512_setr_epi32(0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15);
+    __m256i sum_256;
+    __m512i sum64_512 = _mm512_setzero_si512();
+
+    if (params->r[0] > 0 && params->r[1] > 0) {
+        const __m512i xq_coeff = pair_set_epi16_avx512(xq[0], xq[1]);
+
+        do {
+            __m512i sum_512 = _mm512_setzero_si512();
+
+            for (j = 0; j <= width - 32; j += 32) {
+                const __m256i s_256 = _mm256_loadu_si256((__m256i *)(src + j));
+                const __m256i d_256 = _mm256_loadu_si256((__m256i *)(dat + j));
+                const __m512i s_512 = _mm512_cvtepu8_epi16(s_256);
+                const __m512i d_512 = _mm512_cvtepu8_epi16(d_256);
+                const __m512i flt0_16b = _mm512_permutevar_epi32(
+                    idx,
+                    _mm512_packs_epi32(
+                        _mm512_loadu_si512((__m512i *)(flt0 + j)),
+                        _mm512_loadu_si512((__m512i *)(flt0 + j + 16))));
+                const __m512i flt1_16b = _mm512_permutevar_epi32(
+                    idx,
+                    _mm512_packs_epi32(
+                        _mm512_loadu_si512((__m512i *)(flt1 + j)),
+                        _mm512_loadu_si512((__m512i *)(flt1 + j + 16))));
+                const __m512i u0 = _mm512_slli_epi16(d_512, SGRPROJ_RST_BITS);
+                const __m512i flt0_0_sub_u = _mm512_sub_epi16(flt0_16b, u0);
+                const __m512i flt1_0_sub_u = _mm512_sub_epi16(flt1_16b, u0);
+                const __m512i v0 = _mm512_madd_epi16(
+                    xq_coeff,
+                    _mm512_unpacklo_epi16(flt0_0_sub_u, flt1_0_sub_u));
+                const __m512i v1 = _mm512_madd_epi16(
+                    xq_coeff,
+                    _mm512_unpackhi_epi16(flt0_0_sub_u, flt1_0_sub_u));
+                const __m512i vr0 =
+                    _mm512_srai_epi32(_mm512_add_epi32(v0, rounding), shift);
+                const __m512i vr1 =
+                    _mm512_srai_epi32(_mm512_add_epi32(v1, rounding), shift);
+                const __m512i e0 = _mm512_sub_epi16(
+                    _mm512_add_epi16(_mm512_packs_epi32(vr0, vr1), d_512),
+                    s_512);
+                const __m512i err0 = _mm512_madd_epi16(e0, e0);
+                sum_512 = _mm512_add_epi32(sum_512, err0);
+            }
+
+            for (; j < width; ++j) {
+                const int32_t u = (int32_t)(dat[j] << SGRPROJ_RST_BITS);
+                int32_t v = xq[0] * (flt0[j] - u) + xq[1] * (flt1[j] - u);
+                const int32_t e =
+                    ROUND_POWER_OF_TWO(v, shift) + dat[j] - src[j];
+                err += e * e;
+            }
+
+            dat += dat_stride;
+            src += src_stride;
+            flt0 += flt0_stride;
+            flt1 += flt1_stride;
+            const __m512i sum0_512 =
+                _mm512_cvtepi32_epi64(_mm512_castsi512_si256(sum_512));
+            const __m512i sum1_512 =
+                _mm512_cvtepi32_epi64(_mm512_extracti64x4_epi64(sum_512, 1));
+            sum64_512 = _mm512_add_epi64(sum64_512, sum0_512);
+            sum64_512 = _mm512_add_epi64(sum64_512, sum1_512);
+        } while (--y);
+
+        const __m256i sum0_256 = _mm512_castsi512_si256(sum64_512);
+        const __m256i sum1_256 = _mm512_extracti64x4_epi64(sum64_512, 1);
+        sum_256 = _mm256_add_epi64(sum0_256, sum1_256);
+    }
+    else if (params->r[0] > 0 || params->r[1] > 0) {
+        const int32_t xq_active = (params->r[0] > 0) ? xq[0] : xq[1];
+        const __m512i xq_coeff = pair_set_epi16_avx512(
+            xq_active, (-xq_active * (1 << SGRPROJ_RST_BITS)));
+        const int32_t *flt = (params->r[0] > 0) ? flt0 : flt1;
+        const int32_t flt_stride =
+            (params->r[0] > 0) ? flt0_stride : flt1_stride;
+
+        do {
+            __m512i sum_512 = _mm512_setzero_si512();
+
+            for (j = 0; j <= width - 32; j += 32) {
+                const __m256i s_256 = _mm256_loadu_si256((__m256i *)(src + j));
+                const __m256i d_256 = _mm256_loadu_si256((__m256i *)(dat + j));
+                const __m512i s_512 = _mm512_cvtepu8_epi16(s_256);
+                const __m512i d_512 = _mm512_cvtepu8_epi16(d_256);
+                const __m512i flt_16b = _mm512_permutevar_epi32(
+                    idx,
+                    _mm512_packs_epi32(
+                        _mm512_loadu_si512((__m512i *)(flt + j)),
+                        _mm512_loadu_si512((__m512i *)(flt + j + 16))));
+                const __m512i v0 = _mm512_madd_epi16(
+                    xq_coeff, _mm512_unpacklo_epi16(flt_16b, d_512));
+                const __m512i v1 = _mm512_madd_epi16(
+                    xq_coeff, _mm512_unpackhi_epi16(flt_16b, d_512));
+                const __m512i vr0 =
+                    _mm512_srai_epi32(_mm512_add_epi32(v0, rounding), shift);
+                const __m512i vr1 =
+                    _mm512_srai_epi32(_mm512_add_epi32(v1, rounding), shift);
+                const __m512i e0 = _mm512_sub_epi16(
+                    _mm512_add_epi16(_mm512_packs_epi32(vr0, vr1), d_512),
+                    s_512);
+                const __m512i err0 = _mm512_madd_epi16(e0, e0);
+                sum_512 = _mm512_add_epi32(sum_512, err0);
+            }
+
+            for (; j < width; ++j) {
+                const int32_t u = (int32_t)(dat[j] << SGRPROJ_RST_BITS);
+                const int32_t v = xq_active * (flt[j] - u);
+                const int32_t e =
+                    ROUND_POWER_OF_TWO(v, shift) + dat[j] - src[j];
+                err += e * e;
+            }
+
+            dat += dat_stride;
+            src += src_stride;
+            flt += flt_stride;
+            const __m512i sum0_512 =
+                _mm512_cvtepi32_epi64(_mm512_castsi512_si256(sum_512));
+            const __m512i sum1_512 =
+                _mm512_cvtepi32_epi64(_mm512_extracti64x4_epi64(sum_512, 1));
+            sum64_512 = _mm512_add_epi64(sum64_512, sum0_512);
+            sum64_512 = _mm512_add_epi64(sum64_512, sum1_512);
+        } while (--y);
+
+        const __m256i sum0_256 = _mm512_castsi512_si256(sum64_512);
+        const __m256i sum1_256 = _mm512_extracti64x4_epi64(sum64_512, 1);
+        sum_256 = _mm256_add_epi64(sum0_256, sum1_256);
+    }
+    else {
+        __m512i sum_512 = _mm512_setzero_si512();
+
+        do {
+            for (j = 0; j <= width - 32; j += 32) {
+                const __m256i s_256 = _mm256_loadu_si256((__m256i *)(dat + j));
+                const __m256i d_256 = _mm256_loadu_si256((__m256i *)(src + j));
+                const __m512i s_512 = _mm512_cvtepu8_epi16(s_256);
+                const __m512i d_512 = _mm512_cvtepu8_epi16(d_256);
+                const __m512i diff = _mm512_sub_epi16(d_512, s_512);
+                const __m512i err_512 = _mm512_madd_epi16(diff, diff);
+                sum_512 = _mm512_add_epi32(sum_512, err_512);
+            }
+
+            for (; j < width; ++j) {
+                const int32_t e = (int32_t)(dat[j]) - src[j];
+                err += e * e;
+            }
+
+            dat += dat_stride;
+            src += src_stride;
+        } while (--y);
+
+        const __m256i sum0_256 = _mm512_castsi512_si256(sum_512);
+        const __m256i sum1_256 = _mm512_extracti64x4_epi64(sum_512, 1);
+        const __m256i sum32_256 = _mm256_add_epi32(sum0_256, sum1_256);
+        const __m256i sum64_0 =
+            _mm256_cvtepi32_epi64(_mm256_castsi256_si128(sum32_256));
+        const __m256i sum64_1 =
+            _mm256_cvtepi32_epi64(_mm256_extracti128_si256(sum32_256, 1));
+        sum_256 = _mm256_add_epi64(sum64_0, sum64_1);
+    }
+
+    return err + _mm_cvtsi128_si64(hadd_64_avx2(sum_256));
+}
+
+#endif  // !NON_AVX512_SUPPORT

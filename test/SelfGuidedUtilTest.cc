@@ -21,6 +21,7 @@
 #include "EbDefinitions.h"
 #include "EbUtility.h"
 #include "EbRestoration.h"
+#include "EbUnitTestUtility.h"
 #include "random.h"
 #include "util.h"
 
@@ -170,6 +171,102 @@ class PixelProjErrorTest
         }
     }
 
+    virtual void run_speed_test(const int size, const int r0, const int r1) {
+        prepare_random_data();
+
+        const int dgd_stride = MAX_DATA_BLOCK;
+        const int src_stride = MAX_DATA_BLOCK;
+        const int flt0_stride = MAX_DATA_BLOCK;
+        const int flt1_stride = MAX_DATA_BLOCK;
+        int h_end = size;
+        int v_end = size;
+        int xq[2];
+        int64_t err_ref, err_test;
+        double time_c, time_o;
+        uint64_t start_time_seconds, start_time_useconds;
+        uint64_t middle_time_seconds, middle_time_useconds;
+        uint64_t finish_time_seconds, finish_time_useconds;
+
+        xq[0] = rnd8_.random() % (1 << SGRPROJ_PRJ_BITS);
+        xq[1] = rnd8_.random() % (1 << SGRPROJ_PRJ_BITS);
+        SgrParamsType params;
+        params.r[0] = r0;
+        params.r[1] = r1;
+        uint8_t *dgd =
+            (sizeof(*dgd_) == 2) ? (CONVERT_TO_BYTEPTR(dgd_)) : (uint8_t *)dgd_;
+        uint8_t *src =
+            (sizeof(*src_) == 2) ? (CONVERT_TO_BYTEPTR(src_)) : (uint8_t *)src_;
+
+        const uint64_t num_loop = 1000000;
+
+        EbStartTime(&start_time_seconds, &start_time_useconds);
+
+        for (uint64_t i = 0; i < num_loop; i++) {
+            err_ref = ref_func_(src,
+                                h_end,
+                                v_end,
+                                src_stride,
+                                dgd,
+                                dgd_stride,
+                                flt0_,
+                                flt0_stride,
+                                flt1_,
+                                flt1_stride,
+                                xq,
+                                &params);
+        }
+
+        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+        for (uint64_t i = 0; i < num_loop; i++) {
+            err_test = tst_func_(src,
+                                 h_end,
+                                 v_end,
+                                 src_stride,
+                                 dgd,
+                                 dgd_stride,
+                                 flt0_,
+                                 flt0_stride,
+                                 flt1_,
+                                 flt1_stride,
+                                 xq,
+                                 &params);
+        }
+
+        EbStartTime(&finish_time_seconds, &finish_time_useconds);
+
+        ASSERT_EQ(err_ref, err_test);
+
+        EbComputeOverallElapsedTimeMs(start_time_seconds,
+                                      start_time_useconds,
+                                      middle_time_seconds,
+                                      middle_time_useconds,
+                                      &time_c);
+        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+                                      middle_time_useconds,
+                                      finish_time_seconds,
+                                      finish_time_useconds,
+                                      &time_o);
+
+        printf("Average Nanoseconds per Function Call\n");
+        printf(
+            "    eb_av1_lowbd_pixel_proj_error_c(size: %d, r0: %d, r1: %d)   : "
+            "%6.2f\n",
+            size,
+            r0,
+            r1,
+            1000000 * time_c / num_loop);
+        printf(
+            "    eb_av1_lowbd_pixel_proj_error_optsize: %d, r0: %d, r1: %d) : "
+            "%6.2f   (Comparison: "
+            "%5.2fx)\n",
+            size,
+            r0,
+            r1,
+            1000000 * time_o / num_loop,
+            time_c / time_o);
+    }
+
     virtual void run_extreme_test() {
         const int iters = min_test_times;
         for (int iter = 0; iter < iters && !HasFatalFailure(); ++iter) {
@@ -221,9 +318,20 @@ TEST_P(PixelProjErrorLbdTest, MatchTestWithRandomSizeAndValue) {
 TEST_P(PixelProjErrorLbdTest, MatchTestWithExtremeValue) {
     run_extreme_test();
 }
+TEST_P(PixelProjErrorLbdTest, /*DISABLED_*/ SpeedTest) {
+    run_speed_test(256, 1, 1);
+    run_speed_test(256, 1, 0);
+    run_speed_test(256, 0, 0);
+}
 
-static const PixelProjErrorTestParam lbd_test_vector[] = {make_tuple(
-    eb_av1_lowbd_pixel_proj_error_avx2, eb_av1_lowbd_pixel_proj_error_c)};
+static const PixelProjErrorTestParam lbd_test_vector[] = {
+    make_tuple(eb_av1_lowbd_pixel_proj_error_avx2,
+               eb_av1_lowbd_pixel_proj_error_c),
+#ifndef NON_AVX512_SUPPORT
+    make_tuple(eb_av1_lowbd_pixel_proj_error_avx512,
+               eb_av1_lowbd_pixel_proj_error_c)
+#endif
+};
 
 INSTANTIATE_TEST_CASE_P(RST, PixelProjErrorLbdTest,
                         ::testing::ValuesIn(lbd_test_vector));
