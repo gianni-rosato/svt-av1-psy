@@ -1568,7 +1568,10 @@ void* enc_dec_kernel(void *input_ptr)
             segmentBandSize = (segments_ptr->lcu_band_count * (segmentBandIndex + 1) + segments_ptr->segment_band_count - 1) / segments_ptr->segment_band_count;
 
             // Reset Coding Loop State
-            reset_mode_decision( // HT done
+            reset_mode_decision(
+#if EIGHT_PEL_PREDICTIVE_ME
+                sequence_control_set_ptr,
+#endif
                 context_ptr->md_context,
                 picture_control_set_ptr,
                 segment_index);

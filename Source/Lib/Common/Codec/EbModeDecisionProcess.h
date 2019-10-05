@@ -359,6 +359,9 @@ extern "C" {
         208, 212, 216, 220, 224, 228, 232, 236, 240, 244, 249, 255};
 
     extern void reset_mode_decision(
+#if EIGHT_PEL_PREDICTIVE_ME
+        SequenceControlSet    *sequence_control_set_ptr,
+#endif
         ModeDecisionContext   *context_ptr,
         PictureControlSet     *picture_control_set_ptr,
         uint32_t                 segment_index);

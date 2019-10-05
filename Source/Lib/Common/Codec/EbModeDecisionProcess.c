@@ -381,6 +381,9 @@ const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4] = {
 };
 
 void reset_mode_decision(
+#if EIGHT_PEL_PREDICTIVE_ME
+    SequenceControlSet    *sequence_control_set_ptr,
+#endif
     ModeDecisionContext   *context_ptr,
     PictureControlSet     *picture_control_set_ptr,
     uint32_t                   segment_index)
@@ -424,9 +427,14 @@ void reset_mode_decision(
         reset_mode_decision_neighbor_arrays(picture_control_set_ptr);
     }
 
+#if EIGHT_PEL_PREDICTIVE_ME
+    picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv = picture_control_set_ptr->enc_mode == ENC_M0 &&
+        (sequence_control_set_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER) ? 1 : 0;
+#else
 #if EIGTH_PEL_MV
     picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv = picture_control_set_ptr->enc_mode == ENC_M0 &&
         (picture_control_set_ptr->parent_pcs_ptr->is_pan || picture_control_set_ptr->parent_pcs_ptr->is_tilt) ? 1 : 0;
+#endif
 #endif
     EbBool enable_wm;
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)

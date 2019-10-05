@@ -43,7 +43,8 @@ extern "C" {
 #endif
 
 #define MR_MODE                           0
-#define EIGTH_PEL_MV                      0
+#define EIGTH_PEL_MV                      1
+#define EIGHT_PEL_PREDICTIVE_ME           1
 #define COMP_INTERINTRA                   1 // InterIntra mode support
 
 //FOR DEBUGGING - Do not remove
