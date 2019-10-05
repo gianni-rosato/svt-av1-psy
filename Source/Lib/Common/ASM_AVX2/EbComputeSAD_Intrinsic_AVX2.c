@@ -1739,7 +1739,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
  * Requirement: height <= 64
  * Requirement: height % 2 = 0 when width = 4 or 8
 *******************************************************************************/
-void sad_loop_kernel_avx2(
+void sad_loop_kernel_avx2_intrin(
     uint8_t  *src,                            // input parameter, source samples Ptr
     uint32_t  src_stride,                      // input parameter, source stride
     uint8_t  *ref,                            // input parameter, reference samples Ptr

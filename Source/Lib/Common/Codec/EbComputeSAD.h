@@ -6,8 +6,8 @@
 #ifndef EbComputeSAD_h
 #define EbComputeSAD_h
 
-#include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
+#include "aom_dsp_rtcd.h"
 #include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "EbComputeSAD_C.h"
 #include "EbComputeSAD_SSE2.h"
@@ -64,20 +64,6 @@ extern "C" {
         (void)width;
         return 0;
     }
-
-    typedef void(*EbSadLoopKernelNxMType)(
-        uint8_t  *src,                            // input parameter, source samples Ptr
-        uint32_t  src_stride,                      // input parameter, source stride
-        uint8_t  *ref,                            // input parameter, reference samples Ptr
-        uint32_t  ref_stride,                      // input parameter, reference stride
-        uint32_t  height,                         // input parameter, block height (M)
-        uint32_t  width,                          // input parameter, block width (N)
-        uint64_t *best_sad,
-        int16_t *x_search_center,
-        int16_t *y_search_center,
-        uint32_t  src_stride_raw,                   // input parameter, source stride (no line skipping)
-        int16_t search_area_width,
-        int16_t search_area_height);
 
     typedef uint32_t(*EbSadAvgKernelNxMType)(
         uint8_t  *src,

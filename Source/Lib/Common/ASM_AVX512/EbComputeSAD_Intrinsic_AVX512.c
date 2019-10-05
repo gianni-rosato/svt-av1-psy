@@ -64,7 +64,7 @@ static AOM_FORCE_INLINE uint32_t compute64x_m_sad_avx512_intrin(
 /*******************************************************************************
 * Requirement: height % 2 = 0
 *******************************************************************************/
-static INLINE uint32_t compute128x_m_sad_avx512_intrin(
+SIMD_INLINE uint32_t compute128x_m_sad_avx512_intrin(
     const uint8_t  *src,         // input parameter, source samples Ptr
     const uint32_t  src_stride,  // input parameter, source stride
     const uint8_t  *ref,         // input parameter, reference samples Ptr
@@ -219,7 +219,7 @@ void eb_aom_sad64x128x4d_avx512(const uint8_t *src, int src_stride,
 
 #endif
 
-static INLINE void compute128x_m_4d_sad_avx512_intrin(const uint8_t *src,
+SIMD_INLINE void compute128x_m_4d_sad_avx512_intrin(const uint8_t *src,
     const uint32_t src_stride, const uint8_t *const ref_array[4],
     const uint32_t ref_stride, uint32_t sad_array[4], const uint32_t height)
 {
@@ -277,7 +277,7 @@ static INLINE void add16x8x2to32bit(const __m256i sads256[2], __m128i sads128[2]
     sads128[1] = _mm_add_epi32(sad128_hl, sad128_hh);
 }
 
-static INLINE void add16x8x3to32bit(const __m256i sads256[3], __m128i sads128[2])
+SIMD_INLINE void add16x8x3to32bit(const __m256i sads256[3], __m128i sads128[2])
 {
     const __m256i zero = _mm256_setzero_si256();
     const __m256i sad256_0_lo = _mm256_unpacklo_epi16(sads256[0], zero);
@@ -298,7 +298,7 @@ static INLINE void add16x8x3to32bit(const __m256i sads256[3], __m128i sads128[2]
     sads128[1] = _mm_add_epi32(sad128_hl, sad128_hh);
 }
 
-static INLINE void add16x8x4to32bit(const __m256i sads256[4], __m128i sads128[2])
+SIMD_INLINE void add16x8x4to32bit(const __m256i sads256[4], __m128i sads128[2])
 {
     const __m256i zero = _mm256_setzero_si256();
     const __m256i sad256_0_lo = _mm256_unpacklo_epi16(sads256[0], zero);
@@ -323,7 +323,7 @@ static INLINE void add16x8x4to32bit(const __m256i sads256[4], __m128i sads128[2]
     sads128[1] = _mm_add_epi32(sad128_hl, sad128_hh);
 }
 
-static INLINE void add16x8x6to32bit(const __m256i sads256[6], __m128i sads128[2])
+SIMD_INLINE void add16x8x6to32bit(const __m256i sads256[6], __m128i sads128[2])
 {
     const __m256i zero = _mm256_setzero_si256();
     const __m256i sad256_0_lo = _mm256_unpacklo_epi16(sads256[0], zero);
@@ -356,7 +356,7 @@ static INLINE void add16x8x6to32bit(const __m256i sads256[6], __m128i sads128[2]
     sads128[1] = _mm_add_epi32(sad128_hl, sad128_hh);
 }
 
-static INLINE void add16x8x8to32bit(const __m256i sads256[8], __m128i sads128[2])
+SIMD_INLINE void add16x8x8to32bit(const __m256i sads256[8], __m128i sads128[2])
 {
     const __m256i zero = _mm256_setzero_si256();
     const __m256i sad256_0_lo = _mm256_unpacklo_epi16(sads256[0], zero);
@@ -397,7 +397,7 @@ static INLINE void add16x8x8to32bit(const __m256i sads256[8], __m128i sads128[2]
     sads128[1] = _mm_add_epi32(sad128_hl, sad128_hh);
 }
 
-static INLINE void add16x16x2to32bit(const __m512i sads512[2], __m256i sads256[2])
+SIMD_INLINE void add16x16x2to32bit(const __m512i sads512[2], __m256i sads256[2])
 {
     const __m512i zero = _mm512_setzero_si512();
 
@@ -427,7 +427,7 @@ static INLINE void add16x16x2to32bit(const __m512i sads512[2], __m256i sads256[2
     sads256[1] = _mm256_unpackhi_epi128(sad256_0, sad256_1);
 }
 
-static INLINE void add16x16x3to32bit(const __m512i sads512[3], __m256i sads256[2])
+SIMD_INLINE void add16x16x3to32bit(const __m512i sads512[3], __m256i sads256[2])
 {
     const __m512i zero = _mm512_setzero_si512();
 
@@ -462,7 +462,7 @@ static INLINE void add16x16x3to32bit(const __m512i sads512[3], __m256i sads256[2
     sads256[1] = _mm256_unpackhi_epi128(sad256_0, sad256_1);
 }
 
-static INLINE void add16x16x4to32bit(const __m512i sads512[4], __m256i sads256[2])
+SIMD_INLINE void add16x16x4to32bit(const __m512i sads512[4], __m256i sads256[2])
 {
     // Don't call two add16x16x2to32bit(), which is slower.
     const __m512i zero = _mm512_setzero_si512();
@@ -502,7 +502,7 @@ static INLINE void add16x16x4to32bit(const __m512i sads512[4], __m256i sads256[2
     sads256[1] = _mm256_unpackhi_epi128(sad256_0, sad256_1);
 }
 
-static INLINE void add16x16x6to32bit(const __m512i sads512[6], __m256i sads256[2])
+SIMD_INLINE void add16x16x6to32bit(const __m512i sads512[6], __m256i sads256[2])
 {
     const __m512i zero = _mm512_setzero_si512();
 
@@ -549,7 +549,7 @@ static INLINE void add16x16x6to32bit(const __m512i sads512[6], __m256i sads256[2
     sads256[1] = _mm256_unpackhi_epi128(sad256_0, sad256_1);
 }
 
-static INLINE void add16x16x8to32bit(const __m512i sads512[8], __m256i sads256[2])
+SIMD_INLINE void add16x16x8to32bit(const __m512i sads512[8], __m256i sads256[2])
 {
     // Don't call two add16x16x4to32bit(), which is slower.
     const __m512i zero = _mm512_setzero_si512();
@@ -660,7 +660,7 @@ static INLINE void sad_loop_kernel_8_avx2(const uint8_t *const src,
     *sum = _mm256_adds_epu16(*sum, _mm256_mpsadbw_epu8(rr0, ss0, (5 << 3) | 5)); // 101 101
 }
 
-static INLINE void sad_loop_kernel_16_avx512(const uint8_t *const src,
+SIMD_INLINE void sad_loop_kernel_16_avx512(const uint8_t *const src,
     const uint32_t src_stride, const uint8_t *const ref,
     const uint32_t ref_stride, __m512i *const sum)
 {
@@ -685,7 +685,7 @@ static INLINE void sad_loop_kernel_16_avx512(const uint8_t *const src,
     *sum = _mm512_adds_epu16(*sum, _mm512_dbsad_epu8(ss3, rr1, 0xE9));
 }
 
-static INLINE void sad_loop_kernel_16_2sum_avx512(const uint8_t *const src,
+SIMD_INLINE void sad_loop_kernel_16_2sum_avx512(const uint8_t *const src,
     const uint32_t src_stride, const uint8_t *const ref,
     const uint32_t ref_stride, __m512i sum[2])
 {
@@ -736,7 +736,7 @@ static INLINE void sad_loop_kernel_16_2sum_avx2(const uint8_t *const src,
     sums[1] = _mm256_adds_epu16(sums[1], _mm256_mpsadbw_epu8(rr1, ss0, (7 << 3) | 7)); // 111 111
 }
 
-static INLINE void sad_loop_kernel_32_avx512(const uint8_t *const src, const uint8_t *const ref, __m512i *const sum)
+SIMD_INLINE void sad_loop_kernel_32_avx512(const uint8_t *const src, const uint8_t *const ref, __m512i *const sum)
 {
     const __m256i s01 = _mm256_loadu_si256((__m256i*)src);
     const __m512i s = _mm512_castsi256_si512(s01);
@@ -755,7 +755,7 @@ static INLINE void sad_loop_kernel_32_avx512(const uint8_t *const src, const uin
     *sum = _mm512_adds_epu16(*sum, _mm512_dbsad_epu8(ss3, rr1, 0xE9));
 }
 
-static INLINE void sad_loop_kernel_32_2sum_avx512(const uint8_t *const src, const uint8_t *const ref, __m512i sums[2])
+SIMD_INLINE void sad_loop_kernel_32_2sum_avx512(const uint8_t *const src, const uint8_t *const ref, __m512i sums[2])
 {
     const __m256i s01 = _mm256_loadu_si256((__m256i*)src);
     const __m512i s = _mm512_castsi256_si512(s01);
@@ -774,7 +774,7 @@ static INLINE void sad_loop_kernel_32_2sum_avx512(const uint8_t *const src, cons
     sums[1] = _mm512_adds_epu16(sums[1], _mm512_dbsad_epu8(ss3, rr1, 0xE9));
 }
 
-static INLINE void sad_loop_kernel_32_4sum_avx512(const uint8_t *const src, const uint8_t *const ref, __m512i sums[4])
+SIMD_INLINE void sad_loop_kernel_32_4sum_avx512(const uint8_t *const src, const uint8_t *const ref, __m512i sums[4])
 {
     const __m256i s01 = _mm256_loadu_si256((__m256i*)src);
     const __m512i s = _mm512_castsi256_si512(s01);
@@ -815,7 +815,7 @@ static INLINE void sad_loop_kernel_32_2sum_avx2(const uint8_t *const src, const 
     sums[1] = _mm256_adds_epu16(sums[1], _mm256_mpsadbw_epu8(rr1, ss0, (7 << 3) | 7)); // 111 111
 }
 
-static INLINE void sad_loop_kernel_32_4sum_avx2(const uint8_t *const src, const uint8_t *const ref, __m256i sums[4])
+SIMD_INLINE void sad_loop_kernel_32_4sum_avx2(const uint8_t *const src, const uint8_t *const ref, __m256i sums[4])
 {
     const __m256i ss0 = _mm256_loadu_si256((__m256i*)src);
     const __m256i rr0 = _mm256_loadu_si256((__m256i*)ref);
@@ -963,7 +963,7 @@ static INLINE void update_best(const __m128i sad, const int32_t x,
     }
 }
 
-static INLINE void update_8_best(const __m128i sads[2], const int32_t x,
+SIMD_INLINE void update_8_best(const __m128i sads[2], const int32_t x,
     const int32_t y, uint32_t *const best_s, int32_t *const best_x,
     int32_t *const best_y)
 {
@@ -987,6 +987,17 @@ static INLINE void update_small_pel(const __m256i sum256,
     update_best(sad, x, y, best_s, best_x, best_y);
 }
 
+static INLINE void update_some_pel(const __m256i sum256, const int32_t x,
+    const int32_t y, uint32_t *const best_s, int32_t *const best_x,
+    int32_t *const best_y)
+{
+    const __m128i sum0 = _mm256_castsi256_si128(sum256);
+    const __m128i sum1 = _mm256_extracti128_si256(sum256, 1);
+    __m128i minpos;
+    const uint32_t min0 = saturate_add(sum0, sum1, &minpos);
+    update_best_kernel(min0, minpos, x, y, best_s, best_x, best_y);
+}
+
 static INLINE void update_256_pel(const __m512i sum512, const int32_t x,
     const int32_t y, uint32_t *const best_s, int32_t *const best_x,
     int32_t *const best_y)
@@ -1000,7 +1011,7 @@ static INLINE void update_256_pel(const __m512i sum512, const int32_t x,
     update_best(sum256_hi, x + 8, y, best_s, best_x, best_y);
 }
 
-static INLINE void update_384_pel(const __m512i sum512, const __m256i sums256[2],
+SIMD_INLINE void update_384_pel(const __m512i sum512, const __m256i sums256[2],
     const int32_t x, const int32_t y, uint32_t *const best_s,
     int32_t *const best_x, int32_t *const best_y)
 {
@@ -1025,7 +1036,7 @@ static INLINE void update_384_pel(const __m512i sum512, const __m256i sums256[2]
     update_best_kernel(min_hi, minpos_hi, x + 8, y, best_s, best_x, best_y);
 }
 
-static INLINE void update_512_pel(const __m512i sum512, const int32_t x,
+SIMD_INLINE void update_512_pel(const __m512i sum512, const int32_t x,
     const int32_t y, uint32_t *const best_s, int32_t *const best_x,
     int32_t *const best_y)
 {
@@ -1044,7 +1055,7 @@ static INLINE void update_512_pel(const __m512i sum512, const int32_t x,
     update_best_kernel(min_hi, minpos_hi, x + 8, y, best_s, best_x, best_y);
 }
 
-static INLINE void update_1024_pel(const __m512i sums512[2], const int32_t x,
+SIMD_INLINE void update_1024_pel(const __m512i sums512[2], const int32_t x,
     const int32_t y, uint32_t *const best_s, int32_t *const best_x,
     int32_t *const best_y)
 {
@@ -1095,7 +1106,7 @@ static INLINE void update_1024_pel(const __m512i sums512[2], const int32_t x,
     }
 }
 
-static INLINE void update_768_pel(const __m512i sum512, const __m256i sums256[2],
+SIMD_INLINE void update_768_pel(const __m512i sum512, const __m256i sums256[2],
     const int32_t x, const int32_t y, uint32_t *const best_s,
     int32_t *const best_x, int32_t *const best_y)
 {
@@ -1107,7 +1118,7 @@ static INLINE void update_768_pel(const __m512i sum512, const __m256i sums256[2]
     update_1024_pel(sums512, x, y, best_s, best_x, best_y);
 }
 
-static INLINE void update_1536_pel(const __m512i sums512[3], const int32_t x,
+SIMD_INLINE void update_1536_pel(const __m512i sums512[3], const int32_t x,
     const int32_t y, uint32_t *const best_s, int32_t *const best_x,
     int32_t *const best_y)
 {
@@ -1159,7 +1170,7 @@ static INLINE void update_1536_pel(const __m512i sums512[3], const int32_t x,
     }
 }
 
-static INLINE void update_2048_pel(const __m512i sums512[4], const int32_t x,
+SIMD_INLINE void update_2048_pel(const __m512i sums512[4], const int32_t x,
     const int32_t y, uint32_t *const best_s, int32_t *const best_x,
     int32_t *const best_y)
 {
@@ -1253,7 +1264,7 @@ static INLINE void update_leftover_512_pel(const __m256i sum256,
     update_best_kernel(min0, minpos, x, y, best_s, best_x, best_y);
 }
 
-static INLINE void update_leftover8_1024_pel(const __m256i sums256[2],
+SIMD_INLINE void update_leftover8_1024_pel(const __m256i sums256[2],
     const int32_t x, const int32_t y, uint32_t *const best_s,
     int32_t *const best_x, int32_t *const best_y)
 {
@@ -1278,7 +1289,7 @@ static INLINE void update_leftover8_1024_pel(const __m256i sums256[2],
     }
 }
 
-static INLINE void update_leftover_1024_pel(const __m256i sums256[2],
+SIMD_INLINE void update_leftover_1024_pel(const __m256i sums256[2],
     const int16_t search_area_width, const int32_t x, const int32_t y,
     const uint32_t leftover, const __m128i mask, uint32_t *const best_s,
     int32_t *const best_x, int32_t *const best_y)
@@ -1318,7 +1329,7 @@ static INLINE void update_leftover_1024_pel(const __m256i sums256[2],
     }
 }
 
-static INLINE void update_leftover8_1536_pel(const __m256i sums256[3],
+SIMD_INLINE void update_leftover8_1536_pel(const __m256i sums256[3],
     const int32_t x, const int32_t y, uint32_t *const best_s,
     int32_t *const best_x, int32_t *const best_y)
 {
@@ -1344,7 +1355,7 @@ static INLINE void update_leftover8_1536_pel(const __m256i sums256[3],
     }
 }
 
-static INLINE void update_leftover_1536_pel(const __m256i sums256[3],
+SIMD_INLINE void update_leftover_1536_pel(const __m256i sums256[3],
     const int16_t search_area_width, const int32_t x, const int32_t y,
     const uint32_t leftover, const __m128i mask, uint32_t *const best_s,
     int32_t *const best_x, int32_t *const best_y)
@@ -1385,7 +1396,7 @@ static INLINE void update_leftover_1536_pel(const __m256i sums256[3],
     }
 }
 
-static INLINE void update_leftover8_2048_pel(const __m256i sums256[4],
+SIMD_INLINE void update_leftover8_2048_pel(const __m256i sums256[4],
     const int32_t x, const int32_t y, uint32_t *const best_s,
     int32_t *const best_x, int32_t *const best_y)
 {
@@ -1412,7 +1423,7 @@ static INLINE void update_leftover8_2048_pel(const __m256i sums256[4],
     }
 }
 
-static INLINE void update_leftover_2048_pel(const __m256i sums256[4],
+SIMD_INLINE void update_leftover_2048_pel(const __m256i sums256[4],
     const int16_t search_area_width, const int32_t x, const int32_t y,
     const uint32_t leftover, const __m128i mask, uint32_t *const best_s,
     int32_t *const best_x, int32_t *const best_y)
@@ -1459,7 +1470,7 @@ static INLINE void update_leftover_2048_pel(const __m256i sums256[4],
 * Requirement: height <= 64
 * Requirement: height % 2 = 0
 *******************************************************************************/
-void sad_loop_kernel_avx512(
+void sad_loop_kernel_avx512_intrin(
     uint8_t  *src,            // input parameter, source samples Ptr
     uint32_t  src_stride,     // input parameter, source stride
     uint8_t  *ref,            // input parameter, reference samples Ptr
@@ -1474,30 +1485,22 @@ void sad_loop_kernel_avx512(
     int16_t   search_area_height)
 {
     const uint32_t  height2 = height >> 1;
-    const uint32_t leftover = search_area_width & 7;
     const uint8_t *s, *r;
     int32_t best_x = *x_search_center, best_y = *y_search_center;
     uint32_t best_s = 0xffffff;
     int32_t x, y;
     uint32_t h;
-    __m128i mask128;
-    __m256i mask256;
 
-    mask128 = _mm_set1_epi32(-1);
-    for (x = 0; x < (int32_t)leftover; x++) {
-        mask128 = _mm_slli_si128(mask128, 2);
-    }
-    mask256 = _mm256_insertf128_si256(_mm256_castsi128_si256(mask128), mask128, 1);
-
-    switch (width) {
-    case 4:
-        if (height <= 4) {
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 8; x += 8) {
-                    s = src;
-                    r = ref + x;
+    if (search_area_width == 8) {
+        switch (width) {
+        case 4:
+            if (height <= 4) {
+                y = 0;
+                do {
                     __m128i sum = _mm_setzero_si128();
+
+                    s = src;
+                    r = ref;
 
                     h = height2;
                     do {
@@ -1506,36 +1509,17 @@ void sad_loop_kernel_avx512(
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_best(sum, x, y, &best_s, &best_x, &best_y);
-                }
-
-                if (leftover) {
-                    s = src;
-                    r = ref + x;
-                    __m128i sum = _mm_setzero_si128();
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_4_sse4_1(s, src_stride, r, ref_stride, &sum);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    sum = _mm_or_si128(sum, mask128);
-                    update_best(sum, x, y, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        else {
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 8; x += 8) {
+                    update_best(sum, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
                     __m256i sum256 = _mm256_setzero_si256();
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height2;
                     do {
@@ -1544,39 +1528,20 @@ void sad_loop_kernel_avx512(
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_small_pel(sum256, x, y, &best_s, &best_x, &best_y);
-                }
+                    update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
 
-                if (leftover) {
-                    __m256i sum256 = _mm256_setzero_si256();
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_4_avx2(s, src_stride, r, ref_stride, &sum256);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    update_leftover_small_pel(sum256, x, y, mask128, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        break;
-
-    case 8:
-        // Note: Tried _mm512_dbsad_epu8 but is even slower.
-        y = 0;
-        do {
-            for (x = 0; x <= search_area_width - 8; x += 8) {
+        case 8:
+            // Note: Tried _mm512_dbsad_epu8 but is even slower.
+            y = 0;
+            do {
                 __m256i sum256 = _mm256_setzero_si256();
 
                 s = src;
-                r = ref + x;
+                r = ref;
 
                 h = height2;
                 do {
@@ -1585,55 +1550,38 @@ void sad_loop_kernel_avx512(
                     r += 2 * ref_stride;
                 } while (--h);
 
-                update_small_pel(sum256, x, y, &best_s, &best_x, &best_y);
-            }
+                update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                ref += src_stride_raw;
+            } while (++y < search_area_height);
+            break;
 
-            if (leftover) {
-                __m256i sum256 = _mm256_setzero_si256();
-
-                s = src;
-                r = ref + x;
-
-                h = height2;
+        case 16:
+            if (height <= 16) {
+                y = 0;
                 do {
-                    sad_loop_kernel_8_avx2(s, src_stride, r, ref_stride, &sum256);
-                    s += 2 * src_stride;
-                    r += 2 * ref_stride;
-                } while (--h);
+                    __m256i sum256 = _mm256_setzero_si256();
 
-                update_leftover_small_pel(sum256, x, y, mask128, &best_s, &best_x, &best_y);
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_16_avx2(s, src_stride, r, ref_stride, &sum256);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
             }
-
-            ref += src_stride_raw;
-        } while (++y < search_area_height);
-        break;
-
-    case 16:
-        if (height <= 16) {
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
-                    __m512i sum512 = _mm512_setzero_si512();
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_16_avx512(s, src_stride, r, ref_stride, &sum512);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    update_256_pel(sum512, x, y, &best_s, &best_x, &best_y);
-                }
-
-                // leftover
-                for (; x < search_area_width; x += 8) {
+            else if (height <= 32) {
+                y = 0;
+                do {
                     __m256i sum256 = _mm256_setzero_si256();
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height2;
                     do {
@@ -1642,77 +1590,17 @@ void sad_loop_kernel_avx512(
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_leftover_256_pel(sum256, search_area_width, x, y, mask128, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        else if (height <= 32) {
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
-                    __m512i sum512 = _mm512_setzero_si512();
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_16_avx512(s, src_stride, r, ref_stride, &sum512);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    update_512_pel(sum512, x, y, &best_s, &best_x, &best_y);
-                }
-
-                // leftover
-                for (; x < search_area_width; x += 8) {
-                    __m256i sum256 = _mm256_setzero_si256();
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_16_avx2(s, src_stride, r, ref_stride, &sum256);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    update_leftover_512_pel(sum256, search_area_width, x, y, mask256, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        else {
-            const uint32_t leftover16 = search_area_width & 15;
-
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
-                    __m512i sums512[2] = { _mm512_setzero_si512(), _mm512_setzero_si512() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_16_2sum_avx512(s, src_stride, r, ref_stride, sums512);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    update_1024_pel(sums512, x, y, &best_s, &best_x, &best_y);
-                }
-
-                if (leftover16 >= 8) {
+                    update_some_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
                     __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height2;
                     do {
@@ -1721,60 +1609,20 @@ void sad_loop_kernel_avx512(
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
-                    x += 8;
-                }
+                    update_leftover8_1024_pel(sums256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
 
-                if (leftover) {
-                    __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_16_2sum_avx2(s, src_stride, r, ref_stride, sums256);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    update_leftover_1024_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        break;
-
-    case 24:
-        if (height <= 16) {
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
-                    __m512i sum512 = _mm512_setzero_si512();
-                    __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_16_avx512(s, src_stride, r, ref_stride, &sum512);
-                        sad_loop_kernel_8_avx2(s + 16, src_stride, r + 16, ref_stride, &sums256[0]);
-                        sad_loop_kernel_8_avx2(s + 16, src_stride, r + 24, ref_stride, &sums256[1]);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    update_384_pel(sum512, sums256, x, y, &best_s, &best_x, &best_y);
-                }
-
-                // leftover
-                for (; x < search_area_width; x += 8) {
+        case 24:
+            if (height <= 16) {
+                y = 0;
+                do {
                     __m256i sum256 = _mm256_setzero_si256();
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height2;
                     do {
@@ -1784,23 +1632,465 @@ void sad_loop_kernel_avx512(
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_leftover_512_pel(sum256, search_area_width, x, y, mask256, &best_s, &best_x, &best_y);
+                    update_some_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
+                    __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_16_avx2(s, src_stride, r, ref_stride, &sums256[0]);
+                        sad_loop_kernel_8_avx2(s + 16, src_stride, r + 16, ref_stride, &sums256[1]);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_leftover8_1024_pel(sums256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
+        case 32:
+            if (height <= 8) {
+                y = 0;
+                do {
+                    __m256i sum256 = _mm256_setzero_si256();
+
+                    s = src;
+                    r = ref;
+
+                    h = height;
+                    do {
+                        sad_loop_kernel_32_avx2(s, r, &sum256);
+                        s += src_stride;
+                        r += ref_stride;
+                    } while (--h);
+
+                    update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else if (height <= 16) {
+                y = 0;
+                do {
+                    __m256i sum256 = _mm256_setzero_si256();
+
+                    s = src;
+                    r = ref;
+
+                    h = height;
+                    do {
+                        sad_loop_kernel_32_avx2(s, r, &sum256);
+                        s += src_stride;
+                        r += ref_stride;
+                    } while (--h);
+
+                    update_some_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else if (height <= 32) {
+                y = 0;
+                do {
+                    __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                    s = src;
+                    r = ref;
+
+                    h = height;
+                    do {
+                        sad_loop_kernel_32_2sum_avx2(s, r, sums256);
+                        s += src_stride;
+                        r += ref_stride;
+                    } while (--h);
+
+                    update_leftover8_1024_pel(sums256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
+                    __m256i sums256[4] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                    s = src;
+                    r = ref;
+
+                    h = height;
+                    do {
+                        sad_loop_kernel_32_4sum_avx2(s, r, sums256);
+                        s += src_stride;
+                        r += ref_stride;
+                    } while (--h);
+
+                    update_leftover8_2048_pel(sums256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
+        case 48:
+            if (height <= 32) {
+                y = 0;
+                do {
+                    __m256i sums256[3] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_32_2sum_avx2(s, r, sums256);
+                        sad_loop_kernel_32_2sum_avx2(s + src_stride, r + ref_stride, sums256);
+                        sad_loop_kernel_16_avx2(s + 32, src_stride, r + 32, ref_stride, &sums256[2]);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_leftover8_1536_pel(sums256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
+                    __m256i sums256[6] = {
+                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(),
+                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256()
+                    };
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_32_4sum_avx2(s, r, sums256);
+                        sad_loop_kernel_32_4sum_avx2(s + src_stride, r + ref_stride, sums256);
+                        sad_loop_kernel_16_2sum_avx2(s + 32, src_stride, r + 32, ref_stride, &sums256[4]);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
+                    const __m256i sum23 = _mm256_adds_epu16(sums256[2], sums256[3]);
+                    const __m256i sum45 = _mm256_adds_epu16(sums256[4], sums256[5]);
+                    const __m256i sum0123 = _mm256_adds_epu16(sum01, sum23);
+                    const __m256i sum256 = _mm256_adds_epu16(sum0123, sum45);
+                    const __m128i sum_lo = _mm256_castsi256_si128(sum256);
+                    const __m128i sum_hi = _mm256_extracti128_si256(sum256, 1);
+                    const __m128i sad = _mm_adds_epu16(sum_lo, sum_hi);
+                    const __m128i minpos = _mm_minpos_epu16(sad);
+                    const uint32_t min0 = _mm_extract_epi16(minpos, 0);
+
+                    if (min0 < best_s) {
+                        if (min0 != 0xFFFF) { // no overflow
+                            best_s = min0;
+                            best_x = _mm_extract_epi16(minpos, 1);
+                            best_y = y;
+                        }
+                        else { // overflow
+                            __m128i sads[2];
+
+                            add16x8x6to32bit(sums256, sads);
+                            update_8_best(sads, 0, y, &best_s, &best_x, &best_y);
+                        }
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
+        default:
+            assert(width == 64);
+
+            if (height <= 16) {
+                y = 0;
+                do {
+                    __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                    s = src;
+                    r = ref;
+
+                    h = height;
+                    do {
+                        sad_loop_kernel_64_2sum_avx2(s, r, sums256);
+                        s += src_stride;
+                        r += ref_stride;
+                    } while (--h);
+
+                    update_leftover8_1024_pel(sums256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else if (height <= 32) {
+                y = 0;
+                do {
+                    __m256i sums256[4] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                    s = src;
+                    r = ref;
+
+                    h = height;
+                    do {
+                        sad_loop_kernel_64_4sum_avx2(s, r, sums256);
+                        s += src_stride;
+                        r += ref_stride;
+                    } while (--h);
+
+                    update_leftover8_2048_pel(sums256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
+                    __m256i sums256[8] = {
+                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(),
+                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256()
+                    };
+
+                    s = src;
+                    r = ref;
+
+                    h = height;
+                    do {
+                        sad_loop_kernel_64_8sum_avx2(s, r, sums256);
+                        s += src_stride;
+                        r += ref_stride;
+                    } while (--h);
+
+                    const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
+                    const __m256i sum23 = _mm256_adds_epu16(sums256[2], sums256[3]);
+                    const __m256i sum45 = _mm256_adds_epu16(sums256[4], sums256[5]);
+                    const __m256i sum67 = _mm256_adds_epu16(sums256[6], sums256[7]);
+                    const __m256i sum0123 = _mm256_adds_epu16(sum01, sum23);
+                    const __m256i sum4567 = _mm256_adds_epu16(sum45, sum67);
+                    const __m256i sum256 = _mm256_adds_epu16(sum0123, sum4567);
+                    const __m128i sum_lo = _mm256_castsi256_si128(sum256);
+                    const __m128i sum_hi = _mm256_extracti128_si256(sum256, 1);
+                    const __m128i sad = _mm_adds_epu16(sum_lo, sum_hi);
+                    const __m128i minpos = _mm_minpos_epu16(sad);
+                    const uint32_t min0 = _mm_extract_epi16(minpos, 0);
+
+                    if (min0 < best_s) {
+                        if (min0 != 0xFFFF) { // no overflow
+                            best_s = min0;
+                            best_x = _mm_extract_epi16(minpos, 1);
+                            best_y = y;
+                        }
+                        else { // overflow
+                            __m128i sads[2];
+
+                            add16x8x8to32bit(sums256, sads);
+                            update_8_best(sads, 0, y, &best_s, &best_x, &best_y);
+                        }
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+        }
+    }
+    else if (search_area_width == 16) {
+        switch (width) {
+        case 4:
+            if (height <= 4) {
+                y = 0;
+                do {
+                    {
+                        __m128i sum = _mm_setzero_si128();
+
+                        s = src;
+                        r = ref;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_sse4_1(s, src_stride, r, ref_stride, &sum);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_best(sum, 0, y, &best_s, &best_x, &best_y);
+                    }
+
+                    {
+                        __m128i sum = _mm_setzero_si128();
+
+                        s = src;
+                        r = ref + 8;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_sse4_1(s, src_stride, r, ref_stride, &sum);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_best(sum, 8, y, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
+                    {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                    }
+
+                    {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + 8;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_small_pel(sum256, 8, y, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
+        case 8:
+            // Note: Tried _mm512_dbsad_epu8 but is even slower.
+            y = 0;
+            do {
+                {
+                    __m256i sum256 = _mm256_setzero_si256();
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_8_avx2(s, src_stride, r, ref_stride, &sum256);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                }
+
+                {
+                    __m256i sum256 = _mm256_setzero_si256();
+
+                    s = src;
+                    r = ref + 8;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_8_avx2(s, src_stride, r, ref_stride, &sum256);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_small_pel(sum256, 8, y, &best_s, &best_x, &best_y);
                 }
 
                 ref += src_stride_raw;
             } while (++y < search_area_height);
-        }
-        else {
-            const uint32_t leftover16 = search_area_width & 15;
+            break;
 
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
+        case 16:
+            if (height <= 16) {
+                y = 0;
+                do {
+                    __m512i sum512 = _mm512_setzero_si512();
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_16_avx512(s, src_stride, r, ref_stride, &sum512);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_256_pel(sum512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else if (height <= 32) {
+                y = 0;
+                do {
+                    __m512i sum512 = _mm512_setzero_si512();
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_16_avx512(s, src_stride, r, ref_stride, &sum512);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_512_pel(sum512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
+                    __m512i sums512[2] = { _mm512_setzero_si512(), _mm512_setzero_si512() };
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_16_2sum_avx512(s, src_stride, r, ref_stride, sums512);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_1024_pel(sums512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
+        case 24:
+            if (height <= 16) {
+                y = 0;
+                do {
                     __m512i sum512 = _mm512_setzero_si512();
                     __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height2;
                     do {
@@ -1811,60 +2101,42 @@ void sad_loop_kernel_avx512(
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_768_pel(sum512, sums256, x, y, &best_s, &best_x, &best_y);
-                }
-
-                // leftover
-                if (leftover16 >= 8) {
+                    update_384_pel(sum512, sums256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
+                    __m512i sum512 = _mm512_setzero_si512();
                     __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height2;
                     do {
-                        sad_loop_kernel_16_avx2(s, src_stride, r, ref_stride, &sums256[0]);
-                        sad_loop_kernel_8_avx2(s + 16, src_stride, r + 16, ref_stride, &sums256[1]);
+                        sad_loop_kernel_16_avx512(s, src_stride, r, ref_stride, &sum512);
+                        sad_loop_kernel_8_avx2(s + 16, src_stride, r + 16, ref_stride, &sums256[0]);
+                        sad_loop_kernel_8_avx2(s + 16, src_stride, r + 24, ref_stride, &sums256[1]);
                         s += 2 * src_stride;
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
+                    update_768_pel(sum512, sums256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
 
-                    x += 8;
-                }
-
-                if (leftover) {
-                    __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_16_avx2(s, src_stride, r, ref_stride, &sums256[0]);
-                        sad_loop_kernel_8_avx2(s + 16, src_stride, r + 16, ref_stride, &sums256[1]);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    update_leftover_1024_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        break;
-
-    case 32:
-        if (height <= 8) {
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
+        case 32:
+            if (height <= 8) {
+                y = 0;
+                do {
                     __m512i sum512 = _mm512_setzero_si512();
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     // Note: faster than looping 2 rows.
                     h = height;
@@ -1874,37 +2146,17 @@ void sad_loop_kernel_avx512(
                         r += ref_stride;
                     } while (--h);
 
-                    update_256_pel(sum512, x, y, &best_s, &best_x, &best_y);
-                }
-
-                // leftover
-                for (; x < search_area_width; x += 8) {
-                    __m256i sum256 = _mm256_setzero_si256();
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height;
-                    do {
-                        sad_loop_kernel_32_avx2(s, r, &sum256);
-                        s += src_stride;
-                        r += ref_stride;
-                    } while (--h);
-
-                    update_leftover_256_pel(sum256, search_area_width, x, y, mask128, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        else if (height <= 16) {
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
+                    update_256_pel(sum512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else if (height <= 16) {
+                y = 0;
+                do {
                     __m512i sum512 = _mm512_setzero_si512();
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height2;
                     do {
@@ -1914,39 +2166,17 @@ void sad_loop_kernel_avx512(
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_512_pel(sum512, x, y, &best_s, &best_x, &best_y);
-                }
-
-                // leftover
-                for (; x < search_area_width; x += 8) {
-                    __m256i sum256 = _mm256_setzero_si256();
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height;
-                    do {
-                        sad_loop_kernel_32_avx2(s, r, &sum256);
-                        s += src_stride;
-                        r += ref_stride;
-                    } while (--h);
-
-                    update_leftover_512_pel(sum256, search_area_width, x, y, mask256, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        else if (height <= 32) {
-            const uint32_t leftover16 = search_area_width & 15;
-
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
+                    update_512_pel(sum512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else if (height <= 32) {
+                y = 0;
+                do {
                     __m512i sums512[2] = { _mm512_setzero_si512(), _mm512_setzero_si512() };
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height;
                     do {
@@ -1955,55 +2185,17 @@ void sad_loop_kernel_avx512(
                         r += ref_stride;
                     } while (--h);
 
-                    update_1024_pel(sums512, x, y, &best_s, &best_x, &best_y);
-                }
-
-                if (leftover16 >= 8) {
-                    __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height;
-                    do {
-                        sad_loop_kernel_32_2sum_avx2(s, r, sums256);
-                        s += src_stride;
-                        r += ref_stride;
-                    } while (--h);
-
-                    update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
-                    x += 8;
-                }
-
-                if (leftover) {
-                    __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height;
-                    do {
-                        sad_loop_kernel_32_2sum_avx2(s, r, sums256);
-                        s += src_stride;
-                        r += ref_stride;
-                    } while (--h);
-
-                    update_leftover_1024_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        else {
-            const uint32_t leftover16 = search_area_width & 15;
-
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
+                    update_1024_pel(sums512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
                     __m512i sums512[4] = { _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512() };
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height;
                     do {
@@ -2012,58 +2204,20 @@ void sad_loop_kernel_avx512(
                         r += ref_stride;
                     } while (--h);
 
-                    update_2048_pel(sums512, x, y, &best_s, &best_x, &best_y);
-                }
+                    update_2048_pel(sums512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
 
-                if (leftover16 >= 8) {
-                    __m256i sums256[4] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height;
-                    do {
-                        sad_loop_kernel_32_4sum_avx2(s, r, sums256);
-                        s += src_stride;
-                        r += ref_stride;
-                    } while (--h);
-
-                    update_leftover8_2048_pel(sums256, x, y, &best_s, &best_x, &best_y);
-                    x += 8;
-                }
-
-                if (leftover) {
-                    __m256i sums256[4] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height;
-                    do {
-                        sad_loop_kernel_32_4sum_avx2(s, r, sums256);
-                        s += src_stride;
-                        r += ref_stride;
-                    } while (--h);
-
-                    update_leftover_2048_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        break;
-
-    case 48:
-        if (height <= 32) {
-            const uint32_t leftover16 = search_area_width & 15;
-
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
+        case 48:
+            if (height <= 32) {
+                y = 0;
+                do {
                     __m512i sums512[3] = { _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512() };
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height2;
                     do {
@@ -2074,62 +2228,20 @@ void sad_loop_kernel_avx512(
                         r += 2 * ref_stride;
                     } while (--h);
 
-                    update_1536_pel(sums512, x, y, &best_s, &best_x, &best_y);
-                }
-
-                if (leftover16 >= 8) {
-                    __m256i sums256[3] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_32_2sum_avx2(s, r, sums256);
-                        sad_loop_kernel_32_2sum_avx2(s + src_stride, r + ref_stride, sums256);
-                        sad_loop_kernel_16_avx2(s + 32, src_stride, r + 32, ref_stride, &sums256[2]);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    update_leftover8_1536_pel(sums256, x, y, &best_s, &best_x, &best_y);
-                    x += 8;
-                }
-
-                if (leftover) {
-                    __m256i sums256[3] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_32_2sum_avx2(s, r, sums256);
-                        sad_loop_kernel_32_2sum_avx2(s + src_stride, r + ref_stride, sums256);
-                        sad_loop_kernel_16_avx2(s + 32, src_stride, r + 32, ref_stride, &sums256[2]);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    update_leftover_1536_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        else {
-            const uint32_t leftover16 = search_area_width & 15;
-
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
+                    update_1536_pel(sums512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
                     __m512i sums512[6] = {
                         _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(),
                         _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512()
                     };
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height2;
                     do {
@@ -2171,7 +2283,7 @@ void sad_loop_kernel_avx512(
                     if (minmin < best_s) {
                         if (minmin != 0xFFFF) { // no overflow
                             best_s = minmin;
-                            best_x = x + delta + _mm_extract_epi16(minpos, 1);
+                            best_x = delta + _mm_extract_epi16(minpos, 1);
                             best_y = y;
                         }
                         else { // overflow
@@ -2182,135 +2294,29 @@ void sad_loop_kernel_avx512(
 
                             sads128[0] = _mm256_castsi256_si128(sads256[0]);
                             sads128[1] = _mm256_extracti128_si256(sads256[0], 1);
-                            update_8_best(sads128, x + 0, y, &best_s, &best_x, &best_y);
+                            update_8_best(sads128, 0, y, &best_s, &best_x, &best_y);
 
                             sads128[0] = _mm256_castsi256_si128(sads256[1]);
                             sads128[1] = _mm256_extracti128_si256(sads256[1], 1);
-                            update_8_best(sads128, x + 8, y, &best_s, &best_x, &best_y);
-                        }
-                    }
-                }
-
-                if (leftover16 >= 8) {
-                    __m256i sums256[6] = {
-                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(),
-                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256()
-                    };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_32_4sum_avx2(s, r, sums256);
-                        sad_loop_kernel_32_4sum_avx2(s + src_stride, r + ref_stride, sums256);
-                        sad_loop_kernel_16_2sum_avx2(s + 32, src_stride, r + 32, ref_stride, &sums256[4]);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
-                    const __m256i sum23 = _mm256_adds_epu16(sums256[2], sums256[3]);
-                    const __m256i sum45 = _mm256_adds_epu16(sums256[4], sums256[5]);
-                    const __m256i sum0123 = _mm256_adds_epu16(sum01, sum23);
-                    const __m256i sum256 = _mm256_adds_epu16(sum0123, sum45);
-                    const __m128i sum_lo = _mm256_castsi256_si128(sum256);
-                    const __m128i sum_hi = _mm256_extracti128_si256(sum256, 1);
-                    const __m128i sad = _mm_adds_epu16(sum_lo, sum_hi);
-                    const __m128i minpos = _mm_minpos_epu16(sad);
-                    const uint32_t min0 = _mm_extract_epi16(minpos, 0);
-
-                    if (min0 < best_s) {
-                        if (min0 != 0xFFFF) { // no overflow
-                            best_s = min0;
-                            best_x = x + _mm_extract_epi16(minpos, 1);
-                            best_y = y;
-                        }
-                        else { // overflow
-                            __m128i sads[2];
-
-                            add16x8x6to32bit(sums256, sads);
-                            update_8_best(sads, x, y, &best_s, &best_x, &best_y);
+                            update_8_best(sads128, 8, y, &best_s, &best_x, &best_y);
                         }
                     }
 
-                    x += 8;
-                }
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
 
-                if (leftover) {
-                    __m256i sums256[6] = {
-                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(),
-                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256()
-                    };
+        default:
+            assert(width == 64);
 
-                    s = src;
-                    r = ref + x;
-
-                    h = height2;
-                    do {
-                        sad_loop_kernel_32_4sum_avx2(s, r, sums256);
-                        sad_loop_kernel_32_4sum_avx2(s + src_stride, r + ref_stride, sums256);
-                        sad_loop_kernel_16_2sum_avx2(s + 32, src_stride, r + 32, ref_stride, &sums256[4]);
-                        s += 2 * src_stride;
-                        r += 2 * ref_stride;
-                    } while (--h);
-
-                    const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
-                    const __m256i sum23 = _mm256_adds_epu16(sums256[2], sums256[3]);
-                    const __m256i sum45 = _mm256_adds_epu16(sums256[4], sums256[5]);
-                    const __m256i sum0123 = _mm256_adds_epu16(sum01, sum23);
-                    const __m256i sum256 = _mm256_adds_epu16(sum0123, sum45);
-                    const __m128i sum_lo = _mm256_castsi256_si128(sum256);
-                    const __m128i sum_hi = _mm256_extracti128_si256(sum256, 1);
-                    const __m128i sad0 = _mm_adds_epu16(sum_lo, sum_hi);
-                    const __m128i sad1 = _mm_or_si128(sad0, mask128);
-                    const __m128i minpos = _mm_minpos_epu16(sad1);
-                    const uint32_t min0 = _mm_extract_epi16(minpos, 0);
-
-                    if (min0 < best_s) {
-                        if (min0 != 0xFFFF) { // no overflow
-                            best_s = min0;
-                            best_x = x + _mm_extract_epi16(minpos, 1);
-                            best_y = y;
-                        }
-                        else { // overflow
-                            const int32_t num = x + ((leftover < 4) ? leftover : 4);
-                            __m128i sads[2];
-
-                            add16x8x6to32bit(sums256, sads);
-
-                            do {
-                                UPDATE_BEST(sads[0], 0, x, best_s, best_x, best_y);
-                                sads[0] = _mm_srli_si128(sads[0], 4);
-                            } while (++x < num);
-
-                            while (x < search_area_width) {
-                                UPDATE_BEST(sads[1], 0, x, best_s, best_x, best_y);
-                                sads[1] = _mm_srli_si128(sads[1], 4);
-                                x++;
-                            }
-                        }
-                    }
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        break;
-
-    default:
-        assert(width == 64);
-
-        if (height <= 16) {
-            const uint32_t leftover16 = search_area_width & 15;
-
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
+            if (height <= 16) {
+                y = 0;
+                do {
                     __m512i sums512[2] = { _mm512_setzero_si512(), _mm512_setzero_si512() };
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height;
                     do {
@@ -2320,55 +2326,17 @@ void sad_loop_kernel_avx512(
                         r += ref_stride;
                     } while (--h);
 
-                    update_1024_pel(sums512, x, y, &best_s, &best_x, &best_y);
-                }
-
-                if (leftover16 >= 8) {
-                    __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height;
-                    do {
-                        sad_loop_kernel_64_2sum_avx2(s, r, sums256);
-                        s += src_stride;
-                        r += ref_stride;
-                    } while (--h);
-
-                    update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
-                    x += 8;
-                }
-
-                if (leftover) {
-                    __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height;
-                    do {
-                        sad_loop_kernel_64_2sum_avx2(s, r, sums256);
-                        s += src_stride;
-                        r += ref_stride;
-                    } while (--h);
-
-                    update_leftover_1024_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        else if (height <= 32) {
-            const uint32_t leftover16 = search_area_width & 15;
-
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
+                    update_1024_pel(sums512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else if (height <= 32) {
+                y = 0;
+                do {
                     __m512i sums512[4] = { _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512() };
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height;
                     do {
@@ -2378,58 +2346,20 @@ void sad_loop_kernel_avx512(
                         r += ref_stride;
                     } while (--h);
 
-                    update_2048_pel(sums512, x, y, &best_s, &best_x, &best_y);
-                }
-
-                if (leftover16 >= 8) {
-                    __m256i sums256[4] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height;
-                    do {
-                        sad_loop_kernel_64_4sum_avx2(s, r, sums256);
-                        s += src_stride;
-                        r += ref_stride;
-                    } while (--h);
-
-                    update_leftover8_2048_pel(sums256, x, y, &best_s, &best_x, &best_y);
-                    x += 8;
-                }
-
-                if (leftover) {
-                    __m256i sums256[4] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
-
-                    s = src;
-                    r = ref + x;
-
-                    h = height;
-                    do {
-                        sad_loop_kernel_64_4sum_avx2(s, r, sums256);
-                        s += src_stride;
-                        r += ref_stride;
-                    } while (--h);
-
-                    update_leftover_2048_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
-                }
-
-                ref += src_stride_raw;
-            } while (++y < search_area_height);
-        }
-        else {
-            const uint32_t leftover16 = search_area_width & 15;
-
-            y = 0;
-            do {
-                for (x = 0; x <= search_area_width - 16; x += 16) {
+                    update_2048_pel(sums512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
                     __m512i sums512[8] = {
                         _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(),
                         _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512()
                     };
 
                     s = src;
-                    r = ref + x;
+                    r = ref;
 
                     h = height;
                     do {
@@ -2472,7 +2402,7 @@ void sad_loop_kernel_avx512(
                     if (minmin < best_s) {
                         if (minmin != 0xFFFF) { // no overflow
                             best_s = minmin;
-                            best_x = x + delta + _mm_extract_epi16(minpos, 1);
+                            best_x = delta + _mm_extract_epi16(minpos, 1);
                             best_y = y;
                         }
                         else { // overflow
@@ -2483,121 +2413,1143 @@ void sad_loop_kernel_avx512(
 
                             sads128[0] = _mm256_castsi256_si128(sads256[0]);
                             sads128[1] = _mm256_extracti128_si256(sads256[0], 1);
-                            update_8_best(sads128, x + 0, y, &best_s, &best_x, &best_y);
+                            update_8_best(sads128, 0, y, &best_s, &best_x, &best_y);
 
                             sads128[0] = _mm256_castsi256_si128(sads256[1]);
                             sads128[1] = _mm256_extracti128_si256(sads256[1], 1);
-                            update_8_best(sads128, x + 8, y, &best_s, &best_x, &best_y);
+                            update_8_best(sads128, 8, y, &best_s, &best_x, &best_y);
                         }
                     }
-                }
 
-                if (leftover16 >= 8) {
-                    __m256i sums256[8] = {
-                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(),
-                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256()
-                    };
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+        }
+    }
+    else {
+        const uint32_t leftover = search_area_width & 7;
+        __m128i mask128;
+        __m256i mask256;
+
+        mask128 = _mm_set1_epi32(-1);
+        for (x = 0; x < (int32_t)leftover; x++) {
+            mask128 = _mm_slli_si128(mask128, 2);
+        }
+        mask256 = _mm256_insertf128_si256(_mm256_castsi128_si256(mask128), mask128, 1);
+
+        switch (width) {
+        case 4:
+            if (height <= 4) {
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 8; x += 8) {
+                        __m128i sum = _mm_setzero_si128();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_sse4_1(s, src_stride, r, ref_stride, &sum);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_best(sum, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    if (leftover) {
+                        __m128i sum = _mm_setzero_si128();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_sse4_1(s, src_stride, r, ref_stride, &sum);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        sum = _mm_or_si128(sum, mask128);
+                        update_best(sum, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 8; x += 8) {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_small_pel(sum256, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    if (leftover) {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover_small_pel(sum256, x, y, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
+        case 8:
+            // Note: Tried _mm512_dbsad_epu8 but is even slower.
+            y = 0;
+            do {
+                for (x = 0; x <= search_area_width - 8; x += 8) {
+                    __m256i sum256 = _mm256_setzero_si256();
 
                     s = src;
                     r = ref + x;
 
-                    h = height;
+                    h = height2;
                     do {
-                        sad_loop_kernel_64_8sum_avx2(s, r, sums256);
-                        s += src_stride;
-                        r += ref_stride;
+                        sad_loop_kernel_8_avx2(s, src_stride, r, ref_stride, &sum256);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
                     } while (--h);
 
-                    const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
-                    const __m256i sum23 = _mm256_adds_epu16(sums256[2], sums256[3]);
-                    const __m256i sum45 = _mm256_adds_epu16(sums256[4], sums256[5]);
-                    const __m256i sum67 = _mm256_adds_epu16(sums256[6], sums256[7]);
-                    const __m256i sum0123 = _mm256_adds_epu16(sum01, sum23);
-                    const __m256i sum4567 = _mm256_adds_epu16(sum45, sum67);
-                    const __m256i sum256 = _mm256_adds_epu16(sum0123, sum4567);
-                    const __m128i sum_lo = _mm256_castsi256_si128(sum256);
-                    const __m128i sum_hi = _mm256_extracti128_si256(sum256, 1);
-                    const __m128i sad = _mm_adds_epu16(sum_lo, sum_hi);
-                    const __m128i minpos = _mm_minpos_epu16(sad);
-                    const uint32_t min0 = _mm_extract_epi16(minpos, 0);
-
-                    if (min0 < best_s) {
-                        if (min0 != 0xFFFF) { // no overflow
-                            best_s = min0;
-                            best_x = x + _mm_extract_epi16(minpos, 1);
-                            best_y = y;
-                        }
-                        else { // overflow
-                            __m128i sads[2];
-
-                            add16x8x8to32bit(sums256, sads);
-                            update_8_best(sads, x, y, &best_s, &best_x, &best_y);
-                        }
-                    }
-
-                    x += 8;
+                    update_small_pel(sum256, x, y, &best_s, &best_x, &best_y);
                 }
 
                 if (leftover) {
-                    __m256i sums256[8] = {
-                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(),
-                        _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256()
-                    };
+                    __m256i sum256 = _mm256_setzero_si256();
 
                     s = src;
                     r = ref + x;
 
-                    h = height;
+                    h = height2;
                     do {
-                        sad_loop_kernel_64_8sum_avx2(s, r, sums256);
-                        s += src_stride;
-                        r += ref_stride;
+                        sad_loop_kernel_8_avx2(s, src_stride, r, ref_stride, &sum256);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
                     } while (--h);
 
-                    const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
-                    const __m256i sum23 = _mm256_adds_epu16(sums256[2], sums256[3]);
-                    const __m256i sum45 = _mm256_adds_epu16(sums256[4], sums256[5]);
-                    const __m256i sum67 = _mm256_adds_epu16(sums256[6], sums256[7]);
-                    const __m256i sum0123 = _mm256_adds_epu16(sum01, sum23);
-                    const __m256i sum4567 = _mm256_adds_epu16(sum45, sum67);
-                    const __m256i sum256 = _mm256_adds_epu16(sum0123, sum4567);
-                    const __m128i sum_lo = _mm256_castsi256_si128(sum256);
-                    const __m128i sum_hi = _mm256_extracti128_si256(sum256, 1);
-                    const __m128i sad0 = _mm_adds_epu16(sum_lo, sum_hi);
-                    const __m128i sad1 = _mm_or_si128(sad0, mask128);
-                    const __m128i minpos = _mm_minpos_epu16(sad1);
-                    const uint32_t min0 = _mm_extract_epi16(minpos, 0);
-
-                    if (min0 < best_s) {
-                        if (min0 != 0xFFFF) { // no overflow
-                            best_s = min0;
-                            best_x = x + _mm_extract_epi16(minpos, 1);
-                            best_y = y;
-                        }
-                        else { // overflow
-                            const int32_t num = x + ((leftover < 4) ? leftover : 4);
-                            __m128i sads[2];
-
-                            add16x8x8to32bit(sums256, sads);
-
-                            do {
-                                UPDATE_BEST(sads[0], 0, x, best_s, best_x, best_y);
-                                sads[0] = _mm_srli_si128(sads[0], 4);
-                            } while (++x < num);
-
-                            while (x < search_area_width) {
-                                UPDATE_BEST(sads[1], 0, x, best_s, best_x, best_y);
-                                sads[1] = _mm_srli_si128(sads[1], 4);
-                                x++;
-                            }
-                        }
-                    }
+                    update_leftover_small_pel(sum256, x, y, mask128, &best_s, &best_x, &best_y);
                 }
 
                 ref += src_stride_raw;
             } while (++y < search_area_height);
+            break;
+
+        case 16:
+            if (height <= 16) {
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sum512 = _mm512_setzero_si512();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_avx512(s, src_stride, r, ref_stride, &sum512);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_256_pel(sum512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    // leftover
+                    for (; x < search_area_width; x += 8) {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover_256_pel(sum256, search_area_width, x, y, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else if (height <= 32) {
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sum512 = _mm512_setzero_si512();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_avx512(s, src_stride, r, ref_stride, &sum512);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_512_pel(sum512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    // leftover
+                    for (; x < search_area_width; x += 8) {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover_512_pel(sum256, search_area_width, x, y, mask256, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                const uint32_t leftover16 = search_area_width & 15;
+
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sums512[2] = { _mm512_setzero_si512(), _mm512_setzero_si512() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_2sum_avx512(s, src_stride, r, ref_stride, sums512);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_1024_pel(sums512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    if (leftover16 >= 8) {
+                        __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_2sum_avx2(s, src_stride, r, ref_stride, sums256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
+                        x += 8;
+                    }
+
+                    if (leftover) {
+                        __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_2sum_avx2(s, src_stride, r, ref_stride, sums256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover_1024_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
+        case 24:
+            if (height <= 16) {
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sum512 = _mm512_setzero_si512();
+                        __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_avx512(s, src_stride, r, ref_stride, &sum512);
+                            sad_loop_kernel_8_avx2(s + 16, src_stride, r + 16, ref_stride, &sums256[0]);
+                            sad_loop_kernel_8_avx2(s + 16, src_stride, r + 24, ref_stride, &sums256[1]);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_384_pel(sum512, sums256, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    // leftover
+                    for (; x < search_area_width; x += 8) {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_avx2(s, src_stride, r, ref_stride, &sum256);
+                            sad_loop_kernel_8_avx2(s + 16, src_stride, r + 16, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover_512_pel(sum256, search_area_width, x, y, mask256, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                const uint32_t leftover16 = search_area_width & 15;
+
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sum512 = _mm512_setzero_si512();
+                        __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_avx512(s, src_stride, r, ref_stride, &sum512);
+                            sad_loop_kernel_8_avx2(s + 16, src_stride, r + 16, ref_stride, &sums256[0]);
+                            sad_loop_kernel_8_avx2(s + 16, src_stride, r + 24, ref_stride, &sums256[1]);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_768_pel(sum512, sums256, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    // leftover
+                    if (leftover16 >= 8) {
+                        __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_avx2(s, src_stride, r, ref_stride, &sums256[0]);
+                            sad_loop_kernel_8_avx2(s + 16, src_stride, r + 16, ref_stride, &sums256[1]);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
+
+                        x += 8;
+                    }
+
+                    if (leftover) {
+                        __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_16_avx2(s, src_stride, r, ref_stride, &sums256[0]);
+                            sad_loop_kernel_8_avx2(s + 16, src_stride, r + 16, ref_stride, &sums256[1]);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover_1024_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
+        case 32:
+            if (height <= 8) {
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sum512 = _mm512_setzero_si512();
+
+                        s = src;
+                        r = ref + x;
+
+                        // Note: faster than looping 2 rows.
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_avx512(s, r, &sum512);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_256_pel(sum512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    // leftover
+                    for (; x < search_area_width; x += 8) {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_avx2(s, r, &sum256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_leftover_256_pel(sum256, search_area_width, x, y, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else if (height <= 16) {
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sum512 = _mm512_setzero_si512();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_32_avx512(s, r, &sum512);
+                            sad_loop_kernel_32_avx512(s + src_stride, r + ref_stride, &sum512);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_512_pel(sum512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    // leftover
+                    for (; x < search_area_width; x += 8) {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_avx2(s, r, &sum256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_leftover_512_pel(sum256, search_area_width, x, y, mask256, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else if (height <= 32) {
+                const uint32_t leftover16 = search_area_width & 15;
+
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sums512[2] = { _mm512_setzero_si512(), _mm512_setzero_si512() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_2sum_avx512(s, r, sums512);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_1024_pel(sums512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    if (leftover16 >= 8) {
+                        __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_2sum_avx2(s, r, sums256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
+                        x += 8;
+                    }
+
+                    if (leftover) {
+                        __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_2sum_avx2(s, r, sums256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_leftover_1024_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                const uint32_t leftover16 = search_area_width & 15;
+
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sums512[4] = { _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_4sum_avx512(s, r, sums512);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_2048_pel(sums512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    if (leftover16 >= 8) {
+                        __m256i sums256[4] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_4sum_avx2(s, r, sums256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_leftover8_2048_pel(sums256, x, y, &best_s, &best_x, &best_y);
+                        x += 8;
+                    }
+
+                    if (leftover) {
+                        __m256i sums256[4] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_4sum_avx2(s, r, sums256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_leftover_2048_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
+        case 48:
+            if (height <= 32) {
+                const uint32_t leftover16 = search_area_width & 15;
+
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sums512[3] = { _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_32_2sum_avx512(s, r, sums512);
+                            sad_loop_kernel_32_2sum_avx512(s + src_stride, r + ref_stride, sums512);
+                            sad_loop_kernel_16_avx512(s + 32, src_stride, r + 32, ref_stride, &sums512[2]);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_1536_pel(sums512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    if (leftover16 >= 8) {
+                        __m256i sums256[3] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_32_2sum_avx2(s, r, sums256);
+                            sad_loop_kernel_32_2sum_avx2(s + src_stride, r + ref_stride, sums256);
+                            sad_loop_kernel_16_avx2(s + 32, src_stride, r + 32, ref_stride, &sums256[2]);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover8_1536_pel(sums256, x, y, &best_s, &best_x, &best_y);
+                        x += 8;
+                    }
+
+                    if (leftover) {
+                        __m256i sums256[3] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_32_2sum_avx2(s, r, sums256);
+                            sad_loop_kernel_32_2sum_avx2(s + src_stride, r + ref_stride, sums256);
+                            sad_loop_kernel_16_avx2(s + 32, src_stride, r + 32, ref_stride, &sums256[2]);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover_1536_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                const uint32_t leftover16 = search_area_width & 15;
+
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sums512[6] = {
+                            _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(),
+                            _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512()
+                        };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_32_4sum_avx512(s, r, sums512);
+                            sad_loop_kernel_32_4sum_avx512(s + src_stride, r + ref_stride, sums512);
+                            sad_loop_kernel_16_2sum_avx512(s + 32, src_stride, r + 32, ref_stride, &sums512[4]);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        const __m512i sum512_01 = _mm512_adds_epu16(sums512[0], sums512[1]);
+                        const __m512i sum512_23 = _mm512_adds_epu16(sums512[2], sums512[3]);
+                        const __m512i sum512_45 = _mm512_adds_epu16(sums512[4], sums512[5]);
+                        const __m512i sum512_0123 = _mm512_adds_epu16(sum512_01, sum512_23);
+                        const __m512i sum512 = _mm512_adds_epu16(sum512_0123, sum512_45);
+                        const __m256i sum_lo = _mm512_castsi512_si256(sum512);
+                        const __m256i sum_hi = _mm512_extracti64x4_epi64(sum512, 1);
+                        const __m256i sad = _mm256_adds_epu16(sum_lo, sum_hi);
+                        const __m128i sad_lo = _mm256_castsi256_si128(sad);
+                        const __m128i sad_hi = _mm256_extracti128_si256(sad, 1);
+                        const __m128i minpos_lo = _mm_minpos_epu16(sad_lo);
+                        const __m128i minpos_hi = _mm_minpos_epu16(sad_hi);
+                        const uint32_t min0 = _mm_extract_epi16(minpos_lo, 0);
+                        const uint32_t min1 = _mm_extract_epi16(minpos_hi, 0);
+                        uint32_t minmin, delta;
+                        __m128i minpos;
+
+                        if (min0 <= min1) {
+                            minmin = min0;
+                            delta = 0;
+                            minpos = minpos_lo;
+                        }
+                        else {
+                            minmin = min1;
+                            delta = 8;
+                            minpos = minpos_hi;
+                        }
+
+                        if (minmin < best_s) {
+                            if (minmin != 0xFFFF) { // no overflow
+                                best_s = minmin;
+                                best_x = x + delta + _mm_extract_epi16(minpos, 1);
+                                best_y = y;
+                            }
+                            else { // overflow
+                                __m256i sads256[2];
+                                __m128i sads128[2];
+
+                                add16x16x6to32bit(sums512, sads256);
+
+                                sads128[0] = _mm256_castsi256_si128(sads256[0]);
+                                sads128[1] = _mm256_extracti128_si256(sads256[0], 1);
+                                update_8_best(sads128, x + 0, y, &best_s, &best_x, &best_y);
+
+                                sads128[0] = _mm256_castsi256_si128(sads256[1]);
+                                sads128[1] = _mm256_extracti128_si256(sads256[1], 1);
+                                update_8_best(sads128, x + 8, y, &best_s, &best_x, &best_y);
+                            }
+                        }
+                    }
+
+                    if (leftover16 >= 8) {
+                        __m256i sums256[6] = {
+                            _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(),
+                            _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256()
+                        };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_32_4sum_avx2(s, r, sums256);
+                            sad_loop_kernel_32_4sum_avx2(s + src_stride, r + ref_stride, sums256);
+                            sad_loop_kernel_16_2sum_avx2(s + 32, src_stride, r + 32, ref_stride, &sums256[4]);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
+                        const __m256i sum23 = _mm256_adds_epu16(sums256[2], sums256[3]);
+                        const __m256i sum45 = _mm256_adds_epu16(sums256[4], sums256[5]);
+                        const __m256i sum0123 = _mm256_adds_epu16(sum01, sum23);
+                        const __m256i sum256 = _mm256_adds_epu16(sum0123, sum45);
+                        const __m128i sum_lo = _mm256_castsi256_si128(sum256);
+                        const __m128i sum_hi = _mm256_extracti128_si256(sum256, 1);
+                        const __m128i sad = _mm_adds_epu16(sum_lo, sum_hi);
+                        const __m128i minpos = _mm_minpos_epu16(sad);
+                        const uint32_t min0 = _mm_extract_epi16(minpos, 0);
+
+                        if (min0 < best_s) {
+                            if (min0 != 0xFFFF) { // no overflow
+                                best_s = min0;
+                                best_x = x + _mm_extract_epi16(minpos, 1);
+                                best_y = y;
+                            }
+                            else { // overflow
+                                __m128i sads[2];
+
+                                add16x8x6to32bit(sums256, sads);
+                                update_8_best(sads, x, y, &best_s, &best_x, &best_y);
+                            }
+                        }
+
+                        x += 8;
+                    }
+
+                    if (leftover) {
+                        __m256i sums256[6] = {
+                            _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(),
+                            _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256()
+                        };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_32_4sum_avx2(s, r, sums256);
+                            sad_loop_kernel_32_4sum_avx2(s + src_stride, r + ref_stride, sums256);
+                            sad_loop_kernel_16_2sum_avx2(s + 32, src_stride, r + 32, ref_stride, &sums256[4]);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
+                        const __m256i sum23 = _mm256_adds_epu16(sums256[2], sums256[3]);
+                        const __m256i sum45 = _mm256_adds_epu16(sums256[4], sums256[5]);
+                        const __m256i sum0123 = _mm256_adds_epu16(sum01, sum23);
+                        const __m256i sum256 = _mm256_adds_epu16(sum0123, sum45);
+                        const __m128i sum_lo = _mm256_castsi256_si128(sum256);
+                        const __m128i sum_hi = _mm256_extracti128_si256(sum256, 1);
+                        const __m128i sad0 = _mm_adds_epu16(sum_lo, sum_hi);
+                        const __m128i sad1 = _mm_or_si128(sad0, mask128);
+                        const __m128i minpos = _mm_minpos_epu16(sad1);
+                        const uint32_t min0 = _mm_extract_epi16(minpos, 0);
+
+                        if (min0 < best_s) {
+                            if (min0 != 0xFFFF) { // no overflow
+                                best_s = min0;
+                                best_x = x + _mm_extract_epi16(minpos, 1);
+                                best_y = y;
+                            }
+                            else { // overflow
+                                const int32_t num = x + ((leftover < 4) ? leftover : 4);
+                                __m128i sads[2];
+
+                                add16x8x6to32bit(sums256, sads);
+
+                                do {
+                                    UPDATE_BEST(sads[0], 0, x, best_s, best_x, best_y);
+                                    sads[0] = _mm_srli_si128(sads[0], 4);
+                                } while (++x < num);
+
+                                while (x < search_area_width) {
+                                    UPDATE_BEST(sads[1], 0, x, best_s, best_x, best_y);
+                                    sads[1] = _mm_srli_si128(sads[1], 4);
+                                    x++;
+                                }
+                            }
+                        }
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
+        default:
+            assert(width == 64);
+
+            if (height <= 16) {
+                const uint32_t leftover16 = search_area_width & 15;
+
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sums512[2] = { _mm512_setzero_si512(), _mm512_setzero_si512() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_2sum_avx512(s + 0 * 32, r + 0 * 32, sums512);
+                            sad_loop_kernel_32_2sum_avx512(s + 1 * 32, r + 1 * 32, sums512);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_1024_pel(sums512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    if (leftover16 >= 8) {
+                        __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_64_2sum_avx2(s, r, sums256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
+                        x += 8;
+                    }
+
+                    if (leftover) {
+                        __m256i sums256[2] = { _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_64_2sum_avx2(s, r, sums256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_leftover_1024_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else if (height <= 32) {
+                const uint32_t leftover16 = search_area_width & 15;
+
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sums512[4] = { _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_4sum_avx512(s + 0 * 32, r + 0 * 32, sums512);
+                            sad_loop_kernel_32_4sum_avx512(s + 1 * 32, r + 1 * 32, sums512);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_2048_pel(sums512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    if (leftover16 >= 8) {
+                        __m256i sums256[4] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_64_4sum_avx2(s, r, sums256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_leftover8_2048_pel(sums256, x, y, &best_s, &best_x, &best_y);
+                        x += 8;
+                    }
+
+                    if (leftover) {
+                        __m256i sums256[4] = { _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256() };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_64_4sum_avx2(s, r, sums256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        update_leftover_2048_pel(sums256, search_area_width, x, y, leftover, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            else {
+                const uint32_t leftover16 = search_area_width & 15;
+
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sums512[8] = {
+                            _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(),
+                            _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512()
+                        };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_32_4sum_avx512(s + 0 * 32, r + 0 * 32, sums512 + 0);
+                            sad_loop_kernel_32_4sum_avx512(s + 1 * 32, r + 1 * 32, sums512 + 4);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        const __m512i sum512_01 = _mm512_adds_epu16(sums512[0], sums512[1]);
+                        const __m512i sum512_23 = _mm512_adds_epu16(sums512[2], sums512[3]);
+                        const __m512i sum512_45 = _mm512_adds_epu16(sums512[4], sums512[5]);
+                        const __m512i sum512_67 = _mm512_adds_epu16(sums512[6], sums512[7]);
+                        const __m512i sum512_0123 = _mm512_adds_epu16(sum512_01, sum512_23);
+                        const __m512i sum512_4567 = _mm512_adds_epu16(sum512_45, sum512_67);
+                        const __m512i sum512 = _mm512_adds_epu16(sum512_0123, sum512_4567);
+                        const __m256i sum_lo = _mm512_castsi512_si256(sum512);
+                        const __m256i sum_hi = _mm512_extracti64x4_epi64(sum512, 1);
+                        const __m256i sad = _mm256_adds_epu16(sum_lo, sum_hi);
+                        const __m128i sad_lo = _mm256_castsi256_si128(sad);
+                        const __m128i sad_hi = _mm256_extracti128_si256(sad, 1);
+                        const __m128i minpos_lo = _mm_minpos_epu16(sad_lo);
+                        const __m128i minpos_hi = _mm_minpos_epu16(sad_hi);
+                        const uint32_t min0 = _mm_extract_epi16(minpos_lo, 0);
+                        const uint32_t min1 = _mm_extract_epi16(minpos_hi, 0);
+                        uint32_t minmin, delta;
+                        __m128i minpos;
+
+                        if (min0 <= min1) {
+                            minmin = min0;
+                            delta = 0;
+                            minpos = minpos_lo;
+                        }
+                        else {
+                            minmin = min1;
+                            delta = 8;
+                            minpos = minpos_hi;
+                        }
+
+                        if (minmin < best_s) {
+                            if (minmin != 0xFFFF) { // no overflow
+                                best_s = minmin;
+                                best_x = x + delta + _mm_extract_epi16(minpos, 1);
+                                best_y = y;
+                            }
+                            else { // overflow
+                                __m256i sads256[2];
+                                __m128i sads128[2];
+
+                                add16x16x8to32bit(sums512, sads256);
+
+                                sads128[0] = _mm256_castsi256_si128(sads256[0]);
+                                sads128[1] = _mm256_extracti128_si256(sads256[0], 1);
+                                update_8_best(sads128, x + 0, y, &best_s, &best_x, &best_y);
+
+                                sads128[0] = _mm256_castsi256_si128(sads256[1]);
+                                sads128[1] = _mm256_extracti128_si256(sads256[1], 1);
+                                update_8_best(sads128, x + 8, y, &best_s, &best_x, &best_y);
+                            }
+                        }
+                    }
+
+                    if (leftover16 >= 8) {
+                        __m256i sums256[8] = {
+                            _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(),
+                            _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256()
+                        };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_64_8sum_avx2(s, r, sums256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
+                        const __m256i sum23 = _mm256_adds_epu16(sums256[2], sums256[3]);
+                        const __m256i sum45 = _mm256_adds_epu16(sums256[4], sums256[5]);
+                        const __m256i sum67 = _mm256_adds_epu16(sums256[6], sums256[7]);
+                        const __m256i sum0123 = _mm256_adds_epu16(sum01, sum23);
+                        const __m256i sum4567 = _mm256_adds_epu16(sum45, sum67);
+                        const __m256i sum256 = _mm256_adds_epu16(sum0123, sum4567);
+                        const __m128i sum_lo = _mm256_castsi256_si128(sum256);
+                        const __m128i sum_hi = _mm256_extracti128_si256(sum256, 1);
+                        const __m128i sad = _mm_adds_epu16(sum_lo, sum_hi);
+                        const __m128i minpos = _mm_minpos_epu16(sad);
+                        const uint32_t min0 = _mm_extract_epi16(minpos, 0);
+
+                        if (min0 < best_s) {
+                            if (min0 != 0xFFFF) { // no overflow
+                                best_s = min0;
+                                best_x = x + _mm_extract_epi16(minpos, 1);
+                                best_y = y;
+                            }
+                            else { // overflow
+                                __m128i sads[2];
+
+                                add16x8x8to32bit(sums256, sads);
+                                update_8_best(sads, x, y, &best_s, &best_x, &best_y);
+                            }
+                        }
+
+                        x += 8;
+                    }
+
+                    if (leftover) {
+                        __m256i sums256[8] = {
+                            _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(),
+                            _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256(), _mm256_setzero_si256()
+                        };
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height;
+                        do {
+                            sad_loop_kernel_64_8sum_avx2(s, r, sums256);
+                            s += src_stride;
+                            r += ref_stride;
+                        } while (--h);
+
+                        const __m256i sum01 = _mm256_adds_epu16(sums256[0], sums256[1]);
+                        const __m256i sum23 = _mm256_adds_epu16(sums256[2], sums256[3]);
+                        const __m256i sum45 = _mm256_adds_epu16(sums256[4], sums256[5]);
+                        const __m256i sum67 = _mm256_adds_epu16(sums256[6], sums256[7]);
+                        const __m256i sum0123 = _mm256_adds_epu16(sum01, sum23);
+                        const __m256i sum4567 = _mm256_adds_epu16(sum45, sum67);
+                        const __m256i sum256 = _mm256_adds_epu16(sum0123, sum4567);
+                        const __m128i sum_lo = _mm256_castsi256_si128(sum256);
+                        const __m128i sum_hi = _mm256_extracti128_si256(sum256, 1);
+                        const __m128i sad0 = _mm_adds_epu16(sum_lo, sum_hi);
+                        const __m128i sad1 = _mm_or_si128(sad0, mask128);
+                        const __m128i minpos = _mm_minpos_epu16(sad1);
+                        const uint32_t min0 = _mm_extract_epi16(minpos, 0);
+
+                        if (min0 < best_s) {
+                            if (min0 != 0xFFFF) { // no overflow
+                                best_s = min0;
+                                best_x = x + _mm_extract_epi16(minpos, 1);
+                                best_y = y;
+                            }
+                            else { // overflow
+                                const int32_t num = x + ((leftover < 4) ? leftover : 4);
+                                __m128i sads[2];
+
+                                add16x8x8to32bit(sums256, sads);
+
+                                do {
+                                    UPDATE_BEST(sads[0], 0, x, best_s, best_x, best_y);
+                                    sads[0] = _mm_srli_si128(sads[0], 4);
+                                } while (++x < num);
+
+                                while (x < search_area_width) {
+                                    UPDATE_BEST(sads[1], 0, x, best_s, best_x, best_y);
+                                    sads[1] = _mm_srli_si128(sads[1], 4);
+                                    x++;
+                                }
+                            }
+                        }
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
         }
-        break;
     }
 
     *best_sad = best_s;

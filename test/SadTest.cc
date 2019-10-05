@@ -42,6 +42,7 @@
 #include "EbMeSadCalculation_SSE2.h"
 #include "EbMotionEstimation.h"
 #include "EbMotionEstimationContext.h"
+#include "EbUnitTestUtility.h"
 #include "random.h"
 #include "util.h"
 
@@ -584,18 +585,18 @@ SearchArea TEST_LOOP_AREAS[] = {
 typedef std::tuple<EbSadLoopKernelNxMType, EbSadLoopKernelNxMType> FuncPair;
 
 FuncPair TEST_FUNC_PAIRS[] = {
-    FuncPair(sad_loop_kernel_c, sad_loop_kernel_sse4_1),
-    FuncPair(sad_loop_kernel_c, sad_loop_kernel_avx2),
+    FuncPair(sad_loop_kernel, sad_loop_kernel_sse4_1_intrin),
+    FuncPair(sad_loop_kernel, sad_loop_kernel_avx2_intrin),
     FuncPair(sad_loop_kernel_sparse, sad_loop_kernel_sparse_sse4_1_intrin),
     FuncPair(sad_loop_kernel_sparse, sad_loop_kernel_sparse_avx2_intrin),
 #ifndef NON_AVX512_SUPPORT
-    FuncPair(sad_loop_kernel_c, sad_loop_kernel_avx512),
+    FuncPair(sad_loop_kernel, sad_loop_kernel_avx512_intrin),
 #endif
 };
 
 FuncPair TEST_HME_FUNC_PAIRS[] = {
-    FuncPair(sad_loop_kernel_c, sad_loop_kernel_sse4_1_hme_l0_intrin),
-    FuncPair(sad_loop_kernel_c, sad_loop_kernel_avx2_hme_l0_intrin)};
+    FuncPair(sad_loop_kernel, sad_loop_kernel_sse4_1_hme_l0_intrin),
+    FuncPair(sad_loop_kernel, sad_loop_kernel_avx2_hme_l0_intrin)};
 
 typedef std::tuple<TestPattern, BlkSize, SearchArea, FuncPair> SadLoopTestParam;
 
@@ -630,7 +631,7 @@ class SadLoopTest : public ::testing::WithParamInterface<SadLoopTestParam>,
                       std::get<0>(TEST_GET_PARAM(2)),
                       std::get<1>(TEST_GET_PARAM(2))),
           func_c_(std::get<0>(TEST_GET_PARAM(3))),
-          func_o_(std::get<0>(TEST_GET_PARAM(3))) {
+          func_o_(std::get<1>(TEST_GET_PARAM(3))) {
     }
 
   protected:
@@ -688,10 +689,101 @@ class SadLoopTest : public ::testing::WithParamInterface<SadLoopTestParam>,
             << "search area [" << search_area_width_ << " x "
             << search_area_height_ << "]";
     }
+
+    void speed_sad_loop() {
+        const uint64_t num_loop = 100000;
+        double time_c, time_o;
+        uint64_t start_time_seconds, start_time_useconds;
+        uint64_t middle_time_seconds, middle_time_useconds;
+        uint64_t finish_time_seconds, finish_time_useconds;
+
+        prepare_data();
+
+        uint64_t best_sad0 = UINT64_MAX;
+        uint64_t best_sad1 = UINT64_MAX;
+        int16_t x_search_center0 = 0;
+        int16_t x_search_center1 = 0;
+        int16_t y_search_center0 = 0;
+        int16_t y_search_center1 = 0;
+
+        EbStartTime(&start_time_seconds, &start_time_useconds);
+
+        for (uint64_t i = 0; i < num_loop; i++) {
+            func_c_(src_aligned_,
+                    src_stride_,
+                    ref1_aligned_,
+                    ref1_stride_,
+                    height_,
+                    width_,
+                    &best_sad0,
+                    &x_search_center0,
+                    &y_search_center0,
+                    ref1_stride_,
+                    search_area_width_,
+                    search_area_height_);
+        }
+
+        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+        for (uint64_t i = 0; i < num_loop; i++) {
+            func_o_(src_aligned_,
+                    src_stride_,
+                    ref1_aligned_,
+                    ref1_stride_,
+                    height_,
+                    width_,
+                    &best_sad1,
+                    &x_search_center1,
+                    &y_search_center1,
+                    ref1_stride_,
+                    search_area_width_,
+                    search_area_height_);
+        }
+
+        EbStartTime(&finish_time_seconds, &finish_time_useconds);
+
+        EXPECT_EQ(best_sad0, best_sad1)
+            << "compare best_sad error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(x_search_center0, x_search_center1)
+            << "compare x_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(y_search_center0, y_search_center1)
+            << "compare y_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+
+        EbComputeOverallElapsedTimeMs(start_time_seconds,
+                                      start_time_useconds,
+                                      middle_time_seconds,
+                                      middle_time_useconds,
+                                      &time_c);
+        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+                                      middle_time_useconds,
+                                      finish_time_seconds,
+                                      finish_time_useconds,
+                                      &time_o);
+
+        printf("    sad_loop_kernel(%dx%d) search area[%dx%d]: %5.2fx)\n",
+            width_,
+            height_,
+            search_area_width_,
+            search_area_height_,
+            time_c / time_o);
+    }
 };
 
 TEST_P(SadLoopTest, SadLoopTest) {
     check_sad_loop();
+}
+
+TEST_P(SadLoopTest, DISABLED_SadLoopSpeedTest) {
+    speed_sad_loop();
 }
 
 INSTANTIATE_TEST_CASE_P(
