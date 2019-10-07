@@ -203,7 +203,9 @@ PredictionStructureConfigEntry four_level_hierarchical_pred_struct[] = {
     {
         3,                  // GOP Index 3 - Temporal Layer
         4,                  // GOP Index 3 - Decode Order
-#if PRED_CHANGE
+#if PRED_CHANGE_MOD
+        { 1, 3, 2, 5},      // GOP Index 3 - Ref List 0
+#elif PRED_CHANGE
         { 1, 2, 3, 5},      // GOP Index 3 - Ref List 0
 #else
        { 1,   3, 5,  7},    //    GOP Index 3 - Ref List 0
@@ -279,7 +281,9 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 1 - Temporal Layer
         4,                  // GOP Index 1 - Decode Order
-#if PRED_CHANGE_5L
+#if PRED_CHANGE_MOD
+       { 1, 9, 8, 17},  // GOP Index 1 - Ref List 0
+#elif PRED_CHANGE_5L
        { 1, 8, 9, 17},  // GOP Index 1 - Ref List 0
 #else
        { 1, 5, 9, 17},  // GOP Index 1 - Ref List 0
@@ -299,7 +303,9 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 3 - Temporal Layer
         5,                  // GOP Index 3 - Decode Order
-#if PRED_CHANGE_5L
+#if PRED_CHANGE_MOD
+         { 1, 3, 2, 11},     // GOP Index 3 - Ref List 0
+#elif PRED_CHANGE_5L
          { 1, 2, 3, 11},     // GOP Index 3 - Ref List 0
 #else
          { 1, 3, 7, 11},     // GOP Index 3 - Ref List 0
@@ -315,7 +321,9 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 5 - Temporal Layer
         7,                  // GOP Index 5 - Decode Order
-#if PRED_CHANGE_5L
+#if PRED_CHANGE_MOD
+    { 1, 5, 4, 13},      // GOP Index 5 - Ref List 0
+#elif PRED_CHANGE_5L
     { 1, 4, 5, 13},      // GOP Index 5 - Ref List 0
 #else
     { 1, 5, 9, 13},      // GOP Index 5 - Ref List 0
@@ -335,7 +343,9 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 7 - Temporal Layer
         8,                  // GOP Index 7 - Decode Order
-#if PRED_CHANGE_5L
+#if PRED_CHANGE_MOD
+        { 1, 3, 6, 7},    // GOP Index 7 - Ref List 0
+#elif PRED_CHANGE_5L
         { 1, 3, 6, 7},    // GOP Index 7 - Ref List 0
 #else
         { 1, 3, 7, 11},    // GOP Index 7 - Ref List 0
@@ -351,7 +361,9 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 9 - Temporal Layer
         11,                 // GOP Index 9 - Decode Order
-#if PRED_CHANGE_5L
+#if PRED_CHANGE_MOD
+        { 1, 9, 8, 17},     // GOP Index 9 - Ref List 0
+#elif PRED_CHANGE_5L
         { 1, 8, 9, 17},     // GOP Index 9 - Ref List 0
 #else
         { 1, 5, 9, 17},     // GOP Index 9 - Ref List 0
@@ -371,7 +383,9 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 11 - Temporal Layer
         12,                 // GOP Index 11 - Decode Order
-#if PRED_CHANGE_5L
+#if PRED_CHANGE_MOD
+       { 1, 3, 2, 11},    // GOP Index 11 - Ref List 0
+#elif PRED_CHANGE_5L
        { 1, 2, 3, 11},    // GOP Index 11 - Ref List 0
 #else
        { 1, 3, 7, 11},    // GOP Index 11 - Ref List 0
@@ -387,7 +401,9 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 13 - Temporal Layer
         14,                 // GOP Index 13 - Decode Order
-#if PRED_CHANGE_5L
+#if PRED_CHANGE_MOD
+         { 1, 5, 4, 13},  // GOP Index 13 - Ref List 0
+#elif PRED_CHANGE_5L
          { 1, 4, 5, 13},  // GOP Index 13 - Ref List 0
 #else
          { 1, 5, 9, 13},  // GOP Index 13 - Ref List 0
@@ -404,7 +420,9 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         4,                  // GOP Index 15 - Temporal Layer
         15,                 // GOP Index 15 - Decode Order
-#if PRED_CHANGE_5L
+#if PRED_CHANGE_MOD
+        { 1, 3, 6, 7},  // GOP Index 15 - Ref List 0
+#elif PRED_CHANGE_5L
         { 1, 3, 6, 7},  // GOP Index 15 - Ref List 0
 #else
         { 1, 3, 7, 11},  // GOP Index 15 - Ref List 0
