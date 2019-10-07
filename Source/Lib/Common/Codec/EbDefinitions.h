@@ -43,6 +43,8 @@ extern "C" {
 #endif
 
 #define MR_MODE                           0
+
+#define WARP_UPDATE                       1 // Modified Warp settings: ON for MR mode. ON for ref frames in M0
 #define EIGTH_PEL_MV                      1
 #define EIGHT_PEL_PREDICTIVE_ME           1
 #define COMP_INTERINTRA                   1 // InterIntra mode support
